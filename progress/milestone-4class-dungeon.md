@@ -16,17 +16,19 @@ https://github.com/users/KirkDiggler/projects/10
 
 ## In Progress
 
-- **rpg-toolkit #505**: Attack resolution integration test PR (in progress)
+- **rpg-toolkit #505**: Movement integration tests (PR #570)
 - **rpg-api #294**: Rest System - Long rest before dungeon start
 - **rpg-api #399**: Unified Dungeon Coordinate System
 
-## Current Focus: Attack Resolution Integration
+## Current Focus: Integration Test Gate (Nearly Complete)
 
-ResolveAttack is implemented. Integration tests prove the full pipeline:
-Character → Conditions → Chains → ResolveAttack → Damage.
+All major combat pipelines proven end-to-end with real Conditions:
+- AttackChain + DamageChain (advantage/disadvantage, rage bonus, crits)
+- MovementChain (DisengagingCondition prevents OA, Dash doubles movement)
+- Turn lifecycle (temporary action cleanup)
 
-**Done:** Turn end cleanup, attack resolution with conditions, critical hits
-**Next:** Movement with MovementChain, then full-round multi-character test
+**Done:** Attack resolution, movement, turn cleanup
+**Last piece:** Full-round multi-character test (turn order)
 **Then:** Ready for API layer integration
 
 See `ideas/action-feature-system.md` for full status.

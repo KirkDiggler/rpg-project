@@ -123,9 +123,11 @@ Character.Cleanup() removes temporary actions. Character.onActionGranted calls A
 | **Normal attack (no conditions)** | ✅ | Baseline without modifiers |
 | **Critical hit** | ✅ | Natural 20 doubles dice, rage bonus |
 | **Turn end cleanup** | ✅ | Temporary actions removed on Cleanup() |
+| **Disengaging prevents OA** | ✅ | DisengagingCondition → MovementChain → no OA |
+| **Normal movement triggers OA** | ✅ | Baseline: goblin attacks when fighter leaves reach |
+| **Dash doubles movement** | ✅ | Dash ability grants speed as extra movement |
 
 **Still needed before full API integration:**
-- Movement with MovementChain (speed bonuses from conditions)
 - Full round with multiple characters (turn order)
 
 **The rule:** If it works in the integration test with printed output, it's ready for the API layer.
