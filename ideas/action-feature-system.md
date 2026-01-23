@@ -82,17 +82,8 @@ Combat uses a **two-level action economy**:
 
 ## Current Gaps (#546)
 
-### Turn End Cleanup (Next Up)
-**Problem:** Temporary actions (FlurryStrike, OffHandStrike) don't auto-remove when:
-1. Uses are exhausted (`UsesRemaining() == 0`)
-2. Turn ends
-
-**Impact:** Actions accumulate on character, state corruption.
-
-**Solution options:**
-- Actions self-remove when exhausted (publish `ActionRemovedEvent`)
-- Character listens to `TurnEndEvent` and removes temporary actions
-- Or both (exhaustion + turn boundary)
+### Turn End Cleanup ✅ (PR #568, merged)
+Character.Cleanup() removes temporary actions. Character.onActionGranted calls Apply().
 
 ### GetTotalSpeed(ctx)
 **Problem:** Only base speed from race exists. Condition bonuses (Unarmored Movement) not factored in.
@@ -102,26 +93,39 @@ Combat uses a **two-level action economy**:
 ### Help/Hide/Ready Abilities
 **Status:** Not implemented. Can be separate issues when needed.
 
-## What's Next: Attack Resolution (#505)
+## Attack Resolution (#505)
 
-Once turn cleanup is solid, the next major piece is `combat.ResolveAttack()` - the three-phase attack model with reaction windows (ADR-0027). This makes the combat loop actually resolve hits and damage.
+`combat.ResolveAttack()` is **fully implemented** in `combat/attack.go`:
+- Validates input, looks up combatants from context
+- Calculates attack bonus (ability mod + proficiency)
+- Fires AttackChain → conditions modify (advantage/disadvantage, critical threshold)
+- Rolls d20 with advantage/disadvantage handling
+- Determines hit/miss/crit (natural 20/1 rules)
+- On hit: rolls damage, fires DamageChain → conditions add bonuses/resistance
+- Publishes DamageReceivedEvent
 
-See issue #505 for the full plan.
+**Remaining #505 work (when needed):**
+- Reaction windows (AttackDeclaredEvent for Shield, AttackRolledEvent for Sentinel)
+- Attack of Opportunity (MovementStep triggers)
 
-## Gate: Integration Tests Before API Layer
+## Gate: Integration Tests Before API Layer ✅ (Passing)
 
-Before moving any of this up to the game server, we need integration tests in the toolkit that prove the full combat flow end-to-end. Pattern: test suite with printed output showing the sequence of events.
+`character/integration_test.go` now demonstrates:
 
-**What the integration test should demonstrate:**
-1. Character with features/conditions applied to event bus
-2. Turn start → action economy reset
-3. Activate Attack ability → grants attacks
-4. Strike action → fires through AttackChain → conditions modify (advantage/disadvantage)
-5. Resolve hit/miss → damage chain → conditions modify (rage bonus, sneak attack)
-6. Movement with MovementChain (speed bonuses from conditions)
-7. Turn end → temporary actions removed, conditions expire
-8. Full round with multiple characters
+| Scenario | Status | What it proves |
+|----------|--------|----------------|
+| Action economy flow | ✅ | Attack ability → Strike → OffHandStrike |
+| Extra Attack variants | ✅ | Fighter levels 1-20 |
+| Two-weapon fighting | ✅ | Light weapon validation, grant flow |
+| Event ordering | ✅ | Events published in correct sequence |
+| **Raging Barbarian vs Dodging Defender** | ✅ | AttackChain + DamageChain with real conditions |
+| **Disadvantage causes miss** | ✅ | DodgingCondition imposes disadvantage |
+| **Normal attack (no conditions)** | ✅ | Baseline without modifiers |
+| **Critical hit** | ✅ | Natural 20 doubles dice, rage bonus |
+| **Turn end cleanup** | ✅ | Temporary actions removed on Cleanup() |
 
-Existing: `character/integration_test.go` covers parts of this. Will need expansion once attack resolution lands.
+**Still needed before full API integration:**
+- Movement with MovementChain (speed bonuses from conditions)
+- Full round with multiple characters (turn order)
 
-**The rule:** If it works in the integration test with printed output, it's ready for the API layer. If not, we're not done in the toolkit.
+**The rule:** If it works in the integration test with printed output, it's ready for the API layer.

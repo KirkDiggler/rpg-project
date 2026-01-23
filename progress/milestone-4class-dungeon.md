@@ -9,24 +9,25 @@ https://github.com/users/KirkDiggler/projects/10
 
 ## Recently Completed (This Session)
 
-- **rpg-toolkit #558**: DodgingCondition (PR #566, merged)
-- **rpg-toolkit #557**: DisengagingCondition (PR #563, merged earlier)
-- **rpg-toolkit #552**: Dodging and Disengaging with chain infrastructure (done)
+- **rpg-toolkit #546 (partial)**: Turn end cleanup - Character.Cleanup() removes temporary actions (PR #568, merged)
 - **rpg-toolkit #546 (partial)**: GetSpeed + GetExtraAttacksCount (PR #567, merged)
+- **rpg-toolkit #505 (discovery)**: ResolveAttack already fully implemented in combat/attack.go
+- **Integration tests**: Attack resolution with conditions (AttackChain + DamageChain), critical hits, turn lifecycle
 
 ## In Progress
 
-- **rpg-toolkit #546**: Complete ability/action system - turn end cleanup next
+- **rpg-toolkit #505**: Attack resolution integration test PR (in progress)
 - **rpg-api #294**: Rest System - Long rest before dungeon start
 - **rpg-api #399**: Unified Dungeon Coordinate System
 
-## Current Focus: Action System Stream
+## Current Focus: Attack Resolution Integration
 
-Working through #546 gaps → then #505 (attack resolution).
+ResolveAttack is implemented. Integration tests prove the full pipeline:
+Character → Conditions → Chains → ResolveAttack → Damage.
 
-**Next up:** Turn end cleanup - temporary actions auto-remove when exhausted or turn ends.
-**Then:** GetTotalSpeed (speed with condition bonuses)
-**Then:** Attack resolution (#505, ADR-0027)
+**Done:** Turn end cleanup, attack resolution with conditions, critical hits
+**Next:** Movement with MovementChain, then full-round multi-character test
+**Then:** Ready for API layer integration
 
 See `ideas/action-feature-system.md` for full status.
 
