@@ -3,23 +3,32 @@
 ## Project Board
 https://github.com/users/KirkDiggler/projects/10
 
-## Status: 133 Done | 4 In Progress | 26 Todo
+## Status: ~137 Done | 2 In Progress | ~22 Todo
 
-### By Repo
+*Last updated: 2026-01-23*
 
-| Repo | Done | In Progress | Todo |
-|------|------|-------------|------|
-| rpg-toolkit | 46 | 2 | 12 |
-| rpg-api | 48 | 2 | 8 |
-| rpg-dnd5e-web | 25 | 0 | 6 |
-| rpg-api-protos | 14 | 0 | 0 |
+## Recently Completed (This Session)
 
-## In Progress (4)
+- **rpg-toolkit #558**: DodgingCondition (PR #566, merged)
+- **rpg-toolkit #557**: DisengagingCondition (PR #563, merged earlier)
+- **rpg-toolkit #552**: Dodging and Disengaging with chain infrastructure (done)
+- **rpg-toolkit #546 (partial)**: GetSpeed + GetExtraAttacksCount (PR #567, merged)
 
+## In Progress
+
+- **rpg-toolkit #546**: Complete ability/action system - turn end cleanup next
 - **rpg-api #294**: Rest System - Long rest before dungeon start
 - **rpg-api #399**: Unified Dungeon Coordinate System
-- **rpg-toolkit #557**: Implement DisengagingCondition
-- **rpg-toolkit #564**: Add example/documentation pattern to dungeon module
+
+## Current Focus: Action System Stream
+
+Working through #546 gaps → then #505 (attack resolution).
+
+**Next up:** Turn end cleanup - temporary actions auto-remove when exhausted or turn ends.
+**Then:** GetTotalSpeed (speed with condition bonuses)
+**Then:** Attack resolution (#505, ADR-0027)
+
+See `ideas/action-feature-system.md` for full status.
 
 ## Todo - Grouped by Theme
 
@@ -42,9 +51,7 @@ https://github.com/users/KirkDiggler/projects/10
 - rpg-api #296: Death Saves - 0 HP unconscious and saving throws
 - rpg-api #363: Character alive validation before allowing combat actions
 - rpg-toolkit #505: Attack resolution and reactions (ADR-0027)
-- rpg-toolkit #546: Complete ability/action system for API integration
-- rpg-toolkit #552: Dodging and Disengaging conditions with chain infrastructure
-- rpg-toolkit #558: Implement DodgingCondition
+- rpg-toolkit #546: Complete ability/action system (turn cleanup, Help/Hide, GetTotalSpeed)
 - rpg-api #385: Refactor orchestrator to use gamectx combatant pattern (ADR-0026)
 
 ### Quality & Polish
@@ -61,8 +68,6 @@ https://github.com/users/KirkDiggler/projects/10
 | PR | Title | Related Issues |
 |----|-------|----------------|
 | #565 | Dungeon generation | #545, #564 |
-| #563 | Disengaging condition | #557 |
-| #264 | Domain-specific ref packages | - |
 
 ### rpg-api
 | PR | Title | Related Issues |

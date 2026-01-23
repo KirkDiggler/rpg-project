@@ -1,69 +1,127 @@
-# Actions and Features: The Activate/Apply Model
+# Action System: Two-Level Action Economy
 
-## Status: Active Design - Partially Implemented
+## Status: Core Implemented, Gaps Being Filled (#546)
 
-## The Insight
+## The Architecture (Resolved)
 
-Everything a player "does" in combat is a `core.Action[T]`. But they come in different flavors:
+Combat uses a **two-level action economy**:
 
-### Activated Actions (Player triggers, immediate effect)
-- **Rage**: Consumes a use -> publishes ConditionAppliedEvent -> condition takes over
-- **Second Wind**: Consumes a use -> rolls healing -> publishes HealingReceivedEvent
-- **Action Surge**: Consumes a use -> directly grants an extra action
+### Level 1: Combat Abilities (spend action economy → grant capacity)
+- **Attack**: Spends 1 action → grants N attacks (1 + ExtraAttacks)
+- **Dash**: Spends 1 action → grants extra movement equal to speed
+- **Dodge**: Spends 1 action → applies DodgingCondition
+- **Disengage**: Spends 1 action → applies DisengagingCondition
 
-### Applied Effects (Subscribe to bus, passive/ongoing)
-- **RagingCondition**: Listens for damage chains -> adds rage bonus at StageFeatures
-- **Prone**: Listens for attack rolls -> grants advantage to melee attackers
-- **Blessed**: Listens for attack/save chains -> adds 1d4
+### Level 2: Actions (consume capacity → do things)
+- **Strike**: Consumes 1 attack → resolves through AttackChain
+- **Move**: Consumes movement → changes position
+- **FlurryStrike**: Consumes 1 flurry strike → unarmed bonus attack
+- **OffHandStrike**: Consumes 1 off-hand attack → light weapon bonus attack
 
-### The Spectrum
+### Features (activate → spend resources → grant conditions/actions)
+- **Rage**: Consumes a use → publishes ConditionAppliedEvent → RagingCondition listens
+- **Second Wind**: Consumes a use → rolls healing → publishes HealingReceivedEvent
+- **Flurry of Blows**: Consumes Ki → grants FlurryStrike actions
 
-```
-Pure Activate          Both                    Pure Apply
-(immediate, done)     (activate creates        (passive, ongoing)
-                       an applied effect)
-|                     |                        |
-Second Wind           Rage                     Pack Tactics
-Action Surge          Bless (spell)            Undead Fortitude
-                      Flurry of Blows?
-```
+### Conditions (subscribe to bus → passive modifiers)
+- **RagingCondition**: Damage chain bonus, advantage on STR saves
+- **DodgingCondition**: Disadvantage on incoming attacks, advantage on DEX saves
+- **DisengagingCondition**: Prevents attacks of opportunity
+- **UnarmoredDefense**: Modifies AC calculation
+- **SneakAttack**: Adds dice on eligible attacks
 
-## The Open Question: Combat Actions as Features
+## Key Design Decisions
 
-Strikes and special attacks are technically "activated" too:
-- **Basic Attack**: Activate with weapon ref + target -> resolve through chain
-- **Offhand Strike (Two-Weapon Fighting)**: Activate with offhand weapon -> bonus action attack
-- **Flurry of Blows**: Activate (costs Ki) -> grants 2 unarmed bonus action attacks
-
-Are these "features" or "actions"? The current model:
-- Features have a `FeatureInput` and are stored on the character
-- Strikes/attacks have an `AttackInput` and are resolved through combat
-
-**Possible unification**: Both are `core.Action[T]` but with different input types. The API just calls `Activate(key, input)` and the toolkit figures out what kind of action it is.
+1. **Abilities consume economy, grant capacity** - Clear two-level split
+2. **Actions consume capacity, do work** - Strike uses an attack, Move uses movement
+3. **Features are player-triggered** - Cost resources, immediate or grant conditions
+4. **Conditions are passive listeners** - Subscribe to chains, modify events
+5. **Chains order modifiers** - base → features → conditions → equipment → final
+6. **Resources recover via RestTopic** - Subscribe to events, auto-restore
 
 ## What's Implemented
 
-| Feature | Activate | Apply/Condition | Resource | Chain Integration |
-|---------|----------|-----------------|----------|-------------------|
-| Rage | Yes | Yes (RagingCondition) | Long rest | Damage chain |
-| Second Wind | Yes | Resource only | Short rest | None |
-| Action Surge | Yes | Resource only | Short rest | None |
-| Flurry of Blows | Not yet | Not yet | Ki (short rest) | Would grant attacks |
-| Offhand Strike | Not yet | Not yet | None (bonus action) | Would be attack |
-| Sneak Attack | Passive | Event listener | None | Damage chain |
+### Combat Abilities
+| Ability | Implemented | Tested | Notes |
+|---------|-------------|--------|-------|
+| Attack | ✅ | ✅ | Grants 1+ExtraAttacks |
+| Dash | ✅ | ✅ | Grants speed as extra movement |
+| Dodge | ✅ | ✅ | Applies DodgingCondition |
+| Disengage | ✅ | ✅ | Applies DisengagingCondition |
+| Help | ❌ | - | Grants advantage to ally |
+| Hide | ❌ | - | Stealth check → Hidden condition |
 
-## Design Principles
+### Actions
+| Action | Implemented | Tested | Notes |
+|--------|-------------|--------|-------|
+| Strike | ✅ | ✅ | Consumes attack, fires AttackChain |
+| Move | ✅ | ✅ | Consumes movement, fires MovementChain |
+| FlurryStrike | ✅ | ✅ | Consumes flurry, unarmed attack |
+| OffHandStrike | ✅ | ✅ | Consumes off-hand, light weapon |
 
-1. **core.Action[T] is the universal interface** - everything activatable implements it
-2. **CanActivate checks preconditions** - resources, action economy, valid state
-3. **Activate executes and publishes** - never both modifies AND subscribes
-4. **Conditions do the subscribing** - features create conditions, conditions listen
-5. **Chains order the modifiers** - base -> features -> conditions -> equipment -> final
-6. **Resources recover via events** - subscribe to RestTopic, auto-restore
+### Character Methods for Combat
+| Method | Implemented | PR |
+|--------|-------------|-----|
+| GetSpeed() | ✅ | #567 |
+| GetExtraAttacksCount() | ✅ | #567 |
+| GetTotalSpeed(ctx) | ❌ | - |
 
-## Next Steps
+### Conditions
+| Condition | Implemented | PR |
+|-----------|-------------|-----|
+| DodgingCondition | ✅ | #566 |
+| DisengagingCondition | ✅ | #563 |
+| RagingCondition | ✅ | Earlier |
+| UnarmoredDefense | ✅ | Earlier |
+| SneakAttack | ✅ | Earlier |
+| BrutalCritical | ✅ | Earlier |
+| MartialArts | ✅ | Earlier |
+| UnarmoredMovement | ✅ | Earlier |
+| ImprovedCritical | ✅ | Earlier |
+| Fighting Styles (6) | ✅ | Earlier |
 
-- Implement Flurry of Blows (Monk) - tests the "activate grants attacks" pattern
-- Implement Offhand Strike - tests the "bonus action attack" pattern
-- Consider whether basic attacks should go through the same Activate path
-- Consider ActivateFeature vs ActivateAction as separate RPCs or unified
+## Current Gaps (#546)
+
+### Turn End Cleanup (Next Up)
+**Problem:** Temporary actions (FlurryStrike, OffHandStrike) don't auto-remove when:
+1. Uses are exhausted (`UsesRemaining() == 0`)
+2. Turn ends
+
+**Impact:** Actions accumulate on character, state corruption.
+
+**Solution options:**
+- Actions self-remove when exhausted (publish `ActionRemovedEvent`)
+- Character listens to `TurnEndEvent` and removes temporary actions
+- Or both (exhaustion + turn boundary)
+
+### GetTotalSpeed(ctx)
+**Problem:** Only base speed from race exists. Condition bonuses (Unarmored Movement) not factored in.
+
+**Impact:** Dash ability uses base speed only. Can be addressed via MovementChain instead.
+
+### Help/Hide/Ready Abilities
+**Status:** Not implemented. Can be separate issues when needed.
+
+## What's Next: Attack Resolution (#505)
+
+Once turn cleanup is solid, the next major piece is `combat.ResolveAttack()` - the three-phase attack model with reaction windows (ADR-0027). This makes the combat loop actually resolve hits and damage.
+
+See issue #505 for the full plan.
+
+## Gate: Integration Tests Before API Layer
+
+Before moving any of this up to the game server, we need integration tests in the toolkit that prove the full combat flow end-to-end. Pattern: test suite with printed output showing the sequence of events.
+
+**What the integration test should demonstrate:**
+1. Character with features/conditions applied to event bus
+2. Turn start → action economy reset
+3. Activate Attack ability → grants attacks
+4. Strike action → fires through AttackChain → conditions modify (advantage/disadvantage)
+5. Resolve hit/miss → damage chain → conditions modify (rage bonus, sneak attack)
+6. Movement with MovementChain (speed bonuses from conditions)
+7. Turn end → temporary actions removed, conditions expire
+8. Full round with multiple characters
+
+Existing: `character/integration_test.go` covers parts of this. Will need expansion once attack resolution lands.
+
+**The rule:** If it works in the integration test with printed output, it's ready for the API layer. If not, we're not done in the toolkit.
