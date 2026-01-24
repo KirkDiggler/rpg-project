@@ -1,0 +1,71 @@
+{
+  "scope": "idea",
+  "name": "rest-system",
+  "memories": [
+    {
+      "type": "task-progress",
+      "id": "rest-progress",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Rest System Implementation",
+      "summary": "Toolkit side already has RecoverableResource with RestTopic. Primarily an API orchestration task.",
+      "milestone": "4class-dungeon",
+      "board_issues": [294],
+      "completed": [
+        "RecoverableResource with RestTopic subscription (toolkit)",
+        "Event-driven resource recovery pattern"
+      ],
+      "in_progress": [
+        "rpg-api #294: Rest System - Long rest before dungeon start"
+      ],
+      "blocked": [],
+      "todo": [
+        "API: Add LongRest to encounter orchestrator",
+        "API: Call LongRest in CreateDungeon before combat starts",
+        "Toolkit: Top-level Rest(character, restType) function",
+        "Toolkit: Publish RestEvent for each character",
+        "API: Persist updated character state after rest"
+      ],
+      "dependencies": []
+    },
+    {
+      "type": "test-criteria",
+      "id": "rest-tests",
+      "created": "2026-01-23",
+      "status": "active",
+      "feature": "Rest System",
+      "description": "Verify long rest and short rest correctly restore resources.",
+      "criteria": [
+        "Character at half HP gets full HP after long rest",
+        "Rage with 0 uses gets all uses back after long rest",
+        "Second Wind with 0 uses gets use back after short rest",
+        "Rage does NOT reset on short rest",
+        "Hit dice restored to max on long rest",
+        "Short rest: spending hit dice heals correct amount"
+      ],
+      "passing": [],
+      "failing": [],
+      "not_implemented": [
+        "Character at half HP gets full HP after long rest",
+        "Rage with 0 uses gets all uses back after long rest",
+        "Second Wind with 0 uses gets use back after short rest",
+        "Rage does NOT reset on short rest",
+        "Hit dice restored to max on long rest",
+        "Short rest: spending hit dice heals correct amount"
+      ],
+      "issue": 294,
+      "references": []
+    },
+    {
+      "type": "note",
+      "id": "rest-no-blockers",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "No architectural blockers",
+      "content": "The event-driven resource system is already built. This is primarily API orchestration: call the right toolkit function at dungeon start.",
+      "tags": ["architecture", "ready"],
+      "references": []
+    }
+  ]
+}

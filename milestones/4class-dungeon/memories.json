@@ -1,0 +1,154 @@
+{
+  "scope": "milestone",
+  "name": "4class-dungeon",
+  "memories": [
+    {
+      "type": "task-progress",
+      "id": "ms-overall",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Milestone Overall",
+      "summary": "~137 Done | 2 In Progress | ~22 Todo. Integration test gate passing. Last piece before API integration: full-round multi-character test.",
+      "milestone": "4class-dungeon",
+      "board_issues": [],
+      "completed": [
+        "rpg-toolkit #546: Turn end cleanup - Character.Cleanup() removes temporary actions (PR #568)",
+        "rpg-toolkit #546: GetSpeed + GetExtraAttacksCount (PR #567)",
+        "rpg-toolkit #505: ResolveAttack fully implemented in combat/attack.go",
+        "Integration tests: Attack resolution with conditions, critical hits, turn lifecycle"
+      ],
+      "in_progress": [
+        "rpg-toolkit #505: Movement integration tests (PR #570)",
+        "rpg-api #294: Rest System - Long rest before dungeon start",
+        "rpg-api #399: Unified Dungeon Coordinate System"
+      ],
+      "blocked": [],
+      "todo": [],
+      "dependencies": []
+    },
+    {
+      "type": "task-progress",
+      "id": "ms-multi-room",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Multi-Room Dungeon",
+      "summary": "Core goal of the milestone. Absolute positioning system with PRs open.",
+      "milestone": "4class-dungeon",
+      "board_issues": [535, 541, 542, 543, 544, 545, 401, 402, 393, 310, 311, 312, 313],
+      "completed": [],
+      "in_progress": [
+        "rpg-api #399: Unified Dungeon Coordinate System (PR #400)"
+      ],
+      "blocked": [],
+      "todo": [
+        "rpg-toolkit #535: Track entities at Environment level with dungeon-absolute coords",
+        "rpg-toolkit #541: Room assembly with absolute coordinate conversion",
+        "rpg-toolkit #542: Door as entity type with state",
+        "rpg-toolkit #543: Collision detection with absolute coordinates",
+        "rpg-toolkit #544: Spatial queries with absolute coordinates",
+        "rpg-toolkit #545: Dungeon generator with theme and encounter integration",
+        "rpg-api #401: Populate Room.origin and convert walls to absolute coordinates",
+        "rpg-api #402: Simplify dungeon orchestrator to use toolkit absolute coordinates",
+        "rpg-api #393: Multi-room encounter management and monster pursuit",
+        "rpg-dnd5e-web #310: Room switching UI for multi-room encounters",
+        "rpg-dnd5e-web #311: Accumulate revealed rooms into single dungeon map state",
+        "rpg-dnd5e-web #312: Render dungeon map using Room.origin for floor tile positioning",
+        "rpg-dnd5e-web #313: Camera follows player through multi-room dungeon"
+      ],
+      "dependencies": ["rpg-toolkit #545 before rpg-api #402"]
+    },
+    {
+      "type": "task-progress",
+      "id": "ms-combat",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Combat System",
+      "summary": "Action economy core implemented. Death saves, reactions, and orchestrator refactor remain.",
+      "milestone": "4class-dungeon",
+      "board_issues": [296, 363, 505, 546, 385],
+      "completed": [],
+      "in_progress": [
+        "rpg-toolkit #505: Attack resolution - movement integration tests (PR #570)"
+      ],
+      "blocked": [],
+      "todo": [
+        "rpg-api #296: Death Saves - 0 HP unconscious and saving throws",
+        "rpg-api #363: Character alive validation before allowing combat actions",
+        "rpg-toolkit #505: Attack reactions (Shield, Sentinel features)",
+        "rpg-toolkit #546: Help/Hide abilities, GetTotalSpeed",
+        "rpg-api #385: Refactor orchestrator to use gamectx combatant pattern (ADR-0026)"
+      ],
+      "dependencies": ["#296 depends on #363"]
+    },
+    {
+      "type": "task-progress",
+      "id": "ms-polish",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Quality & Polish",
+      "summary": "Multiplayer events, pathfinding, UI components, monster audits.",
+      "milestone": "4class-dungeon",
+      "board_issues": [369, 383, 476, 490, 258, 266],
+      "completed": [],
+      "in_progress": [],
+      "blocked": [],
+      "todo": [
+        "rpg-api #369: Multiplayer - Combat events not published to all stream subscribers",
+        "rpg-api #383: Pathfinding validation and fallbacks",
+        "rpg-toolkit #476: Grant tests for Fighter, Barbarian, Monk",
+        "rpg-toolkit #490: Audit all starter monsters for correct actions/traits",
+        "rpg-dnd5e-web #258: Feature & Condition card components with rich runtime data",
+        "rpg-dnd5e-web #266: Progress Indicator - Room counter and mini-map"
+      ],
+      "dependencies": []
+    },
+    {
+      "type": "test-criteria",
+      "id": "ms-integration-gate",
+      "created": "2026-01-23",
+      "status": "passing",
+      "feature": "Integration Test Gate",
+      "description": "All major combat pipelines proven end-to-end with real Conditions before API integration.",
+      "criteria": [
+        "AttackChain + DamageChain with advantage/disadvantage, rage bonus, crits",
+        "MovementChain with DisengagingCondition prevents OA, Dash doubles movement",
+        "Turn lifecycle with temporary action cleanup",
+        "Full round with multiple characters and turn order"
+      ],
+      "passing": [
+        "Action economy flow: Attack ability -> Strike -> OffHandStrike",
+        "Extra Attack variants: Fighter levels 1-20",
+        "Two-weapon fighting: light weapon validation, grant flow",
+        "Event ordering: events published in correct sequence",
+        "Raging Barbarian vs Dodging Defender: AttackChain + DamageChain with real conditions",
+        "Disadvantage causes miss: DodgingCondition imposes disadvantage",
+        "Normal attack (no conditions): baseline without modifiers",
+        "Critical hit: natural 20 doubles dice, rage bonus",
+        "Turn end cleanup: temporary actions removed on Cleanup()",
+        "Disengaging prevents OA: DisengagingCondition -> MovementChain -> no OA",
+        "Normal movement triggers OA: goblin attacks when fighter leaves reach",
+        "Dash doubles movement: Dash ability grants speed as extra movement"
+      ],
+      "failing": [],
+      "not_implemented": [
+        "Full round with multiple characters (turn order)"
+      ],
+      "issue": 505,
+      "references": ["rpg-toolkit: character/integration_test.go"]
+    },
+    {
+      "type": "note",
+      "id": "ms-open-prs",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Open PRs",
+      "content": "rpg-toolkit #565 (dungeon generation, issues #545 #564), rpg-api #403 (two-level action economy RPCs, issue #546), rpg-api #400 (unified dungeon coordinate system, issues #399 #401)",
+      "tags": ["prs", "status"],
+      "references": []
+    }
+  ]
+}

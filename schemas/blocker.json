@@ -1,0 +1,14 @@
+{
+  "type": "blocker",
+  "id": "",
+  "created": "",
+  "status": "active|resolved|wont-fix",
+  "title": "",
+  "description": "",
+  "blocked_by": "",
+  "impact": "",
+  "issue": null,
+  "workaround": "",
+  "resolution": "",
+  "resolved_date": ""
+}

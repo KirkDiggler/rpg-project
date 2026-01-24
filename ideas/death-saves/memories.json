@@ -1,0 +1,58 @@
+{
+  "scope": "idea",
+  "name": "death-saves",
+  "memories": [
+    {
+      "type": "task-progress",
+      "id": "ds-progress",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Death Saves Implementation",
+      "summary": "Design complete. Fits condition pattern. Not started yet.",
+      "milestone": "4class-dungeon",
+      "board_issues": [296, 363],
+      "completed": [
+        "Design: UnconsciousCondition as bus listener"
+      ],
+      "in_progress": [],
+      "blocked": [],
+      "todo": [
+        "Implement UnconsciousCondition subscribing to TurnStartTopic, DamageReceivedTopic, HealingReceivedTopic",
+        "Track successes/failures internally in condition",
+        "Publish CharacterDiedEvent or CharacterStabilizedEvent",
+        "API: Detect 0 HP after damage resolution, apply condition",
+        "API: Return death save results in turn events",
+        "Web: Death save tracker UI (pips for successes/failures)",
+        "rpg-api #363: Character alive validation before combat actions"
+      ],
+      "dependencies": ["#363 (alive validation) before or alongside #296"]
+    },
+    {
+      "type": "decision",
+      "id": "ds-condition-pattern",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Death saves as a Condition",
+      "context": "Death saves need to react to multiple events (turn start, damage, healing). Could be special-cased or fit existing pattern.",
+      "options": ["Special case in combat code", "UnconsciousCondition using existing Condition pattern"],
+      "chosen": "UnconsciousCondition using existing Condition pattern",
+      "reasoning": "Conditions already subscribe to bus events and react passively. Death saves are exactly this: react to turn start (roll), damage (auto-fail), healing (wake up).",
+      "consequences": ["No special combat code needed", "Condition is self-contained", "Testing uses same patterns as other conditions"],
+      "references": ["ideas/action-feature-system/"]
+    },
+    {
+      "type": "known-issue",
+      "id": "ds-open-questions",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Unresolved death save design questions",
+      "description": "Several gameplay decisions not yet made: manual vs auto roll, post-death behavior, Medicine checks, monster targeting.",
+      "impact": "Won't block initial implementation but need answers before polish.",
+      "workaround": "Start with auto-roll, remove from encounter on death. Revisit later.",
+      "issue": 296,
+      "resolution": "",
+      "resolved_date": ""
+    }
+  ]
+}
