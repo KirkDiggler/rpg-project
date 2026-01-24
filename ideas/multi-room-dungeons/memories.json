@@ -1,0 +1,58 @@
+{
+  "scope": "idea",
+  "name": "multi-room-dungeons",
+  "memories": [
+    {
+      "type": "task-progress",
+      "id": "mrd-progress",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Multi-Room Dungeon Implementation",
+      "summary": "PRs open for dungeon generation and unified coordinates. Need to merge and test transitions.",
+      "milestone": "4class-dungeon",
+      "board_issues": [535, 541, 542, 543, 544, 545, 399, 401, 402, 393, 310, 311, 312, 313],
+      "completed": [],
+      "in_progress": [
+        "rpg-toolkit PR #565: Dungeon generation (issues #545, #564)",
+        "rpg-api PR #400: Unified dungeon coordinate system (issues #399, #401)"
+      ],
+      "blocked": [],
+      "todo": [
+        "Merge cube-coordinates branches across all repos",
+        "Test multi-room transition with absolute positioning",
+        "Verify event broadcasts include absolute coords for room reveals",
+        "rpg-api #402: Simplify dungeon orchestrator to use toolkit absolute coordinates",
+        "rpg-api #393: Multi-room encounter management and monster pursuit",
+        "rpg-dnd5e-web #310-313: Room switching UI, map accumulation, rendering, camera"
+      ],
+      "dependencies": ["Toolkit #565 merges before API #402"]
+    },
+    {
+      "type": "decision",
+      "id": "mrd-absolute-pos",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Absolute positioning owned by toolkit",
+      "context": "Original implementation had UI calculating room offsets. Different clients could calculate differently.",
+      "options": ["Client-side offset calculation", "API calculates offsets", "Toolkit owns positioning with absolute coords"],
+      "chosen": "Toolkit owns positioning with absolute coords",
+      "reasoning": "Toolkit owns all rules including spatial. API stores what toolkit provides. Client renders directly. No math duplication.",
+      "consequences": ["Rooms have absolute offsets in dungeon-space", "API stores and returns absolute coords", "UI renders without offset math"],
+      "references": ["docs/architecture.md"]
+    },
+    {
+      "type": "decision",
+      "id": "mrd-cube-coords",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Cube coordinates for hex grids",
+      "context": "Hex grids need a coordinate system. Multiple options exist.",
+      "options": ["Offset coordinates", "Axial coordinates", "Cube coordinates (q, r, s)"],
+      "chosen": "Cube coordinates (q, r, s)",
+      "reasoning": "No ambiguity, clean math, constraint q+r+s=0 catches errors. Industry standard for hex grids.",
+      "consequences": ["All positions use (q, r, s) tuples", "Connections are logical, not spatial (ADR-0015)"],
+      "references": ["ADR-0015"]
+    }
+  ]
+}

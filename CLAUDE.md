@@ -1,6 +1,6 @@
 # RPG Project - Session Context
 
-This is the brain for the RPG platform. Read this first in any session.
+This is the shared brain for the RPG platform. Read this first in any session.
 
 ## What We're Building
 
@@ -52,22 +52,42 @@ Rules:
 
 ## Current Milestone
 
-**4-Class Multiplayer Multi-Room Dungeon**
+**4-Class Multiplayer Multi-Room Dungeon** - See `milestones/4class-dungeon/`
 
-See `progress/` for current state.
-
-## Documentation Structure
+## Structure
 
 ```
 rpg-project/
-  CLAUDE.md          <- You are here. Read this first.
+  CLAUDE.md              <- You are here. Read this first.
+  schemas/               <- Memory type definitions (the contract)
   docs/
-    architecture.md  <- 3-layer model, trust boundaries, data flow
-    vocabulary.md    <- Extended glossary with examples
-    boundaries.md    <- What each layer knows and doesn't know
-  ideas/             <- Active design explorations (cross-repo)
-  progress/          <- Milestone tracking, what's merged/open
+    architecture.md      <- 3-layer model, trust boundaries, data flow
+    vocabulary.md        <- Extended glossary with examples
+    boundaries.md        <- What each layer knows and doesn't know
+  milestones/
+    4class-dungeon/
+      CLAUDE.md          <- Milestone scope and context
+      memories.json      <- Structured progress, decisions, blockers
+  ideas/
+    <idea-name>/
+      CLAUDE.md          <- Idea scope and context
+      design.md          <- Full design exploration
+      memories.json      <- Structured progress, decisions, test criteria
+    archive/             <- Superseded designs
+  assets/
+    CLAUDE.md            <- Asset pipeline: what's here, how it maps to web
+    models/              <- OBJ/MTL files (body, heads, weapons, equipment, hair)
+    textures/            <- PNG textures with marker colors for shader swapping
+    coords/              <- JSON position/rotation data for attachments
+    shaders/             <- JS shader implementations from teammate
+    docs/                <- Integration guides and proposals
 ```
+
+## Memory System
+
+This repo uses typed memories at every scope. See `schemas/` for type definitions.
+Each scope (project, milestone, idea) has a `memories.json` with structured entries.
+Types: task-progress, decision, blocker, test-criteria, known-issue, note.
 
 ## Per-Repo CLAUDE.md Files
 

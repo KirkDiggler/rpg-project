@@ -1,0 +1,81 @@
+{
+  "scope": "idea",
+  "name": "action-feature-system",
+  "memories": [
+    {
+      "type": "task-progress",
+      "id": "afs-progress",
+      "created": "2026-01-23",
+      "updated": "2026-01-23",
+      "status": "active",
+      "name": "Action Feature System Implementation",
+      "summary": "Core two-level economy implemented and integration tested. Help/Hide and GetTotalSpeed remain.",
+      "milestone": "4class-dungeon",
+      "board_issues": [505, 546],
+      "completed": [
+        "Attack ability: spends action, grants N attacks",
+        "Dash ability: spends action, grants extra movement",
+        "Dodge ability: spends action, applies DodgingCondition",
+        "Disengage ability: spends action, applies DisengagingCondition",
+        "Strike action: consumes attack, fires AttackChain",
+        "Move action: consumes movement, fires MovementChain",
+        "FlurryStrike action: consumes flurry, unarmed attack",
+        "OffHandStrike action: consumes off-hand, light weapon",
+        "GetSpeed() and GetExtraAttacksCount() (PR #567)",
+        "Turn end cleanup: Character.Cleanup() removes temporary actions (PR #568)",
+        "All conditions: Raging, Dodging, Disengaging, UnarmoredDefense, SneakAttack, BrutalCritical, MartialArts, UnarmoredMovement, ImprovedCritical, Fighting Styles (6)",
+        "ResolveAttack fully implemented in combat/attack.go"
+      ],
+      "in_progress": [
+        "rpg-toolkit #505: Movement integration tests (PR #570)"
+      ],
+      "blocked": [],
+      "todo": [
+        "GetTotalSpeed(ctx) - condition bonuses not factored in",
+        "Help ability - grants advantage to ally",
+        "Hide ability - stealth check, Hidden condition",
+        "Attack reactions (Shield, Sentinel) - reaction windows"
+      ],
+      "dependencies": []
+    },
+    {
+      "type": "decision",
+      "id": "afs-two-level",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Two-level action economy architecture",
+      "context": "D&D 5e has complex action interactions. Needed a clean separation between spending economy and doing work.",
+      "options": ["Single flat action list", "Two-level: abilities grant capacity, actions consume it", "State machine per action type"],
+      "chosen": "Two-level: abilities grant capacity, actions consume it",
+      "reasoning": "Clean separation of concerns. Abilities are the resource gate, actions are the execution. Makes features and conditions orthogonal.",
+      "consequences": ["Abilities and actions are separate types", "Features activate independently", "Conditions subscribe to chains, not actions"],
+      "references": ["rpg-toolkit: character/abilities/", "rpg-toolkit: character/actions/"]
+    },
+    {
+      "type": "decision",
+      "id": "afs-chains",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Modifier chains for staged pipelines",
+      "context": "Multiple sources modify attacks and damage (features, conditions, equipment). Need deterministic ordering.",
+      "options": ["Priority-based modifiers", "Ordered chain pipeline", "Event-based accumulation"],
+      "chosen": "Ordered chain pipeline",
+      "reasoning": "base -> features -> conditions -> equipment -> final gives deterministic order. Each stage can see what came before.",
+      "consequences": ["AttackChain and DamageChain are first-class types", "Conditions register at specific chain stages", "Order is always predictable"],
+      "references": []
+    },
+    {
+      "type": "decision",
+      "id": "afs-conditions-on-bus",
+      "created": "2026-01-23",
+      "status": "active",
+      "title": "Conditions as passive bus listeners",
+      "context": "Conditions like Rage modify damage, Dodge imposes disadvantage. They need to affect combat without being explicitly called.",
+      "options": ["Explicit condition checks in combat code", "Conditions subscribe to event bus and modify chains"],
+      "chosen": "Conditions subscribe to event bus and modify chains",
+      "reasoning": "Keeps combat code clean. Adding a new condition never requires changing existing combat logic. Conditions are self-contained.",
+      "consequences": ["Conditions call Apply(bus) to subscribe", "New conditions are additive, not invasive", "Testing requires bus setup"],
+      "references": []
+    }
+  ]
+}

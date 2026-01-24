@@ -1,0 +1,14 @@
+{
+  "type": "test-criteria",
+  "id": "",
+  "created": "",
+  "status": "active|passing|failing",
+  "feature": "",
+  "description": "",
+  "criteria": [],
+  "passing": [],
+  "failing": [],
+  "not_implemented": [],
+  "issue": null,
+  "references": []
+}

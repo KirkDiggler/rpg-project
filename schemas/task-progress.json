@@ -1,0 +1,16 @@
+{
+  "type": "task-progress",
+  "id": "",
+  "created": "",
+  "updated": "",
+  "status": "active|complete|paused",
+  "name": "",
+  "summary": "",
+  "milestone": "",
+  "board_issues": [],
+  "completed": [],
+  "in_progress": [],
+  "blocked": [],
+  "todo": [],
+  "dependencies": []
+}

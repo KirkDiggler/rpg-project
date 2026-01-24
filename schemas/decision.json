@@ -1,0 +1,13 @@
+{
+  "type": "decision",
+  "id": "",
+  "created": "",
+  "status": "active|superseded|revisiting",
+  "title": "",
+  "context": "",
+  "options": [],
+  "chosen": "",
+  "reasoning": "",
+  "consequences": [],
+  "references": []
+}
