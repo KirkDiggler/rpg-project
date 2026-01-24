@@ -6,10 +6,10 @@
       "type": "task-progress",
       "id": "afs-progress",
       "created": "2026-01-23",
-      "updated": "2026-01-23",
+      "updated": "2026-01-24",
       "status": "active",
       "name": "Action Feature System Implementation",
-      "summary": "Core two-level economy implemented and integration tested. Help/Hide and GetTotalSpeed remain.",
+      "summary": "Toolkit core complete. API PR #403 open (CI passing, ready to merge). Web needs proto upgrade and UI wiring.",
       "milestone": "4class-dungeon",
       "board_issues": [505, 546],
       "completed": [
@@ -24,19 +24,42 @@
         "GetSpeed() and GetExtraAttacksCount() (PR #567)",
         "Turn end cleanup: Character.Cleanup() removes temporary actions (PR #568)",
         "All conditions: Raging, Dodging, Disengaging, UnarmoredDefense, SneakAttack, BrutalCritical, MartialArts, UnarmoredMovement, ImprovedCritical, Fighting Styles (6)",
-        "ResolveAttack fully implemented in combat/attack.go"
+        "ResolveAttack fully implemented in combat/attack.go",
+        "Movement integration tests (PR #570 merged)",
+        "Proto definitions for action economy (rpg-api-protos #127 merged, available since v0.1.77+)"
       ],
       "in_progress": [
-        "rpg-toolkit #505: Movement integration tests (PR #570)"
+        "rpg-api #403: Two-level action economy RPCs (ActivateCombatAbility + ExecuteAction) - CI passing, ready to merge"
       ],
       "blocked": [],
       "todo": [
-        "GetTotalSpeed(ctx) - condition bonuses not factored in",
-        "Help ability - grants advantage to ally",
-        "Hide ability - stealth check, Hidden condition",
-        "Attack reactions (Shield, Sentinel) - reaction windows"
+        "Merge rpg-api PR #403",
+        "rpg-dnd5e-web: Upgrade protos from v0.1.76 to latest (v0.1.80) to get action economy types",
+        "rpg-dnd5e-web: Wire up ActivateCombatAbility + ExecuteAction in combat hooks/panel",
+        "rpg-dnd5e-web: Update ActionPanel to use ability activation flow instead of direct Attack/Move RPCs",
+        "GetTotalSpeed(ctx) - condition bonuses not factored in (rpg-toolkit #546)",
+        "Help ability - grants advantage to ally (rpg-toolkit #546)",
+        "Hide ability - stealth check, Hidden condition (rpg-toolkit #546)",
+        "Attack reactions (Shield, Sentinel) - reaction windows (rpg-toolkit #505)"
       ],
-      "dependencies": []
+      "dependencies": [
+        "Merge API PR #403 before web integration",
+        "Upgrade web protos before wiring up new RPCs"
+      ]
+    },
+    {
+      "type": "note",
+      "id": "afs-next-session",
+      "created": "2026-01-24",
+      "status": "active",
+      "title": "Next Session: Wire Up Action Economy in Web",
+      "content": "The toolkit and API layers are done. Next session should:\n1. Review and merge rpg-api PR #403 (CI passing)\n2. Upgrade rpg-dnd5e-web protos: npm i --save github:KirkDiggler/rpg-api-protos#v0.1.80\n3. Create hooks for ActivateCombatAbility and ExecuteAction RPCs\n4. Update ActionPanel/ActionPanelV2 to use the two-level flow:\n   - Player clicks 'Attack' → calls ActivateCombatAbility(ATTACK) → gets grants\n   - Player clicks target → calls ExecuteAction(STRIKE) → resolves combat\n5. Relevant web issues: #211 (attack actions), #151 (combat action interface), #220 (rage button)\n\nKey files:\n- rpg-api PR #403: ActivateCombatAbility + ExecuteAction handlers/orchestrator\n- rpg-dnd5e-web: src/components/combat-v2/panels/ActionPanel.tsx, ActionPanelV2.tsx\n- rpg-dnd5e-web: src/api/encounterHooks.ts (existing combat hooks)\n- rpg-api-protos: ActivateCombatAbilityRequest/Response, ExecuteActionRequest/Response",
+      "tags": ["next-session", "web-integration"],
+      "references": [
+        "rpg-api PR #403",
+        "rpg-dnd5e-web issues #211, #151, #220",
+        "rpg-api-protos v0.1.80"
+      ]
     },
     {
       "type": "decision",

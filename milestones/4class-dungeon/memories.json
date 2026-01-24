@@ -9,17 +9,19 @@
       "updated": "2026-01-23",
       "status": "active",
       "name": "Milestone Overall",
-      "summary": "~137 Done | 2 In Progress | ~22 Todo. Integration test gate passing. Last piece before API integration: full-round multi-character test.",
+      "summary": "~139 Done | 2 In Progress | ~21 Todo. Integration test gate passing. Action economy API ready to merge (PR #403). Next: web UI integration.",
       "milestone": "4class-dungeon",
       "board_issues": [],
       "completed": [
         "rpg-toolkit #546: Turn end cleanup - Character.Cleanup() removes temporary actions (PR #568)",
         "rpg-toolkit #546: GetSpeed + GetExtraAttacksCount (PR #567)",
         "rpg-toolkit #505: ResolveAttack fully implemented in combat/attack.go",
-        "Integration tests: Attack resolution with conditions, critical hits, turn lifecycle"
+        "rpg-toolkit #505: Movement integration tests (PR #570 merged)",
+        "Integration tests: Attack resolution with conditions, critical hits, turn lifecycle",
+        "rpg-dnd5e-web #316: Character attachment system - heads, hair, weapons, shields (PR #317 merged)"
       ],
       "in_progress": [
-        "rpg-toolkit #505: Movement integration tests (PR #570)",
+        "rpg-api #403: Two-level action economy RPCs (CI passing, ready to merge)",
         "rpg-api #294: Rest System - Long rest before dungeon start",
         "rpg-api #399: Unified Dungeon Coordinate System"
       ],
@@ -146,7 +148,7 @@
       "created": "2026-01-23",
       "status": "active",
       "title": "Open PRs",
-      "content": "rpg-toolkit #565 (dungeon generation, issues #545 #564), rpg-api #403 (two-level action economy RPCs, issue #546), rpg-api #400 (unified dungeon coordinate system, issues #399 #401)",
+      "content": "rpg-toolkit #565 (dungeon generation, issues #545 #564), rpg-api #403 (two-level action economy RPCs, issue #546 - CI passing, ready to merge), rpg-api #400 (unified dungeon coordinate system, issues #399 #401)",
       "tags": ["prs", "status"],
       "references": []
     }
