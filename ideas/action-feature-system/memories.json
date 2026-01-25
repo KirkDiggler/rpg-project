@@ -6,12 +6,12 @@
       "type": "task-progress",
       "id": "afs-progress",
       "created": "2026-01-23",
-      "updated": "2026-01-24",
+      "updated": "2026-01-25",
       "status": "active",
       "name": "Action Feature System Implementation",
-      "summary": "Toolkit core complete. API PR #403 open (CI passing, ready to merge). Web needs proto upgrade and UI wiring.",
+      "summary": "TurnManager merged in toolkit (PR #573). Provides high-level turn orchestration: UseAbility, Strike, Move, OffHandStrike, FlurryStrike. Next: API thin orchestrator using TurnManager.",
       "milestone": "4class-dungeon",
-      "board_issues": [505, 546],
+      "board_issues": [505, 546, 572],
       "completed": [
         "Attack ability: spends action, grants N attacks",
         "Dash ability: spends action, grants extra movement",
@@ -26,40 +26,64 @@
         "All conditions: Raging, Dodging, Disengaging, UnarmoredDefense, SneakAttack, BrutalCritical, MartialArts, UnarmoredMovement, ImprovedCritical, Fighting Styles (6)",
         "ResolveAttack fully implemented in combat/attack.go",
         "Movement integration tests (PR #570 merged)",
-        "Proto definitions for action economy (rpg-api-protos #127 merged, available since v0.1.77+)"
+        "Proto definitions for action economy (rpg-api-protos #127 merged, v0.1.80)",
+        "TurnManager: high-level turn orchestration (PR #573 merged, issue #571 closed)",
+        "TurnManager.UseAbility() - activates combat abilities by ref",
+        "TurnManager.Strike/Move/OffHandStrike/FlurryStrike - action execution",
+        "TurnManager.GetAvailableAbilities/GetAvailableActions - UI queries with CapacityType",
+        "TurnManager lifecycle: StartTurn/EndTurn with event publishing",
+        "CapacityType added to ActionInfo for proper availability checking"
       ],
-      "in_progress": [
-        "rpg-api #403: Two-level action economy RPCs (ActivateCombatAbility + ExecuteAction) - CI passing, ready to merge"
-      ],
+      "in_progress": [],
       "blocked": [],
       "todo": [
-        "Merge rpg-api PR #403",
-        "rpg-dnd5e-web: Upgrade protos from v0.1.76 to latest (v0.1.80) to get action economy types",
-        "rpg-dnd5e-web: Wire up ActivateCombatAbility + ExecuteAction in combat hooks/panel",
-        "rpg-dnd5e-web: Update ActionPanel to use ability activation flow instead of direct Attack/Move RPCs",
-        "GetTotalSpeed(ctx) - condition bonuses not factored in (rpg-toolkit #546)",
-        "Help ability - grants advantage to ally (rpg-toolkit #546)",
-        "Hide ability - stealth check, Hidden condition (rpg-toolkit #546)",
-        "Attack reactions (Shield, Sentinel) - reaction windows (rpg-toolkit #505)"
+        "Toolkit: Add TurnManager integration tests (full turn flow with real components)",
+        "Toolkit: GetTotalSpeed(ctx) - condition bonuses not factored in (#546)",
+        "Toolkit: Help ability - grants advantage to ally (#546)",
+        "Toolkit: Hide ability - stealth check, Hidden condition (#546)",
+        "API: New thin orchestrator using TurnManager (issue #572 relates)",
+        "API: Handler converts proto → refs at boundary",
+        "Web: Wire up ActivateCombatAbility + ExecuteAction after API ready"
       ],
       "dependencies": [
-        "Merge API PR #403 before web integration",
-        "Upgrade web protos before wiring up new RPCs"
+        "API must be complete before web integration"
       ]
     },
     {
-      "type": "note",
-      "id": "afs-next-session",
+      "type": "decision",
+      "id": "pr403-closed",
       "created": "2026-01-24",
       "status": "active",
-      "title": "Next Session: Wire Up Action Economy in Web",
-      "content": "The toolkit and API layers are done. Next session should:\n1. Review and merge rpg-api PR #403 (CI passing)\n2. Upgrade rpg-dnd5e-web protos: npm i --save github:KirkDiggler/rpg-api-protos#v0.1.80\n3. Create hooks for ActivateCombatAbility and ExecuteAction RPCs\n4. Update ActionPanel/ActionPanelV2 to use the two-level flow:\n   - Player clicks 'Attack' → calls ActivateCombatAbility(ATTACK) → gets grants\n   - Player clicks target → calls ExecuteAction(STRIKE) → resolves combat\n5. Relevant web issues: #211 (attack actions), #151 (combat action interface), #220 (rage button)\n\nKey files:\n- rpg-api PR #403: ActivateCombatAbility + ExecuteAction handlers/orchestrator\n- rpg-dnd5e-web: src/components/combat-v2/panels/ActionPanel.tsx, ActionPanelV2.tsx\n- rpg-dnd5e-web: src/api/encounterHooks.ts (existing combat hooks)\n- rpg-api-protos: ActivateCombatAbilityRequest/Response, ExecuteActionRequest/Response",
-      "tags": ["next-session", "web-integration"],
-      "references": [
-        "rpg-api PR #403",
-        "rpg-dnd5e-web issues #211, #151, #220",
-        "rpg-api-protos v0.1.80"
-      ]
+      "title": "Closed PR #403 - fresh start with toolkit-first approach",
+      "context": "PR #403 had architectural violations: proto types in orchestrator, business logic that belongs in toolkit, fallback behavior masking issues.",
+      "options": ["Refactor PR #403", "Close and start fresh with toolkit-first"],
+      "chosen": "Close and start fresh with toolkit-first",
+      "reasoning": "PR had 650+ lines of orchestrator code, much of which was game logic. Easier to do it right from scratch than refactor. Toolkit should own Activate/Execute logic, API just orchestrates.",
+      "consequences": [
+        "Need to add combatabilities.Activate() function to toolkit",
+        "Need to add actions.Execute() function to toolkit",
+        "API orchestrator will be thin - load data, call toolkit, persist",
+        "Handler is only place proto types exist"
+      ],
+      "references": ["rpg-api PR #403 (closed)"]
+    },
+    {
+      "type": "decision",
+      "id": "turnmanager-design",
+      "created": "2026-01-25",
+      "status": "active",
+      "title": "TurnManager as high-level turn orchestrator",
+      "context": "API needs simple entry points for turn actions. Don't want game logic scattered in API.",
+      "options": ["Separate Activate/Execute functions", "Single TurnManager that owns the turn"],
+      "chosen": "Single TurnManager that owns the turn",
+      "reasoning": "TurnManager holds all state for a turn: character, economy, room, combatants. Provides clean API: UseAbility, Strike, Move, etc. API just creates TurnManager and calls methods.",
+      "consequences": [
+        "API creates TurnManager per turn with all dependencies",
+        "TurnManager owns ActionEconomy, builds context per-call",
+        "GetAvailableAbilities/GetAvailableActions for UI queries",
+        "StartTurn/EndTurn for lifecycle events"
+      ],
+      "references": ["rpg-toolkit PR #573"]
     },
     {
       "type": "decision",
@@ -72,7 +96,7 @@
       "chosen": "Two-level: abilities grant capacity, actions consume it",
       "reasoning": "Clean separation of concerns. Abilities are the resource gate, actions are the execution. Makes features and conditions orthogonal.",
       "consequences": ["Abilities and actions are separate types", "Features activate independently", "Conditions subscribe to chains, not actions"],
-      "references": ["rpg-toolkit: character/abilities/", "rpg-toolkit: character/actions/"]
+      "references": ["rpg-toolkit: combatabilities/", "rpg-toolkit: actions/"]
     },
     {
       "type": "decision",
