@@ -85,6 +85,25 @@ Combat uses a **two-level action economy**:
 ### Turn End Cleanup ✅ (PR #568, merged)
 Character.Cleanup() removes temporary actions. Character.onActionGranted calls Apply().
 
+### Available Actions Query - NOT EXPOSED VIA PROTO
+**Problem:** Toolkit has `TurnManager.GetAvailableAbilities()` and `TurnManager.GetAvailableActions()` that return what the player can do right now, with `CanUse` and `Reason` fields. But this isn't exposed via proto.
+
+**Current state:** Web must derive available actions from `ActionEconomy` fields:
+- `attacks_remaining > 0` → Strike available
+- `flurry_strikes_remaining > 0` → FlurryStrike available
+- etc.
+
+This duplicates logic that toolkit already knows.
+
+**Solution:** Include `available_actions` in proto responses:
+- Add `AvailableAbility` and `AvailableAction` proto messages
+- Include them in `ActivateCombatAbilityResponse` and `ExecuteActionResponse`
+- Web just renders what it's told
+
+**Issues:**
+- rpg-api-protos: Add AvailableAbility/AvailableAction messages
+- rpg-api: Include available abilities/actions in responses
+
 ### GetTotalSpeed(ctx)
 **Problem:** Only base speed from race exists. Condition bonuses (Unarmored Movement) not factored in.
 

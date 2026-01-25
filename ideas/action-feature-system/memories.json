@@ -6,12 +6,12 @@
       "type": "task-progress",
       "id": "afs-progress",
       "created": "2026-01-23",
-      "updated": "2026-01-24",
+      "updated": "2026-01-25",
       "status": "active",
       "name": "Action Feature System Implementation",
-      "summary": "TurnManager merged (PR #573) with integration tests (PR #575). Ready for API thin orchestrator.",
+      "summary": "TurnManager merged (PR #573) with integration tests (PR #575). Gap identified: available actions not exposed via proto. Issues created: protos#129, api#404.",
       "milestone": "4class-dungeon",
-      "board_issues": [505, 546, 572],
+      "board_issues": [505, 546, 572, 129, 404],
       "completed": [
         "Attack ability: spends action, grants N attacks",
         "Dash ability: spends action, grants extra movement",
@@ -38,6 +38,8 @@
       "in_progress": [],
       "blocked": [],
       "todo": [
+        "Proto: Add AvailableAbility/AvailableAction messages (rpg-api-protos#129)",
+        "API: Include available abilities/actions in combat responses (rpg-api#404)",
         "Toolkit: GetTotalSpeed(ctx) - condition bonuses not factored in (#546)",
         "Toolkit: Help ability - grants advantage to ally (#546)",
         "Toolkit: Hide ability - stealth check, Hidden condition (#546)",
@@ -97,6 +99,24 @@
       "reasoning": "Clean separation of concerns. Abilities are the resource gate, actions are the execution. Makes features and conditions orthogonal.",
       "consequences": ["Abilities and actions are separate types", "Features activate independently", "Conditions subscribe to chains, not actions"],
       "references": ["rpg-toolkit: combatabilities/", "rpg-toolkit: actions/"]
+    },
+    {
+      "type": "decision",
+      "id": "afs-available-actions-in-response",
+      "created": "2026-01-25",
+      "status": "active",
+      "title": "Include available actions in every combat response",
+      "context": "Toolkit has GetAvailableAbilities/Actions with CanUse and Reason fields. Web needs to know what actions are available after activating abilities (e.g., Flurry of Blows grants FLURRY_STRIKE). Currently would have to derive from ActionEconomy fields.",
+      "options": ["Add separate GetAvailableAbilities/Actions RPCs", "Include available_actions in every response", "Let web derive from ActionEconomy state"],
+      "chosen": "Include available_actions in every response",
+      "reasoning": "Every combat action changes what's available next. Including in response means web just renders what it's told - no duplicate derivation logic. No extra round-trips.",
+      "consequences": [
+        "Need proto messages for AvailableAbility and AvailableAction",
+        "ActivateCombatAbilityResponse gains available_actions field",
+        "ExecuteActionResponse gains available_actions field",
+        "Web becomes simpler - just renders the list"
+      ],
+      "references": ["rpg-toolkit: combat/turn_manager_queries.go"]
     },
     {
       "type": "decision",

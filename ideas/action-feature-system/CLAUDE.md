@@ -6,7 +6,7 @@ Core combat system architecture. Abilities spend economy to grant capacity, Acti
 4class-dungeon
 
 ## Status
-**TurnManager merged (PR #573) with integration tests (PR #575)** - Ready for API integration.
+**TurnManager merged (PR #573) with integration tests (PR #575)**. Gap identified: available actions not exposed via proto. Issues created: rpg-api-protos#129, rpg-api#404.
 
 ## What TurnManager Provides
 
@@ -42,9 +42,11 @@ tm.GetEconomy()                // Current ActionEconomy state
 
 ## Next Steps
 
-1. **API**: Thin orchestrator that creates TurnManager, calls methods, persists state
-2. **API**: Handler converts proto enums → `*core.Ref` at boundary
-3. **Web**: Wire up after API ready
+1. **Proto**: Add AvailableAbility/AvailableAction messages (rpg-api-protos#129)
+2. **API**: Include available abilities/actions in responses (rpg-api#404)
+3. **API**: Thin orchestrator that creates TurnManager, calls methods, persists state
+4. **API**: Handler converts proto enums → `*core.Ref` at boundary
+5. **Web**: Wire up after API ready - just render the available actions from response
 
 ## Testing Coverage
 
@@ -83,6 +85,8 @@ tm.GetEconomy()                // Current ActionEconomy state
 - `combat/action_economy.go` - ActionEconomy type
 
 ## Related Issues
+- rpg-api-protos#129: Add AvailableAbility/AvailableAction messages (NEW)
+- rpg-api#404: Include available abilities/actions in responses (NEW)
 - #571: Activate() function (CLOSED - implemented via TurnManager)
 - #572: Execute() function (OPEN - relates to API integration)
 - #574: TurnManager integration tests (PR #575)
