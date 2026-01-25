@@ -6,10 +6,10 @@
       "type": "task-progress",
       "id": "afs-progress",
       "created": "2026-01-23",
-      "updated": "2026-01-25",
+      "updated": "2026-01-24",
       "status": "active",
       "name": "Action Feature System Implementation",
-      "summary": "TurnManager merged in toolkit (PR #573). Provides high-level turn orchestration: UseAbility, Strike, Move, OffHandStrike, FlurryStrike. Next: API thin orchestrator using TurnManager.",
+      "summary": "TurnManager merged (PR #573) with integration tests (PR #575). Ready for API thin orchestrator.",
       "milestone": "4class-dungeon",
       "board_issues": [505, 546, 572],
       "completed": [
@@ -32,12 +32,12 @@
         "TurnManager.Strike/Move/OffHandStrike/FlurryStrike - action execution",
         "TurnManager.GetAvailableAbilities/GetAvailableActions - UI queries with CapacityType",
         "TurnManager lifecycle: StartTurn/EndTurn with event publishing",
-        "CapacityType added to ActionInfo for proper availability checking"
+        "CapacityType added to ActionInfo for proper availability checking",
+        "TurnManager integration tests (PR #575): full turn flow, availability queries, dash/dodge/strike/move"
       ],
       "in_progress": [],
       "blocked": [],
       "todo": [
-        "Toolkit: Add TurnManager integration tests (full turn flow with real components)",
         "Toolkit: GetTotalSpeed(ctx) - condition bonuses not factored in (#546)",
         "Toolkit: Help ability - grants advantage to ally (#546)",
         "Toolkit: Hide ability - stealth check, Hidden condition (#546)",

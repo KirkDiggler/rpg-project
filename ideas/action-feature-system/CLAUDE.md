@@ -6,7 +6,7 @@ Core combat system architecture. Abilities spend economy to grant capacity, Acti
 4class-dungeon
 
 ## Status
-**TurnManager merged (PR #573)** - High-level turn orchestration complete. Ready for API integration.
+**TurnManager merged (PR #573) with integration tests (PR #575)** - Ready for API integration.
 
 ## What TurnManager Provides
 
@@ -67,7 +67,13 @@ tm.GetEconomy()                // Current ActionEconomy state
 - Archery fighting style +2
 - Great Weapon Fighting rerolls
 
-**TODO**: TurnManager integration test with full turn flow using real components.
+**TurnManager Integration Tests** (PR #575):
+- Full fighter turn: Attack ability → 2 strikes → movement
+- Availability queries reflect economy state
+- Dash doubles movement
+- Dodge consumes action and publishes event
+- Strike requires attack capacity
+- Move validates path
 
 ## Key Files
 - `combat/turn_manager.go` - Main orchestrator
@@ -79,6 +85,7 @@ tm.GetEconomy()                // Current ActionEconomy state
 ## Related Issues
 - #571: Activate() function (CLOSED - implemented via TurnManager)
 - #572: Execute() function (OPEN - relates to API integration)
+- #574: TurnManager integration tests (PR #575)
 - #546: Complete ability/action system
 
 ## State
