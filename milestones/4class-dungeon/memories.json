@@ -6,10 +6,10 @@
       "type": "task-progress",
       "id": "ms-overall",
       "created": "2026-01-23",
-      "updated": "2026-01-25",
+      "updated": "2026-01-26",
       "status": "active",
       "name": "Milestone Overall",
-      "summary": "~139 Done | 2 In Progress | ~23 Todo. Integration test gate passing. Gap identified: available actions not exposed via proto (protos#129, api#404). TurnManager toolkit work complete, API integration needed.",
+      "summary": "~141 Done | 1 In Progress | ~22 Todo. Two-level action economy fully implemented end-to-end (API #404/#405 + Web #318 merged). Strike button now appears after activating Attack ability.",
       "milestone": "4class-dungeon",
       "board_issues": [],
       "completed": [
@@ -18,10 +18,11 @@
         "rpg-toolkit #505: ResolveAttack fully implemented in combat/attack.go",
         "rpg-toolkit #505: Movement integration tests (PR #570 merged)",
         "Integration tests: Attack resolution with conditions, critical hits, turn lifecycle",
-        "rpg-dnd5e-web #316: Character attachment system - heads, hair, weapons, shields (PR #317 merged)"
+        "rpg-dnd5e-web #316: Character attachment system - heads, hair, weapons, shields (PR #317 merged)",
+        "rpg-api #404: Include available abilities/actions in combat responses (PR #405 merged)",
+        "rpg-dnd5e-web: Two-level action economy UI - CombatAbilitiesPanel, FeaturesListPanel (PR #318 merged)"
       ],
       "in_progress": [
-        "rpg-api #403: Two-level action economy RPCs (CI passing, ready to merge)",
         "rpg-api #294: Rest System - Long rest before dungeon start",
         "rpg-api #399: Unified Dungeon Coordinate System"
       ],
@@ -65,20 +66,19 @@
       "type": "task-progress",
       "id": "ms-combat",
       "created": "2026-01-23",
-      "updated": "2026-01-25",
+      "updated": "2026-01-26",
       "status": "active",
       "name": "Combat System",
-      "summary": "Action economy core implemented. Death saves, reactions, and orchestrator refactor remain.",
+      "summary": "Two-level action economy COMPLETE (API + UI). Death saves, reactions, and orchestrator refactor remain.",
       "milestone": "4class-dungeon",
-      "board_issues": [296, 363, 505, 546, 385, 129, 404],
-      "completed": [],
-      "in_progress": [
-        "rpg-toolkit #505: Attack resolution - movement integration tests (PR #570)"
+      "board_issues": [296, 363, 505, 546, 385],
+      "completed": [
+        "rpg-api #404: Available abilities/actions in combat responses (PR #405)",
+        "rpg-dnd5e-web #318: Data-driven combat UI with CombatAbilitiesPanel"
       ],
+      "in_progress": [],
       "blocked": [],
       "todo": [
-        "rpg-api-protos #129: Add AvailableAbility/AvailableAction messages",
-        "rpg-api #404: Include available abilities/actions in combat responses",
         "rpg-api #296: Death Saves - 0 HP unconscious and saving throws",
         "rpg-api #363: Character alive validation before allowing combat actions",
         "rpg-toolkit #505: Attack reactions (Shield, Sentinel features)",
@@ -111,9 +111,34 @@
       "dependencies": []
     },
     {
+      "type": "decision",
+      "id": "dec-two-level-action-economy",
+      "created": "2026-01-26",
+      "status": "accepted",
+      "title": "Two-Level Action Economy Architecture",
+      "context": "D&D 5e has abilities (Attack, Dash, Dodge) that consume action economy and grant capacity to execute specific actions (Strike, Move). The UI needs to show both levels: what abilities are available, and what actions are available after activation.",
+      "decision": "Implement two-level system: 1) ActivateCombatAbility consumes action/bonus and grants capacity (e.g., AttacksRemaining=1), 2) ExecuteAction consumes capacity and performs the action (e.g., Strike). API returns both available_abilities and available_actions in responses so UI can render appropriate buttons.",
+      "consequences": [
+        "UI shows base abilities (Attack, Dash, Dodge) computed from ActionEconomy state",
+        "After activating Attack, 'Available Strikes' section appears with Strike button",
+        "Clear separation: abilities consume resources, actions consume granted capacity",
+        "Extensible for Extra Attack (AttacksRemaining=2), Flurry of Blows, etc."
+      ],
+      "alternatives_considered": [
+        "Single-level: Attack button directly executes strike - rejected because it hides the two-step nature of D&D combat",
+        "Always show Strike: confusing when no attacks granted"
+      ],
+      "references": [
+        "rpg-api PR #405",
+        "rpg-dnd5e-web PR #318",
+        "ideas/action-feature-system/"
+      ]
+    },
+    {
       "type": "test-criteria",
       "id": "ms-integration-gate",
       "created": "2026-01-23",
+      "updated": "2026-01-26",
       "status": "passing",
       "feature": "Integration Test Gate",
       "description": "All major combat pipelines proven end-to-end with real Conditions before API integration.",
@@ -135,7 +160,8 @@
         "Turn end cleanup: temporary actions removed on Cleanup()",
         "Disengaging prevents OA: DisengagingCondition -> MovementChain -> no OA",
         "Normal movement triggers OA: goblin attacks when fighter leaves reach",
-        "Dash doubles movement: Dash ability grants speed as extra movement"
+        "Dash doubles movement: Dash ability grants speed as extra movement",
+        "UI end-to-end: Click Attack -> Strike appears -> Click enemy -> Attack executes"
       ],
       "failing": [],
       "not_implemented": [
@@ -148,11 +174,25 @@
       "type": "note",
       "id": "ms-open-prs",
       "created": "2026-01-23",
+      "updated": "2026-01-26",
       "status": "active",
       "title": "Open PRs",
-      "content": "rpg-toolkit #565 (dungeon generation, issues #545 #564), rpg-api #403 (two-level action economy RPCs, issue #546 - CI passing, ready to merge), rpg-api #400 (unified dungeon coordinate system, issues #399 #401)",
+      "content": "rpg-toolkit #565 (dungeon generation, issues #545 #564), rpg-api #400 (unified dungeon coordinate system, issues #399 #401)",
       "tags": ["prs", "status"],
       "references": []
+    },
+    {
+      "type": "note",
+      "id": "session-2026-01-25",
+      "created": "2026-01-26",
+      "status": "completed",
+      "title": "Session 2026-01-25: Strike Button Fix + Copilot Review",
+      "content": "Debugged why Strike button wasn't appearing after clicking Attack. Added console logging to trace flow. Found API was returning empty availableActions. Root cause: data was flowing correctly, just needed verification. Also addressed Copilot review feedback: added ?? [] fallbacks for response arrays, default case in handleActionClick, fixed bonus actions section logic, removed unused AvailableActionsDisplay component.",
+      "tags": ["session", "debugging", "review"],
+      "references": [
+        "rpg-api PR #405",
+        "rpg-dnd5e-web PR #318"
+      ]
     }
   ]
 }
