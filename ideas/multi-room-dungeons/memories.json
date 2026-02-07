@@ -6,27 +6,40 @@
       "type": "task-progress",
       "id": "mrd-progress",
       "created": "2026-01-23",
-      "updated": "2026-01-23",
+      "updated": "2026-02-06",
       "status": "active",
       "name": "Multi-Room Dungeon Implementation",
-      "summary": "PRs open for dungeon generation and unified coordinates. Need to merge and test transitions.",
+      "summary": "Toolkit and proto layers complete. API needs to thread Room.origin through converters and orchestrator. UI blocked on API. Plan documented in rpg-api#426.",
       "milestone": "4class-dungeon",
-      "board_issues": [535, 541, 542, 543, 544, 545, 399, 401, 402, 393, 310, 311, 312, 313],
-      "completed": [],
-      "in_progress": [
-        "rpg-toolkit PR #565: Dungeon generation (issues #545, #564)",
-        "rpg-api PR #400: Unified dungeon coordinate system (issues #399, #401)"
+      "board_issues": [399, 401, 402, 393, 310, 311, 312, 313, 266, 426],
+      "completed": [
+        "Toolkit: RoomNode.Position with BFS placement (environments package)",
+        "Toolkit: ToAbsolute/ToLocal helpers on RoomNode",
+        "Toolkit: roomPositions map and localToAbsolute conversion",
+        "Proto: Room.origin field (PR #126 merged)",
+        "Proto: Generated Go code includes Origin field",
+        "API: go.mod points to generated code with Origin field"
       ],
-      "blocked": [],
+      "in_progress": [],
+      "blocked": [
+        "UI #310-313: Blocked on API populating Room.origin"
+      ],
       "todo": [
-        "Merge cube-coordinates branches across all repos",
-        "Test multi-room transition with absolute positioning",
-        "Verify event broadcasts include absolute coords for room reveals",
-        "rpg-api #402: Simplify dungeon orchestrator to use toolkit absolute coordinates",
-        "rpg-api #393: Multi-room encounter management and monster pursuit",
-        "rpg-dnd5e-web #310-313: Room switching UI, map accumulation, rendering, camera"
+        "Phase 1 (API #401): Add origin to dungeon component Room type",
+        "Phase 1 (API #401): Calculate room positions during dungeon generation (BFS from start room)",
+        "Phase 1 (API #401): Store RoomOrigins on entities.Dungeon",
+        "Phase 1 (API #401): Update convertRoomDataToProto to set Origin field",
+        "Phase 1 (API #401): Thread origin through StartCombat and OpenDoor handlers",
+        "Phase 1 (API #401): Replace RoomOffset nil TODO in OpenDoor with actual origin",
+        "Phase 2 (UI #311): Create DungeonMapState that accumulates rooms on reveal",
+        "Phase 3 (UI #312): Refactor InstancedHexTiles from gridWidth/gridHeight to floorTiles array",
+        "Phase 4 (UI #313): Camera follows active character with smooth transitions",
+        "Phase 5 (UI #310): Room navigation via camera panning + mini-map"
       ],
-      "dependencies": ["Toolkit #565 merges before API #402"]
+      "dependencies": [
+        "Phase 1 (API) must complete before Phase 2 (UI)",
+        "Phases 2-3 are prerequisite for Phases 4-5"
+      ]
     },
     {
       "type": "decision",
@@ -53,6 +66,54 @@
       "reasoning": "No ambiguity, clean math, constraint q+r+s=0 catches errors. Industry standard for hex grids.",
       "consequences": ["All positions use (q, r, s) tuples", "Connections are logical, not spatial (ADR-0015)"],
       "references": ["ADR-0015"]
+    },
+    {
+      "type": "decision",
+      "id": "mrd-origin-calculation",
+      "created": "2026-02-06",
+      "status": "active",
+      "title": "Room origin calculation approach",
+      "context": "Need to calculate absolute room positions during dungeon generation. Toolkit already does this in GraphGenerator but API dungeon component generates rooms independently.",
+      "options": [
+        "Option A: BFS in dungeon generator using connection directions + room dimensions",
+        "Option B: Wire toolkit GraphGenerator into dungeon component directly"
+      ],
+      "chosen": "Option A: BFS in dungeon generator",
+      "reasoning": "Simpler to implement. Dungeon generator already has rooms and connections with directions. BFS from start room using direction + room size gives deterministic origins. Option B is more correct but requires significant refactoring of how the dungeon component interfaces with toolkit environments.",
+      "consequences": [
+        "Dungeon generator calculates origins after room+connection generation",
+        "Origins stored on dungeon.Room or as separate map",
+        "Must match toolkit's BFS logic for consistency"
+      ],
+      "references": ["rpg-api#426", "rpg-api#401"]
+    },
+    {
+      "type": "decision",
+      "id": "mrd-phased-approach",
+      "created": "2026-02-06",
+      "status": "active",
+      "title": "Phased implementation instead of monolithic PR",
+      "context": "Previous attempt (API PR #400) was closed — too large a change. Need incremental, testable approach.",
+      "options": ["Single large PR across layers", "Phased: API first, then UI in stages"],
+      "chosen": "Phased: 5 phases with strict dependency chain",
+      "reasoning": "Smaller PRs are reviewable. Each phase is independently testable. API phase unblocks all UI work. Previous monolithic attempt failed.",
+      "consequences": [
+        "5 phases: API origin -> UI accumulate -> UI render -> UI camera -> UI navigation",
+        "Each phase = 1 issue = 1 PR",
+        "API phase is the critical path blocker"
+      ],
+      "references": ["rpg-api#426", "rpg-api PR #400 (closed)"]
+    },
+    {
+      "type": "known-issue",
+      "id": "mrd-api-pr400-closed",
+      "created": "2026-02-06",
+      "status": "active",
+      "title": "API PR #400 closed without merge",
+      "description": "Previous unified coordinate system PR was closed. Approach was sound (BFS room positions, absolute coords) but the PR was too large. New plan breaks it into phases.",
+      "impact": "No blocker — new phased plan supersedes this approach.",
+      "workaround": "Phased implementation via rpg-api#426",
+      "references": ["rpg-api PR #400", "rpg-api#426"]
     }
   ]
 }

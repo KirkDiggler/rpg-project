@@ -1,71 +1,186 @@
 # Multi-Room Dungeons: Absolute Positioning
 
-## Status: In Progress (PRs Open)
+## Status: In Progress — API is the blocker
 
 ## The Problem
 
-When a player opens a door to room 2, the original implementation rendered it at 0,0,0 (cube coords) and the UI calculated the offset. This is wrong because:
-- Client shouldn't do spatial math
-- Different clients could calculate differently
-- The toolkit should own positioning (it owns all rules)
+When a player opens a door to room 2, each room needs to render at its correct position in dungeon-space. The client should not calculate offsets — the toolkit owns spatial rules.
 
 ## The Solution
 
-Rooms have absolute positions in dungeon-space. The toolkit's dungeon package handles this.
+Rooms have absolute positions in dungeon-space. The toolkit's environment package calculates room origins via BFS during spatial placement.
 
-### What Exists
+## What Exists (Code Audit 2026-02-06)
 
-**Toolkit PR #565**: `feat(dungeon): Add dungeon generation to toolkit`
-- Dungeon package in rulebook layer
-- Rooms get absolute offsets when added to dungeon
-- Connection system links rooms logically
+### Toolkit ✅ Complete
+- `RoomNode.Position` — absolute cube coordinates per room
+- `ToAbsolute()` / `ToLocal()` — coordinate conversion helpers
+- `roomPositions` map in `BasicEnvironment` — tracks all room origins
+- `localToAbsolute()` — converts entity positions during persistence
+- BFS spatial placement in `GraphGenerator` — calculates room positions from door alignment
 
-**API PR #400**: `feat: Add unified dungeon coordinate system`
-- API stores dungeon state with absolute coords
-- Returns absolute positions in proto responses
-- UI renders directly without offset math
+### Proto ✅ Complete
+- `Room.origin` field (field 9, type `Position`) added in PR #126
+- Generated Go code includes `Room.Origin *v1alpha1.Position`
+- API's `go.mod` already points to the generated commit with this field
 
-**Web branch**: `feature/cube-coordinates`
-- Hex grid uses cube coordinates (q, r, s)
-- Renders rooms at their absolute positions
+### API ❌ The Gap
+The toolkit calculates room positions but the API never passes them through:
 
-### Architecture
+**`convertRoomDataToProto()`** builds proto Room with:
+- Id, Type, Width, Height, GridType, HexOrientation, Entities
+- Does NOT set `Origin` or `Walls`
 
+**`convertToDungeonEntity()`** stores:
+- Rooms map, Connections, StartRoomID, BossRoomID, state
+- Does NOT store room origins/positions
+
+**`OpenDoor()`** returns:
+- `RoomOffset: nil // TODO: Calculate offset for grid merge`
+
+**`convertToRoomData()`** creates `spatial.RoomData` with:
+- ID, Type, Width, Height, GridType, CubeEntities
+- No origin concept
+
+### UI ❌ Blocked on API
+- `InstancedHexTiles` renders tiles in a loop: `for z in 0..gridHeight, x in 0..gridWidth`
+- All tiles start from (0,0,0) — single room only
+- No multi-room state accumulation
+- Camera fixed at position `[8, 10, 8]`
+
+## Data Flow (current vs target)
+
+### Current (broken)
 ```
-Dungeon (toolkit/rulebooks/dnd5e/dungeon)
-  |
-  +-- Room 1 (offset: 0, 0, 0)
-  |     +-- Entities at absolute positions
-  |     +-- Walls, doors at absolute positions
-  |
-  +-- Room 2 (offset: 12, 0, -12)  <- toolkit calculates this
-  |     +-- Entities at absolute positions
-  |     +-- Connection to Room 1 via door
-  |
-  +-- Room 3 (offset: 24, 0, -24)
-        +-- ...
+Toolkit RoomNode.Position ✅
+  → dungeon.Room (no origin) ❌
+    → entities.Dungeon (no origins) ❌
+      → spatial.RoomData (no origin) ❌
+        → proto Room (Origin: nil) ❌
+          → UI renders at (0,0) ❌
 ```
 
-### Data Flow
+### Target
+```
+Toolkit RoomNode.Position ✅
+  → dungeon.Room.Origin ← ADD
+    → entities.Dungeon.RoomOrigins ← ADD
+      → orchestrator passes origin ← THREAD
+        → proto Room.Origin set ← SET
+          → UI accumulates + renders absolute ← BUILD
+```
 
-1. Toolkit generates dungeon with room offsets
-2. API stores the dungeon state (rooms + offsets + entities)
-3. API returns absolute positions in CombatState proto
-4. Web renders rooms at their absolute positions
-5. When door opens: API sends new room data with absolute coords
-6. Web just adds it to the scene (no math needed)
+## Implementation Phases
 
-## What's Left
+### Phase 1: API — Thread Room Origin (rpg-api #401)
 
-- [ ] Merge cube-coordinates branches across all repos
-- [ ] Merge toolkit #565 (dungeon generation)
-- [ ] Merge API #400 (unified coordinates)
-- [ ] Test multi-room transition with absolute positioning
-- [ ] Verify event broadcasts include absolute coords for room reveals
+**Step 1a: Add origin to dungeon component Room**
+```go
+// internal/components/dungeon/types.go
+type Room struct {
+    ID       string
+    Shape    *Shape
+    // ... existing fields ...
+    Origin   Position  // NEW: absolute position in dungeon-space
+}
+```
+
+**Step 1b: Calculate room positions during generation**
+
+Two options:
+
+**Option A (recommended):** Calculate positions in the dungeon generator after rooms and connections are built. Use connection directions + room dimensions to compute BFS offsets.
+
+**Option B:** Use toolkit's `GraphGenerator` directly. More correct but requires wiring toolkit environment creation into the dungeon component.
+
+The calculation:
+- Room 0 (start): origin = (0, 0, 0)
+- Room N: origin = previous_room.origin + offset based on connection direction and room dimensions
+- For hex grids: offset depends on which wall the door is on (north/south/east/west)
+
+**Step 1c: Store origins on dungeon entity**
+```go
+// internal/entities/dungeon.go
+type Dungeon struct {
+    // ... existing fields ...
+    RoomOrigins map[string]Position `json:"room_origins"` // room ID -> absolute origin
+}
+```
+
+**Step 1d: Populate proto Room.origin**
+```go
+// converters.go - update convertRoomDataToProto to accept origin
+func convertRoomDataToProto(roomData interface{}, origin *Position) *dnd5ev1alpha1.Room {
+    room := &dnd5ev1alpha1.Room{
+        // ... existing fields ...
+        Origin: &apiv1alpha1.Position{
+            X: int32(origin.X),
+            Y: int32(origin.Y),
+            Z: int32(origin.Z),
+        },
+    }
+    return room
+}
+```
+
+**Step 1e: Thread through StartCombat and OpenDoor**
+- StartCombat: first room origin is (0,0,0)
+- OpenDoor: look up revealed room's origin from `dungeon.RoomOrigins`
+
+### Phase 2: UI — Accumulate Rooms (rpg-dnd5e-web #311)
+
+```typescript
+interface DungeonMapState {
+  floorTiles: CubeCoord[]           // All tile positions across rooms
+  entities: Map<string, EntityData>  // All entities keyed by ID
+  walls: WallData[]                  // All walls across rooms
+  doors: Map<string, DoorData>       // All doors
+  revealedRoomIds: Set<string>       // Tracking
+}
+```
+
+- On `CombatStartedEvent`: init with first room tiles at origin (0,0,0)
+- On `RoomRevealedEvent`: merge new tiles at `room.origin` offset
+
+### Phase 3: UI — Render Absolute (rpg-dnd5e-web #312)
+
+Refactor `InstancedHexTiles`:
+- Old: `gridWidth, gridHeight` props → loop from (0,0)
+- New: `floorTiles: CubeCoord[]` prop → render at absolute positions
+
+### Phase 4: UI — Camera Follow (rpg-dnd5e-web #313)
+
+- Track active character position
+- Smooth lerp camera to character on turn start
+- Option C from issue: manual pan + auto-center button
+
+### Phase 5: UI — Room Navigation (rpg-dnd5e-web #310)
+
+With contiguous map rendering, room "switching" becomes camera panning. Add:
+- Mini-map showing revealed rooms (#266)
+- "Center on character" button
+- Room indicators showing monster presence
 
 ## Design Decisions
 
-- Cube coordinates (q, r, s) for hex grids - no ambiguity, clean math
-- Rooms are rectangular regions in dungeon-space
-- Connections are logical, not spatial (ADR-0015)
-- Spawn layer handles entity placement after room transition
+| Decision | Choice | Reasoning |
+|----------|--------|-----------|
+| Coordinate system | Cube (q,r,s) | No ambiguity, constraint q+r+s=0, industry standard |
+| Position ownership | Toolkit | Toolkit owns all spatial rules. No math in client. |
+| Storage | Origins per room on dungeon entity | Simple, queryable, doesn't require toolkit reconstruction |
+| Proto field | Room.origin (field 9) | Already exists and generated |
+| Room position calc | BFS from start room using door directions | Matches toolkit's approach, deterministic |
+
+## Previous Attempt
+
+**API PR #400** — Implemented unified coordinates. Closed without merge.
+- Approach was sound (BFS, absolute coords)
+- Too large a change in one PR
+- This plan breaks into 5 testable phases
+
+## References
+- rpg-api#426 — Tracking issue
+- rpg-api#399, #401, #402 — API issues
+- rpg-dnd5e-web#310-313, #266 — UI issues
+- Proto PR #126 — Room.origin field
+- API PR #400 — Previous attempt (closed)
