@@ -42,50 +42,17 @@ UI:      renders what it receives → reusable EquipmentCard component
 
 Both reference equipment by ID. Both should carry resolved stats so the UI can display them.
 
-**New types in `shared/` package** (reusable across choices and grants):
+**New types in `equipment` package** (see Package Structure section for type definitions):
+
+The `equipment` package already imports `weapons`, `armor`, etc. — so `EquipmentDetail`, `WeaponDetail`, and `ArmorDetail` use proper typed constants (no string workarounds). Tools, packs, and ammunition get base fields only (name, weight, cost) since they don't have type-specific stats that affect gameplay decisions.
+
+**Resolver function** in `equipment/`:
 
 ```go
-type EquipmentDetail struct {
-    Name     string         `json:"name"`
-    Type     EquipmentType  `json:"type"`     // weapon, armor, tool, pack, ammunition
-    Weight   float64        `json:"weight"`
-    Cost     string         `json:"cost"`     // "25 gp" format
-
-    // Only one of these is set, based on Type
-    Weapon   *WeaponDetail  `json:"weapon,omitempty"`
-    Armor    *ArmorDetail   `json:"armor,omitempty"`
-    // Tools, packs, and ammunition get base fields only (name, weight, cost).
-    // They don't have type-specific stats that affect gameplay decisions.
-}
-
-type WeaponDetail struct {
-    Category    string   `json:"category"`    // "simple-melee", "martial-ranged", etc.
-    Damage      string   `json:"damage"`      // "1d8"
-    DamageType  string   `json:"damage_type"` // "slashing", "piercing", "bludgeoning"
-    Properties  []string `json:"properties"`  // ["finesse", "light", "versatile"]
-    NormalRange int      `json:"normal_range,omitempty"` // feet, for thrown/ranged
-    LongRange   int      `json:"long_range,omitempty"`   // feet, for thrown/ranged
-}
-
-type ArmorDetail struct {
-    Category            string `json:"category"`              // "light", "medium", "heavy", "shield"
-    BaseAC              int    `json:"base_ac"`
-    DexBonus            bool   `json:"dex_bonus"`
-    MaxDexBonus         *int   `json:"max_dex_bonus,omitempty"`
-    StrengthRequirement int    `json:"strength_requirement,omitempty"`
-    StealthDisadvantage bool   `json:"stealth_disadvantage"`
-}
-```
-
-**Note on string types:** `WeaponDetail` and `ArmorDetail` use plain strings for category, damage type, and properties instead of the typed constants from the `weapons`/`armor` packages. This avoids import cycles since `shared` is imported by those packages, not the other way around. The string values match the existing constants (e.g., `weapons.CategorySimpleMelee` = `"simple-melee"`).
-
-**Resolver function** in `shared/`:
-
-```go
-// ResolveEquipmentDetail looks up an equipment ID across weapon, armor, tool,
-// pack, and ammunition registries and returns the populated detail.
+// ResolveEquipmentDetail looks up an equipment ID using the existing GetByID
+// pattern and returns a populated detail struct.
 // Returns nil if the ID is not found in any registry.
-func ResolveEquipmentDetail(id EquipmentID) *EquipmentDetail
+func ResolveEquipmentDetail(id shared.EquipmentID) *EquipmentDetail
 ```
 
 **Where enrichment happens:** After building the equipment requirements/grants, call `ResolveEquipmentDetail` for each item. This happens once when building class data — the results are part of the static class definition, not computed per API request.
@@ -168,37 +135,55 @@ The component accepts the proto `Equipment` type directly so it works anywhere t
 
 | Repo | Changes |
 |------|---------|
-| **rpg-toolkit** | Add `EquipmentDetail` types to `shared/`, `ResolveEquipmentDetail()` helper, call it in equipment requirement builders and grants |
+| **rpg-toolkit** | Add `EquipmentDetail` types to `equipment/`, `ResolveEquipmentDetail()` extending existing `GetByID`, call it in equipment requirement builders and grants |
 | **rpg-api-protos** | Add `equipment_detail` field to `EquipmentItem` message |
 | **rpg-api** | Map toolkit `Detail` to proto `equipment_detail` in choice handler, including Cost/Weight conversion |
 | **rpg-dnd5e-web** | Create `EquipmentCard` component, use in equipment choice selector and category dropdowns |
 
-## Prerequisite: Package Reorganization
+## Package Structure (No Restructure Needed)
 
-**Before implementing enrichment, the toolkit needs a package restructure.**
+The `equipment` package already exists at `rulebooks/dnd5e/equipment/` and imports `weapons`, `armor`, `tools`, `packs`, and `ammunition` — exactly the dependency direction needed. It has a `GetByID` function that looks up across all registries, which is the foundation for `ResolveEquipmentDetail`.
 
-The current layout has `weapons/`, `armor/`, and shared types in `shared/`. This creates import cycles when trying to build `EquipmentDetail` — `shared` can't import `weapons`/`armor` types, and using strings to avoid cycles is a code smell.
+The `EquipmentDetail`, `WeaponDetail`, and `ArmorDetail` types belong in the `equipment` package where they can use proper typed constants from `weapons` and `armor` packages (no string workarounds needed).
 
-**The fix:** Create a proper `equipment` package that is the parent concept. Weapons, armor, tools, packs, and ammunition are all equipment. The `equipment` package should own the `EquipmentDetail` types and resolver, importing from `weapons`/`armor` as needed. Consider whether `weapons`/`armor` should become sub-packages of `equipment` (e.g., `equipment/weapons`, `equipment/armor`) or stay as peers that `equipment` imports.
+**Updated types using proper package types:**
 
-**Prompt for the restructure session:**
+```go
+// In rulebooks/dnd5e/equipment/
 
-> The rpg-toolkit has weapon and armor data in separate packages (`rulebooks/dnd5e/weapons/`, `rulebooks/dnd5e/armor/`) with shared types in `shared/`. We need to add an `EquipmentDetail` type that references weapon/armor types (WeaponCategory, WeaponProperty, DamageType, ArmorCategory, etc.), but `shared` can't import from `weapons`/`armor` without creating import cycles.
->
-> Equipment is a first-class D&D concept — weapons, armor, tools, packs, and ammunition are all equipment. We need a proper `equipment` package that owns this hierarchy. Evaluate whether `weapons`/`armor` should become sub-packages of `equipment` or stay as peers. The goal is clean imports where `EquipmentDetail` can use proper typed constants, not strings.
->
-> Check `rpg-project/ideas/equipment-enrichment/design.md` for the full enrichment design that depends on this restructure.
->
-> Key files to review:
-> - `rulebooks/dnd5e/weapons/types.go` — WeaponProperty, WeaponCategory, Weapon struct
-> - `rulebooks/dnd5e/armor/armor.go` — ArmorCategory, Armor struct
-> - `rulebooks/dnd5e/shared/equipment.go` — EquipmentID, EquipmentType, EquipmentCategory
-> - `rulebooks/dnd5e/character/choices/requirements.go` — where equipment choices are built
+type EquipmentDetail struct {
+    Name     string                `json:"name"`
+    Type     shared.EquipmentType  `json:"type"`
+    Weight   float64               `json:"weight"`
+    Cost     string                `json:"cost"`
+    Weapon   *WeaponDetail         `json:"weapon,omitempty"`
+    Armor    *ArmorDetail          `json:"armor,omitempty"`
+}
+
+type WeaponDetail struct {
+    Category   weapons.WeaponCategory   `json:"category"`
+    Damage     string                   `json:"damage"`
+    DamageType damage.Type              `json:"damage_type"`
+    Properties []weapons.WeaponProperty `json:"properties"`
+    Range      *weapons.Range           `json:"range,omitempty"`
+}
+
+type ArmorDetail struct {
+    Category            armor.ArmorCategory `json:"category"`
+    BaseAC              int                 `json:"base_ac"`
+    DexBonus            bool                `json:"dex_bonus"`
+    MaxDexBonus         *int                `json:"max_dex_bonus,omitempty"`
+    StrengthRequirement int                 `json:"strength_requirement,omitempty"`
+    StealthDisadvantage bool                `json:"stealth_disadvantage"`
+}
+```
+
+`ResolveEquipmentDetail` extends the existing `GetByID` pattern — look up the equipment, then populate the detail struct from the resolved item.
 
 ## Implementation Order (after restructure)
 
 1. **Protos first** — Add the field, generate code
-2. **Toolkit** — Add types to equipment package, resolver, enrich requirement builders
+2. **Toolkit** — Add detail types to `equipment/`, extend `GetByID` into `ResolveEquipmentDetail`, enrich requirement builders
 3. **API** — Map the new field with Cost/Weight conversion
 4. **UI** — Build EquipmentCard and wire into equipment choices
 
