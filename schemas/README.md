@@ -12,14 +12,14 @@ Structured memory schemas used at any scope (project, milestone, idea). Each typ
 | Test Criteria | `test-criteria.json` | Validation requirements and pass/fail state |
 | Known Issue | `known-issue.json` | Documented problems with impact and workarounds |
 | Note | `note.json` | Context, observations, general information |
+| Pattern | `pattern.json` | Reusable approaches, best practices, conventions |
+| Lesson Learned | `lesson-learned.json` | What went wrong or worked well across sessions |
 
 ## Planned (implement when use case arises)
 
 | Type | Purpose |
 |------|---------|
 | Follow Up | Action items to revisit at a specific time or trigger |
-| Pattern | Recognized approaches, best practices, conventions |
-| Expertise | Domain knowledge, skills, capabilities |
 | Announcement | Team communications, status updates |
 
 ## Usage

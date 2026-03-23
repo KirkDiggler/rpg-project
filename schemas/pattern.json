@@ -1,0 +1,13 @@
+{
+  "type": "pattern",
+  "id": "",
+  "created": "",
+  "updated": "",
+  "status": "active|deprecated",
+  "name": "",
+  "description": "",
+  "example": "",
+  "anti_pattern": null,
+  "domain": "",
+  "references": []
+}
