@@ -1,0 +1,86 @@
+{
+  "scope": "idea",
+  "name": "bug-fix-team",
+  "memories": [
+    {
+      "type": "decision",
+      "id": "dec-milestone-as-state",
+      "created": "2026-03-28",
+      "status": "accepted",
+      "title": "GH Milestone as Shared State",
+      "context": "Need coordination between lead and worker agents across sessions without local file contention.",
+      "decision": "Use GitHub milestone + issue comments as the shared state layer. No local context files. The milestone IS the state.",
+      "consequences": [
+        "No write contention between agents",
+        "State is visible in GitHub UI",
+        "No context files to sync between sessions",
+        "Agents need GH CLI access"
+      ],
+      "alternatives_considered": [
+        "Local context files (PM pattern) — rejected for write contention risk",
+        "Session-based (no persistence) — rejected, too manual"
+      ],
+      "references": ["design.md"]
+    },
+    {
+      "type": "decision",
+      "id": "dec-lead-plus-workers",
+      "created": "2026-03-28",
+      "status": "accepted",
+      "title": "Lead + Layer-Aligned Workers",
+      "context": "Needed a team structure for parallel bug fixing that respects repo boundaries.",
+      "decision": "Lead coordinator triages and reviews. Workers are aligned to layers (web/api/toolkit). Workers implement, lead reviews before Kirk tests.",
+      "consequences": [
+        "Lead catches quality issues before Kirk sees PRs",
+        "Workers stay in their lane — boundary rule enforced by role",
+        "Cross-layer bugs become new issues, not scope creep",
+        "Toolkit fixer may not be needed every session"
+      ],
+      "alternatives_considered": [
+        "Layer-aligned only (no lead) — rejected, loses review step that has been catching real bugs",
+        "Bug-scoped agents (one agent per bug, cross-layer) — rejected, violates boundary model"
+      ],
+      "references": ["design.md"]
+    },
+    {
+      "type": "decision",
+      "id": "dec-issue-filing-threshold",
+      "created": "2026-03-28",
+      "status": "accepted",
+      "title": "Moderate Autonomy for Issue Filing",
+      "context": "Workers discover bugs while fixing other bugs. Need a threshold for what they can file vs. what needs Kirk's approval.",
+      "decision": "Workers can file `bug` issues autonomously (prefixed with [discovered]). Feature/gap items get flagged to Kirk via issue comments. Lead can add `gap` label to existing issues but cannot create new feature/gap issues.",
+      "consequences": [
+        "Bug pipeline stays fed without blocking workers",
+        "Design decisions stay with Kirk (creative director role)",
+        "Discovery bugs are easy to spot on the board"
+      ],
+      "alternatives_considered": [
+        "Conservative (all notes local, Kirk reviews) — rejected, too slow",
+        "Liberal (agents file anything) — rejected, scope creep risk"
+      ],
+      "references": ["design.md"]
+    },
+    {
+      "type": "task-progress",
+      "id": "tp-design",
+      "created": "2026-03-28",
+      "updated": "2026-03-28",
+      "status": "completed",
+      "name": "Design",
+      "summary": "Design spec complete. Brainstormed team structure, workflow, issue lifecycle. Two-pass spec review, all issues resolved.",
+      "milestone": "4class-dungeon",
+      "board_issues": [],
+      "completed": ["Design spec written and reviewed"],
+      "in_progress": [],
+      "blocked": [],
+      "todo": [
+        "Write role prompts",
+        "Set up GH milestone/labels",
+        "File QA bugs as issues",
+        "Run first session"
+      ],
+      "dependencies": []
+    }
+  ]
+}
