@@ -6,7 +6,7 @@ Coordinated multi-agent team for fixing QA bugs across layers (web, API, toolkit
 4class-dungeon
 
 ## Status
-**Design complete.** Role prompts and milestone setup not yet implemented.
+**Setup complete.** Milestone created across all repos, workflow labels created, role prompts written, 6 QA bugs filed. Ready for first session.
 
 ## Team Structure
 

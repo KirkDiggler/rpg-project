@@ -74,12 +74,34 @@
       "completed": ["Design spec written and reviewed"],
       "in_progress": [],
       "blocked": [],
-      "todo": [
-        "Write role prompts",
-        "Set up GH milestone/labels",
-        "File QA bugs as issues",
-        "Run first session"
+      "todo": [],
+      "dependencies": []
+    },
+    {
+      "type": "task-progress",
+      "id": "tp-setup",
+      "created": "2026-03-28",
+      "updated": "2026-03-28",
+      "status": "completed",
+      "name": "Setup",
+      "summary": "Infrastructure complete. GH milestone created in all 4 repos, workflow labels (blocked/parked/gap) created, 4 role prompts written, 6 QA bugs filed on milestone and project board.",
+      "milestone": "4class-dungeon",
+      "board_issues": [
+        "rpg-dnd5e-web#351", "rpg-api#448", "rpg-dnd5e-web#352",
+        "rpg-dnd5e-web#353", "rpg-dnd5e-web#354", "rpg-dnd5e-web#355"
       ],
+      "completed": [
+        "GH milestone '4-Class Multiplayer Multi-Room Dungeon' in all repos",
+        "Workflow labels (blocked, parked, gap) in all repos",
+        "Bug Fix Coordinator role prompt",
+        "Web Fixer role prompt",
+        "API Fixer role prompt",
+        "Toolkit Fixer role prompt",
+        "6 QA bugs filed and added to project board #10"
+      ],
+      "in_progress": [],
+      "blocked": [],
+      "todo": ["Run first bug fix session"],
       "dependencies": []
     }
   ]
