@@ -67,8 +67,8 @@
       "id": "encounter-snapshot-naming",
       "created": "2026-03-28",
       "status": "active",
-      "title": "EncounterSnapshot name (not EncounterState) due to enum conflict",
-      "content": "Design spec says EncounterState but proto already has enum EncounterState (WAITING, ACTIVE, PAUSED, COMPLETED). Proto message is named EncounterSnapshot instead. Update design.md and plan.md references when convenient.",
+      "title": "EncounterStateData name (not EncounterState) due to enum conflict",
+      "content": "Design spec says EncounterState but proto already has enum EncounterState (WAITING, ACTIVE, PAUSED, COMPLETED). Proto message is named EncounterStateData instead, following the toolkit Data convention (character.Data, monster.Data). Update design.md and plan.md references when convenient.",
       "tags": ["proto", "naming"],
       "references": ["rpg-api-protos#135"]
     }
