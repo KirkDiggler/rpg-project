@@ -50,10 +50,8 @@ message EntityState {
   // Combat (shared across all combatant types)
   int32 current_hit_points = 8;
   int32 max_hit_points = 9;
-  bool is_dead = 10;
-  bool is_unconscious = 11;
-  repeated Condition active_conditions = 12;
-  DeathSaveProgress death_saves = 13;
+  repeated Condition active_conditions = 10;
+  DeathSaveProgress death_saves = 11;
 
   // Type-specific rendering data
   oneof details {
@@ -127,6 +125,7 @@ message RoomLayout {
 
 - `CharacterDetails` carries only what rendering needs — not the full character sheet. The `Character` message still exists for character creation/sheet views.
 - `EntityState` owns HP for both characters and monsters. No more separate tracking.
+- **No boolean flags for entity status.** Dead, unconscious, raging, dodging, etc. are all `Condition` entries in `active_conditions`. The toolkit already models these as conditions. The client derives rendering behavior from conditions (e.g., `hasCondition(entity, DEAD)` to remove from board). No dual representation.
 - `RoomLayout` is spatial-only — entities live in the flat `entities` map with a `room_id` field, not nested inside rooms.
 - Obstacles are entities too — consistent rendering path.
 
@@ -446,7 +445,7 @@ No merge logic. The server sends complete `EntityState` entries — the client j
 
 ### How the three bugs vanish
 
-- **#358 (dead monster not removed):** Rendering reads `entities` map, checks `entity.isDead`. One place, one check.
+- **#358 (dead monster not removed):** Rendering reads `entities` map, checks `hasCondition(entity, DEAD)`. One place, one check.
 - **#357 (hover shows uninjured):** Hover panel reads `entities.get(hoveredId).currentHitPoints`. Same object the renderer uses.
 - **#347 (HP bar doesn't update):** HP lives on the `EntityState` that React is already watching. Update the entity, UI re-renders.
 
@@ -457,7 +456,7 @@ useEncounterState (holds EncounterState)
   │
   ├── BattleMapPanel
   │     reads entities map → filters by room_id → renders positions
-  │     isDead check is on the same object
+  │     DEAD condition check is on the same object
   │
   ├── HexEntity
   │     reads entity.details.character or entity.details.monster
@@ -498,11 +497,11 @@ LobbyView shrinks to: set up the stream, route events to `applySnapshot` or `app
 ### Web layer (rpg-dnd5e-web)
 
 - **`useEncounterState` tests:** `applySnapshot` replaces state fully. `applyEntityUpdates` merges by entity ID without losing unaffected entities.
-- **Rendering integration:** Entity with `isDead: true` doesn't render. HP changes propagate to hover panel.
+- **Rendering integration:** Entity with `DEAD` condition doesn't render. HP changes propagate to hover panel.
 
 ### Bug regression tests
 
-- **#358:** `ActionExecutedEvent` kills monster → `isDead: true` → not in rendered entity list.
+- **#358:** `ActionExecutedEvent` kills monster → `DEAD` condition in `active_conditions` → not in rendered entity list.
 - **#357:** `AttackResolvedEvent` with damage → `entities.get(monsterId).currentHitPoints` reflects damage → hover reads same value.
 - **#347:** `FeatureActivatedEvent` for Second Wind → entity HP updated → HP bar receives new value.
 
