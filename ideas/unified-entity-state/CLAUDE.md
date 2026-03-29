@@ -6,7 +6,7 @@ The web client tracks entity data across multiple fragmented state containers (d
 4class-dungeon
 
 ## Status
-**Idea captured.** Needs brainstorming session to design.
+**Design approved.** See `design.md` for full spec. Ready for implementation planning.
 
 ## The Problem
 

@@ -11,6 +11,36 @@
       "content": "During 2026-03-28 bug fix session, every web rendering bug traced back to entity data being split across multiple React state containers (dungeonMap.entities, monsters[], fullCharactersMap). Kirk observed this pattern and suggested a dedicated entity feed / unified store.",
       "tags": ["architecture", "web"],
       "references": ["rpg-dnd5e-web#351", "rpg-dnd5e-web#357", "rpg-dnd5e-web#358"]
+    },
+    {
+      "type": "decision",
+      "id": "approach-a-unified-entity-map",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Approach A: Unified EntityState with type-specific oneof",
+      "content": "Chose full-stack fix (Approach A) over web-only or envelope approaches. Single EntityState message with common fields (position, HP, conditions) plus oneof details (CharacterDetails, MonsterDetails, ObstacleDetails). EncounterState holds flat entities map keyed by ID, rooms as spatial-only layouts. Events carry EntityState directly — snapshots for major events, deltas for combat actions.",
+      "tags": ["architecture", "proto", "api", "web"],
+      "references": ["design.md"]
+    },
+    {
+      "type": "decision",
+      "id": "toolkit-boundary-fix",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "API must use toolkit Load/Fire/Harvest/Save pattern, not manual HP math",
+      "content": "Current API violates toolkit boundary by manually doing CharacterHP[id] - damage in monster_turns.go. The design requires the API to use LoadFromData() → attach to bus → fire action → check dirty → ToData() → save. The API never interprets HP, conditions, or damage. This is the foundational fix Kirk identified.",
+      "tags": ["architecture", "api", "toolkit"],
+      "references": ["design.md"]
+    },
+    {
+      "type": "decision",
+      "id": "clean-cut-migration",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Clean cut migration, no backwards compatibility",
+      "content": "Proto changes are breaking. Since we control all clients (Discord Activity), no compatibility layer needed. Order: protos first, then API and web in parallel, coordinated deploy.",
+      "tags": ["migration", "rollout"],
+      "references": ["design.md"]
     }
   ]
 }
