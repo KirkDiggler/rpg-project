@@ -18,7 +18,7 @@
       "created": "2026-03-28",
       "status": "active",
       "title": "Approach A: Unified EntityState with type-specific oneof",
-      "content": "Chose full-stack fix (Approach A) over web-only or envelope approaches. Single EntityState message with common fields (position, HP, conditions) plus oneof details (CharacterDetails, MonsterDetails, ObstacleDetails). EncounterState holds flat entities map keyed by ID, rooms as spatial-only layouts. Events carry EntityState directly — snapshots for major events, deltas for combat actions.",
+      "content": "Chose full-stack fix (Approach A) over web-only or envelope approaches. Single EntityState message with common fields (position, HP, conditions) plus oneof details (CharacterDetails, MonsterDetails, ObstacleDetails). EncounterSnapshot holds flat entities map keyed by ID, rooms as spatial-only layouts. Events carry EntityState directly — snapshots for major events, deltas for combat actions.",
       "tags": ["architecture", "proto", "api", "web"],
       "references": ["design.md"]
     },
@@ -41,6 +41,36 @@
       "content": "Proto changes are breaking. Since we control all clients (Discord Activity), no compatibility layer needed. Order: protos first, then API and web in parallel, coordinated deploy.",
       "tags": ["migration", "rollout"],
       "references": ["design.md"]
+    },
+    {
+      "type": "task-progress",
+      "id": "spike-test-result",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Spike test: Load/Fire/Harvest works, unconscious at 0 HP does NOT auto-apply",
+      "content": "Spike test (rpg-toolkit/rulebooks/dnd5e/integration/entity_cycle_test.go) confirms: DealDamage → ApplyDamage → IsDirty → ToData round-trip works. Full save/reload preserves HP. However, dropping to 0 HP does NOT auto-apply Unconscious condition — DroppedToZero flag is returned but no condition created. Filed rpg-toolkit#606 to fix this.",
+      "tags": ["toolkit", "testing"],
+      "references": ["rpg-toolkit#606"]
+    },
+    {
+      "type": "task-progress",
+      "id": "proto-pr",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Proto PR up, waiting for merge — rpg-api-protos#135",
+      "content": "Phase 1 complete. PR rpg-api-protos#135 adds EntityState, EncounterSnapshot, RoomLayout, CharacterDetails, MonsterDetails, ObstacleDetails. All snapshot events carry EncounterSnapshot, all delta events carry EntityState. CI generates code after merge. Phase 2 (API) and Phase 3 (web) are blocked until this merges and generated code is available.",
+      "tags": ["proto", "blocking"],
+      "references": ["rpg-api-protos#135"]
+    },
+    {
+      "type": "note",
+      "id": "encounter-snapshot-naming",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "EncounterSnapshot name (not EncounterState) due to enum conflict",
+      "content": "Design spec says EncounterState but proto already has enum EncounterState (WAITING, ACTIVE, PAUSED, COMPLETED). Proto message is named EncounterSnapshot instead. Update design.md and plan.md references when convenient.",
+      "tags": ["proto", "naming"],
+      "references": ["rpg-api-protos#135"]
     }
   ]
 }
