@@ -1,0 +1,16 @@
+{
+  "scope": "idea",
+  "name": "unified-entity-state",
+  "memories": [
+    {
+      "type": "note",
+      "id": "origin",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Origin: bug fix session exposed fragmented state",
+      "content": "During 2026-03-28 bug fix session, every web rendering bug traced back to entity data being split across multiple React state containers (dungeonMap.entities, monsters[], fullCharactersMap). Kirk observed this pattern and suggested a dedicated entity feed / unified store.",
+      "tags": ["architecture", "web"],
+      "references": ["rpg-dnd5e-web#351", "rpg-dnd5e-web#357", "rpg-dnd5e-web#358"]
+    }
+  ]
+}
