@@ -65,7 +65,11 @@ These should be the first entries in context/lessons-learned.json:
 ## Status
 Idea stage. Needs design.md with schema definitions and spawn prompt integration patterns.
 
+## Platform Simplifier Role
+See `platform-simplifier-design.md` for the design spec. Role implemented at `docs/teams/roles/platform-simplifier/`. Plan at `platform-simplifier-plan.md`.
+
 ## Related
 - Existing rpg-project memory system: `schemas/`, `memories.json` at each scope
 - Team prompts: `docs/teams/platform-audit-prompts.md`
 - Project manager role: draft alongside this system
+- Unified entity state idea: `../unified-entity-state/` — the canonical example the simplifier would have caught
