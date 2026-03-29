@@ -226,12 +226,14 @@ message AttackResolvedEvent {
 message MonsterTurnCompletedEvent {
   MonsterTurnResult monster_turn = 1;
   repeated EntityState updated_entities = 2;
+  CombatState combat_state = 3;  // turn advances after monster acts
 }
 
 message MovementCompletedEvent {
   string entity_id = 1;
   repeated Position path = 2;
   EntityState updated_entity = 3;
+  CombatState combat_state = 4;  // movement consumes ActionEconomy.movement_remaining
 }
 
 message TurnEndedEvent {
