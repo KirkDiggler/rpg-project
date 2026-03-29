@@ -373,15 +373,22 @@ Delta events that change action economy include `CombatState` (ActionExecutedEve
 
 ```
 // 1. Load
+bus := events.NewBus()
 for each involved entity:
     obj := toolkit.LoadFromData(encounter.Entities[id].ToolkitData)
-    bus.Attach(obj)
+    // Monster actions and conditions load separately (import cycle avoidance)
+    if monster: LoadMonsterActions(obj); LoadMonsterConditions(obj, bus)
+    obj.SubscribeToEvents(bus)
 
 // 2. Execute
-result := bus.Fire(action)  // toolkit handles all mutations
+result := combat.ResolveAttack(ctx, &AttackInput{...})
+// ResolveAttack does NOT call ApplyDamage — the orchestrator must:
+if result.Hit {
+    target.ApplyDamage(ctx, &ApplyDamageInput{...})
+}
 
-// 3. Harvest
-for each dirty object:
+// 3. Harvest dirty objects
+for each entity where obj.IsDirty():
     data := obj.ToData()
     encounter.Entities[id].ToolkitData = data        // update storage
     encounter.Entities[id].Position = obj.Position()  // sync spatial
@@ -391,6 +398,12 @@ entityStates := toEntityStates(affectedIDs, encounter.Entities)  // single conve
 repo.Save(encounter)
 publisher.Publish(event with entityStates)
 ```
+
+**Important toolkit details:**
+- `ApplyDamage()` is the caller's responsibility — `ResolveAttack` publishes chain events and damage events but does not mutate HP directly. The orchestrator calls `target.ApplyDamage()` after resolution.
+- Monster actions and conditions must be loaded via separate calls (`LoadMonsterActions`, `LoadMonsterConditions`) after `LoadFromData` due to import cycle avoidance in the toolkit.
+- Conditions serialize as `[]json.RawMessage` in toolkit Data. The `toEntityState()` conversion deserializes these and projects them into proto `Condition` messages.
+- `ActionEconomy` is stored on `character.Data.ActionEconomy` (nil outside combat). Our design moves this to `CombatState.current_turn_economy` since only the active turn's economy matters for clients — a deliberate projection, not a loss of data. The toolkit's per-character tracking is preserved in `ToolkitData`.
 
 ### What gets fixed
 
@@ -526,9 +539,13 @@ The `CharacterHP` manual subtraction in `monster_turns.go` means character objec
 
 In rpg-toolkit, write a test that does:
 1. `LoadFromData(characterData)` + `LoadFromData(monsterData)` on same bus
-2. Fire an attack action from monster → character
-3. Verify `character.ToData()` reflects the damage (HP decreased)
+2. Load monster actions and conditions separately (import cycle pattern)
+3. Resolve attack from monster → character via `combat.ResolveAttack()`
+4. Call `character.ApplyDamage()` with the result (ApplyDamage is the caller's responsibility, not the bus's)
+5. Verify `character.IsDirty()` is true
+6. Verify `character.ToData()` reflects the damage (HP decreased)
+7. Verify conditions (e.g., unconscious at 0 HP) are present in `ToData().Conditions`
 
-If this works, the toolkit already supports the pattern and the API just needs to use it. If it fails, toolkit work is needed first and becomes step 0 in the migration order — contradicting the "no toolkit changes" claim.
+If this works, the toolkit already supports the full Load → Execute → ApplyDamage → Harvest cycle and the API just needs to use it properly. If it fails (particularly step 7 — unconscious condition not auto-applied at 0 HP), toolkit work is needed first.
 
 This spike is a prerequisite for implementation planning.
