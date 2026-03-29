@@ -1,0 +1,36 @@
+{
+  "scope": "idea",
+  "name": "platform-simplifier",
+  "memories": [
+    {
+      "type": "note",
+      "id": "origin",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Origin: unified-entity-state showed need for cross-repo pattern detection",
+      "content": "During 2026-03-28 session, Kirk observed that the unified-entity-state problem (3 bugs sharing a root cause) would have been caught earlier by a team role that reads accumulated knowledge and cross-references it against planned work. Kirk framed this as the platform engineer role — seeing what's hindering devs and how it could be improved.",
+      "tags": ["architecture", "team"],
+      "references": ["rpg-project/ideas/unified-entity-state", "rpg-project/ideas/team-memory-system"]
+    },
+    {
+      "type": "decision",
+      "id": "approach-platform-engineer",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Chose Platform Engineer approach over Pattern Detector or Codebase Evolver",
+      "content": "Evaluated three approaches: (A) narrow pattern detector, (B) platform engineer with friction forecasting, (C) wide autonomous codebase evolver. Chose B — wide enough to catch structural friction before it bites, focused enough that findings are relevant to the current session. C was too noisy, A missed friction forecasting.",
+      "tags": ["decision", "architecture"],
+      "references": []
+    },
+    {
+      "type": "decision",
+      "id": "team-position-first-voice",
+      "created": "2026-03-28",
+      "status": "active",
+      "title": "Simplifier reports first in team startup, before PM",
+      "content": "Chose to make the simplifier the first voice in team startup rather than standalone pre-session or PM-feeding. This way Kirk hears the structural picture before the operational picture, and can factor it into task assignment.",
+      "tags": ["decision", "team"],
+      "references": []
+    }
+  ]
+}
