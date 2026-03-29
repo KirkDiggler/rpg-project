@@ -66,7 +66,7 @@ These should be the first entries in context/lessons-learned.json:
 Idea stage. Needs design.md with schema definitions and spawn prompt integration patterns.
 
 ## Platform Simplifier Role
-See `platform-simplifier-design.md` for the design spec of a new team role that reads accumulated knowledge and upcoming work, identifies structural friction, and briefs the team before workers start.
+See `platform-simplifier-design.md` for the design spec. Role implemented at `docs/teams/roles/platform-simplifier/`. Plan at `platform-simplifier-plan.md`.
 
 ## Related
 - Existing rpg-project memory system: `schemas/`, `memories.json` at each scope
