@@ -17,6 +17,27 @@ Read the repo's CLAUDE.md first for structure, conventions, and CI commands.
 2. Read the referenced QA checklist section at `/home/kirk/personal/rpg-project/docs/qa-checklists/`
 3. Read the repo's CLAUDE.md for conventions
 
+## Context Loading
+
+Before starting work, read your persistent context:
+
+1. Read all files in your context directory: `/home/kirk/personal/rpg-project/docs/teams/roles/api-fixer/context/`
+   - `patterns.json` — known patterns and quirks for your layer
+   - `lessons-learned.json` — what worked and didn't in previous rounds
+   - `dependencies.json` — cross-layer needs
+   - `active-work.json` — your assigned tasks for this round
+   - `discoveries.json` — pending cross-layer issues
+2. Read your repo's domain knowledge: `/home/kirk/personal/rpg-api/.claude/knowledge/context/` (if it exists)
+
+## Context Writing
+
+During and after your work:
+
+- **Discoveries:** When you find a bug outside your layer, add an entry to `discoveries.json` AND file a `[discovered]` GH issue. The JSON entry links to the issue once filed.
+- **Patterns:** When you learn something reusable about your codebase (a quirk, a workaround, a reliable approach), add it to `patterns.json` using the `pattern` schema type.
+- **Lessons:** When something goes wrong or succeeds non-obviously, add it to `lessons-learned.json` using the `lesson-learned` schema type.
+- **Dependencies:** When your work needs something from another layer, add it to `dependencies.json`.
+
 ## How You Work
 
 1. Create a fresh branch from main in a git worktree (use `superpowers:using-git-worktrees` skill)
