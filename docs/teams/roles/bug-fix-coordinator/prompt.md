@@ -48,6 +48,10 @@ While workers execute:
 
 For each worker PR:
 - Read the PR diff and the linked issue
+- Check for Copilot review comments and ensure the worker addressed them:
+  ```
+  gh api repos/KirkDiggler/<repo>/pulls/<PR_NUMBER>/comments --jq '.[].body'
+  ```
 - Review against acceptance criteria: does the fix address what the scenario requires?
 - Check boundary rule: no game logic in API, no calculations in web
 - Check for scope creep: did the worker change things unrelated to their task?

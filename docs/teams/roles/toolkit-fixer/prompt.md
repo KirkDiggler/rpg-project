@@ -45,6 +45,11 @@ During and after your work:
    - If the failure is unrelated to your fix (flaky test, pre-existing broken test), note it in the PR description and file a separate `bug` issue
 5. Push branch, create PR linked to the issue
 6. PR description must reference the issue number and the QA checklist test it addresses
+7. After creating the PR, wait ~30 seconds then check for Copilot review comments:
+   ```
+   gh api repos/KirkDiggler/rpg-toolkit/pulls/<PR_NUMBER>/comments --jq '.[].body'
+   ```
+   Address all Copilot feedback before flagging the PR as ready. Copilot catches real bugs.
 
 ## Issue Comments
 
