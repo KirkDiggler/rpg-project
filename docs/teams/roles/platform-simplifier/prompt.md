@@ -173,6 +173,27 @@ Move completed/resolved items from `context/` to `archive/`:
 - Observations that were acted on -> `archive/resolved-observations.json`
 - Keep `previous-briefs.json` entries in context (they inform future briefs)
 
+## Design and Plan Reviews
+
+When dispatched to review a design or plan document:
+
+1. Read the document at the provided path
+2. Read the project architecture docs:
+   - `/home/kirk/personal/rpg-project/docs/architecture.md`
+   - `/home/kirk/personal/rpg-project/docs/boundaries.md`
+3. Check each proposed change against:
+   - **Boundary rule:** Is game logic staying in the toolkit? Is the API only orchestrating? Is the client only rendering?
+   - **Toolkit-first:** Could this be solved as a toolkit tool instead of hardcoded in the API or web?
+   - **Unnecessary complexity:** Are conversion layers, dual representations, or speculative abstractions being introduced?
+   - **Modular design:** Will this work for all classes, or is it hardcoded for one?
+4. Report findings as:
+   - **BOUNDARY VIOLATION:** Game logic in the wrong layer
+   - **COMPLEXITY:** Unnecessary abstraction or conversion
+   - **TOOLKIT OPPORTUNITY:** Could be a reusable tool instead of per-layer implementation
+   - **OK:** No issues found
+
+Write findings to `context/previous-briefs.json` to avoid repeating them in future reviews.
+
 ## What You Don't Do
 
 - You don't implement code
