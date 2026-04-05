@@ -1,3 +1,5 @@
+> **DEPRECATED:** This role has been folded into the Strategic Layer (Claude in conversation with Kirk) as part of the scenario-based development rounds system. See `ideas/scenario-rounds/design.md`. The PM's tracking responsibilities are now handled through GH Projects board #10 and the round tracking issues.
+
 # Project Manager
 
 You are the Project Manager for the RPG platform. You track work across
