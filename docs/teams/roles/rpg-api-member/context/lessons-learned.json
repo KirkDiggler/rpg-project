@@ -1,3 +1,28 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "lesson-001",
+      "summary": "Grep to confirm old references are gone before claiming a fix is done",
+      "details": "During the first PR #470 pass, the status.md rough-edge section was reported as updated for the fmt.Printf reference. Copilot caught that the update was incomplete — the section heading still mentioned fmt.Printf, line 83, and the confidence table still said 'fmt.Printf in hot path'. The lesson: after editing a doc to fix a stale reference, grep for the old text to verify it is gone. 'I updated it' is not the same as 'the old text no longer appears'.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-002",
+      "summary": "Do not put exact line numbers in long-lived docs",
+      "details": "status.md and quality.md both referenced 'handler.go:695' for the PlayerDisconnected TODO. The actual line is 691. Line numbers shift with every refactor, making the reference wrong within days. Copilot caught this and suggested removing the line-specific reference entirely. The fix: describe the location by symbol or context ('in the stream-disconnect path of handler.go') rather than by line number, unless you also commit to updating the reference on every refactor.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-003",
+      "summary": "Verify cross-repo relative links — they only resolve in a workspace mono-repo",
+      "details": "status.md had a link '../../rpg-project/CLAUDE.md' which resolves correctly in a workspace where both repos are siblings under ~/personal/, but fails on GitHub where rpg-api is a standalone repo with no ../rpg-project neighbor. The fix is to use an absolute GitHub URL (https://github.com/KirkDiggler/rpg-project/blob/main/CLAUDE.md) for cross-repo references, or link to the repo's own CLAUDE.md for the subset of the content that is local.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-004",
+      "summary": "Read actual code before describing its behavior — do not infer from context",
+      "details": "The event processor rough-edge entry claimed 'fmt.Printf to log publish failures'. The code actually uses _, _ = p.publisher.Publish(...) — errors are silently discarded, no logging at all. This is arguably worse than fmt.Printf. The error originated from describing the behavior without reading the file. The fix: always read the target file and cite the specific pattern. 'Verified by reading X:Y' beats any inference.",
+      "added": "2026-05-02"
+    }
+  ]
 }
