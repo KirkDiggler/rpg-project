@@ -1,0 +1,52 @@
+{
+  "items": [
+    {
+      "id": "work-001",
+      "summary": "PR #470: docs/honest-status-snapshot — this bootstrapping branch",
+      "details": "Branch: docs/honest-status-snapshot. Added status.md and quality.md in initial PR. This dispatch extends it with full doc tree: architecture/overview.md, architecture/data-model.md, architecture/components/*.md, how-to/*.md, and context/ JSON updates. All docs created on 2026-05-02.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-002",
+      "summary": "Round 2 multi-room dungeon — 6 paused PRs, #468 failing CI",
+      "details": "PRs: #459 (shiftRoomToAbsolute in DungeonStart), #461 (monster entity-map origin offset), #463 (wall absolute positions), #466 (OpenDoor RoomData persist), #467 (room2 horizontal perimeter wall Z-coord fix), #468 (consolidated branch — failing CI on test step). Plan: abandon #468, cherry-pick or re-implement the 6 fixes onto a fresh branch from main, ensure coordinate transform is canonical before merging.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-003",
+      "summary": "Coordinate types refactor — blocked by Round 2 restart",
+      "details": "The coordinate-space bugs (5 fix PRs) root-cause is no canonical local-to-absolute transform. Need: (1) a single toAbsolute function, (2) possible unification of dungeon.Position (int) and entities.Position (float64). This should be the first thing on the fresh Round 2 branch. See docs/architecture/data-model.md#the-position-type-problem.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-004",
+      "summary": "Proto contamination cleanup — encounter orchestrator and entities",
+      "details": "Two targets: (1) orchestrators/encounter/service.go: replace pb.MonsterType, pb.CombatAbilityId, pb.ActionId in Input/Output types with string or local enums. (2) orchestrators/encounter/orchestrator.go: move buildRoomLayoutProto, buildRoomsMap to handler converter layer; replace protoAbilityIDToRef/protoActionIDToRef with string-based dispatch. (3) entities/entity_state.go, entities/encounter_state_builder.go: move proto construction to handler layer. (4) entities/encounter_events.go: remove json:\"-\" proto embedded fields.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-005",
+      "summary": "Redis implementations for encounter, dungeon, and encounter-log repos",
+      "details": "Three in-memory-only repositories need Redis implementations before any durability story. Encounter repo is blocked on solving RoomData interface{} serialization. Dungeon repo is blocked on serializing mixed toolkit/component types. Encounter log repo (append-only) is the easiest — append events as JSON list per encounter key.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-006",
+      "summary": "Move dungeon component to rpg-toolkit",
+      "details": "internal/components/dungeon/ is game logic in the wrong repo. Tracked decision, no open issue as of 2026-05-02. Should be filed as an issue in rpg-toolkit. Migration path: extract to rpg-toolkit/tools/dungeon or rpg-toolkit/rulebooks/dnd5e/dungeon. The internal toolkit/ subdirectory already adapts rpg-toolkit types, making extraction tractable.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-007",
+      "summary": "PlayerDisconnected not wired in streaming handler",
+      "details": "handlers/dnd5e/v1alpha1/encounter/handler.go:691 has TODO: 'Call PlayerDisconnected on the orchestrator'. The orchestrator method is implemented. The handler hook is missing. One-line fix but needs a test.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-008",
+      "summary": "Revert ThemeDebugWalls to ThemeCrypt in dungeon_mapper.go",
+      "details": "orchestrators/encounter/dungeon_mapper.go:44 maps crypt to ThemeDebugWalls. One-line change. Should be in the same PR as the Round 2 coordinate fixes.",
+      "added": "2026-05-02"
+    }
+  ]
+}

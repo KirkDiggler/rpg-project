@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "id": "dep-001",
+      "summary": "rpg-api-protos/gen/go — compiled proto generated branch",
+      "details": "go.mod: github.com/KirkDiggler/rpg-api-protos/gen/go v0.0.0-20260329063233-e78908772cad. This is the @generated branch pseudo-version. To update: GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated. See docs/how-to/update-proto-dependency.md.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-002",
+      "summary": "rpg-toolkit/rulebooks/dnd5e — D&D 5e rules engine",
+      "details": "go.mod: github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e v0.55.5. This is the primary toolkit dependency — combat, character, abilities, monster, initiative, classes, races, backgrounds, weapons, armor, etc. To update: GOPROXY=direct go get github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e@latest.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-003",
+      "summary": "rpg-toolkit/tools/spatial and tools/environments — spatial and dungeon graph",
+      "details": "go.mod: tools/spatial v0.4.0, tools/environments v0.4.0. spatial owns the hex-grid room type and entity placement. environments owns the connection graph (rooms + edges) used for dungeon layouts.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-004",
+      "summary": "No local replace directives",
+      "details": "go.mod has no replace directives. Per workspace CLAUDE.md: NEVER add replace directives — they break CI/CD. During development that needs unreleased toolkit features, publish to the toolkit repo and update the version.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-005",
+      "summary": "testcontainers-go for integration tests",
+      "details": "go.mod: github.com/testcontainers/testcontainers-go v0.40.0 and modules/redis v0.40.0. Used by the integration test harness to spin up a real Redis container. Requires Docker for integration tests.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-006",
+      "summary": "go.uber.org/mock for gomock",
+      "details": "go.mod: go.uber.org/mock v0.6.0. This is Uber's maintained fork of gomock. All mocks are generated with this version. mockery is NOT used.",
+      "added": "2026-05-02"
+    }
+  ]
+}

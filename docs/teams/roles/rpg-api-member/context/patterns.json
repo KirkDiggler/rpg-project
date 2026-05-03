@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "id": "pat-001",
+      "summary": "Input/Output types on every function at every layer",
+      "details": "Non-negotiable. Every orchestrator method, every repository method, every service method has *Input and *Output types. Never accept positional args. Never return bare types. Even helpers should use this pattern. This enables adding fields without breaking callers and future pagination.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-002",
+      "summary": "No proto types past the handler boundary",
+      "details": "Handlers import and use pb. types for conversion. Orchestrators speak internal entity types ONLY. No pb. imports in orchestrators, services, repositories, or entity files. If a type needs to flow past the handler, define a local entity struct for it. The encounter orchestrator currently violates this — 39 pb. refs in orchestrator.go and 3 in service.go. These are tracked violations, not approved patterns.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-003",
+      "summary": "Test suites with gomock at interface boundaries",
+      "details": "Use testify/suite for all test organization. Use go.uber.org/mock (gomock) for mocking at interface boundaries — not mockery. Place mocks in mock/ subdirectory next to the interface, using package name <domain>mock. Regenerate with go:generate.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-004",
+      "summary": "Constructor validates config at startup",
+      "details": "Every New() or NewX() constructor validates its Config struct. If a required dependency is nil, return an error immediately. Never nil-check at runtime in methods. Fail fast at startup.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-005",
+      "summary": "Never return (nil, nil)",
+      "details": "Every function returns either a valid non-nil output or an error. Empty results use empty structs or empty slices, not nil. This applies at every layer.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-006",
+      "summary": "Auth context extraction at handler, passed explicitly to orchestrator",
+      "details": "Handlers call auth.PlayerIDFromContext(ctx) and pass playerID as a field in the orchestrator's input struct. The orchestrator does not access the context for auth. This keeps auth logic in one layer.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-007",
+      "summary": "Outside-in development: handler stub → interface → tests → implementation → repository",
+      "details": "Start with a gRPC handler returning codes.Unimplemented. Define the service interface and Input/Output types. Write handler tests with mocked service. Implement the orchestrator. Implement the repository last. See docs/how-to/add-handler-method.md.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-008",
+      "summary": "Load-then-stream pattern for real-time encounter state",
+      "details": "Clients call GetEncounterState to get a full snapshot with LastEventID, then call StreamEncounterEvents with last_event_id to receive only new events. The orchestrator updates LastEventID in EncounterData whenever an event is published. This is the canonical multi-player state sync pattern.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-009",
+      "summary": "Game logic belongs in rpg-toolkit, not rpg-api",
+      "details": "If code checks weapon properties, calculates modifiers, evaluates conditions, or implements D&D rules — it belongs in rpg-toolkit. rpg-api passes entities to toolkit functions and persists results. The dungeon component is currently violating this boundary and is scheduled for migration.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-010",
+      "summary": "make pre-commit before every commit; make ci-check before every push",
+      "details": "pre-commit runs: fmt, tidy, fix-eof, lint, test. ci-check runs scripts/ci-checks.sh for CI-specific validations. Never use --no-verify. If pre-commit fails, fix the issue — CI will fail with the same checks.",
+      "added": "2026-05-02"
+    }
+  ]
+}

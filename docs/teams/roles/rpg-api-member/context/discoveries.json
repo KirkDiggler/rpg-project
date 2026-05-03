@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "id": "disc-001",
+      "summary": "Proto types in encounter service.go Input/Output types (not just orchestrator.go)",
+      "details": "orchestrators/encounter/service.go:7 imports pb and uses pb.MonsterType in MonsterCombatState (line 459), pb.CombatAbilityId in ActivateCombatAbilityInput (line 511), and pb.ActionId in ExecuteActionInput (line 535). The first reviewer pass noted proto types in the orchestrator implementation (~50 pb. refs in orchestrator.go), but the Input/Output types in service.go are also contaminated. Any caller of the Service interface must also import pb.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-002",
+      "summary": "entities package imports and constructs proto messages",
+      "details": "entities/entity_state.go and entities/encounter_state_builder.go contain full proto construction functions (ToEntityStateProto, BuildEncounterStateData, CombatStateToProto). These belong in the handler converter layer. entities/encounter_events.go embeds *dnd5ev1alpha1.EncounterStateData, *dnd5ev1alpha1.EntityState, *dnd5ev1alpha1.CombatState as json:\"-\" fields in 9 event structs. entities/room.go stores apiv1alpha1.GridType (a proto enum) directly on the Room entity struct.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-003",
+      "summary": "orchestrator.go is 5,577 lines (not 5,650 as stated in PR #470 draft)",
+      "details": "The current line count on the docs/honest-status-snapshot branch is 5,577 lines, not 5,650. The draft status.md says 5,650 — that figure was correct at initial draft time but may reflect a different branch state. The quality.md also says 5,650. Both should be corrected to the verified count of 5,577.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-004",
+      "summary": "Encounter orchestrator has 39 pb. references, not 50",
+      "details": "grep -n 'pb\\.' orchestrator.go | wc -l returns 39. The PR #470 draft says 'approximately 50'. The actual count is 39. Key pb. sites: buildRoomLayoutProto (line 1097), buildRoomsMap (line 1167), protoAbilityIDToRef (line 2321), protoActionIDToRef (line 2372), and local variable declarations for pb.EntityState and pb.EncounterStateData.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-005",
+      "summary": "encounter service.go has 27 character converter TODOs (not 20)",
+      "details": "grep 'TODO' converters.go | wc -l returns 27. The PR #470 draft says 20. The handler.go has 8 additional TODOs (listed as 8 in quality.md — this appears correct).",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-006",
+      "summary": "RoomData stored as interface{} in EncounterData and input types",
+      "details": "encounters/repository.go: EncounterData.RoomData, SaveInput.RoomData, and UpdateInput.RoomData are all typed as interface{} with a comment 'Temporarily using interface{} until spatial is fixed'. The orchestrator uses type assertions at every access point. This makes the repository and orchestrator brittle and disables type checking for room data.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-007",
+      "summary": "DEPRECATED fields in EncounterData still present during migration",
+      "details": "encounters/repository.go: EncounterData has both Monsters []*monster.Data + CharacterHP map[string]int (DEPRECATED comments) AND Entities map[string]*entities.EntityStateData (the new unified approach). Both are present simultaneously. There is no migration path or deprecation deadline visible.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-008",
+      "summary": "SandboxRoom service has interface but no implementation wired",
+      "details": "services/sandboxroom/service.go defines a Service interface with 11 methods covering room generation, spatial queries, and entity management. There is no orchestrator, handler, or server wiring for this service. It is a declared interface with no implementation path visible.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-009",
+      "summary": "Three Position types with different int/float64 signatures",
+      "details": "entities.Position uses float64 X,Y,Z. dungeon.Position uses int X,Y,Z. apiv1alpha1.Position (proto) uses float64 X,Y,Z. RoomOrigins in entities.Dungeon stores dungeon.Position (int). Entity positions in EncounterData use entities.Position (float64). The int/float64 mismatch requires type casts at every boundary. This is the root cause of the five coordinate-space bugs.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-010",
+      "summary": "dungeon_mapper.go line 44 routes crypt theme to ThemeDebugWalls",
+      "details": "mapTheme in dungeon_mapper.go: case 'crypt' returns dungeon.ThemeDebugWalls with a TODO comment 'swap back to ThemeCrypt after wall UI testing'. This is present in the docs/honest-status-snapshot branch. All crypt dungeons show debug walls in any build from this branch.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-011",
+      "summary": "encounter orchestrator has 39 pb refs, service.go adds 3 more — total 42 pb-contaminated sites in the encounter package",
+      "details": "Counting across the package: orchestrator.go has 39 pb. refs, service.go has 3 proto-typed fields in Input/Output types. The contamination extends to anyone importing the encounter package's Input/Output types.",
+      "added": "2026-05-02"
+    }
+  ]
+}
