@@ -1,0 +1,38 @@
+{
+  "items": [
+    {
+      "id": "pr-379",
+      "type": "active",
+      "description": "PR #379 docs/honest-status-snapshot — bootstrap doc tree (architecture/overview.md, data-model.md, components/*.md, how-to/*.md). Extended by this session.",
+      "branch": "docs/honest-status-snapshot",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "pr-377",
+      "type": "paused",
+      "description": "PR #377 fix/376-room-revealed-all-rooms — calls allRoomsFromEncounterState in handleRoomRevealed instead of roomFromEncounterState. Paused pending confirmation that RoomRevealed events reach browser (issue #380).",
+      "branch": "fix/376-room-revealed-all-rooms",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "pr-378",
+      "type": "paused",
+      "description": "PR #378 test/room-reveal-transforms — extracts 5 transform functions from LobbyView.tsx to utils/encounterStateTransforms.ts with 25 tests. Paused alongside #377. IMPORTANT: these 25 tests are NOT on main — the status.md claim about commit 15f232e merging to main was incorrect.",
+      "branch": "test/room-reveal-transforms",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "pr-370",
+      "type": "paused",
+      "description": "PR #370 fix/hex-entity-equipment-fallback — resolves weapons/shields from itemId fallback when equipment data is missing. Independently useful, unblocked by stream issue.",
+      "branch": "fix/hex-entity-equipment-fallback",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "issue-380",
+      "type": "blocked",
+      "description": "Issue #380 — stream delivery investigation. RoomRevealed confirmed to fire on API side (open_door_test.go). Whether it reaches browser via gRPC-Web is unconfirmed. Use Chrome DevTools on port 9222 (scripts/rpg-chrome.sh) to check Network tab → StreamEncounterEvents → EventStream.",
+      "updated": "2026-05-02"
+    }
+  ]
+}

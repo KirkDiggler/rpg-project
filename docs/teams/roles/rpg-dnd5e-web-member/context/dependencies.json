@@ -1,0 +1,43 @@
+{
+  "items": [
+    {
+      "id": "rpg-api-protos",
+      "package": "@kirkdiggler/rpg-api-protos",
+      "version": "v0.1.86",
+      "source": "github:KirkDiggler/rpg-api-protos#v0.1.86",
+      "note": "Lock file must be regenerated (rm -rf node_modules package-lock.json && npm install) on version bumps. GitHub tag installs can silently use stale commits otherwise.",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "bufbuild-protobuf",
+      "package": "@bufbuild/protobuf",
+      "note": "Use create(SchemaType, fields) to construct proto messages. Manually constructed objects need $typeName and $unknown fields set.",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "connectrpc",
+      "package": "@connectrpc/connect + @connectrpc/connect-web",
+      "note": "gRPC-Web transport for browser. createGrpcWebTransport for unary RPCs, server streaming for useEncounterStream.",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "react-three-fiber",
+      "package": "@react-three/fiber + three",
+      "note": "3D hex grid rendering. Requires WebGL context. Components cannot be tested with standard vitest setup without mocking.",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "discord-sdk",
+      "package": "@discord/embedded-app-sdk",
+      "note": "Discord Activity iframe SDK. Initializes auth, provides user.id. Requires /.proxy routing for all API calls when running on discordsays.com.",
+      "updated": "2026-05-02"
+    },
+    {
+      "id": "vitest",
+      "package": "vitest",
+      "version": "4.x",
+      "note": "Test runner. 298 tests, 14 files, ~1.5s runtime as of 2026-05-02.",
+      "updated": "2026-05-02"
+    }
+  ]
+}

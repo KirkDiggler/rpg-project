@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "id": "status-test-count-wrong",
+      "type": "lesson",
+      "description": "The status.md test count (323) was wrong. Grep for 'tests' in the vitest output is not reliable — run npm test and read the summary line. Actual: 298 tests, 14 files.",
+      "date": "2026-05-02"
+    },
+    {
+      "id": "verify-git-branch-before-claiming-merged",
+      "type": "lesson",
+      "description": "Before claiming a commit is on main, run: git log --oneline origin/main | grep <hash>. Or: git branch --contains <hash>. The 15f232e commit was only on the PR branch.",
+      "date": "2026-05-02"
+    },
+    {
+      "id": "lobby-view-legacy-count-grep",
+      "type": "lesson",
+      "description": "The legacy comment count changes as refactoring happens. Always grep -c 'legacy' src/components/LobbyView.tsx rather than relying on a cached number. Was 41 at PR #379 creation, 26 on current branch as of 2026-05-02.",
+      "date": "2026-05-02"
+    }
+  ]
+}

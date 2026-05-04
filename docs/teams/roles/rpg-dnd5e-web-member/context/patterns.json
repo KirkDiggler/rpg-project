@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "proto-object-construction",
+      "type": "pattern",
+      "description": "When constructing proto-compatible objects manually (not via create()), set $typeName as const and $unknown: undefined. Example: { ..., $typeName: 'dnd5e.api.v1alpha1.EntityPlacement' as const, $unknown: undefined }. This is a protobuf-es v2 requirement.",
+      "example": "LobbyView.tsx:129"
+    },
+    {
+      "id": "options-ref-pattern",
+      "type": "pattern",
+      "description": "In useEncounterStream, optionsRef.current = options on every render prevents stale closures inside long-lived async stream callbacks. Use this pattern in any hook that accepts callbacks and maintains async loops.",
+      "example": "useEncounterStream.ts:228-229"
+    },
+    {
+      "id": "load-then-stream",
+      "type": "pattern",
+      "description": "Connect stream, buffer events (isSyncingRef), fetch snapshot, replay buffer, set synced. This sequence in useEncounterStream is the canonical pattern for joining a real-time encounter mid-stream.",
+      "example": "useEncounterStream.ts:251-340"
+    },
+    {
+      "id": "mergeRoom-immutable",
+      "type": "pattern",
+      "description": "mergeRoom() in useDungeonMap is immutable — it never mutates input state. All geometry accumulation is via new Map/Set construction. Use this pattern for any state that needs to accumulate across events.",
+      "example": "useDungeonMap.ts"
+    },
+    {
+      "id": "wall-key-dedup",
+      "type": "pattern",
+      "description": "wallKey(wall) canonicalizes wall endpoints by sorting them lexicographically, so the same physical wall shared between two rooms produces one map entry regardless of direction.",
+      "example": "useDungeonMap.ts — wallKey function"
+    }
+  ]
+}
