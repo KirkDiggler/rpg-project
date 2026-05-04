@@ -29,6 +29,24 @@
       "summary": "rulebooks/dnd5e/dungeon has correct dependency direction but wrong layer location",
       "details": "dungeon/ imports tools/environments and tools/spatial (lower layers — correct). The problem is not a dependency inversion but the module location: dungeon logic belongs at the Tools layer so rpg-api can import dungeon generation without importing the full dnd5e rulebook. The planned move is architectural relocation, not a dependency fix.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-006",
+      "summary": "Toolkit ADR and journey docs are load-bearing context, not archive material — do not apply platform-mcp doc shape mechanically",
+      "details": "The previous invocation bootstrapped docs by adding copies of docs/adr/ and docs/journey/ into docs/archive/, treating them as legacy. Kirk corrected: the ADRs and journey docs record how the engine came to be and are top-level docs, not archive material. The originals were never moved (they stayed at docs/adr/ and docs/journey/ all along); the archive copies were pure duplication added by the bootstrap commit. Fix: git rm the 116 archive copies. Rule going forward: ADRs stay forever (superseded ones get a note, not deletion); journey docs stay as exploration history. The platform-mcp doc shape is a starting point, not a constraint — toolkit is foundational in a way other repos aren't. When in doubt, the toolkit's own history matters more than structural uniformity.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-007",
+      "summary": "Plans judgment call: toolkit docs/plans/ is top-level; the single legitimately-archived plan stays in docs/archive/plans/",
+      "details": "docs/plans/ contains 10 feature design plans (Dec 2025-Jan 2026). These are toolkit-specific exploration — some implemented, some stale — and they live at top-level because they document the toolkit's design history. A single older plan (2025-12-06-ac-system-design.md) was legitimately moved into docs/archive/plans/ by commit 3dd2b98 (Dec 2025) before the ideas/plans distinction was clear; it has no duplicate in docs/plans/ and was left in place. The 10 copies added by the bootstrap commit were removed.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-008",
+      "summary": "Ideas judgment call: toolkit docs/ideas/ is top-level; it is toolkit-specific design memory, not rpg-project/ideas/ territory",
+      "details": "docs/ideas/ has 3 idea directories (action-economy-history, monster-behavior, type-safe-refs). These are toolkit-scoped design explorations that predate the rpg-project/ideas/ convention. rpg-project/ideas/ owns cross-repo ideas; toolkit/docs/ideas/ owns toolkit-internal design history. They are not duplicates. The archive copies were removed; the originals stay at top-level.",
+      "added": "2026-05-02"
     }
   ]
 }
