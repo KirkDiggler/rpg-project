@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "pat-001",
+      "summary": "ToData / LoadFromData persistence pattern",
+      "details": "Every stateful toolkit component implements ToData() *XxxData and LoadFromData(ctx, *XxxData, events.EventBus) (*Xxx, error). Data struct has JSON tags, no methods. Runtime struct has no JSON tags, holds event bus subscriptions. rpg-api serializes Data to Redis; calls LoadFromData before any rule call; calls ToData after to serialize the result back. Never (nil, nil) — always return a valid object or an error. Present in: character, Draft, BasicEnvironment, RoomData.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-002",
+      "summary": "ToJSON / LoadJSON for conditions and features (heterogeneous blobs)",
+      "details": "When multiple runtime types share a single opaque JSON field (conditions list, features list), the pattern is: ToJSON() (json.RawMessage, error) for serialization; LoadJSON(json.RawMessage) (BehaviorType, error) for routing. LoadJSON peeks at ref.Value in the JSON, switches on it to the correct constructor, unmarshals the full struct. This keeps rpg-api's stored JSON opaque. Defined in rulebooks/dnd5e/conditions/loader.go and rulebooks/dnd5e/features/loader.go.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-003",
+      "summary": "BusEffect lifecycle: Apply subscribes, Remove unsubscribes, collect all errors on Remove",
+      "details": "Any game mechanic that modifies behavior through events implements BusEffect: Apply(bus EventBus) error (subscribe handlers, store IDs), Remove(bus EventBus) error (unsubscribe all, clear IDs), IsApplied() bool. Remove must collect ALL unsubscribe errors (errors.Join or rpgerr accumulation) — never stop at the first failure. PR #603 established this convention. Stopping at first error leaves orphaned subscriptions.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-004",
+      "summary": "Refs package: typed constructors over raw strings",
+      "details": "rulebooks/dnd5e/refs/ provides named ref constructors: refs.Features.Rage(), refs.Conditions.Dodging(), refs.CombatAbilities.Attack(), refs.Actions.Strike(). These are the canonical identifiers. Never use raw strings like 'rage' or 'dnd5e:features:rage' in switch cases or comparisons — always use refs.* or the module's typed constant. This makes identifiers greppable and refactorable.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-005",
+      "summary": "Testify suite pattern — mandatory for all non-example tests",
+      "details": "All tests use suite.Suite + SetupTest() + s.Run() for subtests. SetupTest() creates fresh mocks and instances before each test function. SetupSubTest() resets shared test data before each s.Run(). Example tests (example_*_test.go) may be flat — they are documentation, not behavioral tests. Mocks go in mock/ subdirectory per module, generated with go:generate using uber's gomock.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-006",
+      "summary": "Input/Output types on every function — non-negotiable",
+      "details": "Every function at every layer uses Input/Output struct types: func DoThing(ctx context.Context, input *DoThingInput) (*DoThingOutput, error). No positional parameters beyond ctx and input. This applies to internal helpers too. Never return (nil, nil) — always a valid object or an error. This is the workspace-wide rule enforced by CLAUDE.md.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pat-007",
+      "summary": "LayerOrchestrator FindPath is room-to-room, not intra-room",
+      "details": "BasicRoomOrchestrator.FindPath(sourceRoomID, targetRoomID) returns a sequence of room IDs to traverse. It is not an A* within a single room. For intra-room pathfinding use SimplePathFinder.FindPath(start, goal CubeCoordinate, blocked) — but this is hex-only (issue #614). Square-grid intra-room pathfinding has no toolkit solution today.",
+      "added": "2026-05-02"
+    }
+  ]
+}

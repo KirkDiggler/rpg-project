@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "id": "disc-001",
+      "summary": "items/validation/basic_validator_test.go does not compile — GetType() return type mismatch",
+      "details": "items/validation/basic_validator_test.go:27 implements GetType() string on mockItem, but core.Entity.GetType() returns core.EntityType (a distinct named string type defined at core/entity.go:8). Go's type system treats these as distinct — the mock does not satisfy core.Entity. Running go test ./... from items/ exits with a build failure. Production code in item.go builds correctly. Fix: change return type on mockItem.GetType() to core.EntityType and change the itemType field accordingly. Tracked: issue #612.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-002",
+      "summary": "Four modules have local replace directives committed to main — items, mechanics/conditions, mechanics/proficiency, mechanics/spells",
+      "details": "Verified by reading each go.mod file. items/go.mod: 1 directive (core). mechanics/conditions/go.mod: 4 directives (core, dice, events, effects). mechanics/proficiency/go.mod: 1 directive (effects). mechanics/spells/go.mod: 6 directives (core, dice, events, conditions, effects, resources). mechanics/conditions emits 'go: updates to go.mod needed' before printing test results. All four violate the workspace rule 'NEVER add replace directives — Breaks CI/CD'. Tracked: issue #613.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-003",
+      "summary": "PathFinder interface is hex-only — no square-grid intra-room pathfinder exists",
+      "details": "tools/spatial/pathfinder.go:9 defines: FindPath(start, goal CubeCoordinate, blocked map[CubeCoordinate]bool) []CubeCoordinate. CubeCoordinate is the hex type. SimplePathFinder.FindPath uses GetNeighbors() on CubeCoordinate which has no knowledge of square grid topology. There is no SquarePathFinder. BasicRoomOrchestrator.FindPath is room-to-room only (which sequence of rooms), not intra-room. A monster navigating obstacles in a square room has no toolkit path. Tracked: issue #614.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-004",
+      "summary": "backgrounds/grants.go (172 lines) and races/grants.go (109 lines) have no test files",
+      "details": "Verified by: find rulebooks/dnd5e/backgrounds -name '*_test.go' returns empty. find rulebooks/dnd5e/races -name '*_test.go' returns empty. Both files implement GetGrants() switch statements that return skill proficiencies, tool proficiencies, and language grants for each background/race. This non-trivial switch is called during character creation finalization in rpg-api. A wrong skill assignment produces a character with wrong proficiencies. Tracked: issue #615.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-005",
+      "summary": "LayoutOrchestrator and TransitionSystem interfaces defined in orchestrator.go with no implementations and no 'not implemented' marker",
+      "details": "tools/spatial/orchestrator.go:109 defines LayoutOrchestrator (ArrangeRooms, CalculateRoomPositions, ValidateLayout, GetLayoutMetrics). orchestrator.go:135 defines TransitionSystem (BeginTransition, CompleteTransition, CancelTransition, GetActiveTransitions, GetTransition). Both have zero implementations. tools/spatial/CLAUDE.md documents them as 'future work' but the source file has no // Not implemented comment. A new contributor cannot distinguish implemented interfaces from advisory ones by reading the source. Risk: someone implements against a contract that is actually advisory.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-006",
+      "summary": "mechanics/features base module has zero test files — loader and SimpleFeature are untested",
+      "details": "ls mechanics/features/ shows: README.md, doc.go, docs/, errors.go, feature.go, go.mod, go.sum, loader.go, mock/, simple_feature.go. No *_test.go files. Running go test ./... from mechanics/features returns 'no test files' — not a failure, but loader.Route() error paths and simple_feature.go behaviors are untested at the module level. Indirect coverage exists via rulebooks/dnd5e/features tests.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-007",
+      "summary": "rulebooks/dnd5e/dungeon/ is inside the rulebook but architecturally belongs at Tools layer",
+      "details": "rulebooks/dnd5e/dungeon/ (dungeon.go, dungeon_data.go, types.go, dungeon_test.go) provides procedural dungeon generation. It depends on tools/environments and tools/spatial (correct direction — lower layers). But its location means rpg-api must import the full dnd5e rulebook to use dungeon logic. The planned move is to tools/dungeon/ or a new top-level module. No issue filed as of 2026-05-02. dungeon_test.go is 336 lines — solid test coverage, no bugs known, just wrong location.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-008",
+      "summary": "character/choices/testdata/ provenance undocumented — fetched from an external API, no refresh instructions",
+      "details": "rulebooks/dnd5e/character/choices/testdata/api/classes/ and testdata/api/races/ contain JSON fixtures. No file documents when they were fetched, from which URL, or how to refresh them. If the upstream API changes its schema, tests silently test stale data. Low priority but worth noting before a new contributor modifies the choice system.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-009",
+      "summary": "spawn module's Phase 2 patterns (formation, team, clustered) have no standalone tests",
+      "details": "tools/spawn/spawning_patterns.go implements formation, team-based, player choice, and clustered spawning. No test file exercises these patterns directly. Tested only through the engine integration test. A bug in formation logic would not be caught by cd tools/spawn && go test ./...",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-010",
+      "summary": "graph_generator.go in tools/environments is substantial (estimated 400 lines) with no direct unit tests",
+      "details": "tools/environments/graph_generator.go generates connected room graphs with configurable parameters. No direct test file exists for this file. It is tested indirectly through BasicEnvironment creation tests in environment_persistence_test.go. A procedural generation algorithm with no unit tests is a gap — edge cases (degenerate inputs, zero rooms, disconnected graph) are not explicitly verified.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-011",
+      "summary": "The dual-bus pattern (EventBus vs BusEffect) has no ADR and is easy to misuse",
+      "details": "events/bus.go defines EventBus (plain pub/sub). events/bus_effect.go defines BusEffect (Apply/Remove lifecycle). These are distinct concepts. ADR-0024 covers typed topics but does not explain when to use EventBus directly vs. routing through BusEffect. The correct heuristic: EventBus for stateless observers; BusEffect for stateful mechanics with an active/inactive lifecycle. Without documentation, new contributors wire the wrong one.",
+      "added": "2026-05-02"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "lesson-001",
+      "summary": "EntityType is a named type, not a raw string — mocks must match the exact return type",
+      "details": "core.EntityType is defined as 'type EntityType string' — a distinct named type. A mock that returns string instead of EntityType compiles if the mock does not claim to satisfy an interface, but fails when assigned to core.Entity. The items/validation test failure (issue #612) is the canonical example. Always check: if an interface method returns a named type, your mock must return that exact named type.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-002",
+      "summary": "Never commit replace directives — they are dev-only conveniences that break CI",
+      "details": "Local replace directives (replace github.com/foo => ../foo) resolve against local filesystem paths. CI does not have those paths. Even when CI checks out the full repo, go mod tidy produces a diff from the replace directives, which CI can treat as a failure. The CLAUDE.md rule is unambiguous: NEVER add replace directives. Remove them before committing. The four modules in issue #613 are the result of development shortcuts that became permanent.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-003",
+      "summary": "Bulk error collection in Remove() — PR #603",
+      "details": "BusEffect.Remove() must unsubscribe all active handlers, not stop at the first failure. PR #603 fixed Condition.Remove() to collect all unsubscribe errors. The pattern: var errs []error; for each ID, if unsubscribe fails append to errs; set subscriptions nil; return errors.Join(errs...). Stopping at first failure leaves orphaned subscriptions that fire on events after removal.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-004",
+      "summary": "make pre-commit only covers core + events — not the full repo",
+      "details": "The Makefile pre-commit target runs fmt, tidy, lint, and tests for core and events only. Before committing changes to mechanics/*, tools/*, rulebooks/*, items run per-module go test ./... and golangci-lint run ./... manually. make test-all covers all modules but currently fails at items/ (issue #612).",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-005",
+      "summary": "rulebooks/dnd5e/dungeon has correct dependency direction but wrong layer location",
+      "details": "dungeon/ imports tools/environments and tools/spatial (lower layers — correct). The problem is not a dependency inversion but the module location: dungeon logic belongs at the Tools layer so rpg-api can import dungeon generation without importing the full dnd5e rulebook. The planned move is architectural relocation, not a dependency fix.",
+      "added": "2026-05-02"
+    }
+  ]
+}

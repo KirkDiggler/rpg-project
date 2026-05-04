@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "id": "dep-001",
+      "summary": "rpg-api consumes rulebooks/dnd5e, tools/spatial, tools/environments, tools/spawn",
+      "details": "rpg-api imports: rulebooks/dnd5e (character, combat, initiative, monster, monstertraits, features, conditions, actions, combatabilities, spells, dungeon, gamectx, refs). tools/spatial (room layout, entity placement, GridType constants). tools/environments (dungeon graph persistence, connection graph). tools/spawn (entity placement adapter). rpg-api never imports mechanics/* or core/* directly — it always goes through rulebooks/dnd5e types. rpg-api stores character.Data (toolkit type) in Redis and reconstructs via LoadFromData.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-002",
+      "summary": "rpg-api hardcodes spatial.GridTypeHex and HexOrientationPointyTop in the encounter handler",
+      "details": "Verified from rpg-api/docs/architecture/overview.md: encounter handler hardcodes spatial.GridTypeHex and spatial.HexOrientationPointyTop at six call sites (lines 157-158, 359-360, 569-570, 757-758, 822-823, 905-906). These spatial constants should come from the orchestrator's output, not be constructed in the handler. This is a violation on the rpg-api side, not the toolkit side — but toolkit needs to be aware that consumers may depend on the current hex-default behavior.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-003",
+      "summary": "rpg-api components/dungeon/ depends on dungeon generation logic that should be in toolkit",
+      "details": "rpg-api/internal/components/dungeon/ implements procedural dungeon generation (room shapes, wall perimeters, door spawning, hex-grid layouts, monster CR budgets, theme tables). This violates the Boundary Rule — game mechanics belong in rpg-toolkit. The work item is to extract this to toolkit (tools/dungeon/ or a new module). Until then, rpg-api and toolkit have a silent duplication: dungeon logic in both repos.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-004",
+      "summary": "toolkit never imports rpg-api or rpg-api-protos — verified clean",
+      "details": "Verified: grep -r 'rpg-api' */go.mod from toolkit root returns empty. No toolkit module imports rpg-api or rpg-api-protos. This is the correct direction. If any toolkit module ever needs a type that rpg-api has, the type must be defined locally in toolkit.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-005",
+      "summary": "game module version spread: v0.1.0 with events v0.1.1, while spatial uses events v0.6.2",
+      "details": "game/go.mod pins events v0.1.1. tools/spatial/go.mod pins events v0.6.2. These are significantly different versions. game.Context is used in tools/spatial for LoadRoomFromContext. If events interface changed between v0.1.1 and v0.6.2 in ways that affect the EventBus type, there could be a compatibility gap. No runtime issue observed as of 2026-05-02, but watch for this when upgrading game.",
+      "added": "2026-05-02"
+    }
+  ]
+}

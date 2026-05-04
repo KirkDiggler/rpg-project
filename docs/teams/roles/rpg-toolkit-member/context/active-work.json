@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "id": "work-001",
+      "summary": "PR #611: docs/honest-status-snapshot — this bootstrapping branch",
+      "details": "Branch: docs/honest-status-snapshot. Added status.md and quality.md in initial commit. This dispatch extends it with: docs/archive/ (legacy adr/, journey/, plans/, ideas/), docs/architecture/overview.md, docs/architecture/data-model.md, docs/architecture/components/*.md (core, events, mechanics, tools-spatial, tools-environments, tools-spawn, rulebook-dnd5e, items), docs/how-to/*.md (run-tests, add-a-mechanic, add-a-rulebook-entry, fix-go-mod-replace-directives), and rpg-project context/ JSONs. All created 2026-05-02.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-002",
+      "summary": "Issue #612: items/validation test compile failure — GetType() return type",
+      "details": "items/validation/basic_validator_test.go:27 returns string where core.EntityType is required. Fix: change GetType() string to GetType() core.EntityType on the mock struct and update the itemType field. Estimated 15-30 minutes. Needs an issue and branch.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-003",
+      "summary": "Issue #613: Remove local replace directives from 4 modules — items, conditions, proficiency, spells",
+      "details": "Four modules have local replace directives committed to main. Each needs a cleanup PR: publish any unpublished dependency versions, update require pins to published versions, remove replace blocks, run go mod tidy, confirm tests pass. One PR per module per workspace convention. See how-to/fix-go-mod-replace-directives.md for step-by-step.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-004",
+      "summary": "Issue #614: Add square-grid pathfinder to tools/spatial",
+      "details": "PathFinder interface (tools/spatial/pathfinder.go:9) is hex-only (CubeCoordinate arguments). Need: SquarePathFinder implementing FindPath(start, goal SquareCoord, blocked map[SquareCoord]bool) []SquareCoord using Chebyshev-distance A*. Also: add 'Not implemented' comments to LayoutOrchestrator and TransitionSystem interfaces in orchestrator.go to prevent contributor confusion.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-005",
+      "summary": "Issue #615: Add tests for backgrounds/grants.go and races/grants.go",
+      "details": "Both files implement non-trivial switch statements (13 backgrounds, 10 races) that return skill/tool/language grants used during character creation. Neither has a test file. A test file for each should enumerate all backgrounds/races and assert the expected grant output. Used by rpg-api at character finalization.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "work-006",
+      "summary": "Planned (no issue): Move rulebooks/dnd5e/dungeon/ to tools/dungeon/",
+      "details": "The dungeon package is architecturally a Tools-layer concern but lives inside the rulebook. Moving it would allow rpg-api to import dungeon logic without importing the full dnd5e module. Solid test coverage (336 lines) — the move is mechanical once scoped. Needs an issue filed before starting.",
+      "added": "2026-05-02"
+    }
+  ]
+}
