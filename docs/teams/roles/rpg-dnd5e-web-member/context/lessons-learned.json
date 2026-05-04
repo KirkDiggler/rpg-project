@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "id": "audit-must-propagate-to-all-occurrences",
+      "type": "lesson",
+      "description": "When an audit catches drift (line counts, file existence, API shape), the correction must propagate to ALL doc claims, not just where I first wrote it. Discoveries in context/ are not enough — grep -rn the docs for the stale fact and fix every occurrence. 'I noted it in discoveries' is not the same as 'the docs are correct.' PR #379 Copilot review found 13 comments all tracing back to this failure: context knew the right facts, but multiple doc files still claimed the old ones.",
+      "date": "2026-05-02"
+    },
+    {
       "id": "status-test-count-wrong",
       "type": "lesson",
       "description": "The status.md test count (323) was wrong. Grep for 'tests' in the vitest output is not reliable — run npm test and read the summary line. Actual: 298 tests, 14 files.",
