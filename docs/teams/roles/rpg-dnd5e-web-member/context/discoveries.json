@@ -41,6 +41,13 @@
       "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 0d82258",
       "added": "2026-05-05",
       "status": "in-progress"
+    },
+    {
+      "id": "disc-wave2-cross-room-web-gates",
+      "summary": "Three layered web-side gates blocked cross-room play: (1) BattleMapPanel.tsx:75-81 filtered entities by entity.roomId === currentRoomId so the player vanished when a new room was revealed; (2) HexGrid.tsx isBlocked treated any non-floor-tile as impassable, but doors sit on the boundary and are in NEITHER room's bbox so A* refused to path through open doors — root of 'client never lets me cross'; (3) handleRoomRevealed had no console.log so the dispatcher's correct delivery was invisible during playtest. Fixed by removing the entity filter, adding openDoorWalkableKeys to extend isBlocked, and adding a structured log. Branch fix/wave2-player-move-render commit 26238ee. All conceptually the same shape — web treating currentRoomId as singular focus instead of accepting all revealed rooms as first-class. Per feedback_no_logic_in_web.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 26238ee",
+      "added": "2026-05-05",
+      "status": "in-progress"
     }
   ]
 }

@@ -41,6 +41,13 @@
       "summary": "Movement-style event consumers prefer updatedEntity but fall back on entityId + path[last] when the snapshot is missing.",
       "description": "Pattern for consumers of events that carry both an entity snapshot and a movement path: prefer the snapshot, but synthesize a position-only update from path[path.length-1] when the snapshot is absent. Drives applyEntityPositionUpdate in useEncounterState. The pure helper mergeEntityPosition is a no-op when the entity isn't already tracked — never fabricate entities from a position alone.",
       "example": "LobbyView.tsx handleMovementCompleted; useEncounterState.ts mergeEntityPosition"
+    },
+    {
+      "id": "revealed-rooms-are-first-class",
+      "type": "pattern",
+      "summary": "Render every revealed room and every entity in unified state regardless of currentRoomId; never filter by entity.roomId === currentRoomId.",
+      "description": "currentRoomId is the player's location, not a render scope. Once a room is revealed, its tiles, walls, doors, and entities are first-class scene members until the encounter ends. Filtering renders or interactions by entity.roomId === currentRoomId hides the player when they enter a new room and breaks cross-room visibility. The accumulated dungeonMap.floorTiles + open-door walkable-keys define the walkable scene; A* and click handlers operate on the union, not on a per-room slice. Per feedback_no_logic_in_web — visibility decisions belong to the API.",
+      "example": "BattleMapPanel.tsx mapEntitiesForRender; HexGrid.tsx isBlocked + openDoorWalkableKeys"
     }
   ]
 }
