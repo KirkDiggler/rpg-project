@@ -3,24 +3,28 @@
     {
       "id": "audit-must-propagate-to-all-occurrences",
       "type": "lesson",
+      "summary": "Audit corrections must propagate to every doc occurrence, not just discoveries — grep all docs.",
       "description": "When an audit catches drift (line counts, file existence, API shape), the correction must propagate to ALL doc claims, not just where I first wrote it. Discoveries in context/ are not enough — grep -rn the docs for the stale fact and fix every occurrence. 'I noted it in discoveries' is not the same as 'the docs are correct.' PR #379 Copilot review found 13 comments all tracing back to this failure: context knew the right facts, but multiple doc files still claimed the old ones.",
       "date": "2026-05-02"
     },
     {
       "id": "status-test-count-wrong",
       "type": "lesson",
+      "summary": "Test counts must come from npm test summary line, not grep — status.md claimed 323 vs actual 298.",
       "description": "The status.md test count (323) was wrong. Grep for 'tests' in the vitest output is not reliable — run npm test and read the summary line. Actual: 298 tests, 14 files.",
       "date": "2026-05-02"
     },
     {
       "id": "verify-git-branch-before-claiming-merged",
       "type": "lesson",
+      "summary": "Verify a commit is on main with git branch --contains before claiming it shipped.",
       "description": "Before claiming a commit is on main, run: git log --oneline origin/main | grep <hash>. Or: git branch --contains <hash>. The 15f232e commit was only on the PR branch.",
       "date": "2026-05-02"
     },
     {
       "id": "lobby-view-legacy-count-grep",
       "type": "lesson",
+      "summary": "Always re-grep legacy comment count in LobbyView.tsx live; cached numbers go stale fast.",
       "description": "The legacy comment count changes as refactoring happens. Always grep -c 'legacy' src/components/LobbyView.tsx rather than relying on a cached number. Was 41 at PR #379 creation, 26 on current branch as of 2026-05-02.",
       "date": "2026-05-02"
     }
