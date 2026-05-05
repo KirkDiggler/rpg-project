@@ -59,6 +59,12 @@
       "summary": "make pre-commit before every commit; make ci-check before every push",
       "details": "pre-commit runs: fmt, tidy, fix-eof, lint, test. ci-check runs scripts/ci-checks.sh for CI-specific validations. Never use --no-verify. If pre-commit fails, fix the issue — CI will fail with the same checks.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "pat-coord-space-merge-boundary",
+      "summary": "Apply room origin at the merge boundary; cumulative encounter state is dungeon-absolute",
+      "added": "2026-05-04",
+      "details": "When folding revealed-room data (walls, entities, obstacles, monster placements) into cumulative encounter state, translate from room-local to dungeon-absolute at the producer using dungeon.Module.LocalToAbsolute (or the localToAbsoluteOrLocal helper in orchestrator.go for the single-room start case). Do this at the OpenDoor merge site, not at downstream consumers.\n\nProducers that write to cumulative state and must apply origin:\n- buildRoomLayoutProto (orchestrator.go ~1098): walls in EncounterStateData.rooms[].walls.\n- localToAbsoluteOrLocal at OpenDoor (~3172): monster.Position in MonsterInfo / Entities map.\n- buildCombinedRoomDataAfterOpenDoor (~5836): obstacle.Position in spatial.RoomData.CubeEntities.\n\nConsumers (handlers, event publishers, perception, movement-collision, roomContainingPosition) treat cumulative state as already-absolute and never re-translate. The proto RoomLayout.Origin field is still emitted alongside absolute walls so a client can recover the local frame by subtraction if needed.\n\nIf you add a new producer of cumulative state and skip origin translation, you reproduce issue #493. Enforce this at code review for any new merge site."
     }
   ]
 }

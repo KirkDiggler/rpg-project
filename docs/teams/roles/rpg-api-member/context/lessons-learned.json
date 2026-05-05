@@ -23,6 +23,12 @@
       "summary": "Read actual code before describing its behavior — do not infer from context",
       "details": "The event processor rough-edge entry claimed 'fmt.Printf to log publish failures'. The code actually uses _, _ = p.publisher.Publish(...) — errors are silently discarded, no logging at all. This is arguably worse than fmt.Printf. The error originated from describing the behavior without reading the file. The fix: always read the target file and cite the specific pattern. 'Verified by reading X:Y' beats any inference.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-coord-space-discipline",
+      "summary": "Enforce coord-space contracts at the producer / merge boundary, not at consumers",
+      "added": "2026-05-04",
+      "details": "Issue #493 was the sixth bug of the same shape: a piece of cumulative encounter state emitted in room-local coordinates when the rest of the cumulative state had been translated to dungeon-absolute. Specifically, RoomLayout.walls in EncounterStateData.rooms were untranslated while EntityState.position and RoomData.CubeEntities were absolute. The visual symptom (rooms overlapping in the client) and the gameplay symptom (cross-room targeting / pathing failures) both trace back to this single producer.\n\nLessons: (1) When you have two coordinate spaces, declare ONE canonical frame for cumulative state and enforce it at every producer that writes to that state. (2) Do not put translation in consumers — it spreads the discipline across an unbounded surface area, and any new consumer that forgets to translate becomes a bug. (3) When you find one producer is the wrong frame, grep for sibling producers in the same data structure (here: rooms[] map fields, entities[] map fields, CubeEntities) before assuming you've fixed it. (4) Cube invariant X+Y+Z=0 is preserved under origin addition because both LocalPosition and AbsolutePosition satisfy it independently — no special-case math needed at the merge site.\n\nApplying this discipline closes the runtime data-flow bug class. Type-level unification (one Position type, one numeric width) is a separate discipline tracked as #465 and is what would prevent these bugs from being writeable in the first place."
     }
   ]
 }

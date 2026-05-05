@@ -47,7 +47,8 @@
       "summary": "OpenDoor reveal stores room-B walls and entities without translating from room-local to dungeon-absolute, so revealed rooms overlap room A geometrically",
       "pointer": "KirkDiggler/rpg-api#493",
       "added": "2026-05-04",
-      "status": "open"
+      "status": "in-progress",
+      "delta": "Localized to buildRoomLayoutProto in orchestrator.go (line ~1098). Entity positions and CubeEntities were already translated correctly; only RoomLayout.walls in EncounterStateData.rooms were room-local. Fix on branch fix/cross-room-state-wave2 applies origin element-wise to each wall vertex at the producer. Awaiting Kirk's playtest verification before flipping to resolved."
     }
   ]
 }
