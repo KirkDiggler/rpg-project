@@ -27,6 +27,13 @@
       "summary": "Always re-grep legacy comment count in LobbyView.tsx live; cached numbers go stale fast.",
       "description": "The legacy comment count changes as refactoring happens. Always grep -c 'legacy' src/components/LobbyView.tsx rather than relying on a cached number. Was 41 at PR #379 creation, 26 on current branch as of 2026-05-02.",
       "date": "2026-05-02"
+    },
+    {
+      "id": "event-consumer-mirror-server-fallback-fields",
+      "type": "lesson",
+      "summary": "When proto events carry both 'rich' (entity snapshot) and 'thin' (path/id) fields, the consumer must accept either shape — the server can legitimately send only one.",
+      "description": "MovementCompletedEvent has updatedEntity (full snapshot) AND path[]+entityId (delta-shaped). The API on player moves currently sends only the delta-shaped fields; on monster moves it sends both. The web consumer originally only acted when updatedEntity was set, so player moves silently dropped on the floor. Lesson: when the proto exposes overlapping/redundant fields, the consumer should treat them as a fallback chain, not a single required field. Mirror what the matched producer-side path does — applyMonsterMovement already used path[last]; handleMovementCompleted should too. Found 2026-05-05 during Wave 2 cross-room state work.",
+      "date": "2026-05-05"
     }
   ]
 }

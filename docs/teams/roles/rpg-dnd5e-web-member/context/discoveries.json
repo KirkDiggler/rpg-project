@@ -34,6 +34,13 @@
       "pointer": "KirkDiggler/rpg-api#493",
       "added": "2026-05-04",
       "status": "open"
+    },
+    {
+      "id": "disc-wave2-player-move-consumer",
+      "summary": "MovementCompletedEvent for players carries entityId+path but omits updatedEntity, so handleMovementCompleted in LobbyView never advanced the character position in encounterState. Fix mirrors applyMonsterMovement: fall back on path[path.length-1] via new mergeEntityPosition helper. Stream dispatch was already correct (useEncounterStream.ts:127). Branch fix/wave2-player-move-render, commit 0d82258. Awaiting Kirk playtest verification.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 0d82258",
+      "added": "2026-05-05",
+      "status": "in-progress"
     }
   ]
 }

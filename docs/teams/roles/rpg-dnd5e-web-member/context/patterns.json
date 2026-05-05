@@ -34,6 +34,13 @@
       "summary": "wallKey() sorts endpoints lexicographically to dedupe shared walls across rooms.",
       "description": "wallKey(wall) canonicalizes wall endpoints by sorting them lexicographically, so the same physical wall shared between two rooms produces one map entry regardless of direction.",
       "example": "useDungeonMap.ts — wallKey function"
+    },
+    {
+      "id": "event-consumer-fallback-on-path",
+      "type": "pattern",
+      "summary": "Movement-style event consumers prefer updatedEntity but fall back on entityId + path[last] when the snapshot is missing.",
+      "description": "Pattern for consumers of events that carry both an entity snapshot and a movement path: prefer the snapshot, but synthesize a position-only update from path[path.length-1] when the snapshot is absent. Drives applyEntityPositionUpdate in useEncounterState. The pure helper mergeEntityPosition is a no-op when the entity isn't already tracked — never fabricate entities from a position alone.",
+      "example": "LobbyView.tsx handleMovementCompleted; useEncounterState.ts mergeEntityPosition"
     }
   ]
 }
