@@ -62,6 +62,20 @@
       "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 86694de",
       "added": "2026-05-05",
       "status": "in-progress"
+    },
+    {
+      "id": "disc-wave2-overlay-y-offsets-stale",
+      "summary": "MovementRangeBorder (BORDER_Y_OFFSET=0.05) and PathPreview (PATH_Y_OFFSET=0.03) had Y offsets stale against the floor extrusion. ShadedHexFloor (b08d214) replaced flat ShapeGeometry tiles with ExtrudeGeometry({depth:0.1}) + rotateX(-π/2) + translate(0,0.05,0), which puts the floor's top face at world y=0.15 — both overlays sat AT or BELOW the floor's bottom face (y=0.05) and were occluded by the opaque top from the standard top-down camera. Cyan border was visible only when the camera tilted enough to see the floor's bottom face — Kirk's 'renders below the floor' Wave 2 playtest report. Initial dispatch hypothesis ('InstancedMesh shader missing instanceMatrix multiply, all instances at origin' — same shape as 573fa40) was a red herring: MovementRangeBorder is a single THREE.Mesh with one BufferGeometry containing baked-in world coords for every boundary edge, not an InstancedMesh. Fix raises BORDER_Y_OFFSET to 0.17 and PATH_Y_OFFSET to 0.16 (border on top so it reads when shared with path). New floorOverlayHeights.test.ts source-text-inspects the constants against the documented floor top (y=0.15) — same pattern as AdvancedCharacterShader.test.ts since vitest's jsdom can't drive WebGL. Branch fix/wave2-player-move-render commit bd6c2db. Lesson: when a foundational geometry component changes (flat → extruded), grep every overlay's Y offset and update them in the same PR; otherwise bug surfaces playtests later as 'render position wrong' with misleading symptoms.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ bd6c2db",
+      "added": "2026-05-05",
+      "status": "in-progress"
+    },
+    {
+      "id": "disc-wave2-cross-room-reachable-not-web-bug",
+      "summary": "Wave 2 'cannot move further into revealed room' symptom is NOT a web-side bug per source inspection. Web's reachable computation already uses the union of all revealed-room floor tiles (`dungeonMap.floorTiles` from useDungeonMap accumulates across mergeRoom for every room) PLUS open-door walkable keys (HexGrid.tsx:222-238 `isBlocked` checks `floorTiles.has(key) || doorOpenKeys.has(key)`). After a cross-door move, `applyEntityPositionUpdate` writes the player's new position from `event.path[event.path.length-1]` into the unified encounter store; `currentEntityPosition` in HexGrid derives from there. BFS from that new position would explore neighbors in BOTH room A and room B because both rooms' floor tiles are in the union. The only ways the symptom can manifest with this code path are: (1) `getMovementRemainingFromCombat(combatState)` returns 0 because the api isn't preserving canonical actionEconomy.movementRemaining across the boundary-crossing move — analogous to the 86694de OpenDoor desync, but for the cross-door MoveCharacter call; (2) `currentEntityPosition` is stale because the api emits MovementCompletedEvent without `updatedEntity` AND without a `path[]` final coordinate inside room B. Both scenarios are api-side. The wave2-debug log in HexGrid.tsx:286-312 prints `movementRemaining` + reachable-set size + sample on player turn — next playtest will pinpoint which scenario fires. Surfacing for the api team-member; no web fix attempted on this branch. Lesson: when a symptom looks like a web bug, walk the data flow source-first before patching — most cross-cutting Wave 2 symptoms have been api-side root causes leaking through.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render investigation only",
+      "added": "2026-05-05",
+      "status": "open-api-side"
     }
   ]
 }
