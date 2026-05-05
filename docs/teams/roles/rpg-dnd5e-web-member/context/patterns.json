@@ -45,9 +45,16 @@
     {
       "id": "revealed-rooms-are-first-class",
       "type": "pattern",
-      "summary": "Render every revealed room and every entity in unified state regardless of currentRoomId; never filter by entity.roomId === currentRoomId.",
-      "description": "currentRoomId is the player's location, not a render scope. Once a room is revealed, its tiles, walls, doors, and entities are first-class scene members until the encounter ends. Filtering renders or interactions by entity.roomId === currentRoomId hides the player when they enter a new room and breaks cross-room visibility. The accumulated dungeonMap.floorTiles + open-door walkable-keys define the walkable scene; A* and click handlers operate on the union, not on a per-room slice. Per feedback_no_logic_in_web — visibility decisions belong to the API.",
-      "example": "BattleMapPanel.tsx mapEntitiesForRender; HexGrid.tsx isBlocked + openDoorWalkableKeys"
+      "summary": "Render every revealed room and every entity in unified state regardless of currentRoomId; never filter by entity.roomId === currentRoomId. Also INGEST every revealed room — don't read only data.rooms[currentRoomId].",
+      "description": "currentRoomId is the player's location, not a render scope. Once a room is revealed, its tiles, walls, doors, and entities are first-class scene members until the encounter ends. Filtering renders or interactions by entity.roomId === currentRoomId hides the player when they enter a new room and breaks cross-room visibility. The accumulated dungeonMap.floorTiles + open-door walkable-keys define the walkable scene; A* and click handlers operate on the union, not on a per-room slice. Per feedback_no_logic_in_web — visibility decisions belong to the API. The ingest side is symmetric: when a RoomRevealed event lands, `data.currentRoomId` is still the player's previous room (opening a door doesn't move the player). The revealed room's RoomLayout lives in `data.rooms[<revealedId>]`. Helpers that materialize legacy Room objects from EncounterStateData must iterate `Object.keys(data.rooms)`, not just read `data.rooms[currentRoomId]` — otherwise the revealed room's floor tiles never get generated.",
+      "example": "BattleMapPanel.tsx mapEntitiesForRender; HexGrid.tsx isBlocked + openDoorWalkableKeys; LobbyView.tsx roomsFromEncounterState"
+    },
+    {
+      "id": "custom-shader-instancing",
+      "type": "pattern",
+      "summary": "Custom THREE.ShaderMaterial used on InstancedMesh must explicitly multiply by instanceMatrix; Three.js does not auto-rewrite custom vertexShader source.",
+      "description": "Three.js's WebGLProgram auto-defines USE_INSTANCING and adds the `attribute mat4 instanceMatrix;` declaration when a material is bound to an InstancedMesh, but it does NOT rewrite a ShaderMaterial's user-supplied vertexShader source. The shader author is responsible for `vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);` (and `mat3(instanceMatrix) * normal` for lighting) inside `#ifdef USE_INSTANCING`. Likewise, USE_INSTANCING_COLOR + `attribute vec3 instanceColor;` for per-instance color — pass through a varying. Without the multiply, every instance renders at the geometry's local origin, which collapses an entire InstancedMesh into one stack at world (0,0,0). Symptoms can be mistaken for 'tile generation broken' when in reality the data layer is correct and the GPU is just rendering all instances on top of each other.",
+      "example": "src/shaders/AdvancedCharacterShader.ts vertex shader USE_INSTANCING block; src/components/hex-grid/ShadedHexFloor.tsx uses InstancedMesh + this material"
     }
   ]
 }

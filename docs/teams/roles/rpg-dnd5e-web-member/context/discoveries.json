@@ -48,6 +48,13 @@
       "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 26238ee",
       "added": "2026-05-05",
       "status": "in-progress"
+    },
+    {
+      "id": "disc-wave2-shader-instancing-collapse",
+      "summary": "AdvancedCharacterShader's vertexShader missed the instanceMatrix multiply, so every InstancedMesh tile rendered at the geometry's local origin. ShadedHexFloor wraps every revealed-room floor tile in one InstancedMesh keyed off this shader; without `instanceMatrix * vec4(position, 1.0)` all 18*16 = 288 floor tiles stacked at world (0,0,0) and Kirk only ever saw a single hex at the corner — initially mis-described as 'movement range outline only'. Three.js auto-defines USE_INSTANCING and provides the instanceMatrix attribute, but it does NOT auto-rewrite a custom ShaderMaterial's vertexShader source — that's on the author. Fix wraps position+normal transform in `#ifdef USE_INSTANCING` and threads instanceColor through `vInstanceColor` for per-tile shading variation + hover/door highlights. Non-instanced character/hair/non-instanced wall paths preserved via #else branch. Pure-function tile-accumulation tests in useDungeonMap.test.ts had been green throughout — bug was below them (render output collapsed to origin). Same commit also fixes roomFromEncounterState only building the current room's RoomLayout (`data.currentRoomId` is still room A on RoomRevealed since opening a door doesn't move the player); added roomsFromEncounterState that iterates every entry in `data.rooms` with current room ordered last. Branch fix/wave2-player-move-render commit 573fa40. Lessons: a green pure-function test layer doesn't prove the render path; custom ShaderMaterial + InstancedMesh = remember to use instanceMatrix; a 'movement range outline' that shrinks correctly proves floor data IS populated and pushes the bug to the render-side.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 573fa40",
+      "added": "2026-05-05",
+      "status": "in-progress"
     }
   ]
 }
