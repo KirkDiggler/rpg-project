@@ -3,26 +3,30 @@
     {
       "id": "disc-001",
       "summary": "items/validation/basic_validator_test.go does not compile — GetType() return type mismatch",
-      "details": "items/validation/basic_validator_test.go:27 implements GetType() string on mockItem, but core.Entity.GetType() returns core.EntityType (a distinct named string type defined at core/entity.go:8). Go's type system treats these as distinct — the mock does not satisfy core.Entity. Running go test ./... from items/ exits with a build failure. Production code in item.go builds correctly. Fix: change return type on mockItem.GetType() to core.EntityType and change the itemType field accordingly. Tracked: issue #612.",
-      "added": "2026-05-02"
+      "pointer": "rpg-toolkit#612",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-002",
       "summary": "Four modules have local replace directives committed to main — items, mechanics/conditions, mechanics/proficiency, mechanics/spells",
-      "details": "Verified by reading each go.mod file. items/go.mod: 1 directive (core). mechanics/conditions/go.mod: 4 directives (core, dice, events, effects). mechanics/proficiency/go.mod: 1 directive (effects). mechanics/spells/go.mod: 6 directives (core, dice, events, conditions, effects, resources). mechanics/conditions emits 'go: updates to go.mod needed' before printing test results. All four violate the workspace rule 'NEVER add replace directives — Breaks CI/CD'. Tracked: issue #613.",
-      "added": "2026-05-02"
+      "pointer": "rpg-toolkit#613",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-003",
       "summary": "PathFinder interface is hex-only — no square-grid intra-room pathfinder exists",
-      "details": "tools/spatial/pathfinder.go:9 defines: FindPath(start, goal CubeCoordinate, blocked map[CubeCoordinate]bool) []CubeCoordinate. CubeCoordinate is the hex type. SimplePathFinder.FindPath uses GetNeighbors() on CubeCoordinate which has no knowledge of square grid topology. There is no SquarePathFinder. BasicRoomOrchestrator.FindPath is room-to-room only (which sequence of rooms), not intra-room. A monster navigating obstacles in a square room has no toolkit path. Tracked: issue #614.",
-      "added": "2026-05-02"
+      "pointer": "rpg-toolkit#614",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-004",
       "summary": "backgrounds/grants.go (172 lines) and races/grants.go (109 lines) have no test files",
-      "details": "Verified by: find rulebooks/dnd5e/backgrounds -name '*_test.go' returns empty. find rulebooks/dnd5e/races -name '*_test.go' returns empty. Both files implement GetGrants() switch statements that return skill proficiencies, tool proficiencies, and language grants for each background/race. This non-trivial switch is called during character creation finalization in rpg-api. A wrong skill assignment produces a character with wrong proficiencies. Tracked: issue #615.",
-      "added": "2026-05-02"
+      "pointer": "rpg-toolkit#615",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-005",

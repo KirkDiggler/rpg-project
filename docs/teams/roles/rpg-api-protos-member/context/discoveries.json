@@ -3,20 +3,23 @@
     {
       "id": "disc-001",
       "summary": "EncounterService carries TWO state shapes — verified at file:line",
-      "details": "GetEncounterStateResponse (encounter.proto:353-382) populates BOTH legacy fragmented fields (CombatState combat_state=6, Room room=7, repeated MonsterCombatState monsters=8, repeated DoorInfo doors=10, repeated CharacterCombatState characters=12) AND the unified `EncounterStateData encounter_state_data = 20` introduced by PR #136. The legacy messages CharacterCombatState (line 314), MonsterCombatState (line 343), EntityPlacement (line 18) are still defined and still populated by rpg-api's orchestrator. This is the Rule 1 violation tracked as issue #138.",
-      "added": "2026-05-02"
+      "pointer": "rpg-api-protos#138",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-002",
       "summary": "buf breaking is `continue-on-error: true` in CI — single-line fix",
-      "details": ".github/workflows/ci.yml:31 — `continue-on-error: true` on the buf breaking step makes it advisory rather than blocking. A breaking proto change merges with a yellow x. Verified by reading the file. Rule 2 violation. Issue #139 — highest-leverage one-line fix on the board (delete that line).",
-      "added": "2026-05-02"
+      "pointer": "rpg-api-protos#139",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-003",
       "summary": "~5,154 lines of unused proto across 5 services + 4 deprecated RPCs",
-      "details": "Verified by grepping rpg-api/internal and rpg-dnd5e-web/src for any reference. Unused: sandbox.api.v1alpha1 package (sandbox_room.proto 177, sandbox_common.proto 138 — total 315 lines, only referenced by services/sandboxroom/types.go interface stub with no orchestrator/handler/server wiring per rpg-api disc-008); api.v1alpha1.EnvironmentService (room_environments.proto, 530 lines, no consumer); api.v1alpha1.SpatialService (room_spatial.proto, 1064 lines, no consumer); api.v1alpha1.SpawnService (room_spawn.proto, 1424 lines, no consumer); api.v1alpha1.SelectionTableService (room_selectables.proto, 1821 lines, no consumer — largest unused service). PLUS 4 deprecated RPCs in EncounterService (Attack, MoveCharacter, DungeonStart, GetCombatState). Issue #140.",
-      "added": "2026-05-02"
+      "pointer": "rpg-api-protos#140",
+      "added": "2026-05-02",
+      "status": "open"
     },
     {
       "id": "disc-004",
