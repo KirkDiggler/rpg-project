@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "id": "active-001",
+      "summary": "PR #137 — honest status snapshot + full doc tree bootstrap",
+      "details": "Branch docs/honest-status-snapshot. Started as just status.md + quality.md; expanded 2026-05-02 to mirror rpg-api PR #470 — adds architecture/overview.md, architecture/data-model.md, architecture/components/*.md (one per service), how-to/*.md. Archives pre-existing docs (adr/, plans/, P001 UE plugin doc, usage-go.md, usage-typescript.md) under docs/archive/. No proto changes. CI: buf lint clean, buf format clean, buf breaking clean.",
+      "added": "2026-05-02",
+      "status": "in-progress"
+    },
+    {
+      "id": "active-002",
+      "summary": "Issue #138 — collapse dual state shapes in EncounterService",
+      "details": "EncounterStateData (encounter.proto:96) coexists with legacy fragmented fields in GetEncounterStateResponse (line 353-382). CharacterCombatState, MonsterCombatState, EntityPlacement still defined and populated. Per Rule 1 (one source of truth for shape) — violation. Fix requires consumer migration in rpg-api / rpg-dnd5e-web first, then a proto PR that removes the legacy fields with `reserved`. ChoiceSubmission dual selection paths (selection_ids vs deprecated oneof) bundled in this issue.",
+      "added": "2026-05-02",
+      "status": "tracked"
+    },
+    {
+      "id": "active-003",
+      "summary": "Issue #139 — make `buf breaking` blocking in CI",
+      "details": ".github/workflows/ci.yml:31 has `continue-on-error: true` on the buf breaking step. Per Rule 2 — the contract layer must enforce its own contract. One-line fix: remove that line. Highest-leverage fix on the board.",
+      "added": "2026-05-02",
+      "status": "tracked"
+    },
+    {
+      "id": "active-004",
+      "summary": "Issue #140 — delete unused proto (~5,000 lines)",
+      "details": "sandbox/api/v1alpha1 (315 lines, both files) + 4 unused api/v1alpha1 services (room_environments.proto 530, room_spatial.proto 1064, room_spawn.proto 1424, room_selectables.proto 1821) + 4 deprecated EncounterService RPCs (Attack, MoveCharacter, DungeonStart, GetCombatState) + deprecated fields (TurnState 5 fields, Proficiencies 2, DamageComponent.source). Per Rule 4 — no proto unused for >1 release. Coordinate with rpg-api: delete services/sandboxroom/types.go interface stub at the same time. Will fail buf breaking (expected); land after #139 with explicit waiver, or before.",
+      "added": "2026-05-02",
+      "status": "tracked"
+    },
+    {
+      "id": "active-005",
+      "summary": "Upcoming: Position int32 migration",
+      "details": "Per rpg-project/ideas/coordinate-types/design.md, api.v1alpha1.Position will move from double X/Y/Z to int32 X/Y/Z. Cube coordinate invariant (X+Y+Z=0) is integer; the current double signature is the root cause of int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change. Must follow the rpg-api types landing first (per design.md). Likely a v1alpha2 package bump rather than in-place rename.",
+      "added": "2026-05-02",
+      "status": "design-complete-blocked-on-rpg-api"
+    }
+  ]
+}

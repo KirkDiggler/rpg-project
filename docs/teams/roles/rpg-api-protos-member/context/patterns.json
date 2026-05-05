@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "id": "pattern-001",
+      "summary": "Reference-based contract — clients send IDs, never calculations",
+      "details": "Across all services, request fields are bare `string` IDs (character_id, encounter_id, weapon_id, feature_id, dungeon_id, connection_id) plus typed enums (CombatAbilityId, ActionId, FeatureId). Clients never compute damage, AC, modifiers — those flow back from rpg-api as fields on the response. Matches the workspace Boundary Rule: client sends references, API orchestrates by key, toolkit implements rules.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-002",
+      "summary": "Three-message split for staged data: requirement / submission / record",
+      "details": "Choice (the requirement), ChoiceSubmission (what the player picked), ChoiceData (what's stored on the character). Three distinct messages with distinct roles. Same pattern could apply to other staged-data flows (e.g. spell selection, equipment loadout). Keeps each shape focused on its own role rather than overloading one message.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-003",
+      "summary": "Enum + opaque bytes for toolkit-owned payloads",
+      "details": "Condition (common.proto:90) carries `ConditionId id` plus `bytes condition_data`. CharacterFeature carries `FeatureId id` plus `bytes feature_data`. PartyMember carries `bytes character_data`. The contract layer identifies the entity; the toolkit owns the JSON payload. The web client renders the bytes as opaque blob plus the enum-driven UI affordances. Shape-stable contract; toolkit-evolving payload.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-004",
+      "summary": "Discriminated union via `oneof` + per-arm message types",
+      "details": "EntityState.details (encounter.proto:57): `oneof details { CharacterDetails | MonsterDetails | ObstacleDetails }`. EncounterEvent.event (line 836): 26-variant oneof. SourceRef.source (common.proto:189): 6-variant oneof. ExecuteActionRequest.input: `oneof input { StrikeInput | MoveInput }`. Pattern works well when variants have different fields. Same arm name as the wire field; type-safe in Go and TS.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-005",
+      "summary": "AIP-158 inline pagination on list RPCs",
+      "details": "page_size + page_token + next_page_token + total_size, directly on the request and response. Used consistently by the live character-side list RPCs. New list RPCs should match. Don't use `PageInfo` envelope (the unused services' pattern).",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-006",
+      "summary": "Cross-package import for genuinely shared types",
+      "details": "encounter.proto imports api/v1alpha1/room_common.proto for Position and Wall — not redefined in dnd5e.api.v1alpha1. This is the canonical reuse pattern. The negative example is sandbox.api.v1alpha1 which redefined EntitySize, Wall (as WallSegment), Door rather than reusing.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-007",
+      "summary": "Load-then-stream for real-time state synchronization",
+      "details": "Client calls GetEncounterState — gets full snapshot + last_event_id. Client calls StreamEncounterEvents — receives events with id > last_event_id. Snapshot-plus-watermark pattern; safer than \"replay all events from start\" for late joiners and reconnect. The pagination shape on GetEncounterHistory (limit + up_to_event_id + has_more) supports this — the field names diverge from AIP-158 because the watermark semantics differ from page-cursor semantics.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-008",
+      "summary": "Section-based updates over bulk update",
+      "details": "CharacterService has UpdateName / UpdateRace / UpdateClass / UpdateBackground / UpdateAbilityScores / UpdateSkills / UpdateAppearance instead of a single UpdateCharacter with a field mask. Each section update returns the full updated draft so the client doesn't need a separate Get. The leftover UpdateCharacterRequest/Response messages (with update_mask) are dead — can be removed. Section-based pattern is preferred; field masks complicate validation and can leak partial state.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-009",
+      "summary": "Two-level action economy: Activate (grant capacity) + Execute (consume capacity)",
+      "details": "ActivateCombatAbility consumes action-economy resources (e.g. Standard Action) and grants capacity (e.g. 2 attacks for Extra Attack). ExecuteAction consumes the granted capacity (e.g. one strike). Two RPCs replace the old single-shot Attack/MoveCharacter. Pattern is generalizable — any \"declare intent → resolve specifics\" flow can use it. Replaces the deprecated Attack and MoveCharacter RPCs.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "pattern-010",
+      "summary": "`bool success + string error` is the de facto error envelope",
+      "details": "Used by most response messages in the live services. Not a typed error envelope, not gRPC status, just a boolean + string. Matches the dominant pattern; new RPCs should use it unless there's a strong reason for richer error data. The only typed-error message in the repo (MovementError) is on a deprecated RPC and didn't propagate.",
+      "added": "2026-05-02"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "items": [
+    {
+      "id": "disc-001",
+      "summary": "EncounterService carries TWO state shapes — verified at file:line",
+      "details": "GetEncounterStateResponse (encounter.proto:353-382) populates BOTH legacy fragmented fields (CombatState combat_state=6, Room room=7, repeated MonsterCombatState monsters=8, repeated DoorInfo doors=10, repeated CharacterCombatState characters=12) AND the unified `EncounterStateData encounter_state_data = 20` introduced by PR #136. The legacy messages CharacterCombatState (line 314), MonsterCombatState (line 343), EntityPlacement (line 18) are still defined and still populated by rpg-api's orchestrator. This is the Rule 1 violation tracked as issue #138.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-002",
+      "summary": "buf breaking is `continue-on-error: true` in CI — single-line fix",
+      "details": ".github/workflows/ci.yml:31 — `continue-on-error: true` on the buf breaking step makes it advisory rather than blocking. A breaking proto change merges with a yellow x. Verified by reading the file. Rule 2 violation. Issue #139 — highest-leverage one-line fix on the board (delete that line).",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-003",
+      "summary": "~5,154 lines of unused proto across 5 services + 4 deprecated RPCs",
+      "details": "Verified by grepping rpg-api/internal and rpg-dnd5e-web/src for any reference. Unused: sandbox.api.v1alpha1 package (sandbox_room.proto 177, sandbox_common.proto 138 — total 315 lines, only referenced by services/sandboxroom/types.go interface stub with no orchestrator/handler/server wiring per rpg-api disc-008); api.v1alpha1.EnvironmentService (room_environments.proto, 530 lines, no consumer); api.v1alpha1.SpatialService (room_spatial.proto, 1064 lines, no consumer); api.v1alpha1.SpawnService (room_spawn.proto, 1424 lines, no consumer); api.v1alpha1.SelectionTableService (room_selectables.proto, 1821 lines, no consumer — largest unused service). PLUS 4 deprecated RPCs in EncounterService (Attack, MoveCharacter, DungeonStart, GetCombatState). Issue #140.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-004",
+      "summary": "Position is currently `double X/Y/Z`, slated for int32 breaking change",
+      "details": "api/v1alpha1/room_common.proto:9 — Position uses `double x = 1; double y = 2; double z = 3;`. Per rpg-project/ideas/coordinate-types/design.md, this needs to move to int32 to match the cube coordinate invariant (X+Y+Z=0) used by the dungeon component. The double signature is the root cause of the int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change; design says rpg-api types must land first. Likely v1alpha2 package bump rather than in-place edit.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-005",
+      "summary": "Two dead messages in CharacterService with no RPC backing them",
+      "details": "character.proto:364 UpdateCharacterRequest + line 374 UpdateCharacterResponse — no `rpc UpdateCharacter` exists (verified by grep). Section-based updates (UpdateName/UpdateRace/UpdateClass/etc) replaced bulk updates. Same pattern at line 509 UpdateDraftRequest + line 519 UpdateDraftResponse — no `rpc UpdateDraft`. Both define `repeated string update_mask` for a field-mask pattern that was never wired. Removable without consumer impact. Worth bundling into issue #140 cleanup.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-006",
+      "summary": "Deprecated fields catalog — TurnState, Proficiencies, DamageComponent",
+      "details": "TurnState (encounter.proto:223): movement_used (line 225), movement_max (226), action_used (227), bonus_action_used (228), reaction_available (229) — all `[deprecated = true]`, superseded by ActionEconomy. PLUS reserved 9, 10 for retired disengage_active/dodge_active. Proficiencies (character.proto:286): armor field 3 (line 306) and weapons field 4 (line 309) — both `[deprecated = true]`, superseded by armor_categories/weapon_categories/specific_weapons. DamageComponent (encounter.proto:510): source field 1 (line 512) — `[deprecated = true]`, superseded by SourceRef source_ref. ChoiceSubmission (choices.proto:165): the oneof selection (line 178) is comment-deprecated (no field option), superseded by selection_ids field 5. EquipmentSlot.EQUIPMENT_SLOT_GLOVES (character.proto:1180) is rejected at runtime by rpg-api but has no proto-level deprecation marker — enum-value deprecation has no examples in the repo.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-007",
+      "summary": "5 cross-package type-name collisions",
+      "details": "Verified by grepping `^message <name>` across all .proto files. (1) Room — api.v1alpha1.Room (room_common.proto:176, generic, unused) vs dnd5e.api.v1alpha1.Room (encounter.proto:111, live). (2) Entity — api.v1alpha1.Entity (room_common.proto:33, unused) vs dnd5e.api.v1alpha1.EntityState/EntityPlacement (encounter.proto:18, 45). (3) EntitySize — dnd5e.api.v1alpha1.EntitySize (enums.proto:818) vs sandbox.api.v1alpha1.EntitySize (sandbox_common.proto:73) — same six values, different fully-qualified names. (4) DiceRoll — api.v1alpha1.DiceRoll (dice.proto:49, result form) vs dnd5e.api.v1alpha1.DiceRoll (common.proto:45, notation form) — both LIVE, different shapes, same name; this is the worst collision. (5) ValidationResult — api.v1alpha1.ValidationResult (room_common.proto:216, generic) vs dnd5e.api.v1alpha1.ValidationResult (common.proto:122, three-tier). Plus Wall vs WallSegment between api.v1alpha1 and sandbox.api.v1alpha1.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-008",
+      "summary": "Three pagination patterns coexist in the repo",
+      "details": "Pattern A (AIP-158 inline, the standard): page_size + page_token + next_page_token + total_size on the request/response directly. Used by every live list RPC in CharacterService. Pattern B (event-style): GetEncounterHistory (encounter.proto:386, 397) uses `limit` / `up_to_event_id` / `has_more` / `last_event_id` — different field names from Pattern A. Pattern C (PageInfo envelope): unused services in api/v1alpha1 use `PageInfo page_info` from room_common.proto:223. The three coexist; Pattern A is the de facto standard.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-009",
+      "summary": "Three error patterns coexist in the repo",
+      "details": "Pattern A (dominant): `bool success = 1; string error = 2;` — used by OpenDoorResponse, EquipItemResponse, ShortRestResponse, LongRestResponse, AttackResponse, ActivateCombatAbilityResponse, ExecuteActionResponse. Pattern B (one-off): `MovementError` typed-error message (encounter.proto:419) with enum + string + map<string,string> — only used by MoveCharacterResponse, which is itself deprecated. Pattern C: gRPC status codes (codes.Unimplemented for GetCombatState). Pattern A is the de facto standard.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-010",
+      "summary": "buf breaking config is `use: [FILE]` (more sensitive than PACKAGE)",
+      "details": "buf.yaml line 7-9: `breaking: use: [FILE]`. This means changes are flagged per-file, not per-package. Stricter than the default PACKAGE setting. Implication for the Position int32 migration: it must be a NEW file (v1alpha2 package) rather than an in-place edit of room_common.proto.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-011",
+      "summary": "Lint config excepts PACKAGE_VERSION_SUFFIX and RPC_RESPONSE_STANDARD_NAME",
+      "details": "buf.yaml lint.except includes PACKAGE_VERSION_SUFFIX (we use v1alpha1 style; default would force v1alpha) and RPC_RESPONSE_STANDARD_NAME (streaming RPCs use event-style names like EncounterEvent). Two intentional deviations from the buf default lint set. New deviations should land in a discussed PR, not added quietly.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-012",
+      "summary": "C++ generation runs in CI but no UE consumer exists",
+      "details": "buf.gen.yaml lines 22-28 generate C++ via buf.build/protocolbuffers/cpp + buf.build/grpc/cpp into gen/cpp. No UE consumer in this workspace exercises it. Makefile has `package-ue-plugin` and `validate-ue-plugin` targets (per old docs/P001-ue-cpp-client-generation.md, now archived). Decision pending: keep generating speculatively, or remove the C++ plugins from buf.gen.yaml until a real UE consumer materializes.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "disc-013",
+      "summary": "PR #136 is the worked example for breaking-change discipline",
+      "details": "PRs #135/#136 (2026-04-03) introduced unified entity state and retired the legacy fragmented event fields. The retirement was done correctly: every retired field has both `reserved <number>` and `reserved \"<name>\"`. Example at encounter.proto:903-905 (CombatStartedEvent reserves 1-5 with names). This is the model to replicate when retiring fields. The team knows the discipline; CI just doesn't enforce it (issue #139).",
+      "added": "2026-05-02"
+    }
+  ]
+}

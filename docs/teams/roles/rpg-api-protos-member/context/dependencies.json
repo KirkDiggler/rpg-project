@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "dep-001",
+      "summary": "Buf CLI",
+      "details": "Required for buf lint, buf format, buf breaking, buf generate. CI uses bufbuild/buf-setup-action@v1. Local install: `brew install bufbuild/buf/buf` (macOS) or download from GitHub releases. No version pin in CI; tracks latest. Verified working on docs/honest-status-snapshot 2026-05-02.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-002",
+      "summary": "Go 1.21 (CI), local matches via go.mod when generated",
+      "details": "CI uses actions/setup-go@v4 with go-version: '1.21'. `gen/go/go.mod` is initialized fresh per CI run by `cd gen/go && go mod init github.com/KirkDiggler/rpg-api-protos/gen/go && go mod tidy`. The repo root has its own go.mod for tooling.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-003",
+      "summary": "Node 18 (CI) + npm",
+      "details": "CI uses actions/setup-node@v4 with node-version: '18'. TypeScript validation runs `npx tsc --noEmit --project tsconfig.json`. Publishing uses npm publish to @kirkdiggler/rpg-api-protos.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-004",
+      "summary": "go.uber.org/mock/mockgen for Go mocks",
+      "details": "Installed in CI via `go install go.uber.org/mock/mockgen@latest`. Triggered by `make mocks`. Mocks land under gen/go/.../mocks/ and ship in the @generated branch. rpg-api consumes them in tests.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-005",
+      "summary": "buf plugins (remote)",
+      "details": "buf.gen.yaml uses remote plugins (no local install): buf.build/protocolbuffers/go, buf.build/grpc/go, buf.build/bufbuild/es (target=ts; one plugin handles both messages and Connect services), buf.build/protocolbuffers/cpp, buf.build/grpc/cpp. The C++ plugins are generated despite no UE consumer (decision pending whether to remove).",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-006",
+      "summary": "GitHub secrets: NPM_TOKEN, GITHUB_TOKEN",
+      "details": "publish-packages job (.github/workflows/ci.yml:81-170) requires NPM_TOKEN for npm publish and GITHUB_TOKEN (auto-provided) for force-pushing the generated branch and creating GitHub releases.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "dep-007",
+      "summary": "Latest published tag: v0.1.86 (as of 2026-05-02)",
+      "details": "Auto-incremented per main merge. `generated` branch is force-pushed with the same tag. Consumer pull commands: `GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated` (latest) or `@v0.1.86` (pinned).",
+      "added": "2026-05-02"
+    }
+  ]
+}

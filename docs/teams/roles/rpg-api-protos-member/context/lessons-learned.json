@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "lesson-001",
+      "summary": "`buf format -w` before every commit, no exceptions",
+      "details": "Per rpg-api-protos/CLAUDE.md. CI runs `buf format --diff --exit-code` and fails if formatting drifted. The fix is trivial — run `buf format -w` once — but easy to forget when iterating fast. Pre-push checklist in docs/how-to/run-buf-checks-locally.md.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-002",
+      "summary": "Never push to the `generated` branch",
+      "details": "Per rpg-api-protos/CLAUDE.md. `generated` is force-pushed by CI on every main merge with a fresh tag. Any commits made directly to `generated` are lost. Always work in feature branches from main; let CI manage `generated`.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-003",
+      "summary": "Verify-before-asserting on consumer references",
+      "details": "When claiming `<service>` is unused, grep both rpg-api/internal AND rpg-dnd5e-web/src. The sandbox.api.v1alpha1 package looked unused on first inspection but turned out to be referenced by rpg-api/internal/services/sandboxroom/types.go (an interface stub with no wiring — still effectively unused, but the reference exists). Per Kirk's verify-before-asserting feedback. The unused claim is honest only if `verified by grep on YYYY-MM-DD` is in the doc.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-004",
+      "summary": "`reserved` both number AND name when retiring fields",
+      "details": "PR #136 worked example (encounter.proto:903-905): `reserved 1, 2, 3, 4, 5; reserved \"combat_state\", \"room\", \"party\", \"monsters\", \"doors\";`. The number reservation prevents tag reuse (wire safety); the name reservation prevents field-name reuse (TS client safety). Both required. A `reserved <number>` without `reserved \"<name>\"` allows the name to be reused and breaks TS clients silently.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-005",
+      "summary": "Schema-without-consumer is the seductive failure mode",
+      "details": "The repo accumulated ~5,000 lines of unused proto across 5 services because each was added speculatively (\"we'll need this for X\"). None earned its keep. Per Rule 4 — no proto unused for >1 release. New services added without a consumer in flight are this trap; delay until the consumer is real. The cost is paid every PR forever.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-006",
+      "summary": "Edit docs in the same PR that invalidates a line",
+      "details": "Per the role prompt and platform-mcp convention. status.md and quality.md are living docs — when a PR adds/removes/changes a service, the corresponding doc lines update in the same PR. Otherwise they rot. Quarterly cleanup PRs are a sign the discipline lapsed.",
+      "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-007",
+      "summary": "Honest mandate: cite file:line, never \"presumably\"",
+      "details": "Per the role prompt. Every claim about a proto detail (\"this field is deprecated\", \"this RPC is unused\", \"this shape carries dual state\") must cite the file and line where it's verifiable. Status and quality docs that say \"presumably\" or \"approximately\" are dishonest about what we know. The first reviewer pass on PR #137 corrected several inflated counts (5,650 → 5,577 lines, ~50 → 39 pb. references, ~20 → 27 TODOs). Verify before asserting.",
+      "added": "2026-05-02"
+    }
+  ]
+}
