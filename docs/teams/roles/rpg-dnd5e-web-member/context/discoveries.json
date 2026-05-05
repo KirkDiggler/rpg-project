@@ -48,6 +48,13 @@
       "description": "Both ActionPanel.tsx and ActionPanelV2.tsx exist and are exported from combat-v2/panels/index.ts. No documentation explains which supersedes the other or which LobbyView actually uses. Needs clarification and deprecation of one.",
       "verified": "ls src/components/combat-v2/panels/",
       "date": "2026-05-02"
+    },
+    {
+      "id": "disc-wave2-coord-overlap",
+      "summary": "OpenDoor reveal stores room-B walls and entities without translating from room-local to dungeon-absolute, so revealed rooms overlap room A geometrically",
+      "pointer": "TBD — recommend new issue; see janitor return report",
+      "added": "2026-05-04",
+      "status": "open"
     }
   ]
 }

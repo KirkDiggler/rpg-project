@@ -65,6 +65,13 @@
       "summary": "encounter orchestrator has 39 pb refs, service.go adds 3 more — total 42 pb-contaminated sites in the encounter package",
       "details": "Counting across the package: orchestrator.go has 39 pb. refs, service.go has 3 proto-typed fields in Input/Output types. The contamination extends to anyone importing the encounter package's Input/Output types.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "disc-wave2-coord-overlap",
+      "summary": "OpenDoor reveal stores room-B walls and entities without translating from room-local to dungeon-absolute, so revealed rooms overlap room A geometrically",
+      "pointer": "TBD — recommend new issue; see janitor return report",
+      "added": "2026-05-04",
+      "status": "open"
     }
   ]
 }
