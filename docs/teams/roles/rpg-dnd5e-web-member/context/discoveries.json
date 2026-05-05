@@ -55,6 +55,13 @@
       "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 573fa40",
       "added": "2026-05-05",
       "status": "in-progress"
+    },
+    {
+      "id": "disc-wave2-deprecated-movement-fields",
+      "summary": "TurnState.movementUsed and TurnState.movementMax are deprecated proto fields; the canonical source is TurnState.actionEconomy.movementRemaining. Web call sites used `(movementMax || 30) - (movementUsed || 0)` everywhere, and the api converter at converters.go:436 fills movementUsed from `30 - state.MovementRemaining` on a code path that desyncs from actionEconomy across OpenDoor (Wave 2). When the deprecated path reported 0 ft remaining while actionEconomy still said 30, the web's range indicator (useMovementRange.getReachableHexes returned empty Set), pathing into revealed rooms (useHexInteraction gated isWithinRange on movementRemaining), and any non-adjacent attack (same gate) all silently broke. Adjacent attacks worked because pathCost=0. Single root cause for the three Wave 2 post-shader-fix symptoms. Fix: new utils/movementUtils.ts as the only place that reads movement-remaining; resolution order is canonical actionEconomy → deprecated subtraction → 0. BattleMapPanel and LobbyView's validateAndExecuteMove now route through it. Diagnostic logs added in handleMovementCompleted (canonical vs deprecated values) and HexGrid (reachable-tiles size + sample on player turn). Five other call sites (CombatOverlay, CombatActionPanel, DebugPanel, usePlayerTurn, ActionEconomyIndicators) still read deprecated; display-only and out of scope for this commit. Branch fix/wave2-player-move-render commit 86694de. Lesson: `@deprecated` proto fields are toxic when other fields can carry the same data — pick canonical-first reads and have ONE helper, not inline subtractions everywhere.",
+      "pointer": "rpg-dnd5e-web fix/wave2-player-move-render @ 86694de",
+      "added": "2026-05-05",
+      "status": "in-progress"
     }
   ]
 }
