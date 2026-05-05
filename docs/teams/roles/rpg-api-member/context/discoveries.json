@@ -49,6 +49,14 @@
       "added": "2026-05-04",
       "status": "in-progress",
       "delta": "Localized to buildRoomLayoutProto in orchestrator.go (line ~1098). Entity positions and CubeEntities were already translated correctly; only RoomLayout.walls in EncounterStateData.rooms were room-local. Fix on branch fix/cross-room-state-wave2 applies origin element-wise to each wall vertex at the producer. Awaiting Kirk's playtest verification before flipping to resolved."
+    },
+    {
+      "id": "disc-wave2-wall-consumer-scope",
+      "summary": "Wall-collision / event-publish consumers loaded only currentRoom.Walls, missing every other revealed room's perimeter walls",
+      "pointer": "KirkDiggler/rpg-api#465",
+      "added": "2026-05-05",
+      "status": "in-progress",
+      "delta": "Sibling of #493: that bug was at the producer (rendering data); this one was at the consumers (collision + event data). MoveCharacter, executeMonsterTurns, ResolveAttack, executeMoveAction all loaded dungeon.GetRoom(currentRoomID).Walls and treated that as the encounter wall set. After OpenDoor revealed room B, room B's perimeter was invisible — collision passed straight through. New helper loadAbsoluteWallsForRevealedRooms (revealed_walls.go) returns the union in dungeon-absolute. Wall consumers now use this. MoveCharacter / executeMoveAction also stop translating target absolute → room-local before the wall check (consistent absolute-frame collision). executeMonsterTurns drops the per-step localToAbsoluteOrLocal on turnResult.Movement (absolute in, absolute out). Commit 44ce47f layered onto branch fix/cross-room-state-wave2. Awaiting Kirk's playtest verification."
     }
   ]
 }
