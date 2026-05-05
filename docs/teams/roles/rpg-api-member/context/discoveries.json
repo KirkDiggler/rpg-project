@@ -69,7 +69,7 @@
     {
       "id": "disc-wave2-coord-overlap",
       "summary": "OpenDoor reveal stores room-B walls and entities without translating from room-local to dungeon-absolute, so revealed rooms overlap room A geometrically",
-      "pointer": "TBD — recommend new issue; see janitor return report",
+      "pointer": "KirkDiggler/rpg-api#493",
       "added": "2026-05-04",
       "status": "open"
     }
