@@ -1,27 +1,6 @@
 {
   "items": [
     {
-      "id": "test-count-incorrect",
-      "type": "correction",
-      "description": "status.md claimed 323 tests. Actual count on main as of 2026-05-02: 298 tests across 14 test files. The 25 encounterStateTransforms tests are on branch test/room-reveal-transforms only.",
-      "verified": "npm test -- --reporter=verbose",
-      "date": "2026-05-02"
-    },
-    {
-      "id": "15f232e-not-on-main",
-      "type": "correction",
-      "description": "status.md claimed commit 15f232e (extract transform functions + 25 tests) merged to main. INCORRECT. git branch --contains 15f232e shows only test/room-reveal-transforms. The 25 tests and encounterStateTransforms.ts/test.ts are PR #378 only.",
-      "verified": "git branch --contains 15f232e",
-      "date": "2026-05-02"
-    },
-    {
-      "id": "lobby-view-lines",
-      "type": "measurement",
-      "description": "LobbyView.tsx is 2,345 lines as of 2026-05-02 (not 2,256 as status.md claimed). Legacy comment occurrences: 26 grep-verified (not 41 as originally reported).",
-      "verified": "wc -l src/components/LobbyView.tsx && grep -c 'legacy' src/components/LobbyView.tsx",
-      "date": "2026-05-02"
-    },
-    {
       "id": "ability-modifier-formula-copies",
       "type": "violation",
       "description": "Math.floor((score - 10) / 2) — the D&D ability modifier formula — appears in 6 files: CharacterInfoSection.tsx:33, DnDSkills.tsx:11, SavingThrowsDisplay.tsx:17, DnDSavingThrows.tsx:11, diceCalculations.ts:27, Phase1Demo.tsx:172. This is a rendering rule violation: the web is calculating game mechanics. The API should provide computed modifier values.",

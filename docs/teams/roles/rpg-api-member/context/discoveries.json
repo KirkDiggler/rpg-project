@@ -13,24 +13,6 @@
       "added": "2026-05-02"
     },
     {
-      "id": "disc-003",
-      "summary": "orchestrator.go is 5,577 lines (not 5,650 as stated in PR #470 draft)",
-      "details": "The current line count on the docs/honest-status-snapshot branch is 5,577 lines, not 5,650. The draft status.md says 5,650 — that figure was correct at initial draft time but may reflect a different branch state. The quality.md also says 5,650. Both should be corrected to the verified count of 5,577.",
-      "added": "2026-05-02"
-    },
-    {
-      "id": "disc-004",
-      "summary": "Encounter orchestrator has 39 pb. references, not 50",
-      "details": "grep -n 'pb\\.' orchestrator.go | wc -l returns 39. The PR #470 draft says 'approximately 50'. The actual count is 39. Key pb. sites: buildRoomLayoutProto (line 1097), buildRoomsMap (line 1167), protoAbilityIDToRef (line 2321), protoActionIDToRef (line 2372), and local variable declarations for pb.EntityState and pb.EncounterStateData.",
-      "added": "2026-05-02"
-    },
-    {
-      "id": "disc-005",
-      "summary": "encounter service.go has 27 character converter TODOs (not 20)",
-      "details": "grep 'TODO' converters.go | wc -l returns 27. The PR #470 draft says 20. The handler.go has 8 additional TODOs (listed as 8 in quality.md — this appears correct).",
-      "added": "2026-05-02"
-    },
-    {
       "id": "disc-006",
       "summary": "RoomData stored as interface{} in EncounterData and input types",
       "details": "encounters/repository.go: EncounterData.RoomData, SaveInput.RoomData, and UpdateInput.RoomData are all typed as interface{} with a comment 'Temporarily using interface{} until spatial is fixed'. The orchestrator uses type assertions at every access point. This makes the repository and orchestrator brittle and disables type checking for room data.",
@@ -58,12 +40,6 @@
       "id": "disc-010",
       "summary": "dungeon_mapper.go line 44 routes crypt theme to ThemeDebugWalls",
       "details": "mapTheme in dungeon_mapper.go: case 'crypt' returns dungeon.ThemeDebugWalls with a TODO comment 'swap back to ThemeCrypt after wall UI testing'. This is present in the docs/honest-status-snapshot branch. All crypt dungeons show debug walls in any build from this branch.",
-      "added": "2026-05-02"
-    },
-    {
-      "id": "disc-011",
-      "summary": "encounter orchestrator has 39 pb refs, service.go adds 3 more — total 42 pb-contaminated sites in the encounter package",
-      "details": "Counting across the package: orchestrator.go has 39 pb. refs, service.go has 3 proto-typed fields in Input/Output types. The contamination extends to anyone importing the encounter package's Input/Output types.",
       "added": "2026-05-02"
     },
     {
