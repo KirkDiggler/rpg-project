@@ -177,7 +177,7 @@ func (s *InMemorySuite) TestSaveGet_RoundTrip_PreservesData() {
 	enc := encounter.New("enc-1", encounter.NewBroker(encounter.NewInMemoryTransport()))
 	// AddPlayer + minimal setup so ToData has something interesting.
 	s.Require().NoError(enc.AddPlayer(encounter.PlayerInput{
-		ID:       "player-A",
+		PlayerID: "player-A",
 		EntityID: "char-A",
 		Position: core.Hex{Q: 0, R: 0, S: 0},
 	}))
@@ -341,6 +341,10 @@ func translateMoveEvent(e *events.MoveEvent, viewer core.PlayerID, now time.Time
 	if !ok || len(slice.SeenSegments) == 0 {
 		return nil, ErrViewerSawNothing
 	}
+	// Use the per-viewer SeenSegments (not the full e.Path) so the wire
+	// reflects the viewer's reality — the toolkit broker delivered this
+	// event because the viewer saw at least one segment, but only those
+	// segments belong on the wire (per spec section 5: per-viewer reality).
 	path := make([]*encounterv2pb.Position, 0, len(slice.SeenSegments))
 	for _, h := range slice.SeenSegments {
 		path = append(path, HexToPosition(h))
@@ -364,8 +368,10 @@ func translateHexRevealedEvent(e *events.HexRevealedEvent, viewer core.PlayerID,
 	if !ok || len(slice.Hexes) == 0 {
 		return nil, ErrViewerSawNothing
 	}
+	// HexRevealedSlice.Hexes is core.HexSet which is map[Hex]struct{} —
+	// range over keys (the hex), not values (struct{}).
 	hexes := make([]*encounterv2pb.Hex, 0, len(slice.Hexes))
-	for _, h := range slice.Hexes {
+	for h := range slice.Hexes {
 		hexes = append(hexes, &encounterv2pb.Hex{Position: HexToPosition(h)})
 	}
 	return &encounterv2pb.EncounterEvent{
@@ -394,15 +400,16 @@ Expected: PASS, 1 test.
 Append to `translate_test.go`:
 ```go
 func (s *TranslateSuite) TestTranslateEvent_MoveEvent_FullPath() {
+	// NewMoveEvent signature (events/move.go:34): (encID, seq, mover, path, perPlayer)
 	evt := events.NewMoveEvent(
 		"enc-1",
+		uint64(1),
 		"char-A",
 		[]core.Hex{{Q: 0, R: 0, S: 0}, {Q: 1, R: -1, S: 0}, {Q: 2, R: -2, S: 0}},
 		map[core.PlayerID]events.MovePlayerSlice{
 			"player-B": {SeenSegments: []core.Hex{{Q: 0, R: 0, S: 0}, {Q: 1, R: -1, S: 0}, {Q: 2, R: -2, S: 0}}},
 		},
 	)
-	// Manually stamp seq if NewMoveEvent doesn't accept it.
 	out, err := v2encounter.TranslateEvent(evt, "player-B", s.now)
 	s.Require().NoError(err)
 	s.Require().NotNil(out)
@@ -431,7 +438,7 @@ Append:
 ```go
 func (s *TranslateSuite) TestTranslateEvent_MoveEvent_EmptySliceReturnsErrViewerSawNothing() {
 	evt := events.NewMoveEvent(
-		"enc-1", "char-A",
+		"enc-1", uint64(1), "char-A",
 		[]core.Hex{{Q: 0, R: 0, S: 0}},
 		map[core.PlayerID]events.MovePlayerSlice{
 			"player-B": {SeenSegments: nil},
@@ -443,7 +450,7 @@ func (s *TranslateSuite) TestTranslateEvent_MoveEvent_EmptySliceReturnsErrViewer
 }
 
 func (s *TranslateSuite) TestTranslateEvent_MoveEvent_ViewerNotInPerPlayerReturnsErrViewerSawNothing() {
-	evt := events.NewMoveEvent("enc-1", "char-A", nil, nil)
+	evt := events.NewMoveEvent("enc-1", uint64(1), "char-A", nil, nil)
 	_, err := v2encounter.TranslateEvent(evt, "player-X", s.now)
 	s.Require().Error(err)
 	s.Require().True(errors.Is(err, v2encounter.ErrViewerSawNothing))
@@ -734,7 +741,7 @@ func (s *HandlerSuite) TestMoveEntity_HappyPath_LoadsCallsMoveSaves() {
 	// Seed encounter with player-A controlling char-A at (0,0,0).
 	enc := tkenc.New("enc-1", s.broker)
 	s.Require().NoError(enc.AddPlayer(tkenc.PlayerInput{
-		ID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
+		PlayerID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
 	}))
 	s.Require().NoError(s.repo.Save(s.ctx, enc.ToData()))
 
@@ -821,6 +828,15 @@ func (h *Handler) MoveEntity(ctx context.Context, req *encounterv2pb.MoveEntityR
 
 If Step 4.1 gave a clean entity_id-validation API, also add validation here before calling `enc.Move`. Mismatched entity_id → `codes.PermissionDenied`.
 
+> **Implementer note:** confirmed during plan review that `*encounter.Data` exposes `Players` map keyed by `core.PlayerID`, with each entry carrying an exported `EntityID` (per `rpg-toolkit/encounter/data.go:23-25`). If you take the "read from data directly" branch, validate before calling `LoadFromData` (which consumes `data`):
+> ```go
+> if pd, ok := data.Players[core.PlayerID(playerID)]; ok {
+>     if string(pd.EntityID) != req.GetEntityId() {
+>         return nil, status.Error(codes.PermissionDenied, "entity_id does not match player's controlled entity")
+>     }
+> }
+> ```
+
 - [ ] **Step 4.5: Run happy-path test**
 
 ```bash
@@ -894,7 +910,7 @@ Append to `handler_test.go`:
 func (s *HandlerSuite) TestStreamEncounter_SendsSnapshotFirst() {
 	enc := tkenc.New("enc-1", s.broker)
 	s.Require().NoError(enc.AddPlayer(tkenc.PlayerInput{
-		ID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
+		PlayerID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
 	}))
 	s.Require().NoError(s.repo.Save(s.ctx, enc.ToData()))
 
@@ -933,7 +949,10 @@ func (h *Handler) StreamEncounter(req *encounterv2pb.StreamEncounterRequest, str
 		return status.Error(codes.InvalidArgument, "encounter_id is required")
 	}
 
-	// Subscribe FIRST so we don't miss events between snapshot read and stream-active.
+	// Subscribe FIRST so the broker holds events in its buffered channel
+	// (per encounter/broker.go:84) while we build the snapshot. Any Move
+	// happening between Subscribe and the forward loop is captured by the
+	// subscription and delivered after the snapshot send.
 	sub, err := h.broker.Subscribe(encID, core.PlayerID(playerID))
 	if err != nil {
 		return status.Errorf(codes.Internal, "subscribe: %v", err)
@@ -1016,7 +1035,7 @@ Append to `handler_test.go`:
 func (s *HandlerSuite) TestStreamEncounter_ForwardsBrokerEvents() {
 	enc := tkenc.New("enc-1", s.broker)
 	s.Require().NoError(enc.AddPlayer(tkenc.PlayerInput{
-		ID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
+		PlayerID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
 	}))
 	s.Require().NoError(s.repo.Save(s.ctx, enc.ToData()))
 
@@ -1085,9 +1104,7 @@ package integration_test
 
 import (
 	"context"
-	"io"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -1117,10 +1134,10 @@ func (s *EncounterV2IntegrationSuite) TestMovementSliceTwoPlayers() {
 	// Build a small encounter with players A and B both visible to each other.
 	enc := tkenc.New("enc-1", s.srv.BrokerV2)
 	s.Require().NoError(enc.AddPlayer(tkenc.PlayerInput{
-		ID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
+		PlayerID: "player-A", EntityID: "char-A", Position: core.Hex{Q: 0, R: 0, S: 0},
 	}))
 	s.Require().NoError(enc.AddPlayer(tkenc.PlayerInput{
-		ID: "player-B", EntityID: "char-B", Position: core.Hex{Q: 1, R: -1, S: 0},
+		PlayerID: "player-B", EntityID: "char-B", Position: core.Hex{Q: 1, R: -1, S: 0},
 	}))
 	s.Require().NoError(s.srv.EncRepoV2.Save(s.ctx, enc.ToData()))
 
@@ -1159,11 +1176,9 @@ func (s *EncounterV2IntegrationSuite) TestMovementSliceTwoPlayers() {
 	s.Require().NotNil(movB.GetEntityMoved())
 	s.Require().Equal("char-A", movB.GetEntityMoved().EntityId)
 
-	// Close streams.
-	deadline, cancel := context.WithTimeout(s.ctx, 100*time.Millisecond)
-	defer cancel()
-	_ = deadline
-	_ = io.EOF
+	// Stream contexts are scoped to the per-call ctx; the test ends, contexts
+	// are cancelled by the suite tear-down, server-side stream loops exit
+	// cleanly via select on ctx.Done().
 }
 
 func TestEncounterV2IntegrationSuite(t *testing.T) {
@@ -1225,7 +1240,7 @@ Expected: clean. Specifically: format/lint/vet/build/test all green.
 
 - [ ] **Step 7.2: Update `rpg-api/docs/status.md`**
 
-Find the encounter / v1alpha1 / orchestrator section and add a v1alpha2 entry: "v1alpha2 encounter service: walking skeleton shipped via [PR_LINK]. MoveEntity + StreamEncounter implemented over toolkit encounter SDK; other RPCs return Unimplemented. v1alpha1 movement path remains primary until web migrates. Follow-ups: rpg-toolkit#629 (LoS-loss events)."
+Confirmed during plan review: `rpg-api/docs/status.md` and `rpg-api/docs/quality.md` both exist. Find the encounter / v1alpha1 / orchestrator section in `status.md` and add a v1alpha2 entry: "v1alpha2 encounter service: walking skeleton shipped via [PR_LINK]. MoveEntity + StreamEncounter implemented over toolkit encounter SDK; other RPCs return Unimplemented. v1alpha1 movement path remains primary until web migrates. Follow-ups: rpg-toolkit#629 (LoS-loss events)."
 
 - [ ] **Step 7.3: Add a journey doc (if pattern exists)**
 
