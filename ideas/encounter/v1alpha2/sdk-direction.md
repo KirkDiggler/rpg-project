@@ -183,9 +183,10 @@ func (e *MoveEvent) Sequence() uint64            { return e.seq }
 func (e *MoveEvent) Audience() AudienceSet       { return audienceFrom(e.PerPlayer) }
 
 type MovePlayerSlice struct {
-    Revealed     HexSet
-    Hidden       HexSet
     SeenSegments []Hex   // which parts of the path this player saw
+    // Note: vision changes from the move (newly-revealed hexes) are published
+    // as a separate HexRevealedEvent, not embedded here. See "Decoupled
+    // cause/effect events" decision below.
 }
 
 type AttackEvent struct {
@@ -210,6 +211,30 @@ type AttackPlayerSlice struct {
 
 type DoorOpenedEvent struct { /* same shape */ }
 type ModeChangedEvent struct { /* From, To, Initiative */ }
+
+// HexRevealedEvent — decoupled from cause. Anything that changes a player's
+// vision (move, door open, light change, blind condition wearing off, etc.)
+// emits this alongside its own action event. Honest about effect; agnostic
+// about cause. New cause types don't touch existing events.
+type HexRevealedEvent struct {
+    encID     EncounterID
+    seq       uint64
+    PerPlayer map[PlayerID]HexRevealedSlice
+}
+func (*HexRevealedEvent) isEncounterEvent()           {}
+func (e *HexRevealedEvent) EncounterID() EncounterID  { return e.encID }
+func (e *HexRevealedEvent) Sequence() uint64          { return e.seq }
+func (e *HexRevealedEvent) Audience() AudienceSet     { return audienceFrom(e.PerPlayer) }
+
+type HexRevealedSlice struct {
+    Hexes    HexSet               // newly-visible squares for this player
+    Entities []EntityVisibility   // newly-visible entities (with limited identity if not identified)
+}
+
+// HexHiddenEvent — symmetric counterpart for vision lost (walking out of LoS,
+// lights going out, gaining Blinded condition). Deferred — none of the slice-1
+// actions cause hexes to disappear from view. Future addition under the same
+// decoupled principle.
 
 // ...one concrete per verb / world-action
 ```
@@ -334,19 +359,29 @@ func (e *Encounter) Move(playerID PlayerID, path []Hex) error {
     // 1. Validate (turn ordering when in combat mode, action economy, path legality)
     // 2. Apply state mutation (positions, action economy spend)
 
-    // 3. Compute per-player projections — encounter has full state
-    //    (perception views, walls, senses, conditions)
-    perPlayer := map[PlayerID]events.MovePlayerSlice{}
+    // 3. Per-player projection — produces TWO event slice maps per the decoupled
+    //    cause/effect principle: who-saw-the-move, plus whose vision changed
+    movePerPlayer   := map[PlayerID]events.MovePlayerSlice{}
+    revealPerPlayer := map[PlayerID]events.HexRevealedSlice{}
     for _, viewer := range e.players {
-        slice := perception.ProjectMove(playerID, path, viewer.View, e.spatial)
-        if slice != nil {
-            perPlayer[viewer.ID] = *slice
-            viewer.View.ApplyMove(*slice)            // update what they now know
+        moveSlice, revealSlice := perception.ProjectMove(playerID, path, viewer.View, e.spatial)
+        if moveSlice != nil {
+            movePerPlayer[viewer.ID] = *moveSlice
+        }
+        if revealSlice != nil {
+            revealPerPlayer[viewer.ID] = *revealSlice
+            viewer.View.ApplyReveal(*revealSlice)    // update what they now know
         }
     }
 
-    // 4. Publish typed event
-    return e.broker.Publish(events.NewMoveEvent(e.id, e.nextSeq(), playerID, path, perPlayer))
+    // 4. Publish — typed events, decoupled cause (Move) from effect (HexRevealed)
+    if len(movePerPlayer) > 0 {
+        e.broker.Publish(events.NewMoveEvent(e.id, e.nextSeq(), playerID, path, movePerPlayer))
+    }
+    if len(revealPerPlayer) > 0 {
+        e.broker.Publish(events.NewHexRevealedEvent(e.id, e.nextSeq(), revealPerPlayer))
+    }
+    return nil
 }
 ```
 
@@ -413,6 +448,7 @@ The boundary rule (`API never knows what "rage" does`) holds — and tightens. T
 - **Recipient identity**: `PlayerID` Day 1; introduce `RecipientID` alias when GM seats / NPC observers land. (Was Q3.)
 - **Event taxonomy**: sealed `EncounterEvent` interface (AWS v2 SDK pattern), one concrete type per world-action. No generic envelope.
 - **Event scope**: encounter events are mode-spanning (combat, free-roam, social) — not combat-only. `encounter/` package name reflects this.
+- **Decoupled cause/effect events**: vision changes are emitted as `HexRevealedEvent` regardless of cause (move, door open, lights on, blind condition removed). Action events (`MoveEvent`, `DoorOpenedEvent`, `ConditionRemovedEvent`, `LightChangedEvent`) describe what happened in the world; `HexRevealedEvent` describes the per-player perceptual effect with the same shape across all causes. New cause types don't touch existing events. Symmetric `HexHiddenEvent` deferred until vision-loss cases land.
 - **Bus vs Broker relationship**: parallel taxonomies. Bus events stay fine-grained for chain composition; Broker events are coarse post-resolution narration. Different shapes, different jobs.
 - **`Sequence`**: assigned by the encounter at publish time (encounter is the source of truth for ordering). On the interface for cross-cutting access (logging, tracing, dead-letter handling).
 - **Generic `Event` interface extraction**: deferred. Stay collapsed under `EncounterEvent` until a non-encounter use case shows up. Go interface satisfaction makes future extraction additive (one-liner `isEvent()` per concrete).
@@ -432,7 +468,10 @@ The boundary rule (`API never knows what "rage" does`) holds — and tightens. T
 
 - **Concrete `v1alpha1` → `v1alpha2` cutover sequencing** — orchestrator migration order, deprecation, rollout.
 - **Full contents of `EncounterData`** — beyond `PerceptionView`, the encounter persists: entity list (positions, HP, conditions), action economy state, turn state, **monster AI / behavior state (last damager, marked, threat tables, target memory)**, mode state, encounter map / spatial state. Enumerate when writing the spec.
-- **Full `EncounterEvent` catalog** — enumerate the concrete types. Combat: Move, Attack, ActivateFeature, UseAction, Interact, ConditionApplied, ConditionRemoved, EndTurn, InitiativeRolled. Free-roam: Move, OpenDoor, Search, Reveal. Mode-transition: ModeChanged, EncounterStarted, EncounterEnded. Plus per-event `PerPlayer` slice shapes.
+- **Full `EncounterEvent` catalog** — enumerate concrete types in two layers per the decoupled cause/effect principle:
+  - **Cause events** (action-flavored): Move, Attack, ActivateFeature, UseAction, Interact, ConditionApplied, ConditionRemoved, OpenDoor, Search, EndTurn, InitiativeRolled, ModeChanged, EncounterStarted, EncounterEnded, LightChanged, ...
+  - **Effect events** (player-perceptual): HexRevealed, HexHidden (later), and any future "what changed for this player" events that decouple cleanly from cause.
+  - Plus per-event `PerPlayer` slice shapes.
 - **AI decision logic location** — the SDK doesn't *run* AI; it calls into rules code (`mechanics/`, `behavior/`, or per-rulebook). Needs to land somewhere; out of scope for this SDK design but part of the larger picture.
 - **Backend choice for prod** — Redis pubsub assumed, but Kafka may matter once playtests scale; not a Day-1 decision.
 - **Issue #617 interaction** — events package rewrite left stale `replace` directives in mechanics modules. Does it block this, or do we land alongside?
