@@ -111,7 +111,7 @@ type Handler struct {
     encounterv2pb.UnimplementedEncounterServiceServer  // every other RPC = Unimplemented
     broker  *encounter.Broker
     encRepo encountersv2.Repository
-    clock   clockwork.Clock
+    now     func() time.Time   // injected; defaults to time.Now
 }
 ```
 
@@ -138,11 +138,11 @@ type Handler struct {
 4. data := encRepo.Get(ctx, encID)
    enc  := encounter.LoadFromData(data, h.broker)
    snap := enc.SnapshotFor(playerID)
-   stream.Send(translateSnapshot(snap, h.clock.Now()))   // SnapshotDelivered first
+   stream.Send(translateSnapshot(snap, h.now()))   // SnapshotDelivered first
 5. loop:
      select case <-ctx.Done(): return
             case evt := <-sub.Events():
-                out, err := translateEvent(evt, playerID, h.clock.Now())
+                out, err := translateEvent(evt, playerID, h.now())
                 // error switch (see translator section below)
                 stream.Send(out)
 ```
@@ -177,7 +177,7 @@ func translateEvent(
 
 **Per-viewer signature** because the toolkit's `MoveEvent.PerPlayer` carries every viewer's slice; the translator picks `evt.PerPlayer[viewerID]` to populate `EntityMoved.actual_path`. Translation is per-stream, not global.
 
-**Wall-clock injected.** Toolkit events carry `seq` but not timestamp (toolkit is rules engine, not clock owner). The proto envelope wants both. Handler injects `clockwork.Clock`; translator stamps `now` per call.
+**Wall-clock injected.** Toolkit events carry `seq` but not timestamp (toolkit is rules engine, not clock owner). The proto envelope wants both. Handler holds a `now func() time.Time` (production = `time.Now`; tests pass a fixed-time func). Translator takes `now time.Time` as a parameter. No new dependency; rpg-api doesn't use clockwork elsewhere.
 
 **Slice 1 mapping table:**
 
@@ -191,7 +191,7 @@ Other toolkit event types → return `(nil, ErrUnknownEventType)`. New events ge
 
 **Stream-loop error discipline:**
 ```go
-out, err := translateEvent(evt, viewerID, h.clock.Now())
+out, err := translateEvent(evt, viewerID, h.now())
 switch {
 case errors.Is(err, ErrViewerSawNothing):
     continue  // expected; viewer was on the audience set but saw nothing visible
@@ -213,7 +213,7 @@ Typed errors are the communication channel. Callers `errors.Is`-check the expect
 | Layer | Tool | What it proves |
 |---|---|---|
 | **Translator unit** | `translate_test.go`, table-driven, `proto.Equal` | Wire-fidelity contract. **Target: 100% line coverage on `translate.go`.** |
-| **Handler unit** | testify suite, real broker + real `InMemoryTransport` + real repo + fake clock | RPC behavior end-to-end within one process. |
+| **Handler unit** | testify suite, real broker + real `InMemoryTransport` + real repo + fixed-time `now` func | RPC behavior end-to-end within one process. |
 | **Integration (bufconn)** | extends existing `internal/integration/harness/harness.go` with v2 client + broker handle | The wave-2.5 acceptance shape: two players, one moves, both subscribe, assert per-stream delivery. **Slice 1 gate.** |
 
 **No broker mock generated.** The broker is a small, well-tested toolkit type — mocking would cost more friction than it pays. The mockable boundary, if and when one is ever needed, is `Transport` (interface), not `Broker` (concrete). Slice 1 has zero handler-test mocks.
