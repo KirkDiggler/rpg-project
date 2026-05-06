@@ -1,10 +1,10 @@
 # Encounter SDK Direction — Brainstorm Snapshot
 
-Date: 2026-05-05 (revised)
-Status: **brainstorming, in-progress** — not a spec yet. Three open questions remain at the end.
+Date: 2026-05-06
+Status: **design settled — ready to promote to a formal spec.** All design questions resolved. Items still needing enumeration before implementation are in "What this brainstorm did not settle" at the end.
 Relationship to siblings:
 - `design.md` — the v1alpha2 contract (shipped Phase 1 protos at v0.1.93). This brainstorm doesn't change the proto contract; it changes who emits/consumes it.
-- `orchestrator-design.md` — Phase 2 design as drafted in the previous session. **This brainstorm is a re-framing of that Phase 2 work.** Instead of growing more orchestrator code in rpg-api, the orchestrator becomes a thin shim and the new responsibility (encounter lifecycle, action dispatch, event projection, event distribution) moves into a new SDK layer in rpg-toolkit. If this direction holds, `orchestrator-design.md` §2/§3 get superseded; §4 open questions get re-asked from this seam.
+- `orchestrator-design.md` — Phase 2 design as drafted in the previous session. **This brainstorm supersedes it.** Same v1alpha2 wave, different framing of Phase 2: encounter lifecycle and per-player event distribution move into a new toolkit SDK; rpg-api orchestrator becomes a thin shim.
 
 ---
 
@@ -18,7 +18,7 @@ Proposal: insert an **encounter SDK layer** in rpg-toolkit between the orchestra
 
 ---
 
-## Architectural decisions made so far
+## Architectural decisions
 
 ### 1. Encounter is fully transient (data-in / data-out)
 
@@ -34,29 +34,39 @@ The encounter object exists only for the duration of one action. No long-lived i
 ### 2. Two distinct event systems, parallel taxonomies
 
 - **`events.Bus`** (toolkit's existing in-process synchronous chain) — stays internal to the SDK, used during action resolution to compose modifier chains (Monk WIS-AC, condition stacks, etc.). Fine-grained, mutate-during-dispatch (`PreAttackRolled`, `DamageRolled`, `ConditionApplied`). **Unchanged.** Not the player-facing stream.
-- **The Broker + EncounterEvent taxonomy** (new) — process-scoped game-server component, handles per-player gRPC streaming. Coarse-grained, immutable post-resolution narration (`MoveEvent`, `AttackEvent`, `DoorOpenedEvent`).
+- **The Broker + EncounterEvent taxonomy** (new) — process-scoped game-server component, handles per-player gRPC streaming. Coarse-grained, immutable post-resolution narration (`MoveEvent`, `AttackEvent`, `DoorOpenedEvent`, `ModeChangedEvent`...).
 
-Same world-action vocabulary (Move, Attack, Door, etc.); different shapes for different jobs. They live in separate packages.
+Same world-action vocabulary; different shapes for different jobs. They live in separate packages.
 
-### 3. Per-player visibility is enforced server-side; client is dumb pixels
+### 3. EncounterEvents span all encounter modes
+
+An encounter is a *scene* (a hex map with entities and state). Encounter mode (`COMBAT`, `EXPLORATION`/free-roam, `SOCIAL`) defines whether turn order is enforced and which verbs are available — but the event taxonomy is mode-spanning.
+
+- Mode-spanning events: `MoveEvent`, `DoorOpenedEvent`, `InteractEvent`, `RevealedEvent`.
+- Mode-specific events: `AttackEvent` and the action-economy events tend to be combat-mode.
+- Mode-transition events: `ModeChangedEvent`, `InitiativeStartedEvent`, `EncounterEndedEvent`.
+
+`encounter/` (not `combat/`) is the right package scope precisely because free-roam events need the same broker plumbing as combat events.
+
+### 4. Per-player visibility is enforced server-side; client is dumb pixels
 
 Video game rule #1: never trust the client. Events that a player should not see never reach their stream. The encounter (which has full state) computes per-player projections; the broker fans them out by audience. Players who can't perceive an event simply don't receive it.
 
-Door opens → Bob (across the room) gets `MoveEvent` with a few revealed squares. Alice (at the door) gets `MoveEvent` with deep reveal into the room. Carol (no LoS) receives nothing. One typed event published; broker delivers per audience.
+Door opens → Bob (across the room) gets `DoorOpenedEvent` with a few revealed squares. Alice (at the door) gets one with deep reveal into the room. Carol (no LoS) receives nothing. One typed event published; broker delivers per audience.
 
-### 4. Server holds complexity
+### 5. Server holds complexity
 
 Per-player **PerceptionView** is persisted on the encounter (`ToData`). Server emits *deltas* against that view. Reconnect/late-join sends the persisted view as a snapshot — the transport doesn't need history retention.
 
-### 5. Broker takes a Transport at construction
+### 6. Broker takes a Transport at construction
 
 The broker is the SDK's pub/sub facade. It owns active in-process subscriptions and routes events. Underneath, it publishes/subscribes through a pluggable **Transport** — a thin interface (`Publish(channel, payload)` / `Subscribe(channel) → events`) that wraps Redis pubsub, Kafka, or an in-memory map. The broker doesn't know which.
 
-### 6. Events are typed concretes under a sealed interface
+### 7. Events are typed concretes under a sealed interface
 
 Following the AWS v2 SDK `AttributeValue` pattern: a sealed `EncounterEvent` interface with an unexported marker method, and one concrete struct per world-action. No generic envelope, no opaque payload. Type-safe, sum-typed, compile-time bounded. (Detailed in the events section below.)
 
-### 7. Visibility model starts simple, grows under one interface
+### 8. Visibility model starts simple, grows under one interface
 
 Day 1: ad-hoc projection inside encounter verbs. Persistent perception state is a `PerceptionView` per player on the encounter (cumulative reveals, known entities, active senses, conditions). When rules force richer modeling (long-term awareness, illusions, etc.) it grows under the same `Project` signature.
 
@@ -78,7 +88,7 @@ broker := sdk.NewBroker(transport)             // process-scoped, long-lived
 
 ```go
 func (s *Server) TakeAction(ctx, req) (*Resp, error) {
-    // 1. Auth: this player, this encounter, their turn
+    // 1. Auth: this player, this encounter, their turn (when in combat mode)
     // 2. Load
     data := s.encounters.Get(req.EncounterID)
     encounter := sdk.LoadFromData(data, s.broker)
@@ -128,9 +138,10 @@ func (s *Server) StreamEncounter(req, stream) error {
 
 func eventToProto(evt events.EncounterEvent, p PlayerID) *v1alpha2.EncounterEvent {
     switch e := evt.(type) {
-    case *events.MoveEvent:        return toMoveProto(e, p)
-    case *events.AttackEvent:      return toAttackProto(e, p)
-    case *events.DoorOpenedEvent:  return toDoorOpenedProto(e, p)
+    case *events.MoveEvent:           return toMoveProto(e, p)
+    case *events.AttackEvent:         return toAttackProto(e, p)
+    case *events.DoorOpenedEvent:     return toDoorOpenedProto(e, p)
+    case *events.ModeChangedEvent:    return toModeChangedProto(e, p)
     // ... one case per concrete event
     }
 }
@@ -142,7 +153,7 @@ Handler adapter pulls each player's slice from the typed event's `PerPlayer` map
 
 ## Events: sealed `EncounterEvent`, typed concretes
 
-The events package — likely `rpg-toolkit/encounter/events/` (TBD).
+Lives in `rpg-toolkit/encounter/events/`.
 
 ```go
 package events
@@ -198,6 +209,7 @@ type AttackPlayerSlice struct {
 }
 
 type DoorOpenedEvent struct { /* same shape */ }
+type ModeChangedEvent struct { /* From, To, Initiative */ }
 
 // ...one concrete per verb / world-action
 ```
@@ -206,7 +218,7 @@ type DoorOpenedEvent struct { /* same shape */ }
 A `BaseEvent` struct embedded into each concrete would be less boilerplate but **breaks the seal** — external packages could embed `BaseEvent` and inadvertently satisfy `EncounterEvent`. AWS v2 SDK takes the same call: each concrete defines its own `is<X>` marker. The four-method-per-type boilerplate is the cost of the seal. Worth it.
 
 **Future extraction of a generic `Event`.**
-Today, `EncounterEvent` is the only flavor. Later, if we want the broker to carry non-encounter events (lobby messages, system notifications), we can extract:
+Today `EncounterEvent` is the only flavor. Later, if we want the broker to carry non-encounter events (lobby messages, system notifications), we can extract:
 
 ```go
 // Future
@@ -222,13 +234,13 @@ type EncounterEvent interface {
 }
 ```
 
-Existing concretes get a one-liner `func (*MoveEvent) isEvent() {}` added — additive, no consumer breakage. Go's structural interface satisfaction makes this kind of layering free to defer.
+Existing concretes get a one-liner `func (*MoveEvent) isEvent() {}` added — additive, no consumer breakage. Go's structural interface satisfaction makes layering free to defer.
 
 ---
 
 ## SDK package surface
 
-Package location TBD — either new top-level `rpg-toolkit/encounter/`, or grow inside the existing `rpg-toolkit/game/` package. See open questions.
+`rpg-toolkit/encounter/` (top-level package).
 
 ```go
 // Construction
@@ -254,6 +266,8 @@ func (e *Encounter) ToData() *Data
 ```
 
 Note: **no `Subscribe` on Encounter.** Subscribe is a Broker concern (long-lived, process-scoped); Encounter is transient and mutates+publishes only.
+
+The encounter SDK *uses* `game.Context` internally (chain handlers query it), but doesn't share a package with it. `game.Context` stays in `rpg-toolkit/game/` as the chain-handler query facade.
 
 ## Transport — the pluggable pub/sub interface
 
@@ -317,7 +331,7 @@ The broker NEVER type-switches events — it routes by `EncounterID()` and `Audi
 
 ```go
 func (e *Encounter) Move(playerID PlayerID, path []Hex) error {
-    // 1. Validate (turn, action economy, path legality)
+    // 1. Validate (turn ordering when in combat mode, action economy, path legality)
     // 2. Apply state mutation (positions, action economy spend)
 
     // 3. Compute per-player projections — encounter has full state
@@ -385,16 +399,20 @@ The boundary rule (`API never knows what "rage" does`) holds — and tightens. T
 
 - **`ToData/LoadFromData` is the canonical persistence pattern** in toolkit — Character, Draft, BasicEnvironment, spatial Room all use it. We're following the established shape.
 - **No "Encounter" aggregate exists yet** — this fills a real gap, no name collision risk.
-- **`game.Context` exists** in `rpg-toolkit/game/` as a small facade (just `context.go`). The encounter SDK could grow there or stand on its own.
+- **`game.Context` exists** in `rpg-toolkit/game/` as the chain-handler query facade. Different audience from this SDK; unchanged by this work.
 - **Events package rewrite (issue #617)** left some mechanics modules with stale `replace` directives that can't build. Likely needs cleanup before this lands or as part of it.
 - **No visibility/perception model exists** anywhere in toolkit. We're introducing a new subdomain (`rpg-toolkit/perception/`).
 - **Dungeon is moving from `rulebooks/dnd5e/dungeon/` to `tools/dungeon/`.** Coordinate if SDK depends on dungeon logic.
 
 ---
 
-## Decisions settled (was open last revision)
+## Decisions settled
 
+- **Action surface**: verb methods on `Encounter` (`Move`, `Attack`, `ActivateFeature`, `UseAction`, `Interact`, `SubmitCheck`, `EndTurn`). Orchestrator switches on action type from proto. (Was Q1.)
+- **Package location**: top-level `rpg-toolkit/encounter/` for SDK + events + broker. `game.Context` stays in `rpg-toolkit/game/` as the chain-handler query facade. Different audiences, different lifecycles, different packages. (Was Q2.)
+- **Recipient identity**: `PlayerID` Day 1; introduce `RecipientID` alias when GM seats / NPC observers land. (Was Q3.)
 - **Event taxonomy**: sealed `EncounterEvent` interface (AWS v2 SDK pattern), one concrete type per world-action. No generic envelope.
+- **Event scope**: encounter events are mode-spanning (combat, free-roam, social) — not combat-only. `encounter/` package name reflects this.
 - **Bus vs Broker relationship**: parallel taxonomies. Bus events stay fine-grained for chain composition; Broker events are coarse post-resolution narration. Different shapes, different jobs.
 - **`Sequence`**: assigned by the encounter at publish time (encounter is the source of truth for ordering). On the interface for cross-cutting access (logging, tracing, dead-letter handling).
 - **Generic `Event` interface extraction**: deferred. Stay collapsed under `EncounterEvent` until a non-encounter use case shows up. Go interface satisfaction makes future extraction additive (one-liner `isEvent()` per concrete).
@@ -402,47 +420,23 @@ The boundary rule (`API never knows what "rage" does`) holds — and tightens. T
 
 ---
 
-## Open questions
-
-### Q1 — Where does the action catalog live?
-
-Two shapes for the action surface:
-
-- **A) Verb methods** (drawn above) — `encounter.Move(...)`, `encounter.Attack(...)`, etc. Orchestrator switches on action type from the proto. Adding a new action type touches the SDK signature *and* the orchestrator switch.
-- **B) Sealed-sum dispatch** — `encounter.Apply(playerID, ActionDescriptor)` where `ActionDescriptor` is a Go sum type. SDK owns the dispatch table. New actions land in toolkit only; orchestrator doesn't change.
-
-**Lean: A initially** — orchestrator already knows action type from proto, verb methods read clearly. Revisit if catalog grows past ~10 verbs.
-
-### Q2 — Package location
-
-- **`rpg-toolkit/encounter/`** (new top-level) — discoverable, signals importance.
-- **Grow `rpg-toolkit/game/`** (existing, currently just `Context`) — "how you run a game" is conceptually what `game/` is about; would house `Encounter`, `PerceptionView`, `Broker`, and the events package.
-
-**Lean: grow `game/`.** It pulls more weight that way and matches the conceptual scope.
-
-### Q3 — Recipient identity beyond PlayerID
-
-`PerPlayer` map and `AudienceSet` are keyed by `PlayerID` today. Real games have GMs, possibly NPC-as-spectator, possibly observers. Probably want a `RecipientID` alias or interface so the SDK is agnostic about who counts as a recipient. Day 1 = just PlayerIDs; the type can grow.
-
-**Lean: ship Day 1 with `PlayerID`; introduce `RecipientID` when GM seats land.** Not a blocker.
-
----
-
 ## Pickup for next session
 
-1. Settle Q1–Q3 above.
-2. Decide whether this brainstorm replaces `orchestrator-design.md` Phase 2 or sits alongside it. (My read: replaces — same wave, different framing.)
-3. Write the formal design doc (probably `design-v2.md` here, or a new sibling).
-4. Spec review loop.
-5. Implementation plan.
+1. This brainstorm supersedes `orchestrator-design.md` Phase 2. Note that explicitly when promoting (or update orchestrator-design.md with a pointer to this file).
+2. Promote to formal design doc — new sibling, e.g. `design-encounter-sdk.md` or `design-v2.md`.
+3. Spec review loop.
+4. Implementation plan (see writing-plans skill).
+5. First implementation slice — most likely: define `EncounterEvent` interface + first 3-4 concrete event types + `Broker` skeleton with `InMemoryTransport`. Get the subscribe/publish loop working end-to-end before wiring rules.
 
-## What this brainstorm did *not* settle
+## What this brainstorm did *not* settle (need enumeration before/during spec)
 
-- Concrete v1alpha1 → v1alpha2 cutover sequencing (orchestrator migration order, deprecation).
-- Specific contents of `EncounterData` beyond `PerceptionView` (entity list, action economy, turn state — straightforward, but enumerate).
-- Backend choice for prod (Redis pubsub assumed, but Kafka may matter once playtests scale; not a day-1 decision).
-- How the existing `events.Bus` mechanics module rewrite (#617) interacts with this — does it block, or do we land alongside?
-- **Failure semantics**: what happens if the transport fails mid-action? Action succeeds, event lost? Action rolls back? Probably: action succeeds, event delivery is best-effort with reconnect-via-snapshot as the safety net. Document.
-- **Multi-process scale-out**: does anything need to change if rpg-api runs N replicas? Mostly no — Redis pubsub fans out across processes; broker self-receipt is uniform. But concurrent-write lock semantics on the same encounter need a thought.
-- **Snapshot completeness**: what does `SnapshotFor(playerID)` actually serialize? The full PerceptionView, plus current entity positions visible to that player, plus turn state? Enumerate when writing the spec.
-- **Wire codec for Transport**: JSON with type discriminator vs protobuf-internal vs gob. Affects portability of Redis channel data and ability to inspect via redis-cli. Probably JSON for debuggability; revisit if size matters.
+- **Concrete `v1alpha1` → `v1alpha2` cutover sequencing** — orchestrator migration order, deprecation, rollout.
+- **Full contents of `EncounterData`** — beyond `PerceptionView`, the encounter persists: entity list (positions, HP, conditions), action economy state, turn state, **monster AI / behavior state (last damager, marked, threat tables, target memory)**, mode state, encounter map / spatial state. Enumerate when writing the spec.
+- **Full `EncounterEvent` catalog** — enumerate the concrete types. Combat: Move, Attack, ActivateFeature, UseAction, Interact, ConditionApplied, ConditionRemoved, EndTurn, InitiativeRolled. Free-roam: Move, OpenDoor, Search, Reveal. Mode-transition: ModeChanged, EncounterStarted, EncounterEnded. Plus per-event `PerPlayer` slice shapes.
+- **AI decision logic location** — the SDK doesn't *run* AI; it calls into rules code (`mechanics/`, `behavior/`, or per-rulebook). Needs to land somewhere; out of scope for this SDK design but part of the larger picture.
+- **Backend choice for prod** — Redis pubsub assumed, but Kafka may matter once playtests scale; not a Day-1 decision.
+- **Issue #617 interaction** — events package rewrite left stale `replace` directives in mechanics modules. Does it block this, or do we land alongside?
+- **Failure semantics** — what happens if the transport fails mid-action? Action succeeds, event lost? Action rolls back? Probably: action succeeds, event delivery best-effort, reconnect-via-snapshot is the safety net. Document.
+- **Multi-process scale-out** — Redis pubsub fans out cleanly; broker self-receipt is uniform. But concurrent-write lock semantics on the same encounter need a thought.
+- **Snapshot completeness** — what `SnapshotFor(playerID)` actually serializes. Full `PerceptionView`, plus current entity positions visible to that player, plus turn state. Enumerate.
+- **Wire codec for Transport** — JSON with type discriminator vs protobuf-internal vs gob. Affects portability of Redis channel data and ability to inspect via redis-cli. Probably JSON for debuggability; revisit if size matters.
