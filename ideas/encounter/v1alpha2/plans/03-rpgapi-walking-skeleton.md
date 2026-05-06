@@ -925,7 +925,37 @@ func (s *HandlerSuite) TestStreamEncounter_SendsSnapshotFirst() {
 	s.Require().NotNil(first.GetSnapshotDelivered(), "first event should be SnapshotDelivered")
 }
 ```
-Add a `capturingStream` helper at the bottom of the test file — a stub `encounterv2pb.EncounterService_StreamEncounterServer` that records `Send` calls into a channel and supports `Context()` returning the test ctx so the stream loop can be cancelled.
+Add a `capturingStream` helper at the bottom of the test file. Sketch:
+```go
+type capturingStream struct {
+	grpc.ServerStream // embed for unused methods (SendMsg, RecvMsg, etc.)
+	ctx  context.Context
+	sent chan *encounterv2pb.EncounterEvent
+}
+
+func newCapturingStream(ctx context.Context) *capturingStream {
+	return &capturingStream{ctx: ctx, sent: make(chan *encounterv2pb.EncounterEvent, 16)}
+}
+
+func (s *capturingStream) Context() context.Context { return s.ctx }
+
+func (s *capturingStream) Send(evt *encounterv2pb.EncounterEvent) error {
+	s.sent <- evt
+	return nil
+}
+
+func (s *capturingStream) WaitForSend(t *testing.T, timeout time.Duration) *encounterv2pb.EncounterEvent {
+	t.Helper()
+	select {
+	case evt := <-s.sent:
+		return evt
+	case <-time.After(timeout):
+		t.Fatalf("no event received within %s", timeout)
+		return nil
+	}
+}
+```
+Confirm the actual interface name (likely `encounterv2pb.EncounterService_StreamEncounterServer`) by reading the generated proto code; embed `grpc.ServerStream` to satisfy unused methods.
 
 - [ ] **Step 5.3: Run (expect failure)**
 
@@ -1004,7 +1034,7 @@ func (h *Handler) StreamEncounter(req *encounterv2pb.StreamEncounterRequest, str
 }
 ```
 
-Add `translateSnapshot` to `translate.go`:
+Add `translateSnapshot` to `translate.go`. **Note:** this introduces a new import — `translate.go`'s import block currently only pulls `core` and `events` from the toolkit. Add the top-level `"github.com/KirkDiggler/rpg-toolkit/encounter"` import to `translate.go` before adding the function:
 ```go
 func translateSnapshot(snap encounter.Snapshot, now time.Time) *encounterv2pb.EncounterEvent {
 	return &encounterv2pb.EncounterEvent{
