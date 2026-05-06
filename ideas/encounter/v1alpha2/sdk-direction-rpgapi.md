@@ -206,7 +206,7 @@ stream.Send(out)
 
 Typed errors are the communication channel. Callers `errors.Is`-check the expected ones; everything else escalates. Honors the project rule: never return `(nil, nil)`.
 
-**Coordinate translation:** `core.Hex` (Q,R,S cube) ↔ proto `Position` (Q,R,S cube). 1:1 helpers, table-tested.
+**Coordinate translation:** `core.Hex` (Q,R,S cube) ↔ proto `Position` (x,y,z cube; invariant `x+y+z = 0` per `types.proto`). 1:1 mapping, helpers table-tested.
 
 ### 6. Test strategy
 
