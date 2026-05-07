@@ -105,11 +105,9 @@ rm -rf node_modules package-lock.json && npm install
 
 Create a throwaway file `src/__proto-check.ts`:
 ```ts
-import type {
-  StreamEncounterRequestSchema,
-  EncounterEvent,
-} from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
-console.log({ StreamEncounterRequestSchema });
+import { StreamEncounterRequestSchema } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/service_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
+console.log({ StreamEncounterRequestSchema, _check: null as EncounterEvent | null });
 ```
 
 Run:
@@ -671,13 +669,21 @@ disappear→appear sequence, defensive no-op on unknown entity."
 
 - [ ] **Step 5.1: Confirm v1alpha2 EncounterEvent oneof case names**
 
-The proto's `EncounterEvent` carries a oneof with one case per event type. Check the generated TS for the exact case names:
+The proto's `EncounterEvent` carries a oneof with one case per event type. The generated TS is split across three files:
+
+- `service_pb.ts` — service messages (`StreamEncounterRequest`, `StreamEncounterRequestSchema`, etc.)
+- `events_pb.ts` — `EncounterEvent` and the per-case payload types (`SnapshotDelivered`, `EntityMoved`, `GeometryRevealed`, `EntityAppeared`, `EntityDisappeared`)
+- `types_pb.ts` — shared types (`Position`, `Hex`, `Entity`, `Encounter`, etc.)
+
+Check the generated TS for the exact case names:
 
 ```bash
-grep -A40 "export type EncounterEvent " node_modules/@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb.ts
+grep -A40 "export type EncounterEvent " node_modules/@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb.ts
 ```
 
 Expected case names (verify against actual output): `snapshotDelivered`, `entityMoved`, `geometryRevealed`, `entityAppeared`, `entityDisappeared`. The string discriminator on the oneof is `event.event.case`.
+
+**Important: payload type names have NO `Event` suffix.** The proto exports `SnapshotDelivered`, `EntityMoved`, `GeometryRevealed`, `EntityAppeared`, `EntityDisappeared` — not `*Event`. Use those exact names everywhere.
 
 If the generated names differ (e.g. `snapshot_delivered` vs `snapshotDelivered`), use what the generated TS actually exports — adjust the rest of this task accordingly.
 
@@ -686,7 +692,7 @@ If the generated names differ (e.g. `snapshot_delivered` vs `snapshotDelivered`)
 Create `src/api/encounterStream2Dispatch.test.ts`:
 ```ts
 import { describe, expect, it, vi } from 'vitest';
-import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
 import { dispatchEncounterStream2Event, type EncounterStream2Options } from './encounterStream2Dispatch';
 
 function makeEvent<K extends string, V>(caseName: K, value: V): EncounterEvent {
@@ -728,8 +734,10 @@ describe('dispatchEncounterStream2Event', () => {
   it('routes entityAppeared to onEntityAppeared', () => {
     const onEntityAppeared = vi.fn();
     const options: EncounterStream2Options = { onEntityAppeared };
+    // NOTE: v1alpha2 Entity uses `id` (not `entityId`); see types_pb.ts.
     const event = makeEvent('entityAppeared', {
-      entity: { entityId: 'g', position: { x: 1, y: -1, z: 0 } },
+      entity: { id: 'g', position: { x: 1, y: -1, z: 0 } },
+      reason: '',
     });
     dispatchEncounterStream2Event(event, options);
     expect(onEntityAppeared).toHaveBeenCalledTimes(1);
@@ -778,12 +786,12 @@ Create `src/api/encounterStream2Dispatch.ts`:
 ```ts
 import type {
   EncounterEvent,
-  EntityAppearedEvent,
-  EntityDisappearedEvent,
-  EntityMovedEvent,
-  GeometryRevealedEvent,
-  SnapshotDeliveredEvent,
-} from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+  EntityAppeared,
+  EntityDisappeared,
+  EntityMoved,
+  GeometryRevealed,
+  SnapshotDelivered,
+} from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
 
 /**
  * Per-event-type callbacks for the v1alpha2 encounter stream.
@@ -794,11 +802,11 @@ import type {
  * slice 1 — DO NOT apply it as state. Treat as a stream-up sync barrier.
  */
 export interface EncounterStream2Options {
-  onSnapshotDelivered?: (event: SnapshotDeliveredEvent) => void;
-  onEntityMoved?: (event: EntityMovedEvent) => void;
-  onGeometryRevealed?: (event: GeometryRevealedEvent) => void;
-  onEntityAppeared?: (event: EntityAppearedEvent) => void;
-  onEntityDisappeared?: (event: EntityDisappearedEvent) => void;
+  onSnapshotDelivered?: (event: SnapshotDelivered) => void;
+  onEntityMoved?: (event: EntityMoved) => void;
+  onGeometryRevealed?: (event: GeometryRevealed) => void;
+  onEntityAppeared?: (event: EntityAppeared) => void;
+  onEntityDisappeared?: (event: EntityDisappeared) => void;
 }
 
 /**
@@ -876,7 +884,7 @@ Tests cover all five cases + unknown + no-callback-registered."
 
 Create `src/api/fakeEncounterStream2.ts`:
 ```ts
-import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
 
 /**
  * Test helper: an async iterable that yields events from a controllable queue.
@@ -968,7 +976,7 @@ Create `src/api/useEncounterStream2.test.ts`:
 ```ts
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
 import {
   createFakeStream,
   type FakeStream,
@@ -1151,22 +1159,20 @@ Verify `src/api/client.ts` has (or add) a `encounterClientV2` for the v1alpha2 s
 
 ```ts
 import { createClient } from '@connectrpc/connect';
-import { EncounterService as EncounterServiceV2 } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import { EncounterService as EncounterServiceV2 } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/service_pb';
 
 export const encounterClientV2 = createClient(EncounterServiceV2, transport);
 ```
 
-(The exact import path / service identifier depends on the generated TS — verify against the proto package once Task 1's bump lands.)
+(Verify the exact `EncounterService` export name in `service_pb.ts` once Task 1's bump lands — the connectrpc service descriptor pattern is consistent, but the symbol name might be a generated alias.)
 
 - [ ] **Step 6.5: Write the hook implementation**
 
 Create `src/api/useEncounterStream2.ts`:
 ```ts
 import { create } from '@bufbuild/protobuf';
-import {
-  StreamEncounterRequestSchema,
-  type EncounterEvent,
-} from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import { StreamEncounterRequestSchema } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/service_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
 import { useEffect, useRef, useState } from 'react';
 import { encounterClientV2 } from './client';
 import {
@@ -1365,13 +1371,24 @@ useEncounterStream2(encounterId, playerId, {
     encounterState.applyEntityPositionUpdate(event.entityId, last);
   },
   onGeometryRevealed: (event) => {
-    encounterState.applyHexRevealed(
-      event.hexes.map(protoPositionToHex)
-    );
+    // GeometryRevealed.hexes is Hex[]; each Hex wraps a Position via .position.
+    // Skip any hex that's missing position (defensive — shouldn't happen).
+    const positions = event.hexes
+      .map((h) => h.position)
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
+    encounterState.applyHexRevealed(positions.map(protoPositionToHex));
   },
   onEntityAppeared: (event) => {
-    if (!event.entity) return;
-    encounterState.applyEntityAppeared(event.entity);
+    if (!event.entity || !event.entity.position) return;
+    // v1alpha2 Entity uses `id` (not `entityId`); applyEntityAppeared takes
+    // v1's EntityState shape. Construct the minimum-viable EntityState from
+    // the v2 Entity — slice 2 only renders position; future slices that
+    // need richer fields (HP, type, etc.) can extend this translation.
+    const stub = {
+      entityId: event.entity.id,
+      position: event.entity.position,
+    } as EntityState;
+    encounterState.applyEntityAppeared(stub);
   },
   onEntityDisappeared: (event) => {
     if (!event.lastKnownPosition) return;
@@ -1387,7 +1404,9 @@ Add imports near the top of the file:
 ```ts
 import { useEncounterStream2 } from '../api/useEncounterStream2';
 import { protoPositionToHex } from '../utils/hexCoord';
+import type { EntityState } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha1/encounter_pb';
 ```
+(EntityState is the v1alpha1 type — already imported elsewhere in LobbyView; verify and add if missing.)
 
 - [ ] **Step 7.4: Verify no regression on v1 callbacks**
 
@@ -1525,7 +1544,8 @@ Create `src/api/useEncounterStream2.integration.test.tsx`:
 ```tsx
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
+import type { EntityState } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha1/encounter_pb';
 import {
   createFakeStream,
   type FakeStream,
@@ -1574,10 +1594,19 @@ function useTestHarness(encounterId: string) {
       if (last) state.applyEntityPositionUpdate(e.entityId, last);
     },
     onGeometryRevealed: (e) => {
-      state.applyHexRevealed(e.hexes.map(protoPositionToHex));
+      const positions = e.hexes
+        .map((h) => h.position)
+        .filter((p): p is NonNullable<typeof p> => p !== undefined);
+      state.applyHexRevealed(positions.map(protoPositionToHex));
     },
     onEntityAppeared: (e) => {
-      if (e.entity) state.applyEntityAppeared(e.entity);
+      if (!e.entity || !e.entity.position) return;
+      // v1alpha2 Entity.id ↔ v1 EntityState.entityId; minimal stub for slice 2
+      const stub = {
+        entityId: e.entity.id,
+        position: e.entity.position,
+      } as EntityState;
+      state.applyEntityAppeared(stub);
     },
     onEntityDisappeared: (e) => {
       if (e.lastKnownPosition) {
@@ -1602,7 +1631,7 @@ describe('useEncounterStream2 + useEncounterState — integration', () => {
     act(() =>
       fake.push(
         makeEvent('entityAppeared', {
-          entity: { entityId: 'alice', position: { x: 0, y: 0, z: 0 } },
+          entity: { id: 'alice', position: { x: 0, y: 0, z: 0 }, reason: '' },
         })
       )
     );
@@ -1638,7 +1667,7 @@ describe('useEncounterStream2 + useEncounterState — integration', () => {
     act(() =>
       fake.push(
         makeEvent('entityAppeared', {
-          entity: { entityId: 'goblin', position: { x: 1, y: -1, z: 0 } },
+          entity: { id: 'goblin', position: { x: 1, y: -1, z: 0 } },
         })
       )
     );
@@ -1662,13 +1691,15 @@ describe('useEncounterStream2 + useEncounterState — integration', () => {
     const { result } = renderHook(() => useTestHarness('enc-1'));
 
     act(() => fake.push(makeEvent('snapshotDelivered', {})));
+    // GeometryRevealed.hexes is Hex[]; each Hex wraps a Position via .position.
     act(() =>
       fake.push(
         makeEvent('geometryRevealed', {
           hexes: [
-            { x: 5, y: -3, z: -2 },
-            { x: 6, y: -3, z: -3 },
+            { position: { x: 5, y: -3, z: -2 }, terrain: 0 },
+            { position: { x: 6, y: -3, z: -3 }, terrain: 0 },
           ],
+          walls: [],
         })
       )
     );
@@ -1690,7 +1721,7 @@ describe('useEncounterStream2 + useEncounterState — integration', () => {
     act(() =>
       fake.push(
         makeEvent('entityAppeared', {
-          entity: { entityId: 'mover', position: { x: 0, y: 0, z: 0 } },
+          entity: { id: 'mover', position: { x: 0, y: 0, z: 0 } },
         })
       )
     );
@@ -1734,7 +1765,7 @@ describe('useEncounterStream2 + useEncounterState — integration', () => {
     act(() =>
       fake.push(
         makeEvent('entityAppeared', {
-          entity: { entityId: 'mover', position: { x: 5, y: -3, z: -2 } },
+          entity: { id: 'mover', position: { x: 5, y: -3, z: -2 } },
         })
       )
     );
