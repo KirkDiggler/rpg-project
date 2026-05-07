@@ -60,16 +60,24 @@
 
 - [ ] **Step 1.1: Find the right proto package version**
 
-The rpg-api Go side already pulls v1alpha2 from a specific generated pseudo-version (per `sessions/active.md`: `v0.0.0-20260507051118-0443dec90664`, generated branch commit `0443dec90664`). The web TypeScript side installs from GitHub by tag. Find the matching tag:
+The rpg-api Go side already pulls v1alpha2 from a specific generated pseudo-version (per `sessions/active.md`: `v0.0.0-20260507051118-0443dec90664`, generated branch commit `0443dec90664`). The web TypeScript side installs from GitHub by tag or commit SHA.
 
-Run:
+First, check for a tagged release with v1alpha2:
 ```bash
 gh release list -R KirkDiggler/rpg-api-protos --limit 10
 ```
 
-Look for the latest tag whose `generated` branch commit corresponds to (or post-dates) `0443dec90664`. If no tagged release exists yet, pin directly to the commit:
+If a tagged release exists whose `generated` branch commit equals or post-dates `0443dec90664`, use it: `github:KirkDiggler/rpg-api-protos#<tag>`.
+
+If no exact-match tag exists, pin to the latest `generated` branch commit directly:
+```bash
+# Get the latest commit SHA on the generated branch
+gh api repos/KirkDiggler/rpg-api-protos/branches/generated --jq '.commit.sha'
 ```
-"@kirkdiggler/rpg-api-protos": "github:KirkDiggler/rpg-api-protos#<commit-sha-from-generated-branch>"
+
+Use the returned SHA in `package.json`:
+```json
+"@kirkdiggler/rpg-api-protos": "github:KirkDiggler/rpg-api-protos#<commit-sha-from-above>"
 ```
 
 - [ ] **Step 1.2: Verify the v1alpha2 encounter package exists in the chosen version**
@@ -513,7 +521,7 @@ export interface LocalEncounterState {
 
 Update `createEmptyEncounterState` to initialize `revealedHexes: new Set()`.
 
-Update `applySnapshotToState` to preserve any existing `revealedHexes` (snapshots from v1 don't carry v2 reveal data — pass through `prev.revealedHexes` if applicable, OR initialize empty since snapshot always wipes; verify pattern with the existing `applySnapshotToState` semantics — current code at line 61-76 builds a fresh state, so initialize to `new Set()`).
+Update `applySnapshotToState` to initialize `revealedHexes: new Set()` (always — keep the existing function signature `(proto: EncounterStateData)`, do not introduce a `prev` parameter). The trade-off: a v1alpha1 snapshot rebuild legitimately wipes any v2-revealed hexes, but on stream reconnect the v2 hook receives a fresh `SnapshotDelivered` followed by deltas — and the broker will re-emit `GeometryRevealed` for hexes the player still has in their PerceptionView. So wipe-on-snapshot is correct; v2 deltas restore. Document this with a `// v2 reveals come back via the stream's GeometryRevealed deltas` comment on the line.
 
 - [ ] **Step 4.4: Add the three new reducer functions**
 
@@ -880,16 +888,18 @@ import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/ap
  *   stream.push(makeEvent('entityMoved', { ... }));
  *   stream.close();   // signals end-of-stream
  *   stream.error(new Error('boom'));   // simulates transport error
+ *   stream.reset();   // drop pending state for next test
  */
 export interface FakeStream {
   iterator: AsyncIterable<EncounterEvent>;
   push: (event: EncounterEvent) => void;
   close: () => void;
   error: (err: Error) => void;
+  reset: () => void;
 }
 
 export function createFakeStream(): FakeStream {
-  const queue: EncounterEvent[] = [];
+  let queue: EncounterEvent[] = [];
   let closed = false;
   let pendingError: Error | null = null;
   let resolve: ((v: void) => void) | null = null;
@@ -939,33 +949,71 @@ export function createFakeStream(): FakeStream {
       pendingError = err;
       wakeup();
     },
+    reset() {
+      queue = [];
+      closed = false;
+      pendingError = null;
+      // Don't wake current waiters — they'd see done:true incorrectly.
+      // Each test should construct its own stream via vi.hoisted (see hook tests).
+    },
   };
 }
 ```
 
 - [ ] **Step 6.2: Write failing tests for the hook**
 
+**Important — vitest mock hoisting:** `vi.mock(...)` factories are hoisted above imports, which means symbols imported at the top of the file aren't available inside the factory. Use `vi.hoisted(...)` for setup that needs to run with the mock factory. Each test gets a fresh fake stream via `beforeEach` reassigning the hoisted ref.
+
 Create `src/api/useEncounterStream2.test.ts`:
 ```ts
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
-import { createFakeStream } from './fakeEncounterStream2';
-import { useEncounterStream2 } from './useEncounterStream2';
+import {
+  createFakeStream,
+  type FakeStream,
+} from './fakeEncounterStream2';
 
 function makeEvent(caseName: string, value: unknown): EncounterEvent {
   return { event: { case: caseName, value } } as unknown as EncounterEvent;
 }
 
-// Mock the gRPC client so the hook's call resolves to our fake stream
+// vi.hoisted allows the mock factory to use these refs even though hoisting
+// runs the factory before regular imports. The wrapper object is mutable so
+// beforeEach can swap the underlying stream.
+const hoisted = vi.hoisted(() => {
+  return {
+    fakeRef: { current: null as FakeStream | null },
+  };
+});
+
 vi.mock('./client', () => {
-  const fake = createFakeStream();
   return {
     encounterClientV2: {
-      streamEncounter: vi.fn(() => fake.iterator),
+      streamEncounter: vi.fn(() => {
+        if (!hoisted.fakeRef.current) {
+          throw new Error(
+            'fakeRef.current is null — test forgot to set it in beforeEach'
+          );
+        }
+        return hoisted.fakeRef.current.iterator;
+      }),
     },
-    __fake: fake, // expose for tests to drive
   };
+});
+
+// Import the hook AFTER vi.mock so the mock is applied
+import { useEncounterStream2 } from './useEncounterStream2';
+
+let fake: FakeStream;
+
+beforeEach(() => {
+  fake = createFakeStream();
+  hoisted.fakeRef.current = fake;
+});
+
+afterEach(() => {
+  hoisted.fakeRef.current = null;
 });
 
 describe('useEncounterStream2', () => {
@@ -975,13 +1023,10 @@ describe('useEncounterStream2', () => {
       useEncounterStream2('enc-1', 'alice', { onSnapshotDelivered })
     );
 
-    // Connecting initially
     expect(result.current.connectionState).toBe('connecting');
 
-    // Push the snapshot
-    const { __fake } = await import('./client');
     act(() => {
-      __fake.push(makeEvent('snapshotDelivered', { encounter: undefined }));
+      fake.push(makeEvent('snapshotDelivered', { encounter: undefined }));
     });
 
     await waitFor(() => {
@@ -996,16 +1041,15 @@ describe('useEncounterStream2', () => {
       useEncounterStream2('enc-1', 'alice', { onEntityMoved })
     );
 
-    const { __fake } = await import('./client');
     act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
+      fake.push(makeEvent('snapshotDelivered', {}));
     });
     await waitFor(() =>
       expect(result.current.connectionState).toBe('connected')
     );
 
     act(() => {
-      __fake.push(
+      fake.push(
         makeEvent('entityMoved', {
           entityId: 'alice',
           actualPath: [{ x: 0, y: 0, z: 0 }],
@@ -1021,7 +1065,6 @@ describe('useEncounterStream2', () => {
     const { result } = renderHook(() =>
       useEncounterStream2('enc-1', 'alice', {})
     );
-    // Wait a tick — should still be connecting
     await new Promise((r) => setTimeout(r, 10));
     expect(result.current.connectionState).toBe('connecting');
   });
@@ -1033,11 +1076,10 @@ describe('useEncounterStream2', () => {
       useEncounterStream2('enc-1', 'alice', { onEntityMoved })
     );
 
-    const { __fake } = await import('./client');
     act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
-      __fake.push(makeEvent('totallyUnknownCase', {}));
-      __fake.push(
+      fake.push(makeEvent('snapshotDelivered', {}));
+      fake.push(makeEvent('totallyUnknownCase', {}));
+      fake.push(
         makeEvent('entityMoved', { entityId: 'a', actualPath: [] })
       );
     });
@@ -1050,13 +1092,12 @@ describe('useEncounterStream2', () => {
     warn.mockRestore();
   });
 
-  it('aborts cleanly on unmount', async () => {
+  it('aborts cleanly on unmount', () => {
     const { unmount, result } = renderHook(() =>
       useEncounterStream2('enc-1', 'alice', {})
     );
     expect(result.current.connectionState).toBe('connecting');
     unmount();
-    // No assertions on stream content; passing the test = no unhandled rejection
   });
 
   it('handles encounterId === null by staying idle', () => {
@@ -1064,29 +1105,26 @@ describe('useEncounterStream2', () => {
     expect(result.current.connectionState).toBe('idle');
   });
 
-  // Reconnect tests use fake timers — verify backoff schedule
   it('reconnects with exponential backoff on stream error', async () => {
     vi.useFakeTimers();
     const { result } = renderHook(() =>
       useEncounterStream2('enc-1', 'alice', {})
     );
-    const { __fake } = await import('./client');
 
     act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
+      fake.push(makeEvent('snapshotDelivered', {}));
     });
     await vi.waitFor(() =>
       expect(result.current.connectionState).toBe('connected')
     );
 
     act(() => {
-      __fake.error(new Error('connection lost'));
+      fake.error(new Error('connection lost'));
     });
     await vi.waitFor(() =>
       expect(result.current.connectionState).toBe('disconnected')
     );
 
-    // Advance timers by initialDelayMs (1000)
     act(() => {
       vi.advanceTimersByTime(1000);
     });
@@ -1204,9 +1242,10 @@ export function useEncounterStream2(
         let sawFirstSnapshot = false;
         for await (const event of stream as AsyncIterable<EncounterEvent>) {
           if (!sawFirstSnapshot) {
-            // First message must be SnapshotDelivered (broker contract).
-            // Dispatch it as normal — the dispatcher routes to onSnapshotDelivered.
-            // Then transition to 'connected'.
+            // Broker contract: first message is always SnapshotDelivered. We
+            // don't validate the case here — a violation is a server-side bug
+            // that the playtest will surface via missing snapshot effects.
+            // Loose handling matches v1's tolerance.
             dispatchEncounterStream2Event(event, optionsRef.current);
             sawFirstSnapshot = true;
             setConnectionState('connected');
@@ -1307,7 +1346,7 @@ Open `src/components/LobbyView.tsx` and find the `useEncounterStream(encounterId
 
 - [ ] **Step 7.2: Drop v1 movement-related registrations**
 
-Remove (or comment out with a TODO referencing slice 3) the `onRoomRevealed` and `onMovementCompleted` properties from the v1 hook's options. The handler functions (`handleRoomRevealed`, `handleMovementCompleted`) and the v1 hook code itself stay — only the registrations go.
+**Drop** the `onRoomRevealed` and `onMovementCompleted` properties from the v1 hook's options object — delete the lines outright, don't comment them out. The handler functions (`handleRoomRevealed`, `handleMovementCompleted`) stay defined for slice 3 to remove. The v1 hook source (`useEncounterStream.ts`) is unchanged. This matches the spec's "v1 hook code stays untouched in slice 2; only consumer registrations change" — we want a clean diff that slice 3 can build on, not a layer of stale comments.
 
 - [ ] **Step 7.3: Add the v2 hook alongside**
 
@@ -1410,11 +1449,23 @@ Read each entity's `.ghost` flag (now optional on the local extended type). Pass
 ))}
 ```
 
-In the entity renderer, when `ghost` is true, apply reduced opacity (~0.4) and a desaturated tint. The exact mechanism depends on the existing rendering pipeline:
-- If the entity is rendered via `MediumHumanoid` with shader uniforms, add a `ghostMode: boolean` uniform that the existing `AdvancedCharacterShader` switches on (or piggyback on an existing uniform if appropriate).
-- If a simpler `<mesh>` with `<meshStandardMaterial>` is in use, set `transparent` + `opacity={ghost ? 0.4 : 1}` and a `color={ghost ? grayTint : normalTint}`.
+**Default rendering path: material `transparent` + `opacity` on the existing mesh wrapper.** Find the entity wrapper (likely a `<group>` or `<mesh>` containing the rendered entity) and add:
 
-Pick whichever path requires the least invasive change. **Verify with a brief read of `MediumHumanoid.tsx` and `AdvancedCharacterShader.ts` before writing the code** — slice 2's discipline is "smallest change, no asset additions."
+```tsx
+<group
+  // ... existing props
+  // Ghost rendering: reduced opacity, no shader changes needed for slice 2
+>
+  {/* If existing rendering uses material props, set transparent + opacity */}
+  {/* If using MediumHumanoid (shader pipeline), wrap in a group with material override */}
+  {/* The simplest path is opacity on the parent group's material if exposed,
+      or wrapping each child mesh's material with transparent + opacity */}
+</group>
+```
+
+For the slice 2 acceptance, the gate is: the entity is visibly different when ghosted (any rendering path that achieves that). **Don't introduce shader uniforms or asset changes** — that's deferred polish, not slice 2 scope. If material opacity isn't trivially achievable through the existing render path, an alternative cheap approach is to add a HUD/overlay marker (DOM element positioned over the canvas at the entity's screen-space position) — but try material opacity first.
+
+Verify the chosen path by reading `MediumHumanoid.tsx:50-275` and the parent BattleMapPanel render code; pick whichever is least invasive on the existing pipeline.
 
 - [ ] **Step 8.3: Layer revealedHexes with revealedRoomIds in fog/visibility logic**
 
@@ -1461,59 +1512,106 @@ stream events, asserts ghost rendering at last_known_position."
 
 ---
 
-## Task 9: Component integration test — fake stream end-to-end
+## Task 9: Hook + state integration test
 
 **Files:**
-- Create: `src/components/encounter/BattleMapPanel.test.tsx`
+- Create: `src/api/useEncounterStream2.integration.test.tsx`
 
-This task validates the full slice 2 dispatch chain through a real React render: fake stream → hook → reducer → component. It's the closest thing to the playtest that doesn't need a backend.
+**Why this isn't a BattleMapPanel render test:** BattleMapPanel renders entities through React Three Fiber to a Canvas — entity meshes are NOT in the DOM, so DOM-based assertions (`getByTestId`, etc.) don't work for them. Setting up `@react-three/test-renderer` is a real undertaking and the actual visual rendering is verified by the local playtest in Task 10. This task instead validates the full hook → reducer chain (fake stream → useEncounterStream2 → useEncounterState callbacks → state changes) which is where the dispatch-and-mutation correctness lives. The visual layer is gated by Task 10's two-browser playtest.
 
 - [ ] **Step 9.1: Write the integration test**
 
-Create `src/components/encounter/BattleMapPanel.test.tsx`:
+Create `src/api/useEncounterStream2.integration.test.tsx`:
 ```tsx
-import { act, render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/encounter_pb';
-import { createFakeStream } from '../../api/fakeEncounterStream2';
-
-// NOTE: this test mounts a thin wrapper around BattleMapPanel that
-// owns the v2 hook + state, mirroring LobbyView's wiring. The wrapper
-// is test-only — see harness below.
+import {
+  createFakeStream,
+  type FakeStream,
+} from './fakeEncounterStream2';
+import { useEncounterState } from '../hooks/useEncounterState';
+import { protoPositionToHex, hexKey } from '../utils/hexCoord';
 
 function makeEvent(caseName: string, value: unknown): EncounterEvent {
   return { event: { case: caseName, value } } as unknown as EncounterEvent;
 }
 
-vi.mock('../../api/client', () => {
-  const fake = createFakeStream();
-  return {
-    encounterClientV2: { streamEncounter: vi.fn(() => fake.iterator) },
-    __fake: fake,
-  };
+const hoisted = vi.hoisted(() => ({
+  fakeRef: { current: null as FakeStream | null },
+}));
+
+vi.mock('./client', () => ({
+  encounterClientV2: {
+    streamEncounter: vi.fn(() => hoisted.fakeRef.current!.iterator),
+  },
+}));
+
+import { useEncounterStream2 } from './useEncounterStream2';
+
+let fake: FakeStream;
+beforeEach(() => {
+  fake = createFakeStream();
+  hoisted.fakeRef.current = fake;
+});
+afterEach(() => {
+  hoisted.fakeRef.current = null;
 });
 
-// Test wrapper that mirrors LobbyView's v2 wiring
-function TestHarness({ encounterId }: { encounterId: string }) {
-  // Use the real hooks the way LobbyView does
-  // (Implementation: copy the LobbyView wiring snippet into this harness)
-  // ... renders <BattleMapPanel encounterEntities={state.entities} ... />
-  return null; // placeholder — flesh out per actual hook wiring
+/**
+ * Test harness — exactly mirrors LobbyView's v2 wiring (Task 7.3) so the
+ * integration test exercises the same callback graph the production code uses.
+ * Returns the encounter state directly for assertions.
+ */
+function useTestHarness(encounterId: string) {
+  const state = useEncounterState();
+  useEncounterStream2(encounterId, 'alice', {
+    onSnapshotDelivered: () => {
+      /* noop — payload empty in slice 1, just a sync barrier */
+    },
+    onEntityMoved: (e) => {
+      const last = e.actualPath[e.actualPath.length - 1];
+      if (last) state.applyEntityPositionUpdate(e.entityId, last);
+    },
+    onGeometryRevealed: (e) => {
+      state.applyHexRevealed(e.hexes.map(protoPositionToHex));
+    },
+    onEntityAppeared: (e) => {
+      if (e.entity) state.applyEntityAppeared(e.entity);
+    },
+    onEntityDisappeared: (e) => {
+      if (e.lastKnownPosition) {
+        state.applyEntityDisappeared(
+          e.entityId,
+          protoPositionToHex(e.lastKnownPosition)
+        );
+      }
+    },
+  });
+  return state.state;
 }
 
-describe('BattleMapPanel — v1alpha2 integration', () => {
-  it('renders entity at the last hex of EntityMoved.actual_path', async () => {
-    const { getByTestId } = render(<TestHarness encounterId="enc-1" />);
-    const { __fake } = await import('../../api/client');
+describe('useEncounterStream2 + useEncounterState — integration', () => {
+  it('EntityMoved teleports the entity to last hex of actual_path', async () => {
+    const { result } = renderHook(() => useTestHarness('enc-1'));
 
-    act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
+    // Stream up
+    act(() => fake.push(makeEvent('snapshotDelivered', {})));
+
+    // Seed alice via EntityAppeared so subsequent move has a target
+    act(() =>
+      fake.push(
+        makeEvent('entityAppeared', {
+          entity: { entityId: 'alice', position: { x: 0, y: 0, z: 0 } },
+        })
+      )
+    );
+    await waitFor(() => {
+      expect(result.current.entities.has('alice')).toBe(true);
     });
 
-    // Seed an entity via v1alpha1 path (or via test setup)
-    // Then push EntityMoved
-    act(() => {
-      __fake.push(
+    act(() =>
+      fake.push(
         makeEvent('entityMoved', {
           entityId: 'alice',
           actualPath: [
@@ -1522,90 +1620,86 @@ describe('BattleMapPanel — v1alpha2 integration', () => {
             { x: 2, y: -2, z: 0 },
           ],
         })
-      );
-    });
-
+      )
+    );
     await waitFor(() => {
-      const aliceEl = getByTestId('entity-alice');
-      // Assert the rendered position matches { x: 2, y: -2, z: 0 }
-      // (specific assertion depends on how BattleMapPanel exposes positions
-      // — data-attribute on the entity DOM element is the cleanest path)
-      expect(aliceEl).toHaveAttribute('data-q', '2');
-      expect(aliceEl).toHaveAttribute('data-r', '-2');
+      expect(result.current.entities.get('alice')?.position).toEqual({
+        x: 2,
+        y: -2,
+        z: 0,
+      });
     });
   });
 
-  it('renders entity as ghost at last_known_position on EntityDisappeared', async () => {
-    const { getByTestId } = render(<TestHarness encounterId="enc-1" />);
-    const { __fake } = await import('../../api/client');
+  it('EntityDisappeared marks ghost and updates position to last_known', async () => {
+    const { result } = renderHook(() => useTestHarness('enc-1'));
 
-    // Seed entity, then push appear/disappear sequence
-    act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
-      __fake.push(
+    act(() => fake.push(makeEvent('snapshotDelivered', {})));
+    act(() =>
+      fake.push(
         makeEvent('entityAppeared', {
-          entity: {
-            entityId: 'goblin',
-            position: { x: 1, y: -1, z: 0 },
-          },
+          entity: { entityId: 'goblin', position: { x: 1, y: -1, z: 0 } },
         })
-      );
-      __fake.push(
+      )
+    );
+    act(() =>
+      fake.push(
         makeEvent('entityDisappeared', {
           entityId: 'goblin',
           lastKnownPosition: { x: 3, y: -2, z: -1 },
         })
-      );
-    });
+      )
+    );
 
     await waitFor(() => {
-      const goblinEl = getByTestId('entity-goblin');
-      expect(goblinEl).toHaveAttribute('data-ghost', 'true');
-      expect(goblinEl).toHaveAttribute('data-q', '3');
+      const g = result.current.entities.get('goblin');
+      expect(g?.ghost).toBe(true);
+      expect(g?.position).toEqual({ x: 3, y: -2, z: -1 });
     });
   });
 
-  it('reveals hexes from GeometryRevealed', async () => {
-    const { queryByTestId } = render(<TestHarness encounterId="enc-1" />);
-    const { __fake } = await import('../../api/client');
+  it('GeometryRevealed adds to revealedHexes set', async () => {
+    const { result } = renderHook(() => useTestHarness('enc-1'));
 
-    act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
-      __fake.push(
+    act(() => fake.push(makeEvent('snapshotDelivered', {})));
+    act(() =>
+      fake.push(
         makeEvent('geometryRevealed', {
           hexes: [
             { x: 5, y: -3, z: -2 },
             { x: 6, y: -3, z: -3 },
           ],
         })
-      );
-    });
+      )
+    );
 
     await waitFor(() => {
-      // Hex at (5, -3, -2) should now be marked revealed (no fog overlay)
-      expect(queryByTestId('hex-fog-5,-3,-2')).toBeNull();
-      expect(queryByTestId('hex-fog-6,-3,-3')).toBeNull();
+      expect(
+        result.current.revealedHexes.has(hexKey({ q: 5, r: -3, s: -2 }))
+      ).toBe(true);
+      expect(
+        result.current.revealedHexes.has(hexKey({ q: 6, r: -3, s: -3 }))
+      ).toBe(true);
     });
   });
 
   it('appear → move → disappear → appear sequence settles cleanly', async () => {
-    const { getByTestId } = render(<TestHarness encounterId="enc-1" />);
-    const { __fake } = await import('../../api/client');
+    const { result } = renderHook(() => useTestHarness('enc-1'));
 
-    act(() => {
-      __fake.push(makeEvent('snapshotDelivered', {}));
-      __fake.push(
+    act(() => fake.push(makeEvent('snapshotDelivered', {})));
+    act(() =>
+      fake.push(
         makeEvent('entityAppeared', {
           entity: { entityId: 'mover', position: { x: 0, y: 0, z: 0 } },
         })
-      );
-    });
+      )
+    );
     await waitFor(() => {
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-ghost', 'false');
+      expect(result.current.entities.get('mover')?.ghost).toBeFalsy();
     });
 
-    act(() => {
-      __fake.push(
+    act(() =>
+      fake.push(
         makeEvent('entityMoved', {
           entityId: 'mover',
           actualPath: [
@@ -1613,66 +1707,55 @@ describe('BattleMapPanel — v1alpha2 integration', () => {
             { x: 1, y: -1, z: 0 },
           ],
         })
-      );
-    });
+      )
+    );
     await waitFor(() => {
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-q', '1');
+      expect(result.current.entities.get('mover')?.position).toEqual({
+        x: 1,
+        y: -1,
+        z: 0,
+      });
     });
 
-    act(() => {
-      __fake.push(
+    act(() =>
+      fake.push(
         makeEvent('entityDisappeared', {
           entityId: 'mover',
           lastKnownPosition: { x: 2, y: -1, z: -1 },
         })
-      );
-    });
+      )
+    );
     await waitFor(() => {
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-ghost', 'true');
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-q', '2');
+      const m = result.current.entities.get('mover');
+      expect(m?.ghost).toBe(true);
+      expect(m?.position).toEqual({ x: 2, y: -1, z: -1 });
     });
 
-    act(() => {
-      __fake.push(
+    act(() =>
+      fake.push(
         makeEvent('entityAppeared', {
           entity: { entityId: 'mover', position: { x: 5, y: -3, z: -2 } },
         })
-      );
-    });
+      )
+    );
     await waitFor(() => {
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-ghost', 'false');
-      expect(getByTestId('entity-mover')).toHaveAttribute('data-q', '5');
+      const m = result.current.entities.get('mover');
+      expect(m?.ghost).toBeFalsy();
+      expect(m?.position).toEqual({ x: 5, y: -3, z: -2 });
     });
   });
 });
 ```
 
-- [ ] **Step 9.2: Wire test-only data attributes**
-
-For the assertions above to work, `BattleMapPanel`'s entity render path needs `data-testid`, `data-q`, `data-r`, `data-ghost` attributes. Add them in Task 8 (or here if you didn't earlier). Pattern:
-
-```tsx
-<div
-  data-testid={`entity-${entity.entityId}`}
-  data-q={entity.position.x}
-  data-r={entity.position.y}
-  data-ghost={String(entity.ghost ?? false)}
->
-  <EntityRenderer ... />
-</div>
-```
-
-Same approach for hex fog: `data-testid={hex-fog-${q},${r},${s}}` rendered only when the hex is NOT revealed.
-
-- [ ] **Step 9.3: Run tests, expect PASS**
+- [ ] **Step 9.2: Run tests, expect PASS**
 
 ```bash
-npx vitest run src/components/encounter/BattleMapPanel.test.tsx
+npx vitest run src/api/useEncounterStream2.integration.test.tsx
 ```
 
 Expected: PASS — all four scenarios green.
 
-- [ ] **Step 9.4: Run full test suite + ci-check**
+- [ ] **Step 9.3: Run full test suite + ci-check**
 
 ```bash
 npm run ci-check
@@ -1680,22 +1763,25 @@ npm run ci-check
 
 Expected: PASS.
 
-- [ ] **Step 9.5: Commit**
+- [ ] **Step 9.4: Commit**
 
 ```bash
-git add src/components/encounter/BattleMapPanel.test.tsx \
-        src/components/encounter/BattleMapPanel.tsx
-git commit -m "test(BattleMapPanel): integration test for v1alpha2 event dispatch
+git add src/api/useEncounterStream2.integration.test.tsx
+git commit -m "test(api): hook+state integration test for v1alpha2 dispatch chain
 
-End-to-end test through fake stream → hook → reducer → component:
-- EntityMoved teleports entity to last hex of actual_path
-- EntityDisappeared renders entity as ghost at last_known_position
-- GeometryRevealed clears fog on the revealed hexes
-- appear → move → disappear → appear sequence settles cleanly
+Validates the full slice 2 dispatch chain through a test harness that
+mirrors LobbyView's v2 wiring exactly: fake stream → useEncounterStream2
+→ useEncounterState reducers → state mutation. Asserts on state shape,
+not rendered DOM (BattleMapPanel uses R3F; entities aren't DOM nodes).
 
-Closest thing to the playtest gate without a backend. Adds
-data-testid / data-q / data-r / data-ghost attributes to the
-entity render for assertion."
+Visual rendering correctness is gated by the two-browser playtest in
+Task 10, not by component tests.
+
+Scenarios covered:
+- EntityMoved teleports to last hex of actual_path
+- EntityDisappeared sets ghost flag + last_known_position
+- GeometryRevealed adds hexes to revealedHexes set
+- appear → move → disappear → appear sequence settles cleanly"
 ```
 
 ---
@@ -1709,7 +1795,17 @@ entity render for assertion."
   - Optional `DEV_SEED_FILE` startup hook
   - `cmd/server/server.go` swap to `NewRedis`
 
-If those aren't yet present, **stop and ping the API session** per the `sessions/active.md` handoff protocol before proceeding.
+Verify before starting Task 10:
+
+```bash
+cd ~/personal/rpg-api && git checkout feat/494-encounter-v2-walking-skeleton && git pull
+ls internal/repositories/encounters/v2/redis.go cmd/devseed/main.go
+grep -n "NewRedis" cmd/server/server.go
+```
+
+If any of those are missing, the rpg-api session hasn't picked up the dead-drop yet. **Stop and tell Kirk** — message him with the missing items so he can resume the API session (see `sessions/active.md` handoff protocol §3 — Kirk decides whether to resume the existing API session or start a fresh one). Don't try to do the rpg-api work from this session; the boundary is intentional.
+
+Also confirm the dead-drop section in `sessions/active.md` is still present (`grep "Pending API addition" /home/kirk/.claude/projects/-home-kirk-personal/sessions/active.md`). It should be removed by the API session once the work lands; if it's still there, the work isn't done.
 
 - [ ] **Step 10.1: Bring up rpg-api with Redis-backed v2**
 
