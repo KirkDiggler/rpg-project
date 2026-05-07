@@ -134,7 +134,7 @@ on encounterId change:
 
 ### Reconnect
 
-Mirror v1alpha1's exponential backoff: 1s initial, 2x multiplier, 30s cap, 10 max attempts. On reconnect, server sends a fresh `SnapshotDelivered` first, then resumes deltas.
+Mirror v1alpha1's exponential backoff: 1s initial, 2x multiplier, 30s cap, 10 max attempts. **Share constants by extracting `RECONNECT_CONFIG` from `useEncounterStream.ts:83-88` into `src/api/streamReconnect.ts` and importing from both hooks** — single source of truth, no drift. On reconnect, server sends a fresh `SnapshotDelivered` first, then resumes deltas.
 
 ### Snapshot semantics — what `onSnapshotDelivered` does in slice 2
 
@@ -187,7 +187,7 @@ applyEntityDisappeared(entityId: string, lastKnown: HexCoord): void
 
 State shape gains:
 - `revealedHexes: Set<string>` (key = `"q,r,s"`) — separate from existing v1 `revealedRooms`. UI renders a hex as revealed if **either** set covers it (no merge logic; just an `||` at render time).
-- Entity record gains optional `ghost: boolean` and `ghostSince: number` (timestamp of last `EntityDisappeared`; slice 2 uses only the boolean).
+- Entity record gains `ghost: boolean` (set by `applyEntityDisappeared`, cleared by `applyEntityAppeared`). Don't add timestamp / fade-time fields speculatively — slice 2 doesn't use them, future fade polish adds what it needs.
 
 ### Coordinate transform
 
@@ -200,7 +200,7 @@ export function hexToProtoPosition(h: HexCoord): Position
 
 ### Animation policy — slice 2 teleports
 
-`applyEntityPositionUpdate` writes the final hex (`actual_path[actual_path.length - 1]`); no per-step tween, no path animation. Matches v1alpha1's existing behavior at `src/hooks/useEncounterState.ts:108-118`. The `actual_path` field is preserved on event objects for any future combat-log / debug-overlay use, but slice 2 doesn't render it.
+`applyEntityPositionUpdate` writes the final hex (`actual_path[actual_path.length - 1]`); no per-step tween, no path animation. Matches v1alpha1's existing behavior at `src/hooks/useEncounterState.ts:108-118`. The full `actual_path` array remains on the event object the callback receives — slice 2 just doesn't read past `last(...)`. Don't store `actual_path[]` in `useEncounterState`; future slices that want path-aware features (animation, combat-log breadcrumbs) add storage when they need it.
 
 Animation lands when the new animated character models arrive (separate polish slice, future wave). The proto carries the path; rendering it animated is purely a client-side enhancement.
 
