@@ -152,7 +152,7 @@ Create `src/utils/hexCoord.test.ts`:
 import { describe, expect, it } from 'vitest';
 import { hexToProtoPosition, protoPositionToHex } from './hexCoord';
 
-// HexCoord uses (q, r, s); Position uses (x, y, z). Both cube; 1:1 mapping.
+// CubeHexCoord uses (q, r, s); Position uses (x, y, z). Both cube; 1:1 mapping.
 
 describe('protoPositionToHex', () => {
   it('maps cube position (1, -1, 0) to hex (1, -1, 0)', () => {
@@ -205,7 +205,7 @@ Create `src/utils/hexCoord.ts`:
  * Cube hex coordinates (q, r, s) used by src/components/hex-grid/hexMath.ts.
  * The cube invariant q + r + s = 0 holds for valid hexes.
  */
-export interface HexCoord {
+export interface CubeHexCoord {
   q: number;
   r: number;
   s: number;
@@ -223,18 +223,18 @@ export interface ProtoPosition {
   z: number;
 }
 
-export function protoPositionToHex(pos: ProtoPosition): HexCoord {
+export function protoPositionToHex(pos: ProtoPosition): CubeHexCoord {
   return { q: pos.x, r: pos.y, s: pos.z };
 }
 
-export function hexToProtoPosition(hex: HexCoord): ProtoPosition {
+export function hexToProtoPosition(hex: CubeHexCoord): ProtoPosition {
   return { x: hex.q, y: hex.r, z: hex.s };
 }
 
 /**
  * Stable string key for a hex coord â€” usable in Set<string> / Map<string, T>.
  */
-export function hexKey(hex: HexCoord): string {
+export function hexKey(hex: CubeHexCoord): string {
   return `${hex.q},${hex.r},${hex.s}`;
 }
 ```
@@ -254,7 +254,7 @@ git add src/utils/hexCoord.ts src/utils/hexCoord.test.ts
 git commit -m "feat(utils): add hex coordinate transform helpers for v1alpha2
 
 protoPositionToHex / hexToProtoPosition wrap the 1:1 cube mapping
-between v1alpha2 Position(x,y,z) and the web's HexCoord(q,r,s).
+between v1alpha2 Position(x,y,z) and the web's CubeHexCoord(q,r,s).
 hexKey produces a stable string for Set/Map keys.
 
 Single point of change if proto field names ever shift."
@@ -526,7 +526,7 @@ Update `applySnapshotToState` to initialize `revealedHexes: new Set()` (always â
 After the existing `mergeEntityPosition` function, add:
 
 ```ts
-import { hexKey, type HexCoord, hexToProtoPosition } from '../utils/hexCoord';
+import { hexKey, type CubeHexCoord, hexToProtoPosition } from '../utils/hexCoord';
 
 /**
  * Add hexes to the v1alpha2 revealedHexes set.
@@ -535,7 +535,7 @@ import { hexKey, type HexCoord, hexToProtoPosition } from '../utils/hexCoord';
  */
 export function applyHexRevealed(
   prev: LocalEncounterState,
-  hexes: HexCoord[]
+  hexes: CubeHexCoord[]
 ): LocalEncounterState {
   const next = new Set(prev.revealedHexes);
   for (const h of hexes) {
@@ -568,7 +568,7 @@ export function applyEntityAppeared(
 export function applyEntityDisappeared(
   prev: LocalEncounterState,
   entityId: string,
-  lastKnown: HexCoord
+  lastKnown: CubeHexCoord
 ): LocalEncounterState {
   const existing = prev.entities.get(entityId);
   if (!existing) return prev;
@@ -594,15 +594,15 @@ export interface UseEncounterStateResult {
   applyCombatState: (combat: CombatState) => void;
   reset: () => void;
   // v1alpha2 additions
-  applyHexRevealed: (hexes: HexCoord[]) => void;
+  applyHexRevealed: (hexes: CubeHexCoord[]) => void;
   applyEntityAppeared: (entity: EntityState) => void;
-  applyEntityDisappeared: (entityId: string, lastKnown: HexCoord) => void;
+  applyEntityDisappeared: (entityId: string, lastKnown: CubeHexCoord) => void;
 }
 ```
 
 Add three new `useCallback` blocks inside `useEncounterState`:
 ```ts
-const applyHexRevealedCb = useCallback((hexes: HexCoord[]) => {
+const applyHexRevealedCb = useCallback((hexes: CubeHexCoord[]) => {
   setState((prev) => applyHexRevealed(prev, hexes));
 }, []);
 
@@ -611,7 +611,7 @@ const applyEntityAppearedCb = useCallback((entity: EntityState) => {
 }, []);
 
 const applyEntityDisappearedCb = useCallback(
-  (entityId: string, lastKnown: HexCoord) => {
+  (entityId: string, lastKnown: CubeHexCoord) => {
     setState((prev) => applyEntityDisappeared(prev, entityId, lastKnown));
   },
   []
@@ -1491,7 +1491,7 @@ Verify the chosen path by reading `MediumHumanoid.tsx:50-275` and the parent Bat
 Find the existing fog-of-war / hex visibility check (likely in a render-time predicate that consumes `revealedRoomIds`). Update to also consult `revealedHexes`:
 
 ```ts
-function isHexRevealed(hex: HexCoord, state: LocalEncounterState): boolean {
+function isHexRevealed(hex: CubeHexCoord, state: LocalEncounterState): boolean {
   if (state.revealedHexes.has(hexKey(hex))) return true;
   // Existing: check if hex is in a revealed room
   return state.revealedRoomIds.includes(roomIdForHex(hex));
