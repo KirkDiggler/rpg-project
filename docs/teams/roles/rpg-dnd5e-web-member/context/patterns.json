@@ -132,6 +132,33 @@
       "example": "src/hooks/useEncounterState.ts LocalEncounterState type + applySnapshotDelivered; src/components/playtest/PlaytestHarness.tsx entities table (HP column) + initiative display + combat gate"
     },
     {
+      "id": "v2-prompt-modal-pattern",
+      "type": "pattern",
+      "status": "validated",
+      "validated_in": "Wave 2.9 playtest 2026-05-09 (PR #403)",
+      "summary": "pendingPrompt: InputRequired | null lives in encounter state; modal renders when set; cleared on SubmitCheck resolution",
+      "description": "Wave 2.9 (rpg-dnd5e-web PR #403) added `pendingPrompt: InputRequired | null` to LocalEncounterState in src/hooks/useEncounterState.ts and a `setPendingPrompt(prompt)` reducer to mutate it. The PlaytestHarness renders a SkillCheckPromptModal whenever `state.pendingPrompt !== null && state.pendingPrompt.kind.case === 'skill_check'`:\n\n  - Modal carries a header (\"Skill check: {ability} (DC {dc}), tool: {tool}\"), a number input for the d20 roll (1-20), and a Submit button wired to useSubmitCheckV2.\n  - Other prompt kinds (`dialogue`, `target_select`) render a placeholder (\"not yet supported\") for Wave 2.9. Future waves wire them.\n  - On SubmitCheck success the caller calls `setPendingPrompt(null)` (see v2-rpc-response-side-effect for who calls what when).\n\nThe state is encounter-scoped (one slot per encounter) — single-pending is enforced server-side per pat-v2-pending-prompt-collision; the web mirrors with a single nullable field, no queue.\n\nWhen adding a new prompt kind to the modal: add a switch case on `pendingPrompt.kind.case` in the modal render block, NOT a parallel state field. Keep one state slot, multiple render branches.\n\nPlaytestHarness is the verification surface for Wave 2.9 (per pat-v2-playtest-harness). LobbyView migration to a real prompt UI is Wave 5+ work; build the durable design against the validated harness shape rather than co-evolving.",
+      "example": "src/hooks/useEncounterState.ts pendingPrompt + setPendingPrompt reducer; src/components/playtest/PlaytestHarness.tsx SkillCheckPromptModal section; src/api/useSubmitCheckV2.ts"
+    },
+    {
+      "id": "v2-rpc-response-side-effect",
+      "type": "pattern",
+      "status": "validated",
+      "validated_in": "Wave 2.9 playtest 2026-05-09 (PR #403)",
+      "summary": "Caller-side hook reads response.input_required and updates encounter state via setPendingPrompt; hook does NOT auto-set state",
+      "description": "Wave 2.9 (rpg-dnd5e-web PR #403) established the convention for handling caller-private response payloads (per api-side pat-v2-prompt-on-response). Pattern:\n\n  // useInteractV2 hook returns response unchanged; does not touch encounter state.\n  const { interact } = useInteractV2()\n  const { setPendingPrompt } = useEncounterState()\n\n  const handleClick = async () => {\n    const response = await interact({ encounterId, target })\n    if (response.inputRequired) {\n      setPendingPrompt(response.inputRequired)\n    }\n  }\n\nWhy NOT auto-set inside the hook:\n  - Hook stays pure: input → RPC → output. No coupling to a specific state container.\n  - Different callers want different post-response behavior (the playtest harness might also want to log the prompt; a future LobbyView might want to focus the modal; a test might want to assert without side-effects).\n  - Single responsibility. The hook does the RPC; the caller decides what to do with caller-private payload.\n\nSame pattern applies to:\n  - useTakeActionV2 (Wave 2.9 doesn't wire a prompt-issuing TakeAction yet; future waves will).\n  - useSubmitCheckV2.submitCheck() resolution: caller invokes `setPendingPrompt(null)` on success (regardless of roll outcome — success/fail are roll-result, not RPC-result, and both clear the prompt server-side).\n\nWhen wiring a new RPC whose response carries a side-effect-shaped payload (input_required, narrative_event, prompt_outcome): caller-side hook reads it, caller dispatches the state update. Don't reach into useEncounterState from inside the RPC hook.",
+      "example": "src/api/useInteractV2.ts (returns response unchanged); src/api/useSubmitCheckV2.ts (returns response unchanged); src/components/playtest/PlaytestHarness.tsx Interact-button click handler (reads response.inputRequired then calls setPendingPrompt)"
+    },
+    {
+      "id": "v2-prompt-identity-guard",
+      "type": "pattern",
+      "status": "validated",
+      "validated_in": "Wave 2.9 playtest 2026-05-09 (PR #403)",
+      "summary": "Auto-clear timer for prompt-modal results uses a prompt-identity check before clearing; prevents a stale 2s timer from clobbering a newer incoming prompt",
+      "description": "Design choice from Wave 2.9 (rpg-dnd5e-web PR #403). The PlaytestHarness's SkillCheckPromptModal renders the SubmitCheck result transiently (e.g. \"rolled 14, total 17, success!\") for ~2 seconds, then clears the prompt state via `setPendingPrompt(null)`. Naive implementation:\n\n  setTimeout(() => setPendingPrompt(null), 2000)\n\nis a race condition. A new prompt can arrive (alice opens a second locked door, or a future wave introduces a chained-prompt sequence) before the 2s timer fires; the stale timer would then clear the new prompt and the modal would vanish without the user submitting.\n\nFix: capture a stable identity for the prompt at timer-set time, and check identity before clearing:\n\n  const promptAtSubmit = state.pendingPrompt\n  setTimeout(() => {\n    // Only clear if the prompt is still the one we just resolved.\n    if (state.pendingPrompt === promptAtSubmit) {\n      setPendingPrompt(null)\n    }\n  }, 2000)\n\nReference identity is sufficient for Wave 2.9 (one prompt slot, prompts replaced wholesale). If a future wave introduces structural-equality concerns, swap to a `promptId` field.\n\nWhen adding any auto-clear / auto-dismiss timer that mutates encounter state: capture the value-being-cleared at timer-set time, identity-check at timer-fire time. Same pattern fires for: auto-dismissed toast notifications, transient UI overlays, scheduled animations that mutate render state. Reference rpg-dnd5e-web#403's design choice.",
+      "example": "src/components/playtest/PlaytestHarness.tsx SkillCheckPromptModal auto-clear timer (identity-guarded setPendingPrompt(null))"
+    },
+    {
       "id": "custom-shader-instancing",
       "type": "pattern",
       "summary": "Custom THREE.ShaderMaterial used on InstancedMesh must explicitly multiply by instanceMatrix; Three.js does not auto-rewrite custom vertexShader source.",
