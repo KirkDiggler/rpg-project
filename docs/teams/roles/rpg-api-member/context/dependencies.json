@@ -35,6 +35,18 @@
       "summary": "go.uber.org/mock for gomock",
       "details": "go.mod: go.uber.org/mock v0.6.0. This is Uber's maintained fork of gomock. All mocks are generated with this version. mockery is NOT used.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "dep-007",
+      "summary": "rpg-toolkit/encounter — v2 encounter SDK (Wave 2.5+)",
+      "added": "2026-05-08",
+      "details": "go.mod: github.com/KirkDiggler/rpg-toolkit/encounter v0.2.0. Released package; not a pseudo-version. Provides:\n  - encounter.Broker over a pluggable Transport (NewInMemoryTransport for now)\n  - encounter.Encounter aggregate with Move() and OpenDoor() verbs (more verbs coming)\n  - encounter.LoadFromData(*Data, *Broker) → *Encounter\n  - encounter.Encounter.ToData() → *Data (round-trips losslessly)\n  - encounter.Encounter.SnapshotFor(playerID) → Snapshot (per-viewer projection)\n  - encounter/core: PlayerID, EncounterID, Hex, type aliases used at the boundary\n  - encounter/events: sealed EncounterEvent interface + concretes (MoveEvent, HexRevealedEvent, EntityAppearedEvent, EntityDisappearedEvent)\n\nTo update: GOPROXY=direct go get github.com/KirkDiggler/rpg-toolkit/encounter@latest. Watch for new event types — TranslateEvent in v2/encounter/translate.go must add a case for each, otherwise the stream loop logs ErrUnknownEventType in production."
+    },
+    {
+      "id": "dep-008",
+      "summary": "rpg-api-protos pin advanced for v1alpha2 encounter (PR rpg-api-protos#151)",
+      "added": "2026-05-08",
+      "details": "go.mod: github.com/KirkDiggler/rpg-api-protos/gen/go v0.0.0-20260507051118-0443dec90664 (was v0.0.0-20260329063233-e78908772cad in dep-001). Includes the v1alpha2.encounter package: types.proto (EncounterMode, Position, Encounter, EntityState, etc.), events.proto (sealed EncounterEvent envelope + concretes), service.proto (CreateEncounter, GetEncounter, StreamEncounter, MoveEntity, Interact, TakeAction, EndTurn, SubmitCheck).\n\nGo import path: github.com/KirkDiggler/rpg-api-protos/gen/go/dnd5e/api/v1alpha2/encounter (alias encounterv2pb in v2 handler code)."
     }
   ]
 }
