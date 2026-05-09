@@ -26,7 +26,11 @@ This roadmap describes **goal sentences** for future waves so the runway is visi
 | **2.6** | ✅ Done (2026-05-08) | Player creates a v2 encounter and the snapshot arrives on connect (no hardcoded fallbacks) |
 | **2.7** | ✅ Done (2026-05-09) | Player opens a door, room 2 contents render via v2 events on both browsers |
 | **2.8** | ✅ Done (2026-05-09) | Player attacks monster under TURN_BASED, monster takes its turn back, attack outcomes project per viewer |
-| **2.9** | 🟡 Active | Player attempts a locked door; SubmitCheck resolves the skill-check prompt; door opens or stays closed; both browsers see the correct outcome |
+| **2.9** | ✅ Done (2026-05-09) | Player attempts a locked door; SubmitCheck resolves the skill-check prompt; door opens or stays closed; both browsers see the correct outcome |
+| **2.10** | 🟡 Active | Player attacks monster; HP hits 0; monster dies and is removed from initiative + visible state; once last hostile dies, encounter ends per viewer |
+| **2.11** | Sketched | Combat depth: reactions, opportunity attacks, multiattack — bosses become real |
+| **2.12** | Sketched | Dungeon flow: multi-room, doors as room transitions ("encounter ended" unlocks next room) |
+| **2.13** | Sketched | Party scaling to 4 players in a single encounter |
 | **5** (existing) | Sketched | Real LobbyView talks v2 exclusively for migrated verbs; `/playtest` harness gone |
 | **Final** | Sketched | `grep "v1alpha1.EncounterService"` returns nothing across rpg-api-protos / rpg-api / rpg-dnd5e-web |
 
