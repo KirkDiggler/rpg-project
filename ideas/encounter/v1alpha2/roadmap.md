@@ -27,8 +27,8 @@ This roadmap describes **goal sentences** for future waves so the runway is visi
 | **2.7** | ✅ Done (2026-05-09) | Player opens a door, room 2 contents render via v2 events on both browsers |
 | **2.8** | ✅ Done (2026-05-09) | Player attacks monster under TURN_BASED, monster takes its turn back, attack outcomes project per viewer |
 | **2.9** | ✅ Done (2026-05-09) | Player attempts a locked door; SubmitCheck resolves the skill-check prompt; door opens or stays closed; both browsers see the correct outcome |
-| **2.10** | 🟡 Active | Player attacks monster; HP hits 0; monster dies and is removed from initiative + visible state; once last hostile dies, encounter ends per viewer |
-| **2.11** | Sketched | Combat depth: reactions, opportunity attacks, multiattack — bosses become real |
+| **2.10** | ✅ Done (2026-05-09) | Player attacks monster; HP hits 0; monster dies and is removed from initiative + visible state; once last hostile dies, encounter ends per viewer |
+| **2.11** | 🟡 Active | Combat depth: reactions, opportunity attacks, multiattack — and class-specific action availability surfaced in the harness so monk/fighter scenarios can be driven end-to-end |
 | **2.12** | Sketched | Dungeon flow: multi-room, doors as room transitions ("encounter ended" unlocks next room) |
 | **2.13** | Sketched | Party scaling to 4 players in a single encounter |
 | **5** (existing) | Sketched | Real LobbyView talks v2 exclusively for migrated verbs; `/playtest` harness gone |
