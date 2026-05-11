@@ -28,6 +28,8 @@ This roadmap describes **goal sentences** for future waves so the runway is visi
 | **2.8** | ✅ Done (2026-05-09) | Player attacks monster under TURN_BASED, monster takes its turn back, attack outcomes project per viewer |
 | **2.9** | ✅ Done (2026-05-09) | Player attempts a locked door; SubmitCheck resolves the skill-check prompt; door opens or stays closed; both browsers see the correct outcome |
 | **2.10** | ✅ Done (2026-05-09) | Player attacks monster; HP hits 0; monster dies and is removed from initiative + visible state; once last hostile dies, encounter ends per viewer |
+| **2.11a** | ✅ Done (2026-05-09) | CombatResolver injection seam: encounter SDK exposes `CombatResolver` interface; rpg-api wires `StandInCombatResolver` (mimics pre-2.11a math) at all 6 LoadFromData/New sites — prerequisite slice for 2.11b |
+| **2.11b** | ✅ Done (2026-05-10) | rpg-api's `StandInCombatResolver` replaced with real `dnd5e.combat.ResolveAttack` chain (Combatant adapter + CombatantLookup); `Encounter.NPCAct` folded onto same `CombatResolver` (in-package `resolveAttack` deleted); weapon-equipping bridge verified end-to-end |
 | **2.11** | 🟡 Active | Combat depth: reactions, opportunity attacks, multiattack — and class-specific action availability surfaced in the harness so monk/fighter scenarios can be driven end-to-end |
 | **2.12** | Sketched | Dungeon flow: multi-room, doors as room transitions ("encounter ended" unlocks next room) |
 | **2.13** | Sketched | Party scaling to 4 players in a single encounter |
