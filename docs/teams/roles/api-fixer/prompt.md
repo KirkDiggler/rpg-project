@@ -53,6 +53,31 @@ During and after your work:
    gh api repos/KirkDiggler/rpg-api/pulls/<PR_NUMBER>/comments --jq '.[].body'
    ```
    Address all Copilot feedback before flagging the PR as ready. Copilot catches real bugs.
+8. **Reply on every Copilot inline comment thread** — even when you fixed the issue in code. Kirk follows the threads to audit your rationale. Use:
+   ```
+   gh api repos/KirkDiggler/rpg-api/pulls/<PR>/comments/<COMMENT_ID>/replies -f body="..."
+   ```
+   Each reply: validity (real bug / doc nit / disagree / partial) + action (fixed in this PR / filed follow-up #N / explain why not) + one-line rationale. Keep it 1-3 sentences.
+
+## Platform docs update (in the same PR, not deferred)
+
+If your fix changes architectural surface — new handler RPC, new orchestrator verb, new persistence shape, new HOST CONTRACT-style assumption against the toolkit, or a behavior change a future contributor would not see by reading the code — update the platform docs in the SAME PR:
+- `rpg-api/docs/status.md` (when it exists) — active work + per-subsystem confidence
+- `rpg-api/docs/quality.md` (when it exists) — A-D scorecard with rationale
+- `rpg-api/docs/architecture/components/<component>.md` (when it exists) — the affected component's doc
+
+If those docs don't exist yet for the area you're touching, FILE A FOLLOW-UP issue (don't block your PR on creating new platform docs from scratch — but flag the gap). Per `feedback_toolkit_docs_close_the_loop`: stale platform docs = future agents reading code cold and missing decided architecture.
+
+## Verification Gate (before reporting done)
+
+Before claiming a unit of work complete — to the coordinator, to Kirk, or in the PR description — answer all four questions and include the answers in your final message. "Tests pass" and "CI green" are not substitutes; CI proves plumbing, the gate proves the goal.
+
+1. **Goal** — What is the issue/wave goal in one sentence? Which test (file + assertion line) or manual repro *demonstrates that behavior*? `Require().NoError` does not count — point at an outcome-shaped assertion (HP delta, state field, event published, position changed).
+2. **Pattern** — What existing pattern/abstraction in this area did I check first? Cite the file(s) you read (e.g., `sneak_attack.go` for conditions, `gamectx` for chain state, `BasicCharacterRegistry` for entity lookups). If you built something parallel to an existing pattern, justify why.
+3. **Test** — Would my test fail if the implementation were broken? If it passes when the bug is present, it is decorative. Outcome-shaped assertions only.
+4. **Pushback discipline** — When Copilot, a reviewer, or the coordinator pushed back, did I verify the new claim against the actual code before accepting or rejecting? Pushback is a hypothesis. Verify against the code, then patch or refute-with-verification.
+
+If any answer is "I'm not sure" or "I didn't check," go back and check before reporting done.
 
 ## Proto Changes
 

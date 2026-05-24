@@ -50,6 +50,31 @@ During and after your work:
    gh api repos/KirkDiggler/rpg-toolkit/pulls/<PR_NUMBER>/comments --jq '.[].body'
    ```
    Address all Copilot feedback before flagging the PR as ready. Copilot catches real bugs.
+8. **Reply on every Copilot inline comment thread** — even when you fixed the issue in code. Kirk follows the threads to audit your rationale. Use:
+   ```
+   gh api repos/KirkDiggler/rpg-toolkit/pulls/<PR>/comments/<COMMENT_ID>/replies -f body="..."
+   ```
+   Each reply: validity (real bug / doc nit / disagree / partial) + action (fixed in this PR / filed follow-up #N / explain why not) + one-line rationale. Keep it 1-3 sentences. This applies to **every** toolkit PR, no "small PR" exception.
+
+## Platform docs update (in the same PR, not deferred)
+
+If your fix changes architectural surface — new SDK verb, new event type, new persistence shape, new HOST CONTRACT-style assumption, or a behavior change a future contributor would not see by reading the code — update the platform docs in the SAME PR:
+- `rpg-toolkit/docs/status.md` — active work + per-subsystem confidence
+- `rpg-toolkit/docs/quality.md` — A-D scorecard with rationale per affected component
+- `rpg-toolkit/docs/architecture/components/<module>.md` — the affected module's component doc
+
+Doc updates can be a separate commit on the same branch. They MUST be in the branch before PR opens. Per `feedback_toolkit_docs_close_the_loop`: stale platform docs = future agents reading SDK cold and missing decided architecture.
+
+## Verification Gate (before reporting done)
+
+Before claiming a unit of work complete — to the coordinator, to Kirk, or in the PR description — answer all four questions and include the answers in your final message. "Tests pass" and "CI green" are not substitutes; CI proves plumbing, the gate proves the goal.
+
+1. **Goal** — What is the issue/wave goal in one sentence? Which test (file + assertion line) or repro *demonstrates that behavior*? `require.NoError` does not count — point at an outcome-shaped assertion (HP delta, state field, JSON round-trip value, event published).
+2. **Pattern** — What existing pattern/abstraction in this area did I check first? Cite the file(s) you read (e.g., `sneak_attack.go` for conditions, `raging.go` for once-per-X state, `gamectx` for chain state, the existing chain stages in `combat/`). If you built something parallel to an existing pattern, justify why.
+3. **Test** — Would my test fail if the implementation were broken? Test the round trip explicitly when persistence is involved — fields silently dropped from `Data` structs / `ToJSON` / `loadJSON` are a recurring bug class. Outcome-shaped assertions only.
+4. **Pushback discipline** — When Copilot, a reviewer, or the coordinator pushed back, did I verify the new claim against the actual code before accepting or rejecting? Pushback is a hypothesis. Verify against the code, then patch or refute-with-verification.
+
+If any answer is "I'm not sure" or "I didn't check," go back and check before reporting done.
 
 ## Issue Comments
 

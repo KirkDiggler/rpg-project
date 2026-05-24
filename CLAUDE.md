@@ -50,6 +50,10 @@ Rules:
 - No issue without a board entry
 - New work = new issue on board -> fresh branch from main
 
+## External Contributors
+
+If your session is driven by someone other than Kirk on his primary machine — **start at `docs/teams/external-contributor.md`**. It walks you into the autonomous-waves loop at the implementer slot: bootstrap reading order, the per-issue loop, the pre-implementation grounding gate, and what stays in your human's hands.
+
 ## Current Milestone
 
 **4-Class Multiplayer Multi-Room Dungeon** - See `milestones/4class-dungeon/`

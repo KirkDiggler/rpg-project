@@ -52,6 +52,8 @@ For each worker PR:
   ```
   gh api repos/KirkDiggler/<repo>/pulls/<PR_NUMBER>/comments --jq '.[].body'
   ```
+- **Confirm worker replied on every Copilot inline thread** (not just patched the code) — Kirk follows the threads to audit reasoning. Use `gh api repos/KirkDiggler/<repo>/pulls/<PR>/comments` and check each comment has a reply chain.
+- **Verify the worker passed the Verification Gate.** Their report-done message must answer: Goal (outcome-shaped test or repro), Pattern (existing pattern checked), Test (would fail if broken), Pushback discipline (verified before accepting). If any answer is missing or hand-wavy, send back with "answer the gate for X."
 - Review against acceptance criteria: does the fix address what the scenario requires?
 - Check boundary rule: no game logic in API, no calculations in web
 - Check for scope creep: did the worker change things unrelated to their task?

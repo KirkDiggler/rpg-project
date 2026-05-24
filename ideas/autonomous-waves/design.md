@@ -51,6 +51,7 @@ fed the work.
 
 | Gate | Artifact | Second opinion |
 |---|---|---|
+| Pre-implementation grounding | The wave plan + inner-issue brief; the relevant ADRs and shipped patterns the planned shape will compose with | A grounding pass (orchestrator or a fresh exploration agent) that confirms the planned shape doesn't duplicate an existing toolkit / api primitive |
 | Agent dispatch | The diff, the PR description, the brief-vs-actual delta | Verifier-pass (today: orchestrator; future: dedicated agent before PR opens) |
 | Verifier-pass | Pass/fail report on symbols, citations, internal coherence | Copilot review |
 | Copilot review | Inline comments | Orchestrator decides each: fix, threaded why-not, or escalate to Kirk |
@@ -67,6 +68,7 @@ too-shallow check. Wave 1 evidence:
 - Verifier missed prose-coherence on PR #619 (5 of 5 issues caught only by Copilot) → next time, verifier does a depth-pass before the PR opens, not after.
 - Copilot caught replace-directive misstatements on PR #618 → next time, brief tells the agent to actually run `go mod tidy` and report what the directive does, instead of asserting.
 - Label-on-after-open failed CI on PR #147 → workflow trigger types fixed in #149.
+- Wave 2.11's original plan (`09-wave-2.11-combat-depth.md`) invented `ReactionPromptEvent` + a parallel "PromptKindReaction" machinery in the encounter SDK; toolkit ADR-0027 (chain-as-reaction-window) + ADR-0025 (gamectx) already covered the same problem (conditions subscribe to chains, query gamectx; `sneak_attack.go`, `fighting_style_protection.go`, `disengaging.go` are the shipped exemplars). Two exploration agents grounded against shipped toolkit code on 2026-05-10 and surfaced the duplication; the plan was replaced with `11-wave-2.11-condition-driven-reactions.md`. → **new gate: pre-implementation grounding** (added above to the gates table). The brief writer's job, before any wave plan ships, is to ground the planned shape against the shipped substrate — relevant ADRs, existing patterns in the affected role's `patterns.json`, grep results for the verbs and nouns the plan introduces. If the substrate already provides the abstraction, the plan composes with it instead of paralleling it. This gate runs before agent dispatch and applies whether the implementer is the orchestrator, a team-member, or an external contributor.
 
 **The "self-manageable" candidate.** PR #483 (single-constant TODO swap)
 hit consensus immediately: verifier-pass green, Copilot 0 comments, CI

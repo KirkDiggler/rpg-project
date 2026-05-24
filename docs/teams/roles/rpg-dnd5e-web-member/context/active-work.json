@@ -1,9 +1,29 @@
 {
   "items": [
     {
-      "id": "pr-379",
+      "id": "pr-412",
       "type": "active",
-      "description": "PR #379 docs/honest-status-snapshot — bootstrap doc tree (architecture/overview.md, data-model.md, components/*.md, how-to/*.md). Extended by this session.",
+      "description": "PR #412 feat/playtest-visual-harness — interactive visual hex-grid layer for PlaytestHarness. Rebased onto main 2026-05-18 after #408 merge; integrates with the reaction modal + ready-reactions panel by lifting the reaction overlay out of the dev grid so it stays reachable in 'Map only' mode. Single-commit rebase replaced the original 23258c5 + 69c6e2e. 83 vitest cases pass; CI green; awaits Kirk merge + MCP playtest verification.",
+      "branch": "feat/playtest-visual-harness",
+      "updated": "2026-05-18"
+    },
+    {
+      "id": "pr-408",
+      "type": "merged",
+      "description": "PR #408 feat/wave-2.11d-reaction-ui-407 — Wave 2.11d reaction UI infrastructure (modal + ready-reactions panel + SetReactionReady hook + #409/#410/#411 follow-ups). Merged to main 2026-05-18 (commit 0cf1f61).",
+      "branch": "feat/wave-2.11d-reaction-ui-407",
+      "updated": "2026-05-18"
+    },
+    {
+      "id": "proto-issue-158",
+      "type": "blocked",
+      "description": "rpg-api-protos#158 — expose reaction_readiness in EncounterStateData snapshot. Tracks the proto extension needed so the web panel can shed the #410 tri-state affordance and read server-seeded defaults (OA default-on for melee combatants at AddPlayer) directly from the snapshot.",
+      "updated": "2026-05-18"
+    },
+    {
+      "id": "pr-379",
+      "type": "paused",
+      "description": "PR #379 docs/honest-status-snapshot — bootstrap doc tree (architecture/overview.md, data-model.md, components/*.md, how-to/*.md).",
       "branch": "docs/honest-status-snapshot",
       "updated": "2026-05-02"
     },

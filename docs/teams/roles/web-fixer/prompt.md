@@ -50,6 +50,22 @@ During and after your work:
    gh api repos/KirkDiggler/rpg-dnd5e-web/pulls/<PR_NUMBER>/comments --jq '.[].body'
    ```
    Address all Copilot feedback before flagging the PR as ready. Copilot catches real bugs.
+8. **Reply on every Copilot inline comment thread** — even when you fixed the issue in code. Kirk follows the threads to audit your rationale. Use:
+   ```
+   gh api repos/KirkDiggler/rpg-dnd5e-web/pulls/<PR>/comments/<COMMENT_ID>/replies -f body="..."
+   ```
+   Each reply: validity (real bug / nit / disagree / partial) + action (fixed in this PR / filed follow-up #N / explain why not) + one-line rationale. Keep it 1-3 sentences.
+
+## Verification Gate (before reporting done)
+
+Before claiming a unit of work complete — to the coordinator, to Kirk, or in the PR description — answer all four questions and include the answers in your final message. "Tests pass" and "CI green" are not substitutes; CI proves plumbing, the gate proves the goal.
+
+1. **Goal** — What is the issue/QA checklist item in one sentence? What did you see in the browser (or in an MCP-driven playtest at port 9222 — see `feedback_drive_playtests_via_mcp`) that *demonstrates the fixed behavior*? Render correctness in the UI is the goal, not "the hook returns data."
+2. **Pattern** — What existing pattern/component/hook in this area did I check first? Cite the file(s). Web logic should be "render + call" only (see `feedback_no_logic_in_web`) — if you found yourself gating on game state (roomId filters, condition checks), that's API territory and the fix is in the wrong layer.
+3. **Test** — Do my unit/component tests fail if the implementation is broken? `expect(...).toBeInTheDocument()` against the new render is the floor; bonus: an MCP playtest run that captures the goal behavior.
+4. **Pushback discipline** — When Copilot, a reviewer, or the coordinator pushed back, did I verify the new claim against the actual code/render before accepting or rejecting? Pushback is a hypothesis. Verify, then patch or refute-with-verification.
+
+If any answer is "I'm not sure" or "I didn't check," go back and check before reporting done.
 
 ## Issue Comments
 

@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-05-10** — by `11-wave-2.11-condition-driven-reactions.md`. The original plan invented a `ReactionPromptEvent` shape that fights the ADR-0027 three-phase chain pattern + the ADR-0025 gamectx pattern that the toolkit already implements. It also folded multiattack + AvailableActions surfacing + reactions into one wave that was too large to dispatch coherently. Kept for archaeological reference; do not implement against this plan.
+>
+> The replacement reuses the toolkit's existing seams: conditions self-subscribe to the chain (per `sneak_attack.go`, `fighting_style_protection.go`, `disengaging.go`), `gamectx` carries Room + CharacterRegistry into the chain (per ADR-0025), and reactions are condition handlers returning reaction-requests that the chain processor batches between phases (per ADR-0027). The Wave 2.11a/b cleanup (per-attack bus, missing gamectx, attacker-and-target-only registry) is folded into the new wave's foundation slice rather than patched separately.
+
 # Wave 2.11 — Combat depth (reactions, opportunity attacks, multiattack — and class-specific action availability surfaced in the harness)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Each inner issue is its own dispatch; this plan is the wave-shape that ties them together.
