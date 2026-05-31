@@ -1,5 +1,12 @@
 # Encounter v1alpha2 — Orchestrator & Event Streams Design
 
+> **Superseded for the orchestrator shape (2026-05-30):** the converged design is
+> [`plans/11-582-encounter-orchestrator.md`](plans/11-582-encounter-orchestrator.md)
+> (+ the toolkit seam [`plans/10-689-encounter-hydration-cascade.md`](plans/10-689-encounter-hydration-cascade.md)).
+> The streams/visibility-component vision below did not ship; the event spine is simpler
+> (toolkit emits → broker → `StreamEncounter` drains → `translate.go`). Read this doc for
+> the §2 locked decisions (package layout, stateless per-RPC cycle) as historical context.
+
 **Status:** Draft, partial. Captures Phase 2 design decisions from a brainstorming session that took the scenic route. Fresh session recommended for the next pass — see §5.
 
 **Date:** 2026-05-06
