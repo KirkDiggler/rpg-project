@@ -2,6 +2,19 @@
 
 **For the next session:** read this, then `CLAUDE.md`, then `ideas/encounter/v1alpha2/{design,orchestrator-design,sdk-direction-rpgapi}.md`. You are continuing a **clean-slate rebuild of rpg-api's encounter path**. Most decisions below are made — reconcile + build, don't re-derive.
 
+## ⏩ Update — late 2026-05-30 (rebuild VERIFIED green, awaiting the playtest signoff)
+
+- ✅ Toolkit **#687/#688** + proto **#168** — merged (unchanged).
+- ✅ **#576** (first runner attempt, `feat/575`) and **#575** — closed/superseded.
+- 🟢 **rpg-api #578 (`feat/577-encounter-load-rebuild`) — CI GREEN + director-verified, NOT yet merged.** Lands the clean slice: `encounter.Load` single load path (kills the #684 double-subscribe by construction), generic `ActivateFeature` via the toolkit verb, `ResourceChanged` translate, depguard import-guard — **plus** the monster-damage one-model fix below. Closes #577.
+- 🐛→✅ **#579 (goblin dealt 5, should be 8) — FIXED in #578.** rpg-api's `syntheticMonsterWeapon`/`extractBaseDice` stripped the goblin's `+2` (its DEX mod) and the resolver added STR(−1). One-model fix: feed the toolkit the **real scimitar** (finesse) so its existing logic picks DEX → `1d6+2 = 8`. Hack deleted. shield=8, rage baseline=8 / raging=4. (Lesson: *"is this actually different? no → same system"* — a prior agent hid this by changing the test to 5; rejected.)
+- 📋 Known follow-ups: **#580** (pin mockgen — the version mismatch that false-alarmed pre-commit); **71 PRE-EXISTING lint issues** (not CI-gated — main is green; separate cleanup); **EndTurn** still uses `publishTurnEndAndPersistReset` (`Cleanup`-patched, not yet fully migrated to the runner — Phase 2); stale comments in `dnd5e_combat_resolver_test.go` referencing the deleted funcs (tiny).
+- 🆕 **Director role** defined (`docs/teams/roles/director/prompt.md`); `CLAUDE.md` now points every session here first.
+
+**NEXT = the wave signoff: drive the MCP playtest.** Rage button → "raging" indicator + charges 2/2→1/2, then the full round: goblin attacks raging bob → 8 base → Rage resistance → 4, no "modifier ID already exists". Per `feedback_playtest_is_the_signoff_bar` AND the autonomy grant (merge is *conditioned on* playtest-verified): **merge #578 only after the playtest confirms it end-to-end.** Then close #577/#579; the umbrella **#574** closes on playtest pass; the 4 Brothers (board #12) then ride the clean rails. Branch `feat/577` is green and ready to playtest (restart dev servers + clear vite cache first — `feedback_playtest_restart_dev_servers`).
+
+---
+
 ## What happened (short version)
 
 Began as "verify the 4 brothers (Chapter 2) are L1-playable." Pulled to chapter altitude, audited rpg-api, found it had drifted: **business logic leaked into rpg-api** (rage tier table, charge math, condition construction in the `ActivateFeature` handler), the **event-bus load path is scattered**, and a **double-apply bug class (#684)** lives in it. Kirk's call: **clean-slate the rpg-api encounter vertical** — build the clean path properly. We keep losing our way there (it's leaked to web too — switch statements worse than the rage one).
