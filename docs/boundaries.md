@@ -80,6 +80,7 @@ What each layer knows and doesn't know. When in doubt, check here.
 - Rich structured results with breakdowns
 - Updated game state (conditions applied, resources consumed)
 - Events for the bus (what happened, who was affected)
+- **Persistence via `ToData()`, hydration via `LoadFromData()`** — the toolkit holds no storage. `ToData()` flattens an entity to a plain `*Data` for the host to persist; `LoadFromData(ctx, bus)` rebuilds it **live on the event bus** (the single subscribe point — never a raw `json.Unmarshal`). See `architecture.md` → "The Persistence & Hydration Contract."
 
 ### Never Does
 - Database calls

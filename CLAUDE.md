@@ -67,6 +67,25 @@ imports (depguard-enforced), toolkit owns all rules and drives the events.
 _Prior milestone (4-Class Multiplayer Multi-Room Dungeon, `milestones/4class-dungeon/`) is largely
 delivered; its remaining gaps fold into the chapters above._
 
+## Status docs
+
+CLAUDE.md is the **table of contents**; the **status docs hold the live state**. They follow a fixed shape so a cold session reads a known structure instead of mining dense prose — and so the solid-vs-open discipline is built into the format.
+
+**`sessions/active.md`** — the living handoff. ONE file, rewritten (not endlessly appended) each session:
+
+| Section | Holds |
+|---------|-------|
+| **Now** | chapter / wave / what this session is driving (1–2 lines) |
+| **Solid** | verified — keep, don't re-derive |
+| **Open questions** | verify before acting; NEVER logged as findings |
+| **Next** | the immediate gated step |
+| **Decision log** | this wave's decisions, dated, + where each is visible (board / PR) |
+| **Pointers** | where the deep design / code lives |
+
+Narrative history lives in git, not in the doc — the handoff stays thin and current.
+
+**Per-repo `docs/status.md`** (all 5 repos) — same idea, repo-scoped: Now / Health / In flight / Known rough edges / Pointers. (`docs/quality.md` keeps its A–D scorecard.)
+
 ## Structure
 
 ```
