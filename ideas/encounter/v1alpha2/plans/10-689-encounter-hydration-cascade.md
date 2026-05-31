@@ -103,21 +103,25 @@ Stat snapshots stay (stand-in / no-data path + the SDK's HP math).
 `EndTurn(ctx, actorID)` (`combat.go:146`, gains `ctx`) emits the boundary right after the broker `TurnEndedEvent` (`:160`):
 
 ```go
-_ = dnd5eEvents.TurnEndTopic.On(e.bus).Publish(ctx, dnd5eEvents.TurnEndEvent{CharacterID: string(actorID)})
+// as-shipped #690: error propagated before initiative advances
+if err := dnd5eEvents.TurnEndTopic.On(e.bus).Publish(ctx, dnd5eEvents.TurnEndEvent{CharacterID: string(actorID)}); err != nil {
+    return err
+}
 ```
 
-The exact one-liner already in the host's `publishTurnEndOnBus` (`end_turn.go:328-331`), now inside the SDK verb with **no character re-load around it**. Held conditions (`SneakAttackCondition` resets on `TurnEndTopic` for its own `CharacterID` — `sneak_attack.go:102-103,136-139`) reset `UsedThisTurn=false` in place. In the NPC turn-cycle the SDK's `EndTurn` runs per NPC (`end_turn.go:202`), so the signal fires there too — the host's manual `publishTurnEndOnBus(prevNPC)` (`:205`) and `publishTurnEndAndPersistReset` (`:345-395`, the `defer Cleanup` #684 patch) delete. `ToData` (§1) cascades the reset state back, so cross-RPC once-per-turn persistence works without a separate write-back.
+The one-liner from the host's `publishTurnEndOnBus` (`end_turn.go:328-331`), now inside the SDK verb with **no character re-load around it**. (As-shipped #690 the publish error is **propagated** — the publish is the only thing that resets per-turn state, so swallowing it would silently skip the reset; Copilot caught the original `_ =`.) Held conditions (`SneakAttackCondition` resets on `TurnEndTopic` for its own `CharacterID` — `sneak_attack.go:102-103,136-139`) reset `UsedThisTurn=false` in place. In the NPC turn-cycle the SDK's `EndTurn` runs per NPC (`end_turn.go:202`), so the signal fires there too — the host's manual `publishTurnEndOnBus(prevNPC)` (`:205`) and `publishTurnEndAndPersistReset` (`:345-395`, the `defer Cleanup` #684 patch) delete. `ToData` (§1) cascades the reset state back, so cross-RPC once-per-turn persistence works without a separate write-back.
 
 ---
 
 ## 4. Reaction conditions at the cascade
 
-OA + Shield are already in `conditions.LoadJSON` (`loader.go:149-159`), so they ride the cascade as ordinary conditions, gated by the SDK-owned `ReactionReadiness` (`data.go:46`, seeded default-on for OA at `AddPlayer`/`AddMonster`, `encounter.go:229-231,269-271`).
+**OA only — Shield is out of scope** (cut as-shipped #690). The four L1 classes (Barbarian/Fighter/Monk/Rogue) include no Shield caster (it's a wizard spell), so auto-applying `ShieldSpellCondition` would wire a reaction nobody uses — *"if it's not in there, we're not implementing it"* (Kirk). `ShieldSpellCondition` stays in the conditions library, just not auto-applied; `hasFirstLevelSpellSlot` was dropped.
 
-- **(A, recommended)** The cascade's dnd5e-side hydrate step applies OA/Shield (`conditions.NewOpportunityAttackCondition(id).Apply(ctx, e.bus)` when readiness is seeded; Shield when ready + spellcaster heuristic). Pure relocation of `reaction_conditions.go` into the SDK cascade; the `hasFirstLevelSpellSlot` heuristic moves with it.
-- (B, rejected for now) Persist OA/Shield into the character's `Data.Conditions`. Changes what the host persists and entangles encounter-scoped readiness with character-scoped condition state.
+The cascade's dnd5e-side hydrate step applies **`OpportunityAttackCondition`** universally for melee combatants (`conditions.NewOpportunityAttackCondition(id).Apply(ctx, e.bus)`) — relocating the OA half of the old `reaction_conditions.go`.
 
-Either way rpg-api's `reaction_conditions.go` + its depguard exclusion delete; the import guard covers the whole handler+orchestrator package.
+**Verified (e93aa40):** readiness is a **fire-time** gate the condition itself enforces (OA checks `gamectx.IsReactionReady` when firing — `opportunity_attack.go:163`), *not* a subscribe-time gate — so applying OA at hydration is a safe no-op until `ReactionReadiness` is set. No subscribe-time readiness-gating needed (an earlier `reactionSeeded` subscribe-gate was an unwarranted divergence, removed).
+
+rpg-api's `reaction_conditions.go` + its depguard exclusion delete; the import guard covers the whole handler+orchestrator package.
 
 ---
 
