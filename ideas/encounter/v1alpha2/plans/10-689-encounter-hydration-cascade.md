@@ -21,7 +21,7 @@
 
 - **The cascade already exists and is the cure.** `character.LoadFromData` (`character/data.go:119`) cascades into `conditions.LoadJSON` (`conditions/loader.go:18`, ref-routed switch) and calls `condition.Apply(ctx, bus)` per condition (`character/data.go:230-237`). #684 fires because the host calls `character.LoadFromData` on the *same* `e.bus` twice (resolver `loadCharacterWithBus` at `dnd5e_combat_resolver.go:516` + `publishTurnEndAndPersistReset` at `end_turn.go:374`). One owner, one load → cured.
 - **OA + Shield are already in the loader switch:** `loader.go:149` `OpportunityAttack().ID`, `:156` `Spells.Shield().ID`. They reconstitute via the normal condition cascade — no special construction — if present in the entity's condition list (driven by readiness). Refs: `refs/conditions.go:102`, `refs/spells.go:256`.
-- **Monsters do NOT cascade conditions in `monster.LoadFromData`** — by design, to avoid an import cycle (`monster/monster.go:45-53`: "Conditions must be loaded by the caller … Use LoadMonsterConditions helper"). There is **no `LoadMonsterConditions` helper today** — only `monster/actions.LoadMonsterActions` (`monster/actions/loader.go:114`), which `npc.go:107` already calls. The monster side needs a small helper (§1, Q2).
+- **Monsters do NOT auto-cascade conditions in `monster.LoadFromData`** — by design, caller-applied (`monster.go:350-353` shows the commented `monstertraits.LoadMonsterConditions(...)` call the caller is meant to make; `monster.go:43-46`). **The helper already exists** at `rulebooks/dnd5e/monstertraits/loader.go:84` — used by `monster/monsters/zombie.go` + the skeleton/zombie tests. So the cascade **wires in the existing `monstertraits.LoadMonsterConditions`** for monsters — **no new rulebook helper needed** (corrects a v2-draft claim that no helper existed; caught in review). `monster/actions.LoadMonsterActions` (`monster/actions/loader.go:114`) is already called at `npc.go:107`.
 - **ADR-0027 confirmed** (`docs/adr/0027:54-57`): `combat.AttackContext` is JSON-serializable; eventBus/roller no longer in the context; the orchestrator persists it across the player-reaction RPC gap. The phased-flow reasoning relies on exactly this.
 - **`encounter.go:13` already imports `dnd5eEvents`**, and `npc.go`/`activate_feature.go` already call `monster.LoadFromData`/`character.LoadFromData` inside the SDK — so cascading there is consistent with shipped precedent, not a new boundary breach.
 
@@ -60,7 +60,7 @@ for _, md := range e.data.Monsters {
 ```
 
 - **Players** need the serialized char blob. `PlayerData` has none today (`data.go:101-113`). Add `PlayerData.DataJSON json.RawMessage` (`omitempty`), populated by the host — mirrors `MonsterData.DataJSON` (`data.go:161`) and `ActivateFeatureInput.CharDataJSON` (`activate_feature.go:30-36`). Keeps the SDK out of the store (no load-by-ID behind the seam).
-- **Monsters:** `monster.LoadFromData(ctx, &data, e.bus)` (`monster/monster.go:304`) + `monsteractions.LoadMonsterActions` (already in `npc.go:107`) + condition cascade (`LoadMonsterConditions`-shaped helper — Q2). The `syncMonsterDataFromSnapshot` step (`npc.go:179`) folds in here.
+- **Monsters:** `monster.LoadFromData(ctx, &data, e.bus)` (`monster/monster.go:304`) + `monsteractions.LoadMonsterActions` (already at `npc.go:107`) + the existing `monstertraits.LoadMonsterConditions` (`monstertraits/loader.go:84`) for the conditions. The `syncMonsterDataFromSnapshot` call (`npc.go:102`) folds in here.
 - **Reaction conditions (OA/Shield)** applied as part of this cascade, driven by `e.data.ReactionReadiness[id]` — §4.
 
 This is the **single subscribe point.** One `Encounter.LoadFromData` per RPC + a fresh `Encounter` per request ⇒ "once per encounter object" == "once per request" == the cure.
@@ -117,9 +117,9 @@ Either way rpg-api's `reaction_conditions.go` + its depguard exclusion delete; t
 
 ## 5. Migration & compatibility (clean break)
 
-**SDK (`encounter`) — breaking:** (1) `LoadFromData` gains `ctx`; (2) `EndTurn` gains `ctx`; (3) `New(...)` likely gains `ctx` (runs the cascade; confirm at impl); (4) `AttackInput` gains `Attacker`/`Defender combat.Combatant`, `MovementStepInput` gains `Mover`; (5) `PlayerData` gains `DataJSON` (`omitempty`); (6) `ToData()` cascades held state back; (7) new rulebook helper `LoadMonsterConditions`.
+**SDK (`encounter`) — breaking:** (1) `LoadFromData` gains `ctx`; (2) `EndTurn` gains `ctx`; (3) `New(...)` likely gains `ctx` (runs the cascade; confirm at impl); (4) `AttackInput` gains `Attacker`/`Defender combat.Combatant`, `MovementStepInput` gains `Mover`; (5) `PlayerData` gains `DataJSON` (`omitempty`); (6) `ToData()` cascades held state back; (7) the encounter cascade wires the **existing** `monstertraits.LoadMonsterConditions` for monsters.
 
-**dnd5e rulebook — one addition** (the monster-conditions helper, Q2); combat/character untouched.
+**dnd5e rulebook — no new code required:** `monstertraits.LoadMonsterConditions` already exists (`monstertraits/loader.go:84`); the encounter cascade just calls it. combat/character untouched.
 
 **rpg-api adapter — deletes/changes (so the consumer can plan):** delete `resolveEntity`, `loadCharacterWithBus`, `rehydrateMonster` re-load, `pendingPhasedAttack` cache, `saveAttackerConditionState`, `publishTurnEndAndPersistReset`, `publishTurnEndOnBus` calls, `reaction_conditions.go` (+ depguard exclusion); resolver methods read the held entities → shrink to translation; populate `PlayerData.DataJSON` at create/seed; add `ctx` to all `tkenc.LoadFromData`/`enc.EndTurn` call sites. Single cross-repo unit (local `replace` during dev, real tag at end). New ADR + journey entry in the SDK PR.
 
@@ -147,7 +147,7 @@ Either way rpg-api's `reaction_conditions.go` + its depguard exclusion delete; t
 ## Open questions — director resolutions
 
 - **Q1 — `PlayerData.DataJSON` persisted or transient?** **DEFAULT TAKEN: transient** (host re-attaches the blob after each `Get`, before `LoadFromData`; character store stays authoritative; matches `MonsterData.DataJSON`/`ActivateFeatureInput.CharDataJSON`). Alternative (persist on the snapshot, journey-019 self-contained) trades staleness for self-containment — flagged to Kirk; redirect if desired.
-- **Q2 — monster-condition helper location?** **RESOLVED: add `monster/conditions.LoadMonsterConditions(ctx, mon, data.Conditions, bus, roller)`** so the monster round-trip composes like the character one (the one rulebook change).
+- **Q2 — monster-condition helper?** **RESOLVED: wire the *existing* `monstertraits.LoadMonsterConditions` (`monstertraits/loader.go:84`) into the encounter cascade.** It already exists (used by `zombie.go` + the skeleton/zombie tests); `monster.LoadFromData` doesn't auto-apply conditions by design (caller-applied), so the cascade calls it for monsters. **No new rulebook helper** — corrects the v2 draft's "add a helper" framing (caught in review).
 - **Q3 — `ActivateFeature`'s own `defer Cleanup` re-load (`activate_feature.go:100-110`)?** **RESOLVED: follow-up issue** — same #684 class, off the combat-resolution critical path; keep #689 focused.
 - **Q4 — held type `combat.Combatant` + type-assert in host, vs typed getters on the SDK?** **RESOLVED: hold `combat.Combatant`, type-assert in the host resolver** — SDK stays at the interface; host knows its concrete types.
 
