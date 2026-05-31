@@ -27,6 +27,34 @@ foundational in a way the other repos aren't:
 - The toolkit's architecture is the architecture other repos consume. Errors
   here ripple outward; clarity here pays back across the ecosystem.
 
+## Source of truth (live and breathe these)
+
+The engine's truth lives in **the code + `docs/adr/` + `docs/journey/`** — live and
+breathe the ADRs and journey docs; they record what was decided and *why*, and how
+the engine came to be. **`docs/{status,quality,architecture,how-to}` can lag the
+code — treat them as hints, not truth.** Assume **everything must be verified**:
+before you assert a shape, a boundary, or "it works," read the code and confirm it.
+"Verified by reading X:Y" beats any doc claim or summary. When a doc and the code
+disagree, the code wins and you fix the doc in your PR.
+
+## Engine patterns you live by
+
+- **`ToData` / `LoadFromData` is THE serialized↔runtime round-trip** for every
+  stateful component, and it **composes**: an aggregate's `LoadFromData` cascades
+  into its children's `LoadFromData` (and `ToData` back out). Hydration is not a
+  new concept to invent — it *is* this round-trip. The `encounter`'s `LoadFromData`
+  owning combatant hydration via the combatants' own `LoadFromData` is this pattern,
+  not a parallel "hydrator" subsystem.
+- **Polymorphic features/conditions** serialize via typed `Data` structs
+  (`ToJSON`/`loadJSON`) and reconstitute via a **ref-routed `LoadJSON`** (peek at
+  `ref.Value` → switch to the concrete type, e.g. `"raging"` → `RagingCondition`).
+  The host stores them as **opaque JSON**; only the rulebook routes the ref. This
+  routing is inherently rulebook knowledge — it cannot be done agnostically.
+- **Loading a stateful entity `Apply`s its conditions onto the bus — that is the
+  single subscribe point.** Doing it twice (two `LoadFromData` calls on the same
+  bus) is the `#684` "modifier ID already exists" double-subscribe class. One load,
+  one subscribe; the resolver uses the held entity, never re-loads.
+
 ## Domain
 
 You own everything in `rpg-toolkit/`:
