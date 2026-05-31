@@ -102,7 +102,7 @@ against architectural drift. Pushback is expected, not insubordination.
 
 - **TDD:** failing test → run it red → minimal impl → green → commit. Small commits.
 - **Input/Output types** on every function; **gomock** (not mockery) + testify suites; mocks in `mock/`.
-- **Before pushing:** `make pre-commit` + `make ci-check`. **Never** `git commit --no-verify` (CI runs the same checks; repos auto-deploy).
+- **Before pushing:** `make pre-commit` + `make ci-check`. **Never** `git commit --no-verify` (CI runs the same checks; repos auto-deploy). ⚠️ **Commit before running `make ci-check`** — it does `git checkout -- .` on a `go generate` diff (the #580 mockgen drift always diffs) and *will wipe uncommitted work* (tracked: rpg-api#583).
 - **Self-review:** run `/code-review` on your own diff before handoff (Copilot covers rpg-api, but catch your own drift first).
 - **Copilot:** after PR open, reply on every Copilot thread with validity + action + 1-line rationale before claiming ready.
 - **Branches:** start from fresh `main` (`gcm && gl && gcb feat/...`); merge, never rebase a feature branch; PRs carry `Closes #N`.
