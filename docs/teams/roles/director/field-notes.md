@@ -13,6 +13,15 @@ A claim that makes a problem conveniently disappear is a **flag, not a relief.**
 - **"It's done."** = substantial uncommitted WIP, no PR, no CI. → `git status` + `gh pr checks` before believing any completion.
 - **General tell:** a green that arrives right after a confusing failure — suspect a silenced symptom (a drained channel, a changed assertion, a skipped test), not a fix.
 
+## False reds — verify a scary signal too, not just a convenient green
+
+The verification reflex cuts both ways. A flood of alarming errors is not automatically real; check it against the **real gate** before reacting — and before relaying "it's broken" to Kirk.
+
+- **gopls "BrokenImport … in GOROOT" + cascading "undefined: X" across rpg-toolkit (multi-module).** The harness language server can't resolve the toolkit's multi-module layout (no `go.work`), so it reports every cross-module import as unresolvable, then every type as undefined — a *cascade from the imports*, not a code error. Whole files look "broken." The real gate is `go build ./...` / `go test ./...` / `make pre-commit` in the module dir, which were green while gopls screamed (confirmed 3× during #689). The tell: "in GOROOT" / "not included in your workspace" = workspace-resolution failure, not a compile error. A flood arriving mid-agent-edit is doubly suspect (intermediate file state). Don't chase them; don't relay them as breakage.
+- **Tool-version drift (the #580 mockgen-pin class).** A linter/codegen on your PATH at a different version than the repo pins over-reports vs. the real gate. Ex (2026-05-31): local `golangci-lint v2.12.2` flagged 31 test-file `goconst` that the repo-pinned `v2.2.1` (+ the config's `*_test.go` exclusion) doesn't. Run the pinned tool, or trust `make pre-commit` + the implementer who ran it, before calling lint "failing."
+
+The cost of a false red is wasted thrash and — worse — telling Kirk something's broken when it isn't. Verify, then speak.
+
 ## Altitude
 
 Orchestrate; don't implement inline. Dispatch agents for reading/building/debugging; spend your own context on the big picture and the conversation. The *one* time to drop into the code yourself is to verify a pivotal claim (the goblin-damage catch needed me to read `extractBaseDice` and the goblin statblock — nothing else). Delegate, then verify the result.
