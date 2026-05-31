@@ -65,9 +65,13 @@ for _, md := range e.data.Monsters {
 
 This is the **single subscribe point.** One `Encounter.LoadFromData` per RPC + a fresh `Encounter` per request ⇒ "once per encounter object" == "once per request" == the cure.
 
+> **Model note (turn-based now; learn into a real-time server later).** This cure rests on the **simple turn-based, stateless-per-RPC** model: load → verb → persist, with the bus reconstructed fresh each `LoadFromData` (`encounter.go:31` "not serialized"). That's the right simplicity while we set up the building. A future "proper game server" could keep the encounter + bus **in memory across actions** (real-time); then the invariant shifts from "fresh per request" to "subscribe-once for the encounter's in-memory lifetime" — a learned-into evolution (pairs with the persistent-in-mem / Redis-transport direction), explicitly **not now**.
+
 ### `ToData` cascading back (`encounter.go:339`)
 
-With held entities that mutate condition state (e.g. `SneakAttack.UsedThisTurn`), `ToData` cascades the held combatants' `ToData()` back into `PlayerData.DataJSON` / `MonsterData.DataJSON` so persistence captures post-turn state — **replacing** the host's scattered `saveAttackerConditionState` (`dnd5e_combat_resolver.go:422`) + the `publishTurnEndAndPersistReset` write-back (`end_turn.go:388-394`). The SDK owns the round-trip both directions; it still never *stores* (host saves the returned `*Data`).
+Today `ToData()` is literally `return e.data` — it hands back the load-time snapshot pointer, not current held-entity state. **That changes:** with held entities that mutate (e.g. `SneakAttack.UsedThisTurn`), `ToData` cascades the held combatants' `ToData()` back into `PlayerData.DataJSON` / `MonsterData.DataJSON`, **gated by the existing per-entity dirty flag** (`character.IsDirty()`/`MarkClean()`, `character.go:744-753`; `monster.go:59`) so only changed entities re-serialize. This **replaces** the host's scattered `saveAttackerConditionState` (`dnd5e_combat_resolver.go:422`) + the `publishTurnEndAndPersistReset` write-back (`end_turn.go:388-394`).
+
+**The model (Kirk's framing):** the encounter is the **entity-aware authority** — ask it for an entity, get the state-synced runtime instance, because it holds them all. `Data` stays the **simple snapshot** and is a *serialization view* written by this cascade — not a rival read-source that drifts. The SDK owns the round-trip both directions; it still never *stores* (host saves the returned `*Data`). We deliberately keep `Data` simple now — not making the held entities the sole truth / deriving `Data` on demand (a possible later tightening).
 
 ---
 

@@ -47,22 +47,24 @@ Input/Output speak toolkit/entity types (`encountercore.PlayerID`, `tkenc.Action
 
 ### The private `load(id)`
 
-The `Runner.Run` body (`runner.go:109-155`) becomes a private method — single-load guarantee survives, closure-over-handler form dies:
+The `Runner.Run` body (`runner.go:109-155`) becomes a private method — single-load guarantee survives, closure-over-handler form dies. **It returns the encounter and nothing else** (Kirk review catch: the draft's 3-return `(*Encounter, *Data, error)` had a smell — the extra `*Data`):
 
 ```go
-func (o *Orchestrator) load(ctx, in loadInput) (*tkenc.Encounter, *tkenc.Data, error) {
+func (o *Orchestrator) load(ctx, in loadInput) (*tkenc.Encounter, error) {   // 2 returns
     data, err := o.encRepo.Get(ctx, in.EncounterID)        // NotFound mapping
-    // membership + optional entity-ownership checks BEFORE LoadFromData (skip rehydrate on auth-fail)
-    enc, err := tkenc.LoadFromData(ctx, data, o.broker,     // ctx per #689
+    // membership + optional entity-ownership checks here, from data, BEFORE LoadFromData
+    // (skip rehydrate on the auth-fail path)
+    return tkenc.LoadFromData(ctx, data, o.broker,          // ctx per #689
         tkenc.WithCharacterResolver(o.resolver),
         tkenc.WithCombatResolver(o.buildCombatResolver(data)),
         tkenc.WithMovementResolver(o.buildMovementResolver(data)),
         tkenc.WithRoller(o.roller))
-    return enc, data, err
 }
 ```
 
-Each method: `enc, data := o.load(...)` → `enc.<Verb>(...)` → `o.encRepo.Save(ctx, enc.ToData())`.
+**Why no `*Data` return:** the encounter *is* the synced state — it holds every entity and, asked, returns it with state in sync. Verbs / resolver / orchestrator read entities + orchestration state **through the encounter** (a small synced-getter surface: entity-by-id, initiative, mode), never a side snapshot that can drift. Persist with `enc.ToData()` — the dirty-gated cascade (see [`10-689`](10-689-encounter-hydration-cascade.md) §1) that serializes the held entities back into the **simple `Data` snapshot**. `Data` stays simple; we are *not* making entities the sole truth / deriving `Data` on demand now (possible later tightening).
+
+Each method: `enc := o.load(...)` → `enc.<Verb>(...)` → `o.encRepo.Save(ctx, enc.ToData())`.
 
 ### How the thin handler calls it
 
