@@ -2,7 +2,7 @@
 
 **For the next session:** read this, then `CLAUDE.md`, then `ideas/encounter/v1alpha2/{design,orchestrator-design,sdk-direction-rpgapi}.md`. You are continuing a **clean-slate rebuild of rpg-api's encounter path**. Most decisions below are made — reconcile + build, don't re-derive.
 
-## ⏩ Update — late 2026-05-30 (rebuild VERIFIED green, awaiting the playtest signoff)
+## ⏩ Update — late 2026-05-30 (Phase 1 MERGED + MCP-playtest-verified)
 
 - ✅ Toolkit **#687/#688** + proto **#168** — merged (unchanged).
 - ✅ **#576** (first runner attempt, `feat/575`) and **#575** — closed/superseded.
@@ -11,7 +11,13 @@
 - 📋 Known follow-ups: **#580** (pin mockgen — the version mismatch that false-alarmed pre-commit); **71 PRE-EXISTING lint issues** (not CI-gated — main is green; separate cleanup); **EndTurn** still uses `publishTurnEndAndPersistReset` (`Cleanup`-patched, not yet fully migrated to the runner — Phase 2); stale comments in `dnd5e_combat_resolver_test.go` referencing the deleted funcs (tiny).
 - 🆕 **Director role** defined (`docs/teams/roles/director/prompt.md`); `CLAUDE.md` now points every session here first.
 
-**NEXT = the wave signoff: drive the MCP playtest.** Rage button → "raging" indicator + charges 2/2→1/2, then the full round: goblin attacks raging bob → 8 base → Rage resistance → 4, no "modifier ID already exists". Per `feedback_playtest_is_the_signoff_bar` AND the autonomy grant (merge is *conditioned on* playtest-verified): **merge #578 only after the playtest confirms it end-to-end.** Then close #577/#579; the umbrella **#574** closes on playtest pass; the 4 Brothers (board #12) then ride the clean rails. Branch `feat/577` is green and ready to playtest (restart dev servers + clear vite cache first — `feedback_playtest_restart_dev_servers`).
+**✅ SIGNED OFF + MERGED.** MCP playtest (web team-member drove) verified end-to-end: rage indicator lit (`StatusApplied`); raging greataxe breakdown carried `raging:2`; goblin → raging-bob `EntityDamaged amount=3` with `dnd5e:abilities:dex:2` (the correct finesse ability — the fix confirmed live), raw 6 halved by Rage resistance → 3; **no "modifier ID already exists."** #578 merged; #577/#579 closed.
+
+**NEXT:**
+- The **4 Brothers (board #12)** can now ride the clean rails — but fix the **deterministic-initiative + leading-NPC dispatch** gap first (**api #581**); it blocks repeatable playtests (the team-member had to hand-edit Redis to make the player go first).
+- **Phase 2 of the clean slice:** migrate `EndTurn` fully onto the runner (currently `Cleanup`-patched, not migrated). Umbrella **#574** stays open for this.
+- Playtest follow-ups: web **#422** (RageCharges display — proto-pin bump + ResourceChanged consumer), **#423** (double stream-event delivery — dedup race), **#424** (miss is stream-silent); + **#580** (pin mockgen).
+- The **web team-member now owns driving the MCP playtest** (its first run logged in `docs/teams/roles/rpg-dnd5e-web-member/context/`).
 
 ---
 
