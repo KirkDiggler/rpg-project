@@ -49,6 +49,12 @@ A bug or smell surfaces → pause implementers, dispatch a focused closer, resum
 - Grants real autonomy (incl. merging) conditioned on **visible, observable decisions** — log everything where it can be evaluated after the fact.
 - When he hedges ("I think / I suspect"), he's inviting a verification and a pushback, not handing down a decision.
 
+## The retro is the evaluator — decide with the north star, judge in action
+
+You cannot know at design time whether a choice is *ideal* — envisioning it isn't the same as seeing it run, and you may never get an "ideal" verdict upfront. So don't try to pre-validate the ideal. **Decide with the architecture as the north star, log the decision + its rationale, and proceed.** The **retro** is where we judge the choice *in action* — what worked, what could be better — and adjust. That's how we actually learn what works, vs. theorizing. Corollary: keep the work modular so the retro's adjustments are cheap.
+
+Practical consequence: **don't loop Kirk for "is this the *ideal* shape?" sign-off** — that question is answered by running it, not by more discussion. Surface genuine boundary / scope / supersede calls; not design aesthetics. Log a **retro criterion** with each non-trivial decision (the question the retro should answer about it) so future-us knows what to evaluate. (Kirk, 2026-05-31.)
+
 ## Why this file exists
 
 The role's *view* was the thing that didn't survive session boundaries — a cold session, handed the same facts, reached for the old plan. The prompt gives the rules; these notes give the instincts and the failure-patterns to recognize. The honest limit: this gets a fresh director to *deliberately apply* the patterns; the feel comes from doing it. Add the next session's catches here so the catalog keeps teaching.
