@@ -1,6 +1,6 @@
 # Design: rpg-api#582 — the clean encounter orchestrator (retire the Runner + scattered loader)
 
-**Status:** PROPOSED — converged design, pending sign-off. Design-first; no code until ratified.
+**Status:** ACCEPTED (2026-05-30, Kirk signed off). Attack verbs gated on toolkit#689; non-attack verbs + Runner removal unblocked.
 **Authored by:** rpg-api team-member (design pass), under the director reframe "the Runner goes away; build the dedicated orchestrator."
 **Depends on:** rpg-toolkit#689 (encounter hydration cascade — see [`10-689-encounter-hydration-cascade.md`](10-689-encounter-hydration-cascade.md)). The attack-resolving verbs land clean only once #689 removes the per-attack re-load.
 **Supersedes (reconcile):** the 2026-05-06 `orchestrator-design.md` (streams/visibility-heavy vision) and the `sdk-direction-rpgapi.md:152` "no orchestrator layer in v2" note — both predate this reframe.

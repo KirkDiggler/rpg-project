@@ -1,6 +1,6 @@
 # Design: rpg-toolkit#689 — `Encounter.LoadFromData` owns combatant hydration via the cascade
 
-**Status:** PROPOSED — pending Kirk sign-off. Design-first; no code until ratified.
+**Status:** ACCEPTED (2026-05-30, Kirk signed off). Implementation: toolkit#689, TDD from the subscribe-exactly-once test.
 **Authored by:** toolkit team-member (design pass), reframed per Kirk's "hydration = the existing `ToData`/`LoadFromData` round-trip" steer.
 **Director-verified core mechanism:** `character.LoadFromData` (`rulebooks/dnd5e/character/data.go:119`) → `conditions.LoadJSON` (`:223`) → `condition.Apply(ctx, bus)` (`:231`). That single `Apply` is the subscribe point; doing it twice on one bus is the #684 double-subscribe. OA/Shield are in `conditions.LoadJSON` (`loader.go:149,156`). Both confirmed by reading the code on `main`.
 **Unblocks:** rpg-api#582 (clean encounter orchestrator). Part of umbrella rpg-api#574.
