@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "id": "wave-0-signoff-follow-ups",
+      "type": "active",
+      "description": "Follow-ups surfaced by Wave 0 MCP playtest 2026-05-30: (1) Proto bump: web is on rpg-api-protos@3a5e2bc47447; ResourceChanged was added in proto PR #168. Bump the web to include ResourceChanged so the dispatcher can handle it and RageCharges display can be built. (2) Double-stream event issue: StatusApplied and EntityDamaged appear twice — investigate useEncounterStream2 buffering. (3) Attack miss silence: no user feedback when TakeAction(attack) misses. File issues for all three.",
+      "updated": "2026-05-30"
+    },
+    {
       "id": "pr-379",
       "type": "active",
       "description": "PR #379 docs/honest-status-snapshot — bootstrap doc tree (architecture/overview.md, data-model.md, components/*.md, how-to/*.md). Extended by this session.",

@@ -44,7 +44,8 @@ If you see game logic in the API, say something. If you see calculations in the 
 ## Project Board
 
 **ALWAYS check before starting work:**
-https://github.com/users/KirkDiggler/projects/10
+- https://github.com/users/KirkDiggler/projects/11 — **Chapter 1: Architecture Honesty** (current; umbrella issue rpg-api #574)
+- https://github.com/users/KirkDiggler/projects/12 — **Chapter 2: The 4 Brothers** (next; rides the clean rails once Chapter 1 lands)
 
 Rules:
 - One issue per PR
@@ -52,9 +53,19 @@ Rules:
 - No issue without a board entry
 - New work = new issue on board -> fresh branch from main
 
-## Current Milestone
+## Current Chapter
 
-**4-Class Multiplayer Multi-Room Dungeon** - See `milestones/4class-dungeon/`
+**Chapter 1: Architecture Honesty** — clean-slate rebuild of the rpg-api encounter vertical:
+one private `load(id)` per orchestrator method (hydrates the whole encounter onto the bus once,
+killing the #684 double-apply class), handlers as ~20-line pure translation with zero rulebook
+imports (depguard-enforced), toolkit owns all rules and drives the events.
+
+- **Live state + next steps:** `sessions/active.md` (read first — freshest narrative)
+- **Design (don't re-derive):** `ideas/encounter/v1alpha2/{design,orchestrator-design,plan,roadmap}.md`
+- **Next chapter (board #12):** the 4 Brothers — L1-playable Barbarian/Fighter/Monk/Rogue — once the clean rails land.
+
+_Prior milestone (4-Class Multiplayer Multi-Room Dungeon, `milestones/4class-dungeon/`) is largely
+delivered; its remaining gaps fold into the chapters above._
 
 ## Structure
 

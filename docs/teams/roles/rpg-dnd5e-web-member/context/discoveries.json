@@ -1,6 +1,25 @@
 {
   "items": [
     {
+      "id": "wave-0-playtest-mcp-signoff-2026-05-30",
+      "type": "observation",
+      "summary": "MCP playtest of rpg-api PR #578 (feat/577-encounter-load-rebuild): all three goals verified.",
+      "detail": {
+        "goal1_rage_indicator": "PASS. ActivateFeature(rage) → StatusApplied char-bob <- raging. rage: RAGING indicator lit in header. RageCharges not rendered (ResourceChanged not in web proto package — web follow-up below).",
+        "goal2_bob_raging_attack": "PASS. EntityDamaged goblin-1 amount=13 hp_after=17/30 [dnd5e:weapons:greataxe:8, dnd5e:abilities:str:3, dnd5e:conditions:raging:2]. Rage +2 damage component confirmed in breakdown.",
+        "goal2_goblin_attacks_raging_bob": "PASS. EntityDamaged char-bob amount=3 hp_after=11/14 [dnd5e:weapons:scimitar:4, dnd5e:abilities:dex:2, dnd5e:conditions:raging:0]. Raw scimitar=4+DEX=2=6, halved by Rage resistance to 3. No 'modifier ID already exists' error anywhere.",
+        "modifier_id_double_apply": "ABSENT. Server logs show no 'modifier ID already exists' error through ActivateFeature + TakeAction + EndTurn (goblin NPC dispatch) sequence.",
+        "event_sequence": "EndTurn → TurnEnded(char-bob) → TurnStarted(goblin-1 round=1) → EntityDamaged(char-bob amount=3) → TurnEnded(goblin-1) → TurnStarted(char-bob round=2)"
+      },
+      "web_follow_ups": [
+        "ResourceChanged proto case missing from web node_modules — web is pinned to rpg-api-protos@3a5e2bc47447 (damage_breakdown PR #161); ResourceChanged was added in proto PR #168 after that. Two unhandled event case warnings on ActivateFeature. Need proto bump to include ResourceChanged so charge display can be built.",
+        "StatusApplied and EntityDamaged events appear TWICE each in the event log (double stream subscription during snapshot/live overlap). Both streams deliver the same event. This is a known buffering/replay edge case in useEncounterStream2.",
+        "AttackMissed is completely silent — no stream event when attack misses. No visible feedback to the player when TakeAction(attack) produces a miss. Needs a wire event or client-side indication."
+      ],
+      "setup_notes": "Initiative is not deterministic in wave-3-barbarian fixture (random on SetMode). Had to manipulate Redis directly to force bob-first order for playtest. Consider adding a --bob-first flag to devseed or seeding with active_idx=bob-position.",
+      "date": "2026-05-30"
+    },
+    {
       "id": "ability-modifier-formula-copies",
       "type": "violation",
       "description": "Math.floor((score - 10) / 2) — the D&D ability modifier formula — appears in 6 files: CharacterInfoSection.tsx:33, DnDSkills.tsx:11, SavingThrowsDisplay.tsx:17, DnDSavingThrows.tsx:11, diceCalculations.ts:27, Phase1Demo.tsx:172. This is a rendering rule violation: the web is calculating game mechanics. The API should provide computed modifier values.",

@@ -1,6 +1,34 @@
 {
   "items": [
     {
+      "id": "mcp-playtest-is-standing-role",
+      "type": "lesson",
+      "summary": "Driving the MCP playtest is now a standing responsibility of the rpg-dnd5e-web team-member.",
+      "description": "As of 2026-05-30 Wave 0 signoff, the web team-member operates the MCP playtest harness end-to-end via Chrome DevTools MCP (port 9222). The playtest is the wave signoff bar — CI-green is necessary but not sufficient. Setup: (1) kill old servers, (2) start rpg-api with AUTH_DEV_MODE=true, (3) start Envoy proxy via Docker (--network host, envoy/envoy.yaml proxies :8080 → :50051), (4) clear .vite cache + start npm run dev on rpg-dnd5e-web, (5) seed fixture via go run ./cmd/devseed --fixture=<name>. Navigate to /playtest?encounterId=<id>&playerId=<player>.",
+      "date": "2026-05-30"
+    },
+    {
+      "id": "envoy-proxy-required-for-grpc-web",
+      "type": "lesson",
+      "summary": "rpg-api runs gRPC on :50051; web needs an Envoy proxy on :8080 for gRPC-Web. Envoy must run before the playtest.",
+      "description": "The web client (Connect-ES) sends HTTP/gRPC-Web requests to localhost:8080. The API server only speaks raw gRPC on :50051. Envoy translates. The config lives at rpg-api/envoy/envoy.yaml. With Docker available: `docker run -d --name rpg-envoy --network host -v /home/kirk/personal/rpg-api/envoy/envoy.yaml:/etc/envoy/envoy.yaml envoyproxy/envoy:v1.31-latest -c /etc/envoy/envoy.yaml`. Use --network host so Envoy can reach localhost:50051.",
+      "date": "2026-05-30"
+    },
+    {
+      "id": "initiative-not-deterministic-in-wave3-fixture",
+      "type": "lesson",
+      "summary": "wave-3-barbarian fixture uses random initiative (enc.SetMode(ModeTurnBased) rolls dice). For playtests where player-first order matters, manipulate Redis or add a fixture flag.",
+      "description": "The devseed fixture calls enc.SetMode(ModeTurnBased) which rolls random initiative. In the 2026-05-30 playtest, goblin won initiative (goblin → char-bob), blocking the playtest flow since there's no web UI to skip the goblin's first turn. Fix: redis-cli GET enc:v2:dev-encounter | python3 -c 'd[\"initiative\"]=[\"char-bob\",\"goblin-1\"]; d[\"active_idx\"]=0; print(json.dumps(d))' | redis-cli -x SET enc:v2:dev-encounter. Long-term fix: add --force-bob-first flag to devseed, or add a SetInitiativeOrder method to the encounter SDK.",
+      "date": "2026-05-30"
+    },
+    {
+      "id": "attack-miss-is-stream-silent",
+      "type": "lesson",
+      "summary": "A missed attack (TakeAction RPC succeeds, d20 roll < AC) produces no EntityDamaged stream event and no web feedback. The event log shows TakeAction(attack) with no follow-up.",
+      "description": "With random dice, bob (+5 to hit vs goblin AC 15) has ~55% hit chance. A miss fires only AttackResolvedEvent (suppressed by translate.go as cause-only with no wire shape). DamageDealtEvent only fires on hit. Result: from the web's perspective, a miss looks identical to a 'pending' state — the event log shows the RPC call but nothing else. First attack in the 2026-05-30 playtest was a miss; second hit. This is a known gap — no miss indication to the player.",
+      "date": "2026-05-30"
+    },
+    {
       "id": "audit-must-propagate-to-all-occurrences",
       "type": "lesson",
       "summary": "Audit corrections must propagate to every doc occurrence, not just discoveries — grep all docs.",
