@@ -2,6 +2,18 @@
 
 **For the next session:** read this, then `CLAUDE.md`, then `ideas/encounter/v1alpha2/{design,orchestrator-design,sdk-direction-rpgapi}.md`. You are continuing a **clean-slate rebuild of rpg-api's encounter path**. Most decisions below are made — reconcile + build, don't re-derive.
 
+## ⏩ Update — 2026-05-30 (Design RATIFIED + toolkit#689 in implementation)
+
+- **Design ratified + merged** (rpg-project PR #53). Accepted docs: `ideas/encounter/v1alpha2/plans/{10-689-encounter-hydration-cascade,11-582-encounter-orchestrator}.md`. Review-gated (design-review agent: APPROVE-WITH-NITS; one real catch — `monstertraits.LoadMonsterConditions` already exists — fixed). The 2026-05-06 `orchestrator-design.md` carries a superseded-pointer to these.
+- **toolkit#689 in implementation** (toolkit expert `a7d88950b5490d537`, TDD from the subscribe-exactly-once regression). Locked shape: `Encounter.LoadFromData(ctx)` cascades into combatant `LoadFromData`, **holds `combat.Combatant`**, conditions `Apply` once (the #684 cure); resolver takes held entities (no re-load); `EndTurn(ctx)` emits `dnd5eEvents.TurnEndTopic` directly; `ToData` = **dirty-gated cascade** (existing `character/monster.IsDirty()`); wire the **existing** `monstertraits.LoadMonsterConditions`. Clean break (ctx on `LoadFromData`/`EndTurn`).
+- **`load(ctx,in)` returns just `*tkenc.Encounter`** (the entity-aware synced authority — ask it, get the state-synced entity); `Data` is the simple serialization snapshot, not a rival source. (Kirk's catch: the 3rd `*Data` return was the smell.)
+- **Cross-repo unit with #582 — do NOT merge #689 early.** Sequence: build → green → validate against the rpg-api consumer via local `replace` → bump/merge toolkit → then #582 verbs (Sequencing B: Interact/SubmitCheck/ActivateFeature first; TakeAction/EndTurn/Move after #689).
+- **Model:** turn-based, stateless-per-RPC (ephemeral bus per `LoadFromData`); persistent in-mem bus / real-time game server = learned-into future, **not now**.
+- **Q-resolutions:** Q1 transient char-blob (host re-attaches `PlayerData.DataJSON`); Q2 wire the existing helper (no new rulebook code); Q3 `ActivateFeature`'s own re-load = follow-up issue; Q4 hold `combat.Combatant` + type-assert host-side.
+- **Boundary stance (recorded):** the `encounter` SDK is dnd5e-coupled today (event vocab + loaders); fully-agnostic engine is a separately-tracked goal. Team-member prompts updated to reflect this + the ToData/LoadFromData engine pattern + ADR/journey-as-truth + verify-everything.
+
+---
+
 ## ⏩ Update — 2026-05-30 (Director handover + #582 reframed: Runner → clean orchestrator)
 
 **Director role made official this session.** Previous-you handed off #582. Decisions made with Kirk (build within them; don't re-litigate):
