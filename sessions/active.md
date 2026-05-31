@@ -2,6 +2,22 @@
 
 **For the next session:** read this, then `CLAUDE.md`, then `ideas/encounter/v1alpha2/{design,orchestrator-design,sdk-direction-rpgapi}.md`. You are continuing a **clean-slate rebuild of rpg-api's encounter path**. Most decisions below are made — reconcile + build, don't re-derive.
 
+## ⏩ Update — 2026-05-30 (Director handover + #582 reframed: Runner → clean orchestrator)
+
+**Director role made official this session.** Previous-you handed off #582. Decisions made with Kirk (build within them; don't re-litigate):
+
+- **The `Runner` is NOT the destination — it goes away.** It lives in the handler package and carries orchestration plumbing (broker/repo/combat+movement resolver config) — a retrofit bolted onto the existing handlers, the same shape #576 was. The clean path is a **dedicated encounter orchestrator** (its own package, one explicit method per RPC, each `load(id) → toolkit verb → persist`), per `ideas/encounter/v1alpha2/orchestrator-design.md` §2.1–2.2. The Runner + scattered loaders + inline verb logic all collapse into it. The single-load *guarantee* survives; the Runner *form* dies.
+- **#582 reframed + retitled** → "build the clean encounter orchestrator (retire the Runner + scattered loader)." Board #11 reconciled: **#574 (In Progress), #577 (Done), #582 (In Progress)** added — they were untracked. (#574 body pointed at a nonexistent `ideas/wave-0-architecture-honesty/`; canonical design is `ideas/encounter/v1alpha2/` — noted in a #574 comment.)
+- **Sequencing B:** move RPCs onto the orchestrator ONE AT A TIME, each MCP-playtest-verified, deleting the old path per-verb. Never the whole vertical red at once.
+- **The crux (the real #684):** not the loader noise — the **combat resolver re-loads characters mid-attack** (`loadCharacterWithBus` → re-subscribes conditions to the bus `LoadFromData` already wired; fires on any attack-resolving verb). Fix = orchestrator resolves attacks against the **already-hydrated** entities; that's a **toolkit helper** ("hydrated-entity handoff"), likely separable from Phase 3. **Design-first pass in flight** (named agent `rpg-api-expert`) to pin the exact toolkit gap + the **EndTurn seam** (NPC loop + turn-end reset + reaction serialization — design, don't hack-wrap) → surfaced to Kirk before any code.
+- `charCache` in the original DoD **no longer exists** (stale word in `runner.go:21` only).
+
+**Event/transport spine confirmed clean (no change to the spine):** toolkit emits → `tkenc.Broker` (pluggable `Transport`; `InMemoryTransport` ships in toolkit, wired at `cmd/server/server.go:233-234`) → `StreamEncounter` drains → `translate.go` → proto. A **Redis pub/sub adapter is a one-line swap** at server.go:234 (rpg-api internal component implementing `tkenc.Transport`; toolkit stays redis-free). The in-mem transport already has Redis pub/sub's **no-replay** semantics → swapping is semantically clean, AND the reconnect/catch-up gap exists today → own it via **snapshot-on-subscribe in the orchestrator**, not a durable transport. Build the Redis adapter only when multi-instance is real (one-line swap, no lock-in).
+
+**Process tuned this session:** team members are the experts; the unified expert prompts (`docs/teams/roles/{rpg-api,rpg-toolkit}-member/prompt.md`) now carry the boundary + **pushback duty (incl. against the director)** + "server is where we learn → surface a toolkit helper" + four-question done-gate + stop-and-report + (toolkit) single-broker-publish-authority / one-mutation-owner-one-channel. Director routes design/impl THROUGH the experts; gates verification; playtest is the sign-off bar.
+
+---
+
 ## ⏩ Update — late 2026-05-30 (Phase 1 MERGED + MCP-playtest-verified)
 
 - ✅ Toolkit **#687/#688** + proto **#168** — merged (unchanged).
