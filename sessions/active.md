@@ -13,11 +13,12 @@
 
 **✅ SIGNED OFF + MERGED.** MCP playtest (web team-member drove) verified end-to-end: rage indicator lit (`StatusApplied`); raging greataxe breakdown carried `raging:2`; goblin → raging-bob `EntityDamaged amount=3` with `dnd5e:abilities:dex:2` (the correct finesse ability — the fix confirmed live), raw 6 halved by Rage resistance → 3; **no "modifier ID already exists."** #578 merged; #577/#579 closed.
 
-**NEXT:**
-- The **4 Brothers (board #12)** can now ride the clean rails — but fix the **deterministic-initiative + leading-NPC dispatch** gap first (**api #581**); it blocks repeatable playtests (the team-member had to hand-edit Redis to make the player go first).
-- **Phase 2 of the clean slice:** migrate `EndTurn` fully onto the runner (currently `Cleanup`-patched, not migrated). Umbrella **#574** stays open for this.
-- Playtest follow-ups: web **#422** (RageCharges display — proto-pin bump + ResourceChanged consumer), **#423** (double stream-event delivery — dedup race), **#424** (miss is stream-silent); + **#580** (pin mockgen).
-- The **web team-member now owns driving the MCP playtest** (its first run logged in `docs/teams/roles/rpg-dnd5e-web-member/context/`).
+**NEXT = finish the clean path (rpg-api cleanup, #582). NOT the brothers — paused.** Honest state (verified on merged code): Phase 1 laid the rail and put `ActivateFeature` on it, but **only 1 of ~5 verbs is clean** — `TakeAction`/`EndTurn`/`Interact`/`SubmitCheck` still use the scattered loader (`loadCharacterWithBus`/`applyReactionConditions`/`charCache` are NOT deleted, only avoided on the ActivateFeature path), the `Dnd5eCombatResolver` still owns combat (imports rulebooks 8×, *excluded* from the import-guard), and the 5,844-line v1alpha1 `orchestrator.go` is untouched.
+
+- **This session: #582 (Phase 2)** — migrate the remaining verbs onto the `Runner` + delete the scattered loader. `EndTurn` is the hard seam (design it, don't hack-wrap). Then #684's double-subscribe class is impossible for all verbs and the import-guard covers the whole package.
+- **Then (file when reached):** Phase 3 — move combat resolution into the toolkit (resolver stops owning rules); Phase 4 — retire v1alpha1.
+- **PAUSED:** 4 Brothers (board #12) + the Barbarian full-round verification — the brothers shouldn't ride half-old rails. (On resume: fix #581 deterministic-initiative/leading-NPC first; Barbarian is the smallest-delta template; verify UD 10+DEX+CON=14 *reduces* the goblin's correct 8, full round.)
+- Other open follow-ups: web **#422/#423/#424**, **#580** (mockgen), **#581** (initiative). The **web team-member now owns driving the MCP playtest** (first run logged in its `context/`).
 
 ---
 
