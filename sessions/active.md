@@ -2,6 +2,29 @@
 
 **For the next session:** read this, then `CLAUDE.md`, then `ideas/encounter/v1alpha2/{design,orchestrator-design,sdk-direction-rpgapi}.md`. You are continuing a **clean-slate rebuild of rpg-api's encounter path**. Most decisions below are made — reconcile + build, don't re-derive.
 
+## ⏩ Update — 2026-05-31: RESET for a fresh, thin director — carve the clean rpg-api path
+
+**Read this + `docs/teams/roles/director/{prompt,field-notes}.md` (the role changed). Your `feedback_*` memories auto-load. Then direct — do NOT re-read the world into your context.**
+
+**Why the reset:** the prior director burned ~600k tokens — mostly getting up to speed + doing hands-on work *inline* (grpcurl/redis/code-reading/playtest-driving), which produced low-confidence findings. **The director role was rewritten:** NO hands-on work; **commission** verification (a fresh agent returns evidence, you judge); get up to speed cheaply; keep your context thin. Honor it from token one.
+
+**The goal:** carve out the **clean path through rpg-api** — a dedicated encounter orchestrator (`internal/orchestrators/encounter/v2`) that retires the Runner + inline verb logic. Ratified design: `ideas/encounter/v1alpha2/plans/{10-689-encounter-hydration-cascade,11-582-encounter-orchestrator}.md`.
+
+**SOLID (keep):**
+- Design ratified + merged — rpg-project PR #53 (plans/10 toolkit cascade + plans/11 rpg-api orchestrator).
+- **toolkit#689** — `Encounter.LoadFromData` owns hydration via the cascade; resolver takes held entities; OA-only (Shield cut); `ToData` unconditional. Built, Copilot-responded, CI-green. **PR #690 OPEN + HELD** (cross-repo unit, not merged). Branch `feat/689-encounter-hydration-cascade`.
+- **rpg-api#582 (chunk 1)** — adopted the #689 SDK (ctx on LoadFromData/EndTurn; resolver uses held entities; scattered loader deleted). Built + go-integration-green. **Committed locally, NOT pushed/merged**, on `feat/582-adopt-689-cascade` (HEAD 09aeb1e) with a local `replace → ../rpg-toolkit/encounter`. Strip replace + bump real tags + merge #690 + this together — AFTER the open question clears.
+
+**OPEN QUESTION (NOT a finding — verify clean before acting):**
+- **Does v1alpha2 rage resistance halve the goblin's damage to the raging barbarian?** The prior director's low-confidence, context-bloated checks suggested *unhalved* (amount=7) — but **Kirk playtested rage working**. Treat as an OPEN question; the likelier cause is a flaw in that director's playtest setup (rebuilt/stale server, fixture, React StrictMode double-stream, or a v1alpha1↔v1alpha2 mixup), NOT a confirmed toolkit regression. **Verify clean** (commission a fresh agent, against "it worked"). #574's blocker is downgraded to this.
+- Real test gap regardless: no v1alpha2 check covers goblin→raging-player resistance; `barbarian_test.go`'s resistance test is **v1alpha1 + has `Skip` escape-hatches** (hollow green). A v2 api-layer check (integration test or client cmd, no skip) is needed.
+
+**NEXT (chunk 2 — the carve-out proper):** build `internal/orchestrators/encounter/v2`, move verbs off the Runner onto it (Sequencing B, per-RPC), retire the Runner — per plans/11. Gated on the open question clearing + the cross-repo unit merging.
+
+**Pointers:** wave umbrella + ledger **rpg-api#574** (a retro closes the wave). Follow-ups under the wave: toolkit#691 (ActivateFeature self-load), toolkit#692 (IsDirty beyond HP), toolkit#693 (cross-RPC ApplyAttackOutcome held entity), rpg-api#583 (`make ci-check` does `git checkout -- .` → wipes uncommitted work; **commit before ci-check**). Board #11. Workspaces verified clean; 4 team-member roles defined (web/protos leaner).
+
+---
+
 ## ⏩ Update — 2026-05-30 (Design RATIFIED + toolkit#689 in implementation)
 
 - **Design ratified + merged** (rpg-project PR #53). Accepted docs: `ideas/encounter/v1alpha2/plans/{10-689-encounter-hydration-cascade,11-582-encounter-orchestrator}.md`. Review-gated (design-review agent: APPROVE-WITH-NITS; one real catch — `monstertraits.LoadMonsterConditions` already exists — fixed). The 2026-05-06 `orchestrator-design.md` carries a superseded-pointer to these.
