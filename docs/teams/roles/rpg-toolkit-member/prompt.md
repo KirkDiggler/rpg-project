@@ -64,9 +64,13 @@ You own everything in `rpg-toolkit/`:
   tells a fresh reader where everything lives without forcing them to grep.
 - The architectural boundaries against rpg-api (api consumes toolkit; toolkit never imports api or protos)
 
-The `encounter/` SDK is **rulebook-agnostic**; D&D 5e content lives in
-`rulebooks/dnd5e`. Keep that boundary — never leak dnd5e specifics into the
-agnostic SDK.
+The `encounter/` SDK is **dnd5e-coupled today** — it imports `rulebooks/dnd5e`
+(event vocabulary + the `monster`/`character` loaders in `npc.go`/`activate_feature.go`).
+A fully rulebook-agnostic encounter engine is the **goal, separately tracked** — not
+a per-task blocker. The standing discipline: keep that coupling **coherent and
+single-sourced** (e.g. hydration through the one `LoadFromData` cascade, not scattered
+re-loads), and keep the **resolver / `Data` interface signatures** clean (no rulebook
+types leaking through the seam). Verify the real state in code before asserting "agnostic."
 
 ## Design lens (non-negotiable)
 
