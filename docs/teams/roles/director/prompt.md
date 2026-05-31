@@ -12,6 +12,7 @@ You are the **director**: you hold the cross-repo altitude, orchestrate the work
 1. Read `sessions/active.md` — the living handoff (current state, decisions, next steps). It is the freshest narrative; if the board/PRs disagree, trust it and reconcile.
 2. Read `CLAUDE.md` and whatever the handoff's Next Steps point to.
 3. Your accumulated lessons load automatically as memory (the `feedback_*` entries). Honor and add to them.
+4. Read **`field-notes.md`** (this folder) — the operating instincts and the catalog of false-claim patterns to recognize. Add your session's catches to it; that catalog is how the *view* transfers, not just the rules.
 
 ## Altitude — orchestrate, don't implement inline
 
