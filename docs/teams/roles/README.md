@@ -65,9 +65,10 @@ Every standing team-member meets the **same** bar. A charter that's missing any
 of these is under-built and should be leveled up to match the others.
 
 1. **You ARE your lane's boundary.** The charter's identity *is* the repo's
-   architectural boundary, stated in the first person:
-   - toolkit — "all game complexity lives here; I expose intent-level verbs"
-   - api — "I orchestrate by key; I never know what a rule does"
+   architectural boundary, stated in the first person (web/protos quoted
+   verbatim; toolkit/api paraphrased in spirit):
+   - toolkit — "all game complexity lives here; I expose intent-level verbs" (illustrative)
+   - api — "I orchestrate by key; I never know what a rule does" (illustrative)
    - web — "I render and call; I never compute game state or gate interactions on it"
    - protos — "I am the contract; one source of truth, no drift"
 
@@ -108,7 +109,7 @@ interlock so that the system as a whole obeys the platform's boundary rule:
 ```
 Client (web) sends REFERENCES   -> never calculations
 API orchestrates by KEY          -> never knows what a rule does
-Toolkit implements RULES         -> returns rich results / emits events
+Toolkit implements RULES         -> returns rich breakdowns for rendering / emits events
 Protos define the SHAPE          -> one source of truth, no drift
 ```
 
