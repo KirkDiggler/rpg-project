@@ -1,37 +1,44 @@
-# Active handoff — 2026-05-31: clean rpg-api encounter path (Chapter 1: Architecture Honesty)
+# Active handoff — 2026-06-01: rpg-api encounter carve COMPLETE + playtest-verified (Chapter 1)
 
-> Shape defined in `CLAUDE.md → Status docs`. This is the living handoff — **rewritten, not appended**. Full narrative history lives in git.
+> Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 
 ## Now
-Chapter 1 (Architecture Honesty) — board #11, umbrella rpg-api #574. Carving the clean **v1alpha2 encounter path** through rpg-api: a dedicated `internal/orchestrators/encounter/v2` (one private `load(id)` per method, ~20-line thin handlers, toolkit owns all rules + drives events). Director runs thin — **commission + verify, no hands-on work** (`docs/teams/roles/director/{prompt,field-notes}.md`).
+Chapter 1 (Architecture Honesty), board #11, umbrella rpg-api **#574**. The v1alpha2 encounter orchestrator carve (**#582**) is **code-complete AND goal-verified**. The wave's last step is the **retro** (sweep the ledger, close #574). Director runs thin — commission + verify (`docs/teams/roles/director/`).
 
 ## Solid (verified — keep, don't re-derive)
-- **Design ratified + merged** (rpg-project PR #53): `ideas/encounter/v1alpha2/plans/{10-689-encounter-hydration-cascade,11-582-encounter-orchestrator}.md`.
-- **Persistence/Hydration contract is now first-class doc** — `docs/architecture.md → "The Persistence & Hydration Contract"` + `boundaries.md`. Key truths: `ToData`/`LoadFromData` is a *convention, not an interface*; `LoadFromData` returns a **live, bus-subscribed** entity (not a plain unmarshal); **load-once = subscribe-once = the #684 cure**. Grounded in a verified read-only toolkit audit — the toolkit boundary holds (no proto / persistence / orchestration imports).
-- **toolkit #689 (PR #690) MERGED** (21:07Z) — the encounter hydration cascade. CI auto-cut **`github.com/KirkDiggler/rpg-toolkit/encounter v0.17.0`** (commit `71fe432`; prior `v0.16.0`).
-- **rpg-api #584 MERGED** (21:28Z) — chunk 1 of #582: adopted the #689 cascade SDK, `replace` stripped + bumped to `encounter/v0.17.0`. **Rage halving proven on the released tag** (CI-green build+test). Copilot caught + the member fixed 2 real persistence bugs in-lane (Appearance write-back data-loss; `end_turn` cap-exhausted persist-skip); the cross-RPC resume gap is a tracked SDK limitation, left as a loud error (re-loading would reintroduce #684). **Cross-repo unit (#689 + #582 ch.1) complete.**
-- **RESOLVED — rage resistance halves correctly.** Verified at the v1alpha2 API layer, decoded evidence, deterministic roller: goblin → raging barbarian **8 → 4** (raging ×0.5, `dnd5e:abilities:dex` tag); non-raging 8. The prior "unhalved = 7" was a **setup flaw** (toolkit checked out on `main` = no cascade; rpg-api doesn't even compile there), **NOT a regression**. A genuine v2 no-skip test exists and passes: `internal/handlers/dnd5e/v2/encounter/integration_barbarian_rage_test.go::TestIntegration_RageResistance_HalvesGoblinDamage`.
+- **Cross-repo cascade landed:** toolkit #689 (PR #690) merged → `encounter/v0.17.0` → rpg-api #584 adopted it (local replace stripped). The Persistence/Hydration contract is first-class doc (`architecture.md`/`boundaries.md`): ToData/LoadFromData is a *convention*; `LoadFromData` returns a **live bus-subscribed** entity; load-once = subscribe-once = the #684 cure.
+- **The encounter orchestrator carve (#582) is COMPLETE.** All 7 verbs on `internal/orchestrators/encounter/v2`, the **Runner is deleted**, `rulebooks/dnd5e/combat` is in the **depguard deny set** (no guarded handler/orchestrator file imports any rulebook). PRs #585/#587/#588/#589/#590/#591/#592 — each verified (CI + Copilot + lane) and merged. Pattern: thin handler → `Orchestrator.<Verb>` → one private `load(ctx,in)` → toolkit verb → persist (`SyncErr`). Resolver adapters stay handler-side (the tkenc↔rulebook seam, depguard-excluded). The reaction **wire-pause is DEFERRED** (kept internal — Kirk's call).
+- **GOAL VERIFIED — MCP playtest PASS (2026-06-01):** rage+combat end-to-end through v2. Decoded: offensive rage bonus flows (greataxe `amount=6` = 1+STR3+raging2); **goblin → raging-bob halved 3 → 1** (scimitar1+DEX2=3 → rage resistance floor(3/2)=1; HP 14→13); the carved EndTurn NPC-dispatch loop ran the goblin's turn; **no "modifier ID already exists"**; no regressions. Fresh env (api `eaf4046`, `encounter/v0.17.0`, `.vite` cleared, no `$unknown`). Devseed `wave-3-barbarian`.
 
 ## Open questions
-- None blocking — the rage-resistance gate cleared this session.
+- None blocking.
 
 ## Next
-1. **Chunk 2 (the carve-out proper) — now unblocked, the wave's main remaining work:** build `internal/orchestrators/encounter/v2`, move verbs off the Runner (Sequencing B — per-RPC, delete old path per-verb, each MCP-playtest-verified), retire the Runner — per `plans/11`. This is a multi-step sub-wave, not a single dispatch; scope the verb sequence before launching.
-2. **#694 (toolkit, unblocked):** ADR-0031 + per-package contract markers. Re-dispatch the toolkit member with **post-#689 signatures** (now on `main` / `v0.17.0`). Retro-refined: marker = drift-protection + definition-site pointer, not cold-reader discoverability (the ADR + brain-doc cross-link does that). Low priority vs. chunk 2.
+1. **Wave retro (closes #574)** — sweep the ledger below, capture the wave's decisions, close the wave. Director + Kirk.
+2. **Then Chapter 2 (board #12): the 4 Brothers** — rides the clean rails the carve just laid.
 
-## Decision log (2026-05-31)
-1. **Status-doc template** — CLAUDE.md owns the shape (table of contents vs. live state); this file follows it. `commit 3aa0d76`
-2. **Hydration contract → first-class docs** — the false start was our docs hiding the contract, not toolkit drift; promoted into architecture.md + boundaries.md. `commit 3aa0d76`
-3. **#694 design: marker over interface** — toolkit member pushed back (LoadFromData is a constructor; ToData carries a `SyncErr` side-channel; injected hydrator already rejected in journey-050 / ADR-0030). → ADR-0031 + `var _` markers. `issue #694`
-4. **#694 sequenced behind #689** — contract shape, ADR number, and marked files all arrive with #689; don't document a transitional state. `logged on #694`
-5. **Gate cleared → landed the #689/#582 unit.** merge #690 ✓ → tag `v0.17.0` ✓ → rpg-api bump + strip replace ✓ → merge #584 (chunk 1) ✓ (21:28Z). Cross-repo unit complete; chunk 2 + #694 unblocked.
+## Ledger (follow-ups under the wave, for the retro to sweep)
+- **rpg-api #586** — enforce depguard in GitHub CI (lint isn't a CI job today; the boundary guard is local-pre-commit-only).
+- **rpg-toolkit #695** — SDK home for the Shield +5 AC magnitude (rule magnitude currently isolated in rpg-api's reaction adapter).
+- **rpg-toolkit #694** — ADR-0031 + contract markers; now unblocked (re-dispatch with post-#689 signatures). Retro-refined: marker = drift-protection + definition-site pointer, not cold-reader discoverability.
+- **Playtest caveats (minor):** (a) v2 stream surfaces no distinct `ResourceChanged` for the rage-charge decrement (only `StatusApplied`); (b) web console warn — `useEncounterStream2` unhandled event case on a zero-damage no-op reaction-check event (cosmetic reducer gap); (c) Interact routes clean but wasn't exercised vs. a real door (wave-3-barbarian has none — needs a door devseed).
+- **#691** (ActivateFeature self-load), **#692** (IsDirty beyond HP), **#693** (cross-RPC held-entity / the deferred reaction wire-pause), **#583** (`ci-check` wipes uncommitted).
 
-Operating principle captured this session → `director/field-notes.md` (`commit e9b6a37`): **the retro is the evaluator** — decide with the architecture as north star, log a retro criterion, judge in action; don't pre-validate the ideal, and don't loop Kirk for "is this the ideal shape?" sign-off.
+## Decision log (2026-05-31 → 06-01)
+1. Status-doc template — CLAUDE.md owns the shape. `3aa0d76`
+2. Hydration contract → first-class docs. `3aa0d76`
+3. #694 marker over interface (toolkit member pushback). `#694`
+4. #694 sequenced behind #689. `#694`
+5. Rage-resistance gate cleared → landed #689/#582-chunk-1 (#690 → `v0.17.0` → #584).
+6. Chunk 2 = full carve-out, Sequencing B; EndTurn reaction wire-pause **deferred** (kept internal — Kirk). `#582`
+7. All 7 verbs carved + Runner deleted + `combat` locked in depguard deny set (#585–#592).
+8. **Goal sign-off: MCP playtest PASS — rage+combat verified end-to-end through v2. #582 closed.**
+
+Retro-as-evaluator principle captured in `director/field-notes.md` (`e9b6a37`): decide with the architecture as north star, log a retro criterion, judge in action.
 
 ## Pointers
-- **Board:** #11 (Chapter 1, umbrella #574); #12 (Chapter 2: 4 Brothers — next, rides the clean rails).
-- **Design (don't re-derive):** `ideas/encounter/v1alpha2/`; carve-out plans `plans/{10,11}`.
-- **Contract:** `docs/architecture.md → "The Persistence & Hydration Contract"`; toolkit ADR-0030 / journey-050 (+ ADR-0031 when #694 lands).
-- **Roles:** `docs/teams/roles/<role>/{prompt,field-notes}.md`.
-- **Repo state:** toolkit `main` (`v0.17.0` tagged); rpg-api chunk-1 on `main` (remote `feat/582-…` deleted; `gcm && gl` before chunk 2).
-- **Follow-ups under the wave:** toolkit #691 (ActivateFeature self-load), #692 (IsDirty beyond HP), #693 (cross-RPC ApplyAttackOutcome held entity); rpg-api #583 (`make ci-check` runs `git checkout -- .` → commit before ci-check).
+- Board: #11 (Chapter 1, umbrella #574); #12 (Chapter 2: 4 Brothers — next).
+- Design: `ideas/encounter/v1alpha2/` (`plans/{10,11}`). Contract: `architecture.md → "The Persistence & Hydration Contract"`; toolkit ADR-0030 / journey-050.
+- Orchestrator: `internal/orchestrators/encounter/v2/` (one `load` per verb; resolver adapters handler-side, depguard-excluded).
+- Roles: `docs/teams/roles/<role>/{prompt,field-notes}.md`.
+- Repo state: toolkit `main` (`v0.17.0`); rpg-api `main` (carve complete, `eaf4046`+). Playtest stack may still be up (api/envoy/vite/chrome/redis) — fine to tear down.
