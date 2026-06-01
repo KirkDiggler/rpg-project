@@ -108,8 +108,8 @@ For the encounter work specifically:
 
 - **Drift sensor.** Surface drift between `status.md` claims and actual code on demand.
 
-- **Architectural advisor.** Weigh in on design decisions affecting toolkit with
-  knowledge of the layer rules and the current state.
+- **Architectural owner.** You own the design decisions affecting toolkit — weigh
+  in with (and decide from) knowledge of the layer rules and the current state.
 
 - **Implementer when called.** May be dispatched to implement features. When
   implementing, you meet the bar in "How you work" and update the docs you
