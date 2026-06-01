@@ -14,14 +14,16 @@ Chapter 1 (Architecture Honesty), board #11, umbrella rpg-api **#574**. The v1al
 - None blocking.
 
 ## Next
-1. **Wave retro (closes #574)** — sweep the ledger below, capture the wave's decisions, close the wave. Director + Kirk.
-2. **Then Chapter 2 (board #12): the 4 Brothers** — rides the clean rails the carve just laid.
+1. **See it end-to-end, THEN retro (Kirk's call, 2026-06-01):** the rage button is a **RESTORE** — built in PR **rpg-dnd5e-web#420** (`feat/419-rage-button`, CI-green, Copilot-addressed) and stranded unmerged when the #582 carve pulled focus to rpg-api. Web member is staging it to merge-ready (re-pin the web proto to match rpg-api's current server contract). **On resume:** merge #420 → re-run the harness playtest **UI-driven** (rage button → `ActivateFeature` → goblin damage halves *on screen*) so **Kirk witnesses the full game path end-to-end**. *That observed run is the gate for the retro — not "merge-ready."* (+ door devseed for Interact = rpg-api lane, queued under #425.)
+2. **Then the wave retro (closes #574)** — sweep the ledger, capture decisions. Director + Kirk.
+3. **Then Chapter 2 (#12): the vertical slice** — scope the playtest north-star (4 brothers L1-playable, multi-room, locked-door gating, boss room; pure combat first) into issues, then build features on the clean rails. Next-director kickoff issue to be drafted (scope-then-build).
 
 ## Ledger (follow-ups under the wave, for the retro to sweep)
 - **rpg-api #586** — enforce depguard in GitHub CI (lint isn't a CI job today; the boundary guard is local-pre-commit-only).
 - **rpg-toolkit #695** — SDK home for the Shield +5 AC magnitude (rule magnitude currently isolated in rpg-api's reaction adapter).
 - **rpg-toolkit #694** — ADR-0031 + contract markers; now unblocked (re-dispatch with post-#689 signatures). Retro-refined: marker = drift-protection + definition-site pointer, not cold-reader discoverability.
-- **rpg-dnd5e-web #425** — harness can't drive ActivateFeature (no rage button); the #582 sign-off scripted the v2 client instead. Add harness controls sharing the *game's* hooks so harness verification proves the game path (playtest-as-spec) + a door devseed for Interact. **This is the open question on whether the carve sign-off is fully "harness-verified."**
+- **rpg-dnd5e-web #425** — harness must drive the v2 RPCs through the game's shared hooks. Diagnosis: the rage button is a **RESTORE** — **PR #420** (`feat/419-rage-button`) built it via the shared `useActivateFeatureV2` hook, CI-green + Copilot-addressed, stranded unmerged. **DONE staging (2026-06-01): PR #420 is MERGE-READY** — proto re-pinned `92a9d062`→`99ba9c0` (commit `0aca473`, matches rpg-api server contract `v0.0.0-20260530184527-99ba9c0608f7`; superset adding `ResourceChanged`), `npm install` refreshed lock, `ci-check` green, all 5 CI checks SUCCESS, mergeStateStatus CLEAN, 2 Copilot threads still resolved. Body: `Closes #419` + `Part of #425`. **Director + Kirk merge (not me).** Remaining gate: UI-driven re-playtest (rage button → ActivateFeature through harness) closes the #582 "harness-verified" caveat. Door devseed (Interact) = rpg-api lane, dispatched separately.
+- **Game-UI v1alpha1→v2 ActivateFeature parity** — the *game's* `LobbyView` still calls v1alpha1 `useActivateFeature` (harness now on v2). Full game-UI migration off the v1alpha1 encounter client is a separate larger effort (not #425) — file/scope at the retro.
 - **Playtest caveats (minor):** (a) v2 stream surfaces no distinct `ResourceChanged` for the rage-charge decrement (only `StatusApplied`); (b) web console warn — `useEncounterStream2` unhandled event case on a zero-damage no-op reaction-check event (cosmetic reducer gap).
 - **#691** (ActivateFeature self-load), **#692** (IsDirty beyond HP), **#693** (cross-RPC held-entity / the deferred reaction wire-pause), **#583** (`ci-check` wipes uncommitted).
 
@@ -34,6 +36,8 @@ Chapter 1 (Architecture Honesty), board #11, umbrella rpg-api **#574**. The v1al
 6. Chunk 2 = full carve-out, Sequencing B; EndTurn reaction wire-pause **deferred** (kept internal — Kirk). `#582`
 7. All 7 verbs carved + Runner deleted + `combat` locked in depguard deny set (#585–#592).
 8. **Goal sign-off: MCP playtest verified the v2 orchestrator path** (real v2 client, decoded — rage halving 3→1, #684 cure holds); #582 closed *at its layer*. **Caveat:** driven via the v2 client, **not the harness UI** (harness has no rage button → rpg-dnd5e-web#425); harness/game-UI path for rage not yet proven. Open: whether "done" requires the harness-UI bar.
+
+9. **Kirk's call (pause): see the slice end-to-end before the retro.** The retro is gated on an *observed* UI-driven harness playtest (restored rage button → ActivateFeature → on-screen halving), not on merge-ready PRs. "Merge-ready" ≠ "I saw it work."
 
 Retro-as-evaluator principle captured in `director/field-notes.md` (`e9b6a37`): decide with the architecture as north star, log a retro criterion, judge in action.
 

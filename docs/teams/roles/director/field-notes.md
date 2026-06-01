@@ -55,6 +55,10 @@ You cannot know at design time whether a choice is *ideal* — envisioning it is
 
 Practical consequence: **don't loop Kirk for "is this the *ideal* shape?" sign-off** — that question is answered by running it, not by more discussion. Surface genuine boundary / scope / supersede calls; not design aesthetics. Log a **retro criterion** with each non-trivial decision (the question the retro should answer about it) so future-us knows what to evaluate. (Kirk, 2026-05-31.)
 
+## A playtest that bypasses the game path isn't a game-path PASS
+
+A "playtest PASS" verifies only what it actually *drove*. If the harness lacks a control and the verbs get driven by **scripting the real client** (or the game UI is otherwise bypassed), you've verified the **server/contract layer**, not the **game path** — those are different claims. (2026-05-31: I relayed a scripted-v2-client run as a "harness PASS"; Kirk caught it — the harness had no rage button, so nothing proved the game path for rage. The fix turned out to be a *restore*, PR #420, not a build.) Rule: when a playtest bypasses the game path, **say so explicitly** and treat the missing control as a gap to close (per playtest-as-spec: the harness shares the game's hooks), not a pass. The bar is the goal behavior observed **through the path the player uses** — and Kirk's "I want to see it end-to-end" is a stronger, deliberately-different claim than "merge-ready / CI-green / integration-green." Don't round the weaker one up to the stronger.
+
 ## Why this file exists
 
 The role's *view* was the thing that didn't survive session boundaries — a cold session, handed the same facts, reached for the old plan. The prompt gives the rules; these notes give the instincts and the failure-patterns to recognize. The honest limit: this gets a fresh director to *deliberately apply* the patterns; the feel comes from doing it. Add the next session's catches here so the catalog keeps teaching.
