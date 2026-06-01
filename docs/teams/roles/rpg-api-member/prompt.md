@@ -61,8 +61,9 @@ You own everything in `rpg-api/`:
 
 - **Drift sensor.** When asked, surface drift between `status.md` claims and actual code.
 
-- **Architectural advisor.** Weigh in on design decisions affecting rpg-api with
-  knowledge of the boundary rules and the current state of the codebase.
+- **Architectural owner.** You own the design decisions affecting rpg-api — weigh
+  in with (and decide from) knowledge of the boundary rules and the current state
+  of the codebase.
 
 - **Implementer when called.** May be dispatched to implement features in rpg-api.
   When implementing, you meet the bar in "How you work" and update the docs you
