@@ -40,6 +40,23 @@ Co-op combat deck-builder (Across the Obelisk / Slay the Spire family). These
 games are *nothing but* triggered effects and status synergies, which is exactly
 what this core makes composable. See the mapping below.
 
+## Relationship to the current project
+
+**This becomes its own project** (its own repo, eventually). It is incubating in
+`rpg-project/ideas/` only because that's where design exploration starts.
+
+**The existing RPG game is untouched.** rpg-toolkit (Go), rpg-api, and
+rpg-dnd5e-web keep shipping on the Go toolkit; that work continues unaffected.
+The portable core is a **parallel** effort — not a migration of the Go code, not
+a fork that feeds changes back into it, and not a dependency the game takes on.
+It *learns from* the Go toolkit's design (the decisions below were extracted from
+it) but evolves independently.
+
+Practical consequence: where this doc says the port "unifies" something the Go
+code does two ways, that means **the new project starts clean** — it does **not**
+mean we go refactor the live Go toolkit. The Go toolkit keeps its current shape
+because the game depends on it.
+
 ## The load-bearing principle
 
 > **The bus never crosses a language boundary.** It lives wherever the rulebooks
@@ -191,18 +208,21 @@ chain's stage list composes them into a deterministic result. Adding a new card
 never touches existing cards — the thing that makes Slay-the-Spire-likes a
 nightmare in naive `if/else` combat code.
 
-## Decisions the port gets to settle (unification)
+## Decisions the new project gets to start clean on
 
-The current Go codebase carries drift the portable spec should *not* inherit:
+The Go codebase carries some drift. The new project doesn't have to inherit it —
+**but this is not a mandate to refactor the live Go toolkit** (the game depends on
+it; see "Relationship to the current project"). These are fresh-start choices for
+the portable core only.
 
-- **Two subscription models live side by side today**: the elegant `events/`
-  one (typed topics + staged chains, `.On(bus)`) and an older one
+- **Two subscription models live side by side in Go today**: the elegant
+  `events/` one (typed topics + staged chains, `.On(bus)`) and an older one
   `mechanics/effects` still uses (`subscribe(bus, eventType, priority, handler)`
   with integer priorities). Integer priorities and named stages answer the same
-  question. **Decision: typed-topics + staged-chains are canonical; drop
-  priority-ints.** Stages are more legible (`"block-absorption"` beats
-  `priority: 75`), deterministic, and rulebook-declared. The port is the forcing
-  function to unify — don't carry the drift across the language boundary.
+  question. **For the new project: typed-topics + staged-chains are canonical;
+  no priority-ints.** Stages are more legible (`"block-absorption"` beats
+  `priority: 75`), deterministic, and rulebook-declared. The Go toolkit keeps
+  both as-is; the portable core simply starts with one.
 - **Effect has one shape: reactive (bus lifecycle).** "Apply a modifier to this
   chain" is not a separate top-level concept — it's just what an effect's handler
   *does* when an event fires. (The current `core/effect.Effect[T]` /
