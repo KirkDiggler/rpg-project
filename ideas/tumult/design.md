@@ -314,6 +314,103 @@ each of those as it lands. Phases — one PR per phase issue:
    `tumult::Encounter` and reflect its `StrikeResult`/`BreakdownStep` into
    the HUD (UE build verification on Windows — Kirk's last step). HUD reads
    `source` from the receipt; the `EmitCombatLog` paren-strings retire.
+
+   **Slice 2 design decisions (locked 2026-06-24):**
+
+   - **D2.1 — tumult as UE module:** Vendor tumult `v0.1.0` under
+     `rpgkit-ue/ThirdParty/tumult/` and expose it as a UE module via
+     `ThirdParty/tumult/tumult.Build.cs` (PrivateDependencyModuleNames
+     includes `Core`, `CoreUObject` for the module runtime; the module's
+     PublicIncludePaths adds `include/`; PrivateIncludePaths or the
+     module's own .cpp list adds `src/` so the compiled stateful TUs —
+     `src/encounter.cpp`, `src/effects/{vulnerable,tough_skin,bleed}.cpp`
+     — build as part of the module). `RPGKitUE.Build.cs` adds `"tumult"`
+     to `PrivateDependencyModuleNames`. A pinned `scripts/sync-tumult.sh`
+     fetches a named tag (`v0.1.0`) into `ThirdParty/tumult/` so the pin
+     is explicit and reproducible. Matches the existing
+     `ThirdParty/rpgkit/` vendor pattern (extended for the few `.cpp`
+     files tumult has); no CMake dependency added to the UE build.
+
+   - **D2.2 — PR #4 superseded:** rpgkit-ue PR #4 (`Extract encounter
+     runtime`) closes WITHOUT merging. Its `URPGKitEncounterRuntime`
+     design is sound (the user reviewed it during the original session);
+     we salvage its good parts (Blueprint compat wrappers, the
+     request-topic plumbing shape, the STATUS.md update prose) into Slice
+     2 directly. Rationale: Slice 2's runtime wraps a
+     `tumult::Encounter` from the start; landing PR #4 first would create
+     a hand-rolled runtime that Slice 2 then immediately replaces — two
+     seams for the same job. One seam, not two.
+
+   - **D2.3 — `URPGKitBus` deleted in Slice 2 (no-shortcut path):**
+     `URPGKitBus` (a `UGameInstanceSubsystem`) has a scope mismatch with
+     `tumult::Encounter`: the subsystem is session-wide, but each
+     `Encounter::setup()` creates a fresh bus by construction (the fix
+     that kills stale cross-encounter subscriptions). Keeping
+     `URPGKitBus` as a thin delegator forever preserves the scope
+     mismatch — that's the shortcut, not the fix. Three-step delete in
+     Slice 2:
+       1. `ARPGKitGameMode::GetEncounter()` exposes the
+         `tumult::Encounter` (the new authority). All current C++ callers
+         of `URPGKitBus` (`ExecuteDamageChain`, `ApplyEffect`,
+         `RemoveEffect`, `GetRawBus` publish paths) move to
+         `Encounter::strike`/`applyEffect`/`removeEffect`/`bus()` and
+         translate the results at the UE-boundary
+         (`StrikeResult`→`FRPGKitChainResult`, etc.).
+       2. `URPGKitBus::PublishEvent` (the one `BlueprintCallable`) moves
+         onto `ARPGKitGameMode` as a `BlueprintCallable` forwarder
+         `PublishEvent(FName, FRPGKitEventPayload)` that calls
+         `GetEncounter().bus().publish(...)` via the right typed
+         `Topic<T>` for the topic name (today: `turn.ended`). Blueprint
+         assets keep working.
+       3. `URPGKitBus` deleted (`RPGKitBus.h`/`.cpp`/`.generated.h`
+         references cleared from `RPGKitUE.Build.cs` source list;
+         `URPGKitBus` field on `ARPGKitGameMode` removed).
+     **Windows gate:** Kirk scans `.uasset` Blueprint assets for any
+     `URPGKitBus` references before the delete. If references surface,
+     deletion defers to Slice 2.1 with one-PR deprecated alias
+     (`URPGKitBus` kept as a thin shim that routes to the Encounter);
+     otherwise cold delete in Slice 2. The plan's "verify" step before
+     the delete names this explicitly so the Linux-buildable side lands
+     everything up to (but not including) the delete, and Kirk's
+     Windows step is the verification + the final delete commit OR the
+     deferred-alias PR.
+
+   - **D2.4 — UE effects wrap tumult effects:** `URPGKitVulnerableEffect`
+     / `URPGKitToughSkinEffect` / `URPGKitBleedEffect` become thin
+     `UObject`s that own a `tumult::VulnerableEffect`
+     /`tumult::ToughSkinEffect`/`tumult::BleedEffect` (heap-allocated
+     inside the UObject, lifetime tied to the UObject). The UE base
+     `URPGKitEffect` keeps its existing `BlueprintImplementableEvent`
+     hooks (`OnEffectApplied`, `OnEffectRemoved`); its
+     `GetRawEffect()`/`RawEffectPtr` indirection is replaced by a
+     pointer to the owned `tumult::` effect. `applyEffect`/`removeEffect`
+     on the Encounter return `(Status, EffectReceipt)`; the UE wrapper
+     surfaces the receipt to the blueprint hook (Kirk's
+     `OnEffectApplied`/`OnEffectRemoved` get called with the receipt's
+     source/id so a HUD can render "Vulnerable applied by card
+     strike-1"). Blueprint-facing `UPROPERTY` param fields
+     (`TargetEntityId`, `PercentBonus`, `Stacks`, `DurationTurns`, etc.)
+     stay on the `URPGKitEffect` subclass and are passed to the tumult
+     effect's constructor in `BeginPlay`/`PostInitProperties`. This
+     proves the host-adapter pattern end-to-end: authored UE content →
+     JSName→tumult effect → receipt surfaced back to Blueprint.
+
+   - **Verification (Linux-buildable + Windows last step):** Linux side
+     of this slice is mostly structural (Build.cs files, sync script,
+     salvable Blueprint compat API). The Linux-buildable-but-cannot-link
+     line is: anything that `#include`s Unreal headers but isn't part of
+     a UE module is unverifiable on Linux. The plan draws this line
+     explicitly per step so a Linux-buildable subagent doesn't take a
+     Blue ≠ Blue step_markers build and falsely claim DONE.
+   - **Acceptance:** the existing visual demo loop in rpgkit-ue
+     (`docs/status.md` — cards, energy, enemy attack, block timing,
+     bleed/vulnerable effect, HUD with combat log + damage breakdown)
+     still plays end-to-end on Windows after the migration, and the
+     damage breakdown on the HUD now reads source from the chain receipt
+     (visible by matching the paren-source label in
+     `Integration.HeroStrikeBreakdownNamesEveryModifierFromReceipts`
+     output OR by confirming no `EmitCombatLog` paren-strings remain on
+     the strikes path).
 3. **Slice 3 — Cards as Actions + Action receipts in HUD.**
    Implement Cards as `rpg::core::Action` subclasses; route
    `ActionReceipt` from `tumult` through the UE executor so a card names
