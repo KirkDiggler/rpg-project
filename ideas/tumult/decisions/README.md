@@ -22,4 +22,4 @@ this README is the index. Format and rationale live in
 - [DR-0007 — Spec in ideas folder](0007-spec-in-ideas-folder.md) — `capabilities.md` + decisions are the source of truth; the board tracks state only.
 - [DR-0008 — Consumption model](0008-consumption-model.md) — a host vendors + compiles tumult source as its own module rather than linking a prebuilt lib.
 - [DR-0009 — Recipe verified by CI](0009-recipe-verified-by-ci.md) — a CI sample consumer compiles tumult the documented way and runs as a ctest, so the recipe can't rot.
-- [DR-0010 — Host-observation edge](0010-host-observation-edge.md) — `strike` publishes a `StrikeResolved` notification (after mutation) **and** keeps its `StrikeResult` return; a `std::vector<CombatantView>` snapshot is the read-model. _(The first engineering DR — the prior nine were the board's own construction.)_
+- [DR-0010 — Host-observation edge](0010-host-observation-edge.md) — `strike` publishes a `StrikeResolved` notification (after mutation) **and** keeps its `StrikeResult` return; a `std::vector<CombatantView>` snapshot is the read-model.
