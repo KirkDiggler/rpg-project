@@ -69,10 +69,20 @@ We are tool builders. The discipline below is the product as much as the code.
 
 ### 1. Decision Receipts
 
-Every non-obvious design decision gets a receipt in **`ideas/tumult/decisions/`**
-— one file per decision named `NNNN-slug.md` (e.g. `0001-board-spine.md`),
-indexed by `ideas/tumult/decisions/README.md`. A receipt is deliberately light —
-seam-focused, not a heavyweight ADR:
+Every non-obvious **engineering** decision — a seam, primitive, or API-shape
+choice a future contributor would otherwise reverse-engineer or get wrong — gets
+a receipt in **`ideas/tumult/decisions/`**, one file per decision named
+`NNNN-slug.md` (e.g. `0008-consumption-model.md`), indexed by
+`decisions/README.md`. A receipt is deliberately light — seam-focused, not a
+heavyweight ADR:
+
+> **Bar (recalibrated 2026-06-27):** a DR is for code/engineering decisions, not
+> process or convention. How we run the board, where files live, how we cut
+> waves — those live *in this section as prose*, not as ceremonial receipts.
+> (The early DR-0001…0007 were mostly process scaffolding — a sign we
+> over-applied the tool; leave them, but don't mint more like them.) Reserving
+> DRs for engineering keeps `decisions/` high-signal. Expect few DRs, almost all
+> about code.
 
 ```
 ## DR-NNN · YYYY-MM-DD · <one-line title>
@@ -89,8 +99,10 @@ struct.* Small change, large payoff, and now pointable-at.
 **Why this matters:** decision receipts are to our process what `(Status,
 Receipt)` is to combat — they make the *why* observable. That observability is
 the precondition for autonomy: a wave-owning session earns more rope by leaving
-receipts a reviewer can audit, not by being trusted blind. **No non-obvious call
-ships without a DR.**
+receipts a reviewer can audit, not by being trusted blind. **No non-obvious
+engineering call ships without a DR** — but process is *pulled by pain, not
+pushed up front*: bias to shipping, and let building reveal which process earns
+its keep.
 
 ### 2. Think in primitives, watch the seams
 
