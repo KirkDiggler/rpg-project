@@ -167,6 +167,10 @@ DRs** — process, not engineering, per the DR bar above:
   dispatched session is: *send your structured report via SendMessage before going
   idle.* The idle / turn-end notification is **not** the report — a wave that
   finishes without a returned report is not handed off.
+- **Run examples under ASan/UBSan locally before push** (A2 retro). A dangling
+  pointer-into-temporary was invisible on Linux release / `make` and only surfaced
+  under MSVC-debug / ASan in CI; running the examples under sanitizers locally
+  catches this class before CI does.
 
 ---
 
@@ -212,8 +216,9 @@ Each wave lists: **goal behavior**, the **demand** it proofs, the
 cut reconciles design.md's Slice 2–7 sketch (which named `rpgkit-ue` as host)
 against the `tumult-ue` reality.
 
-_Horizon status: **Wrap Foundation done** (A1 merged). **First Loop active** (A2 —
-tumult#7, plan in `wave-a2/plan.md`)._
+_Horizon status: **Wrap Foundation done** (A1 merged). **First Loop done** (A2
+merged — tumult#7 closed, PR #8; retro in `wave-a2/retro.md`). Next active horizon:
+**Cards Visible** (Group B)._
 
 ### Group A — Easy to wrap (the foundation)
 
@@ -226,8 +231,9 @@ Proofs: tumult-ue#4. Primitives/seams: the include-vs-link seam (header-only
 Done-when: documented consumption contract + tumult-ue#4 lights up.
 DRs: DR-008 (vendor source + compile as a host module), DR-009 (recipe verified by CI).
 
-**A2 · First Loop — host-observable encounter.** — **active** (tumult#7; plan in
-`wave-a2/plan.md`; **DR-010**). _Horizon: First Loop._
+**A2 · First Loop — host-observable encounter.** — **done** (merged tumult#8;
+issue #7 closed; plan in `wave-a2/plan.md`, retro in `wave-a2/retro.md`; **DR-010**).
+_Horizon: First Loop._
 Goal: a host runs a minimal combat loop — reads every combatant's HP from a
 read-model each iteration, strikes until the goblin reaches 0 and is marked dead,
 and observes each resolved strike via one bus subscription whose breakdown still
