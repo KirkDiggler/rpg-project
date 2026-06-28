@@ -28,8 +28,8 @@ learn their real shape.
 
 | Source | Why |
 |--------|-----|
-| `ideas/tumult/design.md` | The locked design thesis + T1–T4 decisions. Note: its Slice 2–7 sketch predates the `tumult-ue` pivot — see _Waves_ below for the reconciled cut. |
-| `ideas/tumult/plan.md` | Slice-1 task-level detail (the implemented seam). |
+| `ideas/tumult/initial-plan/design.md` | The locked design thesis + T1–T4 decisions. Note: its Slice 2–7 sketch predates the `tumult-ue` pivot — see _Waves_ below for the reconciled cut. |
+| `ideas/tumult/initial-plan/plan.md` | Slice-1 task-level detail (the implemented seam). |
 | `tumult` repo `CLAUDE.md` / `AGENTS.md` | The boundary rule, binding decisions, workflow (issue-first, TDD, pre-commit). |
 | In-flight branches | `origin/docs/tumult-slice-2`, `origin/docs/tumult-game-design` exist on `rpg-project` — **reconcile before starting Wave A** so we don't duplicate drafted design. |
 | Boards #14 / #15 / #16 | #14 *rpgkit: Portable Combat Core* (the engine), #15 *RPGKit Unreal Workshop* (demand corpus), #16 *Tumult UE Foundations* (the active UE 5.8 host). |
@@ -69,9 +69,10 @@ We are tool builders. The discipline below is the product as much as the code.
 
 ### 1. Decision Receipts
 
-Every non-obvious design decision gets a receipt in **`ideas/tumult/decisions.md`**
-(append-only, newest on top). A receipt is deliberately light — seam-focused,
-not a heavyweight ADR:
+Every non-obvious design decision gets a receipt in **`ideas/tumult/decisions/`**
+— one file per decision named `NNNN-slug.md` (e.g. `0001-board-spine.md`),
+indexed by `ideas/tumult/decisions/README.md`. A receipt is deliberately light —
+seam-focused, not a heavyweight ADR:
 
 ```
 ## DR-NNN · YYYY-MM-DD · <one-line title>
@@ -117,7 +118,7 @@ workflow itself is a living thing — refine it as we learn what's good for us.
 - [ ] Goal behavior named, and the demand issue it proofs cited.
 - [ ] Primitive(s) and seam(s) identified up front.
 - [ ] TDD: test first, `make test` green, `make pre-commit` green (never `--no-verify`).
-- [ ] Every non-obvious call has a DR in `decisions.md`.
+- [ ] Every non-obvious call has a DR in `decisions/` (a new `NNNN-slug.md`).
 - [ ] Boundary held: no host types in `include/tumult/`.
 - [ ] Done-when criteria met and **observable** (a test or an edge proof, not "it compiles").
 - [ ] Stop-and-ask if blocked on a decision that's genuinely the director's.
@@ -143,7 +144,7 @@ Pay attention to the shapes: where sessions thrive, where they stall.
   on this board AND remain on #14** (same GitHub issue on both, shared
   open/closed state). Division rule: **tumult-driven rpgkit work surfaces here;
   rpgkit-internal work (tutorials, etc.) stays on #14 only.**
-- **Source of truth:** *this doc* + `decisions.md`. The board tracks **state**;
+- **Source of truth:** *this doc* + `decisions/`. The board tracks **state**;
   the design lives in docs. (Knowledge-in-docs, board-tracks-status.)
 - **Workflow:** issue-first; one PR per logical unit; cite the use case;
   merge never rebase; PR → Copilot → fix/reply → director merges.

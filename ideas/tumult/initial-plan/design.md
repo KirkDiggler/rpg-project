@@ -39,7 +39,7 @@ become a second edge that consumes the same engine.
   The HUD explanation tool consumes receipt-shaped facts; an explanation
   formatter is testable in plain C++ with no host.
 - **Cross-repo discipline (this is a multi-repo change).** Per
-  `rpg-project/CLAUDE.md`, this design lives in `rpg-project/ideas/tumult/`
+  `rpg-project/CLAUDE.md`, this design lives in `rpg-project/ideas/tumult/initial-plan/`
   and the eventual implementation plan cites the board use cases on
   `rpgkit-ue` that proved the pressure (board #15: `rpgkit-ue#9`, `#14`,
   `#15`, `#16`).
@@ -393,7 +393,7 @@ Slice 2 demonstrates the answer by retiring host strings on the live HUD.
 - **rpgkit-demo-game** stays unchanged during Slice 1; Slice 7 (or earlier,
   if forced) migrates it to host tumult, turning the qwen experiment into a
   terminal-edge proof of the same engine both UE and terminal share.
-- **rpg-project/ideas/tumult/{design.md, plan.md, memories.json}** are the
+- **rpg-project/ideas/tumult/initial-plan/{design.md, plan.md, memories.json}** are the
   cross-repo home; this design is the source of truth, not a copy in any
   consumer repo.
 

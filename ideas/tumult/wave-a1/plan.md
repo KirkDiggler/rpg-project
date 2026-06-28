@@ -20,12 +20,12 @@ A1 does **not** cut a new release: tumult `v0.1.0` is already tagged + released,
 
 ---
 
-## Per-wave checklist (capabilities.md § "How we work" — filled for A1)
+## Per-wave checklist (ideas/tumult/capabilities.md § "How we work" — filled for A1)
 
 - [x] **Goal behavior named + demand cited:** a host compiles tumult via the documented recipe and calls `Encounter` from `BeginPlay`. Proofs **tumult-ue#4**; completes **tumult#3** (host-integration docs).
 - [x] **Primitive(s)/seam(s):** the **host↔library edge** — the include-vs-link consumption seam. No new primitive; A1 documents and proves the consumption contract.
 - [x] **TDD / observable done-when:** the sample consumer **is** the executable test. `ctest --preset debug -R host_consumer` passes locally and in the existing CI ctest jobs; `make pre-commit` green; never `--no-verify`.
-- [x] **DRs:** DR-008 (vendor source + compile as a host module) and DR-009 (recipe verified by a CI sample consumer) are appended to `decisions.md` as part of this wave.
+- [x] **DRs:** DR-008 (vendor source + compile as a host module) and DR-009 (recipe verified by a CI sample consumer) are added to `decisions/` (`0008-consumption-model.md`, `0009-recipe-verified-by-ci.md`) as part of this wave.
 - [x] **Boundary held — no host types in `include/tumult/`:** A1 adds nothing to `include/tumult/`. The UE snippets (`UCLASS`, `FString`, `UE_LOG`) live **only** in `docs/host-integration.md`. `examples/host-consumer/main.cpp` uses **only** `tumult::` + `rpg::core::` types — zero UE types — so it builds on any toolchain in CI.
 - [x] **Stop-and-ask:** if `docs/host-integration.md` is absent at Task 1 (PR #4 not merged) — stop and report; do not recreate the file.
 
@@ -683,7 +683,7 @@ What changed:
 
 Boundary: nothing added to include/tumult/; UE types live only in docs; the example uses only tumult:: + rpg::core::.
 
-Decisions: DR-008 (vendor source + compile as a host module; rpg::core header-only so nothing linked) and DR-009 (recipe verified by a CI sample consumer, not just prose) in rpg-project/ideas/tumult/decisions.md.
+Decisions: DR-008 (vendor source + compile as a host module; rpg::core header-only so nothing linked) and DR-009 (recipe verified by a CI sample consumer, not just prose) in rpg-project/ideas/tumult/decisions/ (0008-consumption-model.md, 0009-recipe-verified-by-ci.md).
 
 Proofs tumult-ue#4.
 
@@ -710,7 +710,7 @@ Wait for CI (build-linux clang/g++, build-windows MSVC, lint) to go green and fo
 - `docs/status.md` updated in the same PR → Task 4. ✓
 - Sequenced after PR #4; branch from PR-#4-inclusive main → Sequencing section + Task 1 Step 2 (stop-if-absent). ✓
 - Per-wave checklist (boundary; observable done-when) → Per-wave checklist section. ✓
-- Two DRs (DR-008, DR-009) → appended to `decisions.md` (this wave), referenced in PR body. ✓
+- Two DRs (DR-008, DR-009) → added to `decisions/` as `0008-consumption-model.md` / `0009-recipe-verified-by-ci.md` (this wave), referenced in PR body. ✓
 
 **2. Placeholder scan:** No `TBD`/`TODO`/"add error handling"/"similar to". The only token left to fill is the issue number `#N`, created in Task 1 Step 1 — a normal issue-first reference, with explicit "replace `#N`" instructions at each use. No code/content placeholders.
 
