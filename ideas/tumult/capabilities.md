@@ -143,6 +143,31 @@ merges** (same session handles its own Copilot review + CI fixes). We don't know
 yet if our artifacts carry enough for that — so each handoff is a measurement.
 Pay attention to the shapes: where sessions thrive, where they stall.
 
+### 6. Wave-plan & handoff conventions (adopted from the A1 retro)
+
+A1 taught us how to *write* a wave and *hand it off*. These are **conventions, not
+DRs** — process, not engineering, per the DR bar above:
+
+- **Plans carry intent + acceptance, not literal diffs.** A wave plan names each
+  task's *goal* and its *acceptance criteria as outcomes*, and lets the executor
+  read the current code and choose the specifics. Literal `old_string`/`new_string`
+  (or full code blocks pinned to today's source) rot between authoring and
+  execution and make the plan lie. Give exact shapes only where a shape is the
+  *contract* (e.g. a DR's interface delta); name everything else as the executor's
+  call.
+- **State the goal, not the toolchain incantation.** Done-when is a behavior
+  ("`host_consumer` builds and runs green as a ctest"), not a specific
+  generator/preset command. The executor picks the toolchain; the presets are a
+  convenience, not the contract.
+- **CI is the authoritative gate.** Local `make pre-commit` may lack
+  `clang-format`/`clang-tidy` or run a different version — so name which local
+  checks may be unavailable and tell the executor not to thrash on env-only lint
+  failures. The CI `lint` + build jobs decide. Never `--no-verify`.
+- **Handoff briefs end with an explicit report step.** The last instruction to any
+  dispatched session is: *send your structured report via SendMessage before going
+  idle.* The idle / turn-end notification is **not** the report — a wave that
+  finishes without a returned report is not handed off.
+
 ---
 
 ## The board — "Tumult: Combat Engine"
@@ -187,21 +212,36 @@ Each wave lists: **goal behavior**, the **demand** it proofs, the
 cut reconciles design.md's Slice 2–7 sketch (which named `rpgkit-ue` as host)
 against the `tumult-ue` reality.
 
+_Horizon status: **Wrap Foundation done** (A1 merged). **First Loop active** (A2 —
+tumult#7, plan in `wave-a2/plan.md`)._
+
 ### Group A — Easy to wrap (the foundation)
 
-**A1 · Consumption contract + first host call.**
+**A1 · Consumption contract + first host call.** — **done** (merged tumult#6; issue
+#5 closed). _Horizon: Wrap Foundation._
 Goal: a host can `#include` + link tumult and call `Encounter` from BeginPlay;
 tumult#3 docs reconciled (host = `tumult-ue`).
 Proofs: tumult-ue#4. Primitives/seams: the include-vs-link seam (header-only
 `include/` vs the `Encounter` OBJECT library), the host↔library edge.
 Done-when: documented consumption contract + tumult-ue#4 lights up.
-Expect DRs: what's header-only vs compiled; the minimal host-facing surface.
+DRs: DR-008 (vendor source + compile as a host module), DR-009 (recipe verified by CI).
 
-**A2 · Minimal encounter state to the edge.**
-Goal: host displays HP read from a tumult `Encounter`.
-Proofs: tumult-ue#5. Seams: host-facing getters/reflection; `Character` /
-`StrikeResult` read surface stays host-type-free.
-Done-when: HP visible in UE sourced from tumult state.
+**A2 · First Loop — host-observable encounter.** — **active** (tumult#7; plan in
+`wave-a2/plan.md`; **DR-010**). _Horizon: First Loop._
+Goal: a host runs a minimal combat loop — reads every combatant's HP from a
+read-model each iteration, strikes until the goblin reaches 0 and is marked dead,
+and observes each resolved strike via one bus subscription whose breakdown still
+self-names from receipts.
+Proofs: tumult-ue#5. Seams (settled in DR-010, do not re-open): the host↔encounter
+**observation edge** — `strike` publishes a `StrikeResolved` notification **after**
+mutation *and* keeps its `StrikeResult` return (push + pull); a value-snapshot
+`std::vector<CombatantView>` read-model (mirror-not-wrap, T3) over live pointers;
+"dead" is the `alive` flag, not a death event; the host owns the loop (tumult adds
+no loop primitive). rpgkit untouched (`Topic<T>` already ships in v0.3.0).
+Done-when: the extended `examples/host-consumer/` ctest runs the loop, drives HP
+20→0, marks the goblin dead from the read-model, observes one event per strike, and
+the breakdown still self-names — green in CI. (Proof stays a tumult ctest, **not** a
+UE build.)
 
 ### Group B — A card reaches UE (capable)
 
