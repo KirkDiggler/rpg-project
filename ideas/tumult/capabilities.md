@@ -217,8 +217,10 @@ cut reconciles design.md's Slice 2–7 sketch (which named `rpgkit-ue` as host)
 against the `tumult-ue` reality.
 
 _Horizon status: **Wrap Foundation done** (A1 merged). **First Loop done** (A2
-merged — tumult#7 closed, PR #8; retro in `wave-a2/retro.md`). Next active horizon:
-**Cards Visible** (Group B)._
+merged — tumult#7 closed, PR #8; retro in `wave-a2/retro.md`). **Cards Visible
+ACTIVE** — B1 (tumult#9; plan in `wave-b1/plan.md`; **DR-011**), which folds the
+original B1+B2 into one tumult wave (only literal UE rendering defers to
+tumult-ue)._
 
 ### Group A — Easy to wrap (the foundation)
 
@@ -251,19 +253,31 @@ UE build.)
 
 ### Group B — A card reaches UE (capable)
 
-**B1 · One card as an `Action` (headless).**
-Goal: a Strike card is an `rpg::core::Action`; activating it routes through
-`Encounter` and yields an `ActionReceipt`; rides the **existing generic damage**.
-Proofs: rpgkit-ue#15. Seams: the Action verb layer vs the direct
-`Encounter::strike` verb (decision 10: Action ≠ Effect).
-Done-when: headless test — play card → state mutates → `ActionReceipt` names the card.
-
-**B2 · Card self-names on the HUD.**
-Goal: `ActionReceipt` reflected to the host so the card names itself, no
-GameMode name-switch.
-Proofs: tumult-ue#13/#14. Seams: receipt→edge formatter (the `formatStep`
-analog for actions).
-Done-when: UE shows a card-play receipt that names the card from the receipt.
+**B1 · Cards Visible — first card as an `Action` with a self-naming receipt.** —
+**ACTIVE** (tumult#9; plan in `wave-b1/plan.md`; **DR-011**). _Horizon: Cards Visible._
+_Folds the original B1 (card as an `Action` + `ActionReceipt`) and B2 (card
+self-names on the HUD) into one tumult wave — only the **literal UE** render
+defers to tumult-ue; the self-naming-at-the-edge proof lands here._
+Goal: a host plays one Strike card via `Encounter::playCard` and gets a
+self-naming receipt — the card names itself and every modifier names its source —
+observable as the returned `CardResult` (pull) and a `CardResolved` event (push).
+Proofs: rpgkit-ue#15 (add an action without a GameMode branch) + tumult-ue#13/#14
+(card self-names on the HUD). Seams (settled in DR-011, do not re-open): a
+**parallel** `playCard` verb that **reuses `strike` as the one mechanism**
+(strike untouched); **card-runs** (`StrikeCard : Action` owns its behavior;
+`playCard` stays generic — new cards = new subclasses); the Encounter **bundles**
+`CardResult{ActionReceipt, StrikeResult}` and publishes `CardResolved`, recovering
+the breakdown via the A2 `StrikeResolved` event correlated by `correlationId`
+(because `ActionReceipt` is identity-only). rpgkit untouched (`Action<TInput>`,
+`ActionReceipt`, `correlationId` already ship in v0.3.0).
+Done-when: an extended `examples/host-consumer/` ctest plays a card → state
+mutates identically to a direct strike → `CardResult`/`CardResolved` name the card
+(from the receipt) and each modifier (from its source); gate-rejection tested;
+strike + A2 tests unregressed — green in CI. (Proof stays a tumult ctest, **not** a
+UE build.)
+Watch-item (intent-to-converge): if every card turns out to be a thin
+`strike`-wrapper, that triggers a revisit toward unify or the data-driven
+(op-list + resolver) model — see DR-011.
 
 **B3 · Played, not just executed (energy + tiny hand).**
 Goal: minimal energy + a small hand so a card is *drawn and played* within a turn.
