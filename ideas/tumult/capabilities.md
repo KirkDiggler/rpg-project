@@ -28,8 +28,8 @@ learn their real shape.
 
 | Source | Why |
 |--------|-----|
-| `ideas/tumult/design.md` | The locked design thesis + T1–T4 decisions. Note: its Slice 2–7 sketch predates the `tumult-ue` pivot — see _Waves_ below for the reconciled cut. |
-| `ideas/tumult/plan.md` | Slice-1 task-level detail (the implemented seam). |
+| `ideas/tumult/initial-plan/design.md` | The locked design thesis + T1–T4 decisions. Note: its Slice 2–7 sketch predates the `tumult-ue` pivot — see _Waves_ below for the reconciled cut. |
+| `ideas/tumult/initial-plan/plan.md` | Slice-1 task-level detail (the implemented seam). |
 | `tumult` repo `CLAUDE.md` / `AGENTS.md` | The boundary rule, binding decisions, workflow (issue-first, TDD, pre-commit). |
 | In-flight branches | `origin/docs/tumult-slice-2`, `origin/docs/tumult-game-design` exist on `rpg-project` — **reconcile before starting Wave A** so we don't duplicate drafted design. |
 | Boards #14 / #15 / #16 | #14 *rpgkit: Portable Combat Core* (the engine), #15 *RPGKit Unreal Workshop* (demand corpus), #16 *Tumult UE Foundations* (the active UE 5.8 host). |
@@ -69,9 +69,20 @@ We are tool builders. The discipline below is the product as much as the code.
 
 ### 1. Decision Receipts
 
-Every non-obvious design decision gets a receipt in **`ideas/tumult/decisions.md`**
-(append-only, newest on top). A receipt is deliberately light — seam-focused,
-not a heavyweight ADR:
+Every non-obvious **engineering** decision — a seam, primitive, or API-shape
+choice a future contributor would otherwise reverse-engineer or get wrong — gets
+a receipt in **`ideas/tumult/decisions/`**, one file per decision named
+`NNNN-slug.md` (e.g. `0008-consumption-model.md`), indexed by
+`decisions/README.md`. A receipt is deliberately light — seam-focused, not a
+heavyweight ADR:
+
+> **Bar (recalibrated 2026-06-27):** a DR is for code/engineering decisions, not
+> process or convention. How we run the board, where files live, how we cut
+> waves — those live *in this section as prose*, not as ceremonial receipts.
+> (The early DR-0001…0007 were mostly process scaffolding — a sign we
+> over-applied the tool; leave them, but don't mint more like them.) Reserving
+> DRs for engineering keeps `decisions/` high-signal. Expect few DRs, almost all
+> about code.
 
 ```
 ## DR-NNN · YYYY-MM-DD · <one-line title>
@@ -88,8 +99,10 @@ struct.* Small change, large payoff, and now pointable-at.
 **Why this matters:** decision receipts are to our process what `(Status,
 Receipt)` is to combat — they make the *why* observable. That observability is
 the precondition for autonomy: a wave-owning session earns more rope by leaving
-receipts a reviewer can audit, not by being trusted blind. **No non-obvious call
-ships without a DR.**
+receipts a reviewer can audit, not by being trusted blind. **No non-obvious
+engineering call ships without a DR** — but process is *pulled by pain, not
+pushed up front*: bias to shipping, and let building reveal which process earns
+its keep.
 
 ### 2. Think in primitives, watch the seams
 
@@ -117,7 +130,7 @@ workflow itself is a living thing — refine it as we learn what's good for us.
 - [ ] Goal behavior named, and the demand issue it proofs cited.
 - [ ] Primitive(s) and seam(s) identified up front.
 - [ ] TDD: test first, `make test` green, `make pre-commit` green (never `--no-verify`).
-- [ ] Every non-obvious call has a DR in `decisions.md`.
+- [ ] Every non-obvious call has a DR in `decisions/` (a new `NNNN-slug.md`).
 - [ ] Boundary held: no host types in `include/tumult/`.
 - [ ] Done-when criteria met and **observable** (a test or an edge proof, not "it compiles").
 - [ ] Stop-and-ask if blocked on a decision that's genuinely the director's.
@@ -143,7 +156,7 @@ Pay attention to the shapes: where sessions thrive, where they stall.
   on this board AND remain on #14** (same GitHub issue on both, shared
   open/closed state). Division rule: **tumult-driven rpgkit work surfaces here;
   rpgkit-internal work (tutorials, etc.) stays on #14 only.**
-- **Source of truth:** *this doc* + `decisions.md`. The board tracks **state**;
+- **Source of truth:** *this doc* + `decisions/`. The board tracks **state**;
   the design lives in docs. (Knowledge-in-docs, board-tracks-status.)
 - **Workflow:** issue-first; one PR per logical unit; cite the use case;
   merge never rebase; PR → Copilot → fix/reply → director merges.

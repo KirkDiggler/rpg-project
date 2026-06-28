@@ -122,7 +122,7 @@ Early — Slice 1 in progress. See `docs/status.md`.
 
 ## Design
 
-[rpg-project/ideas/tumult/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/design.md)
+[rpg-project/ideas/tumult/initial-plan/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/initial-plan/design.md)
 
 ## License
 
@@ -355,7 +355,7 @@ Hosts (UE via rpgkit-ue, terminal via rpgkit-demo-game) wrap a
 `tumult::Encounter`. tumult never knows a host.
 
 **Source design (don't re-derive):**
-[rpg-project/ideas/tumult/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/design.md)
+[rpg-project/ideas/tumult/initial-plan/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/initial-plan/design.md)
 · implementation plan: `plan.md` beside it.
 
 ## The boundary
@@ -397,7 +397,7 @@ to `rpgkit`, `rpgkit-ue`, `rpgkit-demo-game`; tucked into the workspace at
 `/home/kirk/personal/tumult`.
 
 **Source design (don't re-derive):**
-[rpg-project/ideas/tumult/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/design.md)
+[rpg-project/ideas/tumult/initial-plan/design.md](https://github.com/KirkDiggler/rpg-project/blob/main/ideas/tumult/initial-plan/design.md)
 · implementation plan: `plan.md` beside it.
 · per-repo rules: `AGENTS.md` in this repo.
 
@@ -415,7 +415,7 @@ stages (no priorities), opaque `SubscriptionId`, breakdown in scope, naming,
 synchronous ordered fail-fast delivery, params-struct signatures for
 multi-field operations.
 
-Tumult-local decisions (locked in `ideas/tumult/design.md`):
+Tumult-local decisions (locked in `ideas/tumult/initial-plan/design.md`):
 
 | # | Decision |
 |---|---|
@@ -2177,7 +2177,7 @@ Kirk creates the remote `KirkDiggler/tumult` (or assigns the agent), runs:
 gh repo create KirkDiggler/tumult --private --source=. --remote=origin --push
 git checkout -b feat/slice-1-core-seam
 git push -u origin feat/slice-1-core-seam
-gh pr create --title "feat: Slice 1 — core seam + simplification proof" --body "First PR for tumult. Implements the design at rpg-project/ideas/tumult/design.md. Closes the first-slice work; UE hookup is Slice 2 (Kirk's Windows step). Acceptance: \`Integration.HeroStrikeBreakdownNamesEveryModifierFromReceipts\` green — \`formatStep\` reads \`source\` from \`Chain::Step::source\`, not a host string."
+gh pr create --title "feat: Slice 1 — core seam + simplification proof" --body "First PR for tumult. Implements the design at rpg-project/ideas/tumult/initial-plan/design.md. Closes the first-slice work; UE hookup is Slice 2 (Kirk's Windows step). Acceptance: \`Integration.HeroStrikeBreakdownNamesEveryModifierFromReceipts\` green — \`formatStep\` reads \`source\` from \`Chain::Step::source\`, not a host string."
 ```
 
 Wait for Copilot review; address every comment; **NEVER merge without Kirk's explicit approval.**
@@ -2215,7 +2215,7 @@ All specs/decisions explicit; the only residual decision (deferred to plan execu
 
 ## Execution Handoff
 
-Plan complete and saved to `rpg-project/ideas/tumult/plan.md`. Two execution options:
+Plan complete and saved to `rpg-project/ideas/tumult/initial-plan/plan.md`. Two execution options:
 
 **1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks with two-stage review. Best for keeping my context lean between tasks and giving each task a focused reviewer.
 
