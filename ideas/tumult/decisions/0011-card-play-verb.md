@@ -18,6 +18,15 @@ Decision:        four locked choices, settled by Kirk after the B1 surface pass:
                  inside its `activate()`. `playCard` is **generic** over the
                  Action's input type — it never switches on card kind; a new card
                  is a new `Action` subclass, not a new `playCard` branch.
+                 **Genericity asymmetry (named, not yet generalized):** `playCard`
+                 is generic on the **input** side (any `Action<TInput>` plays
+                 without a type-switch) but strike-**coupled** on the **output**
+                 side — it subscribes to `strikeResolvedTopic` to recover the
+                 outcome and returns `CardResult{StrikeResult}`. That coupling is
+                 deliberate for B1 (one op kind: `strike`). Do **not** pre-build a
+                 generic `CardResult<TOutcome>` or a generalized recovery channel
+                 now — n=1, YAGNI; just naming the seam so the wave-owner doesn't
+                 over-engineer and future-us sees the trigger (below).
 
                  3. **Card lives in tumult; rpgkit untouched.** `StrikeCard`,
                  `StrikeInput`, `CardResult`, `CardResolved`, `formatCardPlay`,
@@ -143,10 +152,18 @@ Interface delta: tumult-only; additive; `strike()`'s existing return + A2 events
                  Exact identifier / topic-id / field naming is the executor's
                  call; the shapes above are the contract.
 
-Revisit trigger: parallel is an **intent-to-converge** bet — "maybe a card *is*
-                 a strike." If every card we add turns out to be a thin
-                 `strike`-wrapper (no other op kind appears), that is the explicit
-                 trigger to revisit toward **unify** (collapse `strike` into the
-                 card path) or the **data-driven** (op-list + resolver) model.
-                 Until a card needs a non-`strike` op, parallel + card-runs is the
+Revisit triggers: **two**, not one — watch for either:
+                 (a) **Intent-to-converge.** Parallel is a bet — "maybe a card
+                 *is* a strike." If every card we add turns out to be a thin
+                 `strike`-wrapper (no other op kind appears), that is the trigger
+                 to revisit toward **unify** (collapse `strike` into the card path)
+                 or the **data-driven** (op-list + resolver) model.
+                 (b) **First non-`strike` card.** The genericity asymmetry above
+                 bites the moment a card resolves to something other than a strike
+                 — e.g. a pure-block card or an apply-effect card. That card's
+                 outcome is not a `StrikeResult` and is not recovered from
+                 `strikeResolvedTopic`, so it forces `playCard`'s recovery channel
+                 and `CardResult` to generalize (or a second `play*` path). Until
+                 then, leave the strike-coupled output as-is.
+                 Until one of these fires, parallel + card-runs is the
                  lower-commitment shape that keeps both futures open.
