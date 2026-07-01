@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "id": "disc-014",
+      "summary": "api-side: split toolkit ActionRef string→Ref{module,type,id} defensively (TakeAction wave)",
+      "details": "The TakeAction contract (PR #171/v0.1.100) carries action_ref as a proto Ref{module,type,id}, but the toolkit emits it as a colon-delimited string via core.Ref.String() (core/ref.go:81 = fmt.Sprintf(\"%s:%s:%s\", Module,Type,ID)), e.g. dnd5e:combat_abilities:attack. rpg-api parses string→Ref at translate by splitting on ':'. Toolkit (verified both publish paths) confirms it's ALWAYS a clean triple in practice — the web sends full triples, tests confirm. EDGE (toolkit-flagged, defensive only): a malformed caller with empty Module/Type yields '::attack' (colon-delimited, empty parts). api's split should TOLERATE/VALIDATE a short or empty-part split rather than panic/index-out-of-range. NOT a proto-shape issue (the wire field is a clean Ref); purely an api-consumer parse-robustness note. Routed to the api lane via team-lead 2026-06-01. Not blocking — no real caller produces it.",
+      "added": "2026-06-01"
+    },
+    {
       "id": "disc-001",
       "summary": "EncounterService carries TWO state shapes — verified at file:line",
       "pointer": "rpg-api-protos#138",

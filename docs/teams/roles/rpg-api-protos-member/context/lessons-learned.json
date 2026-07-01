@@ -41,6 +41,12 @@
       "summary": "Honest mandate: cite file:line, never \"presumably\"",
       "details": "Per the role prompt. Every claim about a proto detail (\"this field is deprecated\", \"this RPC is unused\", \"this shape carries dual state\") must cite the file and line where it's verifiable. Status and quality docs that say \"presumably\" or \"approximately\" are dishonest about what we know. The first reviewer pass on PR #137 corrected several inflated counts (5,650 → 5,577 lines, ~50 → 39 pb. references, ~20 → 27 TODOs). Verify before asserting.",
       "added": "2026-05-02"
+    },
+    {
+      "id": "lesson-008",
+      "summary": "Don't force-push a contract change under an in-flight review/merge gate — ping HOLD first",
+      "details": "On TakeAction #170 (PR #171), I reported the contract 'locked + ready to gate', the director ran an independent review gate signing off the 5-value TargetKind shape, and THEN I force-pushed a 6-value shape (NONE restored after toolkit reopened the semantics). My force-push beat the squash-merge so main shipped correct, but the gate had reviewed a shape that wasn't what landed. Director flagged it (logged as wave D15 / retro coordination item). Two-part rule: (1) ROOT — converge the contract COMPLETELY with the counterpart before declaring 'gate-ready'; don't request a gate while any field/enum-value question is genuinely still open. (2) If a contract change DOES land after you've handed off the gate/merge, ping the gatekeeper to HOLD, re-push, and let the gate re-run on the final shape before it bakes to main — never force-push silently under an in-flight gate. The shape is frozen from your side once you ask for the gate.",
+      "added": "2026-06-01"
     }
   ]
 }

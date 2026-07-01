@@ -46,8 +46,10 @@ If you see game logic in the API, say something. If you see calculations in the 
 ## Project Board
 
 **ALWAYS check before starting work:**
-- https://github.com/users/KirkDiggler/projects/11 — **Chapter 1: Architecture Honesty** (current; umbrella issue rpg-api #574)
-- https://github.com/users/KirkDiggler/projects/12 — **Chapter 2: The 4 Brothers** (next; rides the clean rails once Chapter 1 lands)
+- https://github.com/users/KirkDiggler/projects/13 — **Chapter 2: Combat Verbs** (current; verb-shaped waves on the v1alpha2 route; umbrella issue rpg-project #54, first wave = TakeAction)
+- https://github.com/users/KirkDiggler/projects/11 — **Chapter 1: Architecture Honesty** (the clean rails Chapter 2 rides on; umbrella rpg-api #574)
+
+_Board #12 "Chapter 2: The 4 Brothers" closed 2026-06-01 — superseded by #13; the 4 brothers are now the cast that verifies each verb wave._
 
 Rules:
 - One issue per PR
@@ -57,14 +59,21 @@ Rules:
 
 ## Current Chapter
 
-**Chapter 1: Architecture Honesty** — clean-slate rebuild of the rpg-api encounter vertical:
-one private `load(id)` per orchestrator method (hydrates the whole encounter onto the bus once,
-killing the #684 double-apply class), handlers as ~20-line pure translation with zero rulebook
-imports (depguard-enforced), toolkit owns all rules and drives the events.
+**Chapter 2: Combat Verbs** (board #13) — bring the v1alpha2 `EncounterService` verbs to life one
+verb-shaped wave at a time, each validated against the **North-Star Invariants** in
+`ideas/encounter/v1alpha2/design.md`. First wave = **TakeAction end-to-end** (umbrella rpg-project
+#54): unify the toolkit's encounter verb path with the character action-menu/economy, add the
+resolved-action event + correlation id + timestamp to the event spine, project menu/economy
+verbatim, push the economy delta. Wave doc: `ideas/encounter/v1alpha2/take-action/design.md`
+(validated 2026-06-01).
+
+**Foundation — Chapter 1: Architecture Honesty** — the clean rails Chapter 2 rides on: one private
+`load(id)` per orchestrator method (killed the #684 double-apply class), handlers as ~20-line pure
+translation with zero rulebook imports (depguard-enforced), toolkit owns all rules and drives the events.
 
 - **Live state + next steps:** `sessions/active.md` (read first — freshest narrative)
 - **Design (don't re-derive):** `ideas/encounter/v1alpha2/{design,orchestrator-design,plan,roadmap}.md`
-- **Next chapter (board #12):** the 4 Brothers — L1-playable Barbarian/Fighter/Monk/Rogue — once the clean rails land.
+- **The 4 brothers** (L1 Barbarian/Fighter/Monk/Rogue) are the **cast** that verifies each verb wave on #13 — not a board axis of their own (the old #12 board is closed).
 
 _Prior milestone (4-Class Multiplayer Multi-Room Dungeon, `milestones/4class-dungeon/`) is largely
 delivered; its remaining gaps fold into the chapters above._

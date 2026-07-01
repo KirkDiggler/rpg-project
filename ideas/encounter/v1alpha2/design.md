@@ -1,6 +1,6 @@
 # Encounter v1alpha2 — Design
 
-**Status:** Draft (brainstorm complete, awaiting spec review)
+**Status:** Active — the v1alpha2 architecture **north star**. Every wave validates against the **North-Star Invariants** section below before implementation. (Brainstorm 2026-05-05; hardened 2026-06-01 by the TakeAction design review.)
 **Date:** 2026-05-05
 **Authors:** Kirk + Claude (brainstorming session)
 **Supersedes:** `dnd5e.api.v1alpha1.EncounterService` (full replacement, clean break)
@@ -40,6 +40,63 @@ Rooms are a server-side authoring concept (the dungeon generator places them, th
 4. **One verb per concept.** `MoveEntity` (any entity), `Interact` (any target). No `MovePlayer` + `MoveMonster` when the payload is the same.
 5. **Events are the story.** Typed events with semantic verbs carry world-state changes. RPC responses are minimal acks plus caller-private follow-ups (skill check prompts, dialogue choices).
 6. **Mirror the toolkit, don't reinvent it.** The toolkit has thought hard about action economy, conditions, spatial, environments. The wire reflects those decisions rather than introducing parallel abstractions.
+
+---
+
+## ★ North-Star Invariants — validate every wave against these
+
+> The principles in §1, distilled into a **checkable list** and hardened by the TakeAction design
+> review (2026-06-01). **Every wave is reviewed against this list before implementation; a
+> violation is a blocker, not a nit.** This is the north star — a wave doc is validated against it,
+> and only then becomes the implementer's star.
+
+**Boundary — who knows the rules**
+
+1. The **web** sends `Ref`s and renders server data. It never computes availability, cost,
+   legality, targeting, or any rules verdict.
+2. **rpg-api** orchestrates by key and translates *shape*. It never interprets, calculates,
+   validates-by-rules, mutates rules-state, or authors user-facing rules strings. Concretely: it
+   never deducts the economy, never decides the action menu, never writes `display_name` /
+   `unavailable_reason` — it copies what the toolkit returns, field-for-field, with **zero rules
+   conditionals**. (An `if economy.X > 0` in the projection layer is the violation.)
+3. The **toolkit** owns all rules: the action menu (availability, reasons, cost, target kind), the
+   economy *and its deduction*, resolution, and the canonical events — **including the combat log**
+   (narration is rules knowledge, so it can't live in the game server).
+4. **protos + rpg-api are one contract unit.** Translating toolkit → proto is first-class, expected
+   work — never something to minimize away.
+
+**Events — the story**
+
+5. Toolkit events are canonical truth: sealed, sequenced, audience-scoped, and stamped with
+   **game-event time at publish** (not wire-delivery time).
+6. rpg-api projects events for **audience** (per-viewer visibility), never for **rendering**.
+   Per-viewer visibility is the *only* legitimate reason not to emit an event to a viewer. "The web
+   doesn't draw it yet" is never a reason to drop — that is the data-loss bug (#594 / the
+   `AttackResolved` suppression) we are correcting.
+7. A toolkit field with no proto counterpart is a **proto gap to close**, not a permitted drop.
+   Narrowing an event's shape in translation is the same data-loss anti-pattern as suppression.
+8. Events carry **causation**: every effect (damage, condition, resource) ties to the action that
+   caused it via a correlation id on the spine. The toolkit-owned combat log is reassembled from
+   this. We pay the correlation-id cost now; retrofitting it onto persisted events later is the
+   lossy path.
+9. Every player-facing action emits a **first-class resolved-action event** (actor, action_ref,
+   targets, hit/miss/crit, roll, economy consumed) — not just its scattered effects.
+10. RPC responses are minimal acks + caller-private follow-ups (`InputRequired`). State flows as
+    events.
+
+**Capability**
+
+11. "What can this entity do" is server-sent data (`TurnState.available_actions`): the toolkit
+    computes it, rpg-api projects it verbatim, the web renders it. The menu carries the **target
+    kind** so the UI raises the right prompt without knowing rules.
+12. Illegal actions are **pre-empted** in the menu (`available=false` + `unavailable_reason`) so the
+    UI never offers them; structural/turn errors use status codes. Economy/menu refresh is **pushed
+    as a delta event** — the menu never goes silently stale.
+
+**Persistence**
+
+13. Durable persistence (event log, replay, metrics, stored combat log) is **deferred** until a
+    consumer needs it — but the event contract above is shaped *now* to be forward-compatible.
 
 ---
 

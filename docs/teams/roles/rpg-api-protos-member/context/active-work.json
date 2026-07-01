@@ -1,6 +1,20 @@
 {
   "items": [
     {
+      "id": "active-006",
+      "summary": "PR #171 (#170) MERGED — TakeAction resolved-action event contract (v1alpha2)",
+      "details": "Beat-1 of TakeAction wave (Chapter 2). Merged 2026-06-01 as main 63c1d93, released v0.1.100. Added to dnd5e/api/v1alpha2/encounter: correlation_id (string, tag 3) on EncounterEvent envelope (Inv 8 causation); ActionResolved (tag 27, umbrella: actor_entity_id, Ref action_ref, target_entity_id, EconomyConsumed) + nested EconomyConsumed{actions,bonus_actions,reactions,movement,granted_consumed map}; AttackResolved (tag 28: attacker_entity_id,target_entity_id,hit,critical,attack_roll,attack_bonus,target_ac — fires on MISS, the #594 fix, D9 ErrUnknownEventType unblock); TurnStateChanged (tag 45, push refresh, full recomputed TurnState — kept OFF ActionResolved on the audience seam Inv 6); EconomySlot + TargetKind enums + economy_slot(5)/target_kind(6) on AvailableAction. Refs carry toolkit's TWO native namespaces verbatim (combat_abilities:* intent + actions:* doing), NOT flattened (flattening = Inv-2 rules remap). action_ref is a Ref/triple on the wire; api splits the module:type:id string at translate. TargetKind = {UNSPECIFIED,SELF,SINGLE_ENTITY,POSITION,AREA,NONE} — NONE!=SELF (Dodge=SELF self-buff; Dash=NONE targets nothing); proto mirrors toolkit's 6-value enum 1:1 for field-for-field projection. Entity-id wire fields follow v1alpha2 <role>_entity_id convention (not toolkit struct's bare _id). Contract converged peer-to-peer with toolkit expert; director-signed-off D13; landed FIRST in D9 pipeline. Doc: added v1alpha2 TakeAction section to docs/architecture/components/encounter-service.md.",
+      "added": "2026-06-01",
+      "status": "done"
+    },
+    {
+      "id": "active-007",
+      "summary": "Ref.type example comment fix (types.proto Ref) — PR #172 MERGED",
+      "details": "dnd5e/api/v1alpha2/encounter/types.proto — the canonical Ref message's `type` examples listed only the old single \"action\" namespace, self-contradictory with the same file's AvailableAction.ref comment (combat_abilities) after #171. One-source-of-truth-for-shape drift, comment-only/zero-wire-impact. Surfaced by team-lead's independent review gate on #171 (non-blocking). Fixed + MERGED via PR #172 (Part of #54) 2026-06-01: examples now combat_abilities/actions + a no-flatten note; canonical Ref doc is self-consistent. NOTE for future: an automated comment-only checker false-positives on a `field = N;` line when only its trailing inline `//` comment changes (the whole line reads as changed though the field is byte-identical) — eyeball confirms comment-only.",
+      "added": "2026-06-01",
+      "status": "done"
+    },
+    {
       "id": "active-001",
       "summary": "PR #137 — honest status snapshot + full doc tree bootstrap",
       "details": "Branch docs/honest-status-snapshot. Started as just status.md + quality.md; expanded 2026-05-02 to mirror rpg-api PR #470 — adds architecture/overview.md, architecture/data-model.md, architecture/components/*.md (one per service), how-to/*.md. Archives pre-existing docs (adr/, plans/, P001 UE plugin doc, usage-go.md, usage-typescript.md) under docs/archive/. No proto changes. CI: buf lint clean, buf format clean, buf breaking clean.",
