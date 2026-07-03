@@ -188,6 +188,22 @@ vocabulary that **also needs a live turn-start tick soon** — Beat 2's `Dodging
 owner's next turn *start*, and that tick does not currently fire. Noting the adjacency; not designing the
 turn-start tick here.
 
+**Persistence cadence is orchestrator policy, not part of the state model.** This design decides **who
+owns** combat state (the encounter) and **what the snapshot is** (the encounter's serialized runtime). It
+deliberately does **not** decide **how often** the runtime flushes to the snapshot. Today's cadence —
+flush at the end of every RPC — is a property of the turn-based *transport* (`load → act → persist` per
+verb), and it is what makes pause/resume free. It must stay a policy of the rpg-api orchestrator, **never**
+an assumption baked into a toolkit interface or the snapshot format: no toolkit signature should imply
+"you are serialized after every action," and no snapshot field should mean "written this RPC."
+
+The payoff is future-proofing *without designing the future*. A later non-turn-based / real-time mode
+changes exactly **one** thing — the encounter stays hydrated in memory for its lifetime and persistence
+becomes a periodic write-behind flush. The state model, snapshot format, load path, and condition scopes
+are all unchanged. (Contrast in one line: the old split model synced every mutation through the char
+store — a non-starter at real-time cadence; one-home is the only shape whose flush interval can scale
+down.) This is a guard-rail, **not** a design for that mode — no queues, tick rates, or speculative APIs;
+its sole job is to stop implementers hard-coding per-RPC assumptions into shared interfaces.
+
 ---
 
 ## 5. The design edges (the actual work)
