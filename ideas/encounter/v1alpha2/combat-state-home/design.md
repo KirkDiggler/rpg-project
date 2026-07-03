@@ -29,6 +29,23 @@ stays latent), keeps ActivateFeature's divergent write, and leaves the next comb
 cause; B treats the symptom. Kirk + director aligned on A (`feedback_default_to_one_system`,
 `feedback_prefer_breaking_changes`).
 
+**Why now — and what the rage incident does and doesn't prove.** The architecture case rests on three
+things true on current `main`: (1) the observed **HP divergence** (snapshot 7 vs store 14); (2) **three
+distinct write paths** for combat-mutable state — the snapshot's `PlayerData.HP`, ActivateFeature's
+bespoke char-store write, and the per-RPC condition flush; and (3) **Beat 2's incoming encounter-scoped
+conditions** (Dodging/Hidden/Help), meaningless outside combat, about to triple the condition state in
+play. The defensive-rage incident that surfaced #596 is **not** offered as proof that the current model
+drops condition state: a read-only trace of current `main` shows the persist cascade round-trips *every*
+player's condition state at *every* layer (`attachPlayerCharacterData → hydrateCombatants → unconditional
+syncCombatantsToData → persistPlayerCharacterData`, each looping over all players), no live path resets
+per-turn flags on TurnStart (that topic is dead — §4), and RagingCondition's flags reset only inside its
+own `onTurnEnd` *after* evaluation, so its window is correctly "since your last turn." The most likely
+reading of the original incident (on a much older build, toolkit v0.17) is the 5e rule firing
+**correctly** — the goblin had not hit Bob since his last turn (misses publish nothing) and Bob had not
+attacked. **We withdraw the "state was provably lost" claim.** What the incident *does* prove is the
+**diagnosability cost**: it took days to trace precisely because state ownership was ambiguous across
+three homes. That ambiguity — not a demonstrated data-loss bug — is the case for one home.
+
 ---
 
 ## 2. Where state lives today (grounded in the code)
@@ -39,7 +56,7 @@ Combat-mutable state is scattered across **three** homes — the defect:
 |-------|-----------------|---------------------|
 | HP | `PlayerData.HP` (int on snapshot, `encounter/data.go:109`) **and** `character.Data.HitPoints` (char store) | conflicting — snapshot 7 vs store 14 observed |
 | Resource charges (rage/ki/slots) | `character.Data.Resources` / `ClassResources`, via transient `DataJSON` | char store |
-| Conditions (raging + per-turn flags) | `character.Data.Conditions`, via transient `DataJSON` | char store — but stripped each turn |
+| Conditions (raging + per-turn flags) | `character.Data.Conditions`, via transient `DataJSON` | char store — round-tripped through the transient blob every RPC (ownership ambiguous; §1) |
 
 **The per-verb round-trip that splits the home** (combat-capable verbs; e.g. `take_action.go`,
 `end_turn.go`):
@@ -157,8 +174,19 @@ them with eyes open (these are exactly `gap §7`'s snapshot-size/staleness risks
   consumer reading store HP mid-combat must be re-routed through the encounter (§7 audit).
 
 The honest trade: the `#689 Q1` "no duplicate" optimization is precisely what created the two-home
-divergence and the per-turn condition strip. **One home beats no-duplicate.** We accept a bigger, GC'd
-snapshot to get a single source of truth.
+divergence and the ambiguous ownership that made the rage incident cost days to diagnose (§1). **One home
+beats no-duplicate.** We accept a bigger, GC'd snapshot to get a single source of truth.
+
+**The rulebook's tick vocabulary today — what the boundary is joining.** A read-only trace of current
+`main` found the rulebook has exactly **one live tick**: `dnd5eEvents.TurnEndTopic` (fired per actor at
+`encounter/combat.go:362`). `TurnStartTopic` is **dead on the live path** — its only publisher is legacy
+`combat/turn_manager.go:246`, which has no callers; live turn-start goes through `seedActorTurn →
+character.StartTurn`, which publishes nothing. There are **no** `RoundStart`/`RoundEnd` topics (round is a
+counter folded into the broker's `TurnStartedEvent`). This *strengthens* the combat-ended-boundary
+argument in §5.1 and flags an adjacency: the `EndCombat` event this design proposes joins a boundary
+vocabulary that **also needs a live turn-start tick soon** — Beat 2's `DodgingCondition` expires at its
+owner's next turn *start*, and that tick does not currently fire. Noting the adjacency; not designing the
+turn-start tick here.
 
 ---
 
@@ -184,13 +212,15 @@ condition. That is a toolkit-internal representation choice; what matters for th
 hand-roll their lifetime via bespoke Data structs that don't yet carry `DurationType` — so wiring the
 declaration uniformly is real toolkit work, not a flag flip.)
 
-**The combat-ended boundary is a toolkit gap to add.** Conditions self-expire on **turn** boundaries
-today (Dodging removes itself at its owner's next `TurnStart`, `dodging.go:84-88`; Raging on `RestEvent`
-/ no-activity, `raging.go:178-202`). But combat can end **mid-turn** (last enemy dies on your turn) — a
-Dodging/Hidden condition would still be live at `ToData` time. So Option A needs an `EndCombat` /
-mode→`Ended` toolkit verb that publishes a "combat ended" event, mirroring the existing `RestEvent`
-(`character.go:459-467`): encounter-scoped conditions remove themselves in response; durable ones don't
-subscribe and survive. Same shape `LongRest` already uses.
+**The combat-ended boundary is a toolkit gap to add.** Conditions are *written* to self-expire on
+boundaries — Dodging subscribes to `TurnStart` to remove itself at its owner's next turn
+(`dodging.go:84-88`); Raging reacts to `RestEvent` / no-activity (`raging.go:178-202`). But two of those
+triggers are not live today: `TurnStartTopic` has no live publisher (§4), so Dodging's self-expiry is
+currently **inert**, and combat can end **mid-turn** (last enemy dies on your turn) with no boundary at
+all. So Option A needs an `EndCombat` / mode→`Ended` toolkit verb that publishes a "combat ended" event,
+mirroring the live `RestEvent` (`character.go:459-467`): encounter-scoped conditions remove themselves in
+response; durable ones don't subscribe and survive. Same shape `LongRest` already uses — and it is one of
+the boundary ticks (alongside the missing live turn-start, §4) the rulebook needs regardless of #596.
 
 **Worked examples of the rule:**
 
@@ -292,7 +322,7 @@ GC'd, so there is no persisted corpus to convert — only the code contract flip
 
 1. **Toolkit first (unblocks the API break):**
    - Land [#691](https://github.com/KirkDiggler/rpg-toolkit/issues/691) — fold ActivateFeature onto the
-     held combatant (corrects its "no behavior change" premise — rage now persists).
+     held combatant, removing its bespoke divergent char-store write (one of the three write paths, §1).
    - Add the **combat-ended boundary** verb/event + the **declared persistence scope** on conditions (§5.1).
 2. **rpg-api (the contract flip — one coherent change):**
    - Flip `DataJSON` transient → durable (drop the flush + `pd.DataJSON = nil`).
@@ -314,11 +344,12 @@ acceptable for the playtest, not for production.
 
 ### 5.8 Beat 2 fit — Dodging / Hidden / Help live encounter-scoped
 
-- **Dodging** ([#699](https://github.com/KirkDiggler/rpg-toolkit/issues/699)): already self-removes at
-  the owner's next `TurnStart`. Under A it lives on the snapshot DataJSON, **survives the per-RPC
-  round-trip** (durable now), and self-expires via the turn machinery. **Under today's
-  flush-through-store it would be stripped every turn — the exact defensive-rage bug.** Beat 2
-  mechanically depends on the round-trip being fixed; A is the clean substrate.
+- **Dodging** ([#699](https://github.com/KirkDiggler/rpg-toolkit/issues/699)): *written* to self-remove
+  at the owner's next `TurnStart` (`dodging.go:84-88`), but that tick has no live publisher today (§4),
+  so the expiry is currently inert. Under A it lives on the snapshot DataJSON and survives the per-RPC
+  round-trip like every other condition; making it actually expire needs both a durable home (this
+  design) **and** a live turn-start tick + the combat-ended boundary (§4, §5.1). A is the clean substrate;
+  the missing ticks are the adjacent toolkit work.
 - **Hidden** ([#716](https://github.com/KirkDiggler/rpg-toolkit/issues/716)): inherently encounter-scoped
   (hidden until you attack/move/are seen). A condition on the snapshot, expired by combat events; never
   on the sheet.
