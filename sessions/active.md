@@ -1,48 +1,36 @@
-# Active handoff — 2026-07-03: Beat 2 designed + adversarially gated (PASS); #596 parked; OA fix merged
+# Active handoff — 2026-07-05: Beat 2 closed; next session opens with brainstorming + planning
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 
 ## Now
-**Chapter 2: Combat Verbs**, board **#13**, umbrella **rpg-project #54**. **Beat 2 (mechanical effects: Dodge/Help/Hide do real things) is designed and gate-PASSED** — wave doc on **rpg-project PR #73** (branch `design/beat2-mechanical-effects`, head `5a30c5b`), adversarial gate verdict PASS after one revision round (both gate comments on the PR). **Awaiting Kirk's review + merge of #73 — implementation dispatches are gated on that.** `rpg-api#596` is **PARKED** (see decision log). Director runs thin — commission + verify.
+**Beat 2 (mechanical effects: Dodge/Help/Hide + the effects paved road) is CLOSED**, retro'd on **rpg-project #75** 2026-07-05. Final sign-off was a 5/5 MCP playtest verify on pure `main` across all four repos. Beat 2 shipped as **14 PRs across 4 repos** (toolkit, api, web, protos). The full ledger and retro live on **#75** — read there, this doc doesn't duplicate it. Director runs thin — commission + verify. The next-steps board was built with Kirk same day — **The Dungeon Run**, board #19, https://github.com/users/KirkDiggler/projects/19 — journey-shaped (Party Assembles / Class Kits / The Dungeon / Game Screen legs + Dungeon Night capstone), built from three evidence sweeps (toolkit L1 kits, creation journey, co-op dungeon journey).
 
 ## Solid (verified — keep, don't re-derive)
-- **Beat 2 scope** (from the gated doc on PR #73 — read it, don't re-derive):
-  - Toolkit: construct `DodgingCondition` on `Dodge.Activate` (Rage pattern — the condition already exists incl. self-expiry, just never gets constructed).
-  - Revive the dead `TurnStartTopic` publish in `encounter.seedActorTurn` — this lights up **three** dormant subscribers: Dodging, RecklessAttack, and Unconscious's auto-death-save (the last is `rpg-api#612`'s death gate from the other side — regression-check RecklessAttack).
-  - New `checks` package (`MakeAbilityCheck` + `AbilityCheckChain`, mirrors `saves.MakeSavingThrow`), built via Hide's Stealth roll.
-  - Help is **attack-only** this wave (check-subscriber path deferred; machinery still ships).
-  - Cross-entity targeting threads the *target's* PlayerData — the condition audience projects from the ally's position, not the actor's.
-  - Hidden/Helped conditions require `loader.go`/`factory.go` registration + `ToJSON` round-trip tests, or they evaporate at the first RPC.
-  - Advantage/disadvantage added full-chain — the rulebook's attack resolution already computes them (confirmed dropped today at encounter `AttackOutcome`, both rpg-api resolvers, `AttackResolvedEvent`, and the protos).
-  - Condition display names stay web-resolved (API forwards refs only).
-  - API seeds player HP at `AddPlayer` (`#612` folded in as required scope).
-  - Consume step tags toolkit + bumps api, shipping the merged OA fix (`#724`).
-- **Playtest sign-off bar:** named devseed fixture `wave-2-beat2` (a Monk + a Fighter), one MCP session, three beats — Dodge → goblin attack shows visible disadvantage; Hide → Hidden status + attack interactions both ways (success path live; Hide-failure covered by a unit test with a mock roller, not the playtest); Help → condition attributed to the ally, goblin hits the Fighter for real damage, Fighter driven to 0 HP, auto death-save asserted at their next turn start (runtime-confirms `#612` + turn-start revival + Unconscious in one scene).
-- **`rpg-toolkit#722`/`#723` CLOSED** — PR `rpg-toolkit#724` merged by Kirk 2026-07-03. Root cause: `getAttackerMeleeWeapon` was a hardcoded unarmed-strike stub; fix = `MeleeWeaponProvider` interface + `Character.MeleeWeapon()`/`Monster.MeleeWeapon()`. `#723` wasn't reproducible on current main — closed with regression tests locking the invariant; if the symptom recurs, check rpg-api resolver wiring first. Follow-up filed + boarded: `rpg-toolkit#725` (natural bite/claw weapons resolve as unarmed on the OA path). The fix is on toolkit `main` but **unreleased** — ships with Beat 2's version bump.
-- **`rpg-api#612` filed + boarded** (from today's HP dual-home probe): player snapshot HP is never seeded (the sole `AddPlayer` call omits it) and never reconciled with the character store (no player equivalent of `syncMonsterDataFromSnapshot`); the HP-bar projection and death gate both read the snapshot copy. Static-trace evidence is in the issue; runtime confirmation is Beat 2 playtest beat 3.
-- **Tick vocabulary on current main:** only `dnd5eEvents.TurnEndTopic` is live (`encounter/combat.go:362`, fires per actor incl. NPCs). `TurnStartTopic` is dead — its sole publisher (`turn_manager.go:246`) has no live callers. No round-start/end topics exist; round is a counter on the broker's `TurnStartedEvent`.
-- **Conventions** (in director memory, restated): worktree-per-implementer, canonical checkouts stay on main; always set `model` explicitly on dispatches (Sonnet default, Opus for gates/deep-debug); refs as `repo#N` + link; permission prompts are terminal-only and invisible to orchestrator + Kirk — pre-authorize command sets; a status-ping met with silence ≈ a prompt-stalled agent (bit us twice today).
+- **The paved-road pattern for effects** (the reusable spine Beat 2 discovered/hardened): activation verb → `ConditionAppliedTopic` → condition registration (`loader.go`/`factory.go`) → per-tick subscriber wiring → the event pipeline table (toolkit topic → api translate → proto → web dispatch) → render. Full detail is in the **#75 retro comment** — that's the canonical writeup, not this doc.
+- **Death-save arc is fully client-visible end to end** — ghost-events-to-rendered-nat-20-revival, confirmed via playtest.
+- **Permissions issue root-caused and fixed at the user-settings level, 2026-07-05** — was blocking implementer dispatches; not a per-agent or per-repo problem.
+- Everything is on `main` across all repos, matching the 5/5 playtest verify.
+- **`rpg-toolkit#721`** — `make pre-commit` is broken on toolkit main (bc syntax error in the coverage script), boarded on #13. With the next effort being toolkit-led, implementers must run the underlying lint/test targets directly — never `--no-verify`.
+- **Two stacks, one destination:** v1alpha1 owns lobby/multi-room/boss-victory (defeat detection is dead code — TPK can't trigger), v2 owns all Beat-1/2-hardened combat + Redis persistence but has **no** join/multi-room/boss. Strategic call: v2 is the chassis, v1 is a parts donor, destination is deleting v1. Toolkit's `spatial.BasicRoomOrchestrator` / `tools/spawn` / rulebooks-dungeon have zero rpg-api imports (verified).
+- **Rogue creation is hard-blocked in the web UI** — ListClasses never advertises Expertise and there's no web picker for it; backend write path is proven fine by integration test.
 
-## Open questions / calls (verify before acting)
-- **Kirk's review of rpg-project PR #73** (the wave star) — merge gates filing the Beat 2 wave issue under `#54`, the per-repo issues from the doc's breakdown, and implementation dispatches.
-- **PR #72 disposition** (parked `#596` Option-A design, 4 commits incl. lifecycle/durability/cadence sections): merge-as-parked-record vs. leave open vs. close — Kirk's call, no urgency.
-- rpg-project **PRs #65 and #52** are older open PRs from previous threads — reconcile/close when convenient.
-- Toolkit `make pre-commit` is still broken on main (`rpg-toolkit#721`, `bc` script) — implementers run the underlying lint/test targets directly; never `--no-verify`.
+## Open questions / calls (verify before acting; not findings)
+- Retro learnings are captured as **retro material only** — Kirk's explicit call at close-out was NOT to adopt them as process mandates yet ("proposals a little early"). They feed the upcoming planning session instead.
+- `rpg-project PR #72` (combat-mutable-state ONE HOME) — **merged 2026-07-05** as the parked design record; `rpg-api#596` itself remains parked/open, unchanged by Beat 2.
 
-## Next
-1. Kirk merges PR #73 → file the Beat 2 wave issue under `#54` + per-repo issues (one per PR) from the doc's breakdown.
-2. Dispatch implementers per the doc's work-by-layer plan (toolkit first; api/protos/web after the toolkit tag). Pre-authorize the Go/gh command set before dispatching.
-3. Sign-off = the three-beat `wave-2-beat2` MCP playtest + participatory retro (green CI alone is insufficient).
+## Next (driven by board #19)
+Work now flows from board #19 — wave 1 (quick-win fixes: Rage RAW gaps, Ki-at-L1, character-sheet features, Rogue creation unblock — issues filed, see board) then the two critical-path trailblazers (4-player lobby on v2; multi-room on v2, toolkit-led) get design phases before implementation.
+- The **structural window** queued for whenever planning schedules it: the **ADR-0034 restructure** (rpg-toolkit), **`rpg-api#616`** (encounter/v2 layering — orchestration living in the handler package instead of Chapter-1 layering), and the **snapshot-vs-live dual-home family** (`rpg-toolkit#736` AC dual-homed, `rpg-toolkit#740` stale HP snapshot on the NPC-targeting path, and the `rpg-api#612`-class of bugs generally). Scheduling relative to the three groupings above is a planning-session decision, not decided here.
 
-## Decision log (2026-07-03)
-1. **`rpg-api#596` parked by Kirk.** The defensive-rage motivation was debunked by a read-only code trace (rage's turn-end rule fired 5e-correctly; the persist cascade round-trips every player's condition state on current main; no `TurnStart` reset exists — the topic is dead code). Design PR #72 amended to withdraw the "state was provably lost" claim (`213c20b`) and add encounter-lifecycle/pause-resume, disconnect≠teardown, declared per-condition durability (Kirk's curse example), and persistence-cadence-is-policy sections (`3b67e88`, `e5583d5`). Unpark trigger: Beat 2 surfacing real state-ownership pain. Visible: PR #72 + `rpg-api#596`.
-2. **Kirk merged rpg-toolkit#724 directly** (OA weapon fix) after personally unblocking a terminal-only permission stall on the implementer.
-3. **HP dual-home probe** (commissioned when Kirk challenged the `#596` evidence) confirmed the dual-home is structurally live and found the unseeded-snapshot-HP bug → `rpg-api#612` filed, boarded, and folded into Beat 2 as required scope.
-4. **Beat 2 design produced and adversarially gated** — PASS-with-required-changes (R1–R6) → revision `5a30c5b` → re-review PASS. The gate worked both directions: the designer successfully refuted one gate nit (a citation that was actually correct).
-5. **Beat 2 scope decisions:** Help is attack-only this wave; Hide-failure is verified by unit test, not playtest; observer-set computation lives in the encounter SDK (gate-endorsed — "who sees whom" is spatial) with the guardrail that passive Perception is gathered via a rulebook-owned `Combatant.PassivePerception()` method, never inlined in the SDK.
+## Decision log (2026-07-05)
+1. **Beat 2 closed at retro** on rpg-project#75 — the retro + ledger there is the record of what shipped and what was learned; this doc only points to it.
+2. **Action-item adoption deferred to planning** — Kirk: "proposals a little early." Retro findings are inputs to the next planning session, not standing process.
+3. **PR rpg-project#72 merged as the parked design record**, right after close-out (2026-07-05) — the issue `rpg-api#596` itself stays parked; no new decision on its disposition.
 
 ## Pointers
-- Wave star: `ideas/encounter/v1alpha2/mechanical-effects/design.md` (on PR #73's branch until merged) + both gate comments on the PR.
-- Parked: `ideas/encounter/v1alpha2/combat-state-home/design.md` (PR #72); `gap-defensive-rage-persistence.md` §1 is superseded by PR #72's corrected motivation.
-- Boards: **#13** (Chapter 2, umbrella `rpg-project#54`); **#14** (Tumult, parked). North-star invariants: `ideas/encounter/v1alpha2/design.md`.
+- Board **#19** (The Dungeon Run) — https://github.com/users/KirkDiggler/projects/19 — the current board; wave 1 issues filed, see Next.
+- **rpg-project#75** — Beat 2 wave issue: full ledger (14 PRs / 4 repos) + retro comment (paved-road pattern, death-save arc, permissions fix).
+- **ADR-0034** — `rpg-toolkit/docs/adr/0034-where-encounter-logic-lives.md` — queued for restructure in the structural window.
+- Board **#13** (Chapter 2: Combat Verbs) — https://github.com/users/KirkDiggler/projects/13 — prior Chapter-2 board, Beat 1/2 record.
+- Follow-up shelf: `rpg-api#616`, `rpg-api#596` (parked; design record merged as rpg-project#72), `rpg-toolkit#736`, `rpg-toolkit#740`, `rpg-dnd5e-web#432`.
 - Roles: `docs/teams/roles/<role>/{prompt,field-notes}.md`.
