@@ -19,7 +19,7 @@ exist), and only the first `character_id` in a request is ever bound.
 
 ## Decisions
 
-1. **Separate `LobbyService`** in `dnd5e/api/v1alpha2` — not RPCs bolted onto
+1. **Separate `LobbyService`** — not RPCs bolted onto
    `EncounterService` (Kirk, 2026-07-06). Rationale, in Kirk's frame: services version
    independently. The encounter service is where iteration churn lives and will need
    more versions; the lobby service can stay stable — or grow a feature — without
@@ -42,7 +42,13 @@ exist), and only the first `character_id` in a request is ever bound.
 
 ## Proposed Surface
 
-`dnd5e/api/v1alpha2/lobby/service.proto` — six RPCs:
+`dnd5e/api/lobby/v1alpha1/service.proto`, package `dnd5e.api.lobby.v1alpha1` — the
+lobby starts at its own v1alpha1 and versions on its own clock (Kirk, 2026-07-06:
+lining a new service up with another service's version number re-imports the
+whole-API-versioning habit the service split exists to avoid). Service-first layout,
+version as the package suffix — buf's recommended shape; the encounter service stays
+at `dnd5e/api/v1alpha2/encounter/` and can adopt service-first whenever it next bumps.
+Six RPCs:
 
 ```
 CreateLobby(campaign_id, character_id)      → {lobby_id, join_ref, host_player_id}
