@@ -1,41 +1,81 @@
-# Active handoff — 2026-07-05 (end of day): Wave 1 complete; board #19 is the work queue
+# Active handoff — 2026-07-11: Party Assembles wave closed at retro; final weekend — ship toward a real fight on GameView
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 
 ## Now
-**Wave 1 (the quick-win fixes off board #19) is COMPLETE** — all five issues fixed, merged by Kirk same day: `rpg-toolkit#745`/`#746` (PRs #747/#748), `rpg-dnd5e-web#436`/`#437` (PRs #438/#439), `rpg-api#625` (PR #626). rulebooks/dnd5e v0.65.0 tagged and delivered into rpg-api (PR #628 merged) — Rage melee-STR gate, STR advantage under Rage, and the Ki L2 gate are live in the game. Toolkit docs close-the-loop merged (#749). Board #19 (https://github.com/users/KirkDiggler/projects/19) is the single work queue and reads true.
+**The Party Assembles wave is CLOSED at retro on rpg-project#81** (2026-07-11). What
+shipped, all merged: LobbyService v1alpha1 contract (rpg-api-protos#177,
+`EncounterService.CreateEncounter` deleted — `StartEncounter` is the sole construction
+path), the full API vertical (rpg-api#630 + #633), and **GameView** — the real front
+end's first slice — on the playtest-proven stack (rpg-dnd5e-web#441 + #443). Verified by
+the bar itself: 4 browsers, 4 adventurers, mutual sight, each player their own view. The
+"4 real clients in one v2 encounter" story is Done on board #19.
+
+**Context that shapes everything: this is the final weekend (through 2026-07-13).**
+Ship over scaffolding; leave every artifact successor-ready. Goal for the window:
+**a real fight on the GameView route** (attack a goblin, see damage, end turns, kill it,
+via MCP playtest) — combat-entry survey dispatched 2026-07-11; design bite then
+implementation follow from its findings.
 
 ## Solid (verified — keep, don't re-derive)
-- **The paved-road pattern for effects** (the reusable spine Beat 2 discovered/hardened): activation verb → `ConditionAppliedTopic` → condition registration (`loader.go`/`factory.go`) → per-tick subscriber wiring → the event pipeline table (toolkit topic → api translate → proto → web dispatch) → render. Full detail is in the **#75 retro comment** — that's the canonical writeup, not this doc.
-- **Death-save arc is fully client-visible end to end** — ghost-events-to-rendered-nat-20-revival, confirmed via playtest.
-- **Permissions issue root-caused and fixed at the user-settings level, 2026-07-05** — was blocking implementer dispatches; not a per-agent or per-repo problem.
-- Everything is on `main` across all repos, matching the 5/5 playtest verify.
-- **`rpg-toolkit#721`** — `make pre-commit` is broken on toolkit main (bc syntax error in the coverage script), boarded on #13. With the next effort being toolkit-led, implementers must run the underlying lint/test targets directly — never `--no-verify`.
-- **Two stacks, one destination:** v1alpha1 owns lobby/multi-room/boss-victory (defeat detection is dead code — TPK can't trigger), v2 owns all Beat-1/2-hardened combat + Redis persistence but has **no** join/multi-room/boss. Strategic call: v2 is the chassis, v1 is a parts donor, destination is deleting v1. Toolkit's `spatial.BasicRoomOrchestrator` / `tools/spawn` / rulebooks-dungeon have zero rpg-api imports (verified).
-- **Rogue creation verified end-to-end in a real browser** (full creation flow, expertise picks, finalize) — but expertise math is invisible in play: the proto's `Proficiencies` flattens Expert to plain proficient at the wire; filed as **`rpg-api#627`** (Party Assembles / Fix / Todo on board #19), recommended shape = server-computed per-skill modifiers (`AbilityModifiers` precedent) which also removes the web's client-side skill-modifier calculation (boundary violation).
-- **`DamageChainEvent` now carries `IsMelee`** (added for the Rage gate — future damage-chain modifiers rely on it instead of re-deriving).
-- **No leveling path exists**: the public draft flow hardcodes level 1 (surfaced by the Ki fix — L2 behavior is unit-tested only).
-- **rpg-api's `make pre-commit`/`ci-check` fail on clean main** (73 pre-existing lint issues; GitHub CI only runs `go test -race`) — same shape as `toolkit#721`, unfixed.
+- **There is no room/space concept anywhere on the encounter stack** — not in
+  `tkenc.Encounter` (bare `core.Hex` positions), not in devseed. Visibility is a pure
+  per-player `SightRange` radius (`perception.VisibleHexesAt`, a stub that ignores
+  walls — none exist). The harness never had rooms; it had visibility. ADR-0034
+  (accepted, unimplemented) defers the spatial consolidation. Full trace: rpg-api#632
+  comments + `ideas/game-screen-rebuild/old-vs-new.md`.
+- **`tools/spawn`'s room-placement entry points are dead stubs** (`getRoomFromSpatial`
+  always errors) despite "complete" status docs — The Dungeon leg must budget for it.
+- **Doors already flow `revealed_walls`/`removed_walls`** (`DoorData` on `tkenc.Data`) —
+  partial wall plumbing to study for the walled-room design.
+- **GameView and /playtest share hooks/components** — that sharing is what makes MCP
+  verification proof of the game path. `/playtest` is permanent. LobbyView still exists
+  but is unreachable; slice 3 (delete legacy + drop all `*V2`/`*2` suffixes) not yet run.
+- **v1alpha1 surface still runs server-side** and the old UI runs from git — the
+  old-vs-new comparison (`ideas/game-screen-rebuild/old-vs-new.md`) maps every old-way
+  capability to a boarded leg; use its gap table, don't re-derive.
+- rpg-api `make pre-commit`/`ci-check` still fail on clean main (73 lint issues) —
+  rpg-api#631, Shelf. Lint-scope to touched packages; never `--no-verify`.
 
-## Open questions / calls (verify before acting; not findings)
-- Retro learnings are captured as **retro material only** — Kirk's explicit call at close-out was NOT to adopt them as process mandates yet ("proposals a little early"). They feed the upcoming planning session instead.
-- `rpg-project PR #72` (combat-mutable-state ONE HOME) — **merged 2026-07-05** as the parked design record; `rpg-api#596` itself remains parked/open, unchanged by Beat 2.
+## Process (locked at the 2026-07-11 retro — Kirk's calls)
+1. **Playtest-before-merge** on any wave PR with observable behavior — both
+   playtest-found bugs this wave (web#442, api#632) were invisible to CI and review.
+2. **Copilot is respected** — it caught two real bugs this wave (negative PartyCap,
+   non-atomic Redis write); disposition every comment, never dismiss as noise.
+3. **Every review gate carries a doc-drift axis** (docs-vs-code claims checked per PR);
+   for repos without Copilot (rpg-project, rpg-api-protos) the gate is the only reviewer.
+4. **No multi-line bash anywhere** (unallowlistable → permission prompts hang Kirk):
+   Write/Edit for file content, single-line commands, constraint goes in every agent
+   brief. Read-only allowlist lives in project `.claude/settings.json`.
+
+## Open questions (verify before acting; not findings)
+- Combat entry: how a lobby-built encounter enters TURN_BASED with a monster — survey
+  in flight; the lobby contract deliberately dropped `initial_mode`, don't re-add it
+  casually.
+- rpg-project#83 (visibility-diagnosis doc correction) — open at handoff time.
 
 ## Next (driven by board #19)
-Work now flows from board #19. Next session opens with either **(a)** the four class-kit Verify playtest stories on board #19 — now unblocked by the v0.65.0 bump; needs a wave-1-verify devseed fixture naming the cast — or **(b)** the design phase for one of the two critical-path trailblazers (4-player lobby on v2; multi-room on v2, toolkit-led). Kirk's call at session start. `rpg-api#627` is the remaining Party Assembles fix.
-- The **structural window** queued for whenever planning schedules it: the **ADR-0034 restructure** (rpg-toolkit), **`rpg-api#616`** (encounter/v2 layering — orchestration living in the handler package instead of Chapter-1 layering), and the **snapshot-vs-live dual-home family** (`rpg-toolkit#736` AC dual-homed, `rpg-toolkit#740` stale HP snapshot on the NPC-targeting path, and the `rpg-api#612`-class of bugs generally). Scheduling relative to the three groupings above is a planning-session decision, not decided here.
+1. **Combat entry on the new stack** (in flight) — opens The Dungeon leg.
+2. **The Dungeon trailblazer** (multi-room on v2, toolkit-led): inherits ADR-0034 +
+   the tools/spawn stub budget + the doors wall-plumbing precedent.
+3. **Game Screen polish** once there's a fight to render: HUD, combat log, initiative
+   overlay, movement-range highlight — gap rows 4–8 in `old-vs-new.md`.
+4. **Slice 3** (delete LobbyView + v1 hooks, rename pass) — mechanical, any time.
 
-## Decision log (2026-07-05, end of day)
-1. **Kirk merged all wave-1 PRs same-day** — `rpg-toolkit#747`/`#748`, `rpg-dnd5e-web#438`/`#439`, `rpg-api#626`, plus the v0.65.0 bump PR #628 and toolkit docs close-the-loop #749.
-2. **`rpg-api#627` filed after the expertise re-trace corrected a wrong first diagnosis** — toolkit was innocent; the proto boundary drops the skill level (Expert flattens to proficient at the wire).
-3. **v1-vs-v2 chassis call stands as written earlier** (see Solid: two stacks, one destination) — no new decision here.
+## Decision log (this wave — full detail on rpg-project#81)
+1. Clean slate, no shim; `/playtest` permanent; no version-suffixed names (2026-07-06).
+2. Separate LobbyService at its own `lobby/v1alpha1` (service-first, own version clock).
+3. `StartEncounter` subsumes `CreateEncounter` — one construction path.
+4. #632 diagnosis corrected mid-wave: visibility (one field), not geometry — real rooms
+   deferred to The Dungeon leg.
+5. Retro action items 1–4 above (2026-07-11).
 
 ## Pointers
-- Board **#19** (The Dungeon Run) — https://github.com/users/KirkDiggler/projects/19 — the current board; wave 1 complete, see Now/Next.
-- **`rpg-api#627`** — Party Assembles fix: expertise math invisible at the wire (`Proficiencies` flattens Expert); the remaining item from wave 1's Rogue-creation verify.
-- **rpg-project#75** — Beat 2 wave issue: full ledger (14 PRs / 4 repos) + retro comment (paved-road pattern, death-save arc, permissions fix).
-- **ADR-0034** — `rpg-toolkit/docs/adr/0034-where-encounter-logic-lives.md` — queued for restructure in the structural window.
-- Board **#13** (Chapter 2: Combat Verbs) — https://github.com/users/KirkDiggler/projects/13 — prior Chapter-2 board, Beat 1/2 record.
-- Follow-up shelf: `rpg-api#616`, `rpg-api#596` (parked; design record merged as rpg-project#72), `rpg-toolkit#736`, `rpg-toolkit#740`, `rpg-dnd5e-web#432`.
-- Old open `rpg-dnd5e-web` PRs (#370, #38, dependabot batch) are unrelated pre-existing housekeeping — not from this thread.
+- Board **#19** (The Dungeon Run) — https://github.com/users/KirkDiggler/projects/19 —
+  single work queue, reads true as of 2026-07-11.
+- **rpg-project#81** — Party Assembles umbrella: final ledger + retro (the wave record).
+- `ideas/game-screen-rebuild/` — design.md (parent), lobby-surface.md (contract incl.
+  edge-case policies), old-vs-new.md (verified gap table with board routing).
+- Deferred shelf: rpg-api#616 (v2 layering), rpg-api#631 (lint), rpg-toolkit#736/#740,
+  ADR-0034 (walled-room prerequisite).
 - Roles: `docs/teams/roles/<role>/{prompt,field-notes}.md`.
