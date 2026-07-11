@@ -53,8 +53,9 @@ and every missing piece maps onto a boarded leg.
 
 | # | Old-way capability | New-way home | Status |
 |---|--------------------|--------------|--------|
-| 1 | Room with walls/obstacles; players see each other | `StartEncounter` places party in a toolkit-generated room | **rpg-api#632, filed** — the current blocker |
-| 2 | TURN_BASED entry, initiative, a monster | Combat entry + monster seeding on the new stack | The Dungeon leg (tools/spawn trailblazer) + the FREE_ROAM-only ledger item on rpg-project#81 |
+| 1 | Players see each other | `StartEncounter` seeds `SightRange` (visibility, not geometry — diagnosis corrected 2026-07-09, see rpg-api#632) | **rpg-api#632** — one-field fix in flight |
+| 1b | Room with walls/obstacles | Encounter grows a real Space (toolkit-led: ADR-0034 consolidation, `environments.QuickRoom` → `spatial.Room`, room-aware perception). NOTE: `tools/spawn` room placement is a dead stub today (`getRoomFromSpatial` always errors) — budget for it. Reuse study: doors already flow `revealed_walls`/`removed_walls` through the pipeline (`DoorData` on `tkenc.Data`) — partial wall plumbing exists to learn from | The Dungeon leg — folds into the multi-room trailblazer design |
+| 2 | TURN_BASED entry, initiative, a monster | Combat entry + monster seeding on the new stack | The Dungeon leg (tools/spawn trailblazer — see 1b's stub caveat) + the FREE_ROAM-only ledger item on rpg-project#81 |
 | 3 | Dungeon settings in lobby (theme/difficulty/length) | Dungeon config on the encounter stack | The Dungeon leg — config feeds the multi-room trailblazer, not a lobby-service concern |
 | 4 | Full character HUD (mods, equipment, features) | Game-grade treatment on EncounterView (the gap map's "richer treatment" item) | Game Screen leg — new issue when slice opens |
 | 5 | Combat Log panel | Render the v2 event stream (events already arrive) | Game Screen leg |
