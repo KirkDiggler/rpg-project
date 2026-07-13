@@ -56,19 +56,15 @@ relocating dungeon rules content into the toolkit).
 - **"Hostile" == "is a monster" for wave 1** — no faction model exists; the combat-entry
   predicate names the seam where factions land later.
 
-## Forks for Kirk
+## Forks — RESOLVED (Kirk, 2026-07-13)
 
-1. **Combat-entry check: inline vs kicked.** Inline at the mutation sites
-   (`Move`/`AddMonster`), exactly like `checkEncounterEnd` — symmetric, cannot be
-   forgotten — versus an exposed `CheckCombatEntry()` the api calls per mutating RPC —
-   keeps `Move` single-purpose, but one missed call site means combat silently never
-   starts. **Recommendation: inline.** Both the surveyor and the director land here;
-   the silent-no-combat failure mode of the kicked shape is the worse bug class.
-2. **Wave-1 seeding scope.** Fixed placement of 2 goblins via `monster.NewGoblin`
-   through the fixed spawn engine now; wire `rulebooks/dnd5e/dungeon`'s placement data
-   model as real `SpawnConfig` in wave 2. **Recommendation: yes, defer** — wave 1's
-   done-when doesn't need theme/CR budgets, and the data model has zero existing
-   integration to build on.
+1. **Combat-entry check runs INLINE at the mutation sites** (`Move`/`AddMonster`),
+   exactly like `checkEncounterEnd` — symmetric, cannot be forgotten. Kirk: "def
+   inline." The kicked-method alternative's silent-no-combat failure mode is the
+   worse bug class.
+2. **Wave-1 seeding is fixed placement of 2 goblins** via `monster.NewGoblin` through
+   the fixed spawn engine; `rulebooks/dnd5e/dungeon`'s placement data model becomes
+   real `SpawnConfig` input in wave 2.
 
 ## Wave 1 — the walled room ("walk into a room, the fight starts")
 
