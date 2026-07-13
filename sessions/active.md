@@ -1,95 +1,89 @@
-# Active handoff — 2026-07-12: the game-screen rebuild is COMPLETE; frontier is The Dungeon leg
+# Active handoff — 2026-07-13: final-weekend close; combat-entry family + rage family fixed; frontier is The Dungeon leg design
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 
 ## Now
-**The game-screen rebuild (`ideas/game-screen-rebuild/design.md`) is complete — all four
-slices shipped and playtest-verified.** Since 2026-07-06: LobbyService v1alpha1
-(protos#177, api#630/#633), GameView = LobbyFlow + EncounterView on the proven stack
-(web#441, #443), a real winnable fight (api#635 + toolkit#751/v0.24.4 — NPC turns, real
-dice, `EncounterEnded: all_hostiles_defeated` live), fight-feel (web#446 — combat log
-narrating server events verbatim + initiative tracker), and the clean slate (web#448,
-−17.4k lines: LobbyView + v1 path deleted, every `*V2`/`*2` suffix renamed away). The
-real game route is Home → Play → LobbyFlow → EncounterView; `/playtest` is the permanent
-verification surface sharing the same hooks; `/concepts` is the separate mockup lab.
-
-**In flight right now**: rpg-api#636 (NPC-first initiative stalls the encounter — an
-implementer is building the server-side NPC-turn kick, design fork framed in the issue).
+**The final-weekend engagement (2026-07-06 → 07-13) closes with the stack whole.** After
+the game-screen rebuild completed (see the #85-era handoff), the bug-fixing stretch
+landed four more units, all playtest-verified pre-merge: the **NPC-first stall fix**
+(rpg-api#638 — server-side single-flight kick drives NPC turns at combat entry;
+`--inject-combat-npc-first` gives a deterministic repro knob), the **rage leak sweep**
+(rpg-toolkit#753 + bump #639 — encounter-scoped conditions end at encounter end via a
+new `CombatEndEvent`, opt-in per condition mirroring RestTopic), and the **rage-sustain
+RAW fix** (rpg-toolkit#756 + bump #640 — sustain flag reads `PostAttackRollChain`, so a
+missed attack keeps rage; verified live including rage resistance halving a crit).
+Current dnd5e module: **v0.65.2**; encounter: **v0.24.5**. The dev stack demo is fully
+reliable: lobby → GameView → inject a goblin → narrated fight → victory, any initiative
+order.
 
 ## Solid (verified — keep, don't re-derive)
-- **Playtest-before-merge catches what nothing else does**: six real bugs this weekend
-  invisible to CI + review — web#442 (stream abort never reconnects), api#632 (SightRange
-  omitted — diagnosis CORRECTED from "missing rooms": no room/space concept exists
-  anywhere on the encounter stack, visibility is a pure radius stub, ADR-0034 defers the
-  spatial fold-in), api#636 (NPC-first stall), api#637 (inject-seeded first actor's
-  economy empty after restart — deterministic, 2-for-2), web#444 (no resume path after
-  refresh), toolkit#752 (**raging condition leaks across encounters** via persisted
-  character data — bonus applies with no visible status; found because the combat log
-  itemizes modifier refs).
-- **Combat entry today is dev tooling**: `devseed --inject-combat --encounter-id=<id>`
-  adds a goblin + flips TURN_BASED by writing Redis out-of-process; clients pick it up
-  via reconnect (restart the api or wait). The REAL combat-entry trigger is Dungeon-leg
-  design work; the lobby contract deliberately has no `initial_mode`.
-- **Rage uses persist across encounters correctly** (charge spend, no long rest = no
-  rage) — the leak in #752 is the *condition*, not the charges.
-- **tools/spawn room placement is a dead stub** (`getRoomFromSpatial` always errors)
-  despite "complete" status docs; doors already flow `revealed_walls` — both feed the
-  walled-room design (The Dungeon leg, with ADR-0034).
-- **MCP-input limitation, not a bug**: synthetic canvas events can't reach the r3f
-  raycaster — playtests drive map-targeting via the component's `onEntityClick` handler;
-  a human mouse click on a goblin is still owed as confirmation of the real path.
-- rpg-api `make pre-commit`/`ci-check` fail on clean main (73 lint issues, rpg-api#631,
-  Shelf) — lint-scope to touched packages; never `--no-verify`.
+- **Nine playtest-found bugs this engagement, seven fixed+merged**, two open with full
+  evidence: rpg-api#637 (inject-seeded first actor's economy empty after restart — 3
+  deterministic repros; the #638 cascade path sidesteps it for normal flow) and
+  rpg-toolkit#754 (snapshots carry no active conditions — hydrated-in statuses are
+  invisible to late/reconnecting viewers; additive contract fix sketched in the issue).
+  Plus rpg-dnd5e-web#444 (no resume into a running encounter after refresh) and
+  rpg-api#641 (flaky Rogue test: v1 StartCombat generation is seed-dependent — fix with
+  a deterministic seed or let it die with v1).
+- **Combat entry is still dev tooling** (`devseed --inject-combat [--inject-combat-npc-first]
+  --encounter-id=<id>`, out-of-process Redis write; clients pick it up via reconnect /
+  api restart). The REAL trigger is The Dungeon leg's design work.
+- **No room/space concept exists on the encounter stack** (visibility = SightRange
+  radius; ADR-0034 defers the spatial fold-in; tools/spawn room placement is a dead
+  stub; doors carry the only wall plumbing). The walled-room design is toolkit-led.
+- **HP persists across encounters** (no rest = no heal) — appears intentional; rest
+  verbs exist in the rulebook (LongRest/ShortRest) but aren't reachable from the game.
+- MCP-input limitation: canvas targeting is driven via the component's onEntityClick
+  in playtests (r3f raycaster unreachable by synthetic events); human mouse click on a
+  goblin still owed once as confirmation.
+- rpg-api lint debt rpg-api#631 unchanged (73 issues, lint-scope to touched packages).
 
-## Process (locked at the 2026-07-11 retro + this weekend's additions)
-1. **Playtest-before-merge** on any PR with observable behavior — the orchestrator
-   drives MCP playtests on the branch; evidence goes on the PR.
-2. **Copilot respected** — and **verify it actually reviewed**: oversized PRs (e.g. the
-   −17.4k slice-3) get silently skipped; a skipped review is NOT clean — gate those like
-   the no-Copilot repos (rpg-project, rpg-api-protos).
-3. **Every review gate carries a doc-drift axis.**
-4. **No multi-line bash / heredocs in any agent work** (unallowlistable prompts hang
-   Kirk); Write/Edit for files. Project allowlist (`.claude/settings.json`) covers the
-   read-only set + `git rm`/`git mv`.
+## Process (all locked; memoried on the director side)
+1. Playtest-before-merge on any PR with observable behavior; evidence on the PR.
+2. Copilot respected — it caught real bugs in five separate PRs this engagement —
+   AND verify it actually reviewed (oversized PRs get skipped silently → gate those).
+3. Every review gate carries a doc-drift axis.
+4. No multi-line bash/heredocs in agent work; Write/Edit for files. Allowlist in
+   project `.claude/settings.json` (read-only set + git rm/mv).
+5. **Bumps ride the implementation PR that needs them** (Kirk, 2026-07-13); standalone
+   chore bumps only for toolkit-only fixes with nothing api-side queued — say so in
+   the PR body. Rules fixes land toolkit-side and reach the server as pure bumps —
+   that's the boundary working, not a smell.
 
 ## Open questions (verify before acting; not findings)
-- api#637's root cause — the #636 implementer was asked to observe whether the same
-  load seam explains it; check their PR findings before starting #637 separately.
-- Whether #636's fix lands as stream-subscribe kick (single-flight) or another seam —
-  implementer investigating; my lean is recorded in the issue.
+- rpg-api#637 root cause: the seeded-at-inject TurnState/economy doesn't survive
+  persist→load→project. The #638 drive path re-seeds correctly; compare the two.
+- Whether the four Class-Kit L1 verify stories (board drafts) should run before or
+  with The Dungeon leg design — Kirk's call at next pickup.
 
 ## Next (driven by board #19)
-1. **rpg-api#636** (in flight) — then injected fights are reliable end-to-end.
-2. **The Dungeon leg proper**: real combat entry (replaces injection), walled rooms
-   (toolkit ADR-0034 + environments.QuickRoom bridge — budget the tools/spawn stub),
-   monster seeding, multi-room trailblazer. `old-vs-new.md`'s gap table rows 1b–3 route
-   all of it.
-3. **Game Screen remainder**: HUD (gap row 4: modifiers/equipment/features), in-map
-   movement on GameView (the Move button is a stub), resume (web#444).
-4. **Class Kits**: toolkit#752 rage leak; the four L1 verify stories remain open.
-5. Naming straggler (out of rebuild scope): `AbilityScoresSectionV2` in character
-   creation still carries a suffix.
+1. **The Dungeon leg design** — the big one: real combat entry (replaces injection),
+   walled rooms (ADR-0034 + environments.QuickRoom bridge + spawn-stub budget +
+   doors precedent), monster seeding, multi-room trailblazer. Design bites before
+   implementation; old-vs-new.md gap rows 1b–3 are the map.
+2. **State-fidelity pair**: rpg-api#637 + rpg-toolkit#754 (related seams; #754's fix
+   is additive across all four repos).
+3. **Game Screen polish**: HUD (gap row 4), in-map movement (the Move button is a
+   stub), resume (web#444).
+4. Shelf: rpg-api#631 lint debt, rpg-api#641 flaky test, `AbilityScoresSectionV2`
+   naming straggler.
 
-## Decision log (this stretch — full ledgers on the issues/PRs)
-1. Combat entry via dev tooling, zero contract change (2026-07-11, api#634) — real
-   trigger is Dungeon-leg design.
-2. Toolkit gate fix over fake snapshot fields (toolkit#751): `isPlayerCombatant`
-   honors hydration; no theater math in rpg-api.
-3. Slice-3 survivors settled by evidence (web#448 body) — shared-looking lobby
-   components were v1-only and died; character-service v1alpha1 usage stays (never in
-   rebuild scope).
-4. Oversized-PR Copilot skip ⇒ gate-agent rule (2026-07-12).
+## Decision log (this stretch)
+1. NPC turns driven at combat entry via subscribe-time kick, single-flight (#638).
+2. Condition lifetime = opt-in per condition via CombatEndTopic; no taxonomy (#753).
+3. Rage sustains on attack ATTEMPT (PostAttackRollChain), not hit (#756).
+4. Bumps ride implementation PRs (2026-07-13, after #640's flake-blocked round-trip).
+5. Flaky v1-path test: deterministic seed or death-with-v1, not a rewrite (#641).
 
 ## Pointers
-- Board **#19** (The Dungeon Run) — https://github.com/users/KirkDiggler/projects/19 —
-  single work queue, reads true as of 2026-07-12.
-- `ideas/game-screen-rebuild/` — design.md (complete), lobby-surface.md (contract),
-  old-vs-new.md (gap table = the remaining work's map).
-- Wave records: rpg-project#81 (Party Assembles retro), rpg-api#634 close-out (the
-  first fight), web#448 body (deletion survivors).
-- Deferred shelf: rpg-api#616 (v2 layering), rpg-api#631 (lint), rpg-toolkit#736/#740,
-  ADR-0034 (walled rooms), rpg-dnd5e-web#444 (resume).
-- Dev stack: api `AUTH_DEV_MODE=true go run ./cmd/server server`, web `npm run dev`
-  (port 3001), chrome `scripts/rpg-chrome.sh`, cast via `go run ./cmd/devseed` (+
-  `--fixture=wave-2-beat2` for charli/finn), goblin via `--inject-combat`.
+- Board **#19** — https://github.com/users/KirkDiggler/projects/19 — reads true as of
+  2026-07-13; every open item above is on it with leg + status.
+- `ideas/game-screen-rebuild/` — design.md / lobby-surface.md / old-vs-new.md (the
+  remaining-work map).
+- Wave records: rpg-project#81 (Party Assembles retro), rpg-api#634 close-out (first
+  fight), web#448 body (deletion survivors), PR evidence comments on every merged fix.
+- Dev stack: api `AUTH_DEV_MODE=true go run ./cmd/server server` (50051), web
+  `npm run dev` (3001), chrome `scripts/rpg-chrome.sh` (9222), cast
+  `go run ./cmd/devseed` (+`--fixture=wave-2-beat2`), goblin `--inject-combat`
+  (+`--inject-combat-npc-first` for the worst-case order).
 - Roles: `docs/teams/roles/<role>/{prompt,field-notes}.md`.
