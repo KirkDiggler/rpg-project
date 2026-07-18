@@ -48,7 +48,7 @@ lining a new service up with another service's version number re-imports the
 whole-API-versioning habit the service split exists to avoid). Service-first layout,
 version as the package suffix — buf's recommended shape; the encounter service stays
 at `dnd5e/api/v1alpha2/encounter/` and can adopt service-first whenever it next bumps.
-Six RPCs:
+Seven RPCs:
 
 ```
 CreateLobby(campaign_id, character_id)      → {lobby_id, join_ref, host_player_id}
@@ -57,6 +57,11 @@ SetReady(lobby_id, ready)                   → {}          (broadcast on stream
 LeaveLobby(lobby_id)                        → {}          (pre-start only)
 StartEncounter(lobby_id)                    → {encounter_id}   (host-only, all-ready gated)
 StreamLobby(lobby_id)                       → stream LobbyEvent
+GetMyActiveLobby()                          → {lobby_id, encounter_id, lobby_status}
+                                               (rpg-api-protos#180 / rpg-api#653 / web#444 —
+                                                resume-after-refresh; no request fields,
+                                                identity from auth context; empty lobby_id
+                                                means no active lobby)
 ```
 
 ```
