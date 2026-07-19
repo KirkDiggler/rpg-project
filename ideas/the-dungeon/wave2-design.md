@@ -1,0 +1,200 @@
+# The Dungeon — Wave 2: multi-room, doors, traversal, a boss room
+
+## Status: Design — survey-verified 2026-07-19 (file:line for every claim). Extends `design.md` (wave 1). All six forks RESOLVED by Kirk 2026-07-19 (§Forks — RESOLVED); slices dispatch from here.
+
+North star (May 2026 playtest): **4-player co-op, multi-room dungeon, locked doors, a boss room** — mouse-only, no devseed.
+
+## The headline finding: this wave is mostly ASSEMBLY — with ONE genuine new build
+
+(Most shapes already exist; the one substantial invention is the combat-pocket lifecycle — gap 5 / Fork 2. Read that before costing the wave as "cheap.")
+
+Wave 1 ("the walled room", rpg-toolkit#757) plus "Wave 2.7/2.9" work and the dead multi-room orchestrator mean most shapes already exist. The honest inventory before designing anything new:
+
+**Already built (verified):**
+
+- **Door verbs + lock/unlock skill check** — `encounter/data.go:170` `DoorData{ID, Position core.Hex, Open, Locked, LockDC, LockAbility, LockTool}` on `Data.Doors`; `encounter/encounter.go:1013` `Encounter.OpenDoor(playerID, doorID)`; `encounter/prompts.go:130` `AttemptUnlock` issues a skill-check prompt when `Locked`, `SubmitCheck` on success clears `Locked` then calls `OpenDoor` internally (`prompts.go:268`). The toolkit deliberately does **not** gate `OpenDoor` on `Locked` — routing locked→unlock is the orchestrator's job.
+- **API door interaction, end to end** — `internal/orchestrators/encounter/v2/interact.go:66` `Interact` loads the encounter, classifies `data.Doors[TargetEntityID]`, routes locked→`AttemptUnlock` (caller-private skill-check prompt) / unlocked→`OpenDoor` (publishes `DoorOpened` + `GeometryRevealed`), persists. Handler maps sentinels to status codes. **Wired.**
+- **`Interact` works today** — `Interact(encounterId, targetEntityId, "open")` is live end to end; the harness debug text-input button drives it (web survey). The web `useInteract` hook exists (`src/api/useInteract.ts`).
+- **The wire** — `WallKind{SOLID, DOOR_CLOSED, DOOR_OPEN, WINDOW}` (types.proto:82); `Wall{from, to, kind}` (types.proto:152, "a barrier between two adjacent hexes" — `from`/`to` may differ); `Space{hexes, walls, entities, zones}` (types.proto:184, "no rooms on the wire"); `Interact` (service.proto:54,185); `DoorOpened{door_entity_id, revealed_hexes, revealed_walls, removed_walls}` (events.proto:252); `DoorClosed` (events.proto:261); `GeometryRevealed{hexes, walls}` (events.proto:102).
+- **Wall geometry + LoS + combat entry** — `SpaceData{Walls []environments.WallSegmentData, Width, Height}` (data.go:80); `WallSegmentData{Start, End spatial.CubeCoordinate, BlocksMovement, BlocksLoS}` (environments/environment_data.go:188) — **segments already carry per-segment blocks-flags**; wall-aware `VisibleHexesAt`/`CanSeeAt`/`truncateAtWall` (space.go); inline combat self-entry on visibility-pair formation; terminal end via `checkEncounterEnd`→`ModeEnded`+`EncounterEndedEvent` (death.go:393).
+- **The full multi-room orchestrator — as DEAD CODE** — `tools/spatial/orchestrator.go:58` `RoomOrchestrator` interface, `orchestrator.go:12` `ConnectionTypeDoor`, `connection.go:8` `BasicConnection` with `IsPassable` (connection.go:79), `basic_orchestrator.go:247` `AddConnection`, `:351` `MoveEntityBetweenRooms`, `:403` `CanMoveEntityBetweenRooms`, plus `FindPath`. All tested; **encounter only ever calls `AddRoom` once as a single-room container.** Per ADR-0015 these connections are *abstract* (logical links; position is the game layer's job).
+- **Room-aware spawn** — spawn engine (spawn PR #770) has `PositionOracle` + `FixedPositions` + `SpawnConfig.Seed`, single-room-scoped via `GetRoom`; rpg-api `seedGoblins` builds a `PositionOracle` on `perception.CanSeeAt` for out-of-sight placement (status.md:70-74). #760/#764 both **closed**.
+- **Web renders doors from wall kind** — `src/components/hex-grid/syntyHexWallHelpers.ts:42` `edgePieceKind(WallKind)` maps `DOOR_CLOSED`/`DOOR_OPEN`/`WINDOW` (44-47) to door GLB pieces; the set-membership wall renderer "extends automatically to DOOR_*" (`src/hooks/dungeonMapGeometry.ts:87`); door state is tracked (`src/hooks/useEncounterState.ts:293`, `DOOR_CLOSED`→`DOOR_OPEN` overwrites the entry). Door-open is a **Y-rotation pose of the same GLB** (needs visual QA); an isolated DOOR cell renders **6 door pairs** (unit-test-proven) — the multiplicity constraint.
+
+**The real gaps (this is the whole wave):**
+
+1. **Doors don't block, and opening reveals nothing.** `OpenDoor` (encounter.go:1013) flips `door.Open` and calls `perception.ProjectDoorOpen`, but never touches `e.room`'s walls — a **closed door blocks neither movement nor LoS today**, and `ProjectDoorOpen` (perception/project.go:135) only re-reveals the door cell's already-visible neighbors (its `door` param is commented *"reserved for future-slice wall logic"*). Walls block but can't open; doors open but don't block or reveal.
+2. **There is one room.** Live space = one `environments.QuickRoom` via `enc.InitRoom(20,20,PatternRandom)` (`internal/orchestrators/lobby/start_encounter.go:171`), party at placeholder `roomCenterHex()` (:92), 2 goblins. No multi-chamber generation, no entrance concept.
+3. **Unseeded RNG (rpg-toolkit#787).** `RandomSeed` defaults 0 (`wall_patterns.go:129` `rand.NewSource(params.RandomSeed)`; `room_builder.go:174` only seeds when non-zero), so every dungeon is identical.
+4. **The client click surface is missing.** The web renders door geometry and tracks state, but has no way to know *which rendered wall is a clickable door with which id*: `EncounterView.tsx:19-22` + `:223-225` document that "HexGrid's door-click surface needs a v2-shaped `DoorInfo[]` the v2 stream doesn't accumulate." The old v1alpha1 `DoorInfo[]`/`HexDoor` path is dead code (never populated).
+5. **Combat has no room scope.** `rollInitiative` (combat.go:499) seeds initiative from **all** `e.data.Monsters` (combat.go:508 — LoS-blind), and `checkCombatEntry` (combat.go:360) flips to `ModeTurnBased` on the *first* player↔monster sightline. So the first goblin sighting in chamber 1 rolls **every** seeded monster — the locked-away boss included — into one initiative. The only combat exit is `checkEncounterEnd`→`ModeEnded` (terminal; `SetMode` rejects external `ModeEnded`, core/mode.go:28); nothing ever fires a non-terminal `TURN_BASED`→`FREE_ROAM` (the `SetMode(ModeFreeRoam)` *mechanism* exists in combat.go's switch, but no rule calls it). Result with seed-all + one space: one dungeon-wide initiative that cannot end until every monster dies — and for slice 3 the boss is behind a locked door you cannot reach mid-initiative, so it **soft-locks**. This is the wave's one genuine NEW toolkit build (see Fork 2), and it corrects the wave-1 premise that "combat entry mirrors combat end with no new lifecycle" — that holds for one room, not for many.
+
+---
+
+## The crux, resolved first: are doors walls or entities?
+
+The contradiction the design must settle before anything else:
+
+- **The wire says doors are kind-flipped WALLS** — `WallKind.DOOR_*`, "opening changes the kind, not the wall's existence" (types.proto:80). The web renders doors *from wall kind* (syntyHexWallHelpers.ts:42).
+- **The toolkit says doors are positioned ENTITIES** — `DoorData{ID, Position, Open, Locked, LockDC…}` keyed by ID on `Data.Doors`, separate from walls (which are degenerate `Start==End` segments with no kind field). `Interact` targets an **entity id**; `DoorOpened.door_entity_id` names one.
+
+**Resolution: the `DoorData` entity is the single source of truth; the wall kind is its projected geometry.** A door is one internal object — `DoorData` (id, position, open/locked, lock params) — that owns interactivity and lock state and is targeted by `Interact(door.ID)`. Its geometry is *derived at projection time* into a DOOR-kind `Wall` for the renderer. This honors both existing shapes without either being a second source of truth: the entity is truth, the wall is a view. `DoorData` (id, position, open, locked) **is** the "v2-shaped DoorInfo" the web asked for — so the web assembles its door-click surface directly from the DOOR-kind walls once those carry the id, with no parallel list to correlate.
+
+**The one bridge this requires: `Wall.id`.** The web reads a `DOOR_*` wall and must learn the door's id to send `Interact(id)`. Walls today are `{from, to, kind}` — no id. So the wave's single load-bearing wire addition is `Wall.id` (`optional string`, additive): the projector copies `DoorData.ID` onto the door's `Wall`; solid walls leave it empty; `DoorOpened.door_entity_id` is that same id. With it, each `DOOR_*` wall self-describes — geometry (kind → GLB pose), passage edge (from/to), and identity (id → `Interact`) — and the web needs no position-correlation and no separate door list.
+
+Alternatives weighed and rejected:
+
+- **A new `Space.doors []Door` list (the literal "DoorInfo[]").** Matches the web's comment wording and the `DoorData` shape 1:1, but it is *more* wire surface (a new message + repeated field) and forces the web to correlate two lists (walls for geometry, doors for identity) by position — for no gain over one `Wall.id`. The DOOR-kind walls already *are* the door list once they carry ids.
+- **Doors as `Space.entities` entries.** `entities` are real-time, LOS-filtered, moving objects; doors are sticky geometry with a different lifecycle. Wrong bucket, and it splits the door across entities+walls.
+- **Zero wire change via position-matching a hidden door record.** There is no door record on the wire to match against without adding one; "zero change" isn't actually reachable for the *click surface*. `Wall.id` is the smallest honest addition.
+
+Locked state on the wire is a **separate, optional** touch (see §Q2): `WALL_KIND_DOOR_LOCKED` gives a distinct locked visual, but without it a locked door renders as `DOOR_CLOSED` and its locked-ness surfaces as the skill-check prompt on click. So the *required* wire surface of the whole wave is exactly `Wall.id`.
+
+---
+
+## Design question 1 — Dungeon topology
+
+**Recommendation: ONE continuous `Space` / one `spatial.Room` spanning the whole dungeon; "rooms" are wall-partitioned regions within it, joined by DOOR-kind cells. Do NOT adopt the multi-room orchestrator.**
+
+This deviates from the "assembly not invention" default (the orchestrator is right there, tested), so here is the hard argument, because the deviation is load-bearing.
+
+**Weighing the front-runner (multiple `spatial.Room`s + `RoomOrchestrator`/`Connection`s):** it exists and is tested (orchestrator.go:58, basic_orchestrator.go:247/351/403). But it solves a *different* problem: ADR-0015 connections are **abstract** — "logical relationships, not spatial constraints"; `MoveEntityBetweenRooms` removes the entity from the source room and emits a transition event for the *game layer* to place it. That is theater-of-mind navigation between separately-coordinated rooms. A tactical hex dungeon needs the opposite: the party physically stands on a doorway cell, sees *through* it, and walks *across* it in one coordinate system. Adopting the orchestrator would force us to:
+
+1. **Re-add precise positions ADR-0015 deliberately dropped** — the door must be at a specific hex, walkable-through and LoS-gated, which abstract connections don't model.
+2. **Invent cross-room LoS ourselves** — the orchestrator has no line of sight across a connection; reveal-through-a-doorway (the whole point) isn't something it provides.
+3. **Rewrite the proven wave-1 core** — `checkCombatEntry`/`CanSeeAt`/`truncateAtWall` all close over **one** `e.room`, with no per-entity room membership anywhere (survey seam). Multiple rooms means teaching every one of those about room membership and cross-room queries.
+4. **Flatten to one `Space` for the wire anyway** — the wire is *"continuous flat hex map — no rooms on the wire"* (types.proto:179), hexes/walls sticky per character, entities LOS-filtered. N rooms would be collapsed to one `Space` on projection regardless.
+
+So reusing the orchestrator is *more* invention (precise positions + cross-room LoS + a membership rewrite + wire-flattening) than extending the single continuous space, and it buys nothing the north star needs. The very seam the survey flags — "everything closes over one `e.room`" — is the argument *for* staying single-room-as-whole-dungeon: keep one `e.room` that **is** the whole dungeon and none of that machinery changes; walls + door cells gate LoS/movement/combat-entry across regions for free.
+
+**The continuous model needs a "region" concept — and it is NEW (cheap) toolkit work, not reuse.** The toolkit `SpaceData` has no zone/region field (data.go:80 — `Walls`, `Width`, `Height` only), and the *wire* `Zone` is explicitly non-structural ("Zones do NOT structure the map for movement or rendering", types.proto:161). So a chamber tag that scopes spawning, combat pockets (Fork 2), and entrance anchoring is a small new addition to the toolkit's `SpaceData` (e.g. a per-hex or per-region chamber id), with the wire `Zone` available only to carry the *label* for ambient/narration — region *logic* stays toolkit-side. Cheap, but honestly new. The dead orchestrator is not deleted by this wave; it remains the seam if a future need (procedural mega-dungeons, cross-*encounter* travel) ever wants genuinely separate spaces.
+
+**How many rooms for the first slice: 2 chambers + a boss chamber = 3 regions, 2 doors (one plain, one locked)** — the minimum that proves every north-star word. Layout is a short linear chain for slice 1 (entrance → door → mid → locked door → boss); branching is a later generation concern.
+
+---
+
+## Design question 2 — Doors: data model + blocking + passage edge
+
+Builds on the crux (§above): `DoorData` is truth; it projects to a `Wall{id, from, to, kind=DOOR_*}`.
+
+**Blocking + opening (the core toolkit integration).** Today a closed door doesn't block and opening reveals nothing (gap 1). Fix:
+
+- **Closed doors block via the existing wall machinery.** A closed `DoorData` at its `Position` must present as a blocking cell to `IsLineOfSightBlocked`/`CanPlaceEntity`. Recommended: `rebuildRoomFromData` (which already reconstructs wall entities each load) registers a blocking wall entity at each **closed** door's `Position`, derived from `Data.Doors` — so `DoorData` stays the single source of door truth and `SpaceData.Walls` stays *solid* walls only. (Trivial alternative: generation writes a co-located `WallSegmentData` with `BlocksMovement/BlocksLoS` and `OpenDoor` toggles it — `WallSegmentData` already has those flags, environment_data.go:188. Either works; the derived-from-`Doors` path avoids redundant state.)
+- **`OpenDoor` unblocks + reveals** (extend encounter.go:1013): after `door.Open = true`, the door's cell stops blocking (next rebuild, or flag-toggle), **then** re-run reveal. Fix `ProjectDoorOpen` (project.go:135 — its `door` param is already reserved for this): with the cell now transparent, re-run `VisibleHexesAt` and reveal the delta — the next chamber comes into view **progressively through the doorway**, SightRange-capped, blocked by that chamber's own walls. Publish it via `DoorOpened.revealed_hexes`/`revealed_walls` (already on the wire).
+
+**The passage edge (multiplicity constraint #648-comment-4, web-confirmed: an isolated DOOR cell renders 6 door pairs).** The proto `Wall{from, to}` may differ (types.proto:152). Project a door as `Wall{from: doorCell, to: passageNeighbor, kind: DOOR_CLOSED}` — the from→to pair **is** the one designated passage edge, so the renderer draws a single door frame on that edge. Solid walls stay `from==to`. Zero new geometry fields; the existing renderer keys the pose off `kind` (Y-rotation, syntyHexWallHelpers.ts) and the edge off from/to.
+
+**Locked doors reuse the existing skill-check verb.** `Interact(target=door)` → orchestrator reads `DoorData.Locked` → locked returns `InputRequired{skill_check}` (`AttemptUnlock`), the client resolves via `SubmitCheck`, success unlocks-and-opens (all wired: interact.go:92, prompts.go). **No new RPC, no new toolkit verb.** Optional wire polish: `WALL_KIND_DOOR_LOCKED` (additive enum) for a distinct locked visual; without it, a locked door renders as `DOOR_CLOSED` and locked-ness surfaces on click.
+
+**Wire touches (both additive; one required):**
+
+| Touch | Required? | Why |
+|---|---|---|
+| `Wall.id` (`optional string`) | **required** | door click → `Interact(id)`; the crux bridge |
+| `WALL_KIND_DOOR_LOCKED` | optional | distinct locked visual; else locked renders as closed |
+
+Everything else (`Interact`, `DoorOpened`, `DoorClosed`, `GeometryRevealed`, `Space`, `Wall.from/to/kind`) is reused as-is.
+
+**Resolve the latent unread-field case:** the web currently reads only `DoorOpened.door_entity_id`; `revealed_hexes`/`revealed_walls` go unconsumed. This design **consumes them** (they carry the through-doorway reveal), retiring the ambiguity. `removed_walls` is used only when an open action genuinely removes a barrier (rare); populate it only then.
+
+---
+
+## Design question 3 — Traversal + reveal
+
+- **What reveals: progressive LoS through the opening** (§Q2). You see through the doorway, then more as you step in — honest to per-hex sticky reveal + SightRange, and it doesn't spoil the next chamber's monster positions the way whole-room reveal would.
+- **Entrance-anchored spawn (Kirk, #648 2026-07-18): the continuous model makes it nearly free.** Chamber 1's spawn anchors to a designated **dungeon-entrance cell** just inside its perimeter, replacing `roomCenterHex()` (start_encounter.go:92, self-documented as a safest-margin placeholder, not a design). Because the party never re-spawns when crossing a door in one continuous space, **Kirk's "room N's spawn anchors to the traversed door" clause becomes moot** — there is no per-room respawn to anchor. Kirk confirmed continuous walk-through (Fork 1, 2026-07-19): his earlier comment assumed a per-room-transition model that the continuous topology dissolves. The initial spawn still composes with the wall-aware, verified-placeable, near-the-entrance search flagged in status.md.
+- **Party split across rooms: allowed, ungated.** One space → members roam freely; combat entry is per visibility-pair, so it already handles a lone scout opening a door and drawing the next fight. No gate (consistent with `feedback_no_logic_in_web`). Playtest-watch: a solo scout can trigger the boss while the party is a room away — emergent co-op, acceptable for slice 1; flag, don't gate.
+
+---
+
+## Design question 4 — The boss room
+
+**What makes it the boss room mechanically for slice 1, honest to existing systems:**
+
+1. **A locked door gates it** — the north-star "locked door", unlock via the existing `AttemptUnlock`→`SubmitCheck` skill check.
+2. **A tougher single monster.** Only `monster.NewGoblin` exists (monster.go:228) — no WarChief. Cheapest honest option: `monster.NewGoblinBoss` following the exact `NewGoblin` pattern (more HP/damage, same attack/move AI, same kit) — stat data, not new mechanics. No boss-specific AI in slice 1.
+3. **The boss chamber is terminal; its clear ends the dungeon — but only atop the combat-pocket lifecycle (Fork 2).** Seed **all** chambers' monsters at StartEncounter, each out-of-sight per its region. This is only safe if combat is *pocket-scoped*: initiative built from **engaged (LoS-having)** monsters, a non-terminal `TURN_BASED`→`FREE_ROAM` exit when a pocket is cleared, and `ModeEnded` (`checkEncounterEnd`, death.go:393) reserved for the **whole-dungeon** clear (the boss, last monster anywhere). Without that (today's `rollInitiative`, combat.go:508), the first sighting rolls the boss into initiative and completion can never fire — see gap 5 and Fork 2. So "the boss chamber ends the dungeon" is **new end-logic**, not the existing terminal transition reused unchanged; the terminal event shape is reused, the lifecycle that reaches it is new.
+
+**Dungeon completion reuses rpg-api#663's `EndEncounter(reason)` seam** — #663 adds an administrative terminal transition with a `reason` taxonomy (`abandoned`) over the same `ModeEnded` path. Victory is the same transition with `reason:"victory"/"completed"`; #663's liveness-refuses-resume then also protects a *completed* dungeon from re-imprisoning players on reconnect. Coordinate so the reason taxonomy covers both.
+
+---
+
+## Design question 5 — Generation (seeded, multi-room, connected)
+
+**Recommendation: multi-chamber generation is a TOOLKIT capability (extend `tools/environments`); rpg-api orchestrates by key (length/layout/theme/seed) and receives geometry back.** The live generator already is the toolkit's (`enc.InitRoom`→`environments.QuickRoom`, start_encounter.go:171) — the correct layer, geometry being the toolkit's per the boundary rule.
+
+Wave 2 extends it to emit a **multi-chamber `SpaceData`**: N chambers at non-overlapping offsets in one coordinate space, wall-partitioned, one DOOR-kind cell per adjacent-chamber pair, a **spanning-tree connectivity guarantee** (every chamber reachable from the entrance through doors), a designated entrance cell in chamber 1, and per-chamber spawn regions (via the new chamber-region tag, §Q1) for seeding and combat pockets. Each chamber's interior walls reuse the existing `QuickRoom`/`RandomPattern` generator per chamber for variety.
+
+**Absorb rpg-toolkit#787 (unseeded RNG) here.** Thread a real seed into `PatternParams.RandomSeed` (wall_patterns.go:129; room_builder.go:174 only seeds when non-zero): default to entropy, with an **explicit seed param** plumbed for reproducible tests/fixtures (`feedback_devseed_fixture_per_wave`). Audit deterministic-layout tests before flipping the default. StartEncounter passes the seed (entropy in prod, fixed in the wave's named devseed fixture).
+
+**Monster + boss seeding: per-region, out-of-sight, via the existing spawn engine.** The engine now has `PositionOracle` + `FixedPositions` + `SpawnConfig.Seed`, single-room-scoped via `GetRoom` (spawn PR #770). With one `e.room` (the whole dungeon), scope each chamber's seed to that chamber's region tag (§Q1) and keep monsters **out of sight from that region's entrance door** (the same `perception.CanSeeAt` oracle wave-1 uses from the room center — generalized to the door). `FixedPositions` pins the boss; `Seed` gives fixtures determinism. The `rulebooks/dnd5e/dungeon` placement model (`MonsterPlacementData`, `SpawnZoneData` — zero callers today) is the natural home for the per-room-type spawn tables the generator feeds; wave 2 gives it its first real caller.
+
+**Fork — the dormant rpg-api multi-room generator.** rpg-api already contains a rich but **unwired** generator: `internal/components/dungeon/` (`LayoutGenerator`→RoomSlots+Connections+StartRoom+BossRoom, `ShapeGenerator`, `PerimeterUpdater` with door openings, `FeatureGenerator` with spawn zones, `EncounterGenerator` with `IsBossRoom`/`BossPool`/`CRBudget`). Its callers are only within its own package + `spawner/dungeon_adapter.go`; StartEncounter does **not** use it. Geometry generation in rpg-api is a boundary violation (this is the Architecture-Honesty chapter). **Decided (Fork 3, Kirk 2026-07-19): toolkit-owned generation.** Its *design intent* informs the toolkit generator's API, but geometry-producing code lives in the toolkit; the api component is retired or thinned to an orchestration shell passing settings by key.
+
+---
+
+## Design question 6 — Slice plan
+
+Ordered, each independently mergeable and playtest-verifiable. Toolkit→api→web within a slice. `Wall.id` lands in its own additive rpg-api-protos PR ahead of the api leg that populates it.
+
+**Slice 0 — Seeded room variety + LoS symmetry (toolkit only). Closes rpg-toolkit#787 and rpg-toolkit#788.** Entropy-default seed + explicit seed param on the room generator (#787); audit deterministic tests first. Fix the `lerpCube` LoS asymmetry (≥22-hex sightlines resolve differently depending on which end you cast from — rpg-toolkit#788), which multi-room sightlines across long chambers will hit. *Playtest bar:* two consecutive `StartEncounter`s show different wall layouts; the named devseed fixture still reproduces a fixed one; a long diagonal sightline reveals the same either direction.
+
+**Slice 1 — Doors block and reveal (toolkit only; integration-gated).** Closed `DoorData` cell blocks via the wall machinery; `OpenDoor` unblocks and `ProjectDoorOpen` re-runs LoS to reveal through the doorway. Fold in the known gate finding: **NPC-direction event visibility is radius-only and leaks through walls** (#648 body) — make it wall-aware here, or a closed door leaks the next chamber's monster cues. *Gate (integration test, not a mouse playtest — nothing renders these yet; observable end-to-end in Slice 3):* a closed door blocks LoS+movement; opening it reveals the cells beyond and lets movement through.
+
+**Slice 1b — Combat pockets (toolkit only; integration-gated). Resolves gap 5 / Fork 2.** Scope `rollInitiative` to engaged (LoS-having) monsters; add a non-terminal `TURN_BASED`→`FREE_ROAM` transition fired when the current pocket's monsters are all dead but live monsters remain elsewhere; reserve `ModeEnded` for the whole-dungeon clear. Re-entry on the next sighting via the existing `checkCombatEntry`. *Gate (integration test):* two monster groups behind a closed door — sighting group A starts combat with only group A in initiative; clearing A returns to `FREE_ROAM`; opening the door and sighting group B starts a fresh pocket; clearing B (last monsters) fires `ModeEnded`. **This is the wave's one substantial new toolkit build; sequence it before Slice 2 depends on it.**
+
+**Slice 2 — Two-chamber dungeon, end to end (toolkit→protos→api→web). THE multi-room slice.** Toolkit: generator emits 2 chambers + 1 plain door + entrance cell + per-chamber region tags (§Q1) for spawn + pockets; depends on Slice 1b. Protos: additive `Wall.id`. API: build the 2-chamber space, project the door as `Wall{id, from, to, DOOR_CLOSED}`, entrance-anchored spawn (replace `roomCenterHex()`), seed goblins per chamber out-of-sight. Web: attach a click surface to `DOOR_*` walls (id → `useInteract`), render open/closed pose, consume `DoorOpened.revealed_*` to reveal chamber 2, door-blocked walkability. *Playtest bar:* spawn at chamber-1 entrance, fight the goblins, click the closed door → it opens → chamber 2 reveals through the doorway → walk through → chamber-2 goblins appear (`EntityAppeared`) → combat by rule.
+
+**Slice 3 — Locked boss door + boss chamber + completion (toolkit→protos→api→web).** Toolkit: `monster.NewGoblinBoss`; generator adds a 3rd (boss) chamber behind a locked door; boss-clear rides the existing terminal end. Protos (optional): `WALL_KIND_DOOR_LOCKED`. API: project the locked door, seed the boss out-of-sight, wire completion to #663's `EndEncounter(reason:"victory")` + liveness-refuses-resume. Web: locked-door render + skill-check prompt on click (`InputRequired`→`SubmitCheck`, already wired), victory state. *Playtest bar:* clear chamber 2, reach the locked boss door, click → skill-check → resolve → unlock+open → enter boss chamber → boss appears → defeat it → dungeon completes (resume does not re-imprison).
+
+### The wave's closing playtest script (mouse-only, the done-bar)
+
+1. Party of 4 assembles via the lobby; `StartEncounter` drops them **just inside the chamber-1 entrance** (not center).
+2. Chamber-1 goblins come into view on a move → combat by rule → fight to their deaths.
+3. Click the closed door → it opens → chamber 2 reveals **through the doorway**.
+4. Move through → chamber-2 goblins appear → combat.
+5. Clear chamber 2 → reach the **locked** boss door → click → skill-check prompt → resolve → unlock + open.
+6. Enter the boss chamber → the boss (tough goblin) appears → fight to victory.
+7. Boss dies (last hostile) → **dungeon completes**; reconnecting resumes to an endable state, not an inescapable fight.
+
+No devseed injection, no server restart, mouse-only throughout.
+
+---
+
+## Layer-honesty ledger (every wire touch)
+
+| Touch | Layer | Additive? | Required? | Why |
+|---|---|---|---|---|
+| `Wall.id` (`optional string`) | protos | yes | **yes** | door addressability for `Interact`/`DoorOpened`; the crux bridge |
+| `WALL_KIND_DOOR_LOCKED` | protos | yes | no | distinct locked visual; else locked renders as closed |
+| Door blocks/reveals; `OpenDoor` unblocks + `ProjectDoorOpen` re-runs LoS | toolkit | n/a | — | rules/geometry — toolkit-owned |
+| **Combat pockets: LoS-scoped `rollInitiative` + non-terminal region-clear `TURN_BASED`→`FREE_ROAM`** | toolkit | n/a | **yes** | the one substantial NEW build (Fork 2); combat-lifecycle — toolkit-owned |
+| Chamber-region tag on `SpaceData` | toolkit | n/a | — | NEW (cheap); scopes spawn + pockets; wire `Zone` is non-structural |
+| Multi-chamber generator + `#787` seed + `#788` LoS-symmetry | toolkit | n/a | — | geometry generation — toolkit-owned |
+| `monster.NewGoblinBoss` | toolkit | n/a | — | rules content — toolkit-owned |
+| Build multi-chamber space; project doors (+id); entrance spawn; per-region seed | api | n/a | — | orchestration by key — no rules |
+| Door click surface + open/closed pose + reveal | web | n/a | — | renders truth, sends intent |
+
+Nothing subtractive; no breaking change; no `Space`-shape change beyond `Wall.id` (+ optional enum value).
+
+---
+
+## Forks — RESOLVED (Kirk, 2026-07-19)
+
+All six locked as recommended; slices dispatch from the decisions below. The full rationale and rejected alternatives live in the sections cited.
+
+1. **Topology + spawn: ONE continuous `Space`; regions are a new (cheap) toolkit chamber tag; spawn is continuous walk-through** (entrance-anchored *initial* spawn only, no per-room respawn). Not the multi-room orchestrator — it is tested dead code for abstract theater-of-mind navigation, and adopting it costs more than extending the proven single room. (§Q1/Q3)
+2. **Combat scope: combat pockets** — initiative scoped to engaged (LoS-having) monsters, a non-terminal `TURN_BASED`→`FREE_ROAM` region-clear exit, and `ModeEnded` reserved for the whole-dungeon (boss) clear. The wave's one substantial new toolkit build; the only option that handles the locked boss and matches the umbrella's "fights start room by room." (§gap 5, Slice 1b)
+3. **Generation ownership: toolkit-owned geometry.** Extend `tools/environments`; retire or thin the dormant rpg-api `internal/components/dungeon` generator (geometry-in-api is the boundary lie this chapter retires). rpg-api orchestrates by key. (§Q5)
+4. **Door representation: `DoorData` entity is truth, projecting to a DOOR-kind `Wall`; add additive `Wall.id`** as the click→`Interact` bridge. Not a separate `Space.doors[]` list, not door-as-`entities`. (§Crux)
+5. **Locked-door unlock: the existing skill check** (`AttemptUnlock`→`SubmitCheck`, already wired). Not key-item, not room-clear-gate. (§Q2/Q4)
+6. **Slice-1 shape: 3 chambers, 2 doors (1 plain, 1 locked), a boss chamber; party split allowed and ungated** (a solo scout may open a pocket the rest of the party isn't in — accepted as emergent co-op). (§Q1/Q3)
+
+## Load-bearing digest
+
+- **Wave 2 is mostly assembly — with one real build.** Door verbs, lock/unlock skill check, api `Interact` routing, wall geometry+LoS, combat entry, terminal-*end shape*, and the web's door *renderer* all exist. The gaps: closed doors must *block* and opening must *reveal through the doorway* (toolkit), multi-chamber *generation* (toolkit), the web *click surface* (needs `Wall.id`), and — the one substantial new build — **combat pockets** so the whole dungeon doesn't roll into one un-endable initiative (toolkit; Fork 2).
+- **The crux — doors are `DoorData` entities (truth) projecting to DOOR-kind walls (geometry).** One additive field, `Wall.id`, bridges click→`Interact`; that is the wave's only *required* wire change. `WALL_KIND_DOOR_LOCKED` is optional polish.
+- **Topology: one continuous `Space`; regions are a new (cheap) toolkit chamber tag** (`SpaceData` has none today; the wire `Zone` is non-structural). The multi-room orchestrator is tested dead code solving theater-of-mind navigation — adopting it means precise-positions + cross-room LoS + a `one-e.room` rewrite + wire-flattening, i.e. more invention than extension. Keep it as a future seam, don't build on it now.
+- **Passage edge = `Wall.from`/`to`** (already present); resolves the web-proven 6-door-pair multiplicity. The open verb is `Interact` (wired).
+- **Seed all chambers up front, out-of-sight** (spawn engine's `PositionOracle`/`FixedPositions`/`Seed`) — but this is safe ONLY with combat pockets (Fork 2). Today `rollInitiative` is LoS-blind (combat.go:508), so the first sighting rolls the whole dungeon (boss included) into one initiative that can't end — the wave's one genuine new toolkit build is scoping initiative to engaged monsters + a non-terminal region-clear `TURN_BASED`→`FREE_ROAM` exit; only the terminal *event shape* (`ModeEnded`, #663's `EndEncounter(reason)` seam) is reused, not the lifecycle that reaches it.
+- **Generation belongs in the toolkit** (absorb #787's `RandomSeed`); rpg-api's rich dungeon generator is dormant and geometry-in-api is the boundary lie this chapter retires.
