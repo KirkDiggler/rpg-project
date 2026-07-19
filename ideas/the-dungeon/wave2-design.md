@@ -1,6 +1,6 @@
 # The Dungeon — Wave 2: multi-room, doors, traversal, a boss room
 
-## Status: Design — survey-verified 2026-07-19 (file:line for every claim). Extends `design.md` (wave 1). Six forks await Kirk (§Forks).
+## Status: Design — survey-verified 2026-07-19 (file:line for every claim). Extends `design.md` (wave 1). All six forks RESOLVED by Kirk 2026-07-19 (§Forks — RESOLVED); slices dispatch from here.
 
 North star (May 2026 playtest): **4-player co-op, multi-room dungeon, locked doors, a boss room** — mouse-only, no devseed.
 
@@ -102,7 +102,7 @@ Everything else (`Interact`, `DoorOpened`, `DoorClosed`, `GeometryRevealed`, `Sp
 ## Design question 3 — Traversal + reveal
 
 - **What reveals: progressive LoS through the opening** (§Q2). You see through the doorway, then more as you step in — honest to per-hex sticky reveal + SightRange, and it doesn't spoil the next chamber's monster positions the way whole-room reveal would.
-- **Entrance-anchored spawn (Kirk, #648 2026-07-18): the continuous model makes it nearly free.** Chamber 1's spawn anchors to a designated **dungeon-entrance cell** just inside its perimeter, replacing `roomCenterHex()` (start_encounter.go:92, self-documented as a safest-margin placeholder, not a design). Because the party never re-spawns when crossing a door in one continuous space, **Kirk's "room N's spawn anchors to the traversed door" clause becomes moot** — there is no per-room respawn to anchor. Confirm with Kirk (his comment assumed a per-room-transition model). The initial spawn still composes with the wall-aware, verified-placeable, near-the-entrance search flagged in status.md.
+- **Entrance-anchored spawn (Kirk, #648 2026-07-18): the continuous model makes it nearly free.** Chamber 1's spawn anchors to a designated **dungeon-entrance cell** just inside its perimeter, replacing `roomCenterHex()` (start_encounter.go:92, self-documented as a safest-margin placeholder, not a design). Because the party never re-spawns when crossing a door in one continuous space, **Kirk's "room N's spawn anchors to the traversed door" clause becomes moot** — there is no per-room respawn to anchor. Kirk confirmed continuous walk-through (Fork 1, 2026-07-19): his earlier comment assumed a per-room-transition model that the continuous topology dissolves. The initial spawn still composes with the wall-aware, verified-placeable, near-the-entrance search flagged in status.md.
 - **Party split across rooms: allowed, ungated.** One space → members roam freely; combat entry is per visibility-pair, so it already handles a lone scout opening a door and drawing the next fight. No gate (consistent with `feedback_no_logic_in_web`). Playtest-watch: a solo scout can trigger the boss while the party is a room away — emergent co-op, acceptable for slice 1; flag, don't gate.
 
 ---
@@ -129,7 +129,7 @@ Wave 2 extends it to emit a **multi-chamber `SpaceData`**: N chambers at non-ove
 
 **Monster + boss seeding: per-region, out-of-sight, via the existing spawn engine.** The engine now has `PositionOracle` + `FixedPositions` + `SpawnConfig.Seed`, single-room-scoped via `GetRoom` (spawn PR #770). With one `e.room` (the whole dungeon), scope each chamber's seed to that chamber's region tag (§Q1) and keep monsters **out of sight from that region's entrance door** (the same `perception.CanSeeAt` oracle wave-1 uses from the room center — generalized to the door). `FixedPositions` pins the boss; `Seed` gives fixtures determinism. The `rulebooks/dnd5e/dungeon` placement model (`MonsterPlacementData`, `SpawnZoneData` — zero callers today) is the natural home for the per-room-type spawn tables the generator feeds; wave 2 gives it its first real caller.
 
-**Fork — the dormant rpg-api multi-room generator.** rpg-api already contains a rich but **unwired** generator: `internal/components/dungeon/` (`LayoutGenerator`→RoomSlots+Connections+StartRoom+BossRoom, `ShapeGenerator`, `PerimeterUpdater` with door openings, `FeatureGenerator` with spawn zones, `EncounterGenerator` with `IsBossRoom`/`BossPool`/`CRBudget`). Its callers are only within its own package + `spawner/dungeon_adapter.go`; StartEncounter does **not** use it. Geometry generation in rpg-api is a boundary violation (this is the Architecture-Honesty chapter). Recommendation: its *design intent* informs the toolkit generator's API, but geometry-producing code lives in the toolkit; the api component is retired or thinned to an orchestration shell passing settings by key. **Kirk decides its fate** — the biggest layer call of the wave.
+**Fork — the dormant rpg-api multi-room generator.** rpg-api already contains a rich but **unwired** generator: `internal/components/dungeon/` (`LayoutGenerator`→RoomSlots+Connections+StartRoom+BossRoom, `ShapeGenerator`, `PerimeterUpdater` with door openings, `FeatureGenerator` with spawn zones, `EncounterGenerator` with `IsBossRoom`/`BossPool`/`CRBudget`). Its callers are only within its own package + `spawner/dungeon_adapter.go`; StartEncounter does **not** use it. Geometry generation in rpg-api is a boundary violation (this is the Architecture-Honesty chapter). **Decided (Fork 3, Kirk 2026-07-19): toolkit-owned generation.** Its *design intent* informs the toolkit generator's API, but geometry-producing code lives in the toolkit; the api component is retired or thinned to an orchestration shell passing settings by key.
 
 ---
 
@@ -179,14 +179,16 @@ Nothing subtractive; no breaking change; no `Space`-shape change beyond `Wall.id
 
 ---
 
-## Forks — awaiting Kirk
+## Forks — RESOLVED (Kirk, 2026-07-19)
 
-1. **Topology (incl. spawn semantics).** Recommend one continuous `Space` (regions = wall-partitioned chamber tags), NOT the multi-room orchestrator (dead code, abstract, LoS-blind — reusing it is more work than extending the proven single room), and continuous walk-through spawn (entrance-anchored *initial* spawn only; no per-room respawn — Kirk's #648 comment assumed per-room transitions, confirm). Spawn semantics fold in here because they follow directly from the topology. The biggest structural call; argued hard in §Q1/Q3.
-2. **Combat scope across rooms (the one substantial NEW build).** Recommend combat pockets: initiative scoped to engaged (LoS-having) monsters + a non-terminal `TURN_BASED`→`FREE_ROAM` region-clear exit + `ModeEnded` reserved for the whole-dungeon clear. **Options honestly costed:** (a) combat pockets [recommended] — new toolkit combat-lifecycle mechanics, but the `SetMode(FreeRoam)` mechanism already exists, so the new work is scoping `rollInitiative` + a pocket-cleared predicate; matches the umbrella's "fights start room by room"; the only option that handles the locked boss (exit combat, explore to the locked door, open it, then the boss fight starts as a fresh pocket). (b) dynamic initiative join/leave, one continuous combat — monsters join on sighting, but you never leave initiative between rooms (traversal happens one-move-per-turn, initiative-locked; still can't end until full clear); cheaper on the exit side, worse to play. (c) accept one dungeon-wide initiative for the first slice, time-boxed as a known flaw — cheapest, but **soft-locks slice 3** (the boss behind a locked door is unreachable mid-initiative, so combat never ends) and contradicts the umbrella; viable only for a 2-room no-lock throwaway. Recommend (a). (§gap 5, Slice 1b)
-3. **Generation ownership / fate of `internal/components/dungeon`.** Recommend toolkit-owned geometry; retire or thin the dormant api generator. (§Q5)
-4. **Door representation.** Recommend `DoorData` entity as truth, projecting to a `Wall{id, from, to, DOOR_kind}` — the entity/wall crux resolution; needs `Wall.id`. Reject a separate `Space.doors[]` list and door-as-`entities`. (§Crux)
-5. **Locked-door unlock mechanic.** Recommend the existing skill-check (`AttemptUnlock`→`SubmitCheck`, wired). Reject key-item and room-clear-gate for slice 1. (§Q2/Q4)
-6. **First-slice chamber count + party split.** Recommend 3 regions (2 + boss), 2 doors (1 plain, 1 locked); party split allowed/ungated. Confirm the split is acceptable (lone scout can trigger the boss — and with combat pockets, a solo scout opens a pocket the rest of the party isn't in). (§Q1/Q3)
+All six locked as recommended; slices dispatch from the decisions below. The full rationale and rejected alternatives live in the sections cited.
+
+1. **Topology + spawn: ONE continuous `Space`; regions are a new (cheap) toolkit chamber tag; spawn is continuous walk-through** (entrance-anchored *initial* spawn only, no per-room respawn). Not the multi-room orchestrator — it is tested dead code for abstract theater-of-mind navigation, and adopting it costs more than extending the proven single room. (§Q1/Q3)
+2. **Combat scope: combat pockets** — initiative scoped to engaged (LoS-having) monsters, a non-terminal `TURN_BASED`→`FREE_ROAM` region-clear exit, and `ModeEnded` reserved for the whole-dungeon (boss) clear. The wave's one substantial new toolkit build; the only option that handles the locked boss and matches the umbrella's "fights start room by room." (§gap 5, Slice 1b)
+3. **Generation ownership: toolkit-owned geometry.** Extend `tools/environments`; retire or thin the dormant rpg-api `internal/components/dungeon` generator (geometry-in-api is the boundary lie this chapter retires). rpg-api orchestrates by key. (§Q5)
+4. **Door representation: `DoorData` entity is truth, projecting to a DOOR-kind `Wall`; add additive `Wall.id`** as the click→`Interact` bridge. Not a separate `Space.doors[]` list, not door-as-`entities`. (§Crux)
+5. **Locked-door unlock: the existing skill check** (`AttemptUnlock`→`SubmitCheck`, already wired). Not key-item, not room-clear-gate. (§Q2/Q4)
+6. **Slice-1 shape: 3 chambers, 2 doors (1 plain, 1 locked), a boss chamber; party split allowed and ungated** (a solo scout may open a pocket the rest of the party isn't in — accepted as emergent co-op). (§Q1/Q3)
 
 ## Load-bearing digest
 
