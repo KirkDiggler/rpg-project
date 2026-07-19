@@ -1,95 +1,129 @@
-# Active handoff — 2026-07-12: the game-screen rebuild is COMPLETE; frontier is The Dungeon leg
+# Active handoff — 2026-07-19 (evening): COMPACTION POINT — UI pass shipped, wave 2 begun, one prod mystery open
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 
-## Now
-**The game-screen rebuild (`ideas/game-screen-rebuild/design.md`) is complete — all four
-slices shipped and playtest-verified.** Since 2026-07-06: LobbyService v1alpha1
-(protos#177, api#630/#633), GameView = LobbyFlow + EncounterView on the proven stack
-(web#441, #443), a real winnable fight (api#635 + toolkit#751/v0.24.4 — NPC turns, real
-dice, `EncounterEnded: all_hostiles_defeated` live), fight-feel (web#446 — combat log
-narrating server events verbatim + initiative tracker), and the clean slate (web#448,
-−17.4k lines: LobbyView + v1 path deleted, every `*V2`/`*2` suffix renamed away). The
-real game route is Home → Play → LobbyFlow → EncounterView; `/playtest` is the permanent
-verification surface sharing the same hooks; `/concepts` is the separate mockup lab.
+The director session compacted at ~900k tokens at Kirk's call. Everything durable
+is below; two implementer agents were live at compaction (their worktrees/PRs
+survive — resume or re-dispatch, see In-Flight).
 
-**In flight right now**: rpg-api#636 (NPC-first initiative stalls the encounter — an
-implementer is building the server-side NPC-turn kick, design fork framed in the issue).
+## The one open mystery: prod movement (#495)
 
-## Solid (verified — keep, don't re-derive)
-- **Playtest-before-merge catches what nothing else does**: six real bugs this weekend
-  invisible to CI + review — web#442 (stream abort never reconnects), api#632 (SightRange
-  omitted — diagnosis CORRECTED from "missing rooms": no room/space concept exists
-  anywhere on the encounter stack, visibility is a pure radius stub, ADR-0034 defers the
-  spatial fold-in), api#636 (NPC-first stall), api#637 (inject-seeded first actor's
-  economy empty after restart — deterministic, 2-for-2), web#444 (no resume path after
-  refresh), toolkit#752 (**raging condition leaks across encounters** via persisted
-  character data — bonus applies with no visible status; found because the combat log
-  itemizes modifier refs).
-- **Combat entry today is dev tooling**: `devseed --inject-combat --encounter-id=<id>`
-  adds a goblin + flips TURN_BASED by writing Redis out-of-process; clients pick it up
-  via reconnect (restart the api or wait). The REAL combat-entry trigger is Dungeon-leg
-  design work; the lobby contract deliberately has no `initial_mode`.
-- **Rage uses persist across encounters correctly** (charge spend, no long rest = no
-  rage) — the leak in #752 is the *condition*, not the charges.
-- **tools/spawn room placement is a dead stub** (`getRoomFromSpatial` always errors)
-  despite "complete" status docs; doors already flow `revealed_walls` — both feed the
-  walled-room design (The Dungeon leg, with ADR-0034).
-- **MCP-input limitation, not a bug**: synthetic canvas events can't reach the r3f
-  raycaster — playtests drive map-targeting via the component's `onEntityClick` handler;
-  a human mouse click on a goblin is still owed as confirmation of the real path.
-- rpg-api `make pre-commit`/`ci-check` fail on clean main (73 lint issues, rpg-api#631,
-  Shelf) — lint-scope to touched packages; never `--no-verify`.
+**rpg-dnd5e-web#495** — the ONLY unresolved blocker for playing in Discord.
+Trail (all evidence on the issue):
+1. Movement dead in deployed Discord; three client/server theories falsified by
+   live repro (local current-main works perfectly end-to-end: 185 hexes revealed
+   on connect, click-to-move works).
+2. Kirk's console capture: `protocol error: incomplete envelope` → nginx was
+   buffering/truncating grpc-web streams. Fixed: **rpg-deployment#51** (merged,
+   deployed ~19:00): proxy_buffering off, 1h stream timeouts, conditional
+   Connection header.
+3. Post-fix: stream error GONE; briefly saw `invalid envelope` on click
+   (signature of an nginx error page — rate-limit 503 or referer-gate 404 —
+   where proto bytes belong; suspects: `limit_req zone=api burst=20` shared by
+   stream+RPCs, and the `if ($http_referer !~ discordsays.com) return 404` gate,
+   both in nginx-ssl.conf's Service location). Then: **cannot reproduce; console
+   quiet; still mid-room with no movement.**
+4. CRITICAL UNKNOWN: Kirk may STILL be resumed into a poisoned OLD encounter —
+   the resume feature re-imprisons (no abandon path, **rpg-api#663**), and old
+   encounters' tiny revealed sets are PERSISTED server-side; no client/nginx fix
+   can grow them retroactively.
 
-## Process (locked at the 2026-07-11 retro + this weekend's additions)
-1. **Playtest-before-merge** on any PR with observable behavior — the orchestrator
-   drives MCP playtests on the branch; evidence goes on the PR.
-2. **Copilot respected** — and **verify it actually reviewed**: oversized PRs (e.g. the
-   −17.4k slice-3) get silently skipped; a skipped review is NOT clean — gate those like
-   the no-Copilot repos (rpg-project, rpg-api-protos).
-3. **Every review gate carries a doc-drift axis.**
-4. **No multi-line bash / heredocs in any agent work** (unallowlistable prompts hang
-   Kirk); Write/Edit for files. Project allowlist (`.claude/settings.json`) covers the
-   read-only set + `git rm`/`git mv`.
+**Next steps, in order** (also on #495):
+a. Kirk escapes the old encounter: `redis-cli DEL "player:<discord-id>:lobby"`
+   on the prod host → reload → create a genuinely FRESH encounter post-all-fixes.
+b. Fresh encounter floor WIDE + movement works → close #495, promote #663
+   (abandon path) so the trap dies.
+c. Fresh encounter STILL 1-tile → prod server-side reveal bug: get
+   `redis-cli GET enc:v2:<id> | grep -o '"sight_range":[0-9]*'` from prod, and
+   check what api image the prod compose actually pins (deploy may pin a stale
+   tag — never verified).
+d. If movement dies with wide floor: capture MoveEntity's network entry
+   (status + response preview — HTML=nginx rule, which code = which rule).
 
-## Open questions (verify before acting; not findings)
-- api#637's root cause — the #636 implementer was asked to observe whether the same
-  load seam explains it; check their PR findings before starting #637 separately.
-- Whether #636's fix lands as stream-subscribe kick (single-flight) or another seam —
-  implementer investigating; my lean is recorded in the issue.
+## Kirk's list at compaction
 
-## Next (driven by board #19)
-1. **rpg-api#636** (in flight) — then injected fights are reliable end-to-end.
-2. **The Dungeon leg proper**: real combat entry (replaces injection), walled rooms
-   (toolkit ADR-0034 + environments.QuickRoom bridge — budget the tools/spawn stub),
-   monster seeding, multi-room trailblazer. `old-vs-new.md`'s gap table rows 1b–3 route
-   all of it.
-3. **Game Screen remainder**: HUD (gap row 4: modifiers/equipment/features), in-map
-   movement on GameView (the Move button is a stub), resume (web#444).
-4. **Class Kits**: toolkit#752 rage leak; the four L1 verify stories remain open.
-5. Naming straggler (out of rebuild scope): `AbilityScoresSectionV2` in character
-   creation still carries a suffix.
+1. **Merge rpg-project#92** — wave-2 design, forks all RESOLVED (recorded in-doc).
+2. #495 next-steps above (his infra/keys).
+3. Character creation + sheet eyeball pass (post-#487 styling revival) — low priority.
 
-## Decision log (this stretch — full ledgers on the issues/PRs)
-1. Combat entry via dev tooling, zero contract change (2026-07-11, api#634) — real
-   trigger is Dungeon-leg design.
-2. Toolkit gate fix over fake snapshot fields (toolkit#751): `isPlayerCombatant`
-   honors hydration; no theater math in rpg-api.
-3. Slice-3 survivors settled by evidence (web#448 body) — shared-looking lobby
-   components were v1-only and died; character-service v1alpha1 usage stays (never in
-   rebuild scope).
-4. Oversized-PR Copilot skip ⇒ gate-agent rule (2026-07-12).
+## In-flight agents at compaction (worktrees/branches survive)
 
-## Pointers
-- Board **#19** (The Dungeon Run) — https://github.com/users/KirkDiggler/projects/19 —
-  single work queue, reads true as of 2026-07-12.
-- `ideas/game-screen-rebuild/` — design.md (complete), lobby-surface.md (contract),
-  old-vs-new.md (gap table = the remaining work's map).
-- Wave records: rpg-project#81 (Party Assembles retro), rpg-api#634 close-out (the
-  first fight), web#448 body (deletion survivors).
-- Deferred shelf: rpg-api#616 (v2 layering), rpg-api#631 (lint), rpg-toolkit#736/#740,
-  ADR-0034 (walled rooms), rpg-dnd5e-web#444 (resume).
-- Dev stack: api `AUTH_DEV_MODE=true go run ./cmd/server server`, web `npm run dev`
-  (port 3001), chrome `scripts/rpg-chrome.sh`, cast via `go run ./cmd/devseed` (+
-  `--fixture=wave-2-beat2` for charli/finn), goblin via `--inject-combat`.
-- Roles: `docs/teams/roles/<role>/{prompt,field-notes}.md`.
+- **toolkit-slice0** — wave-2 slice 0: toolkit#787 (seed room RNG; QuickRoom
+  never calls WithRandomSeed → identical rooms) + toolkit#788 (lerpCube cube-
+  rounding; LoS asymmetric ≥22 hexes). Worktree
+  rpg-toolkit/.claude/worktrees/wave2-slice0, branch feat/wave2-slice0. If dead:
+  re-dispatch from the issues; cross-module = #779 two-commit pattern, no replaces.
+- **web-485-fixes** (veteran, many merged slices) — CHARACTER MODELS HOOKUP:
+  class GLBs shipped class-named in rpg-game-assets (harness/models/synty/
+  characters/{class}.glb + -downed variants + manifest + portraits). Map
+  classRefId (threaded via #493/#665) → GLB, SYNTY_SCALE, downed variant off the
+  unconscious status, fallback = current MediumHumanoid (#479 boundary lineage),
+  monsters out of scope. Issue-first; live verify with multi-class party.
+
+## Wave 2 — The Dungeon (design DONE, forks LOCKED 2026-07-19)
+
+Design: rpg-project#92 (ideas/the-dungeon/wave2-design.md) — gate-hardened
+(adversarial gate found the missing crux). All six forks RESOLVED as recommended:
+1. ONE continuous Space, rooms = wall-partitioned regions (orchestrator in
+   tools/spatial is abstract/positionless — rejected with rationale); spawn
+   per-region up-front, no respawn.
+2. **COMBAT POCKETS** (the wave's one substantial new toolkit build): LoS-scoped
+   initiative + non-terminal region-clear TURN_BASED→FREE_ROAM exit + ModeEnded
+   reserved for dungeon completion. Without it: one dungeon-long initiative that
+   soft-locks on the locked boss (gate-proven; every escape hatch checked closed).
+3. Toolkit-owned generation (retire the dormant rpg-api internal/components/dungeon).
+4. Doors: DoorData entity = truth (encounter/data.go:170 scaffolding, has lock
+   fields), PROJECTED as DOOR-kind walls; ONE additive wire field `Wall.id`
+   bridges click→Interact (which works end-to-end today). Passage-edge problem
+   dissolves via from/to. DoorOpened's revealed/removed fields: use-or-deprecate.
+5. Skill-check unlocks (already wired: Interact routes Locked→AttemptUnlock).
+6. Three chambers / two doors / boss (NewGoblinBoss to be built; only NewGoblin
+   exists); party split allowed ungated.
+Slices: 0 (#787+#788, in flight) → 1 doors block+reveal (integration-gated,
+honest label) → 1b combat pockets → 2 two-chamber traversal (carries Wall.id,
+the wave's only wire change) → 3 locked boss door + completion. Closing playtest:
+mouse-only enter→fight→open→traverse→boss→victory.
+
+## Today's shipped ledger (all deployed; deploy pipeline ALIVE and fail-loud)
+
+- Deploy resurrection: 5 months of silent rot (dead DEPLOYMENT_TOKEN swallowed by
+  continue-on-error) found via smoke pass, fixed end-to-end (rpg-deployment#50
+  closed; web#478/api#662; token rotated; both chains live-verified).
+- Styling resurrection: web#487 — Tailwind v4 migration had killed ALL themed
+  utilities app-wide for ~a year (`@tailwind` directives v4 ignores); one-line
+  fix; CSS 22KB→53KB.
+- The UI pass: #482 lobby polish, #493 EncounterDock (max-viewport map, portal,
+  #486 real combat movement economy), #496 dock responsiveness (42vh cap),
+  #498 action icons, #500 wall variety (deterministic FNV per-edge), #485
+  free-roam movement (killed a fabricated client 30ft budget) + unlit floor.
+- api#665: Entity.display_name + CharacterData.class_ref (dock shows real names).
+- toolkit#786: arcade recovery (death encounter-scoped; AddPlayer-gated restore;
+  delivered to api by PURE BUMP — the toolkit-as-product ideal). #785 closed.
+- Asset initiative (Kirk's parallel sessions): private rpg-game-assets repo,
+  assets:sync, deploy baking with PAT (leak-safe pattern gate-verified), env
+  piece→role manifest, 9 action icons, class-named character models. Coordination
+  via web#469 + asset-request label + board Asset Pipeline lane.
+
+## Open issues worth knowing (all boarded on #19)
+
+- web#495 (the mystery above), api#663 (abandon encounter — PROMOTE after #495),
+  web#492 (shared snapshot-apply helper — kills the unconsumed-field disease
+  class, 4 instances to date), web#471 (death-arc rendering remainder + downed
+  visual), web#484 addendum (audit silently-unstyled components), api#658
+  (silent move refusals — more reachable now), api#666 (identity-read batching
+  seam), toolkit#780 (provenance drift tripwires), toolkit#784 (per-hit HP sync
+  remainder + monster side), protos#182 (EncounterMode ENDED value), protos#183
+  (sheet-vs-snapshot: RESOLVED as Option B overlay — future web slice: pull-out
+  sheet in-encounter), api#660 (roll contract divergence / future Roll mode).
+
+## Process rules locked this week (memory has details)
+
+Playtest-before-merge on BRANCHES (Kirk's correction — merges land verified
+code); PRs open READY (drafts suppress Copilot); evidence images commit-pinned
+raw URLs, attach-at-write, viewed-statements both directions (gates refuse
+unviewable claims); TaskStop-before-replacement-dispatch; never delete foreign
+worktrees; Scope-decisions PR sections; CDP-script screenshot recipe (MCP
+screenshot writes are sandboxed); no background children in agents (results
+route to the session loop); single-line bash for agents; bumps ride
+implementation PRs; issue-first; board #19 is the three-initiative coordination
+surface (code / assets / playtest-feedback label for friends night).
