@@ -1,165 +1,123 @@
-# Active handoff — 2026-07-20 (~02:00): THREE-SESSION SPLIT — platform / game-UX / assets
+# Active handoff — 2026-07-20 (~04:45): PLATFORM session pause-and-restart
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
+> This rewrite covers the PLATFORM lane only (toolkit / api / protos / deploy). The
+> game-UX (web#525) and asset (web#523) lanes run their own parallel sessions; their
+> state is theirs — coordinate via board #19, respect the renderable seam.
 
-The director session ends near its token ceiling after a massive night. Kirk split the
-work into THREE parallel main sessions; this handoff seeds all of them. The board
-(#19, https://github.com/users/KirkDiggler/projects/13 is chapter history — the live
-queue is board #19) remains the single coordination surface. Issue-first, one issue
-per PR, every item boarded.
-
-## The three sessions (Kirk's org decision, 2026-07-20)
-
-1. **PLATFORM (this handoff's primary heir)** — toolkit, api, protos, wire/events,
-   dungeon slices. Everything behind the renderable contract.
-2. **GAME UX** — game-screen information architecture, panel design, input feel.
-   Kickoff charter: **web#525** (Kirk's live critique: OA chip reads as a toggle,
-   End Turn doesn't read as a button, stacked-row taxonomy buries the verb flow).
-   Also reads rpg-project#78. Constraint: web renders + sends intent, never gates
-   on rules; server-driven action menu stays authoritative; Discord-shaped
-   viewports are the design target. Design direction reviewed with Kirk BEFORE
-   implementation (/concepts route).
-3. **ASSETS (already running, Kirk's parallel sessions)** — the look, end-to-end:
-   rpg-game-assets AND the web's 3D rendering components. Charter: **web#523**
-   (props: keys-not-enums contract), plus transferred items: #509 (parked
-   gate-passed animation PR — re-verify vs new packs before merge), #512 (downed
-   GLB re-export — was in progress), #515 (local-player perma-tint). Wiring the 4
-   classes + idle + downed states is theirs.
+Kirk restarted the platform session (new CC version, dontAsk permission mode). This
+handoff is the pause point. Board #19 is the queue; issue-first, one issue per PR,
+Opus gate posted on the PR before any merge-ready call.
 
 ## Now (platform)
 
-- **api#675 (the night's capstone) was IN ITS FINAL LOOP at handoff**: abandon
-  path (Closes api#663) + toolkit bumps that activate combat pockets + rage-at-
-  seating in the live game. State: live playtest evidence on the PR (pocket
-  bounce + live abandon push — director-viewed), Copilot left 3 valid threads
-  (findVisiblePosition placement validation; two tests that hang instead of fail
-  on missing events), agent abandon-663 was fixing them. REMAINING: fixes pushed
-  → CI green → Opus review gate (NOT yet run — dispatch it; every gate tonight
-  caught something) → Kirk merges → deploy → **the merge playtest must confirm
-  the pocket bounce live in Discord** (fight goblin 1 → FREE_ROAM breather →
-  goblin 2 fresh pocket → ModeEnded).
-- **web#520** (dock 49%→10.7% at Discord viewports): all real checks green;
-  Deploy Preview check failed ONLY due to the GitHub Actions incident
-  (2026-07-20 ~00:07 UTC; agent-verified platform-side). Rerun when Actions
-  recovers → Kirk merges. web#521 tracks the deprecated Node-20 pin it exposed.
-- **toolkit#803** (cosmetic: End error-string leak, closes #802) — CI was
-  running; land whenever green.
+**Wave: The Dungeon — Slice 2 (two-chamber dungeon end to end), rpg-project#96
+(https://github.com/KirkDiggler/rpg-project/issues/96).** Defined, boarded (The
+Dungeon leg), playtest bar stated on the umbrella. Slice issues: toolkit#804 →
+protos#185 → api#676 → web#526. First two were dispatched this session:
 
-## Next (platform queue, in order)
+- **protos#186 (https://github.com/KirkDiggler/rpg-api-protos/pull/186)** — Wall.id,
+  DONE pending merge: CI green, gate PASS posted on the PR (agent review = review of
+  record, Copilot doesn't cover protos), undrafted. **In Kirk's merge queue.**
+- **toolkit#806 (https://github.com/KirkDiggler/rpg-toolkit/pull/806)** — the
+  #804 two-chamber generator, OPEN with CI green (director-verified at pause).
+  Implementer's checkpoint claims (NOT yet gate-verified — verify against the
+  diff): single-module (encounter only), feature-complete vs #804 incl. both
+  #791-gate sweeps (reload-blocking test + door+wall dedup test), connectivity
+  by construction via RequiredPaths, named-seed fixture `slice2TwoChambersSeed`,
+  one determinism-test flake found+fixed (empty-interior fallback is a legit
+  output; test samples 5 pairs), docs updated. REMAINING: Copilot window was cut
+  short at ~5min (check reviewThreads before assuming it reviewed), then the
+  Opus gate, then merge (squash OK ONLY if the gate confirms single-module).
+  Worktree: `rpg-toolkit/.claude/worktrees/slice2-generator`.
 
-1. Finish #675 (above). It closes the #495→#510→#663 arc entirely.
-2. **Wave-2 Slice 2** — the two-chamber dungeon, THE next major move. All
-   prerequisites merged tonight (doors #791, pockets #796, varied rooms #793,
-   End #798). Spec: design doc §Slice 2 (ideas/the-dungeon/wave2-design.md).
-   Toolkit: generator emits 2 chambers + door + entrance + region tags. Protos:
-   additive Wall.id (THE wave's only wire change). API: project door walls,
-   entrance-anchored spawn (kills the wall-adjacent-spawn debt, roomCenterHex
-   dies), per-chamber goblin seeding. Web: door click → Interact. Slice-2 sweeps
-   owed: toolkit#802's residual (if #803 unmerged), the reload-blocking
-   integration test (gate note on #791), the co-located door+wall dedup note.
-3. Quick wins (any free agent): web Leave-button wiring (completes #663 for real
-   users — one small web PR, AbandonEncounter RPC exists post-#675), **web#516**
-   (stale economy bar in FREE_ROAM — USER-VISIBLE the moment #675 deploys),
-   web#471 (death-save UI — Kirk played that scene blind tonight; borderline
-   UX-session, coordinate), api#674 (decouple flaky tests + no-retry dispatch
-   from image publishing — tonight's 6-hour stale-prod incident), api#667
-   (ally opportunity attacks — TWICE independently reproduced tonight; toolkit
-   hostility check, likely small), toolkit#799/#800 (spell-slot orphan / dead
-   map cleanup — pre-caster-play debt).
+## Kirk's merge queue at pause (all gate-passed, CI green — local settings deny agent `gh pr merge`, deliberate)
 
-## Solid (verified tonight — do not re-derive)
+1. toolkit#803 — End error-string reword (gate PASS:
+   https://github.com/KirkDiggler/rpg-toolkit/pull/803#issuecomment-5018530252)
+2. protos#186 — Wall.id (gate PASS:
+   https://github.com/KirkDiggler/rpg-api-protos/pull/186#issuecomment-5018701315)
+3. This handoff PR.
 
-- **#495 CLOSED.** Root cause was nginx TWICE: buffering (nginx-ssl.conf, #51)
-  then the same fix missing from nginx-http.conf — THE file prod actually runs
-  (SSL_MODE=http behind Cloudflare Flexible; deploy.yml writes it every deploy).
-  rpg-deployment#54 fixed it; Kirk live-confirmed streams through full combat.
-  Neighbors tracked: rpg-deployment#53 (limit_req 503 HTML → "invalid envelope"
-  on click bursts), web#507 (silent stream reconnect, no last_seen_sequence).
-- **web#510 CLOSED**: players were invisible on the REAL game screen since #502
-  — plain Object3D.clone breaks SkinnedMesh skeleton binding; SkeletonUtils.clone
-  fix shipped in #517. ALL prior "live verification" had run the /playtest
-  harness route only. **Process rule (in memory + below): player-visible
-  evidence must come from the real game route.**
-- **api#670 CLOSED (#671)**: StartEncounter seats now route through toolkit
-  RestoreForNewEncounter + persist. **toolkit#795 (#801)**: restore now also
-  refreshes ALL Data.Resources pools (rage/ki/hit dice) at EVERY new seating,
-  ungated by HP (arcade semantics; hit dice deliberately full, not RAW-half).
-  Delivery = #675's dnd5e bump through the #671 call site.
-- **Toolkit main** (all merged tonight): #789 seeded rooms + symmetric LoS,
-  #791 doors block/reveal (DoorData single-source, projected walls), #793
-  RandomPattern retry (30%→96% non-empty at 20×20), #796 combat pockets
-  (LoS-scoped initiative, non-terminal TURN_BASED→FREE_ROAM pocket exit,
-  ModeEnded = whole-clear only), #798 End(reason) admin verb (works from
-  FREE_ROAM; reason "abandoned"), #801 arcade resource restore.
-- **api main**: #669+#673 (toolkit delivery bumps + honest spawn test — the
-  all-six-directions assertion was an empty-room-era fixture assumption),
-  #671 (restore at seating). **protos#184**: AbandonEncounter(lobby_id) on
-  LobbyService (additive; director line-reviewed — Copilot doesn't cover protos).
-- **web main**: #502 class GLBs (+#517 skeleton fix), #514 armed-action state
-  machine (there WAS no click-action-then-target flow before), #487/#493/#496/
-  #498/#500 (the UI pass), evidence discipline throughout.
-- **Deploy truth**: merging ≠ shipping. rpg-api's docker.yml runs tests in the
-  publish job — a flake stranded prod 6+ hours tonight while Kirk manually
-  redeployed stale images (api#674 tracks decoupling). **Post-merge duty: check
-  the main build+push+deploy-trigger completed after EVERY merge** (in memory).
-- **devcombat.Inject** (in #675): now guarantees LoS placement, forced-SetMode
-  escape hatch DELETED (post-#796 it manufactured impossible states). Known:
-  room.GetEntitiesInRange is blind to players (only spatial-grid entities) —
-  trap for Slice 2 spawn work.
+## Solid (verified this session — do not re-derive)
+
+- **api#675 SHIPPED, deploy chain verified end-to-end**: merged 03:14Z (1d6b26f),
+  main Build Docker Image green INCLUDING push + Trigger-deployment steps,
+  rpg-deployment "Deploy RPG Platform" success 03:17:57Z. Prod runs the pocket
+  build. The TWO main commits before it had FAILED Docker builds — api#674 (decouple
+  tests from publish) keeps earning priority.
+- **Pocket-bounce live-in-Discord confirm NOT yet done** (deliberate, not
+  forgotten): deploy chain verified + pre-merge director-viewed live evidence on
+  api#675. The live confirm = Kirk in Discord runs two-goblin fight (TURN_BASED →
+  FREE_ROAM breather → fresh pocket → ModeEnded). Expect web#516 (stale economy bar
+  in FREE_ROAM) to show — it's user-visible now, quick-win queue.
+- **web#520 merged by Kirk** (UX lane's item); web main build green after.
+- **toolkit#805 filed+boarded** (docs: cross-module = merge-commit rule into
+  toolkit CLAUDE.md) — executes an already-logged decision; retro action item.
+- **Worktree inventory complete** (read-only agent sweep): ~60 worktrees across 5
+  repos, vast majority merged+clean = safe sweep candidates. FLAGS: rpg-api
+  `rage-bump` (on main, no PR, dirty — abandoned?); web `investigate-downed-510`
+  (no PR — check findings written up before delete); rpg-project `handoff-platform`
+  LOCKED (a parallel session's seat — DO NOT TOUCH); web `rpg-game-assets` (asset
+  lane's intentional staging — exempt); several worktrees live OUTSIDE
+  .claude/worktrees (rpg-api-worktrees/, old job tmp dirs) — a convention-scoped
+  cleanup script misses them. Open/unmerged branches to triage individually:
+  toolkit#744, toolkit#731(closed-unmerged), rpg-project#89, #88(closed-unmerged).
+
+## The retro (NOT yet run — participatory, with Kirk; it closes the night wave)
+
+Material all prepped: (1) deploy coupling api#674 with tonight's fresh evidence;
+(2) gate-visibility convention — every gate keeps catching things, PR-comment
+format now has two exemplars (#803, #186); (3) cross-module merge rule →
+toolkit#805; (4) worktree cleanup per inventory above; (5) NEW process findings
+this session: chrome-devtools MCP tools do NOT propagate to dispatched subagents
+(playtest driving can't be delegated in bg-session shape — needs a decided
+mechanism), and agents SYSTEMATICALLY idle without delivering reports (3 of 4
+tonight; one-turn re-ask works every time — consider a prompt-pattern or hook
+fix); (6) ledger sweep to close the wave: web#516, web Leave-button wiring,
+api#667, api#674, toolkit#799/#800, web#521.
 
 ## Open questions
 
-- Kirk's ghost sighting mid-evening (model off-map in the void, untextured) —
-  the position half was never separately root-caused (the skeleton fix made the
-  model render at the right hex; the off-map T-poser may have been the same bug
-  manifesting differently). If it recurs post-#517: fresh investigation, don't
-  assume.
-- Why the harness route tolerated the broken clone but the real route didn't —
-  flagged unresolved in #517's PR body. Matters only if it bites again.
-- The #656-guard flake under -race in docker-stage runs specifically (passed PR
-  CI, failed main twice) — post-#673 rewrite it SHOULD be stable; if the publish
-  job flakes again on it, that's a real hole, not weather (see api#674).
+- Pocket bounce live-in-Discord: expected to pass (deploy verified, pre-merge live
+  evidence) but NOT yet observed post-deploy — confirm with Kirk, don't log as done.
+- toolkit#804 checkpoint quality: whatever the WIP branch claims, verify against
+  the diff before resuming.
 
-## Decision log (tonight, dated 2026-07-19/20, all visible on board/PRs)
+## Next (in order)
 
-- Three-session split (Kirk): platform / game-UX (#525) / assets (#523).
-- Asset team owns the look end-to-end incl. web 3D components; props use string
-  reference keys + asset-owned manifest, NOT per-prop enums (director rec, Kirk
-  reviewing on #523); enum stays for structural kinds only.
-- Cross-module toolkit PRs = MERGE COMMITS, never squash (squash orphans pinned
-  pseudo-version SHAs; #789's bb98112 rescued via archive/pr-789-head tag +
-  bot tags). Single-module PRs may squash. → toolkit CLAUDE.md at next retro.
-- Playtest evidence: real-route frames for anything player-visible; harness
-  dev-panel acceptable for wire/behavior claims (event-log proofs).
-- The bump PR fixes what the bump breaks (precedent: #673 test rewrite, #675
-  devcombat fix). Main never lands a known-red test.
-- AbandonEncounter proto shape approved by director under standing authority
-  (additive, matches #663's written design) — logged same-turn to Kirk.
-- #509 parked at Kirk's call ("animations ahead of itself") then transferred to
-  asset lane with re-verify condition.
-- UX split into its own main session (Kirk, on the panel critique — #525).
+1. Kirk: merge queue above → restart done.
+2. Retro with Kirk (agenda above).
+3. toolkit#806: check Copilot reviewThreads (window was cut short), run the Opus
+   gate, merge per the gate's module-scope verdict.
+4. api#676 (needs #186 merged + #804 delivered): door projection, entrance spawn
+   (roomCenterHex dies), per-chamber seeding. Trap: room.GetEntitiesInRange is
+   blind to players.
+5. web#526 (needs #676): door click → Interact. Coordinate with UX lane on board.
+6. Slice-2 playtest vs the bar on #96; then Slice 3 (locked boss door) per
+   wave2-design §Slice 3.
 
-## Process rules locked/updated tonight (memory has full versions)
+## Decision log (this session, 2026-07-20, all visible on board/PRs)
 
-Real-route evidence for player-visible claims; post-merge main-build
-verification after every merge to auto-deploying repos; agent Copilot monitors
-SYSTEMATICALLY race the review — director gh-checks on every implementer idle
-(GraphQL reviewThreads works when the REST comments endpoint is down); TaskStop
-before replacement dispatch; single-line bash for agents (heredocs hang Kirk's
-prompts); background-child research results route to the SESSION loop, not the
-spawning agent — director relays.
+- Slice 2 defined as the platform lane's first wave: umbrella rpg-project#96 +
+  4 slice issues, boarded The Dungeon leg (Kirk's kickoff order).
+- toolkit#803 + protos#186 gates run and PASSED; gate comments on both PRs; merges
+  queued to Kirk (agent-merge deny stands, deliberate).
+- toolkit#805 filed executing the merge-commit-rule decision.
+- Slice-2 front legs dispatched pre-retro (retro material is process-level, forks
+  LOCKED — parallelism judged safe; retro validates).
+- Pocket-bounce: local-bypass plan approved by Kirk mid-session, then obsoleted by
+  the MCP-subagent finding; settled as deploy-chain-verified + live confirm with
+  Kirk post-restart.
 
 ## Pointers
 
-- Wave-2 design (forks LOCKED): ideas/the-dungeon/wave2-design.md
-- Board: https://github.com/users/KirkDiggler/projects/19 — legs: Party
-  Assembles / Class Kits / The Dungeon / Game Screen / Capstone / Shelf /
-  Asset Pipeline. IDs for item-edit are in the director memory
-  (feedback_* + this file's git history).
-- UX kickoff: web#525 + rpg-project#78. Asset kickoff: web#523.
-- Deploy: rpg-deployment (nginx-http.conf is the LIVE config; Cloudflare
-  Flexible in front; deploy.yml SSM pulls :latest — verify GHCR moved before
-  believing a deploy changed anything).
-- Open PRs at handoff: api#675 (capstone, in final loop), web#520 (dock,
-  awaiting Actions recovery), toolkit#803 (cosmetic), web#509 (parked → asset
-  lane). Dependabot debt: web#314/#254/#253/#252/#251/#205, stale web#38.
+- Wave-2 design (forks LOCKED): ideas/the-dungeon/wave2-design.md — §Slice 2/3.
+- Board #19: https://github.com/users/KirkDiggler/projects/19 (field IDs in
+  director memory + this file's git history).
+- Wave-level dungeon umbrella: rpg-api#648. Slice-2 wave umbrella: rpg-project#96.
+- Deploy: rpg-deployment; nginx-http.conf is the LIVE config; verify GHCR moved +
+  "Deploy RPG Platform" ran before believing a deploy changed anything.
+- Open PRs at pause: toolkit#803, protos#186 (both merge-ready), toolkit#806
+  (CI green, awaiting Copilot-check + Opus gate). Dependabot debt unchanged
+  (web#314/#254/#253/#252/#251/#205, stale web#38).
