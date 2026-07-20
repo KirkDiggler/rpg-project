@@ -19,13 +19,17 @@ protos#185 → api#676 → web#526. First two were dispatched this session:
 - **protos#186 (https://github.com/KirkDiggler/rpg-api-protos/pull/186)** — Wall.id,
   DONE pending merge: CI green, gate PASS posted on the PR (agent review = review of
   record, Copilot doesn't cover protos), undrafted. **In Kirk's merge queue.**
-- **toolkit#804** — two-chamber generator was IN FLIGHT at pause. Implementer was
-  ordered to checkpoint: commit+push branch `feat/wave2-slice2-generator` (worktree
-  `rpg-toolkit/.claude/worktrees/slice2-generator`). Check the branch on origin for
-  the checkpoint state; resume by dispatching a fresh implementer onto that branch
-  (verify its claims against the actual diff first — don't trust the WIP commit
-  message). Its scope includes the #791-gate sweeps (reload-blocking integration
-  test, door+wall dedup note).
+- **toolkit#806 (https://github.com/KirkDiggler/rpg-toolkit/pull/806)** — the
+  #804 two-chamber generator, OPEN with CI green (director-verified at pause).
+  Implementer's checkpoint claims (NOT yet gate-verified — verify against the
+  diff): single-module (encounter only), feature-complete vs #804 incl. both
+  #791-gate sweeps (reload-blocking test + door+wall dedup test), connectivity
+  by construction via RequiredPaths, named-seed fixture `slice2TwoChambersSeed`,
+  one determinism-test flake found+fixed (empty-interior fallback is a legit
+  output; test samples 5 pairs), docs updated. REMAINING: Copilot window was cut
+  short at ~5min (check reviewThreads before assuming it reviewed), then the
+  Opus gate, then merge (squash OK ONLY if the gate confirms single-module).
+  Worktree: `rpg-toolkit/.claude/worktrees/slice2-generator`.
 
 ## Kirk's merge queue at pause (all gate-passed, CI green — local settings deny agent `gh pr merge`, deliberate)
 
@@ -84,8 +88,8 @@ api#667, api#674, toolkit#799/#800, web#521.
 
 1. Kirk: merge queue above → restart done.
 2. Retro with Kirk (agenda above).
-3. Resume toolkit#804 from the checkpoint branch; gate; merge-commit if
-   cross-module.
+3. toolkit#806: check Copilot reviewThreads (window was cut short), run the Opus
+   gate, merge per the gate's module-scope verdict.
 4. api#676 (needs #186 merged + #804 delivered): door projection, entrance spawn
    (roomCenterHex dies), per-chamber seeding. Trap: room.GetEntitiesInRange is
    blind to players.
@@ -114,6 +118,6 @@ api#667, api#674, toolkit#799/#800, web#521.
 - Wave-level dungeon umbrella: rpg-api#648. Slice-2 wave umbrella: rpg-project#96.
 - Deploy: rpg-deployment; nginx-http.conf is the LIVE config; verify GHCR moved +
   "Deploy RPG Platform" ran before believing a deploy changed anything.
-- Open PRs at pause: toolkit#803, protos#186 (both merge-ready), plus whatever
-  toolkit#804's checkpoint produced. Dependabot debt unchanged
+- Open PRs at pause: toolkit#803, protos#186 (both merge-ready), toolkit#806
+  (CI green, awaiting Copilot-check + Opus gate). Dependabot debt unchanged
   (web#314/#254/#253/#252/#251/#205, stale web#38).
