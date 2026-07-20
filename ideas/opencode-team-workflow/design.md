@@ -1,0 +1,391 @@
+---
+name: OpenCode Team Workflow
+description: Port the human-centered UI/UX, Platform, and Assets team workflow to OpenCode as a provider-neutral control plane, side-by-side with Claude Code, without duplicating Project 19 as task state
+status: approved (2026-07-20) — implementation planning follows in a separate session
+---
+
+# OpenCode Team Workflow — Design
+
+Approved design for `rpg-project#101`. This document is the complete,
+already-approved spec — implementation planning (`plan.md`) is a separate,
+later session; nothing here is a placeholder or an open question.
+
+## 1. Purpose and core architecture
+
+OpenCode becomes a **provider-neutral control plane** while Claude Code
+remains operational **side-by-side** during rollout — this is not a
+migration-and-cutover, it's a second control plane proven against the same
+work before any decision to consolidate.
+
+The port is of **workflow semantics**, not Claude Code's literal team/mailbox
+internals: the director/standing-member/fixer/janitor/gate discipline, the
+Project-19-is-truth discipline, the four-question done-gate. Those transfer.
+Claude Code's specific mailbox/dispatch plumbing does not need to.
+
+**Human-centered team pods.** Three pods — **UI/UX**, **Platform**, **Assets**
+— each with a human in its collaboration loop. Kirk occupies multiple pods
+today; the structure is designed so future humans can each own a pod aligned
+with their strengths without redesigning the workflow.
+
+**Two roots, unchanged relationship:**
+- `rpg-project` is the **canonical cross-repo coordination root** — designs,
+  plans, role charters live here. Humans start coordination sessions here.
+- `game-dev` remains **portable workstation bootstrap and asset tooling.** It
+  clones/verifies `rpg-project` (added to its idempotent clone/verify set) but
+  does **not** duplicate team policy — no parallel `game-dev/docs/team-workflow`.
+
+**Project 19** (`KirkDiggler`, "The Dungeon Run") is durable execution/task
+state. OpenCode sessions are replaceable workers: a worker can be killed and a
+different worker can pick up the same task from GitHub state alone, with no
+hidden local session dependency.
+
+## 2. Project 19 contract
+
+**Existing fields (unchanged):**
+
+| Field | Values |
+|---|---|
+| Status | Todo / In Progress / In Review / Done |
+| Team | UI/UX / Platform / Assets / Cross-team |
+| Feature | Party Assembles / Class Kits / The Dungeon / Game Screen / Capstone / Shelf / Infra |
+| Kind | Build / Fix / Verify / Learn / Decide |
+
+**Issue-backing rule.** Every executable task is backed by a repository issue
+— Project draft items have no durable comment stream, so a draft item cannot
+be dispatched against. Drafts may remain as milestones/placeholders; create or
+link an owning issue **before** dispatch, every time.
+
+**Repo law, preserved unchanged:**
+- One issue per PR.
+- No branch without an issue.
+- No issue without a Project 19 entry.
+- Fresh issue work starts from a fresh `main` branch.
+
+**Lifecycle:**
+
+```
+triage (fields + acceptance + owner)
+  -> In Progress
+  -> WORK SESSION STARTED (visible marker on the issue)
+  -> checkpoints (see §3)
+  -> ready PR + In Review
+  -> independent gate (Sol, see §4)
+  -> findings routed back to implementer  OR  MERGE-READY
+  -> human merge (Kirk)
+  -> deployment verification where applicable (watch the deploy run to terminal
+     success — merge != shipped)
+  -> Done
+```
+
+**Signature.** Any agent GitHub activity (issue/PR comments) rides Kirk's
+account; every such comment ends with a role signature: `— <role>, on behalf
+of KirkDiggler`.
+
+## 3. Continuity and persistence
+
+Two layers of continuity, not one:
+
+- **Live continuity (cheap, best-effort):** resume an OpenCode `task_id` when
+  the same session/process is still available. This is a convenience, never a
+  requirement.
+- **Durable continuity (the real contract):** issue, PR, branch, and a
+  structured checkpoint comment — nothing else. A worker replacement must be
+  able to reconstruct **solely** from these; it must never require inheriting
+  hidden local session state from the terminated worker.
+
+**Checkpoint contract.** Every checkpoint records: completed work, verification
+performed, blockers, and the explicit next action. A checkpoint that fails to
+publish to GitHub **is a failed checkpoint** — not a soft-fail to retry
+silently later. An auth prompt or a human-decision-needed point becomes an
+explicit, visible blocker in the checkpoint, never a silent stall.
+
+**Authority.** Project 19 + GitHub is the authoritative task state, full stop.
+
+**What each existing artifact keeps doing — nothing new is invented to duplicate it:**
+- `sessions/active.md` stays a **thin, current, cross-team cold-start
+  narrative** — it is not, and does not become, a second task tracker.
+- Existing role `context/*.json` and `field-notes.md` retain **durable
+  operating lessons** (the instinct-and-failure-pattern catalog) — unaffected
+  by this design.
+- An idea's `memories.json` is available for architectural
+  decisions/blockers/test-criteria when a session finds it useful — it is
+  **not mandatory duplicated task state**; the issue/PR/board triad remains
+  authoritative even when a `memories.json` entry exists alongside it.
+
+**No second database, daemon, or orchestration store.** This is a hard
+boundary, not a starting default that might change: GitHub + the board is the
+entire durable-state surface for this design.
+
+**Same-beat propagation.** A decision propagates to the issue, the PR, and the
+board **in the same work beat** it's made — never staggered — so that a cold
+session starting from any one of the three never inherits a stale story from
+the other two. This generalizes the existing director discipline ("propagate
+decisions everywhere visible") to OpenCode workers.
+
+## 4. Human-centered roles and reconciliation with the existing roster
+
+**Primary human-facing OpenCode roles:** `ui-lead`, `platform-lead`,
+`assets-lead` — one per pod. Each adapts the existing **director charter**
+(`docs/teams/roles/director/prompt.md`) within a single team lane: collaborate
+with the pod's human, triage, dispatch, verify, coordinate. Exactly like the
+director, a lead does **no** implementation, commit, push, merge, or hands-on
+bug investigation — that discipline is the entire reason the director role is
+reliable, and it carries over unchanged. The human alone makes final product
+decisions and merges.
+
+**Standing expert ownership is retained, not replaced.** The design
+deliberately does **not** collapse the roster into one generic implementer —
+expert ownership of each repo's boundary is load-bearing (see
+`docs/teams/roles/README.md` §"the expert-ownership standard").
+
+| Pod | Standing members used |
+|---|---|
+| Platform | `rpg-toolkit-member`, `rpg-api-member`, `rpg-api-protos-member` (existing charters, unchanged) |
+| UI/UX + Assets | `rpg-dnd5e-web-member` (existing charter) — ownership across the two pods must be made **explicit** (see below) |
+
+**The web-ownership seam.** `rpg-dnd5e-web-member`'s existing charter is a
+single repo owned by two pods (UI/UX: presentation/interaction/accessibility;
+Assets: 3D client seams/animation/performance). Today's charter doesn't split
+this. This design does not invent the split now — it requires that
+**implementation planning choose the smallest adapter or split that makes web
+ownership explicit across the two pods without duplicating shared web law**
+(the render-and-call boundary, the hard rules in the existing charter). Two
+concrete shapes planning may choose between (not a decision made here):
+a shared charter with a pod-scoped "which seam am I touching" preamble, or
+two thin pod-adapters that both point at the one canonical
+`rpg-dnd5e-web-member` charter. Either is acceptable; inventing a third repo
+owner, or letting one pod silently absorb the other's work, is not.
+
+**Standing members persist issue PR-to-merge**, own their living docs
+(`status.md`/`quality.md`), enforce repo boundaries, and refuse invalid briefs
+— unchanged from the existing charters.
+
+**Fixers become task-scoped Terra workers.** The existing
+`toolkit-fixer`/`api-fixer`/`web-fixer` charters map to OpenCode Terra workers:
+dispatched for one scoped task, disperse when done, carry no standing
+ownership. Unchanged in spirit; the OpenCode adapter binds the model (§5).
+
+**Shared read-only exploration role retained** — the Explore/orientation
+pattern the director already uses to reconcile a stale handoff against reality
+without pulling the whole world into its own context. Maps to a Luna worker
+(§5).
+
+**Janitor maps to Luna.** The existing `janitor` charter (curates handoff, role
+context, structured memory, board hygiene; writes no code, makes no design
+decisions) is unchanged and binds to a Luna model (§5).
+
+**Deprecated `project-manager` stays retired** — Project 19 already owns
+tracking; nothing in this design revives it.
+
+**`platform-simplifier` is deferred, not deleted.** It activates only after a
+real need is observed **and** its knowledge prerequisites (the per-repo
+`.claude/knowledge/` corpus it reads — see `ideas/team-memory-system/design.md`)
+exist. This design does not activate it.
+
+**Independent gate — fresh-context Sol reviewer.** Works in an **independent
+worktree** (never the implementer's), adversarially reviews the diff, the
+claims, the tests, and the evidence — may conduct **reversible** mutation
+experiments to probe a claim (e.g., temporarily breaking a code path to
+confirm a test actually catches it, then reverting). The gate **never fixes**
+what it finds and **never commits or pushes**; findings route back to the
+**original implementer**. A **fresh** regate follows remediation — the same
+gate re-running on the same context is not an independent regate.
+
+**The four-question done-gate applies to every completion**, human-facing lead
+included, unchanged from the existing standard:
+1. **Goal** — does observable behavior match the task's goal sentence?
+2. **Pattern** — did the work follow the repo's existing patterns?
+3. **Test** — proven on the real path, not a stub/fixture bypass?
+4. **Pushback** — did anything in the brief conflict with the lane or standing
+   rules? Say so.
+
+**Domain lanes (what each pod actually watches for):**
+- **UI/UX** — presentation, interaction, accessibility, responsive Discord
+  viewport, visual evidence (screenshots/recordings as the artifact of record).
+- **Platform** — toolkit/API/protos/deployment correctness, wire-state
+  correctness, cross-repo sequencing (proto before API before web, per the
+  existing boundary rule).
+- **Assets** — asset pipeline, license boundaries, manifests, 3D client seams,
+  animation, performance, multi-angle evidence.
+
+## 5. Initial GPT model profile
+
+Model bindings are a **separate axis from role policy** (§4) — this profile
+can be swapped for Claude/Gemini/open-source models later, after the GPT
+proof, without touching any role's charter or duties.
+
+| Role class | Model | Variant |
+|---|---|---|
+| Team leads (`ui-lead`, `platform-lead`, `assets-lead`) | `openai/gpt-5.6-sol-fast` | `xhigh` |
+| Independent gate | `openai/gpt-5.6-sol` | `max` |
+| Standing members / fixers (Terra workers) | `openai/gpt-5.6-terra` | `high` |
+| Explore / research | `openai/gpt-5.6-luna` | `medium` |
+| Janitor, title/summary/compaction chores | `openai/gpt-5.6-luna` | `low` (may be raised when judgment requires it; `low` is the initial binding, not a ceiling) |
+
+**Sol / Terra / Luna are capability/cost categories**, not separate
+intelligence tiers layered on top of variant. `-fast` targets the **same** API
+model with priority service (`serviceTier: priority`) — it buys latency, not
+different reasoning quality. Reasoning depth is controlled independently by
+the **variant** column.
+
+## 6. Configuration and source of truth
+
+**Project-scoped OpenCode setup lives in `rpg-project`:**
+- `opencode.jsonc` — project config.
+- `AGENTS.md -> CLAUDE.md` — a **Git symlink** (accepted Linux/WSL-only
+  constraint; this design does not attempt a Windows-native equivalent).
+- `.opencode/agent/` — the thin role adapters (model + permission bindings).
+- `.opencode/skills/` — project-scoped skills.
+
+**Charters stay canonical; adapters point, they don't copy.** Every
+`docs/teams/roles/**/prompt.md` charter remains the single source of truth for
+a role's identity and duties. An `.opencode/agent/` file is a thin binding
+(model, variant, permissions, a pointer to the charter path) — never a copied
+or paraphrased charter. A charter edit is a one-place edit that both Claude
+Code and OpenCode pick up.
+
+**No duplicate policy store.** Vendor-neutral board/gate/team policy stays in
+the existing `rpg-project` docs/role system. This design explicitly does
+**not** create a `game-dev/docs/team-workflow` (or any other) second source of
+truth for that policy.
+
+**Root `CLAUDE.md` becomes tool-neutral where practical**, refactored to stay
+current for Project 19 without assuming Claude Code as the only reader.
+Tool/provider-specific detail (OpenCode config, agent bindings) lives in
+configuration/adapter files, not in the shared narrative doc.
+
+**`opencode.jsonc` boundaries:**
+- Does **not** modify `~/.config/opencode/opencode.jsonc`, provider
+  credentials, or global work settings.
+- **Disables inherited work-only MCPs** at project scope while **retaining**
+  relevant browser tools (the MCP playtest/evidence-capture surface stays
+  available).
+- Credentials remain local/uncommitted — no credential material in this repo.
+
+**Sibling-repo access.** OpenCode launched from `rpg-project` needs **explicit
+allowed/reference access** to the sibling implementation repos living under
+`game-dev` (`rpg-toolkit`, `rpg-api`, `rpg-dnd5e-web`, `rpg-api-protos`,
+`rpg-deployment`) — configured, not assumed.
+
+**`game-dev/bootstrap.sh`:**
+- Adds `rpg-project` to its idempotent clone/verify set (alongside the
+  existing three game repos).
+- May verify OpenCode availability (binary present, reachable).
+- **Never** overwrites global OpenCode config — bootstrap only clones/verifies
+  and checks tooling presence, it does not write into
+  `~/.config/opencode/opencode.jsonc`.
+
+## 7. Error handling and operational gates
+
+- **No issue means no executable dispatch.** A lead cannot claim a task has
+  "started" until issue creation/linking and board publication have actually
+  succeeded — not attempted, succeeded.
+- **Worker permission prompt or auth blocker → stop and publish the blocker.**
+  An invisibly-blocked agent is unacceptable; silence is the failure mode, not
+  the block itself.
+- **Worktree collision → isolate, never overwrite.** A worker that finds its
+  target worktree in use creates or uses its own isolated worktree; it never
+  overwrites another worker's in-progress state.
+- **A gate finding keeps the item In Review** and routes back to the original
+  implementer — a finding never silently reopens as a fresh Todo item, losing
+  the review thread.
+- **A green arriving right after a confusing failure is a flag, not a relief**
+  — verify ground truth and test discrimination before believing it (the
+  existing director field-notes catalog of false greens applies unchanged to
+  OpenCode workers). Use repository-pinned tools and real build/test gates,
+  not cascading language-server noise, as the arbiter of "broken."
+- **A test/playtest claim is scoped only to the real path it exercised.**
+  Fixtures cannot prove production integration; a claim that bypasses the game
+  path must say so explicitly rather than rounding up to a stronger claim.
+- **Human playtest and evidence judgment remain human-in-loop** wherever a
+  subagent cannot itself reach the relevant browser/MCP surface — this is not
+  a delegatable step in those cases.
+- **Merge does not mean shipped.** For auto-deploying repos, the workflow
+  requires watching the main build/deploy run to terminal success before a
+  task is marked Done.
+- **The retro is the evaluator.** Model/workflow choices made in this design
+  are hypotheses; retrospective observation in action — not design-time
+  argument — is how they get judged and adjusted (this generalizes the
+  existing director field-notes principle "decide with the north star, judge
+  in action" to the model-profile and role-split choices in §4–§5).
+- **Role permissions reinforce boundaries where practical**, but must still
+  allow a lead's board actions (triage, field edits, comments) and a
+  reviewer's reversible mutation experiments — permission scoping must not
+  accidentally block the gate's actual job.
+
+## 8. Side-by-side rollout and verification
+
+**What gets validated before this is trusted:** config load, symlink
+resolution, role discovery, exact model/variant applied per role, unchanged
+global config (no accidental overwrite of
+`~/.config/opencode/opencode.jsonc`), role permissions (leads can act, gates
+can act, neither can merge), sibling-repo access, and board operation
+end-to-end.
+
+**First live proof — the deliberate-kill test.** A Terra implementation worker
+is **deliberately terminated** after it has published a checkpoint. A
+**replacement worker** resumes the task reconstructing **solely** from GitHub
+(issue thread + checkpoint comment) and the branch — no inherited local
+session state — and carries the task through to opening a PR.
+
+**Gate proof.** A fresh Sol gate verifies the resulting PR. Findings (if any)
+cycle: original or replacement implementer addresses → a **fresh** regate
+re-verifies. Kirk merges.
+
+**Success criteria for the proof (all must hold):**
+- No context loss across the kill/replace boundary.
+- No lead performed implementation.
+- No reviewer self-remediated a finding it raised.
+- Complete Project/issue/PR history — the story is fully reconstructable from
+  GitHub alone.
+- Repository gates (CI, lint, tests) passing.
+- Team-appropriate evidence attached (screenshots for UI/UX, wire-state
+  evidence for Platform, multi-angle evidence for Assets, as relevant to the
+  pilot task).
+- Deployment verified where applicable.
+- Human merge authority exercised — Kirk merges, not any agent.
+
+**After the proof:** compare against the equivalent Claude Code workflow.
+Automate only observed failures from the comparison — do not pre-build
+automation for failure modes that didn't actually occur. Explicitly **out of
+scope for this rollout**: an initial plugin, a daemon, a second store,
+immediate Claude Code removal, or a multi-provider benchmark. Any of those is
+a future decision, made after evidence, not assumed here.
+
+## 9. Approved equipment pilot chain
+
+The equipment feature is both the first live OpenCode proof and a real
+in-flight feature — the proof rides real work, not a synthetic exercise.
+
+- **Upstream UI/UX input:** `rpg-dnd5e-web` PR #557 and issue #531 (the
+  fixture-first equipment concept that produced the wire-contract request).
+- **First live OpenCode proof task/PR:** the additive proto contract under
+  `rpg-api-protos#187` (equipment/inventory fields on `CharacterData`,
+  equip/unequip intent RPCs, slot taxonomy, display-ready item fields — see
+  the issue body for the full enumeration).
+- **Before proto implementation begins**, three decisions already open on
+  `rpg-api-protos#187` must be resolved:
+  1. **Slot-selection ownership** — who decides which slot an equip intent
+     targets when ambiguous.
+  2. **Authoritative item-slot compatibility representation** — the shape that
+     states which slots an item may occupy.
+  3. **Whether inventory includes equipped items** — one representation,
+     chosen and documented, not left implicit.
+  An explicit two-hander-blocked marker on the wire is **minor/non-blocking**
+  unless the UI turns out to need it — do not gate the proto PR on it
+  preemptively.
+- **The broader equipment task stays alive after the proto PR merges** — this
+  pilot proves the workflow on one link of the chain, not the whole feature:
+  - Rules/occupancy design coordinated with `rpg-project#94` plus a
+    corresponding toolkit issue.
+  - A new, linked `rpg-api` issue for encounter hydration and equip intents.
+  - The UI fixture-to-live swap under `rpg-dnd5e-web#531`.
+- **Each repository implementation gets its own linked issue/PR on Project
+  19.** This chain is explicitly **not** one oversized cross-repo task — the
+  proto, toolkit, API, and web legs are separate issues, separate PRs, each
+  independently gated.
+
+## 10. Rollout issue
+
+This design and configuration effort is itself tracked by `rpg-project#101`,
+Project 19 Team **Cross-team**, Feature **Infra**, Kind **Build**.

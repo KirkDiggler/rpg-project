@@ -1,0 +1,57 @@
+# Idea: OpenCode Team Workflow
+
+Port the established human-centered UI/UX, Platform, and Assets team workflow
+to OpenCode as a provider-neutral control plane — without replacing Claude
+Code, without duplicating Project 19 as task state, and without copying the
+existing role charters instead of adapting them.
+
+## Status
+
+**Design approved (2026-07-20).** `design.md` records the complete,
+Kirk-approved design. Implementation planning follows in a separate session
+once the written spec is approved — `plan.md` does not exist yet by design;
+that is a defined process state (spec approved → plan not yet written), not a
+TODO placeholder.
+
+## Tracking
+
+- Issue: `rpg-project#101` — https://github.com/KirkDiggler/rpg-project/issues/101
+- Board: Project 19 ("The Dungeon Run"), Team **Cross-team**, Feature **Infra**, Kind **Build**
+- Pilot chain this design's first live proof rides on: `rpg-api-protos#187`
+  (equipment contract), coordinating with `rpg-project#94` and
+  `rpg-dnd5e-web#531`/`#557`
+
+## Purpose
+
+OpenCode becomes a second, provider-neutral control plane standing side-by-side
+with Claude Code during rollout. It ports the *workflow semantics* already
+proven here — human-centered team pods, standing expert ownership, an
+independent adversarial gate, Project 19 as durable task state — rather than
+Claude Code's literal team/mailbox internals. `rpg-project` remains the
+canonical cross-repo coordination root; `game-dev` remains portable
+workstation bootstrap and does not fork team policy.
+
+## Approved boundaries (the non-negotiables)
+
+- Project 19 / GitHub (issues, PRs, board fields) is the durable, authoritative
+  task state. OpenCode sessions are replaceable workers, not the source of
+  truth — a worker can be killed and replaced from GitHub state alone.
+- No executable dispatch without a backing issue. No second database, daemon,
+  or orchestration store.
+- Existing `docs/teams/roles/**` charters stay canonical. OpenCode agent files
+  are thin adapters (model + permission bindings) that point to them.
+- Role policy (who does what, what a role refuses) and model profile (which
+  GPT model/variant backs a role) are separate axes — the model profile can
+  change later without touching role policy.
+- Human alone makes final product decisions and merges. No role gains merge
+  authority.
+- `game-dev/bootstrap.sh` clones/verifies `rpg-project` and may verify OpenCode
+  availability; it never overwrites global `~/.config/opencode/opencode.jsonc`
+  or provider credentials.
+
+## Pointers
+
+- Full design (complete, no open questions): [`design.md`](design.md)
+- Implementation plan: `plan.md` — **not yet created.** Planning starts in a
+  fresh session once this design doc is the agreed spec; do not draft it
+  speculatively here.
