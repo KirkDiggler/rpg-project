@@ -22,6 +22,8 @@ local worktree path. See Tracking below for the PR once opened.
 ## Tracking
 
 - Issue: `rpg-project#101` — https://github.com/KirkDiggler/rpg-project/issues/101
+- Design/plan review PR (Review phase: Design Review): `rpg-project#102` —
+  https://github.com/KirkDiggler/rpg-project/pull/102
 - Board: Project 19 ("The Dungeon Run"), Team **Cross-team**, Feature **Infra**, Kind **Build**
 - Pilot chain this design's first live proof rides on: `rpg-api-protos#187`
   (equipment contract), coordinating with `rpg-project#94` and
