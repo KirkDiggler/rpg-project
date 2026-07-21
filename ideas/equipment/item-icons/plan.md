@@ -25,7 +25,7 @@ one `resolveIconUrl(item.iconKey)` call site for
 component's rendering, disabled/`busy`, or intent-emission logic.
 
 **Tech Stack:** TypeScript 5.8 (strict mode, `satisfies` for compile-time
-exhaustiveness), Vitest + `@testing-library/react`, React 18 function
+exhaustiveness), Vitest + `@testing-library/react`, React 19 function
 components, no new runtime dependencies.
 
 ## Global Constraints
@@ -1264,26 +1264,50 @@ outside the four touched in Tasks 1-2).
 - [ ] **Step 4: Sync local assets before visual verification**
 
 A fresh worktree does not carry the gitignored `public/models/synty/`
-tree populated by earlier syncs. Run:
+tree populated by earlier syncs. `scripts/sync-synty-assets.sh` derives
+its private-asset checkout location as `$WEB_ROOT/../rpg-game-assets` —
+inside this worktree, `$WEB_ROOT` is
+`.../rpg-dnd5e-web/.worktrees/576-item-icons`, so that resolves to
+`.../rpg-dnd5e-web/.worktrees/rpg-game-assets`, a location that does not
+exist yet, not the real checkout already sitting at
+`/home/kirk/game-dev/rpg-game-assets`. Left alone, `npm run assets:sync`
+would clone a second, redundant copy of the private repo into
+`.worktrees/`. From the worktree root, symlink around that instead:
+
+```bash
+[ -e ../rpg-game-assets ] || ln -s /home/kirk/game-dev/rpg-game-assets ../rpg-game-assets
+```
+
+Expected: no output (the `[ -e ... ] ||` guard makes this idempotent — a
+rerun after the symlink already exists is a silent no-op, not a
+duplicate-link error). This makes the sync script reuse the existing
+private checkout instead of cloning a duplicate one; it does not copy or
+duplicate any Synty asset data itself.
+
+Now sync:
 
 ```bash
 npm run assets:sync
 ```
 
-Expected: clones/pulls `rpg-game-assets` as a sibling directory and
-copies `harness/models/synty/` into `public/models/synty/`; confirm the
-specific files this registry references are present, e.g.:
+Expected: clones/pulls `rpg-game-assets` (now resolved via the symlink)
+and copies `harness/models/synty/` into `public/models/synty/`. Confirm
+the specific file this registry's dedicated-shortsword/longsword entries
+reference is present:
 
 ```bash
-test -f public/models/synty/ui/library/icons/weapons/ICON_SM_Wep_Sword_02_Clean.png && echo present
+test -f public/models/synty/ui/library/icons/weapons/ICON_SM_Wep_Sword_02_Clean.png
 ```
 
-Expected output: `present`.
+Expected: exit status `0` (no output either way — `test` is silent on
+success; run `echo $?` immediately after if you want to see the `0`
+explicitly, but do not add an `&& echo` to the command itself).
 
-- [ ] **Step 5: Visual verification — plain browser, `/concepts` equipment bench**
+- [ ] **Step 5: Supporting visual check — plain browser, `/concepts` equipment bench**
 
-Start the dev server and check the same-origin, no-proxy surface the
-design doc calls out first:
+This is a fast, backend-free sanity check, not the required evidence —
+Step 6 is mandatory and is what actually verifies the shipped behavior.
+Start the dev server:
 
 ```bash
 npm run dev
@@ -1294,54 +1318,192 @@ Using the chrome-devtools MCP tools (or equivalent), navigate to
 screenshot. Confirm: Sir Aldric's longsword/greatsword/shield/chain-mail/
 handaxe all show icons (dedicated/generic tiers, previously blank), and
 Remy's dagger rows (fixture-only ids, unaffected by this change) still
-show their existing fixture icon. Also load the live game route (an
-active encounter reachable via a locally running `rpg-api`, per
-`docs/how-to/local-dev.md`) if one is available in this environment, and
-confirm the same icons render there.
+show their existing fixture icon.
 
-If no icons appear on `/concepts` (same-origin, no proxy involved), that
-is a real regression in this change — stop and debug before proceeding;
-do not attribute it to the known production-sync discrepancy.
+If no icons appear here, that is a real regression in this change — stop
+and debug before proceeding to Step 6; do not attribute it to the known
+production-sync discrepancy (that discrepancy is specifically about the
+Discord Activity proxy path, checked separately in Step 7, not this
+same-origin dev-server check).
 
-- [ ] **Step 6: Visual verification — inside the Discord Activity, separately**
+- [ ] **Step 6: MANDATORY visual verification — the real local game route**
+
+`/concepts` (Step 5) is fixture-driven and never exercises the actual
+wire path (`CharacterData` -> `characterEquipmentFrom` ->
+`EquipmentPopover`, see `docs/architecture/components/equipment.md`'s
+"Live wiring" section). This step is the one that actually proves the
+shipped behavior and is **not optional** — it must be completed and pass
+before this PR is opened or submitted to gate.
+
+Start a local `rpg-api` stack per `docs/how-to/local-dev.md`, in three
+separate terminals (or background processes) alongside the
+`rpg-dnd5e-web` worktree's own `npm run dev` from Step 5:
+
+```bash
+# Terminal 1 — Redis (rpg-api's storage backend, matching the Makefile's
+# own test-integration convention):
+docker run -d --name dev-redis -p 6379:6379 redis:alpine
+
+# Terminal 2 — the rpg-api gRPC server, from an rpg-api checkout:
+cd /home/kirk/game-dev/rpg-api
+make run
+```
+
+```bash
+# Terminal 3 — seed the equip-demo fixture (rpg-dnd5e-web#571's aldric:
+# a fighter with longsword+shield+chain-mail equipped, a spare
+# greatsword carried) into the default "dev-encounter" encounter, from
+# the same rpg-api checkout:
+cd /home/kirk/game-dev/rpg-api
+go run ./cmd/devseed --fixture=equip-demo
+```
+
+Expected: the seed command exits 0 with no error; it writes to the
+Redis instance from Terminal 1 (`localhost:6379`, matching the devseed's
+default).
+
+Set the web worktree's dev-mode auth to the seeded player, per
+`docs/how-to/local-dev.md`'s `.env.local` example (`VITE_API_HOST`
+pointed at the running `rpg-api` from Terminal 2, per that doc):
+
+```bash
+# In the rpg-dnd5e-web worktree's .env.local (create if absent):
+# VITE_API_HOST=<the running rpg-api address, per local-dev.md>
+# VITE_DEV_PLAYER_ID=aldric
+```
+
+Navigate to `http://localhost:5173/?encounterId=dev-encounter` (the
+`?encounterId=` dev-mode gate documented in `App.tsx`) and confirm the
+live encounter loads as `aldric`. Open the equipment popover (the
+chestplate chip on `EncounterDock`) and, using the chrome-devtools MCP
+tools (or equivalent), capture a screenshot showing: `EquipmentSlots`
+rendering icons for the equipped longsword/shield/chain-mail, and
+`InventoryLight` rendering an icon for the carried greatsword — all
+sourced through the real wire path, not fixtures. If a pre-change
+baseline is convenient (e.g. a second worktree checked out at
+`origin/main` running the same seeded encounter), capture a "before"
+screenshot showing no icons for comparison; a "post-change only"
+screenshot proving icons now render is sufficient evidence on its own if
+a separate before-checkout isn't convenient.
+
+**If this local stack cannot be started or the seeded encounter cannot be
+reached in this environment** (missing Docker/Redis access, `rpg-api`
+checkout unavailable, network policy, etc.): stop here. Report a
+verification blocker describing exactly what failed and at which command
+above. Do **not** claim this task's product work complete, and do **not**
+proceed to open the PR or submit anything to the Step 11 Sol gate on the
+strength of Step 5's `/concepts` check alone — that check is supporting
+evidence only, not a substitute for this step.
+
+- [ ] **Step 7: Visual verification — inside the Discord Activity, separately**
 
 Per `docs/architecture/components/discord.md`, the Discord Activity
 sandbox routes every API/asset call through `/.proxy` under
-`discordsays.com` — a different request path than the same-origin
-`/concepts` check above. Launch the activity through Discord exactly as
-done for prior verified work in this repo, open the equipment popover on
-a character with equipped canonical items, and capture a screenshot.
+`discordsays.com` — a different request path than the same-origin checks
+in Steps 5-6. Launch the activity through Discord exactly as done for
+prior verified work in this repo, open the equipment popover on a
+character with equipped canonical items, and capture a screenshot.
 
-- **If both surfaces show icons:** capture and note both screenshots as
-  before/after evidence in the PR description; proceed to Step 7.
-- **If `/concepts` (Step 5) shows icons but the Discord Activity does
-  not:** this confirms the proxy/path-mapping gap the design doc already
-  flagged as unconfirmed. File a **separate** issue against the Discord
+Two outcomes, each with its own PR-body command in Step 9 below:
+
+- **Outcome A — both surfaces show icons:** proceed to Step 8.
+- **Outcome B — Step 6's real local game route shows icons but the
+  Discord Activity does not:** this confirms the proxy/path-mapping gap
+  the design doc already flagged as unconfirmed. File a **separate**
+  issue (exact command in Step 9's Outcome B) against the Discord
   activity/proxy setup describing the discrepancy. Do **not** expand
-  #576's scope to fix it, and do not block this PR on it — note the filed
-  issue number in this PR's description instead.
+  #576's scope to fix it, and do not block this PR on it.
 
-- [ ] **Step 7: Commit the docs change**
+- [ ] **Step 8: Commit the docs change**
 
 ```bash
 git add docs/architecture/components/equipment.md
 git commit -m "docs(equipment): note the canonical item-icon lookup (#576)"
 ```
 
-- [ ] **Step 8: Push and open the PR**
+- [ ] **Step 9: Push and open the PR**
+
+Push first (shared by both outcomes):
 
 ```bash
 git push -u origin feat/576-item-icons
+```
+
+**If Step 7's Outcome A** (both surfaces passed):
+
+```bash
 gh pr create --repo KirkDiggler/rpg-dnd5e-web \
   --base main --head feat/576-item-icons \
   --title "feat(equipment): canonical weapon/armor item icons (#576)" \
-  --body "Closes #576. Adds src/utils/itemIcons.ts (exhaustive 38-weapon+13-armor canonical icon registry + getItemIconUrl resolver, wire > canonical > supplemental > text-only precedence) and wires it into EquipmentSlots/InventoryLight, replacing their direct resolveIconUrl(item.iconKey) call. Design: rpg-project#111 (ideas/equipment/item-icons/design.md). Visual evidence: [plain-browser /concepts screenshot] / [Discord Activity screenshot] — see Step 6 result. — asset-pipeline agent, on behalf of KirkDiggler"
+  --body "Closes #576.
+
+Adds src/utils/itemIcons.ts — an exhaustive 38-weapon+13-armor canonical icon registry plus getItemIconUrl(ref, iconKey), implementing the wire > canonical > supplemental > text-only precedence — and wires it into EquipmentSlots.tsx/InventoryLight.tsx, replacing their direct resolveIconUrl(item.iconKey) call with getItemIconUrl(item.ref, item.iconKey). No other rendering/interaction/accessibility behavior changes.
+
+Design: rpg-project#111 (ideas/equipment/item-icons/design.md + plan.md).
+
+Verification: full local ci-check green. Visual verification passed on the real local game route (rpg-api devseed equip-demo fixture, dev-encounter, aldric) and inside the Discord Activity — no proxy/path discrepancy found for this change. Screenshots will be attached in a signed PR comment immediately after this PR opens.
+
+— asset-pipeline agent, on behalf of KirkDiggler"
 ```
 
-Expected: PR opens against `main`, CI runs green (mirrors the local
-`ci-check` from Step 3).
+**If Step 7's Outcome B** (Discord-only proxy gap): first file the
+separate issue and capture its URL, then reference that URL in the PR
+body:
 
-- [ ] **Step 9: Address automated review, then the independent Sol gate**
+```bash
+PROXY_ISSUE_URL=$(gh issue create --repo KirkDiggler/rpg-dnd5e-web \
+  --title "Discord Activity proxy does not serve canonical item icons that resolve correctly in plain browser (#576 follow-up)" \
+  --body "While verifying rpg-dnd5e-web#576 (canonical weapon/armor item icons), the same equipment popover rendered icons correctly on the real local game route in a plain browser (http://localhost:5173/?encounterId=dev-encounter, same-origin, no proxy) but did not render them inside the Discord Activity (discordsays.com sandbox, requests routed through /.proxy — see docs/architecture/components/discord.md). This points at a proxy/path-mapping gap for /models/synty/ui/library/** asset requests, not a lookup-correctness bug in itemIcons.ts. Filed separately per #576's scope decision — not folded into or blocking that PR.
+
+— asset-pipeline agent, on behalf of KirkDiggler")
+echo "$PROXY_ISSUE_URL"
+
+gh pr create --repo KirkDiggler/rpg-dnd5e-web \
+  --base main --head feat/576-item-icons \
+  --title "feat(equipment): canonical weapon/armor item icons (#576)" \
+  --body "Closes #576.
+
+Adds src/utils/itemIcons.ts — an exhaustive 38-weapon+13-armor canonical icon registry plus getItemIconUrl(ref, iconKey), implementing the wire > canonical > supplemental > text-only precedence — and wires it into EquipmentSlots.tsx/InventoryLight.tsx, replacing their direct resolveIconUrl(item.iconKey) call with getItemIconUrl(item.ref, item.iconKey). No other rendering/interaction/accessibility behavior changes.
+
+Design: rpg-project#111 (ideas/equipment/item-icons/design.md + plan.md).
+
+Verification: full local ci-check green. Visual verification passed on the real local game route (rpg-api devseed equip-demo fixture, dev-encounter, aldric) in a plain browser. Icons did not render inside the Discord Activity — filed separately as $PROXY_ISSUE_URL (proxy/path-mapping gap, not a lookup-correctness bug; not blocking this PR per #576's scope decision). Screenshots (real-game-route pass and Discord-Activity fail) will be attached in a signed PR comment immediately after this PR opens.
+
+— asset-pipeline agent, on behalf of KirkDiggler"
+```
+
+Expected (either outcome): PR opens against `main`, CI runs green
+(mirrors the local `ci-check` from Step 3).
+
+- [ ] **Step 10: Attach the evidence screenshots, then independently verify each one**
+
+Do not invent or paste a screenshot URL into the PR body — GitHub only
+produces a real one once an image is actually uploaded through its UI.
+
+1. Open the new PR in a browser (the URL `gh pr create` printed).
+2. Add a new PR comment. Attach every screenshot captured above —
+   Step 6's mandatory real-local-game-route screenshot at minimum, plus
+   Step 5's supporting `/concepts` screenshot and Step 7's Discord
+   Activity screenshot (pass or fail-state, whichever occurred) — via
+   GitHub's comment image-attachment control (drag-and-drop or the
+   attach-files button; GitHub hosts each as a
+   `user-images.githubusercontent.com` (or `github.com/user-attachments`)
+   URL once uploaded).
+3. End the comment with a one-line caption per attachment identifying
+   which step/surface it's evidence for, then the signature footnote:
+   `— asset-pipeline agent, on behalf of KirkDiggler`.
+4. Post the comment.
+5. **Independently verify:** reload the PR page (a fresh page load, not
+   the same in-memory view used to compose the comment) and open each
+   attached image individually. Confirm each one actually renders the
+   claimed content — do not just trust that the upload succeeded.
+6. Record a written viewed-statement for each attachment, either as a
+   follow-up line in the same comment or a second comment, e.g.: "Viewed
+   equip-demo-local.png: aldric's equipment popover on
+   `?encounterId=dev-encounter`, longsword/shield/chain-mail icons all
+   rendering via the real wire path." One such statement per attachment.
+
+- [ ] **Step 11: Address automated review, then the independent Sol gate**
 
 Per the repo's standing review process:
 
@@ -1351,8 +1513,9 @@ Per the repo's standing review process:
    implementer, in its own fresh worktree — not `.worktrees/576-item-icons`)
    performs the adversarial Sol gate: reruns the full suite, audits the
    38/13 exhaustiveness and path claims against the actual file contents,
-   independently views the visual evidence from Step 6, and posts a GATE
-   REVIEW comment (`MERGE-READY` or findings-before-merge).
+   independently opens and views each screenshot attached in Step 10
+   (not just reads the viewed-statements), and posts a GATE REVIEW
+   comment (`MERGE-READY` or findings-before-merge).
 3. If the gate reports findings, this task's original implementer
    remediates them and the same gate reviewer performs a focused recheck
    — do not restart a full audit unless remediation materially rewrites
@@ -1360,11 +1523,11 @@ Per the repo's standing review process:
 4. **Kirk merges.** No agent merges this PR. Once merged, `#576` closes
    automatically (via the `Closes #576` PR body).
 
-- [ ] **Step 10: Do not merge rpg-project PR #111 yet**
+- [ ] **Step 12: Do not merge rpg-project PR #111 yet**
 
 Per `ideas/equipment/item-icons/design.md`'s process note and
 `rpg-project/CLAUDE.md`'s Cross-Repo Design Workflow, PR #111 (this
 design+plan) stays **open** as the tracking surface until the
-`rpg-dnd5e-web` PR from Step 8 is merged. Once it is, comment on PR #111
+`rpg-dnd5e-web` PR from Step 9 is merged. Once it is, comment on PR #111
 linking the merged `rpg-dnd5e-web` PR and let Kirk decide when to merge
 #111 — do not merge it as part of this task.
