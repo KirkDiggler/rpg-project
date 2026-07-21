@@ -1335,48 +1335,100 @@ wire path (`CharacterData` -> `characterEquipmentFrom` ->
 shipped behavior and is **not optional** — it must be completed and pass
 before this PR is opened or submitted to gate.
 
-Start a local `rpg-api` stack per `docs/how-to/local-dev.md`, in three
-separate terminals (or background processes) alongside the
-`rpg-dnd5e-web` worktree's own `npm run dev` from Step 5:
+Per `rpg-api`'s `docs/how-to/run-locally.md`, the server needs
+`AUTH_DEV_MODE=true` (`make run` does not set this — it is a plain
+`go run cmd/server/*.go server` with no dev-auth env var, so a web client
+sending the `Authorization: Dev <playerId>` header would be rejected).
+The web client also talks gRPC-Web over HTTP, not raw gRPC — `rpg-api`'s
+`docker-compose.yml` documents an `envoy` service that proxies HTTP 8080
+(what TypeScript clients call) to gRPC 50051 (what the bare Go server
+listens on); starting only the server on 50051 leaves the web client with
+nothing to connect to on 8080.
+
+Start the stack, in order, from an `rpg-api` checkout:
 
 ```bash
-# Terminal 1 — Redis (rpg-api's storage backend, matching the Makefile's
-# own test-integration convention):
-docker run -d --name dev-redis -p 6379:6379 redis:alpine
-
-# Terminal 2 — the rpg-api gRPC server, from an rpg-api checkout:
 cd /home/kirk/game-dev/rpg-api
-make run
+
+# 1. Redis — idempotent: start the container if it already exists
+#    (stopped) from a prior run, else create it fresh, per
+#    docs/how-to/run-locally.md.
+docker start rpg-redis 2>/dev/null || docker run -d --name rpg-redis -p 6379:6379 redis:alpine
 ```
 
 ```bash
-# Terminal 3 — seed the equip-demo fixture (rpg-dnd5e-web#571's aldric:
-# a fighter with longsword+shield+chain-mail equipped, a spare
-# greatsword carried) into the default "dev-encounter" encounter, from
-# the same rpg-api checkout:
+# 2. Envoy — gRPC-Web proxy, HTTP 8080 -> gRPC 50051 (host networking,
+#    per docker-compose.yml's own comment on the envoy service).
+cd /home/kirk/game-dev/rpg-api
+docker compose up -d envoy
+```
+
+```bash
+# 3. The rpg-api gRPC server itself, in its own dedicated FOREGROUND
+#    terminal (not backgrounded — leave it running and watch its logs
+#    while testing) — AUTH_DEV_MODE=true is required, exactly per
+#    docs/how-to/run-locally.md:
+cd /home/kirk/game-dev/rpg-api
+AUTH_DEV_MODE=true go run ./cmd/server server
+```
+
+Expected: the server logs it's listening on `:50051` and stays running in
+this terminal (Ctrl+C stops it — leave it up for the rest of this step).
+
+```bash
+# 4. Seed the equip-demo fixture (rpg-dnd5e-web#571's aldric: a fighter
+#    with longsword+shield+chain-mail equipped, a spare greatsword
+#    carried) into the default "dev-encounter" encounter, from a
+#    separate terminal, same rpg-api checkout:
 cd /home/kirk/game-dev/rpg-api
 go run ./cmd/devseed --fixture=equip-demo
 ```
 
 Expected: the seed command exits 0 with no error; it writes to the
-Redis instance from Terminal 1 (`localhost:6379`, matching the devseed's
+Redis instance from step 1 (`localhost:6379`, matching the devseed's
 default).
 
-Set the web worktree's dev-mode auth to the seeded player, per
-`docs/how-to/local-dev.md`'s `.env.local` example (`VITE_API_HOST`
-pointed at the running `rpg-api` from Terminal 2, per that doc):
+In the `rpg-dnd5e-web` worktree, create `.env.local` (already gitignored
+— `.gitignore` lines 25-27 — never commit it) with exactly:
 
-```bash
-# In the rpg-dnd5e-web worktree's .env.local (create if absent):
-# VITE_API_HOST=<the running rpg-api address, per local-dev.md>
-# VITE_DEV_PLAYER_ID=aldric
+```
+VITE_API_HOST=http://localhost:8080
+VITE_DEV_PLAYER_ID=aldric
 ```
 
-Navigate to `http://localhost:5173/?encounterId=dev-encounter` (the
-`?encounterId=` dev-mode gate documented in `App.tsx`) and confirm the
-live encounter loads as `aldric`. Open the equipment popover (the
-chestplate chip on `EncounterDock`) and, using the chrome-devtools MCP
-tools (or equivalent), capture a screenshot showing: `EquipmentSlots`
+Then start (or restart, if it was already running from Step 5, since
+Vite only reads `.env.local` at startup) the dev server:
+
+```bash
+npm run dev
+```
+
+Navigate to exactly:
+
+```
+http://localhost:5173/?encounterId=dev-encounter&playerId=aldric
+```
+
+Both the `encounterId` and `playerId` query params are required here,
+and they are **not** interchangeable with the `.env.local` values above:
+`PlaytestHarness.tsx` reads `playerId` strictly from
+`window.location.search` (`new URLSearchParams(...).get('playerId')`) and
+derives `entityId` from it directly (`` `char-${playerId}` `` — matching
+the devseed's `entityAldric = "char-aldric"` exactly for `playerId=aldric`).
+Omitting `&playerId=aldric` from the URL makes the harness render its own
+guard — "Error: playerId is required — add ?playerId=alice to the URL" —
+regardless of `.env.local`. `useDevPlayerIdAuth(playerId)` then syncs that
+URL value into the gRPC auth store before any request fires. `.env.local`'s
+`VITE_DEV_PLAYER_ID` is a separate, harness-independent fallback that
+`src/api/auth.ts`'s general dev-auth interceptor uses for OTHER routes
+when no URL override exists at all — it does not satisfy or bypass
+`PlaytestHarness`'s own explicit query-param requirement, so it is kept
+here only for consistency with the rest of a normal local-dev setup, not
+because this specific harness route needs it.
+
+Confirm the live encounter loads as `aldric`. Open the equipment popover
+(the chestplate chip on `EncounterDock`) and, using the chrome-devtools
+MCP tools (or equivalent), capture a screenshot showing: `EquipmentSlots`
 rendering icons for the equipped longsword/shield/chain-mail, and
 `InventoryLight` rendering an icon for the carried greatsword — all
 sourced through the real wire path, not fixtures. If a pre-change
@@ -1387,13 +1439,13 @@ screenshot proving icons now render is sufficient evidence on its own if
 a separate before-checkout isn't convenient.
 
 **If this local stack cannot be started or the seeded encounter cannot be
-reached in this environment** (missing Docker/Redis access, `rpg-api`
-checkout unavailable, network policy, etc.): stop here. Report a
-verification blocker describing exactly what failed and at which command
-above. Do **not** claim this task's product work complete, and do **not**
-proceed to open the PR or submit anything to the Step 11 Sol gate on the
-strength of Step 5's `/concepts` check alone — that check is supporting
-evidence only, not a substitute for this step.
+reached in this environment** (missing Docker access, `rpg-api` checkout
+unavailable, network policy, etc.): stop here. Report a verification
+blocker describing exactly what failed and at which command above. Do
+**not** claim this task's product work complete, and do **not** proceed
+to open the PR or submit anything to the Step 11 Sol gate on the strength
+of Step 5's `/concepts` check alone — that check is supporting evidence
+only, not a substitute for this step.
 
 - [ ] **Step 7: Visual verification — inside the Discord Activity, separately**
 
@@ -1453,10 +1505,15 @@ body:
 ```bash
 PROXY_ISSUE_URL=$(gh issue create --repo KirkDiggler/rpg-dnd5e-web \
   --title "Discord Activity proxy does not serve canonical item icons that resolve correctly in plain browser (#576 follow-up)" \
-  --body "While verifying rpg-dnd5e-web#576 (canonical weapon/armor item icons), the same equipment popover rendered icons correctly on the real local game route in a plain browser (http://localhost:5173/?encounterId=dev-encounter, same-origin, no proxy) but did not render them inside the Discord Activity (discordsays.com sandbox, requests routed through /.proxy — see docs/architecture/components/discord.md). This points at a proxy/path-mapping gap for /models/synty/ui/library/** asset requests, not a lookup-correctness bug in itemIcons.ts. Filed separately per #576's scope decision — not folded into or blocking that PR.
+  --body "While verifying rpg-dnd5e-web#576 (canonical weapon/armor item icons), the same equipment popover rendered icons correctly on the real local game route in a plain browser (http://localhost:5173/?encounterId=dev-encounter&playerId=aldric, same-origin, no proxy) but did not render them inside the Discord Activity (discordsays.com sandbox, requests routed through /.proxy — see docs/architecture/components/discord.md). This points at a proxy/path-mapping gap for /models/synty/ui/library/** asset requests, not a lookup-correctness bug in itemIcons.ts. Filed separately per #576's scope decision — not folded into or blocking that PR.
 
 — asset-pipeline agent, on behalf of KirkDiggler")
 echo "$PROXY_ISSUE_URL"
+
+# rpg-project's board rules (CLAUDE.md: "No issue without a board entry")
+# require every new issue land on the same project #576 already tracks
+# ("The Dungeon Run", board 19):
+gh project item-add 19 --owner KirkDiggler --url "$PROXY_ISSUE_URL"
 
 gh pr create --repo KirkDiggler/rpg-dnd5e-web \
   --base main --head feat/576-item-icons \
@@ -1467,7 +1524,7 @@ Adds src/utils/itemIcons.ts — an exhaustive 38-weapon+13-armor canonical icon 
 
 Design: rpg-project#111 (ideas/equipment/item-icons/design.md + plan.md).
 
-Verification: full local ci-check green. Visual verification passed on the real local game route (rpg-api devseed equip-demo fixture, dev-encounter, aldric) in a plain browser. Icons did not render inside the Discord Activity — filed separately as $PROXY_ISSUE_URL (proxy/path-mapping gap, not a lookup-correctness bug; not blocking this PR per #576's scope decision). Screenshots (real-game-route pass and Discord-Activity fail) will be attached in a signed PR comment immediately after this PR opens.
+Verification: full local ci-check green. Visual verification passed on the real local game route (rpg-api devseed equip-demo fixture, dev-encounter, aldric) in a plain browser. Icons did not render inside the Discord Activity — filed separately as $PROXY_ISSUE_URL, added to board 19 (proxy/path-mapping gap, not a lookup-correctness bug; not blocking this PR per #576's scope decision). Screenshots (real-game-route pass and Discord-Activity fail) will be attached in a signed PR comment immediately after this PR opens.
 
 — asset-pipeline agent, on behalf of KirkDiggler"
 ```
@@ -1500,8 +1557,9 @@ produces a real one once an image is actually uploaded through its UI.
 6. Record a written viewed-statement for each attachment, either as a
    follow-up line in the same comment or a second comment, e.g.: "Viewed
    equip-demo-local.png: aldric's equipment popover on
-   `?encounterId=dev-encounter`, longsword/shield/chain-mail icons all
-   rendering via the real wire path." One such statement per attachment.
+   `?encounterId=dev-encounter&playerId=aldric`, longsword/shield/chain-mail
+   icons all rendering via the real wire path." One such statement per
+   attachment.
 
 - [ ] **Step 11: Address automated review, then the independent Sol gate**
 
