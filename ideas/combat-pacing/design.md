@@ -29,8 +29,9 @@ correct and emotionally flat.
 - **Platform owns any eventual web stream/envelope/state seam** ("Platform owns
   wire-and-state correctness end to end — including the client half of stream/reconnect/
   snapshot plumbing"), but **no Platform implementation issue gets created from this idea
-  until the concept's `CONTRACT.md` names a concrete requirement.** Round one is
-  fixture-first and does not touch the live stream, so there is nothing to file yet.
+  until Kirk reviews the concept's `CONTRACT.md` and confirms a concrete requirement**
+  (§6). Round one is fixture-first and does not touch the live stream, so there is
+  nothing to file yet.
 - **Assets is consultation-only** for this round — the 2D die and beat FX use existing
   Synty FX-sheet pointers (§Pointers). Assets only gets pulled in as an implementer if a
   future round chooses a 3D physics die or bespoke new art (option C, fenced out below).
@@ -59,16 +60,24 @@ several real shapes, and the visual prototype must not assume only one of them:
   `AttackResolved` and an optional `EntityDamaged`, with **no `ActionResolved` at all** —
   there was no umbrella action to resolve; the toolkit resolves NPC OAs inline and
   publishes the attack events directly.
-- **A non-attack `ActionResolved`** (e.g. a non-attack action) can have **no attack
-  event following it** — not every `ActionResolved` implies an attack happened.
+- **A non-attack `ActionResolved`** — e.g. a dodge, a dash, drinking a potion, or any
+  other declared action that isn't a strike — can have **no attack event following it**
+  at all: not every `ActionResolved` implies an attack happened.
 - **Status events are not guaranteed to correlate** with an attack at all —
   `StatusApplied`/`StatusRemoved` share the envelope's `correlation_id` mechanism in
   principle, but nothing guarantees a status event is present, or that it arrives paired
   with an attack, for any given case.
-- **Correlation groups have no terminal marker.** There is no "this correlation_id is
-  now complete" signal on the wire. A client watching for a triple has no principled way
-  to know when to stop waiting for a fourth or fifth event that never arrives, versus one
-  that's simply late.
+- **There is no documented, universal completion marker for a correlation group** — no
+  wire contract says "this `correlation_id` is now complete" for every case. In practice,
+  for a declared `TakeAction` strike, a same-correlation `TurnStateChanged` (the actor's
+  refreshed economy/menu) often follows the triple and can incidentally read as "this
+  group is done" — but that's **observed implementation behavior, not a guarantee**:
+  `TurnStateChanged` is projected to the acting client only (it carries the actor's own
+  menu, not a broadcast), so it says nothing to spectators, and an opportunity attack has
+  no `ActionResolved`/`TurnStateChanged` pair to close at all. Whether this incidental
+  actor-only signal is reliable enough to build on, and what a spectator or an OA case
+  needs instead, is exactly what CONTRACT.md must verify against real behavior — not a
+  production completion contract this design gets to assume.
 
 Treat correlation shape, cardinality, and completeness as **contract questions for
 round one's CONTRACT.md to log**, not facts this design — or the visual prototype — gets
@@ -221,17 +230,25 @@ FX · the fuller initiative-tracker hand-off animation (§3).
 ## 6. Contract questions (not asks yet)
 
 **Almost all of round one is client-side and fixture-driven — there is nothing to ask
-the platform team for yet.** What follows are open questions the concept's
-`src/concepts/combat-pacing/CONTRACT.md` gap log should capture as it's built, in the
-same spirit as the equipment concept's contract file (rpg-dnd5e-web#557) — observations
-for Kirk to route, not pre-authored proto requests:
+the platform team for yet.** `src/concepts/combat-pacing/CONTRACT.md` follows the same
+lifecycle the equipment concept's contract file proved out (rpg-dnd5e-web#557): **during
+the concept it records evidence, observations, and candidate gaps** as the fixture lab is
+built and exercised — not proto asks written from assumption. **After Kirk reviews the
+concept**, whichever candidate gaps are confirmed as real needs become the concrete
+feature requests filed on Platform's lane on board 19 — that review is the trigger, not
+this design doc and not round one's code completion. What follows are the candidate
+questions to carry into that log:
 
 1. **Correlation/cardinality/completeness.** §"What we know about the wire" lists the
    real event shapes a reassembly layer would need to handle (declared strike, OA
    without `ActionResolved`, non-attack `ActionResolved`, uncorrelated status events, no
-   terminal marker). Whether the wire should grow a terminal marker, a bounded-wait
-   contract, or something else is a real question — but it's premature until a
-   production reassembler is being built, which is explicitly not round one's job.
+   documented universal completion marker — only the actor-only, TakeAction-only
+   `TurnStateChanged` incidental signal). Whether that incidental signal is reliable
+   enough to build on, whether spectators and OAs need something else, or whether the
+   wire should grow an explicit completion contract, is a real question — but it's
+   premature until a production reassembler is being built, which is explicitly not
+   round one's job. CONTRACT.md should record what the concept actually observes here,
+   not assume an answer.
 2. **The dispatch layer currently discards the envelope.** `dispatchEncounterStreamEvent`
    (`src/api/encounterStreamDispatch.ts`) passes only `payload.value` to each callback —
    `correlation_id`, `sequence`, and `timestamp` on `EncounterEvent` are dropped before
@@ -257,9 +274,9 @@ for Kirk to route, not pre-authored proto requests:
    has secret information anyway. Theatrical over already-resolved events is the right
    tool. Stated so Kirk can overrule if a future PvP mode ever needs true-secret rolls.
 
-**No Platform implementation issue gets filed from this list.** If and when the concept's
-CONTRACT.md turns any of these into a concrete, scoped requirement, that's the trigger to
-file on Platform's lane on board 19 — not this design doc, and not round one's completion.
+**No Platform implementation issue gets filed from this list today.** These are
+candidates for the CONTRACT.md log, not requests — filing happens only after Kirk
+reviews the concept's evidence and confirms a candidate is a real, scoped need (§6 intro).
 
 ## 7. Round-one `/concepts` scope — following the PR #557 pattern
 
@@ -292,9 +309,11 @@ Following the fixture-first pattern the equipment concept (rpg-dnd5e-web#557) pr
   sequencer, the die, the verdict stamp, the damage pop — none of them know about
   streams, correlation ids, fixture types, or game rules. They take beat-shaped props
   and render. This is what makes "promotion = swap the data source" true later.
-- **CONTRACT.md captures observations and questions, not pre-authored proto asks** (§6)
-  — the equipment concept's CONTRACT.md is the model to follow: numbered gaps, each with
-  a why, explicitly deferred to a future request rather than filed now.
+- **`CONTRACT.md` records evidence and candidate gaps as the concept is built, not
+  pre-authored proto asks** (§6) — the equipment concept's `CONTRACT.md` is the model to
+  follow: numbered observations, each with a why. Filing anything on Platform happens
+  only after Kirk reviews the concept and confirms a candidate is real — not during
+  round one.
 
 **Round-one cases** (each an event-shaped fixture per the shapes in §"What we know about
 the wire"):
@@ -349,7 +368,7 @@ than read a recommendation (§2).
 ## Deferred beyond round one
 
 - Correlation/cardinality/completeness contract work and any resulting Platform issue
-  (§6) — gated on CONTRACT.md naming a concrete requirement.
+  (§6) — gated on Kirk's review of CONTRACT.md confirming a concrete requirement.
 - Live-stream reassembly, reconnect/snapshot-flush behavior (§"What we know about the
   wire", §8).
 - Damage-dice tumble, discarded-advantage-die visual (§6.3).
