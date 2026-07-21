@@ -14,7 +14,7 @@
 - Start every executable task with one repository issue, one Project 19 item, a fresh branch from `main`, and a ready, non-draft PR; use one issue per PR.
 - Project 19 fields are exact: Status `Todo` then `In Progress` then `In Review` then `Done`; Team `UI/UX`, `Platform`, `Assets`, or `Cross-team`; Feature `Party Assembles`, `Class Kits`, `The Dungeon`, `Game Screen`, `Capstone`, `Shelf`, or `Infra`; Kind `Build`, `Fix`, `Verify`, `Learn`, or `Decide`.
 - Every GitHub comment and PR body written by a worker ends with `— <role>, on behalf of KirkDiggler`.
-- The implementation lifecycle is exact: create files -> run red then green verification -> commit -> push and open a ready PR -> independent gate -> remediation by the original worker -> fresh independent regate -> human merge. Ready for review is not merge-ready; Kirk alone merges. Verify auto-deploy completion after every merge where the target repository deploys.
+- The implementation lifecycle is exact: create files -> run red then green verification -> commit -> push and open a ready PR -> independent gate verdict (`findings` or `MERGE-READY`) -> remediation by the original worker -> fresh independent regate verdict -> human merge. A ready PR is not `MERGE-READY`; only the independent gate may publish `MERGE-READY`, and only when no Critical or Important findings remain. That verdict does not authorize a merge: Kirk alone decides and merges. Verify auto-deploy completion after every merge where the target repository deploys.
 - Project 19 and GitHub issue, PR, branch, and checkpoint comments are the only durable task state. `task_id` is optional live continuity, never recovery state.
 - Use OpenCode 1.18.4 mechanics only. Project config deep-merges global config. Use only supported keys such as `enabled_providers`, `plugin`, `model`, `small_model`, `default_agent`, `references`, `mcp`, `agent`, and `permission`; do not introduce `project`, `workspace`, `agents`, `mcps`, `permissions`, `charter`, `overlay`, `contextPath`, or `checkpoints` config keys.
 - The initial profile permits only OpenAI: `enabled_providers` is exactly `["openai"]`. The project config declares `"plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]` so a clean machine does not depend on Kirk's global configuration. If global and project configuration declare that identical spec, OpenCode resolves one plugin; on a clean machine OpenCode may populate its own cache, but bootstrap never edits global configuration.
@@ -36,7 +36,7 @@
 | 2 | `rpg-project` | Task 1 merged | Cross-team / Infra / Build / Todo | OpenCode config, adapters, workflow skill, red/green verifier |
 | 3 | `game-dev` | Task 2 merged | Cross-team / Infra / Build / Todo | Seven-repo portable bootstrap and shell-only tests |
 | 4 | `rpg-project` issue only | Task 3 merged | Cross-team / Infra / Verify / Todo | Fresh-machine clean-slate evidence; no code PR |
-| 5 | existing `rpg-api-protos#187` plus new planning issue | Task 4 passed | `#187`: Platform / Party Assembles / Decide; new plan issue: Platform / Party Assembles / Build | Decision checkpoint, separate equipment plan, kill/replace/gate proof |
+| 5 | existing `rpg-api-protos#187` plus new planning issue | Task 4 gate: `MERGE-READY` | `#187`: Platform / Game Screen / Decide / Todo -> In Progress; new plan issue: Platform / Game Screen / Build / Todo -> In Progress | Decision checkpoint, separate equipment plan, kill/replace/gate proof |
 
 ## File Structure
 
@@ -379,19 +379,22 @@ pattern, real-path test evidence, and unresolved boundary pushback.
 ## Authority and limits
 
 I may run read-only checks and reversible mutation experiments that test a
-claim, restoring the checkout before reporting. I do not implement fixes,
-commit, push, merge, alter Project fields, or declare a PR merge-ready. Shell
-permission rules are defense in depth only; this charter is the authoritative
-no-commit/no-push/no-merge boundary. If a permission or authentication prompt
-blocks review, I stop and publish the exact blocker.
+claim, restoring the checkout before reporting. I do not fix, edit canonical
+work, commit, push, merge, or alter Project fields. I may publish the verdict
+`MERGE-READY` only when no Critical or Important findings remain; that verdict
+does not authorize a merge or make the human merge decision. Shell permission
+rules are defense in depth only; this charter is the authoritative
+no-fix/no-canonical-edit/no-commit/no-push/no-merge boundary. If a permission
+or authentication prompt blocks review, I stop and publish the exact blocker.
 
 ## Outcome
 
-I publish a signed GitHub checkpoint with evidence, commands, findings ordered
-by severity, residual risk, and an explicit next action. Findings return to
-the original implementer. After remediation, a different fresh-context gate
-must conduct a fresh regate; the same context may not validate its own earlier
-review. Kirk alone decides and merges.
+I publish a signed GitHub checkpoint with evidence, commands, residual risk,
+and an explicit next action. When Critical or Important findings remain, I
+publish those findings ordered by severity and return them to the original
+implementer. When none remain, I publish `MERGE-READY`. After remediation, a
+different fresh-context gate must conduct a fresh regate; the same context may
+not validate its own earlier review. Kirk alone decides and merges.
 ```
 
 ```markdown
@@ -469,7 +472,7 @@ direct Sol command. The gate reads the just-created canonical charter first:
 git fetch origin
 git worktree add --detach "../rpg-project-gate-ROLE_ISSUE" "origin/docs/ROLE_ISSUE-opencode-canonical-roles"
 cd "../rpg-project-gate-ROLE_ISSUE"
-opencode run --model openai/gpt-5.6-sol --variant max --agent build --auto --title "Gate role PR ROLE_PR" "Read docs/teams/roles/independent-gate/prompt.md first. Independently review PR #ROLE_PR for issue #ROLE_ISSUE: inspect its issue, diff, charter acceptance evidence, and design sections 2, 4, and 7. Do not edit, commit, push, merge, or authenticate. The charter is authoritative. Publish signed findings or a passing gate checkpoint on the PR."
+opencode run --model openai/gpt-5.6-sol --variant max --agent build --auto --title "Gate role PR ROLE_PR" "Read docs/teams/roles/independent-gate/prompt.md first. Independently review PR #ROLE_PR for issue #ROLE_ISSUE: inspect its issue, diff, charter acceptance evidence, and design sections 2, 4, and 7. Do not fix, edit canonical work, commit, push, merge, alter Project fields, or authenticate. The charter is authoritative. Publish signed findings ordered by severity when any Critical or Important finding remains; otherwise publish exactly MERGE-READY. MERGE-READY is a gate verdict only, and Kirk alone decides whether to merge."
 if [ -n "$(git status --porcelain)" ]; then
   printf 'Gate checkout has uncommitted changes; preserve and report them before cleanup.\n' >&2
   exit 1
@@ -488,9 +491,9 @@ status check confirms no gate changes remain.
 The original Terra role implementer addresses every gate finding, reruns the
 GREEN acceptance block and `git diff --check`, commits, pushes, and posts the
 remediation evidence. A different fresh Sol context repeats Step 12 against
-the updated PR. Only after the fresh regate passes does Kirk decide whether to
-merge; after an applicable human merge, set `Status=Done` and verify deployment
-only if this repository later gains an applicable deploy.
+the updated PR. Kirk decides whether to merge only after the fresh regate
+publishes `MERGE-READY`; after an applicable human merge, set `Status=Done` and
+verify deployment only if this repository later gains an applicable deploy.
 
 ### Task 2: Project-Scoped OpenCode Runtime
 
@@ -631,8 +634,9 @@ Project 19, set Team, Feature, Kind, and Status, then create one fresh branch
 from main. Publish WORK SESSION STARTED on the issue. Keep issue, PR, branch,
 and checkpoint comments sufficient for a replacement worker to resume without
 session state. Create files, run red then green verification, commit, push and
-open a ready PR, request an independent gate, route findings to the original
-worker, obtain a fresh regate, and leave human merge authority to Kirk. End
+open a ready PR, request an independent gate verdict, route any Critical or
+Important findings to the original worker, obtain a fresh `MERGE-READY` regate
+before a human merge decision, and leave human merge authority to Kirk. End
 every GitHub comment with the active role signature on behalf of KirkDiggler.
 After an applicable merge, verify deployment to terminal success before marking
 the Project item Done.
@@ -837,11 +841,11 @@ PR merge-ready.
 - [ ] **Step 11: Gate, remediate, and fresh-regate the runtime PR**
 
 Run the configured `independent-gate` adapter in its own worktree after the PR
-is open. The original Terra runtime implementer addresses every finding,
-reruns `./scripts/verify-opencode.sh` and `git diff --check`, commits and
-pushes remediation, then a fresh Sol `independent-gate` context regates the
-updated PR. Kirk alone merges after the fresh passing gate; set the item to
-`Done` after merge.
+is open. The original Terra runtime implementer addresses every Critical or
+Important finding, reruns `./scripts/verify-opencode.sh` and `git diff --check`,
+commits and pushes remediation, then a fresh Sol `independent-gate` context
+regates the updated PR. Kirk alone decides whether to merge after the fresh
+gate publishes `MERGE-READY`; set the item to `Done` after merge.
 
 ### Task 3: Portable Seven-Repository Workspace
 
@@ -1034,10 +1038,11 @@ the PR merge-ready.
 
 Run the configured `independent-gate` adapter in an independent worktree after
 the PR is open. The original Terra workspace implementer addresses every
-finding, reruns the contract and syntax checks plus `git diff --check`, commits
-and pushes remediation, and a fresh Sol context regates the updated PR. Kirk
-merges only after the fresh passing gate, then marks the item `Done`. This repo
-has no application deploy claim, so no deployment verification is asserted.
+Critical or Important finding, reruns the contract and syntax checks plus `git
+diff --check`, commits and pushes remediation, and a fresh Sol context regates
+the updated PR. Kirk decides whether to merge only after the fresh gate
+publishes `MERGE-READY`, then marks the item `Done`. This repo has no
+application deploy claim, so no deployment verification is asserted.
 
 ### Task 4: Project 19 Clean-Slate Verification
 
@@ -1131,7 +1136,7 @@ scope and is not a bootstrap settings overwrite.
 
 - [ ] **Step 6: Publish the evidence checkpoint and close only on proof**
 
-Post a structured issue comment containing fresh environment, before/after states, both bootstrap outcomes, ordered repository/remotes proof, `verify-workspace.sh` output, symlink/config/sibling-access proof, and explicit next action. Request an independent Sol gate to review the evidence without altering the environment. After the gate passes and Kirk confirms the record, set the Project item to `Done`. No code PR is created for this Verify task.
+Post a structured issue comment containing fresh environment, before/after states, both bootstrap outcomes, ordered repository/remotes proof, `verify-workspace.sh` output, symlink/config/sibling-access proof, and explicit next action. Request an independent Sol gate to review the evidence without altering the environment. The gate publishes findings if any Critical or Important finding remains; otherwise it publishes `MERGE-READY`. After that verdict and Kirk's confirmation of the record, set the Project item to `Done`. No code PR is created for this Verify task.
 
 ### Task 5: Equipment Pilot Entry Gate and Recovery Proof
 
@@ -1140,18 +1145,17 @@ Post a structured issue comment containing fresh environment, before/after state
 - Create later: a separate `rpg-project` equipment-plan issue and ready plan PR after the three decisions below are documented.
 
 **Interfaces:**
-- Consumes: passing Task 4 issue evidence; existing `rpg-api-protos#187`; Project 19 durable state.
+- Consumes: Task 4 issue evidence whose gate published `MERGE-READY`; existing `rpg-api-protos#187`; Project 19 durable state.
 - Produces: a decision-complete, separately reviewed equipment plan and a recoverability/gate proof route; it deliberately does not prescribe proto fields or implementation.
 
 - [ ] **Step 1: Verify and activate the existing decision task**
 
-Use `rpg-api-protos#187` as the existing backing issue. Verify its live routing is
-`Feature=Party Assembles` and `Kind=Decide`. When Platform takes ownership,
-re-triage `Team` from `Cross-team` to `Platform`; do not use `Class Kits`.
-Preserve the current status if it is already active, otherwise move it from
+Use `rpg-api-protos#187` as the existing backing issue. Verify and preserve its
+live routing: `Team=Platform`, `Feature=Game Screen`, and `Kind=Decide`. Do not
+re-triage Team or Feature. Verify `Status=Todo`, then move only Status from
 `Todo` to `In Progress`. The Platform lead posts `WORK SESSION STARTED`, links
-the passed Task 4 Verify issue, and records that no proto implementation can
-start yet.
+the Task 4 Verify issue whose gate published `MERGE-READY`, and records that no
+proto implementation can start yet.
 
 - [ ] **Step 2: Resolve exactly three contract decisions in GitHub**
 
@@ -1161,16 +1165,17 @@ The Platform lead obtains and records Kirk's decision for each of the following 
 
 After all three decisions are visible, create a new `rpg-project` issue titled
 `Equipment contract implementation plan`, add it to Project 19 with exactly
-`Team=Platform`, `Feature=Party Assembles`, `Kind=Build`, `Status=Todo`, then
+`Team=Platform`, `Feature=Game Screen`, `Kind=Build`, `Status=Todo`, then
 set `In Progress`. Create a fresh `docs/EQUIPMENT_PLAN_ISSUE-equipment-plan`
 branch, where `EQUIPMENT_PLAN_ISSUE` is the issue number just created. Write
 and self-review a separate plan that references the resolved decisions and
 separates the proto, toolkit, API, and web legs into their own future
 issues/PRs. Run its red/green documentation checks, commit, push, and open a
 ready Plan Review PR. A fresh Sol gate reviews that PR; the original plan
-writer remediates any findings, commits and pushes them, and a fresh Sol regate
-reviews the updated PR before Kirk's human merge. This step intentionally
-contains no proto implementation instructions.
+writer remediates any Critical or Important findings, commits and pushes them,
+and a fresh Sol regate publishes `MERGE-READY` before Kirk's human merge
+decision. This step intentionally contains no proto implementation
+instructions.
 
 - [ ] **Step 4: Prove deliberate worker replacement only after the plan snapshot merges**
 
@@ -1187,16 +1192,16 @@ visible.
 
 - [ ] **Step 5: Replace only from durable state and fresh-gate the result**
 
-Launch a new Terra worker with only the issue URL, branch, PR URL if present, and checkpoint comment. It must reconstruct from those GitHub artifacts rather than an inherited `task_id` or local transcript, finish its one issue/one PR work, and publish its own checkpoint. Launch a fresh Sol `independent-gate` after the PR is ready; the gate may run reversible tests but must not fix, commit, push, or merge. Route every finding to the replacement worker and require a fresh Sol regate after remediation. Kirk performs the human merge and deployment verification only if the repository's release path applies.
+Launch a new Terra worker with only the issue URL, branch, PR URL if present, and checkpoint comment. It must reconstruct from those GitHub artifacts rather than an inherited `task_id` or local transcript, finish its one issue/one PR work, and publish its own checkpoint. Launch a fresh Sol `independent-gate` after the PR is ready; the gate may run reversible tests but must not fix, edit canonical work, commit, push, merge, or alter Project fields. It publishes findings when any Critical or Important finding remains; otherwise it publishes `MERGE-READY`. Route findings to the replacement worker and require a fresh Sol `MERGE-READY` regate after remediation. Kirk alone decides whether to merge and performs deployment verification only if the repository's release path applies.
 
 ## Final Review Checklist
 
 - [ ] Re-read `ideas/opencode-team-workflow/design.md` sections 1 through 10 and record this exact coverage map in the self-review comment: section 1 (control-plane architecture) is Tasks 1 and 2; section 2 (Project 19 contract and artifact lifecycle) is Tasks 1 through 5; section 3 (durable continuity) is Tasks 2, 4, and 5; section 4 (roles and roster) is Task 1; section 5 (model profile) is Task 2; section 6 (configuration and source of truth) is Tasks 2 and 3; section 7 (operational gates) is Tasks 1 through 5; section 8 (side-by-side verification) is Task 4; section 9 (equipment pilot) is Task 5; section 10 (rollout issue) is this Plan Review PR tracking #101.
-- [ ] Search the plan and lifecycle corrections for unresolved-marker text, time estimates, and vague-test language; replace every occurrence that would leave an implementer to invent behavior. The post-gate equipment-plan creation statement is valid only because it names its exact prerequisite: three documented `rpg-api-protos#187` decisions after Task 4 passes.
+- [ ] Search the plan and lifecycle corrections for unresolved-marker text, time estimates, and vague-test language; replace every occurrence that would leave an implementer to invent behavior. The post-gate equipment-plan creation statement is valid only because it names its exact prerequisite: three documented `rpg-api-protos#187` decisions after Task 4's gate publishes `MERGE-READY`.
 - [ ] Check every adapter name, literal canonical path pointer, model, variant, mode, and permission against **Adapter Manifest** and `opencode.jsonc`; check exact OpenAI model IDs, six alias-keyed sibling references with only `{path,description}`, all 16 adapters, exactly four disabled inherited work MCPs, and hidden `title`/`summary`/`compaction` overrides limited to model and variant.
 - [ ] Confirm all required validation commands appear exactly: `opencode debug config`, `opencode agent list`, `opencode debug agent NAME`, `opencode models openai --verbose`, `opencode debug file read AGENTS.md`, and `opencode mcp list`.
 - [ ] Confirm `enabled_providers` is only OpenAI; the raw and resolved configuration each contain the exact project-scoped Superpowers plugin spec; no prohibited config keys, unexpected plugin, daemon, checkpoint schema, duplicate tracker, dry-run rewrite, new test framework, Anthropic/Claude/Sonnet model, or equipment implementation details appear. Confirm all shell snippets parse as Bash where applicable, including the verifier cleanup, jq blocks, and Task 4's deterministic two-entry snapshot function for absent/present combinations.
-- [ ] Search for placeholders, `similar to`, unresolved markers, impossible lifecycle order, stale `settings.json` claims, and vague acceptance instructions. Confirm Tasks 1 through 3 use create -> red/green -> commit -> push/ready PR -> gate -> remediation -> fresh regate -> human merge.
+- [ ] Search for placeholders, `similar to`, unresolved markers, impossible lifecycle order, stale `settings.json` claims, and vague acceptance instructions. Confirm Tasks 1 through 3 use create -> red/green -> commit -> push/ready PR -> independent gate findings or `MERGE-READY` -> remediation -> fresh `MERGE-READY` regate -> Kirk's human merge decision.
 - [ ] Confirm Task 4 saves before and after evidence outside the repository, compares both global entry-file records with `diff -u`, does not create absent entry files or touch credentials, and limits its no-overwrite proof to `$HOME/.config/opencode/opencode.json` and `opencode.jsonc`; cache/package population from the project-scoped Superpowers plugin is not a global-settings overwrite.
 - [ ] Run `git diff --check`, inspect `git status --short --branch`, and inspect `git diff -- ideas/opencode-team-workflow/plan.md`; fix every discrepancy inline before committing.
 - [ ] Commit only the intended changed `ideas/opencode-team-workflow` documentation files for this remediation snapshot; never amend and never use `--no-verify`.
