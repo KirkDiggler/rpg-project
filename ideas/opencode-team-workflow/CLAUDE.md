@@ -7,23 +7,25 @@ existing role charters instead of adapting them.
 
 ## Status
 
-**Design approved (2026-07-20).** `design.md` records the complete,
-Kirk-approved design. Implementation planning follows in a separate session
-once the written spec is approved — `plan.md` does not exist yet by design;
-that is a defined process state (spec approved → plan not yet written), not a
-TODO placeholder.
+**Design snapshot merged (2026-07-21, PR #102).** `design.md` records the
+complete, Kirk-approved design. The next state is a separate implementation
+plan snapshot: `plan.md` is authored on its own branch and reviewed in its own
+ready Plan Review PR.
 
 Review of this idea's own artifacts follows the **design/plan artifact
 lifecycle** the design itself specifies (`design.md` §2, "Design/plan artifact
-lifecycle — never local-only"): committed docs are pushed and opened as a
-ready (non-draft) PR for GitHub-surface review rather than reviewed from a
-local worktree path. See Tracking below for the PR once opened.
+lifecycle — never local-only"): each committed design or plan snapshot is
+pushed and opened as a ready (non-draft) PR for GitHub-surface review. A
+worktree path is never the review surface. Implementation discoveries update
+the canonical docs in the implementation PR or a linked docs follow-up.
 
 ## Tracking
 
 - Issue: `rpg-project#101` — https://github.com/KirkDiggler/rpg-project/issues/101
-- Design/plan review PR (Review phase: Design Review): `rpg-project#102` —
+- Merged design snapshot PR: `rpg-project#102` —
   https://github.com/KirkDiggler/rpg-project/pull/102
+- Plan review PR (Review phase: Plan Review): `rpg-project#103` —
+  https://github.com/KirkDiggler/rpg-project/pull/103
 - Board: Project 19 ("The Dungeon Run"), Team **Cross-team**, Feature **Infra**, Kind **Build**
 - Pilot chain this design's first live proof rides on: `rpg-api-protos#187`
   (equipment contract), coordinating with `rpg-project#94` and
@@ -65,8 +67,7 @@ workstation bootstrap and does not fork team policy.
 
 - Full design (complete, no open questions): [`design.md`](design.md)
 - Artifact review process: `design.md` §2, "Design/plan artifact lifecycle —
-  never local-only" — the PR is the review surface, not a worktree path.
-- Implementation plan: `plan.md` — **not yet created.** Planning starts in a
-  fresh session once this design doc is the agreed spec; do not draft it
-  speculatively here. Once written, it is added to the same documentation PR
-  for Plan Review rather than opening a second PR.
+  never local-only" — the ready PR is the review surface, never a worktree
+  path; design and plan may be separate merged snapshots.
+- Implementation plan: `plan.md` — authored after the merged design snapshot,
+  reviewed in its own ready Plan Review PR, then merged before implementation.
