@@ -1046,7 +1046,7 @@ has no application deploy claim, so no deployment verification is asserted.
 
 **Interfaces:**
 - Consumes: merged Tasks 1 through 3; a fresh WSL/Linux path or fresh Linux machine; GitHub issue checkpoint comments.
-- Produces: a reproducible evidence record that global OpenCode configuration is unchanged across two bootstrap runs and the seven-repo project configuration works locally.
+- Produces: a reproducible evidence record that both global OpenCode configuration entry files are unchanged across two bootstrap runs and the seven-repo project configuration works locally.
 
 - [ ] **Step 1: Create the Verify issue before the environment run**
 
@@ -1054,13 +1054,32 @@ Create an `rpg-project` issue titled `Verify OpenCode clean-slate workspace boot
 
 - [ ] **Step 2: Capture the global-config before snapshot without modifying it**
 
-Run exactly one of the following and paste the command output and chosen state into the issue:
+In one shell that remains open through Step 5, run this exact block. It emits the
+two global OpenCode configuration entry files in deterministic order: first
+`opencode.json`, then `opencode.jsonc`. Each missing file emits `ABSENT` plus
+its path; each present file emits its SHA-256 and path. `mktemp` writes the
+evidence file under `${TMPDIR:-/tmp}`, outside the repository.
 
 ```bash
-if [ -e "$HOME/.config/opencode/opencode.jsonc" ]; then sha256sum "$HOME/.config/opencode/opencode.jsonc"; else printf 'ABSENT\n'; fi
+snapshot_global_opencode_config() {
+  for config in "$HOME/.config/opencode/opencode.json" "$HOME/.config/opencode/opencode.jsonc"; do
+    if [ -e "$config" ]; then
+      sha256sum -- "$config"
+    else
+      printf 'ABSENT %s\n' "$config"
+    fi
+  done
+}
+
+before_snapshot="$(mktemp "${TMPDIR:-/tmp}/opencode-global-config-before.XXXXXX")"
+snapshot_global_opencode_config | tee "$before_snapshot"
+printf 'Before snapshot evidence: %s\n' "$before_snapshot"
 ```
 
-The absence case is valid. Do not create the path, copy a template into it, authenticate, or alter provider credentials.
+Paste the emitted two-line snapshot and the evidence-file path into the issue.
+The absence case is valid. Do not create either entry file or its parent path,
+copy a template into global configuration, authenticate, or alter provider
+credentials.
 
 - [ ] **Step 3: Bootstrap twice from the clean `game-dev` checkout**
 
@@ -1086,9 +1105,29 @@ Expected: `PASS: seven-repository workspace verified`; all seven `.git` director
 
 - [ ] **Step 5: Capture the after snapshot and compare**
 
-Run the same command from Step 2. The before and after states must both be `ABSENT`, or both be the identical SHA-256 digest. Record the two values and the comparison result in the issue.
+In the same shell, run this exact block. It saves a second evidence file outside
+the repository and compares the complete ordered snapshots with `diff -u`:
 
-Expected: exact equality. A changed value is a failed verification: stop, set the Project item to `In Review`, publish the diff path and blocker, and open a linked fix issue rather than modifying the global file.
+```bash
+after_snapshot="$(mktemp "${TMPDIR:-/tmp}/opencode-global-config-after.XXXXXX")"
+snapshot_global_opencode_config | tee "$after_snapshot"
+printf 'After snapshot evidence: %s\n' "$after_snapshot"
+diff -u "$before_snapshot" "$after_snapshot"
+```
+
+Expected: `diff -u` emits no output and exits zero. The before and after records
+must have identical lines for both entry-file paths: `ABSENT <path>` for each
+missing file, or the same SHA-256 plus path for each present file. Record both
+snapshots, both evidence-file paths, and the comparison exit status in the
+issue. A `diff -u` difference or error is a failed verification: stop, set the
+Project item to `In Review`, publish the diff and blocker, and open a linked fix
+issue rather than modifying global configuration.
+
+This proof is deliberately limited to the global configuration entry files
+`$HOME/.config/opencode/opencode.json` and
+`$HOME/.config/opencode/opencode.jsonc`. Normal OpenCode cache or package
+population caused by the project-scoped Superpowers plugin is outside this
+scope and is not a bootstrap settings overwrite.
 
 - [ ] **Step 6: Publish the evidence checkpoint and close only on proof**
 
@@ -1156,8 +1195,9 @@ Launch a new Terra worker with only the issue URL, branch, PR URL if present, an
 - [ ] Search the plan and lifecycle corrections for unresolved-marker text, time estimates, and vague-test language; replace every occurrence that would leave an implementer to invent behavior. The post-gate equipment-plan creation statement is valid only because it names its exact prerequisite: three documented `rpg-api-protos#187` decisions after Task 4 passes.
 - [ ] Check every adapter name, literal canonical path pointer, model, variant, mode, and permission against **Adapter Manifest** and `opencode.jsonc`; check exact OpenAI model IDs, six alias-keyed sibling references with only `{path,description}`, all 16 adapters, exactly four disabled inherited work MCPs, and hidden `title`/`summary`/`compaction` overrides limited to model and variant.
 - [ ] Confirm all required validation commands appear exactly: `opencode debug config`, `opencode agent list`, `opencode debug agent NAME`, `opencode models openai --verbose`, `opencode debug file read AGENTS.md`, and `opencode mcp list`.
-- [ ] Confirm `enabled_providers` is only OpenAI; the raw and resolved configuration each contain the exact project-scoped Superpowers plugin spec; no prohibited config keys, unexpected plugin, daemon, checkpoint schema, duplicate tracker, dry-run rewrite, new test framework, Anthropic/Claude/Sonnet model, or equipment implementation details appear. Confirm all shell snippets parse as Bash where applicable, including the verifier cleanup and jq blocks.
+- [ ] Confirm `enabled_providers` is only OpenAI; the raw and resolved configuration each contain the exact project-scoped Superpowers plugin spec; no prohibited config keys, unexpected plugin, daemon, checkpoint schema, duplicate tracker, dry-run rewrite, new test framework, Anthropic/Claude/Sonnet model, or equipment implementation details appear. Confirm all shell snippets parse as Bash where applicable, including the verifier cleanup, jq blocks, and Task 4's deterministic two-entry snapshot function for absent/present combinations.
 - [ ] Search for placeholders, `similar to`, unresolved markers, impossible lifecycle order, stale `settings.json` claims, and vague acceptance instructions. Confirm Tasks 1 through 3 use create -> red/green -> commit -> push/ready PR -> gate -> remediation -> fresh regate -> human merge.
+- [ ] Confirm Task 4 saves before and after evidence outside the repository, compares both global entry-file records with `diff -u`, does not create absent entry files or touch credentials, and limits its no-overwrite proof to `$HOME/.config/opencode/opencode.json` and `opencode.jsonc`; cache/package population from the project-scoped Superpowers plugin is not a global-settings overwrite.
 - [ ] Run `git diff --check`, inspect `git status --short --branch`, and inspect `git diff -- ideas/opencode-team-workflow/plan.md`; fix every discrepancy inline before committing.
 - [ ] Commit only the intended changed `ideas/opencode-team-workflow` documentation files for this remediation snapshot; never amend and never use `--no-verify`.
 
