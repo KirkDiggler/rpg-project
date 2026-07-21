@@ -503,3 +503,31 @@ in-flight feature — the proof rides real work, not a synthetic exercise.
 
 This design and configuration effort is itself tracked by `rpg-project#101`,
 Project 19 Team **Cross-team**, Feature **Infra**, Kind **Build**.
+
+## 11. Approved gate policy (2026-07-21)
+
+This approved addendum supersedes conflicting earlier lifecycle or gate
+statements in this design, including §2's lifecycle, §4's independent-gate
+description, §8's gate proof, and §9's "independently gated" wording.
+
+An independent adversarial Sol gate is required only for **product-behavior
+PRs**: game rules, proto/API contracts, player-facing web behavior,
+deployment/runtime behavior, and asset-pipeline output consumed by the game.
+Each product code PR receives normal review plus one independent Sol gate. Do
+not stack a separate task review and gate over the same change.
+
+If that gate reports findings, the original implementer remediates them and
+the same independent reviewer performs a focused recheck of the reported
+findings and changed surfaces. Do not restart an unrestricted full audit
+unless the remediation materially rewrites scope.
+
+Workflow setup does not require an independent gate: documentation, project
+configuration, canonical role charters, adapters, bootstrap scripts, verifier
+scripts, and evidence-only Verify tasks instead require deterministic checks,
+self-review, a ready PR where applicable, and Kirk's human merge. The
+previously gate-required canonical role-policy/charter system, project OpenCode
+runtime, seven-repository bootstrap, clean-slate Verify issue, and the
+decision-gated equipment planning and evidence-only recovery work are all
+workflow setup; a real product code PR in that chain remains product behavior.
+PR #103 requires no further adversarial gate after deterministic checks and
+policy/plan consistency are complete. Kirk alone merges.
