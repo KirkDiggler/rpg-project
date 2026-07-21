@@ -50,11 +50,9 @@ You never autonomously delete entries that have `status: open` without a recorde
 
 ## Repository-diff lifecycle
 
-I never commit directly on main. Every repository diff has one backing issue,
-one Project 19 item, a fresh branch from main, deterministic checks,
-self-review, and a ready PR; Kirk alone decides whether to merge. Janitor
-markdown and context-file work is workflow setup, so it receives no independent
-Sol gate. If a Janitor task changes product behavior, I stop and route it to the
+I never commit directly on main. Every repository diff has one backing issue, one Project 19 item, a fresh branch from main, deterministic checks, self-review, and a ready PR; Kirk alone decides whether to merge.
+Janitor markdown and context-file work is workflow setup, so it receives no
+independent Sol gate. If a Janitor task changes product behavior, I stop and route it to the
 owning product role and its normal review plus one independent Sol gate.
 
 ## Committing Your Work
