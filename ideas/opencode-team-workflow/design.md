@@ -97,19 +97,19 @@ filesystem. Design and plan artifacts (`design.md`, `plan.md`) therefore
 markdown files in `rpg-project`, not code:
 
 ```
-design committed locally on the issue branch
+design committed locally on its issue branch
   -> push the issue branch, open a READY PR (never a draft)
   -> PR body states the active review phase explicitly
      ("Review phase: Design Review")
   -> PR URL published as an issue/Project checkpoint comment
      (the durable pointer a fresh session finds, not a local path)
   -> review happens on GitHub's file/inline-comment surface
-  -> written design approval (Kirk)
-  -> implementation plan (plan.md) added to the SAME PR
-  -> plan reviewed on the same PR (PR body now says "Review phase: Plan Review")
-  -> written plan approval (Kirk)
-  -> merge the documentation PR — this is the durable snapshot;
-     implementation starts only after this merge
+  -> written design approval (Kirk) and human merge: durable design snapshot
+  -> implementation plan committed on its own issue branch
+  -> push and open a READY PR with "Review phase: Plan Review"
+  -> publish that PR URL as the next issue/Project checkpoint
+  -> written plan approval (Kirk) and human merge: durable plan snapshot
+  -> implementation starts only after the approved plan snapshot merges
 ```
 
 - **Ready, not draft.** This preserves the platform's existing no-draft
@@ -123,9 +123,13 @@ design committed locally on the issue branch
   opened it — that call is reserved for whichever review/gate the phase
   requires (here: Kirk's written approval), exactly as an implementation PR
   is never self-declared MERGE-READY ahead of its gate (§2 lifecycle above).
-- **One documentation PR carries both design and plan.** The plan is added to
-  the *same* PR after design approval, not a second PR — one reviewable
-  artifact, one merge, one durable snapshot in git history.
+- **Design and plan may merge as separate reviewable snapshot PRs.** Each
+  artifact gets its own ready GitHub review surface and written approval when
+  it is created after the preceding snapshot has merged. A follow-up plan PR
+  is not a weaker review surface; it is the durable plan snapshot in git
+  history. Combining both artifacts in one open documentation PR remains
+  allowed only when both are ready for their respective review phases before
+  the design snapshot merges.
 - **`rpg-project#101` is the design/plan tracker, not an umbrella issue.**
   Once the plan is written and approved, *it* creates and links the separate
   per-repo implementation issues that actually carry PRs — `#101` is never
@@ -134,13 +138,12 @@ design committed locally on the issue branch
   implementation issue, never `#101` directly.
 - **Post-merge drift is corrected in place, not silently.** If an
   implementation PR discovers that a merged assumption in `design.md`/
-  `plan.md` was wrong or incomplete, that PR updates the canonical doc in the
-  same change **when the fix is local to `rpg-project`** (i.e., the
-  implementer already has a `rpg-project` checkout/PR in flight). When the
-  discovery happens inside a different repo's PR, that PR opens a **linked
-  docs follow-up** in `rpg-project` instead of reaching across repos. Either
-  way, the original merged snapshot stays visible in git history (nothing is
-  force-rewritten); the live doc content is what stays honest and current.
+  `plan.md` was wrong or incomplete, that implementation PR updates the
+  canonical doc when it includes the relevant `rpg-project` documentation
+  change. Otherwise it opens a **linked docs follow-up** in `rpg-project`.
+  Either way, the original merged snapshot stays visible in git history
+  (nothing is force-rewritten); the live doc content is what stays honest and
+  current.
 
 ## 3. Continuity and persistence
 
@@ -336,12 +339,12 @@ the **variant** column.
 - `opencode.jsonc` — project config.
 - `AGENTS.md -> CLAUDE.md` — a **Git symlink** (accepted Linux/WSL-only
   constraint; this design does not attempt a Windows-native equivalent).
-- `.opencode/agent/` — the thin role adapters (model + permission bindings).
+- `.opencode/agents/` — the thin role adapters (model + permission bindings).
 - `.opencode/skills/` — project-scoped skills.
 
 **Charters stay canonical; adapters point, they don't copy.** Every
 `docs/teams/roles/**/prompt.md` charter remains the single source of truth for
-a role's identity and duties. An `.opencode/agent/` file is a thin binding
+a role's identity and duties. An `.opencode/agents/` file is a thin binding
 (model, variant, permissions, a pointer to the charter path) — never a copied
 or paraphrased charter. A charter edit is a one-place edit that both Claude
 Code and OpenCode pick up.
