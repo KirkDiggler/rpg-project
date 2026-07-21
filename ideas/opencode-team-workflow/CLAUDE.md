@@ -45,9 +45,13 @@ workstation bootstrap and does not fork team policy.
   change later without touching role policy.
 - Human alone makes final product decisions and merges. No role gains merge
   authority.
-- `game-dev/bootstrap.sh` clones/verifies `rpg-project` and may verify OpenCode
-  availability; it never overwrites global `~/.config/opencode/opencode.jsonc`
-  or provider credentials.
+- `game-dev/bootstrap.sh` adds `rpg-project`, `rpg-toolkit`, `rpg-api`, and
+  `rpg-api-protos` to its clone/verify set (alongside the existing
+  `rpg-dnd5e-web`, `rpg-game-assets`, `rpg-deployment`) — the full seven-repo
+  workspace all three pods and the pilot chain need — and may verify OpenCode
+  availability; it never overwrites global
+  `~/.config/opencode/opencode.jsonc` or provider credentials. `game-dev`
+  itself stays bootstrap/tooling, not a fourth standing team pod.
 
 ## Pointers
 

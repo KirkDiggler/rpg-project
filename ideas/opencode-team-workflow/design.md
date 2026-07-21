@@ -33,6 +33,11 @@ with their strengths without redesigning the workflow.
 - `game-dev` remains **portable workstation bootstrap and asset tooling.** It
   clones/verifies `rpg-project` (added to its idempotent clone/verify set) but
   does **not** duplicate team policy — no parallel `game-dev/docs/team-workflow`.
+  `game-dev` is **not** a newly invented standing team pod — it stays
+  bootstrap/tooling. Work filed against `game-dev` itself (the bootstrap
+  script, the browser harness, the ingest script) is **Cross-team** or
+  **Assets** on the Project 19 board depending on the issue's actual scope,
+  never a fourth pod.
 
 **Project 19** (`KirkDiggler`, "The Dungeon Run") is durable execution/task
 state. OpenCode sessions are replaceable workers: a worker can be killed and a
@@ -136,25 +141,66 @@ decisions and merges.
 **Standing expert ownership is retained, not replaced.** The design
 deliberately does **not** collapse the roster into one generic implementer —
 expert ownership of each repo's boundary is load-bearing (see
-`docs/teams/roles/README.md` §"the expert-ownership standard").
+`docs/teams/roles/README.md` §"the expert-ownership standard"). This design
+also closes two roster holes the existing Platform-only roster left open: it
+adds a canonical standing member for `rpg-deployment` and for
+`rpg-game-assets`, neither of which had an owner before.
 
-| Pod | Standing members used |
+| Pod | Standing members |
 |---|---|
-| Platform | `rpg-toolkit-member`, `rpg-api-member`, `rpg-api-protos-member` (existing charters, unchanged) |
-| UI/UX + Assets | `rpg-dnd5e-web-member` (existing charter) — ownership across the two pods must be made **explicit** (see below) |
+| Platform | `rpg-toolkit-member`, `rpg-api-member`, `rpg-api-protos-member` (existing charters, unchanged) + **`rpg-deployment-member`** (new, see below) |
+| UI/UX | **`ui-web-member`** (new OpenCode adapter — see "The web-ownership seam," below) |
+| Assets | **`rpg-game-assets-member`** (new, see below) + **`assets-web-member`** (new OpenCode adapter — see "The web-ownership seam," below) |
 
-**The web-ownership seam.** `rpg-dnd5e-web-member`'s existing charter is a
-single repo owned by two pods (UI/UX: presentation/interaction/accessibility;
-Assets: 3D client seams/animation/performance). Today's charter doesn't split
-this. This design does not invent the split now — it requires that
-**implementation planning choose the smallest adapter or split that makes web
-ownership explicit across the two pods without duplicating shared web law**
-(the render-and-call boundary, the hard rules in the existing charter). Two
-concrete shapes planning may choose between (not a decision made here):
-a shared charter with a pod-scoped "which seam am I touching" preamble, or
-two thin pod-adapters that both point at the one canonical
-`rpg-dnd5e-web-member` charter. Either is acceptable; inventing a third repo
-owner, or letting one pod silently absorb the other's work, is not.
+### The web-ownership seam — resolved
+
+`rpg-dnd5e-web` is one repo whose work is split across two pods (UI/UX:
+screens, HUD, UX flows, accessibility, responsive Discord viewports,
+fixture-to-live presentation; Assets: model loading, props/environment
+rendering, animation playback, 3D performance/evidence, appearance seams).
+This is decided, not deferred to planning:
+
+- `docs/teams/roles/rpg-dnd5e-web-member/prompt.md` **stays the canonical
+  shared web/repo boundary charter** — the render-and-call boundary rule, the
+  hard rules, the four-question gate all live there, once, for the whole repo.
+- Implementation adds **two small vendor-neutral lane overlays** under that
+  role (or an equivalently clear adjacent canonical location, e.g.
+  `docs/teams/roles/rpg-dnd5e-web-member/overlays/{ui-ux,assets}.md`):
+  - **UI/UX overlay** — owns screens, HUD, UX flows, accessibility, responsive
+    Discord viewports, fixture-to-live presentation.
+  - **Assets overlay** — owns model loading, props/environment rendering,
+    animation playback, 3D performance/evidence, appearance seams.
+- OpenCode's `ui-web-member` and `assets-web-member` are **thin adapters**:
+  each loads the shared charter **plus** its applicable overlay. Neither
+  adapter duplicates shared web law (the render-and-call boundary, the hard
+  rules) — that stays single-sourced in the shared charter.
+- Work that touches both lanes is **split into linked issues**, or explicitly
+  coordinated as one task with both adapters named in the issue if a split
+  would be artificial. Either `ui-web-member` or `assets-web-member` working
+  concurrently in the same repo uses **isolated worktrees** — the existing
+  worktree-collision rule (§7) applies to this seam like any other.
+- This replaces any notion that implementation planning picks the shape later
+  — the shape is the shared-charter-plus-overlay pattern above, decided here.
+
+### New standing members closing roster holes
+
+- **`rpg-deployment-member`** (Platform) — owns deployment/config/release
+  correctness for `rpg-deployment`: the auto-deploy pipeline, `nginx-http.conf`
+  and other live config, release sequencing across the platform repos, and
+  **post-merge deployment verification** (watching the "Deploy RPG Platform"
+  run to terminal success — merge != shipped, per §7). Respects service
+  boundaries: it deploys and verifies delivery — it does not own toolkit/API/
+  proto business logic, and it pushes back the same way every other standing
+  member does if a brief asks it to fix application code instead of
+  deployment config.
+- **`rpg-game-assets-member`** (Assets) — owns the private `rpg-game-assets`
+  library and its harness contract: Synty license boundaries (never commit
+  raw source assets or converted GLBs to a public repo), conversion/promotion
+  quality (FBX → GLB pipeline output), the `harness/models/synty/` contract
+  tree, manifests, performance budgets for shipped assets, and the handoff
+  point into `rpg-dnd5e-web` (where `assets-web-member` picks up the client
+  seam). It does not own web-side rendering code — that boundary is the
+  contract-tree handoff, matching the existing `npm run assets:sync` flow.
 
 **Standing members persist issue PR-to-merge**, own their living docs
 (`status.md`/`quality.md`), enforce repo boundaries, and refuse invalid briefs
@@ -265,11 +311,20 @@ configuration/adapter files, not in the shared narrative doc.
 **Sibling-repo access.** OpenCode launched from `rpg-project` needs **explicit
 allowed/reference access** to the sibling implementation repos living under
 `game-dev` (`rpg-toolkit`, `rpg-api`, `rpg-dnd5e-web`, `rpg-api-protos`,
-`rpg-deployment`) — configured, not assumed.
+`rpg-deployment`, `rpg-game-assets`) — configured, not assumed.
 
-**`game-dev/bootstrap.sh`:**
-- Adds `rpg-project` to its idempotent clone/verify set (alongside the
-  existing three game repos).
+**`game-dev/bootstrap.sh` — full seven-repo workspace.** Today's `REPOS`
+array clones/verifies only three repos: `rpg-dnd5e-web`, `rpg-game-assets`,
+`rpg-deployment`. That set is insufficient for this design — Platform's
+`rpg-toolkit-member`/`rpg-api-member`/`rpg-api-protos-member`/
+`rpg-deployment-member` and the `#187` pilot chain (§9) all need repos
+`bootstrap.sh` doesn't clone today. Implementation must:
+- **Add** `rpg-project`, `rpg-toolkit`, `rpg-api`, and `rpg-api-protos` to the
+  idempotent clone/verify set, **alongside** the existing three
+  (`rpg-dnd5e-web`, `rpg-game-assets`, `rpg-deployment`) — not replacing them.
+- The result is the **full seven-repo workspace** (`rpg-project` + the six
+  implementation repos) that all three pods and the equipment pilot chain
+  need present on a machine bootstrap runs on.
 - May verify OpenCode availability (binary present, reachable).
 - **Never** overwrites global OpenCode config — bootstrap only clones/verifies
   and checks tooling presence, it does not write into
