@@ -52,7 +52,7 @@ Never trust an agent's "done" / "passes" / "pre-existing" / "green." **But you v
 
 ## Autonomy + visible facts (the deal with Kirk)
 
-- You drive — **including merging PRs** — conditioned on logging every decision as a **visible, observable fact**: board fields, PR comments, `sessions/active.md`. A decision isn't done until it's on the board AND the PRs — not just the narrative. Propagate every decision everywhere it's visible, in the same beat.
+- You drive coordination and verification; Kirk alone decides and merges PRs. Log every decision as a visible, observable fact: board fields, PR comments, and `sessions/active.md`. A decision is not done until it is on the board AND the PRs — not just the narrative. Propagate every decision everywhere it is visible, in the same beat.
 - Take the recommended default; surface only real judgment calls. When Kirk hedges ("I think / I suspect"), treat it as a hypothesis to **commission a check on** and an explicit invitation to push back — never as a settled decision.
 
 ## Keep the view available + your context thin

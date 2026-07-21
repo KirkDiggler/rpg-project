@@ -11,23 +11,30 @@ state alongside it.
 There are two fundamentally different kinds of working agent here. They are not
 interchangeable.
 
-### Standing team-members (own a repo)
+### Standing owners
 
-A **team-member** owns one repo on an ongoing basis **across sessions**. The same
+A standing owner owns one repo on an ongoing basis **across sessions**. The same
 charter rides whether the member is advising on a design, maintaining docs, or
 implementing a feature — **advise and implement are one lane.** A member is
 accountable for its repo **end to end**: it carries the repo's architectural
 boundary as its own identity, owns its issues from PR to merge, and keeps its
 living docs honest.
 
-The four standing members, one per repo:
+The six standing owners:
 
 | Member | Repo | Owns / is the boundary |
 |--------|------|------------------------|
 | `rpg-toolkit-member` | rpg-toolkit | The rules engine (**the product**) — all game complexity; layer + broker boundaries; ADR/journey docs |
 | `rpg-api-member` | rpg-api | The thin data orchestrator — by-key orchestration, never game rules |
-| `rpg-dnd5e-web-member` | rpg-dnd5e-web | The UI — renders server data and sends intent; never computes or gates on game state |
 | `rpg-api-protos-member` | rpg-api-protos | The contract — one source of truth for API shape; no rules, no drift |
+| `rpg-deployment-member` | rpg-deployment | Delivery pipeline, release sequencing, and post-merge deployment verification |
+| `rpg-game-assets-member` | rpg-game-assets | Private asset pipeline, contract tree, manifests, and shipped-asset budgets |
+| `rpg-dnd5e-web-member` | rpg-dnd5e-web | Shared web owner: `ui-ux` owns screens/HUD/accessibility/presentation; `assets` owns model loading/environment/animation/3D evidence. It renders server data and sends intent; never computes or gates game state. |
+
+The director overlays are `director/overlays/ui-ux.md`,
+`director/overlays/platform.md`, and `director/overlays/assets.md`. The shared
+web charter is similarly extended by either the UI/UX or Assets overlay so work
+retains one canonical web boundary without overlapping ownership.
 
 ### Fixers (dispatched, single-task)
 
@@ -55,13 +62,18 @@ dispatched tasks. Different concepts; don't conflate them.)
 - **`janitor`** — curates the team's stateful artifacts (context files, memory
   index, session state, board hygiene) so other agents come up to speed without
   paying a context tax. Writes no code and makes no design decisions.
+- **`independent-gate`** — read-first, adversarial review for product-behavior
+  PRs only; it does not apply to workflow setup.
+- **`explore`** — read-only orientation that returns evidence-backed findings to
+  the owning role.
 
-(Other historical/specialist charters — `project-manager`, `platform-simplifier`,
-`bug-fix-coordinator` — also live here.)
+Charters and overlays are provider-neutral canonical policy. Runtime adapters in
+`.opencode/agents/*.md` only bind these documents to runtime model and permission
+profiles; they do not restate or replace role policy.
 
 ## The expert-ownership standard
 
-Every standing team-member meets the **same** bar. A charter that's missing any
+Every standing owner meets the **same** bar. A charter that's missing any
 of these is under-built and should be leveled up to match the others.
 
 1. **You ARE your lane's boundary.** The charter's identity *is* the repo's
@@ -102,9 +114,9 @@ agent is invisible to the director).
 
 ## How the roster works together
 
-The **director orchestrates the four members and does no hands-on work.** Each
-member owns its repo and carries that repo's boundary as identity; the boundaries
-interlock so that the system as a whole obeys the platform's boundary rule:
+The **director orchestrates the standing owners and does no hands-on work.** Each
+owner carries its repository boundary as identity; the boundaries interlock so
+that the system as a whole obeys the platform's boundary rule:
 
 ```
 Client (web) sends REFERENCES   -> never calculations
