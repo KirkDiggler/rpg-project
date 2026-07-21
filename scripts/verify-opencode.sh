@@ -157,7 +157,7 @@ for agent in "${agents[@]}"; do
     [ "$(bash_action "$agent_json" "gh -R KirkDiggler/rpg-project pr merge 103")" = deny ] || fail "lead repo-flag gh pr merge must resolve to the trailing deny"
     case "$agent" in
       ui-lead) task_allowlist=(ui-web-member web-fixer explore independent-gate janitor) ;;
-      platform-lead) task_allowlist=(rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member toolkit-fixer api-fixer explore independent-gate janitor) ;;
+      platform-lead) task_allowlist=(general rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member toolkit-fixer api-fixer explore independent-gate janitor) ;;
       assets-lead) task_allowlist=(rpg-game-assets-member assets-web-member web-fixer explore independent-gate janitor) ;;
     esac
     task_allowlist_json="$(printf '%s\n' "${task_allowlist[@]}" | jq -R . | jq -s .)"
@@ -194,19 +194,19 @@ assert_permission_rule "$explore_json" edit deny "*"
 board_skill=".opencode/skills/project-board-workflow/SKILL.md"
 require_file "$board_skill"
 grep -Fqx -- '- Same-repository backing issue: `Closes #<issue-number>`.' "$board_skill" || fail "board skill lacks the same-repository closing form"
-grep -Fqx -- '- Cross-repository backing issue: `Tracks <owner>/<repository>#<issue-number>`.' "$board_skill" || fail "board skill lacks the cross-repository tracking form"
+grep -Fqx -- '- Cross-repository backing issue: `Closes <owner>/<repository>#<issue-number>`.' "$board_skill" || fail "board skill lacks the cross-repository closing form"
 grep -Fqx -- 'After a human merge, wait for GitHub to close the backing issue and Project 19' "$board_skill" || fail "board skill lacks the wait-before-reconcile rule"
 grep -Fqx -- 'automation to move the item to Done before manually reconciling fields. Repair' "$board_skill" || fail "board skill lacks the automation completion rule"
 grep -Fqx -- 'only fields automation failed to reconcile; do not preempt or duplicate the' "$board_skill" || fail "board skill lacks the limited manual-repair rule"
 grep -Fqx -- 'automated transition.' "$board_skill" || fail "board skill lacks the no-preemption rule"
 [ "$(grep -Fxc -- 'only fields automation failed to reconcile; do not preempt or duplicate the' "$board_skill")" -eq 1 ] || fail "board skill duplicates the manual-repair rule"
 same_repo_keyword='Closes #106'
-cross_repo_keyword='Tracks KirkDiggler/rpg-api#682'
+cross_repo_keyword='Closes KirkDiggler/rpg-api#682'
 invalid_same_repo_keyword='Closes KirkDiggler/rpg-project#106'
-invalid_cross_repo_keyword='Tracks #106'
+invalid_cross_repo_keyword='Closes #106'
 [[ "$same_repo_keyword" =~ ^Closes\ #[1-9][0-9]*$ ]] || fail "same-repository closing keyword does not discriminate"
-[[ "$cross_repo_keyword" =~ ^Tracks\ [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$ ]] || fail "cross-repository tracking keyword does not discriminate"
+[[ "$cross_repo_keyword" =~ ^Closes\ [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$ ]] || fail "cross-repository closing keyword does not discriminate"
 [[ ! "$invalid_same_repo_keyword" =~ ^Closes\ #[1-9][0-9]*$ ]] || fail "same-repository keyword accepts cross-repository form"
-[[ ! "$invalid_cross_repo_keyword" =~ ^Tracks\ [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$ ]] || fail "cross-repository keyword accepts same-repository form"
+[[ ! "$invalid_cross_repo_keyword" =~ ^Closes\ [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$ ]] || fail "cross-repository keyword accepts same-repository form"
 
 printf "PASS: OpenCode project configuration verified without a model call\n"

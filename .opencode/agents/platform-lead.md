@@ -12,6 +12,7 @@ permission:
     "gh * pr merge*": deny
   task:
     "*": deny
+    general: allow
     rpg-toolkit-member: allow
     rpg-api-member: allow
     rpg-api-protos-member: allow

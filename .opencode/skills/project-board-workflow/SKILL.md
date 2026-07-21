@@ -22,7 +22,7 @@ terminal success before marking the Project item Done.
 
 Every PR body must include exactly one closing keyword for its backing issue:
 - Same-repository backing issue: `Closes #<issue-number>`.
-- Cross-repository backing issue: `Tracks <owner>/<repository>#<issue-number>`.
+- Cross-repository backing issue: `Closes <owner>/<repository>#<issue-number>`.
 
 After a human merge, wait for GitHub to close the backing issue and Project 19
 automation to move the item to Done before manually reconciling fields. Repair
