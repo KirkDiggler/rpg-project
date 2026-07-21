@@ -13,6 +13,12 @@ once the written spec is approved — `plan.md` does not exist yet by design;
 that is a defined process state (spec approved → plan not yet written), not a
 TODO placeholder.
 
+Review of this idea's own artifacts follows the **design/plan artifact
+lifecycle** the design itself specifies (`design.md` §2, "Design/plan artifact
+lifecycle — never local-only"): committed docs are pushed and opened as a
+ready (non-draft) PR for GitHub-surface review rather than reviewed from a
+local worktree path. See Tracking below for the PR once opened.
+
 ## Tracking
 
 - Issue: `rpg-project#101` — https://github.com/KirkDiggler/rpg-project/issues/101
@@ -56,6 +62,9 @@ workstation bootstrap and does not fork team policy.
 ## Pointers
 
 - Full design (complete, no open questions): [`design.md`](design.md)
+- Artifact review process: `design.md` §2, "Design/plan artifact lifecycle —
+  never local-only" — the PR is the review surface, not a worktree path.
 - Implementation plan: `plan.md` — **not yet created.** Planning starts in a
   fresh session once this design doc is the agreed spec; do not draft it
-  speculatively here.
+  speculatively here. Once written, it is added to the same documentation PR
+  for Plan Review rather than opening a second PR.
