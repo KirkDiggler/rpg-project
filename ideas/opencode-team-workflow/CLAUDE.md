@@ -24,8 +24,8 @@ the canonical docs in the implementation PR or a linked docs follow-up.
 - Issue: `rpg-project#101` — https://github.com/KirkDiggler/rpg-project/issues/101
 - Merged design snapshot PR: `rpg-project#102` —
   https://github.com/KirkDiggler/rpg-project/pull/102
-- Plan review PR: created from `docs/101-opencode-team-workflow-plan` after
-  `plan.md` passes self-review
+- Plan review PR (Review phase: Plan Review): `rpg-project#103` —
+  https://github.com/KirkDiggler/rpg-project/pull/103
 - Board: Project 19 ("The Dungeon Run"), Team **Cross-team**, Feature **Infra**, Kind **Build**
 - Pilot chain this design's first live proof rides on: `rpg-api-protos#187`
   (equipment contract), coordinating with `rpg-project#94` and
