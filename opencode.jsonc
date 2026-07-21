@@ -1,0 +1,41 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "enabled_providers": ["openai"],
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "model": "openai/gpt-5.6-sol-fast",
+  "small_model": "openai/gpt-5.6-luna",
+  "default_agent": "platform-lead",
+  "references": {
+    "rpg-toolkit": { "path": "../rpg-toolkit", "description": "Rules engine and rulebook boundary." },
+    "rpg-api": { "path": "../rpg-api", "description": "Game server and by-key orchestration boundary." },
+    "rpg-api-protos": { "path": "../rpg-api-protos", "description": "Canonical API contract definitions." },
+    "rpg-dnd5e-web": { "path": "../rpg-dnd5e-web", "description": "Discord Activity UI that renders data and sends intent." },
+    "rpg-deployment": { "path": "../rpg-deployment", "description": "Deployment pipeline and live delivery configuration." },
+    "rpg-game-assets": { "path": "../rpg-game-assets", "description": "Private game asset library and asset contract tree." }
+  },
+  "mcp": {
+    "hub-tools": { "enabled": false },
+    "hub-tools-staging": { "enabled": false },
+    "linear": { "enabled": false },
+    "goat-drops": { "enabled": false },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--browserUrl=http://127.0.0.1:9222", "--no-usage-statistics"],
+      "enabled": true
+    }
+  },
+  "agent": {
+    "build": { "disable": true },
+    "plan": { "disable": true },
+    "general": {
+      "description": "General implementation worker bound to Terra.",
+      "mode": "subagent",
+      "model": "openai/gpt-5.6-terra",
+      "variant": "high",
+      "permission": { "task": "deny" }
+    },
+    "title": { "model": "openai/gpt-5.6-luna", "variant": "low" },
+    "summary": { "model": "openai/gpt-5.6-luna", "variant": "low" },
+    "compaction": { "model": "openai/gpt-5.6-luna", "variant": "low" }
+  }
+}
