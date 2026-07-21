@@ -16,14 +16,14 @@
 - Every GitHub comment and PR body written by a worker ends with `— <role>, on behalf of KirkDiggler`.
 - The implementation lifecycle is exact: create files -> run red then green verification -> commit -> push and open a ready PR -> independent gate -> remediation by the original worker -> fresh independent regate -> human merge. Ready for review is not merge-ready; Kirk alone merges. Verify auto-deploy completion after every merge where the target repository deploys.
 - Project 19 and GitHub issue, PR, branch, and checkpoint comments are the only durable task state. `task_id` is optional live continuity, never recovery state.
-- Use OpenCode 1.18.4 mechanics only. Project config deep-merges global config. Use only supported keys such as `enabled_providers`, `model`, `small_model`, `default_agent`, `references`, `mcp`, `agent`, and `permission`; do not introduce `project`, `workspace`, `agents`, `mcps`, `permissions`, `charter`, `overlay`, `contextPath`, or `checkpoints` config keys.
-- The initial profile permits only OpenAI: `enabled_providers` is exactly `["openai"]`. Keep the project plugin inherited from global configuration; this project config does not remove or replace it.
+- Use OpenCode 1.18.4 mechanics only. Project config deep-merges global config. Use only supported keys such as `enabled_providers`, `plugin`, `model`, `small_model`, `default_agent`, `references`, `mcp`, `agent`, and `permission`; do not introduce `project`, `workspace`, `agents`, `mcps`, `permissions`, `charter`, `overlay`, `contextPath`, or `checkpoints` config keys.
+- The initial profile permits only OpenAI: `enabled_providers` is exactly `["openai"]`. The project config declares `"plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]` so a clean machine does not depend on Kirk's global configuration. If global and project configuration declare that identical spec, OpenCode resolves one plugin; on a clean machine OpenCode may populate its own cache, but bootstrap never edits global configuration.
 - Each `references` entry is keyed by its repository alias and has both an explicit relative `path` and a non-empty `description`; paths are exactly `../rpg-toolkit`, `../rpg-api`, `../rpg-api-protos`, `../rpg-dnd5e-web`, `../rpg-deployment`, and `../rpg-game-assets`.
 - `opencode.jsonc` contains `$schema: "https://opencode.ai/config.json"`; adapters live at `.opencode/agents/`; every adapter frontmatter uses singular `permission`.
 - Every adapter body explicitly requires reading its listed canonical charter and overlay before action. Adapters bind model and permissions only; they do not duplicate charter policy and never use `{file:...}` Markdown splicing.
 - Use only OpenAI models named in this plan. Do not configure, invoke, or dispatch an Anthropic, Claude, or Sonnet model.
 - OpenAI authentication is machine-local. Only Kirk performs the interactive `/connect` flow; bootstrap and structural verification never authenticate, write credentials, or modify global OpenCode configuration. A model-invoking gate uses existing local authentication or stops and publishes an auth blocker.
-- Do not add a plugin, daemon, checkpoint JSON schema, duplicate tracker, dry-run rewrite, or test framework.
+- Do not add a plugin beyond the exact project-scoped Superpowers spec, daemon, checkpoint JSON schema, duplicate tracker, dry-run rewrite, or test framework.
 - The equipment feature and proto implementation are out of scope. This plan records only the post-environment-proof workflow gate and the prerequisite decisions for `rpg-api-protos#187`.
 
 ---
@@ -175,7 +175,24 @@ test -f docs/teams/roles/director/overlays/assets.md
 test -f docs/teams/roles/rpg-dnd5e-web-member/overlays/ui-ux.md
 test -f docs/teams/roles/rpg-dnd5e-web-member/overlays/assets.md
 for role in rpg-deployment-member rpg-game-assets-member independent-gate explore; do
-  test -f "docs/teams/roles/$role/prompt.md"
+  prompt="docs/teams/roles/$role/prompt.md"
+  test -f "$prompt"
+  case "$role" in
+    rpg-deployment-member) description='Provider-neutral standing member for rpg-deployment.' ;;
+    rpg-game-assets-member) description='Provider-neutral standing member for rpg-game-assets.' ;;
+    independent-gate) description='Provider-neutral independent adversarial gate reviewer.' ;;
+    explore) description='Provider-neutral read-only orientation role.' ;;
+  esac
+  {
+    IFS= read -r first
+    IFS= read -r name
+    IFS= read -r actual_description
+    IFS= read -r fourth
+  } < "$prompt"
+  [ "$first" = '---' ]
+  [ "$name" = "name: $role" ]
+  [ "$actual_description" = "description: $description" ]
+  [ "$fourth" = '---' ]
   for context in active-work dependencies discoveries lessons-learned patterns; do
     jq -e '.items == []' "docs/teams/roles/$role/context/$context.json" >/dev/null
   done
@@ -252,6 +269,11 @@ either file:
 
 ```markdown
 <!-- docs/teams/roles/rpg-deployment-member/prompt.md -->
+---
+name: rpg-deployment-member
+description: Provider-neutral standing member for rpg-deployment.
+---
+
 # rpg-deployment Standing Member
 
 ## Identity and boundary
@@ -291,6 +313,11 @@ platform boundary? State the answer visibly.
 
 ```markdown
 <!-- docs/teams/roles/rpg-game-assets-member/prompt.md -->
+---
+name: rpg-game-assets-member
+description: Provider-neutral standing member for rpg-game-assets.
+---
+
 # rpg-game-assets Standing Member
 
 ## Identity and boundary
@@ -334,6 +361,11 @@ Create these exact provider-neutral charters:
 
 ```markdown
 <!-- docs/teams/roles/independent-gate/prompt.md -->
+---
+name: independent-gate
+description: Provider-neutral independent adversarial gate reviewer.
+---
+
 # Independent Gate
 
 ## Purpose
@@ -364,6 +396,11 @@ review. Kirk alone decides and merges.
 
 ```markdown
 <!-- docs/teams/roles/explore/prompt.md -->
+---
+name: explore
+description: Provider-neutral read-only orientation role.
+---
+
 # Explore
 
 ## Purpose and limits
@@ -401,7 +438,7 @@ Update `docs/teams/roles/README.md` to list three director overlays, six standin
 
 Run the Step 3 command again.
 
-Expected: exit code `0`; every new context file parses as `{"items":[]}` and every required charter/overlay exists.
+Expected: exit code `0`; every new context file parses as `{"items":[]}`, every required charter/overlay exists, and each new charter has its exact provider-neutral `name` and `description` frontmatter.
 
 - [ ] **Step 10: Review and commit the reviewable role system**
 
@@ -429,13 +466,22 @@ create an independent checkout of its branch and invoke only the approved
 direct Sol command. The gate reads the just-created canonical charter first:
 
 ```bash
-git worktree add "../rpg-project-gate-ROLE_ISSUE" "docs/ROLE_ISSUE-opencode-canonical-roles"
+git fetch origin
+git worktree add --detach "../rpg-project-gate-ROLE_ISSUE" "origin/docs/ROLE_ISSUE-opencode-canonical-roles"
 cd "../rpg-project-gate-ROLE_ISSUE"
-opencode run --model openai/gpt-5.6-sol --variant max "Read docs/teams/roles/independent-gate/prompt.md first. Independently review PR #ROLE_PR for issue #ROLE_ISSUE: inspect its issue, diff, charter acceptance evidence, and design sections 2, 4, and 7. Do not edit, commit, push, merge, or authenticate. Publish signed findings or a passing gate checkpoint on the PR."
+opencode run --model openai/gpt-5.6-sol --variant max --agent build --auto --title "Gate role PR ROLE_PR" "Read docs/teams/roles/independent-gate/prompt.md first. Independently review PR #ROLE_PR for issue #ROLE_ISSUE: inspect its issue, diff, charter acceptance evidence, and design sections 2, 4, and 7. Do not edit, commit, push, merge, or authenticate. The charter is authoritative. Publish signed findings or a passing gate checkpoint on the PR."
+if [ -n "$(git status --porcelain)" ]; then
+  printf 'Gate checkout has uncommitted changes; preserve and report them before cleanup.\n' >&2
+  exit 1
+fi
+cd - >/dev/null
+git worktree remove "../rpg-project-gate-ROLE_ISSUE"
 ```
 
 Expected: the gate uses an existing machine-local OpenAI connection only. If no
 connection exists, it does not run `/connect`; it publishes the auth blocker.
+After the gate report is published, remove the detached worktree only after its
+status check confirms no gate changes remain.
 
 - [ ] **Step 13: Remediate, fresh-regate, and hand off the human merge**
 
@@ -497,6 +543,7 @@ Create the symlink with `ln -s CLAUDE.md AGENTS.md`. Create `opencode.jsonc` wit
 {
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": ["openai"],
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
   "model": "openai/gpt-5.6-sol-fast",
   "small_model": "openai/gpt-5.6-luna",
   "default_agent": "platform-lead",
@@ -620,7 +667,19 @@ jq -e '
   (.agent.summary | (keys | sort) == ["model", "variant"]) and
   (.agent.compaction | (keys | sort) == ["model", "variant"])
 ' opencode.jsonc >/dev/null || fail "runtime overrides are wrong"
-jq -e '.plugin? == null' opencode.jsonc >/dev/null || fail "project config must not replace inherited plugins"
+superpowers_plugin="superpowers@git+https://github.com/obra/superpowers.git"
+jq -e --arg plugin "$superpowers_plugin" '.plugin == [$plugin]' opencode.jsonc >/dev/null || fail "raw project config must declare the exact Superpowers plugin spec"
+jq -e --arg plugin "$superpowers_plugin" '([.plugin[]? | select(. == $plugin)] | length) == 1' "$resolved" >/dev/null || fail "resolved config must contain the exact Superpowers plugin spec once"
+
+general_json="$(mktemp)"
+tmpfiles+=("$general_json")
+opencode debug agent general >"$general_json" || fail "general agent does not resolve"
+jq -e '
+  .mode == "subagent" and
+  .model.providerID == "openai" and
+  .model.modelID == "gpt-5.6-terra" and
+  .variant == "high"
+' "$general_json" >/dev/null || fail "resolved general profile is wrong"
 
 references=(rpg-toolkit rpg-api rpg-api-protos rpg-dnd5e-web rpg-deployment rpg-game-assets)
 jq -e --argjson aliases '["rpg-toolkit","rpg-api","rpg-api-protos","rpg-dnd5e-web","rpg-deployment","rpg-game-assets"]' '
@@ -706,6 +765,18 @@ for agent in "${agents[@]}"; do
       ([ $rules[] | select(.action == "deny" and .pattern == "*") | .index ] | max) as $broad_deny |
       any($rules[]; .action == "allow" and .pattern == "gh *" and .index > $broad_deny)
     ' "$agent_json" >/dev/null || fail "lead gh permission must follow broad bash deny"
+    case "$agent" in
+      ui-lead) task_allowlist=(ui-web-member web-fixer explore independent-gate janitor) ;;
+      platform-lead) task_allowlist=(rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member toolkit-fixer api-fixer explore independent-gate janitor) ;;
+      assets-lead) task_allowlist=(rpg-game-assets-member assets-web-member web-fixer explore independent-gate janitor) ;;
+    esac
+    task_allowlist_json="$(printf '%s\n' "${task_allowlist[@]}" | jq -R . | jq -s .)"
+    jq -e --argjson allowlist "$task_allowlist_json" '
+      [.permission[] | select(.permission == "task") | {action: .action, pattern: .pattern}] ==
+      ([{action: "deny", pattern: "*"}] + [$allowlist[] | {action: "allow", pattern: .}])
+    ' "$agent_json" >/dev/null || fail "lead task permissions must be broad deny followed by the exact manifest allowlist"
+  else
+    assert_permission_rule "$agent_json" task deny "*"
   fi
 done
 
@@ -723,6 +794,11 @@ for pattern in 'git *commit*' 'git *push*' 'git *merge*' 'gh pr merge*'; do
     any($rules[]; .action == "deny" and .pattern == $pattern and .index > $broad_allow)
   ' "$gate_json" >/dev/null || fail "gate deny $pattern must follow broad allow"
 done
+
+explore_json="$(mktemp)"
+tmpfiles+=("$explore_json")
+opencode debug agent explore >"$explore_json"
+assert_permission_rule "$explore_json" edit deny "*"
 
 printf "PASS: OpenCode project configuration verified without a model call\n"
 ```
@@ -1078,9 +1154,9 @@ Launch a new Terra worker with only the issue URL, branch, PR URL if present, an
 
 - [ ] Re-read `ideas/opencode-team-workflow/design.md` sections 1 through 10 and record this exact coverage map in the self-review comment: section 1 (control-plane architecture) is Tasks 1 and 2; section 2 (Project 19 contract and artifact lifecycle) is Tasks 1 through 5; section 3 (durable continuity) is Tasks 2, 4, and 5; section 4 (roles and roster) is Task 1; section 5 (model profile) is Task 2; section 6 (configuration and source of truth) is Tasks 2 and 3; section 7 (operational gates) is Tasks 1 through 5; section 8 (side-by-side verification) is Task 4; section 9 (equipment pilot) is Task 5; section 10 (rollout issue) is this Plan Review PR tracking #101.
 - [ ] Search the plan and lifecycle corrections for unresolved-marker text, time estimates, and vague-test language; replace every occurrence that would leave an implementer to invent behavior. The post-gate equipment-plan creation statement is valid only because it names its exact prerequisite: three documented `rpg-api-protos#187` decisions after Task 4 passes.
-- [ ] Check every adapter name, literal canonical path pointer, model, variant, mode, and permission against **Adapter Manifest** and `opencode.jsonc`; check exact OpenAI model IDs, six aliased sibling references with exact `path` values, all 16 adapters, and exactly four disabled inherited MCPs.
+- [ ] Check every adapter name, literal canonical path pointer, model, variant, mode, and permission against **Adapter Manifest** and `opencode.jsonc`; check exact OpenAI model IDs, six alias-keyed sibling references with only `{path,description}`, all 16 adapters, exactly four disabled inherited work MCPs, and hidden `title`/`summary`/`compaction` overrides limited to model and variant.
 - [ ] Confirm all required validation commands appear exactly: `opencode debug config`, `opencode agent list`, `opencode debug agent NAME`, `opencode models openai --verbose`, `opencode debug file read AGENTS.md`, and `opencode mcp list`.
-- [ ] Confirm no prohibited config keys, project plugin override, daemon, checkpoint schema, duplicate tracker, dry-run rewrite, new test framework, Anthropic/Claude/Sonnet model, or equipment implementation details appear. Confirm all shell snippets parse as Bash where applicable, including the verifier cleanup and jq blocks.
+- [ ] Confirm `enabled_providers` is only OpenAI; the raw and resolved configuration each contain the exact project-scoped Superpowers plugin spec; no prohibited config keys, unexpected plugin, daemon, checkpoint schema, duplicate tracker, dry-run rewrite, new test framework, Anthropic/Claude/Sonnet model, or equipment implementation details appear. Confirm all shell snippets parse as Bash where applicable, including the verifier cleanup and jq blocks.
 - [ ] Search for placeholders, `similar to`, unresolved markers, impossible lifecycle order, stale `settings.json` claims, and vague acceptance instructions. Confirm Tasks 1 through 3 use create -> red/green -> commit -> push/ready PR -> gate -> remediation -> fresh regate -> human merge.
 - [ ] Run `git diff --check`, inspect `git status --short --branch`, and inspect `git diff -- ideas/opencode-team-workflow/plan.md`; fix every discrepancy inline before committing.
 - [ ] Commit only the intended changed `ideas/opencode-team-workflow` documentation files for this remediation snapshot; never amend and never use `--no-verify`.
