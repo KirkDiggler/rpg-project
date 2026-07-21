@@ -78,7 +78,7 @@
 ### Task 5 equipment workflow proof
 
 - Create: no equipment or proto code under this plan.
-- Create later: one separate `rpg-project` equipment-plan issue and ready plan PR after the three `rpg-api-protos#187` decisions are resolved.
+- Create later: one separate `rpg-project` equipment documentation-and-plan issue and ready review PR that retrospectively documents the adopted `#187/#188`, `#811/#812`, and `#680/#682` chain, its already-selected contract/scope, and the missing `ideas/equipment/design.md` reference.
 
 ## Adapter Manifest
 
