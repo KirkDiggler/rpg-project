@@ -2909,3 +2909,27 @@ folded back into this document — see each item for what was verified:
   encounter component; no audio asset/library added; no damage-dice
   animation; no wiring into `EncounterView`; no new runtime dependency
   (styling is plain CSS, no animation library).
+
+---
+## Post-plan iteration note (2026-07-22 — do not edit the tasks above)
+
+Tasks 1-5 above are the completed, as-executed record of round one's build and are left
+unedited. After Task 5 landed (PR rpg-dnd5e-web#579), a Kirk-reviewed iteration pass
+("faceted d20 + suspenseful reveal timing," same PR) changed `useBeatSequencer.ts`'s
+`CINEMATIC`/`BRISK`/`CRIT_*_EXTRA_MS` constants from Task 2's originally-implemented
+values (Cue 150/600/200/300/200ms family) to substantially longer, more suspenseful
+ones — Cinematic Cue 300ms / Throw 2000ms / Verdict 1600ms / Impact 900ms (hit-only) /
+Release 300ms, Brisk exact-half of those. Kirk reviewed this iteration live on
+2026-07-22 and accepted it for the current round-one concept stage (verbatim: *he can
+get behind this for the stage we are in*; on the routine miss specifically, felt-sense
+from when rolling starts, *just under about 3 seconds, and felt right*) — a subjective
+impression distinct from the measured wall-clock totals (real-browser
+`performance.now()`: hit target 5100ms/observed ≈5130ms, miss target 4200ms/observed
+≈4229ms, crit target 6600ms/observed ≈6629ms, Brisk hit target 2550ms/observed
+≈2582ms). See `design.md` §1 for the current authoritative timing table and the full
+measured-vs-perceived discussion; this note exists only so a future reader of this
+plan's Task 2 code blocks knows those specific embedded numbers were superseded by a
+later, Kirk-accepted iteration and are not what `useBeatSequencer.ts` currently ships.
+This acceptance is concept-stage only, not locked production timing, and does not
+retroactively change Task 2's pass/fail record for the values it was written and
+verified against at the time.

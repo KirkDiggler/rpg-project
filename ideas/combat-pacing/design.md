@@ -1,9 +1,9 @@
 ---
 name: Combat Pacing & Dice
 description: The attack loop needs beats — theatrical suspense choreographed over already-resolved server rolls, so "swing, miss, end turn" stops feeling flat
-updated: 2026-07-21
-confidence: high on the beat model and pacing decisions (Kirk-approved); the wire's correlation/cardinality shape is explicitly a contract question round one defers to CONTRACT.md, not a fact this doc assumes
-status: Round 1 concept, in progress — tracked as rpg-dnd5e-web#561 (Board 19, Feature=Game Screen, Team=UI/UX). Broader charter: rpg-dnd5e-web#525 (Game-UX).
+updated: 2026-07-22
+confidence: high on the beat model and pacing decisions (Kirk-approved); §1's beat durations are the implemented-and-measured values Kirk accepted live on 2026-07-22 for this round-one concept iteration, not locked production timing; the wire's correlation/cardinality shape is explicitly a contract question round one defers to CONTRACT.md, not a fact this doc assumes
+status: Round 1 concept, in progress — tracked as rpg-dnd5e-web#561 (Board 19, Feature=Game Screen, Team=UI/UX). Broader charter: rpg-dnd5e-web#525 (Game-UX). Beat-timing concept iteration accepted by Kirk 2026-07-22 (§1); concept-stage only.
 ---
 
 # Combat Pacing & Dice
@@ -103,25 +103,63 @@ the prototype (see §Round-one success below).
 
 ## 1. The beat model
 
-Decompose one attack into named beats. Durations are *Cinematic-mode* defaults, all
-tunable, all skippable (tap-to-skip jumps to the verdict — never trap a player in an
-animation).
+Decompose one attack into named beats. Durations below are the **implemented-and-
+measured Cinematic values, accepted by Kirk in a live concept review on 2026-07-22**
+(round-one `/concepts` bench, PR rpg-dnd5e-web#579's "faceted d20 + suspenseful reveal
+timing" iteration) — a substantial, deliberate lengthening from this doc's earlier
+proposed ranges, chosen for suspense rather than snappiness. All beats remain tunable
+and skippable (tap-to-skip jumps to the verdict — never trap a player in an animation).
+**This acceptance is for the current round-one concept-stage iteration, not locked
+production timing** — see the note after the budget line below.
 
-| # | Beat | Duration | What happens | Suspense? |
+| # | Beat | Duration (Cinematic) | What happens | Suspense? |
 |---|------|----------|--------------|-----------|
 | 0 | **Declare** | instant | Player clicks Attack + target. The click *is* the commit. (Already exists — the action menu.) | — |
-| 1 | **Cue** | 150–250ms | Target token highlights, attacker "readies." Says *something is coming* so the reveal isn't a value popping from nowhere. | building |
-| 2 | **Throw** | 600–900ms *(Cinematic)* | The d20 tumbles. Outcome hidden until it settles. Lands on the real `attack_roll` — the die shows the server's number, never a fake. | **peak** |
-| 3 | **Verdict** | 200–400ms | Die lands, total assembles (`roll + bonus vs AC`), stamp: HIT / MISS / **CRIT** / **nat-1**. The frame-breaker. | release |
-| 4 | **Impact** | 300–500ms *(hit only)* | Damage number flies off the target, HP bar drains. **Skipped on a miss** — the whiff is the punctuation. | payoff |
+| 1 | **Cue** | 300ms | Target token highlights, attacker "readies." Says *something is coming* so the reveal isn't a value popping from nowhere. | building |
+| 2 | **Throw** | 2000ms | The d20 tumbles. Outcome hidden until it settles. Lands on the real `attack_roll` — the die shows the server's number, never a fake. | **peak** |
+| 3 | **Verdict** | 1600ms | Die lands, total assembles (`roll + bonus vs AC`), stamp: HIT / MISS / **CRIT** / **nat-1**. The frame-breaker. | release |
+| 4 | **Impact** | 900ms *(hit only)* | Damage number flies off the target, HP bar drains. **Skipped on a miss** — the whiff is the punctuation. | payoff |
 | — | **Reaction** | variable *(if prompted)* | Shield / etc. A real interrupt, already modeled by `InputRequired` prompts. Not one of the five timed beats — its duration is whatever the reactor takes. | interrupt |
-| 5 | **Release** | 200–300ms | A short breath before the next actor's turn. **Not** the full initiative-tracker slide-and-highlight treatment — that's future polish, out of round one's scope. | reset |
+| 5 | **Release** | 300ms | A short breath before the next actor's turn. **Not** the full initiative-tracker slide-and-highlight treatment — that's future polish, out of round one's scope. | reset |
 
-**Budget:** routine hit ≈ 1.2–1.6s · routine miss ≈ 1.0s (skips Impact) · **crit ≈ 2.5s
-(earned)**.
+**Brisk** (repeat-roll/grunt-tier compression, §4) is the exact half of every Cinematic
+value above: Cue 150ms, Throw 1000ms, Verdict 800ms, Impact 450ms, Release 150ms.
 
-**How crits/nat-1s break the frame.** The routine loop is deliberately snappy so the
-exceptions land. A **crit** (`critical === true`) stretches the Verdict — the longest
+**Budget — measured wall-clock totals (Cue through Release, `performance.now()` in a
+real browser against the round-one `/concepts` bench, per
+`rpg-dnd5e-web` `docs/evidence/combat-pacing-561.md`), target vs. observed:**
+
+- Cinematic routine **hit**: target 5100ms, observed ≈5130ms
+- Cinematic routine **miss** (skips Impact): target 4200ms, observed ≈4229ms
+- Cinematic **crit** (earned — Verdict/Impact stretch further): target 6600ms, observed
+  ≈6629ms
+- **Brisk**, exact-half of Cinematic, routine hit: target 2550ms, observed ≈2582ms
+
+All observed values land within ~1% of target. **These are objective, stopwatch-style
+measurements of the full beat sequence — not the same thing as how long a beat *feels*
+to a player.** Kirk's own qualitative read, from his 2026-07-22 live review of this
+exact iteration: *he can get behind this for the stage we are in* — and, on the routine
+miss specifically, counting subjectively from when rolling starts, *it felt just under
+about 3 seconds, and felt right.* That ~3s felt-impression and the 4200/4229ms measured
+miss total are **two different measurements, not a contradiction** — a stopwatch counts
+every beat uniformly; a person's felt sense of "how long until I knew" compresses
+against clock time for a short, eventful interval. Both are recorded here deliberately:
+the measured totals are the objective/regression evidence, Kirk's felt read is the
+product-feel judgment call, and neither is being adjusted to match the other.
+
+**Status of this acceptance:** Kirk's 2026-07-22 review accepts these values for the
+**current round-one concept iteration** — it clears the `/concepts` bench to stand as-is
+on timing. It is **not** a sign-off on production choreography, and these numbers are
+not locked: they may change again in a later concept-iteration pass, and definitely
+before (if ever) this pacing model is wired into the live `EncounterView` route against
+real stream events.
+
+**How crits/nat-1s break the frame.** The routine loop is deliberately kept *shorter
+than* the crit/nat-1 exceptions so they land — "snappy" here is relative and felt, not a
+sub-second wall-clock claim; per the accepted concept-iteration values above, routine
+measures longer in raw ms than round one's earlier draft envisioned, and Kirk's own felt
+read of a routine miss (~3s, "felt right") confirms the relative pacing holds even at
+these longer absolute durations. A **crit** (`critical === true`) stretches the Verdict — the longest
 frame-breaker in the set: die glows gold, a screen sheen fires
 (`SPR_FX_FantasyWarrior_Sheen01/02`, `Glow01–03`, `Beams01` all exist in the Synty FX
 sheet), the damage number is oversized and gold. A **nat-1** (`attack_roll === 1 &&
@@ -129,8 +167,9 @@ sheet), the damage number is oversized and gold. A **nat-1** (`attack_roll === 1
 comedic fumble stamp, kept short because a fumble should be funny, not a punishment to
 sit through.
 
-**How the miss stays snappy — this is the actual fix.** Kirk's complaint isn't that
-misses are too fast; it's that they have *no weight*. But a *drawn-out* miss is worse
+**How the miss stays snappy relative to a hit or crit — this is the actual fix.**
+Kirk's complaint isn't that misses are too fast; it's that they have *no weight*. But a
+*drawn-out* miss is worse
 than a flat one. The fix is a **short-but-legible** miss: same Throw tumble, a quick
 MISS stamp, no Impact beat — readable, but it skips Impact. Repeat misses in one turn
 compress further (§4).
