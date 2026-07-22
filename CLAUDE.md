@@ -57,6 +57,19 @@ Rules:
 - No issue without a board entry
 - New work = new issue on board -> fresh branch from main
 
+## Cross-Repo Design Workflow
+
+Cross-repo designs and plans live under `ideas/<topic>/` **in this repo**, never scattered as
+scratch docs in an implementing repo. Flow:
+
+1. Start an idea branch from **latest `origin/main`**, add `ideas/<topic>/design.md`, open an
+   `rpg-project` PR — this PR is Kirk's review surface.
+2. Design is reviewed and approved first. `plan.md` is added to the **same PR**, after design
+   approval — not before, not as a separate PR.
+3. Implementation happens in the owning repo(s) as their own PRs, referencing the approved design.
+4. Merge the `rpg-project` idea PR only **after** implementation is complete — it stays open as
+   the tracking surface until then.
+
 ## Current Chapter
 
 **Chapter 2: Combat Verbs** (board #13) — bring the v1alpha2 `EncounterService` verbs to life one
