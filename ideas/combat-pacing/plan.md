@@ -115,7 +115,7 @@ renders combat text in. No animation library, no CSS-in-JS.
 | `src/concepts/combat-pacing/fixtures.test.ts` (new) | Scenario-count/shape assertions: exactly 8 scenarios, the OA scenario has no `actionResolved` event, the nat-1/crit scenarios carry the right `AttackResolved` flags, the repeated-attacks scenario has 2 correlation groups, every scenario's `sequence` values are strictly increasing, `groupByCorrelation` groups and orders correctly. |
 | `src/concepts/combat-pacing/useBeatSequencer.ts` (new) | Pure timing state machine: `BeatName`, `BeatDurations`, `CINEMATIC`/`BRISK` constants, `CRIT_VERDICT_EXTRA_MS`/`CRIT_IMPACT_EXTRA_MS`, `AUTO_THROW_TIMEOUT_MS`, `REDUCED_MOTION_THROW_MS`, and the `useBeatSequencer` hook (`throwDie`, `skip`, per-group compression, crit stretch, reduced-motion Throw collapse). Internal decisions read `beatRef`/`groupIndexRef` (plain refs), not the `beat`/`groupIndex` React state — state exists only to trigger re-renders — so two `skip()` calls in the same synchronous tick each see the other's effect immediately. |
 | `src/concepts/combat-pacing/useBeatSequencer.test.ts` (new) | Fake-timer tests: full cinematic-hit budget (1450ms), miss skips Impact, crit stretches to exactly 2500ms, Brisk/NPC-grunt budget, second correlation group compresses to Brisk AND auto-plays with no armed wait, `armed` waits for `throwDie()` or `AUTO_THROW_TIMEOUT_MS`, `skip()` from `cue`/`armed`/`throw` jumps to `verdict`, two synchronous `skip()` calls in one tick finish the group (verdict -> done), `instant` pace goes straight to `done`, reduced motion collapses Throw to `REDUCED_MOTION_THROW_MS`, `throwDie()` no-op outside `armed`. |
-| `src/concepts/combat-pacing/beatStageTypes.ts` (new) | Presentation-owned `BeatAttackView`, `BeatDamageView`, `VerdictLabel`, `verdictLabel()` — split into their own module (not inline in `BeatStage.tsx`) because a component file that also exports plain functions/types trips this repo's `react-refresh/only-export-components` lint rule, the same reason `equipmentTypes.ts` is split from `EquipmentSlots.tsx`. |
+| `src/concepts/combat-pacing/beatStageTypes.ts` (new) | Presentation-owned `BeatAttackView`, `BeatDamageView`, `VerdictLabel`, `verdictLabel()` — kept in their own module, not inline in `BeatStage.tsx`, so presentation types stay owned by the presentation layer rather than borrowed from `fixtures.ts` (same separation `equipmentTypes.ts` gives `EquipmentSlots.tsx`). Keeping an exported, non-component helper like `verdictLabel()` out of the component file also avoids this repo's `react-refresh/only-export-components` lint rule if it's ever exported from there instead. |
 | `src/concepts/combat-pacing/BeatStage.tsx` (new) | Presentational component: `Placement` (`token-anchored` \| `center-stage`), `BeatStageProps` (`beat`, `placement`, `attack?: BeatAttackView`, `damage?: BeatDamageView`, `reducedMotion`), token-anchored-promotes-to-center-stage-on-crit/nat-1 logic. Imports its attack/damage types from `./beatStageTypes`, NOT from `./fixtures` — see Task 3's header. Real CSS (in `public/themes/base.css`, this task): die tumble/settle, crit gold, nat-1 red-crack wobble, hit/miss color, oversized crit damage, placement border treatment, reduced-motion suppression. |
 | `src/concepts/combat-pacing/BeatStage.test.tsx` (new) | Render tests per beat (`cue`/`throw`/`armed`/`verdict`/`impact`/`release`), placement promotion on crit and on nat-1, reduced-motion class swap on the die AND the container, verdict class (`beat-verdict--hit`/`--miss`/`--crit`/`--nat1`) per outcome, `beat-damage--crit` only on a crit. |
 | `public/themes/base.css` (modify) | Append `.beat-stage`/`.beat-cue`/`.beat-die`/`.beat-verdict`/`.beat-damage` rules + `@keyframes nat1-crack`, reusing the file's existing `@keyframes dice-roll`/`.animate-dice-roll` and `color-mix()` conventions (Task 3 Step 4). |
@@ -1275,8 +1275,10 @@ git commit -m "feat(concepts): combat-pacing beat sequencer state machine (#561)
   field names/types, plus more), so `CombatPacingConcept.tsx` (Task 4)
   passes a `BeatGroupResult`'s `attack`/`damage` straight into this
   component's props with no adapter function and no cast — verified by
-  `npm run typecheck` passing with zero errors once Task 4 wires them
-  together.
+  `npm run build` (the check that actually exercises this repo's project
+  references — see the Revision note's item 10 on why `npm run
+  typecheck` alone cannot be relied on here) passing with zero errors
+  once Task 4 wires them together.
 - Produces (consumed by Task 4): `BeatAttackView`, `BeatDamageView`,
   `VerdictLabel`, `verdictLabel()` (`beatStageTypes.ts`); `Placement`,
   `BeatStageProps`, the `BeatStage` component (`BeatStage.tsx`).
@@ -1287,14 +1289,16 @@ Create `src/concepts/combat-pacing/beatStageTypes.ts`:
 
 ```ts
 /**
- * Presentation-owned types for `BeatStage.tsx` (rpg-dnd5e-web#561),
- * split into their own module for the same reason
- * `src/components/game/equipment/equipmentTypes.ts` is split out from
- * `EquipmentSlots.tsx`/`InventoryLight.tsx`: a component file that also
- * exports plain functions/types trips this repo's
- * `react-refresh/only-export-components` lint rule (verified — moving
- * `verdictLabel` out of `BeatStage.tsx` and into this file is what
- * cleared `npm run lint`).
+ * Presentation-owned types for `BeatStage.tsx` (rpg-dnd5e-web#561), kept
+ * in their own module rather than inline in the component file — the
+ * same separation `src/components/game/equipment/equipmentTypes.ts`
+ * gives `EquipmentSlots.tsx`/`InventoryLight.tsx`: presentation types
+ * are owned by the presentation layer, not borrowed from the data layer
+ * (`fixtures.ts`). A secondary benefit: an exported, non-component
+ * helper like `verdictLabel()` living in a component file (rather than
+ * here) can trip this repo's `react-refresh/only-export-components`
+ * lint rule — this module sidesteps that too, but the ownership
+ * separation above is the actual reason it exists.
  *
  * `BeatAttackView`/`BeatDamageView` are deliberately NOT imported from
  * `./fixtures` — see `BeatStage.tsx`'s header for why. `fixtures.ts`'s
@@ -1613,11 +1617,13 @@ Create `src/concepts/combat-pacing/BeatStage.tsx`:
  * BeatStage (rpg-dnd5e-web#561) — the presentational die/verdict/damage
  * surface for one beat. Takes ONLY beat-shaped props via its OWN
  * presentation-owned `BeatAttackView`/`BeatDamageView` types
- * (`beatStageTypes.ts`, split into its own module because a component
- * file that also exports plain functions/types trips this repo's
- * `react-refresh/only-export-components` lint rule — the same reason
- * `equipmentTypes.ts` is split from `EquipmentSlots.tsx`). This file does
- * NOT import `AttackResolvedLike`/`EntityDamagedLike` from `./fixtures`.
+ * (`beatStageTypes.ts` — kept in its own module because presentation
+ * types are owned by the presentation layer, not the data layer, the
+ * same separation `equipmentTypes.ts` gives `EquipmentSlots.tsx`; it
+ * also avoids this repo's `react-refresh/only-export-components` lint
+ * rule, which an exported non-component helper living in a component
+ * file can trip). This file does NOT import `AttackResolvedLike`/
+ * `EntityDamagedLike` from `./fixtures`.
  * `fixtures.ts`'s real wire-shaped types are a structural SUPERSET of
  * `beatStageTypes.ts`'s (every field there also exists here, same
  * name/type), so `CombatPacingConcept.tsx` can pass a `BeatGroupResult`'s
@@ -1926,13 +1932,16 @@ this step only confirms the file is syntactically valid before that.
 
 Run: `npm run typecheck && npm run lint`
 
-Expected: no errors. If `verdictLabel`/`BeatAttackView`/`BeatDamageView`
-were defined directly inside `BeatStage.tsx` instead of
-`beatStageTypes.ts`, this step is where `npm run lint` would fail with
-`Fast refresh only works when a file only exports components
+Expected: no errors. Incidental note: if `verdictLabel`/`BeatAttackView`/
+`BeatDamageView` were defined directly inside `BeatStage.tsx` instead of
+`beatStageTypes.ts`, this step is where `npm run lint` would additionally
+fail with `Fast refresh only works when a file only exports components
 (react-refresh/only-export-components)` — confirmed by deliberately
-trying that during this plan's own verification pass; Step 1's file
-split is what keeps this step clean.
+trying that during this plan's own verification pass. Step 1's file
+split exists for the ownership reason stated in `beatStageTypes.ts`'s
+own header (presentation types belong to the presentation layer); this
+lint rule is a secondary thing the split happens to avoid, not the
+reason for it.
 
 - [ ] **Step 8: Commit**
 
@@ -2397,12 +2406,17 @@ Add its render branch (after the `equipment` branch):
 
 Run: `npm run test:run && npm run typecheck && npm run lint`
 
-Expected: all pass, 0 regressions in any pre-existing file. Verified
-directly during this plan's authoring against a disposable worktree off
-`origin/main` (commit `29bdce1`): `Test Files  63 passed (63)`,
-`Tests  1096 passed (1096)` — the pre-existing suite plus this plan's 53
-new tests (14 fixtures + 12 sequencer + 16 BeatStage + 11 concept), zero
-regressions.
+Expected: `npm run test:run` exits 0 with no failing tests — this
+plan's 53 new tests (14 fixtures + 12 sequencer + 16 BeatStage + 11
+concept) plus every pre-existing test, all green; `npm run typecheck`
+and `npm run lint` both exit 0. The exact total test count will differ
+from any number recorded here as this repo's own suite grows over time
+— do not treat a specific total as the pass bar, only "0 failures, 0
+regressions." At authoring time, against a disposable worktree off
+`origin/main` (commit `29bdce1`), this was `Test Files  63 passed (63)`,
+`Tests  1096 passed (1096)` — recorded here as a historical snapshot of
+that one clean run, not a baseline to match on a different checkout or
+a later `main`.
 
 - [ ] **Step 7: Commit**
 
@@ -2769,10 +2783,17 @@ folded back into this document — see each item for what was verified:
    now owns `BeatAttackView`/`BeatDamageView`/`VerdictLabel`/
    `verdictLabel()`; `fixtures.ts`'s `AttackResolvedLike`/
    `EntityDamagedLike` satisfy these structurally (verified: `npm run
-   typecheck` passes with zero errors once Task 4 wires a
+   build` passes with zero errors once Task 4 wires a
    `BeatGroupResult`'s fields straight into `BeatStage`'s props with no
-   cast). This split was also load-bearing for a real lint rule, not
-   just a style preference — see item 6.
+   cast — see item 10 on why `npm run typecheck` alone isn't the right
+   check to cite here). The design invariant this follows: presentation
+   types are owned by the presentation component/module, not borrowed
+   from the data layer. Keeping `verdictLabel()` (an exported, non-
+   component function) in its own module rather than inside
+   `BeatStage.tsx` also happens to avoid a real
+   `react-refresh/only-export-components` lint failure this plan hit
+   during verification — a useful side benefit of the split, not the
+   reason for it.
 5. **`CONTRACT.md` precedent wording corrected.** The committed
    `equipment/CONTRACT.md` is itself already ask-shaped (post-review);
    combat-pacing's file borrows its STRUCTURE only and stays
@@ -2782,10 +2803,16 @@ folded back into this document — see each item for what was verified:
 6. **Test counts recounted for real.** Final, verified totals: 14
    (`fixtures.test.ts`) + 12 (`useBeatSequencer.test.ts`) + 16
    (`BeatStage.test.tsx`) + 11 (`CombatPacingConcept.test.tsx`) = 53 new
-   tests, plus the pre-existing suite: `npm run test:run` reports `Test
-   Files  63 passed (63)`, `Tests  1096 passed (1096)` with all four new
-   files present, zero regressions. Every "Expected: PASS — Tests N
-   passed (N)" line in Tasks 1-4 matches these counts exactly.
+   tests. At authoring time, against the disposable worktree's one clean
+   snapshot (`origin/main` commit `29bdce1`), `npm run test:run` reported
+   `Test Files  63 passed (63)`, `Tests  1096 passed (1096)` with all
+   four new files present, zero regressions — recorded as a point-in-time
+   result, not a count an implementer should expect to match exactly on
+   a different or later checkout. Every "Expected: PASS — Tests N passed
+   (N)" line in Tasks 1-4 for this plan's OWN new files matches the 14/
+   12/16/11 counts above exactly; the full-suite expectation (Task 4 Step
+   6, Task 5 Step 4) is stated relatively (0 failures, `ci-check` exits
+   0), not as a fixed total.
 7. **Minor accuracy fixes:** `HitPointsLike.temp` is now `temp: number`
    (required, matching the wire exactly), with every fixture supplying
    `temp: 0` explicitly. `ActionResolvedLike`'s omission of
@@ -2803,13 +2830,24 @@ folded back into this document — see each item for what was verified:
    `combat-panel/CombatPanelConcept.tsx`'s `FRAMES` pattern (this plan
    adds a 4th, `narrow`, frame that pattern doesn't have) — fixed in the
    File Map and Task 4's header.
-10. A build-only TypeScript error surfaced during verification and is
-    folded into Task 2 Step 3's code directly (not left as a separate
-    fixup step): `useRef<ReturnType<typeof setTimeout>>()` needs an
-    explicit `| undefined` type argument and initial value under this
-    repo's `tsc -b` project-reference build (stricter than the
-    `typecheck` script's plain `tsc --noEmit`) — verified `npm run build`
-    passes with the corrected `useRef<... | undefined>(undefined)`.
+10. A TypeScript error surfaced during verification and is folded into
+    Task 2 Step 3's code directly (not left as a separate fixup step):
+    `useRef<ReturnType<typeof setTimeout>>()` needs an explicit
+    `| undefined` type argument and initial value — without it,
+    `npm run build` (`tsc -b && vite build`) fails with `Expected 1
+    arguments, but got 0`. Note on this repo's `npm run typecheck`
+    script specifically: it runs `tsc --noEmit` against the ROOT
+    `tsconfig.json`, a solution-style config with `"files": []` and only
+    `references` entries — verified directly (`npx tsc --noEmit` at repo
+    root exits 0 even with a deliberately broken file present) that this
+    invocation performs no real per-file diagnostics, so it cannot be
+    relied on to catch this class of error; `npx tsc --noEmit -p
+    tsconfig.app.json` (which targets the actual project config) does
+    catch it, and so does `npm run build`'s `tsc -b` step, which follows
+    the project references `tsc --noEmit` alone does not. The required,
+    reliable check for this class of error is `npm run build` (and by
+    extension `npm run ci-check`, which runs it) — verified passing with
+    the corrected `useRef<... | undefined>(undefined)`.
 
 ## Self-review (performed by the plan author, not a task for the implementer)
 
@@ -2853,9 +2891,11 @@ folded back into this document — see each item for what was verified:
   (Task 3) are the exact names imported in Task 4, which passes
   `AttackResolvedLike`/`EntityDamagedLike`-typed values into
   `BeatAttackView`/`BeatDamageView`-typed props with no adapter — checked
-  by actually running `npm run typecheck` against the wired-together
-  code, zero errors. No renamed field slipped through (e.g. `attackRoll`
-  is spelled identically everywhere it appears).
+  by actually running `npm run build` against the wired-together code
+  (the check that actually exercises this repo's project references;
+  see the Revision note's item 10), zero errors. No renamed field
+  slipped through (e.g. `attackRoll` is spelled identically everywhere
+  it appears).
 - **Path/command accuracy:** every file path was confirmed to exist (or,
   for new files, confirmed its parent directory's sibling convention) by
   reading the live `rpg-dnd5e-web` checkout, AND every code block in
