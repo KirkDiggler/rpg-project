@@ -6,7 +6,7 @@
 
 **Architecture:** A verifier is written first and opens the saved `.blend` to assert the review contract. A separate builder imports the native character and sword, copies native actions from one-at-a-time FBX imports onto the native rig, removes only temporary imported objects, creates review presentation, then saves the licensed local artifact. No web, game, export, retarget, or production Fighter work belongs here.
 
-**Tech Stack:** Blender 5.0.1 (`blender`), Blender Python API, `bpy.ops.wm.fbx_import`, local Synty licensed FBX source files.
+**Tech Stack:** Blender 5.0.1 (`blender`), Blender Python API, bundled `io_scene_fbx.import_fbx.load`, local Synty licensed FBX source files.
 
 ## Global Constraints
 
@@ -26,9 +26,11 @@
   - `Animations/Polygon/Idle/Menacing01/A_Idle_Menacing01_Sword.fbx`
   - `Animations/Polygon/Idle/Menacing01/A_Idle_Menacing01_End_Sword.fbx`
 - Required local directory: `/home/kirk/game-dev/assets/synty/review/combat-stances/`.
-- Do not retarget, edit F-curves, make a game GLB, infer two-handed/shield behavior, or add a
-  production Fighter. If imported action bone names differ from the native rig exactly, stop with
-  `BLOCKED` and report the differing name sets; never silently remap.
+- Do not retarget, edit character/rig/action transforms or F-curves, make a game GLB, infer
+  two-handed/shield behavior, or add a production Fighter. The separate sword's local grip
+  transform is the sole allowed transform adjustment. If imported action bone names differ from
+  the native rig exactly, stop with `BLOCKED` and report the differing name sets; never silently
+  remap.
 
 ---
 
@@ -62,7 +64,7 @@ Run:
 ROOT="/home/kirk/game-dev/assets/synty/animation-sword-combat/SourceFiles"
 OUT="/home/kirk/game-dev/assets/synty/review/combat-stances"
 blender --version
-blender --background --python-expr "import bpy; assert bpy.app.version == (5, 0, 1); assert hasattr(bpy.ops.wm, 'fbx_import'); print('BLENDER_IMPORT_READY')"
+blender --background --python-expr "import bpy; from io_scene_fbx import import_fbx; assert bpy.app.version == (5, 0, 1); bpy.ops.wm.read_factory_settings(use_empty=True); import_fbx.load(bpy.context, filepath='$ROOT/Models/PolygonSyntyCharacter.fbx', use_manual_orientation=False); assert any(o.type == 'ARMATURE' for o in bpy.context.scene.objects); assert any(o.name == 'SK_DUMMY_POLYGON_01' for o in bpy.context.scene.objects); print('DIRECT_FBX_LOAD_READY')"
 test -f "$ROOT/Models/PolygonSyntyCharacter.fbx"
 test -f "$ROOT/Models/SM_Wep_Sword_01.fbx"
 test -f "$ROOT/Animations/Polygon/Idle/Base/A_Idle_Base_Sword.fbx"
@@ -73,9 +75,11 @@ test -f "$ROOT/Animations/Polygon/Idle/Menacing01/A_Idle_Menacing01_End_Sword.fb
 mkdir -p "$OUT/previews"
 ```
 
-Expected: Blender reports `5.0.1` and `BLENDER_IMPORT_READY`; all seven FBX paths exist. The
-Menacing files above are the discovered native Polygon Begin, Loop, and End inputs; do not choose
-the similarly named root-motion files.
+Expected: Blender reports `5.0.1` and `DIRECT_FBX_LOAD_READY`; all seven FBX paths exist. The
+direct loader is required because the exposed `bpy.ops.import_scene.fbx`/`bpy.ops.wm.fbx_import`
+wrappers are broken in this Blender 5.0.1 installation. The Menacing files above are the
+discovered native Polygon Begin, Loop, and End inputs; do not choose the similarly named
+root-motion files.
 
 - [ ] **Step 2: Write the verifier first**
 
@@ -120,10 +124,19 @@ if any("FIGHTER" in obj.name.upper() or "RETARGET" in obj.name.upper() for obj i
 print("REVIEW_SCENE_GREEN")
 ```
 
-The finished verifier additionally checks that every required action has a positive frame range,
-the Begin/End actions have loop disabled, Base/Energetic/Menacing Loop have loop enabled through
-their assigned NLA strips, collection names are `NATIVE_REFERENCE`, `REVIEW_ENVIRONMENT`, and
-`REVIEW_CAMERAS`, and the ground mesh is named `REVIEW_GROUND`.
+The finished verifier defines `action_fcurves(action)` as
+`action.layers[0].strips[0].channelbag(action.slots[0]).fcurves`; Blender 5 actions are slotted
+and layered, so it must not use legacy `action.fcurves`. For each required action it asserts one
+slot/layer/strip/channelbag, exactly 520 fcurves, a positive frame range, and boolean custom
+metadata `action['review_loop']`. It requires `False` for Begin/End and `True` for
+Base/Energetic/Menacing Loop. It also asserts `NATIVE_POLYGON_RIG` has no NLA tracks, collections
+are `NATIVE_REFERENCE`, `REVIEW_ENVIRONMENT`, and `REVIEW_CAMERAS`, and the ground mesh is named
+`REVIEW_GROUND`.
+
+The verifier requires `NATIVE_SWORD.parent_bone == 'Prop_R'`, all three custom properties
+`grip_position`, `grip_rotation_euler`, and `grip_scale`, and a sword origin near the evaluated
+world-space head of `NATIVE_POLYGON_RIG.pose.bones['Prop_R']`; it rejects a sword remaining at the
+world origin or near the rig feet.
 
 - [ ] **Step 3: Run the verifier RED**
 
@@ -143,7 +156,7 @@ Create `build_review_scene.py`. Define these functions in the file:
 
 ```python
 def import_fbx(path: Path) -> list[bpy.types.Object]:
-    """Import path with bpy.ops.wm.fbx_import and return only objects added by that call."""
+    """Call import_fbx.load(bpy.context, filepath=str(path), use_manual_orientation=False) and return only objects added by that call."""
 
 def one_armature(objects: list[bpy.types.Object], source: Path) -> bpy.types.Object:
     """Return the one imported armature or raise RuntimeError naming source and candidates."""
@@ -152,10 +165,10 @@ def visible_meshes(objects: list[bpy.types.Object]) -> list[bpy.types.Object]:
     """Return imported mesh objects, excluding none; caller links them to NATIVE_REFERENCE."""
 
 def copy_action(source_armature: bpy.types.Object, native_rig: bpy.types.Object, action_name: str) -> None:
-    """Require exact pose-bone-name equality, copy source action, rename it, fake-user it, and assign it to native_rig."""
+    """Require exact 52-name pose-bone equality, copy the source slotted/layered action, rename it, fake-user it, set review_loop metadata, and assign it to native_rig."""
 
 def attach_sword(sword: bpy.types.Object, native_rig: bpy.types.Object) -> None:
-    """Inspect native_rig.pose.bones; choose the first existing name from PROP_BONE_CANDIDATES, then bone-parent sword without changing its world transform."""
+    """Require Prop_R, bone-parent sword there, start its local grip at identity, and store local grip values as custom properties."""
 
 def remove_temporary(objects: list[bpy.types.Object]) -> None:
     """Unlink and remove only imported temporary objects after copied actions have fake users."""
@@ -174,29 +187,42 @@ ACTION_FILES = [
     (ROOT / "Animations/Polygon/Idle/Menacing01/A_Idle_Menacing01_Sword.fbx", "A_Idle_Menacing01_Sword", True),
     (ROOT / "Animations/Polygon/Idle/Menacing01/A_Idle_Menacing01_End_Sword.fbx", "A_Idle_Menacing01_End_Sword", False),
 ]
-PROP_BONE_CANDIDATES = ("Prop1", "prop1", "RightHand", "right_hand", "Hand_R")
 ```
 
 Builder order:
 
 1. Factory-reset Blender and create `NATIVE_REFERENCE`, `REVIEW_ENVIRONMENT`, and
    `REVIEW_CAMERAS` collections.
-2. Import `CHARACTER`; select its single armature and visible meshes. If either is absent, retry
-   only with `ROOT / "Models/POLYGONRig_01.fbx"`; if that does not provide one visible mesh and
-   compatible armature, print `BUILD_BLOCKED: no compatible visible native rig` and exit 1.
-   Rename the retained armature `NATIVE_POLYGON_RIG` and retained meshes with `NATIVE_POLYGON_`.
-3. Import `SWORD`, require one mesh, rename it `NATIVE_SWORD`, inspect the retained rig's bone
-   names, and call `attach_sword`. If none of `PROP_BONE_CANDIDATES` exists, print
-   `BUILD_BLOCKED: no authored prop/hand bone; available=<sorted names>` and exit 1.
+2. `import_fbx` calls `from io_scene_fbx import import_fbx` then
+   `import_fbx.load(bpy.context, filepath=str(path), use_manual_orientation=False)`; do not call
+   either broken Blender wrapper. Import `CHARACTER`; require one 52-bone armature and visible mesh
+   `SK_DUMMY_POLYGON_01`. If either is absent, retry only with
+   `ROOT / "Models/POLYGONRig_01.fbx"`; if that does not provide one visible mesh and compatible
+   armature, print `BUILD_BLOCKED: no compatible visible native rig` and exit 1. Rename the
+   retained armature `NATIVE_POLYGON_RIG` and retained meshes with `NATIVE_POLYGON_`.
+3. Import `SWORD`, require one mesh, rename it `NATIVE_SWORD`, require authored bone `Prop_R`
+   (child of `Hand_R`), and call `attach_sword`. It must bone-parent the sword to `Prop_R`, set
+   local position `[0, 0, 0]`, rotation `[0, 0, 0]`, and scale `[1, 1, 1]` because this separate
+   weapon is authored for the prop socket, and write those final values to `grip_position`,
+   `grip_rotation_euler`, and `grip_scale`. If identity is visibly wrong, tune only those local
+   sword values, rewrite the three properties, and render a preview to validate the grip. If
+   `Prop_R` is absent, print `BUILD_BLOCKED: missing Prop_R; available=` followed by comma-joined
+   sorted native bone names and exit 1.
 4. For each `ACTION_FILES` entry, import only that FBX; identify its one temporary armature;
-   compare `set(source_armature.pose.bones.keys())` to
-   `set(native_rig.pose.bones.keys())`. On any difference print `BUILD_BLOCKED: action=<path>
-   missing_on_native=<...> extra_on_native=<...>` and exit 1. Otherwise copy the action, rename it
-   exactly, set `use_fake_user = True`, assign it to the native rig, create one named NLA strip
-   with the configured loop flag, then remove all temporary imported objects and armatures.
+   compare its exact 52 `pose.bones` names to native rig names. Each verified source action has
+   520 curves under `source_action.layers[0].strips[0].channelbag(source_action.slots[0]).fcurves`.
+   On any difference print `BUILD_BLOCKED: action=` followed by the absolute FBX path,
+   `missing_on_native=` followed by comma-joined names, and `extra_on_native=` followed by
+   comma-joined names, then exit 1. Otherwise copy the namespaced imported action (for example,
+   `Armature|A_Idle_Base_Sword|BaseLayer`), rename the copy exactly to the configured review name,
+   set `use_fake_user = True`, set `action['review_loop']` from the configured boolean, and assign
+   it to the native rig. Do not create NLA strips or tracks; Action Editor review needs one clean
+   active action. Remove all temporary imported objects and armatures only after preserving the
+   copied action.
 5. Create `REVIEW_GROUND`, cameras named `FRONT`, `SIDE`, `THREE_QUARTER`, a neutral world, 30 FPS,
    frame start 1, sensible clip distances, and a review-resolution render setting. Do not alter
-   native object transforms or action keyframes.
+   native character/rig transforms or action keyframes; only the separate sword local grip may be
+   tuned as described above.
 6. Save exactly `combat-stance-review.blend` at the command-line output path.
 
 - [ ] **Step 5: Build and run the verifier GREEN**
@@ -216,13 +242,14 @@ decision, not a reason to remap bones or edit authored animation.
 - [ ] **Step 6: Independently inspect saved scene and create local previews**
 
 Run these Blender commands after GREEN. The inline script opens the saved scene, assigns the named
-action to `NATIVE_POLYGON_RIG`, sets its first frame, selects each review camera, and writes the
-three exact local PNG paths:
+action to `NATIVE_POLYGON_RIG`, sets the useful middle frame
+`round((frame_start + frame_end) / 2)`, selects each review camera, asserts character and sword
+are visible, and writes the three exact local PNG paths:
 
 ```bash
 OUT="/home/kirk/game-dev/assets/synty/review/combat-stances"
 blender --background --python-expr "import bpy; bpy.ops.wm.open_mainfile(filepath='$OUT/combat-stance-review.blend'); print([(o.name, o.type) for o in bpy.context.scene.objects]); print(sorted(bpy.data.actions.keys()))"
-blender --background "$OUT/combat-stance-review.blend" --python-expr "import bpy, os; out='$OUT/previews'; shots=[('FRONT','A_Idle_Base_Sword','FRONT-A_Idle_Base_Sword.png'),('SIDE','A_Idle_EnergeticStance01_Sword','SIDE-A_Idle_EnergeticStance01_Sword.png'),('THREE_QUARTER','A_Idle_Menacing01_Sword','THREE_QUARTER-A_Idle_Menacing01_Sword.png')]; rig=bpy.data.objects['NATIVE_POLYGON_RIG']; rig.animation_data_create(); [setattr(rig.animation_data, 'action', bpy.data.actions[action]) or setattr(bpy.context.scene, 'camera', bpy.data.objects[camera]) or setattr(bpy.context.scene, 'frame_current', int(bpy.data.actions[action].frame_range[0])) or setattr(bpy.context.scene.render, 'filepath', os.path.join(out, filename)) or bpy.ops.render.render(write_still=True) for camera, action, filename in shots]"
+blender --background "$OUT/combat-stance-review.blend" --python-expr "import bpy, os; out='$OUT/previews'; shots=[('FRONT','A_Idle_Base_Sword','FRONT-A_Idle_Base_Sword.png'),('SIDE','A_Idle_EnergeticStance01_Sword','SIDE-A_Idle_EnergeticStance01_Sword.png'),('THREE_QUARTER','A_Idle_Menacing01_Sword','THREE_QUARTER-A_Idle_Menacing01_Sword.png')]; rig=bpy.data.objects['NATIVE_POLYGON_RIG']; sword=bpy.data.objects['NATIVE_SWORD']; assert any(o.name.startswith('NATIVE_POLYGON_') and o.visible_render for o in bpy.context.scene.objects) and sword.visible_render; rig.animation_data_create(); [setattr(rig.animation_data, 'action', bpy.data.actions[action]) or setattr(bpy.context.scene, 'camera', bpy.data.objects[camera]) or setattr(bpy.context.scene, 'frame_current', round(sum(bpy.data.actions[action].frame_range) / 2)) or setattr(bpy.context.scene.render, 'filepath', os.path.join(out, filename)) or bpy.ops.render.render(write_still=True) for camera, action, filename in shots]"
 ```
 
 Expected: console scene listing includes `NATIVE_POLYGON_RIG`, `NATIVE_SWORD`, `REVIEW_GROUND`,
@@ -251,7 +278,10 @@ directory; do not disturb the parked `rpg-dnd5e-web` worktree.
   are covered by Task 1.
 - Paths and filenames: all source, output, preview, Blender, and Menacing Begin/Loop/End paths are
   explicit; Blender importer verification is the first task step.
-- Command validity: every automated command invokes `blender --background --python ... -- ...` or
-  Blender's documented `--python-expr`; the GUI command opens the exact local `.blend`.
+- Compatibility: Blender 5.0.1 uses the direct bundled importer and slotted/layered action API;
+  the broken FBX operator wrappers and legacy `action.fcurves` are excluded.
+- Command validity: Steps 1, 3, and 5 invoke Blender with `--background --python` and explicit
+  script plus argument paths; Step 6 uses Blender's documented `--python-expr`; the GUI command
+  opens the exact local `.blend`.
 - Scope: no licensed/local artifact is committed. This plan does not change the approved eventual
   Concepts Lab showcase behavior and does not implement web work.
