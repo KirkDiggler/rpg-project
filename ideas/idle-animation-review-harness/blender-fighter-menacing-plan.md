@@ -30,9 +30,9 @@
 - Do not change the native reference, source action, Fighter character transforms, source keyframes,
   game GLBs, manifests, or Concepts Lab. The only animation edit is the constant local quaternion
   closure delta on target right finger bones at every Menacing keyed frame.
-- Stop with `BLOCKED` on Root convention, Big-Rig rest verification, retarget, imported-action,
-  production weapon, or target-finger incompatibility. Do not silently substitute an asset, rig,
-  mapping, root convention, or weapon.
+- Stop with `BLOCKED` on Root wrapper convention, Big-Rig rest verification, retarget,
+  imported-action, production weapon, or target-finger incompatibility. Do not silently substitute
+  an asset, rig, mapping, wrapper convention, or weapon.
 
 ---
 
@@ -117,10 +117,16 @@ weapon = bpy.data.objects.get("FIGHTER_SM_Wep_Slayer_01")
 action = bpy.data.actions.get("Idle_Menacing01_Sword")
 if not native or not fighter or not weapon or not action:
     red("missing native reference, Fighter Big-Rig, Slayer weapon, or Menacing action")
-if "Root" not in fighter.pose.bones or "Pelvis" not in fighter.pose.bones:
-    red("Fighter Root convention requires Root and Pelvis")
-if weapon.parent != fighter or weapon.parent_bone != "Hand_R":
-    red("SM_Wep_Slayer_01 is not skinned/parented to Hand_R")
+if fighter.type != "ARMATURE" or "Pelvis" not in fighter.pose.bones or "Hand_R" not in fighter.pose.bones:
+    red("Fighter wrapper requires an armature with Pelvis and Hand_R pose bones")
+if tuple(round(value, 6) for value in fighter.rotation_quaternion) != (0.707107, 0.707107, 0.0, 0.0):
+    red("Fighter Root wrapper quaternion changed")
+if tuple(round(value, 6) for value in fighter.scale) != (0.01, 0.01, 0.01):
+    red("Fighter Root wrapper scale changed")
+mods = [modifier for modifier in weapon.modifiers if modifier.type == "ARMATURE" and modifier.object == fighter]
+weights = [vertex for vertex in weapon.data.vertices if any(group.group == weapon.vertex_groups["Hand_R"].index and group.weight > 0 for group in vertex.groups)]
+if len(mods) != 1 or len(weights) != 1562 or len(weights) != len(weapon.data.vertices):
+    red("SM_Wep_Slayer_01 requires Root Armature modifier and 1562/1562 Hand_R weights")
 if action.frame_range[0] > 42 or action.frame_range[1] < 92 or not bool(action.get("review_loop")):
     red("Menacing action does not cover frames 42-92 with review_loop metadata")
 if fighter.animation_data and fighter.animation_data.nla_tracks:
@@ -137,12 +143,15 @@ print("FIGHTER_MENACING_GREEN")
 ```
 
 Extend the verifier to require the original native reference collection and its native Menacing
-action unchanged by saved action name, frame range, and collection object names; the Fighter
-collection `FIGHTER_REVIEW` must be separate. Require a positive action range, action keyframes at
-42, 67, and 92 for every target closure bone, no weapon mesh replacement, and camera/ground
+action unchanged by saved action name, frame range, fcurve/key fingerprint, and collection object
+names; the Fighter collection `FIGHTER_REVIEW` must be separate. The native-left rig must actively
+use the unchanged selected `A_Idle_Menacing01_Sword` action with no NLA, even though the source
+review blend was saved with End active. Require a positive Fighter action range, action keyframes
+at 42, 67, and 92 for every target closure bone, no weapon mesh replacement, and camera/ground
 collections. The verifier checks that action custom properties contain the final per-chain
 quaternion constants and that the closure delta is identical at every keyed frame, including first
-and last, preserving the loop seam.
+and last, preserving the loop seam. The known source-body `calf_l` seam is a transparent non-gating
+`WARN` when its drift is at or below 3 degrees; preserve source body curves rather than correcting it.
 
 Run RED:
 
@@ -158,9 +167,9 @@ Expected: exit 1 and `FIGHTER_MENACING_RED: missing blend:`.
 Create `build_fighter_menacing_review.py` with these exact responsibilities:
 
 ```python
-RIGHT_THUMB_CLOSURE_DELTA = (0.980785, 0.0, 0.19509, 0.0)
-RIGHT_INDEX_CLOSURE_DELTA = (0.965926, 0.0, 0.258819, 0.0)
-RIGHT_FINGERS_CLOSURE_DELTA = (0.965926, 0.0, 0.258819, 0.0)
+RIGHT_THUMB_CLOSURE_DELTA = (0.980785, 0.0, -0.19509, 0.0)
+RIGHT_INDEX_CLOSURE_DELTA = (0.92388, 0.0, -0.382683, 0.0)
+RIGHT_FINGERS_CLOSURE_DELTA = (0.92388, 0.0, -0.382683, 0.0)
 FINGER_CHAINS = {
     "right_thumb": ("thumb_01_r", "thumb_02_r", "thumb_03_r"),
     "right_index": ("indexFinger_01_r", "indexFinger_02_r", "indexFinger_03_r", "indexFinger_04_r"),
@@ -171,7 +180,7 @@ def import_glb(path: Path) -> list[bpy.types.Object]:
     """Import path with bpy.ops.import_scene.gltf and return the newly added objects."""
 
 def require_fighter_root(rig: bpy.types.Object) -> None:
-    """Require Root, Pelvis, Hand_R, all FINGER_CHAINS bones, and Big-Rig collection membership; otherwise raise RuntimeError with FIGHTER_MENACING_BLOCKED text."""
+    """Require the imported Root wrapper's preserved quaternion/scale, pose bones Pelvis and Hand_R, all FINGER_CHAINS bones, and Big-Rig collection membership; otherwise raise RuntimeError with FIGHTER_MENACING_BLOCKED text."""
 
 def copy_native_reference(native_blend: Path) -> tuple[bpy.types.Object, bpy.types.Collection]:
     """Append the native reference collection from native_blend without saving or mutating native_blend."""
@@ -185,29 +194,35 @@ def verify_keyed_closure_seam(action: bpy.types.Action, rig: bpy.types.Object) -
 
 Builder order:
 
-1. Start a new scene, append the native reference collection from the original local blend, and
-   never save to or alter that original file. Put native reference at X=-1.4m and preserve its
-   Menacing action and source collection contents.
-2. Import `tmp/fighter-menacing-retarget.glb`; identify its sole character armature, rename it
-   `FIGHTER_BIGRIG`, place it at X=+1.4m, and link it plus its meshes to `FIGHTER_REVIEW`. Require
-   `Root`, `Pelvis`, `Hand_R`, all declared right thumb/index/general finger bones, and exact Big-Rig
-   rest compatibility. On failure print `FIGHTER_MENACING_BLOCKED: target Root or Big-Rig structure
-   incompatible` and exit 1.
+1. Start a new scene at 30 FPS before importing the retarget GLB, append the native reference
+   collection from the original local blend, and never save to or alter that original file. Put
+   native reference at X=-1.4m, explicitly assign its unchanged selected
+   `A_Idle_Menacing01_Sword` action with no NLA, and preserve its fcurve/key fingerprint. This
+   intentionally overrides the source review blend's saved End-active state without changing End.
+2. Import `tmp/fighter-menacing-retarget.glb` after setting 30 FPS so source time maps to action
+   frames 42-92. Identify the imported `Root` armature wrapper object, rename it
+   `FIGHTER_BIGRIG`, place it at X=+1.4m, and link it plus its meshes to `FIGHTER_REVIEW`. Preserve
+   the wrapper's local quaternion approximately `(0.707107, 0.707107, 0, 0)` and scale
+   `(0.01, 0.01, 0.01)`; `Root` is not a pose bone. Require pose bones `Pelvis`, `Hand_R`, all
+   declared right thumb/index/general finger bones, and exact Big-Rig rest compatibility. On
+   failure print `FIGHTER_MENACING_BLOCKED: target Root wrapper or Big-Rig structure incompatible`
+   and exit 1.
 3. Require the imported production skinned weapon mesh named `SM_Wep_Slayer_01`, rename only its
-   object to `FIGHTER_SM_Wep_Slayer_01`, retain its existing `Hand_R` skinning/parent relationship,
-   and do not import or substitute a sword.
+   object to `FIGHTER_SM_Wep_Slayer_01`, retain its single Armature modifier targeting
+   `FIGHTER_BIGRIG`, and require nonzero `Hand_R` weights on all 1,562 imported weapon vertices.
+   Do not bone-parent, replace, or import another sword.
 4. Find the imported `Idle_Menacing01_Sword` action, set fake user and
    `action['review_loop'] = True`, clear any NLA tracks, and assign it as the sole active Fighter
    action. Source fingers are neutral/open: call `apply_constant_closure` on every action keyed
-   frame, including frames 42, 67, and 92 plus first/last. Do not edit native action curves.
+   frame, including frames 42, 67, and 92 plus first/last. Preserve all source body curves; report
+   the transparent non-gating `WARN: calf_l seam drift <= 3 degrees` without changing calf_l.
 5. Store `closure_right_thumb`, `closure_right_index`, and `closure_right_fingers` as four-float
    custom properties on both the Fighter action and `FIGHTER_BIGRIG`. Call
    `verify_keyed_closure_seam`; a mismatch prints `FIGHTER_MENACING_BLOCKED: closure loop seam`
    and exits 1.
 6. Create shared ground and `FRONT`, `SIDE`, `THREE_QUARTER`, `HAND_CLOSE_FRONT`, and
-   `HAND_CLOSE_SIDE` cameras. Frame both characters for comparison; aim hand cameras at the Fighter
-   right weapon hand. Set 30 FPS and save only
-   `fighter-menacing-review.blend`.
+    `HAND_CLOSE_SIDE` cameras. Frame both characters for comparison; aim hand cameras at the Fighter
+    right weapon hand, then save only `fighter-menacing-review.blend`.
 
 Use Blender MCP viewport/render inspection on the native and target at frames 42, 67, and 92.
 Tune only the three named closure quaternion constants if the right hand remains open, misses the
@@ -240,6 +255,16 @@ Fighter visible at right. Do not stage, commit, push, copy, or sync any local re
 
 ---
 
+## Execution Outcome
+
+The local review execution reached `FIGHTER_MENACING_GREEN` with 15 previews and independent
+review found no blocking findings. The source `calf_l` seam remains a visible non-gating WARN at
+3 degrees or below. The tuned closure constants above produced the accepted closed right weapon
+hand. These are facts about local licensed artifacts; no `.blend`, temporary GLB, preview, or game
+asset is committed by this document.
+
+---
+
 ## Plan Self-Review
 
 - Coverage: selected frames 42-92, native preservation, Big-Rig retarget CLI, Root convention,
@@ -249,5 +274,6 @@ Fighter visible at right. Do not stage, commit, push, copy, or sync any local re
   paths are absolute and explicit.
 - Scope: no game GLB, manifest, production asset, or web change is authorized; all outputs are
   licensed local artifacts.
-- Compatibility: structural/root/retarget incompatibility is BLOCKED with no silent workaround;
+- Compatibility: the Root wrapper object, rather than a Root pose bone, carries the verified
+  quaternion/scale; structural/retarget incompatibility is BLOCKED with no silent workaround;
   closure tuning affects only declared target finger local rotations and preserves first/last seam.
