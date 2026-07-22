@@ -43,4 +43,9 @@ See `design.md` — beat model, dice options (round one compares token-anchored 
 center-stage placement), pacing knobs, contract questions and their CONTRACT.md
 lifecycle, the round-one `/concepts` scope following the PR #557 fixture-first pattern,
 decided items, and what's still open beyond round one.
+
+See `plan.md` — the approved design's round-one `rpg-dnd5e-web` implementation
+plan: 5 TDD tasks (fixtures → `useBeatSequencer` → `BeatStage` →
+`CombatPacingConcept` wiring → CONTRACT.md/docs/visual-verification/PR),
+exact file map, and the file's own self-review.
 </content>
