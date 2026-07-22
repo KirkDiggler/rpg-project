@@ -37,6 +37,16 @@ The first judgment is which native one-handed stance reads correctly. Only after
 add the production Fighter beside the native reference and retarget or repair the selected stance:
 grip, wrist, elbows, feet, weapon alignment, and loop are reviewed together.
 
+## Visual Decision: 2026-07-22
+
+Selected native action: `A_Idle_Menacing01_Sword`, using its loop frames 42-92. Its body and sword
+read as the accepted one-handed carry. `A_Idle_Base_Sword` is rejected as T-pose-like.
+`A_Idle_EnergeticStance01_Sword` is rejected as a disco-like fidget that returns to Base. The
+required repair for the selected Menacing loop is a closed right weapon hand.
+
+The next deliverable preserves the native reference and adds the production Fighter beside it for
+side-by-side Menacing-loop retargeting, grip repair, and visual judgment.
+
 The initial stance family is one-handed melee. Large two-handed weapons may rest in one hand
 during idle, so a separate two-handed idle is not required initially. True two-handed handling
 remains required for attacks, blocks, and tense guards. Shield is a later left-hand or forearm
@@ -59,7 +69,7 @@ the fourth idle are later review work.
 ## Non-Goals
 
 - No game-ready GLB, asset sync, production resolver wiring, or Concepts Lab implementation.
-- No production Fighter retargeting until the native stance decision is made.
+- No production game GLB or manifest change from the local Fighter retarget review.
 - No separate initial two-handed idle, shield-specific stance, unarmed/staff stance, ranged
   stance, drinking animation, nose-pick animation, or fourth idle.
 
