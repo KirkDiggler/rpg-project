@@ -147,19 +147,29 @@ and pass both rigid-follow checks below. Both feet must retain baseline ground
 height within `0.01` meters, every required render must complete, and Kirk must
 visually accept the one-handed ready guard and hand close-up.
 
+For every baseline, proof-pose, pre-export, and fresh-reimport weapon sample,
+compute `hand_world = armature.matrix_world @ hand_pose_bone.matrix`, decompose
+it as `location, rotation, _scale = hand_world.decompose()`, then build
+`hand_frame_m = Matrix.Translation(location) @ rotation.to_matrix().to_4x4()`.
+Express evaluated world-space weapon coordinates through
+`hand_frame_m.inverted()`. This scale-free rigid frame preserves hand
+position/orientation in world meters; the armature `Root` scale is an encoding
+conversion and must not redefine the metric unit.
+
 The original imported scene proves rigid following: compare every evaluated
 weapon vertex at the deterministic `Idle_Relaxed` baseline and at
-`Pose_WeaponProof` frame 1. At each frame, express coordinates through
-`(armature.matrix_world @ Hand_R pose-bone matrix).inverted()` and match vertices
-by index because topology is unchanged in-scene. The maximum Euclidean
-displacement must be `<= 0.001` meters.
+`Pose_WeaponProof` frame 1. At each frame, use the defined scale-free
+`hand_frame_m.inverted()` coordinates and match vertices by index because
+topology is unchanged in-scene. The maximum Euclidean displacement must be
+`<= 0.001` meters.
 
 The export round trip proves preservation separately: compare the complete
 evaluated weapon loop-triangle surface at `Pose_WeaponProof` frame 1 immediately
-before export and after fresh reimport, each in its current `Hand_R` space. Use a
-deterministic sorted multiset that preserves triangle and material identity, not
-raw vertex indices, because glTF may split or reorder vertices. The maximum
-matched coordinate delta must be `<= 0.001` meters.
+before export and after fresh reimport, each through its defined scale-free
+`hand_frame_m.inverted()` coordinates. Use a deterministic sorted multiset that
+preserves triangle and material identity, not raw vertex indices, because glTF
+may split or reorder vertices. The maximum matched coordinate delta must be
+`<= 0.001` meters.
 
 Any missing baseline clip, ambiguous weapon mesh, rest mutation, existing-action
 change, grip drift, structural/export difference, ground-height failure, or
