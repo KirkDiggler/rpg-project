@@ -102,15 +102,23 @@ Blender diagnostic in the disposable
 Armature modifier and 100% `Hand_R` weights. It starts with `Idle_Toy` and adds
 only `Pose_ToyWeapon`, with constant full-pose keys at frames 1 and 2. The
 candidate pose must create obvious weapon world motion of at least `0.25`
-meters.
+meters from `Idle_Toy` at deterministic frame `1.0`.
 
 Export a matched no-op control and the candidate, then reset Blender and
-fresh-reimport both. Compare hierarchy, rest matrices, object transforms,
-meshes, materials, and all existing actions. Compare transforms with matrices
-and quaternions rather than raw Euler values. At baseline, pose, pre-export,
-and fresh-reimport samples, derive the hand frame from the decomposed world hand
-matrix without its scale. The weapon's hand-frame coordinates must remain rigid
-within `<= 0.001` meters both in-scene and across the round trip.
+fresh-reimport both. The candidate must equal the control for hierarchy, rest
+matrices, object transforms and parenting, mesh/material contract, and the
+evaluated pre-existing `Idle_Toy` action. `Pose_ToyWeapon` is the sole allowed
+addition; any other deviation fails. Compare transforms with matrices and
+quaternions rather than raw Euler values.
+
+At baseline, pose, pre-export, and fresh-reimport samples, derive the scale-free
+hand frame from the decomposed world hand matrix. The weapon's hand-frame
+coordinates must remain rigid within `<= 0.001` meters both in-scene and across
+the round trip. The unchanged in-scene topology may compare vertices by index.
+For pre-export/fresh-reimport comparison, use a deterministic,
+topology-independent complete evaluated triangle-surface representation that
+preserves material and triangle identity, because glTF may split or reorder
+vertices.
 
 The diagnostic emits a fail-closed report, before/after render, candidate GLB,
 and clean inspection `.blend`. Before saving the inspection file, remove any
