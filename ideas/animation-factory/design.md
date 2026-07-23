@@ -1,6 +1,6 @@
 # Animation Factory
 
-## Status: Approved conversational design, awaiting written-spec review (2026-07-23)
+## Status: Approved conversational design including Step 0, awaiting amended written-spec review (2026-07-23)
 
 Tracking: `rpg-project#114`; related investigation: `rpg-dnd5e-web#548`.
 
@@ -92,6 +92,86 @@ metadata and a defined web action playback rate.
 - Native target-family clips are geometrically attractive, but the owned
   inventory proves native Sidekick binding, not native Fantasy Rivals locomotion
   for these four classes.
+
+## Step 0: disposable weapon-pose proof
+
+Before production factory code or walk-retarget work, run a disposable proof
+that an agent can author and round-trip a weapon-bearing pose on canonical
+`fighter.glb`. The canonical target is read-only. The output is a constant
+held-pose action named `Pose_WeaponProof`, not a static baked mesh or a
+Blender-session-only render.
+
+The pose is a one-handed ready guard: the weapon arm and torso make an obvious
+guard, while the off-hand remains intentionally free. It is not a two-hand
+grip or IK problem. The proof uses deterministic local-bone pose data; BlenderMCP
+may help visual iteration, but the result must be reproducible without session
+state. Scripts, staged GLB, reports, and renders are disposable under
+`/tmp/opencode/weapon-pose-proof/`. Step 0 creates no repository implementation,
+does not change a canonical GLB, and cannot promote an asset.
+
+The existing fighter weapon is already a baked, full-weight `Hand_R` skin and
+prior idle renders retained its grip. This proof does not re-prove attachment in
+all contexts. It validates one controlled unit: an agent-authored pose/action,
+the baked weapon following it, and a factory-style export/fresh-reimport round
+trip. Static mesh baking cannot prove that action contract; BlenderMCP-only state
+cannot reproduce it; and Auto-Rig Pro or IK would add unneeded retargeting or
+two-hand variables.
+
+### Step 0 data flow
+
+1. Start a fresh Blender process and import the canonical fighter.
+2. Snapshot skeleton/rest data, canonical `Root`, object hierarchy, meshes,
+   materials/images, existing action semantics, and the unambiguous existing
+   `Hand_R`-weighted baked weapon mesh.
+3. Evaluate a deterministic `Idle_Relaxed` frame as the natural standing
+   baseline.
+4. Layer explicit local offsets on the torso and right clavicle, upper-arm,
+   forearm, and hand chain. Do not edit armature rest data or the weapon socket;
+   keep the off-hand free.
+5. Key the resulting full pose identically at frames 1 and 2 into
+   `Pose_WeaponProof`. This one-frame span gives glTF a nonzero constant clip.
+6. Export only to staging, reset Blender, fresh-reimport the candidate, and
+   compare it with a matched same-exporter no-op control.
+7. Produce synchronized before/after front, side, back, and three-quarter
+   full-body renders plus a hand/grip close-up.
+8. Kirk's visual approval is the final gate. Nothing is promoted by this proof.
+
+### Step 0 gates and scope
+
+The proof fails unless `Root`, skeleton hierarchy/rest matrices, object contract,
+meshes, materials, and images match the no-op control; all pre-existing clips
+have equivalent sampled transforms; and only `Pose_WeaponProof` is new. The
+weapon must be identified unambiguously as the existing `Hand_R`-weighted baked
+weapon, move at least `0.25` meters in world space from baseline to proof pose,
+and pass both rigid-follow checks below. Both feet must retain baseline ground
+height within `0.01` meters, every required render must complete, and Kirk must
+visually accept the one-handed ready guard and hand close-up.
+
+The original imported scene proves rigid following: compare every evaluated
+weapon vertex at the deterministic `Idle_Relaxed` baseline and at
+`Pose_WeaponProof` frame 1. At each frame, express coordinates through
+`(armature.matrix_world @ Hand_R pose-bone matrix).inverted()` and match vertices
+by index because topology is unchanged in-scene. The maximum Euclidean
+displacement must be `<= 0.001` meters.
+
+The export round trip proves preservation separately: compare the complete
+evaluated weapon loop-triangle surface at `Pose_WeaponProof` frame 1 immediately
+before export and after fresh reimport, each in its current `Hand_R` space. Use a
+deterministic sorted multiset that preserves triangle and material identity, not
+raw vertex indices, because glTF may split or reorder vertices. The maximum
+matched coordinate delta must be `<= 0.001` meters.
+
+Any missing baseline clip, ambiguous weapon mesh, rest mutation, existing-action
+change, grip drift, structural/export difference, ground-height failure, or
+render failure stops the proof. A retry may adjust pose-bone offsets only; it
+may not hand-tune the existing weapon socket or introduce per-character
+retarget corrections.
+
+Passing Step 0 proves agent-authored pose control, baked-weapon following, action
+addition, export/fresh-reimport preservation, staging, and visual evidence. It
+does not prove locomotion retargeting, family profiles, foot contact,
+gait/cadence, Auto-Rig Pro, or production-factory readiness. The four-target
+walk proof remains the production-factory proof.
 
 ## Factory contract
 
