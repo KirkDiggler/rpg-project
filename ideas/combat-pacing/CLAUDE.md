@@ -30,10 +30,16 @@ the whole co-op table.
   Choreography delays presentation only — never state.
 - Whenever a roll-bearing event does arrive, it's already resolved before the wire —
   **no roll-started event** → suspense is client-side theater over a decided result.
-- Known gap, not a round-one blocker: `encounterStreamDispatch.ts` passes only
-  `payload.value`, discarding the envelope (`correlation_id`, `sequence`, `timestamp`).
-  Round one is fixture-first (no live stream), so this only matters once a later round
-  promotes fixtures to a real reassembler — log it in `CONTRACT.md`, don't fix it now.
+- **Envelope-discard gap — confirmed after Kirk's review, now filed.**
+  `encounterStreamDispatch.ts` passes only `payload.value`, discarding the envelope
+  (`correlation_id`, `sequence`, `timestamp`). Round one logged this as a candidate, not
+  a blocker, because round one is fixture-first (no live stream). It became relevant the
+  moment a later round (rpg-dnd5e-web#581, promoting this concept into the live game)
+  needed it: Kirk reviewed the candidate and confirmed it as a real, scoped need, filed
+  as **rpg-dnd5e-web#582** (Board 19, Team=Platform) — a Platform prerequisite that
+  **blocks #581**. The approved contract (an exported `EncounterEventMetadata` type,
+  every typed callback receiving `(payload, metadata)`, values passed verbatim) lives in
+  `design.md` §9.
 - `CONTRACT.md` lifecycle (per PR #557): records evidence/observations/candidate gaps
   during the concept; Platform requests get filed only after Kirk reviews the concept
   and confirms a candidate as a real, scoped need — never pre-authored.
@@ -42,7 +48,8 @@ the whole co-op table.
 See `design.md` — beat model, dice options (round one compares token-anchored vs
 center-stage placement), pacing knobs, contract questions and their CONTRACT.md
 lifecycle, the round-one `/concepts` scope following the PR #557 fixture-first pattern,
-decided items, and what's still open beyond round one.
+decided items, what's still open beyond round one, and (§9) the approved envelope
+metadata passthrough contract confirmed by Kirk's review (rpg-dnd5e-web#582).
 
 See `plan.md` — the approved design's round-one `rpg-dnd5e-web` implementation
 plan: 5 TDD tasks (fixtures → `useBeatSequencer` → `BeatStage` →
