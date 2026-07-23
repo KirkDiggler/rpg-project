@@ -1,6 +1,6 @@
 # Animation Factory
 
-## Status: Approved conversational design including Step 0, awaiting amended written-spec review (2026-07-23)
+## Status: Approved conversational design including the toy diagnostic and Step 0, awaiting amended written-spec review (2026-07-23)
 
 Tracking: `rpg-project#114`; related investigation: `rpg-dnd5e-web#548`.
 
@@ -93,13 +93,39 @@ metadata and a defined web action playback rate.
   inventory proves native Sidekick binding, not native Fantasy Rivals locomotion
   for these four classes.
 
+## Pre-Step 0: toy armature/weapon diagnostic
+
+Before the canonical fighter proof, run one deterministic, fresh, headless
+Blender diagnostic in the disposable
+`/tmp/opencode/toy-weapon-proof/` workspace. It uses a toy armature at uniform
+`0.01` scale with `Root -> Hand_R`, plus a simple colored weapon mesh with one
+Armature modifier and 100% `Hand_R` weights. It starts with `Idle_Toy` and adds
+only `Pose_ToyWeapon`, with constant full-pose keys at frames 1 and 2. The
+candidate pose must create obvious weapon world motion of at least `0.25`
+meters.
+
+Export a matched no-op control and the candidate, then reset Blender and
+fresh-reimport both. Compare hierarchy, rest matrices, object transforms,
+meshes, materials, and all existing actions. Compare transforms with matrices
+and quaternions rather than raw Euler values. At baseline, pose, pre-export,
+and fresh-reimport samples, derive the hand frame from the decomposed world hand
+matrix without its scale. The weapon's hand-frame coordinates must remain rigid
+within `<= 0.001` meters both in-scene and across the round trip.
+
+The diagnostic emits a fail-closed report, before/after render, candidate GLB,
+and clean inspection `.blend`. Before saving the inspection file, remove any
+importer-only helpers and clear every `PoseBone.custom_shape`. This is a bounded
+proof of basic Blender/glTF armature, skinning, action, and export mechanics;
+it does not establish fighter correctness, canonical-asset behavior, or
+retargeting.
+
 ## Step 0: disposable weapon-pose proof
 
-Before production factory code or walk-retarget work, run a disposable proof
-that an agent can author and round-trip a weapon-bearing pose on canonical
-`fighter.glb`. The canonical target is read-only. The output is a constant
-held-pose action named `Pose_WeaponProof`, not a static baked mesh or a
-Blender-session-only render.
+After the toy diagnostic passes, before production factory code or walk-retarget
+work, run a disposable proof that an agent can author and round-trip a
+weapon-bearing pose on canonical `fighter.glb`. The canonical target is
+read-only. The output is a constant held-pose action named `Pose_WeaponProof`,
+not a static baked mesh or a Blender-session-only render.
 
 The pose is a one-handed ready guard: the weapon arm and torso make an obvious
 guard, while the off-hand remains intentionally free. It is not a two-hand
