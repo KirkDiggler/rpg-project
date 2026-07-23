@@ -30,16 +30,20 @@ the whole co-op table.
   Choreography delays presentation only — never state.
 - Whenever a roll-bearing event does arrive, it's already resolved before the wire —
   **no roll-started event** → suspense is client-side theater over a decided result.
-- **Envelope-discard gap — confirmed after Kirk's review, now filed.**
+- **Live metadata delivery needs two confirmed, parallel Platform prerequisites.**
   `encounterStreamDispatch.ts` passes only `payload.value`, discarding the envelope
   (`correlation_id`, `sequence`, `timestamp`). Round one logged this as a candidate, not
   a blocker, because round one is fixture-first (no live stream). It became relevant the
   moment a later round (rpg-dnd5e-web#581, promoting this concept into the live game)
-  needed it: Kirk reviewed the candidate and confirmed it as a real, scoped need, filed
-  as **rpg-dnd5e-web#582** (Board 19, Team=Platform) — a Platform prerequisite that
-  **blocks #581**. The approved contract (an exported `EncounterEventMetadata` type,
-  every typed callback receiving `(payload, metadata)`, values passed verbatim) lives in
-  `design.md` §9.
+  needed it: Kirk reviewed the candidate and confirmed the client-only callback contract,
+  filed as **rpg-dnd5e-web#582** (Board 19, Team=Platform). Root-cause verification then
+  confirmed that `rpg-api` also drops toolkit-authored `CorrelationID()`/`OccurredAt()`
+  when translating `DamageDealtEvent`/`ConditionAppliedEvent` into `EntityDamaged`/
+  `StatusApplied`; that distinct API-only correction is **rpg-api#701**. #701 and #582
+  may land in parallel and are independently landable, but **both are required by #581**
+  before live attack-effect grouping. The approved split contract lives in `design.md` §9:
+  #701 projects effect metadata onto envelopes; #582 passes envelope metadata verbatim to
+  typed callbacks.
 - `CONTRACT.md` lifecycle (per PR #557): records evidence/observations/candidate gaps
   during the concept; Platform requests get filed only after Kirk reviews the concept
   and confirms a candidate as a real, scoped need — never pre-authored.
@@ -48,8 +52,9 @@ the whole co-op table.
 See `design.md` — beat model, dice options (round one compares token-anchored vs
 center-stage placement), pacing knobs, contract questions and their CONTRACT.md
 lifecycle, the round-one `/concepts` scope following the PR #557 fixture-first pattern,
-decided items, what's still open beyond round one, and (§9) the approved envelope
-metadata passthrough contract confirmed by Kirk's review (rpg-dnd5e-web#582).
+decided items, what's still open beyond round one, and (§9) the approved two-prerequisite
+metadata delivery contract confirmed by Kirk's review: rpg-api#701 plus rpg-dnd5e-web#582,
+both required before rpg-dnd5e-web#581 live grouping.
 
 See `plan.md` — the approved design's round-one `rpg-dnd5e-web` implementation
 plan: 5 TDD tasks (fixtures → `useBeatSequencer` → `BeatStage` →
