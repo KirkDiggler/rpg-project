@@ -107,7 +107,8 @@ nothing is synced, pushed, or consumed before the one complete release commit ex
 validation failure before that commit leaves no published mixed state: discard the isolated
 worktree and recreate it from the baseline commit. Tracked release metadata records the baseline
 commit SHA, workflow/config version, complete inventory and hashes, evidence SHA, and gate
-results; a commit cannot record its own SHA. The release commit SHA is Git identity recorded in
+results. The inventory hashes every release artifact except the metadata file itself, avoiding a
+recursive self-hash; index verification validates metadata separately. A commit cannot record its own SHA. The release commit SHA is Git identity recorded in
 the implementation PR, independent gate, and any rollback issue. If a post-publication regression
 is found, open a new rollback issue/PR and use `git revert <release-commit>` to restore the
 complete tracked release in one new rollback commit; then re-run asset sync and client
