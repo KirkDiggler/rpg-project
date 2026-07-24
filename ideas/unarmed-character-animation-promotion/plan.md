@@ -6,7 +6,7 @@
 
 **Architecture:** An isolated `rpg-game-assets` worktree begins at a recorded baseline commit. Blender creates the A GLB and transfers retained actions with explicit Blender 5 slots; `swap_atlas.py` generates B/C/D. Validation writes a versioned inventory/hashes file, `apply` materializes only that inventory, and `verify-index` proves the staged Git index matches it before the one release commit.
 
-**Tech Stack:** Python 3 stdlib, Blender 5 `bpy`, existing `swap_atlas.py`, `animation_qa.py`, `build_mesh_stats.py`, Git, and Node `sharp`.
+**Tech Stack:** Python 3 stdlib, Blender 5 `bpy`, existing `swap_atlas.py`, `animation_qa.py`, `build_mesh_stats.py`, Git, Node `sharp`, and `omggif`.
 
 ## Global Constraints
 
@@ -40,9 +40,9 @@ python3 scripts/promote_character_checkpoints.py stage --config scripts/configs/
 npm install --prefix scripts --no-save --no-package-lock sharp omggif && git status --short
 node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
 python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
-python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-dir tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
+python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
 git add --pathspec-from-file=tmp/unarmed-v1/release/pathspec.nul --pathspec-file-nul
-python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-dir tmp/unarmed-v1
+python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-root tmp/unarmed-v1
 git diff --cached --check && git diff --cached --stat
 git commit -m "asset: promote unarmed character animation checkpoints"
 ```
@@ -167,6 +167,7 @@ Before writing evidence, create/select `EVIDENCE_WORKTREE` with `git -C /home/ki
 def test_apply_and_verify_index_require_exact_validated_inventory(self):
     cli.apply(self.repo, self.stage, self.baseline)
     git(self.repo, "add", *self.metadata["inventory"])
+    git(self.repo, "add", self.metadata["metadataPath"])
     self.assertEqual(cli.verify_index(self.repo, self.stage), [])
     git(self.repo, "add", "unrelated.txt")
     self.assertEqual(cli.verify_index(self.repo, self.stage), ["staged paths differ from release inventory"])
@@ -213,6 +214,10 @@ Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: PASS. Com
 
 ```bash
 for class in fighter barbarian monk rogue; do for clip in Idle_Relaxed Walk_Forward; do for angle in 0 45 90 180; do out="tmp/unarmed-v1/evidence/${class}-${clip}-${angle}"; blender -b -P scripts/animation_qa_render.py -- --character "tmp/unarmed-v1/release/harness/models/synty/characters/${class}.glb" --clip "$clip" --out-dir "$out" --frames 28 --wrap-frames 2 --width 256 --height 320 --angle "$angle" --delay-cs 4; node scripts/render_animation_evidence.mjs --frames-dir "$out" --out-strip "${out}.png" --out-gif "${out}.gif" --title "${class} ${clip} angle ${angle}" --verdict PASS; done; done; done
+mkdir -p "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1"
+cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1/"
+test "$(find "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1" -name '*.png' | wc -l)" -eq 32 && test "$(find "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1" -name '*.gif' | wc -l)" -eq 32
+(cd "$EVIDENCE_WT" && sha256sum playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1/* > playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1.sha256 && git add playtest-evidence/asset-pipeline/unarmed-character-animation-promotion && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
 ```
 
 - [ ] Independent gate reruns Tasks 2-4, views portrait/multi-angle files, validates `git show --name-only <releaseCommit>` against metadata, and posts `GATE REVIEW`.
