@@ -87,23 +87,31 @@ Every base and color variant preserves the established Root wrapper exactly:
    gate for the regenerated portraits.
 3. Stage the updated characters manifest, weapon metadata, README/relevant asset docs, mesh
    stats report, animation QA report, and any regenerated portraits with the staged GLBs.
-4. Validate the complete staged set for all four classes and every affected artifact.
-5. Publish the complete validated set as one release commit in an isolated `rpg-game-assets`
+4. Before complete release validation, generate the versioned 4x4 staged-portrait contact sheet
+   in the public playtest-evidence path, record its SHA-256, and obtain an independent viewed
+   statement that no weapon or fragment appears. If it fails, regenerate the affected class's
+   staged A/B/C/D portraits, rebuild/review the sheet, and only then continue.
+5. Validate the complete staged set for all four classes and every affected artifact.
+6. Materialize the validated release inventory into canonical paths in the isolated worktree,
+   stage exactly that inventory, verify staged paths and SHA-256s against release metadata, then
+   publish one release commit in `rpg-game-assets`:
    worktree: all four classes' `A`/`B`/`C`/`D` standing GLBs, any regenerated portraits,
    manifest and metadata, README/docs, mesh stats report, and animation QA report. No class or
    artifact may be committed separately. Public screenshot evidence is a separately tracked
    review artifact and is not part of this private asset release transaction.
-6. Sync assets and verify the consuming web client without changing its resolver.
+7. Sync assets and verify the consuming web client without changing its resolver.
 
 The publication boundary is the versioned, committed canonical state, not individual filesystem
 replacements. Build and validate in an isolated worktree created at the recorded baseline commit;
 nothing is synced, pushed, or consumed before the one complete release commit exists. A crash or
 validation failure before that commit leaves no published mixed state: discard the isolated
-worktree and recreate it from the baseline commit. Release metadata records that baseline commit
-SHA and the release commit SHA. If a post-publication regression is found, open a new rollback
-issue/PR and use `git revert <release-commit>` to restore the complete tracked release in one new
-rollback commit; then re-run asset sync and client verification. Temporary staging backups are
-diagnostic only and are never a rollback mechanism.
+worktree and recreate it from the baseline commit. Tracked release metadata records the baseline
+commit SHA, workflow/config version, complete inventory and hashes, evidence SHA, and gate
+results; a commit cannot record its own SHA. The release commit SHA is Git identity recorded in
+the implementation PR, independent gate, and any rollback issue. If a post-publication regression
+is found, open a new rollback issue/PR and use `git revert <release-commit>` to restore the
+complete tracked release in one new rollback commit; then re-run asset sync and client
+verification. Temporary staging backups are diagnostic only and are never a rollback mechanism.
 
 ## Validation And Evidence
 
