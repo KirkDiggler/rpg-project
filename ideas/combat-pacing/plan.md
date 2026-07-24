@@ -2933,3 +2933,501 @@ later, Kirk-accepted iteration and are not what `useBeatSequencer.ts` currently 
 This acceptance is concept-stage only, not locked production timing, and does not
 retroactively change Task 2's pass/fail record for the values it was written and
 verified against at the time.
+
+# Platform Metadata Prerequisites Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Deliver the two approved Platform prerequisites that preserve toolkit occurrence/correlation metadata on API effect envelopes and expose every encounter envelope's sequence, timestamp, and correlation at typed web callbacks before `rpg-dnd5e-web#581` implements live attack-effect grouping.
+
+**Architecture:** `rpg-api#701` is an API-only projection correction: `DamageDealtEvent` and `ConditionAppliedEvent` already carry `eventMeta`, so their translators must copy `OccurredAt()` and `CorrelationID()` to existing proto envelope fields. `rpg-dnd5e-web#582` is a web-only dispatcher seam: it builds one typed metadata object from an incoming `EncounterEvent` and supplies that unchanged object as the second argument to every handled callback. Neither task groups events, infers completion, delays state, or changes protos/toolkit.
+
+**Tech Stack:** Go with Testify suites and `google.golang.org/protobuf/types/known/timestamppb`; TypeScript 5.8, Vitest 4, and generated Connect/protobuf TypeScript types.
+
+## Global Constraints
+
+- These are two independent repository tasks and may execute in parallel, but **both must merge before `rpg-dnd5e-web#581`**; neither one alone unblocks #581.
+- One issue, branch, and PR per implementing repository: `rpg-api#701` only in `rpg-api`; `rpg-dnd5e-web#582` only in `rpg-dnd5e-web`. Never make a cross-repository commit.
+- Start each implementation worktree from the latest `origin/main`; do not modify shared checkouts.
+- Preserve existing proto fields and toolkit metadata. #701 uses `string(e.CorrelationID())` and `timestamppb.New(e.OccurredAt())`, including an intentionally empty correlation ID.
+- #582 forwards `sequence` as `bigint`, `timestamp` as `Timestamp | undefined`, and `correlationId` as `string` exactly as received. It performs no validation, conversion, grouping, deduplication, buffering, completion detection, or state delay.
+- Existing one-parameter TypeScript handlers remain source-compatible because JavaScript permits a callback to ignore the added second call-time argument.
+- Run `make ci-check` before the API PR and `npm run ci-check` before the web PR. Do not use `--no-verify`.
+- Do not implement UI issue `rpg-dnd5e-web#581` in either task.
+
+## Exact File Map
+
+| Repository / file | Task | Responsibility |
+| --- | --- | --- |
+| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate.go` | 6 | Remove handler-clock arguments from the two affected dispatch paths/translators and project effect-event occurrence/correlation metadata to `EntityDamaged` and `StatusApplied` envelopes. |
+| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate_combat_test.go` | 6 | Stamp effect events with fixed toolkit metadata and prove exact envelope propagation, including a same-correlation attack chain and empty correlation preservation. |
+| `rpg-dnd5e-web/src/api/encounterStreamDispatch.ts` | 7 | Export the wire-derived metadata and generic callback types; build one metadata object per envelope and provide it to every handled callback. |
+| `rpg-dnd5e-web/src/api/encounterStreamDispatch.test.ts` | 7 | Parameterize all 22 currently handled cases and prove payload plus exact metadata delivery while retaining the existing unknown/no-callback/shared-sequence regressions. |
+| `rpg-dnd5e-web/docs/architecture/components/use-encounter-stream.md` | 7 | Update the document date to `2026-07-24` and document the two-argument callback contract and verbatim metadata behavior. |
+
+---
+## Task 6: `rpg-api#701` — project effect metadata to existing envelopes
+
+**Branch and PR:** Create `feat/701-effect-envelope-metadata` from `origin/main` in a new `rpg-api` worktree. Open one PR for `rpg-api#701`, link related `rpg-dnd5e-web#582` and blocked `rpg-dnd5e-web#581`, and change only the two files in this task.
+
+**Interfaces:** `TranslateEvent(evt events.EncounterEvent, viewer core.PlayerID, now time.Time)` remains public and unchanged because other event translations still need `now`. `translateDamageDealtEvent` and `translateConditionAppliedEvent` change from `(e, viewer, now)` to `(e, viewer)`; their envelopes set `Timestamp: timestamppb.New(e.OccurredAt())` and `CorrelationId: string(e.CorrelationID())`.
+
+- [ ] **Step 1: Create the isolated API worktree and verify the baseline**
+
+```bash
+git -C /home/kirk/game-dev/rpg-api fetch origin
+git -C /home/kirk/game-dev/rpg-api worktree add /tmp/opencode/worktrees/rpg-api-701-effect-envelope-metadata -b feat/701-effect-envelope-metadata origin/main
+make ci-check
+```
+
+Run `make ci-check` from `/tmp/opencode/worktrees/rpg-api-701-effect-envelope-metadata`.
+
+Expected: the clean `origin/main` baseline passes before tests are changed.
+
+- [ ] **Step 2: Write the failing metadata tests in `internal/handlers/dnd5e/v2/encounter/translate_combat_test.go`**
+
+Add these suite tests after the existing damage and condition happy-path tests. They use only public toolkit constructors and the promoted public `Stamp` method.
+
+```go
+func (s *TranslateSuite) TestTranslateEvent_DamageDealtEvent_ProjectsToolkitMetadata() {
+	gameTime := time.Date(2026, 7, 24, 10, 11, 12, 345678900, time.UTC)
+	evt := events.NewDamageDealtEvent("enc-1", uint64(71), "goblin-1", "char-A", 5, "slashing", 2, 7,
+		map[core.PlayerID]events.DamageDealtSlice{"player-A": {Visible: true}})
+	evt.Stamp(gameTime, "corr-701-effect")
+
+	out, err := v2encounter.TranslateEvent(evt, "player-A", s.now)
+	s.Require().NoError(err)
+	s.Require().Equal("corr-701-effect", out.GetCorrelationId())
+	s.Require().Equal(gameTime, out.GetTimestamp().AsTime())
+}
+
+func (s *TranslateSuite) TestTranslateEvent_ConditionAppliedEvent_ProjectsToolkitMetadata() {
+	gameTime := time.Date(2026, 7, 24, 10, 11, 13, 456789000, time.UTC)
+	evt := events.NewConditionAppliedEvent("enc-1", uint64(72), "goblin-1", "char-A", "dnd5e:conditions:poisoned", 3,
+		map[core.PlayerID]events.ConditionAppliedSlice{"player-A": {Visible: true}})
+	evt.Stamp(gameTime, "corr-701-effect")
+
+	out, err := v2encounter.TranslateEvent(evt, "player-A", s.now)
+	s.Require().NoError(err)
+	s.Require().Equal("corr-701-effect", out.GetCorrelationId())
+	s.Require().Equal(gameTime, out.GetTimestamp().AsTime())
+}
+
+func (s *TranslateSuite) TestTranslateEvent_DamageDealtEvent_PreservesEmptyCorrelationID() {
+	evt := events.NewDamageDealtEvent("enc-1", uint64(73), "goblin-1", "char-A", 5, "slashing", 2, 7,
+		map[core.PlayerID]events.DamageDealtSlice{"player-A": {Visible: true}})
+	evt.Stamp(time.Date(2026, 7, 24, 10, 11, 14, 0, time.UTC), "")
+
+	out, err := v2encounter.TranslateEvent(evt, "player-A", s.now)
+	s.Require().NoError(err)
+	s.Require().Equal("", out.GetCorrelationId())
+}
+```
+
+Add one focused chain assertion using the existing action/attack constructors and the same public stamping API:
+
+```go
+func (s *TranslateSuite) TestTranslateEvent_DeclaredHitChain_SharesToolkitCorrelationID() {
+	gameTime := time.Date(2026, 7, 24, 10, 12, 0, 0, time.UTC)
+	const correlationID = "corr-701-declared-hit"
+	visibleAction := map[core.PlayerID]events.ActionResolvedSlice{"player-A": {Visible: true}}
+	visibleAttack := map[core.PlayerID]events.AttackResolvedSlice{"player-A": {Visible: true}}
+	visibleDamage := map[core.PlayerID]events.DamageDealtSlice{"player-A": {Visible: true}}
+	action := events.NewActionResolvedEvent("enc-1", uint64(80), "char-A", "dnd5e:combat_abilities:attack", "goblin-1", events.EconomyConsumed{Actions: 1}, visibleAction)
+	attack := events.NewAttackResolvedEvent("enc-1", uint64(81), "char-A", "goblin-1", true, false, 16, 5, 14, false, false, nil, nil, visibleAttack)
+	damage := events.NewDamageDealtEvent("enc-1", uint64(82), "goblin-1", "char-A", 7, "slashing", 0, 7, visibleDamage)
+	for _, evt := range []events.EncounterEvent{action, attack, damage} {
+		evt.Stamp(gameTime, correlationID)
+		out, err := v2encounter.TranslateEvent(evt, "player-A", s.now)
+		s.Require().NoError(err)
+		s.Require().Equal(correlationID, out.GetCorrelationId())
+		s.Require().Equal(gameTime, out.GetTimestamp().AsTime())
+	}
+}
+```
+
+- [ ] **Step 3: Run the targeted test file and verify RED**
+
+```bash
+go test ./internal/handlers/dnd5e/v2/encounter -run 'TestTranslateSuite/(TestTranslateEvent_(DamageDealtEvent_ProjectsToolkitMetadata|ConditionAppliedEvent_ProjectsToolkitMetadata|DamageDealtEvent_PreservesEmptyCorrelationID|DeclaredHitChain_SharesToolkitCorrelationID))' -count=1
+```
+
+Expected: FAIL. The new damage/status metadata assertions see the handler clock and an empty `CorrelationId`; the chain fails on the `DamageDealtEvent` envelope.
+
+- [ ] **Step 4: Make the minimal translator change in `internal/handlers/dnd5e/v2/encounter/translate.go`**
+
+Change the only two dispatch calls that no longer need `now`:
+
+```go
+	case *events.DamageDealtEvent:
+		return translateDamageDealtEvent(e, viewer)
+	case *events.ConditionAppliedEvent:
+		return translateConditionAppliedEvent(e, viewer)
+```
+
+Change the exact translator signatures and envelope headers; retain `now` on `TranslateEvent` because its other dispatch arms still pass it.
+
+```go
+case *events.DamageDealtEvent:
+	return translateDamageDealtEvent(e, viewer)
+case *events.ConditionAppliedEvent:
+	return translateConditionAppliedEvent(e, viewer)
+
+func translateDamageDealtEvent(e *events.DamageDealtEvent, viewer core.PlayerID) (*encounterv2pb.EncounterEvent, error)
+func translateConditionAppliedEvent(e *events.ConditionAppliedEvent, viewer core.PlayerID) (*encounterv2pb.EncounterEvent, error)
+
+// In each existing final EncounterEvent literal:
+Sequence:      int64(e.Sequence()),
+Timestamp:     timestamppb.New(e.OccurredAt()),
+CorrelationId: string(e.CorrelationID()),
+```
+
+Do not alter the existing `EntityDamaged` or `StatusApplied` payload construction. The literal conversion preserves the zero value as `""`.
+
+- [ ] **Step 5: Run RED tests again and verify GREEN**
+
+```bash
+go test ./internal/handlers/dnd5e/v2/encounter -run 'TestTranslateSuite/(TestTranslateEvent_(DamageDealtEvent_ProjectsToolkitMetadata|ConditionAppliedEvent_ProjectsToolkitMetadata|DamageDealtEvent_PreservesEmptyCorrelationID|DeclaredHitChain_SharesToolkitCorrelationID))' -count=1
+make ci-check
+```
+
+Expected: the named tests PASS, then the full API CI gate passes.
+
+- [ ] **Step 6: Commit and open the single API PR**
+
+```bash
+git add internal/handlers/dnd5e/v2/encounter/translate.go internal/handlers/dnd5e/v2/encounter/translate_combat_test.go
+git commit -m "fix(encounter): preserve effect envelope metadata (#701)"
+git push -u origin feat/701-effect-envelope-metadata
+gh pr create --base main --head feat/701-effect-envelope-metadata --title "fix(encounter): preserve effect envelope metadata (#701)" --body "Closes #701. Related: KirkDiggler/rpg-dnd5e-web#582. Blocks KirkDiggler/rpg-dnd5e-web#581.\n\n— asset-pipeline agent, on behalf of KirkDiggler"
+```
+
+Expected: one `rpg-api#701` PR contains only the API translator and its tests.
+
+---
+## Task 7: `rpg-dnd5e-web#582` — pass envelope metadata to all typed callbacks
+
+**Branch and PR:** Create `feat/582-envelope-metadata` from `origin/main` in a new `rpg-dnd5e-web` worktree. Open one PR for `rpg-dnd5e-web#582`, link `rpg-api#701` and blocked `rpg-dnd5e-web#581`, and change only the three files in this task.
+
+**Interfaces:** Export `type EncounterEventMetadata = Pick<EncounterEvent, 'sequence' | 'timestamp' | 'correlationId'>;` and `export type EncounterStreamHandler<T> = (event: T, metadata: EncounterEventMetadata) => void;`. Every optional member of `EncounterStreamOptions` becomes `EncounterStreamHandler<Payload>`; one-parameter functions remain assignable to this two-parameter callback type.
+
+- [ ] **Step 1: Create the isolated web worktree and verify the baseline**
+
+```bash
+git -C /home/kirk/game-dev/rpg-dnd5e-web fetch origin
+git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add /tmp/opencode/worktrees/rpg-dnd5e-web-582-envelope-metadata -b feat/582-envelope-metadata origin/main
+npm ci
+npm run ci-check
+```
+
+Run the final two commands from `/tmp/opencode/worktrees/rpg-dnd5e-web-582-envelope-metadata`.
+
+Expected: the clean `origin/main` baseline passes.
+
+- [ ] **Step 2: Replace routing-only tests with parameterized RED coverage in `src/api/encounterStreamDispatch.test.ts`**
+
+Extend `makeEvent` so its envelope fields are explicit and reusable:
+
+```ts
+import type { EncounterEvent } from '@kirkdiggler/rpg-api-protos/gen/ts/dnd5e/api/v1alpha2/encounter/events_pb';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  dispatchEncounterStreamEvent,
+  type EncounterEventMetadata,
+  type EncounterStreamOptions,
+} from './encounterStreamDispatch';
+
+function makeEvent<K extends string, V>(
+  caseName: K,
+  value: V,
+  metadata: EncounterEventMetadata = {
+    sequence: 1n,
+    timestamp: undefined,
+    correlationId: '',
+  }
+): EncounterEvent {
+  return { ...metadata, event: { case: caseName, value } } as unknown as EncounterEvent;
+}
+```
+
+Replace the individual route-count tests with this complete case-to-callback table. Keep the existing payload-detail tests (`damageBreakdown`, attack miss, input prompt) and retain the shared-sequence, unknown-case, and no-callback tests below it.
+
+```ts
+const routedCases = [
+  ['snapshotDelivered', 'onSnapshotDelivered', { encounter: undefined }],
+  ['entityMoved', 'onEntityMoved', { entityId: 'a', actualPath: [] }],
+  ['geometryRevealed', 'onGeometryRevealed', { hexes: [] }],
+  ['entityAppeared', 'onEntityAppeared', { entity: { id: 'g' }, reason: '' }],
+  ['entityDisappeared', 'onEntityDisappeared', { entityId: 'g' }],
+  ['doorOpened', 'onDoorOpened', { doorEntityId: 'door-east' }],
+  ['entityDamaged', 'onEntityDamaged', { entityId: 'g', amount: 5 }],
+  ['statusApplied', 'onStatusApplied', { entityId: 'g', status: {} }],
+  ['statusRemoved', 'onStatusRemoved', { entityId: 'g', statusSource: {} }],
+  ['modeChanged', 'onModeChanged', { from: 1, to: 2, reason: 'ambush' }],
+  ['initiativeRolled', 'onInitiativeRolled', { order: [] }],
+  ['turnStarted', 'onTurnStarted', { entityId: 'a', round: 1 }],
+  ['turnEnded', 'onTurnEnded', { entityId: 'a' }],
+  ['actionResolved', 'onActionResolved', { actorEntityId: 'a', actionRef: {}, targetEntityId: 'g', economyConsumed: {} }],
+  ['attackResolved', 'onAttackResolved', { attackerEntityId: 'a', targetEntityId: 'g', hit: false, critical: false, attackRoll: 4, attackBonus: 5, targetAc: 13 }],
+  ['turnStateChanged', 'onTurnStateChanged', { turnState: {} }],
+  ['entityDied', 'onEntityDied', { entityId: 'g' }],
+  ['entityRemoved', 'onEntityRemoved', { entityId: 'g', reason: 'destroyed' }],
+  ['encounterEnded', 'onEncounterEnded', { reason: 'ended' }],
+  ['deathSaveRolled', 'onDeathSaveRolled', { entityId: 'a', roll: 14 }],
+  ['entityStabilized', 'onEntityStabilized', { entityId: 'a' }],
+  ['inputRequiredDelivered', 'onInputRequiredDelivered', { inputRequired: {} }],
+] as const;
+
+describe.each(routedCases)('%s', (caseName, callbackName, payload) => {
+  it(`routes payload and exact envelope metadata to ${callbackName}`, () => {
+    const callback = vi.fn();
+    const metadata: EncounterEventMetadata = {
+      sequence: 9007199254740993n,
+      timestamp: { seconds: 1721815200n, nanos: 123456789 } as EncounterEventMetadata['timestamp'],
+      correlationId: `corr-${caseName}`,
+    };
+    dispatchEncounterStreamEvent(
+      makeEvent(caseName, payload, metadata),
+      { [callbackName]: callback } as EncounterStreamOptions
+    );
+    expect(callback).toHaveBeenCalledOnce();
+    expect(callback).toHaveBeenCalledWith(payload, metadata);
+  });
+});
+```
+
+Add named combat-chain and absent-value tests:
+
+```ts
+it('passes exact per-envelope metadata with one shared correlation to ActionResolved, AttackResolved, and EntityDamaged', () => {
+  const action = vi.fn();
+  const attack = vi.fn();
+  const damage = vi.fn();
+  const actionMetadata: EncounterEventMetadata = {
+    sequence: 91n,
+    timestamp: { seconds: 1721815200n, nanos: 100 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
+  const attackMetadata: EncounterEventMetadata = {
+    sequence: 92n,
+    timestamp: { seconds: 1721815201n, nanos: 200 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
+  const damageMetadata: EncounterEventMetadata = {
+    sequence: 93n,
+    timestamp: { seconds: 1721815202n, nanos: 300 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
+  const options: EncounterStreamOptions = { onActionResolved: action, onAttackResolved: attack, onEntityDamaged: damage };
+  dispatchEncounterStreamEvent(makeEvent('actionResolved', { actorEntityId: 'a' }, actionMetadata), options);
+  dispatchEncounterStreamEvent(makeEvent('attackResolved', { attackerEntityId: 'a' }, attackMetadata), options);
+  dispatchEncounterStreamEvent(makeEvent('entityDamaged', { entityId: 'g', amount: 7 }, damageMetadata), options);
+  expect(action.mock.calls[0][1]).toEqual(actionMetadata);
+  expect(attack.mock.calls[0][1]).toEqual(attackMetadata);
+  expect(damage.mock.calls[0][1]).toEqual(damageMetadata);
+  expect(action.mock.calls[0][1].correlationId).toBe(attack.mock.calls[0][1].correlationId);
+  expect(attack.mock.calls[0][1].correlationId).toBe(damage.mock.calls[0][1].correlationId);
+});
+
+it('passes empty correlationId and undefined timestamp through unchanged', () => {
+  const onTurnStateChanged = vi.fn();
+  const metadata: EncounterEventMetadata = { sequence: 42n, timestamp: undefined, correlationId: '' };
+  dispatchEncounterStreamEvent(makeEvent('turnStateChanged', { turnState: {} }, metadata), { onTurnStateChanged });
+  expect(onTurnStateChanged).toHaveBeenCalledWith({ turnState: {} }, metadata);
+});
+```
+
+- [ ] **Step 3: Run the targeted web test and verify RED**
+
+```bash
+npm run test:run -- src/api/encounterStreamDispatch.test.ts
+```
+
+Expected: FAIL because every callback currently receives one argument; the parameterized, combat-chain, and absent-value assertions requiring the exact second argument fail.
+
+- [ ] **Step 4: Implement the metadata type, callback signature, and one-object dispatch in `src/api/encounterStreamDispatch.ts`**
+
+Directly after the import, add:
+
+```ts
+export type EncounterEventMetadata = Pick<
+  EncounterEvent,
+  'sequence' | 'timestamp' | 'correlationId'
+>;
+
+export type EncounterStreamHandler<T> = (
+  event: T,
+  metadata: EncounterEventMetadata
+) => void;
+```
+
+Replace every callback annotation in `EncounterStreamOptions` with the generic type. The complete current mapping is:
+
+```ts
+onSnapshotDelivered?: EncounterStreamHandler<SnapshotDelivered>;
+onEntityMoved?: EncounterStreamHandler<EntityMoved>;
+onGeometryRevealed?: EncounterStreamHandler<GeometryRevealed>;
+onEntityAppeared?: EncounterStreamHandler<EntityAppeared>;
+onEntityDisappeared?: EncounterStreamHandler<EntityDisappeared>;
+onDoorOpened?: EncounterStreamHandler<DoorOpened>;
+onEntityDamaged?: EncounterStreamHandler<EntityDamaged>;
+onStatusApplied?: EncounterStreamHandler<StatusApplied>;
+onStatusRemoved?: EncounterStreamHandler<StatusRemoved>;
+onModeChanged?: EncounterStreamHandler<ModeChanged>;
+onInitiativeRolled?: EncounterStreamHandler<InitiativeRolled>;
+onTurnStarted?: EncounterStreamHandler<TurnStarted>;
+onTurnEnded?: EncounterStreamHandler<TurnEnded>;
+onActionResolved?: EncounterStreamHandler<ActionResolved>;
+onAttackResolved?: EncounterStreamHandler<AttackResolved>;
+onTurnStateChanged?: EncounterStreamHandler<TurnStateChanged>;
+onEntityDied?: EncounterStreamHandler<EntityDied>;
+onEntityRemoved?: EncounterStreamHandler<EntityRemoved>;
+onEncounterEnded?: EncounterStreamHandler<EncounterEnded>;
+onDeathSaveRolled?: EncounterStreamHandler<DeathSaveRolled>;
+onEntityStabilized?: EncounterStreamHandler<EntityStabilized>;
+onInputRequiredDelivered?: EncounterStreamHandler<InputRequiredDelivered>;
+```
+
+Create exactly one object before the switch and add it as the second argument in every existing case arm:
+
+```ts
+const payload = event.event;
+const metadata: EncounterEventMetadata = {
+  sequence: event.sequence,
+  timestamp: event.timestamp,
+  correlationId: event.correlationId,
+};
+
+switch (payload.case) {
+  case 'snapshotDelivered':
+    options.onSnapshotDelivered?.(payload.value, metadata);
+    break;
+  case 'entityMoved':
+    options.onEntityMoved?.(payload.value, metadata);
+    break;
+  case 'geometryRevealed':
+    options.onGeometryRevealed?.(payload.value, metadata);
+    break;
+  case 'entityAppeared':
+    options.onEntityAppeared?.(payload.value, metadata);
+    break;
+  case 'entityDisappeared':
+    options.onEntityDisappeared?.(payload.value, metadata);
+    break;
+  case 'doorOpened':
+    options.onDoorOpened?.(payload.value, metadata);
+    break;
+  case 'entityDamaged':
+    options.onEntityDamaged?.(payload.value, metadata);
+    break;
+  case 'statusApplied':
+    options.onStatusApplied?.(payload.value, metadata);
+    break;
+  case 'statusRemoved':
+    options.onStatusRemoved?.(payload.value, metadata);
+    break;
+  case 'modeChanged':
+    options.onModeChanged?.(payload.value, metadata);
+    break;
+  case 'initiativeRolled':
+    options.onInitiativeRolled?.(payload.value, metadata);
+    break;
+  case 'turnStarted':
+    options.onTurnStarted?.(payload.value, metadata);
+    break;
+  case 'turnEnded':
+    options.onTurnEnded?.(payload.value, metadata);
+    break;
+  case 'actionResolved':
+    options.onActionResolved?.(payload.value, metadata);
+    break;
+  case 'attackResolved':
+    options.onAttackResolved?.(payload.value, metadata);
+    break;
+  case 'turnStateChanged':
+    options.onTurnStateChanged?.(payload.value, metadata);
+    break;
+  case 'entityDied':
+    options.onEntityDied?.(payload.value, metadata);
+    break;
+  case 'entityRemoved':
+    options.onEntityRemoved?.(payload.value, metadata);
+    break;
+  case 'encounterEnded':
+    options.onEncounterEnded?.(payload.value, metadata);
+    break;
+  case 'deathSaveRolled':
+    options.onDeathSaveRolled?.(payload.value, metadata);
+    break;
+  case 'entityStabilized':
+    options.onEntityStabilized?.(payload.value, metadata);
+    break;
+  case 'inputRequiredDelivered':
+    options.onInputRequiredDelivered?.(payload.value, metadata);
+    break;
+  default:
+    console.warn(
+      '[useEncounterStream] unhandled event case:',
+      (payload as { case?: string }).case
+    );
+}
+```
+
+- [ ] **Step 5: Update `docs/architecture/components/use-encounter-stream.md`**
+
+Set frontmatter `updated: 2026-07-24`. Replace the Event dispatch paragraph with:
+
+```md
+`dispatchEncounterStreamEvent` (`src/api/encounterStreamDispatch.ts`) is a
+pure switch over `event.event.case` — one optional callback per event type in
+`EncounterStreamOptions`. Every callback receives `(payload, metadata)`, where
+`metadata` is the verbatim wire-derived `EncounterEventMetadata` object:
+`sequence` stays `bigint`, `timestamp` stays `Timestamp | undefined`, and
+`correlationId` stays a string including `""`. The dispatcher constructs one
+metadata object for each envelope and does not validate, convert, group,
+deduplicate, buffer, delay, or otherwise interpret it. Existing one-argument
+callbacks remain valid and continue receiving their unchanged payload.
+
+It handles reveals (`GeometryRevealed`), entity appear/disappear/damage/status,
+door state, mode/turn changes, the TakeAction-wave `TurnStateChanged` menu
+push, death/removal/encounter-end, and stream-delivered prompts.
+`useEncounterState`'s reducers are the typical callback targets — see
+[use-encounter-state.md](use-encounter-state.md).
+```
+
+- [ ] **Step 6: Verify GREEN and the full web gate**
+
+```bash
+npm run test:run -- src/api/encounterStreamDispatch.test.ts
+npm run ci-check
+```
+
+Expected: the parameterized metadata tests, the distinct-sequence shared-correlation combat-chain test, retained shared-sequence/unknown/no-callback tests, and all existing tests PASS; then the complete web CI gate passes.
+
+- [ ] **Step 7: Commit and open the single web PR**
+
+```bash
+git add src/api/encounterStreamDispatch.ts src/api/encounterStreamDispatch.test.ts docs/architecture/components/use-encounter-stream.md
+git commit -m "feat(stream): expose envelope metadata to callbacks (#582)"
+git push -u origin feat/582-envelope-metadata
+gh pr create --base main --head feat/582-envelope-metadata --title "feat(stream): expose envelope metadata to callbacks (#582)" --body "Closes #582. Related: KirkDiggler/rpg-api#701. Blocks #581.\n\n— asset-pipeline agent, on behalf of KirkDiggler"
+```
+
+Expected: one `rpg-dnd5e-web#582` PR contains only web callback passthrough, its tests, and its architecture documentation.
+
+---
+## Implementation Coordination And Gates
+
+- [ ] Assign independent implementers to Task 6 and Task 7; they may work concurrently because their files, repositories, branches, commits, and PRs do not overlap.
+- [ ] Require each implementer to report the targeted RED result, targeted GREEN result, full CI result, commit hash, and PR URL before review.
+- [ ] On the web PR, inspect Copilot review comments with `gh pr view <PR_NUMBER> --comments` and `gh api repos/KirkDiggler/rpg-dnd5e-web/pulls/<PR_NUMBER>/comments`; address each applicable finding with tests and rerun `npm run ci-check` before requesting re-review.
+- [ ] Obtain an independent gate review for the API PR and an independent gate review for the web PR. Verify #701 has no web changes and #582 has no API changes.
+- [ ] Do not state that either merged PR alone unblocks #581. Only after both PRs are approved and merge-ready does the platform prerequisite gate for #581 clear.
+- [ ] Kirk performs both merges. Do not merge, push after review without approval, or implement #581 as part of this work.
+
+## Self-Review Against `design.md` Section 9
+
+- **Spec coverage:** Task 6 maps the required toolkit `CorrelationID()` and `OccurredAt()` to both effect-envelope translators, proves fixed timestamp/correlation values, preserves an empty correlation, and proves the existing declared-hit action/attack/damage chain. Task 7 defines the exact `Pick` metadata type and reusable generic handler, updates all 22 currently handled callbacks, builds one object per envelope, forwards unchanged values, tests every case plus a same-correlation combat chain with distinct per-envelope sequences and metadata values, retains the required dispatcher regressions, and updates the architecture date/documentation. The coordination gate states parallel independence, both-prerequisite dependency, distinct PRs, Copilot handling, independent review, and Kirk-only merges.
+- **Completeness scan:** This appended section names concrete files, branches, commits, commands, test names, and all 22 dispatcher cases; its code-change steps provide literal signatures, field assignments, and case arms.
+- **Type and signature consistency:** #701 retains `TranslateEvent(..., now)` and removes `now` only from the two private translators that no longer use it. #582's `EncounterEventMetadata` is `Pick<EncounterEvent, 'sequence' | 'timestamp' | 'correlationId'>`; every option member uses `EncounterStreamHandler<Payload>` and every switch arm receives the same `metadata` object as its second argument.
+- **File and command accuracy:** The API dispatch currently calls the two affected translators with `now`; the web `origin/main` dispatcher and test file currently contain the stated 22 cases, and the web architecture document currently has the specified frontmatter path. The exact gates are `go test ./internal/handlers/dnd5e/v2/encounter -run 'TestTranslateSuite/(TestTranslateEvent_(DamageDealtEvent_ProjectsToolkitMetadata|ConditionAppliedEvent_ProjectsToolkitMetadata|DamageDealtEvent_PreservesEmptyCorrelationID|DeclaredHitChain_SharesToolkitCorrelationID))' -count=1`, `make ci-check`, `npm run test:run -- src/api/encounterStreamDispatch.test.ts`, and `npm run ci-check`.

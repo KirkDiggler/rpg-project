@@ -2,8 +2,8 @@
 name: Combat Pacing & Dice
 description: The attack loop needs beats — theatrical suspense choreographed over already-resolved server rolls, so "swing, miss, end turn" stops feeling flat
 updated: 2026-07-22
-confidence: high on the beat model and pacing decisions (Kirk-approved); §1's beat durations are the implemented-and-measured values Kirk accepted live on 2026-07-22 for this round-one concept iteration, not locked production timing; the wire's correlation/cardinality shape is explicitly a contract question round one defers to CONTRACT.md, not a fact this doc assumes
-status: Round 1 concept, in progress — tracked as rpg-dnd5e-web#561 (Board 19, Feature=Game Screen, Team=UI/UX). Broader charter: rpg-dnd5e-web#525 (Game-UX). Beat-timing concept iteration accepted by Kirk 2026-07-22 (§1); concept-stage only.
+confidence: high on the beat model and pacing decisions (Kirk-approved); §1's beat durations are the implemented-and-measured values Kirk accepted live on 2026-07-22 for this round-one concept iteration, not locked production timing; the wire's correlation/cardinality shape (§6 item 1) is still an open contract question round one defers to CONTRACT.md, not a fact this doc assumes; the envelope-metadata delivery path is now split into two approved, independently landable Platform prerequisites (§9: rpg-api#701 projects toolkit metadata onto effect envelopes; rpg-dnd5e-web#582 preserves envelope metadata at typed callbacks)
+status: Round 1 concept, in progress — tracked as rpg-dnd5e-web#561 (Board 19, Feature=Game Screen, Team=UI/UX). Broader charter: rpg-dnd5e-web#525 (Game-UX). Beat-timing concept iteration accepted by Kirk 2026-07-22 (§1); concept-stage only. Live promotion rpg-dnd5e-web#581 requires both Platform prerequisites in §9: rpg-api#701 and rpg-dnd5e-web#582.
 ---
 
 # Combat Pacing & Dice
@@ -288,13 +288,19 @@ questions to carry into that log:
    premature until a production reassembler is being built, which is explicitly not
    round one's job. CONTRACT.md should record what the concept actually observes here,
    not assume an answer.
-2. **The dispatch layer currently discards the envelope.** `dispatchEncounterStreamEvent`
-   (`src/api/encounterStreamDispatch.ts`) passes only `payload.value` to each callback —
-   `correlation_id`, `sequence`, and `timestamp` on `EncounterEvent` are dropped before
-   they reach any combat callback. This is a real, observed gap worth logging in
-   CONTRACT.md, but it is **not a round-one prerequisite** — round one plays fixtures,
-   not the live stream, so nothing here blocks the concept. It becomes relevant only when
-   a later round promotes fixtures to a live-stream reassembler.
+2. **The dispatch layer currently discards the envelope — CONFIRMED, now filed as
+   web#582 (§9).** `dispatchEncounterStreamEvent` (`src/api/encounterStreamDispatch.ts`)
+   passes only `payload.value` to each callback — `correlation_id`, `sequence`, and
+   `timestamp` on `EncounterEvent` are dropped before they reach any combat callback. This
+   was a round-one candidate, not a round-one prerequisite — round one played fixtures,
+   not the live stream, so nothing here blocked the concept. It became relevant the moment
+   a later round (web#581) proposed promoting the concept into the live game: Kirk
+   reviewed this exact candidate on 2026-07-22 and confirmed it as a real, scoped need,
+   filed as rpg-dnd5e-web#582 (Board 19, Team=Platform). End-to-end verification then
+   confirmed a separately scoped API prerequisite, rpg-api#701, for correlated effect
+   envelopes (§9). Both issues are required before web#581 can group live attack effects.
+   **§9 records the approved contract**; this item's status here is historical (what
+   round one observed and logged), not the current source of truth.
 3. **Roll-metadata gaps (flag, don't ask yet):**
    - `AttackResolved` already carries `attack_roll`, `attack_bonus`, `target_ac`, `hit`,
      `critical`, `has_advantage/disadvantage` + source refs — enough for the full "20+4
@@ -313,9 +319,11 @@ questions to carry into that log:
    has secret information anyway. Theatrical over already-resolved events is the right
    tool. Stated so Kirk can overrule if a future PvP mode ever needs true-secret rolls.
 
-**No Platform implementation issue gets filed from this list today.** These are
-candidates for the CONTRACT.md log, not requests — filing happens only after Kirk
+**No Platform implementation issue got filed from this list during round one.** These
+were candidates for the CONTRACT.md log, not requests — filing happens only after Kirk
 reviews the concept's evidence and confirms a candidate is a real, scoped need (§6 intro).
+Item 2 has since cleared that gate as web#582, with the separately verified rpg-api#701
+effect-envelope prerequisite (§9); items 1, 3, and 4 remain open candidates, not filed.
 
 ## 7. Round-one `/concepts` scope — following the PR #557 pattern
 
@@ -386,6 +394,135 @@ than read a recommendation (§2).
   reassembler to be built against — round one's fixtures are authored, not streamed, so
   none of that is exercised here.
 
+## 9. Envelope metadata delivery — confirmed Platform prerequisites (rpg-api#701 + web#582)
+
+**Status: approved.** §6 item 2 logged callback-level envelope discard as a round-one
+candidate, not a request. Kirk reviewed it on 2026-07-22 and confirmed web#582 as the
+client-side contract. End-to-end root-cause verification then confirmed that the API also
+drops toolkit-authored correlation/occurrence metadata for effect envelopes, filed
+separately as **rpg-api#701**. The two changes are independent, may land in parallel, and
+both are required before **rpg-dnd5e-web#581** can promote the beat sequencer into
+`EncounterView` and group live attack effects. This section records those production
+prerequisites, not #581's reassembler — see "Scope boundary" below.
+
+**Verified current state.** The proto already carries the fields and the toolkit already
+authors them. The two delivery seams are distinct:
+
+- `EncounterEvent` (`events_pb.ts`) already declares `sequence: bigint` (`int64`,
+  field 1), an optional `timestamp?: Timestamp` (`google.protobuf.Timestamp`, field 2),
+  and `correlationId: string` (field 3) at the envelope level — these are not new
+  fields.
+- `dispatchEncounterStreamEvent` (`src/api/encounterStreamDispatch.ts`) destructures
+  `event.event` and invokes each callback with only `payload.value`; the envelope's three
+  fields are discarded before any callback runs. This is **web#582's** client-only scope.
+- `translateDamageDealtEvent` and `translateConditionAppliedEvent` construct
+  `EntityDamaged`/`StatusApplied` envelopes without their embedded toolkit event's
+  `CorrelationID()` and stamp the handler clock rather than `OccurredAt()`. This is
+  **rpg-api#701's** API-only scope; it projects those existing toolkit values onto the
+  already-defined envelope fields.
+
+**Approved contract shape.** An exported `EncounterEventMetadata` type, defined as a
+`Pick` off the wire's own `EncounterEvent` fields (`Pick<EncounterEvent, 'sequence' |
+'timestamp' | 'correlationId'>` or equivalent) so the metadata type can never drift from
+the wire it is picked from. Every `EncounterStreamOptions` callback — every currently
+handled event case, not only the three combat ones — changes from `(payload) => void` to
+`(payload, metadata: EncounterEventMetadata) => void`. This is additive and
+backward-compatible: a caller's existing single-parameter callback keeps compiling and
+running unchanged (JavaScript ignores an extra call-time argument a function doesn't
+declare), so nothing currently subscribed to the stream breaks the day this lands.
+
+**Values pass through verbatim.** The dispatcher forwards `event.sequence`,
+`event.timestamp`, and `event.correlationId` exactly as received alongside
+`payload.value` — no numeric coercion of `sequence` (stays `bigint`), no `Date`
+conversion of `timestamp` (stays `Timestamp | undefined`), no defaulting an empty
+`correlationId` to something else. No conversion, validation, grouping, dedup,
+completion-marker synthesis, or game-rule interpretation of any kind — that is
+explicitly #581's (or a later reassembler's) job, never this passthrough's.
+
+**Field semantics — verified against `rpg-api`'s translator
+(`internal/handlers/dnd5e/v2/encounter/translate.go`), not assumed:**
+
+- **`correlationId` ties an action's cause/effect chain.** `translateActionResolvedEvent`,
+  `translateAttackResolvedEvent`, and `translateTurnStateChangedEvent` all set the
+  envelope's `CorrelationId` from the toolkit event's own `CorrelationID()` (the shared
+  `eventMeta` accessor) — confirming design.md's existing claim that `TurnStateChanged`
+  can "incidentally close" a declared strike's group: it shares the *same*
+  `correlation_id`, not merely adjacent timing. `TurnStateChanged`'s own doc comment notes
+  the field is legitimately **empty** for turn-start refreshes (Invariant 8) — a real,
+  intentional value this passthrough must forward as-is, not treat as an error.
+  **Confirmed API prerequisite: rpg-api#701.** `DamageDealtEvent` and
+  `ConditionAppliedEvent` embed the same `eventMeta` and therefore already expose
+  `CorrelationID()` and broker-authored `OccurredAt()`, but their current translators
+  (`translateDamageDealtEvent`, `translateConditionAppliedEvent`) do not project either:
+  `EntityDamaged`/`StatusApplied` arrive with an empty `correlation_id` and a handler-clock
+  timestamp. #701 corrects only that API translation, preserving empty IDs unchanged for
+  genuinely uncorrelated events. Without it, #582 correctly forwards metadata but cannot
+  make a client tie hit-only damage or status effects to the responsible attack.
+- **`sequence` is ordering information, not a global-uniqueness guarantee.** Two
+  precedents already in the codebase prove it: `TranslateSnapshot` and
+  `BuildReplayEvents` currently stamp `Sequence: 0` on `SnapshotDelivered` and every
+  replayed `EntityAppeared`/`GeometryRevealed` sent alongside it — several envelopes,
+  one connect, the same `0`. And historically, before rpg-toolkit#765, `rpg-api`
+  deliberately stamped a synthesized `InitiativeRolled` envelope with the **same**
+  `sequence` as its paired `ModeChanged` envelope ("seq is shared with the paired
+  ModeChangedEvent: this envelope is that transition's effect, not an
+  independently-caused event of its own" — since retired; `InitiativeRolled` now carries
+  its own real sequence number). A consumer may use `sequence` to order events it already
+  knows are related; it must never assume a `sequence` value uniquely identifies one
+  event.
+- **`timestamp` is the toolkit's own occurrence time, not `rpg-api`'s wall clock** — for
+  the correlated action/attack events this live feature needs. `translateActionResolvedEvent`'s
+  doc comment is explicit: "the event's game-time `OccurredAt` (Invariant 5, **NOT**
+  rpg-api's wall clock)". #701 applies that same existing toolkit occurrence time to
+  `EntityDamaged`/`StatusApplied`; #582 then forwards the resulting envelope timestamp
+  without changing it. Some non-combat translators, e.g. `ModeChanged`, currently stamp
+  the handler's own `now` instead — a difference neither prerequisite needs to resolve.
+
+**Why every handled callback gets metadata, not only the three combat events.** A
+production consumer needs sequence/correlation/timestamp context around encounter-level
+boundaries that are not combat events themselves: `SnapshotDelivered` (the connect/
+reconnect sync barrier), `ModeChanged`/`InitiativeRolled` (the FREE_ROAM→TURN_BASED
+transition), and `TurnStarted`/`TurnEnded`/`TurnStateChanged` (turn boundaries). A
+discontinuity at any of these is exactly what this design's own "flush pending theater
+immediately" invariant (§"What we know about the wire", Discontinuities) needs to
+detect — scoping metadata to only `ActionResolved`/`AttackResolved`/`EntityDamaged` would
+leave a reassembler blind to the boundary events it must react to. One uniform
+`(payload, metadata)` shape for every case is simpler to implement, test, and reason
+about than a special-cased subset, and it costs nothing extra per call.
+
+**The invariant does not move.** This is a passthrough, not new behavior: authoritative
+HP, economy, and turn state continues to apply immediately on receipt, exactly as stated
+above and unchanged by #582. The change is what the callback signature *carries*, never
+when or how state updates — no new delay, no buffering, no reordering.
+
+**TDD / acceptance shape for web#582 (matches its own "Add dispatch tests" bar):**
+
+- A parameterized test across every currently handled `EncounterEvent` case asserting
+  each registered callback receives the exact `payload.value` it receives today *plus*
+  the exact `{ sequence, timestamp, correlationId }` the fixture envelope carries — one
+  assertion shape, run over the full case list, not one bespoke test per case.
+- Explicit, named-case tests for `ActionResolved`, `AttackResolved`, and `EntityDamaged`
+  — the callback-level combat metadata #582 exposes — each proving `metadata` is present
+  and correct alongside the unchanged payload.
+- An explicit empty-string `correlationId` case (the real, legitimate turn-start-refresh
+  value above) and an explicit `undefined` `timestamp` case (the wire's own optional-field
+  shape) both passed through unmodified — not defaulted, not coerced, not dropped.
+- Run the targeted file first — `npm run test:run -- src/api/encounterStreamDispatch.test.ts`
+  — then the full `npm run ci-check` before any PR, matching this repo's own non-negotiable
+  gate (plan.md's Global Constraints).
+
+**Dependency and scope boundary.** #582 is a client-only passthrough: it changes typed
+web callbacks to carry envelope metadata and remains independently landable; it contains
+no `rpg-api` code. #701 is an API-only translator correction: it projects toolkit-authored
+`CorrelationID()`/`OccurredAt()` onto `EntityDamaged`/`StatusApplied` envelopes and contains
+no web callback code. Neither issue implements reassembly, completion, buffering, or
+live-route presentation. They may be implemented and merged in parallel, but **#581
+requires both** before live grouping: #701 supplies correct effect-envelope metadata and
+#582 delivers it to the typed callback boundary. Round one's `/concepts` bench (§7) remains
+fixture-driven and unaffected by either landing. §6 item 1 (correlation/cardinality/
+completeness for a real reassembler) remains open and undecided — the two prerequisites
+deliver raw fields; neither decides how #581 groups or completes them.
+
 ## Decided this revision
 
 - **Click-to-roll is the default** for your own turn, with a short auto-timeout so a
@@ -406,10 +543,12 @@ than read a recommendation (§2).
 
 ## Deferred beyond round one
 
-- Correlation/cardinality/completeness contract work and any resulting Platform issue
-  (§6) — gated on Kirk's review of CONTRACT.md confirming a concrete requirement.
+- Correlation/cardinality/completeness contract work for a real reassembler (§6 item 1)
+  — still open, still undecided; unlike §6 item 2 (§9, web#582), this candidate has not
+  cleared Kirk's review gate. Any resulting Platform issue is gated on that review.
 - Live-stream reassembly, reconnect/snapshot-flush behavior (§"What we know about the
-  wire", §8).
+  wire", §8) — rpg-api#701 and web#582 (§9) together deliver the raw effect-envelope and
+  callback metadata a reassembler would need; neither builds the reassembler.
 - Damage-dice tumble, discarded-advantage-die visual (§6.3).
 - 3D physics dice (option C) and any Assets-implemented new art (§2, §5).
 - The fuller initiative-tracker hand-off animation (§1, §3).
@@ -419,7 +558,9 @@ than read a recommendation (§2).
 - Wire contract: `rpg-api-protos` `dnd5e/api/v1alpha2/encounter/events.proto`
   (`EncounterEvent` envelope, `ActionResolved`, `AttackResolved`, `EntityDamaged`,
   `StatusApplied`) · web `src/api/encounterStreamDispatch.ts` (the envelope-discarding
-  dispatch, §6.2)
+  dispatch, confirmed and filed as web#582 — §9) · `rpg-api`
+  `internal/handlers/dnd5e/v2/encounter/translate.go` (the envelope-field source of truth
+  §9 verifies against: `Sequence`/`Timestamp`/`CorrelationId` per translator)
 - Pattern precedent: `src/concepts/equipment/` (rpg-dnd5e-web#557) — fixture-first
   components, intent/event inspector, `CONTRACT.md` gap-log convention this round
   follows
@@ -430,5 +571,8 @@ than read a recommendation (§2).
 - Prototype home: web `/concepts` route (`src/concepts/combat-pacing/`), fixture-first
   per `docs/how-to/concepts-route.md`
 - Tracking: rpg-dnd5e-web#561 (Board 19, Feature=Game Screen, Team=UI/UX). Broader
-  charter: rpg-dnd5e-web#525 (Game-UX). North-star: `ideas/encounter/v1alpha2/design.md`
+  charter: rpg-dnd5e-web#525 (Game-UX). North-star: `ideas/encounter/v1alpha2/design.md`.
+  Live promotion: rpg-dnd5e-web#581 (requires both rpg-api#701 and rpg-dnd5e-web#582).
+  Platform prerequisites: rpg-api#701 (effect-envelope projection) and rpg-dnd5e-web#582
+  (callback metadata passthrough; §9).
 </content>
