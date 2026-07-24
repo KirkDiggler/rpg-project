@@ -1,7 +1,7 @@
 # Unarmed Character Animation Promotion
 
 **Date:** 2026-07-23  
-**Status:** Draft  
+**Status:** Approved
 **Scope:** Replace the four canonical standing class GLBs with approved, intentionally
 unarmed models and promote their approved idle/walk animation checkpoints.  
 **Primary repository:** `rpg-game-assets`
@@ -86,29 +86,34 @@ Every base and color variant preserves the established Root wrapper exactly:
    affected class's `A`/`B`/`C`/`D` portraits in staging and repeat this same contact-sheet
    gate for the regenerated portraits.
 3. Stage the updated characters manifest, weapon metadata, README/relevant asset docs, mesh
-   stats report, animation QA report, and all required evidence with the staged GLBs and any
-   regenerated portraits.
+   stats report, animation QA report, and any regenerated portraits with the staged GLBs.
 4. Validate the complete staged set for all four classes and every affected artifact.
-5. Promote the complete validated set as one unit: all four classes' `A`/`B`/`C`/`D` standing
-   GLBs, any regenerated portraits, manifest and metadata, README/docs, mesh stats report,
-   animation QA report, and evidence. No class or artifact may be promoted separately.
+5. Publish the complete validated set as one release commit in an isolated `rpg-game-assets`
+   worktree: all four classes' `A`/`B`/`C`/`D` standing GLBs, any regenerated portraits,
+   manifest and metadata, README/docs, mesh stats report, and animation QA report. No class or
+   artifact may be committed separately. Public screenshot evidence is a separately tracked
+   review artifact and is not part of this private asset release transaction.
 6. Sync assets and verify the consuming web client without changing its resolver.
 
-No canonical overwrite is permitted before complete-set staging validation completes. A
-validation failure leaves the complete canonical set untouched, preserves staging artifacts
-for diagnosis, and returns to the relevant approved checkpoint/export step. If a
-post-promotion regression is found, restore the complete previous set as one unit: every
-class's `A`/`B`/`C`/`D` standing GLBs, portraits, manifest and metadata, README/docs, mesh
-stats report, animation QA report, and evidence; then re-run asset sync and client
-verification. No mixed old/new class set, portraits, generated reports, or metadata is
-allowed.
+The publication boundary is the versioned, committed canonical state, not individual filesystem
+replacements. Build and validate in an isolated worktree created at the recorded baseline commit;
+nothing is synced, pushed, or consumed before the one complete release commit exists. A crash or
+validation failure before that commit leaves no published mixed state: discard the isolated
+worktree and recreate it from the baseline commit. Release metadata records that baseline commit
+SHA and the release commit SHA. If a post-publication regression is found, open a new rollback
+issue/PR and use `git revert <release-commit>` to restore the complete tracked release in one new
+rollback commit; then re-run asset sync and client verification. Temporary staging backups are
+diagnostic only and are never a rollback mechanism.
 
 ## Validation And Evidence
 
 For every staged base and every A/B/C/D runtime GLB, establish:
 
-- Exactly one armature/body assembly and no weapon mesh, weapon attachment, or visible
-  weapon geometry.
+- Blender pre-export validation finds exactly one target armature and exactly one expected body
+  mesh object, with no other mesh object. It captures that body mesh's topology/material stats.
+  Post-export glTF validation finds exactly one mesh-bearing node/mesh with the exact configured
+  body name and matching captured topology/material stats; no additional mesh-bearing node is
+  permitted. Name checks are supplementary and never proof of weapon absence.
 - The exact four-clip set above, no extra clips, and the preserved idle metadata order.
 - `Idle_Relaxed` is the approved replacement; the two non-relaxed idle clips retain
   their existing names and keyframe data.
@@ -133,9 +138,10 @@ For every staged base and every A/B/C/D runtime GLB, establish:
 
 ## Repositories Affected
 
-`rpg-game-assets` is the only expected tracked-code/content repository: canonical GLBs,
-color variants, portraits only when necessary, manifest metadata, documentation, generated
-mesh-stat and animation-QA reports, and evidence live there.
+`rpg-game-assets` is the only expected product tracked-code/content repository: canonical GLBs,
+color variants, portraits only when necessary, manifest metadata, documentation, and generated
+mesh-stat and animation-QA reports live there. Public screenshot evidence follows the existing
+playtest-evidence convention but is outside the private asset release transaction.
 
 `rpg-dnd5e-web` participates in asset-sync and actual-client verification only. No web
 resolver or tracked web-code change is expected. If verification finds a consumer defect,
