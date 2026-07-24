@@ -3150,7 +3150,7 @@ function makeEvent<K extends string, V>(
 }
 ```
 
-Replace the 21 individual route-count tests with this complete case-to-callback table. Keep the existing payload-detail tests (`damageBreakdown`, attack miss, input prompt) and retain the shared-sequence, unknown-case, and no-callback tests below it.
+Replace the individual route-count tests with this complete case-to-callback table. Keep the existing payload-detail tests (`damageBreakdown`, attack miss, input prompt) and retain the shared-sequence, unknown-case, and no-callback tests below it.
 
 ```ts
 const routedCases = [
@@ -3199,18 +3199,34 @@ describe.each(routedCases)('%s', (caseName, callbackName, payload) => {
 Add named combat-chain and absent-value tests:
 
 ```ts
-it('passes the same correlation metadata to ActionResolved, AttackResolved, and EntityDamaged', () => {
+it('passes exact per-envelope metadata with one shared correlation to ActionResolved, AttackResolved, and EntityDamaged', () => {
   const action = vi.fn();
   const attack = vi.fn();
   const damage = vi.fn();
-  const metadata: EncounterEventMetadata = { sequence: 91n, timestamp: undefined, correlationId: 'corr-attack-chain' };
+  const actionMetadata: EncounterEventMetadata = {
+    sequence: 91n,
+    timestamp: { seconds: 1721815200n, nanos: 100 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
+  const attackMetadata: EncounterEventMetadata = {
+    sequence: 92n,
+    timestamp: { seconds: 1721815201n, nanos: 200 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
+  const damageMetadata: EncounterEventMetadata = {
+    sequence: 93n,
+    timestamp: { seconds: 1721815202n, nanos: 300 } as EncounterEventMetadata['timestamp'],
+    correlationId: 'corr-attack-chain',
+  };
   const options: EncounterStreamOptions = { onActionResolved: action, onAttackResolved: attack, onEntityDamaged: damage };
-  dispatchEncounterStreamEvent(makeEvent('actionResolved', { actorEntityId: 'a' }, metadata), options);
-  dispatchEncounterStreamEvent(makeEvent('attackResolved', { attackerEntityId: 'a' }, metadata), options);
-  dispatchEncounterStreamEvent(makeEvent('entityDamaged', { entityId: 'g', amount: 7 }, metadata), options);
-  expect(action.mock.calls[0][1]).toBe(metadata);
-  expect(attack.mock.calls[0][1]).toBe(metadata);
-  expect(damage.mock.calls[0][1]).toBe(metadata);
+  dispatchEncounterStreamEvent(makeEvent('actionResolved', { actorEntityId: 'a' }, actionMetadata), options);
+  dispatchEncounterStreamEvent(makeEvent('attackResolved', { attackerEntityId: 'a' }, attackMetadata), options);
+  dispatchEncounterStreamEvent(makeEvent('entityDamaged', { entityId: 'g', amount: 7 }, damageMetadata), options);
+  expect(action.mock.calls[0][1]).toEqual(actionMetadata);
+  expect(attack.mock.calls[0][1]).toEqual(attackMetadata);
+  expect(damage.mock.calls[0][1]).toEqual(damageMetadata);
+  expect(action.mock.calls[0][1].correlationId).toBe(attack.mock.calls[0][1].correlationId);
+  expect(attack.mock.calls[0][1].correlationId).toBe(damage.mock.calls[0][1].correlationId);
 });
 
 it('passes empty correlationId and undefined timestamp through unchanged', () => {
@@ -3227,7 +3243,7 @@ it('passes empty correlationId and undefined timestamp through unchanged', () =>
 npm run test:run -- src/api/encounterStreamDispatch.test.ts
 ```
 
-Expected: FAIL because every callback currently receives one argument, so the parameterized assertions requiring the exact second argument fail.
+Expected: FAIL because every callback currently receives one argument; the parameterized, combat-chain, and absent-value assertions requiring the exact second argument fail.
 
 - [ ] **Step 4: Implement the metadata type, callback signature, and one-object dispatch in `src/api/encounterStreamDispatch.ts`**
 
@@ -3386,7 +3402,7 @@ npm run test:run -- src/api/encounterStreamDispatch.test.ts
 npm run ci-check
 ```
 
-Expected: the parameterized metadata tests, retained shared-sequence/unknown/no-callback tests, and all existing tests PASS; then the complete web CI gate passes.
+Expected: the parameterized metadata tests, the distinct-sequence shared-correlation combat-chain test, retained shared-sequence/unknown/no-callback tests, and all existing tests PASS; then the complete web CI gate passes.
 
 - [ ] **Step 7: Commit and open the single web PR**
 
@@ -3411,7 +3427,7 @@ Expected: one `rpg-dnd5e-web#582` PR contains only web callback passthrough, its
 
 ## Self-Review Against `design.md` Section 9
 
-- **Spec coverage:** Task A maps the required toolkit `CorrelationID()` and `OccurredAt()` to both effect-envelope translators, proves fixed timestamp/correlation values, preserves an empty correlation, and proves the existing declared-hit action/attack/damage chain. Task B defines the exact `Pick` metadata type and reusable generic handler, updates all 22 currently handled callbacks, builds one object per envelope, forwards unchanged values, tests every case plus combat correlation and absent values, retains the required dispatcher regressions, and updates the architecture date/documentation. The coordination gate states parallel independence, both-prerequisite dependency, distinct PRs, Copilot handling, independent review, and Kirk-only merges.
+- **Spec coverage:** Task A maps the required toolkit `CorrelationID()` and `OccurredAt()` to both effect-envelope translators, proves fixed timestamp/correlation values, preserves an empty correlation, and proves the existing declared-hit action/attack/damage chain. Task B defines the exact `Pick` metadata type and reusable generic handler, updates all 22 currently handled callbacks, builds one object per envelope, forwards unchanged values, tests every case plus a same-correlation combat chain with distinct per-envelope sequences and metadata values, retains the required dispatcher regressions, and updates the architecture date/documentation. The coordination gate states parallel independence, both-prerequisite dependency, distinct PRs, Copilot handling, independent review, and Kirk-only merges.
 - **Completeness scan:** This appended section names concrete files, branches, commits, commands, test names, and all 22 dispatcher cases; its code-change steps provide literal signatures, field assignments, and case arms.
 - **Type and signature consistency:** #701 retains `TranslateEvent(..., now)` and removes `now` only from the two private translators that no longer use it. #582's `EncounterEventMetadata` is `Pick<EncounterEvent, 'sequence' | 'timestamp' | 'correlationId'>`; every option member uses `EncounterStreamHandler<Payload>` and every switch arm receives the same `metadata` object as its second argument.
 - **File and command accuracy:** The API dispatch currently calls the two affected translators with `now`; the web `origin/main` dispatcher and test file currently contain the stated 22 cases, and the web architecture document currently has the specified frontmatter path. The exact gates are `go test ./internal/handlers/dnd5e/v2/encounter -run 'TestTranslateSuite/(TestTranslateEvent_(DamageDealtEvent_ProjectsToolkitMetadata|ConditionAppliedEvent_ProjectsToolkitMetadata|DamageDealtEvent_PreservesEmptyCorrelationID|DeclaredHitChain_SharesToolkitCorrelationID))' -count=1`, `make ci-check`, `npm run test:run -- src/api/encounterStreamDispatch.test.ts`, and `npm run ci-check`.
