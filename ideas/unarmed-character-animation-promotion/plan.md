@@ -42,8 +42,7 @@ RUN_ID="$(git rev-parse --short HEAD)-unarmed-v1"
 EVIDENCE_RUN="$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/$RUN_ID"
 test ! -e "$EVIDENCE_RUN" && mkdir -p "$EVIDENCE_RUN"
 node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_RUN/portraits.png" --sha-out "$EVIDENCE_RUN/portraits.sha256"
-# Produce, copy, count, hash, commit, push, and independently approve the 32 animation PNG/GIF pairs as Task 5 specifies.
-python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-run "$EVIDENCE_RUN" --evidence-commit "$EVIDENCE_COMMIT" --evidence-viewed "$EVIDENCE_RUN/viewed-statement.txt"
+# Task 4 publishes all 32 animation PNG/GIF pairs and obtains an independent EVIDENCE REVIEW before validation.
 python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
 git add --pathspec-from-file=tmp/unarmed-v1/release/pathspec.nul --pathspec-file-nul
 python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-root tmp/unarmed-v1
@@ -161,7 +160,22 @@ node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-
 
 `EVIDENCE_WT` is already created, branch-verified, and clean-verified in the top-level journey before this producer runs. Expected: one labelled 4x4 PNG and SHA file. Independent pass statement is exactly: `I viewed portraits.png and confirm no weapon or weapon fragment is visible in any of its 16 labelled frames.` If false for class X, rerun portrait renderer with `--classes X`, rebuild sheet, obtain a new statement, then run the full evidence sequence and validation. Commit `feat: render reproducible character portrait evidence`.
 
-### Task 4: Stage, Validate, Apply, and Verify Index
+### Task 4: Publish Evidence and Obtain Independent EVIDENCE REVIEW
+
+- [ ] Implementer runs the portrait producer and the 32-artifact multi-angle command, copies current-run files to fresh `$EVIDENCE_RUN`, verifies exactly 32 PNG plus 32 GIF, hashes them, commits, and pushes `evidence/asset-pipeline-wave1`. Capture only after this push: `EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"`.
+- [ ] Controller dispatches an independent reviewer. The reviewer views portraits plus every class (`fighter`, `barbarian`, `monk`, `rogue`), clip (`Idle_Relaxed`, `Walk_Forward`), and angle (`0`, `45`, `90`, `180`) artifact and posts this exact machine-readable comment on the future private `rpg-game-assets` PR:
+
+```text
+EVIDENCE REVIEW
+evidenceCommit: <EVIDENCE_COMMIT>
+portraits: PASS (16 viewed)
+animationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)
+— asset-pipeline agent, on behalf of KirkDiggler
+```
+
+- [ ] Record `EVIDENCE_REVIEW_URL` and `EVIDENCE_REVIEW_ID` from that GitHub comment. Implement `validate_evidence_review(evidence_commit, comment_url) -> dict` using `gh api repos/KirkDiggler/rpg-game-assets/issues/comments/<id>`; require exact SHA, PASS values, 16 portraits, 64 artifacts/classes/clips/angles, and signature. Fixture its API JSON in `scripts/test_character_promotion_validation.py`; the real release calls `gh api` and records SHA, URL, ID, and verdict in metadata.
+
+### Task 5: Stage, Validate, Apply, and Verify Index
 
 **Files:** Create/modify `scripts/promote_character_checkpoints.py`, `scripts/test_promote_character_checkpoints.py`.
 
@@ -197,7 +211,7 @@ def test_manifest_and_docs_contract(self):
 
 Run: `python3 scripts/test_character_promotion_validation.py` Expected: FAIL before `validate_manifest_docs` exists, then PASS. The validator requires all four `bakedIntoModel` values false; exact configured `idleClips` order; baseline-equal standalone `weapon.file`, socket blocks, and `weaponsCatalog`; and no baked-standing-weapon claim in README or manifest comments. It permits only intended manifest fields in the semantic manifest diff.
 
-- [ ] **Step 4: Implement flow.** `stage` builds complete `stage/release` repo-shaped tree and real staged fixture before Task 3 consumes portraits. Portrait gate runs after stage and before `validate`. `validate` performs semantic constrained diff, retained fingerprint, A/B/C/D parity, one-mesh, manifest/docs hard gate, staged mesh stats `--repo-root stage/release`, parsed changed-path animation PASS gates, then writes inventory metadata. `apply` checks clean/baseline, copies validated paths only, and emits pathspec.nul. `verify-index` compares staged set and staged blob SHA-256s.
+- [ ] **Step 4: Implement flow.** `stage` builds complete `stage/release`; Task 3 produces portraits and Task 4 publishes/reviews all evidence before this task invokes validation. Run: `python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-commit "$EVIDENCE_COMMIT" --evidence-review-url "$EVIDENCE_REVIEW_URL"`. Validation calls `validate_evidence_review`, then performs semantic constrained diff, retained fingerprint, A/B/C/D parity, one-mesh, manifest/docs hard gate, mesh and animation gates, and writes metadata. `apply` checks clean/baseline, copies validated paths only, and emits pathspec.nul. `verify-index` compares staged set and staged blob SHA-256s.
 
 - [ ] **Step 5: Run full flow.** Execute the CLI Contract commands in order, with inventory-driven `git add` before `verify-index`. Expected: all commands exit 0; no canonical edit occurs before `apply`; index exactly matches metadata after `apply`.
 
@@ -212,7 +226,7 @@ def test_release_commit_reverts_complete_inventory(self):
 
 Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: PASS. Commit `feat: materialize and verify character promotion releases`.
 
-### Task 5: Evidence, Release, and Client Gate
+### Task 6: Release and Client Gate
 
 - [ ] Run exact multi-angle commands:
 
@@ -222,7 +236,7 @@ mkdir -p "$EVIDENCE_RUN/animation"
 cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_RUN/animation/"
 test "$(find "$EVIDENCE_RUN/animation" -name '*.png' | wc -l)" -eq 32 && test "$(find "$EVIDENCE_RUN/animation" -name '*.gif' | wc -l)" -eq 32
 (cd "$EVIDENCE_WT" && sha256sum "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation/* > "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation.sha256 && git add "${EVIDENCE_RUN#"$EVIDENCE_WT"}" && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
-EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"; printf '%s\n' 'I viewed portraits.png and all 32 labelled animation PNG/GIF pairs; no weapon, fragment, skinning, clipping, or pose defect is visible.' > "$EVIDENCE_RUN/viewed-statement.txt"; git -C "$EVIDENCE_WT" add "${EVIDENCE_RUN#"$EVIDENCE_WT"}/viewed-statement.txt" && git -C "$EVIDENCE_WT" commit -m "evidence: record unarmed animation review" && git -C "$EVIDENCE_WT" push origin evidence/asset-pipeline-wave1
+EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"
 ```
 
 - [ ] Independent gate reruns Tasks 2-4, views portrait/multi-angle files, validates `git show --name-only <releaseCommit>` against metadata, and posts `GATE REVIEW`.
