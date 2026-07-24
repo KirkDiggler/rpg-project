@@ -40,6 +40,16 @@ approved `Walk_Forward`. This supersedes prior weapon-bearing or baked-weapon as
 these four standing model outputs. Standalone weapon assets remain available; future equipment
 swapping remains deferred. This decision governs any conflict in this promotion.
 
+**2026-07-24:** Kirk chose semantic retained-idle parity with a maximum absolute evaluated
+pose-bone `matrix_basis` element delta of `1e-4`, rather than exact serialized glTF animation
+accessor float equality. Blender 5 import/copy/export preserves the distinct actions, exact clip,
+bone/channel-path, interpolation, and source-keyframe-time coverage, and evaluated poses; measured
+normal GLB round-trip drift nevertheless reaches `6.6e-05`. The retained gate therefore evaluates
+every retained source keyframe time and reports the maximum observed delta. A deliberate mutation
+greater than `1e-4` must fail. This is distinct from generated A/B/C/D parity: where `swap_atlas.py`
+preserves actions through the same pipeline, decoded action data across those generated variants
+must remain exact.
+
 ## Runtime Contract
 
 Each promoted base GLB contains exactly four clips: its current three manifest idle
@@ -127,12 +137,22 @@ For every staged base and every A/B/C/D runtime GLB, establish:
   permitted. Name checks are supplementary and never proof of weapon absence.
 - The exact four-clip set above, no extra clips, and the preserved idle metadata order.
 - `Idle_Relaxed` is the approved replacement; the two non-relaxed idle clips retain
-  their existing names and keyframe data.
-- Identical animation clip names and keyframe counts across A/B/C/D for the same class.
+  their existing semantics. For every retained clip, require exact clip name, target bone/channel
+  path coverage, interpolation modes, and source keyframe time coverage. At every retained source
+  keyframe time, evaluate every retained pose bone's `matrix_basis`; the maximum absolute
+  matrix-element delta from baseline must be at most `1e-4`, and the validation report must record
+  that maximum. Do not require raw serialized glTF accessor/value equality between the baseline
+  and its Blender 5 round-trip output.
+- Generated A/B/C/D variants must have exact clip names, target bone/channel paths,
+  interpolation modes, keyframe times, and decoded animation accessor values when `swap_atlas.py`
+  has preserved actions through the same pipeline. This generated-variant parity is separate from
+  the baseline-to-new Blender round-trip retained-idle tolerance.
 - The Root wrapper node, float32 scale, glTF quaternion, one-child identity structure,
   exact class assembly name, and source-derived child ownership match the runtime contract.
-- Direct glTF JSON comparison against each current canonical class file permits only weapon-node
-  removal and animation payload changes; all other differences fail validation.
+- Structural glTF JSON comparison against each current canonical class file permits only
+  weapon-node removal and approved animation changes; all other differences fail validation. It
+  must not impose byte-exact baseline animation accessor/value equality on retained actions; the
+  retained-action gate above is authoritative for that comparison.
 - `scripts/build_mesh_stats.py` and its `PROPOSED_BUDGETS` are authoritative. It must exit 0
   and emit no new warning for any changed standing model compared with the pre-promotion mesh
   stats report.
@@ -183,12 +203,20 @@ without a product need. It is rejected because the existing class-specific disti
 idles are shipped, approved identity; only `Idle_Relaxed` and `Walk_Forward` are in the
 approved promotion boundary.
 
+### GLB chunk surgery for byte-exact retained accessors
+
+Preserving baseline animation chunks byte-for-byte would require a different GLB chunk-surgery
+architecture instead of the Blender 5 import/copy/export workflow. It is rejected because the
+measured `6.6e-05` round-trip matrix drift is within the approved `1e-4` semantic tolerance while
+the current workflow already preserves action identity, structural coverage, and evaluated poses.
+
 ## Success Criteria
 
 The work succeeds only when all four canonical standing classes and their A/B/C/D variants
 are unarmed, meet the exact Root, assembly-name, glTF-comparison, and four-clip contracts,
-preserve the manifest's idle metadata and class-specific idles, and have complete staged-set
-validation evidence before one-unit canonical promotion. Weapon metadata accurately says
+preserve the manifest's idle metadata and class-specific idles under the retained semantic-parity
+gate, and have complete staged-set validation evidence before one-unit canonical promotion.
+Weapon metadata accurately says
 `bakedIntoModel: false`; every retained or regenerated portrait passes the independent
 weapon-free contact-sheet gate; authoritative mesh-stat and animation-QA gates pass; and
 asset sync, web tests/CI, and actual-client idle/walk transition verification all pass
