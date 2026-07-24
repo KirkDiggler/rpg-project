@@ -1,9 +1,64 @@
 # Dungeon Visual Fidelity — why the live game doesn't look like the reference
 
-**Status:** diagnosis complete, implementation not started
+**Status:** ⚠️ **LARGELY SUPERSEDED — read this section first**
 **Date:** 2026-07-24
 **Goal:** Make the live encounter route (`EncounterView`/`EncounterMap`) render the
 crypt the way the playtest harness already does.
+
+## ⚠️ CORRECTION (2026-07-24, same day, later)
+
+**Most of the "root causes" below were already fixed and merged. The real problem
+was that every local checkout was behind `origin/main`.** The diagnosis was
+performed against stale source and reached confident, wrong conclusions.
+
+Actual staleness found:
+
+| Repo | Behind `origin/main` | Contained |
+|---|---|---|
+| `rpg-dnd5e-web` | 4 commits | #585 consume server theme on real route, #587 crypt brightness + live dial, #588 brazier/torch light-anchor glow |
+| `rpg-api` | 8 commits | #702 project revealed static obstacles, #703 project locked door state, #705 perimeter edge walls, #708 consume toolkit crypt dressing |
+| `rpg-toolkit` | 6 commits | — |
+| `rpg-project` | behind | the merged `ideas/dungeon-authoring/` design (PR #117) |
+| `node_modules` protos | stale vs lockfile | `Space.theme`, `WALL_KIND_DOOR_LOCKED` |
+
+Corrections to the causes below:
+
+- **Cause 1 (EncounterMap drops theme/lighting props) — FIXED.** `EncounterMap.tsx`
+  on main passes `spaceTheme`, `ambientIntensity`, `directionalIntensity`, and
+  `moodPointLights` (`:333-354`). Merged in web #585/#587/#588.
+- **Cause 2 (`obstacle_ref` never written) — FIXED.** `project.go` on main builds
+  `obstacleEntity()` with `ObstacleRef: obstacleRefFor(obstacle.Ref)`. Merged in
+  api #702.
+- **The "contract trap" warning was WRONG.** `obstacleRefFor` already splits
+  `"dnd5e:props:pillar"` into `{Module:"dnd5e", Type:"props", Id:"pillar"}` — the
+  bare tail, exactly as the client wants, with tests asserting it. There is no
+  double-prefix hazard. Disregard that warning.
+- **Cause 4 (walls read as "rubble") — FIXED by the same work.**
+  `SyntyHexWall.tsx:308` selects the crypt variant weights when
+  `spaceTheme === 'crypt'`, so every wall in a themed space uses the plain-heavy
+  10:2:1 mix. The weighting analysis below is still accurate as *background*, but
+  it is no longer an open defect.
+- **The locked-door prompt soft-lock** needs re-verification against api #703
+  (project locked door state), which may already address it.
+
+**After syncing all repos and rebuilding, local rendering matches deployed.**
+
+**The durable lesson is the inverse of the original premise.** The team believed
+they were "deploying to see miss after miss." In fact *deployed was ahead of
+local* — the local workspace was the stale one, across four repos plus
+`node_modules`. Before diagnosing any visual gap, **verify every checkout is
+current**:
+
+```bash
+for r in rpg-toolkit rpg-api rpg-dnd5e-web rpg-project rpg-api-protos; do
+  (cd "$r" && git fetch -q origin \
+    && echo "$r behind by $(git rev-list --count HEAD..origin/main)")
+done
+```
+
+What genuinely remains open is documented in "Still open after the correction"
+near the end. Everything between here and there is preserved as the original
+(largely superseded) analysis.
 
 ## The short version
 
@@ -342,6 +397,44 @@ reinstalled (`node node_modules/playwright/cli.js install chromium`).
 - **Decor as entities or as a separate wire concept?** Decor doesn't block
   movement or LOS, so projecting it through the same LOS-gated entity list as
   monsters may be wrong — worth deciding before (2) hardens the shape.
+
+## Still open after the correction
+
+Verified against synced `origin/main` on all repos, 2026-07-24:
+
+1. **Decor density.** The generator places obstacles as collision geometry;
+   api #708 ("consume toolkit crypt dressing") may have widened this. Re-count
+   distinct prop refs in a *freshly generated* encounter before assuming the
+   23-of-29-unused figure below still holds — that count was taken against stale
+   code.
+2. **Camera framing.** Untouched by any of the merged work. The live route still
+   sits closer and lower than the reference's pulled-back diorama.
+3. **Locked-door prompt recovery.** `ProjectFor` re-surfacing
+   `Data.PendingPrompts[viewer]` on reconnect — re-verify against api #703 first.
+4. **Authored room layout** — the live thread. See below; this is where
+   `ideas/dungeon-authoring/` takes over.
+
+## Relationship to `ideas/dungeon-authoring/`
+
+That design (PR #117, **merged**; implementation plan PR #121, open) is the
+answer to "let us lay out the room." Kirk's framing, 2026-07-24: *"when we can
+make something we control look right, we can look to make pieces of it
+procedural."* — author first, proceduralize what's proven.
+
+It collapses a dungeon definition (today scattered across `CryptDungeonParams` in
+the toolkit, a hardcoded monster table in rpg-api, and a key resolver) into one
+YAML file, with the schema and compiler in the toolkit and content files in
+rpg-api. Its acceptance case is authoring a 4-room crypt without writing Go.
+
+Two notes connecting it to this document:
+
+- It asserts **"protos / rpg-dnd5e-web: no changes"** because the wire already
+  carries zones/archetypes, theme, walls, obstacles and monsters. Given api #702
+  and web #585 are merged, that now holds — it did not when this doc was first
+  written against stale checkouts.
+- Its v1 explicitly defers hand-drawn room layouts (`rooms[].layout` is a reserved
+  seat). So "the walls stair-step because generated rooms are organic blobs"
+  remains true after v1 — v1 fixes *what is in* each room, not its silhouette.
 
 ## Anchors
 
