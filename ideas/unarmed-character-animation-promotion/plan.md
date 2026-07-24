@@ -10,8 +10,10 @@
 
 ## Global Constraints
 
+- Authoritative tracking is **rpg-project issue #119** (`https://github.com/KirkDiggler/rpg-project/issues/119`) and **rpg-project design PR #120** (`https://github.com/KirkDiggler/rpg-project/pull/120`). Commit `82d4fc5` references issue #119 in its subject; PR #120 carries design/plan review.
+
 - Implement later in one private `rpg-game-assets` issue/Board 19 Team `Assets` item/branch/PR referencing **rpg-project issue #119** and **rpg-project PR #120**.
-- Config contains only logical checkpoint/atlas filenames. Require explicit `--checkpoint-dir` and `--atlas-dir` (or equivalent exported variables) before work begins.
+- Config contains only logical checkpoint/atlas filenames. Require explicit `--checkpoint-root` and `--atlas-root` before work begins.
 - Baseline worktree must be clean and equal `baselineCommit`; pre-commit failures discard/rebuild it. The one release commit is publication. Post-publication rollback is a new PR running `git revert <releaseCommit>`.
 - Metadata records `baselineCommit`, `workflowVersion`, config SHA-256, portrait-evidence SHA-256, and gate results. Its `inventory` hashes every release artifact except metadata itself; staged paths must equal `inventory.paths UNION {metadataPath}`. It never records its own unknown release commit SHA; that SHA is recorded in the PR/gate/rollback issue.
 - Exact clips, ordered `idleClips`, unarmed `bakedIntoModel: false`, Root transforms, assembly names, no downed edits, standalone weapon retention, mesh/animation gates, and no web product changes are exactly as binding design.md states.
@@ -31,17 +33,21 @@
 ## CLI Contract
 
 ```bash
-python3 scripts/promote_character_checkpoints.py stage --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --checkpoint-dir "$SYNTY_APPROVED_CHECKPOINT_DIR" --atlas-dir "$SYNTY_FANTASY_RIVALS_TEXTURE_DIR" --stage-dir tmp/unarmed-v1
-node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out /home/kirk/game-dev/rpg-dnd5e-web/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png --sha-out /home/kirk/game-dev/rpg-dnd5e-web/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256
-python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-dir tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha /home/kirk/game-dev/rpg-dnd5e-web/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256
+EVIDENCE_WT=/tmp/opencode/evidence-unarmed
+git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add "$EVIDENCE_WT" evidence/asset-pipeline-wave1
+test "$(git -C "$EVIDENCE_WT" branch --show-current)" = evidence/asset-pipeline-wave1 && test -z "$(git -C "$EVIDENCE_WT" status --porcelain)"
+python3 scripts/promote_character_checkpoints.py stage --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --checkpoint-root "$SYNTY_APPROVED_CHECKPOINT_DIR" --atlas-root "$SYNTY_FANTASY_RIVALS_TEXTURE_DIR" --stage-root tmp/unarmed-v1
+npm install --prefix scripts --no-save --no-package-lock sharp omggif && git status --short
+node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
+python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
 python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-dir tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
-git add README.md scripts harness/models/synty/characters/manifest.json harness/models/synty/characters/{fighter,barbarian,monk,rogue}.glb harness/models/synty/characters/{fighter,barbarian,monk,rogue}-{b,c,d}.glb harness/models/synty/mesh-stats.json harness/animation-qa
+git add --pathspec-from-file=tmp/unarmed-v1/release/pathspec.nul --pathspec-file-nul
 python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-dir tmp/unarmed-v1
 git diff --cached --check && git diff --cached --stat
 git commit -m "asset: promote unarmed character animation checkpoints"
 ```
 
-`apply` refuses non-clean worktrees, a HEAD different from metadata `baselineCommit`, missing/changed validated release files, or an inventory path outside the repo. It loops over every validated `inventory.paths`, including conditional portraits, copies each release path to its canonical relative path, and writes tracked `harness/models/synty/characters/unarmed-promotion-v1.json`. `verify-index` validates metadata schema/config/evidence/gates, requires `git diff --cached --name-only` equal `inventory.paths UNION {metadataPath}`, obtains each inventory staged blob with `git show :<path>`, and compares SHA-256; it never hashes metadata recursively.
+`apply` refuses non-clean worktrees, a HEAD different from metadata `baselineCommit`, missing/changed validated release files, or an inventory path outside the repo. It loops over every validated `inventory.paths`, including conditional portraits, copies each release path to its canonical relative path, writes tracked metadata, and writes NUL-delimited `pathspec.nul` containing sorted `inventory.paths UNION {metadataPath}`. `verify-index` validates metadata schema/config/evidence/gates, requires `git diff --cached --name-only -z` equal that set, obtains each inventory staged blob with `git show :<path>`, and compares SHA-256; it never hashes metadata recursively.
 
 ```json
 {"schemaVersion":1,"workflowVersion":"unarmed-promotion-v1","metadataPath":"harness/models/synty/characters/unarmed-promotion-v1.json","root":{"name":"Root","scale":[0.009999999776482582,0.009999999776482582,0.009999999776482582],"rotation":[0.70710688829422,0,0,0.7071066498756409]},"atlases":{"b":"FantasyRivals_Texture_01_B.png","c":"FantasyRivals_Texture_01_C.png","d":"FantasyRivals_Texture_01_D.png"},"classes":{"fighter":{"checkpoint":"fighter-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/fighter.glb","b":"characters/fighter-b.glb","c":"characters/fighter-c.glb","d":"characters/fighter-d.glb"},"body":"SK_BR_Character_Slayer_01","assembly":"SK_BR_Character_Slayer_01","weaponNodes":["SM_Wep_Slayer_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_Stretch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_Stretch","Idle_Drinking","Walk_Forward"],"portraits":{"a":"characters/portraits/fighter.png","b":"characters/portraits/fighter-b.png","c":"characters/portraits/fighter-c.png","d":"characters/portraits/fighter-d.png"}},"barbarian":{"checkpoint":"barbarian-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/barbarian.glb","b":"characters/barbarian-b.glb","c":"characters/barbarian-c.glb","d":"characters/barbarian-d.glb"},"body":"SK_BR_Character_BarbarianGiant_01","assembly":"SK_BR_Character_BarbarianGiant_01","weaponNodes":["SM_Wep_BarbarianGiant_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_ChinScratch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_ChinScratch","Idle_Drinking","Walk_Forward"]},"monk":{"checkpoint":"monk-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/monk.glb","b":"characters/monk-b.glb","c":"characters/monk-c.glb","d":"characters/monk-d.glb"},"body":"SK_Character_Mystic_01","assembly":"SK_Character_Mystic_01","weaponNodes":["SM_Wep_Mystic_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_Meditative","Idle_Drinking"],"final":["Idle_Relaxed","Idle_Meditative","Idle_Drinking","Walk_Forward"]},"rogue":{"checkpoint":"rogue-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/rogue.glb","b":"characters/rogue-b.glb","c":"characters/rogue-c.glb","d":"characters/rogue-d.glb"},"body":"SK_Character_DarkElf_01","assembly":"SK_Character_DarkElf_01","weaponNodes":["SM_Wep_DarkElf_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_CheckWatch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_CheckWatch","Idle_Drinking","Walk_Forward"]}}}
@@ -143,11 +149,10 @@ Portrait renderer CLI is `blender -b -P scripts/render_character_portraits.py --
 - [ ] **Step 4: Verify producers.**
 
 ```bash
-EVIDENCE_NODE_PREFIX=/tmp/unarmed-evidence-node
-mkdir -p "$EVIDENCE_NODE_PREFIX" && npm --prefix "$EVIDENCE_NODE_PREFIX" init -y && npm --prefix "$EVIDENCE_NODE_PREFIX" i sharp omggif
-NODE_PATH="$EVIDENCE_NODE_PREFIX/node_modules" node -e 'console.log(require.resolve("sharp")); console.log(require.resolve("omggif"))'
+npm install --prefix scripts --no-save --no-package-lock sharp omggif
+git status --short
 blender -b -P scripts/render_character_portraits.py -- --input-root tmp/unarmed-v1/release --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --classes fighter barbarian monk rogue --out-root tmp/unarmed-v1/release/harness/models/synty/characters
-NODE_PATH="$EVIDENCE_NODE_PREFIX/node_modules" node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
+node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
 ```
 
 Before writing evidence, create/select `EVIDENCE_WORKTREE` with `git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add /tmp/opencode/evidence-unarmed evidence/asset-pipeline-wave1`, set `EVIDENCE_WORKTREE=/tmp/opencode/evidence-unarmed`, then require `test "$(git -C "$EVIDENCE_WORKTREE" branch --show-current)" = evidence/asset-pipeline-wave1` and `test -z "$(git -C "$EVIDENCE_WORKTREE" status --porcelain)"`. Expected: one labelled 4x4 PNG and SHA file. Independent pass statement is exactly: `I viewed portraits-v1.png and confirm no weapon or weapon fragment is visible in any of its 16 labelled frames.` If false for class X, rerun portrait renderer with `--classes X`, rebuild sheet, obtain a new statement, then rerun Task 4 validation. Commit/push evidence separately: `git -C "$EVIDENCE_WORKTREE" add playtest-evidence/asset-pipeline/unarmed-character-animation-promotion && git -C "$EVIDENCE_WORKTREE" commit -m "evidence: unarmed character portraits" && git -C "$EVIDENCE_WORKTREE" push origin evidence/asset-pipeline-wave1`. Commit `feat: render reproducible character portrait evidence`.
@@ -175,11 +180,23 @@ def test_apply_copies_conditional_portraits_only_when_inventory_lists_them(self)
 
 - [ ] **Step 2: Verify red.** Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: FAIL with missing CLI functions.
 
-- [ ] **Step 3: Implement flow.** `stage` builds complete `stage/release` repo-shaped tree and records pre-export fingerprints. Portrait gate runs before `validate`. `validate` performs semantic constrained diff, retained fingerprint, A/B/C/D parity, one-mesh, staged mesh stats `--repo-root stage/release`, parsed changed-path animation PASS gates, then writes tracked inventory metadata. `apply` checks clean/baseline, copies validated paths only. `verify-index` compares staged set and staged blob SHA-256s.
+- [ ] **Step 3: Write and run the manifest/docs hard-gate test.**
 
-- [ ] **Step 4: Run full flow.** Execute the CLI Contract commands in order, with `git add` before `verify-index`. Expected: all commands exit 0; no canonical edit occurs before `apply`; index exactly matches metadata after `apply`.
+```python
+def test_manifest_and_docs_contract(self):
+    errors = v.validate_manifest_docs(self.baseline_manifest, self.candidate_manifest, self.baseline_readme, self.candidate_readme, CONFIG)
+    self.assertEqual(errors, [])
+    self.candidate_manifest["mapping"]["monk"]["weapon"]["bakedIntoModel"] = True
+    self.assertEqual(v.validate_manifest_docs(self.baseline_manifest, self.candidate_manifest, self.baseline_readme, self.candidate_readme, CONFIG), ["monk weapon.bakedIntoModel must be false"])
+```
 
-- [ ] **Step 5: Real Git rollback integration.**
+Run: `python3 scripts/test_character_promotion_validation.py` Expected: FAIL before `validate_manifest_docs` exists, then PASS. The validator requires all four `bakedIntoModel` values false; exact configured `idleClips` order; baseline-equal standalone `weapon.file`, socket blocks, and `weaponsCatalog`; and no baked-standing-weapon claim in README or manifest comments. It permits only intended manifest fields in the semantic manifest diff.
+
+- [ ] **Step 4: Implement flow.** `stage` builds complete `stage/release` repo-shaped tree and real staged fixture before Task 3 consumes portraits. Portrait gate runs after stage and before `validate`. `validate` performs semantic constrained diff, retained fingerprint, A/B/C/D parity, one-mesh, manifest/docs hard gate, staged mesh stats `--repo-root stage/release`, parsed changed-path animation PASS gates, then writes inventory metadata. `apply` checks clean/baseline, copies validated paths only, and emits pathspec.nul. `verify-index` compares staged set and staged blob SHA-256s.
+
+- [ ] **Step 5: Run full flow.** Execute the CLI Contract commands in order, with inventory-driven `git add` before `verify-index`. Expected: all commands exit 0; no canonical edit occurs before `apply`; index exactly matches metadata after `apply`.
+
+- [ ] **Step 6: Real Git rollback integration.**
 
 ```python
 def test_release_commit_reverts_complete_inventory(self):

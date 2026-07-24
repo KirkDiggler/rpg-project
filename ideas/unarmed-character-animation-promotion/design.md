@@ -6,6 +6,8 @@
 unarmed models and promote their approved idle/walk animation checkpoints.  
 **Primary repository:** `rpg-game-assets`
 
+**Tracking:** Issue: https://github.com/KirkDiggler/rpg-project/issues/119. Design/plan review PR: https://github.com/KirkDiggler/rpg-project/pull/120. Commit `82d4fc5` references issue #119 in its subject; PR #120 is the review surface carrying the design and plan.
+
 ## Goal
 
 Promote the approved unarmed checkpoints into the canonical runtime models:
