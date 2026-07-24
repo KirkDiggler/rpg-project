@@ -2959,14 +2959,14 @@ verified against at the time.
 
 | Repository / file | Task | Responsibility |
 | --- | --- | --- |
-| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate.go` | A | Remove handler-clock arguments from the two affected dispatch paths/translators and project effect-event occurrence/correlation metadata to `EntityDamaged` and `StatusApplied` envelopes. |
-| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate_combat_test.go` | A | Stamp effect events with fixed toolkit metadata and prove exact envelope propagation, including a same-correlation attack chain and empty correlation preservation. |
-| `rpg-dnd5e-web/src/api/encounterStreamDispatch.ts` | B | Export the wire-derived metadata and generic callback types; build one metadata object per envelope and provide it to every handled callback. |
-| `rpg-dnd5e-web/src/api/encounterStreamDispatch.test.ts` | B | Parameterize all 22 currently handled cases and prove payload plus exact metadata delivery while retaining the existing unknown/no-callback/shared-sequence regressions. |
-| `rpg-dnd5e-web/docs/architecture/components/use-encounter-stream.md` | B | Update the document date to `2026-07-24` and document the two-argument callback contract and verbatim metadata behavior. |
+| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate.go` | 6 | Remove handler-clock arguments from the two affected dispatch paths/translators and project effect-event occurrence/correlation metadata to `EntityDamaged` and `StatusApplied` envelopes. |
+| `rpg-api/internal/handlers/dnd5e/v2/encounter/translate_combat_test.go` | 6 | Stamp effect events with fixed toolkit metadata and prove exact envelope propagation, including a same-correlation attack chain and empty correlation preservation. |
+| `rpg-dnd5e-web/src/api/encounterStreamDispatch.ts` | 7 | Export the wire-derived metadata and generic callback types; build one metadata object per envelope and provide it to every handled callback. |
+| `rpg-dnd5e-web/src/api/encounterStreamDispatch.test.ts` | 7 | Parameterize all 22 currently handled cases and prove payload plus exact metadata delivery while retaining the existing unknown/no-callback/shared-sequence regressions. |
+| `rpg-dnd5e-web/docs/architecture/components/use-encounter-stream.md` | 7 | Update the document date to `2026-07-24` and document the two-argument callback contract and verbatim metadata behavior. |
 
 ---
-## Task A: `rpg-api#701` — project effect metadata to existing envelopes
+## Task 6: `rpg-api#701` — project effect metadata to existing envelopes
 
 **Branch and PR:** Create `feat/701-effect-envelope-metadata` from `origin/main` in a new `rpg-api` worktree. Open one PR for `rpg-api#701`, link related `rpg-dnd5e-web#582` and blocked `rpg-dnd5e-web#581`, and change only the two files in this task.
 
@@ -3105,7 +3105,7 @@ gh pr create --base main --head feat/701-effect-envelope-metadata --title "fix(e
 Expected: one `rpg-api#701` PR contains only the API translator and its tests.
 
 ---
-## Task B: `rpg-dnd5e-web#582` — pass envelope metadata to all typed callbacks
+## Task 7: `rpg-dnd5e-web#582` — pass envelope metadata to all typed callbacks
 
 **Branch and PR:** Create `feat/582-envelope-metadata` from `origin/main` in a new `rpg-dnd5e-web` worktree. Open one PR for `rpg-dnd5e-web#582`, link `rpg-api#701` and blocked `rpg-dnd5e-web#581`, and change only the three files in this task.
 
@@ -3418,7 +3418,7 @@ Expected: one `rpg-dnd5e-web#582` PR contains only web callback passthrough, its
 ---
 ## Implementation Coordination And Gates
 
-- [ ] Assign independent implementers to Task A and Task B; they may work concurrently because their files, repositories, branches, commits, and PRs do not overlap.
+- [ ] Assign independent implementers to Task 6 and Task 7; they may work concurrently because their files, repositories, branches, commits, and PRs do not overlap.
 - [ ] Require each implementer to report the targeted RED result, targeted GREEN result, full CI result, commit hash, and PR URL before review.
 - [ ] On the web PR, inspect Copilot review comments with `gh pr view <PR_NUMBER> --comments` and `gh api repos/KirkDiggler/rpg-dnd5e-web/pulls/<PR_NUMBER>/comments`; address each applicable finding with tests and rerun `npm run ci-check` before requesting re-review.
 - [ ] Obtain an independent gate review for the API PR and an independent gate review for the web PR. Verify #701 has no web changes and #582 has no API changes.
@@ -3427,7 +3427,7 @@ Expected: one `rpg-dnd5e-web#582` PR contains only web callback passthrough, its
 
 ## Self-Review Against `design.md` Section 9
 
-- **Spec coverage:** Task A maps the required toolkit `CorrelationID()` and `OccurredAt()` to both effect-envelope translators, proves fixed timestamp/correlation values, preserves an empty correlation, and proves the existing declared-hit action/attack/damage chain. Task B defines the exact `Pick` metadata type and reusable generic handler, updates all 22 currently handled callbacks, builds one object per envelope, forwards unchanged values, tests every case plus a same-correlation combat chain with distinct per-envelope sequences and metadata values, retains the required dispatcher regressions, and updates the architecture date/documentation. The coordination gate states parallel independence, both-prerequisite dependency, distinct PRs, Copilot handling, independent review, and Kirk-only merges.
+- **Spec coverage:** Task 6 maps the required toolkit `CorrelationID()` and `OccurredAt()` to both effect-envelope translators, proves fixed timestamp/correlation values, preserves an empty correlation, and proves the existing declared-hit action/attack/damage chain. Task 7 defines the exact `Pick` metadata type and reusable generic handler, updates all 22 currently handled callbacks, builds one object per envelope, forwards unchanged values, tests every case plus a same-correlation combat chain with distinct per-envelope sequences and metadata values, retains the required dispatcher regressions, and updates the architecture date/documentation. The coordination gate states parallel independence, both-prerequisite dependency, distinct PRs, Copilot handling, independent review, and Kirk-only merges.
 - **Completeness scan:** This appended section names concrete files, branches, commits, commands, test names, and all 22 dispatcher cases; its code-change steps provide literal signatures, field assignments, and case arms.
 - **Type and signature consistency:** #701 retains `TranslateEvent(..., now)` and removes `now` only from the two private translators that no longer use it. #582's `EncounterEventMetadata` is `Pick<EncounterEvent, 'sequence' | 'timestamp' | 'correlationId'>`; every option member uses `EncounterStreamHandler<Payload>` and every switch arm receives the same `metadata` object as its second argument.
 - **File and command accuracy:** The API dispatch currently calls the two affected translators with `now`; the web `origin/main` dispatcher and test file currently contain the stated 22 cases, and the web architecture document currently has the specified frontmatter path. The exact gates are `go test ./internal/handlers/dnd5e/v2/encounter -run 'TestTranslateSuite/(TestTranslateEvent_(DamageDealtEvent_ProjectsToolkitMetadata|ConditionAppliedEvent_ProjectsToolkitMetadata|DamageDealtEvent_PreservesEmptyCorrelationID|DeclaredHitChain_SharesToolkitCorrelationID))' -count=1`, `make ci-check`, `npm run test:run -- src/api/encounterStreamDispatch.test.ts`, and `npm run ci-check`.
