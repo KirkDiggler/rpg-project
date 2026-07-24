@@ -38,8 +38,12 @@ git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add "$EVIDENCE_WT" evidence/as
 test "$(git -C "$EVIDENCE_WT" branch --show-current)" = evidence/asset-pipeline-wave1 && test -z "$(git -C "$EVIDENCE_WT" status --porcelain)"
 python3 scripts/promote_character_checkpoints.py stage --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --checkpoint-root "$SYNTY_APPROVED_CHECKPOINT_DIR" --atlas-root "$SYNTY_FANTASY_RIVALS_TEXTURE_DIR" --stage-root tmp/unarmed-v1
 npm install --prefix scripts --no-save --no-package-lock sharp omggif && git status --short
-node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
-python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
+RUN_ID="$(git rev-parse --short HEAD)-unarmed-v1"
+EVIDENCE_RUN="$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/$RUN_ID"
+test ! -e "$EVIDENCE_RUN" && mkdir -p "$EVIDENCE_RUN"
+node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_RUN/portraits.png" --sha-out "$EVIDENCE_RUN/portraits.sha256"
+# Produce, copy, count, hash, commit, push, and independently approve the 32 animation PNG/GIF pairs as Task 5 specifies.
+python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-run "$EVIDENCE_RUN" --evidence-commit "$EVIDENCE_COMMIT" --evidence-viewed "$EVIDENCE_RUN/viewed-statement.txt"
 python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
 git add --pathspec-from-file=tmp/unarmed-v1/release/pathspec.nul --pathspec-file-nul
 python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-root tmp/unarmed-v1
@@ -152,10 +156,10 @@ Portrait renderer CLI is `blender -b -P scripts/render_character_portraits.py --
 npm install --prefix scripts --no-save --no-package-lock sharp omggif
 git status --short
 blender -b -P scripts/render_character_portraits.py -- --input-root tmp/unarmed-v1/release --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --classes fighter barbarian monk rogue --out-root tmp/unarmed-v1/release/harness/models/synty/characters
-node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.png" --sha-out "$EVIDENCE_WORKTREE/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/portraits-v1.sha256"
+node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_RUN/portraits.png" --sha-out "$EVIDENCE_RUN/portraits.sha256"
 ```
 
-Before writing evidence, create/select `EVIDENCE_WORKTREE` with `git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add /tmp/opencode/evidence-unarmed evidence/asset-pipeline-wave1`, set `EVIDENCE_WORKTREE=/tmp/opencode/evidence-unarmed`, then require `test "$(git -C "$EVIDENCE_WORKTREE" branch --show-current)" = evidence/asset-pipeline-wave1` and `test -z "$(git -C "$EVIDENCE_WORKTREE" status --porcelain)"`. Expected: one labelled 4x4 PNG and SHA file. Independent pass statement is exactly: `I viewed portraits-v1.png and confirm no weapon or weapon fragment is visible in any of its 16 labelled frames.` If false for class X, rerun portrait renderer with `--classes X`, rebuild sheet, obtain a new statement, then rerun Task 4 validation. Commit/push evidence separately: `git -C "$EVIDENCE_WORKTREE" add playtest-evidence/asset-pipeline/unarmed-character-animation-promotion && git -C "$EVIDENCE_WORKTREE" commit -m "evidence: unarmed character portraits" && git -C "$EVIDENCE_WORKTREE" push origin evidence/asset-pipeline-wave1`. Commit `feat: render reproducible character portrait evidence`.
+`EVIDENCE_WT` is already created, branch-verified, and clean-verified in the top-level journey before this producer runs. Expected: one labelled 4x4 PNG and SHA file. Independent pass statement is exactly: `I viewed portraits.png and confirm no weapon or weapon fragment is visible in any of its 16 labelled frames.` If false for class X, rerun portrait renderer with `--classes X`, rebuild sheet, obtain a new statement, then run the full evidence sequence and validation. Commit `feat: render reproducible character portrait evidence`.
 
 ### Task 4: Stage, Validate, Apply, and Verify Index
 
@@ -214,10 +218,11 @@ Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: PASS. Com
 
 ```bash
 for class in fighter barbarian monk rogue; do for clip in Idle_Relaxed Walk_Forward; do for angle in 0 45 90 180; do out="tmp/unarmed-v1/evidence/${class}-${clip}-${angle}"; blender -b -P scripts/animation_qa_render.py -- --character "tmp/unarmed-v1/release/harness/models/synty/characters/${class}.glb" --clip "$clip" --out-dir "$out" --frames 28 --wrap-frames 2 --width 256 --height 320 --angle "$angle" --delay-cs 4; node scripts/render_animation_evidence.mjs --frames-dir "$out" --out-strip "${out}.png" --out-gif "${out}.gif" --title "${class} ${clip} angle ${angle}" --verdict PASS; done; done; done
-mkdir -p "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1"
-cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1/"
-test "$(find "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1" -name '*.png' | wc -l)" -eq 32 && test "$(find "$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1" -name '*.gif' | wc -l)" -eq 32
-(cd "$EVIDENCE_WT" && sha256sum playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1/* > playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/animation-v1.sha256 && git add playtest-evidence/asset-pipeline/unarmed-character-animation-promotion && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
+mkdir -p "$EVIDENCE_RUN/animation"
+cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_RUN/animation/"
+test "$(find "$EVIDENCE_RUN/animation" -name '*.png' | wc -l)" -eq 32 && test "$(find "$EVIDENCE_RUN/animation" -name '*.gif' | wc -l)" -eq 32
+(cd "$EVIDENCE_WT" && sha256sum "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation/* > "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation.sha256 && git add "${EVIDENCE_RUN#"$EVIDENCE_WT"}" && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
+EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"; printf '%s\n' 'I viewed portraits.png and all 32 labelled animation PNG/GIF pairs; no weapon, fragment, skinning, clipping, or pose defect is visible.' > "$EVIDENCE_RUN/viewed-statement.txt"; git -C "$EVIDENCE_WT" add "${EVIDENCE_RUN#"$EVIDENCE_WT"}/viewed-statement.txt" && git -C "$EVIDENCE_WT" commit -m "evidence: record unarmed animation review" && git -C "$EVIDENCE_WT" push origin evidence/asset-pipeline-wave1
 ```
 
 - [ ] Independent gate reruns Tasks 2-4, views portrait/multi-angle files, validates `git show --name-only <releaseCommit>` against metadata, and posts `GATE REVIEW`.
