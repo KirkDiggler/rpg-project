@@ -2,47 +2,83 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a reusable private workflow that stages, validates, materializes, index-verifies, and publishes one complete unarmed four-class character release.
+**Goal:** Build one private, inventory-controlled promotion workflow for the four approved unarmed character checkpoints, then prove the released assets in the web client.
 
-**Architecture:** An isolated `rpg-game-assets` worktree begins at a recorded baseline commit. Blender creates the A GLB and transfers retained actions with explicit Blender 5 slots; `swap_atlas.py` generates B/C/D. Validation writes a versioned inventory/hashes file, `apply` materializes only that inventory, and `verify-index` proves the staged Git index matches it before the one release commit.
+**Architecture:** `stage` creates a complete disposable release tree and never changes canonical assets. The sole public-evidence producer commits a fresh, run-specific evidence directory before an independent review. Only `validate` may create release metadata; only a PASS validation may be applied to a clean, isolated asset worktree and committed once.
 
-**Tech Stack:** Python 3 stdlib, Blender 5 `bpy`, existing `swap_atlas.py`, `animation_qa.py`, `build_mesh_stats.py`, Git, Node `sharp`, and `omggif`.
+**Tech Stack:** Python 3 stdlib, Blender 5 `bpy`, existing `swap_atlas.py`, `animation_qa.py`, `build_mesh_stats.py`, Git, GitHub CLI, Node ESM with `sharp` and `omggif`.
 
 ## Global Constraints
 
-- Authoritative tracking is **rpg-project issue #119** (`https://github.com/KirkDiggler/rpg-project/issues/119`) and **rpg-project design PR #120** (`https://github.com/KirkDiggler/rpg-project/pull/120`). Commit `82d4fc5` references issue #119 in its subject; PR #120 carries design/plan review.
-
-- Implement later in one private `rpg-game-assets` issue/Board 19 Team `Assets` item/branch/PR referencing **rpg-project issue #119** and **rpg-project PR #120**.
-- Config contains only logical checkpoint/atlas filenames. Require explicit `--checkpoint-root` and `--atlas-root` before work begins.
-- Baseline worktree must be clean and equal `baselineCommit`; pre-commit failures discard/rebuild it. The one release commit is publication. Post-publication rollback is a new PR running `git revert <releaseCommit>`.
-- Metadata records `baselineCommit`, `workflowVersion`, config SHA-256, portrait-evidence SHA-256, and gate results. Its `inventory` hashes every release artifact except metadata itself; staged paths must equal `inventory.paths UNION {metadataPath}`. It never records its own unknown release commit SHA; that SHA is recorded in the PR/gate/rollback issue.
-- Exact clips, ordered `idleClips`, unarmed `bakedIntoModel: false`, Root transforms, assembly names, no downed edits, standalone weapon retention, mesh/animation gates, and no web product changes are exactly as binding design.md states.
-- Public evidence is only `rpg-dnd5e-web` branch `evidence/asset-pipeline-wave1` under `playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/`; it is excluded from private release inventory and rollback.
+- Track the work at https://github.com/KirkDiggler/rpg-project/issues/119 and review this design/plan at https://github.com/KirkDiggler/rpg-project/pull/120. Commit `82d4fc5` references issue #119.
+- Product changes are private `rpg-game-assets` content only. Public evidence is committed only on `rpg-dnd5e-web` branch `evidence/asset-pipeline-wave1` under `playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/`; it contains no licensed GLB, texture, source blend, or private report.
+- The four canonical A files are `characters/fighter.glb`, `characters/barbarian.glb`, `characters/monk.glb`, and `characters/rogue.glb`; their B/C/D files use `-b`, `-c`, and `-d`. No downed file, resolver, or web product code changes.
+- Each A/B/C/D GLB has exactly the class's three ordered idle clips plus `Walk_Forward`, with the retained idles semantically identical to baseline. `idleClips` is `Idle_Relaxed`, class-distinctive idle, `Idle_Drinking`; `Walk_Forward` is not an idle entry. Set every class weapon `bakedIntoModel` to `false` while retaining its standalone weapon file, socket fields, and weapons catalog.
+- Root is exactly `Root`, scale `[0.009999999776482582,0.009999999776482582,0.009999999776482582]`, rotation `[0.70710688829422,0,0,0.7071066498756409]`, with one identity-local child owning the source assembly. The assembly/body is `SK_BR_Character_Slayer_01`, `SK_BR_Character_BarbarianGiant_01`, `SK_Character_Mystic_01`, or `SK_Character_DarkElf_01` for fighter, barbarian, monk, or rogue respectively.
+- Config names only logical source files; invocation requires `--checkpoint-root` and `--atlas-root`. The complete portable config is below.
+- Semantic validation uses decoded glTF semantics, not indices: constrained baseline diff, interpolation-aware action fingerprints, exact action set, A/B/C/D parity, one body mesh/no extra mesh, Root contract, baseline topology/material ownership, manifest/docs gate, and authoritative mesh/animation reports. Name checks alone never prove weapon absence.
+- `build_mesh_stats.py` must support a staged `--repo-root` while preserving the existing no-argument output bytes and `harness/models/synty/...` report paths. Animation QA accepts `--paths` and `--input-root`, writes paths relative to the input root, and parses changed-model PASS verdicts rather than treating exit status as the verdict.
+- Metadata records baseline SHA, workflow/config SHA-256, evidence commit/SHA/review URL/ID/verdict, reports, gate results, and sorted release inventory hashes. It excludes `metadataPath` from its inventory to prevent recursive self-hashing. A release commit SHA is recorded externally in the asset PR/final gate/rollback issue, never in metadata.
+- Baseline and asset-release worktrees are clean and at metadata `baselineCommit`. Before the release commit, failure discards the isolated worktree and staging tree; no backup is a rollback. After publication, rollback is a new PR that sets `RELEASE_COMMIT` to the published SHA, runs `git revert "$RELEASE_COMMIT"`, then asset sync and client verification.
+- Every GitHub review or gate comment ends exactly `— asset-pipeline agent, on behalf of KirkDiggler`.
 
 ## File Map
 
-- Create `scripts/configs/character-promotion/unarmed-checkpoints-v1.json`: complete logical class/checkpoint/atlas/clip/body contract below.
-- Create `scripts/export_checkpoint_character.py` and `scripts/character_action_transfer.py`: one-mesh export and Blender 5 retained-action transfer.
-- Create `scripts/character_promotion_validation.py`: semantic GLB, animation, QA-report, inventory/hash validators.
-- Create `scripts/promote_character_checkpoints.py`: `stage`, `validate`, `apply`, `verify-index` CLI.
-- Create `scripts/render_character_portraits.py`: versioned 512x512 staged portrait renderer promoted from the external renderer interface.
-- Create `scripts/render_character_portrait_contact_sheet.mjs`: deterministic manifest-driven 4x4 labelled portrait sheet using `sharp`.
-- Create `scripts/test_character_promotion_validation.py`, `scripts/test_character_action_transfer.py`, `scripts/test_promote_character_checkpoints.py`, `scripts/test_build_mesh_stats.py`, `scripts/test_render_character_portrait_contact_sheet.mjs`.
-- Modify `scripts/build_mesh_stats.py`, `scripts/animation_qa.py`, `scripts/test_animation_qa.py`, `README.md`, `harness/models/synty/characters/manifest.json`, generated standing GLBs/conditional portraits/reports.
+- Create `scripts/configs/character-promotion/unarmed-checkpoints-v1.json`: portable class, clip, Root, canonical, atlas, and portrait contract.
+- Create `scripts/character_promotion_validation.py`: glTF semantics, manifests/docs, report, evidence-review, inventory, and index validation primitives.
+- Create `scripts/export_checkpoint_character.py` and `scripts/character_action_transfer.py`: Blender 5 export and retained-action transfer.
+- Create `scripts/promote_character_checkpoints.py`: `stage`, `validate`, `apply`, and `verify-index`; `validate` is the sole metadata producer.
+- Create `scripts/render_character_portraits.py`, `scripts/render_character_portrait_contact_sheet.mjs`, `scripts/animation_qa_render.py`, and `scripts/render_animation_evidence.mjs`: staged-only evidence producers.
+- Modify `scripts/build_mesh_stats.py`, `scripts/animation_qa.py`, `README.md`, and `harness/models/synty/characters/manifest.json`; add focused tests beside the corresponding scripts.
 
-## CLI Contract
+## Portable Config
+
+```json
+{
+  "schemaVersion": 1,
+  "workflowVersion": "unarmed-promotion-v1",
+  "metadataPath": "harness/models/synty/characters/unarmed-promotion-v1.json",
+  "root": {"name": "Root", "scale": [0.009999999776482582, 0.009999999776482582, 0.009999999776482582], "rotation": [0.70710688829422, 0, 0, 0.7071066498756409]},
+  "atlases": {"b": "FantasyRivals_Texture_01_B.png", "c": "FantasyRivals_Texture_01_C.png", "d": "FantasyRivals_Texture_01_D.png"},
+  "classes": {
+    "fighter": {"checkpoint": "fighter-unarmed-idle-walk-approved.blend", "canonical": {"a": "characters/fighter.glb", "b": "characters/fighter-b.glb", "c": "characters/fighter-c.glb", "d": "characters/fighter-d.glb"}, "body": "SK_BR_Character_Slayer_01", "assembly": "SK_BR_Character_Slayer_01", "weaponNodes": ["SM_Wep_Slayer_01"], "authoritative": ["Idle_Relaxed", "Walk_Forward"], "retained": ["Idle_Stretch", "Idle_Drinking"], "final": ["Idle_Relaxed", "Idle_Stretch", "Idle_Drinking", "Walk_Forward"], "portraits": {"a": "characters/portraits/fighter.png", "b": "characters/portraits/fighter-b.png", "c": "characters/portraits/fighter-c.png", "d": "characters/portraits/fighter-d.png"}},
+    "barbarian": {"checkpoint": "barbarian-unarmed-idle-walk-approved.blend", "canonical": {"a": "characters/barbarian.glb", "b": "characters/barbarian-b.glb", "c": "characters/barbarian-c.glb", "d": "characters/barbarian-d.glb"}, "body": "SK_BR_Character_BarbarianGiant_01", "assembly": "SK_BR_Character_BarbarianGiant_01", "weaponNodes": ["SM_Wep_BarbarianGiant_01"], "authoritative": ["Idle_Relaxed", "Walk_Forward"], "retained": ["Idle_ChinScratch", "Idle_Drinking"], "final": ["Idle_Relaxed", "Idle_ChinScratch", "Idle_Drinking", "Walk_Forward"], "portraits": {"a": "characters/portraits/barbarian.png", "b": "characters/portraits/barbarian-b.png", "c": "characters/portraits/barbarian-c.png", "d": "characters/portraits/barbarian-d.png"}},
+    "monk": {"checkpoint": "monk-unarmed-idle-walk-approved.blend", "canonical": {"a": "characters/monk.glb", "b": "characters/monk-b.glb", "c": "characters/monk-c.glb", "d": "characters/monk-d.glb"}, "body": "SK_Character_Mystic_01", "assembly": "SK_Character_Mystic_01", "weaponNodes": ["SM_Wep_Mystic_01"], "authoritative": ["Idle_Relaxed", "Walk_Forward"], "retained": ["Idle_Meditative", "Idle_Drinking"], "final": ["Idle_Relaxed", "Idle_Meditative", "Idle_Drinking", "Walk_Forward"], "portraits": {"a": "characters/portraits/monk.png", "b": "characters/portraits/monk-b.png", "c": "characters/portraits/monk-c.png", "d": "characters/portraits/monk-d.png"}},
+    "rogue": {"checkpoint": "rogue-unarmed-idle-walk-approved.blend", "canonical": {"a": "characters/rogue.glb", "b": "characters/rogue-b.glb", "c": "characters/rogue-c.glb", "d": "characters/rogue-d.glb"}, "body": "SK_Character_DarkElf_01", "assembly": "SK_Character_DarkElf_01", "weaponNodes": ["SM_Wep_DarkElf_01"], "authoritative": ["Idle_Relaxed", "Walk_Forward"], "retained": ["Idle_CheckWatch", "Idle_Drinking"], "final": ["Idle_Relaxed", "Idle_CheckWatch", "Idle_Drinking", "Walk_Forward"], "portraits": {"a": "characters/portraits/rogue.png", "b": "characters/portraits/rogue-b.png", "c": "characters/portraits/rogue-c.png", "d": "characters/portraits/rogue-d.png"}}
+  }
+}
+```
+
+## Exact CLI Journey
+
+Run these commands from the private `rpg-game-assets` worktree unless a command explicitly uses `$EVIDENCE_WT`. This is the only release order: evidence worktree setup, `stage`, evidence production/public commit, independent review URL, `validate`, `apply`, inventory-driven add, `verify-index`, one release commit, then PR/client verification.
 
 ```bash
 EVIDENCE_WT=/tmp/opencode/evidence-unarmed
 git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add "$EVIDENCE_WT" evidence/asset-pipeline-wave1
-test "$(git -C "$EVIDENCE_WT" branch --show-current)" = evidence/asset-pipeline-wave1 && test -z "$(git -C "$EVIDENCE_WT" status --porcelain)"
+test "$(git -C "$EVIDENCE_WT" branch --show-current)" = evidence/asset-pipeline-wave1
+test -z "$(git -C "$EVIDENCE_WT" status --porcelain)"
+
 python3 scripts/promote_character_checkpoints.py stage --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --checkpoint-root "$SYNTY_APPROVED_CHECKPOINT_DIR" --atlas-root "$SYNTY_FANTASY_RIVALS_TEXTURE_DIR" --stage-root tmp/unarmed-v1
-npm install --prefix scripts --no-save --no-package-lock sharp omggif && git status --short
+
+npm install --prefix scripts --no-save --no-package-lock sharp omggif
 RUN_ID="$(git rev-parse --short HEAD)-unarmed-v1"
 EVIDENCE_RUN="$EVIDENCE_WT/playtest-evidence/asset-pipeline/unarmed-character-animation-promotion/$RUN_ID"
-test ! -e "$EVIDENCE_RUN" && mkdir -p "$EVIDENCE_RUN"
+test ! -e "$EVIDENCE_RUN" && mkdir -p "$EVIDENCE_RUN/animation"
+blender -b -P scripts/render_character_portraits.py -- --input-root tmp/unarmed-v1/release --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --classes fighter barbarian monk rogue --out-root tmp/unarmed-v1/release/harness/models/synty/characters
 node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_RUN/portraits.png" --sha-out "$EVIDENCE_RUN/portraits.sha256"
-# Task 4 publishes all 32 animation PNG/GIF pairs and obtains an independent EVIDENCE REVIEW before validation.
+for class in fighter barbarian monk rogue; do for clip in Idle_Relaxed Walk_Forward; do for angle in 0 45 90 180; do out="tmp/unarmed-v1/evidence/${class}-${clip}-${angle}"; blender -b -P scripts/animation_qa_render.py -- --character "tmp/unarmed-v1/release/harness/models/synty/characters/${class}.glb" --clip "$clip" --out-dir "$out" --frames 28 --wrap-frames 2 --width 256 --height 320 --angle "$angle" --delay-cs 4; node scripts/render_animation_evidence.mjs --frames-dir "$out" --out-strip "${out}.png" --out-gif "${out}.gif" --title "$class $clip angle $angle" --verdict PASS; done; done; done
+cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_RUN/animation/"
+test "$(find "$EVIDENCE_RUN/animation" -name '*.png' | wc -l)" -eq 32
+test "$(find "$EVIDENCE_RUN/animation" -name '*.gif' | wc -l)" -eq 32
+(cd "$EVIDENCE_WT" && sha256sum "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/portraits.png "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation/* > "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/evidence.sha256 && git add "${EVIDENCE_RUN#"$EVIDENCE_WT"}" && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
+EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"
+
+# The independent reviewer posts the required review on the already-open private draft asset PR.
+ASSET_PR_NUMBER="$(gh pr view --repo KirkDiggler/rpg-game-assets --json number --jq .number)"
+gh pr comment "$ASSET_PR_NUMBER" --repo KirkDiggler/rpg-game-assets --body "$(printf 'EVIDENCE REVIEW\nevidenceCommit: %s\nportraits: PASS (16 viewed)\nanimationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)\n— asset-pipeline agent, on behalf of KirkDiggler' "$EVIDENCE_COMMIT")"
+EVIDENCE_REVIEW_URL="$(gh api "repos/KirkDiggler/rpg-game-assets/issues/$ASSET_PR_NUMBER/comments" | jq -er --arg sha "$EVIDENCE_COMMIT" 'map(select(.body == ("EVIDENCE REVIEW\\nevidenceCommit: " + $sha + "\\nportraits: PASS (16 viewed)\\nanimationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)\\n— asset-pipeline agent, on behalf of KirkDiggler"))) | if length == 1 then .[0].html_url else error("expected exactly one matching EVIDENCE REVIEW") end')"
+python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-commit "$EVIDENCE_COMMIT" --evidence-review-url "$EVIDENCE_REVIEW_URL"
 python3 scripts/promote_character_checkpoints.py apply --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)"
 git add --pathspec-from-file=tmp/unarmed-v1/release/pathspec.nul --pathspec-file-nul
 python3 scripts/promote_character_checkpoints.py verify-index --repo-root "$PWD" --stage-root tmp/unarmed-v1
@@ -50,202 +86,86 @@ git diff --cached --check && git diff --cached --stat
 git commit -m "asset: promote unarmed character animation checkpoints"
 ```
 
-`apply` refuses non-clean worktrees, a HEAD different from metadata `baselineCommit`, missing/changed validated release files, or an inventory path outside the repo. It loops over every validated `inventory.paths`, including conditional portraits, copies each release path to its canonical relative path, writes tracked metadata, and writes NUL-delimited `pathspec.nul` containing sorted `inventory.paths UNION {metadataPath}`. `verify-index` validates metadata schema/config/evidence/gates, requires `git diff --cached --name-only -z` equal that set, obtains each inventory staged blob with `git show :<path>`, and compares SHA-256; it never hashes metadata recursively.
+The controller opens the draft private asset PR before Task 4 solely as the required review surface; Task 6 updates it with the release commit. The independent reviewer, not the implementer, runs the two review commands above after viewing every artifact. The URL is rejected unless GitHub returns exactly that review comment. No command in Tasks 1-4 invokes `validate`, `apply`, `verify-index`, or creates a release commit.
 
-```json
-{"schemaVersion":1,"workflowVersion":"unarmed-promotion-v1","metadataPath":"harness/models/synty/characters/unarmed-promotion-v1.json","root":{"name":"Root","scale":[0.009999999776482582,0.009999999776482582,0.009999999776482582],"rotation":[0.70710688829422,0,0,0.7071066498756409]},"atlases":{"b":"FantasyRivals_Texture_01_B.png","c":"FantasyRivals_Texture_01_C.png","d":"FantasyRivals_Texture_01_D.png"},"classes":{"fighter":{"checkpoint":"fighter-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/fighter.glb","b":"characters/fighter-b.glb","c":"characters/fighter-c.glb","d":"characters/fighter-d.glb"},"body":"SK_BR_Character_Slayer_01","assembly":"SK_BR_Character_Slayer_01","weaponNodes":["SM_Wep_Slayer_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_Stretch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_Stretch","Idle_Drinking","Walk_Forward"],"portraits":{"a":"characters/portraits/fighter.png","b":"characters/portraits/fighter-b.png","c":"characters/portraits/fighter-c.png","d":"characters/portraits/fighter-d.png"}},"barbarian":{"checkpoint":"barbarian-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/barbarian.glb","b":"characters/barbarian-b.glb","c":"characters/barbarian-c.glb","d":"characters/barbarian-d.glb"},"body":"SK_BR_Character_BarbarianGiant_01","assembly":"SK_BR_Character_BarbarianGiant_01","weaponNodes":["SM_Wep_BarbarianGiant_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_ChinScratch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_ChinScratch","Idle_Drinking","Walk_Forward"]},"monk":{"checkpoint":"monk-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/monk.glb","b":"characters/monk-b.glb","c":"characters/monk-c.glb","d":"characters/monk-d.glb"},"body":"SK_Character_Mystic_01","assembly":"SK_Character_Mystic_01","weaponNodes":["SM_Wep_Mystic_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_Meditative","Idle_Drinking"],"final":["Idle_Relaxed","Idle_Meditative","Idle_Drinking","Walk_Forward"]},"rogue":{"checkpoint":"rogue-unarmed-idle-walk-approved.blend","canonical":{"a":"characters/rogue.glb","b":"characters/rogue-b.glb","c":"characters/rogue-c.glb","d":"characters/rogue-d.glb"},"body":"SK_Character_DarkElf_01","assembly":"SK_Character_DarkElf_01","weaponNodes":["SM_Wep_DarkElf_01"],"authoritative":["Idle_Relaxed","Walk_Forward"],"retained":["Idle_CheckWatch","Idle_Drinking"],"final":["Idle_Relaxed","Idle_CheckWatch","Idle_Drinking","Walk_Forward"]}}}
-```
+### Task 1: Config And Pure Semantic Validators
 
-### Task 1: Semantic Validators
+**Files:** Create the config, `scripts/character_promotion_validation.py`, and `scripts/test_character_promotion_validation.py`.
 
-**Files:** Create `scripts/character_promotion_validation.py`, `scripts/test_character_promotion_validation.py`.
+**Interfaces:** Produces `semantic_glb(gltf, bin_data) -> dict`, `animation_fingerprint(gltf, bin_data, animation) -> dict`, `validate_candidate(baseline, candidate, weapon_nodes) -> list[str]`, `validate_retained_actions(baseline, candidate, names) -> list[str]`, `validate_variant_parity(paths, expected) -> list[str]`, `validate_manifest_docs(baseline_manifest, candidate_manifest, baseline_readme, candidate_readme, config) -> list[str]`, and `validate_evidence_review(evidence_commit, comment_url) -> dict`. Task 5 consumes these pure validators.
 
-**Interfaces:** `semantic_glb(gltf, bin) -> dict`, `animation_fingerprint(gltf, bin, animation) -> dict`, `validate_candidate(baseline, candidate, allowed_weapon_nodes) -> list[str]`, `validate_retained_actions(baseline, candidate, names) -> list[str]`, `validate_variant_parity(paths, expected) -> list[str]`.
+- [ ] Write tests that reject material/topology/Root/mesh changes, an interpolation change, a retained action key/value change, variant clip/count differences, a `bakedIntoModel: true` manifest, stale baked-weapon documentation, and malformed reviewed GitHub JSON.
+- [ ] Run `python3 scripts/test_character_promotion_validation.py`; expect failure before implementations exist.
+- [ ] Implement semantic node/skin/mesh/material/image/accessor decoding, constrained weapon-subtree removal, interpolation-aware target-bone fingerprints, A/B/C/D parity, exact manifest/docs rules, report-path/verdict checks, inventory SHA-256 checks, and fixture-backed review parsing. The real review lookup parses the comment ID from `EVIDENCE_REVIEW_URL`, calls `gh api repos/KirkDiggler/rpg-game-assets/issues/comments/$COMMENT_ID`, and requires the exact evidence SHA, `portraits: PASS (16 viewed)`, `animationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)`, and signature.
+- [ ] Run `python3 scripts/test_character_promotion_validation.py`; expect PASS. Commit `feat: validate semantic character promotion contracts`.
 
-- [ ] **Step 1: Write red tests.**
+### Task 2: Blender 5 Retained-Action Transfer And Unarmed Export
 
-```python
-def test_candidate_rejects_nonweapon_material_change(self):
-    self.assertEqual(v.validate_candidate(self.base, self.changed_material, {"weapon"}), ["material[0] changed"])
+**Files:** Create `scripts/export_checkpoint_character.py`, `scripts/character_action_transfer.py`, and `scripts/test_character_action_transfer.py`.
 
-def test_retained_fingerprint_uses_target_bone_path_times_values(self):
-    self.assertEqual(v.validate_retained_actions(self.base, self.reexported, ["Idle_Drinking"]), [])
+**Interfaces:** Produces `assign_armature_action(armature, action)`, `copy_named_action(source, target, name)`, `validate_export_scene(armature, body) -> dict`, exporter `--out --body --stats-out --clip`, and transfer `--target --baseline --out --body --retain`. Task 3 calls these through `stage`.
 
-def test_variant_parity_rejects_sampler_count_difference(self):
-    self.assertEqual(v.validate_variant_parity(self.variants, EXPECTED), ["monk c Walk_Forward sampler count differs from a"])
+- [ ] Write a Blender-backed monk re-export test that transfers `Idle_Meditative` and `Idle_Drinking`, then asks Task 1's validator to prove retained semantics and exactly four final clips.
+- [ ] Run `python3 scripts/test_character_action_transfer.py --checkpoint-dir "$SYNTY_APPROVED_CHECKPOINT_DIR" --canonical-root harness/models/synty --stage-dir tmp/action-smoke`; expect failure before scripts exist.
+- [ ] Implement Blender 5 slot binding: clear NLA tracks, require exactly one action slot, set `armature.animation_data.action` and `action_slot`. Export only the configured target armature/body, remove only `Icosphere`, reject every additional mesh, capture source topology/material stats, import the baseline only to copy configured retained actions, remove imported baseline objects/actions, and export `Idle_Relaxed`, `Walk_Forward`, and retained clips exactly once.
+- [ ] Re-run the command; expect PASS and the four configured clips. Commit `feat: transfer retained character actions with Blender slots`.
 
-def test_fingerprint_rejects_step_for_linear_channel(self):
-    self.assertNotEqual(v.animation_fingerprint(self.gltf_linear, self.bin, self.anim), v.animation_fingerprint(self.gltf_step, self.bin, self.anim))
-```
+### Task 3: Full Staged Release Producer
 
-- [ ] **Step 2: Verify red.** Run: `python3 scripts/test_character_promotion_validation.py` Expected: FAIL with missing module.
+**Files:** Create `scripts/promote_character_checkpoints.py`, `scripts/render_character_portraits.py`, and tests; modify `scripts/build_mesh_stats.py`, `scripts/animation_qa.py`, and their tests.
 
-- [ ] **Step 3: Implement robust semantics.**
+**Interfaces:** Consumes Tasks 1-2 and source roots. Produces only `stage/release`: all four staged A/B/C/D GLBs; staged manifest/docs/weapon metadata; conditional regenerated A/B/C/D portraits and `portrait-render-v1.json`; staged mesh-stat and animation-QA reports. It does not validate the complete release, materialize canonical files, or commit.
 
-```python
-def animation_fingerprint(gltf, bin_data, animation):
-    nodes = build_nodes(gltf)
-    return {animation["name"]: sorted((nodes[ch["target"]["node"]].name, ch["target"]["path"],
-        tuple(decode_accessor(gltf, bin_data, animation["samplers"][ch["sampler"]]["input"])),
-        animation["samplers"][ch["sampler"]].get("interpolation", "LINEAR"), tuple(decode_accessor(gltf, bin_data, animation["samplers"][ch["sampler"]]["output"]))) for ch in animation["channels"])}
-```
+- [ ] Write tests for `stage`: it calls export/transfer for A, uses `swap_atlas.py` for B/C/D without hand-maintained geometry/actions, keeps staged files repo-relative, generates mesh/animation reports, and regenerates all four portraits for a class only when inspection flags a weapon in its current portrait.
+- [ ] Write builder tests that assert unchanged no-argument output bytes and staged `--repo-root stage/release --output stage/release/harness/models/synty/mesh-stats.json` output names `harness/models/synty/characters/monk.glb`; write QA tests for relative paths and parsed PASS verdicts.
+- [ ] Run the focused tests; expect failure before stage/report interfaces exist.
+- [ ] Implement `stage` to build the entire disposable release tree before any evidence command, mutate the staged manifest/docs only, run report producers against that tree, and preserve retained/non-goal assets. Implement portrait rendering as transparent 512x512 A/B/C/D output with input/output hashes. Keep `sharp`/`omggif` ESM imports installed through `npm install --prefix scripts --no-save --no-package-lock sharp omggif`.
+- [ ] Run `python3 scripts/test_promote_character_checkpoints.py stage && python3 scripts/test_build_mesh_stats.py && python3 scripts/test_animation_qa.py`; expect PASS. Commit `feat: stage complete unarmed character release`.
 
-`semantic_glb` resolves node names, children, skins, meshes/primitives/POSITION/index accessors, materials/textures/images, and animations by semantic name, not indices. `validate_candidate` permits only configured weapon subtree mesh/node/material/texture/image removal and animation payload changes; Root, body node, body material/texture image bytes, skin joints, topology, and scene ownership must match. `validate_retained_actions` compares the fingerprints above for retained clips, which survives buffer/accessor reindexing. Parity compares exact clip set plus channel/sampler counts and fingerprints across A/B/C/D.
+### Task 4: Public Evidence And Independent EVIDENCE REVIEW
 
-- [ ] **Step 4: Verify green and commit.** Run: `python3 scripts/test_character_promotion_validation.py` Expected: PASS. Commit `feat: validate semantic character promotion contracts`.
+**Files:** Create `scripts/render_character_portrait_contact_sheet.mjs`, `scripts/animation_qa_render.py`, `scripts/render_animation_evidence.mjs`, and their tests.
 
-### Task 2: Blender Export, Transfer, and Real Re-export Gate
+**Interfaces:** Consumes the complete Task 3 stage. Produces the single public `$EVIDENCE_RUN`, `portraits.png`, `portraits.sha256`, exactly 32 PNG and 32 GIF multi-angle artifacts, `evidence.sha256`, pushed `$EVIDENCE_COMMIT`, and `$EVIDENCE_REVIEW_URL`. Task 5 consumes all six. This is the only multi-angle producer.
 
-**Files:** Create `scripts/export_checkpoint_character.py`, `scripts/character_action_transfer.py`, `scripts/test_character_action_transfer.py`.
+- [ ] Write tests that verify contact-sheet ordering fighter/barbarian/monk/rogue then a/b/c/d, labels `${class} ${color}`, SHA-256 contents, and one PNG/GIF pair per class, `Idle_Relaxed`/`Walk_Forward`, and angle `0`/`45`/`90`/`180`.
+- [ ] Run `node scripts/test_render_character_portrait_contact_sheet.mjs`; expect failure before producers exist.
+- [ ] Implement the deterministic ESM contact sheet and animation render/assembly scripts. Execute every concrete producer command in **Exact CLI Journey** beginning with `npm install --prefix scripts --no-save --no-package-lock sharp omggif` and ending with `git push origin evidence/asset-pipeline-wave1`; do not alter staged/canonical assets.
+- [ ] Confirm the fresh directory contains the portrait sheet, its SHA, 32 PNGs, 32 GIFs, and `evidence.sha256`; capture `EVIDENCE_COMMIT` only after the evidence push.
+- [ ] An independent reviewer views the sheet and all 64 animation artifacts, then posts the required comment on the already-open private draft asset PR and provides its URL.
 
-**Interfaces:** `assign_armature_action(armature, action)`, `copy_named_action(source, target, name)`, `validate_export_scene(armature, body) -> dict`; exporter `--out --body --stats-out --clip`; transfer `--target --baseline --out --body --retain`.
+- [ ] The independent reviewer runs the `gh pr comment` command in **Exact CLI Journey**, which interpolates the captured `$EVIDENCE_COMMIT`; then record its URL and ID with the following `gh api` command.
 
-- [ ] **Step 1: Write red real-asset test.**
+- [ ] Record the returned comment URL and ID. If portraits fail, regenerate only the affected class's staged A/B/C/D portraits, rebuild the sheet, repeat all Task 4 producers, commit a new fresh evidence run, and obtain a new review before continuing. Commit `feat: publish reproducible unarmed evidence`.
 
-```python
-def test_monk_real_reexport_preserves_retained_semantics(self):
-    result = run_transfer("monk", self.checkpoint_dir, self.canonical_root, self.out)
-    self.assertEqual(result.returncode, 0, result.stderr)
-    self.assertEqual(v.validate_retained_actions(self.baseline, self.out, ["Idle_Meditative", "Idle_Drinking"]), [])
-```
+### Task 5: Validate, Apply, And Release
 
-- [ ] **Step 2: Verify red.** Run: `python3 scripts/test_character_action_transfer.py --checkpoint-dir "$SYNTY_APPROVED_CHECKPOINT_DIR" --canonical-root harness/models/synty --stage-dir tmp/action-smoke` Expected: FAIL because helpers do not exist.
+**Files:** Modify `scripts/promote_character_checkpoints.py` and `scripts/test_promote_character_checkpoints.py`.
 
-- [ ] **Step 3: Implement.**
+**Interfaces:** Consumes Task 3's stage and Task 4's evidence commit/SHA/review URL. `validate` produces metadata, validated inventory, and no canonical changes. A PASS `validate` enables `apply`; `apply` produces canonical materialization and `pathspec.nul`; `verify-index` consumes the Git index and metadata. Task 6 consumes the one release commit.
 
-```python
-def assign_armature_action(armature, action):
-    armature.animation_data_create() if armature.animation_data is None else None
-    for track in list(armature.animation_data.nla_tracks): armature.animation_data.nla_tracks.remove(track)
-    armature.animation_data.action = action
-    assert len(action.slots) == 1
-    armature.animation_data.action_slot = action.slots[0]
-```
+- [ ] Write red tests proving `validate` refuses missing/stale evidence or a GitHub comment mismatch; `apply` refuses absent metadata/inventory, dirty or wrong-baseline worktrees, and changed staged files; conditional portraits are copied only if inventoried; and `verify-index` rejects any extra/missing path or staged blob SHA mismatch.
+- [ ] Run `python3 scripts/test_promote_character_checkpoints.py`; expect failure before flow functions exist.
+- [ ] Implement `validate` to fetch and verify the real review comment, run every Task 1 semantic/report/manifest/docs gate against all staged A/B/C/D files, then write metadata and sorted inventory hashes excluding metadata. Implement `apply` to require PASS metadata and exact baseline, copy only inventory paths, write metadata, and emit NUL-delimited sorted `inventory.paths UNION {metadataPath}`. Implement `verify-index` to require exactly that staged set and compare `git show :<path>` SHA-256s to inventory while separately validating metadata.
+- [ ] Execute the `validate`, `apply`, inventory-driven `git add`, and `verify-index` commands in **Exact CLI Journey**, in that order. Expect `validate` before `apply`, no canonical edit before apply, and a verified index matching metadata.
+- [ ] Add a real Git integration test: create baseline/release commits, set `RELEASE_COMMIT` to the release SHA, run `git revert --no-edit "$RELEASE_COMMIT"`, and assert the complete tracked inventory tree hashes equal the baseline. Document the durable rollback process: new rollback PR, `git revert "$RELEASE_COMMIT"`, asset sync, and client verification.
+- [ ] Run `python3 scripts/test_promote_character_checkpoints.py && git diff --cached --check`; expect PASS and no whitespace errors. Create exactly one release commit: `asset: promote unarmed character animation checkpoints`.
 
-Exporter removes only `Icosphere`, requires exactly one armature and one mesh object named configured body, captures primitive/POSITION/index/material-slot stats, and rejects another mesh. Transfer imports staged target then baseline, copies only two configured actions after deleting name collisions, binds copied actions using the helper, removes baseline actions/armature, and exports checkpoint `Idle_Relaxed`/`Walk_Forward` plus retained actions exactly once.
+### Task 6: Asset PR, Web Client Verification, And Independent Final Gate
 
-- [ ] **Step 4: Verify green.** Run prior command. Expected: PASS and four clips. Commit `feat: transfer retained character actions with Blender slots`.
+**Files:** No new evidence producers. Update only the private asset PR description and, if operationally required, an external final-gate record.
 
-### Task 3: Stage First, Then Portrait Gate and QA Producers
+**Interfaces:** Consumes the Task 5 release commit, its metadata/inventory, and the Task 4 public evidence/review. Produces the asset PR, synced web verification evidence, and independent final-gate result. It never creates pre-release visual evidence.
 
-**Files:** Modify `scripts/build_mesh_stats.py`, `scripts/animation_qa.py`, `scripts/test_animation_qa.py`; create `scripts/test_build_mesh_stats.py`, `scripts/render_character_portraits.py`, `scripts/render_character_portrait_contact_sheet.mjs`, `scripts/test_render_character_portrait_contact_sheet.mjs`.
+- [ ] Push the single release commit on the private `rpg-game-assets` branch and update the existing draft asset PR with issue #119, PR #120, baseline/release SHAs, metadata inventory/hash result, evidence commit/SHA/review URL, licensing boundary, and rollback command.
+- [ ] Only after the release commit, run `npm run assets:sync && npm run test:run && npm run ci-check` in `rpg-dnd5e-web`; expect all commands to exit 0. Do not change the resolver. File any consumer defect as a separate web issue.
+- [ ] Independently verify the actual client for fighter, barbarian, monk, and rogue: Home, character select, Play, lobby, Start, EncounterView, `Idle_Relaxed`, `Walk_Forward`, then idle; confirm the promoted canonical paths are loaded.
+- [ ] Set `RELEASE_COMMIT="$(git rev-parse HEAD)"`, dispatch an independent final reviewer to compare `git show --name-only "$RELEASE_COMMIT"` with metadata inventory, confirm the Task 4 evidence/review, inspect the client result, and post a signed `GATE REVIEW` on the asset PR. Require PASS before merge.
 
-- [ ] **Step 1: Write red tests.**
+## Plan Audit
 
-```python
-def test_mesh_stats_preserves_repo_relative_paths(self):
-    stats.build(repo_root=self.stage_root, output=self.stage_root / "harness/models/synty/mesh-stats.json")
-    self.assertEqual(load_asset()["file"], "harness/models/synty/characters/monk.glb")
-```
-
-```javascript
-assert.equal(await sha256(out), await fs.readFile(shaOut, "utf8").then(s => s.split(" ")[0]));
-assert.match(await fs.readFile(out, "utf8"), /fighter a/);
-```
-
-- [ ] **Step 2: Verify red.** Run: `python3 scripts/test_build_mesh_stats.py && node scripts/test_render_character_portrait_contact_sheet.mjs` Expected: FAIL because interfaces/producers do not exist.
-
-- [ ] **Step 3: Implement producers and staged interfaces.** Mesh CLI is `python3 scripts/build_mesh_stats.py [--repo-root ROOT] [--output PATH]`; defaults are existing `REPO_ROOT` and `OUT_PATH`, preserving bytes and `harness/models/synty/...` paths. Add a test that runs no-argument builder twice on an unchanged baseline and asserts existing `harness/models/synty/mesh-stats.json` bytes are identical, then runs `--repo-root stage/release --output stage/release/harness/models/synty/mesh-stats.json` and asserts its asset file is `harness/models/synty/characters/monk.glb`. Stage creates complete `tmp/unarmed-v1/release` before this task's portrait command. Animation QA requires `--paths ... --input-root ROOT`; report paths are relative to ROOT and changed verdicts are parsed as PASS, not CLI exit code.
-
-Portrait renderer CLI is `blender -b -P scripts/render_character_portraits.py -- --input-root ROOT --manifest MANIFEST --classes fighter barbarian monk rogue --out-root OUT`; it resolves manifest colors `a,b,c,d`, renders transparent 512x512 `portraits/<class>{,-b,-c,-d}.png`, and writes `portrait-render-v1.json` with input/output SHA-256s. Contact CLI consumes that manifest plus staged manifest, orders fighter/barbarian/monk/rogue then a/b/c/d, labels `${class} ${color}`, writes one PNG and `<png>.sha256` using `crypto.createHash("sha256")`; install `sharp` in `scripts/node_modules` exactly as existing UI script documents.
-
-- [ ] **Step 4: Verify producers.**
-
-```bash
-npm install --prefix scripts --no-save --no-package-lock sharp omggif
-git status --short
-blender -b -P scripts/render_character_portraits.py -- --input-root tmp/unarmed-v1/release --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --classes fighter barbarian monk rogue --out-root tmp/unarmed-v1/release/harness/models/synty/characters
-node scripts/render_character_portrait_contact_sheet.mjs --manifest tmp/unarmed-v1/release/harness/models/synty/characters/manifest.json --input-root tmp/unarmed-v1/release/harness/models/synty --out "$EVIDENCE_RUN/portraits.png" --sha-out "$EVIDENCE_RUN/portraits.sha256"
-```
-
-`EVIDENCE_WT` is already created, branch-verified, and clean-verified in the top-level journey before this producer runs. Expected: one labelled 4x4 PNG and SHA file. Independent pass statement is exactly: `I viewed portraits.png and confirm no weapon or weapon fragment is visible in any of its 16 labelled frames.` If false for class X, rerun portrait renderer with `--classes X`, rebuild sheet, obtain a new statement, then run the full evidence sequence and validation. Commit `feat: render reproducible character portrait evidence`.
-
-### Task 4: Publish Evidence and Obtain Independent EVIDENCE REVIEW
-
-- [ ] Implementer runs the portrait producer and the 32-artifact multi-angle command, copies current-run files to fresh `$EVIDENCE_RUN`, verifies exactly 32 PNG plus 32 GIF, hashes them, commits, and pushes `evidence/asset-pipeline-wave1`. Capture only after this push: `EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"`.
-- [ ] Controller dispatches an independent reviewer. The reviewer views portraits plus every class (`fighter`, `barbarian`, `monk`, `rogue`), clip (`Idle_Relaxed`, `Walk_Forward`), and angle (`0`, `45`, `90`, `180`) artifact and posts this exact machine-readable comment on the future private `rpg-game-assets` PR:
-
-```text
-EVIDENCE REVIEW
-evidenceCommit: <EVIDENCE_COMMIT>
-portraits: PASS (16 viewed)
-animationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)
-— asset-pipeline agent, on behalf of KirkDiggler
-```
-
-- [ ] Record `EVIDENCE_REVIEW_URL` and `EVIDENCE_REVIEW_ID` from that GitHub comment. Implement `validate_evidence_review(evidence_commit, comment_url) -> dict` using `gh api repos/KirkDiggler/rpg-game-assets/issues/comments/<id>`; require exact SHA, PASS values, 16 portraits, 64 artifacts/classes/clips/angles, and signature. Fixture its API JSON in `scripts/test_character_promotion_validation.py`; the real release calls `gh api` and records SHA, URL, ID, and verdict in metadata.
-
-### Task 5: Stage, Validate, Apply, and Verify Index
-
-**Files:** Create/modify `scripts/promote_character_checkpoints.py`, `scripts/test_promote_character_checkpoints.py`.
-
-- [ ] **Step 1: Write red materialization/index tests.**
-
-```python
-def test_apply_and_verify_index_require_exact_validated_inventory(self):
-    cli.apply(self.repo, self.stage, self.baseline)
-    git(self.repo, "add", *self.metadata["inventory"])
-    git(self.repo, "add", self.metadata["metadataPath"])
-    self.assertEqual(cli.verify_index(self.repo, self.stage), [])
-    git(self.repo, "add", "unrelated.txt")
-    self.assertEqual(cli.verify_index(self.repo, self.stage), ["staged paths differ from release inventory"])
-
-def test_apply_copies_conditional_portraits_only_when_inventory_lists_them(self):
-    cli.apply(self.repo, self.stage_with_portraits, self.baseline)
-    self.assertTrue((self.repo / "harness/models/synty/characters/portraits/monk-b.png").is_file())
-    cli.apply(self.repo_without_portraits, self.stage_without_portraits, self.baseline)
-    self.assertFalse((self.repo_without_portraits / "harness/models/synty/characters/portraits/monk-b.png").exists())
-```
-
-- [ ] **Step 2: Verify red.** Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: FAIL with missing CLI functions.
-
-- [ ] **Step 3: Write and run the manifest/docs hard-gate test.**
-
-```python
-def test_manifest_and_docs_contract(self):
-    errors = v.validate_manifest_docs(self.baseline_manifest, self.candidate_manifest, self.baseline_readme, self.candidate_readme, CONFIG)
-    self.assertEqual(errors, [])
-    self.candidate_manifest["mapping"]["monk"]["weapon"]["bakedIntoModel"] = True
-    self.assertEqual(v.validate_manifest_docs(self.baseline_manifest, self.candidate_manifest, self.baseline_readme, self.candidate_readme, CONFIG), ["monk weapon.bakedIntoModel must be false"])
-```
-
-Run: `python3 scripts/test_character_promotion_validation.py` Expected: FAIL before `validate_manifest_docs` exists, then PASS. The validator requires all four `bakedIntoModel` values false; exact configured `idleClips` order; baseline-equal standalone `weapon.file`, socket blocks, and `weaponsCatalog`; and no baked-standing-weapon claim in README or manifest comments. It permits only intended manifest fields in the semantic manifest diff.
-
-- [ ] **Step 4: Implement flow.** `stage` builds complete `stage/release`; Task 3 produces portraits and Task 4 publishes/reviews all evidence before this task invokes validation. Run: `python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-commit "$EVIDENCE_COMMIT" --evidence-review-url "$EVIDENCE_REVIEW_URL"`. Validation calls `validate_evidence_review`, then performs semantic constrained diff, retained fingerprint, A/B/C/D parity, one-mesh, manifest/docs hard gate, mesh and animation gates, and writes metadata. `apply` checks clean/baseline, copies validated paths only, and emits pathspec.nul. `verify-index` compares staged set and staged blob SHA-256s.
-
-- [ ] **Step 5: Run full flow.** Execute the CLI Contract commands in order, with inventory-driven `git add` before `verify-index`. Expected: all commands exit 0; no canonical edit occurs before `apply`; index exactly matches metadata after `apply`.
-
-- [ ] **Step 6: Real Git rollback integration.**
-
-```python
-def test_release_commit_reverts_complete_inventory(self):
-    baseline, release = make_commits(self.repo)
-    git(self.repo, "revert", "--no-edit", release)
-    self.assertEqual(tree_hashes(self.repo), tree_hashes_at(self.repo, baseline))
-```
-
-Run: `python3 scripts/test_promote_character_checkpoints.py` Expected: PASS. Commit `feat: materialize and verify character promotion releases`.
-
-### Task 6: Release and Client Gate
-
-- [ ] Run exact multi-angle commands:
-
-```bash
-for class in fighter barbarian monk rogue; do for clip in Idle_Relaxed Walk_Forward; do for angle in 0 45 90 180; do out="tmp/unarmed-v1/evidence/${class}-${clip}-${angle}"; blender -b -P scripts/animation_qa_render.py -- --character "tmp/unarmed-v1/release/harness/models/synty/characters/${class}.glb" --clip "$clip" --out-dir "$out" --frames 28 --wrap-frames 2 --width 256 --height 320 --angle "$angle" --delay-cs 4; node scripts/render_animation_evidence.mjs --frames-dir "$out" --out-strip "${out}.png" --out-gif "${out}.gif" --title "${class} ${clip} angle ${angle}" --verdict PASS; done; done; done
-mkdir -p "$EVIDENCE_RUN/animation"
-cp tmp/unarmed-v1/evidence/*.{png,gif} "$EVIDENCE_RUN/animation/"
-test "$(find "$EVIDENCE_RUN/animation" -name '*.png' | wc -l)" -eq 32 && test "$(find "$EVIDENCE_RUN/animation" -name '*.gif' | wc -l)" -eq 32
-(cd "$EVIDENCE_WT" && sha256sum "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation/* > "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation.sha256 && git add "${EVIDENCE_RUN#"$EVIDENCE_WT"}" && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
-EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"
-```
-
-- [ ] Independent gate reruns Tasks 2-4, views portrait/multi-angle files, validates `git show --name-only <releaseCommit>` against metadata, and posts `GATE REVIEW`.
-- [ ] After release commit only, run `npm run assets:sync && npm run test:run && npm run ci-check` in `rpg-dnd5e-web`; verify actual Home → character select → Play → lobby → Start → EncounterView idle → Walk_Forward → idle for all classes. File a separate web issue for any finding.
-- [ ] Push one implementation PR citing **rpg-project issue #119** and **rpg-project PR #120**, baseline/release SHA, gate results, and external evidence SHA/links.
-
-## Final Review Checklist
-
-- [ ] Every design acceptance criterion maps to Tasks 1-5 and has a command.
-- [ ] No tracked metadata self-references a release SHA; external evidence is excluded from release transaction.
-- [ ] `stage -> portrait gate -> validate -> apply -> git add -> verify-index -> one commit` is the only publication order.
-- [ ] No incomplete-marker or producer-free contact/evidence requirement remains.
+- [ ] `stage` occurs only in Task 3 and before every evidence producer.
+- [ ] All portrait and multi-angle producer commands occur only in Task 4; Task 6 consumes their published commit and never regenerates them.
+- [ ] Complete release validation occurs only in Task 5, after Task 4 evidence commit and independent comment URL; no Task 1-4 command validates, applies, verifies index, or commits a release.
+- [ ] `apply` consumes PASS metadata and inventory from `validate`; inventory-driven `git add` precedes `verify-index`; one release commit follows it.
+- [ ] Every task declares what it consumes and produces; the config, semantic validators, manifest/docs gate, mesh-stat compatibility, dynamic portraits, ESM dependencies, licensing, evidence hashes/provenance, and revert process are covered without duplicate producers.
