@@ -104,7 +104,26 @@ distinct manifest keys are ever used: `obelisk`, `pillar`, `coffin`, `altar`,
 
 The room is bare because the generator only places collision geometry.
 
-### 4. Camera framing
+### 4. Walls read as "rubble", not masonry
+
+`syntyHexWallHelpers.ts:125-147` defines three wall GLBs with weights
+`plain:broken:alcove = 3:1:1` — the code's own comment calls this **"the rubble
+look"**. The `'crypt'` theme reweights them to **10:2:1**, because "a crypt reads
+as intact worked masonry, not a ruin" (`:161-171`).
+
+But `WALL_VARIANTS_BY_THEME` is selected by the `themeWallHexKeys` prop, which
+cause 1 above establishes the live route never passes. Line 157 says it outright:
+default weights apply to "**every real dungeon wall today**".
+
+So ~40% of live-route walls are broken/alcove pieces, versus ~23% under the crypt
+theme (and plain goes from 60% → 77%). **Fixing cause 1 fixes much of the wall
+jankiness for free** — no new assets, just the theme reaching the selector.
+
+Residual jank after that is structural, not weighting: walls follow hex edges, so
+organic generated room shapes stair-step. That's the "author the room layout"
+problem below, not a variant-selection problem.
+
+### 5. Camera framing
 
 The reference is a pulled-back, near-orthographic diorama of the whole room. The
 live route sits much closer and lower. Smallest of the four, but it's part of why
@@ -155,11 +174,80 @@ producing surprises. Worth a periodic check.
 
 (Pathfinder uses a flat vulnerability bonus rather than doubling — easy to conflate.)
 
-**The locked door itself.** `crypt-door-corridor-boss` is
+**The locked door being locked.** `crypt-door-corridor-boss` is
 `locked: true, lock_dc: 12, lock_ability: "dex"` — correct, by design, from
-rpg-toolkit #815/#824. The missing feedback was the stale-proto issue above.
-Server-side projection work is already planned in
+rpg-toolkit #815/#824. Server-side projection work is already planned in
 `ideas/locked-door-terminal-projection/plan.md`.
+
+But interacting with it surfaced a separate, serious bug — see below.
+
+## BUG: unresolved door prompts permanently soft-lock the player
+
+Observed live: `Door interaction error: [failed_precondition] resolve the pending
+prompt before issuing another action`, with every subsequent action refused.
+
+Confirmed in Redis — the encounter carries an unresolved prompt forever:
+
+```json
+"pending_prompts": {"test-player": {"kind":1, "dc":12, "ability":"dex",
+                    "triggered_by":"crypt-door-corridor-boss",
+                    "triggered_action":"open"}}
+```
+
+**Why it's unrecoverable.** A door skill-check prompt is delivered **exactly
+once**, as `InteractResponse.input_required` (`rpg-api`
+`internal/handlers/dnd5e/v2/encounter/interact.go:60-64`). The toolkit is explicit
+that it is *not* broadcast: "Does not publish any broker event — prompts are
+persisted state, not transient broadcasts. The orchestrator picks them up by
+reading `Data.PendingPrompts`" (`rpg-toolkit/encounter/prompts.go:133-136`).
+
+`ProjectFor` never reads `Data.PendingPrompts` — `grep` for
+`PendingPrompt|pending_prompt` across the encounter handler package hits
+`interact.go`, `submit_check.go`, and the *reaction* path
+(`InputRequiredDeliveredEvent`), but **not `project.go`**.
+
+So if the client drops that one response — modal closed, page refreshed, stream
+reconnected, render failure — the prompt survives in persisted state, the client
+can never rediscover it, and `AttemptUnlock` rejects everything from then on
+(`prompts.go:148-150`). There is no cancel, no timeout, and no re-delivery.
+
+**Fix:** project `Data.PendingPrompts[viewer]` into the connect-time snapshot in
+`ProjectFor`, so a reconnecting client re-discovers its own pending prompt. The
+toolkit doc already assumes the orchestrator does this ("*and from
+Data.PendingPrompts on subsequent loads*", `prompts.go:122`). Worth also
+considering a cancel/expiry path so a stuck prompt is never terminal.
+
+Same family as causes 1-3: **the server holds the state and never puts it on the
+wire.**
+
+**Unwedging a stuck encounter locally:**
+
+```bash
+docker exec rpg-redis-dev redis-cli GET "enc:v2:<id>"   # confirm pending_prompts
+# then either answer the check via SubmitCheck, or clear the encounter and restart
+```
+
+## Authoring room layout
+
+Open request from Kirk (2026-07-24): *"it would be great if our dungeon data
+allowed us to layout the room."*
+
+Relevant existing contract — more of this exists than you'd expect:
+
+- `Space.theme` — dungeon-wide visual family, opaque string, no fixed vocabulary
+- `Zone.archetype` — per-zone room function from the toolkit's **fixed** vocabulary
+  (`"entrance" | "chamber" | "corridor" | "boss"`, rpg-toolkit#814). A live
+  encounter already carries 3 zones tagged this way.
+- The proto comment on `Zone.archetype` explicitly reserves the next step:
+  *"Future ambient hooks (lighting profile ref, music cue ref, trigger refs) will
+  be added with new field numbers as needed."*
+
+So the seam for per-room dressing/lighting is designed and partly built. What's
+missing is (a) generators authoring meaningful room *shapes* rather than organic
+blobs, and (b) the client consuming `archetype` at all. Worth deciding whether
+"lay out the room" means authored templates in the toolkit generator, or a
+data-driven room description the client dresses — before cause 2's obstacle
+projection hardens the entity shape.
 
 ## The local iteration loop
 
