@@ -28,7 +28,8 @@
 - Create `scripts/character_promotion_validation.py`: glTF semantics, manifests/docs, report, evidence-review, inventory, and index validation primitives.
 - Create `scripts/export_checkpoint_character.py` and `scripts/character_action_transfer.py`: Blender 5 export and retained-action transfer.
 - Create `scripts/promote_character_checkpoints.py`: `stage`, `validate`, `apply`, and `verify-index`; `validate` is the sole metadata producer.
-- Create `scripts/render_character_portraits.py`, `scripts/render_character_portrait_contact_sheet.mjs`, `scripts/animation_qa_render.py`, and `scripts/render_animation_evidence.mjs`: staged-only evidence producers.
+- Create `scripts/render_character_portraits.py` and `scripts/render_character_portrait_contact_sheet.mjs`: staged-only portrait evidence producers.
+- Reuse unchanged `scripts/animation_qa_render.py` and `scripts/render_animation_evidence.mjs`: their established multi-angle CLI and GIF validation behavior is the Task 4 animation evidence producer contract; do not replace either script.
 - Modify `scripts/build_mesh_stats.py`, `scripts/animation_qa.py`, `README.md`, and `harness/models/synty/characters/manifest.json`; add focused tests beside the corresponding scripts.
 
 ## Portable Config
@@ -74,8 +75,9 @@ test "$(find "$EVIDENCE_RUN/animation" -name '*.gif' | wc -l)" -eq 32
 (cd "$EVIDENCE_WT" && sha256sum "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/portraits.png "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/animation/* > "${EVIDENCE_RUN#"$EVIDENCE_WT"}"/evidence.sha256 && git add "${EVIDENCE_RUN#"$EVIDENCE_WT"}" && git commit -m "evidence: unarmed character animation views" && git push origin evidence/asset-pipeline-wave1)
 EVIDENCE_COMMIT="$(git -C "$EVIDENCE_WT" rev-parse HEAD)"
 
-# The independent reviewer posts the required review on the already-open private draft asset PR.
-ASSET_PR_NUMBER="$(gh pr view --repo KirkDiggler/rpg-game-assets --json number --jq .number)"
+# Task 1 creates the ready, non-draft private asset PR and exports these identifiers.
+test -n "$ASSET_PR_URL" && test -n "$ASSET_PR_NUMBER"
+test "$(gh pr view "$ASSET_PR_NUMBER" --repo KirkDiggler/rpg-game-assets --json isDraft --jq .isDraft)" = false
 gh pr comment "$ASSET_PR_NUMBER" --repo KirkDiggler/rpg-game-assets --body "$(printf 'EVIDENCE REVIEW\nevidenceCommit: %s\nportraits: PASS (16 viewed)\nanimationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)\n— asset-pipeline agent, on behalf of KirkDiggler' "$EVIDENCE_COMMIT")"
 EVIDENCE_REVIEW_URL="$(gh api "repos/KirkDiggler/rpg-game-assets/issues/$ASSET_PR_NUMBER/comments" | jq -er --arg sha "$EVIDENCE_COMMIT" 'map(select(.body == ("EVIDENCE REVIEW\\nevidenceCommit: " + $sha + "\\nportraits: PASS (16 viewed)\\nanimationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)\\n— asset-pipeline agent, on behalf of KirkDiggler"))) | if length == 1 then .[0].html_url else error("expected exactly one matching EVIDENCE REVIEW") end')"
 python3 scripts/promote_character_checkpoints.py validate --config scripts/configs/character-promotion/unarmed-checkpoints-v1.json --repo-root "$PWD" --stage-root tmp/unarmed-v1 --baseline-commit "$(git rev-parse HEAD)" --portrait-evidence-sha "$EVIDENCE_RUN/portraits.sha256" --evidence-commit "$EVIDENCE_COMMIT" --evidence-review-url "$EVIDENCE_REVIEW_URL"
@@ -86,7 +88,7 @@ git diff --cached --check && git diff --cached --stat
 git commit -m "asset: promote unarmed character animation checkpoints"
 ```
 
-The controller opens the draft private asset PR before Task 4 solely as the required review surface; Task 6 updates it with the release commit. The independent reviewer, not the implementer, runs the two review commands above after viewing every artifact. The URL is rejected unless GitHub returns exactly that review comment. No command in Tasks 1-4 invokes `validate`, `apply`, `verify-index`, or creates a release commit.
+Task 1 creates the ready, non-draft private asset PR as the required review surface; Task 6 updates it with the release commit. The independent reviewer, not the implementer, runs the two review commands above after viewing every artifact. The URL is rejected unless GitHub returns exactly that review comment. No command in Tasks 1-4 invokes `validate`, `apply`, `verify-index`, or creates a release commit.
 
 ### Task 1: Config And Pure Semantic Validators
 
@@ -94,10 +96,47 @@ The controller opens the draft private asset PR before Task 4 solely as the requ
 
 **Interfaces:** Produces `semantic_glb(gltf, bin_data) -> dict`, `animation_fingerprint(gltf, bin_data, animation) -> dict`, `validate_candidate(baseline, candidate, weapon_nodes) -> list[str]`, `validate_retained_actions(baseline, candidate, names) -> list[str]`, `validate_variant_parity(paths, expected) -> list[str]`, `validate_manifest_docs(baseline_manifest, candidate_manifest, baseline_readme, candidate_readme, config) -> list[str]`, and `validate_evidence_review(evidence_commit, comment_url) -> dict`. Task 5 consumes these pure validators.
 
+- [ ] At Task 1 start, create the separate private asset implementation issue, add it to Board 19, set `Team=Assets` and `Feature=Class Kits`, and create the clean isolated worktree from latest `main`:
+
+```bash
+ASSET_REPO=KirkDiggler/rpg-game-assets
+ASSET_ISSUE_URL="$(gh issue create --repo "$ASSET_REPO" --title "asset: promote unarmed character animation checkpoints" --body "Implements https://github.com/KirkDiggler/rpg-project/issues/119 using the approved design at https://github.com/KirkDiggler/rpg-project/pull/120.\n\n— asset-pipeline agent, on behalf of KirkDiggler")"
+ASSET_ISSUE_NUMBER="${ASSET_ISSUE_URL##*/}"
+PROJECT_ID="$(gh api graphql -f query='query { user(login: "KirkDiggler") { projectV2(number: 19) { id } } }' --jq '.data.user.projectV2.id')"
+PROJECT_ITEM_ID="$(gh project item-add 19 --owner KirkDiggler --url "$ASSET_ISSUE_URL" --format json --jq .id)"
+TEAM_FIELD_ID="$(gh project field-list 19 --owner KirkDiggler --format json | jq -er '.fields[] | select(.name == "Team") | .id')"
+TEAM_OPTION_ID="$(gh project field-list 19 --owner KirkDiggler --format json | jq -er '.fields[] | select(.name == "Team") | .options[] | select(.name == "Assets") | .id')"
+FEATURE_FIELD_ID="$(gh project field-list 19 --owner KirkDiggler --format json | jq -er '.fields[] | select(.name == "Feature") | .id')"
+FEATURE_OPTION_ID="$(gh project field-list 19 --owner KirkDiggler --format json | jq -er '.fields[] | select(.name == "Feature") | .options[] | select(.name == "Class Kits") | .id')"
+gh project item-edit --id "$PROJECT_ITEM_ID" --project-id "$PROJECT_ID" --field-id "$TEAM_FIELD_ID" --single-select-option-id "$TEAM_OPTION_ID"
+gh project item-edit --id "$PROJECT_ITEM_ID" --project-id "$PROJECT_ID" --field-id "$FEATURE_FIELD_ID" --single-select-option-id "$FEATURE_OPTION_ID"
+ASSET_ROOT=/home/kirk/game-dev/rpg-game-assets
+ASSET_BRANCH=asset/119-unarmed-character-animation-promotion
+ASSET_WT=/tmp/opencode/rpg-game-assets-119-unarmed-character-animation-promotion
+git -C "$ASSET_ROOT" fetch origin main
+ASSET_BASELINE="$(git -C "$ASSET_ROOT" rev-parse origin/main)"
+test ! -e "$ASSET_WT"
+git -C "$ASSET_ROOT" worktree add -b "$ASSET_BRANCH" "$ASSET_WT" "$ASSET_BASELINE"
+test "$(git -C "$ASSET_WT" rev-parse HEAD)" = "$ASSET_BASELINE"
+test -z "$(git -C "$ASSET_WT" status --porcelain)"
+```
+
+- [ ] Expected outputs are an issue URL under `https://github.com/KirkDiggler/rpg-game-assets/issues/`, a Board 19 item with `Team` set to `Assets` and `Feature` set to `Class Kits`, and a clean `$ASSET_WT` on `$ASSET_BRANCH` at `$ASSET_BASELINE`.
 - [ ] Write tests that reject material/topology/Root/mesh changes, an interpolation change, a retained action key/value change, variant clip/count differences, a `bakedIntoModel: true` manifest, stale baked-weapon documentation, and malformed reviewed GitHub JSON.
 - [ ] Run `python3 scripts/test_character_promotion_validation.py`; expect failure before implementations exist.
 - [ ] Implement semantic node/skin/mesh/material/image/accessor decoding, constrained weapon-subtree removal, interpolation-aware target-bone fingerprints, A/B/C/D parity, exact manifest/docs rules, report-path/verdict checks, inventory SHA-256 checks, and fixture-backed review parsing. The real review lookup parses the comment ID from `EVIDENCE_REVIEW_URL`, calls `gh api repos/KirkDiggler/rpg-game-assets/issues/comments/$COMMENT_ID`, and requires the exact evidence SHA, `portraits: PASS (16 viewed)`, `animationAnatomy: PASS (64 artifacts viewed; fighter,barbarian,monk,rogue; Idle_Relaxed,Walk_Forward; 0,45,90,180)`, and signature.
-- [ ] Run `python3 scripts/test_character_promotion_validation.py`; expect PASS. Commit `feat: validate semantic character promotion contracts`.
+- [ ] Run `python3 scripts/test_character_promotion_validation.py`; expect PASS. Commit the first tested workflow/config change, push it, and open the required ready non-draft PR with live evidence-pending checklist status:
+
+```bash
+git -C "$ASSET_WT" add scripts/configs/character-promotion/unarmed-checkpoints-v1.json scripts/character_promotion_validation.py scripts/test_character_promotion_validation.py
+git -C "$ASSET_WT" commit -m "feat: validate semantic character promotion contracts"
+git -C "$ASSET_WT" push -u origin "$ASSET_BRANCH"
+ASSET_PR_URL="$(gh pr create --repo "$ASSET_REPO" --head "$ASSET_BRANCH" --base main --title "asset: promote unarmed character animation checkpoints" --body "Implements $ASSET_ISSUE_URL for https://github.com/KirkDiggler/rpg-project/issues/119 and https://github.com/KirkDiggler/rpg-project/pull/120.\n\nChecklist: Task 1 PASS; Task 2 pending; Task 3 pending; Task 4 evidence pending; Task 5 release pending; Task 6 client gate pending.\n\n— asset-pipeline agent, on behalf of KirkDiggler")"
+ASSET_PR_NUMBER="${ASSET_PR_URL##*/}"
+test "$(gh pr view "$ASSET_PR_NUMBER" --repo "$ASSET_REPO" --json isDraft --jq .isDraft)" = false
+```
+
+- [ ] Expected outputs are a pushed Task 1 commit, a ready non-draft `$ASSET_PR_URL`, and its captured `$ASSET_PR_NUMBER`; Task 4 uses both values for the independent `EVIDENCE REVIEW` comment.
 
 ### Task 2: Blender 5 Retained-Action Transfer And Unarmed Export
 
@@ -124,15 +163,15 @@ The controller opens the draft private asset PR before Task 4 solely as the requ
 
 ### Task 4: Public Evidence And Independent EVIDENCE REVIEW
 
-**Files:** Create `scripts/render_character_portrait_contact_sheet.mjs`, `scripts/animation_qa_render.py`, `scripts/render_animation_evidence.mjs`, and their tests.
+**Files:** Create `scripts/render_character_portrait_contact_sheet.mjs` and its tests. Reuse unchanged `scripts/animation_qa_render.py` and `scripts/render_animation_evidence.mjs`; no interface change is required, and their existing CLI/GIF validation behavior remains authoritative.
 
 **Interfaces:** Consumes the complete Task 3 stage. Produces the single public `$EVIDENCE_RUN`, `portraits.png`, `portraits.sha256`, exactly 32 PNG and 32 GIF multi-angle artifacts, `evidence.sha256`, pushed `$EVIDENCE_COMMIT`, and `$EVIDENCE_REVIEW_URL`. Task 5 consumes all six. This is the only multi-angle producer.
 
 - [ ] Write tests that verify contact-sheet ordering fighter/barbarian/monk/rogue then a/b/c/d, labels `${class} ${color}`, SHA-256 contents, and one PNG/GIF pair per class, `Idle_Relaxed`/`Walk_Forward`, and angle `0`/`45`/`90`/`180`.
 - [ ] Run `node scripts/test_render_character_portrait_contact_sheet.mjs`; expect failure before producers exist.
-- [ ] Implement the deterministic ESM contact sheet and animation render/assembly scripts. Execute every concrete producer command in **Exact CLI Journey** beginning with `npm install --prefix scripts --no-save --no-package-lock sharp omggif` and ending with `git push origin evidence/asset-pipeline-wave1`; do not alter staged/canonical assets.
+- [ ] Implement the deterministic ESM contact sheet only. Reuse the existing animation render and GIF assembly scripts unchanged, then execute every concrete producer command in **Exact CLI Journey** beginning with `npm install --prefix scripts --no-save --no-package-lock sharp omggif` and ending with `git push origin evidence/asset-pipeline-wave1`; do not alter staged/canonical assets.
 - [ ] Confirm the fresh directory contains the portrait sheet, its SHA, 32 PNGs, 32 GIFs, and `evidence.sha256`; capture `EVIDENCE_COMMIT` only after the evidence push.
-- [ ] An independent reviewer views the sheet and all 64 animation artifacts, then posts the required comment on the already-open private draft asset PR and provides its URL.
+- [ ] An independent reviewer views the sheet and all 64 animation artifacts, then posts the required comment on the ready non-draft `$ASSET_PR_URL` created in Task 1 and provides its URL.
 
 - [ ] The independent reviewer runs the `gh pr comment` command in **Exact CLI Journey**, which interpolates the captured `$EVIDENCE_COMMIT`; then record its URL and ID with the following `gh api` command.
 
@@ -157,7 +196,7 @@ The controller opens the draft private asset PR before Task 4 solely as the requ
 
 **Interfaces:** Consumes the Task 5 release commit, its metadata/inventory, and the Task 4 public evidence/review. Produces the asset PR, synced web verification evidence, and independent final-gate result. It never creates pre-release visual evidence.
 
-- [ ] Push the single release commit on the private `rpg-game-assets` branch and update the existing draft asset PR with issue #119, PR #120, baseline/release SHAs, metadata inventory/hash result, evidence commit/SHA/review URL, licensing boundary, and rollback command.
+- [ ] Push the single release commit on the private `rpg-game-assets` branch and update the existing ready non-draft asset PR with issue #119, PR #120, baseline/release SHAs, metadata inventory/hash result, evidence commit/SHA/review URL, licensing boundary, and rollback command.
 - [ ] Only after the release commit, run `npm run assets:sync && npm run test:run && npm run ci-check` in `rpg-dnd5e-web`; expect all commands to exit 0. Do not change the resolver. File any consumer defect as a separate web issue.
 - [ ] Independently verify the actual client for fighter, barbarian, monk, and rogue: Home, character select, Play, lobby, Start, EncounterView, `Idle_Relaxed`, `Walk_Forward`, then idle; confirm the promoted canonical paths are loaded.
 - [ ] Set `RELEASE_COMMIT="$(git rev-parse HEAD)"`, dispatch an independent final reviewer to compare `git show --name-only "$RELEASE_COMMIT"` with metadata inventory, confirm the Task 4 evidence/review, inspect the client result, and post a signed `GATE REVIEW` on the asset PR. Require PASS before merge.
