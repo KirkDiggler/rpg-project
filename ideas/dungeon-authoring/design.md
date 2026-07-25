@@ -57,7 +57,7 @@ So one dungeon's definition is scattered across three sites in two repos. This d
 - `content/dungeons/*.yaml`, embedded with `go:embed`; optional `RPG_CONTENT_DIR` env override so dev iteration is edit-file-restart, no rebuild.
 - Startup: every embedded/override file is loaded through `dungeonspec.Load`; failures log the validation error and disable that key (fail fast, never player-facing).
 - `resolveDungeonSpec(key)`: hardcoded switch → lookup by each file's `key:` field.
-- `StartEncounter`: `Load` → `InitDungeon(compiled.Params, seed)` → `enc.SeedMonsters(compiled.Spawns)`. Api never interprets a spec and no longer sequences monster placement at all — it moves bytes and calls two toolkit entry points. (`crypt_monster_seed.go` deletes entirely.)
+- `StartEncounter`: `Load` → set `compiled.Params.RandomSeed = seed` → `enc.InitDungeon(compiled.Params)` → `enc.SeedMonsters(compiled.Spawns)`. `InitDungeon` takes the one `DungeonParams` argument it always has — the seed is a field on that struct, not a second call argument. Api never interprets a spec and no longer sequences monster placement at all — it moves bytes and calls two toolkit entry points. (`crypt_monster_seed.go` deletes entirely.)
 
 ### protos / rpg-dnd5e-web: no changes
 
@@ -126,7 +126,8 @@ Each seat is an additive field on an existing list/struct; none requires reshapi
 StartEncounter(key, seed?)
   → api: content lookup by key → raw bytes            (content store)
   → toolkit: dungeonspec.Load(bytes)                  (validate + compile)
-  → api: enc.InitDungeon(compiled.Params, seed)       (geometry/walls/obstacles/doors)
+  → api: compiled.Params.RandomSeed = seed            (seed is a Params field, not a call arg)
+  → api: enc.InitDungeon(compiled.Params)             (geometry/walls/obstacles/doors)
   → api: enc.SeedMonsters(compiled.Spawns)            (registry lookup + N-per-room safe-cell
                                                        placement + atomic seeding, toolkit-side)
   → existing projection → wire                        (zones, theme, walls, obstacles, entities)
@@ -293,7 +294,10 @@ gap, folded into the reference-dungeon milestone (M3 below).
   a pattern whose geometry isn't fixed. Revisitable, not permanent: a future
   design could let `place` coexist with `scattered` (e.g. re-rolling walls
   around the fixed cells), but that's new design work, not this delta's
-  problem to solve now.
+  problem to solve now. `pattern: scattered` remains entirely legal on its
+  own — a room with no `place` and no pinned `boss.at` compiles to
+  `environments.PatternRandom` exactly as v1 already specified; only its
+  combination with static placement is new.
 
 ### Compiler & engine
 
