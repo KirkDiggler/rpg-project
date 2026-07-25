@@ -579,6 +579,16 @@ func TestInitDungeon_PlacedObstacleCollisionRejected(t *testing.T) {
 	// region), is a hard InitDungeon error — placed entries are guarantees, not
 	// best-effort (design.md §Validation).
 }
+
+func TestInitDungeon_PlacedObstacleOutOfBoundsRejected(t *testing.T) {
+	// InitDungeon rejects a PlacedObstacleSpec whose At.Col/Row falls outside
+	// [0,width)/[0,height) — same belt-and-suspenders posture as the reserved-
+	// row check above: dungeonspec's own load-time bounds check (Task B2) is
+	// the authoring-path authority, but InitDungeon is a public toolkit entry
+	// point other callers could reach directly, and an unchecked OOB placement
+	// would otherwise fail downstream with a message naming neither the
+	// region nor the cell.
+}
 ```
 
 - [ ] **Step 2: Run → FAIL; Step 3: Implement**
@@ -601,7 +611,7 @@ type PlacedObstacleSpec struct {
 type LocalHex struct{ Col, Row int }
 ```
 
-Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec`. Inside `placeRegionObstacles` (or a small helper it calls first): for each `PlacedObstacleSpec`, reject `At.Row == doorRow`, reject a cell already claimed by another placed entry, reject a wall cell (check against the same `wallCubes` set `regionObstacleCandidates` already builds), otherwise place it verbatim (`ObstacleData{Position: core.HexFromPosition(spatial.Position{X: float64(offsetX + At.Col), Y: float64(At.Row)})}` — `core.HexFromPosition` (`encounter/core/spatial.go`) wraps exactly the `OffsetCoordinateToCubeWithOrientation` + `HexFromCube` pair, symmetric with `Hex.ToPosition()` and orientation-proof, so use it directly rather than hand-assembling the same two calls). Thread the resulting set of placed absolute cube coordinates into `regionObstacleCandidates` (or the border/interior partition in `placeRegionObstacles`, for regions using `PreferBorder`) as an ADDITIONAL exclusion alongside the existing `wallCubes`/`doorRow` exclusions, so rolled obstacles never draw a placed cell.
+Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec`. Inside `placeRegionObstacles` (or a small helper it calls first), four rejections — reject `At.Col`/`At.Row` outside `[0,width)`/`[0,height)` (out-of-bounds), reject `At.Row == doorRow` (reserved row), reject a cell already claimed by another placed entry (collision), reject a wall cell (check against the same `wallCubes` set `regionObstacleCandidates` already builds) — the exact order among these four is the implementer's call beyond what the tests above pin (each test targets one rejection in isolation, so no test depends on a specific check running before another); otherwise place it verbatim (`ObstacleData{Position: core.HexFromPosition(spatial.Position{X: float64(offsetX + At.Col), Y: float64(At.Row)})}` — `core.HexFromPosition` (`encounter/core/spatial.go`) wraps exactly the `OffsetCoordinateToCubeWithOrientation` + `HexFromCube` pair, symmetric with `Hex.ToPosition()` and orientation-proof, so use it directly rather than hand-assembling the same two calls). Thread the resulting set of placed absolute cube coordinates into `regionObstacleCandidates` (or the border/interior partition in `placeRegionObstacles`, for regions using `PreferBorder`) as an ADDITIONAL exclusion alongside the existing `wallCubes`/`doorRow` exclusions, so rolled obstacles never draw a placed cell.
 
 - [ ] **Step 4: Run → PASS — and the full existing obstacle/boss-axis/perimeter suites (`obstacle_placement_test.go`, `boss_primary_axis_test.go`, `perimeter_edge_walls_test.go`) MUST stay green untouched. This task only ADDS a placed-cell exclusion on top of the existing candidate pool; a region with zero `PlacedObstacles` must produce byte-identical output to today.**
 - [ ] **Step 5: Commit** `feat(encounter): PlacedObstacleSpec — verbatim obstacle placement, excluded from the rolled pool (#<issue>)`
