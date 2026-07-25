@@ -795,26 +795,72 @@ func TestContentDirOverride(t *testing.T) {
 - [ ] **Step 2: Run → FAIL (non-short, Redis testcontainer); Step 3: Implement** the branch described above:
 
 ```go
-compiled, contentErr, found := o.resolveContentDungeonSpec(in.DungeonKey)
+// effectiveKey substitutes Task E2b's RPG_DUNGEON_KEY override ONLY when
+// the caller supplied no key at all -- an explicit in.DungeonKey (once a
+// real proto surface exists to set one) always wins. o.dungeonKeyOverride
+// is "" when RPG_DUNGEON_KEY was unset at startup, so this is a no-op
+// today for every real caller (zero player-facing change, per design.md).
+effectiveKey := in.DungeonKey
+if effectiveKey == "" {
+	effectiveKey = o.dungeonKeyOverride
+}
+
+compiled, contentErr, found := o.resolveContentDungeonSpec(effectiveKey)
 if found {
 	if contentErr != nil {
 		return nil, contentErr // *DisabledDungeonKeyError; lobbyStatusError maps it (Task E3)
 	}
 	compiled.Params.RandomSeed = in.RandomSeed // seed is a FIELD, not a call arg
 	if err := enc.InitDungeon(compiled.Params); err != nil {
-		return nil, fmt.Errorf("init dungeon (key=%q) for encounter %q: %w", in.DungeonKey, encID, err)
+		return nil, fmt.Errorf("init dungeon (key=%q) for encounter %q: %w", effectiveKey, encID, err)
 	}
 	// ... existing player-add loop, unchanged ...
 	if err := enc.SeedMonsters(compiled.Spawns); err != nil {
 		return nil, fmt.Errorf("seed monsters for encounter %q: %w", encID, err)
 	}
 } else {
-	// existing resolveDungeonSpec / o.seedRegionMonsters path, byte-for-byte unchanged
-	// (ErrUnknownDungeonKey if resolveDungeonSpec doesn't recognize it either)
+	// existing resolveDungeonSpec(effectiveKey, in.RandomSeed) / o.seedRegionMonsters
+	// path -- resolveDungeonSpec ITSELF is untouched; it already only applies its
+	// own hardcoded defaultDungeonKey fallback when given an empty string, and
+	// effectiveKey is only empty here when NEITHER the caller NOR RPG_DUNGEON_KEY
+	// supplied one, so today's exact fallback behavior (crypt) is unchanged.
+	// (ErrUnknownDungeonKey if resolveDungeonSpec doesn't recognize effectiveKey either)
 }
 ```
 
 - [ ] **Step 4: Full non-short suite green; Step 5: Commit** `feat(lobby)#<issue>: StartEncounter resolves content-backed dungeon keys via SeedMonsters, crypt path untouched`
+
+### Task E2b: `RPG_DUNGEON_KEY` — the dev-loop mechanism for M1's manual acceptance walkthrough
+
+**Why this exists (the finding this task closes):** verified against `origin/main` — `StartEncounterInput{PlayerID, LobbyID}` is ALL the real `StartEncounter` handler (`internal/handlers/dnd5e/lobby/v1alpha1/start_encounter.go`) ever builds from the proto request; `DungeonKey` has no proto/handler surface today (design.md's "no proto or web changes" scope, and `dungeon_spec.go`'s own comment already says as much). Without this task, M1's acceptance bar ("walk `reference-tomb` in the real game route") has no real path for an actual client session to select that key — only direct orchestrator test calls could. `RPG_DUNGEON_KEY` closes that gap the same way `RPG_CONTENT_DIR` already does for content iteration: an env-var override for local/dev sessions, zero proto surface added, zero change to any real player-facing default.
+
+**Files:**
+- Modify: `internal/orchestrators/lobby/orchestrator.go` (verified real: `func New(cfg *Config) (*Orchestrator, error)` — already returns an error, so a bad override fails construction loudly, no new error-plumbing needed. `Config` gains `DungeonKeyOverride string`; `New` validates it — if non-empty, it must resolve via EITHER the content registry (`o.contentSpecs`, and NOT be itself disabled — a load-error key set as the override should also fail loudly at boot, not defer the failure to first request) OR the legacy `dungeonSpecs` map; on failure, return a construction error, same as any other `New` validation failure. Stores the override on `*Orchestrator` for `StartEncounter`'s `effectiveKey` substitution above (Task E2)), `cmd/server/server.go` (reads `os.Getenv("RPG_DUNGEON_KEY")` and threads it into `lobbyorch.Config{DungeonKeyOverride: ...}` — the exact same pattern this file already uses for `AUTH_DEV_MODE`/`REDIS_ADDR`, verified at `cmd/server/server.go`'s `lobbyorch.New(&lobbyorch.Config{...})` call site)
+- Test: `internal/orchestrators/lobby/orchestrator_test.go` (or wherever `New`'s existing validation is tested)
+
+- [ ] **Step 1: Failing tests**
+
+```go
+func TestNew_DungeonKeyOverrideMustResolve(t *testing.T) {
+	_, err := lobbyorch.New(&lobbyorch.Config{ /* ... required fields ..., */ DungeonKeyOverride: "atlantis"})
+	require.Error(t, err, "an override key resolving nowhere (content or legacy) must fail construction loudly")
+}
+
+func TestNew_DungeonKeyOverrideRejectsDisabledContentKey(t *testing.T) {
+	// An override pointing at a content key that itself failed to load
+	// (contentSpecs[key].err != nil) must ALSO fail construction -- not
+	// silently accepted because the key string exists in the map.
+}
+
+func TestNew_DungeonKeyOverrideEmptyIsANoOp(t *testing.T) {
+	// DungeonKeyOverride: "" (today's real deployments, RPG_DUNGEON_KEY
+	// unset) must construct exactly as before this task -- zero
+	// player-facing change is the whole point.
+}
+```
+
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** the validation described above.
+- [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(lobby)#<issue>: RPG_DUNGEON_KEY override, validated at startup — the M1 manual-walkthrough mechanism`
 
 ### Task E3: Error surface
 
@@ -987,7 +1033,7 @@ The in-client control panel ("that room was too tough → adjust → go again") 
 
 ## Acceptance (the bar from the design, run by a human or the parity stack)
 
-1. **(M1)** Edit `content/dungeons/reference-tomb.yaml` (move a placed prop, add a placed monster), restart the api (`RPG_CONTENT_DIR` for the fast loop), start a fresh encounter — the change is live, walkable in the real game route. **No Go was touched.**
+1. **(M1)** Edit `content/dungeons/reference-tomb.yaml` (move a placed prop, add a placed monster); restart the api with `RPG_CONTENT_DIR=<path-to-content-checkout>` (fast loop, no rebuild) AND `RPG_DUNGEON_KEY=reference-tomb` (Task E2b — overrides the default a zero-value `StartEncounter` request resolves to; no proto surface exists yet for a real client to pick a key any other way); start a fresh encounter from the real client flow (host/lobby → StartEncounter, no test-only backdoor) — the edit is live, walkable in the real game route. **No Go was touched.**
 2. **(M1)** `go run ./cmd/dungeonspec-workbench -file content/dungeons/reference-tomb.yaml -seed 7` prints VALID, the spawn plan (boss first, placed positions shown), and a legible ASCII floor plan with placed entries at their exact coordinates.
 3. **(M2)** `make local-prod` (rpg-deployment#57) against the migrated images: the crypt plays exactly as before the migration (parity), and the crypt is selectable by key through the same content-backed path as every other dungeon.
 

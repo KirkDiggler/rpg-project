@@ -328,7 +328,13 @@ gap, folded into the reference-dungeon milestone (M3 below).
 - **In-client tuning panel** ("that room was too tough → adjust → go again"):
   its own small design once static rooms are walkable (M4). Until then the loop
   is edit-YAML → restart api (`RPG_CONTENT_DIR`, no rebuild) → replay, plus the
-  workbench for instant previews.
+  workbench for instant previews. Which dungeon a real encounter boots into is
+  the SAME dev-loop mechanism, one level up: `RPG_DUNGEON_KEY` (sibling env var)
+  overrides the default key an unset `StartEncounter` request resolves to —
+  unset means today's existing default (`crypt`), zero player-facing change.
+  Proper key selection (a lobby/host actually choosing which dungeon to play)
+  stays the deferred host-knobs seat (§Decisions); `RPG_DUNGEON_KEY` is
+  explicitly the M1/dev walkthrough mechanism, not that feature arriving early.
 
 ### Delivery milestones (plan.md is revised to this order)
 
@@ -337,10 +343,12 @@ gap, folded into the reference-dungeon milestone (M3 below).
   placement path (new slice); workbench CLI whose ASCII floor plan renders
   placed entries (slice D extended); api content hosting wiring a NEW dungeon
   key through the spec path (slice E, lightened) — the existing crypt keeps its
-  legacy hardcoded path, untouched. Acceptance: edit `reference-tomb.yaml` (a
-  minimal entrance room + the fully-placed tomb — two rooms, honoring the ≥2
-  rooms/entrance-spawn constraints honestly), restart the api, walk the room in
-  the real game route. **M1-only restriction, stated honestly rather than
+  legacy hardcoded path, untouched. Acceptance, stated as the honest procedure
+  (no proto changes in this delta — see §Compiler & engine — so nothing on the
+  wire lets a real client pick a dungeon key yet): `RPG_CONTENT_DIR=... RPG_DUNGEON_KEY=reference-tomb`,
+  restart the api, start an encounter from the real client flow (host/lobby →
+  StartEncounter, same as any other session — no test-only backdoor), walk the
+  fully-placed tomb. **M1-only restriction, stated honestly rather than
   silently absorbed:** every monster spawn must be pinned (`place` or
   `boss.at`) — count-based `monsters:` entries and an unpinned boss are
   rejected at load time until M2's `SeedMonsters` can roll them; rolled
