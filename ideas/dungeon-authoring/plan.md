@@ -1,29 +1,39 @@
-# Dungeon Authoring (YAML dungeon definitions v1) — Implementation Plan
+# Dungeon Authoring (YAML dungeon definitions v1 + static placement delta) — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. This team's additional law: every PR goes through Copilot ack + independent gate review before Kirk merges; posts open with `— implementer (asset-pipeline), on behalf of KirkDiggler`.
 
-**Goal:** Authoring a dungeon becomes editing one YAML file — schema/validation/compiler in the toolkit, content files in rpg-api, with a workbench CLI to try seeds without a server.
+**Goal:** Authoring a dungeon becomes editing one YAML file — schema/validation/compiler in the toolkit, content files in rpg-api, with a workbench CLI to try seeds without a server. The static-placement delta (design.md §Design delta, approved 2026-07-24) adds a per-item `place` block so an author can pin exact props/monsters instead of only rolling counts — the explicit⟷random dial is per-item, not global.
 
-**Architecture:** A new toolkit sub-package `encounter/dungeonspec` strictly decodes + validates a versioned YAML spec and compiles it to the existing `DungeonParams` plus an ordered spawn plan; a new `monsters.ByRef` registry makes monster refs resolvable at author time; a new `Encounter.SeedMonsters` executes the plan under the atomic-seeding invariant. rpg-api hosts content files (go:embed + dev dir override), resolves keys to bytes, and calls exactly two toolkit entry points. No proto or web changes.
+**Architecture:** A new toolkit sub-package `encounter/dungeonspec` strictly decodes + validates a versioned YAML spec — rooms' count-based `obstacles`/`monsters` AND the delta's per-item `place` block — and compiles it to the existing `DungeonParams` (extended with placed obstacles) plus an ordered spawn plan (extended with optional placed positions); a new `monsters.ByRef` registry makes monster refs resolvable at author time; `encounter/dungeon.go`'s placement path is extended to place `place` entries verbatim and exclude those cells from the rolled candidate pool; a new `Encounter.SeedMonsters` executes the spawn plan under the atomic-seeding invariant, starting (M1) with placed (position-bearing) instructions and extended (M2) to count-based multi-monster rolling. rpg-api hosts content files (go:embed + dev dir override), resolves keys to bytes, and calls the toolkit's placement/spawn entry points — the legacy crypt path is untouched until M2's migration. No proto or web changes.
 
 **Tech Stack:** Go (toolkit modules `encounter`, `rulebooks/dnd5e`; rpg-api), `gopkg.in/yaml.v3` (strict, KnownFields), go:embed, testify.
 
-**Spec:** `rpg-project/ideas/dungeon-authoring/design.md` (approved via rpg-project PR #117, merged 2026-07-24). One delta vs the spec, flagged: `ObstacleSpec.PreferBorder` (added by rpg-toolkit#840 after the design froze) is exposed as optional `prefer_border` in the room-obstacle schema — additive, default false, consistent with the design's honest-to-the-engine rule.
+**Spec:** `rpg-project/ideas/dungeon-authoring/design.md` — the original v1 design (approved via rpg-project PR #117, merged 2026-07-24) plus its `§Design delta — static placement` section (approved in session 2026-07-24, same file, before implementation began). One delta vs the v1 spec, flagged: `ObstacleSpec.PreferBorder` (added by rpg-toolkit#840 after the v1 design froze) is exposed as optional `prefer_border` in the room-obstacle schema — additive, default false, consistent with the design's honest-to-the-engine rule.
+
+**Milestones (this plan is organized by them, matching design.md §Design delta):**
+- **M1 — "The Tomb, walkable."** This plan's primary scope: Slice A (registry, unchanged), Slice B (schema/validation/compiler, extended for `place`), a new engine placement path, Slice D (workbench, extended), and a lightened Slice E (content hosting for one new dungeon key; the crypt's legacy hardcoded path stays untouched).
+- **M2 — Migration.** Slice C completes `SeedMonsters` for count-based multi-monster rooms; the crypt is ported to YAML behind a parity test; the legacy scatter (`crypt_monster_seed.go`, its anchor helpers, and the M1-added resolution branch) is deleted.
+- **M3 — The reference dungeon.** Content/evidence milestone; no new schema/engine/api code anticipated — see the pointer section below.
+- **M4 — The tuning loop.** Future design, not built in this wave.
 
 **Ground rules for every task:** TDD (write the failing test first, watch it fail, then implement); `go test -count=1 -race ./...` in the touched module before every commit; never weaken an existing assertion; commit after each green step. rpg-api extra: commit BEFORE running any `make` target (ci-checks.sh runs `git checkout -- .`), and run non-short integration (`go test -count=1 -race ./...` without `-short`) before push.
 
 ---
 
+# Milestone M1 — "The Tomb, walkable."
+
+Acceptance for this milestone (full detail under Acceptance below): edit `content/dungeons/reference-tomb.yaml`, restart the api, walk the room in the real game route — no Go touched.
+
 ## Slice A — rpg-toolkit: `monsters.ByRef` registry (module `rulebooks/dnd5e`)
 
-The smallest unblockernothing else can validate monster refs without it.
+Unchanged by the delta — the smallest unblocker, nothing else can validate monster refs without it.
 
 ### Task A1: Registry over existing constructors
 
 **Files:**
 - Create: `rulebooks/dnd5e/monster/monsters/registry.go` (NOTE the real path: constructors live in the `monsters` package nested under `monster/` — `rulebooks/dnd5e/monsters/` does NOT exist; verify with `ls rulebooks/dnd5e/monster/monsters/` and by reading rpg-api's `crypt_monster_seed.go` import line before creating anything)
 - Test: `rulebooks/dnd5e/monster/monsters/registry_test.go`
-- Read first: `rulebooks/dnd5e/monster/monsters/` (constructor naming: `NewSkeleton`, `NewSkeletonCaptain`, `NewGhoul`, `NewZombie`, …) and `rulebooks/dnd5e/refs/monsters.go` (canonical refs — ids are hyphenated, e.g. `skeleton-captain`). CAVEAT: `NewGoblin` lives in the PARENT `monster` package, not the `monsters` subpackage — same signature, different import; register it via a closure at the map literal (`func(...) ... { return monster.NewGoblin(...) }`), never by moving it.
+- Read first: `rulebooks/dnd5e/monster/monsters/` (constructor naming: `NewSkeleton`, `NewSkeletonCaptain`, `NewGhoul`, `NewZombie`, …) and `rulebooks/dnd5e/refs/monsters.go` (canonical refs — ids are hyphenated, e.g. `skeleton-captain`). CAVEAT (reverified against rpg-toolkit `origin/main` 2026-07-24): `NewGoblin` lives in the PARENT `monster` package (`rulebooks/dnd5e/monster/monster.go:228`, signature `func NewGoblin(id string) *Monster`), not the `monsters` subpackage, and its return type is `*Monster` (unqualified — it's already inside package `monster`), while the subpackage constructors (`NewSkeleton`, `NewGhoul`, `NewZombie`, `NewSkeletonCaptain`) all return `*monster.Monster`. Register `NewGoblin` via a closure at the map literal (`func(id string) *monster.Monster { return monster.NewGoblin(id) }`), never by moving it.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -102,7 +112,7 @@ The `Constructor` alias must be the real shared signature — verify all listed 
 
 ---
 
-## Slice B — rpg-toolkit: `encounter/dungeonspec` schema + strict decode + validation
+## Slice B — rpg-toolkit: `encounter/dungeonspec` schema + strict decode + validation (extended for `place`)
 
 ### Task B1: Schema structs and strict YAML decode
 
@@ -162,6 +172,7 @@ type RoomSpec struct {
 	Monsters  []MonsterEntry  `yaml:"monsters,omitempty"`
 	Boss      *BossEntry      `yaml:"boss,omitempty"`
 	Obstacles []ObstacleEntry `yaml:"obstacles,omitempty"`
+	Place     []PlacedEntry   `yaml:"place,omitempty"` // delta addition — see below
 }
 
 type MonsterEntry struct {
@@ -170,7 +181,8 @@ type MonsterEntry struct {
 }
 
 type BossEntry struct {
-	Ref string `yaml:"ref"`
+	Ref string  `yaml:"ref"`
+	At  *[2]int `yaml:"at,omitempty"` // delta addition: nil = unpinned (v1 behavior)
 }
 
 type ObstacleEntry struct {
@@ -179,6 +191,17 @@ type ObstacleEntry struct {
 	BlocksMovement *bool  `yaml:"blocks_movement,omitempty"` // nil => true
 	BlocksLoS      *bool  `yaml:"blocks_los,omitempty"`      // nil => true
 	PreferBorder   bool   `yaml:"prefer_border,omitempty"`   // post-design delta: toolkit#840
+}
+
+// PlacedEntry is one static placement (design.md §Design delta) — routed by
+// Ref's `module:type:id` type segment at VALIDATE time (props → obstacle,
+// monsters → spawn; see Task B2), not at decode time, so a bad ref type
+// fails validation with a clear message instead of a decode error.
+type PlacedEntry struct {
+	Ref            string `yaml:"ref"`
+	At             [2]int `yaml:"at"` // [col, row], room-local — see design.md §Design delta
+	BlocksMovement *bool  `yaml:"blocks_movement,omitempty"`
+	BlocksLoS      *bool  `yaml:"blocks_los,omitempty"`
 }
 
 type ConnectorSpec struct {
@@ -197,6 +220,27 @@ Decode uses `yaml.NewDecoder` with `KnownFields(true)` — that is the strictnes
 
 - [ ] **Step 4: Run → PASS**
 - [ ] **Step 5: Commit** `feat(dungeonspec): schema structs + strict YAML decode (#<issue>)`
+
+- [ ] **Step 6 (delta addition): failing test — `place` round-trips, ref-type-agnostic at decode time**
+
+```go
+func TestDecode_PlaceBlockRoundTrips(t *testing.T) {
+	spec, err := dungeonspec.Decode([]byte(placedTombYAML)) // design.md's tomb example, copied verbatim
+	require.NoError(t, err)
+	tomb := spec.Rooms[len(spec.Rooms)-1]
+	require.Len(t, tomb.Place, 6) // coffin, altar, statue-reaper, brazier x2, skeleton
+	assert.Equal(t, "dnd5e:props:coffin", tomb.Place[0].Ref)
+	assert.Equal(t, [2]int{6, 4}, tomb.Place[0].At)
+	require.NotNil(t, tomb.Place[0].BlocksLoS)
+	assert.False(t, *tomb.Place[0].BlocksLoS)
+	assert.Equal(t, "dnd5e:monsters:skeleton", tomb.Place[5].Ref)
+	require.NotNil(t, tomb.Boss.At)
+	assert.Equal(t, [2]int{7, 5}, *tomb.Boss.At)
+}
+```
+
+- [ ] **Step 7: Run → FAIL** (`Place`/`Boss.At` undefined) → already implemented above in Step 3's struct listing, so this is a red→green pair against that same implementation, not a second implementation pass.
+- [ ] **Step 8: Commit** `feat(dungeonspec): place block + boss.at structs and decode (#<issue>)`
 
 ### Task B2: Validation, table-tested
 
@@ -229,6 +273,43 @@ func TestValidate_Table(t *testing.T) {
 - [ ] **Step 2: Run → FAIL** (`Validate` undefined)
 - [ ] **Step 3: Implement `Validate(spec) error`** — plain sequential checks, error messages naming field + file-fixable detail. The chain check: connectors[i] must join rooms[i] and rooms[i+1] by id (the v1 generator constraint — same order the design's example uses).
 - [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): validation — every generator constraint mirrored at load (#<issue>)`
+
+**Delta addition — validation rows for `place`/`boss.at`.** Use a fixture with a `place`-bearing room (design.md's tomb) and a small helper (`tomb(s) *dungeonspec.RoomSpec` returning `&s.Rooms[len(s.Rooms)-1]`) so mutate funcs don't repeat magic indices as the fixture grows:
+
+```go
+{"place at out of bounds (col)", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[0].At = [2]int{99, 4}
+}, "out of bounds"},
+{"place at out of bounds (row)", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[0].At = [2]int{6, 99}
+}, "out of bounds"},
+{"place collides with another placed entry", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[1].At = tomb(s).Place[0].At
+}, "already placed"},
+{"place collides with boss.at", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[0].At = *tomb(s).Boss.At
+}, "already placed"},
+{"place on reserved row (height/2) rejected", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[0].At = [2]int{6, s.Height / 2}
+}, "reserved row"},
+{"place ref of unknown type rejected", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[0].Ref = "dnd5e:traps:pit"
+}, "must be props or monsters"},
+{"blocks_los set on a monster place entry is rejected", func(s *dungeonspec.DungeonSpec) {
+	f := false
+	tomb(s).Place[5].BlocksLoS = &f // Place[5] is the skeleton (monster) entry
+}, "blocks_los only valid on props"},
+{"boss ref duplicated in place is rejected", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place = append(tomb(s).Place, dungeonspec.PlacedEntry{Ref: tomb(s).Boss.Ref, At: [2]int{0, 0}})
+}, "boss ref may not also appear in place"},
+{"place monster ref unresolvable", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Place[5].Ref = "dnd5e:monsters:beholder"
+}, "unknown monster"},
+```
+
+**Reserved-row rule, pinned against real engine code (verified on rpg-toolkit `origin/main`, `encounter/dungeon.go`, 2026-07-24):** `row == height/2` is rejected for EVERY room regardless of archetype. `placeRegionObstacles`/`regionObstacleCandidates` already exclude that entire row from the rolled-obstacle candidate pool in every region, uniformly — a boss/interior region's actual required path spans the row's full width, an entrance/terminal region's spans only half, but the exclusion doesn't discriminate; it's the same over-conservative reservation everywhere. Rejecting `place` on that row therefore gives placed entries the IDENTICAL traversability guarantee rolled obstacles already have, by construction — this ONE check is both the "no door cell" rule and the "room stays traversable" rule from design.md's validation list; no separate path-oracle re-implementation is needed at spec-load time.
+
+- [ ] **Step 6: Run → FAIL; Step 7: Implement the above checks in `Validate`; Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): validation — place block cell/type/collision rules (#<issue>)`
 
 ### Task B3: Compiler → `CompiledDungeon` + crypt parity
 
@@ -300,6 +381,7 @@ type SpawnInstruction struct {
 	RoomID     string
 	MonsterRef string
 	Count      int
+	At         *encounter.LocalHex // delta addition: nil = rolled, non-nil = placed (see below)
 }
 
 // Load decodes, validates, and compiles a spec in one call — the only
@@ -313,48 +395,160 @@ Boss-first ordering is defense-in-depth (design.md §Compiler); the real safety 
 
 - [ ] **Step 4: Run → PASS; Step 5: Full module suite + commit** `feat(dungeonspec): compiler — CompiledDungeon with boss-first spawn plan + crypt parity (#<issue>)`
 
----
-
-## Slice C — rpg-toolkit: `Encounter.SeedMonsters` (atomic seeding)
-
-### Task C1: The invariant test first
-
-**Files:**
-- Create: `encounter/seed_monsters.go`, `encounter/seed_monsters_test.go`
-- Read first: `encounter/encounter.go` `AddMonster` (the reinforcement path: unconditional initiative append when `Mode == TurnBased`), `combat.go` `checkCombatEntry`, and `crypt_monster_seed.go` in **rpg-api** (`internal/orchestrators/lobby/`) — the fragility being retired.
-
-- [ ] **Step 1: Failing regression test — the partial-roster bug cannot happen**
+**Delta addition — compiling `place` into `PlacedObstacles` + `At`-bearing `SpawnInstruction`s.**
 
 ```go
-func TestSeedMonsters_CombatEntryNeverSeesPartialRoster(t *testing.T) {
-	// Party placed at entrance; entrance monster spawn-visible to a player;
-	// boss in the boss room. Pre-fix behavior with naive per-add seeding in
-	// the WRONG order: entrance add → visibility pair → combat starts →
-	// boss add → boss reinforced into initiative. SeedMonsters must yield:
-	// combat may start AFTER the batch, initiative contains ONLY the
-	// engaged (visible) monsters, never the unseen boss.
-	// Build via InitDungeon with a fixed seed + forced spawn adjacency.
+func TestLoad_PlaceRoutesByRefType(t *testing.T) {
+	compiled, err := dungeonspec.Load(placedTombYAML)
+	require.NoError(t, err)
+	tombRegion := regionByID(compiled.Params.Regions, "tomb")
+	require.Len(t, tombRegion.PlacedObstacles, 5) // coffin, altar, statue-reaper, brazier x2
+	assert.Equal(t, "dnd5e:props:coffin", tombRegion.PlacedObstacles[0].Ref)
+	assert.Equal(t, encounter.LocalHex{Col: 6, Row: 4}, tombRegion.PlacedObstacles[0].At)
+	assert.False(t, tombRegion.PlacedObstacles[0].BlocksLoS)
+
+	var skeletonSpawn *dungeonspec.SpawnInstruction
+	for i := range compiled.Spawns {
+		if compiled.Spawns[i].MonsterRef == "dnd5e:monsters:skeleton" {
+			skeletonSpawn = &compiled.Spawns[i]
+		}
+	}
+	require.NotNil(t, skeletonSpawn)
+	require.NotNil(t, skeletonSpawn.At)
+	assert.Equal(t, encounter.LocalHex{Col: 4, Row: 2}, *skeletonSpawn.At)
+	assert.Equal(t, 1, skeletonSpawn.Count)
 }
 
-func TestSeedMonsters_SpawnVisibleStillStartsCombat(t *testing.T) {
-	// The AddPlayer-doesn't-check trap (design.md, verified on main):
-	// batching must NOT lose "combat starts immediately if you spawn
-	// already visible" — one checkCombatEntry evaluation after the batch.
+func TestLoad_BossAtCompilesToSpawnPosition(t *testing.T) {
+	compiled, _ := dungeonspec.Load(placedTombYAML)
+	boss := compiled.Spawns[0] // boss-first ordering unchanged
+	require.NotNil(t, boss.At)
+	assert.Equal(t, encounter.LocalHex{Col: 7, Row: 5}, *boss.At)
+}
+```
+
+**Naming/architecture note (this plan's decision, load-bearing for the engine slice below):** `encounter.LocalHex{Col, Row int}` here names the exact type the new engine slice introduces (see Task N1) — the compiler reuses it rather than inventing a parallel `dungeonspec`-local coordinate type. The critical constraint: `At` stays ROOM-LOCAL (pre-`offsetX`) all the way from YAML into `DungeonParams.Regions[i].PlacedObstacles` and `SpawnInstruction.At` — the compiler never computes a region's `offsetX` itself. That arithmetic (`starts[i]` in `generateDungeonLayout`) is layout-time-only and depends on every region's width in chain order; duplicating it in `dungeonspec` would silently drift the moment column math changes there. The engine adds `offsetX` at placement time, exactly as it already does internally for rolled candidates.
+
+The reference fixture (`testdata/crypt.yaml` and the in-package `referenceYAML`) gains a placed room (mirroring design.md's tomb example) so round-trip/parity tests cover `place`, not just a bespoke `placedTombYAML` literal.
+
+- [ ] **Step 6: Run → FAIL; Step 7: Implement** the ref-type routing (props → append to the region's `PlacedObstacles`; monsters → append an `At`-bearing `SpawnInstruction`, in `place` list order, boss spawn first as already ordered); **Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): compile place block into PlacedObstacles + positioned spawns (#<issue>)`
+
+---
+
+## New M1 slice — rpg-toolkit: engine placement path (`encounter/dungeon.go` + new `encounter/seed_monsters.go`)
+
+Genuinely new engine code the delta requires — none of it exists yet on rpg-toolkit `origin/main` (verified 2026-07-24: no `dungeonspec`, `PlacedObstacles`, `PlacedObstacleSpec`, `LocalHex`, or `SeedMonsters` anywhere in the module). The facts below ARE verified against `origin/main` today and must not drift when this task is implemented:
+
+- `DungeonRegionParams.Obstacles []ObstacleSpec` and `placeRegionObstacles`/`regionObstacleCandidates`/`wallCubeSet`/`drawObstacles`/`drawObstaclesFrom` are real, in `encounter/dungeon.go`, exactly as described below.
+- `regionObstacleCandidates` scans LOCAL `(x, y)` with `x` in `[0, width)`, `y` in `[0, height)`, excluding `y == doorRow` (`doorRow := params.Height / 2`) and wall cells, THEN `placeRegionObstacles`/`generateDungeonLayout` translate to absolute cube coordinates via `spatial.OffsetCoordinateToCubeWithOrientation(spatial.Position{X: float64(x + offsetX), Y: float64(y)}, ...)` — this is the exact frame `place`'s `[col, row]` maps onto with zero conversion beyond that same `+offsetX`.
+- `encounter/combat.go`'s `checkCombatEntry()` self-transitions FREE_ROAM→TURN_BASED via LoS scan, gated idempotent on mode. `encounter/encounter.go`'s `AddMonster` calls `checkCombatEntry()` on every invocation; `AddPlayer` does NOT (reverified today — this is still true on `origin/main`, matching design.md's already-cited finding).
+- Existing test files to extend, not fork: `encounter/obstacle_placement_test.go` (obstacle placement), `encounter/boss_primary_axis_test.go` and `encounter/perimeter_edge_walls_test.go` (must stay green untouched by this task).
+
+### Task N1: `DungeonRegionParams.PlacedObstacles` — verbatim placement, excluded from the rolled pool
+
+**Files:**
+- Modify: `encounter/dungeon.go` (`DungeonRegionParams` gains `PlacedObstacles []PlacedObstacleSpec`; extend `placeRegionObstaclesParams`, `placeRegionObstacles`, `regionObstacleCandidates`)
+- Test: `encounter/obstacle_placement_test.go` (existing file)
+- Read first, in full: `placeRegionObstacles`'s and `regionObstacleCandidates`'s doc comments — they already spell out the candidate-pool/doorRow-exclusion invariants this task must preserve exactly, and the `PreferBorder` two-pool partition (rpg-toolkit#839/#840) this task must not disturb.
+
+- [ ] **Step 1: Failing tests**
+
+```go
+func TestInitDungeon_PlacedObstaclesLandVerbatim(t *testing.T) {
+	// A region with PlacedObstacles: []PlacedObstacleSpec{{Ref: "dnd5e:props:coffin",
+	// At: LocalHex{Col: 6, Row: 4}}} places at EXACTLY local (6,4) translated by that
+	// region's offsetX — assert the resulting ObstacleData.Position directly (the
+	// same OffsetCoordinateToCubeWithOrientation conversion regionObstacleCandidates
+	// uses), not just "an obstacle with this ref exists somewhere in the region."
 }
 
-func TestSeedMonsters_NPerRoomSafeCells(t *testing.T) {
-	// count>1 in one room: all placed on distinct, walkable, non-door,
-	// non-required-path cells; deterministic per seed. Property-style over
-	// 25 seeds.
+func TestInitDungeon_RolledObstaclesNeverUsePlacedCells(t *testing.T) {
+	// A region with both PlacedObstacles and Obstacles (rolled, Count sized so the
+	// candidate pool minus placed cells is tight): across a sweep of seeds, no
+	// rolled ObstacleData ever lands on a placed cell's cube coordinate.
+}
+
+func TestInitDungeon_PlacedObstacleOnReservedRowRejected(t *testing.T) {
+	// InitDungeon rejects a PlacedObstacleSpec whose At.Row == height/2 —
+	// belt-and-suspenders with dungeonspec's own load-time check (Task B2),
+	// since InitDungeon is a public toolkit entry point other callers besides
+	// dungeonspec could reach directly.
+}
+
+func TestInitDungeon_PlacedObstacleCollisionRejected(t *testing.T) {
+	// Two PlacedObstacleSpecs at the same At, or one at a wall cell (PatternRandom
+	// region), is a hard InitDungeon error — placed entries are guarantees, not
+	// best-effort (design.md §Validation).
 }
 ```
 
 - [ ] **Step 2: Run → FAIL; Step 3: Implement**
 
-Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics): `SeedMonsters(spawns []dungeonspec.SpawnInstruction)`—hmm, dependency direction: take a local `SpawnInstruction` mirror or accept `(roomID string, ref string, count int)` tuples; pick whichever keeps encounter free of a dungeonspec import and document it—resolves each ref via `monsters.ByRef` (error on miss — validation should make this unreachable), places N instances per room on safe cells (reuse the candidate-pool machinery `placeRegionObstacles` uses — same exclusions plus occupied-cell; extract a shared helper only if it stays behavior-identical, with its own test), adds all monsters with combat-entry evaluation suppressed, then runs ONE `checkCombatEntry` pass. Boss-first order preserved from the plan.
+```go
+// PlacedObstacleSpec pins one obstacle instance to an exact room-local cell
+// — verbatim placement, not a candidate-pool roll (design.md §Design delta).
+// encounter never interprets Ref, mirroring ObstacleSpec's existing
+// content-agnostic contract.
+type PlacedObstacleSpec struct {
+	Ref            string
+	At             LocalHex
+	BlocksMovement bool
+	BlocksLoS      bool
+}
 
-- [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially the crypt connectivity, boss-axis, and obstacle suites.
-- [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — batch seeding under the atomic combat-entry invariant (#<issue>)`
+// LocalHex is a region-local (pre-offsetX) grid cell: Col in [0,width),
+// Row in [0,height) (the dungeon-shared height) — exactly the local (x,y)
+// frame regionObstacleCandidates already scans (see that function's doc).
+type LocalHex struct{ Col, Row int }
+```
+
+Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec`. Inside `placeRegionObstacles` (or a small helper it calls first): for each `PlacedObstacleSpec`, reject `At.Row == doorRow`, reject a cell already claimed by another placed entry, reject a wall cell (check against the same `wallCubes` set `regionObstacleCandidates` already builds), otherwise place it verbatim (`ObstacleData{Position: core.HexFromCube(spatial.OffsetCoordinateToCubeWithOrientation(...))}`, same conversion as existing rolled placement). Thread the resulting set of placed absolute cube coordinates into `regionObstacleCandidates` (or the border/interior partition in `placeRegionObstacles`, for regions using `PreferBorder`) as an ADDITIONAL exclusion alongside the existing `wallCubes`/`doorRow` exclusions, so rolled obstacles never draw a placed cell.
+
+- [ ] **Step 4: Run → PASS — and the full existing obstacle/boss-axis/perimeter suites (`obstacle_placement_test.go`, `boss_primary_axis_test.go`, `perimeter_edge_walls_test.go`) MUST stay green untouched. This task only ADDS a placed-cell exclusion on top of the existing candidate pool; a region with zero `PlacedObstacles` must produce byte-identical output to today.**
+- [ ] **Step 5: Commit** `feat(encounter): PlacedObstacleSpec — verbatim obstacle placement, excluded from the rolled pool (#<issue>)`
+
+### Task N2: placed-monster spawning under the atomic-seeding invariant (M1-scoped `SeedMonsters`)
+
+**Files:**
+- Create: `encounter/seed_monsters.go`, `encounter/seed_monsters_test.go`
+- Read first (verified above, today): `encounter/encounter.go`'s `AddMonster`/`AddPlayer`, `encounter/combat.go`'s `checkCombatEntry`.
+
+**Scoping call (this plan's decision, resolving an ambiguity the delta text leaves open):** design.md's `SpawnInstruction.At` split ("placed monsters compile to single-count instructions with `At` set; rolled monsters keep `Count` with no position") describes the COMPILER's output shape only — it does not say how much of the ENGINE side lands in M1 vs M2. Given the atomic-seeding invariant applies identically to placed monsters (per the delta), M1 must build `SeedMonsters`' full batching machinery (suppress combat-entry checks across the batch, one `checkCombatEntry()` pass at the end) even though it only NEEDS to place `At`-bearing instructions — a bare loop of individual `AddMonster` calls would reintroduce exactly the partial-roster bug class the invariant exists to prevent (`AddMonster` calls `checkCombatEntry()` on every invocation). M2's Slice C then EXTENDS this same function with the harder, invariant-heavy N-per-room safe-cell-rolling machinery for `Count > 1, At == nil` instructions — the design's own sequencing rationale ("the invariant-heavy engine work lands after the tool proves itself"). M1's own acceptance dungeon (`reference-tomb.yaml`) is fully placed, so it never exercises the rolled path — this scoping costs M1's acceptance nothing.
+
+- [ ] **Step 1: Failing tests**
+
+```go
+func TestSeedMonsters_PlacedMonstersSpawnAtTheirCells(t *testing.T) {
+	// SpawnInstruction{RoomID: "tomb", MonsterRef: "dnd5e:monsters:skeleton",
+	// Count: 1, At: &LocalHex{Col: 4, Row: 2}} resolves via monsters.ByRef and
+	// lands at exactly that region-local cell, translated by the region's
+	// offsetX — same conversion as Task N1's obstacles.
+}
+
+func TestSeedMonsters_CombatEntryNeverSeesPartialRoster(t *testing.T) {
+	// Same regression shape as design.md's originally-specced Slice C: boss
+	// placed at a cell NOT visible from the party's spawn, entrance monster
+	// placed at a cell that IS. SeedMonsters must add both under suppressed
+	// combat-entry evaluation, then run ONE checkCombatEntry pass — initiative
+	// must never contain the boss if only the entrance monster was actually
+	// visible when the batch committed.
+}
+
+func TestSeedMonsters_SpawnVisibleStillStartsCombat(t *testing.T) {
+	// The AddPlayer-doesn't-check trap, reverified on today's origin/main:
+	// batching must not lose "combat starts immediately if you spawn already
+	// visible."
+}
+
+func TestSeedMonsters_RolledInstructionReturnsNotYetSupported(t *testing.T) {
+	// Count > 1, At == nil — M1's explicit scope boundary; M2's Slice C
+	// replaces this error path with real safe-cell rolling.
+}
+```
+
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** — `SeedMonsters(spawns []SpawnInstruction) error` (accepting a local mirror of `dungeonspec.SpawnInstruction`, or the same tuple shape Slice C's original design already flagged as an open call — keep `encounter` free of a `dungeonspec` import either way, document the choice made): for each spawn in order (boss-first, per the compiler), if `At != nil`, resolve `MonsterRef` via `monsters.ByRef` (error on miss — validation should make this unreachable) and stage an `AddMonster` call at the translated absolute position; if `At == nil` and `Count > 1`, return the M1 scope-boundary error above. Run every staged `AddMonster` with combat-entry evaluation SUPPRESSED (a package-private variant or internal flag — implementer's call, but it must not change `AddMonster`'s existing public contract for non-dungeon callers), then run exactly ONE `checkCombatEntry()` pass after the whole batch.
+- [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially existing combat-entry coverage in `combat_test.go`.
+- [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — placed-monster batch seeding under the atomic combat-entry invariant (#<issue>)`
 
 ---
 
@@ -387,17 +581,39 @@ func TestWorkbenchReport_InvalidSpecShowsVerdict(t *testing.T) {
 - [ ] **Step 2: Run → FAIL; Step 3: Implement** — `WorkbenchReport(raw []byte, seed int64) (string, error)`: Load → InitDungeon on a throwaway encounter at the seed → render SpaceData as ASCII (`.` floor, `#` degenerate wall cell, `|`/`-` perimeter edge markers on cell borders if cheap—else fold into `#` and say so, `D` door, `o` obstacle, region ids as a legend). `main.go` = flag parsing (`-file`, `-seed`, `-n` for a multi-seed sweep) + print. Usage doc comment: this is the fast authoring loop — edit YAML → see layouts in seconds, no server (rpg-project#117 observability addendum).
 - [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): workbench — try a spec at a seed without a server (#<issue>)`
 
-Toolkit PRs: ship as 2 PRs — **A+B+D first** ("spec + registry + workbench": D depends only on B's `Load`, and shipping it early gives Kirk the fast authoring loop immediately), then **C alone** ("SeedMonsters": the riskiest piece — the atomic-seeding invariant — lands in its own reviewable unit). Each independently green, each gated. After the final toolkit merge the auto-tagger cuts the release consumed in Slice E.
+**Delta addition — placed entries render at their exact coordinates:**
+
+- [ ] **Step 6: Failing test**
+
+```go
+func TestWorkbenchReport_PlacedEntriesAtExactCoordinates(t *testing.T) {
+	report, err := dungeonspec.WorkbenchReport(placedTombYAML, 7)
+	require.NoError(t, err)
+	// At minimum, the report must name every placed ref in its spawn-plan/
+	// legend section at its exact compiled coordinate — not just "an
+	// obstacle somewhere in the room." A distinct ASCII marker for placed
+	// vs rolled (e.g. 'P' vs 'o') is nice-to-have, author's call.
+	assert.Contains(t, report, "coffin")
+}
+```
+
+- [ ] **Step 7: Run → FAIL; Step 8: Implement** (render `PlacedObstacles`/`At`-bearing spawns with their exact coordinates, distinct marker optional); **Step 9: Commit** `feat(dungeonspec): workbench — render placed entries at their exact coordinates (#<issue>)`
+
+**Toolkit PR sequencing:** ship as 2 PRs — **A + B + N (new engine placement slice) + D first** ("spec + registry + placement path + workbench": the M1 toolkit surface, independently green, independently gated), then **C alone in M2** ("SeedMonsters grows count-based rolling": the riskiest remaining piece lands in its own reviewable unit). After each toolkit merge the auto-tagger cuts the release rpg-api's Slice E bumps to.
 
 ---
 
-## Slice E — rpg-api: content hosting + wiring + migration
+## Slice E (M1, lightened) — rpg-api: content hosting, spec-backed key resolution alongside the legacy crypt path
 
-### Task E1: Content dir + embedded validation-at-startup
+**Verified code-anchor finding (rpg-api `origin/main`, 2026-07-24 — corrects the original plan's paraphrase):** `resolveDungeonSpec` (`internal/orchestrators/lobby/dungeon_spec.go`) is a `map[DungeonKey]dungeonSpecBuilder` lookup (`dungeonSpecs`), not literally a switch statement, with signature `(DungeonKey, tkenc.DungeonParams, error)` — it carries NO spawn/monster information. `StartEncounter` (`internal/orchestrators/lobby/start_encounter.go`) calls `resolveDungeonSpec` once before the lobby lock, runs `enc.InitDungeon(dungeonParams)`, adds players, then SEPARATELY calls `o.seedRegionMonsters(ctx, enc, encID, dungeonParams, dungeonKey)` — and `seedRegionMonsters` is crypt-specific (built on `cryptMonsterSeedSpecs()`'s hardcoded skeleton+captain table via `regionMonsterAnchor`/`buildMonsterSeedGroups`), not generic over an arbitrary `CompiledDungeon.Spawns` plan. This means a content-backed dungeon key cannot just add a branch inside `resolveDungeonSpec` and reuse the existing monster-seeding call site unchanged — it needs its own spawn path alongside it.
+
+**Do NOT modify or delete** (verified real, unchanged names today; M2 retires these, not M1): `internal/orchestrators/lobby/crypt_monster_seed.go` and its `cryptMonsterSeedSpecs`, `regionAnchorDoor`, `regionMonsterAnchor`, `buildMonsterSeedGroups`, `(*Orchestrator) seedRegionMonsters`; nor `regionEntryAnchor`/`anchorProbeEntity` in `start_encounter.go`.
+
+### Task E1: content dir + embedded validation-at-startup
 
 **Files:**
-- Create: `content/dungeons/crypt.yaml` (the parity file — byte-identical intent to testdata/crypt.yaml), `content/dungeons/sunken-crypt.yaml` (the 4-room acceptance file from design.md), `internal/content/content.go` (go:embed + `RPG_CONTENT_DIR` override + `SpecByKey`), `internal/content/content_test.go`
-- Modify: `go.mod` (toolkit encounter bump to the release containing A–D)
+- Create: `content/dungeons/reference-tomb.yaml` (the delta's M1 acceptance file — a minimal entrance room + the fully-placed tomb, two rooms, honoring the ≥2-rooms/entrance-spawn constraints honestly), `internal/content/content.go` (go:embed + `RPG_CONTENT_DIR` override + `SpecByKey`), `internal/content/content_test.go`
+- Modify: `go.mod` (toolkit encounter bump to the release containing A/B/N/D)
 
 - [ ] **Step 1: Failing tests**
 
@@ -417,21 +633,87 @@ func TestSpecByKey_UnknownKey(t *testing.T) {
 func TestContentDirOverride(t *testing.T) {
 	// RPG_CONTENT_DIR pointing at a temp dir with one yaml → that key
 	// resolves; embedded keys still resolve (override AUGMENTS, embedded
-	// remains fallback — or document replace semantics; pick AUGMENT).
+	// remains fallback — pick AUGMENT, document it).
 }
 ```
 
 - [ ] **Steps 2–4: red → implement → green.** Key detail: `SpecByKey` indexes by each file's `key:` field (decode header cheaply), not filename.
 - [ ] **Step 5: Commit** `feat(content)#<issue>: embedded dungeon specs + dev dir override, validated at startup`
 
-### Task E2: StartEncounter wiring + deleting the scatter
+### Task E2 (lightened for M1): `StartEncounter` grows a spec-backed branch, crypt path untouched
 
 **Files:**
-- Modify: `internal/orchestrators/lobby/dungeon_spec.go` (`resolveDungeonSpec`: switch → content lookup + `dungeonspec.Load`), `internal/orchestrators/lobby/start_encounter.go` (wire `SeedMonsters(compiled.Spawns)`; ALSO delete `regionEntryAnchor` + `anchorProbeEntity` here — their only callers live in the file below, so leaving them is orphaned dead code)
-- Delete: `internal/orchestrators/lobby/crypt_monster_seed.go`, `internal/orchestrators/lobby/crypt_monster_seed_internal_test.go` (white-box tests calling regionMonsterAnchor/buildMonsterSeedGroups/seedRegionMonsters — compile-breaks the package if left; its coverage is superseded by Slice C's SeedMonsters invariant tests), AND `internal/orchestrators/lobby/region_entry_anchor_internal_test.go` (the dedicated test that would otherwise keep the orphaned anchor helpers alive)
-- Test: extend `internal/orchestrators/lobby/start_encounter_test.go`; the two REAL integration gates by name: `internal/integration/dungeon_crypt_test.go` (byte-for-byte wire-behavior gate — must stay green untouched) and `internal/integration/lobby_crypt_monster_seed_test.go` (real-Redis composition/determinism suite — its assertions check archetype/ref counts + same-seed determinism, not positions, so it should stay green; UPDATE its package doc, which narrates the retired call-order fragility, to describe the new SeedMonsters invariant instead — keep the tests, fix the story)
+- Modify: `internal/orchestrators/lobby/dungeon_spec.go` (add a SEPARATE resolution path for content-backed keys — e.g. `resolveContentDungeonSpec(key DungeonKey) (dungeonspec.CompiledDungeon, bool)` sitting ALONGSIDE `resolveDungeonSpec`, not folded inside it, since `resolveDungeonSpec`'s existing return shape has no room for `Spawns` and every existing caller/test depends on that shape staying exactly as-is for the crypt key); `internal/orchestrators/lobby/start_encounter.go` (after the existing `resolveDungeonSpec`/`InitDungeon`/player-add-loop sequence: if the key resolved via content, call `enc.SeedMonsters(compiled.Spawns)` — Task N2's M1-scoped implementation — INSTEAD of `o.seedRegionMonsters`; if it resolved via the legacy `dungeonSpecs` map, call `o.seedRegionMonsters` exactly as today, unchanged)
+- Test: extend `internal/orchestrators/lobby/start_encounter_test.go`; new integration test exercising `StartEncounter("reference-tomb")`
 
-- [ ] **Step 1: Failing integration test** — `StartEncounter("sunken-crypt")` → snapshot has 4 zones with the declared archetypes, per-zone monster counts match the YAML, boss connector locked DC 12; and the EXISTING crypt gates above still pass on wire expectations (parity is the migration proof).
+- [ ] **Step 1: Failing integration test** — `StartEncounter("reference-tomb")` → snapshot has 2 zones (entrance + tomb) with declared archetypes, the tomb's placed props/monsters land at their compiled positions, boss present; the EXISTING crypt gates (`internal/integration/dungeon_crypt_test.go`, `internal/integration/lobby_crypt_monster_seed_test.go`) stay green UNTOUCHED — this task must not perturb the crypt's call path at all.
+- [ ] **Step 2: Run → FAIL (non-short, Redis testcontainer); Step 3: Implement** the branch described above.
+- [ ] **Step 4: Full non-short suite green; Step 5: Commit** `feat(lobby)#<issue>: StartEncounter resolves content-backed dungeon keys via SeedMonsters, crypt path untouched`
+
+### Task E3: Error surface
+
+- [ ] Startup logs one line per invalid file (file, field, reason) and disables the key; requesting a disabled key → `InvalidArgument` carrying the validation message; unknown key → `NotFound` (existing behavior, both `dungeonSpecs` and content-backed lookups share it). Table-test the handler mapping. Commit `feat(lobby)#<issue>: content validation error surface`.
+
+---
+
+# Milestone M2 — Migration
+
+## Slice C (M2) — rpg-toolkit: `Encounter.SeedMonsters` grows count-based multi-monster rolling
+
+**This slice EXTENDS `encounter/seed_monsters.go` from M1's Task N2** — that task already built `SeedMonsters`' atomic-batching invariant and its `At`-bearing (placed) path, and explicitly punted any `SpawnInstruction` with `Count > 1` and `At == nil` to a "not yet supported" error. This slice replaces that error path with the real N-per-room safe-cell-rolling machinery design.md's v1 body always specced — the invariant-heavy engine work sequenced after the placement-only path (M1) proved the batching mechanism out.
+
+### Task C1: The invariant test first
+
+**Files:**
+- Modify: `encounter/seed_monsters.go`, `encounter/seed_monsters_test.go` (both created by M1's Task N2 — this slice extends, doesn't recreate them)
+- Read first: `encounter/encounter.go`'s `AddMonster` (the reinforcement path: unconditional initiative append when `Mode == TurnBased`), `combat.go`'s `checkCombatEntry`, and `crypt_monster_seed.go` in **rpg-api** (`internal/orchestrators/lobby/`) — the fragility being retired (verified real, unchanged names as of 2026-07-24: `cryptMonsterSeedSpecs`, `regionAnchorDoor`, `regionMonsterAnchor`, `buildMonsterSeedGroups`, `(*Orchestrator) seedRegionMonsters`).
+
+- [ ] **Step 1: Failing regression test — the partial-roster bug cannot happen, now for rolled multi-monster rooms too**
+
+```go
+func TestSeedMonsters_CombatEntryNeverSeesPartialRoster_RolledRooms(t *testing.T) {
+	// Party placed at entrance; entrance room has a rolled Count>1 monster
+	// group, spawn-visible to a player; boss room has a placed (At-bearing)
+	// boss, not visible. Pre-fix behavior with naive per-add seeding in the
+	// WRONG order: entrance add → visibility pair → combat starts → boss add
+	// → boss reinforced into initiative. SeedMonsters must yield: combat may
+	// start AFTER the batch, initiative contains ONLY the engaged (visible)
+	// monsters, never the unseen boss — same invariant Task N2 already
+	// proved for placed-only rooms, now covering rolled ones too.
+}
+
+func TestSeedMonsters_NPerRoomSafeCells(t *testing.T) {
+	// count>1 in one room: all placed on distinct, walkable, non-door,
+	// non-required-path cells; deterministic per seed. Property-style over
+	// 25 seeds.
+}
+
+func TestSeedMonsters_RolledNeverUsesAPlacedCell(t *testing.T) {
+	// A room mixing place (M1) and count-based monsters/obstacles in the
+	// same room (design.md's per-item dial): rolled monster placement must
+	// exclude cells already claimed by place entries — the same exclusion
+	// Task N1 already wired for obstacles, now exercised for monsters too.
+}
+```
+
+- [ ] **Step 2: Run → FAIL; Step 3: Implement**
+
+Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics, and M1's Task N2 already built exactly this skeleton): extend `SeedMonsters` so a `SpawnInstruction` with `Count > 1` and `At == nil` resolves its ref via `monsters.ByRef` (error on miss — validation should make this unreachable) and places N instances per room on safe cells (reuse the candidate-pool machinery Task N1's `placeRegionObstacles`/`regionObstacleCandidates` uses — same exclusions plus occupied-cell and placed-cell; extract a shared helper only if it stays behavior-identical, with its own test), staged under the SAME suppressed-combat-entry batching Task N2 already built, with ONE `checkCombatEntry()` pass covering both placed and rolled spawns together. Boss-first order preserved from the compiler.
+
+- [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially the crypt connectivity, boss-axis, and obstacle suites, and every M1 `seed_monsters_test.go` case (the placed path must not regress).
+- [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — count-based multi-monster safe-cell rolling (#<issue>)`
+
+## Migration — crypt to YAML, legacy path deleted
+
+### Task E4 (M2): Port the crypt to content, retire the legacy scatter
+
+**Files:**
+- Create: `content/dungeons/crypt.yaml` (the parity file — byte-identical intent to `testdata/crypt.yaml`), `content/dungeons/sunken-crypt.yaml` (the 4-room acceptance file from design.md's original v1 body, if not already shipped as part of `reference-tomb.yaml`'s evolution toward M3)
+- Modify: `internal/orchestrators/lobby/dungeon_spec.go` (fold `resolveContentDungeonSpec` and `resolveDungeonSpec` back into ONE resolution path now that every key — crypt included — is content-backed; delete the `dungeonSpecs` map and `defaultDungeonKey`'s builder-closure indirection), `internal/orchestrators/lobby/start_encounter.go` (collapse the M1 branch: every key now goes through `content.SpecByKey` → `dungeonspec.Load` → `enc.SeedMonsters(compiled.Spawns)`; delete the `o.seedRegionMonsters` call entirely)
+- Delete: `internal/orchestrators/lobby/crypt_monster_seed.go`, `internal/orchestrators/lobby/crypt_monster_seed_internal_test.go` (white-box tests calling `regionMonsterAnchor`/`buildMonsterSeedGroups`/`seedRegionMonsters` — compile-breaks the package if left; coverage superseded by M2's `SeedMonsters` invariant tests), AND `internal/orchestrators/lobby/region_entry_anchor_internal_test.go` (the dedicated test that would otherwise keep the orphaned `regionEntryAnchor`/`anchorProbeEntity` helpers alive — delete those helpers too, their only callers live in the deleted files)
+- Test: extend `internal/orchestrators/lobby/start_encounter_test.go`; the two REAL integration gates by name: `internal/integration/dungeon_crypt_test.go` (byte-for-byte wire-behavior gate — must stay green untouched on wire expectations) and `internal/integration/lobby_crypt_monster_seed_test.go` (real-Redis composition/determinism suite — its assertions check archetype/ref counts + same-seed determinism, not positions, so it should stay green; UPDATE its package doc, which narrates the retired call-order fragility, to describe the new `SeedMonsters` invariant instead — keep the tests, fix the story)
+
+- [ ] **Step 1: Failing integration test** — `StartEncounter("sunken-crypt")` (or the migrated `crypt` key) → snapshot has the declared zones/archetypes, per-zone monster counts match the YAML, boss connector locked DC 12; and the EXISTING crypt gates above still pass on wire expectations (parity is the migration proof).
 - [ ] **Step 2: Run → FAIL (non-short, Redis testcontainer); Step 3: Implement** — api calls exactly:
 
 ```go
@@ -442,21 +724,27 @@ err = enc.InitDungeon(compiled.Params)            // InitDungeon takes ONE argum
 err = enc.SeedMonsters(compiled.Spawns)
 ```
 
-  Delete `crypt_monster_seed.go` + the anchor helpers + their internal test; `CryptDungeonParams` stays in the toolkit as the parity-test fixture (soak per design; do NOT delete this release).
-- [ ] **Step 4: Full non-short suite green; Step 5: Commit** `feat(lobby)#<issue>: StartEncounter builds dungeons from content specs — crypt_monster_seed.go deleted`
+  Delete `crypt_monster_seed.go` + the anchor helpers + their internal tests; `CryptDungeonParams` stays in the toolkit as the parity-test fixture (soak per design; do NOT delete this release).
+- [ ] **Step 4: Full non-short suite green; Step 5: Commit** `feat(lobby)#<issue>: StartEncounter builds every dungeon from content specs — crypt_monster_seed.go and the M1 dual-path branch both deleted`
 
-### Task E3: Error surface
+---
 
-- [ ] Startup logs one line per invalid file (file, field, reason) and disables the key; requesting a disabled key → `InvalidArgument` carrying the validation message; unknown key → `NotFound` (existing). Table-test the handler mapping. Commit `feat(lobby)#<issue>: content validation error surface`.
+# Milestone M3 — The reference dungeon (pointer, not a code slice)
+
+Content milestone, not an engineering slice: grow `reference-tomb.yaml` into the full multi-room Synty-bar dungeon (dense placement, brazier light pools, banners, statues) using M1's tooling (`place` + the workbench) as-is; add camera framing (a separate known gap, folded in here per design.md's north star); screenshot-harness evidence against the POLYGON Dungeon promo shot is the acceptance artifact. This dungeon becomes the procedural quality bar. No new schema/engine/api code is anticipated here — if authoring the reference dungeon surfaces a real gap in `place`/validation/the engine placement path, that's new design work to bring back for review, not a silently-absorbed M3 task.
+
+# Milestone M4 — The tuning loop (future design, do not build in this wave)
+
+The in-client control panel ("that room was too tough → adjust → go again") gets its own small design once M1's static rooms are walkable and M3's reference dungeon exists to tune against. Not scoped here.
 
 ---
 
 ## Acceptance (the bar from the design, run by a human or the parity stack)
 
-1. Edit `sunken-crypt.yaml` (change a width, add a monster), restart the api (`RPG_CONTENT_DIR` for the fast loop), start a fresh encounter — the change is live. **No Go was touched.**
-2. `go run ./cmd/dungeonspec-workbench -file content/dungeons/sunken-crypt.yaml -seed 7` prints VALID, the spawn plan (boss first), and a legible ASCII floor plan.
-3. `make local-prod` (rpg-deployment#57) against the new images: the crypt plays exactly as before the migration (parity), and sunken-crypt is selectable by key.
+1. **(M1)** Edit `content/dungeons/reference-tomb.yaml` (move a placed prop, add a placed monster), restart the api (`RPG_CONTENT_DIR` for the fast loop), start a fresh encounter — the change is live, walkable in the real game route. **No Go was touched.**
+2. **(M1)** `go run ./cmd/dungeonspec-workbench -file content/dungeons/reference-tomb.yaml -seed 7` prints VALID, the spawn plan (boss first, placed positions shown), and a legible ASCII floor plan with placed entries at their exact coordinates.
+3. **(M2)** `make local-prod` (rpg-deployment#57) against the migrated images: the crypt plays exactly as before the migration (parity), and the crypt is selectable by key through the same content-backed path as every other dungeon.
 
 ## Explicitly deferred (do not build)
 
-Difficulty engine (SRD XP budgets/pools), `interactions` (traps/clues), loot, `rooms[].layout`, `locked.tool`, temperaments, quest-line composition, per-room heights — all reserved seats per design.md.
+Difficulty engine (SRD XP budgets/pools), `interactions` (traps/clues), loot, `rooms[].layout`, `locked.tool`, temperaments, quest-line composition, per-room heights — all reserved seats per design.md's v1 body. Added by the delta: **table-rolls / choose-from-list** (deliberately not designed — Kirk 2026-07-24: fully-explicit and fully-rolled bracket the space; the middle notch gets designed after both ends have been played); **the in-client tuning panel** (M4, future design, once M1's static rooms are walkable and M3's reference dungeon exists to tune against).

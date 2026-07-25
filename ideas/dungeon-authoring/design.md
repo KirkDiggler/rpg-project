@@ -1,6 +1,6 @@
 # Dungeon Authoring — YAML dungeon definitions (v1)
 
-## Status: Design — approved in session by Kirk 2026-07-23; this PR is the review surface. Implementation slices dispatch after merge-approval of this design.
+## Status: Design — approved in session by Kirk 2026-07-23; this PR is the review surface. Implementation slices dispatch after merge-approval of this design. Extended by the §Design delta — static placement section (approved in session 2026-07-24) before implementation began.
 
 North star: **authoring a dungeon should be editing one data file, not touching three Go files across two repos.** First for us (the dev team), later for designer tools, someday maybe player uploads — which is a *constraint* (the format must be strictly validatable), not a feature.
 
@@ -174,3 +174,165 @@ Per-call `Load` (files are tiny; no cache invalidation complexity) **plus** star
 1. Package name: `encounter/dungeonspec` vs a top-level `dungeonspec` module — proposed: sub-package of `encounter` (it compiles to `encounter` types; a separate module adds release friction for no boundary gain).
 2. YAML dep in the toolkit: `gopkg.in/yaml.v3` strict mode as proposed, or keep the toolkit YAML-free (accept JSON bytes; api converts)? Proposed: yaml.v3 — the format is the contract, and validation should see the author's actual file.
 3. Does `CryptDungeonParams` delete immediately after parity, or soak one release as a fixture? Proposed: soak.
+
+---
+
+## Design delta — static placement (`place`) — approved 2026-07-24
+
+**Status:** approved by Kirk in session 2026-07-24; this PR is the review
+surface. v1 had not started implementation, so this delta revises v1 itself —
+v1 + this delta implement together as one wave.
+
+### North star, sharpened
+
+The POLYGON Dungeon pack promo shot is the explicit visual bar. The goal is a
+**fully-authored reference dungeon** — every prop, monster, and light pool
+placed by hand as data — that (a) is walkable in the real game route and (b)
+becomes the measuring stick for procedural output. Kirk's framing: start fully
+explicit, then release aspects to randomness one piece at a time, learning what
+each release costs visually. This requires the explicit⟷random dial to be
+**per-item, not global** — which v1's flow-level-only schema cannot express.
+
+Accepted carve-out from the bar: **elevation** (the promo shot's sunken arena,
+stairs, balconies). The hex engine is single-level; we chase the shot's mood
+(light pools, density, rhythm) on one level. Camera framing is a separate known
+gap, folded into the reference-dungeon milestone (M3 below).
+
+### Schema: the `place` block
+
+`RoomSpec` gains one optional field:
+
+```yaml
+- id: tomb
+  archetype: boss
+  width: 12
+  boss: { ref: "dnd5e:monsters:skeleton-captain", at: [7, 5] }
+  place:
+    - { ref: "dnd5e:props:coffin",        at: [6, 4], blocks_los: false }
+    - { ref: "dnd5e:props:altar",         at: [9, 4] }
+    - { ref: "dnd5e:props:statue-reaper", at: [1, 1] }
+    - { ref: "dnd5e:props:brazier",       at: [3, 1] }
+    - { ref: "dnd5e:props:brazier",       at: [3, 6] }
+    - { ref: "dnd5e:monsters:skeleton",   at: [4, 2] }
+```
+
+- **One mixed list, routed by ref type.** `dnd5e:props:*` → placed obstacle;
+  `dnd5e:monsters:*` → placed spawn. Any other ref type is a validation error.
+  `PlacedEntry{Ref, At [2]int, BlocksMovement *bool, BlocksLoS *bool}` — the
+  blocking flags carry the same defaults/semantics as `ObstacleEntry` and are
+  meaningful only for props (validation rejects them on monster entries).
+- **`BossEntry` gains optional `at`.** The boss designation stays where v1 put
+  it (`boss:` on the boss room — all archetype invariants unchanged); `at` pins
+  its position. A boss ref may NOT also appear in `place` (validation error —
+  one authority for the boss).
+- **The dial is per-item.** `place` coexists with the count-based `obstacles`
+  and `monsters` lists in the same room: placed entries are honored first, then
+  count-based entries roll into the remaining safe cells (placed cells are
+  excluded from the roll pool). A fully static room uses `place` only. There is
+  NO `mode:` flag — what the author wrote is the mode.
+- **Coordinates are room-local**: `at: [col, row]` in the room's own grid, so a
+  room definition is self-contained and reorderable. Pinned against the
+  engine's real coordinate frame (verified on rpg-toolkit `origin/main`,
+  `encounter/dungeon.go`): `col` is the region's local X offset in
+  `[0, width)`, `row` is the shared dungeon `height`'s Y offset in
+  `[0, height)` — exactly the local `(x, y)` pair `placeRegionObstacles`/
+  `regionObstacleCandidates` already index rolled obstacle candidates by,
+  before the region's own `offsetX` (`starts[i]` in `generateDungeonLayout`)
+  gets added to land on the dungeon's one absolute hex grid. rpg-api#399
+  already unified the dungeon onto one continuous absolute space per encounter
+  (regions are X-offset windows into it, not separate rooms); `place`'s
+  room-local coordinates are purely an authoring convenience layered on top of
+  that — the compiler must NOT attempt the offset translation itself (that's
+  `generateDungeonLayout`'s own layout-time arithmetic, and duplicating it in
+  `dungeonspec` would drift the moment column math changes there); the engine
+  adds `offsetX` at placement time, exactly as it already does for rolled
+  candidates. Row `height/2` (`doorRow`, see Validation below) is reserved in
+  every room regardless of archetype and is therefore not addressable by
+  `place`.
+- **Lighting stays emergent — no lighting fields.** The client derives mood
+  lights from light-emitting prop positions (brazier/torch/candle; web #588).
+  Placing braziers IS authoring the light pools. Mesh color/material authoring
+  is likewise absent.
+
+### Validation additions (load-time, same file-or-it-doesn't-load contract)
+
+- `at` in-bounds: `col` in `[0, room.width)`, `row` in `[0, height)` (the
+  shared dungeon height, per v1's existing per-dungeon-not-per-room rule).
+- At most one placed entry per cell — a room's `place` entries and its
+  (optional) `boss.at`, if set, share one collision domain; a boss pinned onto
+  the same cell as a placed prop is the same error as two placed props
+  colliding.
+- **No placement on row `height/2`** (`doorRow`). Verified against
+  `encounter/dungeon.go`'s `placeRegionObstacles`/`regionObstacleCandidates`:
+  the engine already excludes this entire row from every region's obstacle
+  candidate pool, in every region regardless of archetype — a uniform,
+  over-conservative reservation (a boss/interior region's actual required path
+  spans the row's full width; an entrance/terminal region's spans only half),
+  not an archetype-specific one. Forbidding `place` on that same row therefore
+  gives placed entries the IDENTICAL traversability guarantee rolled obstacles
+  already have, by construction — no separate path-oracle re-implementation is
+  needed at spec-load time; the row exclusion alone is provably sufficient.
+  This sharpens the original framing ("no placement on a door cell"): the
+  literal door hex sits in the boundary column *between* two regions, which is
+  outside any single room's own local coordinate space and was never
+  addressable via `at` to begin with — the real, engine-verified rule is the
+  full reserved row, not the door hex itself.
+- Ref type must be props or monsters; monster refs resolve via the registry;
+  prop refs stay opaque end-to-end (client-resolved), exactly like v1
+  obstacles.
+- Placed entries are hard guarantees (fail the file), while count-based rolls
+  keep today's best-effort semantics (#818/#819) in whatever cells remain.
+
+### Compiler & engine
+
+- `DungeonRegionParams` grows `PlacedObstacles []PlacedObstacleSpec{Ref, At,
+  BlocksMovement, BlocksLoS}` (exact naming per engine conventions); `At` is
+  the same room-local `(col, row)` pair the schema carries, untranslated —
+  `InitDungeon` places them verbatim after geometry, before rolled obstacles;
+  the rolled pool excludes placed cells.
+- `SpawnInstruction` gains an optional position (`At`); placed monsters compile
+  to single-count instructions with `At` set; rolled monsters keep `Count` with
+  no position. Spawn ordering (boss-first) is unchanged.
+- **The atomic-seeding invariant applies identically to placed monsters** —
+  combat entry never observes a partially-seeded dungeon. If an author places a
+  monster within spawn line-of-sight of the party, combat starts immediately:
+  that is correct authored behavior, not a bug.
+- **Wire and client: still zero changes.** Placed and rolled entities are
+  indistinguishable on the wire; every renderer improvement applies to both.
+
+### Explicitly out of scope for this delta (decisions, not omissions)
+
+- **Table-rolls / choose-from-list**: deliberately NOT designed — not even as a
+  reserved sketch. Kirk 2026-07-24: fully-explicit and fully-rolled bracket the
+  space; the middle notch gets designed after both ends have been played.
+- **Interactions** (e.g. "hidden monster wakes when the party nears the
+  coffin"): stays in the existing reserved `interactions` seat.
+- **Per-room height**: still a reserved seat (real generator constraint).
+- **Elevation / multi-level**: accepted carve-out, see north star.
+- **In-client tuning panel** ("that room was too tough → adjust → go again"):
+  its own small design once static rooms are walkable (M4). Until then the loop
+  is edit-YAML → restart api (`RPG_CONTENT_DIR`, no rebuild) → replay, plus the
+  workbench for instant previews.
+
+### Delivery milestones (plan.md is revised to this order)
+
+- **M1 — "The Tomb, walkable."** Registry (slice A unchanged); schema/
+  validation/compiler including `place` (slice B extended); the engine
+  placement path (new slice); workbench CLI whose ASCII floor plan renders
+  placed entries (slice D extended); api content hosting wiring a NEW dungeon
+  key through the spec path (slice E, lightened) — the existing crypt keeps its
+  legacy hardcoded path, untouched. Acceptance: edit `reference-tomb.yaml` (a
+  minimal entrance room + the fully-placed tomb — two rooms, honoring the ≥2
+  rooms/entrance-spawn constraints honestly), restart the api, walk the room in
+  the real game route.
+- **M2 — Migration.** `SeedMonsters` for count-based multi-monster rooms
+  (slice C as planned — the invariant-heavy engine work lands after the tool
+  proves itself); crypt ported to YAML behind the parity test;
+  `crypt_monster_seed.go` and the legacy path deleted.
+- **M3 — The reference dungeon.** Content milestone: grow the tomb into the
+  full multi-room Synty-bar dungeon (dense placement, brazier light pools,
+  banners, statues); camera framing; screenshot-harness evidence against the
+  inspiration shot is the acceptance artifact. This dungeon becomes the
+  procedural quality bar.
+- **M4 — The tuning loop** (future design, do not build in this wave): the
+  in-client control panel — restart encounter, adjust, go again.
