@@ -43,6 +43,62 @@ Toolkit implements RULES           -> returns rich breakdowns for rendering
 
 If you see game logic in the API, say something. If you see calculations in the client, say something.
 
+## How We Work — three lanes
+
+> Kirk, 2026-07-24: *"the assets, ui/ux and platform is the new way ... DoD becomes
+> built in and boundaries established ... how we work is as or more important than
+> what we work on."*
+
+**Three lanes own the work: Assets, UI/UX, Platform.** A lane owns an *outcome* end
+to end, across whatever repos that outcome touches. Repos are territory; lanes are
+ownership.
+
+| Lane | Owns | Spans |
+|------|------|-------|
+| **Assets** | Licensed source → conversion → contract tree → manifests → what renders in-world: models, environment, animation playback, 3D evidence, shipped-asset budgets | rpg-game-assets + the 3D half of rpg-dnd5e-web |
+| **UI/UX** | What the player reads and touches: screens, HUD, accessibility, presentation, sending intent | rpg-dnd5e-web |
+| **Platform** | The rules and the wire: game rules, by-key orchestration, contract shape, delivery | rpg-toolkit, rpg-api, rpg-api-protos, rpg-deployment |
+
+**Why lanes and not one agent per repo.** A repo-scoped split cuts *across* outcomes:
+one crypt-monster slice touches rpg-game-assets **and** rpg-dnd5e-web, and the handoff
+between two repo owners is exactly where intent leaked. Lane ownership keeps one owner
+accountable for the whole outcome. The per-repo member charters
+(`docs/teams/roles/rpg-*-member`) still exist and still carry each repo's architectural
+boundary — they are now the *implementation detail* of a lane, not the unit of ownership.
+
+**The seam between lanes is the thing being protected.** These docs were written when
+the boundaries had to be taught from scratch. Newer models read this architecture
+natively, so the docs no longer need to explain the obvious — they need to record the
+**decisions** and defend the **seams**. Prefer deleting scaffolding that teaches what is
+now assumed; keep anything that encodes a decision or protects a boundary.
+
+### Definition of done is built in
+
+Not a gate someone remembers to apply — it travels with the work. Nothing is done until:
+
+- it is **boarded** (issue-first, one issue per PR), and the decision is visible on the
+  board **and** the PR — narrative alone is not a decision;
+- **CI is green — necessary, never sufficient**;
+- layered review has run: Copilot (code repos), the implementer's own `/code-review`
+  pass, and the director's review of the returned evidence;
+- **evidence is captured and stated as viewed, not inferred** — the MCP playtest is the
+  sign-off bar for anything a player sees;
+- the PR is open **ready for review, never draft** — a draft is invisible work;
+- Kirk decides and merges.
+
+### The board is the living cross-lane document
+
+It is what each lane **sees**, not a task tracker. Its real job is the cross-lane
+question: *this matters for UI — can Platform help?* Lanes negotiate there in the open.
+If a lane needs something from another lane, that need belongs on the board where the
+other lane can see it, not in one lane's private narrative.
+
+### All of this is revisable
+
+Anything here can change if it improves — **we must improve to keep up.** If a
+convention has stopped earning its place, say so and propose the replacement rather
+than quietly working around it. How we work is as important as what we work on.
+
 ## Project Board
 
 **ALWAYS check before starting work:**
