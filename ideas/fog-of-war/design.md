@@ -25,9 +25,10 @@ The web renders server-authored knowledge and sends intent. It must not
 calculate line of sight, visibility, or memory transitions. The correct future
 production boundary is:
 
-1. The toolkit owns and persists each player's current visibility and personal
+1. The toolkit owns visibility and knowledge rules, maintains the per-viewer
+   `View`/encounter-data shape, and serializes it as encounter data.
+2. The API durably stores that encounter data and projects the viewer's
    knowledge.
-2. The API projects that knowledge for the viewer.
 3. Protos carry snapshot and transition data.
 4. The web renders the received state only.
 
@@ -87,7 +88,7 @@ per-component approximations:
 Visible content retains the normal production visual treatment. Unseen content
 has no rendering path. If an asset is unavailable, its fallback preserves the
 state distinction: live fallback remains live, remembered fallback stays crypt
-and inert, and unseen remains absent. An unsupported future palette selector
+charcoal and inert, and unseen remains absent. An unsupported future palette selector
 falls back to crypt charcoal and cannot alter knowledge or interaction state.
 
 ## Concept architecture
@@ -126,8 +127,11 @@ all concepts, not only fog of war, and states that concepts:
 
 ## Authored scenario and data flow
 
-The fixture is a two-room crypt. Each step projects data only for its selected
-viewer and intentionally contains no hidden world state.
+The fixture is a two-room crypt. Every render input is an explicitly authored
+viewer projection containing no unauthorized records. The concept may keep a
+separate authored world-truth fixture or scenario panel to compare hidden
+changes, but it is never passed to renderers or used by the reducer to derive
+visibility or memory. This comparison is not client-side LOS.
 
 1. **Room 1, visible.** The viewer receives Room 1's live floor, walls, a
    closed door, trap, props, corpse, monster, and player. Room 2 has no records
@@ -137,10 +141,10 @@ viewer and intentionally contains no hidden world state.
    not calculate the reveal.
 3. **Room 2, Room 1 remembered.** The viewer moves into Room 2. The projection
    marks Room 1's complete last-observed scene remembered and Room 2 live.
-4. **Hidden change.** Fixture-only world changes occur in Room 1 while the
-   viewer receives no Room 1 update. The remembered Room 1 reducer state must
-   remain byte-for-byte equivalent in knowledge terms: same observed positions
-   and states.
+4. **Hidden change.** The separate authored world-truth fixture changes Room 1
+   while the viewer projection receives no Room 1 update. The remembered Room 1
+   reducer state must remain byte-for-byte equivalent in knowledge terms: same
+   observed positions and states.
 5. **Reconnect.** A reconnect projection restores the viewer's Room 2 visible
    state and Room 1 remembered snapshot. It does not reconstruct memory from
    current hidden world truth.
@@ -202,10 +206,12 @@ fixture-driven until reviewed:
    monsters (`rpg-api/internal/handlers/dnd5e/v2/encounter/project.go:141-187`).
    They cannot restore remembered entities. Static obstacles are sticky only
    when their hex was revealed (`:189-205`), still without remembered state.
-5. `rpg-toolkit/encounter/perception/view.go:5-22` persists per-player
-   `RevealedHexes` and reserves `KnownEntities`, but the latter is explicitly
-   unused shape stability. The current persistence seam therefore does not
-   retain a complete knowledge snapshot.
+5. `rpg-toolkit/encounter/perception/view.go:5-22` defines the per-player
+   `RevealedHexes` encounter-data shape and reserves `KnownEntities`, but the
+   latter is explicitly unused shape stability. `Encounter.ToData` serializes
+   that shape for its caller to save (`rpg-toolkit/encounter/encounter.go:566-574`);
+   rpg-api durably persists the returned encounter data. The current seam
+   therefore does not retain a complete knowledge snapshot.
 
 ## Fail-closed behavior
 
@@ -263,12 +269,14 @@ current-truth replacement on return.
 After concept review, separate issue-first work may implement the approved
 consumer contract in dependency order:
 
-1. Toolkit: persist per-player current visibility plus full scene/entity
-   knowledge; enforce the re-sight and unseen-isolation rules.
+1. Toolkit: own the per-player current-visibility and scene/entity-knowledge
+   rules; maintain and serialize the `View`/encounter-data shape; enforce the
+   re-sight and unseen-isolation rules.
 2. Protos: add snapshot and transition shapes for viewer-scoped current and
    remembered geometry/entities without overloading additive reveal events.
-3. API: project only viewer-authorized current and remembered records, remove
-   whole-room wall/door leakage, and restore knowledge on reconnect.
+3. API: durably store the toolkit's encounter data; project only
+   viewer-authorized current and remembered records, remove whole-room
+   wall/door leakage, and restore knowledge on reconnect.
 4. Production web: consume that contract on the encounter route using the
    proven concept rendering seam.
 
