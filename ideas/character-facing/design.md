@@ -182,6 +182,13 @@ facing rather than to the world.
 - **Staging default** — `DEFAULT_HEADING_BY_TYPE`, seeded as `initialHeading`.
   Preserves today's players-up-board / monsters-down-board look.
 
+Because the offset now travels with the model rather than the entity, the
+`ErrorBoundary` fallback path in `HexEntity` (a mapped class GLB that fails to load
+degrades to `mediumHumanoidElement`) is correct by construction: each element is
+built with its own family's constant, so a mid-life model swap swaps the offset with
+it. That is a live path, not a hypothetical — it fires on any missing or unsynced
+GLB — so it belongs in the test matrix.
+
 ## The calibration step — the load-bearing risk
 
 `Math.PI` currently has both terms fused into it. **The split cannot be derived by
@@ -195,6 +202,14 @@ terms can silently cancel to `2π` (no rotation) or double. It has to be measure
    reproduce today's on-screen look exactly.
 5. **Visual-parity gate: with movement disabled, the board must look like it does
    today.** Only then wire the movement source.
+
+**Calibrate the downed variants separately, do not assume they inherit.** The
+rpg-dnd5e-web#512 lesson is precisely this failure mode: the downed GLBs shipped
+without the standing models' `Root` wrapper node (0.01 scale + Z-up→Y-up) and
+rendered invisible in production, and copy-based QA missed it twice. A variant
+diverging from its base on root-node convention is exactly the thing that also
+changes a rig's apparent forward axis. Treat "standing and downed share an offset"
+as a claim to verify, not a default.
 
 Step 5 before any behavior change is what keeps this from shipping everyone
 backwards. This is the QA-evidence half of the work, not a footnote to it.
@@ -222,6 +237,10 @@ hook's step state and snaps position; facing simply holds — cosmetically corre
   `HEX_DIRECTIONS` (30/90/150/210/270/330°) and `undefined` on a zero delta;
   `shortestTurn` wrap — 350°→10° must turn **+20°, not −340°**; `easeHeading` clamps
   at the target without overshoot, and is a no-op when already there.
+  **Pin the exact-180° tie-break**: a full reversal (walk east, then west) is a
+  common real path and sits exactly on the wrap boundary where `+π` and `−π` are
+  equally short. Either is visually fine; an unpinned one is a coin-flip that makes
+  the turn direction non-deterministic across runs. Assert the chosen sign.
 - **`useEntityFacing.test.ts`** (existing `vi.hoisted` mocked-`useFrame` harness):
   seeds the initial heading on mount without easing; eases toward a requested
   heading over ticks; takes the short way around the wrap; **stops calling
