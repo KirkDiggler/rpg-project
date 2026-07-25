@@ -1,129 +1,138 @@
 # Crypt Monsters
 
 **Date:** 2026-07-25
-**Status:** Revised discovery design pending written review
+**Status:** Durable Phase 1 animation design
 **Tracker:** [rpg-project#128](https://github.com/KirkDiggler/rpg-project/issues/128)
 **Design review:** [rpg-project#129](https://github.com/KirkDiggler/rpg-project/pull/129)
 
 ## Goal
 
-Discover a repeatable workflow for processing the monster assets already
-available to the project. This is a two-model experiment, not a production
-rollout design.
+Create a repeatable private asset-pipeline workflow for the standing crypt
+monster roster. Phase 1 gives every in-scope standing model exactly two clips:
+`Idle_Relaxed` and an in-place `Walk_Forward`. It preserves each model's native
+geometry and weapons unchanged.
 
-The discovery begins with `Skeleton_Soldier_01`. Its result is useful only if
-the recorded process can then be applied to `Skeleton_Soldier_02`, or if the
-second model clearly documents why it cannot.
+Existing static downed siblings remain available as authored. They receive no
+new animation work in Phase 1.
 
-## Starting Point
+## Phase Boundaries
 
-The first loop uses Blender interactively. Kirk can rapidly judge viewport
-screenshots, so visual judgment is the primary feedback signal rather than a
-proxy gate invented in advance.
+### Phase 1: Locomotion
 
-Inspect the source asset and the current candidate together. Compare only the
-character conventions already known to matter:
+- Retarget `Idle_Relaxed` and in-place `Walk_Forward` for every in-scope
+  standing crypt model.
+- Preserve native model geometry, materials, embedded or separate weapons, and
+  their authored placement.
+- Obtain visual approval for each source result before baking or batch work.
+- Keep all source and converted licensed assets private.
 
-- Scale relative to the gameplay floor.
-- Feet and body contact with the floor.
-- Facing and forward direction.
-- Root and export shape.
+### Later Phases
 
-Do not assume the monster has character-rig or animation parity. Rig
-compatibility, animation suitability, and export behavior are questions to
-learn from the specimen.
+- Phase 2 is weapon placement and socket work. It may change how weapons are
+  attached only after Phase 1 is complete.
+- One attack animation is a possible later phase after weapon placement. It is
+  explicitly not current scope.
+- Downed animation, runtime resolver or web wiring, renderer work, and release
+  rollout are not part of this design.
 
-## Soldier01 Discovery Loop
+## Roster And Runtime Contracts
 
-1. Open the source/current candidate in Blender and inspect it against the
-   known conventions.
-2. Make one bounded change that addresses the most visible problem.
-3. Capture gameplay-relevant viewport screenshots and show them to Kirk.
-4. Use Kirk's visual judgment to keep, adjust, or discard that change.
-5. Repeat only while the next bounded change is justified by the inspection or
-   feedback.
+The in-scope standing roster is `Skeleton_Soldier_01`,
+`Skeleton_Soldier_02`, `Skeleton_Slave`, `Skeleton_Knight`, `Ghost_01`,
+`Ghost_02`, and `Tormented_Soul`. Their existing static downed siblings stay
+in the roster without new clips.
 
-The loop should produce an intentional-looking model, not merely a file that
-exports or a clip that exists. It must not turn into unreviewed production
-work, batch processing, or an attempt to solve every monster category.
-
-## Unknowns To Resolve
-
-The first loop deliberately leaves these open until Blender evidence answers
-them:
-
-- Whether the rig is compatible with existing character conventions.
-- Whether an existing animation is usable.
-- Whether retargeting, a direct pose, or neither is appropriate.
-- How embedded or separate weapons should be handled.
-- What Root and export behavior the output needs.
-- Whether the Soldier01 result generalizes to Soldier02.
-
-No presumed answer becomes a requirement before it is observed and accepted.
-
-## Record Only What Works
-
-The Soldier01 producer records the exact successful inputs and operations at
-the level warranted by the result. This may be a concise recipe,
-configuration, or script; it is not a commitment to create automation before
-repetition proves it valuable.
-
-Export the approved output privately. Licensed source assets and converted
-binaries remain private. Viewport screenshots may be shared publicly when they
-contain only permitted visual evidence.
-
-A fresh independent agent applies those recorded steps to
-`Skeleton_Soldier_02` and reports where they generalize or fail. Do not silently
-tune the second model into a separate undocumented workflow. If it needs a
-different step, record the difference and its reason. This is a learning test,
-not another elaborate approval gate.
-
-## Two-Model Retro
-
-After the Soldier02 attempt, hold a short retro that answers:
-
-- Which Soldier01 steps reproduced unchanged?
-- Which steps were model-specific, and why?
-- Is a shared recipe sufficient, or is targeted automation justified?
-- Is any validation justified by a real failure or repeated check?
-- Does the result support another specimen, or does it expose a boundary that
-  needs a separate design?
-
-This is the decision point for future work. There is no precommitted batch or
-production plan before the two-model result is reviewed.
-
-## First-Slice Outputs
-
-- One visually approved private `Skeleton_Soldier_01` output.
-- A concise processing record of the successful Soldier01 steps.
-- A `Skeleton_Soldier_02` repeatability result, including exact reasons if it
-  does not reproduce.
-
-## First-Slice Acceptance
-
-The discovery slice is accepted when:
-
-- Kirk says the Soldier01 model looks intentional from gameplay-relevant
-  views.
-- Basic scale, facing, floor, and Root/export sanity checks pass.
-- A fresh independent agent applies the recorded process to Soldier02 and
-  reports exactly what reproduced or why it did not.
-
-## Out Of Scope Until Learned
-
-The following are explicitly deferred: roster batch processing, runtime
-resolver or web wiring, downed models, ghost materials, walk clips, elaborate
-validators, renderer features, and release choreography.
-
-## Existing Work
-
-[rpg-game-assets#28](https://github.com/KirkDiggler/rpg-game-assets/pull/28)
+This design changes asset preparation only. It does not change the runtime
+resolver, web wiring, renderer behavior, model identifiers, or consumer
+contracts. [rpg-game-assets#28](https://github.com/KirkDiggler/rpg-game-assets/pull/28)
 and [rpg-dnd5e-web#594](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/594)
-remain paused. Preserve them for later reuse; do not rebuild, merge around, or
-otherwise advance them based on this discovery result.
+remain paused for later reuse and must not be rebuilt, merged around, or
+advanced by this work.
 
-## Next Decision
+Ghost material behavior remains subject to the explicit material review in the
+batch proof order below; this animation design does not substitute materials or
+alter their authored treatment. Approved outputs remain private in the normal
+asset pipeline. No public source or converted Synty asset is committed, and no
+runtime or release promotion occurs without its separately approved release
+work.
 
-After written review, begin the small Blender discovery loop directly; no
-`plan.md` is a prerequisite. Create a later plan only if the two-model retro
-establishes a justified production workflow and scope.
+## Verified Soldier01 Retarget Discovery
+
+The Soldier01 experiment produced a clean true T-pose source retargeted to a
+live relaxed result without manually posing the target rig. The approved idle
+source is:
+
+`/home/kirk/game-dev/assets/synty/animation-base-locomotion/SourceFiles/Animations/Polygon/Masculine/Idle/A_Idle_Standing_Masc.fbx`
+
+Its SHA-256 is
+`76dc31c92fd3ca69f28e92f1f530eac6f60ee71ea0f25d490a633f49d2088dd0`.
+The experiment blend is retained locally with SHA-256
+`9c1dab858124407968e71664cff80f60fa832ceda2ba708718b745a6d3541f7b`.
+
+The retarget uses the exact 46 v2 mappings, with `Hips` mapped to the `Pelvis`
+root, seven idle corrections, `Clavicle_R` excluded, and 47 target constraints.
+Those mappings and corrections are evidence for the profile, not reusable
+Soldier matrices.
+
+Dungeon-authored arm tails are approximately 100 times too long and 78-102
+degrees away from the actual child-joint directions. Built-in ARP copy-rest
+therefore failed. The successful temporary direction-proxy method:
+
+1. Sets each corrected target bone proxy tail to the mapped child
+   `head_local` direction.
+2. Computes the per-target offsets from that proxy.
+3. Binds the real target using those offsets.
+
+The proxy never alters the real rig or mesh. Offsets and matrices must be
+computed per target: Soldier01, Soldier02, Skeleton_Slave, and the ghosts share
+a rest hash; Skeleton_Knight and Tormented_Soul differ.
+
+## Walk Retargeting
+
+Phase 1 extends the dynamic child-direction profile to the mapped leg chains
+for walking. The source must be the in-place masculine forward walk
+`A_Walk_F_Masc`. A visual review must approve the target walk before it is baked
+or admitted to any batch work.
+
+## Batch Proof Order
+
+Proceed only after Soldier01 has visually approved `Idle_Relaxed` and
+`Walk_Forward`, in this order:
+
+1. `Skeleton_Soldier_01`: complete both clips.
+2. `Skeleton_Soldier_02` and `Skeleton_Slave`.
+3. `Skeleton_Knight`: separate right-arm review.
+4. `Ghost_01` and `Ghost_02`: material review.
+5. `Tormented_Soul`: separate full-rig review.
+
+Each result must preserve scale, floor contact, facing, root/export shape, and
+native geometry and weapon state. Record profile differences and their evidence
+rather than silently applying Soldier01 matrices to a different rest hash.
+
+## Validation And Release
+
+Blender viewport review is the approval gate for each model and clip. Verify
+idle relaxation, in-place forward travel for walking, floor contact, facing,
+and the unchanged native weapon/geometry presentation before baking. Record
+the exact source, profile, rest-hash relationship, and any model-specific
+correction with each approved output.
+
+Exports stay private and follow the existing game-asset contract only after
+their separate integration and release approvals. Licensed Synty source and
+converted GLBs are never committed to a public repository. Public evidence is
+limited to permitted viewport screenshots.
+
+## Decision Log
+
+### 2026-07-25
+
+- Replaced the idle/downed-only discovery slice with durable Phase 1 coverage:
+  two clips for every in-scope standing model.
+- Kept downed siblings static and deferred weapon placement/socket work to
+  Phase 2.
+- Recorded the Soldier01 child-joint direction-proxy result and its root cause:
+  invalid Dungeon-authored arm tails make ARP copy-rest unsuitable.
+- Required dynamic, per-target offsets and rest-hash-aware profiles rather than
+  reusing Soldier matrices.
+- Added in-place `A_Walk_F_Masc` as the only Phase 1 walk source, with visual
+  approval before baking or batching.
