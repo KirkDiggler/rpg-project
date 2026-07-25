@@ -990,6 +990,30 @@ func TestValidate_MonsterCountZeroRejectedPostLift(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "count")
 }
+
+func TestValidate_UnpinnedBossCompilesAndSeedsPostLift(t *testing.T) {
+	// SECOND landmine this step must cover, no test exists for it today:
+	// compile.go's boss.At handling already has a nil guard for the
+	// unpinned case (SpawnInstruction{Count: 1, At: nil}) -- added when an
+	// earlier spec review caught that C0's "pure deletion" of the
+	// unpinned-boss Validate check would otherwise let an unpinned boss
+	// reach compile.go's boss.At deref and panic, since nothing else in
+	// the compiler expected that path to ever be live. The guard has
+	// existed since B3, unexercised, because Validate always rejected the
+	// input before compile.go could see it. Once THIS step lifts that
+	// restriction, the guard's path becomes reachable for the first time
+	// -- this test is what actually proves it works end to end, not just
+	// that it doesn't panic:
+	// 1. referenceYAML's tomb (or an equivalent unpinned-boss spec) now
+	//    Validates cleanly (Step 1's own test covers this half).
+	// 2. dungeonspec.Load compiles the boss entry to
+	//    SpawnInstruction{Count: 1, At: nil} — not a placed (At-bearing)
+	//    instruction.
+	// 3. That instruction seeds successfully via M2's Task C1 rolling
+	//    path in SeedMonsters (At == nil, Count == 1 is the smallest
+	//    possible rolled case) -- not the M1-era "not yet supported"
+	//    error Task N2 originally returned for exactly this shape.
+}
 ```
 
 - [ ] **Step 2: Run → FAIL** (still rejected); **Step 3: Implement** — delete ONLY the "count-based `monsters:` entry rejected in M1" and "unpinned boss (no `at`) rejected in M1" checks from `Validate` (added in Task B2). Do NOT touch the separate, permanent "boss-archetype room with no `boss:` entry is rejected" check — that one never had an M1 qualifier and stays in force forever; leaving it out of this deletion is the whole point of stating it as a distinct rule in Task B2. In the SAME step, ADD the monster-count check the landmine test above requires — mirror whatever `ObstacleEntry.Count >= 1` check already exists for obstacles (verify it actually exists and read its exact message before mirroring it, don't assume). Three things need removing from Task B2's table test, not two: the two M1-only rows themselves, AND the round-1-added `"referenceYAML's own count-based monsters are M1-invalid"` row (Task B2's fixture-consequence note) — that third row's `wantErr` asserts the OLD, now-wrong direction, and this task's own Step 1 above already covers the positive case for the same fixture, so removing (not flipping) it is the correct fix, not a coverage gap. The "boss-archetype room with no `boss:` entry" row stays in the table test, unmodified, forever.
