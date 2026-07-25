@@ -13,9 +13,16 @@ const requiredFiles = [
   ".pi/extensions/pi-team-harness/src/roles.ts",
   ".pi/extensions/pi-team-harness/src/charters.ts",
   ".pi/extensions/pi-team-harness/src/worker-policy.ts",
+  ".pi/extensions/pi-team-harness/src/github.ts",
+  ".pi/extensions/pi-team-harness/src/checkpoint.ts",
+  ".pi/extensions/pi-team-harness/src/dispatch.ts",
   ".pi/extensions/pi-team-harness/test/roles.test.ts",
   ".pi/extensions/pi-team-harness/test/charters.test.ts",
   ".pi/extensions/pi-team-harness/test/worker-policy.test.ts",
+  ".pi/extensions/pi-team-harness/test/github.test.ts",
+  ".pi/extensions/pi-team-harness/test/checkpoint.test.ts",
+  ".pi/extensions/pi-team-harness/test/dispatch.test.ts",
+  ".pi/extensions/pi-team-harness/test/fixtures/github.json",
 ];
 const forbiddenDependencyNames = new Set([
   "@modelcontextprotocol/sdk",
@@ -29,7 +36,7 @@ const forbiddenDependencyNames = new Set([
   "ws",
 ]);
 const forbiddenSourcePatterns = [
-  { name: "Pi session persistence", pattern: /\bappendEntry\s*\(/ },
+  { name: "Pi session persistence", pattern: /\b(?:appendEntry|sessionManager|getEntries)\b/ },
   { name: "browser-style durable store", pattern: /\b(?:indexedDB|localStorage|sessionStorage|openDatabase)\b/ },
   { name: "daemon listener", pattern: /\b(?:createServer|listen)\s*\(/ },
   { name: "network listener import", pattern: /from\s+["']node:(?:dgram|http|https|net)["']/ },
@@ -115,6 +122,9 @@ if (failures.length === 0) {
   if (charterPathMatches.length === 0) {
     fail("roles adapter must name literal canonical charter paths");
   }
+  if (/\bcontent\s*:/.test(rolesSource)) {
+    fail("roles adapter must not copy canonical charter content");
+  }
   for (const charterPath of charterPathMatches) {
     if (!existsSync(resolve(root, charterPath))) fail(`canonical charter path does not resolve: ${charterPath}`);
   }
@@ -147,5 +157,5 @@ if (failures.length > 0) {
   for (const message of failures) console.error(`- ${message}`);
   process.exitCode = 1;
 } else {
-  console.log("PI team-harness verifier: PASS (Pi 0.82.1 skeleton is deterministic and local-only)");
+  console.log("PI team-harness verifier: PASS (Pi 0.82.1 adapter/dispatch contract is deterministic and local-only)");
 }
