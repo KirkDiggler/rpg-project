@@ -490,12 +490,12 @@ Expected: all commands exit `0`. `npm run ci-check` is mandatory before push; do
 
 - [ ] **Step 3: Run the route and capture browser evidence**
 
-Start the existing local stack according to the web repository’s current local-dev guide, load the route backed by `/home/kirk/game-dev/dungeon-content/reference-tomb.yaml`, and use `/home/kirk/game-dev/tools/browser/screenshot.mjs` to capture:
+Start the existing local stack according to the web repository’s current local-dev guide. In the existing browser session, load the reference-tomb content authored at `/home/kirk/game-dev/dungeon-content/reference-tomb.yaml`; then pass the browser’s current URL to `/home/kirk/game-dev/tools/browser/screenshot.mjs` for these captures:
 
 ```bash
-node /home/kirk/game-dev/tools/browser/screenshot.mjs <reference-tomb-route-url> /tmp/crypt-monsters-reference-tomb-standing.png
-node /home/kirk/game-dev/tools/browser/screenshot.mjs <reference-tomb-route-url> /tmp/crypt-monsters-reference-tomb-moving.png
-node /home/kirk/game-dev/tools/browser/screenshot.mjs <reference-tomb-route-url> /tmp/crypt-monsters-reference-tomb-dead.png
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "$(xclip -o -selection clipboard)" /tmp/crypt-monsters-reference-tomb-standing.png
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "$(xclip -o -selection clipboard)" /tmp/crypt-monsters-reference-tomb-moving.png
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "$(xclip -o -selection clipboard)" /tmp/crypt-monsters-reference-tomb-dead.png
 ```
 
 Expected: standing skeleton resolves Soldier01; moving skeleton visibly plays in-place `Walk_Forward` while board movement supplies translation; dead skeleton loads its authored `-downed.glb` and is not additionally tilted; skeleton-captain resolves Knight with the same standing/moving/dead behavior. Confirm `Slave`, `Ghost01`, `Ghost02`, and `Tormented Soul` do not appear as selectable resolver results.
@@ -528,8 +528,8 @@ Update PR #594 with the test and browser evidence, ending any comment `— asset
 - [ ] **Step 1: Verify the web-main Docker run used post-asset-merge private assets**
 
 ```bash
-gh run list --repo KirkDiggler/rpg-dnd5e-web --workflow docker.yml --branch main --limit 1
-gh run view <web-main-run-id> --repo KirkDiggler/rpg-dnd5e-web --log
+WEB_MAIN_RUN_ID="$(gh run list --repo KirkDiggler/rpg-dnd5e-web --workflow docker.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
+gh run view "$WEB_MAIN_RUN_ID" --repo KirkDiggler/rpg-dnd5e-web --log
 ```
 
 Expected: `Sync Synty assets from private repo` succeeded after `git clone --depth 1` of `KirkDiggler/rpg-game-assets`; inspect the clone revision/log if emitted, or reproduce `git ls-remote` and record that its main SHA is at or after the merged asset PR commit. Build/push must publish the `latest` image.
@@ -537,8 +537,8 @@ Expected: `Sync Synty assets from private repo` succeeded after `git clone --dep
 - [ ] **Step 2: Verify automatic deployment dispatch and production completion**
 
 ```bash
-gh run list --repo KirkDiggler/rpg-deployment --workflow deploy.yml --branch main --limit 3
-gh run view <deployment-run-id> --repo KirkDiggler/rpg-deployment --log
+DEPLOYMENT_RUN_ID="$(gh run list --repo KirkDiggler/rpg-deployment --workflow deploy.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
+gh run view "$DEPLOYMENT_RUN_ID" --repo KirkDiggler/rpg-deployment --log
 ```
 
 Expected: the deployment was triggered with source `rpg-dnd5e-web` and the web merge SHA, then completes successfully. This is the automatic dispatch from workflow lines 102-109, not a human-triggered run.
@@ -586,6 +586,6 @@ Expected: no new toolkit refs, no Ghost/Slave resolver mapping, no additional GL
 ## Plan Self-Review
 
 - Spec coverage: Tasks 1-4 cover the fresh private worktree, existing exporter, seven exact standing exports, full structural/animation/downed validation, private visual proof, Soldier comparison, private PR, and asset merge gate. Tasks 5-6 cover the post-merge #594 rebase, narrow deterministic resolver, #595 preservation, TDD, sync, full checks, and tomb behavior. Task 7 covers normal deployment only and approval-gated recovery. Task 8 isolates the non-blocking 15-reference initiative.
-- Placeholder scan: no incomplete markers or unspecified asset/model identifiers remain. Runtime route URL and workflow run IDs are intentionally command-time values because they are created by the later implementation/release events; commands state exactly how to obtain them rather than inventing false values.
+- Placeholder scan: no incomplete markers or unspecified asset/model identifiers remain. The release commands obtain their run IDs directly from GitHub; browser capture commands use the current route URL copied by the verifier rather than inventing an unverified route shape.
 - Path and type consistency: all exporter invocations use the existing `--out`, `--body`, `--stats-out`, and repeated `--clip` interface; body names, checkpoint paths, runtime paths, manifest keys, clip order/ranges, resolver signature, and web sync path match inspected current code.
 - Granularity: each code task begins with a focused test, has a test command and expected result, and ends at an independently reviewable commit or explicit human gate.
