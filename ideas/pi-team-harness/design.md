@@ -1,7 +1,7 @@
 ---
 name: Pi Team Harness
 issue: rpg-project#135
-status: proposed — Design Review
+status: design approved; Plan Review — canonical PR remains open through implementation
 ---
 
 # Pi Team Harness — Design
@@ -117,9 +117,22 @@ opened as a **ready, non-draft** `rpg-project` PR whose body explicitly says
 `Review phase: Design Review`. It is reviewable, not `MERGE-READY`; that word is
 reserved for the applicable independent product gate, not self-declaration.
 
-A plan is deliberately out of scope for this PR. After written design approval
-and human merge, a later plan snapshot receives its own ready `Review phase:
-Plan Review` PR. Implementation begins only after the approved plan snapshot.
+**Lifecycle decision for this idea.** Kirk approved the design and chose a
+long-lived canonical PR because implementation may expose dragons. PR #136
+therefore remains open on `design/135-pi-team-harness`: after design approval,
+`plan.md` is added to the **same branch and PR**, whose active body phase changes
+to `Review phase: Plan Review`. Kirk reviews the plan before implementation.
+
+Each executable implementation unit then has its own linked repository issue,
+Project 19 item, branch, and ready PR; those PRs reference `rpg-project#135`
+and #136 but do not close #135. An implementation discovery that changes this
+design or plan is reconciled visibly by updating the canonical artifact on the
+open #136 branch and linking the implementation PR/issue evidence. #136 merges
+only after all linked implementation work is complete and a final reconciliation
+confirms that the design, plan, issue, board, and evidence tell the same story.
+This decision supersedes the ordinary separate-snapshot plan flow for this idea
+only; it does not weaken ready review, human approval, or one-issue-per-
+implementation-PR discipline.
 
 ## 3. Role and knowledge-boundary model
 
