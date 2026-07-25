@@ -371,6 +371,8 @@ func TestValidate_Table(t *testing.T) {
 
 ### Task B3: Compiler → `CompiledDungeon` (M1: `place`-routing + door ids; crypt parity moves to M2)
 
+**Implementation order (read before starting this task): B3 is NOT next after B2.** This document groups B3 under "Slice B" thematically (it's the schema's compiler stage), but the section order is NOT execution order. B3's own code compiles a `place` room into `PlacedObstacleSpec`/`LocalHex` (defined in Task N1, `encounter/dungeon.go`) and `SpawnInstruction` (defined in Task N2, `encounter/seed_monsters.go` — B3 only ALIASES it, per the note below). Those types don't exist until N1/N2 land. The real executable order within M1 is **A → B1 → B2 → N1 → N2 → B3 → D1**: finish the whole "New M1 slice" section (below, after Slice D in this document's layout but BEFORE B3 in build order) before starting this task.
+
 **Files:**
 - Create: `encounter/dungeonspec/compile.go`
 - Test: `encounter/dungeonspec/compile_test.go`
@@ -531,6 +533,8 @@ The compiler's nil→true mapping for `PlacedEntry.BlocksMovement`/`BlocksLoS` (
 ---
 
 ## New M1 slice — rpg-toolkit: engine placement path (`encounter/dungeon.go` + new `encounter/seed_monsters.go`)
+
+**Implementation order: this slice runs BEFORE Task B3, despite appearing after Slice B in this document's layout.** Section order here is thematic (schema → engine → workbench → api), not execution order. Task B3 (Slice B) compiles a `place` room into `PlacedObstacleSpec`/`LocalHex` (defined below, Task N1) and `SpawnInstruction` (defined below, Task N2) — those types must exist before B3's code can be written at all. The real executable order within M1 is **A → B1 → B2 → N1 → N2 → B3 → D1**.
 
 Genuinely new engine code the delta requires — none of it exists yet on rpg-toolkit `origin/main` (verified 2026-07-24: no `dungeonspec`, `PlacedObstacles`, `PlacedObstacleSpec`, `LocalHex`, or `SeedMonsters` anywhere in the module). The facts below ARE verified against `origin/main` today and must not drift when this task is implemented:
 
