@@ -63,18 +63,20 @@ No presumed answer becomes a requirement before it is observed and accepted.
 
 ## Record Only What Works
 
-After Kirk approves `Skeleton_Soldier_01`, record the exact successful inputs
-and operations at the level warranted by the result. This may be a concise
-recipe, configuration, or script; it is not a commitment to create automation
-before repetition proves it valuable.
+The Soldier01 producer records the exact successful inputs and operations at
+the level warranted by the result. This may be a concise recipe,
+configuration, or script; it is not a commitment to create automation before
+repetition proves it valuable.
 
 Export the approved output privately. Licensed source assets and converted
 binaries remain private. Viewport screenshots may be shared publicly when they
 contain only permitted visual evidence.
 
-Then apply the recorded process to `Skeleton_Soldier_02`. Do not silently tune
-the second model into a separate undocumented workflow. If it needs a different
-step, record the difference and its reason.
+A fresh independent agent applies those recorded steps to
+`Skeleton_Soldier_02` and reports where they generalize or fail. Do not silently
+tune the second model into a separate undocumented workflow. If it needs a
+different step, record the difference and its reason. This is a learning test,
+not another elaborate approval gate.
 
 ## Two-Model Retro
 
@@ -104,8 +106,8 @@ The discovery slice is accepted when:
 - Kirk says the Soldier01 model looks intentional from gameplay-relevant
   views.
 - Basic scale, facing, floor, and Root/export sanity checks pass.
-- An independent agent can reproduce the recorded process on Soldier02, or
-  records exactly why reproduction cannot proceed.
+- A fresh independent agent applies the recorded process to Soldier02 and
+  reports exactly what reproduced or why it did not.
 
 ## Out Of Scope Until Learned
 
@@ -122,6 +124,6 @@ otherwise advance them based on this discovery result.
 
 ## Next Decision
 
-Written review of this discovery design comes before a `plan.md`. After the
-two-model experiment, decide from the evidence whether a production design,
-automation, validation, or further specimens are warranted.
+After written review, begin the small Blender discovery loop directly; no
+`plan.md` is a prerequisite. Create a later plan only if the two-model retro
+establishes a justified production workflow and scope.
