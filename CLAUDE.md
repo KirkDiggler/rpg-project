@@ -120,6 +120,7 @@ rpg-project/
     architecture.md      <- 3-layer model, trust boundaries, data flow
     vocabulary.md        <- Extended glossary with examples
     boundaries.md        <- What each layer knows and doesn't know
+    howto/               <- Operational runbooks (run the game locally, etc.)
   milestones/
     4class-dungeon/
       CLAUDE.md          <- Milestone scope and context
