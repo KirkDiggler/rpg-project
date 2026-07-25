@@ -955,10 +955,29 @@ func TestValidate_UnpinnedMonstersAllowedOnceSeedMonstersRolls(t *testing.T) {
 	// Validate cleanly — this test is the removal's own proof, not just a
 	// deletion.
 }
+
+func TestValidate_MonsterCountZeroRejectedPostLift(t *testing.T) {
+	// LANDMINE this step must also defuse: design.md's v1 body says
+	// "counts >= 1" as one rule covering both obstacles AND monsters, but
+	// under M1's restriction a monsters: count check is unreachable dead
+	// code (Validate already rejects any non-empty monsters: list before a
+	// count check would ever run) — so Task B2's implementation had no
+	// reason to actually WRITE a monster-count check, only an obstacle one.
+	// Once THIS step deletes the blanket monsters: rejection, count-based
+	// monster entries start flowing through to the compiler for the first
+	// time — with no count validation at all unless this step adds one
+	// alongside the deletion. A monsters: entry with count: 0 (or negative)
+	// must be rejected, same rule obstacles already enforce.
+	s := validSpecWithLiftedRestriction() // e.g. referenceYAML post-lift
+	s.Rooms[0].Monsters[0].Count = 0
+	err := dungeonspec.Validate(s)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "count")
+}
 ```
 
-- [ ] **Step 2: Run → FAIL** (still rejected); **Step 3: Implement** — delete ONLY the "count-based `monsters:` entry rejected in M1" and "unpinned boss (no `at`) rejected in M1" checks from `Validate` (added in Task B2). Do NOT touch the separate, permanent "boss-archetype room with no `boss:` entry is rejected" check — that one never had an M1 qualifier and stays in force forever; leaving it out of this deletion is the whole point of stating it as a distinct rule in Task B2. Three things need removing from Task B2's table test, not two: the two M1-only rows themselves, AND the round-1-added `"referenceYAML's own count-based monsters are M1-invalid"` row (Task B2's fixture-consequence note) — that third row's `wantErr` asserts the OLD, now-wrong direction, and this task's own Step 1 above already covers the positive case for the same fixture, so removing (not flipping) it is the correct fix, not a coverage gap. The "boss-archetype room with no `boss:` entry" row stays in the table test, unmodified, forever.
-- [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): lift M1-only unpinned-monster restriction now that SeedMonsters can roll (#<issue>)`
+- [ ] **Step 2: Run → FAIL** (still rejected); **Step 3: Implement** — delete ONLY the "count-based `monsters:` entry rejected in M1" and "unpinned boss (no `at`) rejected in M1" checks from `Validate` (added in Task B2). Do NOT touch the separate, permanent "boss-archetype room with no `boss:` entry is rejected" check — that one never had an M1 qualifier and stays in force forever; leaving it out of this deletion is the whole point of stating it as a distinct rule in Task B2. In the SAME step, ADD the monster-count check the landmine test above requires — mirror whatever `ObstacleEntry.Count >= 1` check already exists for obstacles (verify it actually exists and read its exact message before mirroring it, don't assume). Three things need removing from Task B2's table test, not two: the two M1-only rows themselves, AND the round-1-added `"referenceYAML's own count-based monsters are M1-invalid"` row (Task B2's fixture-consequence note) — that third row's `wantErr` asserts the OLD, now-wrong direction, and this task's own Step 1 above already covers the positive case for the same fixture, so removing (not flipping) it is the correct fix, not a coverage gap. The "boss-archetype room with no `boss:` entry" row stays in the table test, unmodified, forever.
+- [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): lift M1-only unpinned-monster restriction, add the monster-count check it exposes (#<issue>)`
 
 ### Task C2: crypt compiler parity (unblocked by Task C0)
 

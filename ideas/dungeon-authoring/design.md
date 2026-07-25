@@ -225,7 +225,14 @@ gap, folded into the reference-dungeon milestone (M3 below).
 - **`BossEntry` gains optional `at`.** The boss designation stays where v1 put
   it (`boss:` on the boss room — all archetype invariants unchanged); `at` pins
   its position. A boss ref may NOT also appear in `place` (validation error —
-  one authority for the boss).
+  one authority for the boss). This rule is ROOM-scoped by intent, not
+  dungeon-wide: it forbids the boss room's own `boss:` ref from ALSO showing up
+  in that SAME room's `place` list (two declarations of the same instance,
+  ambiguous which one is authoritative) — it does NOT forbid a monster of the
+  same species appearing elsewhere in the dungeon. A `skeleton-captain` placed
+  in the entrance while the boss room's `skeleton-captain` is the boss is a
+  legitimate second monster of that type, not a duplicate boss; refs name
+  monster TYPES, not unique instances.
 - **The dial is per-item.** `place` coexists with the count-based `obstacles`
   and `monsters` lists in the same room: placed entries are honored first, then
   count-based entries roll into the remaining safe cells (placed cells are
