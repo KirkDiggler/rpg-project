@@ -522,13 +522,34 @@ func TestLoad_BossAtCompilesToSpawnPosition(t *testing.T) {
 	require.NotNil(t, boss.At)
 	assert.Equal(t, encounter.LocalHex{Col: 7, Row: 5}, *boss.At)
 }
+
+func TestLoad_PlaceReservesMonsterAndBossCells(t *testing.T) {
+	// Closes a real gap found on rpg-toolkit#846's gate review: a placed
+	// monster and a pinned boss are SpawnInstructions, not PlacedObstacles —
+	// nothing routed their cells into the rolled-obstacle exclusion set
+	// (Task N1's ReservedCells) before this test existed, so InitDungeon's
+	// obstacle rolling could land a rolled obstacle exactly where
+	// SeedMonsters later expects to place a monster, failing SeedMonsters
+	// at runtime on a fraction of seeds.
+	compiled, err := dungeonspec.Load(placedTombYAML)
+	require.NoError(t, err)
+	tombRegion := regionByID(compiled.Params.Regions, "tomb")
+	assert.Contains(t, tombRegion.ReservedCells, encounter.LocalHex{Col: 4, Row: 2}) // skeleton (place monster)
+	assert.Contains(t, tombRegion.ReservedCells, encounter.LocalHex{Col: 7, Row: 5}) // boss.at
+	// Placed PROPS are NOT duplicated into ReservedCells — their cells are
+	// already excluded via PlacedObstacles (Task N1); ReservedCells exists
+	// specifically for monster cells, which have no other exclusion path.
+	assert.NotContains(t, tombRegion.ReservedCells, encounter.LocalHex{Col: 6, Row: 3}) // coffin (place prop)
+}
 ```
 
 **Naming/architecture note (this plan's decision, load-bearing for the engine slice below):** `encounter.LocalHex{Col, Row int}` here names the exact type the new engine slice introduces (see Task N1) — the compiler reuses it rather than inventing a parallel `dungeonspec`-local coordinate type. The critical constraint: `At` stays ROOM-LOCAL (pre-`offsetX`) all the way from YAML into `DungeonParams.Regions[i].PlacedObstacles` and `SpawnInstruction.At` — the compiler never computes a region's `offsetX` itself. That arithmetic (`starts[i]` in `generateDungeonLayout`) is layout-time-only and depends on every region's width in chain order; duplicating it in `dungeonspec` would silently drift the moment column math changes there. The engine adds `offsetX` at placement time, exactly as it already does internally for rolled candidates.
 
+**RESERVED-CELL GAP (closes a real bug found on rpg-toolkit#846's gate review — not part of the original delta text):** a `place`-routed monster and a pinned `boss.at` are monster spawn positions, not obstacles — until this fix, nothing excluded THEIR cells from the rolled-obstacle candidate pool the way `PlacedObstacles`' cells already are (Task N1), so `InitDungeon`'s obstacle rolling could land a rolled obstacle on a cell `SeedMonsters` later needs for a monster, failing `SeedMonsters` at runtime — verified at roughly 32% of seeds for a spec mixing a placed/pinned monster with count-based obstacles in the same room. The compiler closes this by populating each region's `ReservedCells []encounter.LocalHex` (Task N1) with every monster-bearing cell it compiles — both `place` monster entries and a pinned `boss.at` — alongside, not instead of, routing `place` prop entries into `PlacedObstacles`. `ReservedCells` carries ONLY monster cells; a placed prop's own cell is already excluded via its `PlacedObstacles` entry and must not be double-added here.
+
 The compiler's nil→true mapping for `PlacedEntry.BlocksMovement`/`BlocksLoS` (see the BLOCKING-DEFAULT TRAP above) is the same shape as `ObstacleEntry`'s existing (unwritten-but-implied) nil→true mapping for count-based obstacles — if that mapping isn't ALREADY implemented as part of the original v1 compiler work, implement both here together rather than leaving one inconsistent with the other.
 
-- [ ] **Step 6: Run → FAIL; Step 7: Implement** the ref-type routing (props → append to the region's `PlacedObstacles`, mapping nil `BlocksMovement`/`BlocksLoS` to `true` per the trap above; monsters → append an `At`-bearing `SpawnInstruction`, in `place` list order, boss spawn first as already ordered); **Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): compile place block into PlacedObstacles + positioned spawns (#<issue>)`
+- [ ] **Step 6: Run → FAIL; Step 7: Implement** the ref-type routing (props → append to the region's `PlacedObstacles`, mapping nil `BlocksMovement`/`BlocksLoS` to `true` per the trap above; monsters → append an `At`-bearing `SpawnInstruction`, in `place` list order, boss spawn first as already ordered, AND append that same cell to the region's `ReservedCells` per the gap above — the pinned `boss.at` gets the identical `ReservedCells` treatment even though it compiles outside the `place` list); **Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): compile place block into PlacedObstacles + positioned spawns, reserve monster/boss cells against rolled obstacles (#<issue>)`
 
 ---
 
@@ -546,7 +567,7 @@ Genuinely new engine code the delta requires — none of it exists yet on rpg-to
 ### Task N1: `DungeonRegionParams.PlacedObstacles` — verbatim placement, excluded from the rolled pool
 
 **Files:**
-- Modify: `encounter/dungeon.go` (`DungeonRegionParams` gains `PlacedObstacles []PlacedObstacleSpec`; extend `placeRegionObstaclesParams`, `placeRegionObstacles`, `regionObstacleCandidates`)
+- Modify: `encounter/dungeon.go` (`DungeonRegionParams` gains `PlacedObstacles []PlacedObstacleSpec` AND `ReservedCells []LocalHex` — the latter carries cells the COMPILER wants withheld from rolled obstacles for a reason other than "an obstacle sits there" (a `place`-pinned monster's cell, or a pinned `boss.at` cell — populated by Task B3, consumed here); extend `placeRegionObstaclesParams`, `placeRegionObstacles`, `regionObstacleCandidates`)
 - Test: `encounter/obstacle_placement_test.go` (existing file)
 - Read first, in full: `placeRegionObstacles`'s and `regionObstacleCandidates`'s doc comments — they already spell out the candidate-pool/doorRow-exclusion invariants this task must preserve exactly, and the `PreferBorder` two-pool partition (rpg-toolkit#839/#840) this task must not disturb.
 
@@ -565,6 +586,20 @@ func TestInitDungeon_RolledObstaclesNeverUsePlacedCells(t *testing.T) {
 	// A region with both PlacedObstacles and Obstacles (rolled, Count sized so the
 	// candidate pool minus placed cells is tight): across a sweep of seeds, no
 	// rolled ObstacleData ever lands on a placed cell's cube coordinate.
+}
+
+func TestInitDungeon_RolledObstaclesNeverUseReservedCells(t *testing.T) {
+	// Same shape as the placed-cell test above, but for ReservedCells — a
+	// region with a non-empty ReservedCells (standing in for a monster
+	// SeedMonsters will place later, per Task B3) and a tight rolled-Obstacles
+	// candidate pool: across a sweep of seeds, no rolled ObstacleData ever
+	// lands on a reserved cell's cube coordinate, in EITHER of drawObstacles/
+	// drawObstaclesFrom (the PreferBorder-split draw branches) — not just
+	// whichever branch a naive fix might touch first. Closes the gap found
+	// on rpg-toolkit#846's gate review: before this test existed, nothing
+	// excluded a monster's future cell from obstacle rolling, so a spec
+	// mixing a placed/pinned monster with count-based obstacles in the same
+	// room failed SeedMonsters at runtime on roughly 32% of seeds.
 }
 
 func TestInitDungeon_PlacedObstacleOnReservedRowRejected(t *testing.T) {
@@ -611,7 +646,9 @@ type PlacedObstacleSpec struct {
 type LocalHex struct{ Col, Row int }
 ```
 
-Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec`. Inside `placeRegionObstacles` (or a small helper it calls first), four rejections — reject `At.Col`/`At.Row` outside `[0,width)`/`[0,height)` (out-of-bounds), reject `At.Row == doorRow` (reserved row), reject a cell already claimed by another placed entry (collision), reject a wall cell (check against the same `wallCubes` set `regionObstacleCandidates` already builds) — the exact order among these four is the implementer's call beyond what the tests above pin (each test targets one rejection in isolation, so no test depends on a specific check running before another); otherwise place it verbatim (`ObstacleData{Position: core.HexFromPosition(spatial.Position{X: float64(offsetX + At.Col), Y: float64(At.Row)})}` — `core.HexFromPosition` (`encounter/core/spatial.go`) wraps exactly the `OffsetCoordinateToCubeWithOrientation` + `HexFromCube` pair, symmetric with `Hex.ToPosition()` and orientation-proof, so use it directly rather than hand-assembling the same two calls). Thread the resulting set of placed absolute cube coordinates into `regionObstacleCandidates` (or the border/interior partition in `placeRegionObstacles`, for regions using `PreferBorder`) as an ADDITIONAL exclusion alongside the existing `wallCubes`/`doorRow` exclusions, so rolled obstacles never draw a placed cell.
+Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec` and `ReservedCells []LocalHex`. Inside `placeRegionObstacles` (or a small helper it calls first), four rejections — reject `At.Col`/`At.Row` outside `[0,width)`/`[0,height)` (out-of-bounds), reject `At.Row == doorRow` (reserved row), reject a cell already claimed by another placed entry (collision), reject a wall cell (check against the same `wallCubes` set `regionObstacleCandidates` already builds) — the exact order among these four is the implementer's call beyond what the tests above pin (each test targets one rejection in isolation, so no test depends on a specific check running before another); otherwise place it verbatim (`ObstacleData{Position: core.HexFromPosition(spatial.Position{X: float64(offsetX + At.Col), Y: float64(At.Row)})}` — `core.HexFromPosition` (`encounter/core/spatial.go`) wraps exactly the `OffsetCoordinateToCubeWithOrientation` + `HexFromCube` pair, symmetric with `Hex.ToPosition()` and orientation-proof, so use it directly rather than hand-assembling the same two calls). Thread the resulting set of placed absolute cube coordinates into `regionObstacleCandidates` (or the border/interior partition in `placeRegionObstacles`, for regions using `PreferBorder`) as an ADDITIONAL exclusion alongside the existing `wallCubes`/`doorRow` exclusions, so rolled obstacles never draw a placed cell.
+
+`ReservedCells` gets the IDENTICAL treatment, folded into the SAME exclusion set as `PlacedObstacles`' cells, in BOTH `drawObstacles` AND `drawObstaclesFrom` (the border-preferring and interior draw branches `PreferBorder` splits candidates into) — not just one of the two. This is the fix for a real gap found on rpg-toolkit#846's gate review: `ReservedCells` is populated by the compiler (Task B3) with cells a `place`-pinned monster or a pinned `boss.at` will occupy — never by this task itself — but nothing excluded those cells from obstacle rolling before this field existed, since they aren't `PlacedObstacles` entries. A spec mixing a placed/pinned monster with count-based obstacles in the same room could therefore roll an obstacle straight onto a monster's future cell, failing `SeedMonsters` at runtime (not at `InitDungeon` time) on roughly 32% of seeds — this exclusion closes that seam by construction, the same way `doorRow` closes the traversability seam.
 
 - [ ] **Step 4: Run → PASS — and the full existing obstacle/boss-axis/perimeter suites (`obstacle_placement_test.go`, `boss_primary_axis_test.go`, `perimeter_edge_walls_test.go`) MUST stay green untouched. This task only ADDS a placed-cell exclusion on top of the existing candidate pool; a region with zero `PlacedObstacles` must produce byte-identical output to today.**
 - [ ] **Step 5: Commit** `feat(encounter): PlacedObstacleSpec — verbatim obstacle placement, excluded from the rolled pool (#<issue>)`
@@ -742,7 +779,7 @@ func TestWorkbenchReport_InvalidSpecShowsVerdict(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run → FAIL; Step 3: Implement** — `WorkbenchReport(raw []byte, seed int64) (string, error)`: Load → InitDungeon on a throwaway encounter at the seed → render SpaceData as ASCII (`.` floor, `#` degenerate wall cell, `|`/`-` perimeter edge markers on cell borders if cheap—else fold into `#` and say so, `D` door, `o` obstacle, region ids as a legend). `main.go` = flag parsing (`-file`, `-seed`, `-n` for a multi-seed sweep) + print. Usage doc comment: this is the fast authoring loop — edit YAML → see layouts in seconds, no server (rpg-project#117 observability addendum).
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** — `WorkbenchReport(raw []byte, seed int64) (string, error)`: Load → InitDungeon on a throwaway encounter at the seed → **`enc.SeedMonsters(compiled.Spawns)` on that SAME encounter, before declaring VALID** (finding from rpg-toolkit#846's gate review: `InitDungeon` succeeding was never sufficient proof a spec actually plays — the RESERVED-CELL GAP fixed in Task N1/B3 above meant a spec could `Load` and `InitDungeon` cleanly, then fail `SeedMonsters` on an unlucky seed; a workbench VALID verdict that only covered `Load`+`InitDungeon` would keep missing exactly the one runtime failure mode this whole delta exists to catch before an author hits it in-game) → render SpaceData as ASCII (`.` floor, `#` degenerate wall cell, `|`/`-` perimeter edge markers on cell borders if cheap—else fold into `#` and say so, `D` door, `o` obstacle, region ids as a legend). `main.go` = flag parsing (`-file`, `-seed`, `-n` for a multi-seed sweep) + print. Usage doc comment: this is the fast authoring loop — edit YAML → see layouts in seconds, no server (rpg-project#117 observability addendum).
 - [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): workbench — try a spec at a seed without a server (#<issue>)`
 
 **Delta addition — placed entries render at their exact coordinates:**
@@ -948,7 +985,7 @@ func TestSeedMonsters_RolledNeverUsesAPlacedCell(t *testing.T) {
 
 - [ ] **Step 2: Run → FAIL; Step 3: Implement**
 
-Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics, and M1's Task N2 already built exactly this skeleton): extend `SeedMonsters` so a `SpawnInstruction` with `At == nil` (any `Count`) resolves its ref via `monsters.ByRef` (error on miss — validation should make this unreachable) and places `Count` instances per room on safe cells (reuse the candidate-pool machinery Task N1's `placeRegionObstacles`/`regionObstacleCandidates` uses — same exclusions plus occupied-cell and placed-cell; extract a shared helper only if it stays behavior-identical, with its own test), staged under the SAME suppressed-combat-entry batching Task N2 already built, with ONE `checkCombatEntry()` pass covering both placed and rolled spawns together. Boss-first order preserved from the compiler.
+Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics, and M1's Task N2 already built exactly this skeleton): extend `SeedMonsters` so a `SpawnInstruction` with `At == nil` (any `Count`) resolves its ref via `monsters.ByRef` (error on miss — validation should make this unreachable) and places `Count` instances per room on safe cells (reuse the candidate-pool machinery Task N1's `placeRegionObstacles`/`regionObstacleCandidates` uses — same exclusions plus occupied-cell, placed-cell, AND the region's `ReservedCells` (Task N1/B3's monster-cell reservation — a rolled monster must not land on a cell the compiler already reserved for a `place`-pinned monster or boss in that same room, the exact case `TestSeedMonsters_RolledNeverUsesAPlacedCell` below exercises); extract a shared helper only if it stays behavior-identical, with its own test), staged under the SAME suppressed-combat-entry batching Task N2 already built, with ONE `checkCombatEntry()` pass covering both placed and rolled spawns together. Boss-first order preserved from the compiler.
 
 - [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially the crypt connectivity, boss-axis, and obstacle suites, and every M1 `seed_monsters_test.go` case (the placed path must not regress).
 - [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — count-based multi-monster safe-cell rolling (#<issue>)`
@@ -957,8 +994,10 @@ Mechanism (the design left two candidates; this plan picks **batch-with-deferred
 
 Runs SECOND (after Task C1 above), per this slice's execution-order note — `SeedMonsters` must actually be able to roll before `Validate` starts allowing specs that need it to.
 
+**Scope note (widened by the merge gate's review of rpg-toolkit PR #846 — this task owns the FULL lift, not just `Validate`):** `compile.go` carries a `len(room.Monsters) > 0` guard, added during Task B3's implementation once that task's own scope note ("no new compiler logic expected [in Task C2]") made clear count-based monster compiling had to land somewhere — the guard's own comment points at this task (C0) as where. That guard's existence is itself proof this task was always going to need to touch the compiler, not just `Validate`: a `Validate`-only lift would leave `compile.go` still refusing every spec `Validate` now accepts, reopening the exact "compiles but the engine can't do it" gap this whole restriction exists to prevent — just one file later than before.
+
 **Files:**
-- Modify: `encounter/dungeonspec/validate.go`, `encounter/dungeonspec/validate_test.go`
+- Modify: `encounter/dungeonspec/validate.go`, `encounter/dungeonspec/validate_test.go`, `encounter/dungeonspec/compile.go`, `encounter/dungeonspec/compile_internal_test.go`
 
 - [ ] **Step 1: Failing test — a previously-rejected spec now loads and seeds correctly**
 
@@ -1019,6 +1058,37 @@ func TestValidate_UnpinnedBossCompilesAndSeedsPostLift(t *testing.T) {
 - [ ] **Step 2: Run → FAIL** (still rejected); **Step 3: Implement** — delete ONLY the "count-based `monsters:` entry rejected in M1" and "unpinned boss (no `at`) rejected in M1" checks from `Validate` (added in Task B2). Do NOT touch the separate, permanent "boss-archetype room with no `boss:` entry is rejected" check — that one never had an M1 qualifier and stays in force forever; leaving it out of this deletion is the whole point of stating it as a distinct rule in Task B2. In the SAME step, ADD the monster-count check the landmine test above requires — mirror whatever `ObstacleEntry.Count >= 1` check already exists for obstacles (verify it actually exists and read its exact message before mirroring it, don't assume). Three things need removing from Task B2's table test, not two: the two M1-only rows themselves, AND the round-1-added `"referenceYAML's own count-based monsters are M1-invalid"` row (Task B2's fixture-consequence note) — that third row's `wantErr` asserts the OLD, now-wrong direction, and this task's own Step 1 above already covers the positive case for the same fixture, so removing (not flipping) it is the correct fix, not a coverage gap. The "boss-archetype room with no `boss:` entry" row stays in the table test, unmodified, forever.
 - [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): lift M1-only unpinned-monster restriction, add the monster-count check it exposes (#<issue>)`
 
+**Compiler lift (delta addition — the widened scope above): remove the `compile.go` guard and implement what it was standing in for.**
+
+- [ ] **Step 6: Failing test — the guard flips**
+
+```go
+func TestCompile_RoomMonstersGuardedAgainstSilentDrop(t *testing.T) {
+	// Pre-lift behavior (still true before this step): a room with a
+	// non-empty count-based `monsters:` list fails to compile — the guard
+	// this task removes, added during B3 once Validate's own M1-only
+	// restriction made the guard's condition unreachable via the authoring
+	// path, but left in as defense-in-depth for compile.go's other callers.
+	// Post-lift (this step), the SAME input must compile successfully
+	// instead: this test FLIPS in place, from asserting an error to
+	// asserting compiled spawns — it is not a new test alongside the old one.
+	compiled, err := dungeonspec.Load(referenceYAML) // count-based monsters:, now Validate-legal per Step 1 above
+	require.NoError(t, err)
+	var found bool
+	for _, sp := range compiled.Spawns {
+		if sp.RoomID == "entrance" && sp.MonsterRef == "dnd5e:monsters:skeleton" {
+			found = true
+			assert.Nil(t, sp.At)   // rolled, not placed
+			assert.Equal(t, 2, sp.Count)
+		}
+	}
+	assert.True(t, found)
+}
+```
+
+- [ ] **Step 7: Run → FAIL** (guard still active); **Step 8: Implement** — in `compile.go`, remove the `len(room.Monsters) > 0` guard and implement the compiling it stood in for: each `room.Monsters` entry (`MonsterEntry{Ref, Count}`) compiles to one `SpawnInstruction{RoomID: room.ID, MonsterRef: entry.Ref, Count: entry.Count, At: nil}`, appended in chain order AFTER any `place`-routed (`At`-bearing) spawns for that same room — placed spawns keep priority within a room's own spawn ordering; count-based rolled spawns land after them; boss-first ordering across the whole plan is unchanged. Reuse the same ref-resolution path `place` monster entries already use (`monsters.ByRef`, unreachable-on-miss per `Validate`). Keep this task's existing `Validate`-only landmine tests (`TestValidate_MonsterCountZeroRejectedPostLift`, `TestValidate_UnpinnedBossCompilesAndSeedsPostLift`) untouched — this compiler work is additive alongside them, not a replacement.
+- [ ] **Step 9: Run → PASS; Step 10: Commit** `feat(dungeonspec): compile count-based monsters into rolled SpawnInstructions, remove the M1 compiler guard (#<issue>)`
+
 ### Task C2: crypt compiler parity (unblocked by Task C0)
 
 **Files:**
@@ -1060,7 +1130,7 @@ func TestLoad_Deterministic(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run → FAIL; Step 3: Implement** — no new compiler logic expected here (Task B3's `place`-routing and door-id rule already generalize to count-based rooms); this task should mostly be fixture-writing and assertion-tightening. If it surfaces a real gap in Task B3's implementation, that's a genuine finding to fix here, not a scope violation.
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** — no new compiler logic expected here (Task B3's `place`-routing and door-id rule generalize to count-based rooms, and Task C0 — immediately prior in this slice's execution order — already implements count-based monster compiling itself); this task should mostly be fixture-writing and assertion-tightening. If it surfaces a real gap in Task B3's or Task C0's implementation, that's a genuine finding to fix here, not a scope violation.
 - [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): crypt compiler parity — count-based monsters now loadable (#<issue>)`
 
 ## Migration — crypt to YAML, legacy path deleted
