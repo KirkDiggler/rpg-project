@@ -208,8 +208,8 @@ gap, folded into the reference-dungeon milestone (M3 below).
   width: 12
   boss: { ref: "dnd5e:monsters:skeleton-captain", at: [7, 5] }
   place:
-    - { ref: "dnd5e:props:coffin",        at: [6, 4], blocks_los: false }
-    - { ref: "dnd5e:props:altar",         at: [9, 4] }
+    - { ref: "dnd5e:props:coffin",        at: [6, 3], blocks_los: false }
+    - { ref: "dnd5e:props:altar",         at: [9, 3] }
     - { ref: "dnd5e:props:statue-reaper", at: [1, 1] }
     - { ref: "dnd5e:props:brazier",       at: [3, 1] }
     - { ref: "dnd5e:props:brazier",       at: [3, 6] }
@@ -262,7 +262,11 @@ gap, folded into the reference-dungeon milestone (M3 below).
   (optional) `boss.at`, if set, share one collision domain; a boss pinned onto
   the same cell as a placed prop is the same error as two placed props
   colliding.
-- **No placement on row `height/2`** (`doorRow`). Verified against
+- **No placement on row `height/2`** (`doorRow`). This is the engine's
+  guaranteed clear lane through every room — the same lane rolled obstacles
+  already respect — and it's what makes load-time traversability free: an
+  author never has to reason about pathing when placing static props, just
+  avoid this one row. Verified against
   `encounter/dungeon.go`'s `placeRegionObstacles`/`regionObstacleCandidates`:
   the engine already excludes this entire row from every region's obstacle
   candidate pool, in every region regardless of archetype — a uniform,

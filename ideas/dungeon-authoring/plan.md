@@ -230,7 +230,7 @@ func TestDecode_PlaceBlockRoundTrips(t *testing.T) {
 	tomb := spec.Rooms[len(spec.Rooms)-1]
 	require.Len(t, tomb.Place, 6) // coffin, altar, statue-reaper, brazier x2, skeleton
 	assert.Equal(t, "dnd5e:props:coffin", tomb.Place[0].Ref)
-	assert.Equal(t, [2]int{6, 4}, tomb.Place[0].At)
+	assert.Equal(t, [2]int{6, 3}, tomb.Place[0].At)
 	require.NotNil(t, tomb.Place[0].BlocksLoS)
 	assert.False(t, *tomb.Place[0].BlocksLoS)
 	assert.Equal(t, "dnd5e:monsters:skeleton", tomb.Place[5].Ref)
@@ -404,7 +404,7 @@ func TestLoad_PlaceRoutesByRefType(t *testing.T) {
 	tombRegion := regionByID(compiled.Params.Regions, "tomb")
 	require.Len(t, tombRegion.PlacedObstacles, 5) // coffin, altar, statue-reaper, brazier x2
 	assert.Equal(t, "dnd5e:props:coffin", tombRegion.PlacedObstacles[0].Ref)
-	assert.Equal(t, encounter.LocalHex{Col: 6, Row: 4}, tombRegion.PlacedObstacles[0].At)
+	assert.Equal(t, encounter.LocalHex{Col: 6, Row: 3}, tombRegion.PlacedObstacles[0].At)
 	assert.False(t, tombRegion.PlacedObstacles[0].BlocksLoS)
 
 	var skeletonSpawn *dungeonspec.SpawnInstruction
@@ -456,7 +456,7 @@ Genuinely new engine code the delta requires — none of it exists yet on rpg-to
 ```go
 func TestInitDungeon_PlacedObstaclesLandVerbatim(t *testing.T) {
 	// A region with PlacedObstacles: []PlacedObstacleSpec{{Ref: "dnd5e:props:coffin",
-	// At: LocalHex{Col: 6, Row: 4}}} places at EXACTLY local (6,4) translated by that
+	// At: LocalHex{Col: 6, Row: 3}}} places at EXACTLY local (6,3) translated by that
 	// region's offsetX — assert the resulting ObstacleData.Position directly (the
 	// same OffsetCoordinateToCubeWithOrientation conversion regionObstacleCandidates
 	// uses), not just "an obstacle with this ref exists somewhere in the region."
