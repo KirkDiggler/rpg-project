@@ -76,6 +76,35 @@ findings report on toolkit#848):
   rendering exactly as today (lock DC/ability stay server-side).
 - Rules are untouched by any of this: movement/LOS blocking is rebuilt
   server-side from the data and never reads the client's mesh choices.
+- **Region membership is per-viewer reveal-gated** (added post-review): the
+  hex membership reaching a client is the REVEALED subset (sight-range gated),
+  not full room membership — while the walls list is whole-room and
+  unconditional. Any geometry derived from region hexes therefore tracks the
+  player's explored frontier, not the room. Caught by gate review on the W1
+  implementation; governed by the section below.
+
+## Fog of war / partial reveal (v1 decision, 2026-07-25)
+
+Because region membership is reveal-gated, runs derived from it follow the
+explored frontier. v1 decisions:
+
+- **Envelope runs trace the frontier.** The wall line sits at the edge of the
+  explored area and steps outward as more of the room is revealed — accepted
+  as the fog-of-war visual for v1; revisit after Kirk's walk if it reads
+  badly. (Future alternative needing no backend change: derive full-room
+  envelopes from the unconditional walls channel, which already carries
+  whole-room boundary edges.)
+- **Connector coverage must not depend on reveal state.** Doors pair to the
+  nearest region on each side (not exact column adjacency), and — the
+  structural guarantee — any connector-flanking wall entry not covered by an
+  emitted run FALLS BACK to per-cell rendering. The invisible-wall rule is
+  enforced by construction, not by hoping reveal state cooperates.
+- The clip-clearance dial's default is ~√3 hex units, not 1.0 — the row
+  staircase eats 0.69–0.87 of a nominal offset (measured in review); W4 tunes
+  from there.
+- Different-height adjacent rooms: connector runs take the union of the two
+  row ranges — fine at uniform height (all current content), documented as a
+  known v1 limit.
 
 ## Implementation notes (feeds plan.md)
 
