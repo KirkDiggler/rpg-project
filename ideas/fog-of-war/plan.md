@@ -459,6 +459,12 @@ describe('fogOfWarReducer', () => {
     const next = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed });
     expect(next.projection?.records.some((record) => record.id === '')).toBe(false);
   });
+  it('omits null and unknown-kind nested records without throwing', () => {
+    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, records: [...ROOM2_WITH_ROOM1_MEMORY.records, null, { kind: 'fog', id: 'unknown', roomId: 'room-1', knowledgeState: 'remembered' }] } as unknown as ViewerSceneProjection;
+    expect(() => fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed })).not.toThrow();
+    const next = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed });
+    expect(next.projection?.records.some((record) => record.id === 'unknown')).toBe(false);
+  });
 });
 ```
 
@@ -473,21 +479,24 @@ export type FogOfWarAction =
   | { type: 'hydrate'; projection: ViewerSceneProjection }
   | { type: 'replaceProjection'; projection: ViewerSceneProjection };
 
-function isValidViewerRecord(record: ViewerRecord): boolean {
-  if (!record.id || !record.roomId || (record.knowledgeState !== 'visible' && record.knowledgeState !== 'remembered')) return false;
-  if (record.kind === 'floor') {
-    const { x, y, z } = record.tile;
-    return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) && x + y + z === 0;
-  }
-  if (record.kind === 'wall') return record.wall.from !== undefined && record.wall.to !== undefined;
-  const { entity } = record;
-  if (!entity || !entity.entityId || !entity.name || !entity.position) return false;
-  return Number.isFinite(entity.position.x) && Number.isFinite(entity.position.y) && Number.isFinite(entity.position.z);
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+function isFiniteCube(value: unknown): value is { x: number; y: number; z: number } {
+  return isObject(value) && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.z) && value.x + value.y + value.z === 0;
+}
+function isValidViewerRecord(record: unknown): record is ViewerRecord {
+  if (!isObject(record) || typeof record.id !== 'string' || !record.id || typeof record.roomId !== 'string' || !record.roomId) return false;
+  if (record.knowledgeState !== 'visible' && record.knowledgeState !== 'remembered') return false;
+  if (record.kind === 'floor') return isObject(record.tile) && isFiniteCube(record.tile);
+  if (record.kind === 'wall') return isObject(record.wall) && isFiniteCube(record.wall.from) && isFiniteCube(record.wall.to);
+  if (record.kind === 'entity') return isObject(record.entity) && typeof record.entity.entityId === 'string' && Boolean(record.entity.entityId) && typeof record.entity.name === 'string' && Boolean(record.entity.name) && isFiniteCube(record.entity.position);
+  return false;
 }
 export function sanitizeProjection(
-  projection: ViewerSceneProjection
+  projection: unknown
 ): ViewerSceneProjection | null {
-  if (!projection.viewerId || !projection.currentRoomId || !Array.isArray(projection.records)) {
+  if (!isObject(projection) || typeof projection.viewerId !== 'string' || !projection.viewerId || typeof projection.currentRoomId !== 'string' || !projection.currentRoomId || !Array.isArray(projection.records)) {
     return null;
   }
   return {
@@ -502,7 +511,7 @@ export function fogOfWarReducer(state: FogOfWarState, action: FogOfWarAction): F
 }
 ```
 
-`sanitizeProjection(projection: ViewerSceneProjection): ViewerSceneProjection | null` returns `null` when top-level `viewerId`/`currentRoomId` is empty or `records` is not an array. For a valid top level it returns a new projection whose records pass all checks: non-empty `id`/`roomId`; floor coordinates are finite and satisfy `x + y + z === 0`; wall has `from` and `to`; entity has non-empty id/name and finite position; `knowledgeState` is exactly `'visible'` or `'remembered'`. Invalid nested records are omitted. It never converts a missing/invalid state to visible; malformed remembered records are omitted. `fogOfWarReducer` preserves the existing state reference on `null`. There are no other action variants, and no reducer parameter accepts `WorldTruthFixture`.
+`sanitizeProjection(projection: unknown): ViewerSceneProjection | null` first guards the top-level object, string `viewerId`/`currentRoomId`, and records array before accessing nested values. `isValidViewerRecord(record: unknown): record is ViewerRecord` first guards non-null, non-array objects; then validates shared strings/state; then accepts exactly floor, wall, or entity. Floor and wall `from`/`to` coordinates are finite cube coordinates; entity id/name/position are present and finite. Null, arrays, unknown kinds/states, and missing payloads return false and are omitted. It never converts a missing/invalid state to visible; malformed remembered records are omitted. `fogOfWarReducer` preserves the existing state reference on `null`. There are no other action variants, and no reducer parameter accepts `WorldTruthFixture`.
 
 - [ ] **Step 6: Write adapter tests, then implement exact HexGrid inputs.**
 
@@ -579,7 +588,7 @@ Expected: tests prove no leaks, hidden mutation isolation, atomic re-sight, and 
 
 - [ ] **Step 1: Create the issue/worktree and write failing page-navigation tests.**
 
-Create the UI/UX issue titled `Fog of War: executable two-room concept`, add it to Board 19, create the fresh worktree, then create `FogOfWarConcept.test.tsx` with mocked `HexGrid`. Assert the default is `room1-visible`; clicking `room2-with-room1-memory` shows labels `Viewer projection` and `World truth inspector`, passes both Room 1 and Room 2 tiles to the mock, passes `showFrontierGroundHints={false}`, and reports remembered record count. Capture the mock's serialized viewer props, select `hidden-change-inspector`, and assert the serialized viewer props are unchanged while the world-truth inspector changes. Create `src/concepts/ConceptsView.test.tsx`; render `ConceptsView`, click `Fog of War`, and assert the mocked `FogOfWarConcept` branch renders. Add an `App` test at `src/App.test.tsx` proving development `?concept=fog-of-war&fogStep=resight-room1` opens Concepts Lab, while no query preserves normal initial view.
+Create the UI/UX issue titled `Fog of War: executable two-room concept`, add it to Board 19, create the fresh worktree, then create `FogOfWarConcept.test.tsx` with mocked `HexGrid`. Assert the default is `room1-visible`; clicking `room2-with-room1-memory` shows labels `Viewer projection` and `World truth inspector`, passes both Room 1 and Room 2 tiles to the mock, passes `showFrontierGroundHints={false}`, and reports remembered record count. Capture the mock's serialized viewer props, select `hidden-change-inspector`, and assert the serialized viewer props are unchanged while the world-truth inspector changes. Create `src/concepts/ConceptsView.test.tsx`; render `ConceptsView`, click `Fog of War`, and assert the mocked `FogOfWarConcept` branch renders. Add `src/App.test.tsx` coverage that development `?concept=fog-of-war&fogStep=resight-room1` opens Concepts Lab even after an active-lobby response arrives, while no query still resumes to the active lobby normally.
 
 - [ ] **Step 2: Run the page test and confirm failure.**
 
@@ -616,11 +625,35 @@ export function FogOfWarConcept({ initialStepId }: { initialStepId?: string }) {
 }
 ```
 
-`FogOfWarConcept` accepts `initialStepId?: string`; it is used only by the dev query seam and tests. `selectStep` dispatches only `kind: 'projection'` steps. `hidden-change-inspector` updates the separate `worldTruth` state and leaves the viewer projection reference/adapter output unchanged. In `App.tsx`, only when `import.meta.env.DEV` and `new URLSearchParams(window.location.search).get('concept') === 'fog-of-war'`, initialize `currentView` to Concepts Lab. In `ConceptsView.tsx`, parse `fogStep` only in development, initialize the active page to `'fog-of-war'` only for that same concept query, and pass `initialStepId` to `FogOfWarConcept`; normal in-app navigation and all non-development behavior are unchanged. Provide named controls for the full authored sequence: Room 1 visible, Door/reveal, Room 2 with Room 1 remembered, Hidden change inspector, Reconnect, Re-sight Room 1, and Second viewer. The layout uses a responsive grid (`grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr))`): the WebGL panel has `minHeight: 32rem` desktop and `minHeight: 24rem` at narrow width; inspectors use accessible headings and code-like record counts. Clearly label that viewer projection is renderer input and world truth is comparison-only.
+`FogOfWarConcept` accepts `initialStepId?: string`; it is used only by the dev query seam and tests. `selectStep` dispatches only `kind: 'projection'` steps. `hidden-change-inspector` updates the separate `worldTruth` state and leaves the viewer projection reference/adapter output unchanged. In `App.tsx`, add a stable one-time gate before `currentView`:
+
+```ts
+const [showFogConceptQuery] = useState(
+  () =>
+    import.meta.env.MODE === 'development' &&
+    new URLSearchParams(window.location.search).get('concept') === 'fog-of-war'
+);
+const [currentView, setCurrentView] = useState<AppView>(
+  showFogConceptQuery ? 'concepts' : 'home'
+);
+
+useEffect(() => {
+  if (showFogConceptQuery || !myActiveLobby.data) return;
+  if (myActiveLobby.data.encounterId) {
+    setResumeEncounterId(myActiveLobby.data.encounterId);
+    setCurrentView('lobby');
+  } else if (myActiveLobby.data.lobbyId) {
+    setResumeLobbyId(myActiveLobby.data.lobbyId);
+    setCurrentView('lobby');
+  }
+}, [myActiveLobby.data, showFogConceptQuery]);
+```
+
+This follows the repo's existing `import.meta.env.MODE === 'development'` convention. It is dev-only; normal active-lobby resume behavior is unchanged when the query is absent. In `ConceptsView.tsx`, derive `const fogStepId = import.meta.env.MODE === 'development' && new URLSearchParams(window.location.search).get('concept') === 'fog-of-war' ? new URLSearchParams(window.location.search).get('fogStep') ?? undefined : undefined`; initialize the active page to `'fog-of-war'` only when `fogStepId` is present. Render the branch exactly as `{activePage === 'fog-of-war' && <FogOfWarConcept initialStepId={fogStepId} />}`; normal button navigation passes `undefined`. Provide named controls for the full authored sequence: Room 1 visible, Door/reveal, Room 2 with Room 1 remembered, Hidden change inspector, Reconnect, Re-sight Room 1, and Second viewer. The layout uses a responsive grid (`grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr))`): the WebGL panel has `minHeight: 32rem` desktop and `minHeight: 24rem` at narrow width; inspectors use accessible headings and code-like record counts. Clearly label that viewer projection is renderer input and world truth is comparison-only.
 
 - [ ] **Step 4: Register the concept and write the concepts policy.**
 
-In `ConceptsView.tsx`, import `FogOfWarConcept`, add `'fog-of-war'` to `ConceptPage`, add `{ id: 'fog-of-war', label: 'Fog of War' }` to `CONCEPT_PAGES`, and render `<FogOfWarConcept />` in the active branch. Create `src/concepts/README.md` stating exactly that concepts use real game components with representative fixtures; are executable outside-in contract experiments rather than visual showcase mocks; fixtures describe desired consumer data; `CONTRACT.md` holds evidence/candidate gaps; Kirk reviews before gaps become cross-repo requests; and approved concepts drive toolkit/proto/API/production-web work from a known consumer contract.
+In `ConceptsView.tsx`, import `FogOfWarConcept`, add `'fog-of-war'` to `ConceptPage`, add `{ id: 'fog-of-war', label: 'Fog of War' }` to `CONCEPT_PAGES`, and render `{activePage === 'fog-of-war' && <FogOfWarConcept initialStepId={fogStepId} />}` in the active branch. Create `src/concepts/README.md` stating exactly that concepts use real game components with representative fixtures; are executable outside-in contract experiments rather than visual showcase mocks; fixtures describe desired consumer data; `CONTRACT.md` holds evidence/candidate gaps; Kirk reviews before gaps become cross-repo requests; and approved concepts drive toolkit/proto/API/production-web work from a known consumer contract.
 
 - [ ] **Step 5: Add an evidence-only contract log and route documentation.**
 
@@ -642,7 +675,7 @@ node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?co
 node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=resight-room1" /tmp/fog-resight-mobile.png 5000 390 844
 ```
 
-Inspect: Room 1 has no pre-observation content initially; remembered Room 1 and visible Room 2 render together; remembered floor/wall/door/entity is opaque crypt-charcoal with no hover/cursor/action affordance; hidden change modifies only the world-truth inspector; reconnect restores remembered content; re-sight removes stale remembered presentation and shows current truth; second viewer remains isolated; no frontier hint appears beyond unknown geometry. Attach these images to the Task 4 PR; do not commit them.
+These four commands are the key screenshot evidence for mixed memory and re-sight on desktop/mobile. Manually exercise the remaining authored states in the browser: initial unseen Room 1, door/reveal, hidden-change inspector, reconnect, and second viewer. Record those checks in the Task 4 PR viewed-statement; do not claim the four images alone depict every state. Confirm remembered Room 1 and visible Room 2 render together; remembered floor/wall/door/entity is opaque crypt-charcoal with no hover/cursor/action affordance; hidden change modifies only the world-truth inspector; re-sight removes stale remembered presentation and shows current truth; and no frontier hint appears beyond unknown geometry. Attach the four images to the Task 4 PR; do not commit them.
 
 - [ ] **Step 7: Run full CI, review evidence, and commit Task 4.**
 
