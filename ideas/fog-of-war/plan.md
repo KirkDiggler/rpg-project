@@ -18,7 +18,7 @@
 - `UNSEEN` is omission, never a state value, dark substitute, inferred floor, wall, entity, or interaction target.
 - Define `SceneKnowledgeState = 'visible' | 'remembered'`. Optional `knowledgeState` defaults to `'visible'` so existing production callers remain unchanged. Preserve `isGhost`: remembered is separate from pale-cyan ghosting and never changes current production ghost semantics.
 - Use the single mixed geometry scene: all known floor tiles remain in `floorTiles`; all known walls remain in `walls`. `rememberedFloorHexKeys?: ReadonlySet<string>` and `rememberedWallHexKeys?: ReadonlySet<string>` only select presentation and interaction filtering. Do not split wall lists, mutate `Wall`, or introduce a geometry wrapper type.
-- Centralize the initial memory presentation in `src/components/hex-grid/sceneKnowledge.ts`: `CRYPT_MEMORY_COLOR = new THREE.Color('#465366')`, `CRYPT_MEMORY_OPACITY = 0.58`, `CRYPT_MEMORY_EMISSIVE = new THREE.Color('#111923')`, and `CRYPT_MEMORY_EMISSIVE_INTENSITY = 0.08`. Memory wins over selection, hover, theme, ghost, door, and wall highlights.
+- Centralize the initial memory presentation in `src/components/hex-grid/sceneKnowledge.ts`: `CRYPT_MEMORY_COLOR = new THREE.Color('#465366')`, `CRYPT_MEMORY_OPACITY = 1.0`, `CRYPT_MEMORY_EMISSIVE = new THREE.Color('#111923')`, and `CRYPT_MEMORY_EMISSIVE_INTENSITY = 0.08`. Remembered materials are opaque (`transparent = false`, `depthWrite = true`); cool charcoal color/emissive supplies separation without spectral transparency. Memory wins over selection, hover, theme, ghost, door, and wall highlights.
 - Material safety is mandatory. `useGLTF` and `useTexture` assets are URL-cached: clone per-instance materials, support `Material | Material[]`, restore original cached materials before reuse, dispose only materials created by that instance/effect, and never dispose cached geometry, cached textures, or original materials. Primitive/loading fallbacks must visibly stay remembered too.
 - The Canvas uses `frameloop="demand"`: remembered class models resolve no clip and never self-invalidate. Do not add movement/facing hook enable flags unless direct inspection during execution proves clearing inputs insufficient.
 - Remembered content renders but is inert. Build pathing, occupancy, interaction, turn-order, self-indicator, hover, and door handlers from visible-only records/geometry. Remembered entities never block based on stale positions. Remembered floors cannot be hovered/clicked/pathed. Remembered doors have no handlers, cursor change, or propagation stop. `TurnOrderOverlay` receives no remembered IDs.
@@ -26,7 +26,7 @@
 - The concept projection is a typed, complete authored scene projection with floor/wall/entity records carrying real `AbsoluteFloorTile`, generated `Wall`, and shared `HexGridEntity` payloads plus stable id, `roomId`, and state. The adapter emits exact HexGrid props and omits unseen records. `currentRoomId` is camera/context metadata only; never use it to filter Room 1 remembered content from Room 2 live content.
 - Reducer actions are only `hydrate` and atomic `replaceProjection`. It does not accept world truth and has no reveal, door-open, LOS, or inferred-memory action. Invalid records fail closed by omission; malformed remembered records never become visible.
 - Do not build Intelligence, senses, retention, palette-selection, or production persistence systems. `CONTRACT.md` is evidence-only, not a platform request.
-- Visual evidence uses the real development Concepts Lab, not standalone HTML: start `npm run dev`, enter via the development-only Concepts Lab button, then capture `http://localhost:5173` with `node /home/kirk/game-dev/tools/browser/screenshot.mjs <url> <output.png>` at desktop `1440x900` and mobile `390x844` browser viewports.
+- Visual evidence uses the real development Concepts Lab, not standalone HTML. Task 4 adds a dev-only query seam: `?concept=fog-of-war&fogStep=<step-id>` opens Concepts Lab and selects an authored Fog step; normal navigation is unchanged. The exact screenshot form is `node /home/kirk/game-dev/tools/browser/screenshot.mjs <url> <output.png> 5000 <width> <height>`.
 
 ---
 
@@ -40,10 +40,10 @@
 | `src/components/hex-grid/{SyntyHexWall,ShadedHexWall}.tsx` | Applies remembered wall/door/frame/end/fitting treatment and removes remembered door event handlers. |
 | `src/components/hex-grid/{HexEntity,ClassCharacterModel,MediumHumanoid,PropModel}.tsx` | Renders remembered entities frozen and inert through real asset and fallback paths. |
 | `src/components/playtest/playtestMapHelpers.ts` | Aliases `RenderableEntity` to the exported shared HexGrid entity contract. |
-| `src/concepts/fog-of-war/{fixtures,reducer,adapter}.ts` | Typed viewer projections, isolated world truth, authored scenarios, fail-closed reducer, and exact HexGrid input adapter. |
+| `src/concepts/fog-of-war/{fixtures,reducer,adapter}.ts` | Typed viewer projections, isolated world truth, authored control steps, fail-closed reducer, and exact HexGrid input adapter. |
 | `src/concepts/fog-of-war/FogOfWarConcept.tsx` | Responsive control/inspector page mounting a real crypt `HexGrid`. |
 | `src/concepts/fog-of-war/{fixtures,reducer,adapter,FogOfWarConcept}.test.ts[x]` | Pure contract, reducer, adapter, and page behavior coverage. |
-| `src/concepts/{ConceptsView.tsx,README.md}` | Fog-of-war registration and concepts-wide executable-contract policy. |
+| `src/{App.tsx,concepts/ConceptsView.tsx,concepts/README.md}` | Dev-only query selection, Fog-of-war registration, and concepts-wide executable-contract policy. |
 | `src/concepts/fog-of-war/CONTRACT.md` | Evidence and candidate gaps only; no platform request. |
 
 ## Task 1: Shared knowledge contract and inert mixed geometry
@@ -83,11 +83,13 @@ Expected: the board item carries the returned issue number and requested fields;
 
 - [ ] **Step 2: Write failing shared-contract tests.**
 
-Create `sceneKnowledge.test.ts` with tests for visible-by-default, remembered-only state, a segment whose key begins with a remembered wall hex, and a fitting whose `|`-joined touching keys include one remembered wall key:
+Create `sceneKnowledge.test.ts` with tests for visible-by-default, remembered-only state, a segment whose key begins with a remembered wall hex, a fitting whose `|`-joined touching keys include one remembered wall key, and `cloneCryptMaterials` scalar/array safety:
 
 ```ts
 import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
 import {
+  cloneCryptMaterials,
   isRemembered,
   rememberedFitting,
   rememberedSegment,
@@ -103,6 +105,23 @@ describe('scene knowledge decisions', () => {
     const remembered = new Set(['1,-1,0']);
     expect(rememberedSegment('1,-1,0->2,-2,0', remembered)).toBe(true);
     expect(rememberedFitting('0,0,0|1,-1,0|1,0,-1', remembered)).toBe(true);
+  });
+  it('clones scalar and array materials without mutating originals', () => {
+    const scalar = new THREE.MeshStandardMaterial({ color: '#ffffff' });
+    const array = [new THREE.MeshStandardMaterial({ color: '#ffffff' }), new THREE.MeshBasicMaterial({ color: '#ffffff' })];
+    const scalarClone = cloneCryptMaterials(scalar) as THREE.MeshStandardMaterial;
+    const arrayClone = cloneCryptMaterials(array) as THREE.Material[];
+    expect(scalarClone).not.toBe(scalar);
+    expect(Array.isArray(arrayClone)).toBe(true);
+    expect(arrayClone[0]).not.toBe(array[0]);
+    expect(scalar.color.getHexString()).toBe('ffffff');
+    expect(scalarClone.color.getHexString()).toBe('465366');
+    expect(scalarClone.transparent).toBe(false);
+    expect(scalarClone.depthWrite).toBe(true);
+    expect(scalarClone.opacity).toBe(1);
+    expect(arrayClone[0]!.transparent).toBe(false);
+    expect(arrayClone[0]!.depthWrite).toBe(true);
+    expect(arrayClone[0]!.opacity).toBe(1);
   });
 });
 ```
@@ -123,7 +142,7 @@ import * as THREE from 'three';
 export type SceneKnowledgeState = 'visible' | 'remembered';
 export const CRYPT_MEMORY_COLOR = new THREE.Color('#465366');
 export const CRYPT_MEMORY_EMISSIVE = new THREE.Color('#111923');
-export const CRYPT_MEMORY_OPACITY = 0.58;
+export const CRYPT_MEMORY_OPACITY = 1.0;
 export const CRYPT_MEMORY_EMISSIVE_INTENSITY = 0.08;
 
 export function isRemembered(state?: SceneKnowledgeState): boolean {
@@ -146,15 +165,16 @@ export function cloneCryptMaterials(
       clone.emissive.copy(CRYPT_MEMORY_EMISSIVE);
       clone.emissiveIntensity = CRYPT_MEMORY_EMISSIVE_INTENSITY;
     }
-    clone.transparent = true;
+    clone.transparent = false;
     clone.opacity = CRYPT_MEMORY_OPACITY;
+    clone.depthWrite = true;
     return clone;
   });
   return Array.isArray(original) ? clones : clones[0]!;
 }
 ```
 
-Implementers must use an effect around `cloneCryptMaterials`: snapshot each clone's original material, assign only cloned materials while remembered, restore the original reference on cleanup/state change, and dispose exactly the created clones. The helper never disposes input material.
+Implementers must use an effect around `cloneCryptMaterials`: snapshot each clone's original material, assign only cloned materials while remembered, restore the original reference on cleanup/state change, flatten a scalar result to `[clone]` and an array result to `clone` for disposal, and dispose exactly those created clones. The helper itself never disposes input material.
 
 - [ ] **Step 5: Make HexGrid’s entity and geometry seam additive.**
 
@@ -192,13 +212,13 @@ Inside `Scene`, derive `visibleEntities`, `visibleFloorTiles`, and `visibleWalls
 
 - [ ] **Step 6: Add remembered floor precedence in both renderers.**
 
-Add `rememberedFloorHexKeys?: ReadonlySet<string>` to `SyntyHexFloorProps` and `ShadedHexFloorProps`. In Synty, calculate `isRemembered = rememberedFloorHexKeys?.has(key) ?? false` and select a memory `meshBasicMaterial` with `color={CRYPT_MEMORY_COLOR}`, `opacity={CRYPT_MEMORY_OPACITY}`, `transparent`, and `toneMapped={false}` before the existing crypt-theme branch. In shaded, preserve map iteration order: its creation effect and color effect iterate `for (const [key, tile] of floorTiles)` in identical order; in the color effect choose memory color before selected, hovered, door, wall, or base variation.
+Add `rememberedFloorHexKeys?: ReadonlySet<string>` to `SyntyHexFloorProps` and `ShadedHexFloorProps`. In Synty, calculate `isRemembered = rememberedFloorHexKeys?.has(key) ?? false` and select an opaque memory `meshBasicMaterial` with `color={CRYPT_MEMORY_COLOR}`, `opacity={1}`, `transparent={false}`, `depthWrite`, and `toneMapped={false}` before the existing crypt-theme branch. In shaded, preserve map iteration order: its creation effect and color effect iterate `for (const [key, tile] of floorTiles)` in identical order; in the color effect choose memory color before selected, hovered, door, wall, or base variation.
 
 Add an R3F test assertion that a remembered Synty tile uses `#465366` even when `spaceTheme="crypt"`, and a unit-level color-decision test exported from `sceneKnowledge.ts` if extracting the shaded priority makes it testable. Do not reorder `floorTiles`, because instance color index is coupled to map iteration order.
 
 - [ ] **Step 7: Add remembered wall and door behavior without splitting wall lists.**
 
-Add `rememberedWallHexKeys?: ReadonlySet<string>` to both wall props. In `SyntyHexWall`, compute `isRemembered` for each segment via `rememberedSegment(key, rememberedWallHexKeys)`, and for each vertex fitting via `rememberedFitting(key, rememberedWallHexKeys)`. Pass `CRYPT_MEMORY_COLOR` through the existing `GlbInstance` cloning path for remembered wall segments, end caps, door frames, door leaves, and fittings. For a remembered door render a plain `<group>` with no `onClick`, `onPointerOver`, or `onPointerOut`; do not stop propagation or alter the cursor. In `ShadedHexWall`, choose the memory color before `getKindColor`, and attach no door handlers when its `wall.from` key belongs to `rememberedWallHexKeys`.
+Add `rememberedWallHexKeys?: ReadonlySet<string>` to both wall props. In `SyntyHexWall`, compute `isRemembered` for each segment via `rememberedSegment(key, rememberedWallHexKeys)`, and for each vertex fitting via `rememberedFitting(key, rememberedWallHexKeys)`. Extend `GlbInstance` with `remembered?: boolean`; for remembered wall segments, end caps, door frames, door leaves, and fittings it uses `cloneCryptMaterials` so every cloned material is charcoal, opaque, and depth-writing. Non-remembered theme/locked-door tint behavior remains unchanged. For a remembered door render a plain `<group>` with no `onClick`, `onPointerOver`, or `onPointerOut`; do not stop propagation or alter the cursor. In `ShadedHexWall`, choose the opaque memory color before `getKindColor`, and attach no door handlers when its `wall.from` key belongs to `rememberedWallHexKeys`.
 
 Add tests that a remembered closed door has no event target in both renderers and that a Synty fitting key such as `0,0,0|1,-1,0|1,0,-1` becomes tinted when `1,-1,0` is remembered. The full wall list remains mounted so segment and fitting construction see all neighbors.
 
@@ -244,7 +264,7 @@ Expected: only Task 1 files are staged; `npm run ci-check` passes before the tas
 
 **Interfaces:**
 - Consumes: Task 1 `SceneKnowledgeState`, `CRYPT_MEMORY_*`, `cloneCryptMaterials`, and exported `HexGridEntity`.
-- Produces: `HexEntityProps.knowledgeState?: SceneKnowledgeState`, `ClassCharacterModelProps.remembered?: boolean`, `MediumHumanoidProps.remembered?: boolean`, `PropModelProps.remembered?: boolean`, and `RenderableEntity extends HexGridEntity`.
+- Produces: `HexEntityProps.knowledgeState?: SceneKnowledgeState`, `ClassCharacterModelProps.remembered?: boolean`, `MediumHumanoidProps.remembered?: boolean`, `PropModelProps.remembered?: boolean`, and `RenderableEntity = HexGridEntity`.
 
 - [ ] **Step 1: Create the issue and fresh worktree from latest main.**
 
@@ -252,7 +272,7 @@ Create the issue titled `Fog of War: frozen remembered entity rendering`, place 
 
 - [ ] **Step 2: Write failing entity inertness tests.**
 
-Create `HexEntity.test.tsx` with a remembered player and remembered obstacle. Assert the R3F tree has no `onClick`/`onPointerOver` function on their hit groups, no selected material behavior, and that the remembered player passes neither movement path nor sequence into its model branch. Add a `HexGrid` pure test or extracted helper test that a combat order `['visible-player', 'remembered-monster']` emits only `visible-player`.
+Create `HexEntity.test.tsx` with a remembered player and remembered obstacle. Assert the R3F tree has no `onClick`/`onPointerOver` function on their hit groups, no selected material behavior, and that the remembered player passes neither movement path nor sequence into its model branch. Also assert an ordinary production ghost still mounts its existing stop-propagating no-op click handler. Add a `HexGrid` pure test where `['remembered-first', 'visible-active']` has `activeIndex: 1`; after filtering remembered IDs the order is `['visible-active']` and the recomputed active index is `0`.
 
 ```ts
 expect(screenedEntityProps.knowledgeState).toBe('remembered');
@@ -284,7 +304,20 @@ const renderedMovePath = remembered ? undefined : movePath;
 const renderedMoveSeq = remembered ? undefined : moveSeq;
 ```
 
-Pass no pointer props at all for remembered/dead/ghost entities; do not attach a stop-propagating no-op handler. Pass `renderedSelected`, `remembered`, `renderedMovePath`, and `renderedMoveSeq` into the class, medium, prop, loading placeholder, and primitive fallback paths. Keep `isGhost` unchanged for non-remembered entities. In `HexGrid`, pass `isSelected={false}` and no move inputs for remembered entities, suppress `SelfIndicatorRing` when `myEntity.knowledgeState === 'remembered'`, and filter remembered IDs from `turnOrder` before calculating active index; if the active ID is filtered, use `-1`.
+Branch pointer props by `remembered` first: remembered entities receive no pointer handlers at all; non-remembered dead/ghost entities keep the current stop-propagating no-op click handler; non-remembered live entities keep their existing click/hover/cursor behavior. Pass `renderedSelected`, `remembered`, `renderedMovePath`, and `renderedMoveSeq` into the class, medium, prop, loading placeholder, and primitive fallback paths. Keep `isGhost` unchanged for non-remembered entities. In `HexGrid`, pass `isSelected={false}` and no move inputs for remembered entities, suppress `SelfIndicatorRing` when `myEntity.knowledgeState === 'remembered'`, and recompute turn state as follows:
+
+```ts
+const originalActiveEntityId = combatState?.turnOrder?.[combatState.activeIndex]?.entityId;
+const rememberedEntityIds = new Set(
+  props.entities.filter((entity) => entity.knowledgeState === 'remembered').map((entity) => entity.entityId)
+);
+const turnOrder = (combatState?.turnOrder ?? [])
+  .filter((entry) => !rememberedEntityIds.has(entry.entityId))
+  .map((entry) => ({ entityId: entry.entityId, entityType: entry.entityType, initiative: entry.initiative }));
+const activeIndex = originalActiveEntityId
+  ? turnOrder.findIndex((entry) => entry.entityId === originalActiveEntityId)
+  : -1;
+```
 
 - [ ] **Step 5: Freeze class models without demand-frame work.**
 
@@ -315,7 +348,7 @@ In the existing material effect, remembered has highest priority: clone every or
 
 - [ ] **Step 6: Apply remembered presentation to MediumHumanoid, prop, and fallbacks.**
 
-`MediumHumanoid` gains `remembered?: boolean`; it passes `selected: 0`, `ghostAmount: 0`, `showOutline: false`, and the crypt palette into both textured and solid parts. Add `remembered` to `SolidCharacterPart` and `TexturedCharacterPart`; remembered materials use the central color/opacity and their `useFrame` calls do not invalidate. `PropModel` gains `remembered?: boolean`, snapshots original materials from its clone, assigns `cloneCryptMaterials` only while remembered, restores originals, and disposes only created clones. The capsule fallback and `LoadingPlaceholder` take `remembered` and use a crypt-charcoal `meshStandardMaterial` with memory opacity; they must never fall back to live blue/red/purple colors.
+`MediumHumanoid` gains `remembered?: boolean`; it passes `selected: 0`, `ghostAmount: 0`, `showOutline: false`, and the opaque crypt palette into both textured and solid parts. Add `remembered` to `SolidCharacterPart` and `TexturedCharacterPart`; remembered materials use central opaque color/depth-write settings and their `useFrame` calls do not invalidate. `PropModel` gains `remembered?: boolean`, snapshots original materials from its clone, assigns `cloneCryptMaterials` only while remembered, restores originals, and disposes only created clones. The capsule fallback and `LoadingPlaceholder` take `remembered` and use an opaque crypt-charcoal `meshStandardMaterial` with `transparent={false}`, `opacity={1}`, and `depthWrite`; they must never fall back to live blue/red/purple colors.
 
 Run:
 
@@ -331,7 +364,7 @@ Replace the duplicated interface in `playtestMapHelpers.ts` with:
 
 ```ts
 import type { HexGridEntity } from '../hex-grid/HexGrid';
-export interface RenderableEntity extends HexGridEntity {}
+export type RenderableEntity = HexGridEntity;
 ```
 
 Keep `buildRenderableEntities` output behavior unchanged, which means omitted `knowledgeState` remains visible. Add a `TurnOrderOverlay`-adjacent test through the new HexGrid turn-order helper showing remembered IDs are absent; do not change `TurnOrderOverlay`’s public props.
@@ -363,11 +396,11 @@ Expected: focused tests and CI pass; commit contains only Task 2 files before pu
 
 **Interfaces:**
 - Consumes: `AbsoluteFloorTile`, generated `Wall`, Task 1 `SceneKnowledgeState`, and Task 1 `HexGridEntity`.
-- Produces: `ViewerSceneProjection`, `WorldTruthFixture`, `FogOfWarState`, `fogOfWarReducer`, `sanitizeProjection`, and `toHexGridProps`.
+- Produces: `ViewerSceneProjection`, `WorldTruthFixture`, discriminated `FogConceptStep`, `FogOfWarState`, `fogOfWarReducer`, `sanitizeProjection`, and `toHexGridProps`.
 
 - [ ] **Step 1: Create the issue/worktree and write the failing projection contract tests.**
 
-Create the UI/UX issue titled `Fog of War: typed viewer projection fixtures`, add it to Board 19, create its fresh worktree, then write `fixtures.test.ts` expecting six named scenarios: `room1-visible`, `door-reveal`, `room2-with-room1-memory`, `hidden-change-inspector`, `reconnect`, and `resight-room1`; assert that no viewer projection record uses an unseen state and that the second viewer’s Room 2 records are absent before its own authored reveal.
+Create the UI/UX issue titled `Fog of War: typed viewer projection fixtures`, add it to Board 19, create its fresh worktree, then write `fixtures.test.ts` expecting seven named control steps: projection steps `room1-visible`, `door-reveal`, `room2-with-room1-memory`, `reconnect`, `resight-room1`, and `second-viewer`; plus the sole world-truth step `hidden-change-inspector`. Assert that no viewer projection record uses an unseen state, that `hidden-change-inspector` has no `projection` property, and that the second viewer’s Room 2 records are absent before its own authored reveal.
 
 Use this discriminated shape in the test import:
 
@@ -386,7 +419,15 @@ Expected: FAIL because the fixture module and typed scenarios do not exist.
 
 - [ ] **Step 3: Create typed fixtures and strictly isolate world truth.**
 
-Create `fixtures.ts` with `ViewerSceneProjection { viewerId: string; currentRoomId: string; records: ViewerRecord[] }` and a separate `WorldTruthRecord` union with the same real floor/wall/entity payloads but no `knowledgeState`, then `WorldTruthFixture { rooms: Record<string, { label: string; records: WorldTruthRecord[] }> }`. `WorldTruthFixture` is exported only for inspector display and fixture comparison; it is not accepted by reducer or adapter types. Construct all maps with real `AbsoluteFloorTile`, generated `Wall`, and `HexGridEntity` values. The `room2-with-room1-memory` projection contains Room 1 records with `'remembered'` and Room 2 records with `'visible'` together. The hidden-change fixture changes only `WORLD_TRUTH_AFTER_HIDDEN_CHANGE`; it has no corresponding viewer-projection action.
+Create `fixtures.ts` with `ViewerSceneProjection { viewerId: string; currentRoomId: string; records: ViewerRecord[] }` and a separate `WorldTruthRecord` union with the same real floor/wall/entity payloads but no `knowledgeState`, then `WorldTruthFixture { rooms: Record<string, { label: string; records: WorldTruthRecord[] }> }`. Define the exact control model:
+
+```ts
+export type FogConceptStep =
+  | { kind: 'projection'; id: string; label: string; action: 'hydrate' | 'replaceProjection'; projection: ViewerSceneProjection }
+  | { kind: 'world-truth'; id: 'hidden-change-inspector'; label: string; worldTruth: WorldTruthFixture };
+```
+
+Export `FOG_CONCEPT_STEPS: FogConceptStep[]`. `room1-visible` uses `action: 'hydrate'`; door/reveal, Room 2 memory, reconnect, re-sight, and second viewer use `action: 'replaceProjection'`; `hidden-change-inspector` is the only `kind: 'world-truth'` entry. `WorldTruthFixture` is exported only for inspector display and fixture comparison; it is not accepted by reducer or adapter types. Construct all maps with real `AbsoluteFloorTile`, generated `Wall`, and `HexGridEntity` values. The `room2-with-room1-memory` projection contains Room 1 records with `'remembered'` and Room 2 records with `'visible'` together. The hidden-change fixture changes only `WORLD_TRUTH_AFTER_HIDDEN_CHANGE`; it has no viewer projection or reducer action.
 
 - [ ] **Step 4: Write reducer tests before the reducer.**
 
@@ -408,6 +449,16 @@ describe('fogOfWarReducer', () => {
     expect(next.projection).toEqual(RESIGHT_ROOM1);
     expect(next.projection.records.some((r) => r.roomId === 'room-1' && r.knowledgeState === 'remembered')).toBe(false);
   });
+  it('returns the same state reference for malformed top-level projection', () => {
+    const state = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: ROOM2_WITH_ROOM1_MEMORY });
+    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, viewerId: '', records: [] } as unknown as ViewerSceneProjection;
+    expect(fogOfWarReducer(state, { type: 'replaceProjection', projection: malformed })).toBe(state);
+  });
+  it('omits malformed remembered records rather than coercing them live', () => {
+    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, records: [...ROOM2_WITH_ROOM1_MEMORY.records, { kind: 'entity', id: '', roomId: 'room-1', knowledgeState: 'remembered', entity: {} }] } as unknown as ViewerSceneProjection;
+    const next = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed });
+    expect(next.projection?.records.some((record) => record.id === '')).toBe(false);
+  });
 });
 ```
 
@@ -422,12 +473,36 @@ export type FogOfWarAction =
   | { type: 'hydrate'; projection: ViewerSceneProjection }
   | { type: 'replaceProjection'; projection: ViewerSceneProjection };
 
+function isValidViewerRecord(record: ViewerRecord): boolean {
+  if (!record.id || !record.roomId || (record.knowledgeState !== 'visible' && record.knowledgeState !== 'remembered')) return false;
+  if (record.kind === 'floor') {
+    const { x, y, z } = record.tile;
+    return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) && x + y + z === 0;
+  }
+  if (record.kind === 'wall') return record.wall.from !== undefined && record.wall.to !== undefined;
+  const { entity } = record;
+  if (!entity || !entity.entityId || !entity.name || !entity.position) return false;
+  return Number.isFinite(entity.position.x) && Number.isFinite(entity.position.y) && Number.isFinite(entity.position.z);
+}
+export function sanitizeProjection(
+  projection: ViewerSceneProjection
+): ViewerSceneProjection | null {
+  if (!projection.viewerId || !projection.currentRoomId || !Array.isArray(projection.records)) {
+    return null;
+  }
+  return {
+    viewerId: projection.viewerId,
+    currentRoomId: projection.currentRoomId,
+    records: projection.records.filter(isValidViewerRecord),
+  };
+}
 export function fogOfWarReducer(state: FogOfWarState, action: FogOfWarAction): FogOfWarState {
-  return { ...state, projection: sanitizeProjection(action.projection) };
+  const projection = sanitizeProjection(action.projection);
+  return projection === null ? state : { ...state, projection };
 }
 ```
 
-`sanitizeProjection` returns a new projection whose records pass all checks: non-empty `id`/`roomId`; floor coordinates are finite and satisfy `x + y + z === 0`; wall has `from` and `to`; entity has non-empty id/name and finite position; `knowledgeState` is exactly `'visible'` or `'remembered'`. Invalid records are omitted. It never converts a missing/invalid state to visible; malformed remembered records are omitted. There are no other action variants, and no reducer parameter accepts `WorldTruthFixture`.
+`sanitizeProjection(projection: ViewerSceneProjection): ViewerSceneProjection | null` returns `null` when top-level `viewerId`/`currentRoomId` is empty or `records` is not an array. For a valid top level it returns a new projection whose records pass all checks: non-empty `id`/`roomId`; floor coordinates are finite and satisfy `x + y + z === 0`; wall has `from` and `to`; entity has non-empty id/name and finite position; `knowledgeState` is exactly `'visible'` or `'remembered'`. Invalid nested records are omitted. It never converts a missing/invalid state to visible; malformed remembered records are omitted. `fogOfWarReducer` preserves the existing state reference on `null`. There are no other action variants, and no reducer parameter accepts `WorldTruthFixture`.
 
 - [ ] **Step 6: Write adapter tests, then implement exact HexGrid inputs.**
 
@@ -492,17 +567,19 @@ Expected: tests prove no leaks, hidden mutation isolation, atomic re-sight, and 
 - Create: `src/concepts/fog-of-war/FogOfWarConcept.test.tsx`
 - Create: `src/concepts/fog-of-war/CONTRACT.md`
 - Create: `src/concepts/README.md`
+- Modify: `src/App.tsx`
+- Create: `src/App.test.tsx`
 - Modify: `src/concepts/ConceptsView.tsx`
 - Create: `src/concepts/ConceptsView.test.tsx`
 - Modify: `docs/how-to/concepts-route.md`
 
 **Interfaces:**
-- Consumes: Task 3 `FOG_OF_WAR_SCENARIOS`, `WorldTruthFixture`, `fogOfWarReducer`, and `toHexGridProps`; Task 1/2 `HexGrid` presentation seam.
-- Produces: a registered `/concepts` Fog of War page that drives only `hydrate` and `replaceProjection` actions and exposes clear fixture evidence.
+- Consumes: Task 3 `FOG_CONCEPT_STEPS`, `FogConceptStep`, `WorldTruthFixture`, `fogOfWarReducer`, and `toHexGridProps`; Task 1/2 `HexGrid` presentation seam.
+- Produces: a registered `/concepts` Fog of War page that dispatches only projection control steps, exposes clear fixture evidence, and supports a dev-only evidence query seam.
 
 - [ ] **Step 1: Create the issue/worktree and write failing page-navigation tests.**
 
-Create the UI/UX issue titled `Fog of War: executable two-room concept`, add it to Board 19, create the fresh worktree, then create `FogOfWarConcept.test.tsx` with mocked `HexGrid`. Assert the default is `room1-visible`; clicking `room2-with-room1-memory` shows labels `Viewer projection` and `World truth inspector`, passes both Room 1 and Room 2 tiles to the mock, passes `showFrontierGroundHints={false}`, and reports remembered record count. Create `src/concepts/ConceptsView.test.tsx`; render `ConceptsView`, click `Fog of War`, and assert the mocked `FogOfWarConcept` branch renders.
+Create the UI/UX issue titled `Fog of War: executable two-room concept`, add it to Board 19, create the fresh worktree, then create `FogOfWarConcept.test.tsx` with mocked `HexGrid`. Assert the default is `room1-visible`; clicking `room2-with-room1-memory` shows labels `Viewer projection` and `World truth inspector`, passes both Room 1 and Room 2 tiles to the mock, passes `showFrontierGroundHints={false}`, and reports remembered record count. Capture the mock's serialized viewer props, select `hidden-change-inspector`, and assert the serialized viewer props are unchanged while the world-truth inspector changes. Create `src/concepts/ConceptsView.test.tsx`; render `ConceptsView`, click `Fog of War`, and assert the mocked `FogOfWarConcept` branch renders. Add an `App` test at `src/App.test.tsx` proving development `?concept=fog-of-war&fogStep=resight-room1` opens Concepts Lab, while no query preserves normal initial view.
 
 - [ ] **Step 2: Run the page test and confirm failure.**
 
@@ -515,25 +592,31 @@ Expected: FAIL because the page and ConceptsView registration do not exist.
 Implement a reducer-driven component:
 
 ```tsx
-export function FogOfWarConcept() {
-  const [scenarioId, setScenarioId] = useState('room1-visible');
-  const scenario = FOG_OF_WAR_SCENARIOS.find((item) => item.id === scenarioId) ?? FOG_OF_WAR_SCENARIOS[0]!;
+export function FogOfWarConcept({ initialStepId }: { initialStepId?: string }) {
+  const initialStep = FOG_CONCEPT_STEPS.find((step) => step.kind === 'projection' && step.id === initialStepId) ?? FOG_CONCEPT_STEPS[0]!;
+  const initialProjection = initialStep.kind === 'projection' ? initialStep.projection : ROOM1_VISIBLE;
+  const [stepId, setStepId] = useState(initialStep.id);
+  const [worldTruth, setWorldTruth] = useState(WORLD_TRUTH_INITIAL);
   const [state, dispatch] = useReducer(
     fogOfWarReducer,
-    FOG_OF_WAR_SCENARIOS[0]!.projection,
-    (projection) => ({ projection })
+    initialProjection,
+    (projection) => fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection })
   );
-  const selectScenario = (nextId: string) => {
-    const next = FOG_OF_WAR_SCENARIOS.find((item) => item.id === nextId) ?? FOG_OF_WAR_SCENARIOS[0]!;
-    setScenarioId(next.id);
-    dispatch({ type: state.projection ? 'replaceProjection' : 'hydrate', projection: next.projection });
+  const selectStep = (nextId: string) => {
+    const next = FOG_CONCEPT_STEPS.find((step) => step.id === nextId) ?? FOG_CONCEPT_STEPS[0]!;
+    setStepId(next.id);
+    if (next.kind === 'world-truth') {
+      setWorldTruth(next.worldTruth);
+      return;
+    }
+    dispatch({ type: next.action, projection: next.projection });
   };
   const grid = state.projection ? toHexGridProps(state.projection) : null;
   return grid ? <HexGrid {...grid} syntyDungeon spaceTheme="crypt" isPlayerTurn={false} combatState={null} /> : null;
 }
 ```
 
-Do not dispatch when selecting the hidden-change inspector state; it changes the separate displayed `WorldTruthFixture` only. Provide named controls for the full authored sequence: Room 1 visible, Door/reveal, Room 2 with Room 1 remembered, Hidden change inspector, Reconnect, Re-sight Room 1, and Second viewer. The layout uses a responsive grid (`grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr))`): the WebGL panel has `minHeight: 32rem` desktop and `minHeight: 24rem` at narrow width; inspectors use accessible headings and code-like record counts. Clearly label that viewer projection is renderer input and world truth is comparison-only.
+`FogOfWarConcept` accepts `initialStepId?: string`; it is used only by the dev query seam and tests. `selectStep` dispatches only `kind: 'projection'` steps. `hidden-change-inspector` updates the separate `worldTruth` state and leaves the viewer projection reference/adapter output unchanged. In `App.tsx`, only when `import.meta.env.DEV` and `new URLSearchParams(window.location.search).get('concept') === 'fog-of-war'`, initialize `currentView` to Concepts Lab. In `ConceptsView.tsx`, parse `fogStep` only in development, initialize the active page to `'fog-of-war'` only for that same concept query, and pass `initialStepId` to `FogOfWarConcept`; normal in-app navigation and all non-development behavior are unchanged. Provide named controls for the full authored sequence: Room 1 visible, Door/reveal, Room 2 with Room 1 remembered, Hidden change inspector, Reconnect, Re-sight Room 1, and Second viewer. The layout uses a responsive grid (`grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr))`): the WebGL panel has `minHeight: 32rem` desktop and `minHeight: 24rem` at narrow width; inspectors use accessible headings and code-like record counts. Clearly label that viewer projection is renderer input and world truth is comparison-only.
 
 - [ ] **Step 4: Register the concept and write the concepts policy.**
 
@@ -541,16 +624,25 @@ In `ConceptsView.tsx`, import `FogOfWarConcept`, add `'fog-of-war'` to `ConceptP
 
 - [ ] **Step 5: Add an evidence-only contract log and route documentation.**
 
-Create `src/concepts/fog-of-war/CONTRACT.md` with numbered evidence, not requests: additive-only `GeometryRevealed`; API `visibleNow` not delivered as current geometry; unconditional snapshot wall/door leakage; entity-only ghosting and no remembered reconnect entities; and toolkit `View`’s reserved `KnownEntities`. State that the fixtures intentionally model desired consumer data, no platform issue is created by this concept, and Kirk review precedes any request. Add a Fog of War row to `docs/how-to/concepts-route.md` saying it is a two-room viewer-projection contract bench using real HexGrid/Synty rendering.
+Create `src/concepts/fog-of-war/CONTRACT.md` with numbered evidence, not requests: additive-only `GeometryRevealed`; API `visibleNow` not delivered as current geometry; unconditional snapshot wall/door leakage; entity-only ghosting and no remembered reconnect entities; and toolkit `View`’s reserved `KnownEntities`. State that the fixtures intentionally model desired consumer data, no platform issue is created by this concept, and Kirk review precedes any request. Add a Fog of War row to `docs/how-to/concepts-route.md` saying it is a two-room viewer-projection contract bench using real HexGrid/Synty rendering and documents the development-only query seam for reproducible captures.
 
 - [ ] **Step 6: Run page and fixture tests, then perform desktop/mobile WebGL review.**
 
 ```bash
-npm test -- --run src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/fixtures.test.ts src/concepts/fog-of-war/reducer.test.ts src/concepts/fog-of-war/adapter.test.ts
+npm test -- --run src/App.test.tsx src/concepts/ConceptsView.test.tsx src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/fixtures.test.ts src/concepts/fog-of-war/reducer.test.ts src/concepts/fog-of-war/adapter.test.ts
 npm run dev -- --host 127.0.0.1
 ```
 
-With the server running, open the development Concepts Lab and Fog of War page. Capture the `room2-with-room1-memory` and `resight-room1` states at `1440x900` and `390x844` using the existing browser harness. Inspect: Room 1 has no pre-observation content initially; remembered Room 1 and visible Room 2 render together; remembered floor/wall/door/entity is crypt-charcoal with no hover/cursor/action affordance; hidden change modifies only the world-truth inspector; reconnect restores remembered content; re-sight removes stale remembered presentation and shows current truth; second viewer remains isolated; no frontier hint appears beyond unknown geometry.
+With the server running, capture the query-selected real Concepts Lab states with the existing harness:
+
+```bash
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=room2-with-room1-memory" /tmp/fog-room2-memory-desktop.png 5000 1440 900
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=room2-with-room1-memory" /tmp/fog-room2-memory-mobile.png 5000 390 844
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=resight-room1" /tmp/fog-resight-desktop.png 5000 1440 900
+node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=resight-room1" /tmp/fog-resight-mobile.png 5000 390 844
+```
+
+Inspect: Room 1 has no pre-observation content initially; remembered Room 1 and visible Room 2 render together; remembered floor/wall/door/entity is opaque crypt-charcoal with no hover/cursor/action affordance; hidden change modifies only the world-truth inspector; reconnect restores remembered content; re-sight removes stale remembered presentation and shows current truth; second viewer remains isolated; no frontier hint appears beyond unknown geometry. Attach these images to the Task 4 PR; do not commit them.
 
 - [ ] **Step 7: Run full CI, review evidence, and commit Task 4.**
 
@@ -558,7 +650,7 @@ With the server running, open the development Concepts Lab and Fog of War page. 
 npm run ci-check
 git status --short
 git diff --check
-git add src/concepts/fog-of-war/FogOfWarConcept.tsx src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/CONTRACT.md src/concepts/README.md src/concepts/ConceptsView.tsx src/concepts/ConceptsView.test.tsx docs/how-to/concepts-route.md
+git add src/App.tsx src/App.test.tsx src/concepts/fog-of-war/FogOfWarConcept.tsx src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/CONTRACT.md src/concepts/README.md src/concepts/ConceptsView.tsx src/concepts/ConceptsView.test.tsx docs/how-to/concepts-route.md
 git commit -m "feat: add fog of war concept"
 ```
 
@@ -570,10 +662,10 @@ Expected: full CI passes, the commit contains only Task 4 files, and the visual 
 - [ ] Confirm omitted `knowledgeState`, remembered key sets, and `showFrontierGroundHints` leave production defaults unchanged; no production encounter stream/reducer file changed.
 - [ ] Confirm unseen is absent from fixtures, adapter output, floor/wall/entity renderer inputs, and visual captures.
 - [ ] Confirm mixed Room 1 remembered and Room 2 visible geometry render concurrently; no `currentRoomId` filtering removes remembered Room 1.
-- [ ] Confirm remembered material precedence, safe GLTF/texture cache handling, material-array restoration, disposal ownership, no remembered animation or demand invalidation, and stable shaded instanced-floor ordering.
+- [ ] Confirm remembered material precedence, opaque `transparent=false`/`depthWrite=true` treatment, safe GLTF/texture cache handling, material-array restoration, disposal ownership, no remembered animation or demand invalidation, and stable shaded instanced-floor ordering.
 - [ ] Confirm remembered Synty segments use the portion before `->`, fittings inspect all `|`-joined keys, and remembered door/frame/end/fitting pieces have crypt treatment with no handlers.
 - [ ] Confirm remembered entities never enter pathing, occupancy, hover, selection, targeting, self indicator, or turn order; existing ghost behavior remains pale-cyan and separate.
-- [ ] Confirm reducer accepts only full hydrate/replace projections, sanitizes malformed data by omission, has no world-truth input, and never derives LOS, reveal, memory, or hidden mutations.
+- [ ] Confirm reducer accepts only full hydrate/replace projections, preserves the current state reference for invalid top-level projections, sanitizes malformed nested records by omission, has no world-truth input, and never derives LOS, reveal, memory, or hidden mutations.
 - [ ] Confirm desktop and mobile real-WebGL evidence covers Room 1 visible, door/reveal, Room 2 plus Room 1 memory, hidden-change isolation, reconnect, re-sight, and second-viewer isolation.
 - [ ] Confirm `src/concepts/README.md` and evidence-only fog `CONTRACT.md` state the approved concept workflow and have not created a platform request.
 
