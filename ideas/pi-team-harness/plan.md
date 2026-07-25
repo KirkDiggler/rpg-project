@@ -24,10 +24,11 @@ separate implementation issue + branch + ready PR per executable unit
       -> links #135 and #136; does not close #135
 ```
 
-No implementation issue is created by this plan PR. After Kirk approves this
-plan, the coordinating lead creates each listed issue, adds it to Project 19,
-and assigns its Team/Feature/Kind before a branch exists. Each implementer owns
-its own issue/PR-to-merge flow. A discovery that changes the design or plan is
+No implementation issue is created by this plan PR. After a fresh
+design-to-plan consistency check confirms this plan is faithful to Kirk's
+approved design, the coordinating lead creates each listed issue, adds it to
+Project 19, and assigns its Team/Feature/Kind before a branch exists. Each
+implementer owns its own issue/PR-to-merge flow. A discovery that changes the design or plan is
 reported on its implementation issue/PR and updated visibly on the open #136
 branch before the affected work can be considered reconciled. #136 merges only
 when §10's final-reconciliation gate passes; it is never self-declared
@@ -106,6 +107,8 @@ rpg-project/
       capabilities/
         mcp-bridge.ts
         chrome.ts
+        # destination architecture only; created only by the post-retro
+        # Blender activation issue, never by the core proof:
         blender-lease.ts
         blender.ts
     test/
@@ -170,19 +173,27 @@ capability access for every role in the first proof.
 
 ### 3.2 Worker launch and message contract
 
-For an approved dispatch the lead extension starts a child equivalent to:
+For a human-authorized dispatch the lead extension starts a child equivalent
+to:
 
 ```text
-pi --mode rpc --no-session --approve \
+pi --mode rpc --no-session \
   --extension <rpg-project>/.pi/extensions/pi-team-harness/index.ts \
   --tools <role-profile-tools>
 ```
+
+It never bypasses normal project trust, sets a project-trust default, or
+auto-answers a permission/auth prompt. Before spawn, the lead checks that its own project
+session is already trusted and asks the human to confirm the named issue, role,
+worktree, and tool profile. If trust is absent, the UI is unavailable, or the
+human declines, dispatch stops with a visible blocker and no child process.
 
 The supervisor uses `spawn(..., { shell: false, cwd: assignedWorktree })` and
 sets explicit child-mode environment values containing the role ID and canonical
 project root. `index.ts` detects child mode: it installs the role context and
 policy interception but never creates another supervisor. The lead mode creates
-one in-memory supervisor only after `session_start`.
+one in-memory supervisor only after `session_start`. A child-side permission or
+auth request is surfaced to the human; it is never approved by the supervisor.
 
 The JSONL decoder must split on LF only, strip one trailing CR from input, and
 retain all other Unicode characters. It must **not** use Node `readline`, which
@@ -240,9 +251,10 @@ shape. The template deliberately cannot emit `MERGE-READY`.
 `src/worker-policy.ts` applies the manifest's least-privilege built-in tool
 set and an extension `tool_call` interceptor in child mode. It blocks known
 out-of-profile tool/path/capability attempts and demands an explicit
-capability-lease token for Chrome/Blender custom tools. It does not claim to
-sandbox arbitrary shell behavior; canonical charters, issue scope, isolated
-worktrees, and review remain authoritative.
+capability token for the Chrome custom tools. The eventual Blender adapter adds
+its own lease check only after the post-retro activation issue. This does not
+claim to sandbox arbitrary shell behavior; canonical charters, issue scope,
+isolated worktrees, and review remain authoritative.
 
 The initial profiles are deliberately small:
 
@@ -255,9 +267,11 @@ The initial profiles are deliberately small:
 - Selected standing member: only the assigned worktree's normal repository
   tools, plus GitHub checkpoint capability.
 - Chrome evidence: designated UI/UX or Assets web worker only, on an
-  issue-backed evidence action.
-- Blender: explicitly assigned Assets worker only, after a human grant and
-  while the one in-memory exclusive lease is active.
+  issue-backed evidence action; this is the only capability activated in the
+  core proof.
+- Blender: destination-only until the post-retro activation issue; then only an
+  explicitly assigned Assets worker after a human grant and while the one
+  in-memory exclusive lease is active.
 
 The policy test suite proves the block/allow decisions for these profiles. It
 also proves that a charter refusal or a missing Project item cannot be converted
@@ -273,8 +287,8 @@ the extension process, not a daemon and not a general tool marketplace.
 The bridge has a safe-default empty capability allowlist. Before a live use, the
 backing issue names the target, expected evidence, and the exact approved MCP
 capability names after the bridge has listed them. The bridge rejects all other
-calls. Unit tests use `fake-mcp-server.mjs`; no test needs a real browser or
-Blender GUI.
+calls. **The core proof activates Chrome only.** Unit tests use
+`fake-mcp-server.mjs`; no test needs a real browser or Blender GUI.
 
 - **Chrome:** the bridge derives the existing Chrome DevTools server command
   from `rpg-project/opencode.jsonc` rather than copying a second configuration.
@@ -284,15 +298,18 @@ Blender GUI.
   evidence path may invoke the existing `game-dev/tools/browser/screenshot.mjs`
   for a named local URL; it is a screenshot harness, not a claim of DevTools
   coverage.
-- **Blender:** the bridge derives the pinned server command/environment from the
-  existing `game-dev/opencode.json`: `uvx --from blender-mcp==1.6.4 blender-mcp`,
-  loopback host/port 9876, telemetry disabled, and 180-second timeout. It never
-  writes another global/project Blender configuration. `blender-lease.ts` is
-  process-local and permits only one named Assets worker. It starts unleased,
-  requires an explicit human grant, releases/disconnects on normal completion or
-  `session_shutdown`, and after a crash requires a human GUI Disconnect before
-  a replacement lease. This is a procedural safety control, not a false claim
-  of protocol-level locking.
+- **Blender (deferred destination):** no Blender adapter, lease module, or live
+  Blender capability is activated in PIH-1 through PIH-7. Only after the Chrome
+  core proof and PIH-7 retro may a separate, linked Assets issue activate it.
+  That issue must derive the pinned server command/environment from existing
+  `game-dev/opencode.json`: `uvx --from blender-mcp==1.6.4 blender-mcp`,
+  loopback host/port 9876, telemetry disabled, and 180-second timeout. It must
+  not write another global/project Blender configuration. Its
+  `blender-lease.ts` is process-local and permits only one named Assets worker:
+  it starts unleased, requires an explicit human grant, releases/disconnects on
+  normal completion or `session_shutdown`, and after a crash requires a human
+  GUI Disconnect before replacement. This remains a procedural safety control,
+  not a false claim of protocol-level locking.
 
 `src/evidence.ts` creates a concise report containing role, issue/PR URL,
 command/version/config fingerprints, target, actions, artifact URL, what route
@@ -305,14 +322,15 @@ that exact blocker and does not claim the evidence gate passed.
 ## 4. Reviewable implementation units
 
 The identifiers below are planning labels, **not issue numbers**. Create the
-actual issue and Project 19 item only after Plan Review approval. Each code unit
-is workflow setup: deterministic checks + self-review + ready PR + Kirk review;
-it does not receive an independent product gate. A later proof that changes real
-product behavior follows the existing product-gate policy.
+actual issue and Project 19 item only after a fresh consistency check confirms
+this plan is faithful to the approved design. Each code unit is workflow setup:
+deterministic checks + self-review + ready PR + normal review; it does not
+receive an independent product gate. A later proof that changes real product
+behavior follows the existing product-gate policy.
 
 ### PIH-1 — Extension skeleton and deterministic verifier
 
-**Dependency:** approved plan only.
+**Dependency:** fresh design-to-plan consistency check complete.
 
 **Issue/PR:** create `rpg-project` issue “Build Pi team-harness extension
 skeleton and verifier”; Team=Cross-team, Feature=Infra, Kind=Build. Its one
@@ -431,45 +449,43 @@ status/extension UI notifications.
 GitHub dataset shows a running card plus a human escalation. It is labelled as
 fixture UI evidence, not a real Project 19 or worker recovery claim.
 
-### PIH-5 — Role-scoped Chrome/Blender capability bridge and evidence contract
+### PIH-5 — Role-scoped Chrome evidence bridge and evidence contract
 
 **Dependency:** PIH-2, PIH-3, and PIH-4 merged.
 
-**Issue/PR:** create `rpg-project` issue “Add Pi role-scoped evidence capability
+**Issue/PR:** create `rpg-project` issue “Add Pi role-scoped Chrome evidence
 bridge”; Team=Cross-team, Feature=Infra, Kind=Build. One ready PR links
 #135/#136.
 
 **Files:**
 
-- create `src/capabilities/{mcp-bridge.ts,chrome.ts,blender-lease.ts,blender.ts}`;
+- create `src/capabilities/{mcp-bridge.ts,chrome.ts}`;
 - create `src/evidence.ts`;
 - extend `src/{roles.ts,worker-policy.ts,supervisor.ts,index.ts}` for explicit
-  capability requests/leases only;
+  Chrome capability requests only;
 - create `test/fixtures/fake-mcp-server.mjs` and
-  `test/{mcp-bridge.test.ts,chrome.test.ts,blender-lease.test.ts,blender.test.ts,evidence.test.ts}`;
-- extend package lock and verifier for the MCP SDK and external-config derivation.
+  `test/{mcp-bridge.test.ts,chrome.test.ts,evidence.test.ts}`;
+- extend package lock and verifier for the MCP SDK and Chrome-config derivation.
 
 **Tests/checks:** a fake MCP stdio server proves short-lived launch/list/call/
 shutdown framing, safe-default empty allowlist, role rejection, and no live
 server in deterministic checks. Chrome tests derive command data from an
 `opencode.jsonc` fixture and reject a non-loopback/usage-statistics-enabled
-configuration. Blender tests derive the pinned package, environment, and timeout
-from an `opencode.json` fixture; prove only Assets can request a lease, a second
-request is rejected, normal release clears it, and crash recovery demands human
-Disconnect rather than auto-regrant. Evidence tests reject missing issue/PR URL,
-artifact URL, command fingerprint, scope, or residual risk.
+configuration. Evidence tests reject missing issue/PR URL, artifact URL, command
+fingerprint, scope, or residual risk. No Blender module, lease test, server
+configuration read, or active-scene connection is part of this unit.
 
-**Acceptance evidence:** the PR demonstrates only fake-server checks. A later
-PIH-6 proof selects one real evidence path. The capability PR never connects to
-an active Blender scene or browser merely to make CI green.
+**Acceptance evidence:** the PR demonstrates only fake-server Chrome checks.
+PIH-6 is the first and only live evidence route in the core proof. The
+capability PR never connects to a browser merely to make CI green.
 
-### PIH-6 — Deliberate-kill/replacement proof and one durable evidence artifact
+### PIH-6 — Deliberate-kill/replacement proof and durable Chrome evidence
 
 **Dependency:** PIH-1 through PIH-5 merged; a human selects one small real
-Project 19 task and its evidence route.
+Project 19 task with the existing local Chrome evidence path.
 
 **Issue/PR:** create an evidence-only `rpg-project` Verify issue “Prove Pi
-team-harness replacement and evidence path”; Team=Cross-team, Feature=Infra,
+team-harness replacement and Chrome evidence”; Team=Cross-team, Feature=Infra,
 Kind=Verify. It links #135/#136 and the selected real task. It contains no
 implementation code PR unless the proof discovers a scoped defect; that defect
 gets its own linked Build/Fix issue and PR.
@@ -489,22 +505,19 @@ silently carried in a worker session.
 4. Deliberately terminate the child after that checkpoint. Discard supervisor
    memory. A fresh worker reads only issue/Project/branch/PR/checkpoint state
    and performs the recorded next action.
-5. Select **one** evidence path:
-   - Chrome: only a designated UI/UX or Assets web evidence worker, named local
-     target, approved capability allowlist, artifact URL, console/network scope,
-     and honest player-path statement; or
-   - Blender: only an Assets worker, human save/grant, one active client,
-     disposable-scene-first validation, pinned loopback pilot, visible verify,
-     disconnect/release, and no raw asset/GLB publication.
-6. Attach/link the evidence report from the selected task's issue/PR. If an auth,
-   permission, browser, Blender, artifact-storage, or recovery prerequisite
+5. Capture **Chrome only**: a designated UI/UX or Assets web evidence worker
+   uses the named local target and approved capability allowlist, attaches an
+   artifact URL with console/network scope, and states honestly whether the real
+   player path was exercised. Blender is not an alternate core-proof route.
+6. Attach/link the Chrome evidence report from the selected task's issue/PR. If
+   an auth, permission, browser, artifact-storage, or recovery prerequisite
    fails, stop and publish the exact blocker; do not retry invisibly or call the
    proof passed.
 
 **Acceptance evidence:** linked issue comments show the before-kill checkpoint,
-replacement worker's GitHub-only reconstruction, one durable artifact URL,
-command/version/config fingerprint, and a scoped statement of what was and was
-not proven. Kirk reviews the proof; no agent merges #136.
+replacement worker's GitHub-only reconstruction, one durable Chrome artifact
+URL, command/version/config fingerprint, and a scoped statement of what was and
+was not proven. Kirk reviews the proof; no agent merges #136.
 
 ### PIH-7 — Side-by-side evaluation, retro, and final reconciliation
 
@@ -531,6 +544,29 @@ rationale on the retro issue and #136.
 all linked implementation PRs and evidence URLs are enumerated, and Kirk has a
 single readable canonical PR to review. This is the only unit that may request
 Kirk's final #136 merge decision; it never performs the merge.
+
+### Deferred Blender activation — conditional post-retro issue
+
+**Dependency:** PIH-6 Chrome proof and PIH-7 retro complete. The retro must
+identify a real unmet Assets evidence need; otherwise this unit is not created
+and Chrome remains the completed narrow proof.
+
+**Issue/PR:** only if the retro justifies it, create a separate `rpg-project`
+Assets Build issue and Project 19 item for Blender activation. It links #135/#136
+and receives its own branch/ready PR. If created before #136's final
+reconciliation, #136 remains open until it is reconciled; if deferred, the
+approved destination architecture remains documented without pretending it was
+proved.
+
+**Files/tests/evidence:** create `src/capabilities/{blender-lease.ts,blender.ts}`
+and their `test/{blender-lease.test.ts,blender.test.ts}` only in this issue.
+Tests derive the pinned command, loopback environment, telemetry setting, and
+180-second timeout from an `opencode.json` fixture; prove Assets-only access,
+one process-local lease, explicit human grant, normal release/disconnect, and
+post-crash human GUI Disconnect before a replacement lease. Live evidence uses
+the hardened disposable-scene-first pilot and the issue/PR-visible report
+contract in §3.5. It never publishes raw Synty assets/GLBs or treats an active
+scene capture as export/release QA.
 
 ## 5. Worktree, branch, and review protocol for all code units
 
@@ -563,7 +599,8 @@ change receives a real linked issue/PR under the normal rule.
 | nonblocking persistent worker and two-way messages | PIH-3, PIH-4, PIH-6 | fake RPC event/settlement tests; live one-child steer/follow-up proof |
 | honest crash/restart boundary | PIH-3, PIH-6 | no-session launch + kill fixture; live GitHub-only replacement |
 | human-oriented views/escalations | PIH-4 | fixture TUI/headless fallback tests and a labelled terminal capture |
-| role-scoped Chrome/Blender safety | PIH-2, PIH-5, PIH-6 | policy/lease/bridge tests; exactly one selected live artifact |
+| role-scoped Chrome safety | PIH-2, PIH-5, PIH-6 | policy/bridge tests and one durable Chrome artifact |
+| deferred Blender safety | conditional post-retro issue only | Assets-only lease/pilot tests and evidence only if the retro justifies activation |
 | worktree isolation | PIH-2, PIH-3, PIH-6 | collision/dirty worktree refusal tests; live branch/worktree checkpoint |
 | no daemon or second durable store | PIH-1 through PIH-7 | verifier/static checks plus restart/recovery evidence |
 | side-by-side evaluation and future scope | PIH-7 | comparable evidence-based retro, not a synthetic benchmark |
@@ -593,7 +630,7 @@ state locally to make the failure disappear.
 
 ## 8. Plan-review self-checklist
 
-Before requesting Kirk's Plan Review on #136, verify:
+Before publishing the focused plan-consistency checkpoint on #136, verify:
 
 - [ ] #136's body says `Review phase: Plan Review`, stays ready/non-draft, and
   says it remains open through implementation.
@@ -603,11 +640,11 @@ Before requesting Kirk's Plan Review on #136, verify:
   SDK only as deferred, and cites actual Pi 0.82.1 RPC/TUI/extension mechanics.
 - [ ] Every PIH unit has a post-approval issue/Project 19 requirement,
   dependency, exact files, deterministic/live checks, and acceptance evidence.
-- [ ] PIH-5 does not imply a native Pi MCP API, copies neither Chrome nor Blender
-  configuration, and states the existing Chrome/Blender commands and safety
-  constraints accurately.
-- [ ] PIH-6 proves one child, one replacement, and one Chrome **or** Blender
-  artifact — not a speculative multi-worker deployment.
+- [ ] PIH-5 does not imply a native Pi MCP API, derives only the existing
+  Chrome configuration, and leaves Blender adapter activation to the conditional
+  post-retro issue with its hardened pilot/lease contract intact.
+- [ ] PIH-6 proves one child, one replacement, and one durable **Chrome**
+  artifact — not a speculative multi-worker deployment or Blender pilot.
 - [ ] The plan contains no implementation issue creation, source implementation,
   global Pi change, daemon, second store, raw asset/GLB publication, or merge
   instruction.
@@ -619,8 +656,8 @@ Before requesting Kirk's Plan Review on #136, verify:
 1. Does the selected initial mechanism — a single `--no-session` RPC child —
    give the right recovery honesty, with SDK sessions deferred until evidence
    shows a need?
-2. Is the requirement to choose exactly one live Chrome-or-Blender evidence path
-   in PIH-6 narrow enough, while PIH-5 validates both safety paths with fakes?
+2. Does the Chrome-only PIH-6 proof stay narrow enough while preserving the
+   hardened Blender destination for a retro-justified Assets issue?
 3. Is the final reconciliation gate sufficiently strict before #136 merges, or
    is an additional human decision point needed before PIH-7 begins?
 
@@ -633,8 +670,9 @@ publishes a final signed checkpoint and a #136 comment that enumerates:
 2. every discovery that changed `design.md` or `plan.md`, with a link to its
    implementation evidence and canonical #136 commit;
 3. deterministic verifier/test/typecheck results for each implementation PR;
-4. the deliberate-kill/replacement evidence and exactly one durable
-   Chrome-or-Blender artifact, including what it did not prove;
+4. the deliberate-kill/replacement evidence and the durable Chrome artifact,
+   including what it did not prove; and any conditional Blender activation
+   evidence only if the PIH-7 retro actually justified that later issue;
 5. the side-by-side Claude Code/OpenCode retro, observed failures, and any
    deferred follow-up issues;
 6. confirmation that no daemon, second durable task store, hidden recovery
