@@ -35,6 +35,8 @@ Unchanged by the delta — the smallest unblocker, nothing else can validate mon
 - Test: `rulebooks/dnd5e/monster/monsters/registry_test.go`
 - Read first: `rulebooks/dnd5e/monster/monsters/` (constructor naming: `NewSkeleton`, `NewSkeletonCaptain`, `NewGhoul`, `NewZombie`, …) and `rulebooks/dnd5e/refs/monsters.go` (canonical refs — ids are hyphenated, e.g. `skeleton-captain`). CAVEAT (reverified against rpg-toolkit `origin/main` 2026-07-24): `NewGoblin` lives in the PARENT `monster` package (`rulebooks/dnd5e/monster/monster.go:228`, signature `func NewGoblin(id string) *Monster`), not the `monsters` subpackage, and its return type is `*Monster` (unqualified — it's already inside package `monster`), while the subpackage constructors (`NewSkeleton`, `NewGhoul`, `NewZombie`, `NewSkeletonCaptain`) all return `*monster.Monster`. Register `NewGoblin` via a closure at the map literal (`func(id string) *monster.Monster { return monster.NewGoblin(id) }`), never by moving it.
 
+**Constructor inventory (verified directly against rpg-toolkit `origin/main` today — every file in `rulebooks/dnd5e/monster/monsters/`, `rulebooks/dnd5e/monster/monster.go`, and `rulebooks/dnd5e/refs/monsters.go`, read individually, not inferred from filenames):** 11 of the 15 canonical refs have a constructor. Nine are direct: `skeleton` (`NewSkeleton`), `zombie` (`NewZombie`), `skeleton-captain` (`NewSkeletonCaptain`), `ghoul` (`NewGhoul`), `giant-rat` (`NewGiantRat`), `wolf` (`NewWolf`), `brown-bear` (`NewBrownBear`), `thug` (`NewThug`), `goblin` (`monster.NewGoblin`, parent package, per the caveat above). Two are NON-obvious and easy to get wrong from the function name alone: `bandit.go` defines `NewBanditMelee` and `NewBanditRanged` — NOT `NewBandit`/`NewBanditArcher` as their names might suggest — but reading each constructor's body shows `NewBanditMelee`'s `monster.Config.Ref` is `refs.Monsters.Bandit()` and `NewBanditRanged`'s is `refs.Monsters.BanditArcher()`. So `bandit` resolves via `NewBanditMelee` and `bandit-archer` resolves via `NewBanditRanged` — both real, both easy to miss by pattern-matching names instead of reading the `Ref:` field each constructor actually sets. Four refs have NO constructor anywhere: `skeleton-archer`, `giant-spider`, `giant-wolf-spider`, `bandit-captain` — exclude these from the enumerated test list below, note them in the PR body, do not fabricate constructors for them. Because `bandit.go`'s function names don't match their refs, Step 3's map-literal population must be driven by each constructor's actual `Config.Ref` value (read the source), never guessed from the ref string.
+
 - [ ] **Step 1: Write the failing test**
 
 ```go
@@ -50,15 +52,22 @@ import (
 )
 
 func TestByRef_EveryCanonicalMonsterResolves(t *testing.T) {
-	// The canonical refs list is the contract: every published monster
-	// ref must resolve to a constructor. Enumerate refs.Monsters.*
-	// explicitly (there is no reflection-friendly list — that's fine,
-	// this test IS the list).
+	// The 11 refs verified to have a real constructor today (see the
+	// inventory above) — bandit/bandit-archer resolve via NewBanditMelee/
+	// NewBanditRanged despite the name mismatch; the other 4 canonical
+	// refs (skeleton-archer, giant-spider, giant-wolf-spider,
+	// bandit-captain) have no constructor and are deliberately absent.
 	for _, ref := range []string{
 		refs.Monsters.Skeleton().String(),
+		refs.Monsters.Zombie().String(),
 		refs.Monsters.SkeletonCaptain().String(),
 		refs.Monsters.Ghoul().String(),
-		refs.Monsters.Zombie().String(),
+		refs.Monsters.GiantRat().String(),
+		refs.Monsters.Wolf().String(),
+		refs.Monsters.BrownBear().String(),
+		refs.Monsters.Bandit().String(),
+		refs.Monsters.BanditArcher().String(),
+		refs.Monsters.Thug().String(),
 		refs.Monsters.Goblin().String(),
 	} {
 		ctor, ok := monsters.ByRef(ref)
@@ -67,14 +76,22 @@ func TestByRef_EveryCanonicalMonsterResolves(t *testing.T) {
 	}
 }
 
+func TestByRef_UnconstructedCanonicalRefReturnsFalse(t *testing.T) {
+	// bandit-captain IS a canonical ref (refs.Monsters.BanditCaptain()) but
+	// has no constructor today — distinct from an entirely fictional ref,
+	// and worth its own case so a future constructor addition here doesn't
+	// silently get missed by only testing a made-up name.
+	ctor, ok := monsters.ByRef(refs.Monsters.BanditCaptain().String())
+	assert.False(t, ok)
+	assert.Nil(t, ctor)
+}
+
 func TestByRef_UnknownRefReturnsFalse(t *testing.T) {
 	ctor, ok := monsters.ByRef("dnd5e:monsters:beholder")
 	assert.False(t, ok)
 	assert.Nil(t, ctor)
 }
 ```
-
-Adjust the enumerated list to the refs that actually exist in `refs/monsters.go` — read it, don't guess. If a canonical ref exists with NO constructor, that is a real finding: exclude it here, note it in the PR body, and do not fabricate a constructor.
 
 - [ ] **Step 2: Run to verify failure** — `cd rulebooks/dnd5e && go test ./monster/monsters/ -run TestByRef -v` → FAIL: `undefined: monsters.ByRef`
 
@@ -242,6 +259,8 @@ func TestDecode_PlaceBlockRoundTrips(t *testing.T) {
 - [ ] **Step 7: Run → FAIL** (`Place`/`Boss.At` undefined) → already implemented above in Step 3's struct listing, so this is a red→green pair against that same implementation, not a second implementation pass.
 - [ ] **Step 8: Commit** `feat(dungeonspec): place block + boss.at structs and decode (#<issue>)`
 
+**Fixture note (advisory, verified by hand-checking every row used):** `placedTombYAML` is not the bare `- id: tomb ...` fragment shown in design.md's "Schema: the `place` block" section in isolation — it's that fragment wrapped in a complete, valid two-room file: `version: 1`, a `key: reference-tomb` (the same key the M1 acceptance file in Slice E ships under — this fixture IS `content/dungeons/reference-tomb.yaml`'s content, not a separate lookalike), `height: 8` SPECIFICALLY, a minimal `entrance` room, one connector `{from: entrance, to: tomb}`, then the tomb room verbatim. `height: 8` is load-bearing for the fixture, not an arbitrary choice: the tomb room's placements use rows 1, 2, 3, 5, and 6 (boss at row 5, coffin/altar at row 3, statue/skeleton/braziers at rows 1/1/2/6) — `height: 8` puts `doorRow` at row 4 (clear of all of them); `height: 10` would move `doorRow` to row 5 and collide with the boss's pinned position, breaking the fixture the same way the original (now-fixed) row-4 collision did.
+
 ### Task B2: Validation, table-tested
 
 **Files:**
@@ -262,13 +281,16 @@ func TestValidate_Table(t *testing.T) {
 		{"valid reference spec", func(s *dungeonspec.DungeonSpec) {}, ""},
 		{"version 2 rejected", func(s *dungeonspec.DungeonSpec) { s.Version = 2 }, "unsupported spec version"},
 		{"boss width 5 fails axis rule", func(s *dungeonspec.DungeonSpec) { s.Rooms[3].Width = 5 }, "primary axis"},
-		{"unresolvable monster ref", func(s *dungeonspec.DungeonSpec) { s.Rooms[0].Monsters[0].Ref = "dnd5e:monsters:beholder" }, "unknown monster"},
 		{"broken chain", func(s *dungeonspec.DungeonSpec) { s.Connectors[1].To = "tomb" }, "linear chain"},
 		// ...one row per remaining rule, both directions where meaningful
 	}
-	// decode referenceYAML fresh per case, apply mutate, assert Validate error
+	// decode validM1YAML fresh per case, apply mutate, assert Validate error
 }
 ```
+
+**Base fixture, corrected (consequence of the M1-only monster-pinning restriction below — this replaces the original "decode `referenceYAML`" plan, which does NOT satisfy that restriction):** the table's base is `validM1YAML`, NOT `referenceYAML` directly — same 4-room/3-connector shape (`entrance`→`gallery`→`trap-crossing`→`tomb`, same ids/widths/archetypes/connectors/lock DC 12, `height: 8`) so every existing row above keeps working unmodified (`Rooms[3]` is still the tomb, `Connectors[1]` still exists), with two changes to make it M1-valid: `entrance`/`gallery` drop their count-based `monsters:` blocks (their count-based `obstacles:` stay — unaffected by the restriction); the `tomb` room's `boss:` gains `at: [7, 5]` and its `obstacles:` list is replaced by the delta's full `place:` list (coffin/altar/statue-reaper/brazier×2/skeleton, occupying rows 1, 2, 3, 5, and 6 — clear of `doorRow` (row 4) per the earlier fix) — so `validM1YAML` is ALSO the base every `place`/`boss.at` row below uses via the `tomb(s)` helper, one fixture, not two. The original "unresolvable monster ref" row (`s.Rooms[0].Monsters[0].Ref = ...`) is REMOVED here, not merely edited: with `monsters:` forbidden outright in M1, there is no resolvable-vs-unresolvable distinction left to test on a count-based entry — that coverage already exists below as "place monster ref unresolvable" (a `place` monster entry, which still must resolve), and full count-based ref-resolution coverage returns in M2's Task C0/C2 once `testdata/crypt.yaml` is loadable.
+
+**Implementation-order note (a real interaction this fixture swap introduces):** because `validM1YAML`'s tomb room now carries `at`-bearing `place` entries (column 9 requires `width ≥ 10`), the pre-existing "boss width 5 fails axis rule" row shrinks the room enough to ALSO put those entries out of bounds — if `Validate`'s per-`place`-cell bounds check runs before its boss-primary-axis check, this row would fail on "out of bounds" instead of the intended "primary axis" substring. Order `Validate`'s checks so the boss-axis rule (a room-level/structural check) runs before per-cell `place` bounds checks — a more useful error for an author shrinking a boss room anyway ("your boss room is too small," not "and also one of your ten placements happens to fall off the edge because of that").
 
 - [ ] **Step 2: Run → FAIL** (`Validate` undefined)
 - [ ] **Step 3: Implement `Validate(spec) error`** — plain sequential checks, error messages naming field + file-fixable detail. The chain check: connectors[i] must join rooms[i] and rooms[i+1] by id (the v1 generator constraint — same order the design's example uses).
@@ -305,95 +327,103 @@ func TestValidate_Table(t *testing.T) {
 {"place monster ref unresolvable", func(s *dungeonspec.DungeonSpec) {
 	tomb(s).Place[5].Ref = "dnd5e:monsters:beholder"
 }, "unknown monster"},
+{"place rejected when room pattern is scattered", func(s *dungeonspec.DungeonSpec) {
+	// tomb has both place entries AND a pinned boss.at — either alone
+	// triggers this rule; Validate's OR condition is exercised either way.
+	tomb(s).Pattern = "scattered"
+}, "place/boss.at not allowed with pattern: scattered"},
+{"count-based monsters: entry rejected in M1", func(s *dungeonspec.DungeonSpec) {
+	s.Rooms[0].Monsters = append(s.Rooms[0].Monsters,
+		dungeonspec.MonsterEntry{Ref: "dnd5e:monsters:skeleton", Count: 2})
+}, "rolled monster placement lands in M2"},
+{"unpinned boss (no at) rejected in M1", func(s *dungeonspec.DungeonSpec) {
+	tomb(s).Boss.At = nil
+}, "rolled monster placement lands in M2"},
 ```
 
 **Reserved-row rule, pinned against real engine code (verified on rpg-toolkit `origin/main`, `encounter/dungeon.go`, 2026-07-24):** `row == height/2` is rejected for EVERY room regardless of archetype. `placeRegionObstacles`/`regionObstacleCandidates` already exclude that entire row from the rolled-obstacle candidate pool in every region, uniformly — a boss/interior region's actual required path spans the row's full width, an entrance/terminal region's spans only half, but the exclusion doesn't discriminate; it's the same over-conservative reservation everywhere. Rejecting `place` on that row therefore gives placed entries the IDENTICAL traversability guarantee rolled obstacles already have, by construction — this ONE check is both the "no door cell" rule and the "room stays traversable" rule from design.md's validation list; no separate path-oracle re-implementation is needed at spec-load time.
 
-- [ ] **Step 6: Run → FAIL; Step 7: Implement the above checks in `Validate`; Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): validation — place block cell/type/collision rules (#<issue>)`
+**Scattered-pattern rule (Issue: `place` × `pattern: scattered` is a seed-dependent runtime failure otherwise).** `pattern: scattered` compiles to `environments.PatternRandom`, whose interior walls are seed-rolled — no `at` cell (or pinned `boss.at`) can be guaranteed clear or non-wall at author time for that room, so the load-time "a file that loads is a file that plays" contract can't hold. `Validate` rejects `place` (non-empty) or a pinned `boss.at` in any room whose `pattern` is `scattered`, full stop — a load-time error, not a runtime surprise on an unlucky seed. Revisitable, not permanent: a future design could let `place` coexist with `scattered` (e.g. re-rolling walls around the fixed cells), but that's new design work, out of scope for this delta.
 
-### Task B3: Compiler → `CompiledDungeon` + crypt parity
+**M1-only monster-pinning restriction (Issue: `SeedMonsters` in M1 only handles `At`-bearing spawns — see Task N2 below).** Until M2's Slice C lands count-based safe-cell rolling, a spec that used `monsters:` (count-based) or an unpinned `boss` (no `at`) would compile successfully today but fail at `SeedMonsters` runtime — exactly the "compiles but the engine can't actually do it" gap the file-load contract exists to prevent. `Validate` therefore rejects, in M1: any room with a non-empty `monsters:` list, and any `boss` room whose `boss.at` is nil. Rolled *obstacles* (`obstacles:`, count-based) are UNAFFECTED by this restriction — that placement machinery (`placeRegionObstacles`) already exists in the engine and needs no M2 work. This is temporary and load-bearing to remove correctly: M2's Slice C (Task C1 below) deletes both checks from `Validate` as its first step, with a test proving a previously-rejected spec now loads and seeds correctly.
+
+**Fixture consequence (a real, unavoidable interaction, not an oversight):** this restriction means `referenceYAML` (design.md's original 4-room sunken-crypt example, which uses count-based `monsters:` in its entrance and gallery rooms, decoded verbatim) and `testdata/crypt.yaml` (which mirrors `crypt_monster_seed.go`'s real one-monster-per-region table via `monsters:`, not `place` — see Task B3's note on why the crypt genuinely can't be represented as pinned) both fail `Validate` in M1. That's correct, not a bug: both are M2-era specs. Concretely:
+- The table's base fixture is `validM1YAML` (see above), not `referenceYAML` directly — same shape, M1-valid content.
+- Add one more table row using `referenceYAML` itself as a NEGATIVE case: `{"referenceYAML's own count-based monsters are M1-invalid", func(s *dungeonspec.DungeonSpec) {}, "rolled monster placement lands in M2"}`, decoding `referenceYAML` fresh for this ONE row instead of `validM1YAML` — this turns what would otherwise be an inconsistency into a positive proof that the restriction fires exactly where expected.
+- `TestDecode_RoundTripsTheReferenceSpec` (Task B1, Decode-only, never calls `Validate`) is unaffected either way.
+
+- [ ] **Step 6: Run → FAIL; Step 7: Implement the above checks in `Validate`; Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): validation — place block cell/type/collision/pattern/M1-monster-pinning rules (#<issue>)`
+
+### Task B3: Compiler → `CompiledDungeon` (M1: `place`-routing + door ids; crypt parity moves to M2)
 
 **Files:**
 - Create: `encounter/dungeonspec/compile.go`
 - Test: `encounter/dungeonspec/compile_test.go`
-- Create: `encounter/dungeonspec/testdata/crypt.yaml` (port of today's canonical crypt — same regions/sizes/patterns/obstacles incl. `prefer_border` flags, same lock, same monster set as `crypt_monster_seed.go`'s table: 1 skeleton entrance, skeleton-captain boss)
+
+**Scope note (consequence of the M1-only monster-pinning restriction above):** `testdata/crypt.yaml` and its parity tests are NOT part of this M1 task — see the fixture consequence under Task B2. The crypt's real monster placement (`crypt_monster_seed.go`'s `regionMonsterAnchor`) computes its anchor cell at RUNTIME from the generated room's actual door-adjacent walkable geometry — it is seed/geometry-dependent, not a fixed `at: [col,row]` known at authoring time, so representing it faithfully in `dungeonspec` needs count-based `monsters:` semantics (M2), not `place`. `TestLoad_CryptParity`, `TestLoad_SpawnsAreBossFirst`, and `TestLoad_Deterministic` (all `cryptYAML`-based) move to M2's Slice C as Task C2, run once that slice lifts the M1 restriction. This task proves the compiler's structural logic (door ids, pattern mapping, `place` routing) entirely on the M1-valid `placedTombYAML` fixture (`referenceYAML` itself is decode-only in M1 — see Task B2's fixture consequence for why).
 
 - [ ] **Step 1: Failing tests**
 
-**Door-ID rule (resolves the design's open thread — this plan's decision):** the compiler GENERATES deterministic door ids from content: connector *i* gets `"door-<from>-<to>"` (e.g. `door-entrance-gallery`). No caller-supplied ids, no variadic args, works for any N connectors, stable across runs of the same spec. Door ids are per-encounter opaque handles on the wire (`Wall.id` → `Interact`), so the value change vs today's api-chosen names is behaviorally free. `Load`'s full signature is therefore `Load(raw []byte) (CompiledDungeon, error)` — nothing else.
+**Door-ID rule, corrected (Issue: the original `"door-<from>-<to>"` sketch collides with the untouched crypt gate — verified against real rpg-api code, not just the design's prose):** the compiler generates `"<key>-door-<from>-<to>"` per connector — e.g. `key: reference-tomb`, connector `entrance→tomb` → `"reference-tomb-door-entrance-tomb"`. This is not an arbitrary choice: `internal/integration/dungeon_crypt_test.go:62-63` and `internal/handlers/dnd5e/v2/encounter/project_test.go:1125-1126` on rpg-api `origin/main` both hardcode `cryptEntranceDoorID = "crypt-door-entrance-corridor"` and `cryptBossDoorID = "crypt-door-corridor-boss"` as their own test constants — exactly `"<key>-door-<from>-<to>"` with `key: crypt`. Once the crypt migrates to content in M2 under `key: crypt`, the compiler reproduces these two ids byte-for-byte with zero special-casing, which is what keeps E4's "the existing crypt gates stay green untouched" claim actually true. No caller-supplied ids, no variadic args, works for any N connectors, stable across runs of the same spec. `Load`'s full signature is therefore `Load(raw []byte) (CompiledDungeon, error)` — nothing else.
 
 ```go
-func TestLoad_CryptParity(t *testing.T) {
-	compiled, err := dungeonspec.Load(cryptYAML)
-	require.NoError(t, err)
-	// Feed CryptDungeonParams the compiler's OWN generated ids so the
-	// comparison isolates real structure (regions/pattern/obstacles/lock),
-	// not id-naming:
-	want := encounter.CryptDungeonParams(0,
-		"door-entrance-corridor", "door-corridor-boss")
-	// Field-by-field: Height, Theme, per-region ID/Archetype/Width/Pattern,
-	// obstacle specs (refs, counts, flags, PreferBorder), connector lock
-	// config (DoorID now included — both sides carry the generated names).
-	assert.Equal(t, want.Height, compiled.Params.Height)
-	// ... exhaustive
-}
-
 func TestLoad_GeneratesDeterministicDoorIDs(t *testing.T) {
-	compiled, _ := dungeonspec.Load(referenceYAML) // 4 rooms, 3 connectors
-	require.Len(t, compiled.Params.Connectors, 3)
-	assert.Equal(t, core.EntityID("door-entrance-gallery"),
+	// placedTombYAML: key "reference-tomb", 2 rooms (entrance, tomb), 1 connector —
+	// the M1-valid fixture (referenceYAML's own count-based monsters fail Validate
+	// in M1; see Task B2's fixture consequence). N-connector coverage (3+ doors in
+	// one file) resumes in M2 once referenceYAML/cryptYAML are loadable again.
+	compiled, err := dungeonspec.Load(placedTombYAML)
+	require.NoError(t, err)
+	require.Len(t, compiled.Params.Connectors, 1)
+	assert.Equal(t, core.EntityID("reference-tomb-door-entrance-tomb"),
 		compiled.Params.Connectors[0].DoorID)
-	assert.Equal(t, core.EntityID("door-trap-crossing-tomb"),
-		compiled.Params.Connectors[2].DoorID)
 }
 
 // PATTERN-DEFAULT TRAP (advisory made explicit): the engine treats an
 // empty DungeonRegionParams.Pattern as PatternRandom. The SPEC's default
 // is empty (design.md). The compiler must therefore map "" and "empty" →
 // environments.PatternEmpty and "scattered" → environments.PatternRandom
-// EXPLICITLY — never pass the zero value through. The crypt parity test
-// goes red if this is wrong (CryptDungeonParams sets PatternEmpty
-// explicitly), but write the mapping deliberately, not by debugging.
-
-func TestLoad_SpawnsAreBossFirst(t *testing.T) {
-	compiled, _ := dungeonspec.Load(cryptYAML)
-	require.NotEmpty(t, compiled.Spawns)
-	assert.Equal(t, "tomb-or-boss-room-id", compiled.Spawns[0].RoomID)
-	// then entrance-to-boss chain order for the rest
-}
-
-func TestLoad_Deterministic(t *testing.T) {
-	a, _ := dungeonspec.Load(cryptYAML)
-	b, _ := dungeonspec.Load(cryptYAML)
-	assert.Equal(t, a, b)
-}
+// EXPLICITLY — never pass the zero value through. Write the mapping
+// deliberately (test both directions on placedTombYAML's rooms), not by
+// debugging; M2's crypt parity test (Task C2) is what actually catches a
+// wrong mapping against a real fixture (CryptDungeonParams sets
+// PatternEmpty explicitly), but the M1 tests here shouldn't rely on that.
 ```
 
 - [ ] **Step 2: Run → FAIL; Step 3: Implement**
 
 ```go
+// SpawnInstruction is encounter's OWN type (defined in Task N2's
+// encounter/seed_monsters.go, alongside SeedMonsters) — dungeonspec
+// re-exports it via a plain type ALIAS, not a second struct, so
+// CompiledDungeon.Spawns can be passed directly to
+// enc.SeedMonsters(compiled.Spawns) with zero conversion (Issue: a
+// dungeonspec-local mirror struct would NOT satisfy SeedMonsters'
+// []encounter.SpawnInstruction parameter — Go has no implicit struct
+// conversion for function arguments, this would simply fail to compile).
+// Dependency direction, unchanged from the rest of this package:
+// dungeonspec already imports encounter; encounter never imports
+// dungeonspec (that's the cycle constraint from Step 3's note below) —
+// so the type must be encounter-owned for both sides to share it, and
+// dungeonspec's alias is purely a naming convenience for this package's
+// own callers.
+type SpawnInstruction = encounter.SpawnInstruction
+
 type CompiledDungeon struct {
 	Params encounter.DungeonParams
 	Spawns []SpawnInstruction // boss first, then entrance→boss chain order
 }
 
-type SpawnInstruction struct {
-	RoomID     string
-	MonsterRef string
-	Count      int
-	At         *encounter.LocalHex // delta addition: nil = rolled, non-nil = placed (see below)
-}
-
 // Load decodes, validates, and compiles a spec in one call — the only
 // entry point callers use. Door entity ids are COMPILER-GENERATED from
-// content ("door-<from>-<to>" per connector, see the Door-ID rule above) —
-// callers supply nothing but the bytes.
+// content ("<key>-door-<from>-<to>" per connector, see the Door-ID rule
+// above) — callers supply nothing but the bytes.
 func Load(raw []byte) (CompiledDungeon, error)
 ```
 
 Boss-first ordering is defense-in-depth (design.md §Compiler); the real safety is Slice C's invariant. Note: `dungeonspec` imports `encounter` (parent package) — if Go disallows the cycle you need (encounter importing dungeonspec later), keep dungeonspec import-free of encounter internals except exported types; check the dependency direction BEFORE writing code: dungeonspec → encounter is the only direction used (api calls both).
 
-- [ ] **Step 4: Run → PASS; Step 5: Full module suite + commit** `feat(dungeonspec): compiler — CompiledDungeon with boss-first spawn plan + crypt parity (#<issue>)`
+- [ ] **Step 4: Run → PASS; Step 5: Full module suite + commit** `feat(dungeonspec): compiler — CompiledDungeon, key-scoped door ids (#<issue>)`
 
 **Delta addition — compiling `place` into `PlacedObstacles` + `At`-bearing `SpawnInstruction`s.**
 
@@ -406,6 +436,23 @@ func TestLoad_PlaceRoutesByRefType(t *testing.T) {
 	assert.Equal(t, "dnd5e:props:coffin", tombRegion.PlacedObstacles[0].Ref)
 	assert.Equal(t, encounter.LocalHex{Col: 6, Row: 3}, tombRegion.PlacedObstacles[0].At)
 	assert.False(t, tombRegion.PlacedObstacles[0].BlocksLoS)
+
+	// BLOCKING-DEFAULT TRAP (advisory made explicit, same class as the
+	// PATTERN-DEFAULT TRAP above): PlacedEntry.BlocksMovement/BlocksLoS are
+	// *bool with nil => true (design.md: "same defaults/semantics as
+	// ObstacleEntry"), but PlacedObstacleSpec.BlocksMovement/BlocksLoS
+	// (engine-side, Task N1) are plain bool, whose Go zero value is FALSE.
+	// A compiler that just dereferences a nil *bool panics; one that
+	// silently treats nil as the zero value inverts the default (an
+	// unflagged placed prop would compile to "blocks nothing," backwards
+	// from the design's intent). The altar entry in placedTombYAML sets
+	// NEITHER flag, so it's the direct test of this: it must compile to
+	// BlocksMovement: true, BlocksLoS: true (matching the existing
+	// crypt_dungeon.go precedent: altar is a structural piece, blocks both).
+	altar := tombRegion.PlacedObstacles[1]
+	assert.Equal(t, "dnd5e:props:altar", altar.Ref)
+	assert.True(t, altar.BlocksMovement)
+	assert.True(t, altar.BlocksLoS)
 
 	var skeletonSpawn *dungeonspec.SpawnInstruction
 	for i := range compiled.Spawns {
@@ -429,9 +476,9 @@ func TestLoad_BossAtCompilesToSpawnPosition(t *testing.T) {
 
 **Naming/architecture note (this plan's decision, load-bearing for the engine slice below):** `encounter.LocalHex{Col, Row int}` here names the exact type the new engine slice introduces (see Task N1) — the compiler reuses it rather than inventing a parallel `dungeonspec`-local coordinate type. The critical constraint: `At` stays ROOM-LOCAL (pre-`offsetX`) all the way from YAML into `DungeonParams.Regions[i].PlacedObstacles` and `SpawnInstruction.At` — the compiler never computes a region's `offsetX` itself. That arithmetic (`starts[i]` in `generateDungeonLayout`) is layout-time-only and depends on every region's width in chain order; duplicating it in `dungeonspec` would silently drift the moment column math changes there. The engine adds `offsetX` at placement time, exactly as it already does internally for rolled candidates.
 
-The reference fixture (`testdata/crypt.yaml` and the in-package `referenceYAML`) gains a placed room (mirroring design.md's tomb example) so round-trip/parity tests cover `place`, not just a bespoke `placedTombYAML` literal.
+The compiler's nil→true mapping for `PlacedEntry.BlocksMovement`/`BlocksLoS` (see the BLOCKING-DEFAULT TRAP above) is the same shape as `ObstacleEntry`'s existing (unwritten-but-implied) nil→true mapping for count-based obstacles — if that mapping isn't ALREADY implemented as part of the original v1 compiler work, implement both here together rather than leaving one inconsistent with the other.
 
-- [ ] **Step 6: Run → FAIL; Step 7: Implement** the ref-type routing (props → append to the region's `PlacedObstacles`; monsters → append an `At`-bearing `SpawnInstruction`, in `place` list order, boss spawn first as already ordered); **Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): compile place block into PlacedObstacles + positioned spawns (#<issue>)`
+- [ ] **Step 6: Run → FAIL; Step 7: Implement** the ref-type routing (props → append to the region's `PlacedObstacles`, mapping nil `BlocksMovement`/`BlocksLoS` to `true` per the trap above; monsters → append an `At`-bearing `SpawnInstruction`, in `place` list order, boss spawn first as already ordered); **Step 8: Run → PASS; Step 9: Commit** `feat(dungeonspec): compile place block into PlacedObstacles + positioned spawns (#<issue>)`
 
 ---
 
@@ -513,7 +560,21 @@ Extend `DungeonRegionParams` with `PlacedObstacles []PlacedObstacleSpec`. Inside
 - Create: `encounter/seed_monsters.go`, `encounter/seed_monsters_test.go`
 - Read first (verified above, today): `encounter/encounter.go`'s `AddMonster`/`AddPlayer`, `encounter/combat.go`'s `checkCombatEntry`.
 
-**Scoping call (this plan's decision, resolving an ambiguity the delta text leaves open):** design.md's `SpawnInstruction.At` split ("placed monsters compile to single-count instructions with `At` set; rolled monsters keep `Count` with no position") describes the COMPILER's output shape only — it does not say how much of the ENGINE side lands in M1 vs M2. Given the atomic-seeding invariant applies identically to placed monsters (per the delta), M1 must build `SeedMonsters`' full batching machinery (suppress combat-entry checks across the batch, one `checkCombatEntry()` pass at the end) even though it only NEEDS to place `At`-bearing instructions — a bare loop of individual `AddMonster` calls would reintroduce exactly the partial-roster bug class the invariant exists to prevent (`AddMonster` calls `checkCombatEntry()` on every invocation). M2's Slice C then EXTENDS this same function with the harder, invariant-heavy N-per-room safe-cell-rolling machinery for `Count > 1, At == nil` instructions — the design's own sequencing rationale ("the invariant-heavy engine work lands after the tool proves itself"). M1's own acceptance dungeon (`reference-tomb.yaml`) is fully placed, so it never exercises the rolled path — this scoping costs M1's acceptance nothing.
+**Scoping call (this plan's decision, resolving an ambiguity the delta text leaves open):** design.md's `SpawnInstruction.At` split ("placed monsters compile to single-count instructions with `At` set; rolled monsters keep `Count` with no position") describes the COMPILER's output shape only — it does not say how much of the ENGINE side lands in M1 vs M2. Given the atomic-seeding invariant applies identically to placed monsters (per the delta), M1 must build `SeedMonsters`' full batching machinery (suppress combat-entry checks across the batch, one `checkCombatEntry()` pass at the end) even though it only NEEDS to place `At`-bearing instructions — a bare loop of individual `AddMonster` calls would reintroduce exactly the partial-roster bug class the invariant exists to prevent (`AddMonster` calls `checkCombatEntry()` on every invocation). M2's Slice C then EXTENDS this same function with the harder, invariant-heavy N-per-room safe-cell-rolling machinery for `At == nil` instructions — the design's own sequencing rationale ("the invariant-heavy engine work lands after the tool proves itself"). M1's own acceptance dungeon (`reference-tomb.yaml`) is fully placed, so it never exercises the rolled path — this scoping costs M1's acceptance nothing. Belt-and-suspenders: Task B2's `Validate` already rejects any spec that WOULD produce an `At == nil` instruction, so this is unreachable via the content-hosting path in M1 — the rejection here is for `SeedMonsters`' other, non-dungeonspec callers (defense-in-depth, same posture as `monsters.ByRef`'s "error on miss").
+
+```go
+// SpawnInstruction describes one monster spawn compiled from a dungeon
+// spec — encounter-owned (not dungeonspec-owned; see Task B3's note on
+// why dungeonspec only aliases this type) so rpg-api can call
+// enc.SeedMonsters(compiled.Spawns) directly, with compiled.Spawns typed
+// as []encounter.SpawnInstruction via dungeonspec's alias, zero conversion.
+type SpawnInstruction struct {
+	RoomID     string
+	MonsterRef string
+	Count      int
+	At         *LocalHex // nil = rolled (M2 only in this milestone); non-nil = placed (M1)
+}
+```
 
 - [ ] **Step 1: Failing tests**
 
@@ -540,13 +601,16 @@ func TestSeedMonsters_SpawnVisibleStillStartsCombat(t *testing.T) {
 	// visible."
 }
 
-func TestSeedMonsters_RolledInstructionReturnsNotYetSupported(t *testing.T) {
-	// Count > 1, At == nil — M1's explicit scope boundary; M2's Slice C
-	// replaces this error path with real safe-cell rolling.
+func TestSeedMonsters_UnpinnedInstructionReturnsNotYetSupported(t *testing.T) {
+	// At == nil, REGARDLESS of Count (including Count == 1 — an unpinned
+	// single-monster room is just as unimplemented in M1 as a Count > 1
+	// room; there's no safe-cell-rolling machinery for either yet). M2's
+	// Slice C replaces this error path with real safe-cell rolling for
+	// every At == nil instruction.
 }
 ```
 
-- [ ] **Step 2: Run → FAIL; Step 3: Implement** — `SeedMonsters(spawns []SpawnInstruction) error` (accepting a local mirror of `dungeonspec.SpawnInstruction`, or the same tuple shape Slice C's original design already flagged as an open call — keep `encounter` free of a `dungeonspec` import either way, document the choice made): for each spawn in order (boss-first, per the compiler), if `At != nil`, resolve `MonsterRef` via `monsters.ByRef` (error on miss — validation should make this unreachable) and stage an `AddMonster` call at the translated absolute position; if `At == nil` and `Count > 1`, return the M1 scope-boundary error above. Run every staged `AddMonster` with combat-entry evaluation SUPPRESSED (a package-private variant or internal flag — implementer's call, but it must not change `AddMonster`'s existing public contract for non-dungeon callers), then run exactly ONE `checkCombatEntry()` pass after the whole batch.
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** — `SeedMonsters(spawns []SpawnInstruction) error`: for each spawn in order (boss-first, per the compiler), if `At != nil`, resolve `MonsterRef` via `monsters.ByRef` (error on miss — validation should make this unreachable) and stage an `AddMonster` call at the translated absolute position; if `At == nil` (any `Count`), return the M1 scope-boundary error above. Run every staged `AddMonster` with combat-entry evaluation SUPPRESSED (a package-private variant or internal flag — implementer's call, but it must not change `AddMonster`'s existing public contract for non-dungeon callers), then run exactly ONE `checkCombatEntry()` pass after the whole batch.
 - [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially existing combat-entry coverage in `combat_test.go`.
 - [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — placed-monster batch seeding under the atomic combat-entry invariant (#<issue>)`
 
@@ -563,7 +627,10 @@ func TestSeedMonsters_RolledInstructionReturnsNotYetSupported(t *testing.T) {
 
 ```go
 func TestWorkbenchReport_ValidSpec(t *testing.T) {
-	report, err := dungeonspec.WorkbenchReport(cryptYAML, 42)
+	// placedTombYAML, not cryptYAML: testdata/crypt.yaml doesn't exist (and
+	// wouldn't Validate) until M2's Task C2 lifts the M1-only monster-pinning
+	// restriction — see Task B2's fixture consequence.
+	report, err := dungeonspec.WorkbenchReport(placedTombYAML, 42)
 	require.NoError(t, err)
 	assert.Contains(t, report, "VALID")
 	assert.Contains(t, report, "seed 42")
@@ -632,8 +699,14 @@ func TestSpecByKey_UnknownKey(t *testing.T) {
 
 func TestContentDirOverride(t *testing.T) {
 	// RPG_CONTENT_DIR pointing at a temp dir with one yaml → that key
-	// resolves; embedded keys still resolve (override AUGMENTS, embedded
-	// remains fallback — pick AUGMENT, document it).
+	// resolves; embedded keys not present in the override dir still
+	// resolve (override AUGMENTS the embedded set, it doesn't replace it
+	// wholesale). On a KEY COLLISION specifically — the override dir has a
+	// file whose `key:` matches an embedded one — the override WINS: this
+	// is what makes the edit-restart authoring loop actually work (Task
+	// E1's whole point, and the M1 acceptance bar in Slice E's intro) —
+	// an author editing content/dungeons/reference-tomb.yaml locally via
+	// RPG_CONTENT_DIR must see their edit, not the stale embedded copy.
 }
 ```
 
@@ -647,7 +720,23 @@ func TestContentDirOverride(t *testing.T) {
 - Test: extend `internal/orchestrators/lobby/start_encounter_test.go`; new integration test exercising `StartEncounter("reference-tomb")`
 
 - [ ] **Step 1: Failing integration test** — `StartEncounter("reference-tomb")` → snapshot has 2 zones (entrance + tomb) with declared archetypes, the tomb's placed props/monsters land at their compiled positions, boss present; the EXISTING crypt gates (`internal/integration/dungeon_crypt_test.go`, `internal/integration/lobby_crypt_monster_seed_test.go`) stay green UNTOUCHED — this task must not perturb the crypt's call path at all.
-- [ ] **Step 2: Run → FAIL (non-short, Redis testcontainer); Step 3: Implement** the branch described above.
+- [ ] **Step 2: Run → FAIL (non-short, Redis testcontainer); Step 3: Implement** the branch described above:
+
+```go
+if compiled, ok := resolveContentDungeonSpec(in.DungeonKey); ok {
+	compiled.Params.RandomSeed = in.RandomSeed // seed is a FIELD, not a call arg
+	if err := enc.InitDungeon(compiled.Params); err != nil {
+		return nil, fmt.Errorf("init dungeon (key=%q) for encounter %q: %w", in.DungeonKey, encID, err)
+	}
+	// ... existing player-add loop, unchanged ...
+	if err := enc.SeedMonsters(compiled.Spawns); err != nil {
+		return nil, fmt.Errorf("seed monsters for encounter %q: %w", encID, err)
+	}
+} else {
+	// existing resolveDungeonSpec / o.seedRegionMonsters path, byte-for-byte unchanged
+}
+```
+
 - [ ] **Step 4: Full non-short suite green; Step 5: Commit** `feat(lobby)#<issue>: StartEncounter resolves content-backed dungeon keys via SeedMonsters, crypt path untouched`
 
 ### Task E3: Error surface
@@ -660,7 +749,28 @@ func TestContentDirOverride(t *testing.T) {
 
 ## Slice C (M2) — rpg-toolkit: `Encounter.SeedMonsters` grows count-based multi-monster rolling
 
-**This slice EXTENDS `encounter/seed_monsters.go` from M1's Task N2** — that task already built `SeedMonsters`' atomic-batching invariant and its `At`-bearing (placed) path, and explicitly punted any `SpawnInstruction` with `Count > 1` and `At == nil` to a "not yet supported" error. This slice replaces that error path with the real N-per-room safe-cell-rolling machinery design.md's v1 body always specced — the invariant-heavy engine work sequenced after the placement-only path (M1) proved the batching mechanism out.
+**This slice EXTENDS `encounter/seed_monsters.go` from M1's Task N2** — that task already built `SeedMonsters`' atomic-batching invariant and its `At`-bearing (placed) path, and explicitly punted any `SpawnInstruction` with `At == nil` (regardless of `Count`, per Task N2's broadened M1 scope boundary) to a "not yet supported" error. This slice replaces that error path with the real N-per-room safe-cell-rolling machinery design.md's v1 body always specced — the invariant-heavy engine work sequenced after the placement-only path (M1) proved the batching mechanism out. It also LIFTS the M1-only `Validate` restriction from Task B2 (count-based `monsters:` and an unpinned `boss` were rejected at load time purely because `SeedMonsters` couldn't fulfill them yet) — that restriction's whole justification disappears once this slice ships.
+
+### Task C0: Lift the M1-only `Validate` restriction
+
+**Files:**
+- Modify: `encounter/dungeonspec/validate.go`, `encounter/dungeonspec/validate_test.go`
+
+- [ ] **Step 1: Failing test — a previously-rejected spec now loads and seeds correctly**
+
+```go
+func TestValidate_UnpinnedMonstersAllowedOnceSeedMonstersRolls(t *testing.T) {
+	// referenceYAML (design.md's 4-room sunken-crypt example, count-based
+	// monsters: in entrance/gallery) and testdata/crypt.yaml (see Task C2)
+	// both currently fail Validate with "rolled monster placement lands in
+	// M2" (Task B2). Once this task removes those two checks, both must
+	// Validate cleanly — this test is the removal's own proof, not just a
+	// deletion.
+}
+```
+
+- [ ] **Step 2: Run → FAIL** (still rejected); **Step 3: Implement** — delete the "count-based `monsters:` entry rejected in M1" and "unpinned boss (no `at`) rejected in M1" checks from `Validate` (added in Task B2); update Task B2's table test to remove the two corresponding rows (or flip them to assert `""` / valid, proving the lift rather than silently dropping coverage).
+- [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): lift M1-only unpinned-monster restriction now that SeedMonsters can roll (#<issue>)`
 
 ### Task C1: The invariant test first
 
@@ -698,10 +808,54 @@ func TestSeedMonsters_RolledNeverUsesAPlacedCell(t *testing.T) {
 
 - [ ] **Step 2: Run → FAIL; Step 3: Implement**
 
-Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics, and M1's Task N2 already built exactly this skeleton): extend `SeedMonsters` so a `SpawnInstruction` with `Count > 1` and `At == nil` resolves its ref via `monsters.ByRef` (error on miss — validation should make this unreachable) and places N instances per room on safe cells (reuse the candidate-pool machinery Task N1's `placeRegionObstacles`/`regionObstacleCandidates` uses — same exclusions plus occupied-cell and placed-cell; extract a shared helper only if it stays behavior-identical, with its own test), staged under the SAME suppressed-combat-entry batching Task N2 already built, with ONE `checkCombatEntry()` pass covering both placed and rolled spawns together. Boss-first order preserved from the compiler.
+Mechanism (the design left two candidates; this plan picks **batch-with-deferred-entry** because it keeps today's call order and today's spawn-visibility semantics, and M1's Task N2 already built exactly this skeleton): extend `SeedMonsters` so a `SpawnInstruction` with `At == nil` (any `Count`) resolves its ref via `monsters.ByRef` (error on miss — validation should make this unreachable) and places `Count` instances per room on safe cells (reuse the candidate-pool machinery Task N1's `placeRegionObstacles`/`regionObstacleCandidates` uses — same exclusions plus occupied-cell and placed-cell; extract a shared helper only if it stays behavior-identical, with its own test), staged under the SAME suppressed-combat-entry batching Task N2 already built, with ONE `checkCombatEntry()` pass covering both placed and rolled spawns together. Boss-first order preserved from the compiler.
 
 - [ ] **Step 4: Run → PASS; the full encounter suite MUST stay green** — especially the crypt connectivity, boss-axis, and obstacle suites, and every M1 `seed_monsters_test.go` case (the placed path must not regress).
 - [ ] **Step 5: Commit** `feat(encounter): SeedMonsters — count-based multi-monster safe-cell rolling (#<issue>)`
+
+### Task C2: crypt compiler parity (unblocked by Task C0)
+
+**Files:**
+- Create: `encounter/dungeonspec/testdata/crypt.yaml` (port of today's canonical crypt — same regions/sizes/patterns/obstacles incl. `prefer_border` flags, same lock, same monster set as `crypt_monster_seed.go`'s table: 1 skeleton entrance, skeleton-captain boss, `key: crypt` so the compiler's `"<key>-door-<from>-<to>"` rule reproduces `crypt-door-entrance-corridor`/`crypt-door-corridor-boss` byte-for-byte)
+- Test: `encounter/dungeonspec/compile_test.go` (extends Task B3's file — these three tests move here from that M1 task, per its scope note, now that `testdata/crypt.yaml`'s count-based monster entries pass `Validate` following Task C0)
+
+- [ ] **Step 1: Failing tests**
+
+```go
+func TestLoad_CryptParity(t *testing.T) {
+	compiled, err := dungeonspec.Load(cryptYAML)
+	require.NoError(t, err)
+	// cryptYAML's key is "crypt" — the compiler's door ids must therefore
+	// equal today's real rpg-api constants EXACTLY, not just "some
+	// generated id": verified against internal/integration/
+	// dungeon_crypt_test.go and internal/handlers/dnd5e/v2/encounter/
+	// project_test.go on rpg-api origin/main, both of which hardcode these
+	// two strings as their own test constants.
+	want := encounter.CryptDungeonParams(0,
+		"crypt-door-entrance-corridor", "crypt-door-corridor-boss")
+	// Field-by-field: Height, Theme, per-region ID/Archetype/Width/Pattern,
+	// obstacle specs (refs, counts, flags, PreferBorder), connector lock
+	// config (DoorID now included — both sides carry the same names).
+	assert.Equal(t, want.Height, compiled.Params.Height)
+	// ... exhaustive
+}
+
+func TestLoad_SpawnsAreBossFirst(t *testing.T) {
+	compiled, _ := dungeonspec.Load(cryptYAML)
+	require.NotEmpty(t, compiled.Spawns)
+	assert.Equal(t, "boss", compiled.Spawns[0].RoomID) // crypt's boss region id
+	// then entrance-to-boss chain order for the rest
+}
+
+func TestLoad_Deterministic(t *testing.T) {
+	a, _ := dungeonspec.Load(cryptYAML)
+	b, _ := dungeonspec.Load(cryptYAML)
+	assert.Equal(t, a, b)
+}
+```
+
+- [ ] **Step 2: Run → FAIL; Step 3: Implement** — no new compiler logic expected here (Task B3's `place`-routing and door-id rule already generalize to count-based rooms); this task should mostly be fixture-writing and assertion-tightening. If it surfaces a real gap in Task B3's implementation, that's a genuine finding to fix here, not a scope violation.
+- [ ] **Step 4: Run → PASS; Step 5: Commit** `feat(dungeonspec): crypt compiler parity — count-based monsters now loadable (#<issue>)`
 
 ## Migration — crypt to YAML, legacy path deleted
 

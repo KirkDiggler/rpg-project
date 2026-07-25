@@ -286,6 +286,14 @@ gap, folded into the reference-dungeon milestone (M3 below).
   obstacles.
 - Placed entries are hard guarantees (fail the file), while count-based rolls
   keep today's best-effort semantics (#818/#819) in whatever cells remain.
+- **`place` (and a pinned `boss.at`) is rejected outright in any room whose
+  `pattern` is `scattered`.** Scattered interior walls are seed-rolled — no
+  `at` cell can be guaranteed clear or non-wall at author time, so the
+  load-time "a file that loads is a file that plays" contract can't hold for
+  a pattern whose geometry isn't fixed. Revisitable, not permanent: a future
+  design could let `place` coexist with `scattered` (e.g. re-rolling walls
+  around the fixed cells), but that's new design work, not this delta's
+  problem to solve now.
 
 ### Compiler & engine
 
@@ -328,7 +336,12 @@ gap, folded into the reference-dungeon milestone (M3 below).
   legacy hardcoded path, untouched. Acceptance: edit `reference-tomb.yaml` (a
   minimal entrance room + the fully-placed tomb — two rooms, honoring the ≥2
   rooms/entrance-spawn constraints honestly), restart the api, walk the room in
-  the real game route.
+  the real game route. **M1-only restriction, stated honestly rather than
+  silently absorbed:** every monster spawn must be pinned (`place` or
+  `boss.at`) — count-based `monsters:` entries and an unpinned boss are
+  rejected at load time until M2's `SeedMonsters` can roll them; rolled
+  *obstacles* are unaffected, that placement machinery already exists in the
+  engine.
 - **M2 — Migration.** `SeedMonsters` for count-based multi-monster rooms
   (slice C as planned — the invariant-heavy engine work lands after the tool
   proves itself); crypt ported to YAML behind the parity test;
