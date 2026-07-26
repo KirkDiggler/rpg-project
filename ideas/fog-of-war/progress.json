@@ -227,18 +227,25 @@
       "answer": "Outside-in: a playable single-viewer concept proves the event layer, protos transcribe it, the API translates and projects it, the toolkit supplies the authority. The Wave A order remains right for landing the work.",
       "reason": "A wrong shape costs a fixture edit rather than four merged PRs. The pipeline it plugs into already exists \u2014 Broker publish/subscribe per player and TranslateEvent per viewer.",
       "date": "2026-07-25"
-    }
-  ],
-  "open_questions": [
+    },
     {
       "question": "Does facing belong on the placement or the entity?",
-      "status": "open",
+      "answer": "On the placement, inside the hex record.",
+      "reason": "A record is an observation. A viewer who saw a goblin facing north and lost sight must keep that memory even after the goblin turns and another viewer sees it face south. Facing on the entity would let one viewer's sighting rewrite another's memory.",
       "date": "2026-07-25"
     },
     {
-      "question": "Is GONE distinct from a hex simply never appearing in a viewer's records again?",
-      "status": "open",
+      "question": "Is GONE distinct from a hex never appearing in a viewer's records again?",
+      "answer": "GONE is dropped. States are VISIBLE and REMEMBERED; nothing is ever deleted.",
+      "reason": "A total visible record leaves removal nothing to do \u2014 a witnessed removal is a record that no longer lists the thing, a hidden removal is no record at all. Deletion is the one operation a later observation cannot correct, so it is not worth having when nothing needs it.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Does a REMEMBERED record carry payload, or tell the client to freeze?",
+      "answer": "It carries the full frozen observation.",
+      "reason": "The server retains each viewer's last observation for reconnect anyway. Sending it makes live transitions and reconnect hydration one code path and leaves the client with exactly one behavior: merge records by hex key.",
       "date": "2026-07-25"
     }
-  ]
+  ],
+  "open_questions": []
 }

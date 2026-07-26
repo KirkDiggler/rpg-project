@@ -234,7 +234,7 @@ HexKnowledgeChanged {              // one viewer's slice
 
 HexRecord {
   position: Position
-  state:    VISIBLE | REMEMBERED | GONE
+  state:    VISIBLE | REMEMBERED
   terrain:  TerrainType
   zone_id:  string
   edges:    [Wall]                 // existing Wall shape: from, to, kind, id
@@ -246,6 +246,24 @@ Placement { entity_id, facing }
 
 Two collections, delivered together so they cannot disagree. Hexes say
 **where**; entities say **what**.
+
+### The record is an observation
+
+A `HexRecord` is what one viewer saw at one moment. An `Entity` is what the
+thing currently is, as disclosed to that viewer. Memory freezes records, not
+entities.
+
+That rule decides where a field belongs. Facing is the worked example: a
+viewer sees a goblin facing north and loses sight of it; the goblin later
+turns south and another viewer sees that. The first viewer's memory must
+still say north. If facing lived on the entity, the second viewer's
+observation would silently rewrite the first viewer's memory — one object,
+two memories that must stay independent. So facing is carried on the
+placement, inside the record, where it freezes with everything else the
+viewer observed.
+
+Anything that must stay frozen in memory belongs on the record. Anything that
+should reflect current disclosure belongs on the entity.
 
 ### Why the hex, and why hexes rather than "geometry"
 
@@ -273,6 +291,36 @@ This is why re-sight needs no merge rule: an arriving `VISIBLE` record
 replaces the remembered one wholesale. The door someone opened behind the
 viewer's back, the monster that left, the trap that was not there before —
 all corrected by one message, because appear is the new truth.
+
+### Nothing is ever deleted
+
+There is no removal transition and no tombstone, because a total record
+leaves nothing for one to do. Ask what a removal would remove:
+
+- A monster that left while the viewer watched — the hex arrives `VISIBLE`
+  with `contents: []`. Handled.
+- A wall demolished while the viewer watched — the record carries `edges` and
+  replaces wholesale. Handled.
+- A monster deleted from the world while the viewer was away — memory keeps
+  it. That is the required behavior, not a defect needing a tombstone.
+- The hex itself ceasing to exist — not a thing.
+
+So a record's state is `VISIBLE` or `REMEMBERED`, and knowledge only ever
+grows or gets replaced. Deletion is the one operation a later observation
+cannot correct, which is reason enough not to have it when nothing needs it.
+Unreferenced entity records may linger in a viewer's disclosed set; they are
+vocabulary for memories, harmless, and finite.
+
+### Remembered records carry their observation
+
+A `REMEMBERED` record carries the full frozen observation rather than
+instructing the client to freeze what it holds. The server retains each
+viewer's last observation anyway — reconnect requires it — so sending it
+costs nothing and removes a client behavior.
+
+The payoff is that live transitions and reconnect hydration become the same
+code path instead of two. The client has exactly one behavior: merge records
+by hex key. It never freezes, never deletes, and never decides anything.
 
 ### Why entities are a separate collection
 
@@ -308,6 +356,11 @@ one way through beats a right way plus a fallback. So:
   `DoorOpened` a pure notification for sound and narration, which is what it
   should have been.
 
+- The viewer-authorized removal transitions and tombstones named in
+  `production-design.md` are never built. A total record leaves them nothing
+  to do — see "Nothing is ever deleted" above. This supersedes one of that
+  document's stated fixed semantics, not merely its event names.
+
 `EntityMoved` stays: it describes how something travelled, which is
 presentation, not knowledge.
 
@@ -316,13 +369,13 @@ presentation, not knowledge.
 | Situation | Viewer receives |
 | --- | --- |
 | First sight | Records `VISIBLE` with full truth. No separate reveal step. |
-| Loss of sight | Records `REMEMBERED`. The client freezes what it holds. |
+| Loss of sight | Records `REMEMBERED` carrying the frozen observation. |
 | Re-sight | Records `VISIBLE` with current truth, replacing memory wholesale. |
 | Hidden mutation | Nothing. Stale memory persists by construction. |
 | Movement in view | Source hex `contents: []`, destination hex holding the entity. |
-| Witnessed removal | `GONE`. |
+| Witnessed removal | A `VISIBLE` record without the removed thing. No tombstone. |
 | Hidden removal | Nothing. Memory stays stale until an authorized observation. |
-| Reconnect | The viewer's complete known set: `VISIBLE` and `REMEMBERED` records together. |
+| Reconnect | The viewer's complete known set: `VISIBLE` and `REMEMBERED` records together, same code path as any other event. |
 
 `UNSEEN` has no record. A `VISIBLE` record is authoritative only for the slice
 carrying it. A `REMEMBERED` record is a personal snapshot, not a live record

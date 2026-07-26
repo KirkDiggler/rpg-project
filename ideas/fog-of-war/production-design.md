@@ -30,10 +30,17 @@ production wiring is incomplete.
 > The event set named throughout this document — `GeometryAppeared`,
 > `GeometryDisappeared`, additive `GeometryRevealed`, and separate removal
 > transitions — has been replaced by a single per-viewer `HexKnowledgeChanged`
-> carrying hex records with a `VISIBLE | REMEMBERED | GONE` state, hex-attached
-> edges, and total contents. Reveal, appear, disappear, and removal are states
-> of one record rather than four messages, and the seam speaks hex rather than
+> carrying hex records stated `VISIBLE` or `REMEMBERED`, with hex-attached
+> edges and total contents. Reveal, appearance, and disappearance are states of
+> one record rather than three messages, and the seam speaks hex rather than
 > geometry, because walls and doors are already hex edges on the wire.
+>
+> **Removal transitions and tombstones are not built at all**, which supersedes
+> this document's fixed semantic that "viewer-authorized removals are distinct
+> from disappearance." A visible record states its hex's complete contents, so
+> a witnessed removal is simply a record that no longer lists the thing, and a
+> hidden removal is the absence of any record. Nothing needs deleting, and
+> deletion is the one operation a later observation cannot correct.
 >
 > Everything else here still holds: the three knowledge states, viewer scoping,
 > hidden mutations leaving stale memory, witnessed removals updating it

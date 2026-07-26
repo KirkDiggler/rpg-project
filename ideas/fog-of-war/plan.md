@@ -24,9 +24,12 @@
 - The Canvas uses `frameloop="demand"`: remembered class models resolve no clip and never self-invalidate. Do not add movement/facing hook enable flags unless direct inspection during execution proves clearing inputs insufficient.
 - Remembered content renders but is inert. Build pathing, occupancy, interaction, turn-order, self-indicator, hover, and door handlers from visible-only records/geometry. Remembered entities never block based on stale positions. Remembered floors cannot be hovered/clicked/pathed. Remembered doors have no handlers, cursor change, or propagation stop. `TurnOrderOverlay` receives no remembered IDs.
 - `showFrontierGroundHints?: boolean` defaults to `true`; the concept passes `false` so hints never expose unseen-adjacent ground.
-- The event layer is defined in `design.md` §"The event layer" and is the draft proto contract. One per-viewer `HexKnowledgeChanged` carries `hexes: [HexRecord]` and `entities: [FogEntity]`. A `HexRecord` is `position`, `state` (`VISIBLE | REMEMBERED | GONE`), `terrain`, `zoneId`, `edges: [WallLike]`, `contents: [Placement]`. A `Placement` is `entityId` + `facing`. Do not add fields the concept does not consume.
+- The event layer is defined in `design.md` §"The event layer" and is the draft proto contract. One per-viewer `HexKnowledgeChanged` carries `hexes: [HexRecord]` and `entities: [FogEntity]`. A `HexRecord` is `position`, `state` (`VISIBLE | REMEMBERED`), `terrain`, `zoneId`, `edges: [WallLike]`, `contents: [Placement]`. A `Placement` is `entityId` + `facing`. Do not add fields the concept does not consume.
 - A `VISIBLE` record is **total**: `contents: []` positively means empty. Re-sight replaces the held record wholesale — never a merge, never a field-level update. This is what deletes a remembered occupant, so it is not an optimization to soften later.
-- The reducer's only input is events. It has no world-truth parameter, no LOS, no reveal or door-open action, and no derivation. Knowledge is a map keyed by hex. Applying the same record twice must leave state identical. A placement whose `entityId` is not in the viewer's disclosed entity set is dropped; a `REMEMBERED` record for a hex with no prior knowledge is ignored.
+- **A record is an observation; an entity is current disclosure.** Anything that must stay frozen in a viewer's memory belongs on the record — facing above all, because two viewers who saw the same entity face different ways must keep different memories of it. Anything reflecting what the thing currently is belongs on the entity. Do not move `facing` onto `FogEntity`.
+- **Nothing is ever deleted.** There is no `GONE` state, no removal transition, and no tombstone. A witnessed removal is a `VISIBLE` record that no longer lists the thing; a hidden removal is the absence of any record. Knowledge only grows or gets replaced. Do not add a delete path "for completeness" — deletion is the one operation a later observation cannot correct.
+- **A `REMEMBERED` record carries its full frozen observation** rather than instructing the client to freeze what it holds. Live transitions and reconnect hydration are therefore the same code path, and the client's only behavior is merge-by-hex-key.
+- The reducer's only input is events. It has no world-truth parameter, no LOS, no reveal or door-open action, and no derivation. Knowledge is a map keyed by hex. Applying the same record twice must leave state identical. A placement whose `entityId` is not in the viewer's disclosed entity set is dropped.
 - Only the authority reads world truth, and no consumer-side module may import from `authority/`. This is enforced by `boundary.test.ts`, not by convention. The authority exists to produce the event stream; if it grows rules beyond that, stop and re-read `design.md` §"Concept architecture".
 - Movement animation is out of scope. The authority moves entities between hexes discretely. Do not add interpolation, easing, or path tweening to reach a nicer-looking result.
 - Type `*Like` interfaces against the generated v1alpha2 messages field-for-field rather than importing generated classes, following `src/concepts/combat-pacing/fixtures.ts`. Document every deliberate divergence at its field.
@@ -479,16 +482,16 @@ describe('fog reducer', () => {
     expect(next.hexes.get('0,0,0')?.state).toBe('VISIBLE');
   });
 
-  it('loss of sight freezes the record it already holds', () => {
+  it('a remembered record carries its own frozen observation', () => {
     const seen = fogReducer(emptyKnowledge(), {
       hexes: [visible(0, 0, [{ entityId: 'goblin-1', facing: 0 }])],
       entities: [goblin],
     });
     const lost = fogReducer(seen, {
-      hexes: [{ ...visible(0, 0), state: 'REMEMBERED' }],
+      hexes: [{ ...visible(0, 0, [{ entityId: 'goblin-1', facing: 0 }]), state: 'REMEMBERED' }],
       entities: [],
     });
-    // The frozen record keeps its contents — the goblin is still believed there.
+    // The server sends what the viewer observed; the client never freezes.
     expect(lost.hexes.get('0,0,0')?.state).toBe('REMEMBERED');
     expect(lost.hexes.get('0,0,0')?.contents).toEqual([{ entityId: 'goblin-1', facing: 0 }]);
     expect(lost.entities.get('goblin-1')).toBeDefined();
@@ -514,13 +517,18 @@ describe('fog reducer', () => {
     expect(after.hexes.get('1,0,-1')).toEqual(before.hexes.get('1,0,-1'));
   });
 
-  it('GONE removes the record entirely', () => {
-    const seen = fogReducer(emptyKnowledge(), { hexes: [visible(0, 0)], entities: [] });
-    const gone = fogReducer(seen, {
-      hexes: [{ ...visible(0, 0), state: 'GONE' }],
-      entities: [],
+  it('freezes the facing that was observed, not one seen later', () => {
+    // This viewer saw the goblin facing 0 and lost sight. The goblin later
+    // turned and another viewer saw that. Facing lives on the placement, so
+    // no other viewer's sighting can rewrite this viewer's memory.
+    const remembered = fogReducer(emptyKnowledge(), {
+      hexes: [{ ...visible(0, 0, [{ entityId: 'goblin-1', facing: 0 }]), state: 'REMEMBERED' }],
+      entities: [goblin],
     });
-    expect(gone.hexes.has('0,0,0')).toBe(false);
+    // The goblin is re-disclosed to this viewer, but no record arrives for the
+    // remembered hex — nothing about the memory may move.
+    const later = fogReducer(remembered, { hexes: [], entities: [goblin] });
+    expect(later.hexes.get('0,0,0')?.contents).toEqual([{ entityId: 'goblin-1', facing: 0 }]);
   });
 
   it('applying the same record twice is idempotent', () => {
@@ -579,21 +587,26 @@ export interface WallLike {
   id?: string;
 }
 
-/** A hex is VISIBLE (current authorized truth), REMEMBERED (frozen last
- * observation), or GONE (authorized removal). UNSEEN is omission — never a
- * value. */
-export type HexState = 'VISIBLE' | 'REMEMBERED' | 'GONE';
+/** A hex is VISIBLE (current authorized truth) or REMEMBERED (a frozen last
+ * observation, carried in full). UNSEEN is omission — never a value. There is
+ * deliberately no removal state: a witnessed removal is a VISIBLE record that
+ * no longer lists the thing, and a hidden removal is no record at all. */
+export type HexState = 'VISIBLE' | 'REMEMBERED';
 
 /** What occupies a hex. Resolves against the event's `entities` collection. */
 export interface Placement {
   entityId: string;
-  /** Hex-direction index 0-5. Carried here rather than on the entity because
-   * facing is a property of standing somewhere. */
+  /** Hex-direction index 0-5. Carried on the placement, NOT on the entity:
+   * a record is an observation, so two viewers who saw the same goblin face
+   * different ways must keep different frozen memories of it. Moving this to
+   * FogEntity would let one viewer's sighting rewrite another's memory. */
   facing: number;
 }
 
-/** One hex's complete authorized truth for one viewer. A VISIBLE record is
- * TOTAL: `contents: []` positively means empty, never "omitted". */
+/** One hex's complete authorized truth for one viewer, as observed at one
+ * moment. A VISIBLE record is TOTAL: `contents: []` positively means empty,
+ * never "omitted". A REMEMBERED record carries the frozen observation in
+ * full, so hydration and live transitions share one code path. */
 export interface HexRecord {
   position: PositionLike;
   state: HexState;
@@ -651,21 +664,10 @@ export function fogReducer(state: FogKnowledge, event: HexKnowledgeChanged): Fog
 
   const hexes = new Map(state.hexes);
   for (const record of event.hexes ?? []) {
-    const key = hexKey(record.position);
-    if (record.state === 'GONE') {
-      hexes.delete(key);
-      continue;
-    }
-    if (record.state === 'REMEMBERED') {
-      // Freeze what we hold. A remembered record with no prior knowledge is
-      // meaningless and fails closed by omission.
-      const held = hexes.get(key);
-      if (held) hexes.set(key, { ...held, state: 'REMEMBERED' });
-      continue;
-    }
-    // VISIBLE replaces wholesale — never a merge. Placements referencing an
-    // undisclosed entity are dropped.
-    hexes.set(key, {
+    // Every record replaces wholesale — never a merge, never a delete. This is
+    // the reducer's only behavior. Placements referencing an entity this
+    // viewer has not been told about are dropped (fail closed).
+    hexes.set(hexKey(record.position), {
       ...record,
       contents: record.contents.filter((p) => entities.has(p.entityId)),
     });
@@ -740,7 +742,7 @@ describe('fixture authority', () => {
     const authority = createAuthority(twoRoomCrypt());
     const event = authority.subscribe();
     expect(event.hexes.every((h) => h.state === 'VISIBLE')).toBe(true);
-    // Room 2 is not mentioned at all — not as GONE, not as an empty record.
+    // Room 2 is not mentioned at all — unseen is omission, not an empty record.
     expect(event.hexes.some((h) => inRoom2(h.position))).toBe(false);
   });
 
@@ -928,7 +930,9 @@ Expected: CI green; evidence attached to the PR.
 - [ ] Confirm remembered material precedence, opaque `transparent=false`/`depthWrite=true` treatment, safe GLTF/texture cache handling, material-array restoration, disposal ownership, no remembered animation or demand invalidation, and stable shaded instanced-floor ordering.
 - [ ] Confirm remembered Synty segments use the portion before `->`, fittings inspect all `|`-joined keys, and remembered door/frame/end/fitting pieces have crypt treatment with no handlers.
 - [ ] Confirm remembered entities never enter pathing, occupancy, hover, selection, targeting, self indicator, or turn order; existing ghost behavior remains pale-cyan and separate.
-- [ ] Confirm the reducer takes events as its only input, is idempotent on repeated records, drops placements referencing undisclosed entities, ignores `REMEMBERED` for unknown hexes, and never derives LOS, reveal, memory, or hidden mutations.
+- [ ] Confirm the reducer takes events as its only input, is idempotent on repeated records, drops placements referencing undisclosed entities, and never derives LOS, reveal, memory, or hidden mutations.
+- [ ] Confirm no delete path exists: no `GONE` state, no removal transition, no tombstone, and no reducer branch that removes a hex record.
+- [ ] Confirm `facing` is carried on `Placement` and not on `FogEntity`, and that a re-disclosed entity cannot alter a remembered facing.
 - [ ] Confirm replaying a recorded session against a fresh reducer reproduces identical state — the reducer is a pure function of its events.
 - [ ] Confirm desktop and mobile real-WebGL evidence covers Room 1 visible with Room 2 absent, door/reveal, Room 2 plus Room 1 memory, hidden-change isolation, reconnect, re-sight, and the monster sequence: visible crossing, frozen after leaving sight, gone on approach.
 - [ ] Confirm `src/concepts/README.md` and evidence-only fog `CONTRACT.md` state the approved concept workflow and have not created a platform request.
