@@ -13,6 +13,7 @@ const hiddenManifest = `${packageManifest}.temporary`;
 const installedPiDirectory = resolve(projectRoot, ".pi/extensions/pi-team-harness/node_modules/@earendil-works/pi-coding-agent");
 const hiddenInstalledPiDirectory = `${installedPiDirectory}.temporary`;
 const prohibitedSource = resolve(projectRoot, ".pi/extensions/pi-team-harness/src/prohibited.ts");
+const durableRecordSource = resolve(projectRoot, ".pi/extensions/pi-team-harness/src/durable-record.ts");
 
 function runVerifier(): string {
   return execFileSync(process.execPath, [verifier], { cwd: projectRoot, encoding: "utf8" });
@@ -62,6 +63,20 @@ test("verifier discriminates prohibited external runtime structure", async () =>
     );
   } finally {
     await rm(prohibitedSource);
+  }
+
+  assert.match(runVerifier(), /PASS/);
+});
+
+test("verifier discriminates a forbidden local task record", async () => {
+  await writeFile(durableRecordSource, "appendEntry(\"task-record\", {});\n");
+  try {
+    assert.throws(
+      () => runVerifier(),
+      (error: unknown) => /Pi session persistence is prohibited/.test(String(error)),
+    );
+  } finally {
+    await rm(durableRecordSource);
   }
 
   assert.match(runVerifier(), /PASS/);

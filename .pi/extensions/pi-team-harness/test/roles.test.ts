@@ -4,7 +4,7 @@ import test from "node:test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ROLE_ADAPTERS, roleAdapter } from "../src/roles";
+import { ROLE_ADAPTERS, roleAdapter, roleCanServeTeam } from "../src/roles";
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(testDir, "../../../..");
@@ -35,7 +35,16 @@ test("role adapters name canonical charter paths without copying charter prose",
   }
 });
 
-test("role adapters are found by their literal identifier", () => {
-  assert.equal(roleAdapter("rpg-toolkit-member")?.team, "Platform");
+test("role adapters are found by their literal identifier and retain the canonical roster kinds", () => {
+  assert.equal(roleAdapter("director-platform")?.kind, "lead");
+  assert.equal(roleAdapter("rpg-toolkit-member")?.kind, "member");
+  assert.equal(roleAdapter("api-fixer")?.kind, "fixer");
+  assert.equal(roleAdapter("explore")?.kind, "explore");
+  assert.equal(roleAdapter("janitor")?.kind, "janitor");
+  assert.equal(roleAdapter("independent-gate")?.kind, "gate");
+  assert.equal(roleAdapter("rpg-dnd5e-web-member-ui-ux")?.charterPaths.at(-1), "docs/teams/roles/rpg-dnd5e-web-member/overlays/ui-ux.md");
+  assert.equal(roleAdapter("rpg-dnd5e-web-member-assets")?.charterPaths.at(-1), "docs/teams/roles/rpg-dnd5e-web-member/overlays/assets.md");
+  assert.equal(roleCanServeTeam(roleAdapter("rpg-toolkit-member")!, "Platform"), true);
+  assert.equal(roleCanServeTeam(roleAdapter("rpg-toolkit-member")!, "Cross-team"), false);
   assert.equal(roleAdapter("not-a-role"), undefined);
 });

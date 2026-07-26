@@ -24,6 +24,7 @@ test("canonical charter loader resolves and reads the current charter at runtime
 test("canonical charter resolver rejects paths outside docs/teams/roles", () => {
   const outsideRole: RoleAdapter = {
     id: "outside",
+    kind: "support",
     team: "Cross-team",
     charterPaths: ["README.md"],
   };
