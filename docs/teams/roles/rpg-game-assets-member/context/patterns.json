@@ -1,3 +1,28 @@
 {
-  "items": []
+  "items": [
+    {
+      "type": "pattern",
+      "id": "blender-mcp-auto-rig-pro-animation-workflow",
+      "created": "2026-07-25",
+      "updated": "2026-07-25",
+      "status": "active",
+      "name": "Blender MCP + Auto-Rig Pro animation workflow",
+      "description": "Use this workflow for production animation or rigging work. Blender is 5.0.1. The configured MCP server is `blender-mcp==1.6.4` at loopback `localhost:9876`; its machine install and connection runbook is `/home/kirk/game-dev/docs/blender-mcp-pilot.md`, with configuration in `/home/kirk/game-dev/opencode.json` and installer at `/home/kirk/game-dev/scripts/install-blender-mcp.sh`. Server configuration is not an active GUI connection: enable the Blender add-on and click Connect in every Blender session; never assume a connection persists.\n\nAuto-Rig Pro is local licensed machine state, not bootstrapped or stored in any repository. Before production, inspect Blender Preferences for add-on key `auto_rig_pro-master` (fallback `auto_rig_pro`) and observed version `3.78.34`. Stop and report if it is absent or the version cannot be verified; never silently substitute a different retarget method. Do not provide plugin installation instructions.\n\nMCP is optional for active-GUI inspection and visual iteration only. It has full local control and an exclusive single-client lease, so it is not release truth. Headless repository scripts, tests, and re-import validators, plus Kirk visual approval, are release truth. The canonical retarget recipe's invariants are: use the `BLENDER` glTF import heuristic; derive a dynamic per-target child-joint/rest profile; retain 46 ARP mappings and 47 live constraints while solving; use neither static matrices nor manual production target posing; reach zero final constraints; and validate exact geometry, materials, weights, and action output.",
+      "example": "Preflight examples (configuration does not prove an active GUI socket):\n\n```sh\njq -e '.mcp[\"blender-mcp\"] | select(.enabled == true and .environment.BLENDER_HOST == \"localhost\" and .environment.BLENDER_PORT == \"9876\")' \\\n+  /home/kirk/game-dev/opencode.json\nopencode mcp list\n# These confirm configured state; neither proves Blender is connected.\n\nblender --version\ngrep -nE 'auto_rig_pro(-master)?|3\\.78\\.34' \\\n+  \"$HOME/.config/blender/5.0/scripts/addons/auto_rig_pro-master/__init__.py\"\n# Also verify the enabled add-on and version in Blender Preferences for this session.\n```\n\nIn Blender for every session: enable the Blender MCP add-on, click Connect, then verify Auto-Rig Pro in Preferences before opening the production retarget. Run `rpg-game-assets/scripts/retarget_crypt_idle_walk_arp.py` and `rpg-game-assets/scripts/test_retarget_crypt_idle_walk_arp.py` as the canonical recipe requires; use `rpg-game-assets/.claude/crypt-idle-walk-arp-progress.md` and `game-dev/memory/unarmed-character-animation-workflow.md` for the established sequence. Finish with the repository's headless re-import and exact-output validators, then obtain Kirk visual approval.",
+      "anti_pattern": "Treating `opencode mcp list` or a past Blender session as proof that the GUI socket is connected; treating Auto-Rig Pro as portable or open-source; replacing missing ARP with another retarget method; using MCP-only inspection as release evidence; or shipping retained constraints, static matrices, manual production target poses, or unvalidated output.",
+      "domain": "assets",
+      "references": [
+        "/home/kirk/game-dev/docs/blender-mcp-pilot.md",
+        "/home/kirk/game-dev/opencode.json",
+        "/home/kirk/game-dev/scripts/install-blender-mcp.sh",
+        "rpg-game-assets/scripts/retarget_crypt_idle_walk_arp.py",
+        "rpg-game-assets/scripts/test_retarget_crypt_idle_walk_arp.py",
+        "rpg-game-assets/.claude/crypt-idle-walk-arp-progress.md",
+        "game-dev/memory/unarmed-character-animation-workflow.md",
+        "https://github.com/KirkDiggler/rpg-game-assets/pull/31",
+        "https://github.com/KirkDiggler/rpg-game-assets/issues/32",
+        "https://github.com/KirkDiggler/rpg-project/issues/138"
+      ]
+    }
+  ]
 }
