@@ -105,6 +105,12 @@ explored frontier. v1 decisions:
 - Different-height adjacent rooms: connector runs take the union of the two
   row ranges — fine at uniform height (all current content), documented as a
   known v1 limit.
+- **Load-bearing coupling (for any future server change):** the client
+  derives true grid bounds from `Wall.from` min/max over the walls list,
+  which works because walls are projected whole-room and never reveal-gated
+  (the proto exposes no space dimensions). If per-viewer wall reveal is ever
+  added server-side, that derivation silently narrows and the invisible-wall
+  class returns — put this on that change's checklist.
 
 ## Implementation notes (feeds plan.md)
 

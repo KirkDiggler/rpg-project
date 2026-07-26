@@ -21,9 +21,11 @@ timing (see W2's category rule, which is robust to both wire shapes).
 ## W1 — Run computation (pure module + tests)
 
 A pure module (`wallRuns` or similar): inputs are exactly what the encounter
-map already receives — regions' hex sets, doors, combined space dimensions;
-outputs are per-room **envelope runs** and per-connector **column runs** in
-world coordinates, each with door gaps.
+map already receives — regions' hex sets, doors, and grid bounds derived from
+the unconditional walls list (`Wall.from` min/max — the proto exposes no
+space-dimension fields; as-built correction, see design.md's load-bearing
+coupling note); outputs are per-room **envelope runs** and per-connector
+**column runs** in world coordinates, each with door gaps.
 
 Rules (from the design's implementation notes):
 - Room bounding rect = min/max over the region's `Hexes` (no width/offset
