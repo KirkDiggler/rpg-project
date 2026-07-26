@@ -60,6 +60,54 @@ and rarely need touching.
 `rpg-toolkit` versions with no `replace` directives, so toolkit work still needs
 publish → `go get` before the API can see it.
 
+## Parallel lab api
+
+The primary `rpg-api` container above is a **shared, one-at-a-time**
+resource: its `RPG_DUNGEON_KEY`/`RPG_CONTENT_DIR` get toggled by whoever is
+currently authoring or verifying a dungeon, and two teams working the local
+stack at once will collide (one team's restart or env swap silently changes
+what another team's client is looking at).
+
+Use the parallel lab instance instead of touching the primary whenever
+you're running an experiment, authoring/iterating on dungeon content, or
+verifying something that isn't "the thing everyone else is currently
+testing." **Rule: the primary stays on `reference-tomb` for everyone; labs
+and experiments run on the parallel instance.**
+
+```bash
+cd rpg-deployment
+
+docker build -t rpg-api:local ../rpg-api   # skip if already built
+
+# brings up rpg-api-lab + envoy-lab alongside the existing stack — never
+# touches the primary rpg-api/envoy services
+docker compose -f docker-compose.local-dev.yml \
+               -f docker-compose.local-lab.yml up -d rpg-api-lab envoy-lab
+```
+
+Point a worktree's dev server at the lab instance instead of the primary:
+
+```bash
+VITE_API_HOST=http://localhost:8081 npm run dev
+```
+
+`vite.config.ts`'s `/connect` proxy already reads `VITE_API_HOST` (falling
+back to `localhost:8080`), so this needs no code change — just the env var
+on the `npm run dev` you start from that worktree.
+
+| Knob | Default | Purpose |
+| --- | --- | --- |
+| `RPG_LAB_DUNGEON_KEY` | `wall-lab` | the lab instance's default dungeon key |
+| `RPG_CONTENT_HOST_DIR` | `../dungeon-content` | host dir mounted read-only at `/content` |
+
+Both are shell env vars read at `docker compose up` time (e.g.
+`RPG_LAB_DUNGEON_KEY=my-experiment docker compose -f ... up -d rpg-api-lab`),
+not values baked into the compose file — set them per shell, don't edit the
+file. The lab instance shares the primary's redis/mongo/5e-srd-api network;
+only `rpg-api-lab`/`envoy-lab` are separate. See
+`rpg-deployment/docker-compose.local-lab.yml` for the full service
+definitions.
+
 ## Update assets (models, textures)
 
 **Assets have nothing to do with the API.** They are static files that Vite
