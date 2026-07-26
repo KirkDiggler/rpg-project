@@ -2,16 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver a fixture-driven `/concepts` Fog of War two-room crypt that renders viewer-scoped visible and remembered knowledge with real HexGrid/Synty components, without changing production encounter behavior or cross-repo contracts.
+**Goal:** Deliver a playable single-viewer `/concepts` Fog of War crypt that defines the hex knowledge event layer — the draft proto contract — with real HexGrid/Synty components, without changing production encounter behavior or cross-repo contracts.
 
-**Architecture:** The web adds one small shared scene-knowledge presentation seam to the existing mixed HexGrid scene: known geometry stays in the normal floor/wall collections while remembered-key membership and per-entity state select an inert crypt-charcoal treatment. A typed concept fixture owns complete viewer projections, a separate world-truth inspector fixture, and a reducer limited to atomic projection replacement; the renderer never receives world truth or computes LOS.
+**Architecture:** Two halves separated by an event boundary. An **authority** holds authored world truth and a crude line of sight, reconciles visibility after each move intent, and emits per-viewer `HexKnowledgeChanged` events; it stands in for work the toolkit and API will own. A **consumer** — reducer keyed by hex, adapter to HexGrid props, real renderer — applies only those events and has no other input. Walking the map is what proves the contract; the rendered scene is built solely from emitted events, never from world truth.
 
 **Tech Stack:** TypeScript 5.8, React 19, React Three Fiber 9, Three.js 0.181, `@react-three/drei`, Vitest 4, `@testing-library/react`, and `@react-three/test-renderer`. No dependency additions.
 
 ## Global Constraints
 
 - This plan is canonical at `rpg-project/ideas/fog-of-war/plan.md`, adjacent to the approved `design.md`; implementation occurs only in `rpg-dnd5e-web`.
-- Execute four sequential web issues/PRs. Before each task: create one `rpg-dnd5e-web` issue, add it to Board 19, set Feature=`The Dungeon`, set Team=`Assets` for Tasks 1-2 (shared 3D renderer seam) and Team=`UI/UX` for Tasks 3-4 (fixture and concept presentation), then create a fresh worktree/branch from latest `origin/main`. Use the issue number returned by `gh issue create`; never invent one.
+- Execute five sequential web issues/PRs. **Task 1 is already shipped** — see its section. Before each remaining task: create or re-scope one `rpg-dnd5e-web` issue, add it to Board 19, set Feature=`The Dungeon`, set Team=`Assets` for Task 2 (shared 3D renderer seam) and Team=`UI/UX` for Tasks 3-5 (event layer, authority, concept presentation), then create a fresh worktree/branch from latest `origin/main`. Use the issue number returned by `gh issue create`; never invent one. Issues #605 and #606 already exist and are re-scoped rather than duplicated.
+- Tasks 3, 4, and 5 each end at a review seam: open the PR and stop. The event layer is what the protos transcribe, so it is read before an authority exists to feed it, and the authority is read before the page makes it pretty.
 - Each GitHub issue body or comment ends exactly `— asset-pipeline agent, on behalf of KirkDiggler`.
 - Each task is one issue and one PR. Run `npm run ci-check` before its push; never use `--no-verify`. This planning operation creates no web issues, branches, pushes, or PRs.
 - Scope is the concept plus the smallest additive shared renderer support. Do not modify `EncounterView.tsx`, `useEncounterState.ts`, production stream handling, toolkit, API, or protos. Omitted new props preserve production behavior byte-for-byte in intent.
@@ -23,8 +24,12 @@
 - The Canvas uses `frameloop="demand"`: remembered class models resolve no clip and never self-invalidate. Do not add movement/facing hook enable flags unless direct inspection during execution proves clearing inputs insufficient.
 - Remembered content renders but is inert. Build pathing, occupancy, interaction, turn-order, self-indicator, hover, and door handlers from visible-only records/geometry. Remembered entities never block based on stale positions. Remembered floors cannot be hovered/clicked/pathed. Remembered doors have no handlers, cursor change, or propagation stop. `TurnOrderOverlay` receives no remembered IDs.
 - `showFrontierGroundHints?: boolean` defaults to `true`; the concept passes `false` so hints never expose unseen-adjacent ground.
-- The concept projection is a typed, complete authored scene projection with floor/wall/entity records carrying real `AbsoluteFloorTile`, generated `Wall`, and shared `HexGridEntity` payloads plus stable id, `roomId`, and state. The adapter emits exact HexGrid props and omits unseen records. `currentRoomId` is camera/context metadata only; never use it to filter Room 1 remembered content from Room 2 live content.
-- Reducer actions are only `hydrate` and atomic `replaceProjection`. It does not accept world truth and has no reveal, door-open, LOS, or inferred-memory action. Invalid records fail closed by omission; malformed remembered records never become visible.
+- The event layer is defined in `design.md` §"The event layer" and is the draft proto contract. One per-viewer `HexKnowledgeChanged` carries `hexes: [HexRecord]` and `entities: [FogEntity]`. A `HexRecord` is `position`, `state` (`VISIBLE | REMEMBERED | GONE`), `terrain`, `zoneId`, `edges: [WallLike]`, `contents: [Placement]`. A `Placement` is `entityId` + `facing`. Do not add fields the concept does not consume.
+- A `VISIBLE` record is **total**: `contents: []` positively means empty. Re-sight replaces the held record wholesale — never a merge, never a field-level update. This is what deletes a remembered occupant, so it is not an optimization to soften later.
+- The reducer's only input is events. It has no world-truth parameter, no LOS, no reveal or door-open action, and no derivation. Knowledge is a map keyed by hex. Applying the same record twice must leave state identical. A placement whose `entityId` is not in the viewer's disclosed entity set is dropped; a `REMEMBERED` record for a hex with no prior knowledge is ignored.
+- Only the authority reads world truth, and no consumer-side module may import from `authority/`. This is enforced by `boundary.test.ts`, not by convention. The authority exists to produce the event stream; if it grows rules beyond that, stop and re-read `design.md` §"Concept architecture".
+- Movement animation is out of scope. The authority moves entities between hexes discretely. Do not add interpolation, easing, or path tweening to reach a nicer-looking result.
+- Type `*Like` interfaces against the generated v1alpha2 messages field-for-field rather than importing generated classes, following `src/concepts/combat-pacing/fixtures.ts`. Document every deliberate divergence at its field.
 - Do not build Intelligence, senses, retention, palette-selection, or production persistence systems. `CONTRACT.md` is evidence-only, not a platform request.
 - Visual evidence uses the real development Concepts Lab, not standalone HTML. Task 4 adds a dev-only query seam: `?concept=fog-of-war&fogStep=<step-id>` opens Concepts Lab and selects an authored Fog step; normal navigation is unchanged. The exact screenshot form is `node /home/kirk/game-dev/tools/browser/screenshot.mjs <url> <output.png> 5000 <width> <height>`.
 
@@ -40,13 +45,27 @@
 | `src/components/hex-grid/{SyntyHexWall,ShadedHexWall}.tsx` | Applies remembered wall/door/frame/end/fitting treatment and removes remembered door event handlers. |
 | `src/components/hex-grid/{HexEntity,ClassCharacterModel,MediumHumanoid,PropModel}.tsx` | Renders remembered entities frozen and inert through real asset and fallback paths. |
 | `src/components/playtest/playtestMapHelpers.ts` | Aliases `RenderableEntity` to the exported shared HexGrid entity contract. |
-| `src/concepts/fog-of-war/{fixtures,reducer,adapter}.ts` | Typed viewer projections, isolated world truth, authored control steps, fail-closed reducer, and exact HexGrid input adapter. |
-| `src/concepts/fog-of-war/FogOfWarConcept.tsx` | Responsive control/inspector page mounting a real crypt `HexGrid`. |
-| `src/concepts/fog-of-war/{fixtures,reducer,adapter,FogOfWarConcept}.test.ts[x]` | Pure contract, reducer, adapter, and page behavior coverage. |
+| `src/concepts/fog-of-war/events.ts` | The event layer: `HexKnowledgeChanged`, `HexRecord`, `Placement`, `FogEntity`, `hexKey`. The draft proto contract. |
+| `src/concepts/fog-of-war/reducer.ts` | One viewer's knowledge keyed by hex. Applies events; no other input. |
+| `src/concepts/fog-of-war/adapter.ts` | Reducer state to exact HexGrid props; unseen omitted. |
+| `src/concepts/fog-of-war/authority/{world,los,authority}.ts` | Authored world truth, crude hex LOS, and visibility reconciliation emitting per-viewer events. The only code permitted to read world truth. |
+| `src/concepts/fog-of-war/boundary.test.ts` | Asserts no consumer module imports from `authority/`. Keeps client-side LOS out permanently. |
+| `src/concepts/fog-of-war/FogOfWarConcept.tsx` | Responsive playable page mounting a real crypt `HexGrid`; move intents in, events out. |
+| `src/concepts/fog-of-war/{events,reducer,adapter,FogOfWarConcept}.test.ts[x]` | Contract, reducer, adapter, and page behavior coverage. |
 | `src/{App.tsx,concepts/ConceptsView.tsx,concepts/README.md}` | Dev-only query selection, Fog-of-war registration, and concepts-wide executable-contract policy. |
 | `src/concepts/fog-of-war/CONTRACT.md` | Evidence and candidate gaps only; no platform request. |
 
-## Task 1: Shared knowledge contract and inert mixed geometry
+## Task 1: Shared knowledge contract and inert mixed geometry — ✅ SHIPPED
+
+**Delivered by rpg-dnd5e-web#601 / PR #602** (`b835c29`, merged 2026-07-25).
+`src/components/hex-grid/sceneKnowledge.ts` exists with `SceneKnowledgeState`,
+the `CRYPT_MEMORY_*` constants, `isRemembered`, `rememberedSegment`,
+`rememberedFitting`, and `cloneCryptMaterials`; `HexGrid` accepts
+`rememberedFloorHexKeys`, `rememberedWallHexKeys`, and `knowledgeState` on
+entities, and remembered wall runs render in crypt memory.
+
+The steps below are retained as the record of what was built. Do not re-execute
+them. The remaining work starts at Task 2.
 
 **Issue/branch setup:** Create the issue first with Feature=`The Dungeon`, Team=`Assets`, then use its returned number in the branch/worktree name. Example commands use `$ISSUE`, set from `gh issue create` output.
 
@@ -382,324 +401,536 @@ git commit -m "feat: render remembered entities inertly"
 
 Expected: focused tests and CI pass; commit contains only Task 2 files before push/PR.
 
-## Task 3: Typed viewer projections and fail-closed reducer
+## Task 3: Event layer types, hex reducer, and adapter
 
-**Issue/branch setup:** After Task 2 merges, create a Board 19 issue with Feature=`The Dungeon`, Team=`UI/UX`; begin a fresh worktree from latest `origin/main`.
+This is the contract seam. It is pure TypeScript with no rendering, no world
+truth, and no authority — the consumer half of the concept, built and reviewed
+before anything exists to produce its input. Hand-authored events stand in for
+the authority here, which is what makes the reducer's isolation testable.
+
+**Issue/branch setup:** Update `rpg-dnd5e-web#605` ("Fog of War: typed viewer
+projection fixtures") rather than filing a duplicate — its scope is replaced by
+the event layer, so rewrite the body against `design.md` §"The event layer" and
+retitle it `Fog of War: hex knowledge event layer and reducer`. Confirm Board 19
+carries Feature=`The Dungeon`, Team=`UI/UX`. Start a fresh worktree from latest
+`origin/main`.
 
 **Files:**
-- Create: `src/concepts/fog-of-war/fixtures.ts`
+- Create: `src/concepts/fog-of-war/events.ts`
+- Create: `src/concepts/fog-of-war/events.test.ts`
 - Create: `src/concepts/fog-of-war/reducer.ts`
-- Create: `src/concepts/fog-of-war/adapter.ts`
-- Create: `src/concepts/fog-of-war/fixtures.test.ts`
 - Create: `src/concepts/fog-of-war/reducer.test.ts`
+- Create: `src/concepts/fog-of-war/adapter.ts`
 - Create: `src/concepts/fog-of-war/adapter.test.ts`
 
 **Interfaces:**
-- Consumes: `AbsoluteFloorTile`, generated `Wall`, Task 1 `SceneKnowledgeState`, and Task 1 `HexGridEntity`.
-- Produces: `ViewerSceneProjection`, `WorldTruthFixture`, discriminated `FogConceptStep`, `FogOfWarState`, `fogOfWarReducer`, `sanitizeProjection`, and `toHexGridProps`.
+- Consumes: `AbsoluteFloorTile` (`@/hooks/dungeonMapGeometry`), exported
+  `HexGridEntity` (`src/components/hex-grid/HexGrid.tsx`), `SceneKnowledgeState`
+  (`src/components/hex-grid/sceneKnowledge.ts`).
+- Produces: `HexKnowledgeChanged`, `HexRecord`, `Placement`, `FogEntity`,
+  `fogReducer`, `emptyKnowledge`, `toHexGridProps`.
 
-- [ ] **Step 1: Create the issue/worktree and write the failing projection contract tests.**
+Follow the `combat-pacing`/`equipment` precedent: declare `*Like` interfaces
+matching the generated v1alpha2 messages field-for-field rather than importing
+generated classes, and document every deliberate divergence at its field. See
+`src/concepts/combat-pacing/fixtures.ts`'s file header for the established
+rationale.
 
-Create the UI/UX issue titled `Fog of War: typed viewer projection fixtures`, add it to Board 19, create its fresh worktree, then write `fixtures.test.ts` expecting seven named control steps: projection steps `room1-visible`, `door-reveal`, `room2-with-room1-memory`, `reconnect`, `resight-room1`, and `second-viewer`; plus the sole world-truth step `hidden-change-inspector`. Assert that no viewer projection record uses an unseen state, that `hidden-change-inspector` has no `projection` property, and that the second viewer’s Room 2 records are absent before its own authored reveal.
+- [ ] **Step 1: Update the issue and create the worktree.**
 
-Use this discriminated shape in the test import:
-
-```ts
-export type ViewerRecord =
-  | { kind: 'floor'; id: string; roomId: string; knowledgeState: SceneKnowledgeState; tile: AbsoluteFloorTile }
-  | { kind: 'wall'; id: string; roomId: string; knowledgeState: SceneKnowledgeState; wall: Wall }
-  | { kind: 'entity'; id: string; roomId: string; knowledgeState: SceneKnowledgeState; entity: HexGridEntity };
+```bash
+gh issue edit 605 --repo KirkDiggler/rpg-dnd5e-web \
+  --title "Fog of War: hex knowledge event layer and reducer"
+# Rewrite the body against design.md §"The event layer"; end it exactly:
+#   — asset-pipeline agent, on behalf of KirkDiggler
+git -C /home/kirk/game-dev/rpg-dnd5e-web fetch origin main
+git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add \
+  "/tmp/opencode/web-605-fog-events" -b "feat/605-fog-events" origin/main
+npm --prefix "/tmp/opencode/web-605-fog-events" install
 ```
 
-- [ ] **Step 2: Run fixture tests and confirm the missing-export failure.**
+Expected: issue 605 retitled and re-scoped; clean worktree on `feat/605-fog-events`.
 
-Run: `npm test -- --run src/concepts/fog-of-war/fixtures.test.ts`
+- [ ] **Step 2: Write the failing reducer tests.**
 
-Expected: FAIL because the fixture module and typed scenarios do not exist.
-
-- [ ] **Step 3: Create typed fixtures and strictly isolate world truth.**
-
-Create `fixtures.ts` with `ViewerSceneProjection { viewerId: string; currentRoomId: string; records: ViewerRecord[] }` and a separate `WorldTruthRecord` union with the same real floor/wall/entity payloads but no `knowledgeState`, then `WorldTruthFixture { rooms: Record<string, { label: string; records: WorldTruthRecord[] }> }`. Define the exact control model:
-
-```ts
-export type FogConceptStep =
-  | { kind: 'projection'; id: string; label: string; action: 'hydrate' | 'replaceProjection'; projection: ViewerSceneProjection }
-  | { kind: 'world-truth'; id: 'hidden-change-inspector'; label: string; worldTruth: WorldTruthFixture };
-```
-
-Export `FOG_CONCEPT_STEPS: FogConceptStep[]`. `room1-visible` uses `action: 'hydrate'`; door/reveal, Room 2 memory, reconnect, re-sight, and second viewer use `action: 'replaceProjection'`; `hidden-change-inspector` is the only `kind: 'world-truth'` entry. `WorldTruthFixture` is exported only for inspector display and fixture comparison; it is not accepted by reducer or adapter types. Construct all maps with real `AbsoluteFloorTile`, generated `Wall`, and `HexGridEntity` values. The `room2-with-room1-memory` projection contains Room 1 records with `'remembered'` and Room 2 records with `'visible'` together. The hidden-change fixture changes only `WORLD_TRUTH_AFTER_HIDDEN_CHANGE`; it has no viewer projection or reducer action.
-
-- [ ] **Step 4: Write reducer tests before the reducer.**
-
-Create `reducer.test.ts`:
+Create `reducer.test.ts`. These eight cases are the contract; each maps to a row
+of `design.md` §"Required behavior".
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { ROOM2_WITH_ROOM1_MEMORY, RESIGHT_ROOM1 } from './fixtures';
-import { fogOfWarReducer, initialFogOfWarState } from './reducer';
+import { emptyKnowledge, fogReducer } from './reducer';
+import type { HexKnowledgeChanged } from './events';
 
-describe('fogOfWarReducer', () => {
-  it('does not change memory when hidden world truth changes outside a dispatch', () => {
-    const state = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: ROOM2_WITH_ROOM1_MEMORY });
-    expect(state.projection).toEqual(ROOM2_WITH_ROOM1_MEMORY);
+const at = (q: number, r: number) => ({ x: q, y: r, z: -q - r });
+const goblin = { entityId: 'goblin-1', name: 'Goblin', type: 'monster' as const };
+
+const visible = (q: number, r: number, contents = [] as { entityId: string; facing: number }[]) => ({
+  position: at(q, r),
+  state: 'VISIBLE' as const,
+  terrain: 0,
+  zoneId: '',
+  edges: [],
+  contents,
+});
+
+describe('fog reducer', () => {
+  it('first sight adds a visible hex', () => {
+    const next = fogReducer(emptyKnowledge(), { hexes: [visible(0, 0)], entities: [] });
+    expect(next.hexes.get('0,0,0')?.state).toBe('VISIBLE');
   });
-  it('atomically replaces remembered Room 1 with re-sighted current truth', () => {
-    const remembered = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: ROOM2_WITH_ROOM1_MEMORY });
-    const next = fogOfWarReducer(remembered, { type: 'replaceProjection', projection: RESIGHT_ROOM1 });
-    expect(next.projection).toEqual(RESIGHT_ROOM1);
-    expect(next.projection.records.some((r) => r.roomId === 'room-1' && r.knowledgeState === 'remembered')).toBe(false);
+
+  it('loss of sight freezes the record it already holds', () => {
+    const seen = fogReducer(emptyKnowledge(), {
+      hexes: [visible(0, 0, [{ entityId: 'goblin-1', facing: 0 }])],
+      entities: [goblin],
+    });
+    const lost = fogReducer(seen, {
+      hexes: [{ ...visible(0, 0), state: 'REMEMBERED' }],
+      entities: [],
+    });
+    // The frozen record keeps its contents — the goblin is still believed there.
+    expect(lost.hexes.get('0,0,0')?.state).toBe('REMEMBERED');
+    expect(lost.hexes.get('0,0,0')?.contents).toEqual([{ entityId: 'goblin-1', facing: 0 }]);
+    expect(lost.entities.get('goblin-1')).toBeDefined();
   });
-  it('returns the same state reference for malformed top-level projection', () => {
-    const state = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: ROOM2_WITH_ROOM1_MEMORY });
-    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, viewerId: '', records: [] } as unknown as ViewerSceneProjection;
-    expect(fogOfWarReducer(state, { type: 'replaceProjection', projection: malformed })).toBe(state);
+
+  it('re-sight replaces memory wholesale, deleting a remembered occupant', () => {
+    // design.md case 8 — the load-bearing one.
+    const remembered = fogReducer(emptyKnowledge(), {
+      hexes: [{ ...visible(0, 0, [{ entityId: 'goblin-1', facing: 0 }]), state: 'REMEMBERED' }],
+      entities: [goblin],
+    });
+    const resighted = fogReducer(remembered, { hexes: [visible(0, 0)], entities: [] });
+    expect(resighted.hexes.get('0,0,0')?.state).toBe('VISIBLE');
+    expect(resighted.hexes.get('0,0,0')?.contents).toEqual([]);
   });
-  it('omits malformed remembered records rather than coercing them live', () => {
-    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, records: [...ROOM2_WITH_ROOM1_MEMORY.records, { kind: 'entity', id: '', roomId: 'room-1', knowledgeState: 'remembered', entity: {} }] } as unknown as ViewerSceneProjection;
-    const next = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed });
-    expect(next.projection?.records.some((record) => record.id === '')).toBe(false);
+
+  it('a hidden mutation changes nothing', () => {
+    const before = fogReducer(emptyKnowledge(), {
+      hexes: [{ ...visible(1, 0), state: 'REMEMBERED' }],
+      entities: [],
+    });
+    const after = fogReducer(before, { hexes: [], entities: [] });
+    expect(after.hexes.get('1,0,-1')).toEqual(before.hexes.get('1,0,-1'));
   });
-  it('omits null and unknown-kind nested records without throwing', () => {
-    const malformed = { ...ROOM2_WITH_ROOM1_MEMORY, records: [...ROOM2_WITH_ROOM1_MEMORY.records, null, { kind: 'fog', id: 'unknown', roomId: 'room-1', knowledgeState: 'remembered' }] } as unknown as ViewerSceneProjection;
-    expect(() => fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed })).not.toThrow();
-    const next = fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection: malformed });
-    expect(next.projection?.records.some((record) => record.id === 'unknown')).toBe(false);
+
+  it('GONE removes the record entirely', () => {
+    const seen = fogReducer(emptyKnowledge(), { hexes: [visible(0, 0)], entities: [] });
+    const gone = fogReducer(seen, {
+      hexes: [{ ...visible(0, 0), state: 'GONE' }],
+      entities: [],
+    });
+    expect(gone.hexes.has('0,0,0')).toBe(false);
+  });
+
+  it('applying the same record twice is idempotent', () => {
+    const event: HexKnowledgeChanged = { hexes: [visible(0, 0)], entities: [] };
+    const once = fogReducer(emptyKnowledge(), event);
+    expect(fogReducer(once, event)).toEqual(once);
+  });
+
+  it('drops a placement whose entity is not disclosed', () => {
+    const next = fogReducer(emptyKnowledge(), {
+      hexes: [visible(0, 0, [{ entityId: 'never-disclosed', facing: 0 }])],
+      entities: [],
+    });
+    expect(next.hexes.get('0,0,0')?.contents).toEqual([]);
+  });
+
+  it('is a pure function of the events applied', () => {
+    const events: HexKnowledgeChanged[] = [
+      { hexes: [visible(0, 0, [{ entityId: 'goblin-1', facing: 2 }])], entities: [goblin] },
+      { hexes: [{ ...visible(0, 0), state: 'REMEMBERED' }], entities: [] },
+      { hexes: [visible(0, 0)], entities: [] },
+    ];
+    const replay = events.reduce(fogReducer, emptyKnowledge());
+    const again = events.reduce(fogReducer, emptyKnowledge());
+    expect(replay).toEqual(again);
   });
 });
 ```
 
-- [ ] **Step 5: Implement the two-action fail-closed reducer.**
+- [ ] **Step 3: Run the tests and confirm they fail.**
 
-Create `reducer.ts`:
+Run: `npm test -- --run src/concepts/fog-of-war/reducer.test.ts`
+Expected: FAIL — `./reducer` and `./events` do not resolve.
+
+- [ ] **Step 4: Write `events.ts`.**
 
 ```ts
-export interface FogOfWarState { projection: ViewerSceneProjection | null; }
-export const initialFogOfWarState: FogOfWarState = { projection: null };
-export type FogOfWarAction =
-  | { type: 'hydrate'; projection: ViewerSceneProjection }
-  | { type: 'replaceProjection'; projection: ViewerSceneProjection };
+/**
+ * Fog of War event layer (rpg-project ideas/fog-of-war/design.md §"The event
+ * layer"). These types are the draft proto contract: what the concept proves
+ * by being played is what rpg-api-protos then encodes.
+ *
+ * `PositionLike` and `WallLike` match the generated v1alpha2 `Position` and
+ * `Wall` messages field-for-field rather than importing the generated classes
+ * — same rationale as combat-pacing's fixtures.ts.
+ */
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+export interface PositionLike { x: number; y: number; z: number }
+
+/** Matches v1alpha2 Wall field-for-field. Doors are a DOOR_* `kind`, not a
+ * separate list — the wire has no separate door collection. */
+export interface WallLike {
+  from: PositionLike;
+  to: PositionLike;
+  kind: number;
+  id?: string;
 }
-function isFiniteCube(value: unknown): value is { x: number; y: number; z: number } {
-  return isObject(value) && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.z) && value.x + value.y + value.z === 0;
+
+/** A hex is VISIBLE (current authorized truth), REMEMBERED (frozen last
+ * observation), or GONE (authorized removal). UNSEEN is omission — never a
+ * value. */
+export type HexState = 'VISIBLE' | 'REMEMBERED' | 'GONE';
+
+/** What occupies a hex. Resolves against the event's `entities` collection. */
+export interface Placement {
+  entityId: string;
+  /** Hex-direction index 0-5. Carried here rather than on the entity because
+   * facing is a property of standing somewhere. */
+  facing: number;
 }
-function isValidViewerRecord(record: unknown): record is ViewerRecord {
-  if (!isObject(record) || typeof record.id !== 'string' || !record.id || typeof record.roomId !== 'string' || !record.roomId) return false;
-  if (record.knowledgeState !== 'visible' && record.knowledgeState !== 'remembered') return false;
-  if (record.kind === 'floor') return isObject(record.tile) && isFiniteCube(record.tile);
-  if (record.kind === 'wall') return isObject(record.wall) && isFiniteCube(record.wall.from) && isFiniteCube(record.wall.to);
-  if (record.kind === 'entity') return isObject(record.entity) && typeof record.entity.entityId === 'string' && Boolean(record.entity.entityId) && typeof record.entity.name === 'string' && Boolean(record.entity.name) && isFiniteCube(record.entity.position);
-  return false;
+
+/** One hex's complete authorized truth for one viewer. A VISIBLE record is
+ * TOTAL: `contents: []` positively means empty, never "omitted". */
+export interface HexRecord {
+  position: PositionLike;
+  state: HexState;
+  terrain: number;
+  zoneId: string;
+  edges: WallLike[];
+  contents: Placement[];
 }
-export function sanitizeProjection(
-  projection: unknown
-): ViewerSceneProjection | null {
-  if (!isObject(projection) || typeof projection.viewerId !== 'string' || !projection.viewerId || typeof projection.currentRoomId !== 'string' || !projection.currentRoomId || !Array.isArray(projection.records)) {
-    return null;
-  }
-  return {
-    viewerId: projection.viewerId,
-    currentRoomId: projection.currentRoomId,
-    records: projection.records.filter(isValidViewerRecord),
-  };
+
+/** Everything the server chose to disclose about an entity to this viewer.
+ * Fields the server withholds are simply absent — disclosure is a server
+ * decision, never client policy. */
+export interface FogEntity {
+  entityId: string;
+  name: string;
+  type: 'player' | 'monster' | 'obstacle';
+  classRefId?: string;
+  monsterRefId?: string;
+  obstacleType?: number;
+  propRefId?: string;
 }
-export function fogOfWarReducer(state: FogOfWarState, action: FogOfWarAction): FogOfWarState {
-  const projection = sanitizeProjection(action.projection);
-  return projection === null ? state : { ...state, projection };
+
+/** One viewer's slice. Hexes say where; entities say what. Delivered together
+ * so they cannot disagree. */
+export interface HexKnowledgeChanged {
+  hexes: HexRecord[];
+  entities: FogEntity[];
 }
+
+export const hexKey = (p: PositionLike): string => `${p.x},${p.y},${p.z}`;
 ```
 
-`sanitizeProjection(projection: unknown): ViewerSceneProjection | null` first guards the top-level object, string `viewerId`/`currentRoomId`, and records array before accessing nested values. `isValidViewerRecord(record: unknown): record is ViewerRecord` first guards non-null, non-array objects; then validates shared strings/state; then accepts exactly floor, wall, or entity. Floor and wall `from`/`to` coordinates are finite cube coordinates; entity id/name/position are present and finite. Null, arrays, unknown kinds/states, and missing payloads return false and are omitted. It never converts a missing/invalid state to visible; malformed remembered records are omitted. `fogOfWarReducer` preserves the existing state reference on `null`. There are no other action variants, and no reducer parameter accepts `WorldTruthFixture`.
+- [ ] **Step 5: Write `reducer.ts`.**
 
-- [ ] **Step 6: Write adapter tests, then implement exact HexGrid inputs.**
-
-Create `adapter.test.ts` asserting that `toHexGridProps(ROOM2_WITH_ROOM1_MEMORY)` returns both rooms in `floorTiles`, Room 1 keys in `rememberedFloorHexKeys`/`rememberedWallHexKeys`, remembered entities with `knowledgeState: 'remembered'`, no unseen record, and `showFrontierGroundHints: false`.
-
-Implement:
+Knowledge is a map keyed by hex. Applying an event is a merge; there is no
+other input and no derivation.
 
 ```ts
-export interface FogHexGridProps {
-  floorTiles: Map<string, AbsoluteFloorTile>;
-  rememberedFloorHexKeys: ReadonlySet<string>;
-  walls: Wall[];
-  rememberedWallHexKeys: ReadonlySet<string>;
-  entities: HexGridEntity[];
-  showFrontierGroundHints: false;
+import type { FogEntity, HexKnowledgeChanged, HexRecord } from './events';
+import { hexKey } from './events';
+
+export interface FogKnowledge {
+  hexes: ReadonlyMap<string, HexRecord>;
+  entities: ReadonlyMap<string, FogEntity>;
 }
-export function toHexGridProps(projection: ViewerSceneProjection): FogHexGridProps {
-  const floorTiles = new Map<string, AbsoluteFloorTile>();
-  const rememberedFloorHexKeys = new Set<string>();
-  const walls: Wall[] = [];
-  const rememberedWallHexKeys = new Set<string>();
-  const entities: HexGridEntity[] = [];
-  for (const record of projection.records) {
-    if (record.kind === 'floor') {
-      const key = `${record.tile.x},${record.tile.y},${record.tile.z}`;
-      floorTiles.set(key, record.tile);
-      if (record.knowledgeState === 'remembered') rememberedFloorHexKeys.add(key);
-    } else if (record.kind === 'wall') {
-      walls.push(record.wall);
-      if (record.knowledgeState === 'remembered' && record.wall.from) {
-        rememberedWallHexKeys.add(`${record.wall.from.x},${record.wall.from.y},${record.wall.from.z}`);
-      }
-    } else {
-      entities.push({ ...record.entity, knowledgeState: record.knowledgeState });
+
+export const emptyKnowledge = (): FogKnowledge => ({
+  hexes: new Map(),
+  entities: new Map(),
+});
+
+export function fogReducer(state: FogKnowledge, event: HexKnowledgeChanged): FogKnowledge {
+  const entities = new Map(state.entities);
+  for (const entity of event.entities ?? []) entities.set(entity.entityId, entity);
+
+  const hexes = new Map(state.hexes);
+  for (const record of event.hexes ?? []) {
+    const key = hexKey(record.position);
+    if (record.state === 'GONE') {
+      hexes.delete(key);
+      continue;
     }
+    if (record.state === 'REMEMBERED') {
+      // Freeze what we hold. A remembered record with no prior knowledge is
+      // meaningless and fails closed by omission.
+      const held = hexes.get(key);
+      if (held) hexes.set(key, { ...held, state: 'REMEMBERED' });
+      continue;
+    }
+    // VISIBLE replaces wholesale — never a merge. Placements referencing an
+    // undisclosed entity are dropped.
+    hexes.set(key, {
+      ...record,
+      contents: record.contents.filter((p) => entities.has(p.entityId)),
+    });
   }
-  return { floorTiles, rememberedFloorHexKeys, walls, rememberedWallHexKeys, entities, showFrontierGroundHints: false };
+  return { hexes, entities };
 }
 ```
 
-The explicit `record.kind` branch uses only sanitized records, adds full known geometry to the normal map/array, adds remembered record coordinate keys to the matching set, and never filters records by `currentRoomId`. For wall membership use `wall.from` as the wall-hex key, matching door and Synty segment ownership. It returns no combat callbacks, no door callback, and no production stream data.
+- [ ] **Step 6: Run the reducer tests and confirm they pass.**
 
-- [ ] **Step 7: Run the contract test suite and commit Task 3.**
+Run: `npm test -- --run src/concepts/fog-of-war/reducer.test.ts`
+Expected: PASS, 8 tests.
+
+- [ ] **Step 7: Write the adapter and its failing test, then implement.**
+
+`adapter.ts` turns `FogKnowledge` into exact `HexGrid` props. Remembered hexes
+populate `rememberedFloorHexKeys`/`rememberedWallHexKeys`; contents become
+`HexGridEntity[]` with `knowledgeState` set from their hex's state. Unseen is
+omission — no record, no prop entry.
+
+Write `adapter.test.ts` first, asserting: a remembered hex's key appears in
+both remembered key sets; its occupant is emitted with
+`knowledgeState: 'remembered'`; a visible hex's occupant has
+`knowledgeState: 'visible'`; and no key appears in `floorTiles` that has no
+record. Run it, confirm failure, then implement `toHexGridProps`.
+
+- [ ] **Step 8: Full check and commit.**
 
 ```bash
-npm test -- --run src/concepts/fog-of-war/fixtures.test.ts src/concepts/fog-of-war/reducer.test.ts src/concepts/fog-of-war/adapter.test.ts
-git status --short
-git diff --check
 npm run ci-check
-git add src/concepts/fog-of-war/fixtures.ts src/concepts/fog-of-war/reducer.ts src/concepts/fog-of-war/adapter.ts src/concepts/fog-of-war/fixtures.test.ts src/concepts/fog-of-war/reducer.test.ts src/concepts/fog-of-war/adapter.test.ts
-git commit -m "feat: add fog of war viewer fixtures"
+git add src/concepts/fog-of-war/
+git commit -m "feat(fog)#605: hex knowledge event layer, reducer, and adapter"
 ```
 
-Expected: tests prove no leaks, hidden mutation isolation, atomic re-sight, and the exact mixed-scene adapter output; CI passes before push/PR.
+Expected: CI green; commit contains only Task 3 files. Open the PR and stop —
+this is a review seam. The event layer is what the protos transcribe, so it
+gets read before an authority exists to feed it.
 
-## Task 4: Fog of War concept page, documentation, and visual evidence
+## Task 4: Fixture authority — world truth, line of sight, intent to events
 
-**Issue/branch setup:** After Task 3 merges, create a Board 19 issue with Feature=`The Dungeon`, Team=`UI/UX`; use a fresh worktree from latest `origin/main`.
+The server stand-in. It is the only code in the concept permitted to read world
+truth, and it sits on the far side of the event boundary.
+
+**Issue/branch setup:** File a new `rpg-dnd5e-web` issue titled
+`Fog of War: fixture authority and visibility reconciliation`, Board 19,
+Feature=`The Dungeon`, Team=`UI/UX`. Fresh worktree from latest `origin/main`.
+
+**Files:**
+- Create: `src/concepts/fog-of-war/authority/world.ts`
+- Create: `src/concepts/fog-of-war/authority/los.ts`
+- Create: `src/concepts/fog-of-war/authority/authority.ts`
+- Create: `src/concepts/fog-of-war/authority/authority.test.ts`
+- Create: `src/concepts/fog-of-war/boundary.test.ts`
+
+**Interfaces:**
+- Consumes: nothing from the consumer half.
+- Produces: `createAuthority(world)` exposing `subscribe()` and
+  `moveViewer(coord)`, both returning `HexKnowledgeChanged` events.
+
+- [ ] **Step 1: Create the issue and worktree.** Same shape as Task 3 Step 1;
+  branch `feat/$ISSUE-fog-authority`.
+
+- [ ] **Step 2: Write the failing authority tests.**
+
+These are the cases the play loop must reach. Cases 7 and 8 from `design.md`
+are why the record shape exists, so they are tested at the authority, not only
+at the reducer.
+
+```ts
+describe('fixture authority', () => {
+  it('emits VISIBLE records for what the viewer can see and nothing else', () => {
+    const authority = createAuthority(twoRoomCrypt());
+    const event = authority.subscribe();
+    expect(event.hexes.every((h) => h.state === 'VISIBLE')).toBe(true);
+    // Room 2 is not mentioned at all — not as GONE, not as an empty record.
+    expect(event.hexes.some((h) => inRoom2(h.position))).toBe(false);
+  });
+
+  it('emits REMEMBERED for hexes the viewer just lost sight of', () => {
+    const authority = createAuthority(twoRoomCrypt());
+    authority.subscribe();
+    const event = authority.moveViewer(intoRoom2);
+    expect(event.hexes.filter((h) => inRoom1(h.position)).every((h) => h.state === 'REMEMBERED')).toBe(true);
+  });
+
+  it('emits nothing to a viewer for a change they cannot see', () => {
+    const authority = createAuthority(twoRoomCrypt());
+    authority.subscribe();
+    authority.moveViewer(intoRoom2);
+    const event = authority.mutateHidden(() => openRoom1Chest());
+    expect(event.hexes).toEqual([]);
+  });
+
+  it('freezes a monster on the last hex the viewer saw it (design.md case 7)', () => {
+    const authority = createAuthority(twoRoomCrypt());
+    authority.subscribe();
+    const crossing = authority.moveMonster('goblin-1', pathThroughSight);
+    const lastSeen = crossing.at(-1)!;
+    expect(lastSeen.hexes.some((h) => h.state === 'REMEMBERED'
+      && h.contents.some((p) => p.entityId === 'goblin-1'))).toBe(true);
+  });
+
+  it('re-sighting the frozen hex reports it empty (design.md case 8)', () => {
+    const authority = createAuthority(twoRoomCrypt());
+    authority.subscribe();
+    authority.moveMonster('goblin-1', pathThroughSight);
+    const event = authority.moveViewer(besideTheFrozenHex);
+    const record = event.hexes.find((h) => sameHex(h.position, frozenHex))!;
+    expect(record.state).toBe('VISIBLE');
+    expect(record.contents).toEqual([]);
+  });
+});
+```
+
+- [ ] **Step 3: Run and confirm failure.**
+
+Run: `npm test -- --run src/concepts/fog-of-war/authority/authority.test.ts`
+Expected: FAIL — `createAuthority` does not exist.
+
+- [ ] **Step 4: Implement `world.ts` and `los.ts`.**
+
+`world.ts` holds the authored two-room crypt: hexes with terrain, walls as
+`WallLike` edges with doors as a `kind`, entity roster, and entity positions.
+`los.ts` is a deliberately crude hex line-of-sight — walk the hex line from
+viewer to target and block on any solid wall edge crossed. It does not need to
+be correct D&D; it needs to be *decidable and stable* so the emitted stream is
+reproducible.
+
+Keep this small. It stands in for work the toolkit will own. If it starts
+growing rules beyond producing the event stream, that is the signal to stop —
+see `design.md` §"Concept architecture".
+
+- [ ] **Step 5: Implement `authority.ts`.**
+
+Hold the previous visible set per viewer. On any mutation: recompute the
+visible set, then diff.
+
+- Newly visible or still visible → a `VISIBLE` record built from world truth,
+  with `contents` listing every entity standing there and an `entities` entry
+  for each disclosed entity.
+- Newly not visible, previously visible → a `REMEMBERED` record.
+- Not visible and not previously visible → nothing at all.
+
+The diff is the whole design: what the viewer cannot see produces no message,
+so stale memory persists without the client doing anything.
+
+- [ ] **Step 6: Write the boundary test.**
+
+This is the test that keeps client-side LOS out permanently.
+
+```ts
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const CONSUMER = ['events.ts', 'reducer.ts', 'adapter.ts', 'FogOfWarConcept.tsx'];
+
+describe('fog concept boundary', () => {
+  it('no consumer module imports from the authority half', () => {
+    for (const file of CONSUMER) {
+      const source = readFileSync(join(__dirname, file), 'utf8');
+      expect(source, `${file} must not import world truth`).not.toMatch(/from\s+['"].*authority/);
+    }
+  });
+});
+```
+
+- [ ] **Step 7: Run everything and commit.**
+
+```bash
+npm test -- --run src/concepts/fog-of-war/
+npm run ci-check
+git add src/concepts/fog-of-war/
+git commit -m "feat(fog)#$ISSUE: fixture authority, crude LOS, and the event boundary"
+```
+
+Expected: CI green. Open the PR and stop — second review seam.
+
+## Task 5: Playable concept page, documentation, and visual evidence
+
+**Issue/branch setup:** Update `rpg-dnd5e-web#606` ("Fog of War: executable
+two-room concept") — its scope becomes the playable page. Board 19,
+Feature=`The Dungeon`, Team=`UI/UX`. Fresh worktree from latest `origin/main`.
 
 **Files:**
 - Create: `src/concepts/fog-of-war/FogOfWarConcept.tsx`
 - Create: `src/concepts/fog-of-war/FogOfWarConcept.test.tsx`
 - Create: `src/concepts/fog-of-war/CONTRACT.md`
 - Create: `src/concepts/README.md`
-- Modify: `src/App.tsx`
-- Create: `src/App.test.tsx`
 - Modify: `src/concepts/ConceptsView.tsx`
-- Create: `src/concepts/ConceptsView.test.tsx`
-- Modify: `docs/how-to/concepts-route.md`
+- Modify: `src/App.tsx`
 
-**Interfaces:**
-- Consumes: Task 3 `FOG_CONCEPT_STEPS`, `FogConceptStep`, `WorldTruthFixture`, `fogOfWarReducer`, and `toHexGridProps`; Task 1/2 `HexGrid` presentation seam.
-- Produces: a registered `/concepts` Fog of War page that dispatches only projection control steps, exposes clear fixture evidence, and supports a dev-only evidence query seam.
+- [ ] **Step 1: Update issue 606 and create the worktree.**
 
-- [ ] **Step 1: Create the issue/worktree and write failing page-navigation tests.**
+- [ ] **Step 2: Write the failing page test.**
 
-Create the UI/UX issue titled `Fog of War: executable two-room concept`, add it to Board 19, create the fresh worktree, then create `FogOfWarConcept.test.tsx` with mocked `HexGrid`. Assert the default is `room1-visible`; clicking `room2-with-room1-memory` shows labels `Viewer projection` and `World truth inspector`, passes both Room 1 and Room 2 tiles to the mock, passes `showFrontierGroundHints={false}`, and reports remembered record count. Capture the mock's serialized viewer props, select `hidden-change-inspector`, and assert the serialized viewer props are unchanged while the world-truth inspector changes. Create `src/concepts/ConceptsView.test.tsx`; render `ConceptsView`, click `Fog of War`, and assert the mocked `FogOfWarConcept` branch renders. Add `src/App.test.tsx` coverage that development `?concept=fog-of-war&fogStep=resight-room1` opens Concepts Lab even after an active-lobby response arrives, while no query still resumes to the active lobby normally.
+Assert the page wires authority → reducer → adapter → `HexGrid` and nothing
+else: clicking a hex calls `authority.moveViewer`, the returned event is passed
+to `fogReducer`, and `HexGrid` receives only `toHexGridProps` output. Assert
+the page holds no state derived from world truth.
 
-- [ ] **Step 2: Run the page test and confirm failure.**
+- [ ] **Step 3: Build the page.**
 
-Run: `npm test -- --run src/concepts/fog-of-war/FogOfWarConcept.test.tsx`
+A real crypt `HexGrid` plus a control strip: move by clicking a hex, open the
+door, step the monster along its path, trigger a hidden mutation, and force a
+reconnect (discard reducer state, re-subscribe). A side inspector may display
+world truth for review — it reads from the authority and never feeds the
+reducer. Label it clearly as a review aid.
 
-Expected: FAIL because the page and ConceptsView registration do not exist.
+Pass `showFrontierGroundHints={false}` so hints never expose unseen-adjacent
+ground.
 
-- [ ] **Step 3: Build the responsive real-HexGrid concept page.**
+- [ ] **Step 4: Register the concept and the dev query seam.**
 
-Implement a reducer-driven component:
+Add the Fog of War entry to `ConceptsView.tsx`. Add the dev-only
+`?concept=fog-of-war` seam in `App.tsx` per the Task 4 precedent in this plan's
+earlier revision; normal navigation is unchanged.
 
-```tsx
-export function FogOfWarConcept({ initialStepId }: { initialStepId?: string }) {
-  const initialStep = FOG_CONCEPT_STEPS.find((step) => step.kind === 'projection' && step.id === initialStepId) ?? FOG_CONCEPT_STEPS[0]!;
-  const initialProjection = initialStep.kind === 'projection' ? initialStep.projection : ROOM1_VISIBLE;
-  const [stepId, setStepId] = useState(initialStep.id);
-  const [worldTruth, setWorldTruth] = useState(WORLD_TRUTH_INITIAL);
-  const [state, dispatch] = useReducer(
-    fogOfWarReducer,
-    initialProjection,
-    (projection) => fogOfWarReducer(initialFogOfWarState, { type: 'hydrate', projection })
-  );
-  const selectStep = (nextId: string) => {
-    const next = FOG_CONCEPT_STEPS.find((step) => step.id === nextId) ?? FOG_CONCEPT_STEPS[0]!;
-    setStepId(next.id);
-    if (next.kind === 'world-truth') {
-      setWorldTruth(next.worldTruth);
-      return;
-    }
-    dispatch({ type: next.action, projection: next.projection });
-  };
-  const grid = state.projection ? toHexGridProps(state.projection) : null;
-  return grid ? <HexGrid {...grid} syntyDungeon spaceTheme="crypt" isPlayerTurn={false} combatState={null} /> : null;
-}
-```
+- [ ] **Step 5: Write `src/concepts/README.md` and `CONTRACT.md`.**
 
-`FogOfWarConcept` accepts `initialStepId?: string`; it is used only by the dev query seam and tests. `selectStep` dispatches only `kind: 'projection'` steps. `hidden-change-inspector` updates the separate `worldTruth` state and leaves the viewer projection reference/adapter output unchanged. In `App.tsx`, add a stable one-time gate before `currentView`:
+The README states the concepts-wide policy from `design.md`. `CONTRACT.md` is
+evidence-only: what the event layer needed, what the current wire carries, and
+candidate gaps. It is not a platform request — Kirk reviews it before any
+candidate becomes a cross-repo ask.
 
-```ts
-const [showFogConceptQuery] = useState(
-  () =>
-    import.meta.env.MODE === 'development' &&
-    new URLSearchParams(window.location.search).get('concept') === 'fog-of-war'
-);
-const [currentView, setCurrentView] = useState<AppView>(
-  showFogConceptQuery ? 'concepts' : 'home'
-);
-
-useEffect(() => {
-  if (showFogConceptQuery || !myActiveLobby.data) return;
-  if (myActiveLobby.data.encounterId) {
-    setResumeEncounterId(myActiveLobby.data.encounterId);
-    setCurrentView('lobby');
-  } else if (myActiveLobby.data.lobbyId) {
-    setResumeLobbyId(myActiveLobby.data.lobbyId);
-    setCurrentView('lobby');
-  }
-}, [myActiveLobby.data, showFogConceptQuery]);
-```
-
-This follows the repo's existing `import.meta.env.MODE === 'development'` convention. It is dev-only; normal active-lobby resume behavior is unchanged when the query is absent. In `ConceptsView.tsx`, derive `const fogStepId = import.meta.env.MODE === 'development' && new URLSearchParams(window.location.search).get('concept') === 'fog-of-war' ? new URLSearchParams(window.location.search).get('fogStep') ?? undefined : undefined`; initialize the active page to `'fog-of-war'` only when `fogStepId` is present. Render the branch exactly as `{activePage === 'fog-of-war' && <FogOfWarConcept initialStepId={fogStepId} />}`; normal button navigation passes `undefined`. Provide named controls for the full authored sequence: Room 1 visible, Door/reveal, Room 2 with Room 1 remembered, Hidden change inspector, Reconnect, Re-sight Room 1, and Second viewer. The layout uses a responsive grid (`grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr))`): the WebGL panel has `minHeight: 32rem` desktop and `minHeight: 24rem` at narrow width; inspectors use accessible headings and code-like record counts. Clearly label that viewer projection is renderer input and world truth is comparison-only.
-
-- [ ] **Step 4: Register the concept and write the concepts policy.**
-
-In `ConceptsView.tsx`, import `FogOfWarConcept`, add `'fog-of-war'` to `ConceptPage`, add `{ id: 'fog-of-war', label: 'Fog of War' }` to `CONCEPT_PAGES`, and render `{activePage === 'fog-of-war' && <FogOfWarConcept initialStepId={fogStepId} />}` in the active branch. Create `src/concepts/README.md` stating exactly that concepts use real game components with representative fixtures; are executable outside-in contract experiments rather than visual showcase mocks; fixtures describe desired consumer data; `CONTRACT.md` holds evidence/candidate gaps; Kirk reviews before gaps become cross-repo requests; and approved concepts drive toolkit/proto/API/production-web work from a known consumer contract.
-
-- [ ] **Step 5: Add an evidence-only contract log and route documentation.**
-
-Create `src/concepts/fog-of-war/CONTRACT.md` with numbered evidence, not requests: additive-only `GeometryRevealed`; API `visibleNow` not delivered as current geometry; unconditional snapshot wall/door leakage; entity-only ghosting and no remembered reconnect entities; and toolkit `View`’s reserved `KnownEntities`. State that the fixtures intentionally model desired consumer data, no platform issue is created by this concept, and Kirk review precedes any request. Add a Fog of War row to `docs/how-to/concepts-route.md` saying it is a two-room viewer-projection contract bench using real HexGrid/Synty rendering and documents the development-only query seam for reproducible captures.
-
-- [ ] **Step 6: Run page and fixture tests, then perform desktop/mobile WebGL review.**
+- [ ] **Step 6: Capture visual evidence by playing it.**
 
 ```bash
-npm test -- --run src/App.test.tsx src/concepts/ConceptsView.test.tsx src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/fixtures.test.ts src/concepts/fog-of-war/reducer.test.ts src/concepts/fog-of-war/adapter.test.ts
-npm run dev -- --host 127.0.0.1
+node /home/kirk/game-dev/tools/browser/screenshot.mjs \
+  "http://localhost:5173/?concept=fog-of-war" <output.png> 5000 <width> <height>
 ```
 
-With the server running, capture the query-selected real Concepts Lab states with the existing harness:
+Capture desktop and mobile for: Room 1 visible with Room 2 absent; the door
+opened; Room 2 visible with Room 1 in crypt memory; a hidden mutation leaving
+memory unchanged; reconnect; re-sight replacing memory; and the monster
+sequence — visible crossing, frozen after it leaves sight, gone on approach.
 
-```bash
-node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=room2-with-room1-memory" /tmp/fog-room2-memory-desktop.png 5000 1440 900
-node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=room2-with-room1-memory" /tmp/fog-room2-memory-mobile.png 5000 390 844
-node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=resight-room1" /tmp/fog-resight-desktop.png 5000 1440 900
-node /home/kirk/game-dev/tools/browser/screenshot.mjs "http://127.0.0.1:5173/?concept=fog-of-war&fogStep=resight-room1" /tmp/fog-resight-mobile.png 5000 390 844
-```
+The monster sequence is the money shot. It is the one a reviewer can judge
+without reading any code.
 
-These four commands are the key screenshot evidence for mixed memory and re-sight on desktop/mobile. Manually exercise the remaining authored states in the browser: initial unseen Room 1, door/reveal, hidden-change inspector, reconnect, and second viewer. Record those checks in the Task 4 PR viewed-statement; do not claim the four images alone depict every state. Confirm remembered Room 1 and visible Room 2 render together; remembered floor/wall/door/entity is opaque crypt-charcoal with no hover/cursor/action affordance; hidden change modifies only the world-truth inspector; re-sight removes stale remembered presentation and shows current truth; and no frontier hint appears beyond unknown geometry. Attach the four images to the Task 4 PR; do not commit them.
-
-- [ ] **Step 7: Run full CI, review evidence, and commit Task 4.**
+- [ ] **Step 7: Full check, commit, PR.**
 
 ```bash
 npm run ci-check
-git status --short
-git diff --check
-git add src/App.tsx src/App.test.tsx src/concepts/fog-of-war/FogOfWarConcept.tsx src/concepts/fog-of-war/FogOfWarConcept.test.tsx src/concepts/fog-of-war/CONTRACT.md src/concepts/README.md src/concepts/ConceptsView.tsx src/concepts/ConceptsView.test.tsx docs/how-to/concepts-route.md
-git commit -m "feat: add fog of war concept"
+git add src/concepts/
+git commit -m "feat(fog)#606: playable Fog of War concept, docs, and evidence"
 ```
 
-Expected: full CI passes, the commit contains only Task 4 files, and the visual evidence is attached to the implementation PR rather than added as an unrelated repository artifact.
+Expected: CI green; evidence attached to the PR.
 
 ## Final Acceptance Sweep
 
-- [ ] Confirm all four implementation PRs were issue-first, Board-19 classified, independently reviewed, and merged in order from latest `main`.
+- [ ] Confirm all five implementation PRs were issue-first, Board-19 classified, independently reviewed, and merged in order from latest `main` (Task 1 already merged as PR #602).
+- [ ] Confirm the rendered scene is built only from emitted events — no path reaches the renderer that bypasses the event layer.
+- [ ] Confirm `boundary.test.ts` passes and no consumer module imports from `authority/`.
+- [ ] Confirm a `VISIBLE` record with `contents: []` deletes a remembered occupant, proven both at the reducer and by playing it.
 - [ ] Confirm omitted `knowledgeState`, remembered key sets, and `showFrontierGroundHints` leave production defaults unchanged; no production encounter stream/reducer file changed.
 - [ ] Confirm unseen is absent from fixtures, adapter output, floor/wall/entity renderer inputs, and visual captures.
 - [ ] Confirm mixed Room 1 remembered and Room 2 visible geometry render concurrently; no `currentRoomId` filtering removes remembered Room 1.
 - [ ] Confirm remembered material precedence, opaque `transparent=false`/`depthWrite=true` treatment, safe GLTF/texture cache handling, material-array restoration, disposal ownership, no remembered animation or demand invalidation, and stable shaded instanced-floor ordering.
 - [ ] Confirm remembered Synty segments use the portion before `->`, fittings inspect all `|`-joined keys, and remembered door/frame/end/fitting pieces have crypt treatment with no handlers.
 - [ ] Confirm remembered entities never enter pathing, occupancy, hover, selection, targeting, self indicator, or turn order; existing ghost behavior remains pale-cyan and separate.
-- [ ] Confirm reducer accepts only full hydrate/replace projections, preserves the current state reference for invalid top-level projections, sanitizes malformed nested records by omission, has no world-truth input, and never derives LOS, reveal, memory, or hidden mutations.
-- [ ] Confirm desktop and mobile real-WebGL evidence covers Room 1 visible, door/reveal, Room 2 plus Room 1 memory, hidden-change isolation, reconnect, re-sight, and second-viewer isolation.
+- [ ] Confirm the reducer takes events as its only input, is idempotent on repeated records, drops placements referencing undisclosed entities, ignores `REMEMBERED` for unknown hexes, and never derives LOS, reveal, memory, or hidden mutations.
+- [ ] Confirm replaying a recorded session against a fresh reducer reproduces identical state — the reducer is a pure function of its events.
+- [ ] Confirm desktop and mobile real-WebGL evidence covers Room 1 visible with Room 2 absent, door/reveal, Room 2 plus Room 1 memory, hidden-change isolation, reconnect, re-sight, and the monster sequence: visible crossing, frozen after leaving sight, gone on approach.
 - [ ] Confirm `src/concepts/README.md` and evidence-only fog `CONTRACT.md` state the approved concept workflow and have not created a platform request.
 
 ## Out of Scope Follow-ups

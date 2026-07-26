@@ -1,6 +1,6 @@
 {
   "idea": "fog-of-war",
-  "status": "wave_a_ready",
+  "status": "concept_replan",
   "trigger": "Promote the approved viewer-scoped Fog of War concept into production behavior.",
   "summary": "Deliver live viewer knowledge first, then durable dynamic-entity memory without client-side LOS or hidden-world inference.",
   "parent_issue": "https://github.com/KirkDiggler/rpg-project/issues/147",
@@ -209,7 +209,36 @@
       "answer": "Only after Wave A acceptance passes.",
       "reason": "Issue creation follows dependency-ready waves and lets the live contract inform the durable snapshot design.",
       "date": "2026-07-25"
+    },
+    {
+      "question": "Does GeometryRevealed establish current visibility?",
+      "answer": "Superseded. GeometryRevealed is replaced entirely by one per-viewer HexKnowledgeChanged whose records carry a VISIBLE | REMEMBERED | GONE state.",
+      "reason": "Reveal, appearance, disappearance, and removal are states of one hex record, not four messages. Backward compatibility buys nothing while nothing is playable, and one way through beats a correct path plus a fallback.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Hex or geometry at the client seam?",
+      "answer": "Hex. Geometry stays the parent concept in the toolkit with hex as one layout family.",
+      "reason": "Walls and doors are already edges between two hexes on the wire, and HexGrid already remembers walls by hex key. A hex-keyed record is self-describing where the client consumes it.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "How is the contract decided, given the Wave A dependency order?",
+      "answer": "Outside-in: a playable single-viewer concept proves the event layer, protos transcribe it, the API translates and projects it, the toolkit supplies the authority. The Wave A order remains right for landing the work.",
+      "reason": "A wrong shape costs a fixture edit rather than four merged PRs. The pipeline it plugs into already exists \u2014 Broker publish/subscribe per player and TranslateEvent per viewer.",
+      "date": "2026-07-25"
     }
   ],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Does facing belong on the placement or the entity?",
+      "status": "open",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Is GONE distinct from a hex simply never appearing in a viewer's records again?",
+      "status": "open",
+      "date": "2026-07-25"
+    }
+  ]
 }
