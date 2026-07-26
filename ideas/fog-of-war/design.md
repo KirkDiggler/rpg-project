@@ -14,6 +14,27 @@ platform supplies that data. `src/concepts/fog-of-war/CONTRACT.md` records
 survey evidence and candidate platform gaps after the concept is reviewed.
 Kirk reviews that record before any candidate becomes a cross-repo request.
 
+### Revision: the concept is playable, and the event layer is the deliverable
+
+The original concept stepped a viewer through an authored six-step sequence.
+That is not enough to design a wire contract. A scripted list only proves the
+cases someone thought to script, and it never produces the transitions a
+player generates by wandering — the ones that expose whether a message shape
+actually holds up.
+
+This revision makes the concept **playable on a single viewer**. The player
+moves freely through an authored map and watches fog open and close. Nothing
+is smoke and mirrors: the concept defines a real event layer, and the rendered
+scene is built only from events that layer emits. What the concept proves by
+being played is what the protos then encode.
+
+Single viewer is deliberate, not a simplification to be undone later.
+Per-viewer routing already exists end to end — `Broker.Subscribe(encID,
+playerID)` delivers only events whose `Audience` contains that player, and
+`TranslateEvent(evt, viewer, now)` already translates per viewer. A contract
+that serves one viewer correctly serves all of them once the toolkit
+populates each viewer's slice.
+
 ## Context
 
 This is a multiplayer D&D Discord Activity. Visibility and visibility events
@@ -37,10 +58,12 @@ production boundary is:
 ### Goals
 
 - Establish the player experience for individual, durable dungeon knowledge.
-- Exercise a two-room scenario that proves visible, remembered, unseen,
-  hidden-world-change, reconnect, and re-sight behavior.
-- Define a narrow consumer contract that later platform work can implement
-  without making the web calculate LOS.
+- Let one viewer move freely through an authored map and prove visible,
+  remembered, unseen, hidden-world-change, reconnect, and re-sight behavior by
+  being played, not by stepping a script.
+- Define the event layer — message shape, payload, and transition semantics —
+  concretely enough that the proto work is transcription rather than
+  invention, and without making the web calculate LOS.
 - Preserve a single rendering seam for visible versus remembered content.
 - Make unsafe or incomplete data fail closed, never into live truth.
 
@@ -51,6 +74,10 @@ production boundary is:
   this concept.
 - No automatic party vision, shared minimap, or out-of-band knowledge sync.
 - No client-side LOS, reveal, memory derivation, or inference from world data.
+  The concept's authority does compute line of sight, because something must
+  stand in for the server — but it sits on the far side of the event boundary
+  and is enforced as such by test. No consumer-side module may compute or
+  import it. "The client" means the consumer half.
 - No Intelligence, sense, retention, fidelity, or theme system. The contract
   leaves an opaque optional presentation selector only; v1 uses crypt charcoal.
 - No attempt to turn remembered things into interactable gameplay objects.
@@ -93,24 +120,49 @@ falls back to crypt charcoal and cannot alter knowledge or interaction state.
 
 ## Concept architecture
 
-The future web concept creates `src/concepts/fog-of-war/` with:
+The concept creates `src/concepts/fog-of-war/` in two halves separated by a
+hard boundary: an **authority** standing in for the server, and a **consumer**
+standing in for the game client. Events are the only thing that crosses.
 
-- A `FogOfWarConcept` route entry registered in `src/concepts/ConceptsView.tsx`.
-- Authored fixtures for the two rooms, transitions, reconnect snapshot, and
-  hidden-world updates.
-- A reducer that accepts only authored viewer projections and applies only
-  explicit transitions; it never queries map geometry or computes LOS.
-- Shared render-state inputs for real floor, wall, door, trap, prop, corpse,
-  monster, and player components. Components receive `visible` or `remembered`;
-  unseen is represented by omission from their inputs.
+The authority holds the authored world truth and a deliberately crude line of
+sight. It is the only code in the concept permitted to read world truth. Given
+a move intent it reconciles what the viewer can now see and emits the events
+defined below. It stands in for work the toolkit and API will own; it is not a
+second game engine. It exists to produce the event stream, and it must not
+grow rules beyond what producing that stream requires.
+
+The consumer is the path production keeps:
+
+- A reducer holding one viewer's knowledge keyed by hex, applying events. It
+  never reads world truth, never computes LOS, and takes no input but events.
+- An adapter turning reducer state into `HexGrid` props.
+- Real `HexGrid`/Synty/game components — the renderer seam merged in
+  rpg-dnd5e-web#602. Components receive `visible` or `remembered`; unseen is
+  represented by omission from their inputs.
 - One central crypt-memory material/presentation treatment used by all
   remembered renderers.
-- `CONTRACT.md`, initially documenting evidence and candidate gaps rather than
-  requesting platform changes.
+
+Alongside both: a `FogOfWarConcept` route entry registered in
+`src/concepts/ConceptsView.tsx`, and `CONTRACT.md`, initially documenting
+evidence and candidate gaps rather than requesting platform changes.
+
+The boundary is the point of the exercise. World truth lives on one side,
+events cross, and the consumer can only ever know what a record told it. A
+test asserts that no consumer-side module imports from the authority half, so
+client-side LOS cannot arrive later as a convenience.
 
 The concept uses real HexGrid/Synty/components to expose integration seams.
 It may use fixture adapters, but it must not replace the map with a visual
 showcase mockup or create a parallel game renderer.
+
+### Movement is parked
+
+The authority moves things between hexes; it does not attempt convincing
+motion. Smooth movement is a large problem with its own owners, and reaching
+for it here would swallow the concept. `EntityMoved` already carries
+`actual_path` for whoever takes that on later. The fog contract states where
+things are, discretely, and the record shape below is checked only for not
+foreclosing interpolation — not for enabling it.
 
 ### Concepts README requirement
 
@@ -125,62 +177,163 @@ all concepts, not only fog of war, and states that concepts:
 - let approved concepts drive toolkit, proto, API, and production-web work from
   a known consumer contract.
 
-## Authored scenario and data flow
+## Authored world and play loop
 
-The fixture is a two-room crypt. Every render input is an explicitly authored
-viewer projection containing no unauthorized records. The concept may keep a
-separate authored world-truth fixture or scenario panel to compare hidden
-changes, but it is never passed to renderers or used by the reducer to derive
-visibility or memory. This comparison is not client-side LOS.
+The authored world is a two-room crypt held by the authority. The consumer
+never receives it. A scenario panel may display world truth beside the
+rendered view so a reviewer can see what the player is *not* being told;
+that panel reads from the authority and never feeds the reducer, and the
+comparison is a review aid, not client-side LOS.
 
-1. **Room 1, visible.** The viewer receives Room 1's live floor, walls, a
-   closed door, trap, props, corpse, monster, and player. Room 2 has no records
-   at all, including its walls and door-side geometry.
-2. **Door and reveal.** An authored visible projection opens the Room 1 door
-   and reveals the doorway/currently visible Room 2 contents. The reducer does
-   not calculate the reveal.
-3. **Room 2, Room 1 remembered.** The viewer moves into Room 2. The projection
-   marks Room 1's complete last-observed scene remembered and Room 2 live.
-4. **Hidden change.** The separate authored world-truth fixture changes Room 1
-   while the viewer projection receives no Room 1 update. The remembered Room 1
-   reducer state must remain byte-for-byte equivalent in knowledge terms: same
-   observed positions and states.
-5. **Reconnect.** A reconnect projection restores the viewer's Room 2 visible
-   state and Room 1 remembered snapshot. It does not reconstruct memory from
-   current hidden world truth.
-6. **Return and re-sight.** The viewer returns to Room 1 and receives current
-   truth. The stale remembered Room 1 scene is atomically replaced, exposing
-   the formerly hidden changes as live state.
+The play loop is: the player clicks a hex, the authority reconciles
+visibility, events are emitted, the reducer applies them, the scene
+re-renders. Every case below is reachable by playing rather than by
+advancing a script.
 
-The fixture includes a second authored viewer projection where useful to prove
-that one player's revelation does not populate another player's map. It does
-not add collaboration mechanics.
+1. **Standing in Room 1.** Records for what the viewer can see arrive
+   `VISIBLE`. Room 2 has no records at all — no floor, no walls, no
+   door-side geometry.
+2. **Opening the door.** New hex records arrive for what opening it exposes.
+   The reducer calculates no reveal.
+3. **Walking into Room 2.** Room 1's records arrive `REMEMBERED` as the
+   viewer loses sight of them; Room 2's arrive `VISIBLE`.
+4. **Hidden change.** The authority mutates Room 1 while the viewer is away
+   and emits nothing to that viewer. Remembered Room 1 must be unchanged in
+   knowledge terms: same observed positions and states.
+5. **Reconnect.** A fresh subscription restores Room 2 visible and Room 1
+   remembered. Memory is not reconstructed from current world truth.
+6. **Walking back.** Room 1 records arrive `VISIBLE` with current truth and
+   atomically replace the stale remembered scene, exposing what changed.
 
-## Desired future consumer contract
+Two cases the play loop must also reach, because they are what makes the
+record shape earn itself:
 
-The concept contract is intentionally small and projection-shaped. A future
-snapshot supplies a viewer identity and a complete personal scene projection;
-transitions supply the same kinds of records scoped to that viewer. Each
-renderable record carries:
+7. **A monster crossing the viewer's sight.** It walks a path partly inside
+   the viewer's vision. While visible, its records move hex to hex. When it
+   steps out of sight, the last hex the viewer saw it on freezes
+   `REMEMBERED` with the monster still placed on it, and the hexes it
+   continues through send nothing. The frozen monster is what the viewer
+   believes until contradicted.
+8. **Walking up to the frozen monster.** That hex arrives `VISIBLE` with
+   `contents: []`. The remembered monster disappears — not because a
+   "forget" message arrived, but because the current record is total and
+   says the hex is empty.
 
-- a stable record or entity identifier;
-- its kind and render payload appropriate to the real component;
-- `visible` or `remembered` render state;
-- a last-observed position and state for remembered records; and
-- optional opaque palette metadata for future selection, with crypt charcoal as
-  the required fallback.
+Case 8 is the load-bearing one. It is the reason a visible record must state
+its full contents rather than only its additions.
 
-`UNSEEN` has no record. A current `VISIBLE` record is authoritative only for
-the projection that carries it. A `REMEMBERED` record is a persisted personal
-snapshot, not a live entity with a cosmetic flag. The platform owns creation,
-replacement, deletion, and persistence of knowledge; the web reducer only
-uses supplied records and explicit state transitions.
+## The event layer
 
-The production implementation may choose exact proto message names and storage
-layout after Kirk approves the concept evidence. It must preserve these consumer
-semantics: reconnect includes remembered geometry and entities; entity and
-geometry knowledge are scoped together; current visibility is delivered rather
-than inferred; and re-sight replaces memory atomically.
+The hex is the unit of truth. One event carries one viewer's slice:
+
+```
+HexKnowledgeChanged {              // one viewer's slice
+  hexes:    [HexRecord]
+  entities: [Entity]               // authorized disclosure, this viewer only
+}
+
+HexRecord {
+  position: Position
+  state:    VISIBLE | REMEMBERED | GONE
+  terrain:  TerrainType
+  zone_id:  string
+  edges:    [Wall]                 // existing Wall shape: from, to, kind, id
+  contents: [Placement]            // [] means provably empty
+}
+
+Placement { entity_id, facing }
+```
+
+Two collections, delivered together so they cannot disagree. Hexes say
+**where**; entities say **what**.
+
+### Why the hex, and why hexes rather than "geometry"
+
+Walls and doors are already edges between two hexes on the wire —
+`Wall{from, to, kind, id}`, with doors as a wall *kind* rather than a
+separate list. An abstract geometry record would flatten that back into a
+bag of walls the client must re-associate with hexes. A hex-keyed record is
+self-describing at exactly the seam the client consumes, and the renderer
+already agrees: `HexGrid` remembers walls by hex key, not by wall id.
+
+`Geometry` remains the right parent concept in the toolkit, with hex as one
+layout family and other layouts possible later. At this seam the concept
+speaks hex.
+
+### Why a visible record is total
+
+A `VISIBLE` record states everything on its hex, including `contents: []`.
+Empty is a positive fact, not missing data. If a record could omit contents,
+the client would have to decide whether an absent monster means "gone" or
+"not included in this message" — and every way to decide that is either
+inference or dependence on a second message that may not arrive. Making the
+visible record total removes the question.
+
+This is why re-sight needs no merge rule: an arriving `VISIBLE` record
+replaces the remembered one wholesale. The door someone opened behind the
+viewer's back, the monster that left, the trap that was not there before —
+all corrected by one message, because appear is the new truth.
+
+### Why entities are a separate collection
+
+A placement carries `entity_id` and `facing`. The entity it references
+carries what the server is willing to disclose to *this* viewer, and only
+that. Two consequences fall out:
+
+- Perception is the same mechanism, not a special case. A viewer who passes
+  the check gets a trap placement on that hex plus a trap entity to resolve
+  it against; a viewer who fails gets `contents: []` and no trap entity at
+  all. Neither viewer's client contains logic about traps.
+- Disclosure is a server decision per field. HP is simply a field the server
+  may decline to populate — not a policy the client is trusted to enforce.
+
+Fail-closed becomes one rule: a placement whose `entity_id` is not in the
+viewer's known entity set is dropped.
+
+### What this replaces
+
+Backward compatibility buys nothing here — none of this is playable yet, and
+one way through beats a right way plus a fallback. So:
+
+- `GeometryRevealed` is replaced. Its additive sticky hex/wall payload cannot
+  express a visible/remembered partition, which is the whole feature.
+- `EntityAppeared` and `EntityDisappeared` are replaced. A hex record already
+  states presence and absence.
+- `EntityDisappeared.last_known_position` is retired. It exists today
+  specifically so a client can "freeze marker at last-seen hex without
+  client-side game-state tracking" — the hex record *is* the last-seen
+  position.
+- `DoorOpened`'s `revealed_hexes` / `revealed_walls` / `removed_walls`
+  payload is retired. A door opening is new hex records arriving. That leaves
+  `DoorOpened` a pure notification for sound and narration, which is what it
+  should have been.
+
+`EntityMoved` stays: it describes how something travelled, which is
+presentation, not knowledge.
+
+### Required behavior
+
+| Situation | Viewer receives |
+| --- | --- |
+| First sight | Records `VISIBLE` with full truth. No separate reveal step. |
+| Loss of sight | Records `REMEMBERED`. The client freezes what it holds. |
+| Re-sight | Records `VISIBLE` with current truth, replacing memory wholesale. |
+| Hidden mutation | Nothing. Stale memory persists by construction. |
+| Movement in view | Source hex `contents: []`, destination hex holding the entity. |
+| Witnessed removal | `GONE`. |
+| Hidden removal | Nothing. Memory stays stale until an authorized observation. |
+| Reconnect | The viewer's complete known set: `VISIBLE` and `REMEMBERED` records together. |
+
+`UNSEEN` has no record. A `VISIBLE` record is authoritative only for the slice
+carrying it. A `REMEMBERED` record is a personal snapshot, not a live record
+with a cosmetic flag. Duplicate records are idempotent — applying the same
+record twice is a merge by hex key onto the same value. The platform owns
+creation, replacement, deletion, and persistence of knowledge; the reducer
+only applies supplied records.
+
+Exact proto field numbering and message naming follow repository convention
+and are settled when the protos are written. The semantics above are what the
+concept proves and what the protos must preserve.
 
 ## Verified current contract gaps
 
@@ -212,6 +365,20 @@ fixture-driven until reviewed:
    that shape for its caller to save (`rpg-toolkit/encounter/encounter.go:566-574`);
    rpg-api durably persists the returned encounter data. The current seam
    therefore does not retain a complete knowledge snapshot.
+6. `rpg-api-protos/dnd5e/api/v1alpha2/encounter/types.proto:184-195` runs two
+   different visibility models side by side, and says so: `Space` documents
+   that "hexes and walls are sticky (explored geometry persists per character
+   across the campaign)" while "entities are real-time LOS (server filters per
+   player per event)". Sticky geometry is drawn as though currently observed,
+   so the wire has no state between explored and gone. That gap — not a
+   rendering shortfall — is why fog cannot be expressed today.
+7. `rpg-toolkit/encounter/events/hex_revealed.go:23-32` already carries a
+   per-viewer `PerPlayer map[PlayerID]HexRevealedSlice` whose `Audience()` is
+   derived from its keys, and `HexRevealedSlice` reserves an unused
+   `Entities []EntityVisibility` field "for shape stability so future slices
+   can add entity-visibility accumulation without a JSON migration". The
+   per-viewer split this design needs is the established pattern, and room
+   for entity knowledge was deliberately left open.
 
 ## Fail-closed behavior
 
@@ -244,15 +411,33 @@ The concept implementation must include reducer and fixture tests for:
 - state-preserving asset fallback; and
 - `ConceptsView` navigation wiring for Fog of War.
 
+The event layer adds these, which the older scripted concept could not reach:
+
+- **The boundary holds.** No consumer-side module imports from the authority
+  half. This is the test that keeps client-side LOS out permanently.
+- **A visible record is total.** A hex holding a remembered monster, on
+  receiving a `VISIBLE` record with `contents: []`, renders empty — case 8.
+- **Placements fail closed.** A placement referencing an entity absent from
+  the viewer's entity set is dropped, not rendered as an unknown shape.
+- **Records are idempotent.** Applying the same record twice leaves reducer
+  state identical.
+- **The reducer has no other input.** Its state is a pure function of the
+  events applied, asserted by replaying a recorded session against a fresh
+  reducer and comparing state.
+
 Visual review is required in the real WebGL concept on desktop and mobile. It
-must inspect the complete scenario: Room 1 live, the door reveal, Room 1 crypt
-memory from Room 2, hidden mutation isolation, reconnect restoration, and
-current-truth replacement on return.
+must inspect the complete scenario by playing it: Room 1 live, the door
+reveal, Room 1 crypt memory from Room 2, hidden mutation isolation, reconnect
+restoration, current-truth replacement on return, and the monster that walks
+out of sight, freezes, and vanishes on approach.
 
 ## Acceptance criteria
 
-- `/concepts` exposes **Fog of War** and the two-room scenario runs with real
-  game rendering components.
+- `/concepts` exposes **Fog of War**, and a single viewer can be walked freely
+  around the authored map with real game rendering components, watching fog
+  open and close.
+- The rendered scene is built only from emitted events. Nothing reaches the
+  renderer by a path that bypasses the event layer.
 - No unseen fixture content reaches component inputs or the rendered scene.
 - Remembered Room 1 remains a recognizable but crypt-treated, inert last view
   through movement and reconnect.
@@ -279,6 +464,36 @@ consumer contract in dependency order:
    wall/door leakage, and restore knowledge on reconnect.
 4. Production web: consume that contract on the encounter route using the
    proven concept rendering seam.
+
+### Ordering, and what this revision supersedes
+
+That numbering is dependency order for *landing* the work, not the order in
+which the contract gets decided. The contract is decided outside-in: the
+concept proves the event layer, the protos transcribe it, the API translates
+and projects it, and the toolkit supplies the authority behind it. Working
+this way means corrections happen while they are still cheap — a shape that
+turns out wrong costs a fixture edit rather than four merged PRs.
+
+The pipeline the production work plugs into already exists and does not need
+inventing: encounters publish through `Broker`, stream handlers subscribe
+per player, and `TranslateEvent(evt, viewer, now)` converts domain events to
+protos for one viewer. Fog is new event types flowing through it.
+
+This revision supersedes two things in `production-design.md`:
+
+- Its `GeometryAppeared` / `GeometryDisappeared` naming and its four-event
+  split of reveal, appear, disappear, and removal. The concept collapses these
+  into `HexKnowledgeChanged` with a per-record state, and speaks hex rather
+  than geometry at this seam.
+- Its treatment of `GeometryRevealed` as retained and additive. It is
+  replaced, not preserved; backward compatibility is not a constraint while
+  nothing is playable.
+
+The Wave A issues filed under rpg-project#147 (rpg-toolkit#850, #851,
+rpg-api-protos#197, rpg-api#724, #725, rpg-dnd5e-web#609, rpg-project#148)
+were written against the superseded four-event split and need updating before
+they are worked. Their goals, viewer-scoping requirements, and no-client-LOS
+constraints all survive; the event set named in them does not.
 
 Future Intelligence/senses may vary retention or fidelity, and future themes
 may select a different remembered palette such as forest sepia. Neither changes

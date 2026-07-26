@@ -25,6 +25,27 @@ pale-cyan entity ghost path. The concept plan's default-compatible `isGhost`
 behavior remains valid for its original non-production concept slice while
 production wiring is incomplete.
 
+> **Partly superseded — read `design.md` §"The event layer" first.**
+>
+> The event set named throughout this document — `GeometryAppeared`,
+> `GeometryDisappeared`, additive `GeometryRevealed`, and separate removal
+> transitions — has been replaced by a single per-viewer `HexKnowledgeChanged`
+> carrying hex records with a `VISIBLE | REMEMBERED | GONE` state, hex-attached
+> edges, and total contents. Reveal, appear, disappear, and removal are states
+> of one record rather than four messages, and the seam speaks hex rather than
+> geometry, because walls and doors are already hex edges on the wire.
+>
+> Everything else here still holds: the three knowledge states, viewer scoping,
+> hidden mutations leaving stale memory, witnessed removals updating it
+> immediately, no client-side LOS or world-truth lookup, the wall/door
+> projection leak, the event-before-persist ordering hazard, the wave split,
+> and the verification gates. What changed is the shape of the messages, not
+> the semantics they must carry.
+>
+> Backward compatibility with `GeometryRevealed` is no longer a requirement.
+> Nothing here is playable yet, and one way through is preferred to a correct
+> path plus a fallback.
+
 ## Production Semantics
 
 Production uses three personal knowledge states: unseen, currently visible,
