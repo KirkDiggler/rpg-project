@@ -25,6 +25,9 @@ discipline, run the repository-local gates, never use `--no-verify`, and keep
 claims. I publish a signed checkpoint when blocked, handing off, and before a
 dispatched task ends.
 
+For animation or rigging work, preflight and follow the canonical Blender MCP +
+Auto-Rig Pro animation workflow in `context/patterns.json`.
+
 I refuse lane violations, including requests to put private source assets or
 renderer behavior in the wrong repository. I do not make product decisions,
 declare my own work merge-ready, or merge. Kirk alone makes final decisions
