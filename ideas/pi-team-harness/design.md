@@ -26,12 +26,26 @@ mechanics:
 - a role's architectural boundary is more important than a prompt or tool
   permission that happens to permit it.
 
-The initial deliverable may be a **project-local Pi extension or Pi package** in
-`rpg-project`. It is a runtime adapter and cockpit, not a second policy store.
-It may hold process-local child handles and render a live view, but it must not
-create a task database, daemon, queue service, or local checkpoint ledger. Pi
-session JSONL and extension entries are private, best-effort runtime history;
-they are never a recovery prerequisite or task authority.
+The initial deliverable is a **project-local Pi extension/package in
+`game-dev`**, the portable travel entry point: clone `game-dev`, run
+`./bootstrap.sh`, and resume without a missing workspace beat. `game-dev` owns
+the cockpit runtime/package, bootstrap integration, entry/launcher behavior as
+needed, and the clean-machine verifier. It is a runtime adapter and cockpit,
+not a second policy store: it may hold process-local child handles and render a
+live view, but it must not create a task database, daemon, queue service, or
+local checkpoint ledger. Pi session JSONL and extension entries are private,
+best-effort runtime history; they are never a recovery prerequisite or task
+authority.
+
+`rpg-project` remains the canonical cross-repo policy and design root: role
+charters/overlays, Project 19 protocol, and this design/plan live there.
+`game-dev/bootstrap.sh` already guarantees a sibling `rpg-project` clone. A Pi
+process launched from `game-dev` discovers the local runtime under
+`game-dev/.pi/extensions/`; that runtime resolves charter paths from the cloned
+`game-dev/rpg-project` at execution time and never copies policy into
+`game-dev`. A missing clone or canonical path is a visible hard-stop, not a
+fallback prompt or a second policy store. Neither repository mutates global Pi
+configuration, credentials, or trust defaults.
 
 ### Non-goals
 
@@ -281,10 +295,11 @@ it does not reconstruct from a local database.
 A narrow project-local extension/package is sufficient for the first proof:
 
 ```text
-human <-> lead Pi TUI
+human <-> lead Pi TUI (launched from game-dev)
              |
-             | project-local extension: commands, role/profile lookup,
+             | game-dev project-local extension: commands, runtime profiles,
              | live cards, process-local supervisor
+             | resolves canonical charters from game-dev/rpg-project
              v
        child Pi process per worker (isolated cwd/worktree)
              |
@@ -524,17 +539,22 @@ control plane. This design uses those primitives without pretending otherwise.
 
 | Layer | Initial responsibility | Explicit limit |
 |---|---|---|
-| Project-local extension/package | thin role/profile adapters; dispatch validation; process-local supervisor; GitHub-backed commands; live TUI cards | no durable queue/store/daemon and no policy fork |
+| `game-dev` project-local extension/package | runtime profiles; dispatch validation; process-local supervisor; GitHub-backed commands; live TUI cards; resolves `rpg-project` charters by path | no durable queue/store/daemon, policy fork, or global Pi mutation |
 | Pi extension API | commands, custom tools, `session_start`/`session_shutdown`, status/widgets, TUI overlay, tool-call safety interception | extensions run with full local privileges; permissions supplement but do not replace charter rules |
 | Pi RPC child | isolated per-worker process, JSONL events, prompt/steer/follow-up/abort, child model/session | local session history is non-authoritative and disappears from recovery assumptions |
 | Pi SDK alternative | typed same-process session only if prototype warrants it | must preserve child-equivalent isolation and not persist dispatch state |
 | Pi TUI | human lead conversation, compact live cards, command palette, approval/escalation views | not a browser UI, durable board, or background service |
 
-The project-local extension loads only after Pi's existing project-trust flow.
-Its source is reviewed in the repository like any other full-privilege code.
-The implementation avoids starting timers, sockets, watchers, or child workers
-in the extension factory; it starts resources after `session_start` or an
-explicit command and uses idempotent `session_shutdown` cleanup.
+The `game-dev` project-local extension loads only after Pi's existing
+project-trust flow when Pi is launched from `game-dev`; its optional entry script
+therefore changes cwd to that root and forwards arguments rather than launching
+Pi from a sibling repository. Child workers use the already-selected runtime
+source explicitly when their worktree cwd differs, while their charter resolver
+still reads the canonical `game-dev/rpg-project` paths. Its source is reviewed
+in `game-dev` like any other full-privilege code. The implementation avoids
+starting timers, sockets, watchers, or child workers in the extension factory;
+it starts resources after `session_start` or an explicit command and uses
+idempotent `session_shutdown` cleanup.
 
 RPC integration uses strict LF-delimited JSONL and correlation IDs. The
 supervisor distinguishes `agent_end` from `agent_settled` so a retry,
