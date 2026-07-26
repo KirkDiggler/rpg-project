@@ -1,7 +1,7 @@
 ---
 name: Pi Team Harness
-issue: rpg-project#135
-status: design approved; Plan Review — canonical PR remains open through implementation
+issue: rpg-project#150
+status: proposed — live-feedback reconciliation review; supersedes no delivered runtime history
 ---
 
 # Pi Team Harness — Design
@@ -62,10 +62,13 @@ This design does not:
   or deployment verification; or
 - authorize a generic worker to operate Chrome DevTools or Blender.
 
-The first proof is intentionally one lead, one member, one board-backed issue,
-one replacement exercise, and one durable Chrome **or** Blender evidence
-artifact. More workers, a shared server, cross-provider routing, and automation
-beyond an observed failure are deferred to the retrospective.
+The first proof is intentionally one responsive lead, **one child**, one
+board-backed issue, one replacement exercise, and one durable **Chrome**
+evidence artifact. The mailbox and managed view may show several GitHub items,
+but that never schedules a second child. Blender remains a conditional,
+post-retro Assets-only destination. More workers, a shared server,
+cross-provider routing, and automation beyond an observed failure are deferred
+to an explicit post-core decision.
 
 ## 2. Governing truth and task contract
 
@@ -118,35 +121,38 @@ path, or a terminated worker's context.
 
 The replacement creates a fresh isolated worktree if the old one is unavailable
 or dirty. It does not recover by overwriting another worker's worktree or by
-assuming a private Pi session is correct. If GitHub publication itself is
-blocked, the worker stops and reports the exact blocker through the available
-GitHub surface; if no publication route is available, it reports the exact
-failure to the human rather than continuing invisibly.
+assuming a private Pi session is correct. Managed-session focus and mailbox
+unread state are also discarded: a replacement may re-anchor only from an
+explicit GitHub issue/PR/scoped-Project root or explicit managed links in a
+GitHub checkpoint. It never infers focus from Pi JSONL, a prior overlay,
+worktree, Team-wide query, or dead child. Without that anchor it asks Kirk to
+focus explicitly. If GitHub publication itself is blocked, the worker stops and
+reports the exact blocker through the available GitHub surface; if no
+publication route is available, it reports the exact failure to the human
+rather than continuing invisibly.
 
 ### 2.3 Design/plan artifact lifecycle
 
-This artifact follows the existing design lifecycle: the worktree is only an
-implementation detail. A design is committed on its issue branch, pushed, and
-opened as a **ready, non-draft** `rpg-project` PR whose body explicitly says
-`Review phase: Design Review`. It is reviewable, not `MERGE-READY`; that word is
-reserved for the applicable independent product gate, not self-declaration.
+The worktree is only an implementation detail. A design correction is committed
+on its issue branch, pushed, and opened as a **ready, non-draft** `rpg-project`
+PR. It is reviewable, not `MERGE-READY`; that word remains reserved for an
+applicable independent product gate, never an implementer or design worker.
 
-**Lifecycle decision for this idea.** Kirk approved the design and chose a
-long-lived canonical PR because implementation may expose dragons. PR #136
-therefore remains open on `design/135-pi-team-harness`: after design approval,
-`plan.md` is added to the **same branch and PR**, whose active body phase changes
-to `Review phase: Plan Review`. Kirk reviews the plan before implementation.
+**History and current surface.** Kirk approved the original design and kept
+PR #136 open while its plan and initial implementation units were reconciled.
+That PR was then merged. Its merged design/plan is historical truth, not an
+open surface to revive. This issue (#150) and its fresh ready reconciliation PR
+are the canonical review surface for the live PIH-4 corrections: managed focus,
+director mailbox, and safe sibling-repository dispatch. They link #135/#136 and
+the delivered runtime PRs without rewriting their history.
 
-Each executable implementation unit then has its own linked repository issue,
-Project 19 item, branch, and ready PR; those PRs reference `rpg-project#135`
-and #136 but do not close #135. An implementation discovery that changes this
-design or plan is reconciled visibly by updating the canonical artifact on the
-open #136 branch and linking the implementation PR/issue evidence. #136 merges
-only after all linked implementation work is complete and a final reconciliation
-confirms that the design, plan, issue, board, and evidence tell the same story.
-This decision supersedes the ordinary separate-snapshot plan flow for this idea
-only; it does not weaken ready review, human approval, or one-issue-per-
-implementation-PR discipline.
+Each executable adjustment remains one repository issue, Project 19 item,
+fresh branch, isolated worktree, and ready PR. A discovery that changes these
+canonical documents is reported on the owning implementation issue/PR and
+reconciled in a fresh issue-backed `rpg-project` documentation PR; it is never
+hidden in Pi state. Kirk alone approves design decisions and merges. No agent
+reopens, replaces, or merges #136; a later final retro reviews the documents as
+merged rather than treating an old PR as a durable control plane.
 
 ## 3. Role and knowledge-boundary model
 
@@ -284,11 +290,15 @@ issue + Project 19 item verified
 
 The lead may converse with the human throughout. Dispatch is nonblocking: after
 starting a worker, the lead's Pi TUI returns to the human rather than waiting
-for the worker to finish. The cockpit displays a compact live card such as
-`running`, `waiting for human`, `blocked`, `checkpoint due`, or `exited`; it
-also links the issue, PR, branch, and evidence. The card is a live display, not
-a task tracker. Refreshing it reads GitHub and currently attached child events;
-it does not reconstruct from a local database.
+for the worker to finish. The current core invariant is **one lead plus exactly
+one child**. The cockpit can display several managed issues, PRs, mailbox
+messages, or background links, but none starts, queues, retries, or restores a
+second worker. Any future concurrency is an explicit post-core design decision,
+not a UI implication. The compact live card (`running`, `waiting for human`,
+`blocked`, `checkpoint due`, or `exited`) links repository-qualified issue, PR,
+branch, and evidence. It is a live display, not a task tracker. Refreshing it
+reads GitHub and currently attached child events; it does not reconstruct from
+a local database.
 
 ### 4.2 Process-local Pi architecture
 
@@ -383,70 +393,157 @@ Project 19 remains the shared human/agent coordination protocol. Its current
 Status, Team, Feature, and Kind fields remain the common language; the harness
 reads and updates them through GitHub, not a mirrored local store.
 
-### 5.1 Human-oriented views
+### 5.1 Managed-session focus and bounded views
 
-The cockpit presents query views, not new workflow state:
+The default is **Managed this session**, not every row in a director's Team or
+Project 19. The lead explicitly adds one or several live GitHub-backed focus
+roots: an issue, PR, or named initiative/section represented by its **scoped**
+GitHub/Project URL. A bare Project-wide URL is rejected as a root; broad Project
+inspection is a separate opt-in query. A human-confirmed dispatch attaches its
+explicit owner/repository issue identity to this in-memory set.
 
-- **My team now:** current Team view grouped by Todo / In Progress / In Review,
-  with the backing issue, assigned role, latest visible checkpoint, blocker, and
-  PR link.
-- **Needs a human:** items waiting for decision, tool authorization, auth,
-  Blender lease, scope conflict, or merge. These are escalations, not hidden
-  worker waits.
-- **Review queue:** In Review items, review phase, gate/QA status, unresolved
-  findings, and the next named reviewer.
-- **Recovery queue:** In Progress items with no current local child, stale or
-  missing checkpoint, or a reported crash. The action is to reconstruct from
-  GitHub, not to restore a process.
-- **Cross-team seams:** linked issues with different Team fields, especially
-  toolkit/API/proto/web sequence and the UI/UX–Assets web seam.
+A managed projection is the union of roots plus only their explicit
+GitHub-linked PR, checkpoint, and named background issue/PR descendants. A
+checkpoint that hands off or coordinates background work names the root and
+managed URLs. It may not expand from Team membership, arbitrary issue-text
+links, a worktree, a child handle, local Pi history, or a guessed queue. Each
+focus attachment retains only URL, attachment reason (`Kirk`, `dispatch`, or
+`GitHub link`), and the GitHub URL proving the relationship. It is
+presentation/control memory for this lead session, not a local task record.
 
-Views must always show the source URL and refresh timestamp. If GitHub cannot
-be read, the cockpit says the view is stale/unavailable rather than retaining a
-local snapshot as truth.
+Commands and equivalent TUI controls are:
 
-### 5.2 Escalations
+- `/team-focus add <GitHub issue|PR|scoped Project URL>` validates and adds a
+  live root without mutating GitHub;
+- `/team-focus remove <root>` drops only ephemeral focus, never a GitHub item;
+- `/team-focus inspect` shows roots, reasons, descendants, source URLs, and
+  projection counts; and
+- `/team-status [managed|team|project]` defaults to `managed`; `team` and
+  `project` are visibly labelled broad inspections and never silently become
+  focus or a dispatch queue; and
+- `/team-inbox [inspect|refresh|read|unread]` renders or changes only the
+  current session's managed mailbox presentation (opening its linked GitHub URL
+  remains a human action).
 
-The following become visible human/lead escalations on the issue and cockpit:
+The cockpit presents bounded query views, not workflow state:
 
-- a missing issue or Project 19 item before requested dispatch;
-- a charter refusal or cross-team ownership conflict;
-- a product/design decision required from Kirk;
-- an authentication or permission prompt;
-- failed/ambiguous deterministic check, especially a suspicious green after a
-  confusing failure;
-- evidence that only exercises a fixture or bypass rather than the player path;
-- a stale worker checkpoint, worker crash, orphaned local process, or worktree
-  collision; and
-- request for Chrome evidence or the exclusive Blender lease.
+- **Managed now:** roots/descendants grouped by Todo / In Progress / In Review,
+  with repository-qualified issue, assigned role, checkpoint, blocker, PR, and
+  attachment reason.
+- **Needs a human:** managed operational active/review/recovery escalations
+  only—decision, permission/auth, charter/scope, failed or ambiguous check,
+  evidence, recovery, or merge. Repeated missing-fact debt is grouped by kind
+  and state with a count and representative links.
+- **Review queue:** managed In Review items/PRs, review phase, gate/QA status,
+  unresolved findings, and next named reviewer.
+- **Recovery queue:** managed rows with a GitHub-reported crash, stale/missing
+  checkpoint, or explicit replacement handoff. A lost local child after restart
+  alone is not evidence; reconstruct from GitHub or ask Kirk to re-anchor.
+- **Cross-team seams:** focused explicitly linked items with different Team
+  fields, especially toolkit/API/proto/web and the UI/UX–Assets web seam.
 
+Every section has a fixed ten-row limit, grouped aggregate counts, and visible
+`showing N of M` plus an inspect path. Truncation never hides the total or calls
+omitted rows resolved. Every row shows source URL and refresh timestamp. A
+GitHub read failure says stale/unavailable and discards projected rows instead
+of retaining a local snapshot as truth. Several focused/background rows are
+visibility and coordination only: PIH-3 currently permits exactly one child,
+not multi-worker scheduling, retries, or restoration.
+
+### 5.2 Director mailbox and notification boundary
+
+The managed mailbox is an ephemeral event projection, not a second inbox or
+checkpoint ledger. Each item contains: `source` (owned role ID or GitHub
+team/author), `eventType` (checkpoint/comment, review finding, completion,
+blocker, decision requested, recovery, or dispatch), concise `summary`,
+repository-qualified issue/PR/checkpoint `url`, `timestamp`, and `nextAction`
+with named owner. The event also carries its managed root URL and whether it is
+`owned-rpc` or `github-refresh`. The only inbox actions are inspect/open the
+backing GitHub URL, focus its managed root, explicit refresh, and mark
+read/unread for this session; none writes GitHub, dispatches, or changes durable
+state. Unread/read and selected focus are strictly in-memory session
+presentation state.
+
+Owned RPC child records can produce immediate mailbox cards and TUI/RPC
+`notify`/status/widget updates for lifecycle, permission/auth hard stop,
+checkpoint request, settlement, failure, or explicit escalation. They are live
+signals, never a durable completion claim. Pi's documented `agent_settled` is
+the completion boundary; `agent_end` is not. In TUI, an optional overlay uses
+Pi's supplied theme, focus/cancel handling, and width limits. In RPC, Pi emits
+`extension_ui_request` fire-and-forget `notify`, `setStatus`, and `setWidget`
+records; `custom()` is unavailable, so the command/status output remains the
+fallback.
+
+External GitHub/team/review activity is discovered only on explicit
+`/team-status` or `/team-inbox refresh`, and one startup refresh after the
+session begins. There is no poll timer, watcher, webhook listener, daemon, or
+claim of push delivery. After restart, the mailbox reads recent managed
+GitHub-backed activity and labels all items read/unread-unknown; it never
+persists an unread cursor. Durable content remains the actual comment, review,
+checkpoint, issue, or PR URL.
+
+### 5.3 Escalations
+
+The following become visible human/lead escalations on the issue and managed
+cockpit: a missing issue/Project item; role/repository or charter conflict;
+product/design decision; authentication/permission; failed/ambiguous check;
+fixture-only evidence; stale checkpoint, GitHub-reported crash, orphan warning,
+or worktree collision; Chrome evidence authorization; or a merge decision.
 The lead reports facts and a recommended next action. It does not silently
-resolve a human decision, reassign another team's work, or invent a local
-status to make the board look clean.
+resolve a human decision, reassign another team's work, auto-approve, or invent
+local state to make the board look clean.
 
-## 6. Worktree and repository isolation
+## 6. Repository-aware dispatch and worktree isolation
 
 Every implementation, design, QA mutation experiment, and independent product
-gate that needs a checkout uses an isolated worktree. The worker begins from
-fresh `origin/main` on an issue-named branch and works only in its assigned
-path, for example:
+gate that needs a checkout uses an isolated worktree. **`game-dev` owns the
+extension runtime; it is not the dispatch repository by default.** The role
+manifest is a closed role-to-repository mapping: `rpg-toolkit-member` →
+`KirkDiggler/rpg-toolkit`, `rpg-api-member` → `KirkDiggler/rpg-api`,
+`rpg-api-protos-member` → `KirkDiggler/rpg-api-protos`, deployment/assets/web
+roles → their named repositories (with the web UI/UX or Assets overlay), and a
+Cross-team coordinator is non-implementing. No generic role, Team match, or
+runtime root may select a repository.
 
-```text
-/home/kirk/game-dev/.pi-worktrees/<repo>-<issue>-<role>
-```
+A dispatch payload names an explicit `{owner, repository, issueNumber}` plus
+role, fresh branch, and requested worktree path. Before confirmation/spawn the
+harness resolves the role mapping and refuses unless all identities agree:
 
-The harness records that path only as live process metadata; the durable branch
-name and PR URL appear in GitHub checkpoints. It never edits an existing dirty
-main checkout, another worker's worktree, raw licensed asset staging, or an
-unrelated branch. A collision means select/create another isolated path and
-report it; never overwrite.
+1. `owner/repository` exactly equals the mapped role repository and the GitHub
+   issue URL returned by `gh issue view --repo owner/repository` has that same
+   owner/repository/number;
+2. the Project 19 item is found and its content URL exactly matches that
+   repository-qualified issue URL (same Project fields as before); and
+3. the role is compatible with the item's Team and canonical charter overlay.
 
-Only the worker owning the issue creates commits and pushes the scoped diff. It
-stages the intended file(s), never uses `git add -A` or `--no-verify`, runs its
-repository gates, self-reviews, and opens the ready PR. Leads coordinate; gates
-review without fixes; Kirk merges. An independent gate uses a worktree distinct
-from the implementer's and restores any reversible mutation experiment before
-reporting.
+The repository descriptor supplies the sibling checkout root, expected remote
+`origin` URL, default `origin/main`, and allowed worktree parent. The harness
+resolves real paths before action and refuses a missing/non-git root, dirty main,
+wrong remote, missing `origin/main`, non-main base, existing branch, existing
+worktree/collision, worktree outside the descriptor's allowed parent, a path
+that escapes with `..`/symlink resolution, or any path contained by another
+repository/worktree. It runs `git worktree add -b <branch> <path> origin/main`
+with `cwd` set to that **target repository root**, never the `game-dev` runtime
+root. The child is then launched with that repository worktree as cwd and the
+canonical explicit extension path
+`game-dev/.pi/extensions/pi-team-harness/index.ts`; its charter resolver still
+reads `game-dev/rpg-project`.
+
+For example, a toolkit role/`KirkDiggler/rpg-toolkit#N` dispatch must query that
+repository, match its Project item content URL, verify the `rpg-toolkit` root
+and origin, create only an `rpg-toolkit` worktree under the allowed isolated
+parent, and launch there. It must refuse if `KirkDiggler/game-dev#N`, the
+game-dev root/origin, or a game-dev-contained path is substituted at any step.
+These are safety properties, not an authorization to run two workers.
+
+The harness records worktree paths only as live process metadata; durable
+branch and PR URLs appear in GitHub checkpoints. It never edits a dirty main
+checkout, another worker's worktree, raw licensed asset staging, or an unrelated
+branch. A collision means select/create another isolated path and report it;
+never overwrite. Only the worker owning the issue creates commits and pushes
+the scoped diff. It stages intended files, never uses `git add -A` or
+`--no-verify`, runs repository gates, self-reviews, and opens the ready PR.
+Leads coordinate; gates review without fixes; Kirk merges.
 
 ## 7. Evidence and role-scoped tools
 
@@ -539,7 +636,7 @@ control plane. This design uses those primitives without pretending otherwise.
 
 | Layer | Initial responsibility | Explicit limit |
 |---|---|---|
-| `game-dev` project-local extension/package | runtime profiles; dispatch validation; process-local supervisor; GitHub-backed commands; live TUI cards; resolves `rpg-project` charters by path | no durable queue/store/daemon, policy fork, or global Pi mutation |
+| `game-dev` project-local extension/package | runtime profiles; role/repository dispatch validation; one-child process-local supervisor; GitHub-backed managed focus/mailbox commands and live cards; resolves `rpg-project` charters by path | no durable queue/store/daemon/listener, policy fork, global Pi mutation, or multi-worker scheduler |
 | Pi extension API | commands, custom tools, `session_start`/`session_shutdown`, status/widgets, TUI overlay, tool-call safety interception | extensions run with full local privileges; permissions supplement but do not replace charter rules |
 | Pi RPC child | isolated per-worker process, JSONL events, prompt/steer/follow-up/abort, child model/session | local session history is non-authoritative and disappears from recovery assumptions |
 | Pi SDK alternative | typed same-process session only if prototype warrants it | must preserve child-equivalent isolation and not persist dispatch state |
@@ -565,11 +662,14 @@ semantics: `steer` after the current tool batch, `follow_up` after settlement,
 and `abort` only when a human/lead explicitly requests it.
 
 TUI scope is deliberately modest: use a status/footer indicator plus compact
-widget for active workers; open an overlay for dispatch detail, message actions,
-and escalations. Custom components must work within the actual terminal width,
-use Pi's supplied theme/keybindings, and be optional. The same design must be
-usable through normal commands when the runtime is RPC/headless, where custom
-TUI components are unavailable.
+widget for the one active worker, managed-focus counts, and mailbox attention;
+open an overlay for dispatch detail, focus/inbox inspect, message actions, and
+escalations. Pi supports `notify`, `setStatus`, and `setWidget` as fire-and-
+forget RPC extension-UI requests, while `custom()` is TUI-only; those exact
+commands/structured notifications are the headless fallback. Components work
+within actual terminal width, use Pi's supplied theme/keybindings, and are
+optional. The extension starts no refresh timer, watcher, socket, or listener:
+external GitHub is startup/explicit-refresh only.
 
 Tool profiles begin least-privilege: Explore is read-only; Janitor is limited to
 its curation surface; a member receives only its repository/worktree tools;
@@ -598,19 +698,22 @@ The proof must demonstrate all of the following:
 4. After a checkpoint, the worker is deliberately killed. A fresh worker
    reconstructs solely from the issue, Project 19, branch, PR, and checkpoint,
    then takes the explicit next action.
-5. The task produces one durable evidence artifact: a scoped Chrome
-   player/experience artifact **or** a Blender pilot artifact. Chrome is the
-   preferred first choice for a UI task; Blender is allowed only for a genuine
-   Assets task and includes the exclusive-lease procedure.
+5. The task produces one durable **Chrome** player/experience artifact from the
+   designated UI/UX or Assets-web evidence owner. Blender is not an alternate
+   core-proof route; its hardened Assets-only lease remains conditional on the
+   post-core retro.
 6. The resulting ready PR identifies its review phase, moves the item to In
    Review, receives the checks appropriate to its scope, and is left for Kirk's
    decision. No agent merges or calls its own work `MERGE-READY`.
 
 The proof should choose a workflow/setup or small real feature task whose
 acceptance can be observed without widening to multi-worker routing, a daemon,
-or an entire cross-repo wave. If the task is product behavior, the existing
-independent-gate policy applies; if it is workflow setup, deterministic checks,
-self-review, and Kirk's review apply.
+or an entire cross-repo wave. A managed view/mailbox may show several GitHub-
+linked rows, but that is not simultaneous-worker evidence. If the selected task
+is in a sibling repository, it runs only after the repository-aware dispatch
+unit proves that repository cannot be substituted with `game-dev`. If the task
+is product behavior, the existing independent-gate policy applies; if it is
+workflow setup, deterministic checks, self-review, and Kirk's review apply.
 
 ### 9.2 Success criteria
 
@@ -618,9 +721,10 @@ The prototype succeeds only if:
 
 - GitHub alone supports the kill-and-replace recovery without lost task facts;
 - the board, issue, PR, and checkpoint tell a consistent story;
-- the human can continue conversing with the lead during worker execution;
-- the worker stays in its charter and responsibility overlay, and any pushback
-  is visible;
+- the human can continue conversing with the lead during the one child’s
+  execution; managed focus/mailbox activity never implies another child;
+- the worker stays in its charter, responsibility overlay, and mapped
+  repository, and any pushback is visible;
 - the selected evidence is attached/linked, scoped honestly, and does not
   replace the established release gate;
 - Chrome access is limited to the evidence owner, or Blender has exactly one
@@ -657,15 +761,19 @@ or broader role/tool profile. There is no automatic expansion or cutover.
 
 ## 10. Review questions for Kirk
 
-1. Which existing, real Project 19 issue is the smallest useful first proof,
-   and should its evidence artifact be Chrome (default for UI/UX) or Blender
-   (only if the work is genuinely Assets-scoped)?
-2. Is replaceable RPC child-process supervision the preferred initial mechanism,
-   with same-process SDK sessions deferred unless the prototype exposes a
-   concrete need?
-3. Which comparison task(s) should represent the Claude Code and OpenCode sides
-   so the retro judges workflow evidence rather than unlike scopes?
+1. Does managed-session focus plus the bounded mailbox represent the director’s
+   actual session without silently becoming a Team/Project queue or durable
+   tracker?
+2. Is replaceable one-child RPC supervision still the right core mechanism,
+   with any multi-worker concurrency deferred to a separate evidence-backed
+   design decision?
+3. Does the role/repository identity and target-root refusal contract make a
+   real `rpg-toolkit` dispatch safe enough to trial only after its deterministic
+   tests pass?
+4. Which comparable Chrome-evidence tasks should represent the Pi, Claude Code,
+   and OpenCode sides so the retro judges workflow evidence rather than unlike
+   scopes?
 
 These are sequencing/evaluation choices, not invitations to weaken the
-charters, GitHub-only recovery contract, exclusive Blender procedure, or
-human merge authority.
+charters, GitHub-only recovery/focus contract, exclusive Blender procedure,
+no-daemon boundary, or Kirk’s merge authority.

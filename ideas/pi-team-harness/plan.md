@@ -1,38 +1,34 @@
 ---
 name: Pi Team Harness Implementation Plan
-issue: rpg-project#135
-status: proposed — Plan Review
-canonical_pr: rpg-project#136
+issue: rpg-project#150
+status: proposed — live-feedback reconciliation review
+historical_design_pr: rpg-project#136 (merged)
 ---
 
 # Pi Team Harness — Implementation Plan
 
 ## 1. Purpose and delivery rule
 
-This plan implements the narrow Pi team-harness proof described in
-[`design.md`](design.md). It is not implementation itself. It translates the
-approved design into issue-backed, reviewable units while keeping #136 open as
-the canonical design/plan/reconciliation surface.
-
-Kirk's lifecycle decision is binding:
+This plan reconciles the narrow Pi team-harness proof described in
+[`design.md`](design.md) with delivered PIH-M1/M2, PIH-3, PIH-4, and live-use
+findings. It is not implementation. PR #136 is merged historical design/plan,
+not a surface to reopen. This fresh #150 ready PR is the canonical review of
+its focused corrections.
 
 ```text
-#136: approved design -> Plan Review -> linked implementation evidence and
-      canonical design/plan corrections -> final reconciliation -> Kirk merge
-
-separate implementation issue + branch + ready PR per executable unit
-      -> links #135 and #136; does not close #135
+#136 merged history -> #150 live-feedback reconciliation -> fresh issue-backed
+implementation units -> evidence/discovery -> fresh rpg-project correction PR
+when a design change is needed -> Kirk review/merge
 ```
 
-No implementation issue is created by this plan PR. After a fresh
-design-to-plan consistency check confirms this plan is faithful to Kirk's
-approved design, the coordinating lead creates each listed issue, adds it to
-Project 19, and assigns its Team/Feature/Kind before a branch exists. Each
-implementer owns its own issue/PR-to-merge flow. A discovery that changes the design or plan is
-reported on its implementation issue/PR and updated visibly on the open #136
-branch before the affected work can be considered reconciled. #136 merges only
-when §10's final-reconciliation gate passes; it is never self-declared
-`MERGE-READY`.
+After a fresh design-to-plan consistency check, the coordinating lead creates
+each listed executable unit, adds it to Project 19, and assigns
+Team/Feature/Kind before a branch exists. Each implementer owns its own
+issue/PR-to-merge flow. A discovery that changes the design or plan is reported
+on its implementation issue/PR and updated visibly through a fresh
+`rpg-project` documentation issue/PR; it is never carried in local Pi state.
+Every runtime PR links #150 and historical #135/#136. It is reviewable, never
+self-declared `MERGE-READY`.
 
 ## 2. Fixed initial technical choices
 
@@ -103,6 +99,10 @@ game-dev/
       rpc-worker.ts
       supervisor.ts
       status.ts
+      focus.ts
+      inbox.ts
+      repository-map.ts
+      worktree.ts
       team-overlay.ts
       evidence.ts
       capabilities/
@@ -129,7 +129,8 @@ Pi package convention uses `"*"` ranges). For local type/tests it uses matching
 `@modelcontextprotocol/sdk@1.29.0` for the optional, short-lived capability
 bridge; it is not a Pi feature. It requires Node >=18. The implementer
 rechecks its release notes/API during the bridge issue and records any necessary
-plan correction on #136 rather than guessing an API.
+plan correction through a fresh issue-backed `rpg-project` documentation PR
+rather than guessing an API.
 
 The entry script resolves its own `game-dev` root, requires the bootstrapped
 `$ROOT/rpg-project` clone and canonical charter paths, changes to `$ROOT`, and
@@ -179,6 +180,15 @@ context journal, or task record under `game-dev/.pi`. The extension uses
 and sibling `rpg-project` path are explicit runtime inputs checked by the
 clean-machine contract.
 
+The manifest additionally maps each implementation role to exactly one
+repository descriptor: GitHub owner/repository, sibling root name, expected
+`origin`, base `origin/main`, and its permitted isolated-worktree parent. The
+mapping is closed—not inferred from a role name, Team field, issue number, or
+`game-dev` runtime root. `rpg-toolkit-member`, for example, maps only to
+`KirkDiggler/rpg-toolkit`; web overlay roles both map to
+`KirkDiggler/rpg-dnd5e-web`; Cross-team coordinating roles are non-implementing
+and cannot select a repository by default.
+
 The first live dispatch enables only the selected lead and one selected standing
 member. The manifest may validate all current canonical role IDs so drift is
 caught structurally, but it does not build routing, background workers, or
@@ -221,39 +231,61 @@ The lead exposes exactly these worker actions:
 
 | Action | RPC command | Meaning |
 |---|---|---|
-| start dispatch | `prompt` | one scoped worker brief after issue/board validation |
+| start dispatch | `prompt` | one scoped worker brief after repository-qualified issue/board validation; attaches its issue to current in-memory focus |
 | correct current task | `steer` | delivered after the current assistant tool batch |
 | queue next request | `follow_up` | delivered only after the current run settles |
 | stop | `abort` | explicit human/lead cancellation only |
 | inspect | `get_state` / streamed events | live, non-durable status only |
 
-A `request checkpoint` action is a human-readable follow-up instruction; it is
-not a fabricated checkpoint. The worker must publish the actual GitHub comment
-with completed work, verification scope, blockers, and explicit next action.
+The supervisor permits exactly **one** active child. Several focus/mailbox rows
+are not worker slots and cannot schedule, retry, or restore one. A future
+concurrency increase is an explicit post-core design decision.
 
-### 3.3 GitHub/Project 19 dispatch contract
+`/team-focus add|remove|inspect`, `/team-status managed|team|project`, and
+`/team-inbox [refresh|inspect]` are presentation commands. They accept only live
+GitHub issue/PR/scoped-Project roots, retain focus/unread state in memory, and
+never turn a broad Team/Project query into a hidden queue. A `request
+checkpoint` action is a human-readable follow-up instruction, not a fabricated
+checkpoint. The worker must publish the actual GitHub comment with completed
+work, verification scope, blockers, and explicit next action.
 
-`src/github.ts` is a narrow `gh`-CLI adapter behind an injectable interface. It
-reads the backing issue and Project 19 item before launch and refuses dispatch
-unless all of these are true:
+### 3.3 GitHub/Project 19 and repository-aware dispatch contract
 
-1. the issue exists and is open;
-2. its Project 19 item exists;
-3. Status, Team, Feature, and Kind are present;
-4. the role is compatible with the Team/ownership boundary; and
-5. the caller supplied an issue ID, fresh branch name, and isolated worktree.
+`src/github.ts` is a narrow injected `gh`-CLI adapter. The dispatch input names
+`{ owner, repository, issueNumber }`, role, fresh branch, worktree path, and
+brief; a bare issue number is invalid. `src/repository-map.ts` resolves the
+role's sole descriptor before GitHub or git commands. Dispatch refuses unless:
 
-The adapter has no local cache. The TUI may retain the last read response only
-for its current render and marks it stale after a read error. It does not use
-Pi `appendEntry`, session JSONL, a JSON file, SQLite, Redis, or a hidden task
-queue for task/checkpoint state. This is the explicit **no second durable task
-database** rule; the verifier and recovery tests enforce it as a negative
-contract.
+1. the requested owner/repository exactly equals the role mapping;
+2. `gh issue view --repo owner/repository` returns an open issue whose canonical
+   URL exactly matches that owner/repository/number;
+3. the Project 19 item exists and its content URL exactly matches that issue URL;
+4. Status, Team, Feature, and Kind are present and the role is Team/overlay
+   compatible; and
+5. the mapped sibling root is a clean git checkout with expected `origin`, a
+   resolvable `origin/main`, a fresh branch, and an isolated path contained by
+   that descriptor's allowed worktree parent but by no repository/worktree.
+
+`src/worktree.ts` resolves physical paths (including symlinks) before inspection
+and performs the worktree creation from the mapped repository root, not from
+`game-dev`. It rejects a missing/non-git/dirty root, wrong remote/base,
+pre-existing branch/path/worktree, `..`/symlink escape, and any path nested in
+or containing another repository/worktree. The child still receives the
+explicit canonical `game-dev/.pi/extensions/pi-team-harness/index.ts` path and
+`game-dev/rpg-project` charter root; the extension runtime never substitutes
+for a target repository.
+
+The adapter has no local cache. The TUI may retain only its current render and
+marks it stale after a read error. It does not use Pi `appendEntry`, session
+JSONL, a JSON file, SQLite, Redis, or a hidden task queue for task/checkpoint,
+focus, unread, or mailbox state. This is the explicit **no second durable task
+database** rule; verifier and recovery tests enforce it as a negative contract.
 
 `src/checkpoint.ts` renders the required signed issue-comment template. It
 requires completed work, verification, blockers (explicit `none` is allowed),
-next action/owner, and branch/PR when available. It ends every generated GitHub
-body with:
+next action/owner, and branch/PR when available. PIH-4.1 accepts optional
+explicit root and managed issue/PR links for GitHub-only re-anchor but never
+serializes live focus/unread state. It ends every generated GitHub body with:
 
 ```text
 — Pi team-harness design worker, on behalf of KirkDiggler
@@ -344,23 +376,30 @@ deterministic checks + self-review + ready PR + normal review; it does not
 receive an independent product gate. A later proof that changes real product
 behavior follows the existing product-gate policy.
 
-### Delivered history — PIH-1/#140 and PIH-2/#142 in `rpg-project`
+### Delivered history — migration, PIH-3, and PIH-4
 
-PIH-1 foundation (#140) and PIH-2 dispatch/checkpoint contract (#142) are
-already merged in `rpg-project`. They are historical runtime delivery, not a
-reason to leave the portable runtime there. Their charter references remain
-canonical because they point at `docs/teams/roles/**`; no policy prose is
-migrated. The stopped `rpg-project` PIH-3 issue #144 receives no PR.
+- PIH-1/#140 and PIH-2/#142 were delivered first in `rpg-project`; they are
+  history, not a reason to restore a runtime there.
+- PIH-M1 is delivered as `game-dev#6` / PR #7: portable foundation, entry,
+  bootstrap and clean-machine proof with runtime charter resolution.
+- PIH-M2 is delivered as `rpg-project#145` / PR #146: the temporary
+  `rpg-project` runtime copy is removed. The stopped wrong-repo PIH-3 #144 has
+  no PR.
+- PIH-3 is delivered as `game-dev#8` / PR #9: deterministic fake-child proof
+  of one `--no-session` RPC worker and GitHub-only reconstruction.
+- PIH-4 is delivered as `game-dev#12` / PR #13: five commands, live
+  GitHub/Project status rendering, compact TUI/headless surface, and no durable
+  task state. Its post-merge live read proved fresh rendering only; it exposed
+  108 My-team rows and 258 repetitive Needs-human rows. It did **not** prove a
+  live child, recovery, dispatch, or multiple workers.
 
-### PIH-M1 — Migrate and prove the delivered runtime foundation in `game-dev`
+These PRs are preserved history. The remaining ordered corrections begin at
+PIH-4.1 and must finish before PIH-5.
 
-**Dependency/order:** #140 and #142 merged; #144 stopped; fresh
-#135/#136 consistency check complete. This is first in the migration sequence.
+### Delivered — PIH-M1 migration/proof in `game-dev`
 
-**Issue/PR:** after this design update, create one `game-dev` Build issue and
-Project 19 item (Team=Cross-team, Feature=Infra, Kind=Build) for “Migrate Pi
-team-harness runtime foundation to game-dev.” Its ready `game-dev` PR links
-#135/#136 and the delivered #140/#142 history.
+**Delivered:** `game-dev#6` / PR #7, after #140/#142 and stopped #144. It
+links #135/#136 history and proves the portable ownership boundary.
 
 **Files:** temporarily add the delivered runtime foundation under
 `game-dev/.pi/extensions/pi-team-harness/` and its package tests; add
@@ -384,16 +423,11 @@ portable root after bootstrap, not from a developer's pre-existing
 `rpg-project` checkout. Temporary runtime duplication with #140/#142 is
 explicitly recorded only until PIH-M2 completes.
 
-### PIH-M2 — Remove the temporary `rpg-project` runtime copy
+### Delivered — PIH-M2 removes the temporary `rpg-project` runtime copy
 
-**Dependency/order:** PIH-M1 merged and its clean-machine/entry contract green.
-This is second; it must complete before PIH-3 resumes.
-
-**Issue/PR:** create one `rpg-project` cleanup issue and ready cleanup PR,
-linked to #135/#136 and PIH-M1. It removes only the old runtime/package,
-its runtime tests/verifier, and now-unused ignore entries from `rpg-project`.
-It does not alter `docs/teams/roles/**`, Project 19 policy, OpenCode config, or
-this canonical design/plan.
+**Delivered:** `rpg-project#145` / PR #146, after PIH-M1. It removed only the
+old runtime/package/verifier and proves game-dev still discovers its own runtime
+and canonical charter clone with no fallback copy.
 
 **Tests/checks:** run the `game-dev` runtime verifier/clean-machine contract
 against the migrated foundation; prove the removed `rpg-project/.pi/extensions/
@@ -404,14 +438,11 @@ continues to resolve the canonical clone paths without a fallback copy.
 runtime duplication. A fresh `game-dev` bootstrap+entry run succeeds after the
 old copy is gone; failure is a blocker, not a reason to retain two runtimes.
 
-### PIH-3 — One nonblocking RPC worker and honest recovery semantics
+### Delivered — PIH-3 one nonblocking RPC worker and honest recovery
 
-**Dependency/order:** PIH-M2 merged. This is third and supersedes stopped
-`rpg-project#144`; create no replacement PIH-3 work in `rpg-project`.
-
-**Issue/PR:** create `game-dev` issue “Prototype Pi RPC worker supervision and
-recovery”; Team=Cross-team, Feature=Infra, Kind=Build. Its ready `game-dev` PR
-links #135/#136, #144 (superseded), PIH-M1, and PIH-M2.
+**Delivered:** `game-dev#8` / PR #9 after PIH-M2, superseding stopped
+`rpg-project#144`. It is deliberately one child and fake-child deterministic
+evidence only; it is not multi-worker or live recovery proof.
 
 **Files:** under `game-dev/.pi/extensions/pi-team-harness/`, create
 `src/{rpc-jsonl.ts,rpc-worker.ts,supervisor.ts}`, extend `index.ts`, add
@@ -432,38 +463,128 @@ launched from the portable `game-dev` runtime; live claim remains fake-child onl
 until PIH-6. The checkpoint names crash limitations and exact human action if a
 child cannot start/authenticate.
 
-### PIH-4 — TUI team status and human escalation surface
+### Delivered — PIH-4 status/escalation surface
 
-**Dependency:** PIH-M2 and PIH-3 merged.
+`game-dev#12` / PR #13 delivered the five command/status surface after PIH-M2
+and PIH-3. Its fixture and post-merge live GitHub-read evidence remain valid
+only for status rendering. The unscoped global output is the explicit live-use
+finding that requires the following ordered units; it is not a reason to revise
+delivered history or claim live dispatch/recovery.
 
-**Issue/PR:** create `game-dev` issue “Add Pi team status and escalation
-surface”; Team=Cross-team, Feature=Infra, Kind=Build. One ready `game-dev` PR
-links #135/#136 and PIH-M1/M2.
+### PIH-4.1 — Managed-session focus and bounded projections
 
-**Files:** under `game-dev/.pi/extensions/pi-team-harness/`, create
-`src/{status.ts,team-overlay.ts}`, extend `index.ts` with `/team-status`,
-`/team-dispatch`, `/team-message`, `/team-abort`, and `/team-escalate`, create
-`test/{status.test.ts,team-overlay.test.ts,commands.test.ts}`, and extend the
-`game-dev` verifier for TUI-mode guards and command fallback declarations.
+**Dependency/order:** first correction after delivered PIH-4. It must merge
+before PIH-4.2, PIH-4.3, and PIH-5. Create one `game-dev` Build issue/Project
+19 item (Team=Cross-team, Feature=Infra, Kind=Build) and ready PR linking
+rpg-project#150 and historical #135/#136 plus game-dev#12/PR#13.
 
-**Tests/checks:** fixture data renders Team-now, Needs-a-human, Review, Recovery,
-and cross-team seam rows with source URLs/timestamps and an explicit stale state
-when GitHub reads fail. TUI tests constrain every render line to supplied width
-and exercise focus/cancel behavior. RPC/headless tests prove `ctx.mode !==
-"tui"` does not call `ctx.ui.custom()` and commands still emit structured
-status/extension UI notifications.
+**Files:** add `game-dev/.pi/extensions/pi-team-harness/src/focus.ts`; extend
+`src/{github.ts,checkpoint.ts,status.ts,team-overlay.ts}`, `index.ts`, and
+`scripts/verify-pi-team-harness.mjs`; add `test/focus.test.ts`; extend
+`test/{status.test.ts,team-overlay.test.ts,commands.test.ts}` and GitHub/
+checkpoint fixtures.
 
-**Acceptance evidence:** a terminal capture from a fake supervisor and fake
-GitHub dataset shows a running card plus a human escalation. It is labelled as
-fixture UI evidence, not a real Project 19 or worker recovery claim.
+**Tests/checks:** deterministic fixtures prove that `/team-focus add|remove|
+inspect` accepts only live GitHub issue/PR/scoped-Project roots (not a bare
+Project), keeps reason/source only in memory, attaches confirmed dispatch work,
+and makes no GitHub mutation. One initiative root and several roots yield only
+roots plus explicit GitHub PR/checkpoint/background descendants; Team/project
+queries, arbitrary text links, Pi JSONL, worktrees, and old children are never
+fallback inputs. `/team-status` defaults managed; labelled team/project modes
+remain opt-in. Managed Needs-human/Review/Recovery rows are active/review/
+recovery scoped, group repeated missing facts, cap each section at ten, show
+shown/total and inspect path, and preserve width/TUI/RPC guards. Complete
+restart begins with no focus and re-anchors only explicit checkpoint/root links
+or returns ask-Kirk; a background row never starts/schedules/retries a child.
+
+**Acceptance commands:** from `game-dev`, run `npm --prefix
+.pi/extensions/pi-team-harness ci`, `npm --prefix .pi/extensions/pi-team-harness
+run typecheck`, `npm --prefix .pi/extensions/pi-team-harness test`, `node
+scripts/verify-pi-team-harness.mjs`, `bash tests/pi-team-harness-clean-machine.sh`,
+and `git diff --check`.
+
+**Acceptance evidence:** ready-PR fixture captures show one root, several
+background roots, grouped/capped sections, opt-in broad view, and re-anchor
+versus ask-Kirk. A later real `/team-status managed` capture names roots,
+source/timestamp, totals, and omissions; it proves live GitHub rendering only,
+not a worker, recovery, scheduler, or concurrency.
+
+### PIH-4.2 — Managed director mailbox and refresh semantics
+
+**Dependency/order:** PIH-4.1 merged. This is second and must merge before
+PIH-4.3 and PIH-5. Create one `game-dev` Build issue/Project 19 item and ready
+PR linking #150, #135/#136, PIH-4.1, and delivered PIH-3/4.
+
+**Files:** add `src/inbox.ts`; extend `src/{status.ts,team-overlay.ts,github.ts,
+supervisor.ts}`, `index.ts`, and the verifier; add `test/inbox.test.ts`; extend
+`test/{status.test.ts,team-overlay.test.ts,commands.test.ts,supervisor.test.ts}`
+and fixtures.
+
+**Tests/checks:** fixtures require every event to have source role/team/author,
+event type, concise summary, repository-qualified link, timestamp, root,
+origin (`owned-rpc` or `github-refresh`), and next action/owner. They prove
+owned RPC lifecycle/permission/auth/settlement/failure events notify
+immediately, while external GitHub comments/checkpoints/reviews appear only on
+startup or explicit `/team-inbox refresh`/status refresh; no timer, watcher,
+webhook, listener, daemon, or poller is introduced. Tests prove ephemeral
+unread/selected state is discarded on restart, which then displays recent
+managed GitHub events read/unread-unknown; no appendEntry/session JSONL/local
+cursor is read or written. TUI tests cover theme, width, focus/cancel, inbox
+inspect/open-link, explicit refresh, and session-only read/unread actions; RPC
+tests inspect `extension_ui_request` notification/status/widget fallback and
+never call `custom()`.
+
+**Acceptance commands:** run the same five `game-dev` package/verifier/
+clean-machine/diff commands listed in PIH-4.1.
+
+**Acceptance evidence:** fixture terminal/RPC captures label immediate owned
+RPC notification versus refresh-discovered external activity and include all
+mailbox fields. Any real capture is labelled presentation/live-read only; it
+makes no claim of GitHub push delivery, durable unread state, worker recovery,
+or a second child.
+
+### PIH-4.3 — Repository-aware dispatch isolation
+
+**Dependency/order:** PIH-4.2 merged. This is third and the required gate before
+PIH-5 or any real sibling-repository field trial. Create one `game-dev` Build
+issue/Project 19 item and ready PR linking #150, #135/#136, PIH-4.1/4.2, and
+PIH-3/4.
+
+**Files:** add `src/{repository-map.ts,worktree.ts}`; extend
+`src/{roles.ts,github.ts,dispatch.ts,rpc-worker.ts,supervisor.ts}`, `index.ts`,
+and verifier; add `test/{repository-map.test.ts,worktree.test.ts}`; extend
+`test/{dispatch.test.ts,commands.test.ts,rpc-worker.test.ts,recovery.test.ts}`
+and canonical-workspace/GitHub fixtures.
+
+**Tests/checks:** prove role→owner/repository descriptors and explicit issue
+identity; exact issue URL and Project item content URL matching; repository-
+specific root/origin/`origin/main`/fresh-branch checks; target-root `git
+worktree add` cwd; physical containment/isolation and collision refusal. Red
+probes prove a `rpg-toolkit-member` dispatch refuses when any of
+`KirkDiggler/game-dev`, game-dev issue URL/Project item, game-dev root/origin,
+or game-dev-contained worktree substitutes for toolkit. Also prove no explicit
+extension-path regression: the child launched in toolkit cwd still receives the
+canonical game-dev extension and canonical game-dev/rpg-project charter root.
+One-child enforcement remains green.
+
+**Acceptance commands:** run the same five `game-dev` package/verifier/
+clean-machine/diff commands listed in PIH-4.1.
+
+**Acceptance evidence:** ready-PR deterministic trace shows successful
+repository-qualified fixture dispatch and every game-dev-for-toolkit refusal.
+Only after Kirk reviews that PR may one real simple toolkit task be selected;
+that later evidence must state the exact target repo/root/origin/branch/path and
+still proves one child, not simultaneous workers. No live task runs merely to
+make CI green.
 
 ### PIH-5 — Role-scoped Chrome evidence bridge and evidence contract
 
-**Dependency:** PIH-M2, PIH-3, and PIH-4 merged.
+**Dependency:** delivered PIH-M2/PIH-3/PIH-4 plus PIH-4.1, PIH-4.2, and
+PIH-4.3 merged.
 
 **Issue/PR:** create `game-dev` issue “Add Pi role-scoped Chrome evidence
 bridge”; Team=Cross-team, Feature=Infra, Kind=Build. One ready `game-dev` PR
-links #135/#136 and PIH-M1/M2.
+links #150, historical #135/#136, and PIH-M1/M2.
 
 **Files:** under `game-dev/.pi/extensions/pi-team-harness/`, create
 `src/capabilities/{mcp-bridge.ts,chrome.ts}` and `src/evidence.ts`; extend
@@ -487,18 +608,21 @@ capability PR never connects to a browser merely to make CI green.
 
 ### PIH-6 — Deliberate-kill/replacement proof and durable Chrome evidence
 
-**Dependency:** PIH-M2 and PIH-3 through PIH-5 merged; a human selects one
-small real Project 19 task with the existing local Chrome evidence path.
+**Dependency:** delivered PIH-M2/PIH-3/PIH-4 and PIH-4.1 through PIH-5
+merged; a human selects one small real Project 19 task with the existing local
+Chrome evidence path. A sibling-repository task also requires PIH-4.3's
+repository-aware dispatch evidence first.
 
 **Issue/PR:** create an evidence-only `game-dev` Verify issue “Prove Pi
 team-harness replacement and Chrome evidence”; Team=Cross-team, Feature=Infra,
-Kind=Verify. It links #135/#136 and the selected real task. It contains no
+Kind=Verify. It links #150, historical #135/#136, and the selected real task. It contains no
 implementation code PR unless the proof discovers a scoped defect; that defect
 gets its own linked Build/Fix issue and PR.
 
 **Files:** no planned runtime source change. Any discovery-driven design/plan
-correction is committed to the open #136 `rpg-project` branch and references
-this `game-dev` Verify issue; it is not silently carried in a worker session.
+correction uses a fresh issue-backed `rpg-project` documentation branch/PR and
+references this `game-dev` Verify issue; it is not silently carried in a worker
+session.
 
 **Procedure and checks:**
 
@@ -523,7 +647,8 @@ this `game-dev` Verify issue; it is not silently carried in a worker session.
 **Acceptance evidence:** linked issue comments show the before-kill checkpoint,
 replacement worker's GitHub-only reconstruction, one durable Chrome artifact
 URL, command/version/config fingerprint, and a scoped statement of what was and
-was not proven. Kirk reviews the proof; no agent merges #136.
+was not proven. Kirk reviews the proof; no agent merges the historical #136 or any current
+reconciliation PR.
 
 ### PIH-7 — Side-by-side evaluation, retro, and final reconciliation
 
@@ -531,25 +656,25 @@ was not proven. Kirk reviews the proof; no agent merges #136.
 
 **Issue/PR:** create an evidence-only `rpg-project` Decide/Verify issue “Review
 Pi harness against Claude Code and OpenCode”; Team=Cross-team, Feature=Infra,
-Kind=Decide. It links #135/#136. No speculative optimization PR is created from
+Kind=Decide. It links #150 and historical #135/#136. No speculative optimization PR is created from
 this issue; an observed deficiency becomes a new linked issue after the retro.
 
-**Files:** update `ideas/pi-team-harness/{design.md,plan.md}` on the existing
-#136 `rpg-project` branch only where PIH-M1/M2 or PIH-3..6 evidence changed an
-assumption. Add no separate status database, local evidence journal, or runtime
-implementation code in this reconciliation beat.
+**Files:** update `ideas/pi-team-harness/{design.md,plan.md}` only in a fresh
+issue-backed `rpg-project` documentation PR where PIH-4.1..6 evidence changed
+an assumption. Add no separate status database, local evidence journal, or
+runtime implementation code in this reconciliation beat.
 
 **Checks:** compare comparable board-backed task evidence from Pi, Claude Code,
 and OpenCode on checkpoint/recovery completeness, human interruption behavior,
 boundary/refusal behavior, QA/gate results, evidence scope, worktree/auth/
 lease failures, operator visibility, and contextual cost/latency. Do not call
 unlike tasks a benchmark. Record each change/no-change decision and its
-rationale on the retro issue and #136.
+rationale on the retro issue and historical #135/#136.
 
 **Acceptance evidence:** final reconciliation checklist in §10 is complete,
 all linked implementation PRs and evidence URLs are enumerated, and Kirk has a
-single readable canonical PR to review. This is the only unit that may request
-Kirk's final #136 merge decision; it never performs the merge.
+single readable canonical documentation PR to review. It never reopens or
+merges #136; Kirk decides any new documentation PR merge.
 
 ### Deferred Blender activation — conditional post-retro issue
 
@@ -558,11 +683,11 @@ identify a real unmet Assets evidence need; otherwise this unit is not created
 and Chrome remains the completed narrow proof.
 
 **Issue/PR:** only if the retro justifies it, create a separate `game-dev`
-Assets Build issue and Project 19 item for Blender activation. It links #135/#136
-and receives its own `game-dev` branch/ready PR. If created before #136's final
-reconciliation, #136 remains open until it is reconciled; if deferred, the
-approved destination architecture remains documented without pretending it was
-proved.
+Assets Build issue and Project 19 item for Blender activation. It links #150 and
+historical #135/#136 and receives its own `game-dev` branch/ready PR. If a
+current documentation correction is still required, it receives its own fresh
+`rpg-project` PR; the approved destination architecture remains documented
+without pretending it was proved.
 
 **Files/tests/evidence:** create
 `game-dev/.pi/extensions/pi-team-harness/src/capabilities/{blender-lease.ts,blender.ts}`
@@ -578,22 +703,22 @@ scene capture as export/release QA.
 
 ## 5. Worktree, branch, and review protocol for all code units
 
-Runtime Build/Fix units (PIH-M1, PIH-3 through PIH-6, and any deferred Blender
-activation) live in `game-dev`: their owner creates a `game-dev` issue and
-Project 19 item, branches from `game-dev` main, and uses an isolated
-`game-dev` worktree. PIH-M2 is the one `rpg-project` cleanup PR; PIH-7 and all
-canonical design/plan reconciliation stay in `rpg-project` #136. Every unit
-links #135/#136, stages only declared files, never uses `git add -A` or
-`--no-verify`, self-reviews, and opens one ready PR that closes only its own
-issue.
+Runtime Build/Fix units (the delivered PIH-M1/3/4 history, PIH-4.1 through
+PIH-6, and any deferred Blender activation) live in `game-dev`: their owner
+creates a `game-dev` issue and Project 19 item, branches from `game-dev` main,
+and uses an isolated `game-dev` worktree. PIH-M2 is delivered in `rpg-project`;
+PIH-7 and canonical design/plan corrections use fresh `rpg-project` issues/PRs,
+not merged #136. Every new unit links #150 and historical #135/#136, stages only
+declared files, never uses `git add -A` or `--no-verify`, self-reviews, and
+opens one ready PR that closes only its own issue.
 
 No runtime unit edits `rpg-project` role policy or design docs as a convenience;
-it reports a discovery and the canonical #136 branch reconciles it visibly.
-Conversely, the canonical documentation PR never becomes a place to smuggle
-`game-dev` runtime implementation. The PR body states whether it is workflow
-setup (deterministic checks and normal review) or product behavior (normal review
-plus the independent product gate). It never says `MERGE-READY` before the
-appropriate reviewer does. Every implementing role signs GitHub text.
+it reports a discovery and a fresh canonical documentation PR reconciles it.
+Conversely, canonical documentation never smuggles `game-dev` runtime code. The
+PR body states whether it is workflow setup (deterministic checks and normal
+review) or product behavior (normal review plus independent product gate). It
+never says `MERGE-READY` before the appropriate reviewer does. Every
+implementing role signs GitHub text.
 
 PIH-6 and PIH-7 are evidence-only issues unless they expose a defect. They do
 not create a branch just to manufacture a PR; an actual corrective change gets
@@ -606,15 +731,17 @@ its own linked issue/PR in the owning repository.
 | portable runtime/entry/bootstrap clean machine | PIH-M1 (`game-dev`) | bootstrap clone of `rpg-project`; game-dev discovery/entry; no global mutation |
 | temporary duplication removal | PIH-M2 (`rpg-project`) | migrated game-dev proof green before old runtime removal |
 | canonical roles, toolkit core vs D&D overlays, UI/Assets seam | #140/#142 history + PIH-M1 | game-dev resolver reads literal rpg-project charter/overlay paths; no copied policy |
-| GitHub/Project 19 sole durable truth and checkpoint shape | #142 history + PIH-M1/PIH-6 | migrated fixture contract plus live GitHub checkpoint/replacement evidence |
-| nonblocking persistent worker and two-way messages | PIH-3, PIH-4, PIH-6 (`game-dev`) | fake RPC event/settlement tests; live one-child steer/follow-up proof |
-| honest crash/restart boundary | PIH-3, PIH-6 (`game-dev`) | no-session launch + kill fixture; live GitHub-only replacement |
-| human-oriented views/escalations | PIH-4 (`game-dev`) | fixture TUI/headless fallback tests and a labelled terminal capture |
+| GitHub/Project 19 sole durable truth and checkpoint shape | #142 history + PIH-M1/PIH-4.1/PIH-6 | migrated fixture contract plus explicit-focus checkpoint/replacement evidence |
+| nonblocking one-child worker and two-way messages | delivered PIH-3/4 + PIH-4.2/PIH-6 (`game-dev`) | fake RPC event/settlement tests; immediate owned notification; live one-child steer/follow-up proof |
+| honest crash/restart boundary | PIH-3, PIH-4.1, PIH-6 (`game-dev`) | no-session launch + kill fixture; GitHub-only focus re-anchor or ask-Kirk |
+| managed views/escalations | delivered PIH-4 + PIH-4.1 (`game-dev`) | fixture focus/group/cap/headless proof plus honestly scoped live status read |
+| director mailbox/notification boundary | PIH-4.2 (`game-dev`) | fixture immediate owned RPC versus explicit/startup external refresh; no durable unread/push claim |
+| repository-aware sibling dispatch | PIH-4.3 (`game-dev`) | role/repo/Project URL/root/origin/containment tests and game-dev-for-toolkit refusal probes |
 | role-scoped Chrome safety | PIH-5, PIH-6 (`game-dev`) | policy/bridge tests and one durable Chrome artifact |
 | deferred Blender safety | conditional post-retro `game-dev` issue only | Assets-only lease/pilot tests and evidence only if retro justifies activation |
 | no daemon or second durable store | PIH-M1 through PIH-7 | game-dev verifier/static checks plus restart/recovery evidence |
 | side-by-side evaluation and future scope | PIH-7 (`rpg-project`) | comparable evidence-based retro, not a synthetic benchmark |
-| long-lived canonical PR lifecycle | #136 / PIH-M1 through PIH-7 | linked cross-repo PRs plus §10 reconciliation before #136 merge |
+| canonical documentation lifecycle | merged #136 history + #150/future corrections | fresh issue-backed corrections; no reopening/replacing #136 |
 
 ## 7. Explicit non-goals and stop conditions
 
@@ -624,7 +751,9 @@ following:
 - a request for a long-lived daemon, listener, shared queue, second task
   database, session-derived recovery mechanism, or automatic multi-worker
   scheduler;
-- a request to copy/replace canonical role charters, move D&D rules into toolkit
+- a request to dispatch a sibling role through `game-dev`, infer a repository
+  from Team/role text, bypass exact issue/Project URL/root/origin/containment
+  checks, copy/replace canonical charters, move D&D rules into toolkit
   core/API/proto/web, or grant a lead/member merge authority;
 - an MCP capability not named in an issue-approved allowlist;
 - a second Blender client, a missing human save/grant/disconnect step, a
@@ -640,68 +769,71 @@ state locally to make the failure disappear.
 
 ## 8. Plan-review self-checklist
 
-Before publishing the focused plan-consistency checkpoint on #136, verify:
+Before the #150 reconciliation checkpoint/ready PR, verify:
 
-- [ ] #136's body says `Review phase: Plan Review`, stays ready/non-draft, and
-  says it remains open through implementation.
-- [ ] `design.md` states the same long-lived canonical lifecycle without the old
-  separate-plan-PR contradiction.
-- [ ] The plan selects RPC child processes with `--no-session`, identifies the
-  SDK only as deferred, and cites actual Pi 0.82.1 RPC/TUI/extension mechanics.
-- [ ] #140/#142 are recorded as delivered `rpg-project` history; PIH-M1 proves
-  the runtime in `game-dev`, PIH-M2 removes the temporary old copy, and only then
-  do PIH-3..6 resume in `game-dev`.
-- [ ] Every future unit has its owning-repository issue/Project 19 requirement,
-  dependency, exact files, deterministic/live checks, and acceptance evidence.
-- [ ] PIH-M1 proves bootstrap, `game-dev` project-local discovery, canonical
-  charter resolution, portable entry behavior, and clean-machine failure modes
-  without global Pi/config/credential mutation or a policy copy.
-- [ ] PIH-5 does not imply a native Pi MCP API, derives Chrome configuration
-  through the bootstrapped `rpg-project` clone, and leaves Blender activation to
-  the conditional `game-dev` post-retro issue with its hardened pilot/lease
-  contract intact.
-- [ ] PIH-6 proves one child, one replacement, and one durable **Chrome**
-  artifact — not a speculative multi-worker deployment or Blender pilot.
-- [ ] The plan contains no implementation issue creation, source implementation,
-  global Pi change, daemon, second store, raw asset/GLB publication, or merge
-  instruction.
-- [ ] `git diff --check`, package/doc consistency review, and staged-file review
-  pass before commit.
+- [ ] #136 is recorded accurately as merged history; #150 is the fresh ready,
+  non-draft reconciliation review and is not a covert attempt to reopen #136.
+- [ ] The design/plan agree on one lead plus one child, managed focus/mailbox
+  visibility only, Chrome before Blender, no daemon/listener/store/auto-approval,
+  and Kirk-only merge authority.
+- [ ] PIH-M1/M2, PIH-3, and PIH-4 are recorded as delivered with their real
+  issues/PRs and evidence limits.
+- [ ] PIH-4.1 → PIH-4.2 → PIH-4.3 is explicitly ordered before PIH-5; every
+  unit names game-dev files, tests, acceptance commands, live-evidence boundary,
+  Project item, and historical/current links.
+- [ ] Focus roots/descendants, mailbox fields/actions, immediate owned RPC versus
+  refresh-only external activity, and ephemeral unread/re-anchor rules are
+  precise and prohibit Pi/session/worktree recovery.
+- [ ] Dispatch requires explicit owner/repository/issue identity, exact Project
+  item URL match, role mapping, target root/origin/base/branch/worktree checks,
+  physical containment, and canonical game-dev extension/charter paths.
+- [ ] PIH-4.3 proves game-dev cannot substitute for toolkit and preserves the
+  one-child guard; no real sibling-repository trial precedes it.
+- [ ] PIH-5 does not imply native Pi MCP, Chrome core proof remains first, and
+  Blender stays conditional post-retro with its hardened lease contract.
+- [ ] The plan contains no runtime implementation, global Pi mutation, daemon,
+  listener, second store, raw asset/GLB publication, or product approval claim.
+- [ ] `git diff --check`, documentation consistency review, and staged-file
+  review pass before commit.
 
 ## 9. Planned review questions for Kirk
 
-1. Does the selected initial mechanism — a single `--no-session` RPC child —
-   give the right recovery honesty, with SDK sessions deferred until evidence
-   shows a need?
-2. Does the Chrome-only PIH-6 proof stay narrow enough while preserving the
-   hardened Blender destination for a retro-justified Assets issue?
-3. Is the final reconciliation gate sufficiently strict before #136 merges, or
-   is an additional human decision point needed before PIH-7 begins?
+1. Is managed focus plus a bounded ephemeral mailbox the right director-session
+   operating surface before attempting a real sibling-repository task?
+2. Does PIH-4.3's exact target-repository refusal contract make a one-child
+   toolkit trial safe enough to authorize after its deterministic PR review?
+3. Does the Chrome-only PIH-6 proof remain narrow while retaining Blender's
+   conditional hardened destination and deferring concurrency decisions?
 
-## 10. Final reconciliation and #136 merge gate
+## 10. Final reconciliation gate for a future documentation PR
 
-Before Kirk is asked to merge #136, the Pi team-harness design worker/lead
-publishes a final signed checkpoint and a #136 comment that enumerates:
+Before Kirk is asked to merge a future Pi-harness reconciliation PR, its signed
+checkpoint and PR comment enumerate:
 
-1. every PIH issue, Project 19 item, branch, PR, and merged/not-merged state,
-   including delivered #140/#142, stopped #144, PIH-M1, and PIH-M2;
-2. clean-machine/bootstrap/entry evidence that the runtime loads from
-   `game-dev`, resolves `game-dev/rpg-project` charters without a policy copy,
-   and no longer depends on the removed `rpg-project` runtime path;
-3. every discovery that changed `design.md` or `plan.md`, with a link to its
-   implementation evidence and canonical #136 commit;
-4. deterministic verifier/test/typecheck results for each implementation PR;
-5. the deliberate-kill/replacement evidence and the durable Chrome artifact,
-   including what it did not prove; and any conditional Blender activation
-   evidence only if the PIH-7 retro actually justified that later issue;
-6. the side-by-side Claude Code/OpenCode retro, observed failures, and any
-   deferred follow-up issues;
-7. confirmation that no daemon, second durable task store, hidden recovery
-   dependency, global Pi/config/credential mutation, policy copy, extra Blender
-   client, or unsafe asset publication entered the delivered scope; and
-8. the four-question done-gate answers plus remaining risks.
+1. delivered history (#140/#142, game-dev#6/PR#7, #145/PR#146, game-dev#8/PR#9,
+   game-dev#12/PR#13) and every PIH-4.1+ issue, Project item, branch, PR, and
+   merged/not-merged state;
+2. clean-machine/bootstrap/entry evidence that runtime remains in `game-dev`,
+   resolves `game-dev/rpg-project` charters without policy copy, and never
+   depends on the removed rpg-project runtime;
+3. managed-focus and mailbox evidence: explicit roots/descendants, counts,
+   bounded scope, refresh origin, ephemeral unread/re-anchor result, and what
+   the UI did not prove;
+4. repository-aware dispatch evidence including every game-dev-for-toolkit
+   refusal, target root/origin/branch/worktree checks, and proof that exactly
+   one child remains enforced;
+5. deterministic verifier/test/typecheck results for each implementation PR;
+6. deliberate-kill/replacement evidence and durable Chrome artifact, including
+   what neither proved; conditional Blender evidence only if the retro justified
+   its later issue;
+7. the comparable Claude Code/OpenCode retro, observed failures, and deferred
+   follow-up issues; and
+8. confirmation that no daemon/listener/scheduler, second durable store, hidden
+   focus/recovery dependency, global mutation, policy copy, extra Blender
+   client, unsafe asset publication, auto-approval, or concurrency expansion
+   entered scope.
 
-Kirk then decides whether the canonical artifacts reconcile with delivered
-behavior and whether to merge #136. If any linked implementation work is open,
-evidence is missing, an assumption is stale, or a dragon remains unresolved,
-#136 stays open and the next action is published visibly. No agent merges it.
+Kirk decides whether that fresh documentation PR reconciles with delivered
+behavior. If evidence is missing, an assumption is stale, or a dragon remains,
+the PR stays open with the next action published visibly. No agent merges it or
+reopens #136.
