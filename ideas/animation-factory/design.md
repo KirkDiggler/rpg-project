@@ -131,8 +131,9 @@ retargeting.
 
 After the toy diagnostic passes, before production factory code or walk-retarget
 work, run a disposable proof that an agent can author and round-trip a
-weapon-bearing pose on canonical `fighter.glb`. The canonical target is
-read-only. The output is a constant held-pose action named `Pose_WeaponProof`,
+weapon-bearing pose from the canonical fighter inputs. The canonical fighter
+model is read-only and remains separate from its weapon. The output is a
+constant held-pose action named `Pose_WeaponProof`,
 not a static baked mesh or a Blender-session-only render.
 
 The pose is a one-handed ready guard: the weapon arm and torso make an obvious
@@ -143,29 +144,41 @@ state. Scripts, staged GLB, reports, and renders are disposable under
 `/tmp/opencode/weapon-pose-proof/`. Step 0 creates no repository implementation,
 does not change a canonical GLB, and cannot promote an asset.
 
-The existing fighter weapon is already a baked, full-weight `Hand_R` skin and
-prior idle renders retained its grip. This proof does not re-prove attachment in
-all contexts. It validates one controlled unit: an agent-authored pose/action,
-the baked weapon following it, and a factory-style export/fresh-reimport round
-trip. Static mesh baking cannot prove that action contract; BlenderMCP-only state
-cannot reproduce it; and Auto-Rig Pro or IK would add unneeded retargeting or
-two-hand variables.
+The current canonical contract is separate: `fighter.glb` is unarmed
+(`bakedIntoModel: false`), while the manifest identifies the standalone fighter
+weapon and its complete `Hand_R` rest-head socket frame (position, rotation, and
+scale). Step 0 reads those values verbatim and reconstructs that rigid
+single-bone skin only in its disposable control and candidate scenes; it neither
+changes nor promotes the model, weapon file, or socket metadata. This follows
+the noncanonical stance handoff's relevant constraint—use one deformation path,
+not bone parenting or a doubled transform—without treating its local checkpoints
+as contract. The proof validates one controlled unit: an agent-authored
+pose/action, the contract-framed temporary weapon following it, and a
+factory-style export/fresh-reimport round trip. Static mesh baking cannot prove
+that action contract; BlenderMCP-only state cannot reproduce it; and Auto-Rig
+Pro or IK would add unneeded retargeting or two-hand variables.
 
 ### Step 0 data flow
 
-1. Start a fresh Blender process and import the canonical fighter.
-2. Snapshot skeleton/rest data, canonical `Root`, object hierarchy, meshes,
-   materials/images, existing action semantics, and the unambiguous existing
-   `Hand_R`-weighted baked weapon mesh.
+1. Start a fresh Blender process and import the canonical fighter and the
+   manifest-selected standalone fighter weapon. Record the manifest's
+   `bakedIntoModel: false`, weapon identity, and complete `Hand_R` socket frame.
+2. Snapshot the fighter skeleton/rest data, canonical `Root`, object hierarchy,
+   meshes, materials/images, and existing action semantics; snapshot the
+   separate weapon's mesh/material contract. In each disposable control and
+   candidate scene only, place the weapon from the recorded rest-head frame and
+   bind it through one full-weight `Hand_R` skin. Do not bone-parent it or add a
+   second attachment path.
 3. Evaluate a deterministic `Idle_Relaxed` frame as the natural standing
    baseline.
 4. Layer explicit local offsets on the torso and right clavicle, upper-arm,
-   forearm, and hand chain. Do not edit armature rest data or the weapon socket;
-   keep the off-hand free.
+   forearm, and hand chain. Do not edit armature rest data, the manifest socket
+   frame, or either canonical input; keep the off-hand free.
 5. Key the resulting full pose identically at frames 1 and 2 into
    `Pose_WeaponProof`. This one-frame span gives glTF a nonzero constant clip.
 6. Export only to staging, reset Blender, fresh-reimport the candidate, and
-   compare it with a matched same-exporter no-op control.
+   compare it with a matched same-exporter no-op control that reconstructs the
+   identical disposable weapon attachment.
 7. Produce synchronized before/after front, side, back, and three-quarter
    full-body renders plus a hand/grip close-up.
 8. Kirk's visual approval is the final gate. Nothing is promoted by this proof.
@@ -174,12 +187,14 @@ two-hand variables.
 
 The proof fails unless `Root`, skeleton hierarchy/rest matrices, object contract,
 meshes, materials, and images match the no-op control; all pre-existing clips
-have equivalent sampled transforms; and only `Pose_WeaponProof` is new. The
-weapon must be identified unambiguously as the existing `Hand_R`-weighted baked
-weapon, move at least `0.25` meters in world space from baseline to proof pose,
-and pass both rigid-follow checks below. Both feet must retain baseline ground
-height within `0.01` meters, every required render must complete, and Kirk must
-visually accept the one-handed ready guard and hand close-up.
+have equivalent sampled transforms; and only `Pose_WeaponProof` is new. Both
+exports must reconstruct the manifest-selected standalone fighter weapon from
+its unmodified `Hand_R` socket frame through exactly one full-weight skin; the
+canonical fighter, standalone weapon, and manifest remain unmodified. The
+weapon must move at least `0.25` meters in world space from baseline to proof
+pose and pass both rigid-follow checks below. Both feet must retain baseline
+ground height within `0.01` meters, every required render must complete, and
+Kirk must visually accept the one-handed ready guard and hand close-up.
 
 For every baseline, proof-pose, pre-export, and fresh-reimport weapon sample,
 compute `hand_world = armature.matrix_world @ hand_pose_bone.matrix`, decompose
@@ -190,7 +205,7 @@ Express evaluated world-space weapon coordinates through
 position/orientation in world meters; the armature `Root` scale is an encoding
 conversion and must not redefine the metric unit.
 
-The original imported scene proves rigid following: compare every evaluated
+The disposable assembled scene proves rigid following: compare every evaluated
 weapon vertex at the deterministic `Idle_Relaxed` baseline and at
 `Pose_WeaponProof` frame 1. At each frame, use the defined scale-free
 `hand_frame_m.inverted()` coordinates and match vertices by index because
@@ -205,17 +220,17 @@ preserves triangle and material identity, not raw vertex indices, because glTF
 may split or reorder vertices. The maximum matched coordinate delta must be
 `<= 0.001` meters.
 
-Any missing baseline clip, ambiguous weapon mesh, rest mutation, existing-action
-change, grip drift, structural/export difference, ground-height failure, or
-render failure stops the proof. A retry may adjust pose-bone offsets only; it
-may not hand-tune the existing weapon socket or introduce per-character
-retarget corrections.
+Any missing baseline clip, ambiguous manifest-selected weapon, socket-frame or
+rest mutation, second attachment path, existing-action change, grip drift,
+structural/export difference, ground-height failure, or render failure stops the
+proof. A retry may adjust pose-bone offsets only; it may not hand-tune the
+manifest socket frame or introduce per-character retarget corrections.
 
-Passing Step 0 proves agent-authored pose control, baked-weapon following, action
-addition, export/fresh-reimport preservation, staging, and visual evidence. It
-does not prove locomotion retargeting, family profiles, foot contact,
-gait/cadence, Auto-Rig Pro, or production-factory readiness. The four-target
-walk proof remains the production-factory proof.
+Passing Step 0 proves agent-authored pose control, contract-framed rigid weapon
+following, action addition, export/fresh-reimport preservation, staging, and
+visual evidence. It does not prove locomotion retargeting, family profiles, foot
+contact, gait/cadence, Auto-Rig Pro, or production-factory readiness. The
+four-target walk proof remains the production-factory proof.
 
 ## Factory contract
 
@@ -231,9 +246,10 @@ specific correction field.
 
 The Blender runner launches a fresh process and factory-empty scene for every
 target. It imports one canonical target, preserves the canonical `Root`, meshes,
-materials, images, baked weapons, object parenting, evaluated rest surface, and
-all existing idle actions, then bakes only `Walk_Forward`. It writes candidates
-only to staging; it never writes a canonical asset.
+materials, images, object parenting, evaluated rest surface, all existing idle
+actions, and the separate-weapon manifest contract (`bakedIntoModel: false`,
+weapon identity, and socket frame), then bakes only `Walk_Forward`. It writes
+candidates only to staging; it never writes a canonical asset.
 
 Preflight rejects the whole batch unless the private source exists within the
 license boundary, the 46-bone map is exact, the target matches its declared
@@ -250,35 +266,70 @@ metadata after its output passes QA:
 "locomotion": {
   "clip": "Walk_Forward",
   "gaitSpeedMps": <positive number>,
-  "measurement": "median-stance-foot-speed-v1"
+  "measurement": "root-relative-stance-forward-speed-v1"
 }
 ```
 
-`gaitSpeedMps` is the median horizontal root-space foot speed, in authored
-meters per second, across accepted left and right stance intervals. It is
-measured independently from each output character and recorded in that output's
-evidence metadata. It is a measurement, not a retarget correction: it cannot
-change a family profile, calibration, pose, floor normalization, or any other
-per-character processing parameter.
+`gaitSpeedMps` is an authored-meters-per-second measurement of the walk's
+forward travel implied by its in-place animation; it is not world/root
+translation and it is not the old lowest-foot-Y proxy. For each candidate clip,
+QA evaluates each profile's declared foot-contact landmark in the scale-free,
+orthonormal frame of the evaluated canonical `Root`: decompose the Root world
+matrix, discard scale, transform the evaluated landmark into that frame, and
+project onto the plane perpendicular to the declared up axis. The profile's
+forward unit vector `f` is expressed in that same horizontal root frame. This
+makes the measurement root-relative even when the clip is in-place; the
+preflight root-motion prohibition remains a separate gate.
+
+Contact detection identifies maximal, deterministic left and right stance
+intervals from the source's contact phases and requires the retargeted output to
+pass its corresponding contact and ground checks. An interval is accepted only
+when it has finite samples, a declared landmark and axes, and at least one
+finite, strictly positive time delta between consecutive samples inside that
+same interval. For each such pair, let `v = (p(t1) - p(t0)) / (t1 - t0)` be the
+horizontal root-relative foot velocity. QA records `|v|` for diagnostics, but
+uses the signed forward travel `s = -dot(v, f)` for cadence: a planted foot on a
+forward-moving in-place walk travels backward in the root frame. Every included
+sample must have finite `v`, finite `|v|`, and strictly positive `s`; a lateral
+or forward-moving stance sample is not silently converted into usable speed.
+
+For each accepted stance interval, take the median of its included `s` samples.
+`gaitSpeedMps` is the median of those interval medians across both feet, with at
+least one accepted interval from each foot. This equal-foot, interval-first
+aggregation avoids changing the result merely by sampling a longer stance more
+densely. Its unit is authored meters per second. Missing contact data, a
+non-finite value, a non-positive time delta or interval speed, an absent foot,
+or an absent accepted interval for either foot rejects the candidate. QA records
+the landmarks, coordinate convention, accepted intervals, per-interval values,
+and aggregate in immutable evidence. The value is a measurement, not a retarget
+correction: it cannot change a family profile, calibration, pose, floor
+normalization, or any other per-character processing parameter.
 
 The paired web change copies the approved manifest value into that class's
 existing manifest-derived `ClassCharacterModelEntry`; the web does not fetch the
 asset manifest at runtime. Evidence must verify exact asset/web parity for the
-clip, `gaitSpeedMps`, and measurement identifier.
-
-For a moving class model, the web calculates:
+clip, `gaitSpeedMps`, and measurement identifier. While that class model is
+moving with its resolved walk clip, the web applies the resulting rate to that
+walk action; idle/non-moving behavior remains at its normal rate.
 
 ```
-rawRate = runtimeWorldSpeed / (gaitSpeedMps * SYNTY_SCALE)
+denominator = gaitSpeedMps * SYNTY_SCALE
+rawRate = runtimeWorldSpeed / denominator
 effectiveRate = clamp(rawRate, 0.5, 2.0)
 ```
 
-The bounds are inclusive. Runtime defensively uses `1.0` and emits a diagnostic
-when gait metadata is missing, non-finite, or non-positive; this preserves
-legacy/existing assets. Those conditions cannot pass this batch's promotion
-gate. Factory acceptance also requires the *unclamped* `rawRate` to be within
-`[0.5, 2.0]`; otherwise the batch is rejected and movement pacing or the source
-animation must change rather than hiding the mismatch with a clamp.
+`runtimeWorldSpeed` is the finite, non-negative magnitude of the actual rendered
+world-path displacement per second; `SYNTY_SCALE` converts authored meters to
+those world units. Before division the web requires `gaitSpeedMps` and
+`SYNTY_SCALE` to be finite and strictly positive, and therefore `denominator` to
+be finite and strictly positive. The bounds are inclusive. Runtime defensively
+uses `1.0` and emits a diagnostic when gait metadata or the denominator is
+missing, non-finite, or non-positive; this preserves legacy/existing assets.
+Those conditions cannot pass this batch's promotion gate. Factory acceptance
+also requires a finite `runtimeWorldSpeed`, finite `rawRate`, and the
+*unclamped* `rawRate` within `[0.5, 2.0]`; otherwise the batch is rejected and
+movement pacing or the source animation must change rather than hiding the
+mismatch with a clamp.
 
 ### Retarget pipeline
 
