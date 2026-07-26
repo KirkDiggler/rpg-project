@@ -208,19 +208,29 @@ advancing a script.
 Two cases the play loop must also reach, because they are what makes the
 record shape earn itself:
 
-7. **A monster crossing the viewer's sight.** It walks a path partly inside
-   the viewer's vision. While visible, its records move hex to hex. When it
-   steps out of sight, the last hex the viewer saw it on freezes
-   `REMEMBERED` with the monster still placed on it, and the hexes it
-   continues through send nothing. The frozen monster is what the viewer
-   believes until contradicted.
-8. **Walking up to the frozen monster.** That hex arrives `VISIBLE` with
+7. **Sight cut while a monster stands there.** The viewer watches a monster
+   through the open doorway; the door shuts. That hex arrives `REMEMBERED`
+   with the monster still placed on it, facing the way it was last seen.
+   That frozen record is what the viewer believes until contradicted.
+8. **Regaining sight of the frozen hex.** It arrives `VISIBLE` with
    `contents: []`. The remembered monster disappears — not because a
    "forget" message arrived, but because the current record is total and
    says the hex is empty.
 
 Case 8 is the load-bearing one. It is the reason a visible record must state
 its full contents rather than only its additions.
+
+**A correction found by building this.** An earlier draft of case 7 had a
+monster walking out of sight and freezing on the last hex the viewer saw it.
+That is not what happens. If the hex it left stays visible, the viewer watches
+it leave and receives a `VISIBLE` record with `contents: []` — no ghost,
+correctly, because they saw it go. What freezes a memory is *the hex* ceasing
+to be visible while something stands on it, not the entity moving.
+
+The distinction matters because it locates the mechanism. Memory is per-hex,
+so it is hex visibility that governs freezing; entity movement never produces
+a ghost on its own. Both halves are exercised: the door shutting on a standing
+monster, and a monster walking out of a hex that remains in view.
 
 ## The event layer
 
