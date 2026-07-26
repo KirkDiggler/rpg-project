@@ -103,6 +103,7 @@ game-dev/
       rpc-worker.ts
       supervisor.ts
       status.ts
+      focus.ts
       team-overlay.ts
       evidence.ts
       capabilities/
@@ -221,15 +222,20 @@ The lead exposes exactly these worker actions:
 
 | Action | RPC command | Meaning |
 |---|---|---|
-| start dispatch | `prompt` | one scoped worker brief after issue/board validation |
+| start dispatch | `prompt` | one scoped worker brief after issue/board validation; attaches its issue to the current in-memory focus |
 | correct current task | `steer` | delivered after the current assistant tool batch |
 | queue next request | `follow_up` | delivered only after the current run settles |
 | stop | `abort` | explicit human/lead cancellation only |
 | inspect | `get_state` / streamed events | live, non-durable status only |
 
-A `request checkpoint` action is a human-readable follow-up instruction; it is
-not a fabricated checkpoint. The worker must publish the actual GitHub comment
-with completed work, verification scope, blockers, and explicit next action.
+Focus is a separate presentation command surface: `/team-focus add`, `remove`,
+and `inspect`, plus `/team-status managed|team|project`. It accepts only live
+GitHub issue/PR or scoped Project roots (not a bare Project-wide URL), keeps
+them in memory, and never treats a broad Team/Project query as a hidden dispatch
+queue. A `request checkpoint` action is a human-readable follow-up instruction;
+it is not a fabricated checkpoint. The worker must publish the actual GitHub
+comment with completed work, verification scope, blockers, and explicit next
+action.
 
 ### 3.3 GitHub/Project 19 dispatch contract
 
@@ -252,8 +258,11 @@ contract.
 
 `src/checkpoint.ts` renders the required signed issue-comment template. It
 requires completed work, verification, blockers (explicit `none` is allowed),
-next action/owner, and branch/PR when available. It ends every generated GitHub
-body with:
+next action/owner, and branch/PR when available. PIH-4.1 additionally validates
+optional explicit GitHub focus roots and managed issue/PR links for a dispatch
+handoff; it does not serialize the live focus set. Those URLs let a replacement
+re-anchor only when a checkpoint deliberately provides them. It ends every
+generated GitHub body with:
 
 ```text
 — Pi team-harness design worker, on behalf of KirkDiggler
@@ -432,34 +441,69 @@ launched from the portable `game-dev` runtime; live claim remains fake-child onl
 until PIH-6. The checkpoint names crash limitations and exact human action if a
 child cannot start/authenticate.
 
-### PIH-4 — TUI team status and human escalation surface
+### Delivered history — PIH-4 status surface in `game-dev`
 
-**Dependency:** PIH-M2 and PIH-3 merged.
+PIH-4 is delivered by `game-dev` #12 / PR #13 after PIH-M2 and PIH-3. It added
+the five command/status surface, deterministic fixture coverage, and a compact
+TUI/headless projection without durable task state. Kirk's observed post-merge
+`/team-status` read fresh live GitHub/Project 19 data (not live worker or
+recovery proof), but the unscoped default rendered 108 My-team rows and 258
+repetitive Needs-human rows. That live UX finding and Kirk's managed-session
+focus decision are preserved on `rpg-project` #135/#136; they require the
+following adjustment before PIH-5.
 
-**Issue/PR:** create `game-dev` issue “Add Pi team status and escalation
-surface”; Team=Cross-team, Feature=Infra, Kind=Build. One ready `game-dev` PR
-links #135/#136 and PIH-M1/M2.
+### PIH-4.1 — Managed-session focus and bounded status projections
+
+**Dependency/order:** PIH-4 `game-dev` #12 / PR #13 merged; Kirk's explicit
+managed-session decision recorded on #135/#136. This adjustment completes
+before PIH-5; it does not reopen PIH-3 or claim multi-worker live proof.
+
+**Issue/PR:** after this canonical correction, create one `game-dev` Build
+issue “Scope Pi team status to managed session focus”; Team=Cross-team,
+Feature=Infra, Kind=Build. Its ready `game-dev` PR links #135/#136 and PIH-4
+#12/#13.
 
 **Files:** under `game-dev/.pi/extensions/pi-team-harness/`, create
-`src/{status.ts,team-overlay.ts}`, extend `index.ts` with `/team-status`,
-`/team-dispatch`, `/team-message`, `/team-abort`, and `/team-escalate`, create
-`test/{status.test.ts,team-overlay.test.ts,commands.test.ts}`, and extend the
-`game-dev` verifier for TUI-mode guards and command fallback declarations.
+`src/focus.ts`; extend `src/{github.ts,checkpoint.ts,status.ts,team-overlay.ts}`
+and `index.ts`; create `test/focus.test.ts`; extend
+`test/{status.test.ts,team-overlay.test.ts,commands.test.ts}` and GitHub/
+checkpoint fixtures; extend `scripts/verify-pi-team-harness.mjs` for the new
+file and negative no-store/session-history checks.
 
-**Tests/checks:** fixture data renders Team-now, Needs-a-human, Review, Recovery,
-and cross-team seam rows with source URLs/timestamps and an explicit stale state
-when GitHub reads fail. TUI tests constrain every render line to supplied width
-and exercise focus/cancel behavior. RPC/headless tests prove `ctx.mode !==
-"tui"` does not call `ctx.ui.custom()` and commands still emit structured
-status/extension UI notifications.
+**Tests/checks:** deterministic fixtures prove all of the following:
 
-**Acceptance evidence:** a terminal capture from a fake supervisor and fake
-GitHub dataset shows a running card plus a human escalation. It is labelled as
-fixture UI evidence, not a real Project 19 or worker recovery claim.
+- `/team-focus add|remove|inspect` accepts only live GitHub issue/PR or scoped
+  Project roots (rejecting a bare Project-wide URL), records its reason/source
+  in memory, makes a confirmed dispatch target attached for the session, and
+  never writes/mutates GitHub merely to focus.
+- One initiative/section root and several concurrent issue/PR roots produce a
+  union of direct roots plus only explicit GitHub-linked PR/checkpoint/background
+  descendants; Team-wide/project-wide discovery, arbitrary text links, and
+  session JSONL are not fallback inputs.
+- `/team-status` defaults to managed scope; visibly labelled `team`/`project`
+  modes are opt-in. Managed Needs-human/Review/Recovery projections include only
+  focused operational rows, group repeated missing-fact debt with aggregate
+  counts/representative URLs, and enforce the fixed ten-row per-section cap
+  while showing total/shown counts and inspect route.
+- A restart/replacement begins with no in-memory focus. It can re-anchor only
+  from fixture explicit root/managed links in GitHub checkpoints; absent anchors
+  return an ask-Kirk-to-focus result, never the prior session, a Team-wide query,
+  a local file, or a hidden worker restore. A background row never starts,
+  schedules, retries, or implies a second PIH-3 child.
+- TUI and RPC/headless output expose focus roots, scope, counts, source URLs,
+  stale/unavailable state, and narrow-width/cancel behavior without calling TUI
+  APIs outside TUI mode.
+
+**Acceptance evidence:** the ready PR includes fixture captures for one root,
+several background roots, grouped/capped escalation output, opt-in broad view,
+and restart re-anchor/refusal. A subsequent real `/team-status managed` capture
+must name its explicit root(s), source URL/timestamp, total/shown counts, and
+what was not proved. It may demonstrate live GitHub rendering only; it does not
+claim dispatch, recovery, scheduler, or multi-worker evidence.
 
 ### PIH-5 — Role-scoped Chrome evidence bridge and evidence contract
 
-**Dependency:** PIH-M2, PIH-3, and PIH-4 merged.
+**Dependency:** PIH-M2, PIH-3, PIH-4, and PIH-4.1 merged.
 
 **Issue/PR:** create `game-dev` issue “Add Pi role-scoped Chrome evidence
 bridge”; Team=Cross-team, Feature=Infra, Kind=Build. One ready `game-dev` PR
@@ -487,8 +531,9 @@ capability PR never connects to a browser merely to make CI green.
 
 ### PIH-6 — Deliberate-kill/replacement proof and durable Chrome evidence
 
-**Dependency:** PIH-M2 and PIH-3 through PIH-5 merged; a human selects one
-small real Project 19 task with the existing local Chrome evidence path.
+**Dependency:** PIH-M2, PIH-3, PIH-4, PIH-4.1, and PIH-5 merged; a human
+selects one small real Project 19 task with the existing local Chrome evidence
+path.
 
 **Issue/PR:** create an evidence-only `game-dev` Verify issue “Prove Pi
 team-harness replacement and Chrome evidence”; Team=Cross-team, Feature=Infra,
@@ -578,9 +623,9 @@ scene capture as export/release QA.
 
 ## 5. Worktree, branch, and review protocol for all code units
 
-Runtime Build/Fix units (PIH-M1, PIH-3 through PIH-6, and any deferred Blender
-activation) live in `game-dev`: their owner creates a `game-dev` issue and
-Project 19 item, branches from `game-dev` main, and uses an isolated
+Runtime Build/Fix units (PIH-M1, PIH-3, PIH-4.1, PIH-5 through PIH-6, and any
+deferred Blender activation) live in `game-dev`: their owner creates a
+`game-dev` issue and Project 19 item, branches from `game-dev` main, and uses an isolated
 `game-dev` worktree. PIH-M2 is the one `rpg-project` cleanup PR; PIH-7 and all
 canonical design/plan reconciliation stay in `rpg-project` #136. Every unit
 links #135/#136, stages only declared files, never uses `git add -A` or
@@ -606,10 +651,10 @@ its own linked issue/PR in the owning repository.
 | portable runtime/entry/bootstrap clean machine | PIH-M1 (`game-dev`) | bootstrap clone of `rpg-project`; game-dev discovery/entry; no global mutation |
 | temporary duplication removal | PIH-M2 (`rpg-project`) | migrated game-dev proof green before old runtime removal |
 | canonical roles, toolkit core vs D&D overlays, UI/Assets seam | #140/#142 history + PIH-M1 | game-dev resolver reads literal rpg-project charter/overlay paths; no copied policy |
-| GitHub/Project 19 sole durable truth and checkpoint shape | #142 history + PIH-M1/PIH-6 | migrated fixture contract plus live GitHub checkpoint/replacement evidence |
-| nonblocking persistent worker and two-way messages | PIH-3, PIH-4, PIH-6 (`game-dev`) | fake RPC event/settlement tests; live one-child steer/follow-up proof |
-| honest crash/restart boundary | PIH-3, PIH-6 (`game-dev`) | no-session launch + kill fixture; live GitHub-only replacement |
-| human-oriented views/escalations | PIH-4 (`game-dev`) | fixture TUI/headless fallback tests and a labelled terminal capture |
+| GitHub/Project 19 sole durable truth and checkpoint shape | #142 history + PIH-M1/PIH-4.1/PIH-6 | migrated fixture contract plus explicit-focus checkpoint/replacement evidence |
+| nonblocking persistent worker and two-way messages | PIH-3, PIH-4, PIH-4.1, PIH-6 (`game-dev`) | fake RPC event/settlement tests; live one-child steer/follow-up proof |
+| honest crash/restart boundary | PIH-3, PIH-4.1, PIH-6 (`game-dev`) | no-session launch + kill fixture; focus re-anchor or ask-Kirk; live GitHub-only replacement |
+| human-oriented views/escalations | delivered PIH-4 + PIH-4.1 (`game-dev`) | live status-read finding; fixture scoped/grouped/bounded/headless focus proof |
 | role-scoped Chrome safety | PIH-5, PIH-6 (`game-dev`) | policy/bridge tests and one durable Chrome artifact |
 | deferred Blender safety | conditional post-retro `game-dev` issue only | Assets-only lease/pilot tests and evidence only if retro justifies activation |
 | no daemon or second durable store | PIH-M1 through PIH-7 | game-dev verifier/static checks plus restart/recovery evidence |
@@ -656,6 +701,10 @@ Before publishing the focused plan-consistency checkpoint on #136, verify:
 - [ ] PIH-M1 proves bootstrap, `game-dev` project-local discovery, canonical
   charter resolution, portable entry behavior, and clean-machine failure modes
   without global Pi/config/credential mutation or a policy copy.
+- [ ] Delivered PIH-4 status-read evidence is recorded honestly; PIH-4.1 adds
+  explicit in-memory managed roots, dispatch attachment, GitHub-linked
+  descendants, scoped/grouped/bounded projections, opt-in broad views, and
+  checkpoint-only re-anchoring before PIH-5.
 - [ ] PIH-5 does not imply a native Pi MCP API, derives Chrome configuration
   through the bootstrapped `rpg-project` clone, and leaves Blender activation to
   the conditional `game-dev` post-retro issue with its hardened pilot/lease
@@ -688,18 +737,22 @@ publishes a final signed checkpoint and a #136 comment that enumerates:
 2. clean-machine/bootstrap/entry evidence that the runtime loads from
    `game-dev`, resolves `game-dev/rpg-project` charters without a policy copy,
    and no longer depends on the removed `rpg-project` runtime path;
-3. every discovery that changed `design.md` or `plan.md`, with a link to its
+3. PIH-4's live status-read result and PIH-4.1 managed-focus evidence: explicit
+   roots/descendants, scoped aggregate counts, opt-in broad view, and the
+   restart re-anchor or ask-Kirk result;
+4. every discovery that changed `design.md` or `plan.md`, with a link to its
    implementation evidence and canonical #136 commit;
-4. deterministic verifier/test/typecheck results for each implementation PR;
-5. the deliberate-kill/replacement evidence and the durable Chrome artifact,
+5. deterministic verifier/test/typecheck results for each implementation PR;
+6. the deliberate-kill/replacement evidence and the durable Chrome artifact,
    including what it did not prove; and any conditional Blender activation
    evidence only if the PIH-7 retro actually justified that later issue;
-6. the side-by-side Claude Code/OpenCode retro, observed failures, and any
+7. the side-by-side Claude Code/OpenCode retro, observed failures, and any
    deferred follow-up issues;
-7. confirmation that no daemon, second durable task store, hidden recovery
-   dependency, global Pi/config/credential mutation, policy copy, extra Blender
-   client, or unsafe asset publication entered the delivered scope; and
-8. the four-question done-gate answers plus remaining risks.
+8. confirmation that no daemon, scheduler, second durable task store, hidden
+   focus/recovery dependency, global Pi/config/credential mutation, policy copy,
+   extra Blender client, or unsafe asset publication entered the delivered scope;
+   and
+9. the four-question done-gate answers plus remaining risks.
 
 Kirk then decides whether the canonical artifacts reconcile with delivered
 behavior and whether to merge #136. If any linked implementation work is open,

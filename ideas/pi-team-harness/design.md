@@ -123,6 +123,12 @@ blocked, the worker stops and reports the exact blocker through the available
 GitHub surface; if no publication route is available, it reports the exact
 failure to the human rather than continuing invisibly.
 
+The same rule applies to cockpit focus. A replacement may re-anchor a managed
+view only from an explicit GitHub root or a checkpoint's explicit GitHub focus
+links; it never infers a focus set from Pi session JSONL, a previous TUI view,
+a worktree, a Team-wide query, or an old child handle. If no such anchor is
+visible, the cockpit asks Kirk to select one rather than guessing.
+
 ### 2.3 Design/plan artifact lifecycle
 
 This artifact follows the existing design lifecycle: the worktree is only an
@@ -383,27 +389,69 @@ Project 19 remains the shared human/agent coordination protocol. Its current
 Status, Team, Feature, and Kind fields remain the common language; the harness
 reads and updates them through GitHub, not a mirrored local store.
 
-### 5.1 Human-oriented views
+### 5.1 Managed-session focus and human-oriented views
 
-The cockpit presents query views, not new workflow state:
+The default is **Managed this session**, not every row assigned to the
+director's Team or every Project 19 item. A lead explicitly adds one or more
+GitHub-backed focus roots: a backing issue, linked PR, or a named
+initiative/section represented by its scoped GitHub/Project 19 URL. A bare
+Project URL is not a focus root; broad Project inspection is explicit instead.
+A successful human-confirmed dispatch attaches its target issue to this
+in-memory set. The cockpit
+also projects only the root's explicit GitHub-linked PR/checkpoint descendants
+and explicitly linked background issues/PRs; it does not discover a queue from
+Team membership, issue text guesses, or local session history.
 
-- **My team now:** current Team view grouped by Todo / In Progress / In Review,
-  with the backing issue, assigned role, latest visible checkpoint, blocker, and
-  PR link.
-- **Needs a human:** items waiting for decision, tool authorization, auth,
-  Blender lease, scope conflict, or merge. These are escalations, not hidden
-  worker waits.
-- **Review queue:** In Review items, review phase, gate/QA status, unresolved
-  findings, and the next named reviewer.
-- **Recovery queue:** In Progress items with no current local child, stale or
-  missing checkpoint, or a reported crash. The action is to reconstruct from
-  GitHub, not to restore a process.
-- **Cross-team seams:** linked issues with different Team fields, especially
-  toolkit/API/proto/web sequence and the UI/UX–Assets web seam.
+A focus root records only its URL, why it is present (`Kirk`, `dispatch`, or
+`GitHub link`), and the source URL that proves the relationship. That state is
+presentation/control memory for the current lead session, never a local task
+record. When a checkpoint intentionally hands off or coordinates multiple
+background items, it names its root and managed GitHub issue/PR links so a
+replacement has an explicit durable re-anchor. No checkpoint link means no
+inferred descendant.
 
-Views must always show the source URL and refresh timestamp. If GitHub cannot
-be read, the cockpit says the view is stale/unavailable rather than retaining a
-local snapshot as truth.
+The commands and equivalent TUI controls are:
+
+- `/team-focus add <GitHub issue|PR|scoped Project URL>` — validates the live
+  GitHub root (and rejects a bare Project-wide URL) before adding it for this
+  session;
+- `/team-focus remove <root>` — removes only that ephemeral root, never a
+  GitHub item;
+- `/team-focus inspect` — shows each root, attachment reason, explicit
+  descendants, source URLs, and projection counts; and
+- `/team-status [managed|team|project]` — defaults to `managed`; `team` and
+  `project` are visibly labelled, opt-in broad inspection modes and never
+  silently replace session focus.
+
+The managed projection supports one initiative/section or several concurrently
+tracked issue/PRs, including background work, without claiming that each row is
+a child process. PIH-3 still supervises at most one worker in the prototype;
+focus neither starts workers nor schedules, routes, retries, or restores them.
+
+The cockpit presents bounded query views, not new workflow state:
+
+- **Managed now:** focused roots/descendants grouped by Todo / In Progress / In
+  Review, with issue, assigned role, latest visible checkpoint, blocker, PR,
+  and attachment reason.
+- **Needs a human:** only managed, operational active/review/recovery
+  escalations (decision, auth/permission, scope/charter, failed/ambiguous check,
+  evidence, recovery, or merge). Repeated missing required facts are grouped by
+  kind and state with a count and representative links; they are not one noisy
+  row per unrelated board item.
+- **Review queue:** only managed In Review PR/item rows, review phase, gate/QA
+  status, unresolved findings, and next named reviewer.
+- **Recovery queue:** only managed items with a GitHub-reported crash, stale or
+  missing checkpoint, or an explicit replacement handoff. A lost local child
+  after restart is not sufficient evidence; recovery reconstructs from the
+  root/issue/Project/branch/PR/checkpoint facts or asks Kirk to re-anchor.
+- **Cross-team seams:** focused explicitly linked issues with different Team
+  fields, especially toolkit/API/proto/web sequence and the UI/UX–Assets seam.
+
+Each section has a fixed ten-row limit, grouped aggregate counts, and a visible
+“showing N of M”/inspect path; truncation never hides the total or pretends
+omitted rows are resolved. Views always show source URL and refresh
+timestamp. If GitHub cannot be read, the cockpit says stale/unavailable and
+discards rows rather than retaining a local snapshot as truth.
 
 ### 5.2 Escalations
 
@@ -565,11 +613,12 @@ semantics: `steer` after the current tool batch, `follow_up` after settlement,
 and `abort` only when a human/lead explicitly requests it.
 
 TUI scope is deliberately modest: use a status/footer indicator plus compact
-widget for active workers; open an overlay for dispatch detail, message actions,
-and escalations. Custom components must work within the actual terminal width,
-use Pi's supplied theme/keybindings, and be optional. The same design must be
-usable through normal commands when the runtime is RPC/headless, where custom
-TUI components are unavailable.
+widget for active workers and managed-focus counts; open an overlay for dispatch
+detail, focus add/remove/inspect, message actions, and scoped escalations.
+Custom components must work within the actual terminal width, use Pi's supplied
+theme/keybindings, and be optional. The same design must be usable through
+normal commands when the runtime is RPC/headless, where custom TUI components
+are unavailable.
 
 Tool profiles begin least-privilege: Explore is read-only; Janitor is limited to
 its curation surface; a member receives only its repository/worktree tools;
@@ -608,7 +657,9 @@ The proof must demonstrate all of the following:
 
 The proof should choose a workflow/setup or small real feature task whose
 acceptance can be observed without widening to multi-worker routing, a daemon,
-or an entire cross-repo wave. If the task is product behavior, the existing
+or an entire cross-repo wave. A managed-focus view may show several
+GitHub-linked background issue/PR rows, but that is not multi-worker live proof
+or a scheduler claim. If the task is product behavior, the existing
 independent-gate policy applies; if it is workflow setup, deterministic checks,
 self-review, and Kirk's review apply.
 
