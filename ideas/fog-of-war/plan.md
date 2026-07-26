@@ -11,8 +11,11 @@
 ## Global Constraints
 
 - This plan is canonical at `rpg-project/ideas/fog-of-war/plan.md`, adjacent to the approved `design.md`; implementation occurs only in `rpg-dnd5e-web`.
-- Execute five sequential web issues/PRs. **Task 1 is already shipped** — see its section. Before each remaining task: create or re-scope one `rpg-dnd5e-web` issue, add it to Board 19, set Feature=`The Dungeon`, set Team=`Assets` for Task 2 (shared 3D renderer seam) and Team=`UI/UX` for Tasks 3-5 (event layer, authority, concept presentation), then create a fresh worktree/branch from latest `origin/main`. Use the issue number returned by `gh issue create`; never invent one. Issues #605 and #606 already exist and are re-scoped rather than duplicated.
-- Tasks 3, 4, and 5 each end at a review seam: open the PR and stop. The event layer is what the protos transcribe, so it is read before an authority exists to feed it, and the authority is read before the page makes it pretty.
+- **Tasks 1-2 are one issue and one PR each; Tasks 3-5 share one branch and one PR.** The split is not arbitrary: Tasks 1-2 modify shared production components (`HexGrid`, `HexEntity`, the Synty renderers), which are reusable on their own and correctly merge independently — Task 1 already did, as #602. Tasks 3-5 are entirely `src/concepts/fog-of-war/`. That is one concept, inert in pieces, and merging a third of it delivers nothing.
+- The deeper reason is that the concept's job is to prove the contract wrong. If the event layer merges and then playing the concept shows a record shape is mistaken, the correction becomes a follow-up PR against merged history instead of an edit to an unmerged branch — precisely the downstream cost that working outside-in exists to avoid. Keep corrections as edits.
+- The concept branch is `feat/605-fog-events`, PR rpg-dnd5e-web#611. Tasks 4 and 5 land as further commits on it. It merges once, when the concept runs.
+- Before each task: create or re-scope its `rpg-dnd5e-web` issue, add it to Board 19, set Feature=`The Dungeon`, set Team=`Assets` for Task 2 and Team=`UI/UX` for Tasks 3-5. Use the issue number returned by `gh issue create`; never invent one. Issues #605 and #606 already exist and are re-scoped rather than duplicated. The concept PR closes all three concept issues when it merges.
+- **A seam is a review point, not a merge point.** Tasks 3, 4, and 5 each end by pushing and stopping for review. The event layer is what the protos transcribe, so it is read before an authority exists to feed it, and the authority is read before the page makes it pretty. Do not merge to satisfy a seam.
 - Each GitHub issue body or comment ends exactly `— asset-pipeline agent, on behalf of KirkDiggler`.
 - Each task is one issue and one PR. Run `npm run ci-check` before its push; never use `--no-verify`. This planning operation creates no web issues, branches, pushes, or PRs.
 - Scope is the concept plus the smallest additive shared renderer support. Do not modify `EncounterView.tsx`, `useEncounterState.ts`, production stream handling, toolkit, API, or protos. Omitted new props preserve production behavior byte-for-byte in intent.
@@ -713,7 +716,8 @@ truth, and it sits on the far side of the event boundary.
 
 **Issue/branch setup:** File a new `rpg-dnd5e-web` issue titled
 `Fog of War: fixture authority and visibility reconciliation`, Board 19,
-Feature=`The Dungeon`, Team=`UI/UX`. Fresh worktree from latest `origin/main`.
+Feature=`The Dungeon`, Team=`UI/UX`. **Continue on `feat/605-fog-events`** —
+this is a further commit on the concept branch, not a new branch or PR.
 
 **Files:**
 - Create: `src/concepts/fog-of-war/authority/world.ts`
@@ -844,13 +848,16 @@ git add src/concepts/fog-of-war/
 git commit -m "feat(fog)#$ISSUE: fixture authority, crude LOS, and the event boundary"
 ```
 
-Expected: CI green. Open the PR and stop — second review seam.
+Expected: CI green. Push to `feat/605-fog-events` and stop — second review
+seam. Do not merge; the concept is not runnable yet.
 
 ## Task 5: Playable concept page, documentation, and visual evidence
 
 **Issue/branch setup:** Update `rpg-dnd5e-web#606` ("Fog of War: executable
 two-room concept") — its scope becomes the playable page. Board 19,
-Feature=`The Dungeon`, Team=`UI/UX`. Fresh worktree from latest `origin/main`.
+Feature=`The Dungeon`, Team=`UI/UX`. **Continue on `feat/605-fog-events`.**
+When this task is done the concept runs, so update PR #611's title and body to
+describe the whole concept, close #605/#606/the authority issue, and merge.
 
 **Files:**
 - Create: `src/concepts/fog-of-war/FogOfWarConcept.tsx`
@@ -920,7 +927,8 @@ Expected: CI green; evidence attached to the PR.
 
 ## Final Acceptance Sweep
 
-- [ ] Confirm all five implementation PRs were issue-first, Board-19 classified, independently reviewed, and merged in order from latest `main` (Task 1 already merged as PR #602).
+- [ ] Confirm the shared-component PRs (Tasks 1-2) were issue-first, Board-19 classified, independently reviewed, and merged in order from latest `main` — Task 1 already merged as PR #602.
+- [ ] Confirm the concept landed as one PR (#611) covering Tasks 3-5, reviewed at each seam and merged once it ran, rather than as three merges of inert parts.
 - [ ] Confirm the rendered scene is built only from emitted events — no path reaches the renderer that bypasses the event layer.
 - [ ] Confirm `boundary.test.ts` passes and no consumer module imports from `authority/`.
 - [ ] Confirm a `VISIBLE` record with `contents: []` deletes a remembered occupant, proven both at the reducer and by playing it.
