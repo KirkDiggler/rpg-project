@@ -68,11 +68,13 @@ currently authoring or verifying a dungeon, and two teams working the local
 stack at once will collide (one team's restart or env swap silently changes
 what another team's client is looking at).
 
-Use the parallel lab instance instead of touching the primary whenever
-you're running an experiment, authoring/iterating on dungeon content, or
-verifying something that isn't "the thing everyone else is currently
-testing." **Rule: the primary stays on `reference-tomb` for everyone; labs
-and experiments run on the parallel instance.**
+Use a parallel lab instance instead of touching the primary whenever you're
+running an experiment, authoring/iterating on dungeon content, or verifying
+something that isn't "the thing everyone else is currently testing." **Rule:
+the primary stays on `reference-tomb` for everyone; labs and experiments run
+on the parallel instances.** There are two: `rpg-api-lab` on :8081 and
+`rpg-api-lab2` on :8082, so two concurrent experiments don't collide with
+each other either.
 
 ```bash
 cd rpg-deployment
@@ -97,8 +99,9 @@ on the `npm run dev` you start from that worktree.
 
 | Knob | Default | Purpose |
 | --- | --- | --- |
-| `RPG_LAB_DUNGEON_KEY` | `wall-lab` | the lab instance's default dungeon key |
-| `RPG_CONTENT_HOST_DIR` | `../dungeon-content` | host dir mounted read-only at `/content` |
+| `RPG_LAB_DUNGEON_KEY` | `wall-lab` | lab1's default dungeon key |
+| `RPG_LAB2_DUNGEON_KEY` | `look-lab` | lab2's default dungeon key |
+| `RPG_CONTENT_HOST_DIR` | `../dungeon-content` | host dir mounted read-only at `/content` on both lab instances |
 
 Both are shell env vars read at `docker compose up` time (e.g.
 `RPG_LAB_DUNGEON_KEY=my-experiment docker compose -f ... up -d rpg-api-lab`),
