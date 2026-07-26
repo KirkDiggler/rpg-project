@@ -2,6 +2,8 @@
 
 ## Status: Design — approved in session by Kirk 2026-07-23; this PR is the review surface. Implementation slices dispatch after merge-approval of this design. Extended by the §Design delta — static placement section (approved in session 2026-07-24) before implementation began.
 
+> **Visual companion:** [visual-walkthrough.html](visual-walkthrough.html) is a reviewed visual reading aid for this design and its current delivery facts; this document and `plan.md` remain canonical.
+
 North star: **authoring a dungeon should be editing one data file, not touching three Go files across two repos.** First for us (the dev team), later for designer tools, someday maybe player uploads — which is a *constraint* (the format must be strictly validatable), not a feature.
 
 Driving acceptance case (Kirk): **author a 4-room crypt — entrance, a chamber with clues, a trap room to cross, a boss tomb — without writing Go.** v1 ships the fields that need (near-)zero new rules machinery — the two honest exceptions are a monster-ref registry and a batch seeding entry point, both plumbing over constructors and placement machinery that already exist, not new rules content. Every richer concept gets a reserved seat, not an implementation.
