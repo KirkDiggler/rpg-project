@@ -182,3 +182,35 @@ Each repo has its own CLAUDE.md for repo-specific patterns:
 - **Absolute positioning in toolkit** - Rooms have absolute coords, not UI-offset
 - **Toolkit types are canonical** - API stores them directly, one conversion point at handler/proto boundary
 - **Outside-in development** - Start at handler, work inward
+- **Breaking proto changes get a new version, not a break** - see below
+
+## Proto versioning — when to bump instead of break
+
+The migration marker we want is the **version**: add `v1alpha3`, move consumers one
+at a time, and **the migration is done when we drop `v1alpha2`.** A break forces
+every consumer to move in the same merge; a bump lets each move when it is ready.
+
+**But that is not free, and right now it is usually not worth it.** Carrying two
+packages means dual maintenance, duplicated messages, and a migration you still have
+to finish. At this stage — pre-pre-alpha, nobody playing, a handful of consumers all
+in this workspace — an in-place break is genuinely cheaper than the ceremony.
+
+Worked example, 2026-07-26, Fog of War (rpg-api-protos#197/#198): removing
+`GeometryRevealed`, `Space.walls`, `Hex` and `Entity.position` in place broke rpg-api
+and rpg-dnd5e-web at once and made a scoped change into a three-repo migration.
+**Kirk's call, with hindsight: do it again.** The coordination cost was real but
+smaller than versioning it properly would have been.
+
+So the rule is a trigger, not a default:
+
+- **Break in place** while consumers are few, in this workspace, and can all be moved
+  in one sitting. Use `buf breaking` + the `breaking-change-approved` label, and fix
+  the consumers in the same push.
+- **Bump the version** once that stops being true — an outside consumer, a deployed
+  client we cannot update in lockstep, or a migration too large for one sitting.
+  When the answer to "can I move every consumer right now?" is no, that is the signal.
+
+**If switching a consumer between proto versions is painful, fix the pain** —
+codemods, an import alias, a version constant. That tooling is what makes the bump
+cheap enough to reach for when the trigger does fire, and it is cheaper than the
+migrations it saves.
