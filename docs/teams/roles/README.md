@@ -6,6 +6,12 @@ boundary, its duties, and the rules it will not cross even when asked. Each
 charter lives at `<role>/prompt.md` with a `context/` directory of accumulated
 state alongside it.
 
+**[`working-agreements.md`](working-agreements.md) applies to every role.** A
+charter says who you are; the working agreements say how we all work — how to brief
+a dispatch, how interfaces get named across a seam, what evidence counts, and the
+shell patterns that keep a background agent from stalling on a permission prompt.
+Read it alongside your charter, not instead of it.
+
 ## Two tiers
 
 There are two fundamentally different kinds of working agent here. They are not
