@@ -1,0 +1,251 @@
+{
+  "idea": "fog-of-war",
+  "status": "concept_replan",
+  "trigger": "Promote the approved viewer-scoped Fog of War concept into production behavior.",
+  "summary": "Deliver live viewer knowledge first, then durable dynamic-entity memory without client-side LOS or hidden-world inference.",
+  "parent_issue": "https://github.com/KirkDiggler/rpg-project/issues/147",
+  "concept_issue": "https://github.com/KirkDiggler/rpg-project/issues/130",
+  "design_pr": "https://github.com/KirkDiggler/rpg-project/pull/137",
+  "design_files": [
+    "design.md",
+    "plan.md",
+    "production-design.md"
+  ],
+  "affected_repos": [
+    "rpg-project",
+    "rpg-toolkit",
+    "rpg-api-protos",
+    "rpg-api",
+    "rpg-dnd5e-web"
+  ],
+  "steps": {
+    "concept": {
+      "status": "completed",
+      "issue": "https://github.com/KirkDiggler/rpg-project/issues/130",
+      "files": [
+        "design.md",
+        "plan.md"
+      ]
+    },
+    "production_design": {
+      "status": "completed",
+      "file": "production-design.md",
+      "pr": "https://github.com/KirkDiggler/rpg-project/pull/137"
+    },
+    "implementation": {
+      "status": "ready",
+      "waves": [
+        {
+          "id": "wave-a-live-knowledge",
+          "description": "Deliver live viewer-scoped knowledge and durable geometry memory.",
+          "status": "ready",
+          "blocked_by": [],
+          "issues": [
+            {
+              "id": "A1",
+              "repo": "rpg-toolkit",
+              "issue": 850,
+              "url": "https://github.com/KirkDiggler/rpg-toolkit/issues/850",
+              "title": "encounter: centralize per-viewer visibility reconciliation",
+              "status": "open",
+              "blocked_by": []
+            },
+            {
+              "id": "A2",
+              "repo": "rpg-toolkit",
+              "issue": 851,
+              "url": "https://github.com/KirkDiggler/rpg-toolkit/issues/851",
+              "title": "encounter: persist viewer geometry knowledge and emit visibility transitions",
+              "status": "open",
+              "blocked_by": [
+                "A1"
+              ]
+            },
+            {
+              "id": "A3",
+              "repo": "rpg-api-protos",
+              "issue": 197,
+              "url": "https://github.com/KirkDiggler/rpg-api-protos/issues/197",
+              "title": "v1alpha2: add viewer-scoped geometry knowledge contracts",
+              "status": "open",
+              "blocked_by": [
+                "A2-domain-contract"
+              ]
+            },
+            {
+              "id": "A4",
+              "repo": "rpg-api",
+              "issue": 647,
+              "url": "https://github.com/KirkDiggler/rpg-api/issues/647",
+              "title": "v2 stream: event-then-load races the orchestrator's Save",
+              "status": "open",
+              "blocked_by": [],
+              "existing_issue": true
+            },
+            {
+              "id": "A5",
+              "repo": "rpg-api",
+              "issue": 724,
+              "url": "https://github.com/KirkDiggler/rpg-api/issues/724",
+              "title": "v2 stream: deliver viewer-scoped Fog transitions",
+              "status": "open",
+              "blocked_by": [
+                "A1",
+                "A2",
+                "A3",
+                "A4"
+              ]
+            },
+            {
+              "id": "A6",
+              "repo": "rpg-api",
+              "issue": 725,
+              "url": "https://github.com/KirkDiggler/rpg-api/issues/725",
+              "title": "v2 projection: filter viewer geometry and restore Wave A memory",
+              "status": "open",
+              "blocked_by": [
+                "A2",
+                "A3",
+                "A4"
+              ]
+            },
+            {
+              "id": "A7",
+              "repo": "rpg-dnd5e-web",
+              "issue": 609,
+              "url": "https://github.com/KirkDiggler/rpg-dnd5e-web/issues/609",
+              "title": "Game Screen: consume the production Fog knowledge contract",
+              "status": "open",
+              "blocked_by": [
+                "A5",
+                "A6",
+                "concept-web-stack"
+              ]
+            },
+            {
+              "id": "A8",
+              "repo": "rpg-project",
+              "issue": 148,
+              "url": "https://github.com/KirkDiggler/rpg-project/issues/148",
+              "title": "Fog of War Wave A: cross-repository acceptance",
+              "status": "open",
+              "blocked_by": [
+                "A1",
+                "A2",
+                "A3",
+                "A4",
+                "A5",
+                "A6",
+                "A7"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "wave-b-durable-knowledge",
+          "description": "Persist and atomically restore complete viewer-scoped geometry and dynamic-entity knowledge.",
+          "status": "deferred",
+          "blocked_by": [
+            "A8"
+          ],
+          "planned_issues": [
+            {
+              "id": "B1",
+              "repo": "rpg-toolkit",
+              "title": "Persist complete viewer-known dynamic entities"
+            },
+            {
+              "id": "B2",
+              "repo": "rpg-api-protos",
+              "title": "Add the full viewer-knowledge snapshot contract"
+            },
+            {
+              "id": "B3",
+              "repo": "rpg-api",
+              "title": "Persist and project durable viewer knowledge"
+            },
+            {
+              "id": "B4",
+              "repo": "rpg-dnd5e-web",
+              "title": "Atomically hydrate authoritative viewer knowledge"
+            },
+            {
+              "id": "B5",
+              "repo": "rpg-project",
+              "title": "Fog of War final cross-repository acceptance"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "decisions": [
+    {
+      "question": "What knowledge states does production expose?",
+      "answer": "Unseen, currently visible, and remembered.",
+      "reason": "The client must receive only viewer-authorized current truth or frozen last-authorized observations.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Does GeometryRevealed establish current visibility?",
+      "answer": "No. GeometryRevealed is additive knowledge; GeometryAppeared alone establishes current visibility.",
+      "reason": "Discovery and current line of sight are separate facts and must survive loss and re-sight correctly.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "How are removals represented?",
+      "answer": "Viewer-authorized removals are distinct from disappearance; hidden removals preserve stale memory.",
+      "reason": "Disappearance means visible-to-remembered, while a globally broadcast removal could leak hidden world changes.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "What reconnect durability belongs in Wave A?",
+      "answer": "Complete last-observed geometry is durable; hidden remembered dynamic entities may reset until Wave B.",
+      "reason": "This delivers safe geometry reconnect without prematurely designing the full viewer-scoped scene snapshot.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "When are Wave B issues created?",
+      "answer": "Only after Wave A acceptance passes.",
+      "reason": "Issue creation follows dependency-ready waves and lets the live contract inform the durable snapshot design.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Does GeometryRevealed establish current visibility?",
+      "answer": "Superseded. GeometryRevealed is replaced entirely by one per-viewer HexKnowledgeChanged whose records carry a VISIBLE | REMEMBERED | GONE state.",
+      "reason": "Reveal, appearance, disappearance, and removal are states of one hex record, not four messages. Backward compatibility buys nothing while nothing is playable, and one way through beats a correct path plus a fallback.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Hex or geometry at the client seam?",
+      "answer": "Hex. Geometry stays the parent concept in the toolkit with hex as one layout family.",
+      "reason": "Walls and doors are already edges between two hexes on the wire, and HexGrid already remembers walls by hex key. A hex-keyed record is self-describing where the client consumes it.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "How is the contract decided, given the Wave A dependency order?",
+      "answer": "Outside-in: a playable single-viewer concept proves the event layer, protos transcribe it, the API translates and projects it, the toolkit supplies the authority. The Wave A order remains right for landing the work.",
+      "reason": "A wrong shape costs a fixture edit rather than four merged PRs. The pipeline it plugs into already exists \u2014 Broker publish/subscribe per player and TranslateEvent per viewer.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Does facing belong on the placement or the entity?",
+      "answer": "On the placement, inside the hex record.",
+      "reason": "A record is an observation. A viewer who saw a goblin facing north and lost sight must keep that memory even after the goblin turns and another viewer sees it face south. Facing on the entity would let one viewer's sighting rewrite another's memory.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Is GONE distinct from a hex never appearing in a viewer's records again?",
+      "answer": "GONE is dropped. States are VISIBLE and REMEMBERED; nothing is ever deleted.",
+      "reason": "A total visible record leaves removal nothing to do \u2014 a witnessed removal is a record that no longer lists the thing, a hidden removal is no record at all. Deletion is the one operation a later observation cannot correct, so it is not worth having when nothing needs it.",
+      "date": "2026-07-25"
+    },
+    {
+      "question": "Does a REMEMBERED record carry payload, or tell the client to freeze?",
+      "answer": "It carries the full frozen observation.",
+      "reason": "The server retains each viewer's last observation for reconnect anyway. Sending it makes live transitions and reconnect hydration one code path and leaves the client with exactly one behavior: merge records by hex key.",
+      "date": "2026-07-25"
+    }
+  ],
+  "open_questions": []
+}
