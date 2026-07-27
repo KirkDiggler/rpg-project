@@ -101,11 +101,20 @@ move was a narrowed replacement, not a deletion.
 
 A background agent that hits a prompt waits forever, because nobody is watching.
 
-- **Never chain commands.** `cd /path && cmd` prompts. One command per call; a bare
-  `cd <abs-path>` as its own call persists for later calls.
-- **Prefer `-C`:** `git -C /abs/path status` needs no `cd` at all.
-- **No bare `rm`:** `git rm -f <path>` for tracked, `git clean -fd <path>` for
-  untracked.
+- **Never chain commands.** `cd /path && cmd` prompts. One command per call.
+- **Never rely on the working directory.** Do not assume a bare `cd` persists to your
+  next call — for a dispatched agent it may not, and you will not notice, because the
+  next command runs happily in the *wrong repo*. Address everything absolutely:
+  `git -C /abs/path status`, absolute paths to every file. (An earlier version of
+  this doc claimed a bare `cd` persists. It was wrong, and it cost us — see below.)
+- **Never run a destructive command without an explicit path.** `git clean -fd` and
+  `rm -rf` with no argument act on whatever the cwd happens to be — which, per the
+  bullet above, is not reliably where you think you are. On 2026-07-27 a pathless
+  `git clean -fd`, run while confused about cwd, wiped an unrelated worktree's
+  untracked `.claude/` directory. Nothing version-controlled was lost, but only by
+  luck. Always name the target: `git clean -fd /abs/path/to/target`.
+- **No bare `rm`:** `git rm -f <abs-path>` for tracked, `git clean -fd <abs-path>`
+  for untracked.
 - **Never bare `git stash`** — the stash stack is shared across worktrees and
   sessions. Use a WIP commit.
 - **Never force-push.** Squash-merge means extra commits cost nothing, so add a
