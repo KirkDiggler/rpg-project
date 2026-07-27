@@ -64,8 +64,23 @@ and is not obvious from the code.
 
 | Repo | Base for new work |
 |------|-------------------|
-| **rpg-dnd5e-web** | **`development`** — work lands there, then `development` → `main` as one batch (rpg-dnd5e-web#630). `development` can be cut to prod at any point; there is no deployment pipeline yet. |
-| everything else | `main` |
+| **rpg-dnd5e-web** | **`origin/development`** — work lands there, then `development` → `main` as one batch (rpg-dnd5e-web#630). `development` can be cut to prod at any point; there is no deployment pipeline yet. |
+| everything else | `origin/main` |
+
+**Always `git fetch` first and cut from the `origin/` ref, never from a local branch.**
+
+```bash
+git fetch origin
+git checkout -b feat/123-thing origin/main          # or origin/development for web
+```
+
+A local `main` is only as fresh as your last pull, and in this workspace it is
+routinely behind — the checkouts are long-lived and several worktrees share them.
+Branching from a stale local base silently puts you a commit or two back, which
+surfaces later as a phantom conflict or as "that fix isn't in my branch" (both hit
+this workspace on 2026-07-26). Cutting from `origin/<base>` costs nothing and removes
+the class. It also sidesteps the worktree rule that a branch checked out in one
+worktree cannot be checked out in another.
 
 This is deliberately recorded here rather than left in an issue. It lived only in
 web#630, so a session that correctly searched rpg-project for the branch process
