@@ -55,7 +55,27 @@ Rules:
 - One issue per PR
 - No branch without an issue
 - No issue without a board entry
-- New work = new issue on board -> fresh branch from main
+- New work = new issue on board -> fresh branch from that repo's **base branch** (below)
+
+### Base branches — check before you cut a branch
+
+Not every repo bases off `main`. Getting this wrong sends a PR at the wrong target
+and is not obvious from the code.
+
+| Repo | Base for new work |
+|------|-------------------|
+| **rpg-dnd5e-web** | **`development`** — work lands there, then `development` → `main` as one batch (rpg-dnd5e-web#630). `development` can be cut to prod at any point; there is no deployment pipeline yet. |
+| everything else | `main` |
+
+This is deliberately recorded here rather than left in an issue. It lived only in
+web#630, so a session that correctly searched rpg-project for the branch process
+found nothing and briefed a teammate onto the wrong base (2026-07-26). **When a
+process fact turns up in an issue or in conversation with Kirk, write it here** —
+teammates and role agents come to rpg-project for the current word, and a fact that
+isn't here does not exist as far as they are concerned.
+
+We are pre-pre-alpha: nobody is playing the game. Breaking it is not a gate. Prefer
+momentum and capture the learning over protecting runtime behavior.
 
 ## Cross-Repo Design Workflow
 
