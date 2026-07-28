@@ -64,14 +64,19 @@ and is not obvious from the code.
 
 | Repo | Base for new work |
 |------|-------------------|
-| **rpg-dnd5e-web** | **`origin/development`** — work lands there, then `development` → `main` as one batch (rpg-dnd5e-web#630). `development` can be cut to prod at any point; there is no deployment pipeline yet. |
+| **rpg-dnd5e-web** | **`origin/dev`** — work lands there, then `dev` → `main` as one batch (rpg-dnd5e-web#630). `dev` can be cut to prod at any point; there is no deployment pipeline yet. |
+| **rpg-api** | **`origin/dev`** — same integration-branch model as web, above. |
 | everything else | `origin/main` |
+
+`dev` replaced `development` (web) on 2026-07-28, when rpg-api grew a matching `dev`
+branch — see [Merging a `dev` branch into `main`](#merging-a-dev-branch-into-main)
+below for the rule that came with it.
 
 **Always `git fetch` first and cut from the `origin/` ref, never from a local branch.**
 
 ```bash
 git fetch origin
-git checkout -b feat/123-thing origin/main          # or origin/development for web
+git checkout -b feat/123-thing origin/main          # or origin/dev for web / rpg-api
 ```
 
 A local `main` is only as fresh as your last pull, and in this workspace it is
@@ -91,6 +96,71 @@ isn't here does not exist as far as they are concerned.
 
 We are pre-pre-alpha: nobody is playing the game. Breaking it is not a gate. Prefer
 momentum and capture the learning over protecting runtime behavior.
+
+### Merging a `dev` branch into `main`
+
+Squash in, merge out — mixing the two breaks a release.
+
+- **Into `dev`: squash.** Every feature PR squash-merges into `dev` — one clean
+  commit per feature. This is right and unchanged.
+- **Out of `dev` into `main`: a real merge commit. Never squash.** Squashing the
+  release cut severs ancestry between the two long-lived branches — GitHub records
+  the release as a single commit with `main` as its only parent, so `dev` is never
+  recorded as an ancestor of the result. The next release then has to replay `dev`'s
+  whole history against a `main` that already contains that content, and it
+  conflicts with itself.
+
+Worked example, 2026-07-28, rpg-dnd5e-web: release PR #653 (`development` → `main`)
+was squash-merged. Consequences, all verified:
+
+- The merge-base between the two branches stayed pinned at `0e92197`, from before
+  the whole wave that PR shipped.
+- A trial merge (`git merge-tree`) of the *next* cut produced conflicts in 4 files —
+  git was replaying `development`'s entire history onto a `main` that already held
+  that content, just not as a recorded ancestor.
+- An attempted `-X ours` back-merge **silently reintroduced a dead `Position` type
+  import** in 2 files: `development` had added the import and then removed it as
+  dead code in a later commit (#651), so relative to the stale merge-base
+  `development` showed zero net change while `main` showed a net add, and git took
+  `main`'s side. No conflict markers — a silent clean-merge artifact. It would have
+  failed lint.
+- Fixed by **cherry-picking** the two new commits onto `main` instead (web #654,
+  merged) — cherry-pick replays each commit's own diff, which included the import
+  removal, so the artifact can't occur.
+
+**Kirk's call:** recut the branch as `dev`, give rpg-api a matching `dev` branch,
+and write the rule down now instead of waiting for it to bite again.
+
+**The general principle:** the merge-style rule has to be set the moment a
+*second* long-lived branch is created, not discovered at its first release. A
+single long-lived `main` never hits this — squash is fine there forever. It's
+specifically the relationship between two long-lived branches that needs a real
+merge to stay intact.
+
+**Detector, run any time:** `git merge-base --is-ancestor origin/main origin/dev` —
+fails the instant the branches diverge, instead of surfacing as conflicts at the
+next release cut.
+
+**What actually prevents it:** branch protection on `main`, "Require branches to be
+up to date before merging." A `dev` → `main` PR then can't merge unless `dev`
+already contains `main`'s tip — which a squash-merged predecessor would violate by
+construction.
+
+**What you cannot enforce:** GitHub's merge-method toggles (allow squash / allow
+merge commit / allow rebase) are repo-wide settings, not per-target-branch — you
+cannot allow squash for feature→`dev` PRs while forcing merge-commit for
+`dev`→`main` PRs. This rule cannot live as a repo setting; it lives in this doc plus
+the up-to-date check above. Worth stating so nobody goes hunting for a setting that
+doesn't exist.
+
+**rpg-toolkit is exempt, deliberately.** It has no long-lived integration branch to
+protect: the board rule above already gives it a fresh branch per issue merged
+straight to `main`, and it coordinates downstream consumers by version tag, not by
+branch (`docs/teams/roles/rpg-toolkit-member/prompt.md`: `main` → `feat/...`, CI
+tags packages on merge, consumers bump to the tag when ready). Giving it a
+long-lived `dev` too would reintroduce, from the branch side, the same "three
+versions of one thing" problem proto versioning (above) already had to solve on the
+schema side.
 
 ## Cross-Repo Design Workflow
 
