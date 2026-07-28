@@ -128,6 +128,11 @@ shipped. The toolkit lands and tags; the api bumps to that real version; the web
 keep revealing things the provider must do — that is the method working, not new features.
 They belong on the same branch.
 
+This limits how a **single** wave is cut, not how many waves run at once. Parallel efforts
+legitimately produce many versions of a module — that is a studio working, not churn, and
+the rulebook will spread widest of all. What we did wrong on Fog of War wasn't producing
+three versions. **It was producing three versions of one thing.**
+
 Learned expensively on Fog of War (2026-07-27). The toolkit side shipped as four separate
 PRs — #857, #860, #861, #863 — for what was one feature: fog-of-war support. The cost was
 not theoretical:
