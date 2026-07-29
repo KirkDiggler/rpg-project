@@ -105,6 +105,67 @@ scratch docs in an implementing repo. Flow:
 4. Merge the `rpg-project` idea PR only **after** implementation is complete — it stays open as
    the tracking surface until then.
 
+## How a wave is shaped
+
+**Develop outside-in. Merge inside-out.**
+
+```
+develop:  web concept  ->  protos  ->  api  ->  toolkit
+merge:                     toolkit ->  api  ->  web
+```
+
+Develop from the edge, because the consumer is what discovers the requirement: a playable
+concept proves the shape, protos transcribe what it proved, the api names the interface it
+needs, and the toolkit implements that stated requirement. Nobody guesses at a layer they
+don't consume.
+
+Merge from the middle out, because a consumer can't honestly pin a provider that hasn't
+shipped. The toolkit lands and tags; the api bumps to that real version; the web follows.
+
+### One wave, one branch per repo
+
+**A repo gets ONE branch for a wave, not one per bug found along the way.** Integration will
+keep revealing things the provider must do — that is the method working, not new features.
+They belong on the same branch.
+
+This limits how a **single** wave is cut, not how many waves run at once. Parallel efforts
+legitimately produce many versions of a module — that is a studio working, not churn, and
+the rulebook will spread widest of all. What we did wrong on Fog of War wasn't producing
+three versions. **It was producing three versions of one thing.**
+
+Learned expensively on Fog of War (2026-07-27). The toolkit side shipped as four separate
+PRs — #857, #860, #861, #863 — for what was one feature: fog-of-war support. The cost was
+not theoretical:
+
+- **#860 and #861 conflicted with each other**, in the same function, being two halves of
+  the same change. On one branch that conflict is just typing. It had to be resolved twice,
+  because the first resolution went stale the moment one of them merged.
+- **#863 then conflicted with the result** and needed the same treatment.
+- Four merges, four CI runs, four chances to land in the wrong order.
+- Worst of all: the state became **unfollowable**. Kirk's own words — "I am so lost... it
+  never even dawned on me to break up the toolkit work." The merge conflict was the alarm
+  that something was wrong with the shape.
+
+The rpg-api side made the mirror mistake — six stacked PRs, each fix layered on the last
+because playtesting ran from the tip of the stack — and had to be collapsed into one PR
+before it could ship.
+
+**When is the provider's branch done?** When the consumer driving it stops asking for
+changes. The consumer defines done. So don't open four small PRs as you go; keep one branch
+that accumulates, and land it once. Same principle as an idea PR staying open as the
+tracking surface until implementation completes — one layer down.
+
+### Unmerged provider work
+
+A Go consumer can't merge an unpublished toolkit change — there's nothing to merge, only a
+version to pin. Two ways through:
+
+- **Pre-release tags** (`encounter/v0.47.0-rc1`) for anything that must survive past one
+  laptop. Committable, CI-buildable, honest.
+- **A local override**, per module, for tight iteration only — never committed. See
+  `rpg-api/docs/how-to/local-toolkit-override.md`. Only ever override ONE module; needing
+  several at once is the signal that the wave was sliced too thin.
+
 ## Current Chapter
 
 **Chapter 2: Combat Verbs** (board #13) — bring the v1alpha2 `EncounterService` verbs to life one
