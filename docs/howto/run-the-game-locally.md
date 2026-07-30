@@ -221,6 +221,39 @@ assets by shallow-cloning `rpg-game-assets`'s default branch at image build
 time. Shipping an asset change is: merge in `rpg-game-assets` → trigger a
 `rpg-dnd5e-web` image build → deploy.
 
+## Watching stream events
+
+`debug-stream.md` (the old rpg-dnd5e-web how-to for this) is gone — it documented a
+manual console.log-and-squint workflow tied to code that's since been refactored.
+The real answer now: **`npm run dev` already logs every streamed message, with no
+setup.**
+
+`src/api/streamLogging.ts` (rpg-dnd5e-web#649) wraps `StreamEncounter`'s response in
+client.ts's shared logging interceptor. Unlike a plain unary request/response log,
+it logs each **message as it arrives**, not just the fact that a stream opened — the
+gap it closed was that the old interceptor could only log the stream's iterator
+object once, at open, and never a single event inside it.
+
+It's gated on `import.meta.env.MODE === 'development'` in `client.ts`, same as the
+rest of the request/response logging — automatic in `npm run dev`, nothing to turn
+on. Open the browser console and look for:
+
+```
+🟣 Stream opened: dnd5e.api.v1alpha2.encounter.EncounterService.StreamEncounter
+🟣 Stream: ...StreamEncounter #1 +12ms hexKnowledgeChanged 12 hexes (9 visible, 3 remembered), 2 entities
+🟣 Stream: ...StreamEncounter #2 +340ms entityMoved
+⚪ Stream ended: ...StreamEncounter (2 messages, 1204ms)
+```
+
+Each line's label is the event's oneof case (`entityMoved`, `roomRevealed`, ...);
+`hexKnowledgeChanged` — the highest-traffic event — gets a richer summary (hex
+count, VISIBLE vs REMEMBERED split, entity count) instead of a bare label. A `🔴`
+line means the stream itself errored, not a single bad event.
+
+An in-game panel for the raw event stream is filed (rpg-dnd5e-web#647) but not
+built — the console wrapper is the current tool, not a stopgap being replaced
+imminently.
+
 ## Gotchas that have cost real time
 
 **Stale installed protos.** `rpg-dnd5e-web`'s *installed*
