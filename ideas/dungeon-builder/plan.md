@@ -308,6 +308,22 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
       together) to populate `dungeonregistry.Entry.Name` from `Decode`.
       Existing test: `dungeon_spec_internal_test.go` — extend its fixtures
       to assert `Name` is captured.
+- [ ] **Two existing call sites need their signatures updated together,
+      not just `resolveContentDungeonSpec`.** The Architecture decision
+      above already covers `resolveContentDungeonSpec`
+      (`dungeon_spec.go:223`) moving from `o.contentSpecs[key]` to
+      `o.registry.Get(string(key))`. The second, easy to miss: **
+      `validateDungeonKeyOverride(override string, contentSpecs
+      map[DungeonKey]contentSpecResult) error`**
+      (`orchestrator.go:224`, called from `lobbyorch.New` right after
+      `loadContentSpecs` runs) takes that same raw map as a parameter —
+      once it's replaced by `*dungeonregistry.Registry`, this function's
+      signature must change too (accept the registry and call `Get`
+      instead of map-indexing), or it won't compile. Existing test
+      coverage for this function (wherever `orchestrator_test.go` or a
+      sibling covers the `RPG_DUNGEON_KEY` override validation path)
+      should keep passing unchanged in behavior — only the parameter type
+      changes.
 
 **3. `internal/content`'s missing key → filename mapping.** Write-through's
    "overwrite the originating file" rule (design.md's Key rules) needs to
@@ -469,17 +485,34 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
 
 **7. Curl (really: grpcurl) smoke test — P1's promised zero-UI proof.**
 
+- [ ] **Prerequisite: Redis running locally** — `cmd/server`'s
+      `mustRedisClient()` (`cmd/server/server.go:367-`) builds a Redis
+      client at startup and fails construction without one, exactly like
+      every other local run of this server
+      (`docs/how-to/run-locally.md`'s own Prerequisites section):
+      ```bash
+      docker run -d --name rpg-redis -p 6379:6379 redis:alpine
+      ```
 - [ ] New script `scripts/smoke-authoring.sh` (or inline in the PR
-      description, implementer's call), matching the exact style already
-      established in `docs/how-to/run-locally.md:54-64`:
+      description, implementer's call). **Both `AuthoringService.PutDungeon`
+      and `LobbyService.ListDungeons` require authentication** —
+      `internal/auth/interceptor.go`'s `skipAuthMethods` exempts only the
+      gRPC health check and reflection, nothing else, so this needs
+      `AUTH_DEV_MODE=true` at startup and an `Authorization: Dev
+      <player-id>` header on every data call, matching
+      `docs/how-to/run-locally.md:31,54-64`'s existing pattern exactly
+      (including its `server` subcommand — `go run ./cmd/server server`,
+      not just `./cmd/server`):
       ```bash
       RPG_AUTHORING_ENABLED=1 RPG_CONTENT_DIR=/tmp/dungeon-authoring-smoke \
-        go run ./cmd/server &
+        AUTH_DEV_MODE=true go run ./cmd/server server &
 
       grpcurl -plaintext localhost:50051 list
       # expect: dnd5e.api.authoring.v1alpha1.AuthoringService now appears
+      # (no auth needed -- reflection is exempt)
 
       grpcurl -plaintext \
+        -H "Authorization: Dev player-1" \
         -d '{"key": "smoke-test", "yaml": "version: 1\nkey: smoke-test\nname: Smoke Test\nheight: 6\nrooms:\n  - id: a\n    archetype: entrance\n    width: 6\n  - id: b\n    archetype: boss\n    width: 6\nconnectors:\n  - from: a\n    to: b\n", "validate_only": false}' \
         localhost:50051 \
         dnd5e.api.authoring.v1alpha1.AuthoringService/PutDungeon
@@ -487,7 +520,9 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
       cat /tmp/dungeon-authoring-smoke/smoke-test.yaml
       # expect: the exact YAML just submitted
 
-      grpcurl -plaintext -d '{}' localhost:50051 \
+      grpcurl -plaintext \
+        -H "Authorization: Dev player-1" \
+        -d '{}' localhost:50051 \
         dnd5e.api.lobby.v1alpha1.LobbyService/ListDungeons
       # expect: "smoke-test" / "Smoke Test" now in the list, with NO
       # restart between the PutDungeon call and this one
@@ -550,9 +585,14 @@ dropdown is more useful once both are live.
       Commit: `feat(lobby): wire StartEncounterRequest.dungeon_key to the orchestrator`.
 - [ ] `make ci-check`.
 
-**Acceptance:** grpcurl smoke test extending S1's — start a lobby, call
-`StartEncounter` with `dungeon_key: "smoke-test"`, confirm (via logs or a
-follow-up query) the encounter used the authored spec, not the legacy
+**Acceptance:** grpcurl smoke test using an **embedded** dungeon key —
+`reference-tomb` (the Kirk-authored 3-room tomb shipped as embedded content,
+rpg-project#132) or another key already present in
+`internal/content/dungeons/*.yaml` — not S1's `"smoke-test"` key. S2 is
+independent of S1 and may land first; an acceptance test that only works
+after S1's PutDungeon has run wouldn't stand alone. Start a lobby, call
+`StartEncounter` with `dungeon_key: "reference-tomb"`, confirm (via logs or
+a follow-up query) the encounter used that spec, not the legacy crypt
 default. Opus gate before merge-ready (small surface, still touches the
 key-resolution precedence — worth the pass).
 
@@ -569,11 +609,13 @@ retriage at board-entry time if this reads differently). Depends on S0
 table; getting this wrong is silent and surfaces later as a phantom
 conflict).
 
+Current pin, for reference (`package.json`, checked while writing this plan):
+`"@kirkdiggler/rpg-api-protos": "github:KirkDiggler/rpg-api-protos#v0.1.114"`
+— S0's merge publishes a newer tag; bump past `v0.1.114` to pick it up.
+
 ```bash
 gh release list -R KirkDiggler/rpg-api-protos --limit 5   # find the tag S0 published
-npm i --save github:KirkDiggler/rpg-api-protos#v0.1.<N>   # matches package.json's existing
-                                                            # "@kirkdiggler/rpg-api-protos":
-                                                            # "github:KirkDiggler/rpg-api-protos#..." pin
+npm i --save github:KirkDiggler/rpg-api-protos#v0.1.<N>   # N > 114
 # GitHub-tag deps don't always update package-lock.json cleanly -- if the
 # commit hash in package-lock.json doesn't match, per rpg-dnd5e-web
 # CLAUDE.md: rm -rf node_modules package-lock.json && npm install
@@ -633,19 +675,46 @@ out of scope / a P4+ idea if it ever turns out to matter.
 
 ### Checklist
 
-- [ ] Add `/author` to the existing view-gating pattern (this codebase has
-      **no react-router** — routes are a `type AppView = 'home' | ... `
-      union plus `import.meta.env.MODE === 'development'` + a URL-param
-      check, exactly like `/playtest` (`?encounterId=`) and `/concepts`
-      (`?concept=`) in `src/App.tsx:19-42`). A naive implementer reaching
-      for `react-router` here will produce code that doesn't match
-      anything else in the app — don't.
+- [ ] Add `/author` to the existing view-selection pattern (this codebase
+      has **no react-router** — routes are a `type AppView = 'home' | ... `
+      union plus a URL-param check, like `/playtest` (`?encounterId=`) and
+      `/concepts` (`?concept=`) in `src/App.tsx:19-42`). A naive
+      implementer reaching for `react-router` here will produce code that
+      matches nothing else in the app — don't.
       ```tsx
       const hasAuthorDeepLink = (): boolean =>
-        import.meta.env.MODE === 'development' &&
         typeof window !== 'undefined' &&
         new URLSearchParams(window.location.search).has('author');
       ```
+      **Decision (coordinating-session review, post-design-approval):
+      this is a RUNTIME gate, not a build-time one — unlike `/playtest`
+      and `/concepts`, do NOT add `import.meta.env.MODE === 'development'`
+      here.** The deployed environment is a prebuilt production image
+      (rpg-deployment's `docker-compose.prod.yml` pulling a ghcr image) —
+      a `MODE === 'development'` check compiles `/author` out of that
+      image entirely, which makes design.md's "remote/distributed phase
+      is configuration, not architecture — flip the gate in the deployed
+      compose" claim false for the web half: there'd be no route left to
+      flip on. Instead:
+      - `/author` is **lazily code-split** (`React.lazy`/dynamic `import()`)
+        in every build, dev and prod alike — visiting the URL param always
+        fetches the chunk, but it never bloats the main app bundle. Ships
+        as dead weight in a prod build nobody's using authoring on yet;
+        acceptable pre-pre-alpha, revisit if bundle-size ever becomes a
+        real complaint.
+      - On mount, before rendering the editor, probe the api's authoring
+        surface with a minimal call — `PutDungeon({key: '', yaml: '',
+        validate_only: true})` is enough; its actual response content is
+        irrelevant, only the RPC's existence is being tested. An
+        `Unimplemented` status means the gate is off server-side → render
+        a plain "authoring disabled on this server" state instead of the
+        editor. Any other outcome (success, or `InvalidArgument` from the
+        deliberately-empty payload) means the service exists → mount the
+        real editor.
+      - Net effect: **one env var, `RPG_AUTHORING_ENABLED` on rpg-api,
+        governs both halves.** Flipping it in the deployed compose is
+        the whole remote-phase story, exactly as design.md claims — now
+        actually true end to end, not just true for the api half.
 - [ ] Add `yaml` as a **direct** dependency (`npm install yaml`) — it's
       already present *transitively* in `package-lock.json` (`^2.8.2`,
       pulled in by something else), but a transitive version isn't a
@@ -827,10 +896,13 @@ the screenshot evidence and Kirk's live walk, per memory
   `FloorPlan`, never re-derived client-side** from room widths — that's
   exactly the "room-chain offsets" class of math design.md's server-
   authoritative principle forbids the client from doing.
-- **This codebase has no react-router.** `/author` is a `URLSearchParams`
-  + `AppView` union gate, matching `/playtest` and `/concepts` exactly —
-  reaching for a router here produces code that matches nothing else in
-  the app.
+- **This codebase has no react-router.** `/author`'s view *selection* is a
+  `URLSearchParams` + `AppView` union check, same pattern as `/playtest`
+  and `/concepts` — reaching for a router here produces code that matches
+  nothing else in the app. Its *visibility*, unlike those two, is NOT the
+  same: `/author` is gated at runtime by probing the api, not at build
+  time by `import.meta.env.MODE` — a prebuilt prod image must still be
+  able to serve it once the server-side flag flips. See S4a.
 - **`yaml` is only a transitive dependency today** — add it directly;
   don't rely on whatever version another package happens to pull in.
 - **odd-q hex parity is server-side only** — the board never steps

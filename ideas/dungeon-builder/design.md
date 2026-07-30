@@ -233,7 +233,10 @@ this doc PR itself.)
 - **Remote/distributed phase**: configuration, not architecture — flip the
   gate in the deployed compose (the Discord dev server); later possibly a
   beefier EC2 dev instance with a build manifest and a "dev door" on a
-  Discord dev release routing to it.
+  Discord dev release routing to it. For this to be true end-to-end, the
+  `/author` route must be a *runtime* gate probing the api's authoring
+  surface, not a build-time `import.meta.env.MODE` check baked into the
+  production bundle — see plan.md S4a for why and how.
 
 ## Supersedes M4
 
@@ -266,8 +269,10 @@ both don't get built.
 
 1. This design PR merges as the tracking surface for the arc below (stays
    open per the Cross-Repo Design Workflow, `plan.md` added after approval).
-2. P1 — rpg-api `PutDungeon`/`ListDungeons` behind the authoring gate,
-   write-through, curl-verified.
+2. P1 — rpg-api `PutDungeon` (and its `validate_only` dry-run) behind the
+   authoring gate, write-through, curl-verified. `ListDungeons` is
+   ungated, on `LobbyService` (post-approval correction, above) — it
+   ships whenever it's convenient relative to the gate, not gated by it.
 3. P2 — rpg-api-protos `dungeon_key` field + handler plumbing + regen,
    lobby dropdown wired to `ListDungeons`, delivering rpg-project#131.
 4. P3 — `/author` editor MVP in rpg-dnd5e-web.
