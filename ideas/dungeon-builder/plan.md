@@ -210,19 +210,50 @@ Kind **Build**.
         int32 column = 5;
       }
 
+      // FloorPlanCell is an absolute [column, row] on the compiled grid.
+      message FloorPlanCell {
+        int32 column = 1;
+        int32 row = 2;
+      }
+
       // FloorPlan is the compiled layout an author's board renders.
       // door_row applies uniformly to every room (dungeonspec's
       // height/2 reserved-row invariant) -- carried explicitly, not
       // hardcoded client-side, so a future toolkit change that makes it
-      // non-uniform doesn't silently break the board.
+      // non-uniform doesn't silently break the board. entrance is the
+      // one value here a client genuinely cannot compute: it's
+      // generator-chosen (SpaceData.Entrance, the cell the workbench
+      // renders as `@`), NOT a function of any room's archetype -- an
+      // "entrance"-archetype room names which ROOM holds it, not the
+      // CELL within that room. dungeonspec.Validate never checks a
+      // `place:` entry against it (validatePlaceBlock covers bounds,
+      // door row, duplicate cells, and ref types -- nothing else), while
+      // StartEncounter seats the whole party along a line running
+      // outward from this cell. Without this field an author can place
+      // a movement-blocking prop on the party's own spawn and get a
+      // green save -- the board is the only thing that can warn about
+      // it, and only with this field to check against.
       message FloorPlan {
         repeated FloorPlanRoom rooms = 1;
         repeated FloorPlanConnector connectors = 2;
         int32 height = 3;
         int32 door_row = 4;
+        FloorPlanCell entrance = 5;
       }
 
       message PutDungeonResponse {
+        // success=false <=> the request was well-formed but the YAML
+        // content failed dungeonspec validate/compile -- field_errors is
+        // populated, floor_plan is unset. success=true <=> floor_plan is
+        // set. A malformed REQUEST (key charset violation, key/YAML
+        // key: mismatch) never reaches this message at all -- it's
+        // InvalidArgument status instead, which drops the body, so
+        // there's nothing to populate here for that case. See plan.md
+        // S1's Error transport decision for the full split and why a
+        // single InvalidArgument-for-everything design doesn't work
+        // (gRPC drops the response body on any non-OK status, which
+        // would make field_errors/floor_plan unreachable on exactly the
+        // case they exist for).
         bool success = 1;
         // field_errors is best-effort in v1: rpg-toolkit's
         // dungeonspec.Validate returns one flat error today, not
@@ -244,7 +275,13 @@ Kind **Build**.
       S0 implementer may adjust field numbers/names during `buf lint`, but
       keep the *shape*: every value a naive board implementation might
       otherwise reconstruct with arithmetic (`start_column`, `column`,
-      `door_row`) is instead an explicit wire value.
+      `door_row`) is instead an explicit wire value — and `entrance` is a
+      second, distinct category worth keeping separate in review: not
+      arithmetic the client could derive badly, but a generator decision
+      the client has no way to derive AT ALL. Both failure modes end the
+      same way (client renders something the server didn't actually
+      compute), which is why both get an explicit field rather than one
+      getting a field and the other an implicit "figure it out."
 - [ ] `buf format -w`
 - [ ] `buf lint` — must pass clean (no `PACKAGE_VERSION_SUFFIX` /
       `RPC_RESPONSE_STANDARD_NAME` surprises; both are already excepted in
@@ -369,6 +406,22 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
 
 **4. The authoring gate + `PutDungeon`.**
 
+**Error transport decision — post-approval refinement, surfaced by the S0
+protos gate (rpg-api-protos PR #201), now decided:** the handler layer
+returns `InvalidArgument` status ONLY for a malformed *request* — key
+charset violation, key/YAML `key:` mismatch — where there's nothing
+meaningful to put in the response body. A well-formed request whose YAML
+*content* fails `dungeonspec`'s validate/compile returns OK status with
+`success=false` and `field_errors` populated in-band, `floor_plan` unset.
+`success=true` implies `floor_plan` is set. This split exists because a
+non-OK gRPC status drops the response body entirely — an
+`InvalidArgument`-for-everything design would make `field_errors` and
+`floor_plan` unreachable on exactly the case they exist for. The
+orchestrator itself (`put_dungeon.go`) should return a typed result the
+handler maps to this split, not raw gRPC status codes — matching this
+repo's outside-in layering (orchestrators return domain errors/results;
+handlers translate to wire status).
+
 - [ ] New package `internal/orchestrators/authoring/`. `Config` requires
       `Registry *dungeonregistry.Registry` and `ContentDir string`
       (**not** read from `os.Getenv` inside the orchestrator — passed in
@@ -383,15 +436,24 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
       covering in this order (each its own subtest / table case):
       1. `ContentDir == ""` at `New` → construction error, no orchestrator
          returned.
-      2. Key/YAML `key:` mismatch → `InvalidArgument`-mappable error,
-         zero registry mutation, zero file write (assert via a spy/fake
-         filesystem or a temp dir + `os.Stat` on the would-be file).
+      2. Key/YAML `key:` mismatch → a malformed-request result the
+         handler maps to `InvalidArgument` status (nothing else needs
+         populating for this case), zero registry mutation, zero file
+         write (assert via a spy/fake filesystem or a temp dir +
+         `os.Stat` on the would-be file).
       3. Key charset: `PutDungeon(key="My Dungeon!", ...)` rejected before
-         any decode/compile happens — regex `^[a-z0-9-]+$`.
-      4. Invalid YAML (fails `dungeonspec.Load`) → `field_errors` has
-         exactly one entry (the known v1 limitation — assert this
-         explicitly, don't assert "per-field" since that's not true yet),
-         registry untouched, no file write.
+         any decode/compile happens — regex `^[a-z0-9-]+$` — same
+         malformed-request result as case 2, `InvalidArgument` status.
+      4. Invalid YAML (fails `dungeonspec.Load`) → **NOT**
+         `InvalidArgument` — this is the well-formed-request,
+         content-failed case from the Error transport decision above:
+         `success=false`, `field_errors` has exactly one entry (the known
+         v1 limitation — assert this explicitly, don't assert "per-field"
+         since that's not true yet), `floor_plan` unset, registry
+         untouched, no file write. Assert the orchestrator result is
+         distinguishable in type/shape from case 2/3's result — this is
+         the test that would catch a naive implementation collapsing both
+         failure classes into one "return an error" path.
       5. **Ordering on failure**: inject a write-through failure (temp dir
          made read-only, or a fake writer) on an otherwise-valid spec →
          RPC fails, and the registry (assert via `Registry.Get`) is
@@ -400,9 +462,13 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
          untouched" decision — a naive implementation that swaps the
          registry before writing (or doesn't check the write error) will
          pass every OTHER test here and only fail this one.
-      6. Valid spec, `validate_only=true` → `FloorPlan` populated,
-         `Registry.Get(key)` still returns `ok=false` (nothing persisted),
-         no file written.
+      6. Valid spec, `validate_only=true` → `FloorPlan` populated
+         (including `entrance` — assert it against a fixture spec whose
+         entrance cell is known, not just that the field is non-zero;
+         `[0,0]` is both a plausible real entrance and the proto zero
+         value, so a bug that leaves `entrance` unset would pass a
+         weaker assertion), `Registry.Get(key)` still returns `ok=false`
+         (nothing persisted), no file written.
       7. Valid spec, `validate_only=false` → file written to
          `ContentDir/<key>.yaml` (new key) or the *originating* file
          (existing key, via `FilenameForKey`), registry updated, AND a
@@ -419,8 +485,12 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
       # expect: FAIL on every case (package/method don't exist yet)
       ```
 - [ ] Implement `put_dungeon.go`: decode (key-mismatch + charset checks
-      first — cheap, no compile needed), `dungeonspec.Load` (compile +
-      validate), on success build `FloorPlan` from
+      first — cheap, no compile needed) → a malformed-request result on
+      failure (case 2/3's `InvalidArgument`). Then `dungeonspec.Load`
+      (compile + validate) → on failure, the well-formed-request,
+      content-failed result (case 4's `success=false` + `field_errors`,
+      distinct from the malformed-request result above — see the Error
+      transport decision). On success, build `FloorPlan` from
       `compiled.Params.Regions`/`compiled.Params.Connectors` (walking the
       chain to compute `start_column`/`column` — this is the ONE place in
       the whole arc allowed to do that arithmetic, because it's the
@@ -428,7 +498,16 @@ GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
       `Encounter.InitDungeon(compiled.Params)` call the same way
       `dungeonspec.WorkbenchReport` does
       (`rpg-toolkit/encounter/dungeonspec/workbench.go:42-58`) — reuse
-      that exact pattern, don't reinvent it. Then: write-through via
+      that exact pattern, don't reinvent it. **`entrance` comes from that
+      same throwaway `InitDungeon` call**: `Encounter.ToData().Space.Entrance`
+      is a `core.Hex` — a cube coordinate (`Q, R, S`), NOT an offset
+      `[col, row]` pair. Converting it is the one additional piece of hex
+      math this handler needs, and it isn't new: reuse
+      `spatial.CubeCoordinate.ToOffsetCoordinate()`
+      (`rpg-toolkit/tools/spatial/position.go:170-217` — see Pointers
+      below) rather than hand-rolling the cube→offset conversion — a naive
+      reimplementation here is exactly the class of hex math this whole
+      design exists to keep server-side and correct in one place. Then: write-through via
       `os.WriteFile` to the target path from `FilenameForKey` (or
       `<key>.yaml` if new) FIRST; only on success call `Registry.Put`.
       ```bash
@@ -818,9 +897,15 @@ S4a (needs the board + YAML pane to place into).
       equivalent (toolkit#847's palette — locate the web-side monster ref
       list the same way, likely a sibling file or the character-creation
       class-model constants pattern) for monsters. **Read-only overlays**
-      for door/start/entrance markers (derived from `FloorPlan.connectors`
-      and each room's `archetype == "entrance"` — not draggable palette
-      items; design.md's palette-honesty correction). The **boss pin** is
+      for door and entrance markers — door overlays derive from
+      `FloorPlan.connectors`; **the entrance overlay reads
+      `FloorPlan.entrance` directly, NOT `archetype == "entrance"`** (an
+      earlier version of this plan derived it from the archetype, which
+      is wrong: the archetype names which room holds the entrance, not
+      the spawn cell within it — see S0's `FloorPlan.entrance` field and
+      design.md's response contract for why the distinction is
+      load-bearing, not pedantic. Not draggable palette items either
+      way; design.md's palette-honesty correction). The **boss pin** is
       the one draggable exception (`boss.at` is real schema).
 - [ ] Write tests FIRST: dragging a monster ref onto a cell sets
       `blocks_movement`/`blocks_los` controls to **disabled** (gray, not
@@ -868,11 +953,24 @@ to).
 ### Checklist
 
 - [ ] Write tests FIRST: Save calls `PutDungeon` with `validate_only:
-      false`; a `field_errors` response (the one-flat-entry v1 shape from
-      S1) surfaces as a visible inline message — do NOT write a test
-      asserting per-cell error highlighting, since S1's known limitation
-      makes that untrue; assert instead that the message is legible and
-      doesn't silently vanish. Play, after a successful save, navigates to
+      false`. **Per the Error transport decision (S1): a `success=false`
+      response is author feedback, not an error path.** It arrives as an
+      OK-status response with `field_errors` populated in-band — the save
+      handler reads `field_errors` off the response body (the
+      one-flat-entry v1 shape from S1) and surfaces it as a visible
+      inline message; do NOT write a test asserting per-cell error
+      highlighting, since S1's known limitation makes that untrue; assert
+      instead that the message is legible and doesn't silently vanish.
+      **An `InvalidArgument` transport status is a DIFFERENT, unexpected
+      case** — it means a malformed request (a client-side bug: the key
+      didn't match the YAML's own `key:` field, or slipped past charset
+      validation) reached the server at all, which shouldn't happen for
+      any well-formed save the editor itself constructs. Treat it as a
+      programming error (log/report, generic "something went wrong"
+      state), never render it as author-facing validation feedback the
+      way `field_errors` is rendered — conflating the two would show an
+      author a message meant for a developer, for a case that isn't
+      theirs to fix. Play, after a successful save, navigates to
       the lobby with the just-saved key preselected in S3's dropdown.
       Leaving that encounter (any exit path — victory, defeat, or
       Abandon) returns to `/author`, not `/home`. Play always starts a
@@ -932,6 +1030,22 @@ the screenshot evidence and Kirk's live walk, per memory
   `FloorPlan`, never re-derived client-side** from room widths — that's
   exactly the "room-chain offsets" class of math design.md's server-
   authoritative principle forbids the client from doing.
+- **Entrance is a field, not a derivation.** `archetype == "entrance"`
+  identifies the *room*; `FloorPlan.entrance` is the *cell* — they are not
+  the same value and one cannot substitute for the other. This surfaced
+  as a blocking finding on S0's own review (rpg-api-protos PR #201) after
+  plan.md's first draft got it wrong in both the S0 sketch and S4b; both
+  are fixed now, but it's exactly the kind of thing to double-check
+  against `FloorPlan`'s actual generated fields rather than assume from
+  memory of an earlier plan revision.
+- **`InvalidArgument` status is for malformed requests only — content
+  validation failures are in-band `success=false`.** A single
+  `InvalidArgument`-for-everything design silently loses `field_errors`
+  and `floor_plan`, since gRPC drops the response body on any non-OK
+  status. S1 produces the split; S4c consumes it; get this backwards in
+  either slice and compile errors render as nothing, which is especially
+  easy to miss given the flat-error limitation already means there's only
+  ever one message to lose.
 - **This codebase has no react-router.** `/author`'s view *selection* is a
   `URLSearchParams` + `AppView` union check, same pattern as `/playtest`
   and `/concepts` — reaching for a router here produces code that matches
@@ -984,6 +1098,10 @@ the screenshot evidence and Kirk's live walk, per memory
   `run-buf-checks-locally.md`.
 - Web hex math to reuse, not reinvent: `src/rendering/FloorBuilder.ts`,
   `src/hooks/wallRuns.ts`.
+- Cube→offset hex conversion (S1's `FloorPlan.entrance` build step):
+  `rpg-toolkit/tools/spatial/position.go:170-217`,
+  `CubeCoordinate.ToOffsetCoordinate()` — the same file the sibling
+  `dungeon-walls` plan cites as "hex parity math."
 - rpg-project base-branch table + Cross-Repo Design Workflow:
   `rpg-project/CLAUDE.md`.
 

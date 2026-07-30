@@ -75,8 +75,10 @@ already; on the deployed box it's a volume path.
   (the logic rpg-api already imports); on success, updates the *running*
   orchestrator's compiled-spec registry and stores the compiled spec in the
   content store with precedence uploaded → `RPG_CONTENT_DIR` → embedded; on
-  failure returns structured errors (field-path-mapped, `InvalidArgument`)
-  that an editor can render inline. **What gets mutated, precisely:** the
+  a compile failure, returns structured errors (field-path-mapped)
+  that an editor can render inline — **not** as an `InvalidArgument`
+  status; see the Error transport decision below for why. **What gets
+  mutated, precisely:** the
   registry `StartEncounter` reads (`Orchestrator.contentSpecs`,
   `internal/orchestrators/lobby/dungeon_spec.go`) is built ONCE at
   construction time in `lobby.New`, from `loadContentSpecs` — an immutable
@@ -107,13 +109,36 @@ already; on the deployed box it's a volume path.
   shadow case. Separately: `key` is constrained to `[a-z0-9-]` slugs and
   rejected otherwise — this isn't just tidiness, `key` names a server-side
   file write, so it's a safety constraint on top of a naming one.
+- **Error transport decision — post-approval refinement (surfaced by the
+  S0 protos gate, rpg-api-protos PR #201):** `InvalidArgument` status is for
+  malformed *requests* only — the key-charset and key/YAML-`key:`-mismatch
+  cases above, where there's nothing to return. A well-formed request
+  whose YAML *content* fails `dungeonspec`'s validate/compile returns OK
+  status with `success=false` and `field_errors` populated in-band,
+  `floor_plan` unset — a non-OK status would drop the response body
+  entirely and lose the editor's inline errors, which is the whole reason
+  this split exists. `success=true` implies `floor_plan` is set. With the
+  gate off, the call is `Unimplemented` as already stated. S1 produces
+  exactly this; S4c reads `field_errors` from the body and treats an
+  `InvalidArgument` status as a programming error, never as author
+  feedback.
 - **Write-through**: successful puts also write the YAML to
   `RPG_CONTENT_DIR` per the key rules above, so the on-disk file stays the
   committable artifact, an api restart recovers state from the dir, and on
   a future remote box a volume gives the same durability.
 - **Response contract — grid math never leaves the server.** `PutDungeon`'s
   success response returns the compiled floor plan: laid-out rooms, cell
-  legality, connector/door positions, entrance. A dry-run mode (a
+  legality, connector/door positions, **and the entrance as its own
+  field** — a generator-chosen spawn-anchor cell (`SpaceData.Entrance`),
+  not derivable from any room's `archetype` (an "entrance"-archetype room
+  names which *room* holds it, not the *cell* within that room). This
+  isn't just completeness: `dungeonspec.Validate` never checks a `place:`
+  entry against the entrance — bounds, the reserved door row, duplicate
+  cells, and ref types are all it covers — while `StartEncounter` seats
+  the whole party along a line running outward from that cell. An author
+  can place a movement-blocking prop directly on the party's spawn and
+  get a green save; the board is the only thing that can warn about it,
+  and only if it actually has the entrance cell to check against. A dry-run mode (a
   `validate_only` flag on `PutDungeon`, or a sibling `Preview` RPC —
   implementer's choice) returns the same compiled floor plan without
   persisting, so the board gets live per-edit feedback by asking the server,
@@ -155,9 +180,11 @@ already; on the deployed box it's a volume path.
   encounters persist in Redis across content swaps (known trap, carried
   forward unchanged).
 - Error handling: with the gate off, the authoring surface is
-  absent/`Unimplemented`; validation failures are `InvalidArgument` with
-  structured details; unknown key on `StartEncounter` stays `NotFound` as
-  today.
+  absent/`Unimplemented`; malformed-request failures (key charset, key/YAML
+  mismatch) are `InvalidArgument`; content-validation failures are in-band
+  `success=false` + `field_errors`, per the Error transport decision above
+  — not `InvalidArgument`; unknown key on `StartEncounter` stays `NotFound`
+  as today.
 
 ## rpg-dnd5e-web — the `/author` route (dev-gated)
 
