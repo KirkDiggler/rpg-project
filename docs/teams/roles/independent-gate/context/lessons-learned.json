@@ -1,3 +1,10 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "lesson-transparent-checkpoint-correction",
+      "summary": "A failed or malformed GitHub checkpoint must be acknowledged in the immediate correction, not silently replaced",
+      "details": "After publishing any gate checkpoint, read back the durable GitHub comment and verify that it contains the complete signed evidence. If publication is empty, malformed, points at a temporary file, or otherwise wrong, preserve and link the bad artifact; state exactly what failed; publish the canonical replacement; and explicitly connect the two in the immediate follow-up. Transparency is part of the evidence contract: an observable correction lets the team learn, while a silent replacement hides the process failure even when the final technical verdict is correct. Use gh --body-file for file-backed comments rather than passing @path as literal --body text.",
+      "added": "2026-07-26"
+    }
+  ]
 }
