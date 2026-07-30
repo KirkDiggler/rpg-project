@@ -85,7 +85,16 @@ already; on the deployed box it's a volume path.
   immutable map — implementer's choice) so its effect is visible to the
   *very next* `StartEncounter`, with no restart. A `PutDungeon` whose effect
   waits for a restart defeats the entire point of this design — that
-  failure mode is explicitly excluded.
+  failure mode is explicitly excluded. **Ordering on failure**: write-through
+  to `RPG_CONTENT_DIR` happens first; a write error fails the RPC and the
+  running registry is left untouched. Only after a successful write does the
+  registry swap happen. This ordering is what prevents the silent-divergence
+  case where a spec plays now but vanishes on the next restart because it
+  was never actually written to disk. (A corollary: because the gate
+  requires `RPG_CONTENT_DIR` and write-through is synchronous, the uploaded
+  and dir tiers of the content-store precedence always agree at runtime —
+  "uploaded → dir → embedded" is effectively two-tier, uploaded/dir vs.
+  embedded, in this design's actual operation.)
 - **Key rules**: `PutDungeon` rejects (`InvalidArgument`) any mismatch
   between its `key` argument and the YAML's own declared `key:` field.
   Write-through targets the *originating* file: if a file already in
@@ -109,10 +118,17 @@ already; on the deployed box it's a volume path.
   implementer's choice) returns the same compiled floor plan without
   persisting, so the board gets live per-edit feedback by asking the server,
   never by recomputing layout client-side. `dungeonspec.WorkbenchReport`
-  (`rpg-toolkit/encounter/dungeonspec/workbench.go`) already does exactly
-  this compile-and-describe step outside a server, so no new toolkit
-  capability is needed — `PutDungeon`/`Preview` project the same data over
-  the wire.
+  (`rpg-toolkit/encounter/dungeonspec/workbench.go`) already runs this exact
+  compile-and-describe step outside a server — but it returns a formatted,
+  human-readable text report, not structured data an RPC can project. The
+  structured floor-plan response this design needs is a new projection over
+  data the toolkit already exposes (`CompiledDungeon.Params` from `Load`,
+  `Encounter.ToData()` after `InitDungeon`/`SeedMonsters`) — precedent that
+  the compile step is already server-side and side-effect-free, not a
+  reusable payload. Preview/dry-run compiles at a fixed default seed (not a
+  caller-supplied one): seed only affects rolled content, which the board
+  already keeps off-grid in the "rolled content" panel (below), so the
+  board's per-edit feedback doesn't need seed control.
 - **`ListDungeons()`**: returns keys + display names to feed a lobby
   dropdown. rpg-project#131 ("pick-your-dungeon") contemplated this as an
   optional RPC; this design graduates it to required.
@@ -225,10 +241,17 @@ both don't get built.
 
 - **api**: unit tests around content precedence (uploaded → dir → embedded),
   write-through, and gate-off behavior; curl smoke test proves P1 before any
-  UI.
+  UI. Pinning the decisions above: no-restart visibility (a `PutDungeon`
+  immediately followed by `StartEncounter` yields the new spec, no restart
+  in between); gate-on with `RPG_CONTENT_DIR` unset fails at construction;
+  key-mismatch rejection and originating-file write-through targeting are
+  both unit-tested.
 - **editor**: round-trip tests — YAML → board model → YAML must be
-  byte-stable including comments; placement legality (doorRow unclickable)
-  unit-testable against the same layout rules the compiler uses.
+  byte-stable including comments. Cell legality is NOT re-derived
+  client-side (per the server-authoritative principle above) — the board
+  renders legality exactly as returned by the compiled-layout response, so
+  this is a contract test against a recorded response fixture, not a
+  reimplementation of the compiler's layout rules.
 - The loop itself is judged by live play (Kirk's live-walk + screenshots),
   consistent with how authored content is already verified — not by review
   machinery.
