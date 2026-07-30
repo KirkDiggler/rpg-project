@@ -81,14 +81,14 @@ bash_action() {
   printf '%s\n' "$resolved"
 }
 
-agents=(ui-lead platform-lead assets-lead rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member rpg-game-assets-member ui-web-member assets-web-member toolkit-fixer api-fixer web-fixer independent-gate explore janitor)
+agents=(ui-lead platform-lead assets-lead rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member rpg-game-assets-member game-dev-member ui-web-member assets-web-member toolkit-fixer api-fixer web-fixer independent-gate explore janitor)
 declare -A expected_mode expected_model expected_variant
 for agent in ui-lead platform-lead assets-lead; do
   expected_mode[$agent]=primary
   expected_model[$agent]=gpt-5.6-sol-fast
   expected_variant[$agent]=xhigh
 done
-for agent in rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member rpg-game-assets-member ui-web-member assets-web-member toolkit-fixer api-fixer web-fixer; do
+for agent in rpg-toolkit-member rpg-api-member rpg-api-protos-member rpg-deployment-member rpg-game-assets-member game-dev-member ui-web-member assets-web-member toolkit-fixer api-fixer web-fixer; do
   expected_mode[$agent]=subagent
   expected_model[$agent]=gpt-5.6-terra
   expected_variant[$agent]=high
@@ -125,6 +125,7 @@ for agent in "${agents[@]}"; do
     rpg-api-protos-member) paths=(docs/teams/roles/rpg-api-protos-member/prompt.md) ;;
     rpg-deployment-member) paths=(docs/teams/roles/rpg-deployment-member/prompt.md) ;;
     rpg-game-assets-member) paths=(docs/teams/roles/rpg-game-assets-member/prompt.md) ;;
+    game-dev-member) paths=(docs/teams/roles/game-dev-member/prompt.md) ;;
     ui-web-member) paths=(docs/teams/roles/rpg-dnd5e-web-member/prompt.md docs/teams/roles/rpg-dnd5e-web-member/overlays/ui-ux.md) ;;
     assets-web-member) paths=(docs/teams/roles/rpg-dnd5e-web-member/prompt.md docs/teams/roles/rpg-dnd5e-web-member/overlays/assets.md) ;;
     toolkit-fixer) paths=(docs/teams/roles/toolkit-fixer/prompt.md) ;;

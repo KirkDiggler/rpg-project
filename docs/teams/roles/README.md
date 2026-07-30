@@ -26,7 +26,7 @@ accountable for its repo **end to end**: it carries the repo's architectural
 boundary as its own identity, owns its issues from PR to merge, and keeps its
 living docs honest.
 
-The six standing owners:
+The seven standing owners:
 
 | Member | Repo | Owns / is the boundary |
 |--------|------|------------------------|
@@ -35,6 +35,7 @@ The six standing owners:
 | `rpg-api-protos-member` | rpg-api-protos | The contract — one source of truth for API shape; no rules, no drift |
 | `rpg-deployment-member` | rpg-deployment | Delivery pipeline, release sequencing, and post-merge deployment verification |
 | `rpg-game-assets-member` | rpg-game-assets | Private asset pipeline, contract tree, manifests, and shipped-asset budgets |
+| `game-dev-member` | game-dev | Portable Pi harness, bootstrap convergence, and shared-workspace infrastructure — never gameplay/product ownership or global tool configuration |
 | `rpg-dnd5e-web-member` | rpg-dnd5e-web | Shared web owner: `ui-ux` owns screens/HUD/accessibility/presentation; `assets` owns model loading/environment/animation/3D evidence. It renders server data and sends intent; never computes or gates game state. |
 
 The director overlays are `director/overlays/ui-ux.md`,
