@@ -703,14 +703,28 @@ out of scope / a P4+ idea if it ever turns out to matter.
         acceptable pre-pre-alpha, revisit if bundle-size ever becomes a
         real complaint.
       - On mount, before rendering the editor, probe the api's authoring
-        surface with a minimal call — `PutDungeon({key: '', yaml: '',
-        validate_only: true})` is enough; its actual response content is
-        irrelevant, only the RPC's existence is being tested. An
-        `Unimplemented` status means the gate is off server-side → render
-        a plain "authoring disabled on this server" state instead of the
-        editor. Any other outcome (success, or `InvalidArgument` from the
-        deliberately-empty payload) means the service exists → mount the
-        real editor.
+        surface with a minimal call:
+        ```ts
+        // key is deliberately empty -- it fails PutDungeon's charset
+        // validation before any decode/compile ever runs, so this is a
+        // pure liveness probe, never a real write. Do NOT "fix" this
+        // into a valid key.
+        await putDungeon({ key: '', yaml: '', validateOnly: true });
+        ```
+        its actual response content is irrelevant, only the RPC's
+        existence is being tested — three-way split on the outcome, not a
+        two-way one:
+        - `Unimplemented` → the gate is off server-side → render a plain
+          "authoring disabled on this server" state instead of the
+          editor.
+        - `Unavailable` / a transport failure (server unreachable) → a
+          distinct "can't reach the server" state with a retry action —
+          NOT the editor. A two-way "anything but Unimplemented mounts
+          the editor" split would mount it against a backend that can't
+          even be reached, let alone serve a save.
+        - Anything else, including the expected `InvalidArgument` from
+          the deliberately-invalid probe payload → the service exists and
+          answers → mount the real editor.
       - Net effect: **one env var, `RPG_AUTHORING_ENABLED` on rpg-api,
         governs both halves.** Flipping it in the deployed compose is
         the whole remote-phase story, exactly as design.md claims — now
