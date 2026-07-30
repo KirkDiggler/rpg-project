@@ -129,9 +129,15 @@ already; on the deployed box it's a volume path.
   caller-supplied one): seed only affects rolled content, which the board
   already keeps off-grid in the "rolled content" panel (below), so the
   board's per-edit feedback doesn't need seed control.
-- **`ListDungeons()`**: returns keys + display names to feed a lobby
-  dropdown. rpg-project#131 ("pick-your-dungeon") contemplated this as an
-  optional RPC; this design graduates it to required.
+- **`ListDungeons()`** — **post-approval correction (2026-07-30):** not
+  behind the authoring gate. The gate covers `PutDungeon` (and its
+  `validate_only` dry-run) only — `ListDungeons` reads content and mutates
+  nothing, and the P2 lobby dropdown is a player-facing feature that must
+  work with authoring off. It's defined alongside `LobbyService`, not the
+  new authoring service (see plan.md's S0). Returns keys + display names
+  for the lobby dropdown; rpg-project#131 ("pick-your-dungeon")
+  contemplated this as an optional RPC, this design graduates it to
+  required.
 - **`StartEncounter` DOES need proto/handler changes** (correcting an
   earlier assumption in this design): the orchestrator's caller → env →
   default-key precedence already exists (`StartEncounterInput.DungeonKey`,
