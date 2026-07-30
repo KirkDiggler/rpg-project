@@ -209,9 +209,11 @@ Three panes:
   game to a lobby with that dungeon in the dropdown; come out, edit it, go
   back in."
 
-(For later implementers: rpg-dnd5e-web work branches from `origin/development`,
-not `main` — per rpg-project CLAUDE.md's base-branch table. Not relevant to
-this doc PR itself.)
+(For later implementers: rpg-api and rpg-dnd5e-web work both branch from
+`origin/dev`, not `main` — per rpg-project CLAUDE.md's base-branch table,
+updated by the 2026-07-28 rule (`dev` replaced web's old `development`
+that day, and rpg-api grew a matching `dev`). Not relevant to this doc PR
+itself; see plan.md for the full per-slice branch/PR mechanics.)
 
 ## Phasing
 

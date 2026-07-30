@@ -14,9 +14,23 @@ and `rpg-toolkit/encounter/data.go` while writing this plan.
 - Seven slices below (S0, S1, S2, S3, S4a, S4b, S4c), each = **one issue in
   its owning repo + one ready-for-review PR** (never draft — memory
   `no-draft-prs`).
-- Branch base: `origin/main` for rpg-api-protos and rpg-api; `origin/development`
-  for rpg-dnd5e-web (rpg-project CLAUDE.md's base-branch table — getting this
-  wrong sends a PR at the wrong target silently).
+- Branch base: `origin/main` for rpg-api-protos; **`origin/dev`** for both
+  rpg-api and rpg-dnd5e-web (rpg-project CLAUDE.md's base-branch table,
+  updated by the 2026-07-28 rule — `dev` replaced web's old `development`
+  that day, and rpg-api grew a matching `dev` at the same time; getting
+  this wrong sends a PR at the wrong target silently). **Merge direction
+  matters as much as the branch name**: every S1-S4c feature PR
+  squash-merges INTO `dev` (one clean commit per feature, unchanged); the
+  eventual `dev` → `main` release cut for each repo must be a real merge
+  commit, never squashed — squashing that cut severs ancestry between the
+  two long-lived branches and poisons the next release with false
+  conflicts (CLAUDE.md's "Merging a `dev` branch into `main`" section has
+  the worked example). This plan's slices only ever squash-merge into
+  `dev`; the `dev` → `main` cut is a separate, later, repo-owner action
+  outside this arc's scope. **`gh repo view` confirms both repos' GitHub
+  default branch is still `main`**, not `dev` — `gh pr create` without an
+  explicit `--base dev` on every rpg-api/rpg-dnd5e-web PR in this arc
+  silently opens against `main` instead. Pass it every time for S1-S4c.
 - Board 19 entry per issue: **Feature = "The Dungeon"** on every slice (fetch
   current field/option IDs with `gh project field-list 19 --owner KirkDiggler`
   rather than hardcoding them here — they're a live board, not a doc fact).
@@ -260,7 +274,9 @@ four others.
 registry." Board 19: Feature "The Dungeon", Team **Platform**, Kind **Build**.
 Depends on S0 merged (needs the generated `authoringpb` package).
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-authoring-surface origin/main`
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-authoring-surface origin/dev`
+(rpg-api's integration branch since the 2026-07-28 base-branch rule — not
+`main`; PR with `gh pr create --base dev`, see Issue/PR structure above.)
 
 **Get the fresh protos first:**
 ```bash
@@ -557,7 +573,8 @@ independent of S1 (only needs S0's regenerated protos) — can land in
 parallel with S1 if convenient, but ordered after in this plan since S3's
 dropdown is more useful once both are live.
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-start-encounter-key origin/main`
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-start-encounter-key origin/dev`
+(not `main` — same rpg-api integration-branch rule as S1; `--base dev`.)
 
 ### Checklist
 
@@ -604,10 +621,12 @@ suggested **UI/UX** (a list/dropdown, no 3D rendering — team-lead/Kirk can
 retriage at board-entry time if this reads differently). Depends on S0
 (regenerated TS SDK) and S2 (so the picked key actually takes effect).
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-lobby-picker origin/development`
-— **`origin/development`, not `main`** (rpg-project CLAUDE.md's base-branch
-table; getting this wrong is silent and surfaces later as a phantom
-conflict).
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-lobby-picker origin/dev`
+— **`origin/dev`, not `main`** (rpg-project CLAUDE.md's base-branch table;
+`dev` replaced web's old `development` on 2026-07-28; getting this wrong is
+silent and surfaces later as a phantom conflict). PR with
+`gh pr create --base dev` — GitHub's default branch for this repo is still
+`main`, so an unqualified `gh pr create` targets the wrong branch.
 
 Current pin, for reference (`package.json`, checked while writing this plan):
 `"@kirkdiggler/rpg-api-protos": "github:KirkDiggler/rpg-api-protos#v0.1.114"`
@@ -655,7 +674,8 @@ already owns — `src/rendering/FloorBuilder.ts`, `src/hooks/wallRuns.ts`;
 retriage if this reads as UI/UX instead). Depends on S0 + S1 (needs
 `PutDungeon` with `validate_only` live).
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-route-board origin/development`
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-route-board origin/dev`
+(not `development` — renamed 2026-07-28; `--base dev` on the PR.)
 
 Bump `@kirkdiggler/rpg-api-protos` first — same commands as S3's proto-update
 step (this slice needs the generated `AuthoringService`/`PutDungeon` TS
@@ -788,7 +808,8 @@ flag gating, rolled-content panel." Board 19: Feature "The Dungeon", Team
 **Assets** (propManifest.ts is this team's existing surface). Depends on
 S4a (needs the board + YAML pane to place into).
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-palette origin/development`
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-palette origin/dev`
+(not `development`; `--base dev` on the PR.)
 
 ### Checklist
 
@@ -841,7 +862,8 @@ play handoff." Board 19: Feature "The Dungeon", Team suggested **UI/UX**
 differently). Depends on S4a, S4b, and S3 (the lobby dropdown play jumps
 to).
 
-**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-save-play origin/development`
+**Branch:** `git fetch origin && git checkout -b feat/<issue>-dungeon-builder-author-save-play origin/dev`
+(not `development`; `--base dev` on the PR.)
 
 ### Checklist
 
@@ -928,10 +950,21 @@ the screenshot evidence and Kirk's live walk, per memory
 - **`buf breaking` is blocking in rpg-api-protos CI** — everything in S0
   is additive by design specifically so this passes clean with no
   `breaking-change-approved` label needed.
-- **rpg-dnd5e-web branches from `origin/development`, not `main`** — every
-  web slice above (S3, S4a, S4b, S4c) says this explicitly for a reason:
-  memory records this exact mistake already happened once in this
-  workspace (2026-07-26).
+- **rpg-api and rpg-dnd5e-web both branch from and PR into `origin/dev`,
+  not `main`** — every S1-S4c slice above says this explicitly for a
+  reason: a near-identical mistake (branching web from a stale/wrong base)
+  already happened once in this workspace (2026-07-26), and the base
+  itself moved again since (2026-07-28: web's `development` renamed to
+  `dev`, rpg-api grew a matching `dev`). `gh repo view` confirms both
+  repos' GitHub default branch is still `main`, so `gh pr create` needs
+  an explicit `--base dev` every time, not just a correctly-cut branch.
+- **Squash into `dev`, never squash `dev` → `main`.** Every feature PR in
+  this arc squash-merges; the release cut is someone else's later action
+  and must be a real merge commit — mixing the two breaks the next
+  release (rpg-project CLAUDE.md's "Merging a `dev` branch into `main`,"
+  worked example from the 2026-07-28 incident this rule came from). Not
+  this arc's job to perform, but worth knowing why `dev` exists as a
+  separate branch at all.
 - **No draft PRs** — every slice's PR opens ready-for-review, or it skips
   Kirk's review queue silently.
 
