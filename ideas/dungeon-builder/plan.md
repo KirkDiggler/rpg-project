@@ -598,6 +598,13 @@ handlers translate to wire status).
       `docs/how-to/run-locally.md:31,54-64`'s existing pattern exactly
       (including its `server` subcommand — `go run ./cmd/server server`,
       not just `./cmd/server`):
+      **Fixture note:** a boss room needs two things `dungeonspec.Validate`
+      actually enforces — a non-nil `boss:` entry (`validateBossCardinality`,
+      "boss room must declare boss") and a primary axis that *exceeds*
+      `bossAxisMin = 6`, i.e. `min(width, height) > 6`, not `>= 6`
+      (`validateBossAxis`). A same-number fixture like `height: 6` / boss
+      `width: 6` gives `min(6,6) = 6`, which fails the `> 6` check by
+      exactly one — the fixture below uses 8s to clear it with margin.
       ```bash
       RPG_AUTHORING_ENABLED=1 RPG_CONTENT_DIR=/tmp/dungeon-authoring-smoke \
         AUTH_DEV_MODE=true go run ./cmd/server server &
@@ -608,10 +615,14 @@ handlers translate to wire status).
 
       grpcurl -plaintext \
         -H "Authorization: Dev player-1" \
-        -d '{"key": "smoke-test", "yaml": "version: 1\nkey: smoke-test\nname: Smoke Test\nheight: 6\nrooms:\n  - id: a\n    archetype: entrance\n    width: 6\n  - id: b\n    archetype: boss\n    width: 6\nconnectors:\n  - from: a\n    to: b\n", "validate_only": false}' \
+        -d '{"key": "smoke-test", "yaml": "version: 1\nkey: smoke-test\nname: Smoke Test\nheight: 8\nrooms:\n  - id: entrance\n    archetype: entrance\n    width: 6\n  - id: boss\n    archetype: boss\n    width: 8\n    boss: { ref: \"dnd5e:monsters:skeleton-captain\", at: [4, 2] }\nconnectors:\n  - { from: entrance, to: boss }\n", "validate_only": false}' \
         localhost:50051 \
         dnd5e.api.authoring.v1alpha1.AuthoringService/PutDungeon
-      # expect: success=true, floor_plan populated, and:
+      # expect: success=true, floor_plan populated (rooms with
+      # start_column, the connector's column, door_row, and entrance —
+      # S1's actual verified response includes
+      # entrance: {row: 4} with column omitted because it's 0, proto3
+      # JSON's default-value elision, not a missing field), and:
       cat /tmp/dungeon-authoring-smoke/smoke-test.yaml
       # expect: the exact YAML just submitted
 
@@ -622,6 +633,8 @@ handlers translate to wire status).
       # expect: "smoke-test" / "Smoke Test" now in the list, with NO
       # restart between the PutDungeon call and this one
       ```
+      (Fixture verified live and gate-checked in S1's actual implementation,
+      rpg-api PR #750 — this is that exact transcript, not a re-guess.)
 - [ ] Include this transcript (or the script + its actual output) in the
       PR description as P1's evidence — this is the "curl-testable before
       any UI exists" proof design.md promised.
@@ -639,6 +652,21 @@ message somewhere visible — not by highlighting the specific offending
 cell. A future toolkit enhancement to return structured per-field errors is
 P4+ follow-up work if the UX gap turns out to matter in practice, not
 something this arc should invent unilaterally.
+
+**Follow-up (surfaced by S1's actual implementation, rpg-api PR #750,
+gate-verified as correct today):** `buildFloorPlan`'s `start_column`/
+`column` arithmetic re-derives the room-chain gap convention that
+`rpg-toolkit`'s own generator (`dungeon.go`'s chain-layout code) already
+owns and computes internally. It's correct today — the gate checked it
+against the generator's actual output — but it duplicates one invariant
+across two repos; if the toolkit's gap convention ever changes, both
+sides have to move together or the board silently drifts out of sync
+with what `StartEncounter` actually builds. Candidate P4+ follow-up: the
+toolkit exposes a structured floor plan from `dungeonspec` directly (the
+same shape `WorkbenchReport` already renders as text, made structured),
+and `PutDungeon` projects that instead of re-deriving it — closing the
+gap the same way `entrance` did, rather than adding a second parallel
+implementation of chain math.
 
 **Acceptance:** all listed tests green including `-race`; `make ci-check`
 clean; the grpcurl transcript above in the PR; Opus gate posted before
