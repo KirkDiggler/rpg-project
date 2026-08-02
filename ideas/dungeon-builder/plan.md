@@ -32,7 +32,7 @@ orchestration layer, and the web as a renderer/editor of server-provided truth.
   well-formed YAML content failures return `success=false` plus field errors;
   an authoring-gate-off service is `Unimplemented`.
 - Each implementation issue/PR records its parent slice and ends GitHub bodies
-  and comments with `— platform agent, on behalf of KirkDiggler`.
+  and comments with `— asset-pipeline agent, on behalf of KirkDiggler`.
 
 ## Prerequisite: product editor route — rpg-dnd5e-web#671
 
@@ -203,4 +203,4 @@ release pins, gate evidence, and explicit stops/decisions. Close it only after
 #176–#180 have each met their stated product-path evidence and the final
 cross-repo retro confirms the authoring loop remains live.
 
-— platform agent, on behalf of KirkDiggler
+— asset-pipeline agent, on behalf of KirkDiggler
