@@ -127,8 +127,8 @@ already; on the deployed box it's a volume path.
   shadow case. Separately: `key` is constrained to `[a-z0-9-]` slugs and
   rejected otherwise — this isn't just tidiness, `key` names a server-side
   file write, so it's a safety constraint on top of a naming one.
-- **Error transport decision — post-approval refinement (surfaced by the
-  S0 protos gate, rpg-api-protos PR #201):** `InvalidArgument` status is for
+- **Error transport decision (surfaced by the S0 protos gate,
+  rpg-api-protos PR #201):** `InvalidArgument` status is for
   malformed *requests* only — the key-charset and key/YAML-`key:`-mismatch
   cases above, where there's nothing to return. A well-formed request
   whose YAML *content* fails `dungeonspec`'s validate/compile returns OK
@@ -176,8 +176,7 @@ already; on the deployed box it's a volume path.
   affects rolled content, which the board already keeps off-grid in the
   "rolled content" panel (below), so the board's per-edit feedback doesn't
   need seed control.
-- **`ListDungeons()`** — **post-approval correction (2026-07-30):** not
-  behind the authoring gate. The gate covers `PutDungeon` (and its
+- **`ListDungeons()`** — not behind the authoring gate. The gate covers `PutDungeon` (and its
   `validate_only` dry-run) only — `ListDungeons` reads content and mutates
   nothing, and the lobby dropdown is a player-facing feature that must
   work with authoring off. It's defined alongside `LobbyService`, not the
