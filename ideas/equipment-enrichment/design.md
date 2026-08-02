@@ -1,7 +1,7 @@
 # Equipment Data Enrichment
 
-**Date:** 2026-03-21 (updated 2026-08-01 — concrete-options architecture decision, Party Assembles UX follow-up)
-**Status:** Design updated, ready for review
+**Date:** 2026-03-21 (updated 2026-08-01 — concrete-options architecture decision; corrected 2026-08-02 — scope narrowed to existing live data, see correction note below)
+**Status:** Design updated — current pass narrowed to web-only rich rendering from existing live data; concrete-options/toolkit/API architecture below remains the deferred future decision
 **Scope:** Flow weapon/equipment stats from toolkit through the pipeline so character creation shows meaningful equipment details
 
 ## Problem
@@ -192,6 +192,40 @@ type ArmorDetail struct {
 - **Toolkit:** Test `ResolveEquipmentDetail` resolves weapons, armor, tools, packs, and ammunition. Test that it returns nil for unknown IDs. Test that enriched requirements contain populated details.
 - **API:** Test the choice mapping produces correct `equipment_detail` proto fields including Cost/Weight conversion.
 - **UI:** Verify `EquipmentCard` renders correctly for weapon, armor, and gear variants.
+
+## 2026-08-02 correction: current dropdown-formatting pass needs none of this
+
+**Kirk's correction, propagated across tracking:** the immediate work is rich
+content inside the *existing production* equipment dropdown, and it needs **no
+new contract**. `ListEquipmentByTypeResponse.equipment` (rpg-api-protos
+`character.proto` / `equipment_types.proto`, `message Equipment`) already
+returns full `Equipment` per item today — `WeaponData`/`ArmorData`, cost,
+weight, description — for every category-dropdown call the web already makes.
+The web can render rich `EquipmentCard`-shaped content directly from that
+existing live response; there is no wire-shape gap to fill for this pass, and
+no concept/fixtures lab or standalone preview is needed since the real data
+is already available live. Accordingly:
+
+- **rpg-api-protos#204** (the additive `EquipmentCategoryChoice.options`
+  field implementing the decision below) is **closed without merge** —
+  premature for this pass, not wrong as a future decision.
+- **rpg-api-protos#202**, **rpg-toolkit#872**, and **rpg-api#755** move to
+  Todo/deferred on Project 19. They stay open — they are the tracking
+  issues for the *exact, toolkit-resolved* concrete-eligibility leg (Monk's
+  full `simple-melee`/`simple-ranged` set, special exclusions) that remains a
+  real future need, just not part of formatting the current dropdown.
+- **rpg-dnd5e-web#668** is rescoped to the immediate production rich-dropdown
+  formatting pass against existing `ListEquipmentByType` data, explicitly
+  **excluding** Monk/exact category eligibility.
+- The Phase 1 fixtures/standalone-preview plan in `plan.md` (port 3002,
+  typed-fixture picker) is superseded for this reason — see `plan.md` for the
+  corrected phasing.
+
+The **2026-08-01 update below is unchanged as the future architecture
+decision** for exact toolkit-resolved category eligibility (the Monk sharp
+edge) — it is deferred, not reversed. This correction only concerns *when*
+that wave lands relative to the current dropdown-formatting work, and
+clarifies that the current work does not require it at all.
 
 ## 2026-08-01 update: the MEATY wave — category choices resolve to concrete enriched options
 

@@ -6,20 +6,22 @@ Flow weapon/armor stats from toolkit through protos and API so the UI can displa
 4class-dungeon
 
 ## Status
-**Plan added 2026-08-01** — Kirk approved landing the concrete-options wave in
-two phases rather than as one cross-repo change. **Phase 1 (now):** proto
-contract (additive `options` field) + a rich, accessible web picker built
-against typed fixtures, run standalone via an equipment preview on port 3002.
-No wiring of the picker to production or to any fake/reconstructed
-eligibility. **Phase 2 (deferred):** toolkit category-choice expansion
-(Monk's full-registry resolution is the sharp-edge test) and the API
-translation layer, opening only once Phase 1's gate is clear; web then swaps
-the picker's fixture input for the live wire and deletes
-`ListEquipmentByType` + the client-side eligibility reconstruction in the same
-PR. Dungeon-builder's dev server (port 3001) and its lab API/Redis stack are
-untouched by this wave. See `plan.md` for phase gates, compatibility/rollback,
-the later local-toolkit-override step, and merge order. No implementation
-started.
+**Corrected 2026-08-02** — Kirk's scope correction supersedes the original
+2026-08-01 phasing. **Phase 1 (now, corrected):** web-only rich rendering of
+the *existing production* equipment dropdown, reading fields already present
+on `ListEquipmentByType`'s live `Equipment` response — no proto change, no
+fixtures/concept lab, no standalone preview (dropped entirely; live data
+already exists). Explicitly excludes exact/Monk category eligibility.
+rpg-api-protos#204 (the additive-field implementation) is closed without
+merge; rpg-api-protos#202, rpg-toolkit#872, rpg-api#755 moved to
+Todo/deferred (kept open). **Phase 2 (deferred, unchanged):** toolkit
+category-choice expansion (Monk's full-registry resolution is the sharp-edge
+test) and the API translation layer that maps a new `options` field, opening
+only once Phase 1 (corrected) has shipped; web then deletes
+`ListEquipmentByType`'s client-side eligibility reconstruction in the same
+PR that starts reading live `options`. See `plan.md` for the corrected phase
+gates, compatibility/rollback, and merge order (original Phase 1 kept there
+as superseded history). No implementation started on either phase.
 
 ## Key Decision
 Toolkit enriches at source (not API, not UI). Equipment choices carry full weapon/armor stats inline. UI gets a reusable WeaponCard component.
