@@ -74,11 +74,22 @@ editor. No YAML `walls:` field, editing, or topology change is included.
    provider version.
 4. **Iterate locally without committing an unpublished dependency.** While the
    provider is unmerged, API may use `rpg-api/docs/how-to/local-toolkit-override.md`
-   for **exactly one toolkit module**. Never add/commit `replace` directives or `go.work`, and
-   never add a second local override: API consumes the published proto version
-   rather than overriding protos locally. Before the API PR is opened, pin the
-   real toolkit and proto releases, remove the override, and prove the committed
-   diff contains neither `replace` nor `go.work` changes.
+   for **exactly one toolkit module**. The #176 API slice branch must harden and
+   constrain `scripts/toolkit-local-override.sh` so it permits exactly one module
+   override and verifies the resulting module list; that supporting script change
+   belongs on the same API slice branch, not a separate wave. API consumes the
+   published proto version rather than overriding protos locally.
+
+   **Release-pin validation (before opening the API PR and again at the final
+   API gate):** remove the override; run the API build/test validation with
+   `GOWORK=off`; prove the committed diff contains no `replace` directive; and
+   check that no active `go.work`, `go.work.sum`, or local-toolkit override path
+   can redirect the build. Record the commands and their output in the API PR.
+   A repository-local or user/global Go workspace is not an acceptable substitute
+   for this proof.
+
+   **Decision gate:** any recovery to a separate-PR workflow is an explicit Kirk
+   decision/gate; this plan does not approve it.
 5. **Deliver inside-out.** Release protos and toolkit provider support; update
    API to real released pins and remove its override; then land the #176 web
    integration on the #671 product route. The web consumes the projected edge
@@ -98,6 +109,23 @@ editor. No YAML `walls:` field, editing, or topology change is included.
 
 **Stop point:** do not begin authored edge editing until provider-release pins,
 wire state, and reachable product-route visual evidence all pass.
+
+### #176 technical review checklist and evidence (reviewed 2026-08-02)
+
+- [x] Delivery order, one-branch-per-repository discipline, and the temporary
+  override boundary are explicit.
+- [x] Release-pin validation explicitly requires `GOWORK=off`, no committed
+  `replace`, and checks for active `go.work`, `go.work.sum`, and
+  local-toolkit-override redirection before both the API PR and final API gate.
+- [x] The #176 API slice owns the hardening of
+  `scripts/toolkit-local-override.sh`: it must allow exactly one override and
+  verify the module list.
+- [ ] Execution evidence is not available yet: #176 has not delivered an API
+  branch, released pins, command output, or product-route proof. These remain
+  merge gates, not completed evidence.
+- [ ] Separate-PR workflow recovery is **not approved**. It remains an explicit
+  Kirk decision/gate; the supporting script change is in the same #176 API
+  slice branch, not a separate wave.
 
 ## Slice #177 — authored start marker
 
