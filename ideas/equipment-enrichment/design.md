@@ -1,7 +1,7 @@
 # Equipment Data Enrichment
 
-**Date:** 2026-03-21
-**Status:** Draft
+**Date:** 2026-03-21 (updated 2026-08-01 — concrete-options architecture decision, Party Assembles UX follow-up)
+**Status:** Design updated, ready for review
 **Scope:** Flow weapon/equipment stats from toolkit through the pipeline so character creation shows meaningful equipment details
 
 ## Problem
@@ -192,3 +192,157 @@ type ArmorDetail struct {
 - **Toolkit:** Test `ResolveEquipmentDetail` resolves weapons, armor, tools, packs, and ammunition. Test that it returns nil for unknown IDs. Test that enriched requirements contain populated details.
 - **API:** Test the choice mapping produces correct `equipment_detail` proto fields including Cost/Weight conversion.
 - **UI:** Verify `EquipmentCard` renders correctly for weapon, armor, and gear variants.
+
+## 2026-08-01 update: the MEATY wave — category choices resolve to concrete enriched options
+
+The design above (2026-03-21) covers enrichment of *concrete* equipment items —
+named gear the character definitely gets. It did not fully settle the harder half
+of the problem: **category choices** ("choose a martial weapon", "choose two
+simple weapons") were left with the API calling a separate weapon-list endpoint
+and the UI reconstructing which items are actually eligible for a given category.
+That reconstruction is a boundary violation — the UI ends up doing rules-shaped
+work (which weapon IDs count as "simple melee," which are excluded by a
+class-specific carve-out) that only the toolkit should know. This section is the
+verified architecture decision for that wave.
+
+### Decision
+
+**The toolkit resolves each `EquipmentCategoryChoice` to the concrete, eligible,
+enriched `EquipmentItem`s at the source — not the API, not the web.**
+
+- For every category choice attached to a class/background grant, the toolkit
+  expands the category into its full, concrete membership using the same
+  eligibility rules it already enforces when *validating* a chosen item — so
+  there is exactly one place (the toolkit) that knows what belongs in "simple
+  melee" or "martial ranged."
+- **Monk is the sharp edge that proves the rule isn't a shortcut.** Monk's
+  weapon proficiency is the full actual `simple-melee` + `simple-ranged` sets,
+  not a hand-picked shortlist — the expansion must walk the real weapon
+  registries the same way the validator does, or the two will drift apart the
+  next time a weapon is added.
+- **Existing special exclusions carry over unchanged.** Any class/category
+  carve-out that already excludes specific weapon IDs from an otherwise-open
+  category (e.g. a category that is "martial weapons except heavy ones a small
+  race can't use") applies during expansion, not as a UI-side filter
+  afterward. The expansion is the validator's own eligibility function reused
+  for enumeration, so exclusions can't fall out of sync with what a chosen item
+  is actually validated against.
+- Each resolved option is a fully enriched `EquipmentItem` (`EquipmentDetail` /
+  `WeaponDetail` / `ArmorDetail` populated per the Layer 1 design above) — a
+  category choice's options are indistinguishable, data-shape-wise, from a
+  concrete grant's item once they reach the wire.
+
+### Proto: additive, repeated concrete options
+
+The proto contract carries the resolved membership as a `repeated` field of
+concrete, enriched options on the category-choice message — additive only, no
+breaking change to the existing `EquipmentItem`/`equipment_detail` shape landed
+in the 2026-03-21 design:
+
+```protobuf
+message EquipmentCategoryChoice {
+  string selection_id = 1;
+  string category = 2;       // existing: human-readable category label
+  int32 choose_count = 3;    // existing: how many the player picks
+  repeated EquipmentItem options = 4;  // NEW: concrete, enriched, eligible options
+}
+```
+
+`options` is additive on a message that already exists on the wire — clients that
+don't read it are unaffected; clients that do read it get the full resolved list
+directly, with `equipment_detail` already populated per option.
+
+### API: translate only
+
+The API's choice-mapping layer maps the toolkit's resolved category-choice
+membership straight into `options`, using the exact same `EquipmentItem` mapping
+(including Cost/Weight conversion) already built for concrete grants. No new
+rules knowledge, no new eligibility logic — the API is a pass-through of what the
+toolkit already decided.
+
+### Web: delete the reconstruction, render the rich options directly
+
+This wave **removes** the web's client-side category→type eligibility
+reconstruction and its `ListEquipmentByType` call entirely. Once `options`
+carries concrete, enriched items, the web has no remaining reason to ask "which
+weapon IDs count as martial" — it renders `options` with the same `EquipmentCard`
+the concrete-grant path already uses (Layer 4 above) and lets the player pick
+`choose_count` of them. This is the payoff of the boundary decision: a whole
+class of client-side rules logic disappears rather than needing to be kept in
+sync with the toolkit going forward.
+
+### Alternatives rejected
+
+- **Keep `ListEquipmentByType` as a separate lookup, just enrich its response.**
+  Rejected: this keeps two independent code paths (concrete grants vs. category
+  browsing) that both need to agree on eligibility and enrichment, and keeps the
+  "which type does this category mean" mapping duplicated across API and web.
+  The category choice already has a natural single owner (the toolkit, at
+  resolution time) — a second lookup endpoint is redundant with `options`.
+- **Send category + type-hint, let the API resolve eligible IDs.** Rejected:
+  this just moves the reconstruction from web to API, and the API still isn't
+  the one that owns weapon-eligibility rules (Monk's set, exclusions) — it would
+  have to import toolkit-shaped knowledge to do it, which is exactly the
+  boundary violation being fixed. Resolution has to happen where validation
+  already happens: the toolkit.
+- **Enumerate categories as an enum + let the client hardcode membership.**
+  Rejected outright — this is the status quo bug (a hardcoded/derived client
+  eligibility list silently drifting from the real validator), not a fix.
+
+### Migration
+
+- Additive proto field — no version bump required beyond the normal additive
+  process; existing `EquipmentCategoryChoice` consumers on old API versions are
+  unaffected (empty `options`).
+- API and web migrate together: the web PR that starts reading `options` is the
+  same PR that deletes `ListEquipmentByType` and the client-side eligibility
+  reconstruction — no dark period where both paths are live and could disagree.
+- No data migration — this is a request/response shape change, nothing stored.
+
+### Tests
+
+- **Toolkit:** category-choice expansion returns the exact membership the
+  validator accepts for that category, for every class that has a category
+  choice — asserted by generating the category's expansion and confirming each
+  member independently passes the validator, and that nothing the validator
+  accepts is missing from the expansion. Monk's `simple-melee` + `simple-ranged`
+  expansion specifically asserted against the full weapon registry count (not a
+  hand-picked subset) so a future added weapon is caught by a size assertion,
+  not silently missed. Existing special-exclusion cases get a test asserting the
+  excluded ID appears in neither the expansion nor a successful validation.
+- **API:** choice-mapping test asserting `options` on the wire matches the
+  toolkit's expansion 1:1, including enrichment fields (reuses the existing
+  concrete-item mapping test fixtures where possible rather than duplicating
+  Cost/Weight conversion assertions).
+- **Web:** component test rendering a category choice from fixture `options`
+  data (no `ListEquipmentByType` call in the test — confirms the deletion),
+  asserting `EquipmentCard` renders per option and selection respects
+  `choose_count`.
+
+### Merge order (inside-out, per rpg-project's wave-shape rule)
+
+1. **Toolkit** — implement category-choice expansion, land and tag.
+2. **Protos** — land the additive `options` field (can happen in parallel with
+   toolkit implementation since it's additive and doesn't depend on the
+   toolkit's internals, but the API bump depends on both being real).
+3. **API** — bump to the toolkit's real published tag, map `options` onto the
+   wire, **remove any local `replace` directive** pointing at a toolkit
+   worktree before this merges (see Development note below).
+4. **Web** — consume `options`, delete `ListEquipmentByType` + the client-side
+   eligibility reconstruction. Lands last because it depends on the proto
+   contract already being live on the API it's pointed at.
+
+This is the standard toolkit → api → web merge order; only the require-protos-
+first nuance is new here, because this wave (unlike a pure toolkit/api change)
+has a real wire-shape addition consumed by two downstream layers.
+
+### Development note — local toolkit override, never committed
+
+During development, rpg-api's worktree for this wave points its toolkit module
+at a local toolkit worktree via the documented local-override mechanism
+(`rpg-api/docs/how-to/local-toolkit-override.md`) so the API side can iterate
+against unpublished toolkit changes. **This override must never be committed** —
+it is stripped (real tag substituted) as part of the API PR that actually merges,
+per the merge order above. Only ever override the one `rpg-toolkit` module for
+this wave; needing more is the signal the wave was sliced too thin (working-
+agreements.md `Unmerged provider work`).
