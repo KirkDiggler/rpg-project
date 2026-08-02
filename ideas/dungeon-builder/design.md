@@ -136,10 +136,9 @@ already; on the deployed box it's a volume path.
   `floor_plan` unset — a non-OK status would drop the response body
   entirely and lose the editor's inline errors, which is the whole reason
   this split exists. `success=true` implies `floor_plan` is set. With the
-  gate off, the call is `Unimplemented` as already stated. S1 produces
-  exactly this; S4c reads `field_errors` from the body and treats an
-  `InvalidArgument` status as a programming error, never as author
-  feedback.
+  gate off, the call is `Unimplemented` as already stated. The editor reads
+  `field_errors` from the body and treats an `InvalidArgument` status as a
+  programming error, never as author feedback.
 - **Write-through**: successful puts also write the YAML to
   `RPG_CONTENT_DIR` per the key rules above, so the on-disk file stays the
   committable artifact, an api restart recovers state from the dir, and on
