@@ -1,120 +1,83 @@
-# Active handoff — 2026-07-20 (~22:30): Slice 2 DELIVERED — partial sign-off, walls-render blocker
+# Active handoff — 2026-08-03: Specimen v0.1 provider loop; #763 API integration proven
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
-> PLATFORM lane (toolkit / api / protos / deploy). The game-UX (web#525) and asset
-> (web#523) lanes run their own parallel sessions; their state is theirs —
-> coordinate via board #19, respect the renderable seam. Kirk is moving active work
-> to fresh Opus sessions to save capacity; this handoff seeds a clean pickup.
-> Board #19 is the queue; issue-first, one issue per PR, Opus gate posted on the PR
-> before any merge-ready call. Merges go through the director + Kirk.
+> Platform implementation is repository-owned; merge/release decisions remain with
+> the director and Kirk. Planning PR #181 stays open through implementation and
+> the final retro.
 
-## Now (platform)
+## Now
 
-**Wave: The Dungeon — Slice 2 (two-chamber dungeon), rpg-project#96 — DELIVERED +
-DEPLOYED to prod, PARTIAL sign-off.** The two chambers, the door contract, per-
-chamber goblin seeding, entrance spawn, movement markers, and the FREE_ROAM
-movement fix are all live. The one thing gating a FULL sign-off: **walls (incl. the
-door) don't render** on the default Synty dungeon — web#562, an asset/render-lane
-concern, not platform-data.
+**Dungeon Builder / Specimen Pack v0.1: API #763 has consumed the open toolkit
+provider locally and passed its live-lab evidence.** The provider remains held open
+for related consumer asks; web #671 then #678 are the next ordered product-route
+legs.
 
-## Solid (verified this session / deployed — do not re-derive)
+## Solid — code and verification
 
-- **Slice 2, all four legs merged + deployed, each Opus-gated PASS:** toolkit —
-  two-chamber generator (#806) + connectivity-doc correction (#807); protos —
-  additive `Wall.id` (#186); api — door projection as `Wall{id,from,to,DOOR_CLOSED}`
-  + entrance-anchored spawn (roomCenterHex deleted) + per-chamber out-of-sight
-  seeding (#677); web — door click→`useInteract` + open/closed pose + `DoorOpened`
-  reveal + door-blocked walkability (#549), movement markers/path raised above the
-  Synty floor (#550, closes the "markers under the map" class). Copilot's real
-  catches this wave all fixed pre-merge: RegionAt nil-panic, doorPassageNeighbor
-  nil-panic, **chamberEntryAnchor wrong-region** (seeded chamber-2 goblins on the
-  wrong side; masked only because a closed door blocks LoS — white-box test now
-  guards it).
-- **FREE_ROAM move-budget bug FIXED + deployed (toolkit#808 → #810 → api#679,
-  prod 22:09Z).** Root cause: the move gate keys off `char.InCombat()` (economy !=
-  nil), NOT the mode; the pocket exit `checkPocketCleared` flipped `SetMode(FreeRoam)`
-  but never tore down the combat economy, so players stayed `InCombat()` with 0
-  movement → next move rejected in free-roam. The TERMINAL exit already did this
-  teardown (`ExitCombat`, #767); the non-terminal pocket exit (#794) never got it.
-  Fix: `ExitCombat` per held player at the pocket exit + `Mode==TurnBased` hardening
-  on the move gate. **ExitCombat-ONLY, no EndCombat sweep → Rage/combat-scoped
-  conditions PERSIST across the breather** (Kirk's call).
-- **LIVE sign-off confirmed by Kirk in prod (real game route):** free movement in
-  the breather works, path-following correct, pocket bounce fires (kill goblin →
-  FREE_ROAM → move freely again), markers render above the floor. These are the
-  wave's core behaviors — player-verified.
+- **Schema authority:** [Specimen Pack v0.1](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5162198168)
+  is the single canonical YAML grammar and acceptance specimen. Current
+  `dungeonspec`/compiler behavior is prototype scaffolding, never a competing
+  compatibility contract. This is recorded in the open
+  [Dungeon Builder plan PR #181](https://github.com/KirkDiggler/rpg-project/pull/181).
+- **Toolkit provider:** `rpg-toolkit` [PR #876](https://github.com/KirkDiggler/rpg-toolkit/pull/876)
+  is at `bac22483f2e35812acf53b20bcfe94f3a76c55c1`. Generated-edge and party-start
+  evidence is PASS at that head. It is intentionally the sole open provider PR for
+  related Specimen v0.1 asks: do not merge or tag it per slice; every new commit
+  requires refreshed review/evidence.
+- **API consumption:** `rpg-api:feat/763-generated-floor-plan-edges` is pushed at
+  `dec741058852183d006417dc6580c3c6230cabaa`. `StartEncounter` delegates party
+  seats to the toolkit, preserves member order, and persists its returned positions;
+  API performs no spawn arithmetic. Content load/authoring use `LoadWithConfig`
+  with the same capacity injection.
+- The API branch has exactly one local-only toolkit override: the encounter module
+  pointed at #876 (`bac22483`). It is active through
+  `scripts/toolkit-local-override.sh`, must not be committed, and is removed only
+  after the provider is merged/tagged and API pins that released module.
+- **Live lab:** `rpg-api-dungeon-builder-763` / Envoy are healthy on
+  `localhost:8091`. Authenticated real authoring/lobby/ready/`StartEncounter`
+  calls verified 196 generated physical edges and a four-player authored
+  `start: [12, 4]`. The persisted entrance and ordered seats matched the toolkit
+  result, with player one at the authored anchor. Reproducible local evidence is in
+  ignored `rpg-api/local-dev/dungeon-builder-763/`.
+- **Web sequencing:** [web #671](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/671)
+  (product `/author` route) and [web #678](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/678)
+  (generated-edge render/hit-test) are open and ordered. #671 starts fresh from
+  `origin/dev`; #678 is a separate fresh branch after #671.
+- **Independent API test repair:** [rpg-api #765](https://github.com/KirkDiggler/rpg-api/issues/765)
+  is the unrelated Sneak Attack fixture flake. Its [PR #766](https://github.com/KirkDiggler/rpg-api/pull/766)
+  is merge-ready with CI and director gate PASS; it is independent of this provider
+  loop.
 
-## Open questions / gated (verify before acting; NOT findings)
+## Open questions / gates
 
-- **Walls (incl. the door) not rendering — web#562.** Space reads as flat tile, but
-  movement is correctly blocked, so wall DATA + walkability are correct server-side;
-  it's purely a RENDER gap. Almost certainly why "can't find the door" earlier (the
-  door IS a DOOR-kind wall). Asset/render lane; Kirk deprioritized it for platform.
-  Check: is default SyntyHexWall failing to render wall meshes, and did #549's
-  SyntyHexWall changes regress it vs a pre-existing Synty gap? Blocks the door→
-  chamber-2→fresh-pocket sign-off leg.
-- Door-orientation cosmetic (doorPassageNeighbor picks the first region-tagged
-  neighbor as the passage edge) — flagged on web#526; only matters once walls render.
+- Keep #876 open while API or web has related toolkit asks. The exact current head,
+  not a prior gate, is the only valid provider evidence after any further push.
+- API cannot replace its local override until #876 has a released encounter-module
+  version to pin. No second toolkit override is allowed.
+- The product route still needs #671 before #678 can prove generated-edge behavior.
 
-## Next (platform, in order)
+## Next
 
-1. Close Slice 2: once web#562 makes walls/door visible, finish the door→chamber-2
-   reveal→fresh-pocket sign-off leg against #96's bar; then the **retro** sweeps the
-   #96 ledger and closes the wave.
-2. **toolkit#809 (Decide)** — make the pocket-exit condition-sweep configurable +
-   settle the RAW-correct default (5e rage-end is genuinely ambiguous for a lull).
-   DO NOT build before the pocket behavior is playtested at least once.
-3. Retro-owed follow-ups (on the #96 ledger + the night wave): stale EncounterView
-   `onDoorOpened` comment (ride next web PR); live-`GeometryRevealed`-carries-no-
-   Walls gap (api translate.go — retro watch item, web works around it safely);
-   **api#678** (29 pre-existing lint findings + no CI lint gate); **api#674**
-   (deploy coupling — tests run in the publish job, stranded prod 6h once); **web#516**
-   (stale economy bar in FREE_ROAM — user-visible); **toolkit#805** (cross-module =
-   merge-commit rule → toolkit CLAUDE.md doc PR); toolkit#799/#800.
-4. **Slice 3** (locked boss door + boss chamber + completion) per wave2-design
-   §Slice 3 — after Slice 2 fully closes.
+1. Run the normal review/gate process for API `dec7410`; retain its sole local
+   override during that work.
+2. Start web #671 from latest `origin/dev`, then cut the separate #678 branch from
+   latest `origin/dev` once the product editor route is available.
+3. Leave merge decisions to Kirk: this coordination update neither merges #876 nor
+   #766.
 
-## Decision log (this session, 2026-07-20, visible on board/PRs)
+## Decision log
 
-- Slice 2 delivered leg-by-leg, each Opus-gated; **gate scaled to the change** for
-  the pure dep-bump delivery (api#679) — the delivered fix was already gated at #810,
-  no api code change, integration suite green → a fresh adversarial gate would be
-  disproportionate (reasoning posted on the PR).
-- FREE_ROAM fix = ExitCombat-only, Rage persists across the pocket breather;
-  configurable sweep deferred to toolkit#809 (Kirk).
-- **Merge-janitor** standing role adopted at the retro; first worktree sweep ran
-  (48 merged+clean worktrees removed, locked seats / asset staging preserved).
-- Platform lane = one of THREE teams on board #19 (platform / asset web#523 / UI
-  web#525); the board is multi-team — no lane assumes it's the only writer.
-
-## Process notes (locked/learned this session — full versions in memory)
-
-- **Relocation prompt:** dispatch builders to isolate via `EnterWorktree` **name-
-  form**; a model-supplied `git worktree add` path triggers a permission-root
-  relocation prompt that **dontAsk does NOT clear**. Read-only agents (gates,
-  investigators) don't isolate → no prompt. (`feedback_worktree_relocation_prompt`)
-- Agents idle without delivering their report systematically; a one-turn re-ask
-  recovers every time — end every dispatch with "SendMessage your report BEFORE
-  going idle." Check gh state before pinging.
-- **MCP chrome tools don't reach dispatched subagents** → the MCP playtest is Kirk's
-  hands + director verification of captured evidence, not a delegatable task.
-- **Post-merge deploy verification** after every merge to an auto-deploying repo:
-  watch the main build → "Deploy RPG Platform" run to terminal success (two Docker
-  builds failed earlier tonight; merging ≠ shipping).
-- `dontAsk` is set in `~/.claude/settings.json` (user-global); a background session
-  launched before it applied runs default mode until relaunched — flip via
-  Shift+Tab / `/permissions` in-session, not from a config edit.
+- **2026-08-03 — Specimen authority:** Specimen Pack v0.1 wins on every grammar
+  conflict; recorded in #181 (`25be6a6`).
+- **2026-08-03 — provider loop:** #876 is deliberately held as one open toolkit
+  provider until consumers stop asking; recorded in #181 (`cd483b3`) and on #876.
+- **2026-08-03 — authored start:** API #763 validated the `bac22483` provider seam
+  locally at `dec7410`, including generated-edge and four-player authored-start
+  evidence; it does not merge the provider or commit the local override.
 
 ## Pointers
 
-- Wave-2 design (forks LOCKED): `ideas/the-dungeon/wave2-design.md` — §Slice 2 done,
-  §Slice 3 next.
-- Slice 2 wave umbrella: **rpg-project#96** (In Progress; its comment ledger has the
-  full live-walk results + all follow-up watch items). Wave-level dungeon umbrella:
-  rpg-api#648.
-- Board: https://github.com/users/KirkDiggler/projects/19 — legs: Party Assembles /
-  Class Kits / The Dungeon / Game Screen / Capstone / Shelf / Asset Pipeline.
-- Deploy: rpg-deployment auto-deploys every main merge; nginx-http.conf is the LIVE
-  config (Cloudflare Flexible in front); verify the "Deploy RPG Platform" run
-  succeeded before believing prod changed.
-- Director role: `docs/teams/roles/director/{prompt,field-notes}.md` (read first).
+- Board: https://github.com/users/KirkDiggler/projects/19
+- Design / plan: `ideas/dungeon-builder/{design,plan}.md` (PR #181)
+- Toolkit provider: rpg-toolkit #876; API consumer: `rpg-api:feat/763-generated-floor-plan-edges`
+- API local-override guide: `rpg-api/docs/how-to/local-toolkit-override.md`
