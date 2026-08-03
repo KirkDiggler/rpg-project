@@ -35,6 +35,21 @@ renderer/editor of server-provided truth.
   a genuinely unavailable `AuthoringService` is `Unimplemented`.
 - Each implementation issue/PR records its parent slice and ends GitHub bodies
   and comments with `— asset-pipeline agent, on behalf of KirkDiggler`.
+- The [Specimen Pack v0.1](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5162198168)
+  is the single canonical YAML grammar and acceptance specimen. The current
+  `dungeonspec`/compiler behavior is prototype scaffolding, not a
+  backward-compatibility contract: if it conflicts with the specimen, the
+  specimen wins. Do not create a dual dialect or ship production
+  `stripToV1Subset`-style lossy/map-down conversion.
+- The dungeon document remains `version: 1`; the specimen pack's `v0.1` is an
+  independent pack version, not a schema version. Canonical syntax is not a
+  promise that every field ships in this plan: retain these slices and add
+  unsupported specimen capabilities progressively as their owning work lands.
+- **Specimen metadata errata:** count-based
+  `rooms[].obstacles[].ref/count` and `connectors[].locked.dc/ability` compile
+  today. The specimen's note that `walls[].kind` mirrors a current
+  `EncounterService.Space.walls` wire type is stale; `Space.walls` is
+  removed/reserved and runtime edge truth is `HexRecord.edges`.
 
 ## Prerequisite: product editor route — rpg-dnd5e-web#671
 
