@@ -4,10 +4,12 @@
 **Design:** `ideas/dungeon-builder/design.md` (rpg-project#170, merged)
 **Tracking surface:** this plan PR stays open until the cross-repo implementation it tracks is complete.
 
-**Goal:** Deliver the dev-gated Dungeon Builder authoring loop and its approved
-geometry dialect in the ordered slices #176–#180, while keeping the toolkit as
-the canonical source of dungeon rules and geometry, the API as a projection and
-orchestration layer, and the web as a renderer/editor of server-provided truth.
+**Goal:** Deliver the Dungeon Builder authoring loop—available at `/author`
+without a dev-only gate to normally Discord-authenticated users on Kirk's server
+through existing auth—and its approved geometry dialect in the ordered slices
+#176–#180, while keeping the toolkit as the canonical source of dungeon rules
+and geometry, the API as a projection and orchestration layer, and the web as a
+renderer/editor of server-provided truth.
 
 ## Working rules
 
@@ -30,18 +32,28 @@ orchestration layer, and the web as a renderer/editor of server-provided truth.
   LoS, or room identity.
 - Keep the design's error split: malformed requests use `InvalidArgument`;
   well-formed YAML content failures return `success=false` plus field errors;
-  an authoring-gate-off service is `Unimplemented`.
+  a genuinely unavailable `AuthoringService` is `Unimplemented`.
 - Each implementation issue/PR records its parent slice and ends GitHub bodies
   and comments with `— asset-pipeline agent, on behalf of KirkDiggler`.
 
 ## Prerequisite: product editor route — rpg-dnd5e-web#671
 
-Before a slice asks the web to prove product-route behavior, deliver #671 as the
-single web shell branch from `origin/dev`. It promotes the concept evidence into
-a dev-gated `/author` product route with honest live, gate-off, unavailable,
-invalid, and save-ready states; comment-preserving document editing; and the
-save → lobby → Walk it handoff. It defines the consumer affordances without
-inventing client rules or extending the concept route.
+Before a slice asks the web to prove product-route behavior, #671 starts fresh
+from the latest `origin/dev`. It never cherry-picks from or continues the
+concept branch: the concept is evidence and learning only, not implementation
+authority. Existing components already on `dev` may be retained only when they
+are production-suitable. #671 delivers the `/author` product route without a
+dev-only gate, available to normally Discord-authenticated users on Kirk's
+server through existing auth, with honest live, unavailable, invalid, and
+save-ready states; comment-preserving document editing; and the save → lobby →
+Walk it handoff. It defines the consumer affordances without inventing client
+rules or extending the concept route.
+
+Fixture adapters remain concept/test concerns. The product route instead uses
+local API endpoint integration with the real `AuthoringService`. Keep #671 and
+#678 separate and ordered: #671 delivers the product editor shell; then a
+separate #678 branch, fresh from the latest `origin/dev`, delivers the Slice
+#176 generated-edge web leg on that route.
 
 **Gate and evidence:** targeted comment-round-trip/destructive-board-edit tests
 and `npm run ci-check`; route screenshots/recording of each availability state;
@@ -91,8 +103,9 @@ editor. No YAML `walls:` field, editing, or topology change is included.
    **Decision gate:** any recovery to a separate-PR workflow is an explicit Kirk
    decision/gate; this plan does not approve it.
 5. **Deliver inside-out.** Release protos and toolkit provider support; update
-   API to real released pins and remove its override; then land the #176 web
-   integration on the #671 product route. The web consumes the projected edge
+   API to real released pins and remove its override; then, after #671, land the
+   #176 web integration as the separate #678 branch fresh from the latest
+   `origin/dev`, on the #671 product route. The web consumes the projected edge
    contract and does not infer missing geometry.
 
 **Gate and evidence:**
