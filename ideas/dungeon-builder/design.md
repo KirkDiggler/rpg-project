@@ -154,6 +154,38 @@ start, they report that absolute cell even when its semantic room is not the
 anchor. This preserves one rendered marker and one runtime source of truth
 rather than adding a competing start field.
 
+## Slice #178 design delta — canonical floor-prop facing
+
+Slice #178 adds `facing` only to existing room-scoped `rooms[].place[]` entries
+whose ref is a prop and whose placement is floor-scoped. Its canonical labels
+and numeric values are, in this exact order: `E = 0`, `NE = 1`, `NW = 2`,
+`W = 3`, `SW = 4`, `SE = 5`. YAML keeps the canonical label form. Omitted
+`facing` and explicit `facing: null` both mean **absence**, which is distinct
+from explicit `facing: E` / numeric `0`; the representation must preserve that
+presence bit and never infer absence from zero.
+
+Production submits the canonical YAML unchanged to the toolkit validator and
+compiler. It must not use `stripToV1Subset`, map down, drop, or ignore a facing
+value. The toolkit validates this narrow scope and persists the optional numeric
+facing value with its presence through compiled/runtime placement state; the API
+projects that persisted value verbatim on the rendering path; and the web gives
+a present projected value precedence over a prop model's default rotation while
+absence retains the current default. Neither API nor web remaps, derives, or
+uses `0` as a missing-value sentinel.
+
+No authoring `FloorPlan` placement field, placement delta, or facing echo is
+added in this slice: `FloorPlan` remains the compiled geometry/legality surface.
+Facing is not enabled for monster placements, `rooms[].boss`, top-level
+`place`, or mounted placements (including `mount: wall`). Those unsupported
+inputs fail field-path-specific validation at their supplied facing path—for
+example `rooms[1].place[0].facing`, `rooms[1].boss.facing`, or
+`place[0].facing`—rather than being stripped or silently ignored. This is
+metadata for room-scoped floor props only, with no behavior or AI scope.
+
+The end-to-end evidence must include a product-path visual demonstration with
+an asymmetric floor prop in all six directions, plus validation/persistence/
+projection coverage for `E = 0`, omitted, and explicit `null` cases.
+
 ## rpg-api — runtime dungeon loading (the unlock)
 
 A dev-gated authoring surface, behind an env flag (exact name for
@@ -359,10 +391,13 @@ per-repository issues are cut only after approval of this document.
    resolved anchor and normal four-seat party envelope before generated
    blockers, exposes the anchor as `FloorPlan.entrance`, and supplies runtime
    player positions. Omitted/null preserves current behavior exactly.
-3. **#178 — floor-prop hex facing.** Add optional `facing:
-   E|NE|NW|W|SW|SE` to existing room-scoped floor placements. It is additive;
-   absent preserves current rendering. Wall mount/height and behavior changes
-   are outside this slice.
+3. **#178 — floor-prop hex facing.** Add optional room-scoped floor-prop
+   `facing` with the canonical `E, NE, NW, W, SW, SE = 0..5` order. Omitted or
+   null remains distinct from explicit `E = 0`; toolkit persistence, API
+   projection, and web rendering preserve that distinction. There is no
+   `FloorPlan` placement-field/delta change, and unsupported monster, boss,
+   top-level, or mounted facing is path-specifically rejected—not stripped or
+   ignored. Wall mount/height and behavior changes are outside this slice.
 4. **#179 — authored canonical edges.** Add dungeon-scoped, edge-native
    `walls:` entries (`from`, `to`, `kind: solid|door`) and deterministic
    overlay behavior against generated geometry. They compile to canonical

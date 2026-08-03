@@ -267,16 +267,46 @@ calculation rather than the toolkit selects a player position.
 
 ## Slice #178 — floor-prop hex facing
 
-**Outcome:** Existing room-scoped floor placements accept optional
-`facing: E|NE|NW|W|SW|SE`; absence preserves current orientation.
+**Outcome:** Existing room-scoped **floor-prop** placements accept optional
+`facing` in exactly this canonical label/value order: `E = 0`, `NE = 1`,
+`NW = 2`, `W = 3`, `SW = 4`, `SE = 5`. Omitted and explicit `null` represent
+absence; both are distinct from explicit `E = 0` and retain the current default
+orientation.
 
-Only add wire/API legs when orientation crosses that seam; do not broaden into
-wall mounting, height, rectangular directions, or AI behavior.
+### Contract and delivery
 
-**Gate and evidence:** strict six-value validation with accepted vocabulary in
-errors; all six orientations compile; an asymmetric prop agrees across YAML,
-authoring wire state, product preview, and runtime; legacy YAML remains visually
-unchanged. Stop if the renderer requires client-derived orientation semantics.
+1. **Keep canonical YAML intact (web → API → toolkit).** Production submits the
+   canonical YAML unchanged. No `stripToV1Subset`, map-down, drop, or
+   ignore-on-save path is allowed. The web writes only the canonical labels and
+   does not manufacture a facing for absent/null input.
+2. **Validate and persist in the toolkit.** `dungeonspec` accepts facing only
+   for existing `rooms[].place[]` prop entries that are floor placements. It
+   validates the six-value vocabulary and stores an optional/presence-bearing
+   numeric enum so explicit `E = 0` survives compilation and runtime
+   persistence. It rejects unsupported input at the supplied field path—not by
+   conversion—including facing on monster placements, `rooms[].boss`, top-level
+   `place`, and mounted placements (for example `mount: wall`).
+3. **Project, do not reinterpret (protos/API).** Carry the toolkit-persisted
+   optional value through the existing placement rendering path, adding no
+   authoring `FloorPlan` placement field, placement delta, or facing echo. The
+   API projects the value verbatim and must not default, map, or treat `0` as
+   absent.
+4. **Render with explicit precedence (web).** A present projected facing rotates
+   the asymmetric floor prop; absent/null uses the existing prop-model default.
+   The web does not calculate a direction, infer absence from `0`, or apply
+   facing to a monster, boss, top-level, or mounted placement.
+
+Do not broaden this slice into wall mounting, height, rectangular directions, or
+AI/behavior changes.
+
+**Gate and evidence:** strict path-specific validation reports the accepted
+vocabulary for invalid floor-prop values and rejects each unsupported scope above
+without stripping or ignoring it; toolkit persistence and API projection tests
+cover explicit `E = 0`, omitted, and `null`; and product-path screenshots or a
+recording visually demonstrate one asymmetric floor prop in **all six** canonical
+directions in preview and runtime. Legacy omitted/null YAML remains visually
+unchanged. Stop if any layer requires a client-derived orientation semantic or a
+`FloorPlan` placement delta.
 
 ## Slice #179 — authored canonical wall and door edges
 
