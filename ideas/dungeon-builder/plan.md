@@ -19,7 +19,8 @@ renderer/editor of server-provided truth.
   transcribe that need, API names the toolkit requirement, and toolkit provides
   canonical behavior. Merge inside-out: providers release first, consumers pin
   released versions, and the product route follows.
-- One branch per repository per slice. Keep fixes discovered while integrating a
+- One branch per repository per slice, except for the explicit Specimen Pack
+  v0.1 toolkit provider loop below. Keep fixes discovered while integrating a
   slice on that slice's branch; do not split them into stacked provider PRs.
 - Branch from a freshly fetched remote base: `origin/main` for
   `rpg-toolkit` and `rpg-api-protos`; `origin/dev` for `rpg-api` and
@@ -50,6 +51,24 @@ renderer/editor of server-provided truth.
   today. The specimen's note that `walls[].kind` mirrors a current
   `EncounterService.Space.walls` wire type is stale; `Space.walls` is
   removed/reserved and runtime edge truth is `HexRecord.edges`.
+
+### Specimen Pack v0.1 toolkit provider loop (Kirk decision)
+
+- `rpg-toolkit` PR #876 (the branch for `rpg-toolkit#875`) remains the one open
+  toolkit provider branch/PR for related Specimen Pack v0.1 implementation
+  asks. It is the deliberate exception to the per-slice branch rule; do not
+  merge or tag it after each slice merely for ceremony.
+- During that loop, API local development keeps **exactly one** toolkit-module
+  override: the encounter module, pointed at #876. It never adds a second
+  toolkit-module override.
+- Merge and tag the toolkit provider once the API and web consumers stop
+  requesting related toolkit changes. Then the API removes its override and
+  pins the released encounter module before it is considered ready to merge.
+- An unrelated toolkit unit of work uses its own issue and branch and may merge
+  independently; it neither joins nor waits for this provider loop.
+- Every new commit to #876 invalidates the prior provider gate. Re-review the
+  exact new head and refresh applicable evidence before it is again considered
+  merge-ready.
 
 ## Prerequisite: product editor route — rpg-dnd5e-web#671
 
@@ -97,15 +116,17 @@ editor. No YAML `walls:` field, editing, or topology change is included.
 3. **Supply canonical toolkit support (rpg-toolkit, branch from `origin/main`).**
    Add only the canonical edge export/describe support required by the API
    consumer. The toolkit remains the source of generated edge truth; generated
-   dungeon and runtime behavior otherwise remain unchanged. Release the toolkit
-   provider version.
-4. **Iterate locally without committing an unpublished dependency.** While the
-   provider is unmerged, API may use `rpg-api/docs/how-to/local-toolkit-override.md`
-   for **exactly one toolkit module**. The #176 API slice branch must harden and
-   constrain `scripts/toolkit-local-override.sh` so it permits exactly one module
-   override and verifies the resulting module list; that supporting script change
-   belongs on the same API slice branch, not a separate wave. API consumes the
-   published proto version rather than overriding protos locally.
+   dungeon and runtime behavior otherwise remain unchanged. Keep this work on
+   the defined Specimen Pack v0.1 provider loop; do not merge or tag it merely
+   because this slice's local support is ready.
+4. **Iterate locally without committing an unpublished dependency.** During the
+   provider loop, API may use `rpg-api/docs/how-to/local-toolkit-override.md` for
+   **exactly one toolkit module**: the encounter module pointed at #876. The #176
+   API slice branch must harden and constrain `scripts/toolkit-local-override.sh`
+   so it permits exactly one module override and verifies the resulting module
+   list; that supporting script change belongs on the same API slice branch, not
+   a separate wave. API consumes the published proto version rather than
+   overriding protos locally.
 
    **Release-pin validation (before opening the API PR and again at the final
    API gate):** remove the override; run the API build/test validation with
@@ -117,11 +138,13 @@ editor. No YAML `walls:` field, editing, or topology change is included.
 
    **Decision gate:** any recovery to a separate-PR workflow is an explicit Kirk
    decision/gate; this plan does not approve it.
-5. **Deliver inside-out.** Release protos and toolkit provider support; update
-   API to real released pins and remove its override; then, after #671, land the
-   #176 web integration as the separate #678 branch fresh from the latest
-   `origin/dev`, on the #671 product route. The web consumes the projected edge
-   contract and does not infer missing geometry.
+5. **Deliver inside-out.** Release proto support when its provider contract is
+   ready. Keep related toolkit asks on #876 until the API and web consumers stop
+   requesting them; then merge/tag the toolkit provider once, update API to the
+   real released pin, and remove its override. After #671, land the #176 web
+   integration as the separate #678 branch fresh from the latest `origin/dev`, on
+   the #671 product route. The web consumes the projected edge contract and does
+   not infer missing geometry.
 
 **Gate and evidence:**
 
