@@ -40,8 +40,20 @@ renderer/editor of server-provided truth.
   is the single canonical YAML grammar and acceptance specimen. The current
   `dungeonspec`/compiler behavior is prototype scaffolding, not a
   backward-compatibility contract: if it conflicts with the specimen, the
-  specimen wins. Do not create a dual dialect or ship production
-  `stripToV1Subset`-style lossy/map-down conversion.
+  specimen wins. Do not create a dual dialect.
+- **Staged compatibility (Kirk decision):** while strict `dungeonspec` support
+  is incomplete, production authoring may use the web's explicit
+  strip-before-send adapter. It is load-bearing: it accepts canonical Specimen
+  v0.1 YAML and makes a temporary backend-subset projection; it is not a second
+  schema. Before every
+  send, it must expose an exhaustive loss report naming every dropped canonical
+  field occurrence by YAML path, including dropped collection entries (not just
+  aggregate counts). A passing projected request is labeled **subset validation**
+  only—never full-schema or Specimen-v0.1 support. Give the adapter fixture
+  coverage that proves its payload and loss report agree exactly. As each slice
+  lands strict backend support, remove its fields from the drop path and pass
+  them through unchanged; delete the adapter when no drops remain. This
+  supersedes the prior absolute no-production-strip wording.
 - The dungeon document remains `version: 1`; the specimen pack's `v0.1` is an
   independent pack version, not a schema version. Canonical syntax is not a
   promise that every field ships in this plan: retain these slices and add
@@ -275,10 +287,11 @@ orientation.
 
 ### Contract and delivery
 
-1. **Keep canonical YAML intact (web → API → toolkit).** Production submits the
-   canonical YAML unchanged. No `stripToV1Subset`, map-down, drop, or
-   ignore-on-save path is allowed. The web writes only the canonical labels and
-   does not manufacture a facing for absent/null input.
+1. **Keep canonical YAML authoritative (web → API → toolkit).** The web writes
+   only the canonical labels and does not manufacture a facing for absent/null
+   input. Once this slice's strict backend support lands, the staged adapter
+   removes valid room-scoped floor-prop `facing` from its drop path and submits it
+   unchanged; a stripped pass cannot be claimed as facing support.
 2. **Validate and persist in the toolkit.** `dungeonspec` accepts facing only
    for existing `rooms[].place[]` prop entries that are floor placements. It
    validates the six-value vocabulary and stores an optional/presence-bearing
@@ -299,14 +312,15 @@ orientation.
 Do not broaden this slice into wall mounting, height, rectangular directions, or
 AI/behavior changes.
 
-**Gate and evidence:** strict path-specific validation reports the accepted
-vocabulary for invalid floor-prop values and rejects each unsupported scope above
-without stripping or ignoring it; toolkit persistence and API projection tests
-cover explicit `E = 0`, omitted, and `null`; and product-path screenshots or a
-recording visually demonstrate one asymmetric floor prop in **all six** canonical
-directions in preview and runtime. Legacy omitted/null YAML remains visually
-unchanged. Stop if any layer requires a client-derived orientation semantic or a
-`FloorPlan` placement delta.
+**Gate and evidence:** direct strict path-specific validation reports the
+accepted vocabulary for invalid floor-prop values and rejects each unsupported
+scope above; adapter fixtures name every currently dropped unsupported occurrence
+and never present a stripped pass as facing support. Toolkit persistence and API
+projection tests cover explicit `E = 0`, omitted, and `null`; and product-path
+screenshots or a recording visually demonstrate one asymmetric floor prop in
+**all six** canonical directions in preview and runtime. Legacy omitted/null
+YAML remains visually unchanged. Stop if any layer requires a client-derived
+orientation semantic or a `FloorPlan` placement delta.
 
 ## Slice #179 — authored canonical wall and door edges
 

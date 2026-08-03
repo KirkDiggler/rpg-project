@@ -90,11 +90,24 @@ a genuine incompatible room/topology semantic change.
 
 Canonical syntax does **not** mean every field ships now. Delivery stays sliced:
 unsupported specimen capabilities become supported progressively in the ordered
-slices and later work, without inventing a second production dialect. In
-particular, no production path may use `stripToV1Subset` (or an equivalent
-lossy/map-down transform) to accept a different subset. Implement the specimen
-grammar directly as support arrives; do not preserve current scaffolding merely
-for compatibility.
+slices and later work, without inventing a second production dialect.
+
+**Staged compatibility decision (Kirk):** while strict `dungeonspec` support is
+incomplete, production authoring may use the web's explicit
+strip-before-send adapter. The authored source remains canonical Specimen v0.1
+YAML; the adapter is a temporary projection to the backend's currently supported
+subset, not another schema or an alternate authoring grammar. It is
+load-bearing, not hidden: before sending, it must expose an exhaustive loss
+report naming every dropped canonical field occurrence by YAML path (including
+individual dropped collection entries). Aggregate counts alone are insufficient.
+A successful validation or save of that projection is **subset validation only**;
+the UI and evidence must never call it full-schema or Specimen-v0.1 support.
+
+As each backend capability lands, its canonical fields must stop appearing in
+the loss report and pass through unchanged to strict validation. Shrink the
+adapter slice by slice, and remove it when no drops remain. This supersedes the
+prior absolute no-production-strip wording; it does not revive a dual dialect or
+preserve prototype scaffolding as a compatibility contract.
 
 **Specimen metadata errata:** `rooms[].obstacles[].ref/count` and
 `connectors[].locked.dc/ability` compile today, despite their stale
@@ -164,23 +177,27 @@ and numeric values are, in this exact order: `E = 0`, `NE = 1`, `NW = 2`,
 from explicit `facing: E` / numeric `0`; the representation must preserve that
 presence bit and never infer absence from zero.
 
-Production submits the canonical YAML unchanged to the toolkit validator and
-compiler. It must not use `stripToV1Subset`, map down, drop, or ignore a facing
-value. The toolkit validates this narrow scope and persists the optional numeric
-facing value with its presence through compiled/runtime placement state; the API
-projects that persisted value verbatim on the rendering path; and the web gives
-a present projected value precedence over a prop model's default rotation while
-absence retains the current default. Neither API nor web remaps, derives, or
-uses `0` as a missing-value sentinel.
+The authored source remains canonical YAML. Once this slice's backend capability
+is available, the staged adapter must pass supported floor-prop `facing` through
+unchanged; it may not make the field appear supported by dropping it. The toolkit
+validates this narrow scope and persists the optional numeric facing value with
+its presence through compiled/runtime placement state; the API projects that
+persisted value verbatim on the rendering path; and the web gives a present
+projected value precedence over a prop model's default rotation while absence
+retains the current default. Neither API nor web remaps, derives, or uses `0` as
+a missing-value sentinel.
 
 No authoring `FloorPlan` placement field, placement delta, or facing echo is
 added in this slice: `FloorPlan` remains the compiled geometry/legality surface.
 Facing is not enabled for monster placements, `rooms[].boss`, top-level
-`place`, or mounted placements (including `mount: wall`). Those unsupported
-inputs fail field-path-specific validation at their supplied facing path—for
-example `rooms[1].place[0].facing`, `rooms[1].boss.facing`, or
-`place[0].facing`—rather than being stripped or silently ignored. This is
-metadata for room-scoped floor props only, with no behavior or AI scope.
+`place`, or mounted placements (including `mount: wall`). On the direct strict
+validator, those unsupported inputs fail field-path-specific validation at their
+supplied facing path—for example `rooms[1].place[0].facing`,
+`rooms[1].boss.facing`, or `place[0].facing`. Before backend support, a staged
+production projection may drop such an occurrence only if its loss report names
+it exactly; that stripped result is not validation of the unsupported facing
+scope. This is metadata for room-scoped floor props only, with no behavior or AI
+scope.
 
 The end-to-end evidence must include a product-path visual demonstration with
 an asymmetric floor prop in all six directions, plus validation/persistence/
@@ -395,9 +412,11 @@ per-repository issues are cut only after approval of this document.
    `facing` with the canonical `E, NE, NW, W, SW, SE = 0..5` order. Omitted or
    null remains distinct from explicit `E = 0`; toolkit persistence, API
    projection, and web rendering preserve that distinction. There is no
-   `FloorPlan` placement-field/delta change, and unsupported monster, boss,
-   top-level, or mounted facing is path-specifically rejected—not stripped or
-   ignored. Wall mount/height and behavior changes are outside this slice.
+   `FloorPlan` placement-field/delta change. On the direct strict path,
+   unsupported monster, boss, top-level, or mounted facing is path-specifically
+   rejected; before its capability lands, a production compatibility projection
+   may drop it only with the exact loss report required above, never as claimed
+   support. Wall mount/height and behavior changes are outside this slice.
 4. **#179 — authored canonical edges.** Add dungeon-scoped, edge-native
    `walls:` entries (`from`, `to`, `kind: solid|door`) and deterministic
    overlay behavior against generated geometry. They compile to canonical
