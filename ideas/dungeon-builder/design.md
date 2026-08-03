@@ -103,6 +103,57 @@ for compatibility.
 also stale: `Space.walls` is removed/reserved; runtime edge truth is
 `HexRecord.edges`.
 
+## Slice #177 design delta — authored start and party envelope
+
+`start` is an optional top-level **absolute** `[column, row]` coordinate. A
+literal two-integer sequence selects the authored party-start anchor; omitted
+or explicit `null` means no override and retains the generator-selected
+behavior exactly. It is not room-local like `rooms[].place[].at`, and no room
+ID is repeated beside it.
+
+Static `dungeonspec.Validate` owns the author-time decision, using the
+compiler's declared linear room layout—not client grid arithmetic. It rejects a
+non-null value with the wrong YAML shape, a coordinate outside the absolute
+floor footprint, a connector-gap/door cell, or a coordinate not in exactly one
+semantic room. Any semantic room/archetype may hold the start. The shared
+`doorRow` is legal for `start` when it is in a room; it remains illegal for
+`place`, `boss.at`, and ordinary static reservations. Static validation also
+rejects a conflict with authored blocking content: a movement-blocking placed
+prop, placed monster, or pinned boss (and later authored blocking geometry when
+that dialect arrives). It does not try to predict seed-rolled walls or
+obstacles.
+
+The toolkit resolves the omitted/generated or authored anchor and a stable
+ordered party-spawn envelope as one dungeon concern. Under the normal product
+configuration that envelope has four seats: the anchor is seat zero and the
+other seats are toolkit-selected deterministic floor cells. Four comes from the
+API lobby's effective default `PartyCap`, not from a universal toolkit maximum.
+Service composition supplies that one product capacity to content compilation,
+preview, and encounter initialization; a host may explicitly configure a
+different reservation size. The compiled normal configuration is used by both
+preview and runtime, so a seed cannot change, block, or move the anchor or any
+of those four seats.
+
+This is a dedicated party-start reservation, not ordinary
+`DungeonRegionParams.ReservedCells`: the existing generic reservation keeps its
+placement door-row rule. Before it generates any blockers, the toolkit must
+identify the anchor plus all configured seats and make them unavailable to
+interior-wall generation, rolled obstacles, and every later generated blocking
+placement path. If the declared floor cannot yield the configured deterministic
+envelope, generation fails explicitly; it does not move the authored start,
+fall back to the generated entrance, search for a nearby substitute, or silently
+reduce capacity. At encounter startup the API asks the toolkit for the ordered
+positions for the requested member count. If the request exceeds the available
+reserved seats, the toolkit returns an explicit requested-versus-available error
+and startup fails without an API-made position or fallback.
+
+`SpaceData.Entrance` and the existing `FloorPlan.entrance` field retain their
+wire names but now mean the **resolved party-start anchor**. With an authored
+start, they report that absolute cell even when its semantic room is not the
+`entrance` archetype; with omitted/null start, they report today's generated
+anchor. This preserves one rendered marker and one runtime source of truth
+rather than adding a competing start field.
+
 ## rpg-api — runtime dungeon loading (the unlock)
 
 A dev-gated authoring surface, behind an env flag (exact name for
@@ -176,17 +227,15 @@ already; on the deployed box it's a volume path.
   a future remote box a volume gives the same durability.
 - **Response contract — grid math never leaves the server.** `PutDungeon`'s
   success response returns the compiled floor plan: laid-out rooms, cell
-  legality, connector/door positions, **and the entrance as its own
-  field** — a generator-chosen spawn-anchor cell (`SpaceData.Entrance`),
-  not derivable from any room's `archetype` (an "entrance"-archetype room
-  names which *room* holds it, not the *cell* within that room). This
-  isn't just completeness: `dungeonspec.Validate` never checks a `place:`
-  entry against the entrance — bounds, the reserved door row, duplicate
-  cells, and ref types are all it covers — while `StartEncounter` seats
-  the whole party along a line running outward from that cell. An author
-  can place a movement-blocking prop directly on the party's spawn and
-  get a green save; the board is the only thing that can warn about it,
-  and only if it actually has the entrance cell to check against. A dry-run mode (a
+  legality, connector/door positions, **and `FloorPlan.entrance` as its own
+  field** — the toolkit-resolved party-start anchor (`SpaceData.Entrance`),
+  not a cell the client derives from a room archetype. With `start` absent or
+  null it is the unchanged generator-selected anchor; with an authored value it
+  is that absolute authored cell, including in a non-entrance semantic room.
+  `dungeonspec.Validate` rejects authored blocking conflicts before this
+  response is produced, while toolkit generation protects the entire party
+  envelope from seed-rolled blockers. The board renders this returned truth; it
+  does not calculate a spawn line or invent a warning rule of its own. A dry-run mode (a
   `validate_only` flag on `PutDungeon`, or a sibling `Preview` RPC —
   implementer's choice) returns the same compiled floor plan without
   persisting, so the board gets live per-edit feedback by asking the server,
@@ -243,9 +292,11 @@ Three panes:
 
 - **Board**: renders the grid the server just compiled (see the response
   contract above — the board never derives layout itself) — hex parity
-  visible, the doorRow and other illegal cells simply not clickable,
-  connector columns shown, rooms chained left-to-right as the compiler lays
-  them out. Click to place, drag to move, delete; per-placement
+  visible, connector columns shown, rooms chained left-to-right as the compiler
+  lays them out. In ordinary placement mode the doorRow and other illegal cells
+  are not clickable; start-edit mode may select a room door-row floor cell but
+  never a connector-gap/door cell. Click to place, drag to move, delete;
+  per-placement
   `blocks_movement` / `blocks_los` flags editable **on prop placements
   only** — dungeonspec validation rejects both flags on monster placements,
   so the board gates those controls by ref type rather than letting an
@@ -257,10 +308,11 @@ Three panes:
   validation today, so the board doesn't offer that combination either.
 - **Palette**: the refs that actually have constructors (the toolkit#847
   monster/prop palette). Until their respective schema slices land, generated
-  doors and the resolved entrance are **read-only overlays** derived from the
-  compiled layout, not palette items the author can place. Slice #177 adds an
-  optional dungeon-scoped authored `start` that overrides the generated
-  entrance; an authored `end` is explicitly not in this sequence. Slice #179
+  doors and the resolved party-start marker are **read-only overlays** derived
+  from the compiled layout, not palette items the author can place. Slice #177
+  makes that marker editable as optional dungeon-scoped absolute `start`, while
+  the rendered result remains the server-returned `FloorPlan.entrance`; an
+  authored `end` is explicitly not in this sequence. Slice #179
   adds canonical authored solid/door edges. The **boss pin** (`boss.at`) is
   the one exception already authorable today. Separately: props
   have no toolkit-side registry, so validation checks only a placed ref's
@@ -301,10 +353,12 @@ per-repository issues are cut only after approval of this document.
    and door edge into `FloorPlan`, and render/hit-test that same edge geometry
    in the 2D and 3D views. This is read-only: no YAML `walls:` field or
    topology change.
-2. **#177 — authored start.** Add optional dungeon-scoped `start: [c, r]`.
-   It overrides the generator-selected entrance; absent preserves current
-   behavior. It must be an in-bounds traversable floor cell and appear
-   identically in preview and the real walkthrough.
+2. **#177 — authored start.** Add optional dungeon-scoped absolute
+   `start: [c, r]`. It may be in any semantic room but never a connector gap;
+   a room door-row cell is legal only for start. The toolkit reserves the
+   resolved anchor and normal four-seat party envelope before generated
+   blockers, exposes the anchor as `FloorPlan.entrance`, and supplies runtime
+   player positions. Omitted/null preserves current behavior exactly.
 3. **#178 — floor-prop hex facing.** Add optional `facing:
    E|NE|NW|W|SW|SE` to existing room-scoped floor placements. It is additive;
    absent preserves current rendering. Wall mount/height and behavior changes
@@ -358,6 +412,15 @@ both don't get built.
   renders legality exactly as returned by the compiled-layout response, so
   this is a contract test against a recorded response fixture, not a
   reimplementation of the compiler's layout rules.
+- **#177 acceptance**: sweep a named seed range against authored starts and
+  prove the anchor plus every normal four-seat reservation remain traversable
+  and unchanged; prove one through four real lobby members receive the ordered
+  toolkit positions, while a fifth receives an explicit capacity error; and
+  compare `PutDungeon(validate_only)`/wire `FloorPlan.entrance`, persisted
+  `SpaceData.Entrance`, and the actual first player position on the real
+  `StartEncounter` path. Cover any-semantic-room and room-door-row starts,
+  connector-gap and authored-blocker rejection, and byte/behavioral parity for
+  omitted versus `start: null` fixtures.
 - The loop itself is judged by live play (Kirk's live-walk + screenshots),
   consistent with how authored content is already verified — not by review
   machinery.

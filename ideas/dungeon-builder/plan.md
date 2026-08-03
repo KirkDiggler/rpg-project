@@ -180,21 +180,90 @@ wire state, and reachable product-route visual evidence all pass.
 
 ## Slice #177 — authored start marker
 
-**Outcome:** Optional dungeon-scoped `start: [c, r]` overrides the generated
-entrance; omitted `start` exactly preserves existing behavior.
+**Outcome:** Optional dungeon-scoped, absolute `start: [column, row]` overrides
+the generated party-start anchor. Omitted or explicit `null` retains today's
+behavior exactly. `FloorPlan.entrance` and `SpaceData.Entrance` keep their
+existing names but report that one toolkit-resolved anchor, never competing
+"authored" and "generated" fields.
 
-Plan the consumer-facing UI and wire need outside-in, then deliver provider
-validation/compilation, API projection/startup plumbing, and web integration
-inside-out. Keep static legality distinct from post-compilation/generated-floor
-legality: the reserved door row is valid for `start` but not `place`; resolved
-rolled content must reserve the resolved start; an unusable resolved start is a
-hard failure, never a fallback spawn.
+### Contract and provider work
 
-**Gate and evidence:** validation coverage for bounds, explicit non-floor cells,
-coordinate declarations, authored blockers/placements, and absent-start
-compatibility; compiled `FloorPlan` exposes one consistent resolved start; wire
-state and a real Walk it run show the same spawn cell. Stop if preview and actual
-encounter startup disagree.
+1. **Name the consumer behavior first (web, `origin/dev`).** The editor writes
+   or clears the top-level absolute two-integer sequence and renders only the
+   returned `FloorPlan.entrance`; it must not calculate room starts, connector
+   gaps, a safe spawn line, or start legality. A room-door-row start is
+   authorable, while the existing room-local `place` controls remain unavailable
+   there. Save/preview and Walk it are the same product route.
+2. **Transcribe the existing wire meaning (rpg-api-protos, `origin/main`).** No
+   duplicate start field is introduced. Update the `FloorPlan.entrance` contract
+   comment from “generator-chosen entrance” to “toolkit-resolved party-start
+   anchor,” explicitly allowing an authored start in any semantic room. Preserve
+   its field number and generated consumer compatibility; publish the normal
+   proto release before API/web delivery.
+3. **Make `dungeonspec` and encounter own the rule (rpg-toolkit,
+   `origin/main`, on the Specimen Pack provider loop).** Decode `start` as an
+   optional/null top-level absolute coordinate. `dungeonspec.Validate` rejects
+   malformed coordinate shape, out-of-footprint/non-floor cells, connector gaps
+   (including their door cell), absent/ambiguous semantic-room membership, and
+   static blocking conflicts. A valid start may sit on any room's `doorRow`; do
+   not loosen `place`/`boss.at` rules. Static validation deliberately does not
+   predict seed-rolled walls or obstacles.
+
+   Compile the resolved authored-or-default anchor and a toolkit-owned ordered
+   party-spawn reservation into the dungeon parameters. The normal product
+   configuration reserves **four** seats—the effective API default `PartyCap`,
+   not a universal toolkit maximum. Service composition supplies that one
+   capacity to registry compilation, preview, and runtime initialization; it is
+   configuration passed to the toolkit, not API spawn math. This must be a
+   dedicated party-start reservation, not a reuse of `ReservedCells`, whose ordinary placement rules
+   reject the door row. Before *any* generated blocker is produced, the toolkit
+   determines the anchor plus every configured seat and excludes all of them
+   from interior walls, rolled obstacles, and other generated blocking-placement
+   paths. The selection is deterministic and seed-independent; an insufficient
+   envelope is an explicit generation error, never a moved anchor, nearest-cell
+   search, generated-entrance fallback, or capacity reduction. The encounter
+   exposes the first requested positions from this stored ordered reservation and
+   returns an explicit requested-versus-available error when the request is too
+   large.
+4. **Project and orchestrate only (rpg-api, `origin/dev`).** Preview builds the
+   real toolkit dungeon with the same normal four-seat configuration and projects
+   toolkit `SpaceData.Entrance` verbatim as `FloorPlan.entrance`. Runtime uses
+   the toolkit's ordered spawn-resolution API for `len(members)` before calling
+   `AddPlayer`; delete the production `partyBase.Q + i` / `S - i` arithmetic and
+   the API-owned spacing constant. If members exceed the reserved seats, return
+   the toolkit’s explicit error with no partial encounter, ad-hoc placement, or
+   fallback. Do not make the API derive a room, direction, or capacity rule.
+5. **Deliver inside-out.** Publish the contract update, keep toolkit provider
+   changes on #876 until consumers stop asking for them, then pin the released
+   toolkit module in API and land the web integration on the prerequisite
+   product-editor route. The preview's fixed seed may differ from a runtime
+   encounter seed for rolled dressing, but both use the same seed-independent
+   four-seat reservation and resolved authored anchor.
+
+### Acceptance and stop point
+
+- Toolkit validation covers omitted and `start: null` parity; correct absolute
+  shape; every semantic-room membership; room-door-row acceptance; and rejection
+  of connector gaps, out-of-footprint/non-floor coordinates, and authored
+  movement-blocking prop, placed-monster, or pinned-boss conflicts.
+- A named multi-seed sweep over a scattered/rolled authored-start fixture proves
+  every generated map leaves the anchor and all four reserved seats usable and
+  unchanged—no wall, rolled blocker, relocation, or fallback. Include an
+  explicitly too-small envelope fixture that fails with the deliberate error.
+- API/orchestrator coverage starts real one-, two-, three-, and four-member
+  lobbies and proves positions are distinct, in toolkit order, valid in the
+  actual encounter, and begin at the resolved anchor. A requested fifth member
+  receives the explicit available-seat error; this documents product capacity
+  four without claiming a toolkit-wide maximum.
+- A real `PutDungeon(validate_only)` response/wire capture, persisted
+  `SpaceData.Entrance`, and first player position from `StartEncounter` agree on
+  the authored absolute cell. Product `/author` preview and Walk it capture the
+  same marker and first player spawn. Repeat the same evidence for omitted and
+  `start: null` fixtures to prove no behavior change.
+
+**Stop point:** stop for a design correction if preview and runtime do not use
+that same reservation, if any seed can invalidate or move it, or if an API/client
+calculation rather than the toolkit selects a player position.
 
 ## Slice #178 — floor-prop hex facing
 
