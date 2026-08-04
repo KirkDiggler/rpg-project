@@ -1,4 +1,4 @@
-# Active handoff — 2026-08-03: Specimen v0.1 provider loop; #763 API integration proven
+# Active handoff — 2026-08-03: Specimen v0.1 provider loop; independent #173 delivery complete
 
 > Shape: `CLAUDE.md → Status docs`. Living handoff — **rewritten, not appended**.
 > Platform implementation is repository-owned; merge/release decisions remain with
@@ -10,7 +10,7 @@
 **Dungeon Builder / Specimen Pack v0.1: API #763 has consumed the open toolkit
 provider locally and passed its live-lab evidence.** The provider remains held open
 for related consumer asks; web #671 then #678 are the next ordered product-route
-legs.
+legs. Separately, the Party Assembles equipment-enrichment delivery is complete.
 
 ## Solid — code and verification
 
@@ -43,10 +43,19 @@ legs.
   (product `/author` route) and [web #678](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/678)
   (generated-edge render/hit-test) are open and ordered. #671 starts fresh from
   `origin/dev`; #678 is a separate fresh branch after #671.
+- **Independent Party Assembles delivery:** [web #692](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/692)
+  merged to web `dev` at `4b4b411`; [rpg-project #173](https://github.com/KirkDiggler/rpg-project/pull/173)
+  merged to project `main` at `cdbfc19`. The implementation issues are closed/Done.
+  This consumer leg is independent of the Specimen #876/#763 provider loop.
 - **Independent API test repair:** [rpg-api #765](https://github.com/KirkDiggler/rpg-api/issues/765)
   is the unrelated Sneak Attack fixture flake. Its [PR #766](https://github.com/KirkDiggler/rpg-api/pull/766)
   is merge-ready with CI and director gate PASS; it is independent of this provider
   loop.
+- **Toolkit persisted-choice gate:** [rpg-toolkit #879](https://github.com/KirkDiggler/rpg-toolkit/pull/879)
+  merged 2026-08-03. It closes the finalization bypass for persisted nested category
+  selections: both `ValidateChoices` and `ToCharacter` reject an ineligible
+  persisted Monk `unarmed-strike`, while persisted `club` and `shortbow` controls
+  survive.
 
 ## Open questions / gates
 
@@ -62,8 +71,7 @@ legs.
    override during that work.
 2. Start web #671 from latest `origin/dev`, then cut the separate #678 branch from
    latest `origin/dev` once the product editor route is available.
-3. Leave merge decisions to Kirk: this coordination update neither merges #876 nor
-   #766.
+3. Leave merge decisions to Kirk: this coordination update makes none.
 
 ## Decision log
 
