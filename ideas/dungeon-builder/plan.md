@@ -63,6 +63,16 @@ renderer/editor of server-provided truth.
   today. The specimen's note that `walls[].kind` mirrors a current
   `EncounterService.Space.walls` wire type is stale; `Space.walls` is
   removed/reserved and runtime edge truth is `HexRecord.edges`.
+- **Coordinate-convention erratum (independent review):** canonical absolute
+  wall coordinates are pointy-top **odd-q offset** `[column,row]`, not merely
+  “pointy-top.” This is the established whole-stack convention: toolkit
+  `core.HexFromPosition`, generated geometry, `FloorPlan`, and web
+  `cubeAtColRow` all use it. Under that convention the Specimen Pack pairs
+  `[7,1]`–`[8,0]` and `[7,3]`–`[8,2]` are non-adjacent. They are serializer
+  fixture mistakes, not a reason to switch the whole stack to even-q or axial;
+  the intent-preserving pairs are `[7,1]`–`[8,1]` and `[7,3]`–`[8,3]`.
+  This erratum leaves the document schema at `version: 1` and the Specimen Pack
+  version at `v0.1`.
 
 ### Specimen Pack v0.1 toolkit provider loop (Kirk decision)
 
@@ -345,16 +355,17 @@ its current passage neighbor is inferred from regions. Consequently an authored
 inner edge needs a dungeon-owned, undirected boundary-crossing primitive used by
 movement, pathfinding, and LoS; an authored door needs stable identity from
 normalized endpoints plus reachability from either endpoint. YAML `from`/`to`
-therefore name distinct, adjacent, absolute pointy-top floor cells; edges never
+therefore name distinct, adjacent, absolute pointy-top odd-q offset
+`[column,row]` floor cells; “pointy-top” alone is incomplete. Edges never
 rename or split the existing semantic room IDs. The web consumes the
 server-compiled edge list in preview and runtime, never a documentation-only
 client overlay. Existing `FloorPlanEdge`/`HexRecord.edges` endpoint/kind/door-ID
 shape likely suffices, so make no proto delta unless edge provenance becomes
 product-visible.
 
-**Settled defaults (#179).** `walls[].from`/`to` name absolute pointy-top
-`[column,row]` coordinates; both endpoints must be distinct, adjacent, compiled
-floor cells. Each edge's identity is undirected, formed by normalizing those
+**Settled defaults (#179).** `walls[].from`/`to` name absolute pointy-top odd-q
+offset `[column,row]` coordinates; both endpoints must be distinct, adjacent,
+compiled floor cells. Each edge's identity is undirected, formed by normalizing those
 absolute endpoints, so a duplicate authored edge — including its reversed pair —
 fails validation rather than letting conflicting authored kinds be silently
 selected. The authored-vs-generated overlay is deterministic: an authored kind
