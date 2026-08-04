@@ -333,6 +333,40 @@ connector-generated edges. Compile authored edges into canonical runtime
 `HexRecord.edges`; do not make authored doors satisfy or replace chain
 connectors.
 
+### #179 implementation discovery (source read 2026-08-04)
+
+**Settled facts.** `WallSegmentData` endpoints are absolute cube **hex cells**,
+not polygon corners. `Start == End` is the legacy blocked-cell form; the current
+`Start != End` rebuild path still places a blocker over any valid in-grid `End`
+cell. `DescribeGeneratedEdges` is a read/render projection, not the pairwise
+movement, pathfinding, or LoS authority. Connector doors must initially retain
+that legacy cell-threshold behavior: `DoorData` carries only one `Position`, and
+its current passage neighbor is inferred from regions. Consequently an authored
+inner edge needs a dungeon-owned, undirected boundary-crossing primitive used by
+movement, pathfinding, and LoS; an authored door needs stable identity from
+normalized endpoints plus reachability from either endpoint. YAML `from`/`to`
+therefore name distinct, adjacent, absolute pointy-top floor cells; edges never
+rename or split the existing semantic room IDs. The web consumes the
+server-compiled edge list in preview and runtime, never a documentation-only
+client overlay. Existing `FloorPlanEdge`/`HexRecord.edges` endpoint/kind/door-ID
+shape likely suffices, so make no proto delta unless edge provenance becomes
+product-visible.
+
+**Proposed defaults pending explicit confirmation.** Normalize the unordered
+endpoint pair for duplicate/conflict checks and derived authored-door IDs; start
+authored doors closed and unlocked; require both authored endpoints to be floor
+cells; do not infer or reject semantic-region reachability; and define one
+deterministic authored-vs-generated overlay rule (connector-generated collision
+remains a validation failure).
+
+**Stop conditions.** Stop rather than encode an inner edge as a cell blocker if
+the runtime cannot gate one boundary crossing for movement, pathfinding, **and**
+LoS. Stop if a single-position `DoorData` cannot give a normalized authored door
+one stable interaction ID and reach from both endpoint sides. Stop for a design
+decision if overlay semantics require connector mapping, exterior/non-floor
+endpoints, reachability inference, or product-visible generated/authored
+provenance that the existing wire cannot express.
+
 **Gate and evidence:** clear validation for duplicate, conflicting, non-adjacent,
 out-of-footprint, and connector-collision edges; one shared dungeon-owned edge
 representation; movement/LoS and door-lifecycle evidence through the existing
