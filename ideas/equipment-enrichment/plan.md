@@ -22,7 +22,7 @@ make a separate production-release claim.
   protection share the authoritative category set — [rpg-toolkit#879](https://github.com/KirkDiggler/rpg-toolkit/pull/879), merged 2026-08-03.
 - [x] The additive `repeated EquipmentItem options = 6` proto contract is
   merged — [rpg-api-protos#207](https://github.com/KirkDiggler/rpg-api-protos/pull/207), merged 2026-08-03.
-- [x] API maps resolved options without eligibility logic — [rpg-api#764](https://github.com/KirkDiggler/rpg-api/pull/764), merged 2026-08-03.
+- [x] API maps authoritative options 1:1 and retains legacy category metadata only for backward compatibility — [rpg-api#764](https://github.com/KirkDiggler/rpg-api/pull/764), merged 2026-08-03.
 - [x] Web reads authoritative options as its sole category-option source and
   deletes the category lookup/reconstruction route — [rpg-dnd5e-web#692](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/692), merged 2026-08-04.
 
@@ -38,10 +38,12 @@ make a separate production-release claim.
 3. **Contract shape:** `EquipmentCategoryChoice.options` is an additive
    repeated `EquipmentItem` field at tag `6`; each option carries the existing
    resolved equipment detail.
-4. **Thin consumers:** API maps toolkit output without rules knowledge. The web
-   renders those ordered options and selection IDs directly, with no category
-   inference, fallback option list, or `ListEquipmentByType` fetch on this
-   route.
+4. **Thin consumers:** API maps toolkit-resolved options 1:1. It may derive
+   legacy category metadata for backward compatibility, but never uses it to
+   reconstruct, filter, or sort authoritative options; toolkit owns eligibility.
+   The web renders those ordered options and selection IDs directly, with no
+   category inference, fallback option list, or `ListEquipmentByType` fetch on
+   this route.
 5. **Persistence safety:** a selection must belong to the resolved category set
    before nested draft application records it; invalid legacy persisted
    category data is rejected when finalized.

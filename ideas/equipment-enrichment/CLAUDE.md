@@ -21,7 +21,7 @@ about a separate release or deployment.
 ```
 Toolkit resolves and validates eligible, enriched concrete options
   -> additive proto options field
-  -> API maps those options without rules logic
+  -> API maps options 1:1 and retains legacy category metadata
   -> web renders those options as rich cards
 ```
 
@@ -35,8 +35,9 @@ Toolkit resolves and validates eligible, enriched concrete options
   persisted category selections are rejected at finalization.
 - **Proto is additive.** `EquipmentCategoryChoice.options` is a repeated
   `EquipmentItem` field at tag `6`, reusing the existing enriched item shape.
-- **API is a translator, not a rulebook.** It preserves the toolkit-resolved
-  ordered options and does not infer category membership or eligibility.
+- **API maps authoritative options 1:1.** It still derives legacy weapon-category
+  metadata for backward compatibility, but never uses it to reconstruct, filter,
+  or sort the toolkit-resolved ordered options; toolkit owns their eligibility.
 - **Web has one source of category options.** It renders the API-provided
   `options` with the accessible rich dropdown/card and has no category-to-type
   reconstruction, fallback option source, or `ListEquipmentByType` fetch on
@@ -68,8 +69,9 @@ shortcut for the other.
 - Enumeration and acceptance must use the same toolkit authority. Otherwise a
   value can be present in a draft even though it was never advertised to the
   player.
-- Keep the API and web thin: a client-side eligibility reconstruction can drift
-  as registries, exclusions, and class rules change.
+- Keep the API and web thin: legacy API category metadata is not an option
+  source, and the web must not reconstruct eligibility as registries, exclusions,
+  and class rules change.
 
 ## Repositories
 

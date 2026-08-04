@@ -24,7 +24,7 @@ renders those options directly.
 ```
 Toolkit eligibility + enriched concrete options
   -> additive protobuf options
-  -> API translation only
+  -> API maps options 1:1; retains legacy category metadata
   -> web rich-card rendering of authoritative options
 ```
 
@@ -72,14 +72,16 @@ Existing consumers remain wire-compatible; once mapped by the API, consumers
 that read `options` receive the concrete eligible list without another
 eligibility lookup.
 
-### API: translate, do not decide
+### API: map authoritative options 1:1
 
 [rpg-api#764](https://github.com/KirkDiggler/rpg-api/pull/764) maps the
 ordered toolkit-resolved `EquipmentCategoryChoice.Options` straight to the
-proto `options` field using the existing concrete-item mapping. It adds no
-category-membership or eligibility logic. Its real RPC coverage compares full
-Fighter martial and Monk simple option lists, and exercises persisted valid and
-invalid selections through the creation path.
+proto `options` field using the existing concrete-item mapping. It still
+maps/derives legacy weapon-category metadata for backward compatibility, but
+never uses that metadata to reconstruct, filter, or sort authoritative concrete
+options; toolkit retains eligibility authority. Its real RPC coverage compares
+full Fighter martial and Monk simple option lists, and exercises persisted valid
+and invalid selections through the creation path.
 
 ### Web: rich cards and one option source
 
