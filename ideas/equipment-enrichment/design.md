@@ -1,194 +1,134 @@
 # Equipment Data Enrichment
 
-**Date:** 2026-03-21
-**Status:** Draft
-**Scope:** Flow weapon/equipment stats from toolkit through the pipeline so character creation shows meaningful equipment details
+**Date:** 2026-03-21 (implementation record updated 2026-08-04)
+**Status:** Implementation complete
+**Scope:** Authoritative, enriched equipment-category choices in character creation
 
-## Problem
+## Problem resolved
 
-When choosing starting equipment during character creation, players see item names ("Shortsword", "Chain mail") without any stats. A player has no way to compare a shortsword vs a handaxe without external knowledge. The toolkit has all this data (damage dice, damage type, properties, weight, category) and the protos have messages to carry it (`Equipment`, `WeaponData`, `ArmorData`) — but the equipment *choice* types don't include it.
+Character creation originally showed equipment names while the web independently
+reconstructed which items belonged to a category such as “choose a martial
+weapon.” That left two problems:
 
-This applies to both concrete items in equipment bundles AND the category-based dropdowns (e.g., "choose a martial weapon") where comparing options is the whole point.
+1. Players could not compare the meaningful weapon and armor facts in the
+   selection control.
+2. The web had rules-shaped category-membership logic that could drift from the
+   toolkit validator, especially around full simple/martial sets and exclusions.
 
-## Goals
+The delivered design makes the toolkit the sole authority for both enumeration
+and acceptance, carries its concrete enriched options through the wire, and
+renders those options directly.
 
-1. Enrich equipment choices with full weapon/armor stats at the toolkit level
-2. Flow that data through protos and API to the UI
-3. Build a reusable `EquipmentCard` component in the UI that handles weapons, armor, and gear
-4. Start with character creation, designed so the same component works in inventory/combat/tooltips later
-
-## Non-Goals
-
-- No new weapon or armor items
-- No changes to how equipment choices work mechanically (same choose-from-bundles pattern)
-- No inventory or combat UI changes in this pass
-- No class-specific guidance text (that was the concepts prototype scope)
-
-## The Boundary Rule
+## Delivered boundary design
 
 ```
-Toolkit: resolves equipment IDs to full stats → returns enriched equipment choices
-API:     passes through enriched data → no equipment knowledge needed
-UI:      renders what it receives → reusable EquipmentCard component
+Toolkit eligibility + enriched concrete options
+  -> additive protobuf options
+  -> API maps options 1:1; retains legacy category metadata
+  -> web rich-card rendering of authoritative options
 ```
 
-## Design
+### Toolkit: resolve and validate in one authority
 
-### Layer 1: Toolkit — Enrich EquipmentItem
+The toolkit resolves every `EquipmentCategoryChoice` to deterministic,
+duplicate-free concrete `EquipmentItem` options with quantity `1` and resolved
+detail. `choices.EligibleEquipment` is the authoritative ordered
+category-resolution path for requirement expansion, category validation, and
+nested draft application.
 
-**Scope:** Both `EquipmentItem` types need enrichment:
-- `character/choices/requirements.go` — items in equipment choice bundles
-- `classes/grants.go` — items granted automatically (not chosen)
+This is deliberately not a client or API lookup. It retains the full registry
+semantics and existing exclusions:
 
-Both reference equipment by ID. Both should carry resolved stats so the UI can display them.
+- A broad **simple** category means the simple melee **and** simple ranged
+  registries; a broad **martial** category likewise means martial melee **and**
+  martial ranged registries. Narrow categories such as `simple-melee` retain
+  their named scope.
+- Monk starting equipment remains **shortsword OR any simple weapon**. The
+  “any simple weapon” branch includes simple melee and simple ranged weapons.
+  This is a starting-equipment rule and is distinct from Martial Arts guidance;
+  neither should be used to reinterpret the other.
+- Special weapons such as `unarmed-strike` remain available where their own
+  rules allow them, but are not advertised as equipment-category options and
+  cannot be accepted through that category-selection path.
 
-**New types in `equipment` package** (see Package Structure section for type definitions):
+The initial resolver implementation is [rpg-toolkit#877](https://github.com/KirkDiggler/rpg-toolkit/pull/877).
+The follow-up closed the integrity gap in which nested `Draft.SetClass` checked
+only registry existence and could persist an unadvertised selection:
+[rpg-toolkit#879](https://github.com/KirkDiggler/rpg-toolkit/pull/879). It
+requires the resolved category set before recording a nested selection and
+rejects invalid legacy persisted category data during finalization.
 
-The `equipment` package already imports `weapons`, `armor`, etc. — so `EquipmentDetail`, `WeaponDetail`, and `ArmorDetail` use proper typed constants (no string workarounds). Tools, packs, and ammunition get base fields only (name, weight, cost) since they don't have type-specific stats that affect gameplay decisions.
+### Protobuf: additive concrete options
 
-**Resolver function** in `equipment/`:
-
-```go
-// ResolveEquipmentDetail looks up an equipment ID using the existing GetByID
-// pattern and returns a populated detail struct.
-// Returns nil if the ID is not found in any registry.
-func ResolveEquipmentDetail(id shared.EquipmentID) *EquipmentDetail
-```
-
-**Where enrichment happens:** After building the equipment requirements/grants, call `ResolveEquipmentDetail` for each item. This happens once when building class data — the results are part of the static class definition, not computed per API request.
-
-**Tools, packs, and ammunition:** These get `EquipmentDetail` with `Name`, `Type`, `Weight`, and `Cost` populated, but no type-specific sub-struct. A dungeoneer's pack doesn't have stats to compare the way weapons do — the name and type are sufficient for display.
-
-### Layer 2: Protos — Add Equipment to EquipmentItem
-
-The proto `EquipmentItem` message in `choices.proto` currently has:
+[rpg-api-protos#207](https://github.com/KirkDiggler/rpg-api-protos/pull/207)
+adds this wire-compatible field to the existing category-choice message:
 
 ```protobuf
-message EquipmentItem {
-    string selection_id = 1;
-    int32 quantity = 2;
-    oneof type_hint { ... }
-}
+repeated EquipmentItem options = 6;
 ```
 
-**Proposed:** Add an optional `Equipment` field:
+The field reuses `EquipmentItem` and its existing enriched equipment detail.
+Existing consumers remain wire-compatible; once mapped by the API, consumers
+that read `options` receive the concrete eligible list without another
+eligibility lookup.
 
-```protobuf
-message EquipmentItem {
-    string selection_id = 1;
-    int32 quantity = 2;
-    oneof type_hint {
-        Weapon weapon = 3;
-        Armor armor = 4;
-        Tool tool = 5;
-        Pack pack = 6;
-        Ammunition ammunition = 7;
-    }
-    Equipment equipment_detail = 8;  // Resolved equipment stats (optional)
-}
-```
+### API: map authoritative options 1:1
 
-The existing `Equipment` message in `character.proto` already has `WeaponData`, `ArmorData`, and `GearData` with all the fields we need. No new proto messages required — we reuse what exists.
+[rpg-api#764](https://github.com/KirkDiggler/rpg-api/pull/764) maps the
+ordered toolkit-resolved `EquipmentCategoryChoice.Options` straight to the
+proto `options` field using the existing concrete-item mapping. It still
+maps/derives legacy weapon-category metadata for backward compatibility, but
+never uses that metadata to reconstruct, filter, or sort authoritative concrete
+options; toolkit retains eligibility authority. Its real RPC coverage compares
+full Fighter martial and Monk simple option lists, and exercises persisted valid
+and invalid selections through the creation path.
 
-**Field mapping notes** (toolkit → proto):
-- `WeaponDetail.NormalRange`/`LongRange` → `WeaponData.normal_range`/`long_range` + `range` set to `"melee"` or `"ranged"` based on whether range values are present
-- `EquipmentDetail.Cost` string → `Cost` message: parse "25 gp" into `{quantity: 25, unit: "gp"}`
-- `EquipmentDetail.Weight` float64 → `Weight` message: `{quantity: int(weight), unit: "lb"}`
+### Web: rich cards and one option source
 
-These conversions live in the API's choice mapping layer, which already handles toolkit→proto type conversion.
+The presentation seam was first delivered in
+[rpg-dnd5e-web#670](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/670): an
+accessible production category dropdown renders compact rich equipment cards
+from live equipment data, including weapon damage/properties/range and armor
+AC/category facts.
 
-### Layer 3: API — Pass Through
+The final integration in
+[rpg-dnd5e-web#692](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/692)
+renders authoritative `EquipmentCategoryChoice.options` through that rich
+dropdown. It preserves API order and selection IDs, multiple slots, duplicate
+selections, submission, and reopened-draft hydration. The category-to-type
+reconstruction and its `ListEquipmentByType` fetch were deleted from this
+route: no client eligibility inference, fallback option source, or Monk
+exception remains.
 
-The API handler that maps toolkit choice types to proto messages needs to map the new `Detail` field to the `equipment_detail` proto field. The conversion logic for `Cost` and `Weight` is non-trivial but mechanical — the API gains no new knowledge about what weapons are good or what stats mean.
+## Verification evidence
 
-### Layer 4: UI — Reusable EquipmentCard Component
+| Concern | Merged evidence |
+| --- | --- |
+| Rich production dropdown cards | [rpg-dnd5e-web#670](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/670) |
+| Toolkit resolved options | [rpg-toolkit#877](https://github.com/KirkDiggler/rpg-toolkit/pull/877) |
+| Expansion/validation parity and persisted-data guard | [rpg-toolkit#879](https://github.com/KirkDiggler/rpg-toolkit/pull/879) |
+| Additive proto contract | [rpg-api-protos#207](https://github.com/KirkDiggler/rpg-api-protos/pull/207) |
+| API pass-through mapping | [rpg-api#764](https://github.com/KirkDiggler/rpg-api/pull/764) |
+| Web direct authoritative consumption | [rpg-dnd5e-web#692](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/692) |
 
-Create an `EquipmentCard` component in `src/components/` that takes `Equipment` proto data and renders contextually based on type:
+The merged PR evidence records focused and full checks at each layer: toolkit
+race/lint and category suites; proto format/lint/breaking/generation/compile
+checks; API converter, real Redis creation-path, race, build, vet, and test
+checks; and web component coverage plus `npm run ci-check`.
 
-**For weapons:**
-- Name prominently
-- Damage — dice + type (e.g., "1d6 slashing")
-- Properties — as tags (Finesse, Light, Versatile, etc.)
-- Category — simple/martial, melee/ranged
-- Range — for thrown/ranged weapons
-- Weight — in lbs
+## Compatibility and scope boundary
 
-**For armor:**
-- Name prominently
-- AC — base value with dex bonus note
-- Category — light/medium/heavy/shield
-- Stealth disadvantage flag
-- Strength requirement (if any)
-- Weight — in lbs
+The proto change is additive and uses the next unused field tag. The completed
+web cutover has a single source for category options, so the UI cannot disagree
+with a retained lookup path. This wave adds no new equipment items and makes no
+inventory or combat UI change.
 
-**For tools/packs/ammunition:**
-- Name and type
-- Weight
+## Historical lessons retained
 
-The component accepts the proto `Equipment` type directly so it works anywhere the proto is available (character creation, inventory, combat tooltips).
-
-**Usage in equipment choices:** The `EquipmentChoiceSelector` component checks if `equipment_detail` is present on each `EquipmentItem`. If present, render with `EquipmentCard`. If not (backward compat), fall back to item name string.
-
-**Category choice dropdowns:** When a player picks from a category (e.g., "choose a martial weapon"), the dropdown options should also show `EquipmentCard` for each weapon. This requires the API to resolve available weapons for each category and include their stats. This is already partially handled — the UI calls a weapon list endpoint for category choices — the data just needs the `Equipment` detail attached.
-
-## Repos Affected
-
-| Repo | Changes |
-|------|---------|
-| **rpg-toolkit** | Add `EquipmentDetail` types to `equipment/`, `ResolveEquipmentDetail()` extending existing `GetByID`, call it in equipment requirement builders and grants |
-| **rpg-api-protos** | Add `equipment_detail` field to `EquipmentItem` message |
-| **rpg-api** | Map toolkit `Detail` to proto `equipment_detail` in choice handler, including Cost/Weight conversion |
-| **rpg-dnd5e-web** | Create `EquipmentCard` component, use in equipment choice selector and category dropdowns |
-
-## Package Structure (No Restructure Needed)
-
-The `equipment` package already exists at `rulebooks/dnd5e/equipment/` and imports `weapons`, `armor`, `tools`, `packs`, and `ammunition` — exactly the dependency direction needed. It has a `GetByID` function that looks up across all registries, which is the foundation for `ResolveEquipmentDetail`.
-
-The `EquipmentDetail`, `WeaponDetail`, and `ArmorDetail` types belong in the `equipment` package where they can use proper typed constants from `weapons` and `armor` packages (no string workarounds needed).
-
-**Updated types using proper package types:**
-
-```go
-// In rulebooks/dnd5e/equipment/
-
-type EquipmentDetail struct {
-    Name     string                `json:"name"`
-    Type     shared.EquipmentType  `json:"type"`
-    Weight   float64               `json:"weight"`
-    Cost     string                `json:"cost"`
-    Weapon   *WeaponDetail         `json:"weapon,omitempty"`
-    Armor    *ArmorDetail          `json:"armor,omitempty"`
-}
-
-type WeaponDetail struct {
-    Category   weapons.WeaponCategory   `json:"category"`
-    Damage     string                   `json:"damage"`
-    DamageType damage.Type              `json:"damage_type"`
-    Properties []weapons.WeaponProperty `json:"properties"`
-    Range      *weapons.Range           `json:"range,omitempty"`
-}
-
-type ArmorDetail struct {
-    Category            armor.ArmorCategory `json:"category"`
-    BaseAC              int                 `json:"base_ac"`
-    DexBonus            bool                `json:"dex_bonus"`
-    MaxDexBonus         *int                `json:"max_dex_bonus,omitempty"`
-    StrengthRequirement int                 `json:"strength_requirement,omitempty"`
-    StealthDisadvantage bool                `json:"stealth_disadvantage"`
-}
-```
-
-`ResolveEquipmentDetail` extends the existing `GetByID` pattern — look up the equipment, then populate the detail struct from the resolved item.
-
-## Implementation Order (after restructure)
-
-1. **Protos first** — Add the field, generate code
-2. **Toolkit** — Add detail types to `equipment/`, extend `GetByID` into `ResolveEquipmentDetail`, enrich requirement builders
-3. **API** — Map the new field with Cost/Weight conversion
-4. **UI** — Build EquipmentCard and wire into equipment choices
-
-## Testing
-
-- **Toolkit:** Test `ResolveEquipmentDetail` resolves weapons, armor, tools, packs, and ammunition. Test that it returns nil for unknown IDs. Test that enriched requirements contain populated details.
-- **API:** Test the choice mapping produces correct `equipment_detail` proto fields including Cost/Weight conversion.
-- **UI:** Verify `EquipmentCard` renders correctly for weapon, armor, and gear variants.
+The pre-contract live-data implementation was useful: it proved the rich-card
+interaction against production data without inventing a fixture-only surface.
+It was not sufficient as the final category-choice design because display data
+does not answer which concrete items are valid. The persisted `unarmed-strike`
+case found during integration reinforced the same lesson: enumeration,
+validation, and persistence must share the toolkit authority rather than merely
+checking whether an ID exists in a registry.
