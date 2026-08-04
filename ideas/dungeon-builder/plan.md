@@ -352,27 +352,47 @@ client overlay. Existing `FloorPlanEdge`/`HexRecord.edges` endpoint/kind/door-ID
 shape likely suffices, so make no proto delta unless edge provenance becomes
 product-visible.
 
-**Proposed defaults pending explicit confirmation.** Normalize the unordered
-endpoint pair for duplicate/conflict checks and derived authored-door IDs; start
-authored doors closed and unlocked; require both authored endpoints to be floor
-cells; do not infer or reject semantic-region reachability; and define one
-deterministic authored-vs-generated overlay rule (connector-generated collision
-remains a validation failure).
+**Settled defaults (#179).** `walls[].from`/`to` name absolute pointy-top
+`[column,row]` coordinates; both endpoints must be distinct, adjacent, compiled
+floor cells. Each edge's identity is undirected, formed by normalizing those
+absolute endpoints, so a duplicate authored edge — including its reversed pair —
+fails validation rather than letting conflicting authored kinds be silently
+selected. The authored-vs-generated overlay is deterministic: an authored kind
+(`solid` or `door`) replaces a colliding generated non-connector physical edge;
+any collision with a connector-derived edge still fails validation. Exterior or
+non-floor endpoint editing stays out of scope and read-only — this slice does
+not expand it. An authored door's ID derives stably from the dungeon key plus
+its normalized absolute endpoints; it starts closed and unlocked, and a player
+may interact from either endpoint. Reachability inference, rejection, or
+relocation based on semantic-region membership is out of scope: an inner
+authored edge changes neither cell occupancy nor semantic room identity. No
+proto delta lands unless implementation proves one is required, including any
+product-visible provenance limitation that the existing `FloorPlanEdge`/
+`HexRecord` wire cannot express.
 
-**Stop conditions.** Stop rather than encode an inner edge as a cell blocker if
-the runtime cannot gate one boundary crossing for movement, pathfinding, **and**
-LoS. Stop if a single-position `DoorData` cannot give a normalized authored door
-one stable interaction ID and reach from both endpoint sides. Stop for a design
-decision if overlay semantics require connector mapping, exterior/non-floor
-endpoints, reachability inference, or product-visible generated/authored
-provenance that the existing wire cannot express.
+**Stop conditions.**
 
-**Gate and evidence:** clear validation for duplicate, conflicting, non-adjacent,
-out-of-footprint, and connector-collision edges; one shared dungeon-owned edge
-representation; movement/LoS and door-lifecycle evidence through the existing
-runtime path; an inner wall changes movement/LoS while both cells retain the
-same room ID; product preview and Walk it agree. Stop for a design decision if a
-connector mapping rule becomes necessary.
+1. Stop rather than encode an authored boundary edge as a `WallSegmentData`/cell
+   blocker; the runtime must gate one boundary crossing for movement,
+   pathfinding, **and** LoS, not a whole cell.
+2. Stop if movement, pathfinding, and LoS cannot all consume that same
+   dungeon-owned crossing primitive — rendering `FloorPlanEdge`/`HexRecord.edges`
+   alone does not establish gameplay authority.
+3. Stop if the single-position `DoorData` cannot be evolved or wrapped to yield
+   a normalized, stable authored door ID with symmetric interaction from both
+   endpoints.
+4. Stop for a design decision if implementation requires connector mapping, a
+   departure from the exterior/non-floor read-only scope above, reachability
+   inference or relocation, or product-visible source provenance that the
+   existing `FloorPlanEdge`/`HexRecord` wire cannot express.
+
+**Gate and evidence:** clear validation for duplicate (including the reversed
+pair), conflicting, non-adjacent, out-of-footprint, and connector-collision
+edges; the settled authored-vs-generated overlay applied consistently; one
+shared dungeon-owned edge representation; movement/LoS and door-lifecycle
+evidence through the existing runtime path; an inner wall changes movement/LoS
+while both cells retain the same room ID; product preview and Walk it agree.
+Stop for a design decision if a connector mapping rule becomes necessary.
 
 ## Slice #180 — cell-authored semantic room regions
 
