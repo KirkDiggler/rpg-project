@@ -141,17 +141,30 @@ merge to stay intact.
 fails the instant the branches diverge, instead of surfacing as conflicts at the
 next release cut.
 
-**What actually prevents it:** branch protection on `main`, "Require branches to be
-up to date before merging." A `dev` → `main` PR then can't merge unless `dev`
-already contains `main`'s tip — which a squash-merged predecessor would violate by
-construction.
+**What actually prevents it — now live:** a repository ruleset targeting `main`
+("Protect The President," both repos) sets `strict_required_status_checks_policy:
+true` — the ruleset's form of "require branches to be up to date before merging."
+A `dev` → `main` PR can't merge unless `dev` already contains `main`'s tip — which
+a squash-merged predecessor would violate by construction. Zero bypass actors on
+either ruleset, so this binds repo admins too.
 
-**What you cannot enforce:** GitHub's merge-method toggles (allow squash / allow
-merge commit / allow rebase) are repo-wide settings, not per-target-branch — you
-cannot allow squash for feature→`dev` PRs while forcing merge-commit for
-`dev`→`main` PRs. This rule cannot live as a repo setting; it lives in this doc plus
-the up-to-date check above. Worth stating so nobody goes hunting for a setting that
-doesn't exist.
+**Merge method is enforceable too, and also now live.** The original version of
+this section claimed GitHub's merge-method toggles (allow squash / allow merge
+commit / allow rebase) are repo-wide, not per-target-branch, and concluded the
+`dev`→`main` merge-commit rule could only ever live in this doc. That was wrong.
+It's true of *classic* branch protection, which is exactly why it was easy to
+conclude the setting doesn't exist — but repository **rulesets** are a separate,
+newer system: a ruleset targets specific branches (`conditions.ref_name`), and its
+`pull_request` rule type carries its own `allowed_merge_methods`. Merge method
+genuinely can differ by target branch. The same "Protect The President" ruleset
+sets `allowed_merge_methods: ["merge"]` on `main` in both repos
+(rpg-dnd5e-web ruleset 6782045, rpg-api ruleset 6668107), with `dev` deliberately
+left unprotected so feature→`dev` PRs keep squashing normally. That split is safe
+because the only thing that ever targets `main` is the release cut, which should
+be a merge commit anyway. Together the two rules close both halves of the
+2026-07-28 failure this section documents: require-up-to-date blocks a *stale*
+`dev`; merge-method-`merge`-only blocks the *severed-ancestry* squash. That
+incident needed both to happen — either guard alone would have prevented it.
 
 **rpg-toolkit is exempt, deliberately.** It has no long-lived integration branch to
 protect: the board rule above already gives it a fresh branch per issue merged

@@ -94,6 +94,14 @@ explored frontier. v1 decisions:
   badly. (Future alternative needing no backend change: derive full-room
   envelopes from the unconditional walls channel, which already carries
   whole-room boundary edges.)
+- **Two-tier exception, now load-bearing (PR #626):** a region's row extent
+  tracks its own frontier exactly as above UNLESS it participates in a
+  validated connector, in which case it may snap early to the connector's
+  proven extent via the shared-Height assumption (every region shares one
+  `DungeonParams.Height`, so widening to a peer's proven extent is never
+  wrong geometry — just early). Isolated regions, and regions whose peer
+  hasn't revealed further either, still track the frontier. Column extent is
+  never widened this way — room widths genuinely differ, unlike height.
 - **Connector coverage must not depend on reveal state.** Doors pair to the
   nearest region on each side (not exact column adjacency), and — the
   structural guarantee — any connector-flanking wall entry not covered by an
@@ -111,6 +119,12 @@ explored frontier. v1 decisions:
   (the proto exposes no space dimensions). If per-viewer wall reveal is ever
   added server-side, that derivation silently narrows and the invisible-wall
   class returns — put this on that change's checklist.
+- **Wall height and cutaway now exist** (PR #626): a `?wallHeight=` dial and
+  a `?wallCutaway=1` prototype classifying each run/partition as
+  camera-facing (stub) or away-facing (tall), including a peel-away rule for
+  connector doors/walls that sit between the camera and the player's own
+  current room — see that PR for the full geometry and Kirk's default-look
+  decision.
 
 ## Implementation notes (feeds plan.md)
 

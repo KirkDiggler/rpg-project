@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:,">
+  <title>Dungeon Authoring — Visual Walkthrough</title>
+  <style>
+    :root { --ground:#efe9dd; --panel:#f7f3ea; --ink:#23262e; --muted:#6b6f7a; --line:#d8d1c2; --stone:#51678a; --torch:#b0772e; --green:#1f9e60; --code:#23262e; --codeink:#e8e4da; --key:#8fb0dd; --value:#f0d9ae; --reserved:#7d828f; }
+    @media (prefers-color-scheme: dark) { :root { --ground:#1a1d24; --panel:#22262f; --ink:#e6e2d8; --muted:#9aa0ac; --line:#363b47; --stone:#7f9cc9; --torch:#d29a4b; --green:#3ddc84; --code:#14161c; } }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:0 20px 80px; background:var(--ground); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:920px; margin:auto; }
+    h1,h2,h3 { font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif; text-wrap:balance; }
+    h1 { margin:48px 0 8px; font-size:2.35rem; line-height:1.15; }
+    h2 { margin:56px 0 12px; font-size:1.55rem; }
+    h3 { margin:0 0 6px; font-size:1.1rem; }
+    p { max-width:70ch; }
+    a { color:var(--stone); }
+    .eyebrow { margin:40px 0 0; color:var(--torch); font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+    .lede { max-width:65ch; margin-top:0; color:var(--muted); font-size:1.12rem; }
+    .status { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0 8px; padding:0; list-style:none; font-size:.84rem; }
+    .status li { padding:4px 12px; border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--muted); }
+    .status b { color:var(--ink); }
+    .panel { margin:18px 0; padding:18px 20px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+    .scroll { overflow-x:auto; }
+    .callout { max-width:68ch; margin:16px 0; padding:3px 0 3px 14px; border-left:3px solid var(--torch); color:var(--muted); font-size:.95rem; }
+    .callout b { color:var(--ink); }
+    .legend { display:flex; flex-wrap:wrap; gap:16px; margin:10px 0 4px; color:var(--muted); font-size:.82rem; }
+    .legend span::before { content:""; display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:2px; vertical-align:baseline; }
+    .lg-pin::before { background:var(--value); } .lg-safe::before { background:var(--green); } .lg-row::before { background:var(--reserved); }
+    pre { margin:10px 0; padding:18px 20px; overflow-x:auto; border-radius:10px; background:var(--code); color:var(--codeink); font:13px/1.62 ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+    .k { color:var(--key); } .v { color:var(--value); } .c { color:var(--reserved); font-style:italic; }
+    code { font: .9em ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+    table { width:100%; border-collapse:collapse; font-size:.92rem; }
+    th,td { padding:9px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { color:var(--muted); font-size:.74rem; letter-spacing:.1em; text-transform:uppercase; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+    .card { padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--ground); }
+    .card p { margin:4px 0 0; color:var(--muted); font-size:.9rem; }
+    .flow { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; }
+    .node { min-width:136px; padding:9px 12px; border:1.5px solid var(--line); border-radius:8px; background:var(--ground); }
+    .node b { display:block; font-size:.86rem; } .node span { color:var(--muted); font-size:.75rem; }
+    .arrow { align-self:center; color:var(--muted); font-size:1.15rem; }
+    .band-label { margin:0 0 6px; font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    .band + .band { margin-top:16px; }
+    .milestone-done { color:var(--green); font-weight:700; } .milestone-next { color:var(--torch); font-weight:700; }
+    svg { display:block; max-width:100%; height:auto; } svg text { font-family:system-ui,sans-serif; }
+    footer { margin-top:64px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:.85rem; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Visual companion · canonical design merged in rpg-project #117</p>
+  <h1>A dungeon is a file — and a room can now be placed.</h1>
+  <p class="lede">This is a visual reading aid for the approved dungeon-authoring design and its static-placement delta. It uses the delivered <code>reference-tomb</code> content as its example; the Markdown design and plan remain the normative source.</p>
+  <ul class="status">
+    <li><b>Design:</b> approved; #117 merged</li>
+    <li><b>M1:</b> delivered — static tomb, workbench, content-backed route</li>
+    <li><b>M2:</b> remaining — count-based spawns and crypt migration</li>
+  </ul>
+
+  <h2>1 · What an author writes now</h2>
+  <p>One YAML file lives under rpg-api’s <code>internal/content/dungeons/</code>. The shipped <code>reference-tomb</code> is a three-room, fully static M1 example: entrance, hall, then a locked boss tomb. Gold values are pinned by the author; there is no private asset or game screenshot in this companion.</p>
+  <div class="legend"><span class="lg-pin">pinned entry</span><span class="lg-safe">valid safe placement</span><span class="lg-row">reserved row</span></div>
+  <pre><span class="k">version</span>: <span class="v">1</span>
+<span class="k">key</span>: <span class="v">reference-tomb</span>
+<span class="k">name</span>: <span class="v">The Tomb of the Captain</span>
+<span class="k">theme</span>: <span class="v">crypt</span>
+<span class="k">height</span>: <span class="v">8</span> <span class="c"># shared by every room</span>
+<span class="k">rooms</span>:
+  - <span class="k">id</span>: <span class="v">entrance</span>
+    <span class="k">archetype</span>: <span class="v">entrance</span>
+    <span class="k">width</span>: <span class="v">6</span>
+    <span class="k">place</span>:
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:props:brazier"</span>, <span class="k">at</span>: <span class="v">[1, 1]</span> }
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:props:brazier"</span>, <span class="k">at</span>: <span class="v">[1, 6]</span> }
+  - <span class="k">id</span>: <span class="v">hall</span>
+    <span class="k">archetype</span>: <span class="v">chamber</span>
+    <span class="k">width</span>: <span class="v">10</span>
+    <span class="k">place</span>: <span class="c"># pillars, torch, bone pile, and two skeletons at exact cells</span>
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:monsters:skeleton"</span>, <span class="k">at</span>: <span class="v">[5, 3]</span> }
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:monsters:skeleton"</span>, <span class="k">at</span>: <span class="v">[7, 5]</span> }
+  - <span class="k">id</span>: <span class="v">tomb</span>
+    <span class="k">archetype</span>: <span class="v">boss</span>
+    <span class="k">width</span>: <span class="v">12</span>
+    <span class="k">boss</span>: { <span class="k">ref</span>: <span class="v">"dnd5e:monsters:skeleton-captain"</span>, <span class="k">at</span>: <span class="v">[7, 5]</span> }
+    <span class="k">place</span>:
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:props:coffin"</span>, <span class="k">at</span>: <span class="v">[6, 3]</span>, <span class="k">blocks_los</span>: <span class="v">false</span> }
+      - { <span class="k">ref</span>: <span class="v">"dnd5e:props:altar"</span>, <span class="k">at</span>: <span class="v">[9, 3]</span> }
+<span class="k">connectors</span>:
+  - { <span class="k">from</span>: <span class="v">entrance</span>, <span class="k">to</span>: <span class="v">hall</span> }
+  - { <span class="k">from</span>: <span class="v">hall</span>, <span class="k">to</span>: <span class="v">tomb</span>, <span class="k">locked</span>: { <span class="k">dc</span>: <span class="v">12</span>, <span class="k">ability</span>: <span class="v">dex</span> } }</pre>
+  <p class="callout"><b>Strict means the file either loads or names the problem.</b> Unknown YAML fields fail under strict decode; placements are validated before play. A <code>place</code> item routes by ref type: <code>props</code> becomes an obstacle and <code>monsters</code> becomes a positioned spawn. Light pools remain emergent from light-emitting props such as braziers — there is no lighting field.</p>
+
+  <h2>2 · The placement contract</h2>
+  <div class="grid">
+    <section class="card"><h3>Room-local coordinates</h3><p><code>at: [col, row]</code> is local to its room: <code>0 ≤ col &lt; width</code> and <code>0 ≤ row &lt; height</code>. The compiler does not reproduce the region offset; the engine applies it when it realizes the dungeon’s shared absolute hex space.</p></section>
+    <section class="card"><h3>One clear lane</h3><p>For <code>height: 8</code>, row <code>height / 2 = 4</code> is unavailable to <code>place</code>. This is the engine’s reserved door-row lane in every room, matching rolled-obstacle exclusions and preserving traversability by construction.</p></section>
+    <section class="card"><h3>Static and rolled may coexist</h3><p>Placed props and monsters claim their cells first; count-based obstacle rolls use remaining safe cells. A static placement (including <code>boss.at</code>) cannot be combined with <code>pattern: scattered</code>, because seed-rolled interior walls cannot promise its cell is clear.</p></section>
+  </div>
+
+  <h2>3 · The delivered tomb, as a data map</h2>
+  <p>The diagram is a schematic of the current three-room content, not a rendered game image. The locked connector is between the hall and tomb; the two hall skeletons and the captain are explicit placements.</p>
+  <div class="panel scroll">
+    <svg viewBox="0 0 870 258" role="img" aria-label="Three rooms joined left to right: entrance with two braziers, a pillared hall with two skeletons, and a locked boss tomb with a captain.">
+      <g stroke-width="2.5" fill-opacity=".14">
+        <rect x="25" y="65" width="160" height="115" rx="10" fill="#51678a" stroke="#51678a"/>
+        <rect x="265" y="40" width="235" height="165" rx="10" fill="#51678a" stroke="#51678a"/>
+        <rect x="580" y="25" width="250" height="195" rx="10" fill="#7a4a8c" stroke="#7a4a8c"/>
+      </g>
+      <g stroke="#8a8578" stroke-width="2"><line x1="185" y1="122" x2="265" y2="122"/><line x1="500" y1="122" x2="580" y2="122"/></g>
+      <g fill="#8a8578"><rect x="213" y="110" width="14" height="24" rx="2"/></g>
+      <g fill="#b0772e"><rect x="533" y="108" width="14" height="28" rx="2"/></g>
+      <text x="540" y="98" text-anchor="middle" font-size="13">locked · DC 12 dex</text>
+      <g fill="currentColor" font-size="14" font-weight="650"><text x="105" y="52" text-anchor="middle">entrance</text><text x="382" y="28" text-anchor="middle">hall</text><text x="705" y="14" text-anchor="middle">tomb (boss)</text></g>
+      <g font-size="19"><text x="68" y="112">♨</text><text x="68" y="160">♨</text><text x="330" y="94">●</text><text x="405" y="94">●</text><text x="330" y="165">●</text><text x="405" y="165">●</text><text x="365" y="128">💀</text><text x="438" y="155">💀</text><text x="640" y="92">⚰</text><text x="720" y="95">▣</text><text x="690" y="153">👑</text><text x="620" y="190">♨</text><text x="620" y="61">♨</text></g>
+      <g fill="#8a8578" font-size="11"><text x="105" y="198" text-anchor="middle">2 braziers</text><text x="382" y="224" text-anchor="middle">4 pillars · torch · bone pile · 2 skeletons</text><text x="705" y="239" text-anchor="middle">coffin · altar · statues · braziers · candles · captain</text><text x="25" y="252">schematic only · exact cells are authored in YAML</text></g>
+    </svg>
+  </div>
+
+  <h2>4 · What runs where</h2>
+  <p>The boundary stays intact: rpg-api hosts bytes and selects a key; the toolkit owns decoding, validation, compilation, placement, and monster semantics. No proto or web key-selection surface was added for M1.</p>
+  <div class="panel">
+    <div class="band"><p class="band-label" style="color:var(--torch)">rpg-api — content host and orchestration</p><div class="flow"><div class="node"><b>embedded YAML</b><span>internal/content/dungeons</span></div><div class="arrow">→</div><div class="node"><b>RPG_CONTENT_DIR</b><span>restart-time dev override</span></div><div class="arrow">→</div><div class="node"><b>StartEncounter</b><span>content-backed branch</span></div></div></div>
+    <div class="band"><p class="band-label" style="color:var(--stone)">rpg-toolkit — interpretation and runtime safety</p><div class="flow"><div class="node"><b>dungeonspec.Load</b><span>strict decode · validate · compile</span></div><div class="arrow">→</div><div class="node"><b>InitDungeon</b><span>geometry · doors · placed props</span></div><div class="arrow">→</div><div class="node"><b>SeedMonsters</b><span>pinned spawn batch</span></div></div></div>
+  </div>
+  <p class="callout"><b>The M1 walkthrough is a normal client route, not a test-only backdoor.</b> Set <code>RPG_CONTENT_DIR=… RPG_DUNGEON_KEY=reference-tomb</code>, restart the API, then start an encounter from the host/lobby flow. The override is a development selection mechanism: when absent, M1 retains the legacy crypt default.</p>
+
+  <h2>5 · Two ways to inspect the same file</h2>
+  <div class="grid">
+    <section class="card"><h3>Workbench</h3><p><code>dungeonspec-workbench</code> loads a file and seed, realizes the floor plan, runs <code>SeedMonsters</code>, and reports VALID plus an ASCII layout and exact placed entries. Its verdict covers the full M1 path, not decode alone.</p></section>
+    <section class="card"><h3>Live edit/restart walkthrough</h3><p>Use an <code>RPG_CONTENT_DIR</code> copy to edit YAML without rebuilding. Restart is required because the content registry is built at API construction. The selected <code>reference-tomb</code> can then be walked through the real game flow.</p></section>
+  </div>
+
+  <h2>6 · Delivery state, without promoting the plan to a promise</h2>
+  <table>
+    <thead><tr><th>State</th><th>What is factual now</th></tr></thead>
+    <tbody>
+      <tr><td class="milestone-done">M1 delivered</td><td>Static placement, strict loading, room-local coordinates, the reserved door row, the workbench, content hosting, and the development key override landed. rpg-api <a href="https://github.com/KirkDiggler/rpg-api/pull/710">#710</a> delivered the content-backed path; <a href="https://github.com/KirkDiggler/rpg-api/pull/718">#718</a> merged the Kirk-approved three-room <code>reference-tomb</code> and exact-placement test pins.</td></tr>
+      <tr><td class="milestone-next">M2 remaining</td><td>Migration work remains: count-based multi-monster safe-cell rolling, crypt YAML parity, and removal of the legacy crypt scatter/dual path. rpg-api <a href="https://github.com/KirkDiggler/rpg-api/issues/711">#711</a> is the tracked pre-work: apply the default crypt key before content lookup so a default request and an explicit <code>crypt</code> request cannot diverge when crypt becomes content-backed.</td></tr>
+      <tr><td>Later, not claimed delivered</td><td>M3 is the broader reference-dungeon evidence/camera milestone; M4 is a future tuning-loop design. Difficulty pools, interactions, loot, hand-drawn layouts, and table-rolls are not silently introduced by this companion.</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    Companion to <a href="design.md">the canonical design</a> and <a href="plan.md">implementation plan</a> on rpg-project <a href="https://github.com/KirkDiggler/rpg-project/pull/121">PR #121</a>. Design provenance: <a href="https://github.com/KirkDiggler/rpg-project/pull/117">PR #117</a>, merged. Facts current to the visual-companion amendment; this file is documentation, not a product contract.
+  </footer>
+</main>
+</body>
+</html>

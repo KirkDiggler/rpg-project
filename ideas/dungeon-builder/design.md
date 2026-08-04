@@ -1,0 +1,344 @@
+# Dungeon Builder: the in-game authoring loop
+
+**Status:** design for review
+**Parent:** rpg-project#169 (this design's issue) · dialect-evolution tracker rpg-project#175 · settled delivery sequence rpg-project#176–#180 · relates to `ideas/dungeon-authoring/` (PR #121, M1) · supersedes M4 ("in-client tuning panel," listed as a future-design placeholder in #121) · adjacent to rpg-project#132 (Dungeon visual fidelity umbrella) and rpg-project#131 (pick-your-dungeon)
+
+This is the authoritative design document. It intentionally has no implementation
+`plan.md` until this design is approved.
+
+## Problem
+
+M1 dungeon authoring (rpg-toolkit#846 `dungeonspec` + rpg-api#710 content
+store) made authored YAML dungeons real; the default dungeon on the deployed
+dev server (Kirk's Discord) is the authored 3-room tomb. But the authoring
+loop today is: edit YAML in `RPG_CONTENT_DIR` → `docker restart rpg-api` → start
+a fresh encounter. It works, and it's blind — you place `[11,3]` in a text
+file and find out in 3D after a restart. Coordinate traps are invisible in
+text and bite every session: odd-q hex parity, the unplaceable doorRow at
+`height/2`, connector columns that belong to no room. With friends the loop
+is far worse: merge → deploy → restart the Discord activity → rejoin lobby.
+And there is no separate "prod" to insulate that from — the deployed game IS
+the deployed dev server (Kirk's Discord), so any friend-facing authoring
+surface must eventually run in that same environment, not a staging copy of
+it.
+
+## Product frame — the loop is the product
+
+This is not primarily a map editor; it's the game's design-iteration engine.
+The intended cycle: play with friends → fail → group discussion ("would
+health potions fix this?") → tweak the dungeon → replay → a fix that works
+graduates into a mechanic (potions in lootable boxes; opening costs action
+budget; looting becomes an incentive). Static maps are the design lab: good
+static maps teach what procedural generation must match — the same "author
+first, proceduralize what's proven" spine that shipped M1. Downstream
+unlocks unblocked by faster iteration: pseudo-DM mode (one person authors —
+traps here, monsters there, hiding places — while others play) and
+play-derived feature requests for the AI/monster-behavior work (e.g.
+"monsters need hiding decisions"), sourced from observed play instead of
+speculation.
+
+## Design principles
+
+- **The editor is a view over dungeonspec YAML.** It reads and writes the
+  real format and never invents its own. As the schema grows (facing, walls,
+  loot, triggers), the tool grows a matching affordance — the tool is the
+  forcing function that surfaces what the YAML can't yet express.
+- **The YAML file remains the committable artifact; git stays canonical.**
+  The editor is a faster way to produce and iterate on that file, not a
+  replacement for it.
+- **Loop latency is the ranking design constraint.** Every choice below is
+  judged by how fast idea-to-replay gets.
+- **Grid math is server-authoritative — the Boundary Rule applies to the
+  editor too.** The client never reimplements room-chain offsets, odd-q
+  parity, or doorRow placement to decide what's clickable. The toolkit
+  already produces exactly this server-side for the same reason the
+  workbench CLI exists (`dungeonspec.WorkbenchReport`,
+  `rpg-toolkit/encounter/dungeonspec/workbench.go`): compile a spec at a
+  seed and describe the resulting floor plan without a client. The board
+  renders that server-computed layout; it never derives one.
+- **Rooms are stable authored semantic regions.** Their IDs own reveal,
+  placement, spawning, scripting, and archetype meaning. A wall is not a
+  room-definition operation: an inner wall can change movement and line of
+  sight while both sides retain the same room ID. An area needing independent
+  gameplay identity receives another authored region.
+- **Dungeon space owns canonical wall and door edges.** An edge has one
+  representation, never competing copies owned by adjacent rooms. The runtime
+  representation is `HexRecord.edges`; `EncounterService.Space.walls` no
+  longer exists and must not be reintroduced.
+- **Both future authoring workflows share one compilation target.** A
+  room-first workflow and a large-area workflow compile to floor cells,
+  canonical dungeon-owned edges, and semantic regions. Walls do not flood-fill
+  or rename regions. A collapsed-looking cell remains an obstacle/prop until
+  actual no-floor mechanics (falling, bridging, or vertical
+  visibility/traversal) require a distinct primitive; `holes` are deferred.
+
+## rpg-api — runtime dungeon loading (the unlock)
+
+A dev-gated authoring surface, behind an env flag (exact name for
+implementers to choose, e.g. `RPG_AUTHORING=1`), off by default. Because the
+deployed game is the dev server on Kirk's Discord, enabling authoring for
+friends later is a one-line env change in the deployed compose — same
+environment, no new architecture.
+
+**Decision: the gate requires `RPG_CONTENT_DIR`.** Enabling the authoring
+env flag without `RPG_CONTENT_DIR` also set is a construction-time failure,
+not a degraded mode — the server fails fast with a clear error rather than
+starting in a silently weaker state. Write-through (below) carries two
+guarantees at once: the on-disk file stays the committable artifact, and an
+api restart recovers state from the dir. A memory-only fallback would drop
+both guarantees without telling anyone. Locally the dir is always set
+already; on the deployed box it's a volume path.
+
+- **`PutDungeon(key, yaml)`**: runs the toolkit's existing validate+compile
+  (the logic rpg-api already imports); on success, updates the *running*
+  orchestrator's compiled-spec registry and stores the compiled spec in the
+  content store with precedence uploaded → `RPG_CONTENT_DIR` → embedded; on
+  a compile failure, returns structured errors (field-path-mapped)
+  that an editor can render inline — **not** as an `InvalidArgument`
+  status; see the Error transport decision below for why. **What gets
+  mutated, precisely:** the
+  registry `StartEncounter` reads (`Orchestrator.contentSpecs`,
+  `internal/orchestrators/lobby/dungeon_spec.go`) is built ONCE at
+  construction time in `lobby.New`, from `loadContentSpecs` — an immutable
+  startup snapshot today. `PutDungeon` must update that running registry
+  with concurrency-safe reads (an `RWMutex`, or an atomic swap of a new
+  immutable map — implementer's choice) so its effect is visible to the
+  *very next* `StartEncounter`, with no restart. A `PutDungeon` whose effect
+  waits for a restart defeats the entire point of this design — that
+  failure mode is explicitly excluded. **Ordering on failure**: write-through
+  to `RPG_CONTENT_DIR` happens first; a write error fails the RPC and the
+  running registry is left untouched. Only after a successful write does the
+  registry swap happen. This ordering is what prevents the silent-divergence
+  case where a spec plays now but vanishes on the next restart because it
+  was never actually written to disk. (A corollary: because the gate
+  requires `RPG_CONTENT_DIR` and write-through is synchronous, the uploaded
+  and dir tiers of the content-store precedence always agree at runtime —
+  "uploaded → dir → embedded" is effectively two-tier, uploaded/dir vs.
+  embedded, in this design's actual operation.)
+- **Key rules**: `PutDungeon` rejects (`InvalidArgument`) any mismatch
+  between its `key` argument and the YAML's own declared `key:` field.
+  Write-through targets the *originating* file: if a file already in
+  `RPG_CONTENT_DIR` declares that key, overwrite that file; otherwise create
+  `<key>.yaml`. This matters because the content registry indexes files by
+  declared key, not filename (`internal/content/registry.go`) — a second
+  file that declares an already-used key is silently dropped, and which
+  file survives depends on read/iteration order. Writing through to the
+  originating file is what prevents `PutDungeon` from ever creating that
+  shadow case. Separately: `key` is constrained to `[a-z0-9-]` slugs and
+  rejected otherwise — this isn't just tidiness, `key` names a server-side
+  file write, so it's a safety constraint on top of a naming one.
+- **Error transport decision (surfaced by the S0 protos gate,
+  rpg-api-protos PR #201):** `InvalidArgument` status is for
+  malformed *requests* only — the key-charset and key/YAML-`key:`-mismatch
+  cases above, where there's nothing to return. A well-formed request
+  whose YAML *content* fails `dungeonspec`'s validate/compile returns OK
+  status with `success=false` and `field_errors` populated in-band,
+  `floor_plan` unset — a non-OK status would drop the response body
+  entirely and lose the editor's inline errors, which is the whole reason
+  this split exists. `success=true` implies `floor_plan` is set. With the
+  gate off, the call is `Unimplemented` as already stated. The editor reads
+  `field_errors` from the body and treats an `InvalidArgument` status as a
+  programming error, never as author feedback.
+- **Write-through**: successful puts also write the YAML to
+  `RPG_CONTENT_DIR` per the key rules above, so the on-disk file stays the
+  committable artifact, an api restart recovers state from the dir, and on
+  a future remote box a volume gives the same durability.
+- **Response contract — grid math never leaves the server.** `PutDungeon`'s
+  success response returns the compiled floor plan: laid-out rooms, cell
+  legality, connector/door positions, **and the entrance as its own
+  field** — a generator-chosen spawn-anchor cell (`SpaceData.Entrance`),
+  not derivable from any room's `archetype` (an "entrance"-archetype room
+  names which *room* holds it, not the *cell* within that room). This
+  isn't just completeness: `dungeonspec.Validate` never checks a `place:`
+  entry against the entrance — bounds, the reserved door row, duplicate
+  cells, and ref types are all it covers — while `StartEncounter` seats
+  the whole party along a line running outward from that cell. An author
+  can place a movement-blocking prop directly on the party's spawn and
+  get a green save; the board is the only thing that can warn about it,
+  and only if it actually has the entrance cell to check against. A dry-run mode (a
+  `validate_only` flag on `PutDungeon`, or a sibling `Preview` RPC —
+  implementer's choice) returns the same compiled floor plan without
+  persisting, so the board gets live per-edit feedback by asking the server,
+  never by recomputing layout client-side. `dungeonspec.WorkbenchReport`
+  (`rpg-toolkit/encounter/dungeonspec/workbench.go`) already runs this exact
+  compile-and-describe step outside a server — but it returns a formatted,
+  human-readable text report, not structured data an RPC can project. The
+  structured floor-plan response this design needs is a new projection over
+  data the toolkit already exposes (`CompiledDungeon.Params` from `Load`,
+  `Encounter.ToData()` after `InitDungeon`/`SeedMonsters`) — precedent that
+  the compile step is already server-side and side-effect-free, not a
+  reusable payload. The floor plan must also project the generated canonical
+  solid-wall and door edges for the editor; this is a read-only truth seam
+  before any YAML edge editing. It projects to/from the runtime's
+  `HexRecord.edges`, not a stale flat `Space.walls` field. Preview/dry-run
+  compiles at a fixed default seed (not a caller-supplied one): seed only
+  affects rolled content, which the board already keeps off-grid in the
+  "rolled content" panel (below), so the board's per-edit feedback doesn't
+  need seed control.
+- **`ListDungeons()`** — not behind the authoring gate. The gate covers `PutDungeon` (and its
+  `validate_only` dry-run) only — `ListDungeons` reads content and mutates
+  nothing, and the lobby dropdown is a player-facing feature that must
+  work with authoring off. It's defined alongside `LobbyService`, not the
+  new authoring service. Returns keys + display names for the lobby dropdown;
+  rpg-project#131 ("pick-your-dungeon")
+  contemplated this as an optional RPC, this design graduates it to
+  required.
+- **`StartEncounter` DOES need proto/handler changes** (correcting an
+  earlier assumption in this design): the orchestrator's caller → env →
+  default-key precedence already exists (`StartEncounterInput.DungeonKey`,
+  `internal/orchestrators/lobby/start_encounter.go`), but no proto field
+  feeds it today — `StartEncounterRequest` (rpg-api-protos
+  `dnd5e/api/lobby/v1alpha1/service.proto`) carries only `lobby_id`, and
+  `RPG_DUNGEON_KEY` is a process-wide override, not a per-lobby choice. The
+  authoring loop therefore includes: an **rpg-api-protos change** adding `dungeon_key` to
+  `StartEncounterRequest`, handler plumbing in rpg-api to populate
+  `StartEncounterInput.DungeonKey` from it, and a proto regen consumed by
+  both rpg-api and rpg-dnd5e-web. rpg-api-protos is its own repo with its
+  own release cycle and is the slowest link in this chain — naming it here
+  is deliberate, not an oversight.
+- The editor's play action always starts a **fresh** encounter — stale
+  encounters persist in Redis across content swaps (known trap, carried
+  forward unchanged).
+- Error handling: with the gate off, the authoring surface is
+  absent/`Unimplemented`; malformed-request failures (key charset, key/YAML
+  mismatch) are `InvalidArgument`; content-validation failures are in-band
+  `success=false` + `field_errors`, per the Error transport decision above
+  — not `InvalidArgument`; unknown key on `StartEncounter` stays `NotFound`
+  as today.
+
+## rpg-dnd5e-web — the `/author` route (dev-gated)
+
+Three panes:
+
+- **Board**: renders the grid the server just compiled (see the response
+  contract above — the board never derives layout itself) — hex parity
+  visible, the doorRow and other illegal cells simply not clickable,
+  connector columns shown, rooms chained left-to-right as the compiler lays
+  them out. Click to place, drag to move, delete; per-placement
+  `blocks_movement` / `blocks_los` flags editable **on prop placements
+  only** — dungeonspec validation rejects both flags on monster placements,
+  so the board gates those controls by ref type rather than letting an
+  author set a value the server will reject. Count-based `obstacles:`
+  entries (rolled, not placed) have no coordinates until a seed rolls them:
+  the board preserves them verbatim in the YAML and lists them in an
+  off-board "rolled content" panel instead of pretending they have a
+  position. `place` combined with `pattern: scattered` is rejected by
+  validation today, so the board doesn't offer that combination either.
+- **Palette**: the refs that actually have constructors (the toolkit#847
+  monster/prop palette). Until their respective schema slices land, generated
+  doors and the resolved entrance are **read-only overlays** derived from the
+  compiled layout, not palette items the author can place. Slice #177 adds an
+  optional dungeon-scoped authored `start` that overrides the generated
+  entrance; an authored `end` is explicitly not in this sequence. Slice #179
+  adds canonical authored solid/door edges. The **boss pin** (`boss.at`) is
+  the one exception already authorable today. Separately: props
+  have no toolkit-side registry, so validation checks only a placed ref's
+  type segment, not that the specific ref exists — a hand-typed prop ref
+  can save green and silently render nothing. The practical prop list lives
+  in the web client's own `propManifest.ts`
+  (`src/components/hex-grid/propManifest.ts`), which is the palette source;
+  a shared prop registry that closes this gap is follow-up work,
+  not part of this design. "Compile errors surface inline" (below)
+  therefore does not cover prop-ref existence.
+- **YAML pane**: live text beside the board, two-way — board edits update
+  the YAML, YAML edits update the board. **Hard requirement:
+  comment-preserving round-trip.** Authored files use comments as design
+  notes (e.g. "colonnade: 8 pillars framing the center lane" in
+  `showcase.yaml`); an editor that strips comments on save destroys the
+  artifact. Use a CST-round-trip YAML parser (e.g. the `yaml` npm package by
+  eemeli, which supports this).
+- Save calls `PutDungeon`; compile errors surface inline, mapped onto board
+  cells where possible. Play jumps to the lobby with the authored dungeon
+  preselected in the dropdown; leaving the encounter returns to the editor.
+  This is the core UX loop Kirk described: "go from my edit panel in the
+  game to a lobby with that dungeon in the dropdown; come out, edit it, go
+  back in."
+
+(For later implementers: rpg-api and rpg-dnd5e-web work both branch from
+`origin/dev`, not `main` — per rpg-project CLAUDE.md's base-branch table,
+updated by the 2026-07-28 rule (`dev` replaced web's old `development`
+that day, and rpg-api grew a matching `dev`). Implementation mechanics are
+written only in a plan added after this design is approved.)
+
+## Settled delivery sequence
+
+The authoring loop remains the product, but the geometry dialect advances in
+this order after design approval. These are cross-repo tracking slices; their
+per-repository issues are cut only after approval of this document.
+
+1. **#176 — generated wall/door truth.** Project every generated solid-wall
+   and door edge into `FloorPlan`, and render/hit-test that same edge geometry
+   in the 2D and 3D views. This is read-only: no YAML `walls:` field or
+   topology change.
+2. **#177 — authored start.** Add optional dungeon-scoped `start: [c, r]`.
+   It overrides the generator-selected entrance; absent preserves current
+   behavior. It must be an in-bounds traversable floor cell and appear
+   identically in preview and the real walkthrough.
+3. **#178 — floor-prop hex facing.** Add optional `facing:
+   E|NE|NW|W|SW|SE` to existing room-scoped floor placements. It is additive;
+   absent preserves current rendering. Wall mount/height and behavior changes
+   are outside this slice.
+4. **#179 — authored canonical edges.** Add dungeon-scoped, edge-native
+   `walls:` entries (`from`, `to`, `kind: solid|door`) and deterministic
+   overlay behavior against generated geometry. They compile to canonical
+   runtime `HexRecord.edges`. A solid edge blocks movement and LoS; a door
+   uses the existing lifecycle. Inner edges do not split or rename a semantic
+   room.
+5. **#180 — cell-authored semantic regions.** Add stable-ID, explicit cell
+   regions with archetype metadata, validating non-empty, connected,
+   non-overlapping regions. Rectangular declarations retain a documented
+   compatibility path. A region boundary may meet another region without
+   either room owning the shared edge.
+
+`holes`, no-floor traversal, vertical placement, wall-mounted props,
+free-mode/no-aggro, authored `end`, and automatic flood-fill room naming are
+not part of these slices.
+
+### Dialect evolution is not automatically a document-version bump
+
+The target authoring dialect will keep evolving as the builder discovers
+requirements. Optional additive fields and capabilities remain compatible with
+the current document version. Calling that conceptual target evolution “v2”
+does not itself change an on-disk document version. Reserve a real YAML version
+bump for an incompatible room/topology semantic change; make that decision
+explicit when such a change is proposed rather than preemptively.
+
+## Supersedes M4
+
+The M1 dungeon-authoring plan (rpg-project PR #121) listed "M4: in-client
+tuning panel design" as a placeholder ("the in-client tuning panel is its
+own future design (M4)"). This design absorbs and supersedes M4 — M4 was
+never fleshed out; this is that fleshing-out. Stating this explicitly so
+both don't get built.
+
+## Testing
+
+- **api**: unit tests around content precedence (uploaded → dir → embedded),
+  write-through, and gate-off behavior; curl smoke test proves the endpoint
+  before any UI. Pinning the decisions above: no-restart visibility (a `PutDungeon`
+  immediately followed by `StartEncounter` yields the new spec, no restart
+  in between); gate-on with `RPG_CONTENT_DIR` unset fails at construction;
+  key-mismatch rejection and originating-file write-through targeting are
+  both unit-tested.
+- **editor**: round-trip tests — YAML → board model → YAML must be
+  byte-stable including comments. Cell legality is NOT re-derived
+  client-side (per the server-authoritative principle above) — the board
+  renders legality exactly as returned by the compiled-layout response, so
+  this is a contract test against a recorded response fixture, not a
+  reimplementation of the compiler's layout rules.
+- The loop itself is judged by live play (Kirk's live-walk + screenshots),
+  consistent with how authored content is already verified — not by review
+  machinery.
+
+## Rollout
+
+1. Approve this design PR; only then add an implementation `plan.md` to this
+   same tracking PR.
+2. Cut per-repo implementation issues for #176–#180 in their stated order.
+3. Keep the existing authoring loop (save → lobby → play → back to editor)
+   live throughout; each slice proves its wire state and its real game path.
+4. A remote/distributed authoring rollout remains configuration, not a second
+   architecture: the web route probes the server-side authoring capability at
+   runtime, and the server gate is enabled deliberately in deployed compose.
+
+— asset-pipeline agent, on behalf of KirkDiggler
