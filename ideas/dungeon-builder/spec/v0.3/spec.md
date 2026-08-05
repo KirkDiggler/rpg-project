@@ -1,7 +1,7 @@
 # Dungeon YAML Spec v0.3
 
-**Status:** PROPOSED — level cut and OPEN items below require Kirk ratification.
-**Normative.** See `README.md` for context, rationale, and reconciliation discussion.
+**Status:** RATIFIED v0.3, 2026-08-05.
+**Normative.** See `README.md` for context, rationale, and the ratification record.
 
 ## 1. Level cut
 
@@ -17,19 +17,9 @@ scope for v0.3 by omission. This table states construct membership only — deli
 order follows `plan.md`'s two-wave structure (Wave 0 prerequisite, then Wave 1 =
 #180), unchanged by this spec.
 
-### Ratification points
-
-Items 3–6 are marked OPEN inline at their section below; 1–2 have a settled
-direction already but still require Kirk's sign-off on this PR.
-
-| # | Item | Where | Recommendation |
-|---|---|---|---|
-| 1 | v0.3 level cut (this table + §4) | §1 | — |
-| 2 | `cells:` ruling + #175 Specimen Pack v0.2 supersession | §4.10.1 | `cells:` (ratified) |
-| 3 | Canvas + non-empty `rooms:` in one document | §4.5 | reject the combination |
-| 4 | `rooms:` + `regions:` in one document | §4.10.3 | reject the combination |
-| 5 | Authoring-projection scope (Wave 0 floor cells, Wave 1 region extents + parent id) | §4.5, §4.10 acceptance criteria | adopt the fuller projection |
-| 6 | Canvas-mode top-level `facing:` acceptance | §4.9 | none given — genuinely open |
+All six ratification points from the pre-ratification draft are resolved and stated
+below as normative rules — no OPEN markers remain in this document. See
+`README.md`'s Ratification record for the decision history.
 
 ## 2. Explicitly ABOVE v0.3
 
@@ -167,8 +157,8 @@ rooms: []
 
 1. A document is in exactly one of two floor-source modes: **room-chain mode**
    (`rooms:` non-empty) or **canvas mode** (`canvas:` present, `rooms: []`).
-2. **OPEN — pending ratification** (ratification point 3): whether a document may
-   combine non-empty `rooms:` with `canvas:`. Recommendation: reject.
+2. A document combining non-empty `rooms:` with `canvas:` MUST be rejected — a
+   document declares exactly one floor-source mode, never both.
 3. In canvas mode, the following checks MUST be skipped entirely: the `height >= 4`
    check; the `len(rooms) >= 2` check; `connectors:` count-equals-`len(rooms)-1`;
    boss cardinality; boss-axis; the M1 monster/boss.at restriction; boss-ref
@@ -188,8 +178,8 @@ rooms: []
    rejected in room-chain mode.
 8. `start:` (§4.8) resolves against the canvas floor in canvas mode.
 9. `FloorPlan` MUST echo `rooms: []` plus `canvas.width`/`canvas.height`, with
-   authored edges present as usual. **OPEN — pending ratification** (ratification
-   point 5): whether `FloorPlan` MUST also carry projected canonical floor cells.
+   authored edges present as usual, and MUST also project the canonical
+   structural-floor cells derived from the canvas dimensions.
 10. Growing `width`/`height` MUST be accepted unconditionally. Shrinking below any
     existing placement, wall endpoint, `start:`, or region cell MUST be rejected with
     a named, specific error — never a silent drop.
@@ -203,7 +193,10 @@ rooms: []
   successfully and returns a compiled `FloorPlan`.
 - An in-bounds canvas document validates successfully; every room-chain-only rule is
   skipped; out-of-bounds content fails clearly against canvas dimensions.
+- `FloorPlan` for a canvas document carries the projected canonical structural-floor
+  cell set, not dimensions alone.
 - A canvas document with top-level `height: 1` validates successfully.
+- A document declaring both non-empty `rooms:` and `canvas:` is rejected.
 - Shrinking `width`/`height` below existing content produces a named, specific
   validation error, never a silent drop.
 
@@ -214,6 +207,7 @@ canvas: { width: 20, height: 30 }
 rooms: []
 place:
   - { ref: 'dnd5e:props:pillar', at: [10, 15] }
+  - { ref: 'dnd5e:props:altar', at: [8, 8], facing: W }
   - { ref: 'dnd5e:monsters:skeleton-captain', at: [5, 18] }
 ```
 
@@ -222,6 +216,7 @@ Same field table as §4.4's `place[]`, except `at` is unconditionally absolute
 
 1. MUST be accepted in canvas mode; MUST remain rejected in room-chain mode.
 2. There is no top-level `boss:` in v0.3 — `boss:` remains room-scoped only (§4.4.3).
+3. `facing:` on a non-monster, `mount: floor` entry MUST be accepted (§4.9.2).
 
 ### 4.7 Walls — `walls:` (edge-native; rpg-project#176/#179)
 
@@ -306,26 +301,27 @@ start: [1, 3]   # absolute [column, row]; optional/null
 | Index | 0 | 1 | 2 | 3 | 4 | 5 |
 
 1. `facing:` is decode-known on every `place:`/`boss:` entry type.
-2. Acceptance is scoped to room-scoped, non-monster, `mount: floor` (default)
-   placements only. A monster `place:` entry, a `boss:` entry, or a `mount: wall`
-   placement with `facing:` set MUST be rejected with a field-path-specific error
-   (`"facing only supported on room-scoped floor props"`), not a decode failure and
-   not a silent drop.
-3. Current validator error order (fact, not a v0.3 change): `facing` is checked
+2. Acceptance is scoped to non-monster, `mount: floor` (default) placements — MAY be
+   room-scoped, or top-level in canvas mode (§4.6). The capability belongs to the
+   placement (a floor prop), not to which list it lives in.
+3. A monster `place:` entry, a `boss:` entry, or a `mount: wall` placement with
+   `facing:` set MUST be rejected with a field-path-specific error (e.g.
+   `"facing only supported on floor props"`), not a decode failure and not a silent
+   drop.
+4. Current validator error order (fact, not a v0.3 change): `facing` is checked
    before `mount`; the top-level-unsupported error fires only once no entry sets
    either.
-4. **OPEN — pending ratification** (ratification point 6): whether a canvas-mode
-   top-level entry's `facing:` is accepted or rejected. No default is stated.
 5. Omitted/`null` MUST preserve existing orientation exactly; presence MUST be
    distinguished from absence through persistence.
 
 **Acceptance criteria:**
 - All six values compile and render at the expected 60° orientations on a
   room-scoped, non-monster, floor-mounted placement.
+- All six values compile and render identically on a canvas-mode top-level,
+  non-monster, floor-mounted placement.
 - An unknown value fails validation with the accepted vocabulary named in the error.
 - A monster, boss, or `mount: wall` entry with `facing:` set fails with the
-  field-path-specific message above.
-- Not stated: canvas-mode top-level `facing:` acceptance (item 4 above).
+  field-path-specific message above, in either mode.
 
 ### 4.10 Regions — `regions:` (rpg-project#180, Wave 1)
 
@@ -397,12 +393,19 @@ NOT be accepted as region shape.
 7. Source `cells:` and the derived parent id/containment index MUST both be
    persisted. `Load` MUST recompute both and reject on disagreement with the
    persisted value.
-8. **OPEN — pending ratification** (ratification point 4): whether a document may
-   combine non-empty `rooms:` with declared `regions:`. Precedence (regions win once
-   declared, §4.10.2.7) is already settled and not part of this open item —
-   only the combination's legality is open. Recommendation: reject.
+8. A document combining non-empty `rooms:` with declared `regions:` MUST be
+   rejected — a document declares exactly one topology model, never both.
+   (Precedence — regions winning validation once declared — is the separate,
+   independently-stated rule at §4.10.2.7; this rule is about the combination's
+   legality, not precedence between the two.)
 
-#### 4.10.4 Runtime wire
+#### 4.10.4 Wire projection
+
+**Authoring** — `FloorPlan` MUST project, for each declared region: its `cells:`
+extent and a toolkit-derived parent region id (absent means root). This is in
+addition to, not a replacement for, the per-hex runtime projection below.
+
+**Runtime**:
 
 | Field | Type | Semantics |
 |---|---|---|
@@ -427,10 +430,11 @@ NOT be accepted as region shape.
   the inner region.
 - A boss-archetype region's boss-cell membership check supersedes room-archetype
   boss validation the moment any `regions:` are declared, with no double-validation.
+- A document declaring both non-empty `rooms:` and `regions:` is rejected.
 - `Load` recomputes persisted parent/index and rejects on disagreement.
+- Authoring `FloorPlan` projects each declared region's `cells:` extent and its
+  toolkit-derived parent id.
 - Runtime projection exposes `Zone.parent_id` and per-hex innermost `zone_id`,
   fog-authorized, with no hidden-extent disclosure.
 - No region boundary appears as a `FloorPlanEdge` record unless an independent
   `walls:` entry (§4.7) also exists on that same edge.
-- Not required: authoring-wire projection of region extents or a derived parent id
-  on `FloorPlan` (ratification point 5).
