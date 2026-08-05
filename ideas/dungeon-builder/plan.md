@@ -4,7 +4,7 @@
 
 ## Current authority
 
-[Specimen Pack v0.2](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5185751479) is the target grammar and acceptance authority. v0.1 is historical delivery evidence, not the current target. The target separates physical canvas from semantic regions and keeps the toolkit authoritative.
+The current versioned spec under `ideas/dungeon-builder/spec/` — not a fixed version, so a future spec bump needs no edit here — is the target grammar and acceptance authority, superseding the retired [Specimen Pack v0.2 comment](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5185751479). v0.1 is historical delivery evidence, not the current target. The target separates physical canvas from semantic regions and keeps the toolkit authoritative.
 
 ## Delivery order
 

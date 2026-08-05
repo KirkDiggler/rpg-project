@@ -2,7 +2,7 @@
 
 **Status:** approved target; delivery tracked by rpg-project#175 and PR #181
 
-The canonical target is [Specimen Pack v0.2](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5185751479), superseding v0.1 as grammar authority. v0.1 remains historical delivery evidence only. The dungeon document remains `version: 1`.
+The canonical target is the current versioned spec under `ideas/dungeon-builder/spec/` — not a fixed version, so a future spec bump needs no edit here — superseding v0.1 and the retired [Specimen Pack v0.2 comment](https://github.com/KirkDiggler/rpg-project/issues/175#issuecomment-5185751479) as grammar authority. v0.1 remains historical delivery evidence only. The dungeon document remains `version: 1`.
 
 ## Authority and model
 
