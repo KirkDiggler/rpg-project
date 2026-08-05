@@ -1,10 +1,10 @@
 # Dungeon YAML Spec v0.3 — context and rationale
 
-`spec.md` in this directory is the normative contract. This file is everything that
-isn't: what the spec is for, why it says what it says, what disagreements it found
-between sources, and where the executable examples live. Read `spec.md` to implement
-against; read this file to understand why `spec.md` looks the way it does, or to
-resolve a question `spec.md` marks OPEN.
+`spec.md` in this directory is the normative contract, **RATIFIED 2026-08-05**. This
+file is everything that isn't: what the spec is for, why it says what it says, what
+disagreements it found between sources, the ratification record, and where the
+executable examples live. Read `spec.md` to implement against; read this file to
+understand why `spec.md` looks the way it does.
 
 ## What this is
 
@@ -45,14 +45,52 @@ and web-pack vN name the same contract level.
 
 `spec.md` is table- and rule-first: YAML shape blocks, field tables, numbered MUST/MUST
 NOT requirements, and acceptance criteria per construct. It carries no narrative, no
-"why," and no history. Where a question genuinely isn't settled, `spec.md` marks it
-**OPEN — pending ratification** with a one-line pointer into this file's Reconciliation
-notes, rather than picking an answer. Six such points exist today; the PR description
-enumerates all six as the decision surface for Kirk's review. Code citations
+"why," and no history. Before ratification, six questions genuinely weren't settled,
+and `spec.md` marked each **OPEN — pending ratification** with a one-line pointer into
+this file's Reconciliation notes rather than picking an answer. Kirk ratified all six
+on 2026-08-05 (Ratification record, next section) — `spec.md` now states every one of
+them as a normative rule directly, with no OPEN markers remaining. Code citations
 (`file.go:line`, function names, literal error strings) live in `spec.md` because they
 pin exact required behavior; GitHub comment/issue provenance ("per the 19:27 comment,"
 "the checkpoint says") lives here instead, because it explains where a rule came from
 rather than stating the rule itself.
+
+## Ratification record — 2026-08-05
+
+Kirk ratified all six points from `spec.md`'s pre-ratification decision surface.
+Answers below; `spec.md` states each as a normative rule directly.
+
+1. **v0.3 level cut** — ratified as drafted. No change to the construct groupings in
+   `spec.md` §1.
+2. **`cells:` ruling + #175 Specimen Pack v0.2 supersession** — ratified; already
+   normative in `spec.md` §4.10.1. The named follow-up debt (`design.md:5`/
+   `plan.md:7` still pointing at the superseded comment) was paid separately —
+   rpg-project#195 / PR #196.
+3. **Canvas + non-empty `rooms:` in one document** — ratified **reject**, adopting
+   this spec's own recommendation verbatim. `spec.md` §4.5 states it as a MUST-reject
+   rule with an acceptance criterion.
+4. **`rooms:` + `regions:` in one document** — ratified **reject**, adopting this
+   spec's own recommendation verbatim. `spec.md` §4.10.3 states it as a MUST-reject
+   rule. Kirk's rationale, verbatim: "this is what I originally had in my head when
+   we came up with regions — I saw them as rooms in toolkit... being able to relax it
+   and not create something new if it ever comes up makes this an easy call." A
+   **future-relaxation path is named, not ruled out**: authored regions layered over
+   generated/chain content is a legitimate vNext proposal if a real use case appears,
+   and a chain-to-canvas converter (letting an author "promote" a `rooms:` document
+   into `canvas:` + `regions:` losslessly) is the tool that would make that relaxation
+   cheap — not a chain/region cross-validator.
+5. **Authoring-projection scope** — ratified **adopt the fuller projection**, adopting
+   this spec's own recommendation verbatim. `spec.md` §4.5 now requires `FloorPlan` to
+   project canonical structural-floor cells for a canvas document; `spec.md` §4.10.4
+   now requires the authoring wire to carry region extents and a toolkit-derived
+   parent id. The former "not required by this list" hedge is removed from both
+   sections' acceptance criteria.
+6. **Canvas-mode top-level `facing:`** — ratified **accepted**, under the same
+   conditions `spec.md` §4.9 already applies to a room-scoped entry (non-monster,
+   `mount: floor`). This spec gave no recommendation; the platform team's rationale:
+   the capability belongs to a floor prop, not to room ownership — a placement's
+   entitlement to `facing:` was never really about which list it lives in.
+   `specimens/canvas.yaml:14`'s top-level altar (`facing: W`) is now conforming.
 
 ## Supersession: the #175 Specimen Pack v0.2 lineage
 
@@ -61,8 +99,8 @@ lineage on rpg-project#175 as grammar/acceptance authority for `regions:` — mo
 concretely, its `extent: {min,max}` rectangle grammar, which Kirk has ruled out.
 `cells:` (painted cell lists) is the wire representation, matching `rpg-dnd5e-web`'s
 `TARGET-YAML.md` and its live specimen pack. Full discussion, including the
-`design.md`/`plan.md` follow-up-edit debt this supersession creates, is Reconciliation
-notes item 1 below.
+`design.md`/`plan.md` follow-up-edit debt this supersession created, is Reconciliation
+notes item 1 below — that debt was paid separately, rpg-project#195 / PR #196.
 
 ## The two-floor-source finding
 
@@ -210,7 +248,9 @@ rather than resolved silently.
    to the rectangle grammar this item rejects. This spec's supersession, above, names
    both lines explicitly for exactly that reason, but does not edit `design.md`/
    `plan.md` themselves — different doc lineage, tracked here as a follow-up edit
-   those two files need on `main` once this spec is ratified.
+   those two files need on `main` once this spec is ratified. **RATIFIED 2026-08-05
+   — debt paid**: rpg-project#195 / PR #196 edited both lines to point at the
+   current versioned spec directory instead of a fixed comment.
 2. **Flat/disjoint-only vs. nesting-by-containment for regions.** `TARGET-YAML.md`'s
    own "Invariants — validated client-side" section states a bare "**Non-overlapping**
    — no cell may belong to more than one region at once," with no containment
@@ -237,7 +277,9 @@ rather than resolved silently.
    happens if a document declares both non-empty `rooms:` and a `canvas:` block.
    `spec.md` §4.5 marks this OPEN with a recommendation (reject the combination) but
    does **not** treat it as ratified — it needs an explicit Kirk call, the same way
-   the `rooms:`/`regions:` precedence question (item 5) does.
+   the `rooms:`/`regions:` precedence question (item 5) does. **RATIFIED 2026-08-05
+   — reject**, adopting the recommendation verbatim; `spec.md` §4.5 states it as a
+   MUST-reject rule.
 5. **Whether a document may combine non-empty `rooms:` with declared `regions:` is
    the one open question here — precedence itself is already settled.** `spec.md`
    §4.2 ("Superseded when `regions:` are declared") and §4.10.2 point 7 ("Archetype
@@ -248,7 +290,9 @@ rather than resolved silently.
    whether the *combination itself* (both constructs non-empty in one document)
    should be flatly rejected outright, or silently tolerated with regions simply
    taking validation precedence. `spec.md` §4.10.3 marks only that narrower question
-   OPEN.
+   OPEN. **RATIFIED 2026-08-05 — reject**, adopting the recommendation verbatim (see
+   the Ratification record's item 4 for Kirk's rationale and the named
+   future-relaxation path); `spec.md` §4.10.3 states it as a MUST-reject rule.
 6. **The authoring-projection scope in `spec.md` §4.5/§4.10 is thinner than what
    `plan.md`/`design.md`/the platform checkpoint ask for, on both waves — found while
    drafting, not resolved.**
@@ -288,6 +332,13 @@ rather than resolved silently.
    genuine Kirk/platform ratification point; `spec.md` §4.5's and §4.10's acceptance
    criteria are deliberately **not** amended to require it until that ratification
    happens.
+
+   **RATIFIED 2026-08-05 — adopt the fuller projection**, adopting the
+   recommendation verbatim. `spec.md` §4.5's acceptance criteria now require
+   `FloorPlan` to project canonical structural-floor cells for a canvas document;
+   `spec.md` §4.10.4 now requires the authoring wire to carry, per declared region,
+   its `cells:` extent and a toolkit-derived parent id. The "not required by this
+   list" hedge is removed from both sections.
 7. **`RegionDoc.archetype` is required in the builder's real TypeScript type, while
    this spec (following `design.md`/#180) makes it optional.** `dungeonYaml.ts`'s
    `RegionDoc` declares `archetype: string` (not `archetype?: string`), and
@@ -300,10 +351,13 @@ rather than resolved silently.
    item 2 above, and — per this appendix's own discipline — it should have been
    listed there and wasn't. Flagged now: a future builder round needs to make
    `archetype` genuinely optional client-side to match this contract.
-8. **Canvas-mode top-level `facing:` — open ratification point, not resolved by this
-   spec.** `spec.md` §4.9 states the current, corrected `validateTopLevelPlace`
-   error-ordering as fact (facing checked before mount, verified against source) but
-   does not decide what canvas mode *should* accept for `facing:`. #178's own scope
+8. **Canvas-mode top-level `facing:` — was an open ratification point, not resolved
+   by this spec as drafted; RATIFIED 2026-08-05 — accepted (see the Ratification
+   record's item 6 for the platform team's rationale).** `spec.md` §4.9 states the
+   current, corrected `validateTopLevelPlace` error-ordering as fact (facing checked
+   before mount, verified against source); at drafting time it did not decide what
+   canvas mode *should* accept for `facing:` — that question is what got ratified.
+   #178's own scope
    line, quoted verbatim rather than paraphrased, is "Add
    `facing: E|NE|NW|W|SW|SE` to existing room-scoped `place:` entries" — written
    before canvas mode existed as a document shape, so "room-scoped" there names the
@@ -326,9 +380,11 @@ rather than resolved silently.
      specifically.
 
    Neither reading would mislead an implementer once chosen — both are unambiguous
-   and testable. This spec does not choose. Kirk decides. Until ratified, no
-   acceptance criterion anywhere in `spec.md` covers a canvas-mode top-level entry's
-   `facing:` value either way.
+   and testable. This spec did not choose; Kirk decided. **The canvas-mode extension
+   reading won** — `spec.md` §4.9 now states `facing:` acceptance as scoped to
+   non-monster, `mount: floor` placements regardless of which list they live in, and
+   both `spec.md` §4.6's example and its own acceptance criteria cover the
+   canvas-mode top-level case directly.
 
 ## Specimens — the executable half
 
@@ -342,13 +398,14 @@ own document shape, matching `spec.md` §4.5.
 **Pack v0.4 will be regenerated to exactly this spec cut once this PR is approved** —
 that regeneration is a follow-up in `rpg-dnd5e-web`, a different repository, and is
 explicitly **not** done as part of this PR. Until then, the current v0.3 pack is
-representative but predates three things this spec adds precision to: the
+representative but predates one thing this spec adds precision to: the
 region-nesting/containment model (`spec.md` §4.10.2 — the pack's own client-side
-validator currently only enforces flat/disjoint, item 2 above), the canvas/room-chain
-mode-exclusivity question (`spec.md` §4.5, item 4 above), and canvas-mode top-level
-`facing:`'s open ratification (`spec.md` §4.9, item 8 above) — the pack's own
-`canvas.yaml:14` already emits `facing: W` on a top-level altar placement, exactly the
-case item 8 leaves undecided.
+validator currently only enforces flat/disjoint, item 2 above). Ratification resolved
+the other two things the pack used to predate: the canvas/room-chain mode-exclusivity
+question (ratified reject, item 4 — moot for this pack anyway, since `canvas.yaml`
+never combines both) and canvas-mode top-level `facing:` (ratified accepted, item 8) —
+`canvas.yaml:14`'s `facing: W` on a top-level altar placement is conforming outright
+now, not a gap.
 
 ## Pointers
 
