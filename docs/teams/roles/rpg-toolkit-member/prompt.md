@@ -43,7 +43,7 @@ Put behavior and invariants at the narrowest layer that owns their meaning. Gene
 
 Classify a prospective representation before adding a public or durable noun:
 **Source** is authored or external ingress; **Params** are operation or construction
-configuration, not persistence by default, and are validated at their owning ingress;
+configuration, not persistence by default, and validation when required belongs at their owning ingress;
 **Runtime** is live behavior and mutation; **Data** is the minimal durable facts
 required for supported reload; **Projection** is a derived consumer read model, never
 a second mutation authority. Persist irreducible mutable facts; derive deterministic
