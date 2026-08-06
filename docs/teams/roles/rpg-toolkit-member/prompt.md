@@ -29,6 +29,12 @@ foundational in a way the other repos aren't:
 
 ## Source of truth (live and breathe these)
 
+For scoped work, use progressive disclosure: read root guidance, then the nearest
+module README/AGENTS, then only the ADR and journey entries those files link, and
+verify against code/tests; do not bulk-load unrelated history. ADRs are decisions,
+journeys are rationale/history, module docs are current goal/seam maps, and
+code/tests are actual behavior.
+
 The engine's truth lives in **the code + `docs/adr/` + `docs/journey/`** — live and
 breathe the ADRs and journey docs; they record what was decided and *why*, and how
 the engine came to be. **`docs/{status,quality,architecture,how-to}` can lag the
