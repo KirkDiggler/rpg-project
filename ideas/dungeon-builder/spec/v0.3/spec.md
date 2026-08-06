@@ -365,9 +365,9 @@ NOT be accepted as region shape.
    the containment chain innermost → outward; the first scope in the chain that
    declares the property wins; if none declare it, the root default (if any)
    applies.
-6. Region enter/exit events fire only for the specific boundary crossed — entering a
-   child region while already inside its parent MUST NOT fire a parent-exit event;
-   the reverse holds on exit.
+6. **Future extension seam (non-normative).** A future enter/exit capability may
+   derive transitions from changes in the scope chain. Wave 1 emits and requires no
+   region transition events and adds no trigger capability.
 7. `archetype` is an optional, inheriting scope property. An explicit value MUST be
    one of `entrance | chamber | corridor | boss`; zero, one, or multiple explicitly
    declared regions of each value are runnable. `archetype: boss` labels a boss
@@ -408,9 +408,10 @@ NOT be accepted as region shape.
 
 #### 4.10.4 Wire projection
 
-**Authoring** — `FloorPlan` MAY project, for each declared region: its `cells:`
+**Authoring** — `FloorPlan` MUST project, for each declared region: its `cells:`
 extent and a toolkit-derived parent region id (absent means root). This is in
-addition to, not a replacement for, the per-hex runtime projection below.
+addition to, not a replacement for, the per-hex runtime projection below. This
+projection exposes derived scope structure; it creates no semantic validation.
 
 **Runtime**:
 
@@ -419,9 +420,10 @@ addition to, not a replacement for, the per-hex runtime projection below.
 | `HexRecord.zone_id` | string | innermost region id for this cell; `""` = root |
 | `Zone.parent_id` | string, optional | derived parent region id; absent = root |
 
-1. Runtime zone metadata MUST be fog-authorized: expose the innermost zone and
-   required ancestor chain only for cells the observing player has seen. A global
-   hidden cell-to-region map MUST NOT be exposed.
+1. Runtime projection MUST expose `Zone.parent_id` and per-hex innermost `zone_id`,
+   fog-authorized: expose the innermost zone and required ancestor chain only for
+   cells the observing player has seen. A global hidden cell-to-region map MUST NOT
+   be exposed. This projection creates no semantic validation.
 
 #### 4.10.5 Extension seam
 
@@ -443,9 +445,9 @@ addition to, not a replacement for, the per-hex runtime projection below.
 - `archetype: boss` labels a semantic scope only; no boss entity/cell, monster
   marker, content placement rule, or spawn behavior is required. Ordinary top-level
   `place:` monsters remain ordinary placements.
-- Authoring `FloorPlan` may project each declared region's canonical `cells:` extent
-  and toolkit-derived parent id.
-- Runtime projection may expose `Zone.parent_id` and per-hex innermost `zone_id`,
-  fog-authorized, with no hidden-extent disclosure.
+- Authoring `FloorPlan` projects each declared region's canonical `cells:` extent
+  and toolkit-derived parent id; runtime projects `Zone.parent_id` and per-hex
+  innermost `zone_id`, fog-authorized, with no hidden-extent disclosure. These
+  projections create no semantic validation.
 - No region boundary appears as a `FloorPlanEdge` record unless an independent
   `walls:` entry (§4.7) also exists on that same edge.
