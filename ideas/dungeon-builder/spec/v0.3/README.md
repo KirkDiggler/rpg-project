@@ -160,10 +160,10 @@ applies. A region being silent on one property never forces it to inherit *every
 property from its parent; each property is resolved independently, walking the same
 containment chain.
 
-**Enter/exit is stack semantics, illustrated.** Entering the vault (nested inside the
-crypt) fires a vault-enter transition *without* a crypt-exit transition — containment
-means the crypt was never left. Exiting the vault fires a vault-exit and pops back to
-the crypt's own ambience/scope, again with no crypt-enter (it was already active).
+**Future enter/exit seam, illustrated.** A future capability may derive transitions
+from scope-chain changes: entering a nested vault could transition into the vault
+without leaving the crypt, while exiting could return to the crypt scope. Wave 1
+neither emits nor requires region transition events and adds no trigger capability.
 
 **The runtime substrate already exists; regions extend it rather than replacing it.**
 Authored `region.id` compiles to the toolkit's existing `RegionData.ID`, which already
