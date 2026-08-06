@@ -94,9 +94,9 @@ rooms:
    reserves a connector-gap column).
 3. Exactly one room MUST have `archetype: boss` and MUST declare `boss:`. No other
    room MAY declare `boss:`.
-4. When the document declares any `regions:` (§4.10), room `archetype` MUST be
-   treated as a geometry/generation input only — boss cardinality, entrance
-   semantics, and spawn-rule validation MUST bind to region scopes instead (§4.10.2.7).
+4. A document combining non-empty `rooms:` with `regions:` is rejected (§4.10.3.6).
+   Region archetypes add no boss-cardinality, entrance, or spawn-rule enforcement
+   to the room-chain mode.
 
 ### 4.3 Connectors — `connectors:`
 
@@ -340,7 +340,7 @@ regions:
 | `id` | string | yes | unique within document |
 | `name` | string | no | display label; `id` used if omitted |
 | `archetype` | string | no | `entrance \| chamber \| corridor \| boss`; explicit empty string MUST be rejected; omitted resolves per §4.10.2.5 |
-| `cells` | `[[int,int]]` | yes | non-empty; absolute `[col,row]` pairs; MUST be hex-contiguous (6-neighbor) and MUST NOT contain a duplicate |
+| `cells` | `[[int,int]]` | yes | absolute `[col,row]` pairs on structural floor; duplicate pairs are canonically deduplicated; disconnected and empty sets are legal |
 
 `cells:` is the required wire representation. `extent: {min,max}` rectangles MUST
 NOT be accepted as region shape.
@@ -354,8 +354,8 @@ NOT be accepted as region shape.
    For any two declared regions: disjoint cell sets = siblings (valid); one a strict
    subset of the other = child/parent (valid); any other overlap (equal or partial)
    MUST be rejected. A region's parent = the smallest strict superset among declared
-   regions, or root if none. A cell's innermost region = the smallest declared
-   region containing it.
+   regions, or root if none. An empty region has root as its parent and owns no
+   cell. A cell's innermost region = the smallest declared region containing it.
 3. Regions MAY nest to arbitrary depth.
 4. A region boundary exists wherever region membership changes (including
    transitions to/from root). This boundary is semantic only and MUST NOT be
@@ -368,15 +368,14 @@ NOT be accepted as region shape.
 6. Region enter/exit events fire only for the specific boundary crossed — entering a
    child region while already inside its parent MUST NOT fire a parent-exit event;
    the reverse holds on exit.
-7. When any `regions:` are declared, exactly one declared `regions[]` entry MUST
-   set `archetype: boss`; no other declared region MAY set it. That entry identifies
-   the boss semantic scope. Boss-cardinality, entrance, and spawn-rule validation
-   MUST bind to region archetype scopes exclusively; room `archetype` (§4.2) MUST
-   NOT participate in that validation once regions exist. Wave 1 validates this
-   cardinality and resolves an absolute content location through the region scope
-   chain; it does not require a separately-authored boss entity or boss cell. A
-   top-level `place:` monster remains an explicit ordinary placement, not a boss
-   marker or a new boss-spawn rule.
+7. `archetype` is an optional, inheriting scope property. An explicit value MUST be
+   one of `entrance | chamber | corridor | boss`; zero, one, or multiple explicitly
+   declared regions of each value are runnable. `archetype: boss` labels a boss
+   semantic scope only: it does not identify or create a boss entity/cell, mark a
+   monster as boss, or add spawn behavior. A top-level `place:` monster remains an
+   explicit ordinary placement. Missing semantic roles or conventions are non-blocking
+   follow-up findings where an existing surface can report them; this wave adds no
+   diagnostics proto/API and makes none an acceptance requirement.
 8. Region create/edit/delete operations MUST NOT alter structural floor, canonical
    wall/door edges, door identity, or the validity of any content (placement/
    monster/boss) whose cell falls inside the edited region. Content whose owning
@@ -385,28 +384,31 @@ NOT be accepted as region shape.
    (endpoint-derived, `authored_edges.go:32-36`) are both region-independent and
    MUST NOT be recomputed by a region edit.
 
-#### 4.10.3 Validation
+#### 4.10.3 Structural validation and persistence
 
-1. A region MUST have at least one cell (single-cell regions are legal).
-2. A region's own `cells:` list MUST be hex-contiguous (6-neighbor adjacency).
-3. A region's `cells:` list MUST NOT contain a duplicate cell.
-4. Overlap between two regions resolves per §4.10.2.2 (disjoint or strict
-   containment only).
-5. Regions need not tile the canvas — sparse, disjoint regions with unclaimed cells
-   are valid.
-6. An inner wall (§4.7) MUST NOT alter a region's `cells:` membership.
-7. Source `cells:` and the derived parent id/containment index MUST both be
-   persisted. `Load` MUST recompute both and reject on disagreement with the
-   persisted value.
-8. A document combining non-empty `rooms:` with declared `regions:` MUST be
+1. Hard rejection is limited to source that cannot be represented safely or
+   deterministically: malformed YAML/types/coordinates; duplicate region IDs; a
+   cell outside structural floor; incompatible non-empty `rooms:` with `regions:`;
+   an unsupported explicit archetype; and equal or partial overlap between regions,
+   which prevents a unique innermost owner.
+2. Within one region, duplicate cell pairs are canonically deduplicated before
+   compile and persistence; no error or new diagnostic surface is required. A
+   region's canonical source cells may be empty or disconnected in this exploratory
+   phase.
+3. Disjoint sets and strict containment resolve per §4.10.2.2. Regions need not
+   tile the canvas; sparse, disconnected regions with unclaimed cells are valid.
+4. An inner wall (§4.7) MUST NOT alter a region's canonical source-cell membership.
+5. Persistence retains only irreducible authored region facts: `id`, `name`,
+   archetype presence/value, and canonical source cells. Parent relationships and
+   the innermost cell index are deterministic derived state: recompute them on
+   compile/load. They MUST NOT be persisted, and a missing or disagreeing derived
+   cache MUST NOT reject reload.
+6. A document combining non-empty `rooms:` with declared `regions:` MUST be
    rejected — a document declares exactly one topology model, never both.
-   (Precedence — regions winning validation once declared — is the separate,
-   independently-stated rule at §4.10.2.7; this rule is about the combination's
-   legality, not precedence between the two.)
 
 #### 4.10.4 Wire projection
 
-**Authoring** — `FloorPlan` MUST project, for each declared region: its `cells:`
+**Authoring** — `FloorPlan` MAY project, for each declared region: its `cells:`
 extent and a toolkit-derived parent region id (absent means root). This is in
 addition to, not a replacement for, the per-hex runtime projection below.
 
@@ -428,21 +430,22 @@ addition to, not a replacement for, the per-hex runtime projection below.
    per-property innermost-outward walk (§4.10.2.5).
 
 **Acceptance criteria:**
-- Empty, duplicate-cell, non-contiguous, and equal/partially-overlapping cell sets
-  are rejected with author-facing errors naming the specific cells or regions.
-- Containment derivation is proven for at least a 2-deep nesting, including correct
-  parent-ID/innermost-index derivation and stable behavior across repaint/delete of
-  the inner region.
-- Exactly one declared region sets `archetype: boss`; that region identifies the
-  boss semantic scope, superseding room-archetype boss validation the moment any
-  `regions:` are declared, with no double-validation. An absolute content location
-  resolves through the region scope chain without requiring a separately-authored
-  boss entity/cell or marking an ordinary top-level `place:` monster as boss.
-- A document declaring both non-empty `rooms:` and `regions:` is rejected.
-- `Load` recomputes persisted parent/index and rejects on disagreement.
-- Authoring `FloorPlan` projects each declared region's `cells:` extent and its
-  toolkit-derived parent id.
-- Runtime projection exposes `Zone.parent_id` and per-hex innermost `zone_id`,
+- A structurally usable graph compiles and reloads with zero, one, or multiple
+  explicitly declared `entrance`, `boss`, `chamber`, and `corridor` regions, and
+  with disconnected or empty regions. Missing roles are non-blocking and need no
+  new diagnostic wire surface.
+- Duplicate IDs, out-of-floor cells, unsupported explicit archetypes, equal/partial
+  overlaps, and incompatible non-empty `rooms:` plus `regions:` reject clearly.
+  Duplicate cells within one region canonicalize to one source cell.
+- Parent-ID/innermost-index derivation is deterministic across compile/load and
+  repaint/delete, without persisting derived state or rejecting a missing/disagreeing
+  derived cache.
+- `archetype: boss` labels a semantic scope only; no boss entity/cell, monster
+  marker, content placement rule, or spawn behavior is required. Ordinary top-level
+  `place:` monsters remain ordinary placements.
+- Authoring `FloorPlan` may project each declared region's canonical `cells:` extent
+  and toolkit-derived parent id.
+- Runtime projection may expose `Zone.parent_id` and per-hex innermost `zone_id`,
   fog-authorized, with no hidden-extent disclosure.
 - No region boundary appears as a `FloorPlanEdge` record unless an independent
   `walls:` entry (§4.7) also exists on that same edge.
