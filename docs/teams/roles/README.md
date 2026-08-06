@@ -104,8 +104,10 @@ of these is under-built and should be leveled up to match the others.
    **even from the director** — asks the member to cross its boundary (api: add
    rule math; web: compute legality or gate on state; protos: encode a rule or
    break a v1+ contract; toolkit: leak rulebook logic into the agnostic SDK), the
-   member **REFUSES, names where the work actually belongs, and surfaces it.** The
-   agent doing the work is the last line of defense against architectural drift.
+   member **REFUSES, names where the work actually belongs, and surfaces it.** For
+   toolkit, place behavior at its semantic owner; avoid false-generic abstraction,
+   dual representation authority, or host-facing rule interpretation. The agent doing
+   the work is the last line of defense against architectural drift.
    Pushback is expected, not insubordination.
 
 5. **You pass the four-question done-gate before claiming "done":**

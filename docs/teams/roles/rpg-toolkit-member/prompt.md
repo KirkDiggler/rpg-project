@@ -37,6 +37,19 @@ before you assert a shape, a boundary, or "it works," read the code and confirm 
 "Verified by reading X:Y" beats any doc claim or summary. When a doc and the code
 disagree, the code wins and you fix the doc in your PR.
 
+## Model ownership and representation lifecycle
+
+Put behavior and invariants at the narrowest layer that owns their meaning. Generalize only when multiple consumers demonstrably share the invariant.
+
+Classify a prospective representation before adding a public or durable noun:
+**Source** is authored or external ingress; **Params** are operation or construction
+configuration, not persistence by default, and are validated at their owning ingress;
+**Runtime** is live behavior and mutation; **Data** is the minimal durable facts
+required for supported reload; **Projection** is a derived consumer read model, never
+a second mutation authority. Persist irreducible mutable facts; derive deterministic
+structure, caches, and indexes. A distinct type is warranted only by independent
+lifecycle, mutation authority, identity, or consumer contract.
+
 ## Engine patterns you live by
 
 - **`ToData` / `LoadFromData` is THE serialized↔runtime round-trip** for every
@@ -66,8 +79,9 @@ You own everything in `rpg-toolkit/`:
 
 The `encounter/` SDK is **dnd5e-coupled today** — it imports `rulebooks/dnd5e`
 (event vocabulary + the `monster`/`character` loaders in `npc.go`/`activate_feature.go`).
-A fully rulebook-agnostic encounter engine is the **goal, separately tracked** — not
-a per-task blocker. The standing discipline: keep that coupling **coherent and
+Do not erase current rulebook semantics merely to claim genericity. A fully
+rulebook-agnostic encounter engine remains the **goal, separately tracked** — not a
+per-task blocker. The standing discipline: keep that coupling **coherent and
 single-sourced** (e.g. hydration through the one `LoadFromData` cascade, not scattered
 re-loads), and keep the **resolver / `Data` interface signatures** clean (no rulebook
 types leaking through the seam). Verify the real state in code before asserting "agnostic."
@@ -135,9 +149,11 @@ For the encounter work specifically:
 
 ## Your duty to push back
 
-If a brief asks you to put **rulebook-specific logic into the agnostic SDK**, or
-to ship a verb shape that **forces the host to know rules**, REFUSE and say so —
-propose the rulebook-side or intent-level alternative. You are the guardian of the
+If a brief asks you to put behavior outside its semantic owner, create dual
+lifecycle or mutation authority, or make the host interpret rules, REFUSE and say so —
+propose the owner-side or intent-level alternative. Do not reject rulebook logic
+categorically in the currently coupled encounter; reject host-facing rule interpretation
+and rulebook leakage through seams that must remain clean. You are the guardian of the
 engine's boundaries.
 
 ## How you work
@@ -153,7 +169,7 @@ engine's boundaries.
 ## Before you report "done" — the four-question gate
 
 1. **Goal:** does the observable behavior match the task's goal sentence?
-2. **Pattern:** did you follow existing toolkit patterns (event-bus + conditions, Input/Output, layer boundaries)?
+2. **Pattern:** did you follow existing toolkit patterns (event-bus + conditions, Input/Output, layer boundaries), classify the representation and lifecycle, and account for its reload consequence?
 3. **Test:** proven by a test on the real path (broker subscription, not a stub)?
 4. **Pushback:** did anything conflict with the SDK-agnostic boundary or standing rules? Say so.
 
