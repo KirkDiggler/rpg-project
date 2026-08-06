@@ -9,8 +9,8 @@
 |---|---|---|
 | (a) Already-v1 chain | `rooms:` (id/archetype/width), `connectors:` (+ `locked:`), room-scoped `place:`/`boss:`/`obstacles:` | real, `dungeonspec.Validate`/`PutDungeon`, unchanged |
 | (b) Already-compiling | `walls:` edge lists, `start:`, room-scoped floor-prop `facing:` | live-verified (rpg-api#769/rpg-toolkit#881) |
-| (c) Wave 0 / #192 | `canvas: {width,height}`, mode-branched validation, top-level `place:` (canvas mode only), `start:` on canvas floor, `FloorPlan` canvas echo, shrink-validation | not started |
-| (d) Wave 1 / #180 | `regions:` (`id`, `name?`, `archetype`, `cells`), full scopes semantics | not started |
+| (c) Wave 0 / #192 | `canvas: {width,height}`, mode-branched validation, top-level `place:` (canvas mode only), `start:` on canvas floor, `FloorPlan` canvas echo, shrink-validation | LIVE VERIFIED |
+| (d) Wave 1 / #180 | `regions:` (`id`, `name?`, `archetype`, `cells`), full scopes semantics | implementation not started |
 
 Per-construct specs: §4.1–§4.10. Constructs not listed in this table or §2 are out of
 scope for v0.3 by omission. This table states construct membership only — delivery
@@ -368,10 +368,15 @@ NOT be accepted as region shape.
 6. Region enter/exit events fire only for the specific boundary crossed — entering a
    child region while already inside its parent MUST NOT fire a parent-exit event;
    the reverse holds on exit.
-7. When any `regions:` are declared, boss-cardinality, entrance, and spawn-rule
-   validation MUST bind to region archetype scopes exclusively; room `archetype`
-   (§4.2) MUST NOT participate in that validation once regions exist. A boss's cell
-   MUST be a member of the applicable boss-archetype region.
+7. When any `regions:` are declared, exactly one declared `regions[]` entry MUST
+   set `archetype: boss`; no other declared region MAY set it. That entry identifies
+   the boss semantic scope. Boss-cardinality, entrance, and spawn-rule validation
+   MUST bind to region archetype scopes exclusively; room `archetype` (§4.2) MUST
+   NOT participate in that validation once regions exist. Wave 1 validates this
+   cardinality and resolves an absolute content location through the region scope
+   chain; it does not require a separately-authored boss entity or boss cell. A
+   top-level `place:` monster remains an explicit ordinary placement, not a boss
+   marker or a new boss-spawn rule.
 8. Region create/edit/delete operations MUST NOT alter structural floor, canonical
    wall/door edges, door identity, or the validity of any content (placement/
    monster/boss) whose cell falls inside the edited region. Content whose owning
@@ -428,8 +433,11 @@ addition to, not a replacement for, the per-hex runtime projection below.
 - Containment derivation is proven for at least a 2-deep nesting, including correct
   parent-ID/innermost-index derivation and stable behavior across repaint/delete of
   the inner region.
-- A boss-archetype region's boss-cell membership check supersedes room-archetype
-  boss validation the moment any `regions:` are declared, with no double-validation.
+- Exactly one declared region sets `archetype: boss`; that region identifies the
+  boss semantic scope, superseding room-archetype boss validation the moment any
+  `regions:` are declared, with no double-validation. An absolute content location
+  resolves through the region scope chain without requiring a separately-authored
+  boss entity/cell or marking an ordinary top-level `place:` monster as boss.
 - A document declaring both non-empty `rooms:` and `regions:` is rejected.
 - `Load` recomputes persisted parent/index and rejects on disagreement.
 - Authoring `FloorPlan` projects each declared region's `cells:` extent and its
