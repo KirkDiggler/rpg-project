@@ -113,11 +113,18 @@ Multiplayer fairness (first cut): monsters accrue movement budget from the
 exploring must not make monsters move 4× speed. Roguelike energy systems are
 the richer fallback if max-displacement feels wrong in play.
 
+Standing still means nothing ticks — accepted as the price of not building a
+simulation engine. **A real simulation engine stays on the books as the
+escape hatch**: keep a running list of wants the tick can't serve; when that
+list gets heavy enough, building the engine becomes worth it.
+
 ### Combat ↔ exploration is a two-way door
 
 - **Encounter lapse**: combat needs an exit besides "everything died" — when
-  no monster and no player have mutual awareness, initiative drops and the
-  world tick takes over.
+  a monster breaks line of sight, it's hidden but initiative keeps running:
+  the party has **N turns to find it** before combat lapses and the world
+  tick takes over. (N is a tunable; the pressure of a ticking search is part
+  of the fun.)
 - **Detection contract: D&D surprise rounds.** They saw you first → they get
   the surprise round; you saw them first → you get it. Feels like real D&D,
   and it's symmetric — the same rule powers sneaking up on a patrol and
@@ -156,45 +163,54 @@ gating it.
    justifies it. Patrols, facing, and vision cones become authored content
    on top later.
 
-## Tentative decisions (to confirm at design time)
+## Decisions (2026-08-07, Kirk)
 
 - Behavior config is per-placement data with per-ref dungeon defaults, not
-  per-monster-type code. *(2026-08-07)*
+  per-monster-type code.
 - Decision layer = mode state machine + utility scoring within a mode; not
-  behavior trees, not utility-only. *(2026-08-07)*
+  behavior trees, not utility-only.
+- **The mode machine lives in `rpg-toolkit/behavior/`** — the doc-only
+  package finally gets its implementation (rulebook-agnostic); the dnd5e
+  monster package consumes it.
 - Free roam = event-driven world tick off player movement; no real-time
-  backend simulation. *(2026-08-07)*
-- Detection resolves via D&D surprise rounds; encounter lapse returns to
-  exploration when mutual awareness is lost. *(2026-08-07)*
+  backend simulation. **Tick granularity: per hex crossed** as the starting
+  point, numbers tunable. Standing still → nothing ticks; accepted tradeoff.
+  A real simulation engine is the recorded escape hatch — keep the wants
+  list, build it when the list justifies it.
+- **Encounter lapse: the N-turn search window.** Monster breaks LOS →
+  hidden, initiative continues; party has N turns to find it; then combat
+  lapses to free roam. N tunable.
+- **Detection: make all the check rolls.** Real stealth vs. perception
+  (passive and active per the rules), not a flat unseen→surprise rule.
+  `SensesData.PassivePerception` finally earns its keep. Surprise rounds
+  resolve per D&D.
+- **Disposition profiles are collections of parameters** — named presets
+  (`aggressive`, `timid`) over raw transition parameters (flee-at-HP%,
+  pursue-range). Authors pick a profile; the engine only ever sees
+  parameters; a placement can override an individual knob.
+- **Allies/factions wait for a solid use case.** `pack_tactics.go` (which
+  already wants ally data) is the likely first consumer and the simple
+  starting point when it comes.
 - Sequencing: targeting wiring → LOS perception → modes/flee → world tick.
-  Patrols deferred to content-on-top. *(2026-08-07)*
+  Patrols deferred to content-on-top.
 
 ## Open questions
 
-- **Where does the mode machine live?** Inside `rulebooks/dnd5e/monster`, or
-  does the doc-only `rpg-toolkit/behavior/` package finally get its
-  implementation (rulebook-agnostic)? Leaning: start in the monster package,
-  extract if a second rulebook ever wants it.
-- **Encounter lapse mechanics**: what exactly ends initiative (all monsters
-  unseen for N rounds? immediately?), and what do players see/feel in the UI
-  when combat lapses? Any proto surface needed?
-- **Surprise round details**: flat "unseen → surprise" or real stealth
-  vs. passive perception checks? (`SensesData.PassivePerception` is sitting
-  right there.)
-- **Tick granularity**: per-hex-crossing? distance accumulator? What happens
-  to monster budget when players stand still (nothing, presumably — that's
-  the roguelike deal)?
-- **The scripted fallback path** (`npcActScripted` when `DataJSON` is empty)
-  — do we still need it once behavior matures, or is it retired as part of
-  step 1/2?
-- **Disposition vocabulary**: named profiles (`aggressive`, `timid`,
-  `defensive`) vs. raw transition parameters (flee-at-HP%, pursue-range)?
-  Named profiles author better; parameters compose better. Maybe profiles =
-  presets over parameters.
-- **Allies/factions**: populating `PerceptionData.Allies` is step 2, but a
-  real faction model (monsters vs. monsters? charmed allies?) is explicitly
-  out of scope — when does it stop being deferrable? (`pack_tactics.go`
-  already wants it.)
+- **The scripted fallback path** (`npcActScripted` when `DataJSON` is
+  empty): verified 2026-08-07 that **no production monster uses it** — both
+  live seeding paths (authored YAML `SeedMonsters` and the legacy crypt
+  seeder) construct real rulebook monsters and marshal `DataJSON`; the
+  fallback serves only tests and fixtures per its own doc comment. Risk is
+  silent divergence: a monster that somehow lands there attacks-closest
+  forever and never runs the decision layer, and nothing flags it.
+  Recommendation: retire it when step 2 rewires perception (make empty
+  `DataJSON` an error, fix the test fixtures to carry real monsters) — one
+  brain is the initiative's core principle. Pending Kirk's call.
+- **Encounter lapse UX**: what players see/feel when initiative drops
+  mid-hunt (and any proto surface for it) — design-time work for step 4.
+- **Profile parameter set**: which knobs exist behind a profile (flee
+  threshold, pursue range, preferred range, …) — design-time work for
+  step 3.
 - **Team designation on board 19** for the new monster-behavior owner —
   Kirk to triage.
 
@@ -202,6 +218,8 @@ gating it.
 
 - Patrol routes, facing/vision cones as *authored content* (the machinery
   arrives in steps 2–4; the content tooling comes later).
-- Factions/allegiance model, morale systems, pack coordination.
+- Factions/allegiance model, morale systems, pack coordination — waiting on
+  a solid use case; `pack_tactics` is the likely first consumer when one
+  shows up.
 - Difficult terrain / movement-cost pathfinding, cover, elevation LOS.
 - Any real-time (timer-driven) simulation.
