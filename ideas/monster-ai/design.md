@@ -9,6 +9,20 @@ precisely; the decision layer's internals are specified only by their
 constraints, because that layer belongs to the incoming monster-behavior owner
 to evolve. Phase 1 (this team) builds the structure; the owner extends it.
 
+**Design principles (Kirk, 2026-08-08):**
+
+- The goal is not to make things work — full stop. It's composable,
+  extensible components that give the game a foundation to evolve on.
+- A good slice runs **internal → represented in the game**, acting in the
+  seams. Visible in play, or it isn't a slice.
+- **Every slice leaves a tool behind** that makes the whole fit together
+  better — starting with the combat log growing from debug dump toward a
+  DM's narration (§4a).
+- **Leave shelves**: places where a future capability (sound, new senses,
+  new modes) can land additively — chosen so they cost near-nothing now and
+  never hinder current work. Shelves are called out inline below as
+  **[shelf]**.
+
 ---
 
 ## Phases
@@ -93,11 +107,22 @@ Decision    (behavior/ package: mode machine + utility; owner's territory)
 Actuation   (dnd5e actions, action economy, MoveNPCSteps; publishes events)
 ```
 
-- **Perception** is built by the encounter layer, never by the monster.
-  Step 2 makes it honest: enemies filtered through `perception.CanSeeAt` +
-  the monster's `SensesData`; `Allies` populated. Memory ("last seen at")
-  is added in step 3 for flee/search — it lives in `PerceptionData`, not in
-  the decision layer.
+- **Perception** is built by the encounter layer, never by the monster —
+  and it is **stimuli → knowledge, not a visibility boolean**. A monster's
+  world model is a set of *beliefs with timestamps* ("saw the wizard at
+  [5,3] two turns ago", "heard something by the door"), produced by typed
+  stimulus channels and decaying into memory — never ground truth. Sight
+  (LOS via `CanSeeAt` + `SensesData`: darkvision, blindsight, tremorsense)
+  is the first channel; `Allies` gets populated; "last seen at" memory
+  lives here, not in the decision layer. **[shelf — sound]**: `noise` is
+  the second channel's reserved slot: interactions emit stimuli with
+  intensity and falloff (a door forced with STR is loud, finessed with DEX
+  is quiet), and monsters with hearing in range gain a knowledge entry.
+  Costs us a typed stimulus kind + knowledge entries now; nothing else
+  changes when sound lands. Symmetry note: players already have
+  `View{Memory, KnownEntities, ActiveSenses}` ("reserved for future
+  slices") — monster perception is the same component pointed the other
+  way, not a new invention.
 - **Decision** consumes a perception snapshot + behavior parameters + a
   roller; returns an intent. It **never mutates encounter state, never
   touches the event bus, never resolves rules**. Deterministic given inputs
@@ -130,7 +155,33 @@ type StepInput struct {
     Params     Params
     Roller     dice.Roller
 }
+
+type StepResult struct {
+    Mode    Mode
+    Because Reason    // structured why: rule fired, inputs that fired it
+}
 ```
+
+### 4a. Decisions are breakdowns (observability)
+
+The toolkit already returns rich breakdowns for attack rolls so the client
+can render them; **AI decisions get the same treatment**. Every decision —
+mode transition, target choice, retreat path — carries a structured
+`Because`, and monster turns publish it as a decision breadcrumb alongside
+the events they already emit.
+
+Two renderings of the same breadcrumb **[shelf]**:
+
+- **The combat log as DM narration**: D&D doesn't show HP, so the log
+  narrates in-fiction — "the skeleton turns on the wounded wizard," "the
+  ghoul breaks and runs." The log is a debug dump today; each slice
+  improves it in the game's own voice.
+- **A debug view** (dev tooling, later the owner's tuning tool) renders the
+  mechanics: `target=wizard strategy=lowest-hp candidates=3`. When the
+  question is "why did it flee *there*?", the answer is already recorded.
+
+Slice 1 (targeting) forces the first version of this tool; every later
+slice inherits it and adds its own decisions to the stream.
 
 - The dnd5e monster package **adapts** `PerceptionData` → `behavior.Snapshot`
   and consults the machine at the top of `TakeTurn` (combat clock) and the
@@ -212,17 +263,21 @@ One in-flight PR per module; each step is one toolkit branch that
 accumulates until its consumer stops asking (per the wave rules). Local-env
 branch verification is the PR evidence.
 
-| Step | Repos touched | Acceptance |
-|---|---|---|
-| 1. Targeting end-to-end | toolkit (`dungeonspec`, `rulebooks/dnd5e/monster`); content YAML in rpg-api | Authored tomb with a `lowest-health` skeleton visibly re-targets the wounded PC and **moves toward its chosen target** in the local env |
-| 2. Honest perception | toolkit (`encounter`) | A monster neither attacks nor paths toward a player it cannot see; `AddMonster` rejects empty `DataJSON`; `npcActScripted` deleted, fixtures use real monsters |
-| 3. `behavior/` v1 + flee/hide + lapse | toolkit (`behavior`, `rulebooks/dnd5e/monster`, `encounter`) | A `timid` ghoul at low HP breaks LOS and vanishes from player screens; N-turn search window runs; lapse returns the party to free roam mid-dungeon |
-| 4. World tick + detection + surprise | toolkit (`encounter`), rpg-api (`exploration_tick.go` + call sites) | Pursuing a fled monster through rooms works; it can re-enter behind the party; detection resolves by check rolls; surprise round seeds initiative; door-open gap closed |
+Each slice runs internal → visible in the game, births a component, and
+leaves a tool behind:
 
-Steps 1–3 need no rpg-api code changes beyond content YAML and toolkit
-version bumps. Step 4 is the first api-side work. Protos: expected zero
-through step 4 (mode/initiative events already exist); revisit only if
-surprise-round presentation needs a dedicated signal.
+| Slice | Component born / tool left | Repos touched | Acceptance (local-env, visible) |
+|---|---|---|---|
+| 1. Targeting end-to-end | Behavior-as-placement-data rails; **first decision breadcrumbs** in the combat log | toolkit (`dungeonspec`, `rulebooks/dnd5e/monster`); content YAML in rpg-api | A `lowest-health` skeleton re-targets the wounded PC and **moves toward its chosen target**; the log states the choice in D&D voice. Rider on the same branch: `AddMonster` rejects empty `DataJSON`, `npcActScripted` deleted, fixtures get real monsters |
+| 2. Perception component | Stimulus→knowledge world model (sight channel, `SensesData` live, allies, last-seen memory); **[shelf — sound]** in place | toolkit (`encounter`, `encounter/perception`) | A monster neither attacks nor paths toward what it hasn't perceived; breadcrumbs show what it believes ("last saw wizard at [5,3]"); sneaking behind a wall mid-combat actually works |
+| 3. `behavior/` v1 — two modes + lapse | The `Machine` seam, born with an honest `Snapshot`; profiles→params plumbing | toolkit (`behavior`, `rulebooks/dnd5e/monster`, `encounter`) | A `timid` ghoul at low HP switches to `fleeing` (breadcrumb says why), vanishes from player screens; N-turn search window runs; lapse returns the party to free roam mid-dungeon. `hiding` is deliberately left as the owner's natural first extension |
+| 4. World tick + detection + surprise | The free-roam clock (`exploration_tick.go` + `FreeRoamTick`) | toolkit (`encounter`), rpg-api | Pursuing a fled monster through rooms works; it can re-enter behind the party; detection resolves by check rolls; surprise round seeds initiative; door-open gap closed |
+
+Slices 1–3 need no rpg-api code changes beyond content YAML and toolkit
+version bumps. Slice 4 is the first api-side work. Protos: expected zero
+through slice 4 (mode/initiative events already exist); revisit only if
+surprise-round presentation or the breadcrumb debug view needs a dedicated
+signal.
 
 ## 8. Out of scope (unchanged from brainstorm)
 
