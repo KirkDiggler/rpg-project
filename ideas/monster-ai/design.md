@@ -31,9 +31,11 @@ to evolve. Phase 1 (this team) builds the structure; the owner extends it.
   (targeting wiring → honest perception → behavior package with
   modes/disposition/flee). Ends with hide-and-seek working inside
   turn-based combat.
-- **Phase 2 — step 4 (world tick / free roam):** designed here (§6), built
-  either by this team or as the owner's first big slice — Kirk's call when
-  the time comes.
+- **Phase 2 — slice 4 (world tick / free roam): deliberately deferred.**
+  Direction sketched in §6; the architectural decisions are consciously
+  postponed until slices 1–3 make us comfortable in the
+  perceive → decide → act loop. Built by this team or as the owner's first
+  big slice — Kirk's call when the time comes.
 - **Owner's extension surface (ongoing):** new modes, profile vocabulary,
   patrol/facing content, senses depth, pack tactics — everything inside the
   decision boundary (§4).
@@ -83,12 +85,12 @@ rooms:
 - `profile`: a named preset that **resolves to parameters at compile time**.
   The engine stores and reads only parameters; profiles exist in authoring
   land. A placement may override individual knobs after the preset applies.
-- Parameter set v1 (grows under the owner): `flee_at_hp_pct`,
+- Knob set v1 (grows under the owner): `flee_at_hp_pct`,
   `pursue_range_hexes`, `preferred_range_hexes`. Zero values = today's
   behavior (never flee, press the attack).
 
-Flow: `PlacedEntry` → compiler → `SpawnInstruction{…, Targeting, Params}` →
-`SeedMonsters` → constructor → `monster.Data{Targeting, Behavior BehaviorParams}`
+Flow: `PlacedEntry` → compiler → `SpawnInstruction{…, Targeting, BehaviorConfig}` →
+`SeedMonsters` → constructor → `monster.Data{Targeting, Behavior *behavior.MachineConfig}`
 → `DataJSON`. **No proto changes in phase 1** — behavior rides `DataJSON`,
 which the wire already carries opaquely.
 
@@ -131,34 +133,52 @@ Actuation   (dnd5e actions, action economy, MoveNPCSteps; publishes events)
 
 ## 4. The `behavior/` package (toolkit, rulebook-agnostic)
 
-The doc-only package gets its implementation. The contract — precise at the
-boundary, deliberately open inside:
+The doc-only package gets its implementation. **`behavior/` owns the
+structure; rulebooks own the vocabulary.** The package never learns what
+"fleeing" means — mode values are opaque to it, declared by the rulebook
+that uses them:
 
 ```go
-type Mode string            // "combat", "fleeing", "hiding"; "idle", "patrol", "alert" reserved
+// rulebooks/dnd5e/monster declares its vocabulary:
+const (
+    ModeCombat  behavior.Mode = "combat"
+    ModeFleeing behavior.Mode = "fleeing"
+    // ModeHiding, ModeIdle, ModePatrol, ModeAlert — declared when built, not before
+)
+```
 
-type Params struct {        // resolved from profiles at compile time
-    FleeAtHPPct       int
-    PursueRangeHexes  int
-    PreferredRangeHexes int
-    // grows under the owner; zero values = current behavior
+House style throughout (and for everything this initiative writes):
+`NewSomething(cfg *SomethingConfig) (*Something, error)` for construction,
+`XInput`/`XOutput` types on funcs.
+
+```go
+package behavior
+
+type Mode string   // vocabulary belongs to rulebooks
+
+// One machine per monster, constructed at hydration from config resolved
+// at authoring-compile time (profile → knobs).
+func NewMachine(cfg *MachineConfig) (*Machine, error)
+
+type MachineConfig struct {
+    Initial Mode
+    Knobs   Knobs   // flee_at_hp_pct, pursue_range_hexes, …; zero values = today's behavior
+    // transition-rule registration: shape is the owner's call
 }
 
-// Machine owns mode transitions. Pure: state in, state out.
-type Machine interface {
-    Step(in StepInput) StepResult   // evaluates transitions, returns (possibly new) mode
-}
+// Pure: state in, state out. Never mutates encounter state, never touches
+// the bus; deterministic given input + roller.
+func (m *Machine) Step(in *StepInput) (*StepOutput, error)
 
 type StepInput struct {
-    Current    Mode
-    Percept    Snapshot   // rulebook-agnostic view: self HP%, enemies (dist, seen), allies, geometry
-    Params     Params
-    Roller     dice.Roller
+    Current Mode
+    Percept Snapshot   // rulebook-agnostic: self HP%, enemies (dist, seen), allies, geometry
+    Roller  dice.Roller
 }
 
-type StepResult struct {
+type StepOutput struct {
     Mode    Mode
-    Because Reason    // structured why: rule fired, inputs that fired it
+    Because Reason     // structured why: rule fired, inputs that fired it
 }
 ```
 
@@ -188,13 +208,13 @@ slice inherits it and adds its own decisions to the stream.
   free-roam step (tick clock). Mode then selects the utility-scoring set:
   `combat` scores attacks as today; `fleeing` scores retreat paths (away +
   toward unseen hexes); `hiding` holds position while unseen.
-- **What's fixed:** the boundary above, the mode names v1, purity, and the
-  rule that disposition = `Params` driving transitions — never code per
-  monster type.
-- **What's the owner's:** the machine's internals, transition logic, scoring
-  evolution (today's flat `Score()` constants becoming data-driven), new
-  modes, new params. The constraint set is the contract; the craft is
-  theirs.
+- **What's fixed:** the boundary above (construction + `Step` signature),
+  purity, vocabulary-belongs-to-rulebooks, and the rule that disposition =
+  config knobs driving transitions — never code per monster type.
+- **What's the owner's:** the machine's internals, the transition-rule
+  shape, scoring evolution (today's flat `Score()` constants becoming
+  data-driven), new modes, new knobs. The constraint set is the contract;
+  the craft is theirs.
 
 ## 5. Two clocks, one brain
 
@@ -203,32 +223,41 @@ slice inherits it and adds its own decisions to the stream.
   disengaging/retreating instead of attacking), then applies targeting
   strategy for both **attack selection and movement** (fixing
   `moveTowardEnemy`'s always-closest bug — step 1).
-- **Free-roam clock (step 4):** a new toolkit verb, e.g.
+- **Free-roam clock (slice 4 — deferred; sketch, see §6):** a new toolkit verb, e.g.
   `(*Encounter).FreeRoamTick(TickInput)` beside `npc.go` — for each living,
   un-engaged monster: build (LOS-honest) perception → machine step → if the
   intent is movement, execute via the `MoveNPCSteps` path, spending a
   **tick budget**, and publish the same per-viewer `EntityMoved` /
   appear/disappear events players already understand. Fog handles "we see
   it, it doesn't see us" with zero new client work.
-- **N-turn search window & lapse (step 3):** when every monster in the
+- **N-turn search window & lapse (slice 3):** when every monster in the
   initiative pocket is unseen, a search counter runs; after N player turns
   unseen (N tunable, start N=3), the encounter exits combat exactly like
   the existing pocket-cleared path (`exitCombatForHeldPlayers` →
   `SetMode(ModeFreeRoam)`). Lapse is a sibling of pocket-cleared, not new
   machinery.
-- **Detection & surprise (step 4):** real check rolls (decided) — monster
+- **Detection & surprise (slice 4 — deferred):** real check rolls (decided) — monster
   Stealth vs. passive Perception and the reverse, using `SensesData` at
   last. Detection feeds the existing `checkCombatEntry` seam; whoever wins
   detection gets the surprise round via initiative seeding. Also run the
   tick + entry check on `OpenDoor` — closing the known gap where a player
   can stare through a fresh doorway un-flagged until someone moves.
 
-## 6. The free-roam orchestrator (rpg-api)
+## 6. The free-roam orchestrator (rpg-api) — direction, not commitment
 
-The part that surprised us in the best way: **there is no exploration
-subsystem to reconcile with** — exploration is the same encounter object,
-same RPC, same stream, behind `ModeFreeRoam`. So the orchestrator side of
-free roam is **one new verb file**, by the book:
+**Status (Kirk, 2026-08-08): free roam deliberately carries the fewest hard
+decisions in this design.** It's still fuzzy, and that's fine at this
+stage — the architecture here gets decided for real only when slice 4 is
+cut, informed by what slices 1–3 teach us about the
+perceive → decide → act loop. Below, the **findings** are stable facts
+about the codebase and will hold; everything shaped like a decision is a
+**sketch**.
+
+**Finding** — the part that surprised us in the best way: **there is no
+exploration subsystem to reconcile with** — exploration is the same
+encounter object, same RPC, same stream, behind `ModeFreeRoam`. So the
+orchestrator side of free roam is likely **one new verb file**, by the
+book:
 
 - `internal/orchestrators/encounter/v2/exploration_tick.go` —
   `ExplorationTickInput{EncounterID, MoverID, HexesMoved}` /
@@ -242,12 +271,13 @@ free roam is **one new verb file**, by the book:
   flips the mode (detection → combat), the existing `ModeChanged` /
   `InitiativeRolled` / `TurnStarted` events tell every client the same way
   sight-triggered entry does today.
-- **Budget rule (decided):** per hex crossed by the moving player; monsters
+- **Budget (sketch — brainstorm starting point, revisit at slice 4):** per
+  hex crossed by the moving player; monsters
   accrue from the **max** displacement since the last tick, not the sum of
   all movers. Standing still ticks nothing. Numbers tunable; a real
   simulation engine remains the recorded escape hatch if the wants-list
   outgrows this.
-- **No event bus on the tick path (decided, and now evidenced):** nothing in
+- **No event bus on the tick path (finding-backed):** nothing in
   exploration uses the dnd5e bus today — fog/doors/reveals go straight to
   the per-viewer broker. The tick follows suit: broker events only. We
   deliberately do **not** route tick movement through the per-hex
@@ -271,7 +301,7 @@ leaves a tool behind:
 | 1. Targeting end-to-end | Behavior-as-placement-data rails; **first decision breadcrumbs** in the combat log | toolkit (`dungeonspec`, `rulebooks/dnd5e/monster`); content YAML in rpg-api | A `lowest-health` skeleton re-targets the wounded PC and **moves toward its chosen target**; the log states the choice in D&D voice. Rider on the same branch: `AddMonster` rejects empty `DataJSON`, `npcActScripted` deleted, fixtures get real monsters |
 | 2. Perception component | Stimulus→knowledge world model (sight channel, `SensesData` live, allies, last-seen memory); **[shelf — sound]** in place | toolkit (`encounter`, `encounter/perception`) | A monster neither attacks nor paths toward what it hasn't perceived; breadcrumbs show what it believes ("last saw wizard at [5,3]"); sneaking behind a wall mid-combat actually works |
 | 3. `behavior/` v1 — two modes + lapse | The `Machine` seam, born with an honest `Snapshot`; profiles→params plumbing | toolkit (`behavior`, `rulebooks/dnd5e/monster`, `encounter`) | A `timid` ghoul at low HP switches to `fleeing` (breadcrumb says why), vanishes from player screens; N-turn search window runs; lapse returns the party to free roam mid-dungeon. `hiding` is deliberately left as the owner's natural first extension |
-| 4. World tick + detection + surprise | The free-roam clock (`exploration_tick.go` + `FreeRoamTick`) | toolkit (`encounter`), rpg-api | Pursuing a fled monster through rooms works; it can re-enter behind the party; detection resolves by check rolls; surprise round seeds initiative; door-open gap closed |
+| 4. World tick + detection + surprise *(deferred — architecture re-decided after slice 3)* | The free-roam clock (sketch: `exploration_tick.go` + `FreeRoamTick`) | toolkit (`encounter`), rpg-api | Pursuing a fled monster through rooms works; it can re-enter behind the party; detection resolves by check rolls; surprise round seeds initiative; door-open gap closed |
 
 Slices 1–3 need no rpg-api code changes beyond content YAML and toolkit
 version bumps. Slice 4 is the first api-side work. Protos: expected zero
