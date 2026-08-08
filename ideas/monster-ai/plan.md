@@ -54,9 +54,15 @@ no-fallback rule lands (empty `DataJSON` can no longer enter an encounter).
   one structured field, two renderings (log now, debug view later).
 
 **Cross-repo motion** — the first full wave, so it also proves the rails.
-Develop outside-in, merge inside-out: `rpg-api-protos` → `rpg-toolkit` →
-`rpg-api` → `rpg-dnd5e-web`. One issue/branch/PR per repo, cut from each
-repo's base branch (protos/toolkit: `origin/main`; api/web: `origin/dev`).
+**Develop outside-in**: the edge proves the shape before the contract
+transcribes it. The builder concept already proved the `targeting:`
+vocabulary; the remaining edge work is the web combat-log line built
+against fixture events (which rationale refs exist, what the D&D voice
+says) *before* the proto field is released. **Merge inside-out**:
+`rpg-api-protos` releases → `rpg-toolkit` tags → `rpg-api` pins → `rpg-dnd5e-web`
+lands last. The numbered steps below are the merge/landing order. One
+issue/branch/PR per repo, cut from each repo's base branch
+(protos/toolkit: `origin/main`; api/web: `origin/dev`).
 
 1. **rpg-api-protos** — additive field on `ActionResolved`
    (`dnd5e/api/v1alpha2/encounter/events.proto`): `string
