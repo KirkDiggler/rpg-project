@@ -1,640 +1,655 @@
-# Visual Anchor Metadata — Implementation Plan
+# Visual Anchor Metadata — delivery plan on ratified world offset
 
-**Status:** planning revision proposed for Kirk review after the eight design decisions
-in [`design.md`](design.md) were approved at PR #205 HEAD `067fbc9`. This plan is
-not approved and is not an implementation-start signal.
+**Status:** Revised planning proposal for renewed Kirk review. It implements the
+course-corrected [design](./design.md) against ratified Dungeon YAML v0.4 at PR #203
+HEAD `40a3938`; it does not claim plan approval or implementation readiness.
 
-**Goal:** ship one digest-bound visual-calibration release for the small bookcase and
-ornate torch, then make Dungeon Builder and the actual Game select and place those
-exact variants through one pure selector/resolver with identical matrices and no
-runtime geometry measurement.
+This document is executable only after Kirk renews approval. Until then:
 
-**Scope:** two future implementation issues/PRs—one in `rpg-game-assets`, one in
-`rpg-dnd5e-web`—plus coordination with the already-proposed Dungeon YAML v0.4
-Tranche B contract in rpg-project PR #203 / issue #206. No issue is created until
-Kirk approves this plan.
+- do not create implementation issues/branches/PRs/tags/rulesets;
+- keep #204/#205 and #203/#206 open;
+- do not merge either design surface; and
+- do not report the superseded semantic-anchor proposal as current.
 
-**Design:** [`ideas/visual-anchor-metadata/design.md`](design.md), approved decisions
-recorded on [rpg-project PR #205](https://github.com/KirkDiggler/rpg-project/pull/205).
-The idea PR stays open through delivery and is not merged merely because this plan
-is coherent.
+## Outcome
 
-## Non-negotiable boundaries
+Deliver one production path where:
 
-- Raw licensed inputs remain immutable and private. Generated defects are fixed
-  reproducibly in `rpg-game-assets`, never hidden by web metadata.
-- V1 enrolls only `SM_Prop_Bookcase_Small_01` and
-  `SM_Prop_Torch_Ornate_01`.
-- Dungeon YAML uses PR #203's proposed `at` plus
-  `anchor.surface/edge/support/orientation/adjustment`; this plan adds no YAML,
-  proto, API, or toolkit field.
-- Platform code never loads or validates the visual catalog. Server adjustment
-  validity remains semantic-shape + finite-number only.
-- `rpg-game-assets#43` stays separate. The downed fighter is a post-fix verification
-  through the existing character resolver, never a catalog entry or web offset.
-- No runtime `Box3`/GLB measurement, asset-name branch, duplicated selector, or
-  second transform path enters Builder/Game.
-- No implementation issue, branch, code, or tag is created from this plan before
-  plan approval.
+1. toolkit/protos/API preserve ratified optional `offset: [x,y,z]` through authored
+   source, authoring projection, encounter snapshot, and authorized runtime projection;
+2. a safe digest-bound catalog externally owns intrinsic model calibration and stable
+   default selection;
+3. Builder may compile local controls to world axes, displays/persists the exact triple,
+   and previews the shared result;
+4. actual Game consumes the projected triple and uses the same selector/resolver;
+5. bookcase and torch prove two distinct intrinsic points without YAML wall/support
+   semantics; and
+6. offset/calibration remains cosmetic and mechanically inert.
 
-## Verified current seams (planning baseline)
+## Ratified field audit used by every issue
 
-Validated without editing the owning repositories:
-
-| Repo/ref | Current fact | Plan consequence |
-| --- | --- | --- |
-| `rpg-game-assets origin/main@d22c53f` | `library/prop-role-map.json` is the hand-maintained prop source; `scripts/build_prop_manifest.py` measures promoted GLBs and writes `harness/models/synty/props/manifest.json`. | New calibration declarations join the existing generated inventory; raw pack manifests remain untouched. |
-| same | Generated prop manifest has global `calibration.SYNTY_SCALE=0.75`; it has no stable default id, safe visual projection, per-entry total scale, or asset digest. | Provider work must add these explicitly rather than infer them in web. |
-| same | No repository tags and no repository CI workflow currently exist; Python script tests use stdlib `unittest`. | Release/tag and deterministic generator gates must be explicit in the provider PR/checkpoint. |
-| `rpg-dnd5e-web origin/dev@4b85bb7` | `src/components/hex-grid/propManifest.ts` is a hand-maintained mirror; `resolvePropVariant` returns `PROP_KEYS[key]?.[0]`. It contains three rug `renderScale: 2` overrides. | Enrolled defaults become id-based/order-independent; non-enrolled props stay legacy. #624 remains the broader mirror owner. |
-| same | `PropModel.tsx` applies `position`, `rotationY`, and `SYNTY_SCALE * renderScale`; character wrappers independently apply `SYNTY_SCALE`. | Enrolled matrix rendering needs a compile-time-distinct path that cannot double-apply position/rotation/scale. Characters remain legacy. |
-| same | Builder `src/author/preview3d/DungeonPreview3D.tsx` resolves a variant directly, then passes position/rotation to `PropModel`. | Builder must adapt v0.4 semantics, then call the shared selector/resolver. |
-| same | Actual Game path reaches props through `EncounterMap` → `HexGrid` → `HexEntity`; `HexEntity` wraps `PropModel` in an outer world-position group and falls back to a capsule. | Enrolled Game placement must bypass both current transforms while preserving the generic fallback. |
-| same | `scripts/sync-synty-assets.sh` pulls the adjacent asset checkout's latest branch then `rsync --delete`; `.github/workflows/docker.yml` separately shallow-clones asset default `main` and copies files without catalog/digest verification. | Local and Docker staging must share one pinned, atomic, verified path. |
-| same | Learn-only modules include `PropCompositionConcept*`, `propCompositionExperiment*`, `AssetAnchorLabConcept*`, `AssetAnchorLabPreview*`, and `assetAnchorExperiment*`. | Production must not keep duplicate correction tables/math; retain evidence and only the diagnostic value that consumes shared production contracts. |
-| PR #203 `c37a1e1` | V0.4 already proposes `at` and nested `anchor {surface,edge,support,orientation,adjustment {along,normal,vertical}}`; it rejects parallel `facing`/`mount`. | The remaining contract work is the executable semantic adapter, not new YAML. |
-
-**Native gates:** web uses `npm run ci-check` before every push. Asset scripts use
-focused `python3 -m unittest ...`, direct generator/verifier runs, and deterministic
-clean-diff checks; there is no honest aggregate asset CI command today.
-
-## Work-item and PR structure (created only after plan approval)
-
-### Future issue A — rpg-game-assets provider
-
-**Suggested title:** `Generate digest-bound visual calibration catalog for bookcase and torch`
-
-- Repo/base: `rpg-game-assets`, fresh branch from `origin/main`.
-- Board 19: Feature=`The Dungeon`, Team=`Assets`, Kind=`Build`.
-- One issue, one branch, one ready PR. No public raw assets.
-- Owns source declarations, schema/generator/verifier, initial enrollment, private
-  asset evidence, and immutable provider release tag.
-- Does **not** touch web code or #43.
-
-### Future issue W — rpg-dnd5e-web consumer
-
-**Suggested title:** `Consume shared visual anchors in Builder and Game`
-
-- Repo/base: `rpg-dnd5e-web`, fresh branch from `origin/dev`.
-- Board 19: Feature=`The Dungeon`, Team=`Assets`, Kind=`Build`.
-- One issue, one branch, one ready PR for the complete web wave: contract fixture,
-  ingestion, selector/resolver, Builder, Game, evidence, and cleanup.
-- Links web #624 but does not close it unless #624's full broader acceptance is
-  independently met.
-- No proto/API/toolkit change. It consumes Tranche B projection supplied under
-  #203/#206 when that external contract is available.
-
-### Existing owners that remain separate
-
-- rpg-project #203/#206 owns v0.4 ratification/tracking and any later platform
-  tranche issues. This plan supplies adapter semantics only.
-- rpg-game-assets #43 owns downed re-export centering.
-- web #624 owns general manifest-mirror elimination beyond the two enrolled props.
-- rpg-project #204 / PR #205 remains the cross-repo tracking/review surface.
-
-## Dependency graph
-
-```text
-Approved design (#205)                         DONE
-        |
-        v
-Plan review on same PR                         CURRENT
-        |
-        v
-PR #203/#206 records and ratifies exact Tranche B adapter boundary
-(no new YAML; finite-only platform validation; external visual authority)
-        |
-        +-----------------------------+
-        |                             |
-        v                             v
-W branch: consumer-first pure      A branch: producer catalog,
-contract/tests using fixtures      actual GLBs, verifier
-        |                             |
-        +-------------+---------------+
-                      v
-A PR merges to main; immutable provider release tag is created
-                      |
-                      v
-W branch replaces fixtures with pinned released catalog/GLBs
-                      |
-          #203 Tranche B runtime projection available
-                      |
-                      v
-Builder + actual Game parity/evidence on W branch
-                      |
-                      v
-A independent gate -> W independent gate -> Kirk visual acceptance
-                      |
-                      v
-Implementation PRs may merge; #205 remains open through final evidence/#43 verify
-```
-
-The external Tranche B wire/projection is a dependency for actual Game parity. If
-#203 changes the agreed boundary, stop and return to Kirk/design review; do not invent
-a client approximation or silently add proto/API/toolkit work here.
-
-## Develop outside-in; merge inside-out
-
-### Develop outside-in
-
-1. **Consumer semantics first:** on the single web branch, encode the approved
-   selector/resolver and PR #203 adapter against license-safe fixtures. The consumer
-   names the exact safe-catalog shape and failure outcomes.
-2. **Provider implements that contract:** asset generator proves the catalog against
-   the actual promoted bookcase/torch GLBs.
-3. **Consumer integrates the real provider release:** replace fixtures with the
-   generated released artifact, then wire Builder and Game.
-4. **Runtime projection closes the loop:** use the actual #203 Tranche B projection,
-   never a Concepts-only imitation, for Game evidence.
-
-The web PR may open ready only when it consumes a real provider release; fixture-only
-work is an internal checkpoint, not merge-ready state.
-
-### Merge inside-out / provider first
-
-1. Merge future asset PR A to `rpg-game-assets/main` after its independent gate.
-2. Kirk creates the immutable provider release tag at that exact merged commit.
-3. Web W pins that tag/catalog revision, passes atomic staging and actual parity.
-4. Merge W to `rpg-dnd5e-web/dev` using the repo's normal feature-PR squash flow.
-5. Leave #205 open until cross-repo evidence and post-#43 verification are recorded.
-   PR #203 may remain open for its other v0.4 tranches.
-
-There is no web-first merge: a public consumer cannot honestly pin an unpublished
-private provider output.
-
-# Phase 0 — v0.4 ratification coordination
-
-Before either implementation issue is cut:
-
-- [ ] PR #203 states that no YAML field beyond its current semantic anchor shape is
-  required by Assets.
-- [ ] Its normative table matches the approved adapter:
-  - floor/floor → floor-contact at cell floor center;
-  - wall/floor → floor-contact at structural edge/floor datum;
-  - wall/wall → wall-attachment at structural edge/floor datum;
-  - floor/wall → reject.
-- [ ] Structural room-inward/tangent remains fixed; `into-cell|into-wall` rotates the
-  model 0|180° without flipping adjustment signs.
-- [ ] Server validation is semantic shape + finite numbers only; no catalog limit,
-  hash, scale, pivot, or correction enters server validity/projection.
-- [ ] #206 records the still-unproven production evidence gates rather than claiming
-  the Learn already passed them.
-- [ ] Kirk ratifies Tranche B semantics (or explicitly says implementation may start
-  before the broader v0.4 PR completes).
-
-**Stop condition:** any request for server catalog resolution, raw transform fields,
-new YAML, or asset-dependent gameplay validation returns to design review.
-
-# Phase A — rpg-game-assets provider issue/PR
-
-## A1. Source declaration and schema
-
-**Create:**
-
-- `library/visual-anchor-calibrations.json`
-- `scripts/test_build_web_asset_catalog.py`
-
-**Read/modify:**
-
-- `library/prop-role-map.json`
-- `scripts/build_prop_manifest.py` only if a small reusable inventory helper is
-  needed; do not mix visual calibration into gameplay role semantics.
-- `harness/models/synty/props/manifest.json` remains generated inventory.
-
-The declaration is private producer input. It names:
-
-- schema version;
-- semantic family and stable `defaultVariantId`;
-- concrete variant id + promoted file;
-- accepted GLB digest;
-- sole `totalScale` (`0.75` for both initial variants unless producer evidence
-  disproves it);
-- evidenced `sourceForwardYawRad` (including evidence-backed zero);
-- tagged floor-contact/wall-attachment model point; and
-- optional Builder UX bound hints, explicitly non-normative for YAML validity.
-
-Tests fail for duplicate ids, default missing/foreign to family, nonpositive scale,
-unproven/malformed yaw, invalid tag/finite values, stale accepted digest, and a
-floor-contact vertical correction.
-
-**Judgment:** use ids independent of path, recommended
-`synty:props:<source-piece-name>`. The filename may move; the stable id does not.
-Changing an id is a content migration, not a rename.
-
-## A2. Deterministic safe projection
-
-**Create:**
-
-- `scripts/build_web_asset_catalog.py`
-- `harness/catalogs/synty-web-assets.json` (generated, safe allowlist)
-
-The generator joins declarations to the existing generated prop inventory and the
-actual promoted files. It emits only:
-
-- schema/catalog revision and producer release id;
-- families + explicit default ids;
-- stable id/ref/path/digest/totalScale/yaw/tagged point/companions;
-- optional UX hints.
-
-It excludes private source paths, pack notes, geometry, materials, textures,
-footprint/LoS/gameplay facts, and measurement dumps. Two consecutive runs must be
-byte-identical and leave `git diff` clean.
-
-`catalogRevision` is a digest of normalized consumer entries. Every model/companion
-digest is computed from the actual promoted GLB. A deliberate byte mutation, order
-mutation, missing default, or stale declaration must turn the test/generator red.
-
-## A3. Atomic bundle verifier
-
-**Create:**
-
-- `scripts/verify_web_asset_bundle.py`
-- `scripts/test_verify_web_asset_bundle.py`
-
-Given a staged root + catalog, the verifier checks schema, catalog revision, producer
-release id, paths, exact staged file SHA-256 values, companions, and allowlisted
-fields. It fails closed and never repairs/copies files.
-
-Tests stage old-catalog/new-GLB and new-catalog/old-GLB mixtures, missing or
-unexpected catalog references, corrupted bytes, unsupported schema, and wrong
-producer release. Unrelated non-enrolled files in the broader staged harness remain
-allowed. Every mutation must return nonzero.
-
-## A4. Initial enrollment and calibration evidence
-
-Enroll exactly:
-
-| Family/default | Concrete file | Calibration |
-| --- | --- | --- |
-| `dnd5e:props:bookcase` | `props/SM_Prop_Bookcase_Small_01.glb` | `floor-contact` measured X/Z point; total scale 0.75; evidenced yaw |
-| `dnd5e:props:torch-ornate` | `props/SM_Prop_Torch_Ornate_01.glb` | `wall-attachment` measured X/Y/Z point; total scale 0.75; evidenced yaw |
-
-- [ ] Prove each model point from build-time inspection of the exact promoted digest.
-- [ ] Prove source yaw is a coherent asset convention on the exact output and
-  relevant siblings, not a Root/axis repair.
-- [ ] Record numeric measurement provenance and license-safe multi-angle screenshots.
-- [ ] Confirm `_Bookcase_01/_02`, `_Torch_Ornate_02`, rugs, walls, and characters are
-  not enrolled by family association.
-- [ ] Confirm no raw licensed file/source path appears in public-safe output/evidence.
-
-## A5. Provider gate and release handoff
-
-Run at exact PR head:
-
-```bash
-python3 -m unittest scripts.test_build_web_asset_catalog \
-  scripts.test_verify_web_asset_bundle
-python3 scripts/build_web_asset_catalog.py
-python3 scripts/build_web_asset_catalog.py
-git diff --check
-git status --short
-```
-
-Also run any touched existing manifest tests and the verifier against the real staged
-bundle. The PR checkpoint records commands, catalog revision, both GLB digests, and
-proposed provider release id.
-
-### Version/tag handoff
-
-No asset/web tags exist today. Recommended first immutable provider release:
-`web-assets/v1.0.0` (annotated tag) on the merged asset PR commit. The catalog can
-name that release id before merge; the release gate verifies the tag resolves to the
-commit containing byte-identical catalog/assets. Tags are never moved; changed
-content gets `web-assets/v1.0.1`, while schema-breaking semantics get a new catalog
-schema major/release major.
-
-This avoids a self-referential "catalog embeds its own future commit SHA" problem.
-If Kirk rejects introducing tags, the fallback is an out-of-band pinned merge SHA
-stored in the web provenance wrapper—not a hand-edited provider digest. Decide before
-A implementation begins.
-
-# Phase W — rpg-dnd5e-web consumer issue/PR
-
-One web branch carries W1–W8. Do not split integration findings into stacked PRs.
-
-## W1. Consumer-first catalog and pure contracts
-
-**Create (recommended paths):**
-
-- `src/rendering/visual-assets/catalog.ts`
-- `src/rendering/visual-assets/selectVisualVariant.ts`
-- `src/rendering/visual-assets/resolveVisualPlacement.ts`
-- `src/rendering/visual-assets/semanticAnchorAdapter.ts`
-- colocated `*.test.ts`
-- test-only safe catalog fixtures; no fake production generated file
-
-Cover:
-
-- stable default selection independent of entry order;
-- legacy semantic-ref selection;
-- future explicit id known/removed/foreign behavior without default substitution;
-- hard missing/foreign default;
-- exact floor/floor, wall/floor, wall/wall matrices and floor/wall rejection;
-- all six floor orientations and wall edges;
-- fixed structural inward sign under `into-cell|into-wall`;
-- no-anchor identity, model-point mismatch, missing-wall fallback, invalid catalog,
-  digest failure, and model-load failure outcome;
-- replacement refresh of the new family's default facts.
-
-The modules have no React/R3F/loader/model-name imports. Mutation tests must prove
-order, sign, transform order, and fallback assertions discriminate.
-
-## W2. Generated artifact ingestion and legacy crosswalk
-
-**Generated provider copy:** `src/generated/synty-web-assets.json`.
-
-**Modify:**
-
-- `scripts/sync-synty-assets.sh`
-- `.github/workflows/docker.yml`
-- `src/components/hex-grid/propManifest.ts` and its tests only at the enrollment
-  crosswalk seam
-
-Use one shared staging script/path locally and in Docker:
-
-1. resolve the pinned immutable provider release;
-2. clone/fetch into a temporary checkout without pulling/mutating the developer's
-   shared adjacent checkout;
-3. stage catalog + referenced GLBs/companions;
-4. verify catalog bytes/revision and every staged digest;
-5. atomically replace the destination only on success;
-6. preserve the previous good bundle on failure.
-
-The current Docker "clone latest main + cp" and local "pull + rsync" divergence is
-removed for this bundle.
-
-Partition by enrollment:
-
-- enrolled bookcase/torch families use generated selector/matrix only;
-- all other props use current `propManifest.ts`/`PropModel` unchanged;
-- a guard rejects overlap/double authority;
-- current rug effective scale 1.5 and character scale 0.75 remain unchanged;
-- enrolled total scale applies exactly once.
-
-Post a signed cross-link to web #624. Do not claim the broader mirror issue closed.
-
-## W3. PR #203 semantic adapter
-
-`semanticAnchorAdapter.ts` consumes a minimal semantic interface matching ratified
-#203 fields. Builder source and Game projection adapters translate into it; neither
-contains placement math.
-
-Tests pin:
-
-| Semantic combination | Resolver registration |
+| Field | Exact v0.4 status |
 | --- | --- |
-| floor/floor | floor-contact; cell floor target; along/right, normal/forward, vertical/up |
-| wall/floor | floor-contact; structural edge floor target; tangent/up/inward |
-| wall/wall | wall-attachment; structural edge floor target; tangent/up/inward |
-| floor/wall or invalid/missing support | deterministic rejection before resolver |
+| `ref` | existing identity |
+| `at` | existing owning cell; compiler projects absolute location |
+| `facing` | existing v0.3 applicability only: non-monster floor/default-mount props; six values; v0.4 does not broaden it |
+| `mount` | existing v0.3 decode-known/rejected behavior unchanged; never an anchor signal |
+| `offset` | optional exactly three finite game-world values relative to canonical origin; world axes; facing does not rotate/reinterpret; omission has zero effect without authored presence |
+| `anchor`, `surface`, `support`, `edge`, `orientation`, `adjustment`, `height`, `rotate_degrees`, `variant_id` | not v0.4 placement fields |
 
-Catalog UX bounds may shape controls/warnings only. Any finite server-valid submitted
-adjustment must pass through byte-for-byte and Game applies it exactly; no clamp.
+No issue may introduce a parallel anchor object, server catalog lookup, raw full transform,
+or gameplay-footprint coupling.
 
-If Tranche B generated types/projection are unavailable, keep only pure fixture tests
-and report the external blocker. Do not invent proto types, parse an unratified JSON
-shape, or merge a Concepts-only substitute.
+## Current baselines and seams audited before issue creation
 
-## W4. Sole-transform model seam
+Capture fresh exact heads again when issues are cut. Planning audit used:
 
-**Modify/refactor:**
+- `rpg-toolkit origin/main@1ecd20a9`: `encounter/dungeonspec/{spec,decode,
+  validate,compile}.go` and fixture/unit suites;
+- `rpg-api-protos origin/main@6c4a9160`: authoring
+  `dnd5e/api/authoring/v1alpha1/service.proto`, generated Go/TS, encounter v1alpha2
+  types/events; exact authorized placement owner must be confirmed in the platform
+  implementation issue, not guessed here;
+- `rpg-api origin/dev@2646724d`: `internal/orchestrators/authoring`, dungeon registry
+  and encounter creation/snapshot, authoring handler, v2 authorized hex projection;
+- `rpg-game-assets origin/main@d22c53f`: private prop-role source data,
+  `scripts/build_prop_manifest.py`, generated global `SYNTY_SCALE=0.75`, no asset
+  release tag convention or CI workflow;
+- `rpg-dnd5e-web origin/dev@4b85bb7`: array-first `propManifest` selection; three rug
+  `renderScale=2`; `PropModel` outer transforms; independent character 0.75;
+  Builder direct model resolver; actual Game `EncounterMap→HexGrid→HexEntity` outer
+  group; local pull+rsync versus Docker latest-main+copy divergence; Learn experiment
+  modules; and no current v0.4 offset projection.
 
-- `src/components/hex-grid/PropModel.tsx`
-- `src/components/hex-grid/PropModel.test.tsx`
+Those heads are evidence, not branch bases for future work. Every issue starts from
+fresh owning base and records exact HEAD.
 
-Recommended shape: preserve `PropModel` as the legacy position/rotation/scale API for
-non-enrolled assets, extract shared load/clone/tint/companion rendering, and add a
-compile-time-distinct enrolled component/API that accepts one resolved `Matrix4`.
+## Work graph after renewed approval
 
-- Set/apply the matrix once on the enrolled root.
-- Do not pass position, rotation, `SYNTY_SCALE`, or `renderScale` to that path.
-- Parent and companions share the identical matrix.
-- Preserve URL-keyed GLTF cache/material lifetime and remembered tint.
-- Test a nontrivial scale+yaw+anchor+wall adjustment and assert exact world matrix.
-- A deliberate extra outer scale/rotation/position must make tests fail.
+Create six owning issues; no umbrella-only wrapper in `game-dev`.
 
-## W5. Builder integration and replacement
+| ID | Repository/base | Owning lane | Deliverable | Depends on |
+| --- | --- | --- | --- | --- |
+| T | `rpg-toolkit/main` | Platform | strict YAML offset decode/validate/presence/compile | approved #203/#205 plans |
+| P | `rpg-api-protos/main` | Platform | optional authoring + authorized runtime transport, omission preserved | approved #203 plan; web/API consumer fixtures |
+| A | `rpg-api/dev` | Platform | source persistence, authoring projection, snapshot/runtime projection, no interpretation | T + P released |
+| G | `rpg-game-assets/main` | Assets | declarations, safe generator, two enrolled assets/hints, exact provider handoff | approved #205 |
+| W | `rpg-dnd5e-web/dev` | Assets with UI/Platform review | Builder authoring + actual Game offset, shared catalog selector/resolver, atomic sync | A available + G merged provenance |
+| C | `rpg-project` tracking comments only | Director | cross-repo evidence/gates and #203/#205 close recommendation | T/P/A/G/W delivered |
 
-**Modify:**
+`C` is not a new implementation issue: use existing #206/#204 and PR #203/#205.
+No issue is created until renewed plan approval. Each future issue gets one branch and
+one ready PR, stays open through independent review, and uses the owning repo board.
 
-- `src/author/preview3d/DungeonPreview3D.tsx` and tests
-- the ratified DungeonDoc/placement parser/types owned by the #203 consumer seam
-- Builder inspector/replacement reducer at its existing owner once Tranche B lands
+### Development order: outside-in
 
-Replace the enrolled path's direct `resolvePropVariant` + position/rotation props
-with:
+1. W owner writes contract-level TS fixtures/interfaces first on its future branch:
+   projected optional world triple, semantic ref/at/facing, selector result, expected
+   exact matrix. These are not reported as Game implementation.
+2. P shapes the smallest optional transport that satisfies authoring and authorized
+   runtime consumers, including omission versus explicit all-zero.
+3. A maps P and T without calculations; T implements the source/compiler contract.
+4. G implements the smallest real safe catalog satisfying consumer fixtures.
+5. W replaces fixtures with actual API projection + exact provider revision and wires
+   Builder and Game.
+
+This is development sequencing, not merge sequencing.
+
+### Provider-first merge/release order
+
+1. T merges to `rpg-toolkit/main`; record the actual tagged module/version produced by
+   normal repo release automation (do not invent one in advance).
+2. P merges to `rpg-api-protos/main`; record exact generated artifact revision/tag.
+   T and P may merge in either order only if independently green; A needs both.
+3. A pins released T/P, merges to `rpg-api/dev`, and is deployed/available in the
+   paired acceptance environment.
+4. G merges to `rpg-game-assets/main`; record the exact merged commit SHA chosen below.
+5. W's exact PR head pins A-compatible protos and exact G commit, passes required
+   private-asset checks, then merges to `rpg-dnd5e-web/dev`.
+6. C assembles evidence; Kirk decides whether PR #203/#205 may merge/close.
+
+No consumer merge precedes its provider. A web-only hand-built offset fixture cannot
+satisfy the Game gate.
+
+## T — toolkit issue/PR
+
+### Files/seams
+
+Start at fresh `origin/main`. Expected owners:
+
+- `encounter/dungeonspec/spec.go`: optional authored presence type on room/canvas place
+  and boss without a generic renderer transform type;
+- `decode.go`: strict known-field decode;
+- `validate.go`: exact length-three + finite values, canonical source paths;
+- `compile.go`: copy presence/value to compiled placement; room-local to absolute `at`
+  changes must not alter offset; and
+- existing fixture/unit files for all placement locations.
+
+### Acceptance
+
+- Accept omitted and exact `[0,0,0]` as distinct authored presence cases.
+- Accept positive/negative finite values on room place, canvas place, boss.
+- Reject 0/1/2/4 components, string/null components, NaN and infinities through all
+  decode paths with exact `ValidationError.field`.
+- Keep facing/mount validation independent; offset cannot make invalid combinations
+  valid.
+- Round-trip/copy exactly; no clamping, pivot, snapping, facing rotation, or asset ref
+  lookup.
+- Prove blockers/mechanics unchanged.
+
+### Validation
+
+Run normal Go format/lint/test for the module plus named dungeonspec unit/fixture suites.
+Record exact command/version and full green output in PR evidence.
+
+## P — protos issue/PR
+
+### Contract
+
+Use the existing placement message(s) actually returned by:
+
+- Authoring `FloorPlan.placements[]`; and
+- authorized runtime `HexRecord.contents[]` (or its current concrete placement payload).
+
+Add the smallest optional exact world-vector representation that preserves omission
+versus authored zero. Reuse an existing suitable world vector only if it has exact
+finite/presence semantics and no gameplay meaning; otherwise define a narrowly named
+placement-offset message. Do not add catalog ids, intrinsic points, matrices,
+quaternions, scale, semantic wall/support, or a generic transform.
+
+### Acceptance
+
+- Go/TS generated APIs expose optional presence and three exact components.
+- Binary/JSON compatibility suite proves old payload omission and new zero/nonzero.
+- Authoring and runtime fields have the same units/axes documentation.
+- Generated artifacts and breaking-change checks pass.
+- No server replacement identity/call is introduced.
+
+The exact proto type/field number is an implementation decision reviewed on P; this
+plan intentionally does not fabricate it before inspecting the then-current heads.
+
+## A — API issue/PR
+
+### Flow
+
+1. Accept exact source YAML through existing `PutDungeon(validate_only=true)`.
+2. Preserve authored source and toolkit optional compiled value.
+3. Project optional offset in authoring FloorPlan with source path/ref/absolute at/
+   applicable facing.
+4. Persist it into the immutable encounter snapshot at creation.
+5. Return it on the authorized runtime placement in the visible/remembered hex record.
+6. Never recompute it after source edits for an already-created encounter.
+
+### Acceptance matrix
+
+- room place, canvas place, boss;
+- omission, explicit zero, positive/negative XYZ;
+- validate-only then save/reload then encounter create then authorized runtime read;
+- fog authorization still suppresses unauthorized content;
+- ref edit retain/change/remove cases are independent complete documents;
+- unchanged owning cell/blockers/LoS/pathing/range/targetability/fog;
+- no catalog import, clamping, vector rotation, or asset-specific behavior; and
+- old documents/encounter snapshots remain readable.
+
+### Rollback boundary
+
+Once source/snapshot persistence exists, rollback cannot delete/strip the field. A
+server rollback must retain decode/storage/proto passthrough (even if visual consumers
+are temporarily disabled), preserve existing snapshots, and keep exact authored
+presence. Database/source rollback procedures must prove no lossy rewrite.
+
+## G — asset-provider issue/PR
+
+### Exact v1 identities
+
+Registrar grammar:
 
 ```text
-persisted anchor -> semantic adapter -> shared selector -> shared resolver
-                   -> sole matrix component
+^synty:props:[a-z0-9]+(?:-[a-z0-9]+)*$
 ```
 
-Legacy/unanchored props remain byte-identical.
+Exact immutable ids:
 
-Replacement is client-local whole-document editing:
+```text
+synty:props:sm-prop-bookcase-small-01
+synty:props:sm-prop-torch-ornate-01
+```
 
-- preserve `at`, edge/orientation, and compatible along/normal only when the action
-  says so;
-- author the new ref/support/vertical/blockers explicitly;
-- select the new family's stable default and refresh scale/yaw/model point/companions;
-- never preserve an old matrix or old asset facts;
-- validate the complete candidate through #203's normal validate-only flow.
+Family declarations bind current `dnd5e:props:bookcase` and
+`dnd5e:props:torch-ornate` to those exact defaults. The producer PR must record exact
+current semantic ref spellings from web/API at implementation time.
 
-Tests cover bookcase wall/floor → torch wall/wall, failed target selection leaving the
-old document unchanged, and no stable placement ID/server replacement command.
+A global registrar rejects collisions among all primary/companion ids, conflicting
+path reuse, default outside family, invalid grammar, missing promoted output, and
+silent id changes. A path move leaves id stable; an id change requires an explicit
+migration record and consumer review.
 
-## W6. Actual Game integration
+### Private reviewed source
 
-**Modify at the real path:**
+Add reviewed source declarations (recommended
+`library/visual-anchor-calibrations.json`) with:
 
-- `src/components/game/EncounterMap.tsx` or its existing renderable-entity adapter
-- `src/components/hex-grid/HexGrid.tsx`
-- `src/components/hex-grid/HexEntity.tsx` and tests
+- stable id/family/default;
+- promoted relative GLB path and accepted SHA-256;
+- one `totalScale`;
+- required `sourceForwardYawRad` plus evidence reference;
+- tagged point (`floor-contact` for bookcase, `wall-attachment` for torch);
+- exact point vector in canonical rendered meters; and
+- **required** authoring UX hints for local right/up/forward controls: finite min/max,
+  finite positive step, units, and evidence reference.
 
-Consume the authorized Tranche B runtime projection. Carry semantic anchor data to
-the same adapter/selector/resolver; do not rederive from model identity or nearest
-wall.
+Do not copy raw source asset files or measurement dumps. Raw export defects return to
+re-export; generator metadata cannot compensate malformed Root/axis/scale.
 
-For enrolled props, remove/bypass `HexEntity`'s outer world-position group and
-`PropModel` transforms; render the sole matrix. Preserve capsule/loading/error
-fallback at the logical owning target and the existing remembered/interaction
-behavior.
+### Deterministic safe generator
 
-Current `WALL_ADJACENT_PROP_KEYS` contains only legacy wall-banner behavior. Do not
-add bookcase/torch. Enrolled semantic anchors never use nearest-wall heuristics.
+Add a separate safe projection generator, not renderer fields inside gameplay
+prop-role semantics. Recommended:
 
-Game tests use the exact same catalog fixture and persisted anchor input as Builder
-and assert matrix byte/numeric equality, not merely similar screenshots.
+- input: reviewed declarations + existing generated prop inventory;
+- output: `harness/catalogs/synty-web-assets.json`;
+- stable ordering/number encoding/newlines;
+- no timestamp/current branch/self commit field;
+- allowlisted safe fields only; and
+- check mode reruns generator and byte-compares tracked output.
 
-## W7. Production parity and performance evidence
+Hard failures:
 
-Capture one evidence ledger keyed by:
+- unsupported schema, invalid/nonfinite scale/yaw/point/hint;
+- missing/extraneous/duplicate ids or family defaults;
+- path traversal/non-GLB/missing file;
+- digest mismatch;
+- global collision/default mismatch;
+- forbidden private/source/geometry/material/texture keys/paths; and
+- stale tracked output.
 
-- provider release tag;
-- `catalogRevision`;
-- concrete stable default id;
-- each GLB digest;
-- persisted semantic anchor input; and
-- resolved 4×4 matrix.
+### Required initial UX hint evidence
 
-Required paired Builder/Game proof:
+The Learn numbers are candidates, not automatic production truth. For each enrolled
+entry, record screenshots and numeric matrix/control table across at least:
 
-- [ ] floor/floor sanity case;
-- [ ] corner-pivot small bookcase on wall/floor;
-- [ ] ornate torch on wall/wall;
-- [ ] bookcase → torch whole-document replacement;
-- [ ] E/NE/NW/W/SW/SE wall edges with fixed inward/tangent signs;
-- [ ] interior-authored solid wall and generated-envelope wall;
-- [ ] `into-cell` and `into-wall` without adjustment-sign reversal;
-- [ ] no-anchor, registration mismatch, missing wall context, corrupted catalog,
-  and model-load fallback;
-- [ ] paired representative Discord viewport screenshots with explicit viewed
-  statements and numeric matrices from the same release/hash.
+- three distinct valid existing facings;
+- positive/negative local right and forward controls;
+- positive vertical where visually relevant; and
+- two representative camera distances including Discord viewport.
 
-The two enrolled models are pivot-distinct on purpose: bookcase visible-center
-floor point versus torch back attachment point. Placeholder boxes or Learn-only
-fixture constants cannot pass.
+Reviewers confirm chosen range/step provides useful adjustment without presenting it
+as YAML validity. If evidence cannot justify hints, stop for explicit #205 design
+amendment; do not mark them optional.
 
-Performance gates:
+### Atomic provider verification
 
-- no runtime `Box3`, GLB traversal, or per-frame matrix recomputation;
-- O(1) family/id lookup and constant-time resolution on placement changes;
-- no duplicate GLB/material/companion allocation beyond existing caching;
-- catalog bundle size recorded;
-- `DevPerfProbe`/current real-route baseline compared before/after on the same scene;
-- unexpected draw-call, memory, or frame-time regression blocks acceptance.
+Stage into a fresh temporary directory:
 
-Run focused tests during work and `npm run ci-check` at every pushed checkpoint and
-at exact final head.
+1. copy the **complete** `harness/models/synty/` legacy tree from the candidate exact
+   commit, not only enrolled GLBs;
+2. generate/copy safe catalog;
+3. verify every catalog digest and complete expected legacy inventory;
+4. generate provenance wrapper with chosen provider revision;
+5. run catalog/schema/license checks; then
+6. atomically rename/swap the whole catalog+asset stage.
 
-## W8. Experiment cleanup and documentation honesty
+Failure keeps prior entire tree/catalog; no partial rsync is visible.
 
-After production parity is captured:
+### Provider provenance: explicit Kirk call
 
-- retain `docs/evidence/prop-composition-728*` and
-  `docs/evidence/asset-anchor-lab-731*` as immutable Learn history;
-- remove fixture-local correction/selection/transform constants from
-  `propCompositionExperiment*` and `assetAnchorExperiment*`;
-- either make retained Concepts diagnostics call the shared production
-  selector/resolver, or remove their route/code if they add no calibration QA value;
-- keep runtime bounds visualization isolated to the Learn/calibration route and add a
-  source/build guard proving production Builder/Game do not import it;
-- update architecture/how-to docs and stale `propManifest.ts` comments only where the
-  enrolled/legacy partition changes their truth;
-- do not broaden cleanup into class/wall/all-manifest migration (#624).
+**Recommendation:** choose the exact merged G commit SHA. W's generated provenance
+records that SHA; authenticated local/Docker sync fetches that commit directly and
+verifies `HEAD == recorded SHA`. This is immutable, matches current no-tag convention,
+and avoids a self-referential catalog revision.
 
-**Recommendation:** keep the Anchor Lab raw-measurement visualization as an isolated
-calibration tool, but make its calibrated answer consume the released catalog/shared
-resolver. Remove the one-off Prop Composition route once production replacement
-screenshots supersede its executable value. This preserves useful QA without two
-sources of transform truth.
+If Kirk instead chooses a named release, G must additionally:
 
-# Post-fix downed verification (separate owner)
+- create annotated `web-assets/v1.0.0` only after merge;
+- install a no-bypass repository tag ruleset protecting `web-assets/v*` from update
+  and deletion before creating the tag;
+- record tag object id and `git rev-parse web-assets/v1.0.0^{}` peeled commit; and
+- make W verify both. A lightweight/unprotected/moveable tag is not acceptable.
 
-After rpg-game-assets #43 merges:
+No tag or ruleset is created before Kirk's renewed plan approval and explicit choice.
 
-- sync the exact corrected asset revision through the existing character path;
-- toggle standing/downed fighter on one logical hex in the Anchor Lab and actual
-  Game;
-- require raw downed centering with no safe-catalog character entry, no
-  `variantId` anchor, and no web translation;
-- record player + NPC evidence required by #43 separately.
+### G tests/evidence
 
-#43 is not folded into A or W and does not block bookcase/torch implementation PR
-review. PR #205 remains open until the post-fix verification is recorded; if #43 is
-still open, report that explicit external tracking gate rather than weakening it.
+- normal Python/unit suite using repository environment;
+- generator determinism/check mode twice;
+- collision/adversarial/allowlist tests;
+- exact GLB hashes and immutable-source proof;
+- two per-entry calibration matrix fixtures;
+- full-tree atomic failure injection before swap; and
+- license scan confirming no raw GLB/source content enters public repo.
 
-# Review, independent gates, and human acceptance
+## W — web consumer issue/PR
 
-## Asset PR gate
+Start one future branch from fresh `origin/dev`. W includes platform offset consumption
+and visual catalog integration so one actual matrix path can be proven; it does not
+replace T/P/A.
 
-A fresh-context Assets reviewer verifies exact head:
+### 1. Contract fixtures before providers
 
-- deterministic generation and mutation red/green proof;
-- actual promoted digest/point/yaw/scale evidence;
-- stable defaults and safe allowlist;
-- staged bundle corruption rejection;
-- licensing boundary and no raw public payload;
-- only two enrolled variants.
+Add fixture interfaces/tests for:
 
-Every finding is answered on the PR with the required signature. Kirk alone merges
-and creates the release tag.
+```text
+selectVisualVariant(catalog, semanticRef, explicitVariantId?)
+resolveVisualPlacement(entry, canonicalAtOrigin, facingYaw, worldOffset)
+  -> matrix + diagnostics
+```
 
-## Web PR gate
+Use exact equation:
 
-Before independent review:
+```text
+T(p) · T(o_world) · R_y(facing) · T(-modelPoint)
+     · R_y(sourceForwardYawRad) · S(totalScale)
+```
 
-- `npm run ci-check` passes on exact pushed head;
-- implementer self-review confirms one selector/resolver and no double transform;
-- every Copilot thread is individually reconciled if Copilot reviews the PR;
-- paired actual Builder/Game evidence is attached with hashes/matrices.
+Fixture assertions:
 
-A fresh independent product gate then adversarially checks semantic mapping, matrix
-order/sign, legacy partition, corrupted staging, fallback parity, actual-game path,
-performance, and screenshot claims. Deliberate mutations of default order, wall
-normal, orientation flip, extra outer scale, and digest verification must turn the
-relevant tests red.
+- stable default independent of ordering;
+- exact ids above;
+- omitted/zero/nonzero XYZ;
+- all six valid existing facings;
+- offset vector unchanged when facing changes;
+- point/yaw/scale composition order;
+- no-point identity fallback;
+- replacement reloads all intrinsic fields and offset retains/changes/removes only by
+  explicit client action; and
+- invalid selection/catalog/provenance fails deterministically.
 
-Kirk performs creative visual acceptance on the pinned provider release. A final
-independent re-gate runs after any visual correction. No agent claims approval,
-merge-readiness, or completion before those gates.
+### 2. Exact provider ingestion and complete legacy tree
 
-# Rollback
+Replace both divergent paths with one script/module used by local sync and Docker:
 
-- Provider tags are immutable. A bad release is not retagged; publish a new patch
-  release after correction.
-- Atomic staging leaves the prior catalog+GLBs untouched on verification failure.
-- Web keeps explicit enrollment partitioning. A rollback can un-enroll the two
-  families and restore their legacy render path without changing YAML or gameplay.
-- Revert the web consumer commit/PR as one unit; never keep new catalog selection
-  with old component transforms or vice versa.
-- Persisted semantic anchors remain valid through rollback; legacy rendering may be
-  visually less precise but no matrix/calibration data needs migration.
-- If #203 changes field semantics, stop the web rollout and return to design instead
-  of translating old documents heuristically.
+1. read generated provenance containing exact merged G SHA (or protected tag object +
+   peeled commit if Kirk chose tag);
+2. authenticated fetch/checkout exact revision in a clean temp directory;
+3. assert exact HEAD/peeled SHA before reading files;
+4. stage the **complete** legacy `harness/models/synty/` tree plus safe catalog;
+5. verify byte-identical checked catalog, inventory, every enrolled digest, and schema;
+6. create web generated provenance including provider SHA, catalog digest, generation
+   tool version, and web build SHA; and
+7. atomically replace public tree+catalog after every check succeeds.
 
-# Real plan judgments for Kirk
+A token/secret absence must fail the required private-asset PR check for W rather than
+silently warn/skip. Normal contributors may run public unit fixtures, but exact-head
+merge evidence requires the protected secret check.
 
-| Judgment | Recommendation | Consequence |
+### 3. Exact-head dev PR gate
+
+Add a required workflow for the exact W pull-request head targeting `dev`:
+
+- checkout `github.event.pull_request.head.sha`, assert `git rev-parse HEAD` equality;
+- exact provider checkout/assertion above;
+- full atomic stage in local-script mode and Docker-build mode;
+- build/test/lint/typecheck;
+- run paired Playwright/actual Game evidence from that built head; and
+- upload provenance, matrices, screenshots, inventory and performance artifacts named
+  with both web HEAD and provider SHA.
+
+Before merge, query GitHub and assert required check `headSha` equals current PR HEAD;
+stale green checks after pushes do not count. After merge, repeat a smoke stage/build
+on exact `origin/dev` merge SHA and attach it; do not substitute a local dirty tree.
+
+### 4. Catalog projection and scale partition
+
+Commit only safe generated JSON/provenance. Preserve the complete legacy asset tree in
+built/public staging without committing licensed GLBs.
+
+Generate/consume an enrolled lookup while preserving current public prop roles. Enrolled
+bookcase/torch use catalog `totalScale` once. Compile-time-distinct enrolled matrix
+component owns returned matrix over shared loading internals; legacy component retains
+existing global/renderScale behavior. A discriminator prevents one asset entering both.
+
+Keep the three rug `renderScale=2`, non-enrolled siblings, wall/character paths, and
+#624 behavior unchanged. Add assertions:
+
+- enrolled: no outer `SYNTY_SCALE`/`renderScale`;
+- legacy: current effective scale unchanged;
+- companion meshes inherit the identical sole matrix; and
+- character resolver remains independent.
+
+### 5. Shared selector/resolver
+
+One pure selector and one pure matrix resolver are imported by Builder and Game.
+No model-specific component branch, runtime GLB measurement, React state, camera,
+wall geometry, gameplay state, or network access enters either pure function.
+
+The returned matrix is applied once to a compile-time-distinct enrolled group with
+primitive/companions under it. Remove outer position/yaw/scale for enrolled models.
+Legacy renderer still receives ratified `o_world` once outside its current transform.
+
+### 6. Builder
+
+Builder:
+
+- decodes/projected optional offset presence;
+- displays exact world X/Y/Z triple and omission;
+- may show local right/up/forward controls using required entry hints;
+- converts local delta once with existing facing yaw to world `offset`;
+- previews the exact candidate through `PutDungeon(validate_only=true)`;
+- rejects unsupported server fields loudly; never strips offset to pass;
+- saves complete document with exact finite triple; and
+- on ref edit presents explicit retain/change/remove choice—no implicit reset or
+  preservation policy.
+
+A transient selected wall/context may aid controls but is not serialized; UI states
+plainly that changing wall geometry does not reattach persisted world offset.
+
+### 7. Actual Game
+
+Wire the production path from authorized encounter projection through
+`EncounterMap→HexGrid→HexEntity` (or then-current equivalent) to the same selector/
+resolver. Use compiled absolute at, applicable facing, and exact projected world offset.
+Do not read source YAML, Builder state, wall geometry, or Learn data.
+
+An actual joined encounter from an A-backed snapshot is mandatory. Storybook/Concepts
+Lab/local fake projection is not Game evidence.
+
+### 8. Ref replacement
+
+Test complete-document candidates:
+
+1. bookcase at/facing/offset;
+2. torch retaining exact offset;
+3. torch changing offset;
+4. torch omitting offset; and
+5. invalid target ref/default leaves prior document/preview intact.
+
+New ref reloads id/path/digest/scale/yaw/point/hints/companions. No promise of persistent
+wall attachment/support exists.
+
+### 9. Fallback and rollback
+
+Required deterministic outcomes match design table. Specifically, every fallback
+applies canonical at + exact world offset; none silently drops offset or selects a
+sibling variant.
+
+Split deployment so enrollment can be disabled without disabling ratified offset:
+
+- core offset parser/projection consumer and outer world translation remains on both
+  enrolled and legacy/generic fallback paths;
+- catalog enrollment feature/config may revert bookcase/torch to legacy selection;
+- previous complete atomic asset+catalog stage remains available;
+- persisted source and encounter snapshots remain untouched; and
+- source/API/proto rollback cannot strip already-authored optional presence.
+
+A full revert that causes Game to ignore persisted offset is prohibited after offset
+is accepted in production.
+
+### 10. Learn cleanup
+
+- Anchor Lab may remain isolated diagnostic UI but calibrated results must call the
+  production selector/resolver.
+- Remove Prop Composition one-off centering/variant-selection math after replacement
+  and parity proof; keep historical evidence documents/screens.
+- Add dependency/build-graph test preventing Learn measurement tables from production
+  Builder/Game bundles.
+
+### 11. W tests
+
+- pure selector/resolver unit + golden matrix tests;
+- Builder local→world conversion and exact world display/persistence;
+- projected omission/explicit zero/nonzero;
+- actual Game integration using A service/snapshot;
+- six facing values (not claimed as six wall edges);
+- positive/negative X/Y/Z, facing nonrotation of offset;
+- replacement retain/change/remove;
+- scale double-application and companion identity guards;
+- invalid catalog/provenance/digest/no-point/load fallback;
+- complete-tree atomic stage failure injection;
+- full lint/typecheck/unit/build/Playwright from project environment.
+
+## Cross-repo acceptance evidence
+
+Use one checked evidence index on #205 linking immutable artifacts from T/P/A/G/W.
+Every artifact names issue/PR, exact HEAD, base HEAD, provider SHA/tag+peeled SHA,
+catalog digest, GLB digests, commands, and pass/fail.
+
+### Platform evidence
+
+- source → validate-only projection → save/reload → encounter snapshot → authorized
+  runtime projection for omission/zero/nonzero;
+- authoring/runtime exact component equality;
+- old document/snapshot compatibility;
+- source-path errors for malformed/nonfinite;
+- fog authorization and mechanical invariants; and
+- ref edit retain/change/remove.
+
+### Paired visual evidence
+
+For identical provider/projection facts, capture Builder and actual Game:
+
+- bookcase and torch matrices numerically equal within `1e-6` per element;
+- screenshots at 1280×720 representative Discord viewport and one close diagnostic;
+- omission, ±X/±Y/±Z representatives;
+- six existing facing values where baseline accepts facing;
+- facing changes model orientation while offset world vector stays unchanged;
+- two pivot-distinct intrinsic points;
+- replacement retain/change/remove; and
+- no-point and model-load fallback at `p+o`.
+
+Interior-wall/generated-envelope scenes may be captured as authoring examples only.
+Do not label them wall registration/support parity and do not require six wall edges.
+
+### Gameplay invariants
+
+Compare before/after authoritative data for owning cell, blockers, collision/pathing,
+range, targetability, LoS, fog/visibility, and interaction id. They must be exactly
+unchanged across model/offset changes.
+
+### Licensing
+
+Attach file-name/inventory/license scan summaries only. Never upload raw GLBs/private
+source or secret URLs to public project evidence.
+
+## Quantitative performance gates
+
+Run named methods on W exact PR HEAD and provider SHA:
+
+| Gate | Method | Budget |
 | --- | --- | --- |
-| Provider release identity | Introduce immutable annotated `web-assets/v1.0.0` tag, then patch tags for content changes. | Clean provider-first pin and avoids self-referential embedded commit SHA; adds the asset repo's first tag convention. |
-| Stable variant id spelling | Use `synty:props:<source-piece-name>` independent of path. | Rename/move safe; changing id later is explicit migration. |
-| Generator shape | New safe projection generator joined to existing prop inventory, not more fields in `build_prop_manifest.py` role semantics. | Keeps gameplay role catalog and visual consumer contract separate; one extra deterministic script. |
-| Enrolled model component | Compile-time-distinct matrix component over shared loading internals. | Makes double transforms harder than a runtime boolean; legacy path remains during #624 transition. |
-| UX bounds | Catalog hints inform Builder controls/evidence only; server accepts every finite semantic adjustment exactly. | #206 can ratify without catalog coupling; unusual finite values remain author responsibility and Game parity obligation. |
-| Concept cleanup | Keep isolated Anchor Lab raw diagnostics, route calibrated output through production resolver; remove one-off Prop Composition code after parity. | Retains calibration value without duplicate production truth. |
-| #43 timing | Do not block A/W implementation PRs; block final #205 tracking completion on post-fix verification. | Separate defect owner stays honest while anchor delivery can proceed. |
+| Pure resolver | production Node/Vitest, 10,000 warmups + 100,000 resolves, all six facings/three offsets, three runs same CI runner | median p95-equivalent ≤ `0.05 ms/resolve` |
+| Idle recompute | selector/resolver counters after stable scene over 300 rAF ticks | exactly 0 new resolves |
+| Actual route | `DevPerfProbe`, fixed two-prop scene/camera, 30 s × three runs before/after same machine/provider | median frame time ≤5% regression; p95 ≤+1.0 ms; draw calls +0; reported GPU memory ≤+1 MiB |
+| Safe data | catalog + provenance byte count | ≤8 KiB uncompressed |
+| Network/cache | repeat route load after warm cache | no additional catalog/GLB request caused by rerender; one catalog fetch/build load |
 
-If Kirk chooses no provider tags, resolve the alternative pin/provenance mechanism
-before implementation issues are cut; do not leave version handoff implicit.
+Attach raw JSON/traces and environment. Any breach blocks or requires a specific
+Kirk-approved measured exception on #205.
 
-# Definition of done
+## Drift and atomicity gates
 
-The visual-anchor delivery is done only when all are true:
+The following all hard-fail G/W release checks:
 
-1. PR #203/#206 semantic adapter boundary is ratified and any required external
-   Tranche B projection is actually available; no catalog logic entered platform.
-2. Asset provider PR is merged to main, independently gated, tagged immutably, and
-   its catalog/GLBs pass real staged digest verification.
-3. Exactly two concrete variants are enrolled with explicit stable family defaults,
-   total scale, evidenced yaw, digest-bound tagged points, and license-safe output.
-4. Web consumes that exact provider release; local and Docker staging share atomic
-   verification and preserve the previous bundle on failure.
-5. Builder and actual Game use one selector, one semantic adapter, one placement
-   resolver, and one matrix-only model path for enrolled props; legacy props remain
-   unchanged and no double transform exists.
-6. Replacement refreshes the new family's intrinsic facts while preserving only
-   explicitly compatible semantic authored intent.
-7. Paired evidence proves two pivot-distinct assets, all six wall edges, both wall
-   sources, both wall orientations, replacement, deterministic fallbacks, and equal
-   matrices from identical catalog/producer/GLB hashes.
-8. Performance, drift, licensing, full web CI, independent gates, and Kirk visual
-   acceptance pass at exact heads.
-9. Experiment-only duplicate transform constants are removed or routed through the
-   production resolver; Learn evidence remains intact.
-10. #43 post-fix standing/downed verification is recorded with no web/catalog
-    correction.
-11. Both implementation issues/PRs carry signed final checkpoints and honest board
-    state. Kirk alone merges.
-12. PR #205 remains open through all delivery evidence and only then becomes eligible
-    for final tracking merge. No plan approval is inferred from this revision.
+- generated catalog differs from generator output;
+- catalog expected digest/revision differs between public artifact/runtime import;
+- provider exact HEAD/peeled commit differs from provenance;
+- enrolled GLB SHA-256 differs;
+- complete legacy tree inventory is missing/partially from another provider revision;
+- catalog schema/id/number/hint/companion invalid;
+- asset is both enrolled and legacy-scaled;
+- local and Docker stages differ byte-for-byte; or
+- exact-head required check is stale relative to current W PR HEAD.
+
+No warning-only drift path is acceptable for release.
+
+## Rollout and rollback rehearsal
+
+### Rollout
+
+1. Merge/release T and P.
+2. Merge/deploy A with passthrough disabled from mechanics by construction.
+3. Validate authored source/persistence/runtime projection in a nonproduction dungeon.
+4. Merge G and capture exact provider SHA.
+5. On W exact head, atomically stage full legacy tree+catalog from G SHA.
+6. Enable enrolled renderer in Builder preview, then actual Game test environment.
+7. Run complete evidence/performance matrix.
+8. Merge W to dev only after independent gates and Kirk approval.
+9. Repeat exact dev-merge smoke; update #203/#205 tracking, no automatic merge.
+
+### Rollback rehearsal
+
+Inject catalog/hash failure before swap and prove prior whole stage remains. Then disable
+enrollment and prove:
+
+- legacy/generic rendering still applies exact world offset;
+- persisted YAML/reloaded source/snapshot/API projection retains optional value;
+- no asset sibling substitution occurs;
+- current encounter mechanics/identity unchanged; and
+- reenabling exact prior provider stage restores same matrices.
+
+Document component owners and commands. Never roll back by stripping `offset` from
+source/protos/API once stored.
+
+## Definition of done
+
+All must be true before the director can recommend delivery; only Kirk may approve or
+merge:
+
+1. Renewed course-corrected design and plan approved.
+2. T/P/A/G/W owning issues/PRs created only afterward, each reviewed/merged in provider-
+   first order with exact heads/releases recorded.
+3. v0.4 exact optional offset works end-to-end from YAML through actual Game, preserving
+   omission/verbatim values and remaining mechanically inert.
+4. Safe catalog generator/registrar ships exact two ids/defaults, digest-bound scale/yaw/
+   points, and required evidence-backed UX hints.
+5. Exact provider commit (or protected annotated tag + peeled commit by Kirk choice) is
+   pinned and verified.
+6. Complete legacy tree + catalog stages atomically and identically for local/Docker;
+   exact-head dev PR gate passes.
+7. One selector/resolver feeds Builder/Game; offset is outside facing; returned matrix
+   is sole enrolled primitive/companion transform; no double scale.
+8. Achievable paired evidence passes without semantic wall/support claims.
+9. Replacement retain/change/remove and all deterministic fallbacks/rollback pass.
+10. Quantitative performance, drift, licensing, and experiment cleanup gates pass.
+11. #203/#206 and #204/#205 evidence indexes are current and signed; status remains open
+    until Kirk's merge/closure decision.
+
+rpg-game-assets #43 is **not** a DoD dependency. Its owner must re-export/verify the
+downed character without a web offset, but unrelated scheduling cannot strand this
+two-prop delivery.
+
+## Explicitly out of scope
+
+- semantic wall edge/support/anchor persistence;
+- wall-GLB measurement or automatic reattachment;
+- authored variant id;
+- catalog fields in YAML/protos/API;
+- raw matrix/quaternion/scale/rotation persistence;
+- runtime GLB measurement;
+- model-specific rendering branches;
+- collision/footprint/pathing/LoS change;
+- broad wall/rug/character migration or #624 completion;
+- raw asset edits in public repos; and
+- #43 implementation/closure.
+
+## Kirk judgments required before issue creation
+
+1. **Provider provenance:** approve exact merged provider SHA (recommended), or require
+   protected annotated `web-assets/v1.0.0` + object/peeled commit.
+2. **Immutable ids:** approve exact literals/grammar and migration rule.
+3. **Required hints:** approve evidence-backed initial UX hints as provider-release
+   requirements, never server validity.
+4. **Wall limit:** accept offset-only v0.4 and defer semantic wall/support persistence.
+5. **Performance:** approve named quantitative budgets or supply replacements.
+6. **#43:** confirm separate/nonblocking for #205 completion.
+
+No judgment is assumed by this draft.
