@@ -92,7 +92,10 @@ rooms:
 Flow: `PlacedEntry` → compiler → `SpawnInstruction{…, Targeting, BehaviorConfig}` →
 `SeedMonsters` → constructor → `monster.Data{Targeting, Behavior *behavior.MachineConfig}`
 → `DataJSON`. **No proto changes in phase 1** — behavior rides `DataJSON`,
-which the wire already carries opaquely.
+which the wire already carries opaquely. *(One additive exception, decided
+at planning via §7's revisit clause: the decision-breadcrumb rationale is a
+new `target_rationale` ref field on `ActionResolved` — the log can't say
+"why" without a signal. See `plan.md`.)*
 
 **Enforcement (decided):** a monster enters an encounter fully implemented or
 not at all. `AddMonster` rejects empty `DataJSON`; `npcActScripted` is deleted
@@ -303,11 +306,13 @@ leaves a tool behind:
 | 3. `behavior/` v1 — two modes + lapse | The `Machine` seam, born with an honest `Snapshot`; profiles→params plumbing | toolkit (`behavior`, `rulebooks/dnd5e/monster`, `encounter`) | A `timid` ghoul at low HP switches to `fleeing` (breadcrumb says why), vanishes from player screens; N-turn search window runs; lapse returns the party to free roam mid-dungeon. `hiding` is deliberately left as the owner's natural first extension |
 | 4. World tick + detection + surprise *(deferred — architecture re-decided after slice 3)* | The free-roam clock (sketch: `exploration_tick.go` + `FreeRoamTick`) | toolkit (`encounter`), rpg-api | Pursuing a fled monster through rooms works; it can re-enter behind the party; detection resolves by check rolls; surprise round seeds initiative; door-open gap closed |
 
-Slices 1–3 need no rpg-api code changes beyond content YAML and toolkit
-version bumps. Slice 4 is the first api-side work. Protos: expected zero
-through slice 4 (mode/initiative events already exist); revisit only if
-surprise-round presentation or the breadcrumb debug view needs a dedicated
-signal.
+Slices 2–3 need no rpg-api code changes beyond content YAML and toolkit
+version bumps; slice 4 is the first substantial api-side work. Protos: the
+breadcrumb revisit clause fired at planning — slice 1 carries one additive
+`ActionResolved.target_rationale` field (plus its translate + web log
+rendering); otherwise zero expected through slice 4 (mode/initiative
+events already exist), revisited only if surprise-round presentation needs
+a dedicated signal.
 
 ## 8. Out of scope (unchanged from brainstorm)
 
