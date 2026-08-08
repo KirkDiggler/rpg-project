@@ -1,391 +1,327 @@
 # Dungeon YAML Spec v0.4 — context and rationale
 
-[`spec.md`](spec.md) is the normative contract: **PROPOSED v0.4, not yet
-ratified.** This README records why the proposal has this shape, the evidence it
-transcribes, how it reconciles prior authority, and what still needs ratification.
-It is not a second source of normative grammar.
+[`spec.md`](spec.md) is the normative **PROPOSED** delta over ratified v0.3. This
+README records evidence, decisions, prior-authority reconciliation, and the two
+remaining ratification points. It does not add grammar.
 
-## What this revision is
+## What changed in this revision
 
 Kirk approved the broad **authored playable scene** direction and authorized this
-session to make architecture-consistent decisions without waiting for monster-AI PR
-[#202](https://github.com/KirkDiggler/rpg-project/pull/202) to be amended. The result
-is one broad documentation cut with four independently implementable tranches:
+session to decide coherent defaults. Independent review of the first broad draft
+found six places where it still described an open interface as if it were an
+independent tranche: capability discovery, draft/run lifecycle, persistence,
+envelope projection, asset-catalog/server ownership, and lighting projection. This
+revision closes those interfaces rather than leaving them as ratification questions.
 
-1. topology: canvas is workspace/bounds; regions may be the actual floor;
-2. semantic prop composition learned from the real-model web experiment;
-3. Phase-1 monster behavior configuration from the platform handoff; and
-4. document/region environment lighting with provider-owned resolution.
+The four additive tranches remain:
 
-This is a proposed contract baseline, not an implementation or delivery claim. The
-tranches may ship separately. Strict rejection plus a capability check keeps partial
-rollout honest; no `spec: "0.4"` wire marker pretends they arrive as one server flag.
+| Tranche | Source | Complete projection boundary |
+|---|---|---|
+| A — topology | `canvas.floor_source: regions` + region cells | resolved source, full authoring mask, existing pair edges, presence-aware entrance; snapshot-authorized runtime hex/edges |
+| B — prop composition | authored ref/cell + semantic anchor/adjustment | source facts + `source_path` in authoring/runtime; web resolves released asset catalog |
+| C — Phase-1 monster behavior | exact-ref defaults + flat placement/boss fields | source + derived behavior by source path; resolved `DataJSON` runtime |
+| D — lighting | raw root/region ambient | raw + effective authoring values; effective ambient on authorized runtime hexes |
 
-At the time of this revision, v0.3 Wave 0 and Wave 1 both have LIVE VERIFIED evidence:
-Wave 0 is recorded on [#192](https://github.com/KirkDiggler/rpg-project/issues/192#issuecomment-5206548237),
-and Wave 1 on [#180](https://github.com/KirkDiggler/rpg-project/issues/180#issuecomment-5219362342).
-Those delivered contracts remain the compatibility baseline while this proposal is
-reviewed.
+Each tranche now has a stable builder capability key and a concrete
+`AuthoringService.PutDungeon(validate_only)` probe. There is no new capabilities RPC.
+A missing/incorrect projection makes the key unsupported, and the exact candidate is
+always validate-only checked before save. Unlike the older builder experiment, v0.4
+never strips an unsupported semantic.
 
-## The approved topology direction
+v0.3 Wave 0 and Wave 1 are both LIVE VERIFIED:
+[Wave 0](https://github.com/KirkDiggler/rpg-project/issues/192#issuecomment-5206548237)
+and
+[Wave 1](https://github.com/KirkDiggler/rpg-project/issues/180#issuecomment-5219362342).
+This proposal is future work and claims no implementation.
 
-Kirk's 2026-08-08 ruling remains the headline:
+## Authority and three axes
+
+v0.4 is honestly a normative **delta** over
+[`../v0.3/spec.md`](../v0.3/spec.md), not a false standalone restatement. Ratified
+v0.3 governs every omitted construct.
+
+Three axes stay independent:
+
+1. **v0.4** — documentation/review cut;
+2. **`version: 1`** — unchanged YAML decode version;
+3. **`canvas.floor_source: bounds | regions`** — canvas topology only, omission
+   resolving to legacy `bounds`.
+
+There is no YAML `spec:`/`draft` marker. Behavior and lighting work in room chain,
+bounds canvas, and region-floor canvas wherever their placement/scope exists.
+
+## Topology: workspace bounds, region floor
+
+Kirk's direction remains the headline:
 
 > “I think the floor is the region and we can see what is inside the walls. I think
 > the canvas is available space in the builder but only regions carry into the game.”
 
-The proposal turns that into a narrow, explicit topology choice:
+`floor_source: regions` compiles the deduplicated region-cell union. Canvas dimensions
+remain workspace and legality bounds. Omission remains the v0.3 rectangle so old
+content never silently shrinks.
 
-```yaml
-canvas:
-  width: 20
-  height: 30
-  floor_source: regions
-```
+### One compiled mask, two explicit lifecycles
 
-`canvas.floor_source` says what it does. `regions` means the deduplicated union of
-`regions[].cells`; `bounds` (and omission) means the delivered v0.3 rectangle. Canvas
-dimensions remain coordinate-legality and workspace bounds in both cases. This is
-safer and clearer than the first PR #203 draft's overloaded document-level `spec:`
-field.
+Every mechanical path uses one compiled mask: placement, pathing, target
+reachability, start/seating, walls, LoS, reveal/fog, initialization, and projection.
+But authored content and a running encounter have intentionally different reload
+rules:
 
-### Why omission preserves `bounds`
+- authored load/write recompiles YAML and atomically replaces registered content;
+- encounter start snapshots the exact mask/edges/config it starts with;
+- encounter reload validates snapshot consistency only and never compares against
+  current authored YAML.
 
-Changing omission in place would silently reinterpret every persisted v0.3 canvas.
-A document with no regions would shrink from a rectangle to empty without a decode
-error. Omission therefore keeps the rectangle; a new authored masked floor says
-`floor_source: regions` explicitly. A provider too old to know the nested field
-strict-rejects it, which is the desired hard stop.
+This means editing a dungeon changes future encounters without corrupting one already
+in progress. It also removes the prior draft's contradictory source-versus-compiled
+persistence authority.
 
-### The three axes are deliberately separate
+### Envelope wire is closed, not open
 
-- **v0.4** is this documentation/review level.
-- **`version: 1`** remains the YAML document version.
-- **`canvas.floor_source`** selects one canvas topology semantic.
+The existing flat `FloorPlan.edges {from,to,kind}` pair represents an envelope without
+a new message. Exactly one endpoint belongs to `floor_cells` and owns the side; the
+other is the adjacent void coordinate, including negative/out-of-bounds coordinates.
+Pair order is nonsemantic. Runtime attaches it only to the owning floor
+`HexRecord`. A one-cell floor has six pairs; an interior one-cell void has six pairs
+owned by its surrounding floor cells.
 
-None implies either of the others. There is no YAML `spec:` field and no server-side
-`draft` value. This avoids confusing documentation cadence, decode compatibility,
-and a single semantic choice.
+Clients render provider edges; they never infer envelope geometry from floor shape.
+An authored wall still requires two floor endpoints. There is no envelope door into
+void.
 
-## Why one canonical floor mask is load-bearing
+### Draft validity is not runnable validity
 
-The first PR #203 draft correctly noticed two existing floor helpers, but specifying
-“remember to branch both” would perpetuate the underlying problem. A third path —
-pathfinding, fog, targeting, or reload — could still forget the branch later.
+`validate_only` accepts empty, too-small, and disconnected structurally valid masks
+and always projects their floor/envelope. `FloorPlan.entrance` presence is meaningful:
+absent until an anchor has a complete PartyCap seating envelope within its own floor
+component. With omitted start, qualifying anchors use deterministic canonical order.
 
-The revised contract instead requires the toolkit to compile one sorted canonical
-floor mask, persist it with compiled truth, and make every mechanical consumer query
-that mask. Source regions still author the union; the compiled mask is the one
-runtime truth. Fresh source compilation replaces it atomically. A source/persisted
-mismatch fails rather than selecting the convenient interpretation.
+Non-validate remains strict: floor nonempty, entrance/seats present, all seats in the
+anchor component, and **all floor cells in that same component** for this cut. A
+two-island draft may preview and even have a viable entrance on island A, but it does
+not run while island B exists. That discriminates “can seat the party somewhere” from
+“one runnable connected authored floor.”
 
-That rule covers the seams most likely to drift:
+Union-changing edits compile the complete candidate. They reject orphaned content,
+seats, support edges, or start at source path rather than moving it to root or
+widening back to bounds. Pure semantic changes with unchanged union can still inherit
+outward.
 
-- validate-only and non-validate compile;
-- persistence and restart/reload;
-- pathing, placement, start/party seating, range/target reachability;
-- walls, LoS, reveal, and fog authorization; and
-- authoring/runtime projection.
+### Region equality correction
 
-It also aligns with the prior walls-from-truth decision: once the provider publishes
-canonical geometry, clients render it rather than recreating a parallel version.
+Within one region, duplicate cells canonicalize. Between regions, equal sets reject.
+That includes two empty regions: one empty region is legal/root-owned, but two empties
+are equal sets and therefore invalid. This is the deterministic application of the
+existing overlap model, not a new empty-region hierarchy exception.
 
-## Envelope, voids, drafts, and edits
+## Capabilities: exact probes, no downgrade
 
-Every floor/void side becomes an implicit solid envelope, including an interior void.
-The provider projects those edges explicitly; a client does not infer them from the
-mask. An envelope door remains incoherent because its other side is void. Connecting
-areas means authoring connecting floor cells; gating adjacent floor means an ordinary
-interior door.
+The builder already has a real pattern: one minimally discriminating
+`PutDungeon(validate_only)` request per feature because strict whole-document decode
+cannot identify multiple unknown fields independently. v0.4 standardizes four stable
+client keys:
 
-The revised draft separates authoring validity from runnable validity:
+- `authoring.floor_source.regions`;
+- `authoring.prop.semantic_anchor`;
+- `authoring.monster.behavior_config`;
+- `authoring.environment.region_lighting`.
 
-- `validate_only=true` accepts an empty region-union draft and returns an empty plan;
-- a write/run/encounter compile rejects empty floor;
-- content on non-floor still rejects normally in both cases.
+A key is true only if response success **and returned projection** match the key's
+fixture. The server keeps the probe capability-gated until that release also has the
+required runtime projection, so success attests a complete tranche rather than decode
+alone. Probe failure is displayed raw and disables the surface. Before actual save,
+the exact candidate document is validate-only checked; that is how dynamic behavior
+profile/param values are tested without freezing a registry list in the capability
+protocol.
 
-That preserves the first-keystroke validation loop without persisting a dungeon that
-cannot run.
+This is additive and implementable through today's AuthoringService shape. It does
+not invent a capability RPC, and it no longer allows the earlier `stripToV1Subset`
+behavior to erase unsupported authored intent.
 
-Union-changing edits are candidate recompiles, not semantic-scope reassignment. If
-removing floor or its envelope would orphan a placement, start, wall endpoint, party
-envelope, or prop attachment, the edit rejects atomically. “Fall back to root” still
-makes sense only for inheritance when the structural union is unchanged — for
-example deleting a nested scope whose cells remain covered by its parent. It never
-means turning removed floor into rectangle floor or moving content.
+## Prop composition: retain the lesson, not the fixture grammar
 
-Omitted start on an irregular mask is deterministic: canonical floor order plus the
-existing ordered PartyCap envelope, with a named failure if no candidate seats the
-party. There is no random/seed-dependent rescue and no root fallback.
+Web issue [#728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728), PR
+[#729](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/729), and its
+[evidence](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/docs/evidence/prop-composition-728.md)
+proved:
 
-## Prop composition: what #728/#729 actually proved
+- authored placement owns canonical wall/cell/orientation intent and a bounded local
+  adjustment UX;
+- the asset catalog owns pivot, calibrated scale, attachment baseline, and
+  model-forward correction;
+- preserving a raw bookcase transform for a torch is wrong; and
+- actual GLB bounds, not nominal roots, are the visual acceptance evidence.
 
-Web issue [#728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728) and merged
-PR [#729](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/729) ran a real-model
-bookcase-to-ornate-torch experiment. Its evidence document is
-[`prop-composition-728.md`](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/docs/evidence/prop-composition-728.md).
-The useful result was ownership, not fixture field names:
+The prior broad draft overfit that evidence into a server-owned asset resolver,
+`span: center`, replacement semantics, and catalog provenance wire. All are removed.
 
-| Fact | Learned owner | Replacement |
-|---|---|---|
-| GLB geometry/pivot, calibrated scale, attachment baseline, model-forward correction, footprint/light behavior | asset catalog/model | re-resolve for new ref |
-| chosen canonical cell and wall/span relationship | authored placement | preserve |
-| surface/support/orientation intent | authored placement | preserve or explicitly change as part of the semantic replacement |
-| bounded anchor-local cosmetic adjustment | authored placement, validated against catalog bounds | preserve if valid; otherwise reject |
-| raw matrix/world position, selection ID, temporary fixture slot | client/render state | never persist |
+### Minimal production intent
 
-The failed first render was important: preserving the bookcase's raw transform put
-the torch at the wall base, and treating the raw bookcase pivot as the cell center
-put visible bookcases between hexes. The corrected fixture measured actual geometry
-and used fixture-local asset corrections. Kirk visually accepted the corrected
-result (“those look dead on center awesome”), but the issue explicitly parked an
-Asset Anchor Lab before any correction becomes global.
+A canonical prop keeps:
 
-### Why the proposed `anchor` encoding looks this way
-
-The production encoding in `spec.md` does not copy the fixture's `slotId`, coordinate
-names, limits, or numeric attachment offsets. It persists semantic facts:
-
-- `at`: canonical owning cell;
-- `surface`: floor or wall alignment surface;
-- wall `edge` and `span: center`;
-- `support`: floor-supported versus wall-supported;
+- existing asset `ref` and canonical `at`;
+- floor/wall `surface`;
+- wall `edge` where applicable;
+- floor versus wall `support`;
 - semantic orientation; and
-- optional adjustment in the resolved anchor's local basis.
+- optional finite anchor-local `along`/`normal`/`vertical` adjustment.
 
-This represents both cases the old `mount` proposal blurred:
+The bases are exact: floor normal=forward, floor along=right, wall normal follows
+`into-cell`/`into-wall`, wall along is right looking along that normal, and vertical
+is world up. The chosen cell+edge already identifies the wall span, so no `span` field
+exists.
 
-- wall-aligned floor bookcase = `surface: wall`, `support: floor`;
-- wall-mounted torch = `surface: wall`, `support: wall`.
+Wall support must be seed-invariant: structural room perimeter, region envelope, or
+explicit authored solid edge. A random pattern wall can never support authored
+content. `blocks_movement` and `blocks_los` remain the only mechanical prop facts;
+catalog footprint/light is render/fit only.
 
-A one-action replacement may explicitly change support while preserving the cell,
-edge/span, orientation, and committed adjustment. The asset catalog then re-resolves
-all model-specific facts. An incompatible new asset rejects; it never clamps,
-strips, or inherits the old matrix.
+### Catalog and replacement ownership
 
-The v0.3 `facing` field remains a compatibility shorthand for an unanchored floor
-prop. The proposed `anchor` replaces the still-unimplemented `mount: wall`/`height`
-shape in [#188](https://github.com/KirkDiggler/rpg-project/issues/188) rather than
-adding another overlapping transform vocabulary. `anchor.adjustment.vertical`
-provides cosmetic local height without claiming raw world Y as source truth.
+The synced `rpg-game-assets` catalog is consumed by the web. Builder and game parity
+requires the same released catalog bundle. The server returns only authored ref,
+semantic anchor/adjustment, absolute cell, and source path; it neither loads the
+catalog nor projects a matrix/correction/profile.
 
-### Actual unresolved asset work
+Replacement is ordinary client-local whole-document editing. There is no server
+replacement RPC or placement stable ID. A bookcase→torch editor action submits a new
+complete document; the server validates that result independently. The specimen
+explicitly changes blockers to `false/false` for the torch, proving render footprint
+does not become game mechanics. No #729 numeric correction is promoted.
 
-The architecture can be coherent without inventing catalog constants. What remains
-real work is choosing the catalog owner/API, attachment-profile schema, provider
-versioning, adjustment-bound policy, and a calibration gate across multiple assets,
-wall orientations, and camera views. The fixture's measured bookcase correction,
-torch height, and ± nudge bounds are evidence only. They are intentionally absent
-from this spec.
+## Monster behavior: two independent chains
 
-## Phase-1 monster behavior: the platform handoff, reconciled
+The authoritative handoff is monster-AI PR
+[#202](https://github.com/KirkDiggler/rpg-project/pull/202) comment
+[5228001955](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955).
+The stable source shape remains flat optional `targeting`, `profile`, and `params` on
+monster room/canvas `place` and room `boss`, with props rejected and exact-ref
+monster-only defaults.
 
-PR [#202](https://github.com/KirkDiggler/rpg-project/pull/202) supplies the approved
-monster-AI design/plan context. The direct v0.4 handoff is
-[issuecomment-5228001955](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955).
-The proposal carries its stable grammar and boundaries without freezing the
-slice-3 candidates that the comment warns may change.
+The correction is that profiles contain MachineConfig params **only**, never
+targeting. Resolution is two independent chains:
 
-Settled here:
+- targeting: constructor → exact-ref default explicit targeting → placement/boss
+  explicit targeting;
+- config per key: constructor → default profile params → default explicit params →
+  placement/boss profile params → placement/boss explicit params.
 
-- flat optional `targeting`, `profile`, `params` on monster room `place`, canvas
-  `place`, and room `boss` with full parity;
-- fixed Phase-1 targeting values `closest`, `lowest-health`, `lowest-ac`;
-- props reject all behavior fields;
-- `defaults` is exact full monster-ref only — no prop/family/pattern matching;
-- presence-aware order: constructor → default profile → default explicit params/
-  targeting → placement profile → placement explicit params/targeting;
-- explicit zero and `targeting: closest` override rather than disappear;
-- profiles compile out; runtime persists only resolved targeting/config in
-  `DataJSON`; and
-- authoring never includes runtime mode, memory, perceptions, counters, target IDs,
-  paths, or rationale.
+`params` values are JSON scalar bool/string/finite number. Null/list/map reject;
+the toolkit registry owns per-key scalar kind, integer requirement, range/set, and
+dynamic profile/knob names. Explicit closest/zero/false/empty string retain presence
+when valid.
 
-The earlier design illustrates names such as `aggressive`, `timid`, and candidate
-knobs. The platform comment explicitly says to freeze the shape, not that list. v0.4
-therefore makes the toolkit registry authoritative for profile names and parameter
-key/type/range validation. Example names in specimens are placeholders that an
-implementation fixture substitutes with registered names.
+Profiles compile out. Authoring projection returns source fields and derived
+`resolved_behavior` with `source_path`; runtime `DataJSON` contains resolved targeting
+and MachineConfig only. Boss has full parity. Runtime mode/memory/perception/counters/
+path/target state remains excluded.
 
-The five-stage merge order is slightly more explicit than the comment's compressed
-four-stage summary. It preserves the comment's intent while resolving the case where
-a default profile, explicit default override, and placement profile all coexist.
-Presence is checked at every stage.
+## Lighting: exact, render-only, fog-safe
 
-## Environment: inheritance must resolve before rendering
+Root and region `ambient` inherit innermost → outward → root. Root omission resolves
+to the legacy **0.8** baseline. The toolkit resolves as rules provider; API passes
+through. No provider identity/version snapshot exists.
 
-The first PR #203 draft allowed document/region ambient lighting but left “renderer
-baseline” as an implicit local choice. That would make reload and different clients
-disagree. The revision puts resolution with the toolkit environment provider:
+Lighting is render-only and cannot change LoS, visibility, reveal, fog authorization,
+targeting, or pathing. Authoring FloorPlan returns raw root/region presence plus
+always-present effective values. Runtime adds optional resolved ambient to every
+authorized visible and remembered `HexRecord`; hidden cells/regions stay absent. An
+older server omitting the field fails the lighting capability probe instead of
+claiming support and inviting a renderer fallback.
 
-1. innermost region declaration wins;
-2. otherwise walk outward to document/root;
-3. if root is absent, use the named provider baseline;
-4. persist provider identity/version plus the resolved snapshot.
+Authored reload recompiles raw YAML. Encounter snapshot retains the effective ambient
+it started with, matching the general lifecycle.
 
-A reload uses the compiled snapshot, not whatever a newer renderer or provider now
-prefers. A deliberate recompile may adopt the new provider baseline atomically.
-Authoring projection can show every resolved value; gameplay projection exposes the
-resolved value only through fog-authorized cells/zone ancestry. A hidden lighting
-override must not reveal a hidden region.
+## Boundary matrix
 
-This keeps document lighting useful in room-chain mode, adds region inheritance in
-canvas mode, and does not introduce per-source lights.
+| Concern | Canonical platform input/truth | Client-local |
+|---|---|---|
+| region floor | semantic discriminator + region cells; provider mask/edge projection | paint/draft mask UI |
+| walls | authored `walls` + provider envelope pairs | `wallLines`, footprint/coverage compiler |
+| prop | ref/cell/anchor/adjustment/blocker flags | replacement action, temp ID, raw matrix, catalog calibration application |
+| behavior | refs + source config; toolkit resolved config | no behavior calculation |
+| lighting | raw declarations; toolkit effective ambient | rendering only after authorization |
 
-## Client-local versus platform contract
+`wallLines`, coverage, raw draft controls, UI nudges before commit, matrices/world
+coordinates, and temporary IDs never reach the platform. The platform must not cite a
+particular TypeScript implementation. Local compilation is lossless or it hard-stops.
 
-`wallLines`, draft/coverage masks, raw authoring controls, temporary IDs, raw
-matrices/world coordinates, UI snap previews, and uncommitted nudges are client-local
-compilation concerns. The platform accepts canonical walls, region cells, and
-placements. It does not normatively depend on a particular web implementation or
-TypeScript algorithm.
+## Reconciliation with delivered v0.3 design/plan
 
-This corrects two problems in the first PR #203 draft:
+[`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) remain the
+delivered v0.3 Wave 0/Wave 1 authority. Their rectangle floor, semantic-only region,
+unpainted root, and nonmutating region-edit statements remain correct under omitted/
+`floor_source: bounds`. Their “no lighting/geometry changes in #180” boundary remains
+true because #180 is complete; this proposal is a later cut.
 
-1. it normatively cited a specific TypeScript wall geometry implementation; and
-2. it described strip-before-wire as a compatibility technique.
+If ratified, explicit `floor_source: regions` narrowly changes those topology facts:
+region union becomes floor, union edits revalidate content, and unpainted cells are
+void. This README scopes the conflict rather than rewriting completed delivery
+history or unrelated project state.
 
-The revised rule is lossless compile or hard stop. A local line tool may emit
-canonical edges; a mask tool may emit canonical region cells; a committed nudge may
-become semantic `anchor.adjustment`. If the local state cannot be represented
-without loss, nothing is sent. Fractional coverage never becomes server pathing data.
+## Alternatives rejected
 
-## Scope and delivery matrix
+- **Document `spec: "0.4"`:** conflates documentation level with one semantic choice.
+- **Silent break on omission:** would reinterpret persisted rectangles.
+- **Compiled authoring cache as reload authority:** stale against edited YAML; authored
+  load now recompiles, while encounters retain snapshots.
+- **New envelope message or client derivation:** unnecessary; the existing pair plus
+  floor membership identifies the owner exactly.
+- **Empty/disconnected hard failure in validate-only:** breaks draft preview; runnable
+  strictness belongs to non-validate.
+- **Server asset resolver/catalog provenance:** not needed for canonical validation;
+  web already consumes the asset bundle.
+- **Server replacement semantics/stable placement ID:** unsupported by the whole-doc
+  authoring API and not proven by #729.
+- **Profiles carrying targeting:** couples two independent decisions and breaks the
+  required targeting precedence.
+- **Renderer-selected lighting default:** can drift; toolkit resolves legacy 0.8 and
+  wire carries effective authorized values.
+- **Server `wallLines`/coverage:** duplicates canonical edge/floor truth.
 
-| Concern | Authored by | Validated/resolved by | Persisted canonical truth | Runtime exposure |
-|---|---|---|---|---|
-| irregular structural floor | region cells + semantic floor source | toolkit topology provider | discriminator + canonical floor mask | fog-authorized cells |
-| envelope/interior walls | derived envelope + authored `walls` | toolkit edge model | normalized canonical edges | explicit authorized per-hex edges |
-| prop composition | cell + semantic anchor | toolkit + asset catalog | semantic source + resolved catalog facts (no raw matrix) | semantic placement + immutable catalog facts when authorized |
-| monster behavior | exact-ref defaults + placement fields | toolkit behavior registry/compiler | source + resolved `DataJSON`; profile compiled out | ordinary monster authorization, no authoring/runtime-state leak |
-| lighting | root/region declarations | toolkit environment provider | authored values + provider/version/resolved snapshot | resolved value only for authorized cells/zones |
-| local authoring controls | web/editor | client compiler | never as raw controls | never |
+## Ratification points
 
-Implementation dependencies are narrow:
+The broad direction and wire/lifecycle decisions above are made. Exactly two points
+remain before PROPOSED can become RATIFIED:
 
-- topology needs existing regions and canonical edges but no prop/behavior/lighting;
-- prop anchors need canonical solid-edge queries and the catalog, not region-floor
-  mode specifically;
-- behavior needs the monster registry/DataJSON path and works in every topology;
-- lighting needs the existing region containment graph for regional inheritance but
-  document-level lighting works independently.
+1. **Asset calibration release gate:** the `rpg-game-assets` owner must define and
+   evidence multi-asset/multi-wall calibration coverage, catalog-informed adjustment
+   UX bounds, and the released bundle consumed identically by builder and game. No
+   server catalog schema or fixture numeric constant is requested.
+2. **Initial behavior registry contents:** the monster-behavior owner must ratify the
+   first profile names and parameter keys/scalar kinds/integer/ranges. The v0.4
+   container, merge, validation, persistence, error-path, and projection behavior is
+   already fixed and vocabulary can grow without a YAML shape change.
 
-## Reconciliation with prior canonical documents
+## Acceptance pointers
 
-[`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) are the
-approved/delivered **v0.3 Wave 0/Wave 1** authority. Their statements that canvas
-bounds create complete rectangle floor, regions do not change geometry, unpainted
-root remains floor, and region edits cannot affect content were correct for that
-delivery and are preserved as history.
+Normative cross-layer specimens are in
+[`spec.md` §9](spec.md#9-cross-layer-acceptance-specimens):
 
-They are not v0.4 implementation instructions. If this proposal is ratified,
-`canvas.floor_source: regions` narrowly supersedes those topology statements for
-that explicit branch only:
+- irregular floor with an interior void and one-sided pair envelope;
+- too-small draft plus a two-island discriminator separating entrance from runnable
+  connectedness;
+- whole-document wall-bookcase→wall-torch edit with authored blocker truth;
+- independent targeting/config chains across room/canvas/boss with source paths; and
+- ambient inheritance with remembered/hidden fog assertions and mechanical
+  noninterference.
 
-- omission/`bounds` still follows the delivered documents exactly;
-- `regions` makes union changes structural and revalidates dependent content;
-- semantic-only edits with unchanged union retain the prior inheritance/fallback
-  model.
-
-The old plan also says no lighting/geometry changes in #180. That remains true of
-completed #180; Tranches A/D are new future work, not a retroactive broadening of the
-closed wave. This scoping resolves the conflict without rewriting delivered evidence
-or unrelated project state.
-
-## Alternatives considered
-
-### Keep document-level `spec: "0.4"`
-
-Rejected. It overloads a documentation label as a broad wire semantic, implies all
-tranches move together, and is easily confused with `version: 1`. A nested semantic
-`canvas.floor_source` says exactly which behavior it controls and leaves other fields
-additive/topology-neutral.
-
-### Break omission in place
-
-Rejected because it silently empties or shrinks persisted v0.3 canvases. Explicit
-`regions` plus legacy omission produces a loud compatibility boundary.
-
-### Let validate-only and write both accept empty floor
-
-Rejected. Empty is useful during authoring but is not runnable content. Operation
-intent already distinguishes those cases without inventing draft YAML.
-
-### Re-derive floor/envelope in every subsystem or client
-
-Rejected. Multiple “equivalent” helpers are the failure mode. Compile one mask and
-one canonical edge set; persist/project them.
-
-### Persist a complete prop transform
-
-Rejected by #729's actual-model evidence. It transfers old-asset pivot/attachment
-facts during replacement and couples source to renderer axes. Persist semantic
-anchor intent; catalog-resolve the transform.
-
-### Keep only `mount` + `height` + overloaded `facing`
-
-Rejected for composition. It cannot cleanly distinguish a floor-supported bookcase
-aligned to a wall from a wall-supported torch on the same span, and it overloads
-orientation as edge selection. The nested anchor makes those facts explicit.
-
-### Freeze `aggressive`/`timid` and candidate knobs in v0.4
-
-Rejected per the platform handoff. The names were design candidates; the stable
-contract is a toolkit-owned registry with loud name/key/type/range validation.
-
-### Let the renderer choose absent ambient
-
-Rejected because clients/reloads can diverge. Resolve and snapshot provider truth.
-
-## Ratification record
-
-The broad direction is approved; the document remains PROPOSED until these concrete
-integration points are answered in the same PR:
-
-1. envelope authoring-wire representation for one-sided floor/void edges;
-2. asset catalog repository/API, versioning, attachment schema, and calibration gate;
-3. per-asset/attachment adjustment-bound policy;
-4. behavior registry discovery and compiled-provider provenance;
-5. environment baseline provider and exact authoring/runtime projection fields; and
-6. independent-tranche capability discovery used by the builder's hard stop.
-
-These points do not block a coherent proposed architecture and therefore were not
-escalated as product blockers. Ratification should confirm interfaces/evidence, not
-reopen the approved authored-playable-scene direction.
-
-## Acceptance specimens
-
-The normative specimens live in [`spec.md` §13](spec.md#13-cross-layer-acceptance-specimens):
-
-- irregular region-union floor with an interior void, explicit envelope, empty
-  validate-only versus rejected runnable write, and dependent-edit rejection;
-- wall-aligned floor bookcase → wall-mounted torch replacement, preserving semantic
-  span/adjustment while catalog facts refresh; and
-- exact-ref monster defaults plus placement profile/explicit overrides, proving
-  zero/closest presence and room/canvas/boss parity;
-- root/region lighting inheritance with absent-root provider baseline and fog-safe
-  projection.
-
-Each implementation tranche needs compile, durable persistence/restart, authoring
-projection, real runtime projection, and adversarial rejection evidence for its
-relevant specimen. Unit-only decode evidence is insufficient.
+Each delivered tranche needs decode/compile, exact authoring projection, atomic
+persistence/restart, real authorized runtime projection, probe discrimination, and
+adversarial rejection/noninterference evidence. A decode-only unit test is not enough.
 
 ## Pointers
 
 - [`../v0.3/spec.md`](../v0.3/spec.md) and
-  [`../v0.3/README.md`](../v0.3/README.md) — ratified compatibility baseline.
+  [`../v0.3/README.md`](../v0.3/README.md) — ratified baseline.
 - [`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) — delivered
-  v0.3 Wave 0/Wave 1 authority, scoped above rather than silently treated as v0.4.
-- [rpg-project PR #203](https://github.com/KirkDiggler/rpg-project/pull/203) — this
-  proposal's single review/ratification surface.
-- [rpg-project PR #202](https://github.com/KirkDiggler/rpg-project/pull/202) and
-  [platform handoff](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955)
-  — Phase-1 monster behavior authority used here.
-- [rpg-dnd5e-web #728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728),
+  v0.3 scope, reconciled above.
+- [PR #203](https://github.com/KirkDiggler/rpg-project/pull/203) — single proposal and
+  ratification surface.
+- [PR #202 platform handoff](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955)
+  — behavior contract input.
+- [Web #728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728),
   [PR #729](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/729), and
   [evidence](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/docs/evidence/prop-composition-728.md)
-  — real-model prop-composition learning.
-- [rpg-project #188](https://github.com/KirkDiggler/rpg-project/issues/188),
-  [#190](https://github.com/KirkDiggler/rpg-project/issues/190), and
-  [#191](https://github.com/KirkDiggler/rpg-project/issues/191) — earlier narrow
-  proposals reconciled into this broad cut.
+  — real-model composition learning and explicit calibration caveat.
