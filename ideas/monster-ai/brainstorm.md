@@ -193,19 +193,17 @@ gating it.
   starting point when it comes.
 - Sequencing: targeting wiring → LOS perception → modes/flee → world tick.
   Patrols deferred to content-on-top.
+- **No fallback brain** *(2026-08-08)*: a monster must be fully implemented
+  to be used — registry constructor + serialized `DataJSON`, or it doesn't
+  enter the encounter. Enforce at the door (seeding/`AddMonster` rejects
+  empty `DataJSON`) so a misconfigured monster fails loudly at load, not
+  silently at turn time. `npcActScripted` is retired and its test fixtures
+  get real monsters. (Verified 2026-08-07 that no production monster uses
+  the fallback — both live seeding paths marshal `DataJSON`; it served only
+  tests/fixtures.) Lands naturally with step 2's `NPCAct` rework.
 
 ## Open questions
 
-- **The scripted fallback path** (`npcActScripted` when `DataJSON` is
-  empty): verified 2026-08-07 that **no production monster uses it** — both
-  live seeding paths (authored YAML `SeedMonsters` and the legacy crypt
-  seeder) construct real rulebook monsters and marshal `DataJSON`; the
-  fallback serves only tests and fixtures per its own doc comment. Risk is
-  silent divergence: a monster that somehow lands there attacks-closest
-  forever and never runs the decision layer, and nothing flags it.
-  Recommendation: retire it when step 2 rewires perception (make empty
-  `DataJSON` an error, fix the test fixtures to carry real monsters) — one
-  brain is the initiative's core principle. Pending Kirk's call.
 - **Encounter lapse UX**: what players see/feel when initiative drops
   mid-hunt (and any proto surface for it) — design-time work for step 4.
 - **Profile parameter set**: which knobs exist behind a profile (flee
