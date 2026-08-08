@@ -21,8 +21,11 @@ Deliver one production path where:
    default selection;
 3. Builder may compile local controls to world axes, displays/persists the exact triple,
    and previews the shared result;
-4. actual Game consumes the projected triple and uses the same selector/resolver;
-5. bookcase and torch prove two distinct intrinsic points without YAML wall/support
+4. actual Game consumes the projected triple and applies the generic world placement
+   frame exactly once to every valid placement kind; only enrolled props receive
+   additional catalog calibration;
+5. representative room/canvas props and room monster/boss prove generic transport while
+   bookcase and torch prove two distinct intrinsic points without YAML wall/support
    semantics; and
 6. offset/calibration remains cosmetic and mechanically inert.
 
@@ -57,29 +60,44 @@ Capture fresh exact heads again when issues are cut. Planning audit used:
   release tag convention or CI workflow;
 - `rpg-dnd5e-web origin/dev@4b85bb7`: array-first `propManifest` selection; three rug
   `renderScale=2`; `PropModel` outer transforms; independent character 0.75;
-  Builder direct model resolver; actual Game `EncounterMap→HexGrid→HexEntity` outer
-  group; local pull+rsync versus Docker latest-main+copy divergence; Learn experiment
-  modules; and no current v0.4 offset projection.
+  Builder direct model resolver; state/render ingestion through
+  `src/hooks/useEncounterState.ts`, `src/components/game/EncounterView.tsx` (existing
+  position/facing reverse indexes), and
+  `src/components/playtest/playtestMapHelpers.ts` before actual Game
+  `EncounterMap→HexGrid→HexEntity`; local pull+rsync versus Docker latest-main+copy
+  divergence; Learn experiment modules; and no current v0.4 offset projection.
 
 Those heads are evidence, not branch bases for future work. Every issue starts from
 fresh owning base and records exact HEAD.
 
 ## Work graph after renewed approval
 
-Create six owning issues; no umbrella-only wrapper in `game-dev`.
+Create exactly **five** implementation issues—T/P/A/G/W—and exactly one branch/PR in
+each owning repository. There is no C/wrapper issue and no `game-dev` issue. Director
+coordination/evidence remains comments on existing #206/#204 and PR #203/#205.
+
+Issue creation requires both renewed #205 approval and the deliberate #206 decision to
+open Wave B; #206 currently says the wave is not cut. Approval of this plan does not
+silently bypass that sequencing gate.
 
 | ID | Repository/base | Owning lane | Deliverable | Depends on |
 | --- | --- | --- | --- | --- |
-| T | `rpg-toolkit/main` | Platform | strict YAML offset decode/validate/presence/compile | approved #203/#205 plans |
-| P | `rpg-api-protos/main` | Platform | optional authoring + authorized runtime transport, omission preserved | approved #203 plan; web/API consumer fixtures |
+| T | `rpg-toolkit/main` | Platform | strict YAML offset decode/validate/presence/compile | #206 Wave B opened; approved #203/#205 plans |
+| P | `rpg-api-protos/main` | Platform | optional authoring + authorized runtime transport, omission preserved | #206 Wave B opened; web/API consumer fixtures |
 | A | `rpg-api/dev` | Platform | source persistence, authoring projection, snapshot/runtime projection, no interpretation | T + P released |
-| G | `rpg-game-assets/main` | Assets | declarations, safe generator, two enrolled assets/hints, exact provider handoff | approved #205 |
-| W | `rpg-dnd5e-web/dev` | Assets with UI/Platform review | Builder authoring + actual Game offset, shared catalog selector/resolver, atomic sync | A available + G merged provenance |
-| C | `rpg-project` tracking comments only | Director | cross-repo evidence/gates and #203/#205 close recommendation | T/P/A/G/W delivered |
+| G | `rpg-game-assets/main` | Assets | declarations, safe generator, two enrolled assets/hints, exact provider handoff | renewed #205 approval |
+| W | `rpg-dnd5e-web/dev` | Assets with UI/Platform review | Builder authoring + actual Game generic offset, shared catalog selector/resolver, atomic sync | A available + G merged provenance |
 
-`C` is not a new implementation issue: use existing #206/#204 and PR #203/#205.
-No issue is created until renewed plan approval. Each future issue gets one branch and
-one ready PR, stays open through independent review, and uses the owning repo board.
+At cut time add every issue to **KirkDiggler Project 19** with exact fields:
+
+- T/P/A: `Team=Platform`, `Feature=The Dungeon`, `Kind=Build`, `Status=Todo`;
+- G/W: `Team=Assets`, `Feature=The Dungeon`, `Kind=Build`, `Status=Todo`.
+
+Use then-current owning Platform/Assets board policy and repo labels in addition to
+those fields; do not invent a separate Assets or `game-dev` board. Move each item to
+`In Progress` only when its work session begins and `In Review` only when its ready PR
+opens. Each issue/PR stays open through its independent gate and all GitHub comments
+carry the required role signature.
 
 ### Development order: outside-in
 
@@ -106,7 +124,8 @@ This is development sequencing, not merge sequencing.
 4. G merges to `rpg-game-assets/main`; record the exact merged commit SHA chosen below.
 5. W's exact PR head pins A-compatible protos and exact G commit, passes required
    private-asset checks, then merges to `rpg-dnd5e-web/dev`.
-6. C assembles evidence; Kirk decides whether PR #203/#205 may merge/close.
+6. Director assembles evidence on existing #206/#204 and PR #203/#205; Kirk decides
+   whether either tracking PR may merge/close.
 
 No consumer merge precedes its provider. A web-only hand-built offset fixture cannot
 satisfy the Game gate.
@@ -161,7 +180,10 @@ quaternions, scale, semantic wall/support, or a generic transform.
 
 - Go/TS generated APIs expose optional presence and three exact components.
 - Binary/JSON compatibility suite proves old payload omission and new zero/nonzero.
-- Authoring and runtime fields have the same units/axes documentation.
+- Authoring and runtime fields have the same canonical game-world-unit/axis
+  documentation and cover room/canvas props, room monsters, and boss placement.
+- Snapshot/event placement types used by current web ingestion preserve the same
+  optional presence/value; do not define an authoring-only dead field.
 - Generated artifacts and breaking-change checks pass.
 - No server replacement identity/call is introduced.
 
@@ -177,14 +199,20 @@ plan intentionally does not fabricate it before inspecting the then-current head
 3. Project optional offset in authoring FloorPlan with source path/ref/absolute at/
    applicable facing.
 4. Persist it into the immutable encounter snapshot at creation.
-5. Return it on the authorized runtime placement in the visible/remembered hex record.
-6. Never recompute it after source edits for an already-created encounter.
+5. Return it on the authorized runtime placement in reconnect snapshot and live
+   visible/remembered projection used by current web encounter state.
+6. Preserve the same world-axis value when an authored monster/boss moves or is
+   re-placed; only its canonical origin changes, and vacated records cannot retain a
+   stale placement offset.
+7. Never recompute it after source edits for an already-created encounter.
 
 ### Acceptance matrix
 
-- room place, canvas place, boss;
-- omission, explicit zero, positive/negative XYZ;
+- representative room prop, canvas prop, room monster, and room boss;
+- omission, explicit `[0,0,0]`, positive/negative XYZ;
 - validate-only then save/reload then encounter create then authorized runtime read;
+- reconnect snapshot, live update, VISIBLE-over-REMEMBERED, resight/vacate, and
+  movement/re-placement with exact presence/value;
 - fog authorization still suppresses unauthorized content;
 - ref edit retain/change/remove cases are independent complete documents;
 - unchanged owning cell/blockers/LoS/pathing/range/targetability/fog;
@@ -231,15 +259,19 @@ Add reviewed source declarations (recommended
 
 - stable id/family/default;
 - promoted relative GLB path and accepted SHA-256;
-- one `totalScale`;
+- one `totalScale` converting GLB-local units to canonical game-world units;
 - required `sourceForwardYawRad` plus evidence reference;
-- tagged point (`floor-contact` for bookcase, `wall-attachment` for torch);
-- exact point vector in canonical rendered meters; and
+- tagged point (`floor-contact` for bookcase, `wall-attachment` for torch), expressed
+  after scale/yaw in canonical game-world units; and
 - **required** authoring UX hints for local right/up/forward controls: finite min/max,
-  finite positive step, units, and evidence reference.
+  finite positive step, all in canonical game-world units, and evidence reference.
 
 Do not copy raw source asset files or measurement dumps. Raw export defects return to
-re-export; generator metadata cannot compensate malformed Root/axis/scale.
+re-export; generator metadata cannot compensate malformed Root/axis/scale. Before any
+Learn number is promoted, G records and tests the conversion from experiment-local
+Learn scene units to canonical game-world units (including an evidenced factor of one
+if identity is correct). Generator dimensional tests reject points/hints whose unit
+label or conversion provenance is absent.
 
 ### Deterministic safe generator
 
@@ -247,7 +279,8 @@ Add a separate safe projection generator, not renderer fields inside gameplay
 prop-role semantics. Recommended:
 
 - input: reviewed declarations + existing generated prop inventory;
-- output: `harness/catalogs/synty-web-assets.json`;
+- output: `harness/catalogs/synty-web-assets.json` with fixed
+  `lengthUnit: game-world` and schema-major enforcement for unit/axis/scale semantics;
 - stable ordering/number encoding/newlines;
 - no timestamp/current branch/self commit field;
 - allowlisted safe fields only; and
@@ -255,7 +288,8 @@ prop-role semantics. Recommended:
 
 Hard failures:
 
-- unsupported schema, invalid/nonfinite scale/yaw/point/hint;
+- unsupported schema/unit, missing conversion provenance, invalid/nonfinite
+  scale/yaw/point/hint, or nonzero Y on a v1 `floor-contact` point;
 - missing/extraneous/duplicate ids or family defaults;
 - path traversal/non-GLB/missing file;
 - digest mismatch;
@@ -281,30 +315,37 @@ amendment; do not mark them optional.
 
 Stage into a fresh temporary directory:
 
-1. copy the **complete** `harness/models/synty/` legacy tree from the candidate exact
-   commit, not only enrolled GLBs;
+1. copy the **complete** `harness/models/synty/` legacy tree from the candidate tree,
+   not only enrolled GLBs;
 2. generate/copy safe catalog;
 3. verify every catalog digest and complete expected legacy inventory;
-4. generate provenance wrapper with chosen provider revision;
+4. record only catalog digest + generator/tool identity available from content;
 5. run catalog/schema/license checks; then
 6. atomically rename/swap the whole catalog+asset stage.
+
+G never writes its own future post-merge commit SHA into a tracked wrapper/catalog; that
+SHA is unknowable until merge and belongs in W's post-merge provider lock.
 
 Failure keeps prior entire tree/catalog; no partial rsync is visible.
 
 ### Provider provenance: explicit Kirk call
 
-**Recommendation:** choose the exact merged G commit SHA. W's generated provenance
-records that SHA; authenticated local/Docker sync fetches that commit directly and
-verifies `HEAD == recorded SHA`. This is immutable, matches current no-tag convention,
-and avoids a self-referential catalog revision.
+**Recommendation:** after G merges, choose its exact merged commit SHA. W commits a
+provider lock containing exactly that G SHA, catalog digest, generator/tool identity
+and version, and required repository/schema identity. It contains neither a web SHA
+nor mutable branch name. Authenticated local/Docker sync fetches the G commit directly
+and verifies `HEAD == locked SHA`. Actual `github.sha`/web HEAD is recorded only by the
+running W check as a non-committed artifact and deployment/image label alongside the
+verified lock hash.
 
 If Kirk instead chooses a named release, G must additionally:
 
 - create annotated `web-assets/v1.0.0` only after merge;
 - install a no-bypass repository tag ruleset protecting `web-assets/v*` from update
   and deletion before creating the tag;
-- record tag object id and `git rev-parse web-assets/v1.0.0^{}` peeled commit; and
-- make W verify both. A lightweight/unprotected/moveable tag is not acceptable.
+- W's provider lock records tag object id and
+  `git rev-parse web-assets/v1.0.0^{}` peeled commit plus catalog/tool facts; and
+- W verifies all of them. A lightweight/unprotected/moveable tag is not acceptable.
 
 No tag or ruleset is created before Kirk's renewed plan approval and explicit choice.
 
@@ -315,6 +356,8 @@ No tag or ruleset is created before Kirk's renewed plan approval and explicit ch
 - collision/adversarial/allowlist tests;
 - exact GLB hashes and immutable-source proof;
 - two per-entry calibration matrix fixtures;
+- content-digest change tests plus renewed evidence gate for default/scale/yaw/point
+  edits and schema-major test for unit/axis/order semantics;
 - full-tree atomic failure injection before swap; and
 - license scan confirming no raw GLB/source content enters public repo.
 
@@ -330,22 +373,29 @@ Add fixture interfaces/tests for:
 
 ```text
 selectVisualVariant(catalog, semanticRef, explicitVariantId?)
-resolveVisualPlacement(entry, canonicalAtOrigin, facingYaw, worldOffset)
+resolveVisualPlacement(entryOrNone, canonicalAtOrigin, facingYaw, worldOffset)
   -> matrix + diagnostics
 ```
 
-Use exact equation:
+All translations are canonical game-world units. Use exact equations:
 
 ```text
-T(p) · T(o_world) · R_y(facing) · T(-modelPoint)
-     · R_y(sourceForwardYawRad) · S(totalScale)
+P_generic = T(p) · T(o_world) · R_y(facing)
+C_enrolled = T(-modelPoint) · R_y(sourceForwardYawRad) · S(totalScale)
+M_generic = P_generic
+M_enrolled = P_generic · C_enrolled
 ```
+
+`totalScale` converts GLB-local units to canonical game-world units; post-scale point,
+hints, `p`, `o`, and resolver translations share that unit.
 
 Fixture assertions:
 
 - stable default independent of ordering;
 - exact ids above;
-- omitted/zero/nonzero XYZ;
+- omitted/explicit `[0,0,0]`/nonzero XYZ;
+- generic `M_generic` exactly once for room/canvas prop and monster/boss fixtures;
+- catalog `C_enrolled` only for enrolled prop fixtures;
 - all six valid existing facings;
 - offset vector unchanged when facing changes;
 - point/yaw/scale composition order;
@@ -358,40 +408,66 @@ Fixture assertions:
 
 Replace both divergent paths with one script/module used by local sync and Docker:
 
-1. read generated provenance containing exact merged G SHA (or protected tag object +
-   peeled commit if Kirk chose tag);
+1. read the tracked W provider lock containing exact merged G SHA, catalog digest, and
+   generator/tool identity/version (or protected tag object + peeled commit if Kirk
+   chose tag); the lock contains no web SHA;
 2. authenticated fetch/checkout exact revision in a clean temp directory;
 3. assert exact HEAD/peeled SHA before reading files;
 4. stage the **complete** legacy `harness/models/synty/` tree plus safe catalog;
-5. verify byte-identical checked catalog, inventory, every enrolled digest, and schema;
-6. create web generated provenance including provider SHA, catalog digest, generation
-   tool version, and web build SHA; and
-7. atomically replace public tree+catalog after every check succeeds.
+5. verify byte-identical checked catalog, inventory, every enrolled digest, schema, and
+   generator identity; and
+6. atomically replace public tree+catalog after every check succeeds.
 
-A token/secret absence must fail the required private-asset PR check for W rather than
-silently warn/skip. Normal contributors may run public unit fixtures, but exact-head
-merge evidence requires the protected secret check.
+The running check, not a tracked file, emits evidence containing actual `github.sha`/
+web HEAD, provider lock hash, verified provider SHA/catalog digest, and tool version.
+Deployment/image labels record the same split. No tracked G/W wrapper contains its own
+future/current web build SHA.
 
-### 3. Exact-head dev PR gate
+### 3. Public and protected exact-head gates
 
-Add a required workflow for the exact W pull-request head targeting `dev`:
+**Automatic public PR check (no secrets):** on every W PR, run schema/id/unit checks,
+pure selector/resolver fixtures, public-safe catalog fixtures, lint/typecheck/unit/build
+where licensed files are not required, and scan the diff/artifact manifest. Forks and
+Dependabot receive only this path.
 
-- checkout `github.event.pull_request.head.sha`, assert `git rev-parse HEAD` equality;
-- exact provider checkout/assertion above;
-- full atomic stage in local-script mode and Docker-build mode;
-- build/test/lint/typecheck;
-- run paired Playwright/actual Game evidence from that built head; and
-- upload provenance, matrices, screenshots, inventory and performance artifacts named
-  with both web HEAD and provider SHA.
+**Licensed exact-head check:** define the workflow on trusted `dev` and invoke it only
+after review through a protected GitHub Environment requiring manual Kirk approval.
+The trusted preflight must:
 
-Before merge, query GitHub and assert required check `headSha` equals current PR HEAD;
-stale green checks after pushes do not count. After merge, repeat a smoke stage/build
-on exact `origin/dev` merge SHA and attach it; do not substitute a local dirty tree.
+1. accept PR number + expected head SHA, query GitHub, and prove target is `dev`, head
+   repo equals `KirkDiggler/rpg-dnd5e-web` (not fork/Dependabot), actor/author is an
+   approved same-repository collaborator, and expected SHA equals the current PR head;
+2. run no `pull_request_target` checkout of arbitrary code with secrets;
+3. obtain a short-lived, least-privileged, read-only credential scoped only to reading
+   the private provider, fetch/verify the locked G revision with trusted workflow code,
+   then unset/revoke the credential and delete credential-bearing config before W head
+   scripts execute;
+4. checkout the exact W SHA and assert `git rev-parse HEAD == expected SHA`;
+5. run full atomic stage in local-script and Docker-build modes, build/test/lint/
+   typecheck, and paired Playwright/actual-Game evidence; and
+6. publish the required status against that exact SHA.
+
+Secret absence/expiry, trust mismatch, stale SHA, or missing Environment approval fails
+the licensed gate; it never degrades to warning/skip. Scrub authenticated URLs/tokens
+from git config, process environment, command echo, logs, and evidence. Disable general
+caches or allowlist only dependency/build-cache paths that cannot contain the provider
+checkout or public asset stage. Artifact upload uses an explicit allowlist (safe JSON,
+lock/build evidence, hashes/inventory names, matrices, performance JSON, license-safe
+screenshots); a pre-upload scan rejects `.glb`, archives, tokens, authenticated URLs,
+private checkout content, or any unlisted file. Never upload the private checkout or
+licensed public stage.
+
+Before merge, query GitHub and assert the licensed required check `headSha` equals the
+current W PR HEAD; stale green checks after pushes do not count. After merge, repeat a
+protected smoke stage/build on exact `origin/dev` merge SHA and attach only allowlisted
+non-committed evidence; do not substitute a local dirty tree.
 
 ### 4. Catalog projection and scale partition
 
-Commit only safe generated JSON/provenance. Preserve the complete legacy asset tree in
-built/public staging without committing licensed GLBs.
+Commit only safe generated JSON and the provider lock (G SHA + catalog digest + tool
+identity, never web SHA). Preserve the complete legacy asset tree in built/public
+staging without committing licensed GLBs; actual web HEAD remains non-committed check/
+image evidence.
 
 Generate/consume an enrolled lookup while preserving current public prop roles. Enrolled
 bookcase/torch use catalog `totalScale` once. Compile-time-distinct enrolled matrix
@@ -412,11 +488,36 @@ One pure selector and one pure matrix resolver are imported by Builder and Game.
 No model-specific component branch, runtime GLB measurement, React state, camera,
 wall geometry, gameplay state, or network access enters either pure function.
 
-The returned matrix is applied once to a compile-time-distinct enrolled group with
-primitive/companions under it. Remove outer position/yaw/scale for enrolled models.
-Legacy renderer still receives ratified `o_world` once outside its current transform.
+The resolver returns generic `P=T(p)·T(o)·R_y(φ)` for every valid placement. Only an
+enrolled prop appends catalog `C`; its full `M=P·C` is applied once to the enrolled
+group with primitive/companions under it. Non-enrolled prop/monster/boss groups apply
+`P` once and retain only their partitioned model-internal calibration below it. Remove
+outer position/yaw/scale duplicates for enrolled models; no path applies `o` twice.
 
-### 6. Builder
+### 6. Projection ingestion before render
+
+Name and wire the actual pre-render seams, not only `HexEntity`:
+
+- `src/hooks/useEncounterState.ts`: hydrate optional offset presence/value from the
+  reconnect snapshot and every live encounter update that carries placements;
+- `src/components/game/EncounterView.tsx`: build `offsetByEntityId` beside the existing
+  position/facing reverse indexes, with current VISIBLE truth winning over stale
+  REMEMBERED truth; and
+- `src/components/playtest/playtestMapHelpers.ts`: extend the real `HexEntityData`
+  mapping so offset survives the production helper boundary into the renderer.
+
+Use one presence-aware offset extractor/merge policy across snapshot and events. Tests
+must distinguish omission from explicit `[0,0,0]` and nonzero; prove
+VISIBLE-over-REMEMBERED; reconnect snapshot hydration; live update, resight and vacate;
+and movement/re-placement. On movement/re-placement the current canonical origin `p`
+changes while the unchanged world-axis `o` follows the entity; the vacated cell cannot
+leave a stale offset/index entry.
+
+Generic offset applies exactly once to every valid placement kind. Required end-to-end
+fixtures include a room prop, canvas prop, room monster, and room boss. Only the
+enrolled bookcase/torch prop cases additionally select/apply catalog calibration.
+
+### 7. Builder
 
 Builder:
 
@@ -433,17 +534,20 @@ Builder:
 A transient selected wall/context may aid controls but is not serialized; UI states
 plainly that changing wall geometry does not reattach persisted world offset.
 
-### 7. Actual Game
+### 8. Actual Game
 
-Wire the production path from authorized encounter projection through
-`EncounterMap→HexGrid→HexEntity` (or then-current equivalent) to the same selector/
-resolver. Use compiled absolute at, applicable facing, and exact projected world offset.
-Do not read source YAML, Builder state, wall geometry, or Learn data.
+Wire the production path from the named state/helper seams through
+`EncounterMap→HexGrid→HexEntity` (or then-current equivalent) to the same matrix
+resolver. Use current canonical origin, applicable facing, and exact projected world
+offset. Apply generic `P` exactly once to every valid prop/monster/boss; catalog
+selection/calibration runs only for enrolled props. Do not read source YAML, Builder
+state, wall geometry, or Learn data.
 
-An actual joined encounter from an A-backed snapshot is mandatory. Storybook/Concepts
-Lab/local fake projection is not Game evidence.
+Actual joined encounters from A-backed snapshots are mandatory for representative
+room prop, canvas prop, room monster, and room boss, including one movement/re-placement
+case. Storybook/Concepts Lab/local fake projection is not Game evidence.
 
-### 8. Ref replacement
+### 9. Ref replacement
 
 Test complete-document candidates:
 
@@ -456,7 +560,7 @@ Test complete-document candidates:
 New ref reloads id/path/digest/scale/yaw/point/hints/companions. No promise of persistent
 wall attachment/support exists.
 
-### 9. Fallback and rollback
+### 10. Fallback and rollback
 
 Required deterministic outcomes match design table. Specifically, every fallback
 applies canonical at + exact world offset; none silently drops offset or selects a
@@ -474,7 +578,7 @@ Split deployment so enrollment can be disabled without disabling ratified offset
 A full revert that causes Game to ignore persisted offset is prohibited after offset
 is accepted in production.
 
-### 10. Learn cleanup
+### 11. Learn cleanup
 
 - Anchor Lab may remain isolated diagnostic UI but calibrated results must call the
   production selector/resolver.
@@ -483,12 +587,17 @@ is accepted in production.
 - Add dependency/build-graph test preventing Learn measurement tables from production
   Builder/Game bundles.
 
-### 11. W tests
+### 12. W tests
 
 - pure selector/resolver unit + golden matrix tests;
 - Builder local→world conversion and exact world display/persistence;
-- projected omission/explicit zero/nonzero;
-- actual Game integration using A service/snapshot;
+- projected omission versus explicit `[0,0,0]` versus nonzero through
+  `useEncounterState.ts`, `EncounterView.tsx`, and `playtestMapHelpers.ts`;
+- VISIBLE-over-REMEMBERED, reconnect snapshot hydration, live update/resight/vacate,
+  and movement/re-placement without stale reverse-index state;
+- Builder + actual Game integration using A service/snapshot for representative room
+  prop, canvas prop, room monster, and room boss;
+- generic `P` exactly once on every fixture, catalog `C` only on enrolled props;
 - six facing values (not claimed as six wall edges);
 - positive/negative X/Y/Z, facing nonrotation of offset;
 - replacement retain/change/remove;
@@ -500,8 +609,9 @@ is accepted in production.
 ## Cross-repo acceptance evidence
 
 Use one checked evidence index on #205 linking immutable artifacts from T/P/A/G/W.
-Every artifact names issue/PR, exact HEAD, base HEAD, provider SHA/tag+peeled SHA,
-catalog digest, GLB digests, commands, and pass/fail.
+Every non-committed evidence artifact names issue/PR, actual exact web HEAD/base HEAD,
+tracked provider-lock hash, provider SHA/tag+peeled SHA, catalog/tool/GLB digests,
+commands, and pass/fail. The tracked provider lock itself never contains web HEAD.
 
 ### Platform evidence
 
@@ -510,8 +620,10 @@ catalog digest, GLB digests, commands, and pass/fail.
 - authoring/runtime exact component equality;
 - old document/snapshot compatibility;
 - source-path errors for malformed/nonfinite;
-- fog authorization and mechanical invariants; and
-- ref edit retain/change/remove.
+- fog authorization and mechanical invariants;
+- ref edit retain/change/remove; and
+- authorized VISIBLE/REMEMBERED/resight/vacate plus movement/re-placement snapshot/event
+  truth sufficient for the web ingestion cases.
 
 ### Paired visual evidence
 
@@ -519,7 +631,12 @@ For identical provider/projection facts, capture Builder and actual Game:
 
 - bookcase and torch matrices numerically equal within `1e-6` per element;
 - screenshots at 1280×720 representative Discord viewport and one close diagnostic;
-- omission, ±X/±Y/±Z representatives;
+- omission, explicit `[0,0,0]`, and ±X/±Y/±Z representatives;
+- representative room prop, canvas prop, room monster, and room boss with generic
+  offset exactly once in both Builder and actual Game; only enrolled props show
+  additional catalog calibration;
+- VISIBLE-over-REMEMBERED, reconnect, live/resight/vacate, and movement/re-placement
+  frames with no stale/double offset;
 - six existing facing values where baseline accepts facing;
 - facing changes model orientation while offset world vector stays unchanged;
 - two pivot-distinct intrinsic points;
@@ -542,18 +659,54 @@ source or secret URLs to public project evidence.
 
 ## Quantitative performance gates
 
-Run named methods on W exact PR HEAD and provider SHA:
+Run named methods on W exact PR HEAD/provider lock. Record CI image, CPU/OS, repository
+Node/browser versions, base/head/provider SHAs, and case-table digest.
+
+### Pure resolver statistic
+
+- Environment: production resolver build under the repository CI Node version on one
+  pinned Linux runner.
+- Case table: six facings × three fixed nonzero world offsets, all translations in
+  canonical game-world units.
+- Sampling unit: one timed batch of 1,000 resolves, elapsed by `performance.now()` and
+  divided by 1,000; do not time/log each call.
+- Per run: fresh Node process, 10 untimed warmup batches, then 100 timed batch samples.
+- p95: sort the 100 per-resolve samples; nearest-rank index
+  `ceil(0.95*100)-1` zero-based.
+- Aggregation: three fresh processes in the same job/runner; median of the three
+  per-run p95s.
+- Budget: median p95 ≤ `0.05 ms/resolve`.
+
+### Actual-route base/head comparison
+
+Run exact `origin/dev` base then exact W head sequentially in each of three paired
+cycles on the same job/runner, Chromium version, fixed route/camera, and exact provider
+lock. Wait for the same bookcase/torch to load plus 120 warmup frames, then use current
+`DevPerfProbe`'s 8,000 ms window. Aggregate frame time as the median of the three
+reported per-run `frameTimeMs.p95` values. Head may exceed base by at most
+`max(1.0 ms, 5% of base median p95)`.
+
+For **each paired run**, current measurable `rendererInfo` counters for the same loaded
+models must have exact head-minus-base delta `+0` for:
+
+- `calls.max`;
+- `triangles.max`;
+- `geometries`;
+- `textures`; and
+- `programs`.
+
+Do not claim GPU-byte measurement; `DevPerfProbe` exposes counts, not bytes.
+
+Additional gates:
 
 | Gate | Method | Budget |
 | --- | --- | --- |
-| Pure resolver | production Node/Vitest, 10,000 warmups + 100,000 resolves, all six facings/three offsets, three runs same CI runner | median p95-equivalent ≤ `0.05 ms/resolve` |
 | Idle recompute | selector/resolver counters after stable scene over 300 rAF ticks | exactly 0 new resolves |
-| Actual route | `DevPerfProbe`, fixed two-prop scene/camera, 30 s × three runs before/after same machine/provider | median frame time ≤5% regression; p95 ≤+1.0 ms; draw calls +0; reported GPU memory ≤+1 MiB |
-| Safe data | catalog + provenance byte count | ≤8 KiB uncompressed |
-| Network/cache | repeat route load after warm cache | no additional catalog/GLB request caused by rerender; one catalog fetch/build load |
+| Safe data | catalog + tracked provider-lock byte count | ≤8 KiB uncompressed |
+| Network/cache (plan evidence only) | repeat route after warm cache | no rerender-triggered catalog/GLB request; one catalog fetch per build/page load as designed |
 
-Attach raw JSON/traces and environment. Any breach blocks or requires a specific
-Kirk-approved measured exception on #205.
+Attach allowlisted raw JSON/traces/environment only; never GLBs/private checkout. Any
+breach blocks or requires a specific Kirk-approved measured exception on #205.
 
 ## Drift and atomicity gates
 
@@ -561,7 +714,8 @@ The following all hard-fail G/W release checks:
 
 - generated catalog differs from generator output;
 - catalog expected digest/revision differs between public artifact/runtime import;
-- provider exact HEAD/peeled commit differs from provenance;
+- provider exact HEAD/peeled commit, catalog digest, or tool identity differs from
+  the tracked W provider lock;
 - enrolled GLB SHA-256 differs;
 - complete legacy tree inventory is missing/partially from another provider revision;
 - catalog schema/id/number/hint/companion invalid;
@@ -578,9 +732,12 @@ No warning-only drift path is acceptable for release.
 1. Merge/release T and P.
 2. Merge/deploy A with passthrough disabled from mechanics by construction.
 3. Validate authored source/persistence/runtime projection in a nonproduction dungeon.
-4. Merge G and capture exact provider SHA.
-5. On W exact head, atomically stage full legacy tree+catalog from G SHA.
-6. Enable enrolled renderer in Builder preview, then actual Game test environment.
+4. Merge G, capture exact provider SHA, and cut the tracked W provider lock with G
+   SHA + catalog digest + generator/tool identity (no web SHA).
+5. On W exact head, atomically stage full legacy tree+catalog from the lock through the
+   protected trust gate; record actual web HEAD only in non-committed evidence/labels.
+6. Enable generic offset in Builder/actual Game for every valid placement kind, then
+   enrolled bookcase/torch catalog calibration.
 7. Run complete evidence/performance matrix.
 8. Merge W to dev only after independent gates and Kirk approval.
 9. Repeat exact dev-merge smoke; update #203/#205 tracking, no automatic merge.
@@ -605,19 +762,24 @@ All must be true before the director can recommend delivery; only Kirk may appro
 merge:
 
 1. Renewed course-corrected design and plan approved.
-2. T/P/A/G/W owning issues/PRs created only afterward, each reviewed/merged in provider-
-   first order with exact heads/releases recorded.
+2. Exactly five T/P/A/G/W owning issues/branches/PRs are created only afterward and
+   boarded with the specified Project 19 Platform/Assets fields; no wrapper issue.
 3. v0.4 exact optional offset works end-to-end from YAML through actual Game, preserving
-   omission/verbatim values and remaining mechanically inert.
+   omission/explicit-zero/value across snapshot/live/fog/movement state and remaining
+   mechanically inert.
 4. Safe catalog generator/registrar ships exact two ids/defaults, digest-bound scale/yaw/
-   points, and required evidence-backed UX hints.
-5. Exact provider commit (or protected annotated tag + peeled commit by Kirk choice) is
-   pinned and verified.
+   points, and required evidence-backed UX hints, all promoted into canonical game-world
+   units through a tested conversion.
+5. Tracked W provider lock pins exact G commit (or protected tag object + peeled commit),
+   catalog digest, and tool identity with no web SHA; actual web HEAD appears only in
+   non-committed evidence/labels.
 6. Complete legacy tree + catalog stages atomically and identically for local/Docker;
-   exact-head dev PR gate passes.
-7. One selector/resolver feeds Builder/Game; offset is outside facing; returned matrix
-   is sole enrolled primitive/companion transform; no double scale.
-8. Achievable paired evidence passes without semantic wall/support claims.
+   automatic public and manually approved licensed exact-head gates pass without secret/
+   artifact leakage.
+7. Named web state/helper seams prove generic `P` exactly once for room/canvas props and
+   room monster/boss; only enrolled props receive catalog `C`; no double scale.
+8. Achievable paired evidence and defined measurable performance statistics pass without
+   semantic wall/support or GPU-byte claims.
 9. Replacement retain/change/remove and all deterministic fallbacks/rollback pass.
 10. Quantitative performance, drift, licensing, and experiment cleanup gates pass.
 11. #203/#206 and #204/#205 evidence indexes are current and signed; status remains open
@@ -643,8 +805,10 @@ two-prop delivery.
 
 ## Kirk judgments required before issue creation
 
-1. **Provider provenance:** approve exact merged provider SHA (recommended), or require
-   protected annotated `web-assets/v1.0.0` + object/peeled commit.
+1. **Provider provenance:** approve a tracked W lock with exact merged G SHA + catalog
+   digest + tool identity and no web SHA (recommended), or require protected annotated
+   `web-assets/v1.0.0` + object/peeled commit in that lock. Actual web HEAD stays in
+   non-committed evidence/labels.
 2. **Immutable ids:** approve exact literals/grammar and migration rule.
 3. **Required hints:** approve evidence-backed initial UX hints as provider-release
    requirements, never server validity.
