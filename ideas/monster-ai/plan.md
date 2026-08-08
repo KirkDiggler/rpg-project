@@ -146,6 +146,16 @@ healthy fighter, moves toward and attacks the wounded wizard, and the
 combat log reads the choice in the game's voice. Screenshot + log excerpt
 on the toolkit and web PRs.
 
+**Authoring surface (added 2026-08-08, Kirk):** hand YAML is slice 1's
+authoring path, not the destination — the dungeon builder needs controls
+to *set* these values. Tracked as
+[rpg-dnd5e-web#736](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/736):
+a targeting select on the placement/boss inspector (the doc model already
+carries the field) plus un-stripping it from `stripToV1Subset` once the
+server accepts the key. Blocked on this slice's merge train; aligned with
+dungeon YAML v0.4 tranche C (rpg-project#206). Builder controls for
+`profile:`/`params:`/`defaults:` follow slice 3 the same way.
+
 ### Slice 2 — the perception component
 
 Planned in detail **after slice 1 merges** (the rationale threading will
