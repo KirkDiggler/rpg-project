@@ -269,7 +269,7 @@ entries by stable variant id:
   totalScale                    # sole dimensionless scale authority
   sourceForwardYawRad
   optional tagged visual anchor
-  optional anchor-kind-local authored-adjustment limits
+  optional anchor-kind-local Builder UX limit hints
   optional companion variant/path references
 ```
 
@@ -370,9 +370,10 @@ ONE pure resolveVisualPlacement
 
 ## One pure shared placement resolver
 
-The resolver has no React, R3F, loader, GLB, asset-repository, hex-pathfinding,
+The resolver has no React, R3F, loader, GLB, repository, hex-pathfinding,
 semantic-ref selection, or asset-identity knowledge. It consumes one selected valid
-entry and one generic registration. It returns the one model matrix and a reason.
+entry and one generic registration produced by the authored-semantics adapter. It
+returns the one model matrix and a reason.
 
 ```text
 resolveVisualPlacement(entry, registration)
@@ -380,57 +381,44 @@ resolveVisualPlacement(entry, registration)
                         missing-wall-context }
 ```
 
-The shared selector is executed first; the placement resolver never chooses a
-variant. Builder and game only adapt existing authored hex/span/wall state into the
-same registration structures.
+The shared selector runs first; the placement resolver never chooses a variant.
+Builder and Game adapt the persisted semantic placement through the exact same
+adapter and resolver.
 
 ### Matrix definitions
 
-`T(q)` is a homogeneous translation by 3-vector `q`. `S(s)` is uniform scale by the
-entry's sole `totalScale=s`. `ψ=sourceForwardYawRad`. All vertices are column
-vectors. The anchor point `a` is already expressed in canonical rendered meters
-after `R_y(ψ)S(s)`, so `T(-a)` occurs to the left of yaw/scale.
+`T(q)` translates by 3-vector `q`. `S(s)` is uniform scale by sole
+`totalScale=s`. `ψ=sourceForwardYawRad`. Vertices are homogeneous column vectors.
+An intrinsic model point `a` is already in canonical rendered meters after
+`R_y(ψ)S(s)`, so `T(-a)` sits to the left of yaw/scale.
 
-#### Floor registration
+#### Floor surface + floor support
 
-```text
-floor {
-  p_f: world floor/span target in meters
-  φ: facing yaw in radians
-  n_f=(right, up, forward): authored local nudge in meters
-}
-```
-
-`p_f.y` is the authored floor-surface datum, not a measured model bound. `right/up/
-forward` are in the placement frame and are therefore rotated by `R_y(φ)`. For a
-matching `floor-contact` anchor `a=(ax,0,az)`:
+The adapter supplies:
 
 ```text
-M_floor(a) = T(p_f) · R_y(φ) · T(n_f) · T(-a)
-           · R_y(ψ) · S(s)
-
-worldVertex = M_floor(a) · glbVertex
+p_c: world center of authored `at` on the floor datum
+φ: yaw selected by six-direction `anchor.orientation`
+d_f=(adjustment.along, adjustment.vertical, adjustment.normal)
 ```
 
-Positive local forward moves along the faced `+Z`; positive right moves along faced
-`+X`; positive up moves world `+Y`.
-
-#### Wall registration
+Here `along` is faced local right, `normal` is faced local forward, and `vertical`
+is world up. For matching `floor-contact a=(ax,0,az)`:
 
 ```text
-wall {
-  p_w: world point on the authored structural wall plane at its floor datum
-  i=(ix,0,iz): normalized room-inward direction
-  h: mount height in meters above p_w.y
-  c: wall clearance in meters, positive into the room
-  n_w=(tangent, up, inward): authored local nudge in meters
-  fallbackFloorFrame: owning-span/hex { p_f, φ, n_f }, always available
-}
+M_floor_floor(a) = T(p_c) · R_y(φ) · T(d_f) · T(-a)
+                 · R_y(ψ) · S(s)
 ```
 
-Let world up `u=(0,1,0)`. Define tangent `t=u×i=(iz,0,-ix)`. Then
-`t×u=i`, so the wall basis is right-handed. Its homogeneous rotation has columns
-`[t u i]`:
+`p_c.y` is authored floor elevation, never a measured model bound. Positive normal
+moves forward; positive along moves right; positive vertical moves up.
+
+#### Canonical structural wall frame
+
+Both valid wall-surface combinations use the chosen edge's seed-invariant structural
+frame. Let `p_e` be that edge midpoint at the owning cell's floor datum. Let
+`i=(ix,0,iz)` be the finite normalized **structural room-inward** direction and
+`u=(0,1,0)`. Define `t=u×i=(iz,0,-ix)`; then `t×u=i`. The right-handed basis is:
 
 ```text
 B(i) = | tx  0  ix  0 |
@@ -439,69 +427,98 @@ B(i) = | tx  0  ix  0 |
        |  0  0   0  1 |
 ```
 
-`B` maps canonical `+X/+Y/+Z` to wall tangent/up/inward. It is equivalent to
-`R_y(atan2(ix,iz))`. `h` is the target height of the declared attachment point—not
-the model origin—above the wall frame's floor datum. Let
-`d_w=(n_w.tangent, h+n_w.up, c+n_w.inward)`. For matching wall anchor
-`a=(ax,ay,az)`:
+For persisted adjustment:
 
 ```text
-M_wall(a) = T(p_w) · B(i) · T(d_w) · T(-a)
-          · R_y(ψ) · S(s)
-
-worldVertex = M_wall(a) · glbVertex
+d_w=(adjustment.along, adjustment.vertical, adjustment.normal)
 ```
 
-Thus mount height, clearance, and local nudge are rotated in the wall frame exactly
-once. Negative clearance/embed moves opposite inward, toward/through the structural
-plane. Kirk's fixture `-0.20m` remains a scene nudge expressed in this semantic
-basis; its old fixture-world Z sign is not copied into metadata.
+`along` is positive structural tangent `t`; `vertical` is positive world up;
+`normal` is **always positive structural room-inward `i`**, regardless of model
+orientation. This gives wall clearance/embed one stable sign.
 
-The wall plane is authored structural geometry, normally the canonical edge plane.
-The resolver never measures a loaded wall GLB or chooses a visible-face plane.
-Scenes that want a visible-face clearance or embed express it in `c/n_w`.
+`anchor.orientation` changes model-facing only:
+
+```text
+δ = 0   for into-cell
+δ = π   for into-wall
+```
+
+`R_y(δ)` is inside the adjustment frame, so `into-wall` turns the model 180° around
+the registered point without reversing along/normal/vertical signs.
+
+#### Wall surface + floor support (bookcase shape)
+
+This combination requires a `floor-contact` model point. The support target is the
+wall-edge midpoint on the floor datum; the prop remains floor-supported while using
+the wall frame:
+
+```text
+M_wall_floor(a_floor) = T(p_e) · B(i) · T(d_w) · R_y(δ)
+                      · T(-a_floor) · R_y(ψ) · S(s)
+```
+
+With omitted adjustment, a calibrated bookcase's declared floor point lands at the
+edge span/floor datum. Normal adjustment moves it into/out of the room without
+changing its intrinsic visible-center correction.
+
+#### Wall surface + wall support (torch shape)
+
+This combination requires a `wall-attachment` point `a_wall=(ax,ay,az)`:
+
+```text
+M_wall_wall(a_wall) = T(p_e) · B(i) · T(d_w) · R_y(δ)
+                    · T(-a_wall) · R_y(ψ) · S(s)
+```
+
+For wall support, `adjustment.vertical` is the semantic target height of the declared
+attachment point above the edge's floor datum. It is authored placement intent, not
+an asset baseline. `adjustment.normal` is authored clearance relative to the
+structural wall plane. Omission means zero; the catalog supplies neither value.
+
+The resolver never measures a wall GLB or chooses a visible-face plane. A scene that
+wants a particular height, clearance, or embed authors the adjustment.
 
 ### Exact identity-anchor fallbacks
 
-"Identity" means `a=(0,0,0)`; it does **not** remove valid total scale, producer yaw,
-facing, or authored placement:
+Identity means `a=(0,0,0)`; it retains valid total scale, producer yaw, semantic
+orientation, and authored adjustment:
 
 ```text
-M_floor_identity = T(p_f) · R_y(φ) · T(n_f) · R_y(ψ) · S(s)
-M_wall_identity  = T(p_w) · B(i) · T(d_w) · R_y(ψ) · S(s)
+M_floor_floor_identity = T(p_c) · R_y(φ) · T(d_f) · R_y(ψ) · S(s)
+M_wall_floor_identity  = T(p_e) · B(i) · T(d_w) · R_y(δ) · R_y(ψ) · S(s)
+M_wall_wall_identity   = T(p_e) · B(i) · T(d_w) · R_y(δ) · R_y(ψ) · S(s)
 ```
 
-- A valid selected entry with no anchor uses the matching identity matrix and
+- A valid selected entry with no anchor uses its registration's identity matrix and
   returns `no-anchor`.
-- A floor anchor supplied wall registration, or wall anchor supplied floor
-  registration, uses the supplied registration's identity matrix and returns
-  `registration-mismatch`; it never reinterprets the point.
-- A wall-intended placement lacking a finite wall point or normalized inward vector
-  cannot construct `B`. It uses its required `fallbackFloorFrame` and exactly
-  `M_floor_identity` (with the fallback frame's local nudge), returning
-  `missing-wall-context`. Both consumers therefore retain the legacy owning-hex/span
-  placement rather than inventing a wall.
+- A model-point tag incompatible with the valid semantic combination uses that
+  combination's identity matrix and returns `registration-mismatch`; it never
+  reinterprets a point.
+- If a wall edge cannot produce finite `p_e` and normalized `i`, the adapter uses the
+  required owning-`at` floor fallback with the corresponding floor identity matrix
+  and returns `missing-wall-context`. Platform validation should already reject the
+  invalid semantic support; this runtime fallback is deterministic defense.
 
-These are compatibility fallbacks, not calibration evidence. They cannot be saved
-back as metadata.
+Fallback is not calibration evidence and cannot be saved back as metadata.
 
 ### Sole-transform invariant
 
-The returned matrix is the **only** position/rotation/scale transform applied to the
-GLB primitive and all of its companions. The component must disable/omit its current
-outer `position`, `rotationY`, `SYNTY_SCALE`, and `renderScale` application for an
-enrolled resolved entry. Companions receive the identical matrix, not a separately
-composed approximation. Applying any declarative component position/rotation/scale
-on top of the matrix is a parity and scale failure.
+The returned matrix is the **only** transform applied to the GLB primitive and every
+companion. The component disables/omits current outer `position`, `rotationY`,
+`SYNTY_SCALE`, and `renderScale` for an enrolled entry. Companions receive the
+identical matrix. Any additional component position/rotation/scale is a parity and
+scale failure.
 
 ### Replacement behavior
 
-Replacement preserves placement identity, logical hex/wall/span, registration
-intent, and authored facing/height/clearance/nudge where semantically applicable.
-It asks the selector for the new family's stable default and, only on selection
-success, atomically refreshes semantic ref, concrete id, path, total scale, yaw,
-anchor, and companions. A floor-to-wall replacement must explicitly change
-registration kind; an old resolved XYZ matrix is never preserved or reinterpreted.
+Replacement is a client-local whole-document edit, matching proposed v0.4. It keeps
+semantic `at`, edge/orientation/support intent, and compatible local adjustment only
+when the author chooses to preserve them; it changes `ref`, `surface/support`, and
+vertical/other adjustment as authored. On the submitted complete document, the
+selector resolves the new family's stable default and refreshes path, total scale,
+yaw, model point, and companions. No old resolved XYZ matrix or old asset fact is
+preserved, and there is no server replacement command/stable placement identity.
 
 ## Generation, atomic delivery, drift, and version behavior
 
@@ -560,10 +577,10 @@ Builder and game share this outcome policy as well as the pure functions:
 | Future explicit id exists and belongs to family | Selector returns that exact entry; default is ignored. |
 | Future explicit id is unknown, removed, or belongs to another family | `unknown-explicit-variant`; do **not** substitute default. Render the shared missing-asset visual at the logical placement. |
 | Enrolled family default missing, unknown, or from another family | Hard invalid-catalog producer/sync/build failure; no publish. If encountered at runtime, catalog fails closed and renders the shared missing-asset visual, not an untrusted matrix. |
-| Valid selected entry + matching anchor/registration | Use exact `M_floor(a)` or `M_wall(a)`. |
-| Valid selected entry + no anchor | Use exact `M_floor_identity` or `M_wall_identity`; outcome `no-anchor`. |
+| Valid selected entry + matching anchor/registration | Use exact `M_floor_floor`, `M_wall_floor`, or `M_wall_wall`. |
+| Valid selected entry + no anchor | Use the selected semantic combination's exact identity matrix; outcome `no-anchor`. |
 | Anchor tag and supplied complete registration kind disagree | Use that supplied registration's exact identity matrix; outcome `registration-mismatch`. |
-| Wall intent lacks finite wall point or normalized inward | Use required fallback floor frame's exact `M_floor_identity`; outcome `missing-wall-context`. |
+| Wall intent lacks finite edge point or normalized structural inward | Use owning-`at` `M_floor_floor_identity`; outcome `missing-wall-context`. |
 | Unsupported schema, invalid entry, producer/digest mismatch | Hard failure before publish. Runtime corruption fails closed: no catalog entry/matrix is trusted; shared missing-asset visual only. |
 | Selected path passes catalog gates but the GLB later fails HTTP/decode/load | Do not try another variant and do not change placement. Both consumers render the same shared missing-asset visual at the logical/fallback floor frame and report `model-load-failure`; retry/cache policy remains loader-owned. |
 | Replacement target family/default cannot select | Reject replacement atomically; old semantic ref, selected entry, and rendered matrix remain unchanged. |
@@ -605,108 +622,129 @@ the experiment that distinguishes the rows.
 
 ## Dungeon YAML v0.4 Assets handoff
 
-This is the proposed Assets answer to
-[rpg-project#206](https://github.com/KirkDiggler/rpg-project/issues/206) / the v0.4
-review surface PR #203. The catalog and field shape remain proposed until this
-#204/#205 design is approved. The no-raw-transform boundary is already supported by
-the accepted Learn evidence and is firm.
+Direct answer for
+[rpg-project#206](https://github.com/KirkDiggler/rpg-project/issues/206) / PR #203:
+**no additional YAML fields are required for visual-anchor positioning if the
+currently proposed v0.4 semantic placement fields are ratified.** The remaining
+Assets work is the exact shared adapter above plus production evidence, not another
+YAML object.
 
-### Normative spec dependency versus non-normative production ownership
+### Exact current-proposal field audit
 
-Dungeon YAML v0.4 should normatively depend only on an **external visual-calibration
-contract**: given a semantic ref (and an explicit concrete choice only when that
-future contract exists), Builder and Game select the same stable external catalog
-entry and resolve the same semantic placement intent. The YAML spec neither owns
-nor describes repository layout, generation scripts, authenticated distribution,
-or atomic release mechanics.
-
-This #204/#205 production design separately proposes `rpg-game-assets` ownership of
-intrinsic calibration and an atomic catalog+GLB bundle. Those are non-normative
-architecture/operations decisions for #205 and its later plan—not ratification
-requirements of the Dungeon YAML semantic model. #206 may link them in a clearly
-non-normative integration appendix, but must not embed them as YAML semantics.
-
-Same-release evidence still matters outside the semantic model: Builder and Game
-must record and consume the same stable catalog/content hash in parity acceptance.
-"Same semantic ref" without the same external calibration release is insufficient
-provenance, but neither the hash nor distribution topology belongs in Dungeon YAML.
-
-The proposed external calibration contract supplies:
-
-- stable concrete variant id and exact GLB digest;
-- sole total GLB-to-rendered-meter scale;
-- producer-confirmed/evidenced model-forward yaw convention;
-- tagged floor-contact or wall-attachment model point; and
-- optional validated anchor-kind-local authored-adjustment limits.
-
-Pivot correction is derived by `T(-modelPoint)` in the matrices above. No opaque
-world offset is stored or transported.
-
-### Authored adjustment policy
-
-Adjustment is semantic and anchor-local:
-
-| Anchor kind | Serialized/local axes | Meaning |
+| Candidate from discussion | Actual current status at PR #203 HEAD `c37a1e1` | Assets answer |
 | --- | --- | --- |
-| `floor-contact` | `right`, `up`, `forward` meters | axes after authored facing; `up` is relative to authored floor datum |
-| `wall-attachment` | `tangent`, `up`, `inward` meters, plus semantic mount height and clearance | tangent/up/inward are the right-handed wall basis; positive inward is into the room |
+| `at` | Existing v0.3 absolute owning cell | Reuse unchanged. |
+| `facing` | Existing v0.3 floor-prop field; proposed v0.4 explicitly rejects combining it with `anchor` | Do not create a parallel facing field. `anchor.orientation` owns anchor facing. |
+| `mount` | Decode-known but rejected in v0.3; proposed v0.4 rejects combining it with `anchor` | Do not ratify it for this slice. `anchor.support` carries floor-vs-wall support. |
+| `height` | Not a placement schema field | Do not add it. For wall support, `anchor.adjustment.vertical` is the semantic attachment-point height above floor datum. |
+| `rotate_degrees` | V0.3 calls it experiment-only, not a dialect candidate; PR #203 does not propose it | Do not add it for anchor positioning. Six-direction/into-cell/into-wall orientation is sufficient for v1. |
+| `offset` | Not proposed | Do not add it. Proposed `anchor.adjustment {along,normal,vertical}` is already the single anchor-local translation. |
+| `anchor.surface/edge/support/orientation/adjustment` | Already proposed by PR #203 | Ratify these names/shape; #205 supplies their exact adapter semantics. |
 
-Every component is finite. Production authoring accepts a nonzero adjustment only
-when the selected safe-catalog entry supplies per-axis inclusive min/max limits for
-that anchor kind. Generator rules require finite `min ≤ 0 ≤ max`, correct units/tag,
-and evidence binding to the same variant/digest/total scale. Authoring validation
-rejects out-of-range values before persistence; builder controls clamp only as
-interaction feedback, never as a substitute for validation. Game consumes the
-validated authored values and does not clamp differently.
+### Executable mapping from proposed YAML to the external resolver
 
-The exact method for choosing production min/max values is **not proved by the Learn
-and remains a Kirk design judgment**. Recommended default: start with reviewed
-per-variant/per-anchor-kind limits supported by multi-wall extrema evidence, then
-standardize a geometry-derived formula only after several families produce the same
-rule. Consequence: more calibration review in the first wave, but no false universal
-bound.
+The server validates only the semantic combinations and finite adjustment numbers,
+persists them exactly, and projects them exactly. It does not load a catalog and
+catalog data cannot change YAML validity.
 
-Neither #729's experimental along-wall `±0.25m` / wall-normal `±0.20m`
-controls nor #732's `±0.25m` fine trim becomes a production limit by repetition. Kirk's fixture `-0.20m` wall trim is an authored observation,
-not a default value, limit, or intrinsic calibration. No adjustment policy means
-nonzero authored adjustment is disabled, not unbounded.
+| `surface` | `support` | Other required shape | Required external model point | Target datum and exact adjustment mapping | Result |
+| --- | --- | --- | --- | --- | --- |
+| `floor` | `floor` | no `edge`; `orientation=E|NE|NW|W|SW|SE` | `floor-contact` | `at` cell center on floor; `along→faced right`, `normal→faced forward`, `vertical→world up` | `M_floor_floor` |
+| `floor` | `wall` | invalid | none | rejected at `anchor.support` | no resolver call |
+| `wall` | `floor` | seed-invariant solid `edge`; `orientation=into-cell|into-wall` | `floor-contact` | edge midpoint on floor; `along→structural tangent`, `normal→structural room-inward`, `vertical→world up` | `M_wall_floor` (bookcase shape) |
+| `wall` | `wall` | seed-invariant solid `edge`; `orientation=into-cell|into-wall` | `wall-attachment` | edge midpoint/floor datum; same axes; `vertical` is attachment-point height above floor and `normal` is structural-plane clearance | `M_wall_wall` (torch shape) |
 
-### No raw transform in Dungeon YAML
+A floor surface with any edge, a wall surface without an edge, a door/missing/
+procedural support edge, an unsupported orientation vocabulary, a monster/boss
+anchor, or non-finite adjustment is rejected deterministically at its source path.
+A catalog model-point mismatch is a client visual diagnostic/fallback; it cannot
+turn a semantically valid YAML document into a server validation failure.
 
-Dungeon YAML may contain only authored semantic intent:
+For wall cases, the structural room-inward vector and tangent are fixed by
+`at+edge`. `orientation: into-cell|into-wall` rotates the **model** by `0|180°`
+around its registered point; it does not flip the persisted adjustment basis.
+Positive `adjustment.normal` always means structural room-inward, so Builder and
+Game cannot disagree about clearance sign.
 
-- semantic asset ref;
-- an explicit concrete `variantId` only after the separately approved variant-
-  persistence contract exists (v1 otherwise uses catalog default);
-- semantic target (owning cell/span, wall edge/surface/support);
-- facing or wall/mount intent; and
-- finite, validated anchor-kind-local adjustment components.
+### Actual proposed syntax: bookcase and torch
 
-Dungeon YAML never contains a resolved matrix, raw/world XYZ position, quaternion,
-Euler transform, scale, source yaw, pivot correction, model point, GLB path/digest,
-or any other asset-calibration fact. Compilation/projection preserves semantic
-intent and source path; Builder and Game independently feed that same intent and
-same released catalog entry into the shared pure contracts. Raw transforms remain
-client-local preview state at most and are never canonical/persisted.
+```yaml
+# floor-supported bookcase aligned to a wall
+- ref: 'dnd5e:props:bookcase'
+  at: [3, 2]
+  blocks_movement: true
+  blocks_los: true
+  anchor:
+    surface: wall
+    edge: E
+    support: floor
+    orientation: into-cell
+    adjustment: { along: 0.05, normal: -0.02, vertical: 0.0 }
 
-### Visual parity evidence ledger
+# wall-supported replacement authored as a complete new document value
+- ref: 'dnd5e:props:torch-ornate'
+  at: [3, 2]
+  blocks_movement: false
+  blocks_los: false
+  anchor:
+    surface: wall
+    edge: E
+    support: wall
+    orientation: into-cell
+    adjustment: { along: 0.05, normal: -0.02, vertical: 1.15 }
+```
+
+`1.15` is shown only as the Learn fixture's explicit scene-authored mount choice; it
+is not a catalog baseline, schema default, or generally accepted production value.
+Omitting a component means zero, exactly as PR #203 proposes. Replacement preserves
+`at`, edge/orientation intent, and compatible along/normal adjustment only because
+the client author chose to carry them; it changes ref/support/vertical and submits a
+complete candidate. The resolver reloads the new stable default variant's intrinsic
+facts. V1 requires no authored `variant_id`.
+
+### Adjustment enforcement boundary
+
+Proposed v0.4 is correct to validate adjustment for **shape and finiteness only**,
+never clamp or silently change it, persist exact presence/values, and make Game apply
+those exact values. Catalog-informed bounds are Builder UX and release-evidence
+criteria only; they are not normative server/YAML validity and no catalog dependency
+enters the platform validator.
+
+#729's experimental along `±0.25m` / normal `±0.20m`, #732's `±0.25m` fine
+trim, and Kirk's fixture `-0.20m` remain evidence/UX observations, not schema bounds
+or hard-coded defaults. Builder may warn or bound its controls based on the released
+catalog, but the submitted finite value remains exact and the platform never clamps.
+
+### No raw transform or calibration in YAML
+
+YAML contains only ref, `at`, authored blocker facts, and the proposed semantic
+`anchor` fields above. It never contains concrete variant id in v1, matrix, world
+XYZ, quaternion/Euler, scale, source yaw, pivot/model point, GLB path/digest,
+catalog owner/hash, or wall-GLB measurement. Builder and Game adapt the same
+persisted semantics against the same external visual-calibration release; release
+provenance belongs to acceptance evidence, not the YAML model.
+
+Repository ownership, catalog generation, and atomic distribution remain
+non-normative #204/#205 production architecture. The Dungeon spec only depends on
+an external calibration authority and Builder/Game parity.
+
+### Evidence ledger — do not overstate the Learn
 
 | Claim | Evidence state |
 | --- | --- |
-| Actual corner-pivot bookcase and actual wall torch are materially different anchor cases | **Locked Learn evidence:** web #728/#729 and #731/#732. |
-| Replace preserves semantic span intent while refreshing asset facts | **Locked concept evidence:** #729; not yet a production persistence/release proof. |
-| Raw/calibrated inspection, owning hex, shared tactical Play camera, and six canonical **asset facings** | **Locked Learn evidence:** #731/#732. Six asset facings are not the same claim as six authored wall-edge orientations. |
-| Downed fighter is an export defect, not a variant anchor | **Locked classification evidence:** #731/#732; production correction still belongs to rpg-game-assets#43. |
-| All six wall-edge orientations register correctly | **Unproven production acceptance gap.** Must be shown for the released torch entry with exact matrix/readout evidence. |
-| Interior-authored walls and generated-envelope walls produce the same semantic wall frame | **Unproven production acceptance gap.** Both sources must be covered, including inward/tangent signs and missing-context fallback. |
-| Builder and Game render matching bookcase/torch from the same released catalog+GLB hash | **Unproven production acceptance gap.** Requires paired screenshots/readouts from actual Builder and Game, not only Concepts Lab Orbit/Play. |
-| Catalog-informed adjustment bounds work beyond one fixture | **Unproven production acceptance gap.** Requires multi-asset/multi-wall extrema evidence before nonzero production adjustment is enabled. |
+| Actual corner-pivot bookcase and wall torch are materially different anchor cases | **Locked Learn:** web #728/#729 and #731/#732. |
+| Client replacement can preserve semantic span intent while refreshing asset facts | **Locked concept evidence:** #729; not production persistence/release proof. |
+| Actual-GLB inspection, owning hex, shared Play camera, six asset facings | **Locked Learn:** #731/#732; asset facings are not all six wall edges. |
+| Downed fighter is export defect, not variant anchor | **Locked classification:** #731/#732; correction remains rpg-game-assets#43. |
+| All six wall edges, interior-authored + generated-envelope walls | **Unproven production gate.** Must exercise exact adapter bases/signs. |
+| Paired Builder/Game output from one external calibration release/hash | **Unproven production gate.** Concepts Lab screenshots are not this proof. |
+| Catalog-informed UX bounds across assets/walls | **Unproven release-evidence gate.** It must not gate YAML validity. |
 
-Required production evidence therefore records `catalogRevision`, `producerRevision`,
-selected variant id, staged GLB digest, registration inputs, and resolved matrix next
-to paired Builder/Game screenshots. It covers the bookcase plus torch, all six wall
-edges for the wall case, both interior and generated-envelope wall sources, replace,
-and failure/fallback cases. Cameras may differ; selected entry and matrix may not.
+Required production evidence records external release/catalog revision, selected
+stable default, GLB digest, persisted semantic anchor input, and resolved matrix next
+to paired Builder/Game screenshots. It covers floor/floor, wall/floor bookcase,
+wall/wall torch, all six wall edges, both structural support sources, replacement,
+and fallbacks. Cameras may differ; selected entry and matrix may not.
 
 Relevant lineage:
 [#204](https://github.com/KirkDiggler/rpg-project/issues/204) /
@@ -745,9 +783,10 @@ Relevant lineage:
 1. Pure selector tests cover reorder independence, semantic-ref default selection,
    family membership, unknown/removed explicit id without default substitution,
    missing/foreign default hard failure, and atomic replacement rejection/refresh.
-2. Column-vector golden matrices cover both tags, nonzero total scale and source
-   yaw, all six facings, the right-handed wall basis, mount datum, positive/negative
-   clearance, rotated local nudge, and exact identity matrices.
+2. Column-vector golden matrices cover floor/floor, wall/floor, and wall/wall;
+   both model-point tags; nonzero total scale/yaw; all six floor orientations and
+   wall edges; fixed structural normal under `into-cell|into-wall`; persisted
+   adjustment axes; and exact identity matrices.
 3. Wrong registration kind and missing wall context discriminate against mutations
    and produce their documented exact identity/fallback matrices. Invalid catalog,
    schema, or digest never reaches the resolver as ordinary `no-anchor`.
@@ -765,9 +804,10 @@ Relevant lineage:
    Discord viewport. The torch covers all six wall-edge orientations and both
    interior-authored and generated-envelope walls; multi-angle viewed statements
    keep height/clearance visibly placement data.
-8. Nonzero authored adjustment is gated on catalog limits plus multi-asset/multi-wall
-   extrema evidence; the experimental ±0.25m and fixture -0.20m values receive no
-   production default status.
+8. Catalog-informed adjustment bounds are verified across multiple assets/walls as
+   Builder UX and release evidence only. Server tests prove every finite persisted
+   adjustment is preserved/applied exactly and never catalog-clamped; the experimental
+   fixture numbers receive no default status.
 9. After #43, raw standing/downed fighter toggling keeps one logical hex and visual
    origin with no character catalog entry or web correction. This verifies #43; it
    is not a third anchor rollout.
@@ -833,10 +873,12 @@ The design and later delivery are acceptable only while all remain true:
    intent and atomically refreshes the new family's stable default asset facts.
 10. Ordinary no-anchor/context mismatch uses the exact documented identity matrix;
     invalid schema/catalog/digest never degrades into ordinary no-anchor.
-11. Dungeon YAML persists only semantic target/facing/mount/local-adjustment intent;
-    no world matrix/XYZ/quaternion or asset calibration fact enters the document.
-12. Nonzero adjustment requires catalog-declared anchor-kind-local limits and server/
-    authoring validation; Learn fixture numbers are not defaults.
+11. Dungeon YAML persists only ref/`at`, blockers, and semantic anchor surface/
+    edge/support/orientation/adjustment; no matrix/world XYZ/quaternion or asset
+    calibration fact enters the document.
+12. YAML adjustment validity depends only on semantic shape and finite numbers.
+    Catalog bounds may guide Builder UX/evidence but never alter, clamp, or reject the
+    exact persisted value; Learn fixture numbers are not defaults.
 13. V1 enrolls only small bookcase and ornate torch 01; downed fighter is existing-
     character-path #43 verification only.
 14. All six wall-edge orientations, both interior and generated-envelope walls, and
@@ -844,7 +886,7 @@ The design and later delivery are acceptable only while all remain true:
 
 ## Judgments for Kirk's review
 
-The architecture is closed; these are the remaining product/contract calls. Each has
+The proposed architecture takes concrete defaults; these are the remaining Kirk review calls. Each has
 a recommended default and an explicit consequence:
 
 | Judgment | Recommended default | Consequence |
@@ -854,7 +896,7 @@ a recommended default and an explicit consequence:
 | Anchor representation | **Use tagged intrinsic model points, not stored correction vectors.** | Resolver derives signs uniformly and reviewers can distinguish floor contact from wall attachment; generic offset convenience is rejected. |
 | Scale authority | **Make per-entry `totalScale` the sole authority for enrolled variants; leave non-enrolled legacy assets partitioned until #624 migration.** | Prevents double scaling and avoids broad v1 migration; temporary coexistence needs a strict enrollment/overlap gate. |
 | Wall target | **Use authored structural wall plane plus explicit placement clearance. Never measure the selected wall GLB at runtime.** | Builder/game parity survives wall-model changes; authors own visible-face/embed judgment. |
-| Adjustment limits | **Begin with reviewed per-variant/per-anchor-kind min/max backed by multi-wall extrema evidence; do not generalize #729/#732 fixture bounds.** | Higher initial calibration cost, but nonzero YAML adjustment is provably bounded; a common geometry formula waits for cross-family evidence. |
+| Adjustment UX limits | **Use reviewed per-variant/per-kind hints backed by multi-wall extrema evidence; do not generalize #729/#732 fixture bounds or make hints server validity.** | Builder controls can stay useful without introducing a catalog dependency into YAML validation; any finite submitted value persists/applies exactly. |
 | Catalog change behavior | **Treat default/anchor/scale edits as content-digest changes requiring renewed visual evidence; reserve schema major for semantic/axis/unit/order changes.** | Existing semantic-ref scenes re-resolve to corrected asset truth; pixel-stable historical replay would need recorded catalog provenance later. |
 | Floor vertical correction | **Forbid Y in v1 floor anchors.** | Grounding errors cannot be hidden; legitimate future vertical attachment semantics require an explicit tagged-contract review. |
 
