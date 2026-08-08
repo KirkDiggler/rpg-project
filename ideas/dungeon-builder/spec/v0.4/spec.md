@@ -1,6 +1,6 @@
 # Dungeon YAML Spec v0.4
 
-**Status:** PROPOSED v0.4, 2026-08-08. Not yet ratified.
+**Status:** RATIFIED v0.4, 2026-08-08.
 **Normative delta.** RATIFIED v0.3
 ([`../v0.3/spec.md`](../v0.3/spec.md)) remains the complete baseline. This file
 changes only the constructs and rules it names. Unmentioned v0.3 grammar and behavior
@@ -513,7 +513,7 @@ region/hex data remains absent and authorized no-override hexes omit the field.
 Adversarial tests prove override changes cannot alter LoS, visibility, reveal, fog,
 or target selection.
 
-## 10. Scope and review state
+## 10. Scope and ratification
 
 | In v0.4 | Client-local/not a wire construct | Above v0.4 |
 |---|---|---|
@@ -522,12 +522,12 @@ or target selection.
 | opaque target/profile/params transport + exact-ref defaults | behavior calculations and runtime state | authored patrol/vision routes |
 | optional root/region ambient override inheritance/projection | renderer baseline/theme selection | per-source lights/environment gameplay |
 
-This document remains **PROPOSED** until a bounded consistency review confirms the
-simplified transport shapes and topology rules. There are no remaining non-shape governance gates in v0.4.
-
-**Genuine open spec-shape questions:** none currently identified. Review may still
-find a concrete ambiguity; if so, resolve it in this PR before ratification. Do not
-flip the status merely because the prior artificial gates were removed.
+**Ratification record — 2026-08-08.** Kirk ruled that v0.4 is the pragmatic
+messenger/authoring shape recorded here, not a long-term ownership constitution. The
+bounded independent review of exact proposal head
+`0e97bc838f8d3bcc84852f58ee6b1383cb333ed2` returned **GO with zero
+field-shape/transport blockers**. v0.4 is therefore RATIFIED with no open spec-shape
+questions. PR #203 remains open as the tracking surface through downstream delivery.
 
 Relevant evidence: rpg-project PR #202 and
 [its platform handoff](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955),

@@ -1,6 +1,6 @@
 # Dungeon YAML Spec v0.4 — context and rationale
 
-[`spec.md`](spec.md) is the normative **PROPOSED** delta over ratified v0.3. This
+[`spec.md`](spec.md) is the normative **RATIFIED** delta over ratified v0.3. This
 README explains the pragmatic v0.x transport cut, its evidence, and how it relates to
 delivered v0.3. It does not add grammar.
 
@@ -25,7 +25,7 @@ v0.3 Wave 0 and Wave 1 are both LIVE VERIFIED:
 [Wave 0](https://github.com/KirkDiggler/rpg-project/issues/192#issuecomment-5206548237)
 and
 [Wave 1](https://github.com/KirkDiggler/rpg-project/issues/180#issuecomment-5219362342).
-v0.4 remains PROPOSED and claims no implementation.
+v0.4 is RATIFIED and still claims no implementation.
 
 ## Authority and three axes
 
@@ -198,19 +198,21 @@ unpainted root, and nonmutating-region statements remain correct under omitted/
 `floor_source: bounds`. Their “no lighting/geometry changes in #180” boundary remains
 true because #180 is complete.
 
-If ratified, explicit `floor_source: regions` narrowly changes those topology facts:
+As ratified, explicit `floor_source: regions` narrowly changes those topology facts:
 region union becomes floor, union edits revalidate authored content, and unpainted
 cells are void. This scopes the conflict without rewriting completed delivery history.
 
-## Review state
+## Ratification record — 2026-08-08
 
-The prior non-shape “ratification gates” were governance rather than ambiguities in
-the v0.4 field/transport shape, and are removed. This document remains **PROPOSED** until a bounded consistency review confirms
-the simplified messenger shapes and topology rules.
+Kirk's ruling is the framing this final cut follows: v0.4 is a pragmatic v0.x
+messenger/authoring shape, not a long-term ownership constitution. After that
+simplification, bounded independent review of exact proposal head
+`0e97bc838f8d3bcc84852f58ee6b1383cb333ed2` returned **GO with zero
+field-shape/transport blockers**.
 
-**Genuine remaining spec-shape questions:** none currently identified. Review may
-still find one; resolve any concrete ambiguity in PR #203 before changing the status.
-Do not flip to RATIFIED merely because the artificial gates are gone.
+v0.4 is therefore **RATIFIED**. No genuine spec-shape questions remain. Ratification
+approves the contract; it does not claim downstream implementation or close the
+tracking surface.
 
 ## Acceptance pointers
 
@@ -233,8 +235,7 @@ No implementation issues are created by this documentation revision.
   [`../v0.3/README.md`](../v0.3/README.md) — ratified baseline.
 - [`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) — delivered
   v0.3 scope.
-- [PR #203](https://github.com/KirkDiggler/rpg-project/pull/203) — proposed v0.4 review
-  and tracking surface.
+- [PR #203](https://github.com/KirkDiggler/rpg-project/pull/203) — ratified v0.4 tracking surface.
 - [PR #202 platform handoff](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955)
   — behavior context; v0.4 intentionally keeps the values opaque.
 - [Web #728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728),
