@@ -1,341 +1,391 @@
 # Dungeon YAML Spec v0.4 — context and rationale
 
-`spec.md` in this directory is the normative contract, **PROPOSED 2026-08-08, not yet
-ratified.** This file is everything that isn't: what the spec is for, why it says what
-it says, the alternatives it weighed and rejected, and the open points Kirk and the
-platform team need to rule on before `spec.md`'s header can flip PROPOSED → RATIFIED.
-Read `spec.md` to implement against (once ratified); read this file to understand why
-`spec.md` looks the way it does.
+[`spec.md`](spec.md) is the normative contract: **PROPOSED v0.4, not yet
+ratified.** This README records why the proposal has this shape, the evidence it
+transcribes, how it reconciles prior authority, and what still needs ratification.
+It is not a second source of normative grammar.
 
-## What this is
+## What this revision is
 
-The versioned contract between the builder side (`rpg-dnd5e-web`'s `TARGET-YAML.md`/
-specimens, which authors the dialect ahead of what the platform compiles) and the
-platform side (`rpg-toolkit`/`rpg-api-protos`/`rpg-api`). `../v0.3/spec.md` is
-RATIFIED and, as of this writing, **fully implemented server-side** — Wave 0 (canvas)
-is LIVE VERIFIED and Wave 1 (regions) has an exploratory posture settled on
-rpg-project#200. Per the cadence `../v0.3/README.md` names ("the builder authors spec
-v*N*+1 while the platform implements spec v*N*"), this document is that next cut: the
-builder authors v0.4 while the platform builds out v0.3.
+Kirk approved the broad **authored playable scene** direction and authorized this
+session to make architecture-consistent decisions without waiting for monster-AI PR
+[#202](https://github.com/KirkDiggler/rpg-project/pull/202) to be amended. The result
+is one broad documentation cut with four independently implementable tranches:
 
-`spec.md` is the **proposed contract baseline** for the next level; it is not itself a
-request for platform implementation, and it claims no implementation, test, or merge
-evidence. It is a PR review surface — see "How this gets ratified," below.
+1. topology: canvas is workspace/bounds; regions may be the actual floor;
+2. semantic prop composition learned from the real-model web experiment;
+3. Phase-1 monster behavior configuration from the platform handoff; and
+4. document/region environment lighting with provider-owned resolution.
 
-## Kirk's ruling — the headline, verbatim
+This is a proposed contract baseline, not an implementation or delivery claim. The
+tranches may ship separately. Strict rejection plus a capability check keeps partial
+rollout honest; no `spec: "0.4"` wire marker pretends they arrive as one server flag.
 
-2026-08-08, in response to the rim-edge/canvas-floor gap this document exists to
-close:
+At the time of this revision, v0.3 Wave 0 and Wave 1 both have LIVE VERIFIED evidence:
+Wave 0 is recorded on [#192](https://github.com/KirkDiggler/rpg-project/issues/192#issuecomment-5206548237),
+and Wave 1 on [#180](https://github.com/KirkDiggler/rpg-project/issues/180#issuecomment-5219362342).
+Those delivered contracts remain the compatibility baseline while this proposal is
+reviewed.
 
-> "I think the floor is the region and we can see what is inside the walls. I think
-> the canvas is available space in the builder but only regions carry into the game."
+## The approved topology direction
 
-Two sentences, two distinct claims, both load-bearing:
+Kirk's 2026-08-08 ruling remains the headline:
 
-1. **"The floor is the region"** — canvas-mode structural floor stops being the whole
-   canvas rectangle and becomes the union of whatever cells are painted into declared
-   regions. `spec.md` §4.5.4.
-2. **"The canvas is available space in the builder but only regions carry into the
-   game"** — the canvas keeps its authoring-workspace role (bounds, coordinate
-   legality, the outer extent a builder UI renders) but stops being a game-facing
-   geometry claim on its own. `spec.md` §4.5.4/§4.5.6 draws exactly this line: canvas
-   dimensions still bound *where a coordinate is legal to write*; they no longer
-   determine *what exists as floor*.
+> “I think the floor is the region and we can see what is inside the walls. I think
+> the canvas is available space in the builder but only regions carry into the game.”
 
-Everything else in this document — the envelope model, the doorway question, the
-`spec:` marker — is this ruling worked through to its consequences, not a separate
-set of decisions layered on top of it.
+The proposal turns that into a narrow, explicit topology choice:
 
-## Why this was needed: the rim-edge story
+```yaml
+canvas:
+  width: 20
+  height: 30
+  floor_source: regions
+```
 
-`../v0.3/spec.md` §4.7.2 requires both endpoints of an authored `walls:` edge to be
-hex-adjacent floor cells. Under v0.3's canvas-mode floor rule (the full
-`[0,width) × [0,height)` rectangle), that requirement quietly makes an entire class of
-walls **inexpressible**: a wall on the very rim of the canvas has no floor cell on its
-outward side to be the edge's other endpoint — there's nothing there to be adjacent
-to, floor or otherwise.
+`canvas.floor_source` says what it does. `regions` means the deduplicated union of
+`regions[].cells`; `bounds` (and omission) means the delivered v0.3 rectangle. Canvas
+dimensions remain coordinate-legality and workspace bounds in both cases. This is
+safer and clearer than the first PR #203 draft's overloaded document-level `spec:`
+field.
 
-The smallest exhibit makes this exact and countable rather than hand-wavy: take a
-**1×1 canvas** (`canvas: {width: 1, height: 1}`), the minimal legal canvas under
-`../v0.3/spec.md` §4.5 (positive dimensions, nothing more required). Its single floor
-cell is a hexagon with exactly **six edges**. Every one of those six edges has void on
-the far side — there is no second cell, anywhere, for any of them to be adjacent to.
-All six fail `walls:`'s endpoint-floor-membership rule identically; none can be
-authored, not even to say "wall here" on a boundary an author can plainly see needs
-one. Scale the canvas up and the count of *rim* edges (as opposed to interior ones)
-grows with the perimeter, not the area — but the 1×1 case shows the whole class in one
-cell, with a number small enough to state without hedging: **6 rim edges, 0
-authorable.**
+### Why omission preserves `bounds`
 
-This isn't a corner case nobody would hit. Every canvas-mode document has a rim, and
-under v0.3's rectangle-floor rule the rim is exactly the boundary a real dungeon most
-wants to wall — the edge of the playable space. v0.3 shipped this gap knowingly
-(`../v0.3/spec.md` §2 lists `wallLines:` as unfiled specifically because "its footprint
-rule has no issue to land in yet," and the rim problem was never separately named as
-its own gap) rather than as an oversight; this document is where it gets a name and a
-fix.
+Changing omission in place would silently reinterpret every persisted v0.3 canvas.
+A document with no regions would shrink from a rectangle to empty without a decode
+error. Omission therefore keeps the rectangle; a new authored masked floor says
+`floor_source: regions` explicitly. A provider too old to know the nested field
+strict-rejects it, which is the desired hard stop.
 
-## The fix: envelope walls, generalized from a mechanism that already exists
+### The three axes are deliberately separate
 
-Room-chain mode never had this problem. `../v0.3/spec.md` §1(b) lists "generated
-wall/door truth" (rpg-api#769/rpg-toolkit#881) as already real: a room chain's
-generator produces a perimeter of solid edges around its rectangle automatically —
-nobody authors the outer wall of a room, it's just there, generated from the room's
-own geometry. The rim-edge problem was never "canvas mode has no envelope
-mechanism" — it's "canvas mode's floor was a rectangle with no generated envelope
-wrapped around it at all," which is a gap in what ran, not in what the mechanism could
-do.
+- **v0.4** is this documentation/review level.
+- **`version: 1`** remains the YAML document version.
+- **`canvas.floor_source`** selects one canvas topology semantic.
 
-`spec.md` §4.5.12's envelope-walls rule is that same mechanism, pointed at a
-different, and now non-rectangular, floor shape: **every hex edge with floor on
-exactly one side is an implicit solid edge.** For a room-chain rectangle that's a
-perimeter. For a v0.4 region-union floor it's the boundary of whatever shape the
-author painted — which may be one blob, several disconnected blobs, or a shape with
-holes, and the rule needs no special case for any of them, because "floor on exactly
-one side" is already shape-agnostic. This is why the ruling above states "we can see
-what is inside the walls" almost as a throwaway: once floor is a real, possibly
-irregular shape instead of a rectangle, wrapping it in walls is the SAME operation
-room-chain mode has been doing all along, not a new one.
+None implies either of the others. There is no YAML `spec:` field and no server-side
+`draft` value. This avoids confusing documentation cadence, decode compatibility,
+and a single semantic choice.
 
-The practical payoff: **rim walls stop being authored at all**, in either mode, which
-dissolves the inexpressibility problem above rather than patching around it. The 1×1
-canvas's six edges need no author action under v0.4 — they're simply there, the moment
-that single cell is claimed by a region.
+## Why one canonical floor mask is load-bearing
 
-## Doorways: why there isn't one through the envelope
+The first PR #203 draft correctly noticed two existing floor helpers, but specifying
+“remember to branch both” would perpetuate the underlying problem. A third path —
+pathfinding, fog, targeting, or reload — could still forget the branch later.
 
-An envelope edge (by the rule above) always has void on one side. A door — in every
-existing sense this dialect uses the word (`../v0.3/spec.md` §4.7.4's symmetric
-interaction model, §4.10.4's region-attachment convenience) — is an opening that lets
-something walk from one floor cell into another. An opening in the envelope would let
-something walk from a floor cell into void, which isn't an opening onto anywhere; it's
-a hole in the world. This document does not propose one.
+The revised contract instead requires the toolkit to compile one sorted canonical
+floor mask, persist it with compiled truth, and make every mechanical consumer query
+that mask. Source regions still author the union; the compiled mask is the one
+runtime truth. Fresh source compilation replaces it atomically. A source/persisted
+mismatch fails rather than selecting the convenient interpretation.
 
-Two ways to build a "passage" through the envelope were weighed and rejected before
-landing on the answer `spec.md` §4.5.12 states:
+That rule covers the seams most likely to drift:
 
-- **A door-like construct that opens onto void and creates a floor stub on the other
-  side automatically.** Rejected: it would silently create floor an author never
-  declared, contradicting "the floor is the region" at the exact moment it's supposed
-  to be governing — the new floor cell has no owning region, so it would need its own
-  ad-hoc rule for which region (if any) owns it, undoing the clean containment model
-  §4.10.2 already has.
-- **A special `corridor`-archetype connectivity rule** — since `archetype` already has
-  a `corridor` value (`../v0.3/spec.md` §4.10.1), overload it to mean "this region
-  auto-connects to whatever it's nearest." Rejected: `archetype` is currently a pure
-  label with zero connectivity behavior anywhere in the model (`../v0.3/spec.md`
-  §4.10.2.7); giving one specific value a side effect the others don't have breaks
-  that uniformity for a case the existing mechanism below already covers for free.
+- validate-only and non-validate compile;
+- persistence and restart/reload;
+- pathing, placement, start/party seating, range/target reachability;
+- walls, LoS, reveal, and fog authorization; and
+- authoring/runtime projection.
 
-**The answer that needed no new mechanism at all**: `../v0.3/spec.md` §4.10.2.4
-already establishes that a region boundary is semantic-only and implies no edge.
-That rule was written for region-to-region boundaries generally, before v0.4 existed —
-but it already says exactly what's needed here: **two regions whose cells are
-hex-adjacent connect openly by default.** An author who wants two floor areas
-connected draws (or extends) a region so their cells touch; nothing else is required.
-An author who wants that connection *gated* draws an ordinary `walls:` door edge on
-the shared boundary, exactly as they would gate any other interior passage. "Floor
-bridging," in the terms this document's brief used to frame the question, isn't a new
-capability layered onto the envelope model — it's the v0.3 model, unchanged, simply
-being the ONLY way connectivity across the envelope now works, because there is no
-other way. The simplest coherent rule won by already existing.
+It also aligns with the prior walls-from-truth decision: once the provider publishes
+canonical geometry, clients render it rather than recreating a parallel version.
 
-## `FloorPlan` projection: explicit, not client-derived
+## Envelope, voids, drafts, and edits
 
-`spec.md` §4.5.10 requires envelope edges to be projected on the wire as ordinary
-canonical edges, the same as any other generated or authored edge — not left for a
-client to re-derive from the floor-cell set it already has. This wasn't the only
-option: a client could, in principle, compute "floor cell with a non-floor neighbor"
-itself and draw the implied wall without the server ever saying so.
+Every floor/void side becomes an implicit solid envelope, including an interior void.
+The provider projects those edges explicitly; a client does not infer them from the
+mask. An envelope door remains incoherent because its other side is void. Connecting
+areas means authoring connecting floor cells; gating adjacent floor means an ordinary
+interior door.
 
-Rejected anyway, for a reason this codebase already paid for once: `Space.walls`
-(the old flat runtime wall list) was retired in favor of `HexRecord.edges`
-specifically to have ONE canonical source of wall truth instead of a client
-re-deriving geometry from something else and risking drift (`../v0.3/spec.md` §4.7.5).
-Deriving envelope edges client-side from floor membership would reopen exactly that
-seam — a second, client-computed notion of "where the walls are" running alongside the
-server's canonical `HexRecord.edges`, for envelope edges specifically, the moment
-regions get repainted and the boundary moves. Projecting them explicitly costs nothing
-new on the wire (it's the same `HexRecord.edges` record every other edge already
-uses) and keeps the single-source-of-truth property the walls-from-truth migration
-already established.
+The revised draft separates authoring validity from runnable validity:
 
-## Why `spec:`, not `version: 2`, not a break-in-place
+- `validate_only=true` accepts an empty region-union draft and returns an empty plan;
+- a write/run/encounter compile rejects empty floor;
+- content on non-floor still rejects normally in both cases.
 
-CLAUDE.md's proto-versioning section sets a real bar for when to version instead of
-break: "an outside consumer, a deployed client we cannot update in lockstep, or a
-migration too large for one sitting." A blunt reading might say this doesn't clear
-that bar — everything's in this workspace, and the fix could ship as an in-place break
-the way Fog of War did (`../v0.3/README.md` doesn't cite that precedent, but CLAUDE.md
-does, at length).
+That preserves the first-keystroke validation loop without persisting a dungeon that
+cannot run.
 
-**This case is different in a way that matters: an in-place break here wouldn't fail
-loudly, it would silently reinterpret already-persisted content.** Fog of War's break
-changed decode shape — old callers got a clear rejection, not a wrong answer. This
-change, done naively, would not: every already-saved v0.3 canvas document decodes
-exactly as before under v0.4's rules, just with a *different meaning* — its floor
-silently shrinks from the whole rectangle to whatever its (possibly nonexistent)
-`regions:` declares, which for most existing documents is empty. A previously-working
-dungeon would silently have no floor at all, no error raised anywhere. That's a worse
-failure mode than a hard break, not a milder one — CLAUDE.md's own trigger for
-versioning ("a deployed client we cannot update in lockstep") is really gesturing at
-exactly this risk: content that exists and can't be waved through a single-sitting
-fix-up. A `PutDungeon` call for a canvas document can't tell, from the document alone,
-whether "no `regions:`" means "hasn't been migrated yet" or "genuinely has no floor,
-deliberately."
+Union-changing edits are candidate recompiles, not semantic-scope reassignment. If
+removing floor or its envelope would orphan a placement, start, wall endpoint, party
+envelope, or prop attachment, the edit rejects atomically. “Fall back to root” still
+makes sense only for inheritance when the structural union is unchanged — for
+example deleting a nested scope whose cells remain covered by its parent. It never
+means turning removed floor into rectangle floor or moving content.
 
-A real `version: 2` bump was considered and rejected too — not because the change
-isn't real, but because `version:` (`spec.md` §3.2, `Ground rules` §1) governs DECODE
-shape (`KnownFields`, structural acceptance), and nothing about this change touches
-decode shape at all: every v0.4 field is additive, every existing field keeps its
-existing type. What changes is a SEMANTIC interpretation of an existing field
-(`canvas:`) under a new condition. `version:` is the wrong lever for a semantic
-branch; `spec:` — decode-orthogonal, purely a behavior discriminator — is the right
-one, and it lets both meanings coexist server-side for exactly as long as the
-transition needs, with zero migration required for anything already saved.
+Omitted start on an irregular mask is deterministic: canonical floor order plus the
+existing ordered PartyCap envelope, with a named failure if no candidate seats the
+party. There is no random/seed-dependent rescue and no root fallback.
 
-## Reconciliation notes — section by section against v0.3
+## Prop composition: what #728/#729 actually proved
 
-1. **Canvas floor source (`../v0.3/spec.md` §4.5.4 → `spec.md` §4.5.4).** Rectangle →
-   region union, gated on `spec:`. Both live server-side during the transition; see
-   `spec.md` §4.14.
-2. **Root scope semantics (`../v0.3/spec.md` §4.10.2.1 → `spec.md` §4.10.2.1).**
-   v0.3: unpainted cells belong to root. v0.4 (`spec: "0.4"` only): there are no
-   unpainted FLOOR cells to belong to root at all — an unpainted cell isn't floor.
-   Root survives purely as the hierarchy root for top-level declared regions, not as
-   a cell owner. `spec: "0.3"` documents keep v0.3's rule unchanged.
-3. **Rim-edge inexpressibility — dissolved, not patched.** See "The fix," above.
-   No wall-authoring rule changed (`spec.md` §4.7 is byte-identical to
-   `../v0.3/spec.md` §4.7); rim walls simply stopped needing to be authored.
-4. **`wallLines:` (`../v0.3/spec.md` §2's "unfiled" → `spec.md` §4.13's permanent
-   rejection).** Not a status downgrade — a resolution. v0.3 left it unfiled because
-   "its footprint rule has no issue to land in yet"; this document gives it a
-   permanent, explicit answer: never a wire construct, always compiled down to
-   `walls:` client-side, with the compilation contract now stated normatively so a
-   platform implementer knows what a dense, line-derived `walls:` payload looks like
-   and why.
-5. **`lighting:` (rpg-project#190, doc-level only → `spec.md` §4.12, doc-level +
-   region-scoped).** The document-level `ambient` knob (#190's original scope) is
-   unchanged in shape; this document adds region-level `lighting`, resolved through
-   the SAME per-property innermost-outward chain `../v0.3/spec.md` §4.10.2.5 already
-   reserved for exactly this kind of future extension — the seam gets its first real
-   tenant.
-6. **`height`/`offset` (rpg-project#188, entirely above v0.3 → `spec.md` §4.11,
-   partially promoted).** Only the decor-grade, mechanically-inert slice graduates:
-   `height` (unclamped, decoupled from `mount`, per Kirk's 2026-08-02 "any placement
-   may carry height... mount:wall remains the wall-flush case") and a new `offset`
-   for intra-hex fine positioning. `mount: wall`'s own edge-selection geometry stays
-   above v0.4 — #188 remains open for that half.
-7. **`spec:` — genuinely new, no v0.3 analog.** The first document-level field whose
-   entire purpose is discriminating floor SEMANTICS rather than describing content.
+Web issue [#728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728) and merged
+PR [#729](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/729) ran a real-model
+bookcase-to-ornate-torch experiment. Its evidence document is
+[`prop-composition-728.md`](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/docs/evidence/prop-composition-728.md).
+The useful result was ownership, not fixture field names:
 
-## Alternatives considered, collected
+| Fact | Learned owner | Replacement |
+|---|---|---|
+| GLB geometry/pivot, calibrated scale, attachment baseline, model-forward correction, footprint/light behavior | asset catalog/model | re-resolve for new ref |
+| chosen canonical cell and wall/span relationship | authored placement | preserve |
+| surface/support/orientation intent | authored placement | preserve or explicitly change as part of the semantic replacement |
+| bounded anchor-local cosmetic adjustment | authored placement, validated against catalog bounds | preserve if valid; otherwise reject |
+| raw matrix/world position, selection ID, temporary fixture slot | client/render state | never persist |
 
-Several sections above already name and reject a specific alternative inline; this
-section collects the ones that don't fit naturally into the narrative above, for a
-reviewer scanning for "what else was on the table."
+The failed first render was important: preserving the bookcase's raw transform put
+the torch at the wall base, and treating the raw bookcase pivot as the cell center
+put visible bookcases between hexes. The corrected fixture measured actual geometry
+and used fixture-local asset corrections. Kirk visually accepted the corrected
+result (“those look dead on center awesome”), but the issue explicitly parked an
+Asset Anchor Lab before any correction becomes global.
 
-- **Zero-region canvas validation outcome** (`spec.md` §4.5.13). Considered: reject a
-  `spec: "0.4"` canvas document outright if `regions:` is empty (or resolves to an
-  empty union) — "a document with no floor is not a valid dungeon." Rejected in favor
-  of valid-empty: the entire capability-probed authoring loop TARGET-YAML.md
-  describes (`capabilityProbe.ts`, every-keystroke `validate_only` calls) depends on
-  a from-scratch document validating successfully at the moment authoring BEGINS, not
-  only once it's complete — the same reason a from-scratch `rooms: []` canvas
-  document was accepted in v0.3 despite compiling to nothing playable yet. Rejecting
-  outright would mean the very first `validate_only` call on a blank v0.4 canvas
-  fails, breaking the live-preview loop before an author paints a single cell.
-  Downstream constructs (`start:`, `place:`, `walls:`) already reject against an
-  empty floor through their own existing rules — no separate blanket rejection earns
-  its complexity.
-- **`regions:` requiring `canvas:` to be present** (`spec.md` §4.5.9/§4.10.3.7). Not
-  previously stated anywhere — v0.3 left this genuinely unaddressed (a document with
-  `regions:` but neither `rooms:` nor `canvas:` was simply never considered). This
-  document states it as a MUST because, under `spec: "0.4"`, regions ARE the floor,
-  and floor needs a coordinate-legality bound (`canvas.width`/`height`) to validate
-  cells against — without one, "cell outside structural floor" (`../v0.3/spec.md`
-  §4.10.3.1) has no upper bound to check against. Flagged as a genuine ratification
-  point below, since it's new rather than a restatement.
-- **Coverage-based (fractional) standability as a server concept.** Considered
-  seriously, since the underlying geometric test (`FOOTPRINT_EPSILON`,
-  Cyrus-Beck half-plane clipping — `../v0.3/README.md`'s `wallLines:` note) is already
-  fully specified and implemented client-side; porting it server-side was weighed as
-  "the toolkit already has everything but the code." Rejected: it would introduce a
-  SECOND geometric-truth model (continuous, coverage-based) running alongside the
-  discrete edge/floor-cell model `HexRecord.edges` already is — exactly the
-  duplicated-truth risk the walls-from-truth migration eliminated once already.
-  `spec.md` §4.13.3 states this as a permanent rejection, not a deferral.
+### Why the proposed `anchor` encoding looks this way
 
-## How this gets ratified
+The production encoding in `spec.md` does not copy the fixture's `slotId`, coordinate
+names, limits, or numeric attachment offsets. It persists semantic facts:
 
-Per the process lesson v0.3 itself paid for (`../v0.3/README.md`'s Ratification
-record — six points marked OPEN, resolved in a single 2026-08-05 pass after review):
-**this PR stays open through review.** Reviewers — Kirk and platform — comment ON the
-PR; rulings land as commits that edit `spec.md`'s OPEN-flagged text directly (there is
-no OPEN marker syntax reused from v0.3 in this draft — every open point below is
-instead stated as this document's own RECOMMENDATION, explicit enough to implement
-against, but named as a recommendation rather than baked in as unconditional fact);
-the header flips PROPOSED → RATIFIED in-thread; there is exactly ONE merge, at the
-end, once every point below is settled. Opening a second PR to "fix" a ratification
-finding — the mistake `../v0.3/README.md` doesn't itself narrate but this repo's own
-CLAUDE.md names generally ("a repo gets ONE branch for a wave, not one per bug found
-along the way") — is the failure mode this discipline exists to prevent.
+- `at`: canonical owning cell;
+- `surface`: floor or wall alignment surface;
+- wall `edge` and `span: center`;
+- `support`: floor-supported versus wall-supported;
+- semantic orientation; and
+- optional adjustment in the resolved anchor's local basis.
 
-### Open ratification points
+This represents both cases the old `mount` proposal blurred:
 
-1. **Zero-region/zero-floor `spec: "0.4"` canvas document** — recommend **valid,
-   empty floor**, not a hard rejection. `spec.md` §4.5.13.
-2. **The `spec:` marker's value set and defaulting** — recommend exactly two
-   server-known values (`"0.3"`, `"0.4"`), omission defaulting to `"0.3"`, and
-   `"draft"` as a client-local-only sentinel that never reaches the wire.
-   `spec.md` §4.14.
-3. **`wallLines:` wire support** — recommend **never**; permanent client-side
-   projection to `walls:`, with the compilation contract stated normatively.
-   `spec.md` §4.13.
-4. **Coverage-based standability as a server concept** — recommend **rejected
-   permanently**; traversability stays edge/floor-cell based only, never fractional.
-   `spec.md` §4.13.3.
-5. **Envelope edges on the wire: projected explicitly, or client-derived from floor
-   membership** — recommend **projected explicitly**, reusing `HexRecord.edges`
-   verbatim, per the walls-from-truth precedent. `spec.md` §4.5.10.
-6. **`regions:` requiring `canvas:` present** — recommend **yes, reject otherwise**;
-   this is new rather than a v0.3 restatement and deserves an explicit look.
-   `spec.md` §4.5.9/§4.10.3.7.
-7. **`spec: "0.3"` support's end date** — **not recommended here at all**, flagged
-   as a platform/Kirk call for later: this document proposes indefinite dual support
-   during "the transition" without naming when the transition ends. `spec.md` §4.14.4.
-8. **`height`/`offset` scope** — recommend the narrow, decor-only slice `spec.md`
-   §4.11 states (mechanically inert, non-monster floor placements only), explicitly
-   NOT resolving `mount: wall`'s own edge-selection geometry (rpg-project#188 stays
-   open for that). Confirm this narrower scope is the one wanted before #188 forks
-   into two trackers.
-9. **Region-level `lighting:` resolution mechanics** — recommend reusing
-   `archetype`'s existing innermost-outward walk verbatim, with document-level
-   `lighting:` read as root's own entry in that same chain (not a separate
-   mechanism). `spec.md` §4.10.2.5/§4.12.
+- wall-aligned floor bookcase = `surface: wall`, `support: floor`;
+- wall-mounted torch = `surface: wall`, `support: wall`.
 
-## Specimens — the executable half
+A one-action replacement may explicitly change support while preserving the cell,
+edge/span, orientation, and committed adjustment. The asset catalog then re-resolves
+all model-specific facts. An incompatible new asset rejects; it never clamps,
+strips, or inherits the old matrix.
 
-Per `../v0.3/README.md`'s own precedent: `rpg-dnd5e-web`'s specimen pack
-(`src/concepts/dungeon-builder/specimens/`) regenerating to this cut is explicit
-follow-up work in a different repository, **not done as part of this PR** — matching
-the same "pack vN+1 regenerates once vN+1 is approved" discipline v0.3's own README
-states for its own pack. Until then, the current pack predates this document's
-region-as-floor model entirely (it authors `regions:` as v0.3's non-floor-defining
-scopes) and should not be read as demonstrating v0.4 semantics.
+The v0.3 `facing` field remains a compatibility shorthand for an unanchored floor
+prop. The proposed `anchor` replaces the still-unimplemented `mount: wall`/`height`
+shape in [#188](https://github.com/KirkDiggler/rpg-project/issues/188) rather than
+adding another overlapping transform vocabulary. `anchor.adjustment.vertical`
+provides cosmetic local height without claiming raw world Y as source truth.
+
+### Actual unresolved asset work
+
+The architecture can be coherent without inventing catalog constants. What remains
+real work is choosing the catalog owner/API, attachment-profile schema, provider
+versioning, adjustment-bound policy, and a calibration gate across multiple assets,
+wall orientations, and camera views. The fixture's measured bookcase correction,
+torch height, and ± nudge bounds are evidence only. They are intentionally absent
+from this spec.
+
+## Phase-1 monster behavior: the platform handoff, reconciled
+
+PR [#202](https://github.com/KirkDiggler/rpg-project/pull/202) supplies the approved
+monster-AI design/plan context. The direct v0.4 handoff is
+[issuecomment-5228001955](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955).
+The proposal carries its stable grammar and boundaries without freezing the
+slice-3 candidates that the comment warns may change.
+
+Settled here:
+
+- flat optional `targeting`, `profile`, `params` on monster room `place`, canvas
+  `place`, and room `boss` with full parity;
+- fixed Phase-1 targeting values `closest`, `lowest-health`, `lowest-ac`;
+- props reject all behavior fields;
+- `defaults` is exact full monster-ref only — no prop/family/pattern matching;
+- presence-aware order: constructor → default profile → default explicit params/
+  targeting → placement profile → placement explicit params/targeting;
+- explicit zero and `targeting: closest` override rather than disappear;
+- profiles compile out; runtime persists only resolved targeting/config in
+  `DataJSON`; and
+- authoring never includes runtime mode, memory, perceptions, counters, target IDs,
+  paths, or rationale.
+
+The earlier design illustrates names such as `aggressive`, `timid`, and candidate
+knobs. The platform comment explicitly says to freeze the shape, not that list. v0.4
+therefore makes the toolkit registry authoritative for profile names and parameter
+key/type/range validation. Example names in specimens are placeholders that an
+implementation fixture substitutes with registered names.
+
+The five-stage merge order is slightly more explicit than the comment's compressed
+four-stage summary. It preserves the comment's intent while resolving the case where
+a default profile, explicit default override, and placement profile all coexist.
+Presence is checked at every stage.
+
+## Environment: inheritance must resolve before rendering
+
+The first PR #203 draft allowed document/region ambient lighting but left “renderer
+baseline” as an implicit local choice. That would make reload and different clients
+disagree. The revision puts resolution with the toolkit environment provider:
+
+1. innermost region declaration wins;
+2. otherwise walk outward to document/root;
+3. if root is absent, use the named provider baseline;
+4. persist provider identity/version plus the resolved snapshot.
+
+A reload uses the compiled snapshot, not whatever a newer renderer or provider now
+prefers. A deliberate recompile may adopt the new provider baseline atomically.
+Authoring projection can show every resolved value; gameplay projection exposes the
+resolved value only through fog-authorized cells/zone ancestry. A hidden lighting
+override must not reveal a hidden region.
+
+This keeps document lighting useful in room-chain mode, adds region inheritance in
+canvas mode, and does not introduce per-source lights.
+
+## Client-local versus platform contract
+
+`wallLines`, draft/coverage masks, raw authoring controls, temporary IDs, raw
+matrices/world coordinates, UI snap previews, and uncommitted nudges are client-local
+compilation concerns. The platform accepts canonical walls, region cells, and
+placements. It does not normatively depend on a particular web implementation or
+TypeScript algorithm.
+
+This corrects two problems in the first PR #203 draft:
+
+1. it normatively cited a specific TypeScript wall geometry implementation; and
+2. it described strip-before-wire as a compatibility technique.
+
+The revised rule is lossless compile or hard stop. A local line tool may emit
+canonical edges; a mask tool may emit canonical region cells; a committed nudge may
+become semantic `anchor.adjustment`. If the local state cannot be represented
+without loss, nothing is sent. Fractional coverage never becomes server pathing data.
+
+## Scope and delivery matrix
+
+| Concern | Authored by | Validated/resolved by | Persisted canonical truth | Runtime exposure |
+|---|---|---|---|---|
+| irregular structural floor | region cells + semantic floor source | toolkit topology provider | discriminator + canonical floor mask | fog-authorized cells |
+| envelope/interior walls | derived envelope + authored `walls` | toolkit edge model | normalized canonical edges | explicit authorized per-hex edges |
+| prop composition | cell + semantic anchor | toolkit + asset catalog | semantic source + resolved catalog facts (no raw matrix) | semantic placement + immutable catalog facts when authorized |
+| monster behavior | exact-ref defaults + placement fields | toolkit behavior registry/compiler | source + resolved `DataJSON`; profile compiled out | ordinary monster authorization, no authoring/runtime-state leak |
+| lighting | root/region declarations | toolkit environment provider | authored values + provider/version/resolved snapshot | resolved value only for authorized cells/zones |
+| local authoring controls | web/editor | client compiler | never as raw controls | never |
+
+Implementation dependencies are narrow:
+
+- topology needs existing regions and canonical edges but no prop/behavior/lighting;
+- prop anchors need canonical solid-edge queries and the catalog, not region-floor
+  mode specifically;
+- behavior needs the monster registry/DataJSON path and works in every topology;
+- lighting needs the existing region containment graph for regional inheritance but
+  document-level lighting works independently.
+
+## Reconciliation with prior canonical documents
+
+[`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) are the
+approved/delivered **v0.3 Wave 0/Wave 1** authority. Their statements that canvas
+bounds create complete rectangle floor, regions do not change geometry, unpainted
+root remains floor, and region edits cannot affect content were correct for that
+delivery and are preserved as history.
+
+They are not v0.4 implementation instructions. If this proposal is ratified,
+`canvas.floor_source: regions` narrowly supersedes those topology statements for
+that explicit branch only:
+
+- omission/`bounds` still follows the delivered documents exactly;
+- `regions` makes union changes structural and revalidates dependent content;
+- semantic-only edits with unchanged union retain the prior inheritance/fallback
+  model.
+
+The old plan also says no lighting/geometry changes in #180. That remains true of
+completed #180; Tranches A/D are new future work, not a retroactive broadening of the
+closed wave. This scoping resolves the conflict without rewriting delivered evidence
+or unrelated project state.
+
+## Alternatives considered
+
+### Keep document-level `spec: "0.4"`
+
+Rejected. It overloads a documentation label as a broad wire semantic, implies all
+tranches move together, and is easily confused with `version: 1`. A nested semantic
+`canvas.floor_source` says exactly which behavior it controls and leaves other fields
+additive/topology-neutral.
+
+### Break omission in place
+
+Rejected because it silently empties or shrinks persisted v0.3 canvases. Explicit
+`regions` plus legacy omission produces a loud compatibility boundary.
+
+### Let validate-only and write both accept empty floor
+
+Rejected. Empty is useful during authoring but is not runnable content. Operation
+intent already distinguishes those cases without inventing draft YAML.
+
+### Re-derive floor/envelope in every subsystem or client
+
+Rejected. Multiple “equivalent” helpers are the failure mode. Compile one mask and
+one canonical edge set; persist/project them.
+
+### Persist a complete prop transform
+
+Rejected by #729's actual-model evidence. It transfers old-asset pivot/attachment
+facts during replacement and couples source to renderer axes. Persist semantic
+anchor intent; catalog-resolve the transform.
+
+### Keep only `mount` + `height` + overloaded `facing`
+
+Rejected for composition. It cannot cleanly distinguish a floor-supported bookcase
+aligned to a wall from a wall-supported torch on the same span, and it overloads
+orientation as edge selection. The nested anchor makes those facts explicit.
+
+### Freeze `aggressive`/`timid` and candidate knobs in v0.4
+
+Rejected per the platform handoff. The names were design candidates; the stable
+contract is a toolkit-owned registry with loud name/key/type/range validation.
+
+### Let the renderer choose absent ambient
+
+Rejected because clients/reloads can diverge. Resolve and snapshot provider truth.
+
+## Ratification record
+
+The broad direction is approved; the document remains PROPOSED until these concrete
+integration points are answered in the same PR:
+
+1. envelope authoring-wire representation for one-sided floor/void edges;
+2. asset catalog repository/API, versioning, attachment schema, and calibration gate;
+3. per-asset/attachment adjustment-bound policy;
+4. behavior registry discovery and compiled-provider provenance;
+5. environment baseline provider and exact authoring/runtime projection fields; and
+6. independent-tranche capability discovery used by the builder's hard stop.
+
+These points do not block a coherent proposed architecture and therefore were not
+escalated as product blockers. Ratification should confirm interfaces/evidence, not
+reopen the approved authored-playable-scene direction.
+
+## Acceptance specimens
+
+The normative specimens live in [`spec.md` §13](spec.md#13-cross-layer-acceptance-specimens):
+
+- irregular region-union floor with an interior void, explicit envelope, empty
+  validate-only versus rejected runnable write, and dependent-edit rejection;
+- wall-aligned floor bookcase → wall-mounted torch replacement, preserving semantic
+  span/adjustment while catalog facts refresh; and
+- exact-ref monster defaults plus placement profile/explicit overrides, proving
+  zero/closest presence and room/canvas/boss parity;
+- root/region lighting inheritance with absent-root provider baseline and fog-safe
+  projection.
+
+Each implementation tranche needs compile, durable persistence/restart, authoring
+projection, real runtime projection, and adversarial rejection evidence for its
+relevant specimen. Unit-only decode evidence is insufficient.
 
 ## Pointers
 
-- `../v0.3/{spec,README}.md` — the ratified baseline this document is a delta on.
-- `ideas/dungeon-builder/{design,plan}.md` — the platform's Wave 0/Wave 1 delivery
-  docs this proposal does not edit; a v0.4 wave doc is future work once ratified,
-  same "not created by this dispatch" discipline those files already name for
-  themselves.
-- rpg-project#180 — Wave 1 tracker; rpg-project#200 — the exploratory-scope course
-  correction this document's onboarding read before drafting.
-- rpg-project#186 (`end:`), #187 (`orientation:`), #188 (`mount`/`height`), #190
-  (`lighting:`), #191 (`targeting:`) — the future-construct queue `spec.md` §2 still
-  points at; #188 and #190 are partially absorbed by this cut, named above.
-- `rpg-dnd5e-web` `src/concepts/dungeon-builder/TARGET-YAML.md` — the dialect source
-  of truth this document promotes `height`/`offset`-adjacent fields and the
-  `wallLines:` contract from.
+- [`../v0.3/spec.md`](../v0.3/spec.md) and
+  [`../v0.3/README.md`](../v0.3/README.md) — ratified compatibility baseline.
+- [`../../design.md`](../../design.md) and [`../../plan.md`](../../plan.md) — delivered
+  v0.3 Wave 0/Wave 1 authority, scoped above rather than silently treated as v0.4.
+- [rpg-project PR #203](https://github.com/KirkDiggler/rpg-project/pull/203) — this
+  proposal's single review/ratification surface.
+- [rpg-project PR #202](https://github.com/KirkDiggler/rpg-project/pull/202) and
+  [platform handoff](https://github.com/KirkDiggler/rpg-project/pull/202#issuecomment-5228001955)
+  — Phase-1 monster behavior authority used here.
+- [rpg-dnd5e-web #728](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/728),
+  [PR #729](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/729), and
+  [evidence](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/docs/evidence/prop-composition-728.md)
+  — real-model prop-composition learning.
+- [rpg-project #188](https://github.com/KirkDiggler/rpg-project/issues/188),
+  [#190](https://github.com/KirkDiggler/rpg-project/issues/190), and
+  [#191](https://github.com/KirkDiggler/rpg-project/issues/191) — earlier narrow
+  proposals reconciled into this broad cut.
