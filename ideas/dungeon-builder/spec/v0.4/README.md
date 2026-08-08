@@ -19,8 +19,8 @@ The four additive tranches remain:
 |---|---|---|
 | A — topology | `canvas.floor_source: regions` + region cells | resolved source, full authoring mask, existing pair edges, presence-aware entrance; snapshot-authorized runtime hex/edges |
 | B — prop composition | authored ref/cell + semantic anchor/adjustment | source facts + `source_path` in authoring/runtime; web resolves released asset catalog |
-| C — Phase-1 monster behavior | exact-ref defaults + flat placement/boss fields | source + derived behavior by source path; resolved `DataJSON` runtime |
-| D — lighting | raw root/region ambient | raw + effective authoring values; effective ambient on authorized runtime hexes |
+| C — Phase-1 monster behavior | exact-ref defaults + flat placement/boss fields | typed scalar-union source/resolved behavior by source path; resolved `DataJSON` runtime |
+| D — lighting | raw root/region ambient overrides | raw + optional effective authoring values; optional override on authorized runtime hexes |
 
 Each tranche now has a stable builder capability key and a concrete
 `AuthoringService.PutDungeon(validate_only)` probe. There is no new capabilities RPC.
@@ -103,10 +103,11 @@ two-island draft may preview and even have a viable entrance on island A, but it
 not run while island B exists. That discriminates “can seat the party somewhere” from
 “one runnable connected authored floor.”
 
-Union-changing edits compile the complete candidate. They reject orphaned content,
-seats, support edges, or start at source path rather than moving it to root or
-widening back to bounds. Pure semantic changes with unchanged union can still inherit
-outward.
+Union-changing edits compile the complete candidate. Prior derived entrance/seats are
+discarded and freshly recomputed; they are not dependencies and may change. A strict
+write rejects only when the candidate is not runnable or explicitly authored start,
+content, wall, or support becomes invalid — never because prior derived seats moved.
+Pure semantic changes with unchanged union can still inherit outward.
 
 ### Region equality correction
 
@@ -207,31 +208,40 @@ targeting. Resolution is two independent chains:
 - config per key: constructor → default profile params → default explicit params →
   placement/boss profile params → placement/boss explicit params.
 
-`params` values are JSON scalar bool/string/finite number. Null/list/map reject;
+YAML `params` values are JSON scalar bool/string/finite number. Null/list/map reject;
 the toolkit registry owns per-key scalar kind, integer requirement, range/set, and
-dynamic profile/knob names. Explicit closest/zero/false/empty string retain presence
-when valid.
+dynamic profile/knob names. The authoring proto uses repeated, unique-key
+`BehaviorParam` entries with a bool/string/double oneof — never an untyped map. Numeric
+producers require finite values; registry metadata adds integer/range checks.
 
-Profiles compile out. Authoring projection returns source fields and derived
-`resolved_behavior` with `source_path`; runtime `DataJSON` contains resolved targeting
-and MachineConfig only. Boss has full parity. Runtime mode/memory/perception/counters/
-path/target state remains excluded.
+Omitted params and `params: {}` both project no source entries and have no semantic
+presence distinction. Real keys preserve the correct union arm, including zero,
+false, and valid empty string. Profiles compile out. `FloorPlan.placements[]` returns
+optional typed `source_behavior`, required typed `resolved_behavior`, and
+`source_path`; resolved behavior contains targeting + unique sorted params, never
+profile. Runtime `DataJSON` contains resolved targeting and MachineConfig only. Boss
+has full parity. Runtime mode/memory/perception/counters/path/target state remains
+excluded.
 
 ## Lighting: exact, render-only, fog-safe
 
-Root and region `ambient` inherit innermost → outward → root. Root omission resolves
-to the legacy **0.8** baseline. The toolkit resolves as rules provider; API passes
-through. No provider identity/version snapshot exists.
+Root and region `ambient` are absolute normalized renderer-intensity overrides in
+`[0,1]`. Inheritance selects the nearest **authored** override walking innermost →
+outward → root. If no scope authors one, effective ambient is absent and the existing
+game renderer/theme baseline remains in force. No numeric “legacy baseline” is
+invented; current surfaces legitimately differ (for example general versus crypt).
+The toolkit resolves authored inheritance as rules provider; API passes through.
 
 Lighting is render-only and cannot change LoS, visibility, reveal, fog authorization,
 targeting, or pathing. Authoring FloorPlan returns raw root/region presence plus
-always-present effective values. Runtime adds optional resolved ambient to every
-authorized visible and remembered `HexRecord`; hidden cells/regions stay absent. An
-older server omitting the field fails the lighting capability probe instead of
-claiming support and inviting a renderer fallback.
+optional effective override. Runtime adds optional resolved ambient only to authorized
+visible/remembered `HexRecord`s whose chain has an authored override; hidden data stays
+absent, and an authorized hex with no override also omits it. The probe requires both
+present inherited `0.35` and absent unrelated values, so an older all-omitted wire
+cannot falsely pass.
 
-Authored reload recompiles raw YAML. Encounter snapshot retains the effective ambient
-it started with, matching the general lifecycle.
+Authored reload recompiles raw YAML. Encounter snapshots retain each started hex's
+optional override presence/value, matching the general lifecycle.
 
 ## Boundary matrix
 
@@ -276,14 +286,15 @@ history or unrelated project state.
   authoring API and not proven by #729.
 - **Profiles carrying targeting:** couples two independent decisions and breaks the
   required targeting precedence.
-- **Renderer-selected lighting default:** can drift; toolkit resolves legacy 0.8 and
-  wire carries effective authorized values.
+- **One invented numeric fallback for absent lighting:** false across current themes;
+  omission now preserves each renderer/theme baseline while authored overrides remain
+  absolute and provider-projected.
 - **Server `wallLines`/coverage:** duplicates canonical edge/floor truth.
 
 ## Ratification points
 
 The broad direction and wire/lifecycle decisions above are made. Exactly two points
-remain before PROPOSED can become RATIFIED:
+remain; this document is **not ratification-ready** until both are resolved:
 
 1. **Asset calibration release gate:** the `rpg-game-assets` owner must define and
    evidence multi-asset/multi-wall calibration coverage, catalog-informed adjustment

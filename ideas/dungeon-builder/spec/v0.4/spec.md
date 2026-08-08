@@ -31,7 +31,7 @@ A tranche is not supported until all of those parts and its probe pass.
 |---|---|---|---|
 | A — region floor | `authoring.floor_source.regions` | resolved `FloorPlan.floor_source`, `floor_cells`, pair-based `edges`, optional-presence `entrance` | snapshot mask plus authorized owning-hex edges |
 | B — prop anchor | `authoring.prop.semantic_anchor` | `FloorPlan.placements[]`: `source_path`, `ref`, absolute `at`, authored `anchor`/`adjustment` | authorized `HexRecord.contents[]` placement entry with the same source facts |
-| C — monster behavior | `authoring.monster.behavior_config` | each monster placement's `source_path`, source fields, and derived `resolved_behavior` | resolved targeting/config in monster `DataJSON`; no profile |
+| C — monster behavior | `authoring.monster.behavior_config` | each monster placement's `source_path`, typed `source_behavior`, and typed `resolved_behavior` | resolved targeting/config in monster `DataJSON`; no profile |
 | D — region lighting | `authoring.environment.region_lighting` | raw root/region lighting plus root/region `resolved_ambient` | optional resolved ambient on each authorized visible/remembered `HexRecord` |
 
 These keys are builder-side names for existing `AuthoringService.PutDungeon`
@@ -50,12 +50,14 @@ exact discriminating projection asserted below:
    and one wall-aligned prop returns the exact `source_path`, ref, absolute cell, and
    anchor/adjustment.
 3. **C:** a legacy room-chain fixture uses exact-ref targeting defaults, monster
-   `place`, and `boss`, with `params: {}`; it returns source paths and distinct
-   derived targeting for placement and boss. The key proves the shape, not any
+   `place`, and `boss`, with `params: {}` normalized to no source param entries; it
+   returns source paths, typed source/resolved behavior, and distinct derived
+   targeting for placement and boss. The key proves the shape, not any
    dynamic profile/knob name.
-4. **D:** a legacy canvas with `floor_source` omitted (therefore v0.3 bounds floor),
-   root ambient, a region override, and a silent child returns raw presence plus the
-   three expected effective values.
+4. **D:** a legacy canvas with `floor_source` omitted (therefore v0.3 bounds floor)
+   and no root override contains one region override, its silent child, and an
+   unrelated silent top-level region. Projection returns the override for parent/
+   child and absent effective ambient for root/unrelated region.
 
 A transport failure, unsuccessful response, missing field, wrong presence, or wrong
 value marks the key unsupported. The builder MUST retain the raw response/error for
@@ -206,16 +208,20 @@ rules apply to `floor_source: regions`.
 ### 4.6 Candidate edits
 
 A region-cell or canvas-bound edit compiles the complete candidate before mutation.
-It recomputes mask, envelope, containment, entrance, lighting, and dependent content.
-Removed floor that orphans a placement/monster/boss, authored edge, start, PartyCap
-seat, or prop support rejects at its source path. No content moves, disappears,
-becomes root content, or falls back to bounds.
+It recomputes mask, envelope, containment, entrance, PartyCap seating, lighting, and
+dependent content. A prior derived entrance/seat envelope is not authored content and
+is never an edit dependency: discard it, recompute from the candidate, and permit it
+to change. Only the freshly resolved candidate entrance/seats are authoritative for
+future authored registrations.
 
-If a region edit leaves the union unchanged (for example, deleting a nested scope
-whose cells remain in its parent), semantic properties may inherit outward. If the
-union changes and all strict runnable conditions still pass, write/registration may
-replace atomically. Validate-only may return a structurally valid but non-runnable
-candidate as §4.5 defines.
+A strict write rejects when the candidate fails §4.5 runnable conditions or removed
+floor invalidates an explicitly authored `start`, placement/monster/boss, authored
+edge, or prop support. No authored content moves, disappears, becomes root content,
+or falls back to bounds. If a region edit leaves the union unchanged (for example,
+deleting a nested scope whose cells remain in its parent), semantic properties may
+inherit outward. If the union changes and all strict candidate conditions pass,
+write/registration replaces atomically. Validate-only may return a structurally valid
+but non-runnable candidate as §4.5 defines.
 
 ### 4.7 Authored content versus encounter persistence
 
@@ -377,7 +383,45 @@ JSON scalar bool, string, or finite number. Null, list, and map values reject.
 Registry metadata decides per-key expected scalar kind, whether a number must be an
 integer, and allowed range/set.
 
-### 6.2 Toolkit registry and two independent merge chains
+### 6.2 Typed scalar-union authoring wire
+
+The authoring proto MUST NOT use an untyped map or `google.protobuf.Value` for
+behavior params. It adds this scalar union (message names are normative; field numbers
+are assigned additively by the owning proto change):
+
+```proto
+message BehaviorParam {
+  string key = 1;
+  oneof value {
+    bool bool_value = 2;
+    string string_value = 3;
+    double number_value = 4;
+  }
+}
+
+message SourceBehaviorConfig {
+  optional string targeting = 1;
+  optional string profile = 2;
+  repeated BehaviorParam params = 3;
+}
+
+message ResolvedBehaviorConfig {
+  string targeting = 1;
+  repeated BehaviorParam params = 2;
+}
+```
+
+`BehaviorParam.key` is non-empty. Within one repeated list, keys are unique and
+emitted in ascending key order; duplicates reject rather than last-write-win. A
+`number_value` producer MUST emit a finite number. Registry validation then enforces
+that key's scalar kind, integer requirement, and allowed range/set.
+
+Authored `params: {}` and omitted `params` both normalize to zero source
+`BehaviorParam` entries: there is no semantic or projected presence distinction for
+an empty map. Presence remains load-bearing for actual entries and their zero/false/
+empty-string scalar values, and for optional source `targeting`/`profile`.
+
+### 6.3 Toolkit registry and two independent merge chains
 
 Profiles contain `MachineConfig` params only. They MUST NOT contain or change
 targeting. The toolkit owns dynamic profile names and param key/type/range rules; this
@@ -413,16 +457,20 @@ its started `DataJSON` snapshot without consulting current YAML/profile registry
 There is no fallback brain. A monster unable to produce valid resolved `DataJSON`
 rejects before registration/encounter entry.
 
-### 6.3 Derived authoring projection and runtime exclusion
+### 6.4 Derived authoring projection and runtime exclusion
 
 Each monster/boss `FloorPlan.placements[]` entry returns:
 
-- `source_path`, exact `ref`, absolute `at`;
-- source-present `targeting`, `profile`, and `params`; and
-- `resolved_behavior: { targeting, params }` after both chains.
+- `source_path`, exact `ref`, and absolute `at`;
+- optional `source_behavior: SourceBehaviorConfig`, containing optional source
+  `targeting`/`profile` plus repeated typed source params (absent when the placement
+  authors none; explicit `params: {}` alone also normalizes to absent); and
+- required `resolved_behavior: ResolvedBehaviorConfig` after both merge chains.
 
-`resolved_behavior` never contains `profile`. Errors use the same `source_path` plus
-nested field/key suffix.
+The same contract applies to room `place`, canvas `place`, and `boss`.
+`resolved_behavior` never contains `profile`. Its targeting is constructor/default/
+placement resolved, and its params are unique sorted `BehaviorParam` entries. Errors
+use the same `source_path` plus nested field/key suffix.
 
 Dungeon source and derived authoring projection MUST NOT include current mode,
 machine state, knowledge/memory, stimuli, last-seen data, search/lapse counters,
@@ -435,46 +483,56 @@ entity/fog authorization; behavior config does not reveal a hidden monster.
 ### 7.1 Source, inheritance, and mechanics boundary
 
 ```yaml
-lighting: { ambient: 0.8 }
+lighting: { ambient: 0.6 }
 regions:
   - id: shrine
     cells: [[3, 3], [3, 4]]
     lighting: { ambient: 0.35 }
 ```
 
-Document and region `lighting.ambient` are optional finite floats in `[0,1]`.
-Resolution is property-wise innermost region → ancestors → document root. If the root
-is absent, effective ambient is the legacy baseline **`0.8`**. The toolkit resolves
-inheritance as rules provider; the API passes it through.
+Document and region `lighting.ambient` are optional finite floats in `[0,1]`. An
+authored value is an absolute normalized renderer-intensity override, not a multiplier
+or theme-relative delta. Resolution walks innermost region → ancestors → document
+root and selects the nearest **authored** override.
+
+If no scope in that chain authors an override, effective ambient is absent. The game
+renderer/theme keeps its current baseline; the platform does not invent or publish a
+numeric default. This preserves existing surface differences (for example general
+versus crypt rendering) instead of falsely collapsing them to one constant. The
+toolkit resolves override inheritance as rules provider; the API passes it through.
 
 Lighting is render-only. It MUST NOT change structural floor, wall/LoS tests,
 visibility, senses, reveal, fog authorization, target selection, or pathing. A darker
-ambient value never hides an otherwise authorized hex and a brighter value never
+override never hides an otherwise authorized hex and a brighter override never
 reveals one.
 
-Room-chain mode accepts document lighting only. Bounds canvas unpainted cells use
-root effective ambient. Region-floor cells use their innermost region chain.
+Room-chain mode accepts document lighting only. Bounds-canvas unpainted cells use the
+root override when authored, otherwise no override. Region-floor cells use the nearest
+authored value in their innermost region chain, otherwise no override.
 
 ### 7.2 Persistence and exact projection
 
 Authored YAML persists only raw lighting presence/value. Authored-content load
-recompiles effective values. A running encounter snapshot persists the effective
-ambient on its hex records so reload remains internally stable without consulting
-current authored YAML.
+recompiles optional effective overrides. A running encounter snapshot persists each
+hex's optional effective override (present or absent) so reload remains internally
+stable without consulting current authored YAML.
 
 Authoring projection is exact:
 
 - `FloorPlan.lighting` echoes the raw optional root block;
-- `FloorPlan.resolved_ambient` is always present (`0.8` when root omitted);
-- each `FloorPlan.regions[]` entry echoes raw optional `lighting` and always-present
-  `resolved_ambient` after inheritance.
+- optional `FloorPlan.resolved_ambient` is present only when the root authors an
+  override;
+- each `FloorPlan.regions[]` entry echoes raw optional `lighting` and optional
+  `resolved_ambient`, present only when its inheritance chain finds an authored
+  override.
 
-Runtime `HexRecord.resolved_ambient` is an optional additive field. When the lighting
-capability is supported it MUST be present on every authorized visible **and
-remembered** floor record with that cell's effective value. Hidden cells/regions and
-their lighting remain absent; there is no global runtime lighting/region map. Older
-servers may omit the optional field, which makes the Tranche D probe unsupported
-rather than inviting a client fallback under a claimed capability.
+Runtime `HexRecord.resolved_ambient` is optional. It is present on an authorized
+visible or remembered floor record only when that cell has an effective authored
+override; otherwise it is absent and the renderer/theme baseline remains in force.
+Hidden cells/regions and their lighting remain absent; there is no global runtime
+lighting/region map. The Tranche D probe discriminates support by requiring present
+`0.35` on the overridden parent/silent child and absence on the unrelated silent
+region, so an older server that omits every field does not falsely pass.
 
 ## 8. Client-local compilation boundary
 
@@ -572,18 +630,24 @@ become production vocabulary. Acceptance proves:
 - profile params cannot alter targeting;
 - explicit `closest`, numeric zero, false, and empty string survive presence-aware
   merge when valid for their keys;
-- room place, canvas place, and boss project exact `source_path` and derived behavior;
-- prop fields reject, exact-ref defaults do not match another monster, runtime
-  `DataJSON` contains no profile, and invalid scalar forms/ranges fail at source path.
+- room place, canvas place, and boss project exact `source_path`, optional typed
+  source behavior, and required typed resolved behavior;
+- omitted params and `{}` both emit no source entries; real zero/false/empty-string
+  entries survive with the correct oneof arm; duplicate keys/invalid scalar forms/
+  registry ranges reject at source path;
+- prop fields reject, exact-ref defaults do not match another monster, and runtime
+  `DataJSON` contains no profile.
 
 ### 9.5 Lighting inheritance and fog authorization
 
-Root `0.8`, parent override `0.35`, and silent child resolve child to `0.35`; an
-unrelated silent top-level region resolves `0.8`. Omitted root also resolves `0.8`.
-Authoring projection shows raw presence and effective values. Visible and remembered
-runtime hexes carry effective ambient; hidden region/hex data remains absent.
-Adversarial tests prove ambient changes cannot alter LoS, visibility, reveal, fog, or
-target selection.
+With root omitted, parent override `0.35` and silent child resolve the child to
+present `0.35`; an unrelated silent top-level region resolves to **absent**. With an
+authored root `0.6`, a silent unrelated region resolves to present `0.6`. Authoring
+projection distinguishes raw presence from optional effective presence. Authorized
+visible/remembered runtime hexes carry the override only where resolved; hidden
+region/hex data remains absent and authorized no-override hexes omit the field.
+Adversarial tests prove override changes cannot alter LoS, visibility, reveal, fog,
+or target selection.
 
 ## 10. Scope and ratification
 
@@ -603,7 +667,8 @@ made for this proposal. Exactly two ratification points remain:
    schema or numeric constant is added to the server contract.
 2. **Initial behavior registry contents:** the monster-behavior owner must ratify the
    first shipped profile names and param keys/types/integer/ranges. This spec already
-   fixes their container, validation, merge, persistence, and projection semantics;
+   fixes their typed scalar-union wire, validation, merge, persistence, and projection
+   semantics;
    vocabulary growth does not require a YAML shape change.
 
 Relevant evidence: rpg-project PR #202 and
