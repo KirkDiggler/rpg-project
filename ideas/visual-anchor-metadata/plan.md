@@ -128,9 +128,14 @@ This is development sequencing, not merge sequencing.
 3. A pins released T/P, merges to `rpg-api/dev`, and is deployed/available in the
    paired acceptance environment.
 4. G merges to `rpg-game-assets/main`; record the exact merged commit SHA chosen below.
-5. W's exact PR head pins A-compatible protos and exact G commit, passes required
-   private-asset checks, then merges to `rpg-dnd5e-web/dev`.
-6. Director assembles evidence on existing #206/#204 and PR #203/#205; Kirk decides
+5. W's exact PR head pins A-compatible protos and exact G commit, passes public PR CI,
+   then passes local exact-head locked-provider numeric/hash/performance verification
+   and Kirk's local Builder + actual API-backed Game visual approval on his trusted
+   machine. Record signed scalar/hash evidence only; never upload screenshots or
+   licensed bytes.
+6. W merges to `rpg-dnd5e-web/dev`; the established trusted post-merge build workflow
+   handles private asset fetch/build from the exact provider lock.
+7. Director assembles evidence on existing #206/#204 and PR #203/#205; Kirk decides
    whether either tracking PR may merge/close.
 
 No consumer merge precedes its provider. A web-only hand-built offset fixture cannot
@@ -362,16 +367,18 @@ Hard failures:
 ### Required initial UX hint evidence
 
 The Learn numbers are candidates, not automatic production truth. For each enrolled
-entry, record screenshots and numeric matrix/control table across at least:
+entry, Kirk inspects the local Builder and actual API-backed Game on his trusted machine
+and the verifier records a numeric matrix/control table across at least:
 
 - three distinct valid existing facings;
 - positive/negative local right and forward controls;
 - positive vertical where visually relevant; and
 - two representative camera distances including Discord viewport.
 
-Reviewers confirm chosen range/step provides useful adjustment without presenting it
-as YAML validity. If evidence cannot justify hints, stop for explicit #205 design
-amendment; do not mark them optional.
+Kirk confirms the chosen range/step provides useful adjustment without presenting it as
+YAML validity. Public evidence is signed scalar/hash results only—no screenshot upload,
+GLB, or private-source artifact. If evidence cannot justify hints, stop for explicit
+#205 design amendment; do not mark them optional.
 
 ### Atomic provider verification
 
@@ -481,56 +488,50 @@ Replace both divergent paths with one script/module used by local sync and Docke
    generator identity; and
 6. atomically replace public tree+catalog after every check succeeds.
 
-The running check, not a tracked file, emits evidence containing actual `github.sha`/
-web HEAD, provider lock hash, verified provider SHA/catalog digest, and tool version.
-Deployment/image labels record the same split. No tracked G/W wrapper contains its own
-future/current web build SHA.
+The running local check, not a tracked file, emits signed scalar/hash evidence containing
+actual web HEAD, provider-lock hash, verified provider SHA/catalog digest, generator/tool
+identity and version, numeric matrix/performance results, and pass/fail. Deployment/image
+labels record the same provenance split. No tracked G/W wrapper contains its own future/
+current web build SHA.
 
-### 3. Public and protected exact-head gates
+### 3. Public PR CI and trusted-machine exact-head verification
 
-**Automatic public PR check (no secrets):** on every W PR, run schema/id/unit checks,
-pure selector/resolver fixtures, public-safe catalog fixtures, lint/typecheck/unit/build
-where licensed files are not required, and scan the diff/artifact manifest. Forks and
-Dependabot receive only this path.
+**Automatic public PR CI:** on every W PR, run schema/id/unit checks, pure selector/
+resolver fixtures, public-safe catalog fixtures, lint/typecheck/unit/build where licensed
+files are not required, and scan the diff/artifact manifest. Forks and Dependabot receive
+the same public path. This CI receives no private-provider credential and fetches no
+licensed bytes.
 
-**Licensed exact-head check:** define the workflow on trusted `dev` and invoke it only
-after review through a protected GitHub Environment requiring manual Kirk approval.
-The trusted preflight must:
+**Local exact-head gate:** after public CI and review, Kirk's trusted machine checks out
+the current W PR head and asserts `git rev-parse HEAD` equals the reviewed SHA. Using the
+tracked provider lock, the existing authenticated local path fetches the exact private G
+revision, asserts provider HEAD, catalog/tool identities, inventory, and every enrolled
+GLB digest, then atomically stages the complete legacy tree + catalog in both local-script
+and Docker-build modes. On that exact W/provider pair it runs full build/test/lint/
+typecheck, numeric matrix checks, drift/license scans, and the named performance methods.
+Any stale W head, provider-lock/digest mismatch, partial stage, or numeric/performance
+failure blocks merge and must be rerun on the new exact head.
 
-1. accept PR number + expected head SHA, query GitHub, and prove target is `dev`, head
-   repo equals `KirkDiggler/rpg-dnd5e-web` (not fork/Dependabot), actor/author is an
-   approved same-repository collaborator, and expected SHA equals the current PR head;
-2. run no `pull_request_target` checkout of arbitrary code with secrets;
-3. obtain a short-lived, least-privileged, read-only credential scoped only to reading
-   the private provider, fetch/verify the locked G revision with trusted workflow code,
-   then unset/revoke the credential and delete credential-bearing config before W head
-   scripts execute;
-4. checkout the exact W SHA and assert `git rev-parse HEAD == expected SHA`;
-5. run full atomic stage in local-script and Docker-build modes, build/test/lint/
-   typecheck, and paired Playwright/actual-Game evidence; and
-6. publish the required status against that exact SHA.
+Kirk then locally inspects Builder and the actual API-backed Game using that same exact
+head/provider stage. His approval is recorded on #205 as signed scalar/hash evidence:
+web head, provider-lock hash, provider SHA/catalog/tool/GLB digests, numeric/performance
+summary digest, scenario-result scalars, and pass/fail. Do not upload screenshots,
+licensed files, the private checkout, or the staged public asset tree.
 
-Secret absence/expiry, trust mismatch, stale SHA, or missing Environment approval fails
-the licensed gate; it never degrades to warning/skip. Scrub authenticated URLs/tokens
-from git config, process environment, command echo, logs, and evidence. Disable general
-caches or allowlist only dependency/build-cache paths that cannot contain the provider
-checkout or public asset stage. Artifact upload uses an explicit allowlist (safe JSON,
-lock/build evidence, hashes/inventory names, matrices, performance JSON, license-safe
-screenshots); a pre-upload scan rejects `.glb`, archives, tokens, authenticated URLs,
-private checkout content, or any unlisted file. Never upload the private checkout or
-licensed public stage.
-
-Before merge, query GitHub and assert the licensed required check `headSha` equals the
-current W PR HEAD; stale green checks after pushes do not count. After merge, repeat a
-protected smoke stage/build on exact `origin/dev` merge SHA and attach only allowlisted
-non-committed evidence; do not substitute a local dirty tree.
+This is deliberately **not** a protected licensed-assets PR workflow. It requires no
+GitHub Environment secret/approval, no hostile-PR or no-egress sandbox, no workflow
+bootstrap, no `pull_request_target` secret choreography, and no screenshot/artifact
+upload. Once the public PR checks, local exact-head verification, and Kirk approval pass,
+merge W to `dev`; the established trusted post-merge build workflow performs private
+asset fetch/build from the exact provider lock. Record the resulting `dev` merge SHA and
+build provenance as signed scalar/hash evidence only.
 
 ### 4. Catalog projection and scale partition
 
 Commit only safe generated JSON and the provider lock (G SHA + catalog digest + tool
 identity, never web SHA). Preserve the complete legacy asset tree in built/public
-staging without committing licensed GLBs; actual web HEAD remains non-committed check/
-image evidence.
+staging without committing licensed GLBs; actual web HEAD remains signed scalar/hash
+verification and deployment/image-label evidence.
 
 Generate/consume an enrolled lookup while preserving current public prop roles. Enrolled
 bookcase/torch use catalog `totalScale` once. Compile-time-distinct enrolled matrix
@@ -673,10 +674,11 @@ is accepted in production.
 
 ## Cross-repo acceptance evidence
 
-Use one checked evidence index on #205 linking immutable artifacts from T/P/A/G/W.
-Every non-committed evidence artifact names issue/PR, actual exact web HEAD/base HEAD,
+Use one checked evidence index on #205 for T/P/A/G/W. Licensed-asset verification is
+recorded as signed scalar/hash evidence only: issue/PR, actual exact web HEAD/base HEAD,
 tracked provider-lock hash, provider SHA/tag+peeled SHA, catalog/tool/GLB digests,
-commands, and pass/fail. The tracked provider lock itself never contains web HEAD.
+command/result-summary digests, measured scalars, and pass/fail. The tracked provider
+lock itself never contains web HEAD; no screenshot or licensed-byte evidence is uploaded.
 
 ### Platform evidence
 
@@ -695,26 +697,28 @@ commands, and pass/fail. The tracked provider lock itself never contains web HEA
 - authorized VISIBLE/REMEMBERED/resight/vacate plus movement/re-placement snapshot/event
   truth sufficient for the web ingestion cases.
 
-### Paired visual evidence
+### Paired local visual approval
 
-For identical provider/projection facts, capture Builder and actual Game:
+On Kirk's trusted machine, use identical exact-head provider/projection facts in Builder
+and the actual API-backed Game. Kirk inspects the representative Discord viewport and a
+close diagnostic view; record only signed scenario-result scalars and hashes proving:
 
 - bookcase and torch matrices numerically equal within `1e-6` per element;
-- screenshots at 1280×720 representative Discord viewport and one close diagnostic;
 - omission, explicit `[0,0,0]`, and ±X/±Y/±Z representatives;
 - room prop, canvas prop, room monster, canvas monster, and room boss with generic
   offset exactly once in both Builder and actual Game; only enrolled props show
   additional catalog calibration;
 - VISIBLE-over-REMEMBERED, reconnect, live/resight/vacate, and movement/re-placement
-  frames with no stale/double offset;
+  states with no stale/double offset;
 - six existing facing values where baseline accepts facing;
 - facing changes model orientation while offset world vector stays unchanged;
 - two pivot-distinct intrinsic points;
 - replacement retain/change/remove; and
 - no-point and model-load fallback at `p+o`.
 
-Interior-wall/generated-envelope scenes may be captured as authoring examples only.
-Do not label them wall registration/support parity and do not require six wall edges.
+No screenshot is uploaded or required. Interior-wall/generated-envelope scenes may be
+inspected as authoring examples only; do not label them wall registration/support parity
+and do not require six wall edges.
 
 ### Gameplay invariants
 
@@ -724,18 +728,20 @@ unchanged across model/offset changes.
 
 ### Licensing
 
-Attach file-name/inventory/license scan summaries only. Never upload raw GLBs/private
-source or secret URLs to public project evidence.
+Record signed file-name/inventory/license-scan summary hashes and scalar results only.
+Never upload raw GLBs/private source, screenshots, or authenticated URLs to public
+project evidence.
 
 ## Quantitative performance gates
 
-Run named methods on W exact PR HEAD/provider lock. Record CI image, CPU/OS, repository
-Node/browser versions, base/head/provider SHAs, and case-table digest.
+Run named methods locally on Kirk's trusted machine against W exact PR HEAD/provider
+lock. Record machine/OS, repository Node/browser versions, base/head/provider SHAs, and
+case-table digest as signed scalar/hash evidence.
 
 ### Pure resolver statistic
 
-- Environment: production resolver build under the repository CI Node version on one
-  pinned Linux runner.
+- Environment: production resolver build under the repository Node version on Kirk's
+  recorded trusted machine.
 - Case table: six facings × three fixed nonzero world offsets, all translations in
   canonical game-world units.
 - Sampling unit: one timed batch of 1,000 resolves, elapsed by `performance.now()` and
@@ -743,16 +749,16 @@ Node/browser versions, base/head/provider SHAs, and case-table digest.
 - Per run: fresh Node process, 10 untimed warmup batches, then 100 timed batch samples.
 - p95: sort the 100 per-resolve samples; nearest-rank index
   `ceil(0.95*100)-1` zero-based.
-- Aggregation: three fresh processes in the same job/runner; median of the three
-  per-run p95s.
+- Aggregation: three fresh processes in the same local verification run; median of the
+  three per-run p95s.
 - Budget: median p95 ≤ `0.05 ms/resolve`.
 
 ### Actual-route base/head comparison
 
 Run exact `origin/dev` base then exact W head sequentially in each of three paired
-cycles on the same job/runner, Chromium version, fixed route/camera, and exact provider
-lock. Wait for the same bookcase/torch to load plus 120 warmup frames, then use current
-`DevPerfProbe`'s 8,000 ms window. Aggregate frame time as the median of the three
+cycles on the same trusted machine, Chromium version, fixed route/camera, and exact
+provider lock. Wait for the same bookcase/torch to load plus 120 warmup frames, then use
+current `DevPerfProbe`'s 8,000 ms window. Aggregate frame time as the median of the three
 reported per-run `frameTimeMs.p95` values. Head may exceed base by at most
 `max(1.0 ms, 5% of base median p95)`.
 
@@ -775,8 +781,9 @@ Additional gates:
 | Safe data | catalog + tracked provider-lock byte count | ≤8 KiB uncompressed |
 | Network/cache (plan evidence only) | repeat route after warm cache | no rerender-triggered catalog/GLB request; one catalog fetch per build/page load as designed |
 
-Attach allowlisted raw JSON/traces/environment only; never GLBs/private checkout. Any
-breach blocks or requires a specific Kirk-approved measured exception on #205.
+Record signed result-summary hashes and measured scalars only; do not upload raw traces,
+screenshots, GLBs, or private-checkout content. Any breach blocks or requires a specific
+Kirk-approved measured exception on #205.
 
 ## Drift and atomicity gates
 
@@ -791,7 +798,7 @@ The following all hard-fail G/W release checks:
 - catalog schema/id/number/hint/companion invalid;
 - asset is both enrolled and legacy-scaled;
 - local and Docker stages differ byte-for-byte; or
-- exact-head required check is stale relative to current W PR HEAD.
+- local verification/approval evidence names a W head other than the current PR HEAD.
 
 No warning-only drift path is acceptable for release.
 
@@ -804,13 +811,17 @@ No warning-only drift path is acceptable for release.
 3. Validate authored source/persistence/runtime projection in a nonproduction dungeon.
 4. Merge G, capture exact provider SHA, and cut the tracked W provider lock with G
    SHA + catalog digest + generator/tool identity (no web SHA).
-5. On W exact head, atomically stage full legacy tree+catalog from the lock through the
-   protected trust gate; record actual web HEAD only in non-committed evidence/labels.
-6. Enable generic offset in Builder/actual Game for every valid placement kind, then
-   enrolled bookcase/torch catalog calibration.
-7. Run complete evidence/performance matrix.
-8. Merge W to dev only after independent gates and Kirk approval.
-9. Repeat exact dev-merge smoke; update #203/#205 tracking, no automatic merge.
+5. On Kirk's trusted machine at W exact head, atomically stage the full legacy tree +
+   catalog from the lock and record actual web HEAD as signed scalar/hash evidence.
+6. Enable generic offset in Builder/actual API-backed Game for every valid placement
+   kind, then enrolled bookcase/torch catalog calibration.
+7. Run the complete local numeric/hash/performance matrix and Kirk visual inspection;
+   record signed scalar/hash approval only.
+8. Merge W to `dev` after public CI, independent gates, local exact-head verification,
+   and Kirk approval.
+9. The established trusted post-merge build workflow fetches/builds private assets from
+   the provider lock on exact `dev` merge SHA; record scalar/hash provenance and update
+   #203/#205 tracking, with no automatic tracking-PR merge.
 
 ### Rollback rehearsal
 
@@ -844,10 +855,13 @@ merge:
    units through a tested conversion.
 5. Tracked W provider lock pins exact G commit (or protected tag object + peeled commit),
    catalog digest, and tool identity with no web SHA; actual web HEAD appears only in
-   non-committed evidence/labels.
+   signed scalar/hash evidence and deployment/image labels.
 6. Complete legacy tree + catalog stages atomically and identically for local/Docker;
-   automatic public and manually approved licensed exact-head gates pass without secret/
-   artifact leakage.
+   public PR CI passes, Kirk's trusted-machine exact-head numeric/hash/performance and
+   Builder + actual API-backed Game visual gates pass, and only signed scalar/hash
+   evidence is recorded. No protected PR licensed-assets workflow, Environment secret,
+   no-egress sandbox, workflow bootstrap, screenshot upload, or committed licensed bytes
+   is required.
 7. Named web state/helper seams prove generic `P` exactly once for room prop, canvas
    prop, room monster, canvas monster, and room boss; only enrolled props receive
    catalog `C`; no double scale.
@@ -876,17 +890,29 @@ two-prop delivery.
 - raw asset edits in public repos; and
 - #43 implementation/closure.
 
-## Kirk judgments required before issue creation
+## Decision ledger
 
-1. **Provider provenance:** approve a tracked W lock with exact merged G SHA + catalog
-   digest + tool identity and no web SHA (recommended), or require protected annotated
-   `web-assets/v1.0.0` + object/peeled commit in that lock. Actual web HEAD stays in
-   non-committed evidence/labels.
-2. **Immutable ids:** approve exact literals/grammar and migration rule.
-3. **Required hints:** approve evidence-backed initial UX hints as provider-release
-   requirements, never server validity.
+Kirk approved the revised design/plan boundary on 2026-08-09 and explicitly made these
+calls:
+
+1. **Provider provenance:** W tracks the exact merged G commit SHA + catalog digest +
+   generator/tool identity with no mutable branch or web SHA; no release-tag ceremony.
+   Actual web HEAD stays in signed scalar/hash evidence and deployment/image labels.
+2. **Immutable ids:** use the exact v1 literals/grammar above and require an explicit
+   migration record for any later id change.
+3. **Required hints:** evidence-backed initial UX hints are provider-release requirements
+   and Builder guidance, never YAML/server validity.
 4. **Wall limit:** accept offset-only v0.4 and defer semantic wall/support persistence.
-5. **Performance:** approve named quantitative budgets or supply replacements.
-6. **#43:** confirm separate/nonblocking for #205 completion.
+5. **Performance:** use the named quantitative methods and budgets above.
+6. **#43:** keep the downed-character asset fix separate/nonblocking, with no web offset.
+7. **Licensed-assets delivery course correction (2026-08-09):** do not build protected
+   PR licensed-assets CI/bootstrap. Run public PR CI; on Kirk's trusted machine stage the
+   exact locked provider at the exact reviewed W head and run numeric/hash/performance
+   verification; Kirk locally approves Builder + actual API-backed Game visuals; record
+   signed scalar/hash evidence only; merge W to `dev`; let the established trusted
+   post-merge build workflow fetch/build private assets. This requires no GitHub
+   Environment secret/approval, no hostile-PR exact-head secret workflow, no no-egress PR
+   sandbox, no workflow bootstrap, and no screenshot upload.
 
-No judgment is assumed by this draft.
+The license boundary is unchanged: raw/private source remains private; promoted GLBs may
+ship inside game builds; no licensed bytes are committed to the public web repository.
