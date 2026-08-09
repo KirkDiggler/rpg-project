@@ -1,0 +1,75 @@
+{
+ "label": "70-FINAL-BEFORE-decisive",
+ "encounter": "dea3b271-b03b-4a0e-9d00-c00250ab91e9",
+ "sequence": 37,
+ "mode": 2,
+ "players": {
+  "evex9": {
+   "entity_id": "char_ffdc5941-e92f-45f0-bc97-be32adb9d48b",
+   "pos": [
+    10,
+    -9,
+    -1
+   ],
+   "hp": 12,
+   "character_hp": 12,
+   "max_hp": 12,
+   "conditions": []
+  },
+  "finnx9": {
+   "entity_id": "char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490",
+   "pos": [
+    6,
+    -7,
+    1
+   ],
+   "hp": 8,
+   "character_hp": 8,
+   "max_hp": 12,
+   "conditions": []
+  }
+ },
+ "monsters": {
+  "monster-hall-0": {
+   "pos": [
+    12,
+    -9,
+    -3
+   ],
+   "hp": 13,
+   "max_hp": 13
+  },
+  "monster-hall-1": {
+   "pos": [
+    14,
+    -12,
+    -2
+   ],
+   "hp": 13,
+   "max_hp": 13
+  },
+  "monster-tomb-0": {
+   "pos": [
+    25,
+    -18,
+    -7
+   ],
+   "hp": 45,
+   "max_hp": 45
+  }
+ },
+ "distances": {
+  "monster-hall-0": {
+   "evex9": 2,
+   "finnx9": 6
+  },
+  "monster-hall-1": {
+   "evex9": 4,
+   "finnx9": 8
+  },
+  "monster-tomb-0": {
+   "evex9": 15,
+   "finnx9": 19
+  }
+ }
+}

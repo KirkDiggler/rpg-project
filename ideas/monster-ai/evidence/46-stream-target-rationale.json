@@ -1,0 +1,68 @@
+[
+ {
+  "$typeName": "dnd5e.api.v1alpha2.encounter.EncounterEvent",
+  "sequence": "66",
+  "correlationId": "corr-b831e89e-f782-45d8-882b-6c230f298b9e-66",
+  "event": {
+   "case": "actionResolved",
+   "value": {
+    "$typeName": "dnd5e.api.v1alpha2.encounter.ActionResolved",
+    "actorEntityId": "monster-hall-1",
+    "targetEntityId": "char_89c5cdc8-f79b-431e-9c9d-144f8f4296c2",
+    "targetRationale": "dnd5e:targeting:closest",
+    "actionRef": {
+     "$typeName": "dnd5e.api.v1alpha2.encounter.Ref",
+     "module": "dnd5e",
+     "type": "action",
+     "id": "attack"
+    },
+    "economyConsumed": {
+     "$typeName": "dnd5e.api.v1alpha2.encounter.EconomyConsumed",
+     "actions": 1,
+     "bonusActions": 0,
+     "reactions": 0,
+     "movement": 0,
+     "grantedConsumed": {}
+    }
+   }
+  },
+  "timestamp": {
+   "$typeName": "google.protobuf.Timestamp",
+   "seconds": "1786237351",
+   "nanos": 162274578
+  }
+ },
+ {
+  "$typeName": "dnd5e.api.v1alpha2.encounter.EncounterEvent",
+  "sequence": "76",
+  "correlationId": "corr-b831e89e-f782-45d8-882b-6c230f298b9e-76",
+  "event": {
+   "case": "actionResolved",
+   "value": {
+    "$typeName": "dnd5e.api.v1alpha2.encounter.ActionResolved",
+    "actorEntityId": "monster-hall-0",
+    "targetEntityId": "char_89c5cdc8-f79b-431e-9c9d-144f8f4296c2",
+    "targetRationale": "dnd5e:targeting:lowest-hp",
+    "actionRef": {
+     "$typeName": "dnd5e.api.v1alpha2.encounter.Ref",
+     "module": "dnd5e",
+     "type": "action",
+     "id": "attack"
+    },
+    "economyConsumed": {
+     "$typeName": "dnd5e.api.v1alpha2.encounter.EconomyConsumed",
+     "actions": 1,
+     "bonusActions": 0,
+     "reactions": 0,
+     "movement": 0,
+     "grantedConsumed": {}
+    }
+   }
+  },
+  "timestamp": {
+   "$typeName": "google.protobuf.Timestamp",
+   "seconds": "1786237351",
+   "nanos": 178990318
+  }
+ }
+]

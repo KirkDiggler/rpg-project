@@ -1,0 +1,21 @@
+R0  ⚔️ char_58ebf226-d393-41c0-9c7c-54f54e3338ea → char_01470137-ecd5-427d-9229-68f112ca5a1e: HIT (11+5 vs AC 12)
+R0  💥 char_01470137-ecd5-427d-9229-68f112ca5a1e takes 4 bludgeoning damage (hp 8/12)
+R1  ⏳ Round 1 — char_01470137-ecd5-427d-9229-68f112ca5a1e's turn
+R1  ↩️ char_01470137-ecd5-427d-9229-68f112ca5a1e ends turn
+R1  ⏳ Round 1 — monster-hall-1's turn
+R1  ▶️ monster-hall-1 dnd5e:action:attack → char_01470137-ecd5-427d-9229-68f112ca5a1e
+R1  ↩️ monster-hall-1 ends turn
+R1  ⏳ Round 1 — monster-hall-0's turn
+R1  ↩️ monster-hall-0 ends turn
+R1  ⏳ Round 1 — char_58ebf226-d393-41c0-9c7c-54f54e3338ea's turn
+R1  ⚔️ monster-hall-0 → monster-hall-1: HIT (10+4 vs AC 13)
+R1  💥 monster-hall-1 takes 3 piercing damage (hp 10/13)
+R1  ⚔️ monster-hall-1 → char_01470137-ecd5-427d-9229-68f112ca5a1e: HIT (12+2 vs AC 12)
+R1  💥 char_01470137-ecd5-427d-9229-68f112ca5a1e takes 1 bludgeoning damage [weapon:1, dnd5e:abilities:str:0] (hp 7/12)
+R1  ↩️ char_58ebf226-d393-41c0-9c7c-54f54e3338ea ends turn
+R2  ⏳ Round 2 — char_01470137-ecd5-427d-9229-68f112ca5a1e's turn
+R2  ⚔️ char_58ebf226-d393-41c0-9c7c-54f54e3338ea → char_01470137-ecd5-427d-9229-68f112ca5a1e: HIT (9+5 vs AC 12)
+R2  💥 char_01470137-ecd5-427d-9229-68f112ca5a1e takes 4 bludgeoning damage (hp 3/12)
+R2  ⚔️ monster-hall-1 → char_01470137-ecd5-427d-9229-68f112ca5a1e: CRIT (20+4 vs AC 12)
+R2  💥 char_01470137-ecd5-427d-9229-68f112ca5a1e takes 9 piercing damage (hp 0/12)
+R2  💤 char_01470137-ecd5-427d-9229-68f112ca5a1e is Unconscious (from monster-hall-1)

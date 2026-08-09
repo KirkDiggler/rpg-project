@@ -1,0 +1,84 @@
+[
+ {
+  "kind": "attack",
+  "round": 0
+ },
+ {
+  "kind": "damage",
+  "round": 0
+ },
+ {
+  "kind": "turnStarted",
+  "round": 1
+ },
+ {
+  "kind": "turnEnded",
+  "round": 1
+ },
+ {
+  "kind": "turnStarted",
+  "round": 1
+ },
+ {
+  "kind": "turnEnded",
+  "round": 1
+ },
+ {
+  "kind": "turnStarted",
+  "round": 1
+ },
+ {
+  "kind": "actionResolved",
+  "targetRationale": "dnd5e:targeting:closest",
+  "round": 1
+ },
+ {
+  "kind": "turnEnded",
+  "round": 1
+ },
+ {
+  "kind": "turnStarted",
+  "round": 1
+ },
+ {
+  "kind": "actionResolved",
+  "targetRationale": "dnd5e:targeting:lowest-hp",
+  "round": 1
+ },
+ {
+  "kind": "turnEnded",
+  "round": 1
+ },
+ {
+  "kind": "turnStarted",
+  "round": 2
+ },
+ {
+  "kind": "attack",
+  "round": 2
+ },
+ {
+  "kind": "damage",
+  "round": 2
+ },
+ {
+  "kind": "attack",
+  "round": 2
+ },
+ {
+  "kind": "attack",
+  "round": 2
+ },
+ {
+  "kind": "damage",
+  "round": 2
+ },
+ {
+  "kind": "attack",
+  "round": 2
+ },
+ {
+  "kind": "damage",
+  "round": 2
+ }
+]

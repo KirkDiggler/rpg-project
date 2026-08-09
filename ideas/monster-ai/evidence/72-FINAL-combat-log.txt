@@ -1,0 +1,20 @@
+R0  ⚔️ char_ffdc5941-e92f-45f0-bc97-be32adb9d48b → char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490: HIT (11+5 vs AC 12)
+R0  💥 char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490 takes 4 bludgeoning damage (hp 8/12)
+R1  ⏳ Round 1 — char_ffdc5941-e92f-45f0-bc97-be32adb9d48b's turn
+R1  ↩️ char_ffdc5941-e92f-45f0-bc97-be32adb9d48b ends turn
+R1  ⏳ Round 1 — char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490's turn
+R1  ↩️ char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490 ends turn
+R1  ⏳ Round 1 — monster-hall-1's turn
+R1  ▶️ monster-hall-1 dnd5e:action:attack → char_ffdc5941-e92f-45f0-bc97-be32adb9d48b
+R1  ↩️ monster-hall-1 ends turn
+R1  ⏳ Round 1 — monster-hall-0's turn
+R1  ▶️ monster-hall-0 dnd5e:action:attack → char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490 — turns on the most wounded
+R1  ↩️ monster-hall-0 ends turn
+R2  ⏳ Round 2 — char_ffdc5941-e92f-45f0-bc97-be32adb9d48b's turn
+R2  ⚔️ monster-hall-1 → char_ffdc5941-e92f-45f0-bc97-be32adb9d48b: HIT (14+2 vs AC 12)
+R2  💥 char_ffdc5941-e92f-45f0-bc97-be32adb9d48b takes 1 bludgeoning damage [weapon:1, dnd5e:abilities:str:0] (hp 11/12)
+R2  ⚔️ monster-hall-1 → monster-hall-0: MISS (7+4 vs AC 13)
+R2  ⚔️ char_ffdc5941-e92f-45f0-bc97-be32adb9d48b → monster-hall-0: HIT (15+5 vs AC 13)
+R2  💥 monster-hall-0 takes 8 bludgeoning damage (hp 5/13)
+R2  ⚔️ monster-hall-0 → char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490: HIT (12+2 vs AC 12)
+R2  💥 char_6cd95ff2-08f4-46a1-a143-2c3d3ac3f490 takes 1 bludgeoning damage [weapon:1, dnd5e:abilities:str:0] (hp 7/12)
