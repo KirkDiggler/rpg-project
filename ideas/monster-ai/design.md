@@ -257,6 +257,13 @@ to the same stream, and both views inherit them.
 
 ## 6. The free-roam orchestrator (rpg-api) — direction, not commitment
 
+**Update (Kirk, 2026-08-09):** a play/clock package is incoming
+(toolkit-side) that will help with the free-roam tick — slice-4's clock
+architecture should consume it rather than invent its own. The deferral
+below is why that's cheap. Also prerequisite discovered in play:
+rpg-api#787 (concurrent mutating verbs are unguarded read-modify-write —
+must be fixed before a tick multiplies concurrent writes on this path).
+
 **Status (Kirk, 2026-08-08): free roam deliberately carries the fewest hard
 decisions in this design.** It's still fuzzy, and that's fine at this
 stage — the architecture here gets decided for real only when slice 4 is
