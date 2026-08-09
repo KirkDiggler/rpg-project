@@ -24,8 +24,9 @@ Deliver one production path where:
 4. actual Game consumes the projected triple and applies the generic world placement
    frame exactly once to every valid placement kind; only enrolled props receive
    additional catalog calibration;
-5. representative room/canvas props and room monster/boss prove generic transport while
-   bookcase and torch prove two distinct intrinsic points without YAML wall/support
+5. room prop, canvas prop, room monster, canvas monster, and room boss prove generic
+   transport while bookcase and torch prove two distinct intrinsic points without YAML
+   wall/support
    semantics; and
 6. offset/calibration remains cosmetic and mechanically inert.
 
@@ -52,9 +53,11 @@ Capture fresh exact heads again when issues are cut. Planning audit used:
   `SpawnInstruction`, `ObstacleData`/`MonsterInput`/`MonsterData`, encounter Data JSON,
   perception Memory, and KnownHex event carriers;
 - `rpg-api-protos origin/main@6c4a9160`: authoring
-  `dnd5e/api/authoring/v1alpha1/service.proto`, generated Go/TS, encounter v1alpha2
-  types/events; exact authorized placement owner must be confirmed in the platform
-  implementation issue, not guessed here;
+  `dnd5e/api/authoring/v1alpha1/service.proto` has no placement projection at that
+  audited base, while existing runtime v1alpha2 `Placement` already travels in
+  reconnect `Space.hexes[].contents[]` and live `HexKnowledgeChanged` records; P must
+  introduce the missing authoring element/list and add one shared offset message to
+  both authoring and existing runtime carriers;
 - `rpg-api origin/dev@2646724d`: `internal/orchestrators/authoring`, content registry
   and StartEncounter `Params`/`Spawns` consumption, encounter repository Data save/get,
   authoring handler, reconnect `ProjectFor`, and live KnownHex event translation;
@@ -147,9 +150,11 @@ Start at fresh `origin/main`. T owns the complete toolkit carrier chain, not onl
   1. `CompiledDungeon.Placements []CompiledPlacement` is the authoring-only sidecar with
      source path, ref, absolute at, applicable facing, effective blockers, and offset;
   2. the existing runtime inputs consumed by `StartEncounter`: room props through
-     `CompiledDungeon.Params`/`PlacedObstacleSpec`, canvas props through
-     `Params`/`AbsolutePlacedObstacleSpec`, and room/canvas monsters plus boss through
-     `CompiledDungeon.Spawns`/`SpawnInstruction`;
+     `CompiledDungeon.Params`/`PlacedObstacleSpec`; canvas props through
+     `Params`/`AbsolutePlacedObstacleSpec`; room monsters through
+     `CompiledDungeon.Spawns`/`SpawnInstruction.At`; the distinct canvas-monster path
+     through `Spawns`/`SpawnInstruction.AbsoluteAt`; and room boss through
+     `Spawns`/`SpawnInstruction.At`;
 - `InitDungeon`/`SeedMonsters` copy runtime truth through `ObstacleData` or
   `MonsterInput -> MonsterData`; `Encounter.Data` JSON/restore is immutable encounter
   persistence; and
@@ -165,19 +170,22 @@ identity that drops offset.
 
 ### Acceptance and required runtime tests
 
-- Room prop, canvas prop, room monster, and room boss each cover omission, explicit
-  `[0,0,0]`, and signed nonzero; malformed cardinality/type/null/NaN/Inf reports the
-  exact source field.
+- Five cases—room prop, canvas prop, room monster, canvas monster, and room boss—each
+  cover omission, explicit `[0,0,0]`, and signed nonzero; malformed cardinality/type/
+  null/NaN/Inf reports the exact source field.
 - Compile asserts both authoring `CompiledPlacement` facts (source/ref/absolute at/
   facing/effective blockers/offset) and the corresponding Params/Spawns runtime
-  carrier. Local-to-absolute `at` never rotates/changes offset.
+  carrier, explicitly distinguishing room/boss `SpawnInstruction.At` from canvas-
+  monster `SpawnInstruction.AbsoluteAt`. Local-to-absolute `at` never rotates/changes
+  offset.
 - A real `InitDungeon -> SeedMonsters -> ToData -> JSON -> LoadFromData` path proves
-  exact optional presence/value in `ObstacleData`/`MonsterData` for every kind; legacy
-  JSON omission remains nil.
-- `KnownHexes` plus event JSON prove VISIBLE and frozen REMEMBERED placement offsets,
-  including explicit zero. Movement/resight/vacate and every placement overlay/helper
-  prove offset follows the entity, visible vacated origin has no stale offset, and
-  facing never rotates it.
+  exact optional presence/value in `ObstacleData`/`MonsterData` for all five cases,
+  including canvas-monster `AbsoluteAt`; legacy JSON omission remains nil.
+- `KnownHexes`/viewer Memory plus event JSON prove VISIBLE and frozen REMEMBERED
+  placement offsets for all five cases, including explicit zero and the canvas monster
+  seeded by `AbsoluteAt`. Room- and canvas-monster movement/resight/vacate plus every
+  placement overlay/helper prove offset follows the entity, a visible vacated origin
+  has no stale offset, and facing never rotates it.
 - Baseline comparisons prove canonical position, effective blockers, collision,
   pathing, LoS, range, and targeting unchanged. There is no clamping, pivot, snapping,
   asset lookup, identity join, or gameplay interpretation.
@@ -190,27 +198,37 @@ JSON suites. Record exact commands/version and full green output in PR evidence.
 
 ### Contract
 
-Define one common three-double `PlacementOffset` in canonical game-world axes and add it
-as an optional nested value only on the existing placement surfaces:
+P introduces the missing authoring placement projection; it is not present at the
+audited base:
 
-- authoring `FloorPlan.placements[]`;
-- reconnect `Space.hexes[].contents[]`; and
-- live `HexKnowledgeChanged.hexes[].contents[]`.
+- shared `dnd5e.api.v1alpha1.PlacementOffset` is exactly three doubles `x=1`, `y=2`,
+  `z=3` in canonical game-world axes;
+- new authoring `FloorPlanPlacement` carries `ref=1`, absolute `at=2`, optional
+  applicable `facing=3`, effective `blocks_movement=4`, effective `blocks_los=5`,
+  `source_path=6`, and optional shared `offset=7`;
+- new repeated `FloorPlan.placements=11` contains all compiled room/canvas props,
+  room/canvas monsters, and room boss in provider-defined deterministic order; and
+- the **existing distinct** runtime v1alpha2 `Placement` retains its runtime
+  `entity_id=1`/optional `facing=2` and gains optional shared `offset=3`. That runtime
+  placement already travels in reconnect `Space.hexes[].contents[]` and live
+  `HexKnowledgeChanged.hexes[].contents[]`.
 
-Nested message presence preserves omission versus explicit `[0,0,0]`. Do not add the
-field to `Entity`, create a placement identity/join seam, or add catalog ids, intrinsic
-points, matrices, quaternions, scale, semantic wall/support, or a generic transform.
-Field numbers remain an implementation decision reviewed against fresh heads.
+Nested message presence preserves omission versus explicit `[0,0,0]`. Authoring
+`FloorPlanPlacement` is a projection value, not a runtime identity. Do not add offset
+to `Entity`, introduce an identity/join seam, or add catalog ids, intrinsic points,
+matrices, quaternions, scale, semantic wall/support, replacement, or generic transform.
 
 ### Acceptance and required runtime tests
 
-- Generated Go/TS APIs expose optional `PlacementOffset` presence and exact x/y/z
-  doubles with identical game-world-unit/axis documentation.
-- Binary and proto-JSON compatibility prove legacy absent, explicit zero, and signed
-  nonzero values without changing old payloads.
-- Nested Go+TS round trips prove the authoring FloorPlan placement, reconnect
+- Descriptor/generated Go+TS assertions prove exact shared x/y/z doubles/tags, exact
+  authoring element/list fields/tags, and optional runtime `Placement.offset=3` with
+  identical game-world-unit/axis documentation.
+- Binary and proto-JSON compatibility prove legacy runtime field-1-only bytes decode
+  offset absent and legacy FloorPlan bytes decode placements absent; explicit zero and
+  signed nonzero preserve nested presence/value.
+- Nested Go+TS round trips prove authoring `FloorPlan.placements[]`, reconnect
   `Space.hexes[].contents[]`, and live `HexKnowledgeChanged.hexes[].contents[]` each
-  preserve exact presence/value.
+  preserve absent/zero/signed values.
 - Schema/descriptor assertions prove no offset field on `Entity` and no new identity,
   replacement, or join surface.
 - Generated artifacts, lint/tests, and breaking-change checks pass.
@@ -226,8 +244,10 @@ offset association:
    `CompiledDungeon.Placements` to authoring FloorPlan fields: source path/ref/absolute
    at/applicable facing/effective blockers/exact optional offset.
 2. `StartEncounter` passes toolkit `CompiledDungeon.Params` to `InitDungeon` and
-   `Spawns` to `SeedMonsters`; toolkit mints runtime ids and returns `Encounter.Data`.
-   API persists/reloads that Data as the immutable encounter snapshot.
+   `Spawns` to `SeedMonsters` without reinterpretation. This preserves five distinct
+   inputs: room/canvas prop Params, room-monster and boss `SpawnInstruction.At`, and
+   canvas-monster `SpawnInstruction.AbsoluteAt`. Toolkit mints runtime ids and returns
+   `Encounter.Data`; API persists/reloads that Data as the immutable snapshot.
 3. Reconnect `ProjectFor` maps toolkit perception placements to proto
    `Space.hexes[].contents[]`; live KnownHex event translation maps toolkit
    `events.KnownHexPlacement` to `HexKnowledgeChanged.hexes[].contents[]`.
@@ -244,16 +264,17 @@ dropping toolkit metadata. No API/proto identity field is added.
 
 - `PutDungeon(validate_only)` plus persisted save/reload project authoring source/ref/
   absolute at/facing/effective blockers and nil-versus-explicit-zero/signed offset
-  exactly for representative room/canvas props, room monster, and boss.
-- Real content registry -> `StartEncounter` -> encounter repository save/get proves
-  all four offsets originate from T Params/Spawns and persist in toolkit Data, with no
-  sidecar join or API-owned map.
+  exactly for room prop, canvas prop, room monster, canvas monster, and room boss.
+- Real content registry -> `StartEncounter` -> encounter repository save/get proves all
+  five offsets originate from T Params/Spawns and persist in toolkit Data, explicitly
+  exercising canvas-monster `AbsoluteAt`, with no sidecar join or API-owned map.
 - Reconnect `ProjectFor` and live KnownHex event translation preserve exact optional
-  offset through both toolkit perception/event conversion points. Any fallback/current-
-  position placement rebuild copies canonical runtime metadata rather than matching
-  ref/at/order.
-- Fog matrix proves unauthorized contents/offset absent, VISIBLE wins over REMEMBERED,
-  and movement/re-placement plus resight/vacate is total and non-stale.
+  offset for all five cases through both toolkit perception/event conversion points.
+  Any fallback/current-position placement rebuild copies canonical runtime metadata
+  rather than matching ref/at/order.
+- Fog matrix includes moved canvas and room monsters: unauthorized contents/offset are
+  absent, VISIBLE wins over REMEMBERED, and movement/re-placement plus resight/vacate
+  is total and non-stale.
 - Ref edits retain/change/remove only through complete-document behavior; an existing
   snapshot never recomputes, and legacy authored content/snapshots remain readable.
 - Baseline comparison proves canonical position, blockers, collision/pathing, LoS,
@@ -435,7 +456,8 @@ Fixture assertions:
 - stable default independent of ordering;
 - exact ids above;
 - omitted/explicit `[0,0,0]`/nonzero XYZ;
-- generic `M_generic` exactly once for room/canvas prop and monster/boss fixtures;
+- generic `M_generic` exactly once for room prop, canvas prop, room monster, canvas
+  monster, and room boss fixtures;
 - catalog `C_enrolled` only for enrolled prop fixtures;
 - all six valid existing facings;
 - offset vector unchanged when facing changes;
@@ -555,8 +577,9 @@ changes while the unchanged world-axis `o` follows the entity; the vacated cell 
 leave a stale offset/index entry.
 
 Generic offset applies exactly once to every valid placement kind. Required end-to-end
-fixtures include a room prop, canvas prop, room monster, and room boss. Only the
-enrolled bookcase/torch prop cases additionally select/apply catalog calibration.
+fixtures include a room prop, canvas prop, room monster, canvas monster, and room boss.
+Only the enrolled bookcase/torch prop cases additionally select/apply catalog
+calibration.
 
 ### 7. Builder
 
@@ -585,8 +608,9 @@ selection/calibration runs only for enrolled props. Do not read source YAML, Bui
 state, wall geometry, or Learn data.
 
 Actual joined encounters from A-backed snapshots are mandatory for representative
-room prop, canvas prop, room monster, and room boss, including one movement/re-placement
-case. Storybook/Concepts Lab/local fake projection is not Game evidence.
+room prop, canvas prop, room monster, canvas monster, and room boss, including movement/
+re-placement on both monster input paths. Storybook/Concepts Lab/local fake projection
+is not Game evidence.
 
 ### 9. Ref replacement
 
@@ -636,8 +660,8 @@ is accepted in production.
   `useEncounterState.ts`, `EncounterView.tsx`, and `playtestMapHelpers.ts`;
 - VISIBLE-over-REMEMBERED, reconnect snapshot hydration, live update/resight/vacate,
   and movement/re-placement without stale reverse-index state;
-- Builder + actual Game integration using A service/snapshot for representative room
-  prop, canvas prop, room monster, and room boss;
+- Builder + actual Game integration using A service/snapshot for room prop, canvas
+  prop, room monster, canvas monster, and room boss;
 - generic `P` exactly once on every fixture, catalog `C` only on enrolled props;
 - six facing values (not claimed as six wall edges);
 - positive/negative X/Y/Z, facing nonrotation of offset;
@@ -661,6 +685,9 @@ commands, and pass/fail. The tracked provider lock itself never contains web HEA
   reconnect, and live proto projection for omission/explicit-zero/signed-nonzero;
 - authoring sidecar facts include effective blockers while runtime identity comes only
   from toolkit InitDungeon/SeedMonsters; static/runtime evidence proves no join/side map;
+- the five-case matrix distinguishes room prop, canvas prop, room monster `At`, canvas
+  monster `AbsoluteAt`, and room boss `At` from compile through Data JSON restore,
+  perception/Memory/event, API repository, reconnect, live, fog, and movement;
 - authoring/runtime exact component equality and old document/snapshot compatibility;
 - source-path errors for malformed/nonfinite;
 - fog authorization and mechanical invariants;
@@ -675,7 +702,7 @@ For identical provider/projection facts, capture Builder and actual Game:
 - bookcase and torch matrices numerically equal within `1e-6` per element;
 - screenshots at 1280×720 representative Discord viewport and one close diagnostic;
 - omission, explicit `[0,0,0]`, and ±X/±Y/±Z representatives;
-- representative room prop, canvas prop, room monster, and room boss with generic
+- room prop, canvas prop, room monster, canvas monster, and room boss with generic
   offset exactly once in both Builder and actual Game; only enrolled props show
   additional catalog calibration;
 - VISIBLE-over-REMEMBERED, reconnect, live/resight/vacate, and movement/re-placement
@@ -807,9 +834,11 @@ merge:
 1. Renewed course-corrected design and plan approved.
 2. Exactly five T/P/A/G/W owning issues/branches/PRs are created only afterward and
    boarded with the specified Project 19 Platform/Assets fields; no wrapper issue.
-3. v0.4 exact optional offset works end-to-end from YAML through actual Game, preserving
-   omission/explicit-zero/value across snapshot/live/fog/movement state and remaining
-   mechanically inert.
+3. v0.4 exact optional offset works end-to-end from YAML through actual Game: P has
+   introduced authoring `FloorPlanPlacement`/`FloorPlan.placements[]` separately from
+   existing runtime v1alpha2 `Placement`; T/A pass the five-case matrix including canvas
+   monster `AbsoluteAt`; omission/explicit-zero/signed values survive snapshot/live/fog/
+   movement state and remain mechanically inert.
 4. Safe catalog generator/registrar ships exact two ids/defaults, digest-bound scale/yaw/
    points, and required evidence-backed UX hints, all promoted into canonical game-world
    units through a tested conversion.
@@ -819,8 +848,9 @@ merge:
 6. Complete legacy tree + catalog stages atomically and identically for local/Docker;
    automatic public and manually approved licensed exact-head gates pass without secret/
    artifact leakage.
-7. Named web state/helper seams prove generic `P` exactly once for room/canvas props and
-   room monster/boss; only enrolled props receive catalog `C`; no double scale.
+7. Named web state/helper seams prove generic `P` exactly once for room prop, canvas
+   prop, room monster, canvas monster, and room boss; only enrolled props receive
+   catalog `C`; no double scale.
 8. Achievable paired evidence and defined measurable performance statistics pass without
    semantic wall/support or GPU-byte claims.
 9. Replacement retain/change/remove and all deterministic fallbacks/rollback pass.
