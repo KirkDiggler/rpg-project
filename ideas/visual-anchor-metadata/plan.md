@@ -1,15 +1,27 @@
 # Visual Anchor Metadata — delivery plan on ratified world offset
 
-**Status:** Revised planning proposal for renewed Kirk review. It implements the
-course-corrected [design](./design.md) against ratified Dungeon YAML v0.4 at PR #203
-HEAD `40a3938`; it does not claim plan approval or implementation readiness.
+**Status (2026-08-09):** Kirk approved the course-corrected [design](./design.md) and
+plan against ratified Dungeon YAML v0.4 at PR #203 HEAD `40a3938`; #206 Wave B was
+deliberately opened and delivery is active. Exactly five owning issues exist:
 
-This document is executable only after Kirk renews approval. Until then:
+- T [toolkit #898](https://github.com/KirkDiggler/rpg-toolkit/issues/898) / [PR
+  #903](https://github.com/KirkDiggler/rpg-toolkit/pull/903): merged, published, verified;
+- P [protos #219](https://github.com/KirkDiggler/rpg-api-protos/issues/219) / [PR
+  #220](https://github.com/KirkDiggler/rpg-api-protos/pull/220): merged, published, verified;
+- A [API #783](https://github.com/KirkDiggler/rpg-api/issues/783) / [PR
+  #788](https://github.com/KirkDiggler/rpg-api/pull/788): PR merged to `dev` and verified;
+  issue stays open through cross-repo closeout;
+- G [assets #44](https://github.com/KirkDiggler/rpg-game-assets/issues/44) / [PR
+  #45](https://github.com/KirkDiggler/rpg-game-assets/pull/45): merged and verified; and
+- W [web #737](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/737) / [PR
+  #742](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/742): open at exact head
+  `a33293a4d67637fff0123bc8b84aac12bb2e4466`, public CI green, awaiting local exact-head
+  locked-provider numeric/hash/performance and Kirk visual approval.
 
-- do not create implementation issues/branches/PRs/tags/rulesets;
-- keep #204/#205 and #203/#206 open;
-- do not merge either design surface; and
-- do not report the superseded semantic-anchor proposal as current.
+Do not create duplicate T/P/A/G/W, wrapper, `game-dev`, licensed-PR workflow, or bootstrap
+issues. Web #743/#744 is closed/unmerged as superseded. Keep PR #205 open through W merge,
+the established trusted post-merge asset build, and signed evidence closeout; do not merge
+PR #205 at this checkpoint.
 
 ## Outcome
 
@@ -44,9 +56,10 @@ Deliver one production path where:
 No issue may introduce a parallel anchor object, server catalog lookup, raw full transform,
 or gameplay-footprint coupling.
 
-## Current baselines and seams audited before issue creation
+## Original planning baselines and audited seams
 
-Capture fresh exact heads again when issues are cut. Planning audit used:
+The five existing owning issues recorded their own fresh branch bases. The planning audit
+that shaped them used:
 
 - `rpg-toolkit origin/main@1ecd20a9`: `encounter/dungeonspec/{spec,decode,
   validate,compile}.go` plus existing `DungeonParams`/obstacle specs,
@@ -73,41 +86,30 @@ Capture fresh exact heads again when issues are cut. Planning audit used:
   `EncounterMap→HexGrid→HexEntity`; local pull+rsync versus Docker latest-main+copy
   divergence; Learn experiment modules; and no current v0.4 offset projection.
 
-Those heads are evidence, not branch bases for future work. Every issue starts from
-fresh owning base and records exact HEAD.
+Those heads are historical evidence, not current release provenance.
 
-## Work graph after renewed approval
+## Living work graph and exact issue mapping
 
-Create exactly **five** implementation issues—T/P/A/G/W—and exactly one branch/PR in
-each owning repository. There is no C/wrapper issue and no `game-dev` issue. Director
-coordination/evidence remains comments on existing #206/#204 and PR #203/#205.
+#206 Wave B is deliberately open. The five owning issues below are the complete
+implementation set; director coordination/evidence remains on #206/#204 and PR #203/#205.
+Do not create a sixth leg or recut any completed provider.
 
-Issue creation requires both renewed #205 approval and the deliberate #206 decision to
-open Wave B; #206 currently says the wave is not cut. Approval of this plan does not
-silently bypass that sequencing gate.
-
-| ID | Repository/base | Owning lane | Deliverable | Depends on |
+| ID | Owning issue / PR | Repository/base | Current exact state | Depends on |
 | --- | --- | --- | --- | --- |
-| T | `rpg-toolkit/main` | Platform | strict YAML + authoring sidecar + existing Params/Spawns/Data/perception/event runtime carriers | #206 Wave B opened; approved #203/#205 plans |
-| P | `rpg-api-protos/main` | Platform | optional authoring + authorized runtime transport, omission preserved | #206 Wave B opened; web/API consumer fixtures |
-| A | `rpg-api/dev` | Platform | source persistence, authoring projection, snapshot/runtime projection, no interpretation | T + P released |
-| G | `rpg-game-assets/main` | Assets | declarations, safe generator, two enrolled assets/hints, exact provider handoff | renewed #205 approval |
-| W | `rpg-dnd5e-web/dev` | Assets with UI/Platform review | Builder authoring + actual Game generic offset, shared catalog selector/resolver, atomic sync | A available + G merged provenance |
+| T | toolkit #898 / PR #903 | `rpg-toolkit/main` | Done; merge `7549d9aa1a718ef7453f4337b6bb3818d195e1e0`; `encounter/v0.53.0` verified | complete |
+| P | protos #219 / PR #220 | `rpg-api-protos/main` | Done; merge `8aa4bda5c1f09b1eaa009d52e13c3e3da6037508`; generated Go `a6648cecf193894231bf55df1fc28b3eb42cf32e` verified | complete |
+| A | API #783 / PR #788 | `rpg-api/dev` | PR merged/verified as `f5c847e81c1d4e94c06ebf5e406aec17eaa52b63`; issue remains In Review for closeout | T + P released |
+| G | assets #44 / PR #45 | `rpg-game-assets/main` | Done; exact provider `29e26f7e4b92bdc35277bbaa9712f7cdce8ce85a` verified | approved plan; exact lock below |
+| W | web #737 / PR #742 | `rpg-dnd5e-web/dev` | In Progress/open at `a33293a4d67637fff0123bc8b84aac12bb2e4466`; public CI green; local evidence gate remains | A merged/verified + exact G lock |
 
-At cut time add every issue to **KirkDiggler Project 19** with exact fields:
+Project 19 currently records T/P/G as Done, A as In Review, and W as In Progress. Web
+#743/#744 is closed/unmerged as superseded and is not an implementation leg. Keep the
+required signature on every GitHub comment. Only W, post-merge build verification, and
+cross-repo evidence/closure remain.
 
-- T/P/A: `Team=Platform`, `Feature=The Dungeon`, `Kind=Build`, `Status=Todo`;
-- G/W: `Team=Assets`, `Feature=The Dungeon`, `Kind=Build`, `Status=Todo`.
+### Development order: outside-in (executed sequence)
 
-Use then-current owning Platform/Assets board policy and repo labels in addition to
-those fields; do not invent a separate Assets or `game-dev` board. Move each item to
-`In Progress` only when its work session begins and `In Review` only when its ready PR
-opens. Each issue/PR stays open through its independent gate and all GitHub comments
-carry the required role signature.
-
-### Development order: outside-in
-
-1. W owner writes contract-level TS fixtures/interfaces first on its future branch:
+1. W owner wrote contract-level TS fixtures/interfaces first on the existing W branch:
    projected optional world triple, semantic ref/at/facing, selector result, expected
    exact matrix. These are not reported as Game implementation.
 2. P shapes the smallest optional transport that satisfies authoring and authorized
@@ -119,24 +121,25 @@ carry the required role signature.
 
 This is development sequencing, not merge sequencing.
 
-### Provider-first merge/release order
+### Provider-first merge/release order and remaining gates
 
-1. T merges to `rpg-toolkit/main`; record the actual tagged module/version produced by
-   normal repo release automation (do not invent one in advance).
-2. P merges to `rpg-api-protos/main`; record exact generated artifact revision/tag.
-   T and P may merge in either order only if independently green; A needs both.
-3. A pins released T/P, merges to `rpg-api/dev`, and is deployed/available in the
-   paired acceptance environment.
-4. G merges to `rpg-game-assets/main`; record the exact merged commit SHA chosen below.
-5. W's exact PR head pins A-compatible protos and exact G commit, passes public PR CI,
-   then passes local exact-head locked-provider numeric/hash/performance verification
-   and Kirk's local Builder + actual API-backed Game visual approval on his trusted
-   machine. Record signed scalar/hash evidence only; never upload screenshots or
+1. **Complete:** T merged to `rpg-toolkit/main` and published verified
+   `encounter/v0.53.0`.
+2. **Complete:** P merged to `rpg-api-protos/main` and published the verified generated
+   Go revision named above.
+3. **Complete for W dependency:** A pinned released T/P, merged to `rpg-api/dev`, and
+   passed post-merge build/test plus independent verification.
+4. **Complete:** G merged to `rpg-game-assets/main`; exact provider SHA and digests are
+   locked below.
+5. **Current:** W #742 at exact head `a33293a4d67637fff0123bc8b84aac12bb2e4466`
+   has green public CI. On that unchanged head, run local exact-head locked-provider
+   numeric/hash/performance verification and Kirk's local Builder + actual API-backed Game
+   visual approval. Record signed scalar/hash evidence only; never upload screenshots or
    licensed bytes.
-6. W merges to `rpg-dnd5e-web/dev`; the established trusted post-merge build workflow
-   handles private asset fetch/build from the exact provider lock.
-7. Director assembles evidence on existing #206/#204 and PR #203/#205; Kirk decides
-   whether either tracking PR may merge/close.
+6. **Then:** merge W to `rpg-dnd5e-web/dev`; the established trusted post-merge build
+   workflow handles private asset fetch/build from the exact provider lock.
+7. **Closeout:** director assembles evidence on #206/#204 and PR #203/#205; PR #205
+   remains open until Kirk decides whether the tracking surfaces may merge/close.
 
 No consumer merge precedes its provider. A web-only hand-built offset fixture cannot
 satisfy the Game gate.
@@ -145,7 +148,8 @@ satisfy the Game gate.
 
 ### Files/seams
 
-Start at fresh `origin/main`. T owns the complete toolkit carrier chain, not only YAML:
+Delivered by toolkit #898 / PR #903 from the recorded fresh base. T owns the complete
+carrier chain, not only YAML:
 
 - `encounter/core.PlacementOffset [3]float64` is the cycle-safe shared value; pointers
   preserve omission versus explicit zero wherever presence matters;
@@ -397,26 +401,20 @@ SHA is unknowable until merge and belongs in W's post-merge provider lock.
 
 Failure keeps prior entire tree/catalog; no partial rsync is visible.
 
-### Provider provenance: explicit Kirk call
+### Provider provenance: decided and released
 
-**Recommendation:** after G merges, choose its exact merged commit SHA. W commits a
-provider lock containing exactly that G SHA, catalog digest, generator/tool identity
-and version, and required repository/schema identity. It contains neither a web SHA
-nor mutable branch name. Authenticated local/Docker sync fetches the G commit directly
-and verifies `HEAD == locked SHA`. Actual `github.sha`/web HEAD is recorded only by the
-running W check as a non-committed artifact and deployment/image label alongside the
-verified lock hash.
+Kirk chose the exact merged G commit with no release-tag ceremony. W's provider lock
+contains exact G SHA `29e26f7e4b92bdc35277bbaa9712f7cdce8ce85a`, safe catalog SHA-256
+`0b816d6f08584e66c90556f9ad4d040c71086c1dbf698bf7d5030fb05c490669`, generator/tool
+identity and version, inventory SHA-256
+`e1e1915d330d0431248cdec57e5a591454c38820c832e7eff1a5e0d6a7c54bd1`, 2,143-file tree
+SHA-256 `3bcb0584e267b4291f86370093e56091f3c62ccfb53e86e062c66ec457c4c144`, and required
+repository/schema identity. It contains neither a web SHA nor mutable branch name.
+Authenticated local/Docker sync fetches that exact G commit and verifies `HEAD == locked
+SHA`; the established trusted post-merge build does the same. Actual web HEAD is signed
+scalar/hash evidence and a deployment/image label alongside the verified lock hash.
 
-If Kirk instead chooses a named release, G must additionally:
-
-- create annotated `web-assets/v1.0.0` only after merge;
-- install a no-bypass repository tag ruleset protecting `web-assets/v*` from update
-  and deletion before creating the tag;
-- W's provider lock records tag object id and
-  `git rev-parse web-assets/v1.0.0^{}` peeled commit plus catalog/tool facts; and
-- W verifies all of them. A lightweight/unprotected/moveable tag is not acceptable.
-
-No tag or ruleset is created before Kirk's renewed plan approval and explicit choice.
+Do not create a provider tag/ruleset alternative or another provenance issue.
 
 ### G tests/evidence
 
@@ -432,9 +430,9 @@ No tag or ruleset is created before Kirk's renewed plan approval and explicit ch
 
 ## W — web consumer issue/PR
 
-Start one future branch from fresh `origin/dev`. W includes platform offset consumption
-and visual catalog integration so one actual matrix path can be proven; it does not
-replace T/P/A.
+The existing W branch for web #737 / PR #742 includes platform offset consumption and
+visual catalog integration so one actual matrix path can be proven; it does not replace
+T/P/A. Do not cut another W branch or issue.
 
 ### 1. Contract fixtures before providers
 
@@ -479,10 +477,9 @@ Fixture assertions:
 Replace both divergent paths with one script/module used by local sync and Docker:
 
 1. read the tracked W provider lock containing exact merged G SHA, catalog digest, and
-   generator/tool identity/version (or protected tag object + peeled commit if Kirk
-   chose tag); the lock contains no web SHA;
+   generator/tool identity/version; the lock contains no web SHA or tag indirection;
 2. authenticated fetch/checkout exact revision in a clean temp directory;
-3. assert exact HEAD/peeled SHA before reading files;
+3. assert exact provider HEAD before reading files;
 4. stage the **complete** legacy `harness/models/synty/` tree plus safe catalog;
 5. verify byte-identical checked catalog, inventory, every enrolled digest, schema, and
    generator identity; and
@@ -676,7 +673,7 @@ is accepted in production.
 
 Use one checked evidence index on #205 for T/P/A/G/W. Licensed-asset verification is
 recorded as signed scalar/hash evidence only: issue/PR, actual exact web HEAD/base HEAD,
-tracked provider-lock hash, provider SHA/tag+peeled SHA, catalog/tool/GLB digests,
+tracked provider-lock hash, exact provider SHA, catalog/tool/GLB digests,
 command/result-summary digests, measured scalars, and pass/fail. The tracked provider
 lock itself never contains web HEAD; no screenshot or licensed-byte evidence is uploaded.
 
@@ -791,7 +788,7 @@ The following all hard-fail G/W release checks:
 
 - generated catalog differs from generator output;
 - catalog expected digest/revision differs between public artifact/runtime import;
-- provider exact HEAD/peeled commit, catalog digest, or tool identity differs from
+- provider exact HEAD, catalog digest, or tool identity differs from
   the tracked W provider lock;
 - enrolled GLB SHA-256 differs;
 - complete legacy tree inventory is missing/partially from another provider revision;
@@ -842,9 +839,11 @@ source/protos/API once stored.
 All must be true before the director can recommend delivery; only Kirk may approve or
 merge:
 
-1. Renewed course-corrected design and plan approved.
-2. Exactly five T/P/A/G/W owning issues/branches/PRs are created only afterward and
-   boarded with the specified Project 19 Platform/Assets fields; no wrapper issue.
+1. Course-corrected design and plan are approved; the 2026-08-09 trust-model correction
+   changes operational evidence mechanics only.
+2. Exactly five owning implementation legs remain mapped to toolkit #898/#903, protos
+   #219/#220, API #783/#788, assets #44/#45, and web #737/#742. Do not create duplicates,
+   a wrapper, `game-dev` issue, or replacement for superseded web #743/#744.
 3. v0.4 exact optional offset works end-to-end from YAML through actual Game: P has
    introduced authoring `FloorPlanPlacement`/`FloorPlan.placements[]` separately from
    existing runtime v1alpha2 `Placement`; T/A pass the five-case matrix including canvas
@@ -853,8 +852,9 @@ merge:
 4. Safe catalog generator/registrar ships exact two ids/defaults, digest-bound scale/yaw/
    points, and required evidence-backed UX hints, all promoted into canonical game-world
    units through a tested conversion.
-5. Tracked W provider lock pins exact G commit (or protected tag object + peeled commit),
-   catalog digest, and tool identity with no web SHA; actual web HEAD appears only in
+5. Tracked W provider lock pins exact G commit
+   `29e26f7e4b92bdc35277bbaa9712f7cdce8ce85a`, catalog/inventory/tree/GLB digests, and
+   tool identity with no tag indirection or web SHA; actual web HEAD appears only in
    signed scalar/hash evidence and deployment/image labels.
 6. Complete legacy tree + catalog stages atomically and identically for local/Docker;
    public PR CI passes, Kirk's trusted-machine exact-head numeric/hash/performance and

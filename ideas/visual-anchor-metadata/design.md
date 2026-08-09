@@ -1,10 +1,10 @@
 # Visual Anchor Metadata — canonical calibration with ratified world offset
 
-**Status:** Course-corrected design proposed for renewed Kirk review on
-[rpg-project PR #205](https://github.com/KirkDiggler/rpg-project/pull/205).
+**Status:** Kirk approved this course-corrected design and plan on 2026-08-09;
+delivery is active under [rpg-project PR #205](https://github.com/KirkDiggler/rpg-project/pull/205).
 The earlier semantic-anchor/YAML mapping was based on superseded PR #203 HEAD
 `c37a1e1` and is withdrawn. Ratified Dungeon YAML v0.4 at PR #203 HEAD `40a3938`
-is the contract this revision consumes.
+is the unchanged contract this design consumes.
 
 North star: **the asset owns its intrinsic registration; authored YAML owns only the
 logical placement and an optional finite world-axis translation; Builder and Game
@@ -20,7 +20,8 @@ V1 production proof remains deliberately narrow:
 - no downed-character web correction. rpg-game-assets #43 remains an independent
   re-export defect and is not a completion dependency for this design.
 
-No implementation issue/code is created by this revision.
+This design reconciliation creates no new implementation issue or product code. Delivery
+continues only through the already-cut T/P/A/G/W owning issues named below.
 
 ## What the Learn locked
 
@@ -338,15 +339,16 @@ Recommended v1: after G merges, W commits a small provider lock containing only:
 - repository/schema identity needed to verify those facts.
 
 The lock contains no web SHA and no mutable branch name. No tracked G catalog/wrapper
-may contain its own not-yet-known post-merge SHA. CI/build checks verify the lock, then
-record the actual `github.sha`/web HEAD plus verified lock hash/provider SHA only in a
-non-committed evidence artifact and deployment/image labels. This split avoids both
-self-reference and a falsely tracked build identity.
+may contain its own not-yet-known post-merge SHA. Public checks validate safe lock/catalog
+shape without private assets; local exact-head verification and the established trusted
+post-merge build verify the locked private provider. They record actual web HEAD, verified
+lock hash, provider SHA, catalog/tool/GLB digests, and results only as signed scalar/hash
+evidence and deployment/image labels. This split avoids both self-reference and a falsely
+tracked build identity.
 
-Alternative only by explicit Kirk call: create an annotated `web-assets/v1.0.0` tag,
-protect `web-assets/v*` from update/deletion via a no-bypass ruleset, and put its tag
-object id plus `git rev-parse web-assets/v1.0.0^{}` peeled commit in the W lock. An
-unprotected or moveable tag is not acceptable provenance.
+Kirk chose the exact merged-commit lock with no release-tag ceremony. G is now immutable
+at `29e26f7e4b92bdc35277bbaa9712f7cdce8ce85a`; W must retain that exact commit and its
+catalog/tool/inventory/GLB digests. Do not create a tag or ruleset alternative.
 
 ### Complete atomic stage
 
@@ -428,34 +430,44 @@ to this wall" if geometry changes. That richer intent is deferred above v0.4.
 ## Public/private and licensing boundary
 
 Raw Synty source and promoted GLBs never enter public git. The private authenticated
-stage may ship GLBs inside the built game. Public-safe JSON contains only approved
-identity/path/render numbers/digests/hints. Screenshots/contact sheets and numeric
-matrices are license-safe evidence. An allowlist test rejects source paths, pack
-notes, geometry, materials, textures, and raw measurement payload.
+stage may ship promoted GLBs inside the built game. Public-safe JSON contains only
+approved identity/path/render numbers/digests/hints; an allowlist test rejects source
+paths, pack notes, geometry, materials, textures, and raw measurement payload.
 
-Public fixture/schema/matrix checks run automatically without secrets. A licensed
-exact-head run is a distinct protected trust gate: Kirk manually approves a reviewed,
-same-repository, exact-head job through a protected GitHub Environment; forks and
-Dependabot cannot receive the credential. The credential is short-lived, read-only,
-least-privileged, and never survives private checkout. Logs/URLs are scrubbed and an
-explicit artifact/cache allowlist forbids GLBs, tokens, and private checkout content.
-The plan defines the executable gate.
+Public PR CI runs fixture/schema/matrix, lint, type, unit, and public-build checks without
+private-provider credentials or licensed bytes. After public CI, Kirk's trusted machine
+checks out the exact reviewed W head, stages the exact locked provider revision, and runs
+numeric/hash/drift/license/performance verification for local and Docker modes. Kirk then
+locally inspects Builder and the actual API-backed Game on that identical W/provider pair.
+Any head or lock change invalidates those results.
+
+Record only signed scalar/hash evidence: exact W/provider/lock/catalog/tool/GLB digests,
+measured numeric/performance/scenario scalars, summary hashes, and pass/fail. Do not upload
+screenshots, licensed bytes, private checkout/stage content, or authenticated URLs. After
+W merges to `dev`, the established trusted post-merge build fetches/builds the same exact
+provider lock.
+
+This course correction supersedes **only operational evidence mechanics**. It removes any
+protected GitHub Environment/manual-credential PR job, hostile-PR/no-egress sandbox,
+workflow bootstrap, and screenshot-upload requirement. It changes no YAML field, product
+behavior, transform/selection rule, provider digest, or license boundary.
 
 ## Performance contract
 
 Named, measurable methods and budgets for the initial two-asset scene:
 
-1. **Pure resolver microbenchmark:** use the repository CI Node version and production
-   resolver build on one pinned Linux runner. One sample times a batch of 1,000 resolves
-   cycling the fixed six-facing × three-offset case table with `performance.now()`, then
-   divides elapsed time by 1,000. Each fresh Node process runs 10 untimed warmup batches
-   then 100 timed samples. Sort the 100 per-resolve samples and select nearest-rank p95
-   (`ceil(0.95*n)-1` zero-based). Run three fresh processes in the same job/runner and
-   take the median of their three p95 values. Required result: ≤ `0.05 ms/resolve`.
+1. **Pure resolver microbenchmark:** use the repository Node version and production
+   resolver build on Kirk's recorded trusted machine. One sample times a batch of 1,000
+   resolves cycling the fixed six-facing × three-offset case table with
+   `performance.now()`, then divides elapsed time by 1,000. Each fresh Node process runs
+   10 untimed warmup batches then 100 timed samples. Sort the 100 per-resolve samples and
+   select nearest-rank p95 (`ceil(0.95*n)-1` zero-based). Run three fresh processes in
+   the same local verification run and take the median of their three p95 values.
+   Required result: ≤ `0.05 ms/resolve`.
 2. **Idle recomputation guard:** instrument selector/resolver; after state settles,
    300 `requestAnimationFrame` ticks produce **zero** additional resolves.
 3. **Real-route `DevPerfProbe`:** compare exact `origin/dev` base and W head sequentially
-   in three paired cycles on the same job/runner, browser version, provider revision,
+   in three paired cycles on the same trusted machine, browser version, provider revision,
    fixed route/camera, and already-loaded bookcase/torch. After model-ready plus 120
    warmup frames, sample the probe's existing 8,000 ms window. Aggregate frame time as
    the median of the three reported per-run `frameTimeMs.p95` values. Head must be no
@@ -470,9 +482,9 @@ with the measured evidence; no "looks fine" waiver.
 
 ## Achievable production evidence
 
-Required paired Builder/actual-Game evidence uses identical:
+Required local Builder/actual API-backed Game verification uses identical:
 
-- provider peeled commit provenance;
+- exact merged provider commit provenance;
 - catalog revision and GLB digests;
 - semantic ref/default variant;
 - compiled absolute `at`;
@@ -491,42 +503,57 @@ Prove:
 - all six **existing facing** values where baseline rules permit them;
 - facing changes model orientation but does not rotate offset;
 - bookcase→torch edit with retained, changed, and removed offset;
-- Builder/Game numeric matrix equality and paired screenshots at representative
-  Discord viewport;
+- Builder/Game numeric matrix equality plus Kirk's local visual approval at a
+  representative Discord viewport and close diagnostic view;
 - interior-wall and generated-envelope scenes only as visual authoring examples—the
   contract does not claim semantic support/reattachment; and
 - deterministic no-anchor, invalid catalog/provenance, and model-load fallback.
 
-Concepts Lab evidence is input, not production parity. No requirement may claim six
-wall edges/support types because v0.4 does not transport them.
+Concepts Lab evidence is input, not production parity. Record local approval only as
+signed scenario scalars and summary hashes; no screenshot upload is required or allowed.
+No requirement may claim six wall edges/support types because v0.4 does not transport them.
 
 ## External ratified-offset implementation chain
 
-There are no downstream implementation issues yet. After renewed design/plan approval,
-#203/#206 must cut owning items for:
+#206 Wave B was deliberately opened and exactly five owning issues were cut. Current
+verified state on 2026-08-09:
 
-1. **rpg-toolkit / dungeonspec:** decode exactly three finite values, preserve optional
-   presence, compile/copy without reinterpretation, strict field-path errors.
-2. **rpg-api-protos:** optional exact triple in authoring placement projection and
-   authorized runtime placement. Preserve omission versus authored zero. No matrix or
-   catalog fields.
-3. **rpg-api:** persist/reload authored source, copy toolkit result into authoring and
-   authorized runtime projections, preserve encounter snapshots, no calculations.
-4. **rpg-dnd5e-web:** author/validate/save offset in Builder and apply projected exact
-   offset in actual Game, in addition to visual catalog integration.
+1. **T — [toolkit #898](https://github.com/KirkDiggler/rpg-toolkit/issues/898) / [PR
+   #903](https://github.com/KirkDiggler/rpg-toolkit/pull/903):** merged to `main` as
+   `7549d9aa1a718ef7453f4337b6bb3818d195e1e0`; published `encounter/v0.53.0`; carrier
+   verification passed. The separate pre-existing repo-wide lint debt remains #663.
+2. **P — [protos #219](https://github.com/KirkDiggler/rpg-api-protos/issues/219) / [PR
+   #220](https://github.com/KirkDiggler/rpg-api-protos/pull/220):** merged to `main` as
+   `8aa4bda5c1f09b1eaa009d52e13c3e3da6037508`; generated Go revision
+   `a6648cecf193894231bf55df1fc28b3eb42cf32e` is published and verified. The separate
+   TypeScript/GitHub Release defect remains #210 and is not a Go gate.
+3. **A — [API #783](https://github.com/KirkDiggler/rpg-api/issues/783) / [PR
+   #788](https://github.com/KirkDiggler/rpg-api/pull/788):** reviewed head
+   `c0173ce9c1486630e1f6258fc2f96c476ce171c2` merged to `dev` as
+   `f5c847e81c1d4e94c06ebf5e406aec17eaa52b63`; post-merge build/test and independent
+   gate passed. The issue remains open through W/cross-repo closeout.
+4. **G — [assets #44](https://github.com/KirkDiggler/rpg-game-assets/issues/44) / [PR
+   #45](https://github.com/KirkDiggler/rpg-game-assets/pull/45):** merged and verified
+   on `main` at exact provider commit `29e26f7e4b92bdc35277bbaa9712f7cdce8ce85a`;
+   catalog SHA-256 is `0b816d6f08584e66c90556f9ad4d040c71086c1dbf698bf7d5030fb05c490669`.
+5. **W — [web #737](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/737) / [PR
+   #742](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/742):** open at exact head
+   `a33293a4d67637fff0123bc8b84aac12bb2e4466`; public CI is green. The remaining gate is
+   local exact-head locked-provider numeric/hash/performance verification plus Kirk's
+   local Builder/actual API-backed Game visual approval.
 
-The concrete current seams are toolkit `encounter/dungeonspec/{spec,decode,validate,
-compile}.go`, protos `dnd5e/api/authoring/v1alpha1/service.proto` plus the authorized
-v1alpha2 encounter placement type selected by #203's implementation plan, API
-`internal/orchestrators/authoring` + dungeon registry/snapshot and v2 encounter
-projection, and web state/render ingestion through `src/hooks/useEncounterState.ts`,
-`src/components/game/EncounterView.tsx`, and
-`src/components/playtest/playtestMapHelpers.ts` before the Builder/Game renderer paths
-documented in the plan.
+The superseded web #743/#744 protected-workflow bootstrap is closed/unmerged and is not a
+sixth implementation leg. Do not create a replacement bootstrap, wrapper, or duplicate
+T/P/A/G/W issue. Preserve provider-first order (T + P → A → G → W); PR #205 stays open
+through W merge, trusted post-merge asset build verification, and evidence closeout.
 
-Develop outside-in from web projection requirements; merge provider-first
-(toolkit/protos → API → web). No web-only fixture may be reported as actual Game
-support.
+The concrete seams remain toolkit `encounter/dungeonspec/{spec,decode,validate,
+compile}.go`, protos `dnd5e/api/authoring/v1alpha1/service.proto` plus authorized
+v1alpha2 encounter placement, API `internal/orchestrators/authoring` plus dungeon
+registry/snapshot and encounter projection, and web ingestion through
+`src/hooks/useEncounterState.ts`, `src/components/game/EncounterView.tsx`, and
+`src/components/playtest/playtestMapHelpers.ts` before the Builder/Game renderer paths.
+No web-only fixture may be reported as actual Game support.
 
 ## Experiment cleanup
 
@@ -562,7 +589,7 @@ keeps Learn measurement modules out of Builder/Game.
 6. One selector and one matrix resolver feed Builder/Game; `P` is the sole world
    placement transform and enrolled `M` is the sole primitive/companion group transform.
 7. Complete legacy tree + safe catalog stage atomically from the tracked provider lock;
-   actual web HEAD belongs only to non-committed build evidence/labels.
+   actual web HEAD belongs only to signed scalar/hash evidence and deployment/image labels.
 8. Invalid catalog/provenance/digest cannot publish; ordinary load/no-anchor fallback
    retains `p+o`.
 9. Offset remains cosmetic and mechanically inert.
@@ -571,16 +598,18 @@ keeps Learn measurement modules out of Builder/Game.
     walls/support.
 12. #43 remains separate/nonblocking and can never justify a web correction.
 
-## Genuine Kirk judgments for renewed approval
+## Kirk decision ledger
 
-| Judgment | Recommendation | Consequence |
+| Judgment | Approved decision | Consequence |
 | --- | --- | --- |
-| Provider provenance | **Pin exact merged G commit SHA + catalog digest + tool identity in a tracked W provider lock with no web SHA.** | Actual web HEAD is non-committed CI/image evidence. If Kirk prefers tags, require protected annotated tag + tag object and peeled commit; unprotected tag is rejected. |
-| Exact immutable ids | **Approve the two literals and grammar above.** | Stable across path moves; later spelling changes require migration. |
+| Provider provenance | **Pin exact merged G commit SHA + catalog digest + tool identity in a tracked W provider lock with no web SHA or tag ceremony.** | Actual web HEAD is signed scalar/hash and deployment/image-label evidence; exact lock/digests remain mandatory. |
+| Exact immutable ids | **Use the two literals and grammar above.** | Stable across path moves; later spelling changes require migration. |
 | UX hints | **Require hints/evidence for both initial entries.** | Builder has bounded useful controls without server coupling; missing evidence returns to design instead of shipping unbounded guesses. |
 | Wall authoring | **Accept v0.4 offset-only limitation and defer semantic support/edge persistence.** | Torch/bookcase can be positioned, but cannot automatically remain attached when wall geometry changes. |
-| Performance budgets | **Adopt the four quantitative gates above.** | Objective regression bar; measured exception requires Kirk, not agent rationalization. |
+| Performance budgets | **Use the four quantitative gates above on Kirk's trusted machine.** | Objective regression bar; measured exception requires Kirk, not agent rationalization. |
 | #43 | **Remove it from #205 completion gating; keep only the no-web-offset invariant/cross-link.** | Unrelated export work cannot strand bookcase/torch delivery. |
+| Licensed-assets PR trust model (2026-08-09) | **Public secretless PR CI; trusted local exact-head locked-provider numeric/hash/performance verification; Kirk local Builder/actual API-backed Game visual approval; no screenshot upload; trusted post-merge asset build.** | No protected Environment/manual credential CI, no hostile-PR/no-egress sandbox, and no workflow bootstrap. Operational evidence mechanics only; YAML/product/transform/license architecture is unchanged. |
 
-This revised design requires renewed Kirk approval before the plan is treated as
-current.
+Kirk approved the design/plan boundary and this later trust-model course correction. PR
+#205 remains the open tracking/evidence surface; this reconciliation does not approve its
+merge or create any implementation issue.
