@@ -195,16 +195,25 @@ the events they already emit.
 
 Two renderings of the same breadcrumb **[shelf]**:
 
-- **The combat log as DM narration**: D&D doesn't show HP, so the log
-  narrates in-fiction — "the skeleton turns on the wounded wizard," "the
-  ghoul breaks and runs." The log is a debug dump today; each slice
-  improves it in the game's own voice.
-- **A debug view** (dev tooling, later the owner's tuning tool) renders the
-  mechanics: `target=wizard strategy=lowest-hp candidates=3`. When the
-  question is "why did it flee *there*?", the answer is already recorded.
+- **A debug view** (a Debug/Story toggle on the combat log) renders the
+  mechanics raw: refs verbatim, positions and hex counts on movement,
+  rationale refs including `closest`, sequence numbers —
+  `target=wizard strategy=lowest-hp candidates=3` once the wire carries
+  candidates. When the question is "why did it flee *there*?", the answer
+  is already recorded.
+- **The combat log as DM narration**: D&D doesn't show HP, so the story
+  view narrates in-fiction — "the skeleton turns on the wounded wizard,"
+  "the ghoul breaks and runs."
 
-Slice 1 (targeting) forces the first version of this tool; every later
-slice inherits it and adds its own decisions to the stream.
+**Priority (Kirk, 2026-08-09, learned from slice-1 acceptance):** while
+the game is under construction, **the debug view is the primary lens** —
+withholding information during development is silly; the in-fiction voice
+is a polish layer. Slice 1's acceptance run proved it: even with the
+narrative clause rendering, verifying the decision took Redis dumps and a
+hand-drawn diagram. Debug v1 is client-only over data already on the
+stream (web#740); the candidate-snapshot wire signal is decided at
+slices 2–3 per §7's revisit clause. Every later slice adds its decisions
+to the same stream, and both views inherit them.
 
 - The dnd5e monster package **adapts** `PerceptionData` → `behavior.Snapshot`
   and consults the machine at the top of `TakeTurn` (combat clock) and the
