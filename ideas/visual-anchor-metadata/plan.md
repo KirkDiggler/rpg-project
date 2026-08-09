@@ -48,13 +48,16 @@ or gameplay-footprint coupling.
 Capture fresh exact heads again when issues are cut. Planning audit used:
 
 - `rpg-toolkit origin/main@1ecd20a9`: `encounter/dungeonspec/{spec,decode,
-  validate,compile}.go` and fixture/unit suites;
+  validate,compile}.go` plus existing `DungeonParams`/obstacle specs,
+  `SpawnInstruction`, `ObstacleData`/`MonsterInput`/`MonsterData`, encounter Data JSON,
+  perception Memory, and KnownHex event carriers;
 - `rpg-api-protos origin/main@6c4a9160`: authoring
   `dnd5e/api/authoring/v1alpha1/service.proto`, generated Go/TS, encounter v1alpha2
   types/events; exact authorized placement owner must be confirmed in the platform
   implementation issue, not guessed here;
-- `rpg-api origin/dev@2646724d`: `internal/orchestrators/authoring`, dungeon registry
-  and encounter creation/snapshot, authoring handler, v2 authorized hex projection;
+- `rpg-api origin/dev@2646724d`: `internal/orchestrators/authoring`, content registry
+  and StartEncounter `Params`/`Spawns` consumption, encounter repository Data save/get,
+  authoring handler, reconnect `ProjectFor`, and live KnownHex event translation;
 - `rpg-game-assets origin/main@d22c53f`: private prop-role source data,
   `scripts/build_prop_manifest.py`, generated global `SYNTY_SCALE=0.75`, no asset
   release tag convention or CI workflow;
@@ -82,7 +85,7 @@ silently bypass that sequencing gate.
 
 | ID | Repository/base | Owning lane | Deliverable | Depends on |
 | --- | --- | --- | --- | --- |
-| T | `rpg-toolkit/main` | Platform | strict YAML offset decode/validate/presence/compile | #206 Wave B opened; approved #203/#205 plans |
+| T | `rpg-toolkit/main` | Platform | strict YAML + authoring sidecar + existing Params/Spawns/Data/perception/event runtime carriers | #206 Wave B opened; approved #203/#205 plans |
 | P | `rpg-api-protos/main` | Platform | optional authoring + authorized runtime transport, omission preserved | #206 Wave B opened; web/API consumer fixtures |
 | A | `rpg-api/dev` | Platform | source persistence, authoring projection, snapshot/runtime projection, no interpretation | T + P released |
 | G | `rpg-game-assets/main` | Assets | declarations, safe generator, two enrolled assets/hints, exact provider handoff | renewed #205 approval |
@@ -134,90 +137,128 @@ satisfy the Game gate.
 
 ### Files/seams
 
-Start at fresh `origin/main`. Expected owners:
+Start at fresh `origin/main`. T owns the complete toolkit carrier chain, not only YAML:
 
-- `encounter/dungeonspec/spec.go`: optional authored presence type on room/canvas place
-  and boss without a generic renderer transform type;
-- `decode.go`: strict known-field decode;
-- `validate.go`: exact length-three + finite values, canonical source paths;
-- `compile.go`: copy presence/value to compiled placement; room-local to absolute `at`
-  changes must not alter offset; and
-- existing fixture/unit files for all placement locations.
+- `encounter/core.PlacementOffset [3]float64` is the cycle-safe shared value; pointers
+  preserve omission versus explicit zero wherever presence matters;
+- `encounter/dungeonspec/{spec,decode,validate}.go` strictly decode exactly three finite
+  values on room/canvas placement and boss with canonical source-path errors;
+- `compile.go` compiles the authored value **twice for distinct consumers**:
+  1. `CompiledDungeon.Placements []CompiledPlacement` is the authoring-only sidecar with
+     source path, ref, absolute at, applicable facing, effective blockers, and offset;
+  2. the existing runtime inputs consumed by `StartEncounter`: room props through
+     `CompiledDungeon.Params`/`PlacedObstacleSpec`, canvas props through
+     `Params`/`AbsolutePlacedObstacleSpec`, and room/canvas monsters plus boss through
+     `CompiledDungeon.Spawns`/`SpawnInstruction`;
+- `InitDungeon`/`SeedMonsters` copy runtime truth through `ObstacleData` or
+  `MonsterInput -> MonsterData`; `Encounter.Data` JSON/restore is immutable encounter
+  persistence; and
+- authorized knowledge copies it through `perception.Placement ->
+  events.KnownHexPlacement`, with viewer Memory freezing the last authorized value.
 
-### Acceptance
+`CompiledDungeon.Placements` is never joined to toolkit-minted runtime ids. Movement
+mutates canonical `Position` only, so the same offset follows the runtime entity;
+current VISIBLE truth removes it from a vacated cell while REMEMBERED truth retains the
+last authorized observation. Any placement-producing observation/appearance/pass-
+through helper must copy canonical runtime metadata rather than manufacture a bare
+identity that drops offset.
 
-- Accept omitted and exact `[0,0,0]` as distinct authored presence cases.
-- Accept positive/negative finite values on room place, canvas place, boss.
-- Reject 0/1/2/4 components, string/null components, NaN and infinities through all
-  decode paths with exact `ValidationError.field`.
-- Keep facing/mount validation independent; offset cannot make invalid combinations
-  valid.
-- Round-trip/copy exactly; no clamping, pivot, snapping, facing rotation, or asset ref
-  lookup.
-- Prove blockers/mechanics unchanged.
+### Acceptance and required runtime tests
 
-### Validation
+- Room prop, canvas prop, room monster, and room boss each cover omission, explicit
+  `[0,0,0]`, and signed nonzero; malformed cardinality/type/null/NaN/Inf reports the
+  exact source field.
+- Compile asserts both authoring `CompiledPlacement` facts (source/ref/absolute at/
+  facing/effective blockers/offset) and the corresponding Params/Spawns runtime
+  carrier. Local-to-absolute `at` never rotates/changes offset.
+- A real `InitDungeon -> SeedMonsters -> ToData -> JSON -> LoadFromData` path proves
+  exact optional presence/value in `ObstacleData`/`MonsterData` for every kind; legacy
+  JSON omission remains nil.
+- `KnownHexes` plus event JSON prove VISIBLE and frozen REMEMBERED placement offsets,
+  including explicit zero. Movement/resight/vacate and every placement overlay/helper
+  prove offset follows the entity, visible vacated origin has no stale offset, and
+  facing never rotates it.
+- Baseline comparisons prove canonical position, effective blockers, collision,
+  pathing, LoS, range, and targeting unchanged. There is no clamping, pivot, snapping,
+  asset lookup, identity join, or gameplay interpretation.
 
-Run normal Go format/lint/test for the module plus named dungeonspec unit/fixture suites.
-Record exact command/version and full green output in PR evidence.
+Run normal Go format/lint/test for the entire affected encounter module, including
+named dungeonspec, InitDungeon/SeedMonsters persistence, perception/Memory, and event
+JSON suites. Record exact commands/version and full green output in PR evidence.
 
 ## P — protos issue/PR
 
 ### Contract
 
-Use the existing placement message(s) actually returned by:
+Define one common three-double `PlacementOffset` in canonical game-world axes and add it
+as an optional nested value only on the existing placement surfaces:
 
-- Authoring `FloorPlan.placements[]`; and
-- authorized runtime `HexRecord.contents[]` (or its current concrete placement payload).
+- authoring `FloorPlan.placements[]`;
+- reconnect `Space.hexes[].contents[]`; and
+- live `HexKnowledgeChanged.hexes[].contents[]`.
 
-Add the smallest optional exact world-vector representation that preserves omission
-versus authored zero. Reuse an existing suitable world vector only if it has exact
-finite/presence semantics and no gameplay meaning; otherwise define a narrowly named
-placement-offset message. Do not add catalog ids, intrinsic points, matrices,
-quaternions, scale, semantic wall/support, or a generic transform.
+Nested message presence preserves omission versus explicit `[0,0,0]`. Do not add the
+field to `Entity`, create a placement identity/join seam, or add catalog ids, intrinsic
+points, matrices, quaternions, scale, semantic wall/support, or a generic transform.
+Field numbers remain an implementation decision reviewed against fresh heads.
 
-### Acceptance
+### Acceptance and required runtime tests
 
-- Go/TS generated APIs expose optional presence and three exact components.
-- Binary/JSON compatibility suite proves old payload omission and new zero/nonzero.
-- Authoring and runtime fields have the same canonical game-world-unit/axis
-  documentation and cover room/canvas props, room monsters, and boss placement.
-- Snapshot/event placement types used by current web ingestion preserve the same
-  optional presence/value; do not define an authoring-only dead field.
-- Generated artifacts and breaking-change checks pass.
-- No server replacement identity/call is introduced.
-
-The exact proto type/field number is an implementation decision reviewed on P; this
-plan intentionally does not fabricate it before inspecting the then-current heads.
+- Generated Go/TS APIs expose optional `PlacementOffset` presence and exact x/y/z
+  doubles with identical game-world-unit/axis documentation.
+- Binary and proto-JSON compatibility prove legacy absent, explicit zero, and signed
+  nonzero values without changing old payloads.
+- Nested Go+TS round trips prove the authoring FloorPlan placement, reconnect
+  `Space.hexes[].contents[]`, and live `HexKnowledgeChanged.hexes[].contents[]` each
+  preserve exact presence/value.
+- Schema/descriptor assertions prove no offset field on `Entity` and no new identity,
+  replacement, or join surface.
+- Generated artifacts, lint/tests, and breaking-change checks pass.
 
 ## A — API issue/PR
 
-### Flow
+### Flow and ownership boundary
 
-1. Accept exact source YAML through existing `PutDungeon(validate_only=true)`.
-2. Preserve authored source and toolkit optional compiled value.
-3. Project optional offset in authoring FloorPlan with source path/ref/absolute at/
-   applicable facing.
-4. Persist it into the immutable encounter snapshot at creation.
-5. Return it on the authorized runtime placement in reconnect snapshot and live
-   visible/remembered projection used by current web encounter state.
-6. Preserve the same world-axis value when an authored monster/boss moves or is
-   re-placed; only its canonical origin changes, and vacated records cannot retain a
-   stale placement offset.
-7. Never recompute it after source edits for an already-created encounter.
+A consumes and projects toolkit truth; it does not own placement identity or runtime
+offset association:
 
-### Acceptance matrix
+1. `PutDungeon(validate_only=true)` and persisted authoring reload map toolkit
+   `CompiledDungeon.Placements` to authoring FloorPlan fields: source path/ref/absolute
+   at/applicable facing/effective blockers/exact optional offset.
+2. `StartEncounter` passes toolkit `CompiledDungeon.Params` to `InitDungeon` and
+   `Spawns` to `SeedMonsters`; toolkit mints runtime ids and returns `Encounter.Data`.
+   API persists/reloads that Data as the immutable encounter snapshot.
+3. Reconnect `ProjectFor` maps toolkit perception placements to proto
+   `Space.hexes[].contents[]`; live KnownHex event translation maps toolkit
+   `events.KnownHexPlacement` to `HexKnowledgeChanged.hexes[].contents[]`.
+4. Movement/re-placement changes toolkit canonical position only; API copies the
+   authorized offset it receives. Existing encounters never recompute from later
+   authored source edits.
 
-- representative room prop, canvas prop, room monster, and room boss;
-- omission, explicit `[0,0,0]`, positive/negative XYZ;
-- validate-only then save/reload then encounter create then authorized runtime read;
-- reconnect snapshot, live update, VISIBLE-over-REMEMBERED, resight/vacate, and
-  movement/re-placement with exact presence/value;
-- fog authorization still suppresses unauthorized content;
-- ref edit retain/change/remove cases are independent complete documents;
-- unchanged owning cell/blockers/LoS/pathing/range/targetability/fog;
-- no catalog import, clamping, vector rotation, or asset-specific behavior; and
-- old documents/encounter snapshots remain readable.
+The authoring `CompiledPlacement` sidecar has source metadata/blockers but no runtime
+identity join. A must not match `(ref, at, order)`, create an offset/id side map, infer
+identity from authoring projection, or rebuild a placement from current position while
+dropping toolkit metadata. No API/proto identity field is added.
+
+### Acceptance and required runtime tests
+
+- `PutDungeon(validate_only)` plus persisted save/reload project authoring source/ref/
+  absolute at/facing/effective blockers and nil-versus-explicit-zero/signed offset
+  exactly for representative room/canvas props, room monster, and boss.
+- Real content registry -> `StartEncounter` -> encounter repository save/get proves
+  all four offsets originate from T Params/Spawns and persist in toolkit Data, with no
+  sidecar join or API-owned map.
+- Reconnect `ProjectFor` and live KnownHex event translation preserve exact optional
+  offset through both toolkit perception/event conversion points. Any fallback/current-
+  position placement rebuild copies canonical runtime metadata rather than matching
+  ref/at/order.
+- Fog matrix proves unauthorized contents/offset absent, VISIBLE wins over REMEMBERED,
+  and movement/re-placement plus resight/vacate is total and non-stale.
+- Ref edits retain/change/remove only through complete-document behavior; an existing
+  snapshot never recomputes, and legacy authored content/snapshots remain readable.
+- Baseline comparison proves canonical position, blockers, collision/pathing, LoS,
+  range/targetability/fog unchanged; no catalog lookup, clamp, rotation, asset-specific
+  behavior, identity heuristic, or side map exists.
 
 ### Rollback boundary
 
@@ -615,10 +656,12 @@ commands, and pass/fail. The tracked provider lock itself never contains web HEA
 
 ### Platform evidence
 
-- source → validate-only projection → save/reload → encounter snapshot → authorized
-  runtime projection for omission/zero/nonzero;
-- authoring/runtime exact component equality;
-- old document/snapshot compatibility;
+- source → distinct authoring `CompiledPlacement` and runtime Params/Spawns →
+  ObstacleData/MonsterData JSON snapshot → perception/event placement → authoring,
+  reconnect, and live proto projection for omission/explicit-zero/signed-nonzero;
+- authoring sidecar facts include effective blockers while runtime identity comes only
+  from toolkit InitDungeon/SeedMonsters; static/runtime evidence proves no join/side map;
+- authoring/runtime exact component equality and old document/snapshot compatibility;
 - source-path errors for malformed/nonfinite;
 - fog authorization and mechanical invariants;
 - ref edit retain/change/remove; and
