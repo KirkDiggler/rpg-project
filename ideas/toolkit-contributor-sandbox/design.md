@@ -1,6 +1,6 @@
 # Toolkit contributor onboarding and live sandbox loop
 
-**Status:** design for review
+**Status:** approved — 2026-08-10
 
 **Umbrella:** [rpg-project#208](https://github.com/KirkDiggler/rpg-project/issues/208)
 
