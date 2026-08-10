@@ -80,9 +80,10 @@ scripts/toolkit-local-override.sh off
 - `on` defaults to `encounter` when `--target` is omitted, preserving the existing documented command; Unit B always supplies `--target rulebooks/dnd5e`.
 - The two allowlisted targets are exactly `github.com/KirkDiggler/rpg-toolkit/encounter` and `github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e`; their source subdirectories are exactly `encounter/` and `rulebooks/dnd5e/`.
 - `on` and `refresh` require the selected source subdirectory’s first `go.mod` line to equal the module mapped to its target, sync only that subdirectory to `local-toolkit/$target/`, and permit one active `go.mod` replacement total.
-- `refresh` refuses when no selected allowlisted replacement is active, when an unknown replacement exists, or when more than one replacement exists. It refreshes the selected replacement only.
-- `off` removes only the exact selected `replace` and `local-toolkit/$target/`; it removes the `local-toolkit/` parent only if it is empty. It refuses unknown or second replacements before mutating.
-- `status` prints selected module, source absolute path, source revision, and sync timestamp from ignored override state. It exits non-zero for unknown, missing, or multiple replacements.
+- The helper owns a replacement only when all of these exact values agree before it mutates: the one allowlisted module path, `go.mod` replacement RHS `./local-toolkit/$target`, and an ignored `local-toolkit/.toolkit-local-override-state` record with `target=$target`, `module=$module`, and `replace=./local-toolkit/$target`. The record also holds the source absolute path, revision, and UTC sync timestamp for reporting; parse it as data, never by `source`-ing it.
+- `on` permits no active replacement or the exact owned replacement for its selected target. It refuses an unknown replacement, more than one replacement, a mismatched RHS/state record, or switching from one valid target to the other without `off`, before `rsync`, `go mod edit`, or state writes.
+- `refresh`, `status`, and `off` first require exactly one owned replacement with that exact RHS and matching state. They refuse a missing state, mismatched RHS/state, unknown replacement, or a second replacement before any mutation. `refresh` syncs only that selected target.
+- `off` removes only that prevalidated selected `replace`, its `local-toolkit/$target/`, and its state record; it removes the `local-toolkit/` parent only if it is empty. It never removes a user-owned replacement or sibling tree.
 - `Dockerfile.local-toolkit` remains the local build path because it copies `local-toolkit/` before `go mod download`; normal `Dockerfile`, normal/release pins, and CI remain published-module paths. `scripts/verify-release-pin.sh` continues rejecting `go.mod` replacements and any `local-toolkit/` residue for a commit gate.
 
 ### API sandbox-seeder contract
@@ -95,7 +96,7 @@ go run ./cmd/sandboxseed --address localhost:8080 --health
 ```
 
 - `--address` defaults to `localhost:8080`, the Envoy listener; it is never a Redis address.
-- `--health` calls `grpc.health.v1.Health/Check` through Envoy and exits zero only for `SERVING`; it makes no character mutation. Unit B uses it to wait for the composed Envoy path.
+- `--health` calls `grpc.health.v1.Health/Check` through Envoy and exits zero only for `SERVING`; it makes no character mutation. Unit B polls this command after `start` and `refresh`, retrying at most 30 times with a 2-second interval (60 seconds total) and failing with the final health error on timeout.
 - Normal execution calls the existing `dnd5e.api.v1alpha1.CharacterService` with outgoing `authorization: Dev toolkit-sandbox-fighter` or `authorization: Dev toolkit-sandbox-barbarian` metadata on every RPC.
 - For each identity, the deterministic reset is: `ListCharacters(page_size=100)` → fail if a continuation token is present → `DeleteCharacter` once for every returned character ID → `CreateDraft` → `UpdateName` → `UpdateRace` → `UpdateClass` → `UpdateBackground` → `UpdateAbilityScores` → `GetDraft` → `FinalizeDraft` → `GetCharacter` → `ListCharacters(page_size=100)`.
 - The final list must have no continuation token and exactly one character with the fixed expected name. A draft or section failure stops immediately with the identity and RPC method in the error; it does not retry, choose a substitute, or continue to the next preset.
@@ -121,8 +122,8 @@ The fixed request values are deliberately literal rather than discovered:
 
 - `bootstrap` verifies Ubuntu WSL2, Docker Desktop’s WSL-connected daemon, Git, GitHub SSH read access, Go, Node/npm, `rsync`, and `jq`; it changes none of Windows, Docker Desktop, global tools, credentials, configuration, branches, or existing checkout files.
 - `bootstrap` clones only absent valid roots `rpg-toolkit`, `rpg-api`, `rpg-dnd5e-web`, and `rpg-deployment`. Existing roots must be Git repositories with respectively exact `git@github.com:KirkDiggler/rpg-toolkit.git`, `git@github.com:KirkDiggler/rpg-api.git`, `git@github.com:KirkDiggler/rpg-dnd5e-web.git`, or `git@github.com:KirkDiggler/rpg-deployment.git` origins; valid roots are left untouched and invalid existing paths fail.
-- `start` runs API override `on --target rulebooks/dnd5e --src "$ROOT/rpg-toolkit"`, builds `rpg-api:local` using `rpg-api/Dockerfile.local-toolkit`, starts the exact three compose files in the stated order, waits via `cmd/sandboxseed --health` through Envoy, and prints `npm run dev` plus `http://localhost:3001/?toolkitSandbox=1`.
-- `refresh` runs API override `refresh --src "$ROOT/rpg-toolkit"`, builds before replacement, runs the same three-file compose command with `up -d --no-deps rpg-api` only after a successful build, waits through Envoy, and prints source revision and sync timestamp.
+- `start` runs API override `on --target rulebooks/dnd5e --src "$ROOT/rpg-toolkit"`, builds `rpg-api:local` using `rpg-api/Dockerfile.local-toolkit`, starts the exact three compose files in the stated order, then polls `cmd/sandboxseed --health` through Envoy at most 30 times with a 2-second interval. It prints `npm run dev` plus `http://localhost:3001/?toolkitSandbox=1` only after a serving response.
+- `refresh` runs API override `refresh --src "$ROOT/rpg-toolkit"`, builds before replacement, runs the same three-file compose command with `up -d --no-deps rpg-api` only after a successful build, then uses the same bounded Envoy health poll and prints source revision and sync timestamp only after it serves.
 - `seed` delegates exactly to `go run ./cmd/sandboxseed --address localhost:8080`; it neither contains seeding RPC definitions nor accesses storage.
 - `status` delegates API override status and health, and reports only the D&D 5e source revision/sync timestamp plus compose/API health.
 - `down` runs the same compose set with `down`, then calls API override `off`; it touches only stack containers and the selected local D&D 5e replacement/tree.
@@ -157,8 +158,8 @@ export interface SandboxUnaryClients {
 - The feature-local client helper returns only those fixed unary clients. It constructs the two literal identity sets once with a closure interceptor that always writes its own `Dev <identity>` header and never imports or reads `setAuth`, `getPlayerId`, Discord state, URL `playerId`, or `VITE_DEV_PLAYER_ID`.
 - It does not expose a client creator for arbitrary identities. Focused tests interleave fighter and barbarian unary interceptor calls and prove the captured headers remain `Dev toolkit-sandbox-fighter` and `Dev toolkit-sandbox-barbarian` respectively.
 - The checked-in YAML is an in-memory, editable `version: 1` canvas with `key: toolkit-contributor-sandbox`, `theme: crypt`, `canvas: { width: 12, height: 6 }`, `start: [1, 3]`, and two `dnd5e:monsters:skeleton` placements at `[7, 2]` and `[9, 4]`. A page reload starts from this literal template; it never reads or writes a sandbox draft in local storage.
-- The existing Dungeon Builder is reused through narrowly injected authoring client, initial YAML, and draft-persistence/file-import-export controls. Normal AuthorView keeps its existing defaults. The sandbox performs `PutDungeon(validate_only: true)` for preview and `PutDungeon(validate_only: false)` under the stable key for save; after an RPC failure it renders the returned error and stops.
-- After a successful save, the sandbox calls the two identity-bound `ListCharacters` clients and offers only `Fighter`, `Barbarian`, `Fighter then Barbarian`, and `Barbarian then Fighter`.
+- The existing Dungeon Builder is reused through narrowly injected authoring client, initial YAML, and draft-persistence/file-import-export controls. Normal AuthorView keeps its existing defaults. The supplied client is threaded through the builder mount liveness probe, capability suite, live compile/creation preview, and non-validate save: a sandbox mount makes zero calls through the mutable global `authoringClient`. The sandbox performs `PutDungeon(validate_only: true)` for preview and `PutDungeon(validate_only: false)` under the stable key for save; after an RPC failure it renders the returned error and stops.
+- `DungeonBuilderConcept` exposes optional `onSaveSucceeded(key: string): void`, invoked once for each successful non-validate save and never for validation rejection or transport failure. Sandbox mode suppresses the builder’s ordinary generic lobby link, handles this callback, then calls the two identity-bound `ListCharacters` clients and offers only `Fighter`, `Barbarian`, `Fighter then Barbarian`, and `Barbarian then Fighter`.
 - For a selected fixed order, first identity calls `CreateLobby(campaign_id="toolkit-contributor-sandbox", character_id=the Character.Id returned for that identity)`; second identity, if selected, calls `JoinLobby(join_ref=the CreateLobby response JoinRef, character_id=the second identity’s returned Character.Id)`; every selected identity calls `SetReady(lobby_id, true)` with its own bound client; only first identity calls `StartEncounter(lobby_id, dungeon_key="toolkit-contributor-sandbox")`.
 - On success, show normal links only for selected identities: `/?playerId=toolkit-sandbox-fighter` and/or `/?playerId=toolkit-sandbox-barbarian`. Do not render a harness as the sandbox result.
 
@@ -187,24 +188,28 @@ export interface SandboxUnaryClients {
 
 ### Unit C — `rpg-dnd5e-web`
 
-| File                                                                 | Change | Responsibility                                                                                                                                                |
-| -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/toolkit-contributor-sandbox/constants.ts`                       | Create | Fixed key, identities, one literal template, and the four permitted seat arrangements.                                                                        |
-| `src/toolkit-contributor-sandbox/clients.ts`                         | Create | Feature-private fixed-identity Connect unary clients and immutable Dev interceptors.                                                                          |
-| `src/toolkit-contributor-sandbox/clients.test.ts`                    | Create | Interleaved unary-header isolation tests.                                                                                                                     |
-| `src/toolkit-contributor-sandbox/route.ts`                           | Create | Development-plus-query route predicate.                                                                                                                       |
-| `src/toolkit-contributor-sandbox/route.test.ts`                      | Create | Development positive and production negative route tests.                                                                                                     |
-| `src/toolkit-contributor-sandbox/ToolkitContributorSandbox.tsx`      | Create | Template save, fixed character display, fixed lobby sequence, error stop, and normal GameView links.                                                          |
-| `src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx` | Create | PutDungeon, fixed seat-order, error-stop, and selected-link tests.                                                                                            |
-| `src/App.tsx:1-347`                                                  | Modify | Route to the sandbox before normal app state only when the route predicate is true.                                                                           |
-| `src/author/usePutDungeonPreview.ts:75-337`                          | Modify | Accept a supplied authoring unary client while preserving the default global client for existing mounts.                                                      |
-| `src/author/usePutDungeonPreview.test.ts`                            | Modify | Prove supplied client receives preview calls and existing default behavior remains unchanged.                                                                 |
-| `src/author/useSaveDungeon.ts:18-82`                                 | Modify | Accept a supplied authoring unary client while retaining its default global client.                                                                           |
-| `src/author/useSaveDungeon.test.ts`                                  | Modify | Prove the supplied client receives the non-validate save request.                                                                                             |
-| `src/author/DungeonBuilderConcept.tsx:101-623`                       | Modify | Accept sandbox-only initial YAML, no-local-draft mode, injected authoring client, and disabled canvas/file catalog controls while preserving normal defaults. |
-| `src/author/DungeonBuilderConcept.test.tsx`                          | Modify | Prove a no-local-draft injected mount starts from the supplied template after reload.                                                                         |
-| `src/author/creation/CreationConcept.tsx:47-503`                     | Modify | Respect supplied canvas/file-control visibility while preserving the normal builder’s controls.                                                               |
-| `src/author/creation/ProposedYamlPane.tsx`                           | Modify | Hide file import/export controls when the injected sandbox contract disables them.                                                                            |
+| File                                                                 | Change | Responsibility                                                                                                                                            |
+| -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/toolkit-contributor-sandbox/constants.ts`                       | Create | Fixed key, identities, one literal template, and the four permitted seat arrangements.                                                                    |
+| `src/toolkit-contributor-sandbox/clients.ts`                         | Create | Feature-private fixed-identity Connect unary clients and immutable Dev interceptors.                                                                      |
+| `src/toolkit-contributor-sandbox/clients.test.ts`                    | Create | Interleaved unary-header isolation tests.                                                                                                                 |
+| `src/toolkit-contributor-sandbox/route.ts`                           | Create | Development-plus-query route predicate.                                                                                                                   |
+| `src/toolkit-contributor-sandbox/route.test.ts`                      | Create | Development positive and production negative route tests.                                                                                                 |
+| `src/toolkit-contributor-sandbox/ToolkitContributorSandbox.tsx`      | Create | Template save, fixed character display, fixed lobby sequence, error stop, and normal GameView links.                                                      |
+| `src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx` | Create | PutDungeon, fixed seat-order, error-stop, and selected-link tests.                                                                                        |
+| `src/App.tsx:1-347`                                                  | Modify | Route to the sandbox before normal app state only when the route predicate is true.                                                                       |
+| `src/author/usePutDungeonPreview.ts:75-430`                          | Modify | Thread an optional authoring unary client through liveness, live compile, and creation preview while preserving the global default.                       |
+| `src/author/usePutDungeonPreview.test.ts`                            | Modify | Prove the supplied client receives probe/preview calls and a sandbox path makes zero global-client calls.                                                 |
+| `src/author/capabilityProbe.ts:1-580`                                | Modify | Accept the supplied authoring client for every capability probe, retaining the global default only for normal mounts.                                     |
+| `src/author/capabilityProbe.test.ts`                                 | Modify | Prove supplied-client capability probes never call the global client.                                                                                     |
+| `src/author/useSaveDungeon.ts:18-82`                                 | Modify | Accept a supplied authoring unary client and one success callback while retaining the default global client.                                              |
+| `src/author/useSaveDungeon.test.ts`                                  | Modify | Prove the supplied client receives the non-validate save request and the callback fires only on success.                                                  |
+| `src/author/DungeonBuilderConcept.tsx:101-623`                       | Modify | Accept sandbox-only initial YAML, no-local-draft mode, injected authoring client, save-success callback, and disabled controls while preserving defaults. |
+| `src/author/DungeonBuilderConcept.test.tsx`                          | Modify | Prove template isolation, callback behavior, and no global authoring call for an injected sandbox mount.                                                  |
+| `src/author/creation/CreationConcept.tsx:47-503`                     | Modify | Respect supplied canvas/file-control and generic-save-link visibility while preserving normal builder controls.                                           |
+| `src/author/creation/ProposedYamlPane.tsx`                           | Modify | Hide file import/export controls and pass generic-save-link visibility to the shared result panel.                                                        |
+| `src/author/YamlPane.tsx`                                            | Modify | Allow `SaveResultPanel` to suppress only its ordinary lobby link for the sandbox.                                                                         |
+| `src/author/YamlPane.test.tsx`                                       | Modify | Prove suppressing the generic result link leaves normal saved/error rendering intact.                                                                     |
 
 ### Unit D — `rpg-project`
 
@@ -310,7 +315,7 @@ grep -Fq 'github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e => ./local-toolkit/
 test ! -e local-toolkit/rulebooks/dnd5e
 ```
 
-Also assert that a source declaring any other module fails before `go.mod` or `local-toolkit/` changes, a second active replace fails, an unknown replace fails, and `off` preserves an unrelated non-empty `local-toolkit/` sibling rather than recursively deleting it.
+Also assert that a source declaring any other module fails before `go.mod` or `local-toolkit/` changes; a second or unknown replace fails; and `off` preserves an unrelated non-empty `local-toolkit/` sibling rather than recursively deleting it. For each of `refresh`, `status`, and `off`, seed a valid allowlisted module with either an RHS other than `./local-toolkit/<target>` or a missing/mismatched ownership record, snapshot `go.mod` and `local-toolkit/`, and assert failure leaves both snapshots byte-for-byte unchanged. Finally, turn on `encounter`, attempt `on --target rulebooks/dnd5e`, and assert it fails before any snapshot changes; repeat the mirror case from D&D 5e to encounter.
 
 - [ ] **Step 2: Run the contract test and verify the current script fails for the requested target**
 
@@ -341,7 +346,7 @@ module_for_target() {
 }
 ```
 
-Parse `on [--target encounter|rulebooks/dnd5e] [--src "$TOOLKIT_SOURCE"]`, `refresh [--src "$TOOLKIT_SOURCE"]`, `status`, and `off`. Derive the selected target from the one active allowlisted replacement for refresh/status/off, validate module declarations before `rsync`, record source path/revision/UTC sync timestamp only inside ignored `local-toolkit/`, and make `off` remove only the selected synced directory and its own state file. Keep host `go build ./...` checks after sync and after off. Update the how-to with literal D&D 5e commands and retain the encounter examples.
+Parse `on [--target encounter|rulebooks/dnd5e] [--src "$TOOLKIT_SOURCE"]`, `refresh [--src "$TOOLKIT_SOURCE"]`, `status`, and `off`. Keep an ignored state file at `local-toolkit/.toolkit-local-override-state` with literal, newline-delimited `target`, `module`, `replace`, `source`, `revision`, and `synced_at` keys; reject duplicate, missing, or mismatched ownership keys without `source`-ing the file. Derive the selected target from the one active allowlisted replacement for refresh/status/off and require its JSON `New.Path` to equal exactly `./local-toolkit/$target` before reading state or mutating. `on` accepts only no active replace or this exact owned target; it rejects a different active target before `rsync`, so it cannot transiently add a second replacement. Validate module declarations before `rsync`; write state only after a successful sync and exact replacement check; and make `off` prevalidate ownership before dropping only the selected replacement, synced directory, and state file. Keep host `go build ./...` checks after sync and after off. Update the how-to with literal D&D 5e commands and retain the encounter examples.
 
 - [ ] **Step 4: Run focused override and release-pin checks**
 
@@ -383,9 +388,16 @@ Expected: one focused API commit; do not stage `go.mod`, `go.sum`, or `local-too
 
 - [ ] **Step 1: Write failing real-service integration coverage first**
 
-Create a second suite in package `character_integration`, reusing its package `TestMain` shared Redis fixture. Its core test must call the missing package twice and make exact assertions:
+Create a second suite in package `character_integration`, reusing its package `TestMain` shared Redis fixture. Register it with a top-level test that Go can select, then call the missing package twice and make exact assertions:
 
 ```go
+func TestSandboxSeedSuite(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping integration test in short mode")
+    }
+    suite.Run(t, new(SandboxSeedSuite))
+}
+
 func (s *SandboxSeedSuite) TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs() {
     require.NoError(s.T(), sandboxseed.Seed(s.ctx, s.server.CharacterClient))
     require.NoError(s.T(), sandboxseed.Seed(s.ctx, s.server.CharacterClient))
@@ -408,7 +420,7 @@ In the same suite, create a lobby using the fighter’s character under the barb
 Run:
 
 ```bash
-go test ./internal/integration/character -run TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs -count=1
+go test ./internal/integration/character -run '^TestSandboxSeedSuite$/^TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs$' -count=1
 ```
 
 Expected: non-zero compile failure because `github.com/KirkDiggler/rpg-api/internal/sandboxseed` does not yet exist.
@@ -446,9 +458,9 @@ Run:
 
 ```bash
 go test ./cmd/sandboxseed -count=1
-go test ./internal/integration/character -run TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs -count=1
+go test ./internal/integration/character -run '^TestSandboxSeedSuite$/^TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs$' -count=1
 go test ./internal/auth -run TestUnaryAuthInterceptor_DevScheme_NotAllowed -count=1
-go test ./internal/orchestrators/lobby -run 'Test(CreateLobby|JoinLobby)' -count=1
+go test ./internal/orchestrators/lobby -run '^TestLobbySuite$' -count=1
 make pre-commit
 ```
 
@@ -507,7 +519,7 @@ docker compose -f docker-compose.local-dev.yml -f docker-compose.api.yml -f dock
 rpg-api/scripts/toolkit-local-override.sh off
 ```
 
-It must also prove bootstrap clones only the four named repositories when absent, leaves valid dirty checkouts untouched, rejects a wrong origin without cleaning/resetting/stashing/switching, and down never removes a checkout.
+It must also prove bootstrap clones only the four named repositories when absent, leaves valid dirty checkouts untouched, rejects a wrong origin without cleaning/resetting/stashing/switching, and down never removes a checkout. Configure the fake health command to fail twice and serve on its third call; assert both `start` and `refresh` issue exactly three `go run ./cmd/sandboxseed --address localhost:8080 --health` calls and then succeed. Configure it to fail all 30 calls and assert the command exits non-zero without printing the successful-start message.
 
 - [ ] **Step 2: Run the contract test and verify the facade is absent**
 
@@ -536,7 +548,7 @@ COMPOSE_FILES=(
 
 `bootstrap` must check WSL2 through `/proc/sys/kernel/osrelease`, Docker daemon reachability through `docker info`, tool executables through `command -v`, and GitHub access through `git ls-remote git@github.com:KirkDiggler/rpg-api.git HEAD`. For every existing required root, use `git -C "$root" remote get-url origin` and accept only its exact SSH origin; never call checkout, reset, clean, stash, pull, fetch, or installation commands. For every absent root, clone its exact SSH URL.
 
-Build the compose argument array only as the three existing filenames above and invoke it from `rpg-deployment`. `start` uses full `up -d`; `refresh` uses `up -d --no-deps rpg-api` only after override refresh and image build succeed. `status` calls API override status and API health without listing arbitrary containers. `down` calls compose down, then API override off, and exits on a refusal rather than deleting another replacement.
+Build the compose argument array only as the three existing filenames above and invoke it from `rpg-deployment`. Define one `wait_for_envoy` helper used by both `start` and `refresh`: it runs `(cd "$ROOT/rpg-api" && go run ./cmd/sandboxseed --address localhost:8080 --health)` at most 30 times, sleeps 2 seconds between failed attempts, returns immediately on `SERVING`, and returns non-zero after the 30th failure without printing a success URL. `start` uses full `up -d`; `refresh` uses `up -d --no-deps rpg-api` only after override refresh and image build succeed, then both call that helper. `status` calls API override status and one health check without listing arbitrary containers. `down` calls compose down, then API override off, and exits on a refusal rather than deleting another replacement.
 
 Write the runbook with the literal WSL2 prerequisites, first checkout, daily loop, refresh rule, normal web command/URL, and the marker proof below. Link it from the README in one concise paragraph.
 
@@ -681,21 +693,25 @@ Expected: one focused commit on the Unit C branch; do not open or merge the PR b
 
 **Files:**
 
-- Modify: `src/author/usePutDungeonPreview.ts:75-337`
+- Modify: `src/author/usePutDungeonPreview.ts:75-430`
 - Modify: `src/author/usePutDungeonPreview.test.ts`
+- Modify: `src/author/capabilityProbe.ts:1-580`
+- Modify: `src/author/capabilityProbe.test.ts`
 - Modify: `src/author/useSaveDungeon.ts:18-82`
 - Modify: `src/author/useSaveDungeon.test.ts`
 - Modify: `src/author/DungeonBuilderConcept.tsx:101-623`
 - Modify: `src/author/DungeonBuilderConcept.test.tsx`
 - Modify: `src/author/creation/CreationConcept.tsx:47-503`
 - Modify: `src/author/creation/ProposedYamlPane.tsx`
-- Test: the listed existing authoring tests plus the new injection assertions
+- Modify: `src/author/YamlPane.tsx`
+- Modify: `src/author/YamlPane.test.tsx`
+- Test: the listed existing authoring tests plus injected-client, callback, and zero-global-call assertions
 
 **Interfaces:**
 
 - Consumes: `SandboxUnaryClients.authoring` and `TOOLKIT_SANDBOX_YAML` from Unit C.
-- Produces: optional injected authoring client, optional initial YAML, and sandbox control flags; all optional props preserve the existing AuthorView behavior.
-- Produces for the sandbox: preview calls with `validateOnly: true`, save calls with `validateOnly: false`, no local-storage draft restore/autosave, no new-canvas control, and no YAML import/export control.
+- Produces: optional injected authoring client, optional initial YAML, optional `onSaveSucceeded(key)` callback, and sandbox control flags; all optional props preserve the existing AuthorView behavior.
+- Produces for the sandbox: the supplied client handles liveness, capability probes, live/creation preview calls with `validateOnly: true`, and save calls with `validateOnly: false`; no local-storage draft restore/autosave; no new-canvas or YAML import/export control; and no generic builder lobby link.
 
 - [ ] **Step 1: Write failing injected-client and template-isolation tests**
 
@@ -710,14 +726,14 @@ expect(putDungeon).toHaveBeenCalledWith(
 );
 ```
 
-Extend `usePutDungeonPreview.test.ts` with a supplied client whose preview call must carry `validateOnly: true`. Extend `DungeonBuilderConcept.test.tsx` to render with literal injected template and persistence disabled, edit the text, unmount, rerender, and assert the rerendered YAML is the original template rather than the edited local-storage value.
+Extend `usePutDungeonPreview.test.ts` with a supplied client whose mount liveness call, capability suite, and preview call all use that client (the preview carries `validateOnly: true`), while the mocked global `authoringClient.putDungeon` has zero calls. Extend `capabilityProbe.test.ts` and `useCreationFloorPlanPreview` coverage with supplied-client calls and the same zero-global assertion. Extend `useSaveDungeon.test.ts` to prove `onSaveSucceeded` receives the request key exactly once after `success: true` and never for `success: false` or a throw. Extend `DungeonBuilderConcept.test.tsx` to render with literal injected template and persistence disabled, edit the text, unmount, rerender, and assert the rerendered YAML is the original template rather than the edited local-storage value; also assert its injected mount makes zero global authoring calls, fires its callback only after a successful non-validate save, and suppresses the ordinary `http://localhost:3001/` save-result link. Extend `YamlPane.test.tsx` to prove hiding that link does not hide saved, validation-error, or transport-error feedback.
 
 - [ ] **Step 2: Run the focused tests and observe the missing injection interfaces**
 
 Run:
 
 ```bash
-npm run test:run -- src/author/useSaveDungeon.test.ts src/author/usePutDungeonPreview.test.ts src/author/DungeonBuilderConcept.test.tsx
+npm run test:run -- src/author/useSaveDungeon.test.ts src/author/usePutDungeonPreview.test.ts src/author/capabilityProbe.test.ts src/author/DungeonBuilderConcept.test.tsx src/author/YamlPane.test.tsx
 ```
 
 Expected: non-zero TypeScript or assertion failure because the hooks and builder currently import/use only global authoring client and always use creation-mode draft storage.
@@ -733,6 +749,7 @@ export interface AuthoringUnaryClient {
 
 export function useSaveDungeon(
   client: AuthoringUnaryClient = authoringClient,
+  onSaveSucceeded?: (key: string) => void,
 ): UseSaveDungeonResult;
 export function usePutDungeonPreview(
   doc: DungeonDoc | null,
@@ -740,6 +757,16 @@ export function usePutDungeonPreview(
   forceFixtures = false,
   client: AuthoringUnaryClient = authoringClient,
 ): UsePutDungeonPreviewResult;
+export function useCreationFloorPlanPreview(
+  doc: DungeonDoc | null,
+  yamlText: string,
+  serverState: ServerState,
+  capabilities: ServerCapabilities | null,
+  client: AuthoringUnaryClient = authoringClient,
+): { floorPlan: FloorPlan | null };
+export function probeAllCapabilities(
+  client: AuthoringUnaryClient = authoringClient,
+): Promise<ServerCapabilities>;
 ```
 
 Add this builder contract with defaults that exactly preserve current AuthorView behavior:
@@ -752,17 +779,19 @@ export interface DungeonBuilderConceptProps {
   persistDraft?: boolean;
   allowNewCanvas?: boolean;
   allowYamlFileIO?: boolean;
+  onSaveSucceeded?: (key: string) => void;
+  showSaveResultLink?: boolean;
 }
 ```
 
-When `initialYaml` is supplied and `persistDraft` is false, parse only that literal at mount and never call `loadDraft`, `saveDraft`, or `discardDraft`; a reload therefore returns to the template. Thread `allowNewCanvas` and `allowYamlFileIO` into `CreationConcept` and `ProposedYamlPane` so the sandbox cannot create an alternate canvas or import/export a scenario. Use injected `authoringClient` for both preview and save. Do not alter defaults, AuthorView, ConceptsView, or the existing global API client.
+When `initialYaml` is supplied and `persistDraft` is false, parse only that literal at mount and never call `loadDraft`, `saveDraft`, or `discardDraft`; a reload therefore returns to the template. Thread `allowNewCanvas` and `allowYamlFileIO` into `CreationConcept` and `ProposedYamlPane` so the sandbox cannot create an alternate canvas or import/export a scenario. Thread the injected `authoringClient` through `usePutDungeonPreview`, `probeAllCapabilities`, `compileLive`, `useCreationFloorPlanPreview`, and `useSaveDungeon`; those helpers use their global default only when the prop is omitted. Have `useSaveDungeon` invoke `onSaveSucceeded(key)` directly in its `response.success` branch, exactly once per successful non-validate request. Thread `showSaveResultLink` to `SaveResultPanel` as `showLobbyLink`; its default is `true`, while `false` retains saved/error feedback but omits only the normal generic lobby anchor. Do not alter defaults, AuthorView, ConceptsView, or the existing global API client.
 
 - [ ] **Step 4: Run authoring regressions and full web quality checks**
 
 Run:
 
 ```bash
-npm run test:run -- src/author/useSaveDungeon.test.ts src/author/usePutDungeonPreview.test.ts src/author/DungeonBuilderConcept.test.tsx
+npm run test:run -- src/author/useSaveDungeon.test.ts src/author/usePutDungeonPreview.test.ts src/author/capabilityProbe.test.ts src/author/DungeonBuilderConcept.test.tsx src/author/YamlPane.test.tsx
 npm run format:check
 npm run lint
 npm run typecheck
@@ -775,9 +804,11 @@ Expected: every command exits `0`; normal authoring tests still use global behav
 
 ```bash
 git add src/author/usePutDungeonPreview.ts src/author/usePutDungeonPreview.test.ts \
+  src/author/capabilityProbe.ts src/author/capabilityProbe.test.ts \
   src/author/useSaveDungeon.ts src/author/useSaveDungeon.test.ts \
   src/author/DungeonBuilderConcept.tsx src/author/DungeonBuilderConcept.test.tsx \
-  src/author/creation/CreationConcept.tsx src/author/creation/ProposedYamlPane.tsx
+  src/author/creation/CreationConcept.tsx src/author/creation/ProposedYamlPane.tsx \
+  src/author/YamlPane.tsx src/author/YamlPane.test.tsx
 git commit -m "feat: support injected sandbox dungeon builder"
 ```
 
@@ -860,10 +891,12 @@ Render the injected `<DungeonBuilderConcept>` with these exact props:
   persistDraft={false}
   allowNewCanvas={false}
   allowYamlFileIO={false}
+  onSaveSucceeded={handleSaveSucceeded}
+  showSaveResultLink={false}
 />
 ```
 
-Enable party choices only after that component’s successful `PutDungeon(validate_only: false)` callback. List exactly one character from each fixed client and reject a missing or non-single result visibly. Implement the four literal arrangements from `constants.ts`; do not accept arbitrary order, player labels, IDs, count, join reference, dungeon key, or delete request. Await each RPC in order. Catch each error at the action boundary, show its message, and return without a later RPC. Render only normal player URL anchors for selected successful identities.
+Define `handleSaveSucceeded(key: string)` in the sandbox, reject any key other than `TOOLKIT_SANDBOX_KEY` visibly, clear stale result/error state, and load the two fixed lists. Only after both lists each contain exactly one character may it enable party choices; a missing/non-single list, validation response, or failed RPC leaves them disabled and renders the error. This callback is the only path that enables party choices. Implement the four literal arrangements from `constants.ts`; do not accept arbitrary order, player labels, IDs, count, join reference, dungeon key, or delete request. Await each RPC in order. Catch each error at the action boundary, show its message, and return without a later RPC. Render only normal player URL anchors for selected successful identities.
 
 - [ ] **Step 4: Run focused, production-gate, and complete web validation**
 
@@ -874,7 +907,8 @@ npm run test:run -- src/toolkit-contributor-sandbox/clients.test.ts \
   src/toolkit-contributor-sandbox/route.test.ts \
   src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx \
   src/author/useSaveDungeon.test.ts src/author/usePutDungeonPreview.test.ts \
-  src/author/DungeonBuilderConcept.test.tsx
+  src/author/capabilityProbe.test.ts src/author/DungeonBuilderConcept.test.tsx \
+  src/author/YamlPane.test.tsx
 npm run ci-check
 ```
 
@@ -909,7 +943,7 @@ Expected: exit `0`. After A and B are merged and the API dependency is resolvabl
 Run:
 
 ```bash
-cd ~/game-dev/rpg-api && bash scripts/toolkit-local-override.test.sh && go test ./cmd/sandboxseed -count=1 && go test ./internal/integration/character -run TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs -count=1 && make pre-commit
+cd ~/game-dev/rpg-api && bash scripts/toolkit-local-override.test.sh && go test ./cmd/sandboxseed -count=1 && go test ./internal/integration/character -run '^TestSandboxSeedSuite$/^TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs$' -count=1 && make pre-commit
 cd ~/game-dev && bash tests/toolkit-contributor-contract.sh && bash tests/bootstrap-contract.sh
 cd ~/game-dev/rpg-dnd5e-web && npm run test:run -- src/toolkit-contributor-sandbox/clients.test.ts src/toolkit-contributor-sandbox/route.test.ts src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx && npm run ci-check
 ```
@@ -936,7 +970,8 @@ Run:
 ```bash
 ./scripts/toolkit-contributor.sh start
 ./scripts/toolkit-contributor.sh status
-cd rpg-dnd5e-web && npm install && npm run dev
+cd tools/browser && npm ci && npx playwright install chromium
+cd ../../rpg-dnd5e-web && npm ci && npm run dev
 ```
 
 Expected: start/status exit `0`; status reports the D&D 5e local override source/revision and Envoy-serving API; Vite serves `http://localhost:3001/?toolkitSandbox=1`.
@@ -964,18 +999,30 @@ Expected: each command exits `0`; seed output shows fighter Strength 16 before t
 
 Open `http://localhost:3001/?toolkitSandbox=1`, save the populated template, then execute exactly Fighter, Barbarian, Fighter then Barbarian, and Barbarian then Fighter. For every result, open the displayed normal `?playerId=` link and capture browser evidence that normal `GameView`/`EncounterView` renders. Optional `?encounterId=` harness pages may be captured only as diagnosis alongside, never instead of normal links.
 
-Run a repeatable capture command for every normal link:
+Before capture, the clean checkout must have completed `cd tools/browser && npm ci && npx playwright install chromium` from Step 3; `screenshot.mjs` imports Playwright and is not usable before that setup. Capture a distinct normal-route screenshot for every selected identity/order so a later order cannot overwrite earlier evidence:
 
 ```bash
 node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
   'http://localhost:3001/?playerId=toolkit-sandbox-fighter' \
-  /tmp/toolkit-sandbox-fighter-gameview.png
+  /tmp/toolkit-sandbox-fighter-only-fighter-gameview.png
 node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
   'http://localhost:3001/?playerId=toolkit-sandbox-barbarian' \
-  /tmp/toolkit-sandbox-barbarian-gameview.png
+  /tmp/toolkit-sandbox-barbarian-only-barbarian-gameview.png
+node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
+  'http://localhost:3001/?playerId=toolkit-sandbox-fighter' \
+  /tmp/toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
+  'http://localhost:3001/?playerId=toolkit-sandbox-barbarian' \
+  /tmp/toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
+  'http://localhost:3001/?playerId=toolkit-sandbox-barbarian' \
+  /tmp/toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+node ~/toolkit-sandbox-clean/game-dev/tools/browser/screenshot.mjs \
+  'http://localhost:3001/?playerId=toolkit-sandbox-fighter' \
+  /tmp/toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
 ```
 
-Expected: each selected link reaches normal GameView; preserve one named screenshot for each applicable identity/order and the successful `PutDungeon` key evidence.
+Expected: each selected link reaches normal GameView; retain all six order-qualified files and the successful `PutDungeon` key evidence.
 
 - [ ] **Step 6: Run the required negative checks and owned shutdown**
 
@@ -1003,16 +1050,16 @@ Post one concise Unit D evidence comment containing the command transcript with 
 
 ## Validation Matrix
 
-| Requirement                         | Automated evidence                                                                                                                                                                                                 | Live evidence                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| One D&D 5e override only            | `bash scripts/toolkit-local-override.test.sh` proves target module validation, unknown/second replace rejection, refresh, and exact cleanup; `./scripts/verify-release-pin.sh` rejects residue.                    | `status` reports one D&D 5e source/revision/sync time; start/refresh build `Dockerfile.local-toolkit`.                         |
-| API seeding only                    | `go test ./internal/integration/character -run TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs -count=1` proves two consecutive RPC seed runs, fixed names/classes/style, off-hand shield, and ownership negatives. | `./scripts/toolkit-contributor.sh seed` twice prints two identities, exactly one each, and fighter shield/Strength projection. |
-| Envoy path                          | `go test ./cmd/sandboxseed -count=1` covers address/health client behavior.                                                                                                                                        | facade waits through `go run ./cmd/sandboxseed --address localhost:8080 --health`; no Redis endpoint is used.                  |
-| WSL facade boundaries               | `bash tests/toolkit-contributor-contract.sh` proves four-repo bootstrap only, dirty preservation, delegation, compose order, and down scope.                                                                       | clean WSL2 bootstrap twice, start/status/refresh/seed/down transcript.                                                         |
-| Local rulebook proof                | API integration baseline asserts human fighter Strength 16.                                                                                                                                                        | temporary Human STR bonus 1→2 produces 16→17 only after refresh/reseed, then 17→16 after restoration/refresh/reseed.           |
-| Sandbox template and auth isolation | Vitest tests assert the literal key/template, injected preview/save clients, no local draft persistence, and interleaved immutable headers.                                                                        | save one populated builder canvas under `toolkit-contributor-sandbox`.                                                         |
-| Four lobby combinations             | Component tests assert Fighter, Barbarian, Fighter→Barbarian, Barbarian→Fighter and error stops. API integration asserts wrong-owner Create/Join failures.                                                         | all four arrangements reach ordinary `?playerId=` GameView links.                                                              |
-| Production gates                    | `TestUnaryAuthInterceptor_DevScheme_NotAllowed` and `route.test.ts` production query negative.                                                                                                                     | no production server/build sandbox route or accepted Dev header is claimed.                                                    |
+| Requirement                         | Automated evidence                                                                                                                                                                                                                                                | Live evidence                                                                                                                  |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| One D&D 5e override only            | `bash scripts/toolkit-local-override.test.sh` proves target/module validation, exact owned RHS/state validation, target-switch refusal without mutation, unknown/second rejection, refresh, and exact cleanup; `./scripts/verify-release-pin.sh` rejects residue. | `status` reports one owned D&D 5e source/revision/sync time; start/refresh build `Dockerfile.local-toolkit`.                   |
+| API seeding only                    | `go test ./internal/integration/character -run '^TestSandboxSeedSuite$/^TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs$' -count=1` proves two consecutive RPC seed runs, fixed names/classes/style, off-hand shield, and ownership negatives.                     | `./scripts/toolkit-contributor.sh seed` twice prints two identities, exactly one each, and fighter shield/Strength projection. |
+| Envoy path                          | `go test ./cmd/sandboxseed -count=1` covers address/health behavior; facade contract tests prove bounded fail-then-serve and timeout polling.                                                                                                                     | facade polls `go run ./cmd/sandboxseed --address localhost:8080 --health` through Envoy; no Redis endpoint is used.            |
+| WSL facade boundaries               | `bash tests/toolkit-contributor-contract.sh` proves four-repo bootstrap only, dirty preservation, delegation, compose order, and down scope.                                                                                                                      | clean WSL2 bootstrap twice, start/status/refresh/seed/down transcript.                                                         |
+| Local rulebook proof                | API integration baseline asserts human fighter Strength 16.                                                                                                                                                                                                       | temporary Human STR bonus 1→2 produces 16→17 only after refresh/reseed, then 17→16 after restoration/refresh/reseed.           |
+| Sandbox template and auth isolation | Vitest tests assert the literal key/template, injected liveness/capability/preview/save clients, zero global-client calls for a sandbox mount, callback-gated party choices, no local draft persistence, and interleaved immutable headers.                       | save one populated builder canvas under `toolkit-contributor-sandbox`.                                                         |
+| Four lobby combinations             | Component tests assert Fighter, Barbarian, Fighter→Barbarian, Barbarian→Fighter and error stops. API integration asserts wrong-owner Create/Join failures.                                                                                                        | all four arrangements reach ordinary `?playerId=` GameView links.                                                              |
+| Production gates                    | `TestUnaryAuthInterceptor_DevScheme_NotAllowed` and `route.test.ts` production query negative.                                                                                                                                                                    | no production server/build sandbox route or accepted Dev header is claimed.                                                    |
 
 ## Source Seams Verified Before Planning
 
@@ -1027,7 +1074,7 @@ These were inspected from freshly fetched upstream refs without switching primar
 | `game-dev` `origin/main`       | `3108e32cef96cc3da7b832a036222a8bde7c094b` | `bootstrap.sh:1-196` and `scripts/workspace-repos.sh:1-11` own a broader seven-repo bootstrap; `scripts/dev-env.sh:145-305` owns a two-file developer environment; `tests/bootstrap-contract.sh:1-102` is the shell contract style.                         | Add an independent narrow facade; do not mutate broad bootstrap or dev-env.                                                                       |
 | `rpg-deployment` `origin/main` | `453c3894e9563067cbf60fdb2e2292e7b71bb377` | `docker-compose.local-dev.yml:1-91` provides Dev auth/Envoy; `docker-compose.api.yml:1-46` provides authoring/content; `docker-compose.local-api-src.yml:1-24` replaces only API image.                                                                     | Consume these unchanged in literal local-dev → api → local-api-src order.                                                                         |
 | `rpg-dnd5e-web` `origin/dev`   | `b835282391cce897bc90fa94bea2fb88d352c72c` | `src/api/client.ts:1-124` owns mutable global auth clients; `src/App.tsx:27-347` owns dev query gates and normal `GameView`; `src/api/useDevPlayerIdAuth.ts:1-19` mutates global auth.                                                                      | Sandbox uses isolated feature clients and does not touch global auth or normal `?playerId` behavior.                                              |
-| `rpg-dnd5e-web` `origin/dev`   | `b835282391cce897bc90fa94bea2fb88d352c72c` | `src/author/DungeonBuilderConcept.tsx:101-623`, `usePutDungeonPreview.ts:75-337`, `useSaveDungeon.ts:18-82`, and `creation/CreationConcept.tsx:47-503` are existing builder/save seams.                                                                     | Inject only client/template/persistence/control options; reuse all existing editor controls.                                                      |
+| `rpg-dnd5e-web` `origin/dev`   | `b835282391cce897bc90fa94bea2fb88d352c72c` | `src/author/DungeonBuilderConcept.tsx:101-623`, `usePutDungeonPreview.ts:75-430`, `capabilityProbe.ts:1-580`, `useSaveDungeon.ts:18-82`, and `creation/CreationConcept.tsx:47-503` are existing builder/save seams.                                         | Inject one client through every authoring call, template/persistence/control option, and reuse existing editor controls.                          |
 | `rpg-dnd5e-web` `origin/dev`   | `b835282391cce897bc90fa94bea2fb88d352c72c` | `src/components/game/LobbyFlow.tsx:67-226` uses Create/Join/Ready/Start; `src/components/game/GameView.tsx:18-66` is normal resume/play surface.                                                                                                            | Sandbox drives the same RPC order with bound clients, then shows normal GameView links rather than replacing it.                                  |
 | `rpg-toolkit` `origin/main`    | `0fbcbcae9ae72a0c9ce22d6583023bc80cc098e9` | `rulebooks/dnd5e/races/data.go:42-61` projects Human’s `abilities.STR: 1` through normal character creation.                                                                                                                                                | The WSL proof temporarily changes only this local source value to 2 and observes returned Strength; no toolkit commit/change is part of delivery. |
 
@@ -1035,10 +1082,10 @@ These were inspected from freshly fetched upstream refs without switching primar
 
 ### Spec coverage
 
-- Unit A covers safe D&D 5e override target/module validation, one-replace enforcement, refresh, exact off cleanup, release-pin refusal, real Envoy RPC seeding, fixed choices, authenticated list/delete reset, post-finalize shield equip, double seed, and cross-owner lobby negatives.
-- Unit B covers WSL2 prerequisites, restricted bootstrap, exact compose order, explicit start/refresh/seed/status/down commands, no checkout mutation, and owned shutdown.
-- Unit C covers the development-only query gate, immutable per-identity authoring/character/lobby clients, builder template isolation, validate/save behavior, fixed arrangements, lobby ordering, stop-on-error, and normal GameView links.
-- Unit D covers clean WSL2 rerun, browser/visual proof, all four arrangements, reversible rulebook marker, production Dev/sandbox negatives, and supplemental-only harness posture.
+- Unit A covers safe D&D 5e override target/module validation, exact owned RHS/state enforcement, no-mutation target-switch/refusal cases, refresh, exact off cleanup, release-pin refusal, real Envoy RPC seeding, fixed choices, authenticated list/delete reset, post-finalize shield equip, double seed, and cross-owner lobby negatives.
+- Unit B covers WSL2 prerequisites, restricted bootstrap, exact compose order, bounded Envoy startup polling with fail-then-serve/timeout tests, explicit start/refresh/seed/status/down commands, no checkout mutation, and owned shutdown.
+- Unit C covers the development-only query gate, immutable per-identity authoring/character/lobby clients, injected authoring client flow through probe/capability/preview/save with zero global calls, callback-gated template save, fixed arrangements, lobby ordering, stop-on-error, and normal GameView links.
+- Unit D covers clean WSL2 rerun, installed Playwright/Chromium screenshot runtime, all four arrangements with order-qualified normal-GameView evidence, reversible rulebook marker, production Dev/sandbox negatives, and supplemental-only harness posture.
 - The global constraints explicitly exclude toolkit/proto/deployment work, direct storage/data construction, unimplemented generic draft RPCs, discovery/catalog/watchers, generic client factory, arbitrary cleanup, and production-authoring scope expansion.
 
 ### Deferred-work marker scan
@@ -1056,7 +1103,8 @@ Expected: exit `1` with no matches. The plan uses literal names, fields, values,
 
 - Unit B calls only Unit A’s documented `on --target rulebooks/dnd5e`, `refresh --src`, `status`, `off`, `cmd/sandboxseed --address`, and `--health` interfaces.
 - Unit C’s `SandboxUnaryClients` names match the existing `putDungeon`, `listCharacters`, `createLobby`, `joinLobby`, `setReady`, and `startEncounter` client methods.
-- The builder receives an `AuthoringUnaryClient` in both preview and save hooks, so its template cannot accidentally use mutable global auth while normal routes retain their default client.
+- The builder receives the same `AuthoringUnaryClient` in mount probe, `probeAllCapabilities`, `compileLive`, creation preview, and save hooks, so its sandbox template cannot accidentally use mutable global auth while normal routes retain their default client.
+- `onSaveSucceeded(key)` is declared by the builder, called by the non-validate save success branch, and consumed only by the sandbox’s party-enable handler; `showSaveResultLink` defaults to normal behavior and is false only for sandbox composition.
 - All fixed identities and the stable dungeon key are declared once in `constants.ts` and used in seed, lobby, and normal-link assertions.
 
 ## Final Delivery Order
