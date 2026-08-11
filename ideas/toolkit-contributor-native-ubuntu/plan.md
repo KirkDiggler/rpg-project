@@ -249,48 +249,30 @@ kind_verify='ab287333'
 team_platform='f9c87bc7'
 ```
 
-Use this GraphQL read-back whenever a Project field is gated; it supplies the
-field name and selected value rather than relying on a printed board row:
+Use this exact issue-scoped GraphQL read-back whenever a Project field is gated.
+It never scans the board: each issue is read separately into its own JSON file,
+and the Project 19 row is selected from that issue's `projectItems` result.
 
 ```bash
-project_items_query='query($owner:String!, $number:Int!) {
-  user(login:$owner) {
-    projectV2(number:$number) {
-      items(first:100) {
-        nodes {
-          id
-          content { ... on Issue { number url repository { nameWithOwner } } }
-          fieldValues(first:30) {
-            nodes {
-              ... on ProjectV2ItemFieldSingleSelectValue {
-                name
-                field { ... on ProjectV2SingleSelectField { name } }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}'
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 \
-  > "$sdd_root/project-19.json"
+issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$game_dev_issue" > "$sdd_root/project-game-dev.json"
 ```
 
 The assertions below use `jq -e`; a false predicate is a hard stop. For
-example, this checks a single issue row and all four values:
+example, this checks the single Project 19 row and all four values:
 
 ```bash
-jq -e --arg url "$game_dev_url" '
+jq -e '
   def has_field($field; $value):
     [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.user.projectV2.items.nodes[] | select(.content.url == $url)] as $rows
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
   | ($rows | length == 1)
     and ($rows[0] | has_field("Status"; "Todo"))
     and ($rows[0] | has_field("Team"; "Platform"))
     and ($rows[0] | has_field("Feature"; "Infra"))
     and ($rows[0] | has_field("Kind"; "Build"))
-' "$sdd_root/project-19.json"
+' "$sdd_root/project-game-dev.json"
 ```
 
 All comment read-backs use a task marker and this exact signature test:
@@ -341,12 +323,7 @@ mutation.
   kind_build='ea162471'
   kind_verify='ab287333'
   team_platform='f9c87bc7'
-  project_items_query='query($owner:String!, $number:Int!) {
-    user(login:$owner) { projectV2(number:$number) { items(first:100) { nodes {
-      id content { ... on Issue { number url repository { nameWithOwner } } }
-      fieldValues(first:30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } }
-    } } } }
-  }'
+  issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
   sdd_gitignore="$project_worktree/.superpowers/sdd/.gitignore"
   mkdir -p "$project_worktree/.superpowers/sdd"
   printf '%s\n' '*' > "$sdd_gitignore"
@@ -492,7 +469,7 @@ mutation.
       '' '## Contract boundaries' '' \
       '- Evidence only: no implementation branch, PR, source edit, direct storage, host bypass, harness-only success, port workaround, or automatic process kill.' \
       '- Bootstrap must create new roots on main/dev/dev/main, preserve valid existing roots, and prove API #792/web #747 ancestry in the API/web dev clones.' \
-      '- The only source mutation is the reversible Human Strength marker in the disposable toolkit clone. It stays armed until checkout, restored refresh, restored reseed Strength 16, and clean diff all pass.' \
+      '- The only source mutation is the reversible Human Strength marker in the disposable toolkit clone. It stays armed until checkout, restored refresh, restored fighter strength=16/off_hand=shield record, and clean diff all pass.' \
       '- Browser actions use chrome_devtools_new_page/select_page/take_snapshot/click/wait_for/evaluate_script/take_screenshot: re-save each party order first, record PutDungeon, open displayed normal links in new tabs, verify encounter view, and capture each screenshot immediately.' \
       '' '## Acceptance' '' \
       'Record host/Docker/SSH/ports, focused gates, bootstrap rerun, seeds, marker proof, PutDungeon key evidence, six normal GameView screenshots, negatives, owned down result, checksums, attachments, and independent signed review before this issue closes.' \
@@ -579,28 +556,36 @@ gh api graphql -f query="$parent_query" -F owner=KirkDiggler -F repo=rpg-project
 jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.parent.repository.nameWithOwner == "KirkDiggler/rpg-project"' "$sdd_root/game-dev-parent.json"
 jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.parent.repository.nameWithOwner == "KirkDiggler/rpg-project"' "$sdd_root/native-verify-parent.json"
 
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/project-19.json"
-jq -e --arg url "$game_dev_url" '
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$game_dev_issue" > "$sdd_root/task1-game-dev-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project \
+  -F number="$native_verify_issue" > "$sdd_root/task1-native-verify-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project \
+  -F number=210 > "$sdd_root/task1-wsl-project.json"
+jq -e --arg item "$game_dev_item" '
   def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.user.projectV2.items.nodes[] | select(.content.url == $url)] as $rows
-  | ($rows | length == 1) and ($rows[0] | has_field("Status"; "Todo"))
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ($rows[0] | has_field("Status"; "Todo"))
     and ($rows[0] | has_field("Team"; "Platform")) and ($rows[0] | has_field("Feature"; "Infra"))
     and ($rows[0] | has_field("Kind"; "Build"))
-' "$sdd_root/project-19.json"
-jq -e --arg url "$native_verify_url" '
+' "$sdd_root/task1-game-dev-project.json"
+jq -e --arg item "$native_verify_item" '
   def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.user.projectV2.items.nodes[] | select(.content.url == $url)] as $rows
-  | ($rows | length == 1) and ($rows[0] | has_field("Status"; "Todo"))
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ($rows[0] | has_field("Status"; "Todo"))
     and ($rows[0] | has_field("Team"; "Platform")) and ($rows[0] | has_field("Feature"; "Infra"))
     and ($rows[0] | has_field("Kind"; "Verify"))
-' "$sdd_root/project-19.json"
+' "$sdd_root/task1-native-verify-project.json"
 jq -e '
   def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.user.projectV2.items.nodes[] | select(.content.number == 210 and .content.repository.nameWithOwner == "KirkDiggler/rpg-project")] as $rows
-  | ($rows | length == 1) and ($rows[0] | has_field("Status"; "In Progress"))
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ($rows[0] | has_field("Status"; "In Progress"))
     and ($rows[0] | has_field("Team"; "Cross-team")) and ($rows[0] | has_field("Feature"; "Infra"))
     and ($rows[0] | has_field("Kind"; "Verify"))
-' "$sdd_root/project-19.json"
+' "$sdd_root/task1-wsl-project.json"
 ```
 
 - [ ] **5. Record the ledger, complete #211 only as a design decision, and make the fresh worktree.** #211 is not closed by a PR keyword. Its Team/Feature/Kind are read before the status update and must remain unchanged.
@@ -627,18 +612,32 @@ jq -e '
   printf '%s\n%s\n\n%s\n' "$handoff_marker" \
     "Tracking PR #$tracking_pr merged at $tracking_merge_sha with design blob $design_blob and plan blob $plan_blob. Delivery records are $game_dev_url and $native_verify_url; both are #208 sub-issues and Project 19 Platform / Infra records. #210 remains the sole WSL2 record and retains Cross-team / Infra / Verify ownership. #211 closes only as the completed design decision; #208 remains open through implementation plus both accepted live verifications." \
     "$signature" > "$sdd_root/task1-handoff.md"
-  gh issue view 211 --repo KirkDiggler/rpg-project --json projectItems > "$sdd_root/211-project-before.json"
+  task211_item='PVTI_lAHOAASbwc4Bcj4vzg2H2C0'
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=211 \
+    > "$sdd_root/task1-211-project-before.json"
+  jq -e --arg item "$task211_item" '
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
+      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
+  ' "$sdd_root/task1-211-project-before.json"
   gh issue comment 211 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task1-handoff.md"
   gh issue view 211 --repo KirkDiggler/rpg-project --json comments \
     | jq -e --arg marker "$handoff_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($signature))] | length == 1'
-  gh project item-edit --project-id "$project_id" --id 'PVTI_lAHOAASbwc4Bcj4vzg2H2C0' --field-id "$status_field" --single-select-option-id "$status_done"
+  gh project item-edit --project-id "$project_id" --id "$task211_item" --field-id "$status_field" --single-select-option-id "$status_done"
   gh issue close 211 --repo KirkDiggler/rpg-project
   gh issue view 211 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
-  gh issue view 211 --repo KirkDiggler/rpg-project --json projectItems > "$sdd_root/211-project-after.json"
-  jq -e '
-    def non_status: [.projectItems[]?.fieldValues[]? | select(.field.name != "Status") | {field:.field.name,name:.name}] | sort_by(.field);
-    ($ARGS.positional[0] | fromjson | non_status) == ($ARGS.positional[1] | fromjson | non_status)
-  ' --args "$(cat "$sdd_root/211-project-before.json")" "$(cat "$sdd_root/211-project-after.json")"
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=211 \
+    > "$sdd_root/task1-211-project-after.json"
+  jq -s -e --arg item "$task211_item" '
+    def rows: [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)];
+    def non_status: [.fieldValues.nodes[] | select(.field.name != "Status") | {field:.field.name,name:.name}] | sort_by(.field);
+    (.[0] | rows) as $before
+    | (.[1] | rows) as $after
+    | ($before | length == 1) and ($after | length == 1)
+      and $before[0].id == $item and $after[0].id == $item
+      and ($before[0] | non_status) == ($after[0] | non_status)
+      and ([ $after[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
+  ' "$sdd_root/task1-211-project-before.json" "$sdd_root/task1-211-project-after.json"
 
   test ! -e "$game_dev_worktree"
   git -C "$HOME/game-dev" fetch origin
@@ -688,12 +687,7 @@ project_id='PVT_kwHOAASbwc4Bcj4v'
 status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
 status_in_progress='a434eab1'
 status_done='e4d8ce42'
-project_items_query='query($owner:String!, $number:Int!) {
-user(login:$owner) { projectV2(number:$number) { items(first:100) { nodes {
-  id content { ... on Issue { number url repository { nameWithOwner } } }
-  fieldValues(first:30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } }
-} } } }
-}'
+issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
 test -s "$ledger"
 jq -e '.schema == 1' "$ledger"
 gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title,url \
@@ -806,6 +800,11 @@ grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal'
   git status --porcelain=v1 > "$sdd_root/task2-post-commit-status.txt"
   test ! -s "$sdd_root/task2-post-commit-status.txt"
   git diff origin/main...HEAD --check
+  native_game_dev_head_sha="$(git -C "$game_dev_worktree" rev-parse HEAD)"
+  test "$(git -C "$game_dev_worktree" rev-parse HEAD)" = "$native_game_dev_head_sha"
+  git -C "$game_dev_worktree" push --set-upstream origin "$game_dev_branch"
+  remote_game_dev_head_sha="$(git -C "$game_dev_worktree" ls-remote origin "refs/heads/$game_dev_branch" | awk '{print $1}')"
+  test "$remote_game_dev_head_sha" = "$native_game_dev_head_sha"
 
   {
     printf '%s\n' '## Summary' '' \
@@ -828,13 +827,12 @@ grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal'
     --search "in:title \"$implementation_pr_title\"" \
     --json number,title,url,headRefName,headRefOid,baseRefName,state \
     > "$sdd_root/task2-pr-list.json"
-  jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" '
+  jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" --arg head_sha "$native_game_dev_head_sha" '
     length == 1 and .[0].title == $title and .[0].headRefName == $head
-    and (.[] | .headRefOid | type == "string" and length == 40)
+    and .[0].headRefOid == $head_sha
     and .[0].baseRefName == "main" and .[0].state == "OPEN"
   ' "$sdd_root/task2-pr-list.json"
   native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task2-pr-list.json")"
-  native_game_dev_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/task2-pr-list.json")"
 
 
 
@@ -850,29 +848,14 @@ grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal'
 
   ```
 
-- [ ] **6. Require Kirk-authored complete no-findings review packages, immutable head, hosted checks, one closing reference, and merge ancestry.** Before merge, set Project Status to `In Review` only after CI is green. No GitHub review state is required: the specification and shell reviews are Kirk-authored signed marker comments. Each marker must name the reviewed immutable head, declare its package complete and findings none. A conditional pass, a non-Kirk author, a changed head, a failed or pending hosted check, or any finding returns the item to `In Progress` and blocks merge.
+- [ ] **6. Validate the immutable PR before changing board status, then merge only that re-read head.** First validate the immutable head, exact four-file list, both Kirk-authored signed review comments, and every _present_ hosted check. An empty hosted-check list is not itself a failure; any present non-success/neutral/skipped result is. Only after those assertions pass may the item move to `In Review`. A fresh read of the same PR immediately precedes the merge. A conditional pass, changed head, failed/pending present check, non-Kirk author, or finding blocks merge.
 
 ```bash
 test -s "$sdd_root/task2-green-contract.txt"
 test -s "$sdd_root/task2-bootstrap-contract.txt"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task2-project-before-review.json"
-game_dev_item="$(jq -r --arg url "$game_dev_url" '.data.user.projectV2.items.nodes[] | select(.content.url == $url) | .id' "$sdd_root/task2-project-before-review.json")"
-test -n "$game_dev_item"
-status_options_query='query($id:ID!) { node(id:$id) { ... on ProjectV2 { field(name:"Status") { ... on ProjectV2SingleSelectField { options { id name } } } } } }'
-gh api graphql -f query="$status_options_query" -F id="$project_id" > "$sdd_root/task2-status-options.json"
-jq -e '[.data.node.field.options[] | select(.name == "In Review")] | length == 1' "$sdd_root/task2-status-options.json"
-status_in_review="$(jq -r '.data.node.field.options[] | select(.name == "In Review") | .id' "$sdd_root/task2-status-options.json")"
-gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_review"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task2-project-in-review.json"
-jq -e --arg id "$game_dev_item" '
-[.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-| ($rows|length == 1)
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["In Review"])
-' "$sdd_root/task2-project-in-review.json"
-
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
   --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments \
-  > "$sdd_root/task2-pr-before-merge.json"
+  > "$sdd_root/task2-pr-before-in-review.json"
 jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
   --arg head_sha "$native_game_dev_head_sha" --arg signature "$signature" '
 def good_check:
@@ -893,10 +876,10 @@ and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md
 and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
 and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
 and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
-' "$sdd_root/task2-pr-before-merge.json"
-closing_query='query($owner:String!, $repo:String!, $number:Int!) { repository(owner:$owner,name:$repo) { pullRequest(number:$number) { closingIssuesReferences(first:20) { nodes { number repository { nameWithOwner } } } } } }'
+' "$sdd_root/task2-pr-before-in-review.json"
+closing_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){closingIssuesReferences(first:20){nodes{number repository{nameWithOwner}}}}}}'
 gh api graphql -f query="$closing_query" -F owner=KirkDiggler -F repo=game-dev -F number="$native_game_dev_pr" \
-> "$sdd_root/task2-closing-refs.json"
+  > "$sdd_root/task2-closing-refs.json"
 jq -e --argjson issue "$game_dev_issue" '
 .data.repository.pullRequest.closingIssuesReferences.nodes as $refs
 | ($refs | length == 1)
@@ -904,9 +887,72 @@ jq -e --argjson issue "$game_dev_issue" '
   and $refs[0].repository.nameWithOwner == "KirkDiggler/game-dev"
 ' "$sdd_root/task2-closing-refs.json"
 
-gh pr merge "$native_game_dev_pr" --repo KirkDiggler/game-dev --squash --delete-branch=false
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-before-review.json"
+game_dev_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task2-game-dev-project-before-review.json")"
+jq -e --arg item "$game_dev_item" '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Progress"])
+' "$sdd_root/task2-game-dev-project-before-review.json"
+status_options_query='query($id:ID!){node(id:$id){... on ProjectV2{field(name:"Status"){... on ProjectV2SingleSelectField{options{id name}}}}}}'
+gh api graphql -f query="$status_options_query" -F id="$project_id" > "$sdd_root/task2-status-options.json"
+jq -e '[.data.node.field.options[] | select(.name == "In Review")] | length == 1' "$sdd_root/task2-status-options.json"
+status_in_review="$(jq -r '.data.node.field.options[] | select(.name == "In Review") | .id' "$sdd_root/task2-status-options.json")"
+gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_review"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-in-review.json"
+jq -e --arg item "$game_dev_item" '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Review"])
+' "$sdd_root/task2-game-dev-project-in-review.json"
+
+# This is intentionally the last PR read before the head-locked merge.
+gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
+  --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments \
+  > "$sdd_root/task2-pr-immediately-before-merge.json"
+jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
+  --arg head_sha "$native_game_dev_head_sha" --arg signature "$signature" '
+def good_check:
+  (.conclusion // .state // "") as $result
+  | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
+def kirk_review($pass; $package; $findings; $head_marker):
+  [.comments[] | select(
+    .author.login == "KirkDiggler"
+    and (.body | contains($pass))
+    and (.body | contains($package))
+    and (.body | contains($findings))
+    and (.body | contains($head_marker + $head_sha))
+    and (.body | endswith($signature))
+  )] | length == 1;
+.title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
+and .headRefOid == $head_sha
+and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
+and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
+and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
+and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
+' "$sdd_root/task2-pr-immediately-before-merge.json"
+
+set +e
+gh pr merge "$native_game_dev_pr" --repo KirkDiggler/game-dev --squash --delete-branch=false \
+  --match-head-commit "$native_game_dev_head_sha"
+merge_status=$?
+set -e
+if [ "$merge_status" -ne 0 ]; then
+  gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_progress"
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+    -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-merge-failed.json"
+  jq -e --arg item "$game_dev_item" '
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
+      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Progress"])
+  ' "$sdd_root/task2-game-dev-project-merge-failed.json"
+  exit "$merge_status"
+fi
+
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json state,mergeCommit,baseRefName,headRefName,headRefOid \
-> "$sdd_root/task2-pr-merged.json"
+  > "$sdd_root/task2-pr-merged.json"
 jq -e --arg head "$game_dev_branch" --arg head_sha "$native_game_dev_head_sha" '
 .state == "MERGED" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha
 and (.mergeCommit.oid|type == "string" and length == 40)
@@ -914,15 +960,26 @@ and (.mergeCommit.oid|type == "string" and length == 40)
 native_game_dev_merge_sha="$(jq -r '.mergeCommit.oid' "$sdd_root/task2-pr-merged.json")"
 git -C "$HOME/game-dev" fetch origin
 git -C "$HOME/game-dev" merge-base --is-ancestor "$native_game_dev_merge_sha" origin/main
-gh issue view "$game_dev_issue" --repo KirkDiggler/game-dev --json state,closedByPullRequestsReferences \
-| jq -e --argjson pr "$native_game_dev_pr" '.state == "CLOSED" and ([.closedByPullRequestsReferences[].number] == [$pr])'
+issue_closure_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){state closedByPullRequestsReferences(first:20){nodes{number state mergedAt repository{nameWithOwner}}}}}}'
+gh api graphql -f query="$issue_closure_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
+  > "$sdd_root/task2-game-dev-closure.json"
+jq -e --argjson pr "$native_game_dev_pr" '
+  .data.repository.issue as $issue
+  | $issue.state == "CLOSED"
+    and ($issue.closedByPullRequestsReferences.nodes | length == 1)
+    and $issue.closedByPullRequestsReferences.nodes[0].number == $pr
+    and $issue.closedByPullRequestsReferences.nodes[0].state == "MERGED"
+    and ($issue.closedByPullRequestsReferences.nodes[0].mergedAt | type == "string")
+    and $issue.closedByPullRequestsReferences.nodes[0].repository.nameWithOwner == "KirkDiggler/game-dev"
+' "$sdd_root/task2-game-dev-closure.json"
 gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_done"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task2-project-done.json"
-jq -e --arg id "$game_dev_item" '
-[.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-| ($rows|length == 1)
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
-' "$sdd_root/task2-project-done.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-done.json"
+jq -e --arg item "$game_dev_item" '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
+' "$sdd_root/task2-game-dev-project-done.json"
 jq --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr=$pr | .native_game_dev_head_sha=$head_sha | .native_game_dev_merge_sha=$sha' "$ledger" > "$ledger.next"
 mv "$ledger.next" "$ledger"
 jq -e --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr == $pr and .native_game_dev_head_sha == $head_sha and .native_game_dev_merge_sha == $sha' "$ledger"
@@ -951,12 +1008,7 @@ failure stops without source/port/daemon workaround.
   status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
   status_in_progress='a434eab1'
   status_done='e4d8ce42'
-  project_items_query='query($owner:String!, $number:Int!) {
-    user(login:$owner) { projectV2(number:$number) { items(first:100) { nodes {
-      id content { ... on Issue { number url repository { nameWithOwner } } }
-      fieldValues(first:30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } }
-    } } } }
-  }'
+  issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
   gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title,url \
     > "$sdd_root/task3-game-dev-issue.json"
   gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
@@ -986,17 +1038,17 @@ failure stops without source/port/daemon workaround.
   test ! -e "$native_clean_root"
   gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state \
     | jq -e '.state == "OPEN"'
-  gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task3-project-before.json"
-  native_verify_item="$(jq -r --arg url "$native_verify_url" '.data.user.projectV2.items.nodes[] | select(.content.url == $url) | .id' "$sdd_root/task3-project-before.json")"
-  test -n "$native_verify_item"
-  jq -e --arg id "$native_verify_item" '
-    [.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-    | ($rows|length == 1)
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project \
+    -F number="$native_verify_issue" > "$sdd_root/task3-native-verify-project-before.json"
+  native_verify_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task3-native-verify-project-before.json")"
+  jq -e --arg item "$native_verify_item" '
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Todo"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Platform"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
-  ' "$sdd_root/task3-project-before.json"
+  ' "$sdd_root/task3-native-verify-project-before.json"
   gh project item-edit --project-id "$project_id" --id "$native_verify_item" --field-id "$status_field" --single-select-option-id "$status_in_progress"
   ```
 
@@ -1089,10 +1141,10 @@ and stop. Do not kill, reuse, move, or configure a listener.
   grep -Fqx 'host mode: ubuntu-native' "$native_evidence/status.txt"
   ./scripts/toolkit-contributor.sh seed | tee "$native_evidence/seed-first.txt"
   ./scripts/toolkit-contributor.sh seed | tee "$native_evidence/seed-second.txt"
-  grep -Fq 'Strength 16' "$native_evidence/seed-first.txt"
-  grep -Fq 'Strength 16' "$native_evidence/seed-second.txt"
-  grep -Fq 'Protection' "$native_evidence/seed-second.txt"
-  grep -Fqi 'shield' "$native_evidence/seed-second.txt"
+  for seed_file in "$native_evidence/seed-first.txt" "$native_evidence/seed-second.txt"; do
+    grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"
+    grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16' "$seed_file"
+  done
   ```
 
 - [ ] **5. Prove the reversible marker and keep its flag set through all restoration proof.** The only command which clears `marker_applied` is the final line after every required restoration assertion succeeds.
@@ -1103,19 +1155,21 @@ and stop. Do not kill, reuse, move, or configure a listener.
   marker_applied=1
   ./scripts/toolkit-contributor.sh refresh | tee "$native_evidence/marker-refresh-to-17.txt"
   ./scripts/toolkit-contributor.sh seed | tee "$native_evidence/marker-seed-17.txt"
-  grep -Fq 'Strength 17' "$native_evidence/marker-seed-17.txt"
+  grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=17 off_hand=shield' "$native_evidence/marker-seed-17.txt"
   git -C rpg-toolkit checkout -- "$marker_file"
   ./scripts/toolkit-contributor.sh refresh | tee "$native_evidence/marker-refresh-to-16.txt"
   ./scripts/toolkit-contributor.sh seed | tee "$native_evidence/marker-seed-restored-16.txt"
-  grep -Fq 'Strength 16' "$native_evidence/marker-seed-restored-16.txt"
+  grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$native_evidence/marker-seed-restored-16.txt"
   git -C rpg-toolkit diff --exit-code -- "$marker_file"
   marker_applied=0
   ```
 
-  If checkout, restored refresh, restored reseed, Strength 16 assertion, or
-  clean diff fails, the flag remains `1`; the trap re-checks out the marker
-  source and attempts refresh, reseed, and owned down while preserving the
-  failing command's original status.
+  If checkout, restored refresh, restored reseed, the restored `strength=16`
+  record, or clean diff fails, the flag remains `1`; the trap re-checks out the
+  marker source and attempts refresh, reseed, and owned down while preserving
+  the failing command's original status. The focused integration report
+  `api-sandboxseed-integration.txt`, not seeder stdout, is the evidence for
+  Protection, FightingStyles, and a real shield.
 
 - [ ] **6. Start only task-owned Vite and execute live browser evidence through the `chrome_devtools_*` MCP tools.** `screenshot.mjs` is optional secondary corroboration only after the MCP sequence; it never substitutes for Save/click/link/order actions.
 
@@ -1147,7 +1201,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
      `chrome_devtools_take_snapshot` it.
   2. For **Fighter**, `chrome_devtools_select_page(sandbox_page)`,
      `chrome_devtools_take_snapshot`, and `chrome_devtools_click` the enabled
-     Save button. `chrome_devtools_wait_for` exactly `Saved as "toolkit-contributor-sandbox"`,
+     Save button. `chrome_devtools_wait_for` exactly `Saved as "toolkit-contributor-sandbox".`,
      then `chrome_devtools_evaluate_script` and record that exact text/key.
      `chrome_devtools_wait_for` Fighter enabled,
      `chrome_devtools_take_snapshot`, and `chrome_devtools_click` Fighter.
@@ -1195,7 +1249,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
   perform another Save, or capture all routes at the end. Run only the armed
   marker/Vite/owned-down recovery. Harness URLs do not count.
 
-- [ ] **7. Run negatives, perform owned shutdown, publish evidence, and close only after an independent PASS.**
+- [ ] **7. Run negatives, perform owned shutdown, publish the archive through the issue UI, and close only after an independent PASS.**
 
   ```bash
   cd "$native_clean_root/game-dev/rpg-api"
@@ -1214,58 +1268,140 @@ and stop. Do not kill, reuse, move, or configure a listener.
   test -d rpg-dnd5e-web/.git
   test -d rpg-deployment/.git
   trap - EXIT INT TERM
-  sha256sum "$native_evidence"/* > "$native_evidence/SHA256SUMS.txt"
   find "$native_evidence" -maxdepth 1 -type f -printf '%f\n' | sort | tee "$native_evidence/manifest.txt"
+  sha256sum "$native_evidence"/* > "$native_evidence/SHA256SUMS.txt"
+  native_archive="$native_clean_root/task3-native-evidence.tar.gz"
+  native_archive_sha256="$native_clean_root/task3-native-evidence.tar.gz.sha256"
+  tar -C "$native_clean_root" -czf "$native_archive" evidence
+  (
+    cd "$native_clean_root"
+    sha256sum "$(basename "$native_archive")" > "$(basename "$native_archive_sha256")"
+  )
+  test -s "$native_archive"
+  test -s "$native_archive_sha256"
+  evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
+  printf '%s\n%s\n%s\n%s\n\n%s\n' "$evidence_marker" \
+    "Native clean acceptance for game-dev PR #$native_game_dev_pr at merge $native_game_dev_merge_sha is complete." \
+    'Attachments: task3-native-evidence.tar.gz, task3-native-evidence.tar.gz.sha256, and the six required order-qualified PNGs.' \
+    'The archive contains host/Docker/SSH/ports, focused reports including Protection/FightingStyles evidence, exact seed records, marker transcript, PutDungeon transcript, negatives, and owned-down proof.' \
+    "$signature" > "$sdd_root/task3-evidence-comment.md"
   ```
 
-  Attach the six named PNGs, PutDungeon-key transcript, and checksum manifest.
-  Use the durable evidence-comment file, then assert the exact signed comment:
+  Publish that signed comment **through the GitHub issue UI**, never with `gh
+issue comment` and never by claiming that a CLI comment upload attached a
+  file. Use the actual MCP calls in this order against `$native_verify_url`:
+
+  1. `chrome_devtools_new_page` the issue and retain `native_issue_page`, then
+     `chrome_devtools_take_snapshot` it.
+  2. `chrome_devtools_click` **Add a comment**, take another
+     `chrome_devtools_take_snapshot`, and use
+     `chrome_devtools_evaluate_script` to put the exact contents of
+     `$sdd_root/task3-evidence-comment.md` into the comment editor and dispatch
+     its input event. Snapshot the marker, merge SHA, and signature in the
+     editor before publishing.
+  3. Use `chrome_devtools_upload_file` on that comment's attachment control for
+     `task3-native-evidence.tar.gz`,
+     `task3-native-evidence.tar.gz.sha256`, and these six files:
+
+     ```text
+     toolkit-sandbox-fighter-only-fighter-gameview.png
+     toolkit-sandbox-barbarian-only-barbarian-gameview.png
+     toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+     toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+     toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+     toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
+     ```
+
+     After every upload, use `chrome_devtools_wait_for` its filename in the
+     composer and `chrome_devtools_evaluate_script` the attachment list to
+     record its visible filename. Do not substitute a local path or a `gh`
+     command for an upload.
+
+  4. `chrome_devtools_click` **Comment**, then `chrome_devtools_wait_for` the
+     evidence marker and `chrome_devtools_take_snapshot` the published signed
+     comment. Use `chrome_devtools_evaluate_script` to record its displayed
+     attachment links.
+
+  Read back the published UI comment and require its author, content, names,
+  and attachment URLs. This is a readback only; it does not create or upload a
+  comment.
 
   ```bash
-  evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
-  printf '%s\n%s\n\n%s\n' "$evidence_marker" \
-    "Native clean acceptance for game-dev PR #$native_game_dev_pr at $native_game_dev_merge_sha completed from $native_evidence. Attached evidence includes host/Docker/SSH/ports, main/dev/dev/main bootstrap proof, API #792 and web #747 dev-clone ancestry, focused command exits, status/seeds, 16→17→16 marker transcript, PutDungeon key transcript, six immediate MCP GameView screenshots, wrong-owner integration output, production negatives, Vite PID/log, owned down/tree check, manifest, and SHA256SUMS. Independent review requested." \
-    "$signature" > "$sdd_root/task3-evidence-comment.md"
-  gh issue comment "$native_verify_issue" --repo KirkDiggler/rpg-project --body-file "$sdd_root/task3-evidence-comment.md"
   gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json comments \
-    | jq -e --arg marker "$evidence_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($signature))] | length == 1'
-
-
-
-
-
-
-
-
-
-
-
-
-
+    > "$sdd_root/task3-evidence-readback.json"
+  jq -e --arg marker "$evidence_marker" --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+    [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments
+    | ($comments | length == 1)
+      and ($comments[0].body | contains($marker))
+      and ($comments[0].body | contains($merge))
+      and ($comments[0].body | endswith($signature))
+      and ([
+        "task3-native-evidence.tar.gz",
+        "task3-native-evidence.tar.gz.sha256",
+        "toolkit-sandbox-fighter-only-fighter-gameview.png",
+        "toolkit-sandbox-barbarian-only-barbarian-gameview.png",
+        "toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png",
+        "toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png",
+        "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
+        "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
+      ] | all(. as $filename | ($comments[0].body | contains($filename))))
+      and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
+  ' "$sdd_root/task3-evidence-readback.json"
+  jq -r --arg marker "$evidence_marker" '
+    [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))]
+    | .[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+")
+  ' "$sdd_root/task3-evidence-readback.json" | sort -u > "$sdd_root/task3-attachment-urls.txt"
+  test "$(wc -l < "$sdd_root/task3-attachment-urls.txt")" -ge 8
   ```
 
-A reviewer independent of the executor verifies artifacts, command outputs,
-image order/content, no-bypass/no-auto-kill posture, and failure handling.
-Require one signed `native-ubuntu-acceptance-review: PASS` comment, then set
-this item to Done and close it explicitly; a blocker leaves it In Progress.
+  For **each** URL in `task3-attachment-urls.txt`, explicitly use
+  `chrome_devtools_new_page` (or reload the existing attachment page),
+  `chrome_devtools_wait_for`, `chrome_devtools_take_snapshot`, and
+  `chrome_devtools_evaluate_script` to confirm the URL opens. Record the
+  resulting statement `viewed <filename> at <URL>` in
+  `$native_evidence/task3-attachment-viewed.txt`; the statement must name all
+  eight files. A missing/unopenable attachment stops before review.
 
-```bash
-gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json comments \
-| jq -e --arg sig "$signature" '[.comments[] | select((.body|contains("native-ubuntu-acceptance-review: PASS")) and (.body|endswith($sig))] | length == 1'
-gh project item-edit --project-id "$project_id" --id "$native_verify_item" --field-id "$status_field" --single-select-option-id "$status_done"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task3-project-done.json"
-jq -e --arg id "$native_verify_item" '
-[.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-| ($rows|length == 1)
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Platform"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
-' "$sdd_root/task3-project-done.json"
-gh issue close "$native_verify_issue" --repo KirkDiggler/rpg-project
-gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
+  A fresh reviewer, distinct from the executor, reviews the retained package,
+  command output, image order/content, no-bypass/no-auto-kill posture, and
+  failure handling. The reviewer may sign through the same `KirkDiggler`
+  account and signature, but is still a fresh reviewer rather than the
+  executor. Require this unique signed review marker and full package before
+  marking the issue done:
 
-```
+  ```bash
+  native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
+  gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json comments \
+    > "$sdd_root/task3-native-review-readback.json"
+  jq -e --arg marker "$native_review_marker" --arg evidence "$evidence_marker" \
+    --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+    [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+    | ($reviews | length == 1)
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
+      and ($reviews[0].body | contains($evidence))
+      and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
+      and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+      and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+      and ($reviews[0].body | endswith($signature))
+  ' "$sdd_root/task3-native-review-readback.json"
+  gh project item-edit --project-id "$project_id" --id "$native_verify_item" --field-id "$status_field" --single-select-option-id "$status_done"
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project \
+    -F number="$native_verify_issue" > "$sdd_root/task3-native-verify-project-done.json"
+  jq -e --arg item "$native_verify_item" '
+    def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
+      and ($rows[0] | has_field("Status"; "Done"))
+      and ($rows[0] | has_field("Team"; "Platform"))
+      and ($rows[0] | has_field("Feature"; "Infra"))
+      and ($rows[0] | has_field("Kind"; "Verify"))
+  ' "$sdd_root/task3-native-verify-project-done.json"
+  gh issue close "$native_verify_issue" --repo KirkDiggler/rpg-project
+  gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
+  ```
 
 ### Task 4: Formally amend and execute #210 on the landed baseline
 
@@ -1289,12 +1425,7 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
   project_id='PVT_kwHOAASbwc4Bcj4v'
   status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
   status_done='e4d8ce42'
-  project_items_query='query($owner:String!, $number:Int!) {
-    user(login:$owner) { projectV2(number:$number) { items(first:100) { nodes {
-      id content { ... on Issue { number url repository { nameWithOwner } } }
-      fieldValues(first:30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } }
-    } } } }
-  }'
+  issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
   gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title \
     > "$sdd_root/task4-game-dev-issue.json"
   gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
@@ -1322,24 +1453,38 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
   native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task4-implementation-pr.json")"
   native_game_dev_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/task4-implementation-pr.json")"
   native_game_dev_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/task4-implementation-pr.json")"
+  native_evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
+  native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
   gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,comments \
-    | jq -e --arg sig '— asset-pipeline agent, on behalf of KirkDiggler' '
-        .state == "CLOSED"
-        and ([.comments[] | select((.body|contains("native-ubuntu-acceptance-review: PASS")) and (.body|endswith($sig))] | length == 1)
-      '
+    > "$sdd_root/task4-native-review-readback.json"
+  jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_marker" \
+    --arg merge "$native_game_dev_merge_sha" --arg sig "$signature" '
+      .state == "CLOSED"
+      and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+        | ($reviews | length == 1)
+          and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
+          and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
+          and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
+          and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
+          and ($reviews[0].body | contains($evidence))
+          and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
+          and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+          and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+          and ($reviews[0].body | endswith($sig)))
+    '
   gh issue view 210 --repo KirkDiggler/rpg-project --json state,title \
     | jq -e --arg title "$wsl_issue_title" '.state == "OPEN" and .title == $title'
-  gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task4-project-before.json"
-  wsl_project_item="$(jq -r '.data.user.projectV2.items.nodes[] | select(.content.number == 210 and .content.repository.nameWithOwner == "KirkDiggler/rpg-project") | .id' "$sdd_root/task4-project-before.json")"
-  test -n "$wsl_project_item"
-  jq -e --arg id "$wsl_project_item" '
-    [.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-    | ($rows|length == 1)
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
+    > "$sdd_root/task4-wsl-project-before.json"
+  wsl_project_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task4-wsl-project-before.json")"
+  jq -e --arg item "$wsl_project_item" '
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["In Progress"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Cross-team"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
-  ' "$sdd_root/task4-project-before.json"
+  ' "$sdd_root/task4-wsl-project-before.json"
   ```
 
 - [ ] **2. Preserve #210 ownership, post the formal superseding packet, and make GitHub the only executor handoff.** Generate the durable local packet only for upload; the WSL executor uses the resulting latest GitHub comment, never the native filesystem or local ledger.
@@ -1352,7 +1497,7 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
   Fighter, Barbarian, Fighter then Barbarian, Barbarian then Fighter:
   chrome_devtools_select_page sandbox; chrome_devtools_take_snapshot;
   re-save with chrome_devtools_click on enabled Save;
-  chrome_devtools_wait_for exact Saved as "toolkit-contributor-sandbox";
+  chrome_devtools_wait_for exact `Saved as "toolkit-contributor-sandbox".`;
   chrome_devtools_evaluate_script/save PutDungeon key;
   chrome_devtools_wait_for selected party enabled; chrome_devtools_click it;
   chrome_devtools_wait_for/chrome_devtools_evaluate_script exact normal hrefs;
@@ -1384,19 +1529,19 @@ complete clean WSL preflight, clone, `main/dev/dev/main` root/origin checks,
 two-seed flow, negative tests, owned down, checksum manifest, and attachment
 instructions contained in this Task 4 design.
 
-The packet's marker trap sets `marker_applied=1` before refresh/reseed to
-Strength 17 and clears it only after source checkout, restored refresh,
-restored seed Strength 16, and clean diff. Its trap always re-checks out the
-marker source and attempts refresh/reseed/down without replacing the original
-status; it stops only its task-owned Vite PID and performs no unrelated
-cleanup.
+The packet's marker trap sets `marker_applied=1` before refresh/reseed to the
+fighter `strength=17 off_hand=shield` record and clears it only after source
+checkout, restored refresh, restored fighter `strength=16 off_hand=shield`,
+and clean diff. Its trap always re-checks out the marker source and attempts
+refresh/reseed/down without replacing the original status; it stops only its
+task-owned Vite PID and performs no unrelated cleanup.
 
 The packet's browser section names all actual MCP operations:
 `chrome_devtools_new_page`, `chrome_devtools_select_page`,
 `chrome_devtools_take_snapshot`, `chrome_devtools_click`,
 `chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
 `chrome_devtools_take_screenshot`. For each Fighter, Barbarian, Fighter then
-Barbarian, and Barbarian then Fighter it re-saves first, waits exact `Saved as "toolkit-contributor-sandbox"`, records the PutDungeon key, waits the selected party enabled, evaluates normal hrefs, immediately opens each href in a new tab, uses `chrome_devtools_evaluate_script` to assert `[data-testid="encounter-view"]`, and captures before returning to sandbox:
+Barbarian, and Barbarian then Fighter it re-saves first, waits exact `Saved as "toolkit-contributor-sandbox".`, records the PutDungeon key, waits the selected party enabled, evaluates normal hrefs, immediately opens each href in a new tab, uses `chrome_devtools_evaluate_script` to assert `[data-testid="encounter-view"]`, and captures before returning to sandbox:
 
 ```text
 toolkit-sandbox-fighter-only-fighter-gameview.png
@@ -1406,6 +1551,65 @@ toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
 toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
 toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
 ```
+
+The packet must also contain these literal WSL evidence requirements; do not
+summarize or weaken them. It must run the two seed files through these exact
+regular expressions, with both expressions required for **both** files:
+
+```bash
+wsl_evidence="$wsl_clean_root/evidence"
+for seed_file in "$wsl_evidence/seed-first.txt" "$wsl_evidence/seed-second.txt"; do
+  grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"
+  grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16' "$seed_file"
+done
+grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=17 off_hand=shield' "$wsl_evidence/marker-seed-17.txt"
+grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$wsl_evidence/marker-seed-restored-16.txt"
+```
+
+The packet names the focused API integration report as the evidence for
+Protection, FightingStyles, and the real shield; it must not infer that from
+runtime seeder-output text. After its manifest and SHA256SUMS are complete,
+the WSL executor creates the archive and checksum exactly as follows:
+
+```bash
+wsl_archive="$wsl_clean_root/task4-wsl-evidence.tar.gz"
+wsl_archive_sha256="$wsl_clean_root/task4-wsl-evidence.tar.gz.sha256"
+tar -C "$wsl_clean_root" -czf "$wsl_archive" evidence
+(
+  cd "$wsl_clean_root"
+  sha256sum "$(basename "$wsl_archive")" > "$(basename "$wsl_archive_sha256")"
+)
+test -s "$wsl_archive"
+test -s "$wsl_archive_sha256"
+```
+
+It publishes the signed evidence comment
+in the #210 GitHub issue UI with marker
+`<!-- native-ubuntu-delivery:task4-wsl-evidence -->`, the exact merged
+`$native_game_dev_merge_sha`, and the required signature. It uses actual
+`chrome_devtools_new_page`, `chrome_devtools_take_snapshot`,
+`chrome_devtools_click`, `chrome_devtools_evaluate_script`,
+`chrome_devtools_upload_file`, and `chrome_devtools_wait_for` calls to put the
+archive, checksum, and these six PNGs in that same issue comment:
+
+```text
+toolkit-sandbox-fighter-only-fighter-gameview.png
+toolkit-sandbox-barbarian-only-barbarian-gameview.png
+toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
+```
+
+The pickup explicitly requires `chrome_devtools_wait_for` each filename in the
+composer, a UI click to publish, and a comment readback that asserts author
+`KirkDiggler`, the WSL evidence marker, exact merge SHA, signature, all eight
+filenames, and at least eight distinct
+`https://github.com/user-attachments/` URLs. It then explicitly reloads or
+opens every returned attachment URL with `chrome_devtools_new_page`, waits,
+takes a snapshot, evaluates the loaded attachment, and records a
+`viewed <filename> at <URL>` statement. It does not say that `gh issue comment`
+uploads an attachment.
 
 `screenshot.mjs` is only secondary corroboration. A browser failure retains
 the current MCP artifact and takes no later save, party action, or catch-up
@@ -1423,21 +1627,62 @@ gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
     '
 ```
 
-- [ ] **3. Execute only the posted GitHub packet and close #210 only after independent review.** The executor starts with the packet's own GitHub-derived baseline, not an inherited shell. It must prove `host mode: ubuntu-wsl2`, all clean clone/root/ancestry assertions, seeds, 16→17→16, PutDungeon evidence, six immediate MCP screenshots, negatives, and owned cleanup. A signed `wsl2-acceptance-review: PASS` comment precedes the exact closure operations below; any failure retains `In Progress` and does not close #208.
+- [ ] **3. Execute only the posted GitHub packet and close #210 only after independent review.** The executor starts with the packet's own GitHub-derived baseline, not an inherited shell. It must prove `host mode: ubuntu-wsl2`, all clean clone/root/ancestry assertions, the exact two-file seed records, the `strength=16 → 17 → 16` marker evidence, PutDungeon evidence, six immediate MCP screenshots, negatives, archive/checksum attachment readback and URL views, and owned cleanup. Any failure retains `In Progress` and does not close #208.
+
+A fresh reviewer distinct from the executor verifies the WSL package, even if
+both use the `KirkDiggler` account and signature. The reviewer comment uses its
+own unique marker and cites the evidence marker and exact merge SHA.
 
 ```bash
+wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
+wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
-| jq -e --arg sig "$signature" '[.comments[] | select((.body|contains("wsl2-acceptance-review: PASS")) and (.body|endswith($sig))] | length == 1'
+  > "$sdd_root/task4-wsl-evidence-readback.json"
+jq -e --arg marker "$wsl_evidence_marker" --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments
+  | ($comments | length == 1)
+    and ($comments[0].body | contains($merge))
+    and ($comments[0].body | endswith($signature))
+    and ([
+      "task4-wsl-evidence.tar.gz",
+      "task4-wsl-evidence.tar.gz.sha256",
+      "toolkit-sandbox-fighter-only-fighter-gameview.png",
+      "toolkit-sandbox-barbarian-only-barbarian-gameview.png",
+      "toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png",
+      "toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png",
+      "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
+      "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
+    ] | all(. as $filename | ($comments[0].body | contains($filename))))
+    and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
+' "$sdd_root/task4-wsl-evidence-readback.json"
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
+  > "$sdd_root/task4-wsl-review-readback.json"
+jq -e --arg marker "$wsl_review_marker" --arg evidence "$wsl_evidence_marker" \
+  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+  | ($reviews | length == 1)
+    and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
+    and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
+    and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
+    and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
+    and ($reviews[0].body | contains($evidence))
+    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
+    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
+    and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+    and ($reviews[0].body | endswith($signature))
+' "$sdd_root/task4-wsl-review-readback.json"
 gh project item-edit --project-id "$project_id" --id "$wsl_project_item" --field-id "$status_field" --single-select-option-id "$status_done"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task4-project-done.json"
-jq -e --arg id "$wsl_project_item" '
-[.data.user.projectV2.items.nodes[] | select(.id == $id)] as $rows
-| ($rows|length == 1)
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Cross-team"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
-  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
-' "$sdd_root/task4-project-done.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
+  > "$sdd_root/task4-wsl-project-done.json"
+jq -e --arg item "$wsl_project_item" '
+  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ($rows[0] | has_field("Status"; "Done"))
+    and ($rows[0] | has_field("Team"; "Cross-team"))
+    and ($rows[0] | has_field("Feature"; "Infra"))
+    and ($rows[0] | has_field("Kind"; "Verify"))
+' "$sdd_root/task4-wsl-project-done.json"
 gh issue close 210 --repo KirkDiggler/rpg-project
 gh issue view 210 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
 ```
@@ -1465,12 +1710,7 @@ signature='— asset-pipeline agent, on behalf of KirkDiggler'
 project_id='PVT_kwHOAASbwc4Bcj4v'
 status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
 status_done='e4d8ce42'
-project_items_query='query($owner:String!, $number:Int!) {
-  user(login:$owner) { projectV2(number:$number) { items(first:100) { nodes {
-    id content { ... on Issue { number url repository { nameWithOwner } } }
-    fieldValues(first:30) { nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } }
-  } } } }
-}'
+issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
 parent_query='query($owner:String!, $repo:String!, $number:Int!) { repository(owner:$owner,name:$repo) { issue(number:$number) { number url parent { number repository { nameWithOwner } } subIssues(first:100) { nodes { number url repository { nameWithOwner } } } } } }'
 gh pr list --repo KirkDiggler/rpg-project --state merged --head "$tracking_pr_head" --search "in:title \"$tracking_pr_title\"" --json number,title,state,baseRefName,headRefName,mergeCommit > "$sdd_root/task5-tracking-pr.json"
 jq -e --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" 'length == 1 and .[0].title == $title and .[0].state == "MERGED" and .[0].baseRefName == "main" and .[0].headRefName == $head and (.[]|.mergeCommit.oid|type == "string" and length == 40)' "$sdd_root/task5-tracking-pr.json"
@@ -1507,14 +1747,58 @@ native_game_dev_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/task5-imple
 
 ```bash
 signature='— asset-pipeline agent, on behalf of KirkDiggler'
+native_evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
+native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
+wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
+wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 211 --repo KirkDiggler/rpg-project --json state,comments \
   | jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|endswith($sig))] | length == 1)'
-gh issue view "$game_dev_issue" --repo KirkDiggler/game-dev --json state,closedByPullRequestsReferences \
-  | jq -e --argjson pr "$native_game_dev_pr" '.state == "CLOSED" and ([.closedByPullRequestsReferences[].number] == [$pr])'
+issue_closure_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){state closedByPullRequestsReferences(first:20){nodes{number state mergedAt repository{nameWithOwner}}}}}}'
+gh api graphql -f query="$issue_closure_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
+  > "$sdd_root/task5-game-dev-closure.json"
+jq -e --argjson pr "$native_game_dev_pr" '
+  .data.repository.issue as $issue
+  | $issue.state == "CLOSED"
+    and ($issue.closedByPullRequestsReferences.nodes | length == 1)
+    and $issue.closedByPullRequestsReferences.nodes[0].number == $pr
+    and $issue.closedByPullRequestsReferences.nodes[0].state == "MERGED"
+    and ($issue.closedByPullRequestsReferences.nodes[0].mergedAt | type == "string")
+    and $issue.closedByPullRequestsReferences.nodes[0].repository.nameWithOwner == "KirkDiggler/game-dev"
+' "$sdd_root/task5-game-dev-closure.json"
 gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,comments \
-  | jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-acceptance-review: PASS")) and (.body|endswith($sig))] | length == 1)'
+  > "$sdd_root/task5-native-review-readback.json"
+jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_marker" \
+  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+  .state == "CLOSED"
+  and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+    | ($reviews | length == 1)
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
+      and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
+      and ($reviews[0].body | contains($evidence))
+      and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
+      and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+      and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+      and ($reviews[0].body | endswith($signature)))
+' "$sdd_root/task5-native-review-readback.json"
 gh issue view 210 --repo KirkDiggler/rpg-project --json state,comments \
-  | jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("wsl2-acceptance-review: PASS")) and (.body|endswith($sig))] | length == 1)'
+  > "$sdd_root/task5-wsl-review-readback.json"
+jq -e --arg marker "$wsl_review_marker" --arg evidence "$wsl_evidence_marker" \
+  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+  .state == "CLOSED"
+  and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+    | ($reviews | length == 1)
+      and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
+      and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
+      and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
+      and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
+      and ($reviews[0].body | contains($evidence))
+      and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
+      and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
+      and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+      and ($reviews[0].body | endswith($signature)))
+' "$sdd_root/task5-wsl-review-readback.json"
 gh issue view 208 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "OPEN"'
 
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
@@ -1551,17 +1835,44 @@ gh api graphql -f query="$closing_query" -F owner=KirkDiggler -F repo=game-dev -
 git -C "$HOME/game-dev" fetch origin
 git -C "$HOME/game-dev" merge-base --is-ancestor "$native_game_dev_merge_sha" origin/main
 
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task5-project-19.json"
-jq -e --arg game_url "$(jq -r '.[0].url' "$sdd_root/task5-game-dev-issue.json")" --arg native_url "$native_verify_url" '
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
+  > "$sdd_root/task5-game-dev-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$native_verify_issue" \
+  > "$sdd_root/task5-native-verify-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
+  > "$sdd_root/task5-wsl-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=211 \
+  > "$sdd_root/task5-211-project.json"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
+  > "$sdd_root/task5-208-project.json"
+jq -e '
   def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.user.projectV2.items.nodes[] | select(.content.url == $game_url)] as $game
-  | [.data.user.projectV2.items.nodes[] | select(.content.url == $native_url)] as $native
-  | [.data.user.projectV2.items.nodes[] | select(.content.number == 210 and .content.repository.nameWithOwner == "KirkDiggler/rpg-project")] as $wsl
-  | ($game|length == 1) and ($native|length == 1) and ($wsl|length == 1)
-    and ($game[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Build"))
-    and ($native[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
-    and ($wsl[0] | has_field("Status"; "Done") and has_field("Team"; "Cross-team") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
-' "$sdd_root/task5-project-19.json"
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Build"))
+' "$sdd_root/task5-game-dev-project.json"
+jq -e '
+  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
+' "$sdd_root/task5-native-verify-project.json"
+jq -e '
+  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Cross-team") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
+' "$sdd_root/task5-wsl-project.json"
+jq -e '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
+' "$sdd_root/task5-211-project.json"
+jq -e '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1)
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
+' "$sdd_root/task5-208-project.json"
 ```
 
 Re-run parent/sub-issue reads instead of relying on Task 1 output:
@@ -1591,18 +1902,26 @@ gh issue comment 208 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task5
 gh issue view 208 --repo KirkDiggler/rpg-project --json comments \
 | jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($sig))] | length == 1'
 
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task5-parent-project-before.json"
-parent_item="$(jq -r '.data.user.projectV2.items.nodes[] | select(.content.number == 208 and .content.repository.nameWithOwner == "KirkDiggler/rpg-project") | .id' "$sdd_root/task5-parent-project-before.json")"
-test -n "$parent_item"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
+  > "$sdd_root/task5-parent-project-before.json"
+parent_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task5-parent-project-before.json")"
+jq -e --arg item "$parent_item" '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
+' "$sdd_root/task5-parent-project-before.json"
 gh project item-edit --project-id "$project_id" --id "$parent_item" --field-id "$status_field" --single-select-option-id "$status_done"
-gh api graphql -f query="$project_items_query" -F owner=KirkDiggler -F number=19 > "$sdd_root/task5-parent-project-after.json"
-jq -se --arg id "$parent_item" '
-def row: .data.user.projectV2.items.nodes[] | select(.id == $id);
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
+  > "$sdd_root/task5-parent-project-after.json"
+jq -s -e --arg item "$parent_item" '
+  def rows: [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)];
   def non_status: [.fieldValues.nodes[] | select(.field.name != "Status") | {field:.field.name,name:.name}] | sort_by(.field);
-  (.[0] | row) as $before
-| (.[1] | row) as $after
-  | ($before | non_status) == ($after | non_status)
-    and ([ $after.fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
+  (.[0] | rows) as $before
+  | (.[1] | rows) as $after
+  | ($before | length == 1) and ($after | length == 1)
+    and $before[0].id == $item and $after[0].id == $item
+    and ($before[0] | non_status) == ($after[0] | non_status)
+    and ([ $after[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
 ' "$sdd_root/task5-parent-project-before.json" "$sdd_root/task5-parent-project-after.json"
 gh issue close 208 --repo KirkDiggler/rpg-project
 gh issue view 208 --repo KirkDiggler/rpg-project --json state \
@@ -1612,78 +1931,120 @@ gh issue view 208 --repo KirkDiggler/rpg-project --json state \
 
 ## Review packages and retained evidence
 
-| Gate               | Required retained evidence                                                                                                                                                 | Independent decision                         |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Tracking/process   | exact #211 PR identity, two-file list, review verdict/check conclusions, merged blobs, original PR branch/SHA reads, issue/Project/parent JSON                             | Coordinator before Task 2                    |
-| TDD/implementation | RED result, GREEN commands, fake logs, four-file diff, clone/preservation tests, PR metadata/reviews/checks/closing count                                                  | Specification/safety and shell/TDD reviewers |
-| Native live        | host/Docker/SSH/ports, clean branch/origin/ancestry proof, focused reports/packages, seeds, marker, PutDungeon transcript, six MCP screenshots, negatives, down, checksums | Reviewer other than executor                 |
-| WSL2 live          | latest GitHub packet, GitHub-derived baseline, same clean clone/marker/MCP evidence, field preservation, attachments                                                       | Reviewer other than executor                 |
-| Parent closure     | exact states/fields/links/PR facts/merge ancestry/comment signatures and retained evidence URLs                                                                            | Coordinator before #208 close                |
+| Gate               | Required retained evidence                                                                                                                                                                                                                      | Independent decision                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Tracking/process   | exact #211 PR identity, two-file list, review verdict/check conclusions, merged blobs, original PR branch/SHA reads, issue/Project/parent JSON                                                                                                  | Coordinator before Task 2                    |
+| TDD/implementation | RED result, GREEN commands, fake logs, four-file diff, clone/preservation tests, PR metadata/reviews/checks/closing count                                                                                                                       | Specification/safety and shell/TDD reviewers |
+| Native live        | host/Docker/SSH/ports, clean branch/origin/ancestry proof, focused reports/packages, exact seed and marker records, PutDungeon transcript, six MCP screenshots, negatives, down, archive/checksum, eight attachment URLs, and viewed statements | Fresh reviewer other than executor           |
+| WSL2 live          | latest GitHub packet, GitHub-derived baseline, same clean clone/marker/MCP evidence, exact seed records, archive/checksum, eight attachment URLs, viewed statements, and field preservation                                                     | Fresh reviewer other than executor           |
+| Parent closure     | exact states/fields/links/PR facts/merge ancestry/comment signatures and retained evidence URLs                                                                                                                                                 | Coordinator before #208 close                |
 
 ## Plan self-review requirements
 
 Before committing this plan and before Task 1 begins, run these commands from
-`rpg-project`; the scanner intentionally rejects unresolved task markers while
-allowing the `<!-- pih-dispatch:v1 -->` HTML comments:
+`rpg-project`. They validate the two documents without reading another checkout.
+The scanner permits intentional HTML comment markers, rejects unresolved work
+markers, checks fence pairing, and extracts every fenced Bash block for a real
+`bash -n` pass.
 
-````bash
+```bash
 python3 - <<'PY'
 from pathlib import Path
 import re
+import subprocess
+import tempfile
 
 paths = [
     Path('ideas/toolkit-contributor-native-ubuntu/design.md'),
     Path('ideas/toolkit-contributor-native-ubuntu/plan.md'),
 ]
 tokens = ('T' + 'BD', 'TO' + 'DO', 'FIX' + 'ME', 'PLACE' + 'HOLDER')
+opening = re.compile(r'^\s*(?P<fence>`{3,}|~{3,})(?P<info>[^\n]*)$')
+heading_re = re.compile(r'^#{1,6}\s+(.+)$')
+all_bash_blocks = []
 for path in paths:
     lines = path.read_text().splitlines()
-    in_fence = False
     headings = set()
     task_headings = []
+    active = None
+    bash_lines = []
     for line_number, line in enumerate(lines, 1):
-        if re.match(r'^\\s*(?:```|~~~)', line):
-            in_fence = not in_fence
+        if active is None:
+            match = opening.match(line)
+            if match:
+                active = (match.group('fence')[0], len(match.group('fence')), match.group('info').strip())
+                bash_lines = []
+                continue
+            match = heading_re.match(line)
+            if match:
+                heading = match.group(1)
+                if heading in headings:
+                    raise SystemExit(f'{path}:{line_number}: duplicate heading: {heading}')
+                headings.add(heading)
+                if re.fullmatch(r'Task [1-5]:.*', heading):
+                    task_headings.append(heading)
             continue
-        if in_fence:
+        fence_char, fence_len, info = active
+        if re.match(rf'^\s*{re.escape(fence_char)}{{{fence_len},}}\s*$', line):
+            if info.split(maxsplit=1)[0:1] == ['bash']:
+                all_bash_blocks.append((path, line_number, '\n'.join(bash_lines) + '\n'))
+            active = None
             continue
-        match = re.match(r'^#{1,6}\\s+(.+)$', line)
-        if match:
-            heading = match.group(1)
-            if heading in headings:
-                raise SystemExit(f'{path}:{line_number}: duplicate heading: {heading}')
-            headings.add(heading)
-            if re.match(r'^Task [1-5]:', heading):
-                task_headings.append(heading)
-    if in_fence:
+        bash_lines.append(line)
+    if active is not None:
         raise SystemExit(f'{path}: unbalanced fenced code block')
-    if path.name == 'plan.md' and sorted(task_headings) != sorted(set(task_headings)):
-        raise SystemExit(f'{path}: duplicate Task heading')
+    if path.name == 'plan.md':
+        expected = {1, 2, 3, 4, 5}
+        found = {int(re.match(r'Task ([1-5]):', heading).group(1)) for heading in task_headings}
+        if len(task_headings) != 5 or found != expected:
+            raise SystemExit(f'{path}: require exactly five unique Task 1-5 headings, found {task_headings}')
     text = path.read_text()
     bad_tokens = [token for token in tokens if token in text]
-    angle_pattern = re.escape(chr(60)) + r'[A-Za-z][^>]*' + re.escape(chr(62))
-    bad_angles = [m.group(0) for m in re.finditer(angle_pattern, text)]
-    if bad_tokens or bad_angles:
-        raise SystemExit(f'{path}: unresolved marker(s): {bad_tokens or bad_angles}')
+    if bad_tokens:
+        raise SystemExit(f'{path}: unresolved marker(s): {bad_tokens}')
+    legacy_sdd = '.pi-agents/' + 'sdd'
+    legacy_gate = 'APPRO' + 'VED'
+    legacy_items_scan = 'items(first:' + '100)'
+    legacy_query = 'project_' + 'items_query'
+    if legacy_sdd in text or legacy_gate in text:
+        raise SystemExit(f'{path}: prohibited legacy gate/path')
+    if legacy_items_scan in text or legacy_query in text:
+        raise SystemExit(f'{path}: legacy Project scan/query remains')
+    if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
+        raise SystemExit(f'{path}: unsupported gh issue closedBy field remains')
+with tempfile.TemporaryDirectory() as tmp:
+    for index, (path, line_number, body) in enumerate(all_bash_blocks, 1):
+        script = Path(tmp) / f'{path.stem}-{index}.sh'
+        script.write_text(body)
+        subprocess.run(['bash', '-n', str(script)], check=True)
+print(f'checked {len(all_bash_blocks)} fenced Bash blocks')
 PY
+npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md \
+  ideas/toolkit-contributor-native-ubuntu/plan.md
+first_hashes="$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
+npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md \
+  ideas/toolkit-contributor-native-ubuntu/plan.md
+test "$first_hashes" = "$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
 npx prettier --check ideas/toolkit-contributor-native-ubuntu/design.md \
-ideas/toolkit-contributor-native-ubuntu/plan.md
+  ideas/toolkit-contributor-native-ubuntu/plan.md
 git diff --check
-git diff --name-only
-git diff --cached --name-only
-````
+test "$(git diff --name-only | sort)" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
+test -z "$(git diff --cached --name-only)"
+```
 
-Expected: the scanner, Prettier, and whitespace check pass; the only unstaged
-paths are `ideas/toolkit-contributor-native-ubuntu/design.md` and
+Expected: the scanner and every extracted Bash block pass; the first Prettier
+write may normalize the documents, the second is idempotent, and the Prettier
+check and whitespace check pass. The only changed paths are
+`ideas/toolkit-contributor-native-ubuntu/design.md` and
 `ideas/toolkit-contributor-native-ubuntu/plan.md`; no paths are staged before
-the documentation commit. Commit this correction as a follow-up, never an
-amend:
+the documentation commit. Commit exactly those two files, without an amend:
 
 ```bash
 git add ideas/toolkit-contributor-native-ubuntu/design.md \
-ideas/toolkit-contributor-native-ubuntu/plan.md
+  ideas/toolkit-contributor-native-ubuntu/plan.md
 git diff --cached --check
-git commit -m 'docs: correct native Ubuntu delivery plan'
-git status --short
+test "$(git diff --cached --name-only | sort)" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
+git commit -m 'docs: make native Ubuntu delivery plan executable'
 git diff --cached --name-only
+git status --short
 ```

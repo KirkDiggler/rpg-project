@@ -401,7 +401,7 @@ entire sequence before beginning the next arrangement:
 1. `chrome_devtools_select_page` the retained sandbox page,
    `chrome_devtools_take_snapshot` it, locate the enabled **Save** button, and
    `chrome_devtools_click` it.
-2. `chrome_devtools_wait_for` the exact visible text `Saved as "toolkit-contributor-sandbox"`. Use `chrome_devtools_evaluate_script` on the authoring result to record the
+2. `chrome_devtools_wait_for` the exact visible text `Saved as "toolkit-contributor-sandbox".`. Use `chrome_devtools_evaluate_script` on the authoring result to record the
    successful `toolkit-contributor-sandbox` PutDungeon key and the order name
    in the evidence transcript. This is the authoring proof; a route image is
    not a substitute.
@@ -464,13 +464,20 @@ operator records the exact merged commits and compact exit-code transcript.
    assertion pass.
 4. Run `start`, `seed`, and `status`; retain the fixed compose order,
    `ubuntu-native` status line, Envoy-serving result, and two consecutive
-   seed outcomes. The Fighter must still show Protection, Strength 16, and the
-   real equipped shield.
+   seed outcomes. On both seed files, require the exact regular-expression
+   records `sandboxseed: identity=toolkit-sandbox-fighter
+character_id=[^[:space:]]+ strength=16 off_hand=shield` and
+   `sandboxseed: identity=toolkit-sandbox-barbarian
+character_id=[^[:space:]]+ strength=16`. The focused sandbox-seed
+   integration report, rather than seeder stdout, is the evidence for
+   Protection, FightingStyles, and a real equipped shield.
 5. From a disposable toolkit checkout only, execute the approved local Human
-   Strength marker proof: baseline 16; temporarily change the local Human STR
-   contribution from 1 to 2; `refresh` then `seed` observes 17; restore the
-   source; `refresh` then `seed` returns to 16. This remains an existing API
-   projection proof, not a debug API/proto change.
+   Strength marker proof: baseline fighter `strength=16 off_hand=shield`;
+   temporarily change the local Human STR contribution from 1 to 2; `refresh`
+   then `seed` observes fighter `strength=17 off_hand=shield`; restore the
+   source; `refresh` then `seed` returns the fighter to
+   `strength=16 off_hand=shield`. This remains an existing API projection
+   proof, not a debug API/proto change.
 6. Start the normal Vite command only after the port preflight. Verify it
    serves the documented `http://localhost:3001/?toolkitSandbox=1` URL, then
    execute the browser evidence protocol above: four fresh template saves,
@@ -480,7 +487,17 @@ operator records the exact merged commits and compact exit-code transcript.
 7. Run the established production Dev-header, production sandbox-route, and
    wrong-owner Create/Join negatives. Run `down` and prove only the owned
    `rpg-api/local-toolkit/rulebooks/dnd5e` tree is removed while checkouts and
-   local toolkit edits remain intact.
+   local toolkit edits remain intact. After the manifest and SHA256SUMS are
+   complete, create `task3-native-evidence.tar.gz` and
+   `task3-native-evidence.tar.gz.sha256`. Publish the signed evidence comment
+   through the GitHub issue UI using actual `chrome_devtools_new_page`,
+   `chrome_devtools_take_snapshot`, `chrome_devtools_upload_file`,
+   `chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
+   `chrome_devtools_click` calls to attach that archive, its checksum, and all
+   six screenshots. Read it back as KirkDiggler's comment, require its marker,
+   exact merge SHA, signature, all eight filenames, and at least eight
+   `https://github.com/user-attachments/` URLs, then explicitly open/reload
+   every URL and record a viewed statement.
 
 A current occupied native port, an alternate Vite port, a failed Docker bind,
 or a missing observation is an acceptance blocker with recorded diagnosis. It
@@ -558,10 +575,15 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
   host-port set `80, 3001, 3002, 6380, 8080`; `3001` is Vite and the rest are
   Docker Compose host publications. Occupancy or an unavailable observation
   blocks acceptance; the facade neither scans nor manages ports.
-- Two seed runs produce exactly the fixed Fighter and Barbarian; the Fighter
-  has Protection, Strength 16, and a real equipped shield.
-- The marker transcript proves Strength 16 -> 17 only after refresh/reseed,
-  then 17 -> 16 after restoration/refresh/reseed.
+- Both seed files contain the exact Fighter record
+  `sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+
+strength=16 off_hand=shield` and the exact Barbarian record
+  `sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+
+strength=16`. The focused integration report is the evidence for
+  Protection, FightingStyles, and the real equipped shield.
+- The marker transcript proves fighter `strength=16 off_hand=shield` ->
+  `strength=17 off_hand=shield` only after refresh/reseed, then back to
+  `strength=16 off_hand=shield` after restoration/refresh/reseed.
 - The populated `toolkit-contributor-sandbox` template uses the browser
   evidence protocol: each arrangement saves first, records the exact successful
   PutDungeon key, opens each displayed normal `?playerId=` href in a new tab,
@@ -576,9 +598,19 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
 Record the formal #210 issue-contract/latest-AGENT-PICKUP amendment and exact
 merged baseline commits, command exit codes, host-mode/status output,
 Docker/Envoy results, manual `ss -ltnp` output for `80, 3001, 3002, 6380,
-8080`, bootstrap rerun output, two seed results, the 16 -> 17 -> 16 marker
-transcript, successful `PutDungeon` key, six normal-route screenshots,
-negative-test output, and final owned-tree check. Report any occupied expected
+8080`, bootstrap rerun output, both exact seed records on both seed files, the
+fighter `strength=16 -> 17 -> 16` marker transcript with `off_hand=shield`,
+successful `PutDungeon` key, six normal-route screenshots, negative-test
+output, and final owned-tree check. After the manifest and SHA256SUMS, create
+`task4-wsl-evidence.tar.gz` and `task4-wsl-evidence.tar.gz.sha256`; use the
+GitHub issue UI's actual `chrome_devtools_new_page`,
+`chrome_devtools_take_snapshot`, `chrome_devtools_upload_file`,
+`chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
+`chrome_devtools_click` calls to attach them and all six PNGs to the signed
+#210 evidence comment. Read back KirkDiggler's comment and require the WSL
+marker, exact merge SHA, signature, all eight names, and at least eight
+`https://github.com/user-attachments/` URLs; explicitly open/reload each URL
+and record every viewed attachment statement. Report any occupied expected
 port as an environmental block; never kill its owner.
 
 ## Related / dependencies
@@ -697,13 +729,21 @@ review must report no blocker before merge.
    review is a merge gate, not a post-merge formality.
 5. After merge, retain automated evidence and execute the clean native-Ubuntu
    acceptance above. Record blockers truthfully rather than fixing unrelated
-   tooling or killing processes.
+   tooling or killing processes. A fresh reviewer distinct from the executor
+   (even if both comments are signed by the KirkDiggler account) must post the
+   unique native review marker with PASS, package COMPLETE, findings none, the
+   exact reviewed merge SHA, evidence marker, archive/checksum names,
+   user-attachment URL, and signature before native closure.
 6. Before executing #210, formally amend its issue contract and latest AGENT
    PICKUP to the intentional superseding execution baseline of landed Units
    A-C plus the landed additive native-host PR. Then execute #210 as the sole
    independent evidence-only Ubuntu WSL2 acceptance; its evidence comment has
-   no branch, PR, or closing keyword. Kirk may close it only after accepting
-   that amended-baseline evidence; do not create a duplicate WSL issue.
+   no branch, PR, or closing keyword. A fresh reviewer distinct from the WSL
+   executor, though the same KirkDiggler account may sign, must post the unique
+   WSL review marker with PASS, package COMPLETE, findings none, exact reviewed
+   merge SHA, evidence marker, archive/checksum names, user-attachment URL,
+   and signature. Kirk may close it only after accepting that amended-baseline
+   evidence; do not create a duplicate WSL issue.
 7. Kirk may close #208 only after accepting the clean native acceptance and
    the amended #210 evidence. Until then it remains the parent tracking issue;
    no implementation PR closes the parent.
