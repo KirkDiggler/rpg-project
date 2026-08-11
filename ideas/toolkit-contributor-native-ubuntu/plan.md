@@ -298,7 +298,7 @@ All comment read-backs use a task marker and this exact signature test:
 signature='— asset-pipeline agent, on behalf of KirkDiggler'
 gh issue view "$issue_number" --repo "$issue_repo" --json comments \
   | jq -e --arg marker "$comment_marker" --arg signature "$signature" '
-      [.comments[] | select((.body | contains($marker)) and (.body | endswith($signature))]
+      [.comments[] | select((.body | contains($marker)) and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))]
       | length == 1
     '
 ```
@@ -415,7 +415,7 @@ jq -e --argjson pr "$tracking_pr" --arg base "$tracking_base_sha" --arg head "$t
 gh pr view "$tracking_pr" --repo "$project_repo" --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments > "$sdd_root/pre-tasks-tracking-pr-final.json"
 jq -e --argjson files "$tracking_files" --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg head_sha "$tracking_head_sha" --arg marker "$tracking_review_marker" --arg base_sha "$tracking_base_sha" --arg bundle "$tracking_bundle_name" --arg digest "$tracking_bundle_sha256" --arg sig "$signature" '
   def good_check: (.conclusion // .state // "") as $result | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE")) and (.body | contains("native-ubuntu-tracking-review-findings: none")) and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha)) and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha)) and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle)) and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest)) and (.body | endswith($sig))] as $reviews
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE")) and (.body | contains("native-ubuntu-tracking-review-findings: none")) and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha)) and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha)) and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle)) and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig))] as $reviews
   | .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha and ([.files[].path] | sort) == ($files | sort) and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0) and ($reviews | length == 1)
 ' "$sdd_root/pre-tasks-tracking-pr-final.json"
 gh pr merge "$tracking_pr" --repo "$project_repo" --squash --delete-branch=false --match-head-commit "$tracking_head_sha"
@@ -552,7 +552,7 @@ mutation.
         and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha))
         and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle))
         and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest))
-        and (.body | endswith($signature))
+        and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))
       )] | length == 1;
     .title == $title and .state == "MERGED" and .baseRefName == $base and .headRefName == $head
     and .headRefOid == $head_sha
@@ -810,7 +810,7 @@ jq -e '
   ' "$sdd_root/task1-211-project-before.json"
   gh issue comment 211 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task1-handoff.md"
   gh issue view 211 --repo KirkDiggler/rpg-project --json comments \
-    | jq -e --arg marker "$handoff_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($signature))] | length == 1'
+    | jq -e --arg marker "$handoff_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($signature))] | length == 1'
   gh project item-edit --project-id "$project_id" --id "$task211_item" --field-id "$status_field" --single-select-option-id "$status_done"
   gh issue close 211 --repo KirkDiggler/rpg-project
   gh issue view 211 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
@@ -1159,7 +1159,7 @@ jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
       and (.body | contains($head_marker + $head_sha))
       and (.body | contains($bundle_marker + $bundle))
       and (.body | contains($digest_marker + $digest))
-      and (.body | endswith($signature))
+      and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))
     )] | length == 1;
   .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
   and .headRefOid == $head_sha
@@ -1269,7 +1269,7 @@ jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
       and (.body | contains($head_marker + $head_sha))
       and (.body | contains($bundle_marker + $bundle))
       and (.body | contains($digest_marker + $digest))
-      and (.body | endswith($signature))
+      and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))
     )] | length == 1;
   .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
   and .headRefOid == $head_sha
@@ -1720,7 +1720,7 @@ issue comment` and never by claiming that a CLI comment upload attached a
     | ($comments | length == 1)
       and ($comments[0].body | contains($marker))
       and ($comments[0].body | contains($merge))
-      and ($comments[0].body | endswith($signature))
+      and ($comments[0].body | sub("[\\r\\n]+$"; "") | endswith($signature))
       and ([
         "task3-native-evidence.tar.gz",
         "task3-native-evidence.tar.gz.sha256",
@@ -1795,7 +1795,7 @@ issue comment` and never by claiming that a CLI comment upload attached a
       and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
       and ($reviews[0].body | contains($url))
       and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-      and ($reviews[0].body | endswith($signature))
+      and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($signature))
   ' "$sdd_root/task3-native-review-readback.json"
   gh project item-edit --project-id "$project_id" --id "$native_verify_item" --field-id "$status_field" --single-select-option-id "$status_done"
   gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project \
@@ -1880,7 +1880,7 @@ jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_mark
         and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
         and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
         and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-        and ($reviews[0].body | endswith($sig)))
+        and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($sig)))
   '
 gh issue view 210 --repo KirkDiggler/rpg-project --json state,title \
   | jq -e --arg title "$wsl_issue_title" '.state == "OPEN" and .title == $title'
@@ -1960,7 +1960,7 @@ cleanup_phase_a() {
 trap cleanup_phase_a ERR EXIT INT TERM
 pickup_json="$(gh issue view 210 --repo KirkDiggler/rpg-project --json comments)"
 printf '%s\n' "$pickup_json" | jq -e --arg marker "$pickup_marker" --arg sig "$signature" --argjson pr "$expected_implementation_pr" --arg head "$expected_implementation_head_sha" --arg merge "$expected_implementation_merge_sha" '
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | endswith($sig))
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | sub("[\\r\\n]+$"; "") | endswith($sig))
 '
 game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
 implementation_pr_title='feat: support native Ubuntu toolkit contributor sandbox'
@@ -2155,7 +2155,7 @@ wsl_evidence="$wsl_clean_root/evidence"
 . "$wsl_evidence/task4-context.env"
 evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$wsl_evidence/task4-evidence-readback.json"
-jq -e --arg marker "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments | ($comments | length == 1) and ($comments[0].body | contains($merge)) and ($comments[0].body | endswith($sig)) and (["task4-wsl-evidence.tar.gz","task4-wsl-evidence.tar.gz.sha256","toolkit-sandbox-fighter-only-fighter-gameview.png","toolkit-sandbox-barbarian-only-barbarian-gameview.png","toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png","toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"] | all(. as $f | ($comments[0].body | contains($f)))) and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+") ] | unique | length >= 8)' "$wsl_evidence/task4-evidence-readback.json"
+jq -e --arg marker "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments | ($comments | length == 1) and ($comments[0].body | contains($merge)) and ($comments[0].body | sub("[\\r\\n]+$"; "") | endswith($sig)) and (["task4-wsl-evidence.tar.gz","task4-wsl-evidence.tar.gz.sha256","toolkit-sandbox-fighter-only-fighter-gameview.png","toolkit-sandbox-barbarian-only-barbarian-gameview.png","toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png","toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"] | all(. as $f | ($comments[0].body | contains($f)))) and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+") ] | unique | length >= 8)' "$wsl_evidence/task4-evidence-readback.json"
 jq -r --arg marker "$evidence_marker" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] | .[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+")' "$wsl_evidence/task4-evidence-readback.json" | sort -u > "$wsl_evidence/task4-attachment-urls.txt"
 test "$(wc -l < "$wsl_evidence/task4-attachment-urls.txt")" -ge 8
 ```
@@ -2203,7 +2203,7 @@ EOF
 # The independent reviewer (not executor) runs this after reviewing archive/checksum/reports/MCP/URL evidence.
 gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$wsl_evidence/task4-wsl-review-comment.md"
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$wsl_evidence/task4-review-readback.json"
-jq -e --arg marker "$wsl_review_marker" --arg evidence "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg url "$review_attachment_url" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews | ($reviews | length == 1) and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE")) and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none")) and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge)) and ($reviews[0].body | contains($evidence)) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz")) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256")) and ($reviews[0].body | contains($url)) and ($reviews[0].body | endswith($sig))' "$wsl_evidence/task4-review-readback.json"
+jq -e --arg marker "$wsl_review_marker" --arg evidence "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg url "$review_attachment_url" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews | ($reviews | length == 1) and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE")) and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none")) and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge)) and ($reviews[0].body | contains($evidence)) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz")) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256")) and ($reviews[0].body | contains($url)) and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($sig))' "$wsl_evidence/task4-review-readback.json"
 project_id='PVT_kwHOAASbwc4Bcj4v'
 status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
 status_done='e4d8ce42'
@@ -2254,7 +2254,7 @@ test -s "$packet_path"
 grep -Fqx "$packet_marker" "$packet_path"
 gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$packet_path"
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$sdd_root/task4-wsl-pickup-readback.json"
-jq -e --arg marker "$packet_marker" --arg sig "$signature" --argjson pr "$native_game_dev_pr" --arg head "$native_game_dev_head_sha" --arg merge "$native_game_dev_merge_sha" --arg root "$wsl_clean_root" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | contains($root)) and ($matches[0].body | endswith($sig))' "$sdd_root/task4-wsl-pickup-readback.json"
+jq -e --arg marker "$packet_marker" --arg sig "$signature" --argjson pr "$native_game_dev_pr" --arg head "$native_game_dev_head_sha" --arg merge "$native_game_dev_merge_sha" --arg root "$wsl_clean_root" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | contains($root)) and ($matches[0].body | sub("[\\r\\n]+$"; "") | endswith($sig))' "$sdd_root/task4-wsl-pickup-readback.json"
 ~~~~
 
 - [ ] **3. Execute only the posted GitHub packet and close #210 only after independent review.** The executor starts with the packet's own GitHub-derived baseline, not an inherited shell. It must prove `host mode: ubuntu-wsl2`, all clean clone/root/ancestry assertions, the exact two-file seed records, the `strength=16 → 17 → 16` marker evidence, PutDungeon evidence, six immediate MCP screenshots, negatives, archive/checksum attachment readback and URL views, and owned cleanup. Any failure retains `In Progress` and does not close #208.
@@ -2272,7 +2272,7 @@ jq -e --arg marker "$wsl_evidence_marker" --arg merge "$native_game_dev_merge_sh
 [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments
 | ($comments | length == 1)
   and ($comments[0].body | contains($merge))
-  and ($comments[0].body | endswith($signature))
+  and ($comments[0].body | sub("[\\r\\n]+$"; "") | endswith($signature))
   and ([
     "task4-wsl-evidence.tar.gz",
     "task4-wsl-evidence.tar.gz.sha256",
@@ -2299,7 +2299,7 @@ jq -e --arg marker "$wsl_review_marker" --arg evidence "$wsl_evidence_marker" \
   and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
   and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
   and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-  and ($reviews[0].body | endswith($signature))
+  and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($signature))
 ' "$sdd_root/task4-wsl-review-readback.json"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
 > "$sdd_root/task4-wsl-project-done.json"
@@ -2451,12 +2451,12 @@ jq -e --arg marker "$tracking_review_marker" --arg base "$tracking_base_sha" --a
   and ($reviews[0].body | contains("native-ubuntu-tracking-reviewed-head: " + $head))
   and ($reviews[0].body | contains("native-ubuntu-tracking-review-bundle: " + $bundle))
   and ($reviews[0].body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest))
-  and ($reviews[0].body | endswith($sig))
+  and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($sig))
 ' "$sdd_root/task5-tracking-review-readback.json"
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json comments > "$sdd_root/task5-implementation-review-readback.json"
 jq -e --arg base "$native_game_dev_base_sha" --arg head "$native_game_dev_head_sha" --arg bundle "$native_game_dev_bundle_name" --arg digest "$native_game_dev_bundle_sha256" --arg spec "$spec_review_marker" --arg shell "$shell_review_marker" --arg sig "$signature" '
 def review($marker; $prefix):
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains($prefix + "-package: COMPLETE")) and (.body | contains($prefix + "-findings: none")) and (.body | contains($prefix + "-reviewed-base: " + $base)) and (.body | contains($prefix + "-reviewed-head: " + $head)) and (.body | contains($prefix + "-review-bundle: " + $bundle)) and (.body | contains($prefix + "-review-bundle-sha256: " + $digest)) and (.body | endswith($sig))] | length == 1;
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains($prefix + "-package: COMPLETE")) and (.body | contains($prefix + "-findings: none")) and (.body | contains($prefix + "-reviewed-base: " + $base)) and (.body | contains($prefix + "-reviewed-head: " + $head)) and (.body | contains($prefix + "-review-bundle: " + $bundle)) and (.body | contains($prefix + "-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig))] | length == 1;
 review($spec; "native-ubuntu-spec-review") and review($shell; "native-ubuntu-shell-review")
 ' "$sdd_root/task5-implementation-review-readback.json"
 ```
@@ -2470,7 +2470,7 @@ native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
 wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 211 --repo KirkDiggler/rpg-project --json state,comments \
-| jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|endswith($sig))] | length == 1)'
+| jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig))] | length == 1)'
 issue_closure_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){state closedByPullRequestsReferences(first:20){nodes{number state mergedAt repository{nameWithOwner}}}}}}'
 gh api graphql -f query="$issue_closure_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
 > "$sdd_root/task5-game-dev-closure.json"
@@ -2498,7 +2498,7 @@ and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains(
     and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
     and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
     and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-    and ($reviews[0].body | endswith($signature)))
+    and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($signature)))
 ' "$sdd_root/task5-native-review-readback.json"
 gh issue view 210 --repo KirkDiggler/rpg-project --json state,comments \
 > "$sdd_root/task5-wsl-review-readback.json"
@@ -2515,7 +2515,7 @@ and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains(
     and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
     and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
     and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-    and ($reviews[0].body | endswith($signature)))
+    and ($reviews[0].body | sub("[\\r\\n]+$"; "") | endswith($signature)))
 ' "$sdd_root/task5-wsl-review-readback.json"
 gh issue view 208 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "OPEN"'
 
@@ -2533,7 +2533,7 @@ def kirk_review($pass; $package; $findings; $head_marker):
     and (.body | contains($package))
     and (.body | contains($findings))
     and (.body | contains($head_marker + $head_sha))
-    and (.body | endswith($signature))
+    and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))
   )] | length == 1;
 .title == "feat: support native Ubuntu toolkit contributor sandbox"
 and .state == "MERGED" and .baseRefName == "main" and .headRefName == $head
@@ -2618,7 +2618,7 @@ printf '%s\n%s\n\n%s\n' "$parent_marker" \
 "$signature" > "$sdd_root/task5-parent-summary.md"
 gh issue comment 208 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task5-parent-summary.md"
 gh issue view 208 --repo KirkDiggler/rpg-project --json comments \
-| jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($sig))] | length == 1'
+| jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig))] | length == 1'
 
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
 > "$sdd_root/task5-parent-project-before.json"
@@ -2714,6 +2714,8 @@ for checked_path in paths:
             raise SystemExit(f'{checked_path}: forbidden marker/query: {forbidden}')
 if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
+if re.search(r'\.body\s*\|\s*endswith\(\$(?:signature|sig)\)', text):
+    raise SystemExit('signature check does not normalize trailing comment newlines')
 legacy_attachment_scan = 'https://github\\\\.com/user-attachments/[^[:space:]]+'
 if legacy_attachment_scan in text:
     raise SystemExit('attachment URL scan includes Markdown closing punctuation')
@@ -2731,6 +2733,7 @@ required = [
     'strength=16 off_hand=',
     'native-ubuntu-acceptance-attachment-url:',
     'wsl2-acceptance-attachment-url:',
+    'sub("[\\\\r\\\\n]+$"; "") | endswith($signature)',
     'https://github\\\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+',
     "cat > \"$packet_template\" <<'WSL_PICKUP_TEMPLATE'",
     "cat > \"$renderer_path\" <<'RENDER_PY'",
