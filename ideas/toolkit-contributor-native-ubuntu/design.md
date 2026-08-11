@@ -236,6 +236,52 @@ of them. `status` prints its host-mode line immediately after the successful
 host gate and before its existing helper-status/Envoy calls, so the selected
 mode is visible even when a later status check fails.
 
+### Bootstrap checkout roots and branch contract
+
+The four sandbox roots have one explicit absent-root clone mapping. It is part
+of the existing `bootstrap` contract, not a clean-acceptance workaround:
+
+| Root             | `repo_branch` | Exact origin URL                                |
+| ---------------- | ------------- | ----------------------------------------------- |
+| `rpg-toolkit`    | `main`        | `git@github.com:KirkDiggler/rpg-toolkit.git`    |
+| `rpg-api`        | `dev`         | `git@github.com:KirkDiggler/rpg-api.git`        |
+| `rpg-dnd5e-web`  | `dev`         | `git@github.com:KirkDiggler/rpg-dnd5e-web.git`  |
+| `rpg-deployment` | `main`        | `git@github.com:KirkDiggler/rpg-deployment.git` |
+
+For a root which is absent, the facade selects the mapped branch before any
+later helper/build operation:
+
+```bash
+repo_branch=dev
+repo_url=git@github.com:KirkDiggler/rpg-api.git
+repo_root="$ROOT/rpg-api"
+git clone --branch "$repo_branch" "$repo_url" "$repo_root"
+```
+
+The same literal `repo_branch` / `git clone --branch` form is used for all four
+rows. `--single-branch` is deliberately absent: this change needs an initial
+checkout branch, not a narrower ref-retention policy, and the existing facade
+has no reason to change ordinary clone breadth.
+
+For an already-present root, `bootstrap` validates that it is a Git checkout
+with exactly the table's `origin` URL, then leaves it alone. It preserves its
+current branch, detached state if any, staged and unstaged edits, untracked
+files, and other working state. In particular, the facade must never
+`fetch`, `switch`, `checkout`, `pull`, `reset`, `clean`, or `stash` an existing
+root. An origin mismatch or invalid checkout refuses before any mutation.
+
+The mapping is required because the original provider work is not a `main`
+baseline: rpg-api PR #792 (`9099953f9bc86efbed9bf62209a96c54d9383d6b`) merged
+to `dev`, and rpg-dnd5e-web PR #747
+(`cfa63138a1f06de65991c31b006f29fc2af1ad74`) merged to `dev`. Their commits
+are not guaranteed to be ancestors of the corresponding `main` tips. A fresh
+API/web `dev` clone makes the approved sandbox provider/web baseline directly
+reachable without a release-to-`main` prerequisite, while toolkit and
+deployment keep their approved `main` baselines. Clean acceptance therefore
+asserts `main/dev/dev/main` checkout branches and verifies #792/#747 ancestry
+against the API/web **dev clones**, respectively. This branch choice never
+changes an existing checkout.
+
 The API-helper seam is also unchanged. The facade continues to call only its
 existing D&D 5e ownership commands: `on --target rulebooks/dnd5e --src`,
 `refresh --src`, `status`, and `off`. It does not duplicate the helper's
@@ -336,6 +382,65 @@ later calls, not only exit status. The implementation may factor the pure
 classifier for direct tests, but it may not expose a seventh user command or a
 runtime test switch.
 
+## Browser evidence protocol for both clean acceptances
+
+Native and WSL2 acceptance use the **`chrome_devtools_*` MCP tools** as the
+primary agent interaction surface. The browser protocol is live UI evidence,
+not URL-only navigation. `screenshot.mjs` may be used only as a secondary visual
+corroboration after a successful MCP action sequence; it cannot click Save,
+choose a party, establish an order, extract links, or substitute for any
+required action or assertion.
+
+Start one sandbox page with `chrome_devtools_new_page` at
+`http://localhost:3001/?toolkitSandbox=1`, retain its page identity, and use
+`chrome_devtools_take_snapshot` before every interaction. For **each**
+arrangement in this exact order — **Fighter**, **Barbarian**, **Fighter then
+Barbarian**, **Barbarian then Fighter** — re-save the template and complete this
+entire sequence before beginning the next arrangement:
+
+1. `chrome_devtools_select_page` the retained sandbox page,
+   `chrome_devtools_take_snapshot` it, locate the enabled **Save** button, and
+   `chrome_devtools_click` it.
+2. `chrome_devtools_wait_for` the exact visible text `Saved as "toolkit-contributor-sandbox"`. Use `chrome_devtools_evaluate_script` on the authoring result to record the
+   successful `toolkit-contributor-sandbox` PutDungeon key and the order name
+   in the evidence transcript. This is the authoring proof; a route image is
+   not a substitute.
+3. `chrome_devtools_wait_for` the selected party button to be enabled,
+   `chrome_devtools_take_snapshot` its enabled state, and
+   `chrome_devtools_click` it.
+4. `chrome_devtools_wait_for` the exact normal `?playerId=` link or links
+   expected for that arrangement. `chrome_devtools_evaluate_script` the visible
+   links and assert their displayed hrefs are the expected normal routes:
+   Fighter = fighter; Barbarian = barbarian; Fighter then Barbarian = fighter
+   followed by barbarian; Barbarian then Fighter = barbarian followed by
+   fighter.
+5. Immediately — before selecting the sandbox page again or taking any later
+   sandbox action — use `chrome_devtools_new_page` for **each displayed href**.
+   On each new tab, `chrome_devtools_wait_for` `[data-testid="encounter-view"]`,
+   then use `chrome_devtools_evaluate_script` to assert that selector exists,
+   `chrome_devtools_take_snapshot` the normal GameView, and
+   `chrome_devtools_take_screenshot` it to its order-qualified file. Only then
+   `chrome_devtools_select_page` the sandbox page and start the next re-save
+   after every link in the current arrangement has its evidence.
+
+The six required normal-GameView screenshot names are exactly:
+
+```text
+toolkit-sandbox-fighter-only-fighter-gameview.png
+toolkit-sandbox-barbarian-only-barbarian-gameview.png
+toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
+```
+
+If Save, the exact saved text, the selected-party enablement, normal links,
+new-tab encounter selector, evaluation, or screenshot fails, retain the
+current MCP snapshot/evaluation/error evidence, stop that acceptance sequence,
+and take **no later save, party action, link capture, or end-of-run catch-up
+screenshot**. Run only the declared marker/Vite/owned-down recovery. Harness
+routes remain supplemental and never satisfy this protocol.
+
 ## Clean native-Ubuntu acceptance
 
 After the future `game-dev` implementation PR is merged, an independent clean
@@ -352,8 +457,11 @@ operator records the exact merged commits and compact exit-code transcript.
    occupied or cannot be observed; do not terminate anything. This is not a
    facade scanner or port-management command.
 3. Clone a fresh `game-dev` checkout. Run `bootstrap` twice and show that the
-   first run creates exactly the four sandbox roots and the second leaves valid
-   roots unchanged.
+   first run creates exactly the four sandbox roots on `main/dev/dev/main` and
+   the second leaves valid roots unchanged. Assert API #792 ancestry in the
+   `rpg-api` **dev** clone and web #747 ancestry in the `rpg-dnd5e-web` **dev**
+   clone; do not switch, fetch, or otherwise repair a root to make either
+   assertion pass.
 4. Run `start`, `seed`, and `status`; retain the fixed compose order,
    `ubuntu-native` status line, Envoy-serving result, and two consecutive
    seed outcomes. The Fighter must still show Protection, Strength 16, and the
@@ -364,10 +472,11 @@ operator records the exact merged commits and compact exit-code transcript.
    source; `refresh` then `seed` returns to 16. This remains an existing API
    projection proof, not a debug API/proto change.
 6. Start the normal Vite command only after the port preflight. Verify it
-   serves the documented `http://localhost:3001/?toolkitSandbox=1` URL, save
-   the fixed template through `PutDungeon`, and capture normal `GameView`
-   evidence for Fighter, Barbarian, Fighter then Barbarian, and Barbarian then
-   Fighter. Harness URLs remain supplemental only.
+   serves the documented `http://localhost:3001/?toolkitSandbox=1` URL, then
+   execute the browser evidence protocol above: four fresh template saves,
+   exact PutDungeon-key evidence, immediate new-tab normal-GameView proof, and
+   six order-qualified encounter screenshots. Harness URLs remain supplemental
+   only.
 7. Run the established production Dev-header, production sandbox-route, and
    wrong-owner Create/Join negatives. Run `down` and prove only the owned
    `rpg-api/local-toolkit/rulebooks/dnd5e` tree is removed while checkouts and
@@ -437,9 +546,11 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
 - `/etc/os-release` identifies Ubuntu and `/proc/sys/kernel/osrelease`
   classifies as `ubuntu-wsl2`; WSL1 and other distributions remain unsupported
   in the automated contract.
-- `bootstrap` twice creates only the four required roots then leaves valid
-  roots unchanged. `start`, `status`, `refresh`, `seed`, and `down` retain the
-  original exact compose/Envoy/owned-cleanup behavior.
+- `bootstrap` twice creates only the four required roots using
+  `main/dev/dev/main`, then leaves valid roots unchanged. API #792 and web
+  #747 ancestry pass in the API/web `dev` clones; `start`, `status`, `refresh`,
+  `seed`, and `down` retain the original exact compose/Envoy/owned-cleanup
+  behavior.
 - `docker info` succeeds before each mutating facade command. A failed WSL2
   daemon check would report Docker Desktop WSL-integration or reachable-daemon
   guidance without changing Windows or Docker Desktop.
@@ -451,10 +562,11 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
   has Protection, Strength 16, and a real equipped shield.
 - The marker transcript proves Strength 16 -> 17 only after refresh/reseed,
   then 17 -> 16 after restoration/refresh/reseed.
-- The populated `toolkit-contributor-sandbox` template saves through
-  `PutDungeon`; Fighter, Barbarian, Fighter then Barbarian, and Barbarian then
-  Fighter reach normal `?playerId=` `GameView` routes with order-qualified
-  screenshots.
+- The populated `toolkit-contributor-sandbox` template uses the browser
+  evidence protocol: each arrangement saves first, records the exact successful
+  PutDungeon key, opens each displayed normal `?playerId=` href in a new tab,
+  verifies `[data-testid="encounter-view"]`, and captures its six
+  order-qualified screenshots before the next save.
 - Evidence includes wrong-owner Create/Join refusal, production Dev-header
   refusal, production sandbox-route refusal, and post-`down` proof that only
   the owned D&D 5e local tree was removed.
@@ -682,9 +794,11 @@ Residual operational risks are bounded rather than hidden:
 - Production observations are literal, the classification seam is testable, and
   no environment bypass or unspecified host fallback exists.
 - WSL2, WSL1, native Ubuntu, non-Ubuntu, malformed files, daemon failures,
-  command ordering, ports, docs, and live evidence each have explicit behavior.
+  branch-selected absent roots, untouched existing roots, command ordering,
+  ports, docs, and live browser evidence each have explicit behavior.
 - Docker messages distinguish native from WSL2 without creating a Docker vendor
   requirement; later Docker/Vite failures remain fail-closed.
-- Native and WSL2 acceptance, issue ownership, evidence, review, and closure
-  order are explicit. No placeholder, deferred decision, or chat-only
-  assumption is needed to produce the subsequent implementation plan.
+- Native and WSL2 acceptance use the same Save/link/new-tab protocol; issue
+  ownership, evidence, review, and closure order are explicit. No deferred
+  decision or chat-only assumption is needed to produce the subsequent
+  implementation plan.
