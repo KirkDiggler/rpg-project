@@ -573,14 +573,19 @@ mutation.
   test -s "$sdd_root/tracking-plan.md"
   design_blob="$(git -C "$project_root" rev-parse "$tracking_merge_sha:ideas/toolkit-contributor-native-ubuntu/design.md")"
   plan_blob="$(git -C "$project_root" rev-parse "$tracking_merge_sha:ideas/toolkit-contributor-native-ubuntu/plan.md")"
+  execution_plan_blob="$(git -C "$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/plan.md")"
   test "$design_blob" = "$(git -C "$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/design.md")"
-  test "$plan_blob" = "$(git -C "$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/plan.md")"
+  test "$plan_blob" = "$(git hash-object "$sdd_root/tracking-plan.md")"
+  test "$execution_plan_blob" = "$(git -C "$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/plan.md")"
   ```
 
   The PR identity, GraphQL base/head pair, retained complete bundle, verified
   SHA256, unique Kirk-authored signed complete/no-findings marker, exact two-file
-  list, present hosted-check conclusions, merge SHA ancestry, and merged blob IDs
-  are all required. This is intentionally stronger than searching a document
+  list, present hosted-check conclusions, merge SHA ancestry, and original merged
+  blob IDs are all required. `plan_blob` remains the immutable reviewed PR #212
+  artifact; `execution_plan_blob` records the current corrected plan from
+  `origin/main` without incorrectly requiring later reviewed corrections to have
+  the original blob ID. This is intentionally stronger than searching a document
   heading or trusting a review claim without its immutable range.
 
 - [ ] **2. Validate original merged dependencies with exact GitHub facts.** Query each PR instead of trusting remembered branch facts:
@@ -831,11 +836,11 @@ jq -e '
     --arg tracking_pr "$tracking_pr" --arg tracking_merge_sha "$tracking_merge_sha" \
     --arg tracking_base_sha "$tracking_base_sha" --arg tracking_head_sha "$tracking_head_sha" \
     --arg tracking_bundle_name "$tracking_bundle_name" --arg tracking_bundle_sha256 "$tracking_bundle_sha256" \
-    --arg design_blob "$design_blob" --arg plan_blob "$plan_blob" \
+    --arg design_blob "$design_blob" --arg plan_blob "$plan_blob" --arg execution_plan_blob "$execution_plan_blob" \
     --argjson game_dev_issue "$game_dev_issue" --arg game_dev_url "$game_dev_url" --arg game_dev_item "$game_dev_item" \
     --arg game_dev_branch "$game_dev_branch" --arg game_dev_worktree "$game_dev_worktree" \
     --argjson native_verify_issue "$native_verify_issue" --arg native_verify_url "$native_verify_url" --arg native_verify_item "$native_verify_item" \
-    '{schema:2,tracking_pr:($tracking_pr|tonumber),tracking_merge_sha:$tracking_merge_sha,tracking_base_sha:$tracking_base_sha,tracking_head_sha:$tracking_head_sha,tracking_bundle_name:$tracking_bundle_name,tracking_bundle_sha256:$tracking_bundle_sha256,design_blob:$design_blob,plan_blob:$plan_blob,game_dev_issue:$game_dev_issue,game_dev_url:$game_dev_url,game_dev_project_item:$game_dev_item,game_dev_branch:$game_dev_branch,game_dev_worktree:$game_dev_worktree,native_verify_issue:$native_verify_issue,native_verify_url:$native_verify_url,native_verify_project_item:$native_verify_item,native_game_dev_pr:null,native_game_dev_base_sha:null,native_game_dev_head_sha:null,native_game_dev_bundle_name:null,native_game_dev_bundle_sha256:null,native_game_dev_merge_sha:null}' \
+    '{schema:2,tracking_pr:($tracking_pr|tonumber),tracking_merge_sha:$tracking_merge_sha,tracking_base_sha:$tracking_base_sha,tracking_head_sha:$tracking_head_sha,tracking_bundle_name:$tracking_bundle_name,tracking_bundle_sha256:$tracking_bundle_sha256,design_blob:$design_blob,plan_blob:$plan_blob,execution_plan_blob:$execution_plan_blob,game_dev_issue:$game_dev_issue,game_dev_url:$game_dev_url,game_dev_project_item:$game_dev_item,game_dev_branch:$game_dev_branch,game_dev_worktree:$game_dev_worktree,native_verify_issue:$native_verify_issue,native_verify_url:$native_verify_url,native_verify_project_item:$native_verify_item,native_game_dev_pr:null,native_game_dev_base_sha:null,native_game_dev_head_sha:null,native_game_dev_bundle_name:null,native_game_dev_bundle_sha256:null,native_game_dev_merge_sha:null}' \
     > "$ledger.next"
   mv "$ledger.next" "$ledger"
   jq -e '
@@ -843,12 +848,12 @@ jq -e '
     and (.game_dev_branch|startswith("feat/")) and (.game_dev_worktree|startswith("/"))
     and (.tracking_merge_sha|length == 40) and (.tracking_base_sha|length == 40)
     and (.tracking_head_sha|length == 40) and (.tracking_bundle_name|endswith(".patch"))
-    and (.tracking_bundle_sha256|length == 64)
+    and (.tracking_bundle_sha256|length == 64) and (.execution_plan_blob|length == 40)
   ' "$ledger"
 
   handoff_marker='<!-- native-ubuntu-delivery:task1-handoff -->'
   printf '%s\n%s\n\n%s\n' "$handoff_marker" \
-    "Tracking PR #$tracking_pr merged at $tracking_merge_sha with design blob $design_blob and plan blob $plan_blob. Delivery records are $game_dev_url and $native_verify_url; both are #208 sub-issues and Project 19 Platform / Infra records. #210 remains the sole WSL2 record and retains Cross-team / Infra / Verify ownership. #211 closes only as the completed design decision; #208 remains open through implementation plus both accepted live verifications." \
+    "Tracking PR #$tracking_pr merged at $tracking_merge_sha with design blob $design_blob and reviewed plan blob $plan_blob; corrected execution plan blob $execution_plan_blob was read from origin/main. Delivery records are $game_dev_url and $native_verify_url; both are #208 sub-issues and Project 19 Platform / Infra records. #210 remains the sole WSL2 record and retains Cross-team / Infra / Verify ownership. #211 closes only as the completed design decision; #208 remains open through implementation plus both accepted live verifications." \
     "$signature" > "$sdd_root/task1-handoff.md"
   task211_item='PVTI_lAHOAASbwc4Bcj4vzg2H2C0'
   gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=211 \
@@ -2766,6 +2771,11 @@ for checked_path in paths:
             raise SystemExit(f'{checked_path}: forbidden marker/query: {forbidden}')
 if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
+if re.search(r'^\s*test "\$plan_blob" = .*origin/main:ideas/toolkit-contributor-native-ubuntu/plan\.md', text, re.M):
+    raise SystemExit('original reviewed plan blob cannot equal corrected origin/main recursively')
+execution_plan_assignments = re.findall(r'^\s*execution_plan_blob="\$\(git -C "\$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/plan\.md"\)"$', text, re.M)
+if len(execution_plan_assignments) != 1:
+    raise SystemExit(f'exactly one corrected execution plan assignment required: {execution_plan_assignments}')
 if re.search(r'gh\s+project\s+item-add[^\n]*--jq', text):
     raise SystemExit('unsupported project item-add output option')
 item_add_commands = re.findall(r'^\s*gh project item-add 19 --owner KirkDiggler --url "\$url" --format json \| jq -er \'\.id\'$' , text, re.M)
