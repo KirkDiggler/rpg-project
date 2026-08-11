@@ -1731,11 +1731,11 @@ issue comment` and never by claiming that a CLI comment upload attached a
         "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
         "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
       ] | all(. as $filename | ($comments[0].body | contains($filename))))
-      and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
+      and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+") ] | unique | length >= 8)
   ' "$sdd_root/task3-evidence-readback.json"
   jq -r --arg marker "$evidence_marker" '
     [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))]
-    | .[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+")
+    | .[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+")
   ' "$sdd_root/task3-evidence-readback.json" | sort -u > "$sdd_root/task3-attachment-urls.txt"
   test "$(wc -l < "$sdd_root/task3-attachment-urls.txt")" -ge 8
   ```
@@ -2155,8 +2155,8 @@ wsl_evidence="$wsl_clean_root/evidence"
 . "$wsl_evidence/task4-context.env"
 evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$wsl_evidence/task4-evidence-readback.json"
-jq -e --arg marker "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments | ($comments | length == 1) and ($comments[0].body | contains($merge)) and ($comments[0].body | endswith($sig)) and (["task4-wsl-evidence.tar.gz","task4-wsl-evidence.tar.gz.sha256","toolkit-sandbox-fighter-only-fighter-gameview.png","toolkit-sandbox-barbarian-only-barbarian-gameview.png","toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png","toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"] | all(. as $f | ($comments[0].body | contains($f)))) and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)' "$wsl_evidence/task4-evidence-readback.json"
-jq -r --arg marker "$evidence_marker" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] | .[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+")' "$wsl_evidence/task4-evidence-readback.json" | sort -u > "$wsl_evidence/task4-attachment-urls.txt"
+jq -e --arg marker "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments | ($comments | length == 1) and ($comments[0].body | contains($merge)) and ($comments[0].body | endswith($sig)) and (["task4-wsl-evidence.tar.gz","task4-wsl-evidence.tar.gz.sha256","toolkit-sandbox-fighter-only-fighter-gameview.png","toolkit-sandbox-barbarian-only-barbarian-gameview.png","toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png","toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"] | all(. as $f | ($comments[0].body | contains($f)))) and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+") ] | unique | length >= 8)' "$wsl_evidence/task4-evidence-readback.json"
+jq -r --arg marker "$evidence_marker" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] | .[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+")' "$wsl_evidence/task4-evidence-readback.json" | sort -u > "$wsl_evidence/task4-attachment-urls.txt"
 test "$(wc -l < "$wsl_evidence/task4-attachment-urls.txt")" -ge 8
 ```
 
@@ -2283,7 +2283,7 @@ jq -e --arg marker "$wsl_evidence_marker" --arg merge "$native_game_dev_merge_sh
     "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
     "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
   ] | all(. as $filename | ($comments[0].body | contains($filename))))
-  and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
+  and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+") ] | unique | length >= 8)
 ' "$sdd_root/task4-wsl-evidence-readback.json"
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
 > "$sdd_root/task4-wsl-review-readback.json"
@@ -2714,6 +2714,9 @@ for checked_path in paths:
             raise SystemExit(f'{checked_path}: forbidden marker/query: {forbidden}')
 if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
+legacy_attachment_scan = 'https://github\\\\.com/user-attachments/[^[:space:]]+'
+if legacy_attachment_scan in text:
+    raise SystemExit('attachment URL scan includes Markdown closing punctuation')
 if re.search(r'statusCheckRollup[^\n]{0,160}length\s*(?:>|!=)\s*0', text):
     raise SystemExit('nonempty hosted-check gate')
 required = [
@@ -2728,6 +2731,7 @@ required = [
     'strength=16 off_hand=',
     'native-ubuntu-acceptance-attachment-url:',
     'wsl2-acceptance-attachment-url:',
+    'https://github\\\\.com/user-attachments/[A-Za-z0-9._~:/?#@!$&*+,;=%-]+',
     "cat > \"$packet_template\" <<'WSL_PICKUP_TEMPLATE'",
     "cat > \"$renderer_path\" <<'RENDER_PY'",
 ]
