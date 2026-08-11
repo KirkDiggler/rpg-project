@@ -605,7 +605,6 @@ jq -e '
 
 - [ ] **5. Record the ledger, complete #211 only as a design decision, and make the fresh worktree.** #211 is not closed by a PR keyword. Its Team/Feature/Kind are read before the status update and must remain unchanged.
 
-  <!-- prettier-ignore -->
   ```bash
   game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
   game_dev_worktree="$HOME/game-dev/.pi-worktrees/game-dev-${game_dev_issue}"
@@ -656,7 +655,14 @@ jq -e '
 
 
 
-````
+
+
+
+
+
+
+
+  ```
 
 ### Task 2: TDD the host gate, exact clone mapping, documentation, and one game-dev PR
 
@@ -707,7 +713,8 @@ gh issue view "$game_dev_issue" --repo KirkDiggler/game-dev --json state,title \
 | jq -e --arg title "$game_dev_issue_title" '.state == "OPEN" and .title == $title'
 gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,title \
 | jq -e --arg title "$native_verify_issue_title" '.state == "OPEN" and .title == $title'
-````
+
+```
 
 - [ ] **2. Make RED tests first, including every root/branch assertion.** Extend the existing hermetic copied-script fixture; the fake `cat` returns selected contents only for the two literal paths and the fake command log remains the proof of ordering and absence of later calls. Add the classifier matrix above, no-bypass group, WSL1/Debian refusal for all six commands, native/WSL2 Docker-CLI and `docker info` failures, seed/status preservation, and documentation text assertions.
 
@@ -720,37 +727,37 @@ gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state
   git clone --branch main git@github.com:KirkDiggler/rpg-deployment.git $ROOT/rpg-deployment
   ```
 
-  In the fixture, build each expected line from the exact contract:
+In the fixture, build each expected line from the exact contract:
 
-  ```bash
-  assert_log_contains "git clone --branch $repo_branch $repo_url $repo_root"
-  assert_log_not_contains '--single-branch'
-  assert_log_not_contains 'git checkout'
-  assert_log_not_contains 'git switch'
-  ```
+```bash
+assert_log_contains "git clone --branch $repo_branch $repo_url $repo_root"
+assert_log_not_contains '--single-branch'
+assert_log_not_contains 'git checkout'
+assert_log_not_contains 'git switch'
+```
 
-  For every existing root, create a valid exact-origin checkout on a distinct
-  branch with staged, unstaged, and untracked content. Capture
-  `git branch --show-current` and `git status --porcelain=v1` before and after
-  `bootstrap`; assert byte-for-byte equality and assert the log contains none
-  of `git fetch`, `git switch`, `git checkout`, `git pull`, `git reset`,
-  `git clean`, or `git stash`. Repeat a wrong-origin fixture for all four roots
-  and assert refusal before clone/helper/build/compose activity.
+For every existing root, create a valid exact-origin checkout on a distinct
+branch with staged, unstaged, and untracked content. Capture
+`git branch --show-current` and `git status --porcelain=v1` before and after
+`bootstrap`; assert byte-for-byte equality and assert the log contains none
+of `git fetch`, `git switch`, `git checkout`, `git pull`, `git reset`,
+`git clean`, or `git stash`. Repeat a wrong-origin fixture for all four roots
+and assert refusal before clone/helper/build/compose activity.
 
-  Documentation assertions must require the four branch mappings,
-  `git clone --branch`, both mode tokens, literal host paths, WSL1,
-  Docker-compatible daemon, exact `80, 3001, 3002, 6380, 8080`, and the
-  no-auto-kill language. Then run and retain the expected first failure:
+Documentation assertions must require the four branch mappings,
+`git clone --branch`, both mode tokens, literal host paths, WSL1,
+Docker-compatible daemon, exact `80, 3001, 3002, 6380, 8080`, and the
+no-auto-kill language. Then run and retain the expected first failure:
 
-  ```bash
-  cd "$game_dev_worktree"
-  set +e
-  bash tests/toolkit-contributor-contract.sh > "$sdd_root/task2-red.txt" 2>&1
-  red_status=$?
-  set -e
-  test "$red_status" -ne 0
-  grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal' "$sdd_root/task2-red.txt"
-  ```
+```bash
+cd "$game_dev_worktree"
+set +e
+bash tests/toolkit-contributor-contract.sh > "$sdd_root/task2-red.txt" 2>&1
+red_status=$?
+set -e
+test "$red_status" -ne 0
+grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal' "$sdd_root/task2-red.txt"
+```
 
 - [ ] **3. Implement only the four-file contract.** In the script, encode the mapping as data, use `repo_branch` only for absent roots, and use the exact clone call shown above. Existing-root validation is read-only and exact-origin only. Do not add `--single-branch`, a fetch/switch/pull/reset/clean/stash path, or an auto-repair path.
 
@@ -788,7 +795,6 @@ gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state
 
 - [ ] **5. Commit exactly four paths, open the bounded PR, and rehydrate the PR by exact title/head.**
 
-  <!-- prettier-ignore -->
   ```bash
   cd "$game_dev_worktree"
   git add scripts/toolkit-contributor.sh tests/toolkit-contributor-contract.sh \
@@ -835,7 +841,14 @@ gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state
 
 
 
-````
+
+
+
+
+
+
+
+  ```
 
 - [ ] **6. Require Kirk-authored complete no-findings review packages, immutable head, hosted checks, one closing reference, and merge ancestry.** Before merge, set Project Status to `In Review` only after CI is green. No GitHub review state is required: the specification and shell reviews are Kirk-authored signed marker comments. Each marker must name the reviewed immutable head, declare its package complete and findings none. A conditional pass, a non-Kirk author, a changed head, a failed or pending hosted check, or any finding returns the item to `In Progress` and blocks merge.
 
@@ -913,7 +926,8 @@ jq -e --arg id "$game_dev_item" '
 jq --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr=$pr | .native_game_dev_head_sha=$head_sha | .native_game_dev_merge_sha=$sha' "$ledger" > "$ledger.next"
 mv "$ledger.next" "$ledger"
 jq -e --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr == $pr and .native_game_dev_head_sha == $head_sha and .native_game_dev_merge_sha == $sha' "$ledger"
-````
+
+```
 
 ### Task 3: Independently accept the landed facade on clean native Ubuntu
 
@@ -1006,9 +1020,9 @@ failure stops without source/port/daemon workaround.
   test ! -s "$native_evidence/ports-before.txt" || ! grep -Eq ':(80|3001|3002|6380|8080)[[:space:]]' "$native_evidence/ports-before.txt"
   ```
 
-  If port output cannot show ownership or any listed port is occupied, retain
-  the preflight evidence, post a signed blocker, leave the verification open,
-  and stop. Do not kill, reuse, move, or configure a listener.
+If port output cannot show ownership or any listed port is occupied, retain
+the preflight evidence, post a signed blocker, leave the verification open,
+and stop. Do not kill, reuse, move, or configure a listener.
 
 - [ ] **3. Clone the fresh facade, prove mapped root branches/origins and provider ancestry, then run focused gates.**
 
@@ -1207,7 +1221,6 @@ failure stops without source/port/daemon workaround.
   Attach the six named PNGs, PutDungeon-key transcript, and checksum manifest.
   Use the durable evidence-comment file, then assert the exact signed comment:
 
-  <!-- prettier-ignore -->
   ```bash
   evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
   printf '%s\n%s\n\n%s\n' "$evidence_marker" \
@@ -1222,7 +1235,14 @@ failure stops without source/port/daemon workaround.
 
 
 
-````
+
+
+
+
+
+
+
+  ```
 
 A reviewer independent of the executor verifies artifacts, command outputs,
 image order/content, no-bypass/no-auto-kill posture, and failure handling.
@@ -1244,7 +1264,8 @@ jq -e --arg id "$native_verify_item" '
 ' "$sdd_root/task3-project-done.json"
 gh issue close "$native_verify_issue" --repo KirkDiggler/rpg-project
 gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
-````
+
+```
 
 ### Task 4: Formally amend and execute #210 on the landed baseline
 
@@ -1343,64 +1364,64 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
   and takes no later action.
   ```
 
-  Create `$packet_path` in the standard native SDD directory and post it as
-  the latest #210 comment. It is a rendered GitHub-only AGENT PICKUP, not a
-  reference to this plan, a native acceptance directory, a ledger, or a local
-  template. It begins exactly `<!-- native-ubuntu-delivery:task4-wsl-pickup -->`,
-  contains headings `FORMAL EXECUTION-BASELINE AMENDMENT` and `AGENT PICKUP —
+Create `$packet_path` in the standard native SDD directory and post it as
+the latest #210 comment. It is a rendered GitHub-only AGENT PICKUP, not a
+reference to this plan, a native acceptance directory, a ledger, or a local
+template. It begins exactly `<!-- native-ubuntu-delivery:task4-wsl-pickup -->`,
+contains headings `FORMAL EXECUTION-BASELINE AMENDMENT` and `AGENT PICKUP —
 START HERE ON UBUNTU WSL2`, ends with the required signature, and has no
-  closing keyword for #208.
+closing keyword for #208.
 
-  Before posting, the packet must contain actual Task 4 GitHub-derived values,
-  never unresolved variables: original #209/#60/#792/#747 SHAs, the merged
-  implementation PR number/head/merge SHA, and its clean WSL root. Its first
-  shell block queries the game-dev issue by the exact title, requires one result,
-  derives the `feat/${game_dev_issue}-native-ubuntu-toolkit-contributor` branch, queries the merged
-  PR by exact title/head, requires one result, validates base `main`, immutable
-  head SHA, merge SHA, and #210's exact title/state. It then performs the
-  complete clean WSL preflight, clone, `main/dev/dev/main` root/origin checks,
-  #792/#747 dev-clone ancestry, focused API/game-dev/web reports, start/status/
-  two-seed flow, negative tests, owned down, checksum manifest, and attachment
-  instructions contained in this Task 4 design.
+Before posting, the packet must contain actual Task 4 GitHub-derived values,
+never unresolved variables: original #209/#60/#792/#747 SHAs, the merged
+implementation PR number/head/merge SHA, and its clean WSL root. Its first
+shell block queries the game-dev issue by the exact title, requires one result,
+derives the `feat/${game_dev_issue}-native-ubuntu-toolkit-contributor` branch, queries the merged
+PR by exact title/head, requires one result, validates base `main`, immutable
+head SHA, merge SHA, and #210's exact title/state. It then performs the
+complete clean WSL preflight, clone, `main/dev/dev/main` root/origin checks,
+#792/#747 dev-clone ancestry, focused API/game-dev/web reports, start/status/
+two-seed flow, negative tests, owned down, checksum manifest, and attachment
+instructions contained in this Task 4 design.
 
-  The packet's marker trap sets `marker_applied=1` before refresh/reseed to
-  Strength 17 and clears it only after source checkout, restored refresh,
-  restored seed Strength 16, and clean diff. Its trap always re-checks out the
-  marker source and attempts refresh/reseed/down without replacing the original
-  status; it stops only its task-owned Vite PID and performs no unrelated
-  cleanup.
+The packet's marker trap sets `marker_applied=1` before refresh/reseed to
+Strength 17 and clears it only after source checkout, restored refresh,
+restored seed Strength 16, and clean diff. Its trap always re-checks out the
+marker source and attempts refresh/reseed/down without replacing the original
+status; it stops only its task-owned Vite PID and performs no unrelated
+cleanup.
 
-  The packet's browser section names all actual MCP operations:
-  `chrome_devtools_new_page`, `chrome_devtools_select_page`,
-  `chrome_devtools_take_snapshot`, `chrome_devtools_click`,
-  `chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
-  `chrome_devtools_take_screenshot`. For each Fighter, Barbarian, Fighter then
-  Barbarian, and Barbarian then Fighter it re-saves first, waits exact `Saved as "toolkit-contributor-sandbox"`, records the PutDungeon key, waits the selected party enabled, evaluates normal hrefs, immediately opens each href in a new tab, uses `chrome_devtools_evaluate_script` to assert `[data-testid="encounter-view"]`, and captures before returning to sandbox:
+The packet's browser section names all actual MCP operations:
+`chrome_devtools_new_page`, `chrome_devtools_select_page`,
+`chrome_devtools_take_snapshot`, `chrome_devtools_click`,
+`chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
+`chrome_devtools_take_screenshot`. For each Fighter, Barbarian, Fighter then
+Barbarian, and Barbarian then Fighter it re-saves first, waits exact `Saved as "toolkit-contributor-sandbox"`, records the PutDungeon key, waits the selected party enabled, evaluates normal hrefs, immediately opens each href in a new tab, uses `chrome_devtools_evaluate_script` to assert `[data-testid="encounter-view"]`, and captures before returning to sandbox:
 
-  ```text
-  toolkit-sandbox-fighter-only-fighter-gameview.png
-  toolkit-sandbox-barbarian-only-barbarian-gameview.png
-  toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
-  toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
-  toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
-  toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
-  ```
+```text
+toolkit-sandbox-fighter-only-fighter-gameview.png
+toolkit-sandbox-barbarian-only-barbarian-gameview.png
+toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
+```
 
-  `screenshot.mjs` is only secondary corroboration. A browser failure retains
-  the current MCP artifact and takes no later save, party action, or catch-up
-  screenshot. The packet has exactly one copy-paste prompt and tells the WSL
-  executor to use only this GitHub comment.
+`screenshot.mjs` is only secondary corroboration. A browser failure retains
+the current MCP artifact and takes no later save, party action, or catch-up
+screenshot. The packet has exactly one copy-paste prompt and tells the WSL
+executor to use only this GitHub comment.
 
-  ```bash
-  packet_marker='<!-- native-ubuntu-delivery:task4-wsl-pickup -->'
-  packet_path="$sdd_root/task4-wsl-pickup.md"
-  test -s "$packet_path"
-  gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$packet_path"
-  gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
-    | jq -e --arg marker "$packet_marker" --arg sig '— asset-pipeline agent, on behalf of KirkDiggler' '
-        [.comments[] | select((.body|contains($marker)) and (.body|contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and (.body|contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and (.body|endswith($sig))] | length == 1
-      '
-  ```
+```bash
+packet_marker='<!-- native-ubuntu-delivery:task4-wsl-pickup -->'
+packet_path="$sdd_root/task4-wsl-pickup.md"
+test -s "$packet_path"
+gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$packet_path"
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
+  | jq -e --arg marker "$packet_marker" --arg sig '— asset-pipeline agent, on behalf of KirkDiggler' '
+      [.comments[] | select((.body|contains($marker)) and (.body|contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and (.body|contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and (.body|endswith($sig))] | length == 1
+    '
+```
 
 - [ ] **3. Execute only the posted GitHub packet and close #210 only after independent review.** The executor starts with the packet's own GitHub-derived baseline, not an inherited shell. It must prove `host mode: ubuntu-wsl2`, all clean clone/root/ancestry assertions, seeds, 16→17→16, PutDungeon evidence, six immediate MCP screenshots, negatives, and owned cleanup. A signed `wsl2-acceptance-review: PASS` comment precedes the exact closure operations below; any failure retains `In Progress` and does not close #208.
 
@@ -1561,7 +1582,6 @@ jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.pa
 
 - [ ] **3. Post the signed parent summary, edit only #208 Status, read it back, and close #208 explicitly.** This command sequence preserves the non-default closure semantics: #211 is a design decision closure, the game-dev issue closed solely through its one PR reference, native/#210 closed only after independent evidence reviews, and #208 has no closing keyword in its summary.
 
-<!-- prettier-ignore -->
 ```bash
 parent_marker='<!-- native-ubuntu-delivery:task5-parent-summary -->'
 printf '%s\n%s\n\n%s\n' "$parent_marker" \
