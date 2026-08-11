@@ -298,7 +298,7 @@ All comment read-backs use a task marker and this exact signature test:
 signature='— asset-pipeline agent, on behalf of KirkDiggler'
 gh issue view "$issue_number" --repo "$issue_repo" --json comments \
   | jq -e --arg marker "$comment_marker" --arg signature "$signature" '
-      [.comments[] | select((.body | contains($marker)) and (.body | sub("[\\r\\n]+$"; "") | endswith($signature))]
+      [.comments[] | select((.body | contains($marker)) and (.body | sub("[\\r\\n]+$"; "") | endswith($signature)))]
       | length == 1
     '
 ```
@@ -415,7 +415,7 @@ jq -e --argjson pr "$tracking_pr" --arg base "$tracking_base_sha" --arg head "$t
 gh pr view "$tracking_pr" --repo "$project_repo" --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments > "$sdd_root/pre-tasks-tracking-pr-final.json"
 jq -e --argjson files "$tracking_files" --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg head_sha "$tracking_head_sha" --arg marker "$tracking_review_marker" --arg base_sha "$tracking_base_sha" --arg bundle "$tracking_bundle_name" --arg digest "$tracking_bundle_sha256" --arg sig "$signature" '
   def good_check: (.conclusion // .state // "") as $result | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE")) and (.body | contains("native-ubuntu-tracking-review-findings: none")) and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha)) and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha)) and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle)) and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig))] as $reviews
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE")) and (.body | contains("native-ubuntu-tracking-review-findings: none")) and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha)) and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha)) and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle)) and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig)))] as $reviews
   | .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha and ([.files[].path] | sort) == ($files | sort) and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0) and ($reviews | length == 1)
 ' "$sdd_root/pre-tasks-tracking-pr-final.json"
 gh pr merge "$tracking_pr" --repo "$project_repo" --squash --delete-branch=false --match-head-commit "$tracking_head_sha"
@@ -810,7 +810,7 @@ jq -e '
   ' "$sdd_root/task1-211-project-before.json"
   gh issue comment 211 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task1-handoff.md"
   gh issue view 211 --repo KirkDiggler/rpg-project --json comments \
-    | jq -e --arg marker "$handoff_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($signature))] | length == 1'
+    | jq -e --arg marker "$handoff_marker" --arg signature "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($signature)))] | length == 1'
   gh project item-edit --project-id "$project_id" --id "$task211_item" --field-id "$status_field" --single-select-option-id "$status_done"
   gh issue close 211 --repo KirkDiggler/rpg-project
   gh issue view 211 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
@@ -2456,7 +2456,7 @@ jq -e --arg marker "$tracking_review_marker" --arg base "$tracking_base_sha" --a
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json comments > "$sdd_root/task5-implementation-review-readback.json"
 jq -e --arg base "$native_game_dev_base_sha" --arg head "$native_game_dev_head_sha" --arg bundle "$native_game_dev_bundle_name" --arg digest "$native_game_dev_bundle_sha256" --arg spec "$spec_review_marker" --arg shell "$shell_review_marker" --arg sig "$signature" '
 def review($marker; $prefix):
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains($prefix + "-package: COMPLETE")) and (.body | contains($prefix + "-findings: none")) and (.body | contains($prefix + "-reviewed-base: " + $base)) and (.body | contains($prefix + "-reviewed-head: " + $head)) and (.body | contains($prefix + "-review-bundle: " + $bundle)) and (.body | contains($prefix + "-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig))] | length == 1;
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains($prefix + "-package: COMPLETE")) and (.body | contains($prefix + "-findings: none")) and (.body | contains($prefix + "-reviewed-base: " + $base)) and (.body | contains($prefix + "-reviewed-head: " + $head)) and (.body | contains($prefix + "-review-bundle: " + $bundle)) and (.body | contains($prefix + "-review-bundle-sha256: " + $digest)) and (.body | sub("[\\r\\n]+$"; "") | endswith($sig)))] | length == 1;
 review($spec; "native-ubuntu-spec-review") and review($shell; "native-ubuntu-shell-review")
 ' "$sdd_root/task5-implementation-review-readback.json"
 ```
@@ -2470,7 +2470,7 @@ native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
 wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 211 --repo KirkDiggler/rpg-project --json state,comments \
-| jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig))] | length == 1)'
+| jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig)))] | length == 1)'
 issue_closure_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){state closedByPullRequestsReferences(first:20){nodes{number state mergedAt repository{nameWithOwner}}}}}}'
 gh api graphql -f query="$issue_closure_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
 > "$sdd_root/task5-game-dev-closure.json"
@@ -2618,7 +2618,7 @@ printf '%s\n%s\n\n%s\n' "$parent_marker" \
 "$signature" > "$sdd_root/task5-parent-summary.md"
 gh issue comment 208 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task5-parent-summary.md"
 gh issue view 208 --repo KirkDiggler/rpg-project --json comments \
-| jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig))] | length == 1'
+| jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|sub("[\\r\\n]+$"; "")|endswith($sig)))] | length == 1'
 
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
 > "$sdd_root/task5-parent-project-before.json"
@@ -2666,8 +2666,10 @@ unresolved values and forbidden legacy scans, and verifies the exact five task
 headings.
 
 ```bash
+set -euo pipefail
 python3 - <<'PY'
 from pathlib import Path
+import json
 import re
 import subprocess
 import sys
@@ -2716,6 +2718,8 @@ if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
 if re.search(r'\.body\s*\|\s*endswith\(\$(?:signature|sig)\)', text):
     raise SystemExit('signature check does not normalize trailing comment newlines')
+if re.search(r'select\([^\n]*endswith\(\$(?:signature|sig)\)\)\]', text):
+    raise SystemExit('signed select predicate is missing its closing parenthesis')
 legacy_attachment_scan = 'https://github\\\\.com/user-attachments/[^[:space:]]+'
 if legacy_attachment_scan in text:
     raise SystemExit('attachment URL scan includes Markdown closing punctuation')
@@ -2760,7 +2764,13 @@ with tempfile.TemporaryDirectory() as directory:
     rendered = output_path.read_text()
     if '@@' in rendered or 'chrome_devtools_upload_file' not in rendered or 'wsl2-acceptance-attachment-url:' not in rendered:
         raise SystemExit('packet dry render failed literal assertions')
-print(f'checked {len(blocks)} fenced Bash blocks and rendered packet dry run')
+    signature = '— asset-pipeline agent, on behalf of KirkDiggler'
+    signed_program = '[.comments[] | select((.body | contains($marker)) and (.body | sub("[\\\\r\\\\n]+$"; "") | endswith($signature)))] | length == 1'
+    signed_input = json.dumps({'comments': [{'body': f'marker\n{signature}\r\n'}]})
+    subprocess.run(['jq', '-e', '--arg', 'marker', 'marker', '--arg', 'signature', signature, signed_program], input=signed_input, text=True, check=True, stdout=subprocess.DEVNULL)
+    unsigned_input = json.dumps({'comments': [{'body': f'marker\n{signature}\nextra'}]})
+    subprocess.run(['jq', '-e', '--arg', 'marker', 'marker', '--arg', 'signature', signature, signed_program.replace('length == 1', 'length == 0')], input=unsigned_input, text=True, check=True, stdout=subprocess.DEVNULL)
+print(f'checked {len(blocks)} fenced Bash blocks, rendered packet, and signed-comment jq fixture')
 PY
 npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md
 first_hashes="$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
