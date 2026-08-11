@@ -616,21 +616,12 @@ mutation.
       '
   ```
 
-- [ ] **3. Create only the two deterministic delivery records through durable body files.** The future issue numbers are Task 1 outputs, never guessed values. First require no existing exact-title record; after creation, query the exact title again and require one result.
+- [ ] **3. Create or uniquely rehydrate only the two deterministic delivery records through durable body files.** The future issue numbers are Task 1 outputs, never guessed values. Enumerate issues directly rather than relying on search-index timing. An absent exact-title record is created; one open record is accepted only when its complete normalized body matches the durable body file; duplicates or drift fail closed. This makes Task 1 resumable if issue creation succeeded before a later operation failed.
 
   ```bash
   game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
   native_verify_issue_title='Verify toolkit contributor sandbox on clean native Ubuntu'
   signature='— asset-pipeline agent, on behalf of KirkDiggler'
-
-  gh issue list --repo KirkDiggler/game-dev --state all \
-    --search "in:title \"$game_dev_issue_title\"" --json number,title,url \
-    > "$sdd_root/game-dev-issues-before.json"
-  gh issue list --repo KirkDiggler/rpg-project --state all \
-    --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
-    > "$sdd_root/native-verify-issues-before.json"
-  jq -e 'length == 0' "$sdd_root/game-dev-issues-before.json"
-  jq -e 'length == 0' "$sdd_root/native-verify-issues-before.json"
 
   {
     printf '%s\n' '<!-- pih-dispatch:v1 -->' '' '## Goal / symptom' '' \
@@ -662,23 +653,46 @@ mutation.
       '— asset-pipeline agent, on behalf of KirkDiggler'
   } > "$sdd_root/native-verify-issue.md"
 
-  game_dev_url="$(gh issue create --repo KirkDiggler/game-dev --title "$game_dev_issue_title" --body-file "$sdd_root/game-dev-issue.md")"
-  native_verify_url="$(gh issue create --repo KirkDiggler/rpg-project --title "$native_verify_issue_title" --body-file "$sdd_root/native-verify-issue.md")"
-  gh issue list --repo KirkDiggler/game-dev --state all \
-    --search "in:title \"$game_dev_issue_title\"" --json number,title,url,id \
-    > "$sdd_root/game-dev-issues-after.json"
-  gh issue list --repo KirkDiggler/rpg-project --state all \
-    --search "in:title \"$native_verify_issue_title\"" --json number,title,url,id \
-    > "$sdd_root/native-verify-issues-after.json"
-  jq -e --arg title "$game_dev_issue_title" --arg url "$game_dev_url" '
-    length == 1 and .[0].title == $title and .[0].url == $url and (.[] | .number | type == "number")
-  ' "$sdd_root/game-dev-issues-after.json"
-  jq -e --arg title "$native_verify_issue_title" --arg url "$native_verify_url" '
-    length == 1 and .[0].title == $title and .[0].url == $url and (.[] | .number | type == "number")
-  ' "$sdd_root/native-verify-issues-after.json"
+  ensure_delivery_issue() {
+    local repo="$1" title="$2" body_file="$3" stem="$4"
+    local all_file="$sdd_root/${stem}-all.json"
+    local matches_file="$sdd_root/${stem}-matches.json"
+    local created_url=''
+    gh issue list --repo "$repo" --state all --limit 1000 \
+      --json number,title,url,id,state,body > "$all_file"
+    jq --arg title "$title" '[.[] | select(.title == $title)]' "$all_file" > "$matches_file"
+    case "$(jq 'length' "$matches_file")" in
+      0)
+        created_url="$(gh issue create --repo "$repo" --title "$title" --body-file "$body_file")"
+        ;;
+      1)
+        ;;
+      *)
+        printf 'duplicate exact-title issues for %s in %s\n' "$title" "$repo" >&2
+        return 1
+        ;;
+    esac
+    gh issue list --repo "$repo" --state all --limit 1000 \
+      --json number,title,url,id,state,body > "$sdd_root/${stem}-all-after.json"
+    jq --arg title "$title" '[.[] | select(.title == $title)]' \
+      "$sdd_root/${stem}-all-after.json" > "$sdd_root/${stem}-after.json"
+    jq -e --arg title "$title" --arg created "$created_url" --rawfile expected "$body_file" '
+      length == 1 and .[0].title == $title and .[0].state == "OPEN"
+      and (.[] | .number | type == "number") and (.[] | .id | type == "string")
+      and ($created == "" or .[0].url == $created)
+      and ((.[0].body | sub("[\\r\\n]+$"; "")) == ($expected | sub("[\\r\\n]+$"; "")))
+    ' "$sdd_root/${stem}-after.json"
+  }
+
+  ensure_delivery_issue KirkDiggler/game-dev "$game_dev_issue_title" \
+    "$sdd_root/game-dev-issue.md" game-dev-issues
+  ensure_delivery_issue KirkDiggler/rpg-project "$native_verify_issue_title" \
+    "$sdd_root/native-verify-issue.md" native-verify-issues
   game_dev_issue="$(jq -r '.[0].number' "$sdd_root/game-dev-issues-after.json")"
-  native_verify_issue="$(jq -r '.[0].number' "$sdd_root/native-verify-issues-after.json")"
+  game_dev_url="$(jq -r '.[0].url' "$sdd_root/game-dev-issues-after.json")"
   game_dev_node_id="$(jq -r '.[0].id' "$sdd_root/game-dev-issues-after.json")"
+  native_verify_issue="$(jq -r '.[0].number' "$sdd_root/native-verify-issues-after.json")"
+  native_verify_url="$(jq -r '.[0].url' "$sdd_root/native-verify-issues-after.json")"
   native_verify_node_id="$(jq -r '.[0].id' "$sdd_root/native-verify-issues-after.json")"
   ```
 
@@ -689,27 +703,63 @@ parent_node_id="$(gh issue view 208 --repo KirkDiggler/rpg-project --json id --j
 parent_url="$(gh issue view 208 --repo KirkDiggler/rpg-project --json url --jq .url)"
 parent_number=208
 add_child='mutation($parentId:ID!, $childId:ID!) { addSubIssue(input:{issueId:$parentId,subIssueId:$childId}) { issue { number url } subIssue { number url } } }'
-gh api graphql -f query="$add_child" -F parentId="$parent_node_id" -F childId="$game_dev_node_id" \
-  > "$sdd_root/add-game-dev-child.json"
-gh api graphql -f query="$add_child" -F parentId="$parent_node_id" -F childId="$native_verify_node_id" \
-  > "$sdd_root/add-native-verify-child.json"
-jq -e --arg parent "$parent_url" --argjson parent_number "$parent_number" \
-  --arg child "$game_dev_url" --argjson child_number "$game_dev_issue" '
-  .data.addSubIssue.issue.url == $parent
-  and .data.addSubIssue.issue.number == $parent_number
-  and .data.addSubIssue.subIssue.url == $child
-  and .data.addSubIssue.subIssue.number == $child_number
-' "$sdd_root/add-game-dev-child.json"
-jq -e --arg parent "$parent_url" --argjson parent_number "$parent_number" \
-  --arg child "$native_verify_url" --argjson child_number "$native_verify_issue" '
-  .data.addSubIssue.issue.url == $parent
-  and .data.addSubIssue.issue.number == $parent_number
-  and .data.addSubIssue.subIssue.url == $child
-  and .data.addSubIssue.subIssue.number == $child_number
-' "$sdd_root/add-native-verify-child.json"
+parent_query='query($owner:String!, $repo:String!, $number:Int!) {
+  repository(owner:$owner,name:$repo) {
+    issue(number:$number) {
+      number url parent { number repository { nameWithOwner } }
+      subIssues(first:100) { nodes { number url repository { nameWithOwner } } }
+    }
+  }
+}'
+ensure_parent_208() {
+  local owner="$1" repo="$2" number="$3" node_id="$4" stem="$5"
+  gh api graphql -f query="$parent_query" -F owner="$owner" -F repo="$repo" -F number="$number" \
+    > "$sdd_root/${stem}-parent-before.json"
+  case "$(jq -r '.data.repository.issue.parent | if . == null then "absent" elif .number == 208 and .repository.nameWithOwner == "KirkDiggler/rpg-project" then "expected" else "wrong" end' "$sdd_root/${stem}-parent-before.json")" in
+    absent)
+      gh api graphql -f query="$add_child" -F parentId="$parent_node_id" -F childId="$node_id" \
+        > "$sdd_root/add-${stem}-child.json"
+      jq -e --arg parent "$parent_url" --argjson child_number "$number" '
+        .data.addSubIssue.issue.url == $parent and .data.addSubIssue.issue.number == 208
+        and .data.addSubIssue.subIssue.number == $child_number
+      ' "$sdd_root/add-${stem}-child.json"
+      ;;
+    expected)
+      ;;
+    *)
+      printf '%s already has a different parent\n' "$stem" >&2
+      return 1
+      ;;
+  esac
+  gh api graphql -f query="$parent_query" -F owner="$owner" -F repo="$repo" -F number="$number" \
+    > "$sdd_root/${stem}-parent.json"
+  jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.parent.repository.nameWithOwner == "KirkDiggler/rpg-project"' \
+    "$sdd_root/${stem}-parent.json"
+}
+ensure_parent_208 KirkDiggler game-dev "$game_dev_issue" "$game_dev_node_id" game-dev
+ensure_parent_208 KirkDiggler rpg-project "$native_verify_issue" "$native_verify_node_id" native-verify
 
-game_dev_item="$(gh project item-add 19 --owner KirkDiggler --url "$game_dev_url" --format json --jq .id)"
-native_verify_item="$(gh project item-add 19 --owner KirkDiggler --url "$native_verify_url" --format json --jq .id)"
+ensure_project_19_item() {
+  local repo="$1" number="$2" url="$3" stem="$4"
+  local before="$sdd_root/${stem}-project-before.json"
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo="$repo" -F number="$number" > "$before"
+  jq '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)]' "$before" \
+    > "$sdd_root/${stem}-project-19-before.json"
+  case "$(jq 'length' "$sdd_root/${stem}-project-19-before.json")" in
+    0)
+      gh project item-add 19 --owner KirkDiggler --url "$url" --format json | jq -er '.id'
+      ;;
+    1)
+      jq -er '.[0].id' "$sdd_root/${stem}-project-19-before.json"
+      ;;
+    *)
+      printf '%s has duplicate Project 19 items\n' "$stem" >&2
+      return 1
+      ;;
+  esac
+}
+game_dev_item="$(ensure_project_19_item game-dev "$game_dev_issue" "$game_dev_url" game-dev)"
+native_verify_item="$(ensure_project_19_item rpg-project "$native_verify_issue" "$native_verify_url" native-verify)"
 for item in "$game_dev_item" "$native_verify_item"; do
   gh project item-edit --project-id "$project_id" --id "$item" --field-id "$status_field" --single-select-option-id "$status_todo"
   gh project item-edit --project-id "$project_id" --id "$item" --field-id "$feature_field" --single-select-option-id "$feature_infra"
@@ -2716,6 +2766,14 @@ for checked_path in paths:
             raise SystemExit(f'{checked_path}: forbidden marker/query: {forbidden}')
 if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
+if re.search(r'gh\s+project\s+item-add[^\n]*--jq', text):
+    raise SystemExit('unsupported project item-add output option')
+item_add_commands = re.findall(r'^\s*gh project item-add 19 --owner KirkDiggler --url "\$url" --format json \| jq -er \'\.id\'$' , text, re.M)
+if len(item_add_commands) != 1:
+    raise SystemExit(f'exactly one supported project item-add command required: {item_add_commands}')
+item_add_calls = set(re.findall(r'^(game_dev_item|native_verify_item)="\$\(ensure_project_19_item ', text, re.M))
+if item_add_calls != {'game_dev_item', 'native_verify_item'}:
+    raise SystemExit(f'both project item recovery calls required: {item_add_calls}')
 if re.search(r'\.body\s*\|\s*endswith\(\$(?:signature|sig)\)', text):
     raise SystemExit('signature check does not normalize trailing comment newlines')
 if re.search(r'select\([^\n]*endswith\(\$(?:signature|sig)\)\)\]', text):
