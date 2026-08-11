@@ -1393,11 +1393,21 @@ failure stops without source/port/daemon workaround.
       and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
   ' "$sdd_root/task3-native-verify-project-before.json"
   gh project item-edit --project-id "$project_id" --id "$native_verify_item" --field-id "$status_field" --single-select-option-id "$status_in_progress"
+  task3_state="$sdd_root/task3-state.env"
+  printf 'sdd_root=%q\nsignature=%q\nproject_id=%q\nstatus_field=%q\nstatus_in_progress=%q\nstatus_done=%q\nissue_project_query=%q\ngame_dev_issue=%q\nnative_verify_issue=%q\nnative_verify_url=%q\ngame_dev_branch=%q\ngame_dev_worktree=%q\nnative_game_dev_pr=%q\nnative_game_dev_head_sha=%q\nnative_game_dev_merge_sha=%q\nnative_clean_root=%q\nnative_evidence=%q\nnative_verify_item=%q\n' \
+    "$sdd_root" "$signature" "$project_id" "$status_field" "$status_in_progress" "$status_done" "$issue_project_query" \
+    "$game_dev_issue" "$native_verify_issue" "$native_verify_url" "$game_dev_branch" "$game_dev_worktree" \
+    "$native_game_dev_pr" "$native_game_dev_head_sha" "$native_game_dev_merge_sha" "$native_clean_root" "$native_evidence" "$native_verify_item" \
+    > "$task3_state"
+  test -s "$task3_state"
   ```
 
 - [ ] **2. Preflight native host, tools, SSH, and the exact five-port set before any clone or stack action.**
 
   ```bash
+  set -euo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
   test -f /etc/os-release
   test -f /proc/sys/kernel/osrelease
   grep -Eq "^ID=(ubuntu|'ubuntu'|\"ubuntu\")$" /etc/os-release
@@ -1422,6 +1432,9 @@ and stop. Do not kill, reuse, move, or configure a listener.
 - [ ] **3. Clone the fresh facade, prove mapped root branches/origins and provider ancestry, then run focused gates.**
 
   ```bash
+  set -euo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
   git clone git@github.com:KirkDiggler/game-dev.git "$native_clean_root/game-dev"
   cd "$native_clean_root/game-dev"
   git merge-base --is-ancestor 1df0212e5a04374ea83b9af1dd81d09a8a55831a HEAD
@@ -1449,21 +1462,26 @@ and stop. Do not kill, reuse, move, or configure a listener.
   bash tests/toolkit-contributor-contract.sh | tee "$native_evidence/game-dev-contributor-contract.txt"
   bash tests/bootstrap-contract.sh | tee "$native_evidence/game-dev-bootstrap-contract.txt"
   cd rpg-dnd5e-web
+  npm ci | tee "$native_evidence/web-npm-ci.txt"
   npm run test:run -- src/toolkit-contributor-sandbox/clients.test.ts src/toolkit-contributor-sandbox/route.test.ts src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx \
     | tee "$native_evidence/web-sandbox-tests.txt"
   npm run ci-check | tee "$native_evidence/web-ci-check.txt"
   ```
 
-- [ ] **4. Start, seed, and arm a recovery trap that never masks the original exit status.** Only the task-owned Vite PID may be stopped; no unrelated cleanup runs.
+- [ ] **4. In one self-contained pre-browser command, start, seed, prove the marker, start owned Vite, and persist runtime context.** The armed failure trap restores the marker, stops only its Vite PID, invokes only owned `down`, and preserves the original status. It is disarmed only after marker restoration and Vite readiness succeed.
 
   ```bash
+  set -Eeuo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  task3_runtime="$sdd_root/task3-runtime.env"
   cd "$native_clean_root/game-dev"
   marker_file='rulebooks/dnd5e/races/data.go'
   marker_applied=0
   vite_pid=''
   cleanup_native_acceptance() {
     original_status=$?
-    trap - EXIT INT TERM
+    trap - ERR EXIT INT TERM
     if [ "$marker_applied" -eq 1 ]; then
       git -C "$native_clean_root/game-dev/rpg-toolkit" checkout -- "$marker_file" || printf '%s\n' 'marker checkout recovery failed' >&2
       "$native_clean_root/game-dev/scripts/toolkit-contributor.sh" refresh || printf '%s\n' 'marker refresh recovery failed' >&2
@@ -1477,7 +1495,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
     "$native_clean_root/game-dev/scripts/toolkit-contributor.sh" down || printf '%s\n' 'owned down recovery failed' >&2
     exit "$original_status"
   }
-  trap cleanup_native_acceptance EXIT INT TERM
+  trap cleanup_native_acceptance ERR EXIT INT TERM
 
   ./scripts/toolkit-contributor.sh start | tee "$native_evidence/start.txt"
   ./scripts/toolkit-contributor.sh status | tee "$native_evidence/status.txt"
@@ -1488,12 +1506,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
     grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"
     grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16 off_hand=' "$seed_file"
   done
-  ```
 
-- [ ] **5. Prove the reversible marker and keep its flag set through all restoration proof.** The only command which clears `marker_applied` is the final line after every required restoration assertion succeeds.
-
-  ```bash
-  cd "$native_clean_root/game-dev"
   perl -0pi -e 's/(Human: \{.*?abilities\.STR: )1,/${1}2,/s' rpg-toolkit/$marker_file
   marker_applied=1
   ./scripts/toolkit-contributor.sh refresh | tee "$native_evidence/marker-refresh-to-17.txt"
@@ -1505,20 +1518,8 @@ and stop. Do not kill, reuse, move, or configure a listener.
   grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$native_evidence/marker-seed-restored-16.txt"
   git -C rpg-toolkit diff --exit-code -- "$marker_file"
   marker_applied=0
-  ```
 
-  If checkout, restored refresh, restored reseed, the restored `strength=16`
-  record, or clean diff fails, the flag remains `1`; the trap re-checks out the
-  marker source and attempts refresh, reseed, and owned down while preserving
-  the failing command's original status. The focused integration report
-  `api-sandboxseed-integration.txt`, not seeder stdout, is the evidence for
-  Protection, FightingStyles, and a real shield.
-
-- [ ] **6. Start only task-owned Vite and execute live browser evidence through the `chrome_devtools_*` MCP tools.** `screenshot.mjs` is optional secondary corroboration only after the MCP sequence; it never substitutes for Save/click/link/order actions.
-
-  ```bash
   cd "$native_clean_root/game-dev/rpg-dnd5e-web"
-  npm ci | tee "$native_evidence/web-npm-ci.txt"
   npm run dev > "$native_evidence/vite.log" 2>&1 &
   vite_pid=$!
   for attempt in $(seq 1 30); do
@@ -1527,6 +1528,22 @@ and stop. Do not kill, reuse, move, or configure a listener.
   done
   test -s "$native_evidence/sandbox-page.html"
   grep -Fq 'http://localhost:3001' "$native_evidence/vite.log"
+  printf 'vite_pid=%q\n' "$vite_pid" > "$task3_runtime"
+  test -s "$task3_runtime"
+  kill -0 "$vite_pid"
+  trap - ERR EXIT INT TERM
+  ```
+
+- [ ] **5. Confirm the retained marker proof before browser work.** Step 4 keeps `marker_applied=1` through checkout, restored refresh/reseed, the restored `strength=16 off_hand=shield` record, and clean source diff. `api-sandboxseed-integration.txt`, not seeder stdout, remains the evidence for Protection, FightingStyles, and the real shield.
+
+- [ ] **6. Rehydrate owned runtime context and execute live browser evidence through the `chrome_devtools_*` MCP tools.** `screenshot.mjs` is optional secondary corroboration only after the MCP sequence; it never substitutes for Save/click/link/order actions.
+
+  ```bash
+  set -euo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  . "$sdd_root/task3-runtime.env"
+  kill -0 "$vite_pid"
   ```
 
   Use these MCP actions, in this order; record snapshots/evaluations and append
@@ -1589,18 +1606,40 @@ and stop. Do not kill, reuse, move, or configure a listener.
   A failed Save, exact saved text, key evaluation, selected-party enablement,
   link evaluation, new-page load, encounter selector, or screenshot records the
   current MCP error/snapshot and stops immediately. Do not begin a later order,
-  perform another Save, or capture all routes at the end. Run only the armed
-  marker/Vite/owned-down recovery. Harness URLs do not count.
-
-- [ ] **7. Run negatives, perform owned shutdown, publish the archive through the issue UI, and close only after an independent PASS.**
+  perform another Save, or capture all routes at the end. Harness URLs do not
+  count. On browser failure, run only this rehydrated owned recovery:
 
   ```bash
+  set +e
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  . "$sdd_root/task3-runtime.env"
+  if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid"; wait "$vite_pid" || true; fi
+  "$native_clean_root/game-dev/scripts/toolkit-contributor.sh" down
+  exit 1
+  ```
+
+- [ ] **7. Rehydrate runtime context, run explicit production/ownership negatives, perform owned shutdown, publish the archive through the issue UI, and close only after an independent PASS.**
+
+  ```bash
+  set -Eeuo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  . "$sdd_root/task3-runtime.env"
+  cleanup_native_finish() {
+    original_status=$?
+    trap - ERR EXIT INT TERM
+    if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid" || true; wait "$vite_pid" || true; fi
+    "$native_clean_root/game-dev/scripts/toolkit-contributor.sh" down || true
+    exit "$original_status"
+  }
+  trap cleanup_native_finish ERR EXIT INT TERM
   cd "$native_clean_root/game-dev/rpg-api"
   go test ./internal/auth -run TestUnaryAuthInterceptor_DevScheme_NotAllowed -count=1 \
     | tee "$native_evidence/production-dev-header-negative.txt"
   cd "$native_clean_root/game-dev/rpg-dnd5e-web"
-  npm run test:run -- src/toolkit-contributor-sandbox/route.test.ts \
-    | tee "$native_evidence/production-sandbox-route-negative.txt"
+  npm run test:run -- src/toolkit-contributor-sandbox/route.test.ts src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx \
+    | tee "$native_evidence/production-ownership-negatives.txt"
   if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid"; wait "$vite_pid" || true; fi
   vite_pid=''
   cd "$native_clean_root/game-dev"
@@ -1610,7 +1649,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
   test -d rpg-api/.git
   test -d rpg-dnd5e-web/.git
   test -d rpg-deployment/.git
-  trap - EXIT INT TERM
+  trap - ERR EXIT INT TERM
   find "$native_evidence" -maxdepth 1 -type f -printf '%f\n' | sort | tee "$native_evidence/manifest.txt"
   sha256sum "$native_evidence"/* > "$native_evidence/SHA256SUMS.txt"
   native_archive="$native_clean_root/task3-native-evidence.tar.gz"
@@ -1670,6 +1709,10 @@ issue comment` and never by claiming that a CLI comment upload attached a
   comment.
 
   ```bash
+  set -euo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
   gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json comments \
     > "$sdd_root/task3-evidence-readback.json"
   jq -e --arg marker "$evidence_marker" --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
@@ -1700,24 +1743,47 @@ issue comment` and never by claiming that a CLI comment upload attached a
   For **each** URL in `task3-attachment-urls.txt`, explicitly use
   `chrome_devtools_new_page` (or reload the existing attachment page),
   `chrome_devtools_wait_for`, `chrome_devtools_take_snapshot`, and
-  `chrome_devtools_evaluate_script` to confirm the URL opens. Record the
-  resulting statement `viewed <filename> at <URL>` in
-  `$native_evidence/task3-attachment-viewed.txt`; the statement must name all
-  eight files. A missing/unopenable attachment stops before review.
+  `chrome_devtools_evaluate_script` to confirm the URL opens. Immediately append
+  the actual statement `viewed <filename> at <URL>` to
+  `$native_evidence/task3-attachment-viewed.txt`. A missing/unopenable
+  attachment stops before review.
 
   A fresh reviewer, distinct from the executor, reviews the retained package,
   command output, image order/content, no-bypass/no-auto-kill posture, and
   failure handling. The reviewer may sign through the same `KirkDiggler`
-  account and signature, but is still a fresh reviewer rather than the
-  executor. Require this unique signed review marker and full package before
-  marking the issue done:
+  account and signature. First assert all eight viewed statements and build the
+  signed review from one actual uploaded attachment URL; only the independent
+  reviewer runs the comment command:
 
   ```bash
+  set -euo pipefail
+  task3_state="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan/task3-state.env"
+  . "$task3_state"
+  evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
+  for filename in task3-native-evidence.tar.gz task3-native-evidence.tar.gz.sha256 toolkit-sandbox-fighter-only-fighter-gameview.png toolkit-sandbox-barbarian-only-barbarian-gameview.png toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png; do
+    grep -Eq "^viewed ${filename} at https://github\\.com/user-attachments/" "$native_evidence/task3-attachment-viewed.txt"
+  done
+  native_review_attachment_url="$(head -n 1 "$sdd_root/task3-attachment-urls.txt")"
+  test "${native_review_attachment_url#https://github.com/user-attachments/}" != "$native_review_attachment_url"
   native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
+  printf '%s\n' \
+    "$native_review_marker" \
+    'native-ubuntu-acceptance-review: PASS' \
+    'native-ubuntu-acceptance-review-package: COMPLETE' \
+    'native-ubuntu-acceptance-review-findings: none' \
+    "native-ubuntu-acceptance-reviewed-merge: $native_game_dev_merge_sha" \
+    "native-ubuntu-acceptance-evidence: $evidence_marker" \
+    'native-ubuntu-acceptance-archive: task3-native-evidence.tar.gz' \
+    'native-ubuntu-acceptance-checksum: task3-native-evidence.tar.gz.sha256' \
+    "native-ubuntu-acceptance-attachment-url: $native_review_attachment_url" \
+    "$signature" > "$sdd_root/task3-native-review-comment.md"
+
+  # The independent native reviewer, never the executor, runs this after inspecting the complete evidence.
+  gh issue comment "$native_verify_issue" --repo KirkDiggler/rpg-project --body-file "$sdd_root/task3-native-review-comment.md"
   gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json comments \
     > "$sdd_root/task3-native-review-readback.json"
   jq -e --arg marker "$native_review_marker" --arg evidence "$evidence_marker" \
-    --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+    --arg merge "$native_game_dev_merge_sha" --arg url "$native_review_attachment_url" --arg signature "$signature" '
     [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
     | ($reviews | length == 1)
       and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
@@ -1727,6 +1793,7 @@ issue comment` and never by claiming that a CLI comment upload attached a
       and ($reviews[0].body | contains($evidence))
       and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
       and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+      and ($reviews[0].body | contains($url))
       and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
       and ($reviews[0].body | endswith($signature))
   ' "$sdd_root/task3-native-review-readback.json"
@@ -1757,78 +1824,78 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
 
 - [ ] **1. Rehydrate exactly from GitHub and prove native acceptance is accepted.**
 
-  ```bash
-  set -euo pipefail
-  sdd_root="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan"
-  game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
-  native_verify_issue_title='Verify toolkit contributor sandbox on clean native Ubuntu'
-  wsl_issue_title='Verify the toolkit contributor sandbox on clean WSL2'
-  implementation_pr_title='feat: support native Ubuntu toolkit contributor sandbox'
-  signature='— asset-pipeline agent, on behalf of KirkDiggler'
-  project_id='PVT_kwHOAASbwc4Bcj4v'
-  status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
-  status_done='e4d8ce42'
-  issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
-  gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title \
-    > "$sdd_root/task4-game-dev-issue.json"
-  gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
-    > "$sdd_root/task4-native-verify-issue.json"
-  gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$wsl_issue_title\"" --json number,title,url \
-    > "$sdd_root/task4-wsl-issue.json"
-  jq -e --arg title "$game_dev_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task4-game-dev-issue.json"
-  jq -e --arg title "$native_verify_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task4-native-verify-issue.json"
-  jq -e --arg title "$wsl_issue_title" 'length == 1 and .[0].title == $title and .[0].number == 210' "$sdd_root/task4-wsl-issue.json"
-  game_dev_issue="$(jq -r '.[0].number' "$sdd_root/task4-game-dev-issue.json")"
-  native_verify_issue="$(jq -r '.[0].number' "$sdd_root/task4-native-verify-issue.json")"
-  native_verify_url="$(jq -r '.[0].url' "$sdd_root/task4-native-verify-issue.json")"
-  wsl_issue=210
-  game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
-  game_dev_worktree="$HOME/game-dev/.pi-worktrees/game-dev-${game_dev_issue}"
-  gh pr list --repo KirkDiggler/game-dev --state merged --head "$game_dev_branch" \
-    --search "in:title \"$implementation_pr_title\"" --json number,title,baseRefName,headRefName,headRefOid,state,mergeCommit \
-    > "$sdd_root/task4-implementation-pr.json"
-  jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" '
-    length == 1 and .[0].title == $title and .[0].state == "MERGED"
-    and .[0].baseRefName == "main" and .[0].headRefName == $head
-    and (.[]|.headRefOid|type == "string" and length == 40)
-    and (.[]|.mergeCommit.oid|type == "string" and length == 40)
-  ' "$sdd_root/task4-implementation-pr.json"
-  native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task4-implementation-pr.json")"
-  native_game_dev_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/task4-implementation-pr.json")"
-  native_game_dev_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/task4-implementation-pr.json")"
-  native_evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
-  native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
-  gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,comments \
-    > "$sdd_root/task4-native-review-readback.json"
-  jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_marker" \
-    --arg merge "$native_game_dev_merge_sha" --arg sig "$signature" '
-      .state == "CLOSED"
-      and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
-        | ($reviews | length == 1)
-          and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
-          and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
-          and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
-          and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
-          and ($reviews[0].body | contains($evidence))
-          and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
-          and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
-          and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-          and ($reviews[0].body | endswith($sig)))
-    '
-  gh issue view 210 --repo KirkDiggler/rpg-project --json state,title \
-    | jq -e --arg title "$wsl_issue_title" '.state == "OPEN" and .title == $title'
-  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
-    > "$sdd_root/task4-wsl-project-before.json"
-  wsl_project_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task4-wsl-project-before.json")"
-  jq -e --arg item "$wsl_project_item" '
-    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-    | ($rows | length == 1) and $rows[0].id == $item
-      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["In Progress"])
-      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Cross-team"])
-      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
-      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
-  ' "$sdd_root/task4-wsl-project-before.json"
-  ```
+```bash
+set -euo pipefail
+sdd_root="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan"
+game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
+native_verify_issue_title='Verify toolkit contributor sandbox on clean native Ubuntu'
+wsl_issue_title='Verify the toolkit contributor sandbox on clean WSL2'
+implementation_pr_title='feat: support native Ubuntu toolkit contributor sandbox'
+signature='— asset-pipeline agent, on behalf of KirkDiggler'
+project_id='PVT_kwHOAASbwc4Bcj4v'
+status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
+status_done='e4d8ce42'
+issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
+gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title \
+  > "$sdd_root/task4-game-dev-issue.json"
+gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
+  > "$sdd_root/task4-native-verify-issue.json"
+gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$wsl_issue_title\"" --json number,title,url \
+  > "$sdd_root/task4-wsl-issue.json"
+jq -e --arg title "$game_dev_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task4-game-dev-issue.json"
+jq -e --arg title "$native_verify_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task4-native-verify-issue.json"
+jq -e --arg title "$wsl_issue_title" 'length == 1 and .[0].title == $title and .[0].number == 210' "$sdd_root/task4-wsl-issue.json"
+game_dev_issue="$(jq -r '.[0].number' "$sdd_root/task4-game-dev-issue.json")"
+native_verify_issue="$(jq -r '.[0].number' "$sdd_root/task4-native-verify-issue.json")"
+native_verify_url="$(jq -r '.[0].url' "$sdd_root/task4-native-verify-issue.json")"
+wsl_issue=210
+game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
+game_dev_worktree="$HOME/game-dev/.pi-worktrees/game-dev-${game_dev_issue}"
+gh pr list --repo KirkDiggler/game-dev --state merged --head "$game_dev_branch" \
+  --search "in:title \"$implementation_pr_title\"" --json number,title,baseRefName,headRefName,headRefOid,state,mergeCommit \
+  > "$sdd_root/task4-implementation-pr.json"
+jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" '
+  length == 1 and .[0].title == $title and .[0].state == "MERGED"
+  and .[0].baseRefName == "main" and .[0].headRefName == $head
+  and (.[]|.headRefOid|type == "string" and length == 40)
+  and (.[]|.mergeCommit.oid|type == "string" and length == 40)
+' "$sdd_root/task4-implementation-pr.json"
+native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task4-implementation-pr.json")"
+native_game_dev_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/task4-implementation-pr.json")"
+native_game_dev_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/task4-implementation-pr.json")"
+native_evidence_marker='<!-- native-ubuntu-delivery:task3-evidence -->'
+native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
+gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,comments \
+  > "$sdd_root/task4-native-review-readback.json"
+jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_marker" \
+  --arg merge "$native_game_dev_merge_sha" --arg sig "$signature" '
+    .state == "CLOSED"
+    and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+      | ($reviews | length == 1)
+        and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
+        and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
+        and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
+        and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
+        and ($reviews[0].body | contains($evidence))
+        and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
+        and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+        and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+        and ($reviews[0].body | endswith($sig)))
+  '
+gh issue view 210 --repo KirkDiggler/rpg-project --json state,title \
+  | jq -e --arg title "$wsl_issue_title" '.state == "OPEN" and .title == $title'
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
+  > "$sdd_root/task4-wsl-project-before.json"
+wsl_project_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task4-wsl-project-before.json")"
+jq -e --arg item "$wsl_project_item" '
+  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+  | ($rows | length == 1) and $rows[0].id == $item
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["In Progress"])
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name] == ["Cross-team"])
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name] == ["Infra"])
+    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name] == ["Verify"])
+' "$sdd_root/task4-wsl-project-before.json"
+```
 
 - [ ] **2. Render, dry-validate, and publish the self-contained #210 GitHub AGENT PICKUP.** The literal template below renders only actual Task 4 GitHub-derived values. Its WSL pre-browser command is intentionally one self-contained shell phase: it owns its failure trap, persists context, starts the stack and owned Vite, and disarms only after readiness so later MCP calls can run in separate Pi tool calls.
 
@@ -2649,7 +2716,21 @@ if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
     raise SystemExit('unsupported gh closedBy query')
 if re.search(r'statusCheckRollup[^\n]{0,160}length\s*(?:>|!=)\s*0', text):
     raise SystemExit('nonempty hosted-check gate')
-required = ['baseRefOid', 'git diff --binary --full-index "$base_sha..$head_sha"', 'rollback_game_dev_in_review()', 'wsl2-acceptance-attachment-url:', "cat > \"$packet_template\" <<'WSL_PICKUP_TEMPLATE'", "cat > \"$renderer_path\" <<'RENDER_PY'"]
+required = [
+    'baseRefOid',
+    'git diff --binary --full-index "$base_sha..$head_sha"',
+    'rollback_game_dev_in_review()',
+    'task3-state.env',
+    'task3-runtime.env',
+    'npm ci | tee "$native_evidence/web-npm-ci.txt"',
+    'cleanup_native_acceptance ERR EXIT INT TERM',
+    'production-ownership-negatives.txt',
+    'strength=16 off_hand=',
+    'native-ubuntu-acceptance-attachment-url:',
+    'wsl2-acceptance-attachment-url:',
+    "cat > \"$packet_template\" <<'WSL_PICKUP_TEMPLATE'",
+    "cat > \"$renderer_path\" <<'RENDER_PY'",
+]
 missing = [item for item in required if item not in text]
 if missing:
     raise SystemExit(f'missing required controls: {missing}')
@@ -2680,7 +2761,8 @@ npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md ideas/too
 test "$first_hashes" = "$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
 npx prettier --check ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md
 git diff --check
-test "$(git diff --name-only | sort)" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
+changed_paths="$({ git diff --name-only origin/main..HEAD; git diff --name-only; git diff --cached --name-only; } | sort -u)"
+test "$changed_paths" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
 test -z "$(git diff --cached --name-only)"
 ```
 
