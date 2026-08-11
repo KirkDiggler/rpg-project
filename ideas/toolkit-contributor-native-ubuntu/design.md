@@ -21,10 +21,10 @@ bootstrap  start  refresh  seed  status  down
 
 The facade supports exactly two explicit host modes:
 
-| Mode            | Meaning                                              |
-| --------------- | ---------------------------------------------------- |
-| `ubuntu-native` | Ubuntu running on a kernel with no Microsoft marker. |
-| `ubuntu-wsl2`   | Ubuntu whose kernel release contains a WSL2 marker.  |
+| Mode            | Meaning                                                                         |
+| --------------- | ------------------------------------------------------------------------------- |
+| `ubuntu-native` | Ubuntu whose kernel has neither a Microsoft nor `WSL2` marker.                  |
+| `ubuntu-wsl2`   | Ubuntu whose kernel case-insensitively contains `WSL2` or `microsoft-standard`. |
 
 Both are first-class supported modes. Native Ubuntu accepts any working
 Docker-compatible daemon reachable through the existing `docker` CLI; it does
@@ -109,18 +109,23 @@ The `/etc/os-release` reader is deliberately data parsing, not shell execution:
 The kernel capture must be non-empty. Classification is case-insensitive for
 its markers and follows this order exactly:
 
-| `/etc/os-release` ID                           | `/proc/sys/kernel/osrelease` content | Result                                             |
-| ---------------------------------------------- | ------------------------------------ | -------------------------------------------------- |
-| not `ubuntu`, missing, duplicate, or malformed | any                                  | Refuse: unsupported or unreadable Ubuntu identity. |
-| `ubuntu`                                       | contains `wsl2`                      | `ubuntu-wsl2`                                      |
-| `ubuntu`                                       | contains `microsoft` but not `wsl2`  | Refuse: WSL1 is unsupported.                       |
-| `ubuntu`                                       | contains neither marker              | `ubuntu-native`                                    |
-| `ubuntu`                                       | unreadable or empty                  | Refuse: host cannot be classified.                 |
+| `/etc/os-release` ID                           | `/proc/sys/kernel/osrelease` content                              | Result                                             |
+| ---------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| not `ubuntu`, missing, duplicate, or malformed | any                                                               | Refuse: unsupported or unreadable Ubuntu identity. |
+| `ubuntu`                                       | contains `wsl2` or `microsoft-standard`                           | `ubuntu-wsl2`                                      |
+| `ubuntu`                                       | contains `microsoft`, but neither `wsl2` nor `microsoft-standard` | Refuse: WSL1 is unsupported.                       |
+| `ubuntu`                                       | contains no `microsoft` marker and no `wsl2` marker               | `ubuntu-native`                                    |
+| `ubuntu`                                       | unreadable or empty                                               | Refuse: host cannot be classified.                 |
 
-The WSL2 marker takes precedence when both markers appear, as in ordinary WSL2
-kernel releases. A Microsoft marker without WSL2 is specifically treated as
-WSL1 rather than native Linux. A generic Ubuntu kernel is native; the facade
-does not require a vendor, desktop, init system, or kernel-version allowlist.
+`wsl2` and `microsoft-standard` are both WSL2 signatures and take precedence
+before the WSL1 rule. This includes the legacy WSL2 fixture
+`4.19.128-microsoft-standard`; the WSL1 fixture `4.4.0-19041-Microsoft` has a
+Microsoft marker but neither WSL2 signature and is refused. This is the
+signature boundary: any Ubuntu release containing either WSL2 signature is
+`ubuntu-wsl2`; a Microsoft-containing release with neither signature is
+unsupported WSL1; a non-Microsoft Ubuntu release with no WSL2 marker is
+`ubuntu-native`. No kernel version, vendor, desktop, or init-system allowlist
+is required.
 
 ### Required failures
 
@@ -133,7 +138,7 @@ convey these distinctions:
 | Cannot read `/etc/os-release`                         | The facade cannot determine the Ubuntu distribution; run it from supported Ubuntu native or Ubuntu WSL2.                                                                                         |
 | Missing/malformed/non-Ubuntu `ID`                     | The facade supports Ubuntu native and Ubuntu WSL2 only; identify the observed `ID` when safe to do so.                                                                                           |
 | Cannot read or has empty `/proc/sys/kernel/osrelease` | The facade cannot determine native versus WSL; use a supported Ubuntu host with that kernel file available.                                                                                      |
-| Microsoft without WSL2                                | Ubuntu WSL1 is unsupported; use Ubuntu WSL2 or boot native Ubuntu.                                                                                                                               |
+| Microsoft without `WSL2` or `microsoft-standard`      | Ubuntu WSL1 is unsupported; use Ubuntu WSL2 or boot native Ubuntu.                                                                                                                               |
 | Docker CLI missing in `ubuntu-native`                 | Provide the Docker CLI and a reachable Docker-compatible daemon; the facade will not install or configure either.                                                                                |
 | `docker info` fails in `ubuntu-native`                | Start or repair a Docker-compatible daemon reachable to `docker info`; Docker Engine, rootless Docker, or another compatible daemon is acceptable if the required build/compose operations work. |
 | Docker CLI missing in `ubuntu-wsl2`                   | Provide the Docker CLI and a daemon reachable from this Ubuntu WSL2 distribution; the facade will not change Windows or Docker Desktop.                                                          |
@@ -251,26 +256,28 @@ port-remediation action. Its existing explicit `down` continues to stop only
 the known composition and then clean only the API helper's owned replacement;
 it is not a port-killer.
 
-Port ownership is a **native live-acceptance prerequisite, not a facade
-feature**. Before a clean native live run, the acceptance operator records
-listening owners for the current local surface:
+Port ownership is an **acceptance-operator observation for native and WSL2
+live runs, not a facade feature**. Before a clean live run, the operator records
+listening owners for the fixed local surface:
 
 ```text
-3001  3002  3003  8080
+80, 3001, 3002, 6380, 8080
 ```
 
-Use a non-mutating listener observation such as `ss -ltnp` and report the
-listener/process details available to the operator. If inspection is unavailable
-or any of those ports is already occupied before the clean run, the native
-acceptance run is blocked and reported as an environmental prerequisite; it is
-not repaired by the implementation or silently treated as clean.
+Port `3001` is the normal Vite listener; `80`, `3002`, `6380`, and `8080` are
+fixed Docker Compose host publications. Run `ss -ltnp` manually as
+acceptance/operator evidence only and report the listener/process details
+available to the operator. The facade does not invoke `ss` or any scanner. If
+inspection is unavailable or any of those ports is already occupied before the
+clean run, acceptance is blocked and reported as an environmental prerequisite;
+it is not repaired by the implementation or silently treated as clean.
 
-Docker compose port-bind failures and Vite bind failures remain fail-closed.
+Docker Compose port-bind failures and Vite bind failures remain fail-closed.
 The acceptance run stops and reports the bind error (or a Vite-selected port
 other than the documented `:3001`) rather than killing the owner, accepting an
-alternate URL, or building a port allocation framework. No generic port
-manager, port scanner command, alternate-port configuration, or automatic
-retry/cleanup mechanism is in scope.
+alternate URL, or building a port allocation framework. No scanner, port
+manager, alternate-port behavior or configuration, automatic retry/cleanup
+mechanism, or process kill is added to the facade.
 
 ## Documentation contract
 
@@ -291,10 +298,12 @@ The runbook will:
   tools, credentials, branches, or checkouts;
 - retain the exact first-checkout, daily loop, explicit refresh, marker proof,
   Vite URL, and owned shutdown instructions from the merged runbook;
-- document the native/WSL2 Docker failure distinctions and the unsupported
-  WSL1/non-Ubuntu refusals; and
-- state the occupied-port acceptance prerequisite and no-auto-kill rule rather
-  than presenting it as a new contributor command.
+- document the native/WSL2 Docker failure distinctions, the exact WSL
+  signature boundary, and the unsupported WSL1/non-Ubuntu refusals; and
+- state that manually observing `80, 3001, 3002, 6380, 8080` is an
+  acceptance-only prerequisite (`3001` for Vite; the remainder for Compose),
+  with no facade scanner, port manager, alternate-port behavior, or auto-kill,
+  rather than presenting it as a new contributor command.
 
 The README remains a concise pointer to the runbook. It must not duplicate a
 second bootstrap or broaden the general seven-repository bootstrap.
@@ -310,8 +319,8 @@ on a host-mode environment override.
 | Area                      | Required automated evidence                                                                                                                                                                                                         |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Native classification     | `ID=ubuntu` plus a generic non-Microsoft kernel returns `ubuntu-native`.                                                                                                                                                            |
-| WSL2 classification       | `ID=ubuntu` plus representative case variants containing `wsl2` returns `ubuntu-wsl2`, including a normal Microsoft WSL2 release.                                                                                                   |
-| WSL1 refusal              | `ID=ubuntu` plus `microsoft` without `wsl2` fails before any external command.                                                                                                                                                      |
+| WSL2 classification       | `ID=ubuntu` plus case variants containing `wsl2` or `microsoft-standard` returns `ubuntu-wsl2`; fixtures include legacy WSL2 `4.19.128-microsoft-standard` and a normal Microsoft WSL2 release.                                     |
+| WSL1 refusal              | `ID=ubuntu` plus Microsoft without either WSL2 signature fails before any external command; the exact WSL1 fixture is `4.4.0-19041-Microsoft`.                                                                                      |
 | Other distributions       | Debian and another non-Ubuntu `ID` fail before any external command.                                                                                                                                                                |
 | Bad observations          | Missing/unreadable file captures, empty kernel content, and missing, empty, duplicate, or malformed `ID` all fail closed.                                                                                                           |
 | No bypass                 | Setting legacy/hypothetical path or host-mode environment variables cannot make a generic, non-Ubuntu, or WSL1 fixture pass. Production reads only the two literal paths.                                                           |
@@ -334,12 +343,14 @@ native-Ubuntu run is required before claiming this design delivered. The
 operator records the exact merged commits and compact exit-code transcript.
 
 1. Confirm a clean supported host: `/etc/os-release` has `ID=ubuntu`, the
-   kernel release has neither Microsoft nor WSL2, required tools are present,
-   `docker info` succeeds, and GitHub SSH works. Record the selected
-   `ubuntu-native` mode.
-2. Perform the non-mutating preflight for ports `3001`, `3002`, `3003`, and
-   `8080`. Record listener output and stop if any is occupied or cannot be
-   observed; do not terminate anything.
+   kernel release has no Microsoft marker and no `WSL2` marker, required tools
+   are present, `docker info` succeeds, and GitHub SSH works. Record the
+   selected `ubuntu-native` mode.
+2. Manually run `ss -ltnp` as acceptance/operator evidence for the fixed
+   host-port set `80, 3001, 3002, 6380, 8080` (`3001` is Vite; the others are
+   Docker Compose publications). Record listener output and stop if any is
+   occupied or cannot be observed; do not terminate anything. This is not a
+   facade scanner or port-management command.
 3. Clone a fresh `game-dev` checkout. Run `bootstrap` twice and show that the
    first run creates exactly the four sandbox roots and the second leaves valid
    roots unchanged.
@@ -368,23 +379,36 @@ is not a reason to add process management or widen the feature.
 
 ## WSL2 verification pickup for #210
 
-Native evidence does not replace the existing clean-WSL2 verification. Once
-the original provider, facade, and web units are merged and the additive host
-change is merged, [rpg-project#210](https://github.com/KirkDiggler/rpg-project/issues/210)
-remains the evidence-only WSL2 acceptance record. It has no branch or PR.
+Native evidence does not replace [rpg-project#210](https://github.com/KirkDiggler/rpg-project/issues/210)'s
+original purpose: the independent clean-WSL2 evidence record. Before #210 is
+executed, formally amend its issue contract and latest AGENT PICKUP to use the
+landed Units A-C plus the landed additive native-host PR as its execution
+baseline. That is an intentional superseding execution baseline, not an
+undocumented dependency: the same landed facade must prove the WSL regression.
+#210 remains the sole evidence-only WSL2 acceptance record, with no branch or
+PR; do not create a duplicate WSL verification issue.
 
-The following is a self-contained pickup packet for the person executing that
-later verification. It is intentionally evidence-only and must not be used to
-open a new implementation wave.
+The following is the self-contained amendment/pickup packet for the person
+executing that later verification. It is intentionally evidence-only and must
+not be used to open a new implementation wave.
 
 ```markdown
 <!-- pih-dispatch:v1 -->
 
 ## Goal / symptom
 
-The toolkit contributor sandbox now supports two explicit Ubuntu modes. It
-still needs independent proof that Ubuntu WSL2 remains a supported first-class
-mode and that native support did not weaken the merged WSL2 workflow.
+The toolkit contributor sandbox now supports two explicit Ubuntu modes. The
+original #210 purpose remains independent proof that Ubuntu WSL2 is a
+first-class supported mode and that native support did not weaken the merged
+WSL2 workflow.
+
+## Superseding execution baseline
+
+Before execution, formally amend #210's issue contract and latest AGENT PICKUP
+so this replaces its prior execution baseline: run against the landed Units A-C
+plus the landed additive native-host PR. This is an intentional, documented
+supersession so the same landed facade proves the WSL regression; it is not an
+undocumented dependency and does not create a second WSL verification issue.
 
 ## Desired outcome
 
@@ -397,8 +421,9 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
 
 - Verification owner is `rpg-project`; this issue creates no branch, PR,
   source edit, deployment change, or GitHub implementation issue.
-- Run only after the merged API provider, game-dev facade (including native
-  host support), and web sandbox commits are recorded.
+- Run only after the formally amended execution baseline is satisfied and its
+  exact merged commits are recorded: landed Units A-C plus the landed additive
+  native-host PR.
 - The only source mutation is the temporary local Human Strength marker in a
   disposable checkout; restore it before final refresh/evidence.
 - Do not use a host-mode/path environment bypass, direct storage, a harness
@@ -418,6 +443,10 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
 - `docker info` succeeds before each mutating facade command. A failed WSL2
   daemon check would report Docker Desktop WSL-integration or reachable-daemon
   guidance without changing Windows or Docker Desktop.
+- Before the live run, manually record `ss -ltnp` evidence for the fixed
+  host-port set `80, 3001, 3002, 6380, 8080`; `3001` is Vite and the rest are
+  Docker Compose host publications. Occupancy or an unavailable observation
+  blocks acceptance; the facade neither scans nor manages ports.
 - Two seed runs produce exactly the fixed Fighter and Barbarian; the Fighter
   has Protection, Strength 16, and a real equipped shield.
 - The marker transcript proves Strength 16 -> 17 only after refresh/reseed,
@@ -432,11 +461,13 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
 
 ## Verification evidence
 
-Record exact merged commits, command exit codes, host-mode/status output,
-Docker/Envoy results, bootstrap rerun output, two seed results, the 16 -> 17
--> 16 marker transcript, successful `PutDungeon` key, six normal-route
-screenshots, negative-test output, and final owned-tree check. Report any
-occupied expected port as an environmental block; never kill its owner.
+Record the formal #210 issue-contract/latest-AGENT-PICKUP amendment and exact
+merged baseline commits, command exit codes, host-mode/status output,
+Docker/Envoy results, manual `ss -ltnp` output for `80, 3001, 3002, 6380,
+8080`, bootstrap rerun output, two seed results, the 16 -> 17 -> 16 marker
+transcript, successful `PutDungeon` key, six normal-route screenshots,
+negative-test output, and final owned-tree check. Report any occupied expected
+port as an environmental block; never kill its owner.
 
 ## Related / dependencies
 
@@ -480,8 +511,10 @@ Ubuntu WSL2 retains actionable Docker Desktop WSL-integration guidance.
   toolkit contributor runbook, and the concise README pointer if needed.
 - Production reads literal `/etc/os-release` and
   `/proc/sys/kernel/osrelease` on every command. Require exactly `ID=ubuntu`;
-  WSL2 marker means `ubuntu-wsl2`, Microsoft without WSL2 rejects WSL1, and no
-  Microsoft marker means `ubuntu-native`.
+  case-insensitive `WSL2` or `microsoft-standard` means `ubuntu-wsl2`, a
+  Microsoft-containing release with neither signature rejects WSL1, and a
+  non-Microsoft Ubuntu release with no `WSL2` marker means `ubuntu-native`.
+  This signature boundary has no kernel-version allowlist.
 - Keep a pure classifier that receives captured file contents for direct tests;
   production paths are not configurable. No environment variable, flag,
   config, Docker vendor/context, or test bypass selects a host mode.
@@ -500,10 +533,11 @@ Ubuntu WSL2 retains actionable Docker Desktop WSL-integration guidance.
 
 ## Acceptance
 
-- Test-first coverage proves native Ubuntu, WSL2, WSL1 refusal, Debian/non-
-  Ubuntu refusal, malformed/missing observations, no environment bypass,
-  host-gate ordering for every command, and Docker pre-mutation failures for
-  bootstrap/start/refresh/down.
+- Test-first coverage proves native Ubuntu, WSL2 (including exact legacy
+  `4.19.128-microsoft-standard`), WSL1 refusal (including exact
+  `4.4.0-19041-Microsoft`), Debian/non-Ubuntu refusal, malformed/missing
+  observations, no environment bypass, host-gate ordering for every command,
+  and Docker pre-mutation failures for bootstrap/start/refresh/down.
 - The Docker failure text is actionable and mode-specific. Native accepts a
   working compatible daemon without a Docker Desktop requirement.
 - Existing facade contract assertions continue to pass; `seed` remains one
@@ -511,10 +545,12 @@ Ubuntu WSL2 retains actionable Docker Desktop WSL-integration guidance.
   check while including `host mode: ubuntu-native` or `host mode: ubuntu-wsl2`.
 - Docs name both supported modes, literal observations, unsupported WSL1/non-
   Ubuntu, native daemon guidance, WSL2 guidance, and no-auto-kill port rule.
-- A clean native-Ubuntu live acceptance records free-port observation,
-  bootstrap rerun, full start/refresh/seed/status/down loop, 16 -> 17 -> 16
-  marker proof, all four normal GameView party outcomes, negatives, and owned
-  shutdown.
+- A clean native-Ubuntu live acceptance manually records `ss -ltnp` evidence
+  for `80, 3001, 3002, 6380, 8080` (`3001` for Vite; the remainder for
+  Compose), bootstrap rerun, full start/refresh/seed/status/down loop, 16 ->
+  17 -> 16 marker proof, all four normal GameView party outcomes, negatives,
+  and owned shutdown. This adds no facade scanner, port manager,
+  alternate-port behavior, or process kill.
 
 ## Verification evidence
 
@@ -550,11 +586,15 @@ review must report no blocker before merge.
 5. After merge, retain automated evidence and execute the clean native-Ubuntu
    acceptance above. Record blockers truthfully rather than fixing unrelated
    tooling or killing processes.
-6. Execute #210 later as its independent evidence-only Ubuntu WSL2 acceptance.
-   Its evidence comment has no branch, PR, or closing keyword. Kirk may close
-   it only after accepting that evidence.
-7. #208 remains the parent tracking issue until Kirk accepts all required
-   original and additive evidence. No implementation PR closes the parent.
+6. Before executing #210, formally amend its issue contract and latest AGENT
+   PICKUP to the intentional superseding execution baseline of landed Units
+   A-C plus the landed additive native-host PR. Then execute #210 as the sole
+   independent evidence-only Ubuntu WSL2 acceptance; its evidence comment has
+   no branch, PR, or closing keyword. Kirk may close it only after accepting
+   that amended-baseline evidence; do not create a duplicate WSL issue.
+7. Kirk may close #208 only after accepting the clean native acceptance and
+   the amended #210 evidence. Until then it remains the parent tracking issue;
+   no implementation PR closes the parent.
 
 ## Non-goals
 
@@ -621,19 +661,19 @@ and clearer daemon diagnostics. Native Ubuntu contributors gain the same loop
 with `ubuntu-native` reported by status.
 
 Roll out through the focused test contract and required review first, then the
-clean native acceptance, then the independent #210 WSL2 evidence. Documentation
-lands with the facade so the stated support boundary and actual gate cannot
-drift.
+clean native acceptance, then #210's amended-baseline independent WSL2 evidence.
+Documentation lands with the facade so the stated support boundary and actual
+gate cannot drift.
 
 Residual operational risks are bounded rather than hidden:
 
-| Risk                                                  | Treatment                                                                                                                                                                   |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Future kernel-release wording differs                 | The documented marker rules are isolated in the pure classifier and fixture matrix; unknown Microsoft-without-WSL2 remains fail-closed rather than misclassified as native. |
-| `/etc/os-release` syntax is surprising or hostile     | Parse only the needed `ID` as data and never execute the file; malformed/ambiguous input refuses.                                                                           |
-| `docker info` passes but build/compose later fails    | Subsequent Docker failures remain fail-closed and report their real operation; no vendor heuristic claims compatibility.                                                    |
-| Existing listener owns a required port                | The acceptance preflight records and blocks on it; no process is killed and no alternate port is accepted.                                                                  |
-| Native work accidentally changes the sandbox contract | The preserved-command assertions and narrow owning-issue packet keep API, web, toolkit, proto, deployment, and seed behavior out of scope.                                  |
+| Risk                                                  | Treatment                                                                                                                                                                        |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Future kernel-release wording differs                 | The signature boundary is isolated in the pure classifier and fixtures: `WSL2` or `microsoft-standard` is WSL2; Microsoft without either remains fail-closed rather than native. |
+| `/etc/os-release` syntax is surprising or hostile     | Parse only the needed `ID` as data and never execute the file; malformed/ambiguous input refuses.                                                                                |
+| `docker info` passes but build/compose later fails    | Subsequent Docker failures remain fail-closed and report their real operation; no vendor heuristic claims compatibility.                                                         |
+| Existing listener owns a required port                | The acceptance preflight records and blocks on it; no process is killed and no alternate port is accepted.                                                                       |
+| Native work accidentally changes the sandbox contract | The preserved-command assertions and narrow owning-issue packet keep API, web, toolkit, proto, deployment, and seed behavior out of scope.                                       |
 
 ## Design self-review
 
