@@ -222,14 +222,31 @@ test "$(cat "$sdd_gitignore")" = '*'
 git -C "$project_worktree" check-ignore -q .superpowers/sdd/plan/ledger.json
 ```
 
-The ledger records exactly `tracking_pr`, `tracking_merge_sha`, design/plan
-blob IDs, `game_dev_issue`, `game_dev_url`, `game_dev_project_item`,
-`game_dev_branch`, `game_dev_worktree`, `native_verify_issue`,
-`native_verify_url`, `native_verify_project_item`, `native_game_dev_pr`, and
+The ledger records exactly `tracking_pr`, `tracking_merge_sha`,
+`tracking_base_sha`, `tracking_head_sha`, `tracking_bundle_name`,
+`tracking_bundle_sha256`, design/plan blob IDs, `game_dev_issue`,
+`game_dev_url`, `game_dev_project_item`, `game_dev_branch`,
+`game_dev_worktree`, `native_verify_issue`, `native_verify_url`,
+`native_verify_project_item`, `native_game_dev_pr`,
+`native_game_dev_base_sha`, `native_game_dev_head_sha`,
+`native_game_dev_bundle_name`, `native_game_dev_bundle_sha256`, and
 `native_game_dev_merge_sha`. A write is atomic through the fixed ignored path
 `$ledger.next`, then `mv "$ledger.next" "$ledger"`; the ledger is audit
 material only. Every task re-queries GitHub instead of trusting a shell variable
 or the ledger value.
+
+Every retained review range lives below the ignored
+`$sdd_root/review-bundles/` directory. Its deterministic name includes the PR
+number plus both immutable commit IDs. A bundle is always the complete two-dot
+range, never a file list, a merge diff, or a whitespace check: `git diff
+--binary --full-index "$base_sha..$head_sha"`. Its adjacent `.sha256` file is
+verified with `sha256sum -c` before a marker can cite it. Rehydration writes a
+fresh temporary recomputation, verifies the digest, and byte-compares it with
+the retained bundle; it never rewrites the retained file. A marker must be
+unique by its HTML marker, authored by `KirkDiggler`, end in the required
+signature, and cite the exact base SHA, head SHA, bundle filename, bundle
+SHA256, `COMPLETE`, and `findings: none`. Present hosted checks must have a
+terminal successful/neutral/skipped conclusion; an empty list passes.
 
 Project 19 is `KirkDiggler`'s The Dungeon Run board. These field and option IDs
 are fixed for this delivery:
@@ -286,6 +303,131 @@ gh issue view "$issue_number" --repo "$issue_repo" --json comments \
     '
 ```
 
+## Pre-Tasks tracking-review publication gate
+
+This gate runs **before** the tracking PR merges. It validates and pushes the
+reviewed tracking branch, creates or uniquely rehydrates its exact open PR,
+locks the GraphQL range, retains the complete bundle, obtains the independent
+marker, re-reads the immutable facts, and only then head-locks the merge. Task 1
+begins after this gate has verified the merged result. A present hosted check
+must be terminal-success/neutral/skipped; an empty list is valid.
+
+<!-- prettier-ignore -->
+~~~~bash
+set -euo pipefail
+project_repo='KirkDiggler/rpg-project'
+tracking_pr_title='docs: native Ubuntu toolkit contributor sandbox design and plan'
+tracking_pr_head='design/native-ubuntu-toolkit-sandbox'
+tracking_pr_base='main'
+tracking_files='["ideas/toolkit-contributor-native-ubuntu/design.md","ideas/toolkit-contributor-native-ubuntu/plan.md"]'
+project_worktree="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox"
+project_root="$HOME/game-dev/rpg-project"
+sdd_root="$project_worktree/.superpowers/sdd/plan"
+review_bundle_dir="$sdd_root/review-bundles"
+sdd_gitignore="$project_worktree/.superpowers/sdd/.gitignore"
+signature='— asset-pipeline agent, on behalf of KirkDiggler'
+tracking_review_marker='<!-- native-ubuntu-delivery:tracking-review-bundle -->'
+tracking_pr_oid_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){number title state baseRefName headRefName baseRefOid headRefOid mergeCommit{oid}}}}'
+mkdir -p "$project_worktree/.superpowers/sdd" "$review_bundle_dir"
+printf '%s\n' '*' > "$sdd_gitignore"
+test "$(cat "$sdd_gitignore")" = '*'
+git -C "$project_worktree" check-ignore -q .superpowers/sdd/plan/review-bundles/placeholder
+git -C "$project_worktree" fetch origin
+test "$(git -C "$project_worktree" branch --show-current)" = "$tracking_pr_head"
+git -C "$project_worktree" diff --check origin/main...HEAD
+git -C "$project_worktree" diff --name-only origin/main...HEAD | sort > "$sdd_root/pre-tasks-tracking-files.txt"
+test "$(cat "$sdd_root/pre-tasks-tracking-files.txt")" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
+tracking_head_sha="$(git -C "$project_worktree" rev-parse HEAD)"
+git -C "$project_worktree" push --set-upstream origin "$tracking_pr_head"
+remote_tracking_head_sha="$(git -C "$project_worktree" ls-remote origin "refs/heads/$tracking_pr_head" | awk '{print $1}')"
+test "$remote_tracking_head_sha" = "$tracking_head_sha"
+
+tracking_pr_body="$sdd_root/pre-tasks-tracking-pr.md"
+printf '%s\n' '## Tracking package' '' 'This PR carries the approved native Ubuntu toolkit contributor design and executable delivery plan.' '' '## Verification' '' '- The complete immutable BASE..HEAD review bundle and independent signed marker are required before merge.' '' '## Related records' '' '- Design decision: #211' '- Umbrella: #208' > "$tracking_pr_body"
+gh pr list --repo "$project_repo" --state open --head "$tracking_pr_head" --search "in:title \"$tracking_pr_title\"" --json number,title,url,state,baseRefName,headRefName,headRefOid > "$sdd_root/pre-tasks-tracking-open-before.json"
+open_count="$(jq 'length' "$sdd_root/pre-tasks-tracking-open-before.json")"
+if [ "$open_count" -eq 0 ]; then
+  gh pr create --repo "$project_repo" --base "$tracking_pr_base" --head "$tracking_pr_head" --title "$tracking_pr_title" --body-file "$tracking_pr_body" > "$sdd_root/pre-tasks-tracking-pr-url.txt"
+elif [ "$open_count" -ne 1 ]; then
+  printf '%s\n' 'expected zero or one exact open tracking PR' >&2
+  exit 1
+fi
+gh pr list --repo "$project_repo" --state open --head "$tracking_pr_head" --search "in:title \"$tracking_pr_title\"" --json number,title,url,state,baseRefName,headRefName,headRefOid > "$sdd_root/pre-tasks-tracking-open.json"
+jq -e --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg base "$tracking_pr_base" --arg oid "$tracking_head_sha" '
+  length == 1 and .[0].title == $title and .[0].state == "OPEN" and .[0].baseRefName == $base and .[0].headRefName == $head and .[0].headRefOid == $oid
+' "$sdd_root/pre-tasks-tracking-open.json"
+tracking_pr="$(jq -r '.[0].number' "$sdd_root/pre-tasks-tracking-open.json")"
+gh api graphql -f query="$tracking_pr_oid_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$tracking_pr" > "$sdd_root/pre-tasks-tracking-pr-oids.json"
+jq -e --argjson pr "$tracking_pr" --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg base "$tracking_pr_base" --arg oid "$tracking_head_sha" '
+  .data.repository.pullRequest as $pull | $pull.number == $pr and $pull.title == $title and $pull.state == "OPEN" and $pull.baseRefName == $base and $pull.headRefName == $head and $pull.headRefOid == $oid and ($pull.baseRefOid | type == "string" and length == 40)
+' "$sdd_root/pre-tasks-tracking-pr-oids.json"
+tracking_base_sha="$(jq -r '.data.repository.pullRequest.baseRefOid' "$sdd_root/pre-tasks-tracking-pr-oids.json")"
+base_sha="$tracking_base_sha"
+head_sha="$tracking_head_sha"
+git -C "$project_worktree" cat-file -e "$base_sha^{commit}"
+git -C "$project_worktree" cat-file -e "$head_sha^{commit}"
+tracking_bundle_name="tracking-pr-${tracking_pr}-${base_sha}-${head_sha}.patch"
+tracking_bundle="$review_bundle_dir/$tracking_bundle_name"
+tracking_bundle_sha256_file="$tracking_bundle.sha256"
+tracking_candidate="$(mktemp "$review_bundle_dir/.${tracking_bundle_name}.candidate.XXXXXX")"
+git -C "$project_worktree" diff --binary --full-index "$base_sha..$head_sha" > "$tracking_candidate"
+test -s "$tracking_candidate"
+tracking_candidate_sha256="$(sha256sum "$tracking_candidate" | awk '{print $1}')"
+if test -e "$tracking_bundle"; then
+  test -s "$tracking_bundle_sha256_file"
+  (cd "$review_bundle_dir" && sha256sum -c "$(basename "$tracking_bundle_sha256_file")")
+  test "$tracking_candidate_sha256" = "$(awk '{print $1}' "$tracking_bundle_sha256_file")"
+  cmp -s "$tracking_candidate" "$tracking_bundle"
+  rm -f "$tracking_candidate"
+else
+  mv "$tracking_candidate" "$tracking_bundle"
+  printf '%s  %s\n' "$tracking_candidate_sha256" "$tracking_bundle_name" > "$tracking_bundle_sha256_file"
+fi
+tracking_bundle_sha256="$(awk '{print $1}' "$tracking_bundle_sha256_file")"
+test "$tracking_bundle_sha256" = "$(sha256sum "$tracking_bundle" | awk '{print $1}')"
+
+cat > "$sdd_root/pre-tasks-tracking-review-marker.md" <<EOF
+$tracking_review_marker
+native-ubuntu-tracking-review: PASS
+native-ubuntu-tracking-review-package: COMPLETE
+native-ubuntu-tracking-review-findings: none
+native-ubuntu-tracking-reviewed-base: $tracking_base_sha
+native-ubuntu-tracking-reviewed-head: $tracking_head_sha
+native-ubuntu-tracking-review-bundle: $tracking_bundle_name
+native-ubuntu-tracking-review-bundle-sha256: $tracking_bundle_sha256
+$signature
+EOF
+gh pr view "$tracking_pr" --repo "$project_repo" --json comments > "$sdd_root/pre-tasks-tracking-comments-before.json"
+marker_count="$(jq --arg marker "$tracking_review_marker" '[.comments[] | select(.body | contains($marker))] | length' "$sdd_root/pre-tasks-tracking-comments-before.json")"
+if [ "$marker_count" -eq 0 ]; then
+  # The independent tracking reviewer inspects "$tracking_bundle" and runs this exact command.
+  gh pr comment "$tracking_pr" --repo "$project_repo" --body-file "$sdd_root/pre-tasks-tracking-review-marker.md"
+elif [ "$marker_count" -ne 1 ]; then
+  printf '%s\n' 'duplicate tracking-review marker' >&2
+  exit 1
+fi
+
+# Final immutable reread before the head-locked merge.
+gh api graphql -f query="$tracking_pr_oid_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$tracking_pr" > "$sdd_root/pre-tasks-tracking-pr-final-oids.json"
+jq -e --argjson pr "$tracking_pr" --arg base "$tracking_base_sha" --arg head "$tracking_head_sha" '
+  .data.repository.pullRequest as $pull | $pull.number == $pr and $pull.state == "OPEN" and $pull.baseRefOid == $base and $pull.headRefOid == $head
+' "$sdd_root/pre-tasks-tracking-pr-final-oids.json"
+gh pr view "$tracking_pr" --repo "$project_repo" --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments > "$sdd_root/pre-tasks-tracking-pr-final.json"
+jq -e --argjson files "$tracking_files" --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg head_sha "$tracking_head_sha" --arg marker "$tracking_review_marker" --arg base_sha "$tracking_base_sha" --arg bundle "$tracking_bundle_name" --arg digest "$tracking_bundle_sha256" --arg sig "$signature" '
+  def good_check: (.conclusion // .state // "") as $result | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE")) and (.body | contains("native-ubuntu-tracking-review-findings: none")) and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha)) and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha)) and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle)) and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest)) and (.body | endswith($sig))] as $reviews
+  | .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha and ([.files[].path] | sort) == ($files | sort) and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0) and ($reviews | length == 1)
+' "$sdd_root/pre-tasks-tracking-pr-final.json"
+gh pr merge "$tracking_pr" --repo "$project_repo" --squash --delete-branch=false --match-head-commit "$tracking_head_sha"
+gh pr view "$tracking_pr" --repo "$project_repo" --json state,mergeCommit,baseRefName,headRefName,headRefOid > "$sdd_root/pre-tasks-tracking-pr-merged.json"
+jq -e --arg head "$tracking_pr_head" --arg head_sha "$tracking_head_sha" '
+  .state == "MERGED" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha and (.mergeCommit.oid | type == "string" and length == 40)
+' "$sdd_root/pre-tasks-tracking-pr-merged.json"
+tracking_merge_sha="$(jq -r '.mergeCommit.oid' "$sdd_root/pre-tasks-tracking-pr-merged.json")"
+git -C "$project_root" fetch origin
+git -C "$project_root" merge-base --is-ancestor "$tracking_merge_sha" origin/main
+~~~~
+
 ## Tasks
 
 ### Task 1: Gate the merged tracking artifact, create exact delivery records, and prepare the isolated game-dev worktree
@@ -298,7 +440,7 @@ worktree on a deterministic branch/path.
 original-provider, issue, parent, or Project assertion stops before later
 mutation.
 
-- [ ] **1. Rehydrate from GitHub and prove the exact #211 tracking PR is merged.** Do not use a prior task shell. The tracking identity is fixed here:
+- [ ] **1. Rehydrate, recompute, and gate the merged tracking package.** Do not use a prior task shell. GitHub GraphQL is the authority for both immutable range endpoints; `gh pr view` is not used for `baseRefOid`.
 
   ```bash
   set -euo pipefail
@@ -308,9 +450,13 @@ mutation.
   tracking_pr_base='main'
   tracking_files='["ideas/toolkit-contributor-native-ubuntu/design.md","ideas/toolkit-contributor-native-ubuntu/plan.md"]'
   project_worktree="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox"
+  project_root="$HOME/game-dev/rpg-project"
   sdd_root="$project_worktree/.superpowers/sdd/plan"
+  review_bundle_dir="$sdd_root/review-bundles"
   ledger="$sdd_root/ledger.json"
   signature='— asset-pipeline agent, on behalf of KirkDiggler'
+  tracking_review_marker='<!-- native-ubuntu-delivery:tracking-review-bundle -->'
+  tracking_pr_oid_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){number title state baseRefName headRefName baseRefOid headRefOid mergeCommit{oid}}}}'
   project_id='PVT_kwHOAASbwc4Bcj4v'
   status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
   feature_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLt3s'
@@ -325,51 +471,90 @@ mutation.
   team_platform='f9c87bc7'
   issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
   sdd_gitignore="$project_worktree/.superpowers/sdd/.gitignore"
-  mkdir -p "$project_worktree/.superpowers/sdd"
+  mkdir -p "$project_worktree/.superpowers/sdd" "$review_bundle_dir"
   printf '%s\n' '*' > "$sdd_gitignore"
-  mkdir -p "$sdd_root"
   test "$(cat "$sdd_gitignore")" = '*'
-  git -C "$project_worktree" check-ignore -q .superpowers/sdd/plan/ledger.json
+  git -C "$project_worktree" check-ignore -q .superpowers/sdd/plan/review-bundles/placeholder
 
   gh pr list --repo "$project_repo" --state merged \
     --search "in:title \"$tracking_pr_title\"" \
     --json number,title,url,headRefName,headRefOid,baseRefName,state,mergeCommit \
     > "$sdd_root/tracking-pr-list.json"
   jq -e --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" --arg base "$tracking_pr_base" '
-    length == 1
-    and .[0].title == $title
-    and .[0].headRefName == $head
+    length == 1 and .[0].title == $title
+    and .[0].headRefName == $head and .[0].baseRefName == $base and .[0].state == "MERGED"
     and (.[] | .headRefOid | type == "string" and length == 40)
-    and .[0].baseRefName == $base
-    and .[0].state == "MERGED"
     and (.[] | .mergeCommit.oid | type == "string" and length == 40)
   ' "$sdd_root/tracking-pr-list.json"
   tracking_pr="$(jq -r '.[0].number' "$sdd_root/tracking-pr-list.json")"
   tracking_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/tracking-pr-list.json")"
-  tracking_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/tracking-pr-list.json")"
+
+  gh api graphql -f query="$tracking_pr_oid_query" -F owner=KirkDiggler -F repo=rpg-project \
+    -F number="$tracking_pr" > "$sdd_root/tracking-pr-oids.json"
+  jq -e --argjson expected_pr "$tracking_pr" --arg title "$tracking_pr_title" \
+    --arg head "$tracking_pr_head" --arg base "$tracking_pr_base" '
+    .data.repository.pullRequest as $pr
+    | $pr.number == $expected_pr and $pr.title == $title and $pr.state == "MERGED"
+      and $pr.baseRefName == $base and $pr.headRefName == $head
+      and ($pr.baseRefOid | type == "string" and length == 40)
+      and ($pr.headRefOid | type == "string" and length == 40)
+      and ($pr.mergeCommit.oid | type == "string" and length == 40)
+  ' "$sdd_root/tracking-pr-oids.json"
+  tracking_base_sha="$(jq -r '.data.repository.pullRequest.baseRefOid' "$sdd_root/tracking-pr-oids.json")"
+  tracking_head_sha="$(jq -r '.data.repository.pullRequest.headRefOid' "$sdd_root/tracking-pr-oids.json")"
+  test "$tracking_head_sha" = "$(jq -r '.[0].headRefOid' "$sdd_root/tracking-pr-list.json")"
+  test "$tracking_merge_sha" = "$(jq -r '.data.repository.pullRequest.mergeCommit.oid' "$sdd_root/tracking-pr-oids.json")"
+
+  git -C "$project_root" fetch origin
+  git -C "$project_root" fetch origin "refs/pull/$tracking_pr/head:refs/remotes/origin/pr/$tracking_pr/head"
+  test "$(git -C "$project_root" rev-parse "refs/remotes/origin/pr/$tracking_pr/head")" = "$tracking_head_sha"
+  base_sha="$tracking_base_sha"
+  head_sha="$tracking_head_sha"
+  git -C "$project_root" cat-file -e "$base_sha^{commit}"
+  git -C "$project_root" cat-file -e "$head_sha^{commit}"
+  tracking_bundle_name="tracking-pr-${tracking_pr}-${base_sha}-${head_sha}.patch"
+  tracking_bundle="$review_bundle_dir/$tracking_bundle_name"
+  tracking_bundle_sha256_file="$tracking_bundle.sha256"
+  test -s "$tracking_bundle"
+  test -s "$tracking_bundle_sha256_file"
+  (
+    cd "$review_bundle_dir"
+    sha256sum -c "$(basename "$tracking_bundle_sha256_file")"
+  )
+  tracking_bundle_sha256="$(awk '{print $1}' "$tracking_bundle_sha256_file")"
+  test "$tracking_bundle_sha256" = "$(sha256sum "$tracking_bundle" | awk '{print $1}')"
+  tracking_recomputed="$(mktemp "$review_bundle_dir/.${tracking_bundle_name}.rehydrated.XXXXXX")"
+  git -C "$project_root" diff --binary --full-index "$base_sha..$head_sha" > "$tracking_recomputed"
+  test -s "$tracking_recomputed"
+  test "$tracking_bundle_sha256" = "$(sha256sum "$tracking_recomputed" | awk '{print $1}')"
+  cmp -s "$tracking_recomputed" "$tracking_bundle"
+  rm -f "$tracking_recomputed"
 
   gh pr view "$tracking_pr" --repo "$project_repo" \
     --json number,title,state,baseRefName,headRefName,headRefOid,mergeCommit,files,statusCheckRollup,comments \
     > "$sdd_root/tracking-pr.json"
   jq -e --argjson files "$tracking_files" --arg title "$tracking_pr_title" \
     --arg head "$tracking_pr_head" --arg base "$tracking_pr_base" \
-    --arg head_sha "$tracking_head_sha" --arg signature "$signature" '
+    --arg base_sha "$tracking_base_sha" --arg head_sha "$tracking_head_sha" \
+    --arg bundle "$tracking_bundle_name" --arg digest "$tracking_bundle_sha256" \
+    --arg marker "$tracking_review_marker" --arg signature "$signature" '
     def good_check:
       (.conclusion // .state // "") as $result
       | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
     def kirk_tracking_review:
       [.comments[] | select(
         .author.login == "KirkDiggler"
+        and (.body | contains($marker))
         and (.body | contains("native-ubuntu-tracking-review: PASS"))
         and (.body | contains("native-ubuntu-tracking-review-package: COMPLETE"))
         and (.body | contains("native-ubuntu-tracking-review-findings: none"))
+        and (.body | contains("native-ubuntu-tracking-reviewed-base: " + $base_sha))
         and (.body | contains("native-ubuntu-tracking-reviewed-head: " + $head_sha))
+        and (.body | contains("native-ubuntu-tracking-review-bundle: " + $bundle))
+        and (.body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest))
         and (.body | endswith($signature))
       )] | length == 1;
-    .title == $title
-    and .state == "MERGED"
-    and .baseRefName == $base
-    and .headRefName == $head
+    .title == $title and .state == "MERGED" and .baseRefName == $base and .headRefName == $head
     and .headRefOid == $head_sha
     and ([.files[].path] | sort) == ($files | sort)
     and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
@@ -377,8 +562,6 @@ mutation.
     and (.mergeCommit.oid | type == "string" and length == 40)
   ' "$sdd_root/tracking-pr.json"
 
-  project_root="$HOME/game-dev/rpg-project"
-  git -C "$project_root" fetch origin
   git -C "$project_root" merge-base --is-ancestor "$tracking_merge_sha" origin/main
   git -C "$project_root" diff-tree --no-commit-id --name-only -r "$tracking_merge_sha" \
     | sort > "$sdd_root/tracking-merge-files.txt"
@@ -394,10 +577,11 @@ mutation.
   test "$plan_blob" = "$(git -C "$project_root" rev-parse "origin/main:ideas/toolkit-contributor-native-ubuntu/plan.md")"
   ```
 
-  The PR identity, exact two-file list, immutable head SHA, hosted-check
-  conclusions, Kirk-authored complete/no-findings review marker, merge SHA
-  ancestry, and merged blob IDs are all required.
-  This is intentionally stronger than searching a document heading.
+  The PR identity, GraphQL base/head pair, retained complete bundle, verified
+  SHA256, unique Kirk-authored signed complete/no-findings marker, exact two-file
+  list, present hosted-check conclusions, merge SHA ancestry, and merged blob IDs
+  are all required. This is intentionally stronger than searching a document
+  heading or trusting a review claim without its immutable range.
 
 - [ ] **2. Validate original merged dependencies with exact GitHub facts.** Query each PR instead of trusting remembered branch facts:
 
@@ -594,18 +778,22 @@ jq -e '
   game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
   game_dev_worktree="$HOME/game-dev/.pi-worktrees/game-dev-${game_dev_issue}"
   jq -n \
-    --arg tracking_pr "$tracking_pr" --arg tracking_merge_sha "$tracking_merge_sha" --arg tracking_head_sha "$tracking_head_sha" \
+    --arg tracking_pr "$tracking_pr" --arg tracking_merge_sha "$tracking_merge_sha" \
+    --arg tracking_base_sha "$tracking_base_sha" --arg tracking_head_sha "$tracking_head_sha" \
+    --arg tracking_bundle_name "$tracking_bundle_name" --arg tracking_bundle_sha256 "$tracking_bundle_sha256" \
     --arg design_blob "$design_blob" --arg plan_blob "$plan_blob" \
     --argjson game_dev_issue "$game_dev_issue" --arg game_dev_url "$game_dev_url" --arg game_dev_item "$game_dev_item" \
     --arg game_dev_branch "$game_dev_branch" --arg game_dev_worktree "$game_dev_worktree" \
     --argjson native_verify_issue "$native_verify_issue" --arg native_verify_url "$native_verify_url" --arg native_verify_item "$native_verify_item" \
-    '{schema:1,tracking_pr:($tracking_pr|tonumber),tracking_merge_sha:$tracking_merge_sha,tracking_head_sha:$tracking_head_sha,design_blob:$design_blob,plan_blob:$plan_blob,game_dev_issue:$game_dev_issue,game_dev_url:$game_dev_url,game_dev_project_item:$game_dev_item,game_dev_branch:$game_dev_branch,game_dev_worktree:$game_dev_worktree,native_verify_issue:$native_verify_issue,native_verify_url:$native_verify_url,native_verify_project_item:$native_verify_item,native_game_dev_pr:null,native_game_dev_head_sha:null,native_game_dev_merge_sha:null}' \
+    '{schema:2,tracking_pr:($tracking_pr|tonumber),tracking_merge_sha:$tracking_merge_sha,tracking_base_sha:$tracking_base_sha,tracking_head_sha:$tracking_head_sha,tracking_bundle_name:$tracking_bundle_name,tracking_bundle_sha256:$tracking_bundle_sha256,design_blob:$design_blob,plan_blob:$plan_blob,game_dev_issue:$game_dev_issue,game_dev_url:$game_dev_url,game_dev_project_item:$game_dev_item,game_dev_branch:$game_dev_branch,game_dev_worktree:$game_dev_worktree,native_verify_issue:$native_verify_issue,native_verify_url:$native_verify_url,native_verify_project_item:$native_verify_item,native_game_dev_pr:null,native_game_dev_base_sha:null,native_game_dev_head_sha:null,native_game_dev_bundle_name:null,native_game_dev_bundle_sha256:null,native_game_dev_merge_sha:null}' \
     > "$ledger.next"
   mv "$ledger.next" "$ledger"
   jq -e '
-    .schema == 1 and (.game_dev_issue|type == "number") and (.native_verify_issue|type == "number")
+    .schema == 2 and (.game_dev_issue|type == "number") and (.native_verify_issue|type == "number")
     and (.game_dev_branch|startswith("feat/")) and (.game_dev_worktree|startswith("/"))
-    and (.tracking_merge_sha|length == 40) and (.tracking_head_sha|length == 40)
+    and (.tracking_merge_sha|length == 40) and (.tracking_base_sha|length == 40)
+    and (.tracking_head_sha|length == 40) and (.tracking_bundle_name|endswith(".patch"))
+    and (.tracking_bundle_sha256|length == 64)
   ' "$ledger"
 
   handoff_marker='<!-- native-ubuntu-delivery:task1-handoff -->'
@@ -678,6 +866,7 @@ override, compose, health, seed, status, or down behavior blocks the PR.
 ```bash
 set -euo pipefail
 sdd_root="$HOME/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox/.superpowers/sdd/plan"
+review_bundle_dir="$sdd_root/review-bundles"
 ledger="$sdd_root/ledger.json"
 game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
 native_verify_issue_title='Verify toolkit contributor sandbox on clean native Ubuntu'
@@ -688,8 +877,10 @@ status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
 status_in_progress='a434eab1'
 status_done='e4d8ce42'
 issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
+implementation_pr_oid_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){number title state baseRefName headRefName baseRefOid headRefOid mergeCommit{oid}}}}'
 test -s "$ledger"
-jq -e '.schema == 1' "$ledger"
+jq -e '.schema == 2' "$ledger"
+test -d "$review_bundle_dir"
 gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title,url \
 > "$sdd_root/task2-game-dev-issue.json"
 gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
@@ -787,9 +978,10 @@ grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal'
   commands, all four existing-root preservation cases, and all pre-existing
   facade behavior.
 
-- [ ] **5. Commit exactly four paths, open the bounded PR, and rehydrate the PR by exact title/head.**
+- [ ] **5. Commit exactly four paths, open the bounded PR, and retain one immutable full review bundle.** The range endpoints come from GitHub GraphQL, not a guessed local `main` or a file list. The package is prepared before either independent reviewer begins.
 
-  ```bash
+<!-- prettier-ignore -->
+```bash
   cd "$game_dev_worktree"
   git add scripts/toolkit-contributor.sh tests/toolkit-contributor-contract.sh \
     docs/toolkit-contributor-sandbox.md README.md
@@ -834,57 +1026,156 @@ grep -E 'classify_toolkit_contributor_host|clone --branch|ubuntu-native|literal'
   ' "$sdd_root/task2-pr-list.json"
   native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task2-pr-list.json")"
 
+  gh api graphql -f query="$implementation_pr_oid_query" -F owner=KirkDiggler -F repo=game-dev \
+    -F number="$native_game_dev_pr" > "$sdd_root/task2-pr-oids.json"
+  jq -e --argjson pr "$native_game_dev_pr" --arg title "$implementation_pr_title" \
+    --arg head "$game_dev_branch" --arg head_sha "$native_game_dev_head_sha" '
+    .data.repository.pullRequest as $pull
+    | $pull.number == $pr and $pull.title == $title and $pull.state == "OPEN"
+      and $pull.baseRefName == "main" and $pull.headRefName == $head
+      and ($pull.baseRefOid | type == "string" and length == 40)
+      and $pull.headRefOid == $head_sha
+  ' "$sdd_root/task2-pr-oids.json"
+  native_game_dev_base_sha="$(jq -r '.data.repository.pullRequest.baseRefOid' "$sdd_root/task2-pr-oids.json")"
+  test "$native_game_dev_head_sha" = "$(jq -r '.data.repository.pullRequest.headRefOid' "$sdd_root/task2-pr-oids.json")"
 
+  mkdir -p "$review_bundle_dir"
+  git -C "$game_dev_worktree" fetch origin
+  base_sha="$native_game_dev_base_sha"
+  head_sha="$native_game_dev_head_sha"
+  git -C "$game_dev_worktree" cat-file -e "$base_sha^{commit}"
+  git -C "$game_dev_worktree" cat-file -e "$head_sha^{commit}"
+  native_game_dev_bundle_name="implementation-pr-${native_game_dev_pr}-${base_sha}-${head_sha}.patch"
+  native_game_dev_bundle="$review_bundle_dir/$native_game_dev_bundle_name"
+  native_game_dev_bundle_sha256_file="$native_game_dev_bundle.sha256"
+  native_game_dev_candidate="$(mktemp "$review_bundle_dir/.${native_game_dev_bundle_name}.candidate.XXXXXX")"
+  git -C "$game_dev_worktree" diff --binary --full-index "$base_sha..$head_sha" > "$native_game_dev_candidate"
+  test -s "$native_game_dev_candidate"
+  native_game_dev_candidate_sha256="$(sha256sum "$native_game_dev_candidate" | awk '{print $1}')"
+  if test -e "$native_game_dev_bundle"; then
+    test -s "$native_game_dev_bundle_sha256_file"
+    (
+      cd "$review_bundle_dir"
+      sha256sum -c "$(basename "$native_game_dev_bundle_sha256_file")"
+    )
+    test "$native_game_dev_candidate_sha256" = "$(awk '{print $1}' "$native_game_dev_bundle_sha256_file")"
+    cmp -s "$native_game_dev_candidate" "$native_game_dev_bundle"
+    rm -f "$native_game_dev_candidate"
+  else
+    mv "$native_game_dev_candidate" "$native_game_dev_bundle"
+    printf '%s  %s\n' "$native_game_dev_candidate_sha256" "$native_game_dev_bundle_name" > "$native_game_dev_bundle_sha256_file"
+  fi
+  (
+    cd "$review_bundle_dir"
+    sha256sum -c "$(basename "$native_game_dev_bundle_sha256_file")"
+  )
+  native_game_dev_bundle_sha256="$(awk '{print $1}' "$native_game_dev_bundle_sha256_file")"
+  test "$native_game_dev_bundle_sha256" = "$(sha256sum "$native_game_dev_bundle" | awk '{print $1}')"
 
+  spec_review_marker='<!-- native-ubuntu-delivery:implementation-spec-review-bundle -->'
+  shell_review_marker='<!-- native-ubuntu-delivery:implementation-shell-review-bundle -->'
+  cat > "$sdd_root/task2-spec-review-marker.md" <<EOF
+  $spec_review_marker
+native-ubuntu-spec-review: PASS
+native-ubuntu-spec-review-package: COMPLETE
+native-ubuntu-spec-review-findings: none
+native-ubuntu-spec-reviewed-base: $native_game_dev_base_sha
+native-ubuntu-spec-reviewed-head: $native_game_dev_head_sha
+native-ubuntu-spec-review-bundle: $native_game_dev_bundle_name
+native-ubuntu-spec-review-bundle-sha256: $native_game_dev_bundle_sha256
+$signature
+EOF
+cat > "$sdd_root/task2-shell-review-marker.md" <<EOF
+$shell_review_marker
+native-ubuntu-shell-review: PASS
+native-ubuntu-shell-review-package: COMPLETE
+native-ubuntu-shell-review-findings: none
+native-ubuntu-shell-reviewed-base: $native_game_dev_base_sha
+native-ubuntu-shell-reviewed-head: $native_game_dev_head_sha
+native-ubuntu-shell-review-bundle: $native_game_dev_bundle_name
+native-ubuntu-shell-review-bundle-sha256: $native_game_dev_bundle_sha256
+$signature
+EOF
+gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json comments \
+| jq -e --arg spec "$spec_review_marker" --arg shell "$shell_review_marker" '
+([.comments[] | select(.body | contains($spec))] | length == 0)
+and ([.comments[] | select(.body | contains($shell))] | length == 0)
+'
 
+# The specification/safety reviewer alone runs this after reading "$native_game_dev_bundle".
 
+gh pr comment "$native_game_dev_pr" --repo KirkDiggler/game-dev --body-file "$sdd_root/task2-spec-review-marker.md"
 
+# A different shell/TDD reviewer alone runs this after reading the same unchanged bundle.
 
+gh pr comment "$native_game_dev_pr" --repo KirkDiggler/game-dev --body-file "$sdd_root/task2-shell-review-marker.md"
 
+```
 
+Both reviewers receive the same retained file and digest, not independently
+regenerated or file-filtered material. Their distinct marker names make a
+duplicate, stale, or cross-role comment fail the next gate.
 
-
-
-
-  ```
-
-- [ ] **6. Validate the immutable PR before changing board status, then merge only that re-read head.** First validate the immutable head, exact four-file list, both Kirk-authored signed review comments, and every _present_ hosted check. An empty hosted-check list is not itself a failure; any present non-success/neutral/skipped result is. Only after those assertions pass may the item move to `In Review`. A fresh read of the same PR immediately precedes the merge. A conditional pass, changed head, failed/pending present check, non-Kirk author, or finding blocks merge.
+- [ ] **6. Gate both immutable-bundle reviews, transition to In Review, and merge only the final re-read head.** Every present hosted check must be terminal-success/neutral/skipped; an empty hosted-check list is valid. The rollback guard is armed immediately after the successful transition and remains armed through merged-state and issue-closure assertions.
 
 ```bash
 test -s "$sdd_root/task2-green-contract.txt"
 test -s "$sdd_root/task2-bootstrap-contract.txt"
+gh api graphql -f query="$implementation_pr_oid_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$native_game_dev_pr" > "$sdd_root/task2-pr-before-in-review-oids.json"
+jq -e --argjson pr "$native_game_dev_pr" --arg head "$game_dev_branch" \
+  --arg base_sha "$native_game_dev_base_sha" --arg head_sha "$native_game_dev_head_sha" '
+  .data.repository.pullRequest as $pull
+  | $pull.number == $pr and $pull.state == "OPEN" and $pull.baseRefName == "main"
+    and $pull.headRefName == $head and $pull.baseRefOid == $base_sha and $pull.headRefOid == $head_sha
+' "$sdd_root/task2-pr-before-in-review-oids.json"
+base_sha="$native_game_dev_base_sha"
+head_sha="$native_game_dev_head_sha"
+native_game_dev_recomputed="$(mktemp "$review_bundle_dir/.${native_game_dev_bundle_name}.before-in-review.XXXXXX")"
+git -C "$game_dev_worktree" diff --binary --full-index "$base_sha..$head_sha" > "$native_game_dev_recomputed"
+test "$native_game_dev_bundle_sha256" = "$(sha256sum "$native_game_dev_recomputed" | awk '{print $1}')"
+cmp -s "$native_game_dev_recomputed" "$native_game_dev_bundle"
+rm -f "$native_game_dev_recomputed"
+
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
   --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments \
   > "$sdd_root/task2-pr-before-in-review.json"
 jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
-  --arg head_sha "$native_game_dev_head_sha" --arg signature "$signature" '
-def good_check:
-  (.conclusion // .state // "") as $result
-  | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
-def kirk_review($pass; $package; $findings; $head_marker):
-  [.comments[] | select(
-    .author.login == "KirkDiggler"
-    and (.body | contains($pass))
-    and (.body | contains($package))
-    and (.body | contains($findings))
-    and (.body | contains($head_marker + $head_sha))
-    and (.body | endswith($signature))
-  )] | length == 1;
-.title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
-and .headRefOid == $head_sha
-and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
-and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
-and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
-and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
+  --arg base_sha "$native_game_dev_base_sha" --arg head_sha "$native_game_dev_head_sha" \
+  --arg bundle "$native_game_dev_bundle_name" --arg digest "$native_game_dev_bundle_sha256" \
+  --arg spec_marker "$spec_review_marker" --arg shell_marker "$shell_review_marker" \
+  --arg signature "$signature" '
+  def good_check:
+    (.conclusion // .state // "") as $result
+    | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
+  def kirk_review($marker; $pass; $package; $findings; $base_marker; $head_marker; $bundle_marker; $digest_marker):
+    [.comments[] | select(
+      .author.login == "KirkDiggler"
+      and (.body | contains($marker))
+      and (.body | contains($pass))
+      and (.body | contains($package))
+      and (.body | contains($findings))
+      and (.body | contains($base_marker + $base_sha))
+      and (.body | contains($head_marker + $head_sha))
+      and (.body | contains($bundle_marker + $bundle))
+      and (.body | contains($digest_marker + $digest))
+      and (.body | endswith($signature))
+    )] | length == 1;
+  .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
+  and .headRefOid == $head_sha
+  and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
+  and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
+  and kirk_review($spec_marker; "native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-base: "; "native-ubuntu-spec-reviewed-head: "; "native-ubuntu-spec-review-bundle: "; "native-ubuntu-spec-review-bundle-sha256: ")
+  and kirk_review($shell_marker; "native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-base: "; "native-ubuntu-shell-reviewed-head: "; "native-ubuntu-shell-review-bundle: "; "native-ubuntu-shell-review-bundle-sha256: ")
 ' "$sdd_root/task2-pr-before-in-review.json"
 closing_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){closingIssuesReferences(first:20){nodes{number repository{nameWithOwner}}}}}}'
 gh api graphql -f query="$closing_query" -F owner=KirkDiggler -F repo=game-dev -F number="$native_game_dev_pr" \
   > "$sdd_root/task2-closing-refs.json"
 jq -e --argjson issue "$game_dev_issue" '
-.data.repository.pullRequest.closingIssuesReferences.nodes as $refs
-| ($refs | length == 1)
-  and $refs[0].number == $issue
-  and $refs[0].repository.nameWithOwner == "KirkDiggler/game-dev"
+  .data.repository.pullRequest.closingIssuesReferences.nodes as $refs
+  | ($refs | length == 1)
+    and $refs[0].number == $issue
+    and $refs[0].repository.nameWithOwner == "KirkDiggler/game-dev"
 ' "$sdd_root/task2-closing-refs.json"
 
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
@@ -899,7 +1190,38 @@ status_options_query='query($id:ID!){node(id:$id){... on ProjectV2{field(name:"S
 gh api graphql -f query="$status_options_query" -F id="$project_id" > "$sdd_root/task2-status-options.json"
 jq -e '[.data.node.field.options[] | select(.name == "In Review")] | length == 1' "$sdd_root/task2-status-options.json"
 status_in_review="$(jq -r '.data.node.field.options[] | select(.name == "In Review") | .id' "$sdd_root/task2-status-options.json")"
+
+rollback_game_dev_in_review() {
+  original_status="${1:-1}"
+  if [ "${in_review_rollback_armed:-0}" -ne 1 ] || [ "${in_review_rollback_running:-0}" -eq 1 ]; then
+    return "$original_status"
+  fi
+  in_review_rollback_running=1
+  trap - ERR EXIT
+  set +e
+  rollback_status=0
+  gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_progress" || rollback_status=$?
+  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
+    -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-rollback.json" || rollback_status=$?
+  jq -e --arg item "$game_dev_item" '
+    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+    | ($rows | length == 1) and $rows[0].id == $item
+      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Progress"])
+  ' "$sdd_root/task2-game-dev-project-rollback.json" || rollback_status=$?
+  if [ "$rollback_status" -ne 0 ]; then
+    printf '%s\n' 'FATAL: In Review rollback did not read back In Progress; original failure status is preserved.' >&2
+  fi
+  exit "$original_status"
+}
+
 gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_review"
+# The guard is armed immediately after the transition; ERR plus EXIT cannot double-run it.
+in_review_rollback_armed=1
+in_review_rollback_running=0
+set -E
+trap 'rollback_game_dev_in_review "$?"' ERR
+trap 'rollback_game_dev_in_review "$?"' EXIT
+
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
   -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-in-review.json"
 jq -e --arg item "$game_dev_item" '
@@ -908,54 +1230,62 @@ jq -e --arg item "$game_dev_item" '
     and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Review"])
 ' "$sdd_root/task2-game-dev-project-in-review.json"
 
-# This is intentionally the last PR read before the head-locked merge.
+# These are the last range, bundle, PR, review, check, and head reads before the head-locked merge.
+gh api graphql -f query="$implementation_pr_oid_query" -F owner=KirkDiggler -F repo=game-dev \
+  -F number="$native_game_dev_pr" > "$sdd_root/task2-pr-immediately-before-merge-oids.json"
+jq -e --argjson pr "$native_game_dev_pr" --arg head "$game_dev_branch" \
+  --arg base_sha "$native_game_dev_base_sha" --arg head_sha "$native_game_dev_head_sha" '
+  .data.repository.pullRequest as $pull
+  | $pull.number == $pr and $pull.state == "OPEN" and $pull.baseRefName == "main"
+    and $pull.headRefName == $head and $pull.baseRefOid == $base_sha and $pull.headRefOid == $head_sha
+' "$sdd_root/task2-pr-immediately-before-merge-oids.json"
+base_sha="$native_game_dev_base_sha"
+head_sha="$native_game_dev_head_sha"
+native_game_dev_final_recomputed="$(mktemp "$review_bundle_dir/.${native_game_dev_bundle_name}.before-merge.XXXXXX")"
+git -C "$game_dev_worktree" diff --binary --full-index "$base_sha..$head_sha" > "$native_game_dev_final_recomputed"
+test "$native_game_dev_bundle_sha256" = "$(sha256sum "$native_game_dev_final_recomputed" | awk '{print $1}')"
+cmp -s "$native_game_dev_final_recomputed" "$native_game_dev_bundle"
+rm -f "$native_game_dev_final_recomputed"
+
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
   --json number,title,state,baseRefName,headRefName,headRefOid,files,statusCheckRollup,comments \
   > "$sdd_root/task2-pr-immediately-before-merge.json"
 jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" \
-  --arg head_sha "$native_game_dev_head_sha" --arg signature "$signature" '
-def good_check:
-  (.conclusion // .state // "") as $result
-  | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
-def kirk_review($pass; $package; $findings; $head_marker):
-  [.comments[] | select(
-    .author.login == "KirkDiggler"
-    and (.body | contains($pass))
-    and (.body | contains($package))
-    and (.body | contains($findings))
-    and (.body | contains($head_marker + $head_sha))
-    and (.body | endswith($signature))
-  )] | length == 1;
-.title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
-and .headRefOid == $head_sha
-and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
-and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
-and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
-and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
+  --arg base_sha "$native_game_dev_base_sha" --arg head_sha "$native_game_dev_head_sha" \
+  --arg bundle "$native_game_dev_bundle_name" --arg digest "$native_game_dev_bundle_sha256" \
+  --arg spec_marker "$spec_review_marker" --arg shell_marker "$shell_review_marker" \
+  --arg signature "$signature" '
+  def good_check:
+    (.conclusion // .state // "") as $result
+    | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
+  def kirk_review($marker; $pass; $package; $findings; $base_marker; $head_marker; $bundle_marker; $digest_marker):
+    [.comments[] | select(
+      .author.login == "KirkDiggler"
+      and (.body | contains($marker))
+      and (.body | contains($pass))
+      and (.body | contains($package))
+      and (.body | contains($findings))
+      and (.body | contains($base_marker + $base_sha))
+      and (.body | contains($head_marker + $head_sha))
+      and (.body | contains($bundle_marker + $bundle))
+      and (.body | contains($digest_marker + $digest))
+      and (.body | endswith($signature))
+    )] | length == 1;
+  .title == $title and .state == "OPEN" and .baseRefName == "main" and .headRefName == $head
+  and .headRefOid == $head_sha
+  and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
+  and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
+  and kirk_review($spec_marker; "native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-base: "; "native-ubuntu-spec-reviewed-head: "; "native-ubuntu-spec-review-bundle: "; "native-ubuntu-spec-review-bundle-sha256: ")
+  and kirk_review($shell_marker; "native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-base: "; "native-ubuntu-shell-reviewed-head: "; "native-ubuntu-shell-review-bundle: "; "native-ubuntu-shell-review-bundle-sha256: ")
 ' "$sdd_root/task2-pr-immediately-before-merge.json"
 
-set +e
 gh pr merge "$native_game_dev_pr" --repo KirkDiggler/game-dev --squash --delete-branch=false \
   --match-head-commit "$native_game_dev_head_sha"
-merge_status=$?
-set -e
-if [ "$merge_status" -ne 0 ]; then
-  gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_in_progress"
-  gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
-    -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-merge-failed.json"
-  jq -e --arg item "$game_dev_item" '
-    [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-    | ($rows | length == 1) and $rows[0].id == $item
-      and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Progress"])
-  ' "$sdd_root/task2-game-dev-project-merge-failed.json"
-  exit "$merge_status"
-fi
-
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json state,mergeCommit,baseRefName,headRefName,headRefOid \
   > "$sdd_root/task2-pr-merged.json"
 jq -e --arg head "$game_dev_branch" --arg head_sha "$native_game_dev_head_sha" '
-.state == "MERGED" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha
-and (.mergeCommit.oid|type == "string" and length == 40)
+  .state == "MERGED" and .baseRefName == "main" and .headRefName == $head and .headRefOid == $head_sha
+  and (.mergeCommit.oid | type == "string" and length == 40)
 ' "$sdd_root/task2-pr-merged.json"
 native_game_dev_merge_sha="$(jq -r '.mergeCommit.oid' "$sdd_root/task2-pr-merged.json")"
 git -C "$HOME/game-dev" fetch origin
@@ -972,6 +1302,10 @@ jq -e --argjson pr "$native_game_dev_pr" '
     and ($issue.closedByPullRequestsReferences.nodes[0].mergedAt | type == "string")
     and $issue.closedByPullRequestsReferences.nodes[0].repository.nameWithOwner == "KirkDiggler/game-dev"
 ' "$sdd_root/task2-game-dev-closure.json"
+
+# Merged-state and issue-closure assertions have both succeeded; only now disarm rollback.
+in_review_rollback_armed=0
+trap - ERR EXIT
 gh project item-edit --project-id "$project_id" --id "$game_dev_item" --field-id "$status_field" --single-select-option-id "$status_done"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev \
   -F number="$game_dev_issue" > "$sdd_root/task2-game-dev-project-done.json"
@@ -980,10 +1314,19 @@ jq -e --arg item "$game_dev_item" '
   | ($rows | length == 1) and $rows[0].id == $item
     and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
 ' "$sdd_root/task2-game-dev-project-done.json"
-jq --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr=$pr | .native_game_dev_head_sha=$head_sha | .native_game_dev_merge_sha=$sha' "$ledger" > "$ledger.next"
+jq --argjson pr "$native_game_dev_pr" --arg base_sha "$native_game_dev_base_sha" \
+  --arg head_sha "$native_game_dev_head_sha" --arg bundle "$native_game_dev_bundle_name" \
+  --arg digest "$native_game_dev_bundle_sha256" --arg sha "$native_game_dev_merge_sha" \
+  '.native_game_dev_pr=$pr | .native_game_dev_base_sha=$base_sha | .native_game_dev_head_sha=$head_sha | .native_game_dev_bundle_name=$bundle | .native_game_dev_bundle_sha256=$digest | .native_game_dev_merge_sha=$sha' \
+  "$ledger" > "$ledger.next"
 mv "$ledger.next" "$ledger"
-jq -e --argjson pr "$native_game_dev_pr" --arg head_sha "$native_game_dev_head_sha" --arg sha "$native_game_dev_merge_sha" '.native_game_dev_pr == $pr and .native_game_dev_head_sha == $head_sha and .native_game_dev_merge_sha == $sha' "$ledger"
-
+jq -e --argjson pr "$native_game_dev_pr" --arg base_sha "$native_game_dev_base_sha" \
+  --arg head_sha "$native_game_dev_head_sha" --arg bundle "$native_game_dev_bundle_name" \
+  --arg digest "$native_game_dev_bundle_sha256" --arg sha "$native_game_dev_merge_sha" '
+  .native_game_dev_pr == $pr and .native_game_dev_base_sha == $base_sha
+  and .native_game_dev_head_sha == $head_sha and .native_game_dev_bundle_name == $bundle
+  and .native_game_dev_bundle_sha256 == $digest and .native_game_dev_merge_sha == $sha
+' "$ledger"
 ```
 
 ### Task 3: Independently accept the landed facade on clean native Ubuntu
@@ -1143,7 +1486,7 @@ and stop. Do not kill, reuse, move, or configure a listener.
   ./scripts/toolkit-contributor.sh seed | tee "$native_evidence/seed-second.txt"
   for seed_file in "$native_evidence/seed-first.txt" "$native_evidence/seed-second.txt"; do
     grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"
-    grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16' "$seed_file"
+    grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16 off_hand=' "$seed_file"
   done
   ```
 
@@ -1487,145 +1830,365 @@ published AGENT PICKUP; it creates no new WSL issue, branch, or PR.
   ' "$sdd_root/task4-wsl-project-before.json"
   ```
 
-- [ ] **2. Preserve #210 ownership, post the formal superseding packet, and make GitHub the only executor handoff.** Generate the durable local packet only for upload; the WSL executor uses the resulting latest GitHub comment, never the native filesystem or local ledger.
+- [ ] **2. Render, dry-validate, and publish the self-contained #210 GitHub AGENT PICKUP.** The literal template below renders only actual Task 4 GitHub-derived values. Its WSL pre-browser command is intentionally one self-contained shell phase: it owns its failure trap, persists context, starts the stack and owned Vite, and disarms only after readiness so later MCP calls can run in separate Pi tool calls.
 
-  The packet must state actual SHA values, the clean WSL root
-  `$HOME/toolkit-sandbox-wsl2-${native_game_dev_merge_sha:0:12}`, original #209/#60/#792/#747 facts, `main/dev/dev/main` clone checks, the exact port set, marker trap semantics, negatives, owned down, six filenames, and this self-contained MCP browser protocol:
+<!-- prettier-ignore -->
+~~~~bash
+packet_marker='<!-- native-ubuntu-delivery:task4-wsl-pickup -->'
+packet_path="$sdd_root/task4-wsl-pickup.md"
+packet_template="$sdd_root/task4-wsl-pickup.template.md"
+renderer_path="$sdd_root/render-task4-wsl-pickup.py"
+wsl_clean_root="$HOME/toolkit-sandbox-wsl2-${native_game_dev_merge_sha:0:12}"
+test ! -e "$packet_path"
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments | jq -e --arg marker "$packet_marker" '[.comments[] | select(.body | contains($marker))] | length == 0'
+cat > "$packet_template" <<'WSL_PICKUP_TEMPLATE'
+<!-- native-ubuntu-delivery:task4-wsl-pickup -->
 
-  ```text
-  chrome_devtools_new_page sandbox → chrome_devtools_take_snapshot → for each
-  Fighter, Barbarian, Fighter then Barbarian, Barbarian then Fighter:
-  chrome_devtools_select_page sandbox; chrome_devtools_take_snapshot;
-  re-save with chrome_devtools_click on enabled Save;
-  chrome_devtools_wait_for exact `Saved as "toolkit-contributor-sandbox".`;
-  chrome_devtools_evaluate_script/save PutDungeon key;
-  chrome_devtools_wait_for selected party enabled; chrome_devtools_click it;
-  chrome_devtools_wait_for/chrome_devtools_evaluate_script exact normal hrefs;
-  immediately chrome_devtools_new_page every href;
-  chrome_devtools_wait_for/chrome_devtools_evaluate_script asserts
-  [data-testid="encounter-view"]; chrome_devtools_take_snapshot/
-  chrome_devtools_take_screenshot each required order-qualified PNG; only then
-  chrome_devtools_select_page sandbox. A failure records current MCP evidence
-  and takes no later action.
-  ```
+# FORMAL EXECUTION-BASELINE AMENDMENT
 
-Create `$packet_path` in the standard native SDD directory and post it as
-the latest #210 comment. It is a rendered GitHub-only AGENT PICKUP, not a
-reference to this plan, a native acceptance directory, a ledger, or a local
-template. It begins exactly `<!-- native-ubuntu-delivery:task4-wsl-pickup -->`,
-contains headings `FORMAL EXECUTION-BASELINE AMENDMENT` and `AGENT PICKUP —
-START HERE ON UBUNTU WSL2`, ends with the required signature, and has no
-closing keyword for #208.
+This is the sole WSL2 evidence record. Baseline: rpg-project#209
+`22aee544a42906c2f8c01a0e1eb4935c252dcda2`; game-dev#60
+`1df0212e5a04374ea83b9af1dd81d09a8a55831a`; rpg-api#792 on `dev`
+`9099953f9bc86efbed9bf62209a96c54d9383d6b`; rpg-dnd5e-web#747 on `dev`
+`cfa63138a1f06de65991c31b006f29fc2af1ad74`; and game-dev PR
+#@@IMPLEMENTATION_PR@@ on `main`, head `@@IMPLEMENTATION_HEAD_SHA@@`, merge
+`@@IMPLEMENTATION_MERGE_SHA@@`. The disposable root is `@@WSL_CLEAN_ROOT@@`.
+Create no branch, PR, source change, deployment change, or duplicate WSL issue.
 
-Before posting, the packet must contain actual Task 4 GitHub-derived values,
-never unresolved variables: original #209/#60/#792/#747 SHAs, the merged
-implementation PR number/head/merge SHA, and its clean WSL root. Its first
-shell block queries the game-dev issue by the exact title, requires one result,
-derives the `feat/${game_dev_issue}-native-ubuntu-toolkit-contributor` branch, queries the merged
-PR by exact title/head, requires one result, validates base `main`, immutable
-head SHA, merge SHA, and #210's exact title/state. It then performs the
-complete clean WSL preflight, clone, `main/dev/dev/main` root/origin checks,
-#792/#747 dev-clone ancestry, focused API/game-dev/web reports, start/status/
-two-seed flow, negative tests, owned down, checksum manifest, and attachment
-instructions contained in this Task 4 design.
+# AGENT PICKUP — START HERE ON UBUNTU WSL2
 
-The packet's marker trap sets `marker_applied=1` before refresh/reseed to the
-fighter `strength=17 off_hand=shield` record and clears it only after source
-checkout, restored refresh, restored fighter `strength=16 off_hand=shield`,
-and clean diff. Its trap always re-checks out the marker source and attempts
-refresh/reseed/down without replacing the original status; it stops only its
-task-owned Vite PID and performs no unrelated cleanup.
+The fixed local port set is exactly `80, 3001, 3002, 6380, 8080`. The exact Save acknowledgement is `Saved as "toolkit-contributor-sandbox".`.
 
-The packet's browser section names all actual MCP operations:
-`chrome_devtools_new_page`, `chrome_devtools_select_page`,
-`chrome_devtools_take_snapshot`, `chrome_devtools_click`,
-`chrome_devtools_wait_for`, `chrome_devtools_evaluate_script`, and
-`chrome_devtools_take_screenshot`. For each Fighter, Barbarian, Fighter then
-Barbarian, and Barbarian then Fighter it re-saves first, waits exact `Saved as "toolkit-contributor-sandbox".`, records the PutDungeon key, waits the selected party enabled, evaluates normal hrefs, immediately opens each href in a new tab, uses `chrome_devtools_evaluate_script` to assert `[data-testid="encounter-view"]`, and captures before returning to sandbox:
+This exact latest GitHub comment is the only instruction source. Do not use a
+host-mode/path bypass, direct storage, harness URL, alternate port, Docker or
+Windows configuration change, or generic process killer.
+
+## Phase A — one self-contained pre-browser command
+
+```bash
+set -Eeuo pipefail
+signature='— asset-pipeline agent, on behalf of KirkDiggler'
+pickup_marker='<!-- native-ubuntu-delivery:task4-wsl-pickup -->'
+expected_implementation_pr=@@IMPLEMENTATION_PR@@
+expected_implementation_head_sha='@@IMPLEMENTATION_HEAD_SHA@@'
+expected_implementation_merge_sha='@@IMPLEMENTATION_MERGE_SHA@@'
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+wsl_context="$wsl_evidence/task4-context.env"
+marker_file='rulebooks/dnd5e/races/data.go'
+marker_applied=0
+vite_pid=''
+cleanup_phase_a() {
+  original_status=$?
+  trap - ERR EXIT INT TERM
+  if [ "$marker_applied" -eq 1 ]; then
+    git -C "$wsl_clean_root/game-dev/rpg-toolkit" checkout -- "$marker_file" || printf '%s\n' 'marker checkout recovery failed' >&2
+    "$wsl_clean_root/game-dev/scripts/toolkit-contributor.sh" refresh || printf '%s\n' 'marker refresh recovery failed' >&2
+    "$wsl_clean_root/game-dev/scripts/toolkit-contributor.sh" seed || printf '%s\n' 'marker reseed recovery failed' >&2
+  fi
+  if [ -n "$vite_pid" ] && kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid" || true; wait "$vite_pid" || true; fi
+  if [ -d "$wsl_clean_root/game-dev" ]; then "$wsl_clean_root/game-dev/scripts/toolkit-contributor.sh" down || printf '%s\n' 'owned down recovery failed' >&2; fi
+  exit "$original_status"
+}
+trap cleanup_phase_a ERR EXIT INT TERM
+pickup_json="$(gh issue view 210 --repo KirkDiggler/rpg-project --json comments)"
+printf '%s\n' "$pickup_json" | jq -e --arg marker "$pickup_marker" --arg sig "$signature" --argjson pr "$expected_implementation_pr" --arg head "$expected_implementation_head_sha" --arg merge "$expected_implementation_merge_sha" '
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | endswith($sig))
+'
+game_dev_issue_title='Add native Ubuntu host support to toolkit contributor sandbox'
+implementation_pr_title='feat: support native Ubuntu toolkit contributor sandbox'
+game_dev_issue_json="$(gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title)"
+printf '%s\n' "$game_dev_issue_json" | jq -e --arg title "$game_dev_issue_title" 'length == 1 and .[0].title == $title'
+game_dev_issue="$(printf '%s\n' "$game_dev_issue_json" | jq -r '.[0].number')"
+game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
+pr_json="$(gh pr list --repo KirkDiggler/game-dev --state merged --head "$game_dev_branch" --search "in:title \"$implementation_pr_title\"" --json number,title,state,baseRefName,headRefName,headRefOid,mergeCommit)"
+printf '%s\n' "$pr_json" | jq -e --argjson pr "$expected_implementation_pr" --arg title "$implementation_pr_title" --arg head "$expected_implementation_head_sha" --arg merge "$expected_implementation_merge_sha" --arg branch "$game_dev_branch" 'length == 1 and .[0].number == $pr and .[0].title == $title and .[0].state == "MERGED" and .[0].baseRefName == "main" and .[0].headRefName == $branch and .[0].headRefOid == $head and .[0].mergeCommit.oid == $merge'
+gh issue view 210 --repo KirkDiggler/rpg-project --json state,title | jq -e '.state == "OPEN" and .title == "Verify the toolkit contributor sandbox on clean WSL2"'
+gh pr view 209 --repo KirkDiggler/rpg-project --json state,baseRefName,headRefName,mergeCommit | jq -e '.state == "MERGED" and .baseRefName == "main" and .headRefName == "docs/208-toolkit-contributor-sandbox" and .mergeCommit.oid == "22aee544a42906c2f8c01a0e1eb4935c252dcda2"'
+gh pr view 60 --repo KirkDiggler/game-dev --json state,baseRefName,headRefName,mergeCommit | jq -e '.state == "MERGED" and .baseRefName == "main" and .headRefName == "feat/59-toolkit-contributor-sandbox" and .mergeCommit.oid == "1df0212e5a04374ea83b9af1dd81d09a8a55831a"'
+gh pr view 792 --repo KirkDiggler/rpg-api --json state,baseRefName,headRefName,mergeCommit | jq -e '.state == "MERGED" and .baseRefName == "dev" and .headRefName == "feat/791-dnd5e-sandbox" and .mergeCommit.oid == "9099953f9bc86efbed9bf62209a96c54d9383d6b"'
+gh pr view 747 --repo KirkDiggler/rpg-dnd5e-web --json state,baseRefName,headRefName,mergeCommit | jq -e '.state == "MERGED" and .baseRefName == "dev" and .headRefName == "feat/746-toolkit-contributor-sandbox" and .mergeCommit.oid == "cfa63138a1f06de65991c31b006f29fc2af1ad74"'
+test ! -e "$wsl_clean_root"
+mkdir -p "$wsl_evidence"
+test -f /etc/os-release && test -f /proc/sys/kernel/osrelease
+grep -Eq "^ID=(ubuntu|'ubuntu'|\"ubuntu\")$" /etc/os-release
+grep -Eqi 'wsl2|microsoft-standard' /proc/sys/kernel/osrelease
+docker info | tee "$wsl_evidence/docker-info.txt"
+git ls-remote git@github.com:KirkDiggler/game-dev.git HEAD | tee "$wsl_evidence/github-ssh.txt"
+command -v git docker go node npm rsync jq ssh ss curl
+cat /etc/os-release | tee "$wsl_evidence/os-release.txt"
+cat /proc/sys/kernel/osrelease | tee "$wsl_evidence/kernel-osrelease.txt"
+ss -ltnp '( sport = :80 or sport = :3001 or sport = :3002 or sport = :6380 or sport = :8080 )' | tee "$wsl_evidence/ports-before.txt"
+test ! -s "$wsl_evidence/ports-before.txt" || ! grep -Eq ':(80|3001|3002|6380|8080)[[:space:]]' "$wsl_evidence/ports-before.txt"
+git clone git@github.com:KirkDiggler/game-dev.git "$wsl_clean_root/game-dev"
+cd "$wsl_clean_root/game-dev"
+test "$(git branch --show-current)" = main
+test "$(git remote get-url origin)" = git@github.com:KirkDiggler/game-dev.git
+git merge-base --is-ancestor 1df0212e5a04374ea83b9af1dd81d09a8a55831a HEAD
+git merge-base --is-ancestor "$expected_implementation_merge_sha" HEAD
+./scripts/toolkit-contributor.sh bootstrap | tee "$wsl_evidence/bootstrap-first.txt"
+./scripts/toolkit-contributor.sh bootstrap | tee "$wsl_evidence/bootstrap-second.txt"
+test "$(git -C rpg-toolkit branch --show-current)" = main
+test "$(git -C rpg-api branch --show-current)" = dev
+test "$(git -C rpg-dnd5e-web branch --show-current)" = dev
+test "$(git -C rpg-deployment branch --show-current)" = main
+test "$(git -C rpg-toolkit remote get-url origin)" = git@github.com:KirkDiggler/rpg-toolkit.git
+test "$(git -C rpg-api remote get-url origin)" = git@github.com:KirkDiggler/rpg-api.git
+test "$(git -C rpg-dnd5e-web remote get-url origin)" = git@github.com:KirkDiggler/rpg-dnd5e-web.git
+test "$(git -C rpg-deployment remote get-url origin)" = git@github.com:KirkDiggler/rpg-deployment.git
+git -C rpg-api merge-base --is-ancestor 9099953f9bc86efbed9bf62209a96c54d9383d6b HEAD
+git -C rpg-dnd5e-web merge-base --is-ancestor cfa63138a1f06de65991c31b006f29fc2af1ad74 HEAD
+(cd rpg-dnd5e-web && npm ci) | tee "$wsl_evidence/web-npm-ci.txt"
+(cd rpg-api && bash scripts/toolkit-local-override.test.sh && go test ./cmd/sandboxseed -count=1 && go test ./internal/integration/character -run '^TestSandboxSeedSuite$/^TestSandboxSeed_ResetsTwoIdentitiesThroughRPCs$' -count=1 && make pre-commit) | tee "$wsl_evidence/api-focused.txt"
+bash tests/toolkit-contributor-contract.sh | tee "$wsl_evidence/game-dev-contributor-contract.txt"
+bash tests/bootstrap-contract.sh | tee "$wsl_evidence/game-dev-bootstrap-contract.txt"
+(cd rpg-dnd5e-web && npm run test:run -- src/toolkit-contributor-sandbox/clients.test.ts src/toolkit-contributor-sandbox/route.test.ts src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx && npm run ci-check) | tee "$wsl_evidence/web-focused.txt"
+./scripts/toolkit-contributor.sh start | tee "$wsl_evidence/start.txt"
+./scripts/toolkit-contributor.sh status | tee "$wsl_evidence/status.txt"
+grep -Fqx 'host mode: ubuntu-wsl2' "$wsl_evidence/status.txt"
+./scripts/toolkit-contributor.sh seed | tee "$wsl_evidence/seed-first.txt"
+./scripts/toolkit-contributor.sh seed | tee "$wsl_evidence/seed-second.txt"
+for seed_file in "$wsl_evidence/seed-first.txt" "$wsl_evidence/seed-second.txt"; do grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"; grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16 off_hand=' "$seed_file"; done
+perl -0pi -e 's/(Human: \{.*?abilities\.STR: )1,/${1}2,/s' "rpg-toolkit/$marker_file"
+marker_applied=1
+./scripts/toolkit-contributor.sh refresh | tee "$wsl_evidence/marker-refresh-to-17.txt"
+./scripts/toolkit-contributor.sh seed | tee "$wsl_evidence/marker-seed-17.txt"
+grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=17 off_hand=shield' "$wsl_evidence/marker-seed-17.txt"
+git -C rpg-toolkit checkout -- "$marker_file"
+./scripts/toolkit-contributor.sh refresh | tee "$wsl_evidence/marker-refresh-to-16.txt"
+./scripts/toolkit-contributor.sh seed | tee "$wsl_evidence/marker-seed-restored-16.txt"
+grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$wsl_evidence/marker-seed-restored-16.txt"
+git -C rpg-toolkit diff --exit-code -- "$marker_file"
+marker_applied=0
+cd rpg-dnd5e-web
+npm run dev > "$wsl_evidence/vite.log" 2>&1 &
+vite_pid=$!
+for attempt in $(seq 1 30); do if curl -fsS 'http://localhost:3001/?toolkitSandbox=1' > "$wsl_evidence/sandbox-page.html"; then break; fi; sleep 2; done
+test -s "$wsl_evidence/sandbox-page.html"
+grep -Fq 'http://localhost:3001' "$wsl_evidence/vite.log"
+printf 'signature=%q\nexpected_implementation_pr=%q\nexpected_implementation_head_sha=%q\nexpected_implementation_merge_sha=%q\nwsl_clean_root=%q\nwsl_evidence=%q\nvite_pid=%q\nmarker_file=%q\n' "$signature" "$expected_implementation_pr" "$expected_implementation_head_sha" "$expected_implementation_merge_sha" "$wsl_clean_root" "$wsl_evidence" "$vite_pid" "$marker_file" > "$wsl_context"
+test -s "$wsl_context"
+trap - ERR EXIT INT TERM
+```
+
+Phase A records the exact Docker/SSH/manual five-port preflight (`80, 3001,
+3002, 6380, 8080`), clean clone, `main/dev/dev/main` roots/origins, #792/#747
+ancestry, API/game-dev/web reports, bootstrap twice, start/status, two lowercase
+seed regexes, and the 16→17→16 marker proof. It leaves only its Vite PID and the
+owned stack running for MCP. If Phase A fails, its trap restores the marker,
+stops only that PID, and invokes only owned `down` while preserving failure.
+
+## Phase B — MCP browser evidence (separate Pi calls) and durable PutDungeon writes
+
+At the beginning of every browser/Pi call, rehydrate only the rendered context:
+
+```bash
+set -euo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+. "$wsl_evidence/task4-context.env"
+test "$expected_implementation_pr" = '@@IMPLEMENTATION_PR@@'
+test "$expected_implementation_head_sha" = '@@IMPLEMENTATION_HEAD_SHA@@'
+test "$expected_implementation_merge_sha" = '@@IMPLEMENTATION_MERGE_SHA@@'
+kill -0 "$vite_pid"
+```
+
+Use `chrome_devtools_new_page` at `http://localhost:3001/?toolkitSandbox=1`,
+retain `sandbox_page`, and use `chrome_devtools_take_snapshot` before each
+interaction. For each arrangement in this exact order — **Fighter**,
+**Barbarian**, **Fighter then Barbarian**, **Barbarian then Fighter** —
+`chrome_devtools_select_page` the sandbox; snapshot; `chrome_devtools_click`
+enabled Save; `chrome_devtools_wait_for` exact `Saved as
+"toolkit-contributor-sandbox".`; and `chrome_devtools_evaluate_script` the
+successful PutDungeon key/order. Immediately following that MCP result, run this
+shell/write action in a separate Pi call (substitute the observed values):
+
+```bash
+set -euo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+printf 'PutDungeon arrangement=%s key=%s\n' '<arrangement>' '<observed-key>' >> "$wsl_evidence/put-dungeon-key-evidence.txt"
+```
+
+Then wait for selected party enabled, snapshot/click it, wait/evaluate normal
+hrefs, and immediately `chrome_devtools_new_page` each href;
+`chrome_devtools_wait_for` `[data-testid="encounter-view"]`;
+`chrome_devtools_evaluate_script` selector existence;
+`chrome_devtools_take_snapshot`; and `chrome_devtools_take_screenshot` directly
+into `$wsl_evidence/<required-filename>` before returning to the sandbox.
+Required immediate PNGs are:
 
 ```text
-toolkit-sandbox-fighter-only-fighter-gameview.png
-toolkit-sandbox-barbarian-only-barbarian-gameview.png
-toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
-toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
-toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
-toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
+Fighter: toolkit-sandbox-fighter-only-fighter-gameview.png
+Barbarian: toolkit-sandbox-barbarian-only-barbarian-gameview.png
+Fighter then Barbarian: toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
+Fighter then Barbarian: toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
+Barbarian then Fighter: toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
+Barbarian then Fighter: toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
 ```
 
-The packet must also contain these literal WSL evidence requirements; do not
-summarize or weaken them. It must run the two seed files through these exact
-regular expressions, with both expressions required for **both** files:
+A browser failure records the current MCP artifact and takes no later save,
+party action, or catch-up screenshot. Then run this rehydrated recovery:
 
 ```bash
+set +e
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
 wsl_evidence="$wsl_clean_root/evidence"
-for seed_file in "$wsl_evidence/seed-first.txt" "$wsl_evidence/seed-second.txt"; do
-  grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$seed_file"
-  grep -Ex 'sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+ strength=16' "$seed_file"
-done
-grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=17 off_hand=shield' "$wsl_evidence/marker-seed-17.txt"
-grep -Ex 'sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+ strength=16 off_hand=shield' "$wsl_evidence/marker-seed-restored-16.txt"
+. "$wsl_evidence/task4-context.env"
+if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid"; wait "$vite_pid" || true; fi
+"$wsl_clean_root/game-dev/scripts/toolkit-contributor.sh" down
+exit 1
 ```
 
-The packet names the focused API integration report as the evidence for
-Protection, FightingStyles, and the real shield; it must not infer that from
-runtime seeder-output text. After its manifest and SHA256SUMS are complete,
-the WSL executor creates the archive and checksum exactly as follows:
+## Phase C — rehydrated negatives, owned down, archive, UI upload, URLs, review, Project, and closure
 
 ```bash
+set -Eeuo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+. "$wsl_evidence/task4-context.env"
+cleanup_phase_c() { status=$?; trap - ERR EXIT INT TERM; if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid" || true; wait "$vite_pid" || true; fi; "$wsl_clean_root/game-dev/scripts/toolkit-contributor.sh" down || true; exit "$status"; }
+trap cleanup_phase_c ERR EXIT INT TERM
+(cd "$wsl_clean_root/game-dev/rpg-api" && go test ./internal/auth -run TestUnaryAuthInterceptor_DevScheme_NotAllowed -count=1) | tee "$wsl_evidence/production-dev-header-negative.txt"
+(cd "$wsl_clean_root/game-dev/rpg-dnd5e-web" && npm run test:run -- src/toolkit-contributor-sandbox/route.test.ts src/toolkit-contributor-sandbox/ToolkitContributorSandbox.test.tsx) | tee "$wsl_evidence/production-ownership-negatives.txt"
+if kill -0 "$vite_pid" 2>/dev/null; then kill "$vite_pid"; wait "$vite_pid" || true; fi
+cd "$wsl_clean_root/game-dev"
+./scripts/toolkit-contributor.sh down | tee "$wsl_evidence/down.txt"
+test ! -e rpg-api/local-toolkit/rulebooks/dnd5e
+test -d rpg-toolkit/.git && test -d rpg-api/.git && test -d rpg-dnd5e-web/.git && test -d rpg-deployment/.git
+trap - ERR EXIT INT TERM
+find "$wsl_evidence" -maxdepth 1 -type f -printf '%f\n' | sort | tee "$wsl_evidence/manifest.txt"
+sha256sum "$wsl_evidence"/* > "$wsl_evidence/SHA256SUMS.txt"
 wsl_archive="$wsl_clean_root/task4-wsl-evidence.tar.gz"
 wsl_archive_sha256="$wsl_clean_root/task4-wsl-evidence.tar.gz.sha256"
 tar -C "$wsl_clean_root" -czf "$wsl_archive" evidence
-(
-  cd "$wsl_clean_root"
-  sha256sum "$(basename "$wsl_archive")" > "$(basename "$wsl_archive_sha256")"
-)
-test -s "$wsl_archive"
-test -s "$wsl_archive_sha256"
+(cd "$wsl_clean_root" && sha256sum "$(basename "$wsl_archive")" > "$(basename "$wsl_archive_sha256")")
+test -s "$wsl_archive" && test -s "$wsl_archive_sha256"
+evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
+cat > "$wsl_evidence/task4-wsl-evidence-comment.md" <<EOF
+$evidence_marker
+WSL2 clean acceptance for game-dev PR #$expected_implementation_pr at merge $expected_implementation_merge_sha is complete.
+Attachments: task4-wsl-evidence.tar.gz, task4-wsl-evidence.tar.gz.sha256, and six order-qualified PNGs.
+$signature
+EOF
 ```
 
-It publishes the signed evidence comment
-in the #210 GitHub issue UI with marker
-`<!-- native-ubuntu-delivery:task4-wsl-evidence -->`, the exact merged
-`$native_game_dev_merge_sha`, and the required signature. It uses actual
-`chrome_devtools_new_page`, `chrome_devtools_take_snapshot`,
-`chrome_devtools_click`, `chrome_devtools_evaluate_script`,
-`chrome_devtools_upload_file`, and `chrome_devtools_wait_for` calls to put the
-archive, checksum, and these six PNGs in that same issue comment:
-
-```text
-toolkit-sandbox-fighter-only-fighter-gameview.png
-toolkit-sandbox-barbarian-only-barbarian-gameview.png
-toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png
-toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png
-toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png
-toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png
-```
-
-The pickup explicitly requires `chrome_devtools_wait_for` each filename in the
-composer, a UI click to publish, and a comment readback that asserts author
-`KirkDiggler`, the WSL evidence marker, exact merge SHA, signature, all eight
-filenames, and at least eight distinct
-`https://github.com/user-attachments/` URLs. It then explicitly reloads or
-opens every returned attachment URL with `chrome_devtools_new_page`, waits,
-takes a snapshot, evaluates the loaded attachment, and records a
-`viewed <filename> at <URL>` statement. It does not say that `gh issue comment`
-uploads an attachment.
-
-`screenshot.mjs` is only secondary corroboration. A browser failure retains
-the current MCP artifact and takes no later save, party action, or catch-up
-screenshot. The packet has exactly one copy-paste prompt and tells the WSL
-executor to use only this GitHub comment.
+Use the #210 GitHub issue UI: `chrome_devtools_new_page`,
+`chrome_devtools_take_snapshot`, `chrome_devtools_click` **Add a comment**,
+`chrome_devtools_evaluate_script` the exact comment body,
+`chrome_devtools_upload_file` the archive, checksum, and six PNGs; after every
+upload `chrome_devtools_wait_for` its filename and evaluate the attachment list;
+then click **Comment**, wait for the marker, snapshot, and evaluate attachment
+links. Rehydrate and read back all eight durable URLs:
 
 ```bash
-packet_marker='<!-- native-ubuntu-delivery:task4-wsl-pickup -->'
-packet_path="$sdd_root/task4-wsl-pickup.md"
-test -s "$packet_path"
-gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$packet_path"
-gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
-  | jq -e --arg marker "$packet_marker" --arg sig '— asset-pipeline agent, on behalf of KirkDiggler' '
-      [.comments[] | select((.body|contains($marker)) and (.body|contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and (.body|contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and (.body|endswith($sig))] | length == 1
-    '
+set -euo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+. "$wsl_evidence/task4-context.env"
+evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$wsl_evidence/task4-evidence-readback.json"
+jq -e --arg marker "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments | ($comments | length == 1) and ($comments[0].body | contains($merge)) and ($comments[0].body | endswith($sig)) and (["task4-wsl-evidence.tar.gz","task4-wsl-evidence.tar.gz.sha256","toolkit-sandbox-fighter-only-fighter-gameview.png","toolkit-sandbox-barbarian-only-barbarian-gameview.png","toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png","toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png","toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"] | all(. as $f | ($comments[0].body | contains($f)))) and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)' "$wsl_evidence/task4-evidence-readback.json"
+jq -r --arg marker "$evidence_marker" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] | .[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+")' "$wsl_evidence/task4-evidence-readback.json" | sort -u > "$wsl_evidence/task4-attachment-urls.txt"
+test "$(wc -l < "$wsl_evidence/task4-attachment-urls.txt")" -ge 8
 ```
+
+For every URL use `chrome_devtools_new_page` (or reload),
+`chrome_devtools_wait_for`, `chrome_devtools_take_snapshot`, and
+`chrome_devtools_evaluate_script`. Immediately after each evaluation, append its
+actual filename and URL as `viewed <filename> at <URL>` to
+`$wsl_evidence/task4-attachment-viewed.txt`. Before review, require all eight
+viewed statements:
+
+```bash
+set -euo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+for filename in task4-wsl-evidence.tar.gz task4-wsl-evidence.tar.gz.sha256 toolkit-sandbox-fighter-only-fighter-gameview.png toolkit-sandbox-barbarian-only-barbarian-gameview.png toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png; do
+  grep -Eq "^viewed ${filename} at https://github\\.com/user-attachments/" "$wsl_evidence/task4-attachment-viewed.txt"
+done
+```
+
+A distinct reviewer then builds the review comment from the evidence readback's
+first actual user-attachment URL:
+
+```bash
+set -euo pipefail
+wsl_clean_root='@@WSL_CLEAN_ROOT@@'
+wsl_evidence="$wsl_clean_root/evidence"
+. "$wsl_evidence/task4-context.env"
+evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
+wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
+review_attachment_url="$(head -n 1 "$wsl_evidence/task4-attachment-urls.txt")"
+test "${review_attachment_url#https://github.com/user-attachments/}" != "$review_attachment_url"
+cat > "$wsl_evidence/task4-wsl-review-comment.md" <<EOF
+$wsl_review_marker
+wsl2-acceptance-review: PASS
+wsl2-acceptance-review-package: COMPLETE
+wsl2-acceptance-review-findings: none
+wsl2-acceptance-reviewed-merge: $expected_implementation_merge_sha
+wsl2-acceptance-evidence: $evidence_marker
+wsl2-acceptance-archive: task4-wsl-evidence.tar.gz
+wsl2-acceptance-checksum: task4-wsl-evidence.tar.gz.sha256
+wsl2-acceptance-attachment-url: $review_attachment_url
+$signature
+EOF
+# The independent reviewer (not executor) runs this after reviewing archive/checksum/reports/MCP/URL evidence.
+gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$wsl_evidence/task4-wsl-review-comment.md"
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$wsl_evidence/task4-review-readback.json"
+jq -e --arg marker "$wsl_review_marker" --arg evidence "$evidence_marker" --arg merge "$expected_implementation_merge_sha" --arg url "$review_attachment_url" --arg sig "$signature" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews | ($reviews | length == 1) and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE")) and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none")) and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge)) and ($reviews[0].body | contains($evidence)) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz")) and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256")) and ($reviews[0].body | contains($url)) and ($reviews[0].body | endswith($sig))' "$wsl_evidence/task4-review-readback.json"
+project_id='PVT_kwHOAASbwc4Bcj4v'
+status_field='PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM'
+status_done='e4d8ce42'
+issue_project_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){number url projectItems(first:20){nodes{id project{id number title} fieldValues(first:30){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}}}}}}}}'
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 > "$wsl_evidence/task4-project-before.json"
+wsl_project_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$wsl_evidence/task4-project-before.json")"
+jq -e --arg item "$wsl_project_item" '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows | ($rows | length == 1) and $rows[0].id == $item and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["In Progress"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name ] == ["Cross-team"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name ] == ["Infra"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name ] == ["Verify"])' "$wsl_evidence/task4-project-before.json"
+gh project item-edit --project-id "$project_id" --id "$wsl_project_item" --field-id "$status_field" --single-select-option-id "$status_done"
+gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 > "$wsl_evidence/task4-project-done.json"
+jq -e --arg item "$wsl_project_item" '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows | ($rows | length == 1) and $rows[0].id == $item and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Team") | .name ] == ["Cross-team"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Feature") | .name ] == ["Infra"]) and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Kind") | .name ] == ["Verify"])' "$wsl_evidence/task4-project-done.json"
+gh issue close 210 --repo KirkDiggler/rpg-project
+gh issue view 210 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
+```
+
+The Project 19 transition and #210 closure follow the accepted unique reviewer
+read-back, including its actual attachment URL. Retain all evidence and views.
+
+— asset-pipeline agent, on behalf of KirkDiggler
+WSL_PICKUP_TEMPLATE
+cat > "$renderer_path" <<'RENDER_PY'
+from pathlib import Path
+import re
+import sys
+source, destination, pr, head, merge, root = sys.argv[1:]
+rendered = Path(source).read_text()
+values = {
+    '@@IMPLEMENTATION_PR@@': pr,
+    '@@IMPLEMENTATION_HEAD_SHA@@': head,
+    '@@IMPLEMENTATION_MERGE_SHA@@': merge,
+    '@@WSL_CLEAN_ROOT@@': root,
+}
+for token, value in values.items():
+    if not value:
+        raise SystemExit(f'empty render value: {token}')
+    rendered = rendered.replace(token, value)
+if any(token in rendered for token in values) or '@@' in rendered:
+    raise SystemExit('unreplaced pickup render token')
+required = ['FORMAL EXECUTION-BASELINE AMENDMENT', 'AGENT PICKUP — START HERE ON UBUNTU WSL2', 'ss -ltnp', '80, 3001, 3002, 6380, 8080', 'npm ci', 'chrome_devtools_upload_file', 'Saved as "toolkit-contributor-sandbox".', 'task4-wsl-evidence.tar.gz.sha256', 'projectItems(first:20)', 'wsl2-acceptance-attachment-url:']
+missing = [value for value in required if value not in rendered]
+if missing:
+    raise SystemExit(f'pickup missing required literals: {missing}')
+if re.search(r'(?im)^\s*(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s*(?:[A-Za-z0-9_.-]+/)?#208\b', rendered):
+    raise SystemExit('pickup contains closing keyword for #208')
+Path(destination).write_text(rendered)
+RENDER_PY
+python3 "$renderer_path" "$packet_template" "$packet_path" "$native_game_dev_pr" "$native_game_dev_head_sha" "$native_game_dev_merge_sha" "$wsl_clean_root"
+test -s "$packet_path"
+grep -Fqx "$packet_marker" "$packet_path"
+gh issue comment 210 --repo KirkDiggler/rpg-project --body-file "$packet_path"
+gh issue view 210 --repo KirkDiggler/rpg-project --json comments > "$sdd_root/task4-wsl-pickup-readback.json"
+jq -e --arg marker "$packet_marker" --arg sig "$signature" --argjson pr "$native_game_dev_pr" --arg head "$native_game_dev_head_sha" --arg merge "$native_game_dev_merge_sha" --arg root "$wsl_clean_root" '[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $matches | ($matches | length == 1) and (.comments[-1].body == $matches[0].body) and ($matches[0].body | contains("FORMAL EXECUTION-BASELINE AMENDMENT")) and ($matches[0].body | contains("AGENT PICKUP — START HERE ON UBUNTU WSL2")) and ($matches[0].body | contains("game-dev PR #" + ($pr|tostring))) and ($matches[0].body | contains($head)) and ($matches[0].body | contains($merge)) and ($matches[0].body | contains($root)) and ($matches[0].body | endswith($sig))' "$sdd_root/task4-wsl-pickup-readback.json"
+~~~~
 
 - [ ] **3. Execute only the posted GitHub packet and close #210 only after independent review.** The executor starts with the packet's own GitHub-derived baseline, not an inherited shell. It must prove `host mode: ubuntu-wsl2`, all clean clone/root/ancestry assertions, the exact two-file seed records, the `strength=16 → 17 → 16` marker evidence, PutDungeon evidence, six immediate MCP screenshots, negatives, archive/checksum attachment readback and URL views, and owned cleanup. Any failure retains `In Progress` and does not close #208.
 
@@ -1637,53 +2200,51 @@ own unique marker and cites the evidence marker and exact merge SHA.
 wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
-  > "$sdd_root/task4-wsl-evidence-readback.json"
+> "$sdd_root/task4-wsl-evidence-readback.json"
 jq -e --arg marker "$wsl_evidence_marker" --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments
-  | ($comments | length == 1)
-    and ($comments[0].body | contains($merge))
-    and ($comments[0].body | endswith($signature))
-    and ([
-      "task4-wsl-evidence.tar.gz",
-      "task4-wsl-evidence.tar.gz.sha256",
-      "toolkit-sandbox-fighter-only-fighter-gameview.png",
-      "toolkit-sandbox-barbarian-only-barbarian-gameview.png",
-      "toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png",
-      "toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png",
-      "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
-      "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
-    ] | all(. as $filename | ($comments[0].body | contains($filename))))
-    and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
+[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $comments
+| ($comments | length == 1)
+  and ($comments[0].body | contains($merge))
+  and ($comments[0].body | endswith($signature))
+  and ([
+    "task4-wsl-evidence.tar.gz",
+    "task4-wsl-evidence.tar.gz.sha256",
+    "toolkit-sandbox-fighter-only-fighter-gameview.png",
+    "toolkit-sandbox-barbarian-only-barbarian-gameview.png",
+    "toolkit-sandbox-fighter-then-barbarian-fighter-gameview.png",
+    "toolkit-sandbox-fighter-then-barbarian-barbarian-gameview.png",
+    "toolkit-sandbox-barbarian-then-fighter-barbarian-gameview.png",
+    "toolkit-sandbox-barbarian-then-fighter-fighter-gameview.png"
+  ] | all(. as $filename | ($comments[0].body | contains($filename))))
+  and ([ $comments[0].body | scan("https://github\\.com/user-attachments/[^[:space:]]+") ] | unique | length >= 8)
 ' "$sdd_root/task4-wsl-evidence-readback.json"
 gh issue view 210 --repo KirkDiggler/rpg-project --json comments \
-  > "$sdd_root/task4-wsl-review-readback.json"
+> "$sdd_root/task4-wsl-review-readback.json"
 jq -e --arg marker "$wsl_review_marker" --arg evidence "$wsl_evidence_marker" \
-  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
-  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
-  | ($reviews | length == 1)
-    and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
-    and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
-    and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
-    and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
-    and ($reviews[0].body | contains($evidence))
-    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
-    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
-    and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-    and ($reviews[0].body | endswith($signature))
+--arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+| ($reviews | length == 1)
+  and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
+  and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
+  and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
+  and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
+  and ($reviews[0].body | contains($evidence))
+  and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
+  and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
+  and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+  and ($reviews[0].body | endswith($signature))
 ' "$sdd_root/task4-wsl-review-readback.json"
-gh project item-edit --project-id "$project_id" --id "$wsl_project_item" --field-id "$status_field" --single-select-option-id "$status_done"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
-  > "$sdd_root/task4-wsl-project-done.json"
+> "$sdd_root/task4-wsl-project-done.json"
 jq -e --arg item "$wsl_project_item" '
-  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1) and $rows[0].id == $item
-    and ($rows[0] | has_field("Status"; "Done"))
-    and ($rows[0] | has_field("Team"; "Cross-team"))
-    and ($rows[0] | has_field("Feature"; "Infra"))
-    and ($rows[0] | has_field("Kind"; "Verify"))
+def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1) and $rows[0].id == $item
+  and ($rows[0] | has_field("Status"; "Done"))
+  and ($rows[0] | has_field("Team"; "Cross-team"))
+  and ($rows[0] | has_field("Feature"; "Infra"))
+  and ($rows[0] | has_field("Kind"; "Verify"))
 ' "$sdd_root/task4-wsl-project-done.json"
-gh issue close 210 --repo KirkDiggler/rpg-project
 gh issue view 210 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "CLOSED"'
 ```
 
@@ -1716,11 +2277,11 @@ gh pr list --repo KirkDiggler/rpg-project --state merged --head "$tracking_pr_he
 jq -e --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" 'length == 1 and .[0].title == $title and .[0].state == "MERGED" and .[0].baseRefName == "main" and .[0].headRefName == $head and (.[]|.mergeCommit.oid|type == "string" and length == 40)' "$sdd_root/task5-tracking-pr.json"
 tracking_pr="$(jq -r '.[0].number' "$sdd_root/task5-tracking-pr.json")"
 gh issue list --repo KirkDiggler/game-dev --state all --search "in:title \"$game_dev_issue_title\"" --json number,title,url \
-  > "$sdd_root/task5-game-dev-issue.json"
+> "$sdd_root/task5-game-dev-issue.json"
 gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$native_verify_issue_title\"" --json number,title,url \
-  > "$sdd_root/task5-native-verify-issue.json"
+> "$sdd_root/task5-native-verify-issue.json"
 gh issue list --repo KirkDiggler/rpg-project --state all --search "in:title \"$wsl_issue_title\"" --json number,title,url \
-  > "$sdd_root/task5-wsl-issue.json"
+> "$sdd_root/task5-wsl-issue.json"
 jq -e --arg title "$game_dev_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task5-game-dev-issue.json"
 jq -e --arg title "$native_verify_issue_title" 'length == 1 and .[0].title == $title' "$sdd_root/task5-native-verify-issue.json"
 jq -e --arg title "$wsl_issue_title" 'length == 1 and .[0].title == $title and .[0].number == 210' "$sdd_root/task5-wsl-issue.json"
@@ -1730,17 +2291,107 @@ native_verify_url="$(jq -r '.[0].url' "$sdd_root/task5-native-verify-issue.json"
 game_dev_branch="feat/${game_dev_issue}-native-ubuntu-toolkit-contributor"
 game_dev_worktree="$HOME/game-dev/.pi-worktrees/game-dev-${game_dev_issue}"
 gh pr list --repo KirkDiggler/game-dev --state merged --head "$game_dev_branch" --search "in:title \"$implementation_pr_title\"" \
-  --json number,title,state,baseRefName,headRefName,headRefOid,mergeCommit \
-  > "$sdd_root/task5-implementation-pr.json"
+--json number,title,state,baseRefName,headRefName,headRefOid,mergeCommit \
+> "$sdd_root/task5-implementation-pr.json"
 jq -e --arg title "$implementation_pr_title" --arg head "$game_dev_branch" '
-  length == 1 and .[0].title == $title and .[0].state == "MERGED"
-  and .[0].baseRefName == "main" and .[0].headRefName == $head
-  and (.[]|.headRefOid|type == "string" and length == 40)
-  and (.[]|.mergeCommit.oid|type == "string" and length == 40)
+length == 1 and .[0].title == $title and .[0].state == "MERGED"
+and .[0].baseRefName == "main" and .[0].headRefName == $head
+and (.[]|.headRefOid|type == "string" and length == 40)
+and (.[]|.mergeCommit.oid|type == "string" and length == 40)
 ' "$sdd_root/task5-implementation-pr.json"
 native_game_dev_pr="$(jq -r '.[0].number' "$sdd_root/task5-implementation-pr.json")"
 native_game_dev_head_sha="$(jq -r '.[0].headRefOid' "$sdd_root/task5-implementation-pr.json")"
 native_game_dev_merge_sha="$(jq -r '.[0].mergeCommit.oid' "$sdd_root/task5-implementation-pr.json")"
+
+
+# Rehydrate both immutable PR ranges from GraphQL, recompute their retained
+# complete BASE..HEAD bundles, verify their SHA256 sidecars, and reassert the
+# unique signed marker facts before any parent-close predicate is evaluated.
+review_pr_oid_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){number title state baseRefName headRefName baseRefOid headRefOid mergeCommit{oid}}}}'
+review_bundle_dir="$sdd_root/review-bundles"
+project_root="$HOME/game-dev/rpg-project"
+game_dev_root="$HOME/game-dev"
+tracking_review_marker='<!-- native-ubuntu-delivery:tracking-review-bundle -->'
+spec_review_marker='<!-- native-ubuntu-delivery:implementation-spec-review-bundle -->'
+shell_review_marker='<!-- native-ubuntu-delivery:implementation-shell-review-bundle -->'
+gh api graphql -f query="$review_pr_oid_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$tracking_pr" > "$sdd_root/task5-tracking-pr-oids.json"
+jq -e --argjson pr "$tracking_pr" --arg title "$tracking_pr_title" --arg head "$tracking_pr_head" '
+.data.repository.pullRequest as $pull
+| $pull.number == $pr and $pull.title == $title and $pull.state == "MERGED"
+  and $pull.baseRefName == "main" and $pull.headRefName == $head
+  and ($pull.baseRefOid | type == "string" and length == 40)
+  and ($pull.headRefOid | type == "string" and length == 40)
+' "$sdd_root/task5-tracking-pr-oids.json"
+tracking_base_sha="$(jq -r '.data.repository.pullRequest.baseRefOid' "$sdd_root/task5-tracking-pr-oids.json")"
+tracking_head_sha="$(jq -r '.data.repository.pullRequest.headRefOid' "$sdd_root/task5-tracking-pr-oids.json")"
+gh api graphql -f query="$review_pr_oid_query" -F owner=KirkDiggler -F repo=game-dev -F number="$native_game_dev_pr" > "$sdd_root/task5-implementation-pr-oids.json"
+jq -e --argjson pr "$native_game_dev_pr" --arg title "$implementation_pr_title" --arg head "$game_dev_branch" --arg merge "$native_game_dev_merge_sha" '
+.data.repository.pullRequest as $pull
+| $pull.number == $pr and $pull.title == $title and $pull.state == "MERGED"
+  and $pull.baseRefName == "main" and $pull.headRefName == $head
+  and ($pull.baseRefOid | type == "string" and length == 40)
+  and ($pull.headRefOid | type == "string" and length == 40)
+  and $pull.mergeCommit.oid == $merge
+' "$sdd_root/task5-implementation-pr-oids.json"
+native_game_dev_base_sha="$(jq -r '.data.repository.pullRequest.baseRefOid' "$sdd_root/task5-implementation-pr-oids.json")"
+test "$tracking_head_sha" = "$(jq -r '.data.repository.pullRequest.headRefOid' "$sdd_root/task5-tracking-pr-oids.json")"
+test "$native_game_dev_head_sha" = "$(jq -r '.data.repository.pullRequest.headRefOid' "$sdd_root/task5-implementation-pr-oids.json")"
+tracking_bundle_name="tracking-pr-${tracking_pr}-${tracking_base_sha}-${tracking_head_sha}.patch"
+tracking_bundle="$review_bundle_dir/$tracking_bundle_name"
+tracking_bundle_sha256_file="$tracking_bundle.sha256"
+native_game_dev_bundle_name="implementation-pr-${native_game_dev_pr}-${native_game_dev_base_sha}-${native_game_dev_head_sha}.patch"
+native_game_dev_bundle="$review_bundle_dir/$native_game_dev_bundle_name"
+native_game_dev_bundle_sha256_file="$native_game_dev_bundle.sha256"
+rehydrate_immutable_bundle() {
+repo_root="$1"
+base_sha="$2"
+head_sha="$3"
+bundle="$4"
+digest_file="$5"
+test -s "$bundle" && test -s "$digest_file"
+bundle_dir="$(dirname "$bundle")"
+(
+  cd "$bundle_dir"
+  sha256sum -c "$(basename "$digest_file")"
+)
+expected_digest="$(awk '{print $1}' "$digest_file")"
+test "$expected_digest" = "$(sha256sum "$bundle" | awk '{print $1}')"
+git -C "$repo_root" cat-file -e "$base_sha^{commit}"
+git -C "$repo_root" cat-file -e "$head_sha^{commit}"
+recomputed="$(mktemp "$bundle_dir/.${base_sha}-${head_sha}.task5.XXXXXX")"
+git -C "$repo_root" diff --binary --full-index "$base_sha..$head_sha" > "$recomputed"
+test -s "$recomputed"
+test "$expected_digest" = "$(sha256sum "$recomputed" | awk '{print $1}')"
+cmp -s "$recomputed" "$bundle"
+rm -f "$recomputed"
+}
+git -C "$project_root" fetch origin
+git -C "$project_root" fetch origin "refs/pull/$tracking_pr/head:refs/remotes/origin/pr/$tracking_pr/head"
+test "$(git -C "$project_root" rev-parse "refs/remotes/origin/pr/$tracking_pr/head")" = "$tracking_head_sha"
+git -C "$game_dev_root" fetch origin
+rehydrate_immutable_bundle "$project_root" "$tracking_base_sha" "$tracking_head_sha" "$tracking_bundle" "$tracking_bundle_sha256_file"
+rehydrate_immutable_bundle "$game_dev_root" "$native_game_dev_base_sha" "$native_game_dev_head_sha" "$native_game_dev_bundle" "$native_game_dev_bundle_sha256_file"
+tracking_bundle_sha256="$(awk '{print $1}' "$tracking_bundle_sha256_file")"
+native_game_dev_bundle_sha256="$(awk '{print $1}' "$native_game_dev_bundle_sha256_file")"
+
+gh pr view "$tracking_pr" --repo KirkDiggler/rpg-project --json comments > "$sdd_root/task5-tracking-review-readback.json"
+jq -e --arg marker "$tracking_review_marker" --arg base "$tracking_base_sha" --arg head "$tracking_head_sha" --arg bundle "$tracking_bundle_name" --arg digest "$tracking_bundle_sha256" --arg sig "$signature" '
+[.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+| ($reviews | length == 1)
+  and ($reviews[0].body | contains("native-ubuntu-tracking-review-package: COMPLETE"))
+  and ($reviews[0].body | contains("native-ubuntu-tracking-review-findings: none"))
+  and ($reviews[0].body | contains("native-ubuntu-tracking-reviewed-base: " + $base))
+  and ($reviews[0].body | contains("native-ubuntu-tracking-reviewed-head: " + $head))
+  and ($reviews[0].body | contains("native-ubuntu-tracking-review-bundle: " + $bundle))
+  and ($reviews[0].body | contains("native-ubuntu-tracking-review-bundle-sha256: " + $digest))
+  and ($reviews[0].body | endswith($sig))
+' "$sdd_root/task5-tracking-review-readback.json"
+gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev --json comments > "$sdd_root/task5-implementation-review-readback.json"
+jq -e --arg base "$native_game_dev_base_sha" --arg head "$native_game_dev_head_sha" --arg bundle "$native_game_dev_bundle_name" --arg digest "$native_game_dev_bundle_sha256" --arg spec "$spec_review_marker" --arg shell "$shell_review_marker" --arg sig "$signature" '
+def review($marker; $prefix):
+  [.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)) and (.body | contains($prefix + "-package: COMPLETE")) and (.body | contains($prefix + "-findings: none")) and (.body | contains($prefix + "-reviewed-base: " + $base)) and (.body | contains($prefix + "-reviewed-head: " + $head)) and (.body | contains($prefix + "-review-bundle: " + $bundle)) and (.body | contains($prefix + "-review-bundle-sha256: " + $digest)) and (.body | endswith($sig))] | length == 1;
+review($spec; "native-ubuntu-spec-review") and review($shell; "native-ubuntu-shell-review")
+' "$sdd_root/task5-implementation-review-readback.json"
 ```
 
 - [ ] **2. Assert every closure predicate with `jq -e`, including states, Project fields, parent links, PR files/Kirk review packages/hosted checks/closing count, ancestry, and signatures.**
@@ -1752,126 +2403,126 @@ native_review_marker='<!-- native-ubuntu-delivery:task3-native-review -->'
 wsl_evidence_marker='<!-- native-ubuntu-delivery:task4-wsl-evidence -->'
 wsl_review_marker='<!-- native-ubuntu-delivery:task4-wsl-review -->'
 gh issue view 211 --repo KirkDiggler/rpg-project --json state,comments \
-  | jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|endswith($sig))] | length == 1)'
+| jq -e --arg sig "$signature" '.state == "CLOSED" and ([.comments[] | select((.body|contains("native-ubuntu-delivery:task1-handoff")) and (.body|endswith($sig))] | length == 1)'
 issue_closure_query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issue(number:$number){state closedByPullRequestsReferences(first:20){nodes{number state mergedAt repository{nameWithOwner}}}}}}'
 gh api graphql -f query="$issue_closure_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
-  > "$sdd_root/task5-game-dev-closure.json"
+> "$sdd_root/task5-game-dev-closure.json"
 jq -e --argjson pr "$native_game_dev_pr" '
-  .data.repository.issue as $issue
-  | $issue.state == "CLOSED"
-    and ($issue.closedByPullRequestsReferences.nodes | length == 1)
-    and $issue.closedByPullRequestsReferences.nodes[0].number == $pr
-    and $issue.closedByPullRequestsReferences.nodes[0].state == "MERGED"
-    and ($issue.closedByPullRequestsReferences.nodes[0].mergedAt | type == "string")
-    and $issue.closedByPullRequestsReferences.nodes[0].repository.nameWithOwner == "KirkDiggler/game-dev"
+.data.repository.issue as $issue
+| $issue.state == "CLOSED"
+  and ($issue.closedByPullRequestsReferences.nodes | length == 1)
+  and $issue.closedByPullRequestsReferences.nodes[0].number == $pr
+  and $issue.closedByPullRequestsReferences.nodes[0].state == "MERGED"
+  and ($issue.closedByPullRequestsReferences.nodes[0].mergedAt | type == "string")
+  and $issue.closedByPullRequestsReferences.nodes[0].repository.nameWithOwner == "KirkDiggler/game-dev"
 ' "$sdd_root/task5-game-dev-closure.json"
 gh issue view "$native_verify_issue" --repo KirkDiggler/rpg-project --json state,comments \
-  > "$sdd_root/task5-native-review-readback.json"
+> "$sdd_root/task5-native-review-readback.json"
 jq -e --arg marker "$native_review_marker" --arg evidence "$native_evidence_marker" \
-  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
-  .state == "CLOSED"
-  and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
-    | ($reviews | length == 1)
-      and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
-      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
-      and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
-      and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
-      and ($reviews[0].body | contains($evidence))
-      and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
-      and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
-      and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-      and ($reviews[0].body | endswith($signature)))
+--arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+.state == "CLOSED"
+and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+  | ($reviews | length == 1)
+    and ($reviews[0].body | contains("native-ubuntu-acceptance-review: PASS"))
+    and ($reviews[0].body | contains("native-ubuntu-acceptance-review-package: COMPLETE"))
+    and ($reviews[0].body | contains("native-ubuntu-acceptance-review-findings: none"))
+    and ($reviews[0].body | contains("native-ubuntu-acceptance-reviewed-merge: " + $merge))
+    and ($reviews[0].body | contains($evidence))
+    and ($reviews[0].body | contains("task3-native-evidence.tar.gz"))
+    and ($reviews[0].body | contains("task3-native-evidence.tar.gz.sha256"))
+    and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+    and ($reviews[0].body | endswith($signature)))
 ' "$sdd_root/task5-native-review-readback.json"
 gh issue view 210 --repo KirkDiggler/rpg-project --json state,comments \
-  > "$sdd_root/task5-wsl-review-readback.json"
+> "$sdd_root/task5-wsl-review-readback.json"
 jq -e --arg marker "$wsl_review_marker" --arg evidence "$wsl_evidence_marker" \
-  --arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
-  .state == "CLOSED"
-  and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
-    | ($reviews | length == 1)
-      and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
-      and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
-      and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
-      and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
-      and ($reviews[0].body | contains($evidence))
-      and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
-      and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
-      and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
-      and ($reviews[0].body | endswith($signature)))
+--arg merge "$native_game_dev_merge_sha" --arg signature "$signature" '
+.state == "CLOSED"
+and ([.comments[] | select(.author.login == "KirkDiggler" and (.body | contains($marker)))] as $reviews
+  | ($reviews | length == 1)
+    and ($reviews[0].body | contains("wsl2-acceptance-review: PASS"))
+    and ($reviews[0].body | contains("wsl2-acceptance-review-package: COMPLETE"))
+    and ($reviews[0].body | contains("wsl2-acceptance-review-findings: none"))
+    and ($reviews[0].body | contains("wsl2-acceptance-reviewed-merge: " + $merge))
+    and ($reviews[0].body | contains($evidence))
+    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz"))
+    and ($reviews[0].body | contains("task4-wsl-evidence.tar.gz.sha256"))
+    and ($reviews[0].body | test("https://github\\.com/user-attachments/"))
+    and ($reviews[0].body | endswith($signature)))
 ' "$sdd_root/task5-wsl-review-readback.json"
 gh issue view 208 --repo KirkDiggler/rpg-project --json state | jq -e '.state == "OPEN"'
 
 gh pr view "$native_game_dev_pr" --repo KirkDiggler/game-dev \
-  --json title,state,baseRefName,headRefName,headRefOid,mergeCommit,files,statusCheckRollup,comments \
-  > "$sdd_root/task5-pr-readback.json"
+--json title,state,baseRefName,headRefName,headRefOid,mergeCommit,files,statusCheckRollup,comments \
+> "$sdd_root/task5-pr-readback.json"
 jq -e --arg head "$game_dev_branch" --arg head_sha "$native_game_dev_head_sha" --arg signature "$signature" '
-  def good_check:
-    (.conclusion // .state // "") as $result
-    | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
-  def kirk_review($pass; $package; $findings; $head_marker):
-    [.comments[] | select(
-      .author.login == "KirkDiggler"
-      and (.body | contains($pass))
-      and (.body | contains($package))
-      and (.body | contains($findings))
-      and (.body | contains($head_marker + $head_sha))
-      and (.body | endswith($signature))
-    )] | length == 1;
-  .title == "feat: support native Ubuntu toolkit contributor sandbox"
-  and .state == "MERGED" and .baseRefName == "main" and .headRefName == $head
-  and .headRefOid == $head_sha
-  and (.mergeCommit.oid|type == "string" and length == 40)
-  and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
-  and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
-  and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
-  and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
+def good_check:
+  (.conclusion // .state // "") as $result
+  | $result == "SUCCESS" or $result == "NEUTRAL" or $result == "SKIPPED";
+def kirk_review($pass; $package; $findings; $head_marker):
+  [.comments[] | select(
+    .author.login == "KirkDiggler"
+    and (.body | contains($pass))
+    and (.body | contains($package))
+    and (.body | contains($findings))
+    and (.body | contains($head_marker + $head_sha))
+    and (.body | endswith($signature))
+  )] | length == 1;
+.title == "feat: support native Ubuntu toolkit contributor sandbox"
+and .state == "MERGED" and .baseRefName == "main" and .headRefName == $head
+and .headRefOid == $head_sha
+and (.mergeCommit.oid|type == "string" and length == 40)
+and ([.files[].path] | sort == ["README.md","docs/toolkit-contributor-sandbox.md","scripts/toolkit-contributor.sh","tests/toolkit-contributor-contract.sh"])
+and ([.statusCheckRollup[]? | select(good_check | not)] | length == 0)
+and kirk_review("native-ubuntu-spec-review: PASS"; "native-ubuntu-spec-review-package: COMPLETE"; "native-ubuntu-spec-review-findings: none"; "native-ubuntu-spec-reviewed-head: ")
+and kirk_review("native-ubuntu-shell-review: PASS"; "native-ubuntu-shell-review-package: COMPLETE"; "native-ubuntu-shell-review-findings: none"; "native-ubuntu-shell-reviewed-head: ")
 ' "$sdd_root/task5-pr-readback.json"
 closing_query='query($owner:String!, $repo:String!, $number:Int!) { repository(owner:$owner,name:$repo) { pullRequest(number:$number) { closingIssuesReferences(first:20) { nodes { number repository { nameWithOwner } } } } } }'
 gh api graphql -f query="$closing_query" -F owner=KirkDiggler -F repo=game-dev -F number="$native_game_dev_pr" \
-  | jq -e --argjson issue "$game_dev_issue" '
-      .data.repository.pullRequest.closingIssuesReferences.nodes as $refs
-      | ($refs|length == 1) and $refs[0].number == $issue and $refs[0].repository.nameWithOwner == "KirkDiggler/game-dev"
-    '
+| jq -e --argjson issue "$game_dev_issue" '
+    .data.repository.pullRequest.closingIssuesReferences.nodes as $refs
+    | ($refs|length == 1) and $refs[0].number == $issue and $refs[0].repository.nameWithOwner == "KirkDiggler/game-dev"
+  '
 git -C "$HOME/game-dev" fetch origin
 git -C "$HOME/game-dev" merge-base --is-ancestor "$native_game_dev_merge_sha" origin/main
 
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" \
-  > "$sdd_root/task5-game-dev-project.json"
+> "$sdd_root/task5-game-dev-project.json"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$native_verify_issue" \
-  > "$sdd_root/task5-native-verify-project.json"
+> "$sdd_root/task5-native-verify-project.json"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=210 \
-  > "$sdd_root/task5-wsl-project.json"
+> "$sdd_root/task5-wsl-project.json"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=211 \
-  > "$sdd_root/task5-211-project.json"
+> "$sdd_root/task5-211-project.json"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
-  > "$sdd_root/task5-208-project.json"
+> "$sdd_root/task5-208-project.json"
 jq -e '
-  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1)
-    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Build"))
+def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1)
+  and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Build"))
 ' "$sdd_root/task5-game-dev-project.json"
 jq -e '
-  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1)
-    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
+def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1)
+  and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Platform") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
 ' "$sdd_root/task5-native-verify-project.json"
 jq -e '
-  def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1)
-    and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Cross-team") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
+def has_field($field; $value): [.fieldValues.nodes[] | select(.field.name == $field) | .name] == [$value];
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1)
+  and ($rows[0] | has_field("Status"; "Done") and has_field("Team"; "Cross-team") and has_field("Feature"; "Infra") and has_field("Kind"; "Verify"))
 ' "$sdd_root/task5-wsl-project.json"
 jq -e '
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1)
-    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1)
+  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] == ["Done"])
 ' "$sdd_root/task5-211-project.json"
 jq -e '
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1)
-    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1)
+  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
 ' "$sdd_root/task5-208-project.json"
 ```
 
@@ -1882,8 +2533,8 @@ gh api graphql -f query="$parent_query" -F owner=KirkDiggler -F repo=rpg-project
 gh api graphql -f query="$parent_query" -F owner=KirkDiggler -F repo=game-dev -F number="$game_dev_issue" > "$sdd_root/task5-game-parent.json"
 gh api graphql -f query="$parent_query" -F owner=KirkDiggler -F repo=rpg-project -F number="$native_verify_issue" > "$sdd_root/task5-native-parent.json"
 jq -e --arg game_url "$(jq -r '.[0].url' "$sdd_root/task5-game-dev-issue.json")" --arg native_url "$native_verify_url" '
-  [.data.repository.issue.subIssues.nodes[] | .url] as $children
-  | ($children | index($game_url) != null) and ($children | index($native_url) != null)
+[.data.repository.issue.subIssues.nodes[] | .url] as $children
+| ($children | index($game_url) != null) and ($children | index($native_url) != null)
 ' "$sdd_root/task5-parent-208.json"
 jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.parent.repository.nameWithOwner == "KirkDiggler/rpg-project"' "$sdd_root/task5-game-parent.json"
 jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.parent.repository.nameWithOwner == "KirkDiggler/rpg-project"' "$sdd_root/task5-native-parent.json"
@@ -1896,32 +2547,32 @@ jq -e '.data.repository.issue.parent.number == 208 and .data.repository.issue.pa
 ```bash
 parent_marker='<!-- native-ubuntu-delivery:task5-parent-summary -->'
 printf '%s\n%s\n\n%s\n' "$parent_marker" \
-  "Native Ubuntu delivery is complete: tracking design/plan PR #$tracking_pr, original rpg-project#209 at 22aee544a42906c2f8c01a0e1eb4935c252dcda2, game-dev#60 at 1df0212e5a04374ea83b9af1dd81d09a8a55831a, rpg-api#792 at 9099953f9bc86efbed9bf62209a96c54d9383d6b on dev, rpg-dnd5e-web#747 at cfa63138a1f06de65991c31b006f29fc2af1ad74 on dev, and native game-dev#$native_game_dev_pr at $native_game_dev_merge_sha. The game-dev issue, native verification $native_verify_url, and #210 have accepted signed reviews/evidence. No API, web, toolkit, proto, deployment, or compose code changed in the native wave. Both clean runs proved main/dev/dev/main bootstrap, API/web dev-clone ancestry, marker restoration, immediate MCP browser evidence, negatives, and owned cleanup." \
-  "$signature" > "$sdd_root/task5-parent-summary.md"
+"Native Ubuntu delivery is complete: tracking design/plan PR #$tracking_pr, original rpg-project#209 at 22aee544a42906c2f8c01a0e1eb4935c252dcda2, game-dev#60 at 1df0212e5a04374ea83b9af1dd81d09a8a55831a, rpg-api#792 at 9099953f9bc86efbed9bf62209a96c54d9383d6b on dev, rpg-dnd5e-web#747 at cfa63138a1f06de65991c31b006f29fc2af1ad74 on dev, and native game-dev#$native_game_dev_pr at $native_game_dev_merge_sha. The game-dev issue, native verification $native_verify_url, and #210 have accepted signed reviews/evidence. No API, web, toolkit, proto, deployment, or compose code changed in the native wave. Both clean runs proved main/dev/dev/main bootstrap, API/web dev-clone ancestry, marker restoration, immediate MCP browser evidence, negatives, and owned cleanup." \
+"$signature" > "$sdd_root/task5-parent-summary.md"
 gh issue comment 208 --repo KirkDiggler/rpg-project --body-file "$sdd_root/task5-parent-summary.md"
 gh issue view 208 --repo KirkDiggler/rpg-project --json comments \
 | jq -e --arg marker "$parent_marker" --arg sig "$signature" '[.comments[] | select((.body|contains($marker)) and (.body|endswith($sig))] | length == 1'
 
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
-  > "$sdd_root/task5-parent-project-before.json"
+> "$sdd_root/task5-parent-project-before.json"
 parent_item="$(jq -er '[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] | if length == 1 then .[0].id else error("expected one Project 19 item") end' "$sdd_root/task5-parent-project-before.json")"
 jq -e --arg item "$parent_item" '
-  [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
-  | ($rows | length == 1) and $rows[0].id == $item
-    and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
+[.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)] as $rows
+| ($rows | length == 1) and $rows[0].id == $item
+  and ([ $rows[0].fieldValues.nodes[] | select(.field.name == "Status") | .name ] | length == 1)
 ' "$sdd_root/task5-parent-project-before.json"
 gh project item-edit --project-id "$project_id" --id "$parent_item" --field-id "$status_field" --single-select-option-id "$status_done"
 gh api graphql -f query="$issue_project_query" -F owner=KirkDiggler -F repo=rpg-project -F number=208 \
-  > "$sdd_root/task5-parent-project-after.json"
+> "$sdd_root/task5-parent-project-after.json"
 jq -s -e --arg item "$parent_item" '
-  def rows: [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)];
-  def non_status: [.fieldValues.nodes[] | select(.field.name != "Status") | {field:.field.name,name:.name}] | sort_by(.field);
-  (.[0] | rows) as $before
-  | (.[1] | rows) as $after
-  | ($before | length == 1) and ($after | length == 1)
-    and $before[0].id == $item and $after[0].id == $item
-    and ($before[0] | non_status) == ($after[0] | non_status)
-    and ([ $after[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
+def rows: [.data.repository.issue.projectItems.nodes[] | select(.project.number == 19)];
+def non_status: [.fieldValues.nodes[] | select(.field.name != "Status") | {field:.field.name,name:.name}] | sort_by(.field);
+(.[0] | rows) as $before
+| (.[1] | rows) as $after
+| ($before | length == 1) and ($after | length == 1)
+  and $before[0].id == $item and $after[0].id == $item
+  and ($before[0] | non_status) == ($after[0] | non_status)
+  and ([ $after[0].fieldValues.nodes[] | select(.field.name == "Status") | .name] == ["Done"])
 ' "$sdd_root/task5-parent-project-before.json" "$sdd_root/task5-parent-project-after.json"
 gh issue close 208 --repo KirkDiggler/rpg-project
 gh issue view 208 --repo KirkDiggler/rpg-project --json state \
@@ -1941,110 +2592,98 @@ gh issue view 208 --repo KirkDiggler/rpg-project --json state \
 
 ## Plan self-review requirements
 
-Before committing this plan and before Task 1 begins, run these commands from
-`rpg-project`. They validate the two documents without reading another checkout.
-The scanner permits intentional HTML comment markers, rejects unresolved work
-markers, checks fence pairing, and extracts every fenced Bash block for a real
-`bash -n` pass.
+Run this from `rpg-project` before publishing the correction and before Task 1.
+It validates both native documents, balances all plan fences, syntax-checks every
+Bash fence, dry-renders the literal packet with valid dummy facts, rejects
+unresolved values and forbidden legacy scans, and verifies the exact five task
+headings.
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 
 paths = [
     Path('ideas/toolkit-contributor-native-ubuntu/design.md'),
     Path('ideas/toolkit-contributor-native-ubuntu/plan.md'),
 ]
-tokens = ('T' + 'BD', 'TO' + 'DO', 'FIX' + 'ME', 'PLACE' + 'HOLDER')
+path = paths[1]
+text = path.read_text()
 opening = re.compile(r'^\s*(?P<fence>`{3,}|~{3,})(?P<info>[^\n]*)$')
 heading_re = re.compile(r'^#{1,6}\s+(.+)$')
-all_bash_blocks = []
-for path in paths:
-    lines = path.read_text().splitlines()
-    headings = set()
-    task_headings = []
-    active = None
-    bash_lines = []
-    for line_number, line in enumerate(lines, 1):
-        if active is None:
-            match = opening.match(line)
-            if match:
-                active = (match.group('fence')[0], len(match.group('fence')), match.group('info').strip())
-                bash_lines = []
-                continue
-            match = heading_re.match(line)
-            if match:
-                heading = match.group(1)
-                if heading in headings:
-                    raise SystemExit(f'{path}:{line_number}: duplicate heading: {heading}')
-                headings.add(heading)
-                if re.fullmatch(r'Task [1-5]:.*', heading):
-                    task_headings.append(heading)
+active = None
+body = []
+blocks = []
+task_headings = []
+for number, line in enumerate(text.splitlines(), 1):
+    if active is None:
+        match = opening.match(line)
+        if match:
+            active = (match.group('fence')[0], len(match.group('fence')), match.group('info').strip(), number)
+            body = []
             continue
-        fence_char, fence_len, info = active
-        if re.match(rf'^\s*{re.escape(fence_char)}{{{fence_len},}}\s*$', line):
-            if info.split(maxsplit=1)[0:1] == ['bash']:
-                all_bash_blocks.append((path, line_number, '\n'.join(bash_lines) + '\n'))
-            active = None
-            continue
-        bash_lines.append(line)
-    if active is not None:
-        raise SystemExit(f'{path}: unbalanced fenced code block')
-    if path.name == 'plan.md':
-        expected = {1, 2, 3, 4, 5}
-        found = {int(re.match(r'Task ([1-5]):', heading).group(1)) for heading in task_headings}
-        if len(task_headings) != 5 or found != expected:
-            raise SystemExit(f'{path}: require exactly five unique Task 1-5 headings, found {task_headings}')
-    text = path.read_text()
-    bad_tokens = [token for token in tokens if token in text]
-    if bad_tokens:
-        raise SystemExit(f'{path}: unresolved marker(s): {bad_tokens}')
-    legacy_sdd = '.pi-agents/' + 'sdd'
-    legacy_gate = 'APPRO' + 'VED'
-    legacy_items_scan = 'items(first:' + '100)'
-    legacy_query = 'project_' + 'items_query'
-    if legacy_sdd in text or legacy_gate in text:
-        raise SystemExit(f'{path}: prohibited legacy gate/path')
-    if legacy_items_scan in text or legacy_query in text:
-        raise SystemExit(f'{path}: legacy Project scan/query remains')
-    if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
-        raise SystemExit(f'{path}: unsupported gh issue closedBy field remains')
-with tempfile.TemporaryDirectory() as tmp:
-    for index, (path, line_number, body) in enumerate(all_bash_blocks, 1):
-        script = Path(tmp) / f'{path.stem}-{index}.sh'
-        script.write_text(body)
+        match = heading_re.match(line)
+        if match and re.fullmatch(r'Task [1-5]:.*', match.group(1)):
+            task_headings.append(match.group(1))
+        continue
+    fence_char, fence_len, info, start = active
+    if re.match(rf'^\s*{re.escape(fence_char)}{{{fence_len},}}\s*$', line):
+        if info.split(maxsplit=1)[0:1] == ['bash']:
+            blocks.append((start, '\n'.join(body) + '\n'))
+        active = None
+        continue
+    body.append(line)
+if active is not None:
+    raise SystemExit(f'unbalanced fence begun at {active[3]}')
+if len(task_headings) != 5 or {int(re.match(r'Task ([1-5]):', item).group(1)) for item in task_headings} != {1, 2, 3, 4, 5}:
+    raise SystemExit(f'exactly five Task headings required: {task_headings}')
+for checked_path in paths:
+    checked_text = checked_path.read_text()
+    for forbidden in ('T' + 'BD', 'TO' + 'DO', 'FIX' + 'ME', 'PLACE' + 'HOLDER', '.pi-agents/' + 'sdd', 'APPRO' + 'VED', 'items(first:' + '100)', 'project_' + 'items_query'):
+        if forbidden in checked_text:
+            raise SystemExit(f'{checked_path}: forbidden marker/query: {forbidden}')
+if re.search(r'gh\s+issue\s+view[^\n]*closedByPullRequestsReferences', text):
+    raise SystemExit('unsupported gh closedBy query')
+if re.search(r'statusCheckRollup[^\n]{0,160}length\s*(?:>|!=)\s*0', text):
+    raise SystemExit('nonempty hosted-check gate')
+required = ['baseRefOid', 'git diff --binary --full-index "$base_sha..$head_sha"', 'rollback_game_dev_in_review()', 'wsl2-acceptance-attachment-url:', "cat > \"$packet_template\" <<'WSL_PICKUP_TEMPLATE'", "cat > \"$renderer_path\" <<'RENDER_PY'"]
+missing = [item for item in required if item not in text]
+if missing:
+    raise SystemExit(f'missing required controls: {missing}')
+with tempfile.TemporaryDirectory() as directory:
+    tmp = Path(directory)
+    for index, (start, shell) in enumerate(blocks):
+        script = tmp / f'block-{index}.sh'
+        script.write_text(shell)
         subprocess.run(['bash', '-n', str(script)], check=True)
-print(f'checked {len(all_bash_blocks)} fenced Bash blocks')
+    template_match = re.search(r"cat > \"\$packet_template\" <<'WSL_PICKUP_TEMPLATE'\n(.*?)\nWSL_PICKUP_TEMPLATE\ncat > \"\$renderer_path\" <<'RENDER_PY'\n(.*?)\nRENDER_PY", text, re.S)
+    if not template_match:
+        raise SystemExit('literal packet template/renderer extraction failed')
+    template, renderer = template_match.groups()
+    template_path = tmp / 'template.md'
+    renderer_path = tmp / 'renderer.py'
+    output_path = tmp / 'rendered.md'
+    template_path.write_text(template + '\n')
+    renderer_path.write_text(renderer + '\n')
+    subprocess.run([sys.executable, str(renderer_path), str(template_path), str(output_path), '123', 'a' * 40, 'b' * 40, '/tmp/wsl-root'], check=True)
+    rendered = output_path.read_text()
+    if '@@' in rendered or 'chrome_devtools_upload_file' not in rendered or 'wsl2-acceptance-attachment-url:' not in rendered:
+        raise SystemExit('packet dry render failed literal assertions')
+print(f'checked {len(blocks)} fenced Bash blocks and rendered packet dry run')
 PY
-npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md \
-  ideas/toolkit-contributor-native-ubuntu/plan.md
+npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md
 first_hashes="$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
-npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md \
-  ideas/toolkit-contributor-native-ubuntu/plan.md
+npx prettier --write ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md
 test "$first_hashes" = "$(sha256sum ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md)"
-npx prettier --check ideas/toolkit-contributor-native-ubuntu/design.md \
-  ideas/toolkit-contributor-native-ubuntu/plan.md
+npx prettier --check ideas/toolkit-contributor-native-ubuntu/design.md ideas/toolkit-contributor-native-ubuntu/plan.md
 git diff --check
 test "$(git diff --name-only | sort)" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
 test -z "$(git diff --cached --name-only)"
 ```
 
-Expected: the scanner and every extracted Bash block pass; the first Prettier
-write may normalize the documents, the second is idempotent, and the Prettier
-check and whitespace check pass. The only changed paths are
-`ideas/toolkit-contributor-native-ubuntu/design.md` and
-`ideas/toolkit-contributor-native-ubuntu/plan.md`; no paths are staged before
-the documentation commit. Commit exactly those two files, without an amend:
-
-```bash
-git add ideas/toolkit-contributor-native-ubuntu/design.md \
-  ideas/toolkit-contributor-native-ubuntu/plan.md
-git diff --cached --check
-test "$(git diff --cached --name-only | sort)" = $'ideas/toolkit-contributor-native-ubuntu/design.md\nideas/toolkit-contributor-native-ubuntu/plan.md'
-git commit -m 'docs: make native Ubuntu delivery plan executable'
-git diff --cached --name-only
-git status --short
-```
+Expected: every fence and Bash block passes, the renderer executes against dummy
+facts with no `@@`, formatting is idempotent, the legacy/forbidden scans pass,
+only the two native documents change, and nothing is staged.

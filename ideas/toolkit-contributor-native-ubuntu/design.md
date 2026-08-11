@@ -468,7 +468,7 @@ operator records the exact merged commits and compact exit-code transcript.
    records `sandboxseed: identity=toolkit-sandbox-fighter
 character_id=[^[:space:]]+ strength=16 off_hand=shield` and
    `sandboxseed: identity=toolkit-sandbox-barbarian
-character_id=[^[:space:]]+ strength=16`. The focused sandbox-seed
+character_id=[^[:space:]]+ strength=16 off_hand=`. The focused sandbox-seed
    integration report, rather than seeder stdout, is the evidence for
    Protection, FightingStyles, and a real equipped shield.
 5. From a disposable toolkit checkout only, execute the approved local Human
@@ -579,7 +579,7 @@ comment. The facade must report `host mode: ubuntu-wsl2`.
   `sandboxseed: identity=toolkit-sandbox-fighter character_id=[^[:space:]]+
 strength=16 off_hand=shield` and the exact Barbarian record
   `sandboxseed: identity=toolkit-sandbox-barbarian character_id=[^[:space:]]+
-strength=16`. The focused integration report is the evidence for
+strength=16 off_hand=`. The focused integration report is the evidence for
   Protection, FightingStyles, and the real equipped shield.
 - The marker transcript proves fighter `strength=16 off_hand=shield` ->
   `strength=17 off_hand=shield` only after refresh/reseed, then back to
