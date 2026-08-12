@@ -5,8 +5,8 @@
 **Tracking:**
 [rpg-project#216](https://github.com/KirkDiggler/rpg-project/issues/216)
 
-**Concept:**
-`?concept=attack-die-3d` in the web's existing development-only concept registry
+**Concept:** `?concept=attack-die-3d` in the web's existing development-only
+concept registry
 
 ## Summary
 
@@ -54,8 +54,18 @@ must therefore prove three things before production promotion can be considered:
   change is needed.
 - The runtime asset is `/models/synty/props/SM_Prop_D20_Lightning_01.glb`,
   sourced and promoted through `rpg-game-assets`.
-- The runtime GLB is approximately 204 KB with 1,906 triangles, two material
-  slots, and no textures, animations, or face-orientation metadata.
+- The immutable inspected source for these asset facts is merged
+  [rpg-game-assets PR #46](https://github.com/KirkDiggler/rpg-game-assets/pull/46),
+  whose head commit is `8fbae1ec895510c0d16cfd6fc61465bf92fae1d8` and merge
+  commit is `256866ff1be5866586e487b63b7c242e3a0bd3fb`. Both were available in
+  the local repository, the head commit was verified as an ancestor of remote
+  `origin/main`, and the promoted GLB at that source has SHA-256
+  `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`. These
+  references establish what this design inspected, not permanent runtime truth:
+  a changed GLB hash makes the derived facts and confirmations stale.
+- At that inspected source, the runtime GLB is approximately 204 KB with 1,906
+  triangles, two material slots, and no textures, animations, or
+  face-orientation metadata.
 - Its source look is cloudy white/gray marble with gold numerals. Advertised
   lightning is not embedded in the GLB and requires a narrow web-owned material
   treatment.
@@ -73,7 +83,9 @@ must therefore prove three things before production promotion can be considered:
 2. **Settlement is kinematic, not physical.** A decorative tumble transitions
    through a deterministic presentation schedule, then slerps/damps into the
    calibrated quaternion for the authoritative result. Physics and collision
-   cannot be used to decide the face.
+   cannot be used to decide the face. Completion observation requires
+   sign-invariant quaternion angular distance `<= 0.25°`; after that
+   measurement, rendering copies and holds the exact target quaternion.
 3. **Calibration is an asset contract.** Each numeral maps to one normalized
    quaternion tied to an exact GLB content hash, camera contract, material mode,
    and mesh/material selector contract. No face orientation is assumed resolved
@@ -82,7 +94,10 @@ must therefore prove three things before production promotion can be considered:
    `AttackDie3D`; it does not create a throwaway concept-only renderer.
 5. **SVG stays truthful and available.** Existing `DiceTray` is retained as the
    visible fallback and accessible result presentation. A broken or incomplete
-   3D path must never show the wrong physical face.
+   3D path must never show the wrong physical face. Renderer state is scoped and
+   locked per presentation token: choose already-ready 3D or SVG at beat start,
+   never upgrade an SVG beat after late readiness, and permit only an
+   irreversible fail-closed transition from 3D to SVG if 3D fails mid-beat.
 6. **The model is not a dungeon prop.** Do not add the d20 to the generic
    dungeon prop palette merely to obtain a URL. Use the established public
    runtime path directly through a component-owned asset contract.
@@ -178,21 +193,26 @@ the network widens the scope and requires a new design decision.
 
 ### `AttackDie3D`
 
-The shared component consumes presentation truth and reports presentation
-completion; it does not own combat sequencing. Its boundary must support:
+The shared component consumes presentation truth and renders visual state; it
+never owns or advances the production queue. Its boundary must support:
 
 - authoritative integer `result` in `[1, 20]`;
 - presentation activation/visibility controlled by the existing theater;
+- the active presentation token (today, the `CombatPresentationAttack.id` used
+  as the keyed React/queue identity);
 - `materialMode` selected from the approved raw/magical modes;
-- reduced-motion state;
-- the established completion callback semantics; and
-- an explicit failure/fallback signal or rendering boundary that lets `DiceTray`
-  remain visible when 3D is unavailable.
+- reduced-motion state; and
+- a rendering boundary that leaves `DiceTray` visible when 3D is unavailable.
 
 Internally it owns asset loading, validated contract lookup, decorative motion,
 exact target orientation, camera/rendering state, and error containment. A
 result outside `[1, 20]`, a contract/hash mismatch, or a missing mapping is an
-invalid 3D presentation and takes the fallback path.
+invalid 3D presentation and takes the fallback path. On unmount or token change,
+it cancels pending animation frames, timers, loads that can be aborted, and
+listeners, and disposes token-scoped work. Readiness, failure, or settle
+callbacks capture the token and are ignored when stale, so an old die cannot
+appear late or affect a newer beat. The concept may expose settle telemetry for
+calibration and evidence; that telemetry is not a production completion API.
 
 ### Concept host
 
@@ -203,24 +223,34 @@ component's production API.
 
 ### Existing presentation
 
-`CombatPresentation` remains the timing and sequencing owner. `DiceTray` remains
-the SVG truth/fallback and the existing accessible announcement surface.
-Introducing 3D must not change FIFO ordering, movement wait, attack-result
-release, damage release, keyboard control, or completion callback behavior.
+`EncounterView` remains the FIFO owner: its existing guarded `onComplete(id)`
+removes the matching queue head, while `CombatPresentation` remains the beat
+timer and invokes that callback only when its sequencer reaches `done`. Its
+separate `onResultRelease(id)` continues to release the authoritative outcome at
+Verdict for a miss or Impact for a hit. `DiceTray` remains the SVG
+truth/fallback and the existing accessible visual surface; `BeatStage` remains
+the single live-region verdict announcement. Although `DiceTray` exposes an
+optional visual `onPresentationComplete`, the production `CombatPresentation`
+does not wire it and advances from its existing sequencer instead. `AttackDie3D`
+must preserve that fact: it is visual only and must not call either production
+callback or independently advance a beat or FIFO. Introducing 3D must not change
+FIFO ordering, movement wait, result release, damage release, keyboard control,
+or these completion semantics.
 
 ## Data flow and authority
 
 ```text
 server AttackResolved.attackRoll (authoritative integer 1–20)
-  -> CombatPresentation (existing FIFO/theater timing authority)
-  -> attack-roll presentation beat
-       -> AttackDie3D(result)
+  -> EncounterView queue head (presentation token / FIFO authority)
+  -> CombatPresentation (existing beat timing and result-release authority)
+  -> attack-roll presentation beat (locks renderer once at beat start)
+       -> ready and valid: AttackDie3D(result, token)
             -> validated contract lookup by result
             -> decorative visual path
             -> exact mapped target quaternion
-            -> visual completion callback
-       -> DiceTray authoritative SVG/accessibility path
-            (visible whenever 3D is unavailable or untruthful)
+       -> otherwise: DiceTray authoritative SVG visual path for the whole beat
+  -> CombatPresentation onComplete(id) at sequencer done
+  -> EncounterView removes the matching queue head
 ```
 
 No value flows back from mesh orientation into combat state. Neither animation
@@ -228,9 +258,17 @@ randomness, a physics engine, raycasts, nor face detection may determine
 hit/miss, critical state, the announced value, or the settled target. The face
 map is presentation calibration, not game logic.
 
-The completion callback fires under the same once-only semantics for animated,
-reduced motion, and fallback paths. Error handling must release the presentation
-rather than stall the FIFO.
+The existing sequencer completion path fires under the same once-only semantics
+for animated, reduced-motion, and SVG beats. `AttackDie3D` does not add a second
+completion path. Initial renderer mode (`3D` or `SVG`) is chosen synchronously
+from already-ready, already-validated state when the beat starts. The queue
+never waits for GLB download, shader compilation, WebGL creation, or late
+readiness. A token locked to SVG never upgrades. A failure during a 3D beat is
+the sole allowed transition: it atomically and permanently hides 3D and shows
+SVG for the remainder of that token; recovery can make a later token eligible,
+never the current one. Stale readiness, settle, failure, or teardown work is
+ignored after token change. Error handling therefore cannot stall or
+double-release the FIFO.
 
 ## Face-map and asset contract
 
@@ -257,17 +295,22 @@ quaternions, or a partial map invalidate the 3D path.
 Quaternion sign equivalence (`q` and `-q`) must be handled in normalization,
 comparison, and slerp so interpolation follows the shortest arc and verification
 does not report a false mismatch. Final orientation is measured with
-sign-invariant quaternion angular distance. The implementation plan must choose
-and document a small numeric angular tolerance in degrees/radians based on the
-rendering and transform pipeline; the same value must be used in tests and
-evidence. This specification does not claim a tolerance has already been
-measured.
+sign-invariant quaternion angular distance in degrees. The frozen acceptance
+threshold is `<= 0.25°` at the visual settle-completion observation for every
+result 1–20 in both animated and reduced-motion paths. This observation may feed
+concept evidence but never gates or advances the production sequencer.
+Immediately after observing a pass, the renderer copies the calibrated target
+quaternion exactly and holds that exact value for settled frames. The threshold
+accommodates floating-point and sampled animation measurement; it is not
+permission to leave the displayed die up to `0.25°` off target. The animation
+must fit the existing throw schedule; missing the threshold is a failed visual
+run, not a reason to delay the beat.
 
 Calibration saves normalized quaternions only; it does not claim that a saved
 pose is correct. A face is complete only after human confirmation from both
-settlement cameras. Any change to GLB bytes, selector/name contract, mapping,
-root normalization, cameras, or material mode invalidates stale human
-confirmations and requires a new 20-face evidence run.
+settlement cameras. Any readability-affecting tuple member listed under
+Validation and evidence invalidates every stale human confirmation and requires
+a new 20-face evidence run.
 
 ## Material approach
 
@@ -369,15 +412,18 @@ mismatch, invalid result, and missing/invalid face mapping are recoverable
 presentation failures. They must:
 
 1. avoid rendering a potentially wrong physical face;
-2. show the authoritative SVG result visibly;
+2. show the authoritative SVG result visibly for the rest of that beat;
 3. preserve the existing result announcement and theater timing;
-4. complete/release the presentation exactly once; and
-5. provide diagnostic state in development without exposing noisy duplicate user
+4. leave the one production completion path owned by the existing sequencer;
+5. cancel token-scoped work and ignore stale callbacks; and
+6. provide diagnostic state in development without exposing noisy duplicate user
    messaging.
 
 The 3D layer must not briefly display an arbitrary face while loading or before
-its mapping is known. Keep it hidden until the truthful target and rendering
-path are ready.
+its mapping is known. It is eligible only if it is already ready and truthful at
+beat start. Otherwise the token locks to SVG; late readiness cannot make 3D
+appear during that beat. A mid-beat failure hides 3D and reveals SVG without
+waiting, while the existing beat timer continues unchanged.
 
 ### Accessibility
 
@@ -400,24 +446,63 @@ order, or fallback requirements.
 
 Start with an isolated DOM-overlay renderer because it matches the current
 combat theater and contains failure. Treat its second WebGL context as a
-hypothesis, not an accepted production cost. Instrument and compare it in a
-Discord iframe and representative mobile/ low-GPU devices.
+hypothesis, not an accepted production cost. The web documents a mobile-first UI
+and a sandboxed Discord Activity iframe but no named supported handset or
+low-GPU hardware model. The required target matrix is therefore:
 
-Measure at minimum:
+- **Desktop Chromium:** direct real `EncounterView` route;
+- **Desktop Discord iframe:** the real Activity route in the available desktop
+  Discord client; and
+- **Mobile/low-GPU:** the project's available mobile Discord or low-GPU browser
+  profile on the same real route.
 
-- GLB transfer/decode and first-ready latency, cold and warm;
-- context creation failures/context loss;
-- peak and retained GPU/JS memory where available;
-- frame time and dropped/long frames while tumbling and settling;
-- effect on the underlying dungeon renderer and input responsiveness; and
-- teardown/reuse behavior across repeated FIFO attack presentations.
+For every profile, record browser/client, OS, hardware/GPU, power state,
+viewport, and device-pixel ratio rather than fabricating an unsupported device
+name. Before concept implementation, the implementation issue records the exact
+profiles to be used without changing these required categories or budgets. If no
+mobile or low-GPU profile is available, that matrix entry is an explicit
+promotion blocker rather than silently dropping it.
 
-The implementation should cache/reuse the loaded asset and rendering resources
-within a bounded lifecycle rather than reload per roll, while disposing
-resources when the owning presentation surface is destroyed. Production
-promotion requires measured evidence that the chosen context/lifecycle is
-acceptable. If it is not, redesign renderer sharing/compositing in the separate
-promotion work; do not silently trade away existing theater semantics.
+Use the repository's `DevPerfProbe`/real-route methodology documented in
+`rpg-dnd5e-web/docs/perf/baseline-2026-07-20.md`, extended narrowly where needed
+for die-window long tasks, network, and the overlay context. For each matrix
+entry, compare the existing SVG baseline and 3D candidate on the same web build,
+device, route/encounter, viewport/DPR, and run order conditions, using a runtime
+SVG/3D selection in that one build rather than comparing different builds. Warm
+the GLB and shader before timed trials, then collect exactly 20 repeated
+throw-through-verdict samples per mode per matrix entry and report per-sample
+results, median, and p95. Alternate baseline/candidate sample order so cache or
+thermal drift cannot systematically favor one mode. Use an 8-second fixed
+post-unmount window, matching the repository probe's documented default, after
+each mode's repeated run.
+
+The following budgets are frozen before concept implementation and apply to that
+paired warm-load protocol:
+
+- candidate p95 frame time during the throw-through-verdict window must be no
+  more than 10% above the SVG baseline;
+- there must be no new browser long task over 50 ms attributable to the die;
+- after die unmount, there must be no sustained frame-time miss: the next
+  8-second sampling window's p95 must return within 10% of the paired SVG
+  post-unmount window;
+- asset request count/transfer bytes, first-ready/decode time (cold and warm),
+  context creation/loss, draw calls/triangles, JS heap, and GPU memory must be
+  recorded, including retained values after unmount; where the browser/tool does
+  not expose GPU bytes, record that limitation and the exact Three.js
+  `renderer.info` resource proxies instead of inventing an estimate; and
+- input/keyboard responsiveness and underlying dungeon rendering must remain
+  functional throughout repeated FIFO presentations.
+
+The repository baseline explicitly treats absolute dev-build frame times as
+non-representative and supports only same-method, same-machine relative
+comparison, which is why these are paired regression budgets rather than an
+invented absolute FPS target. The implementation should cache/reuse the loaded
+asset and rendering resources within a bounded lifecycle rather than reload per
+roll, while disposing resources when the owning presentation surface is
+destroyed. A budget failure does not block concept exploration or calibration,
+but it blocks concept graduation and production promotion. If the context or
+lifecycle fails, redesign renderer sharing/compositing in separate promotion
+work; do not silently trade away existing theater semantics.
 
 ## Validation and evidence
 
@@ -428,17 +513,23 @@ web commit/build
 + exact runtime GLB hash
 + face-map/schema version and content
 + selector/root-normalization contract
-+ top and three-quarter camera contract
-+ material mode/version
-+ angular tolerance
++ top and three-quarter camera transforms and projection
++ material mode and shader revision
++ lighting and environment configuration
++ exposure and tone-mapping configuration
++ die scale
++ viewport CSS size and output resolution
++ device-pixel ratio
++ angular tolerance (<= 0.25 degrees)
 ```
 
 The concept graduates only when:
 
 - all 20 results have valid calibrated mappings;
-- all 20 animated final orientations are within the one defined small angular
-  tolerance;
-- all 20 reduced-motion final orientations reach the same mapped targets;
+- all 20 animated final orientations measure `<= 0.25°` at visual settle
+  completion without delaying the beat, then hold the exact target quaternion;
+- all 20 reduced-motion final orientations pass the same `<= 0.25°` visual
+  observation without delaying the beat, then hold the exact target;
 - all 20 engraved numerals are human-confirmed visible and readable from both
   the top and canonical three-quarter settlement cameras;
 - failures and unmapped states visibly use authoritative SVG without a wrong 3D
@@ -447,9 +538,12 @@ The concept graduates only when:
   above.
 
 Machine checks establish completeness and orientation. Human review establishes
-numeral identity and readability; neither substitutes for the other. Evidence
-should use screenshots or other non-licensed render output. Do not publish the
-private GLB itself as evidence.
+numeral identity and readability; neither substitutes for the other. Every human
+confirmation is valid only for the complete immutable tuple above; a change to
+any member invalidates it. This is a bounded evidence contract for the
+attack-die concept, not a general visual-regression platform. Evidence should
+use screenshots or other non-licensed render output. Do not publish the private
+GLB itself as evidence.
 
 ## Testing and playtest
 
@@ -458,15 +552,21 @@ private GLB itself as evidence.
 - Pure face-map completeness, exact key set, finite values, normalization,
   duplicate/extra rejection, and `q`/`-q` equivalence.
 - Target-orientation and shortest-arc slerp math.
-- Final sign-invariant angular-distance calculation and selected tolerance
-  enforcement.
-- Invalidation keys for GLB hash, selectors/root normalization, mapping, camera,
-  and material mode/version.
+- Final sign-invariant angular-distance calculation enforcing `<= 0.25°` at
+  visual settle completion, then copying/holding the exact target quaternion,
+  for animated and reduced motion without delaying the production sequencer.
+- Invalidation keys for GLB hash, selectors/root normalization, face map,
+  cameras/projection, material/shader, lighting/environment, exposure/tone
+  mapping, die scale, viewport CSS/output resolution, and device-pixel ratio.
 - Loader, WebGL, shader, context-loss, hash-mismatch, invalid-result, and
   unmapped-result fallback without a wrong-face flash.
 - Reduced-motion suppression of tumble/lightning and convergence on the same
   target.
-- Once-only completion across success, reduced motion, and fallback.
+- Token-lifetime renderer locking: not-ready-at-start remains SVG, mid-beat 3D
+  failure remains SVG, late readiness cannot appear, and stale callbacks after
+  unmount/token change cannot mutate the current beat.
+- Exactly one existing sequencer-owned completion across 3D success, reduced
+  motion, and SVG fallback; concept settle telemetry cannot advance production.
 - Existing presentation sequencing regression: FIFO order, movement wait, result
   and damage release, keyboard control, and completion callback semantics.
 
@@ -481,11 +581,12 @@ private GLB itself as evidence.
 ### Playtest matrix
 
 Exercise hit, miss, natural 1, and critical flows; keyboard-only operation;
-reduced motion; narrow viewport; Discord iframe; repeated FIFO attacks; and
-representative low-GPU/mobile hardware. Confirm input remains responsive, the
-existing result is announced exactly once, damage/result timing does not
-regress, and fallback is visible under forced load/WebGL/shader/ unmapped
-failures.
+reduced motion; narrow viewport; Discord iframe; repeated FIFO attacks; and the
+named performance matrix above. Confirm input remains responsive, the existing
+result is announced exactly once, damage/result timing does not regress, and
+fallback is visible under forced load/WebGL/shader/unmapped failures. Record the
+paired warm-load performance samples and enforce every frozen regression budget;
+a failure blocks graduation/promotion while leaving concept exploration open.
 
 ## Graduation and promotion criteria
 
@@ -493,9 +594,11 @@ failures.
 
 The concept is ready for a production-promotion decision only after the complete
 validation and playtest requirements above pass, including 20/20 mapping,
-angular tolerance, and human-confirmed two-camera readability. Graduation means
-the concept and shared component have proved the design; it does not place the
-3D die in production combat.
+`<= 0.25°` visual settle observation plus exact-target hold without changing
+beat timing, human-confirmed bound-tuple two-camera readability, and all
+performance budgets. Graduation
+means the concept and shared component have proved the design; it does not place
+the 3D die in production combat.
 
 ### Production promotion
 
@@ -549,7 +652,9 @@ Physics remains deferred throughout this path.
   changes, or transform hierarchy changes can invalidate all mappings.
   Hash/invalidation contracts and angular tests must make drift explicit.
 - **Second WebGL context:** Discord/mobile GPU limits may make the preferred
-  overlay unsuitable for production. Promotion is blocked on measurement.
+  overlay unsuitable for production. Promotion is blocked on the named matrix
+  and frozen regression budgets; an unavailable mobile/low-GPU profile is also a
+  blocker.
 - **Sequencing regression:** new loading and animation states could stall or
   double-release the combat theater. Existing timing and once-only completion
   tests are mandatory.
