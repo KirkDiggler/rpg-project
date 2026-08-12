@@ -102,7 +102,69 @@ export interface AttackDieEvidenceTuple {
 }
 ```
 
-`contractCoreSha256` hashes the canonical JSON of `asset`, `coordinates`, `selectors`, `faces`, and `tuple` with `tuple.contractCoreSha256` omitted; it excludes `state` and `evidence`, so candidate evidence remains bound when those fields graduate. Runtime accepts `state: 'verified'`; development concept code may explicitly accept `candidate` or a provisional proposal. Unknown keys, duplicate JSON keys, non-integer/extra/missing face results, non-finite or zero quaternions, norm error above `1e-6`, digest drift, tuple drift, and selector ambiguity are failures. Normalize by stripping one terminal `/\.\d{3}$/`; require exactly one normalized node, mesh, body material, and numeral material. Treat `q` and `-q` as equivalent and choose the shortest interpolation arc.
+`contractCoreSha256` is SHA-256 over canonical JSON with recursively sorted object keys and order-preserving arrays. Its exact input is `{schemaVersion, kind, state, asset, coordinates, selectors, faces, tuple}` from `AttackDieRuntimeSidecar`, with only `tuple.contractCoreSha256` omitted. Thus schema/kind, candidate/verified state, and the complete runtime core projection are bound; only `evidence` references remain excluded to avoid a digest cycle. Runtime accepts `state: 'verified'`; development concept code may explicitly accept `candidate` or a provisional proposal. Unknown keys, duplicate JSON keys, non-integer/extra/missing face results, non-finite or zero quaternions, norm error above `1e-6`, a null/incorrect `webBuildSha256` in candidate or verified data, digest drift, tuple drift, and selector ambiguity are failures. Normalize by stripping one terminal `/\.\d{3}$/`; require exactly one normalized node, mesh, body material, and numeral material. Treat `q` and `-q` as equivalent and choose the shortest interpolation arc.
+
+### Frozen build identity and preview lifecycle
+
+Task 2 creates these package commands and keeps all manifests outside `dist/`:
+
+```json
+{
+  "attack-die:build": "npm run build -- --mode development",
+  "attack-die:hash-build": "node scripts/attack-die/hash-build.mjs",
+  "attack-die:preview": "node scripts/attack-die/serve-frozen.mjs",
+  "attack-die:evidence": "node scripts/attack-die/capture-evidence.mjs",
+  "perf:attack-die": "node scripts/perf/attack_die_paired.mjs"
+}
+```
+
+`hash-build.mjs --dist dist --out <private-json>` walks regular files under `dist/`, sorts POSIX relative paths bytewise, and hashes canonical UTF-8 lines `<path>\0<size>\0<sha256>\n`. It writes `{schemaVersion:1, kind:"attack-die-web-build-manifest", files:[{path,size,sha256}], webBuildSha256}` outside `dist`; `webBuildSha256` is the SHA-256 of those exact canonical lines. The manifest cannot hash itself. To avoid a hash cycle with the sidecar that contains `webBuildSha256`, build and hash with this reusable exact pattern; it temporarily withholds ignored provider assets and restores them even on failure:
+
+```bash
+BUILD_MANIFEST=${BUILD_MANIFEST:-/tmp/attack-die-web-build-manifest.json}
+PROVIDER_HOLD=$(mktemp -d); HAD_PROVIDER=0
+restore_provider() {
+  if test "$HAD_PROVIDER" = 1; then
+    mkdir -p public/models; rm -rf public/models/synty
+    mv "$PROVIDER_HOLD/synty" public/models/synty
+  fi
+  rm -rf "$PROVIDER_HOLD"
+}
+trap restore_provider EXIT INT TERM
+if test -d public/models/synty; then mv public/models/synty "$PROVIDER_HOLD/synty"; HAD_PROVIDER=1; fi
+npm run attack-die:build
+npm run attack-die:hash-build -- --dist dist --out "$BUILD_MANIFEST"
+restore_provider; HAD_PROVIDER=0; trap - EXIT INT TERM
+```
+
+`serve-frozen.mjs` serves the exact hashed `dist/`, mounts the separately hash-bound provider tree at `/models/synty/`, and exposes the private manifest read-only at `/__attack-die-build-manifest.json`.
+
+Every evidence/performance run uses port `4173` and this non-blocking lifecycle; never put `npm run dev` or a foreground preview before later commands:
+
+```bash
+PREVIEW_PID=
+stop_frozen_preview() {
+  if test -n "${PREVIEW_PID:-}" && kill -0 "$PREVIEW_PID" 2>/dev/null; then
+    kill "$PREVIEW_PID"; wait "$PREVIEW_PID" || true
+  fi
+}
+trap stop_frozen_preview EXIT INT TERM
+npm run attack-die:preview -- --dist dist --asset-root public/models/synty \
+  --build-manifest "$BUILD_MANIFEST" --host 127.0.0.1 --port 4173 \
+  >/tmp/attack-die-preview.log 2>&1 &
+PREVIEW_PID=$!
+READY=0
+for _ in $(seq 1 80); do
+  if curl -fsS http://127.0.0.1:4173/__attack-die-build-manifest.json >/dev/null; then READY=1; break; fi
+  kill -0 "$PREVIEW_PID" 2>/dev/null || { cat /tmp/attack-die-preview.log; exit 1; }
+  sleep 0.25
+done
+test "$READY" = 1
+# Run the evidence/performance commands while this process is alive.
+stop_frozen_preview; PREVIEW_PID=; trap - EXIT INT TERM
+```
+
+The preview server and evidence driver reject path traversal and symlinks. The driver verifies every served hashed JS/CSS/asset path and byte digest that has a direct URL, verifies entry-document references for the remainder, separately verifies the GLB/sidecar digests, and injects the manifest's `webBuildSha256` into final proposal/evidence JSON. Unfrozen `npm run dev` exploration may export `webBuildSha256: null`; candidate/verified asset contracts and graduation evidence reject null.
 
 ---
 
@@ -189,7 +251,22 @@ test -z "$(git -C "$WEB_WT" status --porcelain)"; test -z "$(git -C "$ASSET_WT" 
 
 Expected: clean web at fetched `origin/dev`, clean assets at fetched `origin/main`, and no second branch/PR for either wave.
 
-- [ ] **Step 3: Write strict synthetic red tests.** Fixtures use fake GLB bytes/digests and explicit 1–20 quaternions only; they must not encode claims about the licensed die. Cover exact schema/key rejection, selectors, `q/-q`, shortest arc, invalid result without clamping, `<=0.25°` observation then exact repeated copy, reduced motion, token readiness snapshot, late-readiness exclusion, irreversible failure, stale callback/cleanup, hidden-until-truthful Canvas, forced load/hash/WebGL/shader/context failures, single mounted semantic fallback, and the absence of completion/release props.
+- [ ] **Step 3: Record required performance-profile availability before renderer code.** A human supplies `/tmp/attack-die-required-profiles.json` with exactly three entries whose `category` values are `desktop-chromium`, `desktop-discord-activity`, and `mobile-low-gpu`. Each has `status: "available"` plus non-empty `clientOrBrowser`, `os`, `hardwareGpu`, `powerState`, `viewport`, and numeric positive `dpr`; only `mobile-low-gpu` may instead have `status: "blocked"` plus a non-empty `reason`. Never infer values. Validate and post those human-supplied bytes to the owning web issue:
+
+```bash
+jq -e '(.profiles|length)==3 and ([.profiles[].category]|sort)==["desktop-chromium","desktop-discord-activity","mobile-low-gpu"] and all(.profiles[]; if .status=="available" then ([.clientOrBrowser,.os,.hardwareGpu,.powerState,.viewport]|all(type=="string" and length>0)) and (.dpr|type=="number" and .>0) else .category=="mobile-low-gpu" and .status=="blocked" and (.reason|type=="string" and length>0) end)' /tmp/attack-die-required-profiles.json
+{
+  printf 'Human-confirmed required profile availability before implementation:\n\n```json\n'
+  cat /tmp/attack-die-required-profiles.json
+  printf '\n```\n\n— asset-pipeline agent, on behalf of KirkDiggler\n'
+} >/tmp/attack-die-profile-comment.md
+test "$(tail -n 1 /tmp/attack-die-profile-comment.md)" = '— asset-pipeline agent, on behalf of KirkDiggler'
+gh issue comment "$WEB_ISSUE_NUMBER" --repo "$WEB_REPO" --body-file /tmp/attack-die-profile-comment.md
+```
+
+All commands exit `0`. A blocked mobile/low-GPU category permits Tasks 1–2 concept exploration, but it blocks Task 3 verified provider publication/graduation and all Task 4 completion.
+
+- [ ] **Step 4: Write strict synthetic red tests.** Fixtures use fake GLB bytes/digests and explicit 1–20 quaternions only; they must not encode claims about the licensed die. Cover exact schema/key rejection, selectors, `q/-q`, shortest arc, invalid result without clamping, `<=0.25°` observation then exact repeated copy, reduced motion, token readiness snapshot, late-readiness exclusion, irreversible failure, stale callback/cleanup, hidden-until-truthful Canvas, forced load/hash/WebGL/shader/context failures, single mounted semantic fallback, and the absence of completion/release props.
 
 ```bash
 cd "$WEB_WT"
@@ -198,11 +275,11 @@ npm run test:run -- src/components/ui/dice/attackDieContract.test.ts src/compone
 
 Expected red: non-zero with missing modules/components, not a test-environment failure.
 
-- [ ] **Step 4: Implement the minimal green renderer.** Hash fetched GLB bytes with Web Crypto before `GLTFLoader.parse`; cache only a completely validated bundle. Give each token its own cloned scene/materials and animation lifecycle, use a component-owned overlay `<Canvas aria-hidden="true">`, patch only the uniquely normalized body material, preserve numeral material properties, and dispose token work/listeners/RAF while retaining the bounded shared cache until its owner is destroyed. Run a 2,000 ms decorative throw, reserve the final 800 ms for shortest-arc convergence, observe by 1,900 ms, then copy target on every settled frame; reduced motion applies target before first visible paint, observes next RAF, and fixes shader time at zero. Never expose Canvas before pose validation.
+- [ ] **Step 5: Implement the minimal green renderer.** Hash fetched GLB bytes with Web Crypto before `GLTFLoader.parse`; cache only a completely validated bundle. Give each token its own cloned scene/materials and animation lifecycle, use a component-owned overlay `<Canvas aria-hidden="true">`, patch only the uniquely normalized body material, preserve numeral material properties, and dispose token work/listeners/RAF while retaining the bounded shared cache until its owner is destroyed. Run a 2,000 ms decorative throw, reserve the final 800 ms for shortest-arc convergence, observe by 1,900 ms, then copy target on every settled frame; reduced motion applies target before first visible paint, observes next RAF, and fixes shader time at zero. Never expose Canvas before pose validation.
 
-- [ ] **Step 5: Register `attack-die-3d` only in the existing development Concepts Lab.** The shell has keyboard-operable Appearance, Calibrate, Roll, and Verify tabs and renders `AttackDie3D` with a `DiceTray`/`BeatStage` fallback fixture. Do not add production navigation or a feature flag.
+- [ ] **Step 6: Register `attack-die-3d` only in the existing development Concepts Lab.** The shell has keyboard-operable Appearance, Calibrate, Roll, and Verify tabs and renders `AttackDie3D` with a `DiceTray`/`BeatStage` fallback fixture. Do not add production navigation or a feature flag.
 
-- [ ] **Step 6: Prove green and sequencing non-regression, then commit.** Both commands must exit `0`; the last command must print no paths:
+- [ ] **Step 7: Prove green and sequencing non-regression, then commit.**
 
 ```bash
 npm run test:run -- src/components/ui/dice/attackDieContract.test.ts src/components/ui/dice/attackDieMotion.test.ts src/components/ui/dice/attackDieRuntime.test.ts src/components/ui/dice/attackDieMaterial.test.ts src/components/ui/dice/AttackDie3D.test.tsx src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
@@ -212,6 +289,8 @@ git add src/components/ui/dice/attackDie* src/components/ui/dice/AttackDie3D* sr
 git commit -m 'feat: add authoritative 3D attack die renderer'
 ```
 
+Expected per command: the focused renderer/concept test command exits `0`; the existing presentation-regression test command exits `0`; the protected-production-file diff prints no paths; `git add` stages only the listed concept files; and the commit succeeds.
+
 ### Task 2: Web appearance, calibration, roll, verification, and performance tooling
 
 **Artifact:** The single web PR provides real-browser authoring/evidence tools and a frozen reviewed web commit, without queue authority or private tracked assets.
@@ -219,8 +298,8 @@ git commit -m 'feat: add authoritative 3D attack die renderer'
 **Files:**
 
 - Create: `src/concepts/attack-die-3d/attackDieExperiment.ts` and test; expand `AttackDie3DConcept.tsx` and test.
-- Create: `src/dev/AttackDiePerfHarness.tsx` and test.
-- Create: `scripts/attack-die/capture-evidence.mjs`, `scripts/perf/attack_die_paired.mjs`, `docs/how-to/attack-die-3d-concept.md`.
+- Create: `src/dev/AttackDiePerfHarness.tsx` and test; `scripts/attack-die/frozenBuildManifest.ts` and test.
+- Create: `scripts/attack-die/hash-build.mjs`, `scripts/attack-die/serve-frozen.mjs`, `scripts/attack-die/capture-evidence.mjs`, `scripts/perf/attack_die_paired.mjs`, `docs/how-to/attack-die-3d-concept.md`.
 - Modify: `src/App.tsx`, `package.json`, `public/themes/base.css`.
 
 **Interfaces:** The exporter emits the exact proposal below. `AttackDiePerfHarness` exposes only a development `window.__attackDiePerf` driver (`runSample({mode,result,reducedMotion,token})`, `readCounters()`, `unmountDie()`); it never imports or receives encounter queue callbacks.
@@ -234,23 +313,25 @@ interface AttackDieCalibrationProposal {
   asset: AttackDieRuntimeSidecar['asset'];
   coordinates: AttackDieRuntimeSidecar['coordinates'];
   selectors: AttackDieRuntimeSidecar['selectors'];
-  tupleDraft: Omit<AttackDieEvidenceTuple, 'contractCoreSha256'>;
+  webBuildSha256: string | null;
+  tupleDraft: Omit<AttackDieEvidenceTuple, 'contractCoreSha256' | 'webBuildSha256'>;
   faces: ReadonlyArray<{ result: number; quaternion: QuaternionTuple }>;
 }
 ```
 
-- [ ] **Step 1: Add red reducer/component/harness/driver tests.** Require proposal export for 0–20 unique normalized mappings, exact warning text, no provenance/human-PASS fields, same-pose camera switching, fine `0.1°` controls, forced fallbacks, keyboard focus order, narrow view, reduced-motion suppression, real-route harness development gate, 20-per-mode alternating samples, 8-second post-unmount window, and frozen performance budget calculations.
+- [ ] **Step 1: Add red reducer/component/harness/driver/build-hash tests.** Require proposal export for 0–20 unique normalized mappings, exact warning text, no provenance/human-PASS fields, same-pose camera switching, fine `0.1°` controls, forced fallbacks, keyboard focus order, narrow view, reduced-motion suppression, real-route harness development gate, 20-per-mode alternating samples, 8-second post-unmount window, frozen performance budget calculations, canonical sorted build-manifest hashing, manifest self-exclusion, and changed-byte/path invalidation.
 
 ```bash
 cd "$WEB_WT"
 npm run test:run -- src/concepts/attack-die-3d/attackDieExperiment.test.ts src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx src/dev/AttackDiePerfHarness.test.tsx
+npm run test:run -- scripts/attack-die/frozenBuildManifest.test.ts
 ```
 
-Expected red: non-zero because the experiment and harness do not exist.
+Expected red: both commands are non-zero because the experiment/harness and build-manifest module do not exist.
 
 - [ ] **Step 2: Implement the four tools with explicit provisional visual defaults.** Appearance shows Raw/Magical, animation pause, actual digest/selectors, and identical top/three-quarter captures. Calibrate starts with zero saved faces, supports result 1–20, local-axis coarse/fine controls, normalized save/reset, and camera changes that do not move the die. Roll shows input, target, measured error, renderer lock/fallback, and repeatable decorative variation. Verify drives fixed 1→20 animated/reduced runs and separates machine observations from human review. Begin with these visibly labelled **unverified provisional defaults**: FOV `35`, near/far `0.1/100`; top position `[0,4,0]`, target `[0,0,0]`, up `[0,0,-1]`; three-quarter position `[3,2.4,3]`, target `[0,0,0]`, up `[0,1,0]`; viewport `320x320`, output `640x640`, DPR `2`; scale `0.75`; ACESFilmic/sRGB/exposure `1`, no environment; ambient `0.65`, key `[4,6,5]` intensity `3`, fill `[-4,2,-3]` intensity `1.2`; shader `attack-die-magical-v1` with restrained cyan-white body emission and untouched gold numerals.
 
-- [ ] **Step 3: Implement real-browser and paired-performance drivers.** `attack-die:evidence` captures actual Chromium telemetry/screenshots and can force load, WebGL, shader, context-loss, hash, invalid-result, and unmapped failures. `perf:attack-die` runs on the real `EncounterView` route with the independent overlay harness: same build/profile/encounter/viewport/DPR, warmed GLB/shader, exactly 20 SVG and 20 3D throw-through-verdict windows in alternating order, then a fixed 8,000 ms post-unmount sample. Record per-sample/median/p95 frame time, >50 ms long tasks, request bytes/count, cold/warm ready/decode, contexts/losses, draw calls/triangles, heap, and GPU bytes or explicit `renderer.info` proxies. Enforce candidate p95 `<=110%` of SVG, no new attributable >50 ms task, and post-unmount p95 `<=110%` of SVG; never drive FIFO or production callbacks.
+- [ ] **Step 3: Implement the frozen-build, real-browser, and paired-performance drivers.** Put canonical path sorting/record encoding/digest logic in `frozenBuildManifest.ts`; keep `hash-build.mjs` as its CLI. Add the five package commands and exact build identity/preview lifecycle defined above. `attack-die:build` runs the existing `npm run build` with Vite mode `development`, so the optimized frozen build contains the development-only concept without changing ordinary production builds. `attack-die:evidence` accepts `--url`, `--out`, `--build-manifest`, `--all-results`, `--animated`, and `--reduced-motion`; it captures actual Chromium telemetry/screenshots and can force load, WebGL, shader, context-loss, hash, invalid-result, and unmapped failures. `perf:attack-die` accepts `--base-url`, `--build-manifest`, `--profile-file`, `--out`, `--samples-per-mode`, and `--post-unmount-ms`; it runs on the real `EncounterView` route with the independent overlay harness: same frozen build/profile/encounter/viewport/DPR, warmed GLB/shader, exactly 20 SVG and 20 3D throw-through-verdict windows in alternating order, then a fixed 8,000 ms post-unmount sample. Record per-sample/median/p95 frame time, >50 ms long tasks, request bytes/count, cold/warm ready/decode, contexts/losses, draw calls/triangles, heap, and GPU bytes or explicit `renderer.info` proxies. Enforce candidate p95 `<=110%` of SVG, no new attributable >50 ms task, and post-unmount p95 `<=110%` of SVG. The perf harness never invokes, replaces, receives, or imports queue callbacks; Task 4 separately exercises real FIFO behavior.
 
 - [ ] **Step 4: Green the focused tests and perform human visual freeze before evidence.** Sync assets only from the controlled asset worktree into ignored public files, run Chromium, and exercise keyboard, narrow viewport, reduced motion, cameras, raw/magical, and every forced fallback. A human approves or changes camera/light/material settings; commit approved values before evidence. Do not label initial guesses verified, and do not record face readability PASS here.
 
@@ -260,7 +341,7 @@ rsync -a --delete "$ASSET_WT/harness/models/synty/" "$WEB_WT/public/models/synty
 git check-ignore -q public/models/synty/ && test -z "$(git ls-files public/models/synty/)"
 ```
 
-Expected: focused tests and ignore/leak checks exit `0`; human approval is recorded in the web PR history, not invented in JSON.
+Expected: focused tests, `npm run test:run -- scripts/attack-die/frozenBuildManifest.test.ts`, and ignore/leak checks exit `0`; human approval is recorded in the web PR history, not invented in JSON. This step uses unfrozen development exploration only; it may export `webBuildSha256: null` and does not create graduation evidence.
 
 - [ ] **Step 5: Commit, run the full web gate, reconcile Copilot, obtain an independent gate, and freeze.** Valid Copilot findings receive tests/fixes and another full gate; every finding gets validity/action/rationale. The independent reviewer receives exact HEAD, diff, focused/full outputs, leak check, and browser evidence. No Critical/Important finding may remain.
 
@@ -281,7 +362,7 @@ WEB_EVIDENCE_SHA=$(git rev-parse HEAD)
 test -z "$(git status --porcelain --untracked-files=no)"
 ```
 
-Expected: web PR remains open, all gates exit `0`, no tracked code changes after `WEB_EVIDENCE_SHA`. Restart the final browser with `VITE_ATTACK_DIE_WEB_COMMIT=$WEB_EVIDENCE_SHA` so later proposals bind the frozen SHA.
+Expected: web PR remains open, all gates exit `0`, no tracked code changes after `WEB_EVIDENCE_SHA`. Export `VITE_ATTACK_DIE_WEB_COMMIT=$WEB_EVIDENCE_SHA`, then run the exact provider-withholding build/hash pattern twice with `BUILD_MANIFEST=/tmp/attack-die-web-build-manifest.json`; both manifests/hashes must match byte-for-byte. Provider assets are restored, the private manifest stays outside `dist`, and later evidence uses that exact `dist`, manifest, and frozen SHA through the reusable background preview lifecycle.
 
 ### Task 3: Assets canonical contract and graduation evidence
 
@@ -291,22 +372,26 @@ Expected: web PR remains open, all gates exit `0`, no tracked code changes after
 
 - Human supplies: `library/custom-dice/d20-lightning/provenance.json`.
 - Create: `library/custom-dice/d20-lightning/attack-die-contract.json`, `scripts/build_attack_die_contract.py`, `scripts/test_build_attack_die_contract.py`, `harness/models/synty/dice/d20-lightning/attack-die-contract.json`, `evidence/attack-die-3d/**`.
-- Modify: `library/custom-dice/d20-lightning/asset.json`, `library/custom-dice/d20-lightning/README.md`, `README.md`, `scripts/test_build_mesh_stats.py`, `harness/catalogs/synty-complete-inventory.json`.
+- Modify/Test: `library/custom-dice/d20-lightning/asset.json`, `library/custom-dice/d20-lightning/README.md`, `README.md`, `scripts/test_build_mesh_stats.py`, `scripts/test_build_web_asset_catalog.py`, `harness/models/synty/mesh-stats.json`, `harness/catalogs/synty-complete-inventory.json`.
 - Must remain unchanged: every `*.glb`, `*.fbx`, `*.blend`, `library/prop-role-map.json`, and `.github/workflows/**`.
 
 **Interfaces:** Canonical JSON has exactly `{canonicalSchemaVersion:1, kind:'attack-die-canonical-contract', runtime:AttackDieRuntimeSidecar, privateRefs:{provenanceReceiptSha256:string, machineRunPath:string, humanReviewPath:string, performancePath:string}}`. The generator validates private references, computes the core digest, and emits canonical `runtime` only; the emitted sidecar contains no `privateRefs`, provenance, private paths, attester, or reviewer identity.
 
 - [ ] **Step 1: Stop for human provenance.** A human must supply a `status: "confirmed"` receipt with non-empty owner/licensor, grant basis, permitted private-repository and game-build uses, public-redistribution restriction, attester/date, source-evidence references, exact runtime hash, and derived hashes. The agent validates and commits those supplied bytes verbatim; it must not write, infer, complete, or change confirmation fields.
 
-- [ ] **Step 2: Use the frozen web calibration UI to create the complete provisional proposal.** Verify web HEAD equals `WEB_EVIDENCE_SHA`; sync current asset tree into ignored web public files; manually calibrate results 1–20 without inferred defaults; export the proposal. It is still non-contract and contains no human PASS. Reject it unless its measured GLB SHA is `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`, its normalized selectors match the shared contract, and results are exactly `[1..20]`.
+- [ ] **Step 2: Use the frozen web calibration UI to create the complete provisional proposal.** Verify web HEAD equals `WEB_EVIDENCE_SHA`, sync the current asset tree into ignored web public files, and start the exact frozen `dist` with `BUILD_MANIFEST=/tmp/attack-die-web-build-manifest.json` and the reusable background preview lifecycle. Manually calibrate results 1–20 at `http://127.0.0.1:4173/?concept=attack-die-3d` without inferred defaults; export `/tmp/attack-die-calibration-proposal.json`. It is still non-contract and contains no human PASS. Reject it unless its measured GLB SHA is `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`, its `webBuildSha256` equals the manifest, its normalized selectors match the shared contract, and results are exactly `[1..20]`.
 
 ```bash
-cd "$WEB_WT"; test "$(git rev-parse HEAD)" = "$WEB_EVIDENCE_SHA"
-VITE_ATTACK_DIE_WEB_COMMIT="$WEB_EVIDENCE_SHA" npm run dev -- --host 127.0.0.1 --port 5173
-jq -e '.schemaVersion==1 and .kind=="attack-die-calibration-proposal" and .warning=="PROVISIONAL — NOT AN ASSET CONTRACT" and .asset.sha256=="8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa" and ([.faces[].result]==[range(1;21)])' /tmp/attack-die-calibration-proposal.json
+cd "$WEB_WT"
+test "$(git rev-parse HEAD)" = "$WEB_EVIDENCE_SHA"
+rsync -a --delete "$ASSET_WT/harness/models/synty/" "$WEB_WT/public/models/synty/"
+BUILD_MANIFEST=/tmp/attack-die-web-build-manifest.json
+# Start/ready the frozen preview with the reusable port-4173 lifecycle above.
+jq -e --arg build "$(jq -er '.webBuildSha256' "$BUILD_MANIFEST")" '.schemaVersion==1 and .kind=="attack-die-calibration-proposal" and .warning=="PROVISIONAL — NOT AN ASSET CONTRACT" and .webBuildSha256==$build and .asset.sha256=="8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa" and ([.faces[].result]==[range(1;21)])' /tmp/attack-die-calibration-proposal.json
+# Stop/clean the preview with the reusable lifecycle above.
 ```
 
-Expected: `jq` exits `0`; any unreadable/uncertain face returns to calibration rather than being guessed.
+Expected: `jq` exits `0`; any unreadable/uncertain face returns to calibration rather than being guessed. The frozen preview is always cleaned up by trap.
 
 - [ ] **Step 3: Write the deterministic validator/generator red tests.** Cover duplicate JSON keys, exact integer 1–20 set, finite normalized/canonical-sign quaternions, `q/-q`, GLB/library byte identity and hash, normalized selector cardinality (including current `.001` mesh/`.010` materials), root/camera/material/render tuple drift, core/evidence digest drift, deterministic candidate/verified output, human receipt requirements, verified evidence requirements, and safe-projection leakage.
 
@@ -317,44 +402,76 @@ python3 scripts/test_build_attack_die_contract.py
 
 Expected red: non-zero because `build_attack_die_contract.py` does not exist.
 
-- [ ] **Step 4: Implement the generator and import only the validated proposal.** Use Python standard library GLB parsing and duplicate-key-rejecting JSON loads. `build_attack_die_contract.py` supports normal write, `--check`, `--require-verified`, and `--verify-evidence`; canonical source is the sole authored map and the harness sidecar is always regenerated. Candidate output is accepted only by development web code. Keep existing `propKey`/classification metadata and add direct URL, schema, selector normalization, kinematic-only, generation, and invalidation documentation. Add the existing d20 mesh assertion: 1,906 triangles, two primitives/materials, zero textures/animations, and no prop-budget warning. Regenerate complete inventory; do not edit the licensed GLB or prop-role map.
+- [ ] **Step 4: Implement the generator and import only the validated proposal.** Use Python standard library GLB parsing and duplicate-key-rejecting JSON loads. `build_attack_die_contract.py` supports normal write, `--check`, `--require-verified`, and `--verify-evidence`; canonical source is the sole authored map and the harness sidecar is always regenerated. Candidate output is accepted only by development web code and rejects null build identity. Keep existing `propKey`/classification metadata and add direct URL, schema, selector normalization, kinematic-only, generation, and invalidation documentation. Run `build_mesh_stats.py` before asserting the existing d20's 1,906 triangles, two primitives/materials, zero textures/animations, and no prop-budget warning. In `scripts/test_build_web_asset_catalog.py`, replace PR #46's stale fixed `2,143` file count/tree hash and comment with generated-tree consistency: `load_complete_inventory(COMPLETE_INVENTORY)` must equal `stage.inventory(MODELS)`, `document.fileCount == len(actual)`, and `document.treeSha256 == stage.tree_sha256(actual)`, while retaining a known-file assertion and arbitrary-deletion test. This bounded prerequisite repair is not a new subsystem. Regenerate complete inventory last; do not edit the licensed GLB, prop-role map, or workflows.
 
 ```bash
+cd "$ASSET_WT"
 python3 scripts/build_attack_die_contract.py
-python3 scripts/build_synty_complete_inventory.py
+python3 scripts/build_mesh_stats.py
 python3 scripts/test_build_attack_die_contract.py
 python3 scripts/test_build_mesh_stats.py
-git add library/custom-dice/d20-lightning scripts/build_attack_die_contract.py scripts/test_build_attack_die_contract.py scripts/test_build_mesh_stats.py harness/models/synty/dice harness/catalogs/synty-complete-inventory.json README.md
+python3 scripts/test_build_web_asset_catalog.py
+python3 scripts/build_synty_complete_inventory.py
+git add README.md library/custom-dice/d20-lightning \
+  scripts/build_attack_die_contract.py scripts/test_build_attack_die_contract.py \
+  scripts/test_build_mesh_stats.py scripts/test_build_web_asset_catalog.py \
+  harness/models/synty/dice harness/models/synty/mesh-stats.json \
+  harness/catalogs/synty-complete-inventory.json
 git commit -m 'feat: validate calibrated attack die asset contract'
 ASSET_CANDIDATE_SHA=$(git rev-parse HEAD)
 ```
 
-Expected: generator/tests exit `0`; candidate sidecar is deterministic and web-safe.
+Expected per command: contract generation and mesh-stat regeneration exit `0`; contract, mesh-stat, and web-catalog tests exit `0`; complete inventory regeneration runs last and exits `0`; staging includes every listed generated output; commit succeeds; candidate sidecar is deterministic and web-safe.
 
-- [ ] **Step 5: Capture actual frozen-renderer evidence and human 40-view confirmation.** Run `capture-evidence.mjs` against the candidate sidecar for all 20 animated and all 20 reduced-motion results. Each of 40 machine observations must measure `<=0.25°` and at least three subsequent exact-target-held frames. Save raw/magical top and three-quarter PNGs, `faces/top/01.png`–`20.png`, `faces/three-quarter/01.png`–`20.png`, contact grids, `verification-run.json`, and a pending `human-review.json` under private `evidence/attack-die-3d/`. A human—not the script/agent—records 40 explicit numeral identity/readability decisions (20 results x two cameras) and appearance approval bound to the tuple hash.
-
-- [ ] **Step 6: Capture paired performance on the real route.** Record actual browser/client, OS, hardware/GPU, power, viewport, and DPR for desktop Chromium, desktop Discord Activity, and available mobile/low-GPU. Run exactly 20 alternating SVG/3D samples per profile with the Task 2 budgets. Missing mobile/low-GPU, an unexposed metric without an explicit proxy/limitation, input/underlying-dungeon regression, context/lifecycle failure, retained-resource leak, or budget failure blocks graduation; never invent hardware or measurements.
+- [ ] **Step 5: Re-sync the committed candidate and capture actual frozen-renderer evidence.** The candidate commit may have changed the sidecar, mesh stats, and complete inventory, so replace ignored web assets from that exact candidate before capture. Start the exact frozen build with the reusable port-4173 background lifecycle, then run the exact command below; it writes machine JSON, screenshots, face views, and pending human-review request only under the private asset worktree.
 
 ```bash
 cd "$WEB_WT"
-node scripts/perf/attack_die_paired.mjs --base-url http://127.0.0.1:3001 --profile-file "$ASSET_WT/evidence/attack-die-3d/performance/profiles.json" --out "$ASSET_WT/evidence/attack-die-3d/performance/paired-results.json" --samples-per-mode 20 --post-unmount-ms 8000
+test "$(git -C "$ASSET_WT" rev-parse HEAD)" = "$ASSET_CANDIDATE_SHA"
+rsync -a --delete "$ASSET_WT/harness/models/synty/" "$WEB_WT/public/models/synty/"
+BUILD_MANIFEST=/tmp/attack-die-web-build-manifest.json
+# Start/ready the frozen preview with the reusable port-4173 lifecycle above.
+npm run attack-die:evidence -- \
+  --url 'http://127.0.0.1:4173/?concept=attack-die-3d' \
+  --out "$ASSET_WT/evidence/attack-die-3d" \
+  --build-manifest "$BUILD_MANIFEST" --all-results --animated --reduced-motion
+# Keep preview alive for Step 6, or stop it with the reusable cleanup.
 ```
 
-Expected: exit `0` only when every profile and frozen budget passes.
+Expected: exit `0`; every one of 40 machine observations (20 animated, 20 reduced-motion) is `<=0.25°` and reports at least three subsequent exact-target-held frames. Output includes raw/magical top and three-quarter PNGs, `faces/top/01.png`–`20.png`, `faces/three-quarter/01.png`–`20.png`, contact grids, `verification-run.json`, and pending `human-review.json`. A human—not the script/agent—records 40 explicit numeral identity/readability decisions and appearance approval bound to the exact tuple/build hash.
 
-- [ ] **Step 7: Bind evidence, run focused/full local asset gates, and independently review.** Set runtime state to `verified`, bind content digests (not identities/paths) in the safe sidecar, regenerate inventory, and require verified evidence. The asset repo has no CI workflow; do not add one.
+- [ ] **Step 6: Capture paired performance on the same frozen app.** Copy the exact human-confirmed `/tmp/attack-die-required-profiles.json` bytes to `$ASSET_WT/evidence/attack-die-3d/performance/profiles.json` and confirm all three required categories are now available. A BLOCKED/missing mobile/low-GPU profile stops provider graduation/publication here even though Tasks 1–2 exploration was allowed. Never invent browser/client, OS, hardware/GPU, power, viewport, or DPR. With the same background server still at `4173` (or a fresh instance started by the reusable lifecycle), run exactly 20 alternating SVG/3D samples per profile and write the tracked private result below. An unexposed metric needs an explicit proxy/limitation; input/underlying-dungeon regression, context/lifecycle failure, retained-resource leak, or budget failure blocks graduation.
+
+```bash
+cd "$WEB_WT"
+cp /tmp/attack-die-required-profiles.json "$ASSET_WT/evidence/attack-die-3d/performance/profiles.json"
+jq -e 'all(.profiles[]; .status=="available")' "$ASSET_WT/evidence/attack-die-3d/performance/profiles.json"
+BUILD_MANIFEST=/tmp/attack-die-web-build-manifest.json
+npm run perf:attack-die -- --base-url http://127.0.0.1:4173 \
+  --build-manifest "$BUILD_MANIFEST" \
+  --profile-file "$ASSET_WT/evidence/attack-die-3d/performance/profiles.json" \
+  --out "$ASSET_WT/evidence/attack-die-3d/performance/paired-results.json" \
+  --samples-per-mode 20 --post-unmount-ms 8000
+# Stop/clean the preview with the reusable lifecycle above.
+```
+
+Expected: exit `0` only when every required profile and frozen budget passes; preview cleanup exits without leaving a server.
+
+- [ ] **Step 7: Bind evidence, run focused/full local asset gates, and independently review.** Stop first unless all three required performance categories, including mobile/low-GPU, are available and passed. Set runtime state to `verified`, bind content digests (not identities/paths) in the safe sidecar, regenerate every affected output, run `build_mesh_stats.py` before d20 assertions, and regenerate complete inventory last before its check. The asset repo has no CI workflow; do not add one.
 
 ```bash
 cd "$ASSET_WT"
-python3 scripts/build_attack_die_contract.py --check --require-verified --verify-evidence
+python3 scripts/build_attack_die_contract.py
 python3 scripts/test_build_attack_die_contract.py
 python3 scripts/build_prop_manifest.py
 python3 scripts/build_mesh_stats.py
 python3 scripts/build_web_asset_catalog.py --check
-python3 scripts/build_synty_complete_inventory.py --check
-python3 scripts/verify_web_asset_stage.py --verify-only
 python3 scripts/test_build_mesh_stats.py
 python3 scripts/test_build_web_asset_catalog.py
+python3 scripts/build_synty_complete_inventory.py
+python3 scripts/build_attack_die_contract.py --check --require-verified --verify-evidence
+python3 scripts/build_synty_complete_inventory.py --check
+python3 scripts/verify_web_asset_stage.py --verify-only
 python3 -m pytest scripts/ -q
 sha256sum library/custom-dice/d20-lightning/SM_Prop_D20_Lightning_01.runtime.glb harness/models/synty/props/SM_Prop_D20_Lightning_01.glb
 cmp -s library/custom-dice/d20-lightning/SM_Prop_D20_Lightning_01.runtime.glb harness/models/synty/props/SM_Prop_D20_Lightning_01.glb
@@ -362,12 +479,16 @@ test -z "$(git diff --name-only "$ASSET_BASE"...HEAD -- '*.glb' '*.fbx' '*.blend
 git diff --check
 ```
 
-Expected: every command exits `0`, both SHA lines equal the approved digest, and the forbidden-diff check is empty. Independent review compares canonical/projection bytes, actual screenshots and observations, human receipt/review, performance, leak boundary, and all command exits; no Critical/Important finding remains.
+Expected: every command exits `0`; contract, mesh stats, and complete inventory are regenerated; complete inventory regeneration is the last generating command; both SHA lines equal the approved digest; and the forbidden-diff check is empty. Independent review compares canonical/projection bytes, actual screenshots and observations, human receipt/review, profile availability/performance, generated-tree consistency repair, leak boundary, and all command exits; no Critical/Important finding remains.
 
 - [ ] **Step 8: Commit final evidence, push, and open the one asset PR.** Reference only safe render paths/summaries in the PR body. Leave it open for Kirk.
 
 ```bash
-git add library/custom-dice/d20-lightning harness/models/synty/dice harness/catalogs/synty-complete-inventory.json scripts/build_attack_die_contract.py scripts/test_build_attack_die_contract.py scripts/test_build_mesh_stats.py evidence/attack-die-3d README.md
+git add README.md library/custom-dice/d20-lightning evidence/attack-die-3d \
+  scripts/build_attack_die_contract.py scripts/test_build_attack_die_contract.py \
+  scripts/test_build_mesh_stats.py scripts/test_build_web_asset_catalog.py \
+  harness/models/synty/dice harness/models/synty/mesh-stats.json \
+  harness/catalogs/synty-complete-inventory.json
 git commit -m 'asset: publish verified attack die contract and evidence'
 git status --short
 git push -u origin "$ASSET_BRANCH"
@@ -385,7 +506,7 @@ Expected: one open asset PR, no staged files, no licensed binary diff. **Stop un
 
 **Files:** No planned tracked changes. Sync only into gitignored `public/models/synty/`; any required source fix invalidates the frozen tuple and blocks readiness.
 
-**Interfaces:** Consume the exact merged `AttackDieRuntimeSidecar`; derive `WEB_EVIDENCE_SHA` from `.tuple.webCommit` and require it to equal web HEAD and the accepted private evidence tuple.
+**Interfaces:** Consume the exact merged `AttackDieRuntimeSidecar`; derive `WEB_EVIDENCE_SHA` and `WEB_BUILD_SHA` from its tuple and require them to equal web HEAD, a freshly recomputed frozen build manifest, and the accepted private Task 3 evidence tuple.
 
 - [ ] **Step 1: Sync only the exact merged provider commit.** Stop unless PR state is merged, merge SHA exists, and it is on fetched `origin/main`:
 
@@ -400,25 +521,66 @@ SIDECAR="$WEB_WT/public/models/synty/dice/d20-lightning/attack-die-contract.json
 WEB_EVIDENCE_SHA=$(jq -er '.tuple.webCommit' "$SIDECAR")
 test "$(git -C "$WEB_WT" rev-parse HEAD)" = "$WEB_EVIDENCE_SHA"
 cmp -s "$SIDECAR" "$MERGED_ASSET_WT/harness/models/synty/dice/d20-lightning/attack-die-contract.json"
+WEB_BUILD_SHA=$(jq -er '.tuple.webBuildSha256' "$SIDECAR")
+test -n "$WEB_BUILD_SHA"; test "$WEB_BUILD_SHA" != null
 ```
 
-- [ ] **Step 2: Run focused and full web gates.** Expect every command to exit `0` and both leak/production-file checks to print nothing:
+- [ ] **Step 2: Recompute build identity, then run focused and full web gates.** Export `VITE_ATTACK_DIE_WEB_COMMIT=$WEB_EVIDENCE_SHA`, run the exact provider-withholding build/hash pattern with `BUILD_MANIFEST=/tmp/attack-die-merged-build-manifest.json`, require its canonical manifest/hash to equal the Task 3 tracked evidence tuple, and leave the restored merged provider tree available. Then run the gates below; the explicit `hash-build` command rechecks deterministic output without rebuilding.
 
 ```bash
 cd "$WEB_WT"
 npm run test:run -- src/components/ui/dice/attackDieContract.test.ts src/components/ui/dice/attackDieMotion.test.ts src/components/ui/dice/attackDieRuntime.test.ts src/components/ui/dice/attackDieMaterial.test.ts src/components/ui/dice/AttackDie3D.test.tsx src/concepts/attack-die-3d/attackDieExperiment.test.ts src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx src/dev/AttackDiePerfHarness.test.tsx src/components/ui/dice/DiceTray.test.tsx src/components/game/combatPresentation/CombatPresentation.test.tsx src/components/game/EncounterView.test.tsx
 npm run ci-check
+npm run attack-die:hash-build -- --dist dist --out /tmp/attack-die-merged-build-manifest.json
+test "$(jq -er '.webBuildSha256' /tmp/attack-die-merged-build-manifest.json)" = "$WEB_BUILD_SHA"
+test "$(jq -er '.webBuildSha256' "$MERGED_ASSET_WT/evidence/attack-die-3d/verification-run.json")" = "$WEB_BUILD_SHA"
 git check-ignore -q public/models/synty/
 test -z "$(git ls-files public/models/synty/)"
 test -z "$(git diff --name-only "$WEB_BASE"...HEAD | grep -E '(^public/models/synty/|\.(glb|fbx|blend)$)' || true)"
 test -z "$(git diff --name-only "$WEB_BASE"...HEAD -- src/components/game/combatPresentation/CombatPresentation.tsx src/components/ui/dice/DiceTray.tsx src/components/game/EncounterView.tsx)"
 ```
 
-- [ ] **Step 3: Re-run actual merged-provider evidence.** Verification-only driver requires the same tuple/core/GLB digests, results 1–20 animated and reduced-motion, all `<=0.25°`, exact-target holds, and no fallback in healthy runs. In real Chromium also force every failure, confirm no wrong-face flash, irreversible SVG, one semantic source, hidden Canvas, keyboard/focus/narrow-view operation, reduced-motion lightning suppression, repeated paths with identical endpoint, and hit/miss/natural-1/critical fixture displays. Retain screenshots only in private assets evidence.
+- [ ] **Step 3: Re-run actual merged-provider evidence to private temporary output.** The sole asset PR is already merged, so create no second asset PR and no tracked post-merge evidence. Stop unless the merged provider's profile record shows all three categories available; a blocked/missing mobile/low-GPU profile prevents Task 4 completion. Start the exact frozen app with `BUILD_MANIFEST=/tmp/attack-die-merged-build-manifest.json`, the merged provider tree, and the reusable port-4173 lifecycle; write only to the declared untracked directory below.
 
-- [ ] **Step 4: Recheck paired performance and reviews.** Compare merged-sidecar runs with the accepted private report on all three required profile categories and budgets. Reconcile every new Copilot finding with validity/action/rationale and obtain a fresh independent gate over merged sidecar, web diff, browser outputs, performance, and command exits. A valid finding requiring tracked web changes makes `WEB_EVIDENCE_SHA` stale: stop and do not mark the PR ready; never conceal the change or add a second asset PR within this wave.
+```bash
+MERGED_RECHECK=/tmp/attack-die-merged-provider-recheck
+rm -rf "$MERGED_RECHECK"; mkdir -p "$MERGED_RECHECK/evidence" "$MERGED_RECHECK/performance"
+jq -e 'all(.profiles[]; .status=="available")' "$MERGED_ASSET_WT/evidence/attack-die-3d/performance/profiles.json"
+# Start/ready the frozen preview with the reusable port-4173 lifecycle above.
+npm run attack-die:evidence -- \
+  --url 'http://127.0.0.1:4173/?concept=attack-die-3d' \
+  --out "$MERGED_RECHECK/evidence" \
+  --build-manifest /tmp/attack-die-merged-build-manifest.json \
+  --all-results --animated --reduced-motion
+npm run perf:attack-die -- --base-url http://127.0.0.1:4173 \
+  --build-manifest /tmp/attack-die-merged-build-manifest.json \
+  --profile-file "$MERGED_ASSET_WT/evidence/attack-die-3d/performance/profiles.json" \
+  --out "$MERGED_RECHECK/performance/paired-results.json" \
+  --samples-per-mode 20 --post-unmount-ms 8000
+# Stop/clean the preview with the reusable lifecycle above.
+```
 
-- [ ] **Step 5: Leave the concept PR open for Kirk.** Confirm PR head equals local frozen HEAD, body still describes concept-only scope, state is OPEN, no staged files exist, and all worktrees are clean except ignored synced web assets. Record explicitly: production integration into `CombatPresentation`/`DiceTray` is a separate future issue, written design, plan, branch, and PR after Kirk accepts graduation; this plan creates none of them.
+Both commands must exit `0`; compare recheck tuple/core/GLB/build digests and results with tracked Task 3 evidence. Require results 1–20 animated/reduced, `<=0.25°`, exact-target holds, no healthy fallback, and all required profile budgets. In real Chromium force every failure and confirm no wrong-face flash, irreversible SVG, one semantic source, hidden Canvas, keyboard/focus/narrow-view operation, reduced-motion lightning suppression, repeated paths with identical endpoint, and hit/miss/natural-1/critical fixture displays. Outputs remain private under `/tmp`.
+
+- [ ] **Step 4: Run the separate real repeated-FIFO normal-game-path playtest.** With the actual local API/game stack and normal `EncounterView` UI—not `AttackDiePerfHarness`, fixture callbacks, or direct callback invocation—drive repeated attacks through the real server/UI path. Create the private output directory, begin a timestamped observation log, and capture browser screenshots there:
+
+```bash
+FIFO_OUT=/tmp/attack-die-merged-provider-recheck/real-fifo
+rm -rf "$FIFO_OUT"; mkdir -p "$FIFO_OUT"
+printf 'web=%s\nasset=%s\nbuild=%s\nstarted=%s\n' \
+  "$WEB_EVIDENCE_SHA" "$ASSET_MERGE_SHA" "$WEB_BUILD_SHA" "$(date -u +%FT%TZ)" \
+  >"$FIFO_OUT/observations.txt"
+# Drive repeated attacks through the normal UI/server path and append the
+# authoritative event IDs/results plus observed beat/release order.
+test -s "$FIFO_OUT/observations.txt"
+find "$FIFO_OUT" -maxdepth 1 -name '*.png' -type f -size +0c | grep -q .
+```
+
+Verify observed presentation order equals authoritative attack order; FIFO does not skip, reorder, stall, or double-release; miss result release occurs at Verdict; hit result and damage release occur at Impact; and dungeon movement/keyboard/pointer controls remain responsive during/after repeated presentations. Append explicit PASS/FAIL plus event IDs and observations for each assertion. If the local normal game path cannot be driven, the screenshot check fails, or any assertion cannot be observed, graduation stops; synthetic harness evidence does not satisfy this step.
+
+- [ ] **Step 5: Reconcile reviews and leave the web PR ready.** Compare merged-sidecar runs with tracked Task 3 evidence on all required categories and budgets. Reconcile every new Copilot finding with validity/action/rationale and obtain a fresh independent gate over merged sidecar, web/build diff, evidence, real FIFO notes, performance, and command exits. A valid finding requiring tracked web changes makes `WEB_EVIDENCE_SHA` stale: stop and do not mark the PR ready; never conceal the change or add a second asset PR within this wave.
+
+Confirm PR head equals local frozen HEAD, body still describes concept-only scope, state is OPEN, no staged files exist, and worktrees are clean except ignored synced web assets and declared `/tmp` recheck output. Record explicitly: production integration into `CombatPresentation`/`DiceTray` is a separate future issue, written design, plan, branch, and PR after Kirk accepts graduation; this plan creates none of them.
 
 ## Design coverage and execution order
 
@@ -427,9 +589,11 @@ test -z "$(git diff --name-only "$WEB_BASE"...HEAD -- src/components/game/combat
 - Architecture/ownership, material approach, concept stages, and the incremental
   appearance/calibrate/roll/verify path map to Tasks 1–2.
 - Face-map/asset contract and private provenance map to Task 3.
-- Performance, validation/evidence, testing/playtest, graduation, and provider
-  ordering map to Tasks 2–4.
+- Performance, validation/evidence, testing/playtest (including normal-path
+  repeated FIFO), graduation, and provider ordering map to Tasks 2–4.
 - Non-goals, promotion criteria, and scope risks are enforced by Global
   Constraints and Task 4's separate-promotion handoff.
+
+Reviewer corrections are fully mapped: Task 1 owns profile availability; Task 2 owns deterministic frozen-build identity and the reusable server lifecycle; Task 3 owns generated-output repair/order and candidate evidence; Task 4 owns merged-provider temporary recheck and normal-path FIFO.
 
 Execute Tasks 1→4 in order. Stop rather than weaken the contract when provenance or human review is absent; a face is guessed/unreadable; any tuple member changes; a settle misses the threshold/exact hold; SVG can upgrade late or 3D can recover within a failed token; a wrong face flashes; accessibility duplicates authority; required performance/profile evidence is absent or over budget; private material leaks; provider is unmerged; or a frozen web change is required. Each task's commit is an independently reviewable checkpoint, but only Kirk merges.
