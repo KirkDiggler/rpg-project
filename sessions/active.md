@@ -11,7 +11,11 @@ commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #9
 
 **Remaining in W3: T3.6's scene only**, and it is blocked — see Open questions.
 [Toolkit PR #953](https://github.com/KirkDiggler/rpg-toolkit/pull/953) is in flight with
-ADR-0037 and the enforced decisions digest.
+ADR-0037 and the enforced decisions digest — green and mergeable.
+
+**W4 is combat, built new in the session package** — not an adapter, not a migration. Its opening
+question is the one W2 parked in advance (see below): with combat entry as the second checkpoint
+kind, where does the deciding thing live? **Answer the mode question first** — see Open questions.
 
 ## Solid
 
@@ -26,11 +30,27 @@ ADR-0037 and the enforced decisions digest.
 | `dnd5e/session` | v0.3.1 | 132f018 | conditions survive a suspension; the store is never damaged |
 | `dnd5e/session` | v0.4.0 | f0c7152 | `Join` loads players, `Spawn` instantiates content from a ref |
 
-**The strategy, and its falsifiable claim.** Wrap what exists → migrate rpg-api once at W4 →
-replace behind it. The claim: *after the migration wave, no subsequent wave changes an rpg-api
-source file.* Gated by `gorelease` from the first tag, and made mechanical by
+**The strategy — REVISED 2026-08-13, and the old falsifiable claim is retired.** The plan was
+*wrap what exists → migrate rpg-api at W4 → replace behind it*, claiming *after the migration
+wave, no subsequent wave changes an rpg-api source file.* **Kirk retired that**: a wrapper would
+satisfy the claim while teaching nothing, and worse, **a wrapper would dictate what the session
+contract looks like** — the SDK would inherit the old encounter's assumptions invisibly. There is
+**no adapter to the old encounter**; the idea stays technically open and unused.
+
+**We are building new, and the goal is to get it right.** Getting the SDK into rpg-api is still a
+goal, but it **comes later** — after the session package can run free roam *and* combat. No
+integration slice now. What replaces the old claim: *a real consumer used the SDK and told us
+where the contract was wrong* — payable only once there is something whole enough to consume.
+
+Still standing, and still mechanical: `gorelease` from the first tag, and
 `TestNoInnerTypeCrossesTheBoundary` — it parses the package's own AST and fails on any leaked
 toolkit type. rpg-api imports **zero** of the composition today, so nothing is owed yet.
+
+**Measured 2026-08-13, so nobody re-derives it:** rpg-api already ships exploration. Its encounter
+has `ModeFreeRoam`, players call `MoveEntity`, and `checkCombatEntry` (old `encounter/combat.go:523`)
+runs `perception.CanSeeAt` inline after every move, flipping to `ModeTurnBased` and rolling
+initiative on first sighting. **The difference the SDK actually brings is narrower than "exploration":
+the old stack flips a mode; the SDK stops and asks.** Do not describe free roam as new capability.
 
 **Rulings that decide future calls — don't re-derive these:**
 
@@ -70,14 +90,40 @@ toolkit type. rpg-api imports **zero** of the composition today, so nothing is o
 - **Write world-then-session.** Partial failure must leave a collectable orphan, never a session
   pointing at nothing, and never a window resuming past cells nobody walked.
 
-**The parked question W2 named honestly:** *"stop the walk when the walker sees something new"* is
-a game rule living in a module whose charter says it owns no rules. It's there because no module
-owns *when* a resolution should pause. It moves when the second checkpoint kind makes the deciding
-thing's shape visible — **W4, not W3**; W3's bus carries observation only and nothing in it can
-suspend.
+**The parked question W2 named honestly — NOW DUE:** *"stop the walk when the walker sees something
+new"* is a game rule living in a module whose charter says it owns no rules. It's there because no
+module owns *when* a resolution should pause. It moves when the second checkpoint kind makes the
+deciding thing's shape visible — **W4**, which is now. **Located 2026-08-13:** the rule is the bare
+`if len(sighted) == 0 { continue }` in `runWalk` (`session/suspend.go:180`), immediately before
+`poseWalk`. Combat entry is the second kind.
+
+**The machinery was built in advance for this and does not need changing:** `Prompt` deliberately
+carries *the moment, never the mechanism* (no field names which checkpoint fired, so clients branch
+on `OptionKind` and never learn a reason code), and `frozenResolution.Kind` already discriminates
+which resolution froze — today only `kindWalk` — "so that a later resolution kind is additive
+rather than an ambiguous payload nobody can safely parse."
 
 ## Open questions
 
+- **Does the session have modes at all? — W4's first decision, and it gates the rest.** Whether
+  combat entry is a *checkpoint* (a question posed to a player) or a *regime change* (different
+  rules about who may act) depends on this, so it is asked first. **Measured, not assumed:
+  `FREE_ROAM`/`TURN_BASED` is not a D&D concept — it is one implementation's artifact.** The
+  composition (`rulebooks/dnd5e/encounter`) has **zero** Mode/Turn/Initiative hits. The rules are
+  already decomposed and also mode-free: `initiative.Tracker` owns *whose turn*
+  (`Current`/`Next`/`Round`/`Remove`), `combat.TurnManager` owns *what this turn may spend*
+  (`StartTurn`/`EndTurn` + `ActionEconomy`). Only the old encounter has a mode — and with it
+  `ErrNotTurnBased` and a family of wrong-mode rejections we would be choosing to inherit.
+  Options on the table: **(1)** explicit `Mode` field — proven, but re-imports the model we
+  rejected; **(2)** no mode, turn order simply exists or doesn't, derived not stored — fits the
+  composition and the rules, deletes a state axis; **(3)** combat as a *resolution kind* via the
+  existing `frozenResolution.Kind` — probably a complement to (2), not a rival, since it says how
+  combat runs but not who may act. **Recommendation: try to falsify (2) before adopting it** —
+  take a concrete combat round and check whether "an initiative order exists" carries every
+  constraint a mode carried (6-second rounds, per-turn movement budget, once-per-round reactions).
+  If it does, (2)+(3) compose and the parked checkpoint question resolves as a side effect. If it
+  doesn't, **what breaks tells us what a mode was actually for**. (2) is the option that *fits*,
+  which per ADR-0037 is exactly when to check whether it is true.
 - **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
   `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
   the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
@@ -109,9 +155,14 @@ mentioning rage* — which is **blocked** on `ConditionBehavior` having no `Ref(
 questions). Nothing else in the wave depends on it, so W4 could start first if that decision
 stays open.
 
-Then **W4 — combat, where rpg-api migrates.** The payoff wave: the version-bump promise starts
-there, and its 22 files / ~6,700 lines of old-stack orchestration are *evidence about what a game
-server needs, never a specification to port*.
+Then **W4 — combat, built new in the session package.** rpg-api does **not** migrate here; that
+comes later, once free roam and combat both work (Kirk, 2026-08-13). The old stack's ~6,700 lines
+of orchestration are *evidence about what a game server needs, never a specification to port* —
+and now explicitly not something we adapt to either.
+
+**The gated step is a decision, not code:** answer the mode question in Open questions by trying
+to falsify option (2). Nothing should be built until that lands, because both the checkpoint
+question and the shape of every combat verb hang off it.
 
 ## Decision log
 
@@ -125,6 +176,10 @@ server needs, never a specification to port*.
 | 2026-08-13 | Local `replace`/`go.work` overrides are fine — *committing* them is the ban | `rpg-toolkit/CLAUDE.md` |
 | 2026-08-13 | Entity entry splits on **load-vs-instantiate**, not player-vs-monster; a ref names the package that can *load* the data | ADR-0037 |
 | 2026-08-13 | Seam decisions get genuine options + trade-offs in the open, then an ADR with the rejects recorded | ADR-0037's process note |
+| 2026-08-13 | **No adapter/wrapper over the old encounter** — it would dictate the session contract. Idea stays open and unused | this handoff; ADR pending |
+| 2026-08-13 | **rpg-api integration is deferred** until the session package runs free roam *and* combat. No slice now | this handoff |
+| 2026-08-13 | The old "no rpg-api file changes after migration" claim is **retired** — a wrapper would satisfy it while teaching nothing | this handoff |
+| 2026-08-13 | W4 = combat built new; its first gate is **the mode question**, not code | this handoff, Open questions |
 
 ## Carried follow-ups — filed, none blocking
 
