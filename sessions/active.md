@@ -3,13 +3,12 @@
 ## Now
 
 **The session SDK lane** (`rulebooks/dnd5e/session`) — rpg-api's one interface to the toolkit.
-W0/W1/W2 shipped; **W3 step 1 (characters load) shipped as `session/v0.3.0`**. **W3 step 2
-(conditions across a suspension) is in flight as
-[toolkit PR #950](https://github.com/KirkDiggler/rpg-toolkit/pull/950)** — test-only, 143 tests,
-3/3 mutants killed. Tracking [toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
-
-**Blocked on a Kirk decision:** the rest of W3 (NPCs, and naming conditions at the seam) needs
-two small composition changes — see Open questions.
+W0/W1/W2 shipped. **W3 step 1** (characters load) → `session/v0.3.0`. **W3 step 2** (conditions
+across a suspension) → PR #950 merged at **132f018**, tagged **`session/v0.3.1`** — a `test:`
+commit takes a **patch** bump. **W3 step 3 (NPCs) is in flight as
+[toolkit PR #952](https://github.com/KirkDiggler/rpg-toolkit/pull/952)** — 162 tests, 6/7 mutants
+killed, `gorelease` → **v0.4.0**. Tracking
+[toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
 
 ## Solid
 
@@ -39,9 +38,16 @@ toolkit type. rpg-api imports **zero** of the composition today, so nothing is o
   construction is total). Demonstrated live on #949. Discipline: **every required `Config` field
   lands at or before W4.**
 - **The repo AUTO-TAGS on merge to main** (`auto-tag-modules-safe.yml`; the other two tag
-  workflows are disabled). Bump comes from the conventional-commit prefix, so a `feat:` takes
-  the minor the moment it lands. **A wave's version is decided by its FIRST merge, not its
-  last** — never write a version next to a milestone.
+  workflows are disabled). Bump comes from the conventional-commit prefix — `feat:` → minor,
+  **`test:`/`fix:` → patch** (a test-only PR still consumes a version; #950 took `v0.3.1`).
+  **A wave's version is decided by its FIRST merge, not its last** — never write a version next
+  to a milestone.
+- **The compat gate races the tagger, and it fails CLOSED.** `compat.yml` derives its base from
+  the newest git tag, but `gorelease` resolves "most recent version" through the module proxy. A
+  PR opened soon after a merge therefore passes a base the proxy has not indexed yet, and the job
+  dies with *"Can only suggest a release version when compared against the most recent version of
+  this major"* — which reads like an API problem and is not. **Re-run the job once the proxy
+  catches up.** Cost this one hit: a red gate on PR #952 that had nothing to do with its code.
 - **Contract types vs persistence shapes are two different promises.** A persistence shape
   (`encounter.EncounterData`, `interrupt.LedgerData`) is bytes the host round-trips and never
   builds — it promises *replaceability*. A contract type (`spatial.Position`, `character.Data`)
@@ -67,26 +73,28 @@ suspend.
 
 ## Open questions
 
-**The rest of W3 needs two composition changes. Both are Kirk's call; neither is started.**
-
-- **NPCs cannot join by ID.** Kirk's shape (2026-08-13): *"can join just send an id, we can lookup
-  if that is an existing monster in our encounter? we do need the monster data filled in but that
-  can happen inside."* It works — `monsters.ByRef` + `monster.LoadFromData`/`ToData` all exist, and
-  `monster` is in the same root module as `character` so it costs no new dependency. **The one
-  missing link:** `MemberData` persists `{ID, Kind, Room, Position}`, so a monster member does not
-  record *which* monster it is and **nobody can rehydrate it** — us, rpg-api, or a save-file
-  loader. Needs `MemberInput.Ref`/`MemberData.Ref` (→ `encounter` v0.5.0, ~10 touch points:
-  the two structs, the runtime member, one `ToData` site, three load sites, member validation).
-  The plan's `npc.Data` does not exist and should read `monster.Data`.
-- **`ConditionBehavior` cannot name itself.** The interface is `IsApplied/Apply/Remove/ToJSON`
-  with no `Ref()`. Reporting active conditions at the seam would mean unmarshalling `ToJSON()` and
-  reading `ref` — the exact anti-pattern #941 already files against us. Without it, **T3.6's scene
-  is not expressible** ("Alice raging when she is loaded, without the caller ever mentioning
-  rage"). Needs a `Ref()` on the interface in `rulebooks/dnd5e/events` + its ~24 implementers.
+- **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
+  `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
+  the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
+  already files against us. Without it **T3.6's scene is not expressible** ("Alice raging when she
+  is loaded, without the caller ever mentioning rage"). Needs a `Ref()` on the interface in
+  `rulebooks/dnd5e/events` plus its ~24 implementers. **Kirk's call; not started.**
 - **#946 — character as its own module.** Direction only, blocks nothing. The open part is whether
   the unit is `character` alone or a `dnd5e/core`-shaped module holding the shared enums.
 
-_(#916's dangling `closes #916` references in `plan.md` are fixed on PR #950.)_
+**Resolved since the last handoff, recorded because the reasoning generalises:**
+
+- *NPCs entering the session.* Kirk's ruling (2026-08-13): **a ref is loader routing** — it names
+  the package that can load some data. That killed the `dnd5e:characters:<id>` idea on its own
+  merits: no toolkit package can load a player character, so such a ref would claim something
+  false. Hence **two verbs split by where the data comes from** — `Join` loads a player by ID,
+  `Spawn` instantiates code-resident content by ref — an axis that survives durable NPCs and
+  homebrew, where player-vs-monster does not. **The encounter needs no change**: `monster.Data`
+  carries its own `Ref`, and `SessionData.NPCs` holds the instance, so an earlier "the encounter
+  must record which monster a member is" finding was measuring the encounter as if it were the
+  sole record.
+
+_(#916's dangling `closes #916` references were removed on PR #950.)_
 
 ## Next
 
@@ -125,6 +133,12 @@ server needs, never a specification to port*.
   changes.
 - **[#934](https://github.com/KirkDiggler/rpg-toolkit/issues/934)** two validation asymmetries from
   the anchoring wave.
+- **[#951](https://github.com/KirkDiggler/rpg-toolkit/issues/951)** `encounter.ErrNoMember` means
+  an empty ID, an **absent** member, and a **duplicate** one — opposites under one sentinel. The
+  SDK cannot translate what it cannot distinguish, so joining someone twice reports "no such
+  member". An `ErrMemberExists` sentinel was written and **removed before shipping** rather than
+  exported unpopulated; current (wrong) behaviour is pinned through both verbs so the fix announces
+  itself.
 - **[rpg-project#218](https://github.com/KirkDiggler/rpg-project/issues/218)** every hand-maintained
   module list in the toolkit **fails open** — 3 instances found in one afternoon. Rule to encode:
   *stable claims in hand-written docs, volatile claims derived or tested.*
