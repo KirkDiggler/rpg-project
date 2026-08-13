@@ -1,79 +1,65 @@
 # Interactive Collectible 3D Dice Tray Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Each task is a visible vertical slice and ends with independent review plus a browser checkpoint.
 
-**Goal:** Extend the existing lightning-d20 proof into a production-intent, Concepts Lab–only 3D dice tray with explicit player input, automatic monster throws, stable collectible-die presets, authoritative 1–20 settlement, and a simulated roller/spectator release.
+**Goal:** Grow the existing lightning-d20 proof into a production-intent, Concepts Lab–only 3D dice tray through visible increments: empty tray, one placed die, explicit Roll, grab/release, collectible presets, roller/spectator witnessing, then complete authoritative 1–20 settlement.
 
-**Architecture:** `DiceTray3D` owns tray layout and accessible pointer/button interaction; `AttackDie3D` remains the visual renderer and settles only from authoritative results. A small allowlisted preset registry separates collectible die identity from model/material implementation, while a compact presentation-release value lets the Concepts Lab coordinate roller and spectator panes without streaming pointer movement. Production combat wiring, real transport, loadout/ownership projection, persistence, and damage dice remain separate promotion work.
+**Architecture:** `DiceTray3DShell` owns the rounded tray and overflow-capable presentation surface. `DiceTray3D` adds accessible interaction and composes `AttackDie3D`, which remains the authoritative-result visual renderer. An allowlisted preset registry separates collectible identity from model/material implementation, and a compact presentation-only release value coordinates roller/spectator concept panes without streaming pointer movement.
 
-**Tech Stack:** React 19, TypeScript 5.8, Three.js / React Three Fiber, Vitest, Testing Library, Playwright/Chromium, existing Vite Concepts Lab.
+**Tech Stack:** React 19, TypeScript 5.8, Three.js / React Three Fiber, Vitest, Testing Library, Playwright/Chromium, Vite Concepts Lab.
 
 **Spec:** `rpg-project/ideas/interactive-dice-tray/design.md`
 
 ## Global Constraints
 
-- Work in `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/attack-die-749` on `feat/749-attack-die-3d-concept`; preserve its current uncommitted, user-approved roll/camera/result-10 work.
-- Track implementation through `rpg-dnd5e-web#749` / PR `#750` and link `rpg-project#219`, design PR `rpg-project#220`, `rpg-game-assets#47`, and `rpg-game-assets#49` in durable handoff/evidence.
+- Work in `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/attack-die-749` on `feat/749-attack-die-3d-concept`; preserve its current uncommitted, user-approved trajectory, camera, result-10 pose, and sizing work.
+- Track implementation through `rpg-dnd5e-web#749` / PR `#750`; reference `rpg-project#219`, design PR `rpg-project#220`, `rpg-game-assets#47`, and `rpg-game-assets#49` in final handoff.
 - Concepts Lab route remains `http://127.0.0.1:3002/?concept=attack-die-3d`.
-- Do not wire `CombatPresentation`, `EncounterView`, the production FIFO, or `useBeatSequencer` in this plan. In particular, do not remove the existing production 1.5-second auto-throw timeout here; that is a production-promotion gate.
-- Do not change toolkit, API, proto, deployment, account/profile, inventory, or persistence code.
-- Do not create or display client-generated authoritative outcomes. Gesture and replay data may change only decorative motion; `authoritativeResult` alone selects the target face.
-- Prototype one d20 only. Keep the tray API list-shaped for later groups, but do not render or fabricate damage dice from `EntityDamaged.amount`.
-- Player mode waits indefinitely for Roll or grab/release. Monster mode may auto-release. Spectator panes never expose input.
-- Do not stream pointer movement. Roller and spectator receive one compact, sanitized release value in the concept simulation.
-- Presets are stable die identities, not `player`/`monster` booleans. Spectators render the roller's selected preset.
-- Only allowlisted preset/model contracts may resolve. No arbitrary asset URL may enter from props or a release value.
-- A mapped physical face must be hash-bound to the exact inspected GLB. An unknown preset, hash mismatch, unmapped result, load/shader/context failure, or invalid result fails closed to the existing semantic SVG surface.
-- Current known lightning GLB SHA-256 is `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`; a different digest invalidates the provisional face map.
-- Licensed GLBs, source assets, calibration contact sheets, screenshots, and GIFs remain private/untracked. Commit only code, tests, public-safe docs, and numeric contract data.
-- Keep the existing production-intent renderer lifecycle and exact-target tolerance (`<= 0.25°`, then hold exact quaternion).
+- Every task must leave a visible, browser-reviewable state. After task review passes, capture a private screenshot under `/home/kirk/game-dev/.verification/interactive-dice-tray/task-N/` and report the path before moving on.
+- Do not wire `CombatPresentation`, `EncounterView`, the production FIFO, or `useBeatSequencer`. Do not remove the current production 1.5-second auto-throw timeout in this concept plan; removing it is a production-promotion gate.
+- Do not change toolkit, API, proto, deployment, account/profile, inventory, ownership, purchasing, loadout, or persistence code.
+- Prototype one d20 only. Keep the tray boundary list-shaped for later groups, but never render or fabricate damage dice from `EntityDamaged.amount`.
+- Player mode waits indefinitely for Roll or grab/release. Monster mode may auto-release. Spectator panes expose no roll input.
+- Gesture and replay data are decorative only. `authoritativeResult` alone selects the target face; no client path generates, changes, rerolls, biases, clamps, or interprets it.
+- Do not stream pointer movement. Roller and spectator receive one compact, sanitized release value in the Concepts Lab simulation.
+- Presets are stable collectible die identities, not `player`/`monster` booleans. Spectators render the roller's selected preset.
+- Only allowlisted preset/model contracts may resolve. No arbitrary asset URL may enter through props or release data.
+- A physical 3D result must be mapped to the exact inspected GLB. Unknown preset, digest mismatch, unmapped result, invalid result, load/shader/context failure, or invalid tray cardinality fails closed to the existing semantic SVG surface.
+- Known lightning GLB SHA-256: `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`. Any other digest invalidates the provisional face map.
+- Licensed GLBs, source assets, calibration contact sheets, screenshots, and GIFs stay private/untracked. Commit only code, tests, public-safe docs, and numeric contract data.
+- Preserve the renderer lifecycle and settlement contract: quaternion error `<= 0.25°`, then copy and hold the exact target.
 - Reduced motion retains explicit player input and exact settlement while suppressing tumble/effect animation.
-- Test-first for every behavior change: observe the new test fail for the intended reason, implement minimally, then rerun focused and protected suites.
-- Do not stage `.pi/`, private evidence, or unrelated worktree changes.
+- Test-first for every behavior change: observe RED for the intended reason, implement minimally, then rerun focused and protected tests.
+- Use one writer subagent at a time. A fresh reviewer gates every task before the next writer starts.
+- Never stage `.pi/`, private evidence, or unrelated changes. Kirk alone merges.
 
-## File Structure
+## Visible Delivery Order
 
-### New web files
-
-- `src/components/ui/dice/attackDiePreset.ts` — allowlisted stable preset IDs and model/material/scale contract lookup.
-- `src/components/ui/dice/attackDiePreset.test.ts` — preset identity, allowlist, safe-default, and shared-model assertions.
-- `src/components/ui/dice/dicePresentationRelease.ts` — compact, sanitized presentation-only release value and gesture quantization.
-- `src/components/ui/dice/dicePresentationRelease.test.ts` — clamping, determinism, authority exclusion, and duplicate-key behavior.
-- `src/components/ui/dice/DiceTray3D.tsx` — production-intent tray layout, Roll/grab interaction, monster auto-release, and renderer composition.
-- `src/components/ui/dice/DiceTray3D.test.tsx` — player/monster/spectator, pointer cancellation, outside release, one-shot commit, fallback, and list-boundary tests.
-- `src/concepts/attack-die-3d/attackDieProvisionalFaceMap.ts` — hash-bound, explicitly provisional source-face normals and calibrated 1–20 quaternion tuples.
-- `src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts` — completeness, normalization, hash binding, unique results, and +Y face-normal assertions.
-- `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx` — Concepts Lab controls and local roller/spectator coordination.
-- `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx` — shared preset/result/release and non-stalling concept behavior.
-
-### Modified web files
-
-- `src/components/ui/dice/attackDieVisualConfig.ts` and `.test.ts` — approved 60° camera and review scale reduced from `1.4` to `1.1`.
-- `src/components/ui/dice/attackDieMaterial.ts` and `.test.ts` — preset-selected lightning versus provisional crypt treatment.
-- `src/components/ui/dice/attackDieMotion.ts` and `.test.ts` — armed/static, rolling, settled, and release-variation motion without changing final pose.
-- `src/components/ui/dice/AttackDie3D.tsx` and `.test.tsx` — preset resolution, phase-aware rendering, gesture-derived decorative input, and scale multiplier.
-- `src/concepts/attack-die-3d/attackDieExperiment.ts` and `.test.ts` — use the hash-bound provisional map instead of a result-10-only hardcode.
-- `src/concepts/attack-die-3d/AttackDie3DConcept.tsx` and `.test.tsx` — add Tray stage and pass provider data into the focused panel.
-- `public/themes/base.css` — tray/review surface, grab state, side-by-side layout, responsive sizing, and reduced-motion styles.
-- `docs/how-to/attack-die-3d-concept.md` — controls, provisional preset/map status, and explicit production exclusions.
+| Task | Browser-visible checkpoint |
+|---|---|
+| 0 | Existing approved roll, now smaller at scale 1.1 |
+| 1 | Empty rounded tray/drawer in a new Tray stage |
+| 2 | One result-10 lightning d20 placed and settling inside the tray |
+| 3 | Player waits for explicit Roll; monster can auto-roll |
+| 4 | Optional grab, shake, and release |
+| 5 | Stormforged and Cryptstone collectible presets |
+| 6 | Roller and spectator panes sharing one release |
+| 7 | Authoritative input 1–20 with complete provisional physical settlement |
+| 8 | Final browser matrix, private GIF, documentation, and independent branch review |
 
 ---
 
-### Task 0: Checkpoint the Approved Roll Foundation and Try Scale 1.1
+### Task 0: Checkpoint the Approved Roll and Try Scale 1.1
 
 **Files:**
 - Modify: `src/components/ui/dice/attackDieVisualConfig.test.ts`
 - Modify: `src/components/ui/dice/attackDieVisualConfig.ts`
 - Modify: `src/concepts/attack-die-3d/attackDieExperiment.test.ts`
-- Checkpoint all currently modified approved prototype files listed by `git status --short`
+- Checkpoint all currently modified approved prototype files shown by `git status --short`
 
-**Interfaces:**
-- Consumes: current local right-to-left trajectory, 440×360 surface, 60° three-quarter camera, geometry-derived result-10 pose, and browser-approved settlement.
-- Produces: a clean committed baseline with `ATTACK_DIE_VISUAL_CONFIG.dieScale === 1.1` for later tasks and no loss of the uncommitted approved work.
+**Produces:** committed baseline with the current right-to-left roll, 440×360 surface, 60° three-quarter camera, result-10 top face, and `ATTACK_DIE_VISUAL_CONFIG.dieScale === 1.1`.
 
-- [ ] **Step 1: Record and protect the existing dirty baseline**
-
-Run:
+- [ ] **Step 1: Verify and record the dirty baseline**
 
 ```bash
 cd /home/kirk/game-dev/rpg-dnd5e-web/.worktrees/attack-die-749
@@ -89,25 +75,21 @@ npm run typecheck
 npm run lint -- --quiet
 ```
 
-Expected: the 11 already modified tracked files remain visible; 48 focused tests pass; typecheck, lint, and diff check exit zero. Do not reset or create a new worktree before this checkpoint is committed.
+Expected: the current 11 tracked modifications remain; 48 focused tests pass; static checks exit zero. Do not reset, stash, or create a replacement worktree.
 
-- [ ] **Step 2: Write the failing 1.1-scale assertions**
-
-Change the visual-config expectation to:
+- [ ] **Step 2: Write the failing scale assertions**
 
 ```ts
 expect(ATTACK_DIE_VISUAL_CONFIG.dieScale).toBe(1.1);
 ```
 
-Change the experiment-default expectation to:
+and in the experiment defaults:
 
 ```ts
 dieScale: 1.1,
 ```
 
-- [ ] **Step 3: Run the focused tests to verify RED**
-
-Run:
+- [ ] **Step 3: Verify RED**
 
 ```bash
 npm run test:run -- \
@@ -115,23 +97,25 @@ npm run test:run -- \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts
 ```
 
-Expected: FAIL because the implementation still reports `1.4`.
+Expected: FAIL because implementation still reports `1.4`.
 
-- [ ] **Step 4: Apply the minimal visual change**
-
-Set only:
+- [ ] **Step 4: Apply only the approved scale experiment**
 
 ```ts
 dieScale: 1.1,
 ```
 
-in `ATTACK_DIE_VISUAL_CONFIG`. Do not change the approved camera, viewport, trajectory, or result-10 quaternion in this step.
+Do not alter camera, viewport, trajectory, or result-10 quaternion.
 
-- [ ] **Step 5: Verify the approved foundation and checkpoint it**
+- [ ] **Step 5: Verify GREEN, capture the browser state, and commit**
 
-Run the Step 1 commands again. Then capture a local, untracked settled screenshot at result 10 and confirm the full die remains readable and inside the review surface.
+Repeat Step 1. Capture result 10 settled at the real route to:
 
-Commit all approved existing prototype changes plus the scale adjustment:
+```text
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-0/result-10-scale-1.1.png
+```
+
+Confirm the complete die is visible. Then:
 
 ```bash
 git add \
@@ -149,11 +133,637 @@ git add \
 git commit -m "feat: prototype authoritative lightning d20 roll (#749)"
 ```
 
-Expected: `.pi/` remains untracked and unstaged.
+Expected: `.pi/` stays untracked and unstaged.
 
 ---
 
-### Task 1: Publish a Hash-Bound Provisional 1–20 Face Map
+### Task 1: Show an Empty Tray/Drawer First
+
+**Files:**
+- Create: `src/components/ui/dice/DiceTray3DShell.tsx`
+- Create: `src/components/ui/dice/DiceTray3DShell.test.tsx`
+- Create: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Create: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
+- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx`
+- Modify: `public/themes/base.css`
+
+**Produces:** a reusable rounded tray shell and fifth Concepts Lab tab that visibly renders an empty, non-interactive tray.
+
+```ts
+export interface DiceTray3DShellProps {
+  label: string;
+  phase: 'empty' | 'armed' | 'rolling' | 'settled';
+  children?: React.ReactNode;
+  controls?: React.ReactNode;
+  className?: string;
+}
+```
+
+- [ ] **Step 1: Write shell and concept tests**
+
+Assert:
+
+```ts
+render(<DiceTray3DShell label="Player attack tray" phase="empty" />);
+expect(screen.getByRole('region', { name: 'Player attack tray' })).toBeTruthy();
+expect(screen.getByText('Your d20 will appear here')).toBeTruthy();
+```
+
+With children, assert the empty copy disappears and children render inside `data-testid="dice-tray-3d-motion-surface"`, while `data-testid="dice-tray-3d-well"` remains a distinct rounded boundary.
+
+In `AttackDie3DConcept`, assert five keyboard-operable tabs:
+
+```ts
+['Appearance', 'Calibrate', 'Roll', 'Verify', 'Tray']
+```
+
+and Tray renders copy containing `Empty tray checkpoint` and `No interaction yet`.
+
+- [ ] **Step 2: Verify RED**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/DiceTray3DShell.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
+```
+
+Expected: FAIL because shell/panel/Tray stage do not exist.
+
+- [ ] **Step 3: Implement the shell and empty panel**
+
+The shell renders:
+
+```tsx
+<section
+  role="region"
+  aria-label={label}
+  className="dice-tray-3d-shell"
+  data-phase={phase}
+>
+  <div className="dice-tray-3d-shell__well" data-testid="dice-tray-3d-well" />
+  <div
+    className="dice-tray-3d-shell__motion-surface"
+    data-testid="dice-tray-3d-motion-surface"
+  >
+    {children ?? <p>Your d20 will appear here</p>}
+  </div>
+  {controls && <div className="dice-tray-3d-shell__controls">{controls}</div>}
+</section>
+```
+
+Add `Tray` to the existing tab array and keep arrow-key wrapping correct across five tabs. The panel passes no child yet and labels the checkpoint honestly.
+
+- [ ] **Step 4: Add the tray geometry CSS**
+
+- motion surface: `width: min(100%, 440px); height: 360px; position: relative; overflow: visible`;
+- well: centered rounded rectangle, visibly distinct from the outer review surface;
+- the well must not clip future throw motion;
+- responsive width remains readable below 700px;
+- visible focus styles are preserved for future controls.
+
+- [ ] **Step 5: Verify GREEN and capture the empty tray**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/DiceTray3DShell.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+git diff --check
+```
+
+Capture:
+
+```text
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-1/empty-tray.png
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add \
+  src/components/ui/dice/DiceTray3DShell.tsx \
+  src/components/ui/dice/DiceTray3DShell.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
+  public/themes/base.css
+git commit -m "feat: add empty 3d dice tray concept (#749)"
+```
+
+---
+
+### Task 2: Place One Working Result-10 d20 in the Tray
+
+**Files:**
+- Create: `src/components/ui/dice/DiceTray3D.tsx`
+- Create: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+- Modify: `public/themes/base.css`
+
+**Produces:** one list-shaped tray item rendered through the real `AttackDie3D`, fixed to the currently approved result-10 visual proof. No Roll or grab interaction yet.
+
+```ts
+export interface DiceTray3DItem {
+  id: string;
+  kind: 'd20';
+  presetId: string;
+  authoritativeResult: number;
+  presentationToken: number;
+}
+
+export interface DiceTray3DProps {
+  label: string;
+  phase: 'rolling' | 'settled';
+  dice: readonly DiceTray3DItem[];
+  reducedMotion?: boolean;
+  sceneOverride?: AttackDie3DProps['sceneOverride'];
+  sidecarOverride?: AttackDie3DProps['sidecarOverride'];
+  calibrationPose?: QuaternionTuple;
+}
+```
+
+- [ ] **Step 1: Write failing composition/cardinality tests**
+
+Mock `AttackDie3D`. Assert exactly one d20 passes `authoritativeResult`, token, and overrides unchanged. Assert empty, two-item, non-d20, and result outside 1–20 render semantic fallback copy and never mount `AttackDie3D`.
+
+- [ ] **Step 2: Verify RED**
+
+```bash
+npm run test:run -- src/components/ui/dice/DiceTray3D.test.tsx
+```
+
+Expected: FAIL because `DiceTray3D` does not exist.
+
+- [ ] **Step 3: Implement placement-only composition**
+
+Compose `AttackDie3D` inside `DiceTray3DShell`. For this task only, the concept supplies:
+
+```ts
+{
+  id: 'attack',
+  kind: 'd20',
+  presetId: 'lightning',
+  authoritativeResult: 10,
+  presentationToken: token,
+}
+```
+
+Use reduced motion for the initial settled placement and the existing geometry-derived result-10 pose. Label the panel `Placement checkpoint · result 10 only · no interaction yet`.
+
+- [ ] **Step 4: Write and implement containment styling**
+
+Add `data-testid="dice-tray-3d-renderer"`. At settled result 10, the projected die bounds must be fully inside `dice-tray-3d-well`; the larger 440×360 motion surface remains available for later overflow travel. Do not hide overflow.
+
+- [ ] **Step 5: Verify GREEN and capture**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+Browser-measure both bounding rectangles and assert the settled die's visible bounds are within the well. Capture:
+
+```text
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-2/result-10-in-tray.png
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  public/themes/base.css
+git commit -m "feat: place lightning d20 in the tray (#749)"
+```
+
+---
+
+### Task 3: Add Explicit Roll and Monster Auto-Roll
+
+**Files:**
+- Create: `src/components/ui/dice/dicePresentationRelease.ts`
+- Create: `src/components/ui/dice/dicePresentationRelease.test.ts`
+- Modify: `src/components/ui/dice/attackDieMotion.ts`
+- Modify: `src/components/ui/dice/attackDieMotion.test.ts`
+- Modify: `src/components/ui/dice/AttackDie3D.tsx`
+- Modify: `src/components/ui/dice/AttackDie3D.test.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+
+**Produces:** armed player tray that never auto-rolls, accessible Roll button, monster auto-roll, and phase-aware renderer that hides the result while armed.
+
+```ts
+export interface AttackDieDecorativeRelease {
+  variation: number;
+  vector: readonly [number, number];
+  shake: number;
+}
+
+export interface DicePresentationRelease extends AttackDieDecorativeRelease {
+  schemaVersion: 1;
+  presentationId: string;
+  presetId: string;
+}
+```
+
+`DiceTray3DProps` gains:
+
+```ts
+rollerRole: 'player' | 'monster';
+witnessRole: 'roller' | 'spectator';
+phase: 'armed' | 'rolling' | 'settled';
+release?: DicePresentationRelease;
+onReleaseRequest?: (value: DicePresentationRelease) => void;
+```
+
+- [ ] **Step 1: Write release-contract tests**
+
+`createDicePresentationRelease` must:
+
+- reject blank presentation ID and non-allowlisted preset;
+- normalize finite variation to `Math.abs(Math.trunc(value)) % 997`;
+- use `[0, 0]` and shake `0` for button release;
+- return a frozen object;
+- serialize with none of `result`, `hit`, `damage`, `target`, or URL;
+- key releases as `${presentationId}:${variation}`.
+
+- [ ] **Step 2: Verify RED and implement the compact button release**
+
+```bash
+npm run test:run -- src/components/ui/dice/dicePresentationRelease.test.ts
+```
+
+Implement the minimal deterministic constructor; rerun to GREEN.
+
+- [ ] **Step 3: Write phase-aware renderer tests**
+
+Assert:
+
+- `phase="ready"` uses the same neutral quaternion for authoritative results 1 and 20 and emits no observation;
+- `phase="rolling"` resets elapsed roll once and follows the existing trajectory;
+- `phase="settled"` copies exact target/resting position immediately;
+- reduced motion stays neutral while armed, then settles exactly when released.
+
+- [ ] **Step 4: Verify RED and implement phase-aware motion**
+
+Add:
+
+```ts
+export function attackDiePoseForPhase(input: {
+  phase: DiceTrayPhase;
+  elapsedMs: number;
+  reducedMotion: boolean;
+  current: QuaternionTuple;
+  target: QuaternionTuple;
+  release?: AttackDieDecorativeRelease;
+}): AttackDieMotionFrame & { translation: AttackDieTranslation };
+```
+
+Semantics:
+
+- `entering`/`ready`: fixed neutral pose at center, no target reveal;
+- `rolling`: current tumble/convergence;
+- `settled`/`exiting`: exact target at left resting position;
+- `hidden`: renderer not mounted.
+
+Wire `phase` and `decorativeRelease` through `AttackDie3D` without changing renderer-lock/token lifecycle.
+
+- [ ] **Step 5: Write player/monster/spectator tests**
+
+Assert:
+
+1. player+roller+armed shows `Roll d20`;
+2. advancing fake timers by one hour emits no release;
+3. Roll emits exactly once;
+4. monster+roller+armed emits one automatic release in an effect;
+5. spectator never renders controls and never emits;
+6. supplied result remains unchanged through release.
+
+- [ ] **Step 6: Implement the interaction state**
+
+Use one commit ref keyed by `presentationId`. Button and monster effect call the same one-shot release function. The concept controls phase: Arm → shared release → rolling → matching observed telemetry → settled. Keep this single-pane at this task; spectator pairing comes in Task 6.
+
+- [ ] **Step 7: Verify, capture, and commit**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/attackDieMotion.test.ts \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+Capture armed and rolling states under `task-3/`. Then:
+
+```bash
+git add \
+  src/components/ui/dice/dicePresentationRelease.ts \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/attackDieMotion.ts \
+  src/components/ui/dice/attackDieMotion.test.ts \
+  src/components/ui/dice/AttackDie3D.tsx \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+git commit -m "feat: add explicit player dice roll (#749)"
+```
+
+---
+
+### Task 4: Add Optional Grab, Shake, and Release
+
+**Files:**
+- Modify: `src/components/ui/dice/dicePresentationRelease.ts`
+- Modify: `src/components/ui/dice/dicePresentationRelease.test.ts`
+- Modify: `src/components/ui/dice/DiceTray3D.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/components/ui/dice/attackDieMotion.ts`
+- Modify: `src/components/ui/dice/attackDieMotion.test.ts`
+- Modify: `public/themes/base.css`
+
+**Produces:** optional pointer/touch ritual that emits one compact release; pointer movement stays local and affects only decorative motion.
+
+```ts
+export interface DiceGestureSample {
+  origin: readonly [number, number];
+  current: readonly [number, number];
+  distance: number;
+}
+```
+
+Quantization:
+
+```ts
+vector: [clamp(dx / 160, -1, 1), clamp(dy / 160, -1, 1)]
+shake: clamp(distance / 240, 0, 1)
+```
+
+- [ ] **Step 1: Write quantization and authority tests**
+
+Assert finite clamping, absent gesture defaults, deterministic equality, and no outcome fields. Two releases may change mid-roll translation/quaternion but must finish at identical target/resting pose.
+
+- [ ] **Step 2: Verify RED and implement quantization**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/attackDieMotion.test.ts
+```
+
+Implement, then rerun to GREEN.
+
+- [ ] **Step 3: Write pointer lifecycle tests**
+
+Using explicit `pointerId`, assert:
+
+- only player+roller+armed can capture;
+- pointer move changes local `data-grabbed="true"` presentation but emits nothing;
+- pointer-up outside the tray still emits once;
+- duplicate pointer-up/click cannot emit again;
+- pointer-cancel and lost capture return to armed without release;
+- unmount during grab cleans up;
+- reduced motion preserves explicit input.
+
+Stub `setPointerCapture`, `hasPointerCapture`, and `releasePointerCapture` in jsdom.
+
+- [ ] **Step 4: Implement one-shot pointer handling**
+
+Track pointer ID, origin, current point, and accumulated path distance. Use pointer capture on an accessible button labeled `Grab d20`; set `touch-action: none`. Pointer-up builds the same release contract as Roll. Never pass move samples to parent/spectator.
+
+- [ ] **Step 5: Verify, capture, and commit**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/attackDieMotion.test.ts \
+  src/components/ui/dice/DiceTray3D.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+Capture mid-drag, outside-travel, and settled states under `task-4/`. Then:
+
+```bash
+git add \
+  src/components/ui/dice/dicePresentationRelease.ts \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/attackDieMotion.ts \
+  src/components/ui/dice/attackDieMotion.test.ts \
+  public/themes/base.css
+git commit -m "feat: add grab and release dice gesture (#749)"
+```
+
+---
+
+### Task 5: Add Two Collectible Presets
+
+**Files:**
+- Create: `src/components/ui/dice/attackDiePreset.ts`
+- Create: `src/components/ui/dice/attackDiePreset.test.ts`
+- Modify: `src/components/ui/dice/attackDieMaterial.ts`
+- Modify: `src/components/ui/dice/attackDieMaterial.test.ts`
+- Modify: `src/components/ui/dice/AttackDie3D.tsx`
+- Modify: `src/components/ui/dice/AttackDie3D.test.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+
+**Produces:** allowlisted Stormforged and Cryptstone identities, sharing geometry/face map but using distinct treatments.
+
+```ts
+export type AttackDiePresetId = 'lightning' | 'crypt';
+export type AttackDieMaterialTreatment = 'lightning' | 'crypt';
+export interface AttackDiePreset {
+  id: AttackDiePresetId;
+  displayName: string;
+  familyId: string;
+  dieKind: 'd20';
+  modelContractId: 'lightning-d20';
+  materialTreatment: AttackDieMaterialTreatment;
+  scaleMultiplier: number;
+}
+```
+
+- [ ] **Step 1: Write registry tests**
+
+Require:
+
+```ts
+lightning: {
+  id: 'lightning',
+  displayName: 'Stormforged',
+  familyId: 'stormforged',
+  modelContractId: 'lightning-d20',
+  materialTreatment: 'lightning',
+  scaleMultiplier: 1,
+}
+crypt: {
+  id: 'crypt',
+  displayName: 'Cryptstone',
+  familyId: 'cryptstone',
+  modelContractId: 'lightning-d20',
+  materialTreatment: 'crypt',
+  scaleMultiplier: 1,
+}
+```
+
+Unknown IDs and URL-shaped values resolve `undefined`.
+
+- [ ] **Step 2: Verify RED and implement the frozen allowlist**
+
+```bash
+npm run test:run -- src/components/ui/dice/attackDiePreset.test.ts
+```
+
+Implement without accepting caller URLs.
+
+- [ ] **Step 3: Write treatment tests**
+
+For Cryptstone, assert cloned standard materials use:
+
+```ts
+body.color.set('#24272b');
+body.roughness = 0.9;
+body.metalness = 0.05;
+numeral.color.set('#d8cfb2');
+numeral.emissive.set('#4d563c');
+numeral.emissiveIntensity = reducedMotion ? 0.08 : 0.12;
+```
+
+Stormforged preserves current source treatment. Both dispose owned clones once and include treatment/reduced state in shader cache key.
+
+- [ ] **Step 4: Verify RED and implement treatment**
+
+```bash
+npm run test:run -- src/components/ui/dice/attackDieMaterial.test.ts
+```
+
+Wire preset resolution inside `AttackDie3D`. Unknown preset emits failure code `'unknown-preset'` and uses fallback.
+
+- [ ] **Step 5: Add concept selector and shared result invariance test**
+
+Switching preset changes both display name and material treatment but does not change `authoritativeResult`, target quaternion, or release semantics. Label both presets provisional.
+
+- [ ] **Step 6: Verify, capture, and commit**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/attackDiePreset.test.ts \
+  src/components/ui/dice/attackDieMaterial.test.ts \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+Capture both settled looks under `task-5/`. Then:
+
+```bash
+git add \
+  src/components/ui/dice/attackDiePreset.ts \
+  src/components/ui/dice/attackDiePreset.test.ts \
+  src/components/ui/dice/attackDieMaterial.ts \
+  src/components/ui/dice/attackDieMaterial.test.ts \
+  src/components/ui/dice/AttackDie3D.tsx \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+git commit -m "feat: add collectible dice presets (#749)"
+```
+
+---
+
+### Task 6: Show Roller and Spectator Side by Side
+
+**Files:**
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `public/themes/base.css`
+
+**Produces:** two visible panes that show the roller's same preset and begin from one simulated compact release; pointer movement remains local.
+
+- [ ] **Step 1: Write shared-witness tests**
+
+Assert:
+
+1. Roller and Spectator headings render;
+2. both trays receive identical preset/result/token;
+3. spectator receives `witnessRole="spectator"` and no controls;
+4. pointer move changes only roller local state;
+5. roller release causes both trays to receive the same frozen release object and rolling phase;
+6. monster mode causes one shared automatic release;
+7. stale telemetry cannot settle a newer token;
+8. matching observed telemetry settles both;
+9. duplicate release key is ignored;
+10. concept copy says `Simulated presentation coordination · no production networking`.
+
+- [ ] **Step 2: Verify RED**
+
+```bash
+npm run test:run -- \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx
+```
+
+- [ ] **Step 3: Implement local shared release**
+
+Both panes receive the same provider scene/sidecar without a second fetch. Roller `onReleaseRequest` stores one release and changes both phases in one React update. Only matching roller telemetry settles the pair. This is local concept state, not a network abstraction.
+
+- [ ] **Step 4: Add responsive comparison layout**
+
+Use two columns only when two readable tray surfaces fit; otherwise stack. Each pane labels role, preset, phase, and authoritative result. Do not shrink numerals to force columns.
+
+- [ ] **Step 5: Verify, capture, and commit**
+
+```bash
+npm run test:run -- \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+Capture armed and rolling paired views under `task-6/`. Then:
+
+```bash
+git add \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  public/themes/base.css
+git commit -m "feat: compare shared roller and spectator throws (#749)"
+```
+
+---
+
+### Task 7: Allow Authoritative Result 1–20 Without Lying
 
 **Files:**
 - Create: `src/concepts/attack-die-3d/attackDieProvisionalFaceMap.ts`
@@ -162,13 +772,14 @@ Expected: `.pi/` remains untracked and unstaged.
 - Modify: `src/concepts/attack-die-3d/attackDieExperiment.test.ts`
 - Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
 - Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
 
-**Interfaces:**
-- Consumes: inspected lightning GLB hash and the existing `QuaternionTuple` coordinate contract (`xyzw`, right-handed, +Y up).
-- Produces:
+**Produces:** exact-digest provisional 1–20 map and result input. Wrong/missing mappings use SVG.
 
 ```ts
-export const PROVISIONAL_LIGHTNING_GLB_SHA256: string;
+export const PROVISIONAL_LIGHTNING_GLB_SHA256 =
+  '8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa';
 export const PROVISIONAL_LIGHTNING_FACE_MAP: ReadonlyArray<{
   result: number;
   quaternion: QuaternionTuple;
@@ -178,48 +789,11 @@ export function provisionalLightningFacesForDigest(
 ): typeof PROVISIONAL_LIGHTNING_FACE_MAP | readonly [];
 ```
 
-- [ ] **Step 1: Write completeness, geometry, and invalidation tests**
+- [ ] **Step 1: Write completeness/hash/geometry tests**
 
-Create tests that assert:
+Require 20 sorted unique results, normalized quaternions, exact hash binding, mismatch `[]`, and result 10's existing approved tuple. For every result, apply its quaternion to the inspected source normal and assert browser +Y within five decimals.
 
-```ts
-expect(PROVISIONAL_LIGHTNING_FACE_MAP).toHaveLength(20);
-expect(PROVISIONAL_LIGHTNING_FACE_MAP.map((face) => face.result)).toEqual(
-  Array.from({ length: 20 }, (_, index) => index + 1)
-);
-expect(
-  provisionalLightningFacesForDigest(PROVISIONAL_LIGHTNING_GLB_SHA256)
-).toBe(PROVISIONAL_LIGHTNING_FACE_MAP);
-expect(provisionalLightningFacesForDigest('0'.repeat(64))).toEqual([]);
-```
-
-For every result, apply the quaternion to that result's inspected source normal and assert it reaches browser +Y:
-
-```ts
-const observed = sourceNormal.clone().applyQuaternion(
-  new Quaternion(...face.quaternion)
-);
-expect(observed.x).toBeCloseTo(0, 5);
-expect(observed.y).toBeCloseTo(1, 5);
-expect(observed.z).toBeCloseTo(0, 5);
-expect(Math.hypot(...face.quaternion)).toBeCloseTo(1, 6);
-```
-
-Also preserve the existing exact result-10 tuple assertion so the approved pose cannot drift.
-
-- [ ] **Step 2: Run the new test to verify RED**
-
-Run:
-
-```bash
-npm run test:run -- src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts
-```
-
-Expected: FAIL because the module does not exist.
-
-- [ ] **Step 3: Add the inspected source-normal table and derivation**
-
-Use these browser-coordinate normals, mapped from the inspected numeral-face clusters:
+Use these inspected browser-coordinate source normals:
 
 ```ts
 const SOURCE_NORMAL_BY_RESULT = {
@@ -246,73 +820,47 @@ const SOURCE_NORMAL_BY_RESULT = {
 } as const satisfies Record<number, Vector3Tuple>;
 ```
 
-Build normalized candidate poses by aligning each source normal to +Y, then applying a yaw around +Y. Start from this complete, deterministic review table:
+- [ ] **Step 2: Verify RED and build deterministic candidate poses**
 
-```ts
-const INITIAL_READABILITY_YAW_DEGREES = {
-  1: 0,
-  2: 0,
-  3: 0,
-  4: 0,
-  5: 0,
-  6: 0,
-  7: 0,
-  8: 0,
-  9: 0,
-  10: 225,
-  11: 0,
-  12: 0,
-  13: 0,
-  14: 0,
-  15: 0,
-  16: 0,
-  17: 0,
-  18: 0,
-  19: 0,
-  20: 0,
-} as const satisfies Record<number, number>;
+Align each normal to +Y, then yaw around +Y. Start with yaw `225` for result 10 and `0` for the other explicit entries. Zero is a review start, not a readability claim.
+
+```bash
+npm run test:run -- src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts
 ```
 
-Result 10's `225` degrees reproduces the approved tuple. Zero is an explicit initial review value, not a readability claim; Step 4 replaces any unreadable value with the reviewed numeric yaw. No result may be absent. Keep this module under `concepts/` and label every export provisional.
+- [ ] **Step 3: Calibrate readability result by result**
 
-- [ ] **Step 4: Calibrate readable yaw without changing which face is uppermost**
+For each result 1→20 at the 60° three-quarter camera:
 
-Use the existing Calibrate controls and the 60° three-quarter camera for each result 1→20:
+1. verify the intended numeral is physically uppermost;
+2. adjust only yaw around +Y until readable;
+3. store the final normalized tuple explicitly;
+4. rerun the +Y geometry assertion;
+5. keep contact sheets/screenshots private.
 
-1. select the result;
-2. confirm the intended numeral is on the upper face;
-3. rotate only around world/up presentation orientation as needed to make the numeral readable;
-4. record the resulting normalized `xyzw` tuple explicitly in `PROVISIONAL_LIGHTNING_FACE_MAP`;
-5. re-run the source-normal-to-+Y assertion.
+The map remains concept-only provisional and is not asset-team human approval.
 
-Keep contact sheets/screenshots under `/tmp` or `.verification`, never Git. A tuple is accepted only if both top-face geometry and human readability agree. Do not infer human approval for the canonical asset contract; label this as concept-only provisional calibration.
+- [ ] **Step 4: Bind provider import to the exact digest**
 
-- [ ] **Step 5: Bind the concept provider to the exact hash**
+Only exact digest imports all provisional faces. Digest mismatch passes no mapped calibration pose outside Calibrate, forcing SVG. Add authoritative input 1–20 to the Tray stage and mirror it to both panes.
 
-Replace the result-10-only hardcode with:
-
-```ts
-faces: provisionalLightningFacesForDigest(digest),
-```
-
-Only import provisional faces into experiment state when the digest equals `PROVISIONAL_LIGHTNING_GLB_SHA256`. If it differs, pass no calibration pose in Roll/Appearance/Tray stages so `AttackDie3D` uses SVG fallback. The Calibrate stage may still manipulate an explicitly provisional unsaved pose, but it must not call it mapped.
-
-- [ ] **Step 6: Verify GREEN and protected contract tests**
-
-Run:
+- [ ] **Step 5: Verify all results and fallback**
 
 ```bash
 npm run test:run -- \
   src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
   src/components/ui/dice/attackDieContract.test.ts \
   src/components/ui/dice/AttackDie3D.test.tsx
+npm run typecheck
+npm run lint -- --quiet
 ```
 
-Expected: all tests pass; results 1–20 are mapped only for the exact known digest; mismatch exercises fallback.
+Browser-run results 1→20 in normal and reduced motion. Any wrong physical face is a blocker and requires a failing regression test before correction. Capture a 20-face private contact sheet under `task-7/`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add \
@@ -321,710 +869,33 @@ git add \
   src/concepts/attack-die-3d/attackDieExperiment.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
   src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
-  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
-git commit -m "feat: map provisional lightning d20 faces (#749)"
-```
-
----
-
-### Task 2: Add Stable Collectible-Die Presets and a Crypt Skin
-
-**Files:**
-- Create: `src/components/ui/dice/attackDiePreset.ts`
-- Create: `src/components/ui/dice/attackDiePreset.test.ts`
-- Modify: `src/components/ui/dice/attackDieMaterial.ts`
-- Modify: `src/components/ui/dice/attackDieMaterial.test.ts`
-- Modify: `src/components/ui/dice/AttackDie3D.tsx`
-- Modify: `src/components/ui/dice/AttackDie3D.test.tsx`
-
-**Interfaces:**
-- Consumes: existing allowlisted lightning model/runtime contract and `AttackDieMaterialMode`.
-- Produces:
-
-```ts
-export type AttackDiePresetId = 'lightning' | 'crypt';
-export type AttackDieMaterialTreatment = 'lightning' | 'crypt';
-export interface AttackDiePreset {
-  id: AttackDiePresetId;
-  displayName: string;
-  familyId: string;
-  dieKind: 'd20';
-  modelContractId: 'lightning-d20';
-  materialTreatment: AttackDieMaterialTreatment;
-  scaleMultiplier: number;
-}
-export const DEFAULT_ATTACK_DIE_PRESET_ID: AttackDiePresetId;
-export function resolveAttackDiePreset(id: string): AttackDiePreset | undefined;
-```
-
-`AttackDie3DProps` gains:
-
-```ts
-presetId?: string;
-```
-
-with `lightning` as the compatibility default.
-
-- [ ] **Step 1: Write failing registry tests**
-
-Assert that:
-
-```ts
-expect(resolveAttackDiePreset('lightning')).toMatchObject({
-  id: 'lightning',
-  modelContractId: 'lightning-d20',
-  materialTreatment: 'lightning',
-});
-expect(resolveAttackDiePreset('crypt')).toMatchObject({
-  id: 'crypt',
-  modelContractId: 'lightning-d20',
-  materialTreatment: 'crypt',
-});
-expect(resolveAttackDiePreset('https://example.com/die.glb')).toBeUndefined();
-```
-
-Also assert both first-slice presets share geometry/face map but have different stable IDs and treatments.
-
-- [ ] **Step 2: Run to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/attackDiePreset.test.ts
-```
-
-Expected: FAIL because the registry module does not exist.
-
-- [ ] **Step 3: Implement the frozen allowlisted registry**
-
-Create a deeply immutable two-entry registry. Use player-neutral identities:
-
-```ts
-lightning: {
-  id: 'lightning',
-  displayName: 'Stormforged',
-  familyId: 'stormforged',
-  dieKind: 'd20',
-  modelContractId: 'lightning-d20',
-  materialTreatment: 'lightning',
-  scaleMultiplier: 1,
-},
-crypt: {
-  id: 'crypt',
-  displayName: 'Cryptstone',
-  familyId: 'cryptstone',
-  dieKind: 'd20',
-  modelContractId: 'lightning-d20',
-  materialTreatment: 'crypt',
-  scaleMultiplier: 1,
-},
-```
-
-These names are provisional Concepts Lab copy, not asset-catalog truth. The registry contains no URL supplied by the caller.
-
-- [ ] **Step 4: Write failing material-treatment tests**
-
-Extend `patchAttackDieMaterials` with a final treatment argument. Use real `MeshStandardMaterial` values and assert:
-
-```ts
-const crypt = patchAttackDieMaterials(
-  [body, numeral],
-  'raw',
-  false,
-  selectors,
-  'crypt'
-);
-expect((crypt.body as MeshStandardMaterial).color.getHexString()).toBe('24272b');
-expect((crypt.numeral as MeshStandardMaterial).color.getHexString()).toBe(
-  'd8cfb2'
-);
-```
-
-Also assert lightning preserves source colors and crypt magical/reduced-motion behavior still obeys the existing shader-time contract.
-
-- [ ] **Step 5: Run material tests to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/attackDieMaterial.test.ts
-```
-
-Expected: FAIL because treatment is ignored/not accepted.
-
-- [ ] **Step 6: Implement the crypt treatment minimally**
-
-For `crypt`, require color-capable standard materials and apply:
-
-```ts
-body.color.set('#24272b');
-body.roughness = 0.9;
-body.metalness = 0.05;
-numeral.color.set('#d8cfb2');
-numeral.emissive.set('#4d563c');
-numeral.emissiveIntensity = reducedMotion ? 0.08 : 0.12;
-```
-
-Keep lightning behavior unchanged. Include treatment and reduced-motion state in `customProgramCacheKey`. Continue cloning/disposal ownership exactly once; add a test proving both treated clones dispose with the token.
-
-- [ ] **Step 7: Resolve presets inside `AttackDie3D`**
-
-Resolve `presetId` at the renderer boundary, pass `materialTreatment` into material patching, and multiply the configured base scale by `scaleMultiplier`. Unknown IDs call `fail('unknown attack die preset', 'unknown-preset')` and render only fallback. Add `'unknown-preset'` to `AttackDieFailureCode`.
-
-The model remains the existing allowlisted runtime in this slice; do not generalize `asset.url` to arbitrary strings.
-
-- [ ] **Step 8: Verify GREEN**
-
-```bash
-npm run test:run -- \
-  src/components/ui/dice/attackDiePreset.test.ts \
-  src/components/ui/dice/attackDieMaterial.test.ts \
-  src/components/ui/dice/AttackDie3D.test.tsx
-npm run typecheck
-```
-
-Expected: both presets render from the same model contract with distinct treatments; unknown preset fails closed.
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add \
-  src/components/ui/dice/attackDiePreset.ts \
-  src/components/ui/dice/attackDiePreset.test.ts \
-  src/components/ui/dice/attackDieMaterial.ts \
-  src/components/ui/dice/attackDieMaterial.test.ts \
-  src/components/ui/dice/AttackDie3D.tsx \
-  src/components/ui/dice/AttackDie3D.test.tsx
-git commit -m "feat: add collectible attack die presets (#749)"
-```
-
----
-
-### Task 3: Make the Renderer Phase-Aware and Gesture-Variable
-
-**Files:**
-- Modify: `src/components/ui/dice/attackDieMotion.ts`
-- Modify: `src/components/ui/dice/attackDieMotion.test.ts`
-- Modify: `src/components/ui/dice/AttackDie3D.tsx`
-- Modify: `src/components/ui/dice/AttackDie3D.test.tsx`
-
-**Interfaces:**
-- Consumes: `DiceTrayPhase`, exact target quaternion, preset scale, and a sanitized release value from Task 4's declared shape (define the shared type in this task only as the import target; Task 4 implements its constructor).
-- Produces:
-
-```ts
-export interface AttackDieDecorativeRelease {
-  variation: number;
-  vector: readonly [number, number];
-  shake: number;
-}
-
-export function attackDiePoseForPhase(input: {
-  phase: DiceTrayPhase;
-  elapsedMs: number;
-  reducedMotion: boolean;
-  current: QuaternionTuple;
-  target: QuaternionTuple;
-  release?: AttackDieDecorativeRelease;
-}): AttackDieMotionFrame & { translation: AttackDieTranslation };
-```
-
-`AttackDie3DProps` gains:
-
-```ts
-decorativeRelease?: AttackDieDecorativeRelease;
-```
-
-- [ ] **Step 1: Write failing phase tests**
-
-Add tests proving:
-
-```ts
-expect(attackDiePoseForPhase({ ...base, phase: 'ready' })).toMatchObject({
-  observeNow: false,
-  exactTargetHeld: false,
-  translation: [0, 0, 0],
-});
-expect(
-  attackDiePoseForPhase({ ...base, phase: 'settled' }).quaternion
-).toEqual(target);
-```
-
-The `ready` quaternion must be a fixed neutral display pose that is not derived from `target`, preventing an armed tray from revealing the authoritative face. `settled` must hold the exact target at the in-tray resting position.
-
-Add a decorative-only assertion:
-
-```ts
-expect(midA.translation).not.toEqual(midB.translation);
-expect(settledA.translation).toEqual(settledB.translation);
-expect(settledA.quaternion).toEqual(target);
-expect(settledB.quaternion).toEqual(target);
-```
-
-where releases differ but authoritative result/target do not.
-
-- [ ] **Step 2: Run to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/attackDieMotion.test.ts
-```
-
-Expected: FAIL because phase-aware API does not exist.
-
-- [ ] **Step 3: Implement phase-aware motion**
-
-Use these semantics:
-
-- `hidden`: renderer is not mounted by `AttackDie3D`.
-- `entering` / `ready`: fixed neutral quaternion, centered `[0, 0, 0]`, no observation.
-- `rolling`: existing 2-second deterministic tumble/convergence and right-to-left translation.
-- `settled`: exact target quaternion and exact resting translation.
-- `exiting`: exact target held while the tray's CSS exit treatment runs.
-
-Release vector/shake may alter only pre-settle hop, z-depth, and decorative seed. Clamp its contribution even though Task 4 sanitizes it; defense in depth prevents an imported caller from moving the resting pose.
-
-- [ ] **Step 4: Add failing renderer integration tests**
-
-Mock frames and assert:
-
-1. `phase="ready"` copies the same neutral pose for result 1 and result 20;
-2. switching to `phase="rolling"` resets elapsed motion once;
-3. `phase="settled"` immediately copies exact target and resting position;
-4. two release values produce different mid-roll `position.set` calls but identical final target calls;
-5. reduced motion remains armed until phase changes, then settles exactly.
-
-- [ ] **Step 5: Run renderer test to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/AttackDie3D.test.tsx
-```
-
-Expected: FAIL because `RuntimeDie` still rolls regardless of phase.
-
-- [ ] **Step 6: Wire phase through `RuntimeDie`**
-
-Reset its start timestamp and rendered quaternion when entering a new rolling presentation. Do not remount or replace the renderer lock merely because phase changes. Apply `attackDiePoseForPhase` from the frame callback. Preserve token-staleness, exact-target observation, lifecycle release, shader time, and fail-closed behavior.
-
-- [ ] **Step 7: Verify GREEN and lifecycle protection**
-
-```bash
-npm run test:run -- \
-  src/components/ui/dice/attackDieMotion.test.ts \
-  src/components/ui/dice/AttackDie3D.test.tsx \
-  src/components/ui/dice/attackDieRendererLifecycle.test.ts \
-  src/components/ui/dice/attackDieRenderGate.test.ts
-```
-
-Expected: all pass; armed phase does not reveal or auto-roll; final pose remains exact.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add \
-  src/components/ui/dice/attackDieMotion.ts \
-  src/components/ui/dice/attackDieMotion.test.ts \
-  src/components/ui/dice/AttackDie3D.tsx \
-  src/components/ui/dice/AttackDie3D.test.tsx
-git commit -m "feat: add armed and settled die phases (#749)"
-```
-
----
-
-### Task 4: Define the Compact Presentation Release Contract
-
-**Files:**
-- Create: `src/components/ui/dice/dicePresentationRelease.ts`
-- Create: `src/components/ui/dice/dicePresentationRelease.test.ts`
-
-**Interfaces:**
-- Consumes: stable `AttackDiePresetId` from Task 2.
-- Produces:
-
-```ts
-export interface DicePresentationRelease extends AttackDieDecorativeRelease {
-  schemaVersion: 1;
-  presentationId: string;
-  presetId: AttackDiePresetId;
-}
-
-export interface DiceGestureSample {
-  origin: readonly [number, number];
-  current: readonly [number, number];
-  distance: number;
-}
-
-export function createDicePresentationRelease(input: {
-  presentationId: string;
-  presetId: string;
-  gesture?: DiceGestureSample;
-  variation: number;
-}): DicePresentationRelease;
-
-export function releaseKey(value: DicePresentationRelease): string;
-```
-
-- [ ] **Step 1: Write failing release-contract tests**
-
-Assert exact behavior:
-
-- blank presentation IDs throw;
-- unknown preset IDs throw;
-- variation is finite, truncated, absolute, and reduced modulo `997`;
-- vector components are finite and clamped to `[-1, 1]` after dividing pointer delta by `160` pixels;
-- shake is `clamp(distance / 240, 0, 1)`;
-- absent gesture produces vector `[0, 0]` and shake `0`;
-- repeated input produces deep-equal output;
-- the serialized value contains none of `result`, `hit`, `damage`, `target`, or arbitrary URL fields;
-- `releaseKey` is `${presentationId}:${variation}`.
-
-- [ ] **Step 2: Run to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/dicePresentationRelease.test.ts
-```
-
-Expected: FAIL because the module does not exist.
-
-- [ ] **Step 3: Implement strict quantization**
-
-Use a local finite/clamp helper and return an `Object.freeze`d value. Do not include timestamps or randomness in this constructor; the caller supplies a variation counter so roller and spectator can replay the same compact value.
-
-- [ ] **Step 4: Verify GREEN**
-
-```bash
-npm run test:run -- \
-  src/components/ui/dice/dicePresentationRelease.test.ts \
-  src/components/ui/dice/attackDieMotion.test.ts
-```
-
-Expected: release values are deterministic, bounded, and presentation-only.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add \
-  src/components/ui/dice/dicePresentationRelease.ts \
-  src/components/ui/dice/dicePresentationRelease.test.ts
-git commit -m "feat: define shared dice release presentation (#749)"
-```
-
----
-
-### Task 5: Build the Production-Intent `DiceTray3D` Interaction Component
-
-**Files:**
-- Create: `src/components/ui/dice/DiceTray3D.tsx`
-- Create: `src/components/ui/dice/DiceTray3D.test.tsx`
-- Modify: `public/themes/base.css`
-
-**Interfaces:**
-- Consumes: `AttackDie3D`, `AttackDiePresetId`, `DicePresentationRelease`, and existing authoring overrides for the Concepts Lab.
-- Produces:
-
-```ts
-export type DiceTrayRollerRole = 'player' | 'monster';
-export type DiceTrayWitnessRole = 'roller' | 'spectator';
-
-export interface DiceTray3DItem {
-  id: string;
-  kind: 'd20';
-  presetId: string;
-  authoritativeResult: number;
-  presentationToken: number;
-}
-
-export interface DiceTray3DProps {
-  presentationId: string;
-  rollerRole: DiceTrayRollerRole;
-  witnessRole: DiceTrayWitnessRole;
-  phase: 'armed' | 'rolling' | 'settled';
-  dice: readonly DiceTray3DItem[];
-  release?: DicePresentationRelease;
-  reducedMotion?: boolean;
-  onReleaseRequest?: (release: DicePresentationRelease) => void;
-  onTelemetry?: (event: AttackDieTelemetry) => void;
-  sceneOverride?: AttackDie3DProps['sceneOverride'];
-  sidecarOverride?: AttackDie3DProps['sidecarOverride'];
-}
-```
-
-The first implementation validates exactly one `kind: 'd20'` item at runtime but keeps the prop list-shaped. Invalid cardinality renders a semantic fallback/status and never invents damage dice.
-
-- [ ] **Step 1: Write player/monster/spectator tests first**
-
-Mock `AttackDie3D` and assert:
-
-1. player + roller + armed shows both `Roll Stormforged d20` and `Grab Stormforged d20`;
-2. advancing fake timers by any duration does not call `onReleaseRequest`;
-3. clicking Roll calls `onReleaseRequest` exactly once;
-4. monster + roller + armed requests one automatic release in an effect;
-5. spectator never renders Roll/grab controls and never auto-requests a release;
-6. the renderer receives the supplied authoritative result and preset unchanged;
-7. two dice or a non-d20 item fail closed rather than rendering a fabricated group.
-
-- [ ] **Step 2: Run to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/DiceTray3D.test.tsx
-```
-
-Expected: FAIL because the component does not exist.
-
-- [ ] **Step 3: Implement the tray shell and button path**
-
-Render a semantic section with these stable review attributes:
-
-```tsx
-<section
-  className="dice-tray-3d"
-  data-phase={phase}
-  data-roller-role={rollerRole}
-  data-witness-role={witnessRole}
-  data-preset={die.presetId}
->
-```
-
-Compose `AttackDie3D` over a distinct rounded `.dice-tray-3d__well`. Keep the 440×360 motion surface and a smaller centered tray rectangle so WebGL motion may cross the rectangle while remaining visible. Pass `phase="ready"` for armed, then rolling/settled directly. The SVG `DiceTray` fallback uses the same semantic phase/result but must show `?` while armed.
-
-- [ ] **Step 4: Write failing pointer tests**
-
-Use `fireEvent.pointerDown/move/up/cancel` with explicit `pointerId`. Assert:
-
-- pointer down captures only in player/roller/armed;
-- local pointer moves update `data-grabbed="true"` and a bounded CSS translate but emit no release;
-- pointer up outside the tray still emits exactly one release;
-- the release contains the selected preset and quantized gesture, not a result;
-- a subsequent click/pointer-up cannot emit a second release for the same presentation;
-- pointer cancel returns to armed with no release;
-- lost capture returns to armed if release did not commit;
-- unmount during grab removes local state/listeners;
-- reduced motion keeps the same explicit input behavior.
-
-Stub `setPointerCapture`, `hasPointerCapture`, and `releasePointerCapture` in jsdom rather than weakening production code.
-
-- [ ] **Step 5: Run pointer tests to verify RED**
-
-```bash
-npm run test:run -- src/components/ui/dice/DiceTray3D.test.tsx
-```
-
-Expected: interaction assertions fail because pointer handling is absent.
-
-- [ ] **Step 6: Implement one-shot pointer interaction**
-
-Track only local roller state:
-
-```ts
-interface ActiveGrab {
-  pointerId: number;
-  origin: readonly [number, number];
-  current: readonly [number, number];
-  distance: number;
-}
-```
-
-Use pointer capture on the grab control. Accumulate path distance on move. On pointer-up, call `createDicePresentationRelease`, clear local translation, and commit through a ref keyed by `presentationId`. Never expose move samples through props. Pointer-cancel/lost-capture returns to armed without committing. The separate Roll button uses an absent gesture and the same one-shot commit path.
-
-- [ ] **Step 7: Add tray CSS and containment contract**
-
-Add:
-
-- `.dice-tray-3d` as the 440×360 motion surface;
-- `.dice-tray-3d__well` as the rounded popup rectangle;
-- `.dice-tray-3d__renderer` as the larger overlay layer;
-- `.dice-tray-3d__grab-target` with `touch-action: none` and visible keyboard focus;
-- grabbed/armed/rolling/settled data-state styles;
-- responsive width using `min(100%, 440px)`;
-- side-by-side-safe minimums;
-- reduced-motion rules that disable transitions but not controls.
-
-Do not set `overflow: hidden` on the motion surface or well; the WebGL canvas layer must be large enough for travel outside the rounded rectangle. The settled model's projected bounds must fit within the well at scale 1.1.
-
-- [ ] **Step 8: Verify GREEN and existing SVG protection**
-
-```bash
-npm run test:run -- \
-  src/components/ui/dice/DiceTray3D.test.tsx \
-  src/components/ui/dice/DiceTray.test.tsx \
-  src/components/ui/dice/AttackDie3D.test.tsx
-npm run typecheck
-npm run lint -- --quiet
-```
-
-Expected: player waits forever, monster auto-releases once, spectator is read-only, and fallback remains semantic.
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add \
-  src/components/ui/dice/DiceTray3D.tsx \
-  src/components/ui/dice/DiceTray3D.test.tsx \
-  public/themes/base.css
-git commit -m "feat: add interactive 3d dice tray (#749)"
-```
-
----
-
-### Task 6: Add the Side-by-Side Roller/Spectator Concepts Lab Stage
-
-**Files:**
-- Create: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
-- Create: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
-- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
-- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx`
-- Modify: `public/themes/base.css`
-
-**Interfaces:**
-- Consumes: provider scene/sidecar, provisional hash-bound face map, `DiceTray3D`, and compact release values.
-- Produces:
-
-```ts
-export interface DiceTray3DConceptPanelProps {
-  provider?: {
-    digest: string;
-    sidecar: AttackDieRuntimeSidecar;
-    scene: Object3D;
-  };
-  providerError: string;
-}
-```
-
-The panel owns only local concept coordination state:
-
-```ts
-type ConceptTrayPhase = 'armed' | 'rolling' | 'settled';
-```
-
-- [ ] **Step 1: Write failing concept tests**
-
-Assert the panel exposes:
-
-- authoritative result number input constrained to 1–20;
-- preset select with Stormforged and Cryptstone;
-- roller-mode select with Player and Monster;
-- reduced-motion checkbox;
-- Arm/reset action;
-- Roller and Spectator headings;
-- a visible “simulated presentation coordination” warning.
-
-Assert both mocked trays receive the same result and preset, with witness roles `roller` and `spectator`.
-
-- [ ] **Step 2: Run to verify RED**
-
-```bash
-npm run test:run -- src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
-```
-
-Expected: FAIL because the panel does not exist.
-
-- [ ] **Step 3: Implement local coordination**
-
-On Arm/reset:
-
-- increment the presentation token;
-- clear prior release;
-- set phase to armed;
-- preserve the selected result/preset/mode.
-
-On the roller tray's `onReleaseRequest`:
-
-- store exactly that compact release;
-- change both panes to rolling in the same React update;
-- never copy pointer samples or generate a result.
-
-On the roller renderer's first matching `state: 'observed'` telemetry event:
-
-- verify token and requested result match the active presentation;
-- set both panes to settled;
-- ignore stale spectator/roller callbacks.
-
-For monster mode, the roller tray's automatic release drives the same path. Unknown/missing provider data leaves both panes on semantic fallback and remains non-stalling.
-
-- [ ] **Step 4: Add shared-release behavior tests**
-
-Assert:
-
-1. player remains armed after timers advance;
-2. roller release causes both trays to receive the same release object and rolling phase;
-3. no pointer-move callback exists between panes;
-4. preset switch before arm appears in both panes;
-5. result switch before arm appears in both panes;
-6. monster mode produces one shared automatic release;
-7. stale telemetry cannot settle a newer token;
-8. matching observed telemetry settles both;
-9. unknown preset/provider mismatch renders fallback without waiting.
-
-- [ ] **Step 5: Integrate a fifth `Tray` stage**
-
-Change:
-
-```ts
-const stages = ['Appearance', 'Calibrate', 'Roll', 'Verify', 'Tray'] as const;
-```
-
-Render `DiceTray3DConceptPanel` only for the Tray stage and keep calibration/evidence stages intact. Pass the same inspected provider object; do not load a second copy of the GLB in the panel.
-
-Update keyboard tab-wrap tests to cover five stages.
-
-- [ ] **Step 6: Add responsive side-by-side styling**
-
-Use a two-column review grid above a width that fits two compact surfaces and one column below it. Each pane labels role, preset, phase, and authoritative result without claiming real networking. Do not shrink below readable numeral size merely to force two columns.
-
-- [ ] **Step 7: Verify GREEN**
-
-```bash
-npm run test:run -- \
-  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
-  src/components/ui/dice/DiceTray3D.test.tsx
-npm run typecheck
-npm run lint -- --quiet
-```
-
-Expected: side-by-side concept behavior passes with one shared release and no production transport.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
-  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
-  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
-  public/themes/base.css
-git commit -m "feat: compare roller and spectator dice trays (#749)"
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+git commit -m "feat: settle authoritative d20 results in tray (#749)"
 ```
 
 ---
 
-### Task 7: Browser-Prove Containment, Presets, Results, and Input Paths
+### Task 8: Final Browser Matrix, GIF, Documentation, and Review
 
 **Files:**
 - Modify: `docs/how-to/attack-die-3d-concept.md`
-- Modify only if browser evidence reveals a tested defect: files owned by Tasks 1–6 and their matching tests
-- Private/untracked output: `/home/kirk/game-dev/.verification/interactive-dice-tray/`
+- Modify only through test-first fixes: files owned by Tasks 0–7 and matching tests
+- Private outputs: `/home/kirk/game-dev/.verification/interactive-dice-tray/task-8/`
 
-**Interfaces:**
-- Consumes: completed Concepts Lab tray stage.
-- Produces: repeatable reviewer instructions, private screenshots/GIFs, and an evidence matrix without claiming production transport/performance/asset approval.
+**Produces:** repeatable review guide, final private GIF, complete verification evidence, and independent whole-branch review.
 
-- [ ] **Step 1: Add reviewer documentation first**
+- [ ] **Step 1: Document the final Concepts Lab flow**
 
-Document exact route and steps:
+Document `?concept=attack-die-3d → Tray`, Player/Monster, preset, result, Arm, Roll, grab/release, Roller/Spectator, reduced motion, and forced fallback. Explicitly label:
 
-```text
-?concept=attack-die-3d → Tray
-```
+- provisional skins and face map;
+- simulated coordination;
+- one d20 only;
+- no production combat/network/loadout/damage-dice wiring.
 
-Include:
-
-- switch Player/Monster;
-- select Stormforged/Cryptstone;
-- choose authoritative result 1–20;
-- Arm;
-- Roll or grab/shake/release;
-- compare Roller/Spectator;
-- enable reduced motion;
-- force fallback;
-- explicit labels: provisional face map, provisional skins, simulated coordination, no production combat/network/loadout/damage-dice wiring.
-
-- [ ] **Step 2: Run the complete focused suite**
+- [ ] **Step 2: Run focused and repository suites**
 
 ```bash
 npm run test:run -- \
@@ -1034,74 +905,45 @@ npm run test:run -- \
   src/components/ui/dice/attackDiePreset.test.ts \
   src/components/ui/dice/dicePresentationRelease.test.ts \
   src/components/ui/dice/AttackDie3D.test.tsx \
+  src/components/ui/dice/DiceTray3DShell.test.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
   src/components/ui/dice/DiceTray.test.tsx \
   src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
-npm run typecheck
-npm run lint -- --quiet
-npm run format:check
+npm run ci-checks
+npm run test:run
 git diff --check
 ```
 
-Expected: zero failures/errors. If formatting changes files, run `npm run format`, inspect the diff, and repeat the full command.
+- [ ] **Step 3: Browser-check the final matrix**
 
-- [ ] **Step 3: Browser-check player explicit input**
+Verify:
 
-At the real route:
+- player stays armed for at least 10 seconds;
+- Roll and outside release each commit once;
+- cancel/lost capture do not throw;
+- monster emits one shared automatic release;
+- spectator has no controls;
+- both panes show roller preset and same authoritative result;
+- Stormforged/Cryptstone do not alter result;
+- results 1–20 settle correctly and inside the well;
+- reduced motion preserves explicit input/exact face;
+- unknown preset/digest mismatch/unmapped/renderer failure show SVG;
+- responsive narrow layout stacks without clipping.
 
-1. open Tray, Player, Stormforged, result 10;
-2. wait at least 5 seconds and confirm both panes remain armed;
-3. press Roll and confirm both begin together;
-4. confirm both settle on 10;
-5. re-arm, drag outside the rounded rectangle, release, and confirm one throw;
-6. confirm motion may cross the rectangle but the final rendered die bounds fit inside it.
+- [ ] **Step 4: Generate final private GIF**
 
-Capture private screenshots for armed, outside-travel, and settled states.
-
-- [ ] **Step 4: Browser-check presets and monster mode**
-
-1. select Cryptstone and confirm both panes switch to the same dark-stone/bone treatment;
-2. select Monster and Arm; confirm one automatic shared throw;
-3. confirm spectator has no controls;
-4. switch back to Stormforged and verify result does not change merely because preset changed.
-
-- [ ] **Step 5: Browser-check all authoritative results and fallback**
-
-For results 1→20 in both normal and reduced-motion paths:
-
-- confirm telemetry `requestedResult` equals input;
-- confirm renderer reaches `state: observed` only when the matching mapped face is uppermost;
-- confirm final geometry lies inside the well;
-- confirm SVG is used for a deliberately mismatched digest/unknown preset/unmapped fixture;
-- record readability findings without labeling them canonical human asset approval.
-
-Any wrong physical face is a release blocker. Add a failing automated regression test before correcting its map or renderer behavior.
-
-- [ ] **Step 6: Generate the private progress GIF**
-
-Capture a Player roller/spectator throw at 20 fps for roughly 2.6 seconds, crop to the concept comparison surface, and encode under:
+Capture a player roller/spectator throw at 20 fps for roughly 2.6 seconds and encode:
 
 ```text
-/home/kirk/game-dev/.verification/interactive-dice-tray/roller-spectator.gif
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-8/roller-spectator.gif
 ```
 
-Copy to `~/Downloads` only for sharing. Verify with `file` and `ffprobe`; do not stage it.
+Copy to `~/Downloads` only for sharing. Verify with `file`, `ffprobe`, and SHA-256; never stage it.
 
-- [ ] **Step 7: Run the repository protection suite**
-
-```bash
-npm run ci-checks
-npm run test:run
-```
-
-Expected: formatting, lint, typecheck, build, and all Vitest suites pass. Record the exact counts and any unrelated environmental limitation; do not claim Discord/mobile/low-GPU evidence unless actually run.
-
-- [ ] **Step 8: Verify scope and commit documentation/fixes**
-
-Run:
+- [ ] **Step 5: Scope audit and documentation commit**
 
 ```bash
 git status --short
@@ -1109,89 +951,29 @@ git diff --check
 git diff --name-only origin/feat/749-attack-die-3d-concept...HEAD
 ```
 
-Confirm there are no modifications under:
-
-```text
-src/components/game/combatPresentation/
-src/components/game/EncounterView.tsx
-```
-
-and no toolkit/API/proto/deployment changes.
-
-If browser review finds a defect, return to the owning task, add the failing regression test there, implement the fix, and use that task's explicit commit command before resuming this task. This keeps the documentation commit deterministic.
-
-Commit only the review guide here:
+Confirm no changes under `src/components/game/combatPresentation/`, `EncounterView.tsx`, or other repositories. If browser review finds a defect, return to the owning task's tests and commit command before resuming.
 
 ```bash
 git add docs/how-to/attack-die-3d-concept.md
 git commit -m "docs: add interactive dice tray review guide (#749)"
 ```
 
----
+- [ ] **Step 6: Independent final review**
 
-### Task 8: Final Independent Review and PR Handoff
+Use fresh reviewers for:
 
-**Files:**
-- Modify only in response to accepted review findings: the smallest affected source/test/doc files
-- Do not modify: production combat integration files or other repositories
+1. spec/authority/scope compliance;
+2. correctness, cleanup, pointer lifecycle, disposal, and tests;
+3. user-flow/accessibility/responsive behavior.
 
-**Interfaces:**
-- Consumes: Tasks 0–7 complete and green.
-- Produces: reviewed PR #750 update with explicit residual risks and production gates.
+One writer applies accepted fixes test-first; one scoped re-review checks the fix diff. Rerun `npm run ci-checks`, `npm run test:run`, `git diff --check`, and `git status --short`.
 
-- [ ] **Step 1: Request independent spec-compliance review**
+- [ ] **Step 7: Push and update PR/issue without merging**
 
-Ask a fresh reviewer to compare implementation against:
-
-- `rpg-project/ideas/interactive-dice-tray/design.md`;
-- this plan;
-- the original attack-die contract in `rpg-project/ideas/attack-die-3d/design.md`.
-
-Require findings to cite file/line and classify blockers versus later production gates. The reviewer must specifically inspect authority separation, player no-timeout behavior, spectator read-only behavior, hash binding, one-shot pointer paths, preset allowlisting, exact settlement, and prohibited production wiring.
-
-- [ ] **Step 2: Request independent code-quality/test review**
-
-A second fresh reviewer checks:
-
-- cleanup/stale callback behavior;
-- pointer capture/cancel/lost-capture paths;
-- renderer/material disposal;
-- unknown preset and invalid cardinality fallback;
-- absence of result fields from release data;
-- whether tests assert user-visible behavior rather than mocks alone;
-- responsive and reduced-motion behavior.
-
-- [ ] **Step 3: Address accepted findings test-first**
-
-For each accepted defect, add/reproduce a failing focused test, implement the minimal fix, rerun the focused suite, and request re-review. Do not accept suggestions that widen into real transport, inventory, damage dice, or production combat wiring; record those as follow-up gates.
-
-- [ ] **Step 4: Run fresh final verification**
-
-```bash
-npm run ci-checks
-npm run test:run
-git diff --check
-git status --short
-```
-
-Expected: all checks pass and only `.pi/`/private local artifacts remain untracked. Verify every source commit is pushed to `origin/feat/749-attack-die-3d-concept`.
-
-- [ ] **Step 5: Update PR #750 and issue #749**
-
-Post a concise implementation summary with:
-
-- test/build counts and commands;
-- private browser/GIF path without uploading licensed imagery to a public repo;
-- explicit provisional status of face map and Cryptstone skin;
-- explicit statement that roller/spectator coordination is local simulation;
-- explicit absence of production combat/network/loadout/damage-dice wiring;
-- links to `rpg-project#219` / PR `#220`, assets #47 and #49;
-- residual production gates from the design.
-
-End every GitHub comment with:
+Push only after checks/reviews pass. Update PR #750 and issue #749 with commands/counts, private artifact paths, explicit provisional/simulated status, absence of production wiring, and remaining production gates. End comments:
 
 ```text
 — asset-pipeline agent, on behalf of KirkDiggler
 ```
 
-Do not merge. Kirk alone merges.
+Kirk alone merges.
