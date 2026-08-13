@@ -5,10 +5,13 @@
 **The session SDK lane** (`rulebooks/dnd5e/session`) — rpg-api's one interface to the toolkit.
 W0/W1/W2 shipped. **W3 step 1** (characters load) → `session/v0.3.0`. **W3 step 2** (conditions
 across a suspension) → PR #950 merged at **132f018**, tagged **`session/v0.3.1`** — a `test:`
-commit takes a **patch** bump. **W3 step 3 (NPCs) is in flight as
-[toolkit PR #952](https://github.com/KirkDiggler/rpg-toolkit/pull/952)** — 162 tests, 6/7 mutants
-killed, `gorelease` → **v0.4.0**. Tracking
+commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #952 merged at
+**f0c7152**, tagged **`session/v0.4.0`**. Tracking
 [toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
+
+**Remaining in W3: T3.6's scene only**, and it is blocked — see Open questions.
+[Toolkit PR #953](https://github.com/KirkDiggler/rpg-toolkit/pull/953) is in flight with
+ADR-0037 and the enforced decisions digest.
 
 ## Solid
 
@@ -118,6 +121,8 @@ server needs, never a specification to port*.
 | 2026-08-13 | W3 scoped to "get the character loaded", steps allowed | PR #949 (merged) |
 | 2026-08-13 | Tag column stops predicting after W3 (auto-tag on merge) | `plan.md` |
 | 2026-08-13 | Local `replace`/`go.work` overrides are fine — *committing* them is the ban | `rpg-toolkit/CLAUDE.md` |
+| 2026-08-13 | Entity entry splits on **load-vs-instantiate**, not player-vs-monster; a ref names the package that can *load* the data | ADR-0037 |
+| 2026-08-13 | Seam decisions get genuine options + trade-offs in the open, then an ADR with the rejects recorded | ADR-0037's process note |
 
 ## Carried follow-ups — filed, none blocking
 
@@ -157,6 +162,11 @@ free.**
 
 ## Pointers
 
+- **Decisions:** toolkit **`docs/adr/DECISIONS.md`** — the cliffnotes digest of all 38 ADRs, one
+  or two lines each with the rule each generalises to. **Read this, not the ADR corpus:** loading
+  38 ADRs is expensive and imports baggage (three propose modules never built; numbers collide;
+  status fields are unmaintained). Enforced by `scripts/check-decisions.sh` in CI, so a new ADR
+  fails until it is summarised. Open a full ADR only to contradict one or to get its trade-offs.
 - **Deep record:** toolkit `docs/ideas/session-sdk/{design,plan}.md` (the triplet — design is
   ratified-and-annotated, plan is rewritten freely), `docs/ideas/encounter-transitions/`,
   `docs/ideas/encounter/`, `docs/journey/051+052`.
