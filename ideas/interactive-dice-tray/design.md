@@ -3,7 +3,7 @@ name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
 updated: 2026-08-13
 confidence: high on the approved interaction, authority, preset, and Concepts Lab boundaries; production transport, ownership validation, and individual damage-die contracts remain later work
-status: approved conversational design awaiting Kirk review of this written specification; tracked by rpg-project#219
+status: written specification approved by Kirk on 2026-08-13; implementation plan added beside it for review; tracked by rpg-project#219
 ---
 
 # Interactive Collectible 3D Dice Tray
