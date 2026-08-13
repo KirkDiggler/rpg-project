@@ -9,13 +9,15 @@ commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #9
 **f0c7152**, tagged **`session/v0.4.0`**. Tracking
 [toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
 
-**Remaining in W3: T3.6's scene only**, and it is blocked — see Open questions.
-[Toolkit PR #953](https://github.com/KirkDiggler/rpg-toolkit/pull/953) is in flight with
-ADR-0037 and the enforced decisions digest — green and mergeable.
+**Remaining in W3: T3.6's scene only**, and it is blocked — see Open questions. PR #953
+(ADR-0037 + enforced decisions digest) merged at **f9b720f**; PR #955 (the `play/` layering docs
++ the W4 charter) merged at **ad19574**, taking `rulebooks/dnd5e/v0.80.1`.
 
-**W4 is combat, built new in the session package** — not an adapter, not a migration. Its opening
-question is the one W2 parked in advance (see below): with combat entry as the second checkpoint
-kind, where does the deciding thing live? **Answer the mode question first** — see Open questions.
+**W4 is combat, built new in the session package** — not an adapter, not a migration, and
+**chartered**: `docs/ideas/session-sdk/plan.md` now carries six clauses, each split into *what to
+deflect* and *what to ponder*. The mode question is **answered** — see Solid. What remains open
+is the **trigger's shape**, which is genuinely ours because trigger detection belongs to the
+composition. See Open questions.
 
 ## Solid
 
@@ -64,7 +66,12 @@ the old stack flips a mode; the SDK stops and asks.** Do not describe free roam 
   lands at or before W4.**
 - **The repo AUTO-TAGS on merge to main** (`auto-tag-modules-safe.yml`; the other two tag
   workflows are disabled). Bump comes from the conventional-commit prefix — `feat:` → minor,
-  **`test:`/`fix:` → patch** (a test-only PR still consumes a version; #950 took `v0.3.1`).
+  **`test:`/`fix:`/`docs:` → patch**. **It keys on the module DIRECTORY, not on whether code
+  changed**: a test-only PR consumes a version (#950 → `session/v0.3.1`), and so does a
+  markdown-only one — PR #955 edited `rulebooks/dnd5e/CLAUDE.md` and nothing else in that
+  module, and took **`rulebooks/dnd5e/v0.80.1`** (verified: the tag points at `ad19574`).
+  Consequence worth planning around: **editing a module's own CLAUDE.md/README costs that
+  module a version**, so batch module-scoped doc edits rather than dribbling them.
   **A wave's version is decided by its FIRST merge, not its last** — never write a version next
   to a milestone.
 - **The compat gate races the tagger, and it fails CLOSED.** `compat.yml` derives its base from
@@ -89,6 +96,22 @@ the old stack flips a mode; the SDK stops and asks.** Do not describe free roam 
   scale. The caching-repository escape hatch stays theoretical.
 - **Write world-then-session.** Partial failure must leave a collectable orphan, never a session
   pointing at nothing, and never a window resuming past cells nobody walked.
+- **There is no mode. There are clocks — and they already exist in `play/clock`.** This was asked
+  as an open question and answered by reading, not by designing. `Tick` is the player-driven world
+  clock; `Turn` is a **localized initiative bubble**; `Transfer` moves an entity between them
+  atomically under **R6 — an entity belongs to at most one clock**, which makes "which clock is
+  this player on" well-defined by construction. `Merge` already implements "if two bubbles overlap
+  they merge" (caller supplies the union order — R7 keeps randomness out). `dos2_test.go` asserts
+  Kirk's exact split-party scenario end to end, including a straggler falling into a live fight at
+  a rolled slot. **`FREE_ROAM`/`TURN_BASED` is an artifact of the OLD encounter, not a D&D
+  concept** — do not reintroduce it. Ownership, from `play/clock`'s own test comment: *"trigger
+  detection is the composition's business; here the rulebook has rolled initiative."*
+  `rulebooks/dnd5e/initiative` is **dead** — imported by nothing; `play/clock` superseded it.
+- **Concurrency is pessimistic, via Redis** (Kirk, 2026-08-13): a lock with a buffer and timeout
+  covers the simple cases. It must arrive as an optional capability the manager type-asserts for
+  (`SessionLocker`), **never** as a method added to `SessionRepository` — that stops every host
+  compiling. The optimistic/checksum-CAS alternative is fully documented and left open in
+  `session/repositories.go`; it is not being built.
 
 **The parked question W2 named honestly — NOW DUE:** *"stop the walk when the walker sees something
 new"* is a game rule living in a module whose charter says it owns no rules. It's there because no
@@ -105,25 +128,23 @@ rather than an ambiguous payload nobody can safely parse."
 
 ## Open questions
 
-- **Does the session have modes at all? — W4's first decision, and it gates the rest.** Whether
-  combat entry is a *checkpoint* (a question posed to a player) or a *regime change* (different
-  rules about who may act) depends on this, so it is asked first. **Measured, not assumed:
-  `FREE_ROAM`/`TURN_BASED` is not a D&D concept — it is one implementation's artifact.** The
-  composition (`rulebooks/dnd5e/encounter`) has **zero** Mode/Turn/Initiative hits. The rules are
-  already decomposed and also mode-free: `initiative.Tracker` owns *whose turn*
-  (`Current`/`Next`/`Round`/`Remove`), `combat.TurnManager` owns *what this turn may spend*
-  (`StartTurn`/`EndTurn` + `ActionEconomy`). Only the old encounter has a mode — and with it
-  `ErrNotTurnBased` and a family of wrong-mode rejections we would be choosing to inherit.
-  Options on the table: **(1)** explicit `Mode` field — proven, but re-imports the model we
-  rejected; **(2)** no mode, turn order simply exists or doesn't, derived not stored — fits the
-  composition and the rules, deletes a state axis; **(3)** combat as a *resolution kind* via the
-  existing `frozenResolution.Kind` — probably a complement to (2), not a rival, since it says how
-  combat runs but not who may act. **Recommendation: try to falsify (2) before adopting it** —
-  take a concrete combat round and check whether "an initiative order exists" carries every
-  constraint a mode carried (6-second rounds, per-turn movement budget, once-per-round reactions).
-  If it does, (2)+(3) compose and the parked checkpoint question resolves as a side effect. If it
-  doesn't, **what breaks tells us what a mode was actually for**. (2) is the option that *fits*,
-  which per ADR-0037 is exactly when to check whether it is true.
+- **What is the trigger's shape? — W4's live decision, and it gates the other two.** Trigger
+  detection is the **composition's** business (`play/clock` says so explicitly and holds no
+  rules), so this part is genuinely ours to design rather than to discover. The question is what
+  happens to W2's `[Continue] [Stop]` window when a bubble forms. Kirk's DOS2 framing has **two
+  different entries into combat**: *one person initiates* (you choose to swing) versus getting
+  spotted (the ogre chooses for you). So: does first contact pose a window with initiation as a
+  third option; does mutual awareness simply form the bubble; or **both** — a window when you have
+  the drop, automatic when you do not? Note the machinery does not constrain the answer: `Prompt`
+  deliberately carries *the moment, never the mechanism*, and `OptionKind` is designed to grow.
+  Downstream of this: what shape trigger detection takes in the composition (an injected
+  `Decider`-like seam, or inline in the move path like the old `checkCombatEntry`), and whether
+  combat verbs live on the session Manager beside `Move`/`Traverse` or as their own surface.
+- **How much of `combat`'s bus is rules vs notification?** Charter clause 2 wants the encounter to
+  own the wiring, but `NewTurnManager` *requires* an `EventBus` and publishes `TurnStartEvent`/
+  `TurnEndEvent` itself. Conditions intercepting a chain is real and load-bearing; notification is
+  the courier's job. **Not free** — 3,362 lines are built around that bus and ADR-0027's reaction
+  windows are bus-shaped. Ponder before touching.
 - **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
   `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
   the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
@@ -160,9 +181,10 @@ comes later, once free roam and combat both work (Kirk, 2026-08-13). The old sta
 of orchestration are *evidence about what a game server needs, never a specification to port* —
 and now explicitly not something we adapt to either.
 
-**The gated step is a decision, not code:** answer the mode question in Open questions by trying
-to falsify option (2). Nothing should be built until that lands, because both the checkpoint
-question and the shape of every combat verb hang off it.
+**The gated step is a decision, not code:** settle **the trigger's shape** (Open questions).
+Nothing should be built until it lands — the shape of trigger detection in the composition, and
+whether combat verbs sit on the session Manager, both hang off it. Most other W4 arguments are
+now *deflections* under the charter rather than open questions, which is the point of having it.
 
 ## Decision log
 
@@ -179,7 +201,12 @@ question and the shape of every combat verb hang off it.
 | 2026-08-13 | **No adapter/wrapper over the old encounter** — it would dictate the session contract. Idea stays open and unused | this handoff; ADR pending |
 | 2026-08-13 | **rpg-api integration is deferred** until the session package runs free roam *and* combat. No slice now | this handoff |
 | 2026-08-13 | The old "no rpg-api file changes after migration" claim is **retired** — a wrapper would satisfy it while teaching nothing | this handoff |
-| 2026-08-13 | W4 = combat built new; its first gate is **the mode question**, not code | this handoff, Open questions |
+| 2026-08-13 | W4 = combat built new; its first gate is a decision, not code | this handoff, Open questions |
+| 2026-08-13 | **No mode — clocks.** `play/clock`'s `Tick`/`Turn`/`Transfer` already model it; the mode question was answered by reading, not designing | toolkit PR #955, `play/README.md` |
+| 2026-08-13 | Concurrency is **pessimistic (Redis lock)**; CAS stays documented and unbuilt | `session/repositories.go`, plan.md W4 scope |
+| 2026-08-13 | W4 scope: world tick **+ one** turn bubble, linear per encounter; v1 feature is the straggler joining a live fight at a rolled slot | plan.md W4 scope |
+| 2026-08-13 | W4 chartered — six clauses, each split into *deflect* / *ponder* | toolkit PR #955, plan.md |
+| 2026-08-13 | The `play/` layering gets a CLAUDE.md pointer; per-rulebook casting lives in the rulebook's own CLAUDE.md | toolkit #954 / PR #955 |
 
 ## Carried follow-ups — filed, none blocking
 
@@ -224,6 +251,13 @@ free.**
   38 ADRs is expensive and imports baggage (three propose modules never built; numbers collide;
   status fields are unmaintained). Enforced by `scripts/check-decisions.sh` in CI, so a new ADR
   fails until it is summarised. Open a full ADR only to contradict one or to get its trade-offs.
+- **Before designing anything touching turns, time, perception, story or suspension:** read
+  toolkit **`play/README.md`** and the relevant `play/*` `doc.go`. Four leaves — `clock`, `intel`,
+  `interrupt`, `record` — each with a numbered R1–R10 contract, each returning values and never
+  publishing. **This lane already lost a full turn re-deriving `play/clock` from scratch**
+  (toolkit#954); the root `CLAUDE.md` now carries the layering, and each rulebook's own
+  `CLAUDE.md` says which of its packages plays which part.
+- **W4's charter** (deflect / ponder, six clauses) is in `docs/ideas/session-sdk/plan.md`.
 - **Deep record:** toolkit `docs/ideas/session-sdk/{design,plan}.md` (the triplet — design is
   ratified-and-annotated, plan is rewritten freely), `docs/ideas/encounter-transitions/`,
   `docs/ideas/encounter/`, `docs/journey/051+052`.
