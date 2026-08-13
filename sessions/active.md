@@ -3,9 +3,13 @@
 ## Now
 
 **The session SDK lane** (`rulebooks/dnd5e/session`) — rpg-api's one interface to the toolkit.
-W0/W1/W2 shipped; **W3 step 1 (characters load) shipped as `session/v0.3.0`**. Driving the
-rest of W3: NPCs in `SessionData`, and conditions surviving a suspension. Tracking
-[toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
+W0/W1/W2 shipped; **W3 step 1 (characters load) shipped as `session/v0.3.0`**. **W3 step 2
+(conditions across a suspension) is in flight as
+[toolkit PR #950](https://github.com/KirkDiggler/rpg-toolkit/pull/950)** — test-only, 143 tests,
+3/3 mutants killed. Tracking [toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
+
+**Blocked on a Kirk decision:** the rest of W3 (NPCs, and naming conditions at the seam) needs
+two small composition changes — see Open questions.
 
 ## Solid
 
@@ -63,12 +67,26 @@ suspend.
 
 ## Open questions
 
-- **#916 was closed 2026-08-13** while `plan.md` still lists W5 as "Reactions — opportunity attack
-  (closes #916)" in two places. The deliverable is unaffected — semver tracks API change, not issue
-  numbers — but the reference is now dangling. **Fold the correction into the next W3
-  implementation PR** rather than a standalone docs PR, per the co-location rule below.
+**The rest of W3 needs two composition changes. Both are Kirk's call; neither is started.**
+
+- **NPCs cannot join by ID.** Kirk's shape (2026-08-13): *"can join just send an id, we can lookup
+  if that is an existing monster in our encounter? we do need the monster data filled in but that
+  can happen inside."* It works — `monsters.ByRef` + `monster.LoadFromData`/`ToData` all exist, and
+  `monster` is in the same root module as `character` so it costs no new dependency. **The one
+  missing link:** `MemberData` persists `{ID, Kind, Room, Position}`, so a monster member does not
+  record *which* monster it is and **nobody can rehydrate it** — us, rpg-api, or a save-file
+  loader. Needs `MemberInput.Ref`/`MemberData.Ref` (→ `encounter` v0.5.0, ~10 touch points:
+  the two structs, the runtime member, one `ToData` site, three load sites, member validation).
+  The plan's `npc.Data` does not exist and should read `monster.Data`.
+- **`ConditionBehavior` cannot name itself.** The interface is `IsApplied/Apply/Remove/ToJSON`
+  with no `Ref()`. Reporting active conditions at the seam would mean unmarshalling `ToJSON()` and
+  reading `ref` — the exact anti-pattern #941 already files against us. Without it, **T3.6's scene
+  is not expressible** ("Alice raging when she is loaded, without the caller ever mentioning
+  rage"). Needs a `Ref()` on the interface in `rulebooks/dnd5e/events` + its ~24 implementers.
 - **#946 — character as its own module.** Direction only, blocks nothing. The open part is whether
   the unit is `character` alone or a `dnd5e/core`-shaped module holding the shared enums.
+
+_(#916's dangling `closes #916` references in `plan.md` are fixed on PR #950.)_
 
 ## Next
 
