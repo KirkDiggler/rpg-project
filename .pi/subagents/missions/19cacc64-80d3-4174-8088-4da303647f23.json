@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "19cacc64-80d3-4174-8088-4da303647f23",
+  "title": "Write approved 3D attack die design",
+  "objective": "Create the canonical rpg-project design spec and review PR without beginning implementation.",
+  "status": "completed",
+  "createdAt": "2026-08-12T19:28:02.341Z",
+  "updatedAt": "2026-08-12T20:00:37.623Z",
+  "runs": [
+    {
+      "runId": "a2bde801-c673-4352-b69a-83d04287f1b2",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a2bde801-c673-4352-b69a-83d04287f1b2",
+      "status": "failed",
+      "startedAt": "2026-08-12T19:28:02.343Z",
+      "completedAt": "2026-08-12T19:28:02.434Z"
+    },
+    {
+      "runId": "185be75c-706e-4b3a-8067-87e3a9172b58",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/185be75c-706e-4b3a-8067-87e3a9172b58",
+      "status": "complete",
+      "startedAt": "2026-08-12T19:32:43.628Z",
+      "completedAt": "2026-08-12T19:41:39.331Z"
+    },
+    {
+      "runId": "a33405b1-3565-4195-9a5d-729a7f6a7dba",
+      "mode": "workflow",
+      "asyncDir": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a33405b1-3565-4195-9a5d-729a7f6a7dba",
+      "status": "complete",
+      "startedAt": "2026-08-12T19:46:54.584Z",
+      "completedAt": "2026-08-12T19:54:23.670Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "a2bde801-c673-4352-b69a-83d04287f1b2",
+      "key": "attack-die-design-writer",
+      "status": "failed",
+      "startedAt": "2026-08-12T19:28:02.377Z",
+      "updatedAt": "2026-08-12T19:28:02.428Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "task": "Goal: turn Kirk-approved brainstorming into the canonical cross-repository design and GitHub review surface for a staged 3D attack-die concept.\n\nAuthority: you are the sole writer in a native managed rpg-project worktree. You may fetch, create one tracking issue in KirkDiggler/rpg-project if no duplicate exists, add it to Project 19, edit only the canonical design artifact, commit, push a conventional remote branch, and open one ready (not draft) PR targeting main. Do not merge, close anything, implement web/assets code, write plan.md, modify sessions/active.md, publish/release assets, or touch implementation repositories. Do not overwrite or disturb unrelated work.\n\nRepository/base rules:\n- Read rpg-project instructions first.\n- Search open/closed rpg-project, rpg-dnd5e-web, and rpg-game-assets issues/PRs for an existing attack-die/d20 concept effort. Reuse an exact existing tracking issue if appropriate; otherwise create one rpg-project design issue because this PR belongs to rpg-project.\n- New work must be tracked on Project 19. Set Status=Todo and Team=Assets when those exact options exist. Select an existing Feature value only if clearly appropriate; never invent one. Report any board-field limitation.\n- Fetch origin. This managed worktree may have been created from a stale/current checkout: before edits, prove its clean base is latest origin/main. It is safe to reset the isolated temporary branch to origin/main before writing, but never reset the parent checkout.\n- Push the committed HEAD to a conventional remote branch such as `idea/<issue>-attack-die-3d`; the native local temporary branch does not need renaming. Target origin/main.\n\nCanonical artifact: `ideas/attack-die-3d/design.md` in rpg-project. Do not use docs/superpowers/specs and do not add plan.md.\n\nApproved design contract:\n- Goal: improve the existing attack-roll presentation with the new private lightning d20 GLB. Ultimate acceptance: every authoritative server d20 result 1–20 tumbles decoratively and settles with that engraved numeral visibly on top.\n- Existing facts: production web already passes authoritative `AttackResolved.attackRoll` through `CombatPresentation` to `DiceTray`; presentation randomness must never generate/alter the outcome; no proto/API/toolkit work is needed for the recommended result-driven settle.\n- Asset: `/models/synty/props/SM_Prop_D20_Lightning_01.glb`, source/promoted under rpg-game-assets. Runtime is about 204KB, 1,906 triangles, two material slots, no textures/animations/face metadata. Source look is cloudy white/gray marble with gold numerals. Advertised lightning is not embedded and needs a narrow web material treatment. Current runtime names carry Blender suffixes (`D20_Lightning_Material.010`, `Paint_Material.010`), so use a stable normalized-prefix or corrected-export contract.\n- Provenance/licensing confirmation is a shipping precondition; the private repo/path is correct but current metadata does not establish an explicit ownership/license grant.\n- Web concept URL/id: `?concept=attack-die-3d` in the existing development-only concept registry.\n- Build a production-intent shared `AttackDie3D` component exercised by the concept, not a throwaway concept-only renderer. Keep existing SVG `DiceTray` as accessible/load/WebGL/unmapped fallback. Do not add d20 to the generic dungeon prop palette merely to resolve its URL.\n- Concept stages: Appearance (raw vs magical material); Calibrate (select 1–20, top and 3/4 cameras, save normalized quaternion); Roll (authoritative input, decorative path, kinematic slerp/damped settle, exact final orientation); Verify (run all 20 and evidence grid).\n- Graduation gate: 20/20 mapped, 20/20 final orientation within a defined small angular tolerance, and 20/20 human-confirmed numeral visible/readable from top and canonical 3/4 settlement cameras. Evidence must bind to exact GLB hash, mapping, camera contract, and material mode; changes invalidate stale confirmations.\n- Reduced motion: no tumble or animated lightning, brief static settle to same result. Visual die remains aria-hidden; authoritative result is announced exactly once by existing accessible presentation.\n- Failure behavior: load/WebGL/shader errors and missing mappings must never show a wrong physical face; fall back visibly to authoritative SVG result.\n- Performance: prefer the isolated DOM-overlay concept because it matches current theater, but treat a second WebGL context as a measurable Discord/mobile GPU risk. Measure before production promotion. Preserve existing FIFO attack timing, movement wait, result/damage release, keyboard control, and completion callback semantics.\n- Ownership: rpg-game-assets owns provenance, stable material/face-map asset contract tied to GLB hash, and visual QA; web owns loader, shader, deterministic presentation animation, concept, fallback/a11y, tests, and performance playtest; rules/proto/API own nothing for this scope.\n- Explicit non-goals: physics/collision, damage dice, discarded advantage/disadvantage dice, server seed/trajectory reproduction, universal dice platform, production promotion during this concept PR.\n- Testing: pure face-map completeness/normalization and target-orientation math; final angular tolerance; invalidation keys; loader/error/unmapped fallback; reduced motion; existing sequencing regression; visual all-face evidence; hit/miss/NAT-1/crit, keyboard, narrow viewport, Discord iframe, low-GPU playtests.\n- Incremental path: asset/material proof -> face calibration -> authoritative tumble/settle -> all-face verification -> separate approved implementation/promotion work. Physics remains deferred.\n\nWrite a concise but implementation-ready design with: summary, context, goals/non-goals, product experience, architecture/ownership, component boundaries, data flow/authority, face-map and asset contract, material approach, concept stages/controls, failure/a11y/reduced-motion/performance behavior, validation/evidence, testing/playtest, graduation/promotion criteria, and risks/preconditions. Clearly label established facts versus design decisions. Avoid TBD/TODO/placeholders and avoid pretending currently unverified face orientations or provenance are resolved.\n\nSelf-review before publication: scan for placeholders, contradictions, ambiguous authority, scope creep, and mismatch with rpg-project cross-repo workflow; fix findings inline. Confirm only design.md changed. Validate Markdown formatting/links with the best repo-available checks plus `git diff --check`.\n\nGitHub conventions:\n- Issue and PR should explain that design is approved conversationally but Kirk’s review of the written spec is still required before plan/implementation.\n- One issue for this design PR; later implementation PRs get owning-repo issues after design approval.\n- Ready PR, not draft; leave it open. Include issue linkage and cross-repo scope.\n- End any issue/PR body or comments authored through Kirk’s account with `— asset-pipeline agent, on behalf of KirkDiggler`.\n\nReturn: issue URL/number, Project 19 field evidence, design path, commit SHA, pushed remote branch, PR URL/number/base/head/state, changed-file list, exact validation commands and exit codes, self-review outcome, and residual risks. If auth/board/PR actions fail, stop safely and report exact state; do not improvise routing.",
+      "completedAt": "2026-08-12T19:28:02.428Z",
+      "sessionPath": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/d2fe7edd/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T19:28:02.428Z",
+        "status": "failed"
+      }
+    },
+    {
+      "workflowRunId": "185be75c-706e-4b3a-8067-87e3a9172b58",
+      "key": "attack-die-design-writer-retry",
+      "status": "completed",
+      "startedAt": "2026-08-12T19:32:43.676Z",
+      "updatedAt": "2026-08-12T19:41:39.323Z",
+      "artifactPaths": [
+        "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl"
+      ],
+      "runId": "2c3235d1",
+      "agent": "worker",
+      "task": "Goal: turn Kirk-approved brainstorming into the canonical cross-repository design and GitHub review surface for a staged 3D attack-die concept.\n\nIsolation context: native managed worktree creation was attempted and failed because the primary checkout contains pre-existing unrelated changes. A read-only safety audit verified `/home/kirk/game-dev/rpg-project/.worktrees` exists and is ignored by `.git/info/exclude`, `/home/kirk/game-dev/rpg-project/.worktrees/attack-die-3d` is absent, no related branch exists, and the primary checkout must remain untouched. Use the manual linked-worktree fallback. Do not stash, clean, reset, switch, commit, or edit anything in the primary checkout.\n\nAuthority: you are the sole writer. You may fetch, search GitHub, create one tracking issue in KirkDiggler/rpg-project if no duplicate exists, add it to Project 19, create one linked worktree under the verified ignored `.worktrees` directory, edit only the canonical design artifact inside that worktree, commit, push, and open one ready (not draft) PR targeting main. Do not merge, close anything, implement web/assets code, write plan.md, modify sessions/active.md, publish/release assets, or touch implementation repositories.\n\nRequired isolation sequence:\n1. Read rpg-project instructions from the primary checkout.\n2. Search open/closed rpg-project, rpg-dnd5e-web, and rpg-game-assets issues/PRs for an exact attack-die/d20 concept effort. Reuse an exact tracking issue if appropriate; otherwise create one rpg-project design issue because this PR belongs to rpg-project.\n3. New work must be tracked on Project 19. Set Status=Todo and Team=Assets when those exact options exist. Select an existing Feature only if clearly appropriate; never invent one. Report limitations.\n4. Fetch origin without altering working files. Prove latest `refs/remotes/origin/main`.\n5. Create `/home/kirk/game-dev/rpg-project/.worktrees/attack-die-3d` from latest `refs/remotes/origin/main` on a new branch `idea/<issue-number>-attack-die-3d` using `git worktree add --no-track`. Work exclusively inside that linked worktree afterward.\n6. Before editing, prove the linked worktree is clean and HEAD equals fetched origin/main. If any collision or unexpected state exists, stop safely.\n\nCanonical artifact: `ideas/attack-die-3d/design.md` in the linked rpg-project worktree. Do not use docs/superpowers/specs and do not add plan.md.\n\nApproved design contract:\n- Goal: improve the existing attack-roll presentation with the new private lightning d20 GLB. Ultimate acceptance: every authoritative server d20 result 1–20 tumbles decoratively and settles with that engraved numeral visibly on top.\n- Existing facts: production web already passes authoritative `AttackResolved.attackRoll` through `CombatPresentation` to `DiceTray`; presentation randomness must never generate or alter the outcome; no proto/API/toolkit work is needed for the recommended result-driven settle.\n- Asset: `/models/synty/props/SM_Prop_D20_Lightning_01.glb`, source/promoted under rpg-game-assets. Runtime is about 204 KB, 1,906 triangles, two material slots, no textures, animations, or face metadata. Source look is cloudy white/gray marble with gold numerals. Advertised lightning is not embedded and needs a narrow web material treatment. Runtime names carry Blender suffixes (`D20_Lightning_Material.010`, `Paint_Material.010`), so use a stable normalized-prefix or corrected-export contract.\n- Provenance/licensing confirmation is a shipping precondition; the private repo/path is correct but current metadata does not establish an explicit ownership/license grant.\n- Web concept URL/id: `?concept=attack-die-3d` in the existing development-only concept registry.\n- Build a production-intent shared `AttackDie3D` component exercised by the concept, not a throwaway concept-only renderer. Keep existing SVG `DiceTray` as accessible/load/WebGL/unmapped fallback. Do not add d20 to the generic dungeon prop palette merely to resolve its URL.\n- Concept stages: Appearance (raw versus magical material); Calibrate (select 1–20, top and 3/4 cameras, save normalized quaternion); Roll (authoritative input, decorative path, kinematic slerp/damped settle, exact final orientation); Verify (run all 20 and evidence grid).\n- Graduation gate: 20/20 mapped, 20/20 final orientation within a defined small angular tolerance, and 20/20 human-confirmed numeral visible/readable from top and canonical 3/4 settlement cameras. Evidence binds to exact GLB hash, mapping, camera contract, and material mode; changes invalidate stale confirmations.\n- Reduced motion: no tumble or animated lightning, brief static settle to the same result. Visual die remains aria-hidden; authoritative result is announced exactly once by existing accessible presentation.\n- Failure behavior: load/WebGL/shader errors and missing mappings must never show a wrong physical face; fall back visibly to the authoritative SVG result.\n- Performance: prefer isolated DOM-overlay presentation because it matches the current theater, but treat a second WebGL context as a measurable Discord/mobile GPU risk. Measure before production promotion. Preserve FIFO timing, movement wait, result/damage release, keyboard control, and completion callback semantics.\n- Ownership: rpg-game-assets owns provenance, stable material/face-map asset contract tied to GLB hash, and visual QA; web owns loader, shader, deterministic presentation animation, concept, fallback/a11y, tests, and performance playtest; rules/proto/API own nothing for this scope.\n- Explicit non-goals: physics/collision, damage dice, discarded advantage/disadvantage dice, server seed/trajectory reproduction, universal dice platform, production promotion during the concept PR.\n- Testing: pure face-map completeness/normalization and target-orientation math; final angular tolerance; invalidation keys; loader/error/unmapped fallback; reduced motion; existing sequencing regression; visual all-face evidence; hit/miss/NAT-1/crit, keyboard, narrow viewport, Discord iframe, and low-GPU playtests.\n- Incremental path: asset/material proof -> face calibration -> authoritative tumble/settle -> all-face verification -> separate approved promotion work. Physics remains deferred.\n\nWrite a concise but implementation-ready design with: summary, context, established facts, decisions, goals/non-goals, product experience, architecture/ownership, component boundaries, data flow/authority, face-map and asset contract, material approach, concept stages/controls, failure/a11y/reduced-motion/performance behavior, validation/evidence, testing/playtest, graduation/promotion criteria, and risks/preconditions. Avoid TBD/TODO/placeholders and never imply unverified face orientations or provenance are resolved.\n\nSelf-review before publication: scan for placeholders, contradictions, ambiguous authority, scope creep, and mismatch with the cross-repo workflow; fix findings inline. Confirm only design.md changed. Validate Markdown with best repo-available checks and `git diff --check`.\n\nGitHub conventions:\n- Issue and PR explain that conversational design sections were approved, but Kirk must review the written spec before plan/implementation.\n- One issue for this design PR; later implementation PRs get owning-repo issues after written design approval.\n- Ready PR, not draft; leave it open. Include issue linkage and cross-repo scope.\n- End any issue/PR body or comments authored through Kirk’s account with `— asset-pipeline agent, on behalf of KirkDiggler`.\n\nReturn: issue URL/number, Project 19 field evidence, linked worktree path, design path, commit SHA, pushed branch, PR URL/number/base/head/state, changed-file list, validation commands and exit codes, self-review outcome, primary-checkout preservation evidence, and residual risks. If auth/board/PR actions fail, stop safely and report exact state; do not improvise routing.",
+      "completedAt": "2026-08-12T19:41:39.323Z",
+      "sessionPath": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T19:41:39.323Z",
+        "status": "completed"
+      }
+    },
+    {
+      "workflowRunId": "a33405b1-3565-4195-9a5d-729a7f6a7dba",
+      "key": "attack-die-spec-fixes",
+      "status": "completed",
+      "startedAt": "2026-08-12T19:46:54.634Z",
+      "updatedAt": "2026-08-12T19:54:23.660Z",
+      "artifactPaths": [
+        "/tmp/pi-subagents-uid-1000/async-subagent-runs/3290c077",
+        "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl"
+      ],
+      "runId": "3290c077",
+      "agent": "worker",
+      "task": "Apply a focused written-spec correction to PR #217 based on independent review. Work only in `/home/kirk/game-dev/rpg-project/.worktrees/attack-die-3d`; before any edit, cd there and prove it is the linked worktree on `idea/216-attack-die-3d` with a clean tracked/index state. Never edit, stash, reset, clean, switch, or commit the dirty primary checkout.\n\nReview evaluation: all four warning-class findings are technically valid and within the already-approved design; they clarify acceptance rather than expand product scope. Resolve them in `ideas/attack-die-3d/design.md` only:\n\n1. Lifecycle ownership: define one production owner for queue/presentation completion (preserve existing CombatPresentation/DiceTray sequencing; AttackDie3D is visual and must not independently advance FIFO). Lock 3D-vs-SVG mode for the lifetime of one presentation token. If 3D is not ready at beat start or fails, use SVG for that entire beat; never wait for asset/shader/WebGL readiness. Cancel frame work/listeners on unmount/token change and ignore stale readiness/settle callbacks, preventing late appearance or duplicate completion. Concept-only settle telemetry may exist for evidence but is not production queue authority. Fit this to actual existing callback semantics after re-reading the relevant documented source facts; do not invent a conflicting API.\n\n2. Settle tolerance: freeze a concrete angular acceptance threshold before implementation. Use quaternion angular distance in degrees and set the gate to `<= 0.25°` at the completion observation, followed by copying/holding the exact target quaternion for the settled frame. Explain why the epsilon is a measurement gate, not permission to leave the final face visibly off-target. Apply the same frozen threshold to all 20 results and reduced motion.\n\n3. Evidence invalidation: expand the immutable evidence tuple to every readability-affecting input already in scope: exact GLB hash, face map/version, camera transforms/projection, material mode/shader revision, lighting/environment, exposure/tone mapping, die scale, viewport CSS size/output resolution, and device-pixel ratio. A change invalidates human confirmation. Avoid inventing a general visual-regression platform.\n\n4. Performance/playtest pass-fail: replace subjective terms with a bounded before/after protocol on the same build/device/route and a named target matrix. At minimum cover desktop Chromium and the project’s supported Discord-iframe/mobile-or-low-GPU profile if available from repo docs. Use warm-load repeated samples and freeze explicit regression budgets before concept promotion. Prefer concrete relative budgets appropriate to a transient single die: no >10% regression in p95 frame time during the throw/verdict window versus the existing SVG baseline, no new long task >50ms attributable to the die, no sustained frame-time miss after the die unmounts, and asset/network/GPU-memory measurements recorded. If repository conventions establish better exact targets, use and cite them instead; do not fabricate unsupported device names. Make failure block promotion, not concept exploration.\n\nAlso add immutable rpg-game-assets source references for established facts: asset promotion PR #46 and merged commit/ref available locally/remotely, while making clear the facts were inspected and can go stale if the GLB hash changes. Do not claim provenance is resolved.\n\nRun the same placeholder/contradiction/scope/ambiguity self-review again. Confirm only design.md changes relative to the current branch head, run `git diff --check`, any available Markdown/link check, commit with a concise conventional message referencing #216, push the same branch, and verify PR #217 points to the new commit. Do not add plan.md, implement, merge, close, comment, or change board fields.\n\nReturn exact changed sections, commit SHA, validation commands/exits, PR-head evidence, clean linked-worktree status including untracked files, and residual risks.",
+      "completedAt": "2026-08-12T19:54:23.660Z",
+      "sessionPath": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T19:54:23.660Z",
+        "status": "completed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a2bde801-c673-4352-b69a-83d04287f1b2/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a2bde801-c673-4352-b69a-83d04287f1b2/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/185be75c-706e-4b3a-8067-87e3a9172b58/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/185be75c-706e-4b3a-8067-87e3a9172b58/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl"
+    },
+    {
+      "kind": "status",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a33405b1-3565-4195-9a5d-729a7f6a7dba/status.json"
+    },
+    {
+      "kind": "other",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/a33405b1-3565-4195-9a5d-729a7f6a7dba/events.jsonl",
+      "description": "Lifecycle events"
+    },
+    {
+      "kind": "output",
+      "path": "/tmp/pi-subagents-uid-1000/async-subagent-runs/3290c077"
+    }
+  ],
+  "receipts": [],
+  "cwd": "/home/kirk/game-dev/rpg-project",
+  "ownerSessionId": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43.jsonl",
+  "summary": "Canonical attack-die design published in rpg-project PR #217 at commit 427c3da; issue #216 is on Project 19 (Todo, Assets). Independent corrected-spec review and GitHub publication audit found no blockers. Written-spec approval remains with Kirk before planning."
+}

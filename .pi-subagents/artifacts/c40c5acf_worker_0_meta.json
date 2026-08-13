@@ -1,0 +1,286 @@
+{
+  "runId": "c40c5acf",
+  "agent": "worker",
+  "task": "Create the design-only rpg-project change for the newly created umbrella issue.\nIssue creation result:\nCreated the canonical umbrella issue and routed it to Project 19.\n\n- **Issue:** [rpg-project #208](https://github.com/KirkDiggler/rpg-project/issues/208)\n- **Project item ID:** `PVTI_lAHOAASbwc4Bcj4vzg2BUBI`\n- **Fields:**\n  - Status: `Todo`\n  - Team: `Cross-team`\n  - Feature: `Infra`\n  - Kind: `Build`\n\n### Actions performed\n\n- Confirmed GitHub authentication and repository access.\n- Confirmed no matching issue existed.\n- Validated Project 19 field and option IDs.\n- Created issue #208 with the required marker, sections, bounded scope, acceptance criteria, and signature.\n- Added it to Project 19 and set all requested fields.\n- Re-read the live issue and project item to verify content and routing.\n- Confirmed no staged files and no repository files changed.\n- Created no implementation issues, branch, or PR.\n\n**Blockers:** None.\nTarget repository: /home/kirk/game-dev/rpg-project. The primary checkout is dirty with unrelated user work. Never modify, clean, stash, reset, stage, or switch the primary checkout.\nFetch origin and create an isolated manual git worktree at /home/kirk/game-dev/.pi-worktrees/rpg-project-toolkit-contributor-sandbox-design from latest origin/main. Create a docs/<issue-number>-toolkit-contributor-sandbox branch. Refuse rather than overwrite if the branch/path already exists unexpectedly.\nCreate only ideas/toolkit-contributor-sandbox/design.md. Do not create plan.md, implementation issues, or implementation code. Do not modify sessions/active.md or role policy.\nUse the approved conversation and these scout artifacts as evidence: /home/kirk/game-dev/rpg-project/.pi-subagents/artifacts/dd419acb_scout_0_output.md, /home/kirk/game-dev/rpg-api/.pi-subagents/artifacts/68c441b2_scout_0_output.md, /home/kirk/game-dev/rpg-dnd5e-web/.pi-subagents/artifacts/bb8e6771_scout_0_output.md, /home/kirk/game-dev/.pi-subagents/artifacts/ab50db25_scout_0_output.md, /home/kirk/game-dev/rpg-toolkit/.pi-subagents/artifacts/5985ec3a_rpg-toolkit-member_0_output.md.\nThe design must state: user problem and Windows/WSL2 context; exact daily UX; repository ownership; data/control flow; one-module override safety; API-based idempotent seeding under dedicated Dev identities; use only currently implemented section RPCs because GetRequirements/SubmitChoices are unimplemented; Protection class choice plus post-finalize real shield equip; no direct Redis/Data construction; dev-auth client isolation; Dungeon Builder canvas template and authoring lifecycle; 1/2-seat arbitrary order; normal GameView versus optional harness; error/cleanup behavior; security and production gating; tests and clean-WSL verification matrix; phased delivery and explicit non-goals. Preserve the Boundary Rule.\nKeep design simple-first: one template, one active scenario, explicit refresh, no watcher, no generic scenario schema/catalog/editor.\nRun markdown/diff hygiene checks available in the repo. Commit the design locally with a clear docs message. Do not push or open a PR yet.\nReturn worktree path, branch, commit, changed files, checks with exit codes, residual questions, and confirm the primary checkout was untouched.",
+  "exitCode": 0,
+  "usage": {
+    "input": 217895,
+    "output": 21274,
+    "cacheRead": 1459200,
+    "cacheWrite": 0,
+    "cost": 2.4572950000000002,
+    "turns": 22
+  },
+  "model": "openai-codex/gpt-5.6-sol",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-sol",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 217895,
+        "output": 21274,
+        "cacheRead": 1459200,
+        "cacheWrite": 0,
+        "cost": 2.4572950000000002,
+        "turns": 22
+      }
+    }
+  ],
+  "durationMs": 733338,
+  "toolCount": 39,
+  "launchContractDigest": "2e14cfde1b4d9cd29fe660ef55712090ceb511ecd1e1da86408a5849df1aa53d",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "acceptance": {
+    "status": "review-required",
+    "evidenceStatus": "checked",
+    "explicit": true,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": true,
+      "inferredReason": [
+        "risky write-capable run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files",
+            "diff-summary"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files",
+            "diff-summary"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files",
+        "diff-summary"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "risky write-capable run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files",
+          "diff-summary"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files",
+          "diff-summary"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "criterion:criterion-2",
+        "status": "passed",
+        "message": "Required criterion 'criterion-2' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "evidence:diff-summary",
+        "status": "passed",
+        "message": "diff-summary evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Committed only ideas/toolkit-contributor-sandbox/design.md on docs/208-toolkit-contributor-sandbox; no plan, implementation code, issue, push, or PR was created."
+        },
+        {
+          "id": "criterion-2",
+          "status": "satisfied",
+          "evidence": "Commit ab42e2a22bafb483981ace1baade2d7cc58a5ad5 contains exactly one file and passed final Markdown, diff, scope, cleanliness, and primary-checkout invariant checks."
+        }
+      ],
+      "changedFiles": [
+        "ideas/toolkit-contributor-sandbox/design.md"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "git -C /home/kirk/game-dev/rpg-project fetch origin && git worktree add -b docs/208-toolkit-contributor-sandbox /home/kirk/game-dev/.pi-worktrees/rpg-project-toolkit-contributor-sandbox-design origin/main",
+          "result": "passed",
+          "summary": "Fetched origin and created the isolated worktree from latest origin/main."
+        },
+        {
+          "command": "prettier --check ideas/toolkit-contributor-sandbox/design.md",
+          "result": "failed",
+          "summary": "Initial check found formatting differences; corrected with Prettier."
+        },
+        {
+          "command": "git diff --cached --check",
+          "result": "failed",
+          "summary": "Initial staged check found Markdown hard-break trailing spaces; header formatting was corrected."
+        },
+        {
+          "command": "prettier --check ideas/toolkit-contributor-sandbox/design.md",
+          "result": "passed",
+          "summary": "Final Markdown formatting check passed."
+        },
+        {
+          "command": "git diff --cached --check",
+          "result": "passed",
+          "summary": "Final staged diff hygiene check passed before commit."
+        },
+        {
+          "command": "git commit -m \"docs: design toolkit contributor sandbox (#208)\"",
+          "result": "passed",
+          "summary": "Created local commit ab42e2a."
+        },
+        {
+          "command": "git diff --check HEAD^ HEAD && git show --check --oneline --stat HEAD",
+          "result": "passed",
+          "summary": "Committed diff and commit-object hygiene passed."
+        },
+        {
+          "command": "git status --porcelain=v1 && git diff --cached --quiet",
+          "result": "passed",
+          "summary": "Isolated worktree is clean with no staged files."
+        },
+        {
+          "command": "primary checkout HEAD, branch, status, and staged-file invariant checks",
+          "result": "passed",
+          "summary": "Primary remained on main at c69f71f with its exact pre-existing dirty status and no staged files."
+        }
+      ],
+      "validationOutput": [
+        "Prettier: All matched files use Prettier code style.",
+        "Committed scope: ideas/toolkit-contributor-sandbox/design.md only.",
+        "Diff summary: 1 file changed, 522 insertions.",
+        "Branch is one commit ahead of origin/main.",
+        "No plan.md exists."
+      ],
+      "residualRisks": [
+        "Independent reviewer approval remains required before the review gate is satisfied."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Added a 522-line design for the simple-first WSL2 toolkit contributor sandbox loop; no implementation files changed.",
+      "reviewFindings": [
+        "no blockers in worker self-review; independent reviewer gate remains pending"
+      ],
+      "manualNotes": "Nothing was pushed and no PR was opened. The primary checkout was untouched."
+    },
+    "reviewResult": {
+      "status": "review-required",
+      "findings": [
+        {
+          "severity": "non-blocking",
+          "issue": "Independent review has not been supplied.",
+          "rationale": "The run cannot be marked reviewed from child evidence alone."
+        }
+      ]
+    }
+  },
+  "effects": {
+    "fileMutation": {
+      "status": "observed",
+      "expected": true,
+      "attempted": true
+    }
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi-subagents/artifacts/c40c5acf_worker_0_transcript.jsonl",
+  "timestamp": 1786398108681
+}
