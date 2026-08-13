@@ -23,6 +23,8 @@ ADR-0037 and the enforced decisions digest.
 | `dnd5e/session` | v0.1.0 | 407bd57 | shell, 10 free-roam verbs, event stream, the boundary test |
 | `dnd5e/session` | v0.2.0 | 556b2e1 | the interrupt spine — suspend, persist, resume in a fresh process |
 | `dnd5e/session` | v0.3.0 | 5c79152 | characters load through the host's repository |
+| `dnd5e/session` | v0.3.1 | 132f018 | conditions survive a suspension; the store is never damaged |
+| `dnd5e/session` | v0.4.0 | f0c7152 | `Join` loads players, `Spawn` instantiates content from a ref |
 
 **The strategy, and its falsifiable claim.** Wrap what exists → migrate rpg-api once at W4 →
 replace behind it. The claim: *after the migration wave, no subsequent wave changes an rpg-api
@@ -101,11 +103,11 @@ _(#916's dangling `closes #916` references were removed on PR #950.)_
 
 ## Next
 
-**The rest of W3** ([#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945)): NPCs in
-`SessionData` (session-scoped, **no `NPCRepository` until a durable NPC exists** — adding a Config
-port later is compatible, removing one isn't), and **conditions surviving a suspension** — the
-invariant W2 forced rather than chose: durable condition state must round-trip through the blob or
-a suspension loses it. Takes `session/v0.4.0` on merge.
+**W3 is one step from done.** Everything in [#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945)
+has shipped except **T3.6's scene** — *Alice raging when she is loaded, without the caller ever
+mentioning rage* — which is **blocked** on `ConditionBehavior` having no `Ref()` (see Open
+questions). Nothing else in the wave depends on it, so W4 could start first if that decision
+stays open.
 
 Then **W4 — combat, where rpg-api migrates.** The payoff wave: the version-bump promise starts
 there, and its 22 files / ~6,700 lines of old-stack orchestration are *evidence about what a game
