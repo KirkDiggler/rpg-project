@@ -60,6 +60,8 @@ This design does not build a universal dice simulator. It establishes the smalle
 8. **Shared release is compact.** Production will coordinate one release signal rather than streaming live pointer movement. That signal identifies the presentation and starts the decorative throw for witnesses; it may repeat the already-known preset ID for validation/fallback, but it does not establish ownership.
 9. **Damage dice are reserved, not fabricated.** The tray may support a future dice group, but this concept renders only the d20 until individual authoritative damage results exist.
 10. **Concept approval precedes production promotion.** The Concepts Lab proves reusable production-intent components. Combat wiring, real transport, ownership validation, and persistence require separately approved implementation work.
+11. **The tray lives in a left presentation drawer.** In the gameplay composition, an always-visible drawer floats over the lower-left map area immediately above the current encounter dock. The existing default-open combat log remains on the right, and center-map verdict/damage presentation remains a separate surface. The drawer contains dice only: no hit/miss/crit label, damage total, modifier equation, or combat-log breakdown.
+12. **Always visible is the default, not the only future preference.** The first concept shows the drawer open at all times. A later promotion design may offer always-open, contextual auto-open, or collapsed display preferences without changing the dice data or authority boundary. This concept does not build that preference control.
 
 ## Experience flow
 
@@ -200,7 +202,9 @@ Names may change during planning. The stable ideas are:
 
 ## Concepts Lab surface
 
-Extend the existing `?concept=attack-die-3d` work or introduce a focused dice-tray stage without creating a disconnected mock renderer. The lab provides:
+Extend the existing `?concept=attack-die-3d` work or introduce a focused dice-tray stage without creating a disconnected mock renderer. The Tray stage is a fixture-backed sample gameplay screen rather than an isolated component card: it composes the real current `EncounterDock` along the bottom, its default-open combat log on the right, a neutral map stand-in, and the always-open dice drawer floating on the left above the dock. It does not wire encounter state, alter the center verdict/damage presentation, or duplicate combat-log math.
+
+The lab provides:
 
 - authoritative result input, 1–20;
 - player and monster roller modes;
@@ -364,6 +368,8 @@ No changes for the d20 Concepts Lab. A future damage-dice design may require exp
 
 The concept is ready for production-promotion design review when:
 
+- [ ] The Tray stage shows a sample gameplay composition with the real current encounter dock below the map, the default-open combat log on the right, and the dice-only drawer floating on the left.
+- [ ] The drawer is always visible by default in the concept and contains no verdict, damage total, modifier equation, or combat-log breakdown.
 - [ ] The tray displays one production-intent 3D d20 selected by stable preset ID.
 - [ ] Player mode waits indefinitely for Roll or grab/shake/release.
 - [ ] Monster mode may auto-play.
@@ -401,7 +407,7 @@ Kirk alone merges the resulting PRs.
 - Letting gesture quality influence a result.
 - Player autoplay or an armed-state timeout.
 - Streaming pointer movement to spectators.
-- Inventory UI, ownership, purchasing, loadout persistence, or dice-jail persistence.
+- Inventory UI, ownership, purchasing, loadout persistence, dice-jail persistence, or drawer-display preference persistence.
 - Individual damage dice before the server supplies individual authoritative faces.
 - Proto/API/toolkit changes in the d20 concept slice.
 - Hard synchronization of all clients beyond one presentation release signal.

@@ -39,7 +39,7 @@
 |---|---|
 | 0 | Existing approved roll, now smaller at scale 1.1 |
 | 1 | Empty rounded tray/drawer in a new Tray stage |
-| 2 | One result-10 lightning d20 placed and settling inside the tray |
+| 2 | Sample gameplay screen with the current dock/log and one result-10 d20 in a left dice drawer |
 | 3 | Player waits for explicit Roll; monster can auto-roll |
 | 4 | Optional grab, shake, and release |
 | 5 | Stormforged and Cryptstone collectible presets |
@@ -257,16 +257,20 @@ git commit -m "feat: add empty 3d dice tray concept (#749)"
 
 ---
 
-### Task 2: Place One Working Result-10 d20 in the Tray
+### Task 2: Put One Working Result-10 d20 in a Left Gameplay Drawer
 
 **Files:**
 - Create: `src/components/ui/dice/DiceTray3D.tsx`
 - Create: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Create: `src/concepts/attack-die-3d/DiceTrayEncounterPreview.tsx`
+- Create: `src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx`
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
+- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx`
 - Modify: `public/themes/base.css`
 
-**Produces:** one list-shaped tray item rendered through the real `AttackDie3D`, fixed to the currently approved result-10 visual proof. No Roll or grab interaction yet.
+**Produces:** a fixture-backed sample gameplay screen using the real current `EncounterDock` at the bottom, its default-open combat log on the right, a neutral map stand-in, and an always-visible dice-only drawer floating on the left. The drawer renders one real result-10 `AttackDie3D`. No Roll/grab interaction, center outcome duplication, production encounter wiring, or drawer-preference control yet.
 
 ```ts
 export interface DiceTray3DItem {
@@ -286,21 +290,41 @@ export interface DiceTray3DProps {
   sidecarOverride?: AttackDie3DProps['sidecarOverride'];
   calibrationPose?: QuaternionTuple;
 }
+
+export interface DiceTrayEncounterPreviewProps {
+  tray: React.ReactNode;
+}
 ```
 
-- [ ] **Step 1: Write failing composition/cardinality tests**
+- [ ] **Step 1: Write failing tray composition/cardinality tests**
 
-Mock `AttackDie3D`. Assert exactly one d20 passes `authoritativeResult`, token, and overrides unchanged. Assert empty, two-item, non-d20, and result outside 1–20 render semantic fallback copy and never mount `AttackDie3D`.
+Mock `AttackDie3D`. Assert exactly one d20 passes result, token, phase, reduced motion, scene/sidecar override, and calibration pose unchanged. Assert empty, two-item, non-d20, unknown preset, and result outside 1–20 render semantic fallback copy and never mount `AttackDie3D`. In this slice the only allowlisted preset is `lightning`; no caller-supplied URL exists.
 
-- [ ] **Step 2: Verify RED**
+- [ ] **Step 2: Write failing gameplay-composition tests**
+
+Render `DiceTrayEncounterPreview` with a labeled tray stub. Assert:
+
+1. one `data-testid="dice-tray-encounter-preview"` contains a neutral map area;
+2. the tray is inside `data-testid="dice-tray-left-drawer"` and the real `EncounterDock` is present;
+3. the dock's combat-log toggle is present and the default-open `data-testid="floating-log"` is on the right;
+4. the drawer is before the dock in DOM order and is labeled `Always visible · dice only`;
+5. the drawer contains no `HIT`, `MISS`, `CRIT`, `damage total`, or modifier equation copy;
+6. no production `EncounterView` or `CombatPresentation` component is imported or mounted.
+
+Update the Tray panel test to expect `Gameplay placement checkpoint`, `Result 10 only · no interaction yet`, the encounter preview, left drawer, real dock, and die renderer rather than the old empty copy.
+
+- [ ] **Step 3: Verify RED**
 
 ```bash
-npm run test:run -- src/components/ui/dice/DiceTray3D.test.tsx
+npm run test:run -- \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
 ```
 
-Expected: FAIL because `DiceTray3D` does not exist.
+Expected: FAIL because `DiceTray3D`, the encounter preview, and placed die do not exist.
 
-- [ ] **Step 3: Implement placement-only composition**
+- [ ] **Step 4: Implement the placement-only tray**
 
 Compose `AttackDie3D` inside `DiceTray3DShell`. For this task only, the concept supplies:
 
@@ -314,39 +338,73 @@ Compose `AttackDie3D` inside `DiceTray3DShell`. For this task only, the concept 
 }
 ```
 
-Use reduced motion for the initial settled placement and the existing geometry-derived result-10 pose. Label the panel `Placement checkpoint · result 10 only · no interaction yet`.
+Use reduced motion with `phase="settled"` and the existing `PROVISIONAL_RESULT_10_POSE`. Pass the parent concept's already-loaded scene and sidecar into the panel/tray so the gameplay stage does not fetch the GLB twice. `AttackDie3D` remains the real renderer; the SVG `DiceTray` remains its truthful fallback.
 
-- [ ] **Step 4: Write and implement containment styling**
+- [ ] **Step 5: Compose the sample gameplay screen with current UI**
 
-Add `data-testid="dice-tray-3d-renderer"`. At settled result 10, the projected die bounds must be fully inside `dice-tray-3d-well`; the larger 440×360 motion surface remains available for later overflow travel. Do not hide overflow.
+`DiceTrayEncounterPreview` owns fixture data only. Reuse the real `EncounterDock` with a representative current-turn character, actions, economy, and `CONCEPT_LOG_ENTRIES`; callbacks are inert concept handlers. Layout:
 
-- [ ] **Step 5: Verify GREEN and capture**
+- preview frame: 1024×768 aspect target, responsive `max-width: 100%`, map above dock;
+- dock: real component along the bottom, not a visual reimplementation;
+- combat log: real dock-owned default-open surface on the right;
+- drawer: absolute/floating lower-left above the dock, always open in this concept;
+- drawer content: dice only, with short placement-status copy outside the tray surface;
+- map: neutral fixture backdrop only; no licensed screenshot or fabricated live encounter state.
+
+Do not import or modify `EncounterView`, `CombatPresentation`, `useBeatSequencer`, or production transport/state code.
+
+- [ ] **Step 6: Implement containment and responsive styling**
+
+Add `data-testid="dice-tray-3d-renderer"`. The drawer may use a compact visual shell derived from the same 440×360 motion coordinate space, but must remain large enough for readable numerals. At settled result 10, the complete visible die must fit inside `dice-tray-3d-well`. Keep the motion surface `overflow: visible`; the preview frame itself may clip only at the simulated viewport edge, not at the rounded tray. At narrow review widths, stack the drawer above the dock/map or scale the preview without overlapping the dock/log; do not move the drawer into the center outcome lane.
+
+- [ ] **Step 7: Verify GREEN and capture**
 
 ```bash
 npm run test:run -- \
+  src/components/ui/dice/DiceTray3DShell.test.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
   src/components/ui/dice/AttackDie3D.test.tsx \
-  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+  src/components/game/EncounterDock.test.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
+npx prettier --check \
+  public/themes/base.css \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
 npm run typecheck
 npm run lint -- --quiet
+git diff --check
 ```
 
-Browser-measure both bounding rectangles and assert the settled die's visible bounds are within the well. Capture:
+At the real route, browser-verify the current dock remains readable, the combat log stays on the right, the drawer stays left above the dock, center map space remains unobstructed, and the settled die is fully inside the rounded well. Capture:
 
 ```text
-/home/kirk/game-dev/.verification/interactive-dice-tray/task-2/result-10-in-tray.png
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-2/gameplay-left-drawer-result-10.png
 ```
 
-- [ ] **Step 6: Commit**
+Also capture a narrow responsive state under the same directory.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add \
   src/components/ui/dice/DiceTray3D.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
   public/themes/base.css
-git commit -m "feat: place lightning d20 in the tray (#749)"
+git commit -m "feat: preview dice drawer with combat ui (#749)"
 ```
 
 ---
