@@ -13,11 +13,13 @@ commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #9
 (ADR-0037 + enforced decisions digest) merged at **f9b720f**; PR #955 (the `play/` layering docs
 + the W4 charter) merged at **ad19574**, taking `rulebooks/dnd5e/v0.80.1`.
 
-**W4 is combat, built new in the session package** — not an adapter, not a migration, and
-**chartered**: `docs/ideas/session-sdk/plan.md` now carries six clauses, each split into *what to
-deflect* and *what to ponder*. The mode question is **answered** — see Solid. What remains open
-is the **trigger's shape**, which is genuinely ours because trigger detection belongs to the
-composition. See Open questions.
+**W4 is combat, built new** — chartered (plan.md, six deflect/ponder clauses), sliced onto board
+19 as toolkit **#963→#966** under tracker **#959**, and its foundation is now **decided end to
+end**: **ADR-0038 — resolution owns the bus** (merged `8f74220`, 2026-08-14). Step 4.1 shipped:
+PR #960 merged → **`encounter/v0.5.0`** — members are on clocks, `EncounterData.Bubbles`
+round-trips, `ClockOf(member)` answers, R6 + only-members-on-clocks validated at load, 6/6
+mutants killed. **Next: #963 — bubble town** (form/dissolve/Transfer). The trigger question
+(#964) is answered in direction: **mutual awareness** (Kirk), revisable.
 
 ## Solid
 
@@ -111,7 +113,29 @@ the old stack flips a mode; the SDK stops and asks.** Do not describe free roam 
   covers the simple cases. It must arrive as an optional capability the manager type-asserts for
   (`SessionLocker`), **never** as a method added to `SessionRepository` — that stops every host
   compiling. The optimistic/checksum-CAS alternative is fully documented and left open in
-  `session/repositories.go`; it is not being built.
+  `session/repositories.go`; it is not being built. Position writes are NOT independent (every
+  move evaluates triggers/sight/endings), so serializing free roam through the lock is *correct*.
+- **ADR-0038 — resolution owns the bus** (2026-08-14, merged `8f74220`). The wave-4 seam,
+  decided: everything at the seams is data; a **resolution package** is the ONE place a bus
+  exists — created per interaction, every participant attached through an *instrumented*
+  surface, dead with the call; rules packages (`combat`, `character`) never see the bus — every
+  verb is a **step machine** over data yielding the sealed vocabulary `Gather | Pose | Request |
+  Done` (forced by suspension: no phase may live on a stack); effects keep `Apply(ctx, bus)`
+  unchanged (~26 sites untouched); **granted** effects live on the beneficiary with a link to
+  what kills them (Bless → `BlessedCondition{Source}` on the target, `Concentrating{Granted}` on
+  the caster, break = `RevokeGrants` across dirty participants, claims validated at load as the
+  crash net), **projected** effects never leave their owner (the aura). Full deliberation:
+  toolkit journeys **052→053→054**; the digest entry is in `docs/adr/DECISIONS.md`.
+- **No simulation server, measured not argued:** one free-roam click = full load-act-save at
+  **~187µs** (2.7KB blob, 3-room world, 4-cell walk) — ~1ms with Redis, under a 30–100ms client
+  RTT. A click is a PATH not a cell; retention bounds the blob. The host-side RAM-repository
+  escape hatch is already reserved in `EncounterRepository`'s doc. rpg-api already ships
+  load-per-RPC, so the pattern is in prod.
+- **Monster behavior has an on-ramp**: `encounter/README.md` (decider contract, PR #958) +
+  `monster/README.md` corrected to route behavior work away from old `NPCAct`/`TakeTurn`.
+  Kirk's friend (dammitbilly0ne) shipped `docs/rules/standard-conditions.md` (#956) — treat it
+  as the authority on condition semantics; knockdown pair #961/#962 on board (Team: Monster AI),
+  sequenced behind an untracked "saving throws exposed consistently" prerequisite.
 
 **The parked question W2 named honestly — NOW DUE:** *"stop the walk when the walker sees something
 new"* is a game rule living in a module whose charter says it owns no rules. It's there because no
@@ -128,23 +152,16 @@ rather than an ambiguous payload nobody can safely parse."
 
 ## Open questions
 
-- **What is the trigger's shape? — W4's live decision, and it gates the other two.** Trigger
-  detection is the **composition's** business (`play/clock` says so explicitly and holds no
-  rules), so this part is genuinely ours to design rather than to discover. The question is what
-  happens to W2's `[Continue] [Stop]` window when a bubble forms. Kirk's DOS2 framing has **two
-  different entries into combat**: *one person initiates* (you choose to swing) versus getting
-  spotted (the ogre chooses for you). So: does first contact pose a window with initiation as a
-  third option; does mutual awareness simply form the bubble; or **both** — a window when you have
-  the drop, automatic when you do not? Note the machinery does not constrain the answer: `Prompt`
-  deliberately carries *the moment, never the mechanism*, and `OptionKind` is designed to grow.
-  Downstream of this: what shape trigger detection takes in the composition (an injected
-  `Decider`-like seam, or inline in the move path like the old `checkCombatEntry`), and whether
-  combat verbs live on the session Manager beside `Move`/`Traverse` or as their own surface.
-- **How much of `combat`'s bus is rules vs notification?** Charter clause 2 wants the encounter to
-  own the wiring, but `NewTurnManager` *requires* an `EventBus` and publishes `TurnStartEvent`/
-  `TurnEndEvent` itself. Conditions intercepting a chain is real and load-bearing; notification is
-  the courier's job. **Not free** — 3,362 lines are built around that bus and ADR-0027's reaction
-  windows are bus-shaped. Ponder before touching.
+- **The trigger's shape (#964) — direction set, details open.** Kirk (2026-08-14): **mutual
+  awareness forms the bubble** — "if the monster doesn't see or hear me I can duck out of view" —
+  revisable. Still open inside that: per-member windows (5e surprise is per-creature), and the
+  detection shape — under ADR-0038 the walk is `encounter.NewWalk`, a step machine emitting
+  `Pose` on first contact, so #964 became a *restatement* of moving the rule, not a migration.
+  `IntelDeltas` is keyed by every member, so both directions of "who saw whom" already exist.
+- **Pose vs Request at the reaction-window edge** — settled by the first implementation, not
+  argument. Lean Pose-is-primitive (1:1 with the existing `interrupt.Ledger`).
+- **The suspension-point probe** (first thing #965 does): verify each phase boundary's chain
+  output is fully self-describing data; any boundary holding a closure cannot suspend.
 - **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
   `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
   the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
@@ -181,10 +198,12 @@ comes later, once free roam and combat both work (Kirk, 2026-08-13). The old sta
 of orchestration are *evidence about what a game server needs, never a specification to port* —
 and now explicitly not something we adapt to either.
 
-**The gated step is a decision, not code:** settle **the trigger's shape** (Open questions).
-Nothing should be built until it lands — the shape of trigger detection in the composition, and
-whether combat verbs sit on the session Manager, both hang off it. Most other W4 arguments are
-now *deflections* under the charter rather than open questions, which is the point of having it.
+**Next is #963 — bubble town:** form/dissolve a turn bubble + `Transfer` a straggler into a live
+fight, in the composition. Pure clock wiring — needs none of ADR-0038's resolution package. Done
+when the DOS2 scenario runs through the *composition* (not `play/clock` directly), R6 holds
+through every transition, `ClockOf`'s on-no-clock guard becomes reachable and tested, and forming
+from a member already in a bubble is rejected. The initiative order arrives from OUTSIDE (R7).
+After that: the resolution package itself under ADR-0038 (#965), then the seam (#966).
 
 ## Decision log
 
@@ -207,6 +226,11 @@ now *deflections* under the charter rather than open questions, which is the poi
 | 2026-08-13 | W4 scope: world tick **+ one** turn bubble, linear per encounter; v1 feature is the straggler joining a live fight at a rolled slot | plan.md W4 scope |
 | 2026-08-13 | W4 chartered — six clauses, each split into *deflect* / *ponder* | toolkit PR #955, plan.md |
 | 2026-08-13 | The `play/` layering gets a CLAUDE.md pointer; per-rulebook casting lives in the rulebook's own CLAUDE.md | toolkit #954 / PR #955 |
+| 2026-08-14 | W4 sliced onto board 19: #963 clocks, #964 trigger, #965 resolution, #966 seam; knockdown pair #961/#962 → Monster AI | board 19, tracker #959 |
+| 2026-08-14 | Step 4.1 shipped: members on clocks, bubbles persist, `ClockOf` | toolkit PR #960 → `encounter/v0.5.0` |
+| 2026-08-14 | Trigger = **mutual awareness** (see-or-hear), revisable | #964 |
+| 2026-08-14 | **ADR-0038: resolution owns the bus; rules packages are step machines; granted vs projected effects** | merged `8f74220`; journeys 052–054 |
+| 2026-08-14 | No sim server — per-click load-act-save measured at ~187µs; host RAM-repo hatch reserved | journey 053 |
 
 ## Carried follow-ups — filed, none blocking
 
