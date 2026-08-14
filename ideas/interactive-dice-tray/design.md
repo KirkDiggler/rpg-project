@@ -248,7 +248,7 @@ Concept rules:
 - changing GLB hash, selectors, coordinate convention, or root correction invalidates mappings; and
 - gesture/replay variation cannot select or alter the target quaternion.
 
-Asset issue #47 owns the canonical lightning map. Asset issue #49 owns how maps and model contracts attach to reusable preset identities.
+Asset issue #47 owns the canonical lightning map. Web validates and consumes that asset-owned metadata; it does not independently reconstruct, label, or patch face quaternions. If a physical result is wrong, the correction returns to the asset contract owner rather than becoming a web-local exception. Asset issue #49 owns how maps and model contracts attach to reusable preset identities.
 
 ## Damage-dice expansion seam
 

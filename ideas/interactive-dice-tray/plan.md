@@ -825,11 +825,11 @@ git commit -m "feat: compare shared roller and spectator throws (#749)"
 
 ---
 
-### Task 7: Allow Authoritative Result 1–20 Without Lying
+### Task 7: Consume Asset-Owned 1–20 Face Metadata Without Lying
+
+**Blocked until:** `rpg-game-assets#47` supplies the hash-bound lightning-d20 face metadata. Web must not independently reconstruct, label, or publish the asset team's face map.
 
 **Files:**
-- Create: `src/concepts/attack-die-3d/attackDieProvisionalFaceMap.ts`
-- Create: `src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts`
 - Modify: `src/concepts/attack-die-3d/attackDieExperiment.ts`
 - Modify: `src/concepts/attack-die-3d/attackDieExperiment.test.ts`
 - Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
@@ -837,80 +837,32 @@ git commit -m "feat: compare shared roller and spectator throws (#749)"
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
 
-**Produces:** exact-digest provisional 1–20 map and result input. Wrong/missing mappings use SVG.
+**Produces:** authoritative result input 1–20 backed only by asset-owned metadata. Wrong, missing, incomplete, or hash-mismatched mappings use SVG.
 
-```ts
-export const PROVISIONAL_LIGHTNING_GLB_SHA256 =
-  '8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa';
-export const PROVISIONAL_LIGHTNING_FACE_MAP: ReadonlyArray<{
-  result: number;
-  quaternion: QuaternionTuple;
-}>;
-export function provisionalLightningFacesForDigest(
-  digest: string
-): typeof PROVISIONAL_LIGHTNING_FACE_MAP | readonly [];
-```
+- [ ] **Step 1: Receive and validate the asset contract**
 
-- [ ] **Step 1: Write completeness/hash/geometry tests**
+Use the sidecar delivered through the asset sync boundary. The existing strict contract requires:
 
-Require 20 sorted unique results, normalized quaternions, exact hash binding, mismatch `[]`, and result 10's existing approved tuple. For every result, apply its quaternion to the inspected source normal and assert browser +Y within five decimals.
+- the exact lightning GLB SHA-256;
+- the declared right-handed, `+Y`-up, `xyzw` coordinate convention and root correction;
+- exactly 20 unique results from 1 through 20;
+- one finite normalized settling quaternion per result; and
+- candidate/verified state and evidence consistent with the existing schema.
 
-Use these inspected browser-coordinate source normals:
+Do not add a web-owned `attackDieProvisionalFaceMap`, source-normal table, manually labeled contact sheet, or duplicate numeric map. If the asset team authors face markers/normals in Blender, their pipeline must emit the sidecar quaternions (or promote the contract schema separately); web consumes the resulting contract.
 
-```ts
-const SOURCE_NORMAL_BY_RESULT = {
-  1: [-0.187602, 0.794679, 0.577313],
-  2: [-0.303723, 0.18762, -0.934105],
-  3: [0.490818, 0.794853, -0.3568],
-  4: [-0.60722, 0.794534, -0.000075],
-  5: [0.303631, -0.187494, -0.93416],
-  6: [-0.794747, -0.187289, 0.577321],
-  7: [0.982442, -0.186565, 0.000928],
-  8: [0.187666, -0.794645, 0.57734],
-  9: [-0.794663, -0.187615, -0.577332],
-  10: [0.491124, 0.794645, 0.356841],
-  11: [-0.491125, -0.794651, -0.356829],
-  12: [0.794607, 0.187566, -0.577424],
-  13: [-0.187459, 0.794728, -0.577293],
-  14: [-0.982267, 0.187487, 0.000037],
-  15: [0.794651, 0.187536, 0.577373],
-  16: [-0.303469, 0.187416, 0.934228],
-  17: [0.607728, -0.794146, -0.000299],
-  18: [-0.491176, -0.794624, 0.356817],
-  19: [0.303439, -0.187461, 0.934229],
-  20: [0.187704, -0.794706, -0.577243],
-} as const satisfies Record<number, Vector3Tuple>;
-```
+- [ ] **Step 2: Write provider and fail-closed tests**
 
-- [ ] **Step 2: Verify RED and build deterministic candidate poses**
+Assert that an exact-hash, complete asset sidecar imports all 20 faces into the Concepts Lab. Missing sidecar, invalid cardinality, duplicate result, non-normalized quaternion, invalid state/evidence, or GLB hash mismatch imports no face calibration and forces truthful SVG for unmapped results. Keep the existing concept-only result-10 proof clearly provisional until the asset contract supersedes it.
 
-Align each normal to +Y, then yaw around +Y. Start with yaw `225` for result 10 and `0` for the other explicit entries. Zero is a review start, not a readability claim.
+- [ ] **Step 3: Add authoritative result input**
 
-```bash
-npm run test:run -- src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts
-```
+Add input 1–20 to the Tray stage. Pass the chosen authoritative result unchanged to the roller/spectator presentation. Select its target only from the validated asset sidecar; never derive, rotate, or guess a target in web code. Gesture/release variation remains decorative and cannot alter the selected target.
 
-- [ ] **Step 3: Calibrate readability result by result**
-
-For each result 1→20 at the 60° three-quarter camera:
-
-1. verify the intended numeral is physically uppermost;
-2. adjust only yaw around +Y until readable;
-3. store the final normalized tuple explicitly;
-4. rerun the +Y geometry assertion;
-5. keep contact sheets/screenshots private.
-
-The map remains concept-only provisional and is not asset-team human approval.
-
-- [ ] **Step 4: Bind provider import to the exact digest**
-
-Only exact digest imports all provisional faces. Digest mismatch passes no mapped calibration pose outside Calibrate, forcing SVG. Add authoritative input 1–20 to the Tray stage and mirror it to both panes.
-
-- [ ] **Step 5: Verify all results and fallback**
+- [ ] **Step 4: Verify all asset-provided results and fallback**
 
 ```bash
 npm run test:run -- \
-  src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
@@ -920,21 +872,19 @@ npm run typecheck
 npm run lint -- --quiet
 ```
 
-Browser-run results 1→20 in normal and reduced motion. Any wrong physical face is a blocker and requires a failing regression test before correction. Capture a 20-face private contact sheet under `task-7/`.
+After the asset team has completed its private face/readability review, browser-run asset-provided results 1→20 in normal and reduced motion. Any wrong physical face is reported back to the asset contract owner rather than patched with a web-local quaternion. Capture web integration evidence privately under `task-7/`; do not duplicate the asset team's calibration evidence.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add \
-  src/concepts/attack-die-3d/attackDieProvisionalFaceMap.ts \
-  src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts \
   src/concepts/attack-die-3d/attackDieExperiment.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
   src/concepts/attack-die-3d/AttackDie3DConcept.tsx \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
-git commit -m "feat: settle authoritative d20 results in tray (#749)"
+git commit -m "feat: consume authoritative d20 face metadata (#749)"
 ```
 
 ---
