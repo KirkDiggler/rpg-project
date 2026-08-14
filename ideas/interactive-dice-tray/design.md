@@ -1,9 +1,9 @@
 ---
 name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
-updated: 2026-08-13
-confidence: high on the approved interaction, authority, preset, and Concepts Lab boundaries; production transport, ownership validation, and individual damage-die contracts remain later work
-status: written specification approved by Kirk on 2026-08-13; implementation plan added beside it for review; tracked by rpg-project#219
+updated: 2026-08-14
+confidence: high on the merged authority/presentation boundary, the Original carved asset facts, and the approved staged motion architecture; production transport, ownership validation, rigid-body settlement, and individual damage-die authority remain later work
+status: original Concepts Lab slice merged in rpg-dnd5e-web#750; continuation direction approved by Kirk on 2026-08-14; Stone 0 runtime-asset integration is next; tracked by rpg-project#219
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -13,9 +13,11 @@ status: written specification approved by Kirk on 2026-08-13; implementation pla
 **Related work:**
 
 - [rpg-project#216](https://github.com/KirkDiggler/rpg-project/issues/216) — staged lightning d20 rendering proof
-- [rpg-dnd5e-web#749](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/749) — current web concept implementation
-- [rpg-game-assets#47](https://github.com/KirkDiggler/rpg-game-assets/issues/47) — verified lightning d20 contract
-- [rpg-game-assets#49](https://github.com/KirkDiggler/rpg-game-assets/issues/49) — collectible dice-set preset contracts
+- [rpg-dnd5e-web#749](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/749) / [PR #750](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/750) — merged Concepts Lab authority, event, witness, drawer, gesture-release, fallback, and renderer boundaries
+- [rpg-game-assets#47](https://github.com/KirkDiggler/rpg-game-assets/issues/47) — earlier lightning-d20 contract work, now superseded for new usage by the Original carved set
+- [rpg-game-assets#49](https://github.com/KirkDiggler/rpg-game-assets/issues/49) / PRs [#50](https://github.com/KirkDiggler/rpg-game-assets/pull/50), [#51](https://github.com/KirkDiggler/rpg-game-assets/pull/51), and [#52](https://github.com/KirkDiggler/rpg-game-assets/pull/52) — merged Original carved and painted-number sets, complete hash-bound face maps, and carved body/numeral triangle groups
+- [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) — Stone 0 consumer runtime manifest/provider-root slice
+- [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) — Stone 0 Original carved d20 consumer slice
 
 ## Summary
 
@@ -23,7 +25,89 @@ Turn the existing attack-roll popup into a production-intent **3D dice tray**. A
 
 The die may travel outside the tray's rounded rectangle during its decorative throw, but its resting geometry must finish fully inside that rectangle. Monster attacks use the same tray and die-preset architecture but may roll automatically with a visibly different preset.
 
-The Concepts Lab is the first approval surface. It will prove one attack d20, player and monster modes, stable collectible-die preset IDs, result-driven settlement, explicit player input, and a side-by-side roller/spectator experience. The implementation should leave a clear layout and API seam for future damage-dice groups without pretending that current damage totals contain individual die results.
+The first Concepts Lab slice fulfilled that boundary and merged through web PR #750 at `627184f` (merge `1322dc4`). Its later local held-motion experiment was intentionally not merged: the die moved on a world-axis rail and a full-tray blue grabbed border communicated the wrong physical model. The continuation replaces that experiment rather than layering fixes onto it.
+
+The Concepts Lab was the first approval surface. PR #750 proved one attack d20, player and monster modes, stable preset IDs, result-driven settlement, explicit player input, and a side-by-side roller/spectator experience. The implementation leaves a clear layout and API seam for future damage-dice groups without pretending that current damage totals contain individual die results.
+
+## Approved continuation: tactile roll groups through stepping stones
+
+The player fantasy is not that gesture quality secretly changes the server result. It is that the die feels responsive enough that the player can pretend their release technique mattered. The durable rule is:
+
+> The gesture changes **how** the dice roll, never **what** they roll.
+
+The continuation is staged rather than attempting a universal simulator in one slice.
+
+### Stone 0 — consume the permanent asset contract
+
+The merged Original carved set is the default provider for new dice work. Stone 0 integrates `dice.original.carved.d20`, its exact runtime hash, material-free carved mesh, bounds, body/numeral triangle groups, and complete 1–20 settlement map behind the already-merged `DiceTrayPresentation → DiceTray3D → renderer` boundary. The painted-number family merged in PR #52 proves a future distinct-preset path but is not selected in this slice: recessed carved geometry is the more physical baseline for the settlement and motion work. Stone 0 does not add tactile motion yet.
+
+PR #50 supplies strong asset facts:
+
+- seven promoted dice: d20, d12, d10 percentile, d10, d8, d6, and d4;
+- one cohesive material-free carved family;
+- human-approved private review renders;
+- complete finite normalized face maps bound to each exact runtime GLB hash;
+- carved body/numeral triangle groups from PR #51, enabling two runtime materials without changing the GLB hash;
+- a second painted-number family from PR #52 for later preset work; and
+- Original d20 hash `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e` (491,312 bytes).
+
+It also exposes a cross-repository contract gap that Stone 0 must close before web consumption:
+
+- the assets README still declares `harness/models/synty/` as the sole consumer tree;
+- Original dice were promoted under `harness/models/custom-dice/`;
+- the web sync script mirrors only `harness/models/synty/`; and
+- the canonical dice manifest remains under authoring-only `library/custom-dice/`.
+
+Stone 0 therefore lands inside-out in two ordered repository slices:
+
+1. **Assets provider slice:** declare `harness/models/custom-dice/` as a supported consumer runtime root; generate a consumer-safe runtime preset manifest beside the promoted GLBs; validate its reproducibility, promoted paths, hashes, selectors, bounds, and complete face maps; keep `library/custom-dice/` as authoring authority only.
+2. **Web consumer slice:** sync both approved runtime roots into separate ignored public paths; strictly reconstruct and validate the runtime manifest; hash the GLB before parsing; apply a runtime material to the single carved mesh; resolve authoritative results only through the asset map; coalesce provider loading; and fail closed to semantic SVG on every unavailable, malformed, stale, unmapped, or hash-mismatched input.
+
+The web must not reach into `library/`, copy numeric face facts into source, or preserve Lightning-specific two-material assumptions in the generic provider.
+
+### Stone 1 — tactile held and personalized release choreography
+
+A roll is modeled as a **roll group**, even when the group currently contains one attack d20. Pointer-down must begin on or near a member die; grabbing any member of a future pending group picks up the whole group. The hit region is the projected die silhouette plus forgiving mouse/touch padding, not the whole tray. Pointer capture keeps the held group attached through outside movement. The grabbed visual is communicated by lift, shadow, and pose—never a full-tray blue border. Keyboard and assistive users retain an explicit per-group Roll/Grab control and visible focus.
+
+While held, raw pointer samples remain local. The group follows the pointer in a camera-aligned two-dimensional tray plane with a small constant lift. Filtered velocity drives bounded tilt and wobble; repeated motion accumulates bounded visual shake energy. Reduced motion keeps only one static lifted cue.
+
+On accepted release, the controller emits one frozen, bounded `VisualThrowProfile@1` containing only:
+
+- normalized release position within the tray;
+- normalized release direction and speed;
+- accumulated shake energy;
+- spin bias;
+- deterministic motion seed; and
+- schema version.
+
+It contains no raw client coordinates, path history, timestamps, result, target, damage, URL, transport field, or new external correlation. `presentationId` remains the sole external identity. Button/keyboard Roll uses a neutral profile; Monster release profiles remain host-produced. Roller and Spectator consume the same immutable profile values and independently reproduce the same throw personality.
+
+### Permanent solver boundary
+
+Stone 1 introduces internal seams without changing the merged public authority boundary:
+
+- **RollGroupGestureController** owns local hit testing, pointer capture, raw samples, filtering, held energy, and terminal cleanup.
+- **SettlementResolver** validates asset identity and maps each authoritative result to the asset-owned target quaternion.
+- **DiceMotionSolver** receives roll-group descriptors, one sanitized throw profile, authoritative targets, and elapsed presentation time, and returns Three.js poses only.
+- **ChoreographedSolverV1** deterministically selects and parameterizes arc, spin, bounce, scatter, and continuous final convergence from the throw profile.
+- **RigidBodySolverV2** later replaces V1 behind the same interface.
+- **DiceRuntimeProvider** owns coalesced manifest/GLB loading and immutable validated provider values.
+
+All movement is applied to Three.js die groups. Canvas and renderer CSS transforms remain forbidden. A solver/provider/renderer failure preserves the merged truthful SVG behavior.
+
+### Later stones
+
+- **Stone 2 — multi-die roll groups:** after authoritative per-die results exist, grabbing any member gathers the group into a compact springy “invisible handful”; release scatters each die with deterministic offsets while preserving one shared throw personality.
+- **Stone 3 — physical settlement:** consume verified set-wide face maps and tray collision geometry; introduce deterministic rigid-body simulation and a landing solver that chooses a physically valid trajectory settling naturally on each server-selected face.
+
+Lasso selection, partial-group rolling, rolling individual damage dice, inventory/equipment, production transport, and collectible persistence remain separately designed later work. Partial-group interaction cannot ship until the authority contract names individual dice/subsets rather than only a damage total.
+
+### Stone 0 retro criteria
+
+The Stone 0 retro asks two questions:
+
+1. Could the Lightning concept provider be replaced by Original carved d20 without rewriting `DiceTrayPresentation`, authority reconciliation, witness roles, or fallback semantics?
+2. Does every physical face and model fact originate in the asset runtime contract, with no web-authored quaternion, selector, path, or hash exception?
 
 ## Why this is more than an attack popup
 
@@ -44,8 +128,9 @@ This design does not build a universal dice simulator. It establishes the smalle
 - The current sequencer also auto-throws a player's die after 1.5 seconds. That conflicts with this design and must be removed before production promotion.
 - Monster and spectator attacks already bypass the local player's armed interaction and can auto-play.
 - `EntityDamaged` currently provides a total and optional per-source totals, not the individual authoritative damage-die faces needed for honest 3D damage settlement.
-- The lightning d20 is the only currently promoted game-ready die model in the web runtime.
-- The asset team is building full dice sets. Asset issue #49 owns the reusable preset/set contract and the distinction between material skins and distinct models.
+- The lightning d20 was the only model available to the merged Concepts Lab slice and is now explicitly superseded for new dice usage.
+- Assets PR #50 has merged the complete Original carved set, promoted runtime GLBs, human-approved private renders, and exact hash-bound settlement maps for all supported results across all seven dice.
+- The web cannot consume that set yet because its sync/provider path remains Lightning/Synty-specific and the consumer-safe runtime manifest is not promoted alongside `harness/models/custom-dice/`.
 - A local pointer gesture is not currently delivered to teammates. Shared witnessing therefore needs a later presentation-coordination seam.
 
 ## Product decisions
@@ -55,7 +140,7 @@ This design does not build a universal dice simulator. It establishes the smalle
 3. **The gesture has no game authority.** It may influence decorative position, spin, and effect phase. It may not generate, reroll, bias, clamp, reinterpret, or conceal the authoritative result.
 4. **Monster rolls may auto-play, but rendered witnesses do not produce that event.** There is no player gesture to await for an NPC. The fixture host—and later the single authoritative production adapter—appends one deterministic release for a monster presentation. Roller and spectator components only consume it, preventing duplicate autoplay from multiple clients, remounts, or StrictMode.
 5. **The tray is the popup.** The rounded rectangle is the resting/interaction tray. Throw motion may cross its boundary; settlement must fit inside it.
-6. **Collectible identity uses stable preset IDs.** Presets describe dice such as `lightning` or a future named crypt set. They do not encode `player` or `monster`; roller role selects a preset ID.
+6. **Collectible identity uses stable preset IDs.** Presets describe dice such as `dice.original.carved.d20`; they do not encode `player` or `monster`. Roller role selects an authoritatively projected preset ID, while runtime material treatment may distinguish table roles without changing mesh identity.
 7. **Spectators see the roller's die.** The selected preset is part of the player's shared presentation identity. Spectators do not substitute their own local skin. Production must project the roller's authoritatively equipped preset before the tray arms; the release gesture is not the source of ownership or loadout truth.
 8. **Shared release is compact.** Production will coordinate one release signal rather than streaming live pointer movement. That signal identifies the presentation and starts the decorative throw for witnesses; it may repeat the already-known preset ID for validation/fallback, but it does not establish ownership.
 9. **Damage dice are reserved, not fabricated.** The tray may support a future dice group, but this concept renders only the d20 until individual authoritative damage results exist.
@@ -166,7 +251,7 @@ This is illustrative, not a locked TypeScript interface. The important boundary 
 
 Callers select a preset ID and do not branch on those implementation details.
 
-The first Concepts Lab presets may use the existing lightning model with clearly different temporary material treatments. This proves the skin boundary while the asset team completes promoted sets. Provisional presets and face maps must remain visibly labeled as unverified and must not be mistaken for asset-owned canonical contracts.
+The merged Concepts Lab used the existing Lightning model as a clearly labeled provisional provider. New dice usage resolves only the Original carved runtime contract from PR #50. Material/effect variants may share that geometry, but provisional providers and face maps must remain visibly labeled and must never be mistaken for asset-owned canonical contracts.
 
 ### 5. Presentation coordination owns shared release
 
@@ -205,9 +290,9 @@ Names may change during implementation. The stable ideas are:
 - both views consume the same event values while maintaining their own renderer observation; and
 - `DiceTray3D` and the die renderer remain independently testable beneath the event-fed component.
 
-## Concepts Lab surface
+## Merged Concepts Lab surface (#750)
 
-Extend the existing `?concept=attack-die-3d` work or introduce a focused dice-tray stage without creating a disconnected mock renderer. The Tray stage is a fixture-backed sample gameplay screen rather than an isolated component card: it composes the real current `EncounterDock` along the bottom, its default-open combat log on the right, a neutral map stand-in, and the always-open dice drawer floating on the left above the dock. It does not wire encounter state, alter the center verdict/damage presentation, or duplicate combat-log math.
+The `?concept=attack-die-3d` Tray stage fulfilled the following surface without creating a disconnected mock renderer. The Tray stage is a fixture-backed sample gameplay screen rather than an isolated component card: it composes the real current `EncounterDock` along the bottom, its default-open combat log on the right, a neutral map stand-in, and the always-open dice drawer floating on the left above the dock. It does not wire encounter state, alter the center verdict/damage presentation, or duplicate combat-log math.
 
 The lab provides:
 
@@ -229,11 +314,13 @@ The side-by-side surface simulates delivery of the shared component-input event 
 
 ## Sizing and geometry
 
-The current concept die is intentionally large for visual review. The next iteration should try a presentation scale near **1.1**, down from 1.4, without shrinking the 440×360 review surface.
+The merged concept established a presentation scale of **1.1** for the provisional Lightning model on a 440×360 review surface. Original carved integration does not reuse that asset-local number blindly.
 
-Sizing is a tray responsibility informed by preset asset facts:
+Sizing is a tray responsibility informed by asset facts:
 
-- each preset supplies bounds and recommended scale;
+- the asset contract supplies exact authored bounds, coordinate units/convention, and cohesive set-relative dimensions;
+- the web owns a target visual extent for the approved tray/camera and deterministically computes one uniform normalization from those facts;
+- no caller supplies an arbitrary model scale, and the web does not maintain per-result or per-preset exception tables;
 - the tray computes a resting pose whose full projected geometry fits inside the rounded rectangle;
 - travel may begin or continue outside that rectangle;
 - the resting pose must remain readable from the approved overhead three-quarter camera;
@@ -254,7 +341,7 @@ Concept rules:
 - changing GLB hash, selectors, coordinate convention, or root correction invalidates mappings; and
 - gesture/replay variation cannot select or alter the target quaternion.
 
-Asset issue #47 owns the canonical lightning map. Web validates and consumes that asset-owned metadata; it does not independently reconstruct, label, or patch face quaternions. If a physical result is wrong, the correction returns to the asset contract owner rather than becoming a web-local exception. Asset issue #49 owns how maps and model contracts attach to reusable preset identities.
+Assets PR #50 owns the canonical Original carved maps and their binding to exact runtime hashes. Web validates and consumes that asset-owned metadata; it does not independently reconstruct, label, or patch face quaternions. If a physical result is wrong, the correction returns to the asset contract owner rather than becoming a web-local exception. Earlier Lightning mapping work remains historical evidence, not the provider for new dice usage.
 
 ## Damage-dice expansion seam
 
@@ -323,12 +410,13 @@ Ownership validation, catalog delivery, and persistence are out of scope for the
 - Unknown preset, invalid hash, unmapped result, and renderer failure fall back truthfully.
 - Settled geometry is fully inside the rounded tray for each tested viewport/preset.
 
-### Deferred B: full face correctness
+### Stone 0: full face correctness
 
-- Asset-owned canonical maps are exercised for results 1–20 after `rpg-game-assets#47` fulfills the contract.
+- The PR #50 runtime contract is exercised for Original d20 results 1–20 after the consumer-safe manifest is promoted.
 - Each mapped result reaches and holds its exact target within the approved angular tolerance.
-- Asset-team human review confirms the engraved numeral is uppermost and readable from the approved cameras.
-- Face verification is invalidated when bound asset facts change.
+- Asset-team human review remains the authority that the carved numeral and tagged face correspond.
+- Face verification is invalidated when the bound runtime hash, selector, coordinate convention, or bounds change.
+- Web integration evidence proves strict consumption and fail-closed behavior; it does not duplicate the asset team's private tagging evidence.
 
 ### Shared Concepts Lab proof
 
@@ -360,7 +448,7 @@ Owns the Concepts Lab, tray interaction/layout, reusable die renderer boundary, 
 
 ### `rpg-game-assets`
 
-Owns promoted dice-set assets, provenance status, hashes, selectors, bounds, scale facts, face maps, preset/set manifests, and private visual review. See #47 and #49.
+Owns promoted dice-set assets, provenance status, hashes, selectors, authored units/bounds, face maps, preset/set manifests, and private visual review. PR #50/#49 provide the Original set; the Stone 0 provider slice promotes its consumer-safe runtime contract.
 
 ### Platform repositories
 
@@ -370,9 +458,9 @@ A later approved production plan will route shared-release transport, authoritat
 
 No changes for the d20 Concepts Lab. A future damage-dice design may require explicit individual authoritative roll data, but that work is not implied or pre-approved here.
 
-## Concept acceptance criteria
+## Merged concept acceptance criteria
 
-The concept is ready for production-promotion design review when:
+These criteria record the completed PR #750 proof. Deferred collectible/full-map items move into Stone 0 rather than reopening the merged concept.
 
 - [ ] The Tray stage shows a sample gameplay composition with the real current encounter dock below the map, the default-open combat log on the right, and the dice-only drawer floating on the left.
 - [ ] The drawer is always visible by default, reads as a wider horizontal drawer with a foreshortened floor and distinct back/side/front planes, and contains no verdict, damage total, modifier equation, or combat-log breakdown.
@@ -412,7 +500,7 @@ Kirk alone merges the resulting PRs.
 ## Out of scope
 
 - Production combat integration in the concept PR.
-- A universal physics-based dice simulator.
+- A universal physics-based dice simulator in Stones 0–2; rigid-body settlement is explicitly reserved for Stone 3.
 - Letting gesture quality influence a result.
 - Player autoplay or an armed-state timeout.
 - Streaming pointer movement to spectators.
