@@ -169,11 +169,11 @@ rather than an ambiguous payload nobody can safely parse."
   argument. Lean Pose-is-primitive (1:1 with the existing `interrupt.Ledger`).
 - **The suspension-point probe** (first thing #965 does): verify each phase boundary's chain
   output is fully self-describing data; any boundary holding a closure cannot suspend.
-- **Player movement does not drive the tick yet.** `Move` never calls `Advance`; Pump (driver
-  `"world"`, displacement 1) is the composition's only accrual today. The leaf's own model —
-  the mover as driver with real displacement, max-not-sum fairness — is unwired, deliberately
-  left out of #963 (the DOS2 test pins *who* accrues, not how much, and says so). Decide when
-  movement economy arrives, likely with #965's `Walk`.
+- ~~Player movement does not drive the tick yet~~ — **ruled by Kirk (2026-08-14): free-roam
+  `Move` stays thin.** Its job right now is tracking players moving around, nothing more; the
+  tick/Pump pattern is grown into later, and **the turn clock is where the economy matters now**
+  (movement budget under initiative arrives with the resolution work). The leaf's
+  mover-as-driver accrual model stays deliberately unwired.
 - **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
   `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
   the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
@@ -253,6 +253,7 @@ seam (#966); #964's trigger rides along as `encounter.NewWalk`'s `Pose`.
 | 2026-08-14 | No sim server — per-click load-act-save measured at ~187µs; host RAM-repo hatch reserved | journey 053 |
 | 2026-08-14 | Step 4.2 shipped: `Form`/`Transfer`/`EndTurn`/`Dissolve`; coexistence = fight members are the fight's alone (Move/Traverse reject, Pump skips); drained bubbles pruned, idle bubbles rejected at load | toolkit PR #969 → `encounter/v0.6.0` |
 | 2026-08-14 | Transfer direction is explicit (`To ClockKind`), never inferred — a toggle under load-act-save silently moves stale state the wrong way | PR #969, `ErrBadClock` |
+| 2026-08-14 | Free-roam `Move` stays thin (track positions, no `Advance` wiring); grow into the tick/Pump pattern later — the turn clock is where the economy matters now | this handoff, Open questions |
 
 ## Carried follow-ups — filed, none blocking
 
