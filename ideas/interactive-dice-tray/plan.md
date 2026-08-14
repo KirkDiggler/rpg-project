@@ -353,9 +353,13 @@ Use reduced motion with `phase="settled"` and the existing `PROVISIONAL_RESULT_1
 
 Do not import or modify `EncounterView`, `CombatPresentation`, `useBeatSequencer`, or production transport/state code.
 
-- [ ] **Step 6: Implement containment and responsive styling**
+- [ ] **Step 6: Implement containment, opened-drawer depth, and responsive styling**
 
-Add `data-testid="dice-tray-3d-renderer"`. The drawer may use a compact visual shell derived from the same 440×360 motion coordinate space, but must remain large enough for readable numerals. At settled result 10, the complete visible die must fit inside `dice-tray-3d-well`. Keep the motion surface `overflow: visible`; the preview frame itself may clip only at the simulated viewport edge, not at the rounded tray. At narrow review widths, stack the drawer above the dock/map or scale the preview without overlapping the dock/log; do not move the drawer into the center outcome lane.
+Add `data-testid="dice-tray-3d-renderer"`. The drawer may use a compact visual shell derived from the same 440×360 motion coordinate space, but must remain large enough for readable numerals. At settled result 10, the complete visible die must fit inside `dice-tray-3d-well`. Keep the motion surface `overflow: visible`; the preview frame itself may clip only at the simulated viewport edge, not at the rounded tray.
+
+The always-open surface must read as a physical drawer pulled from the left UI edge. Build a CSS/DOM 2.5D carcass with a recessed rolling bed, raised back/side treatment, dimensional front face, centered decorative handle, cabinet/rail cue, and directional shadow. Decorative planes are `aria-hidden`. Do not transform the Three.js canvas or change renderer camera, scale, lighting, pointer coordinates, result settlement, or fallback. No open/close animation or preference control belongs in this slice.
+
+At narrow review widths, stack the drawer above the dock/map or scale the preview without overlapping the dock/log; do not move the drawer into the center outcome lane. The complete drawer assembly and combat log use the same 10px gap above the dock at desktop/floor widths; decorative faces must be included in that visible bound rather than overflowing below the measured drawer box.
 
 - [ ] **Step 7: Verify GREEN and capture**
 
