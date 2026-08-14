@@ -53,15 +53,17 @@ This design does not build a universal dice simulator. It establishes the smalle
 1. **Player input is explicit.** A player attack waits indefinitely in the armed state until the player presses **Roll** or releases a grabbed die. There is no timer and no player autoplay in this version.
 2. **The gesture is optional.** Pointer/touch grab, shake, and release provide a tactile ritual; the Roll button remains the keyboard, assistive-technology, and low-effort path.
 3. **The gesture has no game authority.** It may influence decorative position, spin, and effect phase. It may not generate, reroll, bias, clamp, reinterpret, or conceal the authoritative result.
-4. **Monster rolls may auto-play.** There is no player gesture to await for an NPC. Monster dice use the same tray and preset machinery with a distinct configured identity.
+4. **Monster rolls may auto-play, but rendered witnesses do not produce that event.** There is no player gesture to await for an NPC. The fixture host—and later the single authoritative production adapter—appends one deterministic release for a monster presentation. Roller and spectator components only consume it, preventing duplicate autoplay from multiple clients, remounts, or StrictMode.
 5. **The tray is the popup.** The rounded rectangle is the resting/interaction tray. Throw motion may cross its boundary; settlement must fit inside it.
 6. **Collectible identity uses stable preset IDs.** Presets describe dice such as `lightning` or a future named crypt set. They do not encode `player` or `monster`; roller role selects a preset ID.
 7. **Spectators see the roller's die.** The selected preset is part of the player's shared presentation identity. Spectators do not substitute their own local skin. Production must project the roller's authoritatively equipped preset before the tray arms; the release gesture is not the source of ownership or loadout truth.
 8. **Shared release is compact.** Production will coordinate one release signal rather than streaming live pointer movement. That signal identifies the presentation and starts the decorative throw for witnesses; it may repeat the already-known preset ID for validation/fallback, but it does not establish ownership.
 9. **Damage dice are reserved, not fabricated.** The tray may support a future dice group, but this concept renders only the d20 until individual authoritative damage results exist.
-10. **Concept approval precedes production promotion.** The Concepts Lab proves reusable production-intent components. Combat wiring, real transport, ownership validation, and persistence require separately approved implementation work.
+10. **Concept approval precedes production promotion through outside-in contracts.** The Concepts Lab hosts fixture producers around the literal shared components and component-input contracts intended for production; it must not create a duplicate concept renderer, disposable event model, or concept-only projection layer. Roller and spectator proofs instantiate the same shared component against the same append-only presentation-event contract. Later production work maps authoritative server/profile/transport facts into that contract so the approved components begin working unchanged. Combat wiring, real transport, ownership validation, and persistence still require separately approved implementation work.
 11. **The tray lives in a left presentation drawer.** In the gameplay composition, an always-visible drawer floats over the lower-left map area immediately above the current encounter dock. It should read as a physical drawer seen from above and pulled open toward the player: a wider, foreshortened rolling floor, visible back plane, angled side planes, lower front face with a restrained handle, and directional shadow surround the real 3D die. It must not read as an upright safe, monitor, appliance, or stack of nested rounded cards; the interior floor—not the front face—is the dominant plane. Any left-edge attachment cue stays shallow and subordinate rather than becoming a vertical rail. The first concept builds that carcass with responsive CSS/DOM planes rather than Three.js geometry, so it does not disturb the die camera, lighting, pointer coordinates, containment, or fallback. The existing default-open combat log remains on the right, and center-map verdict/damage presentation remains a separate surface. The drawer contains dice only: no hit/miss/crit label, damage total, modifier equation, or combat-log breakdown.
 12. **Always visible is the default, not the only future preference.** The first concept shows the drawer open at all times. A later promotion design may offer always-open, contextual auto-open, or collapsed display preferences without changing the dice data or authority boundary. This concept does not build that preference control.
+13. **The shared visualization proof may stay on result 10.** The goal of the current completion slice is tactile Roll/grab/release and event-fed roller/spectator witnessing. It does not need client randomness or a web-owned 1–20 map. The fixture supplies the already-known result 10; asset-owned metadata later broadens physical settlement without changing the shared component contract.
+14. **Combat-log fixtures remain structured data.** The real `CombatLog` already consumes the shared `CombatLogEntry` union containing typed event facts and synthesizes prose only at render time. The dice concept reuses that production component contract; fixtures must not supply authored description/message strings or introduce a second combat-log vocabulary.
 
 ## Experience flow
 
@@ -129,7 +131,17 @@ The existing production-intent `AttackDie3D` should evolve behind a stable rende
 
 It receives a validated authoritative result. It never reads gesture motion as a result source.
 
-### 3. Preset registry owns die identity
+### 3. Presentation events drive the literal shared component
+
+`DiceTrayPresentation` consumes an ordered append-only list of strictly validated component-input events: an authoritative presentation request followed by at most one compact presentation-only release. One bounded `presentationId` is the sole external correlation; renderer item IDs, numeric render generations, and telemetry tokens are allocated locally and never leak into the input contract. The first valid request fixes all result, roller, and preset facts for that presentation. The first matching release wins by presentation ID; conflicting requests and later releases are ignored.
+
+It projects those events into the existing `DiceTray3D` and owns only local renderer-observation settlement. Concepts Lab and production instantiate this same component. The concept appends fixture events in memory; later production adapters map authoritative attack/profile/transport facts into the same input contract. A release callback requests an append but is not proof of delivery, so the component remains armed until the matching event appears in its input list.
+
+Lifecycle semantics are part of the component contract: a release appended to an already-mounted armed request animates; initial hydration with released history or any non-prefix discontinuity converges directly to settled/fallback rather than replaying stale choreography; a new presentation ID resets local observation. Renderer failure remains concealed while armed and converges to truthful semantic SVG only after release. Unknown but syntactically safe preset IDs never become asset URLs and degrade to SVG rather than erasing the result.
+
+The event contract is not itself a transport protocol. It contains no URL, authored prose, pointer stream, damage, target, renderer token, or network timing field. Pointer movement remains local until one sanitized release is requested.
+
+### 4. Preset registry owns die identity
 
 A stable preset registry separates game selection from asset implementation. A conceptual entry contains:
 
@@ -156,7 +168,7 @@ Callers select a preset ID and do not branch on those implementation details.
 
 The first Concepts Lab presets may use the existing lightning model with clearly different temporary material treatments. This proves the skin boundary while the asset team completes promoted sets. Provisional presets and face maps must remain visibly labeled as unverified and must not be mistaken for asset-owned canonical contracts.
 
-### 4. Presentation coordination owns shared release
+### 5. Presentation coordination owns shared release
 
 The eventual production coordination message is presentation-only. It needs enough data to identify and replay the shared ritual, for example:
 
@@ -176,29 +188,22 @@ The exact transport is intentionally undecided here. Platform must choose and va
 The concept should exercise an API whose responsibilities are apparent at the call site. Illustratively:
 
 ```tsx
-<DiceTray3D
-  rollerRole="player"
+<DiceTrayPresentation
+  label="Alice's attack die"
   witnessRole="roller"
-  phase="armed"
-  dice={[
-    {
-      id: 'attack',
-      kind: 'd20',
-      presetId: 'lightning',
-      authoritativeResult: 10,
-    },
-  ]}
-  onRelease={handlePresentationRelease}
+  events={presentationEvents}
+  onEventRequest={appendValidatedFixtureEvent}
 />
 ```
 
-Names may change during planning. The stable ideas are:
+Names may change during implementation. The stable ideas are:
 
-- the tray accepts a list, though the first list has exactly one d20;
-- result and preset are explicit;
-- roller/witness role and phase are independent from die appearance;
-- release is presentation intent, not outcome; and
-- the die renderer remains independently testable.
+- the literal shared component consumes append-only validated events rather than concept-owned phase state;
+- the request event carries one already-known d20 result and stable preset ID;
+- the release event carries presentation intent, never outcome authority;
+- roller/spectator role is a viewer input independent from die appearance;
+- both views consume the same event values while maintaining their own renderer observation; and
+- `DiceTray3D` and the die renderer remain independently testable beneath the event-fed component.
 
 ## Concepts Lab surface
 
@@ -206,11 +211,12 @@ Extend the existing `?concept=attack-die-3d` work or introduce a focused dice-tr
 
 The lab provides:
 
-- authoritative result input, 1–20;
+- fixed authoritative fixture result 10 for the current visualization proof;
 - player and monster roller modes;
 - roller and spectator side-by-side panes;
-- at least two clearly distinct provisional preset identities;
-- preset selection on the roller, mirrored to the spectator;
+- the current lightning preset mirrored from roller to spectator;
+- **Deferred A:** multiple collectible preset identities and selection;
+- **Deferred B:** asset-owned authoritative result input 1–20;
 - Roll button;
 - pointer/touch grab, shake, and release;
 - replay/variation without changing the result;
@@ -219,7 +225,7 @@ The lab provides:
 - explicit provisional/canonical contract status; and
 - fallback exercises.
 
-The side-by-side surface simulates a compact release signal locally. It must label that simulation and must not imply that production networking has been implemented.
+The side-by-side surface simulates delivery of the shared component-input event locally. The reusable event type, reducer/projection, and tray experience belong with shared production-intent UI code; only the fixture producer/delivery harness belongs to the concept. The surface must label delivery as simulated and must not imply that production networking has been implemented.
 
 ## Sizing and geometry
 
@@ -313,15 +319,15 @@ Ownership validation, catalog delivery, and persistence are out of scope for the
 - Gesture data changes decorative motion only; authoritative result remains unchanged.
 - Release outside the tray still commits safely.
 - Reduced motion preserves explicit input and exact target.
-- Preset switching changes visual contract without changing result.
+- **Deferred A:** preset switching changes visual contract without changing result.
 - Unknown preset, invalid hash, unmapped result, and renderer failure fall back truthfully.
 - Settled geometry is fully inside the rounded tray for each tested viewport/preset.
 
-### Face correctness
+### Deferred B: full face correctness
 
-- Complete provisional/canonical maps are exercised for results 1–20.
+- Asset-owned canonical maps are exercised for results 1–20 after `rpg-game-assets#47` fulfills the contract.
 - Each mapped result reaches and holds its exact target within the approved angular tolerance.
-- Human review confirms the engraved numeral is uppermost and readable from the approved cameras.
+- Asset-team human review confirms the engraved numeral is uppermost and readable from the approved cameras.
 - Face verification is invalidated when bound asset facts change.
 
 ### Shared Concepts Lab proof
@@ -374,14 +380,15 @@ The concept is ready for production-promotion design review when:
 - [ ] The CSS/DOM drawer carcass leaves the Three.js canvas untransformed and preserves die camera, scale, containment, fallback, and reduced-motion behavior.
 - [ ] The tray displays one production-intent 3D d20 selected by stable preset ID.
 - [ ] Player mode waits indefinitely for Roll or grab/shake/release.
-- [ ] Monster mode may auto-play.
+- [ ] Monster mode may auto-play from one host-produced release event; rendered witnesses do not compete to produce it.
 - [ ] Gesture changes decorative motion but never the supplied result.
 - [ ] The die may leave the rounded rectangle while moving and settles fully inside it.
 - [ ] The proposed smaller scale is visually reviewed at representative widths.
-- [ ] Roller and spectator panes show the roller's same selected preset.
-- [ ] One compact simulated release starts both panes without streaming pointer motion.
-- [ ] At least two visually distinct provisional preset identities prove the registry boundary.
-- [ ] Results 1–20 are either truthfully mapped or visibly fall back; no wrong physical face is shown.
+- [ ] Roller and spectator instances of the literal shared component consume the same append-only event values and show the same lightning preset and fixed result 10.
+- [ ] One compact fixture-delivered release starts both panes without streaming pointer motion.
+- [ ] Fixed result 10 settles truthfully; invalid/missing mapping or renderer failure visibly falls back without early reveal or stall.
+- [ ] **Deferred A:** at least two visually distinct preset identities prove the registry boundary.
+- [ ] **Deferred B:** asset-owned results 1–20 are either truthfully mapped or visibly fall back; no wrong physical face is shown.
 - [ ] Keyboard, touch, pointer cancellation, reduced motion, fallback, and one-shot release behavior pass.
 - [ ] Provisional asset facts and simulated networking are labeled honestly.
 - [ ] No production combat, transport, inventory, or persistence wiring is included.

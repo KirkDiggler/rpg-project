@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Each task is a visible vertical slice and ends with independent review plus a browser checkpoint.
 
-**Goal:** Grow the existing lightning-d20 proof into a production-intent, Concepts Lab–only 3D dice tray through visible increments: empty tray, one placed die, explicit Roll, grab/release, collectible presets, roller/spectator witnessing, then complete authoritative 1–20 settlement.
+**Goal:** Grow the existing lightning-d20 proof into a production-intent 3D dice visualization through visible outside-in increments: physical drawer placement, explicit Roll, a strict append-only component event contract, grab/release, and two event-fed roller/spectator views. Result 10 remains the fixed fixture truth for this completion slice; collectible variants and full asset-owned 1–20 settlement are deferred follow-ups.
 
-**Architecture:** `DiceTray3DShell` owns the rounded tray and overflow-capable presentation surface. `DiceTray3D` adds accessible interaction and composes `AttackDie3D`, which remains the authoritative-result visual renderer. An allowlisted preset registry separates collectible identity from model/material implementation, and a compact presentation-only release value coordinates roller/spectator concept panes without streaming pointer movement.
+**Architecture:** `DiceTray3DShell` owns the overflow-capable presentation surface inside the physical drawer. `DiceTray3D` owns accessible low-level interaction and composes `AttackDie3D`. `DiceTrayPresentation` is the literal shared production-intent component: it projects a strictly validated append-only request/release event list into `DiceTray3D` and local renderer-observation state. Concepts Lab owns only fixture event production/delivery; future production maps authoritative facts into the same event contract without rewriting these components.
 
 **Tech Stack:** React 19, TypeScript 5.8, Three.js / React Three Fiber, Vitest, Testing Library, Playwright/Chromium, Vite Concepts Lab.
 
@@ -21,11 +21,11 @@
 - Prototype one d20 only. Keep the tray boundary list-shaped for later groups, but never render or fabricate damage dice from `EntityDamaged.amount`.
 - Player mode waits indefinitely for Roll or grab/release. Monster mode may auto-release. Spectator panes expose no roll input.
 - Gesture and replay data are decorative only. `authoritativeResult` alone selects the target face; no client path generates, changes, rerolls, biases, clamps, or interprets it.
-- Do not stream pointer movement. Roller and spectator receive one compact, sanitized release value in the Concepts Lab simulation.
+- Do not stream pointer movement. Roller and spectator consume one compact, sanitized release event from the same append-only component-input list in the Concepts Lab fixture.
 - Presets are stable collectible die identities, not `player`/`monster` booleans. Spectators render the roller's selected preset.
 - Only allowlisted preset/model contracts may resolve. No arbitrary asset URL may enter through props or release data.
 - A physical 3D result must be mapped to the exact inspected GLB. Unknown preset, digest mismatch, unmapped result, invalid result, load/shader/context failure, or invalid tray cardinality fails closed to the existing semantic SVG surface.
-- Known lightning GLB SHA-256: `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`. Any other digest invalidates the provisional face map.
+- Known lightning GLB SHA-256: `8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa`. Any other digest invalidates physical result mappings. This slice uses only the inspected provisional result-10 pose.
 - Licensed GLBs, source assets, calibration contact sheets, screenshots, and GIFs stay private/untracked. Commit only code, tests, public-safe docs, and numeric contract data.
 - Preserve the renderer lifecycle and settlement contract: quaternion error `<= 0.25°`, then copy and hold the exact target.
 - Reduced motion retains explicit player input and exact settlement while suppressing tumble/effect animation.
@@ -41,11 +41,12 @@
 | 1 | Empty rounded tray/drawer in a new Tray stage |
 | 2 | Sample gameplay screen with the current dock/log and one result-10 d20 in a left dice drawer |
 | 3 | Player waits for explicit Roll; monster can auto-roll |
-| 4 | Optional grab, shake, and release |
-| 5 | Stormforged and Cryptstone collectible presets |
-| 6 | Roller and spectator panes sharing one release |
-| 7 | Authoritative input 1–20 with complete provisional physical settlement |
-| 8 | Final browser matrix, private GIF, documentation, and independent branch review |
+| 4 | Single-pane concept now runs through the strict shared event-fed component |
+| 5 | Optional grab, shake, and release through the same event request |
+| 6 | Roller and spectator instances consume one append-only fixture event list |
+| 7 | Final browser matrix, private GIF, documentation, and independent branch review |
+| Deferred A | Stormforged and Cryptstone collectible presets |
+| Deferred B | Asset-owned authoritative input 1–20 |
 
 ---
 
@@ -457,7 +458,7 @@ onReleaseRequest?: (value: DicePresentationRelease) => void;
 
 `createDicePresentationRelease` must:
 
-- reject blank presentation ID and non-allowlisted preset;
+- reject blank presentation ID and, for this pre-event Task 3 implementation, a non-allowlisted preset; Task 4 explicitly supersedes this constructor rule with bounded non-URL preset syntax while keeping asset resolution allowlisted;
 - normalize finite variation to `Math.abs(Math.trunc(value)) % 997`;
 - use `[0, 0]` and shake `0` for button release;
 - return a frozen object;
@@ -552,18 +553,136 @@ git commit -m "feat: add explicit player dice roll (#749)"
 
 ---
 
-### Task 4: Add Optional Grab, Shake, and Release
+### Task 4: State the Outside-In Presentation Event Contract
+
+**Files:**
+- Create: `src/components/ui/dice/dicePresentationEvent.ts`
+- Create: `src/components/ui/dice/dicePresentationEvent.test.ts`
+- Create: `src/components/ui/dice/DiceTrayPresentation.tsx`
+- Create: `src/components/ui/dice/DiceTrayPresentation.test.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.tsx`
+- Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/components/ui/dice/dicePresentationRelease.ts`
+- Modify: `src/components/ui/dice/dicePresentationRelease.test.ts`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
+
+**Produces:** the literal shared production-intent event-fed tray component. Concepts Lab supplies fixture events; future production supplies the same contract without rewriting the component.
+
+```ts
+export type DicePresentationEvent =
+  | {
+      schemaVersion: 1;
+      type: 'dice-presentation-requested';
+      eventId: string;
+      presentationId: string;
+      roller: { entityId: string; role: 'player' | 'monster' };
+      die: {
+        kind: 'd20';
+        presetId: string;
+        authoritativeResult: number;
+      };
+    }
+  | {
+      schemaVersion: 1;
+      type: 'dice-presentation-released';
+      eventId: string;
+      presentationId: string;
+      release: DicePresentationRelease;
+    };
+```
+
+`DiceTrayPresentation` consumes an ordered append-only `readonly DicePresentationEvent[]`, a viewer `witnessRole`, and explicitly development-only renderer injections. It renders the existing `DiceTray3D`; it does not duplicate the renderer or drawer. Its only outward interaction is a request to append a validated release event. `presentationId` is the sole external correlation. The shared component allocates a local numeric renderer generation whenever the accepted presentation ID changes; neither events nor production callers supply `DiceTray3DItem.id` or `presentationToken`.
+
+- [ ] **Step 1: Write strict event/parser tests**
+
+Require exact schema/version/type keys; bounded safe IDs; one d20; integer result 1–20; syntactically safe preset IDs that cannot be URLs; strict recursively reconstructed/frozen inbound release parsing; no renderer ID/token, URL, description, outcome, hit, target, damage, or transport field. Task 4 changes both release construction and parsing from registry-membership validation to bounded non-URL preset-ID syntax; only asset resolution remains allowlisted. This lets a newer safe preset request/replay through truthful SVG on an older client without authorizing a model URL.
+
+Unknown keys at any depth and malformed IDs fail closed. The first valid request fixes all authority-bearing facts for a presentation ID; identical request replay is idempotent, conflicting request facts are rejected, release-before-request is ignored, and the first matching release wins solely by presentation ID regardless of variation. The released event's outer `presentationId` must equal `release.presentationId`, and its repeated `release.presetId` must equal the immutable request preset; mismatch is ignored. Later identical or conflicting releases are ignored. Replay requires a new presentation ID.
+
+- [ ] **Step 2: Verify RED and implement the event projector**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/dicePresentationEvent.test.ts
+```
+
+Provide pure functions that recursively reconstruct/freeze one unknown event and project an ordered event list into the latest valid requested presentation plus at most one matching release. Malformed later events do not poison the last valid projection. Array order is component-input delivery order; do not add wall-clock authority or a network abstraction. Update `dicePresentationReleaseKey` so release cardinality is the presentation ID, not `${presentationId}:${variation}`.
+
+- [ ] **Step 3: Write the shared component tests**
+
+Assert:
+
+1. no valid request renders no tray;
+2. request without release renders player+roller armed indefinitely;
+3. Roll asks the host to append one frozen release event but does not mutate props or leave armed until delivery;
+4. appending that exact event to the mounted armed stream starts rolling;
+5. matching renderer telemetry for the captured local generation/result settles the local component;
+6. a new presentation ID allocates a new local renderer generation and resets observation;
+7. initial hydration containing request+release converges directly to settled/fallback without replay;
+8. truncation, reorder, or non-prefix replacement converges instead of animating stale choreography;
+9. monster and spectator components never request automatic events; the host owns monster autoplay;
+10. malformed/stale/duplicate/conflicting events do not change fixed request facts or active presentation;
+11. renderer failure while armed remains concealed, then matching released failure settles truthful SVG without stalling;
+12. Roll on an unknown syntactically safe preset requests one event; delivery renders neutral/rolling/settled SVG rather than loading a URL or erasing the result;
+13. changing roll status is exposed through a polite live region;
+14. the current single-pane Concepts Lab fixture renders `DiceTrayPresentation`, appends its requested release event once, and no longer owns a duplicate phase/telemetry state machine.
+
+- [ ] **Step 4: Implement the literal shared component**
+
+`DiceTrayPresentation` owns only event projection, local renderer generation allocation, delivery-prefix detection, and local renderer-observation/failure phase. It delegates rendering, input, fail-closed behavior, and authority preservation to `DiceTray3D`/`AttackDie3D`. The same component instance shape must be usable by Concepts Lab fixtures and later production callers; do not import from `concepts/`.
+
+Remove monster autoplay production from `DiceTray3D`; `witnessRole` controls view/input only and never grants append authority. Split invalid tray cardinality from unknown safe preset handling: invalid input keeps the existing unavailable copy, while unknown preset uses semantic SVG with armed concealment and post-release result truth. A failure observed before release is remembered but does not reveal; after release it becomes terminal settled fallback.
+
+The requested event carries the already-known result. The released event carries presentation-only variation. Development-only scene/sidecar/calibration injections must be grouped and bound to lightning result 10; a bare calibration pose is not part of the semantic production contract. Production transport/correlation, encounter wiring, and profile ownership remain later adapters and are not represented as fake concept contracts.
+
+Replace the current single-pane concept's direct phase/release orchestration with a minimal append-only fixed-result-10 fixture around `DiceTrayPresentation`. This creates a browser-visible outside-in checkpoint before Task 6 expands the same pattern to two views.
+
+- [ ] **Step 5: Verify and commit**
+
+```bash
+npm run test:run -- \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/dicePresentationEvent.test.ts \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/AttackDie3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+npm run typecheck
+npm run lint -- --quiet
+```
+
+```bash
+git add \
+  src/components/ui/dice/dicePresentationEvent.ts \
+  src/components/ui/dice/dicePresentationEvent.test.ts \
+  src/components/ui/dice/DiceTrayPresentation.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx \
+  src/components/ui/dice/DiceTray3D.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/dicePresentationRelease.ts \
+  src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
+  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx
+git commit -m "feat: add event-fed dice presentation contract (#749)"
+```
+
+---
+
+### Task 5: Add Optional Grab, Shake, and Release
 
 **Files:**
 - Modify: `src/components/ui/dice/dicePresentationRelease.ts`
 - Modify: `src/components/ui/dice/dicePresentationRelease.test.ts`
 - Modify: `src/components/ui/dice/DiceTray3D.tsx`
 - Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/components/ui/dice/DiceTrayPresentation.test.tsx`
 - Modify: `src/components/ui/dice/attackDieMotion.ts`
 - Modify: `src/components/ui/dice/attackDieMotion.test.ts`
 - Modify: `public/themes/base.css`
 
-**Produces:** optional pointer/touch ritual that emits one compact release; pointer movement stays local and affects only decorative motion.
+**Produces:** optional pointer/touch ritual that requests one compact release through the shared event contract; pointer movement stays local and affects only decorative motion.
 
 ```ts
 export interface DiceGestureSample {
@@ -610,7 +729,7 @@ Stub `setPointerCapture`, `hasPointerCapture`, and `releasePointerCapture` in js
 
 - [ ] **Step 4: Implement one-shot pointer handling**
 
-Track pointer ID, origin, current point, and accumulated path distance. Use pointer capture on an accessible button labeled `Grab d20`; set `touch-action: none`. Pointer-up builds the same release contract as Roll. Never pass move samples to parent/spectator.
+Track pointer ID, origin, current point, and accumulated path distance. Use pointer capture on an accessible button labeled `Grab d20`; set `touch-action: none`. Pointer-up builds the same release contract as Roll. `DiceTrayPresentation` wraps that request as the same validated append-only release event used by the button path. Never pass move samples to the host, event list, or spectator.
 
 - [ ] **Step 5: Verify, capture, and commit**
 
@@ -618,12 +737,13 @@ Track pointer ID, origin, current point, and accumulated path distance. Use poin
 npm run test:run -- \
   src/components/ui/dice/dicePresentationRelease.test.ts \
   src/components/ui/dice/attackDieMotion.test.ts \
-  src/components/ui/dice/DiceTray3D.test.tsx
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx
 npm run typecheck
 npm run lint -- --quiet
 ```
 
-Capture mid-drag, outside-travel, and settled states under `task-4/`. Then:
+Capture mid-drag, outside-travel, and settled states under `task-5/`. Then:
 
 ```bash
 git add \
@@ -631,6 +751,7 @@ git add \
   src/components/ui/dice/dicePresentationRelease.test.ts \
   src/components/ui/dice/DiceTray3D.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx \
   src/components/ui/dice/attackDieMotion.ts \
   src/components/ui/dice/attackDieMotion.test.ts \
   public/themes/base.css
@@ -639,7 +760,9 @@ git commit -m "feat: add grab and release dice gesture (#749)"
 
 ---
 
-### Task 5: Add Two Collectible Presets
+### Deferred Follow-up A: Add Two Collectible Presets
+
+This is not required for the fixed-result roller/spectator visualization proof. Resume after the shared event-fed experience is accepted or when asset issue #49 supplies promoted preset facts.
 
 **Files:**
 - Create: `src/components/ui/dice/attackDiePreset.ts`
@@ -759,73 +882,103 @@ git commit -m "feat: add collectible dice presets (#749)"
 
 ---
 
-### Task 6: Show Roller and Spectator Side by Side
+### Task 6: Prove Event-Fed Roller and Spectator Views
 
 **Files:**
+- Create: `src/concepts/attack-die-3d/diceTrayWitnessFixture.ts`
+- Create: `src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts`
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
 - Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
-- Modify: `src/components/ui/dice/DiceTray3D.tsx`
-- Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTrayEncounterPreview.tsx`
+- Modify: `src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx`
+- Reuse unchanged: `src/concepts/combat-panel/logFixtures.ts`
 - Modify: `public/themes/base.css`
 
-**Produces:** two visible panes that show the roller's same preset and begin from one simulated compact release; pointer movement remains local.
+**Produces:** two visible instances of the literal shared `DiceTrayPresentation`, both driven by one append-only fixture event list, plus the real current dock/log fed by structured fixture data.
 
-- [ ] **Step 1: Write shared-witness tests**
+- [ ] **Step 1: Write the fixture boundary tests**
+
+The concept fixture may own initial events and an append reducer, but no reusable event type, projection, renderer, or tray state machine. Require:
+
+1. one valid fixed-result-10 requested event using the lightning preset;
+2. append-only event order and event-ID/release-key deduplication;
+3. no fixture field named `description`, `message`, `text`, `url`, `html`, or `transport`;
+4. combat history remains `CombatLogEntry[]` structured event data, not authored prose;
+5. the current attack log facts use structured roll/bonus/AC/hit/critical and optional damage fields;
+6. fixture delivery is deterministic under fake timers and does not generate an authoritative result;
+7. player mode starts with request only, while monster mode's single host producer appends one deterministic request/release pair in sequence; rendered consumers never produce monster autoplay.
+
+The existing real `CombatLog` already synthesizes prose late from structured `CombatLogEntry.event` fields. Reuse that contract; do not create another combat-log vocabulary or modify production `CombatLog`, `useCombatLog`, `EncounterDock`, or `EncounterView`.
+
+- [ ] **Step 2: Write shared-witness component tests**
 
 Assert:
 
 1. Roller and Spectator headings render;
-2. both trays receive identical preset/result/token;
-3. spectator receives `witnessRole="spectator"` and no controls;
-4. pointer move changes only roller local state;
-5. roller release causes both trays to receive the same frozen release object and rolling phase;
-6. monster mode causes one shared automatic release;
-7. stale telemetry cannot settle a newer token;
-8. matching observed telemetry settles both;
-9. duplicate release key is ignored;
-10. concept copy says `Simulated presentation coordination · no production networking`.
+2. both are `DiceTrayPresentation` instances receiving the identical immutable event array;
+3. both project the same presentation ID, preset, authoritative result, and deeply equal sanitized release values; local renderer generations may differ and object identity is not asserted;
+4. spectator has no controls and no event callback authority;
+5. pointer movement changes only roller-local grabbed state and appends no event;
+6. Roll or pointer release requests one event, the fixture host appends it once, and both instances begin rolling from it;
+7. monster mode receives one host-produced shared automatic release event, with neither rendered view requesting it;
+8. each instance settles from its own matching renderer telemetry, while stale telemetry cannot settle a newer request;
+9. duplicate/stale release events are ignored by the shared projector;
+10. visible copy says `Fixture event delivery · shared component contract · no production transport`.
 
-- [ ] **Step 2: Verify RED**
+- [ ] **Step 3: Verify RED**
 
 ```bash
 npm run test:run -- \
+  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/components/ui/dice/DiceTray3D.test.tsx
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx
 ```
 
-- [ ] **Step 3: Implement local shared release**
+- [ ] **Step 4: Implement fixture delivery around shared components**
 
-Both panes receive the same provider scene/sidecar without a second fetch. Roller `onReleaseRequest` stores one release and changes both phases in one React update. Only matching roller telemetry settles the pair. This is local concept state, not a network abstraction.
+The concept host stores one append-only event array. In player mode, the roller's validated event request is appended once; the spectator receives no callback. In monster mode, the host fixture producer appends the deterministic request and release in separate ordered deliveries so mounted consumers animate without competing to produce the event. Both shared components consume the same array reference/value and the same parent-loaded provider scene/sidecar without a second GLB fetch. Keep result 10 fixed: this proof is about interaction and witnessing, not face calibration or client randomness.
 
-- [ ] **Step 4: Add responsive comparison layout**
+Keep `DiceTrayEncounterPreview` a fixture composition around the real `EncounterDock` and real log. If it needs a comparison slot, expose generic tray children/labels rather than moving event projection into the concept preview.
 
-Use two columns only when two readable tray surfaces fit; otherwise stack. Each pane labels role, preset, phase, and authoritative result. Do not shrink numerals to force columns.
+- [ ] **Step 5: Add responsive comparison layout**
 
-- [ ] **Step 5: Verify, capture, and commit**
+Use two columns only when two readable 3D tray surfaces fit; otherwise stack. Each pane clearly labels Roller or Spectator and current phase. Preserve the approved physical drawer language, die scale/readability, combat-log default-open behavior, 10px dock rhythm, and narrow no-overlap order. Do not shrink numerals merely to force columns.
+
+- [ ] **Step 6: Verify, capture, and commit**
 
 ```bash
 npm run test:run -- \
+  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/components/ui/dice/DiceTray3D.test.tsx
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx \
+  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/game/EncounterDock.test.tsx \
+  src/components/game/CombatLog.test.tsx
 npm run typecheck
 npm run lint -- --quiet
 ```
 
-Capture armed and rolling paired views under `task-6/`. Then:
+Capture armed, local-grab, shared-rolling, and independently settled paired views under `task-6/` at desktop and narrow widths. Then:
 
 ```bash
 git add \
+  src/concepts/attack-die-3d/diceTrayWitnessFixture.ts \
+  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/components/ui/dice/DiceTray3D.tsx \
-  src/components/ui/dice/DiceTray3D.test.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.tsx \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
   public/themes/base.css
-git commit -m "feat: compare shared roller and spectator throws (#749)"
+git commit -m "feat: compare event-fed roller and spectator (#749)"
 ```
 
 ---
 
-### Task 7: Consume Asset-Owned 1–20 Face Metadata Without Lying
+### Deferred Follow-up B: Consume Asset-Owned 1–20 Face Metadata Without Lying
+
+This is not required for the fixed-result-10 roller/spectator visualization proof.
 
 **Blocked until:** `rpg-game-assets#47` supplies the hash-bound lightning-d20 face metadata. Web must not independently reconstruct, label, or publish the asset team's face map.
 
@@ -889,22 +1042,23 @@ git commit -m "feat: consume authoritative d20 face metadata (#749)"
 
 ---
 
-### Task 8: Final Browser Matrix, GIF, Documentation, and Review
+### Task 7: Final Browser Matrix, GIF, Documentation, and Review
 
 **Files:**
 - Modify: `docs/how-to/attack-die-3d-concept.md`
-- Modify only through test-first fixes: files owned by Tasks 0–7 and matching tests
-- Private outputs: `/home/kirk/game-dev/.verification/interactive-dice-tray/task-8/`
+- Modify only through test-first fixes: files owned by Tasks 0–6 and matching tests
+- Private outputs: `/home/kirk/game-dev/.verification/interactive-dice-tray/task-7/`
 
 **Produces:** repeatable review guide, final private GIF, complete verification evidence, and independent whole-branch review.
 
 - [ ] **Step 1: Document the final Concepts Lab flow**
 
-Document `?concept=attack-die-3d → Tray`, Player/Monster, preset, result, Arm, Roll, grab/release, Roller/Spectator, reduced motion, and forced fallback. Explicitly label:
+Document `?concept=attack-die-3d → Tray`, fixed result 10, Player/Monster, Arm, Roll, grab/release, event-fed Roller/Spectator, reduced motion, and forced fallback. Explicitly label:
 
-- provisional skins and face map;
-- simulated coordination;
-- one d20 only;
+- provisional lightning model/result-10 pose;
+- fixture event delivery through the shared component contract;
+- no production transport despite production-intent component inputs;
+- one d20 only; and
 - no production combat/network/loadout/damage-dice wiring.
 
 - [ ] **Step 2: Run focused and repository suites**
@@ -914,14 +1068,16 @@ npm run test:run -- \
   src/components/ui/dice/attackDieContract.test.ts \
   src/components/ui/dice/attackDieMaterial.test.ts \
   src/components/ui/dice/attackDieMotion.test.ts \
-  src/components/ui/dice/attackDiePreset.test.ts \
   src/components/ui/dice/dicePresentationRelease.test.ts \
+  src/components/ui/dice/dicePresentationEvent.test.ts \
   src/components/ui/dice/AttackDie3D.test.tsx \
   src/components/ui/dice/DiceTray3DShell.test.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
+  src/components/ui/dice/DiceTrayPresentation.test.tsx \
   src/components/ui/dice/DiceTray.test.tsx \
-  src/concepts/attack-die-3d/attackDieProvisionalFaceMap.test.ts \
+  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts \
   src/concepts/attack-die-3d/attackDieExperiment.test.ts \
+  src/concepts/attack-die-3d/DiceTrayEncounterPreview.test.tsx \
   src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
   src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
 npm run ci-checks
@@ -936,21 +1092,21 @@ Verify:
 - player stays armed for at least 10 seconds;
 - Roll and outside release each commit once;
 - cancel/lost capture do not throw;
-- monster emits one shared automatic release;
-- spectator has no controls;
-- both panes show roller preset and same authoritative result;
-- Stormforged/Cryptstone do not alter result;
-- results 1–20 settle correctly and inside the well;
-- reduced motion preserves explicit input/exact face;
-- unknown preset/digest mismatch/unmapped/renderer failure show SVG;
-- responsive narrow layout stacks without clipping.
+- monster emits one shared automatic release event;
+- spectator has no controls or event-request authority;
+- both literal shared components consume the same append-only fixture events and show fixed result 10;
+- pointer movement remains roller-local and never enters the event stream;
+- combat log input remains structured `CombatLogEntry` event data with prose generated only by the real renderer;
+- reduced motion preserves explicit input and exact result-10 settlement;
+- malformed/stale/duplicate presentation events and renderer failure fail closed;
+- responsive narrow layout stacks without clipping or overlap.
 
 - [ ] **Step 4: Generate final private GIF**
 
 Capture a player roller/spectator throw at 20 fps for roughly 2.6 seconds and encode:
 
 ```text
-/home/kirk/game-dev/.verification/interactive-dice-tray/task-8/roller-spectator.gif
+/home/kirk/game-dev/.verification/interactive-dice-tray/task-7/roller-spectator.gif
 ```
 
 Copy to `~/Downloads` only for sharing. Verify with `file`, `ffprobe`, and SHA-256; never stage it.
