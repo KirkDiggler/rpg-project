@@ -142,7 +142,8 @@ the old stack flips a mode; the SDK stops and asks.** Do not describe free roam 
   `monster/README.md` corrected to route behavior work away from old `NPCAct`/`TakeTurn`.
   Kirk's friend (dammitbilly0ne) shipped `docs/rules/standard-conditions.md` (#956) — treat it
   as the authority on condition semantics; knockdown pair #961/#962 on board (Team: Monster AI),
-  sequenced behind an untracked "saving throws exposed consistently" prerequisite.
+  sequenced behind the saving-throws prerequisite — **now tracked as toolkit#970** (filed in the
+  2026-08-14 sweep; #961 prone does not wait on it, #962 knockdown does).
 
 **The parked question W2 named honestly — NOW DUE:** *"stop the walk when the walker sees something
 new"* is a game rule living in a module whose charter says it owns no rules. It's there because no
@@ -255,6 +256,8 @@ seam (#966); #964's trigger rides along as `encounter.NewWalk`'s `Pose`.
 | 2026-08-14 | Transfer direction is explicit (`To ClockKind`), never inferred — a toggle under load-act-save silently moves stale state the wrong way | PR #969, `ErrBadClock` |
 | 2026-08-14 | Free-roam `Move` stays thin (track positions, no `Advance` wiring); grow into the tick/Pump pattern later — the turn clock is where the economy matters now | this handoff, Open questions |
 | 2026-08-14 | **A condition/effect record that fails to load never fails silently in the new stack** — condition loading leaves the character package; resolution's single attach loop rejects loudly ("it is not valid in our new world"). #948's in-character fix options are interim maintenance only | toolkit#948, ADR-0038 clause 2 |
+| 2026-08-14 | **Issue-tracker sweep executed against the new canon** (5 Sonnet reviewers, ~99 toolkit issues; every verdict re-verified before posting): 12 closes (shipped/answered/dead-premise), 21 `old-stack` labels with annotations, ~54 comments reconciling issue text with ADR-0037/0038 + clocks. Canonical trackers picked: #899 (OA hostility, was triple-filed), #721 (coverage-script bug, was triple-filed). Gap issues filed: **#970** saving throws (gates #962), **#971** ConditionBehavior.Ref() (Kirk's decision, made visible), **#972** character.Data round-trip/dual-home audit, **#973** delete dead mechanics/* | toolkit issues, board 19 |
+| 2026-08-14 | Design inputs for #965/#966/wave 5 harvested from old-stack defects, recorded on the tracker: hostility gate at reaction triggers, consciousness gate on Walk, weapon identity in the damage shape, no-magnitudes-in-host pin, does-Dissolve-sweep-Rage (#809) | toolkit#959 comment |
 
 ## Carried follow-ups — filed, none blocking
 
