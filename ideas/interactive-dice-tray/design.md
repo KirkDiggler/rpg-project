@@ -322,7 +322,7 @@ Sizing is a tray responsibility informed by asset facts:
 - the asset contract supplies exact authored bounds, coordinate units/convention, and cohesive set-relative dimensions;
 - the web owns a target visual extent for the approved tray/camera and deterministically computes one uniform normalization from those facts;
 - no caller supplies an arbitrary model scale, and the web does not maintain per-result or per-preset exception tables;
-- before normalization, every axis must satisfy `bboxMax - bboxMin > 0.000001`, `dimensions > 0.000001`, and `abs(dimensions - (bboxMax - bboxMin)) <= 0.000001`; zero, reversed, negative, or internally inconsistent bounds fail closed;
+- before normalization, every axis must satisfy `bboxMax - bboxMin > 0`, `dimensions > 0`, and `abs(dimensions - (bboxMax - bboxMin)) <= 0.000001`; zero, reversed, negative, or internally inconsistent bounds fail closed; `0.000001` is reconciliation tolerance, not a minimum authored unit size;
 - the approved Stone 0 d20 target maximum extent is `0.55` world units: recenter on `(bboxMin + bboxMax) / 2`, then compute `uniformScale = 0.55 / max(dimensions)`; Original d20 dimensions `[10,10,10]` therefore yield scale `0.055`;
 - that extent remains constant at the approved 1440/1241/1240/760 review widths because the 356px drawer remains constant, and settled projected geometry keeps at least 8 CSS px clearance from every well edge;
 - the tray computes a resting pose whose full projected geometry fits inside the rounded rectangle;
