@@ -1,4 +1,4 @@
-# Active handoff — 2026-08-13
+# Active handoff — 2026-08-14
 
 ## Now
 
@@ -14,12 +14,17 @@ commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #9
 + the W4 charter) merged at **ad19574**, taking `rulebooks/dnd5e/v0.80.1`.
 
 **W4 is combat, built new** — chartered (plan.md, six deflect/ponder clauses), sliced onto board
-19 as toolkit **#963→#966** under tracker **#959**, and its foundation is now **decided end to
-end**: **ADR-0038 — resolution owns the bus** (merged `8f74220`, 2026-08-14). Step 4.1 shipped:
-PR #960 merged → **`encounter/v0.5.0`** — members are on clocks, `EncounterData.Bubbles`
-round-trips, `ClockOf(member)` answers, R6 + only-members-on-clocks validated at load, 6/6
-mutants killed. **Next: #963 — bubble town** (form/dissolve/Transfer). The trigger question
-(#964) is answered in direction: **mutual awareness** (Kirk), revisable.
+19 as toolkit **#963→#966** under tracker **#959**, and its foundation is **decided end to
+end**: **ADR-0038 — resolution owns the bus** (merged `8f74220`, 2026-08-14). Step 4.1 shipped
+(PR #960 → **`encounter/v0.5.0`**: members on clocks, bubbles persist, `ClockOf` answers).
+**Step 4.2 shipped** (PR #969 → **`encounter/v0.6.0`**, #963 closed): the composition can make a
+fight — `Form`/`Transfer`/`EndTurn`/`Dissolve`, the DOS2 split-party scenario runs through the
+composition with R6 asserted after every transition, and the coexistence rules landed with it
+(**a fight member is the fight's alone**: Move/Traverse reject with `ErrInBubble`, Pump skips —
+the world thinks on the tick, a fight thinks in turns). **Next: #965 — the resolution package**
+under ADR-0038; its first task is the suspension-point probe. The trigger question (#964) is
+answered in direction: **mutual awareness** (Kirk), revisable — and rides along later as
+`encounter.NewWalk`'s `Pose`.
 
 ## Solid
 
@@ -28,6 +33,8 @@ mutants killed. **Next: #963 — bubble town** (form/dissolve/Transfer). The tri
 | Module | Version | Merge | What it brought |
 |---|---|---|---|
 | `dnd5e/encounter` | v0.1.0 → v0.4.0 | #921/#924/#932/#939 | the composition; transitions; world anchoring; bounded story log |
+| `dnd5e/encounter` | v0.5.0 | #960 | members are on clocks; bubbles persist; `ClockOf`; R6 at the trust boundary |
+| `dnd5e/encounter` | v0.6.0 | #969 | `Form`/`Transfer`/`EndTurn`/`Dissolve`; coexistence gates; husk pruning; DOS2 through the composition |
 | `dnd5e/session` | v0.1.0 | 407bd57 | shell, 10 free-roam verbs, event stream, the boundary test |
 | `dnd5e/session` | v0.2.0 | 556b2e1 | the interrupt spine — suspend, persist, resume in a fresh process |
 | `dnd5e/session` | v0.3.0 | 5c79152 | characters load through the host's repository |
@@ -162,6 +169,11 @@ rather than an ambiguous payload nobody can safely parse."
   argument. Lean Pose-is-primitive (1:1 with the existing `interrupt.Ledger`).
 - **The suspension-point probe** (first thing #965 does): verify each phase boundary's chain
   output is fully self-describing data; any boundary holding a closure cannot suspend.
+- **Player movement does not drive the tick yet.** `Move` never calls `Advance`; Pump (driver
+  `"world"`, displacement 1) is the composition's only accrual today. The leaf's own model —
+  the mover as driver with real displacement, max-not-sum fairness — is unwired, deliberately
+  left out of #963 (the DOS2 test pins *who* accrues, not how much, and says so). Decide when
+  movement economy arrives, likely with #965's `Walk`.
 - **`ConditionBehavior` cannot name itself, and it blocks T3.6.** The interface is
   `IsApplied/Apply/Remove/ToJSON` with no `Ref()`. Reporting a character's active conditions at
   the seam would mean unmarshalling `ToJSON()` and reading `ref` — the exact anti-pattern #941
@@ -198,12 +210,20 @@ comes later, once free roam and combat both work (Kirk, 2026-08-13). The old sta
 of orchestration are *evidence about what a game server needs, never a specification to port* —
 and now explicitly not something we adapt to either.
 
-**Next is #963 — bubble town:** form/dissolve a turn bubble + `Transfer` a straggler into a live
-fight, in the composition. Pure clock wiring — needs none of ADR-0038's resolution package. Done
-when the DOS2 scenario runs through the *composition* (not `play/clock` directly), R6 holds
-through every transition, `ClockOf`'s on-no-clock guard becomes reachable and tested, and forming
-from a member already in a bubble is rejected. The initiative order arrives from OUTSIDE (R7).
-After that: the resolution package itself under ADR-0038 (#965), then the seam (#966).
+**#963 — bubble town — is done** (PR #969 → `encounter/v0.6.0`). Every done-when item landed:
+DOS2 through the composition, R6 after every transition (`ClockOf` per member + a full
+trust-boundary reload), the on-no-clock guard reached and tested (white-box, fabricating the one
+state no public verb can produce), reject-not-merge pinned. Two things the issue didn't name but
+the work forced: **`EndTurn`** (the round cannot wrap without it — done-when governs the pointer
+list), and the **coexistence rules** (fight members rejected by Move/Traverse, skipped by Pump —
+a decider author never detects "am I in combat"; if `Decide` is called, the monster is
+free-roaming, now stated in the encounter README).
+
+**Next is #965 — the resolution package under ADR-0038.** First task: the suspension-point probe
+(verify each phase boundary's chain output is self-describing data — any boundary holding a
+closure cannot suspend). Then the driver over the sealed vocabulary (`Gather | Pose | Request |
+Done`), the instrumented bus surface, and `combat.NewStrike` as the first machine. After that the
+seam (#966); #964's trigger rides along as `encounter.NewWalk`'s `Pose`.
 
 ## Decision log
 
@@ -231,6 +251,8 @@ After that: the resolution package itself under ADR-0038 (#965), then the seam (
 | 2026-08-14 | Trigger = **mutual awareness** (see-or-hear), revisable | #964 |
 | 2026-08-14 | **ADR-0038: resolution owns the bus; rules packages are step machines; granted vs projected effects** | merged `8f74220`; journeys 052–054 |
 | 2026-08-14 | No sim server — per-click load-act-save measured at ~187µs; host RAM-repo hatch reserved | journey 053 |
+| 2026-08-14 | Step 4.2 shipped: `Form`/`Transfer`/`EndTurn`/`Dissolve`; coexistence = fight members are the fight's alone (Move/Traverse reject, Pump skips); drained bubbles pruned, idle bubbles rejected at load | toolkit PR #969 → `encounter/v0.6.0` |
+| 2026-08-14 | Transfer direction is explicit (`To ClockKind`), never inferred — a toggle under load-act-save silently moves stale state the wrong way | PR #969, `ErrBadClock` |
 
 ## Carried follow-ups — filed, none blocking
 
