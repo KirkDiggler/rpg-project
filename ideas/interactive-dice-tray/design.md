@@ -61,7 +61,7 @@ It also exposes a cross-repository contract gap that Stone 0 must close before w
 Stone 0 therefore lands inside-out in two ordered repository slices:
 
 1. **Assets provider slice:** declare `harness/models/custom-dice/` as a supported consumer runtime root; generate a consumer-safe runtime preset manifest beside the promoted GLBs; validate its reproducibility, promoted paths, hashes, selectors, bounds, and complete face maps; keep `library/custom-dice/` as authoring authority only.
-2. **Web consumer slice:** sync both approved runtime roots into separate ignored public paths; strictly reconstruct and validate the runtime manifest; hash the GLB before parsing; apply a runtime material to the single carved mesh; resolve authoritative results only through the asset map; coalesce provider loading; and fail closed to semantic SVG on every unavailable, malformed, stale, unmapped, or hash-mismatched input.
+2. **Web consumer slice:** sync both approved runtime roots into separate ignored public paths; strictly reconstruct and validate the runtime manifest; hash the GLB before parsing; validate the declared glTF node→mesh-definition binding through the GLTF parser metadata; apply runtime materials to the single carved mesh from asset-owned triangle groups; resolve authoritative results only through the asset map; coalesce provider loading; and fail closed to semantic SVG on every unavailable, malformed, stale, unmapped, or hash-mismatched input. Pending provider load shows result-free loading and no tray; terminal provider failure mounts the shared accessible presentation without Canvas, keeps the armed result concealed, and settles to SVG after the normal release rather than blocking the queue.
 
 The web must not reach into `library/`, copy numeric face facts into source, or preserve Lightning-specific two-material assumptions in the generic provider.
 
@@ -140,7 +140,7 @@ This design does not build a universal dice simulator. It establishes the smalle
 3. **The gesture has no game authority.** It may influence decorative position, spin, and effect phase. It may not generate, reroll, bias, clamp, reinterpret, or conceal the authoritative result.
 4. **Monster rolls may auto-play, but rendered witnesses do not produce that event.** There is no player gesture to await for an NPC. The fixture host—and later the single authoritative production adapter—appends one deterministic release for a monster presentation. Roller and spectator components only consume it, preventing duplicate autoplay from multiple clients, remounts, or StrictMode.
 5. **The tray is the popup.** The rounded rectangle is the resting/interaction tray. Throw motion may cross its boundary; settlement must fit inside it.
-6. **Collectible identity uses stable preset IDs.** Presets describe dice such as `dice.original.carved.d20`; they do not encode `player` or `monster`. Roller role selects an authoritatively projected preset ID, while runtime material treatment may distinguish table roles without changing mesh identity.
+6. **Collectible identity uses stable preset IDs.** Presets describe dice such as `dice.original.carved.d20`; they do not encode `player` or `monster`. Roller role selects an authoritatively projected preset ID, while runtime material treatment may distinguish table roles without changing mesh identity. A safe preset ID is 1–64 characters, one to eight dot-separated segments, and each segment matches `[a-z][a-z0-9-]{0,31}`. This admits historical `lightning` and canonical dotted IDs while rejecting URLs, slashes, colons, traversal, empty segments, and arbitrary paths.
 7. **Spectators see the roller's die.** The selected preset is part of the player's shared presentation identity. Spectators do not substitute their own local skin. Production must project the roller's authoritatively equipped preset before the tray arms; the release gesture is not the source of ownership or loadout truth.
 8. **Shared release is compact.** Production will coordinate one release signal rather than streaming live pointer movement. That signal identifies the presentation and starts the decorative throw for witnesses; it may repeat the already-known preset ID for validation/fallback, but it does not establish ownership.
 9. **Damage dice are reserved, not fabricated.** The tray may support a future dice group, but this concept renders only the d20 until individual authoritative damage results exist.
@@ -207,6 +207,7 @@ The existing production-intent `AttackDie3D` should evolve behind a stable rende
 
 - resolving the selected preset contract;
 - loading/cloning the selected model;
+- validating the declared glTF object-node to mesh-definition binding before scene preparation;
 - applying material/effect treatment;
 - decorative tumble and translation;
 - exact result-to-quaternion settlement;
@@ -321,6 +322,8 @@ Sizing is a tray responsibility informed by asset facts:
 - the asset contract supplies exact authored bounds, coordinate units/convention, and cohesive set-relative dimensions;
 - the web owns a target visual extent for the approved tray/camera and deterministically computes one uniform normalization from those facts;
 - no caller supplies an arbitrary model scale, and the web does not maintain per-result or per-preset exception tables;
+- the approved Stone 0 d20 target maximum extent is `0.55` world units: recenter on `(bboxMin + bboxMax) / 2`, then compute `uniformScale = 0.55 / max(dimensions)`; Original d20 dimensions `[10,10,10]` therefore yield scale `0.055`;
+- that extent remains constant at the approved 1440/1241/1240/760 review widths because the 356px drawer remains constant, and settled projected geometry keeps at least 8 CSS px clearance from every well edge;
 - the tray computes a resting pose whose full projected geometry fits inside the rounded rectangle;
 - travel may begin or continue outside that rectangle;
 - the resting pose must remain readable from the approved overhead three-quarter camera;
@@ -365,12 +368,13 @@ Until then:
 - A release commits at most once.
 - Reduced motion suppresses tumble and animated effects while preserving explicit player input and exact settlement.
 - The authoritative result remains available through the existing semantic/live presentation surface; WebGL is never the only source of result meaning.
+- Accessible settled status follows matching renderer telemetry (`observed` 3D versus failed/fallback), never a literal preset-name check.
 - Failure to load a model, preset, shader, or face map uses a readable fallback and does not block the presentation queue.
 
 ## Failure, discontinuity, and fallback
 
 - **Unknown preset:** use the declared safe default if its authoritative mapping is valid; otherwise use SVG.
-- **Unavailable asset or invalid hash:** fail closed to SVG.
+- **Unavailable asset or invalid hash:** while loading, show result-free polite loading and mount no tray/Canvas. On terminal failure, mount the shared presentation without Canvas, preserve Roller input/Spectator non-authority, conceal the armed face as `?`, and settle to truthful SVG only after the matching release.
 - **Unmapped result:** show SVG; never display a different physical face.
 - **Missed shared-release signal:** do not stall. When authoritative presentation must advance, show a readable settled/fallback result.
 - **Missing equipped-preset projection:** use the published safe default or SVG; never trust a release signal as proof that the roller owns a preset.
