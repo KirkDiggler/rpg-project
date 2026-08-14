@@ -254,6 +254,7 @@ seam (#966); #964's trigger rides along as `encounter.NewWalk`'s `Pose`.
 | 2026-08-14 | Step 4.2 shipped: `Form`/`Transfer`/`EndTurn`/`Dissolve`; coexistence = fight members are the fight's alone (Move/Traverse reject, Pump skips); drained bubbles pruned, idle bubbles rejected at load | toolkit PR #969 → `encounter/v0.6.0` |
 | 2026-08-14 | Transfer direction is explicit (`To ClockKind`), never inferred — a toggle under load-act-save silently moves stale state the wrong way | PR #969, `ErrBadClock` |
 | 2026-08-14 | Free-roam `Move` stays thin (track positions, no `Advance` wiring); grow into the tick/Pump pattern later — the turn clock is where the economy matters now | this handoff, Open questions |
+| 2026-08-14 | **A condition/effect record that fails to load never fails silently in the new stack** — condition loading leaves the character package; resolution's single attach loop rejects loudly ("it is not valid in our new world"). #948's in-character fix options are interim maintenance only | toolkit#948, ADR-0038 clause 2 |
 
 ## Carried follow-ups — filed, none blocking
 
