@@ -22,7 +22,7 @@
 - Stone 0 selects only `dice.original.carved.d20`. The painted-number family from assets PR #52 remains a later preset despite being present in the generated runtime manifest.
 - Exact Original carved d20 GLB SHA-256 is `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`; size is 491,312 bytes. A mismatch fails closed before GLTF parsing.
 - All result quaternions, selectors, authored bounds, coordinate facts, and body/numeral triangle groups remain asset-owned. Web code contains no copied settlement map or model-specific exception table.
-- The web owns only presentation normalization. Center on `(bboxMin + bboxMax) / 2`, set `targetMaxExtent = 0.55` world units, and compute `uniformScale = 0.55 / max(dimensions)`. Original d20 dimensions `[10,10,10]` therefore yield `0.055`. Keep that extent unchanged across the approved 1440/1241/1240/760 review widths because the 356px drawer is unchanged; settled projected geometry must retain at least 8 CSS px clearance from every well edge. Do not reuse Lightning group scale `1.1` as an Original asset fact.
+- The web owns only presentation normalization. Before scaling, every axis must satisfy `bboxMax - bboxMin > 0.000001`, `dimensions > 0.000001`, and `abs(dimensions - (bboxMax - bboxMin)) <= 0.000001`; otherwise fail closed. Center on `(bboxMin + bboxMax) / 2`, set `targetMaxExtent = 0.55` world units, and compute `uniformScale = 0.55 / max(dimensions)`. Original d20 dimensions `[10,10,10]` therefore yield `0.055`. Keep that extent unchanged across the approved 1440/1241/1240/760 review widths because the 356px drawer is unchanged; settled projected geometry must retain at least 8 CSS px clearance from every well edge. Do not reuse Lightning group scale `1.1` as an Original asset fact.
 - Preserve `DiceTrayPresentation`, `presentationId` as sole external correlation, immutable first-request/first-release authority, Roller/Spectator restrictions, independent renderer generations/telemetry, structured combat logs, responsive drawer layout, and truthful SVG fallback.
 - Stone 0 does not implement held pointer-follow, shake energy, `VisualThrowProfile@1`, personalized release choreography, multi-die groups, rigid-body physics, production transport, profile/loadout ownership, or damage-die authority.
 - No Canvas or renderer CSS transforms. Three.js object transforms only.
@@ -197,7 +197,7 @@ Add independent cases for:
 - authoring `sizeBytes` mismatch, source/promoted byte-size mismatch, and emitted size not derived from promoted bytes;
 - missing promoted GLB;
 - selector/root/mesh mismatch against GLB JSON;
-- bounds mismatch against accessor bounds;
+- bounds mismatch against accessor bounds, zero/negative/reversed axes, and dimensions differing from `bboxMax - bboxMin` by more than `0.000001`;
 - carved triangle overlap, gap, duplicate, negative, out-of-range, wrong total, or wrong bound hash;
 - supported-result duplicate/gap/extra/out-of-range key;
 - non-finite or non-unit quaternion;
@@ -220,7 +220,7 @@ Modify `validate_dice_tray_presets.py` so every tray-ready preset requires:
 - promoted path inside `harness/models/custom-dice/`;
 - byte-identical source/promoted GLB hashes;
 - authoring `sizeBytes` equal to both source and promoted byte lengths, while emitted `sizeBytes` is derived from promoted bytes;
-- explicit selectors and bounds matching promoted bytes;
+- explicit selectors and bounds matching promoted bytes, with every axis positive and `dimensions == bboxMax - bboxMin` within `0.000001`;
 - unique supported results exactly matching the die kind;
 - decimal-string result keys matching supported results;
 - finite normalized `xyzw` quaternions;
@@ -549,7 +549,7 @@ Expected: the new Original ID assertions fail because merged `PRESET_IDENTIFIER`
 
 - [ ] **Step 2: Write strict runtime-manifest parser tests**
 
-Start from a minimal valid synthetic d20 fixture and mutate one property per test. Require exact keys, bounded safe IDs, runtime-relative non-URL model path, lowercase 64-hex hash, exact byte size, finite bounds, a geometry discriminator, unique decimal result keys, and finite normalized quaternions. Recursively reconstruct/freeze accepted values. Validate the exact result set by kind: d20 `1–20`, d12 `1–12`, d10 `1–10`, d10-percentile `[0, 10, 20, 30, 40, 50, 60, 70, 80, 90]`, d8 `1–8`, d6 `1–6`, and d4 `1–4`. The provider later narrows the selected record to carved d20.
+Start from a minimal valid synthetic d20 fixture and mutate one property per test. Require exact keys, bounded safe IDs, runtime-relative non-URL model path, lowercase 64-hex hash, exact byte size, finite internally consistent bounds, a geometry discriminator, unique decimal result keys, and finite normalized quaternions. Add explicit mutations for zero dimensions, negative dimensions, reversed min/max, all-zero bounds, and dimensions differing from `bboxMax - bboxMin` by more than `0.000001`. Recursively reconstruct/freeze accepted values. Validate the exact result set by kind: d20 `1–20`, d12 `1–12`, d10 `1–10`, d10-percentile `[0, 10, 20, 30, 40, 50, 60, 70, 80, 90]`, d8 `1–8`, d6 `1–6`, and d4 `1–4`. The provider later narrows the selected record to carved d20.
 
 Reject unknown keys, accessors/getters/proxies that throw, path traversal, absolute/URL paths, duplicate results, geometry partition overlap/gap/out-of-range, wrong triangle total, unknown schema/contract, wrong die kind, authoring fields, and an incomplete map.
 
@@ -677,7 +677,7 @@ Assert Original d20:
 - recenters from the validated bounds midpoint and computes exactly `0.55 / max(dimensions)`; the real Original d20 yields `0.055`, remains unchanged at approved responsive widths, and preserves at least 8 CSS px settled clearance from every well edge;
 - shares provider identity but owns independent scene clones, renderer generations, telemetry, Canvas, and disposal;
 - reduced motion still requires explicit release and settles exactly;
-- provider/map/geometry failure remains concealed while armed and converges to semantic SVG after release; and
+- provider/geometry failure remains concealed while armed and converges to semantic SVG after release; a lower-level synthetic renderer test retains `unmapped-result` coverage without claiming that state is reachable through a complete validated runtime manifest; and
 - unknown safe presets never become model URLs; and
 - accessible settled status is driven by matching renderer telemetry (`observed` 3D versus `failed`/fallback), never by checking whether `presetId === 'lightning'`.
 
@@ -807,6 +807,10 @@ Use the corrected frozen-build path with private custom-dice mounted separately:
 SHA=$(git rev-parse HEAD)
 OUT=/home/kirk/game-dev/.verification/interactive-dice-tray/stone-0/$SHA
 BUILD_MANIFEST="$OUT/build-manifest.json"
+if [ -e "$OUT" ]; then
+  echo "refusing stale exact-SHA evidence directory: $OUT" >&2
+  exit 1
+fi
 mkdir -p "$OUT"
 VITE_ATTACK_DIE_WEB_COMMIT="$SHA" \
   npm run attack-die:freeze-build -- --out "$BUILD_MANIFEST"
@@ -819,6 +823,11 @@ node scripts/attack-die/serve-frozen.mjs \
   --port 3003 >"$OUT/preview.log" 2>&1 &
 PREVIEW_PID=$!
 trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+for attempt in $(seq 1 40); do
+  curl -fsS 'http://127.0.0.1:3003/?concept=attack-die-3d' >/dev/null && break
+  sleep 0.25
+done
+curl -fsS 'http://127.0.0.1:3003/?concept=attack-die-3d' >/dev/null
 node scripts/attack-die/capture-stone0-tray-evidence.mjs \
   --url 'http://127.0.0.1:3003/?concept=attack-die-3d' \
   --out "$OUT" \
@@ -839,7 +848,7 @@ On `?concept=attack-die-3d → Tray`, verify:
 5. result target is invariant under Roll versus host release and decorative variation;
 6. Player remains armed indefinitely; Monster release remains host-owned;
 7. reduced motion requires explicit input and settles exactly without tumble;
-8. missing manifest, malformed manifest, GLB hash mismatch, invalid geometry partition, unmapped result, WebGL creation failure, real context loss, and shader failure converge truthfully;
+8. missing manifest, incomplete face map rejected before GLTF parse, malformed manifest, GLB hash mismatch, invalid geometry partition, unknown-safe-preset SVG fallback, WebGL creation failure, real context loss, and shader failure converge truthfully;
 9. desktop `1440×1080`, boundary `1241×900`/`1240×900`, and narrow `760×900` preserve the accepted drawer/log/dock layout and containment; and
 10. startup/scenario console and page errors are empty except explicitly documented unrelated API noise.
 
