@@ -20,6 +20,12 @@ The approved class mapping is:
 | Rogue | `SK_Chr_Rider_01` |
 | Barbarian | `SK_Chr_Blacksmith_Male_01` |
 
+## Approved roster preview
+
+![Approved level-1 human runtime roster](approved-roster.png)
+
+*License-safe palette-A source renders from the private Fantasy Kingdom pack. Front and three-quarter views were independently opened and inspected before publication; source FBXs, textures, GLBs, and `.blend` files remain private.*
+
 Class identity comes primarily from clothing and future equipment, not exaggerated class-specific bodies. Every standing model remains intentionally unarmed; the existing standalone weapons and socket metadata remain available for the equipment-driven weapon system.
 
 ## Scope
