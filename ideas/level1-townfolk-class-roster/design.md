@@ -1,11 +1,12 @@
 # Level-1 Townfolk Four-Class Runtime Roster
 
-**Status:** Approved in conversation; written review pending
+**Status:** Approved by Kirk on 2026-08-15; implementation plan ready
 
 **Date:** 2026-08-15
 
 **Tracking:** [rpg-project#225](https://github.com/KirkDiggler/rpg-project/issues/225), [rpg-game-assets#59](https://github.com/KirkDiggler/rpg-game-assets/issues/59)
 **Approved source checkpoint:** [rpg-game-assets#58](https://github.com/KirkDiggler/rpg-game-assets/issues/58)
+**Implementation:** [plan.md](plan.md)
 
 ## Goal
 
@@ -35,6 +36,7 @@ This promotion includes the complete current class-asset contract:
 - animated standing GLBs in Fantasy Kingdom palette variants A, B, and C;
 - one static downed GLB per class and palette;
 - one 512px transparent portrait per class and palette;
+- deterministic 2048x2048 runtime atlas derivatives from the private 4096x4096 Fantasy Kingdom A/B/C sources;
 - updated private manifest provenance, color inventory, animation declarations, mesh statistics, and deterministic release inventory;
 - removal of obsolete Fantasy Rivals D color siblings and manifest entries;
 - exact-provider sync into the web's ignored Synty runtime tree;
@@ -90,11 +92,12 @@ For each class:
 
 1. Export the palette-A approved checkpoint to the standing class alias.
 2. Validate the exported GLB's one-body/55-joint structure, exact Root wrapper, geometry contract, action names/ranges, packed image, and absence of weapons.
-3. Produce B and C by swapping the embedded atlas payload without changing geometry, rig, animation semantics, or node structure.
-4. Verify that the Kingdom A/B/C atlases are same-dimension and compatible with the checkpoint UV layout before accepting a swap. The pipeline fails rather than fabricating a missing variant.
-5. Produce one static palette-A downed pose from the validated standing model, preserving the Root wrapper and grounding the evaluated mesh.
-6. Produce B/C downed siblings by atlas replacement so all downed variants share the exact pose and structure.
-7. Render A/B/C portraits from the exact standing GLBs and record input/output hashes.
+3. Verify that the private Kingdom A/B/C sources are exact 4096x4096 compatible atlases, then derive each runtime payload in Blender 5.0.1 with a fixed `Image.scale(2048, 2048)` step. No loose derived PNG is committed; the result is embedded in the staged GLB.
+4. Produce B and C by swapping the embedded atlas payload without changing geometry, rig, animation semantics, or node structure. Every standing and downed output must contain exactly one 2048x2048 packed image.
+5. Fail rather than fabricate a missing palette, accept a mismatched source dimension, or silently retain a 4096x4096 runtime image.
+6. Produce one static palette-A downed pose from the validated standing model, preserving the Root wrapper and grounding the evaluated mesh.
+7. Produce B/C downed siblings by atlas replacement so all downed variants share the exact pose and structure.
+8. Render A/B/C portraits from the exact standing GLBs and record input/output hashes.
 
 The manifest is regenerated or structurally updated in the stage to:
 
@@ -109,7 +112,7 @@ The stage deletes the old `*-d`, `*-downed-d`, and portrait-D files. It regenera
 
 ### Atomic apply
 
-Canonical files are untouched until the full stage passes. Apply copies the validated repository-shaped stage into the private provider branch as one release change. A partial class set, mixed source family, stale D sibling, or inventory mismatch is a hard failure.
+Canonical files are untouched until the full stage passes. Apply uses a same-filesystem, rollback-safe directory replacement, verifies the Git index against the sealed stage inventory, and records the result as one provider release commit. The Git commit is the durable atomic release boundary; an injected materialization failure must restore the pre-apply tree byte-for-byte. A partial class set, mixed source family, stale D sibling, or inventory mismatch is a hard failure.
 
 The provider PR is ready for review rather than draft. It carries license-safe rendered evidence, a load-bearing-files section, command output, and the exact stage inventory digest. Kirk alone merges.
 
@@ -118,11 +121,11 @@ The provider PR is ready for review rather than draft. It carries license-safe r
 The web's existing class lookup remains unchanged. After the provider PR merges:
 
 1. Record the merged `rpg-game-assets` commit.
-2. Run the existing `npm run assets:sync` path and verify the local private checkout resolves to that exact commit after its pull.
-3. Confirm `public/models/synty/` mirrors the provider tree with delete semantics, including absence of all retired D files.
+2. Create a detached provider worktree at that exact commit and pass it through the sync script's merged `RPG_GAME_ASSETS_PATH` override; never rely on an incidental sibling checkout or branch pull for release verification.
+3. Confirm `public/models/synty/` mirrors that detached provider tree with delete semantics and byte-identical hashes, including absence of all retired D files.
 4. Exercise the real class model renderer for Fighter, Barbarian, Monk, and Rogue through standing idle, ordered-path movement/facing, and downed rendering.
 
-The synchronized GLBs remain ignored licensed runtime inputs. No converted Synty asset enters the public web repository. If no consumer code or durable public contract changes, no web feature PR is required; license-safe runtime evidence may use the standing public evidence branch.
+The synchronized GLBs remain ignored licensed runtime inputs. No converted Synty asset enters the public web repository. The renderer and resolver require no behavior change. A narrow public documentation/test-fixture PR updates stale four-clip comments to the exact two-clip contract after the provider merge; license-safe runtime evidence uses the standing public evidence branch.
 
 ## Failure handling and rollback
 
@@ -137,6 +140,7 @@ Hard failures include:
 - a weapon or extra mesh in a standing/downed model;
 - animation in a downed model;
 - missing or unpacked textures;
+- a non-4096x4096 private source atlas or a runtime atlas that is not exactly 2048x2048;
 - palette structure/parity mismatch;
 - missing portrait or downed sibling;
 - retained D inventory;
@@ -153,7 +157,8 @@ The release is rolled back by reverting the single provider release commit and r
 - Blender 5.0.1 and Auto-Rig Pro 3.78.34 provenance recorded.
 - Source-vs-checkpoint and source-vs-export reports pass for all four classes.
 - `Idle_Relaxed [2,55]` and `Walk_Forward [2,33]` are exact; final constraint count is zero.
-- Every standing GLB has one body mesh, 55 joints, the established Root wrapper, one packed atlas, and no weapon.
+- Every standing GLB has one body mesh, 55 joints, the established Root wrapper, one packed 2048x2048 atlas, and no weapon.
+- A/B/C private sources are 4096x4096; staged standing/downed runtime images are 2048x2048 and pass the character texture budget without weakening unrelated budgets.
 - A/B/C standing variants have semantic geometry/rig/action parity and differ only by intended image payload/material references.
 - Every downed GLB is static, grounded, unarmed, and Root-compatible with its standing sibling.
 - Portraits are 512px transparent PNGs hash-bound to their standing inputs.
@@ -167,6 +172,7 @@ For all four classes, review:
 - fixed-camera, visible-ground idle/walk evidence from front, side, three-quarter, and high-oblique angles;
 - walk contact strips against a stable checker reference;
 - A/B/C palette sheets;
+- matched private-4096-source versus staged-2048-runtime close-up sheets for all classes and palettes;
 - standing/downed comparison sheets;
 - portrait sheets;
 - anatomical plausibility, clipping, foot contact, silhouette, cross/collar integrity for Monk, and clothing deformation at maximum stride.
