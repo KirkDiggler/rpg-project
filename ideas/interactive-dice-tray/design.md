@@ -1,9 +1,9 @@
 ---
 name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
-updated: 2026-08-14
-confidence: high on the merged authority/presentation boundary, the Original carved asset facts, and the approved staged motion architecture; production transport, ownership validation, rigid-body settlement, and individual damage-die authority remain later work
-status: original Concepts Lab slice merged in rpg-dnd5e-web#750; continuation direction approved by Kirk on 2026-08-14; Stone 0 runtime-asset integration is next; tracked by rpg-project#219
+updated: 2026-08-15
+confidence: high on the merged authority/presentation boundary, the exact Original carved GLB identity, the diagnosed Stone 0 contract defects, and the approved staged motion architecture; corrected face semantics, numeral material coverage, production transport, ownership validation, rigid-body settlement, and individual damage-die authority remain gated
+status: original Concepts Lab slice merged in rpg-dnd5e-web#750; assets provider merged in rpg-game-assets#55; web PR #752 gate withdrawn after live review found wrong carved face identities and incomplete numeral coloring; Stone 0 recovery design approved by Kirk on 2026-08-15; tracked by rpg-project#219
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -15,9 +15,9 @@ status: original Concepts Lab slice merged in rpg-dnd5e-web#750; continuation di
 - [rpg-project#216](https://github.com/KirkDiggler/rpg-project/issues/216) — staged lightning d20 rendering proof
 - [rpg-dnd5e-web#749](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/749) / [PR #750](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/750) — merged Concepts Lab authority, event, witness, drawer, gesture-release, fallback, and renderer boundaries
 - [rpg-game-assets#47](https://github.com/KirkDiggler/rpg-game-assets/issues/47) — earlier lightning-d20 contract work, now superseded for new usage by the Original carved set
-- [rpg-game-assets#49](https://github.com/KirkDiggler/rpg-game-assets/issues/49) / PRs [#50](https://github.com/KirkDiggler/rpg-game-assets/pull/50), [#51](https://github.com/KirkDiggler/rpg-game-assets/pull/51), and [#52](https://github.com/KirkDiggler/rpg-game-assets/pull/52) — merged Original carved and painted-number sets, complete hash-bound face maps, and carved body/numeral triangle groups
-- [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) — Stone 0 consumer runtime manifest/provider-root slice
-- [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) — Stone 0 Original carved d20 consumer slice
+- [rpg-game-assets#49](https://github.com/KirkDiggler/rpg-game-assets/issues/49) / PRs [#50](https://github.com/KirkDiggler/rpg-game-assets/pull/50), [#51](https://github.com/KirkDiggler/rpg-game-assets/pull/51), and [#52](https://github.com/KirkDiggler/rpg-game-assets/pull/52) — merged Original carved and painted-number sets plus structurally complete hash-bound face/triangle metadata; Stone 0 live review later disproved the carved d20's semantic face and cutwall roles
+- [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged Stone 0 consumer runtime manifest/provider-root slice; its Original d20 semantic map and triangle roles now require a correcting follow-up
+- [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — Stone 0 Original carved d20 consumer slice; merge gate withdrawn after Kirk's 2026-08-15 live face review
 
 ## Summary
 
@@ -39,15 +39,15 @@ The continuation is staged rather than attempting a universal simulator in one s
 
 ### Stone 0 — consume the permanent asset contract
 
-The merged Original carved set is the default provider for new dice work. Stone 0 integrates `dice.original.carved.d20`, its exact runtime hash, material-free carved mesh, bounds, body/numeral triangle groups, and complete 1–20 settlement map behind the already-merged `DiceTrayPresentation → DiceTray3D → renderer` boundary. The painted-number family merged in PR #52 proves a future distinct-preset path but is not selected in this slice: recessed carved geometry is the more physical baseline for the settlement and motion work. Stone 0 does not add tactile motion yet.
+The merged Original carved set is the default provider for new dice work. Stone 0's intended scope integrates `dice.original.carved.d20`, its exact runtime hash, material-free carved mesh, bounds, body/numeral triangle groups, and complete 1–20 settlement map behind the already-merged `DiceTrayPresentation → DiceTray3D → renderer` boundary; the first integration attempt remains blocked until the semantic correction below replaces its structurally valid but physically wrong metadata. The painted-number family merged in PR #52 proves a future distinct-preset path but is not selected in this slice: recessed carved geometry is the more physical baseline for the settlement and motion work. Stone 0 does not add tactile motion yet.
 
 PR #50 supplies strong asset facts:
 
 - seven promoted dice: d20, d12, d10 percentile, d10, d8, d6, and d4;
 - one cohesive material-free carved family;
 - human-approved private review renders;
-- complete finite normalized face maps bound to each exact runtime GLB hash;
-- carved body/numeral triangle groups from PR #51, enabling two runtime materials without changing the GLB hash;
+- finite normalized face-map records bound to each exact runtime GLB hash, whose carved d20 labels require the semantic correction below;
+- carved body/numeral triangle groups from PR #51, enabling two runtime materials without changing the GLB hash, with the d20's 879 misclassified cutwalls requiring correction;
 - a second painted-number family from PR #52 for later preset work; and
 - Original d20 hash `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e` (491,312 bytes).
 
@@ -60,10 +60,28 @@ It also exposes a cross-repository contract gap that Stone 0 must close before w
 
 Stone 0 therefore lands inside-out in two ordered repository slices:
 
-1. **Assets provider slice:** declare `harness/models/custom-dice/` as a supported consumer runtime root; generate a consumer-safe runtime preset manifest beside the promoted GLBs; validate its reproducibility, promoted paths, hashes, selectors, bounds, and complete face maps; keep `library/custom-dice/` as authoring authority only.
+1. **Assets provider slice:** declare `harness/models/custom-dice/` as a supported consumer runtime root; generate a consumer-safe runtime preset manifest beside the promoted GLBs; validate its reproducibility, promoted paths, hashes, selectors, bounds, complete face maps, and direct-tag semantic witnesses; keep `library/custom-dice/` as authoring authority only.
 2. **Web consumer slice:** sync both approved runtime roots into separate ignored public paths; strictly reconstruct and validate the runtime manifest; hash the GLB before parsing; validate the declared glTF node→mesh-definition binding through the GLTF parser metadata; apply runtime materials to the single carved mesh from asset-owned triangle groups; resolve authoritative results only through the asset map; coalesce provider loading; and fail closed to semantic SVG on every unavailable, malformed, stale, unmapped, or hash-mismatched input. Pending provider load shows result-free loading and no tray; terminal provider failure mounts the shared accessible presentation without Canvas, keeps the armed result concealed, and settles to SVG after the normal release rather than blocking the queue.
 
 The web must not reach into `library/`, copy numeric face facts into source, or preserve Lightning-specific two-material assumptions in the generic provider.
+
+### Stone 0 recovery — direct carved semantics and independent observation
+
+The first exact-SHA Stone 0 package proved that the renderer faithfully reached the supplied quaternion, but Kirk's live browser review exposed that the supplied asset contract was wrong. The package therefore passed a circular oracle: `mappedTarget` came from the provider, the renderer applied it, and telemetry compared the observed pose to the same tuple. Digest-bound screenshots archived the outcome but did not independently identify the upward carved numeral.
+
+Two asset-owned defects are now confirmed against exact GLB SHA-256 `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`:
+
+- `build_dice_tray_face_maps.py` copied result order from the painted d20 onto a carved d20 with a different physical numeral layout. Only results 1, 2, 9, 19, and 20 settle correctly; the other 15 entries are a deterministic permutation.
+- the body/numeral derivation treated every retained normal cluster as an exterior-face candidate. It assigned 879 cutwall triangles to body. The correct exact partition is 2,684 body + 7,798 numeral = 10,482, not 3,563 + 6,919.
+
+The GLB geometry and hash remain unchanged. Recovery is ordered and inside-out:
+
+1. **Assets semantic correction:** derive result identity from the carved tagged scene's `D20_Result_##` carriers rather than painted decal node labels; bind those tags to exact runtime triangles; publish corrected face entries and the exact 2,684/7,798 partition; regenerate the consumer manifest; and invalidate the previous carved d20 visual approval until a readable all-20 contact sheet is approved.
+2. **Assets semantic oracle:** for every result, independently resolve the carved tagged face normal against the exact runtime GLB, rotate it by the published quaternion, and require that result alone to reach world up. Require published body/numeral ordinal sets to match the tagged outer-plane versus recess/cutwall roles exactly. Structural completeness, unit quaternions, and a screenshot digest are not sufficient.
+3. **Web observation hardening:** consume the corrected asset contract without a web-local permutation; retain target-hold telemetry but add an independently derived upward-result observation from asset-provided face witnesses and the actual rendered world transform; require requested result = observed upward result before 3D evidence can pass.
+4. **Readable browser proof:** capture close-up Roller and Spectator witnesses for all 20 results in addition to full-page layout evidence, record explicit numeral contrast/coverage facts, and require human visual review. Canvas visibility must be labeled as canvas visibility, never as carved-numeral correctness.
+
+The recovery must also repair deterministic source binding: the generated runtime manifest's `sourceManifestSha256` must equal the current tracked authoring bytes under `--check`. The functional settlement and triangle-role correction belongs to `rpg-game-assets`; the independent runtime observation and truthful evidence vocabulary belong to `rpg-dnd5e-web`. No merge-ready verdict may be restored until both owners pass their semantic gates and Kirk rechecks the live results.
 
 ### Stone 1 — tactile held and personalized release choreography
 
@@ -129,8 +147,8 @@ This design does not build a universal dice simulator. It establishes the smalle
 - Monster and spectator attacks already bypass the local player's armed interaction and can auto-play.
 - `EntityDamaged` currently provides a total and optional per-source totals, not the individual authoritative damage-die faces needed for honest 3D damage settlement.
 - The lightning d20 was the only model available to the merged Concepts Lab slice and is now explicitly superseded for new dice usage.
-- Assets PR #50 has merged the complete Original carved set, promoted runtime GLBs, human-approved private renders, and exact hash-bound settlement maps for all supported results across all seven dice.
-- The web cannot consume that set yet because its sync/provider path remains Lightning/Synty-specific and the consumer-safe runtime manifest is not promoted alongside `harness/models/custom-dice/`.
+- Assets PR #50 merged the complete Original carved set and promoted runtime GLBs. Its published face/triangle metadata was structurally complete but not semantically sufficient: live Stone 0 review later proved the Original d20 result order and 879 triangle roles wrong.
+- Assets PR #55 promoted the consumer-safe runtime manifest and `harness/models/custom-dice/` provider root. The web consumes that boundary in PR #752, but the PR is blocked until a correcting assets contract is merged and resynced.
 - A local pointer gesture is not currently delivered to teammates. Shared witnessing therefore needs a later presentation-coordination seam.
 
 ## Product decisions
@@ -345,7 +363,7 @@ Concept rules:
 - changing GLB hash, selectors, coordinate convention, or root correction invalidates mappings; and
 - gesture/replay variation cannot select or alter the target quaternion.
 
-Assets PR #50 owns the canonical Original carved maps and their binding to exact runtime hashes. Web validates and consumes that asset-owned metadata; it does not independently reconstruct, label, or patch face quaternions. If a physical result is wrong, the correction returns to the asset contract owner rather than becoming a web-local exception. Earlier Lightning mapping work remains historical evidence, not the provider for new dice usage.
+Assets owns the canonical Original carved maps and their binding to exact runtime hashes. Web validates and consumes that asset-owned metadata; it does not independently reconstruct, label, permute, or patch face quaternions. If a physical result is wrong, the correction returns to the asset contract owner rather than becoming a web-local exception. Asset generation must derive carved labels from direct carved tags, not from a geometrically congruent die with a different numeral layout. Earlier Lightning and painted-d20 mapping work remain supporting evidence for their own models, not result-order authority for the carved provider.
 
 ## Damage-dice expansion seam
 
@@ -417,11 +435,14 @@ Ownership validation, catalog delivery, and persistence are out of scope for the
 
 ### Stone 0: full face correctness
 
-- The PR #50 runtime contract is exercised for Original d20 results 1–20 after the consumer-safe manifest is promoted.
-- Each mapped result reaches and holds its exact target within the approved angular tolerance.
-- Asset-team human review remains the authority that the carved numeral and tagged face correspond.
-- Face verification is invalidated when the bound runtime hash, selector, coordinate convention, or bounds change.
-- Web integration evidence proves strict consumption and fail-closed behavior; it does not duplicate the asset team's private tagging evidence.
+- The corrected asset runtime contract is exercised for Original d20 results 1–20 after the consumer-safe manifest is regenerated.
+- For each result, an assets-side semantic oracle independently binds the direct carved result tag to exact runtime geometry and proves the published quaternion rotates that tagged face alone to world up.
+- Published geometry roles exactly match 2,684 outer-body triangles and 7,798 numeral recess/cutwall triangles for the unchanged Original d20 hash; no cutwall is body-colored.
+- Web independently derives the observed upward result from asset face witnesses and actual rendered world transforms; target-tuple equality alone cannot pass.
+- Each mapped result reaches and holds its exact target within the approved angular tolerance and reports `observedUpwardResult === requestedResult`.
+- A readable close-up for every result and both witness roles is reviewed; full-page 78px dice and PNG digests alone are insufficient identity/readability evidence.
+- Face verification is invalidated when the bound runtime hash, selector, coordinate convention, bounds, direct tag witness, or geometry partition changes.
+- Web integration evidence proves strict consumption, independent upward observation, contrast/readability, and fail-closed behavior without duplicating or overriding asset authority.
 
 ### Shared Concepts Lab proof
 
