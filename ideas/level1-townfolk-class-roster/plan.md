@@ -15,7 +15,7 @@
 ## Global constraints
 
 - Kirk alone approves creative evidence and merges PRs.
-- Do not begin provider implementation until PR #226 is merged. Do not merge it on Kirk's behalf.
+- PR #226's plan is approved and intentionally remains open throughout provider implementation and runtime verification. Begin implementation while it is open; Kirk merges it only after the final implementation gate.
 - Licensed FBXs, atlases, `.blend` files, and GLBs stay under private/local roots or `rpg-game-assets`; never add them to `rpg-project` or tracked `rpg-dnd5e-web` paths.
 - Public evidence may contain only rendered PNG/GIF/video, checksums, commands, and provenance receipts.
 - Stable A aliases remain `characters/{fighter,monk,rogue,barbarian}.glb`; B/C use `-b`/`-c`. Downed aliases and portraits retain their current spelling.
@@ -103,19 +103,19 @@ playtest-evidence/asset-pipeline/level1-townfolk-class-roster/<run-id>/
 
 ## Task 1: Merge gate, clean provider worktree, and immutable baseline
 
-**Consumes:** merged design authority and current `rpg-game-assets/origin/main`.
+**Consumes:** Kirk-approved design/plan authority on open PR #226 and current `rpg-game-assets/origin/main`.
 
 **Produces:** one clean provider branch/worktree, a committed durable private baseline receipt for weapon/socket and pre-release D hashes, Board 19 item moved to In Progress.
 
 - [ ] Verify the design and operational dependencies before creating implementation state:
 
 ```bash
-test "$(gh pr view 226 -R KirkDiggler/rpg-project --json state --jq .state)" = MERGED
+test "$(gh pr view 226 -R KirkDiggler/rpg-project --json state --jq .state)" = OPEN
 test "$(gh pr view 754 -R KirkDiggler/rpg-dnd5e-web --json state --jq .state)" = MERGED
 test "$(gh pr view 60 -R KirkDiggler/rpg-game-assets --json state --jq .state)" = MERGED
 ```
 
-Expected: three `MERGED` assertions. Stop if any assertion fails.
+Expected: approved design PR #226 remains `OPEN`; both operational dependencies are `MERGED`. Stop if any assertion fails.
 
 - [ ] Create the implementation branch from the exact current private provider main:
 
@@ -803,13 +803,13 @@ git -C /home/kirk/game-dev/rpg-game-assets revert "$PROVIDER_SHA"
 
 Never rewrite history or restore ad hoc backup files after publication.
 
-- [ ] After PASS, close `rpg-game-assets#59` and `rpg-project#225`, move both Board 19 items to Done, and rewrite `rpg-project/sessions/active.md` with provider merge SHA, evidence URLs, test commands, and any residual risks.
+- [ ] After PASS, ask Kirk to merge design/plan PR #226. Only after that merge, close `rpg-game-assets#59` and `rpg-project#225`, move both Board 19 items to Done, and rewrite `rpg-project/sessions/active.md` with provider merge SHA, evidence URLs, test commands, and any residual risks.
 
 ---
 
 ## Plan audit
 
-- [ ] Design PR #226 is merged before implementation.
+- [ ] Design PR #226 remains open throughout implementation and runtime verification; its plan is approved before Task 1 and Kirk merges it only after the final gate.
 - [ ] Peasant/Monk approved hashes remain unchanged; Rider/Blacksmith get explicit Kirk animation approval.
 - [ ] The stage contains exactly 12 standing, 12 downed, 12 portraits, and no D.
 - [ ] Every standing file has exactly `Idle_Relaxed` then `Walk_Forward`; every downed file is static.

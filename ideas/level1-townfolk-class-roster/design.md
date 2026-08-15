@@ -1,6 +1,6 @@
 # Level-1 Townfolk Four-Class Runtime Roster
 
-**Status:** Approved by Kirk on 2026-08-15; implementation plan ready
+**Status:** Design and plan approved by Kirk on 2026-08-15; PR held open through implementation and final verification
 
 **Date:** 2026-08-15
 
