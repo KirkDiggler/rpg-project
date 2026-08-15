@@ -2,8 +2,8 @@
 name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
 updated: 2026-08-15
-confidence: high on the merged authority/presentation boundary, the exact Original carved GLB identity, the diagnosed Stone 0 contract defects, and the approved staged motion architecture; corrected face semantics, numeral material coverage, production transport, ownership validation, rigid-body settlement, and individual damage-die authority remain gated
-status: original Concepts Lab slice merged in rpg-dnd5e-web#750; assets provider merged in rpg-game-assets#55; web PR #752 gate withdrawn after live review found wrong carved face identities and incomplete numeral coloring; Stone 0 recovery design approved by Kirk on 2026-08-15; tracked by rpg-project#219
+confidence: high on the merged authority/presentation boundary, corrected direct-tag Original carved d20 semantics, exact 2,684/7,798 roles, independent upward-result observation, and accepted Stone 0 evidence; tactile choreography, production transport/ownership, rigid-body settlement, and individual damage-die authority remain gated
+status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc, web consumer merged through rpg-dnd5e-web#752 at 8bc2a27, and exact-SHA evidence accepted with Kirk approval; Stone 1 remains a separate planned web slice tracked from rpg-project#219
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -16,8 +16,9 @@ status: original Concepts Lab slice merged in rpg-dnd5e-web#750; assets provider
 - [rpg-dnd5e-web#749](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/749) / [PR #750](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/750) — merged Concepts Lab authority, event, witness, drawer, gesture-release, fallback, and renderer boundaries
 - [rpg-game-assets#47](https://github.com/KirkDiggler/rpg-game-assets/issues/47) — earlier lightning-d20 contract work, now superseded for new usage by the Original carved set
 - [rpg-game-assets#49](https://github.com/KirkDiggler/rpg-game-assets/issues/49) / PRs [#50](https://github.com/KirkDiggler/rpg-game-assets/pull/50), [#51](https://github.com/KirkDiggler/rpg-game-assets/pull/51), and [#52](https://github.com/KirkDiggler/rpg-game-assets/pull/52) — merged Original carved and painted-number sets plus structurally complete hash-bound face/triangle metadata; Stone 0 live review later disproved the carved d20's semantic face and cutwall roles
-- [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged Stone 0 consumer runtime manifest/provider-root slice; its Original d20 semantic map and triangle roles now require a correcting follow-up
-- [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — Stone 0 Original carved d20 consumer slice; merge gate withdrawn after Kirk's 2026-08-15 live face review
+- [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged the first Stone 0 consumer runtime manifest/provider-root slice
+- [rpg-game-assets#57](https://github.com/KirkDiggler/rpg-game-assets/issues/57) / [PR #60](https://github.com/KirkDiggler/rpg-game-assets/pull/60) — corrected carved result identity from direct tags, published strict runtime v2 witnesses, fixed the exact 2,684/7,798 roles, and merged at `7fed0fc`
+- [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — consumed strict v2, independently observed upward results, replaced the circular evidence oracle, and merged Stone 0 at `8bc2a27`
 
 ## Summary
 
@@ -126,6 +127,11 @@ The Stone 0 retro asks two questions:
 
 1. Could the Lightning concept provider be replaced by Original carved d20 without rewriting `DiceTrayPresentation`, authority reconciliation, witness roles, or fallback semantics?
 2. Does every physical face and model fact originate in the asset runtime contract, with no web-authored quaternion, selector, path, or hash exception?
+
+**Retro outcome — yes to both (2026-08-15).**
+
+1. `DiceTrayPresentation` and its request/release, Roller/Spectator, accessibility, and truthful SVG fallback semantics survived unchanged as the literal authority boundary. Stone 0 replaced the provider/renderer behind that seam, then added geometry-backed observation as a confirmation gate rather than a second source of authority.
+2. The selected model path, size/hash, selectors, bounds, material roles, settlement quaternions, direct face witnesses, and result directions all come from the strict asset runtime contract. Web production code contains no corrective permutation, copied quaternion table, carved-label table, model-path exception, or model-hash exception. The exact accepted provider is assets merge `7fed0fc`; the web merge is `8bc2a27`; the accepted package-manifest SHA-256 is `7fcd64b814629e23b5fa3278d7e3166754c5de3b41ab0c7e813eaf2bfa769809`.
 
 ## Why this is more than an attack popup
 

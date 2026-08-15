@@ -714,3 +714,13 @@ Move assets #57 to Done only after Kirk merged it. Move web #751 to In Review on
 ## Post-merge completion
 
 After Kirk merges PR #752, verify the exact merged route against the corrected provider, record provider/web merge SHAs and evidence hashes, move #751 to Done, answer both Stone 0 retro questions, and rewrite `rpg-project/sessions/active.md`. Create a separate Stone 1 issue/plan; do not reuse rejected held-motion commits.
+
+### Stone 0 completion record — 2026-08-15
+
+- Corrected assets PR #60 merged as `7fed0fc3934a64c13a87b424243f7fdaea187af6`.
+- Web PR #752 merged to `dev` as `8bc2a273dba4d018f9d9c6829ca043b7cdafa60e` from exact reviewed head `757bf254c1acdc773c3954a84cf1e4e9067fff05`; merge and head trees are identical.
+- Final package-manifest SHA-256: `7fcd64b814629e23b5fa3278d7e3166754c5de3b41ab0c7e813eaf2bfa769809`; corrected provider manifest `9c2d08b53442e6307ea4235103495f33fd4678b0363d9721bafa7f162dac1c74`; unchanged GLB `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`.
+- Final evidence passed 20 results for both witnesses, 40 close-ups, and 18 scenarios; Kirk approved the 20 Roller close-ups.
+- Fresh merge-SHA Chrome smoke observed authoritative result 10 for separate Roller/Spectator contexts with shared immutable provider/events and distinct clones/contexts.
+- Web #751 is closed and Project 19 Done. Both retro questions are answered yes in `design.md`; `sessions/active.md` carries the current handoff.
+- The separate Stone 1 issue/plan is the next approved-planning action. Rejected held-motion commits `75c5687` and `de2377e2` remain prohibited inputs.

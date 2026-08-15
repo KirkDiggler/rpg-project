@@ -1,4 +1,4 @@
-# Active handoff — 2026-08-14
+# Active handoff — 2026-08-15
 
 ## Now
 
@@ -290,6 +290,19 @@ free.**
 
 ## Other lanes
 
+- **Interactive collectible dice tray (#219) — Stone 0 shipped.** Corrected assets PR #60 merged at
+  `7fed0fc`; web PR #752 merged to `dev` at `8bc2a27` from reviewed head `757bf25`. The exact
+  provider is runtime manifest `9c2d08b...ac1c74`, unchanged Original carved d20 GLB
+  `87bf2d05...a77e`, and 2,684 body / 7,798 numeral triangles. Accepted browser package manifest:
+  `7fcd64b...69809` (40/40 final Roller/Spectator close-ups, 18/18 scenarios, Kirk approval).
+  Post-merge Chrome smoke independently observed result 10 for both contexts on the merge-SHA
+  build. Both retro questions are yes: the provider changed without rewriting
+  `DiceTrayPresentation`/authority/fallback, and every selected physical/model fact comes from the
+  asset runtime contract with no web correction table or exception. Web #751 is closed/Done.
+  **Next:** create a separate Stone 1 web issue and implementation plan for the existing approved
+  `RollGroupGestureController` → sanitized `VisualThrowProfile@1` choreography; never reuse the
+  rejected `75c5687`/`de2377e2` held-motion commits. Stone 2 multi-die and Stone 3 physical
+  settlement remain later.
 - **Semantic scope (#180)** — parked. Wave 0 is live-verified (proto root `v0.1.120`, toolkit
   `encounter/v0.49.1`, rpg-api#771; evidence on rpg-project#192). Wave 1 implementation has not
   started; issues can be cut when the lane is picked back up.
