@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Tracking: `rpg-game-assets#57`, `rpg-dnd5e-web#751`, web PR `#752`, initiative `rpg-project#219`, design PR `#220`.
-- Assets base is merged provider commit `8c32071e935df9ec60f68de820c0188d1ece0f87`; web recovery continues exact reviewed branch `asset/751-original-d20-runtime` from `b5045811e769bcd686186c930252a4c6f95d44b1` after the correcting assets PR merges.
+- Assets base is current `origin/main` commit `444581e75eb8d28cc58b2cd63a5deea0caad3906`, which includes provider merge `8c32071e935df9ec60f68de820c0188d1ece0f87` plus unrelated merged alt-D4 PR #56 that must remain byte-identical; web recovery continues exact reviewed branch `asset/751-original-d20-runtime` from `b5045811e769bcd686186c930252a4c6f95d44b1` after the correcting assets PR merges.
 - Work lands assets first. Kirk alone merges the assets correction and web PR. Do not start the web contract change against an unmerged provider or merge either PR automatically.
 - Keep the exact GLB unchanged: 491,312 bytes, SHA-256 `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`, 10,482 indexed triangles, one material-free mesh.
 - Correct carved result identity comes only from direct `D20_Result_##` tags in `Original_D20_Source.face-tags.blend`/authority. Painted D20 labels may support plane-shape comparison but never carved result order.
@@ -89,7 +89,7 @@ interface DiceSettlementFaceV2 {
 ```bash
 cd /home/kirk/game-dev/rpg-game-assets
 git fetch origin
-test "$(git rev-parse origin/main)" = 8c32071e935df9ec60f68de820c0188d1ece0f87
+test "$(git rev-parse origin/main)" = 444581e75eb8d28cc58b2cd63a5deea0caad3906
 git worktree add .worktrees/57-original-d20-semantic-recovery \
   -b asset/57-original-d20-semantic-recovery origin/main
 cd .worktrees/57-original-d20-semantic-recovery
