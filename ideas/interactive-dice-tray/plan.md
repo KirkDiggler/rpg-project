@@ -723,4 +723,4 @@ After Kirk merges PR #752, verify the exact merged route against the corrected p
 - Final evidence passed 20 results for both witnesses, 40 close-ups, and 18 scenarios; Kirk approved the 20 Roller close-ups.
 - Fresh merge-SHA Chrome smoke observed authoritative result 10 for separate Roller/Spectator contexts with shared immutable provider/events and distinct clones/contexts.
 - Web #751 is closed and Project 19 Done. Both retro questions are answered yes in `design.md`; `sessions/active.md` carries the current handoff.
-- The separate Stone 1 issue/plan is the next approved-planning action. Rejected held-motion commits `75c5687` and `de2377e2` remain prohibited inputs.
+- Stone 1 is separated into web issue #755 and `stone-1-plan.md`; Kirk approved the plan shape on 2026-08-15. Rejected held-motion commits `75c5687` and `de2377e2` remain prohibited inputs.

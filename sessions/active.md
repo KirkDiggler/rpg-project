@@ -299,10 +299,10 @@ free.**
   build. Both retro questions are yes: the provider changed without rewriting
   `DiceTrayPresentation`/authority/fallback, and every selected physical/model fact comes from the
   asset runtime contract with no web correction table or exception. Web #751 is closed/Done.
-  **Next:** create a separate Stone 1 web issue and implementation plan for the existing approved
-  `RollGroupGestureController` → sanitized `VisualThrowProfile@1` choreography; never reuse the
-  rejected `75c5687`/`de2377e2` held-motion commits. Stone 2 multi-die and Stone 3 physical
-  settlement remain later.
+  **Next:** web #755 is Todo with the approved six-task implementation plan at
+  `ideas/interactive-dice-tray/stone-1-plan.md`: `RollGroupGestureController` → sanitized
+  `VisualThrowProfile@1` → `ChoreographedSolverV1`, with exact-SHA paired evidence. Never reuse
+  rejected `75c5687`/`de2377e2`. Stone 2 multi-die and Stone 3 physical settlement remain later.
 - **Semantic scope (#180)** — parked. Wave 0 is live-verified (proto root `v0.1.120`, toolkit
   `encounter/v0.49.1`, rpg-api#771; evidence on rpg-project#192). Wave 1 implementation has not
   started; issues can be cut when the lane is picked back up.

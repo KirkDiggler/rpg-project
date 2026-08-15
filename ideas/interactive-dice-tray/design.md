@@ -3,7 +3,7 @@ name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
 updated: 2026-08-15
 confidence: high on the merged authority/presentation boundary, corrected direct-tag Original carved d20 semantics, exact 2,684/7,798 roles, independent upward-result observation, and accepted Stone 0 evidence; tactile choreography, production transport/ownership, rigid-body settlement, and individual damage-die authority remain gated
-status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc, web consumer merged through rpg-dnd5e-web#752 at 8bc2a27, and exact-SHA evidence accepted with Kirk approval; Stone 1 remains a separate planned web slice tracked from rpg-project#219
+status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc, web consumer merged through rpg-dnd5e-web#752 at 8bc2a27, and exact-SHA evidence accepted with Kirk approval; Stone 1 design/plan approved and tracked separately by rpg-dnd5e-web#755
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -19,6 +19,7 @@ status: Stone 0 complete — corrected assets contract merged through rpg-game-a
 - [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged the first Stone 0 consumer runtime manifest/provider-root slice
 - [rpg-game-assets#57](https://github.com/KirkDiggler/rpg-game-assets/issues/57) / [PR #60](https://github.com/KirkDiggler/rpg-game-assets/pull/60) — corrected carved result identity from direct tags, published strict runtime v2 witnesses, fixed the exact 2,684/7,798 roles, and merged at `7fed0fc`
 - [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — consumed strict v2, independently observed upward results, replaced the circular evidence oracle, and merged Stone 0 at `8bc2a27`
+- [rpg-dnd5e-web#755](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/755) — approved Stone 1 tactile one-member roll-group and sanitized `VisualThrowProfile@1` implementation slice
 
 ## Summary
 
