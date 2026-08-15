@@ -18,7 +18,7 @@
 - Keep the exact GLB unchanged: 491,312 bytes, SHA-256 `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`, 10,482 indexed triangles, one material-free mesh.
 - Correct carved result identity comes only from direct `D20_Result_##` tags in `Original_D20_Source.face-tags.blend`/authority. Painted D20 labels may support plane-shape comparison but never carved result order.
 - Correct d20 roles are exactly 2,684 body triangles and 7,798 numeral recess/cutwall triangles. Every set must be complete, disjoint, in range, and bound to the exact GLB.
-- The correcting consumer contract is `$schemaVersion: 2`, `contract: "dice-runtime-presets"`, `generatedBy: "build_dice_runtime_manifest@2.0.0"`. V2 face entries require a runtime-geometry witness; strict web parsing rejects v1 rather than guessing.
+- The correcting consumer contract is `$schemaVersion: 2`, `contract: "dice-runtime-presets"`, `generatedBy: "build_dice_runtime_manifest@2.0.0"`. V2 entries use an explicit witness discriminator; the Stone 0 carved d20 requires a runtime-triangle witness, while non-audited face/vertex presets use an explicit direction witness and remain outside #57's semantic claim. Strict web parsing rejects v1 rather than guessing.
 - `library/custom-dice/` remains authoring-only. Consumers read only `harness/models/custom-dice/`; public web provider bytes remain ignored/untracked.
 - Web contains no corrective result permutation, copied quaternion table, model URL, hash exception, or carved label table.
 - `DiceTrayPresentation` remains the authority boundary; `presentationId` remains the sole external correlation. Gesture decoration never changes the authoritative result.
@@ -68,21 +68,33 @@
 The v2 consumer entry is exact:
 
 ```ts
-interface RuntimeFaceWitnessV2 {
+interface RuntimeFaceTrianglesWitnessV2 {
   readonly kind: 'runtime-face-triangles';
-  readonly faceNormal: readonly [number, number, number];
+  readonly readKind: 'face';
+  readonly readIndex: number;
+  readonly readDirection: readonly [number, number, number];
   readonly triangleIndices: readonly number[];
   readonly triangleSignatureSha256: string;
 }
 
-interface DiceSettlementFaceV2 {
-  readonly faceIndex: number;
+interface RuntimeDirectionWitnessV2 {
+  readonly kind: 'runtime-direction';
+  readonly readKind: 'face' | 'vertex';
+  readonly readIndex: number;
+  readonly readDirection: readonly [number, number, number];
+}
+
+type RuntimeResultWitnessV2 =
+  | RuntimeFaceTrianglesWitnessV2
+  | RuntimeDirectionWitnessV2;
+
+interface DiceSettlementEntryV2 {
   readonly quaternion: readonly [number, number, number, number];
-  readonly witness: RuntimeFaceWitnessV2;
+  readonly witness: RuntimeResultWitnessV2;
 }
 ```
 
-`triangleIndices` contains the nonempty outer-plane triangles directly tagged for that carved result, is a subset of the body partition, and is disjoint from every other result witness. `triangleSignatureSha256` hashes canonical sorted vertex-coordinate signatures for those exact runtime ordinals; it is not a hash of labels or array positions.
+For `dice.original.carved.d20`, `readIndex` is the direct carved face index and `triangleIndices` contains the nonempty outer-plane triangles directly tagged for that result, is a subset of the body partition, and is disjoint from every other result witness. `triangleSignatureSha256` hashes canonical sorted vertex-coordinate signatures for those exact runtime ordinals; it is not a hash of labels or array positions. Other existing presets emit `runtime-direction` from their current face normal or vertex `readDirection`; they are structurally preserved but receive no new direct-tag semantic approval in #57.
 
 - [ ] **Step 1: Create the isolated assets worktree**
 
@@ -132,7 +144,7 @@ def test_permuted_settlement_is_rejected(self):
 
 Also cover duplicate/missing result tags, an unmatched runtime triangle signature, non-bijective face indices/normals, witness indices outside the exact mesh, witness indices crossing results, non-unit normals/quaternions, wrong result label, and any non-target face tying the target at world-up tolerance.
 
-Extend generator/parser tests so v1 output, missing witness keys, empty witness arrays, duplicate witness ordinals, non-body witness ordinals, wrong witness digest, and stale `sourceManifestSha256` fail.
+Extend generator/parser tests so v1 output, missing witness keys, empty d20 triangle-witness arrays, duplicate witness ordinals, non-body d20 witness ordinals, wrong d20 witness digest, malformed direction witnesses, and stale `sourceManifestSha256` fail. Add a merge-order regression for PR #56: its six aliased multi-node presets require explicit `geometry.kind = "multi-node"`, and its alt D4 entries validate as `readKind = "vertex"` using `vertexIndex`/`readDirection` without fabricating `faceIndex`.
 
 - [ ] **Step 4: Run RED**
 
@@ -151,7 +163,7 @@ Expected: semantic tests fail because direct carved settlement witnesses do not 
 For every result `r`:
 
 ```python
-rotated = quaternion_rotate(entry["quaternion"], entry["witness"]["faceNormal"])
+rotated = quaternion_rotate(entry["quaternion"], entry["witness"]["readDirection"])
 if vector_distance(rotated, [0.0, 1.0, 0.0]) > 1e-6:
     errors.append(f"result {r} witness does not settle alone to world up")
 ```
@@ -197,7 +209,7 @@ This table is a review oracle, not production input.
 
 - [ ] **Step 8: Emit and validate runtime contract v2**
 
-Update `build_dice_runtime_manifest.py` to emit schema/generator v2 and each entry's direct runtime witness. Update authoring/runtime validators for exact-key reconstruction and semantic validation. Regenerate:
+Update `build_dice_runtime_manifest.py` to emit schema/generator v2 and each entry's discriminated runtime witness. The allowlisted carved d20 emits `runtime-face-triangles`; existing face maps emit `runtime-direction` with `readKind: "face"`; the alt-D4 peak-vertex map emits `runtime-direction` with `readKind: "vertex"`. Repair PR #56's missing multi-node geometry metadata without changing any alt-D4 GLB/Blend/evidence bytes. Update authoring/runtime validators for exact-key reconstruction and semantic validation. Regenerate:
 
 ```bash
 python3 scripts/build_dice_runtime_manifest.py
@@ -345,7 +357,7 @@ Open one ready PR to `main` with `Closes #57`, exact old/new manifest hashes, un
 
 **Interfaces:**
 - Consumes: merged `dice-runtime-presets@2` and exact corrected provider bytes.
-- Produces: immutable `RuntimeFaceWitnessV2`; provider-validated witness normals/ordinals bound to parsed geometry.
+- Produces: immutable `RuntimeResultWitnessV2`; provider-validated carved-d20 witness directions/ordinals bound to parsed geometry.
 
 - [ ] **Step 1: Refresh only the private provider boundary**
 
@@ -373,11 +385,11 @@ Expected: corrected real provider and v2 fixture fail against the v1 parser.
 
 - [ ] **Step 3: Implement v2 parsing**
 
-Add `RuntimeFaceWitnessV2` and `DiceSettlementFaceV2` exactly as Task 1 defines. Reconstruct/freeze every accepted array/object and keep hostile getter/proxy handling fail-closed. Do not accept optional witnesses or infer normals from quaternions.
+Add `RuntimeResultWitnessV2` and `DiceSettlementEntryV2` exactly as Task 1 defines. Reconstruct/freeze every accepted array/object and keep hostile getter/proxy handling fail-closed. Do not accept optional witnesses or infer directions from quaternions. The parser accepts both explicit witness discriminators, but the allowlisted carved-d20 provider requires `runtime-face-triangles` before readiness.
 
 - [ ] **Step 4: Write provider geometry RED tests**
 
-Provider preparation must recompute each witness digest from parsed GLB index/position bytes and verify every witness triangle's outward normal agrees with `faceNormal` within dot `>= 0.999999`. Mutations of one index, one vertex coordinate, one digest, body membership, or face normal fail before renderer readiness.
+Provider preparation must recompute each witness digest from parsed GLB index/position bytes and verify every witness triangle's outward normal agrees with `readDirection` within dot `>= 0.999999`. Mutations of one index, one vertex coordinate, one digest, body membership, or read direction fail before renderer readiness.
 
 ```bash
 npm run test:run -- src/components/ui/dice/diceRuntimeProvider.test.ts
@@ -439,7 +451,7 @@ interface UpwardResultObservation {
 }
 
 function observeUpwardResult(
-  entries: Readonly<Record<string, DiceSettlementFaceV2>>,
+  entries: Readonly<Record<string, DiceSettlementEntryV2>>,
   worldQuaternion: readonly [number, number, number, number]
 ): UpwardResultObservation;
 ```
