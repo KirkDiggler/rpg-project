@@ -1,779 +1,598 @@
-# Original Dice Runtime Integration — Stone 0 Implementation Plan
+# Original Carved D20 Semantic Recovery Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the merged Concepts Lab's provisional Lightning provider with the asset-owned Original carved d20 runtime contract, preserving the authoritative presentation boundary while enabling exact 1–20 physical settlement.
+**Goal:** Correct the asset-owned Original carved d20 result identities and numeral triangle roles, then make the web independently observe the upward result and recapture readable exact-SHA Stone 0 evidence.
 
-**Architecture:** `rpg-game-assets` first generates a deterministic consumer-safe runtime manifest beside promoted custom-dice GLBs. After Kirk merges that provider PR, `rpg-dnd5e-web` syncs and strictly validates the private runtime root, hashes the selected GLB before parsing, adapts the material-free carved mesh through asset-owned triangle groups, and supplies the validated provider behind the unchanged `DiceTrayPresentation → DiceTray3D` authority boundary.
+**Architecture:** Recovery remains inside-out. `rpg-game-assets` derives a versioned semantic witness from direct carved `D20_Result_##` tags, binds it to exact GLB triangles, corrects the unchanged model's settlement/partition metadata, and publishes `dice-runtime-presets@2`. Only after Kirk merges that provider PR does `rpg-dnd5e-web` consume the v2 witness, independently resolve the upward face from the rendered pose, and replace the circular evidence oracle with geometry-backed telemetry plus readable all-result close-ups.
 
-**Tech Stack:** Python 3 asset validators/generators, private GLB runtime assets, POSIX shell/rsync, React 19, TypeScript 5.8, Three.js / React Three Fiber, Vitest, Testing Library, Playwright/Chromium, Vite Concepts Lab.
+**Tech Stack:** Python 3, Blender 5.x read-only tag extraction, private GLB geometry, JSON authority/runtime contracts, React 19, TypeScript 5.8, Three.js / React Three Fiber, Vitest, Testing Library, Playwright/Chromium, Vite Concepts Lab.
 
-**Spec:** `rpg-project/ideas/interactive-dice-tray/design.md`
+**Spec:** `rpg-project/ideas/interactive-dice-tray/design.md` at `b0e388dcb6563cf9c8bdb1a4a318cd676dd306d5`
 
 ## Global Constraints
 
-- Provider issue: `rpg-game-assets#53`; consumer issue: `rpg-dnd5e-web#751`; initiative: `rpg-project#219`; design PR: `rpg-project#220`.
-- Work lands inside-out: assets PR first, Kirk merge, then web branch from fresh `origin/dev`. Kirk alone merges both PRs.
-- Use one branch per owning repo for Stone 0. Do not split follow-up findings into stacked PRs; keep same-repo Stone 0 fixes on that repo's branch.
-- `library/custom-dice/` is authoring authority only. No consumer may read it at runtime.
-- Approved private runtime roots are `harness/models/synty/` and `harness/models/custom-dice/`; do not move custom dice into the misleading Synty namespace.
-- Generated runtime manifest path is `harness/models/custom-dice/dice-tray-presets.json`.
-- Runtime preset IDs and model paths resolve only from the strict asset manifest. Caller props/events never provide an asset URL.
-- Stone 0 selects only `dice.original.carved.d20`. The painted-number family from assets PR #52 remains a later preset despite being present in the generated runtime manifest.
-- Exact Original carved d20 GLB SHA-256 is `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`; size is 491,312 bytes. A mismatch fails closed before GLTF parsing.
-- All result quaternions, selectors, authored bounds, coordinate facts, and body/numeral triangle groups remain asset-owned. Web code contains no copied settlement map or model-specific exception table.
-- The web owns only presentation normalization. Before scaling, every axis must satisfy `bboxMax - bboxMin > 0`, `dimensions > 0`, and `abs(dimensions - (bboxMax - bboxMin)) <= 0.000001`; otherwise fail closed. `0.000001` is reconciliation tolerance, not a minimum authored unit size. Center on `(bboxMin + bboxMax) / 2`, set `targetMaxExtent = 0.55` world units, and compute `uniformScale = 0.55 / max(dimensions)`. Original d20 dimensions `[10,10,10]` therefore yield `0.055`. Keep that extent unchanged across the approved 1440/1241/1240/760 review widths because the 356px drawer is unchanged; settled projected geometry must retain at least 8 CSS px clearance from every well edge. Do not reuse Lightning group scale `1.1` as an Original asset fact.
-- Preserve `DiceTrayPresentation`, `presentationId` as sole external correlation, immutable first-request/first-release authority, Roller/Spectator restrictions, independent renderer generations/telemetry, structured combat logs, responsive drawer layout, and truthful SVG fallback.
-- Stone 0 does not implement held pointer-follow, shake energy, `VisualThrowProfile@1`, personalized release choreography, multi-die groups, rigid-body physics, production transport, profile/loadout ownership, or damage-die authority.
-- No Canvas or renderer CSS transforms. Three.js object transforms only.
-- Private GLBs, private runtime manifests, screenshots, GIFs, JSON evidence, and frame sequences stay ignored/untracked in the public web repository.
-- Test-first for every behavior change: capture RED for the intended missing behavior, implement minimally, rerun focused and protected suites, then commit.
-- Every implementation task ends with an independent review. Asset and web PRs are ready, never draft. GitHub comments use `— asset-pipeline agent, on behalf of KirkDiggler`.
-- Final sign-off requires exact-commit browser evidence on the real Concepts Lab route; CI green alone is insufficient.
+- Tracking: `rpg-game-assets#57`, `rpg-dnd5e-web#751`, web PR `#752`, initiative `rpg-project#219`, design PR `#220`.
+- Assets base is merged provider commit `8c32071e935df9ec60f68de820c0188d1ece0f87`; web recovery continues exact reviewed branch `asset/751-original-d20-runtime` from `b5045811e769bcd686186c930252a4c6f95d44b1` after the correcting assets PR merges.
+- Work lands assets first. Kirk alone merges the assets correction and web PR. Do not start the web contract change against an unmerged provider or merge either PR automatically.
+- Keep the exact GLB unchanged: 491,312 bytes, SHA-256 `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e`, 10,482 indexed triangles, one material-free mesh.
+- Correct carved result identity comes only from direct `D20_Result_##` tags in `Original_D20_Source.face-tags.blend`/authority. Painted D20 labels may support plane-shape comparison but never carved result order.
+- Correct d20 roles are exactly 2,684 body triangles and 7,798 numeral recess/cutwall triangles. Every set must be complete, disjoint, in range, and bound to the exact GLB.
+- The correcting consumer contract is `$schemaVersion: 2`, `contract: "dice-runtime-presets"`, `generatedBy: "build_dice_runtime_manifest@2.0.0"`. V2 face entries require a runtime-geometry witness; strict web parsing rejects v1 rather than guessing.
+- `library/custom-dice/` remains authoring-only. Consumers read only `harness/models/custom-dice/`; public web provider bytes remain ignored/untracked.
+- Web contains no corrective result permutation, copied quaternion table, model URL, hash exception, or carved label table.
+- `DiceTrayPresentation` remains the authority boundary; `presentationId` remains the sole external correlation. Gesture decoration never changes the authoritative result.
+- Roller and Spectator retain independent Canvas, renderer, scene clone, generation, resources, and telemetry while consuming the same immutable provider/event facts.
+- Existing target-hold angular telemetry remains useful but cannot establish face identity. 3D evidence passes only when geometry-backed `observedUpwardResult === requestedResult` for both witnesses.
+- Canvas visibility is named `canvasVisible`; it must never be labeled carved-numeral correctness. Full-page screenshots and hashes alone are archival evidence, not semantic approval.
+- Keep tactile held/shake motion, `VisualThrowProfile@1`, multi-die groups, rigid-body physics, production transport/loadout ownership, and performance graduation out of this recovery.
+- Test-first every production behavior: write a discriminating failing test, run RED, implement minimally, rerun GREEN, then protected suites.
+- Private evidence remains under `/home/kirk/game-dev/.verification/interactive-dice-tray/stone-0/`; do not stage GLBs, manifests, screenshots, JSON, logs, or frames in the public web repository.
+- GitHub comments end with `— asset-pipeline agent, on behalf of KirkDiggler`.
+
+## Current invalidated state
+
+- Web PR #752 is open but its merge-ready verdict is withdrawn.
+- Current provider request→actual upward numeral is:
+
+```text
+1→1, 2→2, 3→5, 4→6, 5→3, 6→4, 7→8, 8→7, 9→9,
+10→11, 11→12, 12→10, 13→14, 14→13, 15→18, 16→17,
+17→16, 18→15, 19→19, 20→20
+```
+
+- The prior 3,563/6,919 partition includes 879 cutwall triangles in body.
+- Exact package `.../b5045811e769bcd686186c930252a4c6f95d44b1/` proved conformance to the supplied tuple, not carved face identity, and may not be cited as passing Stone 0 evidence.
 
 ---
 
-### Task 1: Publish the custom-dice consumer runtime contract (`rpg-game-assets#53`)
+### Task 1: Publish direct carved face witnesses (`rpg-game-assets#57`)
 
 **Files:**
-- Create: `scripts/build_dice_runtime_manifest.py`
-- Create: `scripts/test_build_dice_runtime_manifest.py`
+- Create: `scripts/dice_semantic_contract.py`
+- Create: `scripts/test_dice_semantic_contract.py`
+- Create: `scripts/export_carved_d20_semantics.py`
+- Modify: `scripts/build_dice_tray_face_maps.py`
+- Modify: `scripts/build_dice_runtime_manifest.py`
+- Modify: `scripts/test_build_dice_runtime_manifest.py`
 - Modify: `scripts/validate_dice_tray_presets.py`
 - Modify: `scripts/test_validate_dice_tray_presets.py`
+- Modify: `library/custom-dice/original-set/Original_D20_Source.face-tags.authority.json`
 - Modify: `library/custom-dice/dice-tray-presets.json`
 - Generate: `harness/models/custom-dice/dice-tray-presets.json`
-- Modify: `README.md`
-- Modify: `library/custom-dice/README.md`
 
 **Interfaces:**
-- Consumes: authoring contract `library/custom-dice/dice-tray-presets.json`; exact promoted GLBs under `harness/models/custom-dice/`; carved `*.face-tags.authority.json` triangle groups from assets PR #51.
-- Produces: deterministic `dice-runtime-presets@1` JSON consumed by the web; `build_runtime_manifest(repo_root: Path) -> dict`; `canonical_json(value: dict) -> bytes`; CLI write and `--check` modes.
+- Consumes: direct Blender material tags, exact authoring/runtime GLB bytes, current carved authority JSON.
+- Produces: `extract_glb_triangles(path: Path) -> list[Triangle]`; `validate_carved_semantics(preset: dict, authority: dict, triangles: list[Triangle]) -> list[str]`; deterministic Blender export for direct-tag runtime ordinals; v2 runtime entries.
 
-The generated contract conforms to these exact field types:
+The v2 consumer entry is exact:
 
 ```ts
-type LowercaseSha256 = string; // validator requires /^[0-9a-f]{64}$/
-type QuaternionXyzw = readonly [number, number, number, number];
-
-type RuntimeSelectors =
-  | {
-      readonly kind: 'single-mesh';
-      readonly objectNode: string;
-      readonly meshDefinition: string;
-    }
-  | {
-      readonly kind: 'multi-node';
-      readonly rootObjectNode: string;
-      readonly shellObjectNode: string;
-      readonly numeralObjectNodeCount: number;
-    };
-
-type RuntimeGeometry =
-  | {
-      readonly kind: 'single-mesh-triangle-groups';
-      readonly totalTriangles: number;
-      readonly bodyTriangleIndices: readonly number[];
-      readonly numeralTriangleIndices: readonly number[];
-    }
-  | { readonly kind: 'multi-node' };
-
-interface RuntimeBounds {
-  readonly bboxMin: readonly [number, number, number];
-  readonly bboxMax: readonly [number, number, number];
-  readonly dimensions: readonly [number, number, number];
+interface RuntimeFaceWitnessV2 {
+  readonly kind: 'runtime-face-triangles';
+  readonly faceNormal: readonly [number, number, number];
+  readonly triangleIndices: readonly number[];
+  readonly triangleSignatureSha256: string;
 }
 
-interface RuntimeMeshFacts {
-  readonly primitiveCount: number;
-  readonly triangles: number;
-  readonly materials: number;
-  readonly textures: number;
-}
-
-interface DiceRuntimePresetRecord {
-  readonly presetId: string;
-  readonly displayName: string;
-  readonly familyId: string;
-  readonly dieKind: 'd20' | 'd12' | 'd10-percentile' | 'd10' | 'd8' | 'd6' | 'd4';
-  readonly model: {
-    readonly path: string;
-    readonly sha256: LowercaseSha256;
-    readonly sizeBytes: number;
-    readonly selectors: RuntimeSelectors;
-    readonly bounds: RuntimeBounds;
-    readonly meshFacts: RuntimeMeshFacts;
-    readonly geometry: RuntimeGeometry;
-  };
-  readonly faceSettlementMap: {
-    readonly supportedResults: readonly number[];
-    readonly entries: Readonly<
-      Record<string, { readonly faceIndex: number; readonly quaternion: QuaternionXyzw }>
-    >;
-  };
-}
-
-interface DiceRuntimeManifestRecord {
-  readonly $schemaVersion: 1;
-  readonly contract: 'dice-runtime-presets';
-  readonly generatedBy: 'build_dice_runtime_manifest@1.0.0';
-  readonly sourceManifestSha256: LowercaseSha256;
-  readonly runtimeRoot: 'harness/models/custom-dice';
-  readonly coordinateContract: {
-    readonly assetUpAxis: 'Y-up glTF';
-    readonly assetUnits: 'glTF scene units';
-    readonly quaternionConvention: 'x,y,z,w';
-    readonly settlementMapMeaning: string;
-  };
-  readonly presets: readonly DiceRuntimePresetRecord[];
+interface DiceSettlementFaceV2 {
+  readonly faceIndex: number;
+  readonly quaternion: readonly [number, number, number, number];
+  readonly witness: RuntimeFaceWitnessV2;
 }
 ```
 
-The real `dice.original.carved.d20` record must carry:
+`triangleIndices` contains the nonempty outer-plane triangles directly tagged for that carved result, is a subset of the body partition, and is disjoint from every other result witness. `triangleSignatureSha256` hashes canonical sorted vertex-coordinate signatures for those exact runtime ordinals; it is not a hash of labels or array positions.
 
-```json
-{
-  "presetId": "dice.original.carved.d20",
-  "displayName": "Original Carved D20",
-  "familyId": "dice.original.carved",
-  "dieKind": "d20",
-  "modelPath": "original-set/Original_D20_Source.glb",
-  "runtimeSha256": "87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e",
-  "sizeBytes": 491312,
-  "objectNode": "Original_D20_Source_NO_MATERIALS",
-  "meshDefinition": "Original_D20_Source_NO_MATERIALS_mesh",
-  "boundsMin": [-5.0, -5.0, -5.0],
-  "boundsMax": [5.0, 5.0, 5.0],
-  "primitiveCount": 1,
-  "totalTriangles": 10482,
-  "bodyTriangleCount": 3563,
-  "numeralTriangleCount": 6919
-}
-```
-
-Those values populate the typed nested fields above; the JSON fragment is a review checklist, not an alternative schema. The face map has supported results `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]` and one entry for each. For painted-number presets, the generated manifest carries their existing `multi-node` selector contract, but Stone 0 web support remains allowlisted to carved d20.
-
-- [ ] **Step 1: Create the fresh assets worktree**
+- [ ] **Step 1: Create the isolated assets worktree**
 
 ```bash
 cd /home/kirk/game-dev/rpg-game-assets
 git fetch origin
-git worktree add .worktrees/53-dice-runtime-contract -b asset/53-dice-runtime-contract origin/main
-cd .worktrees/53-dice-runtime-contract
+test "$(git rev-parse origin/main)" = 8c32071e935df9ec60f68de820c0188d1ece0f87
+git worktree add .worktrees/57-original-d20-semantic-recovery \
+  -b asset/57-original-d20-semantic-recovery origin/main
+cd .worktrees/57-original-d20-semantic-recovery
+git status --short --branch
 ```
 
-Expected: branch starts from the current `origin/main` containing PRs #50–#52; no files are staged; parent checkout's `.pi/` and `.claude/worktrees/` are untouched.
+Expected: clean tracked tree; parent checkout's `.pi/` and `.claude/worktrees/` remain untouched.
 
-- [ ] **Step 2: Write failing generator tests**
-
-In `scripts/test_build_dice_runtime_manifest.py`, create temporary authoring/runtime fixtures and assert:
-
-```python
-runtime = build_runtime_manifest(repo_root)
-assert runtime["$schemaVersion"] == 1
-assert runtime["contract"] == "dice-runtime-presets"
-assert runtime["runtimeRoot"] == "harness/models/custom-dice"
-assert [p["presetId"] for p in runtime["presets"]] == sorted(
-    p["presetId"] for p in runtime["presets"]
-)
-assert canonical_json(runtime).endswith(b"\n")
-```
-
-Also assert the projected JSON contains none of:
-
-```python
-for forbidden in (
-    "library/", ".blend", "evidence/", "sourceBlend", "sourceNode",
-    "taggedBlend", "authorityPath", "provenance"
-):
-    assert forbidden not in canonical_json(runtime).decode()
-```
-
-Add independent cases for:
-
-- output byte determinism under repeated generation;
-- `--check` rejecting stale/missing output;
-- promoted path traversal or any path outside `harness/models/custom-dice/`;
-- source/promoted GLB hash mismatch;
-- authoring `sizeBytes` mismatch, source/promoted byte-size mismatch, and emitted size not derived from promoted bytes;
-- missing promoted GLB;
-- selector/root/mesh mismatch against GLB JSON;
-- bounds mismatch against accessor bounds, zero/negative/reversed axes, and dimensions differing from `bboxMax - bboxMin` by more than `0.000001`;
-- carved triangle overlap, gap, duplicate, negative, out-of-range, wrong total, or wrong bound hash;
-- supported-result duplicate/gap/extra/out-of-range key;
-- non-finite or non-unit quaternion;
-- a complete map whose hash differs from the emitted model hash; and
-- an authoring-only field leaking into output; and
-- stale cross-field family metadata, including the current carved d6 `trayFaceMapStatus`, disagreeing with its complete preset map.
-
-- [ ] **Step 3: Run RED**
+- [ ] **Step 2: Record baseline failures without changing source**
 
 ```bash
-python3 scripts/test_build_dice_runtime_manifest.py
-```
-
-Expected: FAIL because `build_dice_runtime_manifest.py` and its interfaces do not exist.
-
-- [ ] **Step 4: Strengthen authoring validation before projection**
-
-Modify `validate_dice_tray_presets.py` so every tray-ready preset requires:
-
-- promoted path inside `harness/models/custom-dice/`;
-- byte-identical source/promoted GLB hashes;
-- authoring `sizeBytes` equal to both source and promoted byte lengths, while emitted `sizeBytes` is derived from promoted bytes;
-- explicit selectors and bounds matching promoted bytes, with every axis positive and `dimensions == bboxMax - bboxMin` within `0.000001`;
-- unique supported results exactly matching the die kind;
-- decimal-string result keys matching supported results;
-- finite normalized `xyzw` quaternions;
-- complete-map hash matching runtime hash; and
-- a valid geometry contract.
-
-Add an explicit authoring link from each carved preset to its `*.face-tags.authority.json`; validate that authority file's `triangleGroups.runtimeSha256` matches the runtime GLB and that the two triangle arrays form one disjoint complete partition.
-
-Expand `test_validate_dice_tray_presets.py` with mutation tests for each new failure class before changing validator behavior; run once to see the expected failures, then implement until green.
-
-- [ ] **Step 5: Implement deterministic runtime projection**
-
-Implement four public module functions with these signatures and responsibilities:
-
-- `build_runtime_manifest(repo_root: Path) -> dict[str, object]` validates authoring/provider inputs and returns the consumer projection.
-- `canonical_json(value: dict[str, object]) -> bytes` returns deterministic UTF-8 JSON with two-space indentation and one trailing newline.
-- `write_runtime_manifest(repo_root: Path, output: Path) -> None` writes through a sibling temporary file and atomically replaces the output.
-- `check_runtime_manifest(repo_root: Path, output: Path) -> None` byte-compares generated content and raises a nonzero CLI failure without writing.
-
-CLI behavior:
-
-```bash
-python3 scripts/build_dice_runtime_manifest.py
-python3 scripts/build_dice_runtime_manifest.py --check
-```
-
-The write command atomically replaces `harness/models/custom-dice/dice-tray-presets.json`. `--check` generates in memory and byte-compares without changing files. JSON uses UTF-8, two-space indentation, deterministic insertion order, sorted presets, numerically ordered result entries, and one trailing newline.
-
-- [ ] **Step 6: Generate and inspect the real runtime contract**
-
-```bash
-python3 scripts/build_dice_runtime_manifest.py
+sha256sum \
+  library/custom-dice/original-set/Original_D20_Source.glb \
+  harness/models/custom-dice/original-set/Original_D20_Source.glb
 python3 scripts/build_dice_runtime_manifest.py --check
 python3 scripts/validate_dice_tray_presets.py
-python3 scripts/test_validate_dice_tray_presets.py
-python3 scripts/test_build_dice_runtime_manifest.py
 ```
 
-Expected:
+Expected: both GLBs hash to `87bf2d...a77e`; `--check` exposes the stale source-manifest binding; structural validation does not detect the semantic face permutation.
 
-- all commands exit zero;
-- runtime manifest contains every promoted/review-approved/complete Original preset;
-- `dice.original.carved.d20` has exactly 491,312 promoted bytes, 20 results, and triangle counts 3,563 body + 6,919 numeral = 10,482;
-- runtime manifest contains no authoring/library/evidence path; and
-- no GLB bytes changed.
+- [ ] **Step 3: Write semantic RED tests**
 
-- [ ] **Step 7: Correct the repository contract documentation**
+In `scripts/test_dice_semantic_contract.py`, use one synthetic tetrahedral fixture for unit behavior and the real d20 for integration:
 
-Update `README.md` to declare:
+```python
+def test_real_carved_d20_entries_match_direct_tags(self):
+    preset, authority, triangles = load_real_d20_inputs(self.repo_root)
+    self.assertEqual([], validate_carved_semantics(preset, authority, triangles))
+
+
+def test_permuted_settlement_is_rejected(self):
+    preset, authority, triangles = synthetic_direct_tag_fixture()
+    preset["faceSettlementMap"]["entries"]["1"]["quaternion"] = \
+        preset["faceSettlementMap"]["entries"]["2"]["quaternion"]
+    self.assertIn(
+        "result 1 witness does not settle alone to world up",
+        validate_carved_semantics(preset, authority, triangles),
+    )
+```
+
+Also cover duplicate/missing result tags, an unmatched runtime triangle signature, non-bijective face indices/normals, witness indices outside the exact mesh, witness indices crossing results, non-unit normals/quaternions, wrong result label, and any non-target face tying the target at world-up tolerance.
+
+Extend generator/parser tests so v1 output, missing witness keys, empty witness arrays, duplicate witness ordinals, non-body witness ordinals, wrong witness digest, and stale `sourceManifestSha256` fail.
+
+- [ ] **Step 4: Run RED**
+
+```bash
+python3 scripts/test_dice_semantic_contract.py
+python3 scripts/test_build_dice_runtime_manifest.py
+python3 scripts/test_validate_dice_tray_presets.py
+```
+
+Expected: semantic tests fail because direct carved settlement witnesses do not exist and the real map is permuted; v2 projection tests fail against the v1 generator.
+
+- [ ] **Step 5: Implement pure semantic validation**
+
+`dice_semantic_contract.py` parses indexed GLB positions/indices without Blender, canonicalizes each triangle as three lexicographically sorted rounded glTF-space vertices, computes outward normals, and validates exported direct-tag witnesses.
+
+For every result `r`:
+
+```python
+rotated = quaternion_rotate(entry["quaternion"], entry["witness"]["faceNormal"])
+if vector_distance(rotated, [0.0, 1.0, 0.0]) > 1e-6:
+    errors.append(f"result {r} witness does not settle alone to world up")
+```
+
+Rotate all other result normals by the same quaternion and require their world Y to be `< 0.8`; require the target world Y to be `> 0.999999`. Recompute witness signatures from exact runtime triangles and compare bytes.
+
+- [ ] **Step 6: Export the direct carved authority read-only**
+
+`export_carved_d20_semantics.py` runs under Blender without saving either `.blend` or GLB. It:
+
+1. opens `Original_D20_Source.face-tags.blend` and object `Original_D20_FACE_TAGGED`;
+2. converts Blender `(x,y,z)` to glTF `(x,z,-y)`;
+3. triangulates material-tagged polygons in memory;
+4. joins all 10,482 tagged/untagged triangles to runtime GLB ordinals by canonical vertex-coordinate signature;
+5. derives each `D20_Result_##` outer plane, normal, body witness ordinals, face index, and settle quaternion; and
+6. atomically writes only the JSON authority export requested by `--out`.
+
+Run:
+
+```bash
+blender --background --python scripts/export_carved_d20_semantics.py -- \
+  --blend library/custom-dice/original-set/Original_D20_Source.face-tags.blend \
+  --glb library/custom-dice/original-set/Original_D20_Source.glb \
+  --out /tmp/Original_D20_Source.face-tags.authority.generated.json
+```
+
+Expected: 10,482/10,482 coordinate signatures match; results 1–20 are unique; no source binary is written. Compare and deliberately promote the generated semantic sections into the tracked authority JSON.
+
+- [ ] **Step 7: Stop using painted result order for carved d20**
+
+Change `build_dice_tray_face_maps.py` so `dice.original.carved.d20` reads `settlementEntries` from the direct carved authority. Remove `sourceNode`/`original-painted-number-d20-decal-node` from carved entries. Preserve painted D20 derivation only for `dice.original.painted-numbers.d20`.
+
+The corrected carved mapping is generated from tags and must resolve to:
 
 ```text
-harness/models/synty/       # licensed Synty runtime root
-harness/models/custom-dice/ # private custom-dice runtime root
+new result <- old plane entry:
+1<-1, 2<-2, 3<-5, 4<-6, 5<-3, 6<-4, 7<-8, 8<-7, 9<-9,
+10<-12, 11<-10, 12<-11, 13<-14, 14<-13, 15<-18, 16<-17,
+17<-16, 18<-15, 19<-19, 20<-20
 ```
 
-Update `library/custom-dice/README.md` to distinguish the authoring manifest from generated `harness/models/custom-dice/dice-tray-presets.json`, document generator/check commands, and name `rpg-dnd5e-web#751` as the consumer handoff. Do not claim custom dice are part of the Synty inventory.
+This table is a review oracle, not production input.
 
-- [ ] **Step 8: Verify, commit, push, and open the ready provider PR**
+- [ ] **Step 8: Emit and validate runtime contract v2**
+
+Update `build_dice_runtime_manifest.py` to emit schema/generator v2 and each entry's direct runtime witness. Update authoring/runtime validators for exact-key reconstruction and semantic validation. Regenerate:
 
 ```bash
+python3 scripts/build_dice_runtime_manifest.py
+python3 scripts/build_dice_runtime_manifest.py --check
 python3 scripts/validate_dice_tray_presets.py
+python3 scripts/test_dice_semantic_contract.py
 python3 scripts/test_validate_dice_tray_presets.py
 python3 scripts/test_build_dice_runtime_manifest.py
-python3 scripts/build_dice_runtime_manifest.py --check
+```
+
+Expected: all pass; runtime source hash equals current authoring bytes; all 20 target normals settle alone to up; GLB hashes unchanged.
+
+- [ ] **Step 9: Commit Task 1**
+
+```bash
 git diff --check
 git status --short
-git add \
-  README.md \
-  library/custom-dice/README.md \
-  library/custom-dice/dice-tray-presets.json \
-  harness/models/custom-dice/dice-tray-presets.json \
-  scripts/build_dice_runtime_manifest.py \
-  scripts/test_build_dice_runtime_manifest.py \
-  scripts/validate_dice_tray_presets.py \
-  scripts/test_validate_dice_tray_presets.py
-git commit -m "feat: publish custom dice runtime contract (#53)"
-git push -u origin asset/53-dice-runtime-contract
+git diff --name-only -- '*.glb' '*.blend' | test ! -s /dev/stdin
+git add scripts library/custom-dice harness/models/custom-dice/dice-tray-presets.json
+git commit -m "fix: bind carved d20 results to direct face tags (#57)"
 ```
 
-Open one ready PR to `main` with `Closes #53`, load-bearing paths, exact commands/results, manifest/GLB hashes, and the signed handoff. Commission an independent assets gate. **Stop until Kirk merges this provider PR.**
+Commission an independent task review before Task 2.
 
 ---
 
-### Task 2: Extend the private web asset boundary (`rpg-dnd5e-web#751`)
+### Task 2: Correct numeral roles and publish assets recovery
 
 **Files:**
-- Create: `scripts/sync-game-assets.sh`
-- Create: `scripts/sync-game-assets.test.ts`
-- Modify: `scripts/sync-synty-assets.sh` (compatibility shim only)
-- Modify: `package.json`
-- Modify: `.gitignore`
-- Modify: `scripts/attack-die/build-frozen.sh`
-- Modify: `scripts/attack-die/serve-frozen.mjs`
-- Test: `scripts/attack-die/evidenceProtocol.test.ts`
+- Modify: `scripts/derive_body_numeral_triangle_groups.py`
+- Modify: `scripts/dice_semantic_contract.py`
+- Modify: `scripts/test_dice_semantic_contract.py`
+- Create: `scripts/render_carved_d20_face_audit.py`
+- Modify: `library/custom-dice/original-set/Original_D20_Source.face-tags.authority.json`
+- Modify: `library/custom-dice/dice-tray-presets.json`
+- Generate: `harness/models/custom-dice/dice-tray-presets.json`
+- Create: `evidence/57-original-d20-semantic-recovery/carved-d20-all-results-contact-sheet.png`
 
 **Interfaces:**
-- Consumes: merged assets runtime roots and generated manifest from Task 1.
-- Produces: `npm run assets:sync` mirroring Synty and custom-dice roots; environment-testable shell interface using `RPG_GAME_ASSETS_DIR`, `RPG_WEB_ROOT`, and `ASSETS_SYNC_SKIP_UPDATE=1`; frozen server mount `/models/custom-dice/**`.
+- Consumes: Task 1 direct-tag/runtime ordinal bridge.
+- Produces: exact semantic partition, readable 20-face private review sheet, ready assets PR.
 
-- [ ] **Step 1: Create the fresh web worktree after provider merge**
+- [ ] **Step 1: Write triangle-role RED tests**
+
+```python
+def test_real_d20_partition_matches_direct_tag_roles(self):
+    semantic = load_real_d20_semantics(self.repo_root)
+    self.assertEqual(2684, len(semantic.expected_body))
+    self.assertEqual(7798, len(semantic.expected_numeral))
+    self.assertEqual(semantic.expected_body, semantic.published_body)
+    self.assertEqual(semantic.expected_numeral, semantic.published_numeral)
+```
+
+Add a synthetic regression where 272 cutwall-only normal clusters each have a local maximum; require every cutwall to remain numeral. Add mutations for one cutwall moved to body, one outer-plane triangle moved to numeral, gaps, overlap, and wrong direct-tag bridge.
+
+- [ ] **Step 2: Run RED**
 
 ```bash
-cd /home/kirk/game-dev/rpg-dnd5e-web
-git fetch origin
-git worktree add .worktrees/751-original-dice-runtime -b feat/751-original-dice-runtime origin/dev
-cd .worktrees/751-original-dice-runtime
+python3 scripts/test_dice_semantic_contract.py
 ```
 
-Expected: base includes merged PR #750 and no local held-motion experiment commits.
+Expected: real d20 fails with 3,563/6,919 and identifies 879 false-body cutwalls.
 
-- [ ] **Step 2: Write failing sync-boundary tests**
+- [ ] **Step 3: Implement direct semantic roles**
 
-Create temporary assets/web roots in `sync-game-assets.test.ts`, invoke the shell script with:
+For a direct-tag authority, body is exactly the union of each result's outer-plane witness triangles. Numeral is every other runtime triangle, including lower parallel recess floors and all untagged cutwalls. Do not select a body triangle merely because it is the maximum of a cutwall-only normal cluster.
 
-```ts
-{
-  RPG_GAME_ASSETS_DIR: assetsRoot,
-  RPG_WEB_ROOT: webRoot,
-  ASSETS_SYNC_SKIP_UPDATE: '1',
-}
-```
+`derive_body_numeral_triangle_groups.py` must:
 
-Assert:
+- use the direct witness path for d20;
+- validate rather than overwrite direct semantic exports;
+- leave other carved dice byte-identical in this issue; and
+- explicitly label their legacy cluster-derived roles as outside #57's audited scope.
 
-- Synty files mirror to `public/models/synty/`;
-- custom-dice GLBs and `dice-tray-presets.json` mirror to `public/models/custom-dice/`;
-- stale destination files are deleted independently per root;
-- `library/`, `.blend`, and `evidence/` files never copy;
-- missing either approved source root exits nonzero without partially deleting the other destination; and
-- both destination roots match `.gitignore`.
-
-Run:
+- [ ] **Step 4: Regenerate and prove exact role counts**
 
 ```bash
-npm run test:run -- scripts/sync-game-assets.test.ts
+python3 scripts/derive_body_numeral_triangle_groups.py
+python3 scripts/build_dice_runtime_manifest.py
+python3 scripts/build_dice_runtime_manifest.py --check
+python3 scripts/validate_dice_tray_presets.py
+python3 scripts/test_dice_semantic_contract.py
+python3 scripts/test_validate_dice_tray_presets.py
+python3 scripts/test_build_dice_runtime_manifest.py
 ```
 
-Expected: FAIL because the new script and second runtime root do not exist.
+Expected: d20 2,684 + 7,798 = 10,482; false-role count 0; other promoted GLB bytes and non-d20 role arrays unchanged.
 
-- [ ] **Step 3: Implement the two-root sync**
+- [ ] **Step 5: Generate readable all-result review evidence**
 
-`scripts/sync-game-assets.sh` resolves or updates the private checkout, validates both source roots before mutation, then runs separate `rsync -a --delete` operations. `scripts/sync-synty-assets.sh` becomes a compatibility shim executing the new script. Update `package.json`:
-
-```json
-"assets:sync": "sh scripts/sync-game-assets.sh"
-```
-
-Ignore:
-
-```gitignore
-public/models/synty/
-public/models/custom-dice/
-```
-
-- [ ] **Step 4: Extend frozen-provider safety**
-
-`build-frozen.sh` must temporarily move both ignored provider roots out of `public/`, restore both through the existing signal-safe trap, and prove neither private tree entered `dist`.
-
-`serve-frozen.mjs` must accept separate read-only roots and serve:
-
-```text
-/models/synty/**       -> --synty-root
-/models/custom-dice/** -> --custom-dice-root
-```
-
-Reuse the existing canonical-path/traversal/symlink containment rules. Add evidence protocol tests for the second mount and for traversal/symlink rejection.
-
-- [ ] **Step 5: Verify and commit the boundary**
+`render_carved_d20_face_audit.py` consumes the generated runtime contract, assigns the exact two runtime materials, renders each corrected result from the agreed overhead three-quarter camera at a minimum 320×320 panel, labels panels outside the die image, and builds a 4×5 contact sheet.
 
 ```bash
-npm run test:run -- \
-  scripts/sync-game-assets.test.ts \
-  scripts/attack-die/evidenceProtocol.test.ts \
-  scripts/attack-die/frozenBuildManifest.test.ts
-npm run typecheck
-npx eslint scripts/sync-game-assets.test.ts scripts/attack-die/evidenceProtocol.test.ts
-sh -n scripts/sync-game-assets.sh scripts/sync-synty-assets.sh scripts/attack-die/build-frozen.sh
-npx prettier --check \
-  scripts/sync-game-assets.test.ts \
-  scripts/attack-die/serve-frozen.mjs \
-  package.json
+blender --background --python scripts/render_carved_d20_face_audit.py -- \
+  --manifest harness/models/custom-dice/dice-tray-presets.json \
+  --preset dice.original.carved.d20 \
+  --out evidence/57-original-d20-semantic-recovery
+```
+
+Expected: 20 large panels, one requested result per panel, complete cream numeral recess/cutwalls, no label overlay on geometry. Record output SHA-256 and inspect every panel manually.
+
+- [ ] **Step 6: Run the full assets gate and independent review**
+
+```bash
+python3 scripts/validate_dice_tray_presets.py
+python3 scripts/test_validate_dice_tray_presets.py
+python3 scripts/test_build_dice_runtime_manifest.py
+python3 scripts/test_dice_semantic_contract.py
+python3 scripts/build_dice_runtime_manifest.py --check
+python3 -m py_compile \
+  scripts/dice_semantic_contract.py \
+  scripts/export_carved_d20_semantics.py \
+  scripts/render_carved_d20_face_audit.py
 git diff --check
-git add scripts package.json .gitignore
-git commit -m "feat: sync custom dice runtime assets (#751)"
+git diff --name-only -- '*.glb' '*.blend' | test ! -s /dev/stdin
+git status --short
 ```
 
-Expected: private provider directories remain ignored and unstaged.
+Independent reviewer must recompute all 20 upward results and 2,684/7,798 roles from bytes, inspect the contact sheet, and report zero blocker/high/medium findings.
+
+- [ ] **Step 7: Commit, push, and open the ready assets PR**
+
+```bash
+git add scripts library/custom-dice harness/models/custom-dice/dice-tray-presets.json \
+  evidence/57-original-d20-semantic-recovery
+git commit -m "fix: color every carved d20 numeral triangle (#57)"
+git push -u origin asset/57-original-d20-semantic-recovery
+```
+
+Open one ready PR to `main` with `Closes #57`, exact old/new manifest hashes, unchanged GLB hash, semantic command output, contact-sheet hash/path, and signed gate. Move #57 to In Review. **Stop for Kirk's contact-sheet approval and merge.**
 
 ---
 
-### Task 3: Strictly validate and coalesce the Original runtime provider
+### Task 3: Consume and validate v2 face witnesses (`rpg-dnd5e-web#751`)
+
+**Prerequisite:** Kirk has merged the #57 assets PR and Project 19 marks #57 Done.
 
 **Files:**
-- Create: `src/components/ui/dice/diceRuntimeManifest.ts`
-- Create: `src/components/ui/dice/diceRuntimeManifest.test.ts`
-- Create: `src/components/ui/dice/diceRuntimeProvider.ts`
-- Create: `src/components/ui/dice/diceRuntimeProvider.test.ts`
-- Modify: `src/components/ui/dice/dicePresentationRelease.ts`
-- Modify: `src/components/ui/dice/dicePresentationRelease.test.ts`
-- Modify: `src/components/ui/dice/dicePresentationEvent.ts`
-- Modify: `src/components/ui/dice/dicePresentationEvent.test.ts`
-- Modify: `src/components/ui/dice/attackDieRuntime.ts`
-- Test: `src/components/ui/dice/attackDieRuntime.test.ts`
+- Modify: `src/components/ui/dice/diceRuntimeManifest.ts`
+- Modify: `src/components/ui/dice/diceRuntimeManifest.test.ts`
+- Modify: `src/components/ui/dice/diceRuntimeProvider.ts`
+- Modify: `src/components/ui/dice/diceRuntimeProvider.test.ts`
+- Modify: `src/components/ui/dice/diceRuntimeTestFixtures.ts`
+- Ignored sync: `public/models/custom-dice/**`
 
 **Interfaces:**
-- Consumes: `/models/custom-dice/dice-tray-presets.json`; allowlisted preset ID `dice.original.carved.d20`.
-- Produces: `parseDiceRuntimeManifest(value: unknown): DiceRuntimeManifestResult`; `preloadDiceRuntimePreset(presetId: string): Promise<void>`; `getDiceRuntimePresetSnapshot(presetId: string): DiceRuntimePresetSnapshot`; one immutable validated contract plus parsed source scene per preset.
+- Consumes: merged `dice-runtime-presets@2` and exact corrected provider bytes.
+- Produces: immutable `RuntimeFaceWitnessV2`; provider-validated witness normals/ordinals bound to parsed geometry.
 
-Runtime types:
-
-```ts
-type RuntimeDiceSelectors =
-  | {
-      readonly kind: 'single-mesh';
-      readonly objectNode: string;
-      readonly meshDefinition: string;
-    }
-  | {
-      readonly kind: 'multi-node';
-      readonly rootObjectNode: string;
-      readonly shellObjectNode: string;
-      readonly numeralObjectNodeCount: number;
-    };
-
-interface CarvedTriangleGroupGeometry {
-  readonly kind: 'single-mesh-triangle-groups';
-  readonly totalTriangles: number;
-  readonly bodyTriangleIndices: readonly number[];
-  readonly numeralTriangleIndices: readonly number[];
-}
-
-interface MultiNodeGeometry {
-  readonly kind: 'multi-node';
-}
-
-interface DiceSettlementFace {
-  readonly faceIndex: number;
-  readonly quaternion: readonly [number, number, number, number];
-}
-
-type RuntimeDieKind =
-  | 'd20'
-  | 'd12'
-  | 'd10-percentile'
-  | 'd10'
-  | 'd8'
-  | 'd6'
-  | 'd4';
-
-interface DiceRuntimePreset {
-  readonly presetId: string;
-  readonly displayName: string;
-  readonly familyId: string;
-  readonly dieKind: RuntimeDieKind;
-  readonly model: {
-    readonly path: string;
-    readonly sha256: string;
-    readonly sizeBytes: number;
-    readonly selectors: RuntimeDiceSelectors;
-    readonly bounds: {
-      readonly bboxMin: readonly [number, number, number];
-      readonly bboxMax: readonly [number, number, number];
-      readonly dimensions: readonly [number, number, number];
-    };
-    readonly meshFacts: {
-      readonly primitiveCount: number;
-      readonly triangles: number;
-      readonly materials: number;
-      readonly textures: number;
-    };
-    readonly geometry: CarvedTriangleGroupGeometry | MultiNodeGeometry;
-  };
-  readonly faceSettlementMap: {
-    readonly supportedResults: readonly number[];
-    readonly entries: Readonly<Record<string, DiceSettlementFace>>;
-  };
-}
-
-interface DiceRuntimeManifest {
-  readonly $schemaVersion: 1;
-  readonly contract: 'dice-runtime-presets';
-  readonly generatedBy: 'build_dice_runtime_manifest@1.0.0';
-  readonly sourceManifestSha256: string;
-  readonly runtimeRoot: 'harness/models/custom-dice';
-  readonly coordinateContract: {
-    readonly assetUpAxis: 'Y-up glTF';
-    readonly assetUnits: 'glTF scene units';
-    readonly quaternionConvention: 'x,y,z,w';
-    readonly settlementMapMeaning: string;
-  };
-  readonly presets: readonly DiceRuntimePreset[];
-}
-
-type DiceRuntimeManifestResult =
-  | { readonly ok: true; readonly manifest: DiceRuntimeManifest }
-  | { readonly ok: false; readonly reason: string };
-
-interface RuntimeMeshBinding {
-  readonly objectNode: string;
-  readonly meshDefinition: string;
-  readonly meshDefinitionIndex: number;
-}
-
-interface DiceRuntimePresetSnapshot {
-  readonly status: 'idle' | 'loading' | 'ready' | 'failed';
-  readonly preset?: DiceRuntimePreset;
-  readonly scene?: Object3D;
-  readonly binding?: RuntimeMeshBinding;
-  readonly failureReason?: string;
-}
-```
-
-- [ ] **Step 1: Extend the bounded preset identifier with a failing contract test**
-
-Update release/event tests first. The identifier grammar is total length `1–64`, one to eight dot-separated segments, and every segment matches `/^[a-z][a-z0-9-]{0,31}$/`. Require both `lightning` and `dice.original.carved.d20` to pass. Require leading/trailing dots, empty segments, `..`, `/`, `\\`, `:`, `%`, URL-shaped text, traversal text, uppercase, an over-32-character segment, and total length over 64 to fail in release construction and inbound event parsing.
-
-Run:
+- [ ] **Step 1: Refresh only the private provider boundary**
 
 ```bash
-npm run test:run -- \
-  src/components/ui/dice/dicePresentationRelease.test.ts \
-  src/components/ui/dice/dicePresentationEvent.test.ts
+cd /home/kirk/game-dev/rpg-dnd5e-web/.worktrees/751-original-d20-runtime
+git fetch origin
+test "$(git rev-parse HEAD)" = b5045811e769bcd686186c930252a4c6f95d44b1
+npm run assets:sync
+sha256sum public/models/custom-dice/dice-tray-presets.json \
+  public/models/custom-dice/original-set/Original_D20_Source.glb
+git status --short --ignored | grep '!! public/models/custom-dice/'
 ```
 
-Expected: the new Original ID assertions fail because merged `PRESET_IDENTIFIER` admits only one undotted segment. Implement one shared identifier predicate; do not special-case the Original ID.
+Expected: corrected manifest hash differs; GLB remains `87bf2d...a77e`; provider stays ignored.
 
-- [ ] **Step 2: Write strict runtime-manifest parser tests**
+- [ ] **Step 2: Write strict v2 parser RED tests**
 
-Start from a minimal valid synthetic d20 fixture and mutate one property per test. Require exact keys, bounded safe IDs, runtime-relative non-URL model path, lowercase 64-hex hash, exact byte size, finite internally consistent bounds, a geometry discriminator, unique decimal result keys, and finite normalized quaternions. Add explicit mutations for zero dimensions, negative dimensions, reversed min/max, all-zero bounds, and dimensions differing from `bboxMax - bboxMin` by more than `0.000001`. Recursively reconstruct/freeze accepted values. Validate the exact result set by kind: d20 `1–20`, d12 `1–12`, d10 `1–10`, d10-percentile `[0, 10, 20, 30, 40, 50, 60, 70, 80, 90]`, d8 `1–8`, d6 `1–6`, and d4 `1–4`. The provider later narrows the selected record to carved d20.
-
-Reject unknown keys, accessors/getters/proxies that throw, path traversal, absolute/URL paths, duplicate results, geometry partition overlap/gap/out-of-range, wrong triangle total, unknown schema/contract, wrong die kind, authoring fields, and an incomplete map.
-
-- [ ] **Step 3: Run runtime parser RED and implement**
+Require exact v2 schema/generator and recursively frozen witness values. Reject v1, unknown keys, empty/duplicate/out-of-range witness indices, non-unit/non-finite normals, wrong digest grammar, witness overlap, witness indices outside body, incomplete result set, and any face index reused by two results.
 
 ```bash
 npm run test:run -- src/components/ui/dice/diceRuntimeManifest.test.ts
 ```
 
-Expected: FAIL because the parser does not exist. Implement the pure parser without importing Three.js or performing I/O; rerun to GREEN.
+Expected: corrected real provider and v2 fixture fail against the v1 parser.
 
-- [ ] **Step 4: Write provider loading/coalescing and handoff tests**
+- [ ] **Step 3: Implement v2 parsing**
 
-Use a valid fixture with every top-level and nested field required by Task 1, serialize it with the same canonical ordering, and prove Task 3 accepts those exact bytes without dropping `generatedBy`, `runtimeRoot`, or `coordinateContract`. Mock fetch, digest, and GLTF parsing. Assert:
+Add `RuntimeFaceWitnessV2` and `DiceSettlementFaceV2` exactly as Task 1 defines. Reconstruct/freeze every accepted array/object and keep hostile getter/proxy handling fail-closed. Do not accept optional witnesses or infer normals from quaternions.
 
-1. two concurrent consumers trigger one manifest request, one GLB request, one digest, and one parse;
-2. selection is by allowlisted preset ID only, never caller URL;
-3. response failure, malformed manifest, missing preset, byte-size mismatch, digest mismatch, or invalid map yields one shared failed snapshot;
-4. `GLTFLoader.parse` is never called before successful size/hash/contract validation;
-5. a valid exact hash parses once and exposes one source scene/contract to both witnesses;
-6. provider parsing validates through `gltf.parser.json` that the declared `objectNode` references the declared `meshDefinition`, then exposes a prepared binding keyed by the Object3D node name rather than trying to find a mesh-definition name in `scene`;
-7. a fixture whose glTF node name and mesh-definition name differ still binds correctly, while a wrong node→mesh index fails; and
-8. reset hooks exist only for tests.
+- [ ] **Step 4: Write provider geometry RED tests**
 
-- [ ] **Step 5: Implement the coalesced provider and loader binding**
+Provider preparation must recompute each witness digest from parsed GLB index/position bytes and verify every witness triangle's outward normal agrees with `faceNormal` within dot `>= 0.999999`. Mutations of one index, one vertex coordinate, one digest, body membership, or face normal fail before renderer readiness.
 
-Fetch order is strict:
-
-```text
-manifest bytes → strict JSON parse → select allowlisted preset
-→ GLB response/bytes → size check → SHA-256 check → GLTF parse
+```bash
+npm run test:run -- src/components/ui/dice/diceRuntimeProvider.test.ts
 ```
 
-Cache manifest ownership once and preset ownership by `presetId + sha256`. Keep the `GLTF` parser result long enough to validate the glTF node→mesh-definition binding, then store the source scene plus an immutable binding `{ objectNode, meshDefinition, meshDefinitionIndex }` in the ready snapshot. Failed ownership remains failed for the mounted lifecycle; do not race retries from paired witnesses. Keep the legacy Lightning loader available only to historical non-Tray concept stages until final cleanup proves it unused.
+Expected: fails because provider does not inspect witness semantics.
 
-- [ ] **Step 6: Verify and commit provider loading**
+- [ ] **Step 5: Implement hash-before-parse witness validation**
+
+Preserve load order:
+
+```text
+manifest strict v2 parse → allowlisted preset → GLB size/SHA
+→ GLTF parse and node→mesh binding → witness geometry validation → ready
+```
+
+Expose only the immutable validated preset/scene/binding. A witness failure is terminal provider failure and follows existing armed concealment/release-to-SVG semantics.
+
+- [ ] **Step 6: Verify and commit Task 3**
 
 ```bash
 npm run test:run -- \
-  src/components/ui/dice/dicePresentationRelease.test.ts \
-  src/components/ui/dice/dicePresentationEvent.test.ts \
   src/components/ui/dice/diceRuntimeManifest.test.ts \
   src/components/ui/dice/diceRuntimeProvider.test.ts \
-  src/components/ui/dice/attackDieRuntime.test.ts
+  src/components/ui/dice/materialFreeCarvedMesh.test.ts
 npm run typecheck
 npx eslint src/components/ui/dice/diceRuntimeManifest.ts \
   src/components/ui/dice/diceRuntimeProvider.ts
 npx prettier --check src/components/ui/dice/diceRuntimeManifest* \
-  src/components/ui/dice/diceRuntimeProvider*
+  src/components/ui/dice/diceRuntimeProvider* \
+  src/components/ui/dice/diceRuntimeTestFixtures.ts
 git diff --check
 git add src/components/ui/dice
-git commit -m "feat: validate Original dice runtime provider (#751)"
+git commit -m "fix: validate carved d20 face witnesses (#751)"
 ```
+
+Commission independent task review.
 
 ---
 
-### Task 4: Render the material-free carved mesh from asset-owned geometry groups
+### Task 4: Observe the actual upward result in the renderer
 
 **Files:**
-- Create: `src/components/ui/dice/materialFreeCarvedMesh.ts`
-- Create: `src/components/ui/dice/materialFreeCarvedMesh.test.ts`
-- Modify: `src/components/ui/dice/attackDieMaterial.ts`
-- Modify: `src/components/ui/dice/attackDieMaterial.test.ts`
+- Create: `src/components/ui/dice/diceSettlementObservation.ts`
+- Create: `src/components/ui/dice/diceSettlementObservation.test.ts`
 - Modify: `src/components/ui/dice/AttackDie3D.tsx`
 - Modify: `src/components/ui/dice/AttackDie3D.test.tsx`
-- Modify: `src/components/ui/dice/DiceTray3D.tsx`
 - Modify: `src/components/ui/dice/DiceTray3D.test.tsx`
-- Modify: `src/components/ui/dice/DiceTrayPresentation.tsx`
 - Modify: `src/components/ui/dice/DiceTrayPresentation.test.tsx`
 
 **Interfaces:**
-- Consumes: validated `DiceRuntimePreset`, parsed source scene, validated `RuntimeMeshBinding`, authoritative result, existing phase/release/reduced-motion inputs.
-- Produces: `prepareMaterialFreeCarvedScene(scene, preset, binding, treatment): PreparedDiceScene`; exact result target from `preset.faceSettlementMap.entries[String(result)].quaternion`; existing `AttackDieTelemetry` semantics.
 
 ```ts
-interface DiceMaterialTreatment {
-  readonly bodyColor: string;
-  readonly numeralColor: string;
-  readonly roughness: number;
-  readonly metalness: number;
+interface UpwardResultObservation {
+  readonly result: number;
+  readonly upDot: number;
+  readonly runnerUpDot: number;
+  readonly margin: number;
 }
 
-interface PreparedDiceScene {
-  readonly scene: Object3D;
-  readonly dispose: () => void;
-}
+function observeUpwardResult(
+  entries: Readonly<Record<string, DiceSettlementFaceV2>>,
+  worldQuaternion: readonly [number, number, number, number]
+): UpwardResultObservation;
 ```
 
-`prepareMaterialFreeCarvedScene` accepts `(scene: Object3D, preset: DiceRuntimePreset, binding: RuntimeMeshBinding, treatment: DiceMaterialTreatment)` and returns `PreparedDiceScene`.
+`AttackDieTelemetry` adds `observedUpwardResult`, `observedUpDot`, and `observedUpMargin` on observed frames.
 
-- [ ] **Step 1: Write geometry discrimination tests**
+- [ ] **Step 1: Write pure observation RED tests**
 
-Build a small indexed `BufferGeometry` fixture. Assert preparation:
+Test all 20 corrected real entries. For each requested result, apply its quaternion and require:
 
-- finds exactly one scene Object3D named by `binding.objectNode` and requires it to be the Mesh selected by the provider-validated node→mesh-definition binding;
-- never attempts `scene.getObjectByName(binding.meshDefinition)`, because GLTFLoader names the Object3D from the glTF node rather than the mesh definition;
-- verifies indexed triangle count against `totalTriangles`;
-- copies source triangle triples in body-then-numeral order into a cloned index buffer;
-- creates exactly two contiguous geometry groups with material indices 0 and 1;
-- never mutates source scene/geometry/materials;
-- assigns owned runtime body and numeral materials; and
-- disposes owned clones/materials exactly once.
+```ts
+expect(observation.result).toBe(requestedResult);
+expect(observation.upDot).toBeGreaterThan(0.999999);
+expect(observation.margin).toBeGreaterThan(0.2);
+```
 
-Reject missing/duplicate node, non-mesh selector, non-indexed geometry, count mismatch, invalid group partition, and unexpected child mesh.
+Add the exact historical permutation: pair result 3's direct witness with the old result-3 quaternion and require observation result 5, proving the test fails the previously accepted provider. Reject ties, invalid quaternions, nonfinite values, and an incomplete entry set.
 
-- [ ] **Step 2: Run geometry RED and implement**
+- [ ] **Step 2: Run RED and implement the pure resolver**
+
+```bash
+npm run test:run -- src/components/ui/dice/diceSettlementObservation.test.ts
+```
+
+Expected: FAIL because the independent resolver does not exist. Implement quaternion-vector rotation, sort by transformed Y, and return target/runner-up facts without consulting `mappedTarget` or requested result.
+
+- [ ] **Step 3: Write renderer RED tests**
+
+Require exact-target hold **and** independently observed face equality before `state: 'observed'`. A synthetically permuted target must emit controlled failure/fallback rather than semantic success. Roller and Spectator must independently report the same upward result from separate frames/clones.
+
+- [ ] **Step 4: Integrate observation into actual world-pose telemetry**
+
+Use the final rendered group quaternion after motion convergence. Do not derive observation from the requested result or copy the target tuple into the observation. Keep existing angular error as a separate diagnostic.
+
+Observed success requires:
+
+```ts
+angularErrorDegrees <= 0.25 &&
+observation.result === requestedResult &&
+observation.upDot > 0.999999 &&
+observation.margin > 0.2
+```
+
+Failure preserves explicit release and truthful SVG convergence; it never substitutes another physical result.
+
+- [ ] **Step 5: Verify and commit Task 4**
 
 ```bash
 npm run test:run -- \
-  src/components/ui/dice/materialFreeCarvedMesh.test.ts \
-  src/components/ui/dice/attackDieMaterial.test.ts
-```
-
-Expected: FAIL because carved scene preparation does not exist.
-
-Implement one-time scene preparation. Triangle-group entries identify triangle ordinals, not vertex indices; copy each referenced source index triple into the reordered index array. Two geometry groups produce two draw calls without thousands of per-triangle groups.
-
-- [ ] **Step 3: Write renderer authority tests**
-
-Assert Original d20:
-
-- receives target only from the validated map for authoritative results 1–20;
-- ignores decorative release variation/vector/shake when selecting target;
-- preserves exact-target hold and `<= 0.25°` observation semantics;
-- recenters from the validated bounds midpoint and computes exactly `0.55 / max(dimensions)`; the real Original d20 yields `0.055`, remains unchanged at approved responsive widths, and preserves at least 8 CSS px settled clearance from every well edge;
-- shares provider identity but owns independent scene clones, renderer generations, telemetry, Canvas, and disposal;
-- reduced motion still requires explicit release and settles exactly;
-- provider/geometry failure remains concealed while armed and converges to semantic SVG after release; a lower-level synthetic renderer test retains `unmapped-result` coverage without claiming that state is reachable through a complete validated runtime manifest; and
-- unknown safe presets never become model URLs; and
-- accessible settled status is driven by matching renderer telemetry (`observed` 3D versus `failed`/fallback), never by checking whether `presetId === 'lightning'`.
-
-- [ ] **Step 4: Adapt `AttackDie3D` behind its stable caller boundary**
-
-Add a discriminated internal provider path for `dice-runtime-preset` while retaining the historical Lightning development injection only where old concept tabs still require it. Do not change `DiceTrayPresentation` event authority. `DiceTray3D` allowlists `dice.original.carved.d20` to the new provider and routes unsupported presets to SVG.
-
-Replace `DiceTrayPresentation`'s literal-Lightning status inference with committed local renderer observation: matching `renderer: '3d', state: 'observed', exactTargetHeld: true` records 3D settlement; matching failed/fallback completion records semantic fallback. Stale telemetry remains ignored. This changes announcement truth only, not request/release authority.
-
-Apply movement only to Three.js groups. Do not add Canvas/renderer CSS transforms or held-motion behavior.
-
-- [ ] **Step 5: Verify and commit rendering**
-
-```bash
-npm run test:run -- \
-  src/components/ui/dice/materialFreeCarvedMesh.test.ts \
-  src/components/ui/dice/attackDieMaterial.test.ts \
+  src/components/ui/dice/diceSettlementObservation.test.ts \
   src/components/ui/dice/AttackDie3D.test.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
   src/components/ui/dice/DiceTrayPresentation.test.tsx
 npm run typecheck
 npx eslint src/components/ui/dice
-npx prettier --check src/components/ui/dice/materialFreeCarvedMesh* \
-  src/components/ui/dice/attackDieMaterial* \
-  src/components/ui/dice/AttackDie3D* \
-  src/components/ui/dice/DiceTray3D*
+npx prettier --check src/components/ui/dice/diceSettlementObservation* \
+  src/components/ui/dice/AttackDie3D*
 git diff --check
 git add src/components/ui/dice
-git commit -m "feat: render Original carved d20 contract (#751)"
+git commit -m "fix: observe the upward carved result (#751)"
 ```
+
+Commission independent task review.
 
 ---
 
-### Task 5: Switch the Tray stage, prove results 1–20, and finalize Stone 0
+### Task 5: Replace the circular Stone 0 evidence oracle
 
 **Files:**
-- Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.tsx`
+- Modify: `scripts/attack-die/stone0TrayEvidenceProtocol.ts`
+- Modify: `scripts/attack-die/stone0TrayEvidenceProtocol.test.ts`
+- Modify: `scripts/attack-die/capture-stone0-tray-evidence.mjs`
 - Modify: `src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx`
-- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.tsx`
-- Modify: `src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx`
-- Modify: `src/concepts/attack-die-3d/diceTrayWitnessFixture.ts`
-- Modify: `src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts`
-- Create: `scripts/attack-die/stone0TrayEvidenceProtocol.ts`
-- Create: `scripts/attack-die/stone0TrayEvidenceProtocol.test.ts`
-- Create: `scripts/attack-die/capture-stone0-tray-evidence.mjs`
-- Modify: `package.json`
 - Modify: `docs/how-to/attack-die-3d-concept.md`
-- Private outputs: `/home/kirk/game-dev/.verification/interactive-dice-tray/stone-0/`
+- Private archive/output: `/home/kirk/game-dev/.verification/interactive-dice-tray/stone-0/`
 
 **Interfaces:**
-- Consumes: exact merged provider contract and web runtime from Tasks 2–4.
-- Produces: browser-visible Original carved d20 Tray stage, explicit authoritative result fixture control 1–20, exact-commit evidence, one ready web PR closing #751.
+- Consumes: corrected provider, independent renderer telemetry, real Tray route.
+- Produces: v2 result facts, readable close-ups, exact-SHA package that cannot pass the historic permutation.
 
-- [ ] **Step 1: Write the failing concept/provider tests**
+Each result fact requires both witnesses:
 
-Assert:
-
-- while provider state is pending, no drawer/Canvas/result mounts and a result-free polite loading status is visible;
-- terminal provider failure mounts the shared presentation with no Canvas, preserves the Roller Roll control and Spectator non-authority, conceals the armed result as `?`, and settles to truthful SVG only after the existing matching release event;
-- Roller and Spectator receive the same immutable provider contract/source scene and one shared event array, while renderer generations and clones remain distinct;
-- requested preset is `dice.original.carved.d20`, never `lightning`;
-- authoritative fixture input accepts integers 1–20 and changes request identity before delivery;
-- each result selects its exact asset entry;
-- Roll/host Monster release behavior remains unchanged;
-- malformed/missing provider reaches terminal fail-closed presentation rather than remaining in the pending gate; and
-- non-Tray historical Lightning tooling remains clearly provisional and does not supply the Tray provider.
-
-- [ ] **Step 2: Run concept RED and implement the provider gate**
-
-```bash
-npm run test:run -- \
-  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
-  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts \
-  src/components/ui/dice/DiceTrayPresentation.test.tsx
+```ts
+interface Stone0ResultWitnessV2 {
+  readonly requestedResult: number;
+  readonly mappedTarget: readonly [number, number, number, number];
+  readonly observedUpwardResult: number;
+  readonly observedUpDot: number;
+  readonly observedUpMargin: number;
+  readonly canvasVisible: boolean;
+  readonly exactTargetHeld: boolean;
+  readonly numeralTriangleCount: 7798;
+}
 ```
 
-Expected: FAIL because Tray still requests the Lightning preset/fixed provisional mapping.
+- [ ] **Step 1: Invalidate the old private package explicitly**
 
-Switch only the Tray provider/fixture to Original carved d20. The parent gate distinguishes `loading` from terminal `failed`: only loading withholds the presentation; failed supplies the failure reason to the existing local renderer-failure lifecycle so armed truth remains concealed and release can converge to SVG. Keep Concepts delivery labeled fixture-only with no production transport/profile ownership claim.
+Rename the old exact-SHA directory to a rejection archive suffixed `-REJECTED-semantic-oracle`, rename its `PASS` marker to `INVALIDATED-PASS.txt`, and add `FAILED.txt` explaining that 15/20 asset labels and 879 triangle roles were wrong. Preserve every old artifact for diagnosis; never cite its package hash as acceptance.
 
-Write `stone0TrayEvidenceProtocol.test.ts` before its implementation. Require exact source SHA, build-manifest identity, full provider-manifest and GLB hashes, request/transfer counts, one result fact for each integer 1–20, pending/terminal-failure/reduced-motion/responsive scenario records, deterministic filenames, empty validation failures, and rejection of missing/duplicate/malformed scenario facts. Implement the pure protocol and Playwright driver only after RED.
+- [ ] **Step 2: Write protocol RED tests**
 
-- [ ] **Step 3: Run focused and full repository gates**
+Require schema v2, exact corrected provider manifest hash, results 1–20, both witnesses' independent upward facts, 2,684/7,798 roles, and 40 close-up screenshots. Reject:
+
+- requested result differing from observed result;
+- target hold passing while upward result fails;
+- literal/hard-coded observed values;
+- missing/duplicate close-ups;
+- `carvedVisible` or `carvedResult` fields;
+- close-up dimensions below 220×220 physical pixels;
+- old 3,563/6,919 counts; and
+- any package carrying both PASS and FAILED markers.
+
+```bash
+npm run test:run -- scripts/attack-die/stone0TrayEvidenceProtocol.test.ts
+```
+
+Expected: current protocol fails because it equates canvas/target visibility with carved correctness.
+
+- [ ] **Step 3: Implement truthful evidence vocabulary**
+
+Rename canvas-only facts to `canvasVisible`. Read `observedUpwardResult`, dot, and margin from matching renderer telemetry. No evidence-driver constant may claim a carved result.
+
+Capture per result:
+
+- existing full-page 1440 layout screenshot;
+- Roller well close-up at browser device scale factor 3; and
+- Spectator well close-up at device scale factor 3.
+
+Each close-up must be at least 220×220 physical pixels, include the entire die/well, and remain bound in `package-manifest.json`. Retain 1241/1240/760 responsive, reduced-motion, provider failure, WebGL/context-loss, and shader scenarios.
+
+- [ ] **Step 4: Add the historical permutation regression**
+
+Feed the old provider map into the production protocol/renderer fixture and require failure containing:
+
+```text
+requested result 3 observed upward result 5
+```
+
+This test must fail if observation is again derived from `mappedTarget` equality.
+
+- [ ] **Step 5: Run focused and full gates**
 
 ```bash
 npm run test:run -- \
+  scripts/attack-die/stone0TrayEvidenceProtocol.test.ts \
   src/components/ui/dice/diceRuntimeManifest.test.ts \
   src/components/ui/dice/diceRuntimeProvider.test.ts \
+  src/components/ui/dice/diceSettlementObservation.test.ts \
   src/components/ui/dice/materialFreeCarvedMesh.test.ts \
   src/components/ui/dice/AttackDie3D.test.tsx \
   src/components/ui/dice/DiceTray3D.test.tsx \
   src/components/ui/dice/DiceTrayPresentation.test.tsx \
-  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx \
-  src/concepts/attack-die-3d/DiceTray3DConceptPanel.test.tsx \
-  src/concepts/attack-die-3d/diceTrayWitnessFixture.test.ts
+  src/concepts/attack-die-3d/AttackDie3DConcept.test.tsx
 npm run test:run
 npm run typecheck
 npm run lint
@@ -782,35 +601,23 @@ git diff --check
 git status --short
 ```
 
-Expected: all gates pass; only ignored provider/evidence files remain untracked or ignored; no private byte is staged.
+Expected: all pass; private provider/evidence remains ignored; no GLB or private manifest is staged.
 
-- [ ] **Step 4: Update documentation and commit the exact candidate**
-
-Update the how-to guide with Original provider path/full hash, generated runtime manifest, 1–20 fixture review, pending-versus-terminal provider behavior, failure exercises, explicit private-evidence limits, and the statement that tactile motion remains Stone 1.
+- [ ] **Step 6: Commit exact web recovery candidate**
 
 ```bash
-git add \
-  src/concepts/attack-die-3d \
-  scripts/attack-die/stone0TrayEvidenceProtocol.ts \
-  scripts/attack-die/stone0TrayEvidenceProtocol.test.ts \
-  scripts/attack-die/capture-stone0-tray-evidence.mjs \
-  package.json \
-  docs/how-to/attack-die-3d-concept.md
-git commit -m "feat: prove Original d20 settlement in Concepts Lab (#751)"
+git add src scripts/attack-die docs/how-to/attack-die-3d-concept.md
+git commit -m "test: prove carved d20 face identity in browser (#751)"
+SHA=$(git rev-parse HEAD)
+test "$SHA" != b5045811e769bcd686186c930252a4c6f95d44b1
 ```
 
-- [ ] **Step 5: Build and serve exact-commit private evidence**
-
-Use the corrected frozen-build path with private custom-dice mounted separately:
+- [ ] **Step 7: Capture a fresh exact-SHA package**
 
 ```bash
-SHA=$(git rev-parse HEAD)
 OUT=/home/kirk/game-dev/.verification/interactive-dice-tray/stone-0/$SHA
 BUILD_MANIFEST="$OUT/build-manifest.json"
-if [ -e "$OUT" ]; then
-  echo "refusing stale exact-SHA evidence directory: $OUT" >&2
-  exit 1
-fi
+test ! -e "$OUT"
 mkdir -p "$OUT"
 VITE_ATTACK_DIE_WEB_COMMIT="$SHA" \
   npm run attack-die:freeze-build -- --out "$BUILD_MANIFEST"
@@ -823,11 +630,11 @@ node scripts/attack-die/serve-frozen.mjs \
   --port 3003 >"$OUT/preview.log" 2>&1 &
 PREVIEW_PID=$!
 trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
-for attempt in $(seq 1 40); do
+for attempt in $(seq 1 80); do
   curl -fsS 'http://127.0.0.1:3003/?concept=attack-die-3d' >/dev/null && break
   sleep 0.25
 done
-curl -fsS 'http://127.0.0.1:3003/?concept=attack-die-3d' >/dev/null
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/usr/bin/google-chrome \
 node scripts/attack-die/capture-stone0-tray-evidence.mjs \
   --url 'http://127.0.0.1:3003/?concept=attack-die-3d' \
   --out "$OUT" \
@@ -835,43 +642,63 @@ node scripts/attack-die/capture-stone0-tray-evidence.mjs \
   --source-sha "$SHA"
 kill "$PREVIEW_PID"
 trap - EXIT
+test -f "$OUT/PASS"
+test ! -f "$OUT/FAILED.txt"
 ```
 
-The capture driver owns a deterministic local API fixture, fresh browser contexts per scenario, explicit response mutation for malformed-manifest/hash cases, and real `WEBGL_lose_context` for context loss. It writes `browser-evidence.json`, `network.json`, `console.json`, and deterministic screenshots named by scenario/result/viewport. The evidence protocol rejects any source/build mismatch or incomplete matrix.
+- [ ] **Step 8: Human and independent evidence gate**
 
-On `?concept=attack-die-3d → Tray`, verify:
+Kirk reviews all 20 Roller close-ups; independent reviewer checks all 40 close-ups, recomputes package hashes/protocol, and confirms:
 
-1. one runtime manifest request, one Original D20 GLB request/transfer, and no duplicate Tray provider load;
-2. exact GLB digest `87bf2d0535023e69c968fb9878ba4ad990df4eeec4b503ebb0e917419c47a77e` before Canvas readiness;
-3. Roller and Spectator share provider/event values and own distinct WebGL contexts/clones/telemetry;
-4. each result 1→20 reaches and holds the asset-owned target within `0.25°`;
-5. result target is invariant under Roll versus host release and decorative variation;
-6. Player remains armed indefinitely; Monster release remains host-owned;
-7. reduced motion requires explicit input and settles exactly without tumble;
-8. missing manifest, incomplete face map rejected before GLTF parse, malformed manifest, GLB hash mismatch, invalid geometry partition, unknown-safe-preset SVG fallback, WebGL creation failure, real context loss, and shader failure converge truthfully;
-9. desktop `1440×1080`, boundary `1241×900`/`1240×900`, and narrow `760×900` preserve the accepted drawer/log/dock layout and containment; and
-10. startup/scenario console and page errors are empty except explicitly documented unrelated API noise.
+- visible numeral = requested result for 1–20;
+- numeral treatment is complete and readable;
+- Roller/Spectator agree while owning independent renderers;
+- geometry-backed observations match requested results;
+- no blocker/high/medium finding remains.
 
-Store screenshots, JSON, hashes, and logs privately under the exact-SHA output directory. If evidence finds a defect, add a discriminating test, commit the fix, and rerun the entire exact-SHA capture from a new empty output directory. Do not claim formal performance graduation; the paired performance script's final-context caveat remains separate work.
-
-- [ ] **Step 6: Push, open ready PR, reconcile review, and gate**
-
-```bash
-git push -u origin feat/751-original-dice-runtime
-```
-
-Open one ready PR to `dev` with `Closes #751`, dependency on merged assets #53 PR, exact runtime hashes, focused/full/static commands, private evidence paths/hashes, and no production transport or tactile-motion claim.
-
-Reconcile every Copilot thread individually. Commission an independent fresh-context gate that reruns the full suite, audits strict manifest/hash-before-parse/authority/fallback claims, and independently views browser evidence. Post a signed `GATE REVIEW` verdict. Leave merge to Kirk.
+Any failure gets a discriminating test, new commit, and entirely new exact-SHA directory.
 
 ---
 
-## Stone 0 completion and handoff
+### Task 6: Restore PR #752 only after all recovery gates pass
 
-Stone 0 is complete only after Kirk merges both owning-repo PRs and the exact merged web route still renders the Original carved d20 truthfully. Then:
+**Files:**
+- No new product files unless review finds a defect.
+- Update external SDD ledger and GitHub checkpoints only.
 
-- record provider/web merge SHAs and evidence on `rpg-project#219` and PR #220;
-- update Project 19 items #53 and #751 to Done;
-- run the two Stone 0 retro questions from the design;
-- rewrite `rpg-project/sessions/active.md` with solid facts and remaining risks; and
-- begin a new Stone 1 plan/issue for tactile roll-group gesture and `VisualThrowProfile@1`, without reusing the rejected local rail-motion commits.
+- [ ] **Step 1: Run exact-head normal pre-push hook and push**
+
+Temporarily move harness-only `.pi/` and `.superpowers/` outside the web worktree so formatting checks do not scan them; restore both afterward. Push normally with hooks enabled.
+
+```bash
+git push origin asset/751-original-d20-runtime
+test "$(git rev-parse HEAD)" = \
+  "$(git rev-parse origin/asset/751-original-d20-runtime)"
+```
+
+Expected: full pre-push gate passes; only untracked `.pi/` remains.
+
+- [ ] **Step 2: Reconcile remote review and CI**
+
+Require GitHub Test, Lint and Type Check, Security Audit, and Deploy Preview green. Reconcile every Copilot thread individually. Commission a fresh whole-branch review from merged foundation `1322dc46b21ee0e7e4e87891b84f74a686f64232` through exact new head.
+
+- [ ] **Step 3: Post the replacement signed gate**
+
+The new GATE REVIEW must explicitly supersede the withdrawn b504 gate and cite:
+
+- merged assets correction commit/PR;
+- corrected provider manifest/source hashes;
+- unchanged GLB hash;
+- 20/20 independent upward observations for both witnesses;
+- 2,684/7,798 exact roles;
+- close-up count and package-manifest hash;
+- full test totals and GitHub checks; and
+- residual physical-device/performance limitations.
+
+- [ ] **Step 4: Move Project 19 to In Review and stop**
+
+Move assets #57 to Done only after Kirk merged it. Move web #751 to In Review only after the replacement gate is posted. Update project #219/PR #220. **Do not merge PR #752. Stop for Kirk's final live visual and merge decision.**
+
+## Post-merge completion
+
+After Kirk merges PR #752, verify the exact merged route against the corrected provider, record provider/web merge SHAs and evidence hashes, move #751 to Done, answer both Stone 0 retro questions, and rewrite `rpg-project/sessions/active.md`. Create a separate Stone 1 issue/plan; do not reuse rejected held-motion commits.
