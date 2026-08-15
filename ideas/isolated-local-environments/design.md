@@ -1,6 +1,6 @@
 # Isolated one-command local game environments
 
-**Status:** Approved in design conversation; written review pending  
+**Status:** Written design approved by Kirk on 2026-08-15
 **Tracking:** [rpg-project#221](https://github.com/KirkDiggler/rpg-project/issues/221), follow-on under [rpg-project#208](https://github.com/KirkDiggler/rpg-project/issues/208)  
 **Owners:** `rpg-deployment`, `rpg-dnd5e-web`, and `game-dev`
 
