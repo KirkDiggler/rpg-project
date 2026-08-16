@@ -604,7 +604,7 @@ Expected: canonical `harness/` now matches the validated stage; backup removed o
 - [ ] Stage exactly the validated changed/deleted path set and verify the index:
 
 ```bash
-git add --pathspec-from-file="$STAGE_ROOT/release/pathspec.nul" --pathspec-file-nul
+git add --pathspec-from-file="$STAGE_ROOT/pathspec.nul" --pathspec-file-nul
 python3 -B scripts/promote_character_checkpoints.py verify-index \
   --repo-root "$ASSET_WT" --stage-root "$STAGE_ROOT"
 git diff --cached --check
