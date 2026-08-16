@@ -20,6 +20,15 @@ absolute one-map projection, the self-position read (toolkit#933), stream
 vocabulary growth (toolkit#959) — land SDK-first as their own waves, and
 the protos follow (break-in-place is cheap until adoption).
 
+**Fast-follow (ACTIVE, Kirk 2026-08-16 — "the contract we want, not one
+that matches"):** the v0.9.0 transcription (merged rpg-api-protos#222) is
+re-transcribed in place against **`session/v0.12.0`** (toolkit#1049 landed
+the Traverse retirement and completed one-map the same day). Zero
+consumers; `breaking-change-approved` label per the versioning trigger.
+W2 pins v0.12.0 and its translation layer targets the re-transcribed
+proto; the acceptance loop's cross-room walk is ungated — a walk crosses
+a doorway.
+
 **Shape-motion watch:** the combat capability train will grow the
 stream/story vocabulary while W1 waits — attack outcome kinds, HP-change
 reporting (combat census on toolkit#959). Draft stream/story messages

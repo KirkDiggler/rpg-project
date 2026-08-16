@@ -18,23 +18,25 @@ surface — speaks **one map**.
 
 Consequences, now normative:
 
-- **`Traverse` is transitional.** At the destination a doorway crossing is
-  an ordinary move step on the wire; the RPC exists while the seam exposes
-  the verb, and retires when the SDK's absolute-projection convergence
-  retires it.
-- **The destination for wire positions is dungeon-absolute.** Room IDs stop
-  crossing the seam as the SDK converges; semantic scoping stays the
-  dungeon-builder model (regions on a canvas).
+- **No `Traverse` RPC.** Kirk, 2026-08-16: *"traverse is dead as far as I
+  know... let's get the contract we want not one that matches."* The
+  retirement LANDED the same day (toolkit#1049 → `session/v0.12.0`): a
+  walk crosses a doorway as an ordinary step.
+- **Every wire position is dungeon-absolute.** Live in the SDK as of
+  v0.10.0 ("the Atlas is one map, not a list of rooms") and v0.11.0
+  ("joins, walks and outcomes speak one map"): roomless joins, members,
+  outcomes; one-map atlas. Semantic scoping stays the dungeon-builder
+  model (regions on a canvas).
 - **Door state and locks are unaffected** — the fork-independent gap
   (census gap 4: the reference tomb's locked DC-12 connector) arrives with
   its own capability work.
 
-**Getting started (Kirk, same day):** *"the contract the session package
-already exposed is all we need to get started."* W1 has no preconditions:
-it transcribes the exported surface as it stands — `Traverse` and the
-current position shapes included. The ruling above is the seam's
-destination, not a proto gate; the SDK converges on its own schedule and
-the protos follow each reshape (pre-adoption, break-in-place is cheap).
+**Contract-we-want (Kirk, 2026-08-16, supersedes the transcribe-as-exposed
+start):** the proto surface targets **`session/v0.12.0`** — the completed
+one-map surface, Traverse retired. The initial v0.9.0 transcription (merged
+as rpg-api-protos#222) is re-transcribed in place — zero consumers exist,
+break-in-place is free — and from here rpg-api pins latest and the contract
+steps with the SDK.
 
 ## Scope
 
@@ -54,8 +56,7 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 |---|---|---|
 | `Join` | `Join` | roster |
 | `Exit` | `Exit` | roster |
-| `Move` | `Move` | free roam (path, not cell) |
-| `Traverse` | `Traverse` | free roam (cross a connection) — transitional per §0 |
+| `Move` | `Move` | free roam (path, not cell; crosses doorways) |
 | `Attack` | `Attack` | fight (character attackers only in v1) |
 | `Turn` | `Turn` | fight |
 | `EndTurn` | `EndTurn` | fight |
