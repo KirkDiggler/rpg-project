@@ -797,8 +797,8 @@ Do not fake the downed state by changing React props or editing the resolver. If
 - [ ] Record rollback exactly:
 
 ```bash
-git -C /home/kirk/game-dev/rpg-game-assets revert "$PROVIDER_SHA"
-# open/merge a rollback PR, then repeat Task 7 exact-provider sync and runtime smoke
+git -C /home/kirk/game-dev/rpg-game-assets revert -m 1 "$PROVIDER_SHA"
+# Parent 1 is the pre-PR mainline; open/merge a rollback PR, then repeat Task 7 exact-provider sync and runtime smoke.
 ```
 
 Never rewrite history or restore ad hoc backup files after publication.

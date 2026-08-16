@@ -148,7 +148,7 @@ Hard failures include:
 - asset sync resolving a provider commit other than the reviewed merge;
 - runtime 404s, loader errors, or broken standing/moving/downed presentation.
 
-The release is rolled back by reverting the single provider release commit and resynchronizing the web tree. No public client rollback is needed because the consumer mapping does not change.
+The published release is rolled back by reverting the provider PR merge commit with mainline parent 1, then performing an exact-provider resync of the web tree; the branch release subcommit alone is not the published atomic boundary. No public client rollback is needed because the consumer mapping does not change.
 
 ## Verification
 
