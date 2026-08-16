@@ -2,8 +2,8 @@
 name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
 updated: 2026-08-15
-confidence: high on the merged authority/presentation boundary, corrected direct-tag Original carved d20 semantics, exact 2,684/7,798 roles, independent upward-result observation, and accepted Stone 0 evidence; tactile choreography, production transport/ownership, rigid-body settlement, and individual damage-die authority remain gated
-status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc, web consumer merged through rpg-dnd5e-web#752 at 8bc2a27, and exact-SHA evidence accepted with Kirk approval; Stone 1 design/plan approved and tracked separately by rpg-dnd5e-web#755
+confidence: high on the merged authority/presentation boundary, corrected direct-tag Original carved d20 semantics, exact 2,684/7,798 roles, independent upward-result observation, accepted Stone 0 evidence, and reviewed Stone 1 tactile choreography; production transport/ownership, rigid-body settlement, and individual damage-die authority remain gated
+status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc and web consumer through rpg-dnd5e-web#752 at 8bc2a27; Stone 1 implemented and exact-head approved through open web PR #756 at fe19dc7, awaiting Kirk's merge decision
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -19,7 +19,7 @@ status: Stone 0 complete — corrected assets contract merged through rpg-game-a
 - [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged the first Stone 0 consumer runtime manifest/provider-root slice
 - [rpg-game-assets#57](https://github.com/KirkDiggler/rpg-game-assets/issues/57) / [PR #60](https://github.com/KirkDiggler/rpg-game-assets/pull/60) — corrected carved result identity from direct tags, published strict runtime v2 witnesses, fixed the exact 2,684/7,798 roles, and merged at `7fed0fc`
 - [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — consumed strict v2, independently observed upward results, replaced the circular evidence oracle, and merged Stone 0 at `8bc2a27`
-- [rpg-dnd5e-web#755](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/755) — approved Stone 1 tactile one-member roll-group and sanitized `VisualThrowProfile@1` implementation slice
+- [rpg-dnd5e-web#755](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/755) / [PR #756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) — implemented and reviewed Stone 1 tactile one-member roll groups, sanitized `VisualThrowProfile@1`, deterministic choreography, and exact-SHA evidence; PR is In Review for Kirk
 
 ## Summary
 
@@ -101,6 +101,19 @@ On accepted release, the controller emits one frozen, bounded `VisualThrowProfil
 - schema version.
 
 It contains no raw client coordinates, path history, timestamps, result, target, damage, URL, transport field, or new external correlation. `presentationId` remains the sole external identity. Button/keyboard Roll uses a neutral profile; Monster release profiles remain host-produced. Roller and Spectator consume the same immutable profile values and independently reproduce the same throw personality.
+
+### Stone 1 implementation gate — 2026-08-15
+
+Web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) implements the approved slice at exact reviewed head `fe19dc7fff00890d6e7fec18ad8a03b982ee6b28` without changing the server-selected result or the merged `DiceTrayPresentation` authority boundary.
+
+- `RollGroupGestureController` keeps raw pointer coordinates, IDs, timestamps, bounds, histories, velocity, and tilt local; the Concepts evidence bridge exposes only generation-fenced monotonic booleans and final sanitized profile/observation facts.
+- Native pointer ownership lives on the renderer surface, so the exact 14 px mouse / 24 px touch envelope and outside-capture release are reachable while the explicit keyboard-neutral control remains intact.
+- `ChoreographedSolverV1` consumes only the sanitized profile, elapsed presentation time, authoritative provider-backed target, one-member descriptor, reduced-motion preference, and optional local held state. Roller and Spectator retain independent contexts, clones, resources, motion, rendered poses, observations, and telemetry.
+- Malformed profiles, invalid seeds, provider/renderer failures, lifecycle interruption, and evidence terminal publication fail closed. Reduced motion retains one static lifted cue and exact settlement without tumble, shake, bounce, or scatter.
+- Final review reports 0 Blocker / 0 High / 0 Medium. The exact package contains 12/12 scenarios, 18 protocol PNGs, 12 independent contexts, and a PASS-only marker; package-manifest SHA-256 is `947ee1c884d698c295588f01deb9a5fd9d19fee29bcf8b4066c51e35f2711e54`.
+- The exact-head full suite passed 192 files / 3,394 tests; local gates and all GitHub checks passed. Kirk independently inspected the live exact head and approved it.
+
+One nonblocking Low remains in a static source-order test assertion; direct behavioral terminal-publication tests cover failure before, during, and after PASS. Production transport/reconnect, equipped-preset projection, physical touch hardware, real Discord/mobile/low-GPU coverage, multi-die groups, rigid-body settlement, and formal paired performance remain explicitly ungraduated.
 
 ### Permanent solver boundary
 

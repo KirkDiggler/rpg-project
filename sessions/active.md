@@ -290,19 +290,19 @@ free.**
 
 ## Other lanes
 
-- **Interactive collectible dice tray (#219) — Stone 0 shipped.** Corrected assets PR #60 merged at
-  `7fed0fc`; web PR #752 merged to `dev` at `8bc2a27` from reviewed head `757bf25`. The exact
-  provider is runtime manifest `9c2d08b...ac1c74`, unchanged Original carved d20 GLB
-  `87bf2d05...a77e`, and 2,684 body / 7,798 numeral triangles. Accepted browser package manifest:
-  `7fcd64b...69809` (40/40 final Roller/Spectator close-ups, 18/18 scenarios, Kirk approval).
-  Post-merge Chrome smoke independently observed result 10 for both contexts on the merge-SHA
-  build. Both retro questions are yes: the provider changed without rewriting
-  `DiceTrayPresentation`/authority/fallback, and every selected physical/model fact comes from the
-  asset runtime contract with no web correction table or exception. Web #751 is closed/Done.
-  **Next:** web #755 is Todo with the approved six-task implementation plan at
-  `ideas/interactive-dice-tray/stone-1-plan.md`: `RollGroupGestureController` → sanitized
-  `VisualThrowProfile@1` → `ChoreographedSolverV1`, with exact-SHA paired evidence. Never reuse
-  rejected `75c5687`/`de2377e2`. Stone 2 multi-die and Stone 3 physical settlement remain later.
+- **Interactive collectible dice tray (#219) — Stone 1 is In Review.** Stone 0 remains shipped:
+  assets PR #60 at `7fed0fc`, web PR #752 at `8bc2a27`, corrected Original carved d20 GLB
+  `87bf2d05...a77e`, 2,684 body / 7,798 numeral triangles, and accepted package manifest
+  `7fcd64b...69809`. Stone 1 web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756)
+  implements the approved one-member tactile group at exact reviewed head `fe19dc7`: local native
+  grab/outside capture, sanitized `VisualThrowProfile@1`, provider-backed
+  `ChoreographedSolverV1`, independent Roller/Spectator ownership, static reduced motion, truthful
+  fallback, and privacy-safe generation-fenced evidence facts. Final review is 0 Blocker / 0 High /
+  0 Medium; full suite 192 files / 3,394 tests; all local and GitHub checks passed. Exact package
+  manifest: `947ee1c...11e54` (12/12 scenarios, 18 PNGs, 12 contexts, PASS only); Kirk approved the
+  live exact head. Web #755 and Project 19 are In Review. **Do not merge; Kirk decides.** One
+  nonblocking Low static assertion is covered behaviorally. Never reuse rejected
+  `75c5687`/`de2377e2`. Stone 2 multi-die and Stone 3 physical settlement remain later.
 - **Semantic scope (#180)** — parked. Wave 0 is live-verified (proto root `v0.1.120`, toolkit
   `encounter/v0.49.1`, rpg-api#771; evidence on rpg-project#192). Wave 1 implementation has not
   started; issues can be cut when the lane is picked back up.
