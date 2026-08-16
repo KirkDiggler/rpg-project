@@ -42,17 +42,9 @@ decided.
 
 ## Open questions
 
-- **THE WORLD-MODEL FORK — Kirk's ruling, gates W1.** Room-first (the new
-  composition: rooms, portal connections, `Traverse`, room-local positions)
-  vs one-canvas (the ratified dungeon-builder target and live authored
-  dialect: flat absolute regions, a doorway is a move step). Decides
-  `Traverse`'s existence, position field shapes, and door state/locks.
-  Census from the toolkit lane arriving on #227; design §0 holds the
-  affected proto shapes open. Forcing case: the shipped reference tomb runs
-  on the new stack, a player walks entrance → hall → tomb.
 - **No self-position read** (toolkit#933): a reconnecting client cannot
-  learn its own room+cell; SDK fix precedes the W1 read shapes (design
-  rule 11).
+  learn its own position; SDK fix precedes the W1 read shapes (design
+  rule 11) and rides the seam reshape below.
 - **Chapter 2 / board 13 ("Combat Verbs" on the v1alpha2 route) is
   superseded by #227** — needs Kirk's confirmation, then the board note.
 - **Coexistence flag shape** (which stack `StartEncounter` creates on) —
@@ -60,11 +52,15 @@ decided.
 
 ## Next
 
-**Kirk's world-model ruling** (the first open question) — it gates W1's
-field shapes. Then W1: platform lane cuts `dnd5e/api/session/v1alpha1/` in
-rpg-api-protos per the design's rules; un-gated messages (stream, errors,
-fight verbs) may draft meanwhile. Then W2 rpg-api beside the old path →
-W3 web in parallel → W4 cutover.
+**The SDK seam reshape** (toolkit) — Kirk's world-model ruling is IN
+(2026-08-15, design §0: rooms internal to the encounter, seam projects
+absolute geometry, wire = one map), so the remaining W1 preconditions are
+toolkit-side: absolute positions on every seam output, `Traverse` retired,
+the self-position read (#933), and the forcing case (reference tomb runs,
+entrance → hall → tomb as one move surface). Sequencing vs the combat
+capability push is Kirk's slotting. Un-gated proto messages (stream,
+errors, fight verbs) may draft anytime. Then W1 merge → W2 rpg-api beside
+the old path → W3 web in parallel → W4 cutover.
 
 ## Decision log
 
@@ -77,6 +73,7 @@ W3 web in parallel → W4 cutover.
 | 2026-08-15 | Creation stays the lobby's; `StartSession`/`Spawn` not exposed on the new service | design §2 rule 5 |
 | 2026-08-15 | Stream = `session.Event` mirrored, bytes payload passthrough; host never filters visibility | design MUST-3/4 |
 | 2026-08-15 | Build new beside old; **cutover = the rip-out**; web parallel implementation starts when protos are decided | rpg-project#227, plan.md |
+| 2026-08-15 | **World-model ruling: one map at the seam** — "the encounter has rooms but projects the absolute geo of the dungeon so the session package sees it as all one map"; no `Traverse` on the wire, all wire positions dungeon-absolute, door/lock gap unaffected | design §0, #227 |
 
 ## Carried follow-ups — filed, none blocking
 

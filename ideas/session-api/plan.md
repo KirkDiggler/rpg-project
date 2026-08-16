@@ -11,16 +11,21 @@ Design ratified on the PR; `sessions/active.md` brought current.
 
 ## W1 — protos (rpg-api-protos, base `origin/main`)
 
-**Preconditions (design §0):** (a) Kirk's world-model ruling — room-first vs
-one-canvas, decision moment arriving with the toolkit lane's census on #227;
-(b) the forcing case demonstrated toolkit-side: the shipped reference tomb
-compiles into a runnable new-stack world and a player walks
-entrance → hall → tomb; (c) the SDK's position-shape inconsistency and the
-"where am I" read (toolkit#933, design rule 11) fixed, so the protos
-transcribe fixed shapes rather than inconsistencies. Verbs and messages
-outside the gate (stream, errors, attack/turn/dissolve, reads minus
-position fields) may be drafted meanwhile, but nothing merges before the
-ruling.
+**Preconditions (design §0):** (a) ~~the world-model ruling~~ **RESOLVED
+2026-08-15** — one map at the seam, recorded in §0 and on #227; (b) the SDK
+seam reshape that makes the ruling true at the wire: dungeon-absolute
+positions on every output, `Traverse` retired, the self-position read
+(toolkit#933, design rule 11); (c) the forcing case demonstrated
+toolkit-side: the shipped reference tomb compiles into a runnable new-stack
+world and a player walks entrance → hall → tomb as one continuous move
+surface. Un-gated messages (stream, errors, attack/turn/dissolve) may be
+drafted meanwhile, but nothing merges before (b) and (c).
+
+**Shape-motion watch:** the combat capability train will grow the
+stream/story vocabulary while W1 waits — attack outcome kinds, HP-change
+reporting (combat census on toolkit#959). Draft stream/story messages
+leaving the outcome vocabulary open, per the SDK's own law that adding an
+event kind is compatible.
 
 `dnd5e/api/session/v1alpha1/`: `SessionService` per design §1–2, the `Event`
 message per MUST-3, request/response messages mirroring the SDK's exported

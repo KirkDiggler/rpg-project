@@ -113,3 +113,6 @@ gates the affected field shapes on Kirk's ruling; plan W1 carries the
 preconditions, including the census's forcing case (the reference tomb runs
 on the new stack, entrance → hall → tomb). The rest of the design is
 un-gated and stands.
+
+**Resolved same day:** Kirk ruled — rooms stay internal to the encounter,
+the seam projects absolute geometry, the wire speaks one map. See design §0.

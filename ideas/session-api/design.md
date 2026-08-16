@@ -3,34 +3,36 @@
 **Status:** PROPOSED (approved in-session by Kirk 2026-08-15; ratifies when
 this PR merges). Issue: rpg-project#227. Why: `brainstorm.md`. How: `plan.md`.
 
-## 0. Gate — the world-model ruling (added 2026-08-15, post-census)
+## 0. The world-model ruling — RESOLVED 2026-08-15
 
-A toolkit-lane census (wave-4 close-out, arriving on #227) surfaced a fork
-this design must not silently decide: the new composition is **room-first**
-(spatial rooms, connections as portals, room-local positions, `Traverse` as
-a verb), while the ratified dungeon-builder target
-(`ideas/dungeon-builder/design.md` — flat absolute regions, no rooms or
-connectors) and the live authored dialect are **one-canvas** (a doorway
-crossing is an ordinary move step; positions are absolute). Which model the
-game speaks is Kirk's ruling.
+The toolkit-lane census (on #227) surfaced a fork this design refused to
+decide silently: the new composition is **room-first** (rooms, portal
+connections, room-local positions, `Traverse` as a verb) while the ratified
+dungeon-builder target and the live authored dialect are **one-canvas**.
 
-Held open until that ruling, and **frozen by no W1 message**:
+**Kirk ruled:** *"the encounter has rooms but projects the absolute geo of
+the dungeon so the session package sees it as all one map."* Rooms remain
+an internal structure of the encounter composition; the seam projects
+dungeon-absolute geometry; the session package — and therefore this proto
+surface — speaks **one map**.
 
-- **`Traverse`'s existence as an RPC** — rooms: yes; canvas: it dies and
-  `Move` absorbs the crossing.
-- **Position field shapes** (room-local + room ID vs absolute-only). The
-  SDK's own outputs are inconsistent here today (room-local steps with no
-  room field; members with room but no position; absolute-only atlas), so
-  rule 1's mirroring is **suspended for position fields**: the SDK shape is
-  fixed first, the proto transcribes the fixed shape.
-- **Door state and locks.** The new stack's connections are stateless open
-  doorways, while the shipped reference tomb authors a locked DC-12
-  connector. Whether doors carry state and an interact verb is part of the
-  ruling.
+Consequences, now normative:
 
-Everything else in this design — the verb set minus `Traverse`, the stream
-contract, the error table, creation, coexistence, the cutover — is not
-gated.
+- **No `Traverse` RPC.** A doorway crossing is an ordinary move step on the
+  wire. The seam's current `Traverse` verb retires with the SDK's
+  absolute-projection reshape.
+- **Every wire position is dungeon-absolute.** Room IDs do not cross the
+  seam; semantic scoping stays the dungeon-builder model (regions on a
+  canvas).
+- **Door state and locks are unaffected** — the fork-independent gap
+  (census gap 4: the reference tomb's locked DC-12 connector) arrives with
+  its own capability work.
+
+W1 still freezes nothing for move/position/read shapes until the SDK seam
+projects absolute geometry (retiring room-local outputs and `Traverse`) and
+the self-position read lands (rule 11, toolkit#933) — see plan W1
+preconditions. The stream, errors, fight verbs, creation, coexistence, and
+cutover were never gated.
 
 ## Scope
 
@@ -50,8 +52,7 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 |---|---|---|
 | `Join` | `Join` | roster |
 | `Exit` | `Exit` | roster |
-| `Move` | `Move` | free roam (path, not cell) |
-| `Traverse` | `Traverse` | free roam (cross a connection) — **gated on §0** |
+| `Move` | `Move` | free roam (path, not cell; doorway crossings are ordinary steps per §0) |
 | `Attack` | `Attack` | fight (character attackers only in v1) |
 | `Turn` | `Turn` | fight |
 | `EndTurn` | `EndTurn` | fight |
@@ -149,7 +150,7 @@ unreachable from the server binary) are deleted earlier, in the rpg-api wave.
 1. A party can, entirely through `SessionService` against the local stack:
    create a lobby → start → **the shipped reference tomb compiles into a
    runnable new-stack world and a player walks entrance → hall → tomb**
-   (the crossing expressed per the §0 ruling) → sight forms a fight → take
+   (doorway crossings as ordinary move steps per §0) → sight forms a fight → take
    turns → a character attacks a monster and damage applies → dissolve the
    fight → disconnect and resume, learning own position from reads (rule
    11) plus story resync. Verified live, evidence on the implementing PRs.
