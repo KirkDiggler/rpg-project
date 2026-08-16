@@ -3,6 +3,35 @@
 **Status:** PROPOSED (approved in-session by Kirk 2026-08-15; ratifies when
 this PR merges). Issue: rpg-project#227. Why: `brainstorm.md`. How: `plan.md`.
 
+## 0. Gate — the world-model ruling (added 2026-08-15, post-census)
+
+A toolkit-lane census (wave-4 close-out, arriving on #227) surfaced a fork
+this design must not silently decide: the new composition is **room-first**
+(spatial rooms, connections as portals, room-local positions, `Traverse` as
+a verb), while the ratified dungeon-builder target
+(`ideas/dungeon-builder/design.md` — flat absolute regions, no rooms or
+connectors) and the live authored dialect are **one-canvas** (a doorway
+crossing is an ordinary move step; positions are absolute). Which model the
+game speaks is Kirk's ruling.
+
+Held open until that ruling, and **frozen by no W1 message**:
+
+- **`Traverse`'s existence as an RPC** — rooms: yes; canvas: it dies and
+  `Move` absorbs the crossing.
+- **Position field shapes** (room-local + room ID vs absolute-only). The
+  SDK's own outputs are inconsistent here today (room-local steps with no
+  room field; members with room but no position; absolute-only atlas), so
+  rule 1's mirroring is **suspended for position fields**: the SDK shape is
+  fixed first, the proto transcribes the fixed shape.
+- **Door state and locks.** The new stack's connections are stateless open
+  doorways, while the shipped reference tomb authors a locked DC-12
+  connector. Whether doors carry state and an interact verb is part of the
+  ruling.
+
+Everything else in this design — the verb set minus `Traverse`, the stream
+contract, the error table, creation, coexistence, the cutover — is not
+gated.
+
 ## Scope
 
 A new proto surface mirroring `rulebooks/dnd5e/session`, a thin rpg-api
@@ -22,7 +51,7 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 | `Join` | `Join` | roster |
 | `Exit` | `Exit` | roster |
 | `Move` | `Move` | free roam (path, not cell) |
-| `Traverse` | `Traverse` | free roam (cross a connection) |
+| `Traverse` | `Traverse` | free roam (cross a connection) — **gated on §0** |
 | `Attack` | `Attack` | fight (character attackers only in v1) |
 | `Turn` | `Turn` | fight |
 | `EndTurn` | `EndTurn` | fight |
@@ -76,6 +105,12 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 10. **MUST: capabilities are supplied, never defaulted** (toolkit law from
     resolution#1033): `Config.Dice` and every repository are wired explicitly
     at construction; construction is total.
+11. **MUST: a cold client can learn its own position from reads alone.**
+    Today no SDK read answers "where am I" — `View` skips self and sight
+    does not cross doorways, `Status` lacks member positions (toolkit#933) —
+    so a reconnecting client cannot place itself even with a full story.
+    The SDK-side fix lands before W1 freezes the read shapes; the proto
+    read (`GetStatus` or successor) transcribes it.
 
 ## 3. rpg-api shape
 
@@ -110,10 +145,12 @@ unreachable from the server binary) are deleted earlier, in the rpg-api wave.
 ## 6. Acceptance criteria
 
 1. A party can, entirely through `SessionService` against the local stack:
-   create a lobby → start → walk an authored tomb → traverse a doorway →
-   sight forms a fight → take turns → a character attacks a monster and
-   damage applies → dissolve the fight → disconnect and resume with story
-   resync. Verified live, evidence on the implementing PRs.
+   create a lobby → start → **the shipped reference tomb compiles into a
+   runnable new-stack world and a player walks entrance → hall → tomb**
+   (the crossing expressed per the §0 ruling) → sight forms a fight → take
+   turns → a character attacks a monster and damage applies → dissolve the
+   fight → disconnect and resume, learning own position from reads (rule
+   11) plus story resync. Verified live, evidence on the implementing PRs.
 2. After cutover: zero old-stack imports in rpg-api; `go.mod` pins the new
    toolkit stack; the old proto package is gone from rpg-api-protos.
 3. Handlers carry zero rulebook imports (depguard) and no visibility logic.

@@ -101,3 +101,15 @@ not bugs — do not re-file them.
 - **Chapter 2 (board 13, "Combat Verbs" on the v1alpha2 route) is superseded
   by this initiative** — flagged for Kirk's confirmation on this PR rather
   than acted on unilaterally.
+
+## Late-breaking census (2026-08-15, same day)
+
+Hours after this triplet was drafted, the toolkit lane's wave-4 close-out
+census surfaced a world-model fork (room-first composition vs the ratified
+one-canvas dungeon-builder target) plus four adjacent gaps — no self-position
+read (toolkit#933), inconsistent position shapes, stateless doors vs the
+tomb's authored lock, and `Traverse`'s contingent existence. Design §0 now
+gates the affected field shapes on Kirk's ruling; plan W1 carries the
+preconditions, including the census's forcing case (the reference tomb runs
+on the new stack, entrance → hall → tomb). The rest of the design is
+un-gated and stands.

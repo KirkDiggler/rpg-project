@@ -42,6 +42,17 @@ decided.
 
 ## Open questions
 
+- **THE WORLD-MODEL FORK — Kirk's ruling, gates W1.** Room-first (the new
+  composition: rooms, portal connections, `Traverse`, room-local positions)
+  vs one-canvas (the ratified dungeon-builder target and live authored
+  dialect: flat absolute regions, a doorway is a move step). Decides
+  `Traverse`'s existence, position field shapes, and door state/locks.
+  Census from the toolkit lane arriving on #227; design §0 holds the
+  affected proto shapes open. Forcing case: the shipped reference tomb runs
+  on the new stack, a player walks entrance → hall → tomb.
+- **No self-position read** (toolkit#933): a reconnecting client cannot
+  learn its own room+cell; SDK fix precedes the W1 read shapes (design
+  rule 11).
 - **Chapter 2 / board 13 ("Combat Verbs" on the v1alpha2 route) is
   superseded by #227** — needs Kirk's confirmation, then the board note.
 - **Coexistence flag shape** (which stack `StartEncounter` creates on) —
@@ -49,10 +60,11 @@ decided.
 
 ## Next
 
-**W1 of `ideas/session-api/plan.md`: the protos.** Platform lane cuts
-`dnd5e/api/session/v1alpha1/` in rpg-api-protos per the design's rules
-(mirror the SDK's exported types field-for-field; Event per MUST-3).
-Then W2 rpg-api beside the old path → W3 web in parallel → W4 cutover.
+**Kirk's world-model ruling** (the first open question) — it gates W1's
+field shapes. Then W1: platform lane cuts `dnd5e/api/session/v1alpha1/` in
+rpg-api-protos per the design's rules; un-gated messages (stream, errors,
+fight verbs) may draft meanwhile. Then W2 rpg-api beside the old path →
+W3 web in parallel → W4 cutover.
 
 ## Decision log
 

@@ -11,11 +11,22 @@ Design ratified on the PR; `sessions/active.md` brought current.
 
 ## W1 — protos (rpg-api-protos, base `origin/main`)
 
+**Preconditions (design §0):** (a) Kirk's world-model ruling — room-first vs
+one-canvas, decision moment arriving with the toolkit lane's census on #227;
+(b) the forcing case demonstrated toolkit-side: the shipped reference tomb
+compiles into a runnable new-stack world and a player walks
+entrance → hall → tomb; (c) the SDK's position-shape inconsistency and the
+"where am I" read (toolkit#933, design rule 11) fixed, so the protos
+transcribe fixed shapes rather than inconsistencies. Verbs and messages
+outside the gate (stream, errors, attack/turn/dissolve, reads minus
+position fields) may be drafted meanwhile, but nothing merges before the
+ruling.
+
 `dnd5e/api/session/v1alpha1/`: `SessionService` per design §1–2, the `Event`
 message per MUST-3, request/response messages mirroring the SDK's exported
 inputs/outputs. Additive — `buf breaking` stays green. Done when: reviewed
 against the design's rules, merged, released; the release note names the SDK
-stack version the shapes were read from (session/v0.8.0).
+stack version the shapes were read from.
 
 ## W2 — rpg-api (base `origin/dev`, one branch)
 
