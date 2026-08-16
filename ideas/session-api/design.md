@@ -107,7 +107,9 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
     at construction; construction is total.
 11. **MUST: a cold client can learn its own position from reads alone.**
     Today no SDK read answers "where am I" — `View` skips self and sight
-    does not cross doorways, `Status` lacks member positions (toolkit#933) —
+    does not cross doorways (a structural consequence of separate room
+    containers, not a ratified rule — the ADR behind it was never accepted),
+    `Status` lacks member positions (toolkit#933) —
     so a reconnecting client cannot place itself even with a full story.
     The SDK-side fix lands before W1 freezes the read shapes; the proto
     read (`GetStatus` or successor) transcribes it.
