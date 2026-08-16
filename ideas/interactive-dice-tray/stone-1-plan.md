@@ -999,4 +999,6 @@ All six tasks completed through web PR [#756](https://github.com/KirkDiggler/rpg
 - Full suite: 192 files / 3,394 tests; format, lint, typecheck, build, CI, pre-push, private guards, and all GitHub checks passed.
 - Exact evidence: 12/12 scenarios, 18 protocol PNGs, 12 contexts, PASS-only marker; package-manifest SHA-256 `947ee1c884d698c295588f01deb9a5fd9d19fee29bcf8b4066c51e35f2711e54`.
 - Final privacy review removed reconstructible held-pose history from the browser bridge; only generation-fenced monotonic booleans and sanitized final facts leave the renderer.
-- Kirk inspected and approved the live exact-head interaction. Web #755 and Project 19 are In Review. PR #756 remains unmerged for Kirk's decision.
+- Kirk inspected and approved the live exact-head interaction. PR #756 merged to `dev` as `7b049d57f7956a7db963e622b5ec681a5ba3ce97`; its merge tree exactly matches reviewed head `fe19dc7`. Web #755 is closed and its Project 19 item is Done.
+
+For a new-machine restart, this plan is execution history rather than the next implementation queue. Continue from `design.md` and create a separate tracked slice for whichever missing authority is chosen next: production transport/reconnect, equipped-preset projection, authoritative per-die results for Stone 2, or verified collision/face inputs for Stone 3. Do not extend Stone 1 ad hoc.

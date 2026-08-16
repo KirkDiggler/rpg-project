@@ -3,7 +3,7 @@ name: Interactive Collectible 3D Dice Tray
 description: A shared player ritual for throwing collectible dice while authoritative server outcomes remain unchanged
 updated: 2026-08-15
 confidence: high on the merged authority/presentation boundary, corrected direct-tag Original carved d20 semantics, exact 2,684/7,798 roles, independent upward-result observation, accepted Stone 0 evidence, and reviewed Stone 1 tactile choreography; production transport/ownership, rigid-body settlement, and individual damage-die authority remain gated
-status: Stone 0 complete — corrected assets contract merged through rpg-game-assets#60 at 7fed0fc and web consumer through rpg-dnd5e-web#752 at 8bc2a27; Stone 1 implemented and exact-head approved through open web PR #756 at fe19dc7, awaiting Kirk's merge decision
+status: Stones 0 and 1 complete — corrected asset authority merged through rpg-game-assets#60 at 7fed0fc, Stone 0 web semantics through rpg-dnd5e-web#752 at 8bc2a27, and Stone 1 tactile choreography through rpg-dnd5e-web#756 at 7b049d5; later stones remain separately gated
 ---
 
 # Interactive Collectible 3D Dice Tray
@@ -19,7 +19,7 @@ status: Stone 0 complete — corrected assets contract merged through rpg-game-a
 - [rpg-game-assets#53](https://github.com/KirkDiggler/rpg-game-assets/issues/53) / [PR #55](https://github.com/KirkDiggler/rpg-game-assets/pull/55) — merged the first Stone 0 consumer runtime manifest/provider-root slice
 - [rpg-game-assets#57](https://github.com/KirkDiggler/rpg-game-assets/issues/57) / [PR #60](https://github.com/KirkDiggler/rpg-game-assets/pull/60) — corrected carved result identity from direct tags, published strict runtime v2 witnesses, fixed the exact 2,684/7,798 roles, and merged at `7fed0fc`
 - [rpg-dnd5e-web#751](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/751) / [PR #752](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/752) — consumed strict v2, independently observed upward results, replaced the circular evidence oracle, and merged Stone 0 at `8bc2a27`
-- [rpg-dnd5e-web#755](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/755) / [PR #756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) — implemented and reviewed Stone 1 tactile one-member roll groups, sanitized `VisualThrowProfile@1`, deterministic choreography, and exact-SHA evidence; PR is In Review for Kirk
+- [rpg-dnd5e-web#755](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/755) / [PR #756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) — implemented and reviewed Stone 1 tactile one-member roll groups, sanitized `VisualThrowProfile@1`, deterministic choreography, and exact-SHA evidence; merged to `dev` at `7b049d5`
 
 ## Summary
 
@@ -104,7 +104,7 @@ It contains no raw client coordinates, path history, timestamps, result, target,
 
 ### Stone 1 implementation gate — 2026-08-15
 
-Web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) implements the approved slice at exact reviewed head `fe19dc7fff00890d6e7fec18ad8a03b982ee6b28` without changing the server-selected result or the merged `DiceTrayPresentation` authority boundary.
+Web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) implemented the approved slice at exact reviewed head `fe19dc7fff00890d6e7fec18ad8a03b982ee6b28` and merged to `dev` as `7b049d57f7956a7db963e622b5ec681a5ba3ce97` without changing the server-selected result or the merged `DiceTrayPresentation` authority boundary. The merge tree `46bbc6356b14303f2e92026a663727f1b6826189` exactly equals the reviewed-head tree, so the accepted package binds the merged bytes unchanged.
 
 - `RollGroupGestureController` keeps raw pointer coordinates, IDs, timestamps, bounds, histories, velocity, and tilt local; the Concepts evidence bridge exposes only generation-fenced monotonic booleans and final sanitized profile/observation facts.
 - Native pointer ownership lives on the renderer surface, so the exact 14 px mouse / 24 px touch envelope and outside-capture release are reachable while the explicit keyboard-neutral control remains intact.
@@ -114,6 +114,8 @@ Web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) implements 
 - The exact-head full suite passed 192 files / 3,394 tests; local gates and all GitHub checks passed. Kirk independently inspected the live exact head and approved it.
 
 One nonblocking Low remains in a static source-order test assertion; direct behavioral terminal-publication tests cover failure before, during, and after PASS. Production transport/reconnect, equipped-preset projection, physical touch hardware, real Discord/mobile/low-GPU coverage, multi-die groups, rigid-body settlement, and formal paired performance remain explicitly ungraduated.
+
+**Restart direction:** do not reopen Stone 1 or smuggle later scope through its Concepts bridge. Production delivery first needs an approved transport/correlation/reconnect contract; Spectator collectible identity first needs authoritative equipped-preset projection; Stone 2 must wait for authoritative per-die/subset results; Stone 3 must preserve the same solver boundary and consume verified set-wide face maps plus tray collision geometry. Start each as a separately tracked slice owned by the repository/lane that supplies its missing authority.
 
 ### Permanent solver boundary
 

@@ -290,19 +290,23 @@ free.**
 
 ## Other lanes
 
-- **Interactive collectible dice tray (#219) — Stone 1 is In Review.** Stone 0 remains shipped:
-  assets PR #60 at `7fed0fc`, web PR #752 at `8bc2a27`, corrected Original carved d20 GLB
-  `87bf2d05...a77e`, 2,684 body / 7,798 numeral triangles, and accepted package manifest
-  `7fcd64b...69809`. Stone 1 web PR [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756)
-  implements the approved one-member tactile group at exact reviewed head `fe19dc7`: local native
-  grab/outside capture, sanitized `VisualThrowProfile@1`, provider-backed
+- **Interactive collectible dice tray (#219) — Stones 0 and 1 shipped.** Stone 0: assets PR #60
+  at `7fed0fc`, web PR #752 at `8bc2a27`, corrected Original carved d20 GLB
+  `87bf2d05...a77e`, and package manifest `7fcd64b...69809`. Stone 1: web PR
+  [#756](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/756) merged to `dev` as `7b049d5`
+  from reviewed head `fe19dc7`; the merge tree exactly matches the reviewed tree. It ships local
+  native grab/outside capture, sanitized `VisualThrowProfile@1`, provider-backed
   `ChoreographedSolverV1`, independent Roller/Spectator ownership, static reduced motion, truthful
-  fallback, and privacy-safe generation-fenced evidence facts. Final review is 0 Blocker / 0 High /
-  0 Medium; full suite 192 files / 3,394 tests; all local and GitHub checks passed. Exact package
-  manifest: `947ee1c...11e54` (12/12 scenarios, 18 PNGs, 12 contexts, PASS only); Kirk approved the
-  live exact head. Web #755 and Project 19 are In Review. **Do not merge; Kirk decides.** One
-  nonblocking Low static assertion is covered behaviorally. Never reuse rejected
-  `75c5687`/`de2377e2`. Stone 2 multi-die and Stone 3 physical settlement remain later.
+  fallback, and privacy-safe generation-fenced evidence facts. Final review: 0 Blocker / 0 High /
+  0 Medium; full suite 192 files / 3,394 tests; all local/GitHub checks passed; exact package
+  manifest `947ee1c...11e54` (12/12 scenarios, 18 PNGs, 12 contexts, PASS only); Kirk approved the
+  live exact head. Web #755 is closed/Done. **Laptop restart:** read
+  `ideas/interactive-dice-tray/design.md`, then treat `stone-1-plan.md` as completed history. Do not
+  reopen Stone 1 or reuse rejected `75c5687`/`de2377e2`. Production delivery needs an approved
+  transport/correlation/reconnect contract; Spectator identity needs authoritative equipped-preset
+  projection; Stone 2 waits for authoritative per-die/subset results; Stone 3 waits for verified
+  set-wide face maps and tray collision geometry. File the chosen next slice separately with its
+  owning lane/repository.
 - **Semantic scope (#180)** — parked. Wave 0 is live-verified (proto root `v0.1.120`, toolkit
   `encounter/v0.49.1`, rpg-api#771; evidence on rpg-project#192). Wave 1 implementation has not
   started; issues can be cut when the lane is picked back up.
