@@ -18,21 +18,23 @@ surface — speaks **one map**.
 
 Consequences, now normative:
 
-- **No `Traverse` RPC.** A doorway crossing is an ordinary move step on the
-  wire. The seam's current `Traverse` verb retires with the SDK's
-  absolute-projection reshape.
-- **Every wire position is dungeon-absolute.** Room IDs do not cross the
-  seam; semantic scoping stays the dungeon-builder model (regions on a
-  canvas).
+- **`Traverse` is transitional.** At the destination a doorway crossing is
+  an ordinary move step on the wire; the RPC exists while the seam exposes
+  the verb, and retires when the SDK's absolute-projection convergence
+  retires it.
+- **The destination for wire positions is dungeon-absolute.** Room IDs stop
+  crossing the seam as the SDK converges; semantic scoping stays the
+  dungeon-builder model (regions on a canvas).
 - **Door state and locks are unaffected** — the fork-independent gap
   (census gap 4: the reference tomb's locked DC-12 connector) arrives with
   its own capability work.
 
-W1 still freezes nothing for move/position/read shapes until the SDK seam
-projects absolute geometry (retiring room-local outputs and `Traverse`) and
-the self-position read lands (rule 11, toolkit#933) — see plan W1
-preconditions. The stream, errors, fight verbs, creation, coexistence, and
-cutover were never gated.
+**Getting started (Kirk, same day):** *"the contract the session package
+already exposed is all we need to get started."* W1 has no preconditions:
+it transcribes the exported surface as it stands — `Traverse` and the
+current position shapes included. The ruling above is the seam's
+destination, not a proto gate; the SDK converges on its own schedule and
+the protos follow each reshape (pre-adoption, break-in-place is cheap).
 
 ## Scope
 
@@ -52,7 +54,8 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 |---|---|---|
 | `Join` | `Join` | roster |
 | `Exit` | `Exit` | roster |
-| `Move` | `Move` | free roam (path, not cell; doorway crossings are ordinary steps per §0) |
+| `Move` | `Move` | free roam (path, not cell) |
+| `Traverse` | `Traverse` | free roam (cross a connection) — transitional per §0 |
 | `Attack` | `Attack` | fight (character attackers only in v1) |
 | `Turn` | `Turn` | fight |
 | `EndTurn` | `EndTurn` | fight |
@@ -106,14 +109,13 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 10. **MUST: capabilities are supplied, never defaulted** (toolkit law from
     resolution#1033): `Config.Dice` and every repository are wired explicitly
     at construction; construction is total.
-11. **MUST: a cold client can learn its own position from reads alone.**
-    Today no SDK read answers "where am I" — `View` skips self and sight
-    does not cross doorways (a structural consequence of separate room
-    containers, not a ratified rule — the ADR behind it was never accepted),
-    `Status` lacks member positions (toolkit#933) —
-    so a reconnecting client cannot place itself even with a full story.
-    The SDK-side fix lands before W1 freezes the read shapes; the proto
-    read (`GetStatus` or successor) transcribes it.
+11. **MUST (destination): a cold client can learn its own position from
+    reads alone.** Today no SDK read answers "where am I" — `View` skips
+    self and sight does not cross doorways (a structural consequence of
+    separate room containers, not a ratified rule), `Status` lacks member
+    positions (toolkit#933). The fix is SDK-first and is **not a W1 gate**
+    (Kirk 2026-08-15): it lands as its own wave and the proto read follows;
+    until then reconnect leans on `GetStory` replay.
 
 ## 3. rpg-api shape
 

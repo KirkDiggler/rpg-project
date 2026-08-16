@@ -43,8 +43,8 @@ decided.
 ## Open questions
 
 - **No self-position read** (toolkit#933): a reconnecting client cannot
-  learn its own position; SDK fix precedes the W1 read shapes (design
-  rule 11) and rides the seam reshape below.
+  learn its own position; SDK-first fix as its own wave, NOT a W1 gate
+  (design rule 11); until then reconnect leans on `GetStory` replay.
 - **Chapter 2 / board 13 ("Combat Verbs" on the v1alpha2 route) is
   superseded by #227** — needs Kirk's confirmation, then the board note.
 - **Coexistence flag shape** (which stack `StartEncounter` creates on) —
@@ -52,15 +52,14 @@ decided.
 
 ## Next
 
-**The SDK seam reshape** (toolkit) — Kirk's world-model ruling is IN
-(2026-08-15, design §0: rooms internal to the encounter, seam projects
-absolute geometry, wire = one map), so the remaining W1 preconditions are
-toolkit-side: absolute positions on every seam output, `Traverse` retired,
-the self-position read (#933), and the forcing case (reference tomb runs,
-entrance → hall → tomb as one move surface). Sequencing vs the combat
-capability push is Kirk's slotting. Un-gated proto messages (stream,
-errors, fight verbs) may draft anytime. Then W1 merge → W2 rpg-api beside
-the old path → W3 web in parallel → W4 cutover.
+**W1 is GO — no preconditions** (Kirk 2026-08-15: "the contract the
+session package already exposed is all we need to get started"). Platform
+lane cuts `dnd5e/api/session/v1alpha1/` in rpg-api-protos, transcribing
+session's exported surface as it stands (`Traverse` transitional per
+design §0); known deltas (seam one-map convergence, #933 self-position
+read, stream vocabulary growth toolkit#959) land SDK-first and the protos
+follow. Then W2 rpg-api beside the old path → W3 web in parallel →
+W4 cutover.
 
 ## Decision log
 
@@ -73,7 +72,8 @@ the old path → W3 web in parallel → W4 cutover.
 | 2026-08-15 | Creation stays the lobby's; `StartSession`/`Spawn` not exposed on the new service | design §2 rule 5 |
 | 2026-08-15 | Stream = `session.Event` mirrored, bytes payload passthrough; host never filters visibility | design MUST-3/4 |
 | 2026-08-15 | Build new beside old; **cutover = the rip-out**; web parallel implementation starts when protos are decided | rpg-project#227, plan.md |
-| 2026-08-15 | **World-model ruling: one map at the seam** — "the encounter has rooms but projects the absolute geo of the dungeon so the session package sees it as all one map"; no `Traverse` on the wire, all wire positions dungeon-absolute, door/lock gap unaffected | design §0, #227 |
+| 2026-08-15 | **World-model ruling: one map at the seam** — "the encounter has rooms but projects the absolute geo of the dungeon so the session package sees it as all one map"; the seam's destination, door/lock gap unaffected | design §0, #227 |
+| 2026-08-15 | **W1 preconditions dropped** — "the contract the session package already exposed is all we need to get started"; protos transcribe today's surface, `Traverse` transitional, deltas follow SDK-first | design §0, plan W1 |
 
 ## Carried follow-ups — filed, none blocking
 

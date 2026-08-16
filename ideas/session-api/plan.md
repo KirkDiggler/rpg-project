@@ -11,15 +11,14 @@ Design ratified on the PR; `sessions/active.md` brought current.
 
 ## W1 — protos (rpg-api-protos, base `origin/main`)
 
-**Preconditions (design §0):** (a) ~~the world-model ruling~~ **RESOLVED
-2026-08-15** — one map at the seam, recorded in §0 and on #227; (b) the SDK
-seam reshape that makes the ruling true at the wire: dungeon-absolute
-positions on every output, `Traverse` retired, the self-position read
-(toolkit#933, design rule 11); (c) the forcing case demonstrated
-toolkit-side: the shipped reference tomb compiles into a runnable new-stack
-world and a player walks entrance → hall → tomb as one continuous move
-surface. Un-gated messages (stream, errors, attack/turn/dissolve) may be
-drafted meanwhile, but nothing merges before (b) and (c).
+**Preconditions: none** — Kirk (2026-08-15): *"the contract the session
+package already exposed is all we need to get started."* W1 transcribes
+session's exported surface as it stands, pinned to whatever SDK version is
+current at freeze. The world-model ruling (design §0) is the seam's
+destination, not a gate; known in-flight deltas — seam convergence to the
+absolute one-map projection, the self-position read (toolkit#933), stream
+vocabulary growth (toolkit#959) — land SDK-first as their own waves, and
+the protos follow (break-in-place is cheap until adoption).
 
 **Shape-motion watch:** the combat capability train will grow the
 stream/story vocabulary while W1 waits — attack outcome kinds, HP-change
