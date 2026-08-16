@@ -65,6 +65,7 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 | `GetStatus` | `Status` | read |
 | `GetStory` | `Story` | read — the resync source of truth |
 | `GetView` | `View` | read (sightings) |
+| `GetWhere` | `Where` | read — the caller's own cell (added `session/v0.13.0`) |
 | `GetAtlas` | `Atlas` | read (static; client caches per encounter) |
 | `StreamEvents` | `EventStream` | server-streaming |
 
@@ -110,13 +111,13 @@ additive (no change to existing packages). RPCs mirror the SDK verbs:
 10. **MUST: capabilities are supplied, never defaulted** (toolkit law from
     resolution#1033): `Config.Dice` and every repository are wired explicitly
     at construction; construction is total.
-11. **MUST (destination): a cold client can learn its own position from
-    reads alone.** Today no SDK read answers "where am I" — `View` skips
-    self and sight does not cross doorways (a structural consequence of
-    separate room containers, not a ratified rule), `Status` lacks member
-    positions (toolkit#933). The fix is SDK-first and is **not a W1 gate**
-    (Kirk 2026-08-15): it lands as its own wave and the proto read follows;
-    until then reconnect leans on `GetStory` replay.
+11. **MUST: a cold client can learn its own position from reads alone —
+    SATISFIED at `session/v0.13.0`** (toolkit#1051, "a client can ask
+    where it stands", closing toolkit#933's wire half exactly as this
+    rule's SDK-first path predicted). `GetWhere` mirrors
+    `Where(WhereInput{Session, Member}) → WhereOutput{Position}` — the
+    caller's own cell in dungeon-absolute space. Cold-client reconnect is
+    `GetWhere` + `GetAtlas` + `GetStory`.
 
 ## 3. rpg-api shape
 
