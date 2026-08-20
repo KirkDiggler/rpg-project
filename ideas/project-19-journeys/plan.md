@@ -164,6 +164,6 @@ still omitted its Parent issue projection; direct GraphQL verified those links.
   git push
   ```
 
-- [ ] Post signed checkpoints on issue #229 and PR #230 containing field IDs, view URLs/filters, initiative/journey URLs, #979/#1126 disposition, verification results, deviations, and the real checkpoint that will trigger the pilot retro.
+- [x] Post signed checkpoints on issue #229 and PR #230 containing field IDs, view URLs/filters, initiative/journey URLs, #979/#1126 disposition, verification results, deviations, and the real checkpoint that will trigger the pilot retro.
 
-- [ ] Change PR #230's phase to **Pilot Active** with `gh api -X PATCH`. Keep #229 and #230 open/In Progress. Do not claim the model successful until a real journey checkpoint or handoff exercises the retro criteria in design §13.
+- [x] Change PR #230's phase to **Pilot Active** with `gh api -X PATCH`. Keep #229 and #230 open/In Progress. Do not claim the model successful until a real journey checkpoint or handoff exercises the retro criteria in design §13.
