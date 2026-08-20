@@ -1,43 +1,63 @@
-# Active handoff — 2026-08-20
+# Active handoff — 2026-08-21
 
 ## Now
 
-**The session lane reached rpg-api.** As of 2026-08-20 the whole chain is aligned and merged:
-`encounter v0.26.0` → `resolution v0.10.0` → **`session v0.18.0`** → **`dnd5e.api.session.v1alpha1`**
-(rpg-api-protos#230) → **rpg-api `dev`** (PR #797 at **a61848d**, `SessionService` live beside the
-old encounter stack behind `RPG_SESSION_STACK_ENABLED`, unset in every deployment).
+**The tomb runs, the web draws it, and rendering it found a coordinate bug in the toolkit.**
 
-**W4 combat closed** (#966, `session/v0.8.0`): walks, sees, fights, swings, disengages, with zero
-rules in the session package.
+Since the 2026-08-20 handoff, three things landed and one is in flight.
 
-**The world model landed (S1–S5).** One `spatial.Room` spans the dungeon; rooms are *named regions*;
-walls are absolute boundary edges carrying `BlocksMovement`/`BlocksLineOfSight` independently; void
-is declared. S5 closed the floor mask (#1127 via #1131/#1133): a hex room's `{Width, Height}` is the
-authored offset rectangle, and an offset rectangle **shears** in axial space, so absolute projection
-adds the anchor in offset space and converts **once**.
+**1. The reference tomb runs on the new stack** (rpg-api#799, merged `accebd9`). A new-stack
+`StartEncounter` seeds three chambers with walls between them, a garrison of skeletons in the hall,
+and a captain behind a DC-12 locked door — the same dungeon the old stack always served, compiled by
+the new one. The "no authored-YAML → new-stack compiler" gap recorded in the last handoff **was
+already closed** by toolkit#1133 before it was written; only the prose was stale. `internal/sessionworld`
+holds the compile and the one seam the compiler leaves a host.
 
-**Session adopted that stack** (#1136 → `v0.18.0`, closing #1130) and it was mostly a **deletion** —
-six compile errors — because session had never used the verbs the world model removed.
+**2. The web speaks the new wire** (rpg-dnd5e-web#759, merged `e3f738fa`). Proto pin `v0.1.121` →
+`v0.1.127` — the old pin contained **zero** session files — plus a `sessionClient` and a Concepts Lab
+page that reads a session's atlas from the live server and walks a member by clicking cells. Not the
+game route: that keeps talking to `EncounterService` until the cutover, since four of the web's eight
+encounter calls have no counterpart on the new service.
 
-**Three consequences everything downstream inherits:**
+**3. Verified live end to end**, not just headless. Alice enters at the tomb's authored start, walks
+five cells **crossing a doorway inside a single Move**, sees nothing until she is four cells from a
+skeleton, and then a fight forms — with the captain still unseen behind the locked door.
 
-1. **Rooms no longer imply walls.** On one canvas two chambers side by side are ONE OPEN SPACE until
-   somebody draws the seam. The tomb compiler draws them; every hand-built world behaved wrongly
-   until it did the same. Anything authoring a world owes `Boundaries`, plus `Canvas.Void` (required,
-   no correct default) and the Standing/Sight capabilities.
-2. **Sight needed a NUMBER, and "invent nothing" was not available.** Unbounded range means ONE OPEN
-   DOOR MAKES THE WHOLE DUNGEON ONE FIGHT — an archway is a sightline into every cell beyond, so a
-   bystander joined a fight from the far room. `sightRangeCells = 4` (20ft, a torch's bright radius)
-   stands in until sheets carry vision data, which today they do not at all.
-3. **What the wire carries:** `Atlas{Grid, Cells, Props, Boundaries, Doorways}`. `Occluders` is gone —
-   `Props` name what a thing is and answer *both* blocking questions, because a coffin is walked
-   around but seen over and a pile of bones is neither. Deliberately absent: `Orientation` (a client
-   receiving cells never does the conversion a frame is for) and `Member.Region`.
+**4. IN FLIGHT — a coordinate-convention bug the render exposed.** `tools/spatial` had the two hex
+orientations **running each other's offset schemes**: pointy-top on odd-q (column-shifted, which is
+flat's) and flat-top on odd-r. Both directions swapped **identically**, which is why it survived — every
+caller goes offset → cube → offset through the same mismatched pair, so distances, neighbours, sight
+and round-trips are all self-consistent. **The bug is invisible to every property that stays inside the
+coordinate system.** It became visible exactly once: when the tomb was drawn in a browser and came out
+as a diagonal staircase.
 
-**Two capabilities came off the "not yet" list on the way**, and both changed behaviour under
-existing tests rather than merely adding surface: a fight now **ends by defeat** on its own when one
-side stops standing (`DissolveByDefeat`, v0.15.0), and a member can be **downed** (`EventDowned`).
-The action economy also started refusing (`ErrCannotAfford`, v0.17.0).
+Chain: **#1141 merged** (`tools/spatial/v0.10.0`) → **#1143 merged** (`encounter/v0.27.0`) → **#1145
+open** (session). After that the toolkit is done and the downstream is protos → rpg-api → web.
+
+## Next
+
+**Merge #1145**, then the original gap it all came from: **toolkit#1140 — the wire still cannot tell a
+client which way the hexes point.** `GridKind` says `SQUARE` or `HEX` and stops. What the correction
+changed is that the honest answer is now the *authored* orientation instead of its opposite, so a
+field can finally carry something true. Three options are laid out on the issue; the lean is an
+`Atlas.layout` named for what a client does with it rather than for what an author typed.
+
+Then the downstream, in order, and **each one has a known moving part**:
+
+- **protos** — the new field for #1140.
+- **rpg-api** — no code change expected (it translates), but `internal/sessionworld` pins `(1,-4)` as
+  the tomb's authored `start: [1,3]`, and that literal moves.
+- **rpg-dnd5e-web** — `src/concepts/session-tomb` hardcodes `DEFAULT_LAYOUT = 'flat'` **because of the
+  bug**, with a test asserting pointy is wrong. Both invert, and `referenceTombCells.json` wants
+  recapturing from a corrected server.
+
+**Also open and not blocking:** **toolkit#1139** (the compiler emits room-local placements, session's
+verbs take absolute, nothing published crosses — rpg-api borrows the projection via a throwaway probe
+at ~318µs per encounter start), **rpg-api#800** (partial-failure orphan policy, both stacks), and
+**#1135/#1137/#1138**.
+
+**The dungeon builder still cannot author for the new stack** — `PutDungeon` → `dungeonregistry`
+writes the OLD dialect. That is the next content-side piece and nothing has started on it.
 
 ## Solid
 
@@ -85,6 +105,32 @@ initiative on first sighting. **The difference the SDK actually brings is narrow
 the old stack flips a mode; the SDK stops and asks.** Do not describe free roam as new capability.
 
 **Rulings that decide future calls — don't re-derive these:**
+
+- **A SYMMETRIC BUG IS INVISIBLE TO ROUND-TRIPS.** `tools/spatial` had pointy-top and flat-top running
+  each other's offset schemes, swapped identically in BOTH directions, for the life of the module.
+  Every caller converts offset → cube → offset through the same mismatched pair, so distance,
+  neighbours, line of sight and round-trips were all perfectly self-consistent. **Round-trips, inverse
+  pairs and "these two implementations agree" tests all pass through the error twice and cancel it.**
+  What breaks the symmetry is an EXTERNAL reference — a rendering, a published convention, a system
+  that never saw your conversion. When a module owns both directions of a mapping, ask what would
+  still be true if the whole mapping were rotated; if the answer is "everything", the tests prove less
+  than they look like they do. The discriminator that works names a fact true under one convention and
+  not the other (here: `[-1,1]` is a neighbour under odd-r and two steps under odd-q).
+- **THE LABEL IS WHY NOBODY LOOKED — sweep every place a convention is ASSERTED, not just the code.**
+  The original defect was a constant and its comment disagreeing; the comment is what stopped anyone
+  checking the arithmetic. After fixing `encounter`'s two doc bullets, SIX other statements in the same
+  module still asserted the old mapping. A file where six comments say one thing and two say the other
+  is how the bug returns. Better still, write comments that cannot drift: name WHICH AXIS SHIFTS, not
+  which scheme, so the prose sits visibly beside the arithmetic it describes.
+- **Delegating a projection is not the same as restating one.** `encounter` said "POINTY-TOP is odd-q"
+  in its own words and cost 148 subtests; `session`'s `regionCells` — flagged in its own comment as "a
+  SECOND implementation" — merely loops and calls `HexCellAt`, so the correction flowed straight
+  through and cost ONE. When auditing duplicate logic, the question is whether the copy *decides* or
+  merely *asks*.
+- **"It passed" sometimes means "it never ran", and there is a tell for each.** A mutation reported as
+  killed with NO test names was a compile failure. A `GOWORK` scope reporting zero failures had a `go`
+  directive one patch too low — **zero failures AND zero `ok` lines together** is the signature, since
+  a passing Go run always prints `ok` per package. Both happened this wave.
 
 - **Start from the reversible direction.** Adding a `Config` field is compatible; removing one
   a host implemented is not. Loosening a rule is compatible; tightening breaks every host. So:
