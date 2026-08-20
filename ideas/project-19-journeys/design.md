@@ -1,7 +1,7 @@
 ---
 name: Project 19 Initiative and Journey Model
 tracking: https://github.com/KirkDiggler/rpg-project/issues/229
-status: proposed — conversation-approved 2026-08-20; written PR review pending
+status: approved by Kirk 2026-08-20; pilot implementation pending
 ---
 
 # Project 19 Initiative and Journey Model
@@ -186,8 +186,11 @@ This is the contributor front door.
 
 ### Active Journeys
 
-MUST show non-Done current-initiative journeys and their slice children,
-grouped by parent journey. It MUST expose current PR/review state and blockers.
+MUST show non-Done current-initiative journeys and their slice children with
+Parent issue and Sub-issues progress visible. It SHOULD group by parent journey
+when the available Project view API can configure that grouping. API-writable
+filters and visible hierarchy MUST take precedence over a browser-only grouping
+step during the pilot.
 
 ### Discovery and Concepts
 

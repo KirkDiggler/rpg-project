@@ -144,6 +144,15 @@ Journey parents record hard dependencies now. Start and target dates are added
 later only when scheduling becomes useful and honest. Sequence is not encoded
 through title numbering or speculative dates.
 
+## Planning discovery: Project view API
+
+GitHub's current GraphQL API can create and update Project 19 fields, views,
+filters, visible columns, and cross-repository sub-issue relationships. Its
+writable view configuration does not expose group-by fields. The pilot therefore
+uses API-verifiable table views with Parent issue and Sub-issues progress
+visible; visual parent grouping remains an optional later refinement rather
+than a browser-only setup requirement.
+
 ## Current-architecture reconciliation
 
 Project 19 contains current work, but some issue premises predate the composable
