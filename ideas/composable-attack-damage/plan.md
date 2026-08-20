@@ -64,13 +64,14 @@ git -C /home/dammitbilly/game-dev/rpg-project commit -m "docs: preserve composab
 - Consumes: source branch `feat/composable-attack-damage-canonical` and current `origin/main`.
 - Produces: exact source/base SHAs used by all path-limited re-cuts.
 
-- [ ] **Step 1: Refresh the base without modifying either repository**
+- [x] **Step 1: Refresh the base without modifying either repository**
 
 Run: `git -C /home/dammitbilly/game-dev/rpg-toolkit fetch origin main`
 
-Expected: `origin/main` resolves successfully.
+Expected: `origin/main` resolves successfully. The locally fetched ref used for
+this execution resolves to `bb7ccd428a45ff30a17dfff06bae5d2e68f61336`.
 
-- [ ] **Step 2: Record the source and base**
+- [x] **Step 2: Record the source and base**
 
 Run:
 
@@ -79,13 +80,21 @@ git -C /home/dammitbilly/game-dev/rpg-toolkit rev-parse feat/composable-attack-d
 git -C /home/dammitbilly/game-dev/rpg-toolkit rev-parse origin/main
 ```
 
-Expected source at plan creation: `2e980b875e0842b449aab0de298914e7104da4b0`. Update this plan with the actual base SHA immediately before execution.
+Recorded immutable inputs for every path-limited re-cut:
 
-- [ ] **Step 3: Confirm PR #1144 remains an unchanged source snapshot**
+- Source `feat/composable-attack-damage-canonical`: `2e980b875e0842b449aab0de298914e7104da4b0`.
+- Base `origin/main`: `bb7ccd428a45ff30a17dfff06bae5d2e68f61336`.
+
+Use these full SHAs below; do not substitute a moving branch name or an
+abbreviated source SHA.
+
+- [x] **Step 3: Confirm PR #1144 remains an unchanged source snapshot**
 
 Run: `gh pr view 1144 --repo KirkDiggler/rpg-toolkit --json state,headRefOid,headRefName`
 
-Expected: open PR, head `feat/composable-attack-damage-canonical`, head SHA matching the recorded source.
+Expected: open PR, head `feat/composable-attack-damage-canonical`, head SHA matching the recorded source. The last confirmed result is source
+SHA `2e980b875e0842b449aab0de298914e7104da4b0`; live re-query was unavailable
+in this execution because network access was blocked.
 
 ---
 
@@ -106,13 +115,13 @@ Expected: open PR, head `feat/composable-attack-damage-canonical`, head SHA matc
 - Modify: `docs/adr/README.md`
 
 **Interfaces:**
-- Consumes: canonical damage declarations, monster actions, feature subscribers, and legacy deletion from source SHA `2e980b8`.
+- Consumes: canonical damage declarations, monster actions, feature subscribers, and legacy deletion from source SHA `2e980b875e0842b449aab0de298914e7104da4b0`.
 - Produces: a green `rulebooks/dnd5e` provider release containing canonical damage APIs and no consumer-module edits.
 
 - [ ] **Step 1: Create the clean provider branch**
 
 ```bash
-git -C /home/dammitbilly/game-dev/rpg-toolkit worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-provider -b feat/composable-attack-damage-provider origin/main
+git -C /home/dammitbilly/game-dev/rpg-toolkit worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-provider -b feat/composable-attack-damage-provider bb7ccd428a45ff30a17dfff06bae5d2e68f61336
 ```
 
 - [ ] **Step 2: Generate a path-limited provider patch**
@@ -120,7 +129,7 @@ git -C /home/dammitbilly/game-dev/rpg-toolkit worktree add /home/dammitbilly/gam
 Run from the source worktree:
 
 ```bash
-git diff --binary --output=/tmp/composable-damage-provider.patch origin/main...2e980b8 -- \
+git diff --binary --output=/tmp/composable-damage-provider.patch bb7ccd428a45ff30a17dfff06bae5d2e68f61336...2e980b875e0842b449aab0de298914e7104da4b0 -- \
   rulebooks/dnd5e \
   ':!rulebooks/dnd5e/resolution/**' \
   ':!rulebooks/dnd5e/session/**' \
@@ -227,7 +236,7 @@ Expected: PASS on the provider-only branch.
 Run:
 
 ```bash
-git diff --name-only origin/main...HEAD | rg '^(encounter/|rulebooks/dnd5e/(resolution|session|encounter)/|docs/superpowers/|\.superpowers/)'
+git diff --name-only bb7ccd428a45ff30a17dfff06bae5d2e68f61336...HEAD | rg '^(encounter/|rulebooks/dnd5e/(resolution|session|encounter)/|docs/superpowers/|\.superpowers/)'
 ```
 
 Expected: no output and exit status 1.
@@ -290,13 +299,13 @@ Expected: module metadata, not an unknown-revision error. If CI chose a differen
 
 ```bash
 git fetch origin main
-git worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-resolution -b feat/composable-attack-damage-resolution origin/main
+git worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-resolution -b feat/composable-attack-damage-resolution bb7ccd428a45ff30a17dfff06bae5d2e68f61336
 ```
 
 - [ ] **Step 3: Apply only the resolution source diff**
 
 ```bash
-git diff --binary --output=/tmp/composable-damage-resolution.patch origin/main...2e980b8 -- rulebooks/dnd5e/resolution
+git diff --binary --output=/tmp/composable-damage-resolution.patch bb7ccd428a45ff30a17dfff06bae5d2e68f61336...2e980b875e0842b449aab0de298914e7104da4b0 -- rulebooks/dnd5e/resolution
 git -C /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-resolution apply -3 /tmp/composable-damage-resolution.patch
 ```
 
@@ -317,7 +326,7 @@ Expected: PASS, including multi-pool rolling, exact primary-marker selection, `D
 - [ ] **Step 6: Assert scope, commit, and open PR B**
 
 ```bash
-git diff --name-only origin/main...HEAD | rg -v '^rulebooks/dnd5e/resolution/'
+git diff --name-only bb7ccd428a45ff30a17dfff06bae5d2e68f61336...HEAD | rg -v '^rulebooks/dnd5e/resolution/'
 git diff --check
 git add rulebooks/dnd5e/resolution
 git commit -m "feat(resolution): resolve composable attack damage"
@@ -355,13 +364,13 @@ Expected: module metadata.
 
 ```bash
 git fetch origin main
-git worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-session -b feat/composable-attack-damage-session origin/main
+git worktree add /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-session -b feat/composable-attack-damage-session bb7ccd428a45ff30a17dfff06bae5d2e68f61336
 ```
 
 - [ ] **Step 3: Apply only the aggregate-boundary test**
 
 ```bash
-git diff --binary --output=/tmp/composable-damage-session.patch origin/main...2e980b8 -- rulebooks/dnd5e/session/attack_internal_test.go
+git diff --binary --output=/tmp/composable-damage-session.patch bb7ccd428a45ff30a17dfff06bae5d2e68f61336...2e980b875e0842b449aab0de298914e7104da4b0 -- rulebooks/dnd5e/session/attack_internal_test.go
 git -C /home/dammitbilly/game-dev/rpg-toolkit/.worktrees/composable-damage-session apply -3 /tmp/composable-damage-session.patch
 ```
 
@@ -395,7 +404,7 @@ Expected: PASS.
 - [ ] **Step 8: Assert scope, commit, and open PR C**
 
 ```bash
-git diff --name-only origin/main...HEAD | rg -v '^rulebooks/dnd5e/session/'
+git diff --name-only bb7ccd428a45ff30a17dfff06bae5d2e68f61336...HEAD | rg -v '^rulebooks/dnd5e/session/'
 git diff --check
 git add rulebooks/dnd5e/session
 git commit -m "test(session): pin aggregate strike recording"
