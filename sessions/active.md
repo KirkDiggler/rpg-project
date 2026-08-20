@@ -1,30 +1,43 @@
-# Active handoff — 2026-08-15
+# Active handoff — 2026-08-20
 
 ## Now
 
-**The session SDK lane** (`rulebooks/dnd5e/session`) — rpg-api's one interface to the toolkit.
-W0/W1/W2 shipped. **W3 step 1** (characters load) → `session/v0.3.0`. **W3 step 2** (conditions
-across a suspension) → PR #950 merged at **132f018**, tagged **`session/v0.3.1`** — a `test:`
-commit takes a **patch** bump. **W3 step 3** (NPCs — `Join`/`Spawn`) → PR #952 merged at
-**f0c7152**, tagged **`session/v0.4.0`**. Tracking
-[toolkit#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945).
+**The session lane reached rpg-api.** As of 2026-08-20 the whole chain is aligned and merged:
+`encounter v0.26.0` → `resolution v0.10.0` → **`session v0.18.0`** → **`dnd5e.api.session.v1alpha1`**
+(rpg-api-protos#230) → **rpg-api `dev`** (PR #797 at **a61848d**, `SessionService` live beside the
+old encounter stack behind `RPG_SESSION_STACK_ENABLED`, unset in every deployment).
 
-**Remaining in W3: T3.6's scene only**, and it is blocked — see Open questions. PR #953
-(ADR-0037 + enforced decisions digest) merged at **f9b720f**; PR #955 (the `play/` layering docs
-+ the W4 charter) merged at **ad19574**, taking `rulebooks/dnd5e/v0.80.1`.
+**W4 combat closed** (#966, `session/v0.8.0`): walks, sees, fights, swings, disengages, with zero
+rules in the session package.
 
-**W4 is combat, built new** — chartered (plan.md, six deflect/ponder clauses), sliced onto board
-19 as toolkit **#963→#966** under tracker **#959**, and its foundation is **decided end to
-end**: **ADR-0038 — resolution owns the bus** (merged `8f74220`, 2026-08-14). Step 4.1 shipped
-(PR #960 → **`encounter/v0.5.0`**: members on clocks, bubbles persist, `ClockOf` answers).
-**Step 4.2 shipped** (PR #969 → **`encounter/v0.6.0`**, #963 closed): the composition can make a
-fight — `Form`/`Transfer`/`EndTurn`/`Dissolve`, the DOS2 split-party scenario runs through the
-composition with R6 asserted after every transition, and the coexistence rules landed with it
-(**a fight member is the fight's alone**: Move/Traverse reject with `ErrInBubble`, Pump skips —
-the world thinks on the tick, a fight thinks in turns). **Next: #965 — the resolution package**
-under ADR-0038; its first task is the suspension-point probe. The trigger question (#964) is
-answered in direction: **mutual awareness** (Kirk), revisable — and rides along later as
-`encounter.NewWalk`'s `Pose`.
+**The world model landed (S1–S5).** One `spatial.Room` spans the dungeon; rooms are *named regions*;
+walls are absolute boundary edges carrying `BlocksMovement`/`BlocksLineOfSight` independently; void
+is declared. S5 closed the floor mask (#1127 via #1131/#1133): a hex room's `{Width, Height}` is the
+authored offset rectangle, and an offset rectangle **shears** in axial space, so absolute projection
+adds the anchor in offset space and converts **once**.
+
+**Session adopted that stack** (#1136 → `v0.18.0`, closing #1130) and it was mostly a **deletion** —
+six compile errors — because session had never used the verbs the world model removed.
+
+**Three consequences everything downstream inherits:**
+
+1. **Rooms no longer imply walls.** On one canvas two chambers side by side are ONE OPEN SPACE until
+   somebody draws the seam. The tomb compiler draws them; every hand-built world behaved wrongly
+   until it did the same. Anything authoring a world owes `Boundaries`, plus `Canvas.Void` (required,
+   no correct default) and the Standing/Sight capabilities.
+2. **Sight needed a NUMBER, and "invent nothing" was not available.** Unbounded range means ONE OPEN
+   DOOR MAKES THE WHOLE DUNGEON ONE FIGHT — an archway is a sightline into every cell beyond, so a
+   bystander joined a fight from the far room. `sightRangeCells = 4` (20ft, a torch's bright radius)
+   stands in until sheets carry vision data, which today they do not at all.
+3. **What the wire carries:** `Atlas{Grid, Cells, Props, Boundaries, Doorways}`. `Occluders` is gone —
+   `Props` name what a thing is and answer *both* blocking questions, because a coffin is walked
+   around but seen over and a pile of bones is neither. Deliberately absent: `Orientation` (a client
+   receiving cells never does the conversion a frame is for) and `Member.Region`.
+
+**Two capabilities came off the "not yet" list on the way**, and both changed behaviour under
+existing tests rather than merely adding surface: a fight now **ends by defeat** on its own when one
+side stops standing (`DissolveByDefeat`, v0.15.0), and a member can be **downed** (`EventDowned`).
+The action economy also started refusing (`ErrCannotAfford`, v0.17.0).
 
 ## Solid
 
@@ -38,6 +51,14 @@ answered in direction: **mutual awareness** (Kirk), revisable — and rides alon
 | `dnd5e/session` | v0.1.0 | 407bd57 | shell, 10 free-roam verbs, event stream, the boundary test |
 | `dnd5e/session` | v0.2.0 | 556b2e1 | the interrupt spine — suspend, persist, resume in a fresh process |
 | `dnd5e/session` | v0.3.0 | 5c79152 | characters load through the host's repository |
+| `dnd5e/session` | v0.8.0 | #966 | W4 combat closed — walks, sees, fights, swings, disengages, zero rules |
+| `dnd5e/session` | v0.15.0 | #1079 | a fight can be lost, and the seam says so — `DissolveByDefeat`, `EventDowned` |
+| `dnd5e/session` | v0.17.0 | #1097 | a second swing costs something — the action economy starts refusing |
+| `dnd5e/session` | **v0.18.0** | #1136 | speaks the new Atlas — one map of cells, props that say what they are |
+| `dnd5e/encounter` | **v0.26.0** | #1131/#1133 | S5: the floor mask; one-projection law; canonical door IDs |
+| `dnd5e/resolution` | v0.10.0 | — | lifted with the aligned stack |
+| `api.session.v1alpha1` | protos#230 | c6d579f | the wire re-transcribed against session v0.18.0 |
+| `rpg-api` | PR #797 | a61848d | `SessionService` live on `dev` beside the old stack |
 | `dnd5e/session` | v0.3.1 | 132f018 | conditions survive a suspension; the store is never damaged |
 | `dnd5e/session` | v0.4.0 | f0c7152 | `Join` loads players, `Spawn` instantiates content from a ref |
 
@@ -200,31 +221,33 @@ _(#916's dangling `closes #916` references were removed on PR #950.)_
 
 ## Next
 
-**W3 is one step from done.** Everything in [#945](https://github.com/KirkDiggler/rpg-toolkit/issues/945)
-has shipped except **T3.6's scene** — *Alice raging when she is loaded, without the caller ever
-mentioning rage* — which is **blocked** on `ConditionBehavior` having no `Ref()` (see Open
-questions). Nothing else in the wave depends on it, so W4 could start first if that decision
-stays open.
+**The live walkthrough.** #797's one open evidence box: drive the running server with
+`RPG_SESSION_STACK_ENABLED=1` and walk the placeholder world in the actual game. The headless
+acceptance loop is the merge evidence, not a substitute for seeing it
+(the standing rule is that each victory is verified LIVE in the running game before the next
+is built). Note the placeholder world **no longer opens in combat** — sight has a range now and the
+party enters eight cells from the skeleton — so there is finally something to walk.
 
-Then **W4 — combat, built new in the session package.** rpg-api does **not** migrate here; that
-comes later, once free roam and combat both work (Kirk, 2026-08-13). The old stack's ~6,700 lines
-of orchestration are *evidence about what a game server needs, never a specification to port* —
-and now explicitly not something we adapt to either.
+**Then the web lane (W3 of rpg-project#227).** The contract is settled and published; nothing blocks
+a client reimplementation against `dnd5e.api.session.v1alpha1` except starting it.
 
-**#963 — bubble town — is done** (PR #969 → `encounter/v0.6.0`). Every done-when item landed:
-DOS2 through the composition, R6 after every transition (`ClockOf` per member + a full
-trust-boundary reload), the on-no-clock guard reached and tested (white-box, fabricating the one
-state no public verb can produce), reject-not-merge pinned. Two things the issue didn't name but
-the work forced: **`EndTurn`** (the round cannot wrap without it — done-when governs the pointer
-list), and the **coexistence rules** (fight members rejected by Move/Traverse, skipped by Pump —
-a decider author never detects "am I in combat"; if `Decide` is called, the monster is
-free-roaming, now stated in the encounter README).
+**Two SDK gaps that a client will hit on day one**, both filed 2026-08-20, neither gating the merge:
 
-**Next is #965 — the resolution package under ADR-0038.** First task: the suspension-point probe
-(verify each phase boundary's chain output is self-describing data — any boundary holding a
-closure cannot suspend). Then the driver over the sealed vocabulary (`Gather | Pose | Request |
-Done`), the instrumented bus surface, and `combat.NewStrike` as the first machine. After that the
-seam (#966); #964's trigger rides along as `encounter.NewWalk`'s `Pose`.
+- **rpg-toolkit#1137 — a cold client cannot learn who is DOWNED.** The state exists only as a stream
+  beat; `Member` is `{id, kind, position}`, `Status` is `{open, outcome}`, and `Sighting.Status`
+  distinguishes a live sighting from a memory, not an upright member from a fallen one. So the
+  reconnect recipe (`GetWhere` + `GetAtlas` + `GetStory`) draws the whole party on its feet. Same
+  shape as the gap `GetWhere` closed; wants a read scoped to what the observer perceives, not an
+  encounter-wide roster (that would leak the cells `#1051` refused to batch).
+- **rpg-toolkit#1138 — the action economy refuses but never reports.** `ErrCannotAfford` is real and
+  its message names the currency that ran out, but nothing reports the budget *before* the refusal.
+  A turn UI therefore either offers a button that fails or re-derives how many swings a level-5
+  fighter gets — a rule in the client, the Boundary Rule violation this seam exists to prevent.
+
+**Also open:** #1135 (`Step` refuses a locked door with `ErrBadPlacement` — a fiction beat and a
+client bug share one sentinel, so the tomb's most player-visible moment is indistinguishable from a
+defect) and #1134 (CI never linted #1131/#1133/#1136 — every lint job self-skips; Kirk has his own
+cleanup session on it).
 
 ## Decision log
 
