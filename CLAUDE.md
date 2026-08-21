@@ -46,16 +46,25 @@ If you see game logic in the API, say something. If you see calculations in the 
 ## Project Board
 
 **ALWAYS check before starting work:**
-- https://github.com/users/KirkDiggler/projects/13 — **Chapter 2: Combat Verbs** (current; verb-shaped waves on the v1alpha2 route; umbrella issue rpg-project #54, first wave = TakeAction)
-- https://github.com/users/KirkDiggler/projects/11 — **Chapter 1: Architecture Honesty** (the clean rails Chapter 2 rides on; umbrella rpg-api #574)
+- https://github.com/users/KirkDiggler/projects/19 — **Project 19**, the durable board for the evolving game. Boards #11–#13 are historical chapter records, not the current work source.
 
-_Board #12 "Chapter 2: The 4 Brothers" closed 2026-06-01 — superseded by #13; the 4 brothers are now the cast that verifies each verb wave._
+The current initiative is **Four-player Level-3 Dungeon**. Work is organized as
+**Initiative → Journey → Slice**: an initiative is the strategic outcome, a
+journey is a coherent multi-PR capability, and a slice is one owning-repository
+issue with its linked PR. **Ready Journeys** is the contributor entry point. A
+blank Initiative means the item has not been reconciled against the current
+architecture; Todo alone does not make it ready.
+
+Team and Area remain ownership/product filters, not the work hierarchy. Toolkit
+tests can prove a slice; a gameplay journey closes only when its Done-when
+behavior is observed through the named local dev path. Full contract:
+[`ideas/team-workflow/project-19-journeys/design.md`](ideas/team-workflow/project-19-journeys/design.md).
 
 Rules:
 - One issue per PR
 - No branch without an issue
 - No issue without a board entry
-- New work = new issue on board -> fresh branch from that repo's **base branch** (below)
+- New work = new slice issue on Project 19 -> fresh branch from that repo's **base branch** (below)
 
 ### Base branches — check before you cut a branch
 
