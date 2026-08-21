@@ -26,6 +26,31 @@ attack-specific `ResolveDamage` stack in the integrated provider and resolution
 paths. Those APIs, their unused production callers, and their compatibility
 tests are deleted there; they do not receive adapters.
 
+## Reconciliation and closure
+
+This project-owned design and its companion plan are the durable record of the
+composable attack damage decision. The original toolkit design surface,
+KirkDiggler/rpg-toolkit#1126, is historical input rather than a change that
+still needs to merge. Its implementation landed as independently releasable
+provider, resolution, and session pull requests:
+
+- KirkDiggler/rpg-toolkit#1146 — canonical provider damage pools and rules;
+- KirkDiggler/rpg-toolkit#1148 — `AttackProfile`, `Strike`, and typed outcomes;
+- KirkDiggler/rpg-toolkit#1156 — aggregate-only session recording from the
+  typed outcome.
+
+Reconciliation closes toolkit PR #1126 as superseded without merging its stale
+branch. Toolkit issue #979 then records the same implementation evidence and
+closes as a reconciled decision. Project 19 is verified after both closures:
+#979 should be Done, while journey rpg-project#232 remains open unless its own
+Done-when has been independently demonstrated.
+
+This closure does not claim or schedule the deliberately deferred top-level
+`encounter/` migration, strike-path notification replacement, or off-hand/TWF
+ability-modifier gate. Those are separate future slices. Reconciliation must
+not edit toolkit `main`, manufacture implementation work, or describe these
+deferred behaviors as shipped.
+
 ## Rules Decisions
 
 - A damage pool is crit-eligible by default.
@@ -41,11 +66,13 @@ tests are deleted there; they do not receive adapters.
 - Resistance, vulnerability, and immunity apply independently to each damage
   type through the existing `combat.FinalDamage` arithmetic.
 
-ADR-0036 is superseded by this design. Its selective-critical variant conflicts
-with SRD 5.1 because the ooze's acid dice are damage dice of the attack and
-therefore double on a critical hit. The ADR, decision index, and living combat
-overview are reconciled in the same documentation change as this specification;
-implementation has one authoritative rule to follow.
+Toolkit ADR `0041-composable-attack-damage.md` supersedes ADR-0036. ADR-0036's
+selective-critical variant conflicts with SRD 5.1 because the ooze's acid dice
+are damage dice of the attack and therefore double on a critical hit. The
+filename is part of the citation because later work reused the numeric 0041
+prefix for a different decision. The toolkit ADR, decision index, and living
+combat overview already describe the shipped implementation; this project
+design preserves the cross-repository rationale and delivery history.
 
 ## Scope
 
