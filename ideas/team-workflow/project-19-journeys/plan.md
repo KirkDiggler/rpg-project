@@ -8,7 +8,7 @@
 
 **Tech Stack:** GitHub Projects v2 GraphQL API, GitHub Issues REST/GraphQL APIs, `gh`, `jq`
 
-**Spec:** `ideas/project-19-journeys/design.md`
+**Spec:** `ideas/team-workflow/project-19-journeys/design.md`
 
 ## Global Constraints
 
@@ -152,14 +152,14 @@ still omitted its Parent issue projection; direct GraphQL verified those links.
 **Files:**
 - Modify: `CLAUDE.md` — replace only the stale Project Board section.
 
-- [x] Point `CLAUDE.md` at `https://github.com/users/KirkDiggler/projects/19`, name `Ready Journeys` as the contributor entry, define Initiative → Journey → Slice, retain the one-issue/PR rules, and link `ideas/project-19-journeys/design.md` instead of duplicating it.
+- [x] Point `CLAUDE.md` at `https://github.com/users/KirkDiggler/projects/19`, name `Ready Journeys` as the contributor entry, define Initiative → Journey → Slice, retain the one-issue/PR rules, and link `ideas/team-workflow/project-19-journeys/design.md` instead of duplicating it.
 
 - [x] Verify and commit the documentation amendment:
 
   ```bash
   git diff --check
   rg -n 'projects/19|Ready Journeys|Initiative.*Journey.*Slice|One issue per PR' CLAUDE.md
-  git add CLAUDE.md ideas/project-19-journeys/
+  git add CLAUDE.md ideas/team-workflow/project-19-journeys/
   git commit -m 'docs: ratify Project 19 journey rollout'
   git push
   ```

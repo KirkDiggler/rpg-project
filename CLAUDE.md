@@ -58,7 +58,7 @@ architecture; Todo alone does not make it ready.
 Team and Area remain ownership/product filters, not the work hierarchy. Toolkit
 tests can prove a slice; a gameplay journey closes only when its Done-when
 behavior is observed through the named local dev path. Full contract:
-[`ideas/project-19-journeys/design.md`](ideas/project-19-journeys/design.md).
+[`ideas/team-workflow/project-19-journeys/design.md`](ideas/team-workflow/project-19-journeys/design.md).
 
 Rules:
 - One issue per PR
