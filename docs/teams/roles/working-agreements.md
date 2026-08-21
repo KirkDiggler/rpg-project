@@ -13,12 +13,19 @@ A spawned subagent starts with none of this repo in context. Omit it and you get
 teammate who derives process from the code, which is how a branch lands on the wrong
 base or a "dead" file turns out to be load-bearing.
 
-Every dispatch prompt names, before its task description:
+Every new dispatch prompt names, before its task description:
 
 - `rpg-project/AGENTS.md` — the boundary rule and the vocabulary
-- `rpg-project/CLAUDE.md` — base branches, board rules, proto versioning
-- `rpg-project/sessions/active.md` — the living handoff
-- the relevant `docs/teams/roles/<role>/prompt.md`
+- `rpg-project/CLAUDE.md` — startup, base branches, board rules, proto versioning
+- the Project 19 issue or PR that owns the slice, plus its parent journey when relevant
+- the relevant `docs/teams/roles/<team>/prompt.md`
+- the owning repository's AGENTS.md and nearest scoped instructions
+- `.agents/skills/` only when a matching approved skill exists
+
+`sessions/active.md` remains a shared handoff for cold-start orientation, but new
+dispatch briefs do not depend on it as a per-agent task store. Local continuity
+belongs in ignored `active.md`, copied from `docs/templates/local-active.md`, and
+shared work remains on Project 19.
 
 **Corollary: a process fact that is not in rpg-project does not exist.** The web
 `development` branch flow lived only in rpg-dnd5e-web#630, so a session that
@@ -26,7 +33,20 @@ correctly searched rpg-project found nothing and briefed a teammate onto `main`
 (2026-07-26). When a fact surfaces from an issue or from Kirk in conversation, write
 it here.
 
-## 2. Across a seam, the consumer names the interface
+## 2. Signatures use the Team and the operator
+
+Derive the operator with `gh api user --jq .login`. GitHub activity must end with
+the Team-derived signature from the loaded charter:
+
+```text
+— <team> agent, on behalf of <github-login>
+```
+
+Do not hard-code Kirk's login in new prompts. The point of the signature is to
+make the accountable Team and the actual operator visible on every shared
+comment.
+
+## 3. Across a seam, the consumer names the interface
 
 The layer that *needs* something defines the shape; the layer that *provides* it
 implements that definition. Not the reverse, and not both guessing.
@@ -46,7 +66,7 @@ disagree, **the thing that ran wins.**
 Implementation order and merge order are different questions. You can build
 outside-in and still merge inside-out.
 
-## 3. Flag a wrong spec; never silently implement it
+## 4. Flag a wrong spec; never silently implement it
 
 If the instruction you were given is wrong, say so and stop — do not implement it
 faithfully and let the bug ship with your name on it.
@@ -62,7 +82,7 @@ a director's spec:
 Equally: if you find the *mirror* of a bug you were sent to fix, fix both and say
 you did. Fixing one side of a symmetric bug leaves a planted landmine.
 
-## 4. When a contract changes: moved vs gone
+## 5. When a contract changes: moved vs gone
 
 - **Data MOVED** (`Space.walls` → `HexRecord.edges`, `Entity.position` →
   `HexRecord.contents`) → **remap it from the new location.** Always in scope. A
@@ -71,7 +91,7 @@ you did. Fixing one side of a symmetric bug leaves a planted landmine.
 - **Only stop and ask** if remapping would require inventing information the server
   did not send. That is the one line not to cross — that is how a leak gets built.
 
-## 5. Evidence: a green run can prove nothing
+## 6. Evidence: a green run can prove nothing
 
 Report **real command output**. Never paraphrase a pass you did not see.
 
@@ -87,7 +107,7 @@ So: prefer the check that can fail. Run the real integration suite, not just uni
 fixtures, when the thing under test is a wire contract. When you add a gate, prove
 it fails on a deliberately broken input before trusting it.
 
-## 6. Tests that encode a bug get rewritten, not deleted
+## 7. Tests that encode a bug get rewritten, not deleted
 
 A test asserting behavior the new design deliberately removes was pinning the old
 truth — rewrite it to assert the new one and comment why. Delete only when the
@@ -97,7 +117,7 @@ Before deleting, check the test isn't *also* covering something that survives. I
 the fog wave one deleted test also covered reconnect-replace behavior; the right
 move was a narrowed replacement, not a deletion.
 
-## 7. Shell that does not stall on permission prompts
+## 8. Shell that does not stall on permission prompts
 
 A background agent that hits a prompt waits forever, because nobody is watching.
 
@@ -115,7 +135,7 @@ A background agent that hits a prompt waits forever, because nobody is watching.
 If something prompts anyway, route around it with an equivalent that does not, and
 note the substitution in your report.
 
-## 8. Model tiers
+## 9. Model tiers
 
 Pin the model explicitly on every dispatch; never inherit by accident.
 
