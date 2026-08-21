@@ -1,0 +1,108 @@
+{
+  "runId": "a0ba5923",
+  "agent": "delegate",
+  "task": "Prepare additive native-Ubuntu design work only; no design content yet, no implementation, push, PR, or primary mutation.\nVerify rpg-project PR #209 MERGED to main as 22aee544a42906c2f8c01a0e1eb4935c252dcda2 and umbrella #208 plus WSL verification #210 remain open. Capture dirty primary branch/head/status byte-for-byte.\nCreate one rpg-project issue titled `Design permanent native Ubuntu support for the toolkit contributor sandbox`. Body: parent #208; context original WSL design now merged; approved decisions native Ubuntu first-class alongside Ubuntu WSL2, any working Docker-compatible daemon, one facade/two explicit host modes, no bypass/other distro/auto-kill; deliverables design+plan, later game-dev issue/PR, native acceptance and self-contained #210 WSL pickup. No closing keyword. Signature required.\nAdd issue exactly once to Project 19 and set In Progress / Platform / Infra / Design if those exact options exist; if Kind Design absent ask. Add signed #208 comment linking the additive design issue and stating #208 remains open.\nFetch only origin/main. After issue exists, verify target branch/path absent and create isolated worktree `/home/kirk/game-dev/.pi-worktrees/rpg-project-native-ubuntu-toolkit-sandbox` on branch `design/native-ubuntu-toolkit-sandbox` from fresh origin/main. Refuse overwrite. Verify exact clean base and primary snapshot preserved.\nReturn issue/board fields/comment URL, base SHA, branch/worktree, primary preservation, blockers.",
+  "exitCode": 0,
+  "processSignal": "SIGINT",
+  "usage": {
+    "input": 140374,
+    "output": 4388,
+    "cacheRead": 240128,
+    "cacheWrite": 0,
+    "cost": 0.038142960000000004,
+    "turns": 21
+  },
+  "model": "openai-codex/gpt-5.6-luna",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-luna"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-luna",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 140374,
+        "output": 4388,
+        "cacheRead": 240128,
+        "cacheWrite": 0,
+        "cost": 0.038142960000000004,
+        "turns": 21
+      }
+    }
+  ],
+  "durationMs": 421110,
+  "toolCount": 29,
+  "launchContractDigest": "051c3a24a06d8c53ad6d05684fe6a50981e6cddd16fc5cf029e272c615156ba5",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "acceptance": {
+    "status": "rejected",
+    "evidenceStatus": "rejected",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "default lightweight attestation"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return a concise result and residual risks when applicable",
+          "evidence": [
+            "manual-notes",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "manual-notes",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "default lightweight attestation"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return a concise result and residual risks when applicable",
+        "evidence": [
+          "manual-notes",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "attestation",
+        "status": "failed",
+        "message": "Structured acceptance report not found."
+      }
+    ],
+    "verifyRuns": [],
+    "childReportParseError": "Structured acceptance report not found."
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi-subagents/artifacts/a0ba5923_delegate_0_transcript.jsonl",
+  "timestamp": 1786462362488
+}

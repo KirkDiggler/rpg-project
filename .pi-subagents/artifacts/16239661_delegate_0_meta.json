@@ -1,0 +1,161 @@
+{
+  "runId": "16239661",
+  "agent": "delegate",
+  "task": "Restore and verify the canonical Project 19 routing fields for rpg-project issue #208 after the plan publication read found them unassigned.\nGitHub coordination only; do not edit repository files, comments, PR body, branches, or commits.\nEnsure issue #208 has exactly one Project 19 item and set Status=In Progress, Team=Cross-team, Feature=Infra, Kind=Build using the canonical field/option IDs. If duplicate items exist, stop and report rather than deleting anything.\nRe-read the live item and return issue URL, item ID, exact field values, actions performed, and any blocker. Do not merge or create implementation issues.",
+  "exitCode": 0,
+  "processSignal": "SIGTERM",
+  "usage": {
+    "input": 16738,
+    "output": 2858,
+    "cacheRead": 45056,
+    "cacheWrite": 0,
+    "cost": 0.19195800000000002,
+    "turns": 5
+  },
+  "model": "openai-codex/gpt-5.6-sol",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-sol",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 16738,
+        "output": 2858,
+        "cacheRead": 45056,
+        "cacheWrite": 0,
+        "cost": 0.19195800000000002,
+        "turns": 5
+      }
+    }
+  ],
+  "durationMs": 67534,
+  "toolCount": 6,
+  "launchContractDigest": "7fff42287ebebf1d961f4b8accd7f714865b1f4f84ef33160ad6bbfc2ee8e122",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "read-only task wording"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return concrete findings with file paths and severity when applicable",
+          "evidence": [
+            "review-findings",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "review-findings",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only task wording"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return concrete findings with file paths and severity when applicable",
+        "evidence": [
+          "review-findings",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Live GraphQL verification found exactly one Project 19 item, PVTI_lAHOAASbwc4Bcj4vzg2BUBI, with Status=In Progress, Team=Cross-team, Feature=Infra, and Kind=Build. No file paths apply because this was GitHub metadata-only work."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "gh auth status",
+          "result": "passed",
+          "summary": "Authenticated as KirkDiggler with project and repo scopes."
+        },
+        {
+          "command": "gh issue view 208 --repo KirkDiggler/rpg-project --json url,id,title,projectItems,state",
+          "result": "passed",
+          "summary": "Located the open issue and its Project 19 association."
+        },
+        {
+          "command": "gh api graphql [query Project 19 canonical fields/options]",
+          "result": "passed",
+          "summary": "Resolved canonical project, field, and option IDs."
+        },
+        {
+          "command": "gh api graphql [update four ProjectV2 field values]",
+          "result": "passed",
+          "summary": "Idempotently set Status, Team, Feature, and Kind on the sole item."
+        },
+        {
+          "command": "gh api graphql [post-update live item verification]",
+          "result": "passed",
+          "summary": "Confirmed totalCount=1 and all four exact field values and option IDs."
+        }
+      ],
+      "validationOutput": [
+        "Issue URL: https://github.com/KirkDiggler/rpg-project/issues/208",
+        "Item ID: PVTI_lAHOAASbwc4Bcj4vzg2BUBI",
+        "Exactly one project item exists and it belongs to KirkDiggler Project 19.",
+        "Status=In Progress; Team=Cross-team; Feature=Infra; Kind=Build."
+      ],
+      "residualRisks": [
+        "none"
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "No repository diff; only Project 19 item fields were updated.",
+      "reviewFindings": [
+        "no blockers; no file-based findings apply to this GitHub coordination-only task"
+      ],
+      "manualNotes": "The first detailed live read already showed the canonical values; the same values were explicitly reapplied and verified afterward."
+    }
+  },
+  "effects": {
+    "fileMutation": {
+      "status": "not-applicable",
+      "expected": false,
+      "attempted": false
+    }
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi-subagents/artifacts/16239661_delegate_0_transcript.jsonl",
+  "timestamp": 1786404598582
+}

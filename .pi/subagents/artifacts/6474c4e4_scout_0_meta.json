@@ -1,0 +1,174 @@
+{
+  "runId": "6474c4e4",
+  "agent": "scout",
+  "task": "Read-only audit of rpg-project PR #217 after plan publication. Do not change anything. Verify open/non-draft/base/head/head SHA, changed files exactly design.md+plan.md, commits, PR body accurately says Kirk approved written design but implementation waits for plan approval, `Closes #216`, exact signature final line, issue #216 still exists on Project 19 Todo/Assets, and remote branch reachability. Report publication defects only.",
+  "exitCode": 0,
+  "processSignal": "SIGTERM",
+  "usage": {
+    "input": 23782,
+    "output": 8608,
+    "cacheRead": 15872,
+    "cacheWrite": 0,
+    "cost": 0.38508600000000004,
+    "turns": 6
+  },
+  "model": "openai-codex/gpt-5.6-sol",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-sol",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 23782,
+        "output": 8608,
+        "cacheRead": 15872,
+        "cacheWrite": 0,
+        "cost": 0.38508600000000004,
+        "turns": 6
+      }
+    }
+  ],
+  "durationMs": 173104,
+  "toolCount": 19,
+  "launchContractDigest": "e90d34b67fde4c135bf8d5bf1927d216b101623131cb048ad7aa1375d0689051",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "acceptance": {
+    "status": "attested",
+    "evidenceStatus": "attested",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "attested",
+      "explicit": false,
+      "inferredReason": [
+        "read-only/reviewer-style agent"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Return concrete findings with file paths and severity when applicable",
+          "evidence": [
+            "review-findings",
+            "residual-risks"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "review-findings",
+        "residual-risks"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "read-only/reviewer-style agent"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Return concrete findings with file paths and severity when applicable",
+        "evidence": [
+          "review-findings",
+          "residual-risks"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "No publication defects found. PR #217 is OPEN and non-draft, base main, head idea/216-attack-die-3d at 229a16f61355b862dd3af4816bfac63f1e27c63c; its only paths are ideas/attack-die-3d/design.md and ideas/attack-die-3d/plan.md. Severity is not applicable because there are no findings."
+        }
+      ],
+      "changedFiles": [
+        "ideas/attack-die-3d/design.md",
+        "ideas/attack-die-3d/plan.md"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "gh pr view 217 --json state,isDraft,baseRefName,headRefName,headRefOid,body,files,commits",
+          "result": "passed",
+          "summary": "Verified PR state, refs, SHA, body, exactly two files, and three commits."
+        },
+        {
+          "command": "gh api repos/KirkDiggler/rpg-project/pulls/217/{commits,files}",
+          "result": "passed",
+          "summary": "REST verification confirmed commit SHAs/order and exact changed paths."
+        },
+        {
+          "command": "gh api graphql [issue #216 project item and Project 19 fields]",
+          "result": "passed",
+          "summary": "Issue #216 is OPEN on Project 19 with Status Todo and Team Assets."
+        },
+        {
+          "command": "git ls-remote --heads origin main idea/216-attack-die-3d",
+          "result": "passed",
+          "summary": "Remote head branch resolves to the asserted PR head SHA."
+        },
+        {
+          "command": "gh api repos/KirkDiggler/rpg-project/compare/main...idea/216-attack-die-3d",
+          "result": "passed",
+          "summary": "Remote comparison reports the same three commits and exactly design.md plus plan.md."
+        },
+        {
+          "command": "git diff --cached --name-only",
+          "result": "passed",
+          "summary": "No staged files."
+        }
+      ],
+      "validationOutput": [
+        "PR #217: OPEN, non-draft, base main, head idea/216-attack-die-3d.",
+        "Head SHA: 229a16f61355b862dd3af4816bfac63f1e27c63c.",
+        "Changed files exactly: ideas/attack-die-3d/design.md and ideas/attack-die-3d/plan.md.",
+        "PR body accurately records written-design approval and defers implementation until plan approval.",
+        "Body contains exactly one standalone `Closes #216` line.",
+        "Exact final signature line verified.",
+        "Issue #216 is OPEN on Project 19, Status Todo, Team Assets.",
+        "Both the remote branch and refs/pull/217/head reach the asserted head SHA."
+      ],
+      "residualRisks": [
+        "Point-in-time attestation: GitHub publication metadata may change after 2026-08-12T21:14:51Z.",
+        "The head is three commits behind current main, although GitHub reports the PR MERGEABLE; this is not a requested publication defect."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Remote PR adds 1,098 lines across exactly design.md and plan.md; no other PR paths.",
+      "reviewFindings": [
+        "no blockers: no publication defects found in PR #217 metadata, body, commit inventory, changed paths, issue/project linkage, or remote reachability"
+      ],
+      "manualNotes": "Read-only audit. The initial and final worktree had unrelated unstaged/untracked local artifacts, but zero staged files; this audit changed nothing."
+    }
+  },
+  "effects": {
+    "fileMutation": {
+      "status": "not-applicable",
+      "expected": false,
+      "attempted": false
+    }
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi/subagents/artifacts/6474c4e4_scout_0_transcript.jsonl",
+  "timestamp": 1786569377810
+}

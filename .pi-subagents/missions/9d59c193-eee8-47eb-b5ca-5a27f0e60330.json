@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "9d59c193-eee8-47eb-b5ca-5a27f0e60330",
+  "title": "Write and commit the approved cross-repository design specification in an isolated rpg-project wo...",
+  "objective": "Write and commit the approved cross-repository design specification in an isolated rpg-project worktree. Repository: /home/kirk/game-dev/rpg-project. Create `docs/superpowers/specs/2026-08-12-dungeon-builder-encounter-v03-alignment-design.md`. This is design documentation only—do not implement code, alter sessions/active.md, role context, issues, or PRs. Use concise but complete architecture/data-flow/error/testing sections. Approved decisions: (1) target implemented rpg-toolkit PR #932 encounter v0.3 surface now, using a temporary rpg-api local module override until tagged; (2) preserve author-friendly room-chain Dungeon YAML, first fixture `rpg-api/internal/content/dungeons/reference-tomb.yaml`; (3) toolkit owns a compiler/provider adapter from room-chain YAML to v0.3 SetupInput plus stable provider projection—odd-q conversion, room origins, connectivity, topology, and validation never move into API/web; (4) rpg-api issue #793 wires v0.3, persists composition blob plus immutable compiled content sidecar atomically and identity/version binds them; (5) existing protos do not change; PutDungeon/FloorPlan and encounter v1alpha2 remain the wire surfaces; (6) web renders only server-returned FloorPlan/encounter facts, no Atlas/Absolute/Locate or coordinate/topology logic leaks to browser; (7) Save & Play enabled only for accepted room-chain YAML after v0.3 API adapter works; (8) existing region-union implementation/tests preserved but capability-gated/hard-stopped, not stripped or approximated, until v0.3 mask-room support; (9) static props/facing/walls/region names/entrance/provenance live in toolkit-produced compiled content sidecar; actors compile to SetupInput members; (10) reference tomb acceptance must prove validate preview, exact stable proto projection, Save & Play, kissing doorways, continuous movement across rooms, persistence/reload, and no web derivation; (11) current API PR #782 and web PR #748 are draft/holding inputs to revise rather than merge as-is. Explicitly document what PR #932 does and does not provide: rectangular anchored rooms, absolute Atlas cells/occluders/boundaries/doorways, Absolute/Locate, W1-W5 and persistence; no Dungeon YAML compiler, freeform masks, static presentation sidecar, or API wiring. Correct prior misunderstanding: occluders are not structural holes. Do not prescribe API-owned topology. Include phased implementation order across toolkit adapter, API, then web, but no detailed implementation plan yet. Include failure modes/error states and non-goals (region masks, doors/locks, fine rotation, lighting, proto changes). Self-review for placeholders, contradictions, ambiguity, and scope; fix inline. Commit only the new spec with a conventional docs commit. Return commit SHA, path, summary, and self-review result.",
+  "status": "failed",
+  "createdAt": "2026-08-12T20:01:08.002Z",
+  "updatedAt": "2026-08-12T20:01:08.095Z",
+  "runs": [
+    {
+      "runId": "call_sjyJi4VjyqpoQl10eUNAyVYi|fc_07534947d8ef177f016a7cd0f528d8819ab81f801ffbf47ead",
+      "mode": "workflow",
+      "status": "failed",
+      "startedAt": "2026-08-12T20:01:08.095Z",
+      "completedAt": "2026-08-12T20:01:08.095Z"
+    }
+  ],
+  "workflowChildren": [
+    {
+      "workflowRunId": "call_sjyJi4VjyqpoQl10eUNAyVYi|fc_07534947d8ef177f016a7cd0f528d8819ab81f801ffbf47ead",
+      "key": "write-approved-design",
+      "status": "failed",
+      "startedAt": "2026-08-12T20:01:08.035Z",
+      "updatedAt": "2026-08-12T20:01:08.093Z",
+      "artifactPaths": [],
+      "agent": "worker",
+      "task": "Write and commit the approved cross-repository design specification in an isolated rpg-project worktree. Repository: /home/kirk/game-dev/rpg-project. Create `docs/superpowers/specs/2026-08-12-dungeon-builder-encounter-v03-alignment-design.md`. This is design documentation only—do not implement code, alter sessions/active.md, role context, issues, or PRs. Use concise but complete architecture/data-flow/error/testing sections. Approved decisions: (1) target implemented rpg-toolkit PR #932 encounter v0.3 surface now, using a temporary rpg-api local module override until tagged; (2) preserve author-friendly room-chain Dungeon YAML, first fixture `rpg-api/internal/content/dungeons/reference-tomb.yaml`; (3) toolkit owns a compiler/provider adapter from room-chain YAML to v0.3 SetupInput plus stable provider projection—odd-q conversion, room origins, connectivity, topology, and validation never move into API/web; (4) rpg-api issue #793 wires v0.3, persists composition blob plus immutable compiled content sidecar atomically and identity/version binds them; (5) existing protos do not change; PutDungeon/FloorPlan and encounter v1alpha2 remain the wire surfaces; (6) web renders only server-returned FloorPlan/encounter facts, no Atlas/Absolute/Locate or coordinate/topology logic leaks to browser; (7) Save & Play enabled only for accepted room-chain YAML after v0.3 API adapter works; (8) existing region-union implementation/tests preserved but capability-gated/hard-stopped, not stripped or approximated, until v0.3 mask-room support; (9) static props/facing/walls/region names/entrance/provenance live in toolkit-produced compiled content sidecar; actors compile to SetupInput members; (10) reference tomb acceptance must prove validate preview, exact stable proto projection, Save & Play, kissing doorways, continuous movement across rooms, persistence/reload, and no web derivation; (11) current API PR #782 and web PR #748 are draft/holding inputs to revise rather than merge as-is. Explicitly document what PR #932 does and does not provide: rectangular anchored rooms, absolute Atlas cells/occluders/boundaries/doorways, Absolute/Locate, W1-W5 and persistence; no Dungeon YAML compiler, freeform masks, static presentation sidecar, or API wiring. Correct prior misunderstanding: occluders are not structural holes. Do not prescribe API-owned topology. Include phased implementation order across toolkit adapter, API, then web, but no detailed implementation plan yet. Include failure modes/error states and non-goals (region masks, doors/locks, fine rotation, lighting, proto changes). Self-review for placeholders, contradictions, ambiguity, and scope; fix inline. Commit only the new spec with a conventional docs commit. Return commit SHA, path, summary, and self-review result.",
+      "completedAt": "2026-08-12T20:01:08.093Z",
+      "sessionPath": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-11T15-21-25-299Z_019ff16a-0633-7bb4-9896-9e16016e5137/1ea282dc/run-0/session.jsonl",
+      "heartbeat": {
+        "updatedAt": "2026-08-12T20:01:08.093Z",
+        "status": "failed"
+      }
+    }
+  ],
+  "decisions": [],
+  "artifacts": [],
+  "receipts": [],
+  "cwd": "/home/kirk/game-dev/rpg-project",
+  "ownerSessionId": "/home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-11T15-21-25-299Z_019ff16a-0633-7bb4-9896-9e16016e5137.jsonl",
+  "summary": "Workflow failed: Error: Run 'write-approved-design' failed: worktree isolation requires a clean git working tree. Commit or stash changes first.\n    at MessagePort.<anonymous> ([worker eval]:287:23)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:845:20)\n    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)\n\nCall trace:\n- run write-approved-design: started\n- run write-approved-design: failed — worktree isolation requires a clean git working tree. Commit or stash changes first."
+}

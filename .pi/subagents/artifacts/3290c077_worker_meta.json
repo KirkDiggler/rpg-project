@@ -1,0 +1,263 @@
+{
+  "runId": "3290c077",
+  "agent": "worker",
+  "task": "You are reviving a previous subagent conversation.\n\nOriginal run: 2c3235d1\nOriginal agent: worker\nOriginal session file: /home/kirk/.pi/agent/sessions/--home-kirk-game-dev--/2026-08-12T15-46-25-420Z_019ff6a7-460c-7d0f-8eb4-d1538c0d6b43/2c3235d1/run-0/session.jsonl\n\nUse the stored session context as background. Answer the orchestrator's follow-up below. Do not assume the original child process is still alive.\n\nFollow-up:\nApply a focused written-spec correction to PR #217 based on independent review. Work only in `/home/kirk/game-dev/rpg-project/.worktrees/attack-die-3d`; before any edit, cd there and prove it is the linked worktree on `idea/216-attack-die-3d` with a clean tracked/index state. Never edit, stash, reset, clean, switch, or commit the dirty primary checkout.\n\nReview evaluation: all four warning-class findings are technically valid and within the already-approved design; they clarify acceptance rather than expand product scope. Resolve them in `ideas/attack-die-3d/design.md` only:\n\n1. Lifecycle ownership: define one production owner for queue/presentation completion (preserve existing CombatPresentation/DiceTray sequencing; AttackDie3D is visual and must not independently advance FIFO). Lock 3D-vs-SVG mode for the lifetime of one presentation token. If 3D is not ready at beat start or fails, use SVG for that entire beat; never wait for asset/shader/WebGL readiness. Cancel frame work/listeners on unmount/token change and ignore stale readiness/settle callbacks, preventing late appearance or duplicate completion. Concept-only settle telemetry may exist for evidence but is not production queue authority. Fit this to actual existing callback semantics after re-reading the relevant documented source facts; do not invent a conflicting API.\n\n2. Settle tolerance: freeze a concrete angular acceptance threshold before implementation. Use quaternion angular distance in degrees and set the gate to `<= 0.25°` at the completion observation, followed by copying/holding the exact target quaternion for the settled frame. Explain why the epsilon is a measurement gate, not permission to leave the final face visibly off-target. Apply the same frozen threshold to all 20 results and reduced motion.\n\n3. Evidence invalidation: expand the immutable evidence tuple to every readability-affecting input already in scope: exact GLB hash, face map/version, camera transforms/projection, material mode/shader revision, lighting/environment, exposure/tone mapping, die scale, viewport CSS size/output resolution, and device-pixel ratio. A change invalidates human confirmation. Avoid inventing a general visual-regression platform.\n\n4. Performance/playtest pass-fail: replace subjective terms with a bounded before/after protocol on the same build/device/route and a named target matrix. At minimum cover desktop Chromium and the project’s supported Discord-iframe/mobile-or-low-GPU profile if available from repo docs. Use warm-load repeated samples and freeze explicit regression budgets before concept promotion. Prefer concrete relative budgets appropriate to a transient single die: no >10% regression in p95 frame time during the throw/verdict window versus the existing SVG baseline, no new long task >50ms attributable to the die, no sustained frame-time miss after the die unmounts, and asset/network/GPU-memory measurements recorded. If repository conventions establish better exact targets, use and cite them instead; do not fabricate unsupported device names. Make failure block promotion, not concept exploration.\n\nAlso add immutable rpg-game-assets source references for established facts: asset promotion PR #46 and merged commit/ref available locally/remotely, while making clear the facts were inspected and can go stale if the GLB hash changes. Do not claim provenance is resolved.\n\nRun the same placeholder/contradiction/scope/ambiguity self-review again. Confirm only design.md changes relative to the current branch head, run `git diff --check`, any available Markdown/link check, commit with a concise conventional message referencing #216, push the same branch, and verify PR #217 points to the new commit. Do not add plan.md, implement, merge, close, comment, or change board fields.\n\nReturn exact changed sections, commit SHA, validation commands/exits, PR-head evidence, clean linked-worktree status including untracked files, and residual risks.\n\n## Acceptance Contract\nAcceptance level: checked\nCompletion is not accepted from prose alone. End with a structured acceptance report.\n\nCriteria:\n- criterion-1: Implement the requested change without widening scope\n- criterion-2: Return evidence sufficient for an independent acceptance review\n\nRequired evidence: changed-files, tests-added, commands-run, residual-risks, no-staged-files\n\nReview gate: required by reviewer.\n\nFinish with a fenced JSON block tagged `acceptance-report` in this shape:\nUse empty arrays when no items apply; array fields contain strings unless object entries are shown.\n`criteriaSatisfied[].status` must be exactly one of: satisfied, not-satisfied, not-applicable.\n`commandsRun[].result` must be exactly one of: passed, failed, not-run.\n`manualNotes` and `notes` are optional strings; an empty string means no note and does not satisfy `manual-notes` evidence.\n```acceptance-report\n{\n  \"criteriaSatisfied\": [\n    {\n      \"id\": \"criterion-1\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    },\n    {\n      \"id\": \"criterion-2\",\n      \"status\": \"satisfied\",\n      \"evidence\": \"specific proof\"\n    }\n  ],\n  \"changedFiles\": [\n    \"src/file.ts\"\n  ],\n  \"testsAddedOrUpdated\": [\n    \"test/file.test.ts\"\n  ],\n  \"commandsRun\": [\n    {\n      \"command\": \"command\",\n      \"result\": \"passed\",\n      \"summary\": \"short result\"\n    }\n  ],\n  \"validationOutput\": [\n    \"validation output or concise summary\"\n  ],\n  \"residualRisks\": [\n    \"none\"\n  ],\n  \"noStagedFiles\": true,\n  \"diffSummary\": \"short description of the diff\",\n  \"reviewFindings\": [\n    \"blocker: file.ts:12 - issue found, or no blockers\"\n  ],\n  \"manualNotes\": \"anything else the parent should know\"\n}\n```",
+  "exitCode": 0,
+  "model": "openai-codex/gpt-5.6-sol",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-sol",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 86330,
+        "output": 20304,
+        "cacheRead": 2504704,
+        "cacheWrite": 0,
+        "cost": 2.293122,
+        "turns": 24
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "review-required",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "async write-capable or risky run"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        },
+        {
+          "id": "criterion-2",
+          "must": "Return evidence sufficient for an independent acceptance review",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "review": {
+        "agent": "reviewer",
+        "required": true
+      },
+      "stopRules": []
+    },
+    "inferredReason": [
+      "async write-capable or risky run"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      },
+      {
+        "id": "criterion-2",
+        "must": "Return evidence sufficient for an independent acceptance review",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "criterion:criterion-2",
+        "status": "passed",
+        "message": "Required criterion 'criterion-2' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "passed",
+        "message": "changed-files evidence present."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Only ideas/attack-die-3d/design.md changed in commit 427c3da60db15b1a84ed45d2bb353076666e0ded; no implementation, plan, board, issue, PR-comment, or primary-checkout changes were made."
+        },
+        {
+          "id": "criterion-2",
+          "status": "satisfied",
+          "evidence": "Validation, exact commit and PR-head SHAs, one-file diff, linked-worktree status including .pi/, asset references, and residual risks are reported."
+        }
+      ],
+      "changedFiles": [
+        "ideas/attack-die-3d/design.md"
+      ],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "npx --yes markdownlint-cli2@0.18.1 ideas/attack-die-3d/design.md",
+          "result": "passed",
+          "summary": "Markdownlint completed with zero errors."
+        },
+        {
+          "command": "git diff --check HEAD^..HEAD",
+          "result": "passed",
+          "summary": "No whitespace errors."
+        },
+        {
+          "command": "placeholder scan using rg",
+          "result": "passed",
+          "summary": "No TBD, TODO, FIXME, XXX, placeholder, or question-mark placeholders."
+        },
+        {
+          "command": "contradiction/scope/ambiguity structural self-review",
+          "result": "passed",
+          "summary": "Verified lifecycle authority, fixed tolerance, asset references, evidence inputs, performance budgets, and forbidden-path exclusions."
+        },
+        {
+          "command": "git diff-tree --no-commit-id --name-only -r HEAD scope check",
+          "result": "passed",
+          "summary": "Current correction commit changes only design.md; plan.md is absent."
+        },
+        {
+          "command": "GitHub link checks via gh",
+          "result": "passed",
+          "summary": "rpg-game-assets PR #46 resolves as MERGED and rpg-project issue #216 resolves as OPEN."
+        },
+        {
+          "command": "rpg-game-assets commit ancestry and GLB SHA-256 verification",
+          "result": "passed",
+          "summary": "Commit 8fbae1e is in origin/main; inspected GLB SHA-256 is 8a8e50995ee790481e6d1f4b58919f1acee169398acd783af28376464160c1aa."
+        },
+        {
+          "command": "tracked/index cleanliness and upstream SHA checks",
+          "result": "passed",
+          "summary": "Tracked tree and index are clean; local and remote branch equal 427c3da60db15b1a84ed45d2bb353076666e0ded."
+        },
+        {
+          "command": "gh pr view 217",
+          "result": "passed",
+          "summary": "PR #217 is OPEN, ready, CLEAN/MERGEABLE, and points to correction commit 427c3da60db15b1a84ed45d2bb353076666e0ded."
+        }
+      ],
+      "validationOutput": [
+        "markdownlint-cli2: Summary: 0 error(s)",
+        "Current commit: 1 file changed, 185 insertions, 80 deletions",
+        "PR #217 headRefOid: 427c3da60db15b1a84ed45d2bb353076666e0ded",
+        "Final status includes only pre-existing untracked .pi/; tracked/index state clean"
+      ],
+      "residualRisks": [
+        "Kirk written-spec approval and independent review remain required.",
+        "Asset provenance/licensing remains unresolved.",
+        "Face calibration and human readability evidence are not yet produced.",
+        "Unavailable mobile/low-GPU performance profile blocks promotion.",
+        "Frozen performance budgets remain unmeasured until implementation."
+      ],
+      "noStagedFiles": true,
+      "diffSummary": "Tightened lifecycle authority, settle tolerance, evidence invalidation, performance gates, and immutable asset references in the canonical attack-die design.",
+      "reviewFindings": [
+        "no blockers in the focused correction; reviewer gate remains pending"
+      ],
+      "manualNotes": "The linked worktree contains pre-existing untracked .pi/ only; it was not committed. PR #217 remains open and unmerged."
+    },
+    "reviewResult": {
+      "status": "review-required",
+      "findings": [
+        {
+          "severity": "non-blocking",
+          "issue": "Independent review has not been supplied.",
+          "rationale": "The run cannot be marked reviewed from child evidence alone."
+        }
+      ]
+    }
+  },
+  "launchContractDigest": "38acd272ff0cfae8c7ddc621e2d67eff8a4c1da80dd311a30a8e807ac6536fcd",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi/subagents/artifacts/3290c077_worker_transcript.jsonl",
+  "skills": [],
+  "timestamp": 1786564463353
+}

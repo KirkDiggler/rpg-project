@@ -22,9 +22,11 @@ The verification reflex cuts both ways. A flood of alarming errors is not automa
 
 The cost of a false red is wasted thrash and — worse — telling Kirk something's broken when it isn't. Verify, then speak.
 
-## Altitude
+## Altitude is about scope, not abstinence
 
-Orchestrate; don't implement inline. Dispatch agents for reading/building/debugging; spend your own context on the big picture and the conversation. The *one* time to drop into the code yourself is to verify a pivotal claim (the goblin-damage catch needed me to read `extractBaseDice` and the goblin statblock — nothing else). Delegate, then verify the result.
+Keep substantial project implementation with the role that owns it, and protect the director context from unbounded archaeology. That does not make every command, file read, or edit someone else's job. Local session tooling, configuration repair, small status checks, and other bounded operational tasks can be handled directly—especially when Kirk asks for direct work or says no subagents.
+
+Ask: **is this project delivery, or is it operation of the workspace needed to do the project?** Delegate the former by ownership; handle the latter by the shortest reliable path. If direct work starts sprawling, stop and re-scope rather than defending either execution mode as an absolute. The goblin-damage catch still illustrates the value of ground-truth inspection; the 600k-token incident illustrates the cost of letting inspection become the whole job.
 
 ## "Is this actually different?"
 

@@ -1,0 +1,203 @@
+{
+  "runId": "5ab7e1d5",
+  "agent": "delegate",
+  "task": "Create the canonical rpg-project umbrella issue and Project 19 routing item for the already-approved toolkit contributor onboarding + live sandbox loop. This is coordination/GitHub mutation only; do not edit any repository files or disturb sessions/active.md.\nRepository: KirkDiggler/rpg-project. No matching issue exists per the completed routing scout.\nTitle: Toolkit contributor onboarding and live sandbox loop.\nThe issue body must begin with exactly one top-level <!-- pih-dispatch:v1 --> marker and contain non-empty top-level semantic sections Goal / symptom, Desired outcome, Contract boundaries, Acceptance, Verification evidence, and Related / dependencies. Keep the body bounded and implementation-ready.\nApproved fixed scope: WSL2 toolkit contributor; game-dev bootstrap/start/refresh/seed/status/down workflow; rpg-api one-module local override supports rulebooks/dnd5e; rpg-api cmd/sandboxseed calls the running real CharacterService APIs to create reusable Protection Fighter and Barbarian characters and uses the real equip API to equip the fighter shield; no direct Redis writes; web dev-only sandbox reuses Dungeon Builder with one preloaded canvas template, assembles one or two owned characters in either order, saves via PutDungeon, and uses real lobby create/join/ready/start APIs; normal GameView links plus optional harness links; one active scenario; no generic scenario framework.\nImportant verified constraint: GetRequirements and SubmitChoices proto methods are currently unimplemented handlers. The MVP must use currently implemented production section APIs (CreateDraft, UpdateName/Race/Class/Background/AbilityScores with class choices, GetDraft, FinalizeDraft, List/DeleteCharacter, and the existing equip API) rather than expanding into generic choice-handler completion.\nNon-goals: native-Windows asset setup, rpg-toolkit code changes for the MVP, proto changes, deployment changes unless later proven necessary, automatic file watching, arbitrary scenario catalogs, weakened auth/ownership, direct Character.Data or Redis construction.\nAcceptance must include clean WSL2 setup, explicit refresh after a local rulebook edit, idempotent API-based seeding of both characters, canvas template save, single-seat Fighter, single-seat Barbarian, Fighter→Barbarian two-seat, Barbarian→Fighter two-seat, normal GameView, and proof the local rulebooks/dnd5e override executed.\nEnd the issue body with: — asset-pipeline agent, on behalf of KirkDiggler\nAdd it to user Project 19 and set Status=Todo, Team=Cross-team, Feature=Infra, Kind=Build. Verify the live issue body and project fields after mutation. Do not create implementation issues yet; those wait for design approval.\nReturn the issue URL/number, Project item ID and exact fields, commands/actions performed, and any blocker. Do not create a branch or PR.",
+  "exitCode": 0,
+  "processSignal": "SIGTERM",
+  "usage": {
+    "input": 36833,
+    "output": 5402,
+    "cacheRead": 68096,
+    "cacheWrite": 0,
+    "cost": 0.38027299999999997,
+    "turns": 7
+  },
+  "model": "openai-codex/gpt-5.6-sol",
+  "attemptedModels": [
+    "openai-codex/gpt-5.6-sol"
+  ],
+  "modelAttempts": [
+    {
+      "model": "openai-codex/gpt-5.6-sol",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 36833,
+        "output": 5402,
+        "cacheRead": 68096,
+        "cacheWrite": 0,
+        "cost": 0.38027299999999997,
+        "turns": 7
+      }
+    }
+  ],
+  "durationMs": 161148,
+  "toolCount": 10,
+  "launchContractDigest": "9ee59d80ecacbe40a056d50e767bd432fe9814cb69a888ff7fa36004c4fe538e",
+  "launchResolvedExtensions": {
+    "version": 1,
+    "source": "launch-resolved",
+    "disableAmbientExtensions": false,
+    "runtime": [
+      "sha256:02e218bd199d611a"
+    ],
+    "configured": [],
+    "effective": [
+      "sha256:02e218bd199d611a"
+    ],
+    "omitted": {
+      "runtime": 0,
+      "configured": 0,
+      "effective": 0
+    }
+  },
+  "acceptance": {
+    "status": "checked",
+    "evidenceStatus": "checked",
+    "explicit": false,
+    "effectiveAcceptance": {
+      "level": "checked",
+      "explicit": false,
+      "inferredReason": [
+        "write-capable worker/task"
+      ],
+      "criteria": [
+        {
+          "id": "criterion-1",
+          "must": "Implement the requested change without widening scope",
+          "evidence": [
+            "changed-files",
+            "tests-added",
+            "commands-run",
+            "residual-risks",
+            "no-staged-files"
+          ],
+          "severity": "required"
+        }
+      ],
+      "evidence": [
+        "changed-files",
+        "tests-added",
+        "commands-run",
+        "residual-risks",
+        "no-staged-files"
+      ],
+      "verify": [],
+      "stopRules": []
+    },
+    "inferredReason": [
+      "write-capable worker/task"
+    ],
+    "criteria": [
+      {
+        "id": "criterion-1",
+        "must": "Implement the requested change without widening scope",
+        "evidence": [
+          "changed-files",
+          "tests-added",
+          "commands-run",
+          "residual-risks",
+          "no-staged-files"
+        ],
+        "severity": "required"
+      }
+    ],
+    "runtimeChecks": [
+      {
+        "id": "criterion:criterion-1",
+        "status": "passed",
+        "message": "Required criterion 'criterion-1' satisfied."
+      },
+      {
+        "id": "evidence:changed-files",
+        "status": "not-applicable",
+        "message": "changed-files evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:tests-added",
+        "status": "not-applicable",
+        "message": "tests-added evidence explicitly reported as not applicable."
+      },
+      {
+        "id": "evidence:commands-run",
+        "status": "passed",
+        "message": "commands-run evidence present."
+      },
+      {
+        "id": "evidence:residual-risks",
+        "status": "passed",
+        "message": "residual-risks evidence present."
+      },
+      {
+        "id": "evidence:no-staged-files",
+        "status": "passed",
+        "message": "no-staged-files evidence present."
+      },
+      {
+        "id": "no-staged-files",
+        "status": "passed",
+        "message": "No staged files detected."
+      }
+    ],
+    "verifyRuns": [],
+    "childReport": {
+      "criteriaSatisfied": [
+        {
+          "id": "criterion-1",
+          "status": "satisfied",
+          "evidence": "Created only the requested rpg-project umbrella issue #208 and Project 19 routing item. Live verification confirmed one dispatch marker, all six required non-empty sections, the requested fixed scope and non-goals, final signature, and exact project fields."
+        }
+      ],
+      "changedFiles": [],
+      "testsAddedOrUpdated": [],
+      "commandsRun": [
+        {
+          "command": "gh auth status; gh repo view; gh issue list duplicate check; gh project field-list",
+          "result": "passed",
+          "summary": "Confirmed access, no matching issue, and exact Project 19 field options."
+        },
+        {
+          "command": "python3 issue-body validation; gh issue create",
+          "result": "passed",
+          "summary": "Validated the marker, sections, and signature, then created rpg-project issue #208."
+        },
+        {
+          "command": "gh project item-add; gh project item-edit for Status, Team, Feature, and Kind",
+          "result": "passed",
+          "summary": "Created project item PVTI_lAHOAASbwc4Bcj4vzg2BUBI and assigned Todo, Cross-team, Infra, and Build."
+        },
+        {
+          "command": "gh issue view; gh project item-list; live Python assertions",
+          "result": "passed",
+          "summary": "Verified the live issue body and exact project fields."
+        },
+        {
+          "command": "git diff --cached --name-only; git status --porcelain=v1",
+          "result": "passed",
+          "summary": "No staged files; no repository files were changed by this task."
+        }
+      ],
+      "validationOutput": [
+        "Issue #208 is OPEN at https://github.com/KirkDiggler/rpg-project/issues/208.",
+        "Live body contains exactly one pih-dispatch:v1 marker, all six required sections, and the signature as its final line.",
+        "Project item PVTI_lAHOAASbwc4Bcj4vzg2BUBI has Status=Todo, Team=Cross-team, Feature=Infra, Kind=Build."
+      ],
+      "residualRisks": [],
+      "noStagedFiles": true,
+      "diffSummary": "No repository diff; GitHub coordination mutation only.",
+      "reviewFindings": [
+        "no blockers"
+      ],
+      "manualNotes": "Pre-existing unstaged changes in active-work.json and sessions/active.md, plus .pi-subagents/, were present before and after the task and were not touched."
+    }
+  },
+  "effects": {
+    "fileMutation": {
+      "status": "observed",
+      "expected": true,
+      "attempted": true
+    }
+  },
+  "transcriptPath": "/home/kirk/game-dev/rpg-project/.pi-subagents/artifacts/5ab7e1d5_delegate_0_transcript.jsonl",
+  "timestamp": 1786397375317
+}
