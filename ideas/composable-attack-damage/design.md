@@ -39,11 +39,12 @@ provider, resolution, and session pull requests:
 - KirkDiggler/rpg-toolkit#1156 — aggregate-only session recording from the
   typed outcome.
 
-Reconciliation closes toolkit PR #1126 as superseded without merging its stale
-branch. Toolkit issue #979 then records the same implementation evidence and
-closes as a reconciled decision. Project 19 is verified after both closures:
-#979 should be Done, while journey rpg-project#232 remains open unless its own
-Done-when has been independently demonstrated.
+Reconciliation closes KirkDiggler/rpg-toolkit#1126 as superseded without
+merging its stale branch. KirkDiggler/rpg-toolkit#979 then records the same
+implementation evidence and closes as a reconciled decision. Project 19 is
+verified after both closures: #979 should be Done, while journey
+KirkDiggler/rpg-project#232 remains open unless its own Done-when has been
+independently demonstrated.
 
 This closure does not claim or schedule the deliberately deferred top-level
 `encounter/` migration, strike-path notification replacement, or off-hand/TWF
@@ -66,13 +67,15 @@ deferred behaviors as shipped.
 - Resistance, vulnerability, and immunity apply independently to each damage
   type through the existing `combat.FinalDamage` arithmetic.
 
-Toolkit ADR `0041-composable-attack-damage.md` supersedes ADR-0036. ADR-0036's
-selective-critical variant conflicts with SRD 5.1 because the ooze's acid dice
-are damage dice of the attack and therefore double on a critical hit. The
-filename is part of the citation because later work reused the numeric 0041
-prefix for a different decision. The toolkit ADR, decision index, and living
-combat overview already describe the shipped implementation; this project
-design preserves the cross-repository rationale and delivery history.
+[Toolkit ADR `0041-composable-attack-damage.md`](https://github.com/KirkDiggler/rpg-toolkit/blob/main/docs/adr/0041-composable-attack-damage.md)
+supersedes ADR-0036. ADR-0036's selective-critical variant conflicts with SRD
+5.1 because the ooze's acid dice are damage dice of the attack and therefore
+double on a critical hit. The filename is part of the citation because later
+work reused the numeric 0041 prefix for a different decision. The [toolkit
+decision index](https://github.com/KirkDiggler/rpg-toolkit/blob/main/docs/adr/DECISIONS.md)
+and [living combat overview](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/combat/architecture-overview.md)
+already describe the shipped implementation; this project design preserves
+the cross-repository rationale and delivery history.
 
 ## Scope
 

@@ -2,9 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Publish the reconciled composable-damage record, close toolkit PR #1126 as superseded, and close toolkit issue #979 with evidence while leaving journey rpg-project#232 and all deferred technical work unchanged.
+**Goal:** Publish the reconciled composable-damage record, close
+KirkDiggler/rpg-toolkit#1126 as superseded, and close
+KirkDiggler/rpg-toolkit#979 with evidence while leaving journey
+KirkDiggler/rpg-project#232 and all deferred technical work unchanged.
 
-**Architecture:** The project-owned design is the canonical cross-repository record. Publish that record first, then use immutable merged PRs #1146, #1148, and #1156 as the evidence for closing the stale toolkit design surface and its Decide issue. Finish with read-only verification of Project 19 and both repositories.
+**Architecture:** The project-owned design is the canonical cross-repository
+record. Publish that record first, then use immutable merged PRs
+KirkDiggler/rpg-toolkit#1146, KirkDiggler/rpg-toolkit#1148, and
+KirkDiggler/rpg-toolkit#1156 as the evidence for closing the stale toolkit
+design surface and its Decide issue. Finish with read-only verification of
+Project 19 and both repositories.
 
 **Tech Stack:** Markdown, Git, GitHub CLI (`gh`), GitHub Projects V2 GraphQL API.
 
@@ -12,9 +20,9 @@
 
 ## Global Constraints
 
-- Close rpg-toolkit PR #1126 as superseded; do not merge, rebase, or edit its branch.
-- Close rpg-toolkit issue #979 only after the supersession comment is visible on #1126.
-- Preserve rpg-project#232 as an open journey unless its own Done-when has been independently demonstrated; this plan does not demonstrate it.
+- Close KirkDiggler/rpg-toolkit#1126 as superseded; do not merge, rebase, or edit its branch.
+- Close KirkDiggler/rpg-toolkit#979 only after the supersession comment is visible on #1126.
+- Preserve KirkDiggler/rpg-project#232 as an open journey unless its own Done-when has been independently demonstrated; this plan does not demonstrate it.
 - Do not create or implement top-level `encounter/` migration, strike-notification replacement, or off-hand/TWF gating work.
 - Do not modify rpg-toolkit files, refs, branches, commits, or tags.
 - GitHub comments and PR bodies use: `— asset-pipeline agent, on behalf of KirkDiggler`.
@@ -81,12 +89,15 @@ Before the command, create `/tmp/composable-damage-reconciliation-pr.md` with `a
 ```markdown
 ## Summary
 
-- record #1146, #1148, and #1156 as the shipped composable-damage path
-- define toolkit PR #1126 as a superseded historical design surface
+- record KirkDiggler/rpg-toolkit#1146, KirkDiggler/rpg-toolkit#1148, and
+  KirkDiggler/rpg-toolkit#1156 as the shipped composable-damage path
+- define toolkit PR KirkDiggler/rpg-toolkit#1126 as a superseded historical
+  design surface
 - keep encounter migration, strike notifications, and TWF gating explicitly deferred
-- add the evidence-first closure plan for toolkit issue #979
+- add the evidence-first closure plan for toolkit issue
+  KirkDiggler/rpg-toolkit#979
 
-Parent journey: #232
+Parent journey: KirkDiggler/rpg-project#232
 
 — asset-pipeline agent, on behalf of KirkDiggler
 ```
@@ -113,14 +124,14 @@ Expected: the PR reports `MERGED`. The stable canonical record used by Tasks 2 a
 
 ---
 
-### Task 2: Close toolkit PR #1126 as superseded
+### Task 2: Close KirkDiggler/rpg-toolkit#1126 as superseded
 
 **Files:**
 - No repository files change.
 
 **Interfaces:**
-- Consumes: the merged canonical design at `https://github.com/KirkDiggler/rpg-project/blob/main/ideas/composable-attack-damage/design.md` and immutable implementation PRs #1146, #1148, and #1156.
-- Produces: a visible supersession record on closed, unmerged toolkit PR #1126.
+- Consumes: the merged canonical design at `https://github.com/KirkDiggler/rpg-project/blob/main/ideas/composable-attack-damage/design.md` and immutable implementation PRs KirkDiggler/rpg-toolkit#1146, KirkDiggler/rpg-toolkit#1148, and KirkDiggler/rpg-toolkit#1156.
+- Produces: a visible supersession record on closed, unmerged toolkit PR KirkDiggler/rpg-toolkit#1126.
 
 - [ ] **Step 1: Re-check PR #1126 before mutation**
 
@@ -128,6 +139,9 @@ Run:
 
 ```bash
 gh pr view 1126 --repo KirkDiggler/rpg-toolkit --json state,mergedAt,headRefOid,title,url,comments
+toolkit_main_sha_before=$(gh api repos/KirkDiggler/rpg-toolkit/git/ref/heads/main --jq .object.sha)
+test -n "$toolkit_main_sha_before"
+printf '%s\n' "$toolkit_main_sha_before" > /tmp/rpg-toolkit-main-sha-before.txt
 ```
 
 Expected: `state: OPEN`, `mergedAt: null`, head `205980d9eaa78eb5eeb3e0ecd35f477adc921ad5`, and no existing comment containing `closed as superseded by the shipped provider/resolution/session sequence`. If it is already closed with equivalent evidence, treat this task as complete without adding a duplicate comment. Stop on any other difference.
@@ -172,21 +186,26 @@ Expected: `state: CLOSED`, `mergedAt: null`, and the supersession comment is pre
 Run:
 
 ```bash
-gh api repos/KirkDiggler/rpg-toolkit/git/ref/heads/main --jq .object.sha
+toolkit_main_sha_before=$(sed -n '1p' /tmp/rpg-toolkit-main-sha-before.txt)
+toolkit_main_sha_after=$(gh api repos/KirkDiggler/rpg-toolkit/git/ref/heads/main --jq .object.sha)
+test -n "$toolkit_main_sha_before"
+test -n "$toolkit_main_sha_after"
+test "$toolkit_main_sha_after" = "$toolkit_main_sha_before"
 ```
 
-Compare the returned SHA with the SHA recorded immediately before Step 2 using the same command. Expected: identical SHAs.
+Expected: the returned SHA is identical to the pre-mutation SHA recorded in
+`/tmp/rpg-toolkit-main-sha-before.txt`.
 
 ---
 
-### Task 3: Reconcile and close toolkit issue #979
+### Task 3: Reconcile and close KirkDiggler/rpg-toolkit#979
 
 **Files:**
 - No repository files change.
 
 **Interfaces:**
-- Consumes: closed, unmerged PR #1126; the merged canonical project design; shipped PR evidence.
-- Produces: closed Decide issue #979 and verified Project 19 state without closing journey #232.
+- Consumes: closed, unmerged PR KirkDiggler/rpg-toolkit#1126; the merged canonical project design; shipped PR evidence.
+- Produces: closed Decide issue KirkDiggler/rpg-toolkit#979 and verified Project 19 state without closing journey KirkDiggler/rpg-project#232.
 
 - [ ] **Step 1: Verify issue and journey preconditions**
 
@@ -197,7 +216,7 @@ gh issue view 979 --repo KirkDiggler/rpg-toolkit --json state,title,url,comments
 gh issue view 232 --repo KirkDiggler/rpg-project --json state,title,url
 ```
 
-Expected: #979 is `OPEN`; #232 is `OPEN`. If #979 already contains an equivalent reconciliation comment and is closed, skip Steps 2–3. Stop if #232 is closed because that changes the approved scope.
+Expected: KirkDiggler/rpg-toolkit#979 is `OPEN`; KirkDiggler/rpg-project#232 is `OPEN`. If #979 already contains an equivalent reconciliation comment and is closed, skip Steps 2–3. Stop if #232 is closed because that changes the approved scope.
 
 - [ ] **Step 2: Add the reconciliation comment to #979**
 
@@ -257,10 +276,14 @@ project_id=$(gh api graphql -f query='query { user(login:"KirkDiggler") { projec
 status_field_id=$(gh api graphql -f query='query { user(login:"KirkDiggler") { projectV2(number:19) { fields(first:50) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }' --jq '.data.user.projectV2.fields.nodes[] | select(.name == "Status") | .id')
 done_option_id=$(gh api graphql -f query='query { user(login:"KirkDiggler") { projectV2(number:19) { fields(first:50) { nodes { ... on ProjectV2SingleSelectField { name options { id name } } } } } } }' --jq '.data.user.projectV2.fields.nodes[] | select(.name == "Status") | .options[] | select(.name == "Done") | .id')
 item_979_id=$(gh api graphql --paginate -f query='query($endCursor:String) { user(login:"KirkDiggler") { projectV2(number:19) { items(first:100, after:$endCursor) { pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { number repository { nameWithOwner } } } } } } } }' --jq '.data.user.projectV2.items.nodes[] | select(.content.repository.nameWithOwner == "KirkDiggler/rpg-toolkit" and .content.number == 979) | .id')
+test -n "$project_id"
+test -n "$status_field_id"
+test -n "$done_option_id"
+test -n "$item_979_id"
 gh project item-edit --id "$item_979_id" --project-id "$project_id" --field-id "$status_field_id" --single-select-option-id "$done_option_id"
 ```
 
-Require all four IDs to be non-empty before `item-edit`; otherwise stop without mutation. Do not change any field on #232. Re-run the paginated query and require the expected state.
+Require all four IDs to be non-empty before `item-edit`; otherwise stop without mutation. Do not change any field on KirkDiggler/rpg-project#232. Re-run the paginated query and require the expected state.
 
 - [ ] **Step 5: Run the final closure audit**
 
@@ -274,4 +297,7 @@ git -C /home/dammitbilly/game-dev/rpg-project status --short --branch
 git -C /home/dammitbilly/game-dev/rpg-toolkit status --short --branch
 ```
 
-Expected: #1126 closed and unmerged; #979 closed; #232 open; both local worktrees clean; no toolkit commit or branch mutation occurred during Tasks 2–3.
+Expected: KirkDiggler/rpg-toolkit#1126 closed and unmerged;
+KirkDiggler/rpg-toolkit#979 closed; KirkDiggler/rpg-project#232 open; both
+local worktrees clean; no toolkit commit or branch mutation occurred during
+Tasks 2–3.
