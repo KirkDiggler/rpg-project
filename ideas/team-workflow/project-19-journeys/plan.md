@@ -23,7 +23,7 @@
 - Set Area `Class Kits` on resources, leveling, and spellcasting; set Area `The Dungeon` on dungeon danger.
 - Assign Initiative `Four-player Level-3 Dungeon` and parent #231 only to resources and leveling.
 - Keep Kind blank on all journey issues.
-- PR #230 is the merged predecessor. Reopen rpg-project issue #229 and keep the follow-up rollout PR open through a real collaborator checkpoint; Kirk alone merges the follow-up.
+- PR #230 is the merged predecessor. Keep reopened rpg-project issue #229 and follow-up PR #245 open through a real collaborator checkpoint; Kirk alone merges #245.
 - The active implementation path remains `rpg-toolkit → rpg-api → rpg-dnd5e-web`, with `rpg-api-protos` only when a wire change is earned.
 - `dnd-bot-discord` is archival and supplies no current requirement.
 - Agent-authored GitHub comments end with `— asset-pipeline agent, on behalf of KirkDiggler` until the team-workflow signature design in PR #238 is ratified and implemented.
@@ -917,7 +917,7 @@ status: pilot active; journey-starter expansion live 2026-08-21
 Replace the existing Project 19 bullet in `sessions/active.md` with a concise handoff containing:
 
 ```markdown
-- **Project 19 initiative/journey pilot (#229; merged predecessor PR #230; follow-up `docs/229-global-journey-starters`) — starter expansion live, pilot active.** Ready Journeys is global; Active Journeys is sliced by Parent issue; Shelf is sliced by Readiness. Initiative #231 includes #169, #232, #201, #236, plus #241 (class resources) and #242 (between-run leveling). #243 (spellcasting) and #244 (dungeon danger) are top-level Shaping starters with no Initiative. #201 shelves Intel/clock-driven hiding and ambushes. No new starter has a predicted child slice. Keep the follow-up PR open until a real collaborator checkpoint exercises discovery, claim, and handoff.
+- **Project 19 initiative/journey pilot (#229 / PR #245; merged predecessor PR #230) — starter expansion live, pilot active.** Ready Journeys is global; Active Journeys is sliced by Parent issue; Shelf is sliced by Readiness. Initiative #231 includes #169, #232, #201, #236, plus #241 (class resources) and #242 (between-run leveling). #243 (spellcasting) and #244 (dungeon danger) are top-level Shaping starters with no Initiative. #201 shelves Intel/clock-driven hiding and ambushes. No new starter has a predicted child slice. Keep PR #245 open until a real collaborator checkpoint exercises discovery, claim, and handoff.
 ```
 
 Expected: volatile board facts have owning issue/PR pointers and no gameplay implementation is claimed.
@@ -1014,7 +1014,7 @@ git push -u origin docs/229-global-journey-starters
 
 Expected: clean checks and a pushed first follow-up commit containing the live docs plus completed rollout steps.
 
-- [ ] **Step 5: Open the follow-up PR, reopen #229, and publish signed checkpoints**
+- [x] **Step 5: Open the follow-up PR, reopen #229, and publish signed checkpoints**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -1139,7 +1139,7 @@ gh api repos/KirkDiggler/rpg-project/pulls/230 --jq '.merged_at != null' | grep 
 
 Expected: #229 is reopened, the follow-up PR is open, all three signed comments have durable URLs, and merged PR #230 points forward.
 
-- [ ] **Step 6: Verify final Git and GitHub lifecycle state**
+- [x] **Step 6: Verify final Git and GitHub lifecycle state**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
