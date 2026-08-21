@@ -141,8 +141,8 @@ runtime does not inherit the coordinating session.
 
 Project 19's Team field should select the agent's perspective: Platform, UI/UX,
 Assets, Monster AI, or Cross-team. A Team charter states the outcome lens,
-cross-repository responsibilities, refusal boundaries, and signature label.
-The Assets charter may keep the familiar `asset-pipeline agent` signature.
+cross-repository responsibilities, and refusal boundaries. Agent signatures are
+derived from that active Team; no legacy role label follows unrelated work.
 
 Repository instructions carry technical law. “Never put rulebook logic in
 rpg-api” belongs in `rpg-api/AGENTS.md`; asset tools, license boundaries, and

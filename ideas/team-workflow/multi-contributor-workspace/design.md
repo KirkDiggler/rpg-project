@@ -55,11 +55,20 @@ authenticated operator:
 — <team-role> agent, on behalf of <github-login>
 ```
 
-Each Team charter MUST define its stable signature label. The Assets charter MAY
-use `asset-pipeline` so the established `asset-pipeline agent` signature remains
-intact. An agent MUST NOT claim to speak for another collaborator. Shared boundary
-changes affecting another journey MUST be recorded on the affected issues or
-PRs rather than resolved only in local context.
+The signature label MUST derive mechanically from the active Project 19 Team:
+
+| Team | Signature label |
+|---|---|
+| Platform | `platform` |
+| UI/UX | `ui-ux` |
+| Assets | `assets` |
+| Monster AI | `monster-ai` |
+| Cross-team | `cross-team` |
+
+No legacy role label follows work assigned to another Team. An agent MUST NOT
+claim to speak for another collaborator. Shared boundary changes affecting
+another journey MUST be recorded on the affected issues or PRs rather than
+resolved only in local context.
 
 ## 4. State ownership
 
@@ -208,7 +217,7 @@ The standing role set MUST align with Project 19 Team values and live at
 
 - Platform;
 - UI/UX;
-- Assets, with `asset-pipeline` as an allowed signature label;
+- Assets;
 - Monster AI; and
 - Cross-team.
 
@@ -231,8 +240,7 @@ A Team charter MUST define only:
 
 - the Team's outcome lens and cross-repository responsibilities;
 - refusal and escalation conditions;
-- required completion evidence;
-- its stable GitHub signature label; and
+- required completion evidence; and
 - pointers to shared agreements and repository instructions.
 
 Repository boundaries MUST NOT be modeled as standing roles. The API's ban on
