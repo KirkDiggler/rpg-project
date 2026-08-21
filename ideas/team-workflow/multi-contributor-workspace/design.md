@@ -23,6 +23,10 @@ it MUST NOT choose or assign work on the human's behalf.
 - **Shared state:** collaboration facts another contributor must be able to read.
 - **Local continuity:** machine-local intent and observations used to resume a
   conversation or unpublished implementation.
+- **Team role:** the Project 19 Team perspective responsible for the work's
+  outcome across repository boundaries.
+- **Skill:** an approved, on-demand procedure for a repeatable way of working;
+  never an authority or live-state store.
 - **Module:** for rpg-toolkit, the source tree owned by one nearest enclosing
   `go.mod` and released at its own version.
 
@@ -44,14 +48,16 @@ coordinating and role agents. Canonical charters MUST NOT reserve all decisions,
 reviews, or merges to Kirk. Repository permissions, protection rules, assigned
 ownership, and required review remain binding.
 
-Agent-authored GitHub comments MUST identify the active role and authenticated
-operator:
+Agent-authored GitHub comments MUST identify the active Team role and
+authenticated operator:
 
 ```text
-— <role> agent, on behalf of <github-login>
+— <team-role> agent, on behalf of <github-login>
 ```
 
-An agent MUST NOT claim to speak for another collaborator. Shared boundary
+Each Team charter MUST define its stable signature label. The Assets charter MAY
+use `asset-pipeline` so the established `asset-pipeline agent` signature remains
+intact. An agent MUST NOT claim to speak for another collaborator. Shared boundary
 changes affecting another journey MUST be recorded on the affected issues or
 PRs rather than resolved only in local context.
 
@@ -62,9 +68,11 @@ PRs rather than resolved only in local context.
 | Initiative, journey, slice, baton, status, readiness | Project 19 | Project fields and hierarchy |
 | Requirements, accepted decisions, blockers, handoffs | GitHub | Owning issue or PR |
 | Linked implementation and review phase | GitHub | Slice issue and PR |
+| Outcome perspective and signature | Project 19 Team | Team charter in `rpg-project/docs/teams/roles/` |
 | User's latest local direction | Local continuity | Ignored `rpg-project/active.md` |
 | Local worktree, branch, commits, dirty files | Git | Verified from the repositories |
 | Repository and module laws | Versioned docs | `AGENTS.md`/`CLAUDE.md`, README, ADR/design |
+| Repeatable optional procedure | Approved skill | Canonical `.agents/skills/` location |
 | Personal preferences or runtime recollection | Optional private memory | Runtime/user-owned storage |
 
 No tracked global progress file or role context file MAY override Project 19.
@@ -165,15 +173,22 @@ Automation MAY be designed only after that repeated boundary is observed.
 Where `CLAUDE.md` is the maintained instruction source, `AGENTS.md` MUST be a
 tracked symlink to `CLAUDE.md`.
 
-The required hierarchy is:
+The only automatic instruction load this workspace assumes is
+`game-dev/AGENTS.md`, because the coordinating session starts in game-dev. That
+file MUST act as a concise bootloader and explicitly require this sequence:
 
-1. **game-dev root:** operator identity, Project 19 orientation, local
-   continuity, and workspace-wide safety;
-2. **rpg-project root:** shared architecture, journey workflow, and canonical
-   process pointers;
-3. **owning repository root:** repository boundary, branches, tests, release,
-   and review mechanics; and
-4. **nearest scoped module:** module-specific contract and verification.
+1. read `rpg-project/AGENTS.md`, the canonical pointer to shared architecture,
+   Project 19, Team charters, cross-repository designs, and approved skills;
+2. read local `rpg-project/active.md` and query the authenticated user's Project
+   19 assignments;
+3. after the human selects work, read the owning repository's `AGENTS.md`;
+4. read the nearest scoped module's `AGENTS.md` or README before editing; and
+5. load a matching approved skill only when the task calls for one.
+
+A session started directly in an owning repository MUST still follow its root
+AGENTS pointer back to rpg-project for shared work. A dispatched worker brief
+MUST name the same load chain; inheritance from a parent session MUST NOT be
+assumed.
 
 Every workspace repository is considered migrated only when a root
 `CLAUDE.md` exposes the root symlink. Every nested `CLAUDE.md` intended to govern
@@ -186,18 +201,49 @@ Instructions MUST use progressive disclosure. Load-bearing rules MUST appear
 before historical examples and status. Repository instructions MUST NOT rely on
 personal absolute paths.
 
-## 9. Role system
+## 9. Team role system
 
-A standing role charter MUST define only:
+The standing role set MUST align with Project 19 Team values and live at
+`rpg-project/docs/teams/roles/<team>/prompt.md`:
 
-- identity and owning boundary;
-- responsibilities;
+- Platform;
+- UI/UX;
+- Assets, with `asset-pipeline` as an allowed signature label;
+- Monster AI; and
+- Cross-team.
+
+The authenticated human is the director. Director MUST NOT be a persistent agent
+identity with shared progress. The selected Slice's Team is active; when no Slice
+has been selected, the Journey's Team is active. Conflicting explicit Team values
+MUST be surfaced to the human rather than guessed. The active Team selects the
+agent's perspective; the owning repository selects technical law; Kind and an
+optional skill select the execution method.
+
+| Question | Canonical answer |
+|---|---|
+| Who directs? | Authenticated `gh` operator |
+| What is being advanced? | Assigned Journey and selected Slice |
+| Which outcome perspective owns it? | Project 19 Team charter |
+| Which technical laws apply? | Repository and nearest-module AGENTS |
+| Which procedure applies? | Project 19 Kind plus an approved skill when one exists |
+
+A Team charter MUST define only:
+
+- the Team's outcome lens and cross-repository responsibilities;
 - refusal and escalation conditions;
-- required completion evidence; and
-- pointers to shared working agreements and owning repository instructions.
+- required completion evidence;
+- its stable GitHub signature label; and
+- pointers to shared agreements and repository instructions.
 
-A runtime adapter MAY select model and permissions and point at the charter. It
-MUST NOT copy or override policy.
+Repository boundaries MUST NOT be modeled as standing roles. The API's ban on
+rulebook logic belongs in `rpg-api/AGENTS.md`; toolkit module/release mechanics
+belong in `rpg-toolkit/AGENTS.md`; asset tooling and license rules belong in the
+owning asset repository instructions. Fixer, explorer, reviewer, independent
+gate, and janitor MAY remain runtime execution profiles or become reviewed
+skills, but MUST NOT own durable progress or duplicate a Team charter.
+
+A runtime adapter MAY select model and permissions and point at the Team charter.
+It MUST NOT copy or override policy.
 
 Role context files MUST be classified during migration:
 
@@ -222,7 +268,43 @@ machine-local facts move to the operator's ignored `active.md`; historical prose
 remains available through Git history. Startup references to the tracked session
 file MUST be removed in the same slice.
 
-## 10. rpg-toolkit module contract
+## 10. Skills
+
+The canonical shared skill location MUST be:
+
+```text
+rpg-project/.agents/skills/<skill-name>/SKILL.md
+```
+
+A procedure that applies only inside one repository MUST live at:
+
+```text
+<owning-repository>/.agents/skills/<skill-name>/SKILL.md
+```
+
+Skills MUST follow the Agent Skills standard and use progressive disclosure.
+They MAY include relative scripts, references, fixtures, and assets. Executable
+helpers MUST have deterministic verification and receive the same security
+review as code.
+
+A skill is accepted only after the team has observed and chosen a repeatable way
+of working. It MUST NOT contain live progress, collaborator identity, board
+state, repository invariants, or copied Team policy. AGENTS states what must
+always be true; a skill explains how to perform a matching procedure.
+
+The canonical skill catalog MUST start clean: the pilot catalog contains no
+approved `SKILL.md`. Existing `.opencode/skills`, `.claude/skills`, and other
+runtime-specific skills MUST NOT be bulk-migrated or presented as canonical.
+Each legacy skill MAY be reviewed individually; an accepted workflow is
+rewritten or moved deliberately into the canonical location with current
+terminology and tests. Until then, new runtime adapters MUST NOT depend on it.
+
+`rpg-project/.agents/skills/README.md` MAY describe this contract without
+creating a discoverable skill. The game-dev root AGENTS MUST point to the shared
+catalog. Runtime adapters MAY expose canonical skills through settings or
+explicit paths, but MUST NOT copy their content.
+
+## 11. rpg-toolkit module contract
 
 The nearest enclosing `go.mod` defines an independently versioned module. Nested
 module roots are separate even when they share the rpg-toolkit repository.
@@ -258,7 +340,7 @@ The root toolkit instructions MUST state this contract near the top and remove
 obsolete issue inventories, historical completion claims, and personal-path
 examples that obscure it.
 
-## 11. Ideas taxonomy
+## 12. Ideas taxonomy
 
 Cross-repository idea artifacts MUST use:
 
@@ -284,7 +366,7 @@ Existing merged flat ideas SHOULD move only when touched, with links updated in
 the same change. The open Project 19 journey idea SHOULD move under
 `ideas/team-workflow/project-19-journeys/` before ratification.
 
-## 12. Runtime memory and bootstrap
+## 13. Runtime memory and bootstrap
 
 Correct contributor operation MUST NOT depend on Pi, Codex, Claude, or another
 runtime's private memory system. Personal memory MAY provide convenience but
@@ -295,7 +377,7 @@ memory as shared policy. Existing game-dev memory MUST be audited: load-bearing
 team laws move to canonical docs before memory installation becomes optional or
 operator-scoped. The pilot does not require deleting useful personal memory.
 
-## 13. Runtime adapters and board schema
+## 14. Runtime adapters and board schema
 
 Adapters MUST use the live Project 19 schema. The product classification field
 is `Area`, not the former `Feature` name. Immutable Project owner/field IDs MAY
@@ -308,30 +390,34 @@ focus views MAY project GitHub state; they MUST NOT become a second durable task
 store. Codex and other runtimes MUST be able to follow the same workflow directly
 from AGENTS and GitHub without Pi.
 
-## 14. Rollout
+## 15. Rollout
 
 The first rollout MUST remain bounded to:
 
 1. **rpg-project:** ignored local continuity contract; retirement of global live
-   progress authority; dynamic contributor authority; role-context
-   reconciliation; and canonical idea taxonomy;
-2. **game-dev:** root AGENTS link; runtime-neutral startup; optional rather than
-   canonical personal memory; and workspace link verification;
+   progress authority; Team charters replacing repository roles; role-context
+   reconciliation; clean `.agents/skills/` contract with no imported skills;
+   and canonical idea taxonomy;
+2. **game-dev:** root AGENTS bootloader with the explicit rpg-project/repository/
+   module load chain; runtime-neutral startup; optional rather than canonical
+   personal memory; and workspace link verification;
 3. **rpg-toolkit:** root/scoped AGENTS links; concise instruction ordering;
    module scope/release guard; and stale personal-path cleanup; and
 4. **real contributor proof:** a fresh Codex session continuing
-   `dammitbilly0ne`'s Composable Attack Damage journey.
+   `dammitbilly0ne`'s Composable Attack Damage journey without relying on or
+   importing a legacy runtime-specific skill.
 
 The rollout MUST use Project 19 journey/slice issues and one owning-repository PR
 per slice. It MUST NOT mass-edit all repositories before the pilot retro. After
 the proof, the retro decides whether and how to propagate the AGENTS/link and
 continuity pattern to remaining repositories.
 
-## 15. Acceptance
+## 16. Acceptance
 
 The pilot passes only when a fresh runtime-neutral session can:
 
-1. load workspace guidance through AGENTS without private Claude memory;
+1. auto-load only game-dev AGENTS and follow its explicit pointer into
+   rpg-project, the selected repository, and the nearest module;
 2. derive the authenticated login;
 3. find that user's assigned journey, current slice, and linked PR;
 4. read local human direction from ignored `active.md`;
@@ -339,20 +425,22 @@ The pilot passes only when a fresh runtime-neutral session can:
 6. load the owning repository and nearest module contract;
 7. state rpg-toolkit's one-versioned-module-per-PR and provider-first rules
    before editing; and
-8. leave updated local continuity that another agent runtime can read.
+8. leave updated local continuity that another agent runtime can read; and
+9. locate the clean canonical skill catalog without treating a legacy skill as
+   approved.
 
 Deterministic verification MUST include:
 
-- AGENTS symlink target and tracked-file checks;
+- game-dev bootloader pointer and AGENTS symlink target/tracked-file checks;
 - `git check-ignore` proof for the real `active.md`;
 - active-template heading and secret-placeholder checks;
 - fixture tests for authenticated assignment filtering and failure behavior;
 - toolkit multi-module red and single-module green scope fixtures;
-- scans for retired global-progress authority and stale `Feature` adapter use;
-  and
+- scans for retired repository-role progress, stale `Feature` adapter use, and
+  accidental canonical exposure of legacy skills; and
 - a documented fresh Codex-path walkthrough on the assigned journey.
 
-## 16. Non-goals
+## 17. Non-goals
 
 This design does not:
 
@@ -363,6 +451,7 @@ This design does not:
 - synchronize local continuity across machines;
 - claim to preserve unpushed code when the machine is lost;
 - standardize private runtime memory locations;
+- bulk-migrate or automatically trust existing runtime-specific skills;
 - migrate every historical role/context entry without classification;
 - mass-add AGENTS links to every repository before the pilot; or
 - change gameplay, rules, wire contracts, or product behavior.

@@ -122,21 +122,51 @@ rather than pretending it is already known.
 
 ## Runtime-neutral instruction hierarchy
 
-A fresh agent should receive policy through ordinary repository files:
+The only automatic load the workspace assumes is `game-dev/AGENTS.md`, because
+contributors start their coordinating session in game-dev. That file is the
+bootloader, not the whole manual. It explicitly tells the agent to read:
 
-1. workspace `AGENTS.md` for identity, board, and local continuity;
-2. `rpg-project/AGENTS.md` for shared architecture and workflow;
-3. owning repository `AGENTS.md` for repository mechanics; and
-4. nearest module `AGENTS.md` or README for scoped contracts.
+1. `rpg-project/AGENTS.md` for the shared architecture and the place where the
+   team keeps what it does;
+2. local `rpg-project/active.md` and the authenticated user's Project 19 work;
+3. the selected owning repository's `AGENTS.md`; and
+4. the nearest module `AGENTS.md` or README before editing.
 
 Where `CLAUDE.md` is the maintained source, `AGENTS.md` should be a symlink to
 it. This gives Claude, Pi, Codex, and future runtimes the same bytes without
-copying policy.
+copying policy. A worker brief must carry the same explicit load chain when its
+runtime does not inherit the coordinating session.
 
-Role charters should state identity, ownership, responsibilities, and refusal
-boundaries. They should not duplicate repository mechanics or maintain task
-progress. A role invocation reads the repository/module instructions for the
-work it actually owns.
+## Team roles instead of repository roles
+
+Project 19's Team field should select the agent's perspective: Platform, UI/UX,
+Assets, Monster AI, or Cross-team. A Team charter states the outcome lens,
+cross-repository responsibilities, refusal boundaries, and signature label.
+The Assets charter may keep the familiar `asset-pipeline agent` signature.
+
+Repository instructions carry technical law. “Never put rulebook logic in
+rpg-api” belongs in `rpg-api/AGENTS.md`; asset tools, license boundaries, and
+verification commands belong in the owning asset repository's AGENTS. Those
+rules bind every Team that enters the repository.
+
+This removes the need for persistent `rpg-api-member`, `rpg-toolkit-member`, and
+similar repository roles. Fixer, explorer, reviewer, and janitor describe an
+execution method, not a durable identity with progress files. The authenticated
+human remains the director.
+
+## Skills as learned procedures
+
+Skills hold repeatable ways of working after the team has discovered and chosen
+them. Shared skills belong under `rpg-project/.agents/skills/`; a procedure that
+only applies to one repository belongs under that repository's
+`.agents/skills/`. Main AGENTS points to the shared location and tells an agent
+to load a matching skill when one exists.
+
+The skill catalog starts clean. Existing `.opencode/skills` and `.claude/skills`
+content is not migrated wholesale; each legacy skill must be evaluated on its
+own merits before a new canonical skill is accepted. An approved skill follows
+the Agent Skills `SKILL.md` format, contains no live state, and does not restate
+AGENTS invariants.
 
 ## Toolkit rule made explicit
 
@@ -159,6 +189,7 @@ lists, or personal filesystem examples.
 
 ## Role and memory cleanup
 
+The per-repository role matrix should collapse into the small Team charter set.
 Existing role context needs reconciliation, not blind deletion:
 
 - live progress moves to Project 19 or local `active.md`;
@@ -200,12 +231,13 @@ merge with its links updated in the same change.
 
 The first rollout is intentionally narrow:
 
-1. rpg-project establishes local continuity and cleans the role/state contract;
-2. game-dev exposes runtime-neutral startup and stops relying on shared personal
-   memory;
+1. rpg-project establishes local continuity, Team charters, and the clean
+   canonical skills namespace while removing repository-role progress;
+2. game-dev exposes the root AGENTS bootloader and stops relying on shared
+   personal memory;
 3. rpg-toolkit exposes scoped AGENTS files and enforces module isolation; and
 4. a fresh Codex session on the Composable Attack Damage journey validates the
-   real contributor path.
+   real contributor path without importing a legacy skill.
 
 The retro decides what to propagate to the remaining repositories and whether a
 repeatable checkpoint-promotion rule has emerged. It does not pre-automate that
