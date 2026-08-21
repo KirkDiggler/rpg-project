@@ -2,7 +2,7 @@
 name: Multi-contributor workspace
 tracking: https://github.com/KirkDiggler/rpg-project/issues/237
 journey: https://github.com/KirkDiggler/rpg-project/issues/236
-status: approved in conversation 2026-08-21; written review pending
+status: approved by Kirk 2026-08-21; implementation planning active
 ---
 
 # Multi-contributor workspace
