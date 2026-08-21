@@ -1,85 +1,88 @@
-# Active handoff — 2026-08-21 (evening)
+# Active handoff — 2026-08-22
 
 ## Now
 
-**rpg-api runs on the session SDK alone, and the tomb draws as three chambers from the wire.**
+**The 3D game runs on the session wire: it draws the tomb, the player walks, and the monster that
+forms the fight is on screen.** One day, one chain, four repos, all merged to `dev`/`main`.
 
-Since the morning handoff, one day did four things.
+**1. The 3D route cut over to `dnd5e.api.session.v1alpha1`** (rpg-dnd5e-web#762, three slices, all
+verified live by Kirk on :3001):
+- **#764 slice 1** — `GetAtlas`/`GetWhere` → floor, **straight modular wall runs** (Kirk's ruling:
+  walls are straight runs, never per-hex-edge zigzags), implicit perimeter from the floor mask,
+  doorways, junctions meeting, player at the entrance. Plus #765: the dev identity fix that put
+  the Start button back (UI playerId ≠ auth header id).
+- **#766 slice 2** — click a hex → edge-aware A* over the atlas's declared boundaries/doorways
+  (`atlasPath.ts`; `hexMath.findPath` is per-hex, the wire's rule is per-EDGE) → `Move(path)` →
+  the model animates along the server's RETURNED `steps` → `GetWhere` reconciles. Bug found by
+  demanding a frame burst instead of two stills: the `MOVED` refetch flipped `loading` and
+  unmounted the canvas mid-walk. Canvas now survives background refetches (DOM-identity tests).
+- **#767 slice 3** — `GetView` → every perceived member drawn from the typed `seen.position`;
+  `subject` `skeleton-1` → `skeleton` → `skeleton-soldier-01.glb`; memories ghosted; the fight-lock
+  refusal reads "In a fight — movement is locked." (matched on code AND `session.ErrInBubble` text
+  — rpg-api's `FailedPrecondition` bucket holds eight sentinels).
 
-**1. The old encounter stack is gone from rpg-api `dev`** (rpg-api#801, −37,634 lines; #804
-re-landed the bits a stacked merge missed). Kirk's rulings that made it a clean cut rather than a
-relabel: *prod runs off `main`; anything we build now is not playable anyway; losing it means we
-lose nothing.* Deleted: the v2 EncounterService handler/orchestrator/repo, the lobby's old start
-path, devseed/devcombat, the old integration suites, `dungeonregistry`, the old-dialect authoring
-(`PutDungeon`), `internal/content`. `go mod tidy` dropped `rpg-toolkit/encounter` entirely.
-**Visible consequences**: `ListDungeons` is `Unimplemented` (picker needs a new-stack source,
-rpg-project#131); arcade recovery (`RestoreForNewEncounter`) is not ported — design question; the
-dungeon builder's Save & Play is dark until `PutDungeon` is rebuilt on the new `dungeonspec`.
-**Filed**: rpg-api#803 — session verbs authenticate but do not authorize membership (any caller
-can `End` any session it can name). `dev`→`main` waits until the new stack is whole.
+**2. ADR-0041 — a sighting carries what its channel knows, typed per channel.** The skeleton's cell
+sat in `Sighting.payload` as composition-private JSON. Offered "decode it client-side behind one
+function, file the proper change later"; **Kirk: "not here for fast wins — composable, extensible
+components that are a solid foundation."** Three options thrown, option 2 chosen: channel-keyed
+sub-structs (`Seen{Position}` now; `Heard`/… later; lighting facts go INSIDE `Seen`). Mechanics per
+rule S2 and ADR-0040: the composition decodes its own encoding (`encounter.DecodeSightPayload`,
+strict — refuses `{}`, `null`, the old room-bearing dialect), session projects, intel stays opaque.
+- rpg-toolkit#1158 `encounter/v0.29.0`; #1159 `session/v0.21.2` (patch, not minor — the tagger
+  grades the SUBJECT and it lacked `feat:`; every later PR carried it).
+- rpg-api-protos#233 → `v0.1.129` (`Seen seen` = `Sighting.7`, `Report.3`; additive).
+- rpg-api#807 **adopt dnd5e v0.97.0** — forced by MVS through session v0.21.2; the composable
+  attack-damage migration (toolkit#1146) broke the LEGACY character converter. Kirk's call:
+  **first-pool projection** (base weapon damage → `damage_dice`/`damage_type`; riders are not on
+  the legacy wire); `Net` removed everywhere. Then #808 transcribes `Seen` (live acceptance test:
+  after the walk forms the fight, `GetView` reports `skel-1` with `Seen.Position`).
+- Honest limitation on the ledger: `intel.Report` carries no channel, so `Report.Seen` gates on
+  payload shape, not provenance — **toolkit#1160**.
 
-**2. The wire says which way the hexes point** (rpg-toolkit#1140 → toolkit#1147 `session/v0.20.0`
-+ **ADR-0040**, protos#231 v0.1.128, rpg-api#802, web#760). `Atlas.Layout` = `pointy_top|flat_top`
-on hex, absent on square — the RENDER word, deliberately not the authoring `orientation`. Rule
-banked in the ADR: *a wire field is named for the question the receiver asks, not the one the
-author answered.* The web reads it with `layoutFromWire` and refuses to guess.
+**3. What Kirk saw live, and what it means:** the skeleton pops in at range. Sight is a SUPPLIED
+capability (`session/sight.go`, a flat 4 cells for everyone, no lighting, LoS from the atlas). The
+client draws what `GetView` says and nothing else — when darkvision/lighting arrives it changes the
+`Sight` capability in the toolkit and the client does not move. That is the foundation working.
 
-**3. Drawing it found the NEXT convention bug** (rpg-toolkit#1150 → #1151 `spatial/v0.11.0`,
-#1153 `encounter/v0.28.0`, #1154 `session/v0.21.0`, rpg-api#805, web#761). With `layout` on the
-wire the tomb STILL drew as a diagonal band: spatial's axial basis was cube `(x, y)` while its own
-offset conversion and `hexPixel` — and every standard formula — take `r = z`. Any two cube axes are
-a valid axial pair, so every in-lattice property agreed; only the picture differed. #1141 had not
-caused it; #1141 removed the compensating error. Fixed at the root: `CubeCoordinate.ToAxial` /
-`AxialToCube` are the ONE exported definition of the basis; encounter's `hexRuns` now *asks*
-`HexCellAt` for both ends of a run and sorts. **The discriminator for this whole family is a pixel
-formula**: an authored W×H rectangle, converted and drawn with the standard formula, measures W×H —
-landed in spatial, encounter, and on the served `Atlas` in session (verified to fail on the old pin).
-The `sessionworld` entrance literal moved twice: `(1,−4)` → `(0,−3)` → `(0,3)`.
-
-**4. Verified live.** Session Tomb concept, reading `layout: pointy` off the wire and applying the
-standard formula with no private knowledge: three chambers, two seam walls, two doorways, 224
-cells, 28×8. The diagonal staircase that opened #1140 is gone. (Sessions persisted before the basis
-change are refused by the loader — "door edge endpoint is not floor" — start a fresh lobby.)
-
-**Also today:** the new contributor's composable attack damage landed as a clean provider-only PR
-(toolkit#1146, ADR-0041 after #1152 renumbered it; #1149 superseded) and its resolution consumer
-(toolkit#1148) was reviewed at full engine rigor — mergeable as-is; one pre-existing risk filed as
-toolkit#1155 (off-hand attacks get the full ability modifier with no TWF gate).
+**Also:** rpg-api#809 — `scripts/ci-checks.sh` runs `git checkout -- .` on any dirty tree and
+wiped an agent's uncommitted work (third incarnation of the commit-before-mutating lesson).
 
 ## Next
 
-**Nothing is in flight on the session stack's geometry.** The chain #1140/#1141/#1150 is closed end
-to end, and the pixel-formula tests stand guard at three layers.
+Two tracks, Kirk's framing: **combat** and **dungeon builder**. Combat first — the skeleton fight
+the fighter already walks into is the testable case.
 
-In order of leverage:
-
-- **The dungeon builder on the new stack.** `PutDungeon` → `dungeonregistry` is deleted; the
-  builder needs a new-stack write path against `rulebooks/dnd5e/encounter/dungeonspec` (the YAML
-  v0.4 compiler `sessionworld` already uses). Nothing has started. `ListDungeons` comes back with it
-  (rpg-project#131).
-- **rpg-api#803 — authorization on the session verbs.** One seam rule for `Move/Attack/EndTurn/
-  Answer/Join/Spawn/End`: the caller must be a member and control the member it names. The lobby
-  repository already knows membership.
-- **rpg-api#800 — partial-failure orphans**, now with one stack to rule on instead of two.
-- **The web game route is still on the old wire** (`EncounterService`), which rpg-api `dev` no
-  longer serves. The route cutover is the web's next structural piece; the Concepts Lab page is the
-  proof that the new wire draws.
-- **Open SDK gaps a client hits on day one**: toolkit#1137 (cold client cannot learn who is DOWNED),
-  #1138 (action economy refuses but never reports the budget), #1135 (locked door shares a sentinel
-  with a client bug), #1139 (room-local vs absolute placements at the compiler seam).
-- **toolkit#1155** — the TWF gate, for whoever wires two-weapon fighting.
+- **Move/target indicator** on the 3D route (only a "Walking…" label today; hover hex + path).
+- **Combat on the session stack** — `Attack`/`Turn`/`EndTurn` through the 3D route, against the
+  tomb's skeleton. Open SDK gaps a client hits on day one: toolkit#1137 (cold client can't learn
+  who is DOWNED), #1138 (economy refuses but never reports the budget), #1135 (locked-door
+  sentinel shared with a client bug).
+- **toolkit#1160** — thread the channel onto `intel.Report` so `Report.Seen` gates on provenance.
+- Presentation carry-overs on web#762, behind combat: zoom-coupled camera pitch curve
+  (`cameraDials.ts`, not wired into `SessionCanvas`), continuous camera follow (today it jumps to
+  the destination and holds), door open/close when the wire carries state (static prop now), the
+  floor-skirt placeholder at outer corners (`WallRunMesh.tsx`, reads as a gap from play angles).
+- **Dungeon builder track**: `PutDungeon` on the new `dungeonspec`, `ListDungeons` back
+  (rpg-project#131). Prop FACING is not on the wire (`AtlasProp` = ref/at/blocks_*) — a toolkit +
+  protos field, parked under #131, not a client task.
+- rpg-api#803 (verb authorization), #800 (orphans), #809 (ci-checks.sh).
 
 **Rulings banked today, for the "don't re-derive" list:**
 
-- *Delete, don't relabel.* Offered "relabel the old stack so its arithmetic survives a spatial bump",
-  Kirk chose deleting the old stack on `dev`. The general form: when a dependency correction
-  reaches legacy code through MVS, the question is whether the legacy code should exist, not how to
-  keep it compiling.
-- *One writer per worktree.* A delegated agent's tree is its alone until it has answered the
-  coordinator's LAST message and the tree is clean; send the edit, don't make it.
-- *Stacked PRs merge into their base branch* unless the base is deleted at merge — #802 had to be
-  re-landed by #804. Don't stack across a merge you don't control.
-- *`pkill -f` in a tool shell kills the shell.* Kill dev servers by port, in their own call.
+- *Foundation over fast wins.* Never recommend "hack now + issue later" at a seam; present the
+  right shape with its cost and sequence it across repos. (Memory: `foundation-over-fast-wins`.)
+- *Straight walls.* Presentation is modular straight runs from the authority (boundaries + floor
+  mask); the hex edges are where, not what.
+- *No Fable outside the coordinator.* Subagents run on their definition's model (sonnet); never
+  pass `model: fable`.
+- *One Copilot review per PR.* Runs are a monthly quota — request on open, fix, reply in-thread,
+  never re-request. `gh pr view --json reviewRequests` is blind to bot reviewers; verify with a
+  GraphQL node query.
+- *The tagger grades the subject.* `feat:` or it's a patch.
+- *Delegated idle is not finished; repeated idle is.* An agent that idles twice without acting on a
+  message has released its worktree — say so to it, then take the push/PR yourself.
+- *Demand the frame burst.* Two stills that look the same are not proof of motion; the burst found
+  a real unmount bug.
 
 ## Solid
 
