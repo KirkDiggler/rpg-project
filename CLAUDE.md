@@ -2,7 +2,16 @@
 
 This is the shared brain for the RPG platform. Read this first in any session.
 
-> **Start every session here:** read [`sessions/active.md`](sessions/active.md) — the living handoff: current state, decisions, and next steps. It's the freshest narrative. If the board or open PRs look like they disagree with it, trust the handoff's direction and reconcile the board — it can lag a fresh decision (e.g. a just-superseded PR may still read "open").
+## Startup — shared board first, local continuity second
+
+1. Derive the operator identity with `gh api user --jq .login`; use that login in Team signatures.
+2. Treat Project 19 assignment as shared work. The board and issue hierarchy are the shared state; a local note is never a claim on shared focus.
+3. If ignored `rpg-project/active.md` exists, read it as this operator's local continuity only. To create one, copy `docs/templates/local-active.md` to `active.md`; it is ignored by git.
+4. Let the human choose the current focus before turning local continuity into action.
+5. Read the selected owning repository's AGENTS.md and nearest scoped instructions before touching that repo.
+6. Check `.agents/skills/` only for a matching approved skill. The canonical catalog may be empty; do not treat legacy runtime skills as automatically approved.
+
+> **Fresh shared state:** read [`sessions/active.md`](sessions/active.md) when you need the current cross-team handoff. If the board or open PRs look like they disagree with it, trust the handoff's direction long enough to reconcile the board — it can lag a fresh decision (e.g. a just-superseded PR may still read "open").
 >
 > **Picking up as the technical director?** Read [`docs/teams/roles/director/prompt.md`](docs/teams/roles/director/prompt.md) + [`field-notes.md`](docs/teams/roles/director/field-notes.md) **first** — that's who you are and how you operate (thin: orchestrate + verify, never hands-on). Your `feedback_*` memories auto-load. That plus the handoff is enough to start directing — do **not** pull the whole world into your context.
 
@@ -55,9 +64,13 @@ issue with its linked PR. **Ready Journeys** is the contributor entry point. A
 blank Initiative means the item has not been reconciled against the current
 architecture; Todo alone does not make it ready.
 
-Team and Area remain ownership/product filters, not the work hierarchy. Toolkit
-tests can prove a slice; a gameplay journey closes only when its Done-when
-behavior is observed through the named local dev path. Full contract:
+Team and Area are shared assignment and product filters on Project 19. Assignment
+means the Team is accountable for the outcome lens, not that the Team charter owns
+technical commands. For implementation, read `docs/teams/roles/` for the Team
+lens, then read the owning repository's AGENTS.md and nearest scoped instructions
+for commands and invariants. Toolkit tests can prove a slice; a gameplay journey
+closes only when its Done-when behavior is observed through the named local dev
+path. Full contract:
 [`ideas/team-workflow/project-19-journeys/design.md`](ideas/team-workflow/project-19-journeys/design.md).
 
 Rules:
@@ -65,6 +78,7 @@ Rules:
 - No branch without an issue
 - No issue without a board entry
 - New work = new slice issue on Project 19 -> fresh branch from that repo's **base branch** (below)
+- Local `active.md` is operator continuity only; shared work remains on Project 19 and linked issues/PRs.
 
 ### Base branches — check before you cut a branch
 
