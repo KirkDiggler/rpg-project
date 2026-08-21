@@ -997,13 +997,15 @@ files = [
     root/'ideas/team-workflow/project-19-journeys/plan.md',
     root/'sessions/active.md',
 ]
-text = '\n'.join(p.read_text() for p in files)
+contents = {p: p.read_text() for p in files}
+text = '\n'.join(contents.values())
 for marker in ['T'+'BD', 'T'+'ODO', 'F'+'IXME', 'PLACE'+'HOLDER', '?'*3]:
     assert marker not in text, marker
 assert ('ideas/' + 'project-19-journeys') not in text
-assert 'Initiative is a priority lens' in text
-assert 'Ready Journeys' in text
-assert 'ideas/team-workflow/project-19-journeys/design.md' in text
+claude = contents[root/'CLAUDE.md']
+assert 'Initiative is a priority lens' in ' '.join(claude.split())
+assert 'Ready Journeys' in claude
+assert 'ideas/team-workflow/project-19-journeys/design.md' in claude
 PY
 
 git add CLAUDE.md ideas/team-workflow/project-19-journeys/ sessions/active.md
