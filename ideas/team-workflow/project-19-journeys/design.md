@@ -1,7 +1,7 @@
 ---
 name: Project 19 Initiative and Journey Model
 tracking: https://github.com/KirkDiggler/rpg-project/issues/229
-status: pilot active; journey-starter expansion approved by Kirk 2026-08-20; expansion implementation pending
+status: pilot active; journey-starter expansion approved by Kirk 2026-08-20; expansion implementation planned
 ---
 
 # Project 19 Initiative and Journey Model
