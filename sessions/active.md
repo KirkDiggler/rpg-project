@@ -1,43 +1,85 @@
-# Active handoff — 2026-08-20
+# Active handoff — 2026-08-21 (evening)
 
 ## Now
 
-**The session lane reached rpg-api.** As of 2026-08-20 the whole chain is aligned and merged:
-`encounter v0.26.0` → `resolution v0.10.0` → **`session v0.18.0`** → **`dnd5e.api.session.v1alpha1`**
-(rpg-api-protos#230) → **rpg-api `dev`** (PR #797 at **a61848d**, `SessionService` live beside the
-old encounter stack behind `RPG_SESSION_STACK_ENABLED`, unset in every deployment).
+**rpg-api runs on the session SDK alone, and the tomb draws as three chambers from the wire.**
 
-**W4 combat closed** (#966, `session/v0.8.0`): walks, sees, fights, swings, disengages, with zero
-rules in the session package.
+Since the morning handoff, one day did four things.
 
-**The world model landed (S1–S5).** One `spatial.Room` spans the dungeon; rooms are *named regions*;
-walls are absolute boundary edges carrying `BlocksMovement`/`BlocksLineOfSight` independently; void
-is declared. S5 closed the floor mask (#1127 via #1131/#1133): a hex room's `{Width, Height}` is the
-authored offset rectangle, and an offset rectangle **shears** in axial space, so absolute projection
-adds the anchor in offset space and converts **once**.
+**1. The old encounter stack is gone from rpg-api `dev`** (rpg-api#801, −37,634 lines; #804
+re-landed the bits a stacked merge missed). Kirk's rulings that made it a clean cut rather than a
+relabel: *prod runs off `main`; anything we build now is not playable anyway; losing it means we
+lose nothing.* Deleted: the v2 EncounterService handler/orchestrator/repo, the lobby's old start
+path, devseed/devcombat, the old integration suites, `dungeonregistry`, the old-dialect authoring
+(`PutDungeon`), `internal/content`. `go mod tidy` dropped `rpg-toolkit/encounter` entirely.
+**Visible consequences**: `ListDungeons` is `Unimplemented` (picker needs a new-stack source,
+rpg-project#131); arcade recovery (`RestoreForNewEncounter`) is not ported — design question; the
+dungeon builder's Save & Play is dark until `PutDungeon` is rebuilt on the new `dungeonspec`.
+**Filed**: rpg-api#803 — session verbs authenticate but do not authorize membership (any caller
+can `End` any session it can name). `dev`→`main` waits until the new stack is whole.
 
-**Session adopted that stack** (#1136 → `v0.18.0`, closing #1130) and it was mostly a **deletion** —
-six compile errors — because session had never used the verbs the world model removed.
+**2. The wire says which way the hexes point** (rpg-toolkit#1140 → toolkit#1147 `session/v0.20.0`
++ **ADR-0040**, protos#231 v0.1.128, rpg-api#802, web#760). `Atlas.Layout` = `pointy_top|flat_top`
+on hex, absent on square — the RENDER word, deliberately not the authoring `orientation`. Rule
+banked in the ADR: *a wire field is named for the question the receiver asks, not the one the
+author answered.* The web reads it with `layoutFromWire` and refuses to guess.
 
-**Three consequences everything downstream inherits:**
+**3. Drawing it found the NEXT convention bug** (rpg-toolkit#1150 → #1151 `spatial/v0.11.0`,
+#1153 `encounter/v0.28.0`, #1154 `session/v0.21.0`, rpg-api#805, web#761). With `layout` on the
+wire the tomb STILL drew as a diagonal band: spatial's axial basis was cube `(x, y)` while its own
+offset conversion and `hexPixel` — and every standard formula — take `r = z`. Any two cube axes are
+a valid axial pair, so every in-lattice property agreed; only the picture differed. #1141 had not
+caused it; #1141 removed the compensating error. Fixed at the root: `CubeCoordinate.ToAxial` /
+`AxialToCube` are the ONE exported definition of the basis; encounter's `hexRuns` now *asks*
+`HexCellAt` for both ends of a run and sorts. **The discriminator for this whole family is a pixel
+formula**: an authored W×H rectangle, converted and drawn with the standard formula, measures W×H —
+landed in spatial, encounter, and on the served `Atlas` in session (verified to fail on the old pin).
+The `sessionworld` entrance literal moved twice: `(1,−4)` → `(0,−3)` → `(0,3)`.
 
-1. **Rooms no longer imply walls.** On one canvas two chambers side by side are ONE OPEN SPACE until
-   somebody draws the seam. The tomb compiler draws them; every hand-built world behaved wrongly
-   until it did the same. Anything authoring a world owes `Boundaries`, plus `Canvas.Void` (required,
-   no correct default) and the Standing/Sight capabilities.
-2. **Sight needed a NUMBER, and "invent nothing" was not available.** Unbounded range means ONE OPEN
-   DOOR MAKES THE WHOLE DUNGEON ONE FIGHT — an archway is a sightline into every cell beyond, so a
-   bystander joined a fight from the far room. `sightRangeCells = 4` (20ft, a torch's bright radius)
-   stands in until sheets carry vision data, which today they do not at all.
-3. **What the wire carries:** `Atlas{Grid, Cells, Props, Boundaries, Doorways}`. `Occluders` is gone —
-   `Props` name what a thing is and answer *both* blocking questions, because a coffin is walked
-   around but seen over and a pile of bones is neither. Deliberately absent: `Orientation` (a client
-   receiving cells never does the conversion a frame is for) and `Member.Region`.
+**4. Verified live.** Session Tomb concept, reading `layout: pointy` off the wire and applying the
+standard formula with no private knowledge: three chambers, two seam walls, two doorways, 224
+cells, 28×8. The diagonal staircase that opened #1140 is gone. (Sessions persisted before the basis
+change are refused by the loader — "door edge endpoint is not floor" — start a fresh lobby.)
 
-**Two capabilities came off the "not yet" list on the way**, and both changed behaviour under
-existing tests rather than merely adding surface: a fight now **ends by defeat** on its own when one
-side stops standing (`DissolveByDefeat`, v0.15.0), and a member can be **downed** (`EventDowned`).
-The action economy also started refusing (`ErrCannotAfford`, v0.17.0).
+**Also today:** the new contributor's composable attack damage landed as a clean provider-only PR
+(toolkit#1146, ADR-0041 after #1152 renumbered it; #1149 superseded) and its resolution consumer
+(toolkit#1148) was reviewed at full engine rigor — mergeable as-is; one pre-existing risk filed as
+toolkit#1155 (off-hand attacks get the full ability modifier with no TWF gate).
+
+## Next
+
+**Nothing is in flight on the session stack's geometry.** The chain #1140/#1141/#1150 is closed end
+to end, and the pixel-formula tests stand guard at three layers.
+
+In order of leverage:
+
+- **The dungeon builder on the new stack.** `PutDungeon` → `dungeonregistry` is deleted; the
+  builder needs a new-stack write path against `rulebooks/dnd5e/encounter/dungeonspec` (the YAML
+  v0.4 compiler `sessionworld` already uses). Nothing has started. `ListDungeons` comes back with it
+  (rpg-project#131).
+- **rpg-api#803 — authorization on the session verbs.** One seam rule for `Move/Attack/EndTurn/
+  Answer/Join/Spawn/End`: the caller must be a member and control the member it names. The lobby
+  repository already knows membership.
+- **rpg-api#800 — partial-failure orphans**, now with one stack to rule on instead of two.
+- **The web game route is still on the old wire** (`EncounterService`), which rpg-api `dev` no
+  longer serves. The route cutover is the web's next structural piece; the Concepts Lab page is the
+  proof that the new wire draws.
+- **Open SDK gaps a client hits on day one**: toolkit#1137 (cold client cannot learn who is DOWNED),
+  #1138 (action economy refuses but never reports the budget), #1135 (locked door shares a sentinel
+  with a client bug), #1139 (room-local vs absolute placements at the compiler seam).
+- **toolkit#1155** — the TWF gate, for whoever wires two-weapon fighting.
+
+**Rulings banked today, for the "don't re-derive" list:**
+
+- *Delete, don't relabel.* Offered "relabel the old stack so its arithmetic survives a spatial bump",
+  Kirk chose deleting the old stack on `dev`. The general form: when a dependency correction
+  reaches legacy code through MVS, the question is whether the legacy code should exist, not how to
+  keep it compiling.
+- *One writer per worktree.* A delegated agent's tree is its alone until it has answered the
+  coordinator's LAST message and the tree is clean; send the edit, don't make it.
+- *Stacked PRs merge into their base branch* unless the base is deleted at merge — #802 had to be
+  re-landed by #804. Don't stack across a merge you don't control.
+- *`pkill -f` in a tool shell kills the shell.* Kill dev servers by port, in their own call.
 
 ## Solid
 
@@ -85,6 +127,32 @@ initiative on first sighting. **The difference the SDK actually brings is narrow
 the old stack flips a mode; the SDK stops and asks.** Do not describe free roam as new capability.
 
 **Rulings that decide future calls — don't re-derive these:**
+
+- **A SYMMETRIC BUG IS INVISIBLE TO ROUND-TRIPS.** `tools/spatial` had pointy-top and flat-top running
+  each other's offset schemes, swapped identically in BOTH directions, for the life of the module.
+  Every caller converts offset → cube → offset through the same mismatched pair, so distance,
+  neighbours, line of sight and round-trips were all perfectly self-consistent. **Round-trips, inverse
+  pairs and "these two implementations agree" tests all pass through the error twice and cancel it.**
+  What breaks the symmetry is an EXTERNAL reference — a rendering, a published convention, a system
+  that never saw your conversion. When a module owns both directions of a mapping, ask what would
+  still be true if the whole mapping were rotated; if the answer is "everything", the tests prove less
+  than they look like they do. The discriminator that works names a fact true under one convention and
+  not the other (here: `[-1,1]` is a neighbour under odd-r and two steps under odd-q).
+- **THE LABEL IS WHY NOBODY LOOKED — sweep every place a convention is ASSERTED, not just the code.**
+  The original defect was a constant and its comment disagreeing; the comment is what stopped anyone
+  checking the arithmetic. After fixing `encounter`'s two doc bullets, SIX other statements in the same
+  module still asserted the old mapping. A file where six comments say one thing and two say the other
+  is how the bug returns. Better still, write comments that cannot drift: name WHICH AXIS SHIFTS, not
+  which scheme, so the prose sits visibly beside the arithmetic it describes.
+- **Delegating a projection is not the same as restating one.** `encounter` said "POINTY-TOP is odd-q"
+  in its own words and cost 148 subtests; `session`'s `regionCells` — flagged in its own comment as "a
+  SECOND implementation" — merely loops and calls `HexCellAt`, so the correction flowed straight
+  through and cost ONE. When auditing duplicate logic, the question is whether the copy *decides* or
+  merely *asks*.
+- **"It passed" sometimes means "it never ran", and there is a tell for each.** A mutation reported as
+  killed with NO test names was a compile failure. A `GOWORK` scope reporting zero failures had a `go`
+  directive one patch too low — **zero failures AND zero `ok` lines together** is the signature, since
+  a passing Go run always prints `ok` per package. Both happened this wave.
 
 - **Start from the reversible direction.** Adding a `Config` field is compatible; removing one
   a host implemented is not. Loosening a rule is compatible; tightening breaks every host. So:
@@ -219,36 +287,6 @@ rather than an ambiguous payload nobody can safely parse."
 
 _(#916's dangling `closes #916` references were removed on PR #950.)_
 
-## Next
-
-**The live walkthrough.** #797's one open evidence box: drive the running server with
-`RPG_SESSION_STACK_ENABLED=1` and walk the placeholder world in the actual game. The headless
-acceptance loop is the merge evidence, not a substitute for seeing it
-(the standing rule is that each victory is verified LIVE in the running game before the next
-is built). Note the placeholder world **no longer opens in combat** — sight has a range now and the
-party enters eight cells from the skeleton — so there is finally something to walk.
-
-**Then the web lane (W3 of rpg-project#227).** The contract is settled and published; nothing blocks
-a client reimplementation against `dnd5e.api.session.v1alpha1` except starting it.
-
-**Two SDK gaps that a client will hit on day one**, both filed 2026-08-20, neither gating the merge:
-
-- **rpg-toolkit#1137 — a cold client cannot learn who is DOWNED.** The state exists only as a stream
-  beat; `Member` is `{id, kind, position}`, `Status` is `{open, outcome}`, and `Sighting.Status`
-  distinguishes a live sighting from a memory, not an upright member from a fallen one. So the
-  reconnect recipe (`GetWhere` + `GetAtlas` + `GetStory`) draws the whole party on its feet. Same
-  shape as the gap `GetWhere` closed; wants a read scoped to what the observer perceives, not an
-  encounter-wide roster (that would leak the cells `#1051` refused to batch).
-- **rpg-toolkit#1138 — the action economy refuses but never reports.** `ErrCannotAfford` is real and
-  its message names the currency that ran out, but nothing reports the budget *before* the refusal.
-  A turn UI therefore either offers a button that fails or re-derives how many swings a level-5
-  fighter gets — a rule in the client, the Boundary Rule violation this seam exists to prevent.
-
-**Also open:** #1135 (`Step` refuses a locked door with `ErrBadPlacement` — a fiction beat and a
-client bug share one sentinel, so the tomb's most player-visible moment is indistinguishable from a
-defect) and #1134 (CI never linted #1131/#1133/#1136 — every lint job self-skips; Kirk has his own
-cleanup session on it).
-
 ## Decision log
 
 | Date | Decision | Visible at |
@@ -282,6 +320,11 @@ cleanup session on it).
 | 2026-08-14 | **Issue-tracker sweep executed against the new canon** (5 Sonnet reviewers, ~99 toolkit issues; every verdict re-verified before posting): 12 closes (shipped/answered/dead-premise), 21 `old-stack` labels with annotations, ~54 comments reconciling issue text with ADR-0037/0038 + clocks. Canonical trackers picked: #899 (OA hostility, was triple-filed), #721 (coverage-script bug, was triple-filed). Gap issues filed: **#970** saving throws (gates #962), **#971** ConditionBehavior.Ref() (Kirk's decision, made visible), **#972** character.Data round-trip/dual-home audit, **#973** delete dead mechanics/* | toolkit issues, board 19 |
 | 2026-08-14 | Design inputs for #965/#966/wave 5 harvested from old-stack defects, recorded on the tracker: hostility gate at reaction triggers, consciousness gate on Walk, weapon identity in the damage shape, no-magnitudes-in-host pin, does-Dissolve-sweep-Rage (#809) | toolkit#959 comment |
 | 2026-08-14 | **Board 19 reconciled** (Kirk: "really we just want our project 19 board current"): 46 items pointing at CLOSED issues flipped to Done (they showed Todo/In Progress/In Review); 52 status-less open items surfaced into Todo; #970–#973 + #899 fielded (Status/Team/Feature/Kind). The ~168 old unboarded toolkit issues stay unswept by choice — the board is the source of truth, not the corpus | board 19 |
+
+| 2026-08-21 | `Atlas.Layout` is the render word, separate from the authoring `orientation`; a wire field is named for the receiver's question | ADR-0040, toolkit#1147 |
+| 2026-08-21 | Old encounter stack deleted from rpg-api `dev` rather than relabelled; prod stays on `main` | rpg-api#801, #804 |
+| 2026-08-21 | Spatial's axial basis is cube `(x, z)`; one exported definition; pixel-formula tests at spatial/encounter/session | toolkit#1150, #1151/#1153/#1154 |
+| 2026-08-21 | ADR numbers are claimed at merge: same-day collision resolved by renumbering the later one (0040 → 0041) | toolkit#1152 |
 
 ## Carried follow-ups — filed, none blocking
 
