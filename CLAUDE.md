@@ -57,12 +57,15 @@ If you see game logic in the API, say something. If you see calculations in the 
 **ALWAYS check before starting work:**
 - https://github.com/users/KirkDiggler/projects/19 — **Project 19**, the durable board for the evolving game. Boards #11–#13 are historical chapter records, not the current work source.
 
-The current initiative is **Four-player Level-3 Dungeon**. Work is organized as
-**Initiative → Journey → Slice**: an initiative is the strategic outcome, a
-journey is a coherent multi-PR capability, and a slice is one owning-repository
-issue with its linked PR. **Ready Journeys** is the contributor entry point. A
-blank Initiative means the item has not been reconciled against the current
-architecture; Todo alone does not make it ready.
+The current initiative is **Four-player Level-3 Dungeon**. Adopted work is
+organized as **Initiative → Journey → Slice**; an unadopted capability may remain
+a top-level Shaping journey until an initiative adopts it. Initiative is a
+priority lens, not a permission boundary.
+
+**Ready Journeys** is the global contributor entry point. Use **Current
+Initiative** for prioritized outcomes, **Shelf → Shaping** for rough journey
+starters, and the **Active Journeys** Parent issue rail for work already sliced
+beneath a journey. Todo alone does not make a journey Ready.
 
 Team and Area are shared assignment and product filters on Project 19. Assignment
 means the Team is accountable for the outcome lens, not that the Team charter owns

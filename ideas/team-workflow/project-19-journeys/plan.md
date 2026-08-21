@@ -23,7 +23,7 @@
 - Set Area `Class Kits` on resources, leveling, and spellcasting; set Area `The Dungeon` on dungeon danger.
 - Assign Initiative `Four-player Level-3 Dungeon` and parent #231 only to resources and leveling.
 - Keep Kind blank on all journey issues.
-- Keep rpg-project issue #229 and PR #230 open/In Progress. Kirk alone merges PR #230.
+- PR #230 is the merged predecessor. Reopen rpg-project issue #229 and keep the follow-up rollout PR open through a real collaborator checkpoint; Kirk alone merges the follow-up.
 - The active implementation path remains `rpg-toolkit → rpg-api → rpg-dnd5e-web`, with `rpg-api-protos` only when a wire change is earned.
 - `dnd-bot-discord` is archival and supplies no current requirement.
 - Agent-authored GitHub comments end with `— asset-pipeline agent, on behalf of KirkDiggler` until the team-workflow signature design in PR #238 is ratified and implemented.
@@ -59,8 +59,7 @@ The baseline files are the rollback authority. If Kirk chooses rollback after a
 partial mutation:
 
 - restore README and filters from `project-before.json` / `views-before.json`;
-- use **Slice by → No slicing** on views 7 and 9 if their baseline
-  `verticalGroupByFields` arrays were empty;
+- use **Slice by → No slicing** on views 7 and 9 through the browser;
 - restore #201 and #231 bodies from their `issue-*-before.json` files;
 - remove the two adopted starters from #231 with `removeSubIssue`, then remove
   all four new Project items;
@@ -77,9 +76,9 @@ partial state and evidence until Kirk chooses forward repair or rollback.
 
 **Live resources:** Project 19 README and views 5–9.
 
-**Produces:** Global Ready/Discovery filters, child-slice Active filter, revised contributor contract, and persisted Slice-by settings verified through GraphQL.
+**Produces:** Global Ready/Discovery filters, child-slice Active filter, revised contributor contract, and persisted Slice-by settings verified by browser refresh; the public-API observability gap is captured as evidence.
 
-- [ ] **Step 1: Verify quota and capture a durable pre-mutation snapshot**
+- [x] **Step 1: Verify quota and capture a durable pre-mutation snapshot**
 
 ```bash
 set -euo pipefail
@@ -100,7 +99,7 @@ sha256sum "$cache"/*-before.json > "$cache/baseline.sha256"
 
 Expected: the quota assertion passes, every file is non-empty, and `baseline.sha256` records all captured inputs.
 
-- [ ] **Step 2: Prove the live schema IDs still match the design**
+- [x] **Step 2: Prove the live schema IDs still match the design**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -122,7 +121,7 @@ jq -e '
 
 Expected: exit 0. Stop rather than resolving replacement IDs silently.
 
-- [ ] **Step 3: Write the revised Project README payload**
+- [x] **Step 3: Write the revised Project README payload**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -178,7 +177,7 @@ EOF
 
 Expected: the README describes global pickup, Shaping starters, and Initiative as priority.
 
-- [ ] **Step 4: Update the README and read it back immediately**
+- [x] **Step 4: Update the README and read it back immediately**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -200,7 +199,7 @@ PY
 
 Expected: exact equality after normalizing GitHub's terminal newline behavior.
 
-- [ ] **Step 5: Update the three changed filters sequentially**
+- [x] **Step 5: Update the three changed filters sequentially**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -225,7 +224,7 @@ update_view 'PVTV_lAHOAASbwc4Bcj4vzgLXUnw' \
 
 Expected: each mutation returns its exact requested filter before the next mutation runs.
 
-- [ ] **Step 6: Verify all five filters and unchanged visible fields**
+- [x] **Step 6: Verify all five filters and unchanged visible fields**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -245,9 +244,9 @@ jq -e '
 
 Expected: exit 0 and no visible field disappears.
 
-- [ ] **Step 7: Set the two Slice-by fields in the GitHub browser UI**
+- [x] **Step 7: Set the two Slice-by fields in the GitHub browser UI**
 
-The public `UpdateProjectV2ViewInput` exposes only `visibleFieldIds`; it cannot write `verticalGroupByFields`. In Project 19:
+The public `UpdateProjectV2ViewInput` has no Slice-by property; its nested configuration input exposes only `visibleFieldIds`. In Project 19:
 
 1. Open **Active Journeys** (`/users/KirkDiggler/projects/19/views/7`).
 2. Open the view menu, choose **Slice by**, choose **Parent issue**, and save the view.
@@ -256,19 +255,27 @@ The public `UpdateProjectV2ViewInput` exposes only `visibleFieldIds`; it cannot 
 
 Expected: Active Journeys gains a Parent issue rail; Shelf gains a Readiness rail. Stop until Kirk confirms both browser actions.
 
-- [ ] **Step 8: Read back the browser-only settings through GraphQL**
+- [x] **Step 8: Capture browser persistence and the public-API observability gap**
+
+Kirk confirmed both settings remained after refresh on 2026-08-21. Reordering the tabs changed only their positions: Active Journeys is first and Shelf is fourth; their stable IDs and names are unchanged.
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
-gh api graphql -f query='query($id:ID!){node(id:$id){... on ProjectV2{views(first:100){nodes{number name verticalGroupByFields(first:10){nodes{... on ProjectV2FieldCommon{name}}}}}}}}' -f id='PVT_kwHOAASbwc4Bcj4v' > "$cache/views-slice-readback.json"
+gh api graphql -f query='query($id:ID!){node(id:$id){... on ProjectV2{views(first:100){nodes{id number name updatedAt}}}} viewType:__type(name:"ProjectV2View"){fields{name}} updateConfigurationType:__type(name:"ProjectV2ViewConfigurationInput"){inputFields{name}}}' -f id='PVT_kwHOAASbwc4Bcj4v' > "$cache/views-slice-api-evidence.json"
 
 jq -e '
-  ([.data.node.views.nodes[]|select(.number==7)|.verticalGroupByFields.nodes[].name]==["Parent issue"]) and
-  ([.data.node.views.nodes[]|select(.number==9)|.verticalGroupByFields.nodes[].name]==["Readiness"])
-' "$cache/views-slice-readback.json" >/dev/null
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUns")|.name]==["Active Journeys"]) and
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUn0")|.name]==["Shelf"]) and
+  ([.data.viewType.fields[].name|select(test("slice";"i"))]|length)==0 and
+  ([.data.updateConfigurationType.inputFields[].name]==["visibleFieldIds"])
+' "$cache/views-slice-api-evidence.json" >/dev/null
+
+cat > "$cache/views-slice-browser-verification.txt" <<'EOF'
+2026-08-21 — Kirk set Active Journeys to Slice by Parent issue and Shelf to Slice by Readiness, saved both, and confirmed both persisted after refresh. Active is first and Shelf fourth after tab reordering. GitHub's public ProjectV2View schema exposes no Slice-by field; groupByFields and verticalGroupByFields are different settings and remain empty.
+EOF
 ```
 
-Expected: exit 0. A visual change without this readback is not accepted.
+Expected: stable view identities and the API gap are captured; Kirk's persisted-after-refresh confirmation is the Slice-by acceptance evidence.
 
 ---
 
@@ -280,7 +287,7 @@ Expected: exit 0. A visual change without this readback is not accepted.
 
 **Produces:** Two Todo/Shaping/Cross-team/Class Kits journeys parented under #231, with no assignee, Kind, or child slices.
 
-- [ ] **Step 1: Write the class-resource journey body**
+- [x] **Step 1: Write the class-resource journey body**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -333,7 +340,7 @@ EOF
 
 Expected: the body offers several ways in without selecting a child slice.
 
-- [ ] **Step 2: Create and read back the resource issue**
+- [x] **Step 2: Create and read back the resource issue**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -350,7 +357,7 @@ printf 'RESOURCE_NUMBER=%q\nRESOURCE_URL=%q\n' "$RESOURCE_NUMBER" "$RESOURCE_URL
 
 Expected: one open journey-labeled issue and a persisted number/URL.
 
-- [ ] **Step 3: Board and parent the resource journey**
+- [x] **Step 3: Board and parent the resource journey**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -381,7 +388,7 @@ jq -e '.data.addSubIssue.issue.number==231 and .data.addSubIssue.subIssue.parent
 
 Expected: all five select mutations succeed in order and direct GraphQL reports parent #231.
 
-- [ ] **Step 4: Write and create the leveling journey**
+- [x] **Step 4: Write and create the leveling journey**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -447,7 +454,7 @@ printf 'LEVELING_NUMBER=%q\nLEVELING_URL=%q\n' "$LEVELING_NUMBER" "$LEVELING_URL
 
 Expected: one open journey-labeled issue with the approved optional between-run flow.
 
-- [ ] **Step 5: Board and parent the leveling journey**
+- [x] **Step 5: Board and parent the leveling journey**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -478,7 +485,7 @@ jq -e '.data.addSubIssue.issue.number==231 and .data.addSubIssue.subIssue.parent
 
 Expected: direct GraphQL reports parent #231.
 
-- [ ] **Step 6: Update initiative #231's child list without replacing other content**
+- [x] **Step 6: Update initiative #231's child list without replacing other content**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -503,6 +510,7 @@ new = f'''## Journey children
 - [ ] #169 — Composable Dungeon Builder
 - [ ] #232 — Composable Attack Damage
 - [ ] #201 — Monster Behavior in the Local Dungeon
+- [ ] #236 — Multi-contributor agent workspace
 - [ ] #{os.environ["RESOURCE_NUMBER"]} — See, Spend, and Recover Class Resources
 - [ ] #{os.environ["LEVELING_NUMBER"]} — Earn XP and Level Up Between Runs
 
@@ -525,7 +533,7 @@ test "$(gh api repos/KirkDiggler/rpg-project/issues/231 --jq .body)" = "$(< "$ca
 
 Expected: only the child list, XP exclusion wording, and Learning log gain approved changes.
 
-- [ ] **Step 7: Verify hierarchy, board fields, assignments, and Initiative blast radius**
+- [x] **Step 7: Verify hierarchy, board fields, assignments, and Initiative preservation**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -539,8 +547,7 @@ gh api graphql \
 gh project item-list 19 --owner KirkDiggler --limit 1000 --format json > "$cache/items-after-current-starters.json"
 
 jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" '
-  .data.repository.initiative.subIssues.totalCount==5 and
-  ([.data.repository.initiative.subIssues.nodes[].number]|sort)==([169,201,232,$r,$l]|sort) and
+  (([169,201,232,236,$r,$l] - [.data.repository.initiative.subIssues.nodes[].number])|length)==0 and
   .data.repository.resource.parent.number==231 and
   .data.repository.leveling.parent.number==231 and
   .data.repository.resource.subIssues.totalCount==0 and
@@ -555,12 +562,11 @@ jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" '
   ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$r or .content.number==$l))]|length)==2 and
   all(.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$r or .content.number==$l));
     .status=="Todo" and .readiness=="Shaping" and .team=="Cross-team" and .area=="Class Kits" and
-    .initiative=="Four-player Level-3 Dungeon" and (.kind//null)==null and (.assignees|length)==0) and
-  ([.items[]|select(.initiative=="Four-player Level-3 Dungeon")]|length)==7
+    .initiative=="Four-player Level-3 Dungeon" and (.kind//null)==null and (.assignees|length)==0)
 ' "$cache/items-after-current-starters.json" >/dev/null
 ```
 
-Expected: initiative #231 has exactly five journey children and exactly seven Project items carry the Initiative value.
+Expected: both new journeys are correct, the original pilot children and concurrent #236 remain present, and unrelated Initiative additions do not make this targeted check fail.
 
 ---
 
@@ -572,7 +578,7 @@ Expected: initiative #231 has exactly five journey children and exactly seven Pr
 
 **Produces:** Spellcasting and dungeon-danger starters with no Initiative, parent, assignee, Kind, or children.
 
-- [ ] **Step 1: Write and create the spellcasting starter**
+- [x] **Step 1: Write and create the spellcasting starter**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -635,7 +641,7 @@ printf 'SPELL_NUMBER=%q\nSPELL_URL=%q\n' "$SPELL_NUMBER" "$SPELL_URL" > "$cache/
 
 Expected: the issue is useful without accepting a slot model or creating a child.
 
-- [ ] **Step 2: Board spellcasting without assigning Initiative or parent**
+- [x] **Step 2: Board spellcasting without assigning Initiative or parent**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -658,7 +664,7 @@ jq -e '([.data.node.fieldValues.nodes[]|select(.field.name? != null)|{key:.field
 
 Expected: four select mutations only; direct readback shows no Initiative or Kind.
 
-- [ ] **Step 3: Write and create the dungeon-danger starter**
+- [x] **Step 3: Write and create the dungeon-danger starter**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -719,7 +725,7 @@ printf 'DANGER_NUMBER=%q\nDANGER_URL=%q\n' "$DANGER_NUMBER" "$DANGER_URL" > "$ca
 
 Expected: the issue fixes player choice and canonical monster identity while shelving formulas.
 
-- [ ] **Step 4: Board dungeon danger without assigning Initiative or parent**
+- [x] **Step 4: Board dungeon danger without assigning Initiative or parent**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -742,7 +748,7 @@ jq -e '([.data.node.fieldValues.nodes[]|select(.field.name? != null)|{key:.field
 
 Expected: four select mutations only; direct readback shows no Initiative or Kind.
 
-- [ ] **Step 5: Verify both starters are top-level and correctly shelved**
+- [x] **Step 5: Verify both starters are top-level and correctly shelved**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -764,16 +770,16 @@ jq -e '
 ' "$cache/unadopted-starters-hierarchy.json" >/dev/null
 
 jq -e --argjson s "$SPELL_NUMBER" --argjson d "$DANGER_NUMBER" '
+  ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$s or .content.number==$d))]|length)==2 and
   all(.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$s or .content.number==$d));
     .status=="Todo" and .readiness=="Shaping" and .team=="Cross-team" and
     (.initiative//null)==null and (.kind//null)==null and (.assignees|length)==0) and
   ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and .content.number==$s)|.area]==["Class Kits"]) and
-  ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and .content.number==$d)|.area]==["The Dungeon"]) and
-  ([.items[]|select(.initiative=="Four-player Level-3 Dungeon")]|length)==7
+  ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and .content.number==$d)|.area]==["The Dungeon"])
 ' "$cache/items-after-unadopted-starters.json" >/dev/null
 ```
 
-Expected: both have null parents and Initiatives; the current-Initiative blast radius remains seven.
+Expected: both have null parents and Initiatives; unrelated concurrent Project additions are preserved.
 
 ---
 
@@ -783,7 +789,7 @@ Expected: both have null parents and Initiatives; the current-Initiative blast r
 
 **Produces:** Updated possibility shelf only; current Next proof, status, hierarchy, and assignment remain unchanged.
 
-- [ ] **Step 1: Replace the current shelf block and append one Learning log entry**
+- [x] **Step 1: Replace the current shelf block and append one Learning log entry**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -830,7 +836,7 @@ test "$(gh api repos/KirkDiggler/rpg-project/issues/201 --jq .body)" = "$(< "$ca
 
 Expected: exact body equality and the existing Next proof remains untouched.
 
-- [ ] **Step 2: Verify #201's hierarchy and board state did not drift**
+- [x] **Step 2: Verify #201's hierarchy and board state did not drift**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -863,9 +869,9 @@ Expected: #201 remains Todo/Shaping/unassigned under #231 with no children.
 - Modify: `ideas/team-workflow/project-19-journeys/plan.md`
 - Modify: `sessions/active.md`
 
-**Produces:** Canonical docs matching live state, final evidence manifest, signed checkpoints, and an open Pilot Active PR.
+**Produces:** Canonical docs matching live state, final evidence manifest, signed checkpoints, a reopened pilot issue, and an open follow-up Pilot Active PR.
 
-- [ ] **Step 1: Update the canonical Project Board pointer semantics**
+- [x] **Step 1: Update the canonical Project Board pointer semantics**
 
 In `CLAUDE.md`, replace:
 
@@ -894,7 +900,7 @@ beneath a journey. Todo alone does not make a journey Ready.
 
 Expected: `CLAUDE.md` links the design at `ideas/team-workflow/project-19-journeys/design.md` and no longer says blank Initiative means unready.
 
-- [ ] **Step 2: Mark the design expansion live and refresh the active handoff**
+- [x] **Step 2: Mark the design expansion live and refresh the active handoff**
 
 Change the design frontmatter status from:
 
@@ -911,12 +917,12 @@ status: pilot active; journey-starter expansion live 2026-08-21
 Replace the existing Project 19 bullet in `sessions/active.md` with a concise handoff containing:
 
 ```markdown
-- **Project 19 initiative/journey pilot (#229 / PR #230) — starter expansion live, pilot active.** Ready Journeys is global; Active Journeys is sliced by Parent issue; Shelf is sliced by Readiness. Initiative #231 has five journey children: #169, #232, #201, plus the class-resource and between-run leveling starters. Spellcasting and dungeon-danger are top-level Shaping starters with no Initiative. #201 shelves Intel/clock-driven hiding and ambushes. No starter has a predicted child slice. Keep PR #230 open until a real collaborator checkpoint exercises discovery, claim, and handoff.
+- **Project 19 initiative/journey pilot (#229; merged predecessor PR #230; follow-up `docs/229-global-journey-starters`) — starter expansion live, pilot active.** Ready Journeys is global; Active Journeys is sliced by Parent issue; Shelf is sliced by Readiness. Initiative #231 includes #169, #232, #201, #236, plus #241 (class resources) and #242 (between-run leveling). #243 (spellcasting) and #244 (dungeon danger) are top-level Shaping starters with no Initiative. #201 shelves Intel/clock-driven hiding and ambushes. No new starter has a predicted child slice. Keep the follow-up PR open until a real collaborator checkpoint exercises discovery, claim, and handoff.
 ```
 
 Expected: volatile board facts have owning issue/PR pointers and no gameplay implementation is claimed.
 
-- [ ] **Step 3: Capture and assert the complete final live state**
+- [x] **Step 3: Capture and assert the complete final live state**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -929,14 +935,13 @@ gh project view 19 --owner KirkDiggler --format json > "$cache/project-final.jso
 gh project field-list 19 --owner KirkDiggler --format json > "$cache/fields-final.json"
 gh project item-list 19 --owner KirkDiggler --limit 1000 --format json > "$cache/items-final.json"
 gh api graphql -F resource="$RESOURCE_NUMBER" -F leveling="$LEVELING_NUMBER" -F spell="$SPELL_NUMBER" -F danger="$DANGER_NUMBER" -f query='query($resource:Int!,$leveling:Int!,$spell:Int!,$danger:Int!){repository(owner:"KirkDiggler",name:"rpg-project"){initiative:issue(number:231){subIssues(first:20){totalCount nodes{number title}}} resource:issue(number:$resource){parent{number} subIssues(first:10){totalCount}} leveling:issue(number:$leveling){parent{number} subIssues(first:10){totalCount}} spell:issue(number:$spell){parent{number} subIssues(first:10){totalCount}} danger:issue(number:$danger){parent{number} subIssues(first:10){totalCount}} monster:issue(number:201){body parent{number}}}}' > "$cache/hierarchy-final.json"
-gh api graphql -f query='query($id:ID!){node(id:$id){... on ProjectV2{views(first:100){nodes{number name filter verticalGroupByFields(first:10){nodes{... on ProjectV2FieldCommon{name}}}}}}}}' -f id='PVT_kwHOAASbwc4Bcj4v' > "$cache/views-final.json"
+gh api graphql -f query='query($id:ID!){node(id:$id){... on ProjectV2{views(first:100){nodes{id number name filter updatedAt}}}} viewType:__type(name:"ProjectV2View"){fields{name}}}' -f id='PVT_kwHOAASbwc4Bcj4v' > "$cache/views-final.json"
 
 diff <(jq -S '.fields' "$cache/fields-before.json") <(jq -S '.fields' "$cache/fields-final.json")
 jq -e '.readme|contains("Initiative is a priority lens") and contains("Ready Journeys") and contains("ideas/team-workflow/project-19-journeys/design.md")' "$cache/project-final.json" >/dev/null
 
 jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" '
-  .data.repository.initiative.subIssues.totalCount==5 and
-  ([.data.repository.initiative.subIssues.nodes[].number]|sort)==([169,201,232,$r,$l]|sort) and
+  (([169,201,232,236,$r,$l] - [.data.repository.initiative.subIssues.nodes[].number])|length)==0 and
   .data.repository.resource.parent.number==231 and .data.repository.leveling.parent.number==231 and
   .data.repository.spell.parent==null and .data.repository.danger.parent==null and
   .data.repository.resource.subIssues.totalCount==0 and .data.repository.leveling.subIssues.totalCount==0 and
@@ -945,7 +950,6 @@ jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" '
 ' "$cache/hierarchy-final.json" >/dev/null
 
 jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" --argjson s "$SPELL_NUMBER" --argjson d "$DANGER_NUMBER" '
-  ([.items[]|select(.initiative=="Four-player Level-3 Dungeon")]|length)==7 and
   ([.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$r or .content.number==$l or .content.number==$s or .content.number==$d))]|length)==4 and
   all(.items[]|select(.content.repository=="KirkDiggler/rpg-project" and (.content.number==$r or .content.number==$l or .content.number==$s or .content.number==$d));
     .status=="Todo" and .readiness=="Shaping" and .team=="Cross-team" and (.kind//null)==null and (.assignees|length)==0) and
@@ -956,12 +960,13 @@ jq -e --argjson r "$RESOURCE_NUMBER" --argjson l "$LEVELING_NUMBER" --argjson s 
 ' "$cache/items-final.json" >/dev/null
 
 jq -e '
-  ([.data.node.views.nodes[]|select(.number==6)|.filter]==["label:journey status:Todo readiness:Ready no:assignee"]) and
-  ([.data.node.views.nodes[]|select(.number==7)|.filter]==["has:parent-issue kind:Build,Fix,Verify,Learn,Decide,Concept -status:Done"]) and
-  ([.data.node.views.nodes[]|select(.number==7)|.verticalGroupByFields.nodes[].name]==["Parent issue"]) and
-  ([.data.node.views.nodes[]|select(.number==8)|.filter]==["kind:Learn,Decide,Concept -status:Done"]) and
-  ([.data.node.views.nodes[]|select(.number==9)|.verticalGroupByFields.nodes[].name]==["Readiness"])
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUno")|.filter]==["label:journey status:Todo readiness:Ready no:assignee"]) and
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUns")|.filter]==["has:parent-issue kind:Build,Fix,Verify,Learn,Decide,Concept -status:Done"]) and
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUnw")|.filter]==["kind:Learn,Decide,Concept -status:Done"]) and
+  ([.data.node.views.nodes[]|select(.id=="PVTV_lAHOAASbwc4Bcj4vzgLXUn0")|.filter]==["no:initiative -status:Done"]) and
+  ([.data.viewType.fields[].name|select(test("slice";"i"))]|length)==0
 ' "$cache/views-final.json" >/dev/null
+test -s "$cache/views-slice-browser-verification.txt"
 
 jq -n \
   --slurpfile project "$cache/project-final.json" \
@@ -969,14 +974,17 @@ jq -n \
   --slurpfile items "$cache/items-final.json" \
   --slurpfile hierarchy "$cache/hierarchy-final.json" \
   --slurpfile views "$cache/views-final.json" \
-  '{captured_at:(now|todate),phase:"journey-starter expansion live; retro not yet earned",project:$project[0],fields:$fields[0],items:$items[0],hierarchy:$hierarchy[0],views:$views[0]}' \
+  --rawfile browserSlice "$cache/views-slice-browser-verification.txt" \
+  '{captured_at:(now|todate),phase:"journey-starter expansion live; retro not yet earned",project:$project[0],fields:$fields[0],items:$items[0],hierarchy:$hierarchy[0],views:$views[0],browser_slice_verification:$browserSlice}' \
   > "$cache/final-state.json"
 sha256sum "$cache/final-state.json" > "$cache/final-state.sha256"
 ```
 
 Expected: every assertion exits 0 and `final-state.sha256` records the final evidence artifact.
 
-- [ ] **Step 4: Run documentation self-review and commit**
+Execution lifecycle note: Kirk merged predecessor PR #230 at 2026-08-21T11:11:52Z while the live rollout was in progress, and GitHub deleted its branch. Kirk then approved a fresh follow-up. The preserved documentation patch was applied cleanly to `docs/229-global-journey-starters` from `origin/main` at `0c017bb`; the merged branch was not recreated.
+
+- [x] **Step 4: Run documentation self-review and publish the first follow-up commit**
 
 ```bash
 git diff --check
@@ -990,7 +998,7 @@ files = [
     root/'sessions/active.md',
 ]
 text = '\n'.join(p.read_text() for p in files)
-for marker in ['T'+'BD', 'T'+'ODO', 'F'+'IXME', 'PLACE'+'HOLDER', '???']:
+for marker in ['T'+'BD', 'T'+'ODO', 'F'+'IXME', 'PLACE'+'HOLDER', '?'*3]:
     assert marker not in text, marker
 assert ('ideas/' + 'project-19-journeys') not in text
 assert 'Initiative is a priority lens' in text
@@ -1001,12 +1009,12 @@ PY
 git add CLAUDE.md ideas/team-workflow/project-19-journeys/ sessions/active.md
 git diff --cached --check
 git commit -m 'docs: activate global journey starters'
-git push
+git push -u origin docs/229-global-journey-starters
 ```
 
-Expected: clean checks and a pushed commit containing docs plus completed plan checkboxes.
+Expected: clean checks and a pushed first follow-up commit containing the live docs plus completed rollout steps.
 
-- [ ] **Step 5: Update #229/#230 phase text and publish signed checkpoints**
+- [ ] **Step 5: Open the follow-up PR, reopen #229, and publish signed checkpoints**
 
 ```bash
 cache="$HOME/.cache/pi/project19-journey-starters"
@@ -1015,33 +1023,71 @@ source "$cache/leveling.env"
 source "$cache/spellcasting.env"
 source "$cache/dungeon-danger.env"
 
+STATE_SHA=$(awk '{print $1}' "$cache/final-state.sha256")
+INITIATIVE_CHILDREN=$(jq -r '[.data.repository.initiative.subIssues.nodes[].number|"#\(.)"]|join(", ")' "$cache/hierarchy-final.json")
+cat > "$cache/followup-pr-body.md" <<EOF
+## Review phase
+
+**Pilot Active; journey-starter expansion live.** The revised global views, four journey starters, #201 possibility shelf, and canonical documentation are live. This follow-up stays open through a real collaborator checkpoint and retro, so setup completion is not yet a success verdict or MERGE-READY call.
+
+## Summary
+
+- make Ready Journeys and Discovery global while keeping Current Initiative as the priority lens
+- slice Active Journeys by Parent issue and Shelf by Readiness
+- add #241 and #242 beneath initiative #231
+- add top-level Shaping starters #243 and #244 without Initiative
+- preserve concurrent #236 and its slices
+- record the public API gap for browser-only Slice-by settings
+
+## Evidence
+
+- final-state SHA-256: \`$STATE_SHA\`
+- initiative child readback: $INITIATIVE_CHILDREN
+- persistent local evidence: \`~/.cache/pi/project19-journey-starters/final-state.json\`
+
+## Lifecycle
+
+PR #230 is the merged design/pilot predecessor. Kirk approved this fresh follow-up after #230 merged and its branch was deleted during rollout.
+
+Tracks #229.
+
+— asset-pipeline agent, on behalf of KirkDiggler
+EOF
+
+FOLLOWUP_URL=$(gh pr create --repo KirkDiggler/rpg-project \
+  --base main --head docs/229-global-journey-starters \
+  --title 'docs: activate global journey starters' \
+  --body-file "$cache/followup-pr-body.md")
+FOLLOWUP_NUMBER=${FOLLOWUP_URL##*/}
+printf 'FOLLOWUP_NUMBER=%q\nFOLLOWUP_URL=%q\n' "$FOLLOWUP_NUMBER" "$FOLLOWUP_URL" > "$cache/followup.env"
+gh pr view "$FOLLOWUP_NUMBER" --repo KirkDiggler/rpg-project --json number,state,baseRefName,headRefName,url,body > "$cache/followup-created.json"
+jq -e '.state=="OPEN" and .baseRefName=="main" and .headRefName=="docs/229-global-journey-starters" and (.body|contains("Pilot Active; journey-starter expansion live") and contains("Tracks #229"))' "$cache/followup-created.json" >/dev/null
+
 gh api repos/KirkDiggler/rpg-project/issues/229 --jq .body > "$cache/issue-229-plan-ready.md"
-python3 - <<'PY'
+FOLLOWUP_URL="$FOLLOWUP_URL" python3 - <<'PY'
+import os
 from pathlib import Path
 cache = Path.home()/'.cache/pi/project19-journey-starters'
 body = (cache/'issue-229-plan-ready.md').read_text()
 old = 'The three-journey pilot is active. Kirk approved the journey-starter expansion on 2026-08-20; the implementation plan is committed and execution is pending.'
 new = 'The journey pilot and starter expansion are live. The board remains in Pilot Active state until a real collaborator checkpoint and retro.'
 assert body.count(old) == 1
-(cache/'issue-229-live.md').write_text(body.replace(old, new))
+body = body.replace(old, new)
+anchor = '- `ideas/team-workflow/project-19-journeys/pilot-plan.md` — completed initial rollout'
+assert body.count(anchor) == 1
+body = body.replace(anchor, anchor + f'\n- Follow-up rollout review: {os.environ["FOLLOWUP_URL"]}')
+old_taxonomy = 'The stable-domain location follows the taxonomy designed in PR #238.'
+new_taxonomy = 'The idea remains on its own review line; PR #238 was consulted only for the `ideas/team-workflow/` directory convention.'
+assert body.count(old_taxonomy) == 1
+body = body.replace(old_taxonomy, new_taxonomy)
+(cache/'issue-229-live.md').write_text(body)
 PY
-gh api -X PATCH repos/KirkDiggler/rpg-project/issues/229 -F body=@"$cache/issue-229-live.md" > "$cache/issue-229-live-update.json"
+gh api -X PATCH repos/KirkDiggler/rpg-project/issues/229 -f state=open -F body=@"$cache/issue-229-live.md" > "$cache/issue-229-live-update.json"
 test "$(gh api repos/KirkDiggler/rpg-project/issues/229 --jq .body)" = "$(< "$cache/issue-229-live.md")"
-
-gh api repos/KirkDiggler/rpg-project/pulls/230 --jq .body > "$cache/pr-230-plan-ready.md"
-python3 - <<'PY'
-from pathlib import Path
-cache = Path.home()/'.cache/pi/project19-journey-starters'
-body = (cache/'pr-230-plan-ready.md').read_text()
-old = '**Pilot Active; journey-starter expansion planned.** The initial schema, views, canonical pointer, and three-journey pilot are live. The approved implementation plan is committed; execution is pending. This PR stays open through a real collaborator checkpoint and retro, so setup completion is not yet a success verdict or MERGE-READY call.'
-new = '**Pilot Active; journey-starter expansion live.** The initial schema, revised global views, canonical pointer, five adopted journey children, and two unadopted Shaping starters are live. This PR stays open through a real collaborator checkpoint and retro, so setup completion is not yet a success verdict or MERGE-READY call.'
-assert body.count(old) == 1
-(cache/'pr-230-live.md').write_text(body.replace(old, new))
-PY
-gh api -X PATCH repos/KirkDiggler/rpg-project/pulls/230 -F body=@"$cache/pr-230-live.md" > "$cache/pr-230-live-update.json"
-test "$(gh api repos/KirkDiggler/rpg-project/pulls/230 --jq .body)" = "$(< "$cache/pr-230-live.md")"
+jq -e '.state=="open" and (.body|contains("Follow-up rollout review"))' "$cache/issue-229-live-update.json" >/dev/null
 
 STATE_SHA=$(awk '{print $1}' "$cache/final-state.sha256")
+INITIATIVE_CHILDREN=$(jq -r '[.data.repository.initiative.subIssues.nodes[].number|"#\(.)"]|join(", ")' "$cache/hierarchy-final.json")
 cat > "$cache/expansion-live-checkpoint.md" <<EOF
 ## Journey-starter expansion live — retro not yet earned
 
@@ -1054,7 +1100,7 @@ cat > "$cache/expansion-live-checkpoint.md" <<EOF
 
 ### Journey state
 
-Initiative #231 now has exactly five children: #169, #201, #232, #$RESOURCE_NUMBER, and #$LEVELING_NUMBER.
+Initiative #231's current GraphQL child readback is: $INITIATIVE_CHILDREN. This preserves the concurrent multi-contributor workspace journey alongside this expansion.
 
 - $RESOURCE_URL — Todo / Shaping / Cross-team / Class Kits / unassigned; parent #231
 - $LEVELING_URL — Todo / Shaping / Cross-team / Class Kits / unassigned; parent #231
@@ -1067,7 +1113,8 @@ All four have blank Kind and zero child slices. #201 now shelves Intel/clock-dri
 
 - Final-state SHA-256: \`$STATE_SHA\`
 - Persistent evidence: \`~/.cache/pi/project19-journey-starters/final-state.json\`
-- GitHub's public view-update input cannot write \`verticalGroupByFields\`; Kirk set the two Slice-by values in the browser and GraphQL read them back exactly.
+- Follow-up review: $FOLLOWUP_URL; merged predecessor: PR #230
+- GitHub's public ProjectV2View schema has no Slice-by field. Kirk set both values in the browser and confirmed they persisted after refresh; the API limitation is captured in the final evidence.
 
 This does not pass the pilot by itself. The next acceptance checkpoint is a collaborator finding, claiming, or shaping one journey from shared GitHub state without private assignment.
 
@@ -1075,23 +1122,35 @@ This does not pass the pilot by itself. The next acceptance checkpoint is a coll
 EOF
 
 gh api -X POST repos/KirkDiggler/rpg-project/issues/229/comments -F body=@"$cache/expansion-live-checkpoint.md" > "$cache/checkpoint-229.json"
-gh api -X POST repos/KirkDiggler/rpg-project/issues/230/comments -F body=@"$cache/expansion-live-checkpoint.md" > "$cache/checkpoint-230.json"
+gh api -X POST "repos/KirkDiggler/rpg-project/issues/$FOLLOWUP_NUMBER/comments" -F body=@"$cache/expansion-live-checkpoint.md" > "$cache/checkpoint-followup.json"
+cat > "$cache/predecessor-redirect.md" <<EOF
+The journey-starter expansion continued in $FOLLOWUP_URL after this design/pilot predecessor merged. The live checkpoint and retro gate are carried there and on #229.
+
+— asset-pipeline agent, on behalf of KirkDiggler
+EOF
+gh api -X POST repos/KirkDiggler/rpg-project/issues/230/comments -F body=@"$cache/predecessor-redirect.md" > "$cache/checkpoint-230.json"
 jq -e '.html_url|contains("/issues/229#issuecomment-")' "$cache/checkpoint-229.json" >/dev/null
+jq -e --arg n "$FOLLOWUP_NUMBER" '.html_url|contains("/pull/\($n)#issuecomment-")' "$cache/checkpoint-followup.json" >/dev/null
 jq -e '.html_url|contains("/pull/230#issuecomment-")' "$cache/checkpoint-230.json" >/dev/null
 jq -e '.state=="open"' "$cache/issue-229-live-update.json" >/dev/null
-jq -e '.state=="open"' "$cache/pr-230-live-update.json" >/dev/null
+jq -e '.state=="OPEN"' "$cache/followup-created.json" >/dev/null
+gh api repos/KirkDiggler/rpg-project/pulls/230 --jq '.merged_at != null' | grep -qx true
 ```
 
-Expected: body readbacks match, both comments have durable URLs, and issue #229 plus PR #230 remain open.
+Expected: #229 is reopened, the follow-up PR is open, all three signed comments have durable URLs, and merged PR #230 points forward.
 
 - [ ] **Step 6: Verify final Git and GitHub lifecycle state**
 
 ```bash
+cache="$HOME/.cache/pi/project19-journey-starters"
+source "$cache/followup.env"
 test -z "$(git status --porcelain)"
-test "$(git rev-parse HEAD)" = "$(git rev-parse origin/docs/229-project-19-journeys)"
+test "$(git rev-parse HEAD)" = "$(git rev-parse origin/docs/229-global-journey-starters)"
 gh api repos/KirkDiggler/rpg-project/issues/229 --jq '.state' | grep -qx open
-gh api repos/KirkDiggler/rpg-project/pulls/230 --jq '.state' | grep -qx open
-gh api repos/KirkDiggler/rpg-project/pulls/230 --jq '.body' | grep -Fq 'journey-starter expansion live'
+gh api "repos/KirkDiggler/rpg-project/pulls/$FOLLOWUP_NUMBER" --jq '.state' | grep -qx open
+gh api "repos/KirkDiggler/rpg-project/pulls/$FOLLOWUP_NUMBER" --jq '.body' | grep -Fq 'journey-starter expansion live'
+gh api repos/KirkDiggler/rpg-project/pulls/230 --jq '.merged_at != null' | grep -qx true
+! gh api "repos/KirkDiggler/rpg-project/pulls/$FOLLOWUP_NUMBER" --jq '.body' | grep -Fq 'retro passed'
 ```
 
-Expected: clean synchronized branch, open issue/PR, and no claim that the pilot retro has passed.
+Expected: clean synchronized follow-up branch, reopened issue #229, open follow-up PR, merged predecessor #230, and no claim that the pilot retro has passed.
