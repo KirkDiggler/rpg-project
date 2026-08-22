@@ -71,10 +71,11 @@ Create focused sourced modules:
 | `scripts/local-env/common.sh` | logging, canonical paths, env-name grammar, runtime identity, atomic files, dry-run command wrapper | `local_env_context ROOT NAME MODE` emits context JSON |
 | `scripts/local-env/manifest.sh` | strict known-key parser and digest | `local_env_manifest_read CONTEXT_JSON` emits desired-state JSON |
 | `scripts/local-env/sources.sh` | exact-origin path validation, ref resolution, managed detached worktrees | `local_env_sources_preflight CONTEXT DESIRED`; `local_env_sources_resolve CONTEXT PREFLIGHT` emit JSON |
-| `scripts/local-env/receipt.sh` | attempt/receipt v1 schemas, closed validation, atomic promotion, derivation checks | `local_env_attempt_write CONTEXT DESIRED RESOLVED PHASE RESOURCES PREVIOUS_SHA`; `local_env_receipt_read CONTEXT`; `local_env_receipt_promote ATTEMPT COMPOSE VITE`; `local_env_receipt_update_api_container RECEIPT CONTAINER_ID UPDATED_AT` |
+| `scripts/local-env/receipt.sh` | source-intent/attempt/receipt v1 schemas, closed validation, atomic promotion, derivation checks | `local_env_source_intent_write CONTEXT DESIRED PREFLIGHT PREVIOUS_SHA`; `local_env_attempt_write CONTEXT DESIRED RESOLVED PHASE RESOURCES PREVIOUS_SHA`; `local_env_receipt_read CONTEXT`; `local_env_receipt_promote ATTEMPT COMPOSE VITE`; `local_env_receipt_update_api_container RECEIPT CONTAINER_ID UPDATED_AT` |
 | `scripts/local-env/lock.sh` | one lifecycle lock per derived environment | `local_env_lock_acquire CONTEXT`; `local_env_lock_release`; lock FD remains held by caller |
 | `scripts/local-env/process.sh` | `/proc` identity and safe process-group stop | `local_env_process_observe PID`; `local_env_process_owned RECEIPT`; `local_env_process_stop RECEIPT` |
 | `scripts/local-env/compose.sh` | fixed file ordering and scoped Docker invocation | `local_env_compose CONTEXT RESOLVED -- COMPOSE_ARGS...` |
+| `scripts/local-env/recovery.sh` | self-contained Compose/Vite/down evidence, exact fingerprints, phase reconciliation | closed validators/builders/runners consumed by the supervisor and toolkit facade |
 | `scripts/local-env/web.sh` | lock-aware `npm ci` and explicit asset synchronization | `local_env_web_prepare CONTEXT RESOLVED CLEAN_FLAG` |
 | `scripts/local-env/vite.sh` | owned Vite start/reuse/restart/readiness and URL parsing | `local_env_vite_ensure CONTEXT RESOLVED PRIOR_RECEIPT` emits Vite JSON |
 | `scripts/local-env/toolkit.sh` | toolkit override on/refresh/status/off in managed API source | `local_env_toolkit_on`; `local_env_toolkit_refresh`; `local_env_toolkit_off` |
@@ -144,7 +145,16 @@ Receipt v1 is locked to this exact shape:
 }
 ```
 
-Receipt and attempt `sources` are exact copies of resolved `.sources`, with the same keys and closed child shapes; they never rename `api` to `rpg-api`. Attempt journals have exact top-level keys `schema`, `workspace`, `environment`, `mode`, `manifest`, `runtime`, `sources`, `phase`, `createdResources`, `previousReceiptSha256`, `createdAt`, and `updatedAt`. `schema` is `local-env-attempt/v1`; `phase` is one of `prepared`, `override-off`, `sources-resolved`, `override-on`, `image-built`, `compose-started`, `snapshot-restored`, `api-ready`, `web-prepared`, `vite-started`, or `ready`. `createdResources` is exactly `{"composeStarted":false,"vite":null,"override":null}` where `vite` is either null or the closed Vite child object and `override` is either null or `{"apiPath":"...","toolkitPath":"...","active":true}`. `previousReceiptSha256` is null or 64 lowercase hex. Container ID syntax is checked here; live existence, labels, and port ownership are checked later through Docker inspection. Unknown keys or a derived-field mismatch fail closed.
+Receipt and attempt `sources` are exact copies of resolved `.sources`, with the same keys and closed child shapes; they never rename `api` to `rpg-api`. Attempt journals have exact top-level keys `schema`, `workspace`, `environment`, `mode`, `manifest`, `runtime`, `sources`, `phase`, `createdResources`, `previousReceiptSha256`, `createdAt`, and `updatedAt`. `schema` is `local-env-attempt/v1`; `phase` is one of `prepared`, `override-off`, `sources-resolved`, `override-on`, `image-built`, `compose-intent`, `compose-started`, `snapshot-restored`, `api-ready`, `web-prepared`, `vite-intent`, `vite-started`, or `ready`. `createdResources` has keys `composeStarted`, `vite`, and `override`, plus optional `compose`; `composeStarted:false` requires absent/null `compose`, while `composeStarted:true` requires the closed receipt Compose object captured after the call. `vite` is null or the closed Vite child object. `override` is null or `{"apiPath":"...","toolkitPath":"...","active":true}`. `previousReceiptSha256` is null or 64 lowercase hex. Container ID syntax is checked here; live existence, labels, and port ownership are checked later through Docker inspection. Unknown keys or a derived-field mismatch fail closed.
+
+Crash recovery retains four additional closed, versioned evidence types under the environment runtime directory:
+
+- `local-env-source-intent/v1` has exact keys `schema`, `workspace`, `environment`, `mode`, `desired`, `preflight`, `previousReceiptSha256`, `historicalOverride`, `phase`, `createdAt`, and `updatedAt`. Its phases are `source-intent`, `historical-override-off-intent`, and `historical-override-off`. The plain phase binds current desired/preflight bytes before managed worktree mutation. Toolkit reruns persist the exact prior override resource before calling the old helper and advance the phase after successful `off`.
+- `local-env-compose-recovery/v1` has exact keys `schema`, `context`, `contextSha256`, `attempt`, `previousReceipt`, `provider`, `baseline`, `observed`, `resources`, `upExitStatus`, `committedReceiptSha256`, `phase`, `createdAt`, and `updatedAt`. `attempt` and optional `previousReceipt` embed canonical snapshots plus their SHA256/source SHA256 digests. `provider` closes project, API port, working directory, ordered config files, exact six services, and named-network identity. `baseline`/`observed` contain closed container/network fingerprints; `resources` entries contain one fingerprint and phase `pending`, `acting`, or `completed`. Journal phases are `pending` (durable before provider call), `acting` (durable immediately before it), `cleaning` (exact observed delta durable before removal), `reconciled` (cleanup converged), `committing` (complete observed set durable before receipt transition), and `completed` (bound to the committed receipt digest).
+- `local-env-vite-handoff/v1` has exact keys `schema`, `context`, `priorReceipt`, `newVite`, and `capturedAt`. It is written after the new owned Vite is journaled and before receipt promotion/old-Vite stop, and remains until both the new current evidence and old-stop postcondition are proven.
+- `local-env-down-journal/v1` has exact keys `schema`, `context`, `contextSha256`, `origins`, `provider`, `steps`, `createdAt`, and `updatedAt`. `origins` has exactly `receipt`, `attempt`, `observation`, and `handoff`; each step has exact keys `kind`, `originDigests`, `phase`, and `resource`, with phase `pending`, `acting`, or `completed`. Step kinds are `vite`, `container`, `network`, `override`, and evidence-file `unlink`. The complete self-contained journal is durable before the first shutdown mutation.
+
+The Compose recovery boundary is intentionally asymmetric. After a broad Compose call returns, the launcher must durably capture exact observed IDs before cleanup or commit; a broad `pending`/`acting` intent alone never authorizes adoption/removal of an unknown same-project ID. Targeted toolkit refresh may recover one unknown replacement only when its acting journal contains the exact old `rpg-api` fingerprint as completed intent, the new fingerprint has the same immutable identity except ID/runtime state, and every other baseline identity is unchanged. `cleaning`/`committing` always reject IDs outside durable baseline/observed/resource evidence. A `committing` journal may become `completed` after a receipt-write interruption only when the receipt identity matches the embedded attempt, its Compose IDs match the exact observation/current immutable identities, and—when a previous receipt exists—the current canonical receipt digest differs from the embedded previous digest. Exact retained attempts are removed only after the completed companion is durable.
 
 Every mutating lifecycle command acquires the environment lock before reading/writing attempts, advancing managed worktrees, reconciling Compose, or touching Vite. Lock contention fails before mutation. Different derived environments use different lock files and may proceed concurrently. Lock FD 9 is held by the launcher only; every long-lived child explicitly closes FD 9 before `exec`.
 
@@ -983,9 +993,11 @@ git commit -m "feat: supervise scoped backend and vite runtimes"
 ### Task 9: Unit C5 — Ordered Supervisor, Port Safety, Status, and Down
 
 **Files:**
+- Create: `scripts/local-env/recovery.sh`
 - Create: `scripts/local-env/snapshot.sh`
 - Create: `scripts/local-env/toolkit.sh`
 - Create: `scripts/local-env/supervisor.sh`
+- Create: `tests/local-env-recovery-contract.sh`
 - Create: `tests/local-env-snapshot-contract.sh`
 - Create: `tests/local-env-supervisor-contract.sh`
 - Modify: `scripts/local-env/index.sh`
@@ -1008,11 +1020,11 @@ manifest -> identity and environment lock -> receipt/attempt inspection -> Envoy
 
 Port occupancy tests must show no override/fetch/worktree/build/Compose/npm/process/state mutation. Cover a Docker-published binding, an `ss` listener, and an externally reachable localhost TCP listener hidden from fake `ss` (the WSL2/Docker Desktop case). Accept an occupied port only when a validated receipt plus derived Compose project, exact Envoy container ID/labels, and published binding prove it is this environment's Envoy.
 
-Add failure cases for override on/off, build, Compose, snapshot restore, health, asset sync, Vite, and receipt promotion. First-start cleanup uses attempt-owned resources only, including an active override; rerun failures retain the prior receipt and never destroy a previously healthy environment merely to simulate rollback. Add a moving API-ref toolkit rerun: receipt-validated old override `off` occurs before managed-worktree cleanliness/update, the new source gets `on`, and the successful receipt records the new SHA.
+Add failure cases for override on/off, build, Compose, snapshot restore, health, asset sync, Vite, and receipt promotion. First-start cleanup uses only exact attempt/Compose-recovery/Vite evidence, including an active override; after a Compose call returns, its observed delta is durable before synchronous cleanup. A crash before broad post-call observation fails closed rather than adopting/removing an unknown same-project ID. Rerun failures retain the prior receipt and never destroy a previously healthy environment merely to simulate rollback. Add a moving API-ref toolkit rerun: receipt-validated old override `off` occurs before managed-worktree cleanliness/update, the new source gets `on`, and the successful receipt records the new SHA.
 
 - [ ] **Step 2: Write RED status/down tests**
 
-Assert status classifications/exit codes and that a receipt alone never reports running. Named down must handle both a ready receipt and a valid interruption attempt with no receipt: verify/stop exact journal-owned Vite, down only the journal project when `composeStarted`, disable only its recorded override, remove active state only after cleanup, retain logs, and never run Git. Missing/malformed/forged/stale ownership returns nonzero with zero stop/kill/down/off calls. Validate live container existence, exact Compose project/service labels, and Envoy published-port ownership here rather than in receipt syntax tests.
+Assert status classifications/exit codes and that a receipt alone never reports running. Add interruption tests at every source-intent, Compose, Vite-handoff, receipt/companion, and down-step boundary. Named down first captures a self-contained exact-resource journal, then handles ready receipts, source/attempt-only evidence, Compose recovery, and retained Vite handoff: verify/stop only origin-bound Vite IDs, remove only exact fingerprinted containers/network, disable only the recorded override, unlink active evidence only after cleanup, retain logs, and never run Git. Missing/malformed/forged/stale/cross-context evidence and unrecorded same-project resources return nonzero with zero stop/kill/remove/off calls. Validate live container existence, exact Compose project/service/config labels, immutable identity, health separately from drift, and Envoy published-port ownership here rather than in receipt syntax tests.
 
 Write snapshot tests before supervisor implementation: safe namespace, exact project Redis service, interactive/`--yes` restore, manifest `SNAPSHOT` restored after Compose start and before API health only when `up --restore`, and no restore without the flag.
 
@@ -1039,7 +1051,7 @@ Retain the bounded 30 attempts / 2-second interval for toolkit compatibility. Wh
 
 - [ ] **Step 5: Implement attempts, rollback bounds, status, and down**
 
-Acquire and hold the environment lock across the entire lifecycle. Write phase transitions before each external mutation. Toolkit rerun uses prior receipt/journal source data to validate and disable the owned override before managed API source advancement, records `override-off`, then records a new owned override immediately after `on`; failed first starts disable only that recorded override. On rerun failure, retain prior receipt and failed attempt. `local_env_status` verifies manifest digest, source paths/SHAs, Compose services/labels/health, API health, Vite identity/HTTP, and returns the locked status code. `local_env_down` captures source/override evidence before stopping Vite/Compose, disables the owned override before deleting state, handles valid attempt-only journals, and performs no source-resolution Git operation.
+Acquire and hold the environment lock across the entire lifecycle. Persist the locked source-intent, attempt, Compose-recovery, Vite-handoff, and down-journal phases before their corresponding external mutation, then persist exact post-call evidence before cleanup or promotion. Toolkit rerun uses prior receipt/journal source data to validate and disable the owned override before managed API source advancement, records `historical-override-off-intent`, then `historical-override-off`, and records a new owned override immediately after `on`; failed first starts disable only that recorded override. On rerun failure, retain prior receipt and failed attempt. `local_env_status` reports requested selectors/resolved SHAs/paths/ownership, manifest digest, Compose project/services/immutable identity/health, receipt-bound API URL and Docker log location, Vite identity/HTTP/log, evidence locations, and the locked status code. `local_env_down` uses only the durable self-contained journal and performs no source-resolution Git operation.
 
 Normal readiness output is exact and URL-encoded using `jq -rn --arg value "$environment" '$value|@uri'`:
 
@@ -1054,11 +1066,13 @@ Tests use `local/feature` so an unencoded slash cannot pass.
 
 ```bash
 bash tests/local-env-supervisor-contract.sh
+bash tests/local-env-recovery-contract.sh
 bash tests/local-env-snapshot-contract.sh
 for test in tests/local-env-{manifest,sources,state,compose,web-vite}-contract.sh; do bash "$test"; done
 git diff --check
-git add scripts/local-env/snapshot.sh scripts/local-env/toolkit.sh \
-  scripts/local-env/supervisor.sh scripts/local-env/index.sh \
+git add scripts/local-env/recovery.sh scripts/local-env/snapshot.sh \
+  scripts/local-env/toolkit.sh scripts/local-env/supervisor.sh \
+  scripts/local-env/index.sh tests/local-env-recovery-contract.sh \
   tests/local-env-snapshot-contract.sh tests/local-env-supervisor-contract.sh
 git commit -m "feat: reconcile owned local game environments"
 ```
@@ -1165,7 +1179,7 @@ Task 9's `local_env_toolkit_on` requires `.sources.api.ownership == "managed"` a
   --target rulebooks/dnd5e --src "$toolkit_path"
 ```
 
-Refresh/status/off use the same managed API path and existing ownership state. Image build uses `Dockerfile.local-toolkit` and the derived environment image. After `up -d --no-deps rpg-api` and configured-port health, refresh resolves the new `rpg-api` container ID through the exact Compose project, validates its project/service labels, and calls `local_env_receipt_update_api_container`; that atomic update preserves Vite, sources, manifest/runtime, and `createdAt`, changes only the API ID and `updatedAt`, and is revalidated before return. The facade must not bypass Task 9's environment lock, old-override-off-before-ref-advance ordering, attempt-owned override cleanup, or receipt-preserving down sequence.
+Refresh/status/off use the same managed API path and existing ownership state. Image build uses `Dockerfile.local-toolkit` and the derived environment image. Before `up -d --no-deps rpg-api`, refresh writes a `compose-intent` attempt and `pending`/`acting` Compose recovery sidecar containing the complete baseline, previous receipt digest/snapshot, and exact old `rpg-api` fingerprint as completed targeted-replacement intent. Immediately after Compose returns, it observes/validates the new exact project/service identity and writes `committing` observation before health or receipt mutation. After configured-port health, `local_env_receipt_update_api_container` atomically preserves Vite, sources, manifest/runtime, and `createdAt`, changing only the API ID and `updatedAt`; the companion then binds the distinct updated receipt digest as `completed` before the exact matching attempt is removed. Interruption tests cover pre-observation targeted adoption, post-observation health failure, receipt-written/companion-committing completion, unchanged-prior rejection, retry, status, and named down. The facade must not bypass Task 9's environment lock, old-override-off-before-ref-advance ordering, attempt-owned override cleanup, or receipt-preserving down sequence.
 
 - [ ] **Step 4: Thin the facade while retaining classification**
 
@@ -1251,6 +1265,7 @@ for test in \
   tests/local-env-compose-contract.sh \
   tests/local-env-web-vite-contract.sh \
   tests/local-env-supervisor-contract.sh \
+  tests/local-env-recovery-contract.sh \
   tests/local-env-snapshot-contract.sh \
   tests/dev-env-contract.sh \
   tests/toolkit-contributor-contract.sh; do
