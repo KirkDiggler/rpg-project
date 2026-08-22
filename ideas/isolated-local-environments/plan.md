@@ -1036,7 +1036,7 @@ bash tests/local-env-supervisor-contract.sh
 
 - [ ] **Step 4: Implement specific-port ownership and health**
 
-Require Docker inspection, `ss`, and a bounded localhost TCP-connect probe (`timeout 1 bash -c '</dev/tcp/127.0.0.1/PORT'`) for the configured port. Any one can establish occupancy. If occupied, validate the active receipt and use the derived Compose adapter plus exact Envoy container ID, Compose project/service labels, and Docker published-port binding to prove ownership. Every other listener/binding fails before source or override mutation.
+Require Docker inspection, `ss`, and a bounded localhost TCP-connect probe (`timeout 1 bash -c '</dev/tcp/127.0.0.1/PORT'`) for the configured port. Docker candidates come from exact `docker ps --no-trunc -q --filter publish=PORT` output so the candidate ID can equal `docker inspect .Id`; abbreviated IDs are never ownership evidence. Any one can establish occupancy. If occupied, validate the active receipt and use the derived Compose adapter plus exact Envoy container ID, Compose project/service labels, and Docker published-port binding to prove ownership. Every other listener/binding fails before source or override mutation.
 
 Use the existing real health client parameterized by receipt port:
 
