@@ -1,6 +1,7 @@
 # Simple named local game stacks
 
-**Issue:** rpg-project#221 / game-dev#63  
+**Issue:** rpg-project#221 / game-dev#63
+
 **Status:** Proposed replacement for the over-engineered game-dev#70 runtime
 
 ## Goal
