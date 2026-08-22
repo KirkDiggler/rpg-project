@@ -52,12 +52,23 @@ message Seen { Position position = 1; Standing standing = 2; }   // sight-channe
 message Sighting { ... string name = N; }                          // beside subject
 
 message Declaration {
-  Verb verb = 1; Slot slot = 2; bool affordable = 3; string shortfall = 4;
+  Verb verb = 1; Slot slot = 2; bool affordable = 3; string shortfall = 4;   // shortfall (string) kept for v0.1.131 readers; superseded by 7
   optional int32 remaining = 5;   // MOVE (v0.1.131)
   optional string target = 6;     // ATTACK: the candidate target this declaration prices; one declaration per target in reach
+  Shortfall why = 7;              // present exactly when affordable == false
+  // A monk's Martial Arts bonus strike is simply another declaration {ATTACK, slot: BONUS, target}; off-hand and flurry the same.
+  // Unarmed strike is the catalog ref "unarmed-strike" with BLUDGEONING; the monk's die/DEX are rules inside the toolkit, never on the wire.
 }
 
-message AttackRef { string ref = 1; string name = 2; string damage_type = 3; }  // "dnd5e:weapons:longsword", "Longsword", "slashing"
+enum DamageType { DAMAGE_TYPE_UNSPECIFIED = 0; ACID = 1; BLUDGEONING = 2; COLD = 3; FIRE = 4; FORCE = 5; LIGHTNING = 6; NECROTIC = 7;
+                  PIERCING = 8; POISON = 9; PSYCHIC = 10; RADIANT = 11; SLASHING = 12; THUNDER = 13; }   // closed set → enum, the UI branches on it (Kirk)
+message AttackRef { string ref = 1; string name = 2; DamageType damage_type = 3; }  // ref is the open set the client already maps
+
+enum ShortfallReason { SHORTFALL_REASON_UNSPECIFIED = 0; NO_BUDGET = 1; NOT_YOUR_TURN = 2; NO_TARGET_IN_REACH = 3; DOWNED = 4; UNREADABLE = 5; }
+enum Currency { CURRENCY_UNSPECIFIED = 0; ACTION = 1; BONUS = 2; REACTION = 3; MOVEMENT = 4; }
+message Shortfall {             // structured so the UI can act on it; text stays for narration
+  ShortfallReason reason = 1; Currency currency = 2; int32 needed = 3; int32 left = 4; string text = 5;  // "action: 1 needed, 0 left"
+}
 ```
 ```proto
 // service.proto
@@ -104,6 +115,8 @@ Not in this proto (deliberately): monster behavior, ranged weapons and cover, re
 ## 5. Process for this feature
 1. This doc → Kirk rules. 2. Proto PR (whole §3) → merge → tag. 3. Three builds in parallel; rpg-api pins toolkit branches by pseudo-version; web against the branch api. 4. One walk on :3003 against #533's bar. 5. Merge bottom-up in one sitting. No ADR: nothing here is an open seam decision (typed event bodies are toolkit#941's accepted direction; reach/unarmed/names/standing are projections of rules the composition already holds).
 
-## 6. Open for Kirk
-- **Per-target Attack declarations** vs one Attack declaration + `targets_in_reach[]`: per-target is chosen because the next facts (cover, ranged disadvantage) are per target; say if you'd rather the list.
-- **Typed event bodies now** (the bigger toolkit change, but the root of names/downed/monster-turn/fight-cause) vs. a thinner "subject on Event" stopgap: typed is the foundation; the stopgap would be the fourth "make it work".
+## 6. Ruled (Kirk, 2026-08-22)
+- **Closed sets are enums**: `DamageType`, `Shortfall.reason`/`currency`, `Standing`. Refs stay strings (the open set the client maps).
+- **Per-target Attack declarations** — the monk's bonus strike, off-hand, flurry are further declarations of the same shape.
+- **Typed event bodies now.** toolkit#941 is open and unstarted (session's `kindOf` still unmarshals the payload); this feature does #941 properly — beats record a declared kind and a typed body, session projects them. No stopgap: "we should not build anything to cover a gap that will be thrown away later."
+- **The complete proto merges first**; a later addition is one additive field, not a PR chain.
