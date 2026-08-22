@@ -1,6 +1,6 @@
 # The monster's turn — the driver decides, the composition executes
 
-**Status:** DRAFT for Kirk's ruling, 2026-08-23.
+**Status:** APPROVED by Kirk 2026-08-23 ("design looks good and I like your recommendations"), with two additions below.
 **Journey:** rpg-project#91 → umbrella to be filed as a sub-issue of #91 (slice 2 of the combat turn; slice 1 = #251).
 **Owner-to-be:** the Monster AI initiative (#201, assigned to dammitbilly0ne). Kirk: *"hook in the simple monster turn that they could build on. we want to simplify their starting point so getting the basic actions would be good."*
 **Reused, not re-derived:** ideas/monster-ai (PR #202): perception → decision → actuation as three hard seams, the decision layer "never mutates encounter state, never touches the event bus, never resolves rules"; behavior as placement data (`targeting:`). ADR-0043 (a monster's turn has a driver; `TurnDriver` is a capability the host supplies). Slice 1's typed beats (`moved`, `struck`, `missed`, `turn_ended`).
@@ -18,7 +18,7 @@ Same panel as slice 1. On End Turn: *"Skeleton's turn."* → the skeleton **walk
 | Executing an attack for a monster | `session.Attack` refuses `KindMonster`; `resolution.AttackFromMonsterAction` compiles bite/melee | actuation inside the drive loop via the same strike machine players use (reach from the action's `Reach`) |
 | Executing a move for a monster | `session.Move` prices off a character sheet (`ErrNoCharacter`); `encounter.Step` is kind-agnostic | actuation inside the drive loop via `Step`, bounded by `Speed.Walk` |
 | Monster economy | none (ledger lives on character sheets) | v1: the loop enforces *one attack + ≤ speed feet per turn*; no ledger |
-| Perception for the driver | `encounter.View` is kind-agnostic; `Distance` exists; sight is a flat 4 cells for everyone | MonsterView = sightings with position, standing, distance, in-reach-per-action; sight range stays flat (gap noted) |
+| Perception for the driver | `encounter.View` is kind-agnostic; `Distance` exists; sight is a flat 4 cells for everyone | MonsterView = sightings with position, standing, distance, in-reach-per-action; **sight range becomes data-driven** (see §5) |
 | Wire | `moved`, `struck`, `missed`, `turn_ended` typed | **no proto change** (web: refetch view on others' `moved`; pace the monster beats) |
 | Behavior data | `monster.Data.Targeting` (closest / lowest-health / lowest-ac), skeleton has none set | the basic driver honors `Targeting`; default closest |
 
@@ -49,7 +49,8 @@ type Intent interface{ isIntent() }        // sealed: Pass, Attack{Target Member
 - **rpg-api**: supply `session.Config.TurnDriver = behavior.Basic{}` (one line; the friend later supplies theirs through the same field).
 - **web**: refetch GetView on `moved` for members other than you; monster-beat pacing for `moved`/`struck`/`missed` (web#561); no new shapes.
 
-## 5. Open for Kirk
-- **Loop location**: keep the loop in `encounter` with a session-supplied `Striker` capability (recommended — ADR-0043's placement stands, rules stay in resolution/session), vs. moving the drive loop into `session`. The first is one capability; the second re-homes three choke points (EndTurn, form, transfer/exit).
-- **Budget as a loop rule vs a monster ledger**: loop rule for v1 (recommended); a ledger when monsters get bonus actions/reactions.
-- **Monster sight**: stays a flat 4 cells this slice (senses-aware sight is its own item).
+## 5. Ruled (Kirk, 2026-08-23)
+- **Loop location**: stays in `encounter`, attacks through the session-supplied `Striker` capability (ADR-0043's placement stands).
+- **Budget**: a loop rule (one attack + ≤ speed feet per driven turn); a ledger when monsters get bonus actions/reactions.
+- **Sight is data, not a constant.** Kirk: "the 4 hex sight is not realistic in dnd; sight is 120 ft normally depending on lighting." The flat `sightRangeCells = 4` goes: a member sees as far as line of sight allows up to a range from data — characters 120 ft (24 cells) by default, monsters their `SensesData` (a skeleton's darkvision 60 ft) where set, else the same default — always bounded by walls/doors (LOS). Lighting conditions (bright/dim/dark, torches) are the NEXT item, not this slice; this slice only stops lying about the number.
+- **The fixture proves perception is the only input.** Kirk: "have a skele behind something unable to see us so it would pass." The tomb test scene places a second skeleton behind a wall with no line of sight: its `MonsterView.Seen` is empty → `behavior.Basic` returns `Pass` → the beat is `turn_ended` with no `moved`/`struck`. The first skeleton, in sight, closes and attacks. Both in one test.
