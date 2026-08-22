@@ -859,7 +859,7 @@ setsid sh -c 'cd "$1" && exec env RPG_LOCAL_ENV_TOKEN="$2" "$3/npm" run dev' \
 pid=$!
 ```
 
-A test trap terminates both owned and unrelated fixture groups on every exit path. Record `/proc/$pid/stat` field 22, PGID, cwd, NUL-separated argv, and `/proc/$pid/environ`. Assert exact evidence is owned; wrong PID start ticks, token, cwd, argv ending in `npm`, `run`, `dev`, or PGID is rejected; stopping exact owned evidence terminates only that group and leaves an unrelated fixture process alive.
+A test trap terminates both owned and unrelated fixture groups on every exit path. Record `/proc/$pid/stat` field 22, PGID, cwd, NUL-separated argv, and `/proc/$pid/environ`. Assert exact evidence is owned; wrong PID start ticks, token, cwd, command shape, or PGID is rejected. The command shape is exactly three fields (`npm`, `run`, `dev`), exactly one allowlisted shebang interpreter (`node`, `sh`, `bash`, or `dash`) plus those three fields, or npm's observed runtime rewrite: first field exactly `npm run dev` and every remaining NUL field empty. Reject arbitrary prefixes, trailing-slash `npm`, and nonempty runtime-title suffixes in both pre-promotion observation and later receipt ownership. Stopping exact owned evidence terminates only that group and leaves an unrelated fixture process alive.
 
 Acquire one environment lock on FD 9, assert a second acquisition for that environment fails without state/process mutation, and assert a different environment lock succeeds concurrently. Add an interrupted-launcher case: after the launcher dies, its Vite fixture remains alive but has FD 9 closed, so a new lifecycle command can acquire the lock.
 
@@ -884,7 +884,7 @@ Use `jq -e` to assert exact top-level and child key sets. Write temporary JSON i
 /proc/PID/stat start ticks match
 observed PGID matches and equals receipt PGID
 readlink /proc/PID/cwd matches resolved web path
-NUL-separated /proc/PID/cmdline ends with executable basename npm plus argv run and dev
+NUL-separated /proc/PID/cmdline has an exact direct/interpreter launch shape or exact `npm run dev` runtime-title shape defined above
 NUL-separated /proc/PID/environ contains exact RPG_LOCAL_ENV_TOKEN
 ```
 
