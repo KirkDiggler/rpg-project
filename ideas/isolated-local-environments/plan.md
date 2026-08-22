@@ -4,7 +4,7 @@
 
 **Goal:** Replace checkout-switching `scripts/dev-env.sh` with a small named-manifest wrapper that starts selected API/web refs or paths, exact API/web ports, and an optional toolkit override.
 
-**Architecture:** Start from fresh `game-dev/origin/main`, not game-dev PR #70. Keep one Bash entry point and one shell contract: ref selectors create detached runtime worktrees, path selectors are used directly, Compose receives a name-specific project/image/API port, and host Vite receives the exact web port and API URL. Runtime state is a trusted local `state.env` containing only resolved paths, URLs, the Compose project, and Vite process-group/log details.
+**Architecture:** Start from fresh `game-dev/origin/main`, not game-dev PR #70. Keep one Bash entry point and one shell contract: ref selectors create or update detached runtime worktrees, path selectors are used directly, deployment always uses a managed detached `origin/main`, Compose receives a name-specific project/image/API port, and host Vite receives the exact web port and API URL. Runtime state is a trusted local `state.env` containing only resolved paths, URLs, the Compose project, and Vite process-group/log details.
 
 **Tech Stack:** Bash, Git worktrees, Docker/Compose, npm/Vite, the existing rpg-api toolkit override helper.
 
@@ -15,7 +15,7 @@
 - Begin from current `game-dev/origin/main`; preserve PR #70 at `e89c69e26cde98e14a8724e889d9f0d3296383f8` unchanged.
 - Never switch, reset, clean, or remove a primary checkout or a manifest-selected `*_PATH` checkout.
 - `RPG_API_HOST_PORT` and `RPG_WEB_HOST_PORT` are required and exact; occupied ports fail before build/start.
-- Ref-backed sources use detached worktrees under `.runtime/<environment>/sources/`.
+- Ref-backed API/web/toolkit sources and deployment `origin/main` use detached worktrees under `.runtime/<environment>/sources/`.
 - A toolkit selector requires a ref-backed managed API source and uses `scripts/toolkit-local-override.sh`; no new toolkit facade is added.
 - Do not add receipts, JSON schemas, recovery journals, snapshots, pinning, provider identity checks, or automatic resource adoption.
 - RED-GREEN TDD is required for production behavior.
@@ -47,7 +47,7 @@
 
 - [ ] **Step 1: Write the failing end-to-end shell contract**
 
-Create `tests/dev-env-contract.sh`. Its fixture must initialize local bare origins and clones for `rpg-api`, `rpg-dnd5e-web`, and `rpg-toolkit`; put executable `scripts/toolkit-local-override.sh` and both Dockerfiles in the API commit; put `package.json`, `package-lock.json`, and `node_modules/` in the web commit; and create placeholder deployment Compose files and asset roots.
+Create `tests/dev-env-contract.sh`. Its fixture must initialize local bare origins and clones for `rpg-api`, `rpg-dnd5e-web`, `rpg-toolkit`, and `rpg-deployment`; put executable `scripts/toolkit-local-override.sh` and both Dockerfiles in the API commit; put `package.json` and `package-lock.json` in the web commit; add `node_modules/` to its primary path; and create placeholder deployment Compose files and asset roots.
 
 Put fake `docker`, `npm`, and `ss` executables first on `PATH`. Each fake appends shell-escaped arguments to `$COMMAND_LOG`. The Docker fake prefixes its line with `RPG_API_HOST_PORT=${RPG_API_HOST_PORT:-} RPG_API_IMAGE=${RPG_API_IMAGE:-}`; the npm fake prefixes its line with `VITE_API_HOST=${VITE_API_HOST:-}`. Fake `docker compose ps` also prints `fixture compose running`, fake `ss` prints `${OCCUPIED_PORT_OUTPUT:-}`, and fake `npm run dev` sleeps until killed. The fixture override helper writes `toolkit-local-override.sh` plus its shell-escaped arguments to `$COMMAND_LOG` and exits 0. The assertions must be literal:
 
@@ -126,18 +126,22 @@ environment_paths() {
 }
 
 resolve_source() {
-  local repo=$1 ref=$2 selected_path=$3 destination=$4
+  local repo=$1 ref=$2 selected_path=$3 destination=$4 commit
   if [[ -n "$selected_path" ]]; then
     git -C "$selected_path" rev-parse --show-toplevel
     return
   fi
   [[ -n "$ref" ]] || fail "$repo requires a REF or PATH selector"
-  mkdir -p "$(dirname "$destination")"
-  if [[ -e "$destination" ]]; then
-    git -C "$ROOT/$repo" worktree remove --force "$destination"
-  fi
   git -C "$ROOT/$repo" fetch origin "$ref"
-  git -C "$ROOT/$repo" worktree add --detach "$destination" FETCH_HEAD
+  commit=$(git -C "$ROOT/$repo" rev-parse FETCH_HEAD^{commit})
+  mkdir -p "$(dirname "$destination")"
+  if git -C "$destination" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git -C "$destination" reset --hard -q
+    git -C "$destination" checkout --detach -q "$commit"
+    git -C "$destination" reset --hard -q "$commit"
+  else
+    git -C "$ROOT/$repo" worktree add --detach "$destination" "$commit"
+  fi
   printf '%s\n' "$destination"
 }
 
@@ -158,7 +162,7 @@ RPG_API_HOST_PORT="$RPG_API_HOST_PORT" RPG_API_IMAGE="$API_IMAGE" \
     down --remove-orphans
 ```
 
-Implement `up` in this order: load/validate manifest; call `down_internal`; fail if either port remains occupied; recreate ref-backed worktrees; apply optional toolkit override; build `rpg-api:$SLUG` with normal `Dockerfile` or `Dockerfile.local-toolkit`; start named Compose with `RPG_API_HOST_PORT` and `RPG_API_IMAGE`; run asset sync with explicit `$ROOT/rpg-game-assets`; run `npm ci` only when `node_modules` is absent; start Vite in a new process group with exact arguments:
+Implement `up` in this order: load/validate manifest; call `down_internal`; fail if either port remains occupied; create or update ref-backed worktrees; resolve deployment `origin/main` the same way; apply optional toolkit override; build `rpg-api:$SLUG` with normal `Dockerfile` or `Dockerfile.local-toolkit`; start named Compose with `RPG_API_HOST_PORT` and `RPG_API_IMAGE`; write enough simple state for named cleanup if a later npm step fails; run asset sync with explicit `$ROOT/rpg-game-assets`; run `npm ci` only when `node_modules` is absent; start Vite in a new process group with exact arguments:
 
 ```bash
 setsid env VITE_API_HOST="http://localhost:$RPG_API_HOST_PORT" \
@@ -234,7 +238,7 @@ RPG_WEB_HOST_PORT=3002
 ./scripts/dev-env.sh down local/combat
 ```
 
-Document `*_PATH`, pushed-ref detached worktrees, exact ports, printed URLs, optional `RPG_TOOLKIT_REF|PATH` plus `RPG_TOOLKIT_TARGET`, automatic rebuild-on-rerun, ordinary Vite HMR, log/state locations, and the supported reset (`down`, remove that environment's runtime directory, `up`). Explicitly say the deployment and game-assets roots are the existing workspace checkouts and are not selected by this manifest.
+Document `*_PATH`, pushed-ref detached worktrees, exact ports, printed URLs, optional `RPG_TOOLKIT_REF|PATH` plus `RPG_TOOLKIT_TARGET`, automatic rebuild-on-rerun, ordinary Vite HMR, log/state locations, and the supported reset (`down`, remove that environment's runtime directory, `up`). Explicitly say deployment is managed from `rpg-deployment/origin/main`, game assets use the existing workspace checkout, and neither is selected by this manifest.
 
 - [ ] **Step 2: Validate the real merged Compose provider**
 

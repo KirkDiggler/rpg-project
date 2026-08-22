@@ -40,20 +40,21 @@ A manifest may select `RPG_API_PATH` or `RPG_DND5E_WEB_PATH` instead of the corr
 1. Read the named manifest as trusted local shell-style `KEY=value` configuration.
 2. If this name has prior local state, stop that name's recorded Vite group and Compose project.
 3. Refuse if either requested host port is still occupied.
-4. For each `*_REF`, fetch that pushed ref from the existing workspace clone and create a detached worktree under `.runtime/<environment>/sources/`. For each `*_PATH`, use that checkout directly without changing its Git state.
-5. When a toolkit source is selected, require a ref-backed managed API worktree and call the API's existing `scripts/toolkit-local-override.sh` for `rulebooks/dnd5e` (default) or `encounter`.
-6. Build one environment-tagged API image from the selected API source.
-7. Start the existing deployment Compose files with a project name derived from the environment, `RPG_API_HOST_PORT`, and the environment-tagged API image.
-8. Sync game assets into the selected web source, run `npm ci` only when `node_modules` is absent, and start host Vite on exactly `RPG_WEB_HOST_PORT` with `--strictPort` and `VITE_API_HOST` pointed at the selected API port.
-9. Record only the Vite process-group ID and log path needed by `status` and `down`, then print both URLs.
+4. For each `*_REF`, fetch that pushed ref from the existing workspace clone and create or update a detached worktree under `.runtime/<environment>/sources/`. For each `*_PATH`, use that checkout directly without changing its Git state.
+5. Fetch `rpg-deployment/origin/main` into another environment-owned detached worktree. Deployment is not a manifest selector; this avoids relying on a stale primary checkout whose older Compose files hard-code port 8080.
+6. When a toolkit source is selected, require a ref-backed managed API worktree and call the API's existing `scripts/toolkit-local-override.sh` for `rulebooks/dnd5e` (default) or `encounter`.
+7. Build one environment-tagged API image from the selected API source.
+8. Start the managed deployment Compose files with a project name derived from the environment, `RPG_API_HOST_PORT`, and the environment-tagged API image.
+9. Sync game assets into the selected web source, run `npm ci` only when `node_modules` is absent, and start host Vite on exactly `RPG_WEB_HOST_PORT` with `--strictPort` and `VITE_API_HOST` pointed at the selected API port.
+10. Record a small trusted `state.env` with the resolved paths, Compose project, URLs, Vite process-group ID, and log path needed by `status` and `down`, then print both URLs.
 
-Running `up` again for the same name first stops that name's prior Vite/Compose processes and recreates its managed source worktrees. This is restart-and-rebuild, not state reconciliation.
+Running `up` again for the same name first stops that name's prior Vite/Compose processes and updates its managed source worktrees while retaining untracked web dependencies. This is restart-and-rebuild, not state reconciliation.
 
 ## What `status` and `down` do
 
 `status` prints the manifest, selected source commits/paths, Compose `ps`, configured URLs, and whether the recorded Vite process is alive. It has no drift taxonomy.
 
-`down` stops the recorded Vite process group and runs Compose down for the exact environment-derived project name. It leaves source worktrees and logs available for inspection; the next `up` replaces them.
+`down` stops the recorded Vite process group and runs Compose down for the exact environment-derived project name. It leaves source worktrees and logs available for inspection; the next `up` updates them.
 
 If local runtime state is confusing, the supported recovery is:
 
