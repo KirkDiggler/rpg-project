@@ -300,6 +300,31 @@ closed as history.
 4. **Version 1 deleted** — RULED 2026-08-23, with the condition that the
    fixture combat testing runs on stays usable (§5).
 
+## 7b. Open threads (Kirk, 2026-08-23 — deliberately unresolved)
+
+This design stays open through implementation; adjustments made while
+building are logged in `implementation.md`, and these threads get ruled when
+they are ready, not before.
+
+- **Staggered glyph map.** `E-E-E-T-T-T` over `-E-E-E-T-T-T` is the honest
+  hex idiom: every character touches two above, two below, two beside, which
+  is pointy-top adjacency. The open question is flat-top, whose stagger is
+  per *column* by half a line — text cannot draw it. Shapes on the table:
+  glyphs for pointy-top only (cell lists for flat — two ways to say one
+  thing), glyphs everywhere (the lie returns for flat), or cell lists for
+  both (ruling 1 today). Reversible: either form compiles to the same
+  `FieldInput`; the choice lives in the decoder and the emitter.
+- **Region archetype as a presentation ref.** v1's `archetype` was deleted
+  because it silently decided a world fact (`entrance` chose where the party
+  stands — the #1033 trap). An archetype that carries *presentation* is a
+  different thing: `archetype: crypt` on a region, a ref the assets resolve
+  into lighting kind + audio profile, with `lighting.level` as the dimmer on
+  top — the `ref` slot generalised. It keeps the law the same way `targeting`
+  and prop refs do: the composition carries the string unread. The rule to
+  write down before it lands: **an archetype may never decide mechanics
+  (start, blocking, sight, lighting level); only what the assets show and
+  play.**
+
 ## 8. Not now
 
 Facing / height / offsets / mounts (need their own wire fields — parked under
