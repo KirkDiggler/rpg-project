@@ -36,6 +36,6 @@ Merged bottom-up the same day, each re-pinned to the real tag before merge: rpg-
 
 *Open for Kirk's walk (from toolkit#1210):*
 
-- **(a) Edge-hugging sightlines through opaque void.** In the tomb itself, two members on the edge column of a sheared rectangle may not see each other because the straight line between them clips void cells. Accept as the hex model's truth, or declare the tomb's void transparent / pad the regions?
+- ~~**(a) Edge-hugging sightlines through opaque void.**~~ **RULED 2026-08-24** (Kirk: "I think an opaque void blocks the whole hex"): accepted as the hex model's truth. Opaque void blocks sight entirely; the tomb keeps `void: opaque` unpadded, and a sightline that clips void cells is blocked by design. No code change — ADR-0044's fixture rule (non-void test scenes declare a transparent void) already isolates tests from this. Original question: in the tomb, two members on the edge column of a sheared rectangle may not see each other because the straight line between them clips void cells.
 - **(b) Unknown-key errors carry `line N`, not a YAML path.** Good enough for the builder (it emits its own YAML and never produces unknown keys), or should the builder pre-check keys itself?
 
