@@ -179,7 +179,7 @@ message PutDungeonResponse {
   repeated FieldError errors = 1;              // path + message; empty = compiled
   dnd5e.api.session.v1alpha1.GetAtlasResponse atlas = 2;  // THE SAME MESSAGE THE GAME PLAYS FROM
 }
-message FieldError { string path = 1; string message = 2; }   // "walls[3]", "place[7].blocks_los", "map:4:17"
+message FieldError { string path = 1; string message = 2; }   // "walls[3]", "place[7].blocks_los", "regions[1].cells[0][3]"
 message GetDungeonRequest  { string key = 1; }
 message GetDungeonResponse { string yaml = 1; }
 ```
