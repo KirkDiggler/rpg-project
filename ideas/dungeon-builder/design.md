@@ -35,7 +35,7 @@ One route, `/author`, the existing `src/author/` shell kept. Three columns.
 
 | Tool | Does | Writes |
 |---|---|---|
-| **Region brush** | paint/erase cells into the selected region; new region = new glyph | `map:` + `regions[]` |
+| **Region brush** | paint/erase cells into the selected region | `regions[].cells` |
 | **Wall** | click an edge between two adjacent floor cells to toggle a wall | `walls[]` |
 | **Door** | click an edge (or drag across several) to make a doorway; inspector sets open / closed / locked `{dc, ability}` | `doors[]` |
 | **Start** | one cell; the party's entry | `start` |
@@ -83,22 +83,29 @@ name: The Reference Tomb       # display only
 orientation: pointy            # pointy | flat — REQUIRED; every [col,row] below depends on it
 void: opaque                   # opaque | transparent — REQUIRED
 
-# The floor. One glyph per cell, one line per row, row 0 at the top.
-# '.' is void. Any other printable glyph names a region via `regions`.
-map: |
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-  EEEEEEHHHHHHHHHHTTTTTTTTTTTT
-
+# The floor is the union of the regions' cells. Everything else is void.
+# Cells are absolute [col,row]; the builder writes them sorted, one row per
+# line, so a repaint diffs as a line change (emitter convention, not grammar).
 regions:
-  - { glyph: E, id: entrance, name: Entrance, lighting: { level: 0.6 } }
-  - { glyph: H, id: hall,     name: Hall,     lighting: { level: 0.4 } }
-  - { glyph: T, id: tomb,     name: Tomb,     lighting: { level: 0.15 } }
+  - id: entrance
+    name: Entrance
+    lighting: { level: 0.6 }
+    cells:
+      - [[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]]
+      - [[0,1],[1,1],[2,1],[3,1],[4,1],[5,1]]
+      # ... rows 2–7
+  - id: hall
+    name: Hall
+    lighting: { level: 0.4 }
+    cells:
+      - [[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[15,0]]
+      # ...
+  - id: tomb
+    name: Tomb
+    lighting: { level: 0.15 }
+    cells:
+      - [[16,0],[17,0],[18,0],[19,0],[20,0],[21,0],[22,0],[23,0],[24,0],[25,0],[26,0],[27,0]]
+      # ...
 
 start: [1, 3]                  # absolute; must be floor
 
@@ -129,10 +136,12 @@ the requested key on `PutDungeon`.
 
 New rules:
 
-- **`map` is the floor.** Width = longest line; short lines are padded with
-  void. A glyph with no `regions` entry fails; a `regions` entry with no cells
-  fails. Every floor cell belongs to exactly one region (the glyph says which).
-  Flat — no nesting (Not now).
+- **The regions are the floor.** `cells` is a list of rows, each a list of
+  `[col,row]` — the nesting is for diff-readability only; the compiler flattens
+  it. A region with no cells fails; a cell in two regions fails; there is no
+  other floor. Flat — no nesting (Not now). The canvas is the only picture of
+  the floor: the file says nothing visual (a hex grid's stagger cannot be drawn
+  in text honestly, which is why there is no glyph map — ruled 2026-08-23).
 - **The envelope is implied, never written.** A crossing from floor into void
   is a crossing nobody can make; `void` already says whether sight crosses it.
   That is the runtime's rule today (`seamWall`'s comment) — the file just stops
@@ -243,7 +252,7 @@ hall → `Open` reloads the same YAML byte-for-byte.
 an L-shaped region under both orientations and checks one named cell's world
 position in the builder and in `buildScene3D` — not a round-trip.
 
-**Error paths:** a glyph with no region → `map:2:7`; a wall between
+**Error paths:** a cell in two regions → `regions[1].cells[0][3]`; a wall between
 non-adjacent cells → `walls[3]`; a prop with no `blocks_los` →
 `place[4].blocks_los`; `start` on void → `start`. Each appears on the canvas at
 the thing it names.
@@ -267,9 +276,11 @@ and the v0.4 Wave A/B issues close as history.
 
 ## 7. Rulings
 
-1. **`map:` glyph block as the floor format** — OPEN. Recommended: readable,
-   diffable, a human can author the tomb in eight lines; a non-rectangular
-   room is just a different picture. Alternative: `regions[].cells` lists.
+1. **Floor format** — RULED 2026-08-23: `regions[].cells` lists, not a glyph
+   map. A character grid lies about hex adjacency (rows/columns stagger), and
+   the builder is the only hand that touches the floor — the YAML is the
+   machine artifact, the canvas is the view. Emitter writes cells sorted, one
+   row per line, for diff sanity.
 2. **Lighting** — RULED 2026-08-23: a dimmable switch (`level` 0–1) per
    region now; a `ref` for the asset kind (flame glow, etc.) later.
 3. **`RegionInput` replaces `RoomInput`** — RULED 2026-08-23: regions are the
