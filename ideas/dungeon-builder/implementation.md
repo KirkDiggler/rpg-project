@@ -25,6 +25,8 @@ said, what was built instead, why, and where (PR / commit).*
 | 2026-08-23 | toolkit#1210 (ADR-0044) | — | non-void test scenes declare a transparent void | a sightline hugging the edge column of a sheared rectangle crosses void cells, so under an opaque void two members on column 0 cannot see each other (hex behaviour since #1127; regions make it easy to notice) — open question (a) below |
 | 2026-08-23 | toolkit#1211 (T3) | `AtlasDoorway.Connection` | `AtlasDoorway.Door` (JSON `door`) | encounter keys doorways by door id; connections no longer exist |
 | 2026-08-23 | toolkit#1211 (T3) | — | `GridSquare` deleted, `Atlas.Grid` always `hex`; ~20 external + 2 internal session fixtures, the workbench and main's new `two_players` fixture ported to regions via `regionfixtures_test.go`; square-era scenes re-geometried for hex adjacency | hex only (Kirk's ruling); the port was mechanical but wide |
+| 2026-08-23 | rpg-api#820 | registry compiles and projects the atlas itself | registry REQUIRES an `AtlasProjector`; `cmd/server` wires `sessionOrch.Manager.AtlasOf` through a one-method adapter; registry is constructed after the session orchestrator | `AtlasOf` is a Manager method (see T3 row) |
+| 2026-08-23 | rpg-api#820 | — | `internal/dungeons/dungeonstest` helpers (Shipped / Scratch / Projector); lobby suite pins `Put`'s atlas == the started session's `GetAtlas` cell-for-cell; integration tomb re-authored on regions with every verb cell via `HexCellAt` | the forcing case from the api side |
 
 ## Rulings made during implementation
 
