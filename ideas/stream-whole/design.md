@@ -26,12 +26,12 @@ Kirk's slice-2 walk (2026-08-23): the skeleton's round-2/3 `struck` beats were i
 The story log is the truth; the stream is a best-effort live copy; **the client owns catching up.** That was the design (S9/S10, rule 6) and it stands. What changes is that every party now honours it:
 
 - **toolkit** — nothing new in the publish path. Adds the two-player proof: a session-level test with two joined characters and two capturing `EventStream` subscribers asserting each beat reaches exactly its audience, addressed per recipient, seqs contiguous per recipient, and EndTurn's `Next` walks player → monster → player correctly. Encounter v0.30.7 pinned into session (one PR).
-- **rpg-api** — the forwarder never loses an event without saying so: block on the publishing ctx (preferred) or count+log+return error so `DeliveryReport.Failed` is true. Per-recipient debug send trace on `StreamEvents`. Pin encounter v0.30.7 + the session tag. Acceptance test: two subscribers on one session, one lagging, nothing lost or the loss reported.
+- **rpg-api** — the forwarder never loses an event without saying so: count + log per recipient and return the error so `DeliveryReport.Failed` is true (ruled: never block the publisher on a viewer). Per-recipient debug send trace on `StreamEvents`. Pin encounter v0.30.7 + the session tag. Acceptance test: two subscribers on one session, one lagging, nothing lost or the loss reported.
 - **web** — #779 (rule 6: last seq, reconnect with backoff, `GetStory{from_seq: last+1}` catch-up through the same handler, de-dupe by seq, aged-out → full resync) and #740 (raw feed with seq, stream state visible). Web lane; filed, not built here.
 
 ## 5. Rulings needed from Kirk
 
-1. Broker policy on a slow subscriber: **block** (a slow reader slows its own verb; nothing lost) vs **drop-and-report**. Recommendation: block with ctx — correctness over latency while pre-alpha; revisit when a real client is slow.
+1. Broker policy on a slow subscriber — **RULED 2026-08-23 (Kirk): drop, never silently.** The stream stays a fan-out; a slow viewer never holds the acting player's verb. The forwarder counts and logs the drop per recipient and returns the error so `DeliveryReport.Failed` is true; the client's rule-6 catch-up (web#779) closes the hole from the story log.
 2. Two-player walk: fighter + barbarian, two browsers, same session. Recommendation: yes, that is the gate.
 
 ## 6. Gate
