@@ -62,7 +62,7 @@ author never draws an outer wall.
 `GetDungeon`) · `Save` (`PutDungeon`) · **`Save & Play`** (`PutDungeon`, then
 the lobby's `StartEncounter{dungeon_key}` — the real game route opens on the
 authored dungeon). Problems from the compiler appear on the cell/edge they
-name (`field_errors` carry a path) and the Save verb stays disabled until the
+name (`errors` carry a path) and the Save verb stays disabled until the
 file compiles; `validate_only` never refuses a half-drawn map.
 
 **What the panel does not have (Not now):** facing, height, intra-cell
@@ -220,7 +220,7 @@ ungated, because a picker needs it with authoring off.
 | Layer | Today | Grows |
 |---|---|---|
 | **toolkit `dungeonspec`** | v1 room chain, hex only, seam walls generated | **v2**: `map`/`regions`/`walls`/`doors`/absolute `place`; `Validate` reports path-addressed errors; `Compile` → `FieldInput` |
-| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | **Ruled:** `RegionInput{ID, Name, Cells, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells). Hex only; `Orientation` stays authored. `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` receives the region's lighting level. `EncounterData` carries regions + lighting |
+| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | **Ruled:** `RegionInput{ID, Name, Cells, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells); authored walls move up to `FieldInput.Walls`. Hex only; `Orientation` stays authored. `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` receives the region's lighting level. `EncounterData` carries regions + lighting |
 | **toolkit `session`** | `Atlas{cells, props, boundaries, doorways, layout}` | `Atlas.Regions` |
 | **protos** | authoring = dead dialect; atlas has no regions | §3 |
 | **rpg-api** | one `go:embed` tomb; `dungeon_key` dropped; `ListDungeons` unimplemented; projection borrowed via throwaway encounter | `internal/dungeons` registry: loads every YAML under `RPG_CONTENT_DIR` at boot, compiles each once, **refuses to boot on a file that does not compile**; `PutDungeon` gated by `RPG_AUTHORING_ENABLED` — validate → compile → write-through → atomic swap, puts serialised; `GetDungeon` reads the file; `ListDungeons` from the registry; `StartEncounter` looks the key up. The throwaway-encounter projection is deleted (no room-local frame remains). The tomb ships as `content/reference-tomb.yaml`, not an embed |
