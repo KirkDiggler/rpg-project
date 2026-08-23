@@ -13,6 +13,9 @@ said, what was built instead, why, and where (PR / commit).*
 | 2026-08-23 | rpg-api#820 | `Entry{…, Compiled dungeonspec.Compiled, Atlas}` | `Entry` carries `*sessionworld.Dungeon` | lobby needs absolute party seats, which under v1 exist only after the projection; revisit when T2's `Compiled` is absolute by construction |
 | 2026-08-23 | rpg-api#820 | `RPG_CONTENT_DIR` required | defaults to `./content` when authoring is off; required when `RPG_AUTHORING_ENABLED=1` | a plain checkout / image must boot the tomb with no env |
 | 2026-08-23 | rpg-api#820 | boot refuses a non-compiling file | also refuses filename ≠ `key` and a dir without `reference-tomb.yaml` | the default dungeon must exist; one name per dungeon |
+| 2026-08-23 | rpg-dnd5e-web#781 | `buildScene3D` takes `layout` and renders both orientations | takes `layout`, 2D canvas draws both, 3D still refuses flat-top by name (web#763) — same words as the game | flat-top 3D is its own slice; the builder must not get ahead of the game |
+| 2026-08-23 | rpg-dnd5e-web#781 | Save & Play = `PutDungeon` → `StartEncounter{lobby_id, dungeon_key}` | `PutDungeon` → `CreateLobby` (Home-selected character) → `SetReady` → `StartEncounter{dungeon_key}` → game route | no lobby is open while authoring |
+| 2026-08-23 | rpg-dnd5e-web#781 | — | `PropCompositionConcept` deleted; toolkit-contributor sandbox ported to a v2 doc; one `hexOffset.ts` bridge (odd-r pointy / odd-q flat) pinned by a pixel-formula test | rode on the deleted preview renderer; the symmetric-bug rule |
 
 ## Rulings made during implementation
 
