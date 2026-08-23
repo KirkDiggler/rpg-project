@@ -166,7 +166,7 @@ type PlaceSpec struct {
 
 Pipeline: `Load` = strict `Decode` (unknown keys fail) → `Validate` (standalone — a lint button for free) → `Compile` → `Compiled{Field encounter.FieldInput, PartyStart, Monsters}`. Live instance: `reference-tomb.yaml` (37 lines, 3 rooms, 28×8 = 224 cells). The compiler's own comments say 2-D layout (`compile.go:117`) and square grids (`:139`) are single-file changes; the composition already accepts arbitrary `Origin` and declared boundaries.
 
-Gap: `Compiled` → `FieldInput`, but `session.StartSession` wants `*EncounterData`. Nothing joins them; the worked route is `dungeonspec/tomb_test.go:68-90` (`Load → NewEncounter → ToData()`), and rpg-api's throwaway-encounter workaround.
+Gap: `Compiled.Field` is a `FieldInput`, but `session.StartSession` wants `*EncounterData`. Nothing joins them; the worked route is `dungeonspec/tomb_test.go:68-90` (`Load → NewEncounter → ToData()`), and rpg-api's throwaway-encounter workaround.
 
 ---
 
@@ -203,7 +203,7 @@ The v0.3 README (`:21-26`) declared skew permanent: "the builder authors spec vN
 4. **`ListDungeons`** — shape exists; no handler. Design is #131's.
 5. **`GetDungeon`** — reopen is in #169's Done-when and no RPC exists for it.
 6. **The dialect ruling** (§4).
-7. **`Compiled` → `EncounterData` bridge** — toolkit#1139; retires rpg-api's throwaway encounter.
+7. **`Compiled.Field` (`FieldInput`) → `EncounterData` bridge** — toolkit#1139; retires rpg-api's throwaway encounter.
 8. **A lighting ruling** — emergent ("placing braziers IS authoring the light pools", `ideas/dungeon-authoring/design.md:262`) vs authored render-only `lighting.ambient` (v0.4 tranche D). Toolkit reserved the slot (`void.go:66-70`, #1113) and built nothing; nothing about light is on any wire.
 9. **Coordinate-frame unification in the client** — odd-q builder, odd-r wall runs, axial wire.
 10. **Square grids / 2-D layout** — one-file compiler changes if wanted.

@@ -21,7 +21,8 @@ serves.
 - **The compiler makes the world; the atlas is the proof.** `PutDungeon`
   compiles and answers with the same `GetAtlas` shape the game plays from. The
   builder's preview renders that atlas through the game's own
-  `buildScene3D`. If the preview and the game ever differ, one of them is
+  `buildScene3D` (extended to take `layout` and `props`, which it does not
+  today — plan W). If the preview and the game ever differ, one of them is
   lying and the test says which.
 - **A region is the carrier of per-area world facts.** Its cells, its
   lighting today, its audio profile later. Regions go on the atlas because
@@ -129,8 +130,10 @@ place:
 ```
 
 Field rules, carried over from version 1 unchanged: strict decode (unknown
-key fails), pointers for "the author may leave this out" (`start`,
-`blocks_*`), `blocks_*` REQUIRED on props and REFUSED elsewhere, refs never
+key fails); pointers where omission must be *detectable* so it can be
+refused — `start`, `blocks_*`, `lighting.level` are all REQUIRED, the pointer
+is how "said nothing" stays distinct from "said zero"; `blocks_*` REQUIRED on
+props and REFUSED elsewhere, refs never
 resolved, `targeting` opaque, at most one `boss` per region, `key` must match
 the requested key on `PutDungeon`.
 
@@ -149,7 +152,11 @@ New rules:
 - **`walls` and `doors` are edges between adjacent floor cells.** Adjacency is
   checked by spatial under the declared orientation. An edge listed twice, or
   in both `walls` and a door, fails. A door edge need not sit on a region seam
-  — a door inside a room is legal.
+  — a door inside a room is legal. A door's state (open / closed / locked) is
+  encounter state, not atlas geometry: it compiles to `DoorInput.State`, lives
+  in the started snapshot, and reaches a player through the existing door
+  verbs. The atlas carries the doorway (two cells); the builder's inspector
+  shows the lock from the YAML.
 - **`lighting` is a block with one field today: `level`**, a dimmable switch
   in `[0,1]` (0 = no light, 1 = full). A block rather than a bare number so the
   next field — `ref`, naming the kind of light for the assets (flame glow,
@@ -246,7 +253,10 @@ fixtures. The golden atlas is what proves nothing moved under them.
 
 **Round trip:** builder `New` → paint three regions → walls → locked door →
 props → `Save & Play` → the 3D game route opens on it → walk entrance to
-hall → `Open` reloads the same YAML byte-for-byte.
+hall → `Open` reloads the same YAML byte-for-byte. Byte identity holds
+because the server stores the submitted bytes verbatim (`GetDungeon` returns
+the file, not a re-marshal) and the builder's emitter is deterministic; the
+builder is the writer, so comment preservation is not a requirement.
 
 **Discriminators** (the symmetric-bug lesson): a pixel-formula test that draws
 an L-shaped region under both orientations and checks one named cell's world
@@ -269,10 +279,12 @@ the thing it names.
 5. **Merge bottom-up:** toolkit → protos already in → rpg-api → web, re-pinning
    to real tags.
 
-Board: this is a slice under journey #169 with rpg-api#806 (rewritten to this
-design), toolkit#1139 (closed: seam removed), rpg-project#131 (picker,
-delivered by `ListDungeons`), and the new repo issues as sub-issues. PR #203
-and the v0.4 Wave A/B issues close as history.
+Board: this is slice #256 under journey #169. rpg-api#806 is its sub-issue
+(body to be rewritten to this design). On landing: toolkit#1139 closes (the
+seam it fixes no longer exists), rpg-project#131 closes (picker delivered by
+`ListDungeons`), toolkit#1113 closes (lighting landed on regions). Until then
+they are open dependencies. PR #203 and the v0.4 Wave A/B issues are already
+closed as history.
 
 ## 7. Rulings
 
