@@ -28,6 +28,10 @@ said, what was built instead, why, and where (PR / commit).*
 | 2026-08-23 | rpg-api#820 | registry compiles and projects the atlas itself | registry REQUIRES an `AtlasProjector`; `cmd/server` wires `sessionOrch.Manager.AtlasOf` through a one-method adapter; registry is constructed after the session orchestrator | `AtlasOf` is a Manager method (see T3 row) |
 | 2026-08-23 | rpg-api#820 | — | `internal/dungeons/dungeonstest` helpers (Shipped / Scratch / Projector); lobby suite pins `Put`'s atlas == the started session's `GetAtlas` cell-for-cell; integration tomb re-authored on regions with every verb cell via `HexCellAt` | the forcing case from the api side |
 
+## Landed — 2026-08-23
+
+Merged bottom-up the same day, each re-pinned to the real tag before merge: rpg-api-protos#238 (v0.1.134) → rpg-toolkit#1210 (`encounter/v0.31.0`) → rpg-toolkit#1211 (`session/v0.22.0`) → rpg-api#820 (`dev`) → rpg-dnd5e-web#781 (`dev`). Kirk walked the branch once before any merge; finding 1 (canvas viewport jumping near the edges → scrollable viewport, shift+wheel) fixed on the branch. Follow-ups: rpg-api seed of the shipped tomb into an empty `RPG_CONTENT_DIR` (the deployment's `/content` volume is empty on a fresh box); rpg-dnd5e-web#782 (second door in one seam gets no gap).
+
 ## Rulings made during implementation
 
 *Open for Kirk's walk (from toolkit#1210):*
