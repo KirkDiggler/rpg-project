@@ -1,9 +1,12 @@
 # Dungeon Builder on the Session Stack — design
 
-*Journey: rpg-project#169. Ruling 2026-08-23 (Kirk): fresh start from the new
+*Journey: rpg-project#169. Rulings 2026-08-23 (Kirk): fresh start from the new
 `rulebooks/dnd5e/encounter/dungeonspec`, the way the composable encounter got
-one. Spec v0.4 / PR #203 is history. Regions are authored and carry lighting;
-an audio profile attaches to regions later. Survey that led here:
+one; spec v0.4 / PR #203 is history. Hex only, orientation authored. Regions
+replace rooms — there are no rooms in the atlas projection. A region carries
+lighting as a dimmable level now, with a ref for the asset kind (flame glow,
+etc.) later, and an audio profile later. Version 1 is deleted; every combat
+fixture moves to version 2. Survey that led here:
 `restart-survey-2026-08-23.md`.*
 
 **One sentence:** build a dungeon in the builder, then play through it — and
@@ -46,7 +49,8 @@ author never draws an outer wall.
 
 **Right — inspector + YAML.**
 - **Region inspector** (when a region is selected): `id`, `name`, `lighting`
-  (`bright` / `dim` / `dark`). Later rows: `audio`.
+  as a dimmer slider (`level` 0–1). Later rows: lighting `ref` (what kind of
+  light the assets should show — flame glow, etc.), `audio`.
 - **Dungeon inspector**: `key`, `name`, `orientation`, `void` (`opaque` /
   `transparent`).
 - **YAML pane**: the file, read-only mirror of the canvas, with Download /
@@ -92,9 +96,9 @@ map: |
   EEEEEEHHHHHHHHHHTTTTTTTTTTTT
 
 regions:
-  - { glyph: E, id: entrance, name: Entrance, lighting: dim }
-  - { glyph: H, id: hall,     name: Hall,     lighting: dim }
-  - { glyph: T, id: tomb,     name: Tomb,     lighting: dark }
+  - { glyph: E, id: entrance, name: Entrance, lighting: { level: 0.6 } }
+  - { glyph: H, id: hall,     name: Hall,     lighting: { level: 0.4 } }
+  - { glyph: T, id: tomb,     name: Tomb,     lighting: { level: 0.15 } }
 
 start: [1, 3]                  # absolute; must be floor
 
@@ -137,11 +141,13 @@ New rules:
   checked by spatial under the declared orientation. An edge listed twice, or
   in both `walls` and a door, fails. A door edge need not sit on a region seam
   — a door inside a room is legal.
-- **`lighting` is one of `bright` / `dim` / `dark`** — 5e's three words,
-  because they are the fact a player's perception needs (dim = lightly
-  obscured, dark = heavily obscured). Carried opaquely by the composition like
-  `targeting`; the rulebook interprets, the client maps to render intensity.
-  REQUIRED per region (no default, per #1033).
+- **`lighting` is a block with one field today: `level`**, a dimmable switch
+  in `[0,1]` (0 = no light, 1 = full). A block rather than a bare number so the
+  next field — `ref`, naming the kind of light for the assets (flame glow,
+  moonlight, …) — and later `audio` land beside it without reshaping the file.
+  Carried through the composition unread like `targeting`; how the rulebook
+  turns a level into obscurement is a rule and lives there. REQUIRED per
+  region (no default, per #1033).
 - **Coordinates are absolute offset `[col,row]`** under `orientation`. The
   compiler converts once (`HexCellAt`); no caller ever adds an origin. The
   room-local → absolute seam (toolkit#1139) **ceases to exist** rather than
@@ -180,8 +186,9 @@ message AtlasRegion {
   string id = 1;
   string name = 2;
   repeated Position cells = 3;    // absolute axial, sorted — same frame as `cells`
-  Lighting lighting = 4;          // BRIGHT | DIM | DARK
+  Lighting lighting = 4;
 }
+message Lighting { double level = 1; }   // 0..1; `ref` joins here when the assets need a kind
 message GetAtlasResponse {
   // ... grid, layout, cells, props, boundaries, doorways unchanged
   repeated AtlasRegion regions = 9;
@@ -204,7 +211,7 @@ ungated, because a picker needs it with authoring off.
 | Layer | Today | Grows |
 |---|---|---|
 | **toolkit `dungeonspec`** | v1 room chain, hex only, seam walls generated | **v2**: `map`/`regions`/`walls`/`doors`/absolute `place`; `Validate` reports path-addressed errors; `Compile` → `FieldInput` |
-| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | `RegionInput{ID, Cells, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells). `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` capability receives the region's lighting word. `EncounterData` carries regions + lighting |
+| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | **Ruled:** `RegionInput{ID, Name, Cells, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells). Hex only; `Orientation` stays authored. `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` receives the region's lighting level. `EncounterData` carries regions + lighting |
 | **toolkit `session`** | `Atlas{cells, props, boundaries, doorways, layout}` | `Atlas.Regions` |
 | **protos** | authoring = dead dialect; atlas has no regions | §3 |
 | **rpg-api** | one `go:embed` tomb; `dungeon_key` dropped; `ListDungeons` unimplemented; projection borrowed via throwaway encounter | `internal/dungeons` registry: loads every YAML under `RPG_CONTENT_DIR` at boot, compiles each once, **refuses to boot on a file that does not compile**; `PutDungeon` gated by `RPG_AUTHORING_ENABLED` — validate → compile → write-through → atomic swap, puts serialised; `GetDungeon` reads the file; `ListDungeons` from the registry; `StartEncounter` looks the key up. The throwaway-encounter projection is deleted (no room-local frame remains). The tomb ships as `content/reference-tomb.yaml`, not an embed |
@@ -220,6 +227,13 @@ specimens}`, `CONTRACT.md`, `TARGET-YAML.md`.
 to the **same atlas** the v1 embed produced — same 224 cells, same boundaries,
 same doorway, same props — with `regions` added. Pinned as a golden test in
 `dungeonspec` before v1 is deleted.
+
+**Combat testing keeps working (ruled):** version 1 is deleted in the same PR
+that lands version 2, and every fixture that feeds combat tests moves with it
+— `dungeonspec/tomb_test.go`, `rpg-api/internal/sessionworld` (the embed
+becomes `content/reference-tomb.yaml`), the slice-2 tomb variant with the
+second skeleton behind a wall (rpg-project#254), and the web's session
+fixtures. The golden atlas is what proves nothing moved under them.
 
 **Round trip:** builder `New` → paint three regions → walls → locked door →
 props → `Save & Play` → the 3D game route opens on it → walk entrance to
@@ -251,18 +265,17 @@ design), toolkit#1139 (closed: seam removed), rpg-project#131 (picker,
 delivered by `ListDungeons`), and the new repo issues as sub-issues. PR #203
 and the v0.4 Wave A/B issues close as history.
 
-## 7. Rulings needed
+## 7. Rulings
 
-1. **`map:` glyph block as the floor format** (recommended — readable, diffable,
-   a human can author the tomb in eight lines) vs. `regions[].cells` lists.
-2. **Lighting vocabulary `bright | dim | dark`** (recommended — the fact
-   perception needs) vs. a 0–1 intensity.
-3. **`RegionInput` replaces `RoomInput`** in the composition (recommended — a
-   region is already what survives the compile; rectangles were the chain's
-   constraint) vs. keeping rectangles and compiling a painted region into
-   several.
-4. **Version 1 deleted with the tomb re-authored** (recommended, per
-   no-backcompat) vs. keeping v1 readable.
+1. **`map:` glyph block as the floor format** — OPEN. Recommended: readable,
+   diffable, a human can author the tomb in eight lines; a non-rectangular
+   room is just a different picture. Alternative: `regions[].cells` lists.
+2. **Lighting** — RULED 2026-08-23: a dimmable switch (`level` 0–1) per
+   region now; a `ref` for the asset kind (flame glow, etc.) later.
+3. **`RegionInput` replaces `RoomInput`** — RULED 2026-08-23: regions are the
+   way; no rooms in the atlas projection. Hex only, orientation authored.
+4. **Version 1 deleted** — RULED 2026-08-23, with the condition that the
+   fixture combat testing runs on stays usable (§5).
 
 ## 8. Not now
 
