@@ -16,6 +16,9 @@ said, what was built instead, why, and where (PR / commit).*
 | 2026-08-23 | rpg-dnd5e-web#781 | `buildScene3D` takes `layout` and renders both orientations | takes `layout`, 2D canvas draws both, 3D still refuses flat-top by name (web#763) — same words as the game | flat-top 3D is its own slice; the builder must not get ahead of the game |
 | 2026-08-23 | rpg-dnd5e-web#781 | Save & Play = `PutDungeon` → `StartEncounter{lobby_id, dungeon_key}` | `PutDungeon` → `CreateLobby` (Home-selected character) → `SetReady` → `StartEncounter{dungeon_key}` → game route | no lobby is open while authoring |
 | 2026-08-23 | rpg-dnd5e-web#781 | — | `PropCompositionConcept` deleted; toolkit-contributor sandbox ported to a v2 doc; one `hexOffset.ts` bridge (odd-r pointy / odd-q flat) pinned by a pixel-formula test | rode on the deleted preview renderer; the symmetric-bug rule |
+| 2026-08-23 | toolkit T1 (c46efd9) | `Atlas.Regions` added beside the per-region props/boundaries/doorways | `encounter.Atlas` is FLAT: `{Orientation, Cells, Regions, Props, Boundaries, Doorways{Door, From, To}}`; no Grid/Origin/Width/Height; one doorway per door edge keyed by door id | props, walls and doors are field-level facts once rooms are gone; session's projection becomes a straight copy |
+| 2026-08-23 | toolkit T1 | `FieldInput{Canvas, Regions, Doors, Walls}` | plus `Props []PropInput`; `MemberInput.Room`, `TriggerReachedPosition.Room` gone; `EndingData.At` replaces Room+Position; `StepOutput.Crossing` and `ErrBadConnection` deleted, the moved beat carries `doors: [ids]` | props had to live somewhere; every position is absolute now |
+| 2026-08-23 | toolkit T1 | hex only, orientation authored | `CanvasInput.Orientation` REQUIRED, `Grid()` always hex, square family deleted; `EncounterData.Field` refuses `rooms`/`connections` keys by name | Kirk's ruling; fail-loud load |
 
 ## Rulings made during implementation
 
