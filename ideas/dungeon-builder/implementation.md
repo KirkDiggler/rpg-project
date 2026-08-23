@@ -19,7 +19,15 @@ said, what was built instead, why, and where (PR / commit).*
 | 2026-08-23 | toolkit T1 (c46efd9) | `Atlas.Regions` added beside the per-region props/boundaries/doorways | `encounter.Atlas` is FLAT: `{Orientation, Cells, Regions, Props, Boundaries, Doorways{Door, From, To}}`; no Grid/Origin/Width/Height; one doorway per door edge keyed by door id | props, walls and doors are field-level facts once rooms are gone; session's projection becomes a straight copy |
 | 2026-08-23 | toolkit T1 | `FieldInput{Canvas, Regions, Doors, Walls}` | plus `Props []PropInput`; `MemberInput.Room`, `TriggerReachedPosition.Room` gone; `EndingData.At` replaces Room+Position; `StepOutput.Crossing` and `ErrBadConnection` deleted, the moved beat carries `doors: [ids]` | props had to live somewhere; every position is absolute now |
 | 2026-08-23 | toolkit T1 | hex only, orientation authored | `CanvasInput.Orientation` REQUIRED, `Grid()` always hex, square family deleted; `EncounterData.Field` refuses `rooms`/`connections` keys by name | Kirk's ruling; fail-loud load |
+| 2026-08-23 | toolkit#1210 (T2) | door ids `<key>/<id>`; golden compares the atlas byte-for-byte | door ids changed from v1's `<key>:<west>-<east>`; golden compares doorways by cells; open connectors became open `DoorInput`s (the v2 tomb's entrance→hall too) | connections are gone, a doorway is a door with no state |
+| 2026-08-23 | toolkit#1210 (T2) | `Validate(spec) []FieldError`, every refusal names a YAML path | `ValidationError{[]FieldError}` collecting EVERY defect, `errors.Is(ErrBadSpec)`; unknown-key defects carry `line N` as the path | yaml.v3 cannot give a path for an unknown key; the builder gets a line instead — open question (b) below |
+| 2026-08-23 | toolkit#1210 (T1) | new sentinels for intensity range, duplicate wall, cell budget | `ErrNoField` for all three; `maxRoomCells`/`maxRoomSpan` gone, `maxFieldCells` bounds listed cells; Atlas is O(cells) (atlascost_test deleted) | sentinels only where a caller branches on them |
+| 2026-08-23 | toolkit#1210 (ADR-0044) | — | non-void test scenes declare a transparent void | a sightline hugging the edge column of a sheared rectangle crosses void cells, so under an opaque void two members on column 0 cannot see each other (hex behaviour since #1127; regions make it easy to notice) — open question (a) below |
 
 ## Rulings made during implementation
 
-*(none yet — see `design.md` §7b for the open threads)*
+*Open for Kirk's walk (from toolkit#1210):*
+
+- **(a) Edge-hugging sightlines through opaque void.** In the tomb itself, two members on the edge column of a sheared rectangle may not see each other because the straight line between them clips void cells. Accept as the hex model's truth, or declare the tomb's void transparent / pad the regions?
+- **(b) Unknown-key errors carry `line N`, not a YAML path.** Good enough for the builder (it emits its own YAML and never produces unknown keys), or should the builder pre-check keys itself?
+
