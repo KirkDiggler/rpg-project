@@ -25,6 +25,7 @@ W  web /author + preview       │  (runs against branch api)
 **Files**
 - Rewrite `dnd5e/api/authoring/v1alpha1/service.proto`; delete `dnd5e/api/authoring/v1alpha1/testdata/`.
 - Modify `dnd5e/api/session/v1alpha1/types.proto` (add `AtlasRegion`, `Lighting`).
+- Doc comment on `AtlasRegion.archetype`: the law — an archetype never decides mechanics (start, blocking, sight, intensity); only what the assets show and play.
 - Modify `dnd5e/api/session/v1alpha1/service.proto` (`GetAtlasResponse.regions = 9`).
 
 **Contract**
@@ -44,11 +45,12 @@ message GetDungeonRequest  { string key = 1; }
 message GetDungeonResponse { string yaml = 1; }
 
 // session/v1alpha1/types.proto
-message Lighting { double level = 1; }        // 0..1; a `ref` joins when assets need a kind
+message Lighting { double intensity = 1; }    // 0..1, the dimmer on top of the archetype
 message AtlasRegion {
   string id = 1; string name = 2;
   repeated Position cells = 3;                // absolute axial, sorted, same frame as GetAtlasResponse.cells
-  Lighting lighting = 4;
+  string archetype = 4;                       // presentation ref the assets resolve (lighting kind, audio); never mechanics
+  Lighting lighting = 5;
 }
 // session/v1alpha1/service.proto — GetAtlasResponse
 repeated AtlasRegion regions = 9;             // every floor cell appears in exactly one region
@@ -68,21 +70,22 @@ Doc comments carry the design's sentences: regions replace rooms; walls are decl
 - Modify `encounter.go` (`compileCanvas` ~902–970, `Setup` validation ~1277–1356): build the floor mask from region cells; refuse overlap, empty region, door edge off-floor, boundary endpoints non-adjacent.
 - Modify `region.go`: `regionAt` reads the per-cell owner map built at compile; `Region(id)` returns `{ID, Name, Cells, Lighting}`.
 - Modify `orientation.go`: delete `absoluteOf` (no origin to add); `HexCellAt` stays the one conversion.
-- Modify `data.go`: `FieldData{Canvas, Regions []RegionData, Doors}`; `RegionData{ID, Name, Cells []Position, Lighting}`; rename the JSON keys (fail-loud load, per the 2026-08-17 ruling — old blobs land nowhere).
-- Modify `atlas.go`: `Atlas.Regions []AtlasRegion{ID, Name, Cells, Lighting}`, cells sorted with the same comparator as `Atlas.Cells`.
+- Modify `data.go`: `FieldData{Canvas, Regions []RegionData, Doors}`; `RegionData{ID, Name, Cells []Position, Archetype, Lighting}`; rename the JSON keys (fail-loud load, per the 2026-08-17 ruling — old blobs land nowhere).
+- Modify `atlas.go`: `Atlas.Regions []AtlasRegion{ID, Name, Cells, Archetype, Lighting}`, cells sorted with the same comparator as `Atlas.Cells`.
 - Modify `doc.go` world laws: W2 "regions never overlap" replaces "rooms never overlap, Origins integral"; W3 "doorways kiss" becomes "a door edge joins two adjacent floor cells".
 - Delete the room-chain tests (`canvas_test.go` rooms cases); add `region_test.go`, `atlas_regions_test.go`.
 - ADR: `docs/adr/0044-regions-replace-rooms.md` + one line in `DECISIONS.md`: *a region is a named set of absolute cells carrying per-area world facts (lighting now); rooms, origins and connections were the chain's vocabulary and are gone.*
 
 **Interfaces**
 ```go
-type Lighting struct{ Level float64 }           // [0,1]; carried unread by the composition
+type Lighting struct{ Intensity float64 }       // [0,1]; carried unread by the composition
 
 type RegionInput struct {
     ID       string
     Name     string
-    Cells    []spatial.Position    // authored offset [col,row], absolute
-    Lighting *Lighting             // REQUIRED (nil refused — #1033)
+    Cells     []spatial.Position   // authored offset [col,row], absolute
+    Archetype string               // REQUIRED non-empty; presentation ref, carried unread
+    Lighting  *Lighting            // REQUIRED (nil refused — #1033)
 }
 type FieldInput struct {
     Canvas  CanvasInput            // Void, Orientation — unchanged
@@ -91,10 +94,10 @@ type FieldInput struct {
     Walls   []spatial.Boundary     // authored edges, absolute, offset frame — moved up from RoomInput.Boundaries
 }
 type AtlasRegion struct {
-    ID string; Name string; Cells []spatial.Position; Lighting Lighting
+    ID string; Name string; Cells []spatial.Position; Archetype string; Lighting Lighting
 }
 ```
-Sentinels in `errors.go`: `ErrRegionEmpty`, `ErrRegionOverlap`, `ErrRegionLightingMissing`, `ErrEdgeNotAdjacent`, `ErrEdgeOffFloor`, `ErrDoorEdgeOffFloor`.
+Sentinels in `errors.go`: `ErrRegionEmpty`, `ErrRegionOverlap`, `ErrRegionArchetypeMissing`, `ErrRegionLightingMissing`, `ErrEdgeNotAdjacent`, `ErrEdgeOffFloor`, `ErrDoorEdgeOffFloor`.
 
 **Tests that gate**
 - `TestSetup_RegionsMakeTheFloor`: three regions → `Atlas().Cells` equals their union, sorted; `RegionAt(cell)` answers the owner for every cell; void cell → `false`.
@@ -124,10 +127,11 @@ Sentinels in `errors.go`: `ErrRegionEmpty`, `ErrRegionOverlap`, `ErrRegionLighti
 ```go
 type RegionSpec struct {
     ID string `yaml:"id"`; Name string `yaml:"name"`
+    Archetype string `yaml:"archetype"`               // REQUIRED non-empty
     Lighting *LightingSpec `yaml:"lighting"`          // REQUIRED
     Cells [][][2]int `yaml:"cells"`                   // rows of [col,row]; flattened on compile
 }
-type LightingSpec struct{ Level *float64 `yaml:"level"` }   // REQUIRED, [0,1]
+type LightingSpec struct{ Intensity *float64 `yaml:"intensity"` }   // REQUIRED, [0,1]
 type EdgeSpec [2][2]int                               // [[col,row],[col,row]]
 type DoorSpec struct {
     ID string `yaml:"id"`; Edges []EdgeSpec `yaml:"edges"`
@@ -138,7 +142,7 @@ type PlaceSpec struct { /* unchanged from v1; At is now ABSOLUTE */ }
 
 **Tests that gate**
 - `TestGolden_ReferenceTombV2MatchesV1Atlas` — the forcing case.
-- `TestValidate_PathsNameTheThing` — table: overlap, wall non-adjacent, wall off-floor, door edge in `walls` too, prop without `blocks_los`, `start` on void, `level` 1.2, unknown key → each expected `Path`.
+- `TestValidate_PathsNameTheThing` — table: overlap, wall non-adjacent, wall off-floor, door edge in `walls` too, prop without `blocks_los`, `start` on void, `intensity` 1.2, missing `archetype`, unknown key → each expected `Path`.
 - `TestDecode_RefusesVersion1` — the deleted dialect is refused by name, not parsed hopefully.
 - `TestCompile_DoorInsideARegionIsLegal`.
 - `TestSecondSkeletonFixtureCompiles` — rpg-project#254's fixture, so slice 2 keeps running.
@@ -154,7 +158,7 @@ type PlaceSpec struct { /* unchanged from v1; At is now ABSOLUTE */ }
 **Files**
 - Modify `types.go`: `Atlas.Regions []AtlasRegion` (mirror of encounter's), JSON `regions`.
 - Modify the atlas projection (where `Atlas` is built from `encounter.Atlas()`): copy regions through; cells already absolute axial — no conversion (the symmetric-bug lesson: there is exactly one place cells become axial, and it is not here).
-- Test `atlas_regions_test.go`: `GetAtlas` on a started tomb returns three regions whose cells union to `Atlas.Cells` and whose lighting levels are the authored ones; pixel-formula check on one named cell of an L-shaped region under both layouts.
+- Test `atlas_regions_test.go`: `GetAtlas` on a started tomb returns three regions whose cells union to `Atlas.Cells` and whose archetypes and intensities are the authored ones; pixel-formula check on one named cell of an L-shaped region under both layouts.
 
 **Command:** `cd rulebooks/dnd5e/session && go test -race ./... && golangci-lint run`. Pin T1/T2 by pseudo-version until their tags mint.
 
@@ -200,13 +204,13 @@ type PlaceSpec struct { /* unchanged from v1; At is now ABSOLUTE */ }
 
 **Files**
 - Regenerate protos (`npm run protos` or the repo's equivalent) against P's tag.
-- `src/author/dungeonYaml.ts`: replace the `DungeonDoc` model with the v2 shape (`regions[].cells` rows, `walls`, `doors`, `place` absolute, `lighting.level`); emitter writes cells sorted, one row per line (the diff convention). Delete `stripToV1Subset`, the `spec:` handling, `wallLines`.
+- `src/author/dungeonYaml.ts`: replace the `DungeonDoc` model with the v2 shape (`regions[].cells` rows, `walls`, `doors`, `place` absolute, `archetype`, `lighting.intensity`); emitter writes cells sorted, one row per line (the diff convention). Delete `stripToV1Subset`, the `spec:` handling, `wallLines`.
 - Delete: `src/author/specCompat.ts`, `capabilityProbe.ts`, `hexLayout.ts` (odd-q), `boardGeometry.ts`, `creation/straightWallGeometry.ts`, `creation/hexCorner.ts`, `specimens/`, `CONTRACT.md`, `TARGET-YAML.md`, `preview3d/`'s own wall/floor renderers.
 - `src/author/creation/CreationBoard.tsx`: region brush, wall tool (edge click), door tool (edge click/drag), start, place — all in **axial** via `src/components/session/positionBridge.ts`; offset `[col,row]` is produced only at emit time by one function `toOffset(orientation, axial)` whose inverse is pinned by a pixel-formula test against `hexMath.ts`.
 - `src/components/session/atlasToScene3D.ts`: extend `buildScene3D` to take `layout` (it assumes pointy today) and `props` (returns `Scene3D.props` for `PropModel`); update `SessionCanvas` to pass both — the game and the builder call the same function with the same arguments.
 - `src/author/preview3d/DungeonPreview3D.tsx`: render `PutDungeonResponse.atlas` through the extended `buildScene3D` + `SyntyHexFloor` + `AtlasWalls` + `PropModel`; camera wrapper so `SessionScene`'s `useCameraControls` is not required (orbit + the game's tactical rig).
 - `src/author/usePutDungeonPreview.ts`, `useSaveDungeon.ts`: new proto; `useAuthoringGate.ts`: probe = `GetDungeon("reference-tomb")` succeeds ⇒ authoring on (fix the stale env-var message).
-- `src/author/RegionPanel.tsx`: `id`, `name`, lighting slider (0–1).
+- `src/author/RegionPanel.tsx`: `id`, `name`, `archetype` (select from the assets' profile list — a static list in W, the catalog is Not now), intensity slider (0–1).
 - `src/api/useListDungeons.ts` / `DungeonPicker.tsx`: unchanged shape, now live.
 - `Save & Play`: after `PutDungeon` succeeds, `StartEncounter{lobby_id, dungeon_key}` via `useStartLobbyEncounter.ts` and navigate to the game route.
 - Error display: `FieldError.path` → highlight the cell/edge/placement it names; `Save` disabled while errors exist.

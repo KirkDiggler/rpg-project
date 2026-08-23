@@ -49,9 +49,9 @@ unpainted. Floor/void boundary draws as the envelope automatically — the
 author never draws an outer wall.
 
 **Right — inspector + YAML.**
-- **Region inspector** (when a region is selected): `id`, `name`, `lighting`
-  as a dimmer slider (`level` 0–1). Later rows: lighting `ref` (what kind of
-  light the assets should show — flame glow, etc.), `audio`.
+- **Region inspector** (when a region is selected): `id`, `name`,
+  `archetype` (pick from the assets' profiles), `lighting` as an intensity
+  slider (0–1). Later: `audio` rides the archetype.
 - **Dungeon inspector**: `key`, `name`, `orientation`, `void` (`opaque` /
   `transparent`).
 - **YAML pane**: the file, read-only mirror of the canvas, with Download /
@@ -90,20 +90,23 @@ void: opaque                   # opaque | transparent — REQUIRED
 regions:
   - id: entrance
     name: Entrance
-    lighting: { level: 0.6 }
+    archetype: crypt               # presentation ref the assets resolve; never mechanics
+    lighting: { intensity: 0.6 }
     cells:
       - [[0,0],[1,0],[2,0],[3,0],[4,0],[5,0]]
       - [[0,1],[1,1],[2,1],[3,1],[4,1],[5,1]]
       # ... rows 2–7
   - id: hall
     name: Hall
-    lighting: { level: 0.4 }
+    archetype: crypt
+    lighting: { intensity: 0.4 }
     cells:
       - [[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],[13,0],[14,0],[15,0]]
       # ...
   - id: tomb
     name: Tomb
-    lighting: { level: 0.15 }
+    archetype: crypt
+    lighting: { intensity: 0.15 }
     cells:
       - [[16,0],[17,0],[18,0],[19,0],[20,0],[21,0],[22,0],[23,0],[24,0],[25,0],[26,0],[27,0]]
       # ...
@@ -157,13 +160,20 @@ New rules:
   in the started snapshot, and reaches a player through the existing door
   verbs. The atlas carries the doorway (two cells); the builder's inspector
   shows the lock from the YAML.
-- **`lighting` is a block with one field today: `level`**, a dimmable switch
-  in `[0,1]` (0 = no light, 1 = full). A block rather than a bare number so the
-  next field — `ref`, naming the kind of light for the assets (flame glow,
-  moonlight, …) — and later `audio` land beside it without reshaping the file.
-  Carried through the composition unread like `targeting`; how the rulebook
-  turns a level into obscurement is a rule and lives there. REQUIRED per
-  region (no default, per #1033).
+- **`lighting` is a block with one field today: `intensity`**, a slider in
+  `[0,1]` (0 = no light, 1 = full) — named for what it is (ruled 2026-08-23).
+  A block so later fields land beside it without reshaping the file. Carried
+  through the composition unread like `targeting`; how the rulebook turns an
+  intensity into obscurement is a rule and lives there. REQUIRED per region
+  (no default, per #1033).
+- **`archetype` is a string ref on every region** (ruled 2026-08-23: "carry
+  it regardless"), e.g. `archetype: crypt`. It names a presentation profile
+  the assets resolve — lighting kind (flame glow, moonlight…) and, later, the
+  audio profile — with `lighting.intensity` as the dimmer on top. Carried
+  unread, like a prop ref. **Law: an archetype never decides mechanics** —
+  start, blocking, sight, intensity. v1's archetype chose `start`; that is
+  the #1033 trap and the reason it was deleted. REQUIRED (a region with no
+  archetype is a region the assets cannot dress; no default).
 - **Coordinates are absolute offset `[col,row]`** under `orientation`. The
   compiler converts once (`HexCellAt`); no caller ever adds an origin. The
   room-local → absolute seam (toolkit#1139) **ceases to exist** rather than
@@ -202,9 +212,10 @@ message AtlasRegion {
   string id = 1;
   string name = 2;
   repeated Position cells = 3;    // absolute axial, sorted — same frame as `cells`
-  Lighting lighting = 4;
+  string archetype = 4;           // presentation ref; the assets resolve it; never mechanics
+  Lighting lighting = 5;
 }
-message Lighting { double level = 1; }   // 0..1; `ref` joins here when the assets need a kind
+message Lighting { double intensity = 1; }   // 0..1, the dimmer on top of the archetype
 message GetAtlasResponse {
   // ... grid, layout, cells, props, boundaries, doorways unchanged
   repeated AtlasRegion regions = 9;
@@ -227,7 +238,7 @@ ungated, because a picker needs it with authoring off.
 | Layer | Today | Grows |
 |---|---|---|
 | **toolkit `dungeonspec`** | v1 room chain, hex only, seam walls generated | **v2**: `map`/`regions`/`walls`/`doors`/absolute `place`; `Validate` reports path-addressed errors; `Compile` → `FieldInput` |
-| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | **Ruled:** `RegionInput{ID, Name, Cells, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells); authored walls move up to `FieldInput.Walls`. Hex only; `Orientation` stays authored. `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` receives the region's lighting level. `EncounterData` carries regions + lighting |
+| **toolkit `encounter`** | `FieldInput{Canvas, Rooms[rect+Origin], Connections, Doors}`; a room is a region; `RegionAt` is the mask | **Ruled:** `RegionInput{ID, Name, Cells, Archetype, Lighting}` replaces `RoomInput`+`Origin`+`Connections` (a connection was a chain artefact; a doorway is already two cells); authored walls move up to `FieldInput.Walls`. Hex only; `Orientation` stays authored. `CanvasInput` keeps `Void`; lighting lands on the region, not the canvas (closes toolkit#1113 by relocation). `Sight` receives the region's lighting intensity. `EncounterData` carries regions + lighting |
 | **toolkit `session`** | `Atlas{cells, props, boundaries, doorways, layout}` | `Atlas.Regions` |
 | **protos** | authoring = dead dialect; atlas has no regions | §3 |
 | **rpg-api** | one `go:embed` tomb; `dungeon_key` dropped; `ListDungeons` unimplemented; projection borrowed via throwaway encounter | `internal/dungeons` registry: loads every YAML under `RPG_CONTENT_DIR` at boot, compiles each once, **refuses to boot on a file that does not compile**; `PutDungeon` gated by `RPG_AUTHORING_ENABLED` — validate → compile → write-through → atomic swap, puts serialised; `GetDungeon` reads the file; `ListDungeons` from the registry; `StartEncounter` looks the key up. The throwaway-encounter projection is deleted (no room-local frame remains). The tomb ships as `content/reference-tomb.yaml`, not an embed |
@@ -293,37 +304,29 @@ closed as history.
    the builder is the only hand that touches the floor — the YAML is the
    machine artifact, the canvas is the view. Emitter writes cells sorted, one
    row per line, for diff sanity.
-2. **Lighting** — RULED 2026-08-23: a dimmable switch (`level` 0–1) per
-   region now; a `ref` for the asset kind (flame glow, etc.) later.
+2. **Lighting** — RULED 2026-08-23: an intensity slider (`intensity` 0–1)
+   per region; the *kind* of light comes from the region's `archetype`.
 3. **`RegionInput` replaces `RoomInput`** — RULED 2026-08-23: regions are the
    way; no rooms in the atlas projection. Hex only, orientation authored.
 4. **Version 1 deleted** — RULED 2026-08-23, with the condition that the
    fixture combat testing runs on stays usable (§5).
 
-## 7b. Open threads (Kirk, 2026-08-23 — deliberately unresolved)
+## 7b. Threads closed 2026-08-23 (kept for the record)
 
 This design stays open through implementation; adjustments made while
-building are logged in `implementation.md`, and these threads get ruled when
-they are ready, not before.
+building are logged in `implementation.md`.
 
-- **Staggered glyph map.** `E-E-E-T-T-T` over `-E-E-E-T-T-T` is the honest
-  hex idiom: every character touches two above, two below, two beside, which
-  is pointy-top adjacency. The open question is flat-top, whose stagger is
-  per *column* by half a line — text cannot draw it. Shapes on the table:
-  glyphs for pointy-top only (cell lists for flat — two ways to say one
-  thing), glyphs everywhere (the lie returns for flat), or cell lists for
-  both (ruling 1 today). Reversible: either form compiles to the same
-  `FieldInput`; the choice lives in the decoder and the emitter.
-- **Region archetype as a presentation ref.** v1's `archetype` was deleted
-  because it silently decided a world fact (`entrance` chose where the party
-  stands — the #1033 trap). An archetype that carries *presentation* is a
-  different thing: `archetype: crypt` on a region, a ref the assets resolve
-  into lighting kind + audio profile, with `lighting.level` as the dimmer on
-  top — the `ref` slot generalised. It keeps the law the same way `targeting`
-  and prop refs do: the composition carries the string unread. The rule to
-  write down before it lands: **an archetype may never decide mechanics
-  (start, blocking, sight, lighting level); only what the assets show and
-  play.**
+- **Glyph map — CLOSED, cells stand.** A staggered map (`E-E-E` over
+  `-E-E-E`) would be honest for pointy-top but not flat-top, and the YAML is
+  always loaded into the viewer — readability of the raw file is not a
+  requirement. Kirk: "cells is our choice."
+- **Region archetype — RULED IN** (§2): carried on every region as a
+  presentation ref; never mechanics.
+- **Lighting — intensity**, not level: "our lighting value is really an
+  intensity slider."
+
+**Go given 2026-08-23:** cut P (protos) first, stop for Kirk's look, then
+T1/T2/T3/A/W in parallel.
 
 ## 8. Not now
 
