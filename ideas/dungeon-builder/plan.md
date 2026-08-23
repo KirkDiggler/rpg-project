@@ -102,7 +102,7 @@ Sentinels in `errors.go`: `ErrRegionEmpty`, `ErrRegionOverlap`, `ErrRegionArchet
 **Tests that gate**
 - `TestSetup_RegionsMakeTheFloor`: three regions → `Atlas().Cells` equals their union, sorted; `RegionAt(cell)` answers the owner for every cell; void cell → `false`.
 - `TestSetup_RefusesOverlap` / `_RefusesEmptyRegion` / `_RefusesMissingLighting`: each sentinel by name at `Setup` AND at `LoadEncounter`.
-- `TestAtlas_RegionsCarryLighting`: level round-trips through `ToData` → `Load` → `Atlas`.
+- `TestAtlas_RegionsCarryLighting`: archetype + intensity round-trip through `ToData` → `Load` → `Atlas`.
 - `TestEdges_MustBeAdjacentUnderOrientation`: same `[col,row]` pair adjacent under pointy, not under flat → `ErrEdgeNotAdjacent` only for flat (the discriminator — one formula per orientation, not a swapped pair).
 - Existing combat fixtures (`tomb_test.go` in `dungeonspec`, any `encounter` fixture that built rooms) rebuilt as regions in the same PR — `go test ./...` green is the gate, not a subset.
 - Mutation pass on `region.go` / `compileCanvas` per `mutation-testing-catches-overclaims`.

@@ -4,7 +4,7 @@
 `rulebooks/dnd5e/encounter/dungeonspec`, the way the composable encounter got
 one; spec v0.4 / PR #203 is history. Hex only, orientation authored. Regions
 replace rooms — there are no rooms in the atlas projection. A region carries
-lighting as a dimmable level now, with a ref for the asset kind (flame glow,
+lighting as an intensity slider, with an archetype ref for the asset kind (flame glow,
 etc.) later, and an audio profile later. Version 1 is deleted; every combat
 fixture moves to version 2. Survey that led here:
 `restart-survey-2026-08-23.md`.*
@@ -134,7 +134,7 @@ place:
 
 Field rules, carried over from version 1 unchanged: strict decode (unknown
 key fails); pointers where omission must be *detectable* so it can be
-refused — `start`, `blocks_*`, `lighting.level` are all REQUIRED, the pointer
+refused — `start`, `blocks_*`, `lighting.intensity` are all REQUIRED, the pointer
 is how "said nothing" stays distinct from "said zero"; `blocks_*` REQUIRED on
 props and REFUSED elsewhere, refs never
 resolved, `targeting` opaque, at most one `boss` per region, `key` must match
