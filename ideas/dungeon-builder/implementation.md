@@ -37,5 +37,14 @@ Merged bottom-up the same day, each re-pinned to the real tag before merge: rpg-
 *Open for Kirk's walk (from toolkit#1210):*
 
 - ~~**(a) Edge-hugging sightlines through opaque void.**~~ **RULED 2026-08-24** (Kirk: "I think an opaque void blocks the whole hex"): accepted as the hex model's truth. Opaque void blocks sight entirely; the tomb keeps `void: opaque` unpadded, and a sightline that clips void cells is blocked by design. No code change — ADR-0044's fixture rule (non-void test scenes declare a transparent void) already isolates tests from this. Original question: in the tomb, two members on the edge column of a sheared rectangle may not see each other because the straight line between them clips void cells.
+*Ruled after landing (2026-08-24, the walls walk):*
+
+- **No auto envelope walls — "draw nothing, floor ends into darkness."** Reverses the design's presentation of the floor/void boundary ("draws as the envelope automatically"): the 3D renderer draws ONLY authored walls and doors; the void does the blocking mechanically, invisibly. An author who wants an outer wall draws one — a wall against a void edge renders through the same path as any interior wall. Landed in rpg-dnd5e-web#788. The mechanical rule is untouched (nobody crosses into void; opaque void blocks sight — ruling (a) above).
+- **Prop facing: six hex facings, orientation-aware** (rpg-project#261): the six directions are the dungeon's own neighbor directions under its authored `orientation`; a facing name that doesn't exist under that orientation is a validation error. Angles measured against rendered models, not inferred. Offset semantics still awaiting Kirk's confirmation (proposed: presentation-only).
+
+## Landed after the slice — 2026-08-24 (the walls walk)
+
+rpg-dnd5e-web#788 (fixes #787 and #782): the 3D wall presentation draws the authored edges — chain-traced straight runs via the pre-existing `computeAuthoredWallRuns` engine, partial walls render, doors sit flush in their straightened run with exact-closure gaps (endpoint forced to the gap boundary by construction), per-chain facing agreement, least-squares seam fit (~1.6° honest residual on the tomb's parity-unbalanced boundary list; authored diagonals unsnapped, test-pinned both ways), and no envelope (ruling above). Kirk walked every round on :3001 and merged. Follow-up: rpg-dnd5e-web#791 (double-sided walls). Same day, the local loop was repaired: rpg-deployment#71 (authoring on in local-dev compose, first live exercise of rpg-api#822's seed) and the stale npm git-cache protos wiped in the web checkout.
+
 - **(b) Unknown-key errors carry `line N`, not a YAML path.** Good enough for the builder (it emits its own YAML and never produces unknown keys), or should the builder pre-check keys itself?
 
