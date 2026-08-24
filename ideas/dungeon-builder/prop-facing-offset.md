@@ -102,6 +102,7 @@ with a new ruling).
 | date | where | designed | landed | why |
 |---|---|---|---|---|
 | 2026-08-24 | toolkit#1227 | stack table named `PropInput`/`Atlas.Props` only | `PropData` (encounter's own construction-time persistence, `FieldData` mirror) also carries Facing/Offset, wired through `ToData`/`LoadFromData` | without it an authored facing/offset silently vanishes on save/reload of a running encounter; `data.go`'s own contract says FieldData mirrors FieldInput exactly |
+| 2026-08-24 | toolkit#1228 | session merges AFTER re-pin to the real encounter tag | #1228 merged early with pseudo-version cae9319 (squash-orphaned) baked into session v0.25.0; re-pin PR mints the corrected session tag | the slice-1 lesson replayed — pin real tags in the upper module BEFORE merge next time |
 | 2026-08-24 | toolkit#1227 | golden = tomb byte-identical | plus an explicit assertion that every tomb prop's Facing/Offset is the zero value | the golden comparison struct doesn't include the new fields — without the added assertion it would be silently blind to them |
 
 ## Sequencing
