@@ -1,14 +1,16 @@
 # Character Presentation — public identity, loaded once (v1)
 
-## Status: Idea — started 2026-08-25 at Kirk's direction. Design draft for review; plan follows once the open questions are ruled.
+## Status: Design — open questions RULED by Kirk 2026-08-25 (see Decisions); plan can follow.
 
-This folder is the home for character-presentation ideas generally — how a
-character *looks* to the people playing with them. This document is the first:
-the public/private information split and the roster manifest. Future residents
-when their time comes: the Synty customization system itself (TBD until the
-asset contract exists), bloodied/beat-up visual tiers, portraits, equipment
-visuals. Related but already housed elsewhere: `ideas/character-facing/`
-(how a body turns), `ideas/unified-entity-state/`.
+`ideas/characters/` is the umbrella for character ideas — nested on purpose,
+to break the flat one-folder-per-idea pattern (Kirk, 2026-08-25). This
+document, `characters/presentation/`, is the first resident: the
+public/private information split and the roster manifest. Named future
+residents: `characters/customization/` (the Synty customization system —
+TBD until the asset contract exists; today it is only this design's empty
+shelf), bloodied/beat-up visual tiers, portraits, equipment visuals.
+Related but already housed elsewhere: `ideas/character-facing/` (how a body
+turns), `ideas/unified-entity-state/`.
 
 North star: **every member of a session renders as themselves, because a
 character's public face is session data loaded once and referenced at render —
@@ -62,16 +64,19 @@ refreshes; private data stays behind the gate).
 ## Wire sketch (session v1alpha1)
 
 One new RPC, fetched at session mount and re-fetched on a `joined` event
-(pull — the same refetch pattern every other event already uses):
+(pull — the same refetch pattern every other event already uses; ruled, see
+Decisions). The message is named `PublicMemberInfo` rather than anything
+presentation-flavored so the wire itself states the ruling: this is the
+public half of a character, and nothing private ever belongs in it:
 
 ```proto
 rpc GetRoster(GetRosterRequest) returns (GetRosterResponse);
 
 message GetRosterResponse {
-  repeated MemberPresentation members = 1;
+  repeated PublicMemberInfo members = 1;
 }
 
-message MemberPresentation {
+message PublicMemberInfo {
   string id = 1;              // the session member/subject id
   MemberKind kind = 2;
   string name = 3;
@@ -122,17 +127,19 @@ never needs to know what anyone looks like.
 - No bloodied implementation (designed-for, filed separately when picked).
 - No portraits, no equipment visuals — future residents of this folder.
 
-## Open questions for Kirk
+## Decisions (Kirk, 2026-08-25)
 
-1. `class_ref`/`race_ref` (client keeps its existing ref→GLB mapping, zero
-   new machinery) vs a server-authoritative `model_ref`/archetype (server
-   says *what*, assets resolve *how* — the dungeon-presentation pattern)?
-   Draft recommends refs now, archetype only if cosmetics decouple from
-   class.
-2. Beat-up tiers: is public damage state just "bloodied" (the classic
-   half-HP line) or a richer ladder (unhurt / hurt / bloodied / down)? The
-   threshold is public knowledge either way — the question is granularity.
-3. Is pull-on-joined enough, or should the `joined` event carry the new
-   member's `MemberPresentation` inline? Draft recommends pull.
+1. **`class_ref`/`race_ref` for now.** The client keeps its existing
+   ref→GLB mapping; what customization will look like is unclear, so no
+   server-authoritative model ref until it is.
+2. **Knowing hurt is good — public damage state is wanted.** And it has a
+   visual consumer beyond a HUD tint: the team is looking into models
+   taking dings on the armor through a runtime mesh, which would read the
+   same public hurt state. Granularity firms up when that unit is picked;
+   the ruling here is that hurt-visibility is public and designed-for.
+3. **Pull on join.** The `joined` event triggers a roster refetch; it does
+   not carry the new member's info inline.
+4. **Naming: `PublicMemberInfo`**, not `MemberPresentation` — explicit
+   about the split rather than about rendering.
 
 — asset-pipeline agent, on behalf of KirkDiggler
