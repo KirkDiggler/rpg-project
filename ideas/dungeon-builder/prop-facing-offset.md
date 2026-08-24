@@ -97,6 +97,18 @@ Monster spawn facing (Monster AI journey #201's call); mount points; prop
 catalog validation (#185); free-angle facing (six is the ruling; revisit only
 with a new ruling).
 
+## Landed — 2026-08-24
+
+Merged bottom-up the same day, real tags at every step: rpg-api-protos#243
+(v0.1.137) → rpg-toolkit#1227 (encounter v0.32.0) → rpg-toolkit#1228 + #1229
+re-pin (session v0.25.1) → rpg-api#830 (dev) → rpg-dnd5e-web#795 (dev). Kirk
+walked the builder live between rounds; his findings drove the schema-skew
+hardening (absent fields render centered/unfaced, never NaN-invisible) and
+three filed follow-ups (web#798 edit-in-3D, web#801 offset-in-3D tracking,
+plus the walls thread #799/#800). Both rulings held all the way down: a
+wrong-orientation facing name is a refusal at `place[i].facing`, and offset
+never touches mechanics.
+
 ## Adjustments (ledger — filled during implementation)
 
 | date | where | designed | landed | why |
