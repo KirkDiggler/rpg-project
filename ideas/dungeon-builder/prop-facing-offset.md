@@ -97,6 +97,13 @@ Monster spawn facing (Monster AI journey #201's call); mount points; prop
 catalog validation (#185); free-angle facing (six is the ruling; revisit only
 with a new ruling).
 
+## Adjustments (ledger — filled during implementation)
+
+| date | where | designed | landed | why |
+|---|---|---|---|---|
+| 2026-08-24 | toolkit#1227 | stack table named `PropInput`/`Atlas.Props` only | `PropData` (encounter's own construction-time persistence, `FieldData` mirror) also carries Facing/Offset, wired through `ToData`/`LoadFromData` | without it an authored facing/offset silently vanishes on save/reload of a running encounter; `data.go`'s own contract says FieldData mirrors FieldInput exactly |
+| 2026-08-24 | toolkit#1227 | golden = tomb byte-identical | plus an explicit assertion that every tomb prop's Facing/Offset is the zero value | the golden comparison struct doesn't include the new fields — without the added assertion it would be silently blind to them |
+
 ## Sequencing
 
 1. rpg-api-protos PR (additive fields) — merges first, tags.
