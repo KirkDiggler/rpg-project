@@ -241,3 +241,12 @@ derivation; Kirk walks :3001 parked at the PR head — draw a wall in one drag,
 snap a second to its corner, grab the shared corner and re-angle both, erase
 one with shift-drag — and the feel verdict is his. `GESTURE_TUNING`
 recalibrates from the walk before merge, not after.
+
+## Adjustments (ledger — filled during implementation)
+
+| date | where | designed | landed | why |
+|---|---|---|---|---|
+| 2026-08-25 | web PR #808 | taut path "least deviation" left ties unspecified | ties break toward greater x, then greater y — geometric, direction-independent, pinned by the drag table | a drag exactly along a corner column reaches corners where both zigzag sides advance with identical deviation; the walk needs a deterministic answer |
+| 2026-08-25 | web PR #808 | corner magnetism ~0.4·size read as an endpoint snap radius | endpoints ALWAYS land on the corner lattice; 0.4 became the handle-pickup radius, 0.6 the wall-vertex magnetism gate, plus runHitRadius 0.25 for select-tool hit-testing — all in `GESTURE_TUNING`, all pinned | "A and B snap to the hex corner lattice" is unconditional in §The gesture; a radius beyond which the endpoint floats free would contradict it |
+| 2026-08-25 | web PR #808 | angle magnetism stated for the draw drag; reshape drags unaddressed | endpoint/shared-corner reshape drags skip angle magnetism (wall-vertex + lattice magnetism still apply; the grabbed runs' own vertices excluded from magnetism) | a reshape has multiple chains and no single drag origin to measure an angle from |
+| 2026-08-25 | web PR #808 | door tool "inherits the same drag" | door drag = draw only; no door erase gesture (door shift/right keeps the immediate toggle) | ruling 3 makes the wall eraser door-blind, so a door erase drag has nothing to mean |
