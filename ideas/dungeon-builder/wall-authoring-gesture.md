@@ -111,6 +111,13 @@ snaps to sharing its vertex, and a shared vertex IS a closed corner.
   handle; dragging it re-derives the chain from the OPPOSITE endpoint to the
   new position (same taut path) and replaces the run's edges on release.
   Extend and shrink are the same motion.
+- **Shared-corner grab (wall tool)** — a vertex where two (or more) chains
+  meet is itself a handle (ruling 4, Kirk's own addition). Dragging it moves
+  the vertex on the corner lattice and re-derives EVERY incident chain from
+  its own far endpoint to the new vertex — both walls re-angle in one motion,
+  the corner stays closed by construction at every pointer position, and the
+  live preview shows all affected runs through the shared module. The
+  endpoint grab above is the one-incident-chain case of this same operation.
 - **Move a whole run** — Not now; delete + redraw covers it until draw/extend
   has been walked.
 
@@ -133,19 +140,22 @@ nothing else to design.
   (stronger). Constants in ONE exported place, pinned by tests. The numbers are
   starting points — Kirk's walk is the calibration instrument, the same way
   facing yaw was measured, not inferred.
-- Angle magnetism per ruling 1 below.
+- Angle magnetism per ruling 1.
 
-## Proposed rulings (Kirk rules once)
+## Rulings (Kirk, 2026-08-25, on PR #267)
 
-1. **Angle magnetism** — proposed: ON by default (drag direction within ~6° of
-   a seam direction snaps the preview to it), hold Alt for free angle.
-   Alternative: no snapping — the live preview alone carries the honesty.
-2. **Endpoint-drag semantics** — proposed: re-derive the whole chain from the
-   fixed far endpoint (a wall stays one straight intent). Alternative: append
-   from the old endpoint (walls become polylines — but a polyline is two
-   walls, and two walls are two drags).
-3. **Erase gesture** — proposed: shift/right-drag along a line, same grammar as
-   the region brush. Alternative: erase only via run selection + Delete.
+1. **Angle magnetism — RULED: ON by default.** Drag direction within ~6° of a
+   seam direction snaps the preview to it; hold Alt for free angle.
+2. **Endpoint-drag semantics — RULED: re-derive the whole chain** from the
+   fixed far endpoint. A wall stays one straight intent; a polyline is two
+   walls, and two walls are two drags.
+3. **Erase gesture — RULED: shift/right-drag along a line**, the same grammar
+   the region brush already uses.
+4. **Shared-corner relocation — RULED IN** (Kirk, same message): "once snapped
+   we should be able to relocate the corner that would drag both wall lines to
+   reangle them." Designed in under §Editing: dragging a shared vertex
+   re-derives every incident chain to the new position — both walls re-angle
+   in one motion and the corner never opens.
 
 ## Coherence with #798 (designed together, built separately)
 
@@ -168,7 +178,9 @@ starts.
 - **Pixel-formula, no round-trips** (the symmetric-bug discipline): a table of
   named drags on a fixture floor — vertical-seam drag, horizontal-seam drag, a
   ~40° free drag, a drag across a door, a drag ending on an existing wall
-  vertex — each asserting the EXACT derived edge list; for the seam drags, that
+  vertex, a shared-corner drag on two snapped walls (both chains' re-derived
+  edge lists exact, the new vertex still shared) — each asserting the EXACT
+  derived edge list; for the seam drags, that
   the resulting run is axis-true to 1e-6 (the #802 pins guard the geometry;
   these pin the derivation).
 - **Preview identity**: for each table row, the mid-gesture preview runs equal
@@ -183,3 +195,49 @@ starts.
 Move-whole-run; multi-select of runs; polyline walls in one gesture (a polyline
 is N drags); touch/pen affordances; door-state editing inside the gesture (the
 inspector's job); any file or wire change (there is none in this slice).
+
+## Plan — one web PR
+
+**Branch:** `feat/804-wall-gesture` · **Base:** `origin/dev` · **Repo:**
+rpg-dnd5e-web · **Evidence:** `npm run ci-check`; the drag-table +
+preview-identity tests; screenshots from the :3001 walk. One Copilot review on
+open.
+
+**Files**
+
+- Resurrect `src/author/creation/hexCorner.ts` (+test) from history
+  (`git show 6503936^:src/author/creation/hexCorner.ts`), adapted to
+  `canvasGeometry.ts`'s orientation-aware SVG space (the old copy was
+  pointy-only `hexLayout`).
+- New `src/author/creation/wallGesture.ts` (+test) — the PURE derivation
+  module, zero React: `tautPath(A, B, o)` → lattice edge path → `walls[]`
+  edges (floor filter, door break, dedup); `snapGesturePoint` (wall-vertex
+  magnetism, then corner magnetism; angle magnetism with Alt bypass);
+  `wallVertices(doc)`; the erase path; ONE exported `GESTURE_TUNING`
+  constants object (snap radii, angle tolerance) pinned by tests.
+- `src/author/creation/boardWallRuns.ts` — thread each run's source edge list
+  through additively (presentation metadata; the shared 3D module's geometry
+  is untouched) so a rendered run can answer "which doc edges am I" for
+  hit-testing and selection.
+- `src/author/types.ts` — `Selection` gains `{ kind: 'wall'; edges: Edge[] }`.
+- `CreationBoard.tsx` — press/drag/release for wall + door tools; the preview
+  layer (candidate runs via `boardWallScene` on the candidate doc + faint
+  literal trace); erase modifier; run hit-testing for Select; vertex/endpoint
+  handles with the re-derive drags (rulings 2 and 4).
+- Inspector — "Wall — N edges" panel with Delete.
+
+**Order within the PR** (each unit's tests green before the next):
+
+1. hexCorner resurrection + adaptation.
+2. wallGesture derivation + the drag table (TDD — §Tests' rows written first).
+3. Board wiring: draw + erase gestures with live preview; preview-identity
+   test.
+4. Snapping + `GESTURE_TUNING`.
+5. Selection + handles: run select, Delete, endpoint drag, shared-corner drag.
+6. Door-tool drag.
+
+**Done when:** ci green; the drag table and preview-identity tests pin the
+derivation; Kirk walks :3001 parked at the PR head — draw a wall in one drag,
+snap a second to its corner, grab the shared corner and re-angle both, erase
+one with shift-drag — and the feel verdict is his. `GESTURE_TUNING`
+recalibrates from the walk before merge, not after.
