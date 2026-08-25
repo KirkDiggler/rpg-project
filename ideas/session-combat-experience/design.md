@@ -158,7 +158,19 @@ The session provider builds one internal compiled offer per verb/action/spend va
 
 The target preflight is one shared provider function consumed by both projection and regenerated execution. “Same code path” therefore means shared compiled data and preflight, not merely tests asserting that two independent implementations agree.
 
-Early turn-wide blockers preserve the current cheap refusal precedence: `NOT_YOUR_TURN`, `DOWNED`, or `UNREADABLE` may return verb-level declarations with `available=false`, the authoritative `why`, empty `id`, absent `attack`, and no candidates. They do not load/compile a readable sheet merely to decorate a button the player cannot use. Every compiled Attack declaration—including `NO_BUDGET` and target-only refusals—carries its exact `AttackRef` and non-empty ID.
+Blockers are evaluated per verb so one unreadable Attack never erases an independently executable Move or End Turn:
+
+| Refusal | Attack | Move | End Turn |
+| --- | --- | --- | --- |
+| `NOT_YOUR_TURN` | blocked before sheet load | blocked before sheet load | blocked |
+| `DOWNED` | blocked | blocked | available when the real EndTurn gate otherwise permits it |
+| unreadable whole character | blocked with `UNREADABLE` | blocked with `UNREADABLE` | available when its clock gate permits; it does not require a sheet |
+| `UNREADABLE` compiled Attack | blocked with `UNREADABLE` | continues through its own sheet/economy gate | continues through its clock gate |
+| `NO_BUDGET` or target refusal | compiled but unavailable | compiled independently | unaffected |
+
+`UNREADABLE` is broadened from “the Attack price did not compile” to “the provider dependency required by this verb could not be read.” Its text distinguishes an unreadable character from an unreadable Attack while the structured reason lets the web render the same non-executable treatment. Session/world load failures still fail Afford as a whole; only the member's character/action dependency is projected per verb.
+
+A blocked declaration has `available=false`, the authoritative `why`, empty `id`, absent `attack`, no candidates, and the verb's fixed `target_kind` (`MEMBER`, `PATH`, or `NONE`). It does not compile unrelated detail merely to decorate a button the player cannot use. Every compiled Attack—including `NO_BUDGET` and target-only refusals—carries its exact `AttackRef` and non-empty ID. Every compiled turn-clock Move and End Turn declaration also carries a non-empty ID.
 
 ### Declaration identity and dispatch
 
@@ -191,13 +203,28 @@ The SDK does not persist an offer cache. Under the same load/lock used by the ve
 
 ID construction is normative:
 
-- encode the UTF-8 domain `session-declaration:v1` followed by length-prefixed session ID, member ID, verb, slot, and a canonical encoding of the complete execution-relevant compiled variant;
-- for Attack, that variant includes the full action definition/profile and every spend-profile map, with map entries sorted by their canonical key bytes; for Move and End Turn it includes their sealed verb variant;
-- hash those bytes with SHA-256 and encode the full digest as unpadded base64url after the prefix `v1.`; no truncation is allowed;
-- if two non-identical current compiled offers produce the same ID, Afford and execution fail closed as an internal provider defect rather than selecting either;
-- the ID is a selector, not an idempotency key or authorization token. The same offer may legitimately receive the same ID again when the same state recurs.
+1. Build this selector document as a JSON value with exactly these keys:
 
-The exact canonical-encoder function and Go hash package belong in `plan.md`; the byte-order, sorting, domain, full digest, and collision behavior do not.
+   ```json
+   {
+     "domain": "session-declaration:v1",
+     "session": "<session id>",
+     "member": "<member id>",
+     "verb": "<session verb string>",
+     "slot": "<session slot string>",
+     "variant": null
+   }
+   ```
+
+   `null` is a schematic placeholder only and is replaced before canonicalization.
+
+2. For Attack, `variant` is the parsed JSON value produced by serializing the validated complete `actions.Definition`, including its `SpendProfile` and populated profile union. The definition's existing JSON tags define presence: nil and empty maps/slices omitted by `omitempty` are intentionally the same selector material; a non-nil empty `SpendProfile` remains `{}` and is distinct from a nil cost. Embedded raw JSON such as condition parameters must parse successfully. For Move and End Turn, `variant` is respectively the exact string `session:move:v1` or `session:end-turn:v1`.
+3. Canonicalize the entire selector document with the JSON Canonicalization Scheme, RFC 8785. That standard fixes UTF-8/string escaping, object-key ordering (including every spend-profile map), number rendering, array framing/order, field order independence, and whitespace. All current rule quantities are integers within the RFC's interoperable exact range; a future profile that cannot satisfy RFC 8785 requires a selector-version bump rather than an approximation.
+4. Hash the canonical UTF-8 bytes with SHA-256 and encode the full digest as unpadded base64url after the prefix `v1.`; no truncation is allowed.
+5. If two non-identical current compiled offers produce the same ID, Afford and execution fail closed as an internal provider defect rather than selecting either.
+6. The ID is a selector, not an idempotency key or authorization token. The same offer may legitimately receive the same ID again when the same state recurs.
+
+The exact Go helper and hash/canonicalization package belong in `plan.md`; the RFC 8785 document shape, definition presence semantics, domain, variant strings, full digest, and collision behavior do not.
 
 IDs do not replace authorization. rpg-api still proves that the authenticated player controls the acting member.
 
@@ -273,7 +300,7 @@ Feature-owned resources require an explicit provider contract. Second Wind and A
 
 The projection must not serialize a feature/condition to JSON and inspect fields. `ConditionBehavior.Ref()` from rpg-toolkit#971 is folded into this wave so a live condition can name itself honestly. Rulebook-owned descriptors compose names/details; a loaded effect with no descriptor fails the projection loudly instead of disappearing from `CharacterData`.
 
-One shared character application path uses strict `character.Load` plus `Attach` before GetCharacterData, EquipItem, or UnequipItem can proceed. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). Get composes `EquipmentView` and `StatusView` from that strict sheet. Equip/Unequip validate both projections before mutation, perform no repository write when strict load/projection fails, and return post-state CharacterData composed from the successfully mutated strict sheet (or a successful strict post-write reload). A malformed persisted feature, condition, or item therefore fails as `INTERNAL` before a write; the API never reports an error after silently persisting a forgiving partial sheet.
+One shared character application path uses strict `character.Load` plus `Attach` before GetCharacterData, EquipItem, or UnequipItem can proceed. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). Get composes `EquipmentView` and `StatusView` from that strict sheet. Equip/Unequip strictly load and validate the pre-state, mutate the in-memory sheet, compose and validate the complete post-state CharacterData **before** writing, then persist and return that already-composed result. No fallible post-write reload or projection participates in response success. A malformed persisted feature, condition, item, or post-state projection therefore fails as `INTERNAL` before a write; the API never reports an application error after persisting a forgiving or unrenderable partial sheet.
 
 ### Refresh behavior
 
@@ -352,7 +379,7 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 
 ### `rpg-api-protos`
 
-- Reshape session `Declaration`, reuse `AttackRef` as its sole Attack identity, add `TargetKind`, `TargetCandidate`, `VERB_END_TURN`, and `TARGET_OUT_OF_REACH`.
+- Reshape session `Declaration`, reuse `AttackRef` as its sole Attack identity, add `TargetKind`, `TargetCandidate`, `VERB_END_TURN`, and `TARGET_OUT_OF_REACH`; update `UNREADABLE` docs for per-verb character/action dependency failures.
 - Migrate `AttackRef.ref` from a bare ID to full `core.Ref.String()` consistently across declarations, responses, and events.
 - Add declaration IDs to Attack/Move/EndTurn requests.
 - Add level, hit points, base speed, and feature/condition/resource views directly to the existing owner-private CharacterData; no consumer-specific wrapper.
@@ -362,7 +389,7 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 
 - In `rulebooks/dnd5e/session`, build one internal compiled offer per action/spend variant, evaluate the complete live-sight candidate universe through shared target preflight, project it through Afford, regenerate it at execution, and execute the exact authored Attack definition.
 - Implement the versioned canonical full-SHA-256 declaration selector and fail closed on duplicate IDs.
-- Keep actual verb gates and Afford on the shared compiled-offer/preflight path, with resolution retaining final defensive validation.
+- Keep actual verb gates and Afford on the shared compiled-offer/preflight path, preserve the ruled per-verb blocker matrix, and retain resolution's final defensive validation.
 - In `rulebooks/dnd5e`, add `ConditionBehavior.Ref()`, the non-mutating feature-status/resource descriptor, and immutable character `StatusView` without raw-JSON introspection.
 - One toolkit branch carries the whole wave even though auto-tagging may publish both affected modules.
 
@@ -403,13 +430,13 @@ Develop outside-in, merge inside-out:
 ### Contract and toolkit
 
 - Proto lint/generation passes and removed tags/names are reserved.
-- Every compiled Attack declaration has a non-empty ID, one exact full-ref `AttackRef`, slot, target kind, and server-evaluated candidates. Early verb-level blockers have the ruled empty-ID/absent-attack shape.
+- Every compiled Attack, turn-clock Move, and End Turn declaration has a non-empty ID. Every early per-verb blocker has empty ID, absent attack, and that verb's fixed non-UNSPECIFIED target kind. Every compiled Attack also has one exact full-ref `AttackRef`, slot, and server-evaluated candidates.
 - Every current live sight holding except the actor appears once; stale/undisclosed holdings do not, and missing live position fails rather than omits.
 - Available and unavailable candidates carry the ruled presence invariants for `why`.
 - Afford and each real verb consume the shared compiled offer and target preflight; mutation tests prove a changed preflight affects both.
-- Canonical ID golden tests cover map insertion order, every execution-relevant profile field, scope/domain/version, full digest length, recurrence, and duplicate-ID fail-closed behavior. Regeneration rejects an echoed ID when current state no longer admits its execution, even if the opaque text remains stable.
+- RFC 8785 selector golden tests cover object insertion order, Definition `omitempty` nil/empty normalization, embedded raw JSON canonicalization, every execution-relevant profile field, scope/domain/version, sealed Move/EndTurn variants, full digest length, recurrence, and duplicate-ID fail-closed behavior. Regeneration rejects an echoed ID when current state no longer admits its execution, even if the opaque text remains stable.
 - Declaration, Attack response, and Struck/Missed carry the same full-ref `AttackRef`.
-- Move requires an offered ID only on the turn clock; world-clock movement remains unchanged.
+- The per-verb blocker matrix is table-tested: NOT_YOUR_TURN blocks all; DOWNED and unreadable character/action dependencies block only the verbs whose execution needs them; End Turn remains selectable whenever its real clock gate permits. Move requires an offered ID only on the turn clock; world-clock movement remains unchanged.
 - Character status projection covers the four level-3 party fixtures, names every loaded condition through `Ref()`, projects feature-private Second Wind/Action Surge and shared Ki through stable non-magical keys, deduplicates matching resources, refuses conflicts, excludes SpellSlots/ClassResources, and refuses unreadable effects without dropping them.
 - Strict Get/Equip/Unequip paths perform no write on malformed data; successful writes return CharacterData from the same strict post-state.
 
