@@ -20,10 +20,12 @@ Two changes, one dialect:
   prop off the floor (a torch onto a sconce line, a skull onto an altar).
   Still visual only.
 
-> **Interpretation flag (for Kirk):** "add the height to the offset" is read
-> here as the PROP `offset` gaining a vertical component. If you meant
-> something else — say, wall height expressed through some offset — reply on
-> this PR and this half reshapes; the facings half stands either way.
+> **Ruled (Kirk, 2026-08-25):** "height should be able to gun higher than
+> the 5 ticks we allow on x and y." The prop-offset reading is CONFIRMED —
+> and the height component explicitly escapes the planar clamp: x and y stay
+> in [-0.5, 0.5] (the Inspector's five 0.1-ticks each way), while the third
+> component ranges over [0, 3] cell-heights with its own stepper. Height is
+> not "one more tick axis"; it is allowed to go well past the cell edge.
 
 Law carried forward: **presentation never decides mechanics.** Facing and all
 three offset components are render facts; `blocks_*` stays cell-scoped and
@@ -97,7 +99,7 @@ world-Y from the authored words/values (ADR-0040 spirit).
 | **toolkit `encounter`** | `PropInput.Offset`/`Atlas.Props[].Offset`/`PropData.Offset` widen `[2]float64` → `[3]float64` (breaking is free pre-adoption, per no-backcompat) |
 | **toolkit `session`** | projection copies the third component |
 | **rpg-api** | passthrough + pin bumps |
-| **web** | panel: eight fixed compass buttons (the rose does NOT rotate with orientation) + none; ONE exported yaw table; `offset[2] * HEX_SIZE` applied as world-Y in the shared scene path (`atlasToScene3D` → `SceneProp3D`) |
+| **web** | panel: eight fixed compass buttons (the rose does NOT rotate with orientation) + none; ONE exported yaw table; a height stepper NEXT TO the x/y pad with its own wider range ([0, 3], per the ruling — not the ±0.5 planar clamp); `offset[2] * HEX_SIZE` applied as world-Y in the shared scene path (`atlasToScene3D` → `SceneProp3D`) |
 
 ## Tests
 

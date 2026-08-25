@@ -16,13 +16,14 @@ per entry; the bare pair stays valid and means default height:
 
 ```yaml
 walls:
-  - [[5,0],[6,0]]                            # bare pair — default height
-  - { between: [[5,1],[6,1]], height: 0.5 }  # half-height parapet edge
+  - [[5,0],[6,0]]                          # bare pair — default height
+  - { between: [[5,1],[6,1]], height: 2 }  # double-height wall
 ```
 
 - `height` is a MULTIPLIER of the standard rendered wall height (1.0 =
-  exactly today's walls, 0.5 = waist-high, 2.0 = double), valid in (0, 3].
-  There is no `0` — an absent wall is an absent entry, not a zero-height one.
+  exactly today's walls, 2.0 = double), valid in [1, 3]. Raise-only, per
+  Kirk's ruling (below): no value below standard, and no `0` — an absent
+  wall is an absent entry, not a zero-height one.
 - Why the edge and not some named-run object: runs are derived, order-free,
   and reshape under editing; giving them stored identity re-opens everything
   #804 just closed (order-invariance, the walkChain degree rule). An edge is
@@ -36,21 +37,30 @@ exactly today's runs (golden: the tomb, all-default, byte-identical). The
 canonical, order-invariant engine from #804 is the only place this logic
 lives; 2D preview, 3D preview, and the game route all inherit it.
 
-## The mechanics ruling (needed from Kirk, default proposed)
+## The mechanics ruling (RULED — Kirk, 2026-08-25)
 
-Height is the first wall fact where "visual only" is genuinely contestable:
-seeing and shooting over a low wall IS mechanics. Proposed default for THIS
-slice: **height changes nothing in Sight or movement** — a wall blocks
-exactly as today at any height, and "see/shoot over low walls" is a named
-shelf item that needs its own ruling plus a Sight design (cover, elevation)
-before any code. The law holds until deliberately amended: presentation never
-decides mechanics — and until that future ruling, height is presentation.
+> "yeah visual only … and yeah a wall cannot be seen past. I am looking to
+> raise the walls not lower them now."
+
+Three facts, and the second makes the third cheap:
+
+- **Visual only.** Height changes nothing in Sight or movement — a wall
+  blocks exactly as today at any height. The law holds: presentation never
+  decides mechanics.
+- **Raise-only.** Heights below standard are refused (`[1, 3]`), so the
+  waist-high parapet — the one case where "visual only" was genuinely
+  contestable, because seeing over a low wall IS mechanics — cannot be
+  authored at all. The contestable case is not shelved; it is unexpressible.
+- **A wall cannot be seen past**, at any authored height. This is the
+  existing Sight behavior restated as a design invariant of this slice, not
+  a new rule. If low walls ever return, they must bring their own ruling and
+  a Sight design (cover, elevation) with them.
 
 ## The wire (additive)
 
 `AtlasBoundary` (today bare `{from, to}`) gains `float height = 3` — the
 authored multiplier verbatim when one was authored, `0` = not authored.
-Because the YAML bounds are `(0, 3]`, a literal `0` can never be an authored
+Because the YAML bounds are `[1, 3]`, a literal `0` can never be an authored
 value, so the wire is unambiguous — but spell the client contract out to
 kill the multiply-by-zero trap: a reader maps `0` to the STANDARD height
 (i.e. renders as multiplier `1.0`), and never multiplies by the raw field.
@@ -84,7 +94,7 @@ commit"). Editing interplay, proposed:
 | layer | change |
 |---|---|
 | **protos** | `AtlasBoundary.height = 3`, one PR, tags |
-| **toolkit `dungeonspec`** | parse both wall-entry forms; bounds `(0, 3]` at `walls[i].height`; compile through |
+| **toolkit `dungeonspec`** | parse both wall-entry forms; bounds `[1, 3]` at `walls[i].height` (raise-only); compile through |
 | **toolkit `encounter`** | `Boundary`/`BoundaryData` carry `Height float64` (`0` = default); construction + persistence round-trip |
 | **toolkit `session`** | projection copies it |
 | **rpg-api** | passthrough + pin bumps |
@@ -92,7 +102,8 @@ commit"). Editing interplay, proposed:
 
 ## Tests
 
-- dungeonspec: both entry forms parse; bounds refusal at `walls[i].height`;
+- dungeonspec: both entry forms parse; bounds refusal at `walls[i].height`
+  (below 1 refused — `0.5` is the named refusal case — and above 3);
   bare-pair-only files byte-identical through compile.
 - Engine: mixed-height chain splits at the boundary edge; uniform-height
   chain derives today's runs exactly; the #804 seeded-permutation
@@ -108,9 +119,10 @@ commit"). Editing interplay, proposed:
 
 ## Not now
 
-See/shoot-over-low-walls mechanics (needs its own ruling + Sight design);
-door height; per-face wall textures; height in the 2D canvas beyond a simple
-tone/label on the run (2D stays schematic).
+Low walls entirely (raise-only ruling; a future below-standard height must
+arrive together with its see/shoot-over Sight ruling); door height; per-face
+wall textures; height in the 2D canvas beyond a simple tone/label on the run
+(2D stays schematic).
 
 ## Plan — four PRs, bottom-up
 
@@ -119,8 +131,8 @@ tone/label on the run (2D stays schematic).
    before the upper pin.
 3. rpg-api: pin bump + passthrough.
 4. rpg-dnd5e-web: engine chain-break + YAML + stepper + render; Kirk walks
-   it — draw a room, drop one wall to half height, see the parapet in 2D,
-   3D, and Save & Play.
+   it — draw a room, raise one wall to double height, see the tall wall in
+   2D, 3D, and Save & Play.
 
 ## Adjustments (ledger — filled during implementation)
 
