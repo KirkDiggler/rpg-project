@@ -15,7 +15,7 @@ seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 d
 With detail present, the same line appends raw ordered collections:
 
 ```text
-seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 rolls=[4] flat=0 type=slashing}, {source=ability ref=dnd5e:abilities:strength dice= rolls=[] flat=3 type=slashing}, {source=condition ref=dnd5e:conditions:raging dice= rolls=[] flat=2 type=slashing}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter reason="Hidden"}] disadvantage=[]
+seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 rolls=[4] flat=0 type=slashing}, {source=ability ref=dnd5e:abilities:strength rolls=[] flat=3 type=slashing}, {source=condition ref=dnd5e:conditions:raging rolls=[] flat=2 type=slashing}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter}] disadvantage=[]
 ```
 
 This remains one copyable debug line produced by `debugLogLine.ts`; it does not add a component tree or change the player-facing Story sentence. The formatter displays supplied values and performs no arithmetic. `damage=9` and `crit=false` remain the authoritative resolved answers.
@@ -40,7 +40,6 @@ message DamageComponent {
 message AttackModifierSource {
   string source_ref = 1; // empty means absent
   string source_id = 2;  // entity that supplied the modifier; may be empty
-  string reason = 3;     // the existing rules-owned reason; may be empty
 }
 
 message Struck {
@@ -70,7 +69,7 @@ No layer derives a missing fact:
 | `damage_components[].multiplier` | `DamageComponents[].Multiplier`, preserving nil versus zero |
 | `advantage_sources[]` | `StrikeOutcome.Folded.AdvantageSources` |
 | `disadvantage_sources[]` | `StrikeOutcome.Folded.DisadvantageSources` |
-| modifier `source_ref/source_id/reason` | the same fields on `AttackModifierSource` |
+| modifier `source_ref/source_id` | the same fields on `AttackModifierSource` |
 
 The path is one projection:
 
@@ -110,7 +109,9 @@ Both live delivery and `GetStory` are projections of the encounter story payload
 
 ## Deliberately not carried
 
-Original dice rolls, reroll history, reroll reasons, damage properties, per-component critical flags, component totals, conditions/save outcomes, cancellation/reaction attribution, and attack-bonus decomposition remain internal. `Missed` is unchanged. Adding any of them requires a concrete debug-feed question that the minimum contract cannot answer.
+Original dice rolls, reroll history, reroll reasons, damage properties, per-component critical flags, component totals, human-readable modifier reasons, conditions/save outcomes, cancellation/reaction attribution, and attack-bonus decomposition remain internal. `Missed` is unchanged. Adding any of them requires a concrete debug-feed question that the minimum contract cannot answer.
+
+`AttackModifierSource.Reason` is intentionally not persisted: it is human-readable prose, while encounter's `RecordInput` makes caller-authored prose inexpressible. Source ref plus source entity ID provide attribution without weakening that boundary. This slice does not invent a replacement reason enum.
 
 There is no new event kind, arbitrary metadata bag, ADR, story migration, player-facing prose, or staged combat presentation in this slice.
 
