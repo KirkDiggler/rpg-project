@@ -383,10 +383,7 @@ provider and consumer evidence earn the disposition.
   Dungeon Builder → Load → Save → Open → Save & Play preserved the showcase YAML
   byte-for-byte at `a3927fdbf6b38fb886c55b72f58ad116dd8282917fb279a4f8c5f3c4a5e25542`
   and preserved each prop ref/facing/offset across reopen.
-- Tests and checks: local integrated head `3de2e1a` passed `npm run ci-check`
-  and the focused rerun of 10 files / 183 tests; PR #820 had green **Lint and
-  Type Check**, **Deploy Preview**, **Test**, and **Security Audit** checks
-  before merge.
+- Tests and checks: local integrated head `3de2e1a` passed `npm run ci-check` (format check, lint check, TypeScript type check, build, built theme CSS carries the combat-HUD block, production assets exclude Toolkit Contributor Sandbox code, tests) and the visible `npm run test:run` reported `Test Files 210 passed | 1 skipped (211)` and `Tests 3443 passed | 1 skipped (3444)`; the focused rerun still passed 10 files / 183 tests; PR #820 had green **Lint and Type Check**, **Deploy Preview**, **Test**, and **Security Audit** checks before merge.
 - Kirk verdicts: provider exact-merge review “yeah they look great.” Current
   integrated verdict “it does.”
 - Next lane: authored lighting remains open on journey

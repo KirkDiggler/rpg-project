@@ -74,12 +74,12 @@ runtime/build captures accepted after the provider and web slices merged.
 
 - PR #820 had four green GitHub checks before merge: **Lint and Type Check**,
   **Deploy Preview**, **Test**, and **Security Audit**.
-- Current integrated head `3de2e1a` passed local `npm run ci-check`.
-- Current integrated head also passed the focused render/fixture rerun:
-  10 files / 183 tests.
+- Current integrated head `3de2e1a` passed local `npm run ci-check` (format check, lint check, TypeScript type check, build, built theme CSS carries the combat-HUD block, production assets exclude Toolkit Contributor Sandbox code, tests).
+- Current integrated head also passed the visible `npm run test:run`: `Test Files 210 passed | 1 skipped (211)` and `Tests 3443 passed | 1 skipped (3444)`.
 - The accepted integrated evidence also sits on a previously verified full local
-  suite run at the same head family: 210 passing files / 3,432 passing tests,
-  with the one intentional skipped file/test pair unchanged.
+  suite run at the same head family: `210 passing files / 1 skipped file` and
+  `3,443 passing tests / 1 skipped test`, with the one intentional skipped
+  file/test pair unchanged.
 - Builder capture logged zero browser errors. The playable route returned HTTP
   `200` for the three crypt GLBs and the completed authoring/lobby/session RPCs;
   the only console noise was the already-known React StrictMode cleanup abort on

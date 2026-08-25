@@ -1636,6 +1636,12 @@ Expected: #275 is `Done`; #169 remains `In Progress`.
   folder, appending the landed ledger, retiring stale trackers, setting the two
   implementation slices and three stale trackers to Project 19 `Done`, and
   keeping journey #169 open for authored lighting.
+- **Task 7 report fix:** the earlier landed record said `npm run ci-check`
+  passed but omitted the exact final counts. The record now includes `Test
+  Files 210 passed | 1 skipped (211)` and `Tests 3443 passed | 1 skipped
+  (3444)`, plus the seven ci-check sub-gates: format check, lint check,
+  TypeScript type check, build, built theme CSS carries the combat-HUD block,
+  production assets exclude Toolkit Contributor Sandbox code, tests.
 - **Material rulings/deviations:** this plan intentionally records execution in
   the SDD ledger, commits, PRs, and the concise outcome above instead of bulk
   flipping historical checkboxes; the final accepted current-head PNGs live in
