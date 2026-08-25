@@ -1,6 +1,6 @@
 # Equipped Weapon Presentation — fighter main-hand proof
 
-## Status: Design approved by Kirk 2026-08-26; written review pending
+## Status: Written design approved by Kirk 2026-08-26; Concept implementation plan follows
 
 Parent journey: [rpg-project#281](https://github.com/KirkDiggler/rpg-project/issues/281), **See Equipped Weapons in Character Hands**. This Decide slice is [rpg-project#282](https://github.com/KirkDiggler/rpg-project/issues/282).
 
