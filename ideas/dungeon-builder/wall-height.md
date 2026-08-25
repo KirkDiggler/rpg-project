@@ -49,8 +49,12 @@ decides mechanics — and until that future ruling, height is presentation.
 ## The wire (additive)
 
 `AtlasBoundary` (today bare `{from, to}`) gains `float height = 3` — the
-authored multiplier verbatim, `0` = not authored = default, indistinguishable
-from "said nothing" by design. No pixels on the wire; the client multiplies
+authored multiplier verbatim when one was authored, `0` = not authored.
+Because the YAML bounds are `(0, 3]`, a literal `0` can never be an authored
+value, so the wire is unambiguous — but spell the client contract out to
+kill the multiply-by-zero trap: a reader maps `0` to the STANDARD height
+(i.e. renders as multiplier `1.0`), and never multiplies by the raw field.
+"Said nothing" and "said 1.0" render identically by design. No pixels on the wire; the client multiplies
 into its own calibrated wall height. The web end lands on an existing knob:
 the renderer already draws per-run height overrides (the cutaway machinery's
 `WALL_HEIGHT` 0.8 vs `CUTAWAY_TALL_WALL_HEIGHT` 2.4) — authored height feeds

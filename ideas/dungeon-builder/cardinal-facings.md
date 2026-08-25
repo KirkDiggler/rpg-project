@@ -56,11 +56,15 @@ Validation (fail-loud, path-addressed, same collecting pass as today):
   the Monster AI journey's call).
 
 Old files: every previously valid file stays parseable — the old six names
-are a subset of the eight and two-component offsets remain legal. Rendered
-yaw CHANGES for names whose hex-edge direction differed from true compass
-(pointy-top `ne` pointed at the 30° edge; compass `ne` is 45°). Pre-v1, no
-backcompat baggage: goldens that pinned the old yaws flip deliberately and
-say so.
+are a subset of the eight and two-component offsets remain legal. This IS a
+deliberate semantic redefinition of the shipped #261 dialect: the four
+diagonal names change meaning from "hex-edge direction" to "true compass,"
+so rendered yaw shifts wherever those differed (pointy-top `ne` pointed at
+the 30° edge; compass `ne` is 45°). Kirk's ruling sanctions exactly that
+shift, and in practice no shipped content moves — the reference tomb, the
+only authored dungeon in the wild, authors no facings at all (#261's golden
+asserts every prop's facing/offset is the zero value). Goldens that pinned
+the old yaws flip deliberately and say so.
 
 ## Yaw is one table, orientation-independent, and measured
 
