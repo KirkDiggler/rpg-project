@@ -39,7 +39,7 @@ Wall tool:
     always hangs over a little" — cell-center anchoring overshoots by up to
     half a hex by construction; corners are the finest honest lattice). The
     old `hexCorner.ts` solved corner-lattice addressing + dedup; resurrect it
-    from history (`6503936^`) rather than re-derive.
+    from rpg-dnd5e-web history (`git show 6503936^:src/author/creation/hexCorner.ts`) rather than re-derive.
   - While dragging, the tool derives the **candidate edge chain** (next
     section) and previews: the run(s) the shared module would render for
     current doc + candidate chain, plus a faint literal trace of the candidate
@@ -79,7 +79,7 @@ Derivation rules:
 - A path segment whose cell pair is not two floor cells is **skipped** (the
   envelope is implied, never authored — design §2); the preview shows it
   absent.
-- An edge already in `walls[]` dedups silently — drawing over a wall is
+- An edge already in `walls[]` is deduplicated silently — drawing over a wall is
   idempotent.
 - An edge belonging to a door is **skipped and the chain breaks there** — runs
   already break at doorways; the preview shows the door sitting in its gap. An
