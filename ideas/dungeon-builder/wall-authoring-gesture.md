@@ -107,7 +107,8 @@ snaps to sharing its vertex, and a shared vertex IS a closed corner.
   There is no wall id in the file and none is added; a wall selection is
   `{ kind: 'wall', edges: Edge[] }`. The inspector shows "Wall — N edges";
   Delete removes all N.
-- **Endpoint grab (wall tool)** — hovering near a run's endpoint shows a
+- **Endpoint grab** (ruling 5: on the SELECTED wall, any tool that can
+  select) — hovering near a run's endpoint shows a
   handle; dragging it re-derives the chain from the OPPOSITE endpoint to the
   new position (same taut path) and replaces the run's edges on release.
   Extend and shrink are the same motion.
@@ -156,6 +157,15 @@ nothing else to design.
    reangle them." Designed in under §Editing: dragging a shared vertex
    re-derives every incident chain to the new position — both walls re-angle
    in one motion and the corner never opens.
+5. **Manipulation rides selection — RULED** (Kirk, walking PR #808,
+   2026-08-25): "walls look and can be drawn easily but continuing them and
+   getting them lined up where I want is pretty tricky. i think if I select an
+   existing wall, I should be able to manipulate it. I think the strava route
+   builder does this pretty well." Selecting a wall shows its handles
+   (rendered endpoints + shared corners) immediately, draggable right there —
+   no tool switch, not hover-only. The wall tool keeps draw/erase. Same walk
+   surfaced the snap failure ("I cannot get that upper right corner to snap
+   in") — diagnosis + mechanism in the ledger below.
 
 ## Coherence with #798 (designed together, built separately)
 
