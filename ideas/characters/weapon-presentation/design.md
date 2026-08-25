@@ -14,6 +14,7 @@ Verified 2026-08-26 against `rpg-game-assets` `origin/main`, `rpg-dnd5e-web` `or
 
 - Canonical class GLBs are intentionally unarmed. `rpg-game-assets` PR #27 removed baked weapons while retaining standalone weapon files and socket metadata for future equipment-driven presentation.
 - `harness/models/synty/characters/manifest.json` currently records class-specific `Hand_R` offsets in a Blender bone-head rest frame. Those values proved the earlier Blender export path, but no Synty web renderer consumes them.
+- A direct Three.js GLTFLoader probe of the exact synced files shows `Hand_R` inherits world scale `~0.01` inside the fighter GLB while both standalone weapon roots load at identity scale `1.0`. A bone child therefore needs explicit centimeter-to-meter compensation inside the rig before the outer shared `SYNTY_SCALE` is allowed to scale character and weapon together.
 - `scripts/attach_weapon.py` proved that a standalone weapon can be rigidly attached through full vertex weight to one hand bone and survive a Blender GLB export/reimport round trip. That technique solves an exported-GLB interoperability problem; it does not require the runtime consumer to generate another skinned mesh.
 - The production Synty character path is `ClassCharacterModel`. It loads a class GLB, uses `SkeletonUtils.clone()` so each instance owns a correct cloned skeleton, and plays baked idle/walk clips. It has no equipment attachment seam.
 - The existing `CharacterWeapon` component belongs to the older OBJ `MediumHumanoid` path. It uses character-space offsets and must not be adapted as if it were an animated Synty bone attachment.
@@ -81,11 +82,12 @@ The fighter profile owns exactly:
 
 - semantic socket key `main_hand`;
 - bone name `Hand_R`;
+- `boneUnitMeters` (exactly `0.01` for the canonical fighter rig);
 - joint-local position in meters;
 - joint-local rotation as a quaternion `[x, y, z, w]`; and
-- uniform scale.
+- uniform true-meter weapon scale (normally `1.0`).
 
-The quaternion is deliberate: it removes Euler order and Blender-extrinsic-versus-Three-intrinsic ambiguity from the runtime contract. Values are measured in the exported glTF joint-local frame, not copied unchecked from the existing Blender bone-head-frame receipt.
+The quaternion is deliberate: it removes Euler order and Blender-extrinsic-versus-Three-intrinsic ambiguity from the runtime contract. Values are measured in the exported glTF joint-local frame, not copied unchecked from the existing Blender bone-head-frame receipt. `boneUnitMeters` is equally deliberate: the runtime divides position and weapon scale by `0.01` when assigning child-local Three.js transforms, compensating only the rig's internal Root scale. The outer `SYNTY_SCALE` then still scales the character and attached weapon together.
 
 One Blender helper, `Socket_MainHand`, is parented under `Hand_R` while calibrating. A deterministic receipt/export step serializes its local transform into the provisional fixture and, after approval, the provider manifest.
 
@@ -101,6 +103,7 @@ interface MainHandPresentation {
   weaponUrl: string;
   socket: {
     bone: 'Hand_R';
+    boneUnitMeters: 0.01;
     positionMeters: readonly [number, number, number];
     rotationQuaternion: readonly [number, number, number, number];
     scale: number;
@@ -145,7 +148,7 @@ For one mounted fighter instance:
 3. If unresolved or empty, render the unarmed fighter and stop.
 4. Load and clone the standalone weapon without mutating drei's URL-keyed shared scene.
 5. Find the configured bone in the same fighter clone rendered by the component.
-6. Apply the socket position, quaternion, and uniform scale to the normalized weapon root.
+6. Validate positive finite `boneUnitMeters`, then apply child-local position `positionMeters / boneUnitMeters`, the socket quaternion, and child-local scale `scale / boneUnitMeters` to the normalized weapon root.
 7. Parent the weapon root beneath the bone.
 8. On equipped-ref or model change, remove the prior weapon before attaching the replacement.
 9. On unmount, detach the per-instance weapon clone and dispose only resources the instance owns; never dispose shared cached geometry or materials.
@@ -162,7 +165,7 @@ Failure preserves the character and tells the truth:
 | Unknown equipped ref | Render unarmed; inspector records `unmapped-ref`; development warning only. |
 | Weapon GLB fails to load | Keep the fighter rendered unarmed; attachment-local boundary records `asset-load-failed`. |
 | Configured bone absent | Keep the fighter rendered unarmed; record `missing-bone` with the requested bone name. |
-| Non-finite/invalid socket transform | Refuse attachment before scene mutation; record `invalid-socket`. |
+| Non-finite/invalid socket transform or non-positive `boneUnitMeters` | Refuse attachment before scene mutation; record `invalid-socket`. |
 | Ref changes during load | Stale attachment branch unmounts and cannot attach after the new keyed branch. |
 | Candidate needs a special per-item offset | Reject or re-normalize the candidate; do not add a web exception. |
 
@@ -199,7 +202,7 @@ The Blender evidence proves authoring and animation binding. The browser evidenc
 ### Web Concept slice
 
 - Pure resolver tests: empty, `dnd5e:item:longsword`, `dnd5e:item:shortbow`, unknown ref, rejection of the attack-shaped `dnd5e:weapons:longsword`, and exact full-ref matching.
-- Attachment lifecycle tests with a representative mocked Three hierarchy: exact `Hand_R` lookup, one child attachment, replacement cleanup, unarmed cleanup, missing bone, and stale keyed load behavior.
+- Attachment lifecycle tests with a representative mocked Three hierarchy: exact `Hand_R` lookup, `0.01` bone-unit position/scale compensation, one child attachment, replacement cleanup, unarmed cleanup, missing bone, and stale keyed load behavior.
 - Shared-cache safety test: the attachment path clones and never reparents/mutates the `useGLTF` cached weapon scene.
 - Failure-boundary test: weapon load failure does not remove the fighter.
 - Concept structure tests: all three fixture states, idle/walk selector, three views, six facings, and diagnostic inspector.
