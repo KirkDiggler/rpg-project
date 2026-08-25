@@ -144,7 +144,7 @@ The first wave does not add future `TargetKind` values. `SELF` or `POSITION` arr
 
 ### Availability semantics
 
-- `Declaration.available` answers whether the declaration passes every gate applicable to that verb. Attack uses turn, standing, character/action compilation, economy, and at least one candidate; Move uses turn, standing, character/economy, and remaining movement; End Turn uses only its clock/turn gate and does not inherit Attack/Move sheet, standing, or economy gates.
+- `Declaration.available` answers whether the declaration passes every gate applicable to that verb. Attack uses turn, standing, character/action compilation, economy, and at least one available candidate; Move uses turn, standing, character/economy, and remaining movement; End Turn uses only its clock/turn gate and does not inherit Attack/Move sheet, standing, or economy gates.
 - `Declaration.why` is present exactly when it cannot; the server owns reason precedence. If only target gates fail, it reports `NO_TARGET_IN_REACH`.
 - `TargetCandidate.available` answers the server's target-specific gate independently from the declaration-level gate. Executing against a member requires both booleans; a candidate may remain target-valid while an exhausted action slot disables the declaration.
 - `TargetCandidate.why` is present exactly when the target-specific gate fails. Global budget/turn reasons are not duplicated onto every candidate.
