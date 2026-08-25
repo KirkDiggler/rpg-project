@@ -144,7 +144,7 @@ The first wave does not add future `TargetKind` values. `SELF` or `POSITION` arr
 
 ### Availability semantics
 
-- `Declaration.available` answers whether the declaration passes turn, standing, economy, and action-compilation gates and, for Attack, has at least one available candidate.
+- `Declaration.available` answers whether the declaration passes every gate applicable to that verb. Attack uses turn, standing, character/action compilation, economy, and at least one candidate; Move uses turn, standing, character/economy, and remaining movement; End Turn uses only its clock/turn gate and does not inherit Attack/Move sheet, standing, or economy gates.
 - `Declaration.why` is present exactly when it cannot; the server owns reason precedence. If only target gates fail, it reports `NO_TARGET_IN_REACH`.
 - `TargetCandidate.available` answers the server's target-specific gate independently from the declaration-level gate. Executing against a member requires both booleans; a candidate may remain target-valid while an exhausted action slot disables the declaration.
 - `TargetCandidate.why` is present exactly when the target-specific gate fails. Global budget/turn reasons are not duplicated onto every candidate.
@@ -216,7 +216,19 @@ ID construction is normative:
    }
    ```
 
-   `null` is a schematic placeholder only and is replaced before canonicalization.
+   `null` is a schematic placeholder only and is replaced before canonicalization. `verb` and `slot` use the SDK constants' exact string bytes:
+
+   | Selector | Exact UTF-8 value |
+   | --- | --- |
+   | `VerbAttack` | `attack` |
+   | `VerbMove` | `move` |
+   | `VerbEndTurn` | `end_turn` |
+   | `SlotNone` | the empty string |
+   | `SlotAction` | `action` |
+   | `SlotBonus` | `bonus` |
+   | `SlotReaction` | `reaction` |
+
+   Any new verb/slot string or change to these literals requires a selector-version bump.
 
 2. For Attack, `variant` is the parsed JSON value produced by serializing the validated complete `actions.Definition`, including its `SpendProfile` and populated profile union. The definition's existing JSON tags define presence: nil and empty maps/slices omitted by `omitempty` are intentionally the same selector material; a non-nil empty `SpendProfile` remains `{}` and is distinct from a nil cost. Embedded raw JSON such as condition parameters must parse successfully. For Move and End Turn, `variant` is respectively the exact string `session:move:v1` or `session:end-turn:v1`.
 3. Canonicalize the entire selector document with the JSON Canonicalization Scheme, RFC 8785. That standard fixes UTF-8/string escaping, object-key ordering (including every spend-profile map), number rendering, array framing/order, field order independence, and whitespace. All current rule quantities are integers within the RFC's interoperable exact range; a future profile that cannot satisfy RFC 8785 requires a selector-version bump rather than an approximation.
@@ -430,7 +442,7 @@ Develop outside-in, merge inside-out:
 ### Contract and toolkit
 
 - Proto lint/generation passes and removed tags/names are reserved.
-- Every compiled Attack, turn-clock Move, and End Turn declaration has a non-empty ID. Every early per-verb blocker has empty ID, absent attack, and that verb's fixed non-UNSPECIFIED target kind. Every compiled Attack also has one exact full-ref `AttackRef`, slot, and server-evaluated candidates.
+- Every compiled Attack, turn-clock Move, and End Turn declaration has a non-empty ID. Every compiled and blocked declaration carries the fixed target-kind mapping Attack → `MEMBER`, Move → `PATH`, End Turn → `NONE`; no declaration emits `UNSPECIFIED`. Every early per-verb blocker has empty ID and absent attack. Every compiled Attack also has one exact full-ref `AttackRef`, slot, and server-evaluated candidates.
 - Every current live sight holding except the actor appears once; stale/undisclosed holdings do not, and missing live position fails rather than omits.
 - Available and unavailable candidates carry the ruled presence invariants for `why`.
 - Afford and each real verb consume the shared compiled offer and target preflight; mutation tests prove a changed preflight affects both.
