@@ -15,12 +15,12 @@ seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 d
 With detail present, the same line appends raw ordered collections:
 
 ```text
-seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=condition ref=dnd5e:conditions:raging final_rolls=[] flat=2 type=SLASHING}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter}] disadvantage=[]
+seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=condition ref=dnd5e:conditions:raging final_rolls=[] flat=2 type=SLASHING}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter}]
 ```
 
 This remains one copyable debug line produced by `debugLogLine.ts`; it does not add a component tree or change the player-facing Story sentence. The formatter displays supplied values and performs no arithmetic. `damage=9` and `crit=false` remain the authoritative resolved answers.
 
-When all three new collections are empty, the formatter emits today's line unchanged. That is the fallback for old story entries.
+The formatter appends only non-empty collections, in component/advantage/disadvantage order. Absent attribution stays quiet. When all three collections are empty, it emits today's line unchanged; that is the fallback for old story entries.
 
 ## The minimum contract
 

@@ -553,7 +553,7 @@ Expected: the existing formatter tests pass and the lock file resolves the exact
 Keep the existing struck test unchanged as the old-event fallback. Add a second struck fixture with three damage components, a zero multiplier, one advantage source, and an empty disadvantage list. Extend `names` with `['helper-1', 'Helper']` and assert:
 
 ```text
-seq=7 clock=42 struck attacker=Toolkit Sandbox Fighter target=Skeleton roll=17 total=20 against=13 damage=6 crit=false attack.ref=dnd5e:weapon:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=monster_trait ref=dnd5e:monster-traits:immunity final_rolls=[] flat=0 type=SLASHING multiplier=0}] advantage=[{ref=dnd5e:conditions:hidden source=Helper}] disadvantage=[]
+seq=7 clock=42 struck attacker=Toolkit Sandbox Fighter target=Skeleton roll=17 total=20 against=13 damage=6 crit=false attack.ref=dnd5e:weapon:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=monster_trait ref=dnd5e:monster-traits:immunity final_rolls=[] flat=0 type=SLASHING multiplier=0}] advantage=[{ref=dnd5e:conditions:hidden source=Helper}]
 ```
 
 Assert `line.ids` contains attacker, target, and `helper-1`. Do not put a reason in the fixture.
@@ -576,7 +576,7 @@ Import generated `DamageComponent` and `AttackModifierSource` types. Add pure he
 - print `multiplier` when it is not `undefined`, including zero;
 - resolve non-empty modifier `sourceId` through the existing name map;
 - return an empty suffix when all three collections are missing or empty;
-- otherwise print `components=[...] advantage=[...] disadvantage=[...]` in that order.
+- print only non-empty `components=[...]`, `advantage=[...]`, and `disadvantage=[...]` segments, in that order.
 
 Use `b.damageComponents ?? []`, `b.advantageSources ?? []`, and `b.disadvantageSources ?? []` because hand-built/old fixtures may omit additive fields. Append non-empty modifier source IDs to the existing hover `ids`. Do not sum dice, apply multipliers, infer advantage, or touch `combatBeat.ts`/Story mode.
 
