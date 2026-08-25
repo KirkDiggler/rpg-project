@@ -267,3 +267,15 @@ recalibrates from the walk before merge, not after.
 | 2026-08-25 | web PR #808 (walk round 3, 3a98303) | `walkChain` breaks at any branch vertex per its own header contract | it judged "branch" by UNUSED incident edges, so once an earlier chain consumed one arm, a later walk sailed THROUGH the junction and absorbed the next chain's edges — the 3D overshoot Kirk photographed. Fix: break on TRUE vertex degree; the #793/#794 three-member corner closure (built for exactly this, barely reachable before) now closes the junction; pinned by a 3-way-corner fixture | found because the walk's screenshot showed the east wall's top missing a corner the 2D closed; zero existing goldens moved |
 | 2026-08-25 | web PR #808 (walk round 2, cc397a4) | 3D preview silently kept the last-good atlas during validating/errors/unreachable | `staleAtlasNotice` banners the 3D view whenever the atlas on screen is not the current document's own compile | lag read as broken geometry during the walk; a named stale state is diagnosable, a silent one is a wild goose chase |
 | 2026-08-25 | web PR #808 (98d49cd) | "order" was the named divergence axis | the two callers differ on MORE: pair direction (web normalizes (r,q), server (q,r) — door.go:306) and doorway ordering; a door-on-the-arm 3-way fixture fed both styles now pins convergence to trig noise (1e-9 tolerance, explicit headroom) | the one-formula law holds only if EVERY representational difference between callers is canonicalized or proven self-cancelling — direction and doorway order were latent variants of the same class |
+
+## Landed — 2026-08-25
+
+Merged to dev the same day as the design: rpg-dnd5e-web PR #808 (merge
+eb7153d), one PR, all six plan units plus three walk-calibration rounds. Kirk
+walked :3001 between rounds; his findings drove every ledger row above — the
+see-vs-snap magnetism fix, manipulation riding selection (ruling 5, his Strava
+grammar), and the 2D/3D east-corner divergence whose diagnosis surfaced and
+fixed two shared-engine bugs (order/direction canonicalization, true-degree
+branch breaking) that harden the game route's walls, not just the builder's.
+Final suite 3372+ tests, zero pre-existing goldens moved. Walk verdict: "ok
+much better. I think this is good to go now."
