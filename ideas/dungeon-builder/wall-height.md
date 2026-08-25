@@ -58,7 +58,7 @@ Three facts, and the second makes the third cheap:
 
 ## The wire (additive)
 
-`AtlasBoundary` (today bare `{from, to}`) gains `float height = 3` — the
+`AtlasBoundary` gains `float height = 5` — the
 authored multiplier verbatim when one was authored, `0` = not authored.
 Because the YAML bounds are `[1, 3]`, a literal `0` can never be an authored
 value, so the wire is unambiguous — but spell the client contract out to
@@ -93,7 +93,7 @@ commit"). Editing interplay, proposed:
 
 | layer | change |
 |---|---|
-| **protos** | `AtlasBoundary.height = 3`, one PR, tags |
+| **protos** | `AtlasBoundary.height = 5`, one PR, tags |
 | **toolkit `dungeonspec`** | parse both wall-entry forms; bounds `[1, 3]` at `walls[i].height` (raise-only); compile through |
 | **toolkit `encounter`** | `Boundary`/`BoundaryData` carry `Height float64` (`0` = default); construction + persistence round-trip |
 | **toolkit `session`** | projection copies it |
@@ -138,3 +138,4 @@ wall textures; height in the 2D canvas beyond a simple tone/label on the run
 
 | date | where | designed | landed | why |
 |---|---|---|---|---|
+| 2026-08-25 | protos | `AtlasBoundary.height = 3` | `height = 5` (rpg-api-protos#254) | the doc said "today bare `{from, to}`" but the walls slice had already landed `blocks_movement = 3` / `blocks_line_of_sight = 4` on the message; the doc was written from a stale shape |
