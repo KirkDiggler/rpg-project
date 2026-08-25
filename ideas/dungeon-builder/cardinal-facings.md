@@ -17,8 +17,23 @@ Two changes, one dialect:
   `n`. The prop vocabulary sided with the hex shape in #261; Kirk has now
   sided with the walls.
 - **Offset gains height.** `offset` grows an optional third component: raise a
-  prop off the floor (a torch onto a sconce line, a skull onto an altar).
+  prop off the floor within its own cell (a torch up to a sconce line).
   Still visual only.
+
+> **Corrected (#278, Kirk 2026-08-25): "one per cell is fine."** This bullet
+> originally offered "a skull onto an altar" as a second illustration. It is
+> not authorable and never was: placement is ONE PER CELL at both ends — the
+> compiler refuses a second placement on an occupied cell without consulting
+> height (`dungeonspec/validate.go`, `place()`), and the builder replaces
+> rather than stacks (`dungeonYaml.ts`, `placeAt`). Height raises a prop
+> **within its own cell**; it does not stack one prop on another.
+>
+> Kirk ruled the rule stays: *"one per cell is fine. v1 is like this we will
+> make new assets that combine things."* The answer to wanting a skull on an
+> altar is a **combined asset** — one prop that is both — not two placements
+> sharing a cell. That keeps occupancy meaning exactly one thing, which is
+> what `blocks_movement`/`blocks_los`, the party-start refusal, and every
+> spatial query already assume.
 
 > **Ruled (Kirk, 2026-08-25):** "height should be able to gun higher than
 > the 5 ticks we allow on x and y." The prop-offset reading is CONFIRMED —
@@ -127,10 +142,13 @@ not an attachment system).
    tags before the upper pin (the #1228 lesson).
 3. rpg-api: pin bump + passthrough.
 4. rpg-dnd5e-web: panel, yaw table, world-Y; Kirk walks it — face a statue
-   all eight ways against an axis-true wall in a pointy dungeon, raise a
-   skull onto an altar, Save & Play, see the same scene in the game.
+   all eight ways against an axis-true wall in a pointy dungeon, raise a prop
+   off the floor on its own cell, Save & Play, see the same scene in the game.
+   (Originally written as "raise a skull onto an altar" — corrected per #278;
+   see the ruling above.)
 
 ## Adjustments (ledger — filled during implementation)
 
 | date | where | designed | landed | why |
 |---|---|---|---|---|
+| 2026-08-25 | `AtlasProp.offset_z` doc comment (protos v0.1.143) | illustrated with "a skull onto an altar" | still says it — **reword riding the next proto touch** | The example is unreachable (#278: one placement per cell). The field's contract is correct and only the illustration is wrong, so this is not worth a version bump of its own — but the next PR that opens `dnd5e/api/session/v1alpha1/types.proto` should swap it for the sconce case. |
