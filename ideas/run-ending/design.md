@@ -98,9 +98,12 @@ message DoorChanged {
   string door = 1;
   DoorState state = 2;
   string actor = 3;    // empty when nobody did it (authored state at open)
-  int32 dc = 4;        // set on unlock attempts
-  int32 total = 5;     // set on unlock attempts
-  bool attempted = 6;  // true on an unlock attempt beat, beaten or not
+  // dc, total and beaten are set only on unlock-attempt beats — the
+  // composition's door beat carries {dc, beaten} on those and nothing on a
+  // plain open/close. A beat with dc = 0 is a plain open/close.
+  int32 dc = 4;
+  int32 total = 5;
+  bool beaten = 6;
 }
 
 message Ended {
