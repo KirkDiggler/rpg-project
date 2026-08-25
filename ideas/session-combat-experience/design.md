@@ -79,13 +79,6 @@ The concept showed that the current flat one-row-per-reachable-target shape is n
 The exact field numbers preserve the useful current tags while making the source-level break explicit:
 
 ```proto
-message ActionIdentity {
-  // Full core.Ref.String(), for example
-  // "dnd5e:weapons:longsword", from the authored attack definition.
-  string ref = 1;
-  string name = 2;
-}
-
 enum TargetKind {
   TARGET_KIND_UNSPECIFIED = 0; // producer defect
   TARGET_KIND_NONE = 1;        // End Turn
@@ -125,13 +118,14 @@ message Declaration {
   // precedence; the web never combines reasons.
   Shortfall why = 7;
 
-  // Opaque, bounded, deterministic for the current declaration inputs. The
-  // client echoes it and never parses it.
+  // Opaque, bounded, deterministic selector for the current compiled offer.
+  // The client echoes it and never parses it. Empty on an early verb-level
+  // blocker that deliberately did not compile an offer.
   string id = 8;
 
-  // Required for Attack. Absent for Move and End Turn because those are seam
-  // verbs, not authored content refs. It may be absent on an unreadable sheet.
-  ActionIdentity action = 9;
+  // The one existing public Attack identity. Required for a compiled Attack;
+  // absent for Move, End Turn, and early verb-level blockers.
+  AttackRef attack = 9;
 
   TargetKind target_kind = 10;
 
@@ -144,6 +138,8 @@ message Declaration {
 
 `Verb` adds `VERB_END_TURN`. `ShortfallReason` adds `TARGET_OUT_OF_REACH` for a named candidate that failed the reach gate. The existing `NO_TARGET_IN_REACH` remains the declaration-level answer when no candidate can be attacked; its meaning and number are not repurposed.
 
+`AttackRef` is the sole public Attack identity before and after execution; this design does not add a second ref/name message. The declaration field is named `attack`, not a falsely general `action`; the first non-Attack executable may earn its own identity shape later. In the same breaking wave, `AttackRef.ref` changes from the current bare definition ID (`longsword`) to the full `core.Ref.String()` (`dnd5e:weapons:longsword`) everywhere: Declaration, AttackResponse, Struck/Missed, toolkit projection, API translation, Story/Debug, and web presentation. `name` and `damage_type` remain the provider-authored display facts. All consumers move together.
+
 The first wave does not add future `TargetKind` values. `SELF` or `POSITION` arrives only with the first non-magical executable verb that requires it.
 
 ### Availability semantics
@@ -152,13 +148,21 @@ The first wave does not add future `TargetKind` values. `SELF` or `POSITION` arr
 - `Declaration.why` is present exactly when it cannot; the server owns reason precedence. If only target gates fail, it reports `NO_TARGET_IN_REACH`.
 - `TargetCandidate.available` answers the server's target-specific gate independently from the declaration-level gate. Executing against a member requires both booleans; a candidate may remain target-valid while an exhausted action slot disables the declaration.
 - `TargetCandidate.why` is present exactly when the target-specific gate fails. Global budget/turn reasons are not duplicated onto every candidate.
-- Attack candidates are already-observable members the rulebook/session provider considered for that authored attack, not a list the client creates by classifying sightings. Candidate enumeration may not reveal an unperceived member.
+- The candidate universe is every current live sight holding for the actor (`CurrentVia` non-empty), excluding the actor. Stale memories and undisclosed members are excluded; a live holding with missing position data is an Afford failure, never a silently omitted candidate. Every member in that universe appears once, including members whose target preflight returns `TARGET_OUT_OF_REACH` or another refusal.
 - A budget refusal may disable the declaration while still carrying target-valid candidates. The panel is disabled at the declaration level and does not reinterpret candidate reasons.
 - Economy shapes light only when at least one server declaration using that `Slot` is available. They are not a display of raw unspent currencies. A bonus slot with no executable bonus offer correctly stays dark even if an internal ledger still contains one.
 
+### One compiled-offer path
+
+The session provider builds one internal compiled offer per verb/action/spend variant. A compiled Attack offer holds the complete inert action definition, spend profile, declaration slot, and one target-preflight result for every member in the ruled candidate universe. Afford only projects that object. Attack regenerates and selects that same object before resolution performs its final defensive validation. Move and End Turn use the same pattern for their verb-level gates; path pricing remains execution-time because no path exists during Afford.
+
+The target preflight is one shared provider function consumed by both projection and regenerated execution. “Same code path” therefore means shared compiled data and preflight, not merely tests asserting that two independent implementations agree.
+
+Early turn-wide blockers preserve the current cheap refusal precedence: `NOT_YOUR_TURN`, `DOWNED`, or `UNREADABLE` may return verb-level declarations with `available=false`, the authoritative `why`, empty `id`, absent `attack`, and no candidates. They do not load/compile a readable sheet merely to decorate a button the player cannot use. Every compiled Attack declaration—including `NO_BUDGET` and target-only refusals—carries its exact `AttackRef` and non-empty ID.
+
 ### Declaration identity and dispatch
 
-A declaration ID identifies an exact current offer variant: verb, authored action where one exists, compiled execution/profile variant, and spend profile/slot. The target is not encoded as client authority; Attack still sends the selected member explicitly.
+A declaration ID identifies an exact current compiled offer variant: verb, authored action where one exists, compiled execution/profile variant, and spend profile/slot. The target is not encoded as client authority; Attack still sends the selected member explicitly.
 
 ```proto
 message AttackRequest {
@@ -183,11 +187,21 @@ message EndTurnRequest {
 }
 ```
 
-The SDK does not persist an offer cache. Under the same load/lock used by the verb, it regenerates current declarations, finds the echoed ID, verifies the requested target/path against the current declaration, and then executes through the same rule gates used to produce the declaration. An unknown, stale, mismatched, or now-unavailable ID is `FAILED_PRECONDITION`; the web clears selection, refreshes Turn/Afford, and explains the server-provided refusal. It never retries the action automatically.
+The SDK does not persist an offer cache. Under the same load/lock used by the verb, it regenerates current compiled offers, finds the echoed ID, verifies the requested target/path against the current offer, and then executes through the same gates used to produce it. An unknown, stale, mismatched, or now-unavailable ID is `FAILED_PRECONDITION`; the web clears selection, refreshes Turn/Afford, shows “That option changed; review your current actions,” and adds a refreshed `why.text` only when one exists. It never retries the action automatically.
 
-IDs are not bearer tokens and do not replace authorization. rpg-api still proves that the authenticated player controls the acting member.
+ID construction is normative:
 
-For Attack, the selected `ActionIdentity.ref` must equal the `AttackRef.ref` reported by the response and typed outcome. The provider does not offer one weapon and silently resolve another.
+- encode the UTF-8 domain `session-declaration:v1` followed by length-prefixed session ID, member ID, verb, slot, and a canonical encoding of the complete execution-relevant compiled variant;
+- for Attack, that variant includes the full action definition/profile and every spend-profile map, with map entries sorted by their canonical key bytes; for Move and End Turn it includes their sealed verb variant;
+- hash those bytes with SHA-256 and encode the full digest as unpadded base64url after the prefix `v1.`; no truncation is allowed;
+- if two non-identical current compiled offers produce the same ID, Afford and execution fail closed as an internal provider defect rather than selecting either;
+- the ID is a selector, not an idempotency key or authorization token. The same offer may legitimately receive the same ID again when the same state recurs.
+
+The exact canonical-encoder function and Go hash package belong in `plan.md`; the byte-order, sorting, domain, full digest, and collision behavior do not.
+
+IDs do not replace authorization. rpg-api still proves that the authenticated player controls the acting member.
+
+For Attack, the selected declaration's `AttackRef` must equal the `AttackRef` reported by the response and typed outcome. The provider does not offer one weapon and silently resolve another.
 
 ### Direct-map shortcut
 
@@ -246,6 +260,8 @@ message ResourceView {
 
 `resource_key` states the feature/resource relationship authoritatively. The web may join that opaque key to display `Second Wind 1/1`; it may not infer the relationship from names or class.
 
+Feature-owned resources require an explicit provider contract. Second Wind and Action Surge currently keep their `RecoverableResource` inside the feature object rather than in `Character.resources`; serializing their persistence JSON to discover uses is forbidden. The toolkit therefore adds a narrow, non-mutating feature-status descriptor that receives an owner through a resource-reader interface and returns ref, name, optional detail, and an optional resource `{key, name, current, maximum}`. Feature-private resources report themselves; features sharing character-owned pools such as Ki report the same stable key through the owner reader. `StatusView` deduplicates by key and fails if two providers report conflicting facts. Stable non-magical keys are defined for Second Wind and Action Surge. `Data.SpellSlots` and legacy `Data.ClassResources` are explicitly excluded.
+
 ### Toolkit projection
 
 `rulebooks/dnd5e/character` gains one immutable `StatusView` display projection, sibling to `EquipmentView`. It owns:
@@ -257,7 +273,7 @@ message ResourceView {
 
 The projection must not serialize a feature/condition to JSON and inspect fields. `ConditionBehavior.Ref()` from rpg-toolkit#971 is folded into this wave so a live condition can name itself honestly. Rulebook-owned descriptors compose names/details; a loaded effect with no descriptor fails the projection loudly instead of disappearing from `CharacterData`.
 
-The character handler uses strict `character.Load` plus `Attach` before composing `EquipmentView` and `StatusView`. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). A malformed persisted feature, condition, or item fails the owner read as `INTERNAL`; it is never returned as a plausible but incomplete sheet and never mutated by the read.
+One shared character application path uses strict `character.Load` plus `Attach` before GetCharacterData, EquipItem, or UnequipItem can proceed. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). Get composes `EquipmentView` and `StatusView` from that strict sheet. Equip/Unequip validate both projections before mutation, perform no repository write when strict load/projection fails, and return post-state CharacterData composed from the successfully mutated strict sheet (or a successful strict post-write reload). A malformed persisted feature, condition, or item therefore fails as `INTERNAL` before a write; the API never reports an error after silently persisting a forgiving partial sheet.
 
 ### Refresh behavior
 
@@ -266,11 +282,14 @@ The owner-private character data is a pull projection:
 1. Fetch once at session mount after ownership is established.
 2. Replace the cached value directly from successful Equip/Unequip responses, which return the same `CharacterData` shape.
 3. Coalesce one query invalidation after accepted session sequence advances and after successful local mutating RPCs. A burst of catch-up or movement events produces one refresh, not one request per event.
-4. Fetch fresh on reconnect before replay presentation settles.
+4. While the session route is mounted, call `GetStory(lastSeq + 1)` at a bounded interval no longer than five seconds and immediately when the document regains focus/visibility. Merge recovered and streamed events through the same sequence deduper. Any recovered advance invalidates CharacterData, Turn, and Afford; `ErrStoryTrimmed` restarts from sequence zero and performs fresh reads.
+5. Fetch fresh on reconnect before replay presentation settles.
+
+The bounded catch-up poll closes the existing best-effort stream's terminal-loss hole: if the final `Struck` delivery is dropped, no later live event is required to reveal the gap. Ordinary delivery remains immediate; polling is recovery, not a second event model.
 
 The web never subtracts `Struck.damage`, decrements a resource, applies a condition, or predicts post-action character data. It waits for the owner read. A refresh failure keeps the last confirmed values visibly stale/reconnecting and remains retryable; it does not replace them with zeroes.
 
-A dedicated private-state invalidation event is deliberately not added in this wave. The existing pull-on-event pattern used by `GetRoster` is enough for correctness, while a new event would require deciding whether invalidation is a story beat or parallel stream metadata. The first real high-frequency pressure may earn that optimization later.
+A dedicated private-state invalidation event is deliberately not added in this wave. On the same best-effort stream it would share the terminal-loss problem, while periodic GetStory recovery already uses the canonical persisted source. The first real high-frequency pressure may earn a different transport optimization later.
 
 ## Production web composition
 
@@ -290,7 +309,11 @@ Loading states keep the map usable and identify which surface is waiting. A fail
 
 The authoritative d20 already exists in `AttackResponse` and `Struck`/`Missed`. The acting player's client feeds that result into the merged `DiceTrayPresentation`, holds it concealed, and waits indefinitely for Roll or grab/release. Gesture data changes choreography only.
 
-A stable local presentation ID is derived from the authoritative session and story sequence, not generated as a second action identity. The actor may receive the same outcome through both `AttackResponse` and its stream event; the adapter reconciles them by session/sequence into one presentation, regardless of arrival order, and a duplicate never arms a second roll. Story may reveal the actor's grouped outcome after release; the underlying game result and stream sequence are never delayed or rewritten.
+A stable local presentation ID is derived from the authoritative session and story sequence, not generated as a second action identity. The actor may receive the same outcome through both `AttackResponse` and its stream event; the adapter reconciles them by session/sequence into one presentation, regardless of arrival order, and a duplicate never arms a second roll.
+
+Authoritative events are always ingested immediately, but the actor's Story exchange, semantic/live result, and visible verdict are buffered behind the matching presentation release. Response-first and event-first arrival follow the same gate and cannot reveal or announce the roll early. Reconnect/catch-up settles the presentation immediately and reveals the exchange instead of replaying stale choreography. The underlying game result and stream sequence are never delayed or rewritten.
+
+Debug remains the exhaustive raw diagnostic exception and may reveal an ingested result immediately. Production promotion places it behind a developer/diagnostic control; it is not part of the normal player flow and a closed Debug surface contributes no hidden live-region announcement. Story is never allowed to use Debug as a fallback.
 
 Shared roller/spectator release is not claimed in this wave:
 
@@ -303,7 +326,7 @@ Production shared release and equipped-preset projection remain the separately g
 
 ## Story and correlation
 
-One `Struck` or `Missed` body is already self-contained enough to render the first-wave Story exchange, and its `seq` is sufficient for the local dice presentation ID. No new correlation field is required for this wave.
+One `Struck` or `Missed` body is already self-contained enough to render the first-wave Story exchange, and its `seq` is sufficient for the local dice presentation ID. Its ingestion is immediate and its actor-facing rendering obeys the mandatory release gate above. No new correlation field is required for this wave.
 
 When one future declaration produces multiple typed outcomes—reaction, save, effect application/removal, multiple damage instances, or individual damage dice—the provider must either:
 
@@ -315,12 +338,13 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 ## Failure and trust behavior
 
 - **Not authenticated / foreign character:** existing owner gate returns the same `NOT_FOUND` for foreign and missing IDs; no private data crosses SessionService.
-- **Unknown or stale declaration ID:** `FAILED_PRECONDITION`; clear selection and refresh, no automatic retry.
+- **Unknown or stale declaration ID:** `FAILED_PRECONDITION`; clear selection, show the safe generic changed-option message, refresh, and append current `why.text` only when present; no automatic retry.
 - **Unavailable candidate:** do not dispatch from the panel or map; if state changed after display, the server repeats the authoritative refusal.
 - **Unreadable action/effect:** declaration or character-status projection fails explicitly; never invent a generic executable action or silently omit an effect.
 - **Afford unavailable:** disable action dispatch; keep map, Story, Debug, and private character data readable.
 - **Private character refresh unavailable:** retain last confirmed data with stale/retry state; never calculate replacements.
-- **Stream gap:** recover with GetStory, apply events in sequence, refresh Turn/Afford/CharacterData, and settle old dice choreography.
+- **Stream gap or terminal delivery loss:** periodic/focus GetStory recovery applies events through the sequence deduper, refreshes Turn/Afford/CharacterData, and settles old dice choreography.
+- **Concealed actor result:** ingest immediately but buffer Story, verdict, and semantic announcement until release; only the developer-gated raw Debug surface is exempt.
 - **Unknown ref/icon:** render server name with generic presentation; never turn a ref into an arbitrary asset URL.
 - **Reduced motion/WebGL failure:** preserve explicit Roll and semantic result through the existing dice fallback.
 
@@ -328,30 +352,33 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 
 ### `rpg-api-protos`
 
-- Reshape session `Declaration`, add `ActionIdentity`, `TargetKind`, `TargetCandidate`, `VERB_END_TURN`, and `TARGET_OUT_OF_REACH`.
+- Reshape session `Declaration`, reuse `AttackRef` as its sole Attack identity, add `TargetKind`, `TargetCandidate`, `VERB_END_TURN`, and `TARGET_OUT_OF_REACH`.
+- Migrate `AttackRef.ref` from a bare ID to full `core.Ref.String()` consistently across declarations, responses, and events.
 - Add declaration IDs to Attack/Move/EndTurn requests.
 - Add level, hit points, base speed, and feature/condition/resource views directly to the existing owner-private CharacterData; no consumer-specific wrapper.
 - This is an intentional in-place pre-alpha source break. Use `breaking-change-approved`, reserve removed fields, and move every consumer in the same wave.
 
 ### `rpg-toolkit`
 
-- In `rulebooks/dnd5e/session`, project one nested declaration per action/spend variant, evaluate candidates, mint/revalidate opaque IDs, and execute the exact authored Attack definition.
-- Keep the actual verb gates and the Afford gates on one code path.
-- In `rulebooks/dnd5e`, add `ConditionBehavior.Ref()` and the immutable character `StatusView` projection without raw-JSON introspection.
+- In `rulebooks/dnd5e/session`, build one internal compiled offer per action/spend variant, evaluate the complete live-sight candidate universe through shared target preflight, project it through Afford, regenerate it at execution, and execute the exact authored Attack definition.
+- Implement the versioned canonical full-SHA-256 declaration selector and fail closed on duplicate IDs.
+- Keep actual verb gates and Afford on the shared compiled-offer/preflight path, with resolution retaining final defensive validation.
+- In `rulebooks/dnd5e`, add `ConditionBehavior.Ref()`, the non-mutating feature-status/resource descriptor, and immutable character `StatusView` without raw-JSON introspection.
 - One toolkit branch carries the whole wave even though auto-tagging may publish both affected modules.
 
 ### `rpg-api`
 
 - Translate the SDK types field-for-field; no rulebook imports in handlers beyond the existing orchestrated projection boundary and no offer/condition logic in the server.
 - Preserve caller/member and owner/character authorization.
-- Compose CharacterData once from strict character load, EquipmentView, and StatusView; Equip, Unequip, and GetCharacterData return the same shape.
+- Use one strict load/projection application path before Get, Equip, or Unequip; malformed data causes no write. Compose CharacterData once from EquipmentView and StatusView, and return the same post-state shape.
 - Map stale declarations and rule refusals to `FAILED_PRECONDITION` without leaking repository details.
 
 ### `rpg-dnd5e-web`
 
 - Promote the shared concept composition into the session route through adapters.
 - Render nested declarations and candidates verbatim, echo declaration IDs, and never calculate an unavailable reason.
-- Coalesce private character refreshes, preserve last-confirmed state on failure, and reconcile stream/catch-up before enabling intent.
+- Coalesce private character refreshes, add bounded/focus GetStory recovery for terminal stream loss, preserve last-confirmed state on failure, and reconcile stream/catch-up before enabling intent.
+- Buffer actor Story/verdict/semantic result behind dice release; keep immediate raw output developer-gated in Debug.
 - Reuse `SessionCanvas`, `DiceTrayPresentation`, roster identity, equipment, Story, and Debug; do not create replacement renderers or event vocabularies.
 - Keep the Concepts Lab route as the durable visual regression surface.
 
@@ -376,20 +403,21 @@ Develop outside-in, merge inside-out:
 ### Contract and toolkit
 
 - Proto lint/generation passes and removed tags/names are reserved.
-- Every active-turn Attack declaration has a non-empty ID, exact action ref/name, slot, target kind, and server-evaluated candidates.
+- Every compiled Attack declaration has a non-empty ID, one exact full-ref `AttackRef`, slot, target kind, and server-evaluated candidates. Early verb-level blockers have the ruled empty-ID/absent-attack shape.
+- Every current live sight holding except the actor appears once; stale/undisclosed holdings do not, and missing live position fails rather than omits.
 - Available and unavailable candidates carry the ruled presence invariants for `why`.
-- Afford and each real verb share gates; property/table tests prove they cannot disagree for current state.
-- Declaration IDs are deterministic for unchanged state and distinct across action/spend/profile variants; regeneration rejects an echoed ID when current state no longer admits its execution, even if the opaque text itself remains stable.
-- Attack response/event action ref equals the selected declaration action ref.
+- Afford and each real verb consume the shared compiled offer and target preflight; mutation tests prove a changed preflight affects both.
+- Canonical ID golden tests cover map insertion order, every execution-relevant profile field, scope/domain/version, full digest length, recurrence, and duplicate-ID fail-closed behavior. Regeneration rejects an echoed ID when current state no longer admits its execution, even if the opaque text remains stable.
+- Declaration, Attack response, and Struck/Missed carry the same full-ref `AttackRef`.
 - Move requires an offered ID only on the turn clock; world-clock movement remains unchanged.
-- Character status projection covers the four level-3 party fixtures, names every loaded condition through `Ref()`, relates class-feature resources explicitly, and refuses unreadable effects without dropping them.
-- Strict character reads perform no writes.
+- Character status projection covers the four level-3 party fixtures, names every loaded condition through `Ref()`, projects feature-private Second Wind/Action Surge and shared Ki through stable non-magical keys, deduplicates matching resources, refuses conflicts, excludes SpellSlots/ClassResources, and refuses unreadable effects without dropping them.
+- Strict Get/Equip/Unequip paths perform no write on malformed data; successful writes return CharacterData from the same strict post-state.
 
 ### API
 
 - Session projection round-trips every declaration/candidate/shortfall presence case.
 - Missing, foreign, and malformed character cases preserve the owner-gate and failure policy.
-- Get/Equip/Unequip all return one identical post-state CharacterData composition.
+- Get/Equip/Unequip all use the strict path and return one identical post-state CharacterData composition; malformed feature/condition/item fixtures prove both writes remain untouched.
 - Stale IDs and target mismatches map to `FAILED_PRECONDITION`; authentication failures retain their existing indistinguishable shapes.
 
 ### Web
@@ -398,7 +426,9 @@ Develop outside-in, merge inside-out:
 - Panel-first targeting highlights only candidates whose declaration and target-specific availability are both true; target failures render candidate `why.text` and global failures render declaration `why.text`.
 - The direct map shortcut refuses ambiguity.
 - No client code computes reach, action cost, post-hit HP, resource decrements, target eligibility, or outcome.
-- Successful intents and accepted stream batches invalidate/refetch provider queries without event storms.
+- Successful intents and accepted stream/catch-up batches invalidate/refetch provider queries without event storms.
+- A dropped terminal event is recovered by bounded GetStory polling without a later stream event; focus recovery and `ErrStoryTrimmed` also converge.
+- Response-first and event-first attacks both ingest once and produce no actor-facing Story, verdict, or semantic roll announcement before release; closed Debug stays silent, while enabled developer Debug remains the documented raw exception.
 - Reconnect restores Story/Debug, current private character data, current Turn/Afford, and settled dice without replaying stale choreography.
 - Keyboard, focus, reduced motion, fallback, and the 1024×768 floor remain passing.
 
