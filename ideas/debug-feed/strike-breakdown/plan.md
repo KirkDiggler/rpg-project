@@ -61,9 +61,9 @@ message DamageComponent {
   string source = 1;
   string source_ref = 2;
   string dice = 3;
-  repeated int32 rolls = 4;
+  repeated int32 final_rolls = 4;
   int32 flat_bonus = 5;
-  string damage_type = 6;
+  DamageType damage_type = 6;
   // Presence distinguishes an additive component from immunity's real zero.
   optional double multiplier = 7;
 }
@@ -123,7 +123,7 @@ test -n "$PROTO_TAG"
 test "$PROTO_TAG" != "$OLD_PROTO_TAG"
 git fetch origin generated --tags
 git show "origin/generated:gen/ts/dnd5e/api/session/v1alpha1/events_pb.ts" | \
-  rg 'damageComponents|advantageSources|disadvantageSources|multiplier'
+  rg 'damageComponents|finalRolls|advantageSources|disadvantageSources|multiplier'
 ```
 
 Record `PROTO_TAG` on #246 and parent #265. Consumers must use that exact published tag, not `generated` or an assumed future version.
@@ -166,7 +166,7 @@ in := &encounter.RecordInput{
     DamageComponents: []encounter.DamageComponent{
         {
             Source: "weapon", SourceRef: "dnd5e:weapons:longsword",
-            Dice: "1d8", Rolls: []int{4}, FlatBonus: 0, DamageType: "slashing",
+            Dice: "1d8", FinalRolls: []int{4}, FlatBonus: 0, DamageType: "slashing",
         },
         {
             Source: "monster_trait", SourceRef: "dnd5e:monster-traits:immunity",
@@ -209,7 +209,7 @@ type DamageComponent struct {
     Source     string   `json:"source"`
     SourceRef  string   `json:"source_ref,omitempty"`
     Dice       string   `json:"dice,omitempty"`
-    Rolls      []int    `json:"rolls,omitempty"`
+    FinalRolls []int    `json:"final_rolls,omitempty"`
     FlatBonus  int      `json:"flat_bonus"`
     DamageType string   `json:"damage_type"`
     Multiplier *float64 `json:"multiplier,omitempty"`
@@ -354,13 +354,13 @@ Add documented session types mirroring the primitive contract:
 ```go
 // DamageComponent is the replayable subset of one resolved damage component.
 type DamageComponent struct {
-    Source     string   `json:"source"`
-    SourceRef  string   `json:"source_ref,omitempty"`
-    Dice       string   `json:"dice,omitempty"`
-    Rolls      []int    `json:"rolls,omitempty"`
-    FlatBonus  int      `json:"flat_bonus"`
-    DamageType string   `json:"damage_type"`
-    Multiplier *float64 `json:"multiplier,omitempty"`
+    Source     string     `json:"source"`
+    SourceRef  string     `json:"source_ref,omitempty"`
+    Dice       string     `json:"dice,omitempty"`
+    FinalRolls []int      `json:"final_rolls,omitempty"`
+    FlatBonus  int        `json:"flat_bonus"`
+    DamageType DamageType `json:"damage_type"`
+    Multiplier *float64   `json:"multiplier,omitempty"`
 }
 
 // AttackModifierSource identifies one replayable advantage/disadvantage source.
@@ -463,7 +463,7 @@ Extend the `Struck` arm in `TestEventToProto_TypedBodies` with ordered component
 
 ```go
 require.Len(t, s.GetDamageComponents(), 2)
-require.Equal(t, []int32{4}, s.GetDamageComponents()[0].GetRolls())
+require.Equal(t, []int32{4}, s.GetDamageComponents()[0].GetFinalRolls())
 require.Nil(t, s.GetDamageComponents()[0].Multiplier)
 require.NotNil(t, s.GetDamageComponents()[1].Multiplier)
 require.Zero(t, s.GetDamageComponents()[1].GetMultiplier())
@@ -491,7 +491,7 @@ func damageComponentsToProto(in []sdk.DamageComponent) []*sessionpb.DamageCompon
 func attackModifierSourcesToProto(in []sdk.AttackModifierSource) []*sessionpb.AttackModifierSource
 ```
 
-Map fields one-for-one in input order. Convert `[]int` to `[]int32`; clone a non-nil multiplier pointer so zero remains present. Do not calculate totals, map `Reason`, sort, infer, or decode payload. Set the three fields in the existing `sdk.StruckBody` switch arm.
+Map fields one-for-one in input order. Convert `[]int` to `[]int32`, map session's closed damage type through the existing `damageTypeToProto`, and clone a non-nil multiplier pointer so zero remains present. Do not calculate totals, map `Reason`, sort, infer, or decode payload. Set the three fields in the existing `sdk.StruckBody` switch arm.
 
 - [ ] **Step 5: Run focused and repository verification**
 
@@ -553,7 +553,7 @@ Expected: the existing formatter tests pass and the lock file resolves the exact
 Keep the existing struck test unchanged as the old-event fallback. Add a second struck fixture with three damage components, a zero multiplier, one advantage source, and an empty disadvantage list. Extend `names` with `['helper-1', 'Helper']` and assert:
 
 ```text
-seq=7 clock=42 struck attacker=Toolkit Sandbox Fighter target=Skeleton roll=17 total=20 against=13 damage=6 crit=false attack.ref=dnd5e:weapon:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 rolls=[4] flat=0 type=slashing}, {source=ability ref=dnd5e:abilities:strength rolls=[] flat=3 type=slashing}, {source=monster_trait ref=dnd5e:monster-traits:immunity rolls=[] flat=0 type=slashing multiplier=0}] advantage=[{ref=dnd5e:conditions:hidden source=Helper}] disadvantage=[]
+seq=7 clock=42 struck attacker=Toolkit Sandbox Fighter target=Skeleton roll=17 total=20 against=13 damage=6 crit=false attack.ref=dnd5e:weapon:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=monster_trait ref=dnd5e:monster-traits:immunity final_rolls=[] flat=0 type=SLASHING multiplier=0}] advantage=[{ref=dnd5e:conditions:hidden source=Helper}] disadvantage=[]
 ```
 
 Assert `line.ids` contains attacker, target, and `helper-1`. Do not put a reason in the fixture.
@@ -572,7 +572,7 @@ Import generated `DamageComponent` and `AttackModifierSource` types. Add pure he
 
 - emit component fields in the design's fixed order;
 - omit empty `ref` and `dice` strings;
-- always print `rolls`, `flat`, and `type`;
+- always print `final_rolls`, `flat`, and the existing `DamageType` enum name;
 - print `multiplier` when it is not `undefined`, including zero;
 - resolve non-empty modifier `sourceId` through the existing name map;
 - return an empty suffix when all three collections are missing or empty;

@@ -15,7 +15,7 @@ seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 d
 With detail present, the same line appends raw ordered collections:
 
 ```text
-seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 rolls=[4] flat=0 type=slashing}, {source=ability ref=dnd5e:abilities:strength rolls=[] flat=3 type=slashing}, {source=condition ref=dnd5e:conditions:raging rolls=[] flat=2 type=slashing}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter}] disadvantage=[]
+seq=7 clock=42 struck attacker=Fighter target=Wolf roll=18 total=23 against=13 damage=9 crit=false attack.ref=dnd5e:weapons:longsword attack.name="Longsword" type=SLASHING components=[{source=weapon ref=dnd5e:weapons:longsword dice=1d8 final_rolls=[4] flat=0 type=SLASHING}, {source=ability ref=dnd5e:abilities:strength final_rolls=[] flat=3 type=SLASHING}, {source=condition ref=dnd5e:conditions:raging final_rolls=[] flat=2 type=SLASHING}] advantage=[{ref=dnd5e:conditions:hidden source=Fighter}] disadvantage=[]
 ```
 
 This remains one copyable debug line produced by `debugLogLine.ts`; it does not add a component tree or change the player-facing Story sentence. The formatter displays supplied values and performs no arithmetic. `damage=9` and `crit=false` remain the authoritative resolved answers.
@@ -31,9 +31,9 @@ message DamageComponent {
   string source = 1;
   string source_ref = 2;       // empty means absent
   string dice = 3;             // empty for flat or multiplier components
-  repeated int32 rolls = 4;    // final rolls only
+  repeated int32 final_rolls = 4;
   int32 flat_bonus = 5;
-  string damage_type = 6;
+  DamageType damage_type = 6;
   optional double multiplier = 7; // absent = additive; 0 = immunity
 }
 
@@ -50,7 +50,7 @@ message Struck {
 }
 ```
 
-Fields 9–11 are the next free `Struck` tags. Source category, source ref, and damage type remain strings because this slice transcribes existing toolkit vocabulary; it does not create a second catalog or enum policy. References use `core.Ref.String()`'s canonical `module:type:id` form.
+Fields 9–11 are the next free `Struck` tags. Source category and source ref remain strings because they are open toolkit vocabulary. Damage type reuses SessionService's existing closed `DamageType` enum—the same vocabulary already carried by `AttackRef`—rather than creating a second representation. References use `core.Ref.String()`'s canonical `module:type:id` form.
 
 Multiplier alone requires scalar presence: absence means an additive component, while `0` is the real immunity factor. No other optional scalar needs presence semantics.
 
@@ -63,7 +63,7 @@ No layer derives a missing fact:
 | `damage_components[].source` | `DamageComponents[].Source` |
 | `damage_components[].source_ref` | `DamageComponents[].SourceRef.String()` when non-nil |
 | `damage_components[].dice` | `DamageComponents[].Dice` |
-| `damage_components[].rolls` | `DamageComponents[].FinalDiceRolls` |
+| `damage_components[].final_rolls` | `DamageComponents[].FinalDiceRolls` |
 | `damage_components[].flat_bonus` | `DamageComponents[].FlatBonus` |
 | `damage_components[].damage_type` | `DamageComponents[].DamageType` |
 | `damage_components[].multiplier` | `DamageComponents[].Multiplier`, preserving nil versus zero |
