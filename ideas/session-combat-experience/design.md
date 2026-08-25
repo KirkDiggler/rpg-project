@@ -24,7 +24,7 @@ The merged `?concept=session-combat` surface settled the player-facing compositi
 - Story groups readable exchanges while Debug preserves every wire fact;
 - fresh turn, spent turn, spectating, world-clock, and reconnect states fit at the 1024px floor.
 
-The concept also proved that the current wire is already enough for initiative, movement remaining, one main-hand Attack, End Turn, typed attack outcomes, Story catch-up, Debug, map geometry, public member identity, and equipment. The unresolved facts are action identity/candidates and a modern owner-private HUD projection.
+The concept also proved that the current wire is already enough for initiative, movement remaining, one main-hand Attack, End Turn, typed attack outcomes, Story catch-up, Debug, map geometry, public member identity, and equipment. The unresolved facts are action identity/candidates and a modern owner-private character projection.
 
 This design promotes the approved experience in one deliberately narrow production wave. It does not pretend that every concept fixture action is executable today.
 
@@ -36,9 +36,11 @@ The first production wave exposes only verbs the session stack can execute end t
 2. **Move** — the existing path verb, bounded by server-reported movement remaining; and
 3. **End Turn** — the existing consequential commit.
 
-Dodge, Dash, Disengage, features, spells, items, reactions, self-targeting, area targeting, and position-targeting do not appear as clickable offers until a real session resolution path can execute them. The toolkit's older `character.AvailableAbility` shape is evidence for a future provider; it is not permission to route the session stack through the character package's legacy direct-bus activation methods.
+Dodge, Dash, Disengage, class features, mundane items, reactions, self-targeting, and position-targeting do not appear as clickable offers until a real session resolution path can execute them. The toolkit's older `character.AvailableAbility` shape is evidence for a future provider; it is not permission to route the session stack through the character package's legacy direct-bus activation methods.
 
-Owned features, active conditions, and resource counts may still appear as private character information in the dock. Informational presence is not an executable offer.
+**There is no magic system in the game.** Barbarian, Fighter, Monk, and Rogue were selected deliberately so the first four-player dungeon could postpone every spellcasting decision. This contract therefore reserves nothing for spells, spell slots, concentration, magical items, magical resources, or magical targeting. A future magic system requires its own journey and design rather than entering as another arm of this generalized-action work.
+
+Owned features, active conditions, and non-magical class-resource counts may still appear as private character information in the dock. Informational presence is not an executable offer.
 
 This is not a temporary panel. The composition, action-selection state machine, Story/Debug split, dice boundary, and adapters are the permanent production shape. Later verbs add declarations to it.
 
@@ -47,7 +49,7 @@ This is not a temporary panel. The composition, action-selection state machine, 
 ### Considered approaches
 
 1. **Wire the concept only to today's flat `Declaration`.** Fastest, but the panel would show a generic Attack button, group duplicate target rows in the client, omit unavailable candidates, and still have no durable way to identify which authored attack the player selected.
-2. **Design a universal `Declare` RPC now.** It could eventually cover abilities, features, spells, and items, but no non-Attack session resolution profile currently proves its target, suspension, event, or response semantics. Locking that executor now would turn fixture imagination into a public contract.
+2. **Design a universal `Declare` RPC now.** It could eventually cover martial abilities, class features, and mundane items, but no non-Attack session resolution profile currently proves its target, suspension, event, or response semantics. Locking that executor now would turn fixture imagination into a public contract.
 3. **Recommended: reshape declarations around the current executable verbs, then let the first non-Attack action earn the generic executor.** This gives the production panel exact server-authored actions and target candidates now without committing future rules to an unproved mechanism.
 
 The design chooses approach 3.
@@ -142,7 +144,7 @@ message Declaration {
 
 `Verb` adds `VERB_END_TURN`. `ShortfallReason` adds `TARGET_OUT_OF_REACH` for a named candidate that failed the reach gate. The existing `NO_TARGET_IN_REACH` remains the declaration-level answer when no candidate can be attacked; its meaning and number are not repurposed.
 
-The first wave does not add future `TargetKind` values. `SELF`, `POSITION`, and `AREA` arrive with the first executable verb that requires them.
+The first wave does not add future `TargetKind` values. `SELF` or `POSITION` arrives only with the first non-magical executable verb that requires it.
 
 ### Availability semantics
 
@@ -191,9 +193,9 @@ For Attack, the selected `ActionIdentity.ref` must equal the `AttackRef.ref` rep
 
 The web may dispatch an Attack from a map click only when exactly one current declaration and its clicked candidate are both available. If zero match, it does nothing except present the server reason already rendered. If more than one match, the panel asks the player to choose; the client never picks among main-hand, off-hand, bonus, feature-granted, or otherwise rules-equivalent options.
 
-## Owner-private character HUD
+## Owner-private character data
 
-The live `v1alpha2.character.CharacterService` remains the owner-private character surface. This wave extends the `CharacterData` it already returns instead of copying sheet state into SessionService or introducing a second private read.
+The live `v1alpha2.character.CharacterService` remains the owner-private character surface. This wave extends the `CharacterData` it already returns instead of copying sheet state into SessionService or introducing a second private read. The fields are character facts, not a consumer-specific envelope; the combat dock, equipment screen, and character sheet may all consume the same projection.
 
 The package location remains unchanged in this wave. Migrating the surviving CharacterService out of the old encounter type namespace is a separate contract migration and is not required to make this payload truthful.
 
@@ -202,21 +204,16 @@ The package location remains unchanged in this wave. Migrating the surviving Cha
 ```proto
 message CharacterData {
   // Existing identity/equipment fields 1-8 unchanged.
-  CharacterHud hud = 9;
-}
-
-message CharacterHud {
-  int32 level = 1;
-  HitPoints hit_points = 2;
+  int32 level = 9;
+  // Reuses this package's existing HitPoints {current, max, temp} message.
+  // temp remains zero until the toolkit character model owns temporary HP.
+  HitPoints hit_points = 10;
   // Base sheet speed. Turn movement remaining comes only from Afford.
-  int32 base_speed_feet = 3;
-  repeated FeatureView features = 4;
-  repeated ConditionView conditions = 5;
-  repeated ResourceView resources = 6;
+  int32 base_speed_feet = 11;
+  repeated FeatureView features = 12;
+  repeated ConditionView conditions = 13;
+  repeated ResourceView resources = 14;
 }
-
-// Reuses this package's existing HitPoints {current, max, temp} message.
-// temp remains zero until the toolkit character model owns temporary HP.
 
 message FeatureView {
   Ref ref = 1;
@@ -245,33 +242,33 @@ message ResourceView {
 }
 ```
 
-The HUD projects owned features and currently applied conditions. It does not expose persistence blobs, ability scores, death-save internals, private rule parameters, or another member's sheet.
+`CharacterData` projects owned features and currently applied conditions. It does not expose persistence blobs, ability scores, death-save internals, private rule parameters, spellcasting fields, or another member's sheet. `ResourceView` is limited to resources actually owned by the current Barbarian, Fighter, Monk, and Rogue builds; it is not a shelf for future spell slots.
 
 `resource_key` states the feature/resource relationship authoritatively. The web may join that opaque key to display `Second Wind 1/1`; it may not infer the relationship from names or class.
 
 ### Toolkit projection
 
-`rulebooks/dnd5e/character` gains one immutable `HUDView` display projection, sibling to `EquipmentView`. It owns:
+`rulebooks/dnd5e/character` gains one immutable `StatusView` display projection, sibling to `EquipmentView`. It owns:
 
 - level, current/max HP, and base speed;
 - feature refs, names, provider-composed details, and resource relationships;
 - active condition refs, names, provider-composed details, and observable source member IDs;
 - resource keys, names, and current/max counts.
 
-The projection must not serialize a feature/condition to JSON and inspect fields. `ConditionBehavior.Ref()` from rpg-toolkit#971 is folded into this wave so a live condition can name itself honestly. Rulebook-owned descriptors compose names/details; a loaded effect with no descriptor fails the projection loudly instead of disappearing from the HUD.
+The projection must not serialize a feature/condition to JSON and inspect fields. `ConditionBehavior.Ref()` from rpg-toolkit#971 is folded into this wave so a live condition can name itself honestly. Rulebook-owned descriptors compose names/details; a loaded effect with no descriptor fails the projection loudly instead of disappearing from `CharacterData`.
 
-The character handler uses strict `character.Load` plus `Attach` before composing `EquipmentView` and `HUDView`. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). A malformed persisted feature, condition, or item fails the owner read as `INTERNAL`; it is never returned as a plausible but incomplete sheet and never mutated by the read.
+The character handler uses strict `character.Load` plus `Attach` before composing `EquipmentView` and `StatusView`. It does not use the forgiving `LoadFromData` path that can silently drop an unreadable effect (#948). A malformed persisted feature, condition, or item fails the owner read as `INTERNAL`; it is never returned as a plausible but incomplete sheet and never mutated by the read.
 
 ### Refresh behavior
 
-The private HUD is a pull projection:
+The owner-private character data is a pull projection:
 
 1. Fetch once at session mount after ownership is established.
 2. Replace the cached value directly from successful Equip/Unequip responses, which return the same `CharacterData` shape.
 3. Coalesce one query invalidation after accepted session sequence advances and after successful local mutating RPCs. A burst of catch-up or movement events produces one refresh, not one request per event.
 4. Fetch fresh on reconnect before replay presentation settles.
 
-The web never subtracts `Struck.damage`, decrements a resource, applies a condition, or predicts a post-action HUD. It waits for the owner read. A refresh failure keeps the last confirmed values visibly stale/reconnecting and remains retryable; it does not replace them with zeroes.
+The web never subtracts `Struck.damage`, decrements a resource, applies a condition, or predicts post-action character data. It waits for the owner read. A refresh failure keeps the last confirmed values visibly stale/reconnecting and remains retryable; it does not replace them with zeroes.
 
 A dedicated private-state invalidation event is deliberately not added in this wave. The existing pull-on-event pattern used by `GetRoster` is enough for correctness, while a new event would require deciding whether invalidation is a story beat or parallel stream metadata. The first real high-frequency pressure may earn that optimization later.
 
@@ -287,7 +284,7 @@ The concept components move behind shared production inputs rather than being co
 - End Turn is visually separate but enabled only from its server declaration;
 - world-clock mode reads `Afford.declarations = []` as the complete answer and renders exploration guidance rather than combat actions.
 
-Loading states keep the map usable and identify which surface is waiting. A failed private HUD read does not disable server-authored movement or combat declarations. A failed Afford read disables action dispatch and offers retry; it never falls back to locally calculated buttons.
+Loading states keep the map usable and identify which surface is waiting. A failed private character read does not disable server-authored movement or combat declarations. A failed Afford read disables action dispatch and offers retry; it never falls back to locally calculated buttons.
 
 ## Dice in the first production wave
 
@@ -320,10 +317,10 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 - **Not authenticated / foreign character:** existing owner gate returns the same `NOT_FOUND` for foreign and missing IDs; no private data crosses SessionService.
 - **Unknown or stale declaration ID:** `FAILED_PRECONDITION`; clear selection and refresh, no automatic retry.
 - **Unavailable candidate:** do not dispatch from the panel or map; if state changed after display, the server repeats the authoritative refusal.
-- **Unreadable action/effect:** declaration or HUD projection fails explicitly; never invent a generic executable action or silently omit an effect.
-- **Afford unavailable:** disable action dispatch; keep map, Story, Debug, and private HUD readable.
-- **Private HUD refresh unavailable:** retain last confirmed data with stale/retry state; never calculate replacements.
-- **Stream gap:** recover with GetStory, apply events in sequence, refresh Turn/Afford/HUD, and settle old dice choreography.
+- **Unreadable action/effect:** declaration or character-status projection fails explicitly; never invent a generic executable action or silently omit an effect.
+- **Afford unavailable:** disable action dispatch; keep map, Story, Debug, and private character data readable.
+- **Private character refresh unavailable:** retain last confirmed data with stale/retry state; never calculate replacements.
+- **Stream gap:** recover with GetStory, apply events in sequence, refresh Turn/Afford/CharacterData, and settle old dice choreography.
 - **Unknown ref/icon:** render server name with generic presentation; never turn a ref into an arbitrary asset URL.
 - **Reduced motion/WebGL failure:** preserve explicit Roll and semantic result through the existing dice fallback.
 
@@ -333,28 +330,28 @@ The web never groups by timing, adjacent sequence numbers, matching names, or gu
 
 - Reshape session `Declaration`, add `ActionIdentity`, `TargetKind`, `TargetCandidate`, `VERB_END_TURN`, and `TARGET_OUT_OF_REACH`.
 - Add declaration IDs to Attack/Move/EndTurn requests.
-- Add `CharacterHud` and its feature/condition/resource views to the existing owner-private CharacterData.
+- Add level, hit points, base speed, and feature/condition/resource views directly to the existing owner-private CharacterData; no consumer-specific wrapper.
 - This is an intentional in-place pre-alpha source break. Use `breaking-change-approved`, reserve removed fields, and move every consumer in the same wave.
 
 ### `rpg-toolkit`
 
 - In `rulebooks/dnd5e/session`, project one nested declaration per action/spend variant, evaluate candidates, mint/revalidate opaque IDs, and execute the exact authored Attack definition.
 - Keep the actual verb gates and the Afford gates on one code path.
-- In `rulebooks/dnd5e`, add `ConditionBehavior.Ref()` and the immutable character `HUDView` projection without raw-JSON introspection.
+- In `rulebooks/dnd5e`, add `ConditionBehavior.Ref()` and the immutable character `StatusView` projection without raw-JSON introspection.
 - One toolkit branch carries the whole wave even though auto-tagging may publish both affected modules.
 
 ### `rpg-api`
 
 - Translate the SDK types field-for-field; no rulebook imports in handlers beyond the existing orchestrated projection boundary and no offer/condition logic in the server.
 - Preserve caller/member and owner/character authorization.
-- Compose CharacterData once from strict character load, EquipmentView, and HUDView; Equip, Unequip, and GetCharacterData return the same shape.
+- Compose CharacterData once from strict character load, EquipmentView, and StatusView; Equip, Unequip, and GetCharacterData return the same shape.
 - Map stale declarations and rule refusals to `FAILED_PRECONDITION` without leaking repository details.
 
 ### `rpg-dnd5e-web`
 
 - Promote the shared concept composition into the session route through adapters.
 - Render nested declarations and candidates verbatim, echo declaration IDs, and never calculate an unavailable reason.
-- Coalesce private HUD refreshes, preserve last-confirmed state on failure, and reconcile stream/catch-up before enabling intent.
+- Coalesce private character refreshes, preserve last-confirmed state on failure, and reconcile stream/catch-up before enabling intent.
 - Reuse `SessionCanvas`, `DiceTrayPresentation`, roster identity, equipment, Story, and Debug; do not create replacement renderers or event vocabularies.
 - Keep the Concepts Lab route as the durable visual regression surface.
 
@@ -385,8 +382,8 @@ Develop outside-in, merge inside-out:
 - Declaration IDs are deterministic for unchanged state and distinct across action/spend/profile variants; regeneration rejects an echoed ID when current state no longer admits its execution, even if the opaque text itself remains stable.
 - Attack response/event action ref equals the selected declaration action ref.
 - Move requires an offered ID only on the turn clock; world-clock movement remains unchanged.
-- Character HUD projection covers the four level-3 party fixtures, names every loaded condition through `Ref()`, relates feature resources explicitly, and refuses unreadable effects without dropping them.
-- Strict HUD reads perform no writes.
+- Character status projection covers the four level-3 party fixtures, names every loaded condition through `Ref()`, relates class-feature resources explicitly, and refuses unreadable effects without dropping them.
+- Strict character reads perform no writes.
 
 ### API
 
@@ -402,14 +399,14 @@ Develop outside-in, merge inside-out:
 - The direct map shortcut refuses ambiguity.
 - No client code computes reach, action cost, post-hit HP, resource decrements, target eligibility, or outcome.
 - Successful intents and accepted stream batches invalidate/refetch provider queries without event storms.
-- Reconnect restores Story/Debug, current HUD, current Turn/Afford, and settled dice without replaying stale choreography.
+- Reconnect restores Story/Debug, current private character data, current Turn/Afford, and settled dice without replaying stale choreography.
 - Keyboard, focus, reduced motion, fallback, and the 1024×768 floor remain passing.
 
 ### Live journey gate
 
 With two owner-authenticated browser sessions in the reference tomb:
 
-1. both render the real roster, map, initiative, and their own private HUD;
+1. both render the real roster, map, initiative, and their own private character data in the dock;
 2. the active player selects the authored Attack and sees available/unavailable server candidates;
 3. an unavailable target cannot dispatch and explains the provider reason;
 4. the available target dispatches the echoed declaration ID and target;
@@ -424,7 +421,7 @@ With two owner-authenticated browser sessions in the reference tomb:
 
 ### General executable actions
 
-The first real non-Attack session action—recommended proving cases are Dodge or Dash—earns the generic execution contract. That design may add `SELF`/`POSITION`/`AREA` target kinds, resource price presentation, and a `Declare`-shaped RPC. It must first move the chosen action through inert action data and the resolution machine; it may not expose the character package's legacy direct-bus activation as the new session seam.
+The first real non-Attack session action—recommended proving cases are Dodge or Dash—earns the generic execution contract. That design may add `SELF` or `POSITION` target kinds, class-resource price presentation, and a `Declare`-shaped RPC. It must first move the chosen action through inert action data and the resolution machine; it may not expose the character package's legacy direct-bus activation as the new session seam. It does not design for spells or reserve a magic profile.
 
 ### Shared dice presentation
 
@@ -441,7 +438,8 @@ Stable interaction correlation and individual authoritative damage-die faces arr
 ## Non-goals
 
 - A universal action executor before a non-Attack resolution proves it.
-- Clickable fixture-only Dodge, Dash, feature, spell, or item actions.
+- Clickable fixture-only Dodge, Dash, feature, or item actions.
+- Magic, spells, spell slots, concentration, magical items/resources, or magical targeting; those require a separate future design.
 - Raw action-economy ledgers on the wire.
 - Client-side legality, targeting, cost, hit, damage, condition, or resource logic.
 - Another player's exact HP, feature list, condition list, inventory, or resources.
