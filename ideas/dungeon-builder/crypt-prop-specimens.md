@@ -353,3 +353,43 @@ provider and consumer evidence earn the disposition.
 - Kirk approves all three props in both real 3D views under representative
   existing lighting.
 - Provider merges before the exact-pinned web consumer.
+
+## Landed — 2026-08-25
+
+- Provider slice: [rpg-game-assets#63](https://github.com/KirkDiggler/rpg-game-assets/issues/63)
+  → [PR #64](https://github.com/KirkDiggler/rpg-game-assets/pull/64), merged to
+  `main` as `6c24b19861df127faa69bd4d1ab6ec8fdfad537e` from feature head
+  `951ac2a44dd40e0974e102434dbc7164665c571f` (same Git tree
+  `37b17b93e82cea57fc1fa5a6e2dc3a6ed6d95bdb`). Approved artifact SHA-256:
+  cage `fb16c3bed0fb284e37cfbe2914e7dfa2eeae54fb429796ab5ae1526f4126a4af`,
+  table `be957e0e59b4efff6cbbcafba0a473e4e20f9dbca0a7892691121b8e477a0ff6`, rug
+  `9f3861707a9b3416b89ddee307662fb7c3d106751f2a3f733ac902b7432184ed`.
+  Complete inventory tree SHA-256: `eaf6e1f2128c0dfe134486c2d1c22ea9c9c4535bcb1adc9306b7522343367191`.
+- Consumer slice: [rpg-dnd5e-web#814](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/814)
+  → [PR #820](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/820), merged to
+  `dev` as `12b9c8a69ae0335e076872f8b89cba3fe025f5aa` from reviewed head
+  `3de2e1ad7b83eaee9c7a3ef10d1052c8175475fa` (same Git tree
+  `4ff6ca291d8e9cc01f34dc5854d7aa26f4fc70ec`).
+- Shared renderer rule: `DUNGEON_SURFACE_Y = 0.2` lifts the Synty floor and all
+  props uniformly in builder and game; no specimen-specific repair remained.
+- Public landed evidence lives at
+  `ideas/dungeon-builder/evidence/crypt-prop-specimens/README.md`, with
+  `final-builder.png`
+  `29f965fa4d38440a62d0250763d8e773aaa2f3278247fd04f7e39af1c59efb59` and
+  `final-game.png`
+  `e8d3625906992bcbc504f85196203efe6fd01c44de79bdc9120e396bd6ed7720`.
+- Real-path proof: builder route
+  `?concept=dungeon-builder&authorFixture=crypt-props` and Home → Stanthony →
+  Dungeon Builder → Load → Save → Open → Save & Play preserved the showcase YAML
+  byte-for-byte at `a3927fdbf6b38fb886c55b72f58ad116dd8282917fb279a4f8c5f3c4a5e25542`
+  and preserved each prop ref/facing/offset across reopen.
+- Tests and checks: local integrated head `3de2e1a` passed `npm run ci-check`
+  and the focused rerun of 10 files / 183 tests; PR #820 had green **Lint and
+  Type Check**, **Deploy Preview**, **Test**, and **Security Audit** checks
+  before merge.
+- Kirk verdicts: provider exact-merge review “yeah they look great.” Current
+  integrated verdict “it does.”
+- Next lane: authored lighting remains open on journey
+  [rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169),
+  using [rpg-project#190](https://github.com/KirkDiggler/rpg-project/issues/190)
+  as historical input to reconcile against the current stack.

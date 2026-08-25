@@ -1599,3 +1599,46 @@ gh project item-list 19 --owner KirkDiggler --format json --limit 1000 | jq '
 ```
 
 Expected: #275 is `Done`; #169 remains `In Progress`.
+
+## Execution outcome — 2026-08-25
+
+- **Task 1:** completed on web issue #814. The showcase fixture, shared
+  `AtlasPropModel`, and shared `DungeonSceneLights` landed on
+  `fix/814-crypt-prop-specimens`; focused fixture/render suites and format check
+  passed; controller review replaced an unrequested duplicate reviewer.
+- **Task 2:** completed on asset issue #63. The exporter/validator contract
+  landed, then three integration-driven fixes followed: source-node provenance
+  decoupled from final assembly node names, exact authored export names were
+  preserved through Blender duplicate export, and Blender-only regression tests
+  now skip cleanly in plain Python discovery.
+- **Task 3:** completed after iterative visual calibration in the private
+  provider. The accepted table pose ended beside the plank, inward-facing and
+  Z-calibrated, and the approved final table artifact hash is
+  `be957e0e59b4efff6cbbcafba0a473e4e20f9dbca0a7892691121b8e477a0ff6`.
+- **Task 4:** completed and merged provider-first as
+  [rpg-game-assets#64](https://github.com/KirkDiggler/rpg-game-assets/pull/64)
+  at `6c24b19861df127faa69bd4d1ab6ec8fdfad537e` from feature head
+  `951ac2a44dd40e0974e102434dbc7164665c571f`; the approved complete-inventory
+  tree SHA-256 is `eaf6e1f2128c0dfe134486c2d1c22ea9c9c4535bcb1adc9306b7522343367191`.
+- **Task 5:** completed on the web branch. The consumer dropped rug
+  `renderScale`, introduced shared `DUNGEON_SURFACE_Y = 0.2`, synced the exact
+  provider artifacts, and captured candidate builder/game evidence. Kirk’s
+  candidate verdict was “looks really good.”
+- **Task 6:** completed after merging `origin/dev` into the published web
+  branch (never rebasing), recovering the stale installed dependency tree with a
+  clean `npm ci`, rerunning full gates, and recapturing integrated evidence at
+  reviewed head `3de2e1ad7b83eaee9c7a3ef10d1052c8175475fa`. Web
+  [PR #820](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/820) merged to
+  `dev` as `12b9c8a69ae0335e076872f8b89cba3fe025f5aa` with identical Git tree
+  `4ff6ca291d8e9cc01f34dc5854d7aa26f4fc70ec`; Kirk’s current integrated verdict
+  was “it does.”
+- **Task 7:** completed in `rpg-project` by adding the public landed evidence
+  folder, appending the landed ledger, retiring stale trackers, setting the two
+  implementation slices and three stale trackers to Project 19 `Done`, and
+  keeping journey #169 open for authored lighting.
+- **Material rulings/deviations:** this plan intentionally records execution in
+  the SDD ledger, commits, PRs, and the concise outcome above instead of bulk
+  flipping historical checkboxes; the final accepted current-head PNGs live in
+  `rpg-project` because PR #820 merged before their evidence commit; web issue
+  #814 required manual closure because merging to `dev` does not auto-close an
+  issue on the repository default branch.
