@@ -1,0 +1,124 @@
+# Authored wall height — design + plan (rpg-project#273)
+
+Addendum to the dungeon-builder v2 design (`design.md`), panel-back. Builds on
+the walls thread (#788/#794/#802 axis-true runs, `wall-authoring-gesture.md`'s
+drag-to-author + selection grammar). Kirk's ruling (2026-08-25, after the #804
+walk): "setting the wall height I see as the next priorities."
+
+## The identity question (the design's center)
+
+`walls:` is a flat list of adjacent-cell edge pairs; runs are DERIVED by the
+one shared engine (`boundariesToWallRuns`). A "wall" the author sees is not a
+thing the file stores — so who carries a height?
+
+**Proposal: the edge carries it.** The dialect grows an optional object form
+per entry; the bare pair stays valid and means default height:
+
+```yaml
+walls:
+  - [[5,0],[6,0]]                            # bare pair — default height
+  - { between: [[5,1],[6,1]], height: 0.5 }  # half-height parapet edge
+```
+
+- `height` is a MULTIPLIER of the standard rendered wall height (1.0 =
+  exactly today's walls, 0.5 = waist-high, 2.0 = double), valid in (0, 3].
+  There is no `0` — an absent wall is an absent entry, not a zero-height one.
+- Why the edge and not some named-run object: runs are derived, order-free,
+  and reshape under editing; giving them stored identity re-opens everything
+  #804 just closed (order-invariance, the walkChain degree rule). An edge is
+  the one stable unit of authored fact. The gesture already writes N edges
+  per stroke; the height control writes the same N.
+
+**Chain-breaking:** height joins the run-identity criteria inside
+`boundariesToWallRuns` — a chain SPLITS where adjacent edges disagree on
+height, exactly as doors split runs today. Uniform-height documents derive
+exactly today's runs (golden: the tomb, all-default, byte-identical). The
+canonical, order-invariant engine from #804 is the only place this logic
+lives; 2D preview, 3D preview, and the game route all inherit it.
+
+## The mechanics ruling (needed from Kirk, default proposed)
+
+Height is the first wall fact where "visual only" is genuinely contestable:
+seeing and shooting over a low wall IS mechanics. Proposed default for THIS
+slice: **height changes nothing in Sight or movement** — a wall blocks
+exactly as today at any height, and "see/shoot over low walls" is a named
+shelf item that needs its own ruling plus a Sight design (cover, elevation)
+before any code. The law holds until deliberately amended: presentation never
+decides mechanics — and until that future ruling, height is presentation.
+
+## The wire (additive)
+
+`AtlasBoundary` (today bare `{from, to}`) gains `float height = 3` — the
+authored multiplier verbatim, `0` = not authored = default, indistinguishable
+from "said nothing" by design. No pixels on the wire; the client multiplies
+into its own calibrated wall height. The web end lands on an existing knob:
+the renderer already draws per-run height overrides (the cutaway machinery's
+`WALL_HEIGHT` 0.8 vs `CUTAWAY_TALL_WALL_HEIGHT` 2.4) — authored height feeds
+that same input, it does not invent a new render path.
+
+## Authoring surface (rides #804's selection)
+
+Select a wall — the selection is a run's edges already — and the Inspector
+shows a height stepper alongside the door affordance. Writing it stamps the
+value on EVERY edge of the selection (chain-level intent), writes through to
+the YAML pane, and previews through the shared engine ("the preview IS the
+commit"). Editing interplay, proposed:
+
+- **Endpoint/corner drag** re-derives the chain's edges; the new chain
+  inherits the dragged chain's height on every edge, including edges the
+  reshape created. Chain-level intent survives reshapes; per-edge survival
+  (keep old edges' heights, default the new) is the rejected alternative —
+  it turns one drag into a mixed-height chain nobody asked for.
+- **Erase** deletes entries regardless of form; **redraw** over an erased
+  span writes the CURRENT stroke's height (default unless the author set
+  the stepper before drawing).
+- **Doors** punch through runs as today; a door in a low wall renders today's
+  door in a shorter run. Door height itself is not authored here (shelf).
+
+## The stack
+
+| layer | change |
+|---|---|
+| **protos** | `AtlasBoundary.height = 3`, one PR, tags |
+| **toolkit `dungeonspec`** | parse both wall-entry forms; bounds `(0, 3]` at `walls[i].height`; compile through |
+| **toolkit `encounter`** | `Boundary`/`BoundaryData` carry `Height float64` (`0` = default); construction + persistence round-trip |
+| **toolkit `session`** | projection copies it |
+| **rpg-api** | passthrough + pin bumps |
+| **web** | engine: height in run identity (chain-break); YAML emit/parse of the object form; Inspector stepper; render multiplier into the existing per-run height input, builder preview AND game route |
+
+## Tests
+
+- dungeonspec: both entry forms parse; bounds refusal at `walls[i].height`;
+  bare-pair-only files byte-identical through compile.
+- Engine: mixed-height chain splits at the boundary edge; uniform-height
+  chain derives today's runs exactly; the #804 seeded-permutation
+  order-invariance suite extended with heights (a permuted mixed-height
+  document derives identical runs); the 3-way-junction fixture gets a
+  differing-height arm.
+- Golden: reference tomb byte-identical, plus an explicit all-heights-zero
+  assertion (the #261 ledger lesson: goldens are blind to fields their
+  comparison struct omits).
+- Round-trip: object-form YAML → compile → atlas → wire with the multiplier
+  intact at every layer; 2D, 3D, and game route agree on where a chain
+  splits (the #804 divergence lesson, now with a height axis).
+
+## Not now
+
+See/shoot-over-low-walls mechanics (needs its own ruling + Sight design);
+door height; per-face wall textures; height in the 2D canvas beyond a simple
+tone/label on the run (2D stays schematic).
+
+## Plan — four PRs, bottom-up
+
+1. rpg-api-protos: `AtlasBoundary.height`. Merges first, tags.
+2. rpg-toolkit: dungeonspec + encounter + session, one chain, real tags
+   before the upper pin.
+3. rpg-api: pin bump + passthrough.
+4. rpg-dnd5e-web: engine chain-break + YAML + stepper + render; Kirk walks
+   it — draw a room, drop one wall to half height, see the parapet in 2D,
+   3D, and Save & Play.
+
+## Adjustments (ledger — filled during implementation)
+
+| date | where | designed | landed | why |
+|---|---|---|---|---|
