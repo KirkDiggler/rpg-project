@@ -1,6 +1,6 @@
 # The run's end: doors, the locked door, and the boss
 
-**Status:** DRAFT for Kirk's ruling, 2026-08-25.
+**Status:** RULED (Kirk, 2026-08-25) — building. The design+plan PR (rpg-project#269) stays open through implementation.
 **Journey:** rpg-project#253. This slice is the journey's own Done-when, verbatim: *"reaches and opens the locked door (toolkit#1135 as a fiction beat), and the run ends with a recorded outcome."*
 **Measure:** a party walks the tomb, is refused by the tomb door as fiction — *locked, DC 12* — beats the lock, opens the door, drops the skeleton-captain, and the screen says the run is over. Everyone leaves the bubble and lands back in the game screen. Verified live by Kirk on branches before merge.
 **Design already ruled, reused not re-derived:** a door is state on the wall, one state over a set of edges (toolkit#1123, Kirk 2026-08-19); DC is carried, not interpreted — `encounter.Unlock` is TOLD `Beaten`, it never compares (doorverbs.go); death dissolves the BUBBLE, not the encounter (toolkit#959 fork (c)) — this slice adds an ending *trigger*, it does not touch that ruling; endings are declared or the encounter cannot exist (`ErrNoEnding` liveness law); full data down the log until v1.0 (Kirk 2026-08-24) — no perception limiting on door beats or roll detail; the combat panel and additional actions are ideas/combat-turn's lane — this slice does not add action costs or panel machinery.
@@ -14,8 +14,8 @@ This document is the contract for ONE feature across four repos. The proto secti
 3. **The refusal is fiction, not a defect.** Walking into it anyway gets a sentence: *"The door is locked — DC 12."* A wall stays *"You can't go that way."* A malformed coordinate stays a client bug. Three cases, three answers (toolkit#1135).
 4. **Try the lock.** Click the door from an adjacent cell: the panel offers *Try the lock — DC 12 (dex)*. The roll happens on the server; the beat is public: *"Aldric picks the lock — 17 vs DC 12. The door swings open."* or *"The lock holds — 9 vs DC 12."* Failure changes nothing and is retryable; a beaten lock leaves the door OPEN, not merely unlocked (doorverbs ruling, already built).
 5. **The room answers.** The door opening refreshes sight — the composition already does this — and the captain's room comes into view; opening a door can form a fight (`FormedBubble` is already on the door verbs' outputs) and the fight arrives the way fights already arrive: on the stream.
-6. **The captain drops and the run is over.** Today: `fightEnded{BY_DEFEAT}` and the encounter stays open forever. New: the tomb's authored `boss: true` becomes a declared ending; when the captain goes down, the encounter closes with `Outcome{ending: "boss-down"}` and a table-wide `ended` beat that carries its key.
-7. **The end screen.** The client shows the outcome — *The tomb is cleared* — with one button: **Leave**. Leaving drops you back in the game screen. `withdrawn` (external, already declared) remains the other way out and lands on the same screen with its own sentence.
+6. **The captain drops and the run is over — in free roam.** Today: `fightEnded{BY_DEFEAT}` and the encounter stays open forever. New: the tomb's authored `boss: true` becomes a declared ending. The order is ruled (Kirk, 2026-08-25): the fight dissolves FIRST — `fightEnded{BY_DEFEAT}`, the clock returns to WORLD — and then the encounter closes with `Outcome{ending: "boss-down"}` and a table-wide `ended` beat carrying its key. The run ends standing in the world, not inside a bubble.
+7. **The end screen.** The panel is back to *Free roam* when the outcome overlay arrives — *The tomb is cleared* — with one button: **Leave**. The overlay sits on the world, not on the combat panel. Leaving drops you back in the game screen. `withdrawn` (external, already declared) remains the other way out and lands on the same screen with its own sentence.
 
 Everything above renders from the wire. The client computes no rule: not the DC, not the roll, not what ends the run.
 
@@ -113,7 +113,7 @@ message Ended {
 ## 4. What each repo builds
 
 **rpg-toolkit — encounter module (one PR).**
-- `TriggerMemberDown{Member MemberID}` — a third `Trigger` arm: the ending fires when that member's standing reaches down. Evaluated in `noticeDown`, the one place the composition learns someone is at zero, AFTER the existing bubble logic — a boss death both dissolves the fight (existing ruling, untouched) and closes the encounter (new). Member filter symmetry with `TriggerReachedPosition`: EMPTY means any PLAYER member — the party-wipe ending — so the arm is complete even though the tomb only declares the boss today. Validated at setup like the others (a member-down ending naming a member is fine even when that member joins later — same contract ReachedPosition's filter already has).
+- `TriggerMemberDown{Member MemberID}` — a third `Trigger` arm: the ending fires when that member's standing reaches down. Evaluated in `noticeDown`, the one place the composition learns someone is at zero, AFTER the existing bubble logic — a boss death both dissolves the fight (existing ruling, untouched) and closes the encounter (new). The beat order is part of the contract (Kirk, 2026-08-25): `downed` → `bubble-dissolved` → `ended` — the run ends on the world clock. Pin it in the tomb test. Member filter symmetry with `TriggerReachedPosition`: EMPTY means any PLAYER member — the party-wipe ending — so the arm is complete even though the tomb only declares the boss today. Validated at setup like the others (a member-down ending naming a member is fine even when that member joins later — same contract ReachedPosition's filter already has).
 - toolkit#1135: `Step` returns `ErrLocked` (with door id and DC in the message) for a locked door, and a shut-door sentinel distinct from `ErrBadPlacement` for a merely-closed one. `ErrBadPlacement` goes back to meaning what its name says.
 - Nothing: a failed unlock already beats — `Unlock` deliberately re-states the door as itself so there is one path through `setDoorState`, and the beat carries `{dc, beaten:false}`. The miss is already as much fiction as the hit; the seam only has to project it.
 
@@ -140,13 +140,14 @@ message Ended {
 
 Proto PR first. Toolkit encounter PR, then session PR pinned on it, in sequence (one in-flight PR per module); rpg-api and web build behind the merged proto in parallel. One Copilot round each. Kirk walks the branch: the full measure in §0, two browsers. Merges bottom-up; issues closed manually with pointer comments; board Done.
 
-## 6. For Kirk's ruling
+## 6. Ruled (Kirk, 2026-08-25)
 
-1. **Trigger shape.** `TriggerMemberDown{Member}` with ReachedPosition's filter symmetry (empty = any player = party-wipe, declared by nobody yet) — vs a `Boss bool` on members plus a `TriggerBossDown{}`. Recommended: the former; "boss" stays a content word (dungeonspec/sessionworld), the composition only knows "this member's death ends things".
-2. **Where the boss ending is declared.** sessionworld declares it from the compiled `Boss` flag (recommended, smallest true step) — vs teaching `dungeonspec.Compiled` to emit `Endings`. The yaml grows an `endings:` section when the builder (#169) needs authored variety; not now.
-3. **Ending-key vocabulary.** Keys stay content strings ("boss-down", "withdrawn", "abandoned"); the client maps key → sentence. No won/lost enum on the wire. Recommended: yes — outcome semantics are authored, not structural, same as the toolkit ruled.
-4. **The unlock check.** Session rolls it (ability modifier only, no proficiency/tools yet), composition stays told-not-compared. Door verbs cost nothing and are allowed on either clock; action economy for doors belongs to the combat-turn lane when it wants it. Recommended: yes.
-5. **Doors read shape.** A dedicated `GetDoors` (recommended: atlas is construction-truth cached once, view is the sight channel, door state is neither) — vs folding state into `GetView`.
+1. **Trigger shape:** `TriggerMemberDown{Member}`, ReachedPosition's filter symmetry (empty = any player = the party-wipe ending, declared by nobody yet). "Boss" stays a content word; the composition only knows "this member's death ends things".
+2. **Where the boss ending is declared:** sessionworld, from the compiled `Boss` flag. `dungeonspec` untouched; the yaml grows an `endings:` section when the builder (#169) needs authored variety.
+3. **Ending-key vocabulary:** keys stay content strings ("boss-down", "withdrawn", "abandoned"); the client maps key → sentence. No won/lost enum on the wire.
+4. **The unlock check:** the session rolls it (ability modifier only; proficiency/tools shelved), the composition stays told-not-compared. Door verbs cost nothing and work on either clock; action economy for doors belongs to the combat-turn lane.
+5. **Doors read shape:** a dedicated `GetDoors`. The atlas stays construction-truth cached once; the view stays the sight channel; door state is neither.
+6. **The run ends in free roam:** the bubble dissolves before the encounter closes. On the wire, `fightEnded{BY_DEFEAT}` precedes `ended{"boss-down"}`, and the clock a client reads after the end is WORLD. The outcome overlay sits on free roam, never on the combat panel.
 
 ## Shelves (named, not hidden)
 
