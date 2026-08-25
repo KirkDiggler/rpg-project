@@ -610,6 +610,8 @@ Do not merge until Task 6's branch walk passes.
 
 ### Task 6: Walk live and catch-up delivery, then close the slice
 
+**Implementation status:** Complete. The checkboxes below retain the approved execution sequence; observed deviations and exact evidence are recorded in **Landed**.
+
 **Files:**
 - Modify after evidence exists: `ideas/debug-feed/strike-breakdown/plan.md`
 
@@ -649,9 +651,9 @@ node tools/browser/screenshot.mjs \
 
 Attach `/tmp/265-strike-breakdown-live.png` to web #805; do not dirty another checkout with evidence.
 
-- [ ] **Step 3: Prove catch-up uses the same typed line**
+- [ ] **Step 3: Prove GetStory uses the same typed line**
 
-Join `toolkit-sandbox-fighter` (Browser A) and `toolkit-sandbox-barbarian` (Browser B) to one session. After Browser A has a last sequence, put A's DevTools Network panel offline, trigger a strike from B or the driven monster, then restore A online. Confirm rule-6 catch-up supplies the missing `struck` sequence and its rendered text matches Browser B's live line exactly. Record the sequence and both lines on #805/#265. Do not build a new reconnect harness for this slice.
+Read the same struck sequence through typed `sessionClient.getStory`, pass the returned `Event` through `formatDebugLine`, and compare it byte-for-byte with the line captured live. Record the body case, component count, sequence, and equality result on #805/#265. This proves the public live/Story contract without decoding payload or building a new reconnect harness.
 
 - [ ] **Step 4: Merge web and record implementation evidence**
 
@@ -672,3 +674,35 @@ git push
 - [ ] **Step 5: Close the coordinated slice without closing the Debug Feed journey**
 
 Merge rpg-project PR #266 after its implementation record is present. Verify #246, #1238, #1239, #836, and #805 are closed/Done; set #265 to Done and close it. Leave journey #235 open because this slice proves struck detail only, not the whole debug-feed journey.
+
+## Landed — 2026-08-25
+
+| Layer | Delivery | Merge | Released/consumed |
+|---|---|---|---|
+| SessionService proto | rpg-api-protos#246 / PR #251 | `14d8dabc4b5e5f82a17839a265da70f567c570c6` | root tag `v0.1.140`; generated Go commit `dd1cc6d56c6781e019a1d8220e984473343a24d8` |
+| encounter carrier | rpg-toolkit#1238 / PR #1244 | `aa53bb9d5ce8ba57602a2e3b6f19af063e66249d` | `rulebooks/dnd5e/encounter/v0.34.0` |
+| session projection | rpg-toolkit#1239 / PR #1245 | `29a661f830cd73c7419c9743521911e1e991abb2` | `rulebooks/dnd5e/session/v0.28.0`, pinned to encounter v0.34.0 |
+| API mapping | rpg-api#836 / PR #841 | `b5944120a3a84b6192d1b47cc5380a1440650980` into `dev` | proto Go pseudo-version `v0.0.0-20260825032123-dd1cc6d56c67`; encounter v0.34.0; session v0.28.0 |
+| debug feed | rpg-dnd5e-web#805 / PR #813 | `1caa617f60886cf0f09181daed5ddbc03c5000cc` into `dev` | fresh base already pinned proto `v0.1.141`, which contains the v0.1.140 strike contract |
+
+### Integrated proof
+
+The local SessionService route produced this live line at web head `d209001`:
+
+```text
+seq=11 clock=0 struck attacker=Skeleton target=Toolkit Sandbox Fighter roll=14 total=18 against=16 damage=5 crit=false attack.ref=skeleton-shortbow attack.name="shortbow" type=PIERCING components=[{source=weapon ref=dnd5e:monster_actions:skeleton-shortbow dice=1d6 final_rolls=[3] flat=2 type=PIERCING}]
+```
+
+A typed `sessionClient.getStory({fromSeq: 11})` request returned body case `struck` with one component. Formatting that returned `Event` produced the exact line above: `LIVE_GETSTORY_EQUAL=true`. Empty advantage/disadvantage arrays stayed quiet. The focused web test separately proves populated advantage attribution and multiplier zero.
+
+The live API image combined merged strike mapping `b5944120` with open run-ending API PR #839 head `684244ec`, because the fresh web `dev` base already called #839's door RPCs. Private runtime assets were synced through `npm run assets:sync`; neither integration aid entered PR #813.
+
+### Review and execution adjustments
+
+- Modifier `Reason` was removed before implementation because encounter's `RecordInput` makes prose inexpressible; no replacement enum was invented.
+- Proto review renamed `rolls` to `final_rolls` and reused the existing `DamageType` enum. Source refs remain plain strings because empty and absent have the same designed meaning.
+- Encounter review added `ErrInvalidData` refusal for NaN/±Inf multipliers—the only new primitive values JSON cannot represent—without adding a second rule-semantic validator.
+- Session rebased over the concurrently released door-event session v0.27.1; only the encounter pin conflicted, and the full race/lint suite passed after resolution.
+- Proto's root tags do not version the nested generated Go module; API therefore pins the exact generated commit as a pseudo-version. Web consumes the root tag normally.
+- API review aligned empty slice helpers with existing non-nil-empty converters. Current-head CI, new-code lint, and the full CI-equivalent race suite passed. Unrelated `origin/dev` lint debt discovered by `make pre-commit` is isolated in rpg-api#840.
+- Web review made each detail section independently quiet when empty. Current-head CI and Copilot recommended approval before merge.
