@@ -22,7 +22,7 @@
 - No generic metadata bag, new event kind, story migration, ADR, or generated-code edit.
 - One issue and one PR per repository/module: protos #246; encounter #1238; session #1239; API #836; web #805.
 - Branch from `origin/main` for protos/toolkit and `origin/dev` for API/web, after `git fetch origin`.
-- Deliver sequentially: proto release; encounter release; session release pinned to encounter; API pinned to all providers; web pinned to proto. Never commit `replace`, `go.work`, or generated proto output.
+- Deliver sequentially: proto release; encounter release; session release pinned to encounter; API pinned to all providers; web pinned to proto. Proto's root tag pins TypeScript; generated Go is a nested module and uses the exact generated commit behind that tag as a pseudo-version. Never commit `replace`, `go.work`, or generated proto output.
 - Use normal GitHub CI/Copilot review once per PR; do not create internal review loops for already-written code.
 
 ---
@@ -113,20 +113,20 @@ gh pr create --repo KirkDiggler/rpg-api-protos --base main \
 
 - [ ] **Step 5: Merge and record the generated release**
 
-After CI/Copilot approval, squash-merge. Wait for the generated branch and release workflow, then confirm the newest release contains the new generated Go and TypeScript fields:
+After CI/Copilot approval, squash-merge and wait for `publish-packages`. This repository creates git tags on generated commits but no GitHub Release objects. For this execution, PR #251 produced:
 
 ```bash
-OLD_PROTO_TAG=$(gh release list -R KirkDiggler/rpg-api-protos --limit 1 --json tagName --jq '.[0].tagName')
-# Perform the approved squash merge, then wait for publish-packages.
-PROTO_TAG=$(gh release list -R KirkDiggler/rpg-api-protos --limit 1 --json tagName --jq '.[0].tagName')
-test -n "$PROTO_TAG"
-test "$PROTO_TAG" != "$OLD_PROTO_TAG"
+PROTO_TAG=v0.1.140
 git fetch origin generated --tags
-git show "origin/generated:gen/ts/dnd5e/api/session/v1alpha1/events_pb.ts" | \
+PROTO_GO_COMMIT=$(git rev-parse "${PROTO_TAG}^{commit}")
+test "$PROTO_GO_COMMIT" = 'dd1cc6d56c6781e019a1d8220e984473343a24d8'
+git show "${PROTO_TAG}:gen/ts/dnd5e/api/session/v1alpha1/events_pb.ts" | \
   rg 'damageComponents|finalRolls|advantageSources|disadvantageSources|multiplier'
+git show "${PROTO_TAG}:gen/go/dnd5e/api/session/v1alpha1/events.pb.go" | \
+  rg 'DamageComponents|FinalRolls|AdvantageSources|DisadvantageSources|Multiplier'
 ```
 
-Record `PROTO_TAG` on #246 and parent #265. Consumers must use that exact published tag, not `generated` or an assumed future version.
+Record both `PROTO_TAG` and `PROTO_GO_COMMIT` on #246 and parent #265. Web consumes the root tag. Go's nested `gen/go` module cannot consume a root `v0.1.140` tag as a stable module version, so rpg-api pins `PROTO_GO_COMMIT`, which Go records as a pseudo-version.
 
 ---
 
@@ -436,7 +436,7 @@ Record `SESSION_TAG` on #1239 and #265. Confirm the merged `session/go.mod` cont
 - Modify: `internal/handlers/dnd5e/session/v1alpha1/convert_test.go:332-360,618-665`
 
 **Interfaces:**
-- Consumes: published `PROTO_TAG`, `ENCOUNTER_TAG`, and `SESSION_TAG`.
+- Consumes: published `PROTO_TAG`, its exact generated `PROTO_GO_COMMIT`, `ENCOUNTER_TAG`, and `SESSION_TAG`.
 - Produces: direct typed protobuf mapping used by both StreamEvents and GetStory.
 
 - [ ] **Step 1: Create the API worktree from `origin/dev` and pin all released providers**
@@ -447,7 +447,7 @@ git fetch origin
 git worktree add /home/kirk/game-dev/.pi-worktrees/836-api-strike-detail \
   -b feat/836-api-strike-detail origin/dev
 cd /home/kirk/game-dev/.pi-worktrees/836-api-strike-detail
-GOPROXY=direct go get "github.com/KirkDiggler/rpg-api-protos/gen/go@${PROTO_TAG}"
+GOPROXY=direct go get "github.com/KirkDiggler/rpg-api-protos/gen/go@${PROTO_GO_COMMIT}"
 GOPROXY=direct go get \
   "github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e/encounter@${ENCOUNTER_TAG}" \
   "github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e/session@${SESSION_TAG}"
@@ -455,7 +455,7 @@ go mod tidy
 go test ./internal/handlers/dnd5e/session/v1alpha1/...
 ```
 
-Expected: the generated types and session detail types compile before converter changes; `go.mod` names real published versions.
+Expected: the generated types and session detail types compile before converter changes; `go.mod` names real toolkit versions and the Go pseudo-version for `PROTO_GO_COMMIT`.
 
 - [ ] **Step 2: Write failing converter tests, including zero presence and shared conversion**
 
