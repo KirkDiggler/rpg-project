@@ -1201,9 +1201,12 @@ The accepted final PNGs are verified at 1600×900: `final-builder.png`
 `final-game.png`
 `b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`. The
 public boundary scan excludes GLB, Blend, shell-manifest, placeholders,
-private/local metadata, and unrelated provider evidence. `git diff --check`
-and the final self-review are required before the local-only documentation
-commit.
+private/local metadata, and unrelated provider evidence. Before and against
+Task 12 documentation commit `d961de0`, `git diff --check`, the
+placeholder/private/license scans, image SHA-256/dimension/`cmp` checks, and
+the scoped final review all ran clean. The only pending item is the manual
+post-publication external reconciliation of #825 and #791; no external state
+was mutated here.
 
 Per the explicit closeout constraint, this session did not push, post comments,
 change issues or Project 19, merge PR #285, modify web, or clean worktrees and

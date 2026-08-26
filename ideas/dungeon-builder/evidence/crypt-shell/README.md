@@ -52,6 +52,13 @@ The approved final builder frame is `final-builder.png`, `1600×900`, SHA-256 `0
 
 ## Review and boundaries
 
+Because web PR #827 merged into the non-default `dev` branch, rpg-dnd5e-web
+[issues #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) and
+[#791](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/791) were still
+**OPEN** at the Task 12 documentation commit. After publication, the reviewed
+Task 12 external reconciliation will manually close/mark Done #825 and #791.
+This evidence record does not mutate that external state.
+
 The final web range includes the fallback fixes `aefde18` (preserve closed doors) and `a770746` (unmount rejected open-door leaves), followed by a broad review of the provider, web, and project ranges. For the final web fallback range, Copilot was unavailable for the supported attempts and produced no review event; no absent review was treated as approval. The visible `The Reference Tomb` banner is pre-existing static `SessionEncounterView` copy, not atlas identity, and was left unchanged.
 
 [rpg-dnd5e-web#823](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/823) remains a separate open overlay-depth issue. Lighting remains active under [rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169); authored lighting is not part of this shell landing. No provider source or generated runtime bytes are included here.

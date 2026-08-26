@@ -454,6 +454,13 @@ for the implementation wave intended for rpg-project#284 / PR #285.
 
 ### Review disposition and next lane
 
+Because web PR #827 merged into the non-default `dev` branch, rpg-dnd5e-web
+[issues #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) and
+[#791](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/791) were still
+**OPEN** at the Task 12 documentation commit. After publication, the reviewed
+Task 12 external reconciliation will manually close/mark Done #825 and #791.
+This record does not mutate that external state.
+
 The final web range includes the fallback fixes that preserve closed doors and
 unmount rejected open-door leaves, followed by the broad provider/web/project
 review. For the final web fallback range, Copilot was unavailable for the
