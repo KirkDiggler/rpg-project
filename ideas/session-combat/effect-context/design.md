@@ -1,7 +1,7 @@
 # Effect Context — how an effect reads the world and writes itself back (v1)
 
-**Status:** Design — decided; ready to plan. Brainstorm and the parked territory are in
-[brainstorm.md](./brainstorm.md).
+**Status:** Design — decided. Implementation plan in [plan.md](./plan.md); brainstorm and the parked
+territory in [brainstorm.md](./brainstorm.md).
 **Journey:** rpg-project#253 · **Umbrella:** `ideas/session-combat/`
 **Scope ruling (Kirk, 2026-08-26):** *"Right now. we need the functionality of the game context where
 conditions can look up the state of the world and Mark things dirty when they're dirty."*
