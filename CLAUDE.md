@@ -305,6 +305,23 @@ wrong. All three deserve a reply.
    Re-run the gates instead — build, vet, test, lint — and let Kirk's review be the second
    pass. Kirk merges.
 
+**Requesting a review does not close it.** This is the failure mode, and writing the rule
+down does not prevent it: you request the review, report the PR in the same breath, and move
+on — and the review lands four minutes later, addressed to nobody. It has happened twice
+after the rule was already written, once on the very next PR after writing it.
+
+So the mechanism, not the intention: **never report a PR in the same turn you requested its
+review.** Come back for it. Before calling anything ready, run the count and make it match:
+
+```bash
+R=repos/OWNER/REPO/pulls/N/comments
+echo "open threads:  $(gh api $R --jq '[.[]|select(.in_reply_to_id==null)]|length')"
+echo "with a reply:  $(gh api $R --jq '[.[]|select(.in_reply_to_id!=null)]|length')"
+```
+
+Unequal means the round is open, whatever the PR page looks like. A review nobody answered
+is worse than one nobody requested — it cost the quota and produced nothing.
+
 **What a good round looks like** — rpg-toolkit#1254, 2026-08-26, three findings, all valid:
 
 - One was a real bug the author had not seen: a condition marked its owner dirty whether or
