@@ -1,6 +1,6 @@
 # Shared Table Dice Ritual — Concepts Lab Design
 
-**Status:** Approved conversational design; written review pending
+**Status:** Approved by Kirk 2026-08-26
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · concept design slice [#290](https://github.com/KirkDiggler/rpg-project/issues/290)
 
