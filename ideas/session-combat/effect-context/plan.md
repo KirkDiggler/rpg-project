@@ -61,7 +61,21 @@ Readiness   PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   Ready=51997600  Shaping=9f972e92  B
 
 ---
 
-### Task 2: The two channels — rpg-toolkit#1251, PR A (`rulebooks/dnd5e`)
+### Task 2: The two channels — ✅ **DONE** · rpg-toolkit#1251, PR A → [toolkit#1254](https://github.com/KirkDiggler/rpg-toolkit/pull/1254)
+
+**Landed 2026-08-26.** 527 insertions, 2355 deletions. build + vet + test (27 packages) + golangci-lint all green;
+Copilot review requested once and verified by node query. Board: In Review.
+
+**What changed from the plan, and why:**
+- `ReactionReadiness` was **kept**, not deleted — two live readers and a correct fail-closed default. See design.md.
+- The test count landed at 10 modified + 1 deleted, and three files were left alone.
+- `TestUnarmoredDefense_ACChainWithoutGameContext` turned out to **assert the bug** — it expected AC 13 and
+  called the missing +2 an "API WIRING REQUIREMENT" nothing had ever met. It is inverted and renamed
+  `TestUnarmoredDefense_ACChainNeedsNoGameContext`, asserting 15 on a completely bare context.
+- Two Dueling tests built weapon sets nobody read; they now state `TwoHanded`/`OffHandWeaponRef` on the event
+  so they exercise the rule instead of passing on an empty event.
+- `gamectx/ability_scores.go` and `require.go` also went (only the deleted registries used them), and an
+  orphaned `combatantRegistry` helper in `character/integration_test.go` went with the lookup it fed.
 
 **Files:**
 - Create: `rulebooks/dnd5e/gamectx/cast.go`
@@ -77,7 +91,7 @@ Readiness   PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   Ready=51997600  Shaping=9f972e92  B
 - Consumes: `combat.Combatant`, `shared.AbilityScores`.
 - Produces: `gamectx.Cast`, `gamectx.WithCast`, `gamectx.CastOf`, `MarkDirty` on the owner contract.
 
-- [ ] **Step 1: Branch and establish the baseline**
+- [x] **Step 1: Branch and establish the baseline**
 
 ```bash
 cd /home/kirk/game-dev/rpg-toolkit
@@ -90,7 +104,7 @@ go build ./... && go test ./... 2>&1 | tail -20
 
 Expected: green. Do not proceed past a failing baseline.
 
-- [ ] **Step 2: Define `Cast` — questions, not fields**
+- [x] **Step 2: Define `Cast` — questions, not fields**
 
 ```go
 // Package gamectx — cast.go
@@ -119,19 +133,19 @@ func CastOf(ctx context.Context) (Cast, bool)
 
 No implementation here — `dnd5e` defines the question, `resolution` answers it.
 
-- [ ] **Step 3: Add `MarkDirty` to the owner contract and to `*Character`**
+- [x] **Step 3: Add `MarkDirty` to the owner contract and to `*Character`**
 
 Follow the `FightingStyleProtectionCondition` precedent (`conditions/fighting_style_protection.go:36-70`): each condition declares its own narrow, structurally-satisfied owner interface and type-asserts it in `SetOwner`. An owner of the wrong shape is ignored, never an error.
 
 `*Character` already satisfies the read side — `AbilityScores()` at `character/character.go:175`, `HasShieldEquipped()` at `:925`. Only `MarkDirty()` is new; it sets the same `c.dirty` flag as `character.go:723`.
 
-- [ ] **Step 4: Move the three dead conditions onto the owner handle**
+- [x] **Step 4: Move the three dead conditions onto the owner handle**
 
 Each currently does `registry, err := gamectx.RequireCharacters(ctx)` → `return c, err`. Replace with a read off the owner, and **return the chain unchanged when the owner is absent** — never an error.
 
 This is the behavioural fix. `Character.EffectiveAC` swallows fold errors at `character/character.go:1398-1405`, so today an errored condition silently drops *every* AC contributor.
 
-- [ ] **Step 5: Delete the five dead installers**
+- [x] **Step 5: Delete the five dead installers**
 
 `gamectx.GameContext`/`CharacterRegistry`/`WithGameContext`/`RequireCharacters`/`Characters`, `CombatantRegistry`/`WithCombatants`, `CombatState`/`WithCombatState`, and `combat.CombatantLookup`/`WithCombatantLookup`/`GetCombatantFromContext`.
 
@@ -143,7 +157,7 @@ grep -rn "RequireCharacters\|WithGameContext\|NewGameContext\|WithCombatants\|Wi
 
 Expected: no output. Keep `WithRoom`, `Room`, `RequireRoom`.
 
-- [ ] **Step 6: Rewrite the 10 test files that installed a registry production never installs, and delete 1**
+- [x] **Step 6: Rewrite the 10 test files that installed a registry production never installs, and delete 1**
 
 **Modify (10):**
 ```
@@ -163,7 +177,7 @@ conditions/unarmored_movement_test.go          character/integration_test.go
 
 Note: `integration/` cannot import `resolution` (that is the dependency direction), so nothing in this module can drive a real `Resolve`. **Do not try to prove the end-to-end behaviour here — that is Task 5.**
 
-- [ ] **Step 7: Gates and PR**
+- [x] **Step 7: Gates and PR**
 
 ```bash
 go build ./... && go vet ./... && go test ./... && golangci-lint run
