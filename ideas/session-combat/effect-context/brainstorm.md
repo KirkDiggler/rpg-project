@@ -71,7 +71,7 @@ Context is also the right idiom here: resolution *is* a request, every chain han
 | `gamectx.WithGameContext` (CharacterRegistry) | 0 | 4, all broken |
 | `gamectx.WithCombatants` (CombatantRegistry) | 0 | 0 |
 | `gamectx.WithCombatState` | 0 | 0 |
-| `gamectx.WithReactionReadiness` | 0 | 0 |
+| `gamectx.WithReactionReadiness` | 0 | **2 — and correct, see below** |
 | `combat.WithCombatantLookup` — *a sixth, in another package* | 0 | 0 |
 
 `WithGameContext` and `NewGameContext` have **zero non-test call sites in the toolkit** (verified
