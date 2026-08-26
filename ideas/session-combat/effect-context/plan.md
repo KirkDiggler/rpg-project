@@ -347,13 +347,13 @@ Martial Arts through a real unarmed strike. Sneak Attack firing on an enemy-of-t
 
 ---
 
-### Task 6: Close the tracking surfaces
+### Task 6: Close the tracking surfaces — ✅ **DONE 2026-08-27** (except Kirk's merge of #286)
 
-- [ ] **Step 1: Merge inside-out** — both `dnd5e` PRs, then `resolution`, then `session`. Kirk merges; confirm each auto-tag appeared before bumping the next module.
-- [ ] **Step 2: Confirm the fix in a real run.** Start the local stack, play a barbarian, and read the AC on the dock. It should be 14, not 11. This is what rpg-api#842 was filed against; if it now reads 14, say so on that issue.
-- [ ] **Step 3: Close rpg-project#287 and rpg-toolkit#1251/#1252/#1253 and set it Done on Project 19.** Closing keywords do not fire on `dev`-based repos but **do** fire on toolkit `main` merges — check rather than assume.
-- [ ] **Step 4: Merge design PR #286** once the slice is delivered, per the convention that a design PR stays open through implementation.
-- [ ] **Step 5: Record what moved.** `brainstorm.md`'s parked table is the next slice's agenda — the clock is unblocked the moment dirty lands, and it is the natural successor.
+- [x] **Step 1: Merge inside-out** — both `dnd5e` PRs, then `resolution`, then `session`. Kirk merges; confirm each auto-tag appeared before bumping the next module.
+- [x] **Step 2: Confirm the fix in a real run.** Start the local stack, play a barbarian, and read the AC on the dock. It should be 14, not 11. This is what rpg-api#842 was filed against; if it now reads 14, say so on that issue.
+- [x] **Step 3: Close rpg-project#287 and rpg-toolkit#1251/#1252/#1253 and set it Done on Project 19.** Closing keywords do not fire on `dev`-based repos but **do** fire on toolkit `main` merges — check rather than assume.
+- [ ] **Step 4: Merge design PR #286** — Kirk's once the slice is delivered, per the convention that a design PR stays open through implementation.
+- [x] **Step 5: Record what moved.** `brainstorm.md`'s parked table is the next slice's agenda — the clock is unblocked the moment dirty lands, and it is the natural successor.
 
 ---
 
@@ -369,7 +369,19 @@ anything the toolkit's own suites could not see would have surfaced. Nothing did
 persisted with a degraded `armor_class` — Standre included — reads correctly the moment this merges.
 The stored field is a separate question and stays open on #842.
 
-**Steps 4–5 remain: the playtest, and closing #842.**
+**Steps 4–5 done 2026-08-27.** Verified live, on the character that produced the bug. The local stack
+was rebuilt from merged `dev` (rpg-api `b6da703`) and Standre — `char_305ea868`, still holding
+`armor_class: 11` in redis — read back through `GetCharacterData`:
+
+```
+class          : barbarian · level 1
+AC on the dock : {"total": 14, "note": "10 + 1 DEX + 3 (Unarmored Defense)"}
+conditions     : ["Unarmored Defense"]
+```
+
+**14, with the arithmetic spelled out**, on the character that fought the tomb at 11. rpg-api#842 closed
+with that as its evidence; the stale stored field is left alone deliberately, because nothing reads it
+and a migration to correct a field with no readers is risk without benefit.
 
 **Added 2026-08-27, after Kirk asked whether the plan was complete. It was not, and finishing it as
 written would not have been either.**
@@ -406,11 +418,11 @@ At the time of writing: `dnd5e v0.100.0`, `session v0.30.0`, `resolution v0.13.0
 - [x] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the first consumer to take
   all four toolkit PRs at once; anything the toolkit's own suites could not see shows up here.
 
-- [ ] **Step 4: Confirm in a real run.** Start the local stack, play a barbarian, read the AC on the dock.
+- [x] **Step 4: Confirm in a real run.** Start the local stack, play a barbarian, read the AC on the dock.
   **14, not 11.** This is the acceptance for the whole slice, and the first moment any of it is true for a
   player rather than for a test.
 
-- [ ] **Step 5: Close rpg-api#842** — "Equipping an item silently strips Unarmored Defense from a
+- [x] **Step 5: Close rpg-api#842** — "Equipping an item silently strips Unarmored Defense from a
   character's stored AC" — which is the issue Kirk's own tomb run produced. Note on it that the stored-AC
   half was already fixed by rpg-api#845's strict Load+Attach, and that this bump fixes the computed half;
   the backfill question (characters already stored with a degraded number) is separate and still open.
