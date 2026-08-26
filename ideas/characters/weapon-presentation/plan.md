@@ -1275,6 +1275,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { MainHandAttachmentStatus } from '@/components/hex-grid/mainHandPresentation';
 import { resolveProvisionalMainHand } from './weaponAttachmentExperiment';
 
+const modelStatus = vi.hoisted(() => ({
+  code: 'attached' as MainHandAttachmentStatus['code'],
+}));
+
 vi.mock('@/components/hex-grid/ClassCharacterModel', () => ({
   ClassCharacterModel: (props: {
     isMoving: boolean;
@@ -1284,7 +1288,7 @@ vi.mock('@/components/hex-grid/ClassCharacterModel', () => ({
   }) => {
     useEffect(() => {
       props.onMainHandStatus?.({
-        code: props.mainHandPresentation ? 'attached' : 'unarmed',
+        code: props.mainHandPresentation ? modelStatus.code : 'unarmed',
         ref: props.mainHandPresentation?.ref,
       });
     }, [props]);
@@ -1343,21 +1347,36 @@ it('projects walk, facing, mapped weapon, and close camera into the shared rende
   });
 });
 
-it('does not acknowledge loading or failed mapped weapons', async () => {
+it('does not acknowledge failure, then acknowledges recovery to the same tuple', async () => {
+  const mapped = resolveProvisionalMainHand({
+    main_hand: { module: 'dnd5e', type: 'item', id: 'longsword' },
+  });
+  if (mapped.code !== 'mapped') throw new Error('fixture must map');
   const onRenderObserved = vi.fn();
-  await ReactThreeTestRenderer.create(
-    <WeaponAttachmentScene
-      equipmentState="longsword"
-      motion="idle"
-      view="orbit"
-      facing={0}
-      presentation={undefined}
-      forcedStatus={{ code: 'asset-load-failed' }}
-      onAttachmentStatus={() => {}}
-      onRenderObserved={onRenderObserved}
-    />
+  modelStatus.code = 'asset-load-failed';
+  const props = {
+    equipmentState: 'longsword' as const,
+    motion: 'idle' as const,
+    view: 'orbit' as const,
+    facing: 0 as const,
+    presentation: mapped.presentation,
+    onAttachmentStatus: () => {},
+    onRenderObserved,
+  };
+  const renderer = await ReactThreeTestRenderer.create(
+    <WeaponAttachmentScene {...props} />
   );
   expect(onRenderObserved).not.toHaveBeenCalled();
+
+  modelStatus.code = 'attached';
+  await renderer.update(<WeaponAttachmentScene {...props} />);
+  expect(onRenderObserved).toHaveBeenCalledWith({
+    equipmentState: 'longsword',
+    motion: 'idle',
+    view: 'orbit',
+    facing: 0,
+    attachmentCode: 'attached',
+  });
 });
 ```
 
@@ -1383,7 +1402,9 @@ Create `src/concepts/weapon-attachment/WeaponAttachmentPreview.tsx`:
 - Track the latest attachment status in scene state. Emit `onRenderObserved` from an effect only when:
   - selected state is unarmed and status is `unarmed`; or
   - selected state is longsword/shortbow and status is `attached`.
-- The `forcedStatus` prop exists only for the focused test and defaults to undefined; when present, it replaces callback-derived status without changing presentation.
+- Do not expose a forced-status prop. Tests control emitted status inside the mocked `ClassCharacterModel`, leaving the preview API production-shaped.
+- When status is loading, failed, missing, or otherwise invalid for the selected equipment state, clear the observation dedupe key before returning. Recovery to the same stable tuple must emit a fresh observation.
+- Add focused assertions for a valid unarmed observation and the named orbit/tactical camera branches.
 
 The state effect must emit exactly:
 
