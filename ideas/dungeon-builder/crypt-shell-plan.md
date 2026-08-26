@@ -1178,3 +1178,35 @@ Confirm provider/web slices closed Done, #791 closed Done, #823 open Shaping, #2
 - [ ] **Step 5: Final review and human merge gate**
 
 Run one broad cross-repository review over provider, web, and project ranges. Fix Critical/Important findings with scoped tests. Ask Kirk to merge project PR #285; after merge, verify #284 Done and remove only this wave’s clean worktrees/branches/processes using the finishing-a-development-branch workflow.
+
+## Task 12 execution outcome (2026-08-26)
+
+The approved provider and web slices are landed and recorded without changing
+those repositories. Provider issue #65 / PR #68 merged at
+`f183c96d6d89ecdaf9a2f5dd2c452de485882ed3`; web issue #825 / PR #827 merged at
+`548f561bf8ddab41da53a174e5b69a08358b11e1`. The full landed ledger, exact
+provider/runtime hashes, review disposition, real-path result, and verdicts are
+in `crypt-shell.md`; public-safe final builder/game evidence is in
+`evidence/crypt-shell/README.md`.
+
+Before editing, `origin/main` at
+`9ae62e020c2220954f223c61393a743fd099e92a` was merged into this design branch
+as `0435af0ab94544ada2cf430d2d3097e269be7cce`; that merge commit is the
+post-merge docs base. A fresh visible `npm run test:run` on web reviewed head
+`a770746d73c6bfe35cc743383005e7f796ec672e` reported 231 files passed and 1
+skipped, with 3,648 tests passed and 1 skipped.
+
+The accepted final PNGs are verified at 1600×900: `final-builder.png`
+`0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83` and
+`final-game.png`
+`b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`. The
+public boundary scan excludes GLB, Blend, shell-manifest, placeholders,
+private/local metadata, and unrelated provider evidence. `git diff --check`
+and the final self-review are required before the local-only documentation
+commit.
+
+Per the explicit closeout constraint, this session did not push, post comments,
+change issues or Project 19, merge PR #285, modify web, or clean worktrees and
+processes. Copilot was unavailable for the final supported attempts and had no
+review event; the static banner ruling, separate #823 follow-up, and active
+lighting work under #169 remain recorded.

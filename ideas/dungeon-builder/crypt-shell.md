@@ -383,3 +383,91 @@ This remains one cross-repository wave under rpg-project#284 and journey #169:
 - rug/overlay layering (#823);
 - new wall topology, corner identity, door mechanics, or YAML fields;
 - runtime prop composition.
+
+## Landed record
+
+**Recorded 2026-08-26 after the project branch merged `origin/main`.** The
+approved provider and web slices are landed; this project record is the closeout
+for the implementation wave intended for rpg-project#284 / PR #285.
+
+### Provider
+
+- [Issue #65](https://github.com/KirkDiggler/rpg-game-assets/issues/65) /
+  [PR #68](https://github.com/KirkDiggler/rpg-game-assets/pull/68) merged as
+  `f183c96d6d89ecdaf9a2f5dd2c452de485882ed3`.
+- Reviewed head:
+  `2facea936b47dd0a5750668be6bfa9a664bcc71d`; reviewed/merge tree:
+  `46e41c26e39f0b1434e1282379bd2cad06f7fd7f`. Provider evidence commit:
+  `b9eaec454bc43bbfdb284fa647ffbdef60ff8a3a`.
+- Selected candidates: floor `floor-09-01-u6` at `6u`, wall
+  `wall-double-01-worked`; span `+X`, up `+Y`, finished `+Z` and `-Z` faces.
+- Runtime profile `harness/models/synty/env/shell-profiles.json`:
+  `d02e6398b06f8b347fbe2e68d91d83bfeccd389ea412be5774d34454c2d164a7`.
+- Complete inventory: 2,141 files; payload
+  `fc815f39b4056b0cbbb4edf8d76b552a78c26a80a66da92e77a55d4c22c08303`; tree
+  `f2935197b3c280131afc2da5ac732c0f1e82e1c7b623f2259e9a4ba148f8d57d`.
+- Floor hash:
+  `ec84f155a32297c64e86b8c678955e25d8f8180023327e42c840dd086916b841`.
+  Artifact hashes are body
+  `2216b24e5ea943841682a95c5f4a7692525be42f1cb295bf6d69df33a2e142fc`, base
+  `6933008930a251aec0f27ac757611097faa15f38db06cb542e91128fa60c4f6f`, cap
+  `f56b63ded7b8f8f5ca02a8824df9b9f2a2ca4052d1bf7939281b06c68c059a67`, and
+  door surround
+  `bd4d0a9ca3da8fcee72f8cfaf72d51040f6754920649b9e30c8c8a2e44093cc0`.
+  The existing closed leaf hash is
+  `c1445b4dae6a02127be15fcbd59e6f02f207de28a3461cf95a1ceba18f8d4c15`.
+- Provider result: `337` passed / `20` skipped; Blender export `12/12`,
+  renderer `19/19`, staging `7/7`, and combined renderer/staging `26/26`.
+  The recorded commands were the full `python3 -m unittest discover -s scripts
+  -p 'test_*.py'` gate, Blender export/reimport, inventory `--check`, stage
+  `--verify-only`, and the six-view Blender evidence render. Inventory, profile
+  byte-identity, and stage gates passed; optional Draco and Blender `use_nodes`
+  warnings remained non-fatal. Kirk’s verbatim verdict was **`looks great`**.
+
+### Web
+
+- [Issue #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) /
+  [PR #827](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/827) merged as
+  `548f561bf8ddab41da53a174e5b69a08358b11e1` with tree
+  `3094d2f0c7b53ea8679229123e5773d59c6f9255`.
+- Reviewed head:
+  `a770746d73c6bfe35cc743383005e7f796ec672e`; public evidence head:
+  `404738a9b70ad3a1034252b4c8959cb8012eb0e1`.
+- Fresh `npm run test:run` on that reviewed tree: 231 files passed, 1 skipped;
+  `3,648` tests passed, `1` skipped. The four GitHub checks were green:
+  Lint and Type Check, Deploy Preview, Test, and Security Audit. The seven web
+  gates were format, ESLint, TypeScript, production build, combat-HUD CSS
+  guard, Toolkit Contributor Sandbox exclusion, and test gate.
+- Real path: `crypt-prop-showcase` compiled as 240 cells / 44 boundaries / 2
+  regions; Save, reopen, and Save & Play all completed. Reopened YAML stayed
+  byte-identical at 94 lines / 3,593 bytes, hash
+  `1b5effb21b3ccc5c26153714cff62d7a08041808a1782cd79d9999b3755fca25`; the
+  playable atlas loaded 240 cells and 3 props.
+- Exact observed provider/runtime paths and hashes are preserved in the public
+  [evidence README](evidence/crypt-shell/README.md): the profile, U6 floor,
+  body, base, cap, door surround, existing closed leaf, and accepted cage,
+  table, and rug paths all returned HTTP 200. The final builder and game PNGs
+  are also copied there at `1600×900` with hashes
+  `0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83` and
+  `b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`.
+  Kirk’s verbatim integrated verdict was **`looks really good`**.
+
+### Review disposition and next lane
+
+The final web range includes the fallback fixes that preserve closed doors and
+unmount rejected open-door leaves, followed by the broad provider/web/project
+review. For the final web fallback range, Copilot was unavailable for the
+supported attempts and produced no review event; no absent review was treated
+as approval. The visible `The
+Reference Tomb` banner remains pre-existing static `SessionEncounterView` copy,
+not atlas identity, and was not changed.
+
+[rpg-dnd5e-web#823](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/823)
+remains separate. Journey
+[rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169) remains
+active for authored lighting; lighting is not part of this landing.
+
+The project branch merged `origin/main` at
+`9ae62e020c2220954f223c61393a743fd099e92a` with merge commit
+`0435af0ab94544ada2cf430d2d3097e269be7cce`. This is the post-merge docs base
+for the landed record.
