@@ -272,6 +272,51 @@ version to pin. Two ways through:
   `rpg-api/docs/how-to/local-toolkit-override.md`. Only ever override ONE module; needing
   several at once is the signal that the wave was sliced too thin.
 
+### Reviews — Copilot's round, and answering it
+
+Every PR gets **exactly one Copilot review**, requested when the PR opens. The quota is
+real and shared, so a second round on one PR is a round some other PR does not get.
+
+**Requesting it.** GraphQL `requestReviews` with `botIds: ["BOT_kgDOCnlnWA"]`, then verify
+by reading the PR node back — `gh pr view` does not show bot reviewers, so it will tell you
+nothing landed when it did, or nothing when it didn't. Verify by read-back, never by the
+mutation's own response. Same rule as board writes.
+
+**Answering it.** A review is advice from something that has read the diff and not the
+conversation. It is often right, sometimes right about the wrong reason, and occasionally
+wrong. All three deserve a reply.
+
+1. **Read every finding before fixing any of them.** Findings cluster; two comments are
+   often one mistake seen twice, and fixing them separately produces two different fixes.
+2. **Apply what is right, on the same branch.** No follow-up PR, no "address in a later
+   slice" for something a reviewer could see from the diff.
+3. **Look past the finding to its shape.** If a bug is real in one place, check whether the
+   same shape exists somewhere the reviewer did not look. That is the finding's real value.
+4. **Decline in writing when you disagree**, with the reason, in the thread. A finding you
+   silently ignored is indistinguishable from one you missed.
+5. **Reply in every thread**, naming the commit that addressed it and stating what changed.
+   The thread is the record of why the code looks the way it does.
+6. **Never re-request.** Copilot's footer invites another round; decline the invitation.
+   Re-run the gates instead — build, vet, test, lint — and let Kirk's review be the second
+   pass. Kirk merges.
+
+**What a good round looks like** — rpg-toolkit#1254, 2026-08-26, three findings, all valid:
+
+- One was a real bug the author had not seen: a condition marked its owner dirty whether or
+  not its flag had actually changed, which would have flagged every rogue dirty at the end
+  of every round once turn boundaries become interactions. Fixed, **and the same guard
+  applied to a second condition the reviewer had not flagged** — point 3 earning its place.
+- Two said the package documentation asserted an invariant that did not hold yet: it claimed
+  resolution installs the cast on every path, when no call site existed. Both correct, and
+  pointedly so — **documenting an invariant before it holds is precisely how the registry
+  that PR was deleting came to have five installers and one install.** A reviewer that has
+  not read the conversation can still see that.
+
+The cost of the alternative is the bug that PR fixed. A test asserted the broken behaviour
+and a comment above it called that behaviour an "API WIRING REQUIREMENT" — a requirement
+nothing in the codebase had ever met. Nobody was lying; the note was written when it was
+almost true and never revisited. Review comments are one of the few places that gets caught.
+
 ## Current Chapter
 
 **Chapter 2: Combat Verbs** (board #13) — bring the v1alpha2 `EncounterService` verbs to life one
