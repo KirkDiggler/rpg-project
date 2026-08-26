@@ -1,7 +1,7 @@
 # Effect Context — how an effect reads the world and writes itself back (v1)
 
-**Status:** Design — one open decision for Kirk (see [Open decisions](#open-decisions)). Brainstorm and
-the parked territory are in [brainstorm.md](./brainstorm.md).
+**Status:** Design — decided; ready to plan. Brainstorm and the parked territory are in
+[brainstorm.md](./brainstorm.md).
 **Journey:** rpg-project#253 · **Umbrella:** `ideas/session-combat/`
 **Scope ruling (Kirk, 2026-08-26):** *"Right now. we need the functionality of the game context where
 conditions can look up the state of the world and Mark things dirty when they're dirty."*
@@ -78,8 +78,8 @@ type unarmoredDefenseOwner interface {
 `*Character` already satisfies every one of these — `AbilityScores()` at `character/character.go:175`,
 `HasShieldEquipped()` at `:925`. No new accessors required for the three broken conditions.
 
-Marking dirty rides the same handle. The mechanism depends on
-[the open decision](#open-decisions) below.
+Marking dirty rides the same handle: a condition that mutates its own state calls
+`owner.MarkDirty()`. See [D1](#d1--how-does-dirty-get-marked--ruled-by-discipline-kirk-2026-08-26).
 
 **Why not an instruction event.** Marking dirty is persistence bookkeeping, not a rules event. It
 has no meaning to any other listener and would need a bus for something with no game semantics.
@@ -158,27 +158,40 @@ and structurally cannot serve monsters — which disqualifies keeping it.
 
 ---
 
-## Open decisions
+## Decisions
 
-### D1 — How does dirty get marked?
+### D1 — How does dirty get marked? — **RULED: by discipline (Kirk, 2026-08-26)**
 
-**(a) By discipline.** The condition calls `owner.MarkDirty()` when it mutates itself. Cheap,
-matches the existing dirty flags (`character/character.go:723`, `:1149`, `action_economy.go:48`),
-and every future condition author has to remember.
+A condition that mutates its own state calls `owner.MarkDirty()`. It matches the dirty flags that
+already exist (`character/character.go:723`, `:1149`, `character/action_economy.go:48`) and costs
+nothing at runtime.
 
-**(b) By construction.** Resolution snapshots each participant's `ToData()` before the interaction
-and compares after. Nobody marks anything; forgetting becomes impossible. Costs two serializations
-per participant per interaction and requires the encoding to be deterministic.
+The alternative considered was marking dirty **by construction** — resolution snapshotting each
+participant's `ToData()` before the interaction and comparing after, so forgetting becomes
+impossible. Rejected:
 
-**Recommendation: (b).** "Forgot to mark dirty" is a silent data-loss bug, and this is the same
-class of move as making the room mandatory — a structural guarantee instead of a convention, in the
-spirit of `TestNoCodePathProducesARoomlessInteraction` and R7. The cost is bounded (a handful of
-participants per interaction) and the flag can stay as-is underneath.
+> *"if a condition didn't mark something dirty then it's a bug. this isn't a runtime issue right?
+> it wouldn't have been misconfigured and paying the serialization cost seems a bit much. maybe if
+> we do need that we can have it, but I think we can take a simple approach here."*
 
-**Risk to check before committing to (b):** `ToData()` must be byte-stable for unchanged state.
-Map-keyed fields are the thing to verify — Go's `encoding/json` sorts map keys, but any slice built
-from a map, or any timestamp/UUID minted during serialization, would make every participant look
-dirty forever.
+**The distinction is worth keeping, because it generalizes.** The gamectx failure was a
+*misconfiguration* — identical code behaved differently depending on whether an installer had been
+called somewhere else, so correctness depended on something outside the function you were reading.
+That earns a structural guarantee, which is why `Cast` is mandatory and structurally pinned. A
+missing `MarkDirty` can never be misconfigured: it is an ordinary bug in one function, deterministic
+and local.
+
+> **Structural guarantees are for what varies by wiring. Tests are for what is wrong in one place.**
+
+**Mitigation, at no runtime cost.** The diff check is worth having as a *test* helper rather than a
+production path: a harness that wraps `Resolve`, snapshots every participant before and after, and
+fails if anything changed without coming back in `DirtyCharacters`. That catches the whole class —
+including conditions nobody thought to write a focused test for — while production keeps paying
+nothing. If a real need for the runtime version ever appears, the door is open.
+
+The byte-stability caveat still applies to that helper, and is cheaper to discover there:
+`ToData()` must be stable for unchanged state, so watch for slices built from map iteration or any
+value minted during serialization.
 
 ---
 
