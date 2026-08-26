@@ -1714,7 +1714,8 @@ TDD requirements:
 - change orbit camera position to `[2.4, 1.8, 3.1]` and target to `[0, 0.7, 0]`;
 - change close camera position to `[-1.2, 1.22, 0.85]` and target to the measured post-`SYNTY_SCALE` right-hand region `[-0.6, 1.02, -0.025]`;
 - retain the tactical camera's real shared gameplay constants unchanged;
-- compute close/orbit/tactical camera orientation declaratively and pass a quaternion to each camera; after drei's post-mount `makeDefault` switch, explicitly call the R3F `invalidate()` function once so the next demand frame uses that custom camera rather than Canvas's original default camera;
+- compute close/orbit/tactical camera orientation declaratively and pass each camera an explicit quaternion tuple `[x, y, z, w]` (not a `THREE.Quaternion` object); R3F applies the tuple through `fromArray`, while the object prop remained identity in the actual browser;
+- retain the one post-mount `invalidate()` after drei's `makeDefault` activation so the custom camera's first frame is requested under demand mode;
 - add focused test assertions for the explicit preview height, corrected close/orbit positions, and non-identity declarative camera quaternions;
 - run preview, concept, and shared character focused tests plus typecheck;
 - commit as `fix(concepts): make weapon attachment views judgeable (#821)`.
