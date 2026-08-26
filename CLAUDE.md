@@ -274,8 +274,13 @@ version to pin. Two ways through:
 
 ### Reviews — Copilot's round, and answering it
 
-Every PR gets **exactly one Copilot review**, requested when the PR opens. The quota is
-real and shared, so a second round on one PR is a round some other PR does not get.
+**Not every PR gets one.** Request Copilot for feature PRs and rules/engine changes — work
+where a second reader can catch a real thing. Skip it for doc-only PRs, pin bumps, and small
+mechanical fixes (Kirk, 2026-08-22, on a converter null→{} change: *"i dont need copilot
+review for that change"*). The quota is monthly and shared, so a round spent on a typo fix
+is a round some engine PR does not get.
+
+When a PR does get one, it gets **exactly one**, requested when the PR opens.
 
 **Requesting it.** GraphQL `requestReviews` with `botIds: ["BOT_kgDOCnlnWA"]`, then verify
 by reading the PR node back — `gh pr view` does not show bot reviewers, so it will tell you
