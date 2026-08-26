@@ -195,6 +195,11 @@ must answer `Form` too.
 
 **Q1. Does the boundary vocabulary grow a round topic, or does round stay a field?**
 
+> **RULED 2026-08-27 — no.** Kirk: *"rage is from my turn to my turn. If I am
+> last in initiative I keep rage until the end of my next turn. what would need
+> round end?"* Nothing does. See `design.md` §3.1 for the full reasoning and the
+> named trigger for reopening it.
+
 Turn events already carry `Round int`. A round boundary has a well-defined slot
 (between the last member's turn-end and the first member's turn-start) and
 `play/clock` already computes it. But *nothing subscribes to it yet*: all seven
@@ -212,6 +217,10 @@ boundary and currently has no way to say so, and the alternative is that the
 first round-scoped rule has to invent both the topic and its publisher at once.
 
 **Q2. If round-end exists, does `play/clock` grow a `RoundEnded` milestone?**
+
+> **RULED 2026-08-27 — moot, and no.** Q1 collapsed it: with no subscriber there
+> is nothing to emit, so the closed v1 milestone set stays closed and
+> `play/clock` is untouched by this slice.
 
 `play/clock` emits `RoundStarted` on the wrap and never `RoundEnded`. The
 milestone const block calls itself *"the closed v1 milestone kind set."* So
@@ -267,8 +276,8 @@ from being painted into.
 | **Rest** (U6) | There is no rest verb anywhere — not in `session`, not in rpg-api. This is a verb to design, not an event to publish. | The boundary mechanism must not assume its boundaries come from a *clock*. A rest is a boundary raised by a player's decision, not by time advancing. |
 | **Combat end** | `session.Dissolve` already exists with `ByDecision`/`ByDefeat`, so this is the *closest* follow-on — genuinely just "publish it too." | Whatever carries boundaries must be able to carry one that ends the interaction's own world, not merely advances it. |
 | **Reactions / suspension** | ADR-0038's `Pose` step is unbuilt; opportunity attacks fire on movement, not on boundaries. | A boundary interaction must not become the only thing that can publish mid-interaction, or reactions will have to be bolted onto it. |
-| **Legendary / lair actions** | No monster has them yet. | Q1's answer. A round boundary with no event is the corner: these fire on the round, not on anyone's turn. |
-| **Concentration** | No spells with duration yet. | Durations counted in *rounds* need a round boundary that does not belong to any member's turn. Again Q1. |
+| **Legendary / lair actions** | No monster has them yet. | Q1 ruled there is no round event. Lair actions are an initiative-count *slot*, so the corner is the turn ORDER being insertable — not a round boundary. |
+| **Concentration** | No spells with duration yet. | RAW durations resolve on the caster's own turn, so this wants turn boundaries plus the `Round` field — both of which this slice delivers. It is the first candidate to falsify Q1 if it ever does. |
 | **Surprise** | `Form` records `surprised` in the beat and the story carries it; a surprised creature loses its first turn. | Turn-start publishing must be able to say a turn started *and was skipped*, or surprise will need a second mechanism. |
 
 ---

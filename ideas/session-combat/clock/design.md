@@ -2,8 +2,11 @@
 
 Companion to `brainstorm.md`, which holds the evidence. This is what to build.
 
-**Kirk rules once on this document.** Three questions are genuinely open and are
-marked **[RULING]**; everything else follows from contracts already in force.
+**Kirk rules once on this document.** Three questions were open and marked
+**[RULING]**; everything else follows from contracts already in force.
+
+**Q1 and Q2 RULED 2026-08-27: no round topic, and `play/clock` is untouched.**
+See §3.1. Q3 is still open.
 
 ---
 
@@ -85,9 +88,10 @@ type Announcer interface {
 }
 ```
 
-Called **once per clock advance**, carrying that advance's whole ordered
-milestone set — which is precisely what `clock.EndOutput.Milestones` already is.
-A wrap carries four: `TurnEnded`, `RoundEnded`, `RoundStarted`, `TurnStarted`.
+Called **once per clock advance**, carrying that advance's ordered turn
+boundaries — the publishable part of what `clock.EndOutput.Milestones` already
+returns. Ordinary advance: `TurnEnded(a, N)`, `TurnStarted(b, N)`. On a wrap the
+same two, with the second carrying `N+1`.
 
 **Required at construction, never defaulted** — the law this codebase already
 states for `TurnDriver`: *"a nil answer here would be this module guessing a
@@ -131,25 +135,50 @@ That leaves exactly one real announcer in the system, on exactly one path.
 
 ## 3. Layer by layer
 
-### 3.1 `play/clock` — one new milestone kind **[RULING Q2]**
+### 3.1 `play/clock` — **unchanged** · RULED 2026-08-27
 
-`Turn.End` emits `RoundStarted` on a wrap and never `RoundEnded`. The const
-block calls itself *"the closed v1 milestone kind set."*
+This section proposed adding a `RoundEnded` milestone to what the const block
+calls *"the closed v1 milestone kind set."* **Kirk ruled against it, and the set
+stays closed.**
 
-**Proposed:** add `RoundEnded`, emitted before the round advances:
+His reasoning, and it is the right one:
 
-```
-TurnEnded(active, N) → RoundEnded(N) → RoundStarted(N+1) → TurnStarted(next, N+1)
-```
+> *"rage is from my turn to my turn. If I am last in initiative I keep rage
+> until the end of my next turn. what would need round end?"*
 
-*Why grow the set rather than derive it:* deriving "round N ended" from "round
-N+1 started" puts a temporal rule in the wiring, and a rule living in the wiring
-is the exact failure this codebase keeps catching. `Milestone` is the type whose
-entire job is naming boundaries; a boundary it cannot name is a gap in the type,
-not a gap in the caller.
+Nothing does. Rage is RAW-explicit that it lapses when **your turn** ends, and
+its 1-minute duration expires at the end of **your** turn on the tenth round —
+which `raging.go:267` already implements by counting its own turn-ends, correctly,
+because a member acts exactly once per round (`economy.go:68`).
 
-*The counter-argument, stated fairly:* ADR-0007 says do not extend a sealed set
-against hypotheticals, and today nothing subscribes to a round boundary.
+Searching for a counter-example found none. Every duration phrasing in 5e
+resolves on a turn — *"until the start of your next turn"*, *"at the end of its
+turn"*, *"when you begin your turn."* **Lair actions** are the closest thing to
+round-scoped and are not a boundary either: they are a turn slot at initiative
+count 20, an entry in the order. **Legendary actions** reset at the start of
+their turn. And a grep across every design doc in `rpg-project` and every rule in
+the toolkit turns up exactly one round-scoped sentence, `economy.go:68`, which is
+a statement about turn order rather than a trigger.
+
+**So: in 5e the round is a coordinate, not a trigger.** It measures elapsed
+time, and elapsed time is a number — which `TurnStartEvent` and `TurnEndEvent`
+already carry as `Round int`. A subject-less round event adds nothing a field
+does not already give.
+
+This is [ADR-0007] doing its job. The counter-argument was written into this
+document — *"do not extend a sealed set against hypotheticals"* — and then
+leaned against anyway. The lesson is not "be more careful"; it is that **a
+proposed vocabulary entry with no named subscriber is a hypothetical no matter
+how reasonable it sounds.**
+
+**The trigger for reopening**, recorded rather than left to memory: a mechanic
+that fires at a boundary belonging to **no member** — a lair action modelled as a
+true boundary rather than an initiative slot, or a homebrew "at the end of each
+round." At that point the topic gets defined **together with its publisher and
+its first subscriber**, in one PR, which is exactly what did not happen to
+`TurnStartTopic`.
+
+[ADR-0007]: https://github.com/KirkDiggler/rpg-toolkit/blob/main/docs/adr/0007-generic-trigger-system.md
 
 ### 3.2 `rulebooks/dnd5e/encounter` — stop dropping, start announcing
 
@@ -159,18 +188,23 @@ translates rather than re-exports:
 ```go
 type BoundaryKind string
 const (
-    TurnStarted  BoundaryKind = "turn_started"
-    TurnEnded    BoundaryKind = "turn_ended"
-    RoundStarted BoundaryKind = "round_started"
-    RoundEnded   BoundaryKind = "round_ended"
+    TurnStarted BoundaryKind = "turn_started"
+    TurnEnded   BoundaryKind = "turn_ended"
 )
 
 type Boundary struct {
     Kind    BoundaryKind
-    Subject MemberID // zero for round boundaries — they belong to nobody
+    Subject MemberID
     Round   int
 }
 ```
+
+**Two kinds, because two are what get published** (§3.1). `clock`'s
+`RoundStarted` milestone is translated to nothing — and loses no information,
+because `Turn.End` increments the round *before* stamping the `TurnStarted` that
+follows it (`turn.go:129-134`). **The round advancing is already visible as a
+changed `Round` on the next turn boundary.** A separate kind would be a second
+way to say the same thing.
 
 Changes:
 
@@ -188,27 +222,12 @@ Changes:
   that wants the record. `RoundWrapped` stays: it is what the wire already
   reports and is derivable but load-bearing.
 
-### 3.3 `rulebooks/dnd5e/events` — the vocabulary **[RULING Q1, Q3]**
+### 3.3 `rulebooks/dnd5e/events` — the vocabulary **[RULING Q3]**
 
-**Q1 — a round topic.** Proposed:
-
-```go
-type RoundStartEvent struct{ Round int }
-type RoundEndEvent   struct{ Round int }
-
-RoundStartTopic = events.DefineTypedTopic[RoundStartEvent]("dnd5e.round.start")
-RoundEndTopic   = events.DefineTypedTopic[RoundEndEvent]("dnd5e.round.end")
-```
-
-Note what these carry and what they do not: **no subject.** A round belongs to
-the fight, not to a member — which is exactly why turn events cannot stand in
-for them, and why "round" as a *field* on a turn event is not the same thing.
-
-*Leaning: define both.* Not hypothetical — the clock genuinely crosses this
-boundary and has no way to say so. The alternative is that the first
-round-scoped rule (concentration, a lair action, a legendary reset) has to
-invent the topic **and** its publisher at once, which is how the last one got
-built wrong.
+**Q1 — a round topic — RULED 2026-08-27: no.** See §3.1. Nothing subscribes to a
+round boundary and nothing in 5e fires on one; the round is a coordinate that
+turn events already carry. `dnd5e/events` therefore gains **no new topic at
+all** — this PR only renames, if Q3 says so.
 
 **Q3 — `CharacterID` on turn events.** `TurnStartEvent`/`TurnEndEvent` name their
 subject `CharacterID`. Monsters take turns; `driveMonsterTurns` ends several per
@@ -292,8 +311,11 @@ production does not.
 
 ## 5. Scope — and what is deliberately not here
 
-**In:** turn start, turn end, round start, round end. The announcer capability.
-The fight-start boundary (free — `form` is the same call site).
+**In:** turn start and turn end. The announcer capability. The fight-start
+boundary (free — `form` is the same call site).
+
+**Ruled out 2026-08-27:** round boundaries, and with them any change to
+`play/clock`. See §3.1.
 
 **Out, and why:**
 
@@ -317,7 +339,12 @@ The fight-start boundary (free — `form` is the same call site).
 Bottom-up, one PR per module, merged in order:
 
 ```
-play/clock  →  rulebooks/dnd5e  →  encounter  →  resolution  →  session  →  rpg-api
- (RoundEnded)   (topics, rename)   (Boundary,     (NewBoundary)  (announcer   (bump)
-                                    Announcer)                    seam)
+rulebooks/dnd5e  →  encounter  →  resolution  →  session  →  rpg-api
+   (rename only)     (Boundary,    (NewBoundary)  (announcer   (bump)
+                      Announcer)                   seam)
 ```
+
+**Five, not six.** `play/clock` drops out of the chain entirely with §3.1's
+ruling — the layer that was going to change first now changes not at all. If Q3
+is ruled against too, `rulebooks/dnd5e` drops out as well and the chain is four:
+the whole slice is then `encounter` + `resolution` + `session` + the bump.
