@@ -90,6 +90,30 @@ so AC silently falls back to base. **This is why Kirk's barbarian fought at AC 1
 Worse than a missing bonus: an errored fold drops *every* AC contributor, not just Unarmored
 Defense.
 
+### Not everything ambient is broken — the distinction that matters
+
+*Added 2026-08-26 during implementation, after the first pass got this wrong.*
+
+`ReactionReadiness` looked like a fifth dead registry — zero installs. It is not, and the difference
+is the sharpest thing in this whole diagnosis.
+
+It has two live production readers (`conditions/opportunity_attack.go:167`,
+`conditions/shield_spell.go:186`), and its absent-value behaviour is deliberate:
+
+> *"Not-ready is the safe default — reactions that haven't been explicitly readied must never fire
+> prompts, preventing accidental spell-slot burns."* — `gamectx/reaction_readiness.go:37-41`
+
+So Opportunity Attack and Shield are **not** firing today, and that is **correct** — no affordance
+to ready a reaction exists anywhere in the stack, so no reaction should be spending itself.
+
+- **Fail silently by accident** — absent means a rule that should fire doesn't. Nobody chose that,
+  nothing says so, and three of the four make it worse by erroring into a fold that swallows it.
+- **Fail closed by design** — absent means the safe answer, written down at the point of failure.
+
+An unwired feature with a correct default is not the same defect as an ambient dependency that
+silently disables a working rule. The lesson generalizes past gamectx: **the test for an ambient
+dependency is not "is it installed?" — it is "does its absent value say what the author meant?"**
+
 ### Plural
 
 Five installers in gamectx plus a sixth in `combat`, with its own context key and accessor and no

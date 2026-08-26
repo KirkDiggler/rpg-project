@@ -134,13 +134,35 @@ and structurally cannot serve monsters — which disqualifies keeping it.
 
 | delete | why |
 |---|---|
-| `gamectx.GameContext` / `CharacterRegistry` / `WithGameContext` | 0 installs; character-shaped; superseded by owner handle + `Cast` |
-| `gamectx.CombatantRegistry` / `WithCombatants` | 0 installs, 0 readers |
-| `gamectx.CombatState` / `WithCombatState` | 0 installs, 0 readers |
-| `gamectx.ReactionReadiness` / `WithReactionReadiness` | 0 installs, 0 readers |
-| `combat.CombatantLookup` / `WithCombatantLookup` | 0 installs, 0 readers; duplicate mechanism in a second package |
+| `gamectx.GameContext` / `CharacterRegistry` / `WithGameContext` / `RequireCharacters` | 0 installs; character-shaped, so it cannot serve monsters; superseded by owner handle + `Cast` |
+| `gamectx.CombatantRegistry` / `WithCombatants` | 0 installs, 0 readers of any kind |
+| `gamectx.CombatState` / `WithCombatState` | 0 installs, 0 readers of any kind |
+| `combat.CombatantLookup` / `WithCombatantLookup` / `GetCombatantFromContext` | 0 non-test readers; a duplicate mechanism in a second package with its own context key |
 
-`gamectx` goes from a bag of six to two things that are always there: the room and the cast.
+### `ReactionReadiness` stays — it is a different animal
+
+Corrected 2026-08-26, mid-implementation. The first pass counted *installs* and called this dead. It
+has **two real production readers** — `conditions/opportunity_attack.go:167` and
+`conditions/shield_spell.go:186` — and, decisively, its absent-value behaviour is **correct on
+purpose**:
+
+> *"Not-ready is the safe default — reactions that haven't been explicitly readied must never fire
+> prompts, preventing accidental spell-slot burns."* — `gamectx/reaction_readiness.go:37-41`
+
+That is the distinction worth holding onto:
+
+- The four registries above **fail silently by accident**. Absent means a rule that should fire
+  doesn't, and three of them make it worse by erroring into a fold that swallows the error.
+- Reaction readiness **fails closed by design**. Absent means nobody opted in to spend a reaction,
+  which is exactly right when no "ready a reaction" affordance exists anywhere in the stack.
+
+An unwired feature with a correct default is not the same defect as an ambient dependency that
+silently disables a rule. It belongs to the reactions work `resolution/doc.go` calls wave 5, not
+here. Its one stale detail — a doc comment naming rpg-api's long-deleted `StrikeResolver` as the
+installer — is worth fixing when that wave arrives, not now.
+
+`gamectx` goes from a bag of six to three: the room, the cast, and reaction readiness — the first
+two always installed, the third fail-closed until reactions are built.
 
 ---
 

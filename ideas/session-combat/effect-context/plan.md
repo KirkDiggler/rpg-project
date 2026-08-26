@@ -68,9 +68,10 @@ Readiness   PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   Ready=51997600  Shaping=9f972e92  B
 - Modify: `rulebooks/dnd5e/events/events.go:138` (owner contract)
 - Modify: `rulebooks/dnd5e/character/character.go` (expose `MarkDirty`)
 - Modify: `rulebooks/dnd5e/conditions/unarmored_defense.go:191`, `martial_arts.go:144,257`, `unarmored_movement.go:128`
-- Delete: `rulebooks/dnd5e/gamectx/gamectx.go`, `characters.go`, `combatant.go`, `combat.go`, `reaction_readiness.go`
+- Delete: `rulebooks/dnd5e/gamectx/gamectx.go`, `characters.go`, `combatant.go`, `combat.go`, `require.go`, `ability_scores.go`
+- **Keep:** `gamectx/room.go` and `gamectx/reaction_readiness.go` — readiness fails closed *by design* and has two live readers; see design.md
 - Modify: `rulebooks/dnd5e/combat/combatant.go:113-135` (drop `CombatantLookup`)
-- Modify: 14 test files under `character/`, `conditions/`, `gamectx/`, `integration/` (a 15th, `session/attack_test.go`, is in another module — Task 5)
+- Modify: 10 test files; delete 1 (`gamectx/gamectx_test.go`). A 12th, `session/attack_test.go`, is in another module — Task 5.
 
 **Interfaces:**
 - Consumes: `combat.Combatant`, `shared.AbilityScores`.
@@ -132,25 +133,31 @@ This is the behavioural fix. `Character.EffectiveAC` swallows fold errors at `ch
 
 - [ ] **Step 5: Delete the five dead installers**
 
-`gamectx.GameContext`/`CharacterRegistry`/`WithGameContext`/`RequireCharacters`/`Characters`, `CombatantRegistry`/`WithCombatants`, `CombatState`/`WithCombatState`, `ReactionReadiness`/`WithReactionReadiness`, and `combat.CombatantLookup`/`WithCombatantLookup`/`GetCombatantFromContext`.
+`gamectx.GameContext`/`CharacterRegistry`/`WithGameContext`/`RequireCharacters`/`Characters`, `CombatantRegistry`/`WithCombatants`, `CombatState`/`WithCombatState`, and `combat.CombatantLookup`/`WithCombatantLookup`/`GetCombatantFromContext`.
+
+**Do NOT delete `ReactionReadiness`.** It has two live readers (`conditions/opportunity_attack.go:167`, `conditions/shield_spell.go:186`) and its absent-value behaviour is correct on purpose — *"Not-ready is the safe default... preventing accidental spell-slot burns"* (`gamectx/reaction_readiness.go:37-41`). Fail-closed-by-design is not the same defect as fail-silent-by-accident.
 
 ```bash
-grep -rn "RequireCharacters\|WithGameContext\|NewGameContext\|WithCombatants\|WithCombatState\|WithReactionReadiness\|WithCombatantLookup\|GetCombatantFromContext" --include='*.go' . | grep -v _test.go
+grep -rn "RequireCharacters\|WithGameContext\|NewGameContext\|WithCombatants\|WithCombatState\|WithCombatantLookup\|GetCombatantFromContext" --include='*.go' . | grep -v _test.go
 ```
 
 Expected: no output. Keep `WithRoom`, `Room`, `RequireRoom`.
 
-- [ ] **Step 6: Rewrite the 14 test files that installed a registry production never installs**
+- [ ] **Step 6: Rewrite the 10 test files that installed a registry production never installs, and delete 1**
 
+**Modify (10):**
 ```
-character/integration_test.go            conditions/opportunity_attack_test.go
-conditions/fighting_style_dueling_test.go conditions/shield_spell_test.go
-conditions/fighting_style_protection_test.go conditions/unarmored_defense_test.go
-conditions/martial_arts_test.go          conditions/unarmored_movement_test.go
-gamectx/gamectx_test.go                  integration/barbarian_encounter_test.go
-gamectx/reaction_readiness_test.go       integration/fighter_encounter_test.go
-integration/monk_encounter_test.go       integration/rogue_encounter_test.go
+conditions/fighting_style_dueling_test.go      integration/barbarian_encounter_test.go
+conditions/fighting_style_protection_test.go   integration/fighter_encounter_test.go
+conditions/martial_arts_test.go                integration/monk_encounter_test.go
+conditions/unarmored_defense_test.go           integration/rogue_encounter_test.go
+conditions/unarmored_movement_test.go          character/integration_test.go
 ```
+**Delete (1):** `gamectx/gamectx_test.go` — its subjects are gone.
+
+**Leave alone (3):** `conditions/opportunity_attack_test.go`, `conditions/shield_spell_test.go`, `gamectx/reaction_readiness_test.go` — these use only reaction readiness, which stays.
+
+`character/integration_test.go` and `integration/barbarian_encounter_test.go` touch only `combat.WithCombatantLookup`, not gamectx.
 
 **These are the tests that hid the bug.** Every one of them installs a registry by hand, which is why Unarmored Defense passed in CI and failed in the game. Replace the hand-installed registry with the owner handle. `gamectx/gamectx_test.go` and `reaction_readiness_test.go` go away with their subjects.
 
