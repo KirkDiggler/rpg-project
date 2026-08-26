@@ -1697,11 +1697,28 @@ git commit -m "concept(models): add fighter equipped-weapon lab (#821)"
 - Create: `src/concepts/weapon-attachment/CONTRACT.md`
 - Create: `docs/evidence/821-weapon-attachment/README.md`
 - Create after viewing: screenshots under `docs/evidence/821-weapon-attachment/`
-- Modify only if observed evidence requires it: provisional values in `weaponAttachmentExperiment.ts` and their exact tests.
+- Modify from the pre-walk evidence gate: `src/concepts/weapon-attachment/WeaponAttachmentPreview.tsx` and `.test.tsx`.
+- Modify only if later observed evidence requires it: provisional values in `weaponAttachmentExperiment.ts` and their exact tests.
 
 **Interfaces:**
 - Consumes: actual synced private GLBs, live Concepts deep link, gated verdict JSON.
 - Produces: viewed visual verdict and exact provider findings; no provider manifest or production wiring.
+
+- [ ] **Step 0: Correct the preview framing found by the first actual-browser probe**
+
+The 2026-08-26 pre-walk screenshot showed the browser using the Canvas default height (~150px), making every model too small and putting the scaled fighter's hand below the pre-scale close-camera target. This is a Concept defect, not an asset/socket verdict.
+
+TDD requirements:
+
+- wrap `Canvas` in a `div` with `data-testid="weapon-attachment-preview"`, width/height `100%`, and `minHeight: 520`;
+- change orbit camera position to `[2.4, 1.8, 3.1]` and target to `[0, 0.7, 0]`;
+- change close camera position to `[-1.2, 1.22, 0.85]` and target to the measured post-`SYNTY_SCALE` right-hand region `[-0.6, 1.02, -0.025]`;
+- retain the tactical camera's real shared gameplay constants unchanged;
+- add focused test assertions for the explicit preview height and corrected close/orbit camera positions;
+- run preview, concept, and shared character focused tests plus typecheck;
+- commit as `fix(concepts): make weapon attachment views judgeable (#821)`.
+
+Do not record screenshots or a visual verdict until Kirk sees the corrected live browser path.
 
 - [ ] **Step 1: Start a clean Concepts server with exact private assets**
 
