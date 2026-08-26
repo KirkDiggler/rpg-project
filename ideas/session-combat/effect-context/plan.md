@@ -305,7 +305,20 @@ The paragraph beginning *"No game context is installed"* and the line *"The othe
 
 ---
 
-### Task 5: Prove it — rpg-toolkit#1253 (`rulebooks/dnd5e/session`)
+### Task 5: Prove it — ✅ **DONE** · rpg-toolkit#1253 → [toolkit#1257](https://github.com/KirkDiggler/rpg-toolkit/pull/1257)
+
+**Landed 2026-08-27.** All gates green.
+
+**What changed from the plan:**
+- The bump was **three versions**, not one — session had missed v0.100 and v0.101 too — and it needed
+  **no source changes at all**.
+- `session/attack_test.go` did **not** use a deleted registry. Every `gamectx` mention in it is prose, in
+  comments explaining that no GameContext is installed on this stack. The opening 15-file sweep counted
+  comments; that is the second time this slice mis-scoped itself that way (the first being
+  `ReactionReadiness`).
+- With the AC proof already landed in resolution, session's test is the **wire-level** one:
+  `Manager.Attack` against an unarmoured barbarian reports `AttackOutput.Against == 14`. `Against` is what
+  crosses to rpg-api and what a player reads on the dock.
 
 **Files:**
 - Modify: `rulebooks/dnd5e/session/go.mod`
@@ -316,21 +329,21 @@ The paragraph beginning *"No game context is installed"* and the line *"The othe
 - Consumes: the `resolution` and `dnd5e` tags from Tasks 3 and 4.
 - Produces: the only proof that reaches a real fight.
 
-- [ ] **Step 1: Bump both dependencies and fix the one stale test**
+- [x] **Step 1: Bump both dependencies and fix the one stale test**
 
 `session/attack_test.go` installs a deleted registry. `session` is where `resolution.Resolve` is actually called, from `attack.go:262` (player attacks) and `striker.go:114` (monster strikes).
 
-- [ ] **Step 2: The test that would have caught this**
+- [x] **Step 2: The test that would have caught this**
 
 A barbarian with Unarmored Defense resolves a real attack **through `Manager.Attack`**, and the target AC used is 10+DEX+CON — not 10+DEX.
 
 This is the whole point of the slice. Every existing test of Unarmored Defense passes today while the rule does not work in the game, because they install a registry production never installs. **A unit test on the condition cannot prove this; only a test that goes through the seam can.**
 
-- [ ] **Step 3: A monk and a rogue too**
+- [x] **Step 3: A monk and a rogue too**
 
 Martial Arts through a real unarmed strike. Sneak Attack firing on an enemy-of-the-target adjacency and not firing on an ally-of-the-target adjacency — under a Kind-based `IsHostile` these are still the two-faction answers, so the test pins **the question being asked** and keeps passing when allegiance lands.
 
-- [ ] **Step 4: Gates and PR.** Same as Task 2.
+- [x] **Step 4: Gates and PR.** Same as Task 2.
 
 ---
 
@@ -341,3 +354,51 @@ Martial Arts through a real unarmed strike. Sneak Attack firing on an enemy-of-t
 - [ ] **Step 3: Close rpg-project#287 and rpg-toolkit#1251/#1252/#1253 and set it Done on Project 19.** Closing keywords do not fire on `dev`-based repos but **do** fire on toolkit `main` merges — check rather than assume.
 - [ ] **Step 4: Merge design PR #286** once the slice is delivered, per the convention that a design PR stays open through implementation.
 - [ ] **Step 5: Record what moved.** `brainstorm.md`'s parked table is the next slice's agenda — the clock is unblocked the moment dirty lands, and it is the natural successor.
+
+---
+
+### Task 7: Put the fix in the running game — rpg-api
+
+**Added 2026-08-27, after Kirk asked whether the plan was complete. It was not, and finishing it as
+written would not have been either.**
+
+The slice was scoped "toolkit-only — no protos, no rpg-api, no web", which was right for the design and
+wrong for the acceptance. Task 6 says *"play a barbarian, read the AC on the dock, it should be 14"* — and
+that is unreachable from inside the scope, because **rpg-api pins the toolkit**. Every toolkit PR can be
+merged, every tag cut, and the barbarian still fights at 11.
+
+That is the same shape as the bug this whole slice is about: a green suite over a configuration nobody
+runs. So the bump is a task, not a footnote.
+
+**Files:**
+- Modify: `rpg-api/go.mod`, `go.sum`
+
+**Interfaces:**
+- Consumes: the tags Tasks 2–5 produced.
+- Produces: a running game in which Unarmored Defense applies.
+
+- [ ] **Step 1: Establish what is pinned now**
+
+```bash
+cd /home/kirk/game-dev/rpg-api && git fetch origin
+git show origin/dev:go.mod | grep -E "rulebooks/dnd5e|dnd5e/session|dnd5e/resolution|dnd5e/encounter"
+```
+
+At the time of writing: `dnd5e v0.100.0`, `session v0.30.0`, `resolution v0.13.0` (indirect),
+`encounter v0.35.0` — all pre-fix.
+
+- [ ] **Step 2: Branch from `origin/dev`** (rpg-api is a dev-based repo; closing keywords are inert there,
+  so close by hand) and bump `dnd5e`, `session` and `resolution` to the tags Task 5's merge produced.
+  Use `GOPROXY=direct` if the nested tag has not reached the proxy — it lagged on `resolution/v0.14.0`.
+
+- [ ] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the first consumer to take
+  all four toolkit PRs at once; anything the toolkit's own suites could not see shows up here.
+
+- [ ] **Step 4: Confirm in a real run.** Start the local stack, play a barbarian, read the AC on the dock.
+  **14, not 11.** This is the acceptance for the whole slice, and the first moment any of it is true for a
+  player rather than for a test.
+
+- [ ] **Step 5: Close rpg-api#842** — "Equipping an item silently strips Unarmored Defense from a
+  character's stored AC" — which is the issue Kirk's own tomb run produced. Note on it that the stored-AC
+  half was already fixed by rpg-api#845's strict Load+Attach, and that this bump fixes the computed half;
+  the backfill question (characters already stored with a degraded number) is separate and still open.
