@@ -432,6 +432,34 @@ Each repo has its own CLAUDE.md for repo-specific patterns:
 - **Toolkit types are canonical** - API stores them directly, one conversion point at handler/proto boundary
 - **Outside-in development** - Start at handler, work inward
 - **Breaking proto changes get a new version, not a break** - see below
+- **We run exclusively on hex** - square and gridless stay supported, nothing ships on them
+
+## The grid is hex
+
+`encounter/compilefield.go` compiles an `AxialHexGrid` and nothing else, and `dungeonspec`
+validates against one. **That is the only grid the product ever builds.** `tools/spatial`
+also implements square (Chebyshev) and gridless (Euclidean) and they should keep working —
+the toolkit is a library and somebody else's game may want them — but nothing of ours does.
+
+**So a positional rule proven on a square grid is proven on a configuration we do not ship.**
+Build the grid the encounter builds:
+
+```go
+spatial.NewAxialHexGrid(spatial.AxialHexGridConfig{SpanWidth: 1e6, SpanHeight: 1e6})
+```
+
+Why it matters more than it sounds: hex and square both report **integral** distances, so a
+whole class of mistake is invisible on either. rpg-toolkit#1255 shipped a "within 5 feet"
+radius of 1.5 cells — "widened to include diagonals", a correction hex and square do not need
+— and nothing on either grid ever falls between 1 and 1.5, so it read as correct everywhere
+anyone looked. On a gridless room it was 7.5 feet. The constant had been wrong in
+`SneakAttackCondition` long enough that `ProneCondition`'s comment cited it as the shared
+convention while using a different value itself.
+
+Hex has already cost us twice for related reasons — rpg-toolkit#1141 (offset schemes) and
+#1150 (axial basis) — both cases where a conversion applied identically in both directions
+passed every round-trip test. Prove positional rules on the grid we run, and prefer a test
+that computes an expected value over one that echoes the code's own arithmetic back.
 
 ## Proto versioning — when to bump instead of break
 
