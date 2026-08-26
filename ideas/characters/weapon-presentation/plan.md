@@ -1714,7 +1714,8 @@ TDD requirements:
 - change orbit camera position to `[2.4, 1.8, 3.1]` and target to `[0, 0.7, 0]`;
 - change close camera position to `[-1.2, 1.22, 0.85]` and target to the measured post-`SYNTY_SCALE` right-hand region `[-0.6, 1.02, -0.025]`;
 - retain the tactical camera's real shared gameplay constants unchanged;
-- add focused test assertions for the explicit preview height and corrected close/orbit camera positions;
+- compute close/orbit/tactical camera orientation declaratively and pass a quaternion to each camera; effect-only `lookAt()` is invalid under `frameloop="demand"` because it mutates after the first frame without invalidating;
+- add focused test assertions for the explicit preview height, corrected close/orbit positions, and non-identity declarative camera quaternions;
 - run preview, concept, and shared character focused tests plus typecheck;
 - commit as `fix(concepts): make weapon attachment views judgeable (#821)`.
 
