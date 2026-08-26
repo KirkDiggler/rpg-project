@@ -81,7 +81,8 @@ Turn-emitted milestones carry the clock's Round at the moment of emission."*
 
 **And the encounter throws every one of them away.** There is not a single
 mention of `Milestone` in the whole `rulebooks/dnd5e/encounter` package outside
-tests. `clocks.go:461` is literally:
+tests. `clocks.go:461` — inside `driveOneMonsterTurn`, where a driven monster's turn
+actually ends — is literally:
 
 ```go
 return seq, out.RoundWrapped, nil

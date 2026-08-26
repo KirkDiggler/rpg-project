@@ -174,8 +174,10 @@ type Boundary struct {
 
 Changes:
 
-- `endOneTurn` (`clocks.go:461`) stops returning `out.RoundWrapped` alone and
-  carries `out.Milestones` translated to `[]Boundary`.
+- `driveOneMonsterTurn` (`clocks.go:461`) stops returning `out.RoundWrapped`
+  alone and carries `out.Milestones` translated to `[]Boundary`. **This is the
+  driven monster's own turn ending** — the path §2 is about.
+- `EndTurn` (`clocks.go:1266`) does the same for the caller's own turn end.
 - `driveMonsterTurns` announces each advance **before** driving the member the
   clock landed on.
 - `EndTurn` announces its own advance, then drives.
