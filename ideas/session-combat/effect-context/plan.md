@@ -234,7 +234,25 @@ Same gates as Task 2. This merges before `resolution` bumps.
 
 ---
 
-### Task 4: Answer the question — rpg-toolkit#1252 (`rulebooks/dnd5e/resolution`)
+### Task 4: Answer the question — ✅ **DONE** · rpg-toolkit#1252 → [toolkit#1256](https://github.com/KirkDiggler/rpg-toolkit/pull/1256)
+
+**Landed 2026-08-26.** All gates green; Copilot round requested, answered and closed (1/1).
+
+**What changed from the plan — and it changes Task 5:**
+- **The proving test landed HERE, not in session.** The plan reasoned nothing below session could drive
+  `Resolve`. But this package *is* resolution, and `effective_ac_test.go` was already proving the Defense
+  fighting style end to end. A barbarian with Unarmored Defense is now struck at **AC 14 through a real
+  `Resolve`** (10 + DEX + CON), 12 without the feature, and the wolf's +4 on an 8 lands on one and misses
+  the other — so it decides the hit, not just the report.
+- **Task 5 shrinks accordingly.** Session no longer carries the AC proof; its job is the session verbs and
+  the stale `attack_test.go` registry reference.
+- **The dirty harness became an isolating test, not a generic diff.** The plan wanted a wrapper that
+  snapshots every participant before and after. That is not expressible at this seam: R2 returns only
+  *dirty* sheets, so the after-state of a clean participant is deliberately unobservable. Instead a raging
+  hero **swings** — taking no damage and paying no `Cost` — so both accidents that were marking sheets on a
+  condition's behalf are absent by construction, and the assertion reads the flag out of the blob that gets
+  stored. If a generic diff is ever wanted it needs a new observation point, not a test.
+- `doc.go`'s "No game context is installed" paragraph was **rewritten**, not patched.
 
 **Files:**
 - Create: `rulebooks/dnd5e/resolution/cast.go`
@@ -246,7 +264,7 @@ Same gates as Task 2. This merges before `resolution` bumps.
 - Consumes: `resolution.Participants`, the tag Task 3 produced.
 - Produces: the one and only `gamectx.Cast` implementation, installed unconditionally.
 
-- [ ] **Step 1: Bump to the tag the dnd5e merges produced**
+- [x] **Step 1: Bump to the tag the dnd5e merges produced**
 
 ```bash
 go get github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e@<tag> && go mod tidy
@@ -254,24 +272,24 @@ go get github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e@<tag> && go mod tidy
 
 Expected: `resolution/go.mod` names the new tag. Do not use a pseudo-version.
 
-- [ ] **Step 2: Implement `Cast` over `Participants`**
+- [x] **Step 2: Implement `Cast` over `Participants`**
 
 `Member` and `Members` are direct reads — resolution already holds every participant (R3, *"pass everyone in"*). `Members` returns sorted order, matching R4's determinism requirement so a suspension can be resumed into the same world it left.
 
 `IsHostile` v1 is *"different `MemberKind`"*. **This is still a lie, and it is deliberately confined to one function** — the whole reason `Cast` exposes questions rather than fields. When allegiance lands, only this body changes. Say so in the doc comment, and name `brainstorm.md` as the reason.
 
-- [ ] **Step 3: Install it beside the room, unconditionally**
+- [x] **Step 3: Install it beside the room, unconditionally**
 
 ```go
 ctx = gamectx.WithRoom(ctx, room)
 ctx = gamectx.WithCast(ctx, castOf(cast))
 ```
 
-- [ ] **Step 4: Pin it structurally**
+- [x] **Step 4: Pin it structurally**
 
 Mirror `TestNoCodePathProducesARoomlessInteraction` with `TestNoCodePathProducesACastlessInteraction`. Structural, not by example — an optional ambient dependency is exactly the defect this slice removes, and a test that only covers the happy path re-creates it.
 
-- [ ] **Step 5: The dirty harness — in tests only**
+- [x] **Step 5: The dirty harness — in tests only**
 
 Ruled by Kirk 2026-08-26: production marks dirty by discipline; the diff belongs in a test.
 
@@ -279,11 +297,11 @@ Build a helper that wraps `Resolve`, snapshots every participant's `ToData()` be
 
 Watch for false positives: `ToData()` must be byte-stable for unchanged state. Slices built from map iteration, or any value minted during serialization, will make every participant look dirty forever.
 
-- [ ] **Step 6: Correct `doc.go`**
+- [x] **Step 6: Correct `doc.go`**
 
 The paragraph beginning *"No game context is installed"* and the line *"The other four registries stay empty until a predicate that reads one arrives with its own consumer"* are both false after this task. Replace with what is now true: two installers, both mandatory, and the four speculative ones deleted. This paragraph is the reason the drift went unnoticed — leaving it stale would repeat that.
 
-- [ ] **Step 7: Gates and PR.** Same as Task 2.
+- [x] **Step 7: Gates and PR.** Same as Task 2.
 
 ---
 
