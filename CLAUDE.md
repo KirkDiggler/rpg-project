@@ -272,6 +272,73 @@ version to pin. Two ways through:
   `rpg-api/docs/how-to/local-toolkit-override.md`. Only ever override ONE module; needing
   several at once is the signal that the wave was sliced too thin.
 
+### Reviews — Copilot's round, and answering it
+
+**Not every PR gets one.** Request Copilot for feature PRs and rules/engine changes — work
+where a second reader can catch a real thing. Skip it for doc-only PRs, pin bumps, and small
+mechanical fixes (Kirk, 2026-08-22, on a converter null→{} change: *"i dont need copilot
+review for that change"*). The quota is monthly and shared, so a round spent on a typo fix
+is a round some engine PR does not get.
+
+When a PR does get one, it gets **exactly one**, requested when the PR opens.
+
+**Requesting it.** GraphQL `requestReviews` with `botIds: ["BOT_kgDOCnlnWA"]`, then verify
+by reading the PR node back — `gh pr view` does not show bot reviewers, so it will tell you
+nothing landed when it did, or nothing when it didn't. Verify by read-back, never by the
+mutation's own response. Same rule as board writes.
+
+**Answering it.** A review is advice from something that has read the diff and not the
+conversation. It is often right, sometimes right about the wrong reason, and occasionally
+wrong. All three deserve a reply.
+
+1. **Read every finding before fixing any of them.** Findings cluster; two comments are
+   often one mistake seen twice, and fixing them separately produces two different fixes.
+2. **Apply what is right, on the same branch.** No follow-up PR, no "address in a later
+   slice" for something a reviewer could see from the diff.
+3. **Look past the finding to its shape.** If a bug is real in one place, check whether the
+   same shape exists somewhere the reviewer did not look. That is the finding's real value.
+4. **Decline in writing when you disagree**, with the reason, in the thread. A finding you
+   silently ignored is indistinguishable from one you missed.
+5. **Reply in every thread**, naming the commit that addressed it and stating what changed.
+   The thread is the record of why the code looks the way it does.
+6. **Never re-request.** Copilot's footer invites another round; decline the invitation.
+   Re-run the gates instead — build, vet, test, lint — and let Kirk's review be the second
+   pass. Kirk merges.
+
+**Requesting a review does not close it.** This is the failure mode, and writing the rule
+down does not prevent it: you request the review, report the PR in the same breath, and move
+on — and the review lands four minutes later, addressed to nobody. It has happened twice
+after the rule was already written, once on the very next PR after writing it.
+
+So the mechanism, not the intention: **never report a PR in the same turn you requested its
+review.** Come back for it. Before calling anything ready, run the count and make it match:
+
+```bash
+R=repos/OWNER/REPO/pulls/N/comments
+echo "open threads:  $(gh api $R --jq '[.[]|select(.in_reply_to_id==null)]|length')"
+echo "with a reply:  $(gh api $R --jq '[.[]|select(.in_reply_to_id!=null)]|length')"
+```
+
+Unequal means the round is open, whatever the PR page looks like. A review nobody answered
+is worse than one nobody requested — it cost the quota and produced nothing.
+
+**What a good round looks like** — rpg-toolkit#1254, 2026-08-26, three findings, all valid:
+
+- One was a real bug the author had not seen: a condition marked its owner dirty whether or
+  not its flag had actually changed, which would have flagged every rogue dirty at the end
+  of every round once turn boundaries become interactions. Fixed, **and the same guard
+  applied to a second condition the reviewer had not flagged** — point 3 earning its place.
+- Two said the package documentation asserted an invariant that did not hold yet: it claimed
+  resolution installs the cast on every path, when no call site existed. Both correct, and
+  pointedly so — **documenting an invariant before it holds is precisely how the registry
+  that PR was deleting came to have five installers and one install.** A reviewer that has
+  not read the conversation can still see that.
+
+The cost of the alternative is the bug that PR fixed. A test asserted the broken behaviour
+and a comment above it called that behaviour an "API WIRING REQUIREMENT" — a requirement
+nothing in the codebase had ever met. Nobody was lying; the note was written when it was
+almost true and never revisited. Review comments are one of the few places that gets caught.
+
 ## Current Chapter
 
 **Chapter 2: Combat Verbs** (board #13) — bring the v1alpha2 `EncounterService` verbs to life one
@@ -365,6 +432,34 @@ Each repo has its own CLAUDE.md for repo-specific patterns:
 - **Toolkit types are canonical** - API stores them directly, one conversion point at handler/proto boundary
 - **Outside-in development** - Start at handler, work inward
 - **Breaking proto changes get a new version, not a break** - see below
+- **We run exclusively on hex** - square and gridless stay supported, nothing ships on them
+
+## The grid is hex
+
+`encounter/compilefield.go` compiles an `AxialHexGrid` and nothing else, and `dungeonspec`
+validates against one. **That is the only grid the product ever builds.** `tools/spatial`
+also implements square (Chebyshev) and gridless (Euclidean) and they should keep working —
+the toolkit is a library and somebody else's game may want them — but nothing of ours does.
+
+**So a positional rule proven on a square grid is proven on a configuration we do not ship.**
+Build the grid the encounter builds:
+
+```go
+spatial.NewAxialHexGrid(spatial.AxialHexGridConfig{SpanWidth: 1e6, SpanHeight: 1e6})
+```
+
+Why it matters more than it sounds: hex and square both report **integral** distances, so a
+whole class of mistake is invisible on either. rpg-toolkit#1255 shipped a "within 5 feet"
+radius of 1.5 cells — "widened to include diagonals", a correction hex and square do not need
+— and nothing on either grid ever falls between 1 and 1.5, so it read as correct everywhere
+anyone looked. On a gridless room it was 7.5 feet. The constant had been wrong in
+`SneakAttackCondition` long enough that `ProneCondition`'s comment cited it as the shared
+convention while using a different value itself.
+
+Hex has already cost us twice for related reasons — rpg-toolkit#1141 (offset schemes) and
+#1150 (axial basis) — both cases where a conversion applied identically in both directions
+passed every round-trip test. Prove positional rules on the grid we run, and prefer a test
+that computes an expected value over one that echoes the code's own arithmetic back.
 
 ## Proto versioning — when to bump instead of break
 
