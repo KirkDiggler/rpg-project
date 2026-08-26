@@ -357,7 +357,19 @@ Martial Arts through a real unarmed strike. Sneak Attack firing on an enemy-of-t
 
 ---
 
-### Task 7: Put the fix in the running game — rpg-api
+### Task 7: Put the fix in the running game — rpg-api#842 → [rpg-api#846](https://github.com/KirkDiggler/rpg-api/pull/846)
+
+**Steps 1–3 done 2026-08-27.** `dnd5e v0.100.0 → v0.102.0`, `session v0.30.0 → v0.31.0`,
+`resolution v0.13.0 → v0.14.0`. Builds, vets, 21 test packages and lint all clean with **no source
+changes** — rpg-api is the first consumer to take all four toolkit PRs at once, so this is where
+anything the toolkit's own suites could not see would have surfaced. Nothing did.
+
+**No backfill is needed for what a player sees.** The dock's number is computed, not stored:
+`character/equipment_display.go` builds `ACTotal` from `EffectiveAC(ctx)`. A character already
+persisted with a degraded `armor_class` — Standre included — reads correctly the moment this merges.
+The stored field is a separate question and stays open on #842.
+
+**Steps 4–5 remain: the playtest, and closing #842.**
 
 **Added 2026-08-27, after Kirk asked whether the plan was complete. It was not, and finishing it as
 written would not have been either.**
@@ -377,7 +389,7 @@ runs. So the bump is a task, not a footnote.
 - Consumes: the tags Tasks 2–5 produced.
 - Produces: a running game in which Unarmored Defense applies.
 
-- [ ] **Step 1: Establish what is pinned now**
+- [x] **Step 1: Establish what is pinned now**
 
 ```bash
 cd /home/kirk/game-dev/rpg-api && git fetch origin
@@ -387,11 +399,11 @@ git show origin/dev:go.mod | grep -E "rulebooks/dnd5e|dnd5e/session|dnd5e/resolu
 At the time of writing: `dnd5e v0.100.0`, `session v0.30.0`, `resolution v0.13.0` (indirect),
 `encounter v0.35.0` — all pre-fix.
 
-- [ ] **Step 2: Branch from `origin/dev`** (rpg-api is a dev-based repo; closing keywords are inert there,
+- [x] **Step 2: Branch from `origin/dev`** (rpg-api is a dev-based repo; closing keywords are inert there,
   so close by hand) and bump `dnd5e`, `session` and `resolution` to the tags Task 5's merge produced.
   Use `GOPROXY=direct` if the nested tag has not reached the proxy — it lagged on `resolution/v0.14.0`.
 
-- [ ] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the first consumer to take
+- [x] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the first consumer to take
   all four toolkit PRs at once; anything the toolkit's own suites could not see shows up here.
 
 - [ ] **Step 4: Confirm in a real run.** Start the local stack, play a barbarian, read the AC on the dock.
