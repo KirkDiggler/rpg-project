@@ -1710,7 +1710,7 @@ The 2026-08-26 pre-walk screenshot showed the browser using the Canvas default h
 
 TDD requirements:
 
-- wrap `Canvas` in a `div` with `data-testid="weapon-attachment-preview"`, width/height `100%`, and `minHeight: 520`;
+- wrap `Canvas` in a `div` with `data-testid="weapon-attachment-preview"`, width `100%`, and a definite `height: 520` plus `minHeight: 520`; percentage child height does not resolve from `min-height` alone (the live DOM stayed 878×150 until the parent had definite height);
 - change orbit camera position to `[2.4, 1.8, 3.1]` and target to `[0, 0.7, 0]`;
 - change close camera position to `[-1.2, 1.22, 0.85]` and target to the measured post-`SYNTY_SCALE` right-hand region `[-0.6, 1.02, -0.025]`;
 - retain the tactical camera's real shared gameplay constants unchanged;
