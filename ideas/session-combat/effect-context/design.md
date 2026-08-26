@@ -112,8 +112,19 @@ type Cast interface {
 
     // IsHostile answers whether b is an enemy of a, right now.
     IsHostile(a, b string) (hostile, known bool)
+
+    // IsAllied answers whether b is on a's side, right now.
+    IsAllied(a, b string) (allied, known bool)
 }
 ```
+
+`IsAllied` was added during Task 3 (toolkit#1255), brought by the consumer that forced it —
+Pack Tactics needs *"one of the attacker's **allies**"*, and encoding that as `!IsHostile`
+would be the rule doing its own relational reasoning, which is the thing this seam exists to
+stop. **They are not complements.** Both answer "same `MemberKind`" today, so they behave as
+complements right now; the moment a third faction can be *neutral*, "not my enemy" would start
+counting bystanders as packmates. Sneak Attack asks the first question, Pack Tactics the
+second, and each asks the one it means.
 
 `IsHostile` is implemented in v1 as *"different `MemberKind`"*. **That is still a lie** — but it is
 a lie in **one function** instead of smeared across four rules. When allegiance arrives, that one

@@ -187,7 +187,18 @@ Open one PR against `origin/main`, ready for review (never draft), one Copilot r
 
 ---
 
-### Task 3: The two consumers — rpg-toolkit#1251, PR B (`rulebooks/dnd5e`)
+### Task 3: The two consumers — ✅ **DONE** · rpg-toolkit#1251, PR B → [toolkit#1255](https://github.com/KirkDiggler/rpg-toolkit/pull/1255)
+
+**Landed 2026-08-26.** 515 insertions, 100 deletions; all gates green; one Copilot round requested and verified.
+
+**What changed from the plan:**
+- **`Cast` gained `IsAllied`.** Pack Tactics needs "one of the attacker's *allies*", and `!IsHostile` is not
+  that once neutral exists. Brought by its consumer, per doc.go's own rule about not building ahead of readers.
+- `checkSneakAttackConditions` also returned an **error** into the damage fold when it could not read the
+  room — the same fold-poisoning shape #1254 fixed on the AC chain. Both predicates now return plain bools.
+- `TestPackTacticsGrantsAdvantage` was **the second test in this slice found asserting nothing it promised** —
+  it checked only that the attacker and target IDs survived the fold, under a comment conceding the real
+  check was the game server's job. It now asserts advantage.
 
 **Files:**
 - Modify: `rulebooks/dnd5e/conditions/sneak_attack.go:236-266`
@@ -197,7 +208,7 @@ Open one PR against `origin/main`, ready for review (never draft), one Copilot r
 - Consumes: `gamectx.Cast`, `gamectx.Room`.
 - Produces: two predicates that ask relational questions instead of guessing from entity type.
 
-- [ ] **Step 1: Sneak Attack asks `IsHostile` from the target's perspective**
+- [x] **Step 1: Sneak Attack asks `IsHostile` from the target's perspective**
 
 `sneak_attack.go:257` currently reads:
 
@@ -209,13 +220,13 @@ RAW is *"another **enemy of the target** is within 5 feet of it."* Ask `cast.IsH
 
 `known=false` means no adjacency bonus. Never an error.
 
-- [ ] **Step 2: Implement Pack Tactics**
+- [x] **Step 2: Implement Pack Tactics**
 
 `pack_tactics.go:128` is a stub: *"TODO: In full implementation, check if ally is adjacent to target."* Positions come from `gamectx.Room` (already installed and read by four predicates); allyness comes from `cast.IsHostile(attackerID, otherID) == false`.
 
 The rule's *"and not incapacitated"* clause **cannot be expressed** — Incapacitated is one of the 13 missing standard conditions. Implement the adjacency half and leave a named TODO pointing at the conditions catalogue; do not invent a substitute.
 
-- [ ] **Step 3: Unit tests against a fake cast, then gates and PR**
+- [x] **Step 3: Unit tests against a fake cast, then gates and PR**
 
 Both predicates are tested in-module with a hand-built `gamectx.Cast` fake — that is legitimate here because the fake stands in for a seam that *is* installed in production, unlike the registries being deleted. The production install is proven in Task 5.
 
