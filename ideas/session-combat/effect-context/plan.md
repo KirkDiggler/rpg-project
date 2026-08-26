@@ -70,7 +70,7 @@ Readiness   PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   Ready=51997600  Shaping=9f972e92  B
 - Modify: `rulebooks/dnd5e/conditions/unarmored_defense.go:191`, `martial_arts.go:144,257`, `unarmored_movement.go:128`
 - Delete: `rulebooks/dnd5e/gamectx/gamectx.go`, `characters.go`, `combatant.go`, `combat.go`, `reaction_readiness.go`
 - Modify: `rulebooks/dnd5e/combat/combatant.go:113-135` (drop `CombatantLookup`)
-- Modify: 13 test files under `character/`, `conditions/`, `gamectx/`, `integration/`
+- Modify: 14 test files under `character/`, `conditions/`, `gamectx/`, `integration/` (a 15th, `session/attack_test.go`, is in another module — Task 5)
 
 **Interfaces:**
 - Consumes: `combat.Combatant`, `shared.AbilityScores`.
@@ -140,7 +140,7 @@ grep -rn "RequireCharacters\|WithGameContext\|NewGameContext\|WithCombatants\|Wi
 
 Expected: no output. Keep `WithRoom`, `Room`, `RequireRoom`.
 
-- [ ] **Step 6: Rewrite the 13 test files that installed a registry production never installs**
+- [ ] **Step 6: Rewrite the 14 test files that installed a registry production never installs**
 
 ```
 character/integration_test.go            conditions/opportunity_attack_test.go
