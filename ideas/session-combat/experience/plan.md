@@ -1,6 +1,6 @@
 # Session Combat Experience Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Checked boxes are delivered history; the one unchecked box is Kirk's final merge/closure gate.
 
 **Goal:** Promote the approved session-combat concept into the production session route with server-authored Attack/Move/End Turn declarations, owner-private character status, authoritative dice presentation, readable Story, exhaustive developer Debug, and no client-side rules.
 
@@ -9,6 +9,10 @@
 **Tech Stack:** Protocol Buffers/Buf, Go 1.x modules (`rpg-toolkit`, `rpg-api`), Connect/gRPC, React 19, TypeScript 5.8, Vitest/Testing Library, Three.js/React Three Fiber, Playwright visual verification.
 
 **Spec:** `ideas/session-combat/experience/design.md`
+
+**Execution status:** Delivered through all four implementation repositories. Tasks 1–14 and the pre-merge portions of Task 15 are complete; only Kirk's merge of rpg-project PR #271 and subsequent closure/Done transition of #270 remain pending.
+
+**Historical note:** Checked steps record delivered outcomes. Where execution safely differed from the original command sequence, the amendment is stated at that step rather than rewriting the approved architecture or pretending an unused path ran.
 
 ## Global Constraints
 
@@ -79,7 +83,9 @@
 - Consumes: approved design issue `rpg-project#270`, design PR `rpg-project#271`, parent journey `rpg-project#253`.
 - Produces: four issue URLs and numeric issue IDs exported as `PROTO_ISSUE`, `TOOLKIT_ISSUE`, `API_ISSUE`, `WEB_ISSUE` for every later branch name.
 
-- [ ] **Step 1: Create exact issue bodies with the approved boundaries**
+Execution amendment: the human-directed one-repository-at-a-time sequence staged issue, board, and worktree setup at each repository's entry rather than activating all four slices at once. All four eventual slices completed with the intended fields and bases.
+
+- [x] **Step 1: Create exact issue bodies with the approved boundaries**
 
 Create four `/tmp/session-combat-*.md` bodies. Each body must reference `rpg-project#270`, parent journey `#253`, the owning repository scope below, the no-magic rule, and the Team signature derived from its board Team:
 
@@ -99,7 +105,7 @@ web: production promotion + recovery/presentation only
 
 Every issue's Done-when links to the exact repository gate in Tasks 2–13 and states “Kirk alone merges.”
 
-- [ ] **Step 2: Create issues and capture their numbers**
+- [x] **Step 2: Create issues and capture their numbers**
 
 Run:
 
@@ -118,7 +124,7 @@ printf '%s\n' "$PROTO_URL" "$TOOLKIT_URL" "$API_URL" "$WEB_URL"
 
 Expected: four open issues assigned to `KirkDiggler`.
 
-- [ ] **Step 3: Parent and board every slice**
+- [x] **Step 3: Parent and board every slice**
 
 Use the current Project 19 IDs already verified by design #270:
 
@@ -167,7 +173,7 @@ gh project item-list 19 --owner KirkDiggler --limit 1000 --format json \
 
 Expected: exactly four complete items; no blank Team/Area/Kind/Initiative/Readiness.
 
-- [ ] **Step 4: Create isolated worktrees from correct remote bases**
+- [x] **Step 4: Create isolated worktrees from correct remote bases**
 
 Use `superpowers:using-git-worktrees`. Fetch first. Use these external paths so no unignored in-repository worktree directory can enter a diff:
 
@@ -221,7 +227,7 @@ Expected: all baseline commands exit 0. Stop and report any pre-existing failure
 - Consumes: exact wire sketch and literal values from `ideas/session-combat/experience/design.md`.
 - Produces: `Declaration.attack: AttackRef`, nested `TargetCandidate`, `TargetKind`, selector-bearing requests, full-ref `AttackRef`, and flattened `CharacterData` fields consumed by Tasks 4–13.
 
-- [ ] **Step 1: Reshape the session declaration vocabulary**
+- [x] **Step 1: Reshape the session declaration vocabulary**
 
 In `types.proto`, add exactly:
 
@@ -260,7 +266,7 @@ message Declaration {
 
 Update `AttackRef.ref` docs to require full `core.Ref.String()` and update `UNREADABLE` docs to cover the per-verb character/action dependency matrix. Do not add magic values or future target kinds.
 
-- [ ] **Step 2: Add selector echo to current verbs**
+- [x] **Step 2: Add selector echo to current verbs**
 
 In `service.proto`, add:
 
@@ -288,7 +294,7 @@ message EndTurnRequest {
 
 Document: Attack/EndTurn require non-empty selectors; turn-clock Move requires one; world-clock Move requires empty; a non-empty selector arriving after transition to world clock is stale and must not become a free move.
 
-- [ ] **Step 3: Flatten owner-private status directly into CharacterData**
+- [x] **Step 3: Flatten owner-private status directly into CharacterData**
 
 In `dnd5e/api/v1alpha2/encounter/types.proto`, add direct fields 9–14 and the three display messages:
 
@@ -327,11 +333,11 @@ message ResourceView {
 
 Document that `HitPoints.temp` is zero until toolkit character state owns temporary HP; `resources` excludes `SpellSlots` and legacy `ClassResources`.
 
-- [ ] **Step 4: Update contract/status documentation**
+- [x] **Step 4: Update contract/status documentation**
 
 Record the nested declaration semantics, full-ref AttackRef migration, direct CharacterData fields, no-magic boundary, and in-place breaking label in the two component docs and `docs/status.md`. Remove old claims that Afford is flat or CharacterData is equipment-only.
 
-- [ ] **Step 5: Run contract gates**
+- [x] **Step 5: Run contract gates**
 
 Run:
 
@@ -346,7 +352,7 @@ buf generate
 
 Expected: format/lint/generate PASS. `buf breaking` reports the intentional `Declaration` source break; no unrelated break is accepted.
 
-- [ ] **Step 6: Commit, open the PR, and mark the intentional break**
+- [x] **Step 6: Commit, open the PR, and mark the intentional break**
 
 ```bash
 cd "$PROTO_WORKTREE"
@@ -363,7 +369,7 @@ gh pr edit "$PROTO_PR_URL" --add-label breaking-change-approved
 
 Expected: PR targets `main`, references the owning proto issue and design #270, and contains no generated files.
 
-- [ ] **Step 7: Human merge checkpoint and generated release verification**
+- [x] **Step 7: Human merge checkpoint and generated release verification**
 
 Kirk reviews and merges the proto PR. After CI publishes generated output:
 
@@ -377,6 +383,8 @@ printf 'PROTO_TAG=%s PROTO_GENERATED_SHA=%s\n' "$PROTO_TAG" "$PROTO_GENERATED_SH
 ```
 
 Record both values in the owning issue. Do not begin committed consumer pins until the generated artifact exists.
+
+Delivered amendment: this repository tags generated output, so the source-merge `tag --points-at` command above is not a valid release derivation. PR #253 merged source as `336fc3f`; generation produced `9d75694`; `v0.1.142` identifies that generated artifact. Consumers recorded and pinned the generated release rather than expecting a tag on the source merge.
 
 ---
 
@@ -398,7 +406,7 @@ Record both values in the owning issue. Do not begin committed consumer pins unt
 - Consumes: existing `core.Ref`, `core/resources.ResourceKey`, feature-private `RecoverableResource`, character-owned Rage/Ki pools.
 - Produces: `ConditionBehavior.Ref() *core.Ref`, `features.StatusProvider`, `features.StatusInput`, `features.StatusOutput`, `features.Status`, `features.ResourceStatus`, and stable `resources.SecondWind` / `resources.ActionSurge` keys for Task 4.
 
-- [ ] **Step 1: Write failing identity/status tests**
+- [x] **Step 1: Write failing identity/status tests**
 
 Add tests proving:
 
@@ -430,7 +438,7 @@ go test ./conditions ./features
 
 Expected: FAIL because `Ref`, status types, and keys do not exist.
 
-- [ ] **Step 2: Add ConditionBehavior.Ref and canonical implementations**
+- [x] **Step 2: Add ConditionBehavior.Ref and canonical implementations**
 
 Change the interface:
 
@@ -454,7 +462,7 @@ go test ./conditions ./monstertraits ./character ./monster ./resolution
 
 Expected: PASS; no implementation remains unidentified.
 
-- [ ] **Step 3: Add stable non-magical feature resource status**
+- [x] **Step 3: Add stable non-magical feature resource status**
 
 In `resources/keys.go` add:
 
@@ -489,7 +497,7 @@ type StatusProvider interface { Status(*StatusInput) (*StatusOutput, error) }
 
 Make `Feature` embed `StatusProvider`. Private-resource features read their own resource; Rage/Ki features ask `Owner`; no implementation serializes `ToJSON`. Detail strings are server-authored but may be empty; names never are.
 
-- [ ] **Step 4: Run focused tests and commit**
+- [x] **Step 4: Run focused tests and commit**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e"
@@ -519,7 +527,7 @@ Expected: tests/lint PASS and the commit touches no session module yet.
 - Consumes: Task 3 condition refs, feature status providers, resource keys.
 - Produces: `character.StatusView`, `FeatureView`, `ConditionView`, `ResourceView`, and `(*Character).StatusView(*StatusViewInput) (*StatusViewOutput, error)` consumed by rpg-api Task 8.
 
-- [ ] **Step 1: Write failing status-view tests for the four builds**
+- [x] **Step 1: Write failing status-view tests for the four builds**
 
 Cover Fighter, Barbarian, Monk, and Rogue fixtures:
 
@@ -542,13 +550,13 @@ Run `cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e" && go test ./character -run StatusVi
 
 Expected: FAIL because `StatusView` does not exist.
 
-- [ ] **Step 2: Implement rulebook-owned condition display descriptors**
+- [x] **Step 2: Implement rulebook-owned condition display descriptors**
 
 `conditions/display.go` maps canonical condition refs reachable by the four builds to display-ready names and optional details. It must include the current fighting styles, Rage/Raging, Martial Arts, Unarmored Defense/Movement, Sneak Attack, Brutal/Improved Critical, Reckless Attack, Dodging, Disengaging, Hidden, Helped, Prone, Opportunity Attack, and Unconscious. Unknown refs return `(Display{}, false)`; the character projection turns that into an error.
 
 Do not add spell-slot or magic-oriented status fields. Existing condition code outside the selected builds is only given `Ref()` for interface completeness.
 
-- [ ] **Step 3: Implement StatusView with deterministic ordering**
+- [x] **Step 3: Implement StatusView with deterministic ordering**
 
 Define:
 
@@ -571,7 +579,7 @@ type StatusViewOutput struct { View *StatusView }
 
 Sort features/conditions by `Ref.String()` and resources by key. Validate non-empty refs/names, non-negative resource counts, `current <= maximum`, and conflicting duplicate keys. Return detached values; never expose live feature/resource pointers.
 
-- [ ] **Step 4: Run focused and module gates; commit**
+- [x] **Step 4: Run focused and module gates; commit**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e"
@@ -598,7 +606,7 @@ Expected: PASS. `git diff --check` reports no whitespace errors.
 - Consumes: validated `actions.Definition`, exact `session.Verb`/`Slot` strings.
 - Produces: `declarationID(input declarationIDInput) (string, error)` and `indexCompiledOffers` collision guard consumed by Task 6.
 
-- [ ] **Step 1: Add failing RFC 8785 golden tests**
+- [x] **Step 1: Add failing RFC 8785 golden tests**
 
 Use exact golden selectors:
 
@@ -623,7 +631,7 @@ Run `go test ./... -run DeclarationID -count=1` from `rulebooks/dnd5e/session`.
 
 Expected: FAIL because selector code is absent.
 
-- [ ] **Step 2: Add the vetted RFC 8785 dependency**
+- [x] **Step 2: Add the vetted RFC 8785 dependency**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session"
@@ -633,11 +641,11 @@ go mod tidy
 
 Import `github.com/cyberphone/json-canonicalization/go/src/webpki.org/jsoncanonicalizer` and use `jsoncanonicalizer.Transform`; do not implement a partial canonicalizer.
 
-- [ ] **Step 3: Implement the exact selector document**
+- [x] **Step 3: Implement the exact selector document**
 
 Use a struct with JSON keys `domain`, `session`, `member`, `verb`, `slot`, `variant`; serialize the complete validated Attack definition into `json.RawMessage`, use sealed strings for Move/EndTurn, canonicalize, SHA-256 hash, and encode `v1.` + unpadded base64url. Reject unsupported verb/slot strings and malformed raw JSON.
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session"
@@ -668,7 +676,7 @@ Expected: exact golden tests PASS; no local replace exists.
 - Consumes: Task 5 selectors, current clock/standing/holdings/positions, `character.AssembleAttack`.
 - Produces: internal `compiledOffer`, public nested `Declaration`, one shared target preflight, and `compileOffers` consumed by Task 7.
 
-- [ ] **Step 1: Replace flat-declaration tests with failing nested-offer tests**
+- [x] **Step 1: Replace flat-declaration tests with failing nested-offer tests**
 
 Add tests for:
 
@@ -690,7 +698,7 @@ Run `cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session" && go test ./... -run 'Affor
 
 Expected: compile/test failures against the old flat shape.
 
-- [ ] **Step 2: Define the exported session contract types**
+- [x] **Step 2: Define the exported session contract types**
 
 Add string enums with exact literals:
 
@@ -707,7 +715,7 @@ const (
 
 `Declaration` carries `Available`, `Why`, `Remaining`, `ID`, `Attack *AttackRef`, `TargetKind`, and `Candidates []TargetCandidate`. Preserve non-nil empty candidate slices on Move/EndTurn/world responses.
 
-- [ ] **Step 3: Implement one compiled-offer builder and target preflight**
+- [x] **Step 3: Implement one compiled-offer builder and target preflight**
 
 In `offers.go`, keep inner toolkit types private:
 
@@ -723,7 +731,7 @@ Build EndTurn from clock first, then independently build Move and Attack. Enumer
 
 Return per-verb `UNREADABLE` blockers rather than an incomplete declaration list. Keep session/world load failures as hard errors.
 
-- [ ] **Step 4: Project full AttackRef once**
+- [x] **Step 4: Project full AttackRef once**
 
 Change `attackRefFor` to:
 
@@ -733,7 +741,7 @@ ref := AttackRef{Ref: definition.Ref.String(), Name: definition.Name}
 
 Use the same value in Declaration, AttackOutput, and encounter beat identity. Update all fixtures expecting bare `longsword` to full `dnd5e:weapons:longsword`.
 
-- [ ] **Step 5: Run focused tests and commit**
+- [x] **Step 5: Run focused tests and commit**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session"
@@ -762,7 +770,7 @@ Expected: nested offer tests PASS; old flat-target assumptions are removed rathe
 - Consumes: Task 6 `compileOffers` and selector-index collision guard.
 - Produces: `AttackInput.DeclarationID`, `MoveInput.DeclarationID`, `EndTurnInput.DeclarationID`, `ErrNoDeclarationID`, `ErrStaleDeclaration` consumed by rpg-api Task 9.
 
-- [ ] **Step 1: Write failing execution-gate tests**
+- [x] **Step 1: Write failing execution-gate tests**
 
 Start with the no-mutation stale-selector gate:
 
@@ -787,19 +795,19 @@ Run `cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session" && go test ./... -run 'Decla
 
 Expected: FAIL because inputs and sentinels are absent.
 
-- [ ] **Step 2: Add selector inputs and sentinels**
+- [x] **Step 2: Add selector inputs and sentinels**
 
 Add `DeclarationID string` to all three inputs. `ErrNoDeclarationID` is invalid input; `ErrStaleDeclaration` is current-world refusal. Update exported sentinel/boundary allow-list tests rather than weakening them.
 
-- [ ] **Step 3: Recompile under the existing verb load/lock**
+- [x] **Step 3: Recompile under the existing verb load/lock**
 
 For each turn-clock verb, regenerate offers from the already-loaded state, find exactly one matching ID, recheck target/path against it, then proceed. Resolution retains final defensive validation. World Move accepts empty ID only; a non-empty stale turn ID returns `ErrStaleDeclaration` before walking any cell.
 
-- [ ] **Step 4: Update toolkit architecture/status docs**
+- [x] **Step 4: Update toolkit architecture/status docs**
 
 Document `ConditionBehavior.Ref`, feature/resource StatusView, compiled offers/selectors, per-verb blocker matrix, full-ref AttackRef, and the two changed module boundaries. Update `docs/status.md` without predicting release versions.
 
-- [ ] **Step 5: Run full affected module gates**
+- [x] **Step 5: Run full affected module gates**
 
 ```bash
 cd "$TOOLKIT_WORKTREE/rulebooks/dnd5e/session"
@@ -815,7 +823,7 @@ git diff --check
 
 Expected: all PASS; `git grep 'replace ' -- '*/go.mod'` shows no new local replacement.
 
-- [ ] **Step 6: Commit and open one toolkit PR**
+- [x] **Step 6: Commit and open one toolkit PR**
 
 ```bash
 cd "$TOOLKIT_WORKTREE"
@@ -828,30 +836,9 @@ export TOOLKIT_PR_URL=$(gh pr create --base main --title 'feat(session): product
 
 PR body lists both affected modules, exact verification commands, proto version, no-magic boundary, and design #270. Do not split root/status and session/offers into separate PRs.
 
-- [ ] **Step 7: Publish RCs for API integration**
+- [x] **Step 7: Complete the toolkit publication checkpoint**
 
-Publish pre-release tags from the reviewed toolkit PR head so one API branch can consume both changed Go modules without committing local path overrides:
-
-```bash
-cd "$TOOLKIT_WORKTREE"
-export TOOLKIT_HEAD=$(git rev-parse HEAD)
-next_minor_rc() {
-  python3 - "$1" <<'PY'
-import sys
-major, minor, _patch = map(int, sys.argv[1].removeprefix('v').split('.'))
-print(f"v{major}.{minor + 1}.0-rc1")
-PY
-}
-LATEST_DND5E=$(git tag -l 'rulebooks/dnd5e/v*' --sort=-v:refname | grep -v -- '-rc' | head -1 | sed 's#rulebooks/dnd5e/##')
-LATEST_SESSION=$(git tag -l 'rulebooks/dnd5e/session/v*' --sort=-v:refname | grep -v -- '-rc' | head -1 | sed 's#rulebooks/dnd5e/session/##')
-export DND5E_VERSION=$(next_minor_rc "$LATEST_DND5E")
-export SESSION_VERSION=$(next_minor_rc "$LATEST_SESSION")
-git tag "rulebooks/dnd5e/$DND5E_VERSION" "$TOOLKIT_HEAD"
-git tag "rulebooks/dnd5e/session/$SESSION_VERSION" "$TOOLKIT_HEAD"
-git push origin "rulebooks/dnd5e/$DND5E_VERSION" "rulebooks/dnd5e/session/$SESSION_VERSION"
-```
-
-Verify both tags point at `$TOOLKIT_HEAD`. API Task 8 pins these RCs; Task 9 replaces them with merge-generated final tags before the API PR is review-ready.
+Execution amendment: no RCs were published. Under the human-directed one-repository-at-a-time sequence, toolkit PR #1250 was completed and merged before API setup began. Merge `5b54360` published the final artifacts directly: `rulebooks/dnd5e/v0.100.0`, `rulebooks/dnd5e/session/v0.30.0`, and `rulebooks/dnd5e/resolution/v0.13.0`. API consumed those final versions, so no local override or RC replacement remained.
 
 ---
 
@@ -871,7 +858,7 @@ Verify both tags point at `$TOOLKIT_HEAD`. API Task 8 pins these RCs; Task 9 rep
 - Consumes: toolkit `character.StatusView`/`EquipmentView`, merged proto `CharacterData`.
 - Produces: internal `character.View`, strict project-before-write application path, full proto mapping consumed by web Task 10.
 
-- [ ] **Step 1: Pin merged proto and toolkit artifacts**
+- [x] **Step 1: Pin merged proto and toolkit artifacts**
 
 After proto generation and toolkit RC/final tags exist:
 
@@ -885,7 +872,7 @@ go mod tidy
 
 Verify `go.mod` contains published versions and no `replace`.
 
-- [ ] **Step 2: Write failing no-write and projection tests**
+- [x] **Step 2: Write failing no-write and projection tests**
 
 Add the no-write regression first:
 
@@ -915,7 +902,7 @@ go test ./internal/orchestrators/character ./internal/handlers/dnd5e/v2/characte
 
 Expected: FAIL against forgiving `LoadFromData` and equipment-only CharacterData.
 
-- [ ] **Step 3: Implement one strict internal View**
+- [x] **Step 3: Implement one strict internal View**
 
 In `view.go`:
 
@@ -935,7 +922,7 @@ func projectLoadedCharacter(ctx context.Context, input *ProjectLoadedCharacterIn
 
 `ProjectView` uses strict `tkcharacter.Load` followed by `tkcharacter.Attach`—never forgiving `LoadFromData`—then delegates to `projectLoadedCharacter`; Equip/Unequip call the same internal projector on their already-loaded/mutated sheet. The loaded helper's Input carries the character and its Output carries `View`. Keep Input/Output structs. Return detached projections; do not expose a live `*Character` outside the orchestrator operation.
 
-- [ ] **Step 4: Compose post-state before repository Update**
+- [x] **Step 4: Compose post-state before repository Update**
 
 Equip/Unequip flow:
 
@@ -947,11 +934,11 @@ repository Get → strict load/attach → validate pre-view → mutate in memory
 
 No response path performs a repository reload after Update. Update outputs include the post-view so handlers do not call `recomputedCharacterData`.
 
-- [ ] **Step 5: Map flattened CharacterData and preserve ownership**
+- [x] **Step 5: Map flattened CharacterData and preserve ownership**
 
 `BuildCharacterData(view)` maps equipment/status field-for-field. `verifyCallerOwnsCharacter` still checks authenticated `PlayerID` on repository data before calling `ProjectView`; missing/foreign responses remain byte-identical `NOT_FOUND`. Equip/Unequip already passed that same handler gate before their orchestrator calls.
 
-- [ ] **Step 6: Run focused gates and commit**
+- [x] **Step 6: Run focused gates and commit**
 
 ```bash
 cd "$API_WORKTREE"
@@ -980,7 +967,7 @@ Expected: malformed fixtures prove zero Update calls; all ownership tests remain
 - Consumes: merged proto Task 2 and toolkit Tasks 5–7.
 - Produces: pure wire/SDK translation with unchanged authorization.
 
-- [ ] **Step 1: Write failing handler/converter tests**
+- [x] **Step 1: Write failing handler/converter tests**
 
 Test exact mapping of:
 
@@ -998,7 +985,7 @@ Run `cd "$API_WORKTREE" && go test ./internal/handlers/dnd5e/session/v1alpha1 -c
 
 Expected: FAIL against old generated/SDK fields.
 
-- [ ] **Step 2: Implement field-for-field converters**
+- [x] **Step 2: Implement field-for-field converters**
 
 Add total converters:
 
@@ -1010,17 +997,17 @@ func declarationToProto(sdk.Declaration) *sessionpb.Declaration
 
 Unknown SDK enum values map to proto `UNSPECIFIED`; tests identify that as producer defect. Do not derive target availability or copy target rows into prose.
 
-- [ ] **Step 3: Echo selectors through handlers**
+- [x] **Step 3: Echo selectors through handlers**
 
 Pass `req.GetDeclarationId()` into the three SDK inputs. Preserve `callerActingAs` before every manager call. Add new sentinel rows to the single error translation table and update its count pin.
 
-- [ ] **Step 4: Update API architecture/status docs**
+- [x] **Step 4: Update API architecture/status docs**
 
 Document strict pre-write character application, flattened CharacterData translation, nested session declaration mapping, selector errors, and final provider pins in the three component docs and `docs/status.md`.
 
-- [ ] **Step 5: Run API gates and replace RCs with final tags**
+- [x] **Step 5: Run API gates and pin final tags**
 
-After API tests pass against the RCs, Kirk merges `$TOOLKIT_PR_URL`. Derive and pin the merge-generated final tags:
+Execution amendment: toolkit had already merged under the sequential repository policy, so API began directly on the final tags. The derivation below was used as a final-artifact verification pattern; no RC replacement was needed.
 
 ```bash
 export TOOLKIT_MERGE_SHA=$(gh pr view "$TOOLKIT_PR_URL" --json mergeCommit --jq .mergeCommit.oid)
@@ -1041,7 +1028,7 @@ if rg -n '^replace ' --glob go.mod .; then exit 1; fi
 
 Expected: all gates PASS and no override residue.
 
-- [ ] **Step 6: Commit and open one API PR**
+- [x] **Step 6: Commit and open one API PR**
 
 ```bash
 cd "$API_WORKTREE"
@@ -1074,7 +1061,7 @@ PR body names final toolkit/proto artifacts and includes focused/full gate evide
 - Consumes: generated declaration/CharacterData types.
 - Produces: thin selector-bearing RPC hooks and pure `selectCombatExperience`/`selectDirectMapAttack` used by Task 11.
 
-- [ ] **Step 1: Pin the merged proto tag and regenerate lock state**
+- [x] **Step 1: Pin the merged proto tag and regenerate lock state**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1084,7 +1071,7 @@ grep -n 'rpg-api-protos' package.json package-lock.json
 
 Expected: package and lock resolve the same merged tag/commit.
 
-- [ ] **Step 2: Write failing hook/selection tests**
+- [x] **Step 2: Write failing hook/selection tests**
 
 Tests prove:
 
@@ -1108,13 +1095,13 @@ npm run test:run -- src/api/useSessionAfford.test.ts src/api/useSessionAttack.te
 
 Expected: FAIL on missing fields/modules.
 
-- [ ] **Step 3: Implement thin hooks and pure selection**
+- [x] **Step 3: Implement thin hooks and pure selection**
 
 Do not normalize declarations into rule-bearing booleans. `types.ts` contains presentation state only; generated `Declaration`, `Participant`, and `CharacterData` remain the data contract.
 
 `selectDirectMapAttack(declarations, subject)` returns a declaration only when exactly one available Attack declaration contains an available candidate with that member.
 
-- [ ] **Step 4: Run focused tests and commit**
+- [x] **Step 4: Run focused tests and commit**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1142,7 +1129,7 @@ Expected: focused tests/typecheck PASS.
 - Consumes: Task 10 generated declarations/pure selection plus existing `SessionCanvas` and `DiceTrayPresentation`.
 - Produces: one shared `CombatExperience` render component instantiated by concept fixtures and production route.
 
-- [ ] **Step 1: Write failing shared-component tests**
+- [x] **Step 1: Write failing shared-component tests**
 
 Move/extend current concept tests to assert:
 
@@ -1159,17 +1146,17 @@ Run `cd "$WEB_WORKTREE" && npm run test:run -- src/components/session/combat-exp
 
 Expected: FAIL until shared components exist.
 
-- [ ] **Step 2: Move production-intent rendering without duplicating it**
+- [x] **Step 2: Move production-intent rendering without duplicating it**
 
 `CombatExperience` receives generated provider values and callbacks. The concept builds valid generated-shape fixtures with `create()` and passes them to the same component. Delete concept copies after imports switch; keep contract inspector and state controls concept-only.
 
 Remove `Core/Features/Spells/Items` fixture assumptions from the first-wave action dock. Render authored Attack name/ref, Move allowance, informational feature/condition badges, and the separate server-declared End Turn.
 
-- [ ] **Step 3: Preserve accessibility and responsive behavior**
+- [x] **Step 3: Preserve accessibility and responsive behavior**
 
 Retain native buttons, focus states, semantic unavailable text, reduced motion, horizontal action overflow, and 1024×768 floor. End Turn uses the server declaration; no active-ID comparison enables it independently.
 
-- [ ] **Step 4: Run focused tests and commit**
+- [x] **Step 4: Run focused tests and commit**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1199,11 +1186,11 @@ Expected: concept deep link still renders all review states through shared compo
 - Consumes: flattened owner-gated CharacterData and GetStory.
 - Produces: last-confirmed private data, coalesced `refetch`, and event delivery metadata `{source: 'live' | 'catchup'}` used by Tasks 13–14.
 
-- [ ] **Step 1: Write failing private-data tests**
+- [x] **Step 1: Write failing private-data tests**
 
 Prove initial fetch, Equip/Unequip replacement, coalesced event bursts, last-good retention on error, owner `NOT_FOUND`, and generic ref-based icon fallback. Verify no test subtracts damage or decrements resources.
 
-- [ ] **Step 2: Write failing terminal-loss stream tests with fake timers**
+- [x] **Step 2: Write failing terminal-loss stream tests with fake timers**
 
 Add:
 
@@ -1223,15 +1210,15 @@ Add tests that dispatch `visibilitychange` after changing the harness to visible
 
 Run focused tests; expect FAIL because polling/provenance is absent.
 
-- [ ] **Step 3: Implement bounded polling inside the existing stream sequencer**
+- [x] **Step 3: Implement bounded polling inside the existing stream sequencer**
 
 Export `STORY_RECOVERY_INTERVAL_MS = 5000`. Serialize catch-up calls so interval/focus/gap/reconnect cannot overlap. Feed recovered/live events through the same sequence deduper, now passing source metadata. Add/remove `visibilitychange` and `focus` listeners with effect cleanup; clear interval on session/member change.
 
-- [ ] **Step 4: Implement cached owner-private data**
+- [x] **Step 4: Implement cached owner-private data**
 
 `useCharacterData(characterId)` fetches once, keeps last confirmed state on error, exposes `replace(CharacterData)` for equip responses, and exposes a coalesced `refetch`. Character presentation maps refs to icons/tone only; it renders server names/details/counts unchanged.
 
-- [ ] **Step 5: Run focused tests and commit**
+- [x] **Step 5: Run focused tests and commit**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1264,7 +1251,7 @@ Expected: terminal event recovery occurs within five seconds without a subsequen
 - Consumes: AttackResponse, typed Struck/Missed events with source metadata, existing dice presentation events.
 - Produces: one `(session, seq)` presentation, release-gated actor Story/verdict/live announcement, auto-settled witnesses/history, developer-only raw Debug exception.
 
-- [ ] **Step 1: Write failing response/event ordering tests**
+- [x] **Step 1: Write failing response/event ordering tests**
 
 Cover both orders:
 
@@ -1281,19 +1268,19 @@ it('response first arms once and hides Story until release', () => {
 
 Add mirrored event-first coverage, duplicate response/event delivery, catch-up immediate settlement, current locally armed response surviving a later catch-up copy, witness neutral auto-release, and a rendered closed Debug control with no raw-event live-region text. Use one shared fixture builder for response and stream facts so mismatched authority is a deliberate test case, not fixture drift.
 
-- [ ] **Step 2: Implement one presentation identity and reducer**
+- [x] **Step 2: Implement one presentation identity and reducer**
 
 Use validated `presentationId = session:<sessionId>:<seq>` when it satisfies the existing identifier contract. Refuse/fallback semantically if an unexpected session ID would exceed that boundary; never use arbitrary asset URLs. Request uses Original carved d20 safe default and authoritative result; actor release appends only presentation data.
 
-- [ ] **Step 3: Build Story from typed facts**
+- [x] **Step 3: Build Story from typed facts**
 
 `story.ts` groups one first-wave Struck/Missed per `seq`, uses `AttackRef` full ref/name/damage type, and never uses authored fixture prose or client HP subtraction. For the acting player, omit/buffer the outcome until release; spectators and recovered history render settled immediately.
 
-- [ ] **Step 4: Gate Debug to development diagnostics**
+- [x] **Step 4: Gate Debug to development diagnostics**
 
 Shared Story always exists. The raw Debug tab/control renders only under `import.meta.env.DEV` or the existing explicit diagnostic concept surface. Raw events ingest immediately; closed Debug has no active live region.
 
-- [ ] **Step 5: Run focused tests and commit**
+- [x] **Step 5: Run focused tests and commit**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1325,7 +1312,7 @@ Expected: no actor-facing result before explicit release; game events remain ing
 - Consumes: Tasks 10–13 shared experience/controller/recovery.
 - Produces: production session route with panel-first Attack, exact selector dispatch, owner-private dock, Story/dice gating, and world-clock fallback.
 
-- [ ] **Step 1: Write failing production integration tests**
+- [x] **Step 1: Write failing production integration tests**
 
 `SessionEncounterView.test.tsx` must prove:
 
@@ -1345,17 +1332,17 @@ Run `cd "$WEB_WORKTREE" && npm run test:run -- src/components/session/SessionEnc
 
 Expected: FAIL against old `CombatPanel`/direct-floor behavior.
 
-- [ ] **Step 2: Integrate shared CombatExperience**
+- [x] **Step 2: Integrate shared CombatExperience**
 
 Replace old `useCombatPanel` composition with the shared controller. Keep SessionCanvas map/door/movement behavior unchanged except target rings/clicks now come from the armed server declaration. Remove the old v1 `GetCharacter` fetch once roster + CharacterData supply every used fact.
 
 Update `useSessionWalk` to receive the current Move declaration ID; a state transition to world clock clears it before a free-roam request.
 
-- [ ] **Step 3: Preserve other-member pacing and run-ending behavior**
+- [x] **Step 3: Preserve other-member pacing and run-ending behavior**
 
 Route typed events through one funnel: sequence delivery → private/query invalidation → presentation/story pacing → debug buffer → door/run-ending handlers. Do not regress monster beat pacing, door state refresh, run-ended overlay, roster pull-on-join, or self-MOVED GetWhere behavior.
 
-- [ ] **Step 4: Delete superseded panel code and update architecture docs**
+- [x] **Step 4: Delete superseded panel code and update architecture docs**
 
 Run:
 
@@ -1366,7 +1353,7 @@ rg -n 'CombatPanel|useCombatPanel|combatPanel' src
 
 Delete only files with no remaining production/concept import. Update `combat-v2.md` and `docs/status.md` to name nested declarations, panel-first targeting, shared concept/production components, private CharacterData, recovery poll, developer Debug, and the retired old panel/direct-floor flow.
 
-- [ ] **Step 5: Run focused and full web gates**
+- [x] **Step 5: Run focused and full web gates**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1377,7 +1364,7 @@ git diff --check
 
 Expected: all tests, format, lint, typecheck, build, and full suite PASS.
 
-- [ ] **Step 6: Commit and open the web PR**
+- [x] **Step 6: Commit and open the web PR**
 
 ```bash
 cd "$WEB_WORKTREE"
@@ -1389,7 +1376,7 @@ export WEB_PR_URL=$(gh pr create --base dev --title 'feat(session): promote prod
 
 PR body links design #270, concept #809/#810, provider PRs/tags, and exact local gate output.
 
-- [ ] **Step 7: Run the two-browser live journey gate before merge**
+- [x] **Step 7: Run the two-browser live journey gate before merge**
 
 Build the API from its feature branch and serve the web feature branch. With two authenticated characters in the reference tomb, record:
 
@@ -1406,47 +1393,58 @@ Build the API from its feature branch and serve the web feature branch. With two
 10. reconnect settles history, and world clock restores translucent exploration UI.
 ```
 
-Capture 1280×800 and 1024×768 screenshots with `node tools/browser/screenshot.mjs`; attach evidence to the web issue without committing licensed GLBs/private evidence.
+Capture the final real-assets frames without committing them. Delivered evidence used 1216×800 (`63524e…`) and 960×768 (`282937…`) after the final upstream-preserving rebase; both passed visual review.
 
 ---
 
-### Task 15: Merge inside-out and close the tracking surfaces
+### Task 15: Finalize tracking and leave the design merge to Kirk
 
 **Files:**
-- Modify: `ideas/session-combat/experience/design.md` only if integration forced a contract amendment.
-- Modify: `ideas/session-combat/experience/plan.md` checkboxes/status as execution evidence.
-- Update ignored local `rpg-project/active.md` for operator continuity.
+- Modify: `ideas/session-combat/experience/design.md` with delivery evidence and learned execution amendments.
+- Modify: `ideas/session-combat/experience/plan.md` as the historical checklist.
+- Update PR #271's body with delivered/pending-final-merge status.
 
 **Interfaces:**
-- Consumes: green toolkit/API/web PRs and Kirk's exact live walk.
-- Produces: merged production wave, closed implementation slices, Done board items, then merged design PR #271.
+- Consumes: merged protos/toolkit/API/web delivery, green checks, review resolution, and authenticated live/visual evidence.
+- Produces: final tracking evidence while leaving PR #271 merge and issue #270 closure explicitly to Kirk.
 
-- [ ] **Step 1: Confirm provider/consumer PR heads and review findings**
+- [x] **Step 1: Confirm provider/consumer heads, checks, and review findings**
 
-For each PR, record head SHA, checks, inline review comments, and unresolved conversations. Fix every applicable Critical/Important finding on the same wave branch and rerun its full gate.
+Delivered evidence:
 
-- [ ] **Step 2: Reconfirm the already-merged toolkit provider**
+- Protos #252 / PR #253: source merge `336fc3f`, generated artifact `9d75694`, release `v0.1.142`.
+- Toolkit #1246 / PR #1250: reviewed head `04c2432`, merge `5b54360`, final versions `dnd5e/v0.100.0`, `session/v0.30.0`, and `resolution/v0.13.0`.
+- API #844 / PR #845: reviewed head `6ff299f`, `dev` merge `f1aa9d2`.
+- Web #817 / PR #822: exact authenticated live code head `301b9a3`; final pre-squash branch/evidence head `7ce5f7a`; `dev` merge `b3079d9`. The final branch was safely rebased over upstream builder/weapon attachment work.
 
-Task 9 merged toolkit to replace RCs before the API PR became review-ready. Reconfirm both final module tags still point at `$TOOLKIT_MERGE_SHA` and that the API PR pins those exact versions; no RC remains in `go.mod`.
+Applicable Copilot findings in toolkit, API, and web were fixed and replied to inline; threads were resolved where available and no review was re-requested.
 
-- [ ] **Step 3: Kirk merges rpg-api**
+- [x] **Step 2: Reconfirm published provider artifacts**
 
-Verify the API PR targets `dev`, contains final proto/toolkit pins, and local Docker stack is rebuilt from merged `dev`. Re-run the web against merged API.
+The proto release is recorded with both commits because `v0.1.142` points at generated commit `9d75694`, not source merge `336fc3f`. Toolkit final versions came from merge `5b54360`; API pinned the published finals and carried no RC or local override residue.
 
-- [ ] **Step 4: Kirk walks and merges web**
+- [x] **Step 3: Confirm the merged game server**
 
-Kirk repeats the named two-browser path on the exact web PR head, then alone merges to `dev`.
+API PR #845 targeted `dev` and merged as `f1aa9d2` with the final provider pins. Build/test workflows passed, and the authenticated web journey ran against that merged game-server head.
 
-- [ ] **Step 5: Close issues and Project 19 items**
+- [x] **Step 4: Confirm the merged web and final verification**
 
-Close the four implementation issues as completed, set their Project 19 status to Done, and record final PR/tag/commit evidence on design issue #270.
+Web PR #822 merged to `dev` as `b3079d9`. At final pre-squash head `7ce5f7a`, local verification reported 221 passed / 1 skipped test files and 3,504 passed / 1 skipped tests; `ci-check`, build, and GitHub merge CI were green.
 
-- [ ] **Step 6: Commit final plan evidence and merge design PR last**
+Real synchronized assets passed at 1216×800 (`63524e…`) and 960×768 (`282937…`), with no images committed. Two authenticated contexts passed all ten live requirements. The terminal stream event was recovered through `GetStory` in 744 ms with zero later stream events, and the run's Redis cleanup was exact. The honest allowed terminal alternative was used: `FightEnded` was not played; world-clock empty declarations were verified. Existing npm audit debt remains 1 low and 5 high; the non-blocking Security job was green, not a clean audit. No magic remains the product boundary.
+
+- [x] **Step 5: Confirm implementation tracking is Done**
+
+Issues protos #252, toolkit #1246, API #844, and web #817 are closed, and all four Project 19 items are Done. Design issue #270 intentionally remains open/In Review until this PR merges.
+
+- [x] **Step 6a: Commit and push final delivery evidence**
 
 ```bash
 git add ideas/session-combat/experience/design.md ideas/session-combat/experience/plan.md
 git commit -m "docs(session-combat): record production experience delivery (#270)"
-git push
+git push --force-with-lease
 ```
 
-Kirk merges rpg-project PR #271 only after the implementation is complete. Then set #270 Done and remove worktrees/branches only when directed.
+- [ ] **Step 6b: Kirk merges the design PR and closes tracking — pending**
+
+Kirk alone merges rpg-project PR #271. Only after that merge does Kirk close/set #270 Done. Do not merge PR #271, close #270, or remove worktrees/branches from this task.

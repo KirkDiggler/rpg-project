@@ -1,10 +1,36 @@
 # Session Combat Experience — production contract
 
-**Status:** Design for review
+**Status:** Delivered / implemented
 
 **Tracking:** [rpg-project#270](https://github.com/KirkDiggler/rpg-project/issues/270), under journey [#253](https://github.com/KirkDiggler/rpg-project/issues/253)
 
 **Consumer proof:** [rpg-dnd5e-web#809](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/809) / [PR #810](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/810), merged 2026-08-25
+
+## Implementation / delivery record
+
+The approved contract is implemented end to end. The implementation slices and their Project 19 items are Done; this design PR remains open only for Kirk's final merge and subsequent closure of tracking issue #270.
+
+| Layer | Tracking | Delivered evidence |
+| --- | --- | --- |
+| Protos | [#252](https://github.com/KirkDiggler/rpg-api-protos/issues/252) / [PR #253](https://github.com/KirkDiggler/rpg-api-protos/pull/253) | source merge `336fc3f`; generated artifact `9d75694`; release `v0.1.142` |
+| Toolkit | [#1246](https://github.com/KirkDiggler/rpg-toolkit/issues/1246) / [PR #1250](https://github.com/KirkDiggler/rpg-toolkit/pull/1250) | merge `5b54360`; `dnd5e/v0.100.0`, `session/v0.30.0`, `resolution/v0.13.0` |
+| Game server | [#844](https://github.com/KirkDiggler/rpg-api/issues/844) / [PR #845](https://github.com/KirkDiggler/rpg-api/pull/845) | `dev` merge `f1aa9d2` |
+| Web | [#817](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/817) / [PR #822](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/822) | `dev` merge `b3079d9`; authenticated live code head `301b9a3`; final pre-squash evidence head `7ce5f7a` after a safe rebase preserving upstream builder/weapon attachment work |
+
+Delivery verification:
+
+- At final web head `7ce5f7a`, the local suite reported 221 passed / 1 skipped test files and 3,504 passed / 1 skipped tests. `ci-check`, build, and GitHub merge CI were green.
+- Applicable Copilot feedback in toolkit, API, and web was fixed and replied to inline; threads were resolved where available, with no review re-request.
+- Real synchronized assets passed visual review after the final rebase: `63524e…` at 1216×800 and `282937…` at 960×768. No evidence images were committed.
+- Two authenticated browser contexts passed all ten live journey requirements: real roster/map/initiative and owner-private data; authored full-ref Attack selection; provider-disabled candidates; exact selector dispatch; actor release and witness settlement; Story/Debug behavior; owner-read HP refresh; spent offers plus Move/End Turn; terminal stream recovery and reconnect; and world-clock exploration. The terminal event was recovered through `GetStory` in 744 ms with zero later stream events, and the test's Redis keys were cleaned up exactly.
+- The allowed terminal alternative was exercised honestly: `FightEnded` was not played; world-clock empty declarations were verified directly.
+- The pre-existing npm audit debt remains 1 low and 5 high findings. The non-blocking Security job was green; this is not a clean audit.
+- No magic remains the product boundary. Nothing in delivery added spells, spell resources, magical targeting, or a magic extension shelf.
+
+### Delivery amendments learned
+
+- In `rpg-api-protos`, the release tag identifies the generated artifact (`v0.1.142` → `9d75694`), not the source merge (`336fc3f`). Consumer evidence must record both rather than deriving the tag with `tag --points-at` the source merge.
+- The wave ran one repository at a time—protos → toolkit → API → web—with each provider merged and published before the next consumer began. Future issues/worktrees and toolkit RCs were intentionally not created in parallel; this was the safer execution of the approved outside-in/inside-out dependency order.
 
 ## North star
 
