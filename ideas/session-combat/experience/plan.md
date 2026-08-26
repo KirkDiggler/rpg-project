@@ -23,7 +23,7 @@
 - Public member identity stays on `SessionService.GetRoster`; exact self data stays on owner-gated `CharacterService.GetCharacterData` and is flattened directly into existing `CharacterData`.
 - Never inspect feature/condition persistence JSON in rpg-api or the web.
 - Every player-facing route continues to bind the character/member ID to the authenticated owner. Foreign and missing private characters remain indistinguishable `NOT_FOUND` responses.
-- Develop from the consumer proof and approved protos; merge toolkit → rpg-api → web. Kirk alone merges.
+- The originally approved plan develops from the consumer proof and approved protos, then merges toolkit → rpg-api → web. Delivery followed Kirk's authorized sequential amendment documented below. Kirk alone merges.
 - One issue, branch, worktree, and PR per repository for this wave. Do not split one repository's implementation into stacked PRs.
 - Branch from fresh `origin/main` for protos/toolkit and fresh `origin/dev` for rpg-api/web. Never branch from a stale local branch.
 - Protos merge before implementation branches pin generated output. Never edit the generated branch or generated SDK files by hand.
@@ -63,7 +63,7 @@
 
 ### `rpg-dnd5e-web`
 
-- Modify `package.json` / `package-lock.json` — merged proto tag.
+- Modify `package.json` / `package-lock.json` — compatible generated proto superset tag.
 - Modify `src/api/useSession{Afford,Attack,EndTurn}.ts` and tests — nested declarations and selector echo.
 - Modify `src/api/useGetCharacterData.ts`; create `src/api/useCharacterData.ts` and test — cached last-confirmed private data with refresh.
 - Modify `src/components/session/useSessionEventStream.ts` and test — five-second/focus catch-up polling and delivery provenance.
@@ -83,7 +83,7 @@
 - Consumes: approved design issue `rpg-project#270`, design PR `rpg-project#271`, parent journey `rpg-project#253`.
 - Produces: four issue URLs and numeric issue IDs exported as `PROTO_ISSUE`, `TOOLKIT_ISSUE`, `API_ISSUE`, `WEB_ISSUE` for every later branch name.
 
-Execution amendment: the human-directed one-repository-at-a-time sequence staged issue, board, and worktree setup at each repository's entry rather than activating all four slices at once. All four eventual slices completed with the intended fields and bases.
+Execution amendment: Kirk authorized a one-repository-at-a-time sequence—protos → toolkit → API → web—instead of the originally approved outside-in development order. Issue, board, and worktree setup therefore occurred at each repository's entry rather than activating all four slices at once. All four eventual slices completed with the intended fields and bases. Merging/publishing each provider before its consumer proceeded preserved provider-before-consumer publication and inside-out integration safety.
 
 - [x] **Step 1: Create exact issue bodies with the approved boundaries**
 
@@ -384,7 +384,7 @@ printf 'PROTO_TAG=%s PROTO_GENERATED_SHA=%s\n' "$PROTO_TAG" "$PROTO_GENERATED_SH
 
 Record both values in the owning issue. Do not begin committed consumer pins until the generated artifact exists.
 
-Delivered amendment: this repository tags generated output, so the source-merge `tag --points-at` command above is not a valid release derivation. PR #253 merged source as `336fc3f`; generation produced `9d75694`; `v0.1.142` identifies that generated artifact. Consumers recorded and pinned the generated release rather than expecting a tag on the source merge.
+Delivered amendment: this repository tags generated output, so the source-merge `tag --points-at` command above is not a valid release derivation. PR #253 merged source as `336fc3f`; generation produced `9d75694`; `v0.1.142` identifies that generated artifact. By consumer merge time, the compatible generated superset `v0.1.143` / `a7db07a` was newer. The API preserved it as Go pseudo-version `v0.0.0-20260825072216-a7db07a1009f`, and the web preserved tag `v0.1.143`; neither merged consumer pinned `v0.1.142`.
 
 ---
 
@@ -858,19 +858,19 @@ Execution amendment: no RCs were published. Under the human-directed one-reposit
 - Consumes: toolkit `character.StatusView`/`EquipmentView`, merged proto `CharacterData`.
 - Produces: internal `character.View`, strict project-before-write application path, full proto mapping consumed by web Task 10.
 
-- [x] **Step 1: Pin merged proto and toolkit artifacts**
+- [x] **Step 1: Pin the generated proto superset and toolkit artifacts**
 
-After proto generation and toolkit RC/final tags exist:
+After proto generation and toolkit RC/final tags exist, preserve the newer compatible generated proto superset already current on the API branch:
 
 ```bash
 cd "$API_WORKTREE"
-GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@generated
+GOPROXY=direct go get github.com/KirkDiggler/rpg-api-protos/gen/go@v0.0.0-20260825072216-a7db07a1009f
 GOPROXY=direct go get github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e@${DND5E_VERSION}
 GOPROXY=direct go get github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e/session@${SESSION_VERSION}
 go mod tidy
 ```
 
-Verify `go.mod` contains published versions and no `replace`.
+Verify `go.mod` contains published versions and no `replace`. The proto pseudo-version peels to generated commit `a7db07a` (`v0.1.143`), a superset of #252's `v0.1.142` / `9d75694` output.
 
 - [x] **Step 2: Write failing no-write and projection tests**
 
@@ -1061,15 +1061,15 @@ PR body names final toolkit/proto artifacts and includes focused/full gate evide
 - Consumes: generated declaration/CharacterData types.
 - Produces: thin selector-bearing RPC hooks and pure `selectCombatExperience`/`selectDirectMapAttack` used by Task 11.
 
-- [x] **Step 1: Pin the merged proto tag and regenerate lock state**
+- [x] **Step 1: Preserve the newer compatible generated proto tag and regenerate lock state**
 
 ```bash
 cd "$WEB_WORKTREE"
-npm i --save github:KirkDiggler/rpg-api-protos#${PROTO_TAG}
+npm i --save github:KirkDiggler/rpg-api-protos#v0.1.143
 grep -n 'rpg-api-protos' package.json package-lock.json
 ```
 
-Expected: package and lock resolve the same merged tag/commit.
+Expected: package and lock resolve `v0.1.143` / generated commit `a7db07a`. This compatible superset was already newer when the web consumer merged, so the delivered branch did not downgrade to #252's `v0.1.142`.
 
 - [x] **Step 2: Write failing hook/selection tests**
 
@@ -1393,7 +1393,7 @@ Build the API from its feature branch and serve the web feature branch. With two
 10. reconnect settles history, and world clock restores translucent exploration UI.
 ```
 
-Capture the final real-assets frames without committing them. Delivered evidence used 1216×800 (`63524e…`) and 960×768 (`282937…`) after the final upstream-preserving rebase; both passed visual review.
+Capture the final real-assets frames without committing them. Delivered evidence at rebased integration head `ae3b60c` used 1216×800 (`63524e…`) and 960×768 (`282937…`); both passed visual review.
 
 ---
 
@@ -1412,26 +1412,26 @@ Capture the final real-assets frames without committing them. Delivered evidence
 
 Delivered evidence:
 
-- Protos #252 / PR #253: source merge `336fc3f`, generated artifact `9d75694`, release `v0.1.142`.
+- Protos #252 / PR #253: source merge `336fc3f`, generated artifact `9d75694`, release `v0.1.142`. Merged consumers preserved the newer generated superset `v0.1.143` / `a7db07a`: API Go pseudo-version `v0.0.0-20260825072216-a7db07a1009f` and web tag `v0.1.143`.
 - Toolkit #1246 / PR #1250: reviewed head `04c2432`, merge `5b54360`, final versions `dnd5e/v0.100.0`, `session/v0.30.0`, and `resolution/v0.13.0`.
 - API #844 / PR #845: reviewed head `6ff299f`, `dev` merge `f1aa9d2`.
-- Web #817 / PR #822: exact authenticated live code head `301b9a3`; final pre-squash branch/evidence head `7ce5f7a`; `dev` merge `b3079d9`. The final branch was safely rebased over upstream builder/weapon attachment work.
+- Web #817 / PR #822: authenticated live code head `301b9a3`; rebased integration/evidence head `ae3b60c`; documentation-only reconciliation head `7ce5f7a`; `dev` merge `b3079d9`. The branch was safely rebased over upstream builder/weapon attachment work.
 
 Applicable Copilot findings in toolkit, API, and web were fixed and replied to inline; threads were resolved where available and no review was re-requested.
 
 - [x] **Step 2: Reconfirm published provider artifacts**
 
-The proto release is recorded with both commits because `v0.1.142` points at generated commit `9d75694`, not source merge `336fc3f`. Toolkit final versions came from merge `5b54360`; API pinned the published finals and carried no RC or local override residue.
+The proto amendment is recorded with both commits because `v0.1.142` points at generated commit `9d75694`, not source merge `336fc3f`. The merged consumers did not pin `v0.1.142`: they preserved the newer compatible generated superset `v0.1.143` / `a7db07a`, through the API Go pseudo-version and web tag recorded above. Toolkit final versions came from merge `5b54360`; API pinned those published finals and carried no RC or local override residue.
 
 - [x] **Step 3: Confirm the merged game server**
 
-API PR #845 targeted `dev` and merged as `f1aa9d2` with the final provider pins. Build/test workflows passed, and the authenticated web journey ran against that merged game-server head.
+API PR #845 targeted `dev` and merged as `f1aa9d2` with the final provider pins. Build/test workflows passed. The authenticated web journey ran specifically at web code `301b9a3` against that merged game-server head.
 
 - [x] **Step 4: Confirm the merged web and final verification**
 
-Web PR #822 merged to `dev` as `b3079d9`. At final pre-squash head `7ce5f7a`, local verification reported 221 passed / 1 skipped test files and 3,504 passed / 1 skipped tests; `ci-check`, build, and GitHub merge CI were green.
+Web PR #822 merged to `dev` as `b3079d9`. At rebased integration head `ae3b60c`, local verification reported 221 passed / 1 skipped test files and 3,504 passed / 1 skipped tests; `ci-check`, standalone build, and exact-head GitHub checks were green. Head `7ce5f7a` changed only the evidence document for attribution reconciliation; final GitHub checks were green, but no full-suite run is attributed to that documentation-only head.
 
-Real synchronized assets passed at 1216×800 (`63524e…`) and 960×768 (`282937…`), with no images committed. Two authenticated contexts passed all ten live requirements. The terminal stream event was recovered through `GetStory` in 744 ms with zero later stream events, and the run's Redis cleanup was exact. The honest allowed terminal alternative was used: `FightEnded` was not played; world-clock empty declarations were verified. Existing npm audit debt remains 1 low and 5 high; the non-blocking Security job was green, not a clean audit. No magic remains the product boundary.
+Real synchronized assets passed at `ae3b60c` at 1216×800 (`63524e…`) and 960×768 (`282937…`), with no images committed. At web `301b9a3` against API `f1aa9d2`, two authenticated contexts passed all ten live requirements. No authenticated behavior rerun was performed after the rebase. In that authenticated run, the terminal stream event was recovered through `GetStory` in 744 ms with zero later stream events, and Redis cleanup was exact. The honest allowed terminal alternative was used: `FightEnded` was not played; world-clock empty declarations were verified. Existing npm audit debt remains 1 low and 5 high; the non-blocking Security job was green, not a clean audit. No magic remains the product boundary.
 
 - [x] **Step 5: Confirm implementation tracking is Done**
 
