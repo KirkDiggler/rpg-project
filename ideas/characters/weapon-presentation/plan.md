@@ -862,23 +862,20 @@ git commit -m "feat(models): attach optional weapon to cloned hand bone (#821)"
 
 - [ ] **Step 1: Verify the provisional assets and socket starting point in Blender**
 
-Use the already-running Blender 5.0.1 GUI with the add-on connected only to `127.0.0.1:9876`. Use exactly one MCP client. Its server command must be the verified compatible form `uvx --from blender-mcp==1.6.4 --with 'mcp[cli]==1.29.0' blender-mcp`; do not start a second bare server beside an active client and do not edit `game-dev` from this web slice. If that client is unavailable, perform the same inspection directly in the Blender GUI and record that MCP was not used.
+This checkpoint was completed collaboratively in Blender 5.0.1 on 2026-08-26 before Task 3 dispatch. The disposable scene is saved at `/tmp/rpg-821-fighter-weapon-concept.blend`; Blender MCP protocol 4 recorded Kirk's manual move/rotate operations.
 
-In a disposable scene:
+Human visual rulings:
 
-- import `/home/kirk/game-dev/rpg-game-assets/harness/models/synty/characters/fighter.glb`;
-- import `characters/weapons/fighter-weapon.glb` and `characters/weapons/bow-01.glb` one at a time;
-- inspect exact `Root`, `Hand_R`, scene roots, mesh names, bounds, materials, and clips;
-- keep all cloud integrations off;
-- create `Socket_MainHand` under `Hand_R` with the existing reviewed fighter receipt:
-  - position meters `[-0.0554, 0.1299, 0.0237]`;
-  - rotation quaternion `[-0.7071067811865475, 0, 0, 0.7071067811865476]`;
+- `SM_Wep_Slayer_01` follows the socket but is rejected as the production longsword candidate because it is the oversized prior large-model weapon.
+- `SM_Prop_Bow_01` is accepted as the provisional shortbow candidate for the Concept.
+- The accepted provisional fighter socket is:
+  - position meters `[-0.11356719583272934, 0.04377313703298569, -0.0070696864277124405]`;
+  - rotation quaternion `[-0.5601389408111572, -0.8049638271331787, 0.16070428490638733, 0.11158794164657593]`;
   - weapon scale `1.0`;
-  - bone unit meters `0.01`;
-- verify both weapon roots remain identity grip candidates and both can use the same helper without changing the helper;
-- save only to an ignored/private path, for example `/tmp/rpg-821-fighter-weapon-concept.blend`.
+  - bone unit meters `0.01`.
+- Fingers do not curl around the grip in the existing idle pose; finger posing belongs to the later weapon-animation/hand-pose layer and does not block rigid attachment.
 
-This is a provisional Concept input, not provider acceptance. If either candidate looks semantically wrong, retain it as an explicitly rejected candidate in the evidence; do not select a replacement or modify provider files in this slice.
+Use these values verbatim in the provisional fixture. Do not repeat calibration, choose a replacement provider asset, modify provider files, or add per-weapon offsets in this Concept slice.
 
 - [ ] **Step 2: Write failing resolver and coverage tests**
 
@@ -1041,12 +1038,16 @@ const itemRef = (id: string): RefLike => ({
 export const PROVISIONAL_FIGHTER_SOCKET: MainHandSocket = Object.freeze({
   bone: 'Hand_R',
   boneUnitMeters: 0.01,
-  positionMeters: [-0.0554, 0.1299, 0.0237],
+  positionMeters: [
+    -0.11356719583272934,
+    0.04377313703298569,
+    -0.0070696864277124405,
+  ],
   rotationQuaternion: [
-    -0.7071067811865475,
-    0,
-    0,
-    0.7071067811865476,
+    -0.5601389408111572,
+    -0.8049638271331787,
+    0.16070428490638733,
+    0.11158794164657593,
   ],
   scale: 1,
 });
@@ -1579,7 +1580,7 @@ The inspector must expose these `data-testid` values:
 - `equipped-ref`: exact mapped/unmapped ref or `unarmed`;
 - `candidate-source`: exact source or `none`;
 - `candidate-url`: exact URL or `none`;
-- `socket-profile`: `Hand_R · bone units 0.01m · pos [-0.0554, 0.1299, 0.0237] · quat [-0.707107, 0, 0, 0.707107] · scale 1`;
+- `socket-profile`: `Hand_R · bone units 0.01m · pos [-0.113567, 0.043773, -0.007070] · quat [-0.560139, -0.804964, 0.160704, 0.111588] · scale 1`;
 - `attachment-status`: latest callback code;
 - `texture-warning`: `16 MB > 4.5 MB production budget` or `64 MB > 4.5 MB production budget`, and `none` for unarmed;
 - `coverage-status`: counts `equipment 0/3 · motion 0/2 · views 0/3 · facings 0/6`, updated from `coverageFor()`;
