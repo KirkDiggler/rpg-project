@@ -868,11 +868,13 @@ Human visual rulings:
 
 - `SM_Wep_Slayer_01` follows the socket but is rejected as the production longsword candidate because it is the oversized prior large-model weapon.
 - `SM_Prop_Bow_01` is accepted as the provisional shortbow candidate for the Concept.
-- The accepted provisional fighter socket is:
-  - position meters `[-0.11356719583272934, 0.04377313703298569, -0.0070696864277124405]`;
-  - rotation quaternion `[-0.5601389408111572, -0.8049638271331787, 0.16070428490638733, 0.11158794164657593]`;
+- Kirk's accepted Blender Z-up receipt is position `[-0.11356719583272934, 0.04377313703298569, -0.0070696864277124405]` and quaternion `[-0.5601389408111572, -0.8049638271331787, 0.16070428490638733, 0.11158794164657593]`.
+- The browser fixture must use the derived glTF/Three joint-local socket, not copy that Blender quaternion unchecked:
+  - position meters `[-0.11356871832209599, 0.0437807216160595, -0.0070717729664129085]`;
+  - rotation quaternion `[-0.31717459916354807, -0.45555976264236875, 0.6828311428133312, 0.47498148472569474]`;
   - weapon scale `1.0`;
   - bone unit meters `0.01`.
+- Derivation: basis change `C = rotationX(-π/2)` maps Blender `(x,y,z)` to Three `(x,z,-y)`; `W_three = C × W_blender × C⁻¹`; `L_three = inverse(Hand_R_three_at_Idle_Relaxed_time_0) × W_three`. Reapplying `L_three` in Three reproduces the Blender bow world position/quaternion/scale within floating-point tolerance.
 - Fingers do not curl around the grip in the existing idle pose; finger posing belongs to the later weapon-animation/hand-pose layer and does not block rigid attachment.
 
 Use these values verbatim in the provisional fixture. Do not repeat calibration, choose a replacement provider asset, modify provider files, or add per-weapon offsets in this Concept slice.
@@ -943,15 +945,15 @@ it('uses one frozen fighter socket object for both candidates', () => {
     bone: 'Hand_R',
     boneUnitMeters: 0.01,
     positionMeters: [
-      -0.11356719583272934,
-      0.04377313703298569,
-      -0.0070696864277124405,
+      -0.11356871832209599,
+      0.0437807216160595,
+      -0.0070717729664129085,
     ],
     rotationQuaternion: [
-      -0.5601389408111572,
-      -0.8049638271331787,
-      0.16070428490638733,
-      0.11158794164657593,
+      -0.31717459916354807,
+      -0.45555976264236875,
+      0.6828311428133312,
+      0.47498148472569474,
     ],
     scale: 1,
   });
@@ -1064,15 +1066,15 @@ export const PROVISIONAL_FIGHTER_SOCKET: MainHandSocket = Object.freeze({
   bone: 'Hand_R',
   boneUnitMeters: 0.01,
   positionMeters: [
-    -0.11356719583272934,
-    0.04377313703298569,
-    -0.0070696864277124405,
+    -0.11356871832209599,
+    0.0437807216160595,
+    -0.0070717729664129085,
   ],
   rotationQuaternion: [
-    -0.5601389408111572,
-    -0.8049638271331787,
-    0.16070428490638733,
-    0.11158794164657593,
+    -0.31717459916354807,
+    -0.45555976264236875,
+    0.6828311428133312,
+    0.47498148472569474,
   ],
   scale: 1,
 });
@@ -1626,7 +1628,7 @@ The inspector must expose these `data-testid` values:
 - `equipped-ref`: exact mapped/unmapped ref or `unarmed`;
 - `candidate-source`: exact source or `none`;
 - `candidate-url`: exact URL or `none`;
-- `socket-profile`: `Hand_R · bone units 0.01m · pos [-0.113567, 0.043773, -0.007070] · quat [-0.560139, -0.804964, 0.160704, 0.111588] · scale 1`;
+- `socket-profile`: `Hand_R · bone units 0.01m · pos [-0.113569, 0.043781, -0.007072] · quat [-0.317175, -0.455560, 0.682831, 0.474981] · scale 1`;
 - `attachment-status`: latest callback code;
 - `texture-warning`: `16 MB > 4.5 MB production budget` or `64 MB > 4.5 MB production budget`, and `none` for unarmed;
 - `coverage-status`: counts `equipment 0/3 · motion 0/2 · views 0/3 · facings 0/6`, updated from `coverageFor()`;
