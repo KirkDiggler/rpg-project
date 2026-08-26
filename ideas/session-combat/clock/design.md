@@ -94,13 +94,40 @@ states for `TurnDriver`: *"a nil answer here would be this module guessing a
 rule instead of asking for one."* A missing announcer is not "boundaries are
 off," it is "conditions silently never expire," which is the current bug.
 
-### Read paths fail closed
+### `RefusingAnnouncer`, and the six construction sites
 
-`LoadEncounter` on a read path must still be handed one. It is handed a
-**refusing** announcer, not a no-op: a read verb cannot advance a clock, so an
-announcement on a read path is a bug and should say so at the point of failure.
-A no-op default here would be `fail-closed-not-fail-silent` in reverse — the
-absent value would not say what the author meant.
+`Striker` already solved this and the answer is to copy it verbatim.
+`encounter.RefusingStriker{}` exists precisely because some callers load an
+encounter that must never drive a turn, and `read.go:383` states the rule:
+*"The caller says which: a real one bound to a write verb's own scope, or
+`RefusingStriker{}` for a read that must never drive a turn."*
+
+`RefusingAnnouncer` is its twin. A no-op default would be
+`fail-closed-not-fail-silent` in reverse: the absent value would not say what
+the author meant, and "boundaries silently stopped" is the bug this slice is
+fixing.
+
+Every site that loads an encounter has to name one:
+
+| site | announcer | why |
+|---|---|---|
+| `session/write.go:676` (`adopt`) | **real** | the write path that advances clocks |
+| `session/start.go:158` (`loadAuthored`) | refusing | already passes `RefusingStriker` for the same reason |
+| `session/read.go:383` | refusing / caller's choice | mirrors how `striker` is already threaded |
+| `resolution/resolve.go:289` | refusing | see below |
+| two `cmd/` workbenches | their own | |
+
+**Resolution's own load takes the refusing one, and this is not a recursion
+hazard.** It reads as one at first — resolution loads an encounter, an announcer
+calls resolution — but `Striker`'s comment at that exact call site already
+settles it: this package *"runs ONE interaction machine against a loaded
+snapshot and returns — it never drives a monster's whole turn (that is
+driveMonsterTurns' own job, reached through EndTurn/form, **neither of which
+this package's Resolve calls**)."* No clock advances inside a resolution, so no
+boundary is crossed inside one, so an announcement there is a bug — named
+loudly rather than recursed into.
+
+That leaves exactly one real announcer in the system, on exactly one path.
 
 ## 3. Layer by layer
 
