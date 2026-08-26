@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - Toolkit-only. No protos, no rpg-api, no web. No wire change and no client change in this slice.
-- Module chain is strict: `rulebooks/dnd5e` → `rulebooks/dnd5e/resolution` → `rulebooks/dnd5e/session`. Deliver in that order; each downstream module bumps to the tag the previous merge produced. One issue and one PR per module.
+- Module chain is strict: `rulebooks/dnd5e` → `rulebooks/dnd5e/resolution` → `rulebooks/dnd5e/session`. Deliver in that order; each downstream module bumps to the tag the previous merge produced.
+- **One build issue per module, one *in-flight* PR per module.** `dnd5e` carries two PRs (Tasks 2 and 3) under a single issue — sequential, never concurrent, because they touch the same package tree.
 - Both `dnd5e` PRs merge before `resolution` bumps, so the chain runs **once**. Between those merges the rogue temporarily loses adjacency-driven Sneak Attack (`known=false` while nothing installs a cast) — an intermediate tag that is never consumed by a running game. Do not bump `resolution` mid-way to "test it".
 - `resolution` currently pins `dnd5e v0.99.0` and `session` pins `dnd5e v0.99.0` / `resolution v0.12.0`, while `dnd5e` is already at `v0.100.0`. Bump to the tag this work produces, not to `v0.100.0`.
 - Every `Cast` accessor returns `(value, known bool)`. Missing data is **never** an error and never poisons a chain fold. This is the discipline at `conditions/prone.go:284`; copy it exactly.
@@ -27,48 +28,40 @@
 
 ---
 
-### Task 1: Open and board the slice — rpg-project
+### Task 1: Open and board the tracking surfaces — ✅ **DONE 2026-08-26**
 
-**Files:** none (GitHub state only).
+- [x] **Step 1: Slice issue** — rpg-project#287 *design: how an effect reads the world and writes itself back*
+- [x] **Step 2: Build issues, one per module** — rpg-toolkit#1251 (dnd5e), #1252 (resolution), #1253 (session)
+- [x] **Step 3: All four linked as sub-issues of journey rpg-project#253** (35 sub-issues total)
+- [x] **Step 4: All four boarded on Project 19, verified by read-back**
 
-**Interfaces:**
-- Consumes: `design.md`, journey rpg-project#253.
-- Produces: one slice issue, boarded on Project 19, with the design PR (#286) linked from it.
+| item | Status | Area | Kind | Team | Readiness | Initiative |
+|---|---|---|---|---|---|---|
+| rpg-project#287 | Todo | The Dungeon | Decide | Platform | Ready | Four-player Level-3 Dungeon |
+| rpg-toolkit#1251 | Todo | The Dungeon | Build | Platform | Ready | Four-player Level-3 Dungeon |
+| rpg-toolkit#1252 | Todo | The Dungeon | Build | Platform | **Blocked** | Four-player Level-3 Dungeon |
+| rpg-toolkit#1253 | Todo | The Dungeon | Build | Platform | **Blocked** | Four-player Level-3 Dungeon |
 
-- [ ] **Step 1: Create the slice issue as a sub-issue of the journey**
+#1252 and #1253 are Blocked on purpose: each waits on the tag the module before it produces. Move
+to Ready as that tag lands.
 
-```bash
-gh issue create --repo KirkDiggler/rpg-project \
-  --title "design: how an effect reads the world and writes itself back" \
-  --body "Conditions reach the combat dock but cannot read anything except geometry, and cannot record that they changed. Three are dead in live play — Unarmored Defense, Martial Arts, Unarmored Movement — because they read a gamectx registry with zero non-test installs and return the error into a fold that swallows it.
+**Board coordinates**, for whoever picks this up:
 
-Design + brainstorm: https://github.com/KirkDiggler/rpg-project/pull/286
-Journey: #253
-
-— platform agent, on behalf of KirkDiggler"
+```
+PROJECT_ID  PVT_kwHOAASbwc4Bcj4v
+Status      PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM   Todo=397864df  In Progress=a434eab1  In Review=9dac2cae  Done=e4d8ce42
+Area        PVTSSF_lAHOAASbwc4Bcj4vzhXLt3s   The Dungeon=0e68c572  Game Screen=99f1a1b1
+Kind        PVTSSF_lAHOAASbwc4Bcj4vzhXLt3w   Build=ea162471  Decide=2ccd98be  Fix=38b89d82  Verify=ab287333
+Team        PVTSSF_lAHOAASbwc4Bcj4vzhYbEWs   Platform=f9c87bc7  UI/UX=de75cd8d
+Initiative  PVTSSF_lAHOAASbwc4Bcj4vzhf2z3s   Four-player=20c80cbf
+Readiness   PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   Ready=51997600  Shaping=9f972e92  Blocked=2b2c7c9e
 ```
 
-Expected: an issue URL. Record the number as `SLICE`.
-
-- [ ] **Step 2: Board it — Todo · The Dungeon · Platform · Decide · Ready · Four-player**
-
-```bash
-PROJECT_ID=PVT_kwHOAASbwc4Bcj4v
-STATUS_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhXLtvM      # Todo=397864df
-AREA_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhXLt3s        # The Dungeon=0e68c572
-KIND_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhXLt3w        # Decide — resolve by name, see below
-TEAM_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhYbEWs        # Platform=f9c87bc7
-INITIATIVE_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhf2z3s  # Four-player=20c80cbf
-READINESS_FIELD=PVTSSF_lAHOAASbwc4Bcj4vzhf2z6Y   # Ready — resolve by name
-```
-
-`KIND_DECIDE` and `READINESS_READY` option ids are not recorded here on purpose — resolve them by name from a single `fields(first:50)` query rather than pasting a guess.
-
-Expected: `gh api graphql` read-back shows all six fields set. **Verify by reading back, never by the mutation's own response.**
+**Always verify a board write by reading it back, never by the mutation's own response.**
 
 ---
 
-### Task 2: The two channels — rpg-toolkit `rulebooks/dnd5e`
+### Task 2: The two channels — rpg-toolkit#1251, PR A (`rulebooks/dnd5e`)
 
 **Files:**
 - Create: `rulebooks/dnd5e/gamectx/cast.go`
@@ -173,7 +166,7 @@ Open one PR against `origin/main`, ready for review (never draft), one Copilot r
 
 ---
 
-### Task 3: The two consumers — rpg-toolkit `rulebooks/dnd5e`
+### Task 3: The two consumers — rpg-toolkit#1251, PR B (`rulebooks/dnd5e`)
 
 **Files:**
 - Modify: `rulebooks/dnd5e/conditions/sneak_attack.go:236-266`
@@ -209,7 +202,7 @@ Same gates as Task 2. This merges before `resolution` bumps.
 
 ---
 
-### Task 4: Answer the question — rpg-toolkit `rulebooks/dnd5e/resolution`
+### Task 4: Answer the question — rpg-toolkit#1252 (`rulebooks/dnd5e/resolution`)
 
 **Files:**
 - Create: `rulebooks/dnd5e/resolution/cast.go`
@@ -262,7 +255,7 @@ The paragraph beginning *"No game context is installed"* and the line *"The othe
 
 ---
 
-### Task 5: Prove it — rpg-toolkit `rulebooks/dnd5e/session`
+### Task 5: Prove it — rpg-toolkit#1253 (`rulebooks/dnd5e/session`)
 
 **Files:**
 - Modify: `rulebooks/dnd5e/session/go.mod`
@@ -295,6 +288,6 @@ Martial Arts through a real unarmed strike. Sneak Attack firing on an enemy-of-t
 
 - [ ] **Step 1: Merge inside-out** — both `dnd5e` PRs, then `resolution`, then `session`. Kirk merges; confirm each auto-tag appeared before bumping the next module.
 - [ ] **Step 2: Confirm the fix in a real run.** Start the local stack, play a barbarian, and read the AC on the dock. It should be 14, not 11. This is what rpg-api#842 was filed against; if it now reads 14, say so on that issue.
-- [ ] **Step 3: Close the slice issue and set it Done on Project 19.** Closing keywords do not fire on `dev`-based repos but **do** fire on toolkit `main` merges — check rather than assume.
+- [ ] **Step 3: Close rpg-project#287 and rpg-toolkit#1251/#1252/#1253 and set it Done on Project 19.** Closing keywords do not fire on `dev`-based repos but **do** fire on toolkit `main` merges — check rather than assume.
 - [ ] **Step 4: Merge design PR #286** once the slice is delivered, per the convention that a design PR stays open through implementation.
 - [ ] **Step 5: Record what moved.** `brainstorm.md`'s parked table is the next slice's agenda — the clock is unblocked the moment dirty lands, and it is the natural successor.
