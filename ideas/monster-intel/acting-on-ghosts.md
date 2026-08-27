@@ -15,28 +15,40 @@ Kirk's spec, verbatim, because it is already the ladder:
 
 ## 1. The ladder
 
-Four rungs, in order. A driver takes the first that applies.
+**Revised by Kirk after the first draft**, and the revision makes it shorter:
 
-| # | condition | intent | built today? |
+> if we have current then that wins, if we do not but we have the ghost, we act on that. if the
+> monster is to target closest then if the ghost was closest, it would pursue.
+
+The first draft had four rungs with live sightings strictly above ghosts. That is wrong, and the
+second sentence is why: **choosing what to move toward is a TARGETING decision, and the candidate
+set includes ghosts.** A ladder that always preferred a live sighting would override the
+rulebook's own strategy — which is the one thing this seam is careful not to do (`Targeting` is
+opaque here by C1).
+
+So: three rungs, and only the first is a fixed precedence.
+
+| # | condition | intent | built? |
 |---|---|---|---|
-| 1 | live sighting, in reach, attack left | `Attack{Target, Action}` | **yes** — `behavior.Basic` does exactly this |
-| 2 | live sighting, not in reach, movement left | `Move{Path[:1]}` toward it | **yes** |
-| 3 | **no live sighting, a ghost, movement left** | `Move` toward **the remembered cell** | **no** — this is the slice |
-| 4 | nothing to act on | `Pass{}` | yes |
+| 1 | a **live** sighting is in reach and an attack is left | `Attack{Target, Action}` | **yes** |
+| 2 | movement left, and the targeting strategy picks a winner from **live sightings ∪ ghosts** | `Move` toward it | **partly** — the strategy exists, the ghosts do not |
+| 3 | nothing to pursue | `Pass{}` | yes |
 
-Rungs 1, 2 and 4 are `behavior.Basic` as it stands — 88 lines, and the package doc already calls
-it *"a real, working driver... a foundation to extend, not a finished decision system."* **Rung 3
-is the whole of this work at the behaviour layer.** Everything else here is what rung 3 needs
-underneath it.
+**Rung 1 is live-only by necessity, not by preference.** You cannot attack a memory, so no
+strategy can rank a ghost into it. That is the whole of "current wins": when a target is in
+reach and you can hit it, nothing else is under consideration.
 
-### Why the order is not negotiable
+**Rung 2 is where the strategy earns its name.** `MonsterView.Targeting` already carries the
+rulebook's own word for this and is deliberately opaque to the seam. Under `closest`, a ghost two
+cells behind the monster genuinely outranks a live target ten cells ahead — and Kirk's call is
+that this is correct: it clears the near lead first.
 
-Rung 1 before 2 because an attack you can make is worth more than a better position. Rung 2
-before 3 because **a live sighting always beats a memory** — a monster that walked toward a ghost
-while its target stood in front of it would look broken, and that is the ordering bug this table
-exists to prevent.
-
----
+Worth naming the case that will look wrong in play, so whoever tunes it recognises it rather than
+treats it as a bug: **a ghost behind the monster and a visible enemy in front means it turns its
+back on someone it can see.** That is not the ladder misbehaving, it is `closest` being a blunt
+strategy. The fix, if it wants one, belongs in the strategy — `closest-live-then-closest-ghost`
+is a legal strategy name and the seam would never know the difference. **Do not fix it by putting
+live above remembered in the ladder**, because that quietly makes every future strategy a liar.
 
 ## 2. What `MonsterView` has to grow, and why it is a real contract change
 
@@ -66,7 +78,9 @@ the one that matters:
    written against it.
 2. The two carry genuinely different facts (§3), so one struct would be half-empty either way.
 3. **A driver that ignores `Remembered` entirely is still correct** — just less clever. That is
-   the property that lets this ship incrementally, which is what Kirk asked for.
+   the property that lets this ship incrementally, which is what Kirk asked for. It is also
+   exactly `behavior.Basic` today: it ranks `Seen` by distance and would simply be handed a
+   larger candidate set.
 
 ---
 
@@ -107,6 +121,25 @@ worth walking across the room for.
 ## 4. The arrival case, and why `design.md` has to land first
 
 The monster walks to the remembered cell. It looks. Nothing is there.
+
+### Arriving is surveilling, and that is already true
+
+Kirk: *"Only 1 entry per subject means I would update the ghost to nothing. that would initiate a
+new surveil and possibly find a new target. nothing come back from surveil then the decider would
+need to handle it."*
+
+**All three of those already hold, and the middle one is free.** `refreshSight` runs on every
+step (`step.go:126`), so a monster walking to a remembered cell is surveilling the whole way —
+it does not arrive and then look, it looks continuously and the arrival is just the last one. Two
+consequences:
+
+- The correction may land **before** it arrives. Walk far enough to see the remembered cell and
+  the belief updates from there; the monster never has to stand on the spot.
+- New subjects land on the same pass. The walk toward a stale lead is also how it finds the next
+  one — Kirk's *"possibly find a new target"* needs no code.
+
+And *"nothing comes back from surveil"* is rung 3: no live sighting, no ghost worth pursuing,
+`Pass` — which is precisely the decider's problem and not the model's. §6 keeps it there.
 
 **With the ruled model (`design.md` §5a):** the observation is total over what it perceived, so
 the *place* belief is corrected — and the *subject* belief survives with its position downgraded
