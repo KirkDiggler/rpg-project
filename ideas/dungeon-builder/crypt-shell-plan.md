@@ -92,7 +92,8 @@ ASSET_URL=$(gh issue create -R KirkDiggler/rpg-game-assets \
   --title 'Build the approved crypt floor and two-sided wall shell profile' \
   --body 'Provider slice for KirkDiggler/rpg-project#284 under journey #169. Audition, author, validate, and promote one crypt floor/wall profile; no consumer or mechanics changes.\n\n— assets agent, on behalf of KirkDiggler')
 ASSET_ISSUE=${ASSET_URL##*/}
-git -C /home/kirk/game-dev/rpg-game-assets fetch origin
+: "${RPG_GAME_ASSETS_DIR:?set RPG_GAME_ASSETS_DIR to the assets checkout}"
+git -C "$RPG_GAME_ASSETS_DIR" fetch origin
 # Use superpowers:using-git-worktrees; branch from origin/main, never local main.
 ```
 
@@ -611,7 +612,8 @@ Expected: current tests pass before edits.
 - [ ] **Step 4: Sync the exact merged provider and prove it remains ignored**
 
 ```bash
-RPG_GAME_ASSETS_DIR=/home/kirk/game-dev/rpg-game-assets npm run assets:sync
+: "${RPG_GAME_ASSETS_DIR:?set RPG_GAME_ASSETS_DIR to the assets checkout}"
+npm run assets:sync
 git check-ignore -v public/models/synty/env/Crypt_Wall_Body_01.glb \
   public/models/synty/env/shell-profiles.json
 git status --short
@@ -1179,7 +1181,7 @@ Confirm provider/web slices closed Done, #791 closed Done, #823 open Shaping, #2
 
 Run one broad cross-repository review over provider, web, and project ranges. Fix Critical/Important findings with scoped tests. Ask Kirk to merge project PR #285; after merge, verify #284 Done and remove only this wave’s clean worktrees/branches/processes using the finishing-a-development-branch workflow.
 
-## Task 12 execution outcome (2026-08-26)
+## Task 12 execution outcome — initially recorded 2026-08-26
 
 The approved provider and web slices are landed and recorded without changing
 those repositories. Provider issue #65 / PR #68 merged at
@@ -1196,10 +1198,12 @@ post-merge docs base. A fresh visible `npm run test:run` on web reviewed head
 `a770746d73c6bfe35cc743383005e7f796ec672e` reported 231 files passed and 1
 skipped, with 3,648 tests passed and 1 skipped.
 
-The accepted final PNGs are verified at 1600×900: `final-builder.png`
+The initial record's then-current PNGs were verified at 1600×900:
+`final-builder.png`
 `0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83` and
 `final-game.png`
-`b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`. The
+`b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`. They
+are superseded pre-registration evidence, not current final evidence. The
 public boundary scan excludes GLB, Blend, shell-manifest, placeholders,
 private/local metadata, and unrelated provider evidence. Before and against
 Task 12 documentation commit `d961de0`, `git diff --check`, the
@@ -1213,3 +1217,30 @@ change issues or Project 19, merge PR #285, modify web, or clean worktrees and
 processes. Copilot was unavailable for the final supported attempts and had no
 review event; the static banner ruling, separate #823 follow-up, and active
 lighting work under #169 remain recorded.
+
+## Task 12 finalization report (2026-08-27)
+
+Web follow-up issue #828 / PR #829 merged as
+`c38ab663a9ced71bd494035854ec67c662205f0c`; its reviewed head was
+`9ca2bf4d86a8a164c2b1ebe6fd54180c0f924a61` and its merge tree was
+`786bc4bbff12406f9721c918c950675d3f85691e`. The root defect was fixed with
+geometry-derived scale and child-local registration under the exact `gapStart`
+hinge. Standard and raised walls across four facings measured left/right/top
+cover at least `0.020000901`, with floor contact `0`; thinness was deliberately
+unchanged. The verdict was **`door is pretty thin but no gaps`**.
+
+The provider, profile, door-frame, and closed-leaf hashes are unchanged. The
+post-fix `final-builder.png`, `final-game.png`, and new `close-door.png` are all
+`1600×900`, with hashes recorded in the evidence README. Prior `0854...` and
+`b44e...` frames are marked there as superseded pre-registration evidence.
+Focused coverage was 21 files / 372 tests; full coverage was 231 files / 3,653
+tests, with one file and one test skipped. `npm run ci-check` passed all seven
+gates and all four GitHub checks passed. Copilot’s one SHA typo was fixed in
+`9ca2bf4` and answered in the review reply.
+
+The current published head `30544fc` was merged with `origin/main`
+`f4415270ff14d6ca7ab21f6cb1b2bb79da6a688d` without rebasing as
+`4cb86155e3edf8a5047c8e889b2a3b52e27e7267`, the post-merge docs base. #828
+remains open pending post-publication manual close; #823 remains separate and
+#169 remains active for authored lighting. This finalization made no external
+comments, issue/board changes, pushes, merges, cleanup, or web/provider edits.

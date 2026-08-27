@@ -386,9 +386,10 @@ This remains one cross-repository wave under rpg-project#284 and journey #169:
 
 ## Landed record
 
-**Recorded 2026-08-26 after the project branch merged `origin/main`.** The
-approved provider and web slices are landed; this project record is the closeout
-for the implementation wave intended for rpg-project#284 / PR #285.
+**Initially recorded 2026-08-26; finalized 2026-08-27 after web follow-up
+#828 / PR #829.** The approved provider and web slices are landed; this project
+record is the closeout for the implementation wave intended for
+rpg-project#284 / PR #285.
 
 ### Provider
 
@@ -426,55 +427,45 @@ for the implementation wave intended for rpg-project#284 / PR #285.
 
 ### Web
 
-- [Issue #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) /
-  [PR #827](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/827) merged as
-  `548f561bf8ddab41da53a174e5b69a08358b11e1` with tree
-  `3094d2f0c7b53ea8679229123e5773d59c6f9255`.
-- Reviewed head:
-  `a770746d73c6bfe35cc743383005e7f796ec672e`; public evidence head:
-  `404738a9b70ad3a1034252b4c8959cb8012eb0e1`.
-- Fresh `npm run test:run` on that reviewed tree: 231 files passed, 1 skipped;
-  `3,648` tests passed, `1` skipped. The four GitHub checks were green:
-  Lint and Type Check, Deploy Preview, Test, and Security Audit. The seven web
-  gates were format, ESLint, TypeScript, production build, combat-HUD CSS
-  guard, Toolkit Contributor Sandbox exclusion, and test gate.
-- Real path: `crypt-prop-showcase` compiled as 240 cells / 44 boundaries / 2
-  regions; Save, reopen, and Save & Play all completed. Reopened YAML stayed
-  byte-identical at 94 lines / 3,593 bytes, hash
-  `1b5effb21b3ccc5c26153714cff62d7a08041808a1782cd79d9999b3755fca25`; the
-  playable atlas loaded 240 cells and 3 props.
-- Exact observed provider/runtime paths and hashes are preserved in the public
-  [evidence README](evidence/crypt-shell/README.md): the profile, U6 floor,
-  body, base, cap, door surround, existing closed leaf, and accepted cage,
-  table, and rug paths all returned HTTP 200. The final builder and game PNGs
-  are also copied there at `1600×900` with hashes
-  `0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83` and
-  `b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`.
-  Kirk’s verbatim integrated verdict was **`looks really good`**.
+- [Follow-up issue #828](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/828) /
+  [PR #829](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/829) merged as
+  `c38ab663a9ced71bd494035854ec67c662205f0c` with tree
+  `786bc4bbff12406f9721c918c950675d3f85691e`.
+- Reviewed head: `9ca2bf4d86a8a164c2b1ebe6fd54180c0f924a61`.
+- Root defect/fix: geometry-derived scale plus child-local registration under
+  the exact `gapStart` hinge. Across standard and raised walls and all four
+  facings, left/right/top cover is at least `0.020000901`; floor contact is `0`.
+  Thinness is deliberately unchanged. Kirk’s verbatim verdict: **`door is
+  pretty thin but no gaps`**.
+- Provider/profile/frame/leaf hashes are unchanged from the initial landing:
+  profile `d02e6398b06f8b347fbe2e68d91d83bfeccd389ea412be5774d34454c2d164a7`,
+  door frame `bd4d0a9ca3da8fcee72f8cfaf72d51040f6754920649b9e30c8c8a2e44093cc0`,
+  and closed leaf `c1445b4dae6a02127be15fcbd59e6f02f207de28a3461cf95a1ceba18f8d4c15`.
+- Focused wall/Atlas/DungeonShell suites: 21 files / 372 tests passed. Full
+  `npm run test:run`: 231 files / 3,653 tests passed, one file and one test
+  skipped. `npm run ci-check` passed all seven gates; all four GitHub checks
+  passed (Lint and Type Check, Deploy Preview, Test, and Security Audit).
+  Copilot’s one SHA typo was fixed in `9ca2bf4` and answered in its review
+  reply.
+- The post-fix builder, playable-game, and close-door PNGs are recorded in the
+  public [evidence README](evidence/crypt-shell/README.md), all `1600×900`.
 
 ### Review disposition and next lane
 
-Because web PR #827 merged into the non-default `dev` branch, rpg-dnd5e-web
-[issues #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) and
-[#791](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/791) were still
-**OPEN** at the Task 12 documentation commit. After publication, the reviewed
-Task 12 external reconciliation will manually close/mark Done #825 and #791.
-This record does not mutate that external state.
+PR #829’s one Copilot finding was a SHA typo; commit `9ca2bf4` corrected it and
+received a reply in the review thread. The provider, profile, door-frame, and
+closed-leaf hashes remain unchanged; the prior `0854...` and `b44e...` screenshots
+are superseded pre-registration evidence, not current final evidence.
 
-The final web range includes the fallback fixes that preserve closed doors and
-unmount rejected open-door leaves, followed by the broad provider/web/project
-review. For the final web fallback range, Copilot was unavailable for the
-supported attempts and produced no review event; no absent review was treated
-as approval. The visible `The
-Reference Tomb` banner remains pre-existing static `SessionEncounterView` copy,
-not atlas identity, and was not changed.
-
+[rpg-dnd5e-web#828](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/828)
+remains **OPEN** pending the post-publication manual close. The separate
 [rpg-dnd5e-web#823](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/823)
-remains separate. Journey
+remains open, and journey
 [rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169) remains
-active for authored lighting; lighting is not part of this landing.
+active for authored lighting; lighting is not part of this landing. No external
+issues, comments, board state, or web/provider files were changed here.
 
-The project branch merged `origin/main` at
-`9ae62e020c2220954f223c61393a743fd099e92a` with merge commit
-`0435af0ab94544ada2cf430d2d3097e269be7cce`. This is the post-merge docs base
-for the landed record.
+The project branch started from published head `30544fc`; current `origin/main`
+`f4415270ff14d6ca7ab21f6cb1b2bb79da6a688d` was merged without rebasing as
+`4cb86155e3edf8a5047c8e889b2a3b52e27e7267`. This is the post-merge docs base
+for the finalized landed record.

@@ -1,6 +1,6 @@
 # Crypt shell landing evidence
 
-Public-safe evidence for [rpg-project#284](https://github.com/KirkDiggler/rpg-project/issues/284), under [journey #169](https://github.com/KirkDiggler/rpg-project/issues/169). The accepted final builder and playable-game frames are the only new binary evidence copied here.
+Public-safe evidence for [rpg-project#284](https://github.com/KirkDiggler/rpg-project/issues/284), under [journey #169](https://github.com/KirkDiggler/rpg-project/issues/169). The post-fix builder, playable-game, and close-door frames are the only new binary evidence copied here.
 
 ## Provider landing
 
@@ -23,42 +23,35 @@ Public-safe evidence for [rpg-project#284](https://github.com/KirkDiggler/rpg-pr
 
 Provider gates: full discovery `337` passed / `20` skipped; Blender export `12/12`; renderer `19/19`; staging `7/7`; combined renderer/staging `26/26`; inventory, profile byte-identity, and stage `--verify-only` checks passed. The recorded provider commands were the full `python3 -m unittest discover -s scripts -p 'test_*.py'` gate, the Blender export/reimport gate, `python3 scripts/build_synty_complete_inventory.py --check`, and `python3 scripts/verify_web_asset_stage.py --verify-only`, followed by the six-view Blender evidence render. Kirk’s verbatim provider verdict: **`looks great`**. The expected optional Draco and Blender `use_nodes` warnings were non-fatal.
 
-## Web landing
+## Web follow-up landing
 
-- Issue [rpg-dnd5e-web#825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) / PR [#827](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/827).
-- Merge commit: `548f561bf8ddab41da53a174e5b69a08358b11e1`.
-- Reviewed head: `a770746d73c6bfe35cc743383005e7f796ec672e`; merge tree: `3094d2f0c7b53ea8679229123e5773d59c6f9255`.
-- Public evidence head: `404738a9b70ad3a1034252b4c8959cb8012eb0e1`.
-- Fresh reviewed-head `npm run test:run`: 231 files passed, 1 skipped; 3,648 tests passed, 1 skipped. The existing jsdom `Window's scrollTo()` notice was the only notice.
-- The four GitHub checks were green: Lint and Type Check, Deploy Preview, Test, and Security Audit.
-- Web CI gates were green: format, ESLint, TypeScript, production build, combat-HUD CSS guard, Toolkit Contributor Sandbox exclusion, and test gate.
+- Issue [rpg-dnd5e-web#828](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/828) / PR [#829](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/829).
+- Merge commit: `c38ab663a9ced71bd494035854ec67c662205f0c`.
+- Reviewed head: `9ca2bf4d86a8a164c2b1ebe6fd54180c0f924a61`; merge tree: `786bc4bbff12406f9721c918c950675d3f85691e`.
+- Root defect/fix: geometry-derived scale plus child-local registration under the exact `gapStart` hinge. Standard and raised walls across east, north, west, and south facings measured left/right/top cover ≥ `0.020000901`, with floor contact `0`.
+- Thinness is deliberately unchanged. Kirk’s verbatim verdict: **`door is pretty thin but no gaps`**.
+- Provider/profile/frame/leaf hashes are unchanged: profile `d02e6398b06f8b347fbe2e68d91d83bfeccd389ea412be5774d34454c2d164a7`, door frame `bd4d0a9ca3da8fcee72f8cfaf72d51040f6754920649b9e30c8c8a2e44093cc0`, and closed leaf `c1445b4dae6a02127be15fcbd59e6f02f207de28a3461cf95a1ceba18f8d4c15`.
+- Focused wall/Atlas/DungeonShell suites: **21 files / 372 tests passed**. Full `npm run test:run`: **231 files / 3,653 tests passed; one file and one test skipped**.
+- `npm run ci-check` passed all seven gates; all four GitHub checks passed (Lint and Type Check, Deploy Preview, Test, and Security Audit). Copilot’s one SHA typo was fixed in `9ca2bf4` and answered in the review reply.
 
-The real flow loaded `crypt-prop-showcase`, compiled `240` cells / `44` boundaries / `2` regions, performed Save, reopened it, and retained byte-identical YAML: `94` lines, `3,593` bytes, SHA-256 `1b5effb21b3ccc5c26153714cff62d7a08041808a1782cd79d9999b3755fca25`. Real Save & Play completed through encounter creation and loaded the `240`-cell, `3`-prop atlas.
+The real flow remained `crypt-prop-showcase`: `240` cells / `44` boundaries / `2` regions, Save, reopen, byte-identical YAML, and Save & Play into the `240`-cell / `3`-prop atlas. The post-fix screenshots are all `1600×900`:
 
-Observed provider/runtime requests returned HTTP 200:
+| Frame | SHA-256 |
+| --- | --- |
+| `close-door.png` | `07b7eda475ed812bad3ae8801071a568dd1cec13579c2559931b0b0b27010236` |
+| `final-builder.png` | `6365360061dd9087dca5ccc9b62de79bd3f4e123e296e7a8701eee95a710e561` |
+| `final-game.png` | `683501ed8983e89acdc9d514ccef467557a17d8f0e4b99b01b26a5bace033943` |
 
-- `/models/synty/env/shell-profiles.json` — `d02e6398b06f8b347fbe2e68d91d83bfeccd389ea412be5774d34454c2d164a7`
-- `/models/synty/textures/Dungeons_Texture_FloorTile_09_01.png` — `ec84f155a32297c64e86b8c678955e25d8f8180023327e42c840dd086916b841`
-- `/models/synty/env/Crypt_Wall_Body_01.glb` — `2216b24e5ea943841682a95c5f4a7692525be42f1cb295bf6d69df33a2e142fc`
-- `/models/synty/env/Crypt_Wall_Base_01.glb` — `6933008930a251aec0f27ac757611097faa15f38db06cb542e91128fa60c4f6f`
-- `/models/synty/env/Crypt_Wall_Cap_01.glb` — `f56b63ded7b8f8f5ca02a8824df9b9f2a2ca4052d1bf7939281b06c68c059a67`
-- `/models/synty/env/Crypt_Wall_Door_Surround_01.glb` — `bd4d0a9ca3da8fcee72f8cfaf72d51040f6754920649b9e30c8c8a2e44093cc0`
-- `/models/synty/env/SM_Env_Door_01.glb` — `c1445b4dae6a02127be15fcbd59e6f02f207de28a3461cf95a1ceba18f8d4c15`
-- `/models/synty/props/Crypt_Skeleton_Cage_01.glb`
-- `/models/synty/props/Crypt_Skeleton_Table_01.glb`
-- `/models/synty/props/Crypt_Rug_01.glb`
-
-The approved final builder frame is `final-builder.png`, `1600×900`, SHA-256 `0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83`. The approved final game frame is `final-game.png`, `1600×900`, SHA-256 `b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`. Kirk’s verbatim integrated verdict: **`looks really good`**.
+The prior `final-builder.png` (`0854b0d0bc4dd56a62185ffcfb774230ad77583f90696068308f6200368f7a83`) and `final-game.png` (`b44ef4dd027eaefc02db77f35bb31bb4461b1948dc80974b1bbbcfbe74d9baaa`) are superseded pre-registration evidence, not current final evidence.
 
 ## Review and boundaries
 
-Because web PR #827 merged into the non-default `dev` branch, rpg-dnd5e-web
-[issues #825](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/825) and
-[#791](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/791) were still
-**OPEN** at the Task 12 documentation commit. After publication, the reviewed
-Task 12 external reconciliation will manually close/mark Done #825 and #791.
-This evidence record does not mutate that external state.
+PR #829’s one Copilot finding was a SHA typo; commit `9ca2bf4` corrected it and received a reply in the review thread. No provider source or generated runtime bytes are included here.
 
-The final web range includes the fallback fixes `aefde18` (preserve closed doors) and `a770746` (unmount rejected open-door leaves), followed by a broad review of the provider, web, and project ranges. For the final web fallback range, Copilot was unavailable for the supported attempts and produced no review event; no absent review was treated as approval. The visible `The Reference Tomb` banner is pre-existing static `SessionEncounterView` copy, not atlas identity, and was left unchanged.
-
-[rpg-dnd5e-web#823](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/823) remains a separate open overlay-depth issue. Lighting remains active under [rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169); authored lighting is not part of this shell landing. No provider source or generated runtime bytes are included here.
+[rpg-dnd5e-web#828](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/828)
+remains **OPEN** pending the post-publication manual close. The separate
+[rpg-dnd5e-web#823](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/823)
+remains open. Lighting remains active under
+[rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169); authored
+lighting is not part of this shell landing. This evidence record does not mutate
+external issues, comments, or board state.
