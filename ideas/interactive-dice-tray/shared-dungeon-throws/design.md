@@ -39,7 +39,7 @@ This production wave includes:
 - tray-to-dungeon handoff;
 - two-button lift;
 - fixed-step Rapier simulation against floor cells, authored walls, shut/locked doors, and active dice bodies;
-- a client-generated throw plan with sparse contact checkpoints;
+- a group-shaped client-generated throw plan with sparse contact checkpoints, exercised by the product with one body;
 - a separate presentation-only publish/stream service;
 - shared roller/witness playback;
 - off-table presentation attempts;
@@ -59,6 +59,7 @@ It does not include damage dice, contributed dice, equipped-set projection, serv
 6. **Preserve current reveal authority.** The first accepted release plan crosses the existing reveal gate. If that physical attempt later rolls off the table, Story remains revealed and the next throw is a presentation-only attempt.
 7. **Snapshot collision truth per attempt.** A door opening during or after a throw does not rewrite that throw's world. The next attempt uses the latest door state.
 8. **Fail open to truthful settlement.** Missing transport, mismatched colliders, unsupported physics, provider failure, reconnect, or reduced motion never stalls the authoritative combat presentation.
+9. **Make the new transport group-shaped now.** Damage and contributed dice are already accepted journey outcomes, so plans carry stable body lists, per-body contacts, die-to-die checkpoints, and per-body terminals even though this wave renders one attack d20. Adding future die shapes may add a physics-schema enum value, but it must not require replacing the service or its group-shaped messages.
 
 ## Current reality
 
@@ -149,21 +150,21 @@ The witness therefore sees the throw from release onward, not the actor carrying
 
 ### Contact playback
 
-Every client steps the same body at 60 Hz. At each planned wall/door checkpoint, the client applies the recorded post-contact rigid-body state after that physics step. With matching simulations this assignment is imperceptible because values already agree. Under small cross-browser divergence it is a sparse correction at the moment of impact, ensuring the subsequent bounce belongs to the same collider.
+Every client steps the same ordered body list at 60 Hz. At each planned wall, door, or die-to-die checkpoint, the client applies the recorded post-contact state for every involved body after that physics step. With matching simulations this assignment is imperceptible because values already agree. Under small cross-browser divergence it is a sparse correction at the moment of impact, ensuring the subsequent bounce belongs to the same collider or die pair.
 
-Only wall and shut-door contacts are social milestones in v1. Floor contacts remain ordinary local physics. The full physical path is not transmitted.
+Wall, shut-door, and die-to-die contacts are social milestones in the plan vocabulary. Floor contacts remain ordinary local physics. This product wave emits wall/door milestones because its one body cannot hit another die; multi-body component tests prove die-to-die planning and playback. The full physical path is not transmitted.
 
 ### Settled terminal
 
-A `SETTLED` plan ends at the recorded low-energy in-bounds body state. Each client then performs the existing late authoritative-face assist against the result already supplied by its authoritative attack event. The body freezes only after correction completes.
+A settled body ends at its recorded low-energy in-bounds terminal state. Each client then performs the existing late authoritative-face assist against the matching result already supplied by its authoritative attack event. The body freezes only after correction completes. A future group may settle bodies at different steps; visible playback ends only after every body has a terminal record.
 
 The 320 ms correction is accepted temporary polish debt. Improving it through trajectory search, torque steering, or less visible correction is a later slice.
 
 ### Off-table terminal
 
-An `OFF_TABLE` plan visibly leaves valid floor support or falls beneath the approved threshold. At the recorded terminal step every client removes the world body and returns the die to its drawer.
+An off-table body visibly leaves valid floor support or falls beneath the approved threshold. At that body's recorded terminal step every client removes it from the world and returns it to the drawer.
 
-The actor's presentation re-arms as `attempt + 1`. Witnesses wait for that next plan. The server never rerolls and the web never asks it to; the same authoritative face remains the eventual target.
+For this one-d20 wave, the actor's whole presentation re-arms as `attempt + 1` and witnesses wait for that next plan. The server never rerolls and the web never asks it to; the same authoritative face remains the eventual target. The group-shaped terminal can later return only off-table body IDs while settled bodies remain in place; whether a damage interaction retries only those dice is decided with the authoritative damage-group slice, not inferred by this transport.
 
 Story is revealed by the first accepted release plan and remains revealed across off-table attempts. This keeps the current release boundary and makes the repeated throw explicitly presentation-only.
 
@@ -192,7 +193,7 @@ door:<connection-id>
 dice:<presentation-id>:<die-id>
 ```
 
-The initial production product has one active attack d20, so dice-to-dice collision is exercised through component/physics tests rather than a player-facing multi-die group. The collision world and body filtering do not need replacement when authoritative damage groups arrive.
+The initial production product has one active attack d20. Component/physics tests use at least two stable d20 bodies to prove body ordering, die-to-die collision checkpoints, involved-body correction, and mixed settled/off-table terminals. The collision world, plan, and playback interfaces therefore remain list-shaped when authoritative damage groups arrive.
 
 ### Deliberately absent colliders
 
@@ -214,7 +215,7 @@ This avoids one client's mid-flight door refresh changing a trajectory another c
 
 ### Collider fingerprint
 
-The snapshot is canonically encoded from physics schema, sorted collider records, dimensions, transforms, material constants, and active dice initial records, then SHA-256 hashed. The plan carries exactly 32 fingerprint bytes.
+The snapshot is canonically encoded from physics schema, sorted static collider records, dimensions, transforms, material constants, and each active body's stable ID/shape/collider descriptor, then SHA-256 hashed. Launch transforms and velocities remain in the plan's body list rather than being duplicated in the fingerprint. The plan carries exactly 32 fingerprint bytes.
 
 Clients recompute rather than trusting the publisher. A mismatch triggers one live-door refresh and a 500 ms bounded wait. If the fingerprint still differs, the client refuses physical playback and uses truthful settlement fallback.
 
@@ -232,40 +233,44 @@ The first schema is `RAPIER_DUNGEON_D20_V1`. It fixes:
 - held-height and release-velocity bounds;
 - low-energy settlement test;
 - off-table thresholds;
-- maximum 480 steps (8 seconds); and
-- maximum 16 wall/door checkpoints.
+- maximum 480 steps (8 seconds) per plan;
+- maximum 20 bodies; and
+- maximum 128 wall/door/die contact checkpoints.
 
-A change to any of those facts creates a new schema value. Clients do not silently approximate unknown schemas.
+Every body accepted under this first physics schema has shape `D20`; the production adapter supplies exactly one. Standard `D4`, `D6`, `D8`, `D10`, and `D12` values are present in the body-shape enum because damage groups are a confirmed journey outcome, but physical acceptance of each shape requires a later physics-schema value backed by its verified collider/asset contract. Adding those schema values is additive; it does not change the group-shaped service messages.
+
+A change to any fixed physics fact creates a new schema value. Clients do not silently approximate unknown schemas.
 
 ### Plan generation
 
 At pointer release, the roller:
 
-1. freezes the world snapshot;
-2. converts the sanitized gesture plus world release pose into a rigid-body initial state;
+1. freezes the world snapshot and stable body order;
+2. converts the sanitized gesture plus world release poses into one initial state per body;
 3. creates an isolated raw Rapier world from the snapshot;
 4. steps at exactly 60 Hz;
-5. records each first wall/door contact transition and the body's post-step state;
-6. stops at in-bounds low energy, off-table detection, or step 480;
-7. maps step-480 non-settlement to truthful direct settlement rather than fabricating a terminal physics claim; and
-8. disposes the isolated world.
+5. records each wall/door contact transition and each die-to-die contact transition with post-step state for the involved body or pair;
+6. records and removes each off-table body while allowing the remaining bodies to continue;
+7. stops when every body is in-bounds low energy or off-table, or at step 480;
+8. refuses to publish a physical plan if any body lacks a terminal at step 480 or if contact/body bounds are exceeded, releasing the whole authoritative group through truthful direct fallback instead; and
+9. disposes the isolated world.
 
 A planned face correction is not simulated and no result enters the plan generator.
 
 ### Contact correction
 
-A checkpoint records the complete post-contact body state:
+A checkpoint names one primary die and either one static wall/door collider or one other die. It records complete post-contact state for exactly the involved body set: one body for a static contact, both bodies for a die-to-die contact. Each state contains:
 
 - position;
 - normalized quaternion;
 - linear velocity; and
 - angular velocity.
 
-Visible playback applies that state at the checkpoint step. The collider ID is also emitted to local diagnostics and evidence. Player-facing UI need not narrate technical IDs.
+Visible playback applies those involved-body states at the checkpoint step. Collider/die IDs are also emitted to local diagnostics and evidence. Player-facing UI need not narrate technical IDs.
 
 ### Terminal state
 
-A terminal records kind, step, and body state. `SETTLED` requires low energy and valid floor support. `OFF_TABLE` requires the shared out-of-bounds predicate. Exhausting 480 steps is neither and falls back; it is not mislabeled settled.
+The group terminal contains exactly one record per body. Each record names die ID, terminal kind, step, and body state. `SETTLED` requires low energy and valid floor support. `OFF_TABLE` requires the shared out-of-bounds predicate. Exhausting 480 steps is neither; no physical plan is published when any body reaches that ceiling without a terminal. Mixed valid terminals are supported, so a future group can preserve settled dice while identifying only the off-table subset.
 
 ## Wire design
 
@@ -301,6 +306,33 @@ service SessionPresentationService {
 The proto schema uses the following message structure and field numbers:
 
 ```proto
+enum DicePhysicsSchema {
+  DICE_PHYSICS_SCHEMA_UNSPECIFIED = 0;
+  DICE_PHYSICS_SCHEMA_RAPIER_DUNGEON_D20_V1 = 1;
+}
+
+enum DiceShape {
+  DICE_SHAPE_UNSPECIFIED = 0;
+  DICE_SHAPE_D4 = 1;
+  DICE_SHAPE_D6 = 2;
+  DICE_SHAPE_D8 = 3;
+  DICE_SHAPE_D10 = 4;
+  DICE_SHAPE_D12 = 5;
+  DICE_SHAPE_D20 = 6;
+}
+
+enum DiceStaticContactKind {
+  DICE_STATIC_CONTACT_KIND_UNSPECIFIED = 0;
+  DICE_STATIC_CONTACT_KIND_WALL = 1;
+  DICE_STATIC_CONTACT_KIND_DOOR = 2;
+}
+
+enum DiceTerminalKind {
+  DICE_TERMINAL_KIND_UNSPECIFIED = 0;
+  DICE_TERMINAL_KIND_SETTLED = 1;
+  DICE_TERMINAL_KIND_OFF_TABLE = 2;
+}
+
 message DiceThrowPlan {
   uint32 schema_version = 1;
   string session = 2;
@@ -310,7 +342,7 @@ message DiceThrowPlan {
   uint32 attempt = 6;
   DicePhysicsSchema physics_schema = 7;
   bytes collider_fingerprint = 8;
-  RigidBodyState initial = 9;
+  repeated DiceBodyInitial bodies = 9;
   repeated ContactCheckpoint contacts = 10;
   ThrowTerminal terminal = 11;
 }
@@ -322,9 +354,15 @@ message DiceThrowDraft {
   uint32 attempt = 4;
   DicePhysicsSchema physics_schema = 5;
   bytes collider_fingerprint = 6;
-  RigidBodyState initial = 7;
+  repeated DiceBodyInitial bodies = 7;
   repeated ContactCheckpoint contacts = 8;
   ThrowTerminal terminal = 9;
+}
+
+message DiceBodyInitial {
+  string die_id = 1;
+  DiceShape shape = 2;
+  RigidBodyState state = 3;
 }
 
 message RigidBodyState {
@@ -334,17 +372,35 @@ message RigidBodyState {
   Vector3 angular_velocity = 4;
 }
 
+message StaticColliderContact {
+  DiceStaticContactKind kind = 1;
+  string collider_id = 2;
+}
+
+message DiceBodyCheckpoint {
+  string die_id = 1;
+  RigidBodyState state = 2;
+}
+
 message ContactCheckpoint {
   uint32 step = 1;
-  DiceContactKind kind = 2;
-  string collider_id = 3;
-  RigidBodyState after = 4;
+  string primary_die_id = 2;
+  oneof target {
+    StaticColliderContact static_collider = 3;
+    string other_die_id = 4;
+  }
+  repeated DiceBodyCheckpoint after = 5;
+}
+
+message DiceBodyTerminal {
+  string die_id = 1;
+  uint32 step = 2;
+  DiceTerminalKind kind = 3;
+  RigidBodyState state = 4;
 }
 
 message ThrowTerminal {
-  uint32 step = 1;
-  DiceTerminalKind kind = 2;
-  RigidBodyState state = 3;
+  repeated DiceBodyTerminal dice = 1;
 }
 ```
 
@@ -354,7 +410,7 @@ The package owns its small `Vector3` and `Quaternion` presentation vocabulary ra
 
 No message carries:
 
-- d20 result;
+- any die result or counted/discarded disposition;
 - hit, miss, or critical;
 - attack total or target defense;
 - damage or target HP;
@@ -395,15 +451,21 @@ The server rejects rather than clamps:
 - position components outside `[-4096, 4096]`;
 - linear speed above 64 world units/second;
 - angular speed above 128 radians/second;
-- terminal step outside `1..480`;
-- more than 16 contacts;
+- body count outside `1..20`;
+- duplicate/unsafe die IDs or a body shape unsupported by the selected physics schema;
+- more than 128 contacts or 256 total checkpoint body states;
 - non-increasing contact steps;
-- contact at or after terminal step;
-- floor/dice contact kinds in v1 milestones;
-- quaternion norm error greater than `0.0001`; and
-- payloads above the generated message-size bound.
+- contact step outside `1..480`;
+- a static checkpoint whose `after` list is not exactly its primary body;
+- a die-to-die checkpoint whose two distinct IDs are absent from the body list or whose `after` list is not exactly that pair;
+- a static contact kind other than wall or shut door;
+- a terminal list that does not contain every body exactly once;
+- any body terminal step outside `1..480`;
+- a contact at or after the first terminal step of any involved body;
+- quaternion norm error greater than `0.0001`; or
+- encoded plan size above 64 KiB.
 
-`presentation_id` uses the existing `[A-Za-z0-9][A-Za-z0-9:_-]{0,127}` contract. A contact collider ID is kind-prefixed, 1–256 printable ASCII characters, and contains no whitespace or control characters. Repeated contact with the same collider is legal when its later step is strictly greater. The game server does not claim the wall exists; each receiver proves that through its matching fingerprint and local snapshot.
+`presentation_id` uses the existing `[A-Za-z0-9][A-Za-z0-9:_-]{0,127}` contract. Die IDs use the same bounded contract. A static collider ID is kind-prefixed, 1–256 printable ASCII characters, and contains no whitespace or control characters. Repeated contact with the same collider or die pair is legal when its later step is strictly greater. The game server does not claim a collider or pair is physically correct; each receiver proves that through its matching fingerprint, body list, and local snapshot.
 
 ### Authorization
 
@@ -469,7 +531,7 @@ Extract concept physics into shared, tested units under `src/components/ui/dice/
 - raw Rapier pre-simulation and plan construction;
 - plan parsing/validation;
 - plan playback/reconciliation;
-- d20 rigid body/verified runtime mesh; and
+- list-shaped dice rigid bodies with the verified d20 runtime mesh in this wave; and
 - off-table/settlement predicates.
 
 The concept stage imports these shared units afterward. Production never imports `src/concepts/**`.
@@ -514,7 +576,7 @@ This yields small network-dependent start skew while keeping contact step identi
 | Failure | Behavior |
 | --- | --- |
 | Release before dungeon handoff | Return to drawer; publish nothing |
-| Plan generation exceeds 480 steps | Do not label physics terminal; release through truthful direct fallback |
+| One or more bodies lack a terminal at step 480 | Publish no physical plan; release the whole authoritative group through truthful direct fallback |
 | Publish fails | After 750 ms, actor proceeds locally; witnesses use missing-plan fallback |
 | Plan arrives before authoritative event | Buffer by session/presentation for at most 3 seconds |
 | Authoritative event has no plan | Witness neutral-settles after 10 seconds |
@@ -523,8 +585,9 @@ This yields small network-dependent start skew while keeping contact step identi
 | Unknown physics schema | Refuse physical playback; settle truthfully |
 | Collider fingerprint mismatch | Refetch doors once, wait 500 ms, then fallback |
 | Unknown contact collider | Treat as fingerprint/plan mismatch; never invent collider |
-| Visible simulation diverges | Apply sparse post-contact and terminal states at planned steps |
-| Off-table | All clients return to tray; actor may publish next attempt |
+| Visible simulation diverges | Apply sparse involved-body contact states and per-body terminals at planned steps |
+| Off-table in this d20 wave | All clients return the one die to the tray; actor may publish next attempt |
+| Mixed group terminal in later wave | Keep settled bodies and return only the supplied off-table body IDs; retry policy comes from that wave's authoritative group adapter |
 | Attempt exceeds 32 | Direct semantic settlement; no deadlock |
 | Stream disconnect/reconnect | No replay; current authoritative presentation settles/falls back |
 | Hydrated released history | Immediate settled projection; no stale throw |
@@ -558,7 +621,7 @@ Normal Buf format, lint, breaking, and generation gates are sufficient for proto
 
 - the separate package/service boundary;
 - validated session and server-bound roller fields;
-- bounded presentation vocabulary;
+- bounded list-shaped body/checkpoint/terminal vocabulary;
 - no outcome/result/damage fields; and
 - explicit live-only stream semantics.
 
@@ -588,8 +651,9 @@ TDD covers:
 - omission of props/entities/items;
 - finite gesture-to-launch conversion and lift bounds;
 - fixed-step plan generation and disposal;
-- same input producing the same contact IDs, steps, terminal, and checkpoint states;
-- wall, door, settled, off-table, timeout, and 480-step fallback scenarios;
+- same ordered body input producing the same contact IDs, die pairs, steps, per-body terminals, and checkpoint states;
+- at least two d20 bodies colliding, correcting both involved states, and ending with mixed settled/off-table terminals;
+- wall, door, die-to-die, settled, off-table, timeout, and 480-step fallback scenarios;
 - contact/terminal reconciliation;
 - strict plan parsing and immutable snapshots;
 - plan/event orderings, duplicates, attempt progression, and scope fences;
@@ -686,7 +750,9 @@ The first escalation should compare server pre-simulation plus the same sparse p
 
 ### Damage and contributed dice
 
-Remain under journey #289. They require production per-die/reroll/contributor facts and verified set-wide assets. This d20 service/plan may later grow a versioned multi-body schema; v1 does not reserve fields speculatively.
+Remain under journey #289. They require production per-die/reroll/contributor facts and verified set-wide assets. The presentation service, plan, snapshot, checkpoints, playback, and terminals are already group-shaped, so that wave adds an authoritative group adapter and new verified physics-schema values for non-d20 shapes rather than replacing this transport.
+
+The future adapter decides player-facing subset behavior from supplied group facts. The transport can identify settled and off-table bodies, but it does not decide whether only an off-table subset or the whole damage group must be physically retried.
 
 ### Equipped set projection
 
@@ -695,6 +761,8 @@ The default verified carved d20 is fixed for this wave. Witness collectible iden
 ### Polish and performance
 
 Tray art, hidden face steering, trajectory search, audio/haptics, render scheduling, realistic group-size performance budgets, and broad Discord/mobile profiling remain separate slices. Lazy loading and disposal are included here because the current eager concept architecture is not a valid production boundary.
+
+The concept benchmark measured approximately 0.075 ms per Rapier step for one die, 0.102 ms for eight, and 0.173 ms for twenty on the review machine. At the 480-step hard ceiling those observations imply roughly 36 ms, 49 ms, and 83 ms of total pre-simulation respectively, with ordinary low-energy throws expected to terminate earlier. These are feasibility observations, not production budgets. The pre-simulation API remains worker-compatible so a future multi-die wave can move it off the render thread without changing the plan contract.
 
 ## Non-goals
 
