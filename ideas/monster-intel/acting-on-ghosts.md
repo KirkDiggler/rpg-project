@@ -170,7 +170,73 @@ Steps 1 and 2 are ours. Step 3 is theirs, and it is one function.
 
 ---
 
-## 7. What proves it
+## 7. Worked example: Kirk ducks through the second door
+
+Kirk's own dungeon has a double door and a second way out, and he asked what a monster chasing
+his ghost does when he ducks into another room. It is the right question, because it is the first
+case where the ladder alone is not enough.
+
+### The mechanics that decide it, verified rather than assumed
+
+A door registers **one flag on both**: `blocks := d.state.blocks()` is applied to
+`BlocksMovement` *and* `BlocksLineOfSight` on every edge it owns. So:
+
+- **An open door does not block sight.** A monster in room A can see through an open doorway into
+  room B, along whatever sightline the geometry allows.
+- **A closed door blocks both**, at the boundary.
+- `SeenMember.Path` and `GhostMember.Path` both route *"against this composition's own walls,
+  doors and floor — the same geometry `Encounter.Step` enforces"*, so a path never routes through
+  a closed door and a monster never walks a route it could not walk.
+
+### The walkthrough
+
+1. **Monster holds live sight of Kirk in room A.** Rung 1 or 2.
+2. **Kirk steps through the doorway into room B, door left open.** The monster may *still see him*
+   — an open door occludes nothing. **No ghost yet, and the ladder never leaves rung 2.** This is
+   worth stating because it is the case people expect to produce a ghost and it does not.
+3. **Kirk moves out of the sightline** — around the corner in room B, or the door swings shut.
+   *Now* sight lapses, `CurrentVia` empties, and the holding becomes a ghost.
+4. **Rung 3: the monster walks to the remembered cell.**
+5. **It arrives and looks.**
+
+### What step 5 tells it, and this is the payoff of totality
+
+Under `design.md`'s model an observation is total over **what the monster perceived**, not over
+the one cell it walked to. Standing in the room, it perceives the room — so what it learns is not
+*"he is not on that tile"* but **"he is not in this room."**
+
+That is a categorically better fact, and it is what turns the next decision from flailing into
+searching: the monster is now standing in a room it knows is empty, with two exits it can see,
+and no live sighting. Rung 4 today. **This is exactly where the "giving up" decision from §6
+stops being abstract** — the collaborator's search behaviour has real material to work with,
+because the world model handed it a negative fact instead of a stale positive one.
+
+### The part that makes a ghost worth more or less
+
+**A ghost's position is where he was last SEEN, not where he went.** In Kirk's case that
+distinction is everything:
+
+| how sight was lost | ghost sits at | what it tells the monster |
+|---|---|---|
+| watched him step into the doorway, then lost him | the doorway | **which door he took** — genuinely informative |
+| lost him behind a pillar first, *then* he used a door | the pillar | nothing about either door |
+
+So the same mechanic produces a smart-looking monster or a stupid-looking one depending on
+geometry the player controls — which is the good kind of emergent, and it is the argument for
+`GhostMember.At`: a ghost that is one tick old and sitting in a doorway is a strong lead; a ghost
+that is ten ticks old and sitting in the middle of a room is barely one.
+
+### What this does NOT justify
+
+**The monster must not be told which door Kirk used** unless it saw him use it. That is the C2
+anti-wall-hack contract, and the temptation here is real — "the monster knows its own dungeon, so
+it knows where the doors go" is true and irrelevant. Static topology at construction time is
+fine (`Snapshot`'s doc says so explicitly). *Kirk's* position, or a trail he left, is not.
+
+A monster that guesses the wrong door and searches the wrong room is **correct behaviour**, and
+is the whole reason ducking through a second door is a tactic worth having.
+
+## 8. What proves it
 
 Not a unit test on the ladder — that only proves the ladder.
 
@@ -180,5 +246,11 @@ and it **stops believing he is there** rather than standing on the cell repeatin
 
 The second half is the one that fails without §4, and it is invisible in any test that never
 lets the monster arrive.
+
+**Then the double-door case (§7), in his own dungeon**, because it is the one that proves the
+model rather than the ladder: he ducks through the second door, the monster follows the ghost,
+arrives, and comes away knowing **the room is empty** — not standing on a tile still believing he
+is on it. Whether it then picks the right door is not the test; that it has a negative fact to
+search from, is.
 
 — platform agent, on behalf of KirkDiggler
