@@ -70,7 +70,7 @@ this module needs, and it must land before anything can publish.
 
 ---
 
-### Task 3: Carry the boundary, and announce it — `rulebooks/dnd5e/encounter`
+### Task 3: Carry the boundary, and announce it — `rulebooks/dnd5e/encounter` — ✅ **DONE 2026-08-27** · [toolkit#1259](https://github.com/KirkDiggler/rpg-toolkit/pull/1259)
 
 **PR 2 of 5.** The largest, and the one the design is really about.
 
@@ -89,30 +89,53 @@ this module needs, and it must land before anything can publish.
   which already exist and are already correctly ordered.
 - Produces: `Announcer`, and `EndTurnOutput.Boundaries`.
 
-- [ ] **Step 1: The capability.** `Announce(ctx, enc, crossed []Boundary) error`.
+- [x] **Step 1: The capability.** `Announce(ctx, enc, crossed []Boundary) error`.
   Required at construction; a nil one is refused at load, exactly as `TurnDriver`,
   `Standing`, `Sight` and `Initiative` are. `RefusingAnnouncer` returns
   `ErrRefusingAnnouncer` — **not a no-op**, because a clock cannot advance on a
   construction-only world and a silent default would be the very bug this slice fixes.
-- [ ] **Step 2: Translate, do not re-derive.** `clock.Milestone` → `Boundary`, keeping
+- [x] **Step 2: Translate, do not re-derive.** `clock.Milestone` → `Boundary`, keeping
   `TurnStarted`/`TurnEnded` only. `RoundStarted` translates to nothing and loses
   nothing: `Turn.End` increments before stamping the following `TurnStarted`
   (`turn.go:129-134`).
-- [ ] **Step 3: Announce at the moment of crossing.** In `driveOneMonsterTurn`,
+- [x] **Step 3: Announce at the moment of crossing.** In `driveOneMonsterTurn`,
   BEFORE the driven member acts — this is the whole reason the announcer is a
   capability and not a return value (design.md §2). In `EndTurn` for the caller's
   own end. In `form` for `RoundStarted(1)`/`TurnStarted(first)`, which closes the
   gap where the first turn of every fight begins with no turn-start at all.
-- [ ] **Step 4: `EndTurnOutput.Boundaries`** — the record for a caller that wants it.
-  `RoundWrapped` stays: derivable, but it is what the wire already reports.
-- [ ] **Step 5: An announcer error aborts the caller's whole verb**, like
+- [x] **Step 4: `EndTurnOutput.Boundaries` — DROPPED, deliberately.** See ledger.
+- [x] **Step 5: An announcer error aborts the caller's whole verb**, like
   `TurnDriver.Act` and `Striker.Strike`, and persists nothing — nothing is saved
   until the caller's own commit.
-- [ ] **Step 6: A test that a driven monster's turn-start is announced BEFORE its
+- [x] **Step 6: A test that a driven monster's turn-start is announced BEFORE its
   strike**, not after. This is the ordering the design exists for, and it is
   invisible in behaviour today because no monster trait subscribes.
 
 **Ledger:**
+
+- **`EndTurnOutput.Boundaries` was cut**, and cutting it is Kirk's own Q1 ruling
+  applied to my own design. Nothing consumes it. An output field with no reader is
+  the same hypothetical as a topic with no subscriber — *"a proposed vocabulary
+  entry with no named subscriber is a hypothetical however reasonable it sounds"* —
+  and I had written it into the design one section after arguing against exactly
+  that. `RoundWrapped` already carries what the wire reports.
+- **The first ordering test was wrong and a mutant proved it.** It survived
+  deleting the announce from `driveOneMonsterTurn` outright, while its comment
+  claimed to test that site. One monster after alice gets its turn-start from
+  ALICE's `EndTurn`; the drive loop never enters into it. The real case is **two
+  consecutive unplayed members**, and that is what
+  `TestTheSECONDDrivenMemberAlsoHearsItsTurnStartFirst` now drives. Compare
+  [[mutation-testing-catches-overclaims]].
+- **All three announce sites were then mutated individually**:
+  `driveOneMonsterTurn` kills 2 tests, `EndTurn` kills 2, `form` kills 1. No site
+  is covered only by a test that would pass without it.
+- A found bug on the way: `NewEncounter` validated `Announcer` and never stored
+  it, so `e.announcer` was nil at `form`. Caught by the tomb suite panicking, not
+  by the validation — validation only proves the caller supplied one.
+- 55 files, of which 265 changes are the mechanical `Announcer:` insert at test
+  construction sites. `build`/`vet`/`test`/`lint` clean, **0 issues**.
+- **Copilot round still owed** on both #1258 and #1259 — GraphQL has been rate
+  limited for this whole session and `requestReviews` needs it.
 
 ---
 
