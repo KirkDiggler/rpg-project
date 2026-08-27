@@ -226,6 +226,35 @@ geometry the player controls — which is the good kind of emergent, and it is t
 `GhostMember.At`: a ghost that is one tick old and sitting in a doorway is a strong lead; a ghost
 that is ten ticks old and sitting in the middle of a room is barely one.
 
+### The concrete instance, from Kirk's own dungeon
+
+Kirk played it and described the position: last seen on the **red carpet** in the room above,
+then through a doorway in the dividing wall, then through a **second** door into the room on the
+other side of an interior wall. The monster is left in the first room below; he is in the second.
+
+His expectation: *"I would expect that monster to go look where they last saw me on the red
+carpet."*
+
+**That is rung 3 exactly, and the thing that makes it a good test is that the carpet is the wrong
+way.** The monster walks back up through the doorway, away from where he actually is, because
+that is the only place it has any evidence about. He gets away — not because the monster is
+stupid, but because it is acting correctly on stale information that he made stale on purpose.
+A model where the monster drifted toward him instead would be a model that leaked his position.
+
+Two things this instance surfaces that the abstract version did not:
+
+**The ladder is re-evaluated every turn, so the walk is not a commitment.** If the route back to
+the carpet ever puts him in the monster's sightline — through the open doorway, say — rung 2
+beats rung 3 on that turn and it turns and comes for him. That is `live beats remembered` (§1)
+doing real work rather than being a tidy-sounding rule.
+
+**Where the ghost sits depends on when sight broke, and he can feel the difference.** He says he
+was last seen *on the carpet*, so the ghost is on the carpet and the monster searches the wrong
+room entirely. Had the monster instead watched him step into the doorway, the ghost would sit in
+the doorway — and it would arrive to find an empty threshold with a clear view of where he went
+next. Same mechanic, two very different outcomes, decided by whether he broke sight before or
+after committing to the door.
+
 ### What this does NOT justify
 
 **The monster must not be told which door Kirk used** unless it saw him use it. That is the C2
