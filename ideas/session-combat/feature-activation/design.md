@@ -371,25 +371,49 @@ one that makes #294 and #295 real.
 
 ---
 
-## 9. What I need ruled
+## 9. Ruled — Kirk, 2026-08-27
 
-1. **`ActivateResponse`'s shape.** Three options, and I lean hard on the third.
-   `ActivateAbilityOutput` already returns the refreshed `Abilities` list — which is the old
-   menu's shape, and returning it would put a second declaration surface on the wire next to
-   Afford. **An empty ack** (what the old `ActivateFeatureResponse` was) makes the client
-   re-read Afford, which is one round trip but exactly one source of truth. **Recommendation:
-   empty ack + the client re-reads Afford**, same as Attack's own flow, and the condition's
-   arrival reaches everyone through the event stream rather than through the actor's response.
+All three answered before the first proto line. Recorded here rather than in chat so the build
+inherits the reasons and not just the answers.
 
-2. **`SHORTFALL_REASON_UNAVAILABLE` and `CURRENCY_CHARGES`** (§2.3) — new vocabulary at the
-   seam. Both are cases the seam genuinely cannot express today, but they are the first
-   additions to those enums since they landed and I would rather you say yes than discover it
-   in review.
+### 9.1 `ActivateResponse` is an empty ack, and a refusal is an ERROR
 
-3. **The dock stays one flat row** for this slice (§1.2, point 4), with grouping deferred until
-   you have pressed the buttons. Say if you want the slot grouping now instead.
+> *"Yeah empty ack for success or an error right?"*
 
-Everything else in here is either forced by existing code or already ruled — noted where it is,
-so you are reading three questions and not thirty.
+Success carries nothing; the client re-reads Afford, which stays the one place that answers
+"what can I still declare." The condition's arrival reaches everyone else through the event
+stream rather than through the actor's response.
+
+**And a refusal is a gRPC error, not a `success:false` field.** That is the part worth writing
+down, because the rulebook underneath disagrees: `ActivateAbilityOutput` carries
+`Success bool` + `Error string`, and returns `(output, nil)` for "not in combat", "unknown
+ability", "no rage charges left" and every feature refusal.
+
+So **rpg-api's handler owns a translation**, and it is a real one rather than a pass-through:
+
+| rulebook returns | seam returns |
+|---|---|
+| `(out{Success:true}, nil)` | empty `ActivateResponse`, no error |
+| `(out{Success:false, Error:...}, nil)` | `FAILED_PRECONDITION`, `Error` as the message |
+| `(nil, err)` | the mapped error for `err` |
+
+A handler that forwarded `Success:false` as a successful response would hand the client a
+silent no-op — the exact failure the empty ack exists to make impossible, since an empty
+success and an empty refusal would then be the same bytes. **This needs a test at the rpg-api
+layer specifically**, because neither side has one today: the rulebook's contract is
+success-as-a-field and the seam's is success-as-absence-of-error, and nothing currently sits
+between them to be wrong.
+
+### 9.2 Both new enum values land
+
+`SHORTFALL_REASON_UNAVAILABLE` and `CURRENCY_CHARGES`, as proposed in §2.3. A client can tell
+"come back next turn" from "come back next rest" from "this will never light while you are
+raging" without parsing prose.
+
+### 9.3 The dock stays one flat row
+
+Grouping by slot is deferred until Kirk has pressed the buttons. The A/B/R badge already
+distinguishes the shapes; the question of whether eight buttons in one row is too many is
+answered by looking at eight buttons in one row.
 
 — platform agent, on behalf of KirkDiggler
