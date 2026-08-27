@@ -15,6 +15,8 @@ This is the shared brain for the RPG platform. Read this first in any session.
 >
 > **Picking up as the technical director?** Read [`docs/teams/roles/director/prompt.md`](docs/teams/roles/director/prompt.md) + [`field-notes.md`](docs/teams/roles/director/field-notes.md) **first** — that's who you are and how you operate (thin: orchestrate + verify, never hands-on). Your `feedback_*` memories auto-load. That plus the handoff is enough to start directing — do **not** pull the whole world into your context.
 
+> **New to working with Gary?** [`Billy + Gary — ChatGPT 101 Cheat Sheet`](docs/working-procedures/Gary_ChatGPT_101_Cheat_Sheet.md) is an optional human-facing collaboration primer. It does not replace project policy, repository instructions, code, tests, or Project 19 as authoritative sources.
+
 ## What We're Building
 
 A multiplayer D&D 5e dungeon crawler playable as a Discord Activity. Players create characters, join lobbies, and fight through procedurally generated multi-room dungeons together.
