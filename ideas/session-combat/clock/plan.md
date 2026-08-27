@@ -41,7 +41,7 @@ This file is a **ledger**: it records what changed from the plan and why, the wa
 
 ---
 
-### Task 2: The subject of a turn — `rulebooks/dnd5e`
+### Task 2: The subject of a turn — `rulebooks/dnd5e` — ✅ **DONE 2026-08-27** · [toolkit#1258](https://github.com/KirkDiggler/rpg-toolkit/pull/1258)
 
 **PR 1 of 5.** A rename, and nothing else. Small on purpose: it is the only change
 this module needs, and it must land before anything can publish.
@@ -57,13 +57,13 @@ this module needs, and it must land before anything can publish.
 **Interfaces:**
 - Produces: a turn event whose subject field can describe a monster.
 
-- [ ] **Step 1: Rename the field on both events**, with a doc line saying what it
+- [x] **Step 1: Rename the field on both events**, with a doc line saying what it
   denotes — whoever is taking the turn — rather than what is currently plugged in.
-- [ ] **Step 2: Update every reader.** All seven are `if event.CharacterID != x.CharacterID`
+- [x] **Step 2: Update every reader.** All seven are `if event.CharacterID != x.CharacterID`
   guards; the condition's OWN field stays `CharacterID`, because a condition on a
   character's sheet really is a character's. Only the event's subject is renamed.
-- [ ] **Step 3: `go build ./... && go vet ./... && go test ./... && golangci-lint run`.**
-- [ ] **Step 4: Do NOT touch `RestEvent` / `CombatEndEvent`.** Same principle, out of
+- [x] **Step 3: `go build ./... && go vet ./... && go test ./... && golangci-lint run`.**
+- [x] **Step 4: Do NOT touch `RestEvent` / `CombatEndEvent`.** Same principle, out of
   scope — design.md §3.3.
 
 **Ledger:** *(what changed from plan, and why)*
@@ -202,7 +202,7 @@ can cut, and the game still behaves the old way until this lands.
 - [ ] **Step 2: Branch from `origin/dev`** and bump `dnd5e`, `encounter`,
   `resolution`, `session` to the tags Tasks 2–5 produced. `GOPROXY=direct` if a
   nested tag has not reached the proxy — it lagged on `resolution/v0.14.0` last time.
-- [ ] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the
+- [x] **Step 3: `go build ./... && go vet ./... && go test ./...`.** rpg-api is the
   first consumer to take all four at once.
 - [ ] **Step 4: Confirm in a real run.** Local stack, start a fight, Dodge, end the
   turn, and watch the condition **lapse**. This is the acceptance for the whole
