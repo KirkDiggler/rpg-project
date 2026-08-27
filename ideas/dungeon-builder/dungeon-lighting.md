@@ -332,12 +332,18 @@ approval and merge.
 ## Delivery
 
 This design is the current form of rpg-project#190 under journey #169.
-Implementation is one new `rpg-dnd5e-web` Build/Fix issue, one branch from
-`origin/dev`, and one PR against `dev`.
+By Kirk's explicit 2026-08-27 ruling, that project issue also directly owns the
+one `rpg-dnd5e-web` implementation branch and PR against `dev`; this slice does
+not create a second web issue. The web PR uses
+`Closes KirkDiggler/rpg-project#190` as cross-repository completion intent.
 
-No provider, toolkit, proto, API, deployment, or Project 19 mutation belongs to
-worker sessions for this slice. A board-management session owns hierarchy,
-status, and final issue reconciliation.
+This is a deliberate lean exception to the normal owning-repository issue and
+one-issue-per-PR rules: #190 also owns this design/plan PR, which remains open
+until implementation completes. No provider, toolkit, proto, API, deployment,
+or Project 19 mutation belongs to worker sessions for this slice. Because web
+`dev` is not its default branch, the board-management session verifies issue
+closure after merge and reconciles it manually if GitHub defers the closing
+keyword until `dev` reaches `main`.
 
 ## Not now
 

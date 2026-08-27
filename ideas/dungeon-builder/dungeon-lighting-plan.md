@@ -12,9 +12,9 @@
 
 ## Global Constraints
 
-- Execution starts only after Kirk supplies one owning `rpg-dnd5e-web` issue assigned to Team Assets; worker sessions do not read or mutate Project 19.
-- Create the implementation branch from fresh `origin/dev`, never local `dev`, and target the PR at `dev`.
-- One web issue, one branch, one implementation PR; do not merge it.
+- Kirk explicitly ruled that `rpg-project#190` directly owns this web implementation as a lean exception to the normal owning-repository issue and one-issue-per-PR rules; do not create a second web issue and do not mutate Project 19.
+- Create `feat/190-dungeon-lighting` from fresh `origin/dev`, never local `dev`, and target the PR at `dev`.
+- One implementation branch and one web PR; do not merge it. Project design/plan PR #299 remains open until implementation completes.
 - Visuals only: no fog, LOS, darkvision, reveal, movement, targeting, or encounter-rule changes.
 - Exactly eight source refs emit; region intensity never scales a source's output.
 - Preserve `MeshBasicMaterial`, `toneMapped={false}`, `DUNGEON_SURFACE_Y`, continuous absolute-world UVs, and the current shell/profile fallback.
@@ -27,15 +27,14 @@
 
 ## Execution preflight
 
-The executor receives the issue number as `WEB_ISSUE` from Kirk or the board-management session, then uses the worktree skill:
+The executor uses the worktree skill with the ruled project issue number:
 
 ```bash
-test -n "$WEB_ISSUE"
 cd /home/kirk/game-dev/rpg-dnd5e-web
 git fetch origin --prune
-git worktree add "/home/kirk/.pi/worktrees/rpg-dnd5e-web/${WEB_ISSUE}-dungeon-lighting" \
-  -b "feat/${WEB_ISSUE}-dungeon-lighting" origin/dev
-cd "/home/kirk/.pi/worktrees/rpg-dnd5e-web/${WEB_ISSUE}-dungeon-lighting"
+git worktree add "/home/kirk/.pi/worktrees/rpg-dnd5e-web/190-dungeon-lighting" \
+  -b "feat/190-dungeon-lighting" origin/dev
+cd "/home/kirk/.pi/worktrees/rpg-dnd5e-web/190-dungeon-lighting"
 npm install
 npx vitest run \
   src/author/paletteData.test.ts \
@@ -920,7 +919,7 @@ Expected: clean diff check; only intended source/tests/evidence changed; `git st
 - [ ] **Step 3: Push after the full gate**
 
 ```bash
-git push -u origin "feat/${WEB_ISSUE}-dungeon-lighting"
+git push -u origin feat/190-dungeon-lighting
 ```
 
 The mandatory pre-push hook must run; never use `--no-verify`.
@@ -929,7 +928,7 @@ The mandatory pre-push hook must run; never use `--no-verify`.
 
 The PR body must include:
 
-- `Closes #${WEB_ISSUE}` as completion intent;
+- `Closes KirkDiggler/rpg-project#190` as cross-repository completion intent;
 - parent `KirkDiggler/rpg-project#190` and design PR #299;
 - exact behavior and deferred scope;
 - focused and full test counts;
@@ -937,7 +936,7 @@ The PR body must include:
 - fallback and 12-light-budget behavior; and
 - `— assets agent, on behalf of KirkDiggler`.
 
-Do not mutate Project 19. Because `dev` is not the default branch, the board-management session owns any manual issue closure after merge.
+Do not mutate Project 19. Because `dev` is not the default branch, read back #190 after merge; the board-management session owns manual closure if GitHub defers the closing keyword until `dev` reaches `main`.
 
 - [ ] **Step 5: Request exactly one Copilot review and wait for it**
 
@@ -960,7 +959,7 @@ Run affected focused tests after each fix. If any production code changes after 
 ```bash
 git status --short --branch
 git rev-parse HEAD
-git ls-remote origin "refs/heads/feat/${WEB_ISSUE}-dungeon-lighting"
+git ls-remote origin refs/heads/feat/190-dungeon-lighting
 gh pr view "$PR_NUMBER" -R KirkDiggler/rpg-dnd5e-web \
   --json state,mergeable,headRefOid,statusCheckRollup,url
 ```
