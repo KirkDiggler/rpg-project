@@ -234,6 +234,45 @@ So a subject's position belief takes a third state beyond `Current`/`Held`:
 That third state is what turns "walk to the ghost" from a loop into a search, and it is what the
 behaviour ladder's rung 4 needs to be more than `Pass` (see `acting-on-ghosts.md` §4).
 
+### Current intel cannot conflict — and that is structural, not a rule to enforce
+
+Kirk: *"you cannot have conflicting current Intel, it is either there or not."*
+
+**Already true and unrepresentable otherwise.** Storage is
+`map[observer]map[subject]holding` — one holding, one payload. There is no shape that can hold
+"he is at A" and "he is at B" simultaneously, so the invariant needs no guard, no validation, and
+no test. It is a property of the data structure.
+
+`CurrentVia` being a *set* does not weaken it: multiple channels can **sustain** one belief, but
+they all sustain the same payload. Sight and hearing agreeing that he is at A is one belief with
+two supports, not two beliefs.
+
+### The one place that gets interesting, given §5a
+
+Every landing is an **unconditional overwrite**:
+
+```go
+h.payload = payloadCopy
+h.channel = in.Channel
+h.at = in.At
+h.currentVia[in.Channel] = struct{}{}
+```
+
+So the invariant is kept by **last-writer-wins**, with no notion of one channel outranking
+another. Combined with "intel can be lied to", that means **a deception channel can overwrite
+what the observer is currently looking at.**
+
+Which may be exactly right — being fooled while staring straight at something is what an illusion
+IS — or exactly wrong, if the intent is that seeing beats being told. **This is a ruling, not a
+defect**, and it is the natural consequence of the module's own *"intel treats all identically"*.
+It needs answering the day a rulebook lands a non-perceptual channel, and not before; recorded
+here so that day starts from a decision rather than a surprise.
+
+Note what this does NOT need: channel precedence, confidence scores, or belief merging. The
+question is only whether some channels may not overwrite some others, and the cheapest honest
+answer — if one is wanted — is a rule the *rulebook* applies before it reports, not a ranking
+this module learns.
+
 ### And it can be lied to, which is the part that makes this irreducible
 
 If intel were a projection of world truth it could be derived and never stored. It is not, and
