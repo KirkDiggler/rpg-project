@@ -63,6 +63,34 @@ has further to walk — and that falls out of geometry the player controls, the 
   is not consistency for its own sake — it is what makes being fooled fair, because the player
   and the monster are subject to the same physics.
 
+### It is nearly free ON PURPOSE, and that is the tale this document tells
+
+Kirk, reading a draft of the above: *"it's not an accident that it is mostly free. this is the
+system we built, you are just learning it again."*
+
+He is right, and the correction matters enough to write down, because a document that reads as
+**discovery** invites the next person to rediscover it a third time. Everything this design
+"finds" was decided, deliberately, by someone who knew this was coming:
+
+| what I wrote as a find | where it was actually decided |
+|---|---|
+| "`Channel` is open, so a deception channel is legal" | `intel.go`: *"vocabulary is open — physical channels get physics from the stage, **supernatural from rulebooks**; intel treats all identically"* |
+| "`Report` is the injection point nothing uses" | `Report` exists as a verb distinct from `Surveil` — discrete testimony, landed as `Held`. There is no other reason for it to exist |
+| "`Subject` can be a place" | *"a place key, an entity ID, a believed identity. **Choosing subjects is part of the testimony**"* |
+| "a monster's decision is already knowledge-only" | the C2 anti-wall-hack contract, written into `Snapshot` and `Decider` |
+| "ghosts are deliberately withheld from the turn driver" | `MonsterView.Seen`'s own doc explains the choice and anticipates the extension |
+| "intel must not be reconciled against truth" | `Status` is *derived*; the module has no verb that could reconcile |
+| this whole slice | journey #201's Possibility shelf, 2026-08-21: *"authored ambushes that use **Intel changes**"* |
+
+**The system was built to be lied to.** `intel` is not a visibility cache that happens to be
+abusable — it is a belief store, and every seam above treats it as one. The reason deception
+costs almost nothing to add is that nothing anywhere assumes intel is true.
+
+So this document is not a proposal for a new capability. **It is the write-up of a capability
+that was designed, half-built, and never finished** — and the unfinished half is small and
+specific: absence is not testimony (§3), so a belief cannot yet be corrected by looking, and
+without that a lie is permanent and the game does not work.
+
 ### And it is nearly free
 
 `Report` already *"lands discrete testimony as HELD"* on an open `Channel` vocabulary, and the
