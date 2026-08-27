@@ -135,8 +135,10 @@ message AbilityRef {
 `attack` and `ability` are siblings rather than a `oneof` for the same reason `attack` is not
 one today: a `oneof` would make it a wire-level error for a future verb to carry both, and
 `Requires`-gated bonus attacks (§5) are the case where one declaration plausibly carries an
-attack identity *and* an activation origin. ADR-0007: do not seal an enum — or a oneof —
-against a hypothetical.
+attack identity *and* an activation origin — a case we can name rather than a hypothetical.
+
+The asymmetry decides it without needing a principle: a `oneof` adopted now cannot be undone
+without a break, while one adopted later can be.
 
 ### 2.3 The refusal vocabulary needs one value
 
