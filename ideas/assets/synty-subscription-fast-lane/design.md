@@ -140,6 +140,7 @@ rpg-game-assets/library/synty-subscription/race-candidates.json
 Curated entries reference exact generated inventory IDs and add human judgment:
 
 ```text
+candidateId
 inventoryId
 sourceDisplayName
 neutralVisualGroup
@@ -151,6 +152,10 @@ sourceReadiness
 reviewStatus
 notes
 ```
+
+`candidateId` is a stable, readable artifact key derived from pack and source
+name; `inventoryId` remains the exact generated archive/member identity. The
+candidate ID may gain a short path-hash suffix when source names collide.
 
 A model may suggest several races, and a race may retain several candidates.
 The data says “possible mapping,” never “this asset defines the race.” Runtime
