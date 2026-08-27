@@ -18,6 +18,61 @@ and then the part that turned out to be load-bearing:
 
 ---
 
+---
+
+## The thesis (Kirk, and it is why this document exists)
+
+> **Intel can be lied to is the game.** deception steering the monsters wrong is what it's about.
+> the monster will be distracted but eventually it can correct by checking their Intel and
+> updating as they go.
+
+Everything below is in service of that sentence, and it is worth reading the rest with it in
+hand, because it changes what several sections are *for*.
+
+**A lie and a stale ghost are the same object.** From the monster's side there is no difference
+between "I saw him there and he left" and "something made me believe he is there" — both are a
+belief with a position, held sincerely, and neither is true any more. The monster cannot tell
+them apart and **does not need to**, because the same act resolves both: go and look.
+
+That means the ghost-correction loop this document spends its length on is not hygiene. **It is
+the mechanism that makes deception playable**, and it is playable precisely because it is
+imperfect in both directions:
+
+- A lie that **never** expires is not a tactic, it is a broken monster. If a false belief could
+  not be corrected, one thrown rock disables a guard permanently and the dungeon stops being a
+  place.
+- A lie that is **instantly** seen through is not a tactic either. If the monster reconciled
+  against world truth it would never be fooled at all, and deception would have nothing to act
+  on.
+
+The correction loop sits between those, and gives a lie a **duration nobody has to tune**: it
+buys exactly as long as it takes the monster to walk over and check. Distance is the cost. A
+decoy thrown across a large room buys more than one dropped at your feet, because the monster
+has further to walk — and that falls out of geometry the player controls, the same way §7's
+"where the ghost sits depends on when sight broke" does.
+
+### What this settles
+
+- **The deception-overwrites-sight question** (§5a, "the one place that gets interesting") is
+  answered in the affirmative by the thesis. If deception steering monsters wrong is the point,
+  a lie must be able to land on a monster that is looking at you. The counter is not resistance,
+  it is *checking* — which the model already provides.
+- **"Nothing may reconcile intel against world truth"** stops being a purity rule and becomes the
+  load-bearing one. Any reconciliation pass, however well meant, deletes the game.
+- **A false belief must be correctable only by later testimony**, exactly like a true one. That
+  is not consistency for its own sake — it is what makes being fooled fair, because the player
+  and the monster are subject to the same physics.
+
+### And it is nearly free
+
+`Report` already *"lands discrete testimony as HELD"* on an open `Channel` vocabulary, and the
+module already *"treats all identically"*. **A thrown rock is a `Report` on a sound channel to
+whoever could hear it, carrying a position that is not yours.** No new verb, no new state, no
+special case in any decider — it arrives as an ordinary belief and gets acted on and corrected by
+ordinary rungs. The design's job is to not break that, not to build it.
+
+---
+
 > **Read §5a first.** Sections 2 and 3 argue toward a hex-total model and pose a choice between
 > it and subject-keyed intel. Kirk ruled that choice a false one — the answer is both layers,
 > answering different questions, and intel is a **belief store** rather than a projection of
