@@ -1,6 +1,6 @@
 # Shared Dungeon Dice Throws — Production Design
 
-**Status:** Draft for written review; proposal approved by Kirk 2026-08-27
+**Status:** Approved by Kirk 2026-08-27
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · production design slice [rpg-project#303](https://github.com/KirkDiggler/rpg-project/issues/303)
 
