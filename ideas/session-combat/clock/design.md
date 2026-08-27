@@ -5,8 +5,8 @@ Companion to `brainstorm.md`, which holds the evidence. This is what to build.
 **Kirk rules once on this document.** Three questions were open and marked
 **[RULING]**; everything else follows from contracts already in force.
 
-**Q1 and Q2 RULED 2026-08-27: no round topic, and `play/clock` is untouched.**
-See §3.1. Q3 is still open.
+**All three RULED 2026-08-27.** Q1 and Q2: no round topic, and `play/clock` is
+untouched (§3.1). Q3: rename to `SubjectID` (§3.3). The chain is five PRs.
 
 ---
 
@@ -222,24 +222,43 @@ Changes:
   that wants the record. `RoundWrapped` stays: it is what the wire already
   reports and is derivable but load-bearing.
 
-### 3.3 `rulebooks/dnd5e/events` — the vocabulary **[RULING Q3]**
+### 3.3 `rulebooks/dnd5e/events` — the vocabulary · RULED 2026-08-27
 
 **Q1 — a round topic — RULED 2026-08-27: no.** See §3.1. Nothing subscribes to a
 round boundary and nothing in 5e fires on one; the round is a coordinate that
 turn events already carry. `dnd5e/events` therefore gains **no new topic at
 all** — this PR only renames, if Q3 says so.
 
-**Q3 — `CharacterID` on turn events.** `TurnStartEvent`/`TurnEndEvent` name their
-subject `CharacterID`. Monsters take turns; `driveMonsterTurns` ends several per
-call. Publishing a monster's turn boundary into a field called `CharacterID` is
-the same character-shaped defect that got `gamectx.CharacterRegistry` deleted
-last slice — resolution's own doc: *"character-shaped, so it could not describe
-a monster at all."*
+**Q3 — `CharacterID` on turn events — RULED 2026-08-27: rename to `SubjectID`.**
 
-*Leaning: rename to `SubjectID`*, matching `Milestone.Subject`. It is latent
-today (no monster trait subscribes) and free now (`no-backcompat-baggage`:
-rpg-api pins old versions, so renames cost nothing until adoption). It stops
-being free the moment monster traits start listening.
+`TurnStartEvent`/`TurnEndEvent` named their subject `CharacterID`. Monsters take
+turns, and `driveMonsterTurns` ends several per call — so from the first day this
+slice publishes anything, that field carries monster ids.
+
+Kirk's ruling, and the principle is the durable part:
+
+> *"I think subject is better. we should be naming things for what they
+> represent not what we currently have plugged in."*
+
+Note what this settles that the Q1 argument did not. Q1 was about **adding** an
+entry with no subscriber, and ADR-0007 says do not. This is a **name on an entry
+that already exists**, and the test is not "who reads it today" but "what does it
+denote." A turn belongs to whoever is taking it. `CharacterID` describes the
+current wiring; `SubjectID` describes the thing.
+
+`SubjectID` rather than `Subject` to match the `<Role>ID` convention every id
+field in this package already uses (`TargetID`, `SourceID`, `HelperID`), and it
+matches `clock.Milestone.Subject`, which is what it is translated from.
+
+Free now — rpg-api pins old versions, so a rename costs nothing until adoption
+(`no-backcompat-baggage`). This is the same character-shaped defect that got
+`gamectx.CharacterRegistry` deleted last slice: *"character-shaped, so it could
+not describe a monster at all."*
+
+**Not renamed here:** `RestEvent.CharacterID` and `CombatEndEvent.CharacterID`.
+The same principle applies to both, and both are out of this slice's scope (§5).
+They get it when their own boundary lands, rather than as a drive-by through
+files this slice does not otherwise touch.
 
 ### 3.4 `rulebooks/dnd5e/resolution` — the boundary machine
 
