@@ -312,8 +312,20 @@ is the one #295 built:
 > to expire, tick, or fire, and comes back dirty."*
 
 An activation is the same journey with a player as the declaring actor instead of time: attach
-everyone, do one thing on the bus, collect dirty sheets. `NewAction` already dispatches by
-populated profile arm and today knows only `Attack`; an activation is the second arm.
+everyone, do one thing on the bus, collect dirty sheets.
+
+**So it is `NewActivation`, a sibling of `NewBoundary` — not a second arm on `NewAction`.** An
+earlier draft of this section said the arm, and the arm contradicts §4. `NewAction` dispatches
+on a populated profile of a `combatActions.Definition`, and §4 ruled that the seven do NOT get
+authored Definitions, because each already states its own price. A verb with no Definition
+cannot arrive through a constructor whose first act is `in.Definition.Validate()`.
+
+The two constructors are not redundant. `NewAction` says *"here is a compiled, priced definition
+— resolve it"*, and Attack is the only thing that has one. `NewActivation` says *"this member is
+using the thing they carry"*, where the ability itself is the authority for both its price and
+its effect. Forcing the second through the first would mean minting a Definition for Dodge
+purely so a dispatcher recognises it — a compiled price that no door charges, which is exactly
+the shape §4 exists to refuse.
 
 **The test that proves it must be able to fail.** An integration test that activates and then
 reads the same in-memory character will pass whether or not the bus was live, because

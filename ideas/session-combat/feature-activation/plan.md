@@ -38,6 +38,13 @@ that need `CURRENCY_CHARGES` to say anything useful).
 
 *(corrections the build made to the design — filled in as they happen)*
 
+- **Before the first line of code, and the more expensive of the two:** design §6 said the
+  activation machine was a second profile arm on `resolution.NewAction`. It cannot be —
+  `NewAction`'s first act is `in.Definition.Validate()`, and §4 ruled the seven get no authored
+  `Definition`. Two sections of one document disagreeing, caught by reading them against each
+  other rather than by a compiler. It is `NewActivation`, a sibling of `NewBoundary`. Design §6
+  corrected; step 2c in the table above means that.
+
 - **Before the first line of code:** `targetKindForRef` was described in the slice issue as
   already knowing the answer for everything. It does not know the two features, by design —
   its `default` returns `TargetKindUnspecified` specifically so a new ref shows up as a defect.
