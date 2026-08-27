@@ -108,9 +108,15 @@ worth walking across the room for.
 
 The monster walks to the remembered cell. It looks. Nothing is there.
 
-**With totality (`design.md` §3):** the observation is total over what it perceived, the stale
-belief is corrected, the ghost is gone on the next tick, and the driver falls to rung 4 — or to
-rung 3 on a *different* ghost. The loop closes on its own, with no code in the driver.
+**With the ruled model (`design.md` §5a):** the observation is total over what it perceived, so
+the *place* belief is corrected — and the *subject* belief survives with its position downgraded
+to "not here / unknown". The monster still knows there is someone to hunt; it just no longer
+knows where. It falls to rung 4, or to rung 3 on a *different* ghost. The loop closes on its own,
+with no code in the driver.
+
+**That the subject survives is the whole difference between a search and a shrug.** A model that
+deleted the belief along with the position would leave a monster that has forgotten it was
+chasing anybody — which is not what a player means when they say they lost it.
 
 **Without totality:** the fade pass never touched the payload, the ghost still says (19,3), and
 the monster stands on the empty cell **still believing you are on it**. It re-issues rung 3
@@ -165,7 +171,9 @@ Steps 1 and 2 are ours. Step 3 is theirs, and it is one function.
   opaque to the seam (C1).
 - **Giving up.** After arriving and finding nothing, does the monster search, return to a post,
   or wander? All three are rung 4 today. This is where the mode machine the original monster-AI
-  thinking wanted actually earns its place.
+  thinking wanted actually earns its place — and note that under §5a it arrives at rung 4 still
+  **holding the subject**, so "search for someone I know is here" is expressible without any new
+  state.
 - **Whether a ghost is worth a turn at all** versus holding a chokepoint.
 
 ---

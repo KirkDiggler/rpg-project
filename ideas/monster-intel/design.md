@@ -18,6 +18,12 @@ and then the part that turned out to be load-bearing:
 
 ---
 
+> **Read §5a first.** Sections 2 and 3 argue toward a hex-total model and pose a choice between
+> it and subject-keyed intel. Kirk ruled that choice a false one — the answer is both layers,
+> answering different questions, and intel is a **belief store** rather than a projection of
+> truth. The argument is kept because the reasoning still holds for the *place* layer and
+> explains why the ghost-correction problem is real; the conclusion moved.
+
 ## 0. Why now, and why this is not a Hide ticket
 
 Hide's Stealth check is rolled against an empty observer list today, so it cannot fail
@@ -193,31 +199,96 @@ means when they say the two are interchangeable tactics.
 
 ---
 
+## 5a. RULED (Kirk, in the thread that produced this): intel is belief, not fact
+
+> if enemy is the subject the monster checks the ghost, that subject would be updated to at min
+> not here or unknown. I think monster needs the ghost memory to act on. **Intel isn't a fact, it
+> is what the operator knows or believes.** it can be lied to like charm or deception could have
+> false things injected in
+
+This corrects §3's lean and dissolves what was question 1. It was posed as *hex-total OR
+subject-keyed*, and that was a false choice — **fog of war is already two layers**, and says so:
+
+> A placement carries `entity_id`... The entity it references carries what the server is willing
+> to disclose to *this* viewer... **entities are a separate collection.**
+
+So the model is both, answering different questions:
+
+| layer | question | behaviour |
+|---|---|---|
+| **place** | "what is on this hex / in this room?" | TOTAL. An observation states full contents; looking at an empty room corrects a stale belief |
+| **subject** | "what do I believe about this creature?" | PERSISTENT. Survives not-seeing, degrades, and can be wrong |
+
+**Kirk's correction is that the subject layer must not be erased by the place layer.** Under a
+pure hex model, arriving at an empty room replaces the belief with "empty" and the monster loses
+the hunt — it no longer knows there is anyone to look for. That is exactly backwards: the
+observation should degrade *where*, not delete *who*.
+
+So a subject's position belief takes a third state beyond `Current`/`Held`:
+
+- **`Current`** — sustained by a live channel. I see him, he is there.
+- **`Held`** — a ghost. I saw him at X; I have not seen him since; **X is still my best guess.**
+- **(new) disbelieved / unknown** — I went to X and he was not there. I still know he exists and
+  I am still hunting him; **I no longer have a position.**
+
+That third state is what turns "walk to the ghost" from a loop into a search, and it is what the
+behaviour ladder's rung 4 needs to be more than `Pass` (see `acting-on-ghosts.md` §4).
+
+### And it can be lied to, which is the part that makes this irreducible
+
+If intel were a projection of world truth it could be derived and never stored. It is not, and
+Kirk's charm/deception case is the proof: a belief can be **injected** by something that is not
+an observation at all.
+
+**The module already supports this and nothing uses it.** `Report` — *"lands discrete testimony
+as HELD. Unknown subjects create new holdings; known subjects are overwritten"* — is the
+injection point, and `Channel` is deliberately open:
+
+> Sight is the one predeclared channel; vocabulary is open — physical channels get physics from
+> the stage, supernatural from rulebooks; intel treats all identically.
+
+So a `charm` or `deception` channel is legal today, needs no new verb, and lands a belief the
+observer holds as sincerely as anything it saw. **"Intel treats all identically" is the design
+already agreeing with Kirk** — the module was built to not know whether it is being told the
+truth.
+
+Two consequences worth stating so they are not discovered later:
+
+1. **Nothing may reconcile intel against world truth.** Not a debug read, not a test helper, not
+   a "fix up stale holdings" pass. The moment anything does, a lie becomes impossible to tell and
+   charm/deception have nowhere to live. C2 already forbids the read direction; this forbids the
+   write direction.
+2. **A false belief must be correctable only the way a true one is** — by later testimony. Which
+   is the same rule fog of war already keeps: knowledge only ever grows or gets replaced.
+
 ## 6. What I need ruled
 
-1. **Is the hex the unit of a monster's memory, as it already is for a player's?** Everything
-   above follows from this. Saying yes means an observation is total over the cells a creature
-   perceived, and stale beliefs are corrected by ordinary looking. Saying no means we keep
-   subject-keyed intel and need an explicit "I looked and it was empty" testimony — which is a
-   second mechanism for the thing the player side already does with one.
+~~1. Is the hex the unit of a monster's memory?~~ **Answered in §5a** — both layers, answering
+   different questions. It was a false choice.
 
-2. **Can a monster hold beliefs about places as well as entities at the same time?** `Subject`
-   already permits it ("a place key, an entity ID, a believed identity") and nothing uses it.
-   The banging-behind-the-door case needs it; the chase-the-ghost case does not. If yes, §4's
-   retirement question needs an answer; if no, "the banging" has to be modelled as an
-   unidentified *entity*, which is a different kind of lie.
+~~2. Can a monster hold beliefs about places as well as entities?~~ **Yes, by the same answer.**
+   `Subject` already permits it and fog of war already separates placements from entities. What
+   remains open from §4 is narrower: when investigating one subject resolves it into others (the
+   banging turns out to be a fight), does the original **retire**, become a **place fact**, or
+   get overwritten with **"explained"**? Only the last needs no new mechanism.
 
-3. **Does the turn-clock driver get to see ghosts?** Today `MonsterView.Seen` is `Current` only,
+1. **What exactly does "not here" record?** §5a establishes the third state; its shape is open.
+   The cheapest version is a position belief that is simply absent — the monster knows the
+   subject, holds no cell for it. A richer one records *where it is not*, which is real
+   information a search can use ("I have cleared the carpet room"). The first is a smaller
+   change; the second is what makes a monster look like it is actually searching.
+
+2. **Does the turn-clock driver get to see ghosts?** Today `MonsterView.Seen` is `Current` only,
    deliberately. Kirk's *"they would check last known position"* implies a fight-time driver
    should see them. That is a contract change to `MonsterView` and it is the one thing here that
    directly changes what the friend inheriting monster behaviour builds against.
 
-4. **Suppress vs erase for Hide** (§5). I recommend suppress and think the argument is strong,
+3. **Suppress vs erase for Hide** (§5). I recommend suppress and think the argument is strong,
    but it is the difference between "hidden is a fact about me" and "hiding edits your memory",
    and that is a ruling.
 
-Everything else in here is either already ruled (fog of war), already built (intel's update
-semantics), or follows from question 1.
+Everything else in here is either already ruled (fog of war and now §5a), already built (intel's
+update semantics, and `Report` as the injection point nothing uses yet), or follows from those.
 
 ## 7. What this is not
 
