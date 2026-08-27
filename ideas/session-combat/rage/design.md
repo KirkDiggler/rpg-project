@@ -62,6 +62,51 @@ encounter into feature activation.
 `clock.Turn` sets `round = 1` on `SetOrder` and back to `0` only when idle — so
 the sentinel is the leaf's own vocabulary for "no round", not an invented one.
 
+### CORRECTION after review — the grace is not the anchor
+
+The paragraph above was right about the sentinel and **wrong about using it for
+two things at once.** Copilot caught it on rpg-toolkit#1266.
+
+Keying the grace on `RoundActivated == 0` collapses *"not yet anchored"* and
+*"not yet checked"* into one fact. They coincide only while rounds are valid —
+and `combat.TurnManager` publishes `TurnEndEvent{SubjectID}` with **no Round at
+all** (`turn_manager.go:177`), so it defaults to `0`. Such a rage never anchors,
+therefore never leaves the graced branch, therefore never checks activity *or*
+duration again. **Immortal rage, silently.**
+
+That publisher has no callers — which is the reason to fix it rather than
+dismiss it. It is a public type [combat end](../combat-end/design.md) §5
+deliberately left in place as documented debt, so the hazard belongs to whoever
+picks it up next rather than to today's call graph.
+
+So the two facts get two fields: `SawTurnEnd` is the grace, `RoundActivated` is
+the anchor. **The activity check needs no round**, so it keeps working when the
+duration cannot be evaluated.
+
+Three degraded cases, kept distinct because collapsing any two is how this went
+wrong the first time:
+
+| case | what happens | why not the alternative |
+|---|---|---|
+| never anchored | no cap; **anchors late** when a round finally arrives | a permanent handicap for a publisher that recovers is worse than none |
+| roundless *after* anchoring | cap skipped this turn | `0` would satisfy "round went backwards" and kill a healthy rage on a malformed event |
+| round **below** the anchor | ends the rage (`clock_reset`) | re-anchoring hands out a fresh ten rounds and hides the regression; ignoring leaves the difference negative so the cap never fires |
+
+The last one is a **net under combat end**, which exists to make it unreachable.
+Reaching it means that removal did not happen.
+
+### And a guard that was asserting nothing
+
+Mutating `event.Round > 0` off the *initial* anchor **survived the whole
+suite**: assigning `0` to a field already `0` is a no-op, so zero cannot
+distinguish the guard from its absence. Only a **negative** round can — and it
+matters more than zero does, because a negative anchor *poisons* the arithmetic
+instead of disabling it. Anchored at `-5`, a later round 1 gives `1 - (-5) == 6`
+and the rage banks six rounds it never earned, while `1 < -5` never fires.
+
+The guard was correct and unpinned. Same class as *"mutate the FIX, not only the
+code it touched"* — the fix is a test, not a code change.
+
 ## 3. `onTurnEnd`, after
 
 ```go
