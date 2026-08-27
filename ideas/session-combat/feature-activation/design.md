@@ -335,7 +335,8 @@ sheet — the same discipline #295's dissolve test needed, for the same reason.
   than silently defaulting."* The defect is now visible: the table has to grow the two feature
   refs, or every feature declaration ships an UNSPECIFIED target kind, which the proto calls a
   producer defect. **This is the one gap in §3's table that is not a projection.**
-- **Four rulebook target kinds collapse into three seam ones.** The rulebook distinguishes
+- **The rulebook declares six target kinds, the table emits four, the seam has three.** Of the
+  four the table emits, two collapse into one at the seam. The rulebook distinguishes
   `TargetKindSelf` (Dodge, Disengage, Hide — grant a condition on the actor) from
   `TargetKindNone` (Dash — fires with no prompt). The seam has `NONE`, `MEMBER`, `PATH`. Both
   collapse to `NONE`, and that is right: they are the same instruction to a client — *do not
