@@ -55,17 +55,17 @@ A read-only central-directory scan of the current subscription drop found:
 
 | Fact | Observed inventory |
 | --- | ---: |
-| archives | 33 |
-| compressed size | 3.31 GiB |
-| estimated extracted size | 9.54 GiB |
-| ZIP members | 23,157 |
-| FBXs in ZIPs | 16,742 |
+| archives | 34 |
+| compressed size | 3.39 GiB |
+| estimated extracted size | 10.17 GiB |
+| ZIP members | 24,223 |
+| FBXs in ZIPs | 17,794 |
 | `SK_` FBXs | 934 |
-| `SM_` FBXs | 14,226 |
-| PNGs | 1,733 |
+| `SM_` FBXs | 14,227 |
+| PNGs | 1,746 |
 | individually named complete-character candidates | about 127 |
 | Modular Fantasy Hero skinned parts | 720 across 28 categories |
-| dedicated Emotes/Taunts + Sword Combat animation FBXs | 526 |
+| dedicated Emotes/Taunts + Sword Combat + Bow Combat animation FBXs | 1,578 |
 
 The complete-character estimate normalizes known engine-format duplicates and
 includes named candidates from Adventure, Boss Zombies, Dark Fantasy, Dungeon,
@@ -78,6 +78,12 @@ body. Modular Fantasy Hero supplies parts rather than hundreds of complete
 characters. Sidekick Modular is a higher-poly, later-generation system currently
 available through Unreal-oriented content; its extraction, assembly, visual
 fit, and runtime cost are a later investigation.
+
+The Bow Combat archive alone contributes 1,052 FBXs, alongside 283 Emotes/Taunts
+and 243 Sword Combat FBXs. The inventory classifies these as animation assets;
+it does not convert them as character bodies or make animation compatibility a
+race-gallery gate. Their presence is valuable input to the later production
+roster, where animation binding is calibrated once per selected rig family.
 
 ## Approved rulings
 
@@ -165,12 +171,12 @@ private generated inventory.
 ### Pass 1: scan archives without bulk extraction
 
 The indexer reads ZIP central directories and Unity-package pathnames. It does
-not invoke Blender and does not extract all 9.54 GiB merely to discover what is
+not invoke Blender and does not extract all 10.17 GiB merely to discover what is
 present. Unknown naming remains visible rather than being guessed away.
 
 The current `game-dev/scripts/ingest-assets.sh` is not the subscription scanner:
 
-- it recognizes 32 of the 33 current archive names;
+- it recognizes 33 of the 34 current archive names;
 - only three currently have both a supported conversion profile and atlas
   configuration;
 - nonempty output means “converted,” so a partial run cannot resume honestly;
@@ -318,7 +324,7 @@ Automated coverage remains narrow and high value:
 - explicit Modular and Unreal deferral;
 - one standalone and one combined-FBX Blender inspection/render smoke.
 
-Acceptance then runs one real scan against the 33 current archives and performs
+Acceptance then runs one real scan against the 34 current archives and performs
 human visual review of the generated gallery. The provider repository's broad
 runtime release suite is not rerun after every internal catalog step; the final
 repository gate runs once before review.
@@ -327,7 +333,7 @@ repository gate runs once before review.
 
 1. Record this descriptive fast-lane decision.
 2. Create one `rpg-game-assets` Build issue/Project 19 item and fresh branch.
-3. Implement the archive scanner and generate the 33-archive inventory.
+3. Implement the archive scanner and generate the 34-archive inventory.
 4. Curate complete-body, combined-FBX, trait, modular, and deferred candidates.
 5. Add selective extraction and Blender inspection for individual bodies.
 6. Enumerate combined FBXs; render separable candidates and record failures.
@@ -347,7 +353,7 @@ order, not index completeness.
 
 The discovery Build is complete when:
 
-- all 33 current archives are represented;
+- all 34 current archives are represented;
 - duplicate source identities and delivery formats remain explicit;
 - every discovered character-related source has a readiness classification;
 - individually exported complete bodies have labeled front/three-quarter
