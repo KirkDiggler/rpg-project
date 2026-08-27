@@ -306,7 +306,83 @@ fine (`Snapshot`'s doc says so explicitly). *Kirk's* position, or a trail he lef
 A monster that guesses the wrong door and searches the wrong room is **correct behaviour**, and
 is the whole reason ducking through a second door is a tactic worth having.
 
-## 8. What proves it
+## 8. The discriminating test — Kirk's double door, as a fixture
+
+Journey #201's **Done when** is *"toolkit tests discriminate the chosen behavior from the
+fallback policy, and a monster is observed making that intentional decision through the local dev
+dungeon."* Kirk's ask — *"a test with my double door structure playing out like we see it"* — is
+that sentence made concrete. This is the fixture, written before the code so it is the target
+rather than a description of whatever gets built.
+
+### Geometry
+
+Three regions, matching the dungeon Kirk played:
+
+```
+        ┌─────────────────┐
+        │   CARPET room   │   <- he is seen here first
+        └────────┬────────┘
+                 │  door A  (in the dividing wall)
+        ┌────────┴────────┐
+        │  LEFT   │ RIGHT │   <- interior wall between them
+        │  room   │ room  │      door B connects them
+        └─────────┴───────┘
+```
+
+- **Door A** joins CARPET to LEFT.
+- **Door B** joins LEFT to RIGHT — the "second door".
+- The interior wall blocks sight between LEFT and RIGHT (it must, or there is no test).
+
+### Sequence
+
+| # | act | required state after |
+|---|---|---|
+| 1 | monster in LEFT, hero in CARPET, door A open, line of sight along it | monster holds hero `Current`, position = a CARPET cell |
+| 2 | hero steps LEFT, then through door B into RIGHT | sight breaks at the interior wall |
+| 3 | — | monster holds hero **`Held`** — a ghost, position still the **CARPET** cell |
+| 4 | monster's turn | it declares `Move` toward the CARPET cell — **away from the hero** |
+| 5 | monster steps until it perceives the carpet | belief updates: hero still known, **position unknown** |
+| 6 | monster's next turn | no `Current`, no position — it does **not** re-declare a move to the carpet |
+
+### What makes it discriminating
+
+**`behavior.Basic` fails at step 4 by passing.** It ranks `Seen` only, `Seen` is empty once sight
+breaks, so it returns `Pass{}` — the monster stands in LEFT doing nothing while the hero walks
+away. A ghost-aware driver moves. **That is the discrimination the journey asks for, in one step
+of one test.**
+
+**Step 6 is the one that discriminates the WORLD MODEL rather than the driver**, and it is the
+reason this test is worth more than a unit test on the ladder. Without absence-as-testimony
+(`design.md` §3), step 5 leaves the ghost intact — so at step 6 the driver correctly re-declares
+a move to a cell it is already standing on, and does so forever. **A test that stops at step 4
+passes with the pillar-camping bug fully present.**
+
+### What it must NOT assert
+
+- **Not** that the monster then finds the hero. It should not: he is behind a wall it cannot see
+  through, and a monster that drifted toward him would be leaking his position (§7).
+- **Not** which door it tries next, or that it tries one at all. That is the collaborator's
+  search behaviour (§6) and this test predates it.
+- **Not** a fixed number of turns. Distance is fixture geometry, and pinning turn counts makes
+  the test about the map instead of the behaviour.
+
+### The deception variant, once the above is green
+
+The same fixture, with step 1 replaced: **no sighting ever happens.** Instead a `Report` on a
+sound channel lands a belief on the monster naming a CARPET cell the hero has never been to.
+
+Steps 4 through 6 must play out **identically** — walk to it, find nothing, downgrade to unknown.
+If they do, the thesis holds in code: a lie and a stale ghost are the same object, and one
+correction path serves both. If the two need different handling, something upstream has assumed
+intel is true.
+
+### The local observation
+
+The journey wants both halves. The local one is Kirk's, and he has already described it: he ducks
+through the second door and the monster goes and searches the carpet room. The test above is what
+makes that reproducible rather than anecdotal, and the test is the thing that can fail in CI.
+
+## 9. What proves it
 
 Not a unit test on the ladder — that only proves the ladder.
 
@@ -317,7 +393,7 @@ and it **stops believing he is there** rather than standing on the cell repeatin
 The second half is the one that fails without §4, and it is invisible in any test that never
 lets the monster arrive.
 
-**Then the double-door case (§7), in his own dungeon**, because it is the one that proves the
+**Then the double-door case (§7/§8), in his own dungeon**, because it is the one that proves the
 model rather than the ladder: he ducks through the second door, the monster follows the ghost,
 arrives, and comes away knowing **the room is empty** — not standing on a tile still believing he
 is on it. Whether it then picks the right door is not the test; that it has a negative fact to
