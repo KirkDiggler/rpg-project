@@ -272,11 +272,43 @@ Two consequences worth stating so they are not discovered later:
    banging turns out to be a fight), does the original **retire**, become a **place fact**, or
    get overwritten with **"explained"**? Only the last needs no new mechanism.
 
-1. **What exactly does "not here" record?** §5a establishes the third state; its shape is open.
-   The cheapest version is a position belief that is simply absent — the monster knows the
-   subject, holds no cell for it. A richer one records *where it is not*, which is real
-   information a search can use ("I have cleared the carpet room"). The first is a smaller
-   change; the second is what makes a monster look like it is actually searching.
+1. **What exactly does "not here" record?** §5a establishes the third state; its shape is open,
+   and Kirk named the fork: *"unknown or missing is a value that could be decided on."*
+
+   **Recommendation: explicit, never absent — and this codebase has already ruled this exact
+   class of question, three times, in the same direction.**
+
+   > `NO OMITEMPTY: false is an ANSWER, not an absence` — Declaration.Available
+   >
+   > `Remaining:0 is a real answer (nothing left this turn) and must not collide with "this verb
+   > carries no such number at all"` — Declaration.Remaining
+   >
+   > `A projection that lets Go's "" fall through to proto's 0 would report every banked swing as
+   > "the producer forgot to say"` — Slot
+
+   Here the collision is not hypothetical. `Sighting.Seen` is a pointer today, and nil already
+   means *"this is not sight-channel knowledge"* — its own doc says a nil on a sight holding is
+   **"NOT a legal state a caller should plan for"**. So representing "I looked and he was not
+   there" as a missing position would make the two indistinguishable: *no sight knowledge* and
+   *sight knowledge that says I do not know where* are opposite facts, and one of them is the
+   whole point of the third state.
+
+   Three states, kept apart on purpose:
+
+   | belief | means | a driver does |
+   |---|---|---|
+   | no holding at all | I do not know this creature exists | nothing — it is not on the list |
+   | holding, position believed | `Current` (see him) or `Held` (ghost) | rung 1/2, or rung 3 |
+   | holding, **position unknown** | I know him, I went and looked, I have no cell | rung 4 — **search**, not shrug |
+
+   **The open part is the richer variant**, and it is a genuine choice rather than a default: does
+   "unknown" also record *where it is not* — the rooms already cleared? That is real information
+   a search can use, it is what makes a monster look like it is hunting rather than wandering,
+   and it is the difference between the pillar-camping fix and an actual search behaviour. It is
+   also more state, and it is the sort that goes stale on its own (a cleared room stops being
+   cleared the moment he could have walked back into it). **I would ship the plain version first
+   and let the collaborator find out whether they want the cleared set** — §6's staleness question
+   is the same shape and has the same answer.
 
 2. **Does the turn-clock driver get to see ghosts?** Today `MonsterView.Seen` is `Current` only,
    deliberately. Kirk's *"they would check last known position"* implies a fight-time driver
