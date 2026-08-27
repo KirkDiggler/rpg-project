@@ -31,7 +31,7 @@ So: three rungs, and only the first is a fixed precedence.
 | # | condition | intent | built? |
 |---|---|---|---|
 | 1 | a **live** sighting is in reach and an attack is left | `Attack{Target, Action}` | **yes** |
-| 2 | movement left, and the targeting strategy picks a winner from **live sightings ∪ ghosts** | `Move` toward it | **partly** — the strategy exists, the ghosts do not |
+| 2 | movement left, and either a **committed target** is still unresolved, or the strategy picks a winner from **live sightings ∪ ghosts** | `Move` toward it | **partly** — the strategy exists, the ghosts do not |
 | 3 | nothing to pursue | `Pass{}` | yes |
 
 **Rung 1 is live-only by necessity, not by preference.** You cannot attack a memory, so no
@@ -42,6 +42,32 @@ reach and you can hit it, nothing else is under consideration.
 rulebook's own word for this and is deliberately opaque to the seam. Under `closest`, a ghost two
 cells behind the monster genuinely outranks a live target ten cells ahead — and Kirk's call is
 that this is correct: it clears the near lead first.
+
+### RULED: a committed target is reconciled before a new one is chosen
+
+Kirk: *"yes a monster needs to act on a ghost. **if that was their target they need to reconcile
+that first. if missing they should be able to make a new decision.**"*
+
+This is a real addition to rung 2 and it fixes a failure the pure re-rank has. If the candidate
+set is re-scored from scratch every turn, a monster standing between two ghosts of similar
+distance **dithers** — steps toward A, which changes the distances, steps toward B, and never
+reaches either. Nothing in "rank by strategy" prevents that, because ranking has no memory of
+what it chose last turn.
+
+So a target is **sticky until resolved**:
+
+1. A monster that has committed to pursuing a subject keeps pursuing **that** subject.
+2. **A live sighting still interrupts** — "current wins" is unchanged, and this is the one thing
+   that overrides commitment. Seeing your quarry, or seeing anything the strategy prefers, is new
+   information rather than dithering.
+3. Commitment ends when the belief **resolves**: the monster reaches the remembered cell, or
+   otherwise perceives it, and the position becomes unknown (`design.md` §5a). *"If missing they
+   should be able to make a new decision."*
+
+The distinction that makes this cheap: **commitment is not new state.** A monster is committed to
+whichever subject it is currently pursuing, and "resolved" is exactly the transition to
+position-unknown that §5a already defines. A driver needs to remember its current target across
+turns — one field — and nothing needs to remember *why* it chose it.
 
 Worth naming the case that will look wrong in play, so whoever tunes it recognises it rather than
 treats it as a bug: **a ghost behind the monster and a visible enemy in front means it turns its

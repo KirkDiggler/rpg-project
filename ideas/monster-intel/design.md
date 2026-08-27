@@ -275,7 +275,16 @@ Point 3 is the one real new mechanic, and it has a fork:
   your hex says `contents: []`, which corrects its belief *through the ordinary path* rather than
   by writing into its head.
 
-**Recommendation: suppress, by omission from the percept.** It keeps `hidden` a fact about *you*
+**RULED (Kirk): suppress.** *"I think suppress for normal non deception case they know something
+is up but have nothing to act on."*
+
+That last clause is the feel this produces, and it falls out of §5a for free rather than needing
+anything: hiding takes your **position** away, not your **subject**. The monster keeps knowing you
+exist and that you are around — it walks to where you were, finds nothing, and lands in exactly
+the third state. Alerted and blind. It is the same place it ends up when you break line of sight
+behind a wall, which is the point: **a player using the two interchangeably is right to.**
+
+The original recommendation, kept because the reasoning is why: It keeps `hidden` a fact about *you*
 like every other condition, it needs no new intel verb, it produces the ghost-correction for
 free, and it means "hidden" and "behind a wall" are the same mechanism — which is what a player
 means when they say the two are interchangeable tactics.
