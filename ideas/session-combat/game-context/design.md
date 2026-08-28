@@ -1,7 +1,10 @@
 # Game Context — one read channel, one write channel, one door (v1)
 
 **Status:** PROPOSED — awaiting Kirk's ruling on this PR. Reasoning and
-rejected alternatives in [brainstorm.md](./brainstorm.md).
+rejected alternatives in [brainstorm.md](./brainstorm.md). This PR stays open
+through implementation; an `implementation.md` lands beside this file before
+merge — the mini retro: what we thought we were building vs. what we found
+(Kirk, 2026-08-28).
 **Journey:** rpg-project#253 · **Umbrella:** `ideas/session-combat/` ·
 **Supersedes:** the two-channel spine of
 [effect-context/design.md](../effect-context/design.md) §"The spine" (own-sheet
@@ -54,6 +57,19 @@ test. Sheet keepers already apply `ConditionApplied`/`ConditionRemoved`/
   documentation.
 - **R6** — It runs on **every** path that folds a chain or attaches an
   effect. A path that skips the door is a bug, not a mode (see D1).
+
+## Chain composition
+
+- **R7 — Chains compose by sequencing, never by nesting mid-fold.** A fold
+  that needs another chain's answer takes it as an **input**, folded before
+  it fires (the strike folds the target's AC chain while assembling the
+  attack event — "ask the AC before we fire the chain"); a handler that
+  wants consequences publishes a **request** the machine answers after the
+  fold completes (movement buffers reaction triggers, then runs each strike
+  as its own resolution). Contributing handlers stay pure: append a piece or
+  publish a request — never fold. The bus permits reentrancy (handlers are
+  invoked outside its lock); determinism and resumability are why this law
+  exists, not mechanics.
 
 ## Tenant admission (MUST, checked at review, not by the compiler)
 
