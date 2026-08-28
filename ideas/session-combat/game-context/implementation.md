@@ -100,3 +100,18 @@ fired exactly as designed. Kirk ruled D10: observable, not refused —
 lenient+report on read entries, strict stays on write entries. Also: go get
 right after a fresh tag mis-resolves via the proxy (GOPROXY=direct fixes);
 the resolution bump forced rulebooks/dnd5e v0.105.3→v0.106.0 transitively.
+
+## D10 PR-1 — the drops stop being silent (2026-08-29, rpg-toolkit#1288)
+
+The toolkit's first deliberate log line: one `warnDropped` helper, all eight
+lenient drop branches (seven in character/load.go plus the same apply-time
+shape in sheet_keeper.go — flagged, not smuggled). slog to the default
+logger, chosen as the boring stdlib convention, strikeable in review, stated
+with its evidence in the PR body. The pins assert on what was SAID, not just
+that the load succeeded — a load-only test passes before and after and
+proves nothing. Absent ref stays absent (pinned both directions: truncated
+blob → no ref; well-formed-unknown → the ref) — a placeholder would read
+like a ref that exists. Copilot's round caught the capture handler enabling
+all levels; the fix also sharpened a test's claim from "nothing logged" to
+"nothing dropped", and the mutation was RE-RUN after the filter landed — a
+filter is exactly the fix that can green a test for the wrong reason.
