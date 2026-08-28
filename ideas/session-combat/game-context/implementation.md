@@ -57,3 +57,15 @@ sealed cast + projection entry; verb installs → session installs nothing,
 folds live in resolution (R6). Every intermediate had more mechanism than
 the final form. This produced the ownership-interrogation discipline (the
 who-holds-what table now in design.md) and the standing charter-check rule.
+
+## Phase 1 addendum — the Copilot round (2026-08-28, merged in #1286 @ 891c860)
+
+Thought: the R5 pin's call-expression scan was airtight. Found (Copilot):
+aliasing (`with := gamectx.WithRoom`) bypasses a call scan — fixed by
+scanning selector expressions ("the only file allowed to NAME an installer;
+taking one as a value is still being one"). Rule-3 sweep found the same
+shape's SILENT case: a second tenant install added by alias inside the door
+kept every pin green while "installed in exactly one place" was false —
+proven by mutation against the old pin, which passed it. All four pins now
+count names through one helper. The finding's value was the place the
+reviewer did not look.
