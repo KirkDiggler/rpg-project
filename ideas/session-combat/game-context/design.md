@@ -102,7 +102,17 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   Kirk's probe): a `MarkDirty`-only remnant saves nothing here, because the
   ghost is the READ side — the handle would have to keep its read methods
   for every condition that fires on an undoored path, and R1 gains a
-  permanent asterisk.
+  permanent asterisk. Reformulated 2026-08-28 (Kirk's object-model probe):
+  the door rule generalizes as **whoever starts a fold installs the truth it
+  holds** — a character folding its own AC holds itself, so the join path
+  installs a cast of one in a few lines rather than replicating Resolve.
+  The spike confirms it is as small as it looks.
+- **D5 — the member surface.** `combat.Combatant` exposes mutators
+  (`ApplyDamage`, `MarkClean`), so handing the live object through the cast
+  leaves R2 enforced by discipline, not by the interface. Recommended: the
+  cast hands out the read-facing surface of the object (narrow interface or
+  wrapper); mutation stays request-only by construction. Alternative:
+  accept discipline + review, revisit on first violation.
 - **D2 — in-flight work.** Recommended: land toolkit#1284 as-is
   (grant-at-attach answers *who carries*, unaffected by channel law) and
   toolkit#1285 as-is (record truth is per-change). Migration happens here,
