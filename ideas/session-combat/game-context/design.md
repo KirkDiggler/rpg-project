@@ -155,6 +155,20 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   that matters.
 - **D9 — Fighting Style Protection joins D4's family:** shield read via the
   member surface (D7), reaction spend as a request event.
+- **D10 — fail loudly means observable, not refused** (Kirk, 2026-08-29, on
+  the Join strictness tripwire): a character carrying a condition this build
+  cannot parse still enters — "in the event we had a real bug that would
+  make the character unplayable… my fail loudly is really about
+  observability. it should be obvious that something failed. maybe come out
+  the combat log: condition initialization failed. if we become a real game
+  this is where the error code would go." Cash-out: READ entries (the
+  projection) load leniently and REPORT what they dropped — the report rides
+  the entry's output and session announces it (combat log is the product
+  home; an error code when we are a real game). WRITE entries stay strict —
+  #948's no-clobber holds: never persist a sheet that silently dropped a
+  condition. Strictness is a property of what the entry does, not of
+  loading; one attach mechanism, policy per entry. The two session pins that
+  fired survive, updated to assert the report.
 
 ## Done when
 

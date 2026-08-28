@@ -88,3 +88,15 @@ Honest limit, measured: until Phase 3 the AC VALUE doesn't depend on the door
 (Unarmored Defense still reads the handle) — the suite pins the attach (15
 vs 12) and holds the door structurally; parity asserted to 15 independently
 on both paths so it cannot pass by two wrongs agreeing.
+
+## Phase 2 PR-B — the strictness tripwire fired (2026-08-29)
+
+Thought: rerouting Join through the projection was a pure re-homing. Found:
+session loads leniently (drop-and-continue, pinned twice — one pin literally
+documents itself as a tripwire for this event), resolution attaches strictly
+(#948) — so the reroute changed a verb's observable contract, and the agent
+parked the finished branch unopened rather than deciding. The tripwire test
+fired exactly as designed. Kirk ruled D10: observable, not refused —
+lenient+report on read entries, strict stays on write entries. Also: go get
+right after a fresh tag mis-resolves via the proxy (GOPROXY=direct fixes);
+the resolution bump forced rulebooks/dnd5e v0.105.3→v0.106.0 transitively.
