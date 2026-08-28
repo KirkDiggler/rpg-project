@@ -87,25 +87,48 @@ Kirk's cases against a relation model, all of which work:
 - **The pickpocketed merchant** — the same mechanism as the guards, which is the
   tell that it is the right one.
 
-## The answer: introduce the question, not the answer
+## The recommended shape — for Pez, NOT this slice
 
-One predicate, `(*Encounter).hostile(a, b)`, owning enmity. Its first
-implementation returns exactly what the engine already computes, so the slice is
-a **refactor with zero behaviour change**. The four sites ask it instead of
-switching on `Kind`.
+One predicate, `(*Encounter).hostile(a, b)`, owning enmity. A first
+implementation returning exactly what the engine already computes makes the
+conversion a **refactor with zero behaviour change**; the four sites ask it
+instead of switching on `Kind`.
 
-Kirk approved it as *"dynamic and based on intel, possibly it could change... it
-allows us to grow into more complex setup and unblock us here."* That sentence
-also decided the shape: **a METHOD, not a free function.** A pure function of two
-members could never consult factions or belief, so the guards case would have
-been foreclosed on day one by a signature.
+**A METHOD, not a free function.** Kirk: *"dynamic and based on intel, possibly
+it could change."* A pure function of two members could never consult factions or
+belief, so the guards case would be foreclosed on day one by a signature. This is
+the single most useful thing in this document for whoever builds hostility.
 
-What it buys:
+What it would buy: a merchant hostile to nobody as a **stated fact** rather than
+an omission; rpg-toolkit#899 and #766 collapsing into a one-function fix instead
+of four-site archaeology; factions as a named attachment point rather than a
+rewrite.
 
-- The merchant is **hostile to nobody** — true and stable — rather than a value
-  four switches happen to ignore.
-- #899 and #766 become a one-function fix instead of four-site archaeology.
-- Factions stay an empty shelf with a named attachment point.
+### Why it is not in this slice
+
+Kirk, after the design had been rewritten around it: *"So I think we want to make
+minimal changes. FadedPez will take this work, we only want to be able to place a
+KindWorld npc into the dungeon that can exist on a free roam clock that is not
+hostile to us. Everything else will be managed by Pez. I do not want to
+overreach."*
+
+Correct, and it is the second overreach in this thread — the first was inventing
+a `Kind` immutability rule, the second was reaching for the hostility refactor
+because the analysis behind it was satisfying. **The analysis being right does not
+make it ours to build.** Hostility belongs to whoever owns what an NPC does, and
+that is Pez.
+
+So the slice reverts to adding a value the hostile-path switches do not name, and
+changing none of them. That yields non-hostility and the free-roam clock with
+zero engine edits — the world clock follows because a member is moved to a turn
+clock only by entering a bubble, and bubbles form only from hostile pairs.
+
+**The honest caveat, stated in design.md rather than buried:** that is true today
+and is not a guarantee. It holds because nothing hostile is authored as
+`KindWorld`. The pickpocket case is what turns it from luck into a thing someone
+has to state — and that is the moment the predicate above earns its keep. The
+design's job is to not foreclose it, which is why no immutability rule is
+written.
 
 ## Rejected
 
@@ -137,16 +160,22 @@ Kingdom family the class models did.
 
 ## Rulings (Kirk, 2026-08-28)
 
-1. **Hostility is a predicate**, dynamic, able to grow to read intel.
-2. **The merchant cannot be attacked** — *"definitely not a launch goal"*. Now
-   expressed as `hostile` returning false, not as an immutability law.
+0. **Minimal changes.** Place a `KindWorld` member that exists on a free-roam
+   clock and is not hostile to the party. Everything else is Pez's. *"I do not
+   want to overreach."*
+1. **Hostility as a predicate is a RECOMMENDATION, not this slice** — dynamic,
+   able to grow to read intel, and a method so that stays possible.
+2. **The merchant cannot be attacked** — *"definitely not a launch goal"*.
+   Achieved by the hostile-path switches not naming the new value, with the
+   caveat above recorded rather than hidden.
 3. **The kinds are `player`, `monster`, `world`**; the ref type is `npcs`.
 4. **World members carry an authored `facing`** — they never turn in play.
 5. **`merchant` is a type, not a look** — one ref, several GLBs, which the
    existing `MONSTER_REF_MODELS` + `pickStableCandidateIndex` pattern already
    supports.
 6. **`bystander` is a role within the kind**, not a kind.
-7. **Actions are FadedPez's**; this slice is placement only.
+7. **Actions are FadedPez's** — and so is hostility; this slice is placement
+   only.
 
 ## Shelves left empty
 
