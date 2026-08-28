@@ -115,3 +115,19 @@ like a ref that exists. Copilot's round caught the capture handler enabling
 all levels; the fix also sharpened a test's claim from "nothing logged" to
 "nothing dropped", and the mutation was RE-RUN after the filter landed — a
 filter is exactly the fix that can green a test for the wrong reason.
+
+## D10 PR-2 — policy per entry (2026-08-29, rpg-toolkit#1289)
+
+One mechanism, an argument apart: Resolve = refuseUnreadable (it persists
+sheets — a silent drop is a condition deleted by whatever verb ran, #948);
+ProjectCharacter = dropUnreadable (it only reads; the loader now warns by
+name, #1288). The lenient branch CALLS LoadFromData rather than reimplementing
+it. The contrast is pinned in one test that runs the same unreadable record
+through both doors and mutation-fails in both directions. Found along the
+way: the v0.109.0 bump necessarily adopted #1283+#1284 into resolution
+(version ordering allows no cherry-pick) — monster write-back now includes
+the granted OA condition; one count-derived test rewritten to read the end
+of the list (what it pins is that the applied condition arrived, not how
+many things attach grants on the way), and the agent verified the failure
+came from the bump alone before absorbing it. Copilot quota exhausted — the
+round DID NOT HAPPEN on this PR, reported as absence, not approval.
