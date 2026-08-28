@@ -8,6 +8,10 @@ ruling, same day). Reasoning and rejected alternatives in
 through implementation; an `implementation.md` lands beside this file before
 merge — the mini retro: what we thought we were building vs. what we found
 (Kirk, 2026-08-28).
+**Final form (Kirk, 2026-08-28):** *"having session do loading that should be
+happening in resolution is not a solid foundation we can build on"* — session
+installs nothing; folds live in resolution. D1/D6/D8 below carry the ruled
+forms.
 **Journey:** rpg-project#253 · **Umbrella:** `ideas/session-combat/` ·
 **Supersedes:** the two-channel spine of
 [effect-context/design.md](../effect-context/design.md) §"The spine" (own-sheet
@@ -45,15 +49,26 @@ test. Sheet keepers already apply `ConditionApplied`/`ConditionRemoved`/
 
 ## The two stages
 
-- **R3 — The seam fetches records and installs the truth it loaded.**
-  Session verbs **load-install-act-save** every participant by ID from
-  repositories (load-everything), calling the door (R5) immediately after
-  load — so every downstream computation, inside an interaction or not,
-  inherits an installed context (D1). The only place data is fetched. No
-  rules live here.
+- **R3 — The seam fetches records, and only records.** Session verbs
+  load-act-save every participant by ID from repositories (load-everything).
+  The only place data is fetched; no rules live here. Session holds *records
+  of* the world and the participants — truth (a live room, a live cast)
+  never exists above resolution, so session installs nothing and never calls
+  gamectx. Charter check: a cast is live runtime objects — session
+  installing one fails session's own law that no runtime object crosses the
+  boundary.
 - **R4 — Resolution derives truth.** Everything ambient is a derivation of
   what the interaction already holds: room ← encounter canvas; cast ←
   attached participants; readiness ← cast.
+
+## Who holds what
+
+| Truth | Held by | Installed by | Charter check |
+|---|---|---|---|
+| world / participant **records** | session (repositories) | never — records are not truth | verbs take IDs, repos are key-value ✓ |
+| room (live world) | the encounter's canvas | the door, in resolution | encounter stays ctx-free ✓ (D8) |
+| cast (live sheets) | resolution's `attachAll` | the door | session→cast fails "no runtime object crosses the boundary" → sealed (D6) |
+| reaction readiness | derived from the cast | the door | derived, never fetched (M2) ✓ |
 
 ## The one door
 
@@ -61,8 +76,11 @@ test. Sheet keepers already apply `ConditionApplied`/`ConditionRemoved`/
   `installTruth(ctx, in, cast) ctx`, in `resolution`). No other code calls a
   `gamectx.With*`. Its body is plain sequential code; dependency order is the
   documentation.
-- **R6** — It runs on **every** path that folds a chain or attaches an
-  effect. A path that skips the door is a bug, not a mode (see D1).
+- **R6 — Folds live in resolution.** When a computation needs truth, the
+  computation comes to resolution — never the truth to the computation. A
+  chain folded outside resolution is the bug, not a mode. The one live
+  outside fold today (Join's AC read) moves inside via the projection entry
+  (D6).
 
 ## Chain composition
 
@@ -95,7 +113,8 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
 
 ## Migration (ordered so the fail-silent surface shrinks each step)
 
-1. Preflight/standing fold paths go through the door (per D1's ruling).
+1. The projection entry in resolution; `Join` reroutes its AC read through
+   it (the base-AC-barbarian pin).
 2. Unarmored Defense, Martial Arts, Unarmored Movement: owner-handle reads →
    `Member(ownID)` reads. Delete the per-condition structural owner
    interfaces.
@@ -109,9 +128,11 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
 
 ## Decisions — ruled (Kirk, 2026-08-28)
 
-- **D1 — cast-less paths:** verb-level install, folded into R3
-  (load-install-act-save). How this landed — three reformulations, all from
-  Kirk's probes — lives in this PR's commit history and brainstorm.md.
+- **D1 — cast-less paths (final form):** session installs nothing; folds
+  live in resolution (R6). Four reformulations, every one from a Kirk probe,
+  each smaller than the last — the record lives in this PR's commits and
+  brainstorm.md. The last word: "having session do loading that should be
+  happening in resolution is not a solid foundation we can build on." 
 - **D2 — in-flight work:** toolkit#1284 and #1285 land as-is; migration
   happens here, not by reworking open PRs.
 - **D3 — MarkDirty:** becomes a request event applied by the sheet keeper;
@@ -121,13 +142,26 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   asymmetry a keeper concern.
 - **D5 — member surface:** the cast hands out the read-facing surface of
   the live object; mutation is request-only by construction.
+- **D6 — the cast stays sealed:** `attachAll`/`Participants` remain internal
+  to resolution; nothing is exported to session. Join's AC read becomes a
+  small exported resolution **projection entry** (attach the one character,
+  install the truth, fold, tear down). `compileResolutionCast` — session's
+  hand-rolled preflight attach — is a named open question attached to Phase
+  3, decided on evidence when that phase touches it.
+- **D7 — the member surface carries `HasShieldEquipped`:** the monster
+  answer is false — a monster's shield is baked into its stat-block AC.
+- **D8 — the encounter stays ctx-free, no asterisk:** context never flows
+  from above; resolution installs at its own boundary, the only boundary
+  that matters.
+- **D9 — Fighting Style Protection joins D4's family:** shield read via the
+  member surface (D7), reaction spend as a request event.
 
 ## Done when
 
 - Zero non-test references to `OwnerAware`/`SetOwner`.
 - A new condition reading its own sheet, the world, and an enemy uses one
-  channel with zero wiring changes; a structural test pins that no fold path
-  skips the door.
+  channel with zero wiring changes; a structural test pins that folds live
+  in resolution.
 - The three migrated conditions produce identical folds before/after
   (pixel-formula-style pinned, not round-trip-only).
 - OA fires end-to-end through request-shaped writes; sheets dirty exactly as
@@ -138,3 +172,7 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
 Allegiance semantics (#315) — the stance table's *content* is its own design.
 Reactions opt-in UX (wave 5). Perception limiting (pre-v1 law). The
 open-set installer interface and generic `Of[T]` — shelved in brainstorm.md.
+
+Shelf: `Unlock`'s ability check folds an empty chain today (bus-free sheet,
+no subscribers). The day lock-picking should feel a condition, that check
+becomes a resolution machine under R6 — named, empty, not built.

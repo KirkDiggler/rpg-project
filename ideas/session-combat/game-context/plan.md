@@ -27,15 +27,18 @@ install is the ~one-line-per-verb it looks like; determine where the door
 function lives so session can call it without an import cycle; report to the
 design PR **before Phase 2 begins**.
 
-**Phase 1 — the door (R5).** Extract `installTruth` in `resolution` from the
+**Phase 1 — the door (R5). DONE — rpg-toolkit#1286.** Extract `installTruth` in `resolution` from the
 three inline `With*` calls (`resolve.go:347/374/395`). No behavior change;
 `TestNoCodePathProduces*lessInteraction` stays green; add a structural pin
 that the door is the only caller of any `gamectx.With*`.
 
-**Phase 2 — verbs install (R3/D1).** Session verbs call the door immediately
-after load. New pin: a character with Unarmored Defense joining a session
-reports correct AC with **no `Resolve` running** — the base-AC-barbarian
-test.
+**Phase 2 — the projection entry (R6/D6).** Resolution exports a small
+projection entry: attach the one character, install the truth, fold the AC,
+tear down. `session.Join`'s `projectCharacter` reroutes through it instead of
+calling `Character.EffectiveAC` itself. Session gains no gamectx calls and no
+imports of resolution internals. Pin: a character with Unarmored Defense
+joining a session reports correct AC — the base-AC-barbarian test.
+`compileResolutionCast` is parked to Phase 3 (D6).
 
 **Phase 3 — reader migration (R1).** Unarmored Defense, Martial Arts,
 Unarmored Movement read via `CastOf(ctx).Member(ownID)`; delete the

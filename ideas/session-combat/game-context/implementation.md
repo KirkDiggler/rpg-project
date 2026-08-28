@@ -48,3 +48,12 @@ checked: every gamectx reader today is a chain handler, so nothing misbehaves
 nothing (#1251's shape). Candidate rule when reactions/typed-handler reads
 arrive: forward the publisher's ctx through typed dispatch, or law that
 gamectx readers must be chain handlers.
+
+## Post-ratification amendments (2026-08-28, before Phase 2)
+
+Thought: the ratified design was final. Found: three Kirk probes ("why does
+X need Y") each shrank it — owner handle → cast reads; export-attachAll →
+sealed cast + projection entry; verb installs → session installs nothing,
+folds live in resolution (R6). Every intermediate had more mechanism than
+the final form. This produced the ownership-interrogation discipline (the
+who-holds-what table now in design.md) and the standing charter-check rule.
