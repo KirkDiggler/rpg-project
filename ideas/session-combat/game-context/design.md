@@ -1,7 +1,10 @@
 # Game Context — one read channel, one write channel, one door (v1)
 
-**Status:** PROPOSED — awaiting Kirk's ruling on this PR. Reasoning and
-rejected alternatives in [brainstorm.md](./brainstorm.md). This PR stays open
+**Status:** Design — **decided** (Kirk, 2026-08-28: "I approve and would like
+to proceed"). Plan in [plan.md](./plan.md) — an agent-handoff artifact,
+auto-approved as long as it honestly represents this design (Kirk's plan
+ruling, same day). Reasoning and rejected alternatives in
+[brainstorm.md](./brainstorm.md). This PR stays open
 through implementation; an `implementation.md` lands beside this file before
 merge — the mini retro: what we thought we were building vs. what we found
 (Kirk, 2026-08-28).
@@ -42,9 +45,12 @@ test. Sheet keepers already apply `ConditionApplied`/`ConditionRemoved`/
 
 ## The two stages
 
-- **R3 — The seam fetches records.** Session verbs load-act-save every
-  participant by ID from repositories (load-everything). The only place data
-  is fetched. No rules live here.
+- **R3 — The seam fetches records and installs the truth it loaded.**
+  Session verbs **load-install-act-save** every participant by ID from
+  repositories (load-everything), calling the door (R5) immediately after
+  load — so every downstream computation, inside an interaction or not,
+  inherits an installed context (D1). The only place data is fetched. No
+  rules live here.
 - **R4 — Resolution derives truth.** Everything ambient is a derivation of
   what the interaction already holds: room ← encounter canvas; cast ←
   attached participants; readiness ← cast.
@@ -101,56 +107,24 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
    effect-context design gets a superseded pointer, ADR noting the channel
    law if ruled.
 
-## Decisions for Kirk
+## Decisions — ruled (Kirk, 2026-08-28)
 
-- **D1 — the cast-less paths.** Some folds run outside any interaction —
-  the concrete case is AC derived on read at session join (#1279), where
-  Unarmored Defense contributes with no `Resolve` running, so no cast is
-  installed. Delete the handle and read self via `Member(ownID)`, and on
-  that path the condition takes its "cannot answer" branch: base-AC
-  barbarian again, guaranteed by architecture. Recommended: **every fold is
-  an interaction** — the join-time AC read attaches that one character and
-  builds a cast of one through the same `attachAll` and door. Only this
-  version yields R6 with no asterisk and one loading mechanism engine-wide.
-  Cost: ctx plumbing on the paths #1276/#1279 just made fallible — priced by
-  a spike during step 1, evidence back to Kirk before committing. The honest
-  fallback is weaker than this doc first claimed (corrected 2026-08-28 after
-  Kirk's probe): a `MarkDirty`-only remnant saves nothing here, because the
-  ghost is the READ side — the handle would have to keep its read methods
-  for every condition that fires on an undoored path, and R1 gains a
-  permanent asterisk. Reformulated twice on
-  2026-08-28, both times by Kirk's probes, landing on his form: **"the world
-  loads them into game context, then we fire the chain" holds on every
-  path** — the session verb pattern becomes load-**install**-act-save, one
-  door call right after load, so everything downstream (a Resolve, or an
-  on-read AC computation at join) inherits an installed context and no
-  computation needs to know whether an interaction is running. Resolve keeps
-  its own door call for the interaction-derived truths (attached cast,
-  readiness) — both installs are the same function, both held structurally.
-  The spike confirms the verb-pattern change is the one-line-per-verb it
-  looks like.
-- **D5 — the member surface.** `combat.Combatant` exposes mutators
-  (`ApplyDamage`, `MarkClean`), so handing the live object through the cast
-  leaves R2 enforced by discipline, not by the interface. Recommended: the
-  cast hands out the read-facing surface of the object (narrow interface or
-  wrapper); mutation stays request-only by construction. Alternative:
-  accept discipline + review, revisit on first violation.
-- **D2 — in-flight work.** Recommended: land toolkit#1284 as-is
-  (grant-at-attach answers *who carries*, unaffected by channel law) and
-  toolkit#1285 as-is (record truth is per-change). Migration happens here,
-  not by reworking open PRs.
-- **D3 — MarkDirty.** Recommended: a request event ("my serialized state
-  changed", ref-addressed), applied by the sheet keeper — the handle dies
-  completely. Alternative if D1 falls back: keep the one-method handle.
-- **D4 — OA's write idiom.** Recommended: fully request-shaped — publish
-  trigger, publish spend; keeper meters and dirties. Character/monster
-  asymmetry (purse vs `UsedThisTurn`) stays a keeper concern, not a
-  condition concern.
+- **D1 — cast-less paths:** verb-level install, folded into R3
+  (load-install-act-save). How this landed — three reformulations, all from
+  Kirk's probes — lives in this PR's commit history and brainstorm.md.
+- **D2 — in-flight work:** toolkit#1284 and #1285 land as-is; migration
+  happens here, not by reworking open PRs.
+- **D3 — MarkDirty:** becomes a request event applied by the sheet keeper;
+  the owner handle dies completely.
+- **D4 — OA's writes:** fully request-shaped — publish trigger, publish
+  spend; the keeper meters and dirties, keeping the character/monster
+  asymmetry a keeper concern.
+- **D5 — member surface:** the cast hands out the read-facing surface of
+  the live object; mutation is request-only by construction.
 
 ## Done when
 
-- Zero non-test references to `OwnerAware`/`SetOwner` (or, on D1 fallback,
-  exactly one one-method interface).
+- Zero non-test references to `OwnerAware`/`SetOwner`.
 - A new condition reading its own sheet, the world, and an enemy uses one
   channel with zero wiring changes; a structural test pins that no fold path
   skips the door.
