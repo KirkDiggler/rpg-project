@@ -105,7 +105,9 @@ Only Kirk merges promotion PRs. The existing rule that every merge to an auto-de
 
 ### Hotfix
 
-An urgent production-only fix starts from `origin/main`, targets `main`, and uses a merge commit under the production ruleset. Once production is verified, merge `main` into `dev` before continuing normal integration work. Never rebase either long-lived branch.
+An urgent production-only fix starts from `origin/main`, targets `main`, and uses a merge commit under the production ruleset. Once production is verified, create a second issue and a short-lived sync branch from `origin/dev`, replay the hotfix merge's first-parent diff with `git cherry-pick -m 1 <main-merge-sha>`, and open a second PR to `dev`. That sync PR follows normal integration policy and squash-merges, preserving one integration commit per PR without weakening the `dev` ruleset.
+
+The next `dev -> main` promotion still updates `dev` from current `main` before merge and must prove that update is content-neutral. That later merge records ancestry; the sync PR keeps hotfix content present in new feature branches immediately. A production hotfix and its integration sync are two independently reviewed PRs and therefore require two issues. Never rebase either long-lived branch.
 
 ## Docker safety change
 
@@ -259,6 +261,7 @@ For each promotion:
 
 - **A required check never appears on `dev`:** do not bypass. Compare the explicit ruleset check list with the workflow's `pull_request.branches` filters and job display names; correct the mismatch before merge.
 - **A promotion says `dev` is behind `main`:** update `dev` with `main`, rerun checks, and keep the merge method as a merge commit. Do not rebase or force-push.
+- **A production hotfix must return to integration:** do not temporarily weaken the squash-only `dev` ruleset. Create the separately issued sync PR, replay the production merge with `git cherry-pick -m 1`, run the repository gates, and squash it into `dev`.
 - **A ruleset blocks every merge method:** read back all active rulesets for overlapping targets. Disable the stale overlapping rule only after the explicit replacement is active.
 - **A `dev` workflow can move `latest`:** stop before changing the default. Revert the workflow or restore the explicit main expression.
 - **A main deployment fails:** do not describe the release as shipped. Follow the existing deployment recovery path; changing the default branch is not a deployment rollback.
