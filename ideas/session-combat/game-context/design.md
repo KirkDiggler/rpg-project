@@ -168,7 +168,14 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   #948's no-clobber holds: never persist a sheet that silently dropped a
   condition. Strictness is a property of what the entry does, not of
   loading; one attach mechanism, policy per entry. The two session pins that
-  fired survive, updated to assert the report.
+  fired survive. **Scoped down (Kirk, 2026-08-29): for now the lenient drop
+  site fires a warning log and nothing more** — "it is premature to think how
+  we can get this data out cleanly. we can postpone these decisions until we
+  have the structure we want setup." SHELF (named, empty): the clean data-out
+  — a report type on the loader, the report riding the projection's output,
+  the combat-log announcement at Join, conditions-only-vs-all-drop-sites.
+  Carved when the structure exists; the warning log marks every site the
+  shelf will serve.
 
 ## Done when
 
