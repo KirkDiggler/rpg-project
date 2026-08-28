@@ -102,11 +102,17 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   Kirk's probe): a `MarkDirty`-only remnant saves nothing here, because the
   ghost is the READ side — the handle would have to keep its read methods
   for every condition that fires on an undoored path, and R1 gains a
-  permanent asterisk. Reformulated 2026-08-28 (Kirk's object-model probe):
-  the door rule generalizes as **whoever starts a fold installs the truth it
-  holds** — a character folding its own AC holds itself, so the join path
-  installs a cast of one in a few lines rather than replicating Resolve.
-  The spike confirms it is as small as it looks.
+  permanent asterisk. Reformulated twice on
+  2026-08-28, both times by Kirk's probes, landing on his form: **"the world
+  loads them into game context, then we fire the chain" holds on every
+  path** — the session verb pattern becomes load-**install**-act-save, one
+  door call right after load, so everything downstream (a Resolve, or an
+  on-read AC computation at join) inherits an installed context and no
+  computation needs to know whether an interaction is running. Resolve keeps
+  its own door call for the interaction-derived truths (attached cast,
+  readiness) — both installs are the same function, both held structurally.
+  The spike confirms the verb-pattern change is the one-line-per-verb it
+  looks like.
 - **D5 — the member surface.** `combat.Combatant` exposes mutators
   (`ApplyDamage`, `MarkClean`), so handing the live object through the cast
   leaves R2 enforced by discipline, not by the interface. Recommended: the
