@@ -87,7 +87,7 @@ Kirk's cases against a relation model, all of which work:
 - **The pickpocketed merchant** — the same mechanism as the guards, which is the
   tell that it is the right one.
 
-## The recommended shape — for Pez, NOT this slice
+## The answer: one predicate, and it is ours
 
 One predicate, `(*Encounter).hostile(a, b)`, owning enmity. A first
 implementation returning exactly what the engine already computes makes the
@@ -104,31 +104,44 @@ an omission; rpg-toolkit#899 and #766 collapsing into a one-function fix instead
 of four-site archaeology; factions as a named attachment point rather than a
 rewrite.
 
-### Why it is not in this slice
+### The lanes, settled
 
-Kirk, after the design had been rewritten around it: *"So I think we want to make
-minimal changes. FadedPez will take this work, we only want to be able to place a
-KindWorld npc into the dungeon that can exist on a free roam clock that is not
-hostile to us. Everything else will be managed by Pez. I do not want to
-overreach."*
+The scope moved twice before landing, and both moves were corrections worth
+keeping.
 
-Correct, and it is the second overreach in this thread — the first was inventing
-a `Kind` immutability rule, the second was reaching for the hostility refactor
-because the analysis behind it was satisfying. **The analysis being right does not
-make it ours to build.** Hostility belongs to whoever owns what an NPC does, and
-that is Pez.
+First Kirk cut the slice to placement only — *"I do not want to overreach"* —
+after the design had been rewritten around the predicate. That was right at the
+time: reaching for a hostility refactor from a placement slice was the second
+overreach in the thread, the first being an invented `Kind` immutability rule.
 
-So the slice reverts to adding a value the hostile-path switches do not name, and
-changing none of them. That yields non-hostility and the free-roam clock with
-zero engine edits — the world clock follows because a member is moved to a turn
-clock only by entering a bubble, and bubbles form only from hostile pairs.
+Then he re-cut it the other way, and this is the version that holds:
 
-**The honest caveat, stated in design.md rather than buried:** that is true today
-and is not a guarantee. It holds because nothing hostile is authored as
-`KindWorld`. The pickpocket case is what turns it from luck into a thing someone
-has to state — and that is the moment the predicate above earns its keep. The
-design's job is to not foreclose it, which is why no immutability rule is
-written.
+> *"FadedPez does not care about hostility, they just want to build the merchant.
+> We cared about it because in the dungeon non players are considered hostile.
+> Hostility and allegiance is in our lane. I think we turn over the `KindWorld`
+> addition to them too."*
+
+So the split is by **what each lane is for**, not by what is adjacent to it.
+Hostility is engine; the merchant is content. We build the predicate; Pez builds
+`KindWorld`, the ref, the placement and the builder affordance —
+[handoff-placement.md](handoff-placement.md) hands him the research.
+
+That also fixes the thing that kept nagging: a `KindWorld` member is now
+non-hostile because **our function says so**, not because four switches happen
+not to name it. The "luck versus stated fact" problem dissolves once the lanes
+are cut this way, which is a good sign the cut is right.
+
+**And the rule stays small.** Kirk: *"If we allow all non-monster kinds to not be
+hostile to us I think we are good, and we can stop over-engineering here."* One
+pair is hostile when one side is a monster and the other a player. No factions,
+no disposition, no configuration. The predicate is the seam; this is its whole
+answer for now.
+
+**Scope it honestly, though:** there are FIVE callers, not four. The fifth is
+`combat/movement.go`, whose threat list has no hostility check at all and whose
+`canMakeOpportunityAttack` returns `true` unconditionally. Converting the first
+four preserves behaviour; converting the fifth **fixes** rpg-toolkit#899 and
+#766 — a player no longer opportunity-attacks a retreating ally.
 
 ## Rejected
 
