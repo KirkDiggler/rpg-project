@@ -87,13 +87,22 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
 
 ## Decisions for Kirk
 
-- **D1 — the cast-less paths.** Recommended: **every fold is an
-  interaction** — a lone AC read on join builds a cast of one through the
-  same `attachAll` and door. Only this version yields R6 with no asterisk and
-  one loading mechanism engine-wide. Cost: ctx plumbing on the paths
-  #1276/#1279 just made fallible; priced during step 1, and if the price is
-  ugly we fall back to a residual one-method `MarkDirty` handle and D1 is
-  re-ruled on evidence.
+- **D1 — the cast-less paths.** Some folds run outside any interaction —
+  the concrete case is AC derived on read at session join (#1279), where
+  Unarmored Defense contributes with no `Resolve` running, so no cast is
+  installed. Delete the handle and read self via `Member(ownID)`, and on
+  that path the condition takes its "cannot answer" branch: base-AC
+  barbarian again, guaranteed by architecture. Recommended: **every fold is
+  an interaction** — the join-time AC read attaches that one character and
+  builds a cast of one through the same `attachAll` and door. Only this
+  version yields R6 with no asterisk and one loading mechanism engine-wide.
+  Cost: ctx plumbing on the paths #1276/#1279 just made fallible — priced by
+  a spike during step 1, evidence back to Kirk before committing. The honest
+  fallback is weaker than this doc first claimed (corrected 2026-08-28 after
+  Kirk's probe): a `MarkDirty`-only remnant saves nothing here, because the
+  ghost is the READ side — the handle would have to keep its read methods
+  for every condition that fires on an undoored path, and R1 gains a
+  permanent asterisk.
 - **D2 — in-flight work.** Recommended: land toolkit#1284 as-is
   (grant-at-attach answers *who carries*, unaffected by channel law) and
   toolkit#1285 as-is (record truth is per-change). Migration happens here,
