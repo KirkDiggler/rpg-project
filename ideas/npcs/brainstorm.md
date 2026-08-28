@@ -84,16 +84,51 @@ its camera rules. One compile, one map.
 4. **`bystander` is a role *within* npc**, alongside `merchant` — *"that is
    something else, we don't have a use case for yet."*
 
+## The scope split (Kirk, 2026-08-28)
+
+*"FadedPez will be taking the work to give the merchant the actions. We are only
+making a space for them to be placed in the dungeon builder."*
+
+So this slice is the **placement seam**: a kind that is on no side, a ref, a
+dungeonspec type segment, one additive enum value, and the builder affordance to
+put one down. It gives the NPC no actions at all.
+
+That split is the reason the capability set (`TALK`, `VENDOR`, `TRAINER`,
+`QUEST_GIVER`, `QUEST_TARGET`) moved OUT of this design's normative rules after
+being briefly written into them. rpg-project#311 suggests that set, and it is a
+good suggestion — but it describes what an NPC can be *asked*, which is the half
+FadedPez owns. Specifying his contract before he has the actions in hand would
+be designing someone else's seam from the outside, and it would very likely be
+wrong in the details that matter to him. design.md states the seam he attaches
+to and stops.
+
+**What we owe him instead of a design** is the finding: nothing in the hostile
+path will act on his NPC, and here is why, site by site. That is in the table
+above and on #311.
+
+## What "a space to be placed" actually costs
+
+Larger than it sounds, because the builder's palette applies a **ref-AND-GLB
+test** — `paletteData.ts` offers a thing only when a toolkit ref *and* a promoted
+GLB both exist, and it documents refs excluded for failing either half (`ghoul`
+and `skeleton-archer` have refs and no art; `ghost` and `specter` have art and no
+ref). Neither half alone is placeable.
+
+So "place a merchant" reaches further than the encounter: a `TypeNPCs` constant
+and a merchant ref in `rulebooks/dnd5e/refs`, a promoted merchant GLB, and a
+model-resolution path beside `monsterModels.ts`. The GLB is **Assets-lane work**
+and is filed under the journey rather than pulled into this slice.
+
 ## Shelves left empty
 
 Named attachment points with nothing on them, per the standing rule that the
 shelf matters and its contents do not until a real case arrives:
 
-- **Behaviour behind the capabilities.** rpg-project#311 asks for `TALK`,
-  `VENDOR`, `TRAINER`, `QUEST_GIVER`, `QUEST_TARGET` to be *reported* and not
-  implemented — the shelf with its compartments named, and nothing on it. This
-  supersedes the "NPC role" shelf this document first proposed: Kirk's
-  `bystander`-is-a-role-not-a-kind point is what a capability set expresses.
+- **Everything an NPC can be asked.** Capabilities, the interaction verb, its
+  wire shape, adjacency. Named here so the seam is legible, owned by FadedPez,
+  and deliberately unspecified by us. Kirk's `bystander`-is-a-role-not-a-kind
+  point is what a capability set would express — which is exactly why it is his
+  to shape rather than ours to pre-empt.
 - **Attackable NPCs**, and with them a mutable `Kind` — deliberately deferred.
 - **Disposition**, if a member ever needs to change sides.
 - **Interaction beyond the shop** — the verb seam is shared, the vendor is its
