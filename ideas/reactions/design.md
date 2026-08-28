@@ -199,7 +199,8 @@ persisted on the outcome so replay decodes it rather than re-deriving. Data, not
 `MovementChainEvent`, fold, collect dirty sheets. Plus `UsedThisTurn` on the OA condition and its
 `TurnStartTopic` reset.
 
-**3 · toolkit `dnd5e` (session) — wire it.** `runWalk` resolves each cell through `NewMovement`;
+**3 · toolkit `dnd5e` (session) — wire it.** Light every member's economy when the fight forms;
+`runWalk` resolves each cell through `NewMovement`;
 seat the OA condition on every combatant at attach; populate `WithReactionReadiness` (OA
 default-on); subscribe `ReactionTriggerTopic`, drain per step, resolve each trigger through the
 existing strike path, record the beat. `MoveOutput` needs no new field — the beats are the report.
@@ -210,6 +211,29 @@ existing strike path, record the beat. `MoveOutput` needs no new field — the b
 / unassigned. Not on this slice's critical path.
 
 ## Decisions to rule on
+
+**RULED 2026-08-28 · Every combatant is lit when the bubble forms.**
+
+> "characters should start with their full economy I think they just cant consume it if its not
+> their turn. when we go into a combat bubble, all players should have economy"
+
+This closes the cold-sheet gap and **supersedes the lazy ignition** `session/economy.go` records:
+*"THE SESSION LIGHTS THE SHEET WHEN AN ACTOR ON THE FIGHT CLOCK FIRST ACTS. Not when the bubble
+forms, because nothing loads the sheets then."*
+
+The objection in that second sentence is a real cost rather than a disagreement: lighting at
+formation means a fight starting must LOAD every member's sheet, seed it, and save it — where
+today it loads nobody. That is the work, and it belongs in the session step beside `runWalk`.
+
+Two things this ruling deliberately keeps apart, because conflating them would make reactions
+impossible:
+
+- **Granting** the economy happens for everyone at formation.
+- **Consuming** it out of turn is refused by the TURN GATE, which already exists — `encounter.Step`
+  answers `ErrNotActive` and `Afford` blocks the non-turn verbs.
+- **A reaction is the exception by definition**: it is spent on somebody else's turn, which is why
+  the opportunity attack spends its slot directly through `SpendSlots` rather than through the
+  turn-gated door.
 
 **1 · Does the character's reaction slot still get spent?** The condition's own flag is the meter
 that works for everyone. The character economy has a real `ReactionsRemaining` that Protection
