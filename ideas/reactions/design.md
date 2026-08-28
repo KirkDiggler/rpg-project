@@ -6,29 +6,25 @@ Slice: rpg-project#316 · Journey: rpg-project#253 · Team: Platform
 
 A monster that turns and runs from a fighter gets hit for it, and the combat log says why.
 
-## Why now
+## This is re-grown work, not new work
 
-`conditions.OpportunityAttackCondition` has been complete, correct and fully tested since
-Wave 2.11d, and has never fired in the running game. Kirk hit it directly on 2026-08-28
-("attack of opportunity is also not firing"). It is the only thing on the level-1 audit list
-where something a player is entitled to *every single turn* silently does nothing.
+**The opportunity attack used to fire.** It worked on the old encounter system, driven by
+`combat.MoveEntity` under `combat.TurnManager`, which resolved OAs inline and returned them as
+`MoveEntityResult.OAsTriggered`. The rip-out (rpg-api#801) removed the driver, not the rule. The
+condition, its geometry, its Disengage short-circuit and its six-case suite all survived intact
+because they were never the part that broke.
 
-It is also the seam two other queued items need. The movement chain has two consumers, not one:
-reaction triggers and movement-cost modifiers. Prone's half-speed and difficult terrain both
-live on the second one. Building the chain for OA builds the place they go.
+Kirk, 2026-08-28: *"OA did fire in the game, it was just the old encounter system that was
+ripped out. A lot of what we have been adding is in this category."*
+
+That is the honest framing for this whole stretch of work, and it changes what "done" looks
+like. We are not inventing a reaction system. We are re-growing a seam the composable encounter
+stack has not yet been given, and the test of the answer is whether it is *composable* — whether
+the next thing that wants to notice a step needs any wiring at all.
 
 ## The panel first
 
 There is no new panel. **The combat log is the whole surface**, and it already exists.
-
-Today, a wolf disengaging from a fighter produces:
-
-```
-Wolf moves to (4,7).
-Wolf moves to (5,7).
-```
-
-After this slice:
 
 ```
 Wolf moves to (4,7).
@@ -36,35 +32,47 @@ Opportunity Attack — Grunk's greataxe hits Wolf for 7.
 Wolf moves to (5,7).
 ```
 
-That one label is the only thing the wire cannot say today. Everything else — the roll, the
-total, the AC it beat, the damage, the weapon, the crit flag, the damage components — is
-already carried by the `Struck`/`Missed` bodies, because **an opportunity attack is a strike**
-and records through the same `enc.Record` path a declared swing does.
+That one label is the only thing the wire cannot say today. Every number — roll, total, the AC
+it beat, damage, weapon, crit, damage components — is already carried by the `Struck`/`Missed`
+bodies, because **an opportunity attack is a strike** and records through the same `enc.Record`
+path a declared swing does.
 
 Without the label the log still tells the truth, but it reads as a bug: a fighter dealing damage
 during a monster's turn with nothing saying why. So the label is in scope.
 
-## The ruling already made
+## The rulings already made
 
-**The opportunity attack autofires**, for players and monsters alike. No prompt, no window, no
-panel. Kirk, 2026-08-28:
+**Autofire.** No prompt, no window, no panel. Kirk, 2026-08-28:
 
 > "having oa autofire fills our use cases right now, when that changes we can think about adding
 > a panel to the user"
 
-This supersedes Wave 2.11d ruling B4 (NPC resolved inline, player surfaced as
-`InputRequired{reaction_prompt}`), whose delivery surface — the old encounter stream — was
-removed with the encounter module in rpg-api#801.
+This supersedes Wave 2.11d ruling B4 (NPC inline, player prompted via
+`InputRequired{reaction_prompt}`), whose delivery surface went with the encounter module.
 
-The honest cost, recorded so it is not rediscovered: autofire **spends the reactor's reaction
-without asking**. Nothing else competes for a reaction today, so the conflict is exactly zero.
-It becomes real the day Shield, Uncanny Dodge or Hellish Rebuke lands. That is an argument for
-building the prompt slice sooner, not for withholding this one — the current behaviour is not
-"the player chooses", it is "the reaction never happens".
+The cost, recorded so it is not rediscovered: autofire spends the reactor's reaction without
+asking. Nothing else competes for a reaction today, so the conflict is exactly zero. It becomes
+real when Shield or Uncanny Dodge lands — an argument for building the prompt slice sooner, not
+for withholding this one. The current behaviour is not "the player chooses", it is "the reaction
+never happens".
+
+**A walk loads everything.** Kirk, 2026-08-28:
+
+> "a walk should load everything. if there is a trap along the path it will need to be loaded. i
+> think the idea we know what to load on the bus will hamstring us as we want to add new things
+> in"
+
+This is decisive and it is already **R3**, a law this package wrote down and then did not apply
+to `Move`. `session/announcer.go` states it for the boundary path: *"everyone in, applicability
+is the effect's own predicate... deciding it out here would put a rule in the wiring."* A cast
+selected by what we currently know how to trigger is a cast that silently omits the next thing.
+
+**The condition meters itself.** Kirk, 2026-08-28: *"the OA condition should be able to track
+uses this turn kind of thing like how rage does."* See "How OA knows it has been used".
 
 ## Current reality — verified 2026-08-28 against `origin/main`
 
-### The four seams the condition's own doc left to "the orchestrator"
+### Where the old driver's job went, and did not land
 
 | # | seam | state |
 |---|---|---|
@@ -77,58 +85,98 @@ building the prompt slice sooner, not for withholding this one — the current b
 
 ### The root cause, which is not on that list
 
-**A swing loads the whole roster onto one shared bus. A walk loads only the walker.**
+**A walk loads only the walker.** Every other interaction in this package loads the whole cast:
+`announcerSeam.Announce` does it for a clock boundary, `NewActivation` does it for a feature,
+`compileResolutionCast` does it for a swing. `session/entities.go` says why — one bus per call
+shared by every entity, because "a condition on one member must be able to observe what happens
+to another... it is **the prerequisite for reactions**."
 
-`attack.go`'s `compileResolutionCast` gathers every member, sorts them, and attaches each onto
-one `newCallBus()`. `session/entities.go` states why in its own words: one bus per call shared
-by every entity, because "a condition on one member must be able to observe what happens to
-another — that is the whole reason the bus exists here, and it is **the prerequisite for
-reactions**."
-
-`Move` never builds one. Nobody but the walker is listening. Fixing seams 1–4 without this
-changes nothing, which is why four independent green test suites prove the condition and not
-the feature: every OA test publishes `MovementChain` by hand and installs its own readiness map.
+`Move` is the only write verb that never builds one. Nobody but the walker is listening, so
+there is no one for a `MovementChain` publish to reach. This is why four green suites prove the
+condition and not the feature: every OA test publishes the chain by hand and installs its own
+readiness map.
 
 ### A fifth break nobody had counted
 
-`character.EndTurn` sets `ReactionsRemaining = 0`. Reactions are the one slot that must *survive*
-your turn — an opportunity attack happens on somebody else's turn by definition. Wiring that
-method into the turn boundary would zero the slot for precisely the window in which it matters,
-and OA would silently never fire behind a green suite.
+`character.EndTurn` sets `ReactionsRemaining = 0` — zeroing the one slot that must *survive* your
+turn, since an opportunity attack happens on somebody else's turn by definition. Wiring that
+method into the turn boundary would make OA silently never fire behind a green suite.
 
 It is safe today **only by accident**: `character.EndTurn` has zero non-test callers. The live
-end-turn path is `encounter.EndTurn` (the clock); the sheet is left alone, so the slot seeded at
-the holder's turn start persists through everyone else's turns and is refilled by
-`RefreshForTurn` when their next turn comes. That is the correct behaviour, held in place by
-nothing. This slice pins it with a test.
+end-turn path is `encounter.EndTurn` (the clock) and the sheet is left alone. This slice pins it
+with a test.
 
 ### What already exists and needs no building
 
-- **The reaction economy is real and persisted.** `Data.ActionEconomy.ReactionsRemaining`,
-  written by `ToData`, restored by `Load`, priced by `Afford`, seeded to 1 by `seedTurn`, and
-  already spent by a shipped condition — Protection fighting style calls
-  `SpendSlots(ActionReaction, 1)`.
+- **The self-metering pattern.** `SneakAttackCondition` carries `UsedThisTurn bool` in its
+  persisted JSON, clears it on its owner's turn boundary, and checks it in its own predicate. Its
+  doc explains why it is persisted rather than runtime: every call reconstructs the condition
+  from JSON, so a runtime-only flag resets on every RPC.
+- **The boundary that clears it.** `resolution.NewBoundary` publishes `TurnStartTopic` /
+  `TurnEndTopic` to the whole attached cast — shipped with the clock slice (rpg-project#295).
+- **The story log needs no new event kind.** `struck` / `missed` / `downed` already carry every
+  number an OA produces.
 - **Default readiness was already ruled.** The v1alpha2 encounter proto records it: free-cost
-  reactions like OA are default-on for melee combatants; spell-cost reactions like Shield are
-  default-off. `EncounterService` is not registered in `cmd/server`, so that text is a design
-  record rather than a live contract — but the ruling stands and is reused, not re-derived.
-- **The story log needs no new event kind.** `struck` / `missed` / `downed` already exist and
-  already carry every number an OA produces.
+  reactions like OA default-on for melee combatants, spell-cost reactions like Shield default-off.
+  `EncounterService` is not registered in `cmd/server`, so that text is a design record rather
+  than a live contract — but the ruling stands and is reused, not re-derived.
 
-### Two gaps the build has to answer
+## The seam: a walk step is an interaction
 
-- **A cold sheet cannot answer "have you a reaction."** A member who has not yet taken a turn
-  this fight has `actionEconomy == nil`. In initiative order that is every player before their
-  first turn. See decision 1.
-- **Monsters have no action economy at all.** No reaction slot, no `SlotsLeft`, nothing. The
-  readiness gate has nothing to read for a monster reactor. See decision 4.
+The composable answer is not a bespoke bus inside `runWalk`. It is a third sibling.
+
+`resolution` already has two machines that are not actions: `NewBoundary` (time happened) and
+`NewActivation` (a member used something they carry). `NewActivation`'s own doc names the shape
+they share — *"attach everyone, do ONE thing on the interaction's own bus, collect dirty
+sheets."*
+
+**A step is that shape.** `resolution.NewMovement` publishes one `MovementChainEvent` for one
+cell — `from`, `to`, the threatening set — folds the chain, and returns what the chain and its
+subscribers produced. `runWalk` calls it per cell, exactly where it already calls
+`encounter.Step`.
+
+This satisfies Kirk's ruling structurally rather than by discipline:
+
+- **Attachment is `attachAll`, the same one every other machine uses.** Nobody decides who is
+  "relevant to movement". A trap, a hazard aura, a Sentinel feat, an ally's Protection — each is
+  attached and each answers for itself, which is R3.
+- **`encounter` stays bus-free.** It never imports `events`; determinism is its module law. The
+  publish lives in `resolution`, where every other publish lives, and `session` orchestrates.
+- **The next thing to notice a step needs no wiring.** It subscribes to `MovementChain` and it is
+  already attached. That is the test of whether this was built right.
+
+## How OA knows it has been used
+
+Per Kirk's ruling, the condition tracks its own uses, `SneakAttackCondition`-style:
+
+```go
+type OpportunityAttackConditionData struct {
+    Ref          *core.Ref `json:"ref"`
+    CharacterID  string    `json:"character_id"`
+    UsedThisTurn bool      `json:"used_this_turn"`   // new
+}
+```
+
+Set when it publishes a trigger; cleared when the condition's own holder starts their turn
+(`TurnStartTopic`, `SubjectID == CharacterID`) — the RAW anchor, since a creature regains a spent
+reaction at the start of each of its turns.
+
+**This is what makes the design work for monsters**, and it is why it is the right call and not
+just a smaller one. Monsters have **no action economy at all** — no reaction slot, nothing for a
+readiness gate to read. A meter that lives on the character sheet could never cover them, and an
+unmetered monster OA would fire once per player who walks past it in a round. Self-metering gives
+both kinds the same rule from the same place, with zero monster-economy work.
+
+It also dissolves the cold-sheet problem: a member who has not yet taken a turn this fight has
+`actionEconomy == nil` and cannot answer "have you a reaction", but their OA condition answers
+for itself and defaults to unused.
 
 ## The build, in order
 
-Bottom-up, one module per step, each blocked on the tag below it (no `replace` directives —
-MVS would compile old source against new deps).
+Bottom-up, one module per step, each blocked on the tag below it (no `replace` directives — MVS
+would compile old source against new deps).
 
-**0 · rpg-api-protos — the label.** `Struck` gains field 12 and `Missed` field 7:
+**0 · rpg-api-protos — the label.** `Struck` gains field 12, `Missed` field 7:
 
 ```proto
 // ReactionRef names a reaction an outcome was taken as, when it was not a
@@ -142,83 +190,62 @@ message ReactionRef {
 ```
 
 Additive, `buf breaking` guards it, no hand-written tests. A client that ignores the field
-degrades to exactly today's rendering, which is why web is a lane issue and not a blocker.
+renders exactly as today, which is why web is a lane issue and not a blocker.
 
 **1 · toolkit `encounter` — carry it.** `RecordInput` gains `Reaction *ReactionIdentity`,
-persisted on the outcome so replay decodes it rather than re-deriving. Encounter stays
-bus-free; this is data.
+persisted on the outcome so replay decodes it rather than re-deriving. Data, not a bus.
 
-**2 · toolkit `dnd5e` (session) — the slice itself.** In dependency order inside the module:
+**2 · toolkit `resolution` — `NewMovement`.** The third sibling: attach everyone, publish one
+`MovementChainEvent`, fold, collect dirty sheets. Plus `UsedThisTurn` on the OA condition and its
+`TurnStartTopic` reset.
 
-- **Cast the walk.** `Move` gathers the roster and attaches every member onto one shared
-  `newCallBus()`, in sorted order, reusing the `compileResolutionCast` pattern rather than a
-  second copy of it. This is the one structural change; everything else hangs off it.
-- **Seat OA.** At that attach, apply `NewOpportunityAttackCondition` to every melee combatant.
-  Seat it programmatically — it is universal, which is also why it is correctly absent from
-  class grants.
-- **Populate readiness.** `gamectx.WithReactionReadiness` from each seated member's persisted
-  reaction slot, OA default-on per the existing ruling.
-- **Publish per step.** `runWalk` publishes `MovementChain` for each cell with `from`/`to` and
-  the threatening set, then folds it — the shape `combat.MoveEntity` already uses, lifted to
-  the layer that owns the bus. **Not in `encounter`**: that module never imports `events`,
-  determinism is its module law, and putting a bus in it to fire this would break that.
-- **Subscribe and resolve.** Subscribe `ReactionTriggerTopic`, drain after each step, resolve
-  each trigger through the existing strike path, spend the reactor's reaction, record the beat.
-- **Report.** `MoveOutput` needs no new field — the beats are the report.
+**3 · toolkit `dnd5e` (session) — wire it.** `runWalk` resolves each cell through `NewMovement`;
+seat the OA condition on every combatant at attach; populate `WithReactionReadiness` (OA
+default-on); subscribe `ReactionTriggerTopic`, drain per step, resolve each trigger through the
+existing strike path, record the beat. `MoveOutput` needs no new field — the beats are the report.
 
-**3 · rpg-api — project the label.** One field through `convert.go`. No orchestrator change.
+**4 · rpg-api — project the label.** One field through `convert.go`. No orchestrator change.
 
-**4 · rpg-dnd5e-web — render the label.** Filed to the UI/UX lane under this slice, Todo /
-Ready / unassigned. Not in this slice's critical path.
+**5 · rpg-dnd5e-web — render the label.** Filed to the UI/UX lane under this slice, Todo / Ready
+/ unassigned. Not on this slice's critical path.
 
 ## Decisions to rule on
 
-**1 · A cold sheet has no reaction.** A player who has not acted yet this fight cannot answer
-the readiness question, so in round 1 they would not threaten anyone.
-*Recommendation: light cold sheets during the walk's cast.* The ignition law says the session
-lights a sheet "when an actor on the fight clock first acts", and its stated objection to
-lighting earlier is that "nothing loads every combatant's sheet" at bubble formation. At this
-point in the walk we have just loaded all of them, so the objection does not apply. The
-alternative — accepting that OA does not work before your first turn — is a rule a player would
-correctly report as a bug.
+**1 · Does the character's reaction slot still get spent?** The condition's own flag is the meter
+that works for everyone. The character economy has a real `ReactionsRemaining` that Protection
+fighting style already competes for.
+*Recommendation: spend both where both exist.* The flag is OA's own once-per-round and covers
+monsters; spending `ActionReaction` on a character keeps OA and Protection mutually exclusive,
+which they are in the rules. Two meters with two distinct jobs, not redundancy — but it is worth
+your eye, because the alternative (flag only) is simpler and would let a fighter both Protect an
+ally and take an OA in the same round.
 
 **2 · Does an opportunity attack stop the walk?** *Recommendation: no.* That is Sentinel, which
-is deferred. The walk continues through the remaining cells — except when the OA drops the
-walker, which needs no new mechanism: `encounter.Step` already returns an `Outcome` for an
-ending that fired underfoot and `runWalk` already abandons the remaining path on one.
+is deferred. The walk continues — except when the OA drops the walker, which needs no new
+mechanism: `encounter.Step` already returns an `Outcome` for an ending that fired underfoot, and
+`runWalk` already abandons the remaining path on one.
 
 **3 · Two threateners, one step.** *Recommendation: sorted by member ID*, matching the C8
-determinism law and the existing sorted attach order. Both get their swing; identical inputs
-must produce identical stories.
+determinism law and the existing sorted attach order. Both get their swing.
 
-**4 · Monsters have no reaction economy.** A monster reactor has nothing to meter, so an
-unmetered monster OA could fire once per player who walks past it in a round — a real rules
-violation that would feel worse than the current silence.
-*Recommendation: give the monster's encounter member record a per-round used-reaction flag* and
-meter both kinds. It is small, it is data, it lives where the round is already known.
-*The alternative* is landing player-side OA only (which covers Kirk's reported case — a fleeing
-wolf getting hit — and needs no monster work at all) and filing monster OA to the Monster AI
-lane under journey #201. **Asymmetric OA is the one option I would not pick**: players learning
-they can walk away from a wolf for free is a worse game than no OA at all.
+**4 · Reach is 5ft, fixed.** Reach weapons deferred; the predicate is already conservative and
+says so.
 
-**5 · Reach is 5ft, fixed.** Reach weapons (glaive, halberd) deferred. The condition's predicate
-is already conservative here and says so.
+**5 · Atomicity.** R5 unchanged: all fallible work before the commit, so a walk refused at step 4
+persists no opportunity attack that landed at step 2. The existing law already covers it —
+"nothing is saved on a mid-walk rejection" — and this slice must not weaken it.
 
-**6 · Atomicity.** R5 applies unchanged: all fallible work before the commit, so a walk refused
-at step 4 persists no opportunity attack that landed at step 2. The existing law already covers
-it — "nothing is saved on a mid-walk rejection" — and this slice must not weaken it.
-
-**7 · The reactor swings their equipped weapon**, through the same strike path a declared attack
+**6 · The reactor swings their equipped weapon**, through the same strike path a declared attack
 uses. Not a special-cased unarmed poke.
 
 ## Not now
 
-The reaction prompt and `play/interrupt` — its own slice, and `session/doc.go` already scopes it
-as "Wave 5", listing the four things to re-create with rpg-toolkit#964's slice-2 commit as the
-reference implementation. Shield, Uncanny Dodge, Hellish Rebuke. Reach weapons. Sentinel's
-stop-the-movement. Per-cell movement metering (10ft per difficult hex, refuse entry with 5ft
-left — Kirk's ruling 2026-08-28, deferred with prone). Condition gating of the reactor
-(incapacitated, prone, stunned) — that rides the `Afford` veto slice.
+The reaction prompt and `play/interrupt` — its own slice; `session/doc.go` already scopes it as
+"Wave 5" and names rpg-toolkit#964's slice-2 commit as the reference implementation. Shield,
+Uncanny Dodge, Hellish Rebuke. Reach weapons. Sentinel's stop-the-movement. Per-cell movement
+metering (10ft per difficult hex, refuse entry with 5ft left — Kirk's ruling 2026-08-28, deferred
+with prone). Condition gating of the reactor (incapacitated, prone, stunned) — rides the `Afford`
+veto slice.
 
 ## Done when
 
@@ -230,12 +257,20 @@ Kirk walks the branch and a wolf standing next to his fighter turns to run:
 - a monster that **Disengages** walks away untouched
 - two adjacent threateners both get their swing, in a deterministic order
 - a walk refused mid-path persists no opportunity attack that landed during it
+- **and the composability test**: a new condition that wants to notice a step subscribes to
+  `MovementChain` and needs no change to `runWalk` to be heard
 
 ## Learning log
 
+- "OA never fired" was wrong and worth correcting: it fired on the old stack. The rip-out took
+  the driver and left the rule. Much of the current work is this shape — re-growing seams the
+  composable stack has not been given — and describing it as missing features misreads both the
+  cause and the size.
 - The four documented break points were real and none of them was the work. The work was that
-  `Move` never built the shared bus `Attack` builds — a fact stated plainly in the package's own
-  doc comment, one level away from where every investigation had been looking.
+  `Move` never loads the cast every other interaction loads — a law (R3) the package had already
+  written down for the boundary path and not applied here.
+- Selecting what to put on the bus is the antipattern. `announcer.go` had already said so:
+  "deciding it out here would put a rule in the wiring."
 - `character.EndTurn` zeroing the reaction slot is the same defect class as
-  `fail-closed-not-fail-silent`: a correct-looking method whose absent caller is the only reason
+  `fail-closed-not-fail-silent` — a correct-looking method whose absent caller is the only reason
   the system works. Found by asking what refills the slot, not by reading the OA code.
