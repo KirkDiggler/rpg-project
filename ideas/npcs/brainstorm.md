@@ -1,4 +1,4 @@
-# NPCs — the third kind, and the room before the dungeon
+# World members — the third kind, and the room before the dungeon
 
 The WHY. Normative shapes live in [design.md](design.md).
 
@@ -72,17 +72,56 @@ This is why the third kind is required rather than merely tidy.
 inside the dungeon spec is avoiding a second world concept, its load path, and
 its camera rules. One compile, one map.
 
+## How the third kind got its name
+
+It was `npc` for most of a day, and Kirk broke it himself: *"having monsters in
+the npcs category feels off... tech these are also not players so could be put in
+the npcs with monsters. If that feels wrong then the monsters are in the wrong
+place."*
+
+He was right, and the diagnosis is that **`npc` defines the kind by negation**.
+"Not a player" is a description monsters satisfy too, so the category had no
+edge — which is exactly why monsters kept sliding into it, in the art directory
+and in the argument.
+
+`world` defines it positively, and it makes the whole set one statement:
+
+- `player` — belongs to a person
+- `monster` — belongs to the fight
+- `world` — belongs to the place
+
+Kirk's own gloss, and it is load-bearing rather than decorative: without the
+shared axis stated, `world` reads as "the environment". design.md rule 1 puts it
+in the godoc for that reason.
+
+**The test that settled it was the hired mercenary** — an ally who fights. Not a
+player, not a monster, so `npc` would have welcomed it in, and it would have
+broken all four inherited behaviours the moment somebody placed one. `world`
+refuses it by name: a mercenary belongs to a side, not to the place. A name that
+excludes the right things is worth more than a name that reads smoothly.
+
+The vocabulary also matches #311's own title — *World NPC Foundation* — which
+had the answer in it the whole time.
+
+**The ref type stays `npcs`** (`dnd5e:npcs:merchant`, Kirk's ruling). The two
+words are deliberate, because they answer different questions: `MemberKind` says
+what something is in a fight, while the ref type names a content bucket beside
+`dnd5e:props:pillar` and `dnd5e:monsters:skeleton`. `dnd5e:world:merchant` reads
+badly — "world" is not a category of thing. Forcing one word to serve both
+questions is what produced the original confusion; the compiler is the single
+place the two vocabularies meet, and design.md rule 10 requires it to say so.
+
 ## Rulings (Kirk, 2026-08-28)
 
 1. **The merchant cannot be attacked.** *"That may come, but is definitely not a
    launch goal and probably not needed."* `Kind` therefore stays a fixed authored
    fact and never mutates in play — which is what keeps this slice small.
-2. **The kinds are `player`, `monster`, `npc`.**
+2. **The kinds are `player`, `monster`, `world`**; the ref type is `npcs`.
 3. **NPCs carry an authored facing.** *"They have no behavior so will need a
    facing."* Monsters are refused facing because they turn dynamically in play;
    an NPC never does, so the authored value is the only one there will ever be.
-4. **`bystander` is a role *within* npc**, alongside `merchant` — *"that is
-   something else, we don't have a use case for yet."*
+4. **`bystander` is a role *within* the kind**, alongside `merchant` — *"that
+   is something else, we don't have a use case for yet."*
 
 ## The scope split (Kirk, 2026-08-28)
 
@@ -128,11 +167,22 @@ classes from townfolk source — not a hunt for new art.
 
 **The name `npcs` is already taken, by monsters.** `public/models/synty/npcs/`
 holds ghosts, skeletons, zombies and the tormented soul, keyed `npcs` in its own
-manifest — "NPC" in the older sense of *anything not a player*. The moment
-`KindNPC` and `dnd5e:npcs:*` exist, that directory reads as the NPC art root and
-is nothing of the kind. This is exactly the class of collision that costs an
-afternoon six weeks from now, so design.md makes resolving it an explicit
-obligation rather than a thing the implementer discovers.
+manifest — "NPC" in the older sense of *anything not a player*.
+
+Reading its manifest is what dissolved the question. That directory is **not a
+taxonomy**: it is the polygon-dungeon promotion wave, all seven sharing one
+55-joint armature and one retarget script. A pipeline fact wearing a fiction
+name. And rpg-dnd5e-web#559 already ruled where identity lives — each entry's
+`rulesRef`, explicitly *not* the filename or the path, because the art-to-ref
+mapping is not 1:1.
+
+So renaming it `monsters/` would swap one aspirational label for another and rot
+immediately: the merchant comes from Fantasy Kingdom, the same family the four
+class models were promoted from, and a wave mixing a merchant and a skeleton on
+one rig breaks `monsters/` exactly as `npcs/` is breaking now. **Recommendation:
+leave it, or rename it for what organizes it (the wave), and keep `rulesRef` as
+identity.** Merchant art goes with its own wave regardless. Out of scope for this
+slice; recorded so it is a decision rather than a discovery.
 
 ## Shelves left empty
 

@@ -1,4 +1,4 @@
-# NPCs — the placement seam
+# World members — the placement seam
 
 Normative. Reasoning and rejected options live in [brainstorm.md](brainstorm.md).
 
@@ -6,23 +6,42 @@ Parent: **rpg-project#311** (World NPC Foundation).
 
 ## Scope
 
-**This slice makes a space for an NPC to be placed, and nothing else.** A NPC can
-be authored into a dungeon in the builder, compiles into the encounter as a
-member who is on no side, and renders on the map.
+**This slice makes a space for a world member to be placed, and nothing else.**
+One can be authored into a dungeon in the builder, compiles into the encounter as
+a member who is on no side, and renders on the map.
 
-**It gives the NPC no actions.** Interaction capabilities, the interaction verb,
+**It gives it no actions.** Interaction capabilities, the interaction verb,
 adjacency, and everything the merchant can actually *do* are **FadedPez's work**
 (Kirk, 2026-08-28), layered on this seam via rpg-project#310 and
 [rpg-toolkit#1275](https://github.com/KirkDiggler/rpg-toolkit/issues/1275). This
-document deliberately does not design them — see **Handoff** below.
+document deliberately does not design them — see **Handoff**.
+
+## Naming (Kirk's ruling, 2026-08-28)
+
+The member kind is **`world`**; the content ref type is **`npcs`**. They differ
+on purpose, because they answer different questions:
+
+- **`MemberKind` answers "what is this in a fight?"** `player` belongs to a
+  person, `monster` belongs to the fight, `world` belongs to the place. A
+  positive definition — which is the point. `npc` defined the kind by negation
+  ("not a player"), and monsters satisfy that too, which is how they kept
+  sliding into the category.
+- **The ref type answers "what content bucket is this?"**, alongside
+  `dnd5e:props:pillar` and `dnd5e:monsters:skeleton`. `dnd5e:world:merchant`
+  would read badly — "world" is not a category of thing.
+
+The decisive test for the kind name is the **hired mercenary**: an ally who
+fights. It is not a player and not a monster, so `npc` would have invited it in
+and it would have broken all four behaviours below. `world` refuses it by name —
+a mercenary belongs to a side, not to the place.
 
 ## The law this rests on
 
 Every decision in the hostile path is an **allow-list keyed on `MemberKind`,
 never a deny-list**. Nothing asks "is this member harmless?" — each site asks "is
 this a player?" or "is this a monster?" and ignores everything else. A third
-value is therefore excluded from each by construction, with **none of these four
-sites edited**:
+value is excluded from each by construction, with **none of these four sites
+edited**:
 
 | Behaviour | Decided in | Mechanism |
 |---|---|---|
@@ -31,28 +50,36 @@ sites edited**:
 | Not attackable by players | `session/attack.go`, two sites | Candidates built from `Kind == KindMonster`. |
 | Ignored by monster AI | `behavior/basic.go` | `if sm.Kind != encounter.KindPlayer \|\| !sm.Standing { continue }`. |
 
-Rule 6 exists to prove that claim rather than assume it.
+Rule 7 exists to prove that claim rather than assume it.
 
 ## 1. The kind — `rulebooks/dnd5e/encounter`
 
 ```go
-// KindNPC is a member who is on no side: present and visible, never hostile,
-// never a target, never holding a turn.
-KindNPC MemberKind = "npc"
+// KindWorld is a member who belongs to the PLACE rather than to a person or to
+// the fight: present and visible, on no side, never hostile, never a target,
+// never holding a turn. A merchant, a trainer, a quest-giver.
+//
+// Named for what it IS, not for what it is not. An ally who FIGHTS — a hired
+// mercenary — belongs to a side and is NOT this kind, however friendly.
+KindWorld MemberKind = "world"
 ```
 
-1. An NPC **MUST NOT** form or join a combat bubble, count toward whether a
-   fight is decided, be a player's attack target, or be selected by monster AI.
-2. An NPC **MUST NOT** roll initiative or be driven for a turn.
-3. An NPC **MUST** be visible: it holds a position, appears in sight percepts,
-   and is rendered like any other member.
-4. An NPC **MUST** occupy its cell as any member does, so it blocks movement as
-   an occupied tile (rpg-project#311). A consequence of membership, **not** a
-   declared property — see rule 11.
-5. `Kind` **MUST NOT** change at runtime. Attackable NPCs and any mutation of
-   `Kind` are out of scope.
-6. Every remaining `switch member.Kind` and `Kind ==` comparison in `encounter`,
-   `session` and `behavior` **MUST** be audited and its behaviour for `npc`
+1. The godoc **MUST** carry the belongs-to-the-place gloss and the mercenary
+   exclusion. The set `player | monster | world` only coheres when the shared
+   axis is stated; without it, `world` reads as "the environment".
+2. A world member **MUST NOT** form or join a combat bubble, count toward
+   whether a fight is decided, be a player's attack target, or be selected by
+   monster AI.
+3. It **MUST NOT** roll initiative or be driven for a turn.
+4. It **MUST** be visible: it holds a position, appears in sight percepts, and
+   is rendered like any other member.
+5. It **MUST** occupy its cell as any member does, so it blocks movement as an
+   occupied tile (rpg-project#311). A consequence of membership, **not** a
+   declared property — see rule 12.
+6. `Kind` **MUST NOT** change at runtime. Attackable world members and any
+   mutation of `Kind` are out of scope.
+7. Every remaining `switch member.Kind` and `Kind ==` comparison in `encounter`,
+   `session` and `behavior` **MUST** be audited and its behaviour for `world`
    stated explicitly — including `data.go`'s `Kind == KindPlayer` branch, the
    `Kind` fields on `field.go`'s input/view structs, and `turndriver.go`. An arm
    correct by falling through **MUST** say so in a comment; silence is not
@@ -60,34 +87,37 @@ KindNPC MemberKind = "npc"
 
 ## 2. The ref — `rulebooks/dnd5e/refs`
 
-7. `module.go` **MUST** gain `TypeNPCs core.Type = "npcs"` beside `TypeMonsters`.
-8. At least one NPC ref **MUST** exist for the builder to place. The merchant is
-   the first. Naming the ref is not naming its behaviour.
+8. `module.go` **MUST** gain `TypeNPCs core.Type = "npcs"` beside `TypeMonsters`.
+9. At least one ref **MUST** exist for the builder to place:
+   `dnd5e:npcs:merchant` is the first. Naming the ref is not naming its
+   behaviour.
 
 ## 3. The placement — `encounter/dungeonspec`
 
 `refKind` accepts exactly `props` and `monsters` and refuses everything else by
 name. It gains a third type segment.
 
-9. A ref of type `npcs` **MUST** compile to a member with `Kind == KindNPC`.
-10. An NPC placement **MUST** accept `facing`, one of the eight true-compass
-    names, validated as props' is. This is the one place NPCs follow props
-    rather than monsters: a monster is refused facing because it turns in play,
-    and an NPC never does.
-11. An NPC placement **MUST** be refused `blocks_movement`, `blocks_los`,
-    `targeting`, `boss` and `offset`, each by name. Refusing `blocks_movement`
-    does not contradict rule 4: that field is a **prop's declaration**, and a
-    member's occupancy is not declared.
-12. One-placement-per-cell already holds and is unchanged.
+10. A ref of type `npcs` **MUST** compile to a member with `Kind == KindWorld`.
+    The compiler is the one place the two vocabularies meet, and it **MUST**
+    say so in a comment.
+11. The placement **MUST** accept `facing`, one of the eight true-compass names,
+    validated as props' is. This is the one place it follows props rather than
+    monsters: a monster is refused facing because it turns in play, and a world
+    member never does.
+12. It **MUST** be refused `blocks_movement`, `blocks_los`, `targeting`, `boss`
+    and `offset`, each by name. Refusing `blocks_movement` does not contradict
+    rule 5: that field is a **prop's declaration**, and a member's occupancy is
+    not declared.
+13. One-placement-per-cell already holds and is unchanged.
 
 ## 4. The wire — `rpg-api-protos`
 
 `Member.kind` (field 2) already carries `MemberKind`. The change is additive.
 
-13. `MEMBER_KIND_NPC = 3` **MUST** be added to the existing enum. No new field,
+14. `MEMBER_KIND_WORLD = 3` **MUST** be added to the existing enum. No new field,
     no new message, no reserved tag.
-14. The proto **MUST** merge before toolkit, api, or web build against it.
-15. This slice **MUST NOT** add capabilities to the wire. That is FadedPez's
+15. The proto **MUST** merge before toolkit, api, or web build against it.
+16. This slice **MUST NOT** add capabilities to the wire. That is FadedPez's
     contract to shape when the actions exist.
 
 ## 5. The builder — `rpg-dnd5e-web/src/author`
@@ -96,76 +126,79 @@ The palette applies a **ref-AND-GLB test**: a thing is placeable only if a
 toolkit ref *and* a promoted GLB both exist. `paletteData.ts` documents the rule
 and excludes refs failing either half.
 
-16. `PaletteCategory` **MUST** gain `npcs`, and the palette **MUST** offer every
-    NPC ref that passes the ref-AND-GLB test — verified by resolution, not
-    asserted, exactly as the monster and prop vocabularies are.
-17. The `place` tool **MUST** write an `npcs` placement, and `dungeonYaml.ts`
+17. `PaletteCategory` **MUST** gain `npcs`, matching the ref type, and the
+    palette **MUST** offer every `npcs` ref passing the ref-AND-GLB test —
+    verified by resolution, not asserted, as the monster and prop vocabularies
+    are.
+18. The `place` tool **MUST** write an `npcs` placement, and `dungeonYaml.ts`
     **MUST** round-trip it.
-18. The Inspector **MUST** offer `facing` on a selected NPC, and **MUST NOT**
-    offer `offset`, `blocks_movement`, `blocks_los` or `boss`.
-19. The renderer **MUST** resolve an NPC ref to its model the way
+19. The Inspector **MUST** offer `facing` on a selection, and **MUST NOT** offer
+    `offset`, `blocks_movement`, `blocks_los` or `boss`.
+20. The renderer **MUST** resolve an `npcs` ref to its model the way
     `monsterModels.ts` resolves a monster's.
 
-## 6. Assets dependency — Assets lane, not this slice
+## 6. Assets — Assets lane, not this slice
 
-20. A promoted merchant GLB **MUST** exist before the builder can offer one, per
-    rule 16. Filed under the journey with Team **Assets** and **MUST NOT** be
+21. A promoted merchant GLB **MUST** exist before the builder can offer one, per
+    rule 17. Filed under the journey with Team **Assets** and **MUST NOT** be
     pulled into this slice.
-21. The source art already exists: `SK_Chr_Merchant_01`, as
+22. The source art already exists: `SK_Chr_Merchant_01`, as
     `assets/synty/polygon-fantasy-kingdom/Source_Files/Characters/SK_Chr_Merchant_01.fbx`
     and already converted to
-    `assets/synty/converted/polygon-fantasy-kingdom/SK_Chr_Merchant_01.glb`.
-    The Assets work is therefore a **promotion through the existing pipeline,
-    not new art**.
-22. **Naming collision, and it is a trap.** `public/models/synty/npcs/` ALREADY
-    EXISTS and holds MONSTER art — ghosts, skeletons, zombies, tormented soul —
-    under an `npcs` key in its manifest, using "NPC" in the older sense of
-    "anything not a player". Introducing `KindNPC` and `dnd5e:npcs:*` makes that
-    directory read as the NPC art root, which it is not. The implementer **MUST**
-    resolve this explicitly — rename the directory, or place NPC art elsewhere
-    and say why — and **MUST NOT** let the two meanings share a path silently.
+    `assets/synty/converted/polygon-fantasy-kingdom/SK_Chr_Merchant_01.glb`. The
+    Assets work is a **promotion through the existing pipeline, not new art**.
+23. `public/models/synty/npcs/` already exists and holds MONSTER art — ghosts,
+    skeletons, zombies — from the polygon-dungeon promotion wave, all sharing
+    one 55-joint armature. **It is a promotion-wave bucket, not a taxonomy**,
+    and rpg-dnd5e-web#559's director ruling already puts identity in each
+    entry's `rulesRef`, not in the path. Merchant art **MUST NOT** be filed
+    there merely because the ref type is `npcs`; it belongs with its own
+    promotion wave. Renaming that directory is **out of scope here** and
+    recorded as a recommendation in brainstorm.md.
+24. Separately filed defect: the `monk` entry in that manifest carries
+    `rulesRef: null` **and** `rulesRefNote: null` — the silent gap #559
+    explicitly called unacceptable.
 
 ## 7. The room — authoring only, no code
 
-23. The vestibule **MUST** be a region of the same dungeon spec. No second zone.
-24. `start` **MUST** be a cell inside it, and a `DoorSpec` **MUST** separate it
+25. The vestibule **MUST** be a region of the same dungeon spec. No second zone.
+26. `start` **MUST** be a cell inside it, and a `DoorSpec` **MUST** separate it
     from the first chamber. Opening that door refreshes sight, which forms a
     bubble with anything hostile beyond — existing behaviour, relied on.
-25. Whether the door is locked is authoring, and **MUST NOT** become a rule.
+27. Whether the door is locked is authoring, and **MUST NOT** become a rule.
 
 ## Handoff — what FadedPez attaches to
 
-This slice's deliverable, stated as the seam rather than as his design:
+- A member with `Kind == KindWorld` at an authored cell and facing, addressable
+  by `MemberID`.
+- Reaching the client as `MEMBER_KIND_WORLD`.
+- Nothing in the hostile path acting on it, proven by rule 7's audit.
 
-- A member exists with `Kind == KindNPC`, at an authored cell and facing.
-- It is addressable by `MemberID` and reaches the client as
-  `MEMBER_KIND_NPC`.
-- Nothing in the hostile path acts on it, proven by rule 6's audit.
-
-Everything about what an NPC can be *asked* — capabilities (`TALK`, `VENDOR`,
+Everything about what it can be *asked* — capabilities (`TALK`, `VENDOR`,
 `TRAINER`, `QUEST_GIVER`, `QUEST_TARGET` are #311's suggestion, not this
 document's ruling), the interaction verb, its wire shape, and whether
 interaction requires adjacency — is his to design. **Note for that work:** the
-existing door `Interact` has no adjacency check, so #311's "adjacent player"
-is either a new rule or a shared correction to both.
+existing door `Interact` has no adjacency check, so #311's "adjacent player" is
+either a new rule or a shared correction to both.
 
 ## Out of scope
 
-NPC actions of any kind; capabilities; the interaction verb; adjacency; vendor
-stock, wallets, buying, selling; dialogue; quests; NPC AI, turns, damage or
-death; attackable NPCs; a disposition axis; region typing.
+Actions of any kind; capabilities; the interaction verb; adjacency; vendor stock,
+wallets, buying, selling; dialogue; quests; AI, turns, damage or death;
+attackable world members; a disposition axis; region typing; renaming the
+existing art directory.
 
 ## Acceptance
 
-- A dungeon authored with an `npcs` placement compiles, and the NPC appears at
-  its authored cell and facing.
+- A dungeon authored with an `npcs` placement compiles, and the member appears at
+  its authored cell and facing with `Kind == KindWorld`.
 - The builder offers the merchant in an `npcs` palette category, places it, and
   the YAML round-trips.
 - The Inspector edits its facing and offers no prop-only or monster-only field.
 - A player walks into line of sight of it and **no bubble forms**.
 - A player in a running fight cannot name it as an attack target.
 - A monster in a running fight never selects it as a target.
-- A fight in which every monster is downed ends, with the NPC still standing.
+- A fight in which every monster is downed ends, with it still standing.
 - It takes no turn and never appears in an initiative order.
 - A player cannot walk through its cell.
-- `Member.kind` reaches the client as `MEMBER_KIND_NPC` and it renders.
+- `Member.kind` reaches the client as `MEMBER_KIND_WORLD` and it renders.
