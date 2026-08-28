@@ -69,3 +69,22 @@ kept every pin green while "installed in exactly one place" was false —
 proven by mutation against the old pin, which passed it. All four pins now
 count names through one helper. The finding's value was the place the
 reviewer did not look.
+
+## Phase 2 PR-A — the projection entry (2026-08-28, rpg-toolkit#1287)
+
+Thought: entering the door without a room might force a variant door or a
+nil-as-present lie. Found: an untyped nil reads as genuinely absent
+(`gamectx.Room` guards ok && non-nil), so `installTruth(ctx, nil, cast)` is
+M4-honest — "nobody knows the world here" is TRUE at join. The distinction
+that mattered: absent room ("no world") vs empty room ("you are somewhere and
+there is nothing there" — false and unfalsifiable). Pinned by
+TestTheProjectionInstallsNoWorld. Shape: ProjectCharacter(record in, folded
+AC out), cast sealed, attach through attachAll, Resolve/resolveOn split
+mirrored. R6 pin grew a foldEntries completeness table: the two fold entries
+are the only door callers; a third joins deliberately or fails. One
+implementation decision flagged-not-decided-silently: a refusingRoller per
+the RefusingStriker idiom (unreachable by construction, loud if wrong).
+Honest limit, measured: until Phase 3 the AC VALUE doesn't depend on the door
+(Unarmored Defense still reads the handle) — the suite pins the attach (15
+vs 12) and holds the door structurally; parity asserted to 15 independently
+on both paths so it cannot pass by two wrongs agreeing.
