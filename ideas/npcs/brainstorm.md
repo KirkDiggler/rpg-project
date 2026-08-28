@@ -10,6 +10,11 @@ dungeon. The merchant is an NPC and **not hostile**. It happens in free roam.
 The destination is [rpg-toolkit#1275](https://github.com/KirkDiggler/rpg-toolkit/issues/1275),
 the vendor/NPC inventory foundation.
 
+**Parent: rpg-project#311**, World NPC Foundation — filed the same day and
+asking for exactly this abstraction. **Sibling: rpg-project#310**, the buy-only
+vendor, which layers on top. This document is the design for #311; the vendor is
+designed in #310 / rpg-toolkit#1275, not here.
+
 Two motivations were bundled at the start and came apart under reading:
 
 - *"We cannot set the type on the regions — we had entrance, chamber, corridor."*
@@ -29,10 +34,17 @@ places without any of them being edited:
 | Starts no fight on sight | `encounter/trigger.go` `sidesInContactOrder` | Partitions standing members into `players` and `monsters`. Its own doc states the law: *"a member who is not on a side is in no pair, and a pair is the only thing that forms or joins a bubble."* |
 | Does not hold a fight open | `encounter/standing.go` `fightIsDecided` | Counts players and monsters, returns `players == 0 \|\| monsters == 0`. An uncounted kind cannot keep a decided fight running. |
 | Cannot be attacked | `session/attack.go` (two sites) | The candidate target set is built with `if member.Kind == KindMonster`. A non-monster is never a candidate; naming one returns `ErrStaleDeclaration`. |
+| Ignored by monster AI | `behavior/basic.go` | `if sm.Kind != encounter.KindPlayer \|\| !sm.Standing { continue }` — monsters consider players and nothing else. |
 
-This is the strongest argument that the seam is right: we are not adding a
-concept, we are **adding the value the existing law was already written to
-tolerate**. The cost is an audit, not a redesign.
+The pattern underneath all four is the thing worth naming: **every decision in
+the hostile path is an allow-list keyed on `MemberKind`, never a deny-list.**
+Nothing anywhere asks "is this member harmless?" — each site asks "is this a
+player?" or "is this a monster?" and ignores everything else. That is why a
+third value is safe, and it is also why the audit in design.md rule 9 is the
+real work: the claim is only as good as the sites we have actually read.
+
+We are not adding a concept. We are adding the value the existing law was
+written to tolerate. The cost is an audit, not a redesign.
 
 ## Rejected
 
@@ -77,8 +89,11 @@ its camera rules. One compile, one map.
 Named attachment points with nothing on them, per the standing rule that the
 shelf matters and its contents do not until a real case arrives:
 
-- **NPC role** (`merchant`, `bystander`, quest-giver). The kind says *not a
-  side*; the role would say *what this one is for*. Nothing reads a role today.
+- **Behaviour behind the capabilities.** rpg-project#311 asks for `TALK`,
+  `VENDOR`, `TRAINER`, `QUEST_GIVER`, `QUEST_TARGET` to be *reported* and not
+  implemented — the shelf with its compartments named, and nothing on it. This
+  supersedes the "NPC role" shelf this document first proposed: Kirk's
+  `bystander`-is-a-role-not-a-kind point is what a capability set expresses.
 - **Attackable NPCs**, and with them a mutable `Kind` — deliberately deferred.
 - **Disposition**, if a member ever needs to change sides.
 - **Interaction beyond the shop** — the verb seam is shared, the vendor is its
