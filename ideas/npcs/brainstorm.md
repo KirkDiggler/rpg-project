@@ -119,6 +119,21 @@ and a merchant ref in `rulebooks/dnd5e/refs`, a promoted merchant GLB, and a
 model-resolution path beside `monsterModels.ts`. The GLB is **Assets-lane work**
 and is filed under the journey rather than pulled into this slice.
 
+Two things found while sizing that, both good news and bad news:
+
+**The art already exists.** `SK_Chr_Merchant_01` is in the Synty Fantasy Kingdom
+pack and is already converted to GLB under `assets/synty/converted/`. The Assets
+task is a promotion through the pipeline that already promoted the four player
+classes from townfolk source — not a hunt for new art.
+
+**The name `npcs` is already taken, by monsters.** `public/models/synty/npcs/`
+holds ghosts, skeletons, zombies and the tormented soul, keyed `npcs` in its own
+manifest — "NPC" in the older sense of *anything not a player*. The moment
+`KindNPC` and `dnd5e:npcs:*` exist, that directory reads as the NPC art root and
+is nothing of the kind. This is exactly the class of collision that costs an
+afternoon six weeks from now, so design.md makes resolving it an explicit
+obligation rather than a thing the implementer discovers.
+
 ## Shelves left empty
 
 Named attachment points with nothing on them, per the standing rule that the

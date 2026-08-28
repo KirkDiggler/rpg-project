@@ -109,16 +109,29 @@ and excludes refs failing either half.
 ## 6. Assets dependency — Assets lane, not this slice
 
 20. A promoted merchant GLB **MUST** exist before the builder can offer one, per
-    rule 16. This is filed under the journey with Team **Assets** and **MUST
-    NOT** be pulled into this slice.
+    rule 16. Filed under the journey with Team **Assets** and **MUST NOT** be
+    pulled into this slice.
+21. The source art already exists: `SK_Chr_Merchant_01`, as
+    `assets/synty/polygon-fantasy-kingdom/Source_Files/Characters/SK_Chr_Merchant_01.fbx`
+    and already converted to
+    `assets/synty/converted/polygon-fantasy-kingdom/SK_Chr_Merchant_01.glb`.
+    The Assets work is therefore a **promotion through the existing pipeline,
+    not new art**.
+22. **Naming collision, and it is a trap.** `public/models/synty/npcs/` ALREADY
+    EXISTS and holds MONSTER art — ghosts, skeletons, zombies, tormented soul —
+    under an `npcs` key in its manifest, using "NPC" in the older sense of
+    "anything not a player". Introducing `KindNPC` and `dnd5e:npcs:*` makes that
+    directory read as the NPC art root, which it is not. The implementer **MUST**
+    resolve this explicitly — rename the directory, or place NPC art elsewhere
+    and say why — and **MUST NOT** let the two meanings share a path silently.
 
 ## 7. The room — authoring only, no code
 
-21. The vestibule **MUST** be a region of the same dungeon spec. No second zone.
-22. `start` **MUST** be a cell inside it, and a `DoorSpec` **MUST** separate it
+23. The vestibule **MUST** be a region of the same dungeon spec. No second zone.
+24. `start` **MUST** be a cell inside it, and a `DoorSpec` **MUST** separate it
     from the first chamber. Opening that door refreshes sight, which forms a
     bubble with anything hostile beyond — existing behaviour, relied on.
-23. Whether the door is locked is authoring, and **MUST NOT** become a rule.
+25. Whether the door is locked is authoring, and **MUST NOT** become a rule.
 
 ## Handoff — what FadedPez attaches to
 
