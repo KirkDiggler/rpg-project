@@ -131,3 +131,17 @@ of the list (what it pins is that the applied condition arrived, not how
 many things attach grants on the way), and the agent verified the failure
 came from the bump alone before absorbing it. Copilot quota exhausted — the
 round DID NOT HAPPEN on this PR, reported as absence, not approval.
+
+## D10 PR-2 addendum — the substitute gate's first round (2026-08-29)
+
+With Copilot's quota out ~3 days, every PR now gets an independent review
+(Sonnet, Copilot stance: diff and code only, barred from the design
+conversation) before Kirk. First round: #1289 one real nit (a doc naming the
+deleted loadPolicy symbol — the doc-claims-what-code-lacks pattern this
+chain exists to kill), #1288 retrospectively clean including
+no-raw-blob-leakage and no-double-warning checks. A lesson worth keeping
+from the fix: a struct that documents one field's zero value as "the safe
+answer" and says nothing about its neighbour TEACHES the reader an inference
+("this struct thinks about zero values") that the silent field then betrays
+— documentation asymmetry is itself a defect. Roller's field now says nil
+surfaces deep in monstertraits and points at refusingRoller.
