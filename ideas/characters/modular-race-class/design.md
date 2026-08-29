@@ -3,7 +3,7 @@ name: Modular Race-Class Character Presentation
 issue: https://github.com/KirkDiggler/rpg-project/issues/321
 journey: https://github.com/KirkDiggler/rpg-project/issues/320
 team: Assets
-status: approved in conversation; pending written review
+status: implemented; pending durable-record merge
 ---
 
 # Modular Race-Class Character Presentation
@@ -290,6 +290,31 @@ A is complete when an Elf Fighter whose public roster row carries
 - remains recoverable through class and `MediumHumanoid` fallbacks; and
 - demonstrates that its embedded atlas can be replaced without changing
   geometry or animation.
+
+## A implementation record
+
+A was delivered and accepted through the real production session route:
+
+- initial provider: `rpg-game-assets#80` / PR `#81`, merged as
+  `ddf77063fcecb0a8598bc2e9333ba37bbcae1acb`;
+- provider opacity correction: `rpg-game-assets#83` / PR `#84`, merged as
+  `098dc9bb977199ea212a00d2742d5055a8f1a7dd`;
+- web production integration: `rpg-dnd5e-web#849` / PR `#855`, merged to
+  `dev` as `892900ed53c13c1ab18a078acf78644d693e8193`;
+- final provider manifest SHA-256:
+  `446581a10dbdbde7c06b9c884d18c96f71852714a093e844e1bb316bc987fa94`;
+- final Elf Fighter SHA-256:
+  `3060e6bc2712c3699c3abceb78480fd24007d628ef9c928c5bcffcd53ca7aa39`;
+- accepted socket: `modular-fantasy-hero-main-hand-v1`; and
+- final hair: `Chr_Hair_01`, exported with an opaque material. The atlas is
+  fully opaque; removing erroneous `alphaMode: BLEND` eliminated the
+  camera-angle head/hair sorting pop without changing geometry.
+
+Kirk's real-route verdicts were: **“animations are solid,” “sword grip looks
+good,”** and, after the opacity correction, **“hair looks great.”** Exact
+standing race+class resolution, real walk, authoritative main-hand attachment,
+class-only downed fallback, atlas replacement, and both fallback layers are
+therefore accepted for A.
 
 ## Expansion to B
 
