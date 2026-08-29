@@ -208,10 +208,21 @@ comment in the slice precisely because it said what the test did NOT prove.
 - **#1294** — a TODO describing a registry that no longer existed.
 
 A fifth instance landed in the follow-up (#1298) on the author of this list,
-minutes after writing it: a cumulative-attach test asserting a property equally
-true of the code it existed to catch (same surface either way; the difference
-was ORDER). Mutation caught it; reading did not — which argues the mechanism
-(mutate every new pin) matters more than awareness of the pattern.
+minutes after writing it — and it ran TWO levels deep. The first
+cumulative-attach test could not fail against the casts-of-one version; the
+rewrite was reported as fixed and that was still false: it failed against a
+mutant its author had WRITTEN, and passed against the restored prior
+implementation (review caught it by byte-restoring the old blob under the new
+tests). The review's own root cause was then also wrong — nothing can observe
+a cast during attach in either version; the implementations were behaviorally
+equivalent, and the true difference was structural (R4's ordering rule lived
+in two copies that had to agree). The pin that shipped —
+`TestOrderingIsDecidedInOnePlace` — is the first that verifiably fails against
+the prior blob. **A mutant you write yourself tests your idea of the
+difference; when a change claims to improve on existing code, the prior
+implementation is the only honest mutant.** The process rule that survives:
+restore the old code under the new tests before opening the PR. Awareness of
+the pattern did not help; running the old code did.
 
 Every one was found by mutation or by a compile break. **None was found by
 reading**, including by the reader who had just written the surrounding code.
