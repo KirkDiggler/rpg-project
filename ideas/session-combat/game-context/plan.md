@@ -52,8 +52,12 @@ exported resolution entries that return ANSWERS, never sheets (nothing with
 `TestNoFoldLivesInThisModule`'s literal-match tripwire (a fold cannot run
 without a bus, whatever it is named).
 
-**Phase 4 — read-only member surface (D5).** The cast returns a read-facing
-interface (no `ApplyDamage`, no `MarkClean`); the compiler now enforces R2.
+**Phase 4 — read-only member surface (D5). DONE 2026-08-29** (toolkit
+#1300–#1302, merged same-day; survey in phase4-survey.md, retro in
+implementation.md). `combat.Member` = the read surface; `Combatant` embeds
+it (IsDirty stays keeper-side by ruling); the cast and `conditions.member()`
+hand out Members, the widening pin resolves declarations by object identity.
+Session's diff was pins-only — the seam's own law, confirmed.
 
 **Phase 5 — request-shaped writes (D3/D4).** MarkDirty request event +
 keeper handling; OA publishes its spend instead of reaching through the
