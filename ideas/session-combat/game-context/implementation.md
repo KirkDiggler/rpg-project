@@ -443,5 +443,27 @@ ratified deferral); nil-`Ref()` guard in the monster removal loop
 interface-vestigial + the only-keeper-names-Combatant pin (Phase 4 seeds);
 re-check Phase 6's doc list for paragraphs staled by Phases 2–5.
 
-**Teardown:** all four build worktrees removed, branches deleted; review
-scratch worktrees removed by their reviewers.
+**From the build agent's closing notes (promoted, not paraphrased):**
+- **Evidence rule, folklore → law:** any claim naming a test must quote its
+  `--- PASS`/`--- FAIL` line — a `-run` filter matching nothing prints a
+  package-level PASS, and a mutant that fails to COMPILE looks exactly like
+  a caught mutant if you only read the exit code. Both bit this phase; both
+  were caught by the habit this rule now names.
+- **A survey question Phase 6 inherits:** find where a handle carried
+  information its replacement doesn't. The phase's one real design fork
+  (F7) existed because `purse != nil` silently encoded KIND ("I am a
+  character") and the cast encodes no such thing — neither the survey nor
+  the build brief had that fact; two disagreeing pins surfaced it.
+- **Report the mutant result, not the reasoning.** The agent's fail-closed
+  stakes were overstated until the permissive mutant ran and failed exactly
+  one test — first-principles argument alone would have let the
+  overstatement stand.
+- **Dry-run downstream consumers during the FIRST PR of any
+  interface-widening chain** (uncommitted `replace`, minutes of work). It
+  turned C and D into zero-surprise steps — the one-fake delta was known a
+  day before PR C existed. Standard practice now, not a reaction to a
+  stop-and-report rule.
+
+**Teardown:** all four build worktrees removed, branches deleted, prune run,
+nothing stranded (`git diff origin/main` empty against the last branch);
+review scratch worktrees removed by their reviewers.
