@@ -163,3 +163,135 @@ guarantee: session losing its bus entirely, the Phase 3 frame Kirk's
 "so session has the bus?" probe set). A pin that oversells itself is worse
 than no pin. Also: session's v0.109.0 exposure verified nil — nothing
 duck-types condition state; the Join "dual read" is one fetch, one value.
+
+
+## Phase 3 — session asks, resolution answers (2026-08-29, rpg-toolkit#1291–#1297)
+
+Thought: two independent halves under one rule — three readers move to
+`Member(ownID)`, three session call-bus sites move behind entries. Found: the
+halves were the same half. Every one of the six was a place holding a bus, and
+what the phase actually removed was the bus, not the folds.
+
+Seven PRs, each merged the day it opened. **#1291** put
+`HasShieldEquipped` on the member surface (D7) — no reader, purely additive, and
+the surface stayed decorative until #1294 consumed it. **#1292** moved Unarmored
+Defense onto the cast and produced `member()`. **#1293** moved Martial Arts, both
+handlers in one commit because attack and damage disagreed once already (#709)
+and reading the same scores through the same channel is what makes agreement
+structural. **#1294** moved Unarmored Movement and closed the reader half; four
+`OwnerAware` implementors remain and all four are writers. **#1295** built the
+three entries in resolution. **#1296** rerouted Join. **#1297** rerouted standing
+and preflight, and deleted `newCallBus`.
+
+### The door was correct for a whole phase before it was load-bearing
+
+Phase 2 PR-A recorded an honest limit: the AC value did not depend on
+`installTruth`, measured, because Unarmored Defense still read the owner handle.
+That note named the migration that would close it. #1295 closed it — deleting
+the door now fails SIX tests where it failed none, five value pins plus the AST
+pin catching it structurally.
+
+Worth keeping as a shape: **a structural pin can hold a law that is not yet
+load-bearing, and writing down which phase makes it bite is what lets the
+closure be verified rather than assumed.** The limit note was the most useful
+comment in the slice precisely because it said what the test did NOT prove.
+
+### One pattern, four instances: a comment claiming a check the code never made
+
+- **#1291** — a generated mock header naming a `mockgen` command that had not
+  run since #1254 deleted `CombatantLookup`.
+- **#1292** — a test asserting IN ITS NAME that no game context was needed,
+  after a migration that made game context the read channel.
+- **#1293** — a scaling test whose comment said "we verify the damage string is
+  upgraded to 1d4" and never asserted it; it seeded a roll of 1, which is a
+  legal 1d4 result, so it passed identically whether the rule fired or not.
+- **#1294** — a TODO describing a registry that no longer existed.
+
+Every one was found by mutation or by a compile break. **None was found by
+reading**, including by the reader who had just written the surrounding code.
+This is principle 6 (the record tells the truth same-day) seen from the failure
+side, and the mechanism worth folding in is narrow: *a comment that asserts a
+check is a claim about code, and only the code can be asked.* Prefer a comment
+that states what is NOT covered — those aged correctly all phase.
+
+### F2: a ruling exercised in both directions
+
+Ruled lenient-for-all-participants. Implementation surfaced that
+`DropUnreadable` is read on `attachAll`'s character branch and never reaches
+the monster one — `monstertraits` has one loader with no lenient half — so the
+ruling was not implementable in the module where it landed. Verified both ways
+before reporting: the probe refuses, and `monster.Load` (what session used)
+refuses the same record for the same reason, so nothing regressed. Amended:
+premature, not queued, no real path to a corrupt record with short-lived
+encounters; the asymmetry stays as a pinned fact.
+
+Rulings carry their scope, and this is the reverse case the principle also
+covers: **a ruling can be un-implementable where it lands, and the honest move
+is to report that before building a half-version that reads like the whole
+one.** The sibling of M5 (admission is a ruling): a ruling about POLICY needs a
+check that the policy is expressible where it is ruled.
+
+### Pins that could be walked past
+
+The D11 walker shipped, then review defeated it twice: an interface field
+(`struct{ Payload any }`) and a map KEY, both holding a live sheet, both walking
+clean. Fixed by failing closed — refuse any interface not named with a reason,
+walk both halves of a map. Three interfaces turned up, not the one named; two
+are sealed (`Outcome`, `saves.DCSource`) and `Outcome`'s allow-list entry is
+only honest because every implementor is walked separately behind an AST
+completeness scan.
+
+The reentrancy pin was defeated the same way, by an import alias, and rebuilt to
+resolve the import path to its local name.
+
+**The subtler find was in the fix, not the bug.** The walker's cycle guard was a
+global seen-set, so a type reachable by two routes was attributed to whichever
+field the walk reached first — making the reported PATH order-dependent while
+the allow-list was keyed on paths. An unrelated field reordering could have
+moved an entry out from under its allowance. **A pin whose key can drift is a
+pin that can silently stop guarding**, and that is not visible from a green run.
+
+### The module graph agreed
+
+`go mod tidy` moved `rpg-toolkit/events` from a direct requirement to an
+**indirect** one when the last import went. Not planned, and better evidence
+than the pin: the dependency graph stating what the seam reaches for.
+
+### Deferred, named
+
+Fidelity follow-up (M2): `factsOf` reporting a non-compiling main hand as
+`resolution.ErrBadAttack` rather than `ErrBadParticipant` — the sentinel exists
+and is documented for exactly this, and the wrong wrap in #1295 narrowed Join's
+vocabulary in #1296 (pinned as today's behaviour); `Preflight` attaching
+cumulatively, restoring the one-cast semantics the session loop had; the
+resolution-side reentrancy pin, which session honestly cannot hold because it
+compiles against a published module. Then, riding the session PR: the
+`translateResolution` case and `memberActionsFrom`'s drift-guard.
+
+### What we learned that would change the design
+
+1. **R6's enforceable form is about the bus, not the fold.** "Folds live in
+   resolution" is the rule; "session holds no bus" is the version a test can
+   hold, and it is strictly stronger — a fold cannot run without one, whatever
+   it is named. Two of the three session sites never folded anything; they held
+   a bus only because the loader demanded one. Had the design said the bus, the
+   phase would have been the same work with a clearer target.
+2. **A rule of the form "nothing with X crosses" should get its structural pin
+   at ruling time.** D11 was pinnable by reflection, and doing so found an
+   interface-shaped hole prose could not have. Written down at ruling time, the
+   hole is a design question; written down at implementation time, it is a
+   review finding.
+3. **A "no attack" case was assumed and does not exist.** An empty hand is an
+   unarmed strike. The output shape nearly carried a nil nothing could produce.
+   Design-level shapes with optional fields want one probe each before the
+   optionality is real.
+
+### Two process misses, ours
+
+- **Nearly hand-tagged a module.** CI auto-tags on merge; the brief said the
+  director would tag. Neither was true and the module was already tagged. Caught
+  before acting, but the near-miss is the record: *check what the pipeline
+  already does before assigning the step to a human.*
+- **Re-saved a memory that already existed.** A recall failure, not a record
+  failure — the fact was written down and not retrieved. Worth distinguishing,
+  because the fixes differ: one is better writing, the other better lookup.
