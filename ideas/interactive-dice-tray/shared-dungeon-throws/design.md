@@ -76,9 +76,26 @@ The clean rebuild does not reopen the multiplayer contract.
 8. **Fail open truthfully.** Unsupported or unavailable presentation never stalls authoritative combat indefinitely.
 9. **Server simulation remains deferred.** It earns a new design only if matching schema, snapshot, plan, and checkpoints repeatedly fail the two-browser conversational gate.
 
+## Actor-only production checkpoint
+
+Approved by Kirk 2026-08-29, this checkpoint deliberately disconnects multiplayer coordination so the production route can prove the concept's physical ritual before networking reshapes it.
+
+The checkpoint starts from fresh `origin/dev` and includes only:
+
+- the authoritative local player's concealed attack result;
+- a compact DOM launch tile with Roll fallback;
+- concept-aligned pickup, carry, two-button lift, release, live Rapier collisions, off-table return, and one late face correction;
+- one body/world inside the existing `SessionCanvas` from handoff through terminal;
+- settlement-only result/damage/log reveal; and
+- one owned-browser proof followed by Kirk's local-feel approval.
+
+It explicitly excludes raw pre-simulation, `DiceThrowPlan`, `SessionPresentationService`, Redis, publish/stream reconciliation, checkpoints, witnesses, synchronization delays, and multiplayer evidence. Proto/API work remains preserved but disconnected. After Kirk approves the actor ritual, the next seam is designed and added one at a time; pre-simulation is not presumed harmless merely because its contract exists.
+
+This checkpoint is not a shippable multiplayer claim and opens no web PR. It is the production-component proof that informs the next amendment.
+
 ## Persistent-body amendment
 
-The second production attempt proved that one Canvas and one controller are not sufficient when physical ownership still fragments. These invariants now bind every implementation:
+The second production attempt proved that one Canvas and one controller are not sufficient when physical ownership still fragments. These invariants bind the eventual multiplayer implementation and the actor-only checkpoint where applicable:
 
 1. **One full attempt scope.** `(session, presentation ID, authority sequence, roller, attempt, snapshot fingerprint, render generation, die ID)` is created before pickup and travels with every scene callback. A callback never infers its owner from current state.
 2. **One continuous visible body.** The actor's world body is mounted and runtime-ready before pickup, remains the same body handle through held, planning, accepted playback, correction, and fixed result beat, and unmounts exactly once at terminal cleanup. Retry creates a new generation/body only after prior removal is acknowledged.
@@ -513,18 +530,17 @@ The concepts remain historical working artifacts. Clean production code is allow
 ### Development order
 
 ```text
-revised design approval
+actor-only checkpoint design approval
   -> fresh web branch from origin/dev
-  -> remove legacy tray from production composition
-  -> preserve rejected Task 8 attempt as local evidence
-  -> persistent world/body rewrite with concept-aligned physics
-  -> owned lifecycle/performance/browser proof
+  -> remove legacy production tray
+  -> concept-shaped live actor body in SessionCanvas
+  -> owned local proof
   -> Kirk local-feel gate
-  -> existing multiplayer witness integration
-  -> Kirk two-player gate
-  -> full web CI and one review round
-  -> provider/API/web merge order
-  -> design-record merge
+  -> STOP and design the next seam
+  -> pre-simulation only if that amendment is approved
+  -> publication only after its local effect is understood
+  -> witness playback only after actor coordination is stable
+  -> eventual two-player gate and normal merge order
 ```
 
 The API branch is reconciled and published before the web consumer merges. Normal repository gates and one answered Copilot review round apply.
