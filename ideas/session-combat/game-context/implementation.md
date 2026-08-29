@@ -312,3 +312,70 @@ compiles against a published module. Then, riding the session PR: the
 - **Re-saved a memory that already existed.** A recall failure, not a record
   failure — the fact was written down and not retrieved. Worth distinguishing,
   because the fixes differ: one is better writing, the other better lookup.
+
+## Phase 4 retro (2026-08-29 — toolkit#1300/#1301/#1302, merged same-day)
+
+**D5 landed as written; the survey's headline held measurably.** "Zero
+production call sites mutate a cast member" was proven, not asserted:
+`go build` stayed clean through the whole interface split while `go vet`
+broke in exactly four files, all test fakes. The phase was compiler
+enforcement of an invariant that already held — principle 3's shape, with
+the compile-break set as the evidence.
+
+**The review earned its round.** The substitute reviewer defeated the
+widening pin's sanctioned-door exemption with a same-named method
+(`doorImpersonator.GetEffectiveAC` in the door's own file — matched every
+axis the name-based rule checked, pin passed while missing a widening).
+Fix: the door is a declaration OBJECT now (`*types.Func`, `Recv() == nil`,
+compared via `info.Defs`). The honest-mutant rule ran on its second-ever
+PR: the old pin byte-restored under the new test reported zero offenses —
+review-defeated-it as a number.
+
+**Second-order lesson — name vs object, twice in one PR.** The alias
+escape (Phase 3) was the same mistake about types; the door was it about
+declarations. Both fixes were "compare the object." That is now the rule
+when writing pins, not a fix pattern.
+
+**Third-order lesson — a prefilter on a pin is a second, unpinned rule.**
+The door bug's deeper cause: `worthChecking` selected packages by "imports
+combat," and combat does not import itself, so the one package containing
+the door was never scanned. A performance prefilter silently narrowed the
+pin's scope and nothing said so. Every pin has one; prefilters get the
+same adversarial mutation treatment as the pin body. (Found only by
+mutating the exemption — reading never would have.)
+
+**"Read-only" is a property of the surface, not immutability.** Members
+still alias the live sheets ("a view, not a copy" — deliberate). A rule
+holding a member across a fold sees the keeper's writes land. Phase 5
+must not read D5 as "the cast hands out snapshots"; one line added to
+design.md so this isn't rediscovered.
+
+**The zero-code closer was the seam's own law.** Session — the module
+that holds records, hands them to resolution, and takes back answers —
+never named `combat.Combatant` anywhere, so splitting the sheet surface
+could not touch it. PR C was six lock-file lines. Also caught there: the
+`-run`-filter-matches-nothing false green, live (two testify suite
+methods; caught by grepping `--- PASS` lines, the recorded discipline).
+
+**Docs age at the READING seam.** `gamectx/doc.go` was already false when
+Phase 4 opened — Phase 3 falsified it and Phase 3's retro missed it,
+because the stale paragraph lived in the package being read FROM, not the
+one being changed. Generalisation: when a phase changes who reads what,
+the reading seam's package doc is part of that phase's diff. Phase 6's
+doc list should be re-checked now for paragraphs staled by Phases 2–4.
+
+**Deferred ledger (Phase 6 seeds, evidence attached):**
+- `MarkClean` is interface-vestigial: zero non-test callers repo-wide.
+  `Combatant` is really Member + {ApplyDamage, IsDirty} + a vestige. Same
+  sweep family as `combat.DealDamage` (no production caller) and
+  `combat.WithRoom`. Beware `mechanics/features`' unrelated `MarkClean`.
+- "Only the keeper names `combat.Combatant`" pin — the cross-module
+  complement the widening pin explicitly cannot be (its doc says so).
+  Pairs with toolkit#1119, the room tenant's version of the D5 argument.
+- Type-resolving pins share one `sync.OnceValues` type-check cache (26s →
+  15s for three tests); a future pin of this shape joins the cache.
+
+**Process:** worktree torn down after per-PR content diffs against
+origin/main came back empty (content, not ancestry — squash merges);
+session/v0.40.1 patch-tagged off the `chore(session):` prefix, correctly
+signalling "gains nothing, offers nothing new."

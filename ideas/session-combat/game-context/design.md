@@ -192,6 +192,8 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   session a serialization affordance outside the keeper discipline; nothing
   with `ToData()` crosses the seam.
 
+Clarification (Phase 4 retro): read-only is a property of the SURFACE, not immutability — members alias the live sheets ("a view, not a copy"), so a rule holding a member sees the keeper's writes land. D5 does not mean the cast hands out snapshots.
+
 ## Done when
 
 - Zero non-test references to `OwnerAware`/`SetOwner`.
