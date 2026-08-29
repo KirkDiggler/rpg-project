@@ -207,6 +207,12 @@ comment in the slice precisely because it said what the test did NOT prove.
   legal 1d4 result, so it passed identically whether the rule fired or not.
 - **#1294** — a TODO describing a registry that no longer existed.
 
+A fifth instance landed in the follow-up (#1298) on the author of this list,
+minutes after writing it: a cumulative-attach test asserting a property equally
+true of the code it existed to catch (same surface either way; the difference
+was ORDER). Mutation caught it; reading did not — which argues the mechanism
+(mutate every new pin) matters more than awareness of the pattern.
+
 Every one was found by mutation or by a compile break. **None was found by
 reading**, including by the reader who had just written the surrounding code.
 This is principle 6 (the record tells the truth same-day) seen from the failure
