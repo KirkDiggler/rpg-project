@@ -143,7 +143,10 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   spend; the keeper meters and dirties, keeping the character/monster
   asymmetry a keeper concern.
 - **D5 — member surface:** the cast hands out the read-facing surface of
-  the live object; mutation is request-only by construction.
+  the live object; mutation is request-only by construction. Clarification
+  (Phase 4 retro): read-only is a property of the SURFACE, not immutability
+  — members alias the live sheets ("a view, not a copy"), so a rule holding
+  a member sees the keeper's writes land. D5 does not mean snapshots.
 - **D6 — the cast stays sealed:** `attachAll`/`Participants` remain internal
   to resolution; nothing is exported to session. Join's AC read becomes a
   small exported resolution **projection entry** (attach the one character,
@@ -191,8 +194,6 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   that have a ToData() on it?") — a returned `*character.Character` hands
   session a serialization affordance outside the keeper discipline; nothing
   with `ToData()` crosses the seam.
-
-Clarification (Phase 4 retro): read-only is a property of the SURFACE, not immutability — members alias the live sheets ("a view, not a copy"), so a rule holding a member sees the keeper's writes land. D5 does not mean the cast hands out snapshots.
 
 ## Done when
 
