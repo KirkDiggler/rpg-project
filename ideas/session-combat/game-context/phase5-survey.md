@@ -100,6 +100,22 @@ production path removes a monster condition yet. PR A is editing exactly that
 table, so the row and its test land there and the keepers come out
 symmetric.
 
+### F7 — The lookup's third state fails closed (build finding, 2026-08-29; M4/D10 applied, not a new ruling).
+
+Deleting OA's purse handle surfaces a state the old code never had:
+`member(ctx, id)` answering `(nil, false)` — no cast, or not in it. F3 ruled
+CanReact's two answers and said nothing about this one. Disposition:
+**do not react** — the absent value states the author's intent (M4);
+`!ok → allow` is the silently-absent-handle defect rebuilt; the neighbouring
+`gamectx.RequireRoom` already makes the whole condition a no-op on missing
+context, so both conditions agree on what a missing answer means.
+Unreachable in production and structurally so (`installTruth` on every fold
+path, pinned by `TestNoCodePathProducesACastlessInteraction`). Cost: four
+test files install the cast production always installs (the inverse of the
+#1251 lesson); `TestAnOwnerlessReactorStillMetersItself` was pinning the
+owner handle — the thing being deleted — and is repurposed as the
+fail-closed pin.
+
 ### F6 — Second inert artifact: `AttackChainEvent.ReactionsConsumed`.
 
 Populated by Protection (`events.go:313`), read by nobody outside its own
