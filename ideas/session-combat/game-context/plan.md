@@ -40,10 +40,17 @@ imports of resolution internals. Pin: a character with Unarmored Defense
 joining a session reports correct AC — the base-AC-barbarian test.
 `compileResolutionCast` is parked to Phase 3 (D6).
 
-**Phase 3 — reader migration (R1).** Unarmored Defense, Martial Arts,
-Unarmored Movement read via `CastOf(ctx).Member(ownID)`; delete the
-per-condition structural owner interfaces; parity tests assert identical
-fold results before/after.
+**Phase 3 — session asks, resolution answers (R1, D11).** Two halves under
+one rule. Readers: Unarmored Defense, Martial Arts, Unarmored Movement read
+via `CastOf(ctx).Member(ownID)`; per-condition structural owner interfaces
+deleted; parity pins assert identical fold results before/after (member
+surface gains `HasShieldEquipped` per D7 — monster answers false). Session:
+its three residual call-bus sites — Join's Speed/actions leftovers,
+standing's `IsDown`, `compileResolutionCast` preflight — move behind
+exported resolution entries that return ANSWERS, never sheets (nothing with
+`ToData()` crosses the seam); `newCallBus` deleted; the no-bus pin replaces
+`TestNoFoldLivesInThisModule`'s literal-match tripwire (a fold cannot run
+without a bus, whatever it is named).
 
 **Phase 4 — read-only member surface (D5).** The cast returns a read-facing
 interface (no `ApplyDamage`, no `MarkClean`); the compiler now enforces R2.
