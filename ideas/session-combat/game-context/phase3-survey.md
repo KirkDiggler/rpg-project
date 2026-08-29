@@ -17,6 +17,15 @@ post-#1290), read-only. Director spot-checked the load-bearing counts (three
   drops from death reporting with a warn instead of erroring the whole
   check; the resolve.go "lenient monster is unreachable" comment corrected
   in the same PR (principle 6). PR 5 is unblocked.
+  **AMENDED by Kirk 2026-08-29, after PR 5 found monsters have no lenient
+  loader:** "this all seems premature. we would put bad data in or possibly
+  not migrate existing. encounters are not long lived so this seems like we
+  are wasting cycles for things that I currently do not see a way to get
+  into that state." So: the character-lenient arm stays only because it is
+  pre-existing pinned behavior PR 5 preserved while rerouting; the lenient
+  MONSTER loader is NOT built and NOT queued — premature until a real path
+  to a corrupt record exists. The asymmetry pin
+  (TestAnUnreadableTraitStillRefusesAMonster) stays as the record.
 - **F3 (smaller bus-free loader alternative):** already ruled. D11's ToData
   probe rejected exactly this shape — session holding a live sheet is the
   defect, not the bus per se. Entries return answers; no re-ask.
