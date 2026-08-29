@@ -112,8 +112,8 @@ session pins both.
 
 ## Dispositions
 
-- **F1 — name**: `combat.Member`, proposed above. Kirk to confirm.
-- **F2 — IsDirty placement**: off Member, argued above. Kirk to confirm.
+- **F1 — name**: `combat.Member`. **RULED 2026-08-29** ("I agree with both your recommendations").
+- **F2 — IsDirty placement**: off Member. **RULED 2026-08-29** (same ruling).
 - **F3 — `combat.DealDamage` has NO production caller** (damage.go:167;
   test-only + one integration test). Not Phase 4's business — logged for the
   Phase 6 vestigial sweep next to combat.WithRoom.
