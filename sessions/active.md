@@ -356,7 +356,7 @@ free.**
 
 ## Other lanes
 
-- **Project 19 initiative/journey pilot (#229 / PR #230) — setup live, pilot active.** Board 19 now has Area + Kind:Concept + Initiative + Readiness, five focused views, and initiative #231 with journeys #169 (Kirk: Composable Dungeon Builder), #232 (dammitbilly0ne: Composable Attack Damage; toolkit#979 / PR #1126), and #201 (Monster Behavior, Shaping/unassigned). PR #230 stays open; do not call the model successful until a real slice checkpoint or baton handoff triggers the retro.
+- **Project 19 initiative/journey pilot (#229 / PR #245; merged predecessor PR #230) — starter expansion live, pilot active.** Ready Journeys is global; Active Journeys is sliced by Parent issue; Shelf is sliced by Readiness. Initiative #231 includes #169, #232, #201, #236, plus #241 (class resources) and #242 (between-run leveling). #243 (spellcasting) and #244 (dungeon danger) are top-level Shaping starters with no Initiative. #201 shelves Intel/clock-driven hiding and ambushes. No new starter has a predicted child slice. Keep PR #245 open until a real collaborator checkpoint exercises discovery, claim, and handoff.
 - **Interactive collectible dice tray (#219) — Stones 0 and 1 shipped.** Stone 0: assets PR #60
   at `7fed0fc`, web PR #752 at `8bc2a27`, corrected Original carved d20 GLB
   `87bf2d05...a77e`, and package manifest `7fcd64b...69809`. Stone 1: web PR
