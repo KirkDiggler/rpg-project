@@ -115,9 +115,11 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
 
 1. The projection entry in resolution; `Join` reroutes its AC read through
    it (the base-AC-barbarian pin).
-2. Unarmored Defense, Martial Arts, Unarmored Movement: owner-handle reads →
-   `Member(ownID)` reads. Delete the per-condition structural owner
-   interfaces.
+2. Session asks, resolution answers (D11): the three reader migrations
+   (Unarmored Defense, Martial Arts, Unarmored Movement → `Member(ownID)`
+   reads, per-condition owner interfaces deleted) AND session's three
+   residual call-bus sites move behind resolution entries that return
+   answers; `newCallBus` deleted; the no-bus pin lands.
 3. Write side per D3/D4: reaction spend and dirty-marking become request
    events; OA drops its direct purse/markDirty reach-through.
 4. Delete `OwnerAware`/`SetOwner` machinery when its last user is gone; both
@@ -176,6 +178,19 @@ Tenants today: room, cast, reaction readiness. Named candidate: stance table
   the combat-log announcement at Join, conditions-only-vs-all-drop-sites.
   Carved when the structure exists; the warning log marks every site the
   shelf will serve.
+- **D11 — Phase 3 frame: session asks, resolution answers** (ruled
+  2026-08-29, from Kirk's probe "so session has the bus?"). Session's three
+  residual call-bus sites — Join's Speed/actions leftovers, standing's
+  `IsDown`, `compileResolutionCast` preflight — are the same defect class as
+  the AC fold: session attaching sheets to derive answers. Phase 3 puts them
+  and the three reader migrations under one rule and ends with `newCallBus`
+  deleted, no attach machinery in session, and the no-bus pin — which
+  retires the literal-match limitation of `TestNoFoldLivesInThisModule` (a
+  fold cannot run without a bus, whatever it is named). **Entries return
+  ANSWERS, never sheets** (Kirk's probe: "if we return character doesn't
+  that have a ToData() on it?") — a returned `*character.Character` hands
+  session a serialization affordance outside the keeper discipline; nothing
+  with `ToData()` crosses the seam.
 
 ## Done when
 
