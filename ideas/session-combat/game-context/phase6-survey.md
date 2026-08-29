@@ -299,3 +299,25 @@ the CharacterID rename is single-PR (no submodule constructs the event).
 
 **Minimum that closes the initiative: A + B + B′ + F.** C, D, E are the
 pile, each carrying its ruling.
+
+## RULED (Kirk, 2026-08-29)
+
+**Ruling #1, and it governs the rest:** *"clean up all dead code and remove
+confusion for future selves and other collaborators so we can take bite-sized
+pieces of this. but in the end all dead code and all paths that we don't
+intend to use must be removed."* Phase 6 is the FULL sweep, delivered as
+small serial PRs.
+
+Dispositions under that rule: #2 delete (TurnManager/MoveEntity/WithRoom —
+an unintended path; movement coverage returns when #316 wires NewMovement,
+which stays); #3 delete; #4 delete MarkClean from the interface and both
+sheets, and Character.MarkDirty with it (Monster.MarkDirty keeps its caller
+and its pin); #5 rename, paired with the Ref()-matching filter conversion
+(F5); #6 delete ReactionsConsumed — SpendRequestedEvent is the real channel
+and the combat log reads the real channel when that shelf is built (applied
+by the platform agent, flagged for veto); #7 delete; #8 yes, both pins.
+
+PR sequence (serial in dnd5e — one in-flight PR per module):
+A (handle) → B (comments) → rename+filter → C (turn manager/movement) →
+D (damage/healing/dead events/ReactionsConsumed) → E (MarkClean, with
+resolution→session pin chain carrying B′) → F (the two pins).
