@@ -122,3 +122,19 @@ session pins both.
   Untouched.
 - **F5 — rpg-api**: imports neither `combat.Combatant` nor `gamectx` (grepped
   clean). No downstream break.
+
+## Seeds for Phase 6 (logged 2026-08-29, post-#1300 merge — not rulings)
+
+Kirk's question "after Phase 5 do we drop ApplyDamage, possibly Combatant?"
+surfaced two sweep candidates beyond F3's DealDamage:
+
+- **`MarkClean` may be interface-vestigial**: zero production callers in the
+  toolkit via the interface; rpg-api does not import `combat.Combatant`. If
+  nothing calls it through `Combatant`, it comes off the interface in the
+  Phase 6 sweep. (`ApplyDamage` itself stays: it is the machine's verb over
+  character-or-monster, and the machine already owns the sheets — a request
+  event there would be resolution mailing itself.)
+- **"Only the keeper names the writer type"**: once Phase 5/6 kill the
+  owner-handle lane, resolution is the sole legitimate holder of `Combatant`
+  — pinnable the same way #1300 pins widening. Pairs with toolkit#1119 (room
+  tenant, same D5 argument at type level).
