@@ -1,0 +1,50 @@
+# Dungeon Builder on the Session Stack — implementation ledger
+
+*Adjustments made while building against `design.md` / `plan.md`. The design
+and plan stay open on rpg-project PR #255 through implementation; this file
+is where reality corrects them. One entry per adjustment: what the design
+said, what was built instead, why, and where (PR / commit).*
+
+| Date | Where (PR) | Design said | Built instead | Why |
+|---|---|---|---|---|
+| 2026-08-23 | rpg-api#806 branch → T3 | `PutDungeon` answers with the atlas; rpg-api projects it from the compiled world (plan A: `Entry.Atlas session.Atlas`) | T3 exports `Manager.AtlasOf(ctx, &AtlasOfInput{World})` — a Manager method (not a package func: `LoadEncounter` needs Initiative/Standing/Sight/TurnDriver/Striker, and a free func would invent four of them); shares `loadAuthored` and `projectAtlas` with `Manager.Atlas`; rpg-api wires the session Manager as its AtlasProjector | The only producer of `session.Atlas` was `Manager.Atlas(session)` via unexported `projectAtlas`, and a dungeon in the registry has no session. Re-deriving the projection in rpg-api would be a second geometry path (the symmetric-bug rule); one projection, one producer. |
+| 2026-08-23 | P (rpg-api-protos#238) | plan P kept `tests/declaration-remaining` for a follow-up | deleted in the same PR | Kirk: "we do not need tests in the protos, we have them mechanically compiled" |
+| 2026-08-23 | rpg-api#820 | `Registry.Put(ctx, key, yaml, validateOnly)` | `Put(ctx, *PutInput) (*PutOutput, error)` | rpg-api's Input/Output struct rule |
+| 2026-08-23 | rpg-api#820 | `Entry{…, Compiled dungeonspec.Compiled, Atlas}` | `Entry` carries `*sessionworld.Dungeon` | lobby needs absolute party seats, which under v1 exist only after the projection; revisit when T2's `Compiled` is absolute by construction |
+| 2026-08-23 | rpg-api#820 | `RPG_CONTENT_DIR` required | defaults to `./content` when authoring is off; required when `RPG_AUTHORING_ENABLED=1` | a plain checkout / image must boot the tomb with no env |
+| 2026-08-23 | rpg-api#820 | boot refuses a non-compiling file | also refuses filename ≠ `key` and a dir without `reference-tomb.yaml` | the default dungeon must exist; one name per dungeon |
+| 2026-08-23 | rpg-dnd5e-web#781 | `buildScene3D` takes `layout` and renders both orientations | takes `layout`, 2D canvas draws both, 3D still refuses flat-top by name (web#763) — same words as the game | flat-top 3D is its own slice; the builder must not get ahead of the game |
+| 2026-08-23 | rpg-dnd5e-web#781 | Save & Play = `PutDungeon` → `StartEncounter{lobby_id, dungeon_key}` | `PutDungeon` → `CreateLobby` (Home-selected character) → `SetReady` → `StartEncounter{dungeon_key}` → game route | no lobby is open while authoring |
+| 2026-08-23 | rpg-dnd5e-web#781 | — | `PropCompositionConcept` deleted; toolkit-contributor sandbox ported to a v2 doc; one `hexOffset.ts` bridge (odd-r pointy / odd-q flat) pinned by a pixel-formula test | rode on the deleted preview renderer; the symmetric-bug rule |
+| 2026-08-23 | toolkit T1 (c46efd9) | `Atlas.Regions` added beside the per-region props/boundaries/doorways | `encounter.Atlas` is FLAT: `{Orientation, Cells, Regions, Props, Boundaries, Doorways{Door, From, To}}`; no Grid/Origin/Width/Height; one doorway per door edge keyed by door id | props, walls and doors are field-level facts once rooms are gone; session's projection becomes a straight copy |
+| 2026-08-23 | toolkit T1 | `FieldInput{Canvas, Regions, Doors, Walls}` | plus `Props []PropInput`; `MemberInput.Room`, `TriggerReachedPosition.Room` gone; `EndingData.At` replaces Room+Position; `StepOutput.Crossing` and `ErrBadConnection` deleted, the moved beat carries `doors: [ids]` | props had to live somewhere; every position is absolute now |
+| 2026-08-23 | toolkit T1 | hex only, orientation authored | `CanvasInput.Orientation` REQUIRED, `Grid()` always hex, square family deleted; `EncounterData.Field` refuses `rooms`/`connections` keys by name | Kirk's ruling; fail-loud load |
+| 2026-08-23 | toolkit#1210 (T2) | door ids `<key>/<id>`; golden compares the atlas byte-for-byte | door ids changed from v1's `<key>:<west>-<east>`; golden compares doorways by cells; open connectors became open `DoorInput`s (the v2 tomb's entrance→hall too) | connections are gone, a doorway is a door with no state |
+| 2026-08-23 | toolkit#1210 (T2) | `Validate(spec) []FieldError`, every refusal names a YAML path | `ValidationError{[]FieldError}` collecting EVERY defect, `errors.Is(ErrBadSpec)`; unknown-key defects carry `line N` as the path | yaml.v3 cannot give a path for an unknown key; the builder gets a line instead — open question (b) below |
+| 2026-08-23 | toolkit#1210 (T1) | new sentinels for intensity range, duplicate wall, cell budget | `ErrNoField` for all three; `maxRoomCells`/`maxRoomSpan` gone, `maxFieldCells` bounds listed cells; Atlas is O(cells) (atlascost_test deleted) | sentinels only where a caller branches on them |
+| 2026-08-23 | toolkit#1210 (ADR-0044) | — | non-void test scenes declare a transparent void | a sightline hugging the edge column of a sheared rectangle crosses void cells, so under an opaque void two members on column 0 cannot see each other (hex behaviour since #1127; regions make it easy to notice) — open question (a) below |
+| 2026-08-23 | toolkit#1211 (T3) | `AtlasDoorway.Connection` | `AtlasDoorway.Door` (JSON `door`) | encounter keys doorways by door id; connections no longer exist |
+| 2026-08-23 | toolkit#1211 (T3) | — | `GridSquare` deleted, `Atlas.Grid` always `hex`; ~20 external + 2 internal session fixtures, the workbench and main's new `two_players` fixture ported to regions via `regionfixtures_test.go`; square-era scenes re-geometried for hex adjacency | hex only (Kirk's ruling); the port was mechanical but wide |
+| 2026-08-23 | rpg-api#820 | registry compiles and projects the atlas itself | registry REQUIRES an `AtlasProjector`; `cmd/server` wires `sessionOrch.Manager.AtlasOf` through a one-method adapter; registry is constructed after the session orchestrator | `AtlasOf` is a Manager method (see T3 row) |
+| 2026-08-23 | rpg-api#820 | — | `internal/dungeons/dungeonstest` helpers (Shipped / Scratch / Projector); lobby suite pins `Put`'s atlas == the started session's `GetAtlas` cell-for-cell; integration tomb re-authored on regions with every verb cell via `HexCellAt` | the forcing case from the api side |
+
+## Landed — 2026-08-23
+
+Merged bottom-up the same day, each re-pinned to the real tag before merge: rpg-api-protos#238 (v0.1.134) → rpg-toolkit#1210 (`encounter/v0.31.0`) → rpg-toolkit#1211 (`session/v0.22.0`) → rpg-api#820 (`dev`) → rpg-dnd5e-web#781 (`dev`). Kirk walked the branch once before any merge; finding 1 (canvas viewport jumping near the edges → scrollable viewport, shift+wheel) fixed on the branch. Follow-ups: rpg-api seed of the shipped tomb into an empty `RPG_CONTENT_DIR` (the deployment's `/content` volume is empty on a fresh box); rpg-dnd5e-web#782 (second door in one seam gets no gap).
+
+## Rulings made during implementation
+
+*Open for Kirk's walk (from toolkit#1210):*
+
+- ~~**(a) Edge-hugging sightlines through opaque void.**~~ **RULED 2026-08-24** (Kirk: "I think an opaque void blocks the whole hex"): accepted as the hex model's truth. Opaque void blocks sight entirely; the tomb keeps `void: opaque` unpadded, and a sightline that clips void cells is blocked by design. No code change — ADR-0044's fixture rule (non-void test scenes declare a transparent void) already isolates tests from this. Original question: in the tomb, two members on the edge column of a sheared rectangle may not see each other because the straight line between them clips void cells.
+*Ruled after landing (2026-08-24, the walls walk):*
+
+- **No auto envelope walls — "draw nothing, floor ends into darkness."** Reverses the design's presentation of the floor/void boundary ("draws as the envelope automatically"): the 3D renderer draws ONLY authored walls and doors; the void does the blocking mechanically, invisibly. An author who wants an outer wall draws one — a wall against a void edge renders through the same path as any interior wall. Landed in rpg-dnd5e-web#788. The mechanical rule is untouched (nobody crosses into void; opaque void blocks sight — ruling (a) above).
+- **Prop facing: six hex facings, orientation-aware** (rpg-project#261): the six directions are the dungeon's own neighbor directions under its authored `orientation`; a facing name that doesn't exist under that orientation is a validation error. Angles measured against rendered models, not inferred. Offset semantics still awaiting Kirk's confirmation (proposed: presentation-only).
+
+## Landed after the slice — 2026-08-24 (the walls walk)
+
+rpg-dnd5e-web#788 (fixes #787 and #782): the 3D wall presentation draws the authored edges — chain-traced straight runs via the pre-existing `computeAuthoredWallRuns` engine, partial walls render, doors sit flush in their straightened run with exact-closure gaps (endpoint forced to the gap boundary by construction), per-chain facing agreement, least-squares seam fit (~1.6° honest residual on the tomb's parity-unbalanced boundary list; authored diagonals unsnapped, test-pinned both ways), and no envelope (ruling above). Kirk walked every round on :3001 and merged. Follow-up: rpg-dnd5e-web#791 (double-sided walls). Same day, the local loop was repaired: rpg-deployment#71 (authoring on in local-dev compose, first live exercise of rpg-api#822's seed) and the stale npm git-cache protos wiped in the web checkout.
+
+- **(b) Unknown-key errors carry `line N`, not a YAML path.** Good enough for the builder (it emits its own YAML and never produces unknown keys), or should the builder pre-check keys itself?
+

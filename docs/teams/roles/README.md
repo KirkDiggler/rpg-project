@@ -1,139 +1,72 @@
 # Team Roles
 
-This directory holds the **charters** — the role/identity prompts — for the
-agents that build the RPG platform. A charter is who an agent *is*: its lane, its
-boundary, its duties, and the rules it will not cross even when asked. Each
-charter lives at `<role>/prompt.md` with a `context/` directory of accumulated
-state alongside it.
+This directory holds provider-neutral Team charters for the RPG platform. A Team
+charter is an **outcome lens**: it says what kind of result the Team protects,
+what boundaries it refuses to cross, what evidence it owes, and how it signs
+shared GitHub activity.
 
-**[`working-agreements.md`](working-agreements.md) applies to every role.** A
-charter says who you are; the working agreements say how we all work — how to brief
-a dispatch, how interfaces get named across a seam, what evidence counts, and the
-shell patterns that keep a background agent from stalling on a permission prompt.
-Read it alongside your charter, not instead of it.
+**Repository/module AGENTS files own technical commands and invariants.** A Team
+charter does not replace a repository's AGENTS.md, scoped CLAUDE.md, Makefile,
+package scripts, CI, or domain rules. For any slice, load the Team charter and
+then load the owning repository's instructions before touching files.
 
-## Two tiers
+**[`working-agreements.md`](working-agreements.md) applies to every Team and
+runtime adapter.** A charter says what outcome lens you carry; the working
+agreements say how seams, evidence, dispatches, shell usage, and test claims stay
+honest.
 
-There are two fundamentally different kinds of working agent here. They are not
-interchangeable.
+## Current Team charters
 
-### Standing owners
+| Team | Charter | Outcome lens |
+|---|---|---|
+| Platform | [`platform/prompt.md`](platform/prompt.md) | toolkit/API/proto/deployment/workspace architecture that keeps rules in toolkit and hosts thin |
+| UI/UX | [`ui-ux/prompt.md`](ui-ux/prompt.md) | screens, HUD, interaction, accessibility, and presentation |
+| Assets | [`assets/prompt.md`](assets/prompt.md) | licensed ingestion, manifests, model loading, rendering, animation, and visual evidence |
+| Monster AI | [`monster-ai/prompt.md`](monster-ai/prompt.md) | intentional monster decisions expressed through toolkit-owned behavior contracts |
+| Cross-team | [`cross-team/prompt.md`](cross-team/prompt.md) | initiative seams, integration, coordination, and end-to-end verification |
 
-A standing owner owns one repo on an ongoing basis **across sessions**. The same
-charter rides whether the member is advising on a design, maintaining docs, or
-implementing a feature — **advise and implement are one lane.** A member is
-accountable for its repo **end to end**: it carries the repo's architectural
-boundary as its own identity, owns its issues from PR to merge, and keeps its
-living docs honest.
+These five Team charters are the stable paths for new multi-contributor work.
+Project 19's Team field selects the outcome lens; the owning repository still
+selects the technical law.
 
-The seven standing owners:
+## Required load order for new work
 
-| Member | Repo | Owns / is the boundary |
-|--------|------|------------------------|
-| `rpg-toolkit-member` | rpg-toolkit | The rules engine (**the product**) — all game complexity; layer + broker boundaries; ADR/journey docs |
-| `rpg-api-member` | rpg-api | The thin data orchestrator — by-key orchestration, never game rules |
-| `rpg-api-protos-member` | rpg-api-protos | The contract — one source of truth for API shape; no rules, no drift |
-| `rpg-deployment-member` | rpg-deployment | Delivery pipeline, release sequencing, and post-merge deployment verification |
-| `rpg-game-assets-member` | rpg-game-assets | Private asset pipeline, contract tree, manifests, and shipped-asset budgets |
-| `game-dev-member` | game-dev | Portable Pi harness, bootstrap convergence, and shared-workspace infrastructure — never gameplay/product ownership or global tool configuration |
-| `rpg-dnd5e-web-member` | rpg-dnd5e-web | Shared web owner: `ui-ux` owns screens/HUD/accessibility/presentation; `assets` owns model loading/environment/animation/3D evidence. It renders server data and sends intent; never computes or gates game state. |
+1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary, Project 19 rules,
+   and startup procedure.
+2. The Project 19 item, including its parent journey/initiative when present.
+3. The selected Team charter above.
+4. The owning repository's AGENTS.md and nearest scoped instructions.
+5. A matching approved skill in `.agents/skills/`, if one exists.
 
-The director overlays are `director/overlays/ui-ux.md`,
-`director/overlays/platform.md`, and `director/overlays/assets.md`. The shared
-web charter is similarly extended by either the UI/UX or Assets overlay so work
-retains one canonical web boundary without overlapping ownership.
+If any source disagrees, stop and reconcile before implementing. Do not silently
+let a Team absorb another Team's outcome or let a repository violate its boundary.
 
-### Fixers (dispatched, single-task)
+## Compatibility inputs during runtime migration
 
-A **fixer** is dispatched for **one specific task** and **disperses** when it's
-done. Fixers carry no standing ownership of a repo and no across-session
-accountability; they execute a scoped brief against a checklist and report back.
+The older repository-member, fixer, director overlay, support, and runtime-adapter
+paths remain load-bearing for existing game-dev/OpenCode/Pi adapters until that
+runtime migration is complete. Keep them in place:
 
-| Fixer | Targets |
-|-------|---------|
-| `toolkit-fixer` | rpg-toolkit bugs |
-| `api-fixer` | rpg-api bugs |
-| `web-fixer` | rpg-dnd5e-web bugs |
+- `director/`, including overlays;
+- `rpg-*-member/`, `game-dev-member/`, and `rpg-dnd5e-web-member/`;
+- `*-fixer/`;
+- `independent-gate/`, `explore/`, `janitor/`;
+- historical support directories such as `project-manager/`,
+  `bug-fix-coordinator/`, and `platform-simplifier/`.
 
-(See `project_team_members_vs_fixers` — team-members own apps and docs; fixers do
-dispatched tasks. Different concepts; don't conflate them.)
+Those directories are **temporary compatibility inputs**, not the standing
+ownership model for new Project 19 work. Do not delete, rename, or migrate them
+until the game-dev runtime migration that consumes the five Team charters has
+landed and been verified.
 
-### Supporting roles
+## Signature contract
 
-- **`director`** — the technical/executing director. Holds cross-repo altitude,
-  orchestrates the members, and is the last verification gate before anything is
-  believed "done." Works in conversation with Kirk (the creative director).
-  **Does NO hands-on work** — no shell investigation, no code reading to trace a
-  bug, no edits, no driving the playtest. It directs and verifies; the members do
-  the work.
-- **`janitor`** — curates the team's stateful artifacts (context files, memory
-  index, session state, board hygiene) so other agents come up to speed without
-  paying a context tax. Writes no code and makes no design decisions.
-- **`independent-gate`** — read-first, adversarial review for product-behavior
-  PRs only; it does not apply to workflow setup.
-- **`explore`** — read-only orientation that returns evidence-backed findings to
-  the owning role.
+Derive the operator with `gh api user --jq .login`. GitHub comments are made
+through Kirk's account or the current operator's account, so Team reports and PR
+comments use the Team-specific signature form:
 
-Charters and overlays are provider-neutral canonical policy. Runtime adapters in
-`.opencode/agents/*.md` only bind these documents to runtime model and permission
-profiles; they do not restate or replace role policy.
-
-## The expert-ownership standard
-
-Every standing owner meets the **same** bar. A charter that's missing any
-of these is under-built and should be leveled up to match the others.
-
-1. **You ARE your lane's boundary.** The charter's identity *is* the repo's
-   architectural boundary, stated in the first person (web/protos quoted
-   verbatim; toolkit/api paraphrased in spirit):
-   - toolkit — "all game complexity lives here; I expose intent-level verbs" (illustrative)
-   - api — "I orchestrate by key; I never know what a rule does" (illustrative)
-   - web — "I render and call; I never compute game state or gate interactions on it"
-   - protos — "I am the contract; one source of truth, no drift"
-
-2. **You own your issues PR-to-merge.** Fresh branch from main, `Closes #N`,
-   self-`/code-review`, reply on every Copilot thread (or stand in for Copilot
-   where it doesn't cover the repo), pre-commit/ci-check green — never
-   `--no-verify`. The member persists through PR completion, not just the diff.
-
-3. **You own your repo's living docs.** `status.md` (Now / Health / In flight /
-   Known rough edges / Pointers) and `quality.md` (A–D scorecard) stay honest;
-   docs are edited **in the same PR** that invalidates a line, never deferred.
-
-4. **You have a duty to push back / REFUSE lane violations.** When a brief —
-   **even from the director** — asks the member to cross its boundary (api: add
-   rule math; web: compute legality or gate on state; protos: encode a rule or
-   break a v1+ contract; toolkit: leak rulebook logic into the agnostic SDK), the
-   member **REFUSES, names where the work actually belongs, and surfaces it.** For
-   toolkit, place behavior at its semantic owner; avoid false-generic abstraction,
-   dual representation authority, or host-facing rule interpretation. The agent doing
-   the work is the last line of defense against architectural drift.
-   Pushback is expected, not insubordination.
-
-5. **You pass the four-question done-gate before claiming "done":**
-   1. **Goal** — does the observable behavior match the task's goal sentence?
-   2. **Pattern** — did you follow the repo's existing patterns?
-   3. **Test** — is it proven on the real production path, not a stub/fixture bypass?
-   4. **Pushback** — did anything in the brief conflict with the lane or standing rules? Say so.
-
-Each member's charter also carries a **Director-only** guardrail (do NOT close the
-wave issue, run the MCP playtest, edit `ideas/**`, or merge PRs) and a
-**stuck** clause (hit a permission prompt → STOP and report immediately; a blocked
-agent is invisible to the director).
-
-## How the roster works together
-
-The **director orchestrates the standing owners and does no hands-on work.** Each
-owner carries its repository boundary as identity; the boundaries interlock so
-that the system as a whole obeys the platform's boundary rule:
-
-```
-Client (web) sends REFERENCES   -> never calculations
-API orchestrates by KEY          -> never knows what a rule does
-Toolkit implements RULES         -> returns rich breakdowns for rendering / emits events
-Protos define the SHAPE          -> one source of truth, no drift
+```text
+— <team> agent, on behalf of <github-login>
 ```
 
-When work crosses a seam, it crosses as a **member-to-member surface** (a missing
-field the web needs → an api/proto gap → a toolkit verb behind it), routed and
-verified by the director — never by one member quietly absorbing another's job.
+Each Team charter spells out its exact signature line.
