@@ -11,10 +11,12 @@ post-#1290), read-only. Director spot-checked the load-bearing counts (three
   adoption obligation — rpg-api's `EffectiveAC` call sites owe the R6
   migration (folds come to resolution) before it bumps past PR 2. Free today:
   rpg-api pins old versions. No Phase 3 action.
-- **F2 (Standing entry strictness):** KIRK'S RULING — needed before PR 5.
-  Recommendation: lenient for all participants with the warnDropped-shaped
-  log (D10: observable, not refused); the resolve.go "lenient monster is
-  unreachable" comment corrected in the same PR (principle 6).
+- **F2 (Standing entry strictness):** RULED by Kirk 2026-08-29 ("I agree
+  visibility is what we need"): lenient for all participants with the
+  warnDropped-shaped log (D10: observable, not refused) — a corrupt record
+  drops from death reporting with a warn instead of erroring the whole
+  check; the resolve.go "lenient monster is unreachable" comment corrected
+  in the same PR (principle 6). PR 5 is unblocked.
 - **F3 (smaller bus-free loader alternative):** already ruled. D11's ToData
   probe rejected exactly this shape — session holding a live sheet is the
   defect, not the bus per se. Entries return answers; no re-ask.
