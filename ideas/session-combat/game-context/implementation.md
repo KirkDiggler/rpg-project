@@ -145,3 +145,21 @@ answer" and says nothing about its neighbour TEACHES the reader an inference
 ("this struct thinks about zero values") that the silent field then betrays
 — documentation asymmetry is itself a defect. Roller's field now says nil
 surfaces deep in monstertraits and points at refusingRoller.
+
+## D10 PR-3 — Join reroutes; Phase 2 closes (2026-08-29, rpg-toolkit#1290)
+
+The parked branch's blocker closed exactly as D10 predicted: both tripwire
+pins pass BYTE-IDENTICAL to main — no test edited to make it so. Found: the
+barbarian value pin proves the fold (15, not stored-11 or unattached-12) but
+NOT the reroute — the old path also answers 15 because Join attaches its own
+sheet; measured, not assumed. Hence two pins: value + structural absence
+(no session file names EffectiveAC or imports gamectx), because neither is
+sufficient alone. The independent review then BUILT two escapes from the
+structural pin: a wrapper subpackage (fixed — recursive walk, escape rebuilt
+as a mutation and watched fail) and a renamed same-effect method (cannot be
+name-matched by construction — the pin's doc now calls itself a literal-match
+tripwire, not a proof of absence, with a forward reference to the real
+guarantee: session losing its bus entirely, the Phase 3 frame Kirk's
+"so session has the bus?" probe set). A pin that oversells itself is worse
+than no pin. Also: session's v0.109.0 exposure verified nil — nothing
+duck-types condition state; the Join "dual read" is one fetch, one value.
