@@ -1,6 +1,6 @@
 # Shared Dungeon Dice Throws — Production Design
 
-**Status:** Persistent-body amendment approved by Kirk 2026-08-29; written review pending
+**Status:** Persistent-body amendment approved by Kirk 2026-08-29
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · production design slice [rpg-project#303](https://github.com/KirkDiggler/rpg-project/issues/303) · design PR [rpg-project#304](https://github.com/KirkDiggler/rpg-project/pull/304)
 

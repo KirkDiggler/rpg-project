@@ -1,1088 +1,458 @@
-# Clean Shared Dungeon Dice Throws Implementation Plan
+# Persistent-Body Shared Dungeon Dice Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the production legacy dice drawer with one DOM launch tile, one world-dice controller, and one `SessionCanvas` rigid-body presentation shared through the existing multiplayer throw-plan service.
+**Goal:** Preserve the shipped authority/plan/transport foundation while rebuilding production world dice around one persistent attempt-scoped Rapier body that matches the approved concept and survives pickup, planning, playback, settlement, and retry without a mount gap.
 
-**Architecture:** Authoritative combat creates a result-bearing but concealed `WorldDiceRequest`. The actor's DOM launch tile owns input, a framework-free raw Rapier planner creates the existing bounded `DiceThrowPlan`, and actor/witness clients feed accepted plans into the same visible Rapier layer inside the existing `SessionCanvas`. Only a rendered settled face or classified semantic fallback opens the combat reveal gate; off-table attempts remain concealed and re-arm the actor.
+**Architecture:** A complete attempt scope freezes snapshot/fingerprint and creates one hidden kinematic body inside the existing `SessionCanvas`. Pickup becomes interactive only after projection, verified runtime, Physics world, and that body are ready. The same body is revealed during carry, frozen during raw planning/publish, switched to accepted-plan dynamic playback, and then fixed or removed; every callback carries the originating scope. Multiplayer still relays immutable plans and sparse checkpoints through the existing API without server simulation.
 
-**Tech Stack:** React 19, TypeScript 5.8, Three.js 0.181, React Three Fiber 9, `@react-three/rapier` 2.2.0, `@dimforge/rapier3d-compat` 0.19.2, Connect-ES, proto release `v0.1.145`, Vitest 4, React Testing Library, Playwright.
+**Tech Stack:** React 19, TypeScript 5.8, Three.js 0.181, React Three Fiber 9, `@react-three/rapier` 2.2.0, `@dimforge/rapier3d-compat` 0.19.2, Connect-ES, proto `v0.1.145`, Vitest 4, React Testing Library, Playwright/CDP, Docker Compose.
 
 **Spec:** `ideas/interactive-dice-tray/shared-dungeon-throws/design.md`
 
-**Tracking:** Parent journey `KirkDiggler/rpg-project#289`; design slice `KirkDiggler/rpg-project#303`; design PR `KirkDiggler/rpg-project#304`; API issue/PR `KirkDiggler/rpg-api#852/#853`; web issue `KirkDiggler/rpg-dnd5e-web#837`.
+**Tracking:** `rpg-project#289/#303`, design PR #304, API #852/PR #853, web #837.
 
-## Global Constraints
+## Starting state
 
-- The replacement web branch starts from freshly fetched `origin/dev` and targets `dev`.
-- Preserve the discarded `feat/837-shared-dungeon-dice` worktree only as local evidence. Do not cherry-pick, copy, or import its production coordinator, adapters, physics files, settlement glue, or timers.
-- Concepts Lab files remain untouched and working. Production imports nothing from `src/concepts/**`.
-- Production mounts no `DiceDrawer`, `DiceTrayPresentation`, tray Canvas, or second WebGL renderer.
-- `SessionCanvas` is the one production renderer and the only visual Canvas. Raw Rapier pre-simulation is short-lived computation and is disposed before visible playback.
-- The game server remains a validated relay and never gains a simulation engine in this wave.
-- Normal actor release-to-visible playback targets less than 250 ms; measure it at the local-feel gate without masking it in this slice.
-- The toolkit, `SessionService`, Attack RPC/result authority, and toolkit Story are unchanged.
-- Product scope is one body: die ID `attack-d20`, shape `D20`, preset `dice.original.carved.d20`.
-- The existing transport remains group-shaped: 1–20 bodies, at most 480 steps, 128 contacts, 256 checkpoint body states, 32 attempts, and 64 KiB encoded size.
-- Plans carry no result, hit/miss/critical, damage, target HP, attack reference, arbitrary asset URL, raw pointer sample, or prose.
-- Logical colliders are floor cells, authored walls, shut/locked doors, and active dice. Props, items, characters, and monsters are absent.
-- Physical worlds derive one aggregate floor from logical floor cells while retaining individual walls and shut doors. Logical floor cells remain the off-table support mask and fingerprint input.
-- A settled terminal performs one authoritative-face correction. Do not first snap through the terminal quaternion.
-- Reveal result, damage, Story/log, and downed presentation only after the corrected face has rendered and the body is fixed, or after the failed body has been removed and semantic fallback is accepted.
-- Off-table never reveals. It increments the presentation attempt and restores only the actor's tile; witnesses receive noninteractive retry status.
-- No generic timer may reveal while a body is playing or an off-table retry is active.
-- Reduced motion and physical failure retain an explicit semantic completion control.
-- TDD is mandatory. Every code task records focused RED, minimum GREEN, focused regression, and one commit.
-- Run `npm run ci-check` before every web push and never use `--no-verify`.
-- Kirk's human approval is required in the production route at Task 8 and Task 10. Do not continue past either human gate without approval.
+- API PR #853 is rebased/pushed at `4c6b5cada2f53d9425553e63ba015e1d04fad584`, targets `dev`, and passed `make ci-check`.
+- Proto #257 is merged as `v0.1.145` with generated commit `4d2ba6a8a1d919284665a7c299f87c8f0a3ddbd6`.
+- Web worktree `/home/kirk/.pi/worktrees/rpg-dnd5e-web/837-world-dice-clean` is on `feat/837-world-dice-clean` at committed head `f21178a41bc1c6a7f82a5489b20d9720849b192d` plus rejected, uncommitted Task 8 integration bytes.
+- Keep these reviewed web foundations: combat settlement-only authority, strict plan/proto adapters, canonical logical snapshot/fingerprint, aggregate physical floor derivation, disposable raw Rapier loader/planner shape, pure sparse playback controller, live-only transport, one `SessionCanvas`, and legacy-tray removal.
+- Rewrite the fixed schema/launch mapping, scene/body lifecycle, controller scope/readiness, and production actor integration.
 
----
+## Global constraints
 
-## File Structure
-
-### Authority and production composition
-
-- Modify `src/components/session/combat-experience/presentation.ts` — concealed attack records, actor/witness world-dice request selector, settlement fact, and reveal projection.
-- Modify `src/components/session/combat-experience/useCombatPresentation.ts` — expose `worldDiceRequest` and `settleWorldDice`; remove legacy release callbacks/events.
-- Modify `src/components/session/combat-experience/useSessionCombatExperience.ts` — pass the world-dice authority seam through the production controller.
-- Modify `src/components/session/combat-experience/types.ts` — remove tray event/callback props and define the generic world-dice overlay/status seam.
-- Modify `src/components/session/combat-experience/CombatExperience.tsx` — remove the legacy drawer and settlement-timer gate; render the supplied world-dice control.
-- Delete `src/components/session/combat-experience/DiceDrawer.tsx`.
-- Delete `src/components/session/combat-experience/diceDrawerVisibility.ts`.
-- Delete `src/components/session/combat-experience/useDiceSettleGate.ts`.
-- Delete or replace their production-only tests.
-
-### Clean world-dice feature
-
-Create `src/components/session/world-dice/`:
-
-- `types.ts` — immutable request, held state, launch, terminal, progress, and controller output types.
-- `physicsSchema.ts` — fixed `RAPIER_DUNGEON_D20_V1` constants and carved-d20 convex hull.
-- `plan.ts` — strict immutable plan domain plus proto conversion.
-- `worldSnapshot.ts` — logical floor/wall/door/body records, bounded IDs, aggregate physical floor, origin, support predicate, and fingerprint.
-- `planner.ts` — dynamically loaded raw Rapier pre-simulation.
-- `rapierLoader.ts` — coalesced raw Rapier initialization.
-- `playback.ts` — pure fixed-step checkpoint/terminal controller.
-- `WorldDiceSceneLayer.tsx` — held/planning/playback/fixed-beat world body inside `SessionCanvas`.
-- `gesture.ts` — pure pointer-to-world carry, lift, velocity, release, and cancellation state.
-- `controllerState.ts` — pure actor/witness state machine.
-- `WorldDiceLaunchTile.tsx` — DOM pointer owner, Roll/fallback controls, retry copy, and accessibility.
-- `useWorldDiceController.ts` — effects joining authority, planner, transport, and visible scene commands.
-- Matching focused `*.test.ts` / `*.test.tsx` files for every unit.
-
-### Transport and integration
-
-- Modify `src/api/client.ts` — add `SessionPresentationService` client and redact its debug payloads.
-- Create `src/api/useSessionDiceThrows.ts` and test — publish plus live-only stream with scope fencing.
-- Modify `src/components/session/SessionEncounterView.tsx` and tests — instantiate the controller above sibling map/control, pass scene projection and presentation layer, and settle authority.
-- Modify `src/components/session/SessionCanvas.tsx` and tests — expose stable projection ownership and retain the generic presentation layer.
-- Modify `src/components/session/combat-experience/CombatExperience.module.css` — compact tile, invisible capture-owner, retry, witness, and failure states.
-- Create `src/components/session/world-dice/productionBoundary.test.ts` — no production concept/legacy tray imports and one Canvas.
-
-### Evidence and docs
-
-- Create `scripts/attack-die/capture-shared-dungeon-throw-evidence.mjs` — public-safe two-context diagnostics and screenshots.
-- Create `docs/evidence/837-shared-dungeon-throws/README.md` — exact human procedure and evidence manifest.
-- Create `docs/architecture/components/session-world-dice.md` — authority/controller/transport/render boundaries.
-- Modify `docs/status.md` and `docs/quality.md` only after both human gates pass.
+- Web work targets latest `origin/dev` ancestry and one PR to `dev`; do not rebase during this continuation unless `origin/dev` changes before push.
+- Archive rejected uncommitted Task 8 bytes on a local-only branch before resetting the feature worktree. Never push or cherry-pick that archive.
+- Concepts under `src/concepts/attack-die-3d/**` remain untouched and working. Production imports no concept module.
+- `SessionCanvas` is the only production Canvas/WebGL renderer.
+- One full attempt scope contains session, presentation ID, authority sequence, roller, attempt, snapshot fingerprint, render generation, and die ID.
+- Actor pickup requires projection + verified runtime + Physics world + scoped body readiness. Projection-only readiness is insufficient.
+- One actor body handle/mount persists through prewarm, held, planning, accepted playback, correction, and fixed beat. Retry begins only after prior removal acknowledgement and gets a new render generation/body.
+- Equivalent scene/query object rerenders never replace an active attempt snapshot or clear readiness.
+- Every scene callback carries its originating full scope; no callback infers ownership from current state.
+- Intentional off-table, settled cleanup, semantic failure, provider/runtime failure, and scope cancellation have distinct sanitized removal reasons.
+- Physics schema values match the approved concept: radius `0.275`; die friction/restitution `0.72/0.48`; damping `0.22/0.16`; floor `0.9/0.25`; walls/doors restitution `0.55`; low energy `<0.28/<1.1`; bounded assist at step 180; correction 320 ms.
+- Neutral Roll produces linear velocity `{x:0,y:0.8,z:0}` and angular velocity `{x:0,y:0,z:0}`.
+- Gesture release mapping remains `horizontal=0.5+speed*7.5`, `vertical=0.8+speed*1.5`, `angular=speed*18+shake*1.5`; raw samples remain local.
+- Server remains a validator/relay. Do not add server physics, trajectory streaming, toolkit Story writes, or result fields to plans.
+- Off-table never reveals. Result/damage/log/downed reveal opens only after corrected rendered settlement or explicit semantic failure after body removal.
+- Human testing is not debugging. Do not request Kirk's gate until owned lifecycle, isolated backend, clean-browser, and performance evidence pass.
+- No test or browser process may remain after its step; record PID/process cleanup.
+- TDD, `npm run ci-check` before push, and no `--no-verify` remain mandatory.
 
 ---
 
-### Task 1: Reconcile the provider and establish a clean web worktree
+## File structure
 
-**Files:**
-- No product files.
-- API worktree: `/home/kirk/.pi/worktrees/rpg-api/852-shared-dice-presentation`
-- Discarded web worktree: `/home/kirk/.pi/worktrees/rpg-dnd5e-web/837-shared-dungeon-dice`
-- New web worktree: `/home/kirk/.pi/worktrees/rpg-dnd5e-web/837-world-dice-clean`
+### Keep with focused amendments
 
-**Interfaces:**
-- Consumes: proto release `v0.1.145`; API PR #853; web issue #837.
-- Produces: one clean `feat/837-world-dice-clean` branch based exactly on current `origin/dev`, plus a reconciled API PR head.
+- `src/components/session/combat-experience/{presentation,useCombatPresentation,useSessionCombatExperience}.ts`
+- `src/components/session/world-dice/{types,plan,worldSnapshot,rapierLoader,playback}.ts`
+- `src/api/{client,streamLogging,useSessionDiceThrows}.ts`
+- `src/components/session/SessionCanvas.tsx`
 
-- [ ] **Step 1: Invoke worktree setup law**
+### Rewrite
 
-Read and follow `superpowers:using-git-worktrees` before creating the replacement worktree. Verify the discarded worktree is not modified, staged, committed, or used as a copy source during setup.
+- `src/components/session/world-dice/physicsSchema.ts`
+- `src/components/session/world-dice/planner.ts`
+- `src/components/session/world-dice/WorldDiceSceneLayer.tsx`
+- `src/components/session/world-dice/controllerState.ts`
+- `src/components/session/world-dice/useWorldDiceController.ts`
+- `src/components/session/world-dice/WorldDiceLaunchTile.tsx`
+- `src/components/session/world-dice/gesture.ts`
+- `src/components/session/SessionEncounterView.tsx`
+- `src/components/session/combat-experience/{CombatExperience.tsx,types.ts,CombatExperience.module.css}`
 
-- [ ] **Step 2: Verify and publish the rebased API provider**
+### Create
 
-```bash
-cd /home/kirk/.pi/worktrees/rpg-api/852-shared-dice-presentation
-git status --short --branch
-make ci-check
-git fetch origin
-git push --force-with-lease origin feat/852-shared-dice-presentation
+- `src/components/session/world-dice/launchProfile.ts`
+- `src/components/session/world-dice/lifecycleDiagnostics.ts`
+- `src/components/session/world-dice/persistentBodyBoundary.test.tsx`
+- `scripts/attack-die/sharedDungeonThrowEvidenceProtocol.ts`
+- `scripts/attack-die/sharedDungeonThrowEvidenceProtocol.test.ts`
+- `scripts/attack-die/capture-shared-dungeon-throw-evidence.mjs`
+- `docs/architecture/components/session-world-dice.md`
+- `docs/evidence/837-shared-dungeon-throws/README.md`
 
-gh pr view 853 -R KirkDiggler/rpg-api \
-  --json baseRefName,headRefName,headRefOid,state,statusCheckRollup
-```
+### Delete when reference scan proves unused
 
-Expected: clean worktree; `make ci-check` passes; PR base is `dev`; GitHub head equals the local rebased commit. If the PR has unanswered review threads, stop and use `superpowers:receiving-code-review` before changing API code.
+- `src/components/session/combat-experience/storyReveal.ts` and its test.
+- Remaining ignored legacy dice props/callback compatibility in `combat-experience/types.ts` and concept fixtures that no longer represent production behavior. Do not delete shared `src/components/ui/dice/DiceTrayPresentation*`; Concepts still own it.
 
-- [ ] **Step 3: Preserve and clearly label the discarded local branch**
+---
 
-```bash
-cd /home/kirk/.pi/worktrees/rpg-dnd5e-web/837-shared-dungeon-dice
-git branch -m archive/837-shared-dungeon-dice-discarded
-git status --short --branch
-```
+### Task 1: Preserve rejected Task 8 and restore the clean committed foundation
 
-Expected: the uncommitted experiment remains present and the branch name cannot be mistaken for the replacement delivery branch. Do not clean, commit, or push it.
+**Files:** No product edits on the feature branch.
 
-- [ ] **Step 4: Create the replacement from the remote base**
+**Produces:** local archive branch `archive/837-task8-rejected-persistent-body`; clean feature branch at `f21178a`; fresh SDD ledger for this amended plan.
 
-```bash
-git -C /home/kirk/game-dev/rpg-dnd5e-web fetch origin --prune
-git -C /home/kirk/game-dev/rpg-dnd5e-web worktree add \
-  /home/kirk/.pi/worktrees/rpg-dnd5e-web/837-world-dice-clean \
-  -b feat/837-world-dice-clean origin/dev
+- [ ] **Step 1: Preserve the current SDD workspace**
 
-cd /home/kirk/.pi/worktrees/rpg-dnd5e-web/837-world-dice-clean
-git merge-base --is-ancestor origin/dev HEAD
-test "$(git rev-parse HEAD)" = "$(git rev-parse origin/dev)"
-```
+Rename `/home/kirk/game-dev/.superpowers/sdd/plan` to `/home/kirk/game-dev/.superpowers/sdd/plan-pre-persistent-body-2026-08-29`. Create a fresh workspace/ledger whose first line names this plan path and record the prior archive path plus amendment commit.
 
-Expected: both assertions pass.
-
-- [ ] **Step 5: Install assets/dependencies and prove the untouched baseline**
+- [ ] **Step 2: Save a binary patch and inventory**
 
 ```bash
 cd /home/kirk/.pi/worktrees/rpg-dnd5e-web/837-world-dice-clean
-npm install
-RPG_GAME_ASSETS_PATH=/home/kirk/game-dev/rpg-game-assets \
-  ASSETS_SYNC_SKIP_UPDATE=1 npm run assets:sync
-npm run ci-check
+git diff --binary > /home/kirk/game-dev/.superpowers/sdd/plan/rejected-task8.patch
+git status --porcelain=v1 > /home/kirk/game-dev/.superpowers/sdd/plan/rejected-task8-status.txt
 ```
 
-Expected: baseline CI passes before feature edits. Record exact test counts and commit SHA in execution progress; stop and reconcile any baseline failure rather than attributing it to dice work.
+Expected: patch is non-empty and status lists every rejected Task 8 file.
 
----
-
-### Task 2: Replace legacy tray release authority with a world-settlement seam
-
-**Files:**
-- Modify: `src/components/session/combat-experience/presentation.ts`
-- Modify: `src/components/session/combat-experience/presentation.test.ts`
-- Modify: `src/components/session/combat-experience/useCombatPresentation.ts`
-- Modify: `src/components/session/combat-experience/useCombatPresentation.test.tsx`
-- Modify: `src/components/session/combat-experience/useSessionCombatExperience.ts`
-- Modify: `src/components/session/combat-experience/useSessionCombatExperience.test.tsx`
-- Modify: `src/components/session/combat-experience/types.ts`
-- Modify: `src/components/session/combat-experience/CombatExperience.tsx`
-- Modify: `src/components/session/combat-experience/CombatExperience.test.tsx`
-- Delete: `src/components/session/combat-experience/DiceDrawer.tsx`
-- Delete: `src/components/session/combat-experience/DiceDrawerCollapse.test.tsx`
-- Delete: `src/components/session/combat-experience/diceDrawerVisibility.ts`
-- Delete: `src/components/session/combat-experience/diceDrawerVisibility.test.ts`
-- Delete: `src/components/session/combat-experience/useDiceSettleGate.ts`
-- Delete: `src/components/session/combat-experience/useDiceSettleGate.test.tsx`
-
-**Interfaces:**
-- Produces:
-
-```ts
-export type WorldDiceAuthorityRequest = Readonly<{
-  presentationKey: string;
-  mode: 'physical' | 'semantic';
-  role: 'actor' | 'witness';
-  session: string;
-  presentationId?: string;
-  authoritySeq: bigint;
-  roller: string;
-  authoritativeFace: number;
-  presetId: 'dice.original.carved.d20';
-}>;
-
-export interface WorldDiceSettledFact {
-  readonly type: 'world-dice-settled';
-  readonly presentationKey: string;
-  readonly kind: 'physical' | 'semantic' | 'failure';
-}
-
-export function selectWorldDiceRequest(
-  state: CombatPresentationState
-): WorldDiceAuthorityRequest | undefined;
-```
-
-`UseCombatPresentationResult` produces `worldDiceRequest` and `settleWorldDice(fact)`; it no longer produces `diceEvents`, `onDiceReleaseRequest`, or `onSemanticReleaseRequest`.
-
-- [ ] **Step 1: Write RED authority tests**
-
-Add focused cases with these exact assertions:
-
-```ts
-it('keeps a player attack concealed until matching world settlement', () => {
-  const armed = reduceCombatPresentation(base, playerAttackEvent('s', 42n));
-  const request = selectWorldDiceRequest(armed);
-  expect(request).toMatchObject({
-    role: 'actor',
-    authoritySeq: 42n,
-    authoritativeFace: 17,
-  });
-  expect(selectVisibleResult(armed)).toBeUndefined();
-
-  const settled = reduceCombatPresentation(armed, {
-    type: 'world-dice-settled',
-    presentationKey: request!.presentationKey,
-    kind: 'physical',
-  });
-  expect(selectVisibleResult(settled)?.d20).toBe(17);
-});
-
-it('does not expose an off-table transition to the authority reducer', () => {
-  expectTypeOf<CombatPresentationFact>().not.toMatchTypeOf<{
-    type: 'world-dice-off-table';
-  }>();
-});
-```
-
-Also pin witness player attacks as waiting, monster/catch-up as automatic, unsafe presentation IDs as semantic, newer conflict fail-closed, downed target unresolved until settlement, duplicate settlement idempotent, and foreign/stale key ignored.
-
-- [ ] **Step 2: Run RED**
+- [ ] **Step 3: Commit rejected bytes on a local-only archive branch**
 
 ```bash
-npm run test:run -- \
-  src/components/session/combat-experience/presentation.test.ts \
-  src/components/session/combat-experience/useCombatPresentation.test.tsx
+git switch -c archive/837-task8-rejected-persistent-body
+git add -A
+git commit -m "chore: preserve rejected persistent-body attempt (#837)"
+ARCHIVE_SHA=$(git rev-parse HEAD)
+git switch feat/837-world-dice-clean
 ```
 
-Expected: FAIL because `WorldDiceAuthorityRequest`, `world-dice-settled`, and the selector do not exist.
+Do not push the archive. Expected: feature branch returns to `f21178a...` with a clean tree; archive commit retains exact prior bytes.
 
-- [ ] **Step 3: Implement the pure settlement boundary**
-
-Replace record settlement values with:
-
-```ts
-export type CombatDiceSettlement =
-  | 'unresolved'
-  | 'actor-armed'
-  | 'witness-waiting'
-  | 'settled'
-  | 'auto';
-```
-
-Player-owned live attacks become `actor-armed`; other live player attacks become `witness-waiting`; monsters, catch-up, and truthful conflict degradation become `auto`. `isVisible` returns true only for `settled` or `auto` records with an accepted typed event. Remove release profiles/events from combat state; leave legacy dice modules untouched for Concepts Lab.
-
-- [ ] **Step 4: Remove the production tray and timer gate**
-
-Remove `DiceDrawer` and `useDiceSettleGate` from `CombatExperience`. Add one generic control slot:
-
-```ts
-interface CombatExperienceBaseProps {
-  // existing fields unchanged
-  worldDiceControl?: ReactNode;
-}
-```
-
-Render `{worldDiceControl}` immediately after the map container so the later DOM tile can overlay the map without owning another Canvas. Result, toast, Story, and downed reveal now consume the already-settlement-gated projection directly.
-
-- [ ] **Step 5: Run GREEN and production regressions**
+- [ ] **Step 4: Verify baseline and no owned runtime remains**
 
 ```bash
-npm run test:run -- \
-  src/components/session/combat-experience/presentation.test.ts \
-  src/components/session/combat-experience/useCombatPresentation.test.tsx \
-  src/components/session/combat-experience/useSessionCombatExperience.test.tsx \
-  src/components/session/combat-experience/CombatExperience.test.tsx \
-  src/components/session/downedReveal.test.ts
+test "$(git rev-parse HEAD)" = f21178a41bc1c6a7f82a5489b20d9720849b192d
+git status --short
+! pgrep -af '[s]hared-dice-cdp-profile|837-world-dice-clean.*[v]ite'
+npm run test:run -- src/components/session/world-dice src/components/session/combat-experience
 npm run typecheck
 ```
 
-Expected: PASS; no production test renders `session-combat-dice-drawer`; Concepts Lab tests remain untouched.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/components/session/combat-experience src/components/session/downedReveal.test.ts
-git commit -m "refactor(combat): replace tray release with world settlement (#837)"
-```
+Expected: clean branch, focused baseline green, port 3010 stopped.
 
 ---
 
-### Task 3: Define immutable plans and the canonical logical/physical world
+### Task 2: Reconcile fixed physics and launch profiles with the concept
 
 **Files:**
-- Modify: `package.json`
-- Modify: `package-lock.json`
-- Create: `src/components/session/world-dice/types.ts`
-- Create: `src/components/session/world-dice/physicsSchema.ts`
-- Create: `src/components/session/world-dice/physicsSchema.test.ts`
-- Create: `src/components/session/world-dice/plan.ts`
-- Create: `src/components/session/world-dice/plan.test.ts`
-- Create: `src/components/session/world-dice/worldSnapshot.ts`
-- Create: `src/components/session/world-dice/worldSnapshot.test.ts`
+- Modify `physicsSchema.ts`, `physicsSchema.test.ts`
+- Modify `worldSnapshot.ts`, `worldSnapshot.test.ts`
+- Modify `planner.ts`, `planner.test.ts`
+- Modify `gesture.ts`, `gesture.test.ts`
+- Create `launchProfile.ts`, `launchProfile.test.ts`
 
-**Interfaces:**
-- Produces:
+**Produces:**
 
 ```ts
-export interface WorldDiceSnapshot {
-  readonly colliders: readonly WorldDiceLogicalCollider[];
-  readonly bodies: readonly WorldDiceBodyDescriptor[];
+export interface WorldDiceReleaseProfile {
+  readonly direction: readonly [number, number];
+  readonly speed: number;
+  readonly shake: number;
+  readonly spinBias: number;
 }
-
-export function buildWorldDiceSnapshot(input: Readonly<{
-  scene: Scene3D;
-  doors: ReadonlyMap<string, DoorInfo>;
-  bodies: readonly WorldDiceBodyDescriptor[];
-}>): WorldDiceSnapshot;
-
-export function physicalCollidersForWorldDice(
-  snapshot: WorldDiceSnapshot
-): readonly WorldDicePhysicalCollider[];
-
-export function isWorldDiceSupported(
-  snapshot: WorldDiceSnapshot,
-  position: Readonly<{ x: number; y: number; z: number }>
-): boolean;
-
-export function chooseWorldDiceOrigin(
-  snapshot: WorldDiceSnapshot,
-  playerPosition: CubeCoord,
-  occupiedFloorKeys: ReadonlySet<string>
-): readonly [number, number];
-
-export async function fingerprintWorldDiceSnapshot(
-  snapshot: WorldDiceSnapshot
-): Promise<Uint8Array>;
-
-export function parseWorldDicePlan(value: unknown): WorldDicePlan | undefined;
-export function worldDicePlanFromProto(value: DiceThrowPlan): WorldDicePlan | undefined;
-export function worldDiceDraftToProto(value: WorldDiceDraft): DiceThrowDraft;
+export function worldDiceLaunchFromProfile(
+  position: WorldDiceVector3,
+  profile: WorldDiceReleaseProfile
+): WorldDiceBodyInitial;
+export function neutralWorldDiceLaunch(position: WorldDiceVector3): WorldDiceBodyInitial;
 ```
 
-- [ ] **Step 1: Pin exact provider dependencies**
+- [ ] **Step 1: Write RED concept-parity tests**
+
+Pin every exact schema value from Global constraints, neutral vectors, gesture direction/speed/spin mapping, low-energy thresholds, step-180 in-bounds assist terminal, floor/wall/door material selection, and fingerprint change. Tests contain expected values from the approved spec and import no concept file.
+
+- [ ] **Step 2: Verify RED**
 
 ```bash
-npm i --save github:KirkDiggler/rpg-api-protos#v0.1.145
-npm i --save @dimforge/rapier3d-compat@0.19.2
-npm ls @dimforge/rapier3d-compat
-rg 'rpg-api-protos' package.json package-lock.json
+npm run test:run -- src/components/session/world-dice/{physicsSchema,launchProfile,worldSnapshot,planner,gesture}.test.ts
 ```
 
-Expected: direct Rapier ownership is exactly `0.19.2`; generated package resolves the `v0.1.145` source commit.
+Expected: failures show current radius/material/damping/threshold/neutral drift and missing launch helper.
 
-- [ ] **Step 2: Write RED parser/schema tests**
+- [ ] **Step 3: Implement one schema/profile source**
 
-Use valid one- and two-body fixtures, then hostile table cases for non-finite numbers, quaternion error above `0.0001`, duplicate bodies, unsupported shapes, wrong fingerprint length, attempts outside `1..32`, more than 128 contacts, same-step canonical secondary ordering, missing terminals, contact at/after involved terminal, forbidden keys, and caller mutation.
+Move all die/static material facts and release mapping into `physicsSchema.ts`/`launchProfile.ts`. Gesture emits a sanitized profile-derived body at release. Neutral control calls `neutralWorldDiceLaunch`; no controller hard-coded velocities remain.
 
-```ts
-const parsed = parseWorldDicePlan(validPlan());
-expect(parsed).toBeDefined();
-expect(Object.isFrozen(parsed)).toBe(true);
-expect(Object.isFrozen(parsed!.bodies)).toBe(true);
-expect(JSON.stringify(parsed)).not.toMatch(
-  /authoritativeFace|result|damage|targetHp|pointer|clientX|samples/
-);
-```
+Planner classifies in-bounds settled at concept low energy or step 180, still rejects no terminal at 480, and preserves contact-before-terminal validation. Update canonical fingerprint fixture because fixed schema facts changed.
 
-- [ ] **Step 3: Write RED snapshot tests**
-
-Pin insertion-order independence, open-door omission, shut/locked inclusion, prop/entity omission, deterministic bounded wall hashes, collision detection for duplicate derived IDs, logical floor count, one aggregate physical floor, and one fixed SHA-256 fingerprint.
-
-```ts
-expect(snapshot.colliders.filter((c) => c.kind === 'floor')).toHaveLength(319);
-expect(physicalCollidersForWorldDice(snapshot).filter((c) => c.kind === 'floor'))
-  .toHaveLength(1);
-expect(physicalCollidersForWorldDice(snapshot)).toHaveLength(31);
-```
-
-Use the live Reference Tomb fixture values only where the fixture contract guarantees 319/27/3; keep smaller geometry fixtures for arithmetic tests.
-
-- [ ] **Step 4: Run RED**
+- [ ] **Step 4: Run GREEN and repeated real planner proof**
 
 ```bash
-npm run test:run -- \
-  src/components/session/world-dice/physicsSchema.test.ts \
-  src/components/session/world-dice/plan.test.ts \
-  src/components/session/world-dice/worldSnapshot.test.ts
-```
-
-Expected: FAIL because the feature directory does not exist.
-
-- [ ] **Step 5: Implement strict immutable contracts**
-
-Use one frozen schema record, a sync 64-bit FNV-1a geometry hash for bounded wall IDs, explicit UTF-8 canonical fingerprint records, deep copies of every accepted proto/slice/byte field, and exact list/set validation. Reject rather than clamp malformed plans.
-
-Physical floor aggregation computes X/Z bounds from logical floor boxes while retaining the common floor Y/height. `isWorldDiceSupported` checks individual logical floor records plus the fixed vertical margins; it never uses the aggregate floor for off-table truth.
-
-- [ ] **Step 6: Run GREEN and commit**
-
-```bash
-npm run test:run -- src/components/session/world-dice/{physicsSchema,plan,worldSnapshot}.test.ts
+npm run test:run -- src/components/session/world-dice/{physicsSchema,launchProfile,plan,worldSnapshot,rapierLoader,planner,gesture}.test.ts
+for run in $(seq 1 10); do npm run test:run -- src/components/session/world-dice/planner.test.ts || exit 1; done
 npm run typecheck
-git add package.json package-lock.json src/components/session/world-dice
-git commit -m "feat(dice): define clean dungeon throw contracts (#837)"
 ```
 
----
-
-### Task 4: Generate bounded plans with disposable raw Rapier
-
-**Files:**
-- Create: `src/components/session/world-dice/rapierLoader.ts`
-- Create: `src/components/session/world-dice/rapierLoader.test.ts`
-- Create: `src/components/session/world-dice/planner.ts`
-- Create: `src/components/session/world-dice/planner.test.ts`
-
-**Interfaces:**
-- Produces:
-
-```ts
-export type WorldDicePlanGeneration =
-  | Readonly<{ kind: 'plan'; draft: WorldDiceDraft }>
-  | Readonly<{ kind: 'fallback'; reason: WorldDicePlanningFailure }>;
-
-export async function generateWorldDicePlan(input: Readonly<{
-  presentationId: string;
-  authoritySeq: bigint;
-  attempt: number;
-  snapshot: WorldDiceSnapshot;
-  bodies: readonly WorldDiceBodyInitial[];
-}>): Promise<WorldDicePlanGeneration>;
-```
-
-`WorldDicePlanningFailure` is a closed union: `unsupported | invalid-input | collider | limits | incomplete-terminal | cancelled`.
-
-- [ ] **Step 1: Write RED loader and planner tests**
-
-Pin one import/init for concurrent callers, fresh worlds per call, disposal after success/failure, one wall contact, one shut-door contact, open-door pass, off-table, low-energy settled, two-d20 collision with exactly two involved post-states, same-step canonical ordering, mixed terminals, deterministic output, and fallback at all plan bounds.
-
-```ts
-const [first, second] = await Promise.all([
-  generateWorldDicePlan(input),
-  generateWorldDicePlan(input),
-]);
-expect(first).toEqual(second);
-expect(testRapierInitCount()).toBe(1);
-expect(testLiveWorldCount()).toBe(0);
-```
-
-- [ ] **Step 2: Run RED**
-
-```bash
-npm run test:run -- \
-  src/components/session/world-dice/rapierLoader.test.ts \
-  src/components/session/world-dice/planner.test.ts
-```
-
-Expected: FAIL with missing modules.
-
-- [ ] **Step 3: Implement the raw fixed-step planner**
-
-Dynamically import and coalesce `@dimforge/rapier3d-compat` initialization. Create static bodies from `physicalCollidersForWorldDice`, dynamic convex-hull d20 bodies from the shared schema, and one collision-event queue. After each `world.step`:
-
-1. drain started collision transitions;
-2. canonically order same-step meaningful contacts;
-3. snapshot only involved body states;
-4. classify/remove logical off-table bodies;
-5. count consecutive in-bounds low-energy steps; and
-6. stop only when every body has one terminal.
-
-Wrap `world.free()` and queue cleanup in `finally`. A face/result is not accepted by the function signature.
-
-- [ ] **Step 4: Run GREEN and repeat leak checks**
-
-```bash
-npm run test:run -- src/components/session/world-dice/{rapierLoader,planner}.test.ts
-for run in 1 2 3 4 5; do
-  npm run test:run -- src/components/session/world-dice/planner.test.ts || exit 1
-done
-```
-
-Expected: deterministic PASS five times; live-world test counter returns zero after every test.
+Record planner duration distribution under low worker count, terminal kind/step, contacts, and disposal. Target plan p95 <250 ms.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/components/session/world-dice
-git commit -m "feat(dice): pre-simulate bounded dungeon throws (#837)"
+git commit -m "fix(dice): align dungeon physics with approved concept (#837)"
 ```
 
 ---
 
-### Task 5: Build one held/playback/fixed world layer in SessionCanvas
+### Task 3: Rewrite the scene layer around one persistent scoped body
 
 **Files:**
-- Create: `src/components/session/world-dice/playback.ts`
-- Create: `src/components/session/world-dice/playback.test.ts`
-- Create: `src/components/session/world-dice/WorldDiceSceneLayer.tsx`
-- Create: `src/components/session/world-dice/WorldDiceSceneLayer.test.tsx`
-- Modify: `src/components/session/SessionCanvas.tsx`
-- Modify: `src/components/session/SessionCanvas.test.tsx`
+- Rewrite `WorldDiceSceneLayer.tsx` and test
+- Modify `playback.ts`/test only if adapter scope must be explicit
+- Create `lifecycleDiagnostics.ts`/test
+- Create `persistentBodyBoundary.test.tsx`
+- Modify `SessionCanvas.test.tsx` only for integration seam proof
 
-**Interfaces:**
-- Consumes: `WorldDiceSnapshot`, `WorldDicePlan`, verified runtime preset provider, and current `SessionCanvas.presentationLayer` seam.
-- Produces:
+**Produces:**
 
 ```ts
+export interface WorldDiceAttemptScope {
+  readonly key: string;
+  readonly session: string;
+  readonly presentationId: string;
+  readonly authoritySeq: bigint;
+  readonly roller: string;
+  readonly attempt: number;
+  readonly fingerprintHex: string;
+  readonly renderGeneration: number;
+  readonly dieId: 'attack-d20';
+}
+
 export type WorldDiceSceneCommand =
-  | Readonly<{ kind: 'projection' }>
-  | Readonly<{ kind: 'held'; body: WorldDiceHeldBody }>
-  | Readonly<{ kind: 'planning'; body: WorldDiceHeldBody }>
-  | Readonly<{
-      kind: 'playback';
-      plan: WorldDicePlan;
-      authoritativeFaces: Readonly<Record<string, number>>;
-    }>
-  | Readonly<{ kind: 'fixed-beat'; body: WorldDiceFixedBody }>;
+  | Readonly<{ kind: 'prewarm'; scope: WorldDiceAttemptScope; reset: WorldDiceBodyInitial }>
+  | Readonly<{ kind: 'held'; scope: WorldDiceAttemptScope; body: WorldDiceHeldBody }>
+  | Readonly<{ kind: 'planning'; scope: WorldDiceAttemptScope; body: WorldDiceHeldBody }>
+  | Readonly<{ kind: 'playback'; scope: WorldDiceAttemptScope; plan: WorldDicePlan; authoritativeFace: number }>
+  | Readonly<{ kind: 'fixed'; scope: WorldDiceAttemptScope }>;
 
-export interface WorldDiceSceneLayerProps {
-  readonly command: WorldDiceSceneCommand;
-  readonly snapshot: WorldDiceSnapshot;
-  readonly projectionRef: MutableRefObject<TrayPlaneProjection | undefined>;
-  readonly reducedMotion: boolean;
-  readonly onReady: () => void;
-  readonly onProgress: (step: number) => void;
-  readonly onContact: (event: WorldDiceObservedContact) => void;
-  readonly onTerminal: (event: WorldDiceObservedTerminal) => void;
-  readonly onFailure: (reason: WorldDicePlaybackFailure) => void;
+export interface WorldDiceReadiness {
+  readonly projection: boolean;
+  readonly runtime: boolean;
+  readonly world: boolean;
+  readonly body: boolean;
 }
 ```
 
-- [ ] **Step 1: Write RED pure playback tests**
+All callbacks receive `scope` explicitly.
 
-Pin monotonic fixed steps, one-time checkpoint application, static one-body and dice-pair two-body correction, stale generation fencing, off-table removal, all-body completion, and typed failure when adapters are missing or throw.
+- [ ] **Step 1: Write lifecycle RED tests**
 
-- [ ] **Step 2: Write RED R3F layer tests**
+Cover delayed projection, delayed runtime source, equivalent snapshot rerender, prewarm readiness, one body handle/mount across every actor phase, no body gap, prop-driven kinematic→dynamic→fixed transitions, correction on same handle, exactly one removal reason, retry new generation, and delayed old callbacks ignored.
 
-Mock Rapier/runtime mesh and prove:
+The boundary test records mount/unmount/handle identities from a behavior-complete adapter, not only React nodes.
 
-- projection-only command populates the actual camera-plane bridge before handoff and mounts no body;
-- one `Physics` world and one aggregate floor once a body is held or played;
-- no prop/entity colliders;
-- one carved mesh and kinematic body while held/planning;
-- dynamic playback from accepted initial state;
-- terminal position/zero velocity without terminal quaternion snap;
-- one 320 ms current-to-authoritative target slerp;
-- final body fixed;
-- one rendered frame after final target before terminal callback;
-- progress emitted from physics steps;
-- no terminal callback after failure/unmount; and
-- reduced motion emits direct semantic completion without travel.
-
-```ts
-expect(body.setRotation).not.toHaveBeenCalledWith(
-  plan.terminal.dice[0]!.state.rotation,
-  expect.anything()
-);
-expect(onTerminal).toHaveBeenCalledTimes(1);
-expect(body.setBodyType).toHaveBeenLastCalledWith('fixed', true);
-```
-
-- [ ] **Step 3: Run RED**
+- [ ] **Step 2: Verify RED**
 
 ```bash
-npm run test:run -- \
-  src/components/session/world-dice/playback.test.ts \
-  src/components/session/world-dice/WorldDiceSceneLayer.test.tsx \
-  src/components/session/SessionCanvas.test.tsx
+npm run test:run -- src/components/session/world-dice/{WorldDiceSceneLayer,persistentBodyBoundary,lifecycleDiagnostics,playback}.test*
 ```
 
-Expected: FAIL with missing playback/layer.
+Expected: current source-gated world unmount/readiness split fails.
 
-- [ ] **Step 4: Implement one visible world lifecycle**
+- [ ] **Step 3: Implement persistent world/body ownership**
 
-Use the existing verified carved-d20 runtime provider and settlement map from `src/components/ui/dice/`; do not import the concept's `PhysicsDieBody`. Mount `Physics` with fixed `1/60`, schema solver values, `colliders={false}`, and the derived physical colliders.
+Mount projection bridge and one Physics world for `prewarm`. Once provider source exists, mount one hidden kinematic body and retain it by full scope/die key. Full readiness fires only when all four booleans are true. Handoff changes visibility/pose, not mount identity. Planning freezes; playback applies accepted initial state to the same handle and starts fixed stepping; settlement corrects/fixes the same handle.
 
-Held/planning uses a kinematic body and current pointer-owned pose. Playback switches that same feature boundary to dynamic plan state. At settled terminal preserve current rotation, reconcile position, zero velocities, set kinematic, slerp once to the authoritative target, set fixed, invalidate a final frame, and then emit terminal. Off-table disables/removes the body immediately.
+Scope cancellation/off-table/failure disables then unmounts once, emits reason, and acknowledges removal. Never conditionally erase a handed-off body because runtime/source props rerender.
 
-- [ ] **Step 5: Run GREEN and commit**
+- [ ] **Step 4: Run GREEN and scheduling proof**
 
 ```bash
-npm run test:run -- \
-  src/components/session/world-dice/playback.test.ts \
-  src/components/session/world-dice/WorldDiceSceneLayer.test.tsx \
-  src/components/session/SessionCanvas.test.tsx
+npm run test:run -- src/components/session/world-dice/{WorldDiceSceneLayer,persistentBodyBoundary,lifecycleDiagnostics,playback}.test*
+npm run test:run -- src/components/session/SessionCanvas.test.tsx src/components/ui/dice/{RuntimeDiceMesh,dungeonDiceRuntime,diceSettlementResolver}.test*
 npm run typecheck
-git add src/components/session/world-dice src/components/session/SessionCanvas*
-git commit -m "feat(dice): render one world dice lifecycle (#837)"
+```
+
+Assert prewarm/held/planning/fixed schedule zero continuous frame callbacks; playback/correction schedule one controlled callback and stop at terminal.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/session/world-dice src/components/session/SessionCanvas.test.tsx
+git commit -m "feat(dice): keep one body through each dungeon throw (#837)"
 ```
 
 ---
 
-### Task 6: Add the strict publish/live-stream adapter
+### Task 4: Rewrite controller, readiness, retry, and tile around the full attempt scope
 
 **Files:**
-- Modify: `src/api/client.ts`
-- Modify: `src/api/client.test.ts`
-- Modify: `src/api/streamLogging.ts`
-- Modify: `src/api/streamLogging.test.ts`
-- Create: `src/api/useSessionDiceThrows.ts`
-- Create: `src/api/useSessionDiceThrows.test.ts`
+- Rewrite `controllerState.ts`/test
+- Rewrite `useWorldDiceController.ts`/test
+- Modify `WorldDiceLaunchTile.tsx`/test
+- Modify `gesture.ts`/test as required by frozen handoff snapshot
+- Modify `types.ts`
 
-**Interfaces:**
-- Produces:
+**Produces:** one pure state machine with phases `idle | prewarming | armed | held | planning | waiting-plan | playing | removing | retry | fixed | fallback | settled` and explicit full scope on every physical phase.
 
-```ts
-export interface SessionDiceThrowTransport {
-  publish(draft: WorldDiceDraft): Promise<WorldDicePlan>;
-  readonly streamState: 'connecting' | 'live' | 'reconnecting' | 'stopped';
-}
+- [ ] **Step 1: Write RED scope/readiness tests**
 
-export function useSessionDiceThrows(input: Readonly<{
-  session: string;
-  member: string;
-  onPlan: (plan: WorldDicePlan) => void;
-}>): SessionDiceThrowTransport;
-```
+Pin one frozen snapshot per attempt, equivalent object churn ignored, full readiness required for pickup, Roll queued during prewarm, direct gesture blocked before readiness, snapshot frozen at handoff, one planner/publish operation, equal response/echo idempotent, conflict fail-removes, terminal/removal ordering, retry only after removal, new generation/body, stale callbacks ignored in every phase, witness no interactive fallback, and scope reset cleanup.
 
-- [ ] **Step 1: Write RED transport tests**
-
-Mock the generated Connect client and pin authenticated client construction, exact `{session, member, draft}` publish conversion, strict accepted response parse, live delivery, malformed drop, bounded reconnect, one active stream under StrictMode, scope reset, stale callback fencing, and AbortController cleanup.
-
-Add logger tests proving presentation requests/responses/stream items log only:
-
-```ts
-{
-  presentationId,
-  attempt,
-  bodyCount,
-  contactCount,
-  terminalCount
-}
-```
-
-and never vectors, quaternions, velocities, or raw encoded payloads.
-
-- [ ] **Step 2: Run RED**
+- [ ] **Step 2: Verify RED**
 
 ```bash
-npm run test:run -- \
-  src/api/useSessionDiceThrows.test.ts \
-  src/api/client.test.ts \
-  src/api/streamLogging.test.ts
+npm run test:run -- src/components/session/world-dice/{controllerState,useWorldDiceController,WorldDiceLaunchTile,gesture}.test*
 ```
 
-Expected: FAIL because the presentation client/hook and redaction are absent.
+- [ ] **Step 3: Implement one scope owner**
 
-- [ ] **Step 3: Implement the live-only adapter**
+Create the attempt snapshot/fingerprint/scope once when authority arms and prerequisites exist. Emit `prewarm` immediately. The tile shows preparation plus active Roll; pickup target appears only at full readiness. A pre-ready Roll records queued neutral intent and launches once body-ready. All scene callbacks compare their supplied scope to state scope; no callback reads current scope to invent provenance.
 
-Add `SessionPresentationService` to the shared authenticated transport. Follow `useSessionEventStream` generation/cancellation conventions but omit Story replay, sequence-gap repair, and Get calls. Parse every publish/stream plan through `worldDicePlanFromProto`; malformed data is dropped with one sanitized development warning.
+Off-table transitions to removing, waits acknowledgement, increments attempt/generation, freezes a new current snapshot, and prewarms before retry interaction. Failure removes first and only then exposes actor fallback/auto-settles witness.
 
-Reconnect only while scope is mounted, with the existing bounded stream backoff pattern. `publish` accepts only a plan matching the requested session/member-bound roller and draft identity.
-
-- [ ] **Step 4: Run GREEN and commit**
+- [ ] **Step 4: Run GREEN and full feature regression**
 
 ```bash
-npm run test:run -- \
-  src/api/useSessionDiceThrows.test.ts \
-  src/api/client.test.ts \
-  src/api/streamLogging.test.ts
+npm run test:run -- src/components/session/world-dice
+npm run test:run -- src/components/session/combat-experience src/components/session/SessionCanvas.test.tsx
 npm run typecheck
-git add src/api
-git commit -m "feat(dice): consume shared throw transport (#837)"
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/components/session/world-dice
+git commit -m "feat(dice): scope dungeon throw ownership end to end (#837)"
 ```
 
 ---
 
-### Task 7: Build the pure controller, gesture, and DOM launch tile
+### Task 5: Integrate the actor path and produce owned evidence before human testing
 
 **Files:**
-- Create: `src/components/session/world-dice/gesture.ts`
-- Create: `src/components/session/world-dice/gesture.test.ts`
-- Create: `src/components/session/world-dice/controllerState.ts`
-- Create: `src/components/session/world-dice/controllerState.test.ts`
-- Create: `src/components/session/world-dice/WorldDiceLaunchTile.tsx`
-- Create: `src/components/session/world-dice/WorldDiceLaunchTile.test.tsx`
-- Modify: `src/components/session/combat-experience/CombatExperience.module.css`
+- Modify `SessionEncounterView.tsx`/test
+- Modify `CombatExperience.tsx`/test, `types.ts`, CSS
+- Delete dead production-only legacy helper after reference scan
+- Modify/create `productionBoundary.test.ts`
+- Create evidence protocol/script/docs skeleton
 
-**Interfaces:**
-- Produces:
+- [ ] **Step 1: Write RED production composition tests**
 
-```ts
-export type WorldDiceControllerState =
-  | Readonly<{ phase: 'idle' }>
-  | Readonly<{ phase: 'armed'; request: WorldDiceAuthorityRequest; attempt: number }>
-  | Readonly<{ phase: 'held'; request: WorldDiceAuthorityRequest; attempt: number; held: WorldDiceHeldBody }>
-  | Readonly<{ phase: 'planning'; request: WorldDiceAuthorityRequest; attempt: number; held: WorldDiceHeldBody }>
-  | Readonly<{ phase: 'waiting-plan'; request: WorldDiceAuthorityRequest; attempt: number }>
-  | Readonly<{ phase: 'playing'; request: WorldDiceAuthorityRequest; attempt: number; plan: WorldDicePlan }>
-  | Readonly<{ phase: 'retry'; request: WorldDiceAuthorityRequest; attempt: number }>
-  | Readonly<{ phase: 'removing-failure'; request: WorldDiceAuthorityRequest; reason: string }>
-  | Readonly<{ phase: 'fixed-beat'; request: WorldDiceAuthorityRequest; untilMs: number }>
-  | Readonly<{ phase: 'settled' }>;
+Prove one controller/transport, prewarm before pickup, control topmost in game-frame overlay, one presentation layer, no legacy drawer/concept/second Canvas, actor-only control, monster/catch-up auto behavior, weapons/camera/map preserved, and settlement-only reveal.
 
-export interface WorldDiceLaunchTileProps {
-  readonly mode: 'armed' | 'retry' | 'fallback';
-  readonly rollerName: string;
-  readonly projectionRef: MutableRefObject<TrayPlaneProjection | undefined>;
-  readonly snapshot: WorldDiceSnapshot;
-  readonly onHeldChange: (held: WorldDiceHeldBody | undefined) => void;
-  readonly onLaunch: (launch: WorldDiceLaunch) => void;
-  readonly onCancel: () => void;
-  readonly onNeutralRoll: () => void;
-  readonly onSemanticSettle: () => void;
-}
-```
+- [ ] **Step 2: Implement production composition**
 
-- [ ] **Step 1: Write RED gesture tests**
+Wire one controller above sibling map/control. Use last-good scene facts to create a scope, but never replace an active attempt snapshot on refetch. Remove stale compatibility props/dead `storyReveal` only after `rg` proves no production/reference use. Add sanitized lifecycle evidence sink guarded for development/evidence mode.
 
-Pin die-target-only begin, pointer identity, pointer capture ownership, valid-floor handoff, invalid release restoration, map-event suppression, left X/Z carry, right+left X/Z freeze and bounded lift, right release resume, filtered bounded velocity, one release, button-mask loss, cancel, and no raw pointer fields in `WorldDiceLaunch`.
-
-- [ ] **Step 2: Write RED state tests**
-
-Pin actor and witness transitions, response/echo dedupe, full identity matching, attempts 1–32, off-table to retry without settlement, attempt-32 fallback, settled to fixed beat, failure-removal before semantic settlement, progress heartbeat, stale plan/callback ignore, and scope reset.
-
-- [ ] **Step 3: Write RED tile tests**
-
-Use real pointer events and prove the tile:
-
-- is visible only for actor armed/retry/fallback modes;
-- calls `setPointerCapture` before begin;
-- remains mounted but visually hidden after handoff until up/cancel;
-- calls `preventDefault` and `stopPropagation` for the active pointer only;
-- suppresses context menu only while active;
-- offers `Roll d20` and `Reveal result` with keyboard focus; and
-- announces `Off the table — throw again` through polite status.
-
-- [ ] **Step 4: Run RED**
+- [ ] **Step 3: Run automated gates**
 
 ```bash
-npm run test:run -- \
-  src/components/session/world-dice/gesture.test.ts \
-  src/components/session/world-dice/controllerState.test.ts \
-  src/components/session/world-dice/WorldDiceLaunchTile.test.tsx
-```
-
-Expected: FAIL with missing modules.
-
-- [ ] **Step 5: Implement pure ownership and tile behavior**
-
-Keep mutable browser pointer ownership inside the tile/gesture adapter and immutable product transitions in `controllerState.ts`. Stable callbacks read the current integration through refs so coordinator rerenders cannot trigger cleanup and release pointer capture between pointer-down and first move.
-
-The tile is compact and absent from idle layout. Its capture-owner class uses opacity/pointer target behavior without `display:none` or unmounting until release/cancel.
-
-- [ ] **Step 6: Run GREEN and commit**
-
-```bash
-npm run test:run -- src/components/session/world-dice/{gesture,controllerState,WorldDiceLaunchTile}.test*
-npm run typecheck
-git add src/components/session/world-dice src/components/session/combat-experience/CombatExperience.module.css
-git commit -m "feat(dice): add direct world throw controls (#837)"
-```
-
----
-
-### Task 8: Integrate the actor path and stop for Kirk's local-feel gate
-
-**Files:**
-- Create: `src/components/session/world-dice/useWorldDiceController.ts`
-- Create: `src/components/session/world-dice/useWorldDiceController.test.tsx`
-- Modify: `src/components/session/SessionEncounterView.tsx`
-- Modify: `src/components/session/SessionEncounterView.test.tsx`
-- Modify: `src/components/session/combat-experience/CombatExperience.tsx`
-- Modify: `src/components/session/combat-experience/CombatExperience.test.tsx`
-- Create: `src/components/session/world-dice/productionBoundary.test.ts`
-
-**Interfaces:**
-- Produces:
-
-```ts
-export interface UseWorldDiceControllerResult {
-  readonly control: ReactNode;
-  readonly sceneLayer: ReactNode;
-  readonly projectionRef: MutableRefObject<TrayPlaneProjection | undefined>;
-  readonly status: 'idle' | 'armed' | 'held' | 'planning' | 'playing' | 'retry' | 'fallback';
-}
-
-export function useWorldDiceController(input: Readonly<{
-  request: WorldDiceAuthorityRequest | undefined;
-  scene: Scene3D | undefined;
-  playerPosition: CubeCoord | undefined;
-  doors: ReadonlyMap<string, DoorInfo>;
-  occupiedFloorKeys: ReadonlySet<string>;
-  reducedMotion: boolean;
-  rollerName: string;
-  transport: SessionDiceThrowTransport;
-  onSettled: (fact: WorldDiceSettledFact) => void;
-}>): UseWorldDiceControllerResult;
-```
-
-At this task's human gate, only the actor consumes its accepted publish response. Witness stream plans are collected/fenced but not mounted until Task 9.
-
-- [ ] **Step 1: Write RED actor orchestration tests**
-
-Mock planner/transport/layer callbacks. Pin armed tile, held world command, frozen planning command, exactly one publish, accepted response identity check, response/echo dedupe, actor playback, progress heartbeat, settled/fixed/drawn completion, 600 ms fixed result beat, semantic mode, reduced motion, cancellation, and every unmount/scope cleanup.
-
-- [ ] **Step 2: Write RED production composition tests**
-
-Render `SessionEncounterView` and prove:
-
-```ts
-expect(screen.queryByTestId('session-combat-dice-drawer')).not.toBeInTheDocument();
-expect(screen.queryByRole('button', { name: /roll d20/i })).not.toBeInTheDocument();
-
-acceptPlayerAttack();
-expect(await screen.findByRole('button', { name: /roll d20/i })).toBeVisible();
-expect(sessionCanvasProps.presentationLayer).toBeDefined();
-```
-
-Also assert no tile for monsters/witnesses/catch-up, map handlers remain unchanged outside active capture, `SessionCanvas` receives one presentation layer, and production source has no `src/concepts`, `DiceTrayPresentation`, or `DiceDrawer` import.
-
-- [ ] **Step 3: Run RED**
-
-```bash
-npm run test:run -- \
-  src/components/session/world-dice/useWorldDiceController.test.tsx \
-  src/components/session/world-dice/productionBoundary.test.ts \
-  src/components/session/SessionEncounterView.test.tsx \
-  src/components/session/combat-experience/CombatExperience.test.tsx
-```
-
-Expected: FAIL because production orchestration is not connected.
-
-- [ ] **Step 4: Implement actor-only accepted-plan playback**
-
-Instantiate the transport and controller in `SessionEncounterScope`, above the sibling `CombatExperience` and `SessionCanvas`. Pass `controller.control` into `CombatExperience.worldDiceControl`; pass `controller.sceneLayer` and `projectionRef` into `SessionCanvas` through its generic presentation/projection seam.
-
-On pointer/neutral release, build one snapshot, generate one draft, publish once, freeze held pose, and consume the accepted response. Do not accept witness stream plans yet. A publish error enters `removing-failure`, unmounts the body, and only then exposes semantic settlement.
-
-- [ ] **Step 5: Run focused GREEN and full actor regressions**
-
-```bash
-npm run test:run -- \
-  src/components/session/world-dice \
-  src/components/session/SessionEncounterView.test.tsx \
-  src/components/session/SessionCanvas.test.tsx \
-  src/components/session/combat-experience \
-  src/components/session/downedReveal.test.ts
-npm run typecheck
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Start the integrated local stack at the exact branch heads**
-
-Build/run API PR #853 through the local deployment overlay and start this web worktree on a dedicated port. Verify reflection lists `dnd5e.api.session.presentation.v1alpha1.SessionPresentationService`, then record URLs and SHAs in the execution report.
-
-- [ ] **Step 7: STOP — Kirk local-feel gate**
-
-Ask Kirk to drive one authenticated production player. Do not proceed to Task 9 until Kirk verifies:
-
-1. no old tray at startup;
-2. tile only after a player-owned attack arms;
-3. pickup and drag remain attached over the map without movement highlights;
-4. left+right lift works;
-5. wall/shut-door bounce feels connected;
-6. off-table returns the tile with result/log/damage still hidden;
-7. retry settles with one face correction and no trailing rolls; and
-8. damage/log reveal follows the visibly fixed die.
-
-Record Kirk's words and any defects. A rejected feel gate stays on this task/branch and returns to focused RED tests; it is not deferred to multiplayer.
-
-- [ ] **Step 8: Commit the approved actor slice**
-
-```bash
-git add src/components/session src/components/ui/dice package.json package-lock.json
-git commit -m "feat(session): throw the attack die into the dungeon (#837)"
-```
-
----
-
-### Task 9: Add witness playback, concealed retry, and classified failure
-
-**Files:**
-- Modify: `src/components/session/world-dice/controllerState.ts`
-- Modify: `src/components/session/world-dice/controllerState.test.ts`
-- Modify: `src/components/session/world-dice/useWorldDiceController.ts`
-- Modify: `src/components/session/world-dice/useWorldDiceController.test.tsx`
-- Modify: `src/components/session/world-dice/WorldDiceLaunchTile.tsx`
-- Modify: `src/components/session/SessionEncounterView.tsx`
-- Modify: `src/components/session/SessionEncounterView.test.tsx`
-- Modify: `src/components/session/combat-experience/CombatExperience.module.css`
-
-**Interfaces:**
-- Extends the Task 8 controller so both roles consume matching streamed plans. Produces one noninteractive witness status and one failure-removal handshake.
-
-- [ ] **Step 1: Write RED multiplayer transition tests**
-
-Pin:
-
-- plan-before-event buffer bounded to 3 seconds;
-- event-before-plan witness fallback bounded to 10 seconds;
-- actor response/echo exactly once;
-- witness stream plan exactly once;
-- full correlation and fingerprint checks;
-- one door refresh plus 500 ms grace on fingerprint mismatch;
-- shared off-table to actor retry/witness waiting status;
-- attempts 1–31 accepted and attempt 32 exposes semantic control;
-- newer presentation cannot preempt active player throw;
-- stale attempt/renderer/session callbacks ignored;
-- reconnect does not replay; and
-- catch-up/monster remains automatic.
-
-- [ ] **Step 2: Write RED failure and reveal-order tests**
-
-Use fake timers and an unmount observer to prove:
-
-```ts
-failPlayback('stalled');
-expect(onSettled).not.toHaveBeenCalled();
-expect(worldBody).toBeUnmounted();
-completeFailureRemoval();
-expect(fallbackControl).toBeVisible();
-```
-
-Pin a progress watchdog that classifies failure only after 2 seconds with no advancing playback step. Receiving progress resets it. The watchdog removes/fixes the body and never reveals directly. No watchdog runs in `retry` or while the actor retains a valid fallback control.
-
-- [ ] **Step 3: Run RED**
-
-```bash
-npm run test:run -- \
-  src/components/session/world-dice/controllerState.test.ts \
-  src/components/session/world-dice/useWorldDiceController.test.tsx \
-  src/components/session/SessionEncounterView.test.tsx
-```
-
-Expected: FAIL because witness stream plans and retry/failure states are not connected.
-
-- [ ] **Step 4: Implement one shared plan-consumption path**
-
-Route publish responses and stream plans through one `acceptPlan(plan, source)` callback. Validate complete authority identity, expected attempt, schema, body contract, and current snapshot fingerprint before dispatching `plan-accepted`. Actor and witness both create the same `WorldDiceSceneCommand.playback` from that accepted plan.
-
-On off-table, actor dispatches `retry` and renders the tile; witness dispatches `waiting-plan` and renders polite text `<roller> is throwing again`. Neither calls `onSettled`.
-
-On true failure, first transition to `removing-failure`, remove the scene layer, acknowledge removal on the next committed render, and then expose/call semantic completion as specified for actor/witness/reduced motion.
-
-- [ ] **Step 5: Run GREEN plus timing regressions**
-
-```bash
-npm run test:run -- \
-  src/components/session/world-dice \
-  src/api/useSessionDiceThrows.test.ts \
-  src/components/session/SessionEncounterView.test.tsx \
-  src/components/session/combat-experience \
-  src/components/session/downedReveal.test.ts
-npm run typecheck
-```
-
-Expected: PASS; fake-timer suite has no pending timers after unmount.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/components/session src/api
-git commit -m "feat(dice): share retries and settlement with witnesses (#837)"
-```
-
----
-
-### Task 10: Complete evidence, human multiplayer acceptance, CI, and review
-
-**Files:**
-- Create: `scripts/attack-die/capture-shared-dungeon-throw-evidence.mjs`
-- Create: `docs/evidence/837-shared-dungeon-throws/README.md`
-- Create: `docs/architecture/components/session-world-dice.md`
-- Modify: `docs/status.md`
-- Modify: `docs/quality.md`
-- Modify tests found by final regression only when they reveal a real product defect.
-
-**Interfaces:**
-- Produces: reproducible public-safe evidence, approved two-player behavior, one web PR to `dev`, answered review, and green required checks.
-
-- [ ] **Step 1: Add RED evidence manifest validation**
-
-The evidence script must reject a run unless each scenario has both independent context IDs and these sanitized fields:
-
-```ts
-{
-  presentationId,
-  attempt,
-  colliderFingerprint,
-  plannedContacts: [{ kind, colliderId, step }],
-  observedContacts: [{ kind, colliderId, step }],
-  terminal,
-  fallback,
-  authoritativeFace
-}
-```
-
-It must reject raw pointer fields, vectors, quaternions, velocities, auth headers, URLs containing tokens, licensed model bytes, or private asset paths.
-
-- [ ] **Step 2: Run the complete automated gate before asking Kirk**
-
-```bash
-npm run format
-npm run lint
-npm run typecheck
-npm run build
+npm run test:run -- src/components/session/world-dice src/components/session/SessionEncounterView.test.tsx src/components/session/combat-experience src/components/session/SessionCanvas.test.tsx
 npm run test:run
+npm run typecheck
+npm run lint
+npm run format:check
+npm run build
+```
+
+- [ ] **Step 4: Run isolated backend, never shared `rpg-dev`**
+
+```bash
+cd /home/kirk/game-dev/rpg-deployment
+RPG_API_HOST_PORT=8082 RPG_API_IMAGE=rpg-api:task8-4c6b5ca \
+  docker compose -p rpg-dice-837 \
+  -f docker-compose.local-dev.yml -f docker-compose.local-api-src.yml up -d
+```
+
+Start web on 3010 with `VITE_API_HOST=http://127.0.0.1:8082` and **without** `VITE_DEV_PLAYER_ID`. Seed/create the sandbox lobby only in this isolated compose project.
+
+- [ ] **Step 5: Owned clean-browser proof**
+
+Start one headless/system browser with a unique profile and recorded PID. Prove through the production route:
+
+- topmost pickup hit target;
+- full readiness before pickup;
+- one body mount/handle through handoff, planning, accepted playback, correction, fixed terminal;
+- one plan/publish;
+- off-table removal reason and concealed retry;
+- attempt 2 new generation/body and zero stale callbacks;
+- damage/log after fixed face;
+- planner and accepted-plan-to-frame spans meet targets; and
+- no console/page/raw-payload errors.
+
+Cleanly terminate browser/profile and isolated compose project. Verify no matching process/container remains.
+
+- [ ] **Step 6: Commit evidence-ready actor path**
+
+```bash
+git add src scripts/attack-die docs/architecture/components/session-world-dice.md docs/evidence/837-shared-dungeon-throws/README.md
+git commit -m "feat(session): integrate persistent dungeon dice actor flow (#837)"
+```
+
+Task review must be clean before Task 6.
+
+---
+
+### Task 6: Mandatory Kirk local-feel gate
+
+**Files:** No code unless a rejected observation first receives a focused RED regression.
+
+- [ ] **Step 1: Present owned evidence before URL**
+
+Show exact branch/API SHAs, isolated stack identity, lifecycle trace summary, performance spans, process cleanup, and test counts. Start the isolated stack/browser-facing web only after Kirk agrees to test.
+
+- [ ] **Step 2: STOP for Kirk**
+
+Kirk verifies no old tray; honest preparation; reliable first pickup; carry/lift/release feel; no body disappearance; wall/shut-door bounce; off-table concealed retry; attempt-2 reliability; one correction; fixed-face then damage/log.
+
+- [ ] **Step 3: Handle verdict**
+
+If rejected, stop and return to the owning prior task through systematic debugging/TDD. Do not proceed to witnesses. If approved, record Kirk's words in evidence and continue.
+
+---
+
+### Task 7: Add witness stream playback without creating a second lifecycle
+
+**Files:**
+- Modify controller/state/tests
+- Modify `SessionEncounterView.tsx`/test
+- Modify evidence protocol/script
+
+- [ ] **Step 1: Write RED witness tests**
+
+Pin plan-before-event buffer, event-before-plan bounded fallback, stream/response dedupe, complete correlation/fingerprint, one door refresh/grace, witness prewarm only after accepted plan, same persistent playback path, off-table noninteractive retry status, stale reconnect fencing, and catch-up no replay.
+
+- [ ] **Step 2: Implement one `acceptPlan` path**
+
+Actor response/echo and witness stream call one strict callback. Witness begins at accepted playback scope (no held phases) but uses the same scene body/playback/terminal/correction/removal implementation. Failure auto-settles witness only after removal.
+
+- [ ] **Step 3: Verify and commit**
+
+```bash
+npm run test:run -- src/api/useSessionDiceThrows.test.ts src/components/session/world-dice src/components/session/SessionEncounterView.test.tsx
+npm run test:run
+npm run typecheck
+npm run lint
+npm run format:check
+git add src scripts/attack-die
+git commit -m "feat(dice): share persistent dungeon throws with witnesses (#837)"
+```
+
+---
+
+### Task 8: Two-player gate, docs, CI, PR, and review
+
+- [ ] **Step 1: Isolated two-player owned proof**
+
+Use isolated `rpg-dice-837` backend and two independent contexts. Capture one plan/publish, one body per context, same wall/shut-door contacts, open-door omission, off-table concealment/retry, same settled face, fallback, reconnect/no replay, and clean process teardown.
+
+- [ ] **Step 2: Full verification**
+
+```bash
 npm run ci-check
 git diff --check
+git status --short --branch
 ```
 
-Expected: all pass with exact counts recorded. Inspect the production build graph and source boundary test to confirm one Canvas and no production concept/legacy tray import.
+- [ ] **Step 3: STOP for Kirk integrated gate**
 
-- [ ] **Step 3: STOP — Kirk integrated two-player gate**
+Kirk drives two authenticated players only after owned proof passes. Record approval or return to TDD; never debug by repeated human retries.
 
-Bring Kirk into two independently authenticated production windows. Kirk drives the actor; the implementer records only sanitized evidence. Verify in order:
+- [ ] **Step 4: Final docs and commit**
 
-1. one release produces exactly one API `PublishDiceThrow`;
-2. actor and witness each show one world throw;
-3. both record the same authored wall contact;
-4. both record the same shut-door contact;
-5. after opening that door through the real verb, both omit it and pass through;
-6. off-table removes both world dice, reveals nothing, restores only actor control, and shows witness retry status;
-7. retry settles to the same authoritative face with one correction;
-8. damage, log, downed reveal, and toast occur after the fixed face;
-9. Roll and reduced-motion controls complete truthfully;
-10. interrupted stream uses bounded fallback without stale replay;
-11. weapons remain visible and camera/map interactions remain unchanged outside active capture; and
-12. browser consoles contain zero page errors or raw plan payloads.
+Complete architecture/evidence/status/quality with exact artifacts and no overclaims. Commit `docs(dice): record persistent shared throw evidence (#837)`.
 
-Do not declare the feature complete until Kirk explicitly approves this gate.
+- [ ] **Step 5: Push/open PR to `dev`**
 
-- [ ] **Step 4: Fix rejected-gate findings through TDD**
+Run `npm run ci-check`, push `feat/837-world-dice-clean`, open one PR linked to #837/#303/#289 and API #853, use the UI/UX signature for `KirkDiggler`, request exactly one Copilot round, and do not report ready in the same turn.
 
-For each observed defect, add one focused failing regression test in the owning module, run it RED, implement the minimum fix, run focused GREEN, then repeat Step 2 and Step 3. Do not patch behavior directly from console guesses.
+- [ ] **Step 6: Review and completion verification**
 
-- [ ] **Step 5: Write evidence and architecture docs**
-
-Document one renderer/controller, authority/reveal boundary, logical-versus-physical colliders, transport live-only behavior, off-table concealment, classified failure removal, exact test commands/counts, branch SHAs, and Kirk's approval. Do not claim broader damage-dice, mobile, or server-simulation readiness.
-
-- [ ] **Step 6: Commit and push**
-
-```bash
-git add src package.json package-lock.json scripts docs
-git commit -m "docs(dice): record shared dungeon throw evidence (#837)"
-npm run ci-check
-git push -u origin feat/837-world-dice-clean
-```
-
-- [ ] **Step 7: Open the web PR to `dev`**
-
-Use the UI/UX Team signature with authenticated login `KirkDiggler`. Link journey #289, design #303/PR #304, proto #257/tag `v0.1.145`, API #852/PR #853, both human gates, and exact CI/evidence artifacts. Request exactly one Copilot review round and do not report the PR ready in the same turn.
-
-- [ ] **Step 8: Receive and close the review round**
-
-Invoke `superpowers:receiving-code-review`. Read all findings before fixing any. Apply valid fixes on the same branch with focused RED/GREEN tests; reply to every thread with the exact commit or technical decline. Never re-request Copilot.
-
-Verify thread closure:
-
-```bash
-R=repos/KirkDiggler/rpg-dnd5e-web/pulls/$WEB_PR/comments
-echo "open threads: $(gh api "$R" --jq '[.[]|select(.in_reply_to_id==null)]|length')"
-echo "with reply: $(gh api "$R" --jq '[.[]|select(.in_reply_to_id!=null)]|length')"
-```
-
-Expected: every top-level finding has at least one reply.
-
-- [ ] **Step 9: Final verification before completion claim**
-
-Invoke `superpowers:verification-before-completion`, rerun `npm run ci-check`, verify GitHub required checks, read back PR base/head, and confirm the local tree is clean. Keep API PR #853 ahead of the web merge and keep design PR #304 open until the provider/API/web merge order is complete.
-
----
-
-## Merge order
-
-Kirk alone merges, in this order:
-
-```text
-rpg-api-protos #257 (already merged, v0.1.145)
-  -> rpg-api #853 to dev
-  -> rpg-dnd5e-web clean #837 PR to dev
-  -> rpg-project #304 to main
-```
-
-The web PR must pin the published proto artifact and consume an API head that passed the integrated two-browser gate. The design record merges last.
+Use `superpowers:receiving-code-review`, answer every thread, never re-request, rerun CI, then use `superpowers:verification-before-completion` and final whole-branch review. Merge order remains API #853 → web → design PR #304; Kirk alone merges.
