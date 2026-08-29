@@ -40,7 +40,7 @@ imports of resolution internals. Pin: a character with Unarmored Defense
 joining a session reports correct AC — the base-AC-barbarian test.
 `compileResolutionCast` is parked to Phase 3 (D6).
 
-**Phase 3 — session asks, resolution answers (R1, D11).** Two halves under
+**Phase 3 — session asks, resolution answers (R1, D11). DONE 2026-08-29** (toolkit#1291–#1297 + fidelity follow-ups #1298/#1299; retro in implementation.md). Two halves under
 one rule. Readers: Unarmored Defense, Martial Arts, Unarmored Movement read
 via `CastOf(ctx).Member(ownID)`; per-condition structural owner interfaces
 deleted; parity pins assert identical fold results before/after (member
