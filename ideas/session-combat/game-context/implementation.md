@@ -379,3 +379,69 @@ doc list should be re-checked now for paragraphs staled by Phases 2–4.
 origin/main came back empty (content, not ancestry — squash merges);
 session/v0.40.1 patch-tagged off the `chore(session):` prefix, correctly
 signalling "gains nothing, offers nothing new."
+
+## Phase 5 retro (2026-08-29 — toolkit#1303/#1304/#1305/#1306, merged same-day)
+
+**Measurable headline:** the last four direct writers (Raging, Sneak Attack,
+Opportunity Attack, Fighting Style Protection) publish instead of write; the
+owner handle is dead code (both loader `SetOwner` sites match nothing);
+R2 — writes are requests — now holds everywhere by construction, not
+convention. Tags: dnd5e v0.115.0 → v0.116.0, resolution v0.24.1, session
+v0.40.2. Both dnd5e PRs reviewed clean under the substitute protocol; zero
+blocking findings this phase (contrast Phase 4's door impersonation).
+
+**Kirk's naming catch became a law-shaped lesson.** The draft event was
+`MarkDirtyRequested` — command-shaped. Kirk's probe ("what changed? it seems
+like marking something changed means it's dirty") exposed that every keeper
+event is a FACT (ConditionApplied, HealingReceived), so the event became
+`ConditionStateChangedEvent`: the condition states "my slice of your sheet
+changed where you can't see it"; marking dirty is the keeper's own response.
+Generalizable: a request event is named for the fact the requester states,
+never for the response it wants.
+
+**F7 — the lookup's third state, and a correction kept honest.** Deleting
+the purse surfaced a state the ruling hadn't named: `member()` answering
+(nil, false). Disposed fail-closed as M4/D10 applied at a new site, not a
+new ruling. The build agent then CORRECTED its own scope claim on evidence —
+the permissive mutant fails exactly one test, not two; the fork governs only
+the castless fold, unreachable in production by the door pin. Four test
+files now install the cast production always installs (the inverse-#1251
+shape), and the handle-pinning test was repurposed as the fail-closed pin.
+
+**The timing law held under fire.** Ruled F1: keepers apply synchronously at
+publish — the bus is synchronous, so each request lands at the identical
+instant its direct-write predecessor did. The proof is the movement suite
+passing untouched: `movement.go:133-140`'s documented dependency on OA's
+meter landing MID-fold (second trigger in the same walk sees the spent
+slot). R7's buffering is for reaction ANSWERS, never sheet writes.
+
+**Scope discipline ran both directions on the same defect class.** PR B
+rewrote every comment its own change falsified (loader handoffs,
+gamectx/doc.go's "four conditions still hold one") — record-truth-same-day.
+PR D found five MORE stale comments in the same file it touched, checked
+them against session's INCOMING pin, found them already false at v0.114.0,
+and left them for Phase 6 — don't rewrite historical narrative about bugs
+you never investigated. Kirk ratified. The rule: fix what YOUR change
+falsifies; file what was already false.
+
+**Smaller lessons.** The `chore(module):` prefix mints a PATCH tag (C
+predicted v0.25.0, got v0.24.1 — correct: a pin bump changes no API). The
+build agent self-caught the `-run`-matching-nothing trap (guessed test name,
+cheerful PASS, looked up the real name, re-ran). The monster keeper gained
+its missing `ConditionRemoved` row (F5) — the keepers are symmetric for the
+first time. Non-compiling mutants prove nothing and two were discarded as
+such, stated in the PR body rather than hidden.
+
+**Phase 6 pile (consolidated from both phase surveys):**
+`OwnerAware`/`SetOwner` + both loader handoffs (commented dead, kept to die
+together); `ConditionRemovedEvent.CharacterID` → member naming; the
+character keeper's ToJSON-based removal filter could match on `Ref()` like
+the monster's now does; `AttackChainEvent.ReactionsConsumed` keep-or-delete
+(F6); six stale `attack_test.go` references (pre-stale at v0.114.0, Kirk
+ratified deferral); nil-`Ref()` guard in the monster removal loop
+(noted-not-acted, contract says never-nil); `MarkClean`
+interface-vestigial + the only-keeper-names-Combatant pin (Phase 4 seeds);
+re-check Phase 6's doc list for paragraphs staled by Phases 2–5.
+
+**Teardown:** all four build worktrees removed, branches deleted; review
+scratch worktrees removed by their reviewers.

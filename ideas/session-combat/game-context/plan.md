@@ -59,7 +59,9 @@ it (IsDirty stays keeper-side by ruling); the cast and `conditions.member()`
 hand out Members, the widening pin resolves declarations by object identity.
 Session's diff was pins-only — the seam's own law, confirmed.
 
-**Phase 5 — request-shaped writes (D3/D4).** MarkDirty request event +
+**Phase 5 — request-shaped writes (D3/D4/D9). DONE 2026-08-29** (toolkit
+#1303–#1306, merged same-day; survey + rulings in phase5-survey.md, retro in
+implementation.md). MarkDirty request event +
 keeper handling; OA publishes its spend instead of reaching through the
 purse; sheets go dirty exactly as today, pinned.
 
