@@ -32,7 +32,7 @@ a dead type-assertion until Phase 6 deletes it.
 
 ## Findings and dispositions
 
-### F1 — Write timing: keeper applies synchronously at publish. RECOMMENDED.
+### F1 — Write timing: keeper applies synchronously at publish. RULED 2026-08-29.
 
 The bus is fully synchronous (`events/bus.go:99`); a keeper that subscribes
 normally lands each request at the **identical instant** the direct call
@@ -47,12 +47,18 @@ the sheet keeper," which is this pattern. Attach order already guarantees the
 keeper subscribes before any condition (`resolution/resolve.go:399-402`,
 keeper at `character/load.go:135` before conditions at `:157`).
 
-### F2 — Event shapes. RECOMMENDED; Kirk ratifies names.
+### F2 — Event shapes. RULED 2026-08-29 (“condition state change makes a
+lot of sense to me. I am saying go on that”).
 
-- **`MarkDirtyRequestedEvent{MemberID, SourceRef}`** — new topic. Both
-  `MarkDirty()` bodies are an unconditional boolean set; `MemberID` is
-  sufficient, `SourceRef` buys log legibility for free (every site knows its
-  own ref). Keeper filters on ID like every existing handler.
+- **`ConditionStateChangedEvent{MemberID, ConditionRef}`** — new topic.
+  Kirk's naming catch on the draft (`MarkDirtyRequested`): the draft name was
+  command-shaped while every existing keeper event is fact-shaped
+  (ConditionApplied, HealingReceived — things that happened). The condition
+  states a fact — “my slice of your sheet changed where you can't see it” —
+  and marking dirty is the keeper's own response. Both `MarkDirty()` bodies
+  are an unconditional boolean set, so the payload needs nothing more; the
+  ref buys log legibility for free. Keeper filters on ID like every existing
+  handler.
 - **Reaction spend: supersede the dead `ReactionUsedEvent`**
   (`events.go:659`, topic `:946` — zero publishers, zero subscribers,
   payload is `CharacterID`-shaped with no slot/count, so it cannot serve the
@@ -60,7 +66,7 @@ keeper at `character/load.go:135` before conditions at `:157`).
   **`SpendRequestedEvent{MemberID, ActionType, Amount, SourceRef}`** —
   mirrors the `SpendSlots(ActionReaction, 1)` call it replaces.
 
-### F3 — The read side is the real ruling: where does `SlotsLeft` come from?
+### F3 — The read side. RULED 2026-08-29: the member surface gains the reader.
 
 OA gates on `purse.SlotsLeft(Reaction) > 0` (`opportunity_attack.go:272`);
 Protection on `owner.SlotsLeft(Reaction) > 0`. The purse handle dies; the
@@ -76,7 +82,7 @@ monster has no economy to refuse (Kirk's asymmetry ruling,
 no economy never refuses — same truth as the nil-purse branch, now stated on
 the surface instead of hidden in a nil check.
 
-### F4 — The asymmetry made mechanical: publish both, each keeper applies what its kind holds. RECOMMENDED.
+### F4 — The asymmetry made mechanical: publish both, each keeper applies what its kind holds. RULED 2026-08-29.
 
 OA publishes **spend + dirty**; Protection publishes **spend** (its dirty
 already rides the debit). Character keeper: applies spend (debit
@@ -86,11 +92,13 @@ passes it by, truthfully. Per-kind behavior today is reproduced with zero
 keeper-side conditionals, and D4's "asymmetry is a keeper concern" becomes
 literally which rows each keeper's table has.
 
-### F5 — Pre-existing gap, logged not fixed: the monster keeper has no `ConditionRemoved` subscription.
+### F5 — Pre-existing gap: the monster keeper has no `ConditionRemoved` subscription. PULLED INTO PR A (Kirk, 2026-08-29).
 
 A monster's condition removal never reaches its sheet today
-(`monster/load.go:199-214` — three handlers, no removal). Not Phase 5's
-write class; goes on the seeds list unless Kirk pulls it in.
+(`monster/load.go:199-214` — three handlers, no removal) — latent because no
+production path removes a monster condition yet. PR A is editing exactly that
+table, so the row and its test land there and the keepers come out
+symmetric.
 
 ### F6 — Second inert artifact: `AttackChainEvent.ReactionsConsumed`.
 
@@ -100,9 +108,10 @@ Phase 6 sweep decides keep-or-delete.
 
 ## PR split (module chain: everything lands in dnd5e, then pins)
 
-- **PR A (dnd5e, additive):** new topics/events + keeper rows + the F3
-  member reader. Inert until published; keepers listening before any
-  publisher exists. Supersede/delete `ReactionUsedEvent` here.
+- **PR A (dnd5e, additive):** new topics/events + keeper rows (incl. the
+  monster `ConditionRemoved` row, F5) + the F3 member reader. Inert until
+  published; keepers listening before any publisher exists. Supersede/delete
+  `ReactionUsedEvent` here.
 - **PR B (dnd5e):** the four conditions publish instead of write;
   `selfPersisting`/`protectionOwner` deleted; test fakes lose their writer
   methods. Both-ways proof per Phase 4: behavior pinned identical.
@@ -123,7 +132,6 @@ notice: `session/clockboundary_test.go`, `session/attack_test.go`
 
 ## Seeds carried forward (Phase 6)
 
-Monster keeper's missing `ConditionRemoved` row (F5); `ReactionsConsumed`
-keep-or-delete (F6); `OwnerAware`/`SetOwner` + both loader wirings + the
+`ReactionsConsumed` keep-or-delete (F6); `OwnerAware`/`SetOwner` + both loader wirings + the
 dead-assertion window closes; MarkClean vestigial + only-keeper-names-
 Combatant pin (from phase4-survey.md).
