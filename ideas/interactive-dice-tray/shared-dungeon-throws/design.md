@@ -1,6 +1,6 @@
 # Shared Dungeon Dice Throws — Production Design
 
-**Status:** Revised design approved by Kirk 2026-08-28
+**Status:** Persistent-body amendment approved by Kirk 2026-08-29; written review pending
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · production design slice [rpg-project#303](https://github.com/KirkDiggler/rpg-project/issues/303) · design PR [rpg-project#304](https://github.com/KirkDiggler/rpg-project/pull/304)
 
@@ -12,15 +12,17 @@ Make an attack d20 feel like a physical object the active player carries into th
 
 The authoritative attack result remains unchanged. Gesture, rigid-body physics, contacts, off-table retries, and face correction are presentation only. Clients agree on the same authored wall or shut door contacts and the same settled/off-table terminal outcome; they do not need pixel-identical trajectories.
 
-This revision replaces the rejected production integration attempted on `rpg-dnd5e-web` issue #837. That integration proved the transport and physics but grafted them onto the legacy production dice drawer, creating two renderers and overlapping release, settlement, telemetry, and reveal lifecycles. The replacement starts from current `origin/dev`, imports no code from the discarded web branch, and rebuilds the approved concept behavior behind one production controller and one WebGL renderer.
+The first rejected production integration grafted transport and physics onto the legacy drawer, creating two renderers and overlapping release, settlement, telemetry, and reveal lifecycles. A second clean integration removed that debt but still split projection readiness, runtime readiness, visible-body lifetime, and attempt callbacks. Three rejected production gates reproduced intermittent pickup, early disappearance, and poisoned retries.
+
+The persistent-body amendment keeps the proven multiplayer contract while restoring the concept's load-bearing ownership rule: **one visible Rapier body owns one complete attempt from dungeon handoff through terminal settlement or off-table removal.** Pickup is never enabled until the actual projection, verified runtime, Physics world, and scoped body all exist together.
 
 ## Product outcome
 
 With two authenticated players on the production session route:
 
 1. no tray or dice panel is visible while no player-owned attack roll is armed;
-2. an active player's attack presents a small temporary DOM launch tile over the map;
-3. left-drag carries the die from that tile into the real dungeon;
+2. an active player's attack prewarms one hidden scoped world body and presents a small temporary DOM launch tile over the map;
+3. the pickup target becomes interactive only when projection, verified runtime, Physics world, and that body are all ready, then left-drag reveals and carries the same body into the dungeon;
 4. left remains held while right+vertical movement raises or lowers it;
 5. releasing left creates one bounded throw plan and starts one world throw on each client;
 6. both clients witness the same named wall/shut-door contacts and settled/off-table outcome;
@@ -36,7 +38,7 @@ This wave includes:
 
 - one attack d20 using verified preset `dice.original.carved.d20`;
 - a DOM-only launch tile and neutral Roll control;
-- direct handoff into the real `SessionCanvas`;
+- direct handoff into one persistent attempt-scoped body in the real `SessionCanvas`;
 - pointer capture, map-event isolation, horizontal carry, and two-button lift;
 - fixed-step Rapier pre-simulation and visible playback;
 - floor, authored-wall, shut/locked-door, and active-dice collision truth;
@@ -74,6 +76,20 @@ The clean rebuild does not reopen the multiplayer contract.
 8. **Fail open truthfully.** Unsupported or unavailable presentation never stalls authoritative combat indefinitely.
 9. **Server simulation remains deferred.** It earns a new design only if matching schema, snapshot, plan, and checkpoints repeatedly fail the two-browser conversational gate.
 
+## Persistent-body amendment
+
+The second production attempt proved that one Canvas and one controller are not sufficient when physical ownership still fragments. These invariants now bind every implementation:
+
+1. **One full attempt scope.** `(session, presentation ID, authority sequence, roller, attempt, snapshot fingerprint, render generation, die ID)` is created before pickup and travels with every scene callback. A callback never infers its owner from current state.
+2. **One continuous visible body.** The actor's world body is mounted and runtime-ready before pickup, remains the same body handle through held, planning, accepted playback, correction, and fixed result beat, and unmounts exactly once at terminal cleanup. Retry creates a new generation/body only after prior removal is acknowledged.
+3. **One honest readiness gate.** `pickupReady` means projection, verified runtime source, Physics world, and scoped body are all ready. Projection readiness alone is never user-interactive readiness.
+4. **One frozen attempt snapshot.** Equivalent query/map object rerenders do not replace the snapshot or invalidate pickup. Door/collision truth freezes once per attempt and changes only when a new attempt scope is created.
+5. **One callback provenance rule.** Held, planning, playback, terminal, failure, and removal callbacks all carry the same full scope. Old callbacks are ignored without consulting a newer attempt's scope.
+6. **One removal reason.** Sanitized diagnostics distinguish intentional `off-table`, settled cleanup, semantic failure removal, provider/runtime failure, and scope cancellation. A disappearing body is never unexplained.
+7. **Concept-aligned physics.** Radius, damping, material, restitution, settlement thresholds, and neutral launch are reconciled against the approved rigid-body concept before the schema is considered fixed. Multiplayer adds coordination, not a different feel.
+
+Where older wording conflicts with these invariants, this amendment governs.
+
 ## Clean production architecture
 
 ```text
@@ -87,7 +103,7 @@ launch tile  planner   transport
         accepted DiceThrowPlan
                  |
                  v
-   DungeonDicePlaybackLayer
+   persistent WorldDiceSceneLayer
        inside SessionCanvas
                  |
        settled / off-table / failure
@@ -100,7 +116,7 @@ launch tile  planner   transport
 
 `SessionCanvas` remains the only production WebGL Canvas. The carved 3D die exists only inside that Canvas. The DOM launch tile is not a renderer and owns no animated 3D die.
 
-Raw Rapier pre-simulation is a short-lived computation world, not a second visual renderer or presentation lifecycle. It produces an immutable plan and is disposed before visible playback begins.
+Raw Rapier pre-simulation is a short-lived computation world, not a second visual renderer or presentation lifecycle. It produces an immutable plan and is disposed before visible playback begins. The visible actor body remains mounted and frozen while planning/publishing occurs; pre-simulation never replaces that body.
 
 The Concepts Lab retains `DiceTrayPresentation`, its historical tray renderer, and the rigid-body proof. Production imports nothing from `src/concepts/**`, and the clean rebuild does not refactor the concept to consume production code.
 
@@ -110,7 +126,8 @@ The actor-only launch tile:
 
 - is absent while idle;
 - appears when a locally owned authoritative attack d20 arms;
-- offers a visible die target plus an accessible Roll control;
+- offers an accessible Roll control while the scoped world body prewarms;
+- exposes the visible pickup target only after full `pickupReady` succeeds;
 - owns pointer capture from pointer-down through release/cancel, including movement outside its visible bounds;
 - remains invisibly mounted as capture owner after world handoff;
 - stops active gesture events before they reach map hover, movement, camera, or targeting interactions;
@@ -138,9 +155,10 @@ It owns:
 
 - session, presentation ID, authority sequence, roller, and attempt;
 - actor versus witness role;
-- the launch tile command;
-- held world state;
-- immutable collision snapshot;
+- one full attempt scope and render generation;
+- the launch tile command and full-body readiness;
+- held world state and persistent body identity;
+- one immutable collision snapshot frozen for the attempt;
 - plan generation and publication;
 - accepted response/stream deduplication;
 - visible playback command;
@@ -175,21 +193,22 @@ The transport is a thin adapter over the shipped presentation contract. It:
 
 It knows nothing about launch UI, combat reveal, physics bodies, or Story.
 
-### DungeonDicePlaybackLayer
+### Persistent WorldDiceSceneLayer
 
-The playback layer mounts inside the existing generic `SessionCanvas.presentationLayer` seam. Actor and witness use the same implementation and inputs.
+The scene layer mounts inside the existing generic `SessionCanvas.presentationLayer` seam. Actor and witness use the same playback implementation, while only the actor has held/planning phases.
 
-It owns:
+For an actor attempt it owns:
 
-- one visible Rapier world;
+- one visible Rapier world created before pickup;
 - canonical physical colliders;
-- one verified carved mesh per active body;
-- fixed-step plan advancement;
-- sparse contact corrections;
+- one verified carved mesh/body mounted before pickup and retained through terminal;
+- explicit projection, runtime, world, and body readiness;
+- kinematic held/planning ownership followed by dynamic accepted-plan playback on the same handle;
+- fixed-step plan advancement and sparse contact corrections;
 - per-body terminal handling; and
 - one authoritative-face correction after a settled terminal.
 
-It emits sanitized contacts, terminal completion, readiness, progress, and typed failure. It never emits gameplay results.
+It emits full-scope sanitized readiness, mount/unmount, progress, contact, terminal, failure, and removal-reason events. It never emits gameplay results. Runtime-source delay changes readiness; it does not conditionally erase an already handed-off body.
 
 ### Combat reveal gate
 
@@ -211,13 +230,13 @@ Game state, action economy, query refreshes, and server authority remain immedia
 ### Actor pointer throw
 
 1. A locally owned authoritative attack presentation enters `armed`.
-2. The launch tile appears; the result remains concealed indefinitely while the actor has a valid control.
-3. Pointer-down on the die target captures the pointer and starts local carry.
-4. Crossing a valid visible dungeon floor point mounts the carved body in `SessionCanvas` under the pointer and hides the tile token.
+2. The scene layer freezes the attempt snapshot, loads the verified runtime, mounts one hidden kinematic body, and establishes projection under one scope. The launch tile shows preparation status and keeps Roll accessible.
+3. Only after projection, runtime, world, and body are ready does the die pickup target become interactive. Pointer-down captures the pointer and starts local carry.
+4. Crossing a valid visible dungeon floor point reveals the already-mounted carved body under the pointer and hides the tile token; no body or Physics world mounts during handoff.
 5. Left-drag controls X/Z through the actual session camera projection.
 6. While left remains held, right+vertical movement freezes X/Z and changes bounded height.
 7. Releasing right resumes horizontal carry. Releasing left commits one attempt.
-8. The held world body freezes while the planner and publish request complete. The target budget for this pause is under 250 ms; masking animation is deferred polish.
+8. The same held world body freezes while the planner and publish request complete. No proxy or replacement body appears. Masking animation is deferred polish.
 9. The controller accepts either the publish response or matching stream echo exactly once.
 10. Actor and witnesses start the accepted plan through the same playback layer.
 
@@ -235,7 +254,7 @@ A matching authoritative attack causes the witness controller to wait for a matc
 
 ### Settled
 
-The planner records an in-bounds low-energy terminal. Visible playback reaches that terminal, reconciles terminal position and zero velocity without first snapping through an unnecessary pre-simulated terminal quaternion, then performs one correction to the locally known authoritative face.
+The planner records an in-bounds terminal when the body reaches the concept's low-energy threshold or its bounded 180-step late-assist threshold. Visible playback reaches that terminal, reconciles terminal position and zero velocity without first snapping through an unnecessary pre-simulated terminal quaternion, then performs one correction to the locally known authoritative face.
 
 After the corrected face has rendered, the body becomes fixed, the reveal gate opens, and the frozen die remains for a short result beat before unmounting. There must be no trailing physical rolls or additional quaternion correction after damage/log reveal.
 
@@ -280,6 +299,23 @@ A future exact edge mesh may replace the aggregate floor under a new physics sch
 
 ### Fixed schema
 
+No production web consumer of `RAPIER_DUNGEON_D20_V1` has shipped. Before the first consumer merges, its physical facts are corrected to the approved concept rather than preserving values introduced by the rejected integration:
+
+- carved d20 collider radius: `0.275` world units;
+- die friction `0.72`, restitution `0.48`;
+- linear damping `0.22`, angular damping `0.16`;
+- CCD enabled and sleeping allowed;
+- floor friction `0.9`, restitution `0.25`;
+- wall and shut-door restitution `0.55`;
+- natural-assist threshold: linear speed `< 0.28`, angular speed `< 1.1`;
+- bounded assist begins no later than 180 fixed steps (3 seconds) while the body remains in-bounds, matching the approved concept;
+- authoritative-face correction duration: 320 ms; and
+- neutral Roll profile: zero horizontal direction/speed/spin, yielding linear velocity `{x:0,y:0.8,z:0}` and zero angular velocity before gravity/contact.
+
+Pointer releases retain the concept's bounded mapping: horizontal speed `0.5 + releaseSpeed*7.5`, vertical speed `0.8 + releaseSpeed*1.5`, and angular speed `releaseSpeed*18 + shakeEnergy*1.5`, with direction and spin bias applied exactly as the approved proof. Gesture samples remain local; only the resulting rigid-body state enters the plan.
+
+These values, plus gravity, solver, logical/physical colliders, and stable body descriptors, are fingerprinted. Changing them after the first consumer ships requires a new physics-schema enum value.
+
 `RAPIER_DUNGEON_D20_V1` retains the shipped limits:
 
 - 60 Hz fixed steps;
@@ -291,7 +327,7 @@ A future exact edge mesh may replace the aggregate floor under a new physics sch
 - at most 64 KiB encoded plan size; and
 - D20-only physical bodies under this schema.
 
-A missing terminal at step 480 is a planning failure, not an invented settlement.
+A body still in-bounds at step 180 enters the same bounded late-assist terminal used by the approved concept. A body that cannot produce a valid settled/off-table terminal by step 480 is a planning failure, not an invented result.
 
 ### Contact coordination
 
@@ -335,7 +371,14 @@ A client accepts a plan only when all of these match locally accepted authoritat
 - body contract; and
 - collider fingerprint.
 
-The actor may accept its publish response or stream echo; equal identity is consumed once. Witnesses accept the stream. A short receipt-relative synchronization buffer is allowed, and the release-to-visible target remains under 250 ms on the actor's normal path.
+The actor may accept its publish response or stream echo; equal identity is consumed once. Witnesses accept the stream. A short receipt-relative synchronization buffer is allowed.
+
+Performance is measured as separate spans rather than one ambiguous number:
+
+- release to completed local plan: target p95 under 250 ms on the review machine;
+- accepted plan to first dynamic visible frame: target p95 under 100 ms;
+- projection/runtime/body prewarm happens before pickup and is not hidden inside release latency; and
+- total release to first dynamic visible frame is reported as evidence, not inferred from isolated unit timing.
 
 Plan-before-event is bounded and buffered. Event-before-plan is bounded for witnesses and then semantically settles. Catch-up/hydrated history settles immediately and never replays a stale physical throw.
 
@@ -343,8 +386,9 @@ Plan-before-event is bounded and buffered. Event-before-plan is bounded for witn
 
 | Failure | Behavior |
 | --- | --- |
-| Release before valid handoff | Return token; publish nothing |
-| Pointer cancel/lost capture | Remove held body, restore tile, publish nothing |
+| Runtime/projection/world/body not fully ready | Show preparation state; pickup is unavailable, Roll remains accessible |
+| Release before valid handoff | Hide/remove the scoped body, return token, publish nothing |
+| Pointer cancel/lost capture | Remove the scoped body once, restore tile, publish nothing |
 | Plan generation fails or lacks terminal | Remove/freeze physical body; actor receives explicit semantic fallback |
 | Publish fails | Stop physical attempt and settle truthfully; never begin a private actor-only throw |
 | Plan arrives before event | Buffer briefly by full identity, then drop |
@@ -357,7 +401,8 @@ Plan-before-event is bounded and buffered. Event-before-plan is bounded for witn
 | Active off-table retry | No reveal timer; actor retains retry/fallback controls |
 | Stream reconnect | No replay; current presentation remains fenced or falls back |
 | Reduced motion | Explicit control followed by direct authoritative settlement |
-| Scope/session/member change | Dispose pointer, timers, plans, worlds, bodies, and stale callbacks |
+| Equivalent scene/query object rerender | Preserve frozen attempt snapshot, readiness, and body identity |
+| Scope/session/member change | Remove the scoped body once; dispose pointer, timers, plans, world, and stale callbacks |
 
 A safety watchdog may classify a genuinely stalled playback, but it cannot merely reveal while an active die remains rolling. Failure settlement first removes or fixes the physical presentation; damage/log reveal follows.
 
@@ -380,7 +425,12 @@ TDD covers:
 - no dice UI while idle;
 - actor-only launch tile and witness-only retry status;
 - pointer capture through outside movement, map-event isolation, cancellation, and cleanup;
-- direct handoff, horizontal carry, two-button lift, and neutral Roll;
+- direct handoff, horizontal carry, two-button lift, and neutral Roll aligned with concept cases;
+- delayed projection and delayed runtime source with no interactive pickup before the actual body exists;
+- one body handle/mount from handoff through held, planning, playback, correction, and fixed beat;
+- equivalent snapshot-object churn preserving the frozen attempt and active body;
+- full-scope callback provenance in held/planning as well as playback;
+- exactly one removal with a sanitized reason, plus a fresh generation/body on retry;
 - immutable plan parsing and forbidden-field rejection;
 - canonical snapshot/fingerprint and bounded wall IDs;
 - aggregate physical floor plus logical per-cell support mask;
@@ -395,6 +445,19 @@ TDD covers:
 - a production boundary guard forbidding `src/concepts/**` and legacy tray imports.
 
 Existing combat, camera, movement-budget, downed-reveal, equipment, weapon, Story, provider, and session-route tests remain green.
+
+### Owned proof before human retry
+
+A human feel gate is not used as a debugger. Before Kirk is asked to retry, owned evidence must prove:
+
+1. delayed runtime, delayed projection, and equivalent snapshot rerenders preserve one scoped body lifecycle;
+2. handoff → held → planning → accepted playback → correction → fixed terminal has zero body-mount gap;
+3. attempt 2 cannot receive any attempt-1 callback;
+4. real Reference Tomb planning reports duration, contact count, terminal kind/step, and disposal over repeated low-worker runs;
+5. one clean owned browser records topmost DOM hit target, full readiness, body mount count, accepted-plan source, terminal/removal reason, and reveal order; and
+6. no owned headless browser, duplicate game copy, or concurrent test run contaminates performance evidence.
+
+Diagnostics contain scope hashes/opaque IDs, attempt, render generation, readiness booleans, mount count, durations, counts, terminal kind/step, and removal reason only. They contain no pointer coordinates, transforms, velocities, auth data, or raw plans.
 
 ### Human approval gates
 
@@ -412,7 +475,7 @@ On the real production route with one player, Kirk verifies:
 - settled correction is one clean beat with no trailing rolls; and
 - damage/log reveal follows visible settlement.
 
-Implementation stops at this gate until Kirk approves the local ritual.
+Implementation stops at this gate until Kirk approves the local ritual. The gate is requested only after the owned proof above is attached and reviewed.
 
 #### Gate 2 — integrated two-player acceptance
 
@@ -437,14 +500,15 @@ The web slice is not complete until Kirk approves this walk.
 - `rpg-api-protos` PR #257 is merged and published as `v0.1.145`.
 - `rpg-api` issue #852 / PR #853 retains the presentation transport and targets `dev`.
 - The discarded web branch `feat/837-shared-dungeon-dice` remains local evidence only and will not be cherry-picked.
-- The replacement web branch reuses issue #837, starts from freshly fetched `origin/dev`, and opens one PR to `dev`.
+- The replacement web branch reuses issue #837 and targets `dev`. Its authority, strict plan/snapshot/planner, and transport foundations remain useful.
+- The first clean Task 8 integration is rejected and remains uncommitted/local evidence. Its scene/controller/readiness implementation is rewritten around this persistent-body amendment before another gate.
 - This design PR stays open and merges last.
 
 ### Clean web implementation rule
 
 The replacement may read the approved concept and current `origin/dev`, but it does not copy or cherry-pick code from the discarded production integration. In particular it does not preserve that branch's coordinator, tray adapters, settlement glue, or reveal timers.
 
-The concepts remain historical working artifacts. Clean production code is allowed to reimplement a proven behavior behind appropriately named production interfaces; production never imports the concept.
+The concepts remain historical working artifacts. Clean production code is allowed to reimplement proven behavior behind appropriately named production interfaces; production never imports the concept. Concept constants and interaction cases are reference requirements to reconcile, not source files to import.
 
 ### Development order
 
@@ -452,9 +516,11 @@ The concepts remain historical working artifacts. Clean production code is allow
 revised design approval
   -> fresh web branch from origin/dev
   -> remove legacy tray from production composition
-  -> local one-controller ritual
+  -> preserve rejected Task 8 attempt as local evidence
+  -> persistent world/body rewrite with concept-aligned physics
+  -> owned lifecycle/performance/browser proof
   -> Kirk local-feel gate
-  -> existing multiplayer transport integration
+  -> existing multiplayer witness integration
   -> Kirk two-player gate
   -> full web CI and one review round
   -> provider/API/web merge order
