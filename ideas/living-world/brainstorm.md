@@ -503,3 +503,26 @@ Kirk's mechanical test, adopted: **real = the rulebook imports it.**
   hygiene, not genericity sneaking back in.
 - Guard until Kirk's graduation walk: no module other than `examples/world`
   imports `world/*` (one CI check; parading prevented mechanically).
+
+## 18. Correction: the temp home is examples (Kirk 2026-08-30, supersedes §17's placement)
+
+Kirk's call, and he was right three rounds earlier than the record shows:
+**the whole spike — kernel packages AND the bandit camp — starts under
+`examples/world` as one module.** The reasoning that wanted "one module while
+seams are provisional" (§16) is satisfied *more* strongly there: seams
+maximally fluid, no tag stream minting promises, and location is the import
+guard — example code is unadoptable by construction, no CI rule needed.
+
+- Inside the temp home: `journal`, `graph`, `quest` packages stay
+  import-clean of dnd5e (review-enforced; no go.mod boundary exists yet).
+  Only the bandit-camp wiring touches the rulebook.
+- **Graduation**: seams proven by UC-1 + Kirk's walk → the three packages
+  move out to `world/journal|graph|quest`, and the go.mod dependency arrow
+  is established in writing at that moment. All §16 final-form rulings
+  (empty root, dissolution clause, declare/inject/subscribe) apply at
+  graduation, unchanged. §17's "real = the rulebook imports it" test also
+  stands — it is the graduation criterion.
+- Process note, recorded at Kirk's call-out: his `examples/` suggestion was
+  compatible with the stated goals from the first round; the intervening
+  counter-structures (x/world, world-as-real-module) defended a position
+  rather than checking it. The record keeps them as rejected options.
