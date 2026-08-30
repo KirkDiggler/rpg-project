@@ -277,15 +277,31 @@ version to pin. Two ways through:
   `rpg-api/docs/how-to/local-toolkit-override.md`. Only ever override ONE module; needing
   several at once is the signal that the wave was sliced too thin.
 
-### Reviews — Copilot's round, and answering it
+### Reviews — one independent round, with the verdict published on the PR
 
-**Not every PR gets one.** Request Copilot for feature PRs and rules/engine changes — work
-where a second reader can catch a real thing. Skip it for doc-only PRs, pin bumps, and small
-mechanical fixes (Kirk, 2026-08-22, on a converter null→{} change: *"i dont need copilot
-review for that change"*). The quota is monthly and shared, so a round spent on a typo fix
-is a round some engine PR does not get.
+**Not every PR needs a review round.** Feature PRs and rules/engine changes do; doc-only PRs,
+pin bumps, and small mechanical fixes may skip it (Kirk, 2026-08-22, on a converter null→{}
+change: *"i dont need copilot review for that change"*).
 
-When a PR does get one, it gets **exactly one**, requested when the PR opens.
+A substantive PR gets **one independent final review round** through one of two mechanisms:
+
+- an enabled hosted reviewer such as Copilot; or
+- a fresh read-only review session that did not implement the change.
+
+Kirk may disable a hosted reviewer temporarily. While it is disabled, **do not request it**:
+use a fresh independent session until Kirk explicitly re-enables it. Fresh-session review is
+not a lesser fallback; use the reviewer that produces the stronger project-aware result.
+
+**A local review file is not the review record.** Before calling a PR ready, publish the final
+verdict as a PR comment. The comment must name the reviewed head, readiness verdict,
+Critical/Important/Minor counts, review scope, verification evidence considered, and the
+disposition of any findings or fix rereviews. If the head changes materially, rerun or rebind
+the review and publish an updated final verdict. `.superpowers` and other scratch reports may
+support the work, but reviewers should not need access to the operator's filesystem to know
+what was reviewed.
+
+When Copilot is the selected reviewer, request it exactly once when the PR opens. The quota is
+monthly and shared, so a round spent on a typo fix is a round some engine PR does not get.
 
 **Requesting it.** GraphQL `requestReviews` with `botIds: ["BOT_kgDOCnlnWA"]`, then verify
 by reading the PR node back — `gh pr view` does not show bot reviewers, so it will tell you
@@ -324,8 +340,10 @@ echo "open threads:  $(gh api $R --jq '[.[]|select(.in_reply_to_id==null)]|lengt
 echo "with a reply:  $(gh api $R --jq '[.[]|select(.in_reply_to_id!=null)]|length')"
 ```
 
-Unequal means the round is open, whatever the PR page looks like. A review nobody answered
-is worse than one nobody requested — it cost the quota and produced nothing.
+Unequal means the hosted-review round is open, whatever the PR page looks like. A review
+nobody answered is worse than one nobody requested — it cost the quota and produced nothing.
+A fresh-session review may have no inline threads; its closure mechanism is the published
+current-head verdict comment, including every finding's disposition.
 
 **What a good round looks like** — rpg-toolkit#1254, 2026-08-26, three findings, all valid:
 
