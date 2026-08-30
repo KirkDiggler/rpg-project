@@ -581,3 +581,24 @@ packages, let the recurring shape reveal the schema, extract it the day a
 non-engineer author needs it. The boundary law: **the author decides the
 format** — engineers get packages; the streamer's seat gets data (goals,
 dials, deadlines) because its tooling is a console, not a compiler.
+
+## 21. F7 settled by splitting it (Kirk + probe, 2026-08-30)
+
+F7 was two questions wearing one name, split at ownership:
+
+- **The act loop** (lookup → resolve → branch → subject/audience → append)
+  belongs to the **generic world composer** (§20). Evidence: the spike's
+  Executor contains zero camp knowledge (imports journal only, test-pinned);
+  scenario-owned loops would fork audience discipline per scenario.
+- **The verb declarations** (approach, difficulty, emissions) belong to the
+  **scenario** — meaning is content; `banditcamp.Verbs()` already reads
+  right. The composer runs verbs it never defined; the camp defines verbs
+  it never runs.
+- **The scenario contract** — what a content package hands the composer
+  (graph declarations + verbs + quest templates; never the resolver) — is
+  the third thing Kirk's probe surfaced. It exists implicitly as the
+  declarative part of world.Config. Formalizing it (named interface vs
+  convention) waits for **UC-2, the hostage camp, per the second-instance
+  law**: the recurring shape extracts the contract; we don't invent it.
+
+Status: proposed settlement; ratification at Kirk's walk of #1326.
