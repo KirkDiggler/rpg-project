@@ -117,7 +117,15 @@ A witness accepts only a live plan matching the current authoritative player pre
 
 Witness playback uses the existing production `SessionCanvas` and local world-die layer. It creates no second renderer and no interactive tile. It starts from the plan's initial rigid-body state, advances local physics, applies the plan's terminal type/step, and removes the witness body after the same fixed result beat. This checkpoint does not reinterpret decorative physics as gameplay authority.
 
-Only after Kirk approves two-browser delivery and visible replay may the next seam coordinate witness suspense or add meaningful contact checkpoints. Those remain separate design decisions.
+Kirk approved two-browser delivery and then approved this functional release cut:
+
+- Published planning/transport is the only normal actor path; Direct/Planned/Published experiment controls and timing diagnostics do not ship.
+- An accessible neutral Roll action uses the same planner, publisher, body, terminal, and retry lifecycle as pointer release.
+- A live plan that beats its independent authoritative Story event is retained for at most 1,500 ms in a 16-plan bounded inbox and admitted only after the full expected identity and fingerprint exist.
+- Transport failure remains fail-open for gameplay: the actor completes the same local planned presentation while a witness may miss that decorative throw.
+- Actor and witness off-table terminals advance the presentation attempt, allowing attempt 2 to publish and play without changing the authoritative result.
+
+The first cut explicitly classifies witness Story suspense, sparse wall/door contact checkpoints, witness retry messaging, held-motion streaming, pause masking, audio, and haptics as polish or resilience follow-ups. Same-build clients already share accepted initial state, collider fingerprint, local Rapier schema, and terminal type/step. Meaningful contact checkpoints may be promoted from polish only if integrated evidence shows conversational collision drift.
 
 ## Persistent-body amendment
 

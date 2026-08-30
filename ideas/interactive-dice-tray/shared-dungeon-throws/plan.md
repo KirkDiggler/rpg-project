@@ -164,7 +164,7 @@ Tasks 5–7 supersede only the actor-only exclusions on pre-simulation, presenta
 - [x] Wait for the server-bound unary response before local planned playback.
 - [x] Keep stream and witnesses disconnected.
 - [x] Obtain Kirk approval: approximately 24 ms cold and 10 ms warm publication latency.
-- [x] Run full verification and commit web checkpoints `354872d` and `10a0a7d`.
+- [x] Run full verification. After the release rebase, the web checkpoints are `1b53ec4` and `134df3d`.
 
 ### Task 6: Admit live witness plans without changing combat presentation
 
@@ -188,7 +188,7 @@ interface LocalWorldDieWitnessPlan {
 - [x] Write RED tests proving a live plan is accepted only for the current nonlocal authoritative player presentation with matching session, presentation ID, sequence, roller, expected attempt, schema, one-d20 body, and 32-byte local fingerprint.
 - [x] Write RED tests proving actor echo, stale attempts, malformed bodies, unknown schema, mismatch, stream failure, and cancellation produce no witness command and no authority effect.
 - [x] Implement one cancellable live-only subscription with immutable strict admission and equal-identity deduplication.
-- [x] Run focused tests and typecheck; commit the independently reviewable transport/admission seam as web commit `b55cc58`.
+- [x] Run focused tests and typecheck; after the release rebase, the independently reviewable transport/admission seam is web commit `2e483a3`.
 
 ### Task 7: Render one noninteractive witness body
 
@@ -201,7 +201,7 @@ interface LocalWorldDieWitnessPlan {
 - [x] Add a witness playback command to the existing world-die layer; do not create another Canvas, Physics owner, controller, or renderer.
 - [x] Compose admitted witness plans only for the current nonlocal player presentation. Leave Story/result/damage/log timing unchanged.
 - [x] Verify the actor Direct, Planned, and Published modes are behaviorally unchanged through the full existing regression suite.
-- [x] Run focused/full tests, typecheck, format, lint, build, and `git diff --check`; commit the witness-render seam as web commit `2ae91f8`.
+- [x] Run focused/full tests, typecheck, format, lint, build, and `git diff --check`; after the release rebase, the witness-render seam is web commit `e588d33`.
 
 ### Task 8: Two-browser visual-only Kirk gate
 
@@ -211,4 +211,17 @@ interface LocalWorldDieWitnessPlan {
 - [ ] Confirm stale/mismatched plans and reconnect do not replay a die.
 - [ ] Record delivery-to-first-frame and terminal type/step only; do not log raw plans, transforms, velocities, auth, or result.
 - [x] Ask Kirk to judge visual delivery/replay only, explicitly noting that witness Story timing and meaningful contact checkpoints remain out of scope.
-- [x] Stop after Kirk's approval. Do not add suspense gating, checkpoints, retry status, push, or open a web PR without the next explicit approval.
+- [x] Stop after Kirk's approval. Kirk then explicitly approved the separate functional release-hardening task below.
+
+### Task 9: Functional release hardening
+
+- [x] Rebase the web branch onto current `origin/dev` without retaining stale commit identities.
+- [x] Make planned publication the sole normal actor path and remove experiment selectors/timing diagnostics from the player UI.
+- [x] Add an accessible neutral Roll action through the same plan/publish/playback lifecycle.
+- [x] Add a receipt-relative 1,500 ms / 16-plan inbox for plan-before-Story ordering without persistence or authority effects.
+- [x] Cover automatic publication, plan-before-Story admission, actor off-table attempt 2, and witness off-table attempt 2 through focused integration tests.
+- [x] Commit release hardening as web commit `e465636`.
+- [x] Run final full tests (4,225 passed / 1 skipped), typecheck, format, lint, build, and `git diff --check` on exact release head `e465636`; lint retained one pre-existing camera-hook warning and no errors.
+- [ ] Merge API PR #853, then open and merge the web PR against `dev`, then merge design PR #304 last.
+
+Polish remains separate: witness Story suspense, contact checkpoints, retry messaging, held-motion streaming, pause masking, audio, and haptics.
