@@ -627,3 +627,8 @@ future builder's form; the constructor's refusals ARE its inline guidance
 builder's checklist in the one medium that can also prove the checklist
 right. Writing rule: constructor error messages are written for the future
 form-filler, not the Go debugger — builder UX on layaway.
+
+### Ratification note (2026-08-30): Kirk merged rpg-toolkit#1326 — the walk
+verdict. §20 (composer, small root) and §21 (loop/verbs/contract split) are
+RATIFIED. Next: UC-2 per use-cases.md; the composer and scenario contract
+extract inside UC-2 from real duplication.

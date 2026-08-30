@@ -55,9 +55,56 @@ The seat is NOT exercised here — UC-1 stays seatless on purpose.
 Rendering, wire, protos, the town, populations/templates, world goals, any
 model. Toolkit-only, test-driven.
 
+## UC-2: The hostage population (ratified as next, 2026-08-30 after #1326 merged)
+
+Three parties, one quest template, a population of hostages. Exercises the
+§12 machinery UC-1 barely touched — and serves as quest's trial: after UC-2
+we know whether quest is a real package or folds into graph.
+
+### Declared content
+
+- Template: "rescue the hostage", population 3. A claim takes one offer off
+  the board and mints an instance — the claiming party's OWN hostage
+  (instance identity: name drawn from a declared list; no model anywhere).
+- Instance outcomes as transitions: captive → rescued (success) or
+  captive → turned (failure — the hostage joins the bandits' side: an
+  allegiance edge rewrite on that individual).
+- Rolled dispositions for the rescued (rule of the dice, scripted roller):
+  guard / tries-to-repay / carries-word-of-another-quest — each written as
+  an attributed fact.
+- Successor template: "turn them back — or put them down", activating on the
+  distribution predicate `captive == 0 AND turned == total` (no rescues
+  remain). Its instances target the turned; redemption is the repeatable
+  flip: turned → redeemed (or turned → dead).
+
+### Assertions
+
+| claim | proves |
+|---|---|
+| Party A's failure turns A's hostage only; B's and C's untouched | instance isolation — collisions dissolve (§12) |
+| A claimed offer is unavailable to a second claimant; completing/failing releases nothing back | claims off the board |
+| Successor activates exactly when the fold over ALL instances crosses the predicate — never early, never re-fires | distribution predicates |
+| Rescued dispositions land as rolled, attributed facts | rule of the dice; successes seed content |
+| A turned hostage redeemed by a successor instance reads allied again in every view | the repeatable flip |
+| All world change arrives by fold over the population; nothing stored | §10 holds at population scale |
+
+### Standing orders (per §20–21, ratified)
+
+- Promote shared machinery upward ONLY what both scenarios demand — the
+  composer (world root Act loop, Verb/Act/Emission) extracts here, from
+  real duplication, not speculation. Resolver/Attempt move journal → root
+  with it.
+- Extract the scenario contract from the shape banditcamp and hostagecamp
+  actually share (second-instance law, §21).
+- Constructor errors written for the future form-filler ("this template
+  needs a population size"), fail closed, nothing defaulted.
+
+### Non-goals
+
+Guild/tenancy infra (three party IDs suffice), the town, world goals
+(UC-3), deadlines, any dnd5e changes (freeze), the seat.
+
 ## Seeds (named, not written)
 
-- UC-2: the hostage population — templates, instances, distribution
-  predicates, successor activation ("all turned" wakes the redemption arc).
 - UC-3: the streamer's weekend goal — guild-scoped objective, wall-clock
   deadline, many parties folding into one needle.
