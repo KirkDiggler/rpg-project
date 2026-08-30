@@ -14,6 +14,21 @@ A monster that turns and runs from a fighter gets hit for it, and the combat log
 condition, its geometry, its Disengage short-circuit and its six-case suite all survived intact
 because they were never the part that broke.
 
+> **Correction (2026-08-30, found during the build):** the suite survived; the Disengage
+> short-circuit **never worked on this stack**. The first E2E to walk both real conditions
+> through one real fold (`TestDisengagingWalksAwayUntouched`) found an ordering bug:
+> `resolution/movement.go` publishes the chain (subscribers run) and *then* Executes it
+> (stages run), Disengaging writes `OAPreventionSources` in a **stage**, and OA reads
+> `IsOAPrevented()` in its **subscriber** — strictly before any stage has run, so the check
+> reads an always-empty field. Every existing OA test hand-published the event with the
+> prevention source already in it, which is why the suite stayed green. Ruled fix (director,
+> mechanism inside R4, flagged for Kirk's veto): the movement machine drops
+> `TriggerKindMovementOA` triggers post-fold when the folded event says prevented —
+> order-independent, uses the completed truth, precise to OA by trigger kind; OA's own dead
+> subscriber-side check is deleted (the ThreateningEntities precedent) and its doc block
+> names where enforcement now lives. Lands in P3 (resolution), reclassifying it
+> behavior-surface.
+
 Kirk, 2026-08-28: *"OA did fire in the game, it was just the old encounter system that was
 ripped out. A lot of what we have been adding is in this category."*
 
