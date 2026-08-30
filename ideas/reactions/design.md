@@ -72,6 +72,14 @@ uses this turn kind of thing like how rage does."* See "How OA knows it has been
 
 ## Current reality — verified 2026-08-28 against `origin/main`
 
+> **Superseded 2026-08-30** — re-verified after the game-context phases (#318)
+> landed: three of the four break points below are FIXED, `NewMovement` exists
+> with an 8-test suite, and the remaining break moved (zero production callers,
+> and the monster-turn path was never named here). Current reality lives in
+> [survey-2026-08-30.md](./survey-2026-08-30.md), with six rulings — all ruled
+> by Kirk 2026-08-30. This section stays as the record of what the design was
+> shaped against.
+
 ### Where the old driver's job went, and did not land
 
 | # | seam | state |
@@ -173,6 +181,17 @@ for itself and defaults to unused.
 
 ## The build, in order
 
+> **Amended 2026-08-30** — steps 2 and 3 below predate the game-context phases.
+> Step 2 is already built (`resolution.NewMovement` + the self-metering OA
+> condition shipped with toolkit#1281/#1282). Step 3's "subscribe
+> `ReactionTriggerTopic`, drain per step" is now **forbidden** by session's
+> no-bus pin and unnecessary — `NewMovement` drains its own triggers; readiness
+> is derived by resolution's one door, and the OA spends via `SpendRequested`,
+> not `SpendSlots`. The slice also gained a second seam: an `encounter.Mover`
+> capability beside `Striker`, so a monster's turn provokes the same OA a
+> player's walk does (ruling R1). The current build order is
+> [plan.md](./plan.md).
+
 Bottom-up, one module per step, each blocked on the tag below it (no `replace` directives — MVS
 would compile old source against new deps).
 
@@ -235,7 +254,10 @@ impossible:
   the opportunity attack spends its slot directly through `SpendSlots` rather than through the
   turn-gated door.
 
-**1 · Does the character's reaction slot still get spent?** The condition's own flag is the meter
+**1 · Does the character's reaction slot still get spent? RULED YES 2026-08-30 (R3)** — both
+meters, already built by #318 D4 + toolkit#1281: `UsedThisTurn` covers everyone, the published
+`SpendRequested(ActionReaction)` keeps OA and Protection mutually exclusive on characters.
+The original framing, for the record: the condition's own flag is the meter
 that works for everyone. The character economy has a real `ReactionsRemaining` that Protection
 fighting style already competes for.
 *Recommendation: spend both where both exist.* The flag is OA's own once-per-round and covers
@@ -248,6 +270,12 @@ ally and take an OA in the same round.
 is deferred. The walk continues — except when the OA drops the walker, which needs no new
 mechanism: `encounter.Step` already returns an `Outcome` for an ending that fired underfoot, and
 `runWalk` already abandons the remaining path on one.
+
+> **Amended 2026-08-30 (R6):** the no-new-mechanism claim was wrong — a downed walker is a
+> STANDING change, `runWalk` reads only `Outcome`/`Formed`, and standing is batched once per
+> walk on the documented grounds that "a Move cannot down or revive anyone", which an OA makes
+> false. Ruled: standing is re-asked per step, and the walk stops when a reaction's strike
+> downs the mover. The invariant comment is revised, not quietly contradicted.
 
 **3 · Two threateners, one step.** *Recommendation: sorted by member ID*, matching the C8
 determinism law and the existing sorted attach order. Both get their swing.
@@ -278,7 +306,8 @@ Kirk walks the branch and a wolf standing next to his fighter turns to run:
 - the fighter swings automatically, and the log names it an opportunity attack
 - the reaction is spent, and a second fleeing enemy that round gets away untouched
 - it refills at the start of the fighter's next turn
-- a monster that **Disengages** walks away untouched
+- a **player** who **Disengages** walks away untouched *(restated 2026-08-30, R4 — monsters
+  have no route to the Disengaging condition; giving them one is a separate question)*
 - two adjacent threateners both get their swing, in a deterministic order
 - a walk refused mid-path persists no opportunity attack that landed during it
 - **and the composability test**: a new condition that wants to notice a step subscribes to
