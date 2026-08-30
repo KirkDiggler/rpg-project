@@ -220,8 +220,9 @@ interface LocalWorldDieWitnessPlan {
 - [x] Add an accessible neutral Roll action through the same plan/publish/playback lifecycle.
 - [x] Add a receipt-relative 1,500 ms / 16-plan inbox for plan-before-Story ordering without persistence or authority effects.
 - [x] Cover automatic publication, plan-before-Story admission, actor off-table attempt 2, and witness off-table attempt 2 through focused integration tests.
-- [x] Commit release hardening as web commit `e465636`.
-- [x] Run final full tests (4,225 passed / 1 skipped), typecheck, format, lint, build, and `git diff --check` on exact release head `e465636`; lint retained one pre-existing camera-hook warning and no errors.
-- [ ] Merge API PR #853, then open and merge the web PR against `dev`, then merge design PR #304 last.
+- [x] Commit release hardening as web commit `e465636`; resolve the independent Terra gate's four valid functional findings in `564fb4a`.
+- [x] Run final full tests (4,229 passed / 1 skipped), typecheck, format, lint, build, and `git diff --check` on exact reviewed head `564fb4a`; lint retained one pre-existing camera-hook warning and no errors.
+- [x] Receive the focused Terra recheck verdict `MERGE-READY` with no Critical or Important findings.
+- [x] Merge API PR #853 at `f4ed1671f48776b3107e39db12fe115d68f66c6e`, then web PR #863 at `420670b6a7dbc564ab4a84dde0adbf597d1702a5`; merge design PR #304 last.
 
 Polish remains separate: witness Story suspense, contact checkpoints, retry messaging, held-motion streaming, pause masking, audio, and haptics.

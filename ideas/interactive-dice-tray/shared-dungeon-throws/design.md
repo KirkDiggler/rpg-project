@@ -1,6 +1,6 @@
 # Shared Dungeon Dice Throws — Production Design
 
-**Status:** Visual-only witness checkpoint approved by Kirk 2026-08-29
+**Status:** Functional release cut merged after Kirk approval and independent Terra gate
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · production design slice [rpg-project#303](https://github.com/KirkDiggler/rpg-project/issues/303) · design PR [rpg-project#304](https://github.com/KirkDiggler/rpg-project/pull/304)
 
@@ -549,9 +549,9 @@ The web slice is not complete until Kirk approves this walk.
 ### Repository state
 
 - `rpg-api-protos` PR #257 is merged and published as `v0.1.145`.
-- `rpg-api` issue #852 / PR #853 retains the presentation transport and targets `dev`.
+- `rpg-api` issue #852 / PR #853 merged the presentation transport into `dev` at `f4ed1671f48776b3107e39db12fe115d68f66c6e`.
 - The discarded web branch `feat/837-shared-dungeon-dice` remains local evidence only and will not be cherry-picked.
-- The replacement web branch reuses issue #837 and targets `dev`. Its authority, strict plan/snapshot/planner, and transport foundations remain useful.
+- The replacement web implementation reused issue #837 and merged through PR #863 at `420670b6a7dbc564ab4a84dde0adbf597d1702a5` after a fresh Terra independent gate returned `MERGE-READY` with no Critical or Important findings.
 - The first clean Task 8 integration is rejected and remains uncommitted/local evidence. Its scene/controller/readiness implementation is rewritten around this persistent-body amendment before another gate.
 - This design PR stays open and merges last.
 
