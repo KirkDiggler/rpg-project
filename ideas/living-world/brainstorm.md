@@ -296,3 +296,137 @@ outcomes. Facts are party-attributed from birth so a shared or overlapping
 world remains a possible future *fold*, not a rewrite — the shared-world
 shelf (§7), same move as gates-plural-from-birth: schema anticipates, content
 doesn't.
+
+## 11. Guild worlds and the streamer's seat (2026-08-30 dream session)
+
+**The Discord server is the world**: guild = tenant = world = billing unit —
+one noun, four jobs. Seats are the product: a cap and a concurrent limit per
+guild. This re-scopes §10 same-day: ONE guild journal, facts attributed to
+party and players — the party-attribution shelf paid off immediately (a
+re-scoping, not a rewrite).
+
+**The streamer is the first occupant of the DM seat.** The seat designed for
+an AI gets a paying human first: set goals, announce, grant unlocks — all
+verbs. The containment law bounds streamer chaos exactly as it bounds model
+hallucination, and streamers road-test the seat's verb set for months before
+a model inherits it. Full tenancy ladder, ascending intelligence: **dice
+tables → streamer → local model** — dice are the seat's floor occupant (when
+the world needs a small decision nobody authored, roll on a table) and ship
+free in v1.
+
+**World goals** are quest machinery at guild scope: predicates over guild
+journal facts, many parties contributing, folded — plus a *wall-clock*
+deadline ("take the stronghold before the weekend" → bonus-stream unlock).
+This validates §7's world-clock postponement: the world advances by
+authority (the seat rules time passed) and by player action, never by
+simulation. Precedent: WoW's Ahn'Qiraj gate — community goal, opening event
+as spectacle; unlock moments are stream content by construction.
+
+**The town** is a shared hub feeding instanced runs — parties form, claim,
+dispatch, return; outcomes flow to the guild journal. Discord itself supplies
+voice/presence/community, so the town is a lobby with bodies and a quest
+board, not a second simulation. Rescued NPCs populate it with **rolled
+dispositions** (some become guards, some try to repay, some carry word of an
+alternate quest — the rule of the dice): successes seed content exactly as
+failures do.
+
+**Population sizing: the streamer sets it; our tools advise.** What a good
+content ratio for a thousand seats even is, is our homework — encoded as
+defaults and guidance in the seat's tooling, never as automation. Authority
+in the seat, competence in the tools.
+
+## 12. Populations, not trees (ruled)
+
+Quests come **off the board**: a claim mints an instance — your party's
+hostage is *your* hostage (same template, instance identity; naming the
+instances is the AI's cheapest, lowest-stakes first job — a list suffices
+when the model is absent). The world holds a **population** of such
+individuals, and world-level change is a **fold over the population**: when
+every hostage has turned and none remain to save, the template exhausts and
+its successor activates ("turn them back, or take them out").
+
+The shape is ecological, not tree-like: populations of entities; a quest is
+a state transition one individual makes (captive → rescued / turned; turned
+→ redeemed / dead); new quests **activate on distribution predicates**.
+Nobody authors a tree — the community's aggregate performance walks the
+world through states no one scripted. Failure at scale manufactures act two:
+the turned hostages are its antagonist roster. Collisions between parallel
+parties dissolve: instances own their individuals; the shared world moves
+only by fold.
+
+## 13. Routes: nothing is gated, everything is a check (ruled)
+
+**No route has prerequisites.** Everyone can attempt anything — the
+barbarian in the goblin costume is a legitimate play; proficiency and
+expertise tilt the dice, and the dice decide. "Gate" survives only for
+passive detection thresholds (§3): *attempts are open; noticing is earned.*
+
+Playstyle expression is intrinsic content (Kirk's correction recorded: even
+outcome-identical routes differ — fighting, sneaking, performing are the
+point). Routes still adjust outcomes modestly — a route's mechanical output
+is the encounter's initial state (alerted / surprised / unsuspecting), and
+notably **attitude**: a disguised approach can change how the camp sees the
+players. Routes also **open verbs**: in disguise you can work on the minds
+of the camp's leaders — decisions unavailable on other routes. Depth is the
+DM's choice, not a system ceiling: we build composable tools that go as deep
+as the DM wants.
+
+Stealth and disguise are the §3 detection seam *flipped*: monster perception
+vs player stealth (proximity), monster insight vs player deception
+(interaction). One bidirectional mechanism; the monster side lands in the
+monster-ai lane's behavior reads.
+
+## 14. The kernel: relationships and audience-scoped facts (ratified)
+
+Kirk: relationships are central. Authors declare **structure and
+derivation, never methods**:
+
+- **Relationships as first-class data** — typed edges (*leads, belongs-to,
+  hostile-to*) and **roles as slots** ("leader of the camp" is a position an
+  entity occupies). Edges change only via facts.
+- **Derivations** — declared folds ("this camp's allegiance follows its
+  leader's"; attitude thresholds).
+- **Objectives as predicates over derived state, indifferent to method** —
+  "camp X no longer hostile" is reached by assault, infiltration, leader
+  replacement, or conversion; a flipped camp then *fights for you* free of
+  charge, because ally behavior is behavior reading the same fold.
+
+The changeling and the diplomatic flip both emerge from generic verbs ×
+declared structure × dice, with zero path-specific code — the immersive-sim
+method (Hitman, Deus Ex), made persistent, multiplayer, and DM-seated.
+
+**Belief is the §3 ruling generalized: every entity folds over the facts it
+witnessed. Knowledge is the audience of facts.** Stealth = controlling the
+audience of your own events (the quiet kill is a kill fact with an empty
+goblin-audience — the camp behaves as if the chief lives because the fact
+never reached their fold). Disguise = planting an unbacked fact in their
+feed ("this is your leader"). Seeing through it = the reveal reaching one
+guard's audience and no one else's. Audiences default to **group grain**
+(the camp witnesses as a unit); individual grain only when drama demands.
+No belief database anywhere.
+
+The index card: **entities · relationship edges and slots · audience-scoped
+facts · folds · predicates · a handful of verbs · the seat.**
+
+**The elegance wager, named:** Larian (DOS2, BG3) beat this problem with
+four hundred artisans exhaustively authoring reactions. That road is closed
+to us and we do not take it. Our bet: *derive* reactions from folds, let
+real humans in the world generate drama, and rent runtime intelligence —
+dice, streamer, model — for the long tail. A tabletop module is thirty pages
+where BG3 is a hundred gigabytes, because a DM at the table fills the gaps;
+we are building the table, not the movie.
+
+## 15. Verification: the bandit camp use case (Kirk 2026-08-30)
+
+Excitement tempered on purpose: the unknown unknowns are invisible, and
+ideas get verified by building against something tangible. **The bandit camp
+with many ways in and many outcomes is the use case** — it exercises every
+kernel primitive at once. Written as `use-cases.md` beside this document.
+
+Build shape: **prototype fashion — a new toolkit module as a spike/holding
+place that can evolve into something real.** Rulebook-free by the refs test;
+dice injected (capabilities supplied, never defaulted); outside the frozen
+dnd5e tag namespaces. The lasting artifact is the use case itself as
+executable tests — the camp's paths as data plus generic verbs, asserted
+end-to-end — so the implementation underneath stays disposable while the
+spec accumulates. Slice filing waits for Kirk's adoption.
