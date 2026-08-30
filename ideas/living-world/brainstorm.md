@@ -78,19 +78,28 @@ tell the truth; the advantage-to-+5 rule is a shelf). The gate reads the party
 as it actually is — no assumed classes; whoever carries Perception carries the
 party's eyes.
 
-### Reconciliation with pre-v1 full-data-down-the-log
+### Perception is per-player (REVISED same day — supersedes the first cut)
 
-Pre-v1, a passive gate decides whether the **party** learns something — not
-who. Full data still flows down the log; the reveal arrives *attributed*
-("Standre notices a draft from the east wall"). Per-player secrecy — ranger
-sees it, barbarian doesn't — is exactly what stocks the `audienceFor` shelf
-(ideas/perceive) at v1.0. So passive gates ship with zero perception-limiting
-infrastructure, and they are the first real customer that will eventually
-justify stocking that shelf. The rulings stack instead of fighting.
+First cut said: party-level reveal with attribution, per-player deferred to
+v1.0. **Kirk's ruling, later the same day: "our events are player detected."**
+The player who made the check sees the door; players who did not succeed do
+not. A trap shows only for the players who passed the check. Detection is
+individual, and so is the reveal.
 
-Named honestly: pre-v1 the secret is only *cosmetically* hidden — the client
-holds the data and declines to render it. Fine among friends; real secrecy is
-audienceFor's job later.
+How this sits with the pre-v1 full-data ruling (rulings carry their scope —
+this narrows, it does not reverse): combat and table beats keep the
+everyone-audience until v1.0; **detection beats are qualifier-scoped from
+birth**, making the secret door the `audienceFor` shelf's first stocked
+customer (ideas/perceive) — exactly the one-function policy change the shelf
+was built to make cheap. The surviving pre-v1 letter: the raw dungeon payload
+still reaches every client until v1.0 tightens the wire, so secrecy is
+enforced at the beat/render layer, not cryptographically — fine among
+friends; the debug feed remains a dev view of everything.
+
+The fun hiding in the ruling, named: per-player reveals create social
+gameplay for free. The rogue who sees the trap is the one who yells "wait—"
+over voice. The game never models information sharing; friends share by
+talking. The asymmetry costs nothing and produces the table moment.
 
 ## 4. Gates are plural from birth (ruled 2026-08-30)
 
@@ -124,8 +133,9 @@ Panel back:
   otherwise never have found.
 - **Authoring:** dungeon builder marks a door `secret` with a gate. Two fields
   on an existing noun, not a new noun.
-- **Mechanics:** room-entry evaluation; first qualifying member reveals;
-  reveal is one-way state plus one attributed event down the log.
+- **Mechanics:** room-entry evaluation; every present member is evaluated
+  individually; reveal is one-way state plus one attributed event whose
+  audience is the qualifiers (per-player, per the §3 revision).
 - **Wire:** gate routes on the door declaration, one `SecretRevealed` event.
   Additive, small.
 
@@ -168,6 +178,13 @@ slice issues get filed when the freeze lifts and Kirk adopts.
 - Fact identifier vocabulary (wants the typed-ref work — ideas/typed-ref-vocabulary).
 - Authored content variants gated on journal facts (the gate shape, campaign
   timescale).
+- **The world clock — postponed by explicit ruling** (Kirk 2026-08-30): "a
+  number of solutions… designing one now will be us pretending we know what
+  we need from a world clock." The journal accepts facts from any writer, so
+  whatever clock arrives later plugs in as one more writer. Decide when a
+  real need forces it.
+- Traps as detection payloads (second customer of per-player reveal; trigger
+  mechanics couple to combat and wait for the freeze to lift).
 
 Per the shelf rule: nothing gets stocked until a real use case arrives.
 
