@@ -326,7 +326,10 @@ Unchanged from the design's "Not now", plus:
   nobody is in a fight, no threatened square to leave — and the code says so at
   the line that would change. A trap that wants to notice a wanderer is what
   changes it.
-- **`character.EndTurn` still zeroes the reaction.** Pinned in two modules,
-  unreachable in both, and awaiting Kirk's ruling on whether the body should
-  simply spare the reaction — at which point both source-reading pins can be
-  replaced by one behavioural test.
+- ~~**`character.EndTurn` still zeroes the reaction.**~~ **RULED AND FIXED
+  2026-08-30** — Kirk: "I see that as a bug and simply needs to be fixed."
+  EndTurn now spares the reaction (1da332b on #1320); both source-reading pins
+  retired for one behavioural test on the method, which covers every caller
+  including unwritten ones. Bonus find: `TestEndTurn_ResetsButStaysInCombat`
+  had been asserting the bug was correct — the bug carried positive coverage
+  on top of the pin guarding its unreachability.
