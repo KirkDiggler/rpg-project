@@ -162,6 +162,12 @@ slice issues get filed when the freeze lifts and Kirk adopts.
   door-distance noise). Written down, not claimed.
 - Escortable friendly NPCs (rescue archetype = behavior-driven actor — the
   monster-ai lane's pattern, third recurrence of the seat).
+- Shared / overlapping worlds (journal facts are party-attributed from birth
+  so a cross-party fold stays possible — see §10; nothing built until a real
+  use case).
+- Fact identifier vocabulary (wants the typed-ref work — ideas/typed-ref-vocabulary).
+- Authored content variants gated on journal facts (the gate shape, campaign
+  timescale).
 
 Per the shelf rule: nothing gets stocked until a real use case arrives.
 
@@ -222,3 +228,54 @@ things: the objective component and item possession. The village/return half
 stays authored flavor at run end. Cross-run quests (accept in the village,
 return for the reward) are the explicitly-named second rung, gated on the
 journal noun being earned.
+
+## 10. The journal and quest trees (amended 2026-08-30, second dream round)
+
+Kirk's ask: new systems — quest trees, persistent changes based on player
+outcomes. NPCs are FadedPez's feature; not dreamed here.
+
+**Ruling: we do not architect a quest tree. We architect a journal, and the
+tree emerges from predicates over it.** The failure mode is the authored
+node-and-edge tree plus `savedVillage=true` flag soup. Instead a quest's
+*availability* is a predicate over durable facts — exactly as an objective is
+a predicate over run events and a gate is a predicate over party capability.
+Author "the chief's revenge requires fact: goblin-chief-spared" and trees,
+DAGs, exclusive branches, and converging paths all emerge with no tree stored
+anywhere. The tree is a visualization of the predicate graph, not an engine
+noun.
+
+One predicate concept, three timescales:
+
+| shape        | asks                          | horizon      |
+|--------------|-------------------------------|--------------|
+| gate         | can you pass, right now?      | the moment   |
+| objective    | did it happen?                | the run      |
+| availability | what is true of the world?    | the campaign |
+
+**The journal is the existing law at a bigger clock.** Everything flows down
+the combat log; the log is the run's memory. The journal is the log that
+never gets thrown away: append-only, *attributed* facts — who did what, in
+which run. "The village is burned" is never a stored boolean; it is derived
+by folding facts ("bandits razed the village, run 7" … "village rebuilt, run
+11"). Immutable history, derived present — event sourcing, which is what the
+bus + log + projection stack already is. Zero values tell the truth: absence
+of a fact means it never happened. Journal writes ride the game-context law:
+writes are request events.
+
+**The soul of it: no outcome is invalid — every resolution writes history and
+the world proceeds.** Failing a quest is not a dead end; it is a fact the
+world reacts to (the prisoner not rescued becomes the bandit lieutenant). A
+real DM never reloads the save; an append-only journal means the architecture
+*cannot* — persistent consequence by construction, not by discipline.
+
+Downstream reuse, no new machinery: content reacting to facts is the gate
+again (authored variants gated on journal predicates); the rung-4 improviser
+reads the same journal — it is exactly what the DM seat needs to know the
+campaign; fact identifiers want the typed-ref vocabulary.
+
+**Ruled (Kirk 2026-08-30): the journal is campaign-scoped — one per
+persistent party.** Each table's world diverges and lives with its own
+outcomes. Facts are party-attributed from birth so a shared or overlapping
+world remains a possible future *fold*, not a rewrite — the shared-world
+shelf (§7), same move as gates-plural-from-birth: schema anticipates, content
+doesn't.
