@@ -104,7 +104,44 @@ we know whether quest is a real package or folds into graph.
 Guild/tenancy infra (three party IDs suffice), the town, world goals
 (UC-3), deadlines, any dnd5e changes (freeze), the seat.
 
+## UC-3: The weekend goal (launched 2026-08-30 after #1328 merged)
+
+The trilogy's product-pitch proof: one guild-scope goal, many parties, one
+needle, a wall-clock deadline. "Pacify the region before the weekend" —
+met by any mix of methods across parties, because the needle is a fold and
+folds don't ask how.
+
+### Declared content
+
+- A world goal: predicate over the guild journal spanning ALL parties'
+  facts — e.g. region pacified = the camp no longer hostile AND every
+  hostage resolved (rescued, redeemed, or dead — not captive, not turned).
+  Composes the two existing scenarios; no third scenario is authored.
+- A deadline: a plain timestamp compared against an INJECTED clock —
+  capabilities supplied, never defaulted; no world-clock machinery (§7's
+  postponement holds — this is arithmetic, not simulation).
+- On met-before-deadline: one emission (`GoalMet`). What it unlocks (the
+  bonus stream) is the seat's business — the QuestCompleted/rulebook split
+  at guild scale. Missing the deadline emits its own fact once; late
+  completion never retro-fires the unlock.
+
+### Assertions
+
+| claim | proves |
+|---|---|
+| Three parties contribute by different methods (assault / diplomacy / rescues) and one needle moves | method-indifference at world scale; many parties, one fold |
+| The goal reads identically from a fresh fold of the full journal | needle is derived, never stored |
+| Met at T < deadline emits GoalMet exactly once; a later observe is silent | unlock fires once |
+| Unmet at deadline emits the miss once; completing after does not fire GoalMet | deadlines are honest; no retro-unlock |
+| The clock is injected; constructing a goal without one refuses, worded for the form-filler | supplied-never-defaulted; checklist ruling |
+
+### Non-goals
+
+The seat itself, streamer tooling, tenancy/guild infra beyond party
+attribution, Discord anything, new scenarios, dnd5e changes (freeze).
+
 ## Seeds (named, not written)
 
-- UC-3: the streamer's weekend goal — guild-scoped objective, wall-clock
-  deadline, many parties folding into one needle.
+- The sight seam (F15→F26): who witnesses an act, from position and
+  geometry — legal to design since two scenarios worked around it; wants a
+  design round with Kirk, reaching toward tools/spatial.

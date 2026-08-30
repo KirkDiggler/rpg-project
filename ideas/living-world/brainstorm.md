@@ -632,3 +632,12 @@ form-filler, not the Go debugger — builder UX on layaway.
 verdict. §20 (composer, small root) and §21 (loop/verbs/contract split) are
 RATIFIED. Next: UC-2 per use-cases.md; the composer and scenario contract
 extract inside UC-2 from real duplication.
+
+### Ratification note 2 (2026-08-30): Kirk merged rpg-toolkit#1328. Ratified
+with it: the composer as built, the three evidence-forced promotions
+(dnd5eresolver, scripted, margin-banded verbs), the scenario contract as a
+STRUCT (resolver absent by type), and quest as a REAL package (the Tally
+argument). First run of the rewiring test PASSED. F20 (two precedence lists
+must agree, unchecked) and F26 (sight seam — now twice worked around,
+second-instance legal) carry forward. Next: UC-3 per use-cases.md; sight
+seam reserved for a design round with Kirk.
