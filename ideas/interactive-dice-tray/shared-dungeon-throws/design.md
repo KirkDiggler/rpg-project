@@ -1,6 +1,6 @@
 # Shared Dungeon Dice Throws — Production Design
 
-**Status:** Persistent-body amendment approved by Kirk 2026-08-29
+**Status:** Visual-only witness checkpoint approved by Kirk 2026-08-29
 
 **Tracking:** [rpg-project#289](https://github.com/KirkDiggler/rpg-project/issues/289) · production design slice [rpg-project#303](https://github.com/KirkDiggler/rpg-project/issues/303) · design PR [rpg-project#304](https://github.com/KirkDiggler/rpg-project/pull/304)
 
@@ -92,6 +92,32 @@ The checkpoint starts from fresh `origin/dev` and includes only:
 It explicitly excludes raw pre-simulation, `DiceThrowPlan`, `SessionPresentationService`, Redis, publish/stream reconciliation, checkpoints, witnesses, synchronization delays, and multiplayer evidence. Proto/API work remains preserved but disconnected. After Kirk approves the actor ritual, the next seam is designed and added one at a time; pre-simulation is not presumed harmless merely because its contract exists.
 
 This checkpoint is not a shippable multiplayer claim and opens no web PR. It is the production-component proof that informs the next amendment.
+
+## Incremental coordination checkpoints
+
+Kirk approved the actor ritual and the branch now advances through isolated, reversible seams rather than reconstructing the rejected multiplayer integration at once.
+
+The approved checkpoints and observed results are:
+
+1. **Local pre-simulation A/B.** Direct mode remained the actor-feel baseline. Planned mode freezes the same visible body, runs bounded raw Rapier pre-simulation, then releases that body with the planned terminal type/step. Kirk accepted its release delay and throw feel.
+2. **Unary publication.** Published mode sends the one-d20 draft through `PublishDiceThrow`, waits for the server-bound response, then performs the same local planned playback. Kirk observed approximately 24 ms on the cold publication and 10 ms on the next publication and approved the feel. No stream was opened.
+3. **Visual-only witness delivery.** The next approved checkpoint consumes `StreamDiceThrows` on a second authenticated client, ignores the actor's equal stream echo, and mounts one noninteractive witness body from the accepted plan's initial state. It proves live delivery and visible terminal playback only.
+
+The visual-only witness checkpoint deliberately does **not**:
+
+- coordinate or delay witness Story, result, damage, or combat-log presentation;
+- send held pointer motion;
+- add sparse contact checkpoints to the current one-d20 draft;
+- claim shared wall/door conversational equality;
+- add witness retry controls or settlement gating;
+- replay stream history; or
+- open or merge a web PR.
+
+A witness accepts only a live plan matching the current authoritative player presentation's session, presentation ID, authority sequence, roller, expected attempt, known schema, one-d20 body contract, and local collider fingerprint. The actor ignores its own stream echo because its unary response already owns playback. A missing, stale, malformed, mismatched, or disconnected stream is ignored without changing authoritative combat UX.
+
+Witness playback uses the existing production `SessionCanvas` and local world-die layer. It creates no second renderer and no interactive tile. It starts from the plan's initial rigid-body state, advances local physics, applies the plan's terminal type/step, and removes the witness body after the same fixed result beat. This checkpoint does not reinterpret decorative physics as gameplay authority.
+
+Only after Kirk approves two-browser delivery and visible replay may the next seam coordinate witness suspense or add meaningful contact checkpoints. Those remain separate design decisions.
 
 ## Persistent-body amendment
 

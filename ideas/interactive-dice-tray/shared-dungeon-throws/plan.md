@@ -1,8 +1,8 @@
-# Actor-Only Dungeon Dice Checkpoint Plan
+# Incremental Dungeon Dice Checkpoint Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Stop at the named Kirk gate.
 
-**Goal:** Put the approved rigid-body concept into the real production route with one local actor body and no multiplayer presentation machinery, so Kirk can approve the physical ritual before another seam is added.
+**Goal:** Prove the approved rigid-body ritual in production, then add local planning, unary publication, and visual-only witness delivery as separately approved seams.
 
 **Architecture:** A fresh branch from latest `origin/dev` removes the production drawer and mounts one concept-shaped Rapier body inside the existing `SessionCanvas`. The local authoritative attack remains concealed until that body visibly settles; off-table returns the same presentation to the DOM tile. No pre-simulation, throw plan, publish, stream, witness, or Redis code is imported or called.
 
@@ -148,4 +148,67 @@ Steps:
 - [ ] **STOP and show Kirk the evidence before starting a URL.**
 - [ ] Kirk verifies pickup, carry, lift, release, collision feel, off-table retry, settlement correction, reveal order, and absence of the old tray.
 - [ ] If rejected, return to the single owning Task 3 behavior through systematic debugging/TDD. Do not add networking.
-- [ ] If approved, record the verdict and stop the branch. Design the next seam with Kirk; do not open a PR or begin pre-simulation automatically.
+- [x] If approved, record the verdict and stop the branch. Kirk approved the actor ritual; each later seam below received separate approval.
+
+---
+
+## Post-gate amendment
+
+Tasks 5–7 supersede only the actor-only exclusions on pre-simulation, presentation proto imports, unary publication, and live stream consumption. All authority, one-Canvas, persistent-body, collider, privacy, no-Concept-import, no-web-PR, and short-human-gate constraints remain in force.
+
+### Task 5: Local planning and unary publication checkpoints — complete
+
+- [x] Add Direct/Planned A/B without networking; coordinate terminal type/step only.
+- [x] Obtain Kirk approval of Planned feel.
+- [x] Pin presentation proto `v0.1.145` and publish one-d20 drafts through `PublishDiceThrow`.
+- [x] Wait for the server-bound unary response before local planned playback.
+- [x] Keep stream and witnesses disconnected.
+- [x] Obtain Kirk approval: approximately 24 ms cold and 10 ms warm publication latency.
+- [x] Run full verification and commit web checkpoints `354872d` and `10a0a7d`.
+
+### Task 6: Admit live witness plans without changing combat presentation
+
+**Files:**
+- Create focused stream/admission helpers and tests under `src/components/session/local-world-die/`.
+- Modify `src/api/client.ts` only if the existing generated stream client needs a narrow adapter.
+
+**Produces:**
+
+```ts
+interface LocalWorldDieWitnessPlan {
+  readonly presentationId: string;
+  readonly authoritySeq: bigint;
+  readonly roller: string;
+  readonly attempt: number;
+  readonly initialState: LocalWorldDieRigidBodyState;
+  readonly terminal: LocalWorldDiePlanTerminal;
+}
+```
+
+- [ ] Write RED tests proving a live plan is accepted only for the current nonlocal authoritative player presentation with matching session, presentation ID, sequence, roller, expected attempt, schema, one-d20 body, and 32-byte local fingerprint.
+- [ ] Write RED tests proving actor echo, stale attempts, malformed bodies, unknown schema, mismatch, stream failure, and cancellation produce no witness command and no authority effect.
+- [ ] Implement one cancellable live-only subscription with immutable strict admission and equal-identity deduplication.
+- [ ] Run focused tests and typecheck; commit the independently reviewable transport/admission seam.
+
+### Task 7: Render one noninteractive witness body
+
+**Files:**
+- Modify `src/components/session/local-world-die/LocalWorldDieLayer.tsx` and focused tests.
+- Modify `src/components/session/SessionEncounterView.tsx` and focused tests.
+- Modify the smallest combat overlay surface only if a noninteractive status is needed.
+
+- [ ] Write RED tests for witness spawn from the accepted initial state, local dynamic playback, terminal type/step application, fixed settled beat/removal, off-table removal, scope cancellation, and no tile/pointer ownership.
+- [ ] Add a witness playback command to the existing world-die layer; do not create another Canvas, Physics owner, controller, or renderer.
+- [ ] Compose admitted witness plans only for the current nonlocal player presentation. Leave Story/result/damage/log timing unchanged.
+- [ ] Verify the actor Direct, Planned, and Published modes are behaviorally unchanged.
+- [ ] Run focused/full tests, typecheck, format, lint, build, and `git diff --check`; commit the witness-render seam.
+
+### Task 8: Two-browser visual-only Kirk gate
+
+- [ ] Open two independent authenticated clients against the current session and healthy presentation service.
+- [ ] Prove one Published actor throw yields exactly one actor body and one noninteractive witness body.
+- [ ] Confirm actor stream echo does not restart or duplicate actor playback.
+- [ ] Confirm stale/mismatched plans and reconnect do not replay a die.
+- [ ] Record delivery-to-first-frame and terminal type/step only; do not log raw plans, transforms, velocities, auth, or result.
+- [ ] Ask Kirk to judge visual delivery/replay only, explicitly noting that witness Story timing and meaningful contact checkpoints remain out of scope.
+- [ ] Stop after Kirk's verdict. Do not add suspense gating, checkpoints, retry status, push, or open a web PR without the next explicit approval.
