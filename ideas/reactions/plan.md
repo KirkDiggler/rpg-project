@@ -62,6 +62,16 @@ hand-written tests in protos — Kirk 2026-08-22). Base: origin/main.
 - Keep encounter bus-free and ctx-free on its verbs: the capability takes
   the same shape Striker does (`context.Background()` at the call site, same
   comment).
+- **R6's monster half lands here (added 2026-08-30, mid-build):** the plan
+  originally assigned R6 wholly to P4's `runWalk`, but the monster path never
+  enters `runWalk` — and `stepTo` has no standing gate, so a downed wolf
+  would keep walking while a downed player stopped: the asymmetry R1 exists
+  to prevent. The `Move` case asks standing after each announce and breaks
+  BEFORE `stepTo` — a mover the reaction drops falls in the cell it was
+  leaving (the strike checked reach against where it still stood), never
+  entering the next one. P4's `runWalk` implements the same
+  announce → standing → step-only-if-up ordering; both loops say so in a
+  comment.
 
 **P3 · toolkit `resolution` — bump + adapt.** Expected small: adopt the new
 dnd5e/encounter tags, update workbench constructors for the required Mover
@@ -84,9 +94,11 @@ built; do NOT reshape it. If nothing else is forced, this is a pin-bump PR.
 - **Economy at formation (R2, blocking):** fight formation loads, seeds, and
   saves every member's sheet; the lazy-ignition rule and its comment in
   `session/economy.go` are superseded, not contradicted in place.
-- **Stop the walk when a reaction downs the mover (R6):** standing re-asked
-  per step; revise the "a Move cannot down or revive anyone" comment in
-  `move.go` — the invariant changed, the record follows same-day.
+- **Stop the walk when a reaction downs the mover (R6, player half —
+  monster half lives in P2's Move loop):** standing re-asked per step, break
+  before `Step` (the mover falls in the cell it was leaving); revise the
+  "a Move cannot down or revive anyone" comment in `move.go` — the
+  invariant changed, the record follows same-day.
 - Restore the Disengage E2E player-side (R4): a player with Disengaging
   walks away from an adjacent goblin untouched; without it, the goblin's
   scimitar connects. This is also the first test anywhere that proves the
