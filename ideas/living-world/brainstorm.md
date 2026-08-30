@@ -526,3 +526,15 @@ guard — example code is unadoptable by construction, no CI rule needed.
   compatible with the stated goals from the first round; the intervening
   counter-structures (x/world, world-as-real-module) defended a position
   rather than checking it. The record keeps them as rejected options.
+
+## 19. Build start (Kirk 2026-08-30)
+
+- **Graduation gains its real test (Kirk):** when the components break out to
+  `world/*`, the example gets **rewired to import them exactly as a rulebook
+  would** — declare/inject/subscribe across real module boundaries, proven
+  from the consumer side, not asserted.
+- Process ruled light: example code only — the design lives in the slice
+  issue(s), no design.md ceremony. This brainstorm + use-cases.md remain the
+  source of truth; the issue distills.
+- Delegation: Opus agents implement; Fable holds design dialogue and
+  verification gates.
