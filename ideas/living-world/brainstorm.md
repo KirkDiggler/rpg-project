@@ -538,3 +538,46 @@ guard — example code is unadoptable by construction, no CI rule needed.
   source of truth; the issue distills.
 - Delegation: Opus agents implement; Fable holds design dialogue and
   verification gates.
+
+## 20. After the spike: the composer returns, content is packages (2026-08-30)
+
+**Spike verdict absorbed** (rpg-toolkit PR #1326, findings F1–F18 on its
+body): journal↔graph carved true — the audience-scoped fact IS the knowledge
+model; the blown disguise cost zero new logic. quest is real but thin. The
+missing joint is the acting verb (F7): the kernel defined a Resolver nothing
+kernel-side called, and the rulebook-free Executor lived homeless in the
+example.
+
+**The composer amendment (Kirk's original instinct, vindicated by the
+code):** `world`'s root is not empty — it is the composer, and it is SMALL:
+assembly plus the one write door. `Config{Graph, Verbs, Quests, Resolver}`
+declares and injects; `Act()` runs the loop the spike hand-rolled (verb →
+resolver if contested → branch → subject + audience → append → quests
+observe); `View(observer)` is the read door. Verb/Act/Emission promote from
+banditcamp (already proven rulebook-free by test); Resolver/Attempt move
+from journal to the root; Outcome stays journal vocabulary (facts carry
+it). Under §17's own realness test the composer root is what a rulebook
+imports — `world` becomes real by the test that ruled it empty. §16's
+empty-root line is amended, its god-object fear answered by size: the
+composer owns the act loop and nothing else. Status: sketched and grounded
+in the branch; ratification at Kirk's walk of #1326.
+
+**Proving against real rulebook components — the resolver is a ratchet.**
+Already real: sheets, proficiency/expertise, real d20s, a bus the resolver
+refuses to run without. Rungs, each swapping into the same seam while the
+five UC-1 tests stay untouched: (1) opposed checks assembled from existing
+passives (F1, post-freeze) — the static DC 13 becomes "contested by the
+watchers"; (2) "disguised" becomes a real dnd5e condition subscribing to
+AbilityCheckChain (F4 — its first production subscriber); (3) monsters get
+Skills so the camp rolls back (F5). Proof deepens in the rulebook; the spec
+holds still. Plus §19's graduation rewiring test. `dice.Scripted` upstream
+is freeze-free (dice is not a frozen module).
+
+**Content is packages (ruled):** scenarios are Go modules like banditcamp —
+~90% declaration literals, hard bits welcome — compile-checked, shipping
+with their own tests (UC-1 is the scenario AND its proof). No data schema is
+invented ahead of need (the world-clock lesson): write the next scenarios as
+packages, let the recurring shape reveal the schema, extract it the day a
+non-engineer author needs it. The boundary law: **the author decides the
+format** — engineers get packages; the streamer's seat gets data (goals,
+dials, deadlines) because its tooling is a console, not a compiler.
