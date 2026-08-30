@@ -641,3 +641,16 @@ argument). First run of the rewiring test PASSED. F20 (two precedence lists
 must agree, unchecked) and F26 (sight seam — now twice worked around,
 second-instance legal) carry forward. Next: UC-3 per use-cases.md; sight
 seam reserved for a design round with Kirk.
+
+### Ratification note 3 (2026-08-31): Kirk merged rpg-toolkit#1330 — the
+trilogy is complete (bandit camp · hostage population · weekend goal; 228
+tests, kernel rulebook-free, freeze untouched throughout, go.mod of UC-3
+byte-identical to main). Ratified with it: goal as its own package (four
+fakes to live in quest — the claimless instance, the subjectless binding,
+the nil-able clock, the over-scenarios scope), region-as-ties-only, and the
+pattern "the noun above already existed" (resolver ≠ content, goal ≠ quest).
+Carry-forwards: F29 Predicate layering, F30 the miss-poller (the seat's
+first heartbeat), F34 a Host struct when a fourth capability arrives, F36
+sight seam at three consumers. Visualization of the whole machine published:
+https://claude.ai/code/artifact/ae27af1b-cff6-4e8e-81a7-6aee62b5d48e
+Next: the sight seam, designed with Kirk.
