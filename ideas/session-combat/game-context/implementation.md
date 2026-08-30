@@ -467,3 +467,103 @@ re-check Phase 6's doc list for paragraphs staled by Phases 2–5.
 **Teardown:** all four build worktrees removed, branches deleted, prune run,
 nothing stranded (`git diff origin/main` empty against the last branch);
 review scratch worktrees removed by their reviewers.
+
+## Phase 6 retro (2026-08-29/30 — toolkit#1307–#1315 + #1317/#1318, eleven PRs, all merged)
+
+**The measurable headline: ~2,300 lines deleted across eleven PRs, every
+predicted tag minted exactly as predicted, nothing hand-tagged.** Final
+versions: dnd5e v0.122.1, resolution v0.24.3, session v0.40.3. The owner
+handle is gone (#1307), and with it every second copy of a flow: the
+TurnManager family and its movement (#1310, including a second room context
+key invisible to the door pin), both TurnManager-era activation surfaces
+(#1310, Kirk-ruled mid-flight), the second damage fold with its documented
+latent double-apply (#1312), MarkClean and Character.MarkDirty (#1313). The
+write law is now compiler-backed at both ends: request events on the wire
+(Phase 5) and two source-reading pins (#1317/#1318) proving only the keeper
+names combat.Combatant.
+
+**One root cause under three findings — the phase's lesson:** the build
+agent's words, promoted verbatim: *"I reasoned about the code I was
+changing, not the code that reaches it."* The activation-surface keep (a
+live successor path never traced), the admission-door bypass
+(monstertraits calling AddLoadedCondition directly, never enumerated), and
+the rollback ghost (fallibility added, the undo built on "this cannot
+fail" never re-read). The rule that came out: **before claiming a path
+unreachable, enumerate its callers AND constructors; when a contract test
+carries the argument, confirm it covers the branch in question (it covered
+22 of 26 constructors and nobody checked which); when you make something
+fallible, re-read whatever already handles its failure.** Applied from PR E
+on, it caught four traps the naive sweep would have shipped
+(DamageInstanceInput outliving its file, a same-named type in another
+package, a same-named method in another module, a write-only lookup).
+
+**Three Kirk rulings entered the law this phase:**
+- *"If you're asking me to delete something that's not used anymore, my
+  answer will always be yes."* Unused-symbol keep-or-delete questions have
+  a standing answer; show the zero-caller evidence and flag for veto.
+- *"If we protect the construction, we don't need to worry about the nil."*
+  Guards live at the admission door — and #1311's review round proved the
+  ruling has teeth only when EVERY door is enumerated: the fix moved the
+  refusal into the sheets' own Add methods (now fallible), where all paths
+  converge.
+- *"I want the clean 1 way to do things because we will have collaborators
+  coming online."* Defense-in-depth loses to one-clean-way; an unreachable
+  branch is not safety, it is a second way that confuses the next reader.
+  (The kept-then-vetoed load-path guard is the type case.)
+
+**The substitute review pattern proved itself and may outlive the Copilot
+gap (Kirk: "our review does as good a job or better... may become our
+permanent pattern").** Two behavior-surface PRs got rounds; both rounds
+caught real defects the author and survey missed: the monster keeper's
+panic-vs-refusal asymmetry (#1309), and the unguarded second door plus —
+in the fix's own verify pass — the rollback ghost (#1311). The
+classification is now Kirk's rule, not judgment: deletion PRs with
+suites-identical evidence skip the round ("if our tests still pass and our
+functionalities intact"); behavior surface gets it. The reviewer's
+required habit of reproducing the author's evidence claims is what made
+round 2 of #1311 possible at all.
+
+**Two comment-record findings worth keeping:**
+- PR B's "stale comment" was a HOLLOW TEST: TestDoesNotTriggerOnOwnAttack
+  could not fail (no cast installed → the regression fell through to the
+  fail-closed branch → same empty chain). The false comment was the
+  symptom; the pin on #1178's Protection fix was held by nothing. Mutation
+  both ways was the proof. A comment-staleness sweep should ask "can this
+  test still fail for the stated reason" — the answer found the only real
+  bug-shaped defect of the phase.
+- Falsehoods propagate by copy: "resolution installs exactly one registry"
+  lived in TWO files; #1308 fixed one and only the survey's listing found
+  the sibling (#1315). Fixing an instance doesn't find its copies — grep
+  the claim, not the file.
+
+**For the next survey (this one was excellent and wrong five times, all
+the same way):** every error was a symbol inventory taken by NAME rather
+than by REFERENCE — whole-file deletions that declared live symbols, a
+doc-comment absence that was a thin presence, an allowed set missing a
+package, a coverage cost priced off a half-skipped test, a hand-install
+count wrong in both inherited versions. Recommendation adopted for future
+briefs: **a survey records the command that produced each inventory, so
+the next reader re-runs it instead of trusting the snapshot.**
+
+**Smaller permanent notes:** removing an interface method cannot break an
+implementor — only adding one can, so a narrowing chain's pin PRs are
+bumps+cleanup, not repairs (both downstreams passed their full suites
+against #1313 unbumped). The repo pre-commit hook fails multi-module
+commits whose modules all passed (parallel branch captures stdout as the
+failure list) — filed as toolkit#1316; the workaround (one module per
+commit) is also the better shape, since two modules mean two tags.
+
+**Deferred, with owners:** toolkit#1316 (hook fix). The deeper
+CharacterID→MemberID struct rename — Kirk takes it himself via IDE rename
+(ruled 2026-08-29: "it might be simpler for me to refactor"); constraint:
+the 29 json:"character_id" tags must stay byte-identical. toolkit#977 (the
+monster damage-received row, now carrying a pointer to strike.go's
+argument). Movement E2E coverage returns when slice #316 wires
+resolution.NewMovement (untouched, its doc carries Kirk's load-everything
+ruling). resolution/movement.go:152's past-tense MoveEntity mention is
+deliberate history.
+
+**Teardown:** all ten build worktrees removed; no replace directive ever
+committed; the review record comments live on #1309 and #1311; the
+substitute-review protocol and its classification rule are recorded in the
+platform session's memory.

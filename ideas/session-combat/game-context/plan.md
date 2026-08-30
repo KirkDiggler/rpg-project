@@ -65,7 +65,7 @@ implementation.md). MarkDirty request event +
 keeper handling; OA publishes its spend instead of reaching through the
 purse; sheets go dirty exactly as today, pinned.
 
-**Phase 6 — deletion + docs.** Remove `OwnerAware`/`SetOwner` and both
+**Phase 6 — deletion + docs. DONE 2026-08-30** (toolkit#1307–#1315 + #1317/#1318, eleven PRs merged over two days; grew from the named deletion into the full dead-code sweep by Kirk's ruling — survey+rulings in phase6-survey.md, retro in implementation.md; final tags dnd5e v0.122.1, resolution v0.24.3, session v0.40.3). Remove `OwnerAware`/`SetOwner` and both
 bespoke loader wirings; update `gamectx/doc.go` and `cast.go`; add the
 superseded pointer to effect-context's design; ADR for the channel law if
 Kirk rules he wants one (open question carried from toolkit#1285).
