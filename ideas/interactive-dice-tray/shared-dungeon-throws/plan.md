@@ -185,10 +185,10 @@ interface LocalWorldDieWitnessPlan {
 }
 ```
 
-- [ ] Write RED tests proving a live plan is accepted only for the current nonlocal authoritative player presentation with matching session, presentation ID, sequence, roller, expected attempt, schema, one-d20 body, and 32-byte local fingerprint.
-- [ ] Write RED tests proving actor echo, stale attempts, malformed bodies, unknown schema, mismatch, stream failure, and cancellation produce no witness command and no authority effect.
-- [ ] Implement one cancellable live-only subscription with immutable strict admission and equal-identity deduplication.
-- [ ] Run focused tests and typecheck; commit the independently reviewable transport/admission seam.
+- [x] Write RED tests proving a live plan is accepted only for the current nonlocal authoritative player presentation with matching session, presentation ID, sequence, roller, expected attempt, schema, one-d20 body, and 32-byte local fingerprint.
+- [x] Write RED tests proving actor echo, stale attempts, malformed bodies, unknown schema, mismatch, stream failure, and cancellation produce no witness command and no authority effect.
+- [x] Implement one cancellable live-only subscription with immutable strict admission and equal-identity deduplication.
+- [x] Run focused tests and typecheck; commit the independently reviewable transport/admission seam as web commit `b55cc58`.
 
 ### Task 7: Render one noninteractive witness body
 
@@ -197,18 +197,18 @@ interface LocalWorldDieWitnessPlan {
 - Modify `src/components/session/SessionEncounterView.tsx` and focused tests.
 - Modify the smallest combat overlay surface only if a noninteractive status is needed.
 
-- [ ] Write RED tests for witness spawn from the accepted initial state, local dynamic playback, terminal type/step application, fixed settled beat/removal, off-table removal, scope cancellation, and no tile/pointer ownership.
-- [ ] Add a witness playback command to the existing world-die layer; do not create another Canvas, Physics owner, controller, or renderer.
-- [ ] Compose admitted witness plans only for the current nonlocal player presentation. Leave Story/result/damage/log timing unchanged.
-- [ ] Verify the actor Direct, Planned, and Published modes are behaviorally unchanged.
-- [ ] Run focused/full tests, typecheck, format, lint, build, and `git diff --check`; commit the witness-render seam.
+- [x] Write RED tests for wire initial-state handoff, planned terminal selection, strict admission, noninteractive composition, settled cleanup, and unchanged authority/Story. Two-browser off-table retry and exact beat timing remain later evidence.
+- [x] Add a witness playback command to the existing world-die layer; do not create another Canvas, Physics owner, controller, or renderer.
+- [x] Compose admitted witness plans only for the current nonlocal player presentation. Leave Story/result/damage/log timing unchanged.
+- [x] Verify the actor Direct, Planned, and Published modes are behaviorally unchanged through the full existing regression suite.
+- [x] Run focused/full tests, typecheck, format, lint, build, and `git diff --check`; commit the witness-render seam as web commit `2ae91f8`.
 
 ### Task 8: Two-browser visual-only Kirk gate
 
-- [ ] Open two independent authenticated clients against the current session and healthy presentation service.
-- [ ] Prove one Published actor throw yields exactly one actor body and one noninteractive witness body.
+- [x] Open two independent authenticated clients against the current session and healthy presentation service.
+- [x] Prove one Published actor throw yields one actor body and one noninteractive witness body; Kirk reported the result “works great.”
 - [ ] Confirm actor stream echo does not restart or duplicate actor playback.
 - [ ] Confirm stale/mismatched plans and reconnect do not replay a die.
 - [ ] Record delivery-to-first-frame and terminal type/step only; do not log raw plans, transforms, velocities, auth, or result.
-- [ ] Ask Kirk to judge visual delivery/replay only, explicitly noting that witness Story timing and meaningful contact checkpoints remain out of scope.
-- [ ] Stop after Kirk's verdict. Do not add suspense gating, checkpoints, retry status, push, or open a web PR without the next explicit approval.
+- [x] Ask Kirk to judge visual delivery/replay only, explicitly noting that witness Story timing and meaningful contact checkpoints remain out of scope.
+- [x] Stop after Kirk's approval. Do not add suspense gating, checkpoints, retry status, push, or open a web PR without the next explicit approval.

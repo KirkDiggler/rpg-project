@@ -101,7 +101,7 @@ The approved checkpoints and observed results are:
 
 1. **Local pre-simulation A/B.** Direct mode remained the actor-feel baseline. Planned mode freezes the same visible body, runs bounded raw Rapier pre-simulation, then releases that body with the planned terminal type/step. Kirk accepted its release delay and throw feel.
 2. **Unary publication.** Published mode sends the one-d20 draft through `PublishDiceThrow`, waits for the server-bound response, then performs the same local planned playback. Kirk observed approximately 24 ms on the cold publication and 10 ms on the next publication and approved the feel. No stream was opened.
-3. **Visual-only witness delivery.** The next approved checkpoint consumes `StreamDiceThrows` on a second authenticated client, ignores the actor's equal stream echo, and mounts one noninteractive witness body from the accepted plan's initial state. It proves live delivery and visible terminal playback only.
+3. **Visual-only witness delivery.** The checkpoint consumes `StreamDiceThrows` on a second authenticated client, ignores the actor's equal stream echo, and mounts one noninteractive witness body from the accepted plan's initial state. It proves live delivery and visible terminal playback only. Kirk approved the two-browser result as “works great” on 2026-08-29.
 
 The visual-only witness checkpoint deliberately does **not**:
 
