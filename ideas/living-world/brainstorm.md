@@ -477,3 +477,29 @@ journal  <-  graph  <-  quest
 - Start as ONE module with three internal packages, not three modules:
   package boundaries are free to redraw, module boundaries mint tag
   ceremony. UC-1 votes on the seams before any split.
+
+## 17. Settlement: real packages, practical example (2026-08-30, closes the naming)
+
+Kirk's mechanical test, adopted: **real = the rulebook imports it.**
+
+- `world/journal`, `world/graph`, `world/quest` pass — three real packages.
+  `world` itself is a module path: a namespace and a tag stream, imported by
+  no one (§16's empty root, restated in the test's terms — nothing changed).
+- **The toy-rulebook idea is retracted** (Kirk: "I do not want to prove the
+  generic case if it doesn't fit with our current"). Genericity is a review
+  discipline — the refs test on every diff — not a deliverable. Warhammer /
+  Across the Obelisk remain the charter's thought experiment, never code.
+- **`examples/world` is a separate package by mechanical necessity, not
+  preference**: the practical example imports both `world/*` and `dnd5e` to
+  wire declare/inject/subscribe for real. Inside the `world` module those
+  imports would land a rulebook dependency in world's go.mod — violating the
+  §16 arrow in writing. So the example lives above both, and go.mod itself
+  tells the truth about who depends on whom.
+- `examples/world` is three artifacts in one: UC-1's executable spec (the
+  bandit camp, five paths, real dnd5e checks resolving them — every gap the
+  wiring exposes is a finding), the practical tutorial for the next rulebook
+  author, and the only place tools and rulebook meet before adoption.
+- `world`'s internal tests use ordinary stub resolvers — test doubles, unit
+  hygiene, not genericity sneaking back in.
+- Guard until Kirk's graduation walk: no module other than `examples/world`
+  imports `world/*` (one CI check; parading prevented mechanically).
