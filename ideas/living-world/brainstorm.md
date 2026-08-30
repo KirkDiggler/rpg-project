@@ -614,3 +614,16 @@ present; when the builder is the author, scenarios are data by construction
 only — no builder work now. Kirk: hold at this footing, nothing further
 until stable. dice.Scripted upstream DECLINED — the test-file roller is
 sufficient; do not re-pitch.
+
+### §21 addendum 2 (Kirk): the package is the checklist
+
+Refinement of the two-era scenario: the Go package defines the STRUCTURE of
+a bandit camp — you must have a leader, you must place them on the map, you
+must declare this and that — and the constructor enforces it: fail closed at
+New(), nothing defaulted (the spike's ErrNoJournal/ErrNoBus/ErrIncompleteVerb
+pattern, extended from wiring to content). The required-config struct IS the
+future builder's form; the constructor's refusals ARE its inline guidance
+("this camp needs a leader placed"). Short-run Go structure = authoring the
+builder's checklist in the one medium that can also prove the checklist
+right. Writing rule: constructor error messages are written for the future
+form-filler, not the Go debugger — builder UX on layaway.
