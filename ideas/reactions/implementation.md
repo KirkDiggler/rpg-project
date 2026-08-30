@@ -58,7 +58,7 @@ two-cell walk takes *zero* steps when the first announcement is fatal.
 does not automatically cover the path the Done-when sentence travels. R1 created
 a second path; every subsequent ruling needed asking against both.
 
-### 2. Disengage never worked, and the test that proved it could not fail
+### 2. Disengage never worked on this stack
 
 The design said the condition's "Disengage short-circuit and its six-case suite
 all survived intact because they were never the part that broke." The suite
@@ -74,36 +74,63 @@ field nothing had written yet, on every step, forever. The machine then set
 
 Found by the first E2E to walk both real conditions through one real fold.
 
-**The reason it hid is worse than the bug.** `TestNoTriggerWhenOAPrevented`
-claimed to cover exactly this and was hollow: it never installed a cast, so
-`canReact` fell closed and no trigger fired regardless of the prevention
-sources. Deleting the check left it green.
-
-Following that shape found that **all four negative cases in the OA suite were
-hollow**, each for the same missing line. Measured, not suspected:
-
-| guard removed | test that names it | result |
-|---|---|---|
-| readiness gate | `TestNoTriggerWhenReadinessOff` | still passed |
-| not-self gate | `TestNoTriggerOnSelfMovement` | still passed |
-| leaving-reach | `TestNoTriggerWhenStillInReach` | still passed |
-| leaving-reach | `TestNoTriggerWhenMoverNeverInReach` | still passed |
-
-This is why the suite could be cited — by the design *and* the survey — as
-proof the condition worked while the game had never fired one. A suite whose
-negative half cannot fail is evidence of nothing.
-
 Fixed: prevention is applied by the machine post-fold, keyed on `TriggerKind`
 so it is exactly as narrow as the rule ("Disengage stops opportunity attacks",
-not "silences reactions"); the condition's dead check is deleted; all four
-negative cases install the cast and now fail under their own mutation.
+not "silences reactions"), and the condition's dead check is deleted. A
+predicate that reads state written later is unfixable at its own layer — see
+learning 4.
 
-**The detector that would have caught it, and now belongs in every review:**
-*can this test still fail for its stated reason?* Answer it by removing the
-guard the test names and watching it go red. A negative test that passes for
-an unrelated reason is indistinguishable from one that works.
+### 3. The OA suite's entire negative half could not fail
 
-### 3. `resolution` CAN seat real conditions — the file said otherwise
+This is the most valuable thing the slice found, and it is not a bug in the
+product.
+
+The dead check above was guarded by `TestNoTriggerWhenOAPrevented`, which
+claimed to cover exactly it and was **hollow**: it never installed a cast, so
+`canReact` fell closed and no trigger fired regardless of what the prevention
+sources said. Deleting the check left it green.
+
+Following that shape rather than stopping at the one test found that **all four
+negative cases were hollow, every one for the same single omission.** Measured
+under the mutation each names, not suspected:
+
+| guard removed | test that names it | before | after repair |
+|---|---|---|---|
+| readiness gate | `TestNoTriggerWhenReadinessOff` | still passed | fails |
+| not-self gate | `TestNoTriggerOnSelfMovement` | still passed | fails |
+| leaving-reach | `TestNoTriggerWhenStillInReach` | still passed | fails |
+| leaving-reach | `TestNoTriggerWhenMoverNeverInReach` | still passed | fails |
+
+**Root cause: one missing line each.** `canReact` reads the reactor's reaction
+slot off the cast and falls closed when there is none. No negative case
+installed a cast — the positive case always did — so the predicate never
+reached the guard under test, and every assertion was satisfied by an unrelated
+mechanism upstream of the thing being tested.
+
+**What it cost.** This is why a six-case suite could be cited — by the design
+*and* by the survey — as proof the opportunity attack worked, while the game
+had never fired one. The suite was not weak evidence; in its negative half it
+was no evidence at all. It also built the hiding place the ordering bug sat in
+for months: the one test that would have caught a dead check was structurally
+incapable of failing.
+
+Repaired: each installs the cast, and each was re-measured under its own
+mutation. Same 2333 PASS, same test names — now able to fail for their stated
+reasons.
+
+**The detector, which belongs in every review from here:** *can this test still
+fail for its stated reason?* Answer it by removing the guard the test names and
+watching it go red. Tests asserting that **nothing happened** need this most, because
+every unrelated failure upstream satisfies them.
+
+**And the measurement lesson that nearly buried it.** Deleting
+`isLeavingMyThreatRange` leaves `room` unused, which is a *build* failure — and
+a build failure prints no `--- FAIL` line. Grading "no FAIL line" as a pass
+reported those two tests as still hollow when the harness had simply failed to
+compile. **Neuter the guard (`if false && ...`), do not delete it**, and assert
+the mutant BUILDS before trusting any result it gives you.
+
+### 4. `resolution` CAN seat real conditions — the file said otherwise
 
 `movement_test.go` said this module "cannot seat one" and stood a hand-published
 trigger in for the condition. It can: resolution is the layer that attaches the
@@ -113,7 +140,7 @@ That mistaken belief is *why* the only Disengage coverage lived somewhere that
 fed a pre-populated event straight to a subscriber — a path production never
 runs. The belief created the hiding place.
 
-### 4. Lighting the economy at formation had a discriminator nobody stated
+### 5. Lighting the economy at formation had a discriminator nobody stated
 
 R2's ignition must skip monsters (no economy to light). The obvious
 implementation keys on "is there a monster sheet for this id" — and an existing
@@ -124,7 +151,7 @@ character path and failed the fight it was standing in.
 Kind is the ownership-true discriminator; store-presence was a proxy that lied.
 The pin earned its keep.
 
-### 5. Two behaviour changes the design did not name
+### 6. Two behaviour changes the design did not name
 
 - **A walk now fails if any roster character's sheet will not load.** `castFor`
   is strict for characters and tolerant for monsters ("content with no stored
@@ -138,7 +165,7 @@ The pin earned its keep.
   to assert the economy appears (`reactions_remaining: 1`), keeping the
   ordinary-walk half intact.
 
-### 6. The dead parameter the loop exposed
+### 7. The dead parameter the loop exposed
 
 Once standing went per-step, `runWalk`'s batched `down` argument was overwritten
 before first use — staticcheck SA4009. The parameter and `Manager.Move`'s
@@ -222,11 +249,9 @@ statement.
 1. A `-run` filter matching nothing prints `PASS` with no subtest line. Guarded
    by grepping the subtest name out of `-v` output.
 2. **New:** measuring *absence of a `--- FAIL` line* as a pass reads a **build
-   failure** as a passing test. Deleting `isLeavingMyThreatRange` leaves `room`
-   unused, so two hollow tests were reported as "still hollow" when the harness
-   had simply failed to compile. Neutering the guard (`if false && ...`) keeps
-   the build valid. **A mutation harness must assert the mutant BUILDS before
-   trusting its result.**
+   failure** as a passing test — **a mutation harness must assert the mutant
+   BUILDS before trusting its result.** Full account in finding 3, where it
+   nearly buried the hollowness measurement itself.
 
 **A blanket rename is a worse tool than the compiler.** `#1319` renamed
 `CharacterID` → `MemberID` in conditions — but only on the *Data* structs, not
