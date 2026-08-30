@@ -430,3 +430,50 @@ dnd5e tag namespaces. The lasting artifact is the use case itself as
 executable tests — the camp's paths as data plus generic verbs, asserted
 end-to-end — so the implementation underneath stays disposable while the
 spec accumulates. Slice filing waits for Kirk's adoption.
+
+## 16. The world module (named and ruled 2026-08-30)
+
+Kirk ratified the name: **`world`** — one toolkit module, home of three
+internal packages in strict one-way layering:
+
+```
+journal  <-  graph  <-  quest
+(memory)     (structure     (goals)
+              + present)
+```
+
+- `world/journal` — append-only, attributed, audience-scoped facts. Depends
+  on nothing. Defines the base vocabulary (fact, audience, attribution),
+  which flows UP the stack — no shared kernel exists beside the layering.
+- `world/graph` — entities, typed edges, slots, declared derivations that
+  fold journal facts into present state. Never stores what it can derive.
+- `world/quest` — templates, instances, claims, lifecycle, predicates over
+  derived state (including distribution predicates and guild-scope goals).
+  Watches; never acts.
+
+**Rulings:**
+
+- **The root package stays empty** (doc comment only). `world` is a home and
+  a shipping unit — one go.mod, one tag stream while shapes are provisional —
+  never a composer. Rulebooks import `world/journal|graph|quest`, never
+  `world`. Anything that asks to live at the root must answer "which of the
+  three owns you?" — it always has an answer. The `world.World` facade is a
+  named empty shelf, earned only if UC-1 shows call sites wiring the triple
+  by hand.
+- **Dissolution clause (falsifiable):** if the three packages ever graduate
+  to their own modules, `world` dissolves without residue — an empty shell
+  must not exist. The names survive (`world/graph` becomes `graph`).
+- **Dependency law (mechanical):** generic tools never import rulebooks;
+  rulebooks compose tools. `world` passes the refs test, so the arrow is
+  `rulebooks/* → world`, forever. The game's composer remains the rulebook
+  and session layer; `world` supplies parts, never assembles the machine.
+- **A rulebook builds its world through exactly three touchpoints — declare,
+  inject, subscribe:** declare content in world's terms (camps, slots,
+  derivations, populations — data, not code); inject resolution at the one
+  resolver seam ("resolve this attempt" — where the d20 enters; world never
+  learns what got rolled); subscribe to emissions (`QuestCompleted` → the
+  rulebook decides it means 300 XP). A different rulebook is different
+  declarations and a different resolver; the machinery doesn't change.
+- Start as ONE module with three internal packages, not three modules:
+  package boundaries are free to redraw, module boundaries mint tag
+  ceremony. UC-1 votes on the seams before any split.
