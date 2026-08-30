@@ -602,3 +602,15 @@ F7 was two questions wearing one name, split at ownership:
   law**: the recurring shape extracts the contract; we don't invent it.
 
 Status: proposed settlement; ratification at Kirk's walk of #1326.
+
+### §21 addendum (Kirk, same day): scenarios end at the builder; hold here
+
+"Scenario" is one noun in two eras: today a Go content package (engineers
+author); eventually a dungeon-builder artifact — the builder's existing
+geometry half plus a grown living-world half (entities, slots, verbs, quest
+goals). The package era discovers the field list the builder's UI will
+present; when the builder is the author, scenarios are data by construction
+(the author-decides-the-format law closing its own loop). Forward note
+only — no builder work now. Kirk: hold at this footing, nothing further
+until stable. dice.Scripted upstream DECLINED — the test-file roller is
+sufficient; do not re-pitch.
