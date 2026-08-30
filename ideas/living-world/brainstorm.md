@@ -155,6 +155,13 @@ slice issues get filed when the freeze lifts and Kirk adopts.
 - The quest/journal noun.
 - audienceFor stocking (per-player secrecy at v1.0 — ideas/perceive).
 - Advantage → +5 on passive scores.
+- The objective/goal component (promote the run-ending predicate when the
+  second goal type arrives — see §9).
+- World places as the dungeon graph at a different zoom (noodle: village
+  square is a room, the road is a corridor; travel reuses graph, walk, and
+  door-distance noise). Written down, not claimed.
+- Escortable friendly NPCs (rescue archetype = behavior-driven actor — the
+  monster-ai lane's pattern, third recurrence of the seat).
 
 Per the shelf rule: nothing gets stocked until a real use case arrives.
 
@@ -164,3 +171,54 @@ Per the shelf rule: nothing gets stocked until a real use case arrives.
 - Perception limiting of any kind (pre-v1 ruling holds).
 - Puzzles beyond door-shaped predicates.
 - Anything touching frozen dnd5e module tags (Billy's freeze, #201).
+
+## 9. Quests — core components outside the rulebook (amended 2026-08-30)
+
+Second dream session, same day. Beyond the dungeon: quests — a goal, a story
+wrapper, a resolution ("return what the goblins stole", "rescue the prisoner
+from the bandits"). Kirk's probe: is quest machinery core toolkit, outside the
+rulebook? Ruled: yes, almost all of it, split by a test we already use —
+**if it can be expressed over refs and bus events without knowing any 5e
+semantics, it is core.**
+
+Core (rulebook-free):
+
+- **A quest is a subscriber, not an actor.** It never drives anything — it
+  watches the bus (which carries the whole cast by law) and advances when
+  facts flow past: "entity X downed", "item Y possessed by party", "actor
+  reached location Z". Objectives are predicates over events; progress is a
+  ledger. Rulebook-agnostic by construction because it references refs, not
+  rules.
+- **Lifecycle**: offered → accepted → active → completed/failed. One small
+  state machine per quest.
+- **The journal** — durable story facts quests write and the future DM seat
+  reads (§6's one new noun; quests are its first writer).
+
+Rulebook (dnd5e):
+
+- What a reward *is* (XP, gold, treasure tables). Core emits
+  `QuestCompleted`; the rulebook subscribes and grants — same emit/react
+  shape as noise → monsters.
+- Check resolution on quest steps. Note: **the §4 gate recurs here
+  identically** — "persuade the barkeep to reveal the camp" is the same
+  repeated-routes gate as the stuck door. One component, two customers
+  already: the strongest evidence the gate is core.
+
+Two anchor observations:
+
+- **Quest v0 already shipped and wasn't called that.** The run-ending work —
+  boss down + reach the exit — is a goal predicate with a resolution.
+  "Retrieve the heirloom and get out" is the second instance of the shape,
+  and second instances are when generalizing becomes legal. We promote the
+  run-goal to a component; we do not invent a quest engine.
+- **Quest archetypes decompose into seams already named**: retrieval = item
+  possession + gates; rescue = escortable behavior-driven NPC; delivery =
+  places + travel (world-graph noodle, §7).
+
+Ruled (Kirk 2026-08-30): **the first real quest is single-run.** "Retrieve
+the heirloom from the tomb and make it out" lives entirely inside the
+existing run — no new persistence, no world map. It forces exactly two new
+things: the objective component and item possession. The village/return half
+stays authored flavor at run end. Cross-run quests (accept in the village,
+return for the reward) are the explicitly-named second rung, gated on the
+journal noun being earned.
