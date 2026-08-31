@@ -86,9 +86,11 @@ EquipItem counts how many other slots already reference the requested item and r
 
 No item-instance IDs are introduced. Identical mundane starting weapons have no independently mutable state that warrants separate identity.
 
+The toolkit owner projection exposes a cloned `EquipmentSlots` map directly on `EquipmentView`. The old per-item singular `Slot` projection is removed: one stack can truthfully occupy both hands, so a field that can name only one slot is not merely inconvenient but lossy. `rpg-api` maps `CharacterData.equipped` from the authoritative projected slot map instead of reconstructing it by scanning items.
+
 ### Owner projection and wire contract
 
-Toolkit `EquippedItemView` gains owned `Quantity`. The v1alpha2 encounter `Item` message gains:
+Toolkit `EquippedItemView` gains owned `Quantity`, and `EquipmentView` gains the authoritative `Equipped` slot map described above. The v1alpha2 encounter `Item` message gains:
 
 ```protobuf
 int32 quantity = 7; // total copies owned; always positive
@@ -259,7 +261,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Red/green tests allow two identical eligible category selections and still reject wrong count or ineligible items.
 - Finalization tests cover two selected martial weapons becoming one quantity-two stack and fixed javelin/dart/handaxe quantities remaining exact.
 - Equip tests cover one-copy movement, two-copy dual equip, and overdraw refusal.
-- Equipment projection tests cover positive quantity and one row per item ID.
+- Equipment projection tests cover positive quantity, one row per item ID, and the same quantity-two item ref present in both entries of the projected slot map.
 - Long-rest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, and death saves.
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
 - Activation tests prove activation-before-result event ordering, exact post-clamp healing, condition effects, capacity effects, no events on refusal, catch-up/live parity, audience, and persistence-before-recording failure behavior.
@@ -318,7 +320,7 @@ Each slice starts at the owning toolkit provider, publishes the required module 
 
 1. A valid choose-two equipment requirement accepts the same weapon twice and finalizes it as one quantity-two stack.
 2. Fixed starting quantities such as two handaxes, four javelins, and ten darts reach the owner UI truthfully.
-3. A quantity-two compatible weapon stack can occupy main hand and off hand; a quantity-one stack cannot occupy both.
+3. A quantity-two compatible weapon stack can occupy main hand and off hand; the owner projection preserves both slot entries, and a quantity-one stack cannot occupy both.
 4. Starting a dungeon invokes the attached character's normal LongRest path and persists its result before seating.
 5. HP, death saves, hit dice, spell slots, character-owned resources, and feature-owned resources follow their normal long-rest behavior.
 6. Every shipped loadable condition has a tested long-rest retain/reset/end decision.
