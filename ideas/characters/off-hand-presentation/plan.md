@@ -994,10 +994,15 @@ Open the Build PR. Run fresh independent whole-branch review, resolve findings t
 
 Create a web issue titled `feat: show owner-authoritative off-hand equipment`, add it beneath #334, create a clean `dev` worktree, and run baseline CI.
 
-Sync from the exact merged provider commit:
+Sync from the exact merged provider commit recorded after the Build PR merges:
 
 ```bash
-RPG_GAME_ASSETS_PATH=/path/to/exact/provider/worktree \
+: "${OFF_HAND_PROVIDER_MERGE_COMMIT:?set this to the verified 40-character provider merge OID}"
+provider_source=/tmp/rpg334-off-hand-provider-merged
+rm -rf "$provider_source"
+git -C /home/kirk/game-dev/rpg-game-assets worktree add \
+  --detach "$provider_source" "$OFF_HAND_PROVIDER_MERGE_COMMIT"
+RPG_GAME_ASSETS_PATH="$provider_source" \
 ASSETS_SYNC_SKIP_UPDATE=1 \
 RPG_WEB_ROOT="$PWD" \
   sh scripts/sync-game-assets.sh
