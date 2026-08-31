@@ -2,7 +2,7 @@
 
 ## Status
 
-Design approved in conversation by Kirk on 2026-08-31; written design awaits Kirk's review before implementation planning.
+Design and written specification approved by Kirk on 2026-08-31; implementation plan committed beside this document.
 
 Journey: [rpg-project#334](https://github.com/KirkDiggler/rpg-project/issues/334), **Show owner-authoritative off-hand equipment**.
 
