@@ -142,9 +142,14 @@ git commit -m "feat: compile duplicate equipment picks as stacks"
 - Modify: `rpg-toolkit/rulebooks/dnd5e/character/equipment_display.go`
 - Modify: `rpg-toolkit/rulebooks/dnd5e/character/equip_occupancy_test.go`
 - Modify: `rpg-toolkit/rulebooks/dnd5e/character/equipment_display_test.go`
+- Modify: `rpg-toolkit/rulebooks/dnd5e/character/load.go`
+- Modify: `rpg-toolkit/rulebooks/dnd5e/character/load_test.go`
+- Modify: `rpg-toolkit/rulebooks/dnd5e/character/data.go`
+- Modify only when an old malformed fixture requires it: `rpg-toolkit/rulebooks/dnd5e/character/attack_definition_test.go`
 
 **Interfaces:**
 - Consumes: canonical or legacy inventory rows and `EquipmentSlots`.
+- Strict loading rejects persisted quantity `<= 0`; lenient loading warns and drops the malformed row rather than defaulting it to one.
 - Produces:
 
 ```go
@@ -213,23 +218,34 @@ view.Equipped = maps.Clone(c.equipmentSlots)
 
 Never expose the character's mutable map.
 
-- [ ] **Step 5: Run character tests and static checks**
+- [ ] **Step 5: Add strict/lenient persisted-quantity tests and handling**
+
+Test both `0` and `-1`. Strict `Load` must return a typed invalid-argument error carrying item ID, index, and quantity. Lenient load must emit its ordinary dropped-effect warning and omit the row. Capture RED before changing `loadInventory`, then add the check before catalog resolution/append. Never interpret malformed quantity as one.
+
+If an existing strict-load test used a zero-quantity row to model absence, rewrite that fixture to omit the inventory row while retaining the same behavioral assertion and document why.
+
+- [ ] **Step 6: Run character tests and static checks**
 
 ```bash
 cd rpg-toolkit/rulebooks/dnd5e
 go test ./character -count=1
 go vet ./character/...
+golangci-lint run ./character/...
 ```
 
-Expected: PASS.
+Expected: PASS with zero lint issues.
 
-- [ ] **Step 6: Commit the occupancy/projection provider**
+- [ ] **Step 7: Commit the occupancy/projection provider**
 
 ```bash
 git add rulebooks/dnd5e/character/character.go \
   rulebooks/dnd5e/character/equipment_display.go \
   rulebooks/dnd5e/character/equip_occupancy_test.go \
-  rulebooks/dnd5e/character/equipment_display_test.go
+  rulebooks/dnd5e/character/equipment_display_test.go \
+  rulebooks/dnd5e/character/load.go \
+  rulebooks/dnd5e/character/load_test.go \
+  rulebooks/dnd5e/character/data.go \
+  rulebooks/dnd5e/character/attack_definition_test.go
 git commit -m "feat: project quantity-aware equipment occupancy"
 ```
 
@@ -254,7 +270,7 @@ cd ../../..
 make lint-all
 ```
 
-Expected: all commands pass. Run root `make pre-commit`; if the established unrelated core coverage parser defect appears, record the exact output and keep the scoped module evidence.
+Expected for the changed root D&D module: tests, vet, and module lint pass. Run root `make lint-all` and `make pre-commit`; if either stops in an unchanged module on an established repository defect, record the exact output, prove the branch has no diff in that area, and keep the scoped changed-module evidence. The known core coverage parser defect is one such root-wide blocker; do not repair unrelated modules in this slice.
 
 - [ ] **Step 2: Open the toolkit PR and wait for human merge**
 
