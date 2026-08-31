@@ -654,3 +654,51 @@ first heartbeat), F34 a Host struct when a fourth capability arrives, F36
 sight seam at three consumers. Visualization of the whole machine published:
 https://claude.ai/code/artifact/ae27af1b-cff6-4e8e-81a7-6aee62b5d48e
 Next: the sight seam, designed with Kirk.
+
+## §22 — The witness seam (ruled 2026-08-31, in session, post-graduation)
+
+The seam F15→F26→F36 waited for, designed with Kirk after four consumers
+(UC-1 through UC-4) worked around it. The hole, precisely: `audienceOf` in
+`world/verb.go` trusts "the ids the caller supplied" — content asserts who
+was standing nearby, and the world never consults itself.
+
+Rulings:
+
+- **One rung, not two.** Topological witnessing (same-room presence,
+  door-graph noise distance) REJECTED as kernel machinery — "a stop gap at
+  best." Resolution owns what is in the room; a kernel presence model is
+  dual state beside the game's authoritative one, and a generic case that
+  serves no current need. With it dies the presence-relation field the
+  scenario contract would have grown. The architect's answer is smaller.
+- **Witnessing joins dice and clocks**: a thing the kernel cannot honestly
+  answer. The `Witness` capability is injected beside Resolver and Clock —
+  supplied, never defaulted. Content keeps declaring the MODE (the existing
+  WitnessNobody/Target/Bystanders enum survives); the capability answers
+  the IDS. The kernel hands it only what the kernel owns — actor, target,
+  mode — and the host answers from its own truth: room setup, positions,
+  facing, line of sight. Examples supply a scripted witness exactly the way
+  they supply a scripted resolver.
+- **Facing has room by construction**: sneaking may not turn heads; walking
+  in turns heads. Facing and LOS live entirely inside the host's answer —
+  the kernel never learns they exist. Heads *turning* is not the
+  capability's business: reactions to witnessed facts belong to the
+  behavior lane (monster-ai's side of the seam, per §4's noise ruling).
+- **Two grains dissolve the open-door problem.** Knowledge folds on the
+  audience grain (who knows the concealed door exists — search and
+  captain-loot write it). Physical state folds on the truth grain
+  (concealed vs open — bookkeeping the world cannot be mistaken about, the
+  same move UC-4's quest objective made). A party entering later sees an
+  open door because perceiving present state is not witnessing past
+  events. Stamp-at-write governs knowledge facts; state folds are
+  timeless.
+- **Concealment is the bridging noun, and it is content-declared**: a
+  scenario marks structure concealable — one more field on the builder
+  form. Knowledge pierces concealment for the knower; the opening act ends
+  it for the world.
+
+Slices, in order: (1) world v0.2.0 — the Witness capability, `audienceOf`
+asks it, caller-supplied Bystanders dies; examples adopt at the published
+tag (the two-PR law from the graduation). (2) Concealment as declared
+state, after the capability lands. Game rung: the session's existing sight
+(squareSeam LOS, the shared 120ft ruling) implements the capability at
+adoption — the road to journey #326's secret door in the live game.
