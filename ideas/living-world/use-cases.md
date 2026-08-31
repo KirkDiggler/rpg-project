@@ -140,6 +140,58 @@ folds don't ask how.
 The seat itself, streamer tooling, tenancy/guild infra beyond party
 attribution, Discord anything, new scenarios, dnd5e changes (freeze).
 
+## UC-4: The tomb (launched 2026-08-31, after the graduation)
+
+The configuration form's proof, and the first scenario AUTHORED against the
+published `world/v0.1.0` module rather than rewired onto it — content
+written exactly as a rulebook would write it, on the `scenarios/` shelf.
+Kirk's framing: "we craft the scenarios and expose this configuration form
+to the builder."
+
+### Declared content
+
+- A boss room where the captain stands over a loot chest, and a hidden
+  room behind a secret door holding the artifact. The door is a graph edge
+  from birth — what is scoped is KNOWLEDGE of it: a location fact whose
+  audience starts as {captain}.
+- The quest: recover the artifact and make it out — the single-run quest
+  ruled in brainstorm §9, finally instantiated.
+- Two writers of the same fact:
+  - **Fight** — defeat the captain and his knowledge becomes loot; the
+    location fact transfers to the party's audience. The boss-room chest
+    is the fight's own reward, so door-finders still have a reason to
+    fight (ruled: neither path dominates).
+  - **Search** — an EXPLICIT declared search verb, margin-banded (UC-2
+    machinery). Success plants the same location fact with audience = the
+    searcher alone. Passive reveal ("the magic feel of things being
+    revealed") is ruled POLISH — the sight seam stays reserved for its
+    design round.
+- Knowing is not entering: the door carries an open check. When a knower
+  SUCCEEDS the open check, the door-opened fact lands with room-present
+  audience — now the whole party sees it.
+- Required config — the form: place the artifact, set the captain monster,
+  set the door's checks (find and open, bands each). `New()` refuses each
+  absence with a message written for the form-filler.
+
+### Assertions
+
+| claim | proves |
+|---|---|
+| `New()` without artifact, captain, or door checks refuses, each error naming the missing field in form-filler words | the config struct IS the builder form — checklist ruling, third instance |
+| A party holding no location fact gets a View with no door in it | availability is an audience fold, not a lock: nothing is gated, yet the unknown is unactable |
+| Fight path: captain down → location fact transfers → open succeeds → artifact recovered AND boss chest looted | knowledge is loot; the fight pays twice |
+| Search path: search succeeds → fact audience = searcher only → open → artifact recovered with zero combat facts in the journal | same fact, different writer; the journal's silence records the skipped fight |
+| Party-mates who failed (or never rolled) see no door until a knower succeeds the OPEN check, which broadcasts to those present | per-player detection from birth; success at the door is what shares it |
+| A failed search writes a fact and reveals nothing; the world never rewinds | no outcome invalid; append-only holds |
+
+### Non-goals
+
+Passive detection (the sight seam — reserved for the design round with
+Kirk; explicit search only), traps, new dnd5e machinery (freeze), the
+seat, tenancy, and any change to the `world` module's API — the tomb must
+be expressible with what v0.1.0 ships; friction is a finding, not a
+license to grow the kernel.
+
 ## Seeds (named, not written)
 
 - The sight seam (F15→F26): who witnesses an act, from position and
