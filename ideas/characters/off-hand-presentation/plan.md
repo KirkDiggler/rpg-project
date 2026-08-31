@@ -4,7 +4,7 @@
 
 **Goal:** Show the acting character's existing authoritative shield or supported off-hand weapon beneath `Hand_L`, without changing equipment gameplay or existing main-hand presentation.
 
-**Architecture:** A decision-first provider Learn selects one canonical shield and measures two rig-family socket receipts. A dedicated strict shield release promotes one GLB and manifest while preserving every existing character and weapon GLB hash. The web then reuses a generic bone-attachment core to project owner-private `equipped.off_hand`, mapping exact Shield and existing promoted weapon refs only.
+**Architecture:** A decision-first provider Learn selects one canonical Shield, measures two rig-family sockets, and separates shared-socket motion from item-local normalization. A dedicated strict off-hand release promotes Shield plus evidence-proven Handaxe/Sickle left-hand variants, reuses canonical Dagger/Shortsword bytes, and preserves every existing character/main-hand weapon hash. The web projects only this reviewed provider catalog from owner-private `equipped.off_hand` through a generic bone-attachment core.
 
 **Tech Stack:** Python 3, `unittest`, Blender 5 background Python, glTF 2.0/GLB, Pillow, React 19, TypeScript, Three.js/R3F/drei, Vitest, Playwright, Git/GitHub CLI.
 
@@ -16,8 +16,8 @@
 - Exact authority is existing owner-private `CharacterData.equipped.off_hand`; peer equipment remains unprojected.
 - Shield and off-hand weapons use `Hand_L`; main-hand weapons and existing `Hand_R` contracts remain unchanged.
 - Exactly one reusable left-hand socket is allowed for `townfolk-v1` and one for `modular-fantasy-hero-v1`; no item, class, or race correction table.
-- `dnd5e:item:shield` receives one reviewed provider GLB under `harness/models/synty/shields/`; existing promoted weapon GLBs are reused byte-for-byte.
-- Strict shield GLB: glTF 2.0, identity static root, true meters, POSITION/NORMAL/TEXCOORD_0/TANGENT, one source-compatible 1024² atlas, base RGBA8 ≤ 4.5 MiB, no skin/animation/camera/light.
+- The provider catalog contains exact Shield, Dagger, Shortsword, Handaxe, and Sickle refs. Dagger/Shortsword reuse canonical bytes; Handaxe/Sickle receive deterministic left-hand variants under `harness/models/synty/off-hand/`.
+- Strict generated GLBs: glTF 2.0, identity static root, true meters, POSITION/NORMAL/TEXCOORD_0/TANGENT, one source-compatible 1024² atlas, base RGBA8 ≤ 4.5 MiB, no skin/animation/camera/light.
 - Provider releases require clean tracked HEAD, sealed hash-bound inputs, validate-before-apply, rollback, transactional apply, and clean-head byte-for-byte rebuild.
 - Licensed source paths, provenance, derivatives, and GLBs remain private to `rpg-game-assets`; web tracks no licensed GLBs.
 - Use isolated worktrees, TDD, PR-only integration, fresh independent review, and publish the current-head verdict directly on every substantive PR.
@@ -30,8 +30,8 @@
 
 This plan has three sequential merge gates:
 
-1. **Learn gate:** `rpg-game-assets#102` merges an accepted shield and exact two-profile socket receipt without changing runtime outputs.
-2. **Provider gate:** a newly filed provider Build issue consumes the exact merged Learn receipt and merges the strict shield GLB/manifest.
+1. **Learn gate:** `rpg-game-assets#102` merges accepted Shield, exact two-profile socket receipts, Dagger/Shortsword reuse evidence, and Handaxe/Sickle variant transforms without changing runtime outputs.
+2. **Provider gate:** a newly filed provider Build issue consumes the exact merged Learn receipt and merges the strict off-hand catalog/GLBs.
 3. **Web gate:** a newly filed web issue consumes the exact merged provider commit and proves owner-authoritative Shield and two-weapon presentation.
 
 Do not file the Build issue before the Learn verdict. Do not file the web issue before the provider merge. A later phase reads exact values from the prior merged receipt; it never substitutes values written in this plan.
@@ -406,16 +406,18 @@ git commit -m "learn: measure shared left-hand rig contracts"
 - Create: `rpg-game-assets/evidence/102-off-hand-shield-candidates/shield-left-hand-contact-sheet.png`
 - Modify: `rpg-game-assets/evidence/102-off-hand-shield-candidates/review-config.json`
 - Create: `rpg-game-assets/evidence/102-off-hand-shield-candidates/socket-calibration.json`
+- Create: `rpg-game-assets/evidence/102-off-hand-shield-candidates/left-hand-variant-authority.json`
+- Create: `rpg-game-assets/evidence/102-off-hand-shield-candidates/off-hand-control-contact-sheet.png`
 - Modify: `rpg-game-assets/evidence/102-off-hand-shield-candidates/socket-measurements.json`
 - Create: `rpg-game-assets/scripts/test_off_hand_shield_candidate_closure.py`
 - Create: `rpg-game-assets/scripts/test_off_hand_shield_candidate_evidence.py`
 
 **Interfaces:**
-- Produces the merged Learn authority consumed by the Build phase: exactly one accepted shield, exact normalization/atlas authority, two calibrated socket profiles, complete runtime hash baseline, and Kirk's verdict.
+- Produces the merged Learn authority consumed by the Build phase: exactly one accepted Shield, exact Shield normalization/atlas authority, two calibrated socket profiles, Dagger/Shortsword reuse proof, Handaxe/Sickle variant transforms, complete runtime hash baseline, and Kirk's verdict.
 
 - [ ] **Step 1: Calibrate provisional sockets with existing normalized controls**
 
-In Blender, import exact Townfolk Fighter and one modular Fighter plus canonical Dagger, Shortsword, and one asymmetric promoted weapon. Place those assets at identity under `Hand_L`, calibrate one transform per rig family, and write exact `authoredBlenderBoneLocal` plus converted `runtimeThree` values to `socket-calibration.json`. Validate the file through `load_socket_authority()` and record its SHA-256 before candidate rendering. Do not copy/mirror `Hand_R` values without exported-GLB verification.
+In Blender, import exact Townfolk Fighter and one modular Fighter plus canonical Dagger and Shortsword. Place those assets at identity under `Hand_L`, calibrate one transform per rig family, and write exact `authoredBlenderBoneLocal` plus converted `runtimeThree` values to `socket-calibration.json`. Keep item roots observable: a user adjustment on an item root is provider normalization evidence, never a socket update. Validate the file through `load_socket_authority()` and record its SHA-256 before candidate rendering. Do not copy/mirror `Hand_R` values without exported-GLB verification.
 
 - [ ] **Step 2: Render pending source and left-hand evidence**
 
@@ -457,7 +459,7 @@ runtimeAtlasStrategy
 requireTangents=true
 ```
 
-Calibrate `townfolk-off-hand-v1` and `modular-fantasy-hero-off-hand-v1` using the accepted Shield, Dagger/Shortsword, and one asymmetric existing weapon. Regenerate socket measurements and contact sheets from the final values.
+Calibrate `townfolk-off-hand-v1` and `modular-fantasy-hero-off-hand-v1` using accepted Shield plus Dagger/Shortsword identity controls. Record exact Handaxe/Sickle item-root matrices separately in `left-hand-variant-authority.json`, decomposed into deterministic rigid `bake-static-transform-v1` inputs. Record Dagger/Shortsword as `reuse-canonical-v1`. Discard the review-only War Pick adjustment. Regenerate socket measurements and contact sheets from the final values.
 
 - [ ] **Step 5: Write failing closure tests before the final receipt**
 
@@ -473,6 +475,14 @@ def test_one_human_selection_and_two_socket_profiles_are_bound(self) -> None:
     self.assertTrue(all(row["bone"] == "Hand_L" for row in receipt["socketProfiles"]))
     self.assertEqual(4, receipt["rigCoverage"]["townfolkModels"])
     self.assertEqual(28, receipt["rigCoverage"]["modularModels"])
+    self.assertEqual(
+        ["dnd5e:item:dagger", "dnd5e:item:shortsword"],
+        receipt["offHandWeapons"]["reusedCanonicalRefs"],
+    )
+    self.assertEqual(
+        ["dnd5e:item:handaxe", "dnd5e:item:sickle"],
+        [row["ref"] for row in receipt["offHandWeapons"]["variantTransforms"]],
+    )
 ```
 
 - [ ] **Step 6: Run closure tests to verify RED**
@@ -487,7 +497,7 @@ Expected: FAIL until receipt/docs and final hashes are complete.
 
 - [ ] **Step 7: Generate the canonical Learn receipt and public-safe docs**
 
-The receipt binds every tracked authority/evidence hash, current provider commit, all existing character and weapon GLB hashes, selected source/derivative authority, source-compatible atlas, both coordinate frames, model coverage, PNG dimensions/decoded hashes, and Kirk's exact verdict. It contains no `/home/`, `/tmp/`, archive provenance disclosure, tokens, or private IDs.
+The receipt binds every tracked authority/evidence hash, current provider commit, all existing character and weapon GLB hashes, selected Shield source/normalization/atlas, both coordinate frames, Dagger/Shortsword canonical hashes, Handaxe/Sickle source hashes and reviewed rigid matrices, model coverage, PNG dimensions/decoded hashes, rejected War Pick adjustment, and Kirk's exact verdict. It contains no `/home/`, `/tmp/`, archive provenance disclosure, tokens, or private IDs.
 
 - [ ] **Step 8: Verify no runtime output changed**
 
@@ -508,7 +518,7 @@ Expected: all baseline hashes match; full suite passes with established skips on
 
 ```bash
 git add evidence/102-off-hand-shield-candidates scripts/test_off_hand_shield_candidate_*.py
-git commit -m "learn: select shield and shared left-hand sockets"
+git commit -m "learn: select shield and left-hand presentation authority"
 git push -u origin learn/102-off-hand-shield-candidates
 ```
 
@@ -516,33 +526,39 @@ Open the PR for #102. Run a fresh independent whole-branch review, fix findings 
 
 ---
 
-### Task 5: Shield Release Authority and Manifest
+### Task 5: Off-Hand Release Authority and Manifest
 
 **Files:**
-- Create: `rpg-game-assets/scripts/configs/shield-promotion/v1.json`
-- Create: `rpg-game-assets/scripts/shield_authority.py`
-- Create: `rpg-game-assets/scripts/shield_manifest.py`
-- Create: `rpg-game-assets/scripts/test_shield_authority.py`
-- Create: `rpg-game-assets/scripts/test_shield_manifest.py`
+- Create: `rpg-game-assets/scripts/configs/off-hand-promotion/v1.json`
+- Create: `rpg-game-assets/scripts/off_hand_authority.py`
+- Create: `rpg-game-assets/scripts/off_hand_manifest.py`
+- Create: `rpg-game-assets/scripts/test_off_hand_authority.py`
+- Create: `rpg-game-assets/scripts/test_off_hand_manifest.py`
 - Consume: `rpg-game-assets/evidence/102-off-hand-shield-candidates/receipt.json`
 
 **Interfaces:**
-- Produces `load_shield_release_authority(config_path, repo_root, workspace_root, provider_oid="HEAD") -> ShieldReleaseAuthority`.
-- Produces `build_shield_manifest(authority, output_root) -> dict[str, object]` with exact item and two socket profiles.
+- Produces `load_off_hand_release_authority(config_path, repo_root, workspace_root, provider_oid="HEAD") -> OffHandReleaseAuthority`.
+- Produces `build_off_hand_manifest(authority, output_root) -> dict[str, object]` with exact Shield/Dagger/Shortsword/Handaxe/Sickle items and two socket profiles.
 
 - [ ] **Step 1: After Learn merges, file and link the provider Build issue**
 
-Title: `asset: promote shield and shared left-hand socket contract`.
+Title: `asset: promote off-hand presentation provider`.
 
-The issue body copies the exact Learn merge commit, accepted candidate hash, atlas hash, normalization values, two socket profiles, existing runtime hash baseline, and Kirk verdict. Add it as a sub-issue of #334 and create a clean worktree from the merged provider `main`.
+The issue body copies the exact Learn merge commit, accepted Shield/atlas hashes, two socket profiles, Dagger/Shortsword reuse hashes, Handaxe/Sickle rigid-transform authority, existing runtime hash baseline, and Kirk verdict. Add it as a sub-issue of #334 and create a clean worktree from the merged provider `main`.
 
 - [ ] **Step 2: Write failing authority tests**
 
 ```python
 def test_authority_consumes_exact_merged_learn_receipt(self) -> None:
-    authority = load_shield_release_authority(CONFIG, ROOT, WORKSPACE)
-    self.assertEqual("dnd5e:item:shield", authority.ref)
-    self.assertEqual(PurePosixPath("harness/models/synty/shields/shield.glb"), authority.output_path)
+    authority = load_off_hand_release_authority(CONFIG, ROOT, WORKSPACE)
+    self.assertEqual(
+        ("dnd5e:item:shield", "dnd5e:item:dagger", "dnd5e:item:shortsword", "dnd5e:item:handaxe", "dnd5e:item:sickle"),
+        tuple(item.ref for item in authority.items),
+    )
+    self.assertEqual(
+        ("dnd5e:item:shield", "dnd5e:item:handaxe", "dnd5e:item:sickle"),
+        tuple(item.ref for item in authority.generated_items),
+    )
     self.assertEqual(
         ("townfolk-off-hand-v1", "modular-fantasy-hero-off-hand-v1"),
         tuple(profile.id for profile in authority.socket_profiles),
@@ -553,7 +569,7 @@ def test_authority_consumes_exact_merged_learn_receipt(self) -> None:
 - [ ] **Step 3: Run authority tests to verify RED**
 
 ```bash
-python3 -m unittest scripts.test_shield_authority scripts.test_shield_manifest -v
+python3 -m unittest scripts.test_off_hand_authority scripts.test_off_hand_manifest -v
 ```
 
 Expected: missing-module failures.
@@ -563,11 +579,10 @@ Expected: missing-module failures.
 ```json
 {
   "schemaVersion": 1,
-  "workflowVersion": "shield-provider-v1",
+  "workflowVersion": "off-hand-provider-v1",
   "learnReceiptPath": "evidence/102-off-hand-shield-candidates/receipt.json",
-  "ref": "dnd5e:item:shield",
-  "output": "harness/models/synty/shields/shield.glb",
-  "manifestPath": "harness/models/synty/shields/manifest.json",
+  "outputRoot": "harness/models/synty/off-hand",
+  "manifestPath": "harness/models/synty/off-hand/manifest.json",
   "runtimeAtlasSize": 1024,
   "budgetDecodedMB": 4.5
 }
@@ -579,37 +594,42 @@ Do not duplicate source paths, transforms, socket values, or hashes in config; l
 
 ```python
 @dataclass(frozen=True)
-class ShieldReleaseAuthority:
+class OffHandItemAuthority:
+    ref: str
+    mode: Literal["generate", "reuse"]
+    source_path: Path
+    source_sha256: str
+    output_path: PurePosixPath
+    transform: CompiledTransform | None
+    runtime_atlas_size: int
+    budget_decoded_mb: float
+    require_tangents: bool
+
+
+@dataclass(frozen=True)
+class OffHandReleaseAuthority:
     provider_oid: str
     repo_root: Path
     workspace_root: Path
     learn_receipt_path: Path
     learn_receipt_sha256: str
-    ref: str
-    source_path: Path
-    source_sha256: str
-    source_size: int
-    output_path: PurePosixPath
+    output_root: PurePosixPath
     manifest_path: PurePosixPath
-    transform: CompiledTransform
-    expected_dimensions_blender: tuple[float, float, float]
-    runtime_atlas_source: dict[str, str]
-    runtime_atlas_size: int
-    budget_decoded_mb: float
-    require_tangents: bool
+    items: tuple[OffHandItemAuthority, ...]
+    generated_items: tuple[OffHandItemAuthority, ...]
     socket_profiles: tuple[SocketProfile, SocketProfile]
 ```
 
-Reuse `compile_axis_grip_transform()` and hash/path safety from `weapon_authority`; reject dirty/untracked authority, duplicate JSON keys, unsafe paths, wrong exact ref, stale source/atlas hashes, missing Kirk verdict, or anything other than two exact `Hand_L` profiles.
+Reuse `compile_axis_grip_transform()` and hash/path safety from `weapon_authority`; reject dirty/untracked authority, duplicate JSON keys, unsafe paths, wrong exact item order, stale Shield/source/reuse hashes, missing transform evidence or Kirk verdict, or anything other than two exact `Hand_L` profiles. Handaxe/Sickle sources are the commit-bound canonical main-hand GLBs; their transforms compile from Learn matrices. Dagger/Shortsword must have `transform is None` and reuse their canonical paths directly.
 
-- [ ] **Step 6: Implement deterministic shield manifest generation**
+- [ ] **Step 6: Implement deterministic off-hand manifest generation**
 
 Build the document directly from validated authority and measured staged facts:
 
 ```python
 return {
     "schemaVersion": 1,
-    "generator": {"id": "shield-provider", "version": "1.0.0"},
+    "generator": {"id": "off-hand-provider", "version": "1.0.0"},
     "authorities": {
         "learnReceipt": {
             "path": authority.learn_receipt_path.relative_to(authority.repo_root).as_posix(),
@@ -621,48 +641,38 @@ return {
         for profile in authority.socket_profiles
     },
     "items": {
-        authority.ref: {
-            "path": "shields/shield.glb",
-            "sha256": facts.sha256,
-            "socketProfiles": [profile.id for profile in authority.socket_profiles],
-            "dimensionsMeters": list(facts.dimensions_gltf),
-            "geometry": {"triangles": facts.triangles, "vertices": facts.vertices},
-            "materials": {"count": facts.material_count},
-            "texture": shield_texture_manifest(facts, authority),
-            "source": shield_source_manifest(authority),
-            "bakedNormalization": shield_normalization_manifest(authority),
-            "runtimeCorrectionRequired": False,
-        }
+        item.ref: off_hand_manifest_entry(item, measured_facts[item.ref], authority)
+        for item in authority.items
     },
 }
 ```
 
-`socket_manifest_entry`, `shield_texture_manifest`, `shield_source_manifest`, and `shield_normalization_manifest` are pure functions with direct unit tests for complete values and canonical ordering.
+`socket_manifest_entry` and `off_hand_manifest_entry` are pure functions with direct tests for complete facts, generated-versus-reused mode, provider-normalization evidence, canonical ordering, and `runtimeCorrectionRequired: false`.
 
 - [ ] **Step 7: Run tests and commit authority**
 
 ```bash
-python3 -m unittest scripts.test_shield_authority scripts.test_shield_manifest -v
-git add scripts/configs/shield-promotion/v1.json scripts/shield_authority.py \
-  scripts/shield_manifest.py scripts/test_shield_authority.py scripts/test_shield_manifest.py
-git commit -m "asset: define strict shield release authority"
+python3 -m unittest scripts.test_off_hand_authority scripts.test_off_hand_manifest -v
+git add scripts/configs/off-hand-promotion/v1.json scripts/off_hand_authority.py \
+  scripts/off_hand_manifest.py scripts/test_off_hand_authority.py scripts/test_off_hand_manifest.py
+git commit -m "asset: define strict off-hand release authority"
 ```
 
 ---
 
-### Task 6: Transactional Shield Stage and Apply
+### Task 6: Transactional Off-Hand Stage and Apply
 
 **Files:**
 - Create: `rpg-game-assets/scripts/static_release_transaction.py`
 - Create: `rpg-game-assets/scripts/test_static_release_transaction.py`
-- Create: `rpg-game-assets/scripts/promote_shield.py`
-- Create: `rpg-game-assets/scripts/test_promote_shield.py`
+- Create: `rpg-game-assets/scripts/promote_off_hand.py`
+- Create: `rpg-game-assets/scripts/test_promote_off_hand.py`
 - Modify: `rpg-game-assets/scripts/build_mesh_stats.py`
 - Modify: `rpg-game-assets/scripts/build_web_asset_catalog.py`
 - Modify: `rpg-game-assets/scripts/test_build_web_asset_catalog.py`
 
 **Interfaces:**
-- Produces `promote_shield.py stage|validate|apply|check` with the same clean-head/seal/rollback lifecycle as `promote_weapons.py`.
+- Produces `promote_off_hand.py stage|validate|apply|check` with the same clean-head/seal/rollback lifecycle as `promote_weapons.py`.
 - Produces generic `atomic_apply_targets(repo_root, staged_root, targets, inject_failure_after=None)` with byte rollback.
 
 - [ ] **Step 1: Write failing transaction tests**
@@ -687,17 +697,19 @@ Expected: missing module/function.
 
 - [ ] **Step 3: Implement the generic atomic target transaction**
 
-Move no weapon semantics. Implement only portable target validation, snapshot, fsync/replace, injected-failure support, reverse-order rollback, and cleanup. Reuse the function from `promote_shield.py`; leave `promote_weapons.py` unchanged in this slice unless a separate behavior-preserving extraction proves necessary.
+Move no weapon semantics. Implement only portable target validation, snapshot, fsync/replace, injected-failure support, reverse-order rollback, and cleanup. Reuse the function from `promote_off_hand.py`; leave `promote_weapons.py` unchanged in this slice unless a separate behavior-preserving extraction proves necessary.
 
-- [ ] **Step 4: Write failing shield-stage tests**
+- [ ] **Step 4: Write failing off-hand-stage tests**
 
 ```python
-def test_stage_contains_exact_four_generated_targets(self) -> None:
+def test_stage_contains_exact_six_generated_targets(self) -> None:
     seal = stage_release(self.args)
     self.assertEqual(
         {
-            "harness/models/synty/shields/shield.glb",
-            "harness/models/synty/shields/manifest.json",
+            "harness/models/synty/off-hand/shield.glb",
+            "harness/models/synty/off-hand/handaxe.glb",
+            "harness/models/synty/off-hand/sickle.glb",
+            "harness/models/synty/off-hand/manifest.json",
             "harness/models/synty/mesh-stats.json",
             "harness/catalogs/synty-complete-inventory.json",
         },
@@ -706,22 +718,23 @@ def test_stage_contains_exact_four_generated_targets(self) -> None:
 
 
 def test_validation_requires_strict_static_semantics(self) -> None:
-    gltf, _ = read_glb(self.stage / "release/harness/models/synty/shields/shield.glb")
-    for mesh in gltf["meshes"]:
-        for primitive in mesh["primitives"]:
-            self.assertTrue({"POSITION", "NORMAL", "TEXCOORD_0", "TANGENT"} <= set(primitive["attributes"]))
+    for name in ("shield.glb", "handaxe.glb", "sickle.glb"):
+        gltf, _ = read_glb(self.stage / "release/harness/models/synty/off-hand" / name)
+        for mesh in gltf["meshes"]:
+            for primitive in mesh["primitives"]:
+                self.assertTrue({"POSITION", "NORMAL", "TEXCOORD_0", "TANGENT"} <= set(primitive["attributes"]))
 ```
 
 
-- [ ] **Step 5: Run shield-stage tests to verify RED**
+- [ ] **Step 5: Run off-hand-stage tests to verify RED**
 
 ```bash
-python3 -m unittest scripts.test_promote_shield -v
+python3 -m unittest scripts.test_promote_off_hand -v
 ```
 
 Expected: missing stage implementation.
 
-- [ ] **Step 6: Implement shield normalization/staging**
+- [ ] **Step 6: Implement off-hand normalization/staging**
 
 Use existing tested primitives:
 
@@ -738,25 +751,26 @@ from weapon_glb import (
 The names remain historical; behavior is valid for strict static equipment. Stage in this order:
 
 1. verify clean tracked HEAD and commit-bound inputs;
-2. normalize selected source using the Learn transform;
-3. add tangents only if absent;
-4. rewrite/resize only the source-compatible atlas to 1024²;
-5. validate identity root and strict semantics;
-6. build shield manifest from measured staged bytes;
-7. regenerate mesh stats and complete inventory;
-8. write a canonical seal with provider OID, input records, prestate, target records, and tree SHA;
-9. validate before any canonical apply.
+2. normalize selected Shield source using its Learn transform;
+3. transform canonical Handaxe/Sickle GLBs using the reviewed rigid variant transforms while preserving their embedded atlases;
+4. add tangents only if absent;
+5. rewrite/resize only the Shield's source-compatible atlas to 1024²;
+6. validate all three generated identity-root outputs and exact Dagger/Shortsword reuse hashes;
+7. build the five-item off-hand manifest from measured staged/reused bytes;
+8. regenerate mesh stats and complete inventory;
+9. write a canonical seal with provider OID, input records, prestate, target records, and tree SHA;
+10. validate before any canonical apply.
 
-- [ ] **Step 7: Extend runtime catalog generation for `shields/`**
+- [ ] **Step 7: Extend runtime catalog generation for `off-hand/`**
 
-Add `harness/models/synty/shields/manifest.json` as a supported runtime root without changing weapon entries. Tests assert one exact Shield item and unchanged 27 weapon item hashes.
+Add `harness/models/synty/off-hand/manifest.json` as a supported runtime root without changing main-hand weapon entries. Tests assert the exact five-item off-hand order, three generated paths, Dagger/Shortsword reuse paths, and unchanged 27 main-hand weapon hashes.
 
 - [ ] **Step 8: Run release-tooling and weapon-regression tests**
 
 ```bash
 python3 -m unittest \
   scripts.test_static_release_transaction \
-  scripts.test_promote_shield \
+  scripts.test_promote_off_hand \
   scripts.test_build_web_asset_catalog \
   scripts.test_promote_weapons -v
 ```
@@ -769,31 +783,33 @@ Expected: PASS, including rollback injection and unchanged weapon-pipeline behav
 git add \
   scripts/static_release_transaction.py \
   scripts/test_static_release_transaction.py \
-  scripts/promote_shield.py \
-  scripts/test_promote_shield.py \
+  scripts/promote_off_hand.py \
+  scripts/test_promote_off_hand.py \
   scripts/build_mesh_stats.py \
   scripts/build_web_asset_catalog.py \
   scripts/test_build_web_asset_catalog.py
-git commit -m "asset: add transactional shield release pipeline"
+git commit -m "asset: add transactional off-hand release pipeline"
 test -z "$(git status --porcelain -uall)"
 ```
 
-Do not stage, apply, or create canonical Shield outputs until the evidence tooling in Task 7 is also committed and the tracked provider HEAD is clean.
+Do not stage, apply, or create canonical off-hand outputs until the evidence tooling in Task 7 is also committed and the tracked provider HEAD is clean.
 
 ---
 
 ### Task 7: Provider Evidence, Clean Rebuild, and Merge Gate
 
 **Files:**
-- Create: `rpg-game-assets/scripts/render_promoted_shield_evidence.py`
-- Create: `rpg-game-assets/scripts/shield_release_evidence.py`
-- Create: `rpg-game-assets/scripts/test_shield_release_evidence.py`
-- Create: `rpg-game-assets/scripts/test_off_hand_shield_provider.py`
-- Create: `rpg-game-assets/evidence/334-off-hand-shield-provider/README.md`
-- Create: `rpg-game-assets/evidence/334-off-hand-shield-provider/receipt.json`
-- Create: `rpg-game-assets/evidence/334-off-hand-shield-provider/off-hand-shield-provider-contact-sheet.png`
-- Create: `rpg-game-assets/harness/models/synty/shields/shield.glb`
-- Create: `rpg-game-assets/harness/models/synty/shields/manifest.json`
+- Create: `rpg-game-assets/scripts/render_promoted_off_hand_evidence.py`
+- Create: `rpg-game-assets/scripts/off_hand_release_evidence.py`
+- Create: `rpg-game-assets/scripts/test_off_hand_release_evidence.py`
+- Create: `rpg-game-assets/scripts/test_off_hand_provider.py`
+- Create: `rpg-game-assets/evidence/334-off-hand-provider/README.md`
+- Create: `rpg-game-assets/evidence/334-off-hand-provider/receipt.json`
+- Create: `rpg-game-assets/evidence/334-off-hand-provider/off-hand-provider-contact-sheet.png`
+- Create: `rpg-game-assets/harness/models/synty/off-hand/shield.glb`
+- Create: `rpg-game-assets/harness/models/synty/off-hand/handaxe.glb`
+- Create: `rpg-game-assets/harness/models/synty/off-hand/sickle.glb`
+- Create: `rpg-game-assets/harness/models/synty/off-hand/manifest.json`
 - Modify: `rpg-game-assets/harness/models/synty/mesh-stats.json`
 - Modify: `rpg-game-assets/harness/catalogs/synty-complete-inventory.json`
 
@@ -804,10 +820,13 @@ Do not stage, apply, or create canonical Shield outputs until the evidence tooli
 - [ ] **Step 1: Write failing release-evidence tests**
 
 ```python
-def test_receipt_binds_shield_two_sockets_and_existing_hashes(self) -> None:
+def test_receipt_binds_off_hand_items_two_sockets_and_existing_hashes(self) -> None:
     receipt = build_receipt(self.validated_fixture_stage)
-    self.assertEqual("dnd5e:item:shield", receipt["shield"]["ref"])
-    self.assertEqual(["townfolk-off-hand-v1", "modular-fantasy-hero-off-hand-v1"], receipt["shield"]["socketProfiles"])
+    self.assertEqual(
+        ["dnd5e:item:shield", "dnd5e:item:dagger", "dnd5e:item:shortsword", "dnd5e:item:handaxe", "dnd5e:item:sickle"],
+        [row["ref"] for row in receipt["offHandItems"]],
+    )
+    self.assertEqual(["townfolk-off-hand-v1", "modular-fantasy-hero-off-hand-v1"], receipt["socketProfiles"])
     self.assertEqual(27, len(receipt["existingWeaponBaseline"]))
     self.assertEqual(32, len(receipt["existingCharacterBaseline"]))
 ```
@@ -815,7 +834,7 @@ def test_receipt_binds_shield_two_sockets_and_existing_hashes(self) -> None:
 - [ ] **Step 2: Run the test to verify RED**
 
 ```bash
-python3 -m unittest scripts.test_shield_release_evidence -v
+python3 -m unittest scripts.test_off_hand_release_evidence -v
 ```
 
 - [ ] **Step 3: Implement sealed-stage evidence tooling**
@@ -827,48 +846,53 @@ The renderer accepts only an external validated stage and produces:
 - Human Fighter Longsword + Shield Idle/Walk;
 - Human Fighter Shortsword + Dagger Idle/Walk;
 - one modular Fighter for the same three states; and
-- close hand/grip views for Shield, Dagger/Shortsword, and asymmetric weapon controls.
+- close hand/grip views for Shield, reused Dagger/Shortsword, and variant Handaxe/Sickle controls.
 
-It refuses canonical provider outputs, stale seal hashes, wrong model/weapon controls, symlinks, PNG metadata, or writes outside its explicit output path. `shield_release_evidence.py` records provider commit, seal/tree hashes, Learn receipt hash, Shield/manifest hashes, strict GLB facts, both socket profiles, all 27 weapon hashes, all 4 Townfolk + 28 modular character hashes, atlas/base/mip facts, PNG byte/decoded hashes, and Kirk's provider-sheet verdict.
+It refuses canonical provider outputs, stale seal hashes, wrong model/weapon controls, symlinks, PNG metadata, or writes outside its explicit output path. `off_hand_release_evidence.py` records provider commit, seal/tree hashes, Learn receipt hash, all five catalog item hashes/modes, strict generated GLB facts, both socket profiles, all 27 main-hand weapon hashes, all 4 Townfolk + 28 modular character hashes, atlas/base/mip facts, PNG byte/decoded hashes, and Kirk's provider-sheet verdict.
 
 - [ ] **Step 4: Run unit tests and commit evidence tooling**
 
 ```bash
 python3 -m unittest \
-  scripts.test_shield_release_evidence \
+  scripts.test_off_hand_release_evidence \
   scripts.test_render_promoted_weapon_evidence \
   scripts.test_weapon_release_evidence -v
 git add \
-  scripts/render_promoted_shield_evidence.py \
-  scripts/shield_release_evidence.py \
-  scripts/test_shield_release_evidence.py
-git commit -m "asset: add sealed shield release evidence"
+  scripts/render_promoted_off_hand_evidence.py \
+  scripts/off_hand_release_evidence.py \
+  scripts/test_off_hand_release_evidence.py
+git commit -m "asset: add sealed off-hand release evidence"
 test -z "$(git status --porcelain -uall)"
 ```
 
 - [ ] **Step 5: Build and validate the clean sealed stage**
 
 ```bash
-stage=/tmp/rpg334-shield-stage
+stage=/tmp/rpg334-off-hand-stage
 rm -rf "$stage"
-python3 scripts/promote_shield.py stage \
-  --config scripts/configs/shield-promotion/v1.json \
+python3 scripts/promote_off_hand.py stage \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --workspace-root /home/kirk/game-dev \
   --stage-root "$stage"
-python3 scripts/promote_shield.py validate \
-  --config scripts/configs/shield-promotion/v1.json \
+python3 scripts/promote_off_hand.py validate \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --stage-root "$stage"
 ```
 
-Expected: the seal binds the clean tracked HEAD containing all release/evidence code and contains exactly the four canonical target records.
+Expected: the seal binds the clean tracked HEAD containing all release/evidence code and contains exactly the six canonical target records.
 
 - [ ] **Step 6: Write the production closure test and verify RED**
 
 ```python
 def test_canonical_receipt_matches_applied_outputs(self) -> None:
     receipt = json.loads((EVIDENCE / "receipt.json").read_text())
-    self.assertEqual("dnd5e:item:shield", receipt["shield"]["ref"])
-    self.assertEqual(receipt["shield"]["sha256"], sha256(ROOT / "harness/models/synty/shields/shield.glb"))
+    self.assertEqual(
+        ["dnd5e:item:shield", "dnd5e:item:dagger", "dnd5e:item:shortsword", "dnd5e:item:handaxe", "dnd5e:item:sickle"],
+        [row["ref"] for row in receipt["offHandItems"]],
+    )
+    for name in ("shield.glb", "handaxe.glb", "sickle.glb"):
+        row = next(item for item in receipt["offHandItems"] if item.get("generatedPath", "").endswith(name))
+        self.assertEqual(row["sha256"], sha256(ROOT / "harness/models/synty/off-hand" / name))
     self.assertEqual(27, len(receipt["existingWeaponBaseline"]))
     self.assertEqual(32, len(receipt["existingCharacterBaseline"]))
 ```
@@ -876,7 +900,7 @@ def test_canonical_receipt_matches_applied_outputs(self) -> None:
 Run:
 
 ```bash
-python3 -m unittest scripts.test_off_hand_shield_provider -v
+python3 -m unittest scripts.test_off_hand_provider -v
 ```
 
 Expected: FAIL because canonical receipt/output files are not applied.
@@ -884,13 +908,13 @@ Expected: FAIL because canonical receipt/output files are not applied.
 - [ ] **Step 7: Render and generate evidence from immutable stage bytes**
 
 ```bash
-mkdir -p evidence/334-off-hand-shield-provider
-blender --background --python scripts/render_promoted_shield_evidence.py -- \
+mkdir -p evidence/334-off-hand-provider
+blender --background --python scripts/render_promoted_off_hand_evidence.py -- \
   --stage-release-root "$stage/release" \
-  --output-sheet evidence/334-off-hand-shield-provider/off-hand-shield-provider-contact-sheet.png
-python3 scripts/shield_release_evidence.py build \
+  --output-sheet evidence/334-off-hand-provider/off-hand-provider-contact-sheet.png
+python3 scripts/off_hand_release_evidence.py build \
   --stage-root "$stage" \
-  --evidence-root evidence/334-off-hand-shield-provider
+  --evidence-root evidence/334-off-hand-provider
 ```
 
 - [ ] **Step 8: Stop for Kirk's sealed provider visual approval**
@@ -900,18 +924,20 @@ Do not apply if Kirk rejects scale, facing, grip, or silhouette. Correct provide
 - [ ] **Step 9: Apply only approved bytes and commit outputs/evidence**
 
 ```bash
-python3 scripts/promote_shield.py apply --stage-root "$stage"
-python3 -m unittest scripts.test_off_hand_shield_provider -v
+python3 scripts/promote_off_hand.py apply --stage-root "$stage"
+python3 -m unittest scripts.test_off_hand_provider -v
 git add \
-  scripts/test_off_hand_shield_provider.py \
-  harness/models/synty/shields/shield.glb \
-  harness/models/synty/shields/manifest.json \
+  scripts/test_off_hand_provider.py \
+  harness/models/synty/off-hand/shield.glb \
+  harness/models/synty/off-hand/handaxe.glb \
+  harness/models/synty/off-hand/sickle.glb \
+  harness/models/synty/off-hand/manifest.json \
   harness/models/synty/mesh-stats.json \
   harness/catalogs/synty-complete-inventory.json \
-  evidence/334-off-hand-shield-provider
-git commit -m "asset: promote canonical off-hand shield"
-python3 scripts/promote_shield.py check \
-  --config scripts/configs/shield-promotion/v1.json \
+  evidence/334-off-hand-provider
+git commit -m "asset: promote owner off-hand presentation provider"
+python3 scripts/promote_off_hand.py check \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --workspace-root /home/kirk/game-dev
 ```
 
@@ -923,15 +949,15 @@ git diff --check origin/main...HEAD
 
 git worktree add --detach /tmp/rpg334-provider-rebuild HEAD
 cd /tmp/rpg334-provider-rebuild
-python3 scripts/promote_shield.py stage \
-  --config scripts/configs/shield-promotion/v1.json \
+python3 scripts/promote_off_hand.py stage \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --workspace-root /home/kirk/game-dev \
-  --stage-root /tmp/rpg334-shield-clean-rebuild
-python3 scripts/promote_shield.py validate \
-  --config scripts/configs/shield-promotion/v1.json \
-  --stage-root /tmp/rpg334-shield-clean-rebuild
-python3 scripts/promote_shield.py check \
-  --config scripts/configs/shield-promotion/v1.json \
+  --stage-root /tmp/rpg334-off-hand-clean-rebuild
+python3 scripts/promote_off_hand.py validate \
+  --config scripts/configs/off-hand-promotion/v1.json \
+  --stage-root /tmp/rpg334-off-hand-clean-rebuild
+python3 scripts/promote_off_hand.py check \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --workspace-root /home/kirk/game-dev
 ```
 
@@ -985,7 +1011,7 @@ Verify the ignored shield/manifest bytes against provider hashes before tests or
 it('attaches an asset beneath the configured bone with unit compensation', () => {
   const result = attachBoneObject(root, asset, {
     ref: 'dnd5e:item:shield',
-    assetUrl: '/models/synty/shields/shield.glb',
+    assetUrl: '/models/synty/off-hand/shield.glb',
     socket: {
       bone: 'Hand_L',
       boneUnitMeters: 0.01,
@@ -1080,12 +1106,12 @@ git commit -m "refactor: share rigid hand attachment core"
 - [ ] **Step 1: Write failing exact-resolution tests**
 
 ```ts
-it('maps only exact shield and existing promoted item refs', () => {
+it('maps only exact refs in the reviewed off-hand provider catalog', () => {
   expect(resolveOffHandPresentation(equipped('item', 'shield'))).toMatchObject({
     code: 'mapped',
     presentation: {
       ref: 'dnd5e:item:shield',
-      assetUrl: '/models/synty/shields/shield.glb',
+      assetUrl: '/models/synty/off-hand/shield.glb',
       assetKind: 'shield',
     },
   });
@@ -1097,6 +1123,25 @@ it('maps only exact shield and existing promoted item refs', () => {
       assetKind: 'weapon',
     },
   });
+  expect(resolveOffHandPresentation(equipped('item', 'handaxe'))).toMatchObject({
+    code: 'mapped',
+    presentation: {
+      ref: 'dnd5e:item:handaxe',
+      assetUrl: '/models/synty/off-hand/handaxe.glb',
+      assetKind: 'weapon',
+    },
+  });
+  expect(resolveOffHandPresentation(equipped('item', 'sickle'))).toMatchObject({
+    code: 'mapped',
+    presentation: {
+      ref: 'dnd5e:item:sickle',
+      assetUrl: '/models/synty/off-hand/sickle.glb',
+      assetKind: 'weapon',
+    },
+  });
+  expect(resolveOffHandPresentation(equipped('item', 'war-pick'))).toEqual({
+    code: 'unmapped-ref', ref: 'dnd5e:item:war-pick',
+  });
   expect(resolveOffHandPresentation(equipped('item', 'unknown'))).toEqual({
     code: 'unmapped-ref', ref: 'dnd5e:item:unknown',
   });
@@ -1106,7 +1151,7 @@ it('maps only exact shield and existing promoted item refs', () => {
 });
 ```
 
-Also assert missing `off_hand` is empty, the resolver reuses each of the exact 27 `CURRENT_MAIN_HAND_WEAPONS` URLs, and no handedness/property table exists.
+Also assert missing `off_hand` is empty, exact Shortsword reuses `/models/synty/weapons/shortsword.glb`, catalog order is Shield/Dagger/Shortsword/Handaxe/Sickle, every other main-hand ref remains unsupported, and no handedness/property table or transform catalog exists.
 
 - [ ] **Step 2: Run tests to verify RED**
 
@@ -1116,7 +1161,7 @@ npx vitest run src/components/hex-grid/offHandEquipment.test.ts
 
 - [ ] **Step 3: Implement exact definitions and socket constants**
 
-Copy the two exact `runtimeThree` profiles by value from the merged provider shield manifest, with provider commit/manifest hash comments. Define:
+Copy the two exact `runtimeThree` profiles and five exact item definitions by value from the merged off-hand provider manifest, with provider commit/manifest hash comments. Define:
 
 ```ts
 export interface OffHandPresentation extends BonePresentation {
@@ -1124,7 +1169,7 @@ export interface OffHandPresentation extends BonePresentation {
 }
 ```
 
-Build the weapon lookup directly from `CURRENT_MAIN_HAND_WEAPONS`; do not duplicate the 27-entry array.
+Build a five-item presentation-support lookup from the exact provider manifest. Dagger/Shortsword URLs point to canonical weapon files; Handaxe/Sickle URLs point to generated off-hand files. Do not infer support from weapon properties or the main-hand catalog.
 
 - [ ] **Step 4: Implement the semantic off-hand wrapper**
 
@@ -1409,8 +1454,8 @@ git commit -m "docs: record owner off-hand presentation evidence"
 
 ```bash
 python3 -m unittest discover -s scripts -p 'test_*.py'
-python3 scripts/promote_shield.py check \
-  --config scripts/configs/shield-promotion/v1.json \
+python3 scripts/promote_off_hand.py check \
+  --config scripts/configs/off-hand-promotion/v1.json \
   --workspace-root /home/kirk/game-dev
 git diff --check origin/main...HEAD
 test -z "$(git status --porcelain -uall)"

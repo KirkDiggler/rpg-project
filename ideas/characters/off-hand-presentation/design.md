@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and written specification approved by Kirk on 2026-08-31; implementation plan committed beside this document.
+Design and written specification approved by Kirk on 2026-08-31. Kirk approved the evidence-driven left-hand provider-variant amendment later that day after Blender controls disproved unchanged-GLB compatibility for Handaxe and Sickle.
 
 Journey: [rpg-project#334](https://github.com/KirkDiggler/rpg-project/issues/334), **Show owner-authoritative off-hand equipment**.
 
@@ -35,7 +35,7 @@ Kirk approved these decisions on 2026-08-31:
 3. **Full foundation, not a shortcut.** Promote a reviewed shield and establish reusable left-hand attachment. Do not wire the guessed legacy OBJ shield.
 4. **One hookup per rig family.** Townfolk and modular rigs each receive one reusable `Hand_L` socket. No class, race, shield, or weapon correction table is allowed.
 5. **Provider owns item normalization.** Scale, axes, grip origin, atlas, normals, tangents, and shield geometry offset from its grip are baked into provider bytes.
-6. **Reuse existing weapons unchanged.** An exact already-promoted off-hand weapon uses its existing GLB. A left-hand socket, not a second mirrored asset, places it.
+6. **Reuse when identity proves compatible; derive when evidence disproves it.** Dagger and Shortsword reuse their canonical GLBs unchanged. A weapon that demonstrably needs left-hand normalization receives a deterministic provider-baked off-hand variant; no runtime transform or web correction table is allowed. The first proven variants are Handaxe and Sickle.
 7. **Authority without rule duplication.** Web trusts the server-owned slot. It does not decide whether a weapon is light, whether dual wielding is legal, whether a shield changes AC, or whether a two-handed weapon clears the other hand.
 8. **Owner only.** Only the acting player's private equipment drives this presentation.
 9. **Main hand remains stable.** Existing `Hand_R` sockets, 27 weapon mappings, owner routing, fallbacks, and hashes remain unchanged.
@@ -47,7 +47,7 @@ Kirk approved these decisions on 2026-08-31:
 
 Promote one exact shield GLB, measure one left-hand socket per existing rig family, and project owner-authoritative `off_hand` into a shared bone-attachment renderer. Shield and weapon assets share the socket convention; their provider geometry owns shape-specific placement relative to the grip.
 
-This creates one durable seam for shields and dual wielding while preserving existing game authority.
+This creates one durable seam for shields and dual wielding while preserving existing game authority. Visual controls proved that one socket can serve every reviewed item, but asymmetric weapon roll is not consistent across the original right-hand-normalized provider bytes. Provider-baked left-hand variants resolve that asset fact without weakening the socket contract.
 
 ### Finish the next four main-hand weapons first — deferred
 
@@ -95,22 +95,20 @@ It resolves to one canonical reviewed model. Round, kite, and tower silhouettes 
 
 A weak, semantically misleading, incomplete, or source-incompatible candidate is rejected. A hash-bound authored derivative is allowed only if no source-faithful complete candidate satisfies the shield contract.
 
-### Shield GLB contract
+### Off-hand provider contract
 
-Use a dedicated shield contract rather than inserting a non-weapon into the weapon manifest:
-
-```text
-harness/models/synty/shields/manifest.json
-harness/models/synty/shields/shield.glb
-```
-
-The exact public runtime path is:
+Use a dedicated off-hand contract rather than inserting a shield or left-hand variants into the main weapon manifest:
 
 ```text
-/models/synty/shields/shield.glb
+harness/models/synty/off-hand/manifest.json
+harness/models/synty/off-hand/shield.glb
+harness/models/synty/off-hand/handaxe.glb
+harness/models/synty/off-hand/sickle.glb
 ```
 
-The shield must satisfy the same strict static glTF subset as promoted weapons:
+The first manifest also binds reused canonical Dagger and Shortsword paths/hashes. Exact public runtime paths for generated outputs live under `/models/synty/off-hand/`.
+
+Every generated off-hand GLB must satisfy the same strict static glTF subset as promoted weapons:
 
 - glTF 2.0;
 - one static identity root in the canonical grip frame;
@@ -125,17 +123,19 @@ The shield must satisfy the same strict static glTF subset as promoted weapons:
 Grip-space convention:
 
 - root origin is the center of the intended left-hand grip;
-- local `+Y` runs from the grip toward the shield's upper edge;
-- local `+Z` is the outward-facing shield front;
-- any center offset between the grip and shield face is baked into mesh geometry;
+- local `+Y` runs from the grip toward the item's primary working end or the shield's upper edge;
+- local `+Z` is the authored presentation front;
+- any center, roll, or grip offset is baked into mesh geometry;
 - the identity root is valid at the shared socket; and
-- no web transform is specific to `shield`.
+- no web transform is specific to Shield, Handaxe, Sickle, or any other item.
+
+Handaxe and Sickle variants use their exact canonical provider GLBs as repository-bound source bytes. A deterministic rigid `bake-static-transform-v1` operation applies the human-reviewed item-local matrix to POSITION and direction semantics, preserves the embedded source-compatible atlas, and emits an identity root. Their original main-hand files and hashes never change. Dagger and Shortsword remain byte-reused because identity controls passed.
 
 Detailed licensed source paths, provenance, derivatives, checkpoints, and atlas content remain private in `rpg-game-assets`.
 
 ### Cumulative-release invariants
 
-The shield promotion is cumulative and transactional:
+The off-hand promotion is cumulative and transactional:
 
 - preserve every canonical character GLB hash at the selected clean provider base;
 - preserve all 27 canonical weapon GLB hashes;
@@ -145,7 +145,7 @@ The shield promotion is cumulative and transactional:
 - apply transactionally; and
 - rebuild every cumulative release target from a clean worktree and compare byte-for-byte.
 
-The shield contract may reuse generic static-GLB, atlas, tangent, release-evidence, and transactional-apply machinery. It must not weaken weapon validation to make the new kind fit.
+The off-hand contract may reuse generic static-GLB, atlas, tangent, rigid-transform, release-evidence, and transactional-apply machinery. It must not weaken weapon validation to make the new kind fit.
 
 ## Shared left-hand socket contracts
 
@@ -169,11 +169,11 @@ The values are authored and verified in exported glTF/Three.js joint-local coord
 
 The sockets are calibrated with normalized assets at identity:
 
-1. canonical shield;
-2. one symmetric/simple existing weapon such as Dagger or Shortsword; and
-3. one visibly asymmetric existing weapon to prove the socket does not rely on accidental symmetry.
+1. canonical Shield after provider normalization;
+2. canonical Dagger and Shortsword, whose identity controls passed; and
+3. provider-baked Handaxe and Sickle left-hand variants, whose original canonical bytes required different item-local transforms.
 
-All assets must fit without changing the socket. If the shield needs a nudge, its provider normalization is wrong. If one weapon needs a nudge, its existing grip normalization or the proposed left socket is wrong. No consumer exception is accepted.
+All runtime assets must fit without changing the socket. If an item needs a nudge, either its off-hand provider normalization is wrong or it is not yet in the supported presentation catalog. No consumer exception is accepted. Review-only War Pick adjustment is explicitly discarded: it is not part of the current valid pairing proof and never enters runtime authority.
 
 Automated checks inspect all four current Townfolk class aliases and all 28 current modular race × class standing GLBs. Rig-family profiles may differ from each other; entries within a family may not.
 
@@ -195,13 +195,14 @@ type OffHandPresentation = {
 Resolution rules:
 
 1. Absent `off_hand` returns `undefined`.
-2. Exact `dnd5e:item:shield` resolves to the promoted shield URL.
-3. An exact `dnd5e:item:*` ref already in the promoted weapon presentation catalog reuses that exact weapon URL unchanged.
-4. Unknown item refs return `undefined`.
-5. Attack-shaped refs such as `dnd5e:weapons:dagger` return `undefined`.
-6. No visual similarity fallback is allowed.
+2. Exact `dnd5e:item:shield` resolves to the promoted off-hand Shield URL.
+3. Exact Dagger and Shortsword refs reuse their canonical weapon URLs.
+4. Exact Handaxe and Sickle refs resolve to their provider-baked off-hand variant URLs.
+5. An unreviewed/unsupported item ref returns `undefined`, even when that item has a main-hand presentation.
+6. Attack-shaped refs such as `dnd5e:weapons:dagger` return `undefined`.
+7. No visual similarity fallback is allowed.
 
-The resolver does not filter by weapon properties. If authoritative state contains a promoted exact weapon in `off_hand`, presentation shows it. The server is the only owner of whether that state is legal.
+This is a presentation-support catalog, not a legality table. It records only refs with reviewed provider bytes. The server remains the only owner of whether any item may occupy `off_hand`.
 
 ### Shared attachment core
 
@@ -275,9 +276,10 @@ The first implementation issue is a private provider Learn slice:
 3. Build public-safe source and grip contact sheets without exposing licensed paths or provenance.
 4. Show the actual visual choices to Kirk before hardening promotion configuration.
 5. Reject misleading candidates; author a hash-bound derivative only if necessary.
-6. Calibrate provisional Townfolk and modular `Hand_L` sockets with the selected shield and existing normalized weapons.
-7. Verify Idle and Walk contact without altering animation.
-8. Record Kirk's exact selection and accepted canonical size.
+6. Calibrate provisional Townfolk and modular `Hand_L` sockets with selected Shield, Dagger, and Shortsword controls.
+7. Record evidence-proven item-local adjustments separately from the shared socket; bake approved Handaxe/Sickle adjustments into deterministic provider variants and discard the review-only War Pick adjustment.
+8. Verify Idle and Walk contact without altering animation.
+9. Record Kirk's exact selection, accepted canonical size, socket transforms, reused refs, and variant transforms.
 
 Kirk owns the visual choice. The agent owns source authority, transform math, derivative determinism, validation, tests, and sequencing.
 
@@ -286,13 +288,13 @@ Kirk owns the visual choice. The agent owns source authority, transform math, de
 ### Provider verification
 
 - Candidate closure and private provenance authority.
-- Strict shield GLB structure and semantic checks.
+- Strict Shield and left-hand variant GLB structure and semantic checks.
 - Exact atlas dimensions and decoded base-memory gate.
 - Deterministic/idempotent normals and tangent handling.
 - Identity root and grip-frame checks.
 - Exact Townfolk and modular `Hand_L` socket receipts.
 - Automated compatibility against 4 Townfolk + 28 modular standing models.
-- Idle and Walk Blender evidence for shield, sword-and-shield, and asymmetric off-hand weapon.
+- Idle and Walk Blender evidence for Shield, Dagger/Shortsword identity reuse, and Handaxe/Sickle provider variants.
 - Preservation of every existing character and weapon hash.
 - Clean-head cumulative rebuild and byte comparison.
 - Sealed evidence rendered from immutable validated stage bytes.
@@ -301,8 +303,8 @@ Kirk owns the visual choice. The agent owns source authority, transform math, de
 
 TDD covers:
 
-- absent, shield, known weapon, unknown item, and attack-shaped off-hand refs;
-- reuse of exact existing weapon URLs with no second catalog;
+- absent, Shield, reused Dagger/Shortsword, variant Handaxe/Sickle, unsupported item, and attack-shaped off-hand refs;
+- exact provider-manifest URL selection with no runtime transform catalog;
 - rig-family socket selection;
 - independent main/off-hand mounting and cleanup;
 - exact `Hand_L` lookup and bone-unit compensation;
@@ -349,7 +351,7 @@ Any AC values are recorded as evidence only. The presentation code never calcula
 | Repository | Responsibility |
 | --- | --- |
 | `rpg-project` | Journey #334, approved design, implementation plan, cross-repository sequencing, and final outcome record. |
-| `rpg-game-assets` | Shield Learn, visual decision evidence, optional derivative authority, strict shield promotion, `Hand_L` socket receipts, cumulative hash preservation, and private licensed artifacts. |
+| `rpg-game-assets` | Shield Learn, visual decision evidence, left-hand variant authority, strict off-hand promotion, `Hand_L` socket receipts, cumulative main-hand hash preservation, and private licensed artifacts. |
 | `rpg-dnd5e-web` | Exact off-hand resolver, shared attachment core, owner-only routing, Concepts proof, normal-game evidence, and no tracked licensed GLBs. |
 | `rpg-api` | No change. Existing owner data and normal UI calls are evidence inputs only. |
 | `rpg-api-protos` | No change. Existing `CharacterData.equipped.off_hand` is sufficient. |
@@ -359,7 +361,7 @@ Any AC values are recorded as evidence only. The presentation code never calcula
 Merge sequence:
 
 1. provider Learn and Kirk visual decision;
-2. provider Build and exact merged shield/socket contract;
+2. provider Build and exact merged Shield/left-variant/socket contract;
 3. web Concept + production consumer against that exact provider merge;
 4. normal-game authority/restoration evidence;
 5. final review, merge, Journey closure;
@@ -392,7 +394,7 @@ There is no API gallery change unless verification disproves the current fact th
 - armor, quivers, scabbards, or visibly stowed inventory;
 - monster/NPC equipment;
 - item-specific, class-specific, or race-specific web transforms;
-- mirrored duplicate weapon assets;
+- mirrored or left-hand duplicate weapon assets without a reviewed evidence-proven normalization need;
 - pre-baked armed character variants; or
 - Glaive, Lance, Scimitar, and Trident promotion inside this Journey.
 
@@ -400,9 +402,10 @@ There is no API gallery change unless verification disproves the current fact th
 
 - Kirk has selected one honest canonical shield.
 - `dnd5e:item:shield` has one strict, reviewed, deterministic provider GLB.
+- Dagger and Shortsword reuse canonical bytes; Handaxe and Sickle have strict deterministic left-hand variants bound to reviewed transforms.
 - One shared `Hand_L` socket exists for Townfolk and one for modular rigs.
-- Every current character and weapon GLB remains byte-identical.
-- Exact shield and already-promoted off-hand weapon refs render from owner authority.
+- Every current character and main-hand weapon GLB remains byte-identical.
+- Exact refs in the reviewed off-hand provider manifest render from owner authority; unsupported refs remain empty.
 - Main-hand presentation remains unchanged.
 - Unknown, attack-shaped, peer, and failure cases remain honest and isolated.
 - Four-class/current-rig Idle and Walk evidence is complete.
