@@ -2,6 +2,8 @@
 
 ## Status: Written design approved by Kirk 2026-08-26; Concept implementation plan follows
 
+For subsequent cumulative weapon batches, use the durable [Weapon Presentation Wave Delivery Playbook](./weapon-wave-playbook.md) plus the current wave-specific design. Do not repeat this original fighter-proof approval sequence for established hand-socket work.
+
 Parent journey: [rpg-project#281](https://github.com/KirkDiggler/rpg-project/issues/281), **See Equipped Weapons in Character Hands**. This Decide slice is [rpg-project#282](https://github.com/KirkDiggler/rpg-project/issues/282).
 
 North star: **a player can tell what their character is wielding by looking at the character in the 3D game, because the model reflects authoritative equipped state rather than a baked default or a client guess.**
