@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrying the Die — a dev journal</title>
+<meta name="description" content="Development journal for a co-op D&D dungeon crawler that lives inside Discord. Low-poly tombs, one shared d20, and whoever shows up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone:#272a37;        /* tomb wall */
+    --stone-deep:#1d1f29;   /* floor in shadow */
+    --torch:#e8a34f;        /* torchlight */
+    --torch-dim:#b97f3e;
+    --parchment:#e9e1cf;    /* body text */
+    --parchment-dim:#b3ab99;
+    --d20:#4a66b0;          /* the die on the floor */
+    --hexline:rgba(233,225,207,.07);
+  }
+  *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+  body{
+    background-color:var(--stone-deep);
+    /* the floor we fight on: a faint hex grid, same as the game's move highlights */
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23e9e1cf' stroke-opacity='0.055' stroke-width='1'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16 Z'/%3E%3Cpath d='M28 64 L56 80 L56 97 M28 64 L0 80 L0 97'/%3E%3C/g%3E%3C/svg%3E");
+    color:var(--parchment);
+    font-family:"Source Serif 4", Georgia, serif;
+    font-size:1.06rem; line-height:1.65;
+  }
+  a{color:var(--torch)} a:hover{color:var(--parchment)}
+  :focus-visible{outline:2px solid var(--torch); outline-offset:3px; border-radius:2px}
+  .wrap{max-width:760px; margin:0 auto; padding:0 1.25rem}
+
+  header.masthead{padding:4.5rem 0 3rem; text-align:left; position:relative}
+  .die{
+    display:inline-block; width:2.1rem; height:2.1rem; vertical-align:-0.35em; margin-right:.4rem;
+  }
+  h1{
+    font-family:"Bricolage Grotesque", system-ui, sans-serif;
+    font-weight:800; font-size:clamp(2.4rem, 7vw, 3.6rem); line-height:1.02;
+    letter-spacing:-0.015em; color:var(--parchment);
+  }
+  h1 .lit{color:var(--torch)}
+  .masthead p.tag{
+    margin-top:1rem; max-width:34em; color:var(--parchment-dim); font-size:1.02rem;
+  }
+  .masthead .rule{
+    margin-top:2rem; height:1px; background:linear-gradient(90deg, var(--torch) 0 4.5rem, var(--hexline) 4.5rem 100%);
+  }
+
+  article{padding:2.5rem 0 1rem}
+  .entrydate{
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.8rem; letter-spacing:.08em;
+    color:var(--torch); text-transform:uppercase;
+  }
+  h2{
+    font-family:"Bricolage Grotesque", system-ui, sans-serif; font-weight:700;
+    font-size:clamp(1.5rem, 4.5vw, 2.1rem); line-height:1.15; margin:.5rem 0 1.1rem;
+  }
+  article p{margin:0 0 1.1rem; max-width:38em}
+  figure{margin:1.8rem 0}
+  figure img{
+    display:block; width:100%; height:auto; border-radius:10px;
+    border:1px solid rgba(233,225,207,.12);
+    box-shadow:0 18px 50px -18px rgba(0,0,0,.75);
+  }
+  figcaption{
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.78rem;
+    color:var(--parchment-dim); margin-top:.6rem; line-height:1.5;
+  }
+  em{color:var(--parchment)}
+  footer{
+    margin-top:3.5rem; padding:2rem 0 3rem; border-top:1px solid var(--hexline);
+    font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.78rem; color:var(--parchment-dim);
+  }
+  footer a{color:var(--parchment-dim)} footer a:hover{color:var(--torch)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <h1>
+    <svg class="die" viewBox="0 0 100 100" role="img" aria-label="a twenty-sided die"><polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="#4a66b0"/><polygon points="50,4 90,27 50,38 10,27" fill="#5d7ac4" opacity=".85"/><polygon points="50,38 90,27 90,73 50,96" fill="#3d5697" opacity=".9"/><text x="46" y="72" font-family="Bricolage Grotesque, sans-serif" font-size="34" font-weight="800" fill="#e9e1cf" text-anchor="middle">20</text></svg>Carrying <span class="lit">the Die</span>
+  </h1>
+  <p class="tag">A development journal for a co-op D&amp;D dungeon crawler that lives inside Discord.
+  Low-poly tombs, hex floors, one shared d20, and whoever shows up. Named for the label in the
+  corner of the first screenshot we ever wanted to show anyone.</p>
+  <div class="rule" role="presentation"></div>
+</header>
+
+<article>
+  <span class="entrydate">Entry 001 · 2026-09-01</span>
+  <h2>The halfling with a greatsword</h2>
+
+  <p>Fifth edition has opinions about small creatures and heavy weapons.
+  We have a renderer. The renderer wins.</p>
+
+  <figure>
+    <img src="img/halfling-greatsword.png" width="966" height="647"
+         alt="A low-poly halfling stands in a torchlit tomb holding a greatsword nearly as long as she is tall; its shadow stretches across the hex-tiled floor. An armored companion looks on. A large blue twenty-sided die rests on the floor between them, and a caged skeleton hangs at the edge of the light.">
+    <figcaption>the shadow is doing most of the storytelling here. note the party's die on the
+    floor — someone has to carry it, and the corner of the screen keeps the receipts.</figcaption>
+  </figure>
+
+  <p>That's the reference tomb — the three rooms every run starts from. Hex floor, authored
+  walls, a skeleton in a cage for ambience, and the party's one shared d20 sitting where
+  somebody dropped it. When a check happens, the die is <em>there</em>, on the floor, and you
+  click it. We think dice should be objects, not popups.</p>
+
+  <p>And because no discovery ships alone: the barbarian build.</p>
+
+  <figure>
+    <img src="img/halfling-greatclub.png" width="966" height="553"
+         alt="A shirtless low-poly halfling barbarian stands on stone tiles carrying a greatclub the size of a small tree, near a low burning brazier.">
+    <figcaption>barbarian greatclub is always a good time. the club is roughly one halfling long.</figcaption>
+  </figure>
+
+  <p>Somewhere under all this is a Go rules engine that takes itself very seriously —
+  append-only world facts, per-witness knowledge, an event bus with seven laws. The halfling
+  does not know about any of that. The halfling knows she found a sword.</p>
+
+  <p>More soon. There's a secret door coming.</p>
+</article>
+
+<footer>
+  built in the open · <a href="https://kirkdiggler.github.io/rpg-toolkit/living-world/">how the world-engine works</a> · <a href="https://github.com/KirkDiggler/rpg-toolkit">rpg-toolkit on GitHub</a>
+</footer>
+
+</div>
+</body>
+</html>
