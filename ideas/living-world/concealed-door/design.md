@@ -272,6 +272,17 @@ with work shown.
 
 ## Later slices (named, not designed)
 
+- **The sheet-declared check** (Kirk, 2026-09-01, reading #1373): the
+  successor to Search, expected soon — "ok to start here but I do not
+  think we will stay here long." The player loads their sheet and
+  declares intent FROM it — check with Perception, check with
+  Investigation — and what they learn may differ by skill. Search
+  survives as the special case (possibly the no-roll case); the
+  general tool is a check that works with or without a skill roll.
+  This is the postponed approach-choice ruling and the sheet-era
+  dispatcher converging into one verb design round.
+
+
 - **Slice 2 — the artifact**: recover verb + quest contract + the
   `ListScenarios` RPC; artifact recovery becomes the first placeable
   scenario, binding an artifact (item) and a captain (monster).
