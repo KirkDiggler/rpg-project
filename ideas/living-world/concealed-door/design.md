@@ -136,13 +136,15 @@ slice 1 is explicit search.
   = the searcher alone. A room with nothing hidden resolves the same
   way as a failed check — the answer never leaks the question.
 
-**Still open** (recommendation attached, Kirk rules on the PR):
+- **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
+  with the recommendation): the humble rung first — a dnd5e resolver in
+  the session in the shape the examples' `dnd5eresolver` proved, using
+  the character's real skills. `resolution.Resolve` becoming the
+  Resolver's realest rung (integration.md Rung 5) is its own later
+  slice.
 
-1. **Who resolves the search check.** Recommended: the humble rung
-   first — a dnd5e resolver in the session in the shape the examples'
-   `dnd5eresolver` proved, using the character's real skills.
-   `resolution.Resolve` becoming the Resolver's realest rung
-   (integration.md Rung 5) is its own later slice.
+Nothing remains open; the design is whole. plan.md sits beside this
+file on the same PR.
 
 ## Later slices (named, not designed)
 
