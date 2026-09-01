@@ -43,6 +43,44 @@ regions:
     concealed: true
 ```
 
+## The three mechanisms
+
+Everything in this slice is one of three things — and the third is where the
+page's opening question gets answered.
+
+```mermaid
+flowchart LR
+    subgraph declared["CONCEAL — the author declares"]
+        C["concealed doors + regions<br/>structure, reseeded from the field"]
+    end
+    subgraph learned["SEARCH — members learn"]
+        J["journal facts<br/>audience-scoped, append-only"]
+    end
+    C --> F(("the fold:<br/>who knows<br/>what"))
+    J --> F
+    F --> P["PROJECTION<br/>AtlasFor · DoorsFor · beat audiences<br/>probe + move refusals"]
+    P --> V1["Finch's world"]
+    P --> V2["Bram's world"]
+    classDef secret stroke:#d29a3e,stroke-width:3px
+    class F,P secret
+```
+
+- **Conceal** is the author's declaration: structure marked secret in the
+  field. It never changes at runtime — a door's *state* may toggle open and
+  shut, but what was declared concealed stays declared, which is why closing
+  the door re-conceals it for strangers.
+- **Search** is how knowledge enters: audience-scoped facts, append-only.
+  (Perception is the other writer — witnessing an open door, standing inside
+  a room. Same journal, same grain.)
+- **Projection** is where **who-knows-what actually happens**. Nobody stores
+  the answer. Every time any output leaves the world — an atlas, a door
+  list, a beat's audience, even a *refusal* — it passes through the same
+  fold of declared structure plus learned facts, computed for **that
+  member**. The probe law and the move law aren't separate features; they're
+  the projection applied to error paths. The four atlases below aren't four
+  maps kept in sync; they're **one world asked the same question by four
+  different people**.
+
 ## One dungeon, four atlases
 
 The core trick: a member's atlas is not a filtered copy of the truth — it is
