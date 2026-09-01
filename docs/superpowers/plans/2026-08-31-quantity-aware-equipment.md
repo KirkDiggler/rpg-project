@@ -410,6 +410,8 @@ git commit -m "feat: pass through quantity-aware equipment"
 - Modify: `rpg-dnd5e-web/package-lock.json`
 - Modify: `rpg-dnd5e-web/src/components/choices/EquipmentBundleChoice.tsx`
 - Modify: `rpg-dnd5e-web/src/components/choices/EquipmentBundleChoice.test.tsx`
+- Modify: `rpg-dnd5e-web/src/hooks/useEquipmentBundleSelection.ts`
+- Modify or add focused hook coverage as needed: `rpg-dnd5e-web/src/hooks/useEquipmentBundleSelection.test.ts`
 - Modify: `rpg-dnd5e-web/src/components/game/equipment/equipmentTypes.ts`
 - Modify: `rpg-dnd5e-web/src/components/game/equipment/InventoryLight.tsx`
 - Modify: `rpg-dnd5e-web/src/components/game/equipment/InventoryLight.test.tsx`
@@ -457,7 +459,7 @@ Expected: duplicate selection is disabled and one equipped ref hides the whole s
 
 - [ ] **Step 4: Remove client duplicate blocking**
 
-Delete `disabledOptionIds` and duplicate-alert logic from `CategorySelector`. Preserve ordered slot state and repeated authoritative IDs.
+Delete `disabledOptionIds` and duplicate-alert logic from `CategorySelector`. In `useEquipmentBundleSelection.isComplete`, require only the declared selection count for equipment categories; remove the equipment-ID uniqueness comparison so a hydrated or newly selected repeated ID is complete. Preserve ordered slot state and repeated authoritative IDs. Do not change uniqueness behavior for non-equipment choice components.
 
 - [ ] **Step 5: Add quantity to ItemLike and compute carried count**
 
