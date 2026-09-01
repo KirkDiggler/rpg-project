@@ -338,6 +338,7 @@ Open the PR, wait for human merge, then let CI update the managed `generated` br
 - Modify: `rpg-api/go.sum`
 - Modify: `rpg-api/internal/handlers/dnd5e/v2/character/character_data.go`
 - Modify: `rpg-api/internal/handlers/dnd5e/v2/character/handler_test.go`
+- Modify: `rpg-api/internal/integration/harness/harness.go` to expose the already-registered v1alpha2 CharacterService test client.
 - Modify: `rpg-api/internal/integration/character/creation_test.go`
 - Modify if invalidated: `rpg-api/docs/status.md`
 
@@ -360,7 +361,7 @@ s.Equal("handaxe", cd.GetEquipped()["main_hand"].GetId())
 s.Equal("handaxe", cd.GetEquipped()["off_hand"].GetId())
 ```
 
-The integration test must finalize a Fighter whose choose-two category contains the same martial weapon twice, then use the real CharacterService EquipItem path for both hands.
+The integration test must finalize a Fighter whose choose-two category contains the same martial weapon twice, read the owner v1alpha2 `CharacterData`, then use the real v1alpha2 CharacterService EquipItem path for both hands. The shared integration harness already registers that service; expose its generated client rather than constructing a parallel server path.
 
 - [ ] **Step 3: Run tests and verify RED**
 
