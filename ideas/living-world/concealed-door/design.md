@@ -344,6 +344,14 @@ with work shown.
 - **The probe law went structural at the seam**: Unlock reads the lock
   through DoorsFor(member), so no die is ever rolled against a lock the
   member has not found — enforced by shape, pinned with a dice counter.
+- **Retention is storage-only** (ruled disposition for the review's
+  C1 on toolkit#1377): trim may never affect delivery or numbering — a
+  member's dense stream numbers what was delivered to them, the
+  retained story governs only what is re-readable later, and a verb
+  minting more beats than the retention window numbers and delivers
+  every one before anything is trimmed. Found empirically: a 40-cell
+  free-roam walk trimmed its own beats past every cursor mid-verb and
+  could never commit.
 - **Per-recipient numbering is cursor-based** (one persisted cursor per
   ever-member, advanced with the beats in one persist) because
   retention trims are the norm — counting from 1 was never an option; a
