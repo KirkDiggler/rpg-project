@@ -100,9 +100,12 @@ slice 1 is explicit search.
 **What it forces, per layer** (develop outside-in, merge inside-out):
 
 - **web — builder**: door declaration grows `concealed` plus the two
-  checks. **web — game**: a search intent; per-player door-reveal beats
-  rendered; a concealed, unknown door absent from the party's view.
-- **protos**: dungeonspec door fields; search/open intents; detection
+  checks. **web — game**: the search verb on the player's action
+  surface, targeting the room they stand in; per-player door-reveal
+  beats rendered; a concealed, unknown door absent from the party's
+  view.
+- **protos**: dungeonspec door fields; a room-targeted search
+  intent and the open intent; detection
   beats addressed per recipient. The wire is ready — `Event.recipient`
   and broker routing are live end to end, and per-player detection
   beats from birth is the standing ruling (doors/traps are exactly the
@@ -116,14 +119,26 @@ slice 1 is explicit search.
   license to grow the kernel. The tomb example is precedent, not a
   dependency.
 
-**Open questions for this review** (recommendations attached, Kirk
-rules on the PR):
+**Ruled on review (2026-09-01, Kirk):**
 
-1. **World lifetime.** Recommended: one `World` per dungeon run,
-   composed at run start; journal facts round-trip as data on
-   Input/Output exactly the way `EncounterData` does (Rung 2's
-   persistence shape arriving with its first passenger).
-2. **Who resolves the search check.** Recommended: the humble rung
+- **The dungeon run is the world.** One `World` per run, composed at
+  run start; journal facts round-trip as data on Input/Output exactly
+  the way `EncounterData` does (Rung 2's persistence shape arriving
+  with its first passenger).
+- **Search is a player verb, and it searches a room.** The verb is
+  given back to the players — offered on the action surface, declared
+  intent, universally attemptable, no prerequisites — and its target
+  is a **room**, never a door: a player cannot target structure they
+  do not know exists. Searching sweeps the concealed structure the
+  targeted room holds (v1: the room the searcher occupies — presence
+  is the host's truth), rolling the find check each concealed
+  declaration carries; success writes the location fact with audience
+  = the searcher alone. A room with nothing hidden resolves the same
+  way as a failed check — the answer never leaks the question.
+
+**Still open** (recommendation attached, Kirk rules on the PR):
+
+1. **Who resolves the search check.** Recommended: the humble rung
    first — a dnd5e resolver in the session in the shape the examples'
    `dnd5eresolver` proved, using the character's real skills.
    `resolution.Resolve` becoming the Resolver's realest rung
