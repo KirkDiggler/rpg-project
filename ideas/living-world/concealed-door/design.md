@@ -206,7 +206,13 @@ with work shown.
   begin knowing, everyone else begins blind), and the projection must
   reveal-by-occupancy from the first frame. And a concealed region with
   zero entrances stays as legal as any unreachable plain room — dead
-  content is the author's own business, not a coherence violation.
+  content is the author's own business, not a coherence violation. One
+  expressiveness limit accepted with the frontier invariant (noted at
+  #1370's final review, no severity): a whole dungeon behind a hidden
+  START is only writable all-concealed — visible space seeds at the
+  start, so unconcealed regions beyond a hidden start refuse; if an
+  author ever legitimately wants that shape, it is a ruling to revisit
+  here, not a validator bug.
 - **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
   fog does not hide unexplored space, so the map itself must keep the
   secret — the room "appears to be a wall unless it is found."
