@@ -199,11 +199,24 @@ with work shown.
 - **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
   fog does not hide unexplored space, so the map itself must keep the
   secret — the room "appears to be a wall unless it is found."
-  Concealment extends to regions: a concealed room's entire footprint —
-  its cells, its region entry, its props, its interior boundaries — is
-  absent from a non-knower's atlas, so the space reads as solid mass
-  exactly like anywhere beyond the map's edge, with the masquerade wall
-  covering the one gap the door would leave. Two knowledge moments,
+  Concealment extends to regions, and the law is the never-authored
+  yardstick (refined in review round 3, which caught the first
+  formulation leaking): a non-knower's atlas is BYTE-IDENTICAL to an
+  atlas where the region was never authored — its cells, its region
+  entry, its props, and EVERY boundary touching its cells, border walls
+  included, all withheld. "Interior boundaries" was the leak: a border
+  wall left behind has one endpoint on no visible floor, an
+  impossible-in-an-honest-atlas signature certifying hidden space. With
+  the whole border withheld, the door's edge already reads as solid
+  mass like the rest of it — no mask is needed or wanted there (a
+  synthetic wall touching void would carry the same self-marking
+  signature). The masquerade wall stays confined to its own case: a
+  concealed door between two spaces the member can see, where omission
+  would show as a hole in a visible run. The region reveal's boundaries
+  carry every boundary touching the region's cells. One accepted
+  disclosure, named so it is never mistaken for a bug: a found door's
+  doorways name one cell of hidden floor per entrance — knowing where
+  a door is includes knowing it leads somewhere. Two knowledge moments,
   deliberately distinct: finding the door reveals the DOOR alone
   (knowing where a door is is not seeing what is behind it); the room's
   atlas slice arrives by a recipient-scoped region reveal when the
