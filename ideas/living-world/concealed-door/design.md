@@ -394,13 +394,25 @@ dense numbering, the frontier-scoped movement minimum (#1377, session
 v0.43.0); and the capability plumbing that lets a fight form on a
 concealed dungeon (#1393 + #1397, closing #1378, session v0.44.0).
 
-One pin did not make the merge: PR #1397's review measured that only
-the fight-formation site fails when its supplied capabilities are
-dropped — striker, attack and activate survive mutation, so three of
-the four mid-fight reloads are supplied yet unproven. The fold-in was
-scoped and lost when its builder ran out of budget, and the PR merged
-without it. Carried as toolkit#1398, honestly, rather than counted as
-done.
+One pin arrived late and is now in. PR #1397's review measured that
+only the fight-formation site failed when its supplied capabilities
+were dropped — striker, attack and activate survived mutation, so
+three of the four mid-fight reloads were supplied yet unproven; the
+fold-in was lost when its builder ran out of budget and the PR merged
+without it. Carried as toolkit#1398 rather than counted as done, and
+closed by #1399 (session v0.44.1): the formed fight is now fought in —
+the finder swings, a non-knower Dodges, the zombie takes its turn —
+and all three mutants die. The scene ends where the retired tripwire
+began: the finder still holds her door, and the non-knower's atlas is
+byte-identical to the never-authored answer he held before the fight
+existed.
+
+**The lesson, kept:** supplied is not proven. A capability threaded
+through a call site that no test drives is indistinguishable from one
+that was never threaded, and the suite stays green either way. The
+check that found it — mutate the site, watch what fails — is cheap
+enough to be the default whenever a wave adds a capability to more
+call sites than its scenes exercise.
 
 ## Later slices (named, not designed)
 
