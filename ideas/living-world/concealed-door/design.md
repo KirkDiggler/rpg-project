@@ -381,6 +381,27 @@ with work shown.
   named shelf, not slice work. The module's save-ordering doc carries
   the same admission.
 
+## The toolkit side, complete (2026-09-01)
+
+Every ruling above is code. Merged in dependency order, each through a
+fresh-session review at zero criticals: the required bus and the
+cancelled unaided variant (toolkit#1382, dnd5e v0.126.1); retention at
+the storage boundary (#1384) and the pure world read that keeps a
+mid-verb reader off it (#1386, encounter v0.43.0); resolution's check
+entry with the fold-once reconciliation (#1387, resolution v0.27.0);
+the session concealment seam — per-member reads, Search, per-recipient
+dense numbering, the frontier-scoped movement minimum (#1377, session
+v0.43.0); and the capability plumbing that lets a fight form on a
+concealed dungeon (#1393 + #1397, closing #1378, session v0.44.0).
+
+One pin did not make the merge: PR #1397's review measured that only
+the fight-formation site fails when its supplied capabilities are
+dropped — striker, attack and activate survive mutation, so three of
+the four mid-fight reloads are supplied yet unproven. The fold-in was
+scoped and lost when its builder ran out of budget, and the PR merged
+without it. Carried as toolkit#1398, honestly, rather than counted as
+done.
+
 ## Later slices (named, not designed)
 
 - **Door-property shelves** (Kirk, 2026-09-01, while ruling the
