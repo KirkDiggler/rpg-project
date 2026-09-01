@@ -356,6 +356,18 @@ with work shown.
   ever-member, advanced with the beats in one persist) because
   retention trims are the norm — counting from 1 was never an option; a
   cursor the trim outran fails closed by name.
+- **A mid-verb read must not pass the storage boundary** (found by PR
+  toolkit#1384's review, 2026-09-01): once retention enforces at
+  `ToData`, that call both trims and snapshots — but session also uses
+  it as its only world-snapshot read, four times mid-verb, and persist
+  calls it before projection reads the story. On bump, a verb bigger
+  than the window would trim past the projection baseline *through a
+  read* and silently deliver zero events — the storage-only ruling
+  defeated by a read-shaped call. Encounter grows a pure snapshot read
+  (no trim, no floor advance; named so it cannot be mistaken for the
+  blob you persist) — toolkit#1385; the session follow-through migrates
+  every mid-verb `ToData` call site to it, not just the numbering
+  order.
 
 ## Later slices (named, not designed)
 
