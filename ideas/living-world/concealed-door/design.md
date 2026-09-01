@@ -314,6 +314,22 @@ with work shown.
   seam, so no member ever observes a hole; the protos comment amendment
   (seq is per-recipient) rides the api wave.
 
+## Found by the session wave (2026-09-01, PR toolkit#1377)
+
+- **Combat cannot form on a concealed dungeon until resolution accepts
+  the capabilities** — fight formation reloads the world without
+  CheckResolver/Witness and a concealed field rightly refuses. Fails
+  closed and loudly today, pinned with a self-deleting test; the
+  plumbing follow-up is toolkit#1378 and it GATES the done-when for any
+  dungeon where a fight can start.
+- **The probe law went structural at the seam**: Unlock reads the lock
+  through DoorsFor(member), so no die is ever rolled against a lock the
+  member has not found — enforced by shape, pinned with a dice counter.
+- **Per-recipient numbering is cursor-based** (one persisted cursor per
+  ever-member, advanced with the beats in one persist) because
+  retention trims are the norm — counting from 1 was never an option; a
+  cursor the trim outran fails closed by name.
+
 ## Later slices (named, not designed)
 
 - **Door-property shelves** (Kirk, 2026-09-01, while ruling the
