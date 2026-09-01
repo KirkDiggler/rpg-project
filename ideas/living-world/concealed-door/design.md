@@ -273,6 +273,35 @@ with work shown.
   secret, the shortcut is; a concealed start region stays legal —
   presence pierces at runtime.
 
+## Ruled 2026-09-01, second round (the session-wave gates)
+
+- **Movement is sight-scoped.** Kirk: "if Finch is not in view for Bram
+  then they should not get their movement events... like monsters, I
+  have a last-known-location ghost but know nothing more." The intel
+  model monsters already live by becomes symmetric for party members;
+  the story tab may stay loose. Slice 1 implements the
+  concealment-forced minimum on the engine branch: a step inside a
+  region not revealed to a recipient is not delivered to that recipient
+  — the trail stops at the frontier — and a witnessed crossing reveals
+  by the existing perceive-the-open-door mechanism. Full sight-scoped
+  movement with last-known ghosts is a named follow-up (it narrows
+  full-data-until-v1.0 for movement beats and wants intel's ghost
+  machinery).
+- **Closing re-conceals; knowledge is permanent.** Concealment never
+  globally ends. Opening makes the door perceivable and every perceiver
+  learns it forever — "they saw it open and close to disappear; they
+  know a door is there" — and once shut it is a wall again to
+  strangers. State is reversible; knowledge is not. The engine's
+  per-member facts already carry these semantics; the wave pins a
+  close-re-conceals scene both ways (stranger-after-close sees the
+  twin's wall; a knower keeps a shut door).
+- **The gap oracle: per-recipient dense numbering** (mechanism ruled
+  with work shown, inside two standing constraints — the secrecy
+  principle and the wire's gapless contract; flag if wrong): each
+  member's stream numbers its own deliveries densely at the session
+  seam, so no member ever observes a hole; the protos comment amendment
+  (seq is per-recipient) rides the api wave.
+
 ## Later slices (named, not designed)
 
 - **The sheet-declared check** (Kirk, 2026-09-01, reading #1373): the

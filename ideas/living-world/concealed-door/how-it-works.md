@@ -160,18 +160,21 @@ type Witness interface {         // ← the session's sight seam (LOS, 120ft)
 | reveal beats | on the record, recipient-scoped | project to the wire's typed `DOOR_REVEALED` / `REGION_REVEALED` |
 | unlock | applied route required in, echoed out | session picks the route, fills the wire's `dc` |
 
-## Open at the seam — two rulings, one seed
+## Ruled at the seam — and one seed
 
-- **The vanishing teammate.** A party-mate's position beat currently walks
-  through walls: movement inside a hidden room broadcasts its floor
-  cell-by-cell. Proposed: a *witnessed* crossing is just
-  perceiving-the-open-door (reveal fires — the fiction agrees: watching your
-  friend vanish through a wall is how you learn it's a door); *unwitnessed*,
-  the trail stops at the frontier.
-- **The gap oracle.** Recipient-scoped beats leave seq gaps in everyone
-  else's story — a gap right after a search is a success detector, and it
-  breaks the wire's gapless contract. Proposed: per-recipient dense numbering
-  at the seam.
+- **Movement is sight-scoped.** Out of view means no movement events; what
+  remains is a last-known-location ghost — the model monster intel already
+  lives by, now symmetric for party members. Slice 1 ships the
+  concealment-forced minimum: steps inside a region not revealed to you are
+  not delivered to you (the trail stops at the frontier), and watching a
+  teammate vanish through the wall reveals the door — that's just perceiving
+  it open.
+- **Closing re-conceals; knowledge is permanent.** State is reversible,
+  knowledge is not: a re-shut concealed door is a wall again to strangers,
+  while anyone who ever saw it open keeps the door on their map forever.
+- **The gap oracle is closed by per-recipient numbering.** Each member's
+  stream numbers its own deliveries densely at the session seam — no member
+  ever observes a hole, and the wire's gapless contract stays true.
 - **The sheet-declared check.** Search is the waypoint, not the destination:
   the player will load their sheet and declare intent from it — check with
   Perception, check with Investigation, with or without a roll — and what
