@@ -195,7 +195,11 @@ with work shown.
   byte-identical to the ordinary no-crossing refusal; and the synthetic
   mask boundary must match the NEIGHBOURING AUTHORED RUN's height
   (walls carry per-edge height) — a standard-height mask inside a
-  height-2 run is a visible notch exactly where the secret is.
+  height-2 run is a visible notch exactly where the secret is. And
+  should adjacent concealed regions ever become authorable: a boundary
+  shared with a still-hidden neighbour stays withheld on reveal — the
+  member-scoped answer governs, not a literal every-touching-boundary
+  sweep (review round 4's interpretation pin).
 - **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
   fog does not hide unexplored space, so the map itself must keep the
   secret — the room "appears to be a wall unless it is found."
