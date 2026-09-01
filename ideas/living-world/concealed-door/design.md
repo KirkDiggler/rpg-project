@@ -161,8 +161,45 @@ slice 1 is explicit search.
   Resolver's realest rung (integration.md Rung 5) is its own later
   slice.
 
-Nothing remains open; the design is whole. plan.md sits beside this
-file on the same PR.
+The original questions are all ruled. One new question from the
+independent review of the wire is open below (the hidden room's
+telegraph); plan.md sits beside this file on the same PR.
+
+## Review findings ratified into the contract (2026-09-01)
+
+The independent review of rpg-api-protos#267 surfaced these; the first
+three are mechanism rulings inside the already-ruled principle, made
+with work shown.
+
+- **The masquerade wall.** "Absent from the wire" cannot mean a hole:
+  boundaries are authored walls only and a door's edges carry no
+  boundary, so pure omission leaves a non-knower a visible gap in the
+  wall run exactly where the secret is — the absence itself leaks. The
+  fiction already says what belongs there: a concealed door IS a wall
+  until found. So a non-knower's atlas presents a synthetic ordinary
+  boundary at the door's edges (indistinguishable from an authored
+  wall), and DoorRevealed's boundaries replace the mask with the truth.
+  Refined statement of the absence law: the door is absent from every
+  door-list; its geometry is masked as wall. The mask is not a flag —
+  nothing marks it, and no message shape changes.
+- **The probe law.** Everywhere a door id is spoken (OpenDoor, Unlock),
+  a concealed unfound door answers NOT_FOUND, byte-identical to a door
+  that does not exist — a DC-naming refusal would confirm existence to
+  a guessed id.
+- **Reveal causes are exemplary, not exhaustive.** A member who enters
+  after the door was opened perceives present state (§22's truth
+  grain) and gets their reveal then — the enumerated causes (own
+  search, opened in presence) are examples of knowledge arriving, not
+  the closed set.
+- **Wave 1b pin:** a Move refused at a concealed unfound edge must be
+  byte-identical to the ordinary no-crossing refusal.
+- **OPEN — the hidden room telegraphs itself.** Absence is scoped to
+  the door, so every member's atlas still carries the sealed chamber's
+  cells, region, and props, visibly reachable by nothing — the map
+  itself poses the question the answer is not allowed to leak. Options:
+  accept for slice 1 (client fog may hide unexplored space in practice
+  — verify in the web wave), or extend concealment to regions (a real
+  wire growth, its own ruling). Kirk rules.
 
 ## Later slices (named, not designed)
 
