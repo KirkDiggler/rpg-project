@@ -16,12 +16,16 @@ as new PRs.*
 
 `dungeonspec.DoorSpec` already carries the open check: `LockSpec{DC,
 Ability, Tool}`, held opaquely ("does a DEX check of 12 succeed" is a
-rule the spec never interprets). **Slice 1 adds only the find half** — a
-`Concealed` spec in the same shape — and composes with what exists: a
-concealed door may be plain, closed, or locked underneath, and the open
-path is the one the run-ending work already built. The design's "find
-check and open check on the door declaration" is therefore one new field,
-not two.
+rule the spec never interprets). The open *path* is the one the
+run-ending work already built, and a concealed door composes with plain,
+closed, or locked underneath. One amendment from the multi-approach
+ruling: `LockSpec` is single-approach today, and a check is now a **list
+of accepted approaches, each with its own DC** (Strength to force or
+Dexterity-with-tools to pick; Perception or Investigation to find). So
+the wave grows the find half born as an approach list, and generalizes
+`LockSpec` to the same shape — an in-place break, consumers moved in the
+same wave, per the proto-versioning trigger (few consumers, one
+sitting).
 
 ## Board filing
 
@@ -35,7 +39,9 @@ not two.
 ### Wave 0 — protos (the contract; merges first)
 
 - Door message grows the concealment declaration mirroring the spec:
-  concealed marker + find check (DC, ability).
+  concealed marker + find check as a list of approaches (each: ability/
+  skill + DC); the lock's open check generalizes to the same list shape
+  (in-place break, consumers moved in the same wave).
 - A room-targeted **search intent** (the player names a room, nothing
   else — they cannot target what they do not know exists).
 - Door-reveal **detection beats addressed per recipient** —
@@ -45,9 +51,10 @@ not two.
 
 ### Wave 1 — toolkit (the engine; the wave's center of gravity)
 
-- **dungeonspec**: `DoorSpec` gains the find check (`Concealed`,
-  LockSpec-shaped). Fail-closed validation worded for the form-filler —
-  a concealed door with no find check refuses at compile.
+- **dungeonspec**: `DoorSpec` gains the find check (`Concealed`), born
+  as an approach list; `LockSpec` generalizes to the same shape.
+  Fail-closed validation worded for the form-filler — a concealed door
+  with no find approach refuses at compile.
 - **The run composes its world** (ruled: the dungeon run IS the world).
   At run start, journal + graph are built with the spec's concealed
   doors as concealed graph declarations. World data rides the session's
@@ -56,7 +63,10 @@ not two.
 - **The search verb**, load-act-save through the session seam: sweeps
   the targeted room's concealed declarations, rolls each find check via
   the humble dnd5e resolver (ruled) against the searcher's real skills,
-  writes the location fact with audience = the searcher alone. Empty
+  writes the location fact with audience = the searcher alone. Multiple
+  listed approaches resolve by the character's best (the player cannot
+  be offered a choice that leaks what is hidden; see the design's
+  flagged interpretation). Empty
   room and failed check resolve identically — the answer never leaks
   the question. Rules and trigger detection live in the composition
   layer per the layering laws; the session owns no rules.
@@ -80,9 +90,10 @@ not two.
 
 ### Wave 3 — web (the proof)
 
-- **Builder**: door declaration gains a concealed toggle and find
-  check (DC + ability); the open half reuses the existing lock/closed
-  authoring.
+- **Builder**: door declaration gains a concealed toggle and a find
+  check authored as approach rows (add an approach: ability/skill +
+  DC); the lock editor grows the same rows. The open half otherwise
+  reuses the existing lock/closed authoring.
 - **Game**: the search verb on the action surface, targeting the room
   the player stands in; concealed unknown doors absent from the scene;
   per-player reveal beats rendered (the knower sees the door appear;

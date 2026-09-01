@@ -51,8 +51,10 @@ the filled form validates through `New(cfg)` itself — the refusals come
 back as inline form errors; there is no second validator to drift.
 
 - Field-type vocabulary starts minimal: `entity_ref(kind)` and `check`
-  (approach + difficulty). It grows only when a scenario demands a third
-  shape — the second-instance law applied to form fields.
+  (one or more accepted approaches, each with its own difficulty — see
+  the multi-approach ruling below). It grows only when a scenario
+  demands a third shape — the second-instance law applied to form
+  fields.
 - The checks for a concealed door live on the **door declaration** in
   the builder, not on the scenario form — they belong to the door,
   wherever the author puts it.
@@ -131,10 +133,25 @@ slice 1 is explicit search.
   is a **room**, never a door: a player cannot target structure they
   do not know exists. Searching sweeps the concealed structure the
   targeted room holds (v1: the room the searcher occupies — presence
-  is the host's truth), rolling the find check each concealed
-  declaration carries; success writes the location fact with audience
-  = the searcher alone. A room with nothing hidden resolves the same
+  is the host's truth), rolling each concealed
+  declaration's find check (any of its listed approaches — see the
+  multi-approach ruling); success writes the location fact with
+  audience = the searcher alone. A room with nothing hidden resolves the same
   way as a failed check — the answer never leaks the question.
+
+- **Checks accept multiple approaches** (ruled 2026-09-01). A check is
+  not one ability and one DC; it is a set of accepted approaches, each
+  carrying its own difficulty — a locked door forced with Strength *or*
+  finessed with Dexterity and tools; a concealed door spotted with
+  Perception *or* reasoned out with Investigation. Success by any
+  listed approach; the author prices each route separately. Flagged
+  interpretation on top of the ruling, for Kirk's walk: **who picks the
+  approach** — for a check on structure the player can see (open, a
+  known door), the approaches surface as the player's choice on the
+  action surface; for a check on structure the player cannot see
+  (find), the player just declares search and the resolver applies the
+  character's best listed approach, because offering the choice would
+  leak what is hidden.
 
 - **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
   with the recommendation): the humble rung first — a dnd5e resolver in
