@@ -304,6 +304,24 @@ with work shown.
 
 ## Later slices (named, not designed)
 
+- **Door-property shelves** (Kirk, 2026-09-01, while ruling the
+  witness questions — named for future door kinds; nothing built).
+  Today's constants, confirmed ruled: a concealed door that is OPEN is
+  known by those who witness it, and a found door never re-makes its
+  find check — knowledge is permanent, opening is governed only by the
+  door's own state and lock. Two shelves where those constants become
+  per-door properties:
+  1. *Witnessing is not always learning.* A magic door is the wall even
+     while someone steps through it — comprehending what you just saw
+     could carry its own check (Arcana), making the reveal a witness
+     receives a door property instead of a constant. Without the
+     check, you hold at most "something happened here" — a last-known
+     ghost at a blank wall — not the door.
+  2. *Per-passage checks.* A door kind whose crossing itself demands a
+     check each time — following someone through the magic door takes
+     your own Arcana — distinct from find (once, permanent) and from
+     the lock (state). The approach-list vocabulary every door already
+     carries is the shape both shelves would reuse.
 - **The sheet-declared check** (Kirk, 2026-09-01, reading #1373): the
   successor to Search, expected soon — "ok to start here but I do not
   think we will stay here long." The player loads their sheet and
