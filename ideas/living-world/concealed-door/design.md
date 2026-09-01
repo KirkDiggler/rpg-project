@@ -157,6 +157,18 @@ slice 1 is explicit search.
   nothing in slice 1 forecloses it, since the checks already carry the
   approach lists that round would read.
 
+- **The resolver and the no-bus law** (narrowed during the session
+  wave, 2026-09-01): the session's ratified structural pin — no events
+  bus in the seam, ever (the gamectx slice's TestNoBusLivesInThisModule)
+  — holds. The humble resolver is therefore the first production
+  CALLER of dnd5e's check machinery, not its first bus subscriber: real
+  skills with proficiency and expertise, rolled through
+  checks.MakeAbilityCheck under its own nil-bus contract ("no chain
+  events fire"), zero dice arithmetic at the seam. Behaviorally
+  lossless today (#1357: the chain has zero subscribers anywhere). The
+  chain going LIVE is the resolution rung's opening move — that slice
+  inherits this line.
+
 - **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
   with the recommendation): the humble rung first — a dnd5e resolver in
   the session in the shape the examples' `dnd5eresolver` proved, using
