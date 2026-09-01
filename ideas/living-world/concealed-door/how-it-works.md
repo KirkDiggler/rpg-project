@@ -3,7 +3,7 @@
 *The team's map of slice 1. One secret door, kept honestly, end to end. The
 whole machine answers a single question — **who knows what?** — and every law
 in it exists to stop the answer from leaking through a side channel. In every
-diagram on this page, **amber marks the secret**.*
+diagram, the **amber-bordered node is where the secret lives**.*
 
 *Normative record: [design.md](design.md) (every ruling) and
 [plan.md](plan.md) (the waves). This page is the explainer — if it ever
@@ -16,7 +16,15 @@ the one layer whose job that is. The builder writes data; dungeonspec
 validates it; the compiled field hauls it opaquely; the run's world acts on
 it; the wire shows each member only their own slice.
 
-![Five-stage pipeline: builder YAML through dungeonspec, the compiled field, the run's world, to each member's wire, with concealment carried opaquely until the world acts on it.](pipeline.svg)
+```mermaid
+flowchart LR
+    Y["builder YAML<br/>concealed: [...]"] -->|refuses incoherence| D[dungeonspec]
+    D -->|carried, not interpreted| C[compiled field]
+    C -->|seeds graph + journal| W["the run's world<br/>acts on concealment"]
+    W -->|projected per member| M[each member's wire]
+    classDef secret stroke:#d29a3e,stroke-width:3px
+    class W secret
+```
 
 Only the amber stage has opinions. dungeonspec refuses incoherent authoring
 (the frontier invariant) but never learns what Perception means; the field
@@ -43,17 +51,30 @@ secret**. That's the never-authored yardstick, and it's why nothing can leak:
 there is no seam to find, because the non-knower's map is internally
 consistent.
 
-![Four panels showing the same dungeon as knowledge grows: the authored truth with hall, vault and concealed door; a stranger's atlas where the vault does not exist; a finder's atlas showing the door but no vault; the atlas after the open.](four-atlases.svg)
+The world holds the authored truth — hall, vault, the concealed door between
+them. What each member's atlas shows depends only on their knowledge state:
+
+```mermaid
+flowchart LR
+    A["a stranger's atlas<br/>vault never authored<br/>mask = a wall like any other"]
+    B["the finder's atlas<br/>door present — for them alone<br/>vault still solid mass"]
+    C["the open room<br/>full atlas slice"]
+    D["standing inside<br/>at frame one"]
+    A -->|"search success · door_revealed"| B
+    B -->|"perceives it OPEN · region_revealed"| C
+    A -->|"arrives after the open · both reveals"| C
+    D -->|presence pierces| C
+    classDef secret stroke:#d29a3e,stroke-width:3px
+    class B,C secret
+```
 
 Two knowledge moments, deliberately distinct:
 
-- **② → ③ is finding the door** (a successful search): the door appears for
-  the finder alone; the vault stays never-authored, because knowing where a
-  door is is not seeing what's behind it.
-- **③ → ④ is perceiving it open**: present at the opening, walking up later,
-  or standing inside from frame one (presence pierces).
-
-(Schematic squares in the figure; the real grid is hex.)
+- **Finding the door** (a successful search): the door appears for the finder
+  alone; the vault stays never-authored, because knowing where a door is is
+  not seeing what's behind it.
+- **Perceiving it open**: present at the opening, walking up later, or
+  standing inside from frame one (presence pierces).
 
 ## Search: the answer never leaks the question
 
@@ -63,7 +84,18 @@ acknowledgment: the same bytes whether the room hid nothing or the roll
 failed. Everything a success produces travels as a recipient-scoped beat on
 the finder's own stream.
 
-![Sequence: Finch declares Search on the crypt; the engine asks the injected resolver for her best listed approach; on success a fact is written with audience Finch alone and a door_revealed beat lands on her stream; Bram's stream stays silent, identical to a failed search.](search-sequence.svg)
+```mermaid
+sequenceDiagram
+    participant F as Finch
+    participant W as the run's world
+    participant B as Bram
+    F->>W: Search(crypt) — presence enforced
+    W->>W: resolver rolls her best of [Perception 15, Investigation 12]
+    W->>W: fact minted — known:door, audience = Finch alone
+    W-->>F: door_revealed (her stream only)
+    W--xB: nothing — no beat, no readable gap
+    W-->>F: SearchOutput, empty — same bytes as a failure
+```
 
 No output varies with what the room holds. A failed check writes no fact and
 no beat; an empty room does exactly the same. Even the roll stays private — a
@@ -78,7 +110,14 @@ what) is **reseeded from the authored field at every load**. Who-knows-what is
 always a fold of facts over structure the dungeon itself minted — there is no
 second copy of the truth to disagree with the first.
 
-![Two sources combine at load: the authored field reseeds the graph, and the blob's facts replay into the journal; who knows what is always derived as a fold, never stored.](persistence.svg)
+```mermaid
+flowchart LR
+    F["authored field<br/>construction truth"] -->|reseeds every load| G["graph + journal<br/>rebuilt, never stored"]
+    B["blob facts<br/>the only persistence"] -->|replays, same seqs| G
+    G -->|a fold| K["who knows what"]
+    classDef secret stroke:#d29a3e,stroke-width:3px
+    class K secret
+```
 
 Fail-closed at every edge: a blob world on a dungeon with nothing concealed
 refuses by name; a fact whose kind the field can't mint refuses by name; an
