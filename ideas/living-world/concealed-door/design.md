@@ -199,7 +199,14 @@ with work shown.
   should adjacent concealed regions ever become authorable: a boundary
   shared with a still-hidden neighbour stays withheld on reveal — the
   member-scoped answer governs, not a literal every-touching-boundary
-  sweep (review round 4's interpretation pin).
+  sweep (review round 4's interpretation pin). **Presence pierces**: a
+  member standing inside a concealed region perceives it — you cannot
+  occupy a secret you do not know exists — so a dungeon whose party
+  start sits in a concealed room is legal authoring (the occupants
+  begin knowing, everyone else begins blind), and the projection must
+  reveal-by-occupancy from the first frame. And a concealed region with
+  zero entrances stays as legal as any unreachable plain room — dead
+  content is the author's own business, not a coherence violation.
 - **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
   fog does not hide unexplored space, so the map itself must keep the
   secret — the room "appears to be a wall unless it is found."
