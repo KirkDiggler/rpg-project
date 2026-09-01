@@ -6,6 +6,9 @@ purpose: how living-world capabilities reach the live game — the builder as au
 
 # Living World — entering the game
 
+> Team explainer with diagrams: [how-it-works.md](how-it-works.md) — the
+> machine end to end. This file stays the normative record.
+
 *Companion to brainstorm.md (§21 two-era scenarios, §22 the witness seam),
 use-cases.md UC-4, and integration.md (the rungs). Journey: rpg-project#326.*
 
