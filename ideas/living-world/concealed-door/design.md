@@ -212,7 +212,15 @@ with work shown.
   START is only writable all-concealed — visible space seeds at the
   start, so unconcealed regions beyond a hidden start refuse; if an
   author ever legitimately wants that shape, it is a ruling to revisit
-  here, not a validator bug.
+  here, not a validator bug. Two additions from wave 1b's build
+  (toolkit#1373): **a concealed door never rides the shared moved
+  beat**, found or unfound — one shared payload cannot tell knowers a
+  secret without telling everyone, so the crosser learns through their
+  own recipient-scoped reveal and the roster's moved beat stays silent
+  about the door (an unruled leak found and closed during the build);
+  and **the graph is never persisted** — only journal facts ride the
+  blob, the graph reseeds from the authored field at every load, so
+  who-knows-what cannot drift from the dungeon that minted it.
 - **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
   fog does not hide unexplored space, so the map itself must keep the
   secret — the room "appears to be a wall unless it is found."
