@@ -64,9 +64,9 @@ sitting).
   the targeted room's concealed declarations, rolls each find check via
   the humble dnd5e resolver (ruled) against the searcher's real skills,
   writes the location fact with audience = the searcher alone. Multiple
-  listed approaches resolve by the character's best (the player cannot
-  be offered a choice that leaks what is hidden; see the design's
-  flagged interpretation). Empty
+  listed approaches resolve by the character's best — who picks an
+  approach is postponed per the design; slice 1 pushes no choice to
+  the player. Empty
   room and failed check resolve identically — the answer never leaks
   the question. Rules and trigger detection live in the composition
   layer per the layering laws; the session owns no rules.

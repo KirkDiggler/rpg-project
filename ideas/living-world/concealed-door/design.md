@@ -144,14 +144,15 @@ slice 1 is explicit search.
   carrying its own difficulty — a locked door forced with Strength *or*
   finessed with Dexterity and tools; a concealed door spotted with
   Perception *or* reasoned out with Investigation. Success by any
-  listed approach; the author prices each route separately. Flagged
-  interpretation on top of the ruling, for Kirk's walk: **who picks the
-  approach** — for a check on structure the player can see (open, a
-  known door), the approaches surface as the player's choice on the
-  action surface; for a check on structure the player cannot see
-  (find), the player just declares search and the resolver applies the
-  character's best listed approach, because offering the choice would
-  leak what is hidden.
+  listed approach; the author prices each route separately. **Who picks the
+  approach: postponed** (Kirk, 2026-09-01). Slice 1 pushes no choice to
+  the player — search is just search, open is just open, and the
+  resolver applies the character's best listed approach. The long-term
+  shape, named without being adopted: the character has their sheet and
+  *chooses a skill* to act on a room — approaches chosen from the
+  sheet, never pushed as options. That is its own later design round;
+  nothing in slice 1 forecloses it, since the checks already carry the
+  approach lists that round would read.
 
 - **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
   with the recommendation): the humble rung first — a dnd5e resolver in
