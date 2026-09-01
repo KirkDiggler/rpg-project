@@ -233,15 +233,28 @@ with work shown.
   atlas slice arrives by a recipient-scoped region reveal when the
   recipient perceives the door OPEN — present at the opening, or
   walking up later (present state, §22's truth grain).
-- **Authoring coherence (with the region ruling).** Regions gain a
-  concealed marker, declared — no cascade from the door, per the
-  kernel's own second-instance law. But incoherent combinations refuse
-  at compile, worded for the form-filler: a region whose every entrance
-  is concealed must itself be concealed ("this room can only be entered
-  through a concealed door — conceal the room too, or give it another
-  way in"), and a concealed region with an unconcealed entrance refuses
-  symmetrically. A room with one open door and one concealed shortcut
-  stays legal — the room is no secret, the shortcut is.
+- **Authoring coherence (with the region ruling; reformulated after
+  #1370's review round caught the first sentence direction-blind).**
+  Regions gain a concealed marker, declared — no cascade from the door,
+  per the kernel's own second-instance law. The invariant is
+  boundary-shaped, not entrance-local: **the frontier between visible
+  and hidden space consists of concealed doors and nothing else, and
+  visible space is connected from the party start.** Two refusals,
+  worded for the form-filler: an unconcealed region unreachable from
+  the start without crossing hidden space refuses ("this room can only
+  be entered through a concealed door — conceal the room too, or give
+  it another way in"); a crossing from visible space into a concealed
+  region that is not a concealed door refuses ("a walk-in room cannot
+  be a secret"). Everything wholly inside hidden space — interior
+  doors, open passages between two concealed rooms of one secret suite
+  — is nobody's business, and everything wholly inside visible space is
+  free. The entrance-local first draft refused the minimal honest
+  dungeon (a visible start room whose only crossing is the one
+  concealed door) and made secret suites unauthorable; the frontier
+  form keeps every true refusal and drops the false ones. A room with
+  one open door and one concealed shortcut stays legal — the room is no
+  secret, the shortcut is; a concealed start region stays legal —
+  presence pierces at runtime.
 
 ## Later slices (named, not designed)
 
