@@ -290,8 +290,7 @@ Record the exact tag for Tasks 5 and 6.
 
 **Files:**
 - Modify: `rpg-api-protos/dnd5e/api/v1alpha2/encounter/types.proto`
-- Generated: `rpg-api-protos/gen/go/**`
-- Generated: `rpg-api-protos/gen/ts/**`
+- CI-generated after merge on the managed `generated` branch: Go and TypeScript SDKs. Never commit generated output on the feature branch.
 
 **Interfaces:**
 - Produces: `Item.quantity` field 7, positive total-owned count.
@@ -310,26 +309,27 @@ message Item {
 }
 ```
 
-- [ ] **Step 2: Generate and verify**
+- [ ] **Step 2: Format, generate ephemerally, and verify**
 
 ```bash
 cd rpg-api-protos
-make generate
+buf format -w
 make test
-buf lint
-buf breaking --against '.git#branch=main'
+buf breaking --disable-symlinks --against 'https://github.com/KirkDiggler/rpg-api-protos.git#branch=main'
+git diff --check
+git status --short
 ```
 
-Expected: generated Go/TS expose quantity; breaking check passes because the change is additive.
+Expected: lint/format/generation/compile gates pass and the breaking check accepts the additive field. Any generated working files are verification artifacts only and must be cleaned before commit; the feature diff contains the `.proto` source alone.
 
 - [ ] **Step 3: Commit and publish the proto PR**
 
 ```bash
-git add dnd5e/api/v1alpha2/encounter/types.proto gen
+git add dnd5e/api/v1alpha2/encounter/types.proto
 git commit -m "feat: expose owned item quantity"
 ```
 
-Open the PR, wait for human merge/generated tag, and record the exact proto version.
+Open the PR, wait for human merge, then let CI update the managed `generated` branch and publish the tag. Record the exact proto version; consumers pin that generated release, never the feature commit.
 
 ### Task 5: Pin and map quantity through rpg-api
 
