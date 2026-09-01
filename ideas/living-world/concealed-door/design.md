@@ -162,12 +162,19 @@ slice 1 is explicit search.
   bus in the seam, ever (the gamectx slice's TestNoBusLivesInThisModule)
   — holds. The humble resolver is therefore the first production
   CALLER of dnd5e's check machinery, not its first bus subscriber: real
-  skills with proficiency and expertise, rolled through
-  checks.MakeAbilityCheck under its own nil-bus contract ("no chain
-  events fire"), zero dice arithmetic at the seam. Behaviorally
-  lossless today (#1357: the chain has zero subscribers anywhere). The
-  chain going LIVE is the resolution rung's opening move — that slice
-  inherits this line.
+  skills with proficiency and expertise, zero dice arithmetic at the
+  seam. AMENDED same day, Kirk's ruling: the nil-bus parameter itself
+  is the dark-times shape (an absent value that does not say what the
+  author meant — the day a condition subscribes, every nil-bus call
+  site becomes a silent rules bug). The fix is two total functions
+  instead of one partial one (#1357): \`MakeAbilityCheck\` REQUIRES the
+  bus — a full check consults the chain, period — and a separate,
+  honestly-named unaided variant carries roll + modifier + DC with no
+  bus parameter at all. The session's resolver calls the unaided one by
+  name; absence is a choice made in the open, never a nil. The chain
+  going LIVE is the resolution rung's opening move — that slice
+  inherits this line. Sweep rider: saves' chain entry points audited
+  for the same shape.
 
 - **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
   with the recommendation): the humble rung first — a dnd5e resolver in
