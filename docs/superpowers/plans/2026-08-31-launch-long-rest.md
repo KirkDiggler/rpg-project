@@ -338,15 +338,17 @@ Add separate tests:
 - current-member duplicate Join is refused before rest/save;
 - Exit followed by Join sees the member in persisted `EverMembers` and does not rest/save the deliberately re-spent record;
 - a genuinely new late member rests;
-- resolution rest failure or placement failure writes neither character nor encounter;
+- resolution rest failure writes neither character nor encounter;
 - character save failure leaves encounter unchanged and reports failure;
-- character save success followed by encounter save failure reports the character as written and leaves that rested record durable.
+- after character-save success, bad projection/placement, corrupted stream-cursor preparation, and encounter-save failures all report the character as already written and leave the rested record durable;
+- a zero-HP first admission is read as standing by placement/discovery and cannot emit a false down beat or ending;
+- a driven monster turn triggered during placement resolves against the persisted rested record and cannot be overwritten by stale pre-rest data.
 
 - [ ] **Step 3: Detect first admission from persisted encounter data**
 
 Before `encounter.Join` mutates `EverMembers`, inspect `scope.enc.ToData().EverMembers` for `in.Member`. Do not add a caller flag or second session lifecycle state.
 
-- [ ] **Step 4: Resolve, project, place, then persist**
+- [ ] **Step 4: Resolve and persist before projection/placement**
 
 For a first-ever member only:
 
@@ -354,17 +356,23 @@ For a first-ever member only:
 rested, err := resolution.LongRest(ctx, &resolution.LongRestInput{Character: record})
 ```
 
-Project `rested.Character` through the existing projection path, then perform every current placement/discovery pre-commit check. Only after those succeed, save the character with explicit report vocabulary:
+Validate the resolution output, then immediately save the rested record before any projection, placement, standing consult, fight formation, or driven turn can read the repository:
 
 ```go
 if err := m.characters.SaveCharacter(ctx, rested.Character); err != nil {
-    report := SaveReport{Failed: []string{"character:" + in.Member}}
+    report := SaveReport{
+        Written: append([]string(nil), scope.written...),
+        Failed:  []string{"character:" + in.Member},
+    }
     return nil, &SaveError{Report: report, Err: fmt.Errorf("saving character: %w", err)}
 }
 scope.written = append(scope.written, "character:"+in.Member)
+record = rested.Character
 ```
 
-Then run the existing commit so an encounter failure includes the already-written character in SaveReport. Non-first Join uses the original record and performs no character save.
+Project and place from that same rested data. Non-first Join uses the original record and performs no character save.
+
+Once `scope.written` is non-empty, every subsequent projection/placement/commit-preparation error must preserve the durable-write report. Use one small Session helper that wraps a later error in `SaveError{Report: SaveReport{Written: copy(scope.written)}}`; do not add a staged character overlay. `commit` must likewise return a SaveError when `exitDissolvedCombatants` or stream-number preparation fails after an early character write. Any driven resolution write appends to the same `scope.written`, so later reports retain all durable identities.
 
 - [ ] **Step 5: Verify and publish**
 

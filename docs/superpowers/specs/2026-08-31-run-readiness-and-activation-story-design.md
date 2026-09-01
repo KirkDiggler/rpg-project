@@ -2,6 +2,8 @@
 
 **Status:** Approved in design conversation on 2026-08-31
 
+**Implementation decisions:** [`2026-08-31-run-readiness-and-activation-story/implementation.md`](2026-08-31-run-readiness-and-activation-story/implementation.md)
+
 ## Problem
 
 Three gaps prevent a new dungeon run from feeling like a complete level-one D&D loop:
@@ -122,10 +124,10 @@ Inside the toolkit:
 2. It fetches that member's `character.Data` through `CharacterRepository`, as it already does.
 3. On first admission, it passes the data to `resolution.LongRest`.
 4. `resolution.LongRest` strictly loads the character, creates its transient interaction bus, attaches the sheet, invokes `Character.LongRest`, and returns the resulting `character.Data`. No runtime character or bus crosses the resolution/session seam.
-5. Session projects and places the returned data through the existing Join path.
-6. After all pre-commit checks succeed, Session persists the rested character through `CharacterRepository`, records `character:<id>` in `SaveReport`, and commits the encounter containing the join.
+5. Session immediately persists the rested character through `CharacterRepository` and records `character:<id>` as durable for this Join attempt.
+6. Session projects and places the now-authoritative rested record through the existing Join path, then commits the encounter containing the join.
 
-Rest, projection, or placement failure writes neither the character nor the encounter. If the character save succeeds and the encounter save fails, the report names the durable character write; retry is mechanically safe because LongRest is idempotent and `EverMembers` has not persisted the failed placement. This follows the session SDK's existing partial-save reporting posture instead of inventing a cross-repository transaction.
+LongRest or character-save failure occurs before placement and writes no encounter mutation. Once the character save succeeds, that rest is intentionally durable even if projection, placement, stream-number preparation, or encounter persistence later fails: the rest is the valid between-runs transition, not a tentative side effect of successful placement. Every later error must carry a `SaveError`/`SaveReport` naming `character:<id>` (plus any later durable writes), so the host can distinguish a safe retry from partial progress. Retry is mechanically safe because LongRest is idempotent and `EverMembers` has not persisted the failed placement. This explicit early-save posture avoids a cross-verb character-overlay transaction that would otherwise spread through standing, cast, monster-turn, check, and concealment callbacks.
 
 The existing parallel `RestoreForLaunch` arcade reset is retired so there is one recovery meaning. Long-term town play will replace this temporary first-admission policy with an explicit in-world rest action; no town/rest RPC is introduced in this slice.
 
@@ -250,9 +252,9 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Invalid repeated equipment choices fail at toolkit validation before draft persistence.
 - Invalid or nonpositive inventory quantities fail strict loading/provider validation rather than being silently corrected by API.
 - EquipItem refuses ownership overdraw even if a client displays stale carried count.
-- A failed first-admission rest, projection, or placement writes neither the character nor that Join's encounter mutation. No successful Join seats an unrested sheet.
+- A failed first-admission LongRest or character save writes no Join encounter mutation. No successful Join seats an unrested sheet.
 - A RestEvent subscriber error fails `resolution.LongRest` and therefore Join; it is not logged and ignored.
-- A character-save success followed by encounter-save failure is reported as a partial save; the rested record is safe to reuse on retry because LongRest is idempotent and the failed placement did not persist `EverMembers`.
+- After the character save succeeds, any projection, placement, commit-preparation, or encounter-save failure reports the rested character as already written. The rested record is safe to reuse on retry because LongRest is idempotent and the failed placement did not persist `EverMembers`.
 - Activation effect capture is interaction-scoped. Subscriptions are removed with the resolution bus and cannot leak into later actions.
 - Activation events are authored only after successful resolution and sheet persistence.
 - Unknown future event kinds retain the existing delivered-as-unknown behavior; known activation bodies are never encoded into opaque payload as a shortcut.
@@ -268,7 +270,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Root LongRest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, and death saves.
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
 - Resolution tests prove strict data-in/data-out LongRest owns the transient bus and returns the complete rested sheet without exposing runtime objects.
-- Session tests prove only first-ever Join invokes LongRest, persists the returned character before encounter commit, reports partial saves, and leaves reconnect/exit-rejoin semantics unchanged.
+- Session tests prove only first-ever Join invokes LongRest, persists the returned character before any placement callback can consult standing/cast state, reports that durable rest on every later failure path, and leaves reconnect/exit-rejoin semantics unchanged.
 - Activation tests prove activation-before-result event ordering, exact post-clamp healing, condition effects, capacity effects, no events on refusal, catch-up/live parity, audience, and persistence-before-recording failure behavior.
 
 ### Protos
