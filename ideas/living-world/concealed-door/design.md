@@ -368,6 +368,18 @@ with work shown.
   blob you persist) — toolkit#1385; the session follow-through migrates
   every mid-verb `ToData` call site to it, not just the numbering
   order.
+- **The split-save crash window narrows to the big-verb arm, honestly
+  wedged** (rebind review of toolkit#1377, 2026-09-01; recorded, not
+  patched): with numbering and delivery built before the save-point
+  trim, a crash between the encounter save and the session save loses
+  the cursors — for a normal verb the next load re-derives them; for a
+  verb that outgrew the retention window the persisted floor has
+  passed every cursor and the session refuses every subsequent verb,
+  permanently, by the trim-outran guard. Fail-closed and truthful (no
+  beat was delivered that wasn't saved), strictly better than the
+  pre-fix behavior, and unhealable by retry — a remediation path is a
+  named shelf, not slice work. The module's save-ordering doc carries
+  the same admission.
 
 ## Later slices (named, not designed)
 
