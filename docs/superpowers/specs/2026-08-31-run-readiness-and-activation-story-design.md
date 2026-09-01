@@ -15,9 +15,9 @@ These are separate behavior slices under one player outcome: a character can be 
 ## Design principles
 
 - **Toolkit owns rules and facts.** Equipment-choice legality, quantity, rest behavior, condition lifetime, activation effects, and story facts originate in `rpg-toolkit`.
-- **API stays orchestration and translation.** `rpg-api` loads, invokes, persists, and maps fields. It does not inspect weapon properties, special-case feature refs, reset feature JSON, or compose game outcomes.
+- **API stays transport and host orchestration.** `rpg-api` authenticates, validates request shape, resolves lobby/content IDs, calls the toolkit's ID-based session verbs, and persists API-owned envelopes. It does not load runtime D&D characters, create toolkit event buses, inspect weapon properties, special-case feature/condition refs, reset opaque rule data, or compose game outcomes.
 - **Web renders and echoes.** `rpg-dnd5e-web` may count copies represented by server data for inventory presentation, resolve member names, and format typed event fields. It does not decide equipment legality, rest recovery, or activation effects.
-- **Use existing verbs.** Character draft selection, EquipItem, LobbyService StartEncounter, SessionService Activate, Afford, and the session event stream remain the mutation surfaces.
+- **Use existing host verbs.** Character draft selection, EquipItem, LobbyService StartEncounter, toolkit Session `Join`, SessionService Activate, Afford, and the session event stream remain the externally consumed mutation surfaces. Slice B adds an internal data-in/data-out LongRest operation to `resolution`; it adds no player-facing rest RPC or API-side lifecycle helper.
 - **One durable meaning per representation.** Inventory quantity is the owned count of an item ref. Equipment slots are indexes into that stack. Session events are durable facts, not client acknowledgements.
 
 ## Considered approaches
@@ -30,7 +30,7 @@ Rejected because it would let malformed duplicate choices through to a toolkit t
 
 ### 2. Extend the existing authoritative contracts
 
-Allow repeated equipment selections and canonicalize them into quantity stacks, invoke the attached character's existing long-rest behavior at launch, and extend the existing session story spine with typed activation/effect facts.
+Allow repeated equipment selections and canonicalize them into quantity stacks, make a character's first-ever toolkit Session `Join` invoke the attached character's existing long-rest behavior before placement, and extend the existing session story spine with typed activation/effect facts.
 
 Selected because it fixes each gap at its semantic owner while preserving thin consumers and existing RPCs.
 
@@ -110,22 +110,24 @@ This subtraction is representation bookkeeping, not a legality decision. The ser
 
 ## Slice B: a real long rest before dungeon launch
 
-### Launch policy
+### First admission policy
 
-Starting a new dungeon run grants every seated character a normal 2014 long rest. Launch applies that policy before the session exists; reconnecting to an existing session never does.
+For the current single-dungeon game, the first time a character joins a toolkit session grants that character a normal 2014 long rest before projection and placement. The persisted encounter's `EverMembers` is the admission record: a character absent from it rests; a character already present in it does not. Reconnect does not call `Join`, and exit/rejoin remains in `EverMembers`, so neither path rests again. A genuinely new late join receives the same first-admission rest.
 
-For each lobby member, `rpg-api`:
+`rpg-api` remains unaware of this rule. Lobby StartEncounter continues to call the toolkit's existing `StartSession → Join → Spawn` sequence with IDs, authored world data, and positions. It removes the old `RestoreForLaunch` loop and does not import runtime character lifecycle or event-bus plumbing.
 
-1. Loads the persisted character strictly.
-2. Attaches it once to a fresh toolkit event bus.
-3. Calls `Character.LongRest`.
-4. Serializes the resulting character through `ToData`.
-5. Preserves API-owned entity data such as appearance.
-6. Cleans up subscriptions after projection.
+Inside the toolkit:
 
-All members are loaded, attached, rested, and serialized in memory before any session, roster, or lobby-start write. A malformed character or failed rest refuses launch. Rested character records are then persisted before seating, retaining the existing idempotent retry posture if a later member persistence or session write fails.
+1. Session `Join` opens the persisted encounter and determines whether the member is absent from `EverMembers`.
+2. It fetches that member's `character.Data` through `CharacterRepository`, as it already does.
+3. On first admission, it passes the data to `resolution.LongRest`.
+4. `resolution.LongRest` strictly loads the character, creates its transient interaction bus, attaches the sheet, invokes `Character.LongRest`, and returns the resulting `character.Data`. No runtime character or bus crosses the resolution/session seam.
+5. Session projects and places the returned data through the existing Join path.
+6. After all pre-commit checks succeed, Session persists the rested character through `CharacterRepository`, records `character:<id>` in `SaveReport`, and commits the encounter containing the join.
 
-The launch path does not inspect feature refs or mutate opaque feature/condition JSON. The existing parallel `RestoreForLaunch` arcade reset is retired so there is one recovery meaning.
+Rest, projection, or placement failure writes neither the character nor the encounter. If the character save succeeds and the encounter save fails, the report names the durable character write; retry is mechanically safe because LongRest is idempotent and `EverMembers` has not persisted the failed placement. This follows the session SDK's existing partial-save reporting posture instead of inventing a cross-repository transaction.
+
+The existing parallel `RestoreForLaunch` arcade reset is retired so there is one recovery meaning. Long-term town play will replace this temporary first-admission policy with an explicit in-world rest action; no town/rest RPC is introduced in this slice.
 
 ### Normal long-rest effects
 
@@ -140,7 +142,7 @@ The launch path does not inspect feature refs or mutate opaque feature/condition
 - Conditions receive the RestEvent and apply their own rule-correct lifetime behavior.
 - Deprecated or non-authoritative duplicate resource maps are not revived as a second mechanic.
 
-Launch allows this long rest even when a prior run ended at zero HP. This is run-start policy; it is not a claim that an arbitrary dead character can choose a rest mid-encounter.
+First admission allows this long rest even when the prior run ended at zero HP. This is temporary run-admission policy for a game without permanent death; it is not a claim that an arbitrary dead character can choose a rest mid-encounter.
 
 ### Condition audit
 
@@ -248,8 +250,9 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Invalid repeated equipment choices fail at toolkit validation before draft persistence.
 - Invalid or nonpositive inventory quantities fail strict loading/provider validation rather than being silently corrected by API.
 - EquipItem refuses ownership overdraw even if a client displays stale carried count.
-- Launch failure occurs before session construction. No member is seated with an unrested sheet.
-- A RestEvent subscriber error fails the long rest and therefore launch; it is not logged and ignored.
+- A failed first-admission rest, projection, or placement writes neither the character nor that Join's encounter mutation. No successful Join seats an unrested sheet.
+- A RestEvent subscriber error fails `resolution.LongRest` and therefore Join; it is not logged and ignored.
+- A character-save success followed by encounter-save failure is reported as a partial save; the rested record is safe to reuse on retry because LongRest is idempotent and the failed placement did not persist `EverMembers`.
 - Activation effect capture is interaction-scoped. Subscriptions are removed with the resolution bus and cannot leak into later actions.
 - Activation events are authored only after successful resolution and sheet persistence.
 - Unknown future event kinds retain the existing delivered-as-unknown behavior; known activation bodies are never encoded into opaque payload as a shortcut.
@@ -262,8 +265,10 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Finalization tests cover two selected martial weapons becoming one quantity-two stack and fixed javelin/dart/handaxe quantities remaining exact.
 - Equip tests cover one-copy movement, two-copy dual equip, and overdraw refusal.
 - Equipment projection tests cover positive quantity, one row per item ID, and the same quantity-two item ref present in both entries of the projected slot map.
-- Long-rest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, and death saves.
+- Root LongRest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, and death saves.
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
+- Resolution tests prove strict data-in/data-out LongRest owns the transient bus and returns the complete rested sheet without exposing runtime objects.
+- Session tests prove only first-ever Join invokes LongRest, persists the returned character before encounter commit, reports partial saves, and leaves reconnect/exit-rejoin semantics unchanged.
 - Activation tests prove activation-before-result event ordering, exact post-clamp healing, condition effects, capacity effects, no events on refusal, catch-up/live parity, audience, and persistence-before-recording failure behavior.
 
 ### Protos
@@ -302,10 +307,10 @@ Using a branch-built isolated API lab and unchanged generic game route:
 This design lands as three independently reviewable slices under one Project 19 parent:
 
 1. Quantity-aware equipment selection, inventory projection, and dual-copy equip.
-2. Attached normal long rest at dungeon launch plus the complete condition audit.
+2. First-admission normal long rest through root D&D rules, a resolution adapter, toolkit Session Join persistence, and a thin API consumer.
 3. Durable activation and typed result events.
 
-Each slice starts at the owning toolkit provider, publishes the required module tag, then advances through proto/API/web consumers only where its contract requires. Consumer work pins published tags; no permanent local replacements ship.
+Each slice starts at the owning toolkit provider, publishes the required module tag, then advances through dependent toolkit modules and proto/API/web consumers only where its contract requires. Slice B publishes one PR/tag per toolkit module (`rulebooks/dnd5e`, then `resolution`, then `session`) before the thin API consumer removes its obsolete reset loop and pins those tags. Consumer work pins published tags; no permanent local replacements ship.
 
 ## Out of scope
 
@@ -321,7 +326,7 @@ Each slice starts at the owning toolkit provider, publishes the required module 
 1. A valid choose-two equipment requirement accepts the same weapon twice and finalizes it as one quantity-two stack.
 2. Fixed starting quantities such as two handaxes, four javelins, and ten darts reach the owner UI truthfully.
 3. A quantity-two compatible weapon stack can occupy main hand and off hand; the owner projection preserves both slot entries, and a quantity-one stack cannot occupy both.
-4. Starting a dungeon invokes the attached character's normal LongRest path and persists its result before seating.
+4. A character's first-ever toolkit Session Join invokes resolution's attached normal LongRest path and persists its result before seating; reconnect and exit/rejoin do not rest again.
 5. HP, death saves, hit dice, spell slots, character-owned resources, and feature-owned resources follow their normal long-rest behavior.
 6. Every shipped loadable condition has a tested long-rest retain/reset/end decision.
 7. Successful activation produces a durable activation event followed by each actual result event; refused activation produces none.

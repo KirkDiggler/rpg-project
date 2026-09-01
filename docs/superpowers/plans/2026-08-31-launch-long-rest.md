@@ -1,94 +1,81 @@
-# Launch Long Rest Implementation Plan
+# First-Admission Long Rest Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Start every new dungeon run from the persisted result of the character's real 2014 LongRest path, including all resources and explicit condition lifetimes.
+**Goal:** Persist a normal 2014 LongRest before a character's first-ever Join to a dungeon session, without exposing D&D runtime lifecycle to rpg-api.
 
-**Architecture:** rpg-toolkit's attached Character.LongRest remains the sole rules mechanism. Every condition opts into removal, retained-state reset, or no change through its own subscriptions; rpg-api only loads, attaches, invokes, serializes, persists, and then seats characters.
+**Architecture:** `character.Character.LongRest` remains the rule owner. `resolution.LongRest` is the data-in/data-out interaction boundary that owns the transient bus and attached sheet. Toolkit Session `Join` calls it only when the member is absent from the encounter's persisted `EverMembers`, persists the returned `character.Data`, then commits placement. `rpg-api` only removes its obsolete arcade-reset loop and pins published toolkit modules.
 
-**Tech Stack:** Go 1.24, toolkit typed event bus, testify, miniredis, gRPC integration tests.
+**Tech Stack:** Go 1.24, toolkit typed event bus, resolution surface/cast, session repository seam, testify, miniredis, gRPC integration tests.
 
 **Spec:** `docs/superpowers/specs/2026-08-31-run-readiness-and-activation-story-design.md`
 
 ## Global Constraints
 
-- Launch invokes a normal 2014 long rest and tops off HP; reconnect never rests.
-- Feature-owned resources must recover through RestEvent, not feature-ref switches.
-- Temporary conditions own their removal; Character.LongRest must not switch over condition refs.
-- Passive conditions remain; Sneak Attack and Opportunity Attack meters reset.
-- Hit dice recover half maximum (minimum one), not the old arcade full refill.
-- Persisted spell-slot used counts reset to zero.
-- Retire the parallel RestoreForLaunch behavior; no API-side game rules.
+- A normal 2014 long rest occurs only before a character's first-ever Join to a session; reconnect and exit/rejoin do not rest again.
+- `EverMembers` is the persisted admission record; do not add a caller-authored `rest` flag.
+- `character.Character.LongRest` owns HP, death saves, character resources, hit-die arithmetic, spell slots, and RestEvent publication.
+- Feature-owned resources recover through RestEvent, never feature-ref switches.
+- Temporary conditions own removal; passive conditions remain; Sneak Attack and Opportunity Attack meters reset.
+- Resolution owns the transient bus and runtime character. Session and rpg-api exchange data/IDs only.
+- Session persists the rested `character.Data` through `CharacterRepository` before committing the joined encounter.
+- `rpg-api` contains no LongRest, feature, condition, hit-die, spell-slot, or event-bus behavior.
+- Retire `RestoreForLaunch`; do not replace it with another API-side helper.
+- Publish inside-out with one PR/tag per toolkit module: `rulebooks/dnd5e` → `resolution` → `session` → thin rpg-api consumer.
+- Runtime-carried effect cleanup on reused buses is separately tracked by rpg-toolkit#1372 and does not expand this slice.
 
 ---
 
 ### Task 1: Complete Character.LongRest on a persisted attached sheet
 
+**PR/module:** `rpg-toolkit` — `rulebooks/dnd5e`
+
 **Files:**
-- Modify: `rpg-toolkit/rulebooks/dnd5e/character/character.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/character/long_rest_test.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/character/activation_persists_test.go`
-- Delete after consumers migrate: `rpg-toolkit/rulebooks/dnd5e/character/arcade_recovery.go`
-- Delete after consumers migrate: `rpg-toolkit/rulebooks/dnd5e/character/arcade_recovery_test.go`
+- Modify: `rulebooks/dnd5e/character/character.go`
+- Modify: `rulebooks/dnd5e/character/load.go`
+- Modify: `rulebooks/dnd5e/character/sheet_keeper.go`
+- Modify: `rulebooks/dnd5e/character/long_rest_test.go`
+- Modify: `rulebooks/dnd5e/character/attach_rollback_test.go`
+- Modify: `rulebooks/dnd5e/character/load_test.go`
+- Modify: `rulebooks/dnd5e/character/sheet_keeper_test.go`
 
 **Interfaces:**
-- Consumes: `Load(ctx, *Data)`, `Attach(ctx, *Character, events.EventBus)`, `Character.LongRest(ctx)`.
-- Produces: `ToData()` containing full HP, cleared death saves, normal resource recovery, feature-owned recovery, and unused spell slots.
+- Consumes: `character.Load`, `character.Attach`, `Character.LongRest`, `Character.ToData`.
+- Produces: a strictly loaded attached character whose normal LongRest persists every implemented recovery outcome.
 
-- [ ] **Step 1: Add a failing attached round-trip test**
+- [ ] **Step 1: Write the attached persisted round-trip test**
 
-Build a valid persisted Fighter with Second Wind at `uses:0,max_uses:1`, HP below max, death-save state, a spent short-rest resource, spent hit dice, and spell slots with `Used > 0`. Load and attach it, call LongRest, and serialize:
+Seed a level-four Fighter with HP below 36, death saves, `SecondWindData{Uses:0, MaxUses:1}`, a 0/2 short-rest pool, 0/4 hit dice, and first-level slots with `Used:2`. Run strict `Load → Attach → LongRest → ToData` and assert independent literals:
 
 ```go
-char, err := Load(ctx, data)
-require.NoError(t, err)
-bus := events.NewEventBus()
-require.NoError(t, Attach(ctx, char, bus))
-t.Cleanup(func() { require.NoError(t, char.Cleanup(ctx)) })
-
-require.NoError(t, char.LongRest(ctx))
-got := char.ToData()
-require.Equal(t, got.MaxHitPoints, got.HitPoints)
-if got.DeathSaveState != nil {
-    require.Zero(t, got.DeathSaveState.Successes)
-    require.Zero(t, got.DeathSaveState.Failures)
-}
+require.Equal(t, 36, got.HitPoints)
+require.Equal(t, 36, got.MaxHitPoints)
+require.Zero(t, got.DeathSaveState.Successes)
+require.Zero(t, got.DeathSaveState.Failures)
+require.Equal(t, 2, got.Resources[resources.HitDice].Current)
+require.Equal(t, 2, got.Resources[shortRestPool].Current)
 require.Equal(t, 0, got.SpellSlots[1].Used)
-
-var secondWind features.SecondWindData
-require.NoError(t, json.Unmarshal(featureByRef(t, got.Features, refs.Features.SecondWind()), &secondWind))
-require.Equal(t, secondWind.MaxUses, secondWind.Uses)
+require.Equal(t, 1, secondWindUses(t, got.Features))
 ```
 
-Add this test helper in the same file so the lookup is ref-based rather than positional:
+The test must use a ref-based feature lookup and real `events.NewEventBus`.
 
-```go
-func featureByRef(t *testing.T, blobs []json.RawMessage, want *core.Ref) json.RawMessage {
-    t.Helper()
-    for _, raw := range blobs {
-        var envelope struct { Ref core.Ref `json:"ref"` }
-        require.NoError(t, json.Unmarshal(raw, &envelope))
-        if envelope.Ref.Equals(want) { return raw }
-    }
-    t.Fatalf("feature %s not found", want.String())
-    return nil
-}
-```
-
-Assert a level-four character with zero hit dice recovers exactly two, not four.
-
-- [ ] **Step 2: Run the test and verify RED**
+- [ ] **Step 2: Verify the real RED sequence**
 
 ```bash
 cd rpg-toolkit/rulebooks/dnd5e
 go test ./character -run 'TestLongRest|Test.*Activation.*Persist' -count=1
 ```
 
-Expected: spell-slot assertion fails; Second Wind passes only when the feature was attached correctly.
+Expected current defects, in order as earlier ones are corrected: attached hit dice double-recover to four; persisted Second Wind remains zero because load did not attach feature lifecycle; spell slots remain used.
 
-- [ ] **Step 3: Reset spell slots in Character.LongRest**
+- [ ] **Step 3: Make recovery single-owned and attach feature lifecycle generically**
 
-After normal resource recovery and before publishing RestEvent:
+Character-owned pools remain inert during `Load/Attach`; `LongRest` and `ShortRest` recover them directly. Features that implement the existing Apply/Remove lifecycle attach generically through `BusForEffect(feature.Ref())`; no feature-ref switch is allowed. Strict failure rolls back, lenient failure drops only the failed feature, and lifecycle teardown is symmetric.
+
+Legacy `LoadResourceData` reconstructs inert resource values and retains its signature for source compatibility; raw RestEvent does not recover those character-owned pools.
+
+- [ ] **Step 4: Reset persisted spell slots before RestEvent**
 
 ```go
 for level, slots := range c.spellSlots {
@@ -100,340 +87,356 @@ for level, slots := range c.spellSlots {
 }
 ```
 
-Keep HP maximum, death-save clearing, short/long resource refill, and half-hit-die recovery in Character.LongRest. Do not add feature-specific logic.
+Call `poolChanged` before publishing the owner-scoped RestEvent.
 
-- [ ] **Step 4: Verify the focused character suite**
+- [ ] **Step 5: Verify character behavior and lifecycle**
 
 ```bash
-go test ./character -run 'TestLongRest|Test.*Activation.*Persist' -count=1
+go test ./character -run 'TestLongRest|Test.*Activation.*Persist|TestAttach|TestPureLoad|TestSheetKeeper|TestCharacterResource' -count=1
+go test ./character -count=1
+golangci-lint run ./character/...
 ```
 
-Expected: PASS.
+Mutation checks must kill reintroduced character-resource RestTopic subscription, omitted feature attachment, and omitted spell-slot reset.
 
-- [ ] **Step 5: Commit the complete runtime rest**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add rulebooks/dnd5e/character/character.go \
-  rulebooks/dnd5e/character/long_rest_test.go \
-  rulebooks/dnd5e/character/activation_persists_test.go
+git add rulebooks/dnd5e/character
 git commit -m "feat: complete persisted long-rest recovery"
 ```
 
-Do not delete RestoreForLaunch until the API consumer no longer calls it; delete it in the final toolkit cleanup commit after Task 5's branch proves migration.
+### Task 2: Make temporary conditions end themselves on long rest
 
-### Task 2: Make every temporary condition end itself on long rest
+**PR/module:** same `rulebooks/dnd5e` provider PR
 
 **Files:**
-- Create: `rpg-toolkit/rulebooks/dnd5e/conditions/rest.go`
-- Create: `rpg-toolkit/rulebooks/dnd5e/conditions/rest_test.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/reckless_attack.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/dodging.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/disengaging.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/hidden.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/helped.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/prone.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/unconscious.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/shield_spell.go`
-- Verify existing: `rpg-toolkit/rulebooks/dnd5e/conditions/raging.go`
+- Create: `rulebooks/dnd5e/conditions/rest.go`
+- Create: `rulebooks/dnd5e/conditions/rest_test.go`
+- Modify: `reckless_attack.go`, `dodging.go`, `disengaging.go`, `hidden.go`, `helped.go`, `prone.go`, `unconscious.go`, `shield_spell.go`
+- Verify unchanged rule: `raging.go`
 
 **Interfaces:**
-- Consumes: `dnd5eEvents.RestTopic`, `ConditionRemovedTopic`.
-- Produces: a reusable opt-in subscription helper; no central condition-ref removal switch.
+- Consumes: RestTopic and ConditionRemovedTopic.
+- Produces: explicit owner-scoped opt-in removal plus self-unsubscription for every temporary condition.
 
-- [ ] **Step 1: Write failing removal tests**
+- [ ] **Step 1: Add the failing real-bus table**
 
-For each temporary condition, attach it to a bus, subscribe to ConditionRemovedTopic, publish a short rest as a negative control and a long rest as the trigger:
+Use explicit canonical expected refs for Reckless Attack, Dodging, Disengaging, Hidden, Helped, Prone, Unconscious, and Shield. Every case proves wrong-owner and short-rest negative controls, one exact long-rest removal fact with reason `"long rest"`, `IsApplied()==false` afterward, and no second removal on another long rest. Keep Rage as a separate any-rest control.
 
-```go
-require.NoError(t, condition.Apply(ctx, bus))
-require.NoError(t, dnd5eEvents.RestTopic.On(bus).Publish(ctx, dnd5eEvents.RestEvent{
-    RestType: coreResources.ResetShortRest, CharacterID: memberID,
-}))
-require.Empty(t, removed, "short-rest negative control")
-require.NoError(t, dnd5eEvents.RestTopic.On(bus).Publish(ctx, dnd5eEvents.RestEvent{
-    RestType: coreResources.ResetLongRest, CharacterID: memberID,
-}))
-require.Equal(t, condition.Ref().String(), removed.ConditionRef)
-require.Equal(t, "long rest", removed.Reason)
-```
-
-Use table subtests for Reckless Attack, Dodging, Disengaging, Hidden, Helped, Prone, Unconscious, and Shield. Keep Rage's existing any-rest behavior as its own rule and positive control.
-
-- [ ] **Step 2: Run tests and verify RED**
+- [ ] **Step 2: Verify RED**
 
 ```bash
-cd rpg-toolkit/rulebooks/dnd5e
 go test ./conditions -run 'Test.*LongRest|TestRaging.*Rest' -count=1
 ```
 
-Expected: every new temporary-condition case except Rage fails to publish removal.
-
-- [ ] **Step 3: Add the opt-in removal helper**
-
-Implement in `rest.go`:
+- [ ] **Step 3: Add one opt-in helper**
 
 ```go
+type removeCondition func(context.Context, events.EventBus) error
+
 func subscribeRemoveOnLongRest(
     ctx context.Context,
     bus events.EventBus,
     memberID string,
     ref *core.Ref,
-) (string, error) {
-    return dnd5eEvents.RestTopic.On(bus).Subscribe(ctx,
-        func(ctx context.Context, event dnd5eEvents.RestEvent) error {
-            if event.CharacterID != memberID || event.RestType != coreResources.ResetLongRest {
-                return nil
-            }
-            return dnd5eEvents.ConditionRemovedTopic.On(bus).Publish(ctx,
-                dnd5eEvents.ConditionRemovedEvent{
-                    MemberID: memberID, ConditionRef: ref.String(), Reason: "long rest",
-                })
-        })
-}
+    remove removeCondition,
+) (string, error)
 ```
 
-Each listed condition explicitly calls this helper from Apply, appends the returned ID to its own subscription list, and includes it in existing rollback/unsubscribe behavior.
+The callback ignores other owners/non-long rests, publishes the standard removal fact first, returns immediately on publish error, and then invokes the owning condition's `Remove(ctx, bus)`. Each condition passes its own Remove method, tracks the returned subscription ID, and includes it in Apply rollback and normal removal.
 
-- [ ] **Step 4: Run focused and full condition tests**
+- [ ] **Step 4: Verify conditions**
 
 ```bash
 go test ./conditions -run 'Test.*LongRest|TestRaging.*Rest' -count=1
 go test ./conditions -count=1
+golangci-lint run ./conditions/...
+go vet ./conditions/...
 ```
 
-Expected: PASS with no leaked or duplicate subscriptions.
+Mutation checks must kill omission of any helper call, owner/rest-type guards, publish-before-remove ordering, and self-removal.
 
-- [ ] **Step 5: Commit temporary-condition lifetimes**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add rulebooks/dnd5e/conditions
 git commit -m "feat: end temporary conditions on long rest"
 ```
 
-### Task 3: Reset retained meters and enforce registry completeness
+### Task 3: Reset retained meters and prove every loader entry
+
+**PR/module:** same `rulebooks/dnd5e` provider PR
 
 **Files:**
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/loader.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/loader_test.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/sneak_attack.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/sneak_attack_test.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/opportunity_attack.go`
-- Modify: `rpg-toolkit/rulebooks/dnd5e/conditions/opportunity_attack_meter_test.go`
-- Create: `rpg-toolkit/rulebooks/dnd5e/conditions/long_rest_registry_test.go`
+- Modify: `rulebooks/dnd5e/conditions/loader.go`
+- Modify: `rulebooks/dnd5e/conditions/loader_test.go`
+- Modify: `rulebooks/dnd5e/conditions/sneak_attack.go`
+- Modify: `rulebooks/dnd5e/conditions/sneak_attack_test.go`
+- Modify: `rulebooks/dnd5e/conditions/opportunity_attack.go`
+- Modify: `rulebooks/dnd5e/conditions/opportunity_attack_meter_test.go`
+- Create: `rulebooks/dnd5e/conditions/long_rest_registry_test.go`
+- Create: `rulebooks/dnd5e/character/long_rest_conditions_integration_test.go`
 
 **Interfaces:**
-- Produces: unexported `conditionLoaders` registry keyed by canonical ref string and a complete long-rest expectation table.
+- Produces: canonical full-ref `conditionLoaders`, an independent 22-entry expectation matrix, and persisted all-condition LongRest proof.
 
-- [ ] **Step 1: Add failing retained-meter tests**
+- [ ] **Step 1: Add meter RED tests**
 
-Load Sneak Attack and Opportunity Attack with `used_this_turn:true`, attach, publish a long rest for the owner, and assert serialized state is false. Also assert passive conditions such as Unarmored Defense and Two-Weapon Fighting remain present.
+Load Sneak Attack and Opportunity Attack with `used_this_turn:true`, Apply to a real bus, publish owner long rest, and assert serialized false plus one standard ConditionStateChanged fact. Wrong owner, short rest, and already-false cases remain unchanged and publish nothing.
 
-- [ ] **Step 2: Add a registry completeness test**
+- [ ] **Step 2: Add the independent exhaustive matrix**
 
-Define `longRestCases` with exactly one entry for every loader key and assert set equality:
+Declare exactly 22 explicit fixtures/outcomes: 11 retain unchanged, 2 reset, 9 remove. Assert set equality with production loader keys, while keeping independent loader/ref-contract tests so a paired omission cannot pass.
 
-```go
-require.ElementsMatch(t,
-    slices.Collect(maps.Keys(conditionLoaders)),
-    slices.Collect(maps.Keys(longRestCases)),
-)
-```
-
-Each case declares `retain`, `reset`, or `remove`; the behavioral subtest runs `Load -> Apply -> RestEvent -> ToJSON` and asserts the declared post-state. Include Shield and the feature-ref-shaped Sneak Attack key.
-
-- [ ] **Step 3: Run tests and verify RED**
-
-```bash
-cd rpg-toolkit/rulebooks/dnd5e
-go test ./conditions -run 'TestLongRestRegistry|Test.*Meter.*LongRest' -count=1
-```
-
-Expected: meters remain used and `conditionLoaders` does not yet exist.
-
-- [ ] **Step 4: Refactor LoadJSON dispatch into one registry**
-
-Mechanically move each existing switch arm into:
+- [ ] **Step 3: Refactor loader dispatch mechanically**
 
 ```go
 type conditionLoader func(json.RawMessage) (dnd5eEvents.ConditionBehavior, error)
+
 var conditionLoaders = map[string]conditionLoader{
     refs.Conditions.Raging().String(): loadRaging,
-    // every current loader arm, including refs.Features.SneakAttack and refs.Spells.Shield
+    // every current canonical ref, including Features.SneakAttack and Spells.Shield
 }
 ```
 
-Peek the complete `core.Ref`, look up by `peek.Ref.String()`, and preserve existing wrapped errors. This is dispatch consolidation only; no loading behavior changes.
+Peek the complete ref and route on `peek.Ref.String()`. Preserve each current constructor/loadJSON function and wrapped error meaning. A wrong module/type with a familiar ID must not route.
 
-- [ ] **Step 5: Subscribe retained meters to long rest**
+- [ ] **Step 4: Subscribe both retained meters**
 
-Sneak Attack and Opportunity Attack subscribe to RestTopic. For matching long rests, set `UsedThisTurn=false` only when true and publish ConditionStateChangedTopic with their owner/ref so the keeper marks the sheet dirty. Include subscription rollback and removal.
+For matching owner long rest only, true becomes false and publishes the condition's normal state-changed fact. False remains false without dirtying the sheet. Include Apply rollback and Remove cleanup.
 
-- [ ] **Step 6: Verify all conditions**
+- [ ] **Step 5: Prove the persisted character path**
+
+For all 22 fixtures run strict `Character.Load → Attach → LongRest → ToData`. Assert retained JSON equivalence, both seeded meters persisted false, and all temporary refs absent. The matrix must not rely on a source-text assertion or production fixture registry.
+
+- [ ] **Step 6: Verify and commit**
 
 ```bash
 go test ./conditions -count=1
-go test ./character -run TestLongRest -count=1
-```
-
-Expected: PASS; every registered condition has an explicit rule.
-
-- [ ] **Step 7: Commit registry and meter behavior**
-
-```bash
-git add rulebooks/dnd5e/conditions
+go test ./character -run 'TestLongRest' -count=1
+go test ./... -count=1
+go vet ./...
+golangci-lint run ./conditions/... ./character/...
+git add rulebooks/dnd5e/conditions rulebooks/dnd5e/character/long_rest_conditions_integration_test.go
 git commit -m "test: enforce long-rest behavior for every condition"
 ```
 
-### Task 4: Verify and publish the toolkit root provider
+### Task 4: Publish the root D&D rules provider
+
+**PR/module:** `rpg-toolkit` — `rulebooks/dnd5e`
 
 **Files:**
-- Modify if invalidated: `rpg-toolkit/docs/status.md`
-- Delete: `rpg-toolkit/rulebooks/dnd5e/character/arcade_recovery.go`
-- Delete: `rpg-toolkit/rulebooks/dnd5e/character/arcade_recovery_test.go`
+- Delete: `rulebooks/dnd5e/character/arcade_recovery.go`
+- Delete: `rulebooks/dnd5e/character/arcade_recovery_test.go`
+- Modify: `rpg-toolkit/docs/status.md` only if current claims are invalidated
 
-**Interfaces:**
-- Produces: published `rulebooks/dnd5e` tag with complete LongRest and no parallel arcade reset.
+- [ ] **Step 1: Delete the parallel arcade implementation**
 
-- [ ] **Step 1: Confirm no non-test consumer needs RestoreForLaunch after the coordinated API branch is ready**
+Existing rpg-api remains safe on its old pinned root module until Task 7. Remove `RestoreForLaunch` and its tests from the new provider release; do not preserve a compatibility wrapper or duplicate reset representation.
 
-```bash
-rg -n 'RestoreForLaunch' /home/kirk/game-dev --glob '*.go'
-```
+- [ ] **Step 2: Verify scope and known residual**
 
-Expected before API migration: only the known API launch call plus toolkit tests/docs. Coordinate deletion and API pin so no merged consumer is broken.
+Confirm no new production code addresses runtime-carried reused-bus cleanup; that gap is rpg-toolkit#1372. Confirm the complete provider diff remains root dnd5e rules/tests only.
 
-- [ ] **Step 2: Delete the parallel helper and update stale docs**
-
-Remove RestoreForLaunch and its tests. Update toolkit status/ADR references to state launch hosts invoke attached Character.LongRest.
-
-- [ ] **Step 3: Run full toolkit verification**
+- [ ] **Step 3: Run provider gates**
 
 ```bash
 cd rpg-toolkit/rulebooks/dnd5e
 find character conditions -name '*.go' -print0 | xargs -0 gofmt -w
 go test ./... -count=1
 go vet ./...
+golangci-lint run ./character/... ./conditions/...
 cd ../../..
 make lint-all
 make pre-commit
 ```
 
-Expected: all scoped module checks pass. Record any established unrelated root coverage-parser failure verbatim.
+Record established unrelated root failures verbatim; do not repair them in this PR.
 
-- [ ] **Step 4: Commit, open PR, and wait for human merge/tag**
+- [ ] **Step 4: Independent reviews and PR**
 
-```bash
-git add rulebooks/dnd5e docs/status.md
-git commit -m "refactor: make long rest the only launch recovery path"
-```
+Run internal Terra and public GLM review against the launch-rest scope. Open one PR for the root module, `Closes #1365`, wait for human merge, and record the CI-minted `rulebooks/dnd5e/v…` tag.
 
-After merge, record the exact root module tag.
+### Task 5: Add resolution.LongRest as the data boundary
 
-### Task 5: Invoke LongRest from rpg-api launch orchestration
+**PR/module:** `rpg-toolkit` — `rulebooks/dnd5e/resolution`
 
 **Files:**
-- Modify: `rpg-api/go.mod`
-- Modify: `rpg-api/go.sum`
-- Modify: `rpg-api/internal/orchestrators/lobby/start_encounter_session_stack.go`
-- Modify: `rpg-api/internal/orchestrators/lobby/start_encounter_session_stack_test.go`
-- Modify: `rpg-api/internal/orchestrators/lobby/abandon_encounter_test.go`
-- Modify if invalidated: `rpg-api/docs/status.md`
+- Create: `rulebooks/dnd5e/resolution/long_rest.go`
+- Create: `rulebooks/dnd5e/resolution/long_rest_test.go`
+- Modify: `rulebooks/dnd5e/resolution/go.mod`
+- Modify: `rulebooks/dnd5e/resolution/go.sum`
 
 **Interfaces:**
-- Consumes: published `character.Load`, `Attach`, `LongRest`, `ToData` behavior.
-- Produces: rested persisted records before SessionManager.StartSession.
-
-- [ ] **Step 1: Add failing real-launch acceptance**
-
-Seed valid Fighter and Barbarian records. Fighter has spent Second Wind, HP, hit dice, spell slots, and a temporary condition; Barbarian has spent Rage Charges and Raging. Start the lobby encounter and assert the repository post-state:
+- Consumes: published root `character.Data` and `Character.LongRest` behavior.
+- Produces:
 
 ```go
-s.Equal(fighter.MaxHitPoints, gotFighter.Data.HitPoints)
-s.Equal(1, secondWindUses(t, gotFighter.Data.Features))
-s.Equal(0, gotFighter.Data.SpellSlots[1].Used)
-s.Equal(expectedHalfRecovered, gotFighter.Data.Resources[resources.HitDice].Current)
-s.NotContains(conditionRefs(gotFighter.Data), refs.Conditions.Dodging().String())
-s.Equal(2, gotBarbarian.Data.Resources[resources.RageCharges].Current)
-s.NotContains(conditionRefs(gotBarbarian.Data), refs.Conditions.Raging().String())
-s.Contains(conditionRefs(gotBarbarian.Data), refs.Conditions.UnarmoredDefense().String())
+type LongRestInput struct {
+    Character *character.Data
+}
+
+type LongRestOutput struct {
+    Character *character.Data
+}
+
+func LongRest(context.Context, *LongRestInput) (*LongRestOutput, error)
 ```
 
-Also retain the “failure before session creation” test with one malformed party member.
+- [ ] **Step 1: Create a new module issue/worktree from current origin/main**
 
-- [ ] **Step 2: Run and verify RED on the current API pin**
+One issue, branch, PR, and eventual resolution tag. Pin the exact Task 4 root tag; local overrides are allowed only during development and never committed.
+
+- [ ] **Step 2: Write failing data-boundary tests**
+
+Use real spent Fighter/Barbarian records. Assert nil input/data rejection, strict malformed-effect rejection, complete recovery, and output data independent from input. Add an internal `longRestOn` test over a held surface proving all subscriptions are torn down on success and every error path.
+
+- [ ] **Step 3: Implement through resolution's one attachment door**
+
+`LongRest` creates a new surface over `events.NewEventBus`. The unexported implementation validates one strict participant, calls `attachAll` with `DropUnreadable:false`, reads the character from the cast, invokes `Character.LongRest`, captures `ToData` before teardown, and joins operation/teardown errors using the module's existing error vocabulary. It does not call `Character.Cleanup`, expose a bus, return a runtime character, or duplicate any rest rule.
+
+- [ ] **Step 4: Verify and publish**
+
+```bash
+cd rpg-toolkit/rulebooks/dnd5e/resolution
+gofmt -w long_rest.go long_rest_test.go
+go test ./... -count=1
+go vet ./...
+golangci-lint run ./...
+```
+
+Commit, independently review, open one resolution PR, wait for human merge, and record the CI-minted `rulebooks/dnd5e/resolution/v…` tag.
+
+### Task 6: Rest and persist only first-ever Session Join
+
+**PR/module:** `rpg-toolkit` — `rulebooks/dnd5e/session`
+
+**Files:**
+- Modify: `rulebooks/dnd5e/session/write.go`
+- Modify: `rulebooks/dnd5e/session/write_test.go`
+- Modify: `rulebooks/dnd5e/session/conditions_test.go`
+- Create: `rulebooks/dnd5e/session/join_long_rest_test.go`
+- Modify: `rulebooks/dnd5e/session/go.mod`
+- Modify: `rulebooks/dnd5e/session/go.sum`
+- Modify if invalidated: `rulebooks/dnd5e/session/README.md`, `doc.go`
+
+**Interfaces:**
+- Consumes: published `resolution.LongRest` and `CharacterRepository.SaveCharacter`.
+- Produces: first-ever Join that persists a rested record and reports the write.
+
+- [ ] **Step 1: Create the session issue/worktree and pin resolution/root tags**
+
+Use a local override only while the provider is unpublished. The committed module graph contains exact published tags and no replace/go.work.
+
+- [ ] **Step 2: Write failing Join persistence tests**
+
+Seed a session with empty `EverMembers` and a spent character. Join and assert the repository contains full HP, cleared death saves, half-restored hit dice, unused spell slots, restored feature resource, retained passive conditions, and removed temporary conditions. Assert `Saved.Written` contains `character:<id>`.
+
+Add separate tests:
+
+- current-member duplicate Join is refused before rest/save;
+- Exit followed by Join sees the member in persisted `EverMembers` and does not rest/save the deliberately re-spent record;
+- a genuinely new late member rests;
+- resolution rest failure or placement failure writes neither character nor encounter;
+- character save failure leaves encounter unchanged and reports failure;
+- character save success followed by encounter save failure reports the character as written and leaves that rested record durable.
+
+- [ ] **Step 3: Detect first admission from persisted encounter data**
+
+Before `encounter.Join` mutates `EverMembers`, inspect `scope.enc.ToData().EverMembers` for `in.Member`. Do not add a caller flag or second session lifecycle state.
+
+- [ ] **Step 4: Resolve, project, place, then persist**
+
+For a first-ever member only:
+
+```go
+rested, err := resolution.LongRest(ctx, &resolution.LongRestInput{Character: record})
+```
+
+Project `rested.Character` through the existing projection path, then perform every current placement/discovery pre-commit check. Only after those succeed, save the character with explicit report vocabulary:
+
+```go
+if err := m.characters.SaveCharacter(ctx, rested.Character); err != nil {
+    report := SaveReport{Failed: []string{"character:" + in.Member}}
+    return nil, &SaveError{Report: report, Err: fmt.Errorf("saving character: %w", err)}
+}
+scope.written = append(scope.written, "character:"+in.Member)
+```
+
+Then run the existing commit so an encounter failure includes the already-written character in SaveReport. Non-first Join uses the original record and performs no character save.
+
+- [ ] **Step 5: Verify and publish**
+
+```bash
+cd rpg-toolkit/rulebooks/dnd5e/session
+gofmt -w write.go write_test.go conditions_test.go join_long_rest_test.go
+go test ./... -count=1
+go vet ./...
+golangci-lint run ./...
+```
+
+Commit, independently review, open one session PR, wait for human merge, and record the CI-minted `rulebooks/dnd5e/session/v…` tag.
+
+### Task 7: Remove the API arcade reset and consume toolkit Join
+
+**PR/repo:** `rpg-api` against `origin/dev`
+
+**Files:**
+- Modify: `go.mod`, `go.sum`
+- Modify: `internal/orchestrators/lobby/start_encounter_session_stack.go`
+- Modify: `internal/orchestrators/lobby/start_encounter_session_stack_test.go`
+- Modify: `internal/orchestrators/lobby/abandon_encounter_test.go` only if assertions name old reset behavior
+- Modify: `docs/architecture/components/lobby-service.md`, `docs/status.md`
+
+- [ ] **Step 1: Create the API issue/worktree and add the failing acceptance**
+
+Seed spent Fighter and Barbarian records, call the existing Lobby StartEncounter route, and assert the character repository after seating contains the complete normal-rest outcomes. The test proves the provider through the API route; it does not assert an API helper or mock LongRest call.
+
+- [ ] **Step 2: Pin all published provider tags**
+
+Pin the exact root, resolution, and session tags from Tasks 4–6. Run `go mod tidy`; no local replace survives.
+
+- [ ] **Step 3: Delete API launch recovery behavior**
+
+Remove the entire `RestoreForLaunch` load/mutate/persist block and its `tkchar` import. Keep the existing `StartSession → Join → Spawn` sequence unchanged; Join now owns first admission. Add no replacement helper, feature/condition inspection, bus, or rest flag.
+
+- [ ] **Step 4: Verify the thin consumer**
 
 ```bash
 cd rpg-api
-go test ./internal/orchestrators/lobby -run 'TestSessionStackSuite/TestStartEncounter_.*Rest' -count=1
-```
-
-Expected: Second Wind/condition/half-hit-die assertions fail under RestoreForLaunch.
-
-- [ ] **Step 3: Pin the published toolkit root tag**
-
-Use the exact Task 4 tag and run `go mod tidy`; no replace remains.
-
-- [ ] **Step 4: Replace persisted-field reset with attached LongRest**
-
-Add a private orchestration helper:
-
-```go
-func restForLaunch(ctx context.Context, entity *entities.Character) (*entities.Character, error) {
-    live, err := tkchar.Load(ctx, entity.Data)
-    if err != nil { return nil, fmt.Errorf("load for launch rest: %w", err) }
-    bus := events.NewEventBus()
-    if err := tkchar.Attach(ctx, live, bus); err != nil {
-        return nil, fmt.Errorf("attach for launch rest: %w", err)
-    }
-    if err := live.LongRest(ctx); err != nil {
-        _ = live.Cleanup(ctx)
-        return nil, fmt.Errorf("long rest for launch: %w", err)
-    }
-    rested := live.ToData()
-    if err := live.Cleanup(ctx); err != nil {
-        return nil, fmt.Errorf("clean up launch rest: %w", err)
-    }
-    return &entities.Character{Data: rested, Appearance: entity.Appearance}, nil
-}
-```
-
-Preflight every party member through this helper into memory, then persist all rested entities, then start/session-seat exactly as today. API code never reads feature or condition refs.
-
-- [ ] **Step 5: Verify launch and full API**
-
-```bash
 go test ./internal/orchestrators/lobby -count=1
 go test -short ./... -count=1
 ./scripts/verify-release-pin.sh
 make pre-commit
 ```
 
-Expected: PASS.
+The API diff must be dependency pins, deletion of obsolete behavior, direct integration evidence, and truthful docs only.
 
-- [ ] **Step 6: Commit and open the API PR**
+- [ ] **Step 5: Review and open the API PR**
 
-```bash
-git add go.mod go.sum internal/orchestrators/lobby docs/status.md
-git commit -m "feat: long rest characters before dungeon launch"
-```
+Publish the exact-head independent review verdict. The PR targets `dev`, uses the repository's required merge style, and closes its own child issue.
 
-### Task 6: Live run-start acceptance
+### Task 8: Live first-admission acceptance
 
-**Files:**
-- No production files unless evidence exposes a defect.
+**Files:** no production files unless evidence exposes a launch-rest defect.
 
 - [ ] **Step 1: Build exact API head in isolated lab1**
 
-Use the local runbook and a dedicated identity. Do not restart or repoint the shared primary API.
+Use a dedicated identity and the local runbook. Do not restart or repoint the shared primary API.
 
-- [ ] **Step 2: Create spent persisted state through real gameplay**
+- [ ] **Step 2: Create spent persisted state through gameplay**
 
-Use Second Wind and Rage, take damage, and leave temporary statuses. End/abandon the run through the normal route.
+Spend HP, Second Wind, Rage, hit dice/spell slots where available, and leave temporary conditions. End or abandon the run through the normal route.
 
 - [ ] **Step 3: Start a new Reference Tomb run**
 
-Verify owner status shows full HP and restored feature charges; permanent class/fighting conditions remain and temporary conditions are absent.
+Verify the first Join persists full HP, normal half-hit-die recovery, restored feature/character resources, unused spell slots, retained passives, and removed temporary conditions before the owner status renders.
 
-- [ ] **Step 4: Record evidence**
+- [ ] **Step 4: Prove no repeated rest**
 
-Post exact heads, toolkit tag, API CI, repository assertions, live screenshots/transcript, and human verdict. The isolated lab is stopped after verification; shared primary remains untouched.
+Reconnect without Join and verify no recovery reruns. In a controlled integration fixture, Exit/rejoin an ever-member after re-spending state and prove Join does not rest again.
+
+- [ ] **Step 5: Record evidence**
+
+Post exact heads/tags, toolkit and API CI, repository assertions, live transcript/screenshots, and human verdict to the provider/consumer issues and parent #341. Stop the isolated lab; leave shared primary untouched.
