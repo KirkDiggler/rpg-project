@@ -193,13 +193,28 @@ with work shown.
   the closed set.
 - **Wave 1b pin:** a Move refused at a concealed unfound edge must be
   byte-identical to the ordinary no-crossing refusal.
-- **OPEN — the hidden room telegraphs itself.** Absence is scoped to
-  the door, so every member's atlas still carries the sealed chamber's
-  cells, region, and props, visibly reachable by nothing — the map
-  itself poses the question the answer is not allowed to leak. Options:
-  accept for slice 1 (client fog may hide unexplored space in practice
-  — verify in the web wave), or extend concealment to regions (a real
-  wire growth, its own ruling). Kirk rules.
+- **RULED (Kirk, 2026-09-01): the room hides with its door.** Client
+  fog does not hide unexplored space, so the map itself must keep the
+  secret — the room "appears to be a wall unless it is found."
+  Concealment extends to regions: a concealed room's entire footprint —
+  its cells, its region entry, its props, its interior boundaries — is
+  absent from a non-knower's atlas, so the space reads as solid mass
+  exactly like anywhere beyond the map's edge, with the masquerade wall
+  covering the one gap the door would leave. Two knowledge moments,
+  deliberately distinct: finding the door reveals the DOOR alone
+  (knowing where a door is is not seeing what is behind it); the room's
+  atlas slice arrives by a recipient-scoped region reveal when the
+  recipient perceives the door OPEN — present at the opening, or
+  walking up later (present state, §22's truth grain).
+- **Authoring coherence (with the region ruling).** Regions gain a
+  concealed marker, declared — no cascade from the door, per the
+  kernel's own second-instance law. But incoherent combinations refuse
+  at compile, worded for the form-filler: a region whose every entrance
+  is concealed must itself be concealed ("this room can only be entered
+  through a concealed door — conceal the room too, or give it another
+  way in"), and a concealed region with an unconcealed entrance refuses
+  symmetrically. A room with one open door and one concealed shortcut
+  stays legal — the room is no secret, the shortcut is.
 
 ## Later slices (named, not designed)
 
