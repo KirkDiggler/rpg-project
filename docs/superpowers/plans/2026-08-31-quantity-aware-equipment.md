@@ -329,7 +329,7 @@ git add dnd5e/api/v1alpha2/encounter/types.proto
 git commit -m "feat: expose owned item quantity"
 ```
 
-Open the PR, wait for human merge, then let CI update the managed `generated` branch and publish the root/npm tag. Record both the exact generated commit and tag. Until rpg-api-protos#261 publishes module-qualified `gen/go/v…` tags, Go consumers pin the exact generated commit (which resolves to an immutable pseudo-version); they must not use the moving `@generated` branch as their final committed requirement.
+Open the PR, wait for human merge, then let CI update the managed `generated` branch and root tag. Record the exact generated commit. Go consumers resolve the generated branch or exact generated commit to a pseudo-version, matching the repository's documented consumer workflow; committed `go.mod` pins the resulting immutable pseudo-version with no local override.
 
 ### Task 5: Pin and map quantity through rpg-api
 
@@ -348,7 +348,7 @@ Open the PR, wait for human merge, then let CI update the managed `generated` br
 
 - [ ] **Step 1: Pin published provider/proto versions**
 
-For this delivery, pin toolkit `rulebooks/dnd5e/v0.124.0` and generated proto commit `1e5c208d02ee4d81f167bc8d5ae272016ca0bd57` with `GOPROXY=direct go get`, then `go mod tidy`. The proto commit must resolve to a Go pseudo-version ending in `1e5c208`; verify that with `go list -m -json`. No `replace`, workspace, branch name, or moving `@generated` requirement survives the commit. The pseudo-version is the immutable published generated commit fallback recorded by rpg-api-protos#261, not an unpublished feature commit.
+For this delivery, pin toolkit `rulebooks/dnd5e/v0.124.0` and generated proto commit `1e5c208d02ee4d81f167bc8d5ae272016ca0bd57` with `GOPROXY=direct go get`, then `go mod tidy`. The proto commit must resolve to a Go pseudo-version ending in `1e5c208`; verify that with `go list -m -json`. No `replace`, workspace, local path, or moving branch requirement survives the commit. This is the normal generated-on-merge Go consumer workflow documented by rpg-api-protos.
 
 - [ ] **Step 2: Write failing mapper and integration assertions**
 
