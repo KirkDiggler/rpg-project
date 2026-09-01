@@ -1,6 +1,6 @@
 # Character Customization Concept Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Deliver a durable provider-backed Character Customization Concept that proves or rejects separately loaded skinned scalp/facial-hair accessories and instance-local runtime surface controls on an animated Dwarf Fighter.
 
@@ -80,7 +80,7 @@
   - `build_manifest(recipe: dict[str, object], reports: dict[str, dict[str, object]]) -> dict[str, object]`
   - `manifest_bytes(document: dict[str, object]) -> bytes`
 
-- [ ] **Step 1: Create the provider issue worktree**
+- [x] **Step 1: Create the provider issue worktree**
 
 ```bash
 git -C /home/kirk/game-dev/rpg-game-assets fetch origin
@@ -92,7 +92,7 @@ git -C /home/kirk/game-dev/rpg-game-assets worktree add \
 
 Expected: clean branch named for `rpg-game-assets#107`; do not modify the active off-hand worktree.
 
-- [ ] **Step 2: Write failing schema tests**
+- [x] **Step 2: Write failing schema tests**
 
 ```python
 class ConceptRecipeTests(unittest.TestCase):
@@ -117,7 +117,7 @@ class ConceptRecipeTests(unittest.TestCase):
             validate_recipe_document(document)
 ```
 
-- [ ] **Step 3: Run the focused tests and observe the missing module failure**
+- [x] **Step 3: Run the focused tests and observe the missing module failure**
 
 Run:
 
@@ -127,7 +127,7 @@ python3 -m unittest scripts.test_character_customization_concept_contract -v
 
 Expected: FAIL because `character_customization_concept_contract` and its config do not exist.
 
-- [ ] **Step 4: Add the exact config**
+- [x] **Step 4: Add the exact config**
 
 Use these stable public refs and runtime paths:
 
@@ -170,7 +170,7 @@ Use these stable public refs and runtime paths:
 }
 ```
 
-- [ ] **Step 5: Implement strict pure validation and staging**
+- [x] **Step 5: Implement strict pure validation and staging**
 
 Use dataclasses and exact-key validation:
 
@@ -191,7 +191,7 @@ SURFACE_MODE = "uniform-pbr-v1"
 
 Reject unknown/missing keys, duplicate refs/paths/source meshes, non-portable paths, wrong Dwarf combination/proportions, absent defaults, unsupported surface mode, and any hash mismatch while staging. Reuse the base recipe’s pinned archive/member/atlas/animation facts instead of duplicating hashes.
 
-- [ ] **Step 6: Write manifest tests before manifest implementation**
+- [x] **Step 6: Write manifest tests before manifest implementation**
 
 ```python
 def test_manifest_binds_every_output_to_report_hash_and_weighted_bones(self):
@@ -206,7 +206,7 @@ def test_manifest_binds_every_output_to_report_hash_and_weighted_bones(self):
             self.assertEqual([], option["animations"])
 ```
 
-- [ ] **Step 7: Implement deterministic manifest assembly and run tests**
+- [x] **Step 7: Implement deterministic manifest assembly and run tests**
 
 `manifest_bytes` must use sorted keys, two-space indentation, UTF-8, and a trailing newline. Reports must bind exact output path, hash, mesh, skeleton order, weighted bones, inverse-bind digest, material mode, animation list, and body socket profile.
 
@@ -219,7 +219,7 @@ git diff --check
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit the pure contract**
+- [x] **Step 8: Commit the pure contract**
 
 ```bash
 git add scripts/configs/character-customization-concept-v1.json \
@@ -244,7 +244,7 @@ git commit -m "learn: define hair accessory concept contract (#107)"
   - `build_accessory(staged: StagedConceptInputs, declaration: dict[str, object], output: Path, report: Path) -> dict[str, object]`
   - Blender CLI accepts `--recipe`, `--source-root`, `--asset`, `--output`, and `--report`; `--asset` is either literal `body` or one style ref declared in the recipe.
 
-- [ ] **Step 1: Write failing report-validation tests**
+- [x] **Step 1: Write failing report-validation tests**
 
 ```python
 def test_body_report_requires_hairless_animated_dwarf(self):
@@ -265,7 +265,7 @@ def test_accessory_report_requires_one_mesh_full_shared_skeleton_and_no_clips(se
     self.assertEqual(0, report["material"]["textureCount"])
 ```
 
-- [ ] **Step 2: Run focused tests and observe failure**
+- [x] **Step 2: Run focused tests and observe failure**
 
 ```bash
 python3 -m unittest scripts.test_build_character_customization_concept -v
@@ -273,7 +273,7 @@ python3 -m unittest scripts.test_build_character_customization_concept -v
 
 Expected: FAIL because exporter/report fixtures do not exist.
 
-- [ ] **Step 3: Implement the body build using existing modular primitives**
+- [x] **Step 3: Implement the body build using existing modular primitives**
 
 The body path must execute this exact sequence:
 
@@ -294,7 +294,7 @@ export_selected(output, target_armature, meshes, ["Idle_Relaxed", "Walk_Forward"
 
 Do not alter production `build_combination` behavior. If Blender-import guards currently make the low-level module unimportable, move only the `bpy`-dependent main invocation behind its existing runtime check and prove all modular tests remain unchanged.
 
-- [ ] **Step 4: Implement accessory export against the identical transformed armature**
+- [x] **Step 4: Implement accessory export against the identical transformed armature**
 
 ```python
 reset_scene()
@@ -314,7 +314,7 @@ export_selected(output, armature, meshes, [])
 
 `bind_uniform_pbr_material` must clear inherited slots and assign one opaque node-based Principled BSDF material with no image texture. Preserve geometry, vertex groups, full armature order, and inverse binds.
 
-- [ ] **Step 5: Add structural GLB readback**
+- [x] **Step 5: Add structural GLB readback**
 
 Implement pure GLB inspection that proves:
 
@@ -345,7 +345,7 @@ Implement pure GLB inspection that proves:
 
 The actual bone list comes from readback and is hash-bound; do not invent or truncate it in the report.
 
-- [ ] **Step 6: Run one real body and one real accessory build**
+- [x] **Step 6: Run one real body and one real accessory build**
 
 ```bash
 blender --background --python-exit-code 1 \
@@ -367,7 +367,7 @@ blender --background --python-exit-code 1 \
 
 Expected: body has 12 meshes/two clips; accessory has one mesh/zero clips/63 ordered bones/one untextured opaque PBR material.
 
-- [ ] **Step 7: Add clean-rebuild equality and run focused tests**
+- [x] **Step 7: Add clean-rebuild equality and run focused tests**
 
 Build Hair 08 twice into sibling stage directories and assert SHA-256 equality for GLB and canonical report. Run:
 
@@ -379,7 +379,7 @@ python3 -m unittest \
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit the builder**
+- [x] **Step 8: Commit the builder**
 
 ```bash
 git add scripts/build_character_customization_concept.py \
@@ -415,7 +415,7 @@ Omit `scripts/build_modular_race_class.py` from `git add` when no import-safety 
   - one deterministic manifest and all-or-nothing runtime installation
   - provider verification receipt and contact sheets
 
-- [ ] **Step 1: Write failing atomic-promotion tests**
+- [x] **Step 1: Write failing atomic-promotion tests**
 
 ```python
 def test_validate_refuses_one_missing_accessory(self):
@@ -435,7 +435,7 @@ def test_apply_rolls_back_all_outputs_when_install_fails(self):
 
 Also snapshot every pre-existing tracked `.glb` path/hash and assert promotion changes none of them.
 
-- [ ] **Step 2: Run focused tests and observe failure**
+- [x] **Step 2: Run focused tests and observe failure**
 
 ```bash
 python3 -m unittest scripts.test_promote_character_customization_concept -v
@@ -443,11 +443,11 @@ python3 -m unittest scripts.test_promote_character_customization_concept -v
 
 Expected: FAIL because promotion code does not exist.
 
-- [ ] **Step 3: Implement build/validate/apply/check**
+- [x] **Step 3: Implement build/validate/apply/check**
 
 `--build` invokes Blender with `--python-exit-code 1` once per declared asset into the lexical `.stage/107-customization` directory. `--validate` requires all reports, exact output/report hashes, one 63-bone armature per export, unique skin-joint names, per-name inverse-bind compatibility between every accessory joint and the body, body-only clips, accessory-only material mode, and portable paths. `--apply` prepares temp siblings and atomically installs all seven GLBs plus manifest, restoring all previous files on any exception. `--check` byte-compares tracked files against a clean rebuilt release.
 
-- [ ] **Step 4: Add inventory/mesh-stat classification tests**
+- [x] **Step 4: Add inventory/mesh-stat classification tests**
 
 ```python
 def test_concept_accessories_are_counted_as_skinned_character_parts(self):
@@ -463,7 +463,7 @@ def test_complete_inventory_includes_every_concept_runtime_file(self):
     self.assertIn("models/synty/concepts/character-customization/scalp/hair-08.glb", paths)
 ```
 
-- [ ] **Step 5: Build and validate the full real candidate set**
+- [x] **Step 5: Build and validate the full real candidate set**
 
 ```bash
 python3 scripts/promote_character_customization_concept.py \
@@ -475,7 +475,7 @@ python3 scripts/promote_character_customization_concept.py \
 
 Expected: seven deterministic outputs and one canonical staged manifest; no tracked runtime file changed yet.
 
-- [ ] **Step 6: Implement and render provider evidence**
+- [x] **Step 6: Implement and render provider evidence**
 
 `render_character_customization_concept.py` must create:
 
@@ -485,7 +485,7 @@ Expected: seven deterministic outputs and one canonical staged manifest; no trac
 
 The script imports the staged body/accessories, drives the body’s sampled idle/walk frames, and renders candidate rows. These sheets establish candidate identity and gross fit; browser rebinding remains authoritative for runtime success.
 
-- [ ] **Step 7: Apply, regenerate, and verify provider state**
+- [x] **Step 7: Apply, regenerate, and verify provider state**
 
 ```bash
 python3 scripts/promote_character_customization_concept.py \
@@ -504,7 +504,7 @@ python3 scripts/promote_character_customization_concept.py \
   --check
 ```
 
-- [ ] **Step 8: Run provider gates**
+- [x] **Step 8: Run provider gates**
 
 ```bash
 python3 -m unittest discover -s scripts -p 'test_*.py'
@@ -514,7 +514,7 @@ git diff --check
 
 Expected: all tests pass; only established environment-gated skips; every pre-existing GLB hash unchanged; no private absolute path in tracked files.
 
-- [ ] **Step 9: Commit the complete provider candidate**
+- [x] **Step 9: Commit the complete provider candidate**
 
 ```bash
 git add README.md scripts harness evidence/107-character-customization-concept
@@ -577,7 +577,7 @@ export function applyRuntimeSurfaceTreatment(
 ): readonly THREE.Material[];
 ```
 
-- [ ] **Step 1: Create the web issue worktree and sync the local provider candidate**
+- [x] **Step 1: Create the web issue worktree and sync the local provider candidate**
 
 ```bash
 git -C /home/kirk/game-dev/rpg-dnd5e-web fetch origin
@@ -591,7 +591,7 @@ RPG_GAME_ASSETS_PATH=/home/kirk/.pi/worktrees/rpg-game-assets/107-character-cust
 
 Expected: `public/models/synty/` remains ignored with zero tracked files.
 
-- [ ] **Step 2: Write synthetic-skeleton failing tests**
+- [x] **Step 2: Write synthetic-skeleton failing tests**
 
 Construct a body with one `THREE.Skeleton([Root, Spine, Head], inverses)` shared by two body meshes and an accessory skin using cloned `Root` and `Head` bones/inverses. Assert:
 
@@ -611,7 +611,7 @@ if (result.ok) {
 
 Add one full-order case that reuses the exact body `Skeleton` object and one subset case that creates an owned `Skeleton` wrapper over body `Bone` objects. Add discriminating tests for duplicate body bone names, two accessory skinned meshes, missing bones, per-name inverse-bind delta above `1e-5`, and bind-matrix mismatch. No test may merely restate Three.js serialization.
 
-- [ ] **Step 3: Run focused tests and observe missing functions**
+- [x] **Step 3: Run focused tests and observe missing functions**
 
 ```bash
 npm run test:run -- src/components/hex-grid/skinnedAccessory.test.ts src/components/hex-grid/runtimeSurfaceTreatment.test.ts
@@ -619,7 +619,7 @@ npm run test:run -- src/components/hex-grid/skinnedAccessory.test.ts src/compone
 
 Expected: FAIL because modules do not exist.
 
-- [ ] **Step 4: Implement exact skeleton reuse**
+- [x] **Step 4: Implement exact skeleton reuse**
 
 `bindSkinnedAccessory` must:
 
@@ -633,11 +633,11 @@ Expected: FAIL because modules do not exist.
 
 Never map by array index without comparing names and bind facts.
 
-- [ ] **Step 5: Implement treatment validation and material cloning**
+- [x] **Step 5: Implement treatment validation and material cloning**
 
 Accept only `/^#[0-9A-F]{6}$/i`, finite roughness/metalness within `[0, 1]`, and `THREE.MeshStandardMaterial` sources. Clone every material, set `color`, `roughness`, and `metalness`, and set `needsUpdate = true`. Return created materials so the owner can dispose them; never dispose shared geometry, source materials, or the body skeleton.
 
-- [ ] **Step 6: Prove instance isolation and cleanup**
+- [x] **Step 6: Prove instance isolation and cleanup**
 
 ```typescript
 const firstCreated = applyRuntimeSurfaceTreatment(firstMesh, RED_LEATHER);
@@ -649,7 +649,7 @@ firstCreated.forEach((material) => material.dispose());
 expect(disposeSpy).toHaveBeenCalledTimes(firstCreated.length);
 ```
 
-- [ ] **Step 7: Run focused tests and commit**
+- [x] **Step 7: Run focused tests and commit**
 
 ```bash
 npm run test:run -- src/components/hex-grid/skinnedAccessory.test.ts src/components/hex-grid/runtimeSurfaceTreatment.test.ts
@@ -688,7 +688,7 @@ export type SkinnedAccessoryStatus =
 
 `ClassCharacterModelProps` gains optional `accessories?: readonly SkinnedAccessoryPresentation[]` and `onAccessoryStatus?: (status: SkinnedAccessoryStatus) => void`.
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Mock `useGLTF` with synthetic body/accessory scenes. Assert:
 
@@ -699,7 +699,7 @@ Mock `useGLTF` with synthetic body/accessory scenes. Assert:
 - unmount removes the accessory mesh and disposes only cloned materials; and
 - existing idle/walk/main-hand tests pass unchanged.
 
-- [ ] **Step 2: Run tests and observe missing component/props**
+- [x] **Step 2: Run tests and observe missing component/props**
 
 ```bash
 npm run test:run -- \
@@ -709,13 +709,13 @@ npm run test:run -- \
 
 Expected: FAIL on missing attachment component and props.
 
-- [ ] **Step 3: Implement the loader lifecycle**
+- [x] **Step 3: Implement the loader lifecycle**
 
 `SkinnedAccessoryAttachment` uses `useGLTF(url)`, `SkeletonUtils.clone(scene)`, `bindSkinnedAccessory`, and `applyRuntimeSurfaceTreatment`. In one effect it adds the successfully rebound mesh to `characterRoot`; cleanup removes it, disposes only created materials, and disposes the rebound skeleton only when `ownsSkeletonWrapper` is true. Call R3F `invalidate()` after mount, treatment change, rejection, and cleanup.
 
 Key the component by `${slot}|${styleRef}|${url}` so a style change cannot retain stale state. Report status only when it belongs to the current presentation identity.
 
-- [ ] **Step 4: Extend the real renderer without changing default behavior**
+- [x] **Step 4: Extend the real renderer without changing default behavior**
 
 After the existing body `<primitive>` and before attachment slots, render:
 
@@ -732,7 +732,7 @@ After the existing body `<primitive>` and before attachment slots, render:
 
 No production caller supplies these props in this Journey.
 
-- [ ] **Step 5: Run renderer regression tests and commit**
+- [x] **Step 5: Run renderer regression tests and commit**
 
 ```bash
 npm run test:run -- \
@@ -780,7 +780,7 @@ export interface CharacterCustomizationFixture {
 }
 ```
 
-- [ ] **Step 1: Write failing pure fixture/coverage tests**
+- [x] **Step 1: Write failing pure fixture/coverage tests**
 
 Pin these presets:
 
@@ -795,7 +795,7 @@ export const SURFACE_PRESETS = {
 
 Test default resolution, explicit `none`, unknown ref refusal, one shared treatment object for both attached slots, and verdict coverage requiring every style/none state, both motions, all three views, all four presets, one simultaneous non-default scalp+facial pair, and positive reference-twin isolation.
 
-- [ ] **Step 2: Run pure tests and observe failure**
+- [x] **Step 2: Run pure tests and observe failure**
 
 ```bash
 npm run test:run -- src/concepts/character-customization/characterCustomizationExperiment.test.ts
@@ -803,11 +803,11 @@ npm run test:run -- src/concepts/character-customization/characterCustomizationE
 
 Expected: FAIL because experiment/assets modules do not exist.
 
-- [ ] **Step 3: Implement exact provider-backed assets and pure resolution**
+- [x] **Step 3: Implement exact provider-backed assets and pure resolution**
 
 Use URL prefix `/models/synty/concepts/character-customization/`. `default` resolves to Hair 04 and Facial Hair 02. `none` returns no presentation. Unknown strings return an explicit unmapped resolution shown by the inspector; never silently choose default.
 
-- [ ] **Step 4: Write failing Concept interaction tests**
+- [x] **Step 4: Write failing Concept interaction tests**
 
 Assert the page:
 
@@ -821,17 +821,17 @@ Assert the page:
 - renders a controlled customized character and an untouched reference twin; and
 - disables `Record Concept verdict` until complete positive coverage exists.
 
-- [ ] **Step 5: Implement the two-instance preview**
+- [x] **Step 5: Implement the two-instance preview**
 
 Follow `WeaponAttachmentPreview` camera conventions. The controlled body uses the Concept hairless Dwarf URL and selected accessories. The reference twin uses the same body with default Hair 04/Facial Hair 02 and immutable default treatment. Position the pair so close/orbit/tactical cameras keep both visible; the close view may focus the controlled head while retaining a labelled reference inset.
 
 Use `HexColorPicker` from the already-installed `react-colorful`; no dependency change.
 
-- [ ] **Step 6: Implement diagnostics and observation recording**
+- [x] **Step 6: Implement diagnostics and observation recording**
 
 Record an observation only after current scalp/facial statuses match the current fixture identities and the R3F scene commits. The inspector must label outputs `NON-PRODUCTION CONCEPT EVIDENCE`. It reports zero mounted accessory armatures by counting only mounted body bones and bound mesh status—not by guessing from URL success.
 
-- [ ] **Step 7: Register/document the Concept and run focused tests**
+- [x] **Step 7: Register/document the Concept and run focused tests**
 
 ```bash
 npm run test:run -- \
@@ -844,7 +844,7 @@ npm run typecheck
 
 Expected: PASS.
 
-- [ ] **Step 8: Run the local browser Learn before any provider merge**
+- [x] **Step 8: Run the local browser Learn before any provider merge**
 
 ```bash
 VITE_API_HOST=http://localhost:8080 npm run dev -- --port 3014 --strictPort
@@ -852,7 +852,7 @@ VITE_API_HOST=http://localhost:8080 npm run dev -- --port 3014 --strictPort
 
 Open `http://localhost:3014/?concept=character-customization`. Exercise every style, both `none` states, combined non-default hair/facial hair, arbitrary black/blond/red colors, all four PBR presets, idle/walk, all views, reference isolation, and weapon witness. Capture console/request output and decide whether exact-skeleton rebinding passes the design’s success gate.
 
-- [ ] **Step 9: Commit only after the mechanism passes locally**
+- [x] **Step 9: Commit only after the mechanism passes locally**
 
 ```bash
 git add src/components src/concepts docs/architecture/components/concepts-route.md docs/how-to/concepts-route.md
@@ -877,7 +877,7 @@ If it fails, stop without this commit/PR, preserve measured evidence in `rpg-pro
 - Consumes: successful local browser verdict.
 - Produces: exact provider merge lock and publication evidence.
 
-- [ ] **Step 1: Open the provider PR and run one independent final review**
+- [x] **Step 1: Open the provider PR and run one independent final review**
 
 Before push:
 
@@ -889,7 +889,7 @@ git diff --check
 
 Open the PR for `rpg-game-assets#107`; publish one current-head independent verdict with Critical/Important/Minor counts and provider verification evidence.
 
-- [ ] **Step 2: Merge provider, record its exact merge, and recreate an exact provider view**
+- [x] **Step 2: Merge provider, record its exact merge, and recreate an exact provider view**
 
 ```bash
 PROVIDER_PR=$(gh pr list --repo KirkDiggler/rpg-game-assets \
@@ -910,7 +910,7 @@ git -C /home/kirk/game-dev/rpg-game-assets worktree add --detach \
 
 Record the full merge SHA in the web receipt and run provider `--check` in `$PROVIDER_VIEW` with the explicit private source root.
 
-- [ ] **Step 3: Sync exact merged provider bytes into the web worktree**
+- [x] **Step 3: Sync exact merged provider bytes into the web worktree**
 
 ```bash
 RPG_GAME_ASSETS_PATH="$PROVIDER_VIEW" npm run assets:sync
@@ -919,7 +919,7 @@ git ls-files public/models/synty | wc -l
 
 Expected: sync succeeds; tracked Synty file count is `0`.
 
-- [ ] **Step 4: Write the failing publication receipt test**
+- [x] **Step 4: Write the failing publication receipt test**
 
 ```typescript
 it('pins the exact merged customization provider and seven outputs', () => {
@@ -936,11 +936,11 @@ it('pins the exact merged customization provider and seven outputs', () => {
 
 Also assert every public path is under `/models/synty/concepts/character-customization/`, every hash is exact, no private path appears, and `.gitignore` still ignores `public/models/synty/`.
 
-- [ ] **Step 5: Generate the exact receipt from merged provider facts**
+- [x] **Step 5: Generate the exact receipt from merged provider facts**
 
 The receipt records provider commit, manifest/inventory hashes, seven path/hash/size rows, source mesh/style refs, shared bone-order/inverse-bind facts, default refs, surface mode, existing-production preservation digest, and browser observation summary. It records no timestamp-dependent hash input.
 
-- [ ] **Step 6: Repeat the full browser matrix against merged bytes**
+- [x] **Step 6: Repeat the full browser matrix against merged bytes**
 
 Use `?concept=character-customization` on the web branch after exact sync. Capture at minimum:
 
@@ -955,7 +955,7 @@ Use `?concept=character-customization` on the web branch after exact sync. Captu
 
 Proof windows must have zero unexpected console errors, page errors, or request failures; all seven GLBs must return HTTP 200 with exact provider hashes.
 
-- [ ] **Step 7: Commit exact publication evidence**
+- [x] **Step 7: Commit exact publication evidence**
 
 ```bash
 npm run test:run -- scripts/characterCustomizationConceptPublication.test.ts
@@ -979,11 +979,11 @@ git commit -m "docs: record customization concept evidence (#877)"
 **Interfaces:**
 - Produces: one reviewed web PR, one observed Concept verdict, and an updated canonical design record.
 
-- [ ] **Step 1: Write the observed `CONTRACT.md` verdict**
+- [x] **Step 1: Write the observed `CONTRACT.md` verdict**
 
 Record exact provider/web heads, accepted and rejected candidates, bind status, bone/inverse-bind facts, accessory sizes, material behavior, clipping observations, cache/reference isolation, animation/socket results, browser URL, and Kirk’s words. Keep future proto fields explicitly provisional.
 
-- [ ] **Step 2: Run the focused web suite**
+- [x] **Step 2: Run the focused web suite**
 
 ```bash
 npm run test:run -- \
@@ -999,7 +999,7 @@ npm run test:run -- \
 
 Expected: PASS.
 
-- [ ] **Step 3: Run full web CI**
+- [x] **Step 3: Run full web CI**
 
 ```bash
 npm run ci-check
@@ -1009,15 +1009,15 @@ git ls-files public/models/synty | wc -l
 
 Expected: format, lint, typecheck, build, and full tests pass; tracked Synty count `0`.
 
-- [ ] **Step 4: Open the web PR and run one independent final review**
+- [x] **Step 4: Open the web PR and run one independent final review**
 
 Publish a current-head verdict comment naming review scope and all verification evidence. Address every valid finding on the same branch, rerun affected focused tests and `npm run ci-check`, and publish an updated verdict if the head changes materially.
 
-- [ ] **Step 5: Have Kirk walk the durable Concept**
+- [x] **Step 5: Have Kirk walk the durable Concept**
 
 Serve the exact reviewed head and open `?concept=character-customization`. Record whether separate skinned accessories and runtime PBR treatment are accepted as the production direction. This human visual verdict—not unit tests alone—decides the Learn.
 
-- [ ] **Step 6: Merge web after provider and verify exact merges/checks**
+- [x] **Step 6: Merge web after provider and verify exact merges/checks**
 
 Confirm the provider merge is an ancestor of the receipt facts, the web PR is merged into `dev`, and all required jobs succeeded on the final head. Close `rpg-game-assets#107` and `rpg-dnd5e-web#877` as completed only after their exact merges are verified.
 

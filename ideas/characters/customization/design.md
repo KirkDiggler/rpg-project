@@ -2,7 +2,7 @@
 name: Character Customization Concept
 issue: https://github.com/KirkDiggler/rpg-project/issues/338
 team: Assets
-status: approved design; implementation not started
+status: implemented and accepted; pending design-record merge
 ---
 
 # Character Customization Concept
@@ -287,6 +287,127 @@ validation remain later decisions. Toolkit remains outside presentation data.
 6. Merge the design record after the implementation outcome is known.
 7. If accepted, open a separate production customization journey beginning
    with the evidence-derived proto contract.
+
+## Implementation record and verdict
+
+The separate-skinned-accessory approach succeeded and is now retained as a
+durable development Concept.
+
+### Exact merges
+
+- Provider `rpg-game-assets#107` / PR `#109` merged as
+  `4c208fad5a950d2103d763a9c8aac96d3bb342b1` from reviewed feature head
+  `6c567b5939ba308a3a35b2d4e5354111e30e9f44`.
+- Web `rpg-dnd5e-web#877` / PR `#881` merged into `dev` as
+  `1a3342ed95be2e6b3d9a685c430634c6d64e527f` from final reviewed head
+  `b8c13a98fad811f82864e85f7bb76a909155956e`.
+- Final-head web CI and Deploy Preview passed.
+
+Provider authority:
+
+- manifest `d1d8a815c0241986c6f5367a6de82340722a5bae08d2c62307224d42b1ff7c10`;
+- complete inventory `b2ef0d7a975de9aa69c9531138f88a48a6e1fc5c1dfbb716b22627d9c3b91222`;
+- inventory tree `c29bd470169026d07bf00fc6d30180a80e29b723f56b19b81adff89b468d00af`;
+- 1,231 pre-existing GLBs preserved byte-identically; and
+- seven Concept GLBs added: one hairless body, Hair 04/08/16, and Facial
+  Hair 01/02/03.
+
+Final provider verification was 883 tests passed with 30 established or
+explicit opt-in skips, a byte-identical seven-GLB clean rebuild, a
+byte-identical two-pass evidence render, and an independent current-head
+verdict of Ready with zero Critical, Important, or Minor findings.
+
+### Runtime findings
+
+The Learn established these reusable facts:
+
+1. Separate scalp and facial-hair GLBs can bind to the animated body by exact
+   Bone identity without mounting the accessory's source armature or running a
+   second animation mixer.
+2. `GLTFLoader` initially shares one Skeleton, while `SkeletonUtils.clone()`
+   creates one equivalent Skeleton wrapper per body `SkinnedMesh`. Equivalent
+   wrappers are compatible only when they share the same exact ordered body
+   Bone objects, inverse matrices, and bind matrices; same names alone are
+   insufficient.
+3. The body remains the sole live armature. Every successful attachment mapped
+   all 63 body bones and reported zero mounted source armatures.
+4. Scalp and facial hair select independently, including explicit `none`, and
+   share one arbitrary sRGB color.
+5. Base color, roughness, and metalness work on instance-owned runtime
+   materials. Controlled and reference twins retain disjoint mesh/material
+   identities and exact independent actual values.
+6. Treatment changes must update the existing instance material in place.
+   Re-cloning/rebinding on every color or PBR tick caused the intermittent pop
+   Kirk observed; the accepted fix keeps mesh and material UUIDs stable and
+   emits zero loading/remount events for treatment-only changes.
+7. Styles are preloaded for the Concept. True style changes retain the bounded
+   identity remount and cleanup path.
+8. Main hand, merged off hand, animation, and accessories remain independent
+   siblings in the shared character renderer.
+
+The final browser publication recorded 29 explicit checkpoints, 49 accumulated
+positive renderer observations, 112 runtime material rows, complete style/
+none/motion/view/preset coverage, both required exact walk combinations,
+actual twin isolation, a canonical warhammer on `Hand_R`, seven exact HTTP 200
+asset receipts, and zero unexpected application, page, request, or HTTP
+failures. The final visible suite passed 4,390 tests with one established skip;
+`npm run ci-check` passed.
+
+### Human verdict
+
+Kirk's browser verdicts were:
+
+- **“functionality is really good”**;
+- **“this is exactly what I was going for”**; and
+- after the side-by-side/stable-treatment correction, **“looks great.”**
+
+Kirk accepted the remaining slight visual glitch as irrelevant to the Concept:
+animation polish is nice-to-have rather than a blocker.
+
+### Local all-style Blender catalog
+
+A second local Learn was kept outside every repository at:
+
+```text
+/home/kirk/synty-review/character-customization-catalog/
+```
+
+It contains seven interactive race `.blend` scenes and 28 front/profile contact
+sheets. Each scene has one 63-bone armature, exact race identity and atlas, all
+four starter-class outfits, all 38 scalp styles, all 18 facial-hair styles,
+`Idle_Relaxed`, `Walk_Forward`, and one shared editable Base Color/Roughness/
+Metallic hair material. The 43 MB workspace is reproducible with `./run.sh` and
+contains licensed local review material only.
+
+Kirk reviewed the seven-race Fighter head/collar sheets and ruled:
+**“those all look great.”** This accepts all 38 scalp and all 18 facial-hair
+source options through the initial front/profile race-identity fit gate. It does
+not claim that every scalp × facial-hair × class-outfit Cartesian combination
+has been rendered; the interactive scenes provide that shortlist/combinational
+check.
+
+### Production direction learned, not shipped
+
+The following production journey can now design its proto from evidence rather
+than guesswork:
+
+- independent optional scalp and facial-hair style refs;
+- explicit `none` distinct from absent/provider default;
+- one shared arbitrary sRGB hair color;
+- creation-only selection first;
+- public projection through the existing session `Customization` shelf; and
+- runtime options supplied by a provider-owned compatibility catalog.
+
+A production accessory must be generated for the target proportion/bind
+profile. The current Dwarf accessory bytes are not universal across Elf,
+Halfling, Gnome, Half-Orc, and other baked proportions. Source geometry looked
+good across all seven current race identities, but provider outputs and final
+class-outfit clipping checks remain proportion/profile-aware.
+
+Roughness/metalness capability is proven. Whether production persists raw
+values, a stable surface-preset ref, or a preset plus optional override remains
+a deliberate follow-on contract decision rather than something this Concept
+silently chooses.
 
 ## Non-goals
 
