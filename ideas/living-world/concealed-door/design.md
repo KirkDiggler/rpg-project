@@ -176,12 +176,24 @@ slice 1 is explicit search.
   inherits this line. Sweep rider: saves' chain entry points audited
   for the same shape.
 
-- **Who resolves the search check** (ruled 2026-09-01, Kirk agreeing
-  with the recommendation): the humble rung first — a dnd5e resolver in
-  the session in the shape the examples' `dnd5eresolver` proved, using
-  the character's real skills. `resolution.Resolve` becoming the
-  Resolver's realest rung (integration.md Rung 5) is its own later
-  slice.
+- **Who resolves the search check** — RE-RULED 2026-09-01, late, by
+  Kirk, overriding the humble-rung ruling above after seeing where it
+  led: **the session asks resolution.** The seam's own ratified pin
+  said it all along ("this seam loads no sheets and folds no chains:
+  ask resolution instead"), and the deeper reason is unprovability —
+  for a real character we can never know that no condition applies, so
+  an unaided check is a claim nobody can stand behind; the blinded
+  searcher's penalty must have somewhere to land from day one. The
+  resolution rung's opening move therefore arrives IN slice 1: a check
+  entry in resolution (toolkit#1380) loads the character with their
+  conditions, fires AbilityCheckChain through resolution's lawful bus
+  (the chain's first live audience), and selects the best listed
+  approach — approach selection is rules and moves off the seam. The
+  session's CheckResolver capability wraps that entry: records in,
+  answers out. The earlier humble-rung text stands above as the record
+  of a ruling that did not survive contact — rulings carry their
+  scope, and this one's scope ended the day the seam had to hold a
+  sheet to honor it.
 
 The original questions are all ruled. One new question from the
 independent review of the wire is open below (the hidden room's
