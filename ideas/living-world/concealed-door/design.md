@@ -414,6 +414,46 @@ check that found it — mutate the site, watch what fails — is cheap
 enough to be the default whenever a wave adds a capability to more
 call sites than its scenes exercise.
 
+## Walked in multiplayer, 2026-09-02 — the slice is real
+
+Kirk drove the local dev path with two players and confirmed the centre of
+the done-when: **a player searches, the door appears for that player alone,
+and opening it shows the door to both.** Per-player reveal, the search verb,
+and the shared reveal on open all behaved as ruled, against a
+builder-authored dungeon on the merged stack.
+
+What the walk cost, and what it bought — every one of these was invisible to
+CI and only a used environment could show them:
+
+- **Authoring a concealed dungeon was impossible.** The compile path built a
+  world without CheckResolver/Witness, so `PutDungeon` refused before it ever
+  wrote the file — no concealed dungeon had ever reached disk, though saves
+  appeared to succeed. rpg-api#887.
+- **A stale authored dungeon stops the server booting**, because one file
+  that will not compile fails the whole content registry. The dialect change
+  orphaned four of seven authored dungeons. rpg-api#886 — the blast radius
+  should be the dungeon, not the service.
+- **A concealed door defaults to OPEN.** `closed: true` is opt-in, so the
+  first authored secret door stood open and revealed itself, and everyone
+  present — skeletons included — learned it at first light. Working as ruled,
+  and a trap the tool set for the author.
+- **The frontier rule is load-bearing and the builder cannot satisfy it.**
+  `hiddenFrom` has exactly one caller, the atlas projection; movement never
+  consults concealment. So the validator is the only thing preventing a
+  walk-in, and the author has no way to draw the walls it demands.
+  web#890, toolkit#1405.
+- **A latent fail-open**: `AtlasFor` returns the complete unfiltered atlas
+  when `e.world` is nil. On a concealed field that is the one thing that must
+  never be nil, and if it ever is, everyone sees everything, silently.
+
+Ruled during the walk: **concealment links to the door** — the hidden space
+is what lies behind a concealed door, derived rather than declared twice, so
+the passage and the room cannot disagree. And the **masquerade wall extends
+to every withheld boundary facing concealed space**: a wall is unremarkable,
+but floor that stops in mid-air and refuses to be crossed is the tell. The
+never-authored yardstick governs space and contents; it is the wrong test for
+the boundary that disguises them.
+
 ## Later slices (named, not designed)
 
 - **Door-property shelves** (Kirk, 2026-09-01, while ruling the
