@@ -212,6 +212,10 @@ The UI may narrate the structured result with copy such as:
 The provider supplies totals, remaining counts and outcome classification so the
 client never learns the threshold arithmetic.
 
+### Turn-based command ingress
+
+V1 accepts one authoritative mutating command at a time per encounter/character. Death Save therefore has one possible command source at its active initiative slot, and the client fences a second in-flight dispatch. Per-session locking/CAS is not part of this slice. If the host later permits concurrent writers into one encounter, that concurrency model earns its own design rather than being smuggled into Death Saves.
+
 ### Focused initial scope
 
 Build Death Saves only. No Medicine/stabilize action, no magic, no new healing

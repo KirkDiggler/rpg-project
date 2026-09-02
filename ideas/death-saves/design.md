@@ -75,6 +75,17 @@ still distinguishes Dying, Stabilized and Dead so a later campaign policy can
 continue an all-unconscious scene for capture, rescue or final saves without a
 character-data migration.
 
+### 2.6 Turn-based command ingress
+
+V1 accepts one authoritative mutating command at a time per encounter/character.
+At a Death Save slot there is one active member and one lawful Death Save
+command; the client also fences duplicate in-flight dispatch. Per-session
+locking/CAS is outside this slice by ruling.
+
+If a future host allows simultaneous writers into one encounter, serialization
+or conflict detection earns its own design and applies to every write verb, not
+a Death Save-only lock.
+
 ## 3. Life-state contract
 
 ### 3.1 States
@@ -248,13 +259,16 @@ or event bus crosses the session seam.
 
 ## 7. Damage and healing transitions
 
-Damage at zero is part of Death Save correctness, not a separate UI feature:
+Damage at zero is part of Death Save correctness, not a separate UI feature. The character keeper's real `ApplyDamage` path applies it directly; it does not depend on a `DamageReceivedEvent` publication or a condition-owned second ledger:
 
-- ordinary damage adds one failure;
-- critical damage adds two;
+- positive ordinary damage adds one failure;
+- positive critical damage adds two;
+- zero applied damage, including fully resisted or immune damage, adds nothing;
 - a Stabilized character first loses stabilization, then takes the failure;
 - reaching three failures becomes Dead;
 - the state change is dirty and persisted.
+
+Legacy persisted `UnconsciousCondition` data may remain readable during migration, but its TurnStart/damage Death Save handlers are inert. `Character.Data.DeathSaveState` is the sole authoritative progress.
 
 A Dying character remains a legal Attack target. A Dead character and defeated
 monster do not. Target selection remains a provider rule.
@@ -301,12 +315,13 @@ The session Death Save verb:
 2. verifies roster membership, character kind, turn clock and active member;
 3. reloads the character once;
 4. regenerates/selects the exact current declaration;
-5. invokes resolution with the host roller;
-6. persists the dirty character, including capacity and result;
-7. records a typed Death Save outcome in Story;
-8. lets the encounter observe terminal life-state consequences;
-9. commits world/story and event delivery;
-10. returns result, continuation, sequence, save and delivery reports.
+5. mints and validates one opaque presentation token through the host-supplied generator;
+6. invokes resolution with the host roller;
+7. persists the dirty character, including capacity and result;
+8. records the typed result and opaque token in Story;
+9. lets the encounter observe terminal life-state consequences;
+10. commits world/story and event delivery;
+11. returns result, continuation, recipient-local sequence, opaque token, save and delivery reports.
 
 Character data is written before Story/world consequences, matching Attack's
 reason: life-state capability reads must see the result that caused them.
@@ -319,6 +334,10 @@ the game verb is unsafe and is prevented by the spent capacity.
 
 The game result exists before physical presentation, as it does for Attack, but
 semantic reveal and UI continuation wait for dice settlement.
+
+The provider mints one opaque shared presentation token through a required host-supplied ID generator. That token is persisted in the Death Save Story detail and returned to every recipient. It contains no global Story sequence and is never parsed.
+
+The presentation service's numeric `authority_seq` remains a separate recipient-local authority coordinate. The opaque token correlates actor and witnesses; no global record sequence crosses the session boundary.
 
 The provider returns one continuation instruction:
 
@@ -388,7 +407,7 @@ the verb; the provider chooses and applies the outcome.
 - Stabilized, Dead and Recovered;
 - HP restored;
 - continuation;
-- correlation/presentation identity.
+- opaque correlation/presentation token containing no Story sequence.
 
 The retired encounter wire's DeathSaveRolled message is a useful field census,
 not a contract to import. The SessionService shape mirrors the new SDK.
@@ -513,6 +532,7 @@ projections remain the source for progress and eligibility.
 - capture, rescue or monsters-withdraw scenes after all players fall;
 - campaign-configurable defeat policy;
 - extracting `character` or the root D&D module;
+- per-session locking/CAS or a general concurrent-writer model;
 - unrelated legacy condition cleanup.
 
 ## 16. Delivery sequence
@@ -626,3 +646,6 @@ With at least two player characters in a real local dungeon:
 12. V1 includes no Medicine, magic, new healing UI or in-dungeon resurrection.
 13. Life state is derived, not separately persisted.
 14. No character-module extraction is assumed.
+15. V1 command ingress is serialized by the turn-based host contract; this slice adds no lock/CAS subsystem.
+16. Shared presentation identity is an opaque host-generated token; global Story sequence never crosses the session boundary.
+17. Only positive applied damage advances Death Saves; zero/immune damage does not.
