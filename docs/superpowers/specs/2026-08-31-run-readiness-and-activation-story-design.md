@@ -219,28 +219,39 @@ Resolution captures typed effect facts from the interaction bus instead of infer
 
 Supported result variants for the current activation catalog are:
 
-- **Healing applied:** target, actual HP recovered after maximum-HP clamping, roll, modifier, source ref, HP before, and HP after.
+- **Healing applied:** target, actual HP recovered after maximum-HP clamping, roll, modifier, requested healing, source ref and display name, HP before, and HP after.
 - **Condition applied:** target, condition ref, and server-owned display name.
 - **Condition removed:** target, condition ref, display name, and reason.
 - **Capacity granted:** member and server-authored capacity description, such as additional movement.
 
-The character keeper publishes a post-clamp healing-applied fact after it mutates HP. This distinguishes a 9-point Second Wind roll from the 3 HP actually recovered when the fighter was only 3 HP below maximum.
+The character keeper publishes a post-clamp healing-applied fact after it mutates HP. This distinguishes a 9-point Second Wind roll from the 3 HP actually recovered when the fighter was only 3 HP below maximum. Resolution captures every healing-applied fact produced during the scoped `Activate` interaction, so future activated healing features using the standard healing topic receive the same result path without API or web feature switches. Hit-die spending, LongRest recovery, natural-20 death-save healing, and other healing outside `Activate` do not create activation-result events in this slice.
+
+Whenever an activation result carries a roll and modifier, both Story and Debug expose that arithmetic. Story presents it as readable detail; Debug preserves the complete typed values. The result keeps requested and applied healing distinct.
 
 Each effect becomes its own result event in synchronous publish order. One activation may therefore produce more than one result line without forcing unrelated effects into one sparse message.
 
 Examples:
 
 ```text
-Aldric recovers 7 HP.
-Aldric gains Raging.
-Aldric gains 30 ft of movement.
+Aldric uses Second Wind.
+Aldric recovers 2 HP.
+Second Wind rolled 6 + 1 = 7; 2 applied (8 → 10 HP).
+
+Aldric uses Rage.
+Aldric begins Raging.
 ```
 
-Debug renders the complete typed raw fields. Story resolves member names and uses the server-supplied ability/condition names and numeric facts; it does not identify a feature ref and invent its rules.
+The corresponding condition Debug fact includes the canonical identity rather than requiring the client to infer it:
+
+```text
+condition_applied target=Aldric condition.ref=dnd5e:conditions:raging condition.name="Raging"
+```
+
+Debug renders the complete typed raw fields, including healing roll, modifier, requested amount, applied amount, source, and HP before/after. Story resolves member names and uses the server-supplied ability/condition names and numeric facts; it does not identify a feature ref and invent its rules.
 
 ### Session, proto, API, and web shape
 
-The session SDK gains `EventActivated` and `EventActivationResult` with typed bodies. The encounter record owns audience selection using the same actor/target visibility policy as other outcome records. Catch-up and live subscribers receive the same events through the existing story conversion and broker.
+The session SDK gains `EventActivated` and `EventActivationResult` with typed bodies. The encounter record owns audience selection using existing perception/intelligence state rather than broadcasting results to the whole party. The actor and members who can perceive the affected member receive the applicable beat; a party member in another room does not learn that the actor began Raging merely because they share a party. Audience is fixed when the encounter records the durable fact, so catch-up and live subscribers receive the same visible event set through the existing story conversion and broker. The API and web do not recalculate visibility.
 
 The session proto gains matching enum values and oneof bodies. ActivationResult carries one typed effect variant, not an unstructured payload or client-readable JSON.
 
@@ -257,7 +268,9 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - A RestEvent subscriber error fails `resolution.LongRest` and therefore Join; it is not logged and ignored.
 - After the character save succeeds, any projection, placement, commit-preparation, or encounter-save failure reports the rested character as already written. The rested record is safe to reuse on retry because LongRest is idempotent and the failed placement did not persist `EverMembers`.
 - Activation effect capture is interaction-scoped. Subscriptions are removed with the resolution bus and cannot leak into later actions.
+- Only healing produced inside that activation scope becomes a healing activation result; unrelated healing remains on its owning flow.
 - Activation events are authored only after successful resolution and sheet persistence.
+- Encounter-authored perception determines each beat's audience once; live and catch-up never diverge and clients never broaden the audience.
 - Unknown future event kinds retain the existing delivered-as-unknown behavior; known activation bodies are never encoded into opaque payload as a shortcut.
 
 ## Testing strategy
@@ -272,7 +285,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
 - Resolution tests prove strict data-in/data-out LongRest owns the transient bus and returns the complete rested sheet without exposing runtime objects.
 - Session tests prove only first-ever Join invokes LongRest, persists the returned character before any placement callback can consult standing/cast state, reports that durable rest on every later failure path, and leaves reconnect/exit-rejoin semantics unchanged.
-- Activation tests prove activation-before-result event ordering, exact post-clamp healing, condition effects, capacity effects, no events on refusal, catch-up/live parity, audience, and persistence-before-recording failure behavior.
+- Activation tests prove activation-before-result event ordering, exact post-clamp healing and visible roll arithmetic, condition effects with canonical refs/display names, capacity effects, no events on refusal, catch-up/live parity, perception-scoped audience (including a non-observer in another room), and persistence-before-recording failure behavior.
 
 ### Protos
 
@@ -333,6 +346,8 @@ Each slice starts at the owning toolkit provider, publishes the required module 
 5. HP, death saves, hit dice, spell slots, character-owned resources, feature-owned resources, and stale prior-session action economy follow their normal long-rest behavior; the next fight begins with fresh action and bonus action.
 6. Every shipped loadable condition has a tested long-rest retain/reset/end decision.
 7. Successful activation produces a durable activation event followed by each actual result event; refused activation produces none.
-8. Second Wind's result reports actual HP recovered after clamping, not merely the rolled healing amount.
-9. Catch-up and live session streams carry identical typed activation facts.
-10. `rpg-api` contains no equipment, rest, feature, or condition rules, and the web renders/echoes server-authored data without re-deriving them.
+8. Second Wind's result reports actual HP recovered after clamping and exposes its roll-plus-modifier arithmetic in both Story and Debug; future healing produced through `Activate` uses the same typed path.
+9. Condition activation results show a readable server-authored name in Story and the canonical condition ref and name in Debug.
+10. Encounter perception scopes activation/result audiences so a non-observer in another room receives neither live nor catch-up knowledge of a visible condition change.
+11. Catch-up and live session streams carry identical typed activation facts.
+12. `rpg-api` contains no equipment, rest, feature, or condition rules, and the web renders/echoes server-authored data without re-deriving them.

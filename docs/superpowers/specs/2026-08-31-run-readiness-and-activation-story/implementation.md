@@ -61,3 +61,20 @@ This is a root D&D rule, not a Session or API patch. rpg-toolkit#1223 remains se
 ### Local acceptance before publication
 
 The fix was synced into the exact merged API checkout with the landed `rulebooks/dnd5e` local override, built through `Dockerfile.local-toolkit`, and deployed only to isolated lab1. A third run began with persisted `ActionEconomy:nil`; the first combat formed on round 1 and Second Wind was immediately available without EndTurn. The shared primary container start time remained unchanged.
+
+## Slice C: activation results expose rolls and obey perception
+
+**Date:** 2026-09-02
+**Issue:** rpg-project#342
+
+### Approved behavior
+
+Every successful `Activate` records one activation beat followed by its typed results. Healing results preserve the source, roll, modifier, requested amount, actual post-clamp amount, and HP before/after. Story as well as Debug exposes available roll arithmetic; Story remains readable while Debug includes canonical refs and every raw typed field.
+
+This applies generically to healing produced inside the scoped `Activate` interaction. Second Wind is the current activated healing provider. Hit-die spending, LongRest, natural-20 death-save recovery, and other healing outside `Activate` remain outside activation-result logging.
+
+Condition results likewise use server-authored identities. Story may say `Aldric begins Raging`; Debug includes `dnd5e:conditions:raging` and the toolkit-authored display name. API and web never switch on Rage, Second Wind, or another feature ref.
+
+### Audience
+
+Activation and result facts are not party-global. The encounter fixes each event's audience from its existing perception/intelligence state when recording the durable fact. The actor and members who can perceive the affected member receive it; a party member in another room does not learn that the actor began Raging. Live and catch-up read the same recorded audience, and neither API nor web recalculates or broadens visibility.
