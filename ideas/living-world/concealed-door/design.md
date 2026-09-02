@@ -446,6 +446,13 @@ CI and only a used environment could show them:
   when `e.world` is nil. On a concealed field that is the one thing that must
   never be nil, and if it ever is, everyone sees everything, silently.
 
+Ratified by play: **the two knowledge moments hold and are the right
+shape.** The concealed region stayed hidden after the door was found and
+appeared only once it was opened — Kirk, watching it: *"that makes the most
+sense to me."* A found-but-shut secret door is just a door in a wall: you
+know something is there, you do not know what. The room is the second
+reward, not a consequence of the first.
+
 Ruled during the walk: **concealment links to the door** — the hidden space
 is what lies behind a concealed door, derived rather than declared twice, so
 the passage and the room cannot disagree. And the **masquerade wall extends
