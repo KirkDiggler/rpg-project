@@ -141,6 +141,15 @@
   }
   .shortver .jump .v{color:var(--primary);font-size:1rem;line-height:1.55}
   .shortver .tail{margin-top:1.5rem;color:var(--faint);font:400 .78rem/1.5 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}
+  .field-note-link{
+    display:grid;grid-template-columns:10rem minmax(0,1fr);gap:1.2rem;
+    margin:1.6rem 0 .35rem;padding:1rem 0;border-top:1px solid var(--rule-strong);border-bottom:1px solid var(--rule);
+    color:inherit;text-decoration:none;
+  }
+  .field-note-link .field-label{padding-top:.2rem;color:var(--accent);font:600 .74rem/1.45 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.11em;text-transform:uppercase}
+  .field-note-link strong{display:block;color:var(--primary);font:600 1.28rem/1.15 "IBM Plex Sans Condensed","Arial Narrow",sans-serif}
+  .field-note-link small{display:block;margin-top:.35rem;color:var(--muted);font-size:.92rem}
+  .field-note-link:hover strong{color:var(--accent)}
   .back-to-map{
     display:block;margin-top:2rem;padding-top:.8rem;border-top:1px solid var(--rule);color:var(--faint);
     font:500 .74rem/1.4 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.1em;text-align:right;text-decoration:none;text-transform:uppercase;
@@ -166,7 +175,7 @@
     figure{margin:2.1rem auto 2.6rem}
     .shortver .jump{grid-template-columns:1fr;gap:.3rem;padding-right:1.8rem}
     .shortver .jump .k{padding-top:0}
-    .unlock{grid-template-columns:1fr;gap:.55rem}
+    .unlock,.field-note-link{grid-template-columns:1fr;gap:.55rem}
     .quiet{padding:4rem 0}
   }
 </style>
@@ -245,6 +254,10 @@
         <span class="lbl">What it unlocked</span>
         <span class="txt">Identity, interface, and shared space stopped being separate features. They became one promise: make someone, enter a room together, and care what happens there.</span>
       </div>
+      <a class="field-note-link" href="https://kirkdiggler.github.io/rpg-toolkit/">
+        <span class="field-label">Architecture field note 01</span>
+        <span><strong>When Configuration Becomes a Programming Language &rarr;</strong><small>The character-creation architecture behind this turn.</small></span>
+      </a>
       <a class="back-to-map" href="#story-map">&uarr;&ensp;Back to the map</a>
     </div>
   </section>
