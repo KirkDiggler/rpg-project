@@ -224,7 +224,7 @@ Supported result variants for the current activation catalog are:
 - **Condition removed:** target, condition ref, display name, and reason.
 - **Capacity granted:** member and server-authored capacity description, such as additional movement.
 
-The character keeper publishes a post-clamp healing-applied fact after it mutates HP. This distinguishes a 9-point Second Wind roll from the 3 HP actually recovered when the fighter was only 3 HP below maximum. Resolution captures every healing-applied fact produced during the scoped `Activate` interaction, so future activated healing features using the standard healing topic receive the same result path without API or web feature switches. Hit-die spending, LongRest recovery, natural-20 death-save healing, and other healing outside `Activate` do not create activation-result events in this slice.
+The owning character or monster sheet publishes a post-clamp healing-applied fact after it mutates HP. This distinguishes a 9-point Second Wind roll from the 3 HP actually recovered when the fighter was only 3 HP below maximum. Resolution captures every healing-applied fact produced during the scoped `Activate` interaction, so future activated healing features using the standard healing topic receive the same result path without API or web feature switches. Hit-die spending, LongRest recovery, natural-20 death-save healing, and other healing outside `Activate` do not create activation-result events in this slice.
 
 Whenever an activation result carries a roll and modifier, both Story and Debug expose that arithmetic. Story presents it as readable detail; Debug preserves the complete typed values. The result keeps requested and applied healing distinct.
 
@@ -251,7 +251,9 @@ Debug renders the complete typed raw fields, including healing roll, modifier, r
 
 ### Session, proto, API, and web shape
 
-The session SDK gains `EventActivated` and `EventActivationResult` with typed bodies. The encounter record owns audience selection using existing perception/intelligence state rather than broadcasting results to the whole party. The actor and members who can perceive the affected member receive the applicable beat; a party member in another room does not learn that the actor began Raging merely because they share a party. Audience is fixed when the encounter records the durable fact, so catch-up and live subscribers receive the same visible event set through the existing story conversion and broker. The API and web do not recalculate visibility.
+The session SDK gains `EventActivated` and `EventActivationResult` with typed bodies. The encounter records each as a `subjectBeat` through the existing `audienceFor` policy shelf, naming the actor and the selected or affected target honestly. Under the current pre-v1 policy approved in rpg-project#260, that shelf deliberately sends every combat-log beat to the full encounter roster. Activation facts therefore follow the same full-log policy as attacks, movement, and other outcomes today. They do not introduce an activation-only visibility rule.
+
+Perception-scoped story delivery remains rpg-toolkit#940. When that single encounter policy changes, the subjects recorded by this slice let activation and result beats narrow with the rest of the story without API, web, payload, or append-site changes. Audience remains fixed on each durable record entry, so live and catch-up always deliver the same event set. The API and web never calculate or broaden visibility.
 
 The session proto gains matching enum values and oneof bodies. ActivationResult carries one typed effect variant, not an unstructured payload or client-readable JSON.
 
@@ -270,7 +272,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Activation effect capture is interaction-scoped. Subscriptions are removed with the resolution bus and cannot leak into later actions.
 - Only healing produced inside that activation scope becomes a healing activation result; unrelated healing remains on its owning flow.
 - Activation events are authored only after successful resolution and sheet persistence.
-- Encounter-authored perception determines each beat's audience once; live and catch-up never diverge and clients never broaden the audience.
+- Encounter-authored `audienceFor(subjectBeat, ...)` determines each beat's audience once. Its current policy is the full roster; rpg-toolkit#940 owns the future perception flip. Live and catch-up never diverge and clients never recalculate or broaden the audience.
 - Unknown future event kinds retain the existing delivered-as-unknown behavior; known activation bodies are never encoded into opaque payload as a shortcut.
 
 ## Testing strategy
@@ -285,7 +287,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
 - Resolution tests prove strict data-in/data-out LongRest owns the transient bus and returns the complete rested sheet without exposing runtime objects.
 - Session tests prove only first-ever Join invokes LongRest, persists the returned character before any placement callback can consult standing/cast state, reports that durable rest on every later failure path, and leaves reconnect/exit-rejoin semantics unchanged.
-- Activation tests prove activation-before-result event ordering, exact post-clamp healing and visible roll arithmetic, condition effects with canonical refs/display names, capacity effects, no events on refusal, catch-up/live parity, perception-scoped audience (including a non-observer in another room), and persistence-before-recording failure behavior.
+- Activation tests prove activation-before-result event ordering, exact post-clamp healing and visible roll arithmetic, condition effects with canonical refs/display names, capacity effects, no events on refusal, catch-up/live parity, honest `subjectBeat` classification under the current full-roster policy, and persistence-before-recording failure behavior.
 
 ### Protos
 
@@ -348,6 +350,6 @@ Each slice starts at the owning toolkit provider, publishes the required module 
 7. Successful activation produces a durable activation event followed by each actual result event; refused activation produces none.
 8. Second Wind's result reports actual HP recovered after clamping and exposes its roll-plus-modifier arithmetic in both Story and Debug; future healing produced through `Activate` uses the same typed path.
 9. Condition activation results show a readable server-authored name in Story and the canonical condition ref and name in Debug.
-10. Encounter perception scopes activation/result audiences so a non-observer in another room receives neither live nor catch-up knowledge of a visible condition change.
-11. Catch-up and live session streams carry identical typed activation facts.
-12. `rpg-api` contains no equipment, rest, feature, or condition rules, and the web renders/echoes server-authored data without re-deriving them.
+10. Activation and result records use the encounter's `subjectBeat` audience shelf with honest actor/target subjects. They follow today's full-roster policy and require no consumer change when rpg-toolkit#940 later enables perception scoping.
+11. Catch-up and live session streams carry identical typed activation facts and recorded audiences.
+12. `rpg-api` contains no equipment, rest, feature, condition, or visibility rules, and the web renders/echoes server-authored data without re-deriving them.

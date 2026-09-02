@@ -62,7 +62,7 @@ This is a root D&D rule, not a Session or API patch. rpg-toolkit#1223 remains se
 
 The fix was synced into the exact merged API checkout with the landed `rulebooks/dnd5e` local override, built through `Dockerfile.local-toolkit`, and deployed only to isolated lab1. A third run began with persisted `ActionEconomy:nil`; the first combat formed on round 1 and Second Wind was immediately available without EndTurn. The shared primary container start time remained unchanged.
 
-## Slice C: activation results expose rolls and obey perception
+## Slice C: activation results expose rolls and use the audience shelf
 
 **Date:** 2026-09-02
 **Issue:** rpg-project#342
@@ -77,4 +77,6 @@ Condition results likewise use server-authored identities. Story may say `Aldric
 
 ### Audience
 
-Activation and result facts are not party-global. The encounter fixes each event's audience from its existing perception/intelligence state when recording the durable fact. The actor and members who can perceive the affected member receive it; a party member in another room does not learn that the actor began Raging. Live and catch-up read the same recorded audience, and neither API nor web recalculates or broadens visibility.
+Repository inspection after approval exposed an existing policy boundary: rpg-project#260 deliberately keeps every combat-log beat visible to the full roster until v1.0, and rpg-toolkit#940 owns the eventual perception-scoping flip. Adding an activation-only visibility rule would bypass the single `audienceFor` shelf; flipping the shelf here would expand this slice across attacks, movement, downed, clocks, and every other classified beat.
+
+The final decision is therefore to defer the policy flip. Activation and result facts call `audienceFor(subjectBeat, ...)` with honest actor and affected-target subjects. They follow today's full-roster policy and are automatically ready for #940 without later API, web, payload, or append-site changes. Live and catch-up read the same recorded audience, and neither API nor web recalculates or broadens visibility.
