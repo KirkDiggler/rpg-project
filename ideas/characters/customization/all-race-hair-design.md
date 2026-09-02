@@ -159,6 +159,26 @@ Run the complete deterministic transaction, 1,792 compatibility checks,
 Dwarf/unrelated byte-preservation checks, structural/path/license gates, one
 aggregate visual overview, one full suite, and one GLM 5.3 whole-PR review.
 
+### Provider outcome
+
+Provider PR `KirkDiggler/rpg-game-assets#118` merged as
+`0c837a801d97c98e50a336fb07e3b50d08d54df1` from reviewed head
+`587d67c3859274cfe21bd57af03d788da967eb75`. It published the exact
+941-file aggregate customization authority: 484 GLBs, 448 thumbnails, and nine
+manifests. The aggregate manifest SHA-256 is
+`2457ee61b15cb0ef1ca8cd9b42bc30d84d5286510f91e44d8437a6efbc80efac`.
+All 1,792 body/accessory compatibility pairs passed. Two clean 424-GLB builds
+were byte-identical across all 848 GLB/report files. Dwarf remained 117/117
+byte-identical with manifest SHA-256
+`10ba18b4281ea65b757d959ab7caa888adced2b106e2dc3b2e6ae0d19688ba4a`.
+
+Kirk accepted the 8-race x 4-class provider overview with “looks great”. The
+final current-head provider suite passed 1,065 tests with 53 established skips
+and zero failures. GLM 5.3 moved from Ready 0/0/4 to Ready 0/0/0 after
+interrupted-swap recovery, governed-tree temp-view placement, and deterministic
+font authority were hardened; the single-operator concurrency-lock suggestion
+was dispositioned as a sound non-blocking deferral.
+
 ### Web gate
 
 Parameterize catalog/resolver/picker/session tests across all eight profiles.
