@@ -24,8 +24,9 @@ provider-neutral. Delivery therefore requires one provider PR and one web PR.
 ## Approved product rulings
 
 - All eight race profiles ship together.
-- Human comes from the same Modular Fantasy Hero kit used by this wave: Head 00,
-  normal ears, proportions `[1,1,1]`, palette 01-A, and outfits 01/16/08/10.
+- Human comes from the same Modular Fantasy Hero kit used by this wave: Head 00
+  with its native Human ears and no modular ear attachment, proportions
+  `[1,1,1]`, palette 01-A, and outfits 01/16/08/10.
 - Every profile exposes all 38 scalp and 18 facial-hair options.
 - An absent customization preserves the race's current fixed look. Defaults are
   provider-owned selections and may be either an exact style or `none`.
@@ -46,7 +47,7 @@ provider-neutral. Delivery therefore requires one provider PR and one web PR.
 
 | Race | Head/identity | Proportions | Palette | Existing scalp | Existing facial |
 | --- | --- | --- | --- | --- | --- |
-| Human | Head 00, Ear 01 | `[1,1,1]` | 01-A | chosen in curation | none unless approved otherwise |
+| Human | Head 00 native ears; no ear attachment | `[1,1,1]` | 01-A | chosen in curation | none unless approved otherwise |
 | Elf | Head 00, Ear 03 | `[1,1,1]` | 01-A | Hair 01 | none |
 | Dwarf | Head 00, Ear 01 | `[1.08,0.78,1.08]` | 01-A | Hair 04 | Facial Hair 02 |
 | Half-Elf | Head 00, Ear 01 | `[1,1,1]` | 01-A | Hair 16 | none |
