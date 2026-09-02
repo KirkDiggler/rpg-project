@@ -34,3 +34,30 @@ LongRest persistence is an independently valid between-runs transition:
 A transaction-style character overlay on `writeScope` was considered. It would require every standing, cast, striker, announcer, check, concealment, and dirty-save path to read and mutate staged records before a final flush. That broader Session transaction system is disproportionate to the current rule and obscures the future removal point.
 
 The chosen early-save block is explicit and temporary. When town play introduces an in-world LongRest action, remove the first-admission `resolution.LongRest → SaveCharacter` block from Join; no Session-wide transaction infrastructure needs to be unwound.
+
+## Slice B: LongRest exits stale prior-session action economy
+
+**Date:** 2026-09-02
+**Issues:** rpg-project#341, rpg-toolkit#1408, related rpg-toolkit#1223
+
+### Live discovery
+
+The first merged live proof restored Second Wind and removed temporary conditions correctly, but the second run persisted the prior session's spent turn state:
+
+```text
+run 1 end:      turn=1 actions=0 bonus=0
+run 2 LongRest: turn=1 actions=0 bonus=0
+first EndTurn:  turn=2 actions=1 bonus=1
+```
+
+The UI therefore showed Second Wind `1/1` but unavailable until the player ended a turn. `Character.InCombat` is defined by non-nil `ActionEconomy`; `LongRest` restored every D&D resource but left that old combat marker intact. When the new fight also began on round 1, `RefreshForTurn` treated the stale economy as current.
+
+### Final approved behavior
+
+A completed LongRest exits the prior combat economy through the existing `Character.ExitCombat` owner. `ToData().ActionEconomy` is nil after LongRest; when a new fight forms, normal `StartTurn` seeds fresh action, bonus action, reaction, movement, and an empty granted-capacity map. ShortRest does not clear economy.
+
+This is a root D&D rule, not a Session or API patch. rpg-toolkit#1223 remains separately responsible for clearing economy immediately when `Manager.End`/`Exit` ends combat without a following LongRest, which matters for future town play.
+
+### Local acceptance before publication
+
+The fix was synced into the exact merged API checkout with the landed `rulebooks/dnd5e` local override, built through `Dockerfile.local-toolkit`, and deployed only to isolated lab1. A third run began with persisted `ActionEconomy:nil`; the first combat formed on round 1 and Second Wind was immediately available without EndTurn. The shared primary container start time remained unchanged.

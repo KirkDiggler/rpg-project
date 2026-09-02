@@ -137,6 +137,7 @@ The existing parallel `RestoreForLaunch` arcade reset is retired so there is one
 
 - Hit points become maximum. This also satisfies the launch requirement to top off HP.
 - Death-save state clears.
+- Persisted turn action economy clears by delegating to `Character.ExitCombat`; the next fight's normal `StartTurn` seeds fresh action, bonus action, reaction, movement, and capacity.
 - Character-owned resources that reset on a short or long rest refill.
 - Hit dice recover half their maximum, minimum one, without exceeding maximum.
 - Feature-owned recoverable resources such as Second Wind and Action Surge hear the RestEvent and refill.
@@ -267,7 +268,7 @@ The web adds generic Story and Debug formatting branches. It does not append opt
 - Finalization tests cover two selected martial weapons becoming one quantity-two stack and fixed javelin/dart/handaxe quantities remaining exact.
 - Equip tests cover one-copy movement, two-copy dual equip, and overdraw refusal.
 - Equipment projection tests cover positive quantity, one row per item ID, and the same quantity-two item ref present in both entries of the projected slot map.
-- Root LongRest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, and death saves.
+- Root LongRest tests use persisted Fighter and Barbarian sheets with spent Second Wind, Rage Charges, hit dice, spell slots, HP, death saves, and stale spent action economy. They prove LongRest exits combat while ShortRest does not and the next StartTurn seeds fresh slots.
 - A registry-completeness test requires every loadable condition to declare and prove retain/reset/end behavior through a real attached round trip.
 - Resolution tests prove strict data-in/data-out LongRest owns the transient bus and returns the complete rested sheet without exposing runtime objects.
 - Session tests prove only first-ever Join invokes LongRest, persists the returned character before any placement callback can consult standing/cast state, reports that durable rest on every later failure path, and leaves reconnect/exit-rejoin semantics unchanged.
@@ -329,7 +330,7 @@ Each slice starts at the owning toolkit provider, publishes the required module 
 2. Fixed starting quantities such as two handaxes, four javelins, and ten darts reach the owner UI truthfully.
 3. A quantity-two compatible weapon stack can occupy main hand and off hand; the owner projection preserves both slot entries, and a quantity-one stack cannot occupy both.
 4. A character's first-ever toolkit Session Join invokes resolution's attached normal LongRest path and persists its result before seating; reconnect and exit/rejoin do not rest again.
-5. HP, death saves, hit dice, spell slots, character-owned resources, and feature-owned resources follow their normal long-rest behavior.
+5. HP, death saves, hit dice, spell slots, character-owned resources, feature-owned resources, and stale prior-session action economy follow their normal long-rest behavior; the next fight begins with fresh action and bonus action.
 6. Every shipped loadable condition has a tested long-rest retain/reset/end decision.
 7. Successful activation produces a durable activation event followed by each actual result event; refused activation produces none.
 8. Second Wind's result reports actual HP recovered after clamping, not merely the rolled healing amount.

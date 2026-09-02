@@ -425,26 +425,70 @@ The API diff must be dependency pins, deletion of obsolete behavior, direct inte
 
 Publish the exact-head independent review verdict. The PR targets `dev`, uses the repository's required merge style, and closes its own child issue.
 
-### Task 8: Live first-admission acceptance
+### Task 8: Correct the live-found stale action economy through the local override loop
 
-**Files:** no production files unless evidence exposes a launch-rest defect.
+**Provider/consumer:** root `rulebooks/dnd5e` issue rpg-toolkit#1408, then a thin rpg-api root-pin follow-up
 
-- [ ] **Step 1: Build exact API head in isolated lab1**
+**Files:**
+- Modify: `rpg-toolkit/rulebooks/dnd5e/character/character.go`
+- Modify: `rpg-toolkit/rulebooks/dnd5e/character/long_rest_test.go`
+- Modify later: `rpg-api/go.mod`, `go.sum` only for the published root tag
+
+- [ ] **Step 1: Add the root RED**
+
+Strictly load and attach persisted Data with fully spent `ActionEconomy`. LongRest must produce `ToData().ActionEconomy == nil`; then `StartTurn(1, 35)` must seed 1 action, 1 bonus action, 1 reaction, 35 movement, and empty Granted. ShortRest is the negative control and retains economy.
+
+- [ ] **Step 2: Delegate to the existing owner**
+
+After successful RestEvent publication, `Character.LongRest` invokes existing `Character.ExitCombat`; do not duplicate the nil assignment or alter ShortRest/turn arithmetic. Run root tests/race/vet/lint and review.
+
+- [ ] **Step 3: Prove unpublished source in isolated lab1**
+
+In the exact merged API worktree:
+
+```bash
+scripts/toolkit-local-override.sh on \
+  --target rulebooks/dnd5e \
+  --src /home/kirk/.pi/worktrees/rpg-toolkit/1408-long-rest-economy
+
+docker build -f Dockerfile.local-toolkit -t rpg-api:local .
+```
+
+Recreate only `rpg-api-lab` with the existing lab compose overlay. Do not restart/repoint primary. Start another Reference Tomb run from persisted stale `bonus_actions_remaining:0`; assert admission writes `ActionEconomy:nil`, form combat, and assert Second Wind is available before any EndTurn.
+
+- [ ] **Step 4: Remove the override before publication work**
+
+```bash
+scripts/toolkit-local-override.sh off
+scripts/toolkit-local-override.sh status
+```
+
+Expected: no replace, no local-toolkit residue, published API tree restored. Remove temporary seed source. Publish the root PR/tag only after local acceptance.
+
+- [ ] **Step 5: Consume the root tag thinly**
+
+Open a separate rpg-api PR that changes only root toolkit pin/checksums and direct regression evidence; Session `v0.45.0` and resolution `v0.29.0` consume the higher root through Go module selection without code changes.
+
+### Task 9: Final live first-admission acceptance
+
+**Files:** no production files unless evidence exposes another launch-rest defect.
+
+- [ ] **Step 1: Build exact published API head in isolated lab1**
 
 Use a dedicated identity and the local runbook. Do not restart or repoint the shared primary API.
 
 - [ ] **Step 2: Create spent persisted state through gameplay**
 
-Spend HP, Second Wind, Rage, hit dice/spell slots where available, and leave temporary conditions. End or abandon the run through the normal route.
+Spend HP and Second Wind, leave a temporary condition, and end/abandon through the normal route.
 
 - [ ] **Step 3: Start a new Reference Tomb run**
 
-Verify the first Join persists full HP, normal half-hit-die recovery, restored feature/character resources, unused spell slots, retained passives, and removed temporary conditions before the owner status renders.
+Verify full HP, normal half-hit-die recovery, restored feature/character resources, unused spell slots, retained passives, removed temporary conditions, cleared stale ActionEconomy before combat, and immediately available action/bonus slots when the next fight forms.
 
 - [ ] **Step 4: Prove no repeated rest**
 
-Reconnect without Join and verify no recovery reruns. In a controlled integration fixture, Exit/rejoin an ever-member after re-spending state and prove Join does not rest again.
+Re-spend Second Wind, reconnect without Join, and verify no recovery reruns and exact character bytes remain unchanged. The pinned Session provider retains controlled Exit/rejoin coverage.
 
 - [ ] **Step 5: Record evidence**
 
-Post exact heads/tags, toolkit and API CI, repository assertions, live transcript/screenshots, and human verdict to the provider/consumer issues and parent #341. Stop the isolated lab; leave shared primary untouched.
+Post exact heads/tags, toolkit and API CI, repository assertions, live transcript/screenshots, and human verdict to the provider/consumer issues and parent #341. Stop isolated Vite/lab services, remove override residue, and leave shared primary untouched.
