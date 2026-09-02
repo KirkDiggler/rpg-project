@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Part I Missed</title>
+<meta name="description" content="After more than a decade on game teams and five years away, a backend architect builds a co-op D&amp;D game alone—and remembers why building alone was never the point.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone-deep:#1d1f29;
+    --torch:#e8a34f;
+    --torch-dim:#b97f3e;
+    --parchment:#e9e1cf;
+    --parchment-dim:#b3ab99;
+    --parchment-faint:#8b8676;
+    --rule:rgba(233,225,207,.14);
+  }
+  *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+
+  body{
+    background-color:var(--stone-deep);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23e9e1cf' stroke-opacity='0.055' stroke-width='1'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16 Z'/%3E%3Cpath d='M28 64 L56 80 L56 97 M28 64 L0 80 L0 97'/%3E%3C/g%3E%3C/svg%3E");
+    color:var(--parchment);
+    font-family:"Source Serif 4", Georgia, serif;
+    font-size:1.08rem;
+    line-height:1.68;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--torch);text-underline-offset:3px}
+  a:hover{color:var(--parchment)}
+  :focus-visible{outline:2px solid var(--torch);outline-offset:3px;border-radius:2px}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+  .col{max-width:38em;margin:0 auto}
+
+  h1,h2{font-family:"Bricolage Grotesque", system-ui, sans-serif;text-wrap:balance;line-height:1.06}
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.92em;color:var(--torch)}
+
+  header.masthead{padding:5rem 0 2.5rem}
+  header.masthead .kicker{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--torch);
+    font-weight:600;display:block;margin-bottom:1.4rem;
+  }
+  h1{font-weight:800;font-size:clamp(2.7rem,8vw,4.6rem);letter-spacing:-.022em;color:var(--parchment)}
+  h1 .lit{color:var(--torch)}
+  header.masthead .dek{margin-top:1.5rem;color:var(--parchment-dim);font-size:1.14rem;max-width:34em}
+  header.masthead .byline{
+    margin-top:2.2rem;padding-top:1.3rem;border-top:1px solid var(--rule);
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.76rem;color:var(--parchment-faint);
+  }
+
+  figure{margin:2.6rem auto;max-width:1020px}
+  figure img{
+    display:block;width:100%;height:auto;border-radius:10px;
+    border:1px solid rgba(233,225,207,.13);
+    box-shadow:0 24px 60px -22px rgba(0,0,0,.8);
+  }
+  figcaption{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.76rem;
+    color:var(--parchment-faint);margin-top:.75rem;line-height:1.6;max-width:60ch;
+  }
+
+  section{padding:3.4rem 0}
+  section + section{border-top:1px solid var(--rule)}
+  .stamp{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.72rem;
+    letter-spacing:.13em;text-transform:uppercase;color:var(--torch-dim);
+    display:block;margin-bottom:.85rem;
+  }
+  h2{font-weight:700;font-size:clamp(1.7rem,4.4vw,2.5rem);letter-spacing:-.014em;color:var(--parchment);margin-bottom:1.3rem}
+  section p{margin:0 0 1.15rem}
+  section p:last-child{margin-bottom:0}
+  em{color:var(--parchment);font-style:italic}
+  strong{color:var(--parchment);font-weight:600}
+
+  .unlock{
+    margin:2rem 0 .4rem;padding:1rem 0 0;
+    border-top:2px solid var(--torch);
+    display:flex;flex-direction:column;gap:.45rem;
+  }
+  .unlock .lbl{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.68rem;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--torch);font-weight:600;
+  }
+  .unlock .txt{font-size:1.1rem;color:var(--parchment);line-height:1.5}
+
+  .record{
+    margin:1.9rem 0;padding:1.1rem 1.3rem;
+    background:rgba(233,225,207,.035);
+    border-left:2px solid var(--rule);
+    border-radius:0 6px 6px 0;
+  }
+  .record .lbl{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.66rem;
+    letter-spacing:.15em;text-transform:uppercase;color:var(--parchment-faint);
+    display:block;margin-bottom:.5rem;
+  }
+  .record p{font-size:.96rem;color:var(--parchment-dim);margin:0}
+  .record p + p{margin-top:.6rem}
+
+  blockquote{margin:2.2rem 0;padding-left:1.4rem;border-left:3px solid var(--torch)}
+  blockquote p{
+    font-family:"Bricolage Grotesque", system-ui, sans-serif;
+    font-weight:500;font-size:clamp(1.25rem,3vw,1.6rem);line-height:1.32;
+    color:var(--parchment);letter-spacing:-.01em;margin:0;
+  }
+
+  .quiet{
+    margin:3rem auto;padding:5.5rem 1.5rem;max-width:38em;
+    border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+    text-align:center;
+  }
+  .quiet .r{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.76rem;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--torch-dim);
+  }
+  .quiet p{margin-top:1.2rem;color:var(--parchment-dim)}
+
+  .shortver{
+    max-width:44em;margin:3rem auto 1rem;
+    border-top:2px solid var(--torch);border-bottom:1px solid var(--rule);
+    padding:1.5rem 0 1.8rem;
+  }
+  .shortver h2{
+    font-size:1.5rem;margin-bottom:.4rem;
+  }
+  .shortver .lede{
+    color:var(--parchment-dim);font-size:1rem;margin-bottom:1.5rem;
+  }
+  .shortver ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0}
+  .shortver li{
+    display:grid;grid-template-columns:11.5rem 1fr;gap:1.2rem;
+    padding:.72rem 0;border-top:1px solid var(--rule);
+  }
+  .shortver li:first-child{border-top:0}
+  .shortver li .k{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.72rem;
+    letter-spacing:.11em;text-transform:uppercase;color:var(--torch-dim);
+    padding-top:.28rem;
+  }
+  .shortver li .v{font-size:1rem;line-height:1.55;color:var(--parchment)}
+  .shortver .tail{
+    margin-top:1.5rem;font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:.74rem;color:var(--parchment-faint);letter-spacing:.04em;
+  }
+  @media (max-width:640px){
+    .shortver li{grid-template-columns:1fr;gap:.3rem}
+    .shortver li .k{padding-top:0}
+  }
+
+  .thought{
+    margin:1.9rem 0;padding:1.15rem 1.4rem;
+    border:1px solid var(--torch-dim);border-radius:6px;
+    background:rgba(232,163,79,.06);
+  }
+  .thought p{
+    margin:0;font-family:"Bricolage Grotesque", system-ui, sans-serif;
+    font-weight:500;font-size:1.16rem;line-height:1.35;color:var(--torch);
+    letter-spacing:-.005em;
+  }
+
+  .close{padding:4rem 0 2rem}
+  .close p{font-size:1.16rem}
+
+  footer{
+    padding:2.4rem 0 4.5rem;border-top:1px solid var(--rule);margin-top:2rem;
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.76rem;
+    color:var(--parchment-faint);
+  }
+  footer .col{display:flex;flex-direction:column;gap:.6rem}
+  footer a{color:var(--parchment-dim)}
+  footer a:hover{color:var(--torch)}
+
+  .draftbar{
+    background:rgba(232,163,79,.1);border:1px solid var(--torch-dim);border-radius:6px;
+    padding:.9rem 1.2rem;margin:1.5rem auto 0;max-width:38em;
+    font-family:"IBM Plex Mono", ui-monospace, monospace;font-size:.74rem;
+    color:var(--torch);line-height:1.6;
+  }
+
+  @media (max-width:640px){
+    body{font-size:1.04rem}
+    header.masthead{padding:3rem 0 1.5rem}
+    section{padding:2.6rem 0}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="col">
+      <span class="kicker">What building a game alone clarified</span>
+      <h1>The Part I <span class="lit">Missed</span></h1>
+      <p class="dek">After more than a decade on game teams and about five years out of games, I built a co-op D&amp;D game across a rules toolkit, a server, and a 3D browser client. Getting all three to work clarified what the work had been missing.</p>
+      <p class="byline">Kirk Gilmore &middot; rpg-toolkit, rpg-api, rpg-dnd5e-web &middot; built in the open</p>
+    </div>
+  </header>
+
+  <figure>
+    <img src="img/halfling-greatclub.png" width="966" height="554"
+         alt="A shirtless low-poly halfling barbarian stands on stone tiles carrying a greatclub the size of a small tree, near a low burning brazier.">
+    <figcaption>a halfling barbarian and a greatclub roughly one halfling long. this screenshot is why I finally wrote any of this down.</figcaption>
+  </figure>
+
+  <div class="col shortver">
+    <h2>The Cliff Notes</h2>
+    <p class="lede">The long version keeps the wrong turns. For the meeting-length version, this is the person and the point.</p>
+    <ol>
+      <li><span class="k">Who</span><span class="v">I am a backend architect who spent more than a decade on game teams, then about five years outside games. Given a tangled system, I usually reach first for the part that can be made legible.</span></li>
+      <li><span class="k">What I built</span><span class="v">Over fourteen months, I built a co-op D&amp;D game spanning a reusable rules toolkit, a game server, and a 3D browser client. It began as a Discord bot and grew until the halfling above could walk into a shared crypt.</span></li>
+      <li><span class="k">How I work</span><span class="v">Move a too-specific question up one level, keep each discipline&rsquo;s meaning where it belongs, and make small parts that leave room for content nobody has proposed yet.</span></li>
+      <li><span class="k">When I am wrong</span><span class="v">Rage deadlocked trying to end itself. I discarded that pull request, later checked source instead of trusting my memory, and replaced an encounter system that had become the wrong shape.</span></li>
+      <li><span class="k">What players get</span><span class="v">Dice on the dungeon floor, a teammate rolling <em>your</em> die when you help, and a world where every fact remembers who witnessed it.</span></li>
+      <li><span class="k">Why tell it</span><span class="v">Keeping all three codebases moving largely alone answered one question. It also reminded me that the part I value most is different disciplines solving the same creative problem and shipping the answer together.</span></li>
+    </ol>
+    <p class="tail">&darr;&ensp;the whole thing, with the failures left in</p>
+  </div>
+
+  <section>
+    <div class="col">
+      <span class="stamp">Before the code &middot; five years out</span>
+      <h2>I knew it was not leadership I missed</h2>
+      <p>I spent more than ten years of my career on game teams, then about five years outside games. I kept leading and mentoring during those years. If leadership itself had been the missing thing, I would have had it.</p>
+      <p>What I missed was shared creative problem-solving: designers, engineers, artists, producers, and everyone else bringing different kinds of judgment to the same stubborn problem. The answer changes as it crosses those boundaries. Then the group has to finish it and put it in front of players together.</p>
+      <p>Games make that kind of work unusually dense. They unite marketplaces, social systems, economies, rules, stories, tools, visuals, sound, and human behaviour. A decision in one can change the meaning of all the others. That is what keeps fascinating me.</p>
+      <p>There was no plan behind this project when the itch returned. I just knew I had to build something. So I began alone, at the smallest place I could find.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">The beginning &middot; one pull request</span>
+      <h2>&ldquo;This is what you wanted to add?&rdquo;</h2>
+      <p>A Mastodon bot ran adventures through polls. People voted on what the party did next, and the story moved. I loved it. I contributed exactly one pull request.</p>
+      <p>It was not an adventure or even a feature. I found a tangled piece of logic and simplified it until it read clearly. The maintainer&rsquo;s comment was, more or less: <em>this is what you wanted to add?</em></p>
+      <p>He was not being unkind. He was surprised that, given an entire game-shaped thing to touch, I had reached for the place where the parts were hard to reason about.</p>
+      <p>I have thought about that comment ever since. Somebody had named the way I make things before I had.</p>
+      <blockquote>
+        <p>I am a creative. It is just architectural creativity, and not so much on the visual side.</p>
+      </blockquote>
+      <p>That kind of creativity does not end at a diagram. Its value is making room for somebody else&rsquo;s rule, character, story, tool, or performance without forcing them to become an architect first.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">First shape &middot; identity before infrastructure</span>
+      <h2>Forms meant somebody could make a character</h2>
+      <p>I started building a D&amp;D bot for Discord along the same lines: polls to steer the adventure, text coming back.</p>
+      <p>Then I learned Discord bots could have forms. The project changed immediately, because forms meant <strong>character creation</strong>. Not voting on what a party did next. Sitting down and making someone.</p>
+      <p>That was the first real spark. A character somebody made had an owner; everything after that had a person on the other end who cared what happened. Around then I built an ASCII scene of a room and was thrilled with that too. The honest scale was a character sheet inside a chat window and a room made of text characters.</p>
+      <p>Discord Activities and Three.js arrived close together. A real web application could live inside a voice channel, with everyone in it, and a browser could render the room in 3D. The paragraph could become a shared place.</p>
+      <p>I did not have the engine that place required. I had bot commands. Building the missing foundation is where the next year went.</p>
+      <div class="unlock">
+        <span class="lbl">What it changed</span>
+        <span class="txt">The project stopped being about commands and became a promise to a group of players: make someone, enter a room together, and let the rules take that person seriously.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">June 2025 &middot; protect the boundary</span>
+      <h2>The engine should not know what a short rest is</h2>
+      <p>I began with what looked like a contained question: what is a condition? Poisoned, blessed, enraged. How should the engine represent that?</p>
+      <p>The question was too small. A condition, a class feature, a weapon enchantment, a spell effect, and difficult terrain have the same shape: each hooks into what is happening and changes it. The little bus I had built for combat modifiers turned out to be where all of them could participate.</p>
+      <div class="record">
+        <span class="lbl">From the record</span>
+        <p>The note from that week says it more bluntly: <em>&ldquo;we realized our event bus isn&rsquo;t just for conditions &mdash; it&rsquo;s the nervous system of the entire game.&rdquo;</em></p>
+      </div>
+      <p>I found that answer by crossing the boundary twice. First I built a concentration manager, realised it belonged to one game&rsquo;s rules, and removed it. Then I put <span class="mono">ProcessShortRest()</span> on a generic resource pool and called it a red flag in my own notes.</p>
+      <p>The fix was not a more complete list of D&amp;D concepts. The engine should never learn what a short rest <em>is</em>. It only needs to know something happened and give each relevant piece a chance to care.</p>
+      <p>That distinction is how technical work can respect other disciplines. The rulebook owns the meaning. The engine provides a mechanism sturdy enough for dawn restoring a paladin&rsquo;s power, a story milestone refilling a resource, or a spell topping up an ally &mdash; none of which require a new engine method.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">Content could stay content. A new rule no longer had to smuggle itself into shared machinery just to exist.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">August 2025 &middot; admit the failed version</span>
+      <h2>A barbarian could not stop being angry</h2>
+      <p>Rage looked small. You get angry, hit harder, and take less damage. I estimated about a hundred lines.</p>
+      <p>In 5e, rage ends if you go a round without attacking or being hit. It listens for the end of your turn and, when it is over, has to stop listening. The event system held a lock while handing the event to listeners; un-listening needed that same lock. <strong>The feature could not switch itself off.</strong> A barbarian could not stop being angry.</p>
+      <p>The answer is the first thing in the engine I would still defend today. A listener never reaches into the machinery mid-flight. It <em>returns</em> what it wants to happen, and the machinery acts after the event finishes. Events complete, then the world changes.</p>
+      <p>That was the useful failure. The rest was mine: untyped strings everywhere, plus infrastructure I had already written, ignored, and rebuilt worse. I threw the pull request away and filed five issues from the wreckage.</p>
+      <div class="record">
+        <span class="lbl">From the record</span>
+        <p>Two lines I wrote that night and still stand by: <em>&ldquo;Sometimes the best code is the code you don&rsquo;t ship.&rdquo;</em> And <em>&ldquo;Better to have no combat than broken combat.&rdquo;</em></p>
+      </div>
+      <p>Over the next thirty-six hours, rage became one self-contained object. It listens for three things, remembers whether you swung and whether you were hit, and removes itself when neither happened. Nothing polls it. No combat code asks &ldquo;is this character raging?&rdquo;</p>
+      <p>A new effect can be a small thing attached to a player, monster, or trap. It manages itself. Nobody keeps a master list. That is not only a clean system; it is room for somebody else to add content without reopening combat.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">The same week &middot; let each part know its own work</span>
+      <h2>The server never learns what rage is</h2>
+      <p>Saving the game exposed another discipline boundary. A character may have a rage with two uses left and a bless that expires in four rounds. If the game server has to understand both, the rules now live in two codebases and every rules change becomes coordination debt.</p>
+      <p>Instead, every piece describes itself. A feature knows how to write itself down and how to read itself back. The server stores a blob it cannot interpret. On the way in, the engine reads one field &mdash; a name like <span class="mono">dnd5e:feature:rage</span> &mdash; and gives the whole thing to whoever owns that name.</p>
+      <p><strong>The game server never learns what rage is.</strong></p>
+      <div class="record">
+        <span class="lbl">From the record</span>
+        <p>The idea arrived as one line near the end of a document from the least confident day of that week, when I wrote four documents and decided nothing in any of them: <em>&ldquo;ToJSON for storage, ToData for internals.&rdquo;</em></p>
+        <p>Fourteen months later it is load-bearing across the codebase. The idea I was excited about that week is the one that did not ship.</p>
+      </div>
+      <p>Good boundaries are not walls between people. They are agreements about where knowledge belongs. They let a server engineer, a rules author, and a client developer change their part without making the others impersonate them.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">A rules engine and server that could be built, changed, and reasoned about separately &mdash; the only reason one person could keep both moving, and the reason more than one person would not have to move in lockstep.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">Autumn 2025 &middot; the first visible receipt</span>
+      <h2>A +2 reaches a player</h2>
+      <p>A barbarian rages. The condition attaches itself to the damage calculation. A +2 appears, itemised, in the breakdown a player reads: not a number from somewhere, but a number with its reasons attached.</p>
+      <p>It was the first time the invisible work reached a person visibly. The architecture, rule, interface, and explanation finally occupied the same line.</p>
+      <p>That was also when I first had the feeling that returned twice more:</p>
+      <div class="thought">
+        <p>I have a place to put all of the things I need.</p>
+      </div>
+      <p>I did not, quite. I had a place for conditions and interruptions. That was a lot. It was not everything.</p>
+      <p>Then I went and did something else for four months.</p>
+    </div>
+  </section>
+
+  <div class="quiet">
+    <span class="r">January &ndash; April 2026</span>
+    <p>No design documents. No architecture decisions. Ten merged pull requests across three repositories in February.</p>
+  </div>
+
+  <section>
+    <div class="col">
+      <span class="stamp">Coming back &middot; source over memory</span>
+      <h2>I audited the project I had written</h2>
+      <p>The gap was not a crisis of faith in the game. My work had turned toward building agent systems, and those problems were worth following. This project sat nearly still while I did. The four months changed the tools and the way I could work across a rules engine, server, and 3D client.</p>
+      <p>They did not make understanding optional. When I came back in May 2026, I no longer trusted my memory of the codebase I had written. So I re-derived it by searching the source.</p>
+      <p>Two packages on the combat hot path did not appear anywhere in my documentation. Something I would have described confidently about my own architecture came back marked <em>partially true &mdash; needs correction</em>.</p>
+      <p>That is a useful kind of embarrassment. The plan is evidence of intent. The code is evidence of what teammates and players will actually encounter.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">Honest ground to build on, and the habit of checking the thing that exists instead of defending the thing I remembered.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">July 2026 &middot; another discipline arrives</span>
+      <h2>I found out I could just buy the halfling</h2>
+      <p>The thing holding me up was never the rules engine.</p>
+      <p>I cannot model a character. I cannot texture a crypt or animate a greatclub swing. That is a real wall for one person, and no amount of architecture gets over it. For a long time the honest answer to &ldquo;when will this look like a game?&rdquo; was: it will not.</p>
+      <p>Then I found Synty asset packs: professional low-poly art, buyable in bulk. At the same time, the way I was working had changed enough that I could keep the toolkit, server, and client moving together.</p>
+      <p>In the month after the art landed, more work shipped across the three repositories than in any previous month &mdash; against a trough of ten merged pull requests five months earlier.</p>
+      <div class="record">
+        <span class="lbl">Being fair about it</span>
+        <p>Two things changed in that window, not one. The art arrived and the way I was working changed. I am not going to claim the assets alone did that.</p>
+      </div>
+      <p>The meeting worked because of what came before it. <strong>The engine did not have to change to accept the halfling.</strong> He could walk, swing, open a door, and be seen by a monster that reasoned about him because none of those things had depended on what he looked like.</p>
+      <p>But the engine was not the whole achievement either. Somebody else&rsquo;s visual craft gave the machinery a person players could see. Buying the art did not erase the boundary; it proved why the boundary had been worth protecting.</p>
+    </div>
+  </section>
+
+  <figure>
+    <img src="img/halfling-greatsword.png" width="966" height="647"
+         alt="The same low-poly halfling, now in a fighter's outfit, standing in a dark crypt holding a greatsword nearly as long as he is tall. An armoured companion stands behind him. A large blue twenty-sided die rests on the hex-tiled floor between them, and a caged skeleton hangs at the edge of the torchlight.">
+    <figcaption>same halfling, fighter&rsquo;s outfit. that is the greatsword&rsquo;s own shadow &mdash; the crypt is just genuinely dark down there. and the party&rsquo;s d20 is sitting on the floor where somebody left it.</figcaption>
+  </figure>
+
+  <section>
+    <div class="col">
+      <span class="stamp">The design payoff &middot; help becomes visible</span>
+      <h2>Your teammate rolls your die</h2>
+      <p>Throwing dice is a large part of what tabletop play actually <em>is</em>. It is the moment everyone leans in. So this game rolls them as a table does: <strong>on the dungeon floor, in front of everyone.</strong></p>
+      <p>They are objects. They bounce off walls and can fall off the table. When a check happens, the die is <em>there</em>, on the ground where somebody left it, and you click it.</p>
+      <p>The decision I like best is about helping. <strong>If you are buffing a teammate, they roll your die.</strong> Your bless. Your d4 in their hands, on the floor, with the party watching. A modifier becomes a social gesture instead of a number quietly appearing in somebody else&rsquo;s total.</p>
+      <p>Damage dice are coming. The camera moves with the moment &mdash; over the shoulder when it is yours, pulled back to tactical when it is the party&rsquo;s, and all the way out to a tabletop view when you want the board. Dice will be customisable, because of course they will. Everybody has a set.</p>
+      <p>I am not a game designer. This is the decision I would defend hardest anyway.</p>
+      <p>It is also a compact example of why games resist being separated into departments on a diagram. The rule, 3D object, camera, interface, and behaviour around a table all shape the same few seconds.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">One moment in a co-op game where helping a friend is not invisible. The whole table gets to watch it happen.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">Summer 2026 &middot; stand above the system</span>
+      <h2>The encounter was also one of the tools</h2>
+      <p>By then the old encounter system felt like an application. That sounds like praise. It is not. One type had spread across twenty files, owning combat, movement, fog of war, lock-picking, death saves, and dungeon generation. Every new request was harder than the one before it.</p>
+      <p>I kept wishing for tools <em>inside</em> the encounter: one to manage the clock, another for intel &mdash; who knows what &mdash; and others for the record and interruptions.</p>
+      <p>Then came my favourite realisation in the project:</p>
+      <blockquote>
+        <p>The encounter was also one of those tools.</p>
+      </blockquote>
+      <p>It was never the top of the stack. It was a peer. Pull out the clock, intel, record, and interruptions, and what remains is not a diminished encounter. It is one that composes. <strong>Resolution</strong> ties those peers together.</p>
+      <div class="record">
+        <span class="lbl">From the record</span>
+        <p><em>&ldquo;A tool does things its author never anticipated, because its pieces compose. What I had was exhaustive. You don&rsquo;t build with it; you file an issue against it.&rdquo;</em></p>
+      </div>
+      <p>That distinction matters beyond architecture. An exhaustive system implements the ideas already handed to it. A generative one gives designers parts they can combine into a stealth encounter, a chase, a trap hex, or the thing nobody knew to ask for when the API was named.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">The clock, intel, record, and interruptions became four reusable parts, and the encounter stopped being the place every discipline had to file its request.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">August 2026 &middot; leave room for the next verb</span>
+      <h2>A new thing gets a new machine</h2>
+      <p>With resolution driving, every verb in the game can become a small machine. An attack gathers the attack roll, gathers damage, and finishes. Fireball does not roll to hit, so its machine skips that step. Dragon breath does the same. The driver does not need to special-case any of them.</p>
+      <p>Because each step boundary is plain data instead of a call stack, a machine can be <strong>paused</strong>, interrupted, sent to a player for confirmation, written to disk, picked up again, and finished. A monster answering automatically and a human being asked are the same step, answered by different things. That is what makes a reaction real.</p>
+      <div class="thought">
+        <p>I thought I had it all.</p>
+      </div>
+      <p>And I think I probably did &mdash; for a single dungeon.</p>
+      <p>Sixteen days after the decision to rebuild, the old encounter module was deleted. The new shape could hold more verbs than I could name. What it could not answer was why anyone would keep coming back to use them.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <span class="stamp">The third scale &middot; ask where the work reaches</span>
+      <h2>But what would make the game good?</h2>
+      <p>The question that broke the project open was not an engineering question.</p>
+      <p>What would make a streamer want to buy this? What would make subscribers play week after week instead of watching once? A perfectly composable dungeon crawler is still a dungeon crawler.</p>
+      <p>That question produced the living world.</p>
+      <p>When somebody acts, the result is not &ldquo;success&rdquo; or &ldquo;failure&rdquo;. It is a <strong>fact, with a list of who witnessed it</strong>. Nothing stores what the bandit camp believes. Each observer builds its present from only the facts it saw.</p>
+      <p>Stealth stops being a mechanic bolted on the side and becomes authorship of your own audience. A disguise blown in front of one guard is a fact with a very short witness list. The rogue can see a secret door the fighter genuinely cannot.</p>
+      <p>For a streamer, that is the good part: <strong>the camera sees everything, and each character sees only their own feed.</strong> Dramatic irony becomes a property of the engine instead of another thing the person running the game has to remember.</p>
+      <p>Because a whole Discord server writes into one shared record, failure at scale can generate what comes next. A rescue that goes badly across three parties turns the hostages nobody saved into the next antagonist roster. Nobody authored that outcome. The community&rsquo;s own history did.</p>
+      <p>This was the third arrival of that early feeling. First the rules had somewhere to go. Then the verbs did. Now the players&rsquo; history did too. The architecture had finally reached the question that mattered: not whether the pieces fit, but what people could make of them together.</p>
+      <div class="unlock">
+        <span class="lbl">What it unlocked</span>
+        <span class="txt">A reason for the world to matter between sessions &mdash; the difference between a dungeon somebody clears and a place a community lives in.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="close">
+    <div class="col">
+      <span class="stamp">Candor &middot; the parts still missing</span>
+      <h2>The repository is less complete than the story</h2>
+      <p>I should say that plainly.</p>
+      <p>On day one I mocked up a Discord command for a wandering merchant called Grimsby, in a town called Millhaven, with two days before he moved on. There is no Grimsby. There is no weather, autumn festival, or faction quietly shifting while you sleep. There is still no Artificer. One half-past-one-in-the-morning idea &mdash; character creation should not have to know what a Monk is &mdash; was never built, and the mess it was meant to remove remains in that file.</p>
+      <p>The part of that day-one dream that <em>did</em> ship is the part I would not have predicted: a world that remembers per person, at the scale of a whole server.</p>
+      <p>A place for more work is not the same as the work being finished. I have learned that distinction three times now.</p>
+    </div>
+  </section>
+
+  <section class="close">
+    <div class="col">
+      <span class="stamp">What building alone answered</span>
+      <h2>The point was never to be every discipline</h2>
+      <p>I am not going to pretend the halfling is my work. Somebody at Synty modelled him. What I built is why he can pick up a club that is obviously too big for him, have the rules agree that he may try, have the room remember that he did, and leave the skeleton in the corner unaware of it.</p>
+      <p>Building this largely alone answered a practical question. I could keep a rules toolkit, game server, and 3D client moving long enough for the invisible work and the visible work to meet. I could find the bad boundaries, reverse decisions, re-read the source, and carry the result to players.</p>
+      <p>It answered a personal question too. Succeeding alone did not make solitude feel like the destination. It made the value of the work between disciplines harder to miss.</p>
+      <p>The best part of making games was never owning every part. It was shared creative problem-solving across design, engineering, art, production, and the rest of a game team &mdash; different crafts changing the answer, then finishing it and shipping it together. I had continued leading and mentoring. This was the creative exchange I had been missing.</p>
+      <p>Three times I thought I had everything I needed, and each time I was wrong at a larger scale. I no longer expect that feeling to be accurate. What I have instead is more useful:</p>
+      <div class="thought">
+        <p>I might not have everything I will need. But it currently looks like I have a place to put everything we want to build.</p>
+      </div>
+      <p>For now, that place contains a halfling carrying a club roughly as long as he is. I am very happy with it.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="col">
+      <span>Built in the open &middot; <a href="https://github.com/KirkDiggler/rpg-toolkit">rpg-toolkit</a> &middot; <a href="https://kirkdiggler.github.io/rpg-toolkit/living-world/">how the world engine works</a> &middot; <a href="https://kirkdiggler.github.io/rpg-project/">the dev journal</a></span>
+      <span>Character and environment art by Synty Studios. Everything underneath it is mine.</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

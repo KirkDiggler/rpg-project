@@ -172,3 +172,67 @@ api can parse them, or authored dungeons stop compiling.
   one status per run is well-founded. Builder affordance, not file format.
 
 — cross-team agent, on behalf of KirkDiggler
+
+---
+
+## Implementation (shipped 2026-09-02)
+
+| repo | change | version |
+|---|---|---|
+| **rpg-toolkit** #1429 / PR #1430 | `WallSpec` is a run; grouping inert; a door stands in a wall | `rulebooks/dnd5e/encounter/v0.47.0` |
+| **rpg-api** #893 / PR #894 | pin bump only, no source change | — |
+| **rpg-dnd5e-web** #900 / PR #901 | the builder keeps the stroke; `compiledWalls()` | — |
+
+Merged in that order, with the api **deployed** before web — rpg-api compiles
+every dungeon on `Put`, so a grouped file reaching the old server is a save
+failure, not a degraded render.
+
+### The evidence that mattered
+
+- **The bump was load-bearing, not ceremonial.** The same grouped dungeon
+  compiled against each pin: `v0.45.1` → `bad dungeon spec: field name not
+  found in type dungeonspec.WallSpec`; `v0.47.0` → clean.
+- **Grouping is inert**, pinned by regrouping the reference tomb into 1, 2, 5
+  and 28 runs and getting an identical wall set every time.
+- **The door subtraction is observable** because the tomb's two 14-edge lines
+  run straight past the cells its doors occupy: the spec carries 30 wall edges
+  and the atlas gets 28. Mutating the subtraction to a no-op killed exactly
+  that test and nothing else.
+- **No churn**: all 8 dungeons in `rpg-deployment/content` emit byte-identically
+  to the pre-grouping emitter, checked by importing the `origin/dev` module
+  side by side.
+
+### What we learned that would change the design
+
+- **`Validate` running `walls()` before `doors()` became load-bearing.** The
+  coherence check skips crossings a wall claims ("a wall is not a way in"), so
+  once a run may name a door's edge, which claim wins decides whether a secret
+  room's only entrance is seen at all. Swapping the two breaks ten tests. This
+  was incidental ordering before this slice and is now a rule; it is documented
+  at both sites rather than left to the reader.
+- **Existing dungeons stay flat, and that was not called out up front.** A
+  group records a stroke, and files already on disk have none left —
+  `lg-dungeon.yaml` stays 153 entries until its walls are redrawn. The design
+  argued correctly that the grouping cannot be *derived*, then quietly assumed
+  files would arrive grouped. They will not. Redrawing is the path (one drag
+  can now cross a doorway), and it is worth saying so wherever the feature is
+  described.
+- **A "sacred" constraint dissolved on contact with the author.** #355 recorded
+  Kirk's corner overshoots as something grouping must never tidy away, and the
+  design was ready to protect them. He corrected it in one line — they exist to
+  pull corners square, *"that need goes away."* The lesson is the one already
+  written down: test a constraint against the person who created it before
+  designing around it.
+- **`npm run ci-check` in rpg-dnd5e-web is fail-open.** It printed "Some CI
+  checks failed" for formatting and exited `0`. Read its output, never its exit
+  code — worth a separate fix.
+
+### Still open, deliberately
+
+Wall snapping and squaring (*"the walls are not meant to be angled"*), the
+per-group offset, and surfacing a run's concealment status in the builder. All
+three land on top of runs now that runs exist. Measured on
+`concealed-room.yaml`: 14 runs pure-visible, **5 straddle the frontier**, none
+purely concealed — so the straddling case is the real one.
+
+— cross-team agent, on behalf of KirkDiggler
