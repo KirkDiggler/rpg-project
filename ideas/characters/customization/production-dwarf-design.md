@@ -1,5 +1,5 @@
 ---
-status: approved in conversation; written review pending
+status: implemented and accepted
 journey: https://github.com/KirkDiggler/rpg-project/issues/346
 decide: https://github.com/KirkDiggler/rpg-project/issues/347
 predecessor: https://github.com/KirkDiggler/rpg-project/issues/338
@@ -367,6 +367,48 @@ distinct combinations, reloads/finalizes them, enters one four-player session,
 checks owner/peer looks, walks each model, and verifies representative main- and
 off-hand equipment. Contact sheets and the live picker establish visual fit;
 runtime observations establish exact binding/material authority.
+
+## Implementation outcome
+
+The complete vertical merged without changing the ownership boundaries above:
+
+- proto PR `rpg-api-protos#264` merged as
+  `1dd1afb5587c849e593b49f35583cb7dca1c0ed9`; generated release commit
+  `4a54bd51df0e6459b2908d8f054978cb451416bc`, tag `v0.1.148`;
+- API PR `rpg-api#871` merged as
+  `a795573fe160ca460f3a801d80220629dccd72d3`;
+- provider PR `rpg-game-assets#116` merged as
+  `69a229aabe4a366039dd06a68148a8ff9e0ca4e8` from reviewed head
+  `9d570f5627682269a42d4ad4f280082d3f669280`;
+- web PR `rpg-dnd5e-web#895` merged as
+  `979c33d141b8edbe79a666aa9eacb8529816fd40` from final head
+  `63201095a35025af8b769843607eb235bf2f5f0d`.
+
+The web retained the base-compatible additive proto release `v0.1.152`; its
+hair descriptors and source authority are content-identical to `v0.1.148`.
+The provider shipped schema-v2 consumer authority with four active bodies, four
+immutable complete-body fallbacks, 38 scalp styles, 18 facial-hair styles, 56
+thumbnails, and all 224 body/accessory compatibility checks.
+
+Kirk accepted the production provider sheets with **“looks really good.”** He
+then completed the normal web creation flow, reloaded the persisted draft,
+finalized a Dwarf Monk, entered the Reference Tomb, and gave the exact final
+verdict: **“looks great, and loaded in game to verify it loads.”** Independent
+runtime readback observed Hair 07 and Facial Hair 11 on the production Monk
+body, shared `#64A5CE` treatment, provider roughness `0.72`, and 63 mapped bones
+on both accessories.
+
+The planned four-browser session was deliberately not represented as observed
+human evidence. Four-class and owner/peer behavior are pinned by provider and
+runtime integration tests; Kirk's actual normal-game observation was one Dwarf
+Monk. This is recorded honestly in the web receipt rather than inventing
+browser observations.
+
+Final GLM 5.3 reviews for proto, API, provider, and web closed at **Ready, 0
+Critical / 0 Important / 0 Minor** after every finding received a fix or
+reasoned disposition. Final provider gates, web pre-push CI, GitHub Test,
+Lint/Type Check, Security Audit, and Deploy Preview all passed. Licensed synced
+web bytes remain ignored and untracked.
 
 ## Delivery order
 
