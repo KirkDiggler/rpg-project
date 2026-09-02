@@ -33,8 +33,8 @@ provider-neutral. Delivery therefore requires one provider PR and one web PR.
 - Existing defaults remain Hair 01 for Elf, Hair 16 for Half-Elf/Halfling/Gnome,
   Hair 03 for Tiefling, Hair 08 for Half-Orc, and Hair 04 + Facial Hair 02 for
   Dwarf. Existing profiles without facial hair default to `none`.
-- Human's exact default scalp/facial selection is chosen at its early visual
-  checkpoint, before publication.
+- Human defaults to Hair 16 and facial hair `none`, accepted by Kirk at the
+  corrected early visual checkpoint with the verdict “perfect”.
 - Tiefling horns and every other race-identity mesh are body identity, not hair;
   removing scalp/facial meshes must not remove them.
 - Existing Dwarf v1 runtime, manifest, thumbnails, hashes, defaults, and behavior
@@ -47,7 +47,7 @@ provider-neutral. Delivery therefore requires one provider PR and one web PR.
 
 | Race | Head/identity | Proportions | Palette | Existing scalp | Existing facial |
 | --- | --- | --- | --- | --- | --- |
-| Human | Head 00 native ears; no ear attachment | `[1,1,1]` | 01-A | chosen in curation | none unless approved otherwise |
+| Human | Head 00 native ears; no ear attachment | `[1,1,1]` | 01-A | Hair 16 | none |
 | Elf | Head 00, Ear 03 | `[1,1,1]` | 01-A | Hair 01 | none |
 | Dwarf | Head 00, Ear 01 | `[1.08,0.78,1.08]` | 01-A | Hair 04 | Facial Hair 02 |
 | Half-Elf | Head 00, Ear 01 | `[1,1,1]` | 01-A | Hair 16 | none |
@@ -148,8 +148,10 @@ event, or roster invalidation are introduced.
 ### Early Human checkpoint
 
 Render one neutral Human four-class body sheet and front/profile scalp/facial
-catalogs. Kirk chooses the exact Human default and approves identity before bulk
-publication.
+catalogs. A controlled no-ear/Ear01/Ear02/Ear03 diagnostic established that
+Head 00 already contains the native Human ears and that Ear 01 is a pointed
+Half-Elf-style attachment. After regeneration with no ear attachment, Kirk
+accepted Hair 16 + facial hair `none` and the corrected identity as “perfect”.
 
 ### Provider gate
 
