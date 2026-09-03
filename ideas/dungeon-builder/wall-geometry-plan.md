@@ -40,9 +40,16 @@ branch api. Kirk walks once; merge bottom-up.
 - Validate C4: the concealment walk. Rewrite `ways` as a flood: from each
   region cell, follow non-wall crossings through scenery cells (only
   scenery — never through another region's cells) until a cell of another
-  region is reached; the way's classification is the first crossing out of
-  the origin region. Refusal names the scenery cell the path enters and the
-  room. Visible-reach flood extends through scenery the same way.
+  region is reached; a way is concealed iff **any** crossing along it is a
+  concealed door (the flood stops at walls and concealed doors; the same
+  answer from either end). *Ruled 2026-09-03: the earlier "first crossing
+  out of the origin region" depended on direction and refused a secret room
+  whose own door is the concealed one.* Refusal names the scenery cell the
+  path enters and the room. Visible-reach flood extends through scenery the
+  same way. Tests beyond A2/A3: the concealed door on the visible room's
+  edge (legal, A2's yardstick); a wall standing inside the strip (not a
+  way; legal); a scenery area touching two visible rooms and one hidden
+  room, refused through whichever visible room's way is bare.
 - Compile: `FieldInput.Scenery []Cell` (new).
 
 `encounter` runtime:
@@ -100,8 +107,10 @@ Tests (each able to fail; name the scene, assert the cell):
   rooms read as disconnected and the ratchet would conceal a room the
   server can walk into (which A3 then refuses). Extend the graph to flood
   through scenery exactly as design C4 does — interior cells all scenery,
-  never a third region's cells; classification by the first crossing out of
-  the origin region. Test scenes shaped like toolkit A3 (joined through
+  never a third region's cells; two regions are joined iff some way between
+  them has no concealed door on any crossing (ruled 2026-09-03; the earlier
+  "first crossing out of the origin region" depended on direction and the
+  mirror must agree with the server). Test scenes shaped like toolkit A3 (joined through
   scenery: connected; wall added: separated). Keeping an existing
   derivation true is in scope; the plan was silent only because the mirror
   was not known when it was written.

@@ -245,17 +245,25 @@ doors:
   cells.
 - **C4. The concealment walk crosses scenery.** A *way* between regions A and
   B is a wall-free path from a cell of A to a cell of B whose interior cells
-  are all scenery; it is a concealed way iff its first crossing is a concealed
-  door. The frontier rule is otherwise as written: a way between visible and
-  hidden space that is not a concealed door is refused, naming the scenery
-  cell the path enters and the room. Visible reach from the start extends
-  through scenery.
+  are all scenery. It is a concealed way iff **any** crossing along it is a
+  concealed door — the same answer from either end. So the walk is a flood:
+  from visible space, cross bare crossings and ordinary doors, through
+  scenery, stopping at walls and concealed doors; reaching a hidden region's
+  cell is the refusal, naming the scenery cell the path enters and the room.
+  Where the concealed door stands on the way is the author's choice: on the
+  hidden room's own edge (a strip of floor in front of a secret door), on the
+  visible room's edge (floor beyond a masked wall, byte-identical to the twin
+  with the secret room deleted and the strip kept), or between two scenery
+  cells. *Ruled 2026-09-03 during the slice-1 build: the earlier "first
+  crossing" wording depended on which end the walk started from and refused
+  the natural shape.* Visible reach from the start extends through scenery.
 - **C5.** `hiddenFrom` is unchanged: hidden space is region cell sets. Scenery
   with no owner is in every member's atlas.
 - **C6. The masquerade never stands a wall on scenery's far side.** Scenery is
   not visible *space*; a bare crossing from scenery into hidden space gets no
-  synthesized wall. (C4 guarantees no such crossing is reachable from visible
-  space without a wall.)
+  synthesized wall. (C4 guarantees the scenery on the near side of such a
+  crossing is unreachable from visible space: every way to it stops at a wall
+  or a concealed door, and both read as wall.)
 
 ### 4.2 What a wall derives (slice 2)
 

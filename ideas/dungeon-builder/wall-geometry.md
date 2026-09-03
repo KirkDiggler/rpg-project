@@ -281,6 +281,28 @@ about. Ruling 7 is the invariant; ruling 6 and the offset model are what make
 it true. rpg-dnd5e-web#898 is the same failure one layer down and dissolves
 into ruling 6.
 
+### Build ruling, same day — which crossing conceals a way (C4)
+
+The toolkit builder found the gap while writing the concealment flood. C4
+said a way through scenery *"is a concealed way iff its first crossing is a
+concealed door"*, and a way through a strip has a first crossing at each end.
+Taken literally the natural shape — visible room, bare crossing, strip of
+scenery, the secret room's own door concealed — was refused walking from the
+visible side and legal walking from the secret side. Same dungeon, two
+answers.
+
+Ruled: a way is concealed iff **any** crossing along it is a concealed door.
+That is what a flood computes without being told, it gives the same answer
+from either end, and it leaves the author free to put the concealed door on
+the secret room's edge, on the visible room's edge, or between two scenery
+cells. The third and second shapes pass A2's own yardstick (a non-knower's
+atlas is byte-identical to the twin with the secret room deleted and the
+strip kept), so there is nothing to refuse. C6 still holds: the scenery on
+the near side of any bare scenery-to-hidden crossing is reachable from
+visible space only through a wall or a concealed door, and both read as
+wall. The web mirror (plan §1.3) carries the same rule so the panel and the
+server agree.
+
 ## Ground truth (2026-09-03; web `dev`, toolkit `origin/main` bf234c7)
 
 - Compile output is `encounter.FieldInput`: cells, blocked crossings, doorway
