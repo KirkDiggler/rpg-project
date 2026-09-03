@@ -1,7 +1,8 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
 **Status:** design RULED 2026-09-03 (`wall-geometry-design.md`, six revisions in
-one day); plan in `wall-geometry-plan.md`; building next.
+one day); plan in `wall-geometry-plan.md`. **Slice 1 (scenery floor) SHIPPED
+2026-09-03** across four repos; slice 2 (walls as lines) building.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -302,6 +303,25 @@ the near side of any bare scenery-to-hidden crossing is reachable from
 visible space only through a wall or a concealed door, and both read as
 wall. The web mirror (plan §1.3) carries the same rule so the panel and the
 server agree.
+
+### Slice 1 shipped, same day
+
+| repo | PR | what |
+|---|---|---|
+| rpg-toolkit | #1462 → `encounter/v0.49.0`; #1465 → `v0.51.1` | scenery in the field; A1–A5; the concealment flood on the any-crossing rule; `isFloor`/`isStandable` split; a step onto scenery refused as scenery |
+| rpg-api | #900 | pin `v0.49.0`; scenery proved on disk, at the orchestrator, and on the wire |
+| rpg-dnd5e-web | #915 | scenery brush (refuses, never deletes); concealment mirror floods through scenery; ownerless floor lit like its neighbour, legacy lighting bail retired |
+| rpg-api-protos | #281 | slice 2's `AtlasSegment` (float height) and `sealed`; two stale comments fixed |
+
+Three rulings were made in the build and are recorded above (any crossing;
+lighting; the step message). Two things the build found that belong to other
+lanes: rpg-toolkit#1473 — the session module cannot compile against encounter
+past v0.48.0 after #1470, so rpg-api's pin stops at v0.49.0 and the honest
+step message waits; rpg-toolkit#1464 — two concealed regions bare-adjacent are
+a wall a knower can see and walk through. And one about our own tooling:
+the auto-tagger's number is not predictable (#1465 minted v0.51.1, not
+v0.49.1), so a pin PR reads the tag on the merge SHA and says what else it
+carries.
 
 ## Ground truth (2026-09-03; web `dev`, toolkit `origin/main` bf234c7)
 
