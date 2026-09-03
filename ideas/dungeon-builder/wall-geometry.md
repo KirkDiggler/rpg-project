@@ -1,7 +1,7 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03, three rounds). Design PROPOSED in
-`wall-geometry-design.md`, fourth revision; Kirk rules once; then plan and build.
+**Status:** rulings in (2026-09-03, four rounds). Design PROPOSED in
+`wall-geometry-design.md`, fifth revision; Kirk rules once; then plan and build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -205,15 +205,28 @@ family, and three of them are the two good ones and the trap:
 | across rows, column edge | corners and centres | 1/2 — the trap |
 
 **Ruled from that:** the positions are the **six side midpoints** (corners
-drop; Kirk's *"could prob get away with 5"*); a wall **may not pass through a
-cell's centre** — the refusal that removes the trap by rule instead of by
-hatch; **a door is a midpoint on its wall and opens one crossing**; and
+drop; Kirk's *"could prob get away with 5"*); a wall may pass through a
+cell's centre and seals what it halves (refused in this round, reinstated
+in the next as the thick wall); **a door is a midpoint on its wall and opens one crossing**; and
 **30° steps, not 60°** — Kirk: *"i guess it would be 30 deg if we get the six
 sides in the middle"* — because a rectangle needs one direction from each
 family. Every legal wall is standable-safe on its own; only corners are
 decided by the number, which starts at **0.7** because a square room's inside
 corner keeps exactly 3/4. The centre as a seventh point is the first shelf
 for the set: it buys a wall stub at the cost of its own cell.
+
+Kirk, reading "no centre": *"you mean we cannot go down the center? no
+right? the flat side would be edge, centerline. maybe in the design we can
+visualize where we can go."* Right — and the wall along a column's flat sides
+IS the centreline of the neighbouring rows. Then: *"ideally one of the lines
+would be on the edge of the flat side not cutting off the hex at all."* That
+line exists, and the third-round refusal of it was wrong: on the flat sides
+the even-row hexes are whole, and the price is the odd-row cell the line
+centres, sealed, one per two rows. So each family has a **thin** wall (shaves
+neighbours, kills nothing) and a **thick** wall (neighbours whole, seals
+what it centres), both legal, the cost shown at pick time. The picture is
+`wall-geometry-lines.svg`, generated from the geometry, in the design at
+§4.3; the designer draws the same lines from a picked start (§2.6).
 
 ### The tell, and what it taught
 

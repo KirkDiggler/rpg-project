@@ -1,6 +1,6 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03, fourth revision the same day, for Kirk's one
+**Status:** PROPOSED 2026-09-03, fifth revision the same day, for Kirk's one
 ruling. Record and the why: `wall-geometry.md`. Plan follows ruling.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
 lines. Both ride journey rpg-project#169.
@@ -13,6 +13,7 @@ conversation and where it landed:
 | wall ends are picked from a small named set, never typed freehand | §2.6, §3.3 |
 | the set is the six side midpoints; 30° steps between them | §3.3, §3.5 |
 | a wall lies on a hex axis if a door is to stand in it | §3.5, §3.4 |
+| a wall may run on a flat side and leave the hex whole; it seals what it centres | §1.7, §4.3 |
 | the file keeps numbers; the designer hides them | §2, §3.2 |
 | standability is a number, tuned later | §4.3 |
 | legacy dungeons are deleted and recreated; the defaults are rewritten | §4.5, §7 |
@@ -47,11 +48,13 @@ conversation and where it landed:
    `{cell, offset}` in bounding-box fractions. The set is closed: an offset
    outside it is refused by name. Kirk: *"realistically could prob get away
    with 5."*
-7. **A wall lies in one of twelve directions, 30° apart, and passes through
-   no cell's centre.** The six directions along rows of neighbours and the
-   six along hex sides, together. Kirk: *"we are not making precision walls
-   here and can be constrained."* Every wall that satisfies this cuts no cell
-   deeper than 5/24 (§4.3).
+7. **A wall lies in one of twelve directions, 30° apart.** The six along
+   rows of neighbours and the six along hex sides, together. Kirk: *"we are
+   not making precision walls here and can be constrained."* In each family
+   two lines exist: a **thin** one that shaves its neighbours, and a
+   **thick** one on the flat sides that leaves neighbours whole and seals the
+   cells it runs through the centre of (§4.3). Both are legal; the designer
+   shows the cost.
 8. **A door is a position on a wall.** It opens the one crossing of the side
    it is the midpoint of.
 9. **The wall invariant.** A wall looks the same from the visible side
@@ -85,16 +88,19 @@ conversation and where it landed:
 - **2.6 A wall is two picked positions.** Pick a side midpoint to start.
   The end snaps to side midpoints that lie on one of the twelve rays from
   the start and put no cell centre on the line; nothing else is offered.
-  Kirk: *"snapping could snap to one of those 12 points."* The cells the
-  wall makes unstandable hatch as soon as the end is picked.
+  Kirk: *"snapping could snap to one of those 12 points."* Once a start is
+  picked the designer draws the lines from it, thin and thick told apart,
+  with the cells each would seal greyed, so the author sees where a wall can
+  go and what it costs before choosing (Kirk: *"maybe in the design we can
+  visualize where we can go"*).
 - **2.7 Corners.** Picking a position another wall already ends at joins
   them: the same `{cell, offset}` is written to both, and moving one end
   moves the other. That is the whole of snapping.
 - **2.8 Doors.** Click a midpoint the wall passes through. The door is that
   side's crossing, and it draws as a gap in the wall around the midpoint.
 - **2.9 Wall this boundary.** The common case is a straight wall between
-  two rooms. One gesture along a boundary picks the two legal ends for it —
-  the midpoint line along rows, the quarter line across them (§4.3).
+  two rooms. One gesture along a boundary picks the ends for it, thin by
+  default; the thick line is one toggle away (§4.3).
 
 ## 3. The file — dungeonspec version 2
 
@@ -186,9 +192,12 @@ doors:
 
 - **F13.** The direction from `start` to `end` MUST be a multiple of 30°.
   Refused naming the wall and the angle.
-- **F14.** No cell's centre may lie on the wall. Refused naming the wall and
-  the cell. This is the rule that removes the two wall lines that halve
-  cells (§4.3); with it, every legal wall is standable-safe on its own.
+- **F14.** A wall may pass through cell centres. Each cell it halves is
+  sealed scenery: unstandable, every crossing out of it blocked. Nothing is
+  refused; the designer shows the sealed cells at pick time. (An earlier
+  revision refused these lines; Kirk: *"ideally one of the lines would be on
+  the edge of the flat side not cutting off the hex at all"* — that line
+  exists, and its price is the sealed cells, so it is a choice, not a trap.)
 
 ## 4. The compiler — `rulebooks/dnd5e/encounter/dungeonspec`
 
@@ -236,23 +245,30 @@ doors:
   least `F` of the whole. `F` is one constant in the compiler, first value
   **0.7**, tuned in the game.
 
-  With ends on side midpoints, twelve directions, and no centre on the line,
-  exactly two kinds of wall exist, by symmetry the same in every direction
-  of their family:
+  With ends on side midpoints and twelve directions, exactly four kinds of
+  wall exist, two per family, by symmetry the same in every direction of
+  their family:
 
-  | wall | passes through | cuts per adjacent cell |
-  |---|---|---|
-  | along a row of neighbours, the **midpoint line** | slanted-side midpoints | 1/24 both sides |
-  | across rows, the **quarter line** | slanted-side midpoints | 5/24, alternating sides |
+  | wall | passes through | neighbours | doors |
+  |---|---|---|---|
+  | along a row, **midpoint line** (thin) | slanted-side midpoints | shaved 1/24 both sides | every midpoint |
+  | along a row, **centre line** (thick) | every centre in the row | whole; the row itself is sealed | none on the row |
+  | across rows, **quarter line** (thin) | slanted-side midpoints | shaved 5/24, alternating | every row |
+  | across rows, **flat-side line** (thick) | flat sides in even rows, centres in odd | whole; one odd-row cell sealed per two rows | even rows |
 
-  The two lines F14 refuses — along a row through centres, across rows on
-  the column edge — would halve cells; they are the trap the earlier
-  revisions guarded with a hatch, now gone by rule. A single wall never
-  makes a cell unstandable. Only corners can: a square room's inside corner
-  (quarter line + midpoint line) keeps exactly 3/4, a hexagonal room's
-  corner (two quarter lines) keeps 7/12. **0.7, not 0.75**, so the square
-  corner is not decided by float noise; the hexagonal corner goes scenery
-  and the hatch shows it.
+  ![Where a wall can go](wall-geometry-lines.svg)
+
+  *Generated from the hex geometry (`wall-geometry-lines.svg`); the
+  fractions it labels are computed, not drawn. Green = thin, orange = thick,
+  hatched = what a thin wall shaves, grey = what a thick wall seals, dots =
+  the six positions.*
+
+  A thin wall never makes a cell unstandable on its own. Only corners can: a
+  square room's inside corner (quarter line + midpoint line) keeps exactly
+  3/4, a hexagonal room's corner (two quarter lines) keeps 7/12. **0.7, not
+  0.75**, so the square corner is not decided by float noise; the hexagonal
+  corner goes scenery and the designer shows it. A thick wall's sealed cells
+  are scenery by the same rule (1/2 < 0.7) and need no special case.
 - **C11.** The designer displays the compiler's answer. A local mirror is
   deferred until the picker feels dead without one; if built, it is pinned to
   the compiler by a golden fixture.
@@ -358,12 +374,12 @@ Slice 2:
   draws four lines, and the blocked crossings are the same 46 the room tool
   authored.
 - **A8. Calibration.** A quarter-line wall and a midpoint-line wall leave
-  every adjacent cell standable at `F = 0.7`; a square room's inside corner
-  is standable; a hexagonal room's corner is scenery.
+  every adjacent cell standable at `F = 0.7`; a flat-side wall seals exactly
+  the odd-row cells on it and nothing else; a square room's inside corner is
+  standable; a hexagonal room's corner is scenery.
 - **A9. Refusals.** An offset outside the six; a direction off the twelve; a
-  wall through a cell's centre; a door position no wall passes through; a
-  door position two walls pass through; a pair-form file. Each refused
-  naming the thing.
+  door position no wall passes through; a door position two walls pass
+  through; a pair-form file. Each refused naming the thing.
 - **A10.** A concealed door in a wall: the non-knower's atlas carries the
   full segment and no doorway; the knower's carries the gap. Yardstick twin
   identical.
