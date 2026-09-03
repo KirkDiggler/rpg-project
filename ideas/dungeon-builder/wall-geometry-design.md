@@ -297,7 +297,12 @@ doors:
   outside the room — one diagonal step past two of a square room's four
   corners, which two decided by the row stagger. Shown as a blocked crossing
   in the picker, not refused and not rounded away; relax only if it becomes
-  a problem in play.*
+  a problem in play. Second consequence, found by the web builder: a wall
+  whose endpoint is a cell's centre blocks all six crossings out of that
+  cell, since every one of them starts at that point. The cell is halved and
+  sealed anyway, and a thick wall is solid, so the cell reads as wall on all
+  sides; open endpoints would instead let sight through a thick wall and
+  unseal every corner. Closed stays; the picker shows the cell sealed.*
 - **C8. Footprint.** The wall's cells are every floor cell whose hex the
   closed segment intersects, in order along the wall.
 - **C9. Embedding.** The compiler embeds cells in the plane for this alone:
