@@ -229,11 +229,19 @@ Tests:
 - Pin protos + encounter (+ session if it re-exports the atlas). Translate
   `Segments` and `Sealed` in the atlas handler. Rewritten
   `reference-tomb.yaml` lands here (A13 walk by Kirk).
-- `rpg-deployment/content`: the eight legacy files are deleted; Kirk
-  re-authors what he wants in the new builder. Note on the deployment PR:
-  the content volume must be emptied on the box or the api refuses to boot
-  on the first legacy file it loads (rpg-api#886 is the quarantine
-  alternative — not built here).
+- `rpg-deployment/content` *(corrected 2026-09-03 in the build)*: there are
+  no legacy files to delete from git. `content/` is gitignored except its
+  README; the dungeons in it are written by `PutDungeon` at runtime into the
+  authoring volume, and the deploy's `git reset --hard` never touches them.
+  The eight files were Kirk's local checkout. rpg-deployment PR #74 ships a
+  one-shot `scripts/clear-legacy-dungeon-content.sh` (dry by default,
+  `--delete` to act, keeps the README) and a note on the volume mount.
+  **Runbook, Kirk's hand:** run it with `--delete` on the box before the
+  api deploy that carries encounter v0.52.0, or the api refuses to boot on
+  the first pair-form file it loads (verified: `failed to wire services:
+  content registry: ... does not compile`). Deliberately not wired into
+  the deploy: every file it removes is somebody's authored dungeon
+  (rpg-api#886 is the quarantine alternative — not built here).
 
 ### 2.4 rpg-dnd5e-web
 
