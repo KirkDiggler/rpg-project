@@ -1,21 +1,36 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03, for Kirk's one ruling. Record and the why:
-`wall-geometry.md`. Plan follows ruling.
+**Status:** PROPOSED 2026-09-03 (revised same day to Kirk's file shape and
+vocabulary), for Kirk's one ruling. Record and the why: `wall-geometry.md`.
+Plan follows ruling.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
-lines (offsets on runs). Both ride journey rpg-project#169.
+lines. Both ride journey rpg-project#169.
 
 ## Decisions for Kirk
 
-- **D1. The standability discriminator.** Two candidates, same shadow rule,
-  same file, different compiler constant. See §4.3. Recommendation: the
-  mini-distance rule.
-- **D2. Legacy runs keep the fitter until straightened.** A run with no
-  endpoints is an edge run and renders as today; the tolerance's scope narrows
-  to legacy runs instead of dying on day one. See §4.5 and §2.9.
-- **D3. Endpoint encoding.** `{at, corner, offset}`, offset bounded to ±1 cell
-  unit (props keep ±0.5); the wire carries fractional axial points. See §3.2
-  and §5.2.
+- **D2. Legacy walls keep the fitter until straightened.** A wall in the
+  pair form is a legacy wall: it compiles as today and renders as today. The
+  fitter's scope narrows to legacy walls instead of dying on day one.
+  See §4.5 and §2.9.
+
+Resolved in conversation, recorded here so they stay resolved:
+
+- *Standability is a number, tuned later* (Kirk: *"it is a number though and
+  I imagine it is below 98%"*). Area fraction, one constant in the compiler,
+  first value 0.75 for the tooth reason in §4.3. The scenery brush is the
+  author's control when the number is wrong.
+- *A wall's ends are cell plus offset*, the same noun props use. No corner
+  numbering. A corner is two ends on one point.
+
+## 0. Vocabulary
+
+| thing | word | in the file |
+|---|---|---|
+| one straight wall with a start and an end | **wall** | a `walls[]` entry |
+| the hexes a wall passes through | **cells**, its footprint | `walls[].cells` |
+| the hex-to-hex step a wall blocks | **crossing** | never written in the line form; the pair form's `edges` are crossings |
+| where two walls meet | **corner** | two ends whose points coincide |
+| floor nobody stands on | **scenery** | `scenery` |
 
 ## 1. The model
 
@@ -28,14 +43,17 @@ lines (offsets on runs). Both ride journey rpg-project#169.
    cells. Props may stand on any floor.
 4. **Scenery** is floor that is not standable. Three producers, one state:
    the author's brush (owner none), the cells a wall cuts (owner as painted),
-   and the footing of a presented boundary (projection only, §4.6).
-5. **A wall is a line.** The crossings it blocks are its shadow; the cells it
-   cuts are scenery. A run without endpoints is an edge run: its edges are
-   its shadow, it cuts nothing.
+   and the footing of a presented wall (projection only, §4.6).
+5. **A wall is a straight line from its start to its end.** The crossings it
+   blocks and the cells it cuts are derived. A legacy wall (pair form) blocks
+   exactly its listed crossings and cuts nothing.
 6. **The wall invariant.** A wall looks the same from the visible side
    whatever is beyond it: floor, void, scenery, or hidden space.
 7. **Scenery is transparent and impassable. It seals nothing.** Sight and the
    concealment walk pass through it; walls are the only seal.
+8. **One position noun.** Cell plus offset positions a prop today and a
+   wall's ends next. A prop's offset is visual only; a wall's offset is
+   mechanical. What the offset is attached to decides.
 
 ## 2. The panel — what a streamer sees and does
 
@@ -47,8 +65,7 @@ lines (offsets on runs). Both ride journey rpg-project#169.
 - **2.2 One state per cell.** Painting scenery over a room cell moves it out
   of the room; painting a room over scenery moves it in. Erase makes void and
   cascades as today (walls, doors, placements on the cell go with it).
-- **2.3 Walls and doors** may be drawn on any edge whose two cells are both
-  floor, room or scenery.
+- **2.3 Walls and doors** may stand on any floor, room or scenery.
 - **2.4 Placement.** A prop drops on scenery. A monster or the start does
   not: the drop is refused in place with the reason ("nobody can stand
   here").
@@ -57,17 +74,17 @@ lines (offsets on runs). Both ride journey rpg-project#169.
 
 ### Slice 2
 
-- **2.6 Every new wall stroke has two endpoints**, dragged in board space and
-  drawn as handles. Dragging a handle moves the line; the cells it makes
-  unstandable hatch live. No angle snapping.
-- **2.7 Joins.** A handle released within the magnet radius of another run's
-  endpoint takes that endpoint's exact position, and the two move together
+- **2.6 A wall is drawn from a start to an end** in board space, each end a
+  handle. Dragging a handle moves the line; the cells it makes unstandable
+  hatch live. No angle snapping.
+- **2.7 Corners.** A handle released within the magnet radius of another
+  wall's end takes that end's exact point, and the two move together
   thereafter. This is the only snap.
-- **2.8 Doors on a line.** Click the line; the door takes the crossing under
+- **2.8 Doors on a wall.** Click the wall; the door takes the crossing under
   the click. Deleting the door restores the wall.
-- **2.9 Straighten.** A legacy run (no endpoints) offers **Straighten**, per
-  run and for the whole dungeon: the fitted endpoints are written into the
-  file and the run becomes a line. Until then it renders as today.
+- **2.9 Straighten.** A legacy wall offers **Straighten**, per wall and for
+  the whole dungeon: the fitted start and end are written into the file and
+  the wall becomes a line. Until then it renders as today.
 
 ## 3. The file — dungeonspec version 2, additive
 
@@ -82,29 +99,39 @@ lines (offsets on runs). Both ride journey rpg-project#169.
 - **F2.** `place[]` entries of prop refs MAY sit on scenery. Monster refs and
   `start` MUST NOT. Refused naming the placement and the cell.
 
-### 3.2 Slice 2: endpoints on a run
+### 3.2 Slice 2: the line form of a wall
 
-The run form of `walls[]` (`{edges, height, name}`) gains `from` and `to`.
+```yaml
+walls:
+  - start: { cell: [1, 2], offset: [-0.25, 0.5] }
+    end:   { cell: [1, 4], offset: [-0.25, 0.5] }
+    height: 1
+    cells: [[1, 2], [1, 3], [1, 4]]
+```
 
 | field | type | rule |
 |---|---|---|
-| `from`, `to` | `{at: [col,row], corner: 0–5, offset: [x,y]}` | both present or both absent |
-| `at` | offset cell | MUST be floor |
-| `corner` | integer 0–5 | clockwise from 12 o'clock (pointy) or 3 o'clock (flat) |
-| `offset` | `[x,y]`, cell units (circumradius = 1) | each in [-1, 1]; `[0,0]` and omitted mean the corner itself |
+| `start`, `end` | `{cell: [col,row], offset: [x,y]}` | both present = line form |
+| `cell` | offset cell | MUST be floor |
+| `offset` | `[x,y]`, the unit and bound of `place[].offset` | omitted = the cell's centre |
+| `height` | as today | |
+| `name` | as today | |
+| `cells` | rows of `[col,row]` | the cells the line passes through, in line order |
 
-- **F3.** With endpoints, `edges` MUST equal the line's shadow (§4.2). A file
-  whose edges disagree is refused naming the first differing edge in the
-  author's coordinates. The builder always writes the shadow; a hand edit
-  that breaks it is caught, never silently repaired.
-- **F4.** Without endpoints, the run is an edge run. Its edges are its
-  shadow, it cuts nothing, and it renders as today. Every dungeon on disk is
-  such a file: **zero offset is today's file.**
-- **F5.** `doors[].edges` is unchanged. Every door edge MUST lie in the
-  shadow of some wall, as today.
-- **F6.** `offset` on a wall endpoint is mechanical (§4). `offset` on a prop
-  stays visual only, bounded to ±0.5. Same shape, different law: what the
-  offset is attached to decides.
+- **F3.** `cells` MUST equal the line's footprint (§4.2). A file whose cells
+  disagree is refused naming the first differing cell in the author's
+  coordinates. The builder always writes the footprint; a hand edit that
+  breaks it is caught, never silently repaired.
+- **F4.** A wall with `edges` and no `start`/`end` is a legacy wall: its
+  listed crossings are blocked, it cuts nothing, it renders as today. Every
+  dungeon on disk is such a file: **today's file is today's file.**
+- **F5.** `doors[].edges` is unchanged. Every door edge MUST lie among the
+  crossings some wall blocks, as today.
+- **F6.** A wall's `offset` is mechanical (§4). A prop's `offset` stays
+  visual only. Same shape, different law.
+- **F7.** A corner is not written. Two walls meet when their end points
+  coincide, compared as points, never as `{cell, offset}` tuples — a point on
+  a hex boundary may be named from either hex.
 
 ## 4. The compiler — `rulebooks/dnd5e/encounter/dungeonspec`
 
@@ -112,7 +139,9 @@ The run form of `walls[]` (`{edges, height, name}`) gains `from` and `to`.
 
 - **C1.** `owner` is unchanged. A `scenery` set is added. The flat cell list
   is `owner ∪ scenery`.
-- **C2.** A wall or door edge MUST join two floor cells (owned or scenery).
+- **C2.** A wall or door MUST stand on floor cells (owned or scenery). In the
+  pair form both cells of every crossing; in the line form every footprint
+  cell.
 - **C3.** Props MUST be on floor; monsters and the start MUST be on standable
   cells.
 - **C4. The concealment walk crosses scenery.** A *way* between regions A and
@@ -129,67 +158,63 @@ The run form of `walls[]` (`{edges, height, name}`) gains `from` and `to`.
   synthesized wall. (C4 guarantees no such crossing is reachable from visible
   space without a wall.)
 
-### 4.2 The shadow (slice 2)
+### 4.2 What a line derives (slice 2)
 
-- **C7.** A crossing between adjacent cells P and Q is blocked by a line iff
+- **C7. Crossings.** A crossing between adjacent cells P and Q is blocked iff
   the closed segment from the centre of P to the centre of Q intersects the
-  closed wall segment.
-- **C8.** The compiler embeds cells in the plane for this alone: centre of
-  axial (q, r) under the file's orientation, circumradius 1. This is the
-  toolkit's first world-unit geometry; `tools/spatial/room.go` names the
-  corner-rule sight test as its second customer.
+  closed wall line.
+- **C8. Footprint.** The line's cells are every cell whose hex the closed
+  line intersects, in order along the line. This is `cells`.
+- **C9. Embedding.** The compiler embeds cells in the plane for this alone:
+  centre and corners of axial (q, r) under the file's orientation,
+  circumradius 1, and `offset` in the unit `place[].offset` already uses.
+  This is the toolkit's first world-unit geometry; `tools/spatial/room.go`
+  names the corner-rule sight test as its second customer.
 
-### 4.3 Standability (slice 2) — **D1**
+### 4.3 Standability (slice 2)
 
-A cell touched by a line keeps its owner and may lose standability.
+- **C10.** A footprint cell keeps its owner and is standable iff the area of
+  its hex clipped by the near half-plane of every wall through it is at
+  least `F` of the whole. `F` is one constant in the compiler, first value
+  **0.75**.
 
-- **(a) Area rule** — standable iff the area of the hex clipped by the near
-  half-plane of every wall is at least `F` of the whole. Needs polygon
-  clipping (the web had it and deleted it; recoverable).
-- **(b) Mini-distance rule** — standable iff the distance from the cell's
-  centre to every wall segment is at least `R`. A point-to-segment distance
-  and nothing else. Reads as *"a wall makes a hex unwalkable when it passes
-  closer than a mini's radius to the hex's centre."*
-
-Calibration, same for both orientations: a straightened legacy run sits on
-the midline between two staggered columns, and **every cell touching it loses
-5/24 of its area (20.8 %) and has its centre √3/4 = 0.433 from the line.**
-So under (a) the 80 % Kirk intuited is 1 point above the natural tooth and
-would make every other cell along every straight wall unwalkable; `F = 0.75`
-leaves a 4-point margin against handle jitter. Under (b) `R = 0.30` leaves
-0.13 of margin, and the number is a thing a streamer can see on the table.
-A line through a cell's centre is unstandable under both.
-
-- **C9.** The chosen constant lives once, in the compiler, and the builder
-  displays the compiler's answer. A local mirror in the builder is deferred
-  until the handle drag feels dead without one; if built, it is pinned to
-  the compiler by a golden fixture.
-- **C10.** A monster or the start on a cut cell is refused naming the wall
+  Why 0.75, both orientations: a straightened legacy wall sits on the midline
+  between two staggered columns, and **every cell touching it loses 5/24 of
+  its area (20.8 %)**. An 80 % rule would make every other cell along every
+  straight wall unwalkable; 0.75 leaves a 4-point margin against handle
+  jitter. A line through a cell's centre halves it and it is unstandable.
+  The number is tuned in the game, not argued here.
+- **C11.** The builder displays the compiler's answer. A local mirror is
+  deferred until the handle drag feels dead without one; if built, it is
+  pinned to the compiler by a golden fixture.
+- **C12.** A monster or the start on a cut cell is refused naming the wall
   that cuts it. A prop on a cut cell is allowed.
-- **C11.** The per-cell author override ("this cell is walkable anyway") is
-  a named empty shelf: no field until a streamer needs it.
+- **C13.** The other direction — "this cut cell is walkable anyway" — is a
+  named empty shelf. The brush covers the direction the author needs today.
 
-### 4.4 Doors on a line (slice 2)
+### 4.4 Doors on a wall (slice 2)
 
-- **C12.** The wall's shadow minus its doors' edges is what is blocked, as
-  today. A door's edges MUST lie in the shadow of the line it stands in.
+- **C14.** What is blocked is the wall's crossings minus its doors' edges, as
+  today. A door's edges MUST be among the crossings of the wall it stands
+  in.
 
-### 4.5 Legacy runs — **D2**
+### 4.5 Legacy walls — **D2**
 
-- **C13.** A run without endpoints compiles exactly as today. It emits no
+- **C15.** A wall in the pair form compiles exactly as today. It emits no
   segment (§5.2), so the client renders it through the existing fitter. The
-  fitter's scope is *legacy runs*; it retires when the last content file has
-  none.
+  fitter's scope is *legacy walls*; it retires when the last content file
+  has none.
 
 ### 4.6 Projection (slice 2)
 
-- **C14. Footing.** In `AtlasFor`, every cell cut by a *presented* segment is
-  in the recipient's atlas as scenery with no owner, even when its owner is
-  hidden. Only presented segments foot: the footing of a withheld boundary
-  would trace the secret. This is rpg-dnd5e-web#898, built.
-- **C15. Masquerade on a line.** A concealed door standing in a line wall is
-  presented to a non-knower as the wall's whole segment without the door gap.
-  `maskHeight` reads the segment's height; it no longer reconstructs a run.
+- **C16. Footing.** In `AtlasFor`, every footprint cell of a *presented* wall
+  is in the recipient's atlas as scenery with no owner, even when its owner
+  is hidden. Only presented walls foot: the footing of a withheld wall would
+  trace the secret. This is rpg-dnd5e-web#898, built.
+- **C17. Masquerade on a wall.** A concealed door standing in a line wall is
+  presented to a non-knower as the wall's whole segment without the door
+  gap. `maskHeight` reads the wall's height; it no longer reconstructs a
+  chain.
 
 ## 5. The wire — `dnd5e.api.session.v1alpha1.GetAtlasResponse`
 
@@ -199,20 +224,20 @@ A line through a cell's centre is unstandable under both.
 A cell in `cells` and in no region is scenery. Movement is refused by the
 engine, not the client.
 
-### 5.2 Slice 2: additive — **D3**
+### 5.2 Slice 2: additive
 
 ```proto
 message AtlasSegment {
   AxialPoint from = 1;   // fractional axial: a point in the atlas's own frame
   AxialPoint to = 2;
-  double height = 3;     // the run's height multiplier, as boundaries carry it
+  double height = 3;     // the wall's height multiplier, as boundaries carry it
 }
 message AxialPoint { double q = 1; double r = 2; }
 repeated AtlasSegment segments = 10;   // on GetAtlasResponse
 ```
 
-- The client's axial-to-world formula already accepts fractions; no corner
-  enum, no unit, and no second basis cross the wire.
+- The client's axial-to-world formula already accepts fractions; no unit and
+  no second basis cross the wire.
 - `boundaries` is unchanged and remains the mechanical truth. `segments` is
   presentation: it is what the client draws instead of fitting.
 - rpg-api translates; the runtime never reads segments.
@@ -225,8 +250,8 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
 | can a wall stand on an ownerless cell | refused, "a crossing nobody can make" | accept scenery (C2) |
 | does sight pass over an ownerless cell | treated as void, so per `void` setting | scenery is transparent regardless (§1.7) |
 | can a prop sit on an ownerless cell | refused | accept scenery (C3) |
-| which crossings does a wall block | the edges as written | the shadow (C7), still delivered as edges |
-| who sees a cut cell | n/a | footing (C14) |
+| which crossings does a wall block | the pairs as written | derived from the line (C7), still delivered as pairs |
+| who sees a cut cell | n/a | footing (C16) |
 
 Mechanics on the wire do not move. rpg-api is a pin in slice 1 and a pin plus
 a translation in slice 2.
@@ -250,33 +275,34 @@ Slice 1:
 Slice 2:
 
 - **A6.** Every content file compiles to a byte-identical atlas and emits no
-  segments (legacy runs).
-- **A7.** The record's 6×6 room: four strokes with endpoints emit four
-  segments, the board draws four lines, and the shadow is the same 46 edges
-  the room tool authored.
-- **A8. Calibration.** A straightened vertical legacy run leaves every
-  adjacent cell standable at the default constant; a line through a cell's
-  centre makes it unstandable.
-- **A9.** Hand-edited edges that disagree with the line are refused naming
-  the first differing edge.
+  segments (legacy walls).
+- **A7.** The record's 6×6 room: four walls in the line form emit four
+  segments, the board draws four lines, and the blocked crossings are the
+  same 46 the room tool authored.
+- **A8. Calibration.** A straightened vertical legacy wall leaves every
+  adjacent cell standable at `F = 0.75`; a line through a cell's centre makes
+  it unstandable.
+- **A9.** Hand-edited `cells` that disagree with the line are refused naming
+  the first differing cell.
 - **A10.** A concealed door in a line wall: the non-knower's atlas carries the
   full segment and no doorway; the knower's carries the gap. Yardstick twin
   identical.
 - **A11.** The hugging layout with a midline wall: the non-knower's atlas
-  shows floor slivers on both sides of the wall (C14) and equals the twin
-  authored with scenery where the cuts fall.
+  shows floor on both sides of the wall (C16) and equals the twin authored
+  with scenery where the footprint falls.
+- **A12.** Two walls meeting at a corner named from different hexes compile
+  to one point; the board draws a closed corner.
 
 ## 8. Shelves — named, empty
 
-- Per-cell standability override (C11).
+- "Walkable anyway" on a cut cell (C13).
 - Region-scoped authored scenery (`regions[].scenery`): not needed; cuts
   produce it derived, with the region's visibility.
-- More than one prop per hex: its own thing (rpg-project#360 record, ruling
-  8).
+- More than one prop per hex: its own thing (record, ruling 8).
 - Cliff edges, the third thing a floor edge can be: rpg-toolkit#1443.
 - Sight across transparent void between two regions with no wall between
   them: a pre-existing gap of the same shape as C4, to be filed on the
   toolkit, not folded in here.
-- A builder-local mirror of the standability rule (C9).
+- A builder-local mirror of the standability rule (C11).
 
 — cross-team agent, on behalf of KirkDiggler
