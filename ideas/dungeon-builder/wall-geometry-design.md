@@ -380,7 +380,7 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
 
 | question | today | needed |
 |---|---|---|
-| can a member step onto an ownerless cell | refused, "is not floor" | unchanged |
+| can a member step onto an ownerless cell | refused, "is not floor" | scenery refused as "is scenery: floor nobody stands on" (ruled 2026-09-03 in the build; "is not floor" would lie about a cell §0 calls floor, and Kirk reads that line in the walk); void unchanged |
 | can a wall stand on an ownerless cell | refused, "a crossing nobody can make" | accept scenery (C2) |
 | does sight pass over an ownerless cell | treated as void, so per `void` setting | scenery is transparent regardless (§1.10) |
 | can a prop sit on an ownerless cell | refused | accept scenery (C3) |
