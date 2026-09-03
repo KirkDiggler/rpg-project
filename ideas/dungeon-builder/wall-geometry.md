@@ -1,7 +1,7 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03, four rounds). Design PROPOSED in
-`wall-geometry-design.md`, fifth revision; Kirk rules once; then plan and build.
+**Status:** rulings in (2026-09-03, five rounds). Design PROPOSED in
+`wall-geometry-design.md`, sixth revision; Kirk rules once; then plan and build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -227,6 +227,20 @@ neighbours, kills nothing) and a **thick** wall (neighbours whole, seals
 what it centres), both legal, the cost shown at pick time. The picture is
 `wall-geometry-lines.svg`, generated from the geometry, in the design at
 §4.3; the designer draws the same lines from a picked start (§2.6).
+
+Then, reading the picture: *"to change angles the wall would have to end
+dead center right? then it would go out a clean axis on one of the 30 deg
+angles… if you want to change angles I think it has to end in the center…
+what is the resistance to the center. I do not understand that."* The
+resistance was a mispricing: I had costed the centre as "a thin wall ending
+here spends the cell" and argued it out on that. Checked, every line through
+a centre is a thick line, so a thin wall cannot reach a centre at all and
+the price never arises. **The centre is the seventh position** — Kirk's
+*"1 for center"* from the second round — and the corner rule is one sentence
+per kind: thick walls turn at centres (all twelve rays from a centre are
+thick, and a thick wall seals it anyway); thin walls turn at midpoints
+(three thin lines through every slanted midpoint, four through every
+flat-side one), keeping the corner cell.
 
 ### The tell, and what it taught
 

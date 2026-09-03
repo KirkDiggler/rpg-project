@@ -3,7 +3,7 @@
 <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#b91c1c" stroke-width="2.2"/></pattern></defs>
 <text x="70" y="28" font-size="15" font-weight="600" fill="#222">Where a wall can go (pointy-top, odd-r)</text>
 <text x="70" y="48" fill="#555">green = thin wall: shaves the hatched slivers, kills nothing · orange = thick wall: on the flat sides, leaves neighbours whole,</text>
-<text x="70" y="64" fill="#555">but seals every grey cell it runs through the centre of · every line starts and ends on a side midpoint (green dots)</text>
+<text x="70" y="64" fill="#555">but seals every grey cell it runs through the centre of · thin lines end on midpoints (green), thick lines may also end on centres (orange)</text>
 <polygon points="70.0,92.0 94.2,106.0 94.2,134.0 70.0,148.0 45.8,134.0 45.8,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
 <polygon points="118.5,92.0 142.7,106.0 142.7,134.0 118.5,148.0 94.2,134.0 94.2,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
 <polygon points="167.0,92.0 191.2,106.0 191.2,134.0 167.0,148.0 142.7,134.0 142.7,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
@@ -109,10 +109,10 @@
 <circle cx="118.5" cy="400.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
 <circle cx="94.2" cy="386.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
 <circle cx="94.2" cy="358.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
-<line x1="114.5" y1="368.0" x2="122.5" y2="376.0" stroke="#b91c1c" stroke-width="1.5"/><line x1="114.5" y1="376.0" x2="122.5" y2="368.0" stroke="#b91c1c" stroke-width="1.5"/>
-<circle cx="70" cy="470.0" r="3.6" fill="#15803d"/><text x="80" y="474.0" fill="#333">the six positions a wall may start or end at: side midpoints, box fractions (±0.5, 0) and (±0.25, ±0.375)</text>
+<circle cx="118.5" cy="372.0" r="3.8" fill="#d97706"/>
+<circle cx="70" cy="470.0" r="3.6" fill="#15803d"/><text x="80" y="474.0" fill="#333">six side midpoints, box fractions (±0.5, 0) and (±0.25, ±0.375): where thin walls start, end, and turn</text>
 <circle cx="70" cy="488.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/><text x="80" y="492.0" fill="#333">corners: dropped — a line through corners either halves cells or closes no corner</text>
-<line x1="66" y1="502.0" x2="74" y2="510.0" stroke="#b91c1c" stroke-width="1.5"/><line x1="66" y1="510.0" x2="74" y2="502.0" stroke="#b91c1c" stroke-width="1.5"/><text x="80" y="510.0" fill="#333">centre: a wall through it halves and seals that cell — allowed, shown, and it costs the cell</text>
+<circle cx="70" cy="506.0" r="3.8" fill="#d97706"/><text x="80" y="510.0" fill="#333">the seventh position, the centre: where thick walls turn (free — a thick wall seals it anyway); a thin wall ending here pays that one cell</text>
 <text x="70" y="532.0" fill="#555">Twelve directions, 30° apart. Along rows of neighbours (0°, 60°, 120°): midpoint line or centre line. Along sides (30°, 90°, 150°): quarter line or flat-side line.</text>
 <text x="70" y="548.0" fill="#555">A rectangle needs one direction from each family. Which of the two lines in a family you pick is thin-and-shaved versus thick-and-whole.</text>
 </svg>

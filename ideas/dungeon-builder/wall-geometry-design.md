@@ -1,6 +1,6 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03, fifth revision the same day, for Kirk's one
+**Status:** PROPOSED 2026-09-03, sixth revision the same day, for Kirk's one
 ruling. Record and the why: `wall-geometry.md`. Plan follows ruling.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
 lines. Both ride journey rpg-project#169.
@@ -11,7 +11,8 @@ conversation and where it landed:
 | ruling | where |
 |---|---|
 | wall ends are picked from a small named set, never typed freehand | §2.6, §3.3 |
-| the set is the six side midpoints; 30° steps between them | §3.3, §3.5 |
+| the set is the six side midpoints and the centre; 30° steps between them | §3.3, §3.5 |
+| to change angles a thick wall ends in the centre; thin walls turn at midpoints | §3.6 |
 | a wall lies on a hex axis if a door is to stand in it | §3.5, §3.4 |
 | a wall may run on a flat side and leave the hex whole; it seals what it centres | §1.7, §4.3 |
 | the file keeps numbers; the designer hides them | §2, §3.2 |
@@ -24,7 +25,7 @@ conversation and where it landed:
 | thing | word | in the file |
 |---|---|---|
 | one straight wall with a start and an end | **wall** | a `walls[]` entry |
-| the midpoint of one of a hex's six sides | **position** | `{cell, offset}` |
+| a side midpoint or the centre of a hex | **position** | `{cell, offset}` |
 | the hexes a wall passes through | **cells**, its footprint | never written; derived |
 | the hex-to-hex step a wall blocks | **crossing** | never written; derived |
 | where two walls meet | **corner** | two ends with the same position |
@@ -44,10 +45,10 @@ conversation and where it landed:
    and the footing of a presented wall (projection only, §4.6).
 5. **A wall is a straight line between two positions, and the file holds
    nothing else.** The crossings it blocks and the cells it cuts are derived.
-6. **A position is the midpoint of one of a hex's six sides**, written as
-   `{cell, offset}` in bounding-box fractions. The set is closed: an offset
-   outside it is refused by name. Kirk: *"realistically could prob get away
-   with 5."*
+6. **A position is the midpoint of one of a hex's six sides, or its
+   centre** — seven per hex — written as `{cell, offset}` in bounding-box
+   fractions. The set is closed: an offset outside it is refused by name.
+   Kirk: *"the six sides in the middle and 1 for center."*
 7. **A wall lies in one of twelve directions, 30° apart.** The six along
    rows of neighbours and the six along hex sides, together. Kirk: *"we are
    not making precision walls here and can be constrained."* In each family
@@ -150,23 +151,21 @@ walls:
   visual only. Same shape, same unit, different law.
 - **F7.** The list stays `walls`. `edges` is retired with the pair form.
 
-### 3.3 The six positions
+### 3.3 The seven positions
 
 Bounding-box fractions: x in widths, east positive; y in heights, south
 positive (the axis the prop offset's y already maps to in world z). Every
 value is a dyadic rational, so the set compares exactly as floats, and a
 60° rotation maps it onto itself.
 
-| orientation | side midpoints |
-|---|---|
-| pointy-top | `[0.5,0]` `[-0.5,0]` `[0.25,-0.375]` `[-0.25,-0.375]` `[0.25,0.375]` `[-0.25,0.375]` |
-| flat-top | `[0,0.5]` `[0,-0.5]` `[0.375,0.25]` `[0.375,-0.25]` `[-0.375,0.25]` `[-0.375,-0.25]` |
+| orientation | side midpoints | centre |
+|---|---|---|
+| pointy-top | `[0.5,0]` `[-0.5,0]` `[0.25,-0.375]` `[-0.25,-0.375]` `[0.25,0.375]` `[-0.25,0.375]` | `[0,0]` |
+| flat-top | `[0,0.5]` `[0,-0.5]` `[0.375,0.25]` `[0.375,-0.25]` `[-0.375,0.25]` `[-0.375,-0.25]` | `[0,0]` |
 
 - **F8.** An `offset` not in the set for the file's orientation is refused
   naming the wall and the value.
-- **F9.** The set may grow; nothing here needs it to. The first candidate is
-  the centre, `[0,0]`, for a wall stub — and it costs the cell it ends in,
-  which is why it is not in the set today.
+- **F9.** The set may grow; nothing here needs it to.
 
 ### 3.4 Slice 2: a door
 
@@ -192,6 +191,26 @@ doors:
 
 - **F13.** The direction from `start` to `end` MUST be a multiple of 30°.
   Refused naming the wall and the angle.
+### 3.6 Corners, by kind
+
+- **F15. Thick walls turn at centres.** Every one of the twelve lines
+  through a centre is a thick line — the row's centre line or a flat-side
+  line — and a thick wall seals the cells it centres, so a centre end costs
+  nothing more. Kirk: *"if you want to change angles I think it has to end
+  in the center… then it would go out a clean axis on one of the 30 deg
+  angles."* A thick flat-side wall can also turn onto a centre line at an
+  even-row side midpoint, and nowhere else.
+- **F16. Thin walls turn at midpoints, and cannot reach a centre.** Through
+  every slanted midpoint pass thin lines at 0°, 60°, and 90° (for the
+  upper-right one); through every flat-side midpoint at 30°, 60°, 120°, and
+  150°. So a thin wall makes 60°, 90°, and 120° corners at midpoints and
+  keeps the corner cell (3/4). No thin line passes through any centre, so
+  the picker never offers one to a thin wall.
+- **F17. Thin meets thick at a flat-side midpoint**, through which pass two
+  thick lines and four thin ones.
+
+### 3.7 Through centres
+
 - **F14.** A wall may pass through cell centres. Each cell it halves is
   sealed scenery: unstandable, every crossing out of it blocked. Nothing is
   refused; the designer shows the sealed cells at pick time. (An earlier
@@ -260,8 +279,8 @@ doors:
 
   *Generated from the hex geometry (`wall-geometry-lines.svg`); the
   fractions it labels are computed, not drawn. Green = thin, orange = thick,
-  hatched = what a thin wall shaves, grey = what a thick wall seals, dots =
-  the six positions.*
+  hatched = what a thin wall shaves, grey = what a thick wall seals, green
+  dots = the six midpoints, orange dot = the centre.*
 
   A thin wall never makes a cell unstandable on its own. Only corners can: a
   square room's inside corner (quarter line + midpoint line) keeps exactly
@@ -387,7 +406,9 @@ Slice 2:
   shows floor on both sides of the wall (C18) and equals the twin authored
   with scenery where the footprint falls.
 - **A12.** Two walls carrying the same position at an end close a corner on
-  the board, for a 90° corner and for a 60° corner.
+  the board: thin at a midpoint for 60°, 90°, and 120°, keeping the corner
+  cell; thick at a centre for the same three; thin-to-thick at a flat-side
+  midpoint. A thin wall offered a centre end is a picker defect.
 - **A13.** Every prop in the rewritten defaults renders where it did, after
   the unit change, by screenshot.
 
@@ -398,7 +419,6 @@ Slice 2:
   walls, and its doors in a local frame; placing one translates the cells and
   rotates by a multiple of 60°, under which the six positions map onto
   themselves. After this design is clean.
-- The centre as a seventh position, for wall stubs (F9).
 - "Walkable anyway" on a cut cell (C13).
 - Region-scoped authored scenery (`regions[].scenery`): not needed; cuts
   produce it derived, with the region's visibility.
