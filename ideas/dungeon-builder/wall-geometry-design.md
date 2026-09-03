@@ -1,7 +1,7 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03 (revised same day to Kirk's file shape and
-vocabulary), for Kirk's one ruling. Record and the why: `wall-geometry.md`.
+**Status:** PROPOSED 2026-09-03 (revised same day to Kirk's file shape:
+two points per wall, nothing derived written), for Kirk's one ruling. Record and the why: `wall-geometry.md`.
 Plan follows ruling.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
 lines. Both ride journey rpg-project#169.
@@ -27,7 +27,7 @@ Resolved in conversation, recorded here so they stay resolved:
 | thing | word | in the file |
 |---|---|---|
 | one straight wall with a start and an end | **wall** | a `walls[]` entry |
-| the hexes a wall passes through | **cells**, its footprint | `walls[].cells` |
+| the hexes a wall passes through | **cells**, its footprint | never written; derived |
 | the hex-to-hex step a wall blocks | **crossing** | never written in the line form; the pair form's `edges` are crossings |
 | where two walls meet | **corner** | two ends whose points coincide |
 | floor nobody stands on | **scenery** | `scenery` |
@@ -44,9 +44,10 @@ Resolved in conversation, recorded here so they stay resolved:
 4. **Scenery** is floor that is not standable. Three producers, one state:
    the author's brush (owner none), the cells a wall cuts (owner as painted),
    and the footing of a presented wall (projection only, §4.6).
-5. **A wall is a straight line from its start to its end.** The crossings it
-   blocks and the cells it cuts are derived. A legacy wall (pair form) blocks
-   exactly its listed crossings and cuts nothing.
+5. **A wall is a straight line from its start to its end, and the file
+   holds nothing else.** The crossings it blocks and the cells it cuts are
+   derived, never written. A legacy wall (pair form) blocks exactly its
+   listed crossings and cuts nothing.
 6. **The wall invariant.** A wall looks the same from the visible side
    whatever is beyond it: floor, void, scenery, or hidden space.
 7. **Scenery is transparent and impassable. It seals nothing.** Sight and the
@@ -101,27 +102,30 @@ Resolved in conversation, recorded here so they stay resolved:
 
 ### 3.2 Slice 2: the line form of a wall
 
+Kirk: *"edges just need the starting and ending hex coordinate. current shape
+takes all the cells but that can be derived from it… not only be easy to
+read it would be easy to edit."*
+
 ```yaml
 walls:
-  - start: { cell: [1, 2], offset: [-0.25, 0.5] }
-    end:   { cell: [1, 4], offset: [-0.25, 0.5] }
+  - start: { cell: [1, 2],  offset: [0.5, 0.5] }
+    end:   { cell: [1, 10], offset: [0.5, 0.5] }
     height: 1
-    cells: [[1, 2], [1, 3], [1, 4]]
+  - start: { cell: [1, 10], offset: [0.5, 0.5] }
+    end:   { cell: [9, 10], offset: [0.5, 0.5] }
 ```
 
 | field | type | rule |
 |---|---|---|
 | `start`, `end` | `{cell: [col,row], offset: [x,y]}` | both present = line form |
-| `cell` | offset cell | MUST be floor |
+| `cell` | offset cell | the hex the point is named from |
 | `offset` | `[x,y]`, the unit and bound of `place[].offset` | omitted = the cell's centre |
 | `height` | as today | |
 | `name` | as today | |
-| `cells` | rows of `[col,row]` | the cells the line passes through, in line order |
 
-- **F3.** `cells` MUST equal the line's footprint (§4.2). A file whose cells
-  disagree is refused naming the first differing cell in the author's
-  coordinates. The builder always writes the footprint; a hand edit that
-  breaks it is caught, never silently repaired.
+- **F3.** Nothing derived is written. The footprint and the crossings are the
+  compiler's (§4.2); a file never carries them in this form, so there is
+  nothing to fall out of step and nothing to refuse for disagreeing.
 - **F4.** A wall with `edges` and no `start`/`end` is a legacy wall: its
   listed crossings are blocked, it cuts nothing, it renders as today. Every
   dungeon on disk is such a file: **today's file is today's file.**
@@ -129,9 +133,13 @@ walls:
   crossings some wall blocks, as today.
 - **F6.** A wall's `offset` is mechanical (§4). A prop's `offset` stays
   visual only. Same shape, different law.
-- **F7.** A corner is not written. Two walls meet when their end points
-  coincide, compared as points, never as `{cell, offset}` tuples — a point on
-  a hex boundary may be named from either hex.
+- **F7. A corner is a shared end.** Two walls meet when they carry the same
+  `{cell, offset}` at an end — Kirk: *"so long as the cells that overlap have
+  the same offsets it is a corner."* The builder writes a join by copying the
+  tuple. The compiler has no corner concept: each wall casts its own shadow,
+  and equal points make a closed corner without anyone declaring one.
+- **F8.** The list stays `walls`, because `edges` already means crossings in
+  the pair form and one word means one thing across both forms.
 
 ## 4. The compiler — `rulebooks/dnd5e/encounter/dungeonspec`
 
@@ -139,9 +147,11 @@ walls:
 
 - **C1.** `owner` is unchanged. A `scenery` set is added. The flat cell list
   is `owner ∪ scenery`.
-- **C2.** A wall or door MUST stand on floor cells (owned or scenery). In the
-  pair form both cells of every crossing; in the line form every footprint
-  cell.
+- **C2.** A wall or door MUST stand on floor (owned or scenery). Pair form:
+  both cells of every crossing. Line form: the wall MUST pass through at
+  least one floor cell; void cells on its path are not part of its footprint
+  — nothing to cut, and the crossings into them are impassable already. This
+  is how a wall stands against void (§1.6).
 - **C3.** Props MUST be on floor; monsters and the start MUST be on standable
   cells.
 - **C4. The concealment walk crosses scenery.** A *way* between regions A and
@@ -163,8 +173,9 @@ walls:
 - **C7. Crossings.** A crossing between adjacent cells P and Q is blocked iff
   the closed segment from the centre of P to the centre of Q intersects the
   closed wall line.
-- **C8. Footprint.** The line's cells are every cell whose hex the closed
-  line intersects, in order along the line. This is `cells`.
+- **C8. Footprint.** The line's cells are every floor cell whose hex the
+  closed line intersects, in order along the line. Derived, never written;
+  the builder shows them.
 - **C9. Embedding.** The compiler embeds cells in the plane for this alone:
   centre and corners of axial (q, r) under the file's orientation,
   circumradius 1, and `offset` in the unit `place[].offset` already uses.
@@ -282,16 +293,18 @@ Slice 2:
 - **A8. Calibration.** A straightened vertical legacy wall leaves every
   adjacent cell standable at `F = 0.75`; a line through a cell's centre makes
   it unstandable.
-- **A9.** Hand-edited `cells` that disagree with the line are refused naming
-  the first differing cell.
+- **A9.** A wall whose path touches no floor cell is refused naming the
+  wall; a wall that grazes void cells on its way along a room's edge
+  compiles, cuts only the floor cells, and renders.
 - **A10.** A concealed door in a line wall: the non-knower's atlas carries the
   full segment and no doorway; the knower's carries the gap. Yardstick twin
   identical.
 - **A11.** The hugging layout with a midline wall: the non-knower's atlas
   shows floor on both sides of the wall (C16) and equals the twin authored
   with scenery where the footprint falls.
-- **A12.** Two walls meeting at a corner named from different hexes compile
-  to one point; the board draws a closed corner.
+- **A12.** Two walls carrying the same `{cell, offset}` at an end compile to
+  one point and the board draws a closed corner; the same point named from
+  the neighbouring hex compiles identically.
 
 ## 8. Shelves — named, empty
 

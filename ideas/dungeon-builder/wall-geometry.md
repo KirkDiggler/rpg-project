@@ -104,10 +104,14 @@ the biggest impact with the lowest hanging fruit."*
    `offset` in the shape props use today, `[x, y]` as fractions of a cell.
    **Zero offset is today's file exactly.** Every dungeon on disk is already
    valid under this model, and no migration exists.
-2. **Edges stay in the file (closes open ruling 2), as the shadow.** The
-   compiler derives the crossings the line blocks and refuses a file whose
-   stored edges disagree with its line. Everything that reads `walls[i].edges`
-   keeps working.
+2. **Nothing derived is written (closes open ruling 2).** *Amended later the
+   same day:* the first form of this ruling kept the edges in the file as a
+   checked shadow. Kirk's shape needs only the two ends — *"edges just need
+   the starting and ending hex coordinate… that can be derived… easy to read
+   [and] easy to edit"* — so the line form carries `start` and `end` and
+   nothing else; the footprint and the crossings are the compiler's. The
+   legacy pair form is untouched, so everything that reads `walls[i].edges`
+   today keeps working on today's files.
 3. **The threshold is a tunable, not a rule (closes open ruling 3), and it
    lives in the compiler.** Kirk: *"the 80% rule is probably not a real rule.
    the real percentage will likely be tuned."* The runtime never learns the
