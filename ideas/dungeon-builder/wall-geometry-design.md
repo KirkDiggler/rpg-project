@@ -278,7 +278,13 @@ doors:
 
 - **C7. Crossings.** A crossing between adjacent cells P and Q is blocked iff
   the closed segment from the centre of P to the centre of Q intersects the
-  closed wall segment.
+  closed wall segment. *Consequence, measured in the build (A7): closed
+  endpoints are what make a corner seal, and they also block the one
+  crossing whose midpoint a wall's endpoint sits on even when both cells are
+  outside the room — one diagonal step past two of a square room's four
+  corners, which two decided by the row stagger. Shown as a blocked crossing
+  in the picker, not refused and not rounded away; relax only if it becomes
+  a problem in play.*
 - **C8. Footprint.** The wall's cells are every floor cell whose hex the
   closed segment intersects, in order along the wall.
 - **C9. Embedding.** The compiler embeds cells in the plane for this alone:
