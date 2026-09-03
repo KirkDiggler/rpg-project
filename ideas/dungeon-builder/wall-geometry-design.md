@@ -423,10 +423,16 @@ the concealed door was already whole and is not in the patch) and `repeated
 Position sealed` (the revealed region's sealed cells, a subset of the
 beat's own `region.cells`). The door's gap is not this beat's: `DoorRevealed`
 carries the doorway, and the client derives the gap where that doorway meets
-a segment it already holds, so no segment rides `DoorRevealed`. A client
-applies both fields by appending to what it holds: segments are a
-difference, sealed is the region's slice, and neither replaces anything
-already drawn. After a reveal, `AtlasFor` and the reveal agree
+a segment it already holds, so no segment rides `DoorRevealed`. The two
+fields are applied differently, and the difference is load-bearing
+(measured 2026-09-03): segments **append** (a difference can only add);
+sealed **replaces within the revealed region's cells** and keeps the rest,
+because cells leave the list on a reveal — footing that reached a
+non-knower as ownerless scenery (C18) is sealed for them and becomes the
+room's standable floor once the room is theirs. Exactly:
+`after.sealed = (before.sealed − region.cells) ∪ event.sealed`. A client
+that appends leaves a revealed room's edges unwalkable: a room you can see
+and cannot enter. After a reveal, `AtlasFor` and the reveal agree
 byte-for-byte on both. The session module's `Atlas` and
 `RegionRevealedBody` mirror encounter's by copy and carry both fields.
 
