@@ -3,10 +3,10 @@
 **Status:** design RULED 2026-09-03 (`wall-geometry-design.md`, six revisions in
 one day); plan in `wall-geometry-plan.md`. **Slice 1 (scenery floor) SHIPPED
 2026-09-03; slice 2 (walls as lines) SHIPPED 2026-09-04** across four repos,
-web PR #916 the last to merge; Kirk's first drive: *"really nice… you always
-feel like you are in control"*; polish is rpg-dnd5e-web#917. Remaining before
-this PR closes: the multiplayer half of the walk (plan §3), and the content
-runbook before dev promotes to main.
+web PR #916 the last to merge; **WALKED 2026-09-04, done-when met**: Kirk's
+drive (*"you always feel like you are in control"*) and the multiplayer half
+(*"when the door was opened the room was revealed to both"*); polish is
+rpg-dnd5e-web#917; the content runbook runs before dev promotes to main.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -345,8 +345,26 @@ Kirk drove the builder on the local stack before the web PR merged:
 
 So the stepback's bet held on first contact: precise and explicit beat
 snapping, and control is what a streamer feels. The glitch named — a corner
-needs a second pass to join — is the picker's polish, filed as a follow-up
-on the web, not a change to the model.
+needs a second pass to join — is the picker's polish, filed as
+rpg-dnd5e-web#917, not a change to the model.
+
+Then the multiplayer half (plan §3), same stack, same day:
+
+> *"walked the multiplayer half. one saw the door, other did not. when the
+> door was opened the room was revealed to both."*
+
+That is the concealed room end to end on walls as lines: the finder's map
+gained the gap, the other's kept the whole wall (A10), and the reveal beat
+carried the room's walls and its sealed cells to both so the room drew
+without a fitter (design §5.2a). The tell the stepback set out to remove did
+not appear in either map. A13's screenshot pair for props after the unit
+change was not captured on this box (no Synty models in the worktree); the
+2D board pair and the drive show every prop where it was.
+
+**Done-when met 2026-09-04.** Operational item that stays open outside this
+record: the content runbook (rpg-deployment #74's script) runs on the box
+before dev promotes to main, or the api refuses to boot on the tomb the old
+api seeded.
 
 ## Ground truth (2026-09-03; web `dev`, toolkit `origin/main` bf234c7)
 
