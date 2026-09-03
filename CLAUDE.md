@@ -83,6 +83,7 @@ Rules:
 - No branch without an issue
 - No issue without a board entry
 - New work = new slice issue on Project 19 -> fresh branch from that repo's **base branch** (below)
+- **Opening a ready PR is not an approval gate.** Once the branch meets its local publication checks, push the feature branch and open the PR automatically; the PR is the human's first useful review surface. Do not ask permission merely to open it. Merge, deployment/public release, destructive action, and security-sensitive action retain their own approval gates.
 - Local `active.md` is operator continuity only; shared work remains on Project 19 and linked issues/PRs.
 
 ### Base branches — check before you cut a branch

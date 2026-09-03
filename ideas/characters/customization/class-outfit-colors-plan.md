@@ -102,12 +102,15 @@ API PR --------------------------------------------------------> normal game pro
 - Consumes: atlas member `Source_Files/Textures/PolygonFantasyHero_Texture_01_A.png`, SHA-256 `7f84972790e530f8d83b378eb95f3151e2664c7b4ac23b1d125a55e1efcecd62`.
 - Produces: `load_outfit_color_config(path: Path) -> dict[str, object]`.
 - Produces: `stage_source_inputs(config, source_root, stage_root) -> StagedOutfitInputs`.
-- Produces: `derive_class_mask(source_mask: bytes, primary_groups: tuple[str, ...], secondary_groups: tuple[str, ...]) -> bytes`.
-- Produces: `build_class_masks(config, staged_inputs, output_root) -> dict[str, MaskReceipt]`.
+- Produces: legacy provenance helper `derive_class_mask(source_mask: bytes, primary_groups: tuple[str, ...], secondary_groups: tuple[str, ...]) -> bytes`.
+- Produces: final authority helper `derive_atlas_swatch_mask(atlas: bytes, source_mask: bytes, atlas_swatches: Mapping[str, object]) -> bytes`.
+- Produces: `build_class_masks(config, staged_inputs, output_root) -> dict[str, MaskReceipt]` with actual Human UV-surface coverage per class/channel.
+
+> **Execution amendment, accepted at the Blender gate:** measured UV and eight-yaw render evidence proved the initial whole-source-group split below insufficient: Barbarian/Fighter exposed no channel and no class exposed secondary. Final `exact-atlas-swatches-v1` text config names inclusive per-class atlas rectangles and their exact atlas/source-mask RGBA; the generator verifies every texel before emitting masks. The source-group snippet remains the RED hypothesis/provenance test, not publication authority. Kirk approved the corrected four-class scene: “the characters look great very clear the coloring”.
 
 - [ ] **Step 1: Write failing config and mask tests**
 
-Create a strict config fixture with exact class order and initial source-group choices:
+Create the strict class-order/source fixture and first encode the source-group hypothesis that the Blender task must prove or reject:
 
 ```json
 {
@@ -230,7 +233,7 @@ git commit -m "asset: define class outfit dye masks (#119)"
 **Interfaces:**
 - Consumes: Task 1's `build_class_masks` and exact Human body paths from the profile matrix.
 - Produces: `build_review_scene(repo_root: Path, stage_root: Path, output_blend: Path) -> ReviewReceipt` when run inside Blender.
-- Produces Outliner collections: `Barbarian_01`, `Fighter_16`, `Monk_08`, `Rogue_10`, each with `Original` and `Editable` children.
+- Produces Outliner collections: `Barbarian_01`, `Fighter_16`, `Monk_08`, `Rogue_10`, each with deterministic class-qualified `<Class>_<Outfit>_Original` and `<Class>_<Outfit>_Editable` children because Blender collection datablock names are globally unique.
 
 - [ ] **Step 1: Write failing scene-contract tests**
 
@@ -251,11 +254,13 @@ Add a Blender background test that opens the generated file and asserts:
 self.assertFalse(any(obj.type == "FONT" for obj in bpy.data.objects))
 for class_collection in REVIEW_COLLECTIONS:
     parent = bpy.data.collections[class_collection]
-    self.assertEqual(["Original", "Editable"], [child.name for child in parent.children])
+    original = f"{class_collection}_Original"
+    editable = f"{class_collection}_Editable"
+    self.assertEqual([original, editable], [child.name for child in parent.children])
     editable_materials = {
         slot.material
-        for obj in parent.children["Editable"].all_objects
-        if obj.type == "MESH"
+        for obj in parent.children[editable].all_objects
+        if obj.type == "MESH" and base_name(obj.name) in editable_mesh_names
         for slot in obj.material_slots
     }
     self.assertTrue(editable_materials)
@@ -399,7 +404,7 @@ Expected: missing modules/functions.
 
 - [ ] **Step 4: Implement manifest, structural UV checks, and promotion**
 
-Build class rows in the approved order. Derive each initial outfit set from the Human body's `sourceMeshes` minus Human identity meshes, then remove the approved class config's exact `excludedMeshNames`; emit the remaining exact ordered values as `meshNames`. Validate every exclusion names a real non-identity mesh and validate actual GLB nodes/materials against the manifest. Decode float32 `TEXCOORD_0` accessors and hash their ordered bytes per declared outfit node. Require every race variant of a class to contain each exact Human outfit node name and to match its approved Human UV digest byte-for-byte; do not strip suffixes or fuzzy-match names. Require both mask channels to be sampled by at least one declared outfit triangle and require identity-only nodes to receive no treatment declaration.
+Build class rows in the approved order. Derive each initial outfit set from the Human body's `sourceMeshes` minus Human identity meshes, then remove the approved class config's exact `excludedMeshNames`; emit the remaining exact ordered values as `meshNames`. Validate every exclusion names a real non-identity mesh and validate actual GLB nodes/materials against the manifest. Decode float32 `TEXCOORD_0` accessors and canonicalize each declared outfit node as the sorted multiset of exact 8-byte float32 UV pairs. Require every race variant of a class to contain each exact Human outfit node name and to match its approved Human exact-value UV digest; sorting tolerates exporter-only duplicate-vertex order while preserving values and multiplicity. Do not strip suffixes, round values, or fuzzy-match names. Require both mask channels to be sampled by at least one declared outfit triangle and require identity-only nodes to receive no treatment declaration.
 
 Promotion builds the five-file candidate outside the canonical destination, validates it in an external temporary view, swaps the complete `outfit-customization/v1` root through a same-filesystem temporary sibling, restores the old root after any exception, and recovers an interrupted backup before a new attempt.
 

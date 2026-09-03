@@ -30,9 +30,12 @@ item-instance dyes, and finalized-character equipment editing are later work.
   body atlas.
 - Synty's licensed source includes
   `PolygonFantasyHero_Texture_Mask_01.png`, aligned with
-  `PolygonFantasyHero_Texture_01_A.png`. It identifies replaceable palette
-  regions and supplies useful source authority for deriving two explicit dye
-  channels.
+  `PolygonFantasyHero_Texture_01_A.png`. It identifies some replaceable palette
+  regions and supplies pinned provenance. Provider measurement found its whole
+  groups insufficient for the four selected outfits: Barbarian/Fighter exposed
+  no visible channel and no class exposed a visible secondary. Final curation
+  therefore names exact per-class atlas rectangles and verifies each against
+  both source atlas and source-mask RGBA before deriving runtime masks.
 - Existing production body GLBs include immutable Dwarf v1 files. A color
   system must not rewrite those files or any other accepted body output.
 - Character `Appearance` and public session `Customization` currently carry
@@ -62,9 +65,11 @@ item-instance dyes, and finalized-character equipment editing are later work.
 4. **Class changes retain colors.** Changing class during creation applies the
    same selected colors to the new class's fixed outfit rather than resetting
    them.
-5. **Provider-owned masks.** Licensed source evidence is normalized into four
-   class-specific two-channel masks. The web does not infer dye regions from
-   source pixels, mesh names, or class enums.
+5. **Provider-owned masks.** Exact per-class atlas/UV swatches are stored as
+   text authority and normalized into four class-specific two-channel masks.
+   The licensed source mask remains hash-pinned provenance rather than an
+   exclusive partition. The web does not infer dye regions from source pixels,
+   mesh names, or class enums.
 6. **No body rewrite.** Existing body GLBs and manifests remain byte-identical.
    Outfit treatment is additive sidecar authority.
 7. **Blender first, without a durable Concept.** Kirk reviews editable mappings
