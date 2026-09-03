@@ -11,12 +11,14 @@ Four-player Level-3 Dungeon
 
 ## Status
 
-Approved design; implementation not started.
+Implementation in progress under rpg-project#359. Keep living PR #357 open until final cross-stack proof.
 
 ## Current truth
 
 - `brainstorm.md` — verified session-stack census and Kirk's 2026-09-02 rulings.
 - `design.md` — approved architecture and proof contract.
+- `plan.md` — reviewed inside-out implementation sequence.
+- `implementation.md` — live observed results, unknowns, rulings, releases, and deviations.
 - `archive/2026-01-23-condition-design.md` — superseded automatic-condition design.
 - `archive/2026-01-23-memories.json` — superseded structured progress snapshot.
 
