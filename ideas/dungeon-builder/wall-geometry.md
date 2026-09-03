@@ -1,7 +1,7 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03, five rounds). Design PROPOSED in
-`wall-geometry-design.md`, sixth revision; Kirk rules once; then plan and build.
+**Status:** design RULED 2026-09-03 (`wall-geometry-design.md`, six revisions in
+one day); plan in `wall-geometry-plan.md`; building next.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -250,6 +250,18 @@ forbids it: a thin wall turns at a centre as a second wall, a thick stub
 from its end midpoint that seals that one hex, cost shown. Thin/thick are
 names for cost, not compiler nouns. Doors in a centre-line wall join two
 sealed hexes — windows, not passages — and stay legal, labelled.
+
+**Ruled, and the stance behind it (Kirk, closing the day's design):** *"what
+we are building is being optimized for flexibility. we do not know what we
+do not know. this is not going to prod, we are pre release, which is why we
+want to leave all options open… we wait for solid use cases before
+building… freehand was what we thought we wanted and then limited it
+heavily with snapping things without a real reason. we hid the underlying
+problem from us because of that… we need to leave ourselves the opportunity
+to learn… it is more like research than building something with code. our
+best ideas have come from letting loose and trying things… this is much
+simpler than any attempt before it. there is no game running on this so we
+have free reign."*
 
 ### The tell, and what it taught
 

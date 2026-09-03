@@ -1,7 +1,8 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03, sixth revision the same day, for Kirk's one
-ruling. Record and the why: `wall-geometry.md`. Plan follows ruling.
+**Status:** RULED 2026-09-03 (Kirk: *"i think we are good… let's continue"*),
+sixth revision. Record and the why: `wall-geometry.md`. Plan:
+`wall-geometry-plan.md`. Amended by the plan: §5.2 gains `sealed`.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
 lines. Both ride journey rpg-project#169.
 
@@ -356,6 +357,10 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
 
 - The client's axial-to-world formula already accepts fractions; no unit and
   no second basis cross the wire.
+- `repeated Position sealed = 11;` — every cell in this recipient's atlas
+  nobody can stand on: scenery and the cells walls seal. Needed because a
+  sealed cell keeps its region, so membership no longer implies standable.
+  (Plan amendment, 2026-09-03.)
 - `boundaries` and `doorways` are unchanged and remain the mechanical truth.
   `segments` is presentation: what the client draws instead of fitting. A
   door's gap is derived client-side from its doorway and the segment.
