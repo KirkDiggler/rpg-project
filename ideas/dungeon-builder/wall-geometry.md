@@ -1,9 +1,10 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** design in progress. Kirk's ruling on the geometry is in; three
-rulings remain open.
+**Status:** rulings in (2026-09-03). Next: `design.md`, panel-back, for the
+model below; Kirk rules once; then `plan.md` and the build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
-rpg-toolkit#1443 (cliff edges) · supersedes rpg-dnd5e-web#904 (snapping)
+rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
+edges) · supersedes rpg-dnd5e-web#904 (snapping)
 **Shipped alongside:** rpg-dnd5e-web#903 (region rect, editable YAML, the rail)
 
 This record exists because a day of work on the dungeon builder converged on a
@@ -68,8 +69,9 @@ records **what shape they are**.
 > >80% hex visible then we can stand on it"*
 
 A wall cuts hexes freely. A hex sliced by a wall stays **standable while more
-than 80% of it remains**, and stops being standable below that. Exact, not
-approximate, and it is the discriminator the derived-crossing rule needs.
+than a threshold of it remains**, and stops being standable below that. The
+threshold is the discriminator the derived-crossing rule needs. *Amended
+2026-09-03 (ruling 3 below): the number is a tunable, not a rule.*
 
 ### What this dissolves rather than fixes
 
@@ -80,6 +82,130 @@ approximate, and it is the discriminator the derived-crossing rule needs.
   the hexes are what it cuts.
 - **Corner spurs.** A line has corners by construction.
 
+## The stepback (2026-09-03)
+
+Kirk: *"the shape of the dungeon is #1 and laying it on the hex grid is
+secondary… this is a stepback moment. I think we went as far as we can with
+the current builder."* The builder's users are streamers setting up dungeons
+for their subscribers, and the builder is also where a living-world scenario's
+config form gets filled in. The conversation ran as a back-and-forth by his
+ruling — *"multi choice questions… narrow possibilities when they come too
+early."*
+
+The stepback narrowed itself in one round. Regions stay painted cells.
+**The walls are the shape.** A wall run keeps its edges and gains an offset at
+each end. Kirk: *"the offset idea and using edges for their strength would be
+the biggest impact with the lowest hanging fruit."*
+
+### Rulings
+
+1. **Space of the line (closes open ruling 1): the corner lattice plus an
+   offset.** Each end of a run is anchored to a hex corner and carries an
+   `offset` in the shape props use today, `[x, y]` as fractions of a cell.
+   **Zero offset is today's file exactly.** Every dungeon on disk is already
+   valid under this model, and no migration exists.
+2. **Edges stay in the file (closes open ruling 2), as the shadow.** The
+   compiler derives the crossings the line blocks and refuses a file whose
+   stored edges disagree with its line. Everything that reads `walls[i].edges`
+   keeps working.
+3. **The threshold is a tunable, not a rule (closes open ruling 3), and it
+   lives in the compiler.** Kirk: *"the 80% rule is probably not a real rule.
+   the real percentage will likely be tuned."* The runtime never learns the
+   number; it reads cells and crossings. So this is a projection rule in
+   `dungeonspec`, stated once. The builder shows the compiler's answer — the
+   3D preview already round-trips `PutDungeon validate_only` — and a local
+   mirror waits until the gesture feels dead without one. A per-cell author
+   override (*"control over whether a space can be traveled on"*) is a named
+   empty shelf. Noodle left on that shelf: the tuned thing may turn out to be
+   *"a mini fits here"* rather than a percentage, which a streamer can see.
+4. **Joins are a gesture, not a file fact.** Two runs meeting at a corner
+   share an anchor and matching offsets; the drag keeps them matched. The
+   compiler does not care whether lines touch — each casts its own shadow and
+   crossings are discrete, so a hairline gap blocks the same as a join.
+   Snapping survives only here.
+5. **One position noun.** Anchor plus offset is the position type props use
+   today and wall endpoints use next. Same shape, opposite law: a prop's offset
+   is visual only (Kirk's earlier ruling); a wall's offset casts a shadow. What
+   the offset is attached to decides whether it is mechanical.
+6. **Scenery floor — the third floor state.** Kirk: *"a no region option that
+   looks like the floor in the game but cannot be traveled on."* The floor has
+   two states today, void and owned by a region. Scenery is rendered as floor,
+   belongs to no region, nobody stands on it, it is never a way in, and a wall
+   may stand on it. Three producers, one noun, and the compiler owns the state:
+   the author's brush; wall footing (rpg-dnd5e-web#898, derived as the cells
+   under a presented boundary); and the cells an offset wall cuts below the
+   threshold. The wire already expresses it — the atlas's flat `cells` and
+   each region's own `cells` are equal by construction today, and a cell in
+   the flat list and in no region is scenery.
+7. **The wall invariant: a wall looks the same from the visible side whatever
+   is beyond it.** Floor, void, scenery, or hidden space must be
+   indistinguishable through it — the never-authored yardstick applied to the
+   boundary rather than the space. Two moves make it true: **walls may stand
+   against void** (the outer wall of a room becomes the normal case, so black
+   beyond a wall means nothing), and **the cells a wall cuts are scenery for
+   everyone**, so the slivers always show floor.
+8. **Slice order.** Scenery floor first (smallest; unblocks the dungeon Kirk
+   has now), then offsets on runs, then the scenario config builder.
+   **Parked as its own thing:** more than one prop per hex — the compiler
+   refuses two placements on a cell today, and the rule that replaces it is
+   "a cell blocks if any prop on it blocks"; it rides the same anchor-plus-
+   offset foundation and is not needed for a while. Cliff edges stay adjacent
+   (rpg-toolkit#1443).
+
+### The tell, and what it taught
+
+Two maps of the same concealed room, both leaked. In one the secret sat inside
+visible floor behind the wall: every bare crossing around it was a
+visible-to-hidden adjacency, the masquerade stood a wall on each, and the
+outline drew itself. In the other the secret hugged the wall, and the tell
+moved to the slivers — black where floor should show, because a straight wall
+over a staircase boundary leaves every other far-side cell poking through.
+
+One failure. A wall may only stand between two floor cells today, so a wall
+with black beyond it can mean only one thing: there is floor back there you
+may not see. An honest twin dungeon cannot even author that wall. That same
+rule is what forced the secret to hug the wall in the first place — the room's
+shape was dictated by the wall's edge set, geometry the author never thinks
+about. Ruling 7 is the invariant; ruling 6 and the offset model are what make
+it true. rpg-dnd5e-web#898 is the same failure one layer down and dissolves
+into ruling 6.
+
+## Ground truth (2026-09-03; web `dev`, toolkit `origin/main` bf234c7)
+
+- Compile output is `encounter.FieldInput`: cells, blocked crossings, doorway
+  pairs, region membership, placements. Everything else is carried payload.
+  Runs die in `wallsOf`; no runtime code reads YAML or runs. **Mechanics on
+  the wire do not move**; rpg-api is a pin.
+- **Presentation on the wire moves, additively:** the atlas gains the drawn
+  segment (anchor, offset, height) so the client draws what was drawn and the
+  masquerade draws a straight segment too. This is what lets
+  `boardWallScene` and `CHAIN_TOLERANCE` retire.
+- Concealment is indifferent to where an edge came from: `hiddenFrom`,
+  `Search`, and the frontier walk work on cell sets and the compiled crossing
+  map. `maskHeight` reverse-engineers a run today and gets simpler with a
+  stored line. The masquerade must never stand a wall on scenery's far side —
+  scenery is not visible space.
+- The frontier walk already skips ownerless neighbours as void, and
+  `stepMember` already refuses an ownerless cell as "not floor". Scenery floor
+  is close to free on the runtime; the wall-on-floor rule must accept it.
+- The toolkit has **zero world-unit geometry** — no hex size, corners,
+  polygons, or area. `tools/spatial/room.go` says twice that the corner-rule
+  sight test needs cell-polygon geometry it does not have. The threshold is
+  the toolkit's first geometry and already has a second customer waiting.
+- The web **had** that geometry and deleted it in rpg-dnd5e-web commit
+  `6503936` (`straightWallGeometry.ts`: Cyrus-Beck clip plus Sutherland-
+  Hodgman coverage; `canvasFloor.ts`: the old threshold, inverse framing).
+  Recoverable. The corner lattice and its point-to-cell inverse survive in
+  `src/author/creation/hexCorner.ts`.
+- No grid origin exists on either side, and under ruling 1 none is needed:
+  "slide the grid" is a nudge to every wall's offsets.
+- Placements today are constrained only by region membership. A compiler
+  refusal for a placement left on a sliver, pointing at the thing, is an
+  addition, not a rewrite.
+- On the web this is a rewrite of the document layer (`RegionDoc.cells`, the
+  `Edge` type, every mutator, `tautPath`), not a refactor. The rendering layer
+  stays because it reads the atlas.
+
 ## The other half: let the walls decide the floor
 
 Kirk: *"splay out a really large region, draw some walls and click trim edges
@@ -88,21 +214,8 @@ so remove the region outside the walls."* (rpg-dnd5e-web#910)
 This is the same inversion from the other side. Every attempt so far tried to
 make **hexes form a rectangle**. Trim lets the author **draw the walls and have
 the floor conform** — they never fight the grid, because the grid is not what
-they are drawing. It composes with the line model directly: draw lines, trim
-floor to them.
-
-## Open rulings
-
-1. **What space is the line in?** Free world units make "cuts wherever it
-   likes" literal. The hex corner lattice keeps the file grid-anchored and
-   diffable. This decides whether the derived-crossing rule is exact or
-   approximate.
-2. **Do edges stay in the file?** Deriving them is the cleaner single source;
-   keeping them is friendlier to hand-editing and to everything that reads
-   `walls[i].edges` today.
-3. **Is the 80% rule mechanics?** It reads as *"you can stand there"*, which
-   makes it a floor rule and puts it in the toolkit rather than the client.
-   This decides whether the work is a web change or a three-repo slice.
+they are drawing. Under ruling 6 the cells a wall cuts conform on their own;
+trim remains the author's tool for painted cells wholly outside the walls.
 
 ## Adjacent, and not the same thing
 
@@ -119,7 +232,9 @@ be authored at all. Three edge behaviours are wanted; two exist:
 | **cliff (crossable, with a consequence)** | **no** |
 
 It bears on this design because the concealment frontier check leans on the
-envelope being an absolute seal.
+envelope being an absolute seal, and because ruling 7 makes a wall against void
+legal — the cliff is the third thing a floor edge can be, and it stays its own
+issue.
 
 Until then the builder draws that boundary **dashed and dim** — Kirk: *"walls
 are intentional"* — so it says only "the floor stops here" and cannot be
