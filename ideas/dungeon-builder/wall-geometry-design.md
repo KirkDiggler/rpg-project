@@ -421,8 +421,15 @@ Slice 1:
 Slice 2:
 
 - **A6. The tomb, rewritten.** `reference-tomb.yaml` re-authored in the wall
-  form compiles to the same cells and the same blocked crossings as its
-  pair-form original, and every door opens the same crossing. This is the
+  form compiles to the same cells and the same walled crossings as its
+  pair-form original, and every door opens a crossing between the same two
+  rooms. *Amended 2026-09-03 in the build: "the same crossing" is not always
+  possible. The tomb's seam door sat on a straight crossing of a vertical
+  zigzag; the thin quarter line that reproduces the seam's other fourteen
+  crossings passes a quarter width east of that midpoint, and no thin line
+  runs through a flat-side midpoint at all (F16), so the door moves one row
+  to the slanted midpoint of the same cell. The thick alternative keeps the
+  door and seals four entrance cells, the larger content change.* This is the
   forcing case and the regression net that replaces byte-identity. Kirk:
   *"we built the thing, verify it works, then rewrite that and commit it."*
 - **A7.** The record's 6×6 room: four walls emit four segments, the board
