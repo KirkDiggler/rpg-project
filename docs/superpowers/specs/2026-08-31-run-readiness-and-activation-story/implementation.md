@@ -80,3 +80,49 @@ Condition results likewise use server-authored identities. Story may say `Aldric
 Repository inspection after approval exposed an existing policy boundary: rpg-project#260 deliberately keeps every combat-log beat visible to the full roster until v1.0, and rpg-toolkit#940 owns the eventual perception-scoping flip. Adding an activation-only visibility rule would bypass the single `audienceFor` shelf; flipping the shelf here would expand this slice across attacks, movement, downed, clocks, and every other classified beat.
 
 The final decision is therefore to defer the policy flip. Activation and result facts call `audienceFor(subjectBeat, ...)` with honest actor and affected-target subjects. They follow today's full-roster policy and are automatically ready for #940 without later API, web, payload, or append-site changes. Live and catch-up read the same recorded audience, and neither API nor web recalculates or broadens visibility.
+
+### Delivered activation-result stack
+
+Slice C shipped through the following immutable coordinates:
+
+- root healing facts: `rulebooks/dnd5e/v0.128.0`;
+- activation transaction: `rulebooks/dnd5e/encounter/v0.46.0`;
+- activation effect capture: `rulebooks/dnd5e/resolution/v0.30.0`;
+- durable Session projection: `rulebooks/dnd5e/session/v0.48.0`;
+- generated activation proto: `f87c098979ce64f6c162a769e988c934a1fd80cc` / `v0.1.153`;
+- API merge: `250057d927fd43c279de86a7e2a6a9f2fa0a16d6`;
+- web merge: `2bee01584d8168173f047ddeb69e7ea9aa63c1e2`.
+
+Real handler/Manager/Broker acceptance proved Activated followed by HealingApplied, requested-versus-applied clamping, persisted HP, full-roster receipt, and `proto.Equal` live/GetStory delivery. Kirk then confirmed that Second Wind appeared in the live log.
+
+## Follow-up: reusable server-authored roll traces
+
+**Date:** 2026-09-04<br>
+**Issue:** rpg-project#361<br>
+**Design:** rpg-project#363
+
+The first live log exposed an ambiguity: `Second Wind rolled 6 + 1 = 7` did not say that the feature rolls its own `1d10 + Fighter level`, and the newer Session seam discarded Great Weapon Fighting's original faces and ordered reroll history even though the root damage chain still carried them.
+
+The approved correction kept one result per domain—damage and healing remain distinct—while sharing provider-authored dice provenance and sourced modifier primitives. Toolkit authors notation, original/final faces, ordered indexed rerolls, source refs/names/labels, subtotals, and totals. Encounter validates before append; Session persists and strictly decodes new and legacy records; API maps fields only; web formats them without arithmetic or ref switches.
+
+### Delivered roll-trace stack
+
+The final consumer stack uses:
+
+- root D&D `v0.137.0`;
+- encounter `v0.53.0`;
+- resolution `v0.32.1`;
+- Session `v0.53.1`;
+- generated proto `883dd221a6cdf724df8d5d993d897e0c8a3358ab`;
+- API merge `2716d3e90315ad53e20beab601c63d6e9ec98619`;
+- web merge `1188268486843085ed2fcc226f9a5f56be51fd38`.
+
+Automated acceptance proved deterministic Second Wind (`1d10 [6] + 1 Fighter level = 7`, requested 7, applied 2, HP 8→10) and a persisted GWF Fighter (`[1,5]`, sourced `1→4`, final `[4,5]`, subtotal 9, +3 Strength, 12 damage) through real handler, Session Manager, Broker, Redis, live delivery, and GetStory. Web tests proved shared Story/Debug formatting, legacy fallback, all-or-nothing malformed handling, exact nested conflict identity, and no damage/healing 3D dice behavior. Final counts were 4,923 passing and 5 skipped; post-merge API test/Docker workflows and web CI passed.
+
+After being told that only the isolated visual/reconnect pass remained, Kirk requested cleanup. No plan-specific lab, assets, or service was started for that final pass. The live/visual step is therefore explicitly waived rather than claimed as evidence; a real-stack visual defect remains the cost of that waiver.
+
+### Process correction
+
+The implementation initially created PRs at task-sized boundaries inside the same Go module. Kirk corrected the working agreement: publish one PR per module, not one PR per subtask. Internal TDD/review checkpoints may remain, but PR count is not a deliverable. The final API and web work followed that module-sized shape.
+
+Separate follow-ups remain independent: rpg-toolkit#1460 (legacy fixture identities), #1466 (feature-resource failure semantics), #1467 (negative healing), #1490 (int32 wire bounds), and rpg-api#906 (destructive dirty-tree CI helper).
