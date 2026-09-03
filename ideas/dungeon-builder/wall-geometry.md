@@ -1,7 +1,7 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03). Design PROPOSED in
-`wall-geometry-design.md`; Kirk rules once; then plan and build.
+**Status:** rulings in (2026-09-03, two rounds). Design PROPOSED in
+`wall-geometry-design.md`, third revision; Kirk rules once; then plan and build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -155,6 +155,37 @@ the biggest impact with the lowest hanging fruit."*
    "a cell blocks if any prop on it blocks"; it rides the same anchor-plus-
    offset foundation and is not needed for a while. Cliff edges stay adjacent
    (rpg-toolkit#1443).
+
+### Second round, same day — the picker
+
+Kirk asked to be picked apart rather than agreed with (*"I am wrong probably
+about 50% of the time. that number drops prob to about 20% when we pick apart
+the idea"*), and the pick-apart of the two-point wall found four things,
+each answered by a ruling:
+
+- The prop offset is rendered in circumradius units and bounded to ±0.5, so
+  it cannot name a hex corner (they sit at (0, ±1) and (±0.866, ±0.5)).
+  **Ruled: one unit, bounding-box fractions, for walls and props alike**;
+  the content that would have needed converting is being recreated.
+- A vertical wall from corner to corner on the same column edge runs through
+  the centre of every staggered cell between them and halves each. **Ruled:
+  ends are picked from a small named set of positions, never typed freehand
+  — "there are prob less than a dozen total offset combinations we would
+  want."** Twelve: six corners, six edge midpoints. The trap survives the
+  picker (it is the line, not the ends) and is shown by the hatch; the
+  common-case gesture picks the quarter line.
+- A corner needs one snap, the end magnet. **Ruled: yes, that is the
+  snapping.**
+- Doors spoke crossings while walls spoke points. **Ruled: a door is a hex
+  with exactly one wall through it**; it opens every crossing of that hex the
+  wall blocks (one to three), as one state, on today's wire.
+
+And **legacy dungeons are deleted and recreated** — the pair form, the
+fitter, and `CHAIN_TOLERANCE` go, and the tomb rewritten by hand becomes the
+regression net (*"we built the thing, verify it works, then rewrite that and
+commit it"*). **Room templates** (Gloomhaven map parts) are the shelf after
+this is clean; the closed position set rotates onto itself under 60°, which
+is what makes them cheap.
 
 ### The tell, and what it taught
 
