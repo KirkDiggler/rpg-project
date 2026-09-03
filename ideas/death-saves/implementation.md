@@ -146,12 +146,32 @@ released provider. Do not copy the three-save threshold into resolution and do
 not add spell status to the no-magic display catalog merely to make this read
 work.
 
-- Follow-up issue: rpg-toolkit#1469
-- Resolution issue waiting on it: rpg-toolkit#1439
+- Follow-up issue/PR: rpg-toolkit#1469 / rpg-toolkit#1471
+- Root merge/release: `ec4923d7676c902060a551bc9266275387d14edf` / `rulebooks/dnd5e/v0.135.1`
+- Resolution issue/PR: rpg-toolkit#1439 / rpg-toolkit#1484
+- Resolution merge/release: `e8a909d1d64bfc6c945ffc54a8520fdfabb57d5c` / `rulebooks/dnd5e/resolution/v0.32.0`
 
 **Cost if wrong:** One extra root release and public read surface. The
 alternative silently couples a combat-critical life-state read to unrelated UI
 catalog completeness.
+
+## Resolution participation and Death Save — released
+
+Resolution v0.32.0 adds strict data-in/data-out `Participation` and `DeathSave`
+entries. Participation uses the narrow provider, keeps valid Shield-bearing
+records readable, returns detached progress in input order, and makes Standing
+only its Down projection. DeathSave requires the host roller and returns the
+root typed outcome/continuation unchanged through strict attach/snapshot/teardown.
+
+The implementation was reconstructed on top of resolution v0.31.0 rather than
+resolving another lane's roll-trace migration with ours/theirs. Real Strike
+coverage proves positive/critical damage-at-zero, stabilization loss,
+third-failure death, already-Dead no-op, and zero/immune no-op while preserving
+sourced roll traces.
+
+GLM adversarial review found no Critical/Important issues. Copilot raised no
+concrete finding and requested closer human verification; the GLM evidence was
+posted before merge.
 
 ## Review-process ruling
 
