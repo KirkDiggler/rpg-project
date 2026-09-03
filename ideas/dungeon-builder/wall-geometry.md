@@ -2,9 +2,11 @@
 
 **Status:** design RULED 2026-09-03 (`wall-geometry-design.md`, six revisions in
 one day); plan in `wall-geometry-plan.md`. **Slice 1 (scenery floor) SHIPPED
-2026-09-03; slice 2 (walls as lines) BUILT 2026-09-04**, web PR #916 the last
-to merge; Kirk's first drive: *"really nice… you always feel like you are in
-control"*; polish is a follow-up.
+2026-09-03; slice 2 (walls as lines) SHIPPED 2026-09-04** across four repos,
+web PR #916 the last to merge; Kirk's first drive: *"really nice… you always
+feel like you are in control"*; polish is rpg-dnd5e-web#917. Remaining before
+this PR closes: the multiplayer half of the walk (plan §3), and the content
+runbook before dev promotes to main.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
