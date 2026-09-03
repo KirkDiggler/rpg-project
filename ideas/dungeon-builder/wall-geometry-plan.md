@@ -92,6 +92,19 @@ Tests (each able to fail; name the scene, assert the cell):
 - 2.5: compiler refusals that name a cell highlight it (the existing
   error-to-cell path; extend the coordinate parser if the message shape is
   new).
+- **Concealment mirror (found during the build, 2026-09-03).** The builder
+  carries a client-side mirror of the concealment walk (`deriveConcealment`
+  / `buildRegionGraph`, from rpg-dnd5e-web#893) that ratchets
+  `concealed: true` onto regions from the door graph. It walks region-cell
+  to region-cell crossings only, so a scenery strip would make two joined
+  rooms read as disconnected and the ratchet would conceal a room the
+  server can walk into (which A3 then refuses). Extend the graph to flood
+  through scenery exactly as design C4 does — interior cells all scenery,
+  never a third region's cells; classification by the first crossing out of
+  the origin region. Test scenes shaped like toolkit A3 (joined through
+  scenery: connected; wall added: separated). Keeping an existing
+  derivation true is in scope; the plan was silent only because the mirror
+  was not known when it was written.
 - Tests: parse/emit round-trip with scenery; brush state transitions;
   placement refusals; screenshot of the strip behind a wall in 3D preview.
 
