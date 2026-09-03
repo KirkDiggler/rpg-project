@@ -185,6 +185,11 @@ doors:
   two, is refused naming the door.
 - **F11.** The door's crossing is the crossing of the side whose midpoint
   the position is. One door, one crossing. A wider doorway is two doors.
+- **F11a.** A door whose two cells are both sealed (a door in a centre-line
+  wall) is legal. Nobody passes it; open, sight passes the gap — a window.
+  The designer labels it "nobody can pass here"; the compiler does not
+  refuse it. Kirk: *"not all walls have doors. I am fine having them not
+  usable that way so long as we are not making some low level decision."*
 - **F12.** `doors[].edges` is retired with the pair form.
 
 ### 3.5 Direction
@@ -200,12 +205,19 @@ doors:
   in the center… then it would go out a clean axis on one of the 30 deg
   angles."* A thick flat-side wall can also turn onto a centre line at an
   even-row side midpoint, and nowhere else.
-- **F16. Thin walls turn at midpoints, and cannot reach a centre.** Through
-  every slanted midpoint pass thin lines at 0°, 60°, and 90° (for the
-  upper-right one); through every flat-side midpoint at 30°, 60°, 120°, and
-  150°. So a thin wall makes 60°, 90°, and 120° corners at midpoints and
-  keeps the corner cell (3/4). No thin line passes through any centre, so
-  the picker never offers one to a thin wall.
+- **F16. Thin walls turn at midpoints.** Through every slanted midpoint
+  pass thin lines at 0°, 60°, and 90° (for the upper-right one); through
+  every flat-side midpoint at 30°, 60°, 120°, and 150°. So a thin wall makes
+  60°, 90°, and 120° corners at midpoints and keeps the corner cell (3/4).
+  No thin line passes through any centre — geometry, not policy — so a thin
+  wall that wants to turn at a centre does it as a second wall: the ray from
+  its end midpoint to the centre is a thick stub that seals that one hex,
+  and the thick continuation leaves the centre. Legal, and the stub's cost is
+  shown. Kirk: *"I just like restricting after [it] becomes a problem."*
+- **F16a. Thin and thick are not in the file or the compiler.** They name
+  what a line costs. The compiler knows seven positions, twelve directions,
+  the area rule, and doors as positions on walls; the designer colours each
+  offered ray by what it seals. There is no lower-level decision to relax.
 - **F17. Thin meets thick at a flat-side midpoint**, through which pass two
   thick lines and four thin ones.
 

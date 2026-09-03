@@ -242,6 +242,15 @@ thick, and a thick wall seals it anyway); thin walls turn at midpoints
 (three thin lines through every slanted midpoint, four through every
 flat-side one), keeping the corner cell.
 
+Kirk, on that: *"we dont want the green ones turning at the center… the
+consequence… is you can never put a door on those walls… just wonder if
+there is a very compelling reason to not allow this… I just like
+restricting after [it] becomes a problem."* There is none, and nothing
+forbids it: a thin wall turns at a centre as a second wall, a thick stub
+from its end midpoint that seals that one hex, cost shown. Thin/thick are
+names for cost, not compiler nouns. Doors in a centre-line wall join two
+sealed hexes — windows, not passages — and stay legal, labelled.
+
 ### The tell, and what it taught
 
 Two maps of the same concealed room, both leaked. In one the secret sat inside
