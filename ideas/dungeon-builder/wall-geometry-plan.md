@@ -204,9 +204,10 @@ Content and fixtures in the same PR:
   way (lands in the api PR, pinned to this tag).
 
 Tests:
-- A6: the rewritten tomb compiles to the same `cells` and the same blocked
-  crossings as the committed pre-rewrite golden, and each door opens the
-  same crossing.
+- A6: the rewritten tomb compiles to the same `cells` and the same walled
+  crossings as the committed pre-rewrite golden, and each door opens a
+  crossing between the same two rooms (amended with design A6, 2026-09-03:
+  a seam door may move to the nearest position on its line).
 - A7: the 6×6 room → four segments, 46 blocked crossings.
 - A8: quarter line and midpoint line leave every adjacent cell standable at
   0.7; a flat-side line seals exactly the odd-row cells on it; a square
