@@ -1,6 +1,6 @@
 # Wall geometry — design
 
-**Status:** PROPOSED 2026-09-03, third revision the same day, for Kirk's one
+**Status:** PROPOSED 2026-09-03, fourth revision the same day, for Kirk's one
 ruling. Record and the why: `wall-geometry.md`. Plan follows ruling.
 **Scope:** one model, two slices. Slice 1 = scenery floor. Slice 2 = walls as
 lines. Both ride journey rpg-project#169.
@@ -10,10 +10,11 @@ conversation and where it landed:
 
 | ruling | where |
 |---|---|
-| wall ends come from a small named set of positions, picked, never typed freehand | §2.6, §3.3 |
+| wall ends are picked from a small named set, never typed freehand | §2.6, §3.3 |
+| the set is the six side midpoints; 30° steps between them | §3.3, §3.5 |
+| a wall lies on a hex axis if a door is to stand in it | §3.5, §3.4 |
 | the file keeps numbers; the designer hides them | §2, §3.2 |
 | standability is a number, tuned later | §4.3 |
-| a door belongs to a hex with exactly one wall through it | §2.8, §3.4, §4.4 |
 | legacy dungeons are deleted and recreated; the defaults are rewritten | §4.5, §7 |
 | room templates come after this is clean | §8 |
 
@@ -22,11 +23,10 @@ conversation and where it landed:
 | thing | word | in the file |
 |---|---|---|
 | one straight wall with a start and an end | **wall** | a `walls[]` entry |
-| a named point on a hex's boundary | **position** | `{cell, offset}` |
+| the midpoint of one of a hex's six sides | **position** | `{cell, offset}` |
 | the hexes a wall passes through | **cells**, its footprint | never written; derived |
 | the hex-to-hex step a wall blocks | **crossing** | never written; derived |
 | where two walls meet | **corner** | two ends with the same position |
-| the hex a door sits in | **door hex** | `doors[].cell` |
 | floor nobody stands on | **scenery** | `scenery` |
 
 ## 1. The model
@@ -43,21 +43,25 @@ conversation and where it landed:
    and the footing of a presented wall (projection only, §4.6).
 5. **A wall is a straight line between two positions, and the file holds
    nothing else.** The crossings it blocks and the cells it cuts are derived.
-6. **A position is one of twelve points on a hex's boundary** — its six
-   corners and six edge midpoints — written as `{cell, offset}` in
-   bounding-box fractions. The set is closed: an offset outside it is refused
-   by name. Kirk: *"there are prob less than a dozen total offset
-   combinations we would want."*
-7. **The wall invariant.** A wall looks the same from the visible side
+6. **A position is the midpoint of one of a hex's six sides**, written as
+   `{cell, offset}` in bounding-box fractions. The set is closed: an offset
+   outside it is refused by name. Kirk: *"realistically could prob get away
+   with 5."*
+7. **A wall lies in one of twelve directions, 30° apart, and passes through
+   no cell's centre.** The six directions along rows of neighbours and the
+   six along hex sides, together. Kirk: *"we are not making precision walls
+   here and can be constrained."* Every wall that satisfies this cuts no cell
+   deeper than 5/24 (§4.3).
+8. **A door is a position on a wall.** It opens the one crossing of the side
+   it is the midpoint of.
+9. **The wall invariant.** A wall looks the same from the visible side
    whatever is beyond it: floor, void, scenery, or hidden space.
-8. **Scenery is transparent and impassable. It seals nothing.** Sight and the
-   concealment walk pass through it; walls are the only seal.
-9. **One offset unit.** Bounding-box fractions, x east and y south, for wall
-   positions and for prop offsets alike. Props move from circumradius units
-   to this in the same wave; the content that would have needed converting is
-   being recreated.
-10. **A door is a hex.** Exactly one wall passes through it; the door opens
-    every crossing of that hex the wall blocks.
+10. **Scenery is transparent and impassable. It seals nothing.** Sight and the
+    concealment walk pass through it; walls are the only seal.
+11. **One offset unit.** Bounding-box fractions, x east and y south, for wall
+    positions, door positions, and prop offsets alike. Props move from
+    circumradius units to this in the same wave; the content that would have
+    needed converting is being recreated.
 
 ## 2. The panel — what a streamer sees and does
 
@@ -78,24 +82,19 @@ conversation and where it landed:
 
 ### Slice 2
 
-- **2.6 A wall is two picked positions.** Click the hex the wall starts in
-  and pick one of its twelve positions; click the hex it ends in and pick
-  again. No freehand, no angle snap. Kirk: *"pick the cell the wall ends in
-  and choose the offset from the dropdown."* The cells the wall makes
-  unstandable hatch as soon as the second position is picked.
+- **2.6 A wall is two picked positions.** Pick a side midpoint to start.
+  The end snaps to side midpoints that lie on one of the twelve rays from
+  the start and put no cell centre on the line; nothing else is offered.
+  Kirk: *"snapping could snap to one of those 12 points."* The cells the
+  wall makes unstandable hatch as soon as the end is picked.
 - **2.7 Corners.** Picking a position another wall already ends at joins
   them: the same `{cell, offset}` is written to both, and moving one end
   moves the other. That is the whole of snapping.
-- **2.8 Doors.** Click a hex the wall passes through. If the wall cuts it
-  too deep to stand in, the click is refused with that reason; otherwise the
-  door is there, and every crossing of that hex across the wall opens with
-  it.
-- **2.9 The trap the picker cannot prevent.** Two corners on the same column
-  edge draw a wall through the centre of every staggered cell between them,
-  and those cells go scenery. The hatch shows it at once. **Wall this
-  boundary** — the gesture for the common case — picks the quarter-line
-  positions (slanted-edge midpoints) for a vertical boundary and the vertex
-  line (corners) for a horizontal one, so the common case never trips it.
+- **2.8 Doors.** Click a midpoint the wall passes through. The door is that
+  side's crossing, and it draws as a gap in the wall around the midpoint.
+- **2.9 Wall this boundary.** The common case is a straight wall between
+  two rooms. One gesture along a boundary picks the two legal ends for it —
+  the midpoint line along rows, the quarter line across them (§4.3).
 
 ## 3. The file — dungeonspec version 2
 
@@ -117,18 +116,18 @@ easy to read it would be easy to edit."*
 
 ```yaml
 walls:
-  - start: { cell: [1, 2],  offset: [-0.25, -0.375] }
+  - start: { cell: [1, 2],  offset: [-0.25, -0.375] }   # across rows, quarter line
     end:   { cell: [1, 10], offset: [-0.25,  0.375] }
     height: 1
-  - start: { cell: [1, 10], offset: [-0.25, 0.375] }
-    end:   { cell: [9, 10], offset: [ 0.5,  0.25] }
+  - start: { cell: [1, 10], offset: [-0.25, 0.375] }    # along row 10, midpoint line
+    end:   { cell: [9, 10], offset: [ 0.25, 0.375] }
 ```
 
 | field | type | rule |
 |---|---|---|
 | `start`, `end` | position | required |
 | `cell` | offset `[col,row]` | the hex the point is named from |
-| `offset` | `[x,y]`, bounding-box fractions | MUST be one of the twelve positions (§3.3) |
+| `offset` | `[x,y]`, bounding-box fractions | MUST be one of the six positions (§3.3) |
 | `height` | as today | |
 | `name` | as today | |
 
@@ -145,47 +144,51 @@ walls:
   visual only. Same shape, same unit, different law.
 - **F7.** The list stays `walls`. `edges` is retired with the pair form.
 
-### 3.3 The twelve positions
+### 3.3 The six positions
 
 Bounding-box fractions: x in widths, east positive; y in heights, south
 positive (the axis the prop offset's y already maps to in world z). Every
 value is a dyadic rational, so the set compares exactly as floats, and a
 60° rotation maps it onto itself.
 
-Pointy-top:
-
-| kind | positions |
+| orientation | side midpoints |
 |---|---|
-| corners | `[0,-0.5]` `[0.5,-0.25]` `[0.5,0.25]` `[0,0.5]` `[-0.5,0.25]` `[-0.5,-0.25]` |
-| edge midpoints | `[0.5,0]` `[-0.5,0]` `[0.25,-0.375]` `[-0.25,-0.375]` `[0.25,0.375]` `[-0.25,0.375]` |
-
-Flat-top: the same set with x and y exchanged.
+| pointy-top | `[0.5,0]` `[-0.5,0]` `[0.25,-0.375]` `[-0.25,-0.375]` `[0.25,0.375]` `[-0.25,0.375]` |
+| flat-top | `[0,0.5]` `[0,-0.5]` `[0.375,0.25]` `[0.375,-0.25]` `[-0.375,0.25]` `[-0.375,-0.25]` |
 
 - **F8.** An `offset` not in the set for the file's orientation is refused
-  naming the wall and the value. `[0,0]` is not in the set: a wall does not
-  end in the middle of a hex.
-- **F9.** Nothing stops the set growing; nothing in this design needs it to.
+  naming the wall and the value.
+- **F9.** The set may grow; nothing here needs it to. The first candidate is
+  the centre, `[0,0]`, for a wall stub — and it costs the cell it ends in,
+  which is why it is not in the set today.
 
 ### 3.4 Slice 2: a door
 
 ```yaml
 doors:
   - id: crypt-door
-    cell: [1, 6]
+    at: { cell: [1, 6], offset: [-0.25, 0.375] }
     closed: true
 ```
 
 | field | type | rule |
 |---|---|---|
-| `cell` | offset `[col,row]` | the door hex; replaces `edges` |
+| `at` | position | replaces `edges` |
 | `id`, `closed`, `locked`, `concealed` | as today | |
 
-- **F10.** Exactly one wall MUST pass through the door hex. None, or two,
-  is refused naming the hex.
-- **F11.** The door hex MUST be standable after the wall's cut (§4.3):
-  nobody can stand in a door that halves its hex. Refused naming the hex and
-  the wall.
+- **F10.** Exactly one wall MUST pass through the door's position. None, or
+  two, is refused naming the door.
+- **F11.** The door's crossing is the crossing of the side whose midpoint
+  the position is. One door, one crossing. A wider doorway is two doors.
 - **F12.** `doors[].edges` is retired with the pair form.
+
+### 3.5 Direction
+
+- **F13.** The direction from `start` to `end` MUST be a multiple of 30°.
+  Refused naming the wall and the angle.
+- **F14.** No cell's centre may lie on the wall. Refused naming the wall and
+  the cell. This is the rule that removes the two wall lines that halve
+  cells (§4.3); with it, every legal wall is standable-safe on its own.
 
 ## 4. The compiler — `rulebooks/dnd5e/encounter/dungeonspec`
 
@@ -196,7 +199,7 @@ doors:
 - **C2.** A wall MUST pass through at least one floor cell (owned or
   scenery); void cells on its path are not part of its footprint — nothing to
   cut, and the crossings into them are impassable already. This is how a wall
-  stands against void (§1.7).
+  stands against void (§1.9).
 - **C3.** Props MUST be on floor; monsters and the start MUST be on standable
   cells.
 - **C4. The concealment walk crosses scenery.** A *way* between regions A and
@@ -231,15 +234,25 @@ doors:
 - **C10.** A footprint cell keeps its owner and is standable iff the area of
   its hex clipped by the near half-plane of every wall through it is at
   least `F` of the whole. `F` is one constant in the compiler, first value
-  **0.75**, tuned in the game.
+  **0.7**, tuned in the game.
 
-  Why 0.75 is safe with the picked set: the two straight walls the picker
-  produces cut predictably. A vertical wall on the quarter line costs every
-  adjacent cell 5/24 (20.8 %); a horizontal wall on the vertex line cuts the
-  inside row nothing and the outside row 1/6. An inside corner formed by the
-  two keeps 79 %. The one picked wall that cuts deeper — corners on the
-  same column edge — halves the staggered cells, which is the trap of §2.9,
-  shown by the hatch, never refused.
+  With ends on side midpoints, twelve directions, and no centre on the line,
+  exactly two kinds of wall exist, by symmetry the same in every direction
+  of their family:
+
+  | wall | passes through | cuts per adjacent cell |
+  |---|---|---|
+  | along a row of neighbours, the **midpoint line** | slanted-side midpoints | 1/24 both sides |
+  | across rows, the **quarter line** | slanted-side midpoints | 5/24, alternating sides |
+
+  The two lines F14 refuses — along a row through centres, across rows on
+  the column edge — would halve cells; they are the trap the earlier
+  revisions guarded with a hatch, now gone by rule. A single wall never
+  makes a cell unstandable. Only corners can: a square room's inside corner
+  (quarter line + midpoint line) keeps exactly 3/4, a hexagonal room's
+  corner (two quarter lines) keeps 7/12. **0.7, not 0.75**, so the square
+  corner is not decided by float noise; the hexagonal corner goes scenery
+  and the hatch shows it.
 - **C11.** The designer displays the compiler's answer. A local mirror is
   deferred until the picker feels dead without one; if built, it is pinned to
   the compiler by a golden fixture.
@@ -250,13 +263,12 @@ doors:
 
 ### 4.4 Doors (slice 2)
 
-- **C14.** The door's crossings are every crossing of the door hex that its
-  wall blocks (C7) — one to three. They open and close as one state, exactly
-  as a multi-edge door does today, and reach the wire as one doorway per
-  crossing under one door id.
-- **C15.** The door's presented gap is the wall's chord through the door hex.
-- **C16.** Lock and concealment semantics are unchanged: the door is the unit,
-  its crossings are its shape.
+- **C14.** The door's crossing is the crossing of the side whose midpoint
+  it stands on (F11). It reaches the wire as one doorway under the door's
+  id, exactly as a single-edge door does today.
+- **C15.** The door's presented gap is the wall's segment through the door
+  hex on either side of the midpoint, one side's length in all.
+- **C16.** Lock and concealment semantics are unchanged.
 
 ### 4.5 Legacy — deleted
 
@@ -272,7 +284,7 @@ doors:
   is hidden. Only presented walls foot: the footing of a withheld wall would
   trace the secret. This is rpg-dnd5e-web#898, built.
 - **C19. Masquerade on a wall.** A concealed door in a wall is presented to a
-  non-knower as the wall's whole segment without the chord gap. `maskHeight`
+  non-knower as the wall's whole segment without the gap. `maskHeight`
   reads the wall's height; it no longer reconstructs a chain.
 
 ## 5. The wire — `dnd5e.api.session.v1alpha1.GetAtlasResponse`
@@ -299,8 +311,8 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
   no second basis cross the wire.
 - `boundaries` and `doorways` are unchanged and remain the mechanical truth.
   `segments` is presentation: what the client draws instead of fitting. A
-  door's gap is derived client-side from its doorways and the segment.
-- Prop offsets on the wire change unit (§1.9): the proto comment, not the
+  door's gap is derived client-side from its doorway and the segment.
+- Prop offsets on the wire change unit (§1.11): the proto comment, not the
   field.
 - rpg-api translates; the runtime never reads segments.
 
@@ -310,10 +322,10 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
 |---|---|---|
 | can a member step onto an ownerless cell | refused, "is not floor" | unchanged |
 | can a wall stand on an ownerless cell | refused, "a crossing nobody can make" | accept scenery (C2) |
-| does sight pass over an ownerless cell | treated as void, so per `void` setting | scenery is transparent regardless (§1.8) |
+| does sight pass over an ownerless cell | treated as void, so per `void` setting | scenery is transparent regardless (§1.10) |
 | can a prop sit on an ownerless cell | refused | accept scenery (C3) |
 | which crossings does a wall block | the pairs as written | derived (C7), still delivered as pairs |
-| which crossings does a door open | its listed pairs | its hex's blocked crossings (C14), still delivered as doorways |
+| which crossing does a door open | its listed pair | its side's crossing (C14), still delivered as a doorway |
 | who sees a cut cell | n/a | footing (C18) |
 
 Mechanics on the wire do not move. rpg-api is a pin in slice 1 and a pin plus
@@ -339,26 +351,27 @@ Slice 2:
 
 - **A6. The tomb, rewritten.** `reference-tomb.yaml` re-authored in the wall
   form compiles to the same cells and the same blocked crossings as its
-  pair-form original, and every door opens the same crossings. This is the
+  pair-form original, and every door opens the same crossing. This is the
   forcing case and the regression net that replaces byte-identity. Kirk:
   *"we built the thing, verify it works, then rewrite that and commit it."*
 - **A7.** The record's 6×6 room: four walls emit four segments, the board
   draws four lines, and the blocked crossings are the same 46 the room tool
   authored.
-- **A8. Calibration.** A quarter-line vertical wall leaves every adjacent
-  cell standable at `F = 0.75`; a column-edge vertical wall makes every
-  staggered cell between its ends scenery.
-- **A9.** An offset outside the twelve is refused naming the wall and the
-  value; a pair-form file is refused at the header naming the form.
+- **A8. Calibration.** A quarter-line wall and a midpoint-line wall leave
+  every adjacent cell standable at `F = 0.7`; a square room's inside corner
+  is standable; a hexagonal room's corner is scenery.
+- **A9. Refusals.** An offset outside the six; a direction off the twelve; a
+  wall through a cell's centre; a door position no wall passes through; a
+  door position two walls pass through; a pair-form file. Each refused
+  naming the thing.
 - **A10.** A concealed door in a wall: the non-knower's atlas carries the
-  full segment and no doorway; the knower's carries the chord gap. Yardstick
-  twin identical.
+  full segment and no doorway; the knower's carries the gap. Yardstick twin
+  identical.
 - **A11.** The hugging layout with a quarter-line wall: the non-knower's atlas
   shows floor on both sides of the wall (C18) and equals the twin authored
   with scenery where the footprint falls.
 - **A12.** Two walls carrying the same position at an end close a corner on
-  the board; a door hex with two walls through it is refused; a door hex the
-  wall halves is refused.
+  the board, for a 90° corner and for a 60° corner.
 - **A13.** Every prop in the rewritten defaults renders where it did, after
   the unit change, by screenshot.
 
@@ -367,12 +380,12 @@ Slice 2:
 - **Room templates.** Kirk: *"template shapes that are a region built out…
   map parts that we assembled"* (Gloomhaven). A template is a region, its
   walls, and its doors in a local frame; placing one translates the cells and
-  rotates by a multiple of 60°, under which the twelve positions map onto
+  rotates by a multiple of 60°, under which the six positions map onto
   themselves. After this design is clean.
+- The centre as a seventh position, for wall stubs (F9).
 - "Walkable anyway" on a cut cell (C13).
 - Region-scoped authored scenery (`regions[].scenery`): not needed; cuts
   produce it derived, with the region's visibility.
-- More positions in the set (F9).
 - More than one prop per hex: its own thing (record, ruling 8).
 - Cliff edges, the third thing a floor edge can be: rpg-toolkit#1443.
 - Sight across transparent void between two regions with no wall between

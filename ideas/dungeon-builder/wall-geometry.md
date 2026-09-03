@@ -1,7 +1,7 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03, two rounds). Design PROPOSED in
-`wall-geometry-design.md`, third revision; Kirk rules once; then plan and build.
+**Status:** rulings in (2026-09-03, three rounds). Design PROPOSED in
+`wall-geometry-design.md`, fourth revision; Kirk rules once; then plan and build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -186,6 +186,34 @@ regression net (*"we built the thing, verify it works, then rewrite that and
 commit it"*). **Room templates** (Gloomhaven map parts) are the shelf after
 this is clean; the closed position set rotates onto itself under 60°, which
 is what makes them cheap.
+
+### Third round, same day — the axis
+
+Kirk, on the three-crossing door hex: *"we do not need to go too wild to
+start. I think walls need to fit on one of the hex axes if you wanna place a
+door on it… a hex has 60 deg around and that is more than enough."* Worked
+through, the constraint is a larger win than the door fix. With ends on
+named points and directions constrained, only five wall lines exist per
+family, and three of them are the two good ones and the trap:
+
+| wall | through | cuts per adjacent cell |
+|---|---|---|
+| along a row, midpoint line | side midpoints | 1/24 both sides |
+| along a row, vertex line | corners only | 0 inside, 1/6 outside; closes no corner |
+| along a row, centre line | centres | 1/2 — the trap |
+| across rows, quarter line | side midpoints | 5/24, alternating |
+| across rows, column edge | corners and centres | 1/2 — the trap |
+
+**Ruled from that:** the positions are the **six side midpoints** (corners
+drop; Kirk's *"could prob get away with 5"*); a wall **may not pass through a
+cell's centre** — the refusal that removes the trap by rule instead of by
+hatch; **a door is a midpoint on its wall and opens one crossing**; and
+**30° steps, not 60°** — Kirk: *"i guess it would be 30 deg if we get the six
+sides in the middle"* — because a rectangle needs one direction from each
+family. Every legal wall is standable-safe on its own; only corners are
+decided by the number, which starts at **0.7** because a square room's inside
+corner keeps exactly 3/4. The centre as a seventh point is the first shelf
+for the set: it buys a wall stub at the cost of its own cell.
 
 ### The tell, and what it taught
 
