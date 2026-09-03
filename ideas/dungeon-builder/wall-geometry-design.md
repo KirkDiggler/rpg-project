@@ -74,7 +74,16 @@ conversation and where it landed:
 
 - **2.1 Scenery brush.** A brush beside the room brush that paints floor
   belonging to no room. On the 2D board scenery is floor with a distinct
-  hatch; in the 3D preview and in the game it is plain floor.
+  hatch; in the 3D preview and in the game it is plain floor. *Plain floor
+  is lit like the floor beside it* (ruled 2026-09-03 in the build): an
+  ownerless floor cell takes the light of the nearest owned floor cell, a
+  flood from every owned cell through floor, first arrival wins, ties by
+  atlas cell order; with no owned floor reachable it takes the scene's
+  ambient. Never a dungeon-wide fallback: the client's "unowned floor cells"
+  legacy bail guarded an invariant this slice retires. Not ambient for all
+  scenery, because in slice 2 every cut sliver and wall footing becomes
+  scenery, and ambient would fringe every wall in every room that is not
+  ambient-lit: the tell one layer down.
 - **2.2 One state per cell.** Painting scenery over a room cell moves it out
   of the room; painting a room over scenery moves it in. Erase makes void and
   cascades as today (walls, doors, placements on the cell go with it).

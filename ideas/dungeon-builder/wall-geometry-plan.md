@@ -114,6 +114,16 @@ Tests (each able to fail; name the scene, assert the cell):
   scenery: connected; wall added: separated). Keeping an existing
   derivation true is in scope; the plan was silent only because the mirror
   was not known when it was written.
+- Lighting (ruled 2026-09-03): the per-region lighting resolver bails to a
+  dungeon-wide legacy fallback when any floor cell has no owner, so one
+  scenery cell unlights the whole dungeon. Retire that bail (its invariant
+  is gone) and light an ownerless floor cell as design 2.1 now says: the
+  nearest owned cell's light by flood, ambient when none is reachable. This
+  reaches outside `src/author/` into the resolver the preview and the game
+  share; that is in scope. Tests: every owned cell's intensity unchanged
+  against a pre-scenery golden; a scenery cell equals its neighbour; an
+  isolated scenery cell is ambient; the banner does not appear for
+  ownerless floor.
 - Tests: parse/emit round-trip with scenery; brush state transitions;
   placement refusals; screenshot of the strip behind a wall in 3D preview.
 
