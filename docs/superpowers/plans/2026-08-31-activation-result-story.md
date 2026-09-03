@@ -473,10 +473,10 @@ cd rpg-api-protos
 make generate
 make test
 buf lint
-buf breaking --against '.git#branch=main'
+make breaking
 ```
 
-Expected: PASS; all changes are additive. Generated output is verification evidence, not a hand-authored release commit on the source branch.
+Expected: PASS; all changes are additive. `make breaking` is the repository-owned gate and compares against the GitHub `main` branch; do not substitute `.git#branch=main`, which may resolve a stale local ref in a linked worktree. Generated output is verification evidence, not a hand-authored release commit on the source branch.
 
 - [ ] **Step 3: Commit the source contract, merge, and record generated output**
 
