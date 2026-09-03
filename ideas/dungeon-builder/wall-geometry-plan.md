@@ -191,10 +191,15 @@ bottom-up.
 Content and fixtures in the same PR:
 - Every dungeonspec/encounter/session test fixture in the pair form is
   rewritten in the line form. A throwaway converter (job tmp, not
-  committed) maps each pair run to the nearest legal line: the run's first
-  and last crossings → the thin line through their midpoints when one
-  exists, else the thick line; output reviewed by eye on the board before
-  commit. The converter is deleted with the pair form.
+  committed) maps each pair run to the one line whose blocked crossings are
+  exactly the run's, searching the twelve directions and seven positions,
+  thin preferred, thick when no thin line matches; a door whose crossing is
+  not on the resulting line is re-sited to the nearest position on it and
+  the move is printed. *(Amended 2026-09-03 in the build: the earlier rule,
+  "the line through the first and last crossings' midpoints", gives 85° on
+  a seam whose ends sit on different parity rows.)* Output reviewed by eye
+  on the board before commit. The converter is deleted with the pair form
+  and kept in the job tmp for the api tomb rewrite.
 - `rpg-api/internal/sessionworld/reference-tomb.yaml` rewritten the same
   way (lands in the api PR, pinned to this tag).
 
