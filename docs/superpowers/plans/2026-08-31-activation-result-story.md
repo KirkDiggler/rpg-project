@@ -411,21 +411,22 @@ Commit, open PR, wait for human merge, and record the exact session tag.
 - Generated after merge by canonical CI on the `generated` branch: `rpg-api-protos/gen/go/**`, `rpg-api-protos/gen/ts/**`
 
 **Interfaces:**
-- Produces: EventKind values 15/16 and body tags 21/22.
+- Produces: EventKind values 17/18 and body tags 23/24. Published door/region reveal contracts already own 15/16 and 21/22.
 
 - [ ] **Step 1: Add enum and body arms**
 
 ```protobuf
 enum EventKind {
   // existing 0-14 and UNKNOWN=100
-  EVENT_KIND_ACTIVATED = 15;
-  EVENT_KIND_ACTIVATION_RESULT = 16;
+  // 15/16 are the published DOOR_REVEALED/REGION_REVEALED kinds.
+  EVENT_KIND_ACTIVATED = 17;
+  EVENT_KIND_ACTIVATION_RESULT = 18;
 }
 
 oneof body {
-  // existing tags 10-20
-  Activated activated = 21;
-  ActivationResult activation_result = 22;
+  // existing tags 10-22; 21/22 are door_revealed/region_revealed.
+  Activated activated = 23;
+  ActivationResult activation_result = 24;
 }
 ```
 
