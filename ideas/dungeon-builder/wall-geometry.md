@@ -2,7 +2,9 @@
 
 **Status:** design RULED 2026-09-03 (`wall-geometry-design.md`, six revisions in
 one day); plan in `wall-geometry-plan.md`. **Slice 1 (scenery floor) SHIPPED
-2026-09-03** across four repos; slice 2 (walls as lines) building.
+2026-09-03; slice 2 (walls as lines) BUILT 2026-09-04**, web PR #916 the last
+to merge; Kirk's first drive: *"really nice… you always feel like you are in
+control"*; polish is a follow-up.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
 edges) · supersedes rpg-dnd5e-web#904 (snapping)
@@ -322,6 +324,27 @@ a wall a knower can see and walk through. And one about our own tooling:
 the auto-tagger's number is not predictable (#1465 minted v0.51.1, not
 v0.49.1), so a pin PR reads the tag on the merge SHA and says what else it
 carries.
+
+### Slice 2 built, and the first drive (2026-09-04)
+
+Slice 2 landed across four repos the day after the design was ruled:
+rpg-api-protos #281 and #285 (segments and sealed on the atlas and on the
+reveal), rpg-toolkit #1477 (walls as lines, `encounter/v0.52.0`) and #1483
+(the session mirror and the reveal carry them, `encounter/v0.53.0`,
+`session/v0.52.0`), rpg-api #904 (both wire paths, the tomb as two lines),
+rpg-deployment #74 (the content runbook), rpg-dnd5e-web #916 (the picker,
+the fitter deleted, the reveal patch).
+
+Kirk drove the builder on the local stack before the web PR merged:
+
+> *"I just drove the builder and it is really nice. couple glitches you have
+> to go back and connect but you always feel like you are in control. super
+> functional and the polish is def a follow up."*
+
+So the stepback's bet held on first contact: precise and explicit beat
+snapping, and control is what a streamer feels. The glitch named — a corner
+needs a second pass to join — is the picker's polish, filed as a follow-up
+on the web, not a change to the model.
 
 ## Ground truth (2026-09-03; web `dev`, toolkit `origin/main` bf234c7)
 
