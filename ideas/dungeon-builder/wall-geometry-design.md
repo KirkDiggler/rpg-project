@@ -406,6 +406,19 @@ repeated AtlasSegment segments = 10;   // on GetAtlasResponse
   field.
 - rpg-api translates; the runtime never reads segments.
 
+**5.2a The reveal carries the same additions** *(amended 2026-09-03 in the
+build, found by the rpg-api builder)*. The concealed-region reveal is the
+other path atlas content takes to a client: it carries the revealed
+region's props and boundaries, and the client now draws walls from
+`segments`, so without this a revealed secret room has no walls in exactly
+the scenario the walk exercises. The reveal event gains `repeated
+AtlasSegment segments` (the segments newly presented to the knower; the
+segment through the concealed door was already whole, and its gap derives
+from the doorway the reveal carries) and `repeated Position sealed` (the
+revealed region's sealed cells). After a reveal, `AtlasFor` and the reveal
+agree byte-for-byte on both. The session module's `Atlas` and
+`RegionRevealedBody` mirror encounter's by copy and carry both fields.
+
 ## 6. The runtime — what it answers today and what it needs
 
 | question | today | needed |

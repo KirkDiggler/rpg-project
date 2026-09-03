@@ -269,6 +269,26 @@ writes identical positions; screenshot pair: the tomb before (pair form,
 fitted) and after (segments) look the same; a prop at offset `[0.5, 0]`
 sits on the side, not inside.
 
+### 2.5 The reveal and the session mirror (added 2026-09-03 in the build)
+
+Found building 2.3: rpg-api reads `session.Atlas`, a copy `projectAtlas`
+makes of `encounter.Atlas`, which drops `Segments`/`Sealed`; and the reveal
+carries no segments while 2.4 deletes the boundary fitter. Design 5.2a.
+
+- rpg-toolkit#1480 (session, and encounter if its reveal beat needs the
+  fields): `session.Atlas` gains `Segments`/`Sealed`, `projectAtlas`
+  carries them; the reveal beat and `RegionRevealedBody` carry the newly
+  presented segments and the revealed region's sealed cells. Test: whole
+  segment and no doorway before (C19); reveal body and `AtlasFor` agree
+  byte-for-byte after.
+- rpg-api-protos#284: the reveal event message gains `segments` and
+  `sealed`, additive.
+- rpg-api#899 translates both paths; rpg-dnd5e-web#914 appends a reveal's
+  segments and sealed to the drawn set.
+
+Merge order: toolkit (#1480) and protos (#284) in either order → tags/SHA
+→ api → web.
+
 ## 3. Walk
 
 Branch api on `:50051`, branch web on `:3003`, fresh lobby after an image
