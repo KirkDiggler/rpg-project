@@ -412,11 +412,14 @@ other path atlas content takes to a client: it carries the revealed
 region's props and boundaries, and the client now draws walls from
 `segments`, so without this a revealed secret room has no walls in exactly
 the scenario the walk exercises. The reveal event gains `repeated
-AtlasSegment segments` (the segments newly presented to the knower; the
-segment through the concealed door was already whole, and its gap derives
-from the doorway the reveal carries) and `repeated Position sealed` (the
-revealed region's sealed cells). After a reveal, `AtlasFor` and the reveal
-agree byte-for-byte on both. The session module's `Atlas` and
+AtlasSegment segments` (the segments newly presented to the knower, a set
+difference against the recipient's prior projection; the segment through
+the concealed door was already whole and is not in the patch) and `repeated
+Position sealed` (the revealed region's sealed cells, a subset of the
+beat's own `region.cells`). The door's gap is not this beat's: `DoorRevealed`
+carries the doorway, and the client derives the gap where that doorway meets
+a segment it already holds, so no segment rides `DoorRevealed`. After a
+reveal, `AtlasFor` and the reveal agree byte-for-byte on both. The session module's `Atlas` and
 `RegionRevealedBody` mirror encounter's by copy and carry both fields.
 
 ## 6. The runtime — what it answers today and what it needs
