@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 882 604" width="882" height="604" font-family="system-ui, sans-serif" font-size="11">
+<rect width="100%" height="100%" fill="#faf8f4"/>
+<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#b91c1c" stroke-width="2.2"/></pattern></defs>
+<text x="70" y="28" font-size="15" font-weight="600" fill="#222">Where a wall can go (pointy-top, odd-r)</text>
+<text x="70" y="48" fill="#555">green = thin wall: shaves the hatched slivers, kills nothing · orange = thick wall: on the flat sides, leaves neighbours whole,</text>
+<text x="70" y="64" fill="#555">but seals every grey cell it runs through the centre of · thin lines end on midpoints (green), thick lines may also end on centres (orange)</text>
+<polygon points="70.0,92.0 94.2,106.0 94.2,134.0 70.0,148.0 45.8,134.0 45.8,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="118.5,92.0 142.7,106.0 142.7,134.0 118.5,148.0 94.2,134.0 94.2,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="167.0,92.0 191.2,106.0 191.2,134.0 167.0,148.0 142.7,134.0 142.7,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="215.5,92.0 239.7,106.0 239.7,134.0 215.5,148.0 191.2,134.0 191.2,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,141.0 191.2,134.0 191.2,106.0 203.4,99.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="264.0,92.0 288.2,106.0 288.2,134.0 264.0,148.0 239.7,134.0 239.7,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="312.5,92.0 336.7,106.0 336.7,134.0 312.5,148.0 288.2,134.0 288.2,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="361.0,92.0 385.2,106.0 385.2,134.0 361.0,148.0 336.7,134.0 336.7,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="409.5,92.0 433.7,106.0 433.7,134.0 409.5,148.0 385.2,134.0 385.2,106.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="94.2,134.0 118.5,148.0 118.5,176.0 94.2,190.0 70.0,176.0 70.0,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="106.4,183.0 94.2,190.0 82.1,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="142.7,134.0 167.0,148.0 167.0,176.0 142.7,190.0 118.5,176.0 118.5,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="154.9,183.0 142.7,190.0 130.6,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="191.2,134.0 215.5,148.0 215.5,176.0 191.2,190.0 167.0,176.0 167.0,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,183.0 191.2,190.0 179.1,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="203.4,141.0 215.5,148.0 215.5,176.0 203.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="239.7,134.0 264.0,148.0 264.0,176.0 239.7,190.0 215.5,176.0 215.5,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="251.9,183.0 239.7,190.0 227.6,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="288.2,134.0 312.5,148.0 312.5,176.0 288.2,190.0 264.0,176.0 264.0,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="300.4,183.0 288.2,190.0 276.1,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="336.7,134.0 361.0,148.0 361.0,176.0 336.7,190.0 312.5,176.0 312.5,148.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="348.9,183.0 336.7,190.0 324.6,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="385.2,134.0 409.5,148.0 409.5,176.0 385.2,190.0 361.0,176.0 361.0,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="397.4,183.0 385.2,190.0 373.1,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="433.7,134.0 458.0,148.0 458.0,176.0 433.7,190.0 409.5,176.0 409.5,148.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="445.9,183.0 433.7,190.0 421.6,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="70.0,176.0 94.2,190.0 94.2,218.0 70.0,232.0 45.8,218.0 45.8,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="70.0,176.0 82.1,183.0 57.9,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="118.5,176.0 142.7,190.0 142.7,218.0 118.5,232.0 94.2,218.0 94.2,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="118.5,176.0 130.6,183.0 106.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="167.0,176.0 191.2,190.0 191.2,218.0 167.0,232.0 142.7,218.0 142.7,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="167.0,176.0 179.1,183.0 154.9,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="215.5,176.0 239.7,190.0 239.7,218.0 215.5,232.0 191.2,218.0 191.2,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="215.5,176.0 227.6,183.0 203.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="203.4,225.0 191.2,218.0 191.2,190.0 203.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="264.0,176.0 288.2,190.0 288.2,218.0 264.0,232.0 239.7,218.0 239.7,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="264.0,176.0 276.1,183.0 251.9,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="312.5,176.0 336.7,190.0 336.7,218.0 312.5,232.0 288.2,218.0 288.2,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="312.5,176.0 324.6,183.0 300.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="361.0,176.0 385.2,190.0 385.2,218.0 361.0,232.0 336.7,218.0 336.7,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="361.0,176.0 373.1,183.0 348.9,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="409.5,176.0 433.7,190.0 433.7,218.0 409.5,232.0 385.2,218.0 385.2,190.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="409.5,176.0 421.6,183.0 397.4,183.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="94.2,218.0 118.5,232.0 118.5,260.0 94.2,274.0 70.0,260.0 70.0,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="142.7,218.0 167.0,232.0 167.0,260.0 142.7,274.0 118.5,260.0 118.5,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="191.2,218.0 215.5,232.0 215.5,260.0 191.2,274.0 167.0,260.0 167.0,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,225.0 215.5,232.0 215.5,260.0 203.4,267.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="239.7,218.0 264.0,232.0 264.0,260.0 239.7,274.0 215.5,260.0 215.5,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="288.2,218.0 312.5,232.0 312.5,260.0 288.2,274.0 264.0,260.0 264.0,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="336.7,218.0 361.0,232.0 361.0,260.0 336.7,274.0 312.5,260.0 312.5,232.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="385.2,218.0 409.5,232.0 409.5,260.0 385.2,274.0 361.0,260.0 361.0,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="433.7,218.0 458.0,232.0 458.0,260.0 433.7,274.0 409.5,260.0 409.5,232.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="70.0,260.0 94.2,274.0 94.2,302.0 70.0,316.0 45.8,302.0 45.8,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="118.5,260.0 142.7,274.0 142.7,302.0 118.5,316.0 94.2,302.0 94.2,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="167.0,260.0 191.2,274.0 191.2,302.0 167.0,316.0 142.7,302.0 142.7,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="215.5,260.0 239.7,274.0 239.7,302.0 215.5,316.0 191.2,302.0 191.2,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,309.0 191.2,302.0 191.2,274.0 203.4,267.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="264.0,260.0 288.2,274.0 288.2,302.0 264.0,316.0 239.7,302.0 239.7,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="312.5,260.0 336.7,274.0 336.7,302.0 312.5,316.0 288.2,302.0 288.2,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="361.0,260.0 385.2,274.0 385.2,302.0 361.0,316.0 336.7,302.0 336.7,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="409.5,260.0 433.7,274.0 433.7,302.0 409.5,316.0 385.2,302.0 385.2,274.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="94.2,302.0 118.5,316.0 118.5,344.0 94.2,358.0 70.0,344.0 70.0,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="142.7,302.0 167.0,316.0 167.0,344.0 142.7,358.0 118.5,344.0 118.5,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="191.2,302.0 215.5,316.0 215.5,344.0 191.2,358.0 167.0,344.0 167.0,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,309.0 215.5,316.0 215.5,344.0 203.4,351.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="239.7,302.0 264.0,316.0 264.0,344.0 239.7,358.0 215.5,344.0 215.5,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="288.2,302.0 312.5,316.0 312.5,344.0 288.2,358.0 264.0,344.0 264.0,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="336.7,302.0 361.0,316.0 361.0,344.0 336.7,358.0 312.5,344.0 312.5,316.0" fill="#bdbdbd" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="385.2,302.0 409.5,316.0 409.5,344.0 385.2,358.0 361.0,344.0 361.0,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="433.7,302.0 458.0,316.0 458.0,344.0 433.7,358.0 409.5,344.0 409.5,316.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="70.0,344.0 94.2,358.0 94.2,386.0 70.0,400.0 45.8,386.0 45.8,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="118.5,344.0 142.7,358.0 142.7,386.0 118.5,400.0 94.2,386.0 94.2,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="167.0,344.0 191.2,358.0 191.2,386.0 167.0,400.0 142.7,386.0 142.7,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="215.5,344.0 239.7,358.0 239.7,386.0 215.5,400.0 191.2,386.0 191.2,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="203.4,393.0 191.2,386.0 191.2,358.0 203.4,351.0" fill="url(#hatch)" stroke="none"/>
+<polygon points="264.0,344.0 288.2,358.0 288.2,386.0 264.0,400.0 239.7,386.0 239.7,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="312.5,344.0 336.7,358.0 336.7,386.0 312.5,400.0 288.2,386.0 288.2,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="361.0,344.0 385.2,358.0 385.2,386.0 361.0,400.0 336.7,386.0 336.7,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<polygon points="409.5,344.0 433.7,358.0 433.7,386.0 409.5,400.0 385.2,386.0 385.2,358.0" fill="#e8eef7" stroke="#7a8aa6" stroke-width="1"/>
+<line x1="39.75128869403572" y1="183.0" x2="488.22809220139277" y2="183.0" stroke="#15803d" stroke-width="3"/>
+<line x1="203.4" y1="86.0" x2="203.4" y2="406.0" stroke="#15803d" stroke-width="3"/>
+<line x1="39.75128869403572" y1="288.0" x2="488.22809220139277" y2="288.0" stroke="#d97706" stroke-width="3"/>
+<line x1="336.7" y1="86.0" x2="336.7" y2="406.0" stroke="#d97706" stroke-width="3"/>
+<line x1="289.4" y1="183.0" x2="311.4" y2="183.0" stroke="#faf8f4" stroke-width="5"/>
+<rect x="289.4" y="180.0" width="22" height="6" fill="#d97706"/>
+<text x="300.4" y="174.0" text-anchor="middle" fill="#92400e" font-weight="600">door = one crossing</text>
+<line x1="336.7" y1="193.0" x2="336.7" y2="215.0" stroke="#faf8f4" stroke-width="5"/>
+<rect x="333.7" y="193.0" width="6" height="22" fill="#7c2d12"/>
+<text x="344.7" y="208.0" fill="#7c2d12" font-weight="600">door, even rows only</text>
+<text x="494.22809220139277" y="187.0" fill="#15803d" font-weight="600">midpoint line · shaves 1/24 each side · a door at every midpoint</text>
+<text x="494.22809220139277" y="292.0" fill="#b45309" font-weight="600">centre line · a wall one cell thick · seals the whole row</text>
+<text x="203.4" y="424.0" text-anchor="middle" fill="#15803d" font-weight="600">quarter line · shaves 5/24, alternating sides · doors every row</text>
+<text x="376.7" y="442.0" text-anchor="middle" fill="#b45309" font-weight="600">flat-side line · even rows whole · seals one odd-row cell per two rows</text>
+<circle cx="130.6" cy="351.0" r="3.6" fill="#15803d"/>
+<circle cx="142.7" cy="372.0" r="3.6" fill="#15803d"/>
+<circle cx="130.6" cy="393.0" r="3.6" fill="#15803d"/>
+<circle cx="106.4" cy="393.0" r="3.6" fill="#15803d"/>
+<circle cx="94.2" cy="372.0" r="3.6" fill="#15803d"/>
+<circle cx="106.4" cy="351.0" r="3.6" fill="#15803d"/>
+<circle cx="118.5" cy="344.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="142.7" cy="358.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="142.7" cy="386.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="118.5" cy="400.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="94.2" cy="386.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="94.2" cy="358.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/>
+<circle cx="118.5" cy="372.0" r="3.8" fill="#d97706"/>
+<circle cx="70" cy="470.0" r="3.6" fill="#15803d"/><text x="80" y="474.0" fill="#333">six side midpoints, box fractions (±0.5, 0) and (±0.25, ±0.375): where thin walls start, end, and turn</text>
+<circle cx="70" cy="488.0" r="3" fill="none" stroke="#999" stroke-width="1.2"/><text x="80" y="492.0" fill="#333">corners: dropped — a line through corners either halves cells or closes no corner</text>
+<circle cx="70" cy="506.0" r="3.8" fill="#d97706"/><text x="80" y="510.0" fill="#333">the seventh position, the centre: where thick walls turn (free — a thick wall seals it anyway); a thin wall ending here pays that one cell</text>
+<text x="70" y="532.0" fill="#555">Twelve directions, 30° apart. Along rows of neighbours (0°, 60°, 120°): midpoint line or centre line. Along sides (30°, 90°, 150°): quarter line or flat-side line.</text>
+<text x="70" y="548.0" fill="#555">A rectangle needs one direction from each family. Which of the two lines in a family you pick is thin-and-shaved versus thick-and-whole.</text>
+</svg>
