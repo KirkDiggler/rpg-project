@@ -36,11 +36,13 @@ Review history: three fix rounds closed legacy mutation/healing order,
 persistence aliasing/spent-capacity resurrection, and one malformed test roller.
 Full root tests/lint and CI passed.
 
-## Encounter participation — in progress
+## Encounter participation — released
 
 - Issue: rpg-toolkit#1438
 - PR: rpg-toolkit#1453
-- Reviewed head before current fixes: `53079d4b21beac1567b787ec764ab3fe395f7903`
+- Final branch head: `680c25b82e2e0b4353f8fbb4a69e9ff0a4f682cf`
+- Merge: `f5592a80062a78664f421893bcdcde4bc2f73119`
+- Release: `rulebooks/dnd5e/encounter/v0.50.0`
 
 The first implementation established a rulebook-neutral participation answer:
 Down narration, Contact, and turn behavior (`Wait`, `AutoPass`, `Remove`) are
@@ -127,6 +129,8 @@ defers same-call dissolution/auto-pass until the approved continuation:
 pending. That is deliberate tabletop scheduling, not a claim that combatants
 remain hostile.
 
+All five unknowns above were implemented on the encounter branch. Focused/full/race/lint/CI gates passed. GLM scoped re-review found no remaining Critical/Important issue; the single initial Copilot pass and Claude branch review were answered before merge.
+
 ## Review-process ruling
 
 Published PRs receive one initial Copilot review. Fixes receive scoped local
@@ -136,10 +140,9 @@ publication.
 
 ## Remaining delivery
 
-1. finish/review/merge encounter participation and mint its tag;
-2. resolution participation and Death Save entries;
-3. session declaration/executor/current-state projection;
-4. proto transcription;
-5. thin API acceptance;
-6. web command, shared die, public progress and narration;
-7. real multiplayer verification and final observed-results update here.
+1. resolution participation and Death Save entries;
+2. session declaration/executor/current-state projection;
+3. proto transcription;
+4. thin API acceptance;
+5. web command, shared die, public progress and narration;
+6. real multiplayer verification and final observed-results update here.
