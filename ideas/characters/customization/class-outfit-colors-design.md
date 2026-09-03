@@ -262,6 +262,15 @@ This is a deliberate correction of the production-hair ownership decision.
 Existing hair behavior does not change, but its runtime and persistence owner
 does.
 
+`rulebooks/dnd5e` and `rulebooks/dnd5e/session` are independently versioned Go
+modules. They therefore publish through two sequential toolkit PRs:
+[rpg-toolkit#1450](https://github.com/KirkDiggler/rpg-toolkit/issues/1450)
+first owns and tags Appearance in the D&D module, then
+[rpg-toolkit#1451](https://github.com/KirkDiggler/rpg-toolkit/issues/1451)
+pins that exact CI-minted tag and publishes Session roster projection. Local
+iteration may use a pseudo-version or uncommitted local override, but no local
+`replace` or branch-only pseudo-version enters either merged module.
+
 ## API boundary
 
 The API knows protobuf and toolkit shapes only where it converts between them.
@@ -411,25 +420,32 @@ multiple independently colored characters, movement, and equipped weapons.
 Structural provider checks cover the race matrix without requiring 32
 redundant visual witnesses.
 
-Each changed repository receives one implementation branch/PR for the wave,
-one final full suite, and one independent whole-PR review when its repository
-policy calls for it. Every finding is fixed or dispositioned before readiness.
+Each independently versioned module receives one implementation branch/PR for
+the wave, one final full suite, and one independent whole-PR review when its
+repository policy calls for it. Most repositories therefore have one PR;
+rpg-toolkit has two because D&D and Session are separate modules with an exact
+published dependency between them. Every finding is fixed or dispositioned
+before readiness.
 
 ## Delivery order
 
 1. Provider mask curation and Kirk's Blender approval.
 2. Provider publication.
-3. Proto contract and toolkit implementation, developed against the approved
-   boundary.
-4. Toolkit merge and generated module tag.
-5. API pin bump, conversion/delegation migration, and SDK-backed roster.
-6. Web proto/provider pin, generated catalog, UI/runtime integration, and
+3. Proto contract and D&D toolkit Appearance implementation, developed against
+   the approved boundary.
+4. D&D toolkit merge and CI-minted module tag.
+5. Session toolkit pin to that exact D&D tag, roster implementation, merge, and
+   CI-minted Session tag.
+6. API pin bumps, conversion/delegation migration, and SDK-backed roster.
+7. Web proto/provider pin, generated catalog, UI/runtime integration, and
    normal-game proof.
-7. Canonical design outcome and Journey closure.
+8. Canonical design outcome and Journey closure.
 
-Provider, toolkit, and proto are dependencies of API/web in different ways;
-their exact merge order may interleave, but no consumer merges against an
-unpublished dependency.
+Provider, both toolkit modules, and proto are dependencies of API/web in
+different ways; their exact merge order may interleave where no dependency
+exists, but no consumer merges against an unpublished dependency. Squash merges
+make branch commits unsuitable as durable module dependencies, so local
+pseudo-versions are iteration aids only.
 
 ## Non-goals
 
