@@ -96,14 +96,20 @@ conversation and where it landed:
 
 ### Slice 2
 
-- **2.6 A wall is two picked positions.** Pick a side midpoint to start.
-  The end snaps to side midpoints that lie on one of the twelve rays from
-  the start and put no cell centre on the line; nothing else is offered.
-  Kirk: *"snapping could snap to one of those 12 points."* Once a start is
-  picked the designer draws the lines from it, thin and thick told apart,
-  with the cells each would seal greyed, so the author sees where a wall can
-  go and what it costs before choosing (Kirk: *"maybe in the design we can
-  visualize where we can go"*).
+- **2.6 A wall is two picked positions.** Pick one of a hex's seven
+  positions to start. The end is any position on one of the twelve rays
+  from the start; nothing off a ray is offered. *(Amended 2026-09-03 in the
+  build: an earlier revision's "put no cell centre on the line" refused thick
+  lines, which F14 retires; both are offered and the cost is shown.)* Kirk:
+  *"snapping could snap to one of those 12 points."* Once a start is picked
+  the designer draws the rays from it, thin and thick told apart, with the
+  cells each would seal greyed, so the author sees where a wall can go and
+  what it costs before choosing (Kirk: *"maybe in the design we can
+  visualize where we can go"*). What one wall seals is exact from the
+  lattice and needs no mirror of the area rule: a thin line shaves at most
+  5/24, so a single wall seals exactly the cells whose centres lie on its
+  segment. What walls seal in combination (the hexagonal corner at 7/12) is
+  the compiler's answer and reaches the board as `sealed` off the wire.
 - **2.7 Corners.** Picking a position another wall already ends at joins
   them: the same `{cell, offset}` is written to both, and moving one end
   moves the other. That is the whole of snapping.
@@ -215,10 +221,17 @@ doors:
   in the center… then it would go out a clean axis on one of the 30 deg
   angles."* A thick flat-side wall can also turn onto a centre line at an
   even-row side midpoint, and nowhere else.
-- **F16. Thin walls turn at midpoints.** Through every slanted midpoint
-  pass thin lines at 0°, 60°, and 90° (for the upper-right one); through
-  every flat-side midpoint at 30°, 60°, 120°, and 150°. So a thin wall makes
-  60°, 90°, and 120° corners at midpoints and keeps the corner cell (3/4).
+- **F16. Thin walls turn at midpoints.** Through every side midpoint pass
+  four thin lines and two thick: the two thick are the line through the two
+  centres the side separates and the line along the side itself. In screen
+  angles (y down), through the upper-right slanted midpoint the thin lines
+  are 0°, 60°, 90°, and 150° and the thick 30° and 120°; through a flat-side
+  midpoint the thin are 30°, 60°, 120°, and 150° and the thick 0° and 90°.
+  *(Corrected 2026-09-03 in the build: the earlier count of three thin at a
+  slanted midpoint missed 150°; every side midpoint is the image of every
+  other under a 60° turn of the grid, so all six carry the same count.)* So
+  a thin wall makes 60°, 90°, and 120° corners at midpoints and keeps the
+  corner cell (3/4).
   No thin line passes through any centre — geometry, not policy — so a thin
   wall that wants to turn at a centre does it as a second wall: the ray from
   its end midpoint to the centre is a thick stub that seals that one hex,
