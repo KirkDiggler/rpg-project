@@ -1,6 +1,6 @@
 # Wall geometry — why square rooms fight a hex grid, and what to author instead
 
-**Status:** rulings in (2026-09-03). Next: `design.md`, panel-back, for the
+**Status:** rulings in (2026-09-03). Design PROPOSED in `wall-geometry-design.md`; Kirk rules once; then plan and build. (was: next: `design.md`, panel-back, for the
 model below; Kirk rules once; then `plan.md` and the build.
 **Issues:** rpg-dnd5e-web#908 (walls as lines) · rpg-dnd5e-web#910 (trim) ·
 rpg-dnd5e-web#898 (a wall must stand on floor) · rpg-toolkit#1443 (cliff
