@@ -366,7 +366,9 @@ engine, not the client.
 message AtlasSegment {
   AxialPoint from = 1;   // fractional axial: a point in the atlas's own frame
   AxialPoint to = 2;
-  double height = 3;     // the wall's height multiplier, as boundaries carry it
+  float height = 3;      // the wall's height multiplier, the SAME width as
+                         // AtlasBoundary.height so a client never compares a
+                         // float32 0.7 against a float64 0.7 (ruled in the build)
 }
 message AxialPoint { double q = 1; double r = 2; }
 repeated AtlasSegment segments = 10;   // on GetAtlasResponse

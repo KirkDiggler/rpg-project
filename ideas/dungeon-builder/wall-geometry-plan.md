@@ -137,7 +137,7 @@ bottom-up.
 ### 2.1 rpg-api-protos — `dnd5e/api/session/v1alpha1/service.proto`
 
 - `message AxialPoint { double q = 1; double r = 2; }`
-- `message AtlasSegment { AxialPoint from = 1; AxialPoint to = 2; double height = 3; }`
+- `message AtlasSegment { AxialPoint from = 1; AxialPoint to = 2; float height = 3; }` (float, matching `AtlasBoundary.height`; ruled 2026-09-03 in the build)
 - `GetAtlasResponse`: `repeated AtlasSegment segments = 10;`
   `repeated Position sealed = 11;`
 - `AtlasProp` offset comment: bounding-box fractions (x widths east, y
