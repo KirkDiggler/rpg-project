@@ -131,6 +131,28 @@ remain hostile.
 
 All five unknowns above were implemented on the encounter branch. Focused/full/race/lint/CI gates passed. GLM scoped re-review found no remaining Critical/Important issue; the single initial Copilot pass and Claude branch review were answered before merge.
 
+### Unknown 6 — full StatusView is too strict for participation
+
+**Evidence:** The first resolution implementation used `Character.StatusView`
+to obtain life state and Death Save progress. GLM review showed that a character
+carrying a valid, loadable Shield condition attaches successfully but is
+intentionally rejected by the no-magic display catalog. The old Standing read
+answered that character from HP; the new Participation read would abort every
+verb instead.
+
+**Ruling:** Publish a narrow root character participation view containing only
+derived life state and detached Death Save progress. Resolution consumes that
+released provider. Do not copy the three-save threshold into resolution and do
+not add spell status to the no-magic display catalog merely to make this read
+work.
+
+- Follow-up issue: rpg-toolkit#1469
+- Resolution issue waiting on it: rpg-toolkit#1439
+
+**Cost if wrong:** One extra root release and public read surface. The
+alternative silently couples a combat-critical life-state read to unrelated UI
+catalog completeness.
+
 ## Review-process ruling
 
 Published PRs receive one initial Copilot review. Fixes receive scoped local
