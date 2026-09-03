@@ -187,6 +187,29 @@ review. Normal-game evidence may use two automated four-member sessions; Kirk's
 single final checkpoint reviews the aggregate creation/session result rather
 than repeating a manual workflow eight times.
 
+### Web outcome
+
+Web PR `KirkDiggler/rpg-dnd5e-web#905` merged to `dev` as
+`2c68a1853ee0448c0881bde000b8df4e3a234c36` from reviewed head
+`27d1f26d07b7e6bae81a987919bc6239884fa9f1`. The generated catalog binds
+provider merge `0c837a801d97c98e50a336fb07e3b50d08d54df1`, aggregate manifest
+`2457ee61b15cb0ef1ca8cd9b42bc30d84d5286510f91e44d8437a6efbc80efac`,
+and 969 exact source files. Runtime resolution, creation controls, readonly
+summary, active/complete/generic fallbacks, and owner/peer session rendering are
+profile-driven for all eight races. Synced licensed assets remain ignored and
+untracked.
+
+The normal Human creation route selected Hair 38 + Facial Hair 18,
+`#64A5CE`, and roughness `0.55`; Apply returned the authoritative summary and
+the character finalized. Two Reference Tomb sessions covered Human/Elf/Gnome/
+Tiefling and Dwarf/Half-Elf/Halfling/Half-Orc. Every observed body/accessory
+request succeeded with zero HTTP or application failures. Kirk's final verdict
+was “it really does”. Final local CI and all four GitHub checks (Lint and Type
+Check, Test, Security Audit, Deploy Preview) passed. GLM 5.3 moved from Ready
+0/0/2 to Ready 0/0/0 after dead duplicate resolver authority and a no-op evidence
+assertion were removed; historical publication tests now bind those older
+race-class files as exact aggregate-profile fallbacks.
+
 ## Sustainable process
 
 - Work inline without subagents.
