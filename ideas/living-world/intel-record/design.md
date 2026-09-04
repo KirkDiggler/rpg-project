@@ -99,7 +99,16 @@ place:
   holds; a monster with an empty `holds` and one with intel are
   byte-identical to every observer until a loot.
 - Persistence: the intel table is field structure (construction-truth); the
-  holdings are journal facts; Load replays, never re-seeds.
+  holdings are journal facts; Load replays, never re-seeds. A PROP's
+  records are part of the prop's persisted data (toolkit build,
+  2026-09-04: they were not, and every in-memory scene passed — a scroll
+  taught the first holder only; caught by a session-level scene that
+  reloads the stored encounter the way the game does between verbs; pinned
+  at both levels). Two records on one prop are legal and both apply; two
+  records revealing one door are legal — knowledge is not scarce.
+- Secrecy on the atlas: `AtlasProp` never carries a prop's records, and a
+  scene asserts the serialised atlas contains no record id — a client
+  cannot tell the scroll from the chalice before picking it up.
 - `session.SpawnInput.Holds` replaces `.Knows` and forwards to
   `JoinInput.Holds`. Hosts forward COMPILED intel ids.
 - Trust boundary at load (slice 2's gap 10) extends: a `holds:intel:` fact
