@@ -27,11 +27,14 @@ open through the build and merges on done-when (delegated).
 5. **`Exit` already records where the member stood** (canvas.go: "records
    where they stood on the way out"), which is the exit-cell check.
 
-## Board filing (at branch-cut, not before)
+## Board filing (cut 2026-09-04)
 
-Journey #326 is adopted. Slice issues: rpg-api-protos (wave 0); rpg-toolkit
-encounter module (wave 1 A+B) and session module (wave 1 C); rpg-api
-(wave 2); rpg-dnd5e-web (wave 3). Each PR body: purpose, acceptance table,
+Sub-issues of journey rpg-project#326, Kind=Build: rpg-api-protos#288
+(wave 0); rpg-toolkit#1495 (encounter module, wave 1 A+B) and
+rpg-toolkit#1496 (session module, wave 1 C); rpg-api#913 (wave 2);
+rpg-dnd5e-web#921 (wave 3). Team and Initiative are blank on all five
+because the journey carries neither — set them on #326 first if these
+should surface in the Team or Current Initiative views. Each PR body: purpose, acceptance table,
 evidence, every Copilot thread answered with the stance at decision time.
 Ready PRs, never drafts. Findings outside this slice → `discovered`
 issues on the owning repo, never fixed in passing.
