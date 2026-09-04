@@ -66,6 +66,11 @@ Session service, `dnd5e/api/session/v1alpha1`:
 - `AtlasProp` gains `string id` (empty when the author named none).
   `GetAtlas` omits held props for everyone; a dropped prop appears at
   its drop cell.
+- **Wave-0 follow-up PR (after R10 and the web build's findings):**
+  rename `Take`→`Hold`, `TAKEN`→`HELD`, `Taken`→`Held{holder, prop}`;
+  `AtlasProp.holdable` (bool); `GetAtlasResponse.exits` (repeated
+  `AtlasExit{id, at}`). Leave is offered everywhere; exits are for
+  drawing the way out, not gating.
 
 Authoring service, `dnd5e/api/authoring/v1alpha1`:
 
@@ -200,7 +205,7 @@ Builder:
 Game:
 
 - **Loot on every downed body in range** — never only the captain (design
-  P3). Hold on an adjacent holdable prop. **Leave** at an exit cell calls
+  P3). Hold on an adjacent prop whose `AtlasProp.holdable` is true. **Leave** at an exit cell calls
   `Exit`; the server decides what it means.
 - Beats as statements: "Aldric looted the skeleton captain", "Aldric holds
   the heirloom", "Aldric left through the entrance with the heirloom",

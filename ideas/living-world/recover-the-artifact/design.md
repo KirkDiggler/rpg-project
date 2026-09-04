@@ -87,6 +87,12 @@ each piece below earns its place on its own.
   thing that is only held. The yaml flag is `holdable:`; the beat is
   `held`, rendered present-tense ("Aldric holds the heirloom"); Drop is
   its inverse. Wire renamed in a wave-0 follow-up.
+  **Settled after a round** (same hour): Hold was pulled back for a
+  moment because in 5e "hold" is about hands, then kept for exactly that
+  reason — Kirk: "hold means something, it is a fact; maybe it is a
+  one-handed hold or two-handed; maybe someone has to hold it. hold is a
+  great word." Hands are a shelf (§9), not a collision. The merchant's
+  verb is **Trade** (money for item; later player for player), not Take.
 - **R9 — They drop it.** Kirk: "oh i like that. they drop it." A carrier
   who leaves from anywhere but the bound exit drops the artifact where
   they stood, with a `dropped` beat to everyone present (§6).
@@ -296,6 +302,15 @@ tell the truth); the character sheet's inventory (the artifact is
 run-scoped until the run ends; what keeping it means across runs is the
 journal's business, brainstorm §10, a later slice).
 
+**On the wire (found by the web build, ruled 2026-09-04):** `AtlasProp`
+carries `holdable` — structure on the truth grain, a holdable thing looks
+holdable — so the client offers Hold only where it is true and never
+guesses from an id. `GetAtlasResponse` carries `exits` (id + cell), the
+authored ways out, same for every member like `start`, so the map can
+draw the way out. **Leave is offered everywhere and the server decides**
+what a departure means (R9 needs a departure from the vault to be
+possible); when the member stands on an exit the button may say so.
+
 ## 6. The ending — exit holding the artifact (R6; shape proposed)
 
 "Both paths end in withdrawal with the artifact" — one ending, not two:
@@ -420,6 +435,14 @@ what" answered once, by the journal (unchanged).
   thing over* is this shelf. Three different verbs, one of them ours.
 - **Player-to-player intel sharing** in general — Kirk's open question.
   No verb until a use case beyond the parchment names one.
+- **Hands.** A held thing may cost a hand: one-handed or two-handed hold,
+  a free hand for a shield or a spell, "someone has to hold it" while the
+  party fights. Kirk 2026-09-04. The `holds:` fact is the attachment
+  point; nothing here reads hands.
+- **Take.** The act that lands a held thing in the character's inventory
+  — carrying the artifact back to town and asking the old man. The word
+  is reserved; the run-end fold that turns `holds:` into an item is the
+  later slice.
 - **Loot beyond intel** — coin and gear are rpg-project#310's (wallet,
   shop, prices). Holdings is the seam they will use; nothing stocked.
 - **Who sees a body is lootable** — sight-scoped affordances ride the
