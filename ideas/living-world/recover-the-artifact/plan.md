@@ -262,3 +262,21 @@ merges.
 | 3 | rpg-dnd5e-web: builder + game | 0 pinned; walks against 2 |
 | walk | local stack from the wave-2 and wave-3 worktrees | 2, 3 CI green |
 | merge | bottom-up: toolkit → api → web → #368 | Kirk's walk |
+
+## Retro — the rule for the next slice (Kirk, 2026-09-04, end of the build)
+
+This slice opened as five PRs and closed at roughly thirteen: a wire rename,
+a refusal-text fix, join-time knowledge on two modules, the exited-beat
+truth, a test-only follow-up, an api re-pin. Every one surfaced when the
+NEXT wave integrated — the api launch path, its acceptance scenes — or when a
+naming ruling landed after the first PR had opened. Each cost a PR, a Copilot
+round, a tag and a downstream re-pin; the toolkit's monthly review quota was
+spent by the end.
+
+Kirk: "these toolkit things could be found locally… we have the local stack
+that can be built from pseudo toolkit versions that are pushed up. we would
+have had significantly less PRs and be able to iterate faster with less churn
+overall." Rule: protos first; then build every wave on PUSHED branches and
+pin them as pseudo-versions; stand the local stack up from the worktrees, run
+the api scenes and walk it; fold the findings back on the branches; THEN open
+one bounded PR per module, in dependency order, on real tags as they mint.
