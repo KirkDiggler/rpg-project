@@ -52,22 +52,58 @@ have formed does not. "Making the goblin camp not hostile falls out of this."
 3. **Intel that reveals a fact** (`reveals: { fact: saved-wiseman }`), placed,
    handed, or told — the ways a faction comes to know.
 
+## Ruled (Kirk, same session)
+
+- **The chief is the camp's mind.** "goblins listen to their chief — we only
+  need to convince the chief." A faction names one knower; the camp knows
+  when he knows. A scout learning it flips nothing.
+- **Two ways to convince him, both legal:** "we throw it at the chief, or be
+  in the same room as the chief holding the letter." PRESENCE first — a
+  holder of the letter standing in the chief's region is enough, no verb;
+  THROW/hand second — a verb, later.
+- **The hold-out mission** (Kirk): "a messenger with a letter shows up in n
+  turns." Survive until then; get the letter to the chief; the camp turns.
+  That is the CLOCK tool arriving with its own use case: something scheduled
+  to appear at turn N.
+
+## The hold-out, as the party lives it
+
+1. The party is in the goblin camp; the camp is `hostile until:
+   saved-wiseman`. A fight forms on sight. They hold out.
+2. At turn N the messenger arrives at the entrance carrying the letter — a
+   holdable prop whose intel record `reveals: { fact: saved-wiseman }`.
+   (First cut: the letter APPEARS at the entrance at turn N and the beat
+   says a messenger brought it; a walking, talking messenger is the NPC
+   lane's Interact "give" capability, shelved.)
+3. Somebody Holds the letter and reaches the chief's room while carrying it
+   — presence — or throws it to him (later).
+4. The chief knows `saved-wiseman` → the edge `goblins → party` flips to
+   friendly → **the fight between those two factions dissolves**, the way
+   a boss's death dissolves it today; goblins stop being targets and stop
+   targeting. Whether they then trade, follow, or sulk is Billy's lane.
+
+## Design consequences this names
+
+- **A disposition flip mid-fight dissolves the fight between the flipped
+  factions** — encounter's bubble logic, ours; the same seam a death uses.
+  A fight with a third hostile faction in it keeps going for that faction.
+- **Presence transfer**: "the chief knows what is carried into his room" is
+  a fold over (holder's region == chief's region) ∧ (holder holds a record)
+  — evaluated on every arrival the way concealment's sweep runs on every
+  sight refresh; the record is COPIED to the chief (intel copies).
+- **Timed arrival**: a placement (prop now, NPC later) with `arrives:
+  { turn: N }` — the clock tool's first instance; the hostage's "turns until
+  turned" is its second.
+
 ## Open rulings (for Kirk)
 
-- **Grain.** A faction knows a fact when — one member knows it (group grain,
-  the kernel's default: "belief = every entity folds over facts it
-  witnessed; group grain default"), or every member, or a named leader? The
-  goblin chief learning it should be enough; a lone scout learning it
-  probably should not flip the camp. Proposal: the faction declares a
-  **knower** (the chief); the DM's tool is a dropdown of that faction's
-  monsters.
-- **How they learn, first.** (a) the party HANDS the intel (the handoff
-  shelf — an item transfer to an NPC); (b) the party TELLS it (a verb on a
-  world NPC — fadedpez's Interact/capabilities lane); (c) the camp WITNESSES
-  it (the sight seam; the Wiseman walks in with the party). Proposal: (a)
-  first — it reuses holdings and Loot's transfer in reverse, and needs no new
-  verb semantics; (b) belongs to the NPC lane and arrives when Interact
-  grows a "say/show" capability.
+- ~~Grain~~ — ruled: the chief.
+- ~~How they learn first~~ — ruled: presence, then throw.
+- **Does the flip dissolve a fight already formed?** Proposed yes (above);
+  confirm.
+- **Where does the messenger come from?** A prop that appears at turn N (no
+  new lane) vs an NPC that arrives and gives (fadedpez's Interact). Proposed
+  the prop first, the NPC when the capability exists.
 - **Where the flip lives.** The graph (an edge fact written when the
   predicate holds) — not on the monster, not in behavior. Behavior reads the
   graph if it wants to (Billy's lane); fight formation already does.
@@ -87,5 +123,7 @@ reaction work.
 | a camp authored `hostile until: saved-wiseman` forms a fight on sight while nobody in it knows the fact | scene |
 | the chief receives the intel (handed) → the edge flips → walking into the camp forms no fight | scene, and the walk |
 | a scout receives it → nothing flips (grain) | scene |
-| a fact that arrives mid-fight dissolves nothing by itself (ruled? — see Kirk) | open |
+| the letter carried into the chief's room mid-fight flips the edge and the fight dissolves | scene, and the walk |
+| the letter carried into a scout's room flips nothing | scene |
+| the messenger's letter appears at the entrance at turn N and not before | scene on the clock |
 | the DM authored all of it through the designer: faction, disposition, until, the intel record | screenshot + yaml round-trip |
