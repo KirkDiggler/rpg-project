@@ -218,6 +218,10 @@ authored one (a zero-valued start would claim the party arrives at the
 origin looking nowhere), the session mirror keeps the pointer, and the wire
 OMITS `start` in that case; a bare pair yields a start with an empty facing;
 rpg-api reads the facing from the atlas mirror only, never a second source
-on `Compiled`. Landed: toolkit encounter v0.59.0 (#1517); protos #292; the
+on `Compiled`. The nil case is not an authoring case — dungeonspec REQUIRES
+a start ("the dungeon does not say where the party starts") — it is the
+OLD STORED BLOB: a session persisted before starts were carried, loaded
+after the bump, must serve an atlas with no start rather than one at the
+origin (api build, 2026-09-04; that is the deploy risk, and its scene). Landed: toolkit encounter v0.59.0 (#1517); protos #292; the
 session mirror, api translation and web camera follow. And a **scenario tab** in the
 builder — rpg-project#372.
