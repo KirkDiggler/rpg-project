@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R5) — BUILDING on branches, PRs after the walk — the first tool cut under the north star; plan.md beside this file
+status: RULED 2026-09-04 (R1–R7) — walk findings folded on the branches; PRs after the second walk — the first tool cut under the north star; plan.md beside this file
 journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
 predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
 north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
@@ -49,6 +49,19 @@ proves it.
   intel; a scenario's description may suggest it; the record's `reveals`
   grows one key per use case (a treasure's location, a lock's approach, a
   camp's disposition) and each arrives with its own use case, never ahead.
+- **R6 — Intel can be held by a prop.** Kirk, walking: "tech could get intel
+  by holding something too. if we want to test the intel we need to be able
+  to place it on a few things — not the hardest monster to kill in the
+  game." `holds:` is legal on props as well as monsters. Holding a prop
+  applies its records' `reveals` to the holder (intel copies; the prop keeps
+  its records for a later handoff); looting a body that holds such a prop
+  does the same through the prop. The hold-out's letter is exactly this. The
+  shipped heirloom tomb gains a second record on a holdable prop in the hall
+  so a walk can test intel without killing the captain.
+- **R7 — Intel is a dungeon-level section, not a palette item.** Kirk: "so
+  little weird the intel is next to the assets." The record list and "new
+  intel" live in the inspector's dungeon sections beside Scenarios, not in
+  the palette beside Props; a record's form opens in place there.
 
 ## 2. The file — dungeonspec v2
 
@@ -66,9 +79,9 @@ place:
 - `intel[].reveals` — exactly one target in this cut: `door: <door id>`, refused
   when the door does not exist. A declared-but-unconcealed door is legal and
   inert. The map of targets grows one key per use case (region, …).
-- `place[].holds` — intel ids; monsters only (refused on a prop, for
-  `blocks_movement`'s reason); refused when the id does not exist; the same
-  record may be held by several monsters (intel copies).
+- `place[].holds` — intel ids; legal on monsters AND props (R6); refused
+  when the id does not exist; the same record may be held by several
+  placements (intel copies).
 - `knows` — refused by name, pointing at `intel`/`holds`.
 - `Compiled` exposes `Intel []IntelRecord{ID, Reveals}` and `Holds` on each
   monster placement.
@@ -107,11 +120,12 @@ drop it silently; two api tests pin that it arrives.
 
 ## 5. The designer — the panel (web)
 
-- **Intel panel** in the inspector, beside Regions/Props: **New intel** →
-  a record with a suggested id; **Reveals** = a dropdown of the dungeon's
-  doors (the only kind in this cut; the dropdown is the entity_ref picker
-  filtered by kind, as everywhere); **Held by** = a multi-pick of the
-  dungeon's monsters by id.
+- **Intel section** in the inspector's dungeon sections beside Scenarios
+  (R7): the record list, **New intel** → a record with a suggested id;
+  **Reveals** = a dropdown of the dungeon's doors (the only kind in this
+  cut; the dropdown is the entity_ref picker filtered by kind, as
+  everywhere); **Held by** = a multi-pick of the dungeon's named monsters
+  AND props (R6).
 - Selecting a monster shows what it holds, read-only, with a link back to
   the record — the monster is not where you edit intel.
 - YAML emit/parse round-trip byte-exact for `intel` and `holds`; `knows` is
@@ -145,7 +159,8 @@ answered once (holdings).
 | two monsters holding the same record: looting either reveals; looting both reveals once | intel copies; no double narration |
 | `knows:` is refused by name in the file and in the panel | dungeonspec test; parser test |
 | a `holds:intel:` fact naming an undeclared record is refused at load | trust-boundary scene |
-| the heirloom tomb re-authored through the panel round-trips byte-exact and walks path 2 | fixture pinned in three repos; Kirk's walk |
+| a holdable prop carrying a record teaches its holder on Hold; looting a body that holds that prop teaches too | scenes |
+| the heirloom tomb re-authored through the panel round-trips byte-exact and walks path 2, and its hall scroll teaches without a fight | fixture pinned in three repos; Kirk's walk |
 
 ## 8. Shelves — named, empty
 
@@ -154,7 +169,7 @@ answered once (holdings).
 - **The parchment body and its reading check** — the record grows a body and
   a check; Loot yields the record as an item; reading applies `reveals`.
 - **Hands** — a held record may cost a hand (slice 2 §9).
-- **Intel on props and NPCs** — a chest or a vendor holding intel; `holds` is
-  monsters-only until a use case says otherwise.
+- **Intel on NPCs** — a vendor holding intel; arrives with the NPC lane's
+  give capability. (Props: ruled in, R6.)
 - **The scenario dropdown, description, kill-the-captain** — rpg-project#372 /
   #371, the next cut.
