@@ -269,7 +269,7 @@ type HoldOutput struct{} // as Loot's
 
 Validation: nil → empty member → closed → not a member → no such prop →
 not holdable → already held → not in range. "No such prop" and "not
-takeable" refuse identically only when the prop is inside space the
+holdable" refuse identically only when the prop is inside space the
 member cannot see (the probe law from slice 1); a visible pillar refuses
 by name. Effect: the prop leaves the atlas — a `held` beat to everyone
 present (physical state folds on the truth grain, ruled 2026-09-01) — and
@@ -358,7 +358,7 @@ Consequences the trigger must state:
   encounter auto-closes as it does now.
 - **Leaving from anywhere but the exit while holding drops the holding**
   (R9): the artifact reappears as a
-  takeable prop on the cell the carrier stood on, with a `dropped` beat
+  holdable prop on the cell the carrier stood on, with a `dropped` beat
   to everyone present. Otherwise a carrier who leaves through the lobby —
   or disconnects — takes the only win out of the run with them. Journal
   stays append-only: `dropped:<prop>@<cell>` is a new fact; the
@@ -435,10 +435,13 @@ what" answered once, by the journal (unchanged).
   thing over* is this shelf. Three different verbs, one of them ours.
 - **Player-to-player intel sharing** in general — Kirk's open question.
   No verb until a use case beyond the parchment names one.
-- **Hands.** A held thing may cost a hand: one-handed or two-handed hold,
-  a free hand for a shield or a spell, "someone has to hold it" while the
-  party fights. Kirk 2026-09-04. The `holds:` fact is the attachment
-  point; nothing here reads hands.
+- **Hands.** Kirk 2026-09-04, verbatim rules for the shelf: "hold can
+  take 0–2 hands; if it takes a hand, no two-handed weapon; if it takes
+  two, no weapon." Someone has to hold it while the party fights. Seam:
+  the holdable declaration grows a `hands: 0|1|2` count when this is
+  built (today's `holdable: true` is `hands` unstated), and the weapon
+  rule reads the `holds:` facts of the wielder. Nothing here reads hands
+  now; the flag stays a bool.
 - **Take.** The act that lands a held thing in the character's inventory
   — carrying the artifact back to town and asking the old man. The word
   is reserved; the run-end fold that turns `holds:` into an item is the

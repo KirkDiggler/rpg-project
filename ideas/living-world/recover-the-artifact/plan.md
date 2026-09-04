@@ -81,7 +81,7 @@ Authoring service, `dnd5e/api/authoring/v1alpha1`:
   door | monster` (open vocabulary, deliberately not an enum — the
   descriptor is content).
 - `PutDungeon` ships verbatim YAML: **no proto change** for `id`, `knows`,
-  `takeable`, `exits`, `scenario`. Refusals travel as they do today.
+  `holdable`, `exits`, `scenarios`. Refusals travel as they do today.
 
 Evidence: `buf lint`, `buf format`, `buf breaking`, generate compiling. No
 hand-written tests. Consumers pin the `generated` branch SHA, never the
@@ -103,7 +103,7 @@ dungeonspec (`rulebooks/dnd5e/encounter/dungeonspec`):
   opaquely: dungeonspec validates only that every binding names an id
   that exists (placement or exit). Refusals per design §3.3, each naming
   the line. `Compiled` exposes `Exits`, `Scenario`, and ids/`Knows`/
-  `Takeable` on its placements.
+  `Holdable` on its placements.
 - `PlaceSpec.Boss` **untouched** (R8: the follow-up retires it).
 - Fixture: `reference-tomb.yaml` is **unchanged**. New
   `reference-tomb-heirloom.yaml` = the tomb plus a concealed vault, a
