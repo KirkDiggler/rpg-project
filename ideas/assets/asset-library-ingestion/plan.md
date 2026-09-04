@@ -90,11 +90,25 @@ Done when:
 - source catalog rebuild and runtime inventory checks pass; and
 - portable manifests contain no local path.
 
+### Fantasy Kingdom item acceptance
+
+The merged item pass adds an ignored `.glb-cache/` convention, separates model-cache input from tracked preview output, and groups sheets by the first meaningful filename category.
+
+Verified result:
+
+- 272 item FBXs produced 272 ignored cached GLBs;
+- 272 reusable 512px PNGs and 75 category sheets exist;
+- 470 MiB of GLBs remain outside Git;
+- no cached GLB is tracked;
+- preview and sheet manifests match every path and hash;
+- the source catalog and runtime inventory remain exact; and
+- Kirk accepted the complete item set as **“they all look great.”**
+
 ## Later pack-family passes
 
 Add one reviewed group/config decision at a time:
 
-1. Fantasy Kingdom weapons and items.
+1. Fantasy Kingdom weapons.
 2. Fantasy Kingdom props.
 3. Fantasy Kingdom buildings and environment.
 4. Other packs selected with Kirk.

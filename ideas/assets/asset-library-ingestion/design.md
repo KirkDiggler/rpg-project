@@ -62,19 +62,23 @@ Builds sheets from reusable preview PNGs. Sheets retain the original source dire
 
 Raw archives remain local and are never deleted. Temporary extracted sources may be removed after conversion is verified.
 
-Complete converted packs live only in private `rpg-game-assets`:
+Bulk converted GLBs are reproducible local cache, not Git content. Starting with the Fantasy Kingdom item pass, they live under the ignored path:
+
+```text
+library/<pack>/v<version>/.glb-cache/
+```
+
+Tracked private discovery output contains only previews, sheets, configurations, and portable manifests:
 
 ```text
 library/<pack>/v<version>/
-  models/<original source directories>/
   previews/<original source directories>/
   sheets/<original source directories>/
-  manifest-<group>.json
   preview-manifest-<group>.json
   sheet-manifest-<group>.json
 ```
 
-`library/` is for discovery. Moving a selected asset into `harness/` remains a separate reviewed promotion.
+The 39 already-merged Fantasy Kingdom reference character GLBs remain at their documented paths. Future bulk families use the ignored cache. Licensed collaborators regenerate the same cache from their own source archive and approved pack config. `library/` is for discovery; moving a selected asset into `harness/` remains a separate reviewed promotion.
 
 ## Family order
 
@@ -94,10 +98,11 @@ POLYGON Fantasy Kingdom v5 is the first reference:
 
 - profile: `fantasy-kingdom`;
 - initial atlas: `PolygonFantasyKingdom_Texture_01_A.png`;
-- first family: 39 `SK_Chr` and `SM_Chr` character/attachment FBXs;
-- result: 39 directory-preserving GLBs, 39 accepted isometric previews, and five directory/family sheets.
+- character reference: 39 `SK_Chr` and `SM_Chr` FBXs produced 39 directory-preserving GLBs, 39 accepted previews, and five sheets;
+- item pass: 272 `SM_Item` FBXs produced 272 local cached GLBs, 272 accepted previews, and 75 category sheets;
+- item cache: 470 MiB remained ignored while approximately 65 MiB of previews and sheets became shared private discovery output.
 
-The directory-preserving output fixes four distinct same-named FBX pairs that the old flattened conversion collapsed.
+The directory-preserving character output fixes four distinct same-named FBX pairs that the old flattened conversion collapsed. Kirk accepted the character previews as **“looks great”** and the complete item pass as **“they all look great.”**
 
 ## Human documentation
 
