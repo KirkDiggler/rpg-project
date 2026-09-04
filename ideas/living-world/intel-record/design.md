@@ -212,5 +212,12 @@ looking the right way ("we always start looking the wrong way and have to
 spin around") — `start: { at: [c,r], facing: e }` with the bare pair still
 legal as facing-unstated; `GetAtlasResponse.start {at, facing}` (the atlas
 carries no start today); api translates; the web aims the camera. Its own
-small set behind this slice, not inside it. And a **scenario tab** in the
+small set behind this slice, not inside it. Ruled while building (2026-09-04):
+the start is a POINTER end to end — the field's `Start` is nil when nobody
+authored one (a zero-valued start would claim the party arrives at the
+origin looking nowhere), the session mirror keeps the pointer, and the wire
+OMITS `start` in that case; a bare pair yields a start with an empty facing;
+rpg-api reads the facing from the atlas mirror only, never a second source
+on `Compiled`. Landed: toolkit encounter v0.59.0 (#1517); protos #292; the
+session mirror, api translation and web camera follow. And a **scenario tab** in the
 builder — rpg-project#372.
