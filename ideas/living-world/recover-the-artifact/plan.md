@@ -241,9 +241,11 @@ Kirk built his own dungeon through the scenario form (key
 path 1 — search found the door, Hold, Leave off the exit dropped it (R9
 live), Leave on the exit ended the run; then path 2 — loot the body, the
 door revealed, out through the exit, the exit now drawn on the map. "bewm…
-so I think this is functional." One finding during the walk, fixed on the
-web PR before merge: the exit was not drawn on the game map, so the first
-Leave dropped the artifact for lack of a marker. The two-player reveal
+so I think this is functional." Kirk had merged the web PR (#924, dev 65d9e75)
+before walking, so the one finding — the exit was not drawn on the game
+map, and the first Leave dropped the artifact for lack of a marker — lands
+as a small follow-up web PR (the marker on the board, and Leave labelled
+with its cost off an exit). The two-player reveal
 asymmetry is pinned by the toolkit and rpg-api scenes (looter alone,
 bystander bytes unchanged) rather than walked.
 
