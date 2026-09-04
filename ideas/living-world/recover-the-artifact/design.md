@@ -1,5 +1,5 @@
 ---
-status: DESIGN IN PROGRESS — rulings of 2026-09-04 recorded; §4–§6 open
+status: DESIGN IN PROGRESS — rulings of 2026-09-04 recorded; §6 open
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -47,6 +47,15 @@ each piece below earns its place on its own.
   parchment item; a knowledge check to read it; handing the item to a
   party member transfers the intel with no check on the document; how one
   player shares intel with another.
+- **R4 — All the verbs on the table; consolidate later.** Early alpha.
+  **Loot** and **Take** are their own seam verbs beside Search, OpenDoor,
+  Unlock and Interact. Interact stays what fadedpez shipped: the NPC verb.
+  If one button is wanted later, Loot and Take become declarations under
+  one verb the way Unarmed Strike sits under Attack (§4.1) — the rule
+  halves never change.
+- **R5 — The artifact is taken** (§5 option B, by R4's choice of the
+  word): an explicit verb on an adjacent takeable prop; the prop leaves
+  the atlas for everyone; the taker holds it.
 
 ## 2. Proposed, awaiting ruling
 
@@ -128,7 +137,27 @@ door's find and open checks stay on the door (slice 1).
 - `knows` on a prop;
 - duplicate placement id.
 
-## 4. The loot verb — OPEN in part
+## 4. The verbs — Loot and Take (R4)
+
+### 4.1 The naming rule (deliberate, not "for now")
+
+**A verb is named by what the record will say.** "Looted the captain" and
+"took the heirloom" are statements; the beat kind, the journal fact and
+the rule-half file all carry that word. Interact is not a statement — it
+is a fine button and a poor fact — so it names no rule half here.
+
+The seam already separates the verb from the offer: `Afford` returns
+declarations, each carrying a verb from the closed enum the seam owns,
+and one verb may produce several declarations (Unarmed Strike is a second
+Attack declaration on the bonus slot; the client renders identity
+verbatim and derives nothing). That is the consolidation landing if it is
+ever wanted: one button, several declarations, the same rule halves.
+
+Each verb owns its target kind, its refusal order and its beat, exactly
+as Search, OpenDoor, Unlock and Interact do today. The cost of a verb is
+one RPC, one rpg-api handler and one web action — all deletable pre-v1.
+
+### 4.2 Loot
 
 Rule half in `encounter` beside `search.go`; entry in `session` beside
 `Search`; the same law: keep the secret at the rule half.
@@ -137,16 +166,19 @@ Rule half in `encounter` beside `search.go`; entry in `session` beside
 type LootInput struct {
     Member MemberID   // who loots
     Target MemberID   // the body
+    Range  int        // cells; zero means adjacent, as Interact's does
 }
 type LootOutput struct{} // ack only — see Q1
 ```
 
 Validation order mirrors search: nil → empty member → closed → not a
-member → target not a member → target not down → not adjacent. Refusals
-for "not down" and "not adjacent" are ordinary (the body is visible; there
+member → target not a member → target not down → not in range. Refusals
+for "not down" and "not in range" are ordinary (the body is visible; there
 is no secret in whether it is down). Effect: for every holding of the
 target, transfer to the looter — today that is intel only: `learnDoor`
-with cause `loot`, audience the looter alone, one DOOR_REVEALED beat.
+with cause `loot`, audience the looter alone, one DOOR_REVEALED beat; and
+a `looted` beat to everyone present, naming looter and body and nothing
+of what moved.
 
 **Q1 (open):** the output. Search returns nothing because *anything* would
 say whether there was something to find. Loot's target is a known body,
@@ -160,30 +192,51 @@ symmetry; revisit when the parchment (§9) makes loot yield an item.
 dissolves — a removed initiative slot must keep its position. Check in
 the plan against `noticeDown`'s Remove consequences.
 
-## 5. The artifact — OPEN (next question for Kirk)
+### 4.3 Take
 
-Today a prop is scenery: a ref, a cell, two blocking flags. "Grab the
-artifact" needs a verb and a fact. The candidates, cheapest first:
+```go
+type TakeInput struct {
+    Member MemberID   // who takes
+    Target PropID     // the placement, by its id
+    Range  int        // as Loot
+}
+type TakeOutput struct{}
+```
 
-- **A — reach it.** `TriggerReachedPosition` exists. Reaching the artifact's
-  cell and then withdrawing wins. No item. *Fails zero-values-tell-the-
-  truth:* a member who stood there and left without it "has" it.
-- **B — take it (recommended).** A `Take` verb on an adjacent or same-cell
-  prop declared takeable; the prop leaves the atlas (a beat every present
-  member sees — no secret here); the taker *holds* it (a journal fact,
-  `holds:<placement id>`, audience everyone — physical state folds on the
-  truth grain, ruled 2026-09-01). A fallen holder's body holds it; loot
-  (§4) takes it back — P5's symmetry is the argument for B over a special
-  artifact flag.
-- **C — inventory.** The character sheet's inventory. Rejected for the
-  run: the artifact is run-scoped until the run ends; what "keeping it"
-  means across runs is the journal's business (brainstorm §10) and a
-  later slice.
+Validation: nil → empty member → closed → not a member → no such prop →
+not takeable → already taken → not in range. "No such prop" and "not
+takeable" refuse identically only when the prop is inside space the
+member cannot see (the probe law from slice 1); a visible pillar refuses
+by name. Effect: the prop leaves the atlas — a `taken` beat to everyone
+present (physical state folds on the truth grain, ruled 2026-09-01) — and
+the member holds it (§5).
 
-Under B: which props are takeable? Proposed: `takeable: true` on the
-placement, refused on a monster, defaulting to false — a thing nobody
-declared takeable stays scenery. The scenario's `artifact` binding refuses
-a placement that is not takeable, in form-filler words.
+### 4.4 Pricing in combat — shelf
+
+Out of combat both verbs are free. 5e gives one free object interaction a
+turn and charges an action past that. Loot and Take join the `Afford`
+enum with a slot only when an acceptance scene takes something mid-fight;
+until then they are refused while the taker's fight is on the turn clock
+and it is not their turn, and free on their turn. Named here so the
+first mid-fight take is a ruling, not a surprise.
+
+## 5. The artifact — holdings (R5)
+
+A prop today is scenery: a ref, a cell, two blocking flags. Two additions:
+
+- `takeable: true` on the placement, refused on a monster, defaulting to
+  false — a thing nobody declared takeable stays scenery. The scenario's
+  `artifact` binding refuses a placement that is not takeable, in
+  form-filler words.
+- **Holding** — a run-scoped journal fact `holds:<placement id>` on the
+  member, audience everyone (truth grain). A fallen holder's body holds it
+  still, and Loot (§4.2) takes it back — P5's one mechanism.
+
+Rejected: reach-its-cell-then-leave (`TriggerReachedPosition` exists, but a
+member who stood there and walked away would "have" it — zero values must
+tell the truth); the character sheet's inventory (the artifact is
+run-scoped until the run ends; what keeping it means across runs is the
+journal's business, brainstorm §10, a later slice).
 
 ## 6. The ending — OPEN, with a named promotion
 
@@ -216,10 +269,12 @@ has no form. Ruling needed before the plan.
 | placement id | dungeonspec (author) | third id after region and door |
 | knowledge link `knows` | dungeonspec placement → encounter concealment world at load | like `concealed:` on a door: belongs to the thing, wherever placed |
 | `scenario:` bindings | dungeonspec, opaque; scenario package `New(cfg)` validates | ruled 2026-09-01 |
-| loot rule half | encounter (`loot.go` beside `search.go`) | the secret is kept where the fact is written |
-| loot entry | session (beside `Search`) | the seam; adjacency is the host's truth |
+| `Loot` rule half | encounter (`loot.go` beside `search.go`) | the secret is kept where the fact is written |
+| `Loot` entry | session (beside `Search`, `Interact`) | the seam; range is the host's truth |
+| the button | web | renders verbs and offers verbatim; consolidation is a client menu or an Afford declaration, never a rule |
 | holdings | encounter world journal facts | run-scoped truth-grain state; the parchment shelf inherits it |
-| takeable + `Take` | dungeonspec flag; encounter + session verb | same shape as loot |
+| `Take` | encounter rule half + session entry | same shape as Loot; owns the `taken` beat |
+| `takeable` | dungeonspec (author) | a thing nobody declared takeable stays scenery |
 | the ending | encounter endings | single owner of "the run is over" (Q3) |
 | form descriptor | toolkit scenario package export → rpg-api verbatim → web renders | ruled 2026-09-01 |
 
@@ -241,6 +296,7 @@ what" answered once, by the journal (unchanged).
 | take removes the prop for everyone and the taker holds it | atlas beat to all present; `holds` fact |
 | withdrawing while holding ends the run once; withdrawing without it does not | Q3 |
 | the form refuses a missing or non-takeable artifact in form-filler words | descriptor↔Config pin |
+| every beat names the verb as a statement: `looted`, `taken` | beat kinds pinned; no beat says `interacted` |
 
 ## 9. Shelves — named, empty (Kirk 2026-09-04)
 
