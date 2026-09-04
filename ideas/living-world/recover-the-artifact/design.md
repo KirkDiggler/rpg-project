@@ -1,5 +1,5 @@
 ---
-status: DESIGN IN PROGRESS — rulings of 2026-09-04 recorded; §6 open
+status: DESIGN IN PROGRESS — rulings of 2026-09-04 recorded; §6 proposed (exit + ending shape), awaiting Kirk
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -56,6 +56,11 @@ each piece below earns its place on its own.
 - **R5 — The artifact is taken** (§5 option B, by R4's choice of the
   word): an explicit verb on an adjacent takeable prop; the prop leaves
   the atlas for everyone; the taker holds it.
+- **R6 — The scenario sets the exit; exiting there with the artifact
+  wins.** Kirk: "this scenario could have the exit set and if on exit
+  with artifact then we win." The form gains a second field (§3.2); the
+  ending is one trigger (§6). Answers Q3 and Q4 together: the package
+  declares two bindings and one ending, the encounter runs it.
 
 ## 2. Proposed, awaiting ruling
 
@@ -96,9 +101,13 @@ place:
   - { id: heirloom, ref: "dnd5e:props:reliquary", at: [30,3],
       blocks_movement: false, blocks_los: false }
 
+exits:
+  - { id: front-gate, at: [0, 1] }
+
 scenario:
   recover-the-artifact:
     artifact: heirloom
+    exit: front-gate
 ```
 
 - `id` — P2. Optional. Refused on collision, naming both lines.
@@ -107,6 +116,12 @@ scenario:
   (a prop holds nothing, for `blocks_movement`'s reason). Legal on a
   monster whether or not the door is concealed — knowing an ordinary
   door is inert, not an error.
+- `exits` — where the party can leave: an id and a floor cell, the shape
+  `start` already has. Structure, not scenario: a dungeon has ways out
+  whatever the party is there for. `start` is not implicitly an exit —
+  nothing is defaulted; the reference tomb authors its entrance as one.
+  Refused off the floor (ErrNoEnding's reason: an exit nobody can reach
+  is a liveness hole).
 - `scenario` — one key (the scenario id) mapping to that scenario's
   bindings, **carried opaquely by dungeonspec** and validated by the
   scenario package's `New(cfg)`: dungeonspec checks only that every
@@ -121,18 +136,24 @@ refusal text); rpg-api translates verbatim; the builder renders one picker
 per field type; submitting validates through `New(cfg)`; descriptor and
 `Config` pinned both ways by test.
 
-For this scenario the form has **one field**:
+For this scenario the form has **two fields** (R6):
 
 | key | type | guidance (the refusal, verbatim) |
 |---|---|---|
 | `artifact` | `entity_ref(prop)` | this scenario needs an artifact — which placed thing is the party here to recover |
+| `exit` | `entity_ref(exit)` | this scenario needs a way out — which exit counts as escaping with the artifact |
+
+The builder's picker for `exit` lists the dungeon's authored exits; with
+one exit there is one row to pick. `entity_ref(exit)` is the second
+*kind* under the one field type, not a new type.
 
 The `captain` field of the spike's `Config` is **deleted** under P1. The
 door's find and open checks stay on the door (slice 1).
 
 ### 3.3 Refusals dungeonspec owns (fail closed, name the line)
 
-- a binding names a placement id that does not exist;
+- a binding names a placement id or exit id that does not exist;
+- an exit off the floor; duplicate exit id;
 - `knows` names a door id that does not exist;
 - `knows` on a prop;
 - duplicate placement id.
@@ -238,29 +259,65 @@ tell the truth); the character sheet's inventory (the artifact is
 run-scoped until the run ends; what keeping it means across runs is the
 journal's business, brainstorm §10, a later slice).
 
-## 6. The ending — OPEN, with a named promotion
+## 6. The ending — exit holding the artifact (R6; shape proposed)
 
 "Both paths end in withdrawal with the artifact" — one ending, not two:
-**withdrew while holding the artifact.** Brainstorm §9 ruled: run-ending
-is quest v0; "promote the run-goal predicate when the second goal type
-arrives, don't invent an engine." This is the second goal type.
+**a member exits through the bound exit while holding the artifact.**
+Brainstorm §9 ruled run-ending is quest v0 and to promote the run-goal
+predicate when the second goal type arrives. This is the second goal type,
+and it lands in the endings model, which stays the one owner of "the run
+is over".
 
-**Q3 (open):** where the ending lives. Today `EndingInput{Key, Trigger}`
-with three triggers (reached position, member down, external). Options:
-(a) a fourth trigger `TriggerWithdrewHolding{Item}` — smallest, and
-keeps the endings model the single owner of "the run is over"; (b) the
-scenario package's quest predicate (`quest.Flagged`) decides and the
-host raises `TriggerExternal` — the spike's shape, two owners of one
-answer. Lean: (a), and the scenario package's job shrinks to *declaring*
-it; the composer stays out (packages are the units, ruled 2026-09-01).
+Today the host declares two endings on every authored dungeon:
+`withdrawn` (TriggerExternal, fired by the lobby when the party abandons
+the run) and `boss-down` (TriggerMemberDown, when a boss is authored). The
+scenario package adds a third:
 
-**Q4 (open):** what the form is for, once P1 lands. With intel on the
-placement and loot generic, the scenario carries one binding and one
-ending. A `scenario:` block validated by a Go package versus an
-`endings:` declaration in dungeonspec is a real fork: the form is the
-prize Kirk named, and the package is what makes the descriptor, the
-refusals and the pinning test exist; an `endings:` line is cheaper and
-has no form. Ruling needed before the plan.
+```go
+// TriggerExitedHolding fires when a member standing on Exit's cell
+// declares Exit while holding Item. Evaluated in the one place a
+// departure is noticed, after the departure beat, so the record reads
+// "left through the front gate with the heirloom" and then "ended".
+type TriggerExitedHolding struct {
+    Exit ExitID
+    Item PropID
+}
+```
+
+Two shapes were weighed:
+
+- **Explicit — the Exit verb at the exit (recommended).** `Exit` already
+  exists as a member's departure and carries what they knew out. At an
+  authored exit, holding the artifact, it also ends the run. Nobody's
+  run ends because the carrier stepped on a cell while retreating to
+  help a friend; the player says when. "You always feel like you are in
+  control" (Kirk on the builder, 2026-09-04) is the same instinct.
+- **Automatic — a `Holding` filter on `TriggerReachedPosition`.** The
+  smaller toolkit change (one field on an existing trigger, evaluated
+  where arrivals already are). Rejected for the reason above; named so
+  the trade is visible.
+
+Consequences the trigger must state:
+
+- Exiting **without** the artifact is today's Exit: the member departs,
+  the run continues for the others; when the last member leaves, the
+  encounter auto-closes as it does now.
+- The artifact leaves with the exiting member; a run that ended this way
+  records who carried it out (the `holds` fact and the exit beat agree).
+- A dungeon with a scenario bound and no reachable exit refuses at
+  `New(cfg)` in form-filler words; `ErrNoEnding` is the encounter's own
+  backstop.
+- Win path 1 and win path 2 are indistinguishable at the ending, and
+  that is correct: the journal's silence about a fight is the record of
+  the skipped fight (use-cases UC-4).
+
+**Q3 and Q4 closed by R6:** the ending lives in the encounter's endings
+model; the form exists because two bindings and one ending is a form,
+and the package is what makes the descriptor, the refusals and the
+pinning test exist. rpg-api's `endingsFor` grows one arm: the scenario's
+declared ending, translated verbatim.
+
+**Q1 (loot output)** stays open, non-blocking.
 
 ## 7. Ownership
 
@@ -275,7 +332,8 @@ has no form. Ruling needed before the plan.
 | holdings | encounter world journal facts | run-scoped truth-grain state; the parchment shelf inherits it |
 | `Take` | encounter rule half + session entry | same shape as Loot; owns the `taken` beat |
 | `takeable` | dungeonspec (author) | a thing nobody declared takeable stays scenery |
-| the ending | encounter endings | single owner of "the run is over" (Q3) |
+| `exits` | dungeonspec (author) | structure: ways out, like `start` |
+| the ending | encounter endings (`TriggerExitedHolding`), declared by the scenario package, wired by rpg-api's `endingsFor` | single owner of "the run is over" |
 | form descriptor | toolkit scenario package export → rpg-api verbatim → web renders | ruled 2026-09-01 |
 
 Charter checks run: session gains two entry verbs and no rule (holds);
@@ -286,7 +344,7 @@ content, C1); rpg-api translates and learns no scenario word (holds).
 Singularity: "who has what" answered once, by holdings (P5); "who knows
 what" answered once, by the journal (unchanged).
 
-## 8. Acceptance (draft — completes when §4–§6 rule)
+## 8. Acceptance (draft — completes when §6's shape is ruled)
 
 | item | proof |
 |---|---|
@@ -294,7 +352,8 @@ what" answered once, by the journal (unchanged).
 | loot on the captain reveals the door to the looter alone | DOOR_REVEALED to one recipient; the other member's atlas unchanged until the door is opened in their presence |
 | loot on a body with nothing gives the same bytes as loot on the captain before the reveal beat | P3 |
 | take removes the prop for everyone and the taker holds it | atlas beat to all present; `holds` fact |
-| withdrawing while holding ends the run once; withdrawing without it does not | Q3 |
+| Exit at the bound exit while holding ends the run once, for everyone, naming the carrier; Exit without it departs one member and the run continues | scene: two members, one carries, the other leaves first |
+| Exit at a cell that is not the exit while holding does not end the run | scene: carrier exits from the vault |
 | the form refuses a missing or non-takeable artifact in form-filler words | descriptor↔Config pin |
 | every beat names the verb as a statement: `looted`, `taken` | beat kinds pinned; no beat says `interacted` |
 
