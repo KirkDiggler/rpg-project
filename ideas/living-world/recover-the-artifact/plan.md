@@ -174,7 +174,7 @@ encounter:
   arrive as `FAILED_PRECONDITION` carrying the refusal text.
 - `sessionworld`: at run start, `scenarios.New(cfg, compiled)` for every
   bound scenario; `endingsFor` = `withdrawn` + the flag arm (unchanged) +
-  their endings; `Exits`, `Knows`, `Takeable`, ids flow from `Compiled`
+  their endings; `Exits`, `Knows`, `Holdable`, ids flow from `Compiled`
   into setup.
 - Content: the heirloom fixture **byte-identical to the toolkit's**, put on
   the box through the builder or the seed for the walk. No migration of
