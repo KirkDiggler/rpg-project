@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R8) — two walks' findings folded on the branches; PRs after the walk closes clean — the first tool cut under the north star; plan.md beside this file
+status: RULED 2026-09-04 (R1–R8) — WALKED CLEAN by Kirk on the branch stack; PRs opening in order (encounter → session → api → web) — the first tool cut under the north star; plan.md beside this file
 journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
 predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
 north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
@@ -194,3 +194,22 @@ answered once (holdings).
   give capability. (Props: ruled in, R6.)
 - **The scenario dropdown, description, kill-the-captain** — rpg-project#372 /
   #371, the next cut.
+
+## The walks (2026-09-04)
+
+Walk 1, on the branch stack: three findings, all ruled and folded before any
+PR — intel on props (R6), intel as a dungeon-level section (R7), and the
+question "why that captain" answered by the held-by picker. Walk 2: the
+obelisk he made holdable and gave the record to was in the engine (the
+stored run says so); no Hold appeared because every run was inside a fight
+and the client withheld the verbs in combat — R8, folded. Walk 2 close, in
+his words: "looted the skele, got the intel, saw the door, got the heirloom.
+so this appears to work… for what we set out for this works."
+
+Named for right after: a **facing on the start point** so the camera begins
+looking the right way ("we always start looking the wrong way and have to
+spin around") — `start: { at: [c,r], facing: e }` with the bare pair still
+legal as facing-unstated; `GetAtlasResponse.start {at, facing}` (the atlas
+carries no start today); api translates; the web aims the camera. Its own
+small set behind this slice, not inside it. And a **scenario tab** in the
+builder — rpg-project#372.
