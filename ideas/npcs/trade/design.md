@@ -82,7 +82,7 @@ special case for gifting:
 | Sell | items | currency (future) |
 | Barter | items | items |
 | Gift, either way | empty | items — or reversed |
-| **This slice's only case** | empty | one item |
+| **This slice's only case** | empty | one item, N quantity |
 
 **Refused: both sides empty.** A trade that moves nothing on either side is a caller defect, not
 a very small gift — the same convention `encounter.Interact` already applies to a negative
@@ -97,8 +97,18 @@ The **behavior** this wave ships is one-directional only:
   `ErrGiveNotSupported`) — not silently ignored. Accepting arbitrary items into a vendor's stock
   raises real unresolved questions (does an unlisted item create a new stock row? what happens to
   it once pricing exists?) that belong to the sell/barter wave, not this one.
-- **`Receive.Items` MUST contain exactly one entry, quantity 1.** Keeps the stock-decrement logic
-  to "does this row exist and have at least one unit" — no batching, no partial fills.
+- **`Receive.Items` MUST contain exactly one entry, any quantity up to what's in stock.**
+  `TradeItem.Quantity` already exists (a stack has to carry one) and vendor stock already tracks
+  a quantity to check against, so "N available" costs nothing over "1 available" — the same
+  comparison with a variable. What's refused is **multiple distinct items in one call** (a torch
+  and a rope together): that needs validating every line before committing any of them, which is
+  real added complexity this wave doesn't need to take on.
+
+  This isn't a permanent limit being deferred awkwardly — it's sequenced correctly.
+  rpg-toolkit#1275's `Quote` is already shaped as multiple lines (`Lines []QuoteLine`) with a
+  `Total`; a quote **is** a cart. Buying several different items in one transaction is what the
+  Quote wave generalizes to N lines as part of adding pricing, not a separate multi-item project
+  bolted onto `Trade` beforehand.
 - **Counterparty MUST be `KindWorld` with `CapabilityVendor`.** Player-to-player trade is
   explicitly out of scope for this wave — not because the shape doesn't fit (it does: same
   `TradeInput`, a player `Target` instead of an NPC), but because a player counterparty needs
