@@ -123,6 +123,25 @@ the table below is corrected:
   exist whenever a dungeon declares facts, not only under concealment —
   and the disposition predicate is `knowsFact(member, fact)`, a fold that
   does not exist yet.
+- **The clock DOES NOT HOLD as written.** Rounds exist only inside a fight
+  bubble (`clock.Turn.Round()`); the world clock outside a fight counts
+  FEET (`Pump` advances a tick whose reading is cumulative displacement),
+  and the two clocks are exclusive by design. There is no run-level turn
+  number. Props are construction-truth only — no prop-add verb; `Join` is
+  members-only. BUT slice 2's drop already places a prop on the map at
+  runtime (`dropped:<prop>@<cell>` fact → projection), so an arrival needs
+  no prop-add verb: it is a SCHEDULED DROP. What it needs is a counter, and
+  the honest one is the fight's rounds: the hold-out is by definition a
+  fight, so `arrives: { round: 6 }` means "six rounds after the fight
+  forms". Outside a fight nothing arrives (the world clock stays postponed
+  by the 2026-08-30 ruling; the hostage's timer will say whether that
+  holds).
+- **Wire DOES NOT HOLD as written.** `GetAtlasResponse` carries no members
+  at all; the only per-member row on the wire is the roster's
+  `PublicMemberInfo{id, kind, name, …}` with a closed `MemberKind` enum
+  (player/monster/world) and no faction, side or stance anywhere. So the
+  faction goes on the roster row as a free-form id (never an enum: factions
+  are content), plus a `stance` beat.
 - **Presence HOLDS:** `sweepOccupancy` inside `refreshSight` (every verb
   passes through it; also run at Load) is exactly the fold shape — loop the
   roster, `regionOf(cell)` (a map hit), act when the answer changed. The
@@ -148,7 +167,7 @@ fixed one (rung 2 lands as a consequence, not a prerequisite).
 | `dispositions[]` | both sides exist; `until` is a fact id some record reveals (warn, not refuse? — see §6) | `SetupInput.Dispositions` seeds the per-run stance table (default: `party` hostile to every monster faction) | a reducer over the mind's `<fact>` facts raises the flip; an `AdoptStance` projection rewrites the edge; on the flip, `dissolveBubble(member, ByStance)` for a fight formed between the two | fight formation; behavior (Billy) |
 | `intel[].reveals.fact` | fact ids are plain strings, declared here | intel table rides `Compiled.Field` whole (already) | on transfer, a `fact` reveal writes `known:fact:<id>` into the member-facts journal with the receiver as audience (`learnDoor`'s exact shape); NEW: `knowsFact(member, id)` fold, and the member-facts journal exists whenever facts are declared, not only under concealment | the disposition predicate; later, quest predicates |
 | `place[].holds` on a prop | R6 | `PropInput.Holds` | Hold applies reveals to the holder; presence: a holder in the mind's region teaches the mind | — |
-| `place[].arrives.turn` | ≥ 1; the cell is floor | `PropInput.Arrives` / `MemberInput.Arrives` | the arrival scheduler on the turn clock: the placement is absent until turn N, then placed with a beat ("a messenger arrives") | the client draws it when it exists |
+| `place[].arrives.round` (props, step 3) | ≥ 1; the cell is floor | `PropInput.Arrives` (rides the field) | a SCHEDULED DROP: absent from the projection until the fight's round N, then a `dropped` fact at the cell with an `arrived` beat ("a messenger leaves a letter at the gate"); no prop-add verb needed | the client draws it as it draws a drop today |
 | `scenarios.hold-out.convince` | the id is a faction | `scenarios.New` → `Declared{Endings: [TriggerStance{Between: [goblins, party], Stance: friendly}]}` | a fourth trigger, fired by the stance writer | the `ended` beat |
 
 **A rule for the injection column** (rpg-api build, 2026-09-04): rpg-api
@@ -168,8 +187,10 @@ Two seams are new mechanisms; everything else is a field on an existing one:
    reducer + projection, plus "a flip dissolves a formed fight between those
    factions" (a third `DissolveCause`). This is the whole of tool 2's engine
    cost, and it is bigger than the brainstorm assumed.
-2. **The arrival scheduler**: placements with a turn. Lives in encounter's
-   clock; the first instance of the CLOCK tool.
+2. **The arrival scheduler**: a scheduled drop on the fight's round clock
+   (`RoundStarted` is the hook). The first instance of the CLOCK tool, and
+   the smallest one: it reuses the drop projection and adds a counter
+   comparison. A world-clock arrival is NOT in it (ruled postponed).
 
 ## 4. The cut
 
@@ -178,17 +199,19 @@ Two seams are new mechanisms; everything else is a field on an existing one:
   stance writer, the fight dissolving, `TriggerStance`, the one-field form.
   The letter simply lies at the gate from turn one. Walkable: hold the
   letter, walk it to the chief, the camp turns mid-fight.
-- **Step 3 — the clock.** `arrives: {turn}` and the arrival beat; the same
-  walk with the letter arriving at turn 6. The hostage's "turns until
+- **Step 3 — the clock.** `arrives: {round}` as a scheduled drop on the
+  fight's rounds and the `arrived` beat; the same walk with the letter
+  arriving at round 6 of the hold-out fight. The hostage's "rounds until
   turned" is its second instance.
 
 ## 5. Wire
 
 `PutDungeon` verbatim: no change for the file. New on the session wire:
-`GetAtlasResponse` (or roster) needs each member's faction so the client can
-colour sides; a `stance` beat `{between, stance}` so the table hears the camp
-turn; `arrived` beat for the scheduler (step 3). `ListScenarios` unchanged
-in shape (`entity_ref(faction)` is one more kind).
+`PublicMemberInfo.faction` (free-form id; the roster is the only per-member
+row — the atlas carries no members) so the client can colour sides; a
+`stance` beat `{between, stance}` so the table hears the camp turn; an
+`arrived` beat for the scheduler (step 3). `ListScenarios` unchanged in
+shape (`entity_ref(faction)` is one more kind).
 
 ## 6. Open rulings (for Kirk's return)
 
@@ -204,3 +227,5 @@ in shape (`entity_ref(faction)` is one more kind).
   every dungeon whether written or not.
 - **The `stance` vocabulary** — `hostile | neutral | friendly` closed enum
   in the file (three words the graph already distinguishes), open later.
+- **Which clock an arrival counts on** — proposed: the fight's rounds, and
+  only inside a fight; the world clock stays postponed. Confirm.
