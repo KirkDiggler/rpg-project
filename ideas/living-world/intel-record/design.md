@@ -96,7 +96,14 @@ place:
 
 `PutDungeon` ships verbatim YAML; the atlas never carries intel; the reveal
 reaches the looter as the DOOR_REVEALED beat that already exists. rpg-api
-translates nothing new: it forwards `Holds` where it forwarded `Knows`.
+forwards `Holds` where it forwarded `Knows`. Its error table grows one row
+(api build, 2026-09-04): `session.ErrNoIntel` — a spawn naming an
+undeclared record — maps to INTERNAL, because no RPC names an intel record;
+the only thing that spawns is the server forwarding compiled ids, so the
+refusal reports wiring on our side, never a client's list. The intel table
+rides `Compiled.Field` whole into the run, which is why `reveals` can be
+read at transfer with no wiring — a later piecemeal copy of Field would
+drop it silently; two api tests pin that it arrives.
 
 ## 5. The designer — the panel (web)
 
