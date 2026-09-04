@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R4) — the first tool cut under the north star; plan.md beside this file
+status: RULED 2026-09-04 (R1–R5) — BUILDING on branches, PRs after the walk — the first tool cut under the north star; plan.md beside this file
 journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
 predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
 north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
@@ -38,6 +38,17 @@ proves it.
 - **R4 — Step one proves the tool on the scenario we have.** No dropdown, no
   description, no second scenario in this cut (those are rpg-project#372's
   and #371's).
+- **R5 — Intel is scenario-independent; the customer is a DM.** Kirk: "we
+  could make additional intel at any time — location of treasure, how to
+  open a lock. this scenario says they need to find the artifact; setting
+  up intel for it could go in the description but it is not required for
+  the scenario. the artifact could be behind 1 of n doors. intel is workable
+  in any scenario. our customer is a DM setting up the scenario with DM-like
+  tools. intel is tool 1 we have a real use case for. making the goblin camp
+  not hostile falls out of this." So: no scenario declares or requires
+  intel; a scenario's description may suggest it; the record's `reveals`
+  grows one key per use case (a treasure's location, a lock's approach, a
+  camp's disposition) and each arrives with its own use case, never ahead.
 
 ## 2. The file — dungeonspec v2
 
