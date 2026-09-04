@@ -489,6 +489,14 @@ what" answered once, by the journal (unchanged).
   refusals. "The form feels very customized. we will want that to be data
   driven" — audit what the panel still hardcodes (title, grouping,
   ordering) and move it into the descriptor with the same pinning test.
+- **Which exit wins is not on the wire** (web follow-up #927, review
+  finding 2026-09-04): `GetAtlasResponse.exits` lists every authored way
+  out and nothing says which one the scenario bound, so on a two-exit
+  dungeon the client cannot promise that Leave here ends the run — the
+  button states what is carried and promises nothing. If the party is
+  meant to KNOW its way out (the mission says "escape through the front
+  gate"), the descriptor's binding is the fact to put on the wire, per
+  member like everything else; nothing until a walk wants it.
 - **Loot beyond intel** — coin and gear are rpg-project#310's (wallet,
   shop, prices). Holdings is the seam they will use; nothing stocked.
 - **Who sees a body is lootable** — sight-scoped affordances ride the
