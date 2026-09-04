@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R8) — plan.md beside this file; PR rpg-project#368 stays open through the build
+status: RULED 2026-09-04 (R1–R9) — branch cut same day — plan.md beside this file; PR rpg-project#368 stays open through the build
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -63,16 +63,20 @@ each piece below earns its place on its own.
   declares two bindings and one ending, the encounter runs it.
 - **R7 — Explicit.** The ending fires on the Exit verb at the bound exit,
   never on arrival. Kirk: "explicit."
-- **R8 — The boss flag goes away.** Kirk: "we setup when a scenario ends,
-  not because one monster has a flag on it. that flag is too simple for
-  where we are now." Endings are declared by scenarios, never by a
-  property of a monster. `boss:` is deleted from dungeonspec and refused
-  by name (the pair-form precedent). "The boss falls" becomes the second
-  scenario, **clear-the-tomb**, with one field: `boss: entity_ref(monster)`
-  → `TriggerMemberDown`. The reference tomb binds it, so the live game's
-  ending is unchanged in play. This dissolves the two-endings collision
-  refusal that stood here for a day: with nothing implicit, an author who
-  binds two scenarios sees both on the form and asked for both.
+- **R8 — Endings come from scenarios; the boss flag is retired by the
+  next step, not this one.** Kirk: "we setup when a scenario ends, not
+  because one monster has a flag on it. that flag is too simple for where
+  we are now" — then: "boss:true is fine for now. when we get this in, we
+  turn that tomb into a scenario: kill the captain." So: this slice leaves
+  `boss:` working and untouched; the **named follow-up** converts the
+  reference tomb to the second scenario, **kill-the-captain**
+  (`boss: entity_ref(monster)` → `TriggerMemberDown`), and deletes the
+  flag then, with the content re-put as its runbook gate. Two scenarios
+  bound on one dungeon are legal and visible on the form; the collision
+  refusal proposed earlier is dissolved.
+- **R9 — They drop it.** Kirk: "oh i like that. they drop it." A carrier
+  who leaves from anywhere but the bound exit drops the artifact where
+  they stood, with a `dropped` beat to everyone present (§6).
 
 ## 2. Proposed, awaiting ruling
 
@@ -122,13 +126,8 @@ scenarios:
     exit: front-gate
 ```
 
-The plain reference tomb, after R8:
-
-```yaml
-scenarios:
-  clear-the-tomb:
-    boss: captain
-```
+The plain reference tomb is untouched by this slice; the follow-up binds
+it to `kill-the-captain: {boss: captain}` and drops its flag.
 
 - `id` — P2. Optional. Refused on collision, naming both lines.
 - `knows` — a list of door ids (regions later, if a use case arrives).
@@ -157,8 +156,9 @@ refusal text); rpg-api translates verbatim; the builder renders one picker
 per field type; submitting validates through `New(cfg)`; descriptor and
 `Config` pinned both ways by test.
 
-Two scenarios ship in this slice (R8), so the pinning test and the
-picker each have a second instance on day one:
+One scenario ships in this slice; the second, **kill-the-captain**
+(`boss: entity_ref(monster)`), is R8's named follow-up and gives the
+pinning test and the picker their second instance when the tomb converts.
 
 **recover-the-artifact** (R6):
 
@@ -166,19 +166,6 @@ picker each have a second instance on day one:
 |---|---|---|
 | `artifact` | `entity_ref(prop)` | this scenario needs an artifact — which placed thing is the party here to recover |
 | `exit` | `entity_ref(exit)` | this scenario needs a way out — which exit counts as escaping with the artifact |
-
-**clear-the-tomb** (R8, the flag's successor):
-
-| key | type | guidance (the refusal, verbatim) |
-|---|---|---|
-| `boss` | `entity_ref(monster)` | this scenario ends when one monster falls — which one |
-
-The builder's picker for `exit` lists the dungeon's authored exits; with
-one exit there is one row to pick. `entity_ref(exit)` is the second
-*kind* under the one field type, not a new type.
-
-The `captain` field of the spike's `Config` is **deleted** under P1. The
-door's find and open checks stay on the door (slice 1).
 
 ### 3.3 Refusals dungeonspec owns (fail closed, name the line)
 
@@ -189,8 +176,11 @@ door's find and open checks stay on the door (slice 1).
 - duplicate placement id;
 - `takeable` on a monster; a takeable prop with no `id` (the binding and
   the `taken` beat both need the name);
-- `boss:` anywhere — deleted (R8); the refusal names the `scenarios:` block
-  and the clear-the-tomb form as where that fact now lives.
+- `boss:` stays legal in this slice (R8). A dungeon binding
+  recover-the-artifact whose captain also carries the flag has two
+  endings, and the boss's fall would end the run before anyone loots —
+  the author's business, visible on the form; the heirloom fixture simply
+  authors no flag.
 
 ## 4. The verbs — Loot and Take (R4)
 
@@ -305,9 +295,9 @@ is over".
 Today the host declares two endings on every authored dungeon:
 `withdrawn` (TriggerExternal, fired by the lobby when the party abandons
 the run) and `boss-down` (TriggerMemberDown, when a boss is authored).
-After R8 the host declares `withdrawn` always, plus every ending each
-bound scenario declares — clear-the-tomb's `TriggerMemberDown`, and this
-scenario's:
+This slice keeps both and adds every ending each bound scenario
+declares; the follow-up retires the flag arm when the tomb becomes
+kill-the-captain. This scenario's:
 
 ```go
 // TriggerExitedHolding fires when a member standing on Exit's cell
@@ -339,7 +329,7 @@ Consequences the trigger must state:
   the run continues for the others; when the last member leaves, the
   encounter auto-closes as it does now.
 - **Leaving from anywhere but the exit while holding drops the holding**
-  (provisional, team lead 2026-09-04): the artifact reappears as a
+  (R9): the artifact reappears as a
   takeable prop on the cell the carrier stood on, with a `dropped` beat
   to everyone present. Otherwise a carrier who leaves through the lobby —
   or disconnects — takes the only win out of the run with them. Journal
