@@ -150,6 +150,12 @@ it to `kill-the-captain: {boss: captain}` and drops its flag.
 
 - `id` — P2. Optional. Refused on collision, naming both lines.
 - `knows` — a list of door ids (regions later, if a use case arrives).
+  **It must reach a spawned monster** (rpg-api build, 2026-09-04): the
+  host builds the world empty of members and every monster arrives
+  through `session.Spawn`, while `MemberInput.Knows` is construction-only.
+  So `encounter.JoinInput.Knows` seeds the same path setup uses, and
+  `session.SpawnInput.Knows` forwards it beside the placement's other
+  authored facts. In-slice: without it path 2 cannot be walked.
   Refused by name when the door does not exist. Refused on a prop
   (a prop holds nothing, for `blocks_movement`'s reason). Legal on a
   monster whether or not the door is concealed — knowing an ordinary

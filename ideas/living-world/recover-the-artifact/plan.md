@@ -156,6 +156,8 @@ encounter:
 
 ### PR C — session module
 
+- `SpawnInput.Knows` forwarded to `JoinInput.Knows` (the authored
+  knowledge rides the spawn like the placement's other facts);
 - `Manager.Loot`, `Manager.Hold` beside `Search`; `Exit` surfaces the
   fired ending through the existing `ExitOutput.Closed`; `kindFor` arms
   `looted`, `held`, `dropped`; typed event bodies; `AtlasOf` inherits
