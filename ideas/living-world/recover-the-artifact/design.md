@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R10) — branch cut same day — plan.md beside this file; PR rpg-project#368 stays open through the build
+status: RULED 2026-09-04 (R1–R10) — built, WALKED by Kirk the same day (both paths, on a dungeon he authored through the form); merging — plan.md beside this file; PR rpg-project#368 stays open through the build
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -481,6 +481,14 @@ what" answered once, by the journal (unchanged).
   — carrying the artifact back to town and asking the old man. The word
   is reserved; the run-end fold that turns `holds:` into an item is the
   later slice.
+- **The scenario describes itself** (Kirk, after the walk 2026-09-04): the
+  descriptor gains a `description` — "in this scenario … you can hide the
+  artifact in a concealed room and set a monster that knows the loot" —
+  rendered above the fields, so the form reads as a page, not a panel.
+  Additive on `ScenarioDescriptor`; the package writes it beside its
+  refusals. "The form feels very customized. we will want that to be data
+  driven" — audit what the panel still hardcodes (title, grouping,
+  ordering) and move it into the descriptor with the same pinning test.
 - **Loot beyond intel** — coin and gear are rpg-project#310's (wallet,
   shop, prices). Holdings is the seam they will use; nothing stocked.
 - **Who sees a body is lootable** — sight-scoped affordances ride the

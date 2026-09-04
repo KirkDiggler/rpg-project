@@ -234,6 +234,19 @@ Game:
    Leaves from the vault → the heirloom lies where they stood (R9); the
    other player Takes it and finishes.
 
+## The walk — as it happened (2026-09-04)
+
+Kirk built his own dungeon through the scenario form (key
+`retrieve-the-artifact`) and walked it single-player on the local stack:
+path 1 — search found the door, Hold, Leave off the exit dropped it (R9
+live), Leave on the exit ended the run; then path 2 — loot the body, the
+door revealed, out through the exit, the exit now drawn on the map. "bewm…
+so I think this is functional." One finding during the walk, fixed on the
+web PR before merge: the exit was not drawn on the game map, so the first
+Leave dropped the artifact for lack of a marker. The two-player reveal
+asymmetry is pinned by the toolkit and rpg-api scenes (looter alone,
+bystander bytes unchanged) rather than walked.
+
 ## Follow-up, named (R8)
 
 **kill-the-captain**: the second scenario (`boss: entity_ref(monster)` →
@@ -241,6 +254,9 @@ Game:
 refused by name, the flag arm removed from `endingsFor`, the builder's
 boss toggle removed, and the seeded tomb re-put before dev→main. Filed
 when this slice's walk is done, not before.
+
+**Also named after the walk (Kirk):** the scenario's own `description` on
+the descriptor, and a data-driven audit of the form panel — design §9.
 
 ## Done-when
 
