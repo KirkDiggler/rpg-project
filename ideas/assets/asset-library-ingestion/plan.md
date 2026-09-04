@@ -104,14 +104,26 @@ Verified result:
 - the source catalog and runtime inventory remain exact; and
 - Kirk accepted the complete item set as **“they all look great.”**
 
+### Fantasy Kingdom prop acceptance
+
+The merged prop pass adds group-level preview-facing overrides and scales area-light power with model bounds.
+
+Verified result:
+
+- 899 prop FBXs produced 899 ignored cached GLBs;
+- 899 reusable 512px PNGs and 152 sheets across 144 categories exist;
+- 1.6 GiB of GLBs remain outside Git;
+- preview and sheet manifests match every path and hash;
+- prop facing is consistently `220°` while character/item facing remains unchanged; and
+- Kirk accepted the corrected prop set as **“these look great.”**
+
 ## Later pack-family passes
 
 Add one reviewed group/config decision at a time:
 
 1. Fantasy Kingdom weapons.
-2. Fantasy Kingdom props.
-3. Fantasy Kingdom buildings and environment.
-4. Other packs selected with Kirk.
+2. Fantasy Kingdom buildings and environment.
+3. Other packs selected with Kirk.
 
 A family needing another atlas receives a focused configuration override when observed. Do not guess all texture rules in advance.
 

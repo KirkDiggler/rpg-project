@@ -100,9 +100,12 @@ POLYGON Fantasy Kingdom v5 is the first reference:
 - initial atlas: `PolygonFantasyKingdom_Texture_01_A.png`;
 - character reference: 39 `SK_Chr` and `SM_Chr` FBXs produced 39 directory-preserving GLBs, 39 accepted previews, and five sheets;
 - item pass: 272 `SM_Item` FBXs produced 272 local cached GLBs, 272 accepted previews, and 75 category sheets;
-- item cache: 470 MiB remained ignored while approximately 65 MiB of previews and sheets became shared private discovery output.
+- item cache: 470 MiB remained ignored while approximately 65 MiB of previews and sheets became shared private discovery output;
+- prop pass: 899 `SM_Prop`, `SK_Prop`, and `FX_Prop` FBXs produced 899 local cached GLBs, 899 accepted previews, and 152 sheets across 144 categories;
+- prop cache: 1.6 GiB remained ignored while approximately 306 MiB of previews and sheets became shared private discovery output;
+- prop preview authority: consistent `220°` group facing and bounds-scaled light power, chosen after comparing opposite views and brightness.
 
-The directory-preserving character output fixes four distinct same-named FBX pairs that the old flattened conversion collapsed. Kirk accepted the character previews as **“looks great”** and the complete item pass as **“they all look great.”**
+The directory-preserving character output fixes four distinct same-named FBX pairs that the old flattened conversion collapsed. Kirk accepted the character previews as **“looks great”**, the complete item pass as **“they all look great”**, and the corrected prop facing/lighting as **“these look great.”**
 
 ## Human documentation
 
