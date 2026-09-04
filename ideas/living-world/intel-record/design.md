@@ -203,7 +203,7 @@ PR — intel on props (R6), intel as a dungeon-level section (R7), and the
 question "why that captain" answered by the held-by picker. Walk 2: the
 obelisk he made holdable and gave the record to was in the engine (the
 stored run says so); no Hold appeared because every run was inside a fight
-and the client withheld the verbs in combat — R8, folded. Walk 2 close, in
+and the verbs sat in a skinny row that read as chrome — R8, folded: they live in the action bar now. Walk 2 close, in
 his words: "looted the skele, got the intel, saw the door, got the heirloom.
 so this appears to work… for what we set out for this works."
 
