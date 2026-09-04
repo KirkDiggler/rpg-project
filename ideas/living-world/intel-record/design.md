@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R8) — WALKED CLEAN by Kirk on the branch stack; PRs opening in order (encounter → session → api → web) — the first tool cut under the north star; plan.md beside this file
+status: DONE 2026-09-04 — walked twice by Kirk on the branch stack, then merged bottom-up: toolkit #1514 (encounter v0.58.0) + #1515 (session v0.58.0) + #1516, rpg-api #918, web #933; start facing follows as its own small set (protos #292, toolkit #1517 + #1518, api in #918, web next) — the first tool cut under the north star; plan.md beside this file
 journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
 predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
 north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
