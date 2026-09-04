@@ -91,6 +91,16 @@ an `until`; no intel record reveals that fact (a hold-out nobody can win).
 | `place[].arrives.turn` | ≥ 1; the cell is floor | `PropInput.Arrives` / `MemberInput.Arrives` | the arrival scheduler on the turn clock: the placement is absent until turn N, then placed with a beat ("a messenger arrives") | the client draws it when it exists |
 | `scenarios.hold-out.convince` | the id is a faction | `scenarios.New` → `Declared{Endings: [TriggerStance{Between: [goblins, party], Stance: friendly}]}` | a fourth trigger, fired by the stance writer | the `ended` beat |
 
+**A rule for the injection column** (rpg-api build, 2026-09-04): rpg-api
+assembles no prop input anywhere — props are field structure and ride
+`Compiled.Field` whole into `NewEncounter`, so a new field on a PROP
+placement (`holds`, `arrives`) costs zero forwarding. Monsters are the
+exception by design: the world starts empty of members, a monster crosses
+the `Spawn` seam, and every fact about one is hand-carried — so `faction`
+and `arrives` on a MONSTER cost a line in Compile and a line at the launch
+(the `Knows`→`Holds` precedent). Pinned by
+`TestPropsRideTheFieldRatherThanBeingForwarded` on the api branch.
+
 Two seams are new mechanisms; everything else is a field on an existing one:
 
 1. **The stance writer** (rung 2 of integration.md): a predicate over one
