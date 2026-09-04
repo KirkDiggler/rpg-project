@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R7) — walk findings folded on the branches; PRs after the second walk — the first tool cut under the north star; plan.md beside this file
+status: RULED 2026-09-04 (R1–R8) — two walks' findings folded on the branches; PRs after the walk closes clean — the first tool cut under the north star; plan.md beside this file
 journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
 predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
 north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
@@ -58,6 +58,18 @@ proves it.
   does the same through the prop. The hold-out's letter is exactly this. The
   shipped heirloom tomb gains a second record on a holdable prop in the hall
   so a walk can test intel without killing the captain.
+- **R8 — The verbs are buttons, and they work on your turn in a fight.**
+  Walk 2 (Kirk): "I put the intel on an item, made it holdable, but do not
+  get a Hold option… the skinny Search and Hold button feels out of place;
+  these should be buttons like the other actions I can take." The stored
+  run proved the engine had his obelisk holdable and holding the record;
+  every run was inside a fight from round one and the client withheld the
+  verbs in combat. Ruled: Search, Hold, Loot and Leave live in the action
+  bar beside Attack and Move, in free roam and in combat; in a fight they
+  are offered on the player's turn (the engine is free on-turn, refuses
+  off-turn — recover-the-artifact §4.4) and shown disabled off-turn with
+  the reason; Hold is offered on the prop's own cell as well as adjacent;
+  Loot only on a downed body in range.
 - **R7 — Intel is a dungeon-level section, not a palette item.** Kirk: "so
   little weird the intel is next to the assets." The record list and "new
   intel" live in the inspector's dungeon sections beside Scenarios, not in
