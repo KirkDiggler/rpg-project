@@ -280,3 +280,8 @@ overall." Rule: protos first; then build every wave on PUSHED branches and
 pin them as pseudo-versions; stand the local stack up from the worktrees, run
 the api scenes and walk it; fold the findings back on the branches; THEN open
 one bounded PR per module, in dependency order, on real tags as they mint.
+
+Sharpened the same hour, Kirk: "why not merge the toolkit code — in the end
+api will need the bump. bumping it for every change seems silly." Toolkit PRs
+merge as they come; the api builds against pushed pseudo-versions while the
+slice is open and takes one pin at the end, never a re-pin per toolkit tag.
