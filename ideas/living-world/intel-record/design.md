@@ -1,0 +1,227 @@
+---
+status: DONE 2026-09-04 — walked twice by Kirk on the branch stack, then merged bottom-up: toolkit #1514 (encounter v0.58.0) + #1515 (session v0.58.0) + #1516, rpg-api #918, web #933; start facing follows as its own small set (protos #292, toolkit #1517 + #1518, api in #918, web next) — the first tool cut under the north star; plan.md beside this file
+journey: rpg-project#326 (Living World); issue rpg-project#372 (framing + addendum)
+predecessor: recover-the-artifact/design.md (slice 2; holdings, Loot, Hold, `knows`)
+north star: "we are here to build tools that can be used to tell stories" — rpg-project#326
+---
+
+# The intel record — authored knowledge you place in a monster
+
+The tool: an author configures a piece of intel (what it reveals) and places
+it in a monster, through a form. The test case: the heirloom tomb, re-authored
+through that form, walked once by path 2. No new scenario; the one we have
+proves it.
+
+## 0. Vocabulary
+
+- **intel record** — an authored thing in the dungeon file: an id and what it
+  reveals. Today: one door. Later, by its own use cases: a region, a location,
+  a parchment body, a reading check.
+- **holds** — a monster placement's list of intel record ids. The monster
+  carries them from spawn; Loot transfers them (a prop moves, intel copies).
+- **the panel** — the designer's intel form: create a record, choose what it
+  reveals, assign it to a holder.
+
+## 1. Ruled (Kirk, 2026-09-04, in session)
+
+- **R1 — `knows` goes.** "if we don't have a use case for it then it goes.
+  when a use case does arrive for it it will define the shape without any
+  baggage." One spelling of knowledge: the record. Deleted from dungeonspec
+  and refused by name; the only fixture spelling it is re-authored.
+- **R2 — Intel is assigned through a form.** "the form should assign the
+  Intel to something though and that could use a form." The author never
+  types a property on a monster.
+- **R3 — Intel is a general builder capability**, like a concealed door:
+  declared in the dungeon file, placed on a monster, read by the engine as
+  holdings. Never scenario machinery; the scenario form binds what its quest
+  needs and nothing else.
+- **R4 — Step one proves the tool on the scenario we have.** No dropdown, no
+  description, no second scenario in this cut (those are rpg-project#372's
+  and #371's).
+- **R5 — Intel is scenario-independent; the customer is a DM.** Kirk: "we
+  could make additional intel at any time — location of treasure, how to
+  open a lock. this scenario says they need to find the artifact; setting
+  up intel for it could go in the description but it is not required for
+  the scenario. the artifact could be behind 1 of n doors. intel is workable
+  in any scenario. our customer is a DM setting up the scenario with DM-like
+  tools. intel is tool 1 we have a real use case for. making the goblin camp
+  not hostile falls out of this." So: no scenario declares or requires
+  intel; a scenario's description may suggest it; the record's `reveals`
+  grows one key per use case (a treasure's location, a lock's approach, a
+  camp's disposition) and each arrives with its own use case, never ahead.
+- **R6 — Intel can be held by a prop.** Kirk, walking: "tech could get intel
+  by holding something too. if we want to test the intel we need to be able
+  to place it on a few things — not the hardest monster to kill in the
+  game." `holds:` is legal on props as well as monsters. Holding a prop
+  applies its records' `reveals` to the holder (intel copies; the prop keeps
+  its records for a later handoff); looting a body that holds such a prop
+  does the same through the prop. The hold-out's letter is exactly this. The
+  shipped heirloom tomb gains a second record on a holdable prop in the hall
+  so a walk can test intel without killing the captain.
+- **R8 — The verbs are buttons, and they work on your turn in a fight.**
+  Walk 2 (Kirk): "I put the intel on an item, made it holdable, but do not
+  get a Hold option… the skinny Search and Hold button feels out of place;
+  these should be buttons like the other actions I can take." The stored
+  run proved the engine had his obelisk holdable and holding the record;
+  every run was inside a fight from round one and the verbs sat in a skinny
+  row below the dock, where in a fight they read as chrome (the web build
+  checked: the client had not gated them; my first diagnosis said it had). Ruled: Search, Hold, Loot and Leave live in the action
+  bar beside Attack and Move, in free roam and in combat; in a fight they
+  are offered on the player's turn (the engine is free on-turn, refuses
+  off-turn — recover-the-artifact §4.4) and shown disabled off-turn with
+  the reason; Hold is offered on the prop's own cell as well as adjacent;
+  Loot only on a downed body in range.
+- **R7 — Intel is a dungeon-level section, not a palette item.** Kirk: "so
+  little weird the intel is next to the assets." The record list and "new
+  intel" live in the inspector's dungeon sections beside Scenarios, not in
+  the palette beside Props; a record's form opens in place there.
+
+## 2. The file — dungeonspec v2
+
+```yaml
+intel:
+  - id: vault-map
+    reveals: { door: vault }
+
+place:
+  - { id: captain, ref: "dnd5e:monsters:skeleton-captain", at: [23,5],
+      targeting: closest, holds: [vault-map] }
+```
+
+- `intel[].id` — unique; refused on collision naming both lines.
+- `intel[].reveals` — exactly one target in this cut: `door: <door id>`, refused
+  when the door does not exist. A declared-but-unconcealed door is legal and
+  inert. The map of targets grows one key per use case (region, …).
+- `place[].holds` — intel ids; legal on monsters AND props (R6); refused
+  when the id does not exist; the same record may be held by several
+  placements (intel copies).
+- `knows` — refused by name, pointing at `intel`/`holds`.
+- `Compiled` exposes `Intel []IntelRecord{ID, Reveals}` and `Holds` on each
+  monster placement.
+
+## 3. The engine — encounter + session
+
+- `MemberInput.Holds` and `JoinInput.Holds` ([]IntelID) replace `.Knows`;
+  seeding writes `holds:intel:<record id>` on the member — the RECORD id, not
+  the door: what a record reveals is read at transfer time from the field's
+  intel table, so the same fact kind serves every future `reveals` target.
+- Loot: unchanged in shape. For each intel holding of the body, apply its
+  `reveals` to the looter — a door → `learnDoor(looter, door, "loot")` and the
+  looter's own DOOR_REVEALED beat, exactly as today; copies, never moves.
+- Secrecy (design slice 2, P3): holdings are never projected; the probe law
+  holds; a monster with an empty `holds` and one with intel are
+  byte-identical to every observer until a loot.
+- Persistence: the intel table is field structure (construction-truth); the
+  holdings are journal facts; Load replays, never re-seeds. A PROP's
+  records are part of the prop's persisted data (toolkit build,
+  2026-09-04: they were not, and every in-memory scene passed — a scroll
+  taught the first holder only; caught by a session-level scene that
+  reloads the stored encounter the way the game does between verbs; pinned
+  at both levels). Two records on one prop are legal and both apply; two
+  records revealing one door are legal — knowledge is not scarce.
+- Secrecy on the atlas: `AtlasProp` never carries a prop's records, and a
+  scene asserts the serialised atlas contains no record id — a client
+  cannot tell the scroll from the chalice before picking it up.
+- `session.SpawnInput.Holds` replaces `.Knows` and forwards to
+  `JoinInput.Holds`. Hosts forward COMPILED intel ids.
+- Trust boundary at load (slice 2's gap 10) extends: a `holds:intel:` fact
+  naming a record the field does not declare is refused.
+
+## 4. The wire — no change
+
+`PutDungeon` ships verbatim YAML; the atlas never carries intel; the reveal
+reaches the looter as the DOOR_REVEALED beat that already exists. rpg-api
+forwards `Holds` where it forwarded `Knows`. Its error table grows one row
+(api build, 2026-09-04): `session.ErrNoIntel` — a spawn naming an
+undeclared record — maps to INTERNAL, because no RPC names an intel record;
+the only thing that spawns is the server forwarding compiled ids, so the
+refusal reports wiring on our side, never a client's list. The intel table
+rides `Compiled.Field` whole into the run, which is why `reveals` can be
+read at transfer with no wiring — a later piecemeal copy of Field would
+drop it silently; two api tests pin that it arrives.
+
+## 5. The designer — the panel (web)
+
+- **Intel section** in the inspector's dungeon sections beside Scenarios
+  (R7): the record list, **New intel** → a record with a suggested id;
+  **Reveals** = a dropdown of the dungeon's doors (the only kind in this
+  cut; the dropdown is the entity_ref picker filtered by kind, as
+  everywhere); **Held by** = a multi-pick of the dungeon's named monsters
+  AND props (R6).
+- Selecting a monster shows what it holds, read-only, with a link back to
+  the record — the monster is not where you edit intel.
+- YAML emit/parse round-trip byte-exact for `intel` and `holds`; `knows` is
+  refused by the parser with the compiler's own sentence.
+- The scenario form is untouched: "who knows the way in" never becomes a
+  scenario field (R3).
+
+## 6. Ownership
+
+| noun | holder | why |
+|---|---|---|
+| intel record | dungeonspec (author) | declared structure, like a door |
+| `holds` on a placement | dungeonspec (author) → encounter holdings at spawn | the monster carries it from birth |
+| what a record reveals | encounter, read at transfer | one fact kind, many targets later |
+| the panel | web | the form that assigns intel to something (R2) |
+| scenario form | untouched | binds the quest's nouns only (R3) |
+
+Charter checks: dungeonspec gains declarations and refusals it decides alone
+(holds); encounter's holdings gain a record indirection and no new writer
+(holds); session forwards one renamed field (holds); rpg-api forwards
+(holds); web gains a form (holds — the designer is the product).
+Singularity: knowledge is spelled once (the record); who-has-what is
+answered once (holdings).
+
+## 7. Acceptance
+
+| item | proof |
+|---|---|
+| a record held by the captain reveals its door to the looter alone | scene: two members; loot; DOOR_REVEALED to one; the other's atlas bytes unchanged |
+| a monster holding nothing and one holding intel are byte-identical to every observer until a loot | pinned atlas + story bytes |
+| two monsters holding the same record: looting either reveals; looting both reveals once | intel copies; no double narration |
+| `knows:` is refused by name in the file and in the panel | dungeonspec test; parser test |
+| a `holds:intel:` fact naming an undeclared record is refused at load | trust-boundary scene |
+| a holdable prop carrying a record teaches its holder on Hold; looting a body that holds that prop teaches too | scenes |
+| the heirloom tomb re-authored through the panel round-trips byte-exact and walks path 2, and its hall scroll teaches without a fight | fixture pinned in three repos; Kirk's walk |
+
+## 8. Shelves — named, empty
+
+- **Reveals a region / a location** — the next `reveals` key, when a scenario
+  wants it; the fact kind already fits.
+- **The parchment body and its reading check** — the record grows a body and
+  a check; Loot yields the record as an item; reading applies `reveals`.
+- **Hands** — a held record may cost a hand (slice 2 §9).
+- **Intel on NPCs** — a vendor holding intel; arrives with the NPC lane's
+  give capability. (Props: ruled in, R6.)
+- **The scenario dropdown, description, kill-the-captain** — rpg-project#372 /
+  #371, the next cut.
+
+## The walks (2026-09-04)
+
+Walk 1, on the branch stack: three findings, all ruled and folded before any
+PR — intel on props (R6), intel as a dungeon-level section (R7), and the
+question "why that captain" answered by the held-by picker. Walk 2: the
+obelisk he made holdable and gave the record to was in the engine (the
+stored run says so); no Hold appeared because every run was inside a fight
+and the verbs sat in a skinny row that read as chrome — R8, folded: they live in the action bar now. Walk 2 close, in
+his words: "looted the skele, got the intel, saw the door, got the heirloom.
+so this appears to work… for what we set out for this works."
+
+Named for right after: a **facing on the start point** so the camera begins
+looking the right way ("we always start looking the wrong way and have to
+spin around") — `start: { at: [c,r], facing: e }` with the bare pair still
+legal as facing-unstated; `GetAtlasResponse.start {at, facing}` (the atlas
+carries no start today); api translates; the web aims the camera. Its own
+small set behind this slice, not inside it. Ruled while building (2026-09-04):
+the start is a POINTER end to end — the field's `Start` is nil when nobody
+authored one (a zero-valued start would claim the party arrives at the
+origin looking nowhere), the session mirror keeps the pointer, and the wire
+OMITS `start` in that case; a bare pair yields a start with an empty facing;
+rpg-api reads the facing from the atlas mirror only, never a second source
+on `Compiled`. The nil case is not an authoring case — dungeonspec REQUIRES
+a start ("the dungeon does not say where the party starts") — it is the
+OLD STORED BLOB: a session persisted before starts were carried, loaded
+after the bump, must serve an atlas with no start rather than one at the
+origin (api build, 2026-09-04; that is the deploy risk, and its scene). Landed: toolkit encounter v0.59.0 (#1517); protos #292; the
+session mirror, api translation and web camera follow. And a **scenario tab** in the
+builder — rpg-project#372.
