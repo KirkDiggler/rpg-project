@@ -109,6 +109,25 @@ the table below is corrected:
   is the single path, reached from a member id via `bubbleFor`; a stance
   flip is a third `DissolveCause` in a sealed set — one file edit.
 
+- **`reveals: {fact}` is a one-arm addition** (`applyReveals` switches on
+  the record's targets; `learnDoor` already writes a fact into the
+  receiver's journal with the receiver as audience) — but **no generic fact
+  reader exists**: `knowsDoor`/`knowsRegion` answer through
+  `graph.State.Visible`, which only speaks about entities declared
+  `Concealed` with a matching `Pierce`. "Does this mind hold fact F" needs
+  a new fold over the member's journal. Two traps beside it: the holdings
+  journal is a SEPARATE journal from the concealment world's (which exists
+  only when the field carries concealment), and holdings facts carry an
+  EMPTY audience ("a holding is not a thing that happened to anybody").
+  So a `fact` reveal writes into the member-facts journal — which must
+  exist whenever a dungeon declares facts, not only under concealment —
+  and the disposition predicate is `knowsFact(member, fact)`, a fold that
+  does not exist yet.
+- **Presence HOLDS:** `sweepOccupancy` inside `refreshSight` (every verb
+  passes through it; also run at Load) is exactly the fold shape — loop the
+  roster, `regionOf(cell)` (a map hit), act when the answer changed. The
+  attach point is cheap; only the thing being taught is new.
+
 So the load-bearing mechanism of tool 2 is not "a stance writer" bolted onto
 rung 1; it is **sides by faction inside the encounter**: members carry a
 faction (players default to `party`, monsters default to a `monsters`
@@ -127,7 +146,7 @@ fixed one (rung 2 lands as a consequence, not a prerequisite).
 | `factions[].id`, `place[].faction` | ids unique; every faction referenced exists; `party` reserved | `SetupInput.Factions`; each `MemberInput.Faction` (monsters: hand-carried through Spawn) | NEW: sides by faction — formation, `fightIsDecided`, `bubbleHasPlayer` and targeting ask the run's stance table, not `MemberKind` | fight formation, targeting, behavior |
 | `factions[].mind` | names a monster in that faction | `Faction.Mind` | the presence fold: the faction knows what its mind knows | disposition predicate |
 | `dispositions[]` | both sides exist; `until` is a fact id some record reveals (warn, not refuse? — see §6) | `SetupInput.Dispositions` seeds the per-run stance table (default: `party` hostile to every monster faction) | a reducer over the mind's `<fact>` facts raises the flip; an `AdoptStance` projection rewrites the edge; on the flip, `dissolveBubble(member, ByStance)` for a fight formed between the two | fight formation; behavior (Billy) |
-| `intel[].reveals.fact` | fact ids are plain strings, declared here | intel table rides `Compiled.Field` whole (already) | on transfer, a `fact` reveal writes `<fact>` into the receiver's journal with the receiver as audience (the same path `door` uses to write `known:door`) | the disposition predicate; later, quest predicates |
+| `intel[].reveals.fact` | fact ids are plain strings, declared here | intel table rides `Compiled.Field` whole (already) | on transfer, a `fact` reveal writes `known:fact:<id>` into the member-facts journal with the receiver as audience (`learnDoor`'s exact shape); NEW: `knowsFact(member, id)` fold, and the member-facts journal exists whenever facts are declared, not only under concealment | the disposition predicate; later, quest predicates |
 | `place[].holds` on a prop | R6 | `PropInput.Holds` | Hold applies reveals to the holder; presence: a holder in the mind's region teaches the mind | — |
 | `place[].arrives.turn` | ≥ 1; the cell is floor | `PropInput.Arrives` / `MemberInput.Arrives` | the arrival scheduler on the turn clock: the placement is absent until turn N, then placed with a beat ("a messenger arrives") | the client draws it when it exists |
 | `scenarios.hold-out.convince` | the id is a faction | `scenarios.New` → `Declared{Endings: [TriggerStance{Between: [goblins, party], Stance: friendly}]}` | a fourth trigger, fired by the stance writer | the `ended` beat |
