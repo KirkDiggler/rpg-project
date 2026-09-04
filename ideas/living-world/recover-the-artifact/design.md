@@ -390,6 +390,13 @@ Consequences the trigger must state:
 - A dungeon with a scenario bound and no reachable exit refuses at
   `New(cfg)` in form-filler words; `ErrNoEnding` is the encounter's own
   backstop.
+- **`Exited.holding` is what actually left the run with the member**
+  (toolkit#1507, found by the rpg-api acceptance scene, ruled 2026-09-04):
+  the carried list when the exited-holding ending fired, EMPTY when the
+  departure dropped it. The drop is decided first, then the departure
+  beat is appended with the truthful list, then `dropped`, then `ended`
+  if it fired — §6's beat order holds and no two beats about one
+  departure disagree.
 - **A member who withdrew before the ending fired is not told** (session
   build, 2026-09-04): the `ended` beat's audience is everyone still in
   the run plus the carrier the same verb just removed. "For everyone" in
