@@ -1,90 +1,110 @@
-# Simple Asset Source Tools Implementation Plan
+# Pack-by-Pack Asset Ingestion Implementation Plan
 
-**Goal:** Index all licensed source archives, search their metadata, extract selected candidates, and convert selected FBX files with small repository-owned scripts.
+**Goal:** Index licensed packs and provide a configured conversion, preview, and contact-sheet path one pack family at a time.
 
 **Spec:** `ideas/assets/asset-library-ingestion/design.md`
 
 ## Execution rules
 
-- No spawned subagents.
-- No autonomous implementation/review/fix loops.
-- Work inline in one bounded session per repository.
-- Use test-first development for behavior changes.
-- Run focused tests while working and one full repository suite before PR readiness.
+- No spawned subagents or autonomous review/fix loops.
+- Work inline in one bounded repository session.
+- Prefer real pack verification over a new generalized test framework.
+- Run existing repository tests once before PR readiness.
 - Integration is PR-only.
-- Stop before adding a daemon, database, lock manager, transaction framework, event graph, or generalized workflow engine.
+- Do not add a daemon, database, lock manager, event graph, or state machine.
 
-## Slice 1 — Private source tools (`rpg-game-assets#123`)
+## Slice 1 — Source index and Fantasy Kingdom reference (`rpg-game-assets#123`)
 
-Create:
+### Source catalog
 
-- `scripts/build_asset_source_catalog.py`
-- `scripts/search_asset_source_catalog.py`
-- `scripts/extract_asset_candidates.py`
-- `scripts/convert_asset_candidates.py`
-- `scripts/test_asset_source_tools.py`
-- `library/source-catalog/v1.json`
-- `library/source-catalog/README.md`
+Create `scripts/index_synty_archives.py` and generated private `library/source-catalog/v1.json`.
 
-Update `README.md` with one link to the source-tool reference.
-
-### Required behavior
-
-1. Build deterministic catalog metadata for every ZIP and Unity package under a configured root.
-2. Record archive/member names, sizes, formats, source-relative paths, and SHA-256 identities without serializing absolute paths.
-3. Record unsafe archives as invalid and Unreal/Sidekick archives as deferred when present.
-4. Search by all supplied terms and optional extension.
-5. Extract only selected member IDs and support IDs after rechecking archive/member hashes.
-6. Write each selection into a new candidate folder and refuse overwrite.
-7. Convert FBX through the existing `fbx_to_glb.py` with one explicit selected texture and known pack profile.
-8. Copy an existing GLB candidate; return a clear unsupported error for other formats.
-9. Write `candidate.json` and `conversion.json` receipts containing portable paths and hashes.
-
-### Verification
+Verify:
 
 ```bash
-python3 -m unittest \
-  scripts.test_asset_source_tools \
-  scripts.test_index_weapon_source_archives \
-  scripts.test_synty_pack_profiles -v
-
-python3 scripts/build_asset_source_catalog.py \
+python3 scripts/index_synty_archives.py \
   --archives-root "$HOME/Downloads/synty" \
   --output library/source-catalog/v1.json \
   --check
-
-python3 scripts/search_asset_source_catalog.py \
-  --catalog library/source-catalog/v1.json \
-  --extension fbx \
-  bottle
 ```
 
-Before PR readiness, run the repository's complete public test suite once and verify existing runtime inventory/stage checks. Confirm the diff contains no runtime promotion or local absolute path.
+Expected current reference: every configured archive is represented and no absolute local path appears in the catalog.
 
-## Slice 2 — Local wrapper (`game-dev`, after Slice 1 merges)
+### Pack configuration
 
-Create one small `scripts/asset-library` wrapper that supplies:
+Create `scripts/configs/synty-packs/polygon-fantasy-kingdom.json` with:
 
-- the sibling `rpg-game-assets` paths;
-- default source root `~/Downloads/synty/`; and
-- ignored candidate workspace under `assets/synty/`.
+- Fantasy Kingdom v5 archive identity;
+- `fantasy-kingdom` scale profile;
+- `Texture_01_A` default atlas;
+- character family include patterns;
+- orthographic isometric preview settings; and
+- 20-item, five-column sheet pagination.
 
-Document the visible flow:
+### Pack conversion
 
-```text
-catalog -> converted-candidates -> placement-inbox
-```
+Create `scripts/convert_synty_pack.py` as a small wrapper around existing `fbx_to_glb.py`.
 
-Do not add orchestration state. Folder movement remains the human handoff.
+It must:
 
-## Slice 3 — Shared agent guide (`rpg-project`, after both command repositories merge)
+- select only the requested configured group;
+- support `--dry-run` and a simple `--resume` for missing files;
+- run Blender with `--factory-startup`;
+- preserve original source directories;
+- refuse accidental overwrite unless resuming missing output; and
+- write source/output paths, sizes, and hashes to `manifest-<group>.json`.
 
-Create `.agents/skills/asset-library-ingestion/SKILL.md` using the Agent Skills standard and the `writing-skills` procedure. Keep it short and link to the merged command documentation. It must not contain current batch state, model names, source inventory, local paths, or copied AGENTS policy.
+### Preview rendering
 
-## Merge order
+Create `scripts/render_glb_previews.py` for Blender background execution.
 
-1. `rpg-game-assets` source-tool PR.
-2. `game-dev` wrapper PR.
-3. Existing `rpg-project#367` design/skill PR.
+It renders one 512px orthographic isometric PNG per manifest GLB using the configured camera, neutral background, ground shadow, source/rest pose, and independent bounds-based framing. It writes `preview-manifest-<group>.json`.
 
-Each merge requires Kirk's approval. No direct or local merges.
+### Contact sheets
+
+Create `scripts/build_preview_sheets.py` using Pillow.
+
+It groups previews by original source directory and then filename family, paginates them, labels filename/hash/dimensions, and writes `sheet-manifest-<group>.json`.
+
+### Human documentation
+
+Add:
+
+- `library/source-catalog/README.md` with exact pack commands;
+- `docs/human/asset-ingestion/fbx-to-glb.md` explaining manual Blender conversion; and
+- links from the existing repository and human-doc indexes.
+
+### Fantasy Kingdom acceptance
+
+Run the `characters` group end to end.
+
+Done when:
+
+- 39 source FBXs produce 39 GLBs;
+- original `Source_Files/Characters` and `Source_Files/FBX` paths remain distinct;
+- all four duplicate-name pairs survive independently;
+- 39 reusable 512px PNGs and five sheets exist;
+- Kirk accepts the preview style;
+- one factory-startup resume conversion reproduces an existing GLB hash without Auto-Rig Pro handler output;
+- manifests match every output path, size, and hash;
+- source catalog rebuild and runtime inventory checks pass; and
+- portable manifests contain no local path.
+
+## Later pack-family passes
+
+Add one reviewed group/config decision at a time:
+
+1. Fantasy Kingdom weapons and items.
+2. Fantasy Kingdom props.
+3. Fantasy Kingdom buildings and environment.
+4. Other packs selected with Kirk.
+
+A family needing another atlas receives a focused configuration override when observed. Do not guess all texture rules in advance.
+
+## Later repositories
+
+After the private tool PR merges:
+
+- add a small `game-dev` wrapper/default local paths if it proves useful;
+- add a concise Agent Skills-standard guide only after the commands stabilize; and
+- keep Blender placement and held-item delivery as separate future slices.

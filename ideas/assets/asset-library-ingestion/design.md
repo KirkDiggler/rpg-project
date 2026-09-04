@@ -1,4 +1,4 @@
-# Simple Asset Source Tools Design
+# Pack-by-Pack Asset Ingestion and Preview Design
 
 Status: approved by Kirk
 
@@ -8,92 +8,126 @@ Slice: [rpg-project#366](https://github.com/KirkDiggler/rpg-project/issues/366)
 
 ## Purpose
 
-Give asset collaborators a few small tools for finding and preparing licensed source assets. This is an internal workshop workflow, not a production service.
+Give asset collaborators a small, understandable toolchain for turning licensed Synty source packs into private browsable GLB libraries.
 
-The tools index source archives, search safe metadata, extract explicitly selected files, and convert selected FBX candidates with the converter we already use.
-
-## Human workflow
+The useful result of ingestion is:
 
 ```text
-source archives
-  -> index
-  -> search
-  -> select model and texture IDs
-  -> extract a candidate folder
-  -> convert the selected candidate
-  -> move useful candidates to the next human workflow
+preserved source archive
+  -> configured pack conversion
+  -> GLBs retaining source directories
+  -> one PNG preview per GLB
+  -> paginated sheets per source directory and filename family
 ```
 
-The next workflow is Blender placement. Kirk can open a character and item, place or pose them, and save the scene. Blender placement, hand-socket capture, provider promotion, runtime mapping, and animation are not part of these source tools.
+Collaborators can identify assets from PNG sheets without loading every model in Blender. Blender is used only after someone chooses an asset or wants to learn the manual process.
 
-## Source boundary
+## Pack-by-pack decisions
 
-- The default licensed drop folder is `~/Downloads/synty/`.
-- Source archives are never modified or deleted.
-- Every ZIP or Unity package in the configured folder is indexed.
-- Sidekick or Unreal packages remain visible as `deferred-unreal-export` when encountered.
-- Unsupported model formats remain searchable; converters are added only when a selected asset needs one.
-- The tracked catalog contains names, sizes, formats, and SHA-256 identities, but no source bytes or absolute machine paths.
+Each pack is handled separately with Kirk. Before conversion, record:
+
+- whether the pack contains models, animation, 2D art, or deferred Unreal content;
+- the correct atlas texture;
+- the approved static scale profile;
+- source model families to include or exclude; and
+- preview camera settings.
+
+These facts live in one reviewed JSON configuration under `scripts/configs/synty-packs/`.
+
+After configuration, conversion is mechanical. New decisions are added only when a family genuinely needs a different atlas or treatment.
 
 ## Tools
 
-### Build the catalog
+### `index_synty_archives.py`
 
-`build_asset_source_catalog.py` reads ZIP and Unity package metadata and writes deterministic JSON. Archive and member identities are content hashes. Unsafe archives are recorded as invalid without hiding their siblings.
+Indexes every ZIP and Unity package in `~/Downloads/synty/`. It records archive/member names, source-relative paths, formats, sizes, and hashes in the private catalog. It never modifies or deletes source archives.
 
-### Search the catalog
+### `convert_synty_pack.py`
 
-`search_asset_source_catalog.py` performs simple all-term matching with an optional extension filter. It returns stable archive and member IDs.
+Runs one configured model family, such as `characters` or `props`. It delegates FBX conversion to the existing `fbx_to_glb.py`, launches Blender with factory settings so personal add-ons cannot affect the run, preserves original source directories, and writes a simple manifest of source and output hashes.
 
-### Extract candidates
+### `fbx_to_glb.py`
 
-`extract_asset_candidates.py` consumes a small human/agent-authored selection file. It rechecks archive and member hashes, extracts only the selected model and support files, and creates a fresh candidate folder. It refuses to overwrite an existing candidate.
+The existing converter imports FBX, assigns the selected Synty atlas, preserves rigged characters, applies the pack scale and floor alignment to static objects, and exports GLB.
 
-### Convert candidates
+### `render_glb_previews.py`
 
-`convert_asset_candidates.py` delegates FBX conversion to the existing `fbx_to_glb.py`, using one selected texture and an existing pack scale profile. Existing GLBs may pass through. Other formats return a clear unsupported error until a real candidate justifies another adapter.
+Imports converted GLBs in one background Blender process and renders one independently auto-framed orthographic isometric PNG per model. The preview uses a neutral background, soft ground shadow, consistent pack orientation, and the source/rest pose.
 
-## Candidate folder
+### `build_preview_sheets.py`
+
+Builds sheets from reusable preview PNGs. Sheets retain the original source directory, split large directories by filename family such as `SK_Chr`, `SM_Prop`, or `SM_Bld`, paginate at 20 items, and label each tile with source filename, short GLB hash, and measured dimensions.
+
+## Output ownership
+
+Raw archives remain local and are never deleted. Temporary extracted sources may be removed after conversion is verified.
+
+Complete converted packs live only in private `rpg-game-assets`:
 
 ```text
-candidate-name/
-  candidate.json
-  source/
-  support/
-  model.glb          # after conversion
-  conversion.json   # after conversion
+library/<pack>/v<version>/
+  models/<original source directories>/
+  previews/<original source directories>/
+  sheets/<original source directories>/
+  manifest-<group>.json
+  preview-manifest-<group>.json
+  sheet-manifest-<group>.json
 ```
 
-The folder and its receipts are the workflow state. V1 has no database, daemon, lock manager, event graph, release transaction, rollback service, or resumable orchestration engine.
+`library/` is for discovery. Moving a selected asset into `harness/` remains a separate reviewed promotion.
 
-## Repository ownership
+## Family order
 
-- `rpg-game-assets` owns the scripts, generated private catalog, tests, and source-tool reference.
-- `game-dev` later receives a small wrapper and ignored candidate-workspace convention.
-- `rpg-project` owns this design and, after the commands exist, a short Agent Skills-standard guide that links to repository documentation.
+A pack may be processed in useful passes:
 
-## Testing
+1. character models;
+2. weapons and items;
+3. props;
+4. buildings and environment;
+5. vehicles and effects.
 
-Public tests use generated tiny ZIP, Unity package, FBX, texture, and fake-Blender fixtures. They prove:
+This avoids pretending one atlas is correct for every asset in a large pack.
 
-- deterministic complete indexing;
-- deferred Unreal visibility;
-- Unity logical paths;
-- simple metadata search;
-- archive/member hash verification;
-- selective extraction into a fresh folder;
-- refusal to overwrite candidates;
-- invocation of the existing FBX converter; and
-- portable receipts without local paths.
+## Reference pack
 
-A private check rebuilds the catalog from the configured Synty folder and compares exact bytes. Existing asset-provider tests remain unchanged.
+POLYGON Fantasy Kingdom v5 is the first reference:
+
+- profile: `fantasy-kingdom`;
+- initial atlas: `PolygonFantasyKingdom_Texture_01_A.png`;
+- first family: 39 `SK_Chr` and `SM_Chr` character/attachment FBXs;
+- result: 39 directory-preserving GLBs, 39 accepted isometric previews, and five directory/family sheets.
+
+The directory-preserving output fixes four distinct same-named FBX pairs that the old flattened conversion collapsed.
+
+## Human documentation
+
+Verified hands-on recipes live under `docs/human/asset-ingestion/`. The first lesson explains manual FBX-to-GLB conversion in Blender so collaborators can understand what the batch script automates.
+
+## Verification
+
+This workshop tool is verified through real runs rather than a large new test framework:
+
+- rebuild the source catalog and compare exact bytes;
+- dry-run a configured group and confirm its selected count;
+- run conversion and verify every manifest path, size, and hash;
+- reconvert one missing output with `--resume` and confirm byte-identical output;
+- render every preview and verify image size/hash;
+- build sheets and inspect them visually; and
+- confirm no portable manifest contains a local absolute path.
+
+Existing repository tests and runtime inventory checks remain unchanged.
 
 ## Execution guardrail
 
-Journey #365 does not use spawned subagents or autonomous review/fix loops. Work happens inline in one bounded session. An independent review, when requested, is a separately initiated top-level session at the final PR head.
+Journey #365 does not use spawned subagents or autonomous review/fix loops. Work is inline and bounded. Independent review, if requested, is a separately initiated top-level session at the final PR head.
 
-If a tool needs a state machine, concurrency protocol, transaction framework, or more than a few focused scripts, implementation stops and returns to Kirk before adding that machinery.
+If ingestion starts requiring a daemon, database, generalized state machine, concurrency protocol, or production deployment framework, stop and return to Kirk before adding it.
 
-## Completion
+## Out of scope
 
-This slice is complete when an agent can rebuild the shared private catalog, search it, extract a selected candidate and texture, and convert that candidate without reading prior conversation history or processing every model in every pack.
+- selecting the merchant or other final game assets;
+- Blender hand placement and posing;
+- provider/harness promotion;
+- runtime exact-ref mapping;
+- animation authoring and Auto-Rig Pro workflows; and
+- exporting Sidekick assets from Unreal.
