@@ -213,7 +213,7 @@ type LootInput struct {
     Target MemberID   // the body
     Range  int        // cells; zero means adjacent, as Interact's does
 }
-type LootOutput struct{} // ack only — see Q1
+type LootOutput struct{} // the rule half says nothing; the seam adds its reports
 ```
 
 Validation order mirrors search: nil → empty member → closed → not a
@@ -225,13 +225,13 @@ with cause `loot`, audience the looter alone, one DOOR_REVEALED beat; and
 a `looted` beat to everyone present, naming looter and body and nothing
 of what moved.
 
-**Q1 (open):** the output. Search returns nothing because *anything* would
-say whether there was something to find. Loot's target is a known body,
-and "this body carried nothing" is not a secret worth a silent answer —
-but a client cannot tell "nothing" from "the beat has not arrived".
-Options: ack-only and the beat is the answer (search's shape), or a
-`Transferred int` count (says nothing about *what*). Lean: ack-only for
-symmetry; revisit when the parchment (§9) makes loot yield an item.
+**Q1 — closed at wave 0 (2026-09-04).** The rule half returns nothing.
+The seam's response carries the standard `saved` and `delivery` reports
+every mutating verb carries (a half-failed save must be an error with a
+report, never a shrug) and nothing about what moved. The reports go to
+the caller, who is the looter and learns anyway; other members learn
+only from the beats. The parchment shelf, when stocked, adds what it
+needs additively.
 
 **Q2 (open, plan-level):** the body must be reachable after the fight
 dissolves — a removed initiative slot must keep its position. Check in
@@ -242,10 +242,10 @@ the plan against `noticeDown`'s Remove consequences.
 ```go
 type TakeInput struct {
     Member MemberID   // who takes
-    Target PropID     // the placement, by its id
+    Target PropID     // the placement, by its id (the wire mirrors it as `target`)
     Range  int        // as Loot
 }
-type TakeOutput struct{}
+type TakeOutput struct{} // as Loot's
 ```
 
 Validation: nil → empty member → closed → not a member → no such prop →
@@ -350,7 +350,7 @@ and the package is what makes the descriptor, the refusals and the
 pinning test exist. rpg-api's `endingsFor` grows one arm: the scenario's
 declared ending, translated verbatim.
 
-**Q1 (loot output)** stays open, non-blocking.
+**Q1 (loot output)** closed at wave 0 — see §4.2.
 
 ## 7. Ownership
 

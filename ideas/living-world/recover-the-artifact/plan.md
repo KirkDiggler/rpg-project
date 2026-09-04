@@ -44,10 +44,17 @@ issues on the owning repo, never fixed in passing.
 Session service, `dnd5e/api/session/v1alpha1`:
 
 - `rpc Loot(LootRequest) returns (LootResponse)` —
-  `LootRequest{session, member, target}`; response empty (design Q1's
-  lean: the beat is the answer).
+  `LootRequest{session, member, target, range}` mirroring the SDK input
+  field for field (this service's rule 1); the response carries the
+  seam's standard `saved` and `delivery` reports and nothing about what
+  moved (design Q1, closed at wave 0).
 - `rpc Take(TakeRequest) returns (TakeResponse)` —
-  `TakeRequest{session, member, prop}` (the placement id); response empty.
+  `TakeRequest{session, member, target, range}` where `target` is the
+  placement id of the prop (mirrors `TakeInput.Target`); response as
+  Loot's.
+- `ListScenarios` is ungated: reading content mutates nothing
+  (GetDungeon's precedent); PutDungeon stays behind its flag. rpg-api
+  honours this at wave 2.
 - `Exit` request unchanged. `Exited` body gains `repeated string holding`
   — the prop ids carried out — and `string exit` (the exit id, empty for
   a departure from elsewhere).
