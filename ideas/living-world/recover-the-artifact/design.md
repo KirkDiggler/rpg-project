@@ -239,10 +239,13 @@ Validation order mirrors search: nil → empty member → closed → not a
 member → target not a member → target not down → not in range. Refusals
 for "not down" and "not in range" are ordinary (the body is visible; there
 is no secret in whether it is down). Effect: for every holding of the
-target, transfer to the looter — today that is intel only: `learnDoor`
-with cause `loot`, audience the looter alone, one DOOR_REVEALED beat; and
-a `looted` beat to everyone present, naming looter and body and nothing
-of what moved.
+target, transfer to the looter — **a prop moves, intel copies** (found by
+the toolkit build's mutation pass, 2026-09-04: keying a holding by its
+subject alone let a second monster with the same `knows` silently take
+the door off the first; knowledge is not exclusive, a thing is). Intel:
+`learnDoor` with cause `loot`, audience the looter alone, one
+DOOR_REVEALED beat; a prop: the looter now holds it. And a `looted` beat
+to everyone present, naming looter and body and nothing of what moved.
 
 **Q1 — closed at wave 0 (2026-09-04).** The rule half returns nothing.
 The seam's response carries the standard `saved` and `delivery` reports
@@ -268,10 +271,14 @@ type HoldOutput struct{} // as Loot's
 ```
 
 Validation: nil → empty member → closed → not a member → no such prop →
-not holdable → already held → not in range. "No such prop" and "not
-holdable" refuse identically only when the prop is inside space the
-member cannot see (the probe law from slice 1); a visible pillar refuses
-by name. Effect: the prop leaves the atlas — a `held` beat to everyone
+not holdable → already held → not in range. **The probe law is the whole gate, not one pair of refusals** (toolkit
+build, 2026-09-04): for a prop inside space the member cannot see, EVERY
+refusal — no such prop, not holdable, already held, out of range — is the
+same bytes, because "out of range" about an unseen id answers "yes, there
+is something by that name in a room you have not found" as loudly as
+"not holdable" would. The visibility gate is hoisted above the whole
+order; the order above holds unchanged for every prop the member can
+see, and a visible pillar refuses by name. Effect: the prop leaves the atlas — a `held` beat to everyone
 present (physical state folds on the truth grain, ruled 2026-09-01) — and
 the member holds it (§5).
 
@@ -292,8 +299,11 @@ A prop today is scenery: a ref, a cell, two blocking flags. Two additions:
   false — a thing nobody declared holdable stays scenery. The scenario's
   `artifact` binding refuses a placement that is not holdable, in
   form-filler words.
-- **Holding** — a run-scoped journal fact `holds:<placement id>` on the
-  member, audience everyone (truth grain). A fallen holder's body holds it
+- **Holding** — a run-scoped journal fact on the member, audience
+  everyone (truth grain). Each kind carries its own prefix
+  (`holds:prop:<id>`, `holds:intel:door:<id>`) because a prop id and a
+  door id are both plain strings and no id needs a shape rule to keep the
+  fold safe (toolkit build, 2026-09-04). A fallen holder's body holds it
   still, and Loot (§4.2) takes it back — P5's one mechanism.
 
 Rejected: reach-its-cell-then-leave (`TriggerReachedPosition` exists, but a
@@ -356,8 +366,10 @@ Consequences the trigger must state:
 - Exiting **without** the artifact is today's Exit: the member departs,
   the run continues for the others; when the last member leaves, the
   encounter auto-closes as it does now.
-- **Leaving from anywhere but the exit while holding drops the holding**
-  (R9): the artifact reappears as a
+- **A departure that did not end the run drops what the member carried,
+  wherever they left from** (R9, sharpened by the toolkit build: with two
+  exits authored and one bound, "anywhere but the exit" was ambiguous —
+  R9's reason is the hole, not the cell). The artifact reappears as a
   holdable prop on the cell the carrier stood on, with a `dropped` beat
   to everyone present. Otherwise a carrier who leaves through the lobby —
   or disconnects — takes the only win out of the run with them. Journal
