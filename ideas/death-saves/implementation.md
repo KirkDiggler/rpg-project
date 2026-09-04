@@ -173,12 +173,34 @@ GLM adversarial review found no Critical/Important issues. Copilot raised no
 concrete finding and requested closer human verification; the GLM evidence was
 posted before merge.
 
+### Unknown 7 — the host ID generator supplies its own separator
+
+**Evidence:** API review found that `idgen.NewUUID("presentation-")` generates
+`presentation-_<uuid>` because `UUIDGenerator.Generate` always inserts `_`
+between a non-empty prefix and UUID. Existing production generators pass bare
+prefixes, and deterministic Death Save tests already produce
+`presentation_<n>`.
+
+**Ruling:** Production passes the bare prefix `presentation`, yielding
+`presentation_<uuid>`. The token remains opaque; clients must not depend on its
+prefix or delimiter. The implementation plan now records the generator's actual
+separator behavior.
+
+**Cost if wrong:** Only host-side readability changes. No wire field, identity
+scope, retry behavior, or client parsing contract changes because the token is
+opaque.
+
 ## Review-process ruling
 
 Published PRs receive one initial Copilot review. Fixes receive scoped local
 re-review; Copilot is not repeatedly re-requested. GLM is available for local
 adversarial task reviews and found the first post-removal census defect before
 publication.
+
+Shared or published PR branches are not rebased. They merge the target branch
+explicitly so the PR retains the upstream integration point, conflicts, and
+resolutions; the repository's squash merge still gives `main`/`dev` one clean
+commit. Force-push is not part of this delivery workflow.
 
 ## Remaining delivery
 

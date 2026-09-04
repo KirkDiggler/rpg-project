@@ -976,7 +976,7 @@ Open ready PR, wait for Kirk merge and record the minted proto version/commit.
 - Regenerate: manager mock after SDK interface grows
 - Create: `internal/integration/session/death_save_acceptance_test.go`
 - Modify: `internal/handlers/dnd5e/v2/character/character_data.go` and `handler_test.go` for owner progress
-- Modify: `internal/orchestrators/session/orchestrator.go` and tests — supply `idgen.NewUUID("presentation-")` in production and deterministic generators in tests
+- Modify: `internal/orchestrators/session/orchestrator.go` and tests — supply `idgen.NewUUID("presentation")` in production (the generator inserts `_`) and deterministic generators in tests
 - Modify: `internal/orchestrators/lobby/start_encounter_session_stack_test.go` — supply a deterministic generator to direct SDK manager construction
 - Modify: `internal/sessionworld/sessionworld.go`
 - Modify: `internal/sessionworld/sessionworld_test.go`
@@ -1000,7 +1000,7 @@ Pin:
 - stale/not-turn/not-Dying/spent errors map to FailedPrecondition;
 - missing request fields map consistently;
 - no API code compares roll, HP, success/failure counts or threshold 3;
-- toolkit manager construction receives an explicit opaque ID generator; production uses `idgen.NewUUID("presentation-")`, tests use deterministic `idgen.NewSequential("presentation")`;
+- toolkit manager construction receives an explicit opaque ID generator; production uses `idgen.NewUUID("presentation")` (yielding `presentation_<uuid>`), tests use deterministic `idgen.NewSequential("presentation")`;
 - generated tokens remain separate from recipient-local numeric authority sequence and contain no Story sequence;
 - production `sessionworld.nobodyDown` and integration `allStanding` implement both `Standing` and `Assess`, projecting every supplied construction-time member as Conscious/Contact/Wait with `PartyDefeated:false`;
 - world compilation succeeds after the encounter pin, and a deliberately Standing-only adapter fails with `ErrNoParticipation`.
@@ -1035,7 +1035,7 @@ Expected: compile/provider failure because old pins have no verb.
 
 Run `go get` for exact minted root/encounter/session/proto versions. Regenerate mocks through the repository generator. Implement the handler as one manager call plus conversion. Extend character projection from toolkit status/progress; do not read raw DeathSaveState in the handler when a provider view exists.
 
-Wire the SDK's required `PresentationIDs` capability in the session orchestrator: production constructs `idgen.NewUUID("presentation-")`; tests and direct SDK constructions use deterministic sequential generators. The API never derives the token from Story sequence and never accepts one from the client.
+Wire the SDK's required `PresentationIDs` capability in the session orchestrator: production constructs `idgen.NewUUID("presentation")`, whose generator inserts the `_` separator; tests and direct SDK constructions use deterministic sequential generators. The API never derives the token from Story sequence and never accepts one from the client.
 
 Before running any dungeon/session acceptance, migrate the two direct encounter consumers: add `Assess` to production `internal/sessionworld.nobodyDown` and integration `allStanding`, returning one Conscious/Contact/Wait row per requested member and `PartyDefeated:false`. Pin those exact adapters in their unit/integration tests. This migration lands in the same API PR as the encounter/session bump so no deployed build can construct a world with a Standing-only capability.
 
