@@ -63,8 +63,9 @@ proves it.
   get a Hold option… the skinny Search and Hold button feels out of place;
   these should be buttons like the other actions I can take." The stored
   run proved the engine had his obelisk holdable and holding the record;
-  every run was inside a fight from round one and the client withheld the
-  verbs in combat. Ruled: Search, Hold, Loot and Leave live in the action
+  every run was inside a fight from round one and the verbs sat in a skinny
+  row below the dock, where in a fight they read as chrome (the web build
+  checked: the client had not gated them; my first diagnosis said it had). Ruled: Search, Hold, Loot and Leave live in the action
   bar beside Attack and Move, in free roam and in combat; in a fight they
   are offered on the player's turn (the engine is free on-turn, refuses
   off-turn — recover-the-artifact §4.4) and shown disabled off-turn with
