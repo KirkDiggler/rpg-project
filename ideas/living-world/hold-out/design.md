@@ -81,11 +81,52 @@ an `until`; no intel record reveals that fact (a hold-out nobody can win).
 
 ## 3. The seams — how each line reaches the run
 
+**Ground truth first (code survey, 2026-09-04, against toolkit main and the
+intel branch).** Two claims in the first draft of this table were wrong and
+the table below is corrected:
+
+- **Fight formation never asks `IsHostile`.** It switches on `MemberKind`
+  (`KindPlayer` / `KindMonster` / `KindWorld`): `trigger.go` classifies
+  contact into `players` vs `monsters`, `standing.go`'s `fightIsDecided`
+  and `clocks.go`'s `bubbleHasPlayer` count the same two kinds. There is no
+  faction field on a member and no `party` side name anywhere in the
+  toolkit; the session says outright that same-kind "is the whole of
+  hostility this seam has". `IsHostile`/`IsAllied` live only in
+  resolution's castView and have two callers, both TARGETING conditions
+  (sneak attack, pack tactics). The encounter module cannot even import
+  them (it depends on `world`, not the rulebook root).
+- **The graph the castView reads is process-global and two-node**
+  (`resolution:cast-side:character` / `:monster`, a `sync.OnceValue`, folded
+  over an empty journal) — rung 1 put a graph UNDER the table, not a
+  per-run relation in the run. The encounter's own world (`encounterWorld`
+  in `conceal.go`) has entities, membership and pierces and ZERO edges,
+  reducers or projections, and exists only when the field carries
+  concealment. Runtime edge rewriting in `world/graph` is DECLARATIVE only:
+  append a fact → a declared reducer raises a flag → a declared projection
+  (`AdoptStance`) rewrites the edge on the next fold; `addEdge`/`adopt` are
+  unexported. hostagecamp's `camp.go` is the pattern.
+- **Fight dissolve HOLDS:** `dissolve.go`'s `dissolveBubble(bubble, cause)`
+  is the single path, reached from a member id via `bubbleFor`; a stance
+  flip is a third `DissolveCause` in a sealed set — one file edit.
+
+So the load-bearing mechanism of tool 2 is not "a stance writer" bolted onto
+rung 1; it is **sides by faction inside the encounter**: members carry a
+faction (players default to `party`, monsters default to a `monsters`
+faction unless authored), a per-run stance table keyed by faction pair
+(declared from `dispositions[]`, defaulting to hostile between `party` and
+every monster faction so today's dungeons behave unchanged), and formation,
+`fightIsDecided`, `bubbleHasPlayer` and targeting ask THAT table instead of
+kind. The table is a small per-run `graph.State` with faction entities and
+stance edges, a reducer over `<fact>` journal facts, and an `AdoptStance`
+projection — the hostagecamp pattern moved into the encounter's world.
+castView's global two-node graph then reads the run's table instead of its
+fixed one (rung 2 lands as a consequence, not a prerequisite).
+
 | line in the file | dungeonspec (declares, validates) | Compiled → sessionworld (injects) | encounter (runs) | who reads it in play |
 |---|---|---|---|---|
-| `factions[].id`, `place[].faction` | ids unique; every faction referenced exists; `party` reserved | `SetupInput.Factions`; each `MemberInput.Faction` | the graph's nodes; `IsHostile(a,b)` asks the graph (rung 1, already) | fight formation, targeting |
+| `factions[].id`, `place[].faction` | ids unique; every faction referenced exists; `party` reserved | `SetupInput.Factions`; each `MemberInput.Faction` (monsters: hand-carried through Spawn) | NEW: sides by faction — formation, `fightIsDecided`, `bubbleHasPlayer` and targeting ask the run's stance table, not `MemberKind` | fight formation, targeting, behavior |
 | `factions[].mind` | names a monster in that faction | `Faction.Mind` | the presence fold: the faction knows what its mind knows | disposition predicate |
-| `dispositions[]` | both sides exist; `until` is a fact id some record reveals (warn, not refuse? — see §6) | `SetupInput.Dispositions` seeds graph edges with an `until` | the STANCE WRITER (rung 2): when the mind's facts contain `until`, rewrite the edge; if a fight is formed between the two, dissolve it | fight formation; behavior (Billy) |
+| `dispositions[]` | both sides exist; `until` is a fact id some record reveals (warn, not refuse? — see §6) | `SetupInput.Dispositions` seeds the per-run stance table (default: `party` hostile to every monster faction) | a reducer over the mind's `<fact>` facts raises the flip; an `AdoptStance` projection rewrites the edge; on the flip, `dissolveBubble(member, ByStance)` for a fight formed between the two | fight formation; behavior (Billy) |
 | `intel[].reveals.fact` | fact ids are plain strings, declared here | intel table rides `Compiled.Field` whole (already) | on transfer, a `fact` reveal writes `<fact>` into the receiver's journal with the receiver as audience (the same path `door` uses to write `known:door`) | the disposition predicate; later, quest predicates |
 | `place[].holds` on a prop | R6 | `PropInput.Holds` | Hold applies reveals to the holder; presence: a holder in the mind's region teaches the mind | — |
 | `place[].arrives.turn` | ≥ 1; the cell is floor | `PropInput.Arrives` / `MemberInput.Arrives` | the arrival scheduler on the turn clock: the placement is absent until turn N, then placed with a beat ("a messenger arrives") | the client draws it when it exists |
@@ -103,9 +144,11 @@ and `arrives` on a MONSTER cost a line in Compile and a line at the launch
 
 Two seams are new mechanisms; everything else is a field on an existing one:
 
-1. **The stance writer** (rung 2 of integration.md): a predicate over one
-   member's facts rewriting a graph edge, plus "a flip dissolves a formed
-   fight between those factions". Lives in encounter beside `noticeDown`.
+1. **Sides by faction** in the encounter (above): the side model moves
+   from `MemberKind` to a per-run faction stance table with a declared
+   reducer + projection, plus "a flip dissolves a formed fight between those
+   factions" (a third `DissolveCause`). This is the whole of tool 2's engine
+   cost, and it is bigger than the brainstorm assumed.
 2. **The arrival scheduler**: placements with a turn. Lives in encounter's
    clock; the first instance of the CLOCK tool.
 
