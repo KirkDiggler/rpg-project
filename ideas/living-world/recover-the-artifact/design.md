@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R9) — branch cut same day — plan.md beside this file; PR rpg-project#368 stays open through the build
+status: RULED 2026-09-04 (R1–R10) — branch cut same day — plan.md beside this file; PR rpg-project#368 stays open through the build
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -31,6 +31,8 @@ each piece below earns its place on its own.
   `known:region:<id>` with an audience (encounter/conceal.go).
 - **loot** — a player verb on a downed member that transfers what the body
   holds to the looter.
+- **hold** — the player verb that picks a holdable prop off the floor into
+  a holding (R10). Never *take*: that word lands things in inventory.
 - **holding** — what a member carries during a run. Does not exist today.
 - **the form** — the scenario's config as the builder renders it: field key,
   label, type, guidance; validated by the scenario package's own `New(cfg)`
@@ -50,12 +52,12 @@ each piece below earns its place on its own.
 - **R4 — All the verbs on the table; consolidate later.** Early alpha.
   **Loot** and **Take** are their own seam verbs beside Search, OpenDoor,
   Unlock and Interact. Interact stays what fadedpez shipped: the NPC verb.
-  If one button is wanted later, Loot and Take become declarations under
+  If one button is wanted later, Loot and Hold become declarations under
   one verb the way Unarmed Strike sits under Attack (§4.1) — the rule
   halves never change.
-- **R5 — The artifact is taken** (§5 option B, by R4's choice of the
-  word): an explicit verb on an adjacent takeable prop; the prop leaves
-  the atlas for everyone; the taker holds it.
+- **R5 — The artifact is held** (§5 option B; the word was Take until R10):
+  an explicit verb on an adjacent holdable prop; the prop leaves the
+  atlas for everyone; the holder holds it.
 - **R6 — The scenario sets the exit; exiting there with the artifact
   wins.** Kirk: "this scenario could have the exit set and if on exit
   with artifact then we win." The form gains a second field (§3.2); the
@@ -74,6 +76,17 @@ each piece below earns its place on its own.
   flag then, with the content re-put as its runbook gate. Two scenarios
   bound on one dungeon are legal and visible on the form; the collision
   refusal proposed earlier is dissolved.
+- **R10 — Hold, not Take.** Kirk: "the merchant is looking at a verb to
+  take things off a merchant. ours will not work because it is just a
+  holding fact… take would land in inventory. if ours was hold then it is
+  just a fact." The run-scoped verb is **Hold**: it creates the `holds:`
+  fact and nothing lands in inventory. **Take** is reserved for the act
+  that lands a thing in the character's inventory — buying from a
+  merchant (fadedpez's lane) or carrying the artifact back to town (a
+  later slice). Two eras, two words; the record never says "took" for a
+  thing that is only held. The yaml flag is `holdable:`; the beat is
+  `held`, rendered present-tense ("Aldric holds the heirloom"); Drop is
+  its inverse. Wire renamed in a wave-0 follow-up.
 - **R9 — They drop it.** Kirk: "oh i like that. they drop it." A carrier
   who leaves from anywhere but the bound exit drops the artifact where
   they stood, with a `dropped` beat to everyone present (§6).
@@ -102,7 +115,7 @@ each piece below earns its place on its own.
   shape. The room still hides with its door; it reveals when the door is
   perceived open (slice 1, unchanged).
 - **P5 — One mechanism for "who has what".** *Holding* is the noun. The
-  captain holds intel; a member who took the artifact holds the artifact;
+  captain holds intel; a member who picked up the artifact holds the artifact;
   a fallen holder's body holds it still, and the same loot verb takes it
   back. The parchment shelf (§9) is this noun with an item in it.
 
@@ -115,7 +128,7 @@ place:
   - { id: captain, ref: "dnd5e:monsters:skeleton-captain", at: [23,5],
       targeting: closest, knows: [vault-door] }
   - { id: heirloom, ref: "dnd5e:props:reliquary", at: [30,3],
-      blocks_movement: false, blocks_los: false }
+      blocks_movement: false, blocks_los: false, holdable: true }
 
 exits:
   - { id: front-gate, at: [0, 1] }
@@ -164,7 +177,7 @@ pinning test and the picker their second instance when the tomb converts.
 
 | key | type | guidance (the refusal, verbatim) |
 |---|---|---|
-| `artifact` | `entity_ref(prop)` | this scenario needs an artifact — which placed thing is the party here to recover |
+| `artifact` | `entity_ref(prop)` | this scenario needs an artifact — which holdable thing is the party here to recover |
 | `exit` | `entity_ref(exit)` | this scenario needs a way out — which exit counts as escaping with the artifact |
 
 ### 3.3 Refusals dungeonspec owns (fail closed, name the line)
@@ -174,20 +187,20 @@ pinning test and the picker their second instance when the tomb converts.
 - `knows` names a door id that does not exist;
 - `knows` on a prop;
 - duplicate placement id;
-- `takeable` on a monster; a takeable prop with no `id` (the binding and
-  the `taken` beat both need the name);
+- `holdable` on a monster; a holdable prop with no `id` (the binding and
+  the `held` beat both need the name);
 - `boss:` stays legal in this slice (R8). A dungeon binding
   recover-the-artifact whose captain also carries the flag has two
   endings, and the boss's fall would end the run before anyone loots —
   the author's business, visible on the form; the heirloom fixture simply
   authors no flag.
 
-## 4. The verbs — Loot and Take (R4)
+## 4. The verbs — Loot and Hold (R4, R10)
 
 ### 4.1 The naming rule (deliberate, not "for now")
 
 **A verb is named by what the record will say.** "Looted the captain" and
-"took the heirloom" are statements; the beat kind, the journal fact and
+"holds the heirloom" are statements; the beat kind, the journal fact and
 the rule-half file all carry that word. Interact is not a statement — it
 is a fine button and a poor fact — so it names no rule half here.
 
@@ -237,41 +250,41 @@ needs additively.
 dissolves — a removed initiative slot must keep its position. Check in
 the plan against `noticeDown`'s Remove consequences.
 
-### 4.3 Take
+### 4.3 Hold
 
 ```go
-type TakeInput struct {
-    Member MemberID   // who takes
+type HoldInput struct {
+    Member MemberID   // who picks it up
     Target PropID     // the placement, by its id (the wire mirrors it as `target`)
     Range  int        // as Loot
 }
-type TakeOutput struct{} // as Loot's
+type HoldOutput struct{} // as Loot's
 ```
 
 Validation: nil → empty member → closed → not a member → no such prop →
-not takeable → already taken → not in range. "No such prop" and "not
+not holdable → already held → not in range. "No such prop" and "not
 takeable" refuse identically only when the prop is inside space the
 member cannot see (the probe law from slice 1); a visible pillar refuses
-by name. Effect: the prop leaves the atlas — a `taken` beat to everyone
+by name. Effect: the prop leaves the atlas — a `held` beat to everyone
 present (physical state folds on the truth grain, ruled 2026-09-01) — and
 the member holds it (§5).
 
 ### 4.4 Pricing in combat — shelf
 
 Out of combat both verbs are free. 5e gives one free object interaction a
-turn and charges an action past that. Loot and Take join the `Afford`
+turn and charges an action past that. Loot and Hold join the `Afford`
 enum with a slot only when an acceptance scene takes something mid-fight;
 until then they are refused while the taker's fight is on the turn clock
 and it is not their turn, and free on their turn. Named here so the
-first mid-fight take is a ruling, not a surprise.
+first mid-fight hold is a ruling, not a surprise.
 
 ## 5. The artifact — holdings (R5)
 
 A prop today is scenery: a ref, a cell, two blocking flags. Two additions:
 
-- `takeable: true` on the placement, refused on a monster, defaulting to
-  false — a thing nobody declared takeable stays scenery. The scenario's
-  `artifact` binding refuses a placement that is not takeable, in
+- `holdable: true` on the placement, refused on a monster, defaulting to
+  false — a thing nobody declared holdable stays scenery. The scenario's
+  `artifact` binding refuses a placement that is not holdable, in
   form-filler words.
 - **Holding** — a run-scoped journal fact `holds:<placement id>` on the
   member, audience everyone (truth grain). A fallen holder's body holds it
@@ -363,8 +376,8 @@ declared ending, translated verbatim.
 | `Loot` entry | session (beside `Search`, `Interact`) | the seam; range is the host's truth |
 | the button | web | renders verbs and offers verbatim; consolidation is a client menu or an Afford declaration, never a rule |
 | holdings | encounter world journal facts | run-scoped truth-grain state; the parchment shelf inherits it |
-| `Take` | encounter rule half + session entry | same shape as Loot; owns the `taken` beat |
-| `takeable` | dungeonspec (author) | a thing nobody declared takeable stays scenery |
+| `Hold` | encounter rule half + session entry | same shape as Loot; owns the `held` beat |
+| `holdable` | dungeonspec (author) | a thing nobody declared holdable stays scenery |
 | `exits` | dungeonspec (author) | structure: ways out, like `start` |
 | the ending | encounter endings (`TriggerExitedHolding`), declared by the scenario package, wired by rpg-api's `endingsFor` | single owner of "the run is over" |
 | form descriptor | toolkit scenario package export → rpg-api verbatim → web renders | ruled 2026-09-01 |
@@ -384,11 +397,11 @@ what" answered once, by the journal (unchanged).
 | a party that never loots and never searches finishes the run blind | acceptance scene: kill the captain, never loot, the door stays a wall for everyone (secrecy check, not a win rule — Kirk 2026-09-02) |
 | loot on the captain reveals the door to the looter alone | DOOR_REVEALED to one recipient; the other member's atlas unchanged until the door is opened in their presence |
 | loot on a body with nothing gives the same bytes as loot on the captain before the reveal beat | P3 |
-| take removes the prop for everyone and the taker holds it | atlas beat to all present; `holds` fact |
+| hold removes the prop for everyone and the holder holds it | `held` beat to all present; `holds` fact |
 | Exit at the bound exit while holding ends the run once, for everyone, naming the carrier; Exit without it departs one member and the run continues | scene: two members, one carries, the other leaves first |
 | Exit at a cell that is not the exit while holding does not end the run | scene: carrier exits from the vault |
-| the form refuses a missing or non-takeable artifact in form-filler words | descriptor↔Config pin |
-| every beat names the verb as a statement: `looted`, `taken` | beat kinds pinned; no beat says `interacted` |
+| the form refuses a missing or non-holdable artifact in form-filler words | descriptor↔Config pin |
+| every beat names the verb as a statement: `looted`, `held`, `dropped` | beat kinds pinned; no beat says `interacted` or `took` |
 
 ## 9. Shelves — named, empty (Kirk 2026-09-04)
 

@@ -1,6 +1,6 @@
 # Recover the artifact — plan
 
-**Status:** RULED 2026-09-04 (design.md R1–R9). Branch cut 2026-09-04. Builds design §3–§6 across
+**Status:** RULED 2026-09-04 (design.md R1–R10). Branch cut 2026-09-04. Builds design §3–§6 across
 four repos, panel-back: the proto wave merges first; toolkit, rpg-api and
 web build against pins in parallel; Kirk walks once; merge bottom-up.
 **Journey:** rpg-project#326, slice 2. **Record:** rpg-project#368 stays
@@ -8,7 +8,7 @@ open through the build and merges on done-when (delegated).
 
 ## Simplifications found in the ground truth
 
-1. **Holdings unify loot, take and the parchment shelf.** One fact kind
+1. **Holdings unify loot, hold and the parchment shelf.** One fact kind
    (`holds:<id>`), one transfer routine, two verbs. Loot is a second
    caller of `learnDoor` (encounter/conceal.go), cause `loot`.
 2. **Endings come from scenarios** (R8). `sessionworld.endingsFor` today
@@ -48,10 +48,11 @@ Session service, `dnd5e/api/session/v1alpha1`:
   field for field (this service's rule 1); the response carries the
   seam's standard `saved` and `delivery` reports and nothing about what
   moved (design Q1, closed at wave 0).
-- `rpc Take(TakeRequest) returns (TakeResponse)` —
-  `TakeRequest{session, member, target, range}` where `target` is the
-  placement id of the prop (mirrors `TakeInput.Target`); response as
-  Loot's.
+- `rpc Hold(HoldRequest) returns (HoldResponse)` —
+  `HoldRequest{session, member, target, range}` where `target` is the
+  placement id of the prop (mirrors `HoldInput.Target`); response as
+  Loot's. (Shipped as `Take` in #289; renamed by the wave-0 follow-up
+  after R10.)
 - `ListScenarios` is ungated: reading content mutates nothing
   (GetDungeon's precedent); PutDungeon stays behind its flag. rpg-api
   honours this at wave 2.
@@ -59,11 +60,11 @@ Session service, `dnd5e/api/session/v1alpha1`:
   — the prop ids carried out — and `string exit` (the exit id, empty for
   a departure from elsewhere).
 - New event kinds with typed bodies: `LOOTED` → `Looted{looter, body}`;
-  `TAKEN` → `Taken{taker, prop}`; `DROPPED` → `Dropped{member, prop,
+  `HELD` → `Held{holder, prop}` (was `TAKEN`/`Taken` in #289); `DROPPED` → `Dropped{member, prop,
   Position at}`. `Ended` unchanged; the key is the scenario's declared
   ending key.
 - `AtlasProp` gains `string id` (empty when the author named none).
-  `GetAtlas` omits taken props for everyone; a dropped prop appears at
+  `GetAtlas` omits held props for everyone; a dropped prop appears at
   its drop cell.
 
 Authoring service, `dnd5e/api/authoring/v1alpha1`:
@@ -92,7 +93,7 @@ the tag on the merge SHA, never predict it.
 dungeonspec (`rulebooks/dnd5e/encounter/dungeonspec`):
 
 - `PlaceSpec` gains `ID string`, `Knows []string` (door ids; monsters
-  only), `Takeable *bool` (props only). `Spec` gains `Exits []ExitSpec{ID,
+  only), `Holdable *bool` (props only). `Spec` gains `Exits []ExitSpec{ID,
   At [2]int}` and `Scenario map[string]map[string]string`, carried
   opaquely: dungeonspec validates only that every binding names an id
   that exists (placement or exit). Refusals per design §3.3, each naming
@@ -101,7 +102,7 @@ dungeonspec (`rulebooks/dnd5e/encounter/dungeonspec`):
 - `PlaceSpec.Boss` **untouched** (R8: the follow-up retires it).
 - Fixture: `reference-tomb.yaml` is **unchanged**. New
   `reference-tomb-heirloom.yaml` = the tomb plus a concealed vault, a
-  takeable artifact with an id, `knows: [vault-door]` on the captain (no
+  holdable artifact with an id, `knows: [vault-door]` on the captain (no
   boss flag), `exits: [{id: entrance, at: <start>}]`, and
   `scenarios: {recover-the-artifact: {artifact, exit}}`. Copied
   byte-identical into rpg-api's content and the web Concepts Lab, each
@@ -109,22 +110,22 @@ dungeonspec (`rulebooks/dnd5e/encounter/dungeonspec`):
 
 encounter:
 
-- `FieldInput.Exits`; `PropInput.ID`, `.Takeable`; `MemberInput.Knows`
+- `FieldInput.Exits`; `PropInput.ID`, `.Holdable`; `MemberInput.Knows`
   seeded at setup as `holds:intel:door:<id>` facts on the monster —
   engine-internal, **never projected** (design P3: no wire ever says who
   carries intel).
-- Fact kinds `holds:<id>`, `taken:<prop>`, `dropped:<prop>@<cell>`.
-- `Loot(LootInput{Member, Target, Range})` and `Take(TakeInput{Member,
+- Fact kinds `holds:<id>`, `held:<prop>`, `dropped:<prop>@<cell>`.
+- `Loot(LootInput{Member, Target, Range})` and `Hold(HoldInput{Member,
   Target, Range})` rule halves, validation orders as design §4.2/§4.3;
   the transfer routine moves every holding of the body to the looter —
   intel becomes `learnDoor(looter, door, "loot")` + the looter's
   DOOR_REVEALED; a prop becomes the looter's `holds`. Beats `looted`
-  (looter, body — nothing of what moved) and `taken` (taker, prop) to
+  (looter, body — nothing of what moved) and `held` (holder, prop) to
   everyone present.
 - In-combat rule (design §4.4): refused while the member's fight is on
   the turn clock and it is not their turn; free on their turn. Mirrors
   how Move refuses out of turn.
-- `AtlasFor` drops props with a `taken` fact and places dropped ones.
+- `AtlasFor` drops props with a `held` fact and places dropped ones.
 - `TriggerExitedHolding{Exit ExitID, Item PropID}`; `Exit` evaluates it
   after the departure beat when the member stood on the exit's cell and
   holds the item; a departure from any other cell while holding drops
@@ -142,7 +143,7 @@ encounter:
   serves); `New(cfg, compiled) (Declared, error)` per scenario, where
   `Declared{Endings []EndingInput, ...bound ids}`.
 - **One scenario now**: `recovertheartifact` (refusals: missing artifact,
-  artifact not takeable, missing exit). Form-filler words. Nothing
+  artifact not holdable, missing exit). Form-filler words. Nothing
   defaulted. `killthecaptain` is the follow-up's first file in this
   package.
 - Pinning test: descriptor fields ↔ `Config` struct, both ways, run over
@@ -150,10 +151,10 @@ encounter:
 
 ### PR C — session module
 
-- `Manager.Loot`, `Manager.Take` beside `Search`; `Exit` surfaces the
+- `Manager.Loot`, `Manager.Hold` beside `Search`; `Exit` surfaces the
   fired ending through the existing `ExitOutput.Closed`; `kindFor` arms
-  `looted`, `taken`, `dropped`; typed event bodies; `AtlasOf` inherits
-  the taken filter by construction (it calls `AtlasFor`).
+  `looted`, `held`, `dropped`; typed event bodies; `AtlasOf` inherits
+  the held filter by construction (it calls `AtlasFor`).
 - Scenes: two members, one carries, the other leaves first; carrier
   leaves from the vault (drop); carrier leaves at the exit (ended, names
   the carrier).
@@ -163,7 +164,7 @@ encounter:
 - Pins: protos `generated` SHA; encounter and session tags. The toolkit
   override cannot target `rulebooks/dnd5e/encounter` (rpg-api#902) —
   pseudo-version pins in a walk-only worktree until tags exist.
-- Handlers: `Loot`, `Take` (session service) and `ListScenarios`
+- Handlers: `Loot`, `Hold` (session service) and `ListScenarios`
   (authoring service) — verbatim translation. Error map: the new refusals
   arrive as `FAILED_PRECONDITION` carrying the refusal text.
 - `sessionworld`: at run start, `scenarios.New(cfg, compiled)` for every
@@ -188,9 +189,9 @@ Builder:
 - Placement id: an author field on props and monsters; the panel suggests
   a slug from the ref, the author may rename.
 - `knows` on a monster: a multi-pick over the dungeon's doors, by id.
-- `takeable` toggle on a prop; toggling on requires an id and says so.
+- `holdable` toggle on a prop; toggling on requires an id and says so.
 - Scenario panel: `ListScenarios` → one form per scenario; the
-  `entity_ref(prop)` picker lists takeable props by id, `entity_ref(exit)`
+  `entity_ref(prop)` picker lists holdable props by id, `entity_ref(exit)`
   lists exits; `PutDungeon` refusals render inline on the field they name.
 - YAML emit/parse round-trip byte-exact for every new field; the Concepts
   Lab fixture stays a verbatim copy of the toolkit fixture (a test pins
@@ -199,12 +200,12 @@ Builder:
 Game:
 
 - **Loot on every downed body in range** — never only the captain (design
-  P3). Take on an adjacent takeable prop. **Leave** at an exit cell calls
+  P3). Hold on an adjacent holdable prop. **Leave** at an exit cell calls
   `Exit`; the server decides what it means.
-- Beats as statements: "Aldric looted the skeleton captain", "Aldric took
+- Beats as statements: "Aldric looted the skeleton captain", "Aldric holds
   the heirloom", "Aldric left through the entrance with the heirloom",
-  "Aldric dropped the heirloom". No beat says "interacted".
-- `taken` and `dropped` patch the held atlas (applyReveal precedent); the
+  "Aldric dropped the heirloom". No beat says "interacted" or "took".
+- `held` and `dropped` patch the held atlas (applyReveal precedent); the
   refetch lands afterwards with the server's answer. The `ended` overlay
   names the carrier.
 - Evidence: vitest per apply function and per picker, **the whole test
@@ -214,7 +215,7 @@ Game:
 ## The walk — Kirk, once, two players, local stack
 
 1. **Path 2.** Fight the captain; kill; one player Loots → DOOR_REVEALED to
-   them alone, the other's map unchanged; open → both see the vault; Take
+   them alone, the other's map unchanged; open → both see the vault; Hold
    → the prop vanishes for both; carrier walks to the exit → Leave → the
    run ends for both; the overlay names the carrier.
 2. **Path 1**, fresh run: Search finds the door; the same from there.
