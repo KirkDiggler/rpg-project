@@ -1,5 +1,5 @@
 ---
-status: DESIGN IN PROGRESS — rulings of 2026-09-04 recorded; §6 proposed (exit + ending shape), awaiting Kirk
+status: RULED 2026-09-04 (R1–R7) — plan.md beside this file; PR rpg-project#368 stays open through the build
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -61,6 +61,8 @@ each piece below earns its place on its own.
   with artifact then we win." The form gains a second field (§3.2); the
   ending is one trigger (§6). Answers Q3 and Q4 together: the package
   declares two bindings and one ending, the encounter runs it.
+- **R7 — Explicit.** The ending fires on the Exit verb at the bound exit,
+  never on arrival. Kirk: "explicit."
 
 ## 2. Proposed, awaiting ruling
 
@@ -156,7 +158,16 @@ door's find and open checks stay on the door (slice 1).
 - an exit off the floor; duplicate exit id;
 - `knows` names a door id that does not exist;
 - `knows` on a prop;
-- duplicate placement id.
+- duplicate placement id;
+- `takeable` on a monster; a takeable prop with no `id` (the binding and
+  the `taken` beat both need the name);
+- **the two-endings collision** (provisional, team lead 2026-09-04): a
+  scenario bound on a dungeon where any monster carries `boss: true`. Two
+  endings that both mean "win" contradict each other, and the boss's fall
+  would end the run before anyone could loot. Refusal, for the
+  form-filler: *this scenario ends when the artifact leaves; remove
+  `boss: true` from <placement> or unbind the scenario.* Decided by the
+  scenario package's `New(cfg, compiled)`, since only it knows both facts.
 
 ## 4. The verbs — Loot and Take (R4)
 
@@ -302,6 +313,13 @@ Consequences the trigger must state:
 - Exiting **without** the artifact is today's Exit: the member departs,
   the run continues for the others; when the last member leaves, the
   encounter auto-closes as it does now.
+- **Leaving from anywhere but the exit while holding drops the holding**
+  (provisional, team lead 2026-09-04): the artifact reappears as a
+  takeable prop on the cell the carrier stood on, with a `dropped` beat
+  to everyone present. Otherwise a carrier who leaves through the lobby —
+  or disconnects — takes the only win out of the run with them. Journal
+  stays append-only: `dropped:<prop>@<cell>` is a new fact; the
+  projection shows the prop where it was dropped.
 - The artifact leaves with the exiting member; a run that ended this way
   records who carried it out (the `holds` fact and the exit beat agree).
 - A dungeon with a scenario bound and no reachable exit refuses at
