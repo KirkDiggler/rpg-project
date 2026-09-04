@@ -1,5 +1,5 @@
 ---
-status: RULED 2026-09-04 (R1–R7) — plan.md beside this file; PR rpg-project#368 stays open through the build
+status: RULED 2026-09-04 (R1–R8) — plan.md beside this file; PR rpg-project#368 stays open through the build
 journey: rpg-project#326 (Living World), slice 2
 predecessor: concealed-door/design.md (slice 1, shipped 2026-09-02)
 spike: rpg-toolkit examples/world/scenarios/tomb (UC-4)
@@ -63,6 +63,16 @@ each piece below earns its place on its own.
   declares two bindings and one ending, the encounter runs it.
 - **R7 — Explicit.** The ending fires on the Exit verb at the bound exit,
   never on arrival. Kirk: "explicit."
+- **R8 — The boss flag goes away.** Kirk: "we setup when a scenario ends,
+  not because one monster has a flag on it. that flag is too simple for
+  where we are now." Endings are declared by scenarios, never by a
+  property of a monster. `boss:` is deleted from dungeonspec and refused
+  by name (the pair-form precedent). "The boss falls" becomes the second
+  scenario, **clear-the-tomb**, with one field: `boss: entity_ref(monster)`
+  → `TriggerMemberDown`. The reference tomb binds it, so the live game's
+  ending is unchanged in play. This dissolves the two-endings collision
+  refusal that stood here for a day: with nothing implicit, an author who
+  binds two scenarios sees both on the form and asked for both.
 
 ## 2. Proposed, awaiting ruling
 
@@ -106,10 +116,18 @@ place:
 exits:
   - { id: front-gate, at: [0, 1] }
 
-scenario:
+scenarios:
   recover-the-artifact:
     artifact: heirloom
     exit: front-gate
+```
+
+The plain reference tomb, after R8:
+
+```yaml
+scenarios:
+  clear-the-tomb:
+    boss: captain
 ```
 
 - `id` — P2. Optional. Refused on collision, naming both lines.
@@ -124,8 +142,9 @@ scenario:
   nothing is defaulted; the reference tomb authors its entrance as one.
   Refused off the floor (ErrNoEnding's reason: an exit nobody can reach
   is a liveness hole).
-- `scenario` — one key (the scenario id) mapping to that scenario's
-  bindings, **carried opaquely by dungeonspec** and validated by the
+- `scenarios` — a map from scenario id to that scenario's bindings; a
+  dungeon may bind several, and the run ends when any bound ending
+  fires. Each key maps to bindings, **carried opaquely by dungeonspec** and validated by the
   scenario package's `New(cfg)`: dungeonspec checks only that every
   binding names a placement id that exists. Ruled 2026-09-01: "the
   dungeon spec stores `{scenario_id, bindings}` as pure references".
@@ -138,12 +157,21 @@ refusal text); rpg-api translates verbatim; the builder renders one picker
 per field type; submitting validates through `New(cfg)`; descriptor and
 `Config` pinned both ways by test.
 
-For this scenario the form has **two fields** (R6):
+Two scenarios ship in this slice (R8), so the pinning test and the
+picker each have a second instance on day one:
+
+**recover-the-artifact** (R6):
 
 | key | type | guidance (the refusal, verbatim) |
 |---|---|---|
 | `artifact` | `entity_ref(prop)` | this scenario needs an artifact — which placed thing is the party here to recover |
 | `exit` | `entity_ref(exit)` | this scenario needs a way out — which exit counts as escaping with the artifact |
+
+**clear-the-tomb** (R8, the flag's successor):
+
+| key | type | guidance (the refusal, verbatim) |
+|---|---|---|
+| `boss` | `entity_ref(monster)` | this scenario ends when one monster falls — which one |
 
 The builder's picker for `exit` lists the dungeon's authored exits; with
 one exit there is one row to pick. `entity_ref(exit)` is the second
@@ -161,13 +189,8 @@ door's find and open checks stay on the door (slice 1).
 - duplicate placement id;
 - `takeable` on a monster; a takeable prop with no `id` (the binding and
   the `taken` beat both need the name);
-- **the two-endings collision** (provisional, team lead 2026-09-04): a
-  scenario bound on a dungeon where any monster carries `boss: true`. Two
-  endings that both mean "win" contradict each other, and the boss's fall
-  would end the run before anyone could loot. Refusal, for the
-  form-filler: *this scenario ends when the artifact leaves; remove
-  `boss: true` from <placement> or unbind the scenario.* Decided by the
-  scenario package's `New(cfg, compiled)`, since only it knows both facts.
+- `boss:` anywhere — deleted (R8); the refusal names the `scenarios:` block
+  and the clear-the-tomb form as where that fact now lives.
 
 ## 4. The verbs — Loot and Take (R4)
 
@@ -281,8 +304,10 @@ is over".
 
 Today the host declares two endings on every authored dungeon:
 `withdrawn` (TriggerExternal, fired by the lobby when the party abandons
-the run) and `boss-down` (TriggerMemberDown, when a boss is authored). The
-scenario package adds a third:
+the run) and `boss-down` (TriggerMemberDown, when a boss is authored).
+After R8 the host declares `withdrawn` always, plus every ending each
+bound scenario declares — clear-the-tomb's `TriggerMemberDown`, and this
+scenario's:
 
 ```go
 // TriggerExitedHolding fires when a member standing on Exit's cell

@@ -1,6 +1,6 @@
 # Recover the artifact — plan
 
-**Status:** RULED 2026-09-04 (design.md R1–R7). Builds design §3–§6 across
+**Status:** RULED 2026-09-04 (design.md R1–R8). Builds design §3–§6 across
 four repos, panel-back: the proto wave merges first; toolkit, rpg-api and
 web build against pins in parallel; Kirk walks once; merge bottom-up.
 **Journey:** rpg-project#326, slice 2. **Record:** rpg-project#368 stays
@@ -11,10 +11,13 @@ open through the build and merges on done-when (delegated).
 1. **Holdings unify loot, take and the parchment shelf.** One fact kind
    (`holds:<id>`), one transfer routine, two verbs. Loot is a second
    caller of `learnDoor` (encounter/conceal.go), cause `loot`.
-2. **The ending is a third declared ending**, beside the two rpg-api
-   already declares in `sessionworld.endingsFor` (`withdrawn` = External,
-   fired by the lobby's abandon; `boss-down` = MemberDown). One trigger
-   arm, one `data.go` case. No goal engine.
+2. **Endings come from scenarios, and only from scenarios** (R8).
+   `sessionworld.endingsFor` today declares `withdrawn` (External, fired by
+   the lobby's abandon) and `boss-down` from the authored flag; it becomes
+   `withdrawn` + every ending each bound scenario declares. The flag's
+   successor is a one-field scenario, **clear-the-tomb**, so the second
+   scenario exists on day one and nothing is built for a generic case.
+   One new trigger arm, one `data.go` case. No goal engine.
 3. **Exits reuse `start`'s shape**: an id and a floor cell.
 4. **A taken prop is a projection fact, not a mutation.** The atlas stays
    construction-truth (its own doc: cached once). `AtlasFor` drops props
@@ -85,11 +88,16 @@ dungeonspec (`rulebooks/dnd5e/encounter/dungeonspec`):
   that exists (placement or exit). Refusals per design §3.3, each naming
   the line. `Compiled` exposes `Exits`, `Scenario`, and ids/`Knows`/
   `Takeable` on its placements.
-- Fixture: `reference-tomb.yaml` gains a concealed vault behind the boss
-  room, a takeable artifact in it, `knows: [vault-door]` on the captain,
-  `exits: [{id: entrance, at: <start>}]`, the `scenario:` block, and
-  **`boss: true` removed from the captain** — the collision refusal
-  (design §3.3) proves itself on the old fixture in a test.
+- **`PlaceSpec.Boss` deleted** (R8) and `boss:` refused by name, the
+  refusal pointing at `scenarios:`. Every old-dialect blob fails loudly at
+  load — verified, not trusted (slice 1's lesson).
+- Fixtures, both with `exits` and a `scenarios:` block:
+  `reference-tomb.yaml` binds `clear-the-tomb: {boss: captain}` and is
+  otherwise unchanged (the live game's ending, now declared);
+  `reference-tomb-heirloom.yaml` is the tomb plus a concealed vault, a
+  takeable artifact, `knows: [vault-door]` on the captain, binding
+  `recover-the-artifact`. Both are copied byte-identical into rpg-api's
+  content and the web Concepts Lab, each copy pinned by a test.
 
 encounter:
 
@@ -123,12 +131,14 @@ encounter:
 ### PR B — encounter module: `encounter/scenarios`
 
 - `Descriptor()` per scenario; `All()` registry (what `ListScenarios`
-  serves); `recovertheartifact.New(cfg, compiled) (Declared, error)` where
-  `Declared{Endings []EndingInput, Artifact PropID, Exit ExitID}`.
-- Refusals in form-filler words: missing artifact; artifact not takeable;
-  missing exit; the two-endings collision (design §3.3). Nothing
+  serves); `New(cfg, compiled) (Declared, error)` per scenario, where
+  `Declared{Endings []EndingInput, ...bound ids}`.
+- **Two scenarios**: `recovertheartifact` (refusals: missing artifact,
+  artifact not takeable, missing exit) and `clearthetomb` (refusal:
+  missing boss; a boss that is not a monster). Form-filler words. Nothing
   defaulted.
-- Pinning test: descriptor fields ↔ `Config` struct, both ways.
+- Pinning test: descriptor fields ↔ `Config` struct, both ways, run over
+  `All()` so the third scenario cannot skip it.
 
 ### PR C — session module
 
@@ -148,15 +158,16 @@ encounter:
 - Handlers: `Loot`, `Take` (session service) and `ListScenarios`
   (authoring service) — verbatim translation. Error map: the new refusals
   arrive as `FAILED_PRECONDITION` carrying the refusal text.
-- `sessionworld`: at run start, `scenarios.New(cfg, compiled)` for the
-  dungeon's bound scenario; `endingsFor` appends its ending; `Exits`,
-  `Knows`, `Takeable`, ids flow from `Compiled` into setup. The
-  dungeon registry (compile-on-load) refuses the two-endings collision at
-  `PutDungeon` by name.
-- Content: the walk dungeon is the reference tomb with the vault,
-  **byte-identical to the toolkit fixture**. The content dir on the box is
-  runtime-seeded and gitignored (stepback lesson): re-put through the
-  builder or the runbook script, never assume the file changed.
+- `sessionworld`: at run start, `scenarios.New(cfg, compiled)` for every
+  bound scenario; `endingsFor` becomes `withdrawn` + their endings — the
+  boss arm is deleted with the flag; `Exits`, `Knows`, `Takeable`, ids
+  flow from `Compiled` into setup.
+- Content: both fixtures **byte-identical to the toolkit's**. The content
+  dir on the box is runtime-seeded and gitignored, and a seeded tomb still
+  saying `boss: true` makes the api refuse to boot (rpg-api#886 is the
+  quarantine ask; until it lands, this is a runbook step): **before
+  dev→main, re-put the tomb with its `scenarios:` block**, the same gate
+  the pair-form deletion carries (rpg-deployment#74).
 - Evidence: integration scene for both paths and the secrecy negative;
   `make ci-check` green (rpg-api#901: it destroys uncommitted work — commit
   first).
@@ -166,6 +177,9 @@ encounter:
 Builder:
 
 - Exits palette: a marker placed like `start`, with an id.
+- The boss toggle on monsters is **removed**; the scenario panel is where
+  that fact lives now, and the parser's refusal of `boss:` says so in the
+  compiler's own sentence.
 - Placement id: an author field on props and monsters; the panel suggests
   a slug from the ref, the author may rename.
 - `knows` on a monster: a multi-pick over the dungeon's doors, by id.
