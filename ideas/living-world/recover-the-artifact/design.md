@@ -320,6 +320,10 @@ authored ways out, same for every member like `start`, so the map can
 draw the way out. **Leave is offered everywhere and the server decides**
 what a departure means (R9 needs a departure from the vault to be
 possible); when the member stands on an exit the button may say so.
+The session seam mirrors the encounter's atlas by copy, field for field
+(`projectAtlas`), so `exits`, `holdable` and the prop `id` are CARRIED
+explicitly there, not inherited — only the held-prop filter comes for
+free (session build, 2026-09-04).
 
 ## 6. The ending — exit holding the artifact (R6; shape proposed)
 
@@ -380,6 +384,12 @@ Consequences the trigger must state:
 - A dungeon with a scenario bound and no reachable exit refuses at
   `New(cfg)` in form-filler words; `ErrNoEnding` is the encounter's own
   backstop.
+- **A member who withdrew before the ending fired is not told** (session
+  build, 2026-09-04): the `ended` beat's audience is everyone still in
+  the run plus the carrier the same verb just removed. "For everyone" in
+  §8 means everyone still in the run; a departed player who wants to
+  know how it finished asks with a read (`GetStatus`), which the Leave
+  flow already lands them on.
 - Win path 1 and win path 2 are indistinguishable at the ending, and
   that is correct: the journal's silence about a fight is the record of
   the skipped fight (use-cases UC-4).

@@ -159,7 +159,10 @@ encounter:
 - `Manager.Loot`, `Manager.Hold` beside `Search`; `Exit` surfaces the
   fired ending through the existing `ExitOutput.Closed`; `kindFor` arms
   `looted`, `held`, `dropped`; typed event bodies; `AtlasOf` inherits
-  the held filter by construction (it calls `AtlasFor`).
+  the held filter by construction (it calls `AtlasFor`), but `exits`,
+  `holdable` and the prop `id` are carried explicitly through the
+  session's field-for-field copy — the plan's "inherit" was wrong for
+  those three (session build, 2026-09-04).
 - Scenes: two members, one carries, the other leaves first; carrier
   leaves from the vault (drop); carrier leaves at the exit (ended, names
   the carrier).
