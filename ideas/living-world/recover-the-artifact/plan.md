@@ -234,10 +234,10 @@ merges.
 | step | repo / module | waits on |
 |---|---|---|
 | 0 | rpg-api-protos: Loot, Take, ListScenarios, bodies, `AtlasProp.id` | — |
-| 1A | toolkit encounter: dungeonspec + holdings + verbs + trigger | 0 pinned |
+| 1A | toolkit encounter: dungeonspec + holdings + verbs + trigger | the design only — the toolkit imports no protos; runs in parallel with 0 |
 | 1B | toolkit encounter: `scenarios` package | 1A merged |
 | 1C | toolkit session: entries + event kinds | 1A tag |
-| 2 | rpg-api: pins, handlers, sessionworld, content | 0, 1B, 1C tags (pseudo-versions to walk early) |
+| 2 | rpg-api: pins, handlers, sessionworld, content | 0 (generated SHA) + 1B, 1C tags (pseudo-versions to walk early) — the first wave that needs both |
 | 3 | rpg-dnd5e-web: builder + game | 0 pinned; walks against 2 |
 | walk | local stack from the wave-2 and wave-3 worktrees | 2, 3 CI green |
 | merge | bottom-up: toolkit → api → web → #368 | Kirk's walk |
