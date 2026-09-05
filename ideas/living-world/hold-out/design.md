@@ -34,7 +34,7 @@ intel:
   - { id: wisemans-letter, reveals: { fact: saved-wiseman } }
 
 place:
-  - { id: chief,  ref: "dnd5e:monsters:goblin-boss", at: [12,4], faction: goblins }
+  - { id: chief,  ref: "dnd5e:monsters:goblin", at: [12,4], faction: goblins }   # no goblin-boss stat block yet (shelf)
   - { id: scout,  ref: "dnd5e:monsters:goblin",      at: [4,2],  faction: goblins }
   - { id: letter, ref: "dnd5e:props:scroll", at: [1,3], holdable: true,
       blocks_movement: false, blocks_los: false,
@@ -59,7 +59,7 @@ scenarios:
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
 | `dispositions[].between` | `[faction, faction]` | both MUST exist; the reserved `party` and `monsters` are nameable here (`between: [monsters, party], stance: neutral` makes the unauthored monsters neutral) though never declarable; unordered; a ≠ b; one disposition per pair |
 | `dispositions[].stance` | `hostile \| neutral \| allied` | closed set |
-| `dispositions[].until` | predicate | legal only with `stance: hostile`; when it holds the stance becomes `neutral` |
+| `dispositions[].until` | predicate | legal only with `stance: hostile`; when it holds the stance becomes `neutral`. **This slice: `{ fact }` only** — `round`, `down`, `stance` are refused at dungeonspec AND at the run ("in this version a disposition turns only on a fact; `until` on a round, a fall, or another stance is not built yet"): Settle keys on a flag a journal fact raises, and rounds and Standing are not journal facts yet |
 | `intel[].reveals` | `{ door: id } \| { fact: id }` | exactly one key; `fact` ids are plain strings, declared by mention |
 | `place[].arrives` | predicate | monsters and props; the placement is in reserve until it holds; `at` MUST be floor |
 | `scenarios.hold-out.convince` | `entity_ref(faction)` | the scenario's only field |
@@ -221,7 +221,7 @@ and answer from the run.
 | R1 | a flip dissolves a formed fight between the two factions | yes, `ByStance()` |
 | R11 | where the pair flip lives | **RULED A (Kirk):** a world/graph pair projection, v0.4.0; the graph tells the truth |
 | R2 | the stance after `until` holds | `neutral` ("not hostile"); allied is authorable only as a static stance |
-| R3 | presence grain and the hub | the mind's region, the yardstick Search uses; the faction knows what its mind knows (Kirk 2026-09-05: "at a faction level it makes sense") |
+| R3 | presence grain and the hub | the mind's region, the yardstick Search uses; the faction knows what its mind knows (Kirk 2026-09-05: "at a faction level it makes sense"). A pair folds as every mind of the pair (any mind knowing turns it); a pair with no mind folds as the empty observer, never Truth; the mind is the declared one or the sole member of a faction of one AS AUTHORED — no fallback (R7) |
 | R4 | `party` and `monsters` | reserved; unauthored monsters are `monsters` |
 | R5 | predicate grammar and grains | `round \| down \| fact`; `fact` = mind's knowledge on `until`, truth on `arrives` |
 | R6 | reserved placements | spawned at launch, absent from every projection, placed on the first verb after the predicate holds |
@@ -304,6 +304,13 @@ and answer from the run.
   stance (`npc/policy.go:38`) is a faction of one with one edge toward
   `party`; the graph can answer it when his use case pulls it. Seam note for
   his record, not a change here.
+- **Rounds and Standing as journal facts.** Found by the build: `until` on
+  `{ round }` / `{ down }` has nothing to flag because neither is a fact in the
+  run's world yet; `{ stance }` needs an edge-keyed projection. Under the law
+  these are the next two readers to move; until then dispositions turn on
+  facts only and the refusal says so.
+- **A goblin-boss stat block.** The catalog has only `goblin`; the chief is a
+  plain goblin until the monster content lane adds one (content, not tool).
 - **`count` on a placement** ("3 goblins" as one line): a general placement
   feature, not this slice's tool; three lines until a second author asks.
 - hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
