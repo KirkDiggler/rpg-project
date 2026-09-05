@@ -167,13 +167,22 @@ and answer from the run.
   hold-out ending.
 - Capabilities unchanged (Witness, CheckResolver, Sight, Roller, TurnDriver).
 
-## 6. Wire (protos, additive)
+## 6. Wire (protos, additive) — landed as rpg-api-protos PR #293
 
 - `PublicMemberInfo.faction` — string, free-form (factions are content, never
-  an enum).
-- Beat payloads `STANCE_CHANGED {between, stance}` and
-  `ARRIVED {id, kind, cell}`.
-- `PutDungeon` verbatim; `ListScenarios` gains the `faction` entity kind.
+  an enum). Empty = in no faction, which this slice reads as a world NPC
+  (`place[].faction` is monsters-only; fadedpez's default is a shelf, §11).
+- Beats `STANCE_CHANGED {between: [a, b], stance}` and
+  `ARRIVED {id, kind: PlacementKind, cell}`; `PlacementKind` is a closed enum
+  (MONSTER | PROP) because a client branches on it and a prop is not a member.
+  Both beats go to everyone in the run: a stance is truth grain like a door's
+  state, an arrival is physical state like HELD/DROPPED.
+- `DISSOLVE_KIND_BY_STANCE` on `FightEnded.cause` — the wire mirror of
+  `ByStance()` (§3.5); without it a flip's FIGHT_ENDED would carry
+  UNSPECIFIED, which the file defines as a producer defect. Found by the protos
+  build; the session wave maps the sealed cause to it.
+- `PutDungeon` verbatim; `ListScenarios` gains the `faction` entity kind on
+  its open string vocabulary.
 
 ## 7. The designer (web)
 
