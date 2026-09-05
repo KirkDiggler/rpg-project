@@ -322,6 +322,19 @@ Kirk's own note on the design: the intended play is to dash past the next
 door and hold out there. The kill-the-chief branch (three zombies through the
 gate) has the api's end-to-end scene A4 behind it; walk pending.
 
+**Walk 4 (2026-09-05, same stack): a player DIED (third failed death save,
+Stan Norris) and the survivor's Attack then failed twice:** `attack: record:
+participation arrivals: arrival refresh sight: participation: participation
+member "reinforcement-1" has no roster kind: invalid session data (written
+[character], failed [encounter])`. The arrivals step consulted the
+participation seam about a RESERVED zombie; §3.7 says a reserved placement is
+consulted about nothing. Root cause under investigation (session builder).
+Two consequences on the record: (a) the split write — the character was
+written, the encounter failed — is the known split-save wedge biting a player
+("my fighter was getting his action taken away before I could swing"); (b)
+death saves are live in the camp and worked as designed: three failures, dead,
+transferred to the world clock, the run went on.
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
