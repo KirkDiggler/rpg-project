@@ -247,11 +247,24 @@ and answer from the run.
   mind knows. A goblin who knows before the edge flips hesitates only if
   behavior reads per-member knowledge (Billy's record). Step A is latency 0
   by presence in the mind's region.
-- **Take it back to town** (Kirk: "we have a free take verb… take could be
-  taken back to town"). Hold is the take verb; a holding that leaves the run
-  with its carrier becomes a campaign-grain fact in the journal (integration
-  rung 3, the campaign journal; town = the thin lobby). Intel carried out is
-  the first customer.
+- **Take, the pocket verb** (Kirk 2026-09-05: "take is like holding but goes
+  into inventory. hold is meant to be a temp state and possibly taking up 1 or
+  2 hands. we trade from our inventory"). Two verbs, two nouns, two lifetimes:
+  Hold carries a PROP in hand for the run (`hold.go` already says so: hands a
+  named shelf, inventory untouched); Take pockets an ITEM onto the character's
+  sheet, which survives the run and is what Trade draws from. The shape to fill
+  when it arrives: (a) a prop's item identity, `place[].item: <equipment ref>`
+  — absent means hold-only, the zero value that keeps an heirloom chest in two
+  hands; (b) the run's side, a `taken:<prop>` fact and the prop leaves the atlas
+  as Hold's does; (c) the sheet's side, a runtime "item enters inventory" path
+  the character does not have today (`InventoryItemData` is draft-compile only)
+  and which Trade's receive side needs too — the second instance, so it is built
+  once for both, as a game-context request event the character's keeper
+  applies. Two breaks to rule then: the withdrawal ending names a HELD item, so
+  it becomes `with` (held or pocketed by a member at the exit) or the artifact
+  stays hold-only by having no `item`; and slice 2's drop rule protected the
+  run's win from a disconnect, while a pocketed win leaves with the character —
+  the campaign has it, the run does not. Both verbs apply intel reveals.
 - **Trade for the next quest** (Kirk: "npcs have a trade verb and I can see
   trading for a next quest"). fadedpez's Trade appends a fact; quest
   availability is a predicate over journal facts (brainstorm §10), so a trade
