@@ -275,8 +275,19 @@ and answer from the run.
    the yard, the chief in the fight by line of sight, and the flip not yet
    fired (state verified in redis: correct so far). The scout's strike works.
    No scene ever let the mind take a swing: the session drove the scout by
-   Pass, the api's A2 dissolved the fight before the chief could act. Root
-   cause under investigation on the session→resolution→encounter path.
+   Pass, the api's A2 dissolved the fight before the chief could act.
+   ROOT-CAUSED (session builder, at the seam; resolution's reload not
+   involved) to two encounter defects: (a) `driveOneMonsterTurn`'s intent
+   loop keeps executing after an intent ended the fight — the chief STEPS
+   into the yard where the carrier stands, presence teaches him (presence is
+   symmetric by construction: same region, R3), the camp turns, the fight
+   dissolves, the ending closes the run, and the loop's next intent is
+   Attack → "encounter closed"; with no ending bound he strikes a party he
+   is no longer opposed to. Fix: stop the driven turn when the fight it
+   belongs to is gone. (b) `Exit` removes the exiter from the canvas before
+   `leaveAnyClock` drives the next monster, whose strike reads the roster
+   and finds a member with no place → "invalid encounter data". PRE-EXISTING
+   on main, independent of factions. Fix: roster delete before the drive.
 3. **The client hid the reason.** "Check available actions" was all the table
    saw for three refused EndTurns; the server's message named the chief's
    strike. Surface the server's reason (web polish).
