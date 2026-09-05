@@ -17,6 +17,17 @@ supersedes that issue's `Money`/`Wallet` sections specifically; its `ItemRef`/`S
 - Nothing resembling `Money`, a wallet, or currency arithmetic exists anywhere in the toolkit.
   This is genuinely new, not a rename of something half-built.
 
+**Correction (rpg-toolkit#1522, caught by actually running `ParseCost` against the live
+catalogs rather than trusting this section):** the "no compounds anywhere" claim above was
+wrong. `ammunition.Arrows50`/`Bolts50` carried `Cost: "2 gp 5 sp"` — a homebrew 50-bundle SKU,
+not PHB — and got normalized to `"25 sp"` (250 cp exactly, lossless) rather than teaching
+`ParseCost` a compound grammar for two data points. Also not mentioned here at all:
+`weapons.UnarmedStrike` has an empty `Cost` (not a purchasable good); `ParseCost` correctly
+refuses an empty string, and the "every real cost parses" test excludes it by name rather than
+via a blanket empty-string skip, so a future priced item shipping with an accidentally-empty
+`Cost` still fails the test. Lesson for future design docs generally: a "verified" claim about
+existing data is only as good as actually running the parser against it, not eyeballing a grep.
+
 ## 2. Why a package, not a type on its own
 
 `currency` is the domain ("things a vendor can be paid in"); `Money` is its first concrete type
