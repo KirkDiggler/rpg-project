@@ -54,7 +54,7 @@ scenarios:
 
 | field | type | rules |
 |---|---|---|
-| `factions[].id` | id | unique; the reserved `party` and `monsters` are NEVER declared ("`monsters` is where every monster with no faction already is and is never declared — give these monsters a faction of their own") |
+| `factions[].id` | id | unique; `party` is never declared (nothing about it is authorable); `monsters` MAY be declared — one line gives the default monster side a mind (`{id: monsters, mind: chief}`, the mind being a placement with no faction key). FINAL 2026-09-05 after three crossings; refusal when a disposition waits on an undeclared `monsters`: "faction \"monsters\" is not declared, so it has no mind — declare it under `factions:` to give it one" |
 | `factions[].mind` | placement id | the hub word spreads through: the faction knows what its mind knows. MUST name a monster placement in this faction. Optional: a faction of one has its member as mind; a faction of many with an `until: { fact }` and no mind is refused ("name a mind, or the faction cannot learn") |
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
 | `dispositions[].between` | `[faction, faction]` | both MUST exist; the reserved `party` and `monsters` are nameable here (`between: [monsters, party], stance: neutral` makes the unauthored monsters neutral) though never declarable; unordered; a ≠ b; one disposition per pair |
