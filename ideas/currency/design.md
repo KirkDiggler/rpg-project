@@ -152,6 +152,24 @@ touch):
   resolving what rpg-project#370 left open: does a vendor accept unlisted items? What's the sell
   price (half of `PriceOf`, the usual convention, or something else)? Does a sold item reappear in
   vendor stock? None of that is decided; it's its own design conversation when it's time.
+- **`Unpack`** — surfaced by Wave 2's own item-catalog fix: `compileInventory` resolves a starting
+  pack (Explorer's Pack, etc.) as ONE opaque `InventoryItem`, never decomposing `packs.PackItem`'s
+  `Contents` into individual stacks — verified directly, no code path reads `Contents` anywhere.
+  Same gap hits a pack bought later from a vendor (packs are ordinary, re-purchasable shop goods
+  in 5e, not a character-creation-only concept), so this needs one generic mechanism, not a
+  creation-time special case. Considered and rejected: `Trade` (wrong shape — no counterparty,
+  you'd be "trading" with yourself); `Loot` (wrong `Target` type — `MemberID`, gated on the target
+  being down, neither of which describes an item you already possess; wrong content model —
+  holdings/intel, not typed item stacks); a nested/partial-pack inventory (5e itself has no pack
+  "capacity" or partial-pack rule — a pack is a shopping-list convenience, not an in-fiction
+  container with slots; nesting would double every query's surface for zero gameplay benefit).
+  Landing: its own small verb (`Unpack`, name TBD) — own target (an item already in the actor's
+  inventory), own validation, full decomposition (no partial state), sharing `AddInventoryItem` as
+  the underlying primitive with Wave 4's receive side, same way `Trade` shared `encounter.Interact`
+  without being it. UI can reuse the peek-then-take pattern `Interact`+`Trade` already established
+  for vendors (a popup showing contents, take one or take all) even though the server verb is
+  separate — that's a client-side pattern reuse, not a server-side one. Not designed further here;
+  its own wave once the currency waves above are done.
 
 ## 6. Done when
 
