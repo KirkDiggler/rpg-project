@@ -262,6 +262,25 @@ and answer from the run.
 | A10 | the whole file authored through forms; YAML round-trip byte-stable; refusals inline | screenshot + test |
 | A11 | Kirk walks both branches on one stack before any PR opens | the walk |
 
+## 9b. Walk 1 findings (Kirk, 2026-09-05, local stack 3010/8090)
+
+1. **The lobby's Dungeon dropdown left on its placeholder silently means "the
+   server's default", the heirloom tomb.** Kirk walked recover-the-artifact
+   twice believing it was the camp (two skeletons, the hall scroll, the tomb's
+   captain who kills a carrier). Pre-release: a cost to show, not a hazard —
+   picker finding for #372 (name the default in the placeholder).
+2. **The chief's own strike fails at resolution's reload** — `drive monster
+   turns "chief": execute: strike: strike: encounter closed` on EndTurn and
+   `… invalid encounter data` on Exit — with the fighter holding the letter in
+   the yard, the chief in the fight by line of sight, and the flip not yet
+   fired (state verified in redis: correct so far). The scout's strike works.
+   No scene ever let the mind take a swing: the session drove the scout by
+   Pass, the api's A2 dissolved the fight before the chief could act. Root
+   cause under investigation on the session→resolution→encounter path.
+3. **The client hid the reason.** "Check available actions" was all the table
+   saw for three refused EndTurns; the server's message named the chief's
+   strike. Surface the server's reason (web polish).
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
