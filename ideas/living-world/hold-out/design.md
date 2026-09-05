@@ -320,6 +320,15 @@ and answer from the run.
   stance (`npc/policy.go:38`) is a faction of one with one edge toward
   `party`; the graph can answer it when his use case pulls it. Seam note for
   his record, not a change here.
+- **The fight that dissolves is the scout's, never the chief's** (found by the
+  api's end-to-end scene). Inside the hut, presence transfer and the flip fold
+  BEFORE that pass's sight refresh (§3.8), so by the time the chief could see
+  the carrier the pair is already neutral and no fight forms with him; from
+  the yard he never sees through the hut door. In the walk, entering the hut
+  dissolves the yard fight. With nobody fighting, the flip still fires
+  (STANCE_CHANGED → ENDED, no FIGHT_ENDED): the hold-out is winnable without
+  a fight, per R1. If a design ever wants "the chief's own fight dissolves",
+  that is a §3.8 ordering question for the toolkit, not a wire defect.
 - **A3 as built pins presence, not learning.** In step A no non-mind can
   learn a fact (holding is not knowing: an authored holder carries the record
   unread, as doors work), so "a scout who learned it flips nothing" has no
