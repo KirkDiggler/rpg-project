@@ -265,6 +265,12 @@ and answer from the run.
   stays hold-only by having no `item`; and slice 2's drop rule protected the
   run's win from a disconnect, while a pocketed win leaves with the character —
   the campaign has it, the run does not. Both verbs apply intel reveals.
+  Kirk 2026-09-05: Trade lands first, and Take is "trading an object for
+  nothing" — Trade's shape with an empty give side and the field as the
+  counterparty; it breaks out into its own verb only if it needs more shape.
+- **A hold costs a hand** (Kirk: "we could even configure the scenario to say
+  it takes away a hand"): `holdable: { hands: 1 | 2 }` on a prop, read by the
+  rulebook's equipment rules when hands exist (`hold.go`'s named shelf).
 - **Trade for the next quest** (Kirk: "npcs have a trade verb and I can see
   trading for a next quest"). fadedpez's Trade appends a fact; quest
   availability is a predicate over journal facts (brainstorm §10), so a trade
