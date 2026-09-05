@@ -88,7 +88,61 @@ with **zero consumers** — nothing references it yet, same as `character.AddInv
   one; see §2.
 - **Vendor purse/gold limits** — rpg-toolkit#1275's own non-goal, unchanged.
 
-## 5. Done when
+## 5. The full path beyond this wave
+
+This wave ships `Money` alone (§4). The rest of the road to "a player actually pays for
+something" is laid out here so it doesn't need re-deriving later — nothing below is built by
+this PR, and each wave is its own design/issue when its turn comes.
+
+**Wave 2 — `PriceOf` + catalog completeness** (toolkit, same module as `Money`, no cross-repo
+touch):
+- `equipment.PriceOf(id shared.EquipmentID) (currency.Money, error)` — wraps the existing
+  `equipment.ResolveEquipmentDetail` + `currency.ParseCost`. Lives in `equipment`, not
+  `currency`: `currency` stays dependency-free (a bare string in, `Money` out), `equipment`
+  already knows how to resolve full item details and gains a `Money`-returning sibling to
+  `ResolveEquipmentDetail`.
+- `rulebooks/dnd5e/items.All` is missing entries for most of its own declared adventuring-gear
+  constants — `Torch`, `HempenRope`, `Rations`, `Bedroll`, `Waterskin`, and 9 others have `ItemID`
+  constants (referenced by starting-pack contents) but no `Name`/`Weight`/`Cost` in `All`, so
+  `ResolveEquipmentDetail` returns `nil` for any of them today. **Required, not optional**: every
+  character starts with pack-granted gear (a torch, rope, rations from a chosen starting pack)
+  that must be sellable, and a pack-granted item carries the exact same `InventoryItemData{Type,
+  ID, Quantity}` identity as a bought or looted one (verified — no "came from a pack" flag exists
+  anywhere), so pricing must work for it regardless of how it entered inventory. Populate the 14
+  missing entries with real PHB cost/weight.
+
+**Wave 3 — `Wallet`** (toolkit; likely also a wire touch, decide when this wave starts):
+- `character.Data.Wallet Money`, beside `Inventory`, not embedded in it (rpg-toolkit#1275: *"gold
+  should not be modeled as a regular inventory item"* — arithmetic and a single afford-check value
+  a stack of items was never built to give).
+- **Open question for that wave, not this one**: does a wallet need to be visible to the player
+  for this to be a meaningful step (project it wherever character state already reaches the
+  client), or can persistence-only ship first with visibility as its own fast-follow? Either
+  answer is fine; don't presume it here.
+
+**Wave 4 — `Trade` learns to charge** (the first wave that's genuinely cross-repo again):
+- `TradeOffer.Currency` — additive field, finally filled in (rpg-project#370 deliberately shipped
+  without it).
+- `session.Trade`'s refusal narrows: `Give.Items` stays refused (no item-for-item yet), but
+  `Give.Currency` becomes a *new legal case* — check `Wallet.CanAfford`, `Wallet.Sub`, otherwise
+  unchanged (decrement stock, add item, exactly as today).
+- **rpg-api-protos**: `TradeOffer` gains `currency`; `VendorStockEntry` gains `price` (doesn't
+  exist today — web's PR #920 flagged this gap directly).
+- **rpg-api**: bump pins, thread the new fields through the existing `Trade`/`Interact`
+  converters.
+- **rpg-dnd5e-web**: show price per stock row, show the player's own balance (needs Wave 3's
+  visibility decision), a real "Buy for 15gp" confirm, balance updates on success.
+
+**Beyond Wave 4, not yet designed:**
+- **`Quote`** (multi-item cart) — rpg-toolkit#1275's `Quote{Lines []QuoteLine, Total}` is already
+  a multi-line shape; this is where "buy several different items in one transaction" lands,
+  generalizing Wave 4's single-item case rather than needing its own separate multi-item project.
+- **Selling / barter** — `Give.Items` stays refused through every wave above. Unlocking it means
+  resolving what rpg-project#370 left open: does a vendor accept unlisted items? What's the sell
+  price (half of `PriceOf`, the usual convention, or something else)? Does a sold item reappear in
+  vendor stock? None of that is decided; it's its own design conversation when it's time.
+
+## 6. Done when
 
 `currency.Money` round-trips through JSON, `ParseCost` correctly parses every existing equipment
 `Cost` string (a table-driven test over the real data, not a handful of examples), `Add`/`Sub`/
