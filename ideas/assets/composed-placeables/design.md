@@ -2,7 +2,7 @@
 
 Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under [Dungeon Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 
-**Status: reopened for architectural comparison. No implementation choice is approved.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it.
+**Status: source investigation complete; recommendation awaiting Kirk's review. No implementation choice is approved.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it. Hardware/export performance thresholds remain unmeasured.
 
 ## Governing principle
 
@@ -88,14 +88,28 @@ Evaluate each candidate against:
 
 Current editor safety caps are not hardware or engine performance limits. Measurements must state scene contents, resource sharing, device/browser, camera/visibility, cold versus warm cache, and what was actually measured. Counts of meshes/primitives/textures are not measured FPS.
 
-## Evidence gathering and next decision gate
+## Source findings
 
-The read-only investigation covers three independent evidence seams:
+[The evidence record](evidence.md) binds the investigation to exact source revisions and includes parent verification of the remaining spatial-policy uncertainty.
 
-1. toolkit placement validation, core spatial storage, blocking/sight, identity and projection;
-2. API/proto deployed content storage, authorization, reference and snapshot lifecycles;
-3. web/shared-renderer and asset structure, GLB/export support, resource counts and meaningful benchmark candidates.
+- Core spatial storage is collection-valued. Blanket cell exclusivity is enforced by authoring/construction, but a lower placement-admission rule also rejects new entities behind existing movement blockers. Simply deleting duplicate-cell checks would make table/decoration construction order-dependent.
+- Runtime hold/drop projection can already place multiple props at the same cell. This is not proof that every physical-index and mutable-blocking path supports it; the projection and spatial index must be tested together.
+- Placement IDs, opaque visual/content refs, and explicit gameplay flags already differ in the engine. Preserve that distinction instead of treating each mesh as a rules entity.
+- The deployed dungeon registry provides mutable keyed YAML, not owned, immutable content publication. Every proposed representation needs a real deployed persistence/authorization/revision lifecycle.
+- The example uses four unique cached GLB resources and eight model mesh instances. A plain exported GLB does not automatically consolidate that work. Batching, texture sharing, instancing, and derived optimization must be evaluated separately from packaging.
 
-Reports must bind findings to source revisions, separate current behavior from unknowns, and identify discriminating tests. The comparison will be updated from those findings before recommending an implementation. Kirk reviews that recommendation; only then is an implementation plan added.
+## Recommendation for discussion
 
-No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.
+Choose the semantic and ownership boundaries first; do not let a file format or today's cell guard choose them.
+
+1. **Authored composition is editable semantic source.** It identifies parts, exact visual sources, local transforms and grouping. Published revisions are immutable; authoring copies remain independently editable. JSON is a suitable encoding, not the definition of those semantics.
+2. **A world object owns gameplay identity and spatial/behavior declarations.** One object may have a multipart appearance; multiple objects may legitimately share a cell under explicit rules. Not every candle mesh needs its own engine identity. Authoring groups are not automatically gameplay objects.
+3. **Appearance resolution and render execution are replaceable.** Initially resolve structured appearances to the already-supported shared model resources. A compiled GLB or instanced/optimized batch can later be a derived representation bound to the source revision and rendering profile, rather than the only surviving source of truth. Do not add mandatory baking until fidelity/performance measurements justify it.
+4. **Deployed publishing owns content lifetime and access.** Drafts, published revisions, scope/permissions, retrieval and run bindings belong to the deployed application, not the private base-asset repository. This can be a focused component in existing services; it does not imply four new services or a generic job platform.
+5. **Engine co-location is an explicit independent capability.** Do not preserve one-prop-per-cell as a design law. Separate world registration/construction from movement admission and validate the resulting occupancy/LOS/identity contract. Do not route every presentation part through that capability merely to draw a composition.
+
+For the first table, these boundaries can produce one world prop referring to a published multipart appearance. That is a semantic decision for this prop, not a permanent limitation on world objects, and it does not require baking a file. The same foundation must also account coherently for two independent world objects at one cell. A later interactable component still needs an explicit gameplay declaration; retaining editable structure does not claim pickups become automatic.
+
+Before implementation, agree those boundaries and prove the discriminators in the evidence record: both registration orders/blocking combinations, authored versus dropped/reloaded props, immutable source revision resolution, and identical visuals through alternate rendering representations. The first implementation should exercise the actual table and these seams, not implement every possible future capability.
+
+Kirk reviews this recommendation before an implementation plan is added. No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.
