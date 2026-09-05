@@ -55,6 +55,8 @@ Starting a run copies the compiled world into persisted encounter state (`intern
 
 The pinned proto already has separate `AtlasProp.id` and `AtlasProp.ref`, and repeated AtlasProp records. It has no published assembly, GLB upload/artifact, or asset-revision retrieval contract. The deployed content lifecycle is work required by every proposed publishing representation; neither JSON nor GLB removes it.
 
+The focused [API reuse follow-up](api-reuse.md) establishes that durable JSON records in Redis are already the API's entity-repository convention: characters use ordinary JSON values, no TTL, owner set indexes, typed repository interfaces and injected Redis clients. The composition lifecycle is a missing domain responsibility, not missing storage infrastructure. The dungeon file registry is intentionally specific and must not become a generic definition store.
+
 ## Renderer: what the actual table costs before any bake
 
 The supplied five-placement scene resolves to seven GLB occurrences but four unique URL/cache resources:
