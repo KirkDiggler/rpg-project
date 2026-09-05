@@ -68,7 +68,26 @@ caught earlier: the check code exists and is exercised now; content simply doesn
 yet. Whoever eventually builds NPC content authoring (rpg-api#903 Phase 2) gets a real, working
 knob for free, not a redesign.
 
-## 4. What's still open, deliberately not solved here
+## 4. Cross-repo — checked directly, this is NOT toolkit-only
+
+Unlike `Money`/`Wallet`, `Sell` touches all four repos:
+
+- **rpg-toolkit** — §1-3 above.
+- **rpg-api-protos** — smaller than expected: `TradeOffer.items` (field 1) **already exists on
+  the wire** — it was always structurally there for `Give` too, only ever server-refused. Zero new
+  fields needed for the core transaction. The one real addition: `VendorStockEntry` gains a new
+  `player_sold`/`source` field to carry the tag from §2 — doesn't exist today, checked directly.
+- **rpg-api** — bump pins, thread the new tag through the `VendorStockEntry` converter, add an
+  error-table row for a genuinely new sentinel: none of Buy's existing errors (`ErrOutOfStock`,
+  `ErrWrongPrice`, `ErrInsufficientFunds`) cover "you don't possess this item to sell." The
+  vendor-side insufficient-funds case reuses the *existing* `ErrInsufficientFunds` mapping —
+  nothing new there.
+- **rpg-dnd5e-web** — the real surprise: **no existing UI lets a player pick an item from their
+  own inventory and sell it** — everything built so far (`InventoryLight`, `EquipmentPopover`) is
+  equip/buy-oriented. This is real, non-trivial new UI, arguably bigger than the toolkit mechanism
+  itself. Plus rendering the player-sold tag visually on vendor stock rows.
+
+## 5. What's still open, deliberately not solved here
 
 - **Price preview for the client.** Buy got this for free (`VendorStockEntry.price` already
   exists). Sell has no equivalent — nothing on the wire lets a client show "sell for 7gp" before
@@ -77,7 +96,7 @@ knob for free, not a redesign.
   doesn't block anything in this design.
 - **Item-protection filtering** (§2).
 
-## 5. Done when
+## 6. Done when
 
 A player can sell an item they possess for its exact 1:1 price, see it land in their `Wallet`, see
 it appear in the vendor's stock (tagged `player_sold`), and buy it back through the ordinary buy
