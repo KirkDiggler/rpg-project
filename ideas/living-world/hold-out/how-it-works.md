@@ -104,6 +104,12 @@ flowchart TD
 Nothing is stored as a stance. Save after the flip and load again: the facts
 are there, the fold runs, the camp is still neutral.
 
+*Walk 1 fixes (encounter/hold-out 08469fa2):* a driven monster turn stops the
+moment the fight it belongs to is gone — the chief who steps into the yard,
+learns the fact and turns the camp no longer swings afterwards; and Exit
+removes the leaver from the roster before it drives the next monster (a
+pre-existing ordering bug on main, found by the walk).
+
 ## 4. Reserve and arrival — something enters the run · *designed (step B)*
 
 A placement with `arrives` is spawned at launch but held in reserve: no cell,
