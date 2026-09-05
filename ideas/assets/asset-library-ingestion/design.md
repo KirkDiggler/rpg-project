@@ -274,7 +274,7 @@ After the private provider PR merges, one web command:
 
 Exact refs are selectable Builder entries grouped by family. Three-part family aliases resolve defaults but do not create duplicate palette tiles. Calibration preview, Builder preview, and playable dungeon use the same generated resolver and `PropModel` path. New code must not maintain a second hand-written list of the promoted batch.
 
-The synchronized GLBs remain ignored in the public web checkout. Only license-safe ref, label, role, behavior, dimensions, and path metadata may be committed there.
+The synchronized GLBs remain ignored in the public web checkout. Only license-safe ref, label, role, behavior, dimensions, runtime size/hash, and path metadata may be committed there.
 
 ## Error handling
 
@@ -283,7 +283,8 @@ The synchronized GLBs remain ignored in the public web checkout. Only license-sa
 - Draft export remains available so unfinished work is not lost.
 - Provider validation reports errors by entry/ref and mutates nothing.
 - Duplicate exact refs, duplicate runtime paths, multiple defaults, absent defaults, unsupported placements, and changed source hashes are hard failures.
-- Calibration values must be finite; scale must be greater than `0` and at most `100`; yaw is normalized into `[-180, 180)`; each fine-offset component must remain within `[-0.5, 0.5]` metres; and the baked result's lowest visible point must be within `0.01` metres of the floor.
+- Calibration values must be finite; scale must be greater than `0` and at most `100`; yaw is normalized into `[-180, 180)`; horizontal fine offsets must remain within `[-0.5, 0.5]` metres; and vertical fine offset must remain within `[-0.1, 0.1]` metres.
+- The baked result's lowest visible point must match the declared vertical fine offset within `0.01` metres. Zero is normal floor contact; the narrow adjustment exists only for a visually reviewed slight sink/lift.
 - Every final bounds axis must be positive and no greater than `20` metres in this floor-prop slice; larger architecture returns to a later placement design.
 - Unsupported exact refs never render a misleading substitute.
 - Consumer generation fails before writing when provider metadata or synced files disagree.
