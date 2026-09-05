@@ -292,6 +292,13 @@ and answer from the run.
    saw for three refused EndTurns; the server's message named the chief's
    strike. Surface the server's reason (web polish).
 
+**Walk 2 (2026-09-05, rebuilt stack from api 160f7f0): the win condition
+WALKED.** Two players, the raider camp, the letter to the chief, the camp
+turned, the hold-out ended. Finding filed: a party member who leaves through a
+door leaves a shadow on the other player's map that blocks movement planning
+(client-side — the server refused no Move for occupancy; rpg-dnd5e-web issue
+filed from the walk). Step B starts.
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
