@@ -38,6 +38,12 @@ Today's dungeons declare nothing and get the default table: `party` and
 `monsters` mutually hostile, every faction allied with itself. Same answers,
 read from data instead of computed from kind.
 
+*Web landed (web/hold-out 8aeabbf5):* members on the map coloured by declared
+faction with a sides legend; the stance beat narrated ("The raiders and the
+party are no longer hostile."); a fight ended by stance says the sides stood
+down; the hold-out's `convince` renders as a dropdown of declared factions;
+the compiler's own refusals render inline beside the client's.
+
 *Session landed (session/hold-out 25b2891b):* Spawn carries the
 faction, the roster says whose side everyone is on, and after the flip every
 player's stream reads `stance_changed` → `fight_ended (by stance)` → `ended:

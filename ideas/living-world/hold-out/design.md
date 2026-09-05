@@ -222,7 +222,9 @@ and answer from the run.
 - Placement inspector: `faction` dropdown on monsters; `arrives` predicate
   editor on monsters and props.
 - Intel form: `reveals` kind select (`door | fact`) and the id.
-- Scenario tab: `hold-out` with the `convince` dropdown and the description.
+- Scenario tab: `hold-out` with the `convince` dropdown. The description
+  waits on #372's scenario-tab design: `ScenarioDescriptor` carries a name and
+  per-field guidance and no description field (found by the web build).
 - Play: roster coloured by faction; `stance` and `arrived` beats narrated;
   reserved placements never drawn.
 - YAML round-trips byte-stable; every refusal in §2 renders inline at the
