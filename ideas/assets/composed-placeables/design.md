@@ -2,7 +2,7 @@
 
 Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under [Dungeon Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 
-**Status: source investigation complete; recommendation awaiting Kirk's review. No implementation choice is approved.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it. Hardware/export performance thresholds remain unmeasured.
+**Status: the foundation and bounded vertical slice are approved in conversation; concrete implementation planning is next. Guild ownership was settled on 2026-09-05.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it. Hardware/export performance thresholds remain unmeasured.
 
 ## Governing principle
 
@@ -21,6 +21,18 @@ The future feature path is unknown. A workaround that satisfies the current tabl
 - The first composition may behave as one gameplay prop. Individual pickups/interactions are not required now, but file packaging must not silently decide the domain model.
 - Changing engine placement rules is allowed if it is the better foundation. Avoiding such changes is not an acceptance criterion.
 - The private base-asset ingestion pipeline remains a separate responsibility. This decision must not commandeer its active work or violate its execution guardrails.
+
+## Agreed first vertical slice and ownership
+
+Kirk approved: a composition repository following the existing API/Redis conventions; immutable definition revisions; the lab's save/load path becoming API-backed; composition selection and placement in the real dungeon builder; appearance/spatial behavior surviving move, save/reopen, and play; and a separate proof of two independent props sharing one hex under explicit construction/movement rules.
+
+The ownership boundary is the **Discord guild**, not the individual author. Each server has its own world and composition library. The creator's player identity is attribution within that guild. While this is being built, only Kirk's guild is enabled. Opening other servers, cross-guild sharing/discovery, or broader UGC publishing is a deliberate future product decision, not part of this slice. This does not mandate a separate physical deployment per guild.
+
+Repository and API contracts must carry explicit guild scope and prevent cross-guild list/get/write/reference resolution. A world placement pins a revision within its guild; changing or removing a library entry cannot silently change already-placed content. Base game assets remain the supplied asset catalog, not duplicated user publications per guild.
+
+The source inspection found web Discord context has `guildId`, while the inspected API auth context provides only player identity. The implementation plan must name how trusted guild scope reaches the handler/orchestrator/repository and runtime definition reader. It must not assume that context already exists or conflate a client-provided guild identifier with authorization. One enabled guild is the initial rollout boundary; no public UGC platform or generic tenancy framework is needed.
+
+For the table's first integration, the composition is one gameplay prop with multiple visual parts. The engine co-location case is a distinct capability/proof, not a reason to turn every decorative part into a rules entity. Blocking contributions belong to their physical object/footprint and follow its location; appearance assets do not decide them. Fixed terrain/edge declarations remain distinct.
 
 ## Concrete forcing case
 
@@ -112,4 +124,4 @@ For the first table, these boundaries can produce one world prop referring to a 
 
 Before implementation, agree those boundaries and prove the discriminators in the evidence record: both registration orders/blocking combinations, authored versus dropped/reloaded props, immutable source revision resolution, and identical visuals through alternate rendering representations. The first implementation should exercise the actual table and these seams, not implement every possible future capability.
 
-Kirk reviews this recommendation before an implementation plan is added. No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.
+The agreed slice is now ready for an implementation plan. Concrete wire contracts, trusted guild-context integration, revision operations, and the runtime resolution point must be made explicit there before execution. No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.

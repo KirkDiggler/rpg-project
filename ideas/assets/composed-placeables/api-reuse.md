@@ -44,7 +44,7 @@ The storage mechanism fits existing code. The remaining decisions concern meanin
 - Is a composition copied into the dungeon on placement/save, or referenced by an immutable definition identity/revision? Both must preserve the already-approved independent-copy behavior.
 - Where does expansion/resolution occur: authoring compilation, encounter start, or visual definition retrieval? Give that consumer a narrow read-only resolver, not write/lifecycle ownership.
 - Does Save make a valid composition available, or is a separate Publish operation actually required? Do not add draft/publication workflow solely because the earlier proposal used those words.
-- What owns the library: author, Discord-server scope, or an explicitly global catalog? Existing per-player indexes are a storage precedent, not a product decision.
+- **Resolved by Kirk:** the Discord guild owns the library/world; creator identity is attribution, not the ownership partition. Only Kirk's guild is enabled while building. Cross-guild UGC publishing/sharing remains a deliberate future choice. Repository indexes and lookup inputs must reflect guild scope, not copy the character repository's player ownership semantics.
 - What do rename/delete affect, and which snapshots/references must remain valid afterward?
 
 These decisions determine the new repository and RPC contracts. They do not require reopening the choice of database technology or explaining ordinary API/Redis plumbing.
