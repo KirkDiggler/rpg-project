@@ -120,13 +120,23 @@ A provider-owned `prepare_prop_calibration.py` command accepts a pack identity a
 2. verifies the source GLB exists and matches its recorded hash;
 3. copies it to the web checkout's ignored `public/models/synty/prop-calibration/` directory;
 4. updates an ignored local calibration catalog; and
-5. prints the Prop Calibration Lab URL.
+5. prints the exact loopback Prop Calibration Lab URL.
 
 The command may be repeated to add candidates to the same working batch. The temporary copy is never a promoted asset and is never staged in Git. No local daemon or repository-writing browser service is introduced.
 
 ## Prop Calibration Lab
 
-The new Prop Calibration Lab reuses the existing Asset Anchor Lab's Three.js measurement and comparison patterns without changing that historical fixture. It loads the temporary candidate catalog and shows one selected prop:
+The Prop Calibration Lab is a local development tool, not a product concept. Its code lives under `rpg-dnd5e-web/src/dev/prop-calibration/`; it receives no Concepts Lab tab, Home link, or Dungeon Builder navigation entry. The existing historical Asset Anchor Lab remains unchanged.
+
+The direct route is `http://127.0.0.1:<vite-port>/?propCalibration=1`. It renders only when all three conditions hold:
+
+1. Vite runs in `development` mode;
+2. `window.location.hostname` is loopback (`127.0.0.1`, `localhost`, or the browser's `::1`/`[::1]` IPv6 representation); and
+3. the explicit `propCalibration=1` query parameter is present.
+
+The app uses a development-conditional lazy import, following the existing local harness pattern, so a production build cannot activate the lab and can omit its implementation from the production bundle. A production build served from loopback still refuses the route; a development server deliberately exposed on a non-loopback hostname also refuses it.
+
+The lab loads the temporary candidate catalog and shows one selected prop:
 
 - on the real hex/floor presentation;
 - beside a standard fighter for scale judgment;
@@ -153,7 +163,7 @@ The collaborator fills or adjusts:
 
 Form inputs and visual controls share one state: changing a slider updates the exact value, and typing a valid value updates the preview. The preview applies the proposed bake transform followed by the game's existing shared `SYNTY_SCALE`, so it represents the final runtime convention rather than inventing a second scaling system.
 
-The lab autosaves draft state in browser local storage. It can import a prior batch JSON, export incomplete draft JSON for backup, and export a provider-ready batch only when every required field passes local validation. Browser storage is convenience, not authority. The exported portable JSON becomes the provider recipe.
+The lab autosaves draft state in browser local storage under a prop-calibration-specific key. It can import a prior batch JSON, export incomplete draft JSON for backup, and export a provider-ready batch only when every required field passes local validation. Browser storage is convenience, not authority. The exported portable JSON becomes the provider recipe. It makes no API call and receives no filesystem-writing capability.
 
 ## Reference identity
 
@@ -285,7 +295,7 @@ Ingestion remains verified through real pack acceptance runs plus focused determ
 The calibration and promotion slice adds:
 
 - preparation tests for source-path resolution, hashes, ignored destination, and traversal refusal;
-- lab tests for catalog loading, property-sheet validation, control/form synchronization, local draft recovery, and JSON import/export round trip;
+- lab tests for the development/mode/loopback/query route matrix, production refusal, catalog loading, property-sheet validation, control/form synchronization, local draft recovery, and JSON import/export round trip;
 - recipe tests for exact/family ref rules, default uniqueness, required booleans, finite calibration, and portable paths;
 - provider tests proving stage purity, source binding, Blender bake results, floor contact, identity output transforms, atomic apply, and `check` drift detection;
 - generated-catalog tests proving exact resolution, family-default resolution, unsupported-exact emptiness, and no duplicate Builder aliases;
