@@ -38,7 +38,7 @@ Today's dungeons declare nothing and get the default table: `party` and
 `monsters` mutually hostile, every faction allied with itself. Same answers,
 read from data instead of computed from kind.
 
-*Session landed (session/hold-out a8f1716d, re-pin pending):* Spawn carries the
+*Session landed (session/hold-out 25b2891b):* Spawn carries the
 faction, the roster says whose side everyone is on, and after the flip every
 player's stream reads `stance_changed` → `fight_ended (by stance)` → `ended:
 hold-out`, walked through the real verbs on the fixture.
