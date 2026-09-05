@@ -38,6 +38,11 @@ Today's dungeons declare nothing and get the default table: `party` and
 `monsters` mutually hostile, every faction allied with itself. Same answers,
 read from data instead of computed from kind.
 
+*Session landed (session/hold-out a8f1716d, re-pin pending):* Spawn carries the
+faction, the roster says whose side everyone is on, and after the flip every
+player's stream reads `stance_changed` → `fight_ended (by stance)` → `ended:
+hold-out`, walked through the real verbs on the fixture.
+
 *Resolution landed too (resolution/hold-out 7a32b34d):* Sneak Attack and Pack
 Tactics ask the reloaded run, `castRelations` and its two cast-side entities
 are deleted, and a cast with no run answers "unknown" for everyone rather
