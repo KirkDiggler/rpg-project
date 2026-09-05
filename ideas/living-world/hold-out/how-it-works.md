@@ -38,6 +38,11 @@ Today's dungeons declare nothing and get the default table: `party` and
 `monsters` mutually hostile, every faction allied with itself. Same answers,
 read from data instead of computed from kind.
 
+*Resolution landed too (resolution/hold-out 7a32b34d):* Sneak Attack and Pack
+Tactics ask the reloaded run, `castRelations` and its two cast-side entities
+are deleted, and a cast with no run answers "unknown" for everyone rather
+than letting a default table step back in.
+
 ## 2. Knowledge — what a member knows · *landed (encounter/hold-out 5263f098: known:fact with the learner as subject and audience; presence teaches the mind on the sweep and at the end of Hold/Loot)*
 
 Knowledge is a fact with an audience. A record's `reveals` is applied when the
