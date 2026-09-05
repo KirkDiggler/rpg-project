@@ -170,9 +170,19 @@ remembering then rather than relearning it.
   a multi-line shape; this is where "buy several different items in one transaction" lands,
   generalizing Wave 4's single-item case rather than needing its own separate multi-item project.
 - **Selling / barter** — `Give.Items` stays refused through every wave above. Unlocking it means
-  resolving what rpg-project#370 left open: does a vendor accept unlisted items? What's the sell
-  price (half of `PriceOf`, the usual convention, or something else)? Does a sold item reappear in
-  vendor stock? None of that is decided; it's its own design conversation when it's time.
+  resolving what rpg-project#370 left open: does a vendor accept unlisted items? Does a sold item
+  reappear in vendor stock? None of that is decided; it's its own design conversation when it's
+  time.
+
+  **Pricing is not `Trade`'s concern, corrected here — this was mis-scoped in an earlier draft of
+  this section.** `Trade`'s only contract is "ask for the required price, compare to what was
+  offered, exact match or refuse" (Wave 4). It has no opinion about how that price is computed.
+  Reputation discounts, intimidation, a vendor's per-item markup, a sell-back ratio below buy
+  price — all of that lives entirely behind whatever `Trade` calls for "the required price"
+  (`PriceOf` today, something richer later), never inside `Trade` itself. **First implementation
+  of sell is 1:1 with `PriceOf`** — the same number buying uses, no discount, no economy-balancing
+  logic, no reputation system. Don't build pricing policy to test a mechanism; prove the
+  mechanism first, exactly like buying did.
 - **`Unpack`** — surfaced by Wave 2's own item-catalog fix: `compileInventory` resolves a starting
   pack (Explorer's Pack, etc.) as ONE opaque `InventoryItem`, never decomposing `packs.PackItem`'s
   `Contents` into individual stacks — verified directly, no code path reads `Contents` anywhere.
