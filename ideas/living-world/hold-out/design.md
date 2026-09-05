@@ -326,9 +326,16 @@ gate) has the api's end-to-end scene A4 behind it; walk pending.
 Stan Norris) and the survivor's Attack then failed twice:** `attack: record:
 participation arrivals: arrival refresh sight: participation: participation
 member "reinforcement-1" has no roster kind: invalid session data (written
-[character], failed [encounter])`. The arrivals step consulted the
-participation seam about a RESERVED zombie; §3.7 says a reserved placement is
-consulted about nothing. Root cause under investigation (session builder).
+[character], failed [encounter])`. ROOT CAUSE (session, fixed at 942d1052): the CHIEF FELL TO THAT SWING — the
+record's participation pass noticed him Down, the three zombies arrived inside
+Record, and the arrival's sight refresh asked the session's participation seam
+about a member that had just arrived; the seam's kinds map and the Sight seam
+were rebuilt in `adopt` from `world.Members` alone after resolution handed
+the world back, dropping the reserve. Seeding from the reserve at adopt is
+REQUIRED, not braces: the arrival happens inside the record on the adopted
+world. §3.7 held — the encounter asked about an arrived member, never a
+reserved one. Walk 4 was therefore the kill-the-chief branch, hitting the
+seam one beat after the fall.
 Two consequences on the record: (a) the split write — the character was
 written, the encounter failed — is the known split-save wedge biting a player
 ("my fighter was getting his action taken away before I could swing"); (b)
