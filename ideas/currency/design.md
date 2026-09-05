@@ -137,12 +137,33 @@ touch):
 - `session.Trade`'s refusal narrows: `Give.Items` stays refused (no item-for-item yet), but
   `Give.Currency` becomes a *new legal case* — check `Wallet.CanAfford`, `Wallet.Sub`, otherwise
   unchanged (decrement stock, add item, exactly as today).
+
+**Corrected before implementation (caught reviewing this section, not after shipping it):** the
+wording above is dangerously incomplete on its own — "check `Wallet.CanAfford`" only proves the
+actor's wallet covers whatever `Give.Currency` amount the CALLER supplied. Nothing in that
+sentence ties the offered amount to the item's actual price. As literally written, a client could
+send `Give.Currency: 1cp` for a 500gp longsword and it would go through, because nothing checks
+the offered amount against the real price — only that the wallet can afford whatever was offered.
+That is a server trusting client-supplied pricing, a real vulnerability class, not a taste
+question.
+
+**The rule, stated explicitly so it survives to the sell wave too**: `Trade` computes the
+required price itself, server-side, via `equipment.PriceOf(item.ID)` scaled by `item.Quantity` —
+never the other way around. Refuse (new sentinel, `ErrWrongPrice`, distinct from `ErrOutOfStock`)
+unless the offered `Give.Currency` exactly equals that computed price — no partial-credit
+tolerance, no accepting "close enough." A client reads `VendorStockEntry.price` to *display* the
+number and pre-populate what to send; the server is the only authority on whether it's correct.
+This is a general rule, not a buy-specific one: the same "server computes, client never asserts a
+price" law applies symmetrically once selling exists (`Give.Items`/`Receive.Currency`) — worth
+remembering then rather than relearning it.
+
 - **rpg-api-protos**: `TradeOffer` gains `currency`; `VendorStockEntry` gains `price` (doesn't
   exist today — web's PR #920 flagged this gap directly).
 - **rpg-api**: bump pins, thread the new fields through the existing `Trade`/`Interact`
-  converters.
-- **rpg-dnd5e-web**: show price per stock row, show the player's own balance (needs Wave 3's
-  visibility decision), a real "Buy for 15gp" confirm, balance updates on success.
+  converters, add the `ErrWrongPrice` error-table row.
+- **rpg-dnd5e-web**: show price per stock row (read-only, display purposes — never sent back as
+  the authoritative number), show the player's own balance (separate, small, parallel piece —
+  rpg-api-protos#294), a real "Buy for 15gp" confirm, balance updates on success.
 
 **Beyond Wave 4, not yet designed:**
 - **`Quote`** (multi-item cart) — rpg-toolkit#1275's `Quote{Lines []QuoteLine, Total}` is already
