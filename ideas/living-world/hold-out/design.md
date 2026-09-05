@@ -54,7 +54,7 @@ scenarios:
 
 | field | type | rules |
 |---|---|---|
-| `factions[].id` | id | unique; `party` MUST NOT be declared (reserved for the players' side) |
+| `factions[].id` | id | unique; `party` MUST NOT be declared (nothing about it is authorable); `monsters` MAY be declared — that is how the unauthored monster side gets a mind |
 | `factions[].mind` | placement id | the hub word spreads through: the faction knows what its mind knows. MUST name a monster placement in this faction. Optional: a faction of one has its member as mind; a faction of many with an `until: { fact }` and no mind is refused ("name a mind, or the faction cannot learn") |
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
 | `dispositions[].between` | `[faction, faction]` | both MUST exist; the reserved `party` and `monsters` are nameable here (`between: [monsters, party], stance: neutral` makes the unauthored monsters neutral) though never declarable; unordered; a ≠ b; one disposition per pair |
@@ -132,8 +132,11 @@ hold-out nobody can win".
    second mechanism answering a question the graph owns.
 5. When a flip removes hostility between two factions and a fight is formed
    between members of those factions, the encounter dissolves it with a new
-   sealed cause `ByStance()`. Members of a third faction still hostile keep
-   their fight.
+   sealed cause `ByStance()`. As built: a fight with no opposed pair left
+   dissolves; a fight that still has one keeps running, and every member now
+   opposed to nobody is transferred to the world clock (in no pair, in no
+   fight). Presence transfer also runs at the end of Hold and Loot, so a
+   letter picked up in the hut teaches the mind then, not on the next verb.
 6. Presence transfer rides `sweepOccupancy`: a member holding a record whose
    `reveals` names a fact, standing in the region of a faction's `mind`,
    teaches the mind (the record copies; the holder keeps it).
@@ -304,6 +307,14 @@ and answer from the run.
   stance (`npc/policy.go:38`) is a faction of one with one edge toward
   `party`; the graph can answer it when his use case pulls it. Seam note for
   his record, not a change here.
+- **A3 as built pins presence, not learning.** In step A no non-mind can
+  learn a fact (holding is not knowing: an authored holder carries the record
+  unread, as doors work), so "a scout who learned it flips nothing" has no
+  scene yet; the learned-scout variant waits on the word-spreads shelf.
+- **`until: { round }` would oscillate.** Rounds are current state: a camp
+  hostile until round 6 turns at round 6, the fight dissolves, no fight means
+  no round, and it is hostile again on the next sight. A latch needs a fact —
+  the second reason the run turns on facts alone this slice.
 - **Rounds and Standing as journal facts.** Found by the build: `until` on
   `{ round }` / `{ down }` has nothing to flag because neither is a fact in the
   run's world yet; `{ stance }` needs an edge-keyed projection. Under the law

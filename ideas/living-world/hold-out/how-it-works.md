@@ -8,7 +8,7 @@ The law behind all four: **the run's world is the only state.** Content
 declares it, verbs append to it, readers fold over it, the projection presents
 it. No reader keeps a copy.
 
-## 1. Sides — who fights whom · *file + Compiled landed (encounter/hold-out d5bcd4e7: factions, dispositions, predicate grammar, fixture) · readers pending · authoring landed (web/hold-out 97c0a298: Factions + Dispositions forms, predicate editor)*
+## 1. Sides — who fights whom · *landed (encounter/hold-out 673d5d10: one graph, formation asks it; 177 leaves fail when the table is forced never-hostile) · authoring landed (web/hold-out 97c0a298: Factions + Dispositions forms, predicate editor)*
 
 Every member belongs to a faction; players to `party`, unauthored monsters to
 `monsters`. A disposition is an edge between two factions. Fight formation
@@ -38,7 +38,7 @@ Today's dungeons declare nothing and get the default table: `party` and
 `monsters` mutually hostile, every faction allied with itself. Same answers,
 read from data instead of computed from kind.
 
-## 2. Knowledge — what a member knows · *designed*
+## 2. Knowledge — what a member knows · *landed (encounter/hold-out 673d5d10: known:fact with the learner as subject and audience; presence teaches the mind on the sweep and at the end of Hold/Loot)*
 
 Knowledge is a fact with an audience. A record's `reveals` is applied when the
 record changes hands; a fact reveal writes `known:fact:<id>` with the receiver
@@ -61,7 +61,7 @@ sequenceDiagram
 A scout who learns it flips nothing: the fold for the faction reads the
 mind's facts, and only the mind's.
 
-## 3. The flip — a fact changes a side · *kernel landed (world/pair-settle 640402ed), encounter pending*
+## 3. The flip — a fact changes a side · *landed (world/pair-settle e9da06e Settle; encounter/hold-out 673d5d10 declares Raise + Settle per until, dissolves ByStance; 12 leaves fail without the Raise)*
 
 A declared reducer (`Raise`) flags the mind when a `known:fact` with the mind as
 subject appears; a pair projection (`Settle`, new in the kernel — Kirk's R11:
