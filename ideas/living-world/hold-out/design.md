@@ -342,6 +342,18 @@ written, the encounter failed — is the known split-save wedge biting a player
 death saves are live in the camp and worked as designed: three failures, dead,
 transferred to the world clock, the run went on.
 
+**Walk 5 (2026-09-05, stack from api a1131c5 = session 942d1052): the
+kill-the-chief branch WALKED as designed.** Kirk killed the captain, walked
+back to the start, and three zombies came through the gate ("bam 3 zombies").
+They knocked Stan down; he stabilized while Hopkins hid in the other room. No
+error on the record; the run went on; the camp never turned. The exact
+sequence that broke walk 4 (the chief falls to a player's blow, the arrivals
+land inside that blow's record) held. The api's new acceptance scene covers
+it end to end — a player's Attack fells the chief through gRPC and three
+ARRIVED beats land inside the blow's own record; it fails on the previous
+session head and passes on 942d1052. Both branches of the file have now been
+walked: deliver the letter (walk 3) and kill the chief (walk 5).
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
