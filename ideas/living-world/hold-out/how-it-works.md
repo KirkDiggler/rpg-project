@@ -61,10 +61,12 @@ sequenceDiagram
 A scout who learns it flips nothing: the fold for the faction reads the
 mind's facts, and only the mind's.
 
-## 3. The flip — a fact changes a side · *designed*
+## 3. The flip — a fact changes a side · *kernel landed (world/pair-settle 640402ed), encounter pending*
 
-A declared reducer watches the mind's facts for the disposition's `until`. When
-it holds, a projection rewrites the pair's edge to neutral on the next fold.
+A declared reducer (`Raise`) flags the mind when a `known:fact` with the mind as
+subject appears; a pair projection (`Settle`, new in the kernel — Kirk's R11:
+"the graph should tell the truth") drops the hostile edges between the two
+factions in both directions while the flag holds. `HasEdge` is the only reader.
 Formation now sees no hostile edge, so the encounter dissolves the fight
 between those two factions and the hold-out ending fires.
 

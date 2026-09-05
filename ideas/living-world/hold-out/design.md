@@ -112,13 +112,17 @@ hold-out nobody can win".
    between their factions. A member in reserve or Down appears in no pair.
 3. Knowledge is facts with audiences in the one journal: `known:door:<id>` and
    `holds:intel:<record>` as shipped, with the receiver as audience;
-   a `fact` reveal writes `known:fact:<id>` with the receiver as audience.
-   `knowsFact(member, id)` is a fold; no reader keeps a copy.
+   a `fact` reveal writes `known:fact:<id>` with the RECEIVER as Subject and
+   as audience (the kernel's `Raise` flags a fact's subject, so the learner
+   must be the subject for `Settle{Of: mind}` to fire). `knowsFact(member,
+   id)` is a journal fold over facts of that kind whose subject is the
+   member; no `fact:<id>` entity, no reader keeps a copy.
 4. The disposition flip lives in the graph, not beside it (**Kirk 2026-09-05:
    "the graph should tell the truth"**). world v0.3.0 could not say it: every
    reducer moves one entity and every projection rewrites one entity's own
    edges, so a pair flipping both directions had no home. world gains a PAIR
-   projection (v0.4.0, branch `world/pair-settle`): while the flagged entity
+   projection `graph.Settle{OnFlag, Of, Between, Relations, To}` (v0.4.0,
+   branch `world/pair-settle`, head 640402ed): while the flagged entity
    carries the flag, the pair's edges settle to the target relation in both
    directions; precedence is declared order, last wins, pinned by one test.
    The encounter declares `Raise{On: known:fact:<id>}` + that projection for
