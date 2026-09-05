@@ -2,8 +2,10 @@
 
 **Parent:** rpg-project#386 · **Initiative:** rpg-project#310 · **Origin:** rpg-project#376
 
-> **NOT FINAL.** This design changed shape twice in one conversation and is written up as a
-> snapshot of current thinking, not a settled decision. Anything below can still move.
+**Scope, settled**: this design covers only §2 below — giving `monster.Data` the fields and
+`session.Loot` the mechanism to move them. It deliberately says nothing about how a monster comes
+to have loot in the first place (§3/§4) — that's a real, separate, later conversation, not an
+open question left dangling inside this one.
 
 ## 1. What exists today, verified directly
 
@@ -44,7 +46,12 @@ plumbing, seeded at monster placement). **Current thinking has moved away from t
 
 How much gold or which items a given monster carries is authoring/content work, entirely separate
 from the mechanism above, same distinction as "17 backgrounds' worth of gold values" being
-separate from the wiring that reads them.
+separate from the wiring that reads them. Monsters have stats, attacks, and CR today — zero loot
+data, ever; this is a genuinely new content layer, not a field to populate. The right sequencing,
+by analogy to how vendor stock (`npcs`) was built: one hard-set example first (mirroring
+`npcs.NewMerchant(nil)`), proving `session.Loot` actually moves it, before building any
+`tools/selectables`-driven generated/configured loot-table system. **Its own future design, not
+this one.**
 
 ## 4. Explicitly out of scope
 
@@ -54,6 +61,15 @@ separate from the wiring that reads them.
 - Vaults, chests, and other non-monster lootable containers — not addressed by this design at all;
   whether they'd reuse `monster.Data`'s new shape, need their own, or something else entirely is a
   separate question this doc doesn't answer.
+- **The monster-loot content layer itself** (§3) — real, wanted, explicitly a later conversation.
+- **Monster AI consuming its own `Inventory` mid-combat** (a monster using a potion as an action,
+  the unused remainder becoming lootable on death) — a genuinely exciting idea raised while
+  designing this, but it touches monster combat/`behavior`/`TurnDriver`, not `Loot`. Named here so
+  it isn't lost, not decided or scoped.
+- **Equipment-driven monster variants** (a ranged vs. melee bandit differing only by what's
+  equipped) — same treatment: named, not scoped, not this design's job. Monster combat resolution
+  reads a fixed stat block today, not equipped items the way a player's attacks do; teaching it
+  otherwise is a separate, bigger conversation.
 
 ## 5. Done when (also unsettled — revisit once §2 firms up)
 
