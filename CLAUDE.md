@@ -446,6 +446,20 @@ Each repo has its own CLAUDE.md for repo-specific patterns:
 - rpg-dnd5e-web: Proto hooks, ci-check, Discord integration
 - rpg-api-protos: buf workflow, branch strategy, naming conventions
 
+## Design principle — composable foundations
+
+Kirk's standing design principle (2026-09-05): **we are not here merely to make
+things work; we build composable, extensible components that give the game a
+solid foundation to evolve.** The future feature path is unknown, so a shortcut
+around today's limitation is not sufficient architectural justification.
+
+Treat current limits as decisions to examine, not automatically as permanent
+constraints. Separate domain meaning and ownership from storage, transport, and
+rendering representations. Inspect the actual invariants and compare options
+before selecting a boundary. Extensibility does not mean building speculative
+systems: prefer focused parts with explicit contracts that can evolve or be
+replaced without forcing unrelated parts to change.
+
 ## Key Architecture Decisions
 
 - **Input/Output types on every function** - Non-negotiable

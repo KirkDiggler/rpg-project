@@ -1,147 +1,101 @@
-# Authored arrangements as single placeable props
+# Deployed world-building composition — architectural decision
 
-Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under [Composable Dungeon Builder #169](https://github.com/KirkDiggler/rpg-project/issues/169).
+Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under [Dungeon Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 
-Status: the outcome and first specimen are approved in conversation; this written publishing contract awaits Kirk's review. Implementation planning follows that review.
+**Status: reopened for architectural comparison. No implementation choice is approved.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it.
 
-## Outcome
+## Governing principle
 
-An author builds an arrangement visually, retains its editable JSON source, and publishes a fixed snapshot as one ordinary prop. Dungeon Builder and the playable game render that same artifact through their existing prop path. The game does not gain multiple occupants per hex, component-level targeting, pickup actions, or inferred collision rules.
+Kirk, 2026-09-05:
 
-The first specimen is Kirk's actual exported scene, not a reconstruction of its screenshot:
+> We are not here to make things work. Full stop. We are here to make composable, extensible components that can build a solid foundation that will allow our game to evolve on.
 
-- one existing `dnd5e:props:skeleton-table` asset, already containing the skeleton and table;
-- two `dnd5e:props:candles` placements;
-- two `dnd5e:props:books` placements;
-- five authored transforms, no group or support links;
-- source scene SHA-256 `c6e50c800d869eecaac74dac6670a37a30ba5bbbade49ca6ccead5ecd1cdf2c8`;
-- anchor item `17c67f39-6b5d-49ad-a9be-e63722824dc1`, the skeleton-table, at authored Y zero.
+The future feature path is unknown. A workaround that satisfies the current table example is not sufficient justification for the architecture. Neither is a speculative universal framework. The design must identify focused parts, explicit ownership, and contracts that let one part change without forcing unrelated parts to change. This standing principle is recorded in [the shared startup context](../../../CLAUDE.md#design-principle--composable-foundations).
 
-All five placements become the composition. The existing skeleton-table is neither decomposed nor overwritten. Books and candles remain scenery. The new family is `dnd5e:props:decorated-skeleton-table`, with first exact snapshot `dnd5e:props:decorated-skeleton-table:01` as its default. Publishing a changed composition creates a new exact snapshot rather than mutating `:01`.
+## What the product must support
 
-## Relationship to work already in flight
+- DMs/streamers author through the deployed web application, initially on Kirk's Discord server.
+- An author composes existing assets, saves the editable source, and makes reusable content available to the dungeon builder and players.
+- Publishing cannot depend on a developer committing a recipe to a private repository or running Blender on their workstation.
+- The current concept's scene/library files prove editing and reuse, not deployed persistence, authorization, publication, or delivery.
+- The first composition may behave as one gameplay prop. Individual pickups/interactions are not required now, but file packaging must not silently decide the domain model.
+- Changing engine placement rules is allowed if it is the better foundation. Avoiding such changes is not an acceptance criterion.
+- The private base-asset ingestion pipeline remains a separate responsibility. This decision must not commandeer its active work or violate its execution guardrails.
 
-The [finished crypt specimens](../../dungeon-builder/crypt-prop-specimens.md) established one GLB, one placement anchor, and one gameplay reference for multi-mesh props. This wave changes how their editable source is authored, not that runtime contract.
+## Concrete forcing case
 
-The newer [asset ingestion and promotion design](../asset-library-ingestion/design.md) and [plan](../asset-library-ingestion/plan.md) own the shared promotion/catalog infrastructure:
+Kirk supplied a five-placement scene: one existing skeleton-table (skeleton and table are already one asset), two candles, and two book piles. Its SHA-256 is `c6e50c800d869eecaac74dac6670a37a30ba5bbbade49ca6ccead5ecd1cdf2c8`. It contains explicit transforms and no formal group/support links. The source asset set includes candle companion geometry.
 
-- private provider tooling landed in assets#142, while assets#141 still owns first-batch acceptance;
-- the local calibration lab landed in web#937;
-- web#936 still owns generated exact-ref catalog consumption and the real Builder/game round trip;
-- its first source recipe deliberately excludes assemblies and companions.
+The scene and its screenshot establish the intended appearance. They do not require a baked GLB, one runtime entity per mesh, or preservation of today's cell-exclusivity rule.
 
-This is the separately earned composed-source extension. It must not disguise a derived assembly as a raw FBX/pack-cache source, bypass existing validation, or maintain a second production prop catalog. No implementation takes over the active #141/#936 branches. Their unchanged v1 source recipes and checks must continue to work.
+## Questions that must remain separate
 
-## Authoring and publishing are distinct actions
+1. **Authoring composition:** what is saved, how components are positioned/grouped, how saved content is copied, and how the source remains editable.
+2. **Gameplay representation:** which things have identity/behavior, what an instance is, how occupancy and sight/movement contributions work, and which facts the engine owns.
+3. **Visual representation:** how a published appearance references reusable base assets, how transforms/materials are represented, and whether render artifacts are derived from that source.
+4. **Deployed content lifecycle:** who can save/publish/use content, where source and published revisions live, how dungeon/run snapshots resolve them, and how clients receive/cache them.
+5. **Render execution:** scene nodes, primitives, materials, geometry sharing, instancing/batching, texture memory, loading, and frame cost.
 
-The current World Building concept remains the editor. A scene or saved arrangement is editable authoring data; it is not a playable dungeon payload.
+JSON and GLB are representations. Choosing either does not answer the identity, ownership, or lifecycle questions. One GLB is not necessarily one mesh, one material, one draw call, or less GPU work.
 
-For the first publication, a provider command consumes the exported scene plus explicit, reviewed source bindings and an anchor choice. The private provider retains those inputs. After the real export/promotion/consumer path is proved, a browser-facing **Make placeable prop** action can prepare this recipe. This slice introduces no filesystem-writing browser service, asset-upload API, daemon, or hosted publication service.
+## Options to compare
 
-The pipeline performs these stages:
+These are candidates, not preselected decisions. Some can be combined cleanly.
 
-```text
-scene JSON + bound source assets + chosen placement anchor
-  -> reproducible composed GLB in a disposable stage
-  -> geometry/material/anchor and visual verification
-  -> existing provider stage/validate/apply/check lifecycle
-  -> existing generated exact-ref web catalog
-  -> Dungeon Builder placement
-  -> Save, reopen, Save & Play, same prop in the game
-```
+### A. Published JSON visual assembly, one gameplay prop
 
-A completed export is a candidate, not a published or visually approved asset.
+The deployed service stores an immutable assembly definition referencing bound asset versions and transforms. The renderer resolves it into a visual hierarchy; the engine sees an explicit gameplay prop/appearance reference.
 
-## Private source recipe
+Potential strengths: small publish payloads, retained structure, reusable source geometry/materials, no mandatory bake job. Questions: assembly resolver ownership, source/version binding, aggregate bounds versus gameplay footprint, caching, nesting policy, and whether this preserves a sound distinction between presentation components and game objects.
 
-The provider stores the original scene bytes, a binding document, and a small assembly recipe under `library/assemblies/<assembly-id>/<version>/`. No user Downloads path enters a tracked recipe. Raw source GLBs and existing promoted components remain unchanged.
+### B. Browser-generated GLB at publish time
 
-The assembly recipe names:
+The deployed editor exports a selected visual composition and uploads/registers the artifact. Editable source is retained separately; the runtime can consume a model file.
 
-- its schema version and stable assembly ID;
-- source-scene relative path and SHA-256;
-- source-binding document relative path and SHA-256;
-- explicit anchor item ID;
-- the versioned authoring-render contract used to interpret transforms.
+Potential strengths: reuse of a single-model delivery path, no mandatory server graphics toolchain. Questions: supported materials/effects, export memory and main-thread work, data duplication, untrusted binary validation, upload/storage quotas, reproducibility, and whether the generated file should be an authority or only a derived artifact.
 
-The binding document maps each referenced semantic key to the exact primary GLB path/hash and ordered companion paths/hashes used by the authoring view. It also records the provider revision and consumer/render-contract identity used to establish those bindings.
+### C. Server-generated GLB or other optimized artifact
 
-This matters because the current scene export contains semantic refs, not exact variant IDs or content hashes. The importer must not silently resolve today's mutable family default and assume it was what the author saw. The first scene receives an explicit binding receipt checked against the actual World Building source/served assets. Future richer exports may supply that receipt themselves; the existing scene envelope is not silently redefined.
+The deployed editor publishes source data. A server-side build step derives the render artifact from trusted asset inputs, with explicit failure/status handling.
 
-Paths must be portable and confined to reviewed provider inputs. Hash drift, missing components, unknown refs, invalid identities/transforms, cycles, incompatible render-contract versions, or unsupported animated/skinned sources fail before canonical mutation. A role, source, or scale is never guessed from a display name.
+Potential strengths: controlled toolchain and resource validation, possible optimization, consistent generation. Questions: latency, resource isolation, retries/idempotence, storage and invalidation, asset access, and whether a bake is necessary for the first supported workload. A bounded build step does not imply a new generalized job framework or a Blender-specific domain model.
 
-## Coordinate and anchor contract
+### D. Multiple props per hex with authoring groups
 
-World Building currently renders each primary variant with:
+The engine represents multiple placements in a cell; authoring groups can be instantiated as multiple objects rather than one compound appearance.
 
-1. its loaded GLB node transforms;
-2. a primary-mesh bounds-based floor/center correction;
-3. the shared `SYNTY_SCALE = 0.75`;
-4. its authored positive-Y yaw and continuous scene position;
-5. the shared dungeon surface lift, which is not stored in scene Y.
+Potential strengths: removal of an artificial exclusivity rule, independently addressable world objects where needed. Questions: actual core/index support, movement/LOS aggregation, placement offsets/heights, instance identity, targeting, snapshot/projection behavior, and whether visual-only decorations would acquire unnecessary gameplay identity. Removing one validation check is not proof this option is complete.
 
-Companions receive the primary's same correction, scale, position, and yaw. They do not calculate a separate centering correction. Both candle placements therefore need the same complete bound candle visual, including its companion GLB.
+### E. Separate semantic source from derived representations
 
-For this first floor-standing source class, the selected anchor must be a grounded prop at authored Y zero. The assembly root uses that item's authored position. Every child's authored yaw remains baked into the composition; the exporter does not guess a new forward direction or recenter the complete assembly around its combined bounds.
+An authoring composition can produce gameplay declarations and visual representations through explicit independent contracts. A renderer may use source instances, a compiled GLB, batching, or another supported artifact without redefining the saved source.
 
-Let `q` be a source GLB point after that GLB's own node transforms, `a_i` the primary's raw-unit bounds correction, `p_i` the authored item position, `p_a` the chosen anchor position, `R_i` its Three.js-positive-Y authored rotation, and `S = 0.75`. The exported point, before the game's shared scale, is:
+This is a combination to evaluate, not a mandate to build every option or an abstract scene engine. Its value must be demonstrated by real current consumers and clear boundaries, not hypothetical future features.
 
-```text
-q_out = (p_i - p_a) / S + R_i * (q + a_i)
-```
+## Decision criteria
 
-The same formula applies to a companion using its primary's `a_i`. At a runtime placement origin, shared `PropModel` applies `S` and the dungeon surface lift once. Thus the assembled runtime geometry equals the source arrangement translated to the selected anchor, with no specimen-specific consumer repair.
+Evaluate each candidate against:
 
-The exported file has identity runtime node transforms where required by the provider's static-output convention and preserves named component provenance where practical. Blender import/export axis conversion is an implementation detail verified against independently decoded glTF vertices and Three.js expectations, not a second authoring coordinate system.
+- deployed author usability and complete save/publish/use lifecycle;
+- coherent domain ownership and authoritative engine behavior;
+- preservation of source editing, independent copies, and existing dungeon/run meaning;
+- source and published identity/version binding without accidental mutation;
+- ability to change rendering/packaging without changing gameplay semantics;
+- concrete implementation and migration cost, including coupled invariants;
+- observable loading/frame/memory cost, not file-count assumptions;
+- clear failure, authorization, validation, and resource-limit behavior;
+- testability and a bounded first implementation that earns its extensibility.
 
-The full-assembly AABB center need not equal the placement anchor. Assembly validation must prove the chosen anchor and expected bounds rather than forcing the existing single-source centering rule onto the finished composition. The existing v1 normalizer's centering/grounding gates remain unchanged.
+Current editor safety caps are not hardware or engine performance limits. Measurements must state scene contents, resource sharing, device/browser, camera/visibility, cold versus warm cache, and what was actually measured. Counts of meshes/primitives/textures are not measured FPS.
 
-## Extension to the existing promotion lifecycle
+## Evidence gathering and next decision gate
 
-Introduce an explicit composed-source branch in a version-2 provider batch recipe. Existing schema-v1 raw-pack recipes remain accepted and byte-stable; they are not rewritten.
+The read-only investigation covers three independent evidence seams:
 
-A version-2 composed entry uses the same exact/family ref, display, role, themes, and explicit movement/LoS fields as the existing catalog path. Its source identifies `kind: composed-scene` and the private assembly recipe path/hash instead of claiming `packSlug`/FBX provenance. It has no freely editable second calibration transform: the bound composition and anchor are the visual authority.
+1. toolkit placement validation, core spatial storage, blocking/sight, identity and projection;
+2. API/proto deployed content storage, authorization, reference and snapshot lifecycles;
+3. web/shared-renderer and asset structure, GLB/export support, resource counts and meaningful benchmark candidates.
 
-`stage` resolves and verifies the complete recipe dependency closure, builds the composed GLB through headless Blender, validates the static output against the assembly coordinate contract, and generates the existing combined prop manifest, compact `synty-props-web.json`, mesh statistics, and complete inventory. It mutates no canonical runtime files.
+Reports must bind findings to source revisions, separate current behavior from unknowns, and identify discriminating tests. The comparison will be updated from those findings before recommending an implementation. Kirk reviews that recommendation; only then is an implementation plan added.
 
-Reuse generic finite-geometry, material/texture, path/hash, output-budget reporting, and static-output validation from the existing provider tooling. Keep the source-specific checks separate: a raw-pack source is normalized by its calibration recipe; a composed source is baked by the equation above. Do not introduce a plugin registry or generalized processing framework for two cases.
-
-`validate` repeats the exact source/output binding and metadata checks. `apply` remains an explicitly authorized, whole-batch atomic operation using the existing provider mechanism. `check` derives expected output metadata from both supported recipe versions and detects drift. Source or output changes after review invalidate that review; no stale stage can be applied.
-
-The new source kind is limited to the proven static, grounded visual-assembly case. It is not permission to accept animation, physics, mounts, arbitrary runtime companion behavior, or unknown glTF extensions. Unsupported sources fail explicitly.
-
-## Gameplay and consumer contract
-
-The composed prop keeps the existing skeleton-table's explicit movement/LoS behavior for the first specimen: movement blocked, sight not blocked. Its existing role/footprint metadata is recorded explicitly and checked against the current provider, never inferred from new decorative bounds. One gameplay placeable does not make every visual vertex a separate occupied cell.
-
-The output's exact ref maps to one published GLB through the existing generated catalog path owned by web#936. Family aliases resolve only their reviewed default and do not create duplicate palette tiles. The new exact ref is what new Builder placements serialize. Unsupported exact refs do not substitute another visual.
-
-Consumer integration waits for that shared generated-catalog seam instead of temporarily adding a second hand-maintained resolver. No toolkit/API/proto change is expected for the opaque prop ref, but the real round trip must prove this; discovering a parser/contract limit is a stop-and-escalate condition, not permission for a client workaround.
-
-The source recipe stays editable in the asset builder; a published runtime prop is one object in the dungeon builder. Editing the source, renaming a local arrangement, or deleting a library entry cannot mutate published snapshots or already-stamped copies.
-
-## Verification and delivery gates
-
-1. Preserve and hash the exact user scene. Bind the skeleton-table, books, candles, and candle companions to actual source bytes.
-2. Test malformed/unsupported input, traversal/hash drift, repeated component instances, companions, nonzero yaw, non-origin anchors, and failure before canonical mutation. Use real source-independent synthetic glTF/Blender cases, not only arithmetic round trips.
-3. Compare decoded exported geometry with the source-render equation, including the shared scale and anchor. Verify finite geometry, expected static transforms, materials/textures, bounds, and the original assets remaining byte-identical.
-4. Render the source arrangement and single-GLB candidate through the shared web prop rendering path. Kirk compares the candidate with his composition before canonical provider apply/promotion.
-5. Exercise stage purity, v1 compatibility, v2 composition, metadata generation, exact-ref identity, atomic apply/rollback, and `check` drift detection. Regenerate the existing reports; do not hand-edit generated metadata.
-6. After approved provider publication, consume the exact merged provider revision through the existing web synchronization/generation path. No licensed GLB or screenshot source enters the public web repository.
-7. In the actual Dungeon Builder, select the new prop, place/facing/offset it as one object, save/reopen, Save & Play, and verify the exact ref/artifact and composition in the game. This is the closing proof, not the earlier concept screenshot or a successful export command.
-
-The canonical design PR stays open through implementation. After this design is approved, add `plan.md` to the same PR and file only the earned provider/source-extension and consumer-integration slices. Provider publishes before the consumer pins its merged revision. Follow the adjacent provider workflow's inline/bounded execution guardrail when changing its shared promotion/consumer seam; do not delegate into or commandeer its active work.
-
-## Separate small UI follow-up
-
-World Building library **Rename** and **Delete from library** belong to web#935, not this provider contract. Delete requires an explicit confirmation naming the saved arrangement and must preserve stamped copies and published assets. The user's existing local scene/library must not be cleared as part of testing or migration.
-
-## Not in this slice
-
-- a full environment/terrain/wall editor or waiting for additional source packs;
-- relaxing one-prop-per-cell gameplay occupancy;
-- individually targetable, lootable, destructible, or simulated component items;
-- linked-template propagation or mutable published snapshot identities;
-- arbitrary animation, skinning, mounting, runtime physics, or full XYZ tilt authoring;
-- a hosted asset service or automatic publication from browser local storage;
-- a second asset catalog or consumer-specific scale/pivot repairs.
+No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.
