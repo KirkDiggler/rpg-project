@@ -1,82 +1,62 @@
-# Loot gains currency — a body can hold gold, same verb, one new arm
+# Loot gains currency (and items) — monster gets the other half of a split character already has
 
-**Parent:** rpg-project#386 · **Initiative:** rpg-project#310 (buy-only vendor initiative — this closes the "loot containers" line it
-named and explicitly deferred). **Origin:** rpg-project#376.
+**Parent:** rpg-project#386 · **Initiative:** rpg-project#310 · **Origin:** rpg-project#376
+
+> **NOT FINAL.** This design changed shape twice in one conversation and is written up as a
+> snapshot of current thinking, not a settled decision. Anything below can still move.
 
 ## 1. What exists today, verified directly
 
 `encounter.Loot` moves everything a downed member holds to the looter via one dispatch routine,
-`transferHoldings` (`encounter/loot.go:196`):
+`transferHoldings` (`encounter/loot.go:196`) — today two kinds, intel and a takeable prop
+reference. **Zero currency or item-inventory concept anywhere in `encounter/loot.go`,
+`session/loot.go`, or `monster.Data`** (all verified directly, grepped).
 
-```go
-for _, item := range e.holdings.holdingsOf(from) {
-    switch {
-    case item.record != "":  // intel
-        ...
-    case item.prop != "":    // a holdable prop
-        ...
-    }
-}
-```
+**The pattern this should follow already exists for players, just not for monsters.** A player
+character already keeps two completely separate constructs: real `Inventory`/`Wallet`
+(`character.Data`, session-persisted, catalog-backed, sellable) and, entirely separately,
+**holdings/intel** (encounter-internal — a player who searches or is told about a door holds that
+knowledge through the same `holdings`/`intel` system a monster's knowledge lives in). Monsters
+today only have the second half (they can hold and be looted for intel) — they have no
+`Inventory`/`Wallet` at all. This design is filling in the missing half of a split that already
+works for players, not inventing a new one.
 
-Two holding kinds exist today (intel, prop); currency would be a third arm in this same switch,
-not a new verb, not a new dispatch mechanism — the design already anticipated this ("today that is
-intel only," per the original acting-on-ghosts design). **Zero currency anywhere in either
-`encounter/loot.go` or `session/loot.go`** (verified) — this is genuinely new, same as `Money`
-itself was.
+## 2. Current shape (unsettled) — direct transfer, not a new holding kind
 
-**`monster.Data` has no currency field at all** (verified, grepped) — how much gold a monster
-carries doesn't exist as data anywhere yet.
+Earlier drafts of this doc modeled currency as a third arm in `transferHoldings` (encounter-layer
+plumbing, seeded at monster placement). **Current thinking has moved away from that**, in favor of:
 
-## 2. The real shape — two layers, same split as `Interact`/`Trade`
-
-This isn't "add one field, done" — `encounter` and `session` split responsibility here exactly
-the way they already do for `Interact`: `encounter` answers reach/identity and moves
-encounter-internal facts; `session` resolves content that touches session-persisted state
-(`character.Data`) and saves it.
-
-**`encounter` layer:**
-- The holding struct gains a currency field (alongside the existing `record`/`prop` fields) —
-  a monster's holdings, seeded at placement/spawn from `monster.Data`'s new gold value.
-- `transferHoldings` gains the third switch arm: move the currency holding from body to looter,
-  same as intel/prop already do, within encounter's own holdings tracking.
-- `encounter.Loot`'s response needs to report *that* currency moved (not necessarily how much, to
-  keep design P3's "the answer never leaks the question" law — a body with gold and a body
-  without produce visually different beats only insofar as the looter's own wallet changed, not
-  via anything richer in the shared `looted` beat).
-
-**`session` layer — the genuinely new part:**
-- `session.Loot` today (`session/loot.go`, 122 lines) is a thin seam wrapper — call
-  `encounter.Loot`, return. It has no reason to touch `character.Data` today because intel and
-  props are encounter-internal facts.
-- Currency is the **first holding kind that needs a session-layer follow-up**: after
-  `encounter.Loot` confirms a currency transfer, `session.Loot` must fetch the looter's
-  `character.Data`, `Wallet.Add` the amount, and save the character record — the same
-  `saveCharacterRecord` helper `Trade`/`write.go` already share, not a new persistence path.
-- This makes `session.Loot` grow the same shape `session.Trade`/`session.Interact` already have
-  (encounter answers the world question, session resolves and persists the content question) —
-  it just hasn't needed to before now.
+- `monster.Data` gains real `Inventory []InventoryItemData` and `Wallet currency.Money`, the exact
+  same fields and shapes `character.Data` already has.
+- `session.Loot` does two things in one call: calls `encounter.Loot` for holdings (intel/props,
+  completely unchanged), and — separately — checks the target's `monster.Data` for
+  `Inventory`/`Wallet` and transfers those directly using the same primitives `Trade` already
+  needs: `AddInventoryItem` per item, `Wallet.Add` for gold, saved the same way
+  `saveCharacterRecord` already saves a player's sheet.
+- This also resolves item-loot (a captain carrying a real, later-sellable sword) for free, using
+  the same mechanism as gold — no need to teach the `prop`/holdings model to understand equipment
+  identity, which was the awkward part of the earlier draft.
+- The P3 privacy law (every `looted` beat looks identical regardless of contents) still holds —
+  that law is about the beat's shape, which `session.Loot` controls regardless of which internal
+  mechanism did the transferring underneath it.
 
 ## 3. What's deliberately not decided here — content, not mechanism
 
-**How much gold a given monster carries is a monster-authoring/content decision**, not a mechanism
-decision, same distinction as "17 backgrounds' worth of gold values" being separate from the
-wiring that reads them. This design adds the *field* (`monster.Data`'s new gold value) and the
-*mechanism* (encounter holding + session credit) — it does not decide what a skeleton vs. a bandit
-carries. That's balance/content work for whoever authors monsters, entirely independent of this.
+How much gold or which items a given monster carries is authoring/content work, entirely separate
+from the mechanism above, same distinction as "17 backgrounds' worth of gold values" being
+separate from the wiring that reads them.
 
 ## 4. Explicitly out of scope
 
-- **Loot of items** (a body's equipped weapon becoming takeable) — a `prop`-kind holding already
-  covers a body carrying a takeable object; whether combat loot commonly includes weapons/armor is
-  a monster-authoring question, same as gold amounts, not this design's concern.
-- **Any pricing/value question** — gold looted is just `currency.Money`, added directly via
-  `Wallet.Add`. No `PriceOf` involved; nothing is being bought or sold here.
+- **Any pricing/value question** on the loot side — gold is credited directly via `Wallet.Add`, no
+  `PriceOf` involved; items are added directly via `AddInventoryItem`. Nothing is being bought or
+  sold here (selling a looted item later is just `Sell`, unrelated to this design).
+- Vaults, chests, and other non-monster lootable containers — not addressed by this design at all;
+  whether they'd reuse `monster.Data`'s new shape, need their own, or something else entirely is a
+  separate question this doc doesn't answer.
 
-## 5. Done when
+## 5. Done when (also unsettled — revisit once §2 firms up)
 
-Killing a monster authored with a gold holding and looting its body credits the looter's `Wallet`
-by exactly that amount, saved durably; looting a monster authored with none changes nothing about
-the looter's wallet and produces byte-identical beats to any other empty loot (P3 preserved). A
-monster authored with BOTH intel and gold transfers both through the same call, no special
-ordering required.
+Killing a monster authored with gold and/or items, then looting its body, credits the looter's
+`Wallet` and/or adds the items to their `Inventory`, saved durably; a monster authored with
+neither changes nothing and produces byte-identical beats to any other empty loot (P3 preserved).
