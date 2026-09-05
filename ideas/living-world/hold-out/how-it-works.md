@@ -110,12 +110,13 @@ learns the fact and turns the camp no longer swings afterwards; and Exit
 removes the leaver from the roster before it drives the next monster (a
 pre-existing ordering bug on main, found by the walk).
 
-## 4. Reserve and arrival — something enters the run · *designed (step B)*
+## 4. Reserve and arrival — something enters the run · *landed (encounter/hold-out baea481d): projections byte-identical with and without the reserve; the letter at round 6; three zombies on the chief's fall; `endings[]` authorable and `convince` proven to be one of them*
 
 A placement with `arrives` is spawned at launch but held in reserve: no cell,
-no turn, in no pair, absent from every projection for every member. When its
-predicate holds, it is placed and the same verb's sight refresh treats it like
-anyone walking into view.
+no turn, in no pair, in nobody's story, absent from every projection for every
+member. When its predicate holds it is placed where it was drawn, or the
+nearest free cell of that room, everyone hears `arrived`, and the arrival's own
+sight refresh treats it like anyone walking into view.
 
 ```mermaid
 stateDiagram-v2

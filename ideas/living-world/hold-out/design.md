@@ -299,6 +299,20 @@ door leaves a shadow on the other player's map that blocks movement planning
 (client-side — the server refused no Move for occupancy; rpg-dnd5e-web issue
 filed from the walk). Step B starts.
 
+**Step B as built (encounter baea481d; choices listed for veto):** occupied
+means anything standing on the cell (member or prop) — nothing arrives under
+anyone's feet; a region with no free cell fails the verb loudly rather than
+deferring the arrival (shelf: deferred arrival); arrivals run before that
+site's endings so `ended` stays the last word; reserved members live in a
+separate reserve, not the roster (Holds seeded at arrival); a reserved PROP
+must have an id; `{fact}` on arrives/endings follows R8 (an unrevealed fact
+is allowed); `{round: 1}` arrives at formation (RoundStarted fires for round
+1). Findings: a fight FORMED (not joined) by an arrival during a driven
+monster turn is not driven afterwards (re-entrancy guard; reachable only when
+the old fight dissolved in that same turn and an arrival forms a new one) —
+follow-up issue; the compiled golden shows props: [] for the camp because the
+letter is in reserve at frame one; the party seat list excludes arrival cells.
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
