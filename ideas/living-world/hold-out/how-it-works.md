@@ -17,12 +17,12 @@ stops counting kinds and asks the graph one question.
 ```mermaid
 flowchart LR
   subgraph file[the file]
-    F["factions: goblins (mind: chief)"]
-    D["dispositions: goblins × party = hostile until {fact}"]
-    P["place: chief, scout → faction goblins"]
+    F["factions: raiders (mind: chief)"]
+    D["dispositions: raiders × party = hostile until {fact}"]
+    P["place: chief, scout → faction raiders"]
   end
   subgraph world[the run's world · graph]
-    party((party)) -- "hostile-to" --> gob((goblins))
+    party((party)) -- "hostile-to" --> gob((raiders))
     gob -- "hostile-to" --> party
     chief[chief] -- "belongs-to" --> gob
     scout[scout] -- "belongs-to" --> gob
@@ -49,7 +49,7 @@ sequenceDiagram
   participant L as letter (prop, holds wisemans-letter)
   participant H as holder (party)
   participant W as the run's world · journal
-  participant C as chief (mind of goblins)
+  participant C as chief (mind of raiders)
   H->>L: Hold
   L-->>W: known:fact:saved-wiseman · audience {holder}
   H->>C: walks into the hut (presence, on the sweep every verb runs)
@@ -72,12 +72,12 @@ between those two factions and the hold-out ending fires.
 
 ```mermaid
 flowchart TD
-  K["known:fact:saved-wiseman · audience {chief}"] --> R["reducer: until {fact: saved-wiseman} holds for goblins"]
-  R --> A["projection AdoptStance: goblins × party → neutral (both directions)"]
+  K["known:fact:saved-wiseman · audience {chief}"] --> R["reducer: until {fact: saved-wiseman} holds for raiders"]
+  R --> A["projection AdoptStance: raiders × party → neutral (both directions)"]
   A --> F["formation folds: no hostile-to edge"]
-  F --> X["dissolveBubble(ByStance) for the goblins–party fight"]
+  F --> X["dissolveBubble(ByStance) for the raiders–party fight"]
   F --> E["TriggerStance: hold-out ended"]
-  X --> B["beats: stance {goblins, party, neutral} · ended"]
+  X --> B["beats: stance {raiders, party, neutral} · ended"]
 ```
 
 Nothing is stored as a stance. Save after the flip and load again: the facts

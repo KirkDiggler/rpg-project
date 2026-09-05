@@ -26,11 +26,11 @@ one mechanism at a time as each lands: sides · knowledge · the flip · reserve
 
 `envs/local/hold-out.env`: web **3010**, api **8090**, project `rpg-local--hold-out`.
 Refs point at the pushed branch heads below; the api image is built from the
-api worktree; content registry seeds `reference-goblin-camp` from the shipped
-copy (verify with `docker exec … grep -c goblins /content/reference-goblin-camp.yaml`
+api worktree; content registry seeds `reference-raider-camp` from the shipped
+copy (verify with `docker exec … grep -c raiders /content/reference-raider-camp.yaml`
 before handing Kirk the walk).
 
-## The fixture — `reference-goblin-camp.yaml`
+## The fixture — `reference-raider-camp.yaml`
 
 Design §1's file on a small camp: **gate** region (the front gate exit at the
 letter's cell), **yard** (the scout), **hut** (the chief). Party start at the
@@ -114,7 +114,7 @@ end to end through the gRPC surface.
   beside Scenarios and Intel; the predicate editor (one component); `faction`
   on the placement inspector; `reveals: door | fact` on the intel form;
   `arrives` on the inspector (step B); YAML round-trip byte-stable; every §2
-  refusal inline at the field it names; the goblin-camp fixture in the
+  refusal inline at the field it names; the raider-camp fixture in the
   Concepts Lab; screenshots in `docs/evidence/hold-out/`.
 - **3b play (after protos SHA + api):** roster coloured by faction; `stance`
   and `arrived` beats narrated; reserved placements never drawn; the scenario
@@ -124,7 +124,7 @@ end to end through the gRPC surface.
 
 - **Walk 1 (step A):** author the camp through the forms (or load the
   fixture); the letter lies at the gate; a fight forms on sight; Hold the
-  letter, carry it into the hut mid-fight; the goblins stop; the hold-out
+  letter, carry it into the hut mid-fight; the raiders stop; the hold-out
   ends. Then: kill the chief before delivering; confirm the camp cannot turn.
 - **Walk 2 (step B):** the letter arrives at round 6 and not before; kill the
   chief; reinforcements pour through the gate; an ending authored in the file

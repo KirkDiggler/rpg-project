@@ -16,7 +16,7 @@ Three tools for the designer, proved by one scenario:
    two fields.
 3. **Arrivals** — a placement that enters the run when its predicate holds.
 
-The scenario: a goblin camp is hostile to the party until its chief comes to
+The scenario: a raider camp is hostile to the party until its chief comes to
 know the party saved the Wiseman. A messenger's letter carries that fact; carry
 it to the chief and the camp stops attacking. Kill the chief instead and
 reinforcements arrive at the gate.
@@ -25,29 +25,29 @@ reinforcements arrive at the gate.
 
 ```yaml
 factions:
-  - { id: goblins, mind: chief }
+  - { id: raiders, mind: chief }
 
 dispositions:
-  - { between: [goblins, party], stance: hostile, until: { fact: saved-wiseman } }
+  - { between: [raiders, party], stance: hostile, until: { fact: saved-wiseman } }
 
 intel:
   - { id: wisemans-letter, reveals: { fact: saved-wiseman } }
 
 place:
-  - { id: chief,  ref: "dnd5e:monsters:goblin", at: [12,4], faction: goblins }   # no goblin-boss stat block yet (shelf)
-  - { id: scout,  ref: "dnd5e:monsters:goblin",      at: [4,2],  faction: goblins }
+  - { id: chief,  ref: "dnd5e:monsters:skeleton-captain", at: [12,4], faction: raiders }
+  - { id: scout,  ref: "dnd5e:monsters:skeleton",         at: [4,2],  faction: raiders }
   - { id: letter, ref: "dnd5e:props:scroll", at: [1,3], holdable: true,
       blocks_movement: false, blocks_los: false,
       holds: [wisemans-letter], arrives: { round: 6 } }
-  - { id: reinforcement-1, ref: "dnd5e:monsters:goblin", at: [1,4], faction: goblins, arrives: { down: chief } }
-  - { id: reinforcement-2, ref: "dnd5e:monsters:goblin", at: [2,4], faction: goblins, arrives: { down: chief } }
-  - { id: reinforcement-3, ref: "dnd5e:monsters:goblin", at: [1,5], faction: goblins, arrives: { down: chief } }
+  - { id: reinforcement-1, ref: "dnd5e:monsters:zombie", at: [1,4], faction: raiders, arrives: { down: chief } }
+  - { id: reinforcement-2, ref: "dnd5e:monsters:zombie", at: [2,4], faction: raiders, arrives: { down: chief } }
+  - { id: reinforcement-3, ref: "dnd5e:monsters:zombie", at: [1,5], faction: raiders, arrives: { down: chief } }
 
 exits:
   - { id: front-gate, at: [1,3] }
 
 scenarios:
-  hold-out: { convince: goblins }
+  hold-out: { convince: raiders }
 ```
 
 ## 2. Vocabulary (dungeonspec v2, additive)
@@ -81,7 +81,7 @@ consumers; `round`, `fact`, and `stance` are three new Trigger types.
 The grammar is a closed set that grows one form per use case, sealed the way
 `Trigger` is. `endings[]` in the file (step B, R10) takes the same grammar:
 `{ id, when: <predicate> }`, so `scenarios.hold-out.convince` is sugar for
-`endings: [{ id: turned, when: { stance: { between: [goblins, party], is: neutral } } }]`.
+`endings: [{ id: turned, when: { stance: { between: [raiders, party], is: neutral } } }]`.
 
 **Defaults that keep today's dungeons unchanged:** every unauthored monster is
 in `monsters`; `party` and `monsters` are mutually hostile; every faction is
@@ -241,7 +241,7 @@ and answer from the run.
 | A5 | the letter arrives at round 6 and not before | scene |
 | A6 | reserved placements: projection byte-identical to a run without them, for every member, until arrival | scene (the yardstick) |
 | A7 | every pre-existing encounter, resolution, and session scene passes unchanged under the default factions | the rung-1 bar |
-| A8 | after a flip, a goblin is no longer an enemy for Sneak Attack; before it, unchanged | scene |
+| A8 | after a flip, a skeleton is no longer an enemy for Sneak Attack; before it, unchanged | scene |
 | A9 | save after the flip, load: still neutral; no stance stored | scene |
 | A10 | the whole file authored through forms; YAML round-trip byte-stable; refusals inline | screenshot + test |
 | A11 | Kirk walks both branches on one stack before any PR opens | the walk |
@@ -268,7 +268,7 @@ and answer from the run.
   instead of a placement. Local members learn by presence or by witnessing
   the handover (the Witness capability already names bystanders); the mind
   learns N turns later; the stance stays faction-level and flips when the
-  mind knows. A goblin who knows before the edge flips hesitates only if
+  mind knows. A skeleton who knows before the edge flips hesitates only if
   behavior reads per-member knowledge (Billy's record). Step A is latency 0
   by presence in the mind's region.
 - **Take, the pocket verb** (Kirk 2026-09-05: "take is like holding but goes
@@ -309,9 +309,11 @@ and answer from the run.
   run's world yet; `{ stance }` needs an edge-keyed projection. Under the law
   these are the next two readers to move; until then dispositions turn on
   facts only and the refusal says so.
-- **A goblin-boss stat block.** The catalog has only `goblin`; the chief is a
-  plain goblin until the monster content lane adds one (content, not tool).
-- **`count` on a placement** ("3 goblins" as one line): a general placement
+- **More monsters.** The camp is skeletons, zombies, and the skeleton captain
+  because those are the stat blocks and models that exist (Kirk 2026-09-05:
+  "make do with skeles, zombies and the skele captain for the leader"; he is
+  bringing in more monsters in his own lane). A goblin camp is one ref swap.
+- **`count` on a placement** ("3 raiders" as one line): a general placement
   feature, not this slice's tool; three lines until a second author asks.
 - hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
   give) · betrayal: attacking a neutral faction writes a fact that flips it
