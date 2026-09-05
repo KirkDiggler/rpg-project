@@ -53,7 +53,7 @@ scenarios:
 | field | type | rules |
 |---|---|---|
 | `factions[].id` | id | unique; `party` MUST NOT be declared (reserved for the players' side) |
-| `factions[].mind` | placement id | MUST name a monster placement whose `faction` is this faction |
+| `factions[].mind` | placement id | the hub word spreads through: the faction knows what its mind knows. MUST name a monster placement in this faction. Optional: a faction of one has its member as mind; a faction of many with an `until: { fact }` and no mind is refused ("name a mind, or the faction cannot learn") |
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
 | `dispositions[].between` | `[faction, faction]` | both MUST exist (`party` allowed); unordered; one disposition per pair |
 | `dispositions[].stance` | `hostile \| neutral \| allied` | closed set |
@@ -62,7 +62,11 @@ scenarios:
 | `place[].arrives` | predicate | monsters and props; the placement is in reserve until it holds; `at` MUST be floor |
 | `scenarios.hold-out.convince` | `entity_ref(faction)` | the scenario's only field |
 
-**Predicate grammar** — exactly one key:
+**Predicate grammar** — exactly one key. A predicate IS an encounter `Trigger`
+(`encounter/field.go:793`, the sealed set endings already use: ReachedPosition,
+MemberDown, External, ExitedHolding). The designer's spelling compiles to the
+engine's type; `until` and `arrives` are the Trigger set's second and third
+consumers; `round`, `fact`, and `stance` are three new Trigger types.
 
 | form | holds when | grain |
 |---|---|---|
@@ -70,6 +74,12 @@ scenarios:
 | `{ down: <placement id> }` | that member is Down | truth (reads Standing) |
 | `{ fact: <id> }` on `until` | the faction's `mind` knows the fact | audience (the mind's) |
 | `{ fact: <id> }` on `arrives` | the fact exists in the run's journal, learned by anyone | truth |
+| `{ stance: [a, b], is: hostile \| neutral \| allied }` | the pair's stance folds to that value | truth |
+
+The grammar is a closed set that grows one form per use case, sealed the way
+`Trigger` is. `endings[]` in the file (step B, R10) takes the same grammar:
+`{ id, when: <predicate> }`, so `scenarios.hold-out.convince` is sugar for
+`endings: [{ id: turned, when: { stance: [goblins, party], is: neutral } }]`.
 
 **Defaults that keep today's dungeons unchanged:** every unauthored monster is
 in `monsters`; `party` and `monsters` are mutually hostile; every faction is
@@ -120,10 +130,13 @@ hold-out nobody can win".
    it is placed at `at` — nearest free floor cell in the same region if `at`
    is occupied — with an `arrived:<id>@<cell>` fact; the same verb's sight
    refresh then forms or joins a fight as for any member walking into view.
-8. Predicates are evaluated in one place, at the end of every verb before the
-   sight refresh, and at `RoundStarted`. `{ round }` outside any fight never
-   holds. `{ down }` reads Standing; Standing does not move into the journal in
-   this slice.
+8. Predicates are Triggers and are evaluated where endings already are: at
+   the one place each event is noticed (`noticeDown` for `{ down }`,
+   `RoundStarted` for `{ round }`, the fact append for `{ fact }`, the fold
+   after a flip for `{ stance }`), before that verb's sight refresh. `{ round }`
+   outside any fight never holds. Standing does not move into the journal in
+   this slice. Liveness refusals extend to the new forms (an `arrives` or
+   `until` that can never hold is refused like an unreachable ending).
 9. A faction whose `mind` is Down can no longer learn: `until: { fact }` can
    never hold for it. This is a consequence, not a loss. Mind succession is a
    shelf.
@@ -184,13 +197,14 @@ and answer from the run.
 |---|---|---|
 | R1 | a flip dissolves a formed fight between the two factions | yes, `ByStance()` |
 | R2 | the stance after `until` holds | `neutral` ("not hostile"); allied is authorable only as a static stance |
-| R3 | presence grain | the mind's region, the yardstick Search uses |
+| R3 | presence grain and the hub | the mind's region, the yardstick Search uses; the faction knows what its mind knows (Kirk 2026-09-05: "at a faction level it makes sense") |
 | R4 | `party` and `monsters` | reserved; unauthored monsters are `monsters` |
 | R5 | predicate grammar and grains | `round \| down \| fact`; `fact` = mind's knowledge on `until`, truth on `arrives` |
 | R6 | reserved placements | spawned at launch, absent from every projection, placed on the first verb after the predicate holds |
 | R7 | the dead mind | the flip is gone; consequence not loss; succession shelved |
 | R8 | `until` naming an unrevealed fact | dungeon allows, scenario refuses |
 | R9 | which clock `{ round }` counts | any fight in the run; outside a fight never; the world clock stays postponed |
+| R10 | `endings[]` authorable in the file with the predicate grammar | step B; the hold-out's `convince` becomes sugar; a scenario package with nothing left to do is the north star's own test |
 
 ## 9. Acceptance
 
@@ -214,15 +228,41 @@ and answer from the run.
   §4; §5 without `arrived`; §6 without `ARRIVED`; §7 without the arrives
   field. The letter lies at the gate; no reinforcements. Walkable: hold the
   letter, carry it to the chief mid-fight, the camp turns.
-- **Step B — arrivals.** The predicate grammar in full, `arrives` on props and
-  monsters, reserve, `arrived`, the predicate editor. Walkable: the letter at
+- **Step B — arrivals and authored endings.** The predicate grammar in full,
+  `arrives` on props and monsters, reserve, `arrived`, `endings[]` (R10), the
+  predicate editor. Walkable: the letter at
   round 6; kill the chief, reinforcements.
 - Both steps on branches, one local stack, Kirk's walk, then PRs bottom-up:
   dungeonspec + encounter → resolution → session → protos → api → web.
 
 ## 11. Shelves (named, empty)
 
-hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
-give) · betrayal: attacking a neutral faction writes a fact that flips it back
-· mind succession · directed dispositions · allied-after-flip · world-clock
-arrivals · behavior reading stance (Billy's record) · Standing as journal facts.
+- **Word spreads** (Kirk 2026-09-05: "the local goblins get the message and
+  the faction mind get it 1 turn later"). Knowledge propagates along
+  membership to the mind with a latency: `factions[].spread: { turns: N }`.
+  Mechanism: a scheduled fact — the arrival primitive applied to a fact
+  instead of a placement. Local members learn by presence or by witnessing
+  the handover (the Witness capability already names bystanders); the mind
+  learns N turns later; the stance stays faction-level and flips when the
+  mind knows. A goblin who knows before the edge flips hesitates only if
+  behavior reads per-member knowledge (Billy's record). Step A is latency 0
+  by presence in the mind's region.
+- **Take it back to town** (Kirk: "we have a free take verb… take could be
+  taken back to town"). Hold is the take verb; a holding that leaves the run
+  with its carrier becomes a campaign-grain fact in the journal (integration
+  rung 3, the campaign journal; town = the thin lobby). Intel carried out is
+  the first customer.
+- **Trade for the next quest** (Kirk: "npcs have a trade verb and I can see
+  trading for a next quest"). fadedpez's Trade appends a fact; quest
+  availability is a predicate over journal facts (brainstorm §10), so a trade
+  that unlocks a quest is the same grammar at campaign grain. Nothing to build
+  until the campaign journal exists.
+- **DispositionPolicy is the singleton case.** fadedpez's per-NPC default
+  stance (`npc/policy.go:38`) is a faction of one with one edge toward
+  `party`; the graph can answer it when his use case pulls it. Seam note for
+  his record, not a change here.
+- hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
+  give) · betrayal: attacking a neutral faction writes a fact that flips it
+  back · mind succession · directed dispositions · allied-after-flip ·
+  world-clock arrivals · behavior reading stance (Billy's record) · Standing
+  as journal facts.

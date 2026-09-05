@@ -200,3 +200,38 @@ memory moves when Billy's use case pulls it, on his record.
 - The only per-member row on the wire is the roster's `PublicMemberInfo`
   (closed `MemberKind` enum, no faction, side, or stance anywhere).
 - `sweepOccupancy` inside `refreshSight` runs on every verb and at Load.
+
+## Round 3 (2026-09-05) — reuse, and the hub
+
+**Not new, three times.** "Disposition" was Kirk's own word in the 2026-08-30
+dream sessions (rescued NPCs with dice-rolled dispositions; the hostage camp
+rolled them); fadedpez's NPC module has `DispositionPolicy` (per NPC, "not
+pairwise hostility", one value: neutral); and world/graph already has
+`FactionOf` — the far end of the membership edge — used by its reducers and
+projections. Faction is a kernel primitive being surfaced, not invented.
+
+**The predicate is the Trigger set.** The encounter's endings are already
+predicates (`field.go:793`: ReachedPosition, MemberDown, External,
+ExitedHolding — sealed, liveness-validated, evaluated where each event is
+noticed). `{ down: chief }` is `TriggerMemberDown` with a designer's spelling.
+So `until` and `arrives` are the set's second and third consumers, `round` /
+`fact` / `stance` are new Trigger types, and `endings[]` becomes authorable
+with the same grammar — at which point the hold-out scenario's one field is
+sugar and the package has nothing left to do. Kirk's principle, in his words:
+"while we are building this use case out we want reusable primitives. if we
+get that right we can make things we never thought of. so our new properties
+can be tested out against other surfaces." The surface test is now a design
+step: every primitive names a second surface from our own backlog (the design
+§0/§9), and the one that failed — `mind`, against a hostage camp where each
+captive turns alone — was resolved by Kirk keeping the hub at faction level
+("factions.mind seems like an easy way for word to spread through a given
+faction… at a faction level it makes sense") with the singleton default
+(a faction of one has its member as mind).
+
+**The break named:** "local goblins get the message and the mind gets it a
+turn later" cannot be a stance fact — the stance is a faction-pair edge, so
+the camp is hostile or it is not. It can be a KNOWLEDGE fact: members learn
+now, the mind learns N turns later (a scheduled fact — the arrival primitive
+applied to a fact), the edge flips when the mind knows. Shelved as "word
+spreads" (design §11) with take-it-back-to-town and trade-for-the-next-quest,
+both of which land on the campaign journal (integration rung 3).
