@@ -127,6 +127,13 @@ stateDiagram-v2
   placed --> [*]
 ```
 
+*Session and api landed (session/hold-out 055264d7, api/hold-out a2d2e40):* a
+reserved monster is spawned into the wings, `SpawnOutput.Reserved` says so, no
+roster or atlas shows it; the `arrived` beat crosses the wire as ARRIVED with
+the placement kind and cell; an ending written in the file is declared beside
+the scenario's at launch. End to end: the letter appears at round 6, three
+zombies arrive on the chief's fall, and the authored ending ends the run.
+
 The messenger's letter and the reinforcements are the same mechanism with
 different predicates. The predicate grammar is the encounter's existing
 Trigger set with three new members: `round`, `fact`, `stance`.
