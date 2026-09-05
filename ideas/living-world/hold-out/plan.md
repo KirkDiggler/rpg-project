@@ -48,6 +48,13 @@ Additive: `PublicMemberInfo.faction` (string); beat payloads
 `faction`. `buf lint`/`format`/`breaking` green; no hand-written tests. The
 generated SHA is the pin for api and web.
 
+## Wave 1a-0 — toolkit `world` (branch `world/pair-settle`, pushed first)
+
+The pair projection (design §3.4, R11): declared on graph.Config, validated
+at New, folded never stored, both directions, precedence pinned, per-observer.
+The encounter pins its pseudo-version; the world PR opens once the encounter
+compiles against it (consumer proof), merges as it comes → world/v0.4.0.
+
 ## Wave 1a — toolkit `rulebooks/dnd5e/encounter` (branch `encounter/hold-out`)
 
 Step A first, pushed; step B on the same branch after walk 1.
@@ -125,7 +132,7 @@ end to end through the gRPC surface.
 
 ## Then the PRs (bottom-up, one per module)
 
-toolkit encounter → toolkit resolution (on the encounter tag) → toolkit
+toolkit world → toolkit encounter (on world/v0.4.0) → toolkit resolution (on the encounter tag) → toolkit
 session (on both tags) → protos already merged → rpg-api (ONE pin) → web.
 Slice issues filed under #326 at that point; the numbers relayed to the
 builders (never let a builder search for its issue).

@@ -114,10 +114,18 @@ hold-out nobody can win".
    `holds:intel:<record>` as shipped, with the receiver as audience;
    a `fact` reveal writes `known:fact:<id>` with the receiver as audience.
    `knowsFact(member, id)` is a fold; no reader keeps a copy.
-4. The disposition flip is a declared reducer over the mind's `known:fact`
-   facts and an `AdoptStance` projection that rewrites both directions of the
-   pair's edge to neutral. Persistence stays facts-only; the stance is derived
-   on every load, never stored.
+4. The disposition flip lives in the graph, not beside it (**Kirk 2026-09-05:
+   "the graph should tell the truth"**). world v0.3.0 could not say it: every
+   reducer moves one entity and every projection rewrites one entity's own
+   edges, so a pair flipping both directions had no home. world gains a PAIR
+   projection (v0.4.0, branch `world/pair-settle`): while the flagged entity
+   carries the flag, the pair's edges settle to the target relation in both
+   directions; precedence is declared order, last wins, pinned by one test.
+   The encounter declares `Raise{On: known:fact:<id>}` + that projection for
+   each disposition with an `until`, folded as the faction's mind. `HasEdge`
+   is the whole reader; no composition fold, no stored stance. The rejected
+   branch — a composition fold over a graph that keeps saying hostile — was a
+   second mechanism answering a question the graph owns.
 5. When a flip removes hostility between two factions and a fight is formed
    between members of those factions, the encounter dissolves it with a new
    sealed cause `ByStance()`. Members of a third faction still hostile keep
@@ -207,6 +215,7 @@ and answer from the run.
 | # | ruling | proposed |
 |---|---|---|
 | R1 | a flip dissolves a formed fight between the two factions | yes, `ByStance()` |
+| R11 | where the pair flip lives | **RULED A (Kirk):** a world/graph pair projection, v0.4.0; the graph tells the truth |
 | R2 | the stance after `until` holds | `neutral` ("not hostile"); allied is authorable only as a static stance |
 | R3 | presence grain and the hub | the mind's region, the yardstick Search uses; the faction knows what its mind knows (Kirk 2026-09-05: "at a faction level it makes sense") |
 | R4 | `party` and `monsters` | reserved; unauthored monsters are `monsters` |
