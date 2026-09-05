@@ -25,8 +25,31 @@ other populated side of the same shape `Trade` was built with from the start.
 3. The vendor's payout is checked against its own `Wallet` first — see §3.
 4. The item goes into the vendor's stock — see §2. Not discarded.
 
-**Beat:** `sold` (from the actor's perspective) — not the generic `traded`, matching the
-"a verb is named by what the record will say" law already applied to `Unpack`.
+**Beat:** `sold` (from the actor's perspective). `OutcomeSold` already exists in `encounter/
+outcome.go`, built ahead of this design, with its own doc comment stating exactly why: *"'Alice
+sold her longsword' is a different statement from 'Alice traded for one,' so it gets its own kind
+rather than reusing `OutcomeTraded` with a flipped flag."*
+
+**Rename `OutcomeTraded`→`OutcomeBought` while touching this area, for consistency the current
+code doesn't quite have.** Today buy uses the generic `"traded"` and only sell got a specific
+word — an artifact of buy shipping first, before the "different statement" reasoning existed to
+apply consistently. The same reasoning that earned `sold` its own kind applies equally to buy:
+"Alice bought a longsword" is a different, truer statement than "Alice traded for one." Low cost
+to fix now (this project's own stance: pre-pre-alpha, breaking an outcome-kind string from
+tonight is not a gate) and it's already the area of code this wave touches.
+
+**`Bartered` is reserved, not built.** Barter (item-for-item) isn't in scope this wave (`Give.Items`
+stays refused when `Receive.Items` is also populated), but when it lands, it earns its own kind
+for the same reason — not because "traded" reads badly for it (it doesn't, of the three it fits
+best), but for symmetry: every real transaction shape gets an honest word, none defaults to the
+generic one. Explicitly NOT `Bartered`-for-NPC vs. some other name for player-to-player — a
+player counterparty needs a consent mechanism and is almost certainly its own verb entirely, not
+a naming variant of this one (see rpg-project#369/#370's original scoping). That verb, whenever
+designed, earns its own outcome kind from its own design — not decided here, in the abstract,
+ahead of it existing.
+
+So: three real outcome kinds once this wave and the rename land — `Bought`, `Sold`, and
+`Bartered` reserved for later. No case defaults to a bare `Traded` anymore.
 
 ## 2. Sold items become real vendor stock — this makes buyback free
 
