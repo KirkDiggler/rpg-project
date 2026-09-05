@@ -313,6 +313,15 @@ the old fight dissolved in that same turn and an arrival forms a new one) —
 follow-up issue; the compiled golden shows props: [] for the camp because the
 letter is in reserve at frame one; the party seat list excludes arrival cells.
 
+**Walk 3 (2026-09-05, stack from api a2d2e40 with the step-B camp): the
+hold-out WALKED as designed.** No letter at the gate; the fight formed; Kirk held
+six rounds; the letter arrived; the win condition fired. Finding for the
+behavior lane (toolkit issue filed, rpg-project#201): the chief got stuck
+pathing to a player it could see and never closed ("I could cheese the boss").
+Kirk's own note on the design: the intended play is to dash past the next
+door and hold out there. The kill-the-chief branch (three zombies through the
+gate) has the api's end-to-end scene A4 behind it; walk pending.
+
 ## 10. Cut
 
 - **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
