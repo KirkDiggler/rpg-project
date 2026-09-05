@@ -37,9 +37,11 @@ place:
   - { id: chief,  ref: "dnd5e:monsters:goblin-boss", at: [12,4], faction: goblins }
   - { id: scout,  ref: "dnd5e:monsters:goblin",      at: [4,2],  faction: goblins }
   - { id: letter, ref: "dnd5e:props:scroll", at: [1,3], holdable: true,
+      blocks_movement: false, blocks_los: false,
       holds: [wisemans-letter], arrives: { round: 6 } }
-  - { id: reinforcements, ref: "dnd5e:monsters:goblin", at: [1,4], count: 3,
-      faction: goblins, arrives: { down: chief } }
+  - { id: reinforcement-1, ref: "dnd5e:monsters:goblin", at: [1,4], faction: goblins, arrives: { down: chief } }
+  - { id: reinforcement-2, ref: "dnd5e:monsters:goblin", at: [2,4], faction: goblins, arrives: { down: chief } }
+  - { id: reinforcement-3, ref: "dnd5e:monsters:goblin", at: [1,5], faction: goblins, arrives: { down: chief } }
 
 exits:
   - { id: front-gate, at: [1,3] }
@@ -74,12 +76,12 @@ consumers; `round`, `fact`, and `stance` are three new Trigger types.
 | `{ down: <placement id> }` | that member is Down | truth (reads Standing) |
 | `{ fact: <id> }` on `until` | the faction's `mind` knows the fact | audience (the mind's) |
 | `{ fact: <id> }` on `arrives` | the fact exists in the run's journal, learned by anyone | truth |
-| `{ stance: [a, b], is: hostile \| neutral \| allied }` | the pair's stance folds to that value | truth |
+| `{ stance: { between: [a, b], is: hostile \| neutral \| allied } }` | the pair's stance folds to that value | truth |
 
 The grammar is a closed set that grows one form per use case, sealed the way
 `Trigger` is. `endings[]` in the file (step B, R10) takes the same grammar:
 `{ id, when: <predicate> }`, so `scenarios.hold-out.convince` is sugar for
-`endings: [{ id: turned, when: { stance: [goblins, party], is: neutral } }]`.
+`endings: [{ id: turned, when: { stance: { between: [goblins, party], is: neutral } } }]`.
 
 **Defaults that keep today's dungeons unchanged:** every unauthored monster is
 in `monsters`; `party` and `monsters` are mutually hostile; every faction is
@@ -280,6 +282,8 @@ and answer from the run.
   stance (`npc/policy.go:38`) is a faction of one with one edge toward
   `party`; the graph can answer it when his use case pulls it. Seam note for
   his record, not a change here.
+- **`count` on a placement** ("3 goblins" as one line): a general placement
+  feature, not this slice's tool; three lines until a second author asks.
 - hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
   give) · betrayal: attacking a neutral faction writes a fact that flips it
   back · mind succession · directed dispositions · allied-after-flip ·
