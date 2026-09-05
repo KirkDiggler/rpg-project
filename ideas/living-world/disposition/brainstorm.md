@@ -127,3 +127,76 @@ reaction work.
 | the letter carried into a scout's room flips nothing | scene |
 | the messenger's letter appears at the entrance at turn N and not before | scene on the clock |
 | the DM authored all of it through the designer: faction, disposition, until, the intel record | screenshot + yaml round-trip |
+
+## Round 2 (2026-09-05, in session with Kirk) — the second branch, and the law
+
+**The scenario gained its other half.** Kirk: "take our scenario idea for the
+chief getting the delivered intel to stop the attack. alternatively if the
+chief is killed then reinforcements could arrive. this use case will help us
+setup both the capability in the encounter system and the dungeon builder
+ui." Two branches, one file:
+
+- deliver the intel to the chief → the camp stops attacking;
+- kill the chief instead → reinforcements arrive at the gate.
+
+This answers the open "dead mind" ruling by dissolving it: the chief's death is
+a CONSEQUENCE with its own arrival, not a losing condition. The camp can no
+longer be turned (nobody is left to know), the party can still withdraw or
+fight it out, and the author chose that trade-off on purpose.
+
+**The predicate is the designer's noun.** Both new fields are the same shape:
+`until:` on a disposition and `arrives:` on a placement each take a predicate,
+and the same three forms serve both — `{ round: N }`, `{ down: <placement> }`,
+`{ fact: <id> }`. The second instance arrives inside the slice, which is what
+earns the grammar a place in the descriptor (the second-instance law). Grain
+is the one trap: `{ fact }` on a disposition is judged against the faction's
+MIND (audience grain, "does the chief know it"); on an arrival it is judged
+against the world (truth grain, "was it ever learned") — arrivals are physical,
+and physical state folds on truth, the 2026-08-31 two-grains ruling.
+
+**The law as written (Kirk adopted the style; the sentence is this one):**
+
+> The run's world is the only state. Content declares it, verbs append to it,
+> readers fold over it, the projection presents it. No reader keeps a copy.
+
+Test: no reader may build a journal or a graph, or keep a relation table, of
+its own. On main today that test names four structures — the encounter's
+concealment world (`conceal.go:209`, built only when the field conceals), its
+holdings journal (`holdings.go:146`, facts with no audience), its monster
+memory (`turndriver.go:76`, Billy's lane), and resolution's fixed two-node
+table (`cast.go:211`). Spirit: a designer's line must reach the table through
+one state, so that "who is hostile" and "who knows what" have one answer.
+The law lands one reader per slice, each pulled by a use case that walks — the
+encounter application died of being rewritten feature by feature into one
+program, and a rewrite of all the readers at once is the same mistake with a
+bigger surface. This slice moves two readers: sides, and knowledge. Monster
+memory moves when Billy's use case pulls it, on his record.
+
+**Ground truth the design rests on (code survey 2026-09-04/05, toolkit main
+23eda87):**
+
+- Fight formation never asks `IsHostile`. `trigger.go:353` sorts contact by
+  `MemberKind`; `standing.go:306` and `clocks.go:290/386` count the same two
+  kinds. There is no faction on a member and no `party` anywhere.
+- `IsHostile`/`IsAllied` (`resolution/cast.go:99/121`) have two callers, both
+  targeting conditions, and read `castRelations` — a `sync.OnceValue` graph
+  with two `cast-side` entities folded over an empty journal.
+- The import direction is encounter ← resolution ← session. Resolution's
+  `Input.World` IS the whole `encounter.EncounterData` (`resolve.go`), built
+  by the session at four call sites (activate, announcer, attack, striker):
+  resolution already receives the run's world every time and rebuilds an
+  encounter from it. The session never speaks the world module's vocabulary
+  (`world` is an indirect dependency of session).
+- `EncounterData.World` (`data.go:63`) already persists the journal's facts;
+  the graph reseeds from the field on load. Stances are never stored.
+- Runtime edge rewriting in world/graph is declarative only: a reducer raises
+  a flag from facts, an `AdoptStance` projection rewrites the edge on the next
+  fold (hostagecamp's pattern). `dissolveBubble(bubble, cause)` is the single
+  dissolve path with a sealed cause set.
+- Rounds exist only inside a fight bubble; the world clock outside counts
+  feet; props are construction-truth but slice 2's drop places one at runtime
+  through a fact and a projection. Monsters enter through `Spawn`, at launch,
+  with content resolved in rpg-api; every fact about one is hand-carried.
+- The only per-member row on the wire is the roster's `PublicMemberInfo`
+  (closed `MemberKind` enum, no faction, side, or stance anywhere).
+- `sweepOccupancy` inside `refreshSight` runs on every verb and at Load.

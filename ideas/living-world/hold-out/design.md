@@ -1,231 +1,228 @@
 ---
-status: DRAFT for Kirk's return, 2026-09-04 — the configuration shape of a real scenario, seam by seam
-journey: rpg-project#326; brainstorm: ../disposition/brainstorm.md; tool 1: ../intel-record/design.md (building)
-north star: "we are here to build tools that can be used to tell stories" — the scenario is the test case, the seams are the product
+status: DESIGN, proposed 2026-09-05 (supersedes the 2026-09-04 draft; the survey it carried moved to ../disposition/brainstorm.md)
+journey: rpg-project#326 · brainstorm: ../disposition/brainstorm.md · tool 1: ../intel-record/design.md (shipped 2026-09-04)
+law: the run's world is the only state — this slice moves two readers into it: sides, and knowledge
 ---
 
-# The hold-out — a real scenario, configured
+# The hold-out — design
 
-Kirk, leaving for a run: "I would like us to work on configuring a real
-scenario. intel is an input into it. we need to assign the value to
-something, set the intel of that to something. the configuration shape of
-this is as important as proving our intel system works (we already know
-that) — it is really the seams and how we inject that data into our
-scenario."
+## 0. Purpose
 
-So this page is the SHAPE first: the file a DM writes, the form the
-designer shows, and the seam each line crosses to reach the run. The
-scenario is the hold-out from the disposition brainstorm: the goblin camp is
-hostile until its chief learns the party saved the Wiseman; a messenger's
-letter carries that fact; hold out until it arrives, get it to the chief.
+Three tools for the designer, proved by one scenario:
 
-## 1. The file — everything the DM writes
+1. **Factions with a disposition** — who fights whom, and the predicate that
+   changes it.
+2. **The predicate** — one authorable grammar (`round | down | fact`) used by
+   two fields.
+3. **Arrivals** — a placement that enters the run when its predicate holds.
+
+The scenario: a goblin camp is hostile to the party until its chief comes to
+know the party saved the Wiseman. A messenger's letter carries that fact; carry
+it to the chief and the camp stops attacking. Kill the chief instead and
+reinforcements arrive at the gate.
+
+## 1. The file
 
 ```yaml
 factions:
-  - id: goblins
-    mind: chief                      # the one whose knowledge is the camp's
+  - { id: goblins, mind: chief }
 
 dispositions:
-  - between: [goblins, party]        # `party` is the standing name for the players' side
-    stance: hostile
-    until: saved-wiseman             # a FACT; when the faction knows it, the stance flips
+  - { between: [goblins, party], stance: hostile, until: { fact: saved-wiseman } }
 
 intel:
-  - id: wisemans-letter
-    reveals: { fact: saved-wiseman } # the second `reveals` key, after `door`
+  - { id: wisemans-letter, reveals: { fact: saved-wiseman } }
 
 place:
-  - { id: chief, ref: "dnd5e:monsters:goblin-boss", at: [12,4], faction: goblins }
-  - { id: scout, ref: "dnd5e:monsters:goblin",      at: [4,2],  faction: goblins }
+  - { id: chief,  ref: "dnd5e:monsters:goblin-boss", at: [12,4], faction: goblins }
+  - { id: scout,  ref: "dnd5e:monsters:goblin",      at: [4,2],  faction: goblins }
   - { id: letter, ref: "dnd5e:props:scroll", at: [1,3], holdable: true,
-      holds: [wisemans-letter],
-      arrives: { turn: 6 } }         # the messenger; the CLOCK tool's first instance
+      holds: [wisemans-letter], arrives: { round: 6 } }
+  - { id: reinforcements, ref: "dnd5e:monsters:goblin", at: [1,4], count: 3,
+      faction: goblins, arrives: { down: chief } }
 
 exits:
   - { id: front-gate, at: [1,3] }
 
 scenarios:
-  hold-out:
-    convince: goblins                # entity_ref(faction)
+  hold-out: { convince: goblins }
 ```
 
-Read it as three facts and their joins:
+## 2. Vocabulary (dungeonspec v2, additive)
 
-- **"assign the value to something"** — `intel[].reveals` gives a record its
-  value: a door (tool 1, shipped) or a fact (new key, this slice).
-- **"set the intel of that to something"** — `place[].holds` puts the record
-  on a thing: a monster or a prop (R6). Here the letter, which arrives.
-- **the join** — `dispositions[].until` names the SAME fact id the record
-  reveals. That one string is the whole seam between intel and disposition;
-  the scenario never mentions the letter.
+| field | type | rules |
+|---|---|---|
+| `factions[].id` | id | unique; `party` MUST NOT be declared (reserved for the players' side) |
+| `factions[].mind` | placement id | MUST name a monster placement whose `faction` is this faction |
+| `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
+| `dispositions[].between` | `[faction, faction]` | both MUST exist (`party` allowed); unordered; one disposition per pair |
+| `dispositions[].stance` | `hostile \| neutral \| allied` | closed set |
+| `dispositions[].until` | predicate | legal only with `stance: hostile`; when it holds the stance becomes `neutral` |
+| `intel[].reveals` | `{ door: id } \| { fact: id }` | exactly one key; `fact` ids are plain strings, declared by mention |
+| `place[].arrives` | predicate | monsters and props; the placement is in reserve until it holds; `at` MUST be floor |
+| `scenarios.hold-out.convince` | `entity_ref(faction)` | the scenario's only field |
 
-## 2. What the scenario owns (and does not)
+**Predicate grammar** — exactly one key:
 
-The form for `hold-out` has ONE field: `convince: entity_ref(faction)`.
-Its ending is "the faction bound in `convince` is no longer hostile to the
-party". Everything else — who the chief is, what flips them, what carries
-the fact, when it arrives — is the DM's structure, authored with general
-tools, and would be the same structure under a different scenario (rooms
-carry no roles; intel belongs to no scenario, R5). The scenario's
-description tells the DM how to use them:
+| form | holds when | grain |
+|---|---|---|
+| `{ round: N }` (N ≥ 1) | any fight in the run has started round N | truth |
+| `{ down: <placement id> }` | that member is Down | truth (reads Standing) |
+| `{ fact: <id> }` on `until` | the faction's `mind` knows the fact | audience (the mind's) |
+| `{ fact: <id> }` on `arrives` | the fact exists in the run's journal, learned by anyone | truth |
 
-> "In this scenario the party must turn a hostile faction. Give the faction
-> a mind, set its disposition to hostile until a fact, and place intel that
-> reveals that fact somewhere the party can reach — on a messenger, in a
-> chest, on a body."
+**Defaults that keep today's dungeons unchanged:** every unauthored monster is
+in `monsters`; `party` and `monsters` are mutually hostile; every faction is
+allied with itself; a declared monster faction with no disposition toward
+`party` is hostile to it; declared monster factions are neutral to each other.
 
-`New(cfg, compiled)` refuses, in form-filler words: no faction bound; the
-bound faction has no `mind`; no disposition between it and the party carries
-an `until`; no intel record reveals that fact (a hold-out nobody can win).
+**Refusals, written for the form-filler** (dungeon): unknown faction on a
+placement; a `mind` outside its faction; `party` declared; two dispositions for
+one pair; `until` on a non-hostile stance; `arrives.at` not floor; an unknown
+placement in `{ down }`. The dungeon ALLOWS an `until` fact no record reveals
+(pre-release: show the cost). The SCENARIO refuses it: `hold-out` refuses when
+no faction is bound, the bound faction has no `mind`, no hostile disposition
+with `until` exists between it and `party`, or nothing reveals that fact — "a
+hold-out nobody can win".
 
-## 3. The seams — how each line reaches the run
+## 3. The run's world (encounter)
 
-**Ground truth first (code survey, 2026-09-04, against toolkit main and the
-intel branch).** Two claims in the first draft of this table were wrong and
-the table below is corrected:
+**MUST**
 
-- **Fight formation never asks `IsHostile`.** It switches on `MemberKind`
-  (`KindPlayer` / `KindMonster` / `KindWorld`): `trigger.go` classifies
-  contact into `players` vs `monsters`, `standing.go`'s `fightIsDecided`
-  and `clocks.go`'s `bubbleHasPlayer` count the same two kinds. There is no
-  faction field on a member and no `party` side name anywhere in the
-  toolkit; the session says outright that same-kind "is the whole of
-  hostility this seam has". `IsHostile`/`IsAllied` live only in
-  resolution's castView and have two callers, both TARGETING conditions
-  (sneak attack, pack tactics). The encounter module cannot even import
-  them (it depends on `world`, not the rulebook root).
-- **The graph the castView reads is process-global and two-node**
-  (`resolution:cast-side:character` / `:monster`, a `sync.OnceValue`, folded
-  over an empty journal) — rung 1 put a graph UNDER the table, not a
-  per-run relation in the run. The encounter's own world (`encounterWorld`
-  in `conceal.go`) has entities, membership and pierces and ZERO edges,
-  reducers or projections, and exists only when the field carries
-  concealment. Runtime edge rewriting in `world/graph` is DECLARATIVE only:
-  append a fact → a declared reducer raises a flag → a declared projection
-  (`AdoptStance`) rewrites the edge on the next fold; `addEdge`/`adopt` are
-  unexported. hostagecamp's `camp.go` is the pattern.
-- **Fight dissolve HOLDS:** `dissolve.go`'s `dissolveBubble(bubble, cause)`
-  is the single path, reached from a member id via `bubbleFor`; a stance
-  flip is a third `DissolveCause` in a sealed set — one file edit.
+1. One journal and one graph exist from `New` and from `Load`, whether or not
+   anything is concealed. Entities: members, factions, regions, doors, props.
+   Edges: `belongs-to` (member → faction), structure (as today), and one
+   `hostile-to` / `allied-with` edge per direction from the declared and
+   default dispositions.
+2. `MemberKind` stays a kind. The three side readers — formation
+   (`trigger.go` `sidesInContactOrder`), `fightIsDecided`, `bubbleHasPlayer` —
+   ask the graph: two members are opposed iff a `hostile-to` edge stands
+   between their factions. A member in reserve or Down appears in no pair.
+3. Knowledge is facts with audiences in the one journal: `known:door:<id>` and
+   `holds:intel:<record>` as shipped, with the receiver as audience;
+   a `fact` reveal writes `known:fact:<id>` with the receiver as audience.
+   `knowsFact(member, id)` is a fold; no reader keeps a copy.
+4. The disposition flip is a declared reducer over the mind's `known:fact`
+   facts and an `AdoptStance` projection that rewrites both directions of the
+   pair's edge to neutral. Persistence stays facts-only; the stance is derived
+   on every load, never stored.
+5. When a flip removes hostility between two factions and a fight is formed
+   between members of those factions, the encounter dissolves it with a new
+   sealed cause `ByStance()`. Members of a third faction still hostile keep
+   their fight.
+6. Presence transfer rides `sweepOccupancy`: a member holding a record whose
+   `reveals` names a fact, standing in the region of a faction's `mind`,
+   teaches the mind (the record copies; the holder keeps it).
+7. A placement with `arrives` is in reserve: no cell, no turn, in no pair,
+   absent from every projection for every member (the never-authored
+   yardstick: a run with reserved placements projects byte-identically to one
+   without them, until arrival). On the first verb after its predicate holds
+   it is placed at `at` — nearest free floor cell in the same region if `at`
+   is occupied — with an `arrived:<id>@<cell>` fact; the same verb's sight
+   refresh then forms or joins a fight as for any member walking into view.
+8. Predicates are evaluated in one place, at the end of every verb before the
+   sight refresh, and at `RoundStarted`. `{ round }` outside any fight never
+   holds. `{ down }` reads Standing; Standing does not move into the journal in
+   this slice.
+9. A faction whose `mind` is Down can no longer learn: `until: { fact }` can
+   never hold for it. This is a consequence, not a loss. Mind succession is a
+   shelf.
+10. `scenarios.New` declares `Endings: [TriggerStance{Between, Stance ≠ hostile}]`;
+    the existing withdrawal and defeat endings stay.
 
-- **`reveals: {fact}` is a one-arm addition** (`applyReveals` switches on
-  the record's targets; `learnDoor` already writes a fact into the
-  receiver's journal with the receiver as audience) — but **no generic fact
-  reader exists**: `knowsDoor`/`knowsRegion` answer through
-  `graph.State.Visible`, which only speaks about entities declared
-  `Concealed` with a matching `Pierce`. "Does this mind hold fact F" needs
-  a new fold over the member's journal. Two traps beside it: the holdings
-  journal is a SEPARATE journal from the concealment world's (which exists
-  only when the field carries concealment), and holdings facts carry an
-  EMPTY audience ("a holding is not a thing that happened to anybody").
-  So a `fact` reveal writes into the member-facts journal — which must
-  exist whenever a dungeon declares facts, not only under concealment —
-  and the disposition predicate is `knowsFact(member, fact)`, a fold that
-  does not exist yet.
-- **The clock DOES NOT HOLD as written.** Rounds exist only inside a fight
-  bubble (`clock.Turn.Round()`); the world clock outside a fight counts
-  FEET (`Pump` advances a tick whose reading is cumulative displacement),
-  and the two clocks are exclusive by design. There is no run-level turn
-  number. Props are construction-truth only — no prop-add verb; `Join` is
-  members-only. BUT slice 2's drop already places a prop on the map at
-  runtime (`dropped:<prop>@<cell>` fact → projection), so an arrival needs
-  no prop-add verb: it is a SCHEDULED DROP. What it needs is a counter, and
-  the honest one is the fight's rounds: the hold-out is by definition a
-  fight, so `arrives: { round: 6 }` means "six rounds after the fight
-  forms". Outside a fight nothing arrives (the world clock stays postponed
-  by the 2026-08-30 ruling; the hostage's timer will say whether that
-  holds).
-- **Wire DOES NOT HOLD as written.** `GetAtlasResponse` carries no members
-  at all; the only per-member row on the wire is the roster's
-  `PublicMemberInfo{id, kind, name, …}` with a closed `MemberKind` enum
-  (player/monster/world) and no faction, side or stance anywhere. So the
-  faction goes on the roster row as a free-form id (never an enum: factions
-  are content), plus a `stance` beat.
-- **Presence HOLDS:** `sweepOccupancy` inside `refreshSight` (every verb
-  passes through it; also run at Load) is exactly the fold shape — loop the
-  roster, `regionOf(cell)` (a map hit), act when the answer changed. The
-  attach point is cheap; only the thing being taught is new.
+**Spawn** (rpg-api → session → encounter): `MemberInput.Faction` and
+`MemberInput.Arrives` are hand-carried like `Holds`. Content for a reserved
+monster resolves at launch; the encounter holds the member in reserve.
 
-So the load-bearing mechanism of tool 2 is not "a stance writer" bolted onto
-rung 1; it is **sides by faction inside the encounter**: members carry a
-faction (players default to `party`, monsters default to a `monsters`
-faction unless authored), a per-run stance table keyed by faction pair
-(declared from `dispositions[]`, defaulting to hostile between `party` and
-every monster faction so today's dungeons behave unchanged), and formation,
-`fightIsDecided`, `bubbleHasPlayer` and targeting ask THAT table instead of
-kind. The table is a small per-run `graph.State` with faction entities and
-stance edges, a reducer over `<fact>` journal facts, and an `AdoptStance`
-projection — the hostagecamp pattern moved into the encounter's world.
-castView's global two-node graph then reads the run's table instead of its
-fixed one (rung 2 lands as a consequence, not a prerequisite).
+## 4. Resolution
 
-| line in the file | dungeonspec (declares, validates) | Compiled → sessionworld (injects) | encounter (runs) | who reads it in play |
-|---|---|---|---|---|
-| `factions[].id`, `place[].faction` | ids unique; every faction referenced exists; `party` reserved | `SetupInput.Factions`; each `MemberInput.Faction` (monsters: hand-carried through Spawn) | NEW: sides by faction — formation, `fightIsDecided`, `bubbleHasPlayer` and targeting ask the run's stance table, not `MemberKind` | fight formation, targeting, behavior |
-| `factions[].mind` | names a monster in that faction | `Faction.Mind` | the presence fold: the faction knows what its mind knows | disposition predicate |
-| `dispositions[]` | both sides exist; `until` is a fact id some record reveals (warn, not refuse? — see §6) | `SetupInput.Dispositions` seeds the per-run stance table (default: `party` hostile to every monster faction) | a reducer over the mind's `<fact>` facts raises the flip; an `AdoptStance` projection rewrites the edge; on the flip, `dissolveBubble(member, ByStance)` for a fight formed between the two | fight formation; behavior (Billy) |
-| `intel[].reveals.fact` | fact ids are plain strings, declared here | intel table rides `Compiled.Field` whole (already) | on transfer, a `fact` reveal writes `known:fact:<id>` into the member-facts journal with the receiver as audience (`learnDoor`'s exact shape); NEW: `knowsFact(member, id)` fold, and the member-facts journal exists whenever facts are declared, not only under concealment | the disposition predicate; later, quest predicates |
-| `place[].holds` on a prop | R6 | `PropInput.Holds` | Hold applies reveals to the holder; presence: a holder in the mind's region teaches the mind | — |
-| `place[].arrives.round` (props, step 3) | ≥ 1; the cell is floor | `PropInput.Arrives` (rides the field) | a SCHEDULED DROP: absent from the projection until the fight's round N, then a `dropped` fact at the cell with an `arrived` beat ("a messenger leaves a letter at the gate"); no prop-add verb needed | the client draws it as it draws a drop today |
-| `scenarios.hold-out.convince` | the id is a faction | `scenarios.New` → `Declared{Endings: [TriggerStance{Between: [goblins, party], Stance: friendly}]}` | a fourth trigger, fired by the stance writer | the `ended` beat |
+`castView.IsHostile` / `IsAllied` ask the reloaded run's graph (resolution's
+`Input.World` is already the encounter's data). `castRelations` and the
+`cast-side` entities are deleted. Resolution's encounter pin moves from
+v0.51.0 to the tag carrying §3. Sneak Attack and Pack Tactics change nothing
+and answer from the run.
 
-**A rule for the injection column** (rpg-api build, 2026-09-04): rpg-api
-assembles no prop input anywhere — props are field structure and ride
-`Compiled.Field` whole into `NewEncounter`, so a new field on a PROP
-placement (`holds`, `arrives`) costs zero forwarding. Monsters are the
-exception by design: the world starts empty of members, a monster crosses
-the `Spawn` seam, and every fact about one is hand-carried — so `faction`
-and `arrives` on a MONSTER cost a line in Compile and a line at the launch
-(the `Knows`→`Holds` precedent). Pinned by
-`TestPropsRideTheFieldRatherThanBeingForwarded` on the api branch.
+## 5. Session
 
-Two seams are new mechanisms; everything else is a field on an existing one:
+- `Spawn` carries `Faction` and `Arrives`.
+- Roster row gains `faction`; reserved members are absent from roster and
+  atlas until arrival (member-scoped by absence, as concealed doors are).
+- Beats: `stance` `{between: [a, b], stance}` on a flip; `arrived`
+  `{id, kind: monster|prop, cell}` on arrival; the `ended` beat names the
+  hold-out ending.
+- Capabilities unchanged (Witness, CheckResolver, Sight, Roller, TurnDriver).
 
-1. **Sides by faction** in the encounter (above): the side model moves
-   from `MemberKind` to a per-run faction stance table with a declared
-   reducer + projection, plus "a flip dissolves a formed fight between those
-   factions" (a third `DissolveCause`). This is the whole of tool 2's engine
-   cost, and it is bigger than the brainstorm assumed.
-2. **The arrival scheduler**: a scheduled drop on the fight's round clock
-   (`RoundStarted` is the hook). The first instance of the CLOCK tool, and
-   the smallest one: it reuses the drop projection and adds a counter
-   comparison. A world-clock arrival is NOT in it (ruled postponed).
+## 6. Wire (protos, additive)
 
-## 4. The cut
+- `PublicMemberInfo.faction` — string, free-form (factions are content, never
+  an enum).
+- Beat payloads `STANCE_CHANGED {between, stance}` and
+  `ARRIVED {id, kind, cell}`.
+- `PutDungeon` verbatim; `ListScenarios` gains the `faction` entity kind.
 
-- **Step 2 — disposition without the clock.** Factions, `mind`,
-  dispositions with `until`, `reveals: {fact}`, presence transfer, the
-  stance writer, the fight dissolving, `TriggerStance`, the one-field form.
-  The letter simply lies at the gate from turn one. Walkable: hold the
-  letter, walk it to the chief, the camp turns mid-fight.
-- **Step 3 — the clock.** `arrives: {round}` as a scheduled drop on the
-  fight's rounds and the `arrived` beat; the same walk with the letter
-  arriving at round 6 of the hold-out fight. The hostage's "rounds until
-  turned" is its second instance.
+## 7. The designer (web)
 
-## 5. Wire
+- Dungeon sections beside Scenarios and Intel: **Factions** (id; mind =
+  dropdown of monsters placed in that faction) and **Dispositions** (faction,
+  faction, stance select, `until` = predicate editor, shown only for hostile).
+- **Predicate editor**, one component used by `until` and `arrives`: form
+  select (`round` → number; `down` → dropdown of placed monsters; `fact` →
+  dropdown of fact ids declared by intel records, free text allowed with the
+  "no record reveals this" note).
+- Placement inspector: `faction` dropdown on monsters; `arrives` predicate
+  editor on monsters and props.
+- Intel form: `reveals` kind select (`door | fact`) and the id.
+- Scenario tab: `hold-out` with the `convince` dropdown and the description.
+- Play: roster coloured by faction; `stance` and `arrived` beats narrated;
+  reserved placements never drawn.
+- YAML round-trips byte-stable; every refusal in §2 renders inline at the
+  field it names.
 
-`PutDungeon` verbatim: no change for the file. New on the session wire:
-`PublicMemberInfo.faction` (free-form id; the roster is the only per-member
-row — the atlas carries no members) so the client can colour sides; a
-`stance` beat `{between, stance}` so the table hears the camp turn; an
-`arrived` beat for the scheduler (step 3). `ListScenarios` unchanged in
-shape (`entity_ref(faction)` is one more kind).
+## 8. Rulings (proposed; Kirk vetoes on the PR)
 
-## 6. Open rulings (for Kirk's return)
+| # | ruling | proposed |
+|---|---|---|
+| R1 | a flip dissolves a formed fight between the two factions | yes, `ByStance()` |
+| R2 | the stance after `until` holds | `neutral` ("not hostile"); allied is authorable only as a static stance |
+| R3 | presence grain | the mind's region, the yardstick Search uses |
+| R4 | `party` and `monsters` | reserved; unauthored monsters are `monsters` |
+| R5 | predicate grammar and grains | `round \| down \| fact`; `fact` = mind's knowledge on `until`, truth on `arrives` |
+| R6 | reserved placements | spawned at launch, absent from every projection, placed on the first verb after the predicate holds |
+| R7 | the dead mind | the flip is gone; consequence not loss; succession shelved |
+| R8 | `until` naming an unrevealed fact | dungeon allows, scenario refuses |
+| R9 | which clock `{ round }` counts | any fight in the run; outside a fight never; the world clock stays postponed |
 
-- **Does a flip dissolve a formed fight?** Proposed yes (brainstorm).
-- **`until` naming a fact no record reveals** — refuse at compile (a
-  hold-out nobody can win) or allow (the DM may reveal it another way
-  later)? Proposed: the SCENARIO refuses it (its quest is unwinnable); the
-  dungeon alone allows it (pre-release: allow and show the cost).
-- **Presence grain** — "in the mind's region" (ruled by presence) vs
-  adjacent vs seen. Proposed: region, the same yardstick Search uses.
-- **Where `party` lives** — a reserved faction name for the players' side,
-  or a declared faction the DM must write? Proposed reserved: it exists in
-  every dungeon whether written or not.
-- **The `stance` vocabulary** — `hostile | neutral | friendly` closed enum
-  in the file (three words the graph already distinguishes), open later.
-- **Which clock an arrival counts on** — proposed: the fight's rounds, and
-  only inside a fight; the world clock stays postponed. Confirm.
+## 9. Acceptance
+
+| # | proof | how |
+|---|---|---|
+| A1 | camp `hostile until {fact}`; nobody knows; a fight forms on sight | scene |
+| A2 | the letter carried into the chief's region mid-fight: stance neutral, fight dissolves, hold-out ending fires | scene + walk |
+| A3 | the letter carried into the scout's region: nothing | scene |
+| A4 | chief Down: reinforcements at the gate on the next verb, hostile, fight forms or joins | scene + walk |
+| A5 | the letter arrives at round 6 and not before | scene |
+| A6 | reserved placements: projection byte-identical to a run without them, for every member, until arrival | scene (the yardstick) |
+| A7 | every pre-existing encounter, resolution, and session scene passes unchanged under the default factions | the rung-1 bar |
+| A8 | after a flip, a goblin is no longer an enemy for Sneak Attack; before it, unchanged | scene |
+| A9 | save after the flip, load: still neutral; no stance stored | scene |
+| A10 | the whole file authored through forms; YAML round-trip byte-stable; refusals inline | screenshot + test |
+| A11 | Kirk walks both branches on one stack before any PR opens | the walk |
+
+## 10. Cut
+
+- **Step A — sides and knowledge.** §2 without `arrives`; §3 items 1–6, 9, 10;
+  §4; §5 without `arrived`; §6 without `ARRIVED`; §7 without the arrives
+  field. The letter lies at the gate; no reinforcements. Walkable: hold the
+  letter, carry it to the chief mid-fight, the camp turns.
+- **Step B — arrivals.** The predicate grammar in full, `arrives` on props and
+  monsters, reserve, `arrived`, the predicate editor. Walkable: the letter at
+  round 6; kill the chief, reinforcements.
+- Both steps on branches, one local stack, Kirk's walk, then PRs bottom-up:
+  dungeonspec + encounter → resolution → session → protos → api → web.
+
+## 11. Shelves (named, empty)
+
+hand / throw the letter as a verb · a walking messenger (NPC lane, Interact
+give) · betrayal: attacking a neutral faction writes a fact that flips it back
+· mind succession · directed dispositions · allied-after-flip · world-clock
+arrivals · behavior reading stance (Billy's record) · Standing as journal facts.
