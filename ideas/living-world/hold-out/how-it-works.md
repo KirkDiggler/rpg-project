@@ -8,7 +8,7 @@ The law behind all four: **the run's world is the only state.** Content
 declares it, verbs append to it, readers fold over it, the projection presents
 it. No reader keeps a copy.
 
-## 1. Sides — who fights whom · *designed*
+## 1. Sides — who fights whom · *designed · authoring landed (web/hold-out 97c0a298: Factions + Dispositions forms, predicate editor)*
 
 Every member belongs to a faction; players to `party`, unauthored monsters to
 `monsters`. A disposition is an edge between two factions. Fight formation

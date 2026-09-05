@@ -57,7 +57,7 @@ scenarios:
 | `factions[].id` | id | unique; `party` MUST NOT be declared (reserved for the players' side) |
 | `factions[].mind` | placement id | the hub word spreads through: the faction knows what its mind knows. MUST name a monster placement in this faction. Optional: a faction of one has its member as mind; a faction of many with an `until: { fact }` and no mind is refused ("name a mind, or the faction cannot learn") |
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
-| `dispositions[].between` | `[faction, faction]` | both MUST exist (`party` allowed); unordered; one disposition per pair |
+| `dispositions[].between` | `[faction, faction]` | both MUST exist; the reserved `party` and `monsters` are nameable here (`between: [monsters, party], stance: neutral` makes the unauthored monsters neutral) though never declarable; unordered; a ≠ b; one disposition per pair |
 | `dispositions[].stance` | `hostile \| neutral \| allied` | closed set |
 | `dispositions[].until` | predicate | legal only with `stance: hostile`; when it holds the stance becomes `neutral` |
 | `intel[].reveals` | `{ door: id } \| { fact: id }` | exactly one key; `fact` ids are plain strings, declared by mention |
@@ -72,7 +72,7 @@ consumers; `round`, `fact`, and `stance` are three new Trigger types.
 
 | form | holds when | grain |
 |---|---|---|
-| `{ round: N }` (N ≥ 1) | any fight in the run has started round N | truth |
+| `{ round: N }` (N ≥ 1, refusal wording "a round is counted from 1") | any fight in the run has started round N | truth |
 | `{ down: <placement id> }` | that member is Down | truth (reads Standing) |
 | `{ fact: <id> }` on `until` | the faction's `mind` knows the fact | audience (the mind's) |
 | `{ fact: <id> }` on `arrives` | the fact exists in the run's journal, learned by anyone | truth |
