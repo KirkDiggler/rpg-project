@@ -54,7 +54,7 @@ scenarios:
 
 | field | type | rules |
 |---|---|---|
-| `factions[].id` | id | unique; `party` MUST NOT be declared (nothing about it is authorable); `monsters` MAY be declared — that is how the unauthored monster side gets a mind |
+| `factions[].id` | id | unique; the reserved `party` and `monsters` are NEVER declared ("`monsters` is where every monster with no faction already is and is never declared — give these monsters a faction of their own") |
 | `factions[].mind` | placement id | the hub word spreads through: the faction knows what its mind knows. MUST name a monster placement in this faction. Optional: a faction of one has its member as mind; a faction of many with an `until: { fact }` and no mind is refused ("name a mind, or the faction cannot learn") |
 | `place[].faction` | faction id | monsters only; MUST name a declared faction; absent → the reserved `monsters` faction |
 | `dispositions[].between` | `[faction, faction]` | both MUST exist; the reserved `party` and `monsters` are nameable here (`between: [monsters, party], stance: neutral` makes the unauthored monsters neutral) though never declarable; unordered; a ≠ b; one disposition per pair |
@@ -122,7 +122,7 @@ hold-out nobody can win".
    reducer moves one entity and every projection rewrites one entity's own
    edges, so a pair flipping both directions had no home. world gains a PAIR
    projection `graph.Settle{OnFlag, Of, Between, Relations, To}` (v0.4.0,
-   branch `world/pair-settle`, head 640402ed): while the flagged entity
+   branch `world/pair-settle`, head e9da06e, PR toolkit#1519): while the flagged entity
    carries the flag, the pair's edges settle to the target relation in both
    directions; precedence is declared order, last wins, pinned by one test.
    The encounter declares `Raise{On: known:fact:<id>}` + that projection for
