@@ -164,6 +164,17 @@ hold-out nobody can win".
 `MemberInput.Arrives` are hand-carried like `Holds`. Content for a reserved
 monster resolves at launch; the encounter holds the member in reserve.
 
+**Member ids (ruled 2026-09-05, landed in rpg-api):** an authored placement id
+IS the member id, so `factions[].mind` and `{ down: <id> }` mean the same id
+in the file and in the run; unnamed placements keep ref+ordinal minting, and
+an ordinal is spent on every placement of a ref, named or not, so naming a
+sibling never renumbers a monster nothing about which changed. A collision is
+refused at compile (authored vs minted, naming both) and again before any
+write at launch (against the party's ids and the demo vendor). Consequence:
+the heirloom tomb's captain is now member `captain`. Fact ids and faction ids
+are carried verbatim (like regions and exits), not key-minted like doors and
+intel records.
+
 ## 4. Resolution
 
 `castView.IsHostile` / `IsAllied` ask the reloaded run's graph (resolution's
