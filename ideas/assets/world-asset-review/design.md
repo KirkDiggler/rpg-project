@@ -224,6 +224,8 @@ library/polygon-dark-fortress/v3/glbs/
 
 Material-blocked sources may receive neutral-material, geometry-only review GLBs under a separate ignored review cache. Neutral output exists only to reveal shape and scale. It carries a visible `MATERIAL REVIEW REQUIRED` status in its sheets and Asset Review Lab, and can be Keep, Skip, or Defer but never Ready.
 
+A material-trusted GLB may still be provider-ineligible when its planned post-ceiling embedded textures exceed the runtime budget. It stays visually trusted and reviewable, but `readyEligible` is false and the Lab shows the exact provider reason. Review status describes material fidelity; Ready eligibility independently describes whether the current provider contract can publish the asset.
+
 FX sources use the same review-only boundary until a static export is proven to represent the intended effect. A source that cannot produce even an honest neutral/static preview remains in the report without a fabricated image.
 
 The C rebuild is stage-first. It computes required disk, builds trusted and review-only outputs in disposable sibling roots, validates manifests and expected counts, and only then replaces the corresponding cache/sheet surfaces. Failure preserves the previous canonical discovery library.
@@ -256,7 +258,7 @@ Each prepared candidate includes:
 - source path;
 - GLB SHA-256;
 - temporary local URL;
-- trusted/material/FX review status and blocking reason;
+- trusted/material/FX review status and blocking reasons, including provider texture-budget ineligibility;
 - source family;
 - suggested category;
 - derived suffix and visual ref;
@@ -312,6 +314,7 @@ The scene retains the real Synty floor, hex context, standard fighter, orbit/pla
 Ready requires:
 
 - material-ready source status;
+- a pure provider preflight showing the planned post-ceiling embedded images fit the 4.5 MiB aggregate decoded-texture budget;
 - successful browser GLB load;
 - unique valid derived ref;
 - non-empty display name;
@@ -609,7 +612,7 @@ The journey slice is complete when:
 - the canonical trusted cache contains no unresolved custom-material fallback;
 - a repeatable source glob prepares a verified review queue from existing cached GLBs;
 - the Lab remains responsive while navigating repeated embedded-texture candidates;
-- Kirk can Keep first, finish metadata later, and explicitly mark selected entries Ready;
+- Kirk can Keep first, finish metadata later, and explicitly mark selected entries Ready only when material and current provider budgets both pass;
 - category overrides generate exact refs using `dnd5e:<category>:dark-fortress:<suffix>`;
 - review progress and Ready-only provider JSON round-trip without local paths or licensed bytes;
 - provider stage/apply/check publishes a selected batch atomically;

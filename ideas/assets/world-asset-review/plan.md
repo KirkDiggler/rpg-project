@@ -769,8 +769,9 @@ Assert:
 
 - actual cached hash must match manifest;
 - finite positive cached GLB dimensions are measured and written as `dimensionsMeters`;
-- trusted candidate has `readyEligible: true`;
-- material/FX candidate has `readyEligible: false` plus reasons;
+- a trusted candidate within the provider texture budget has `readyEligible: true`;
+- a material/FX candidate has `readyEligible: false` plus reasons;
+- a material-trusted candidate whose planned post-ceiling images exceed 4.5 MiB remains `reviewStatus: trusted` but has `readyEligible: false` plus the exact provider-budget reason;
 - destination must be ignored and contain no tracked file;
 - destination model is not a hard link to the source (`st_ino` differs on the same device);
 - reflink failure falls back to verified `shutil.copy2`;
@@ -844,7 +845,7 @@ Use this candidate shape:
 }
 ```
 
-Use `cp --reflink=always --` when available; on failure, remove any partial destination and use `shutil.copy2`. Hash the destination afterward. Reject equal source/destination inode identity. Measure finite positive dimensions from GLB POSITION accessor bounds using the existing pure-Python GLB inspection convention. Write JSON through a temporary sibling plus `os.replace`.
+Use `cp --reflink=always --` when available; on failure, remove any partial destination and use `shutil.copy2`. Hash the destination afterward. Reject equal source/destination inode identity. Measure finite positive dimensions from GLB POSITION accessor bounds using the existing pure-Python GLB inspection convention. For material-trusted rows, call the shared pure `planned_runtime_image_facts()` contract from Task 7; if its aggregate exceeds 4.5 MiB, preserve `reviewStatus: trusted` but set `readyEligible: false` and append its exact provider-budget reason. Write JSON through a temporary sibling plus `os.replace`.
 
 - [ ] **Step 6: Add CLI and ignore boundary**
 
@@ -903,7 +904,7 @@ Define fixture source hash as `'a'.repeat(64)` and assert:
 - URL must match `/models/synty/asset-review/{content-addressed-name}.glb` and reject slashes or unsafe filename characters inside the final segment;
 - categories are limited to Props/Items/Weapons/Environment values;
 - `readyEligible` must be boolean;
-- trusted candidates must be eligible;
+- trusted candidates may be ineligible only when they carry a non-empty provider-preflight reason;
 - material/FX candidates must be ineligible with a reason; and
 - source hash must be lowercase SHA-256.
 
@@ -1301,7 +1302,7 @@ Expected: FAIL because generic provider parsing and world-asset normalization do
 
 Extract shared GLB parsing, finite geometry, identity transforms, bounds, and embedded-image inspection from `normalize_prop_for_runtime.py` into functions usable by both entry points. Keep the existing prop wrapper's exact one-image requirement and 4.5 MiB decoded cap unchanged.
 
-The world-asset wrapper accepts multiple reviewed images, reports each image's dimensions/decoded bytes, applies the existing 1024×1024 per-image ceiling without upscaling, and enforces the existing 4.5 MiB aggregate decoded-texture ceiling. It also preserves the existing 20-metre maximum runtime axis. It never drops an auxiliary image or rewires a material to the main atlas.
+Extract `planned_runtime_image_facts(path: Path) -> tuple[dict[str, int | float | str], ...]` as a Blender-free contract that applies the same per-image 1024×1024 downscale calculation and 4.5 MiB aggregate check used by normalization. The world-asset wrapper consumes that exact plan, reports each image's dimensions/decoded bytes, applies the ceiling without upscaling, and preserves the existing 20-metre maximum runtime axis. It never drops an auxiliary image or rewires a material to the main atlas. Review preparation consumes the same pure plan so Ready eligibility cannot disagree with provider normalization.
 
 - [ ] **Step 5: Implement strict recipe types and path derivation**
 
