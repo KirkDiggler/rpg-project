@@ -768,7 +768,7 @@ Create trusted and review manifest fixtures. Assert repeated `--source-match` pa
 Assert:
 
 - actual cached hash must match manifest;
-- finite positive cached GLB dimensions are measured and written as `dimensionsMeters`;
+- eligible candidates require three finite positive GLB dimensions; Ready-ineligible material/FX review candidates may preserve finite non-negative dimensions when at least one axis is positive;
 - a trusted candidate within the provider texture budget has `readyEligible: true`;
 - a material/FX candidate has `readyEligible: false` plus reasons;
 - a material-trusted candidate whose planned post-ceiling images exceed 4.5 MiB remains `reviewStatus: trusted` but has `readyEligible: false` plus the exact provider-budget reason;
@@ -845,7 +845,7 @@ Use this candidate shape:
 }
 ```
 
-Use `cp --reflink=always --` when available; on failure, remove any partial destination and use `shutil.copy2`. Hash the destination afterward. Reject equal source/destination inode identity. Measure finite positive dimensions from GLB POSITION accessor bounds using the existing pure-Python GLB inspection convention. For material-trusted rows, call the shared pure `planned_runtime_image_facts()` contract from Task 7; if its aggregate exceeds 4.5 MiB, preserve `reviewStatus: trusted` but set `readyEligible: false` and append its exact provider-budget reason. Write JSON through a temporary sibling plus `os.replace`.
+Use `cp --reflink=always --` when available; on failure, remove any partial destination and use `shutil.copy2`. Hash the destination afterward. Reject equal source/destination inode identity. Measure dimensions from GLB POSITION accessor bounds using the existing pure-Python convention. Require all axes finite and non-negative with at least one positive axis for Ready-ineligible review rows; eligible rows require all three axes positive. Never clamp or fabricate a zero axis. For material-trusted rows, call the shared pure `planned_runtime_image_facts()` contract from Task 7; if its aggregate exceeds 4.5 MiB, preserve `reviewStatus: trusted` but set `readyEligible: false` and append its exact provider-budget reason. Write JSON through a temporary sibling plus `os.replace`.
 
 - [ ] **Step 6: Add CLI and ignore boundary**
 
@@ -906,7 +906,9 @@ Define fixture source hash as `'a'.repeat(64)` and assert:
 - `readyEligible` must be boolean;
 - trusted candidates may be ineligible only when they carry a non-empty provider-preflight reason;
 - material/FX candidates must be ineligible with a reason; and
-- source hash must be lowercase SHA-256.
+- source hash must be lowercase SHA-256;
+- eligible candidate dimensions must have three positive finite axes; and
+- ineligible candidate dimensions may contain zero axes but must be finite, non-negative, and positive on at least one axis.
 
 - [ ] **Step 2: Write failing review-transition tests**
 

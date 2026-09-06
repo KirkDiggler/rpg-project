@@ -226,7 +226,7 @@ Material-blocked sources may receive neutral-material, geometry-only review GLBs
 
 A material-trusted GLB may still be provider-ineligible when its planned post-ceiling embedded textures exceed the runtime budget. It stays visually trusted and reviewable, but `readyEligible` is false and the Lab shows the exact provider reason. Review status describes material fidelity; Ready eligibility independently describes whether the current provider contract can publish the asset.
 
-FX sources use the same review-only boundary until a static export is proven to represent the intended effect. A source that cannot produce even an honest neutral/static preview remains in the report without a fabricated image.
+FX sources use the same review-only boundary until a static export is proven to represent the intended effect. A source that cannot produce even an honest neutral/static preview remains in the report without a fabricated image. Flat planes and particle review meshes with one or two zero-sized bounds axes remain browseable when they are already Ready-ineligible; their dimensions are preserved exactly rather than clamped or fabricated.
 
 The C rebuild is stage-first. It computes required disk, builds trusted and review-only outputs in disposable sibling roots, validates manifests and expected counts, and only then replaces the corresponding cache/sheet surfaces. Failure preserves the previous canonical discovery library.
 
@@ -263,7 +263,7 @@ Each prepared candidate includes:
 - suggested category;
 - derived suffix and visual ref;
 - suggested display name;
-- measured source bounds in metres; and
+- measured source bounds in metres (finite non-negative review bounds; Ready still requires all three axes positive); and
 - browsing-family guess such as `brazier`.
 
 Suggestions reduce typing but do not become gameplay facts. Display names are humanized from source names and remain editable. Category suggestions remain editable. Refs remain derived.
