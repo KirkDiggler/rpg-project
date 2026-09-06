@@ -260,7 +260,8 @@ Each prepared candidate includes:
 - source family;
 - suggested category;
 - derived suffix and visual ref;
-- suggested display name; and
+- suggested display name;
+- measured source bounds in metres; and
 - browsing-family guess such as `brazier`.
 
 Suggestions reduce typing but do not become gameplay facts. Display names are humanized from source names and remain editable. Category suggestions remain editable. Refs remain derived.
@@ -302,6 +303,7 @@ A review entry contains:
 - base yaw;
 - fine X/Y/Z offset;
 - browsing tags;
+- an explicit `supportsDecoration` authoring hint for surfaces such as tables;
 - notes; and
 - review state plus optional defer reason.
 
@@ -316,10 +318,11 @@ Ready requires:
 - valid category;
 - finite positive scale within provider bounds;
 - normalized finite yaw;
-- finite bounded fine offsets; and
+- finite bounded fine offsets;
+- positive scaled bounds with no axis above the provider's existing 20-metre static-asset ceiling; and
 - explicit Mark Ready confirmation.
 
-Tags and notes are useful but not required for Ready. Source hashes and refs are read-only.
+Tags and notes are useful but not required for Ready. `supportsDecoration` defaults false and is never inferred from a filename; it affects only World Builder surface attachment, not gameplay collision or physics. Source hashes and refs are read-only.
 
 ### Memory behavior
 
@@ -385,6 +388,7 @@ Conceptually:
         "fineOffsetMeters": [0.0, 0.0, 0.0]
       },
       "tags": ["dark-fortress"],
+      "supportsDecoration": false,
       "notes": ""
     }
   ]
@@ -421,8 +425,8 @@ The provider exposes stage, validate, apply, and check operations using the exis
 4. recomputes and validates category, pack key, suffix, ref, output path, and uniqueness;
 5. normalizes scale, yaw, centering, grounding, and fine offset in factory Blender;
 6. preserves all reviewed material-slot assignments and embedded texture provenance;
-7. enforces the current runtime static-asset texture and geometry gates;
-8. validates finite positive bounds and identity output transforms;
+7. caps every embedded image at 1024×1024 without upscaling, preserves the existing 4.5 MiB aggregate decoded-texture ceiling, and enforces the current static geometry gates;
+8. validates finite positive bounds, the existing 20-metre maximum runtime axis, and identity output transforms;
 9. generates a complete candidate catalog, inventory updates, mesh statistics, and receipt; and
 10. mutates no canonical path.
 
@@ -442,7 +446,8 @@ The private provider catalog projects only license-safe data:
 - runtime-relative file;
 - runtime GLB hash and size;
 - measured bounds;
-- browsing tags; and
+- browsing tags;
+- the explicit `supportsDecoration` authoring hint; and
 - provider recipe/tool identity required for verification.
 
 It contains no raw source asset, machine path, review draft, rejected/deferred candidate, or gameplay behavior.
