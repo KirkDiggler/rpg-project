@@ -175,7 +175,7 @@ SM_Bld_Tower_03.fbx
   -> dnd5e:env:dark-fortress:tower_03
 ```
 
-The pack reference key `dark-fortress` is reviewed configuration, separate from the source pack slug `polygon-dark-fortress`.
+The pack reference key `dark-fortress` is reviewed configuration, separate from the source pack slug `polygon-dark-fortress`. Review identity fields live in `scripts/configs/world-asset-review/<pack-slug>.json`, not the conversion config: changing category/ref suggestions must not invalidate a manifest whose GLB bytes did not change.
 
 The suffix algorithm:
 

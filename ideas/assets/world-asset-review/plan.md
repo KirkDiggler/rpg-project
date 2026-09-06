@@ -88,6 +88,7 @@ If either baseline fails, stop and record the exact failure instead of attributi
 - `scripts/build_synty_pack_library.py` — add material-aware stage/apply/check orchestration while preserving existing ordinary runs.
 - `scripts/test_build_synty_pack_library.py` — command construction and policy tests.
 - `scripts/configs/synty-packs/polygon-dark-fortress.json` — palette C, all world groups, material declaration policy, ref prefixes, and optional suffix overrides.
+- `scripts/configs/world-asset-review/polygon-dark-fortress.json` — review-only pack identity, category-prefix suggestions, and exact suffix overrides; deliberately separate from conversion hash authority.
 - `scripts/world_asset_review.py` — category/ref derivation and strict review/provider schema types shared by Assets tools.
 - `scripts/test_world_asset_review.py` — ref, collision, state-independent provider recipe tests.
 - `scripts/prepare_asset_review.py` — source-glob selection, hash verification, reflink/copy, and atomic ignored Web catalog preparation.
@@ -725,13 +726,14 @@ git commit -m "asset: rebuild Dark Fortress discovery under palette C"
 **Repository:** `rpg-game-assets`
 
 **Files:**
+- Create: `scripts/configs/world-asset-review/polygon-dark-fortress.json`
 - Create: `scripts/world_asset_review.py`
 - Create: `scripts/test_world_asset_review.py`
 - Create: `scripts/prepare_asset_review.py`
 - Create: `scripts/test_prepare_asset_review.py`
 
 **Interfaces:**
-- Consumes: repeated source globs plus trusted/review manifests.
+- Consumes: repeated source globs, trusted/review manifests, and a strict review config resolved by source pack slug.
 - Produces: strict candidate catalog schema v1, `derive_ref(source_path, category, config)`, `select_review_candidates()`, and ignored `public/models/synty/asset-review/` content.
 
 - [ ] **Step 1: Write failing ref-derivation tests**
@@ -789,10 +791,12 @@ Expected: FAIL because both modules are missing.
 
 - [ ] **Step 4: Implement category and source-prefix configuration**
 
-Add this reviewed config shape:
+Add this separate reviewed config at `scripts/configs/world-asset-review/polygon-dark-fortress.json`; do not add review-only keys to the conversion pack config because its complete hash binds generated GLB manifests:
 
 ```json
 {
+  "schemaVersion": 1,
+  "packSlug": "polygon-dark-fortress",
   "referencePack": "dark-fortress",
   "reviewCategories": {
     "SM_Prop_": "props",
@@ -807,7 +811,7 @@ Add this reviewed config shape:
 }
 ```
 
-Sort prefixes longest-first so `SM_Chr_Attach_` cannot be consumed by a shorter future prefix. Lowercase the suffix and preserve underscores. Store the configured `referencePack`, a humanized display suggestion, measured GLB dimensions, and browsing-family guess separately from the ref.
+Require exact config keys, schema version 1, and `packSlug` equality with the selected pack root. Resolve this file automatically from the pack slug so the preparation CLI needs no additional human argument. Sort prefixes longest-first so `SM_Chr_Attach_` cannot be consumed by a shorter future prefix. Lowercase the suffix and preserve underscores. Store the configured `referencePack`, a humanized display suggestion, measured GLB dimensions, and browsing-family guess separately from the ref.
 
 - [ ] **Step 5: Implement strict catalog preparation**
 
@@ -868,7 +872,7 @@ Expected: PASS.
 Commit:
 
 ```bash
-git add scripts/configs/synty-packs/polygon-dark-fortress.json \
+git add scripts/configs/world-asset-review/polygon-dark-fortress.json \
   scripts/world_asset_review.py \
   scripts/test_world_asset_review.py \
   scripts/prepare_asset_review.py \
