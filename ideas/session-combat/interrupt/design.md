@@ -61,8 +61,11 @@ re-run. Encounter minor tag. Nothing observable changes in play yet.
 **Session implements `Mover`.** `moverSeam{m, scope}.Move(ctx, enc, mover, from, to)`:
 
 1. Build `ReactionAttacks` off the cast the way the striker seam builds a strike: for each
-   member with OA readiness and a melee attack definition, `AttackFor` answers that
-   definition. Monsters and players alike.
+   member with OA readiness, a melee attack definition, **and a hostile stance toward the
+   mover** (the cast view's `IsHostile`, live since rpg-project#375), `AttackFor` answers
+   that definition. Monsters and players alike. This is where rpg-toolkit#899 (OA ignores
+   hostility) and #766 (a reaction fires between allies in free roam) close: the run's
+   fold answers, not kind.
 2. `resolution.Resolve` with `NewMovement{Mover, MoverKind, From, To, Reactions, Roller}`,
    `World: scope.enc.WorldView()`, no cost (a reaction's price is on the reactor's ledger
    and is charged where the strike is compiled — as today for `Attack`).
@@ -157,8 +160,8 @@ mover. Nothing else.
 - **Readiness stays as it is.** The player is asked *whether*, not *whether ever*; the
   "ready my reaction" toggle of the old stack does not return.
 
-**Done-when.** On the local stack: the monk disengages and walks past the fighter's ally
-line — no window opens for anyone; two wolves walk past the fighter on their turns; the
+**Done-when.** On the local stack: the monk spends a ki point on Step of the Wind and walks
+past two wolves untouched; two wolves walk past the fighter on their turns; the
 first pass opens a window, the fighter chooses `hold`, the wolf continues; the second pass
 opens a window, the fighter chooses `strike`, the beat shows the opportunity attack, and
 the wolf's turn finishes from where it stopped. A restart of rpg-api between the pose and
