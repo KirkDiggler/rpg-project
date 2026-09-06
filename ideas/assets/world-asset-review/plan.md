@@ -729,7 +729,6 @@ git commit -m "asset: rebuild Dark Fortress discovery under palette C"
 - Create: `scripts/test_world_asset_review.py`
 - Create: `scripts/prepare_asset_review.py`
 - Create: `scripts/test_prepare_asset_review.py`
-- Modify: `.gitignore`
 
 **Interfaces:**
 - Consumes: repeated source globs plus trusted/review manifests.
@@ -851,7 +850,7 @@ Add `prepare` and `reset` subcommands. `prepare` accepts required `--pack-root`,
 http://127.0.0.1:5173/?assetReview=1
 ```
 
-Add explicit Web ignore coverage for `public/models/synty/asset-review/`; preparation must still prove it with `git check-ignore` before writing.
+The existing Web rule `public/models/synty/` already covers `public/models/synty/asset-review/`; preparation must prove that effective boundary with `git check-ignore` before writing and must reject any Web checkout where the destination is tracked or not ignored. This Assets task does not edit the Web repository.
 
 - [ ] **Step 7: Run focused tests and commit**
 
@@ -869,8 +868,7 @@ Expected: PASS.
 Commit:
 
 ```bash
-git add .gitignore \
-  scripts/configs/synty-packs/polygon-dark-fortress.json \
+git add scripts/configs/synty-packs/polygon-dark-fortress.json \
   scripts/world_asset_review.py \
   scripts/test_world_asset_review.py \
   scripts/prepare_asset_review.py \
