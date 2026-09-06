@@ -76,9 +76,18 @@ calls it per cell before `enc.Step` — the PR's loop comment names this debt. A
 before the step in both, so the reactor's reach is checked against where the mover still
 stands (#1321's first pinned ordering).
 
+**Disengage is already answered, before anyone is asked.** The machine folds the
+`MovementChain` first and reads triggers off the fold; the `Disengaging` condition
+subscribes to that chain and marks the opportunity attack prevented
+(`conditions/disengaging.go:59-69`, `resolution/movement.go:78`). Step of the Wind applies
+Disengage for a ki point (`features/step_of_the_wind.go:21`). So a disengaging mover
+produces no trigger, and in rung 3 no window opens — the question is never asked and then
+refused.
+
 **Done-when.** On the local stack: a wolf walks out of the fighter's reach on its turn and
 the log shows the fighter's strike marked as an opportunity attack; the fighter walks out
-of a wolf's reach and takes the bite. Both automatic. rpg-api and web need no change beyond
+of a wolf's reach and takes the bite; the monk spends a ki point on Step of the Wind and
+walks out of the same wolf's reach untouched. All automatic. rpg-api and web need no change beyond
 re-pinning: the field is on the wire already, and the dock can label a struck beat by its
 reaction ref.
 
@@ -148,7 +157,8 @@ mover. Nothing else.
 - **Readiness stays as it is.** The player is asked *whether*, not *whether ever*; the
   "ready my reaction" toggle of the old stack does not return.
 
-**Done-when.** On the local stack: two wolves walk past the fighter on their turns; the
+**Done-when.** On the local stack: the monk disengages and walks past the fighter's ally
+line — no window opens for anyone; two wolves walk past the fighter on their turns; the
 first pass opens a window, the fighter chooses `hold`, the wolf continues; the second pass
 opens a window, the fighter chooses `strike`, the beat shows the opportunity attack, and
 the wolf's turn finishes from where it stopped. A restart of rpg-api between the pose and
