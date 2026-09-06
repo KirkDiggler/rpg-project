@@ -1,6 +1,6 @@
 # Bulk World-Asset Review and Promotion Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Journey #365 requires inline execution; do not use subagent-driven development, spawned workers, or autonomous review/fix loops.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Delegation must remain bounded and coordinator-controlled, with one writer per worktree and explicit checkpoints between task batches.
 
 **Goal:** Process all configured Dark Fortress world-building sources under palette C, review cached GLBs in scalable browser batches, and publish explicitly Ready selections into the World Builder through a deterministic private provider.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Work inline. Do not spawn subagents or autonomous review/fix loops.
+- Bounded subagents are allowed where isolation improves correctness, especially across Python and TypeScript contexts. The coordinator retains control, uses one writer per worktree, and does not launch unattended autonomous review/fix loops.
 - Integration is PR-only; never merge locally or push directly to protected branches.
 - Create one implementation issue and one issue branch per owning repository for this wave.
 - Assets branches start from fresh `origin/main`; Web branches start from fresh `origin/dev`.

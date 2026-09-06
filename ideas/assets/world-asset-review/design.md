@@ -581,7 +581,7 @@ Implementation uses one issue branch per owning repository for this wave:
 
 Development follows the consumer need without merging an unavailable provider. The Web Lab can consume synthetic/prepared catalogs while the Assets provider is built. Provider promotion lands before the Web branch binds its committed generated catalog to merged provider authority.
 
-All work remains PR-only. The ingestion journey is implemented inline without spawned autonomous review/fix loops. Unrelated local Dungeon library/config work, placed assets, active notes, and generated Web customization changes remain untouched.
+All work remains PR-only. Bounded coordinator-controlled delegation is allowed when it preserves a useful context boundary, such as keeping Python provider work separate from TypeScript/Web work. The coordinator retains the plan, uses one writer per worktree, reviews results between bounded task batches, and reports back rather than launching an unattended autonomous review/fix loop. Unrelated local Dungeon library/config work, placed assets, active notes, and generated Web customization changes remain untouched.
 
 ## Out of scope
 
