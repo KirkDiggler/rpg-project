@@ -202,6 +202,20 @@ remembering then rather than relearning it.
   separate — that's a client-side pattern reuse, not a server-side one. Not designed further here;
   its own wave once the currency waves above are done.
 
+  **Dependency found while building `Sell`, worth carrying forward rather than rediscovering**:
+  `CharacterData.inventory`'s wire `kind` (weapon/shield/armor/gear — a display vocabulary) is
+  lossy for anything that collapses into `"gear"` — the real `shared.EquipmentType` (tool, pack,
+  item, ammunition) isn't recoverable from it. `Sell`'s own primitive (`RemoveInventoryItem`)
+  matches on the real type, so a client can't reliably sell a `"gear"`-kind item until
+  `CharacterData.Item` also carries the real type (same shape as the `price` field this wave
+  added — a small protos+api addition, no toolkit change). **This wasn't caught earlier because
+  it couldn't have been**: nothing produced an individually-sellable `"gear"`-kind item to test
+  against until `Sell` itself existed to try selling one. `Unpack`'s entire output — a torch, rope,
+  rations, tinderbox — is exactly this class of item. Unpack's own "done when" (an unpacked item is
+  actually usable — sellable, tradeable) isn't met without this fix landing first or alongside it;
+  building and testing `Unpack` without it would mean discovering the identical bug a second time,
+  or worse, testing against a scope narrowed to avoid it without noticing why.
+
 ## 6. Done when
 
 `currency.Money` round-trips through JSON, `ParseCost` correctly parses every existing equipment
