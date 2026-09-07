@@ -50,7 +50,7 @@ At cleanup time the owned local path is API `8090` plus web `3031`, with the mai
 - API source is `7732bfb4342b59e7bfdc76927d5ee475533779aa`; the running container was built from tree-equivalent reviewed head `757e6b79d59fe654a3cb1c3ba855c34d1e6e4419` and was not restarted for documentation cleanup.
 - The browser origin remains `3031`; the old `3030` preview is retired. No full-stack reset was performed because Redis is ephemeral.
 - Composition/content data was preserved byte-identical. The backup and cleanup manifest is `/home/kirk/game-dev/.runtime/local/compositions/cleanup-receipt.olI34G`.
-- Primary user assets remain dirty and the pinned provider is still `/home/kirk/game-dev/.runtime/local/compositions/assets-0fc2ced`.
+- Primary user checkouts were left untouched; the pinned provider remains `/home/kirk/game-dev/.runtime/local/compositions/assets-0fc2ced`.
 
 The former feature worktrees were removed after merge verification and backup; they are not active dependencies.
 
@@ -72,4 +72,4 @@ That investigation supports separating gameplay object identity from visual part
 
 ### Asset and licensing boundary
 
-The private provider remains the authority for licensed source assets and catalog promotion. No licensed GLB or screenshot source was added to this public design repository or to the web composition records. The composition snapshot stores catalog refs and transforms only. Provider pack grouping, custom asset browsing, and absolute asset-version binding were deliberately not absorbed into this slice.
+The private provider remains the authority for licensed source assets and catalog promotion. No licensed GLB or screenshot source was added to this public design repository or to the web composition records. The composition snapshot stores authored JSON—refs, transforms, relationships, and visual-light declarations—not asset bytes. Provider pack grouping, custom asset browsing, and absolute asset-version binding were deliberately not absorbed into this slice.

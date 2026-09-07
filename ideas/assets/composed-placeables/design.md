@@ -61,7 +61,7 @@ Each authored part may carry an explicit point light with:
 - render intensity in the supported `0..20` range; and
 - range in scene units in the supported `0.01..24` range.
 
-Offsets rotate with the part, then the full composition placement is applied once, including the same dungeon-surface alignment as the rendered multipart prop. A shared collector chooses at most 12 lights for the scene using the existing nearest-to-view policy. These lights illuminate rendered meshes only: they do not create gameplay illumination, visibility facts, shadows, flicker, or crypt floor-light pools.
+Offsets rotate with the part, then the full composition placement is applied once, including the same dungeon-surface alignment as the rendered multipart prop. In dungeon preview/play, a shared collector chooses at most 12 lights using the existing nearest-to-view policy; composer and standalone/thumbnail paths currently select around their origin. These lights illuminate rendered meshes only: they do not create gameplay illumination, visibility facts, shadows, flicker, or crypt floor-light pools.
 
 ## Why this boundary
 
