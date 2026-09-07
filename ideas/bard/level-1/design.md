@@ -4,7 +4,9 @@
 **Status:** Design. One slice, cut. Rung 1 of the bard pilot and nothing else.
 **Umbrella:** `ideas/spells/` — levels 1–3, and the choices at 3 made real.
 **Brainstorm:** rpg-project#391 (`ideas/spells/brainstorm.md`), §6 shapes and §7 rungs.
-**Depends on:** nothing in flight. Every seam this uses is shipped.
+**Depends on:** the post-roll window, designed at
+`ideas/session-combat/interrupt/post-roll/design.md` (rpg-project#398) and **included in
+this slice**. Every other seam is shipped.
 
 ---
 
@@ -109,38 +111,57 @@ narrows: it stays nil for an ability that spends its own, and this one does not.
 *Scope:* this ruling is about **new** priced activations. It does not re-plumb Rage,
 Second Wind, or the six combat abilities, and it does not claim they are wrong.
 
-**R2 — The die is spent automatically on the recipient's next attack roll, ability check,
-or saving throw, and the condition consumes itself.**
+**R2 — The spend is the post-roll window, and the window is in this slice.**
 RAW 2014: *"the creature can roll the die and add the number rolled to one ability check,
 attack roll, or saving throw it makes, after rolling the d20 and before the DM says
-whether the roll succeeds or fails."* **The divergence: we spend it on the first eligible
-roll instead of asking.** That window is a Post-roll window and its producer inside a
-machine does not exist — `Step` is sealed to `Gather | Request | Done` with `Pose` named
-and unbuilt (`resolution/step.go:29`), and `Request` runs its sub-machine to Done inline
-(`step.go:67-71`). Rung 4 (Cutting Words) builds that one step and **deletes this default**.
-*Scope:* this ruling covers exactly the inspiration die. It does not say other one-shot
-riders should self-consume, and it does not settle whether the window is opt-in.
+whether the roll succeeds or fails."* **We do not diverge. The player is asked.**
 
-**R3 — The die joins the attack roll as an unsourced `AttackBonus`, and the sourced-bonus
-primitive goes on the shelf.**
-Saves and checks take `BonusSources` with a name and a ref (`events/events.go:426`,
-`:478`); the attack chain takes only `AttackBonus int` (`:286`), which Archery already
-writes into blind (`fighting_style_archery.go:134`). The special case above is a bonus
-list for one condition; **the primitive below is `AttackBonusSource` on
-`AttackChainEvent`, mirroring the two that exist**, projected onto the struck beat beside
-`AdvantageSources` (`session/events.go:1340-1347`, proto `Struck.advantage_sources`).
-That is the right change and it is not this slice: it moves a chain event, a fold, a beat
-and a proto field for a d6. Here the die's provenance rides its own spend beat (R4), and
-the primitive is the shelf's first item.
+An earlier draft of this design spent the die automatically on the first eligible roll,
+because the producer of a post-roll window inside a machine did not exist — `Step` is
+sealed to `Gather | Request | Done` with `Pose` named and unbuilt
+(`resolution/step.go:25-34`). Kirk's call is that the window is built here instead, and
+the reason is not the bard: **the opportunity-attack window shipped and has never been
+walked**, since the monster brain targets the closest member and never walks past anyone.
+The inspiration die is a window that opens every fight, on a player's own attack, so it is
+the machinery's first real walk as well as the bard's real choice. It is also the
+primitive below Cutting Words, Shield-done-right, Silvery Barbs, Counterspell and
+concentration, all of which need a machine that stops after a roll is seen.
 
-**R4 — The spend is reported as an activation-result transaction, so the wire does not
-move.** The Attack verb calls `Encounter.RecordActivation` with `Ability` = the
-inspiration ref and one `ResultConditionRemoved{Target: recipient, Ref: inspired,
-Reason: "spent"}` (`encounter/activation.go:342-357`). Zero new beat kinds, zero proto
-rows. The cost: `condition-removed` **forbids `Amount`** — `rollFactsActivationResultField`
-refuses every roll fact on a non-healing kind (`encounter/activation.go:394-408`) — so the
-face the die rolled is not a number anywhere — it is inside the attack's `Total` and
-nothing names it. That is R3's shelf item, stated as the price of R4 rather than hidden.
+The mechanism is designed in full at
+`ideas/session-combat/interrupt/post-roll/design.md`. What this design consumes from it:
+a `Pose` step between the d20 and `PostAttackRollChain`; a `PostRollOfferChain` the
+recipient's own `inspired` condition answers with an offer; the shipped ledger, freeze,
+Afford row and `React` verb, reused unchanged; and `OfferTakenEvent`, on which the
+condition rolls its die and consumes itself — the die is spent when it is **taken**, so
+declining costs nothing.
+*Scope:* this ruling covers the attack roll. The offer chain on saving throws and ability
+checks is the same shape and is shelved there, not built here — so the die's third and
+second uses arrive with the chain's second fold, not with a second mechanism.
+
+**R3 — The die never touches the attack chain, so the unsourced-`AttackBonus` problem does
+not arise.**
+The attack chain carries only `AttackBonus int` (`events/events.go:286`), which Archery
+writes into blind (`fighting_style_archery.go:134`), while saves and checks carry sourced
+lists (`:426`, `:478`). A die added there would be a number nothing names. With R2 the die
+is added **after** the chain has folded and the d20 is known, by the machine, and its face
+travels on `OfferTakenEvent` with the offering condition's ref on it. So provenance is
+answered by the mechanism rather than paid for with a beat.
+`AttackBonusSource` on `AttackChainEvent` remains the right primitive for effects that do
+modify the roll before it is made — Archery is its first customer, not this die — and it
+stays on the shelf with its own reason rather than as this slice's debt.
+
+**R4 — The spend is still reported as an activation-result transaction, and the face is
+still not a number on it.** The resumed Attack calls `Encounter.RecordActivation` with
+`Ability` = the inspiration ref and one `ResultConditionRemoved{Target: recipient, Ref:
+inspired, Reason: "spent"}` (`encounter/activation.go:342-357`). `condition-removed`
+**forbids `Amount`** — `rollFactsActivationResultField` refuses every roll fact on a
+non-healing kind (`:394-408`) — so the face is inside the attack's `Total` and nothing
+names it there either.
+What changes is that this no longer hides anything: the player **chose** to add it, having
+seen the roll it was added to, and the window's own beat carries that roll and that total
+(`RollWindowOpened`, the one proto row the window design adds). The story reads window,
+then choice, then a struck beat whose total is higher. Naming the face on the spend beat
+is still worth doing and is still shelf.
 
 **R5 — "A creature who can hear you" is range only.** No hearing primitive exists;
 sight does (`intel.Holding`, used by every candidate builder), hearing does not. The
@@ -203,14 +224,15 @@ publishes the condition and returns. A `targetKindForRef` arm returning
 **3. toolkit `conditions` — `inspired`, on the recipient.**
 `refs.Conditions.Inspired()` and a factory arm (`factory.go:70-106`). Parameters: the die
 (`d6`) and the source (the bard's member id) — persisted as opaque JSON, loaded back, the
-way every condition on that list is. Subscriptions, all four the way Raging holds nine:
-`AttackChain` (add the rolled face to `AttackBonus`, R3), `SavingThrowChain` and
-`AbilityCheckChain` (append a `SaveBonusSource` / `CheckBonusSource` naming this
-condition — those lists exist), then `CombatEndTopic` and `RestTopic` for R8's end. On the
-first of the three chains to fire, roll once, add, publish `ConditionRemovedTopic` with
-`Reason: "spent"`, and unsubscribe — Helped's own note applies, that unsubscribing
-mid-dispatch is safe because the bus snapshots subscribers first
-(`conditions/helped.go:151-153`).
+way every condition on that list is. Subscriptions, three rather than five:
+`PostRollOfferChain` (append `Offer{Ref, Name, Audience: the recipient, Die: "1d6"}` — it
+offers, it does not add), `OfferTakenTopic` (its own ref and member only: publish
+`ConditionRemovedTopic` with `Reason: "spent"` and unsubscribe), then `CombatEndTopic` and
+`RestTopic` for R8's end. **It never subscribes to `AttackChain`** — R3. Helped's own note
+applies, that unsubscribing mid-dispatch is safe because the bus snapshots subscribers
+first (`conditions/helped.go:151-153`).
+The save and ability-check arms are the same offer on two more folds and land with the
+window design's own shelf item, not here.
 
 **4. toolkit `session` — the offer, the price, the beats.**
 `buildActivationOffers` (`activations.go:48`) already emits a row per ability with the
@@ -219,8 +241,8 @@ right slot and label. Two additions: an `inspirationCandidates` builder beside
 plus R5's not-self and R7's not-already-inspired rows), and a compiled `Cost` on the
 Activate path where today it is *"nil ON PURPOSE"* (`session/activate.go:272`). The grant
 beat is `RecordActivation` with one `ResultConditionApplied` — the call the verb already
-makes (`activate.go:296-305`). The spend beat is R4: `attack.go` records a second
-`RecordActivation` when the strike's fold reports the die was consumed.
+makes (`activate.go:296-305`). The spend beat is R4, recorded by the **resumed** attack —
+`React`'s post-roll arm, not `Attack` — when the machine reports the offer taken.
 
 **5. rpg-api — nothing but pins.** The class list iterates `classes.ClassData` wholesale
 and already returns the bard (`orchestrator.go:747-756`). Skill choices already reach the
@@ -250,33 +272,46 @@ Confirmed by reading, not assumed.
 **toolkit `resolution` / `session` scenes.** Grant spends one use and one bonus action.
 Refuse self. Refuse a target at 65 ft. Refuse with an empty pool, before anything moves.
 Refuse a second grant on an already-inspired creature, as a candidate shortfall rather
-than an error. Die adds to the recipient's next attack roll. Die adds to the recipient's
-next saving throw. Die adds to the recipient's next ability check. Consumed exactly once
-— a second roll carries nothing. Ends on combat end. Ends on a rest. Long rest restores
+than an error. An inspired recipient's attack **poses a window** instead of resolving:
+Afford shows them a REACT row named "Bardic Inspiration" and everyone else
+`ShortfallWindowOpen`. Answering `strike` adds exactly one face and consumes the die;
+answering `hold` adds nothing and leaves the die in hand for the next attack. An attack by
+an uninspired member poses nothing and is unchanged. Consumed exactly once — a second
+attack after a spend poses no window. Ends on combat end. Ends on a rest. Long rest restores
 uses to `max(1, chaMod)`. A grant with a full profile and an empty ledger charges nothing
 at all (all-or-none).
 
 **rpg-api acceptance.** A bard draft finalizes with three chosen skills, a
 `bardic_inspiration` feature, an `inspiration` pool at its CHA max, and **no spell slots**
 (R6). Through the real session handler: Afford offers the Activate declaration with
-member candidates; Activate produces an activated beat and a condition-applied result.
+member candidates; Activate produces an activated beat and a condition-applied result; the
+inspired member's Attack returns paused and their next Afford carries the REACT row.
 
 **web integration.** The bard appears in the class modal. The dock shows the
 server-authored label with the bonus-action slot and the pool as its price. The
-recipient's condition list shows the die.
+recipient's condition list shows the die. The reaction panel from the OA window renders a
+post-roll window: the d20 and the total so far, and two buttons.
 
 **The walk.** Create a level-1 bard. Enter a fight. Inspire the fighter as a bonus action;
-the log shows the grant and the pool drops by one. The fighter attacks; the beat's total
-carries the die and a spend beat says the inspiration was used. The fighter attacks again
-and it does not. Long rest; the uses come back.
+the log shows the grant and the pool drops by one. The fighter attacks and the dock stops
+on a panel showing the d20 and the total so far, with "Bardic Inspiration" and two
+buttons. **Spend:** the struck beat's total is the roll plus the modifier plus the d6, a
+spend beat says the inspiration was used, and the die is gone — the fighter's next attack
+poses nothing. **Keep:** the total carries no die and the fighter still holds it into the
+next attack, which poses the window again. Both runs, same fight. Long rest; the uses come
+back.
 
 ## Shelf
 
 - **`AttackBonusSource` on the attack chain**, mirroring the save and check bonus lists,
-  projected onto the struck beat. R3's primitive; Archery is its second customer the day
-  it lands.
-- **The post-roll window** (§3.7): one new `Step` (Pose) inside a machine. Rung 4, Cutting
-  Words, and it deletes R2's default.
+  projected onto the struck beat. R3's primitive; Archery is its first customer, and the
+  inspiration die is no longer waiting on it.
+- **The offer chain on saving throws and ability checks**, which is the rest of Bardic
+  Inspiration as written and the window design's own shelf item.
+- **Naming the die's face on the spend beat**, which `condition-removed` forbids today
+  (R4).
+- **Cutting Words** — the same window, audience a hostile bard, the first one posed to
+  somebody other than the roller.
 - **Spellcasting**: the Cast door, slots as pools (§5.1), spells-known on the sheet
   (§5.2). Rung 2, Healing Word.
 - **Instruments and tool proficiency.** The requirement exists
@@ -294,10 +329,13 @@ and it does not. Long rest; the uses come back.
 
 ## What would change the design
 
-- **If the post-roll window lands before this ships**, R2's automatic spend is deleted
-  rather than shipped, and the die becomes a window with two options.
-- **If the sourced attack-bonus primitive lands first**, R3 and R4 both collapse: the die
-  names itself on the struck beat and the separate spend beat is unnecessary.
+- **If the post-roll window slips out of this slice**, the die has no honest spend: the
+  automatic default this design used to carry is deleted, not held in reserve, so the
+  fallback is to ship the grant with no spend at all rather than to ship a spend nobody
+  chose.
+- **If a second post-roll customer appears before this merges**, the window's
+  single-audience and one-pose-per-run rulings both have to give, and that is a change to
+  rpg-project#398 rather than to this design.
 - **If Kirk wants the bard's own screen to show the die**, this slice grows a public
   condition projection, which is an audience change and belongs in its own design.
 - **If a second priced activation appears before this merges**, R1 stops being a first and
