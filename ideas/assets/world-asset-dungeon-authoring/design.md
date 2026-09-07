@@ -25,10 +25,11 @@ game build without becoming dungeon-authorable.
 Monster and NPC appearances are arriving through their own provider paths as
 well. Existing default dungeons already contain hard-coded monster refs, and
 the first promoted NPC appearance families expose why the catalog must not be
-designed as “props plus four visual categories forever.” Scenery, monsters,
-NPCs, and compositions have different runtime semantics, but they should enter
-one builder-facing catalog through explicit adapters rather than accumulating
-independent UI lists.
+designed as “props plus four visual categories forever.” Scenery and actors
+have different runtime semantics, but they should enter one builder-facing
+catalog through explicit adapters rather than accumulating independent UI
+lists. Compositions are technical scenery props: assembled from other assets,
+but authored and placed through one anchor hex.
 
 That boundary was sensible before the World Builder and generated catalogs
 existed. It is now unnecessary friction during pre-playtest development.
@@ -47,9 +48,10 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 1. **Promotion grants visual discoverability.** If an asset passed provider
    promotion and Web synchronization, it enters the appropriate builder catalog
    adapter without another hand-maintained UI list.
-2. **The builder catalog is discriminated.** Scenery, monsters, NPCs, and
-   compositions share discovery and presentation infrastructure without being
-   forced through one runtime behavior.
+2. **The builder catalog is discriminated.** Scenery and actors share discovery
+   and presentation infrastructure without being forced through one runtime
+   behavior. Scenery sources include legacy assets, generated world assets, and
+   compositions; actor kinds include monsters and NPCs.
 3. **Visual category is not gameplay meaning.** `items` and `weapons` identify
    visual intent here. They do not automatically grant inventory, equip a
    character, or invoke a rulebook definition.
@@ -74,8 +76,10 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 - Feed the generated world-asset catalog into the Dungeon Builder palette.
 - Preserve existing legacy props and monster authoring.
 - Replace builder-local category lists with a discriminated shared catalog seam
-  that preserves today's monsters and compositions and accepts future generated
-  monster/NPC catalog adapters without another palette redesign.
+  whose scenery side includes legacy assets, generated world assets, and
+  single-anchor compositions, while its actor side preserves today's monsters
+  and accepts future generated monster/NPC catalog adapters without another
+  palette redesign.
 - Render generated dungeon placements through `WorldAssetModel` in preview and
   play.
 - Preserve current position, facing, offset, identifier, holdable, composition,
@@ -150,10 +154,13 @@ Ready review entries
   → Web world-assets:sync
   → generated worldAssetCatalog.ts + ignored runtime GLBs
   → shared discriminated builder catalog
-       ├─ generated scenery adapter (props/items/weapons/env)
-       ├─ existing monster adapter (gameplay ref + appearance candidates)
-       ├─ future NPC adapter (appearance metadata; placement contract later)
-       ├─ composition adapter
+       ├─ scenery
+       │    ├─ legacy asset adapter
+       │    ├─ generated asset adapter (props/items/weapons/env)
+       │    └─ composition adapter (assembled technical prop, one anchor hex)
+       ├─ actors
+       │    ├─ existing monster adapter (gameplay ref + appearance candidates)
+       │    └─ future NPC adapter (appearance metadata; placement contract later)
        ├─ World Builder palette and WorldAssetModel
        └─ Dungeon Builder palette
             → place[].ref + authored placement fields
@@ -205,13 +212,22 @@ for reconsideration rather than silently widening scope.
 ## Web catalog and palette
 
 The generated `worldAssetCatalog.ts` remains generated and is never edited by
-hand. A shared, discriminated builder-catalog model accepts adapters for:
+hand. The World Builder already consumes generated entries without filtering by
+`props`, `items`, `weapons`, or `env`; that all-category discovery remains an
+explicit tested invariant. An asset appears only after Ready promotion, provider
+merge, and `world-assets:sync`—a candidate in the local review queue is not yet
+a published builder asset.
 
-- legacy scenery;
-- generated world-asset scenery;
-- monsters;
-- NPCs; and
-- compositions.
+A shared, discriminated builder-catalog model has two top-level authoring kinds:
+
+- **scenery**, sourced from legacy assets, generated world assets, or
+  compositions; and
+- **actors**, specialized as monsters or NPCs.
+
+A composition is therefore not a peer of scenery. It is a technical scenery
+prop assembled from other catalog assets, represented by one composition ref,
+and placed through one anchor hex. Its existing expansion/render path remains
+specialized behind the scenery entry.
 
 Each entry declares its authoring kind and source. Shared palette code can
 search, label, thumbnail, and select every kind, while placement dispatch stays
@@ -281,6 +297,8 @@ resolvers.
   monster refs already present in default dungeons.
 - The shared catalog refactor does not turn monsters or future NPCs into scenery;
   their adapters retain kind-specific placement dispatch.
+- Existing compositions remain single-anchor scenery entries and retain their
+  existing expansion, support-link, light, serialization, and rendering paths.
 - Existing exact Plushie and generated world refs retain their current resolver
   authority; no family alias is invented for new world assets.
 - Existing compositions remain valid.
@@ -333,6 +351,8 @@ resolvers.
   adapter; default-dungeon monster refs still parse, display, preview, and play.
 - The common catalog accepts an NPC adapter without widening scenery behavior or
   requiring another palette component.
+- Compositions appear as scenery-sourced technical props, remain one placement
+  at the authoring boundary, and preserve their existing expansion behavior.
 - Placement, Inspector edits, YAML export/import, and server-error paths retain
   exact refs.
 - `AtlasPropModel` routes generated refs to `WorldAssetModel`, legacy refs to
