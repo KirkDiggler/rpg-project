@@ -53,15 +53,27 @@ save, dirty or persist call in the session handlers. A new verb is one handler f
 `attack.go`, one interface entry, and arms in `eventKindToProto`, `setEventBody` and
 `verbToProto` in `convert.go`. There are 26 copies of the pattern.
 
-**"The resolution machines can pause and interrupt."** Does not hold yet — and that is
-fine, because spells are what will make it true.
-`resolution/step.go:66-71`: *"No suspension yet. The requested machine runs to Done inside
-this one's step loop."* The session's suspension spine (Pending, Answer, the verb freeze) was
-deleted because the walk stopped posing windows and a spine with no producer is unreachable;
-`session/doc.go:186-216` names wave 5 — a reaction — as the first honest producer that
-re-creates it, and says the custody design lives untouched in `play/interrupt`. Shield and
-Counterspell therefore do not *ride* the pause machinery; they will be its producer. They are
-wave two of spells, not a head start.
+**"The resolution machines can pause and interrupt."** Half true as of session v0.65.0
+(opportunity-attack rung 3, 2026-09-07), and the half that is true is not the half this
+sentence meant.
+
+**The pause exists, at the mover seam.** When a monster's step would provoke, `moverSeam.Move`
+poses one interrupt window per player reactor (`session/mover.go:254-256`), returns
+`encounter.StepPausedError` — *"news, not a failure"* (`encounter/pause.go:47-55`) — and the
+encounter stores a `PausedTurn` (`encounter/data.go:106-118`) and refuses to be driven until
+`ResumeTurn`. `Manager.React` answers with `ReactStrike` or `ReactHold`
+(`session/react.go:118-186`), unanswered windows are held on their audiences' behalf
+(`react.go:260-268`), and the last answer resumes the turn. `VerbReact` is a real Afford verb
+(`session/afford.go:71-89`, `:597-598`), and `play/interrupt` — the custody ledger — has six
+non-test importers in `session` today.
+
+**What does not exist is the pause inside a resolution machine.** `Step` is still sealed to
+`Gather | Request | Done`; `Pose` is named in ADR-0038 and unbuilt (`step.go:29`), and
+`Request` still says *"No suspension yet. The requested machine runs to Done inside this one's
+step loop"* (`step.go:67`). So the mover seam pauses **between** a step and its consequence;
+nothing pauses **inside** a roll. Shield and Counterspell do not need the custody built — that
+is done — they need a producer one layer down. They are wave two of spells, and the ledger is
+already waiting for them.
 
 ---
 
@@ -183,9 +195,12 @@ Ensnaring Strike (restrained), Hold Person (paralyzed), Sleep (unconscious exist
 
 ### 3.7 The suspension producer
 
-§1. Wave 5. Reaction spells wait on it and give it its first honest producer. Not to be
-designed here beyond the note that the cast machine's phase boundaries must be yielded steps
-like strike's (`strike.go:96-101`), so windows can be added without rebuilding it.
+§1. **Updated as of session v0.65.0: the custody shipped and the producer did not.** The
+opportunity attack pauses a monster's turn at the mover seam — pose, `PausedTurn`, `React`,
+`ResumeTurn`, `VerbReact` — so reaction spells no longer wait on the ledger. What they wait on
+is one new `Step` (Pose) inside a resolution machine, so a machine can stop after a roll and
+before its outcome (`step.go:29,67`). The cast machine's phase boundaries must be yielded steps
+like strike's (`strike.go:96-101`), so that window can be added without rebuilding it.
 
 ---
 
@@ -305,21 +320,23 @@ drives it.
 | Save | one Gather, then Done | the smallest machine that folds a chain, and it never touches the bus — the fold happens once inside `saves.MakeSavingThrow` (`save.go:66-88`) | `resolution/contest.go:241` — the only one |
 | Contest | Request(save) → outcome policy → Gather(impose) → Done (`contest.go:144-213`) | the only machine that composes another and resumes with its outcome | `resolution/strike.go:909` |
 | Activation | Start(find actor and target in the cast) → Gather(run, collect typed effects) → Done | it charges **nothing** at the door on purpose: the ability spends its own slot, so a `Cost` beside it would bill twice (`activation.go:357-363`, effects `activation.go:61-124`) | `session/activate.go:228` |
-| Movement | Start → Gather(announce, fold the chain) → Request(strike) per trigger → Done | the only machine that produces reaction triggers and resolves them inline (`movement.go:158-180`, `:313`) | `session/mover.go:95` |
+| Movement | Start → Gather(announce, fold the chain) → Request(strike) per trigger → Done | the only machine that produces reaction triggers and resolves them inline (`movement.go:158-180`, `:313`) | `session/mover.go:139` |
 | Boundary | Start → one Gather per crossing, sealed kind→topic lookup → Done | publishes the clock, and refuses a kind this build does not know at the door rather than publishing nothing (`boundary.go:76-110`) | `session/announcer.go:60` |
 | Dispatch | not a machine: `NewAction` reads the definition's profile arm and returns one | the one place content chooses a sequence; one arm (`action.go:19-34`) | `session/attack.go:254`, `session/striker.go:98` |
 | The door | `payAtTheDoor` charges a `combat.SpendProfile` all-or-none, after pure preflight and before the first step | the only place a price moves; `Pools` and `Requires` are expressible and unexercised (`cost.go:127-173`, `combat/spend_profile.go:37-45,59-95`) | every priced verb through `Resolve` (`resolve.go:299-427`) |
 | Afford | compiles `Declaration`s off the sheet: verb, slot, available, shortfall, candidates | the server authors the offer and the label; five verbs, none of them a cast (`session/afford.go:36-95`) | session read path, web action dock |
-| Condition on the bus | attach → subscribe (clock topics, chains) → publish removal → detach | the only ongoing effect, persisted as opaque JSON (`conditions/raging.go:88,118,148`, `events/events.go:1009-1016`) | 6 of 14 core conditions have behavior |
+| Condition on the bus | attach → subscribe (clock topics, chains) → publish removal → detach | the only ongoing effect, persisted as opaque JSON (`conditions/raging.go:88` turn end, `:118` rest, `:148` combat end) | 6 of 14 core conditions have behavior |
 | World trigger | a `TriggerFact` on a disposition's `until`, folded per faction mind into graph edges | nothing stores the stance: it is derived on every question from declaration plus facts, and six of the seven trigger forms are refused on an `until` (`encounter/disposition.go:125-149`, `encounter/world.go:395-425`) | `encounter.IsHostile`/`IsAllied` → `resolution/cast.go:115-120` |
-| Placement | validate content → place → reveal | placement is shared with monsters and spawning is not: `PlaceNPC` takes already-built content and never forms a fight (`session/write.go:653`), `Spawn` does (`write.go:539`) | session write path |
+| Placement | validate content → place → reveal | placement is shared with monsters and spawning is not: `PlaceNPC` takes already-built content and never forms a fight (`session/write.go:654`), `Spawn` does (`write.go:540`) | session write path |
+| Step-pause window (mover seam) | announce a step → pose one window per reactor → return `StepPausedError` → store `PausedTurn` and refuse drives → `React(Strike\|Hold)` answers → last answer resumes | the only shape that leaves the process and comes back. It pauses **between** a step and its consequence, not inside a roll, and the pause is carried as news rather than a failure because `Move`'s one return is an error (`encounter/pause.go:47-55`) | `session/mover.go:254-256` (pose), `session/react.go:118-186` (answer, resume), `encounter/data.go:106-118` (`PausedTurn`), `session/afford.go:597-598` (`VerbReact`) |
 
-**What is not in this table, and why.** The pause. `Step` is sealed to `Gather | Request |
-Done`; `Pose` is named in ADR-0038 and not built (`step.go:26-33`), and `Request` says so in
-its own doc — "No suspension yet. The requested machine runs to Done inside this one's step
-loop" (`step.go:66-71`). The custody half *is* built — `play/interrupt` has a ledger with
-Pose and Answer — and it has **zero non-test importers**. So the interrupt window is a design
-that exists and a shape that does not.
+**What is not in this table, and why.** A pause *inside* a machine. The window above is a
+step-pause at the mover seam: the encounter announces a step, asks, and stops. `Step` is still
+sealed to `Gather | Request | Done` with `Pose` named in ADR-0038 and unbuilt (`step.go:29`),
+and `Request` still runs its sub-machine to Done inline (`step.go:67`). So a machine cannot
+stop after it has rolled and before it reads the outcome. Everything downstream of that —
+Shield, Counterspell, Cutting Words — needs one new `Step`, and it needs nothing else: the
+ledger, the verb, the freeze and the resume are all shipped.
 
 ### 6.2 Shapes spellcasting asks for
 
@@ -331,15 +348,15 @@ does not.
 | **Grant** | pay at the door → deliver to a willing target → one beat | no roll at all, because the target does not resist | Activation, which charges nothing at the door and acts on self (`activation.go:357-363`) — the delta is a price and a target who is not the actor | Bardic Inspiration | Healing Word, Cure Wounds, Bless, Aid | **partial** — heal effects and a range check exist (`activation.go:61-124`, `delivery.go:12-39`) |
 | **Save-then-effect** | set a DC → target rolls → read an outcome policy (full / half / nothing) → deliver → beat | the outcome policy; today success means the effect simply never happened | Contest — the steps are already Request(save) → policy → deliver → Done. The delta is two refusals: `OnSuccess` must be `Negated` (`contest.go:70`, and again at the data layer `combat/actions/attack.go:258-261`) and recurrence is refused outright (`contest.go:69-74`) | Vicious Mockery | Sacred Flame, the wolf's knockdown, ghoul paralysis, every save-or-suffer | **partial** |
 | **Fan-out** | resolve one shape once per target in a set or an area → one beat per target | N outcomes from one declaration; every machine input holds one target and every outcome describes one | none. Movement's per-trigger `Request` loop (`movement.go:313`) is the only precedent for repeating a sub-machine | Thunderwave — and the first monster with multiattack gets there first | every area spell, breath weapons, Sweeping Attack, healing word on a group | **missing** — shape queries have no non-test caller (`tools/spatial/hex_grid.go:174,185`); `TargetKind` is NONE\|MEMBER\|PATH |
-| **Post-roll window** | roll → **pause** → offer a window to someone who is not the actor → read the answer → read the outcome | it is the first step that leaves the process | none. `Step` is sealed and `Pose` is unbuilt (`step.go:26-33,66-71`); the custody ledger in `play/interrupt` has no importer | Cutting Words | Shield, Silvery Barbs, Bardic Inspiration's spend, every reaction | **missing**, custody partial |
+| **Post-roll window** | roll → **pause** → offer a window to someone who is not the actor → read the answer → read the outcome | it stops a machine mid-interaction, after a die is seen and before its outcome is read | the step-pause window at the mover seam, which pauses between a step and its consequence and has all the custody: ledger, `PausedTurn`, `React`, `ResumeTurn`, `VerbReact`. The delta is **one new `Step` (Pose) inside a resolution machine** — `step.go:29,67` — and strike is already built for it, every phase boundary being a yielded step (`strike.go:96-101`) | Cutting Words | Shield, Silvery Barbs, Bardic Inspiration's spend, every reaction | **partial** — the window exists at the mover seam, the producer inside a machine does not |
 | **Concentration — an owning condition** | own N effects → on damage taken, request a CON save as Save-then-effect → on failure drop everything owned → a second concentration cast drops the first | ownership and cascade. One owner, many owned, and ending one ends all of them | a condition on the bus. `ConditionApplication` carries `Ref`, `Parameters`, `Save` and **no source binding** (`combat/actions/attack.go:240-244`), so nothing records who owns what. The DC is already in the roster (`saves/gate.go:115`) and the trigger constant exists with no driver (`events/events.go:386-387`) | any concentration spell | Hunter's Mark, Hex, Bless ending when the caster drops it, Dispel Magic | **missing** — this is §3.2, and it is the largest single piece |
 | **Ritual / out-of-bubble cast** | declare with no turn and no round → pay a price that is not a slot on a turn → resolve | the action economy is the whole gate today, and it exists only inside a fight | the standing verbs (Search, Loot, Interact, Trade) run outside a bubble but carry no action definition and no price. Rounds are explicit that they exist only inside one (`encounter/field.go:1106-1113`) | Charm Person on a guard in a corridor | rituals, Detect Magic, every social spell, Song of Rest | **missing** |
-| **Upcast** | choose a level at the door → charge that level's pool → the effect reads what was paid | the price is an input rather than a constant, and the effect is a function of it | `SpendProfile.Pools` (`spend_profile.go:82-84`) — expressible, unexercised, and compiled before the declaration, so nothing lets a player choose | Healing Word at 2nd | Thunderwave, Magic Missile, every scaling spell | **missing**, the pool half partial |
+| **Upcast** | choose a level at the door → charge that level's pool → the effect reads what was paid | the price is an input rather than a constant, and the effect is a function of it | `SpendProfile.Pools` (`spend_profile.go:80`) — expressible, unexercised, and compiled before the declaration, so nothing lets a player choose | Healing Word at 2nd | Thunderwave, Magic Missile, every scaling spell | **missing**, the pool half partial |
 | **Persistent area with recurrence** | place a shape on the map → it persists → re-apply at a clock boundary → end | an effect owned by a region rather than by a member, plus a recurrence step | `saves.SaveGate.Recurrence` is declarable and refused (`ErrRecurrenceUnsupported`, `contest.go:69-74`); `MembersIn(region)` exists with no combat caller (`encounter/region.go:108`) | Fog Cloud, Web | Spirit Guardians, Darkness, authored hazards | **missing** — §3.4 plus a region-owned effect |
-| **Summon / placement** | author a participant → place it → it acts | nothing about the placement; the delta is who authored the content and whether it takes a turn | `PlaceNPC` places already-built content and forms no fight (`session/write.go:653`); `Spawn` forms one (`write.go:539`) | Find Familiar | Animate Dead, conjurations, summoned swarms | **partial** — placement exists, a caster-authored participant does not |
-| **Reaction to a cast** | a declaration is made → **pause** → offer a window → the declaration may not happen | the producer is the door rather than a step or a roll | Post-roll window: same custody, different trigger point | Counterspell | any declaration-time interrupt | **missing**, and there is no cast verb to hang it on |
-| **Teleport** | leave → arrive, with no path between | it must produce no movement chain, so no opportunity attack reads it | Movement, which refuses `From == To` and folds a chain the mover's reactions read (`movement.go:158-180`, `session/mover.go:330`) — the delta is skipping the fold | Misty Step | Dimension Door, Thunder Step, and a push's forced displacement | **missing** |
-| **Detection / illusion — a per-player beat** | resolve once → describe the same board differently to different members | audience. The wire carries one description of a beat for everyone | the grain already exists on the world side: a fact is judged on the *truth* grain or a mind's *audience* grain (`encounter/field.go:1129-1135`), and `Sight` is supplied never defaulted (`resolve.go:198-216`) | Detect Magic, Silent Image | fog of war, hidden creatures, rpg-toolkit#940 | **missing** — the grain exists, the wire does not |
+| **Summon / placement** | author a participant → place it → it acts | nothing about the placement; the delta is who authored the content and whether it takes a turn | `PlaceNPC` places already-built content and forms no fight (`session/write.go:654`); `Spawn` forms one (`write.go:540`) | Find Familiar | Animate Dead, conjurations, summoned swarms | **partial** — placement exists, a caster-authored participant does not |
+| **Reaction to a cast** | a declaration is made → **pause** → offer a window → the declaration may not happen | the producer is the door rather than a step or a roll | the same custody again — one ledger, one `React` verb, one resume — with a third producer, this time at `payAtTheDoor` (`cost.go:148`) rather than at a step or a roll | Counterspell | any declaration-time interrupt | **missing**, and there is no cast verb to hang it on |
+| **Teleport** | leave → arrive, with no path between | it must produce no movement chain, so no opportunity attack reads it | Movement, which refuses `From == To` and folds a chain the mover's reactions read (`movement.go:158-180`, `session/mover.go:481`) — the delta is skipping the fold | Misty Step | Dimension Door, Thunder Step, and a push's forced displacement | **missing** |
+| **Detection / illusion — a per-player beat** | resolve once → describe the same board differently to different members | audience. The wire carries one description of a beat for everyone | the grain already exists on the world side: a fact is judged on the *truth* grain or a mind's *audience* grain (`encounter/field.go:136-138`), and `Sight` is supplied never defaulted (`resolve.go:198-216`) | Detect Magic, Silent Image | fog of war, hidden creatures, rpg-toolkit#940 | **missing** — the grain exists, the wire does not |
 | **Duration boundary** | a clock boundary is crossed → subscribed effects end | nothing; it is the one shape on this list that is finished | Boundary, publishing turn topics that conditions subscribe to (`boundary.go:76-110`) | already served | every timed condition | **exists** — with one gap: "10 minutes" and "1 hour" are not turn boundaries, and outside a bubble nothing crosses one |
 
 ### 6.3 Which kind of change each one is
@@ -349,8 +366,9 @@ Sorting the rows above by what they actually add, because most of them are not m
 - **A new machine — two.** Fan-out, which is a loop over a target source with a per-target
   sub-machine, and the out-of-bubble cast, which is a resolution with no economy to gate it.
 - **A new step, once, for two rows.** Post-roll window and reaction-to-a-cast are the *same*
-  new `Step` (Pose) plus the ledger that already exists in `play/interrupt`. Built once, they
-  serve both, and Teleport is Movement with a step removed rather than a machine added.
+  new `Step` (Pose), and everything around it is already shipped: the ledger, `PausedTurn`,
+  `React`, `ResumeTurn` and `VerbReact` all run today at the mover seam. Built once, one step
+  serves both producers. Teleport is Movement with a step removed rather than a machine added.
 - **A new arm on a machine we have — two.** **Save-then-effect is the contest with an
   outcome policy and a delivery, not a new machine.** Its steps are already Request(save) →
   policy → deliver → Done (`contest.go:144-213`); what is hardcoded is that the policy is
@@ -394,10 +412,10 @@ cost.
 
 | # | Spell or feature | Shapes × effect kinds | Places | Done-when |
 |---|---|---|---|---|
-| 1 | Bardic Inspiration | Grant × condition(held die) | the door with an inspiration pool (`spend_profile.go:82-84`, `character/ledger.go:178-195`); a bus condition on another member | a level-1 bard pays one use at the door, an ally carries a visible die, and a `resolution` test scene shows the pool decrement and the condition applied. The die's *spend* wants rung 4; until then it is spent automatically on the recipient's next strike, and that default is what rung 4 deletes |
+| 1 | Bardic Inspiration | Grant × condition(held die) | the door with an inspiration pool (`spend_profile.go:80`, `character/ledger.go:178-195`); a bus condition on another member | a level-1 bard pays one use at the door, an ally carries a visible die, and a `resolution` test scene shows the pool decrement and the condition applied. The die's *spend* wants rung 4's window; until that step exists it is spent automatically on the recipient's next strike, and that default is what rung 4 deletes |
 | 2 | Healing Word | Grant × heal | the Cast door with slots as pools (§5.1); spells known on the sheet (§5.2); the range check (`delivery.go:12-39`) and the healing beat that already exists | walked: a bard casts it at range on a downed ally, and the client shows the slot as the price and the heal with its roll |
 | 3 | Vicious Mockery | Save-then-effect × {damage, condition} | the outcome policy on the contest (§3.3); one of the inert conditions gets behavior (§3.6) | walked: the client shows a WIS save with its roll and DC, and the target's next attack rolls at disadvantage. Adds a proto enum row — Vicious Mockery is not in the `Spell` enum |
-| 4 | Cutting Words | Post-roll window | the pause (§3.7) — its second producer, and the first that is not a reaction to being attacked | walked: an enemy's attack roll is seen, a bard at range is offered a window, and the answer changes whether the hit lands. Needs the College choice at 3, so it lands after level-up |
+| 4 | Cutting Words | Post-roll window | the pause (§3.7) — the second producer, and the first that lives *inside* a machine rather than between steps; the ledger, `React` and the resume are already shipped | walked: an enemy's attack roll is seen, a bard at range is offered a window, and the answer changes whether the hit lands. Needs the College choice at 3, so it lands after level-up |
 | 5 | Charm Person / Calm Emotions | Save-then-effect × {condition Charmed, world fact} | the fact → mind → disposition fold (`encounter/disposition.go:125-149`, `world.go:395-425`); the out-of-bubble cast | walked: a charmed guard's faction reads neutral through `IsHostile` inside the same run, with **no new stance API**. Per-member directed disposition stays on §3.5's shelf; this rung deliberately lands on the fold that exists |
 | 6 | Thunderwave | Fan-out × Save-then-effect(half) × {damage, push} | §3.1, §3.4, a `TargetKind` for a shape, and push — which has no delivery anywhere today | walked: one declaration produces one beat per target with differing outcomes, and the board shows them moved |
 
@@ -424,7 +442,7 @@ Two things that will bite the day a slot is charged:
 Passed over, not refuted. Its first two rungs are Hunter's Mark — a strike rider, the shape
 Sneak Attack already is — and Cure Wounds, a heal, which is Second Wind with a target. Both
 re-walk places we have, and the ranger reaches a missing one only at Ensnaring Strike. It also
-gets no spells at level 1 (`character/draft.go:1202`), which made §5.1 a gate rather than a
+gets no spells at level 1 (`character/draft.go:1337`), which made §5.1 a gate rather than a
 choice. It stays the natural second class through the same rungs once the shapes exist.
 
 ---
