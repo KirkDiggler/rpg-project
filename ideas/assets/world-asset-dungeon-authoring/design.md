@@ -15,13 +15,22 @@ reference namespaces:
 - `dnd5e:env:*`
 
 After `world-assets:sync`, the generated catalog automatically feeds the World
-Builder. The Dungeon Builder still derives its palette from the legacy
-`PROP_KEYS` vocabulary, the Toolkit DungeonSpec compiler routes only `props`
-and `monsters`, and the dungeon/game renderer resolves scenery through the
-legacy `PropModel` path. A promoted asset can therefore exist in the game build
-without becoming dungeon-authorable.
+Builder. The Dungeon Builder still derives its scenery palette from the legacy
+`PROP_KEYS` vocabulary, while its monster choices are separately hand-listed
+over the current monster-model mapping. The Toolkit DungeonSpec compiler routes
+only `props` and `monsters`, and the dungeon/game renderer resolves scenery
+through the legacy `PropModel` path. A promoted asset can therefore exist in the
+game build without becoming dungeon-authorable.
 
-That boundary was sensible before the World Builder and generated catalog
+Monster and NPC appearances are arriving through their own provider paths as
+well. Existing default dungeons already contain hard-coded monster refs, and
+the first promoted NPC appearance families expose why the catalog must not be
+designed as “props plus four visual categories forever.” Scenery, monsters,
+NPCs, and compositions have different runtime semantics, but they should enter
+one builder-facing catalog through explicit adapters rather than accumulating
+independent UI lists.
+
+That boundary was sensible before the World Builder and generated catalogs
 existed. It is now unnecessary friction during pre-playtest development.
 
 ## Outcome
@@ -35,21 +44,25 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 
 ## Design principles
 
-1. **Promotion grants visual authorability.** If an asset passed provider
-   promotion and Web synchronization, it is available to both builders.
-2. **Visual category is not gameplay meaning.** `items` and `weapons` identify
+1. **Promotion grants visual discoverability.** If an asset passed provider
+   promotion and Web synchronization, it enters the appropriate builder catalog
+   adapter without another hand-maintained UI list.
+2. **The builder catalog is discriminated.** Scenery, monsters, NPCs, and
+   compositions share discovery and presentation infrastructure without being
+   forced through one runtime behavior.
+3. **Visual category is not gameplay meaning.** `items` and `weapons` identify
    visual intent here. They do not automatically grant inventory, equip a
    character, or invoke a rulebook definition.
-3. **Placement owns placement behavior.** Existing authored fields such as
+4. **Placement owns placement behavior.** Existing authored fields such as
    `blocks_movement` and `blocks_los` remain explicit facts in each DungeonSpec
    placement.
-4. **Do not infer semantics.** Filenames, dimensions, tags, and visual category
+5. **Do not infer semantics.** Filenames, dimensions, tags, and visual category
    do not infer collision, line of sight, lighting, pickup behavior, or rules.
-5. **Prefer openness before playtest.** A synchronized asset is not withheld
+6. **Prefer openness before playtest.** A synchronized asset is not withheld
    without an observed technical or gameplay reason.
-6. **Preserve exact refs.** The exact visual ref survives builder, YAML,
+7. **Preserve exact refs.** The exact visual ref survives builder, YAML,
    compiler, atlas, preview, and game rendering unchanged.
-7. **Fail closed visually.** An unsupported exact ref never substitutes a
+8. **Fail closed visually.** An unsupported exact ref never substitutes a
    different asset.
 
 ## Scope
@@ -60,6 +73,9 @@ No second hand-maintained palette list or per-asset Web mapping is required.
   used in DungeonSpec `place[]`.
 - Feed the generated world-asset catalog into the Dungeon Builder palette.
 - Preserve existing legacy props and monster authoring.
+- Replace builder-local category lists with a discriminated shared catalog seam
+  that preserves today's monsters and compositions and accepts future generated
+  monster/NPC catalog adapters without another palette redesign.
 - Render generated dungeon placements through `WorldAssetModel` in preview and
   play.
 - Preserve current position, facing, offset, identifier, holdable, composition,
@@ -72,6 +88,9 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 - Granting inventory items or rulebook features when scenery is picked up.
 - Equipping a placed weapon.
 - Mapping a visual ref to a rulebook item, weapon, or spell.
+- Choosing which promoted monster/NPC appearance maps to which rulebook actor,
+  combat pool, AI policy, faction, or world-NPC definition.
+- Making an unbound monster/NPC appearance behave as scenery or as a combatant.
 - Changing the meaning of current `holdable` or `holds` fields.
 - Inferring or automatically authoring lights.
 - Multi-hex occupancy, rotated footprint masks, or per-cell collision.
@@ -97,6 +116,15 @@ props | items | weapons | env
 ```
 
 When it parses as `monsters`, existing monster behavior remains unchanged.
+Existing monster refs are gameplay identities, not merely model names.
+
+The incoming `npcs` namespace is reserved for the actor side of the shared
+catalog. This slice does not route NPCs through scenery or invent DungeonSpec NPC
+semantics. An NPC catalog adapter may expose synchronized appearance metadata to
+the common catalog surface, but authoring enablement waits for an explicit NPC
+placement contract. This is an honest type distinction rather than a UI
+hard-code: adding that contract will not require replacing the palette again.
+
 Other ref types remain unsupported by the DungeonSpec compiler.
 
 For scenery, all current prop-like validation applies uniformly:
@@ -121,7 +149,11 @@ Ready review entries
   → public, license-safe provider catalog
   → Web world-assets:sync
   → generated worldAssetCatalog.ts + ignored runtime GLBs
-  → shared generated catalog adapters
+  → shared discriminated builder catalog
+       ├─ generated scenery adapter (props/items/weapons/env)
+       ├─ existing monster adapter (gameplay ref + appearance candidates)
+       ├─ future NPC adapter (appearance metadata; placement contract later)
+       ├─ composition adapter
        ├─ World Builder palette and WorldAssetModel
        └─ Dungeon Builder palette
             → place[].ref + authored placement fields
@@ -173,13 +205,35 @@ for reconsideration rather than silently widening scope.
 ## Web catalog and palette
 
 The generated `worldAssetCatalog.ts` remains generated and is never edited by
-hand. A shared adapter exposes its entries to both builders.
+hand. A shared, discriminated builder-catalog model accepts adapters for:
 
-The Dungeon Builder palette becomes the deterministic union of:
+- legacy scenery;
+- generated world-asset scenery;
+- monsters;
+- NPCs; and
+- compositions.
+
+Each entry declares its authoring kind and source. Shared palette code can
+search, label, thumbnail, and select every kind, while placement dispatch stays
+kind-specific. A scenery entry never acquires monster behavior because both
+appear in one palette, and an NPC entry never silently becomes scenery while its
+placement contract is still absent.
+
+For this slice, the Dungeon Builder's scenery entries become the deterministic
+union of:
 
 1. existing legacy prop entries; and
 2. every generated world-asset entry not already represented by the same exact
    ref.
+
+The existing monster adapter preserves the currently authorable rulebook refs
+and their model candidates, including monsters already used by default
+dungeons. It should derive display entries from the authoritative monster
+mapping rather than perpetuating a second manually synchronized palette list.
+The NPC adapter boundary is defined now and may initially be empty or
+non-placeable until the incoming NPC provider and gameplay contract name their
+authority. Adding those entries later is an adapter/data change, not another
+palette architecture change.
 
 Legacy ordering and behavior remain stable. Generated entries retain provider
 order, display name, exact ref, visual category, and any available thumbnail.
@@ -223,7 +277,10 @@ resolvers.
 ## Compatibility
 
 - Existing DungeonSpec YAML remains valid and byte-equivalent when re-emitted.
-- Existing `props` and `monsters` compile and render unchanged.
+- Existing `props` and `monsters` compile and render unchanged, including
+  monster refs already present in default dungeons.
+- The shared catalog refactor does not turn monsters or future NPCs into scenery;
+  their adapters retain kind-specific placement dispatch.
 - Existing exact Plushie and generated world refs retain their current resolver
   authority; no family alias is invented for new world assets.
 - Existing compositions remain valid.
@@ -269,9 +326,13 @@ resolvers.
 
 ### Web
 
-- Generated catalog entries from all four categories appear in the Dungeon
-  palette without a hand-written list.
+- Generated catalog entries from all four scenery categories appear in the
+  Dungeon palette without a hand-written list.
 - Legacy palette ordering and entries remain stable.
+- Existing monster choices are preserved and derived through the monster
+  adapter; default-dungeon monster refs still parse, display, preview, and play.
+- The common catalog accepts an NPC adapter without widening scenery behavior or
+  requiring another palette component.
 - Placement, Inspector edits, YAML export/import, and server-error paths retain
   exact refs.
 - `AtlasPropModel` routes generated refs to `WorldAssetModel`, legacy refs to
@@ -339,6 +400,10 @@ would make future multi-hex work harder to reason about.
 
 The design deliberately leaves clear seams for later work:
 
+- generated monster appearance catalogs bound explicitly to rulebook monster
+  identities and appearance pools;
+- generated NPC catalogs bound explicitly to world-NPC definitions, movement,
+  interaction, and faction policy;
 - optional per-placement or catalog-suggested rulebook bindings;
 - pickup verbs that grant inventory items;
 - weapon equipment interactions;
