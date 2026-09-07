@@ -4,7 +4,7 @@
 
 **Goal:** Make `CompositionService` and the World Builder available in a normal Discord Activity only when the same authenticated user token proves membership in the selected guild, with that canonical GuildID serving as WorldID.
 
-**Architecture:** Keep global authentication unchanged in scope: it establishes only `PlayerID` and privately retains the request's parsed auth scheme/credential for the next interceptor. A unary interceptor allowlisted to the four `CompositionService` methods validates `x-rpg-guild-id`, resolves either the explicit Dev world or Discord membership, and installs trusted API-owned world context; handlers compare the request body's existing `world_id` to that context and never treat the body as authority. The web creates one composition source per Discord credential session and SDK GuildID, while deployment only permits and forwards the selector.
+**Architecture:** Keep global authentication unchanged in scope: it establishes only `PlayerID` and privately retains the request's parsed auth scheme/credential for the next interceptor. A unary interceptor allowlisted to the four `CompositionService` methods validates `x-rpg-guild-id`, resolves either the explicit Dev world or Discord membership, and installs trusted API-owned world context; handlers compare the request body's existing `world_id` to that context and never treat the body as authority. The web selects its composition source from the same actual auth-scheme decision as its transport (Discord wins over Dev), scopes that source to the Discord credential session and SDK GuildID, and epoch-guards any `Unauthenticated` teardown side effect. Deployment permits the selector and otherwise leaves normal request-header forwarding untouched.
 
 **Tech Stack:** Go, gRPC unary interceptors, `net/http`, bounded in-process cache, Redis composition repository; React 19, TypeScript, Connect-Web, Vitest/Testing Library, Discord Embedded App SDK 2.5.0; Envoy, nginx, Bash contract tests.
 
@@ -14,13 +14,13 @@
 
 - This is the composition-first slice only. Global player/character auth stays unguilded; authored dungeon, lobby, session, encounter, and gameplay ownership remain untouched.
 - `GuildID == WorldID`: use the canonical non-zero unsigned decimal Discord snowflake, with no prefix, registry, picker, or fallback mapping.
-- `x-rpg-guild-id` is the only world transport selector. Discord requests require exactly one value; missing, empty, repeated, leading-zero, signed, whitespace-bearing, non-decimal, zero, or `uint64`-overflow values fail before the handler.
+- `x-rpg-guild-id` is the only world transport selector. Discord requests require exactly one value; missing, empty, repeated, comma-joined/combined, leading-zero, signed, whitespace-bearing, non-decimal, zero, or `uint64`-overflow values fail before the handler.
 - The resolver must call `GET /api/users/@me/guilds/{guild_id}/member` with the exact access token authenticated on the same request, including when `/users/@me` identity was a cache hit. Credentials stay private to auth code and never enter handler/service inputs, responses, source identity strings, logs, or test artifacts.
 - Membership alone permits Get/List. Create/Delete additionally retain the existing `RPG_AUTHORING_ENABLED=1` gate. Add no owner, admin, role, Discord permission, creator ACL, or per-record ACL check.
 - Cache only successful membership decisions for at most 30 seconds and at most 1,024 entries, keyed by `(SHA-256 token digest, GuildID)`. Never cache denial, serve expired entries, use stale-on-error, log digests, store raw tokens in the new cache, or add a duplicate raw-token eviction index.
 - A membership-provider `401` evicts that token's existing identity-cache entry and all digest-keyed membership entries even when identity authentication was a cache hit. The older identity cache otherwise remains unchanged; its key/bounds redesign is deferred to [rpg-api#937](https://github.com/KirkDiggler/rpg-api/issues/937).
 - OAuth transaction/session binding remains deferred to [rpg-project#403](https://github.com/KirkDiggler/rpg-project/issues/403). This slice only requests the approved scope and uses valid SDK consent behavior.
-- A Vite development build may use `VITE_DEV_WORLD_ID` (default `test-world`); only an API with `AUTH_DEV_MODE=true` may accept `Dev`. Production never accepts `Dev`, reads `RPG_DEV_WORLD_ID`, or falls back to `test-world`.
+- Source selection follows the actual transport auth scheme, not Vite mode alone: a Discord token wins in every build and uses its canonical SDK GuildID (or creates no source when that guild is absent); only actual `Dev` auth in a Vite development build may use `VITE_DEV_WORLD_ID` (default `test-world`). Only an API with `AUTH_DEV_MODE=true` may accept `Dev`. Unauthenticated and production-`Dev` decisions create no source; production never reads `RPG_DEV_WORLD_ID` or falls back to `test-world`.
 - The current composition proto and toolkit `composition.Data` already carry the required WorldID. Do not change rpg-api-protos or rpg-toolkit absent a concrete contract failure discovered by an existing consumer test.
 - The existing owned stack is down by request. Do not start it during implementation. Automated tests use unit processes/static configuration only; real Discord consent and deployed proxy proof require a coordinated user test.
 - Create one execution issue in each owning repo before cutting code branches. Use one branch for the whole repo wave: API/web from fresh `origin/dev`, deployment from fresh `origin/main`; do not create per-finding branches.
@@ -112,13 +112,13 @@ func UnaryWorldContextInterceptor(WorldResolver) grpc.UnaryServerInterceptor
 
 **Modify**
 
-- `src/discord/DiscordProvider.tsx`, `types.ts` — request `guilds.members.read`, omit `prompt`, use `discordSdk.guildId`, retain returned scopes, expose an opaque `authSessionId` and `clearAuthentication(message?)`, and remove logging of the SDK auth object.
-- `src/api/auth.ts` — keep the in-memory Discord token private while storing/clearing its selected GuildID; add `getGuildId()` for the transport interceptor.
-- `src/api/client.ts`, `client.test.ts` — set `x-rpg-guild-id` only on `CompositionService` requests using Discord auth; Dev and all global services remain header-free.
-- `src/compositions/rpcCompositionSource.ts`, `rpcCompositionSource.test.ts` — construct a production source only for authenticated canonical SDK GuildID; preserve the explicit development source; invoke the supplied auth-clear callback on `Unauthenticated`; retain response WorldID/ID checks.
+- `src/discord/DiscordProvider.tsx`, `types.ts` — request `guilds.members.read`, omit `prompt`, use `discordSdk.guildId`, retain returned scopes, expose an opaque `authSessionId`, ordinary `clearAuthentication(message?)`, and epoch-checked `clearAuthenticationForSession(expectedAuthSessionId, message?)`; remove logging of the SDK auth object.
+- `src/api/auth.ts` — keep the in-memory Discord token private while storing/clearing its selected GuildID; add one non-secret discriminated `getAuthDecision(mode?)` used by both transport and source selection so Discord wins over Dev even in development.
+- `src/api/client.ts`, `client.test.ts` — consume that auth decision (and the existing token getter only for the Discord authorization value) and set `x-rpg-guild-id` only on `CompositionService` requests using Discord auth; Dev and all global services remain header-free.
+- `src/compositions/rpcCompositionSource.ts`, `rpcCompositionSource.test.ts` — accept the shared `AuthDecision` to select Discord/Dev/no source; the adapter captures `authSessionId` and passes it to the supplied callback on `Unauthenticated`; retain response WorldID/ID checks.
 - `src/compositions/useCompositionResolutions.test.tsx`, `src/author/Palette.compositions.test.tsx` — extend the existing source/world late-result and list-reset proof to credential-session and guild switches.
-- `src/compositions/compositionSource.ts`, `src/compositions/useCompositionResolutions.ts` — verified unchanged unless the new tests expose a concrete lifecycle gap; their current effect cleanup/source-object guards already isolate list and resolution publication.
-- `src/App.tsx`, `App.test.tsx` — replace the dev-only source effect with source creation keyed by `(mode, authSessionId, SDK GuildID)`; clear the source before replacement; show a disabled no-guild World Builder state and consent/reconnect errors while leaving global home/character UI usable.
+- `src/compositions/compositionSource.ts`, `src/compositions/useCompositionResolutions.ts` — verified unchanged unless the new tests expose a concrete lifecycle gap; their current effect cleanup/source-object guards isolate result publication, but do not guard authentication side effects.
+- `src/App.tsx`, `App.test.tsx` — replace the dev-only source effect with source creation from `getAuthDecision`, keyed by `(authSessionId, auth kind, SDK GuildID)`; clear the source before replacement and route the source's captured epoch to `clearAuthenticationForSession`; show a disabled no-guild World Builder state and consent/reconnect errors while leaving global home/character UI usable.
 - `docs/architecture/components/discord.md`, `docs/status.md`, `docs/quality.md` — document normal OAuth world access and the limits of membership proof.
 
 **Exact changed web contracts**
@@ -129,20 +129,29 @@ interface DiscordContextType {
   readonly grantedScopes: readonly string[];
   readonly authSessionId: number;
   clearAuthentication(message?: string): void;
+  clearAuthenticationForSession(
+    expectedAuthSessionId: number,
+    message?: string
+  ): void;
 }
 
 // src/api/auth.ts
+export type AuthDecision =
+  | { readonly kind: 'discord'; readonly playerId: string | null; readonly guildId: string | null }
+  | { readonly kind: 'dev'; readonly playerId: string }
+  | { readonly kind: 'unauthenticated' };
 export function setAuth(token: string | null, playerId: string | null, guildId?: string | null): void;
-export function getGuildId(): string | null;
+export function getAuthDecision(mode?: string): AuthDecision;
+export function getDiscordToken(): string | null;
 export function clearAuth(): void;
 
 // src/compositions/rpcCompositionSource.ts
 interface RpcCompositionSourceInput {
   mode: string;
   devWorldId?: string;
-  guildId: string | null;
-  authenticated: boolean;
-  onUnauthenticated: () => void;
+  authSessionId: number;
+  auth: AuthDecision;
+  onUnauthenticated(authSessionId: number): void;
   client?: CompositionRpcClient;
 }
 export function createRpcCompositionSource(input: RpcCompositionSourceInput): CompositionSource | undefined;
@@ -154,13 +163,16 @@ SDK evidence: the installed lock resolves `@discord/embedded-app-sdk` 2.5.0. Its
 
 **Create**
 
-- `tests/guild-world-header-contract.sh` — static assertions for every Envoy allow-list and the live/twin nginx forwarding blocks; it starts no container.
+- `tests/guild-world-header-contract.sh` — static assertions for every Envoy allow-list and proxy noninterference; it starts no container and does not claim to prove version-dependent duplicate-header behavior.
 
 **Modify**
 
 - `envoy/envoy.yaml`, `envoy/envoy-lab.yaml`, `envoy/envoy-lab2.yaml` — add lowercase `x-rpg-guild-id` to `allow_headers` and keep the synchronized configs aligned.
-- `nginx/nginx-http.conf`, `nginx/nginx-ssl.conf` — explicitly preserve `X-Rpg-Guild-Id` in the production gRPC-Web regex location; do not validate, overwrite with a server value, or derive it.
 - `Makefile` — include the static contract in `make test`.
+
+**Verified unchanged**
+
+- `nginx/nginx-http.conf`, `nginx/nginx-ssl.conf` — their production gRPC-Web regex locations already use nginx's normal request-header forwarding. Do not add a selector-specific `proxy_set_header` override: replacing the original field can collapse repeated values before the API can reject them.
 
 `docker-compose.prod.yml` is unchanged: production already enables `RPG_AUTHORING_ENABLED=1` and durable `RPG_CONTENT_DIR`; no role or Discord permission gate is added.
 
@@ -180,7 +192,7 @@ Create these issue titles/scopes and add each to Project 19 with the appropriate
 
 1. rpg-api — **Authorize CompositionService with trusted Discord guild world context**: API resolver/cache/context/handler/registration only; explicitly exclude #937.
 2. rpg-dnd5e-web — **Bind production composition source to a Discord guild credential session**: scope consent, header, source lifecycle, and UI only; explicitly exclude #403.
-3. rpg-deployment — **Pass the guild world selector through the Activity proxy**: Envoy CORS plus nginx forwarding/static proof only.
+3. rpg-deployment — **Pass the guild world selector through the Activity proxy**: Envoy CORS plus static proxy-noninterference proof only; nginx remains unchanged when its normal request-header forwarding is intact.
 
 Each issue links `rpg-project#399`, PR #402, the design, and this plan. Record each resulting integer as `API_ISSUE`, `WEB_ISSUE`, or `DEPLOY_ISSUE`; these are execution outputs, not guessed numbers.
 
@@ -217,7 +229,7 @@ Record the three starting SHAs and assignments. Workers may commit on their assi
 
 - [ ] **Step 1: Write focused failing resolver/interceptor/client/cache tests**
 
-Include table cases for missing header → `FailedPrecondition`; repeated/empty/noncanonical/overflow → `InvalidArgument`; Discord 200 with matching member user → context; `403/404` → `PermissionDenied`; timeout/`429`/`5xx`/bad JSON or missing/mismatched member user → `Unavailable`; and non-Composition method → no guild requirement. Pin same-token behavior with an identity-cache hit:
+Include table cases for missing header → `FailedPrecondition`; repeated, comma-joined/combined, empty, noncanonical, or overflow header metadata → `InvalidArgument`; Discord 200 with matching member user → context; `403/404` → `PermissionDenied`; timeout/`429`/`5xx`/bad JSON or missing/mismatched member user → `Unavailable`; and non-Composition method → no guild requirement. Pin same-token behavior with an identity-cache hit:
 
 ```go
 identityCache.Set("same-token", "player-1")
@@ -351,7 +363,7 @@ Expected: both status checks are clean and `make ci-check` passes. If generation
 
 **Interfaces:**
 - Consumes: SDK 2.5.0 `DiscordSDK.guildId`, authenticate `scopes`, and current Connect client.
-- Produces: one production `CompositionSource` per `(authSessionId, GuildID)`, a per-Composition-RPC guild header, and local auth teardown callback on server `Unauthenticated`.
+- Produces: one `CompositionSource` selected from the actual auth discriminant and scoped to `(authSessionId, GuildID)` for Discord, a per-Composition-RPC guild header, and epoch-checked local auth teardown on server `Unauthenticated`.
 
 - [ ] **Step 1: Write failing transport, provider, factory, and lifecycle tests**
 
@@ -367,7 +379,9 @@ expect(authorize).toHaveBeenCalledWith({
 expect(authorize.mock.calls[0]![0]).not.toHaveProperty('prompt');
 ```
 
-Assert `sdk.guildId`, not URL debug parsing, reaches `setAuth`; cancelled/denied auth and returned scopes missing `guilds.members.read` clear token/user/scopes/source and expose reconnect copy. In `client.test.ts`, fake a Composition request and a Character request: only the former receives one `x-rpg-guild-id`. In source/hook/App tests prove no production source without authenticated guild, direct GuildID→WorldID, explicit Dev fallback only in development, `Unauthenticated` clears auth, no-guild disabled UI copy, and late results from old token-session/guild source cannot publish after rerender.
+Assert `sdk.guildId`, not URL debug parsing, reaches `setAuth`; cancelled/denied auth and returned scopes missing `guilds.members.read` clear token/user/scopes/source and expose reconnect copy. In `auth.test.ts`, table-test the shared discriminant: Discord token in development → `discord` (never Dev), actual Dev credentials in development → `dev`, no credentials → `unauthenticated`, and Dev credentials in production → `unauthenticated`. In `client.test.ts`, fake a Composition request and a Character request: only the former receives one `x-rpg-guild-id` under the Discord decision.
+
+In source/App tests cover the same selection explicitly: Discord-in-development uses canonical GuildID as WorldID or no source without a guild; Dev-in-development alone uses configured/default test world; unauthenticated and production-Dev create no source. Add the adversarial side-effect test, not merely a result-publication test: source A has a pending request; auth session B replaces A; A then returns `Unauthenticated`; B's auth, source, reconnect/error state, list/palette, and resolution state remain intact. Then return `Unauthenticated` from the current B source and assert B auth/source are cleared into the reconnect state. Existing hook source-object guards should also continue proving A's late result/error cannot publish.
 
 - [ ] **Step 2: Run focused RED tests while retaining actual stdout and exit status**
 
@@ -387,9 +401,11 @@ Expected: command confirms a non-zero Vitest exit for missing new behavior; `/tm
 
 - [ ] **Step 3: Implement consent, transport, source, and UI lifecycle**
 
-Use `sdk.guildId`; request `guilds.members.read`; omit `prompt`. Treat returned scopes only as UI evidence. Replace `console.log('Authentication successful!', auth)` with a credential-free summary. Every auth success or clear increments `authSessionId`; `clearAuthentication` clears React user/scopes/auth flag and module auth together.
+Use `sdk.guildId`; request `guilds.members.read`; omit `prompt`. Treat returned scopes only as UI evidence. Replace `console.log('Authentication successful!', auth)` with a credential-free summary. Every auth success or effective clear increments `authSessionId`; ordinary `clearAuthentication` clears React user/scopes/auth flag and module auth together. Maintain the current epoch in a ref (updated synchronously with transitions); `clearAuthenticationForSession(expectedAuthSessionId, message?)` is a no-op unless the expected epoch still owns the current auth state. This guard belongs at the callback owner so an old source cannot clear a newer login or its error state.
 
-The Connect interceptor adds `x-rpg-guild-id` only when `req.service.typeName === CompositionService.typeName`, a Discord token exists, and a guild exists. Dev requests send no guild header. `App` clears its source immediately before asynchronously creating the next source, keys creation on the opaque auth epoch and GuildID, and never embeds the token in the source. Existing source-object/world guards cancel list and resolution publication from old sources; key the World Builder surface by the same non-secret epoch/GuildID so editor-local notice, selection, library, and in-flight state cannot survive a source replacement. Keep global lobby/session/character requests and their state contracts unchanged.
+Compute one non-secret `getAuthDecision`: Discord token presence first; otherwise Dev only when the supplied mode is `development` and a Dev player ID exists; otherwise unauthenticated. The Connect interceptor consumes that decision, reads the existing token getter only for a Discord authorization value, and adds `x-rpg-guild-id` only when `req.service.typeName === CompositionService.typeName`, the decision is Discord, and its guild exists. Dev requests send no guild header. Source selection consumes the same decision without receiving the credential: Discord in any Vite mode uses canonical GuildID or no source; Dev uses configured/default test world only in development; all other cases have no source.
+
+`App` clears its source immediately before asynchronously creating the next source, keys creation on the opaque auth epoch/auth kind/GuildID, and never embeds the token in the source. The adapter captures the source's epoch and reports that epoch when an RPC returns `Unauthenticated`; `App` routes it to the provider's guarded callback. Existing source-object/world guards cancel list and resolution publication from old sources but are not relied upon for auth teardown. Key the World Builder surface by the same non-secret epoch/GuildID so editor-local notice, selection, library, and in-flight state cannot survive a source replacement. Keep global lobby/session/character requests and their state contracts unchanged.
 
 Show “Open this Activity in a server to access its world” when authenticated production has no SDK guild. A cancelled/denied/missing-scope grant shows retry/reconnect and retains no old source. `PermissionDenied` shows generic access denial unless returned scopes prove the membership scope is missing; `Unavailable` keeps an explicit retry action and never substitutes a Dev source.
 
@@ -425,27 +441,21 @@ git status --short
 
 Expected: normal lint-staged hook passes and status is clean.
 
-### Task 5: Permit and preserve the selector through deployment config
+### Task 5: Permit the selector through deployment config without rewriting it
 
 **Files:**
 - Create: `tests/guild-world-header-contract.sh`
 - Modify: `envoy/{envoy.yaml,envoy-lab.yaml,envoy-lab2.yaml}`
-- Modify: `nginx/{nginx-http.conf,nginx-ssl.conf}`
 - Modify: `Makefile`
+- Verify unchanged: `nginx/{nginx-http.conf,nginx-ssl.conf}`
 
 **Interfaces:**
 - Consumes: browser `x-rpg-guild-id` request header.
-- Produces: successful CORS preflight allowance and byte-preserving forwarding to the API; no proxy-side trust decision.
+- Produces: successful CORS preflight allowance and normal request-header forwarding to the API; no proxy-side selector override, drop, manufacture, or trust decision.
 
 - [ ] **Step 1: Write the failing static contract**
 
-The Bash test must assert exactly one lowercase `x-rpg-guild-id` occurrence in each Envoy `allow_headers` line and an explicit line in both production gRPC-Web regex locations:
-
-```nginx
-proxy_set_header X-Rpg-Guild-Id $http_x_rpg_guild_id;
-```
-
-For nginx, it must also reject any config that assigns a literal selector, validates snowflakes, or adds the header to a non-gRPC location. Add the script to `make test`.
+The Bash test must assert exactly one lowercase `x-rpg-guild-id` occurrence in each Envoy `allow_headers` line. For both nginx configs, statically assert the production gRPC-Web path retains normal request-header forwarding: reject `proxy_pass_request_headers off`, any selector-specific `proxy_set_header`, and any selector-specific `map`, `set`, validation, or literal manufacture. Do not require an explicit selector forwarding line and do not claim that static inspection proves how an arbitrary nginx version represents duplicate request fields. Add the script to `make test`.
 
 - [ ] **Step 2: Run RED without starting the stack**
 
@@ -454,11 +464,11 @@ cd /home/kirk/game-dev/rpg-deployment
 bash tests/guild-world-header-contract.sh
 ```
 
-Expected: FAIL because Envoy does not allow and nginx does not explicitly preserve the header.
+Expected: FAIL only because Envoy does not yet include the browser header in its CORS allow-list. The existing nginx configs should already satisfy the noninterference assertions; do not invent a second nginx failure to make RED.
 
 - [ ] **Step 3: Make the minimal configuration changes**
 
-Append `x-rpg-guild-id` to each synchronized Envoy CORS list. Add the exact `proxy_set_header` line only to the gRPC-Web service regex blocks in `nginx-http.conf` (the actual Cloudflare-terminated production path) and `nginx-ssl.conf` (its maintained SSL twin). Do not alter origin rules, manufacture a selector, enable Dev auth, or touch production secrets.
+Append `x-rpg-guild-id` to each synchronized Envoy CORS list. Leave `nginx-http.conf` and `nginx-ssl.conf` unchanged because their gRPC-Web regex locations already use normal request-header forwarding. In particular, do not add a selector-specific `proxy_set_header` override: it can replace/collapse the original fields and defeat the API's repeated-metadata rejection. Do not alter origin rules, manufacture a selector, enable Dev auth, or touch production secrets.
 
 - [ ] **Step 4: Run GREEN and repository tests without bringing services up**
 
@@ -466,19 +476,20 @@ Append `x-rpg-guild-id` to each synchronized Envoy CORS list. Add the exact `pro
 bash tests/guild-world-header-contract.sh
 make test
 git diff --check
+git diff --exit-code -- nginx/nginx-http.conf nginx/nginx-ssl.conf
 ```
 
-Expected: PASS. `make test` may render Compose configuration but starts no containers.
+Expected: PASS. The final diff command proves no needless nginx source edit; `make test` may render Compose configuration but starts no containers. Repeated and comma-joined real-path behavior remains a controlled live proof in Task 6, not a static nginx claim.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Makefile tests/guild-world-header-contract.sh envoy nginx/nginx-http.conf nginx/nginx-ssl.conf
-git commit -m "feat(proxy): pass guild world selector"
+git add Makefile tests/guild-world-header-contract.sh envoy
+git commit -m "feat(proxy): allow guild world selector"
 git status --short
 ```
 
-Expected: clean status.
+Expected: clean status and no nginx file in the commit.
 
 ### Task 6: Independent review, merge/deploy order, and coordinated Discord proof
 
@@ -504,7 +515,7 @@ Expected: mapped files only, no credential logging, clean worktree, and no stage
 
 - [ ] **Step 2: Merge and deploy providers before the production caller**
 
-Kirk merges deployment to `main` first so the permissive proxy path can deploy harmlessly before any browser sends the header. Kirk then squash-merges API to `dev`, promotes `dev` to `main` with a real merge commit under the documented release rule, and waits for the API image/deployment health to prove `CompositionService` registration outside Dev. Only then does Kirk squash-merge web to `dev`, promote web `dev` to `main` with a real merge commit, and deploy the production caller. Never deploy web while either Envoy blocks the header or API production lacks the service.
+Kirk merges deployment to `main` first so the CORS allowance can deploy harmlessly before any browser sends the header; nginx remains on its existing normal forwarding path. Kirk then squash-merges API to `dev`, promotes `dev` to `main` with a real merge commit under the documented release rule, and waits for the API image/deployment health to prove `CompositionService` registration outside Dev. Only then does Kirk squash-merge web to `dev`, promote web `dev` to `main` with a real merge commit, and deploy the production caller. Never deploy web while Envoy blocks the header or API production lacks the service.
 
 - [ ] **Step 3: Run non-live automated release checks**
 
@@ -516,9 +527,9 @@ With Kirk/user present and no token capture, use the deployed production Activit
 
 1. an account holding the old two-scope grant sees the real Discord modal for `guilds.members.read`, can cancel into a cleared reconnect state, then can grant it;
 2. a guild member opens an empty library, creates with existing authoring enabled, lists/gets, resolves a ref in preview/play, and deletes; no role is required;
-3. no guild, known missing scope, non-member guild, expired token/provider `401`, provider unavailability, malformed/repeated/altered header, and body/header mismatch fail with the approved status/UI behavior;
-4. wrong-world IDs cannot read/write/delete/resolve or warm a cache, and switching guild/auth session or signing out while reads are in flight leaves no prior source/list/palette/resolution/error result visible; and
-5. browser Network evidence shows OPTIONS permits `x-rpg-guild-id`, the subsequent request carries it through nginx/Envoy, production rejects `Dev`, and no request reaches `test-world`.
+3. no guild, known missing scope, non-member guild, expired token/provider `401`, provider unavailability, malformed/altered header, and body/header mismatch fail with the approved status/UI behavior;
+4. wrong-world IDs cannot read/write/delete/resolve or warm a cache, and switching guild/auth session or signing out while reads are in flight leaves no prior source/list/palette/resolution/error result visible; an old source's delayed `Unauthenticated` must leave the replacement login intact while a current source's `Unauthenticated` clears it; and
+5. browser Network evidence shows OPTIONS permits `x-rpg-guild-id`, the normal request carries it through nginx/Envoy, production rejects `Dev`, and no request reaches `test-world`. In the same controlled deployed real path, separately send repeated selector fields and one comma-joined/combined selector value and record that the API rejects both as `InvalidArgument`. This live observation—not an unverified nginx-version assertion—is the duplicate/combination forwarding proof.
 
 Record only build SHAs, guild labels or redacted IDs, RPC/status outcomes, UI screenshots without tokens, and pass/fail observations. Never copy authorization headers, codes, access tokens, client secrets, token digests, or browser storage into artifacts.
 
