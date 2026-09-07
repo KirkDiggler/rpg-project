@@ -169,8 +169,10 @@ Ready review entries
        ├─ World Builder catalog adapter (preserves role/variant/support metadata)
        ├─ Dungeon Builder palette adapter
        └─ resolveBuilderScenery(ref)
-            → AtlasPropModel source dispatch
-            → legacy PropModel or generated WorldAssetModel
+            ├─ shared legacy-first exact index
+            └─ mapped non-exact props alias via resolvePropVariant
+                 → AtlasPropModel source dispatch
+                 → legacy PropModel or generated WorldAssetModel
   → Dungeon place[].ref + authored placement fields
        → authoring API
        → Toolkit DungeonSpec scenery compile
@@ -279,8 +281,20 @@ NPC-input adapters. Its scenery partition is the deterministic union of:
    ref.
 
 Deduplication happens before the scenery index is built, with legacy authority
-on an exact-ref collision. `resolveBuilderScenery` reads that same index, so the
-catalog shown to an author and the renderer's source choice cannot disagree.
+on an exact-ref collision. `resolveBuilderScenery` always consults that same
+index first, so the catalog shown to an author and the renderer's exact source
+choice cannot disagree.
+
+The resolver then preserves the legacy prop pipeline's existing mapped family
+aliases without adding duplicate palette entries. Only when the index misses,
+`isExactSceneryRef(ref)` is false, and `parseRef(ref)?.type` is `props` does it
+call the existing `resolvePropVariant(ref)`. A mapped result becomes a legacy
+`ResolvedBuilderScenery` carrying the authored family ref and resolved variant.
+An exact ref never takes this branch, and `items`, `weapons`, and `env` never use
+legacy prop-family fallback. Thus `dnd5e:props:plushie` continues resolving to
+the existing `dnd5e:props:plushie:skeleton-dog` Plushie variant, while an
+unknown one-part prop remains unresolved.
+
 The World Builder's local `catalog.ts` becomes a compatibility adapter over the
 shared scenery entries: it preserves its existing ordering, legacy `role` and
 `variant`, generated `asset`, thumbnail, and `supportsDecoration` fields, but it
@@ -350,18 +364,23 @@ filters without changing generated provider data or reference semantics.
 `AtlasPropModel` becomes the common dispatcher for authored scenery:
 
 1. composition refs continue through `CompositionPlacementModel`;
-2. every other ref is passed to the shared `resolveBuilderScenery(ref)`;
-3. a resolved legacy entry renders its retained `PropVariant` with `PropModel`;
+2. every other ref is passed to the shared `resolveBuilderScenery(ref)`, which
+   checks the legacy-first exact index before the narrowly gated legacy-family
+   branch;
+3. a resolved legacy entry—including a mapped `props` family alias—renders its
+   retained `PropVariant` with `PropModel`;
 4. a resolved generated entry renders its retained exact ref with
    `WorldAssetModel`;
 5. a missing parser-valid exact scenery ref renders empty; and
-6. existing non-exact legacy fallback behavior remains unchanged.
+6. an unresolved non-exact ref renders the existing neutral placeholder.
 
 The exact-scenery decision is centralized in `src/utils/refs.ts`. It uses
 `parseRef`, accepts only `props`, `items`, `weapons`, or `env`, and requires at
 least two `idParts`. This makes missing exact refs in all four scenery namespaces
-fail closed while preserving the family-placeholder behavior of one-part legacy
-refs.
+fail closed. For a one-part `props` ref, the shared resolver first preserves an
+existing mapped family alias; only an unmapped ref reaches the neutral
+placeholder. Unindexed one-part `items`, `weapons`, and `env` refs reach that
+neutral placeholder but never enter legacy prop-family resolution.
 
 The generated path applies the same provider-authored normalization and runtime
 scale already used by the World Builder. Dungeon cell position, authored
@@ -385,8 +404,9 @@ resolvers.
   their adapters retain kind-specific placement dispatch.
 - Existing compositions remain single-anchor scenery entries and retain their
   existing expansion, support-link, light, serialization, and rendering paths.
-- Existing exact Plushie and generated world refs retain their current resolver
-  authority; no family alias is invented for new world assets.
+- The existing exact Plushie ref and its mapped `dnd5e:props:plushie` family
+  alias retain their current `PropVariant` authority; no family alias is invented
+  for generated world assets.
 - Existing compositions remain valid.
 - Old Web clients encountering newly authored refs may render them empty but do
   not receive substituted art. Deployment ordering therefore updates the Web
@@ -399,8 +419,12 @@ resolvers.
 - `world-assets:sync` and `world-assets:check` remain the gate that generated
   metadata matches provider bytes.
 - Duplicate exact refs between legacy and generated sources are resolved once,
-  in the shared catalog, with existing legacy authority. Catalog-adapter and
-  `AtlasPropModel` dispatch tests make the same collision visible.
+  in the shared catalog, with existing legacy authority. The exact index is
+  consulted before any family-alias logic; catalog-adapter and `AtlasPropModel`
+  dispatch tests make the same collision visible.
+- A mapped non-exact `props` family alias resolves through the existing
+  `resolvePropVariant`; an unknown one-part prop receives the neutral placeholder.
+  Exact refs and non-`props` namespaces never use this family fallback.
 - A malformed ref or unsupported ref type is rejected by Toolkit in the
   author's source path.
 - A catalog-known ref whose local GLB is absent or mismatched fails sync/check;
@@ -449,10 +473,14 @@ resolvers.
   filtering.
 - Placement, Inspector edits, YAML export/import, and server-error paths retain
   exact refs.
-- `AtlasPropModel` dispatches the shared resolved entry, routes generated refs
-  to `WorldAssetModel`, routes legacy refs (including exact-ref collisions) to
-  `PropModel`, and renders four-category missing exact refs as empty output while
-  retaining legacy family fallback.
+- `resolveBuilderScenery` resolves `dnd5e:props:plushie` to the existing
+  skeleton-dog Plushie variant, leaves an unknown one-part prop unresolved, and
+  never applies prop-family fallback to exact refs or `items`/`weapons`/`env`.
+- `AtlasPropModel` dispatches the shared resolved entry, renders the mapped
+  Plushie family alias and exact-ref legacy collisions through `PropModel`,
+  routes generated refs to `WorldAssetModel`, renders four-category missing
+  exact refs empty, and retains the neutral placeholder for an unknown one-part
+  prop.
 - Dungeon preview and session renderer share the route.
 - World Builder discovery remains unchanged.
 - Production exclusion and licensed-file guards remain green.

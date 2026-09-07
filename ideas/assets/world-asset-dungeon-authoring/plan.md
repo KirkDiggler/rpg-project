@@ -4,7 +4,7 @@
 
 **Goal:** Make every synchronized `props`, `items`, `weapons`, and `env` world asset automatically discoverable and placeable as DungeonSpec scenery while preserving monsters, future NPC seams, compositions, exact refs, and current one-anchor placement behavior.
 
-**Architecture:** Toolkit expands its existing prop-like scenery route to four visual namespaces without changing the wire shape. API consumes the published Toolkit Encounter module and proves exact refs survive real authoring compilation. Web adds one neutral discriminated builder-catalog authority and legacy-first scenery resolver consumed by the World Builder adapter, Dungeon palette, and `AtlasPropModel`; source-specific legacy/generated metadata, monsters, an explicit non-placeable NPC-input seam, and dynamic compositions remain discriminated behind that shared surface.
+**Architecture:** Toolkit expands its existing prop-like scenery route to four visual namespaces without changing the wire shape. API consumes the published Toolkit Encounter module and proves exact refs survive real authoring compilation. Web adds one neutral discriminated builder-catalog authority and scenery resolver consumed by the World Builder adapter, Dungeon palette, and `AtlasPropModel`; the resolver checks its legacy-first exact index before narrowly preserving existing mapped non-exact `props` family aliases. Source-specific legacy/generated metadata, monsters, an explicit non-placeable NPC-input seam, and dynamic compositions remain discriminated behind that shared surface.
 
 **Tech Stack:** Go, `rpg-toolkit` DungeonSpec, `rpg-api` authoring/session projection, TypeScript, React, Three.js/R3F, Vitest, Testing Library, Playwright/Chromium.
 
@@ -25,9 +25,9 @@
 - Compositions are technical scenery props assembled from other assets and represented by one anchor placement.
 - A visual item or weapon does not grant inventory or equipment behavior.
 - NPC and monster appearances do not acquire rules, AI, faction, or placement behavior from visual promotion.
-- Parser-valid exact `props`, `items`, `weapons`, and `env` refs missing from the shared catalog render empty; never substitute a family/default or unrelated asset. Existing one-ID-part legacy family fallback remains.
+- Parser-valid exact `props`, `items`, `weapons`, and `env` refs missing from the shared catalog render empty; never substitute a family/default or unrelated asset. After an exact-index miss, only a non-exact parsed `props` ref may use the existing `resolvePropVariant` family mapping. A mapped alias renders that legacy variant; an unknown one-part prop uses the neutral placeholder. `items`, `weapons`, and `env` never enter legacy family resolution.
 - `src/utils/refs.ts` remains the only ref parser/colon-split site. Production and test code use `parseRef`/`idParts`; never expand `src/utils/refs.guard.test.ts`'s allowlist for this work.
-- Shared scenery deduplication and rendering use the same resolver, with existing legacy authority on exact-ref collisions.
+- Shared scenery deduplication and rendering use the same resolver, with existing legacy authority on exact-ref collisions. The exact index is always consulted before the mapped-family branch.
 - Multi-hex occupancy and inferred footprints remain out of scope.
 - No protobuf shape change is expected. Discovery of a required proto change stops execution and returns to the director.
 - Preserve the paused Assets weapon worktree `/home/kirk/.pi/worktrees/rpg-game-assets/115-final-weapon-remainder` unchanged.
@@ -466,6 +466,8 @@ Obtain independent review, open the API PR against `dev`, and merge before enabl
 - Create: `rpg-dnd5e-web/src/catalog/builderCatalog.test.ts`
 - Create: `rpg-dnd5e-web/src/concepts/world-building/catalog.test.ts`
 - Modify: `rpg-dnd5e-web/src/concepts/world-building/catalog.ts`
+- Modify: `rpg-dnd5e-web/src/utils/refs.ts`
+- Modify: `rpg-dnd5e-web/src/utils/refs.test.ts`
 - Modify: `rpg-dnd5e-web/src/components/hex-grid/monsterModels.ts`
 - Modify: `rpg-dnd5e-web/src/components/hex-grid/monsterModels.test.ts`
 - Modify: `rpg-dnd5e-web/src/author/paletteData.ts`
@@ -476,11 +478,15 @@ Obtain independent review, open the API PR against `dev`, and merge before enabl
 - Consumes: `GENERATED_WORLD_ASSETS`, legacy `PROP_KEYS`/
   `resolvePropVariant`, authoritative monster model keys, and an explicit array
   of NPC appearance inputs.
-- Produces from `src/catalog/builderCatalog.ts`:
-  - `BuilderCatalogEntry`, a real discriminated union;
+- Produces:
+  - from `src/catalog/builderCatalog.ts`, `BuilderCatalogEntry`, a real
+    discriminated union;
   - `STATIC_BUILDER_CATALOG` and `STATIC_BUILDER_SCENERY_BY_REF`;
   - `resolveBuilderScenery(ref)` as the only non-composition scenery source
-    resolver used by render dispatch;
+    resolver used by render dispatch, with exact-index-first resolution and a
+    non-exact `props`-only mapped-family branch;
+  - from `src/utils/refs.ts`, parser-based `isExactSceneryRef(ref)` for the four
+    allowed scenery types;
   - `compositionBuilderEntry(...)` for dynamic current-world records;
   - `filterBuilderCatalog(entries, query, category)`;
   - `NpcAppearanceCatalogInput` and `npcAppearanceEntries(inputs)` producing
@@ -527,9 +533,31 @@ export const AUTHORABLE_MONSTER_REF_IDS: readonly string[] = Object.freeze(
 
 Do not export mutable candidate arrays and do not add unbound NPC appearances.
 
-- [ ] **Step 2: Define the discriminated union and adapter inputs with failing tests**
+- [ ] **Step 2: Define exactness, the discriminated union, and adapter inputs with failing tests**
 
-Create `src/catalog/builderCatalog.test.ts` first. Import `parseRef` in fixture
+First add `isExactSceneryRef` to the existing imports and add coverage in
+`src/utils/refs.test.ts`:
+
+```ts
+describe('isExactSceneryRef', () => {
+  it.each([
+    ['props', 'dnd5e:props:dark-fortress:missing'],
+    ['items', 'dnd5e:items:dark-fortress:missing'],
+    ['weapons', 'dnd5e:weapons:dark-fortress:missing'],
+    ['env', 'dnd5e:env:dark-fortress:missing'],
+  ])('recognizes exact %s refs', (_kind, ref) => {
+    expect(isExactSceneryRef(ref)).toBe(true);
+  });
+
+  it('rejects a legacy family, another type, and malformed input', () => {
+    expect(isExactSceneryRef('dnd5e:props:plushie')).toBe(false);
+    expect(isExactSceneryRef('dnd5e:monsters:crypt:skeleton')).toBe(false);
+    expect(isExactSceneryRef('dnd5e:items:')).toBe(false);
+  });
+});
+```
+
+Then create `src/catalog/builderCatalog.test.ts`. Import `parseRef` in fixture
 helpers; no test helper may split a ref. The world-asset fixture uses:
 
 ```ts
@@ -607,14 +635,33 @@ Every member shares `ref`, `label`, `short`, `authoringKind`, `source`,
 Run:
 
 ```bash
-npm test -- --run src/catalog/builderCatalog.test.ts
+npm test -- --run \
+  src/utils/refs.test.ts \
+  src/catalog/builderCatalog.test.ts
 ```
 
-Expected: fail because the neutral module does not exist.
+Expected: fail because the central predicate and neutral catalog module do not
+exist.
 
-- [ ] **Step 3: Implement adapters, collision authority, filtering, and the resolver**
+- [ ] **Step 3: Implement exactness, adapters, collision authority, filtering, and the resolver**
 
-In `builderCatalog.ts`, expose these exact construction seams:
+In `src/utils/refs.ts`, retain `isExactPropRef` for existing callers and add:
+
+```ts
+const SCENERY_REF_TYPES = new Set(['props', 'items', 'weapons', 'env']);
+
+export function isExactSceneryRef(ref: string): boolean {
+  const parsed = parseRef(ref);
+  return (
+    parsed !== null &&
+    SCENERY_REF_TYPES.has(parsed.type) &&
+    parsed.idParts.length >= 2
+  );
+}
+```
+
+This central predicate owns structural exactness; do not add a guard allowlist
+entry. Then, in `builderCatalog.ts`, expose these exact construction seams:
 
 ```ts
 export interface NpcAppearanceCatalogInput {
@@ -676,12 +723,38 @@ export function resolveBuilderScenery(
 ): ResolvedBuilderScenery | undefined;
 ```
 
+Import `parseRef` and `isExactSceneryRef` from `@/utils/refs`, and retain the
+existing `resolvePropVariant` import from the legacy manifest. Use one internal
+`legacyBuilderSceneryEntry(ref, variant)` constructor for both indexed legacy
+entries and mapped family results. The resolver implementation is exactly
+ordered as follows:
+
+```ts
+export function resolveBuilderScenery(
+  ref: string
+): ResolvedBuilderScenery | undefined {
+  const indexed = STATIC_BUILDER_SCENERY_BY_REF.get(ref);
+  if (indexed) return indexed;
+
+  const parsed = parseRef(ref);
+  if (!parsed || parsed.type !== 'props' || isExactSceneryRef(ref)) {
+    return undefined;
+  }
+
+  const variant = resolvePropVariant(ref);
+  return variant ? legacyBuilderSceneryEntry(ref, variant) : undefined;
+}
+```
+
 Implementation rules:
 
 1. Adapt legacy entries from every `PROP_KEYS` key whose
-   `resolvePropVariant(ref)` succeeds. Retain the resolved variant, role, and
-   current Dungeon placement defaults. Preserve manifest order in this shared
-   input; consumer-specific ordering remains an adapter concern.
+   `resolvePropVariant(ref)` succeeds by calling
+   `legacyBuilderSceneryEntry(ref, variant)`. Retain the resolved variant, role,
+   and current Dungeon placement defaults. Preserve manifest order in this
+   shared input; consumer-specific ordering remains an adapter concern. Family
+   aliases remain absent from the static palette because they are resolved only
+   on demand.
 2. Adapt every `Object.values(GENERATED_WORLD_ASSETS)` entry. Extract a generated
    collection only with `parseRef(ref)?.idParts`: `idParts[0]` when there are at
    least two ID parts, otherwise the disclosed `legacy` bucket. Never use a
@@ -701,12 +774,19 @@ Implementation rules:
    whose exact ref already appears in legacy before building the map.
 6. `createBuilderSceneryIndex` accepts only legacy/generated scenery. On any
    accidental duplicate it retains the first entry, so the catalog's
-   legacy-first collision rule is also the resolver rule.
-7. `filterBuilderCatalog` trims and lowercases the query, applies exact visual
+   legacy-first collision rule is also the resolver rule. The production
+   resolver checks this index before parsing for a family alias.
+7. Only after an index miss, parse the ref. Return unresolved for malformed
+   refs, any `items`/`weapons`/`env` type, and every exact scenery ref. For a
+   non-exact parsed `props` ref only, call the existing `resolvePropVariant` and
+   adapt a successful mapping as legacy scenery under the original authored
+   family ref. Do not add aliases to the catalog or index and do not infer a
+   family for generated world assets.
+8. `filterBuilderCatalog` trims and lowercases the query, applies exact visual
    category unless `all`, matches precomputed `searchText`, excludes nothing on
    source alone, and preserves input order.
 
-- [ ] **Step 4: Pin generated, collision, actor, composition, and search behavior**
+- [ ] **Step 4: Pin generated, collision, family-alias, actor, composition, and search behavior**
 
 Add table-driven/pure tests that prove:
 
@@ -745,6 +825,30 @@ it('uses one legacy-first rule for both catalog and scenery resolver', () => {
   expect(index.get('dnd5e:props:dark-fortress:altar_01')).toMatchObject({
     source: 'legacy',
   });
+});
+
+it('preserves the existing mapped Plushie family alias after an index miss', () => {
+  const entry = resolveBuilderScenery('dnd5e:props:plushie');
+  expect(entry).toMatchObject({
+    ref: 'dnd5e:props:plushie',
+    source: 'legacy',
+    variant: {
+      displayName: 'Skele Dog Plushie',
+      file: 'props/plushie--skeleton-dog.glb',
+    },
+  });
+});
+
+it('leaves an unknown one-part prop unresolved', () => {
+  expect(resolveBuilderScenery('dnd5e:props:unknown-family')).toBeUndefined();
+});
+
+it.each([
+  'dnd5e:items:plushie',
+  'dnd5e:weapons:plushie',
+  'dnd5e:env:plushie',
+])('never applies legacy prop-family fallback to %s', (ref) => {
+  expect(resolveBuilderScenery(ref)).toBeUndefined();
 });
 
 it('adapts a synthetic NPC appearance without making it placeable', () => {
@@ -813,6 +917,7 @@ npm test -- --run \
   src/concepts/world-building/catalog.test.ts \
   src/author/paletteData.test.ts \
   src/components/hex-grid/monsterModels.test.ts \
+  src/utils/refs.test.ts \
   src/concepts/world-building/WorldBuildingConcept.test.tsx \
   src/concepts/world-building/WorldBuildingViewport.test.tsx \
   src/utils/refs.guard.test.ts
@@ -820,8 +925,10 @@ npm run typecheck
 ```
 
 Expected: all pass; the World Builder still contains all generated categories,
-its metadata and ordering remain stable, and there is no colon-split guard
-exception.
+its metadata and ordering remain stable, the mapped Plushie family alias resolves
+to its existing skeleton-dog variant, an unknown one-part prop remains
+unresolved, non-props never use family fallback, and there is no colon-split
+guard exception.
 
 - [ ] **Step 7: Commit and review the shared authority**
 
@@ -831,6 +938,8 @@ git add \
   src/catalog/builderCatalog.test.ts \
   src/concepts/world-building/catalog.ts \
   src/concepts/world-building/catalog.test.ts \
+  src/utils/refs.ts \
+  src/utils/refs.test.ts \
   src/author/paletteData.ts \
   src/author/paletteData.test.ts \
   src/components/hex-grid/monsterModels.ts \
@@ -839,11 +948,15 @@ git commit -m "feat: share a discriminated builder catalog"
 ```
 
 Review must explicitly confirm: this is one neutral catalog authority rather
-than parallel World/Dungeon unions; the scenery resolver shares the catalog's
-legacy-first exact collision policy; World Builder source metadata is preserved
-by its adapter; all four generated categories are included; monsters remain
-placeable actors; the synthetic NPC input becomes a non-placeable actor; no ref
-split or guard exception was added; and no generated file changed.
+than parallel World/Dungeon unions; the scenery resolver consults the
+legacy-first exact index before preserving only mapped non-exact `props` family
+aliases; the Plushie alias resolves to its existing skeleton-dog variant; an
+unknown one-part prop stays unresolved and non-props never enter family
+fallback; World Builder source metadata is preserved by its adapter; all four
+generated categories are
+included; monsters remain placeable actors; the synthetic NPC input becomes a
+non-placeable actor; no ref split or guard exception was added; and no generated
+file changed.
 
 ---
 
@@ -1136,80 +1249,40 @@ mutation from presentation controls. `src/author/types.ts` remains unchanged.
 ### Task 5: Render shared-catalog DungeonSpec scenery in preview and play
 
 **Files:**
-- Modify: `rpg-dnd5e-web/src/utils/refs.ts`
-- Modify: `rpg-dnd5e-web/src/utils/refs.test.ts`
 - Modify: `rpg-dnd5e-web/src/components/session/AtlasPropModel.tsx`
 - Modify: `rpg-dnd5e-web/src/components/session/AtlasPropModel.test.tsx`
 - Modify: `rpg-dnd5e-web/src/components/session/DungeonEnvironment.test.tsx`
 - Read only: `rpg-dnd5e-web/src/catalog/builderCatalog.ts`
+- Read only: `rpg-dnd5e-web/src/utils/refs.ts`
+- Read only: `rpg-dnd5e-web/src/utils/refs.test.ts`
 - Read only: `rpg-dnd5e-web/src/components/hex-grid/WorldAssetModel.tsx`
 - Read only: `rpg-dnd5e-web/src/generated/worldAssetCatalog.ts`
 
 **Interfaces:**
-- Consumes: Task 3 `resolveBuilderScenery(ref)` and
-  `ResolvedBuilderScenery`; `WorldAssetModel`; existing `SceneProp3D` world
-  position/facing/offset conversion.
-- Produces: parser-based `isExactSceneryRef(ref)` and `AtlasPropModel` dispatch
-  order `composition → shared resolved scenery source → missing exact scenery
-  empty → legacy family placeholder`, shared by builder preview and gameplay.
+- Consumes: Task 3 `resolveBuilderScenery(ref)`,
+  `ResolvedBuilderScenery`, and parser-based `isExactSceneryRef(ref)`;
+  `WorldAssetModel`; existing `SceneProp3D` world position/facing/offset
+  conversion.
+- Produces: `AtlasPropModel` dispatch order `composition → shared resolved
+  scenery source (exact index, then mapped non-exact props alias) → missing
+  exact scenery empty → neutral placeholder`, shared by builder preview and
+  gameplay.
 - Task 6 consumes: real generated asset rendering in the Dungeon Builder and
   session route.
 
-- [ ] **Step 1: Add the central exact-scenery predicate tests**
+- [ ] **Step 1: Confirm the central exact-scenery contract from Task 3**
 
-In `refs.test.ts`, add `isExactSceneryRef` to the existing imports and pin the
-four allowed namespaces as individually named table cases:
-
-```ts
-describe('isExactSceneryRef', () => {
-  it.each([
-    ['props', 'dnd5e:props:dark-fortress:missing'],
-    ['items', 'dnd5e:items:dark-fortress:missing'],
-    ['weapons', 'dnd5e:weapons:dark-fortress:missing'],
-    ['env', 'dnd5e:env:dark-fortress:missing'],
-  ])('recognizes exact %s refs', (_kind, ref) => {
-    expect(isExactSceneryRef(ref)).toBe(true);
-  });
-
-  it('rejects a legacy family, another type, and malformed input', () => {
-    expect(isExactSceneryRef('dnd5e:props:altar')).toBe(false);
-    expect(isExactSceneryRef('dnd5e:monsters:crypt:skeleton')).toBe(false);
-    expect(isExactSceneryRef('dnd5e:items:')).toBe(false);
-  });
-});
-```
-
-Run:
+Run the parser tests before renderer work:
 
 ```bash
 npm test -- --run src/utils/refs.test.ts
 ```
 
-Expected: fail because the central predicate does not exist.
+Expected: pass. `isExactSceneryRef` recognizes exact `props`, `items`,
+`weapons`, and `env` refs, while `dnd5e:props:plushie` remains non-exact and
+eligible for the shared resolver's mapped-family branch.
 
-- [ ] **Step 2: Implement the parser-owned predicate without widening the guard**
-
-In `refs.ts`, retain `isExactPropRef` for existing callers and add:
-
-```ts
-const SCENERY_REF_TYPES = new Set(['props', 'items', 'weapons', 'env']);
-
-export function isExactSceneryRef(ref: string): boolean {
-  const parsed = parseRef(ref);
-  return (
-    parsed !== null &&
-    SCENERY_REF_TYPES.has(parsed.type) &&
-    parsed.idParts.length >= 2
-  );
-}
-```
-
-This is structural exactness, not catalog availability: the parser proves the
-ref has one of the four scenery types and at least two ID parts; the shared
-catalog resolver separately decides whether the exact ref is supported. Do not
-add an entry to `refs.guard.test.ts`'s allowlist.
-
-- [ ] **Step 3: Add failing shared-resolver dispatch and four missing-ref tests**
+- [ ] **Step 2: Add failing shared-resolver dispatch and four missing-ref tests**
 
 In `AtlasPropModel.test.tsx`, mock `WorldAssetModel` separately from the existing
 composition and `PropModel` probes. Mock Task 3's resolver at its module boundary
@@ -1243,17 +1316,23 @@ Add these separate authority regressions:
 
 1. composition refs still bypass the shared static resolver;
 2. a normal resolved legacy ref reaches `PropModel`;
-3. for a synthetic exact ref represented by both legacy and generated test
+3. the Task 3 resolver test proves `dnd5e:props:plushie` resolves to a legacy
+   entry carrying `props/plushie--skeleton-dog.glb`; the Atlas test returns that
+   resolved entry, renders the existing skeleton-dog Plushie `variant` through
+   `PropModel`, and renders neither `WorldAssetModel` nor the placeholder;
+4. `dnd5e:props:unknown-family` remains unresolved and renders exactly the
+   neutral placeholder, with neither model probe;
+5. for a synthetic exact ref represented by both legacy and generated test
    inputs, Task 3's index resolves the legacy entry and `AtlasPropModel` renders
-   the legacy `variant`, never `WorldAssetModel`;
-4. an unresolved one-ID-part legacy prop family still renders the existing
-   placeholder, proving family fallback remains.
+   the legacy `variant`, never `WorldAssetModel`.
 
 The collision test may use `createBuilderSceneryIndex` to establish the
 legacy-selected fixture and have the resolver mock return that exact entry. It
-must assert renderer choice, not only index contents.
+must assert renderer choice, not only index contents. Together with Task 3's
+resolver tests, these cases explicitly distinguish a mapped non-exact `props`
+alias, an unknown one-part prop, and an exact collision.
 
-- [ ] **Step 4: Dispatch only from the shared resolved scenery entry**
+- [ ] **Step 3: Dispatch only from the shared resolved scenery entry**
 
 In `AtlasPropModel.tsx`, delete imports of `GENERATED_WORLD_ASSETS`,
 `resolveWorldAsset`, and `resolvePropVariant` if present. Import only:
@@ -1300,14 +1379,16 @@ return placeholder;
 ```
 
 Construct `placeholder` before this switch, but only return it for legacy load
-failures or unresolved non-exact/family refs. `propWorldPosition` remains the
+failures or unresolved non-exact refs. A mapped legacy family never reaches this
+final branch because `resolveBuilderScenery` returns its legacy entry first.
+`propWorldPosition` remains the
 sole position/offset conversion. `WorldAssetModel` remains the sole provider
 normalization/runtime-scale renderer. Do not copy generated entries into
 `PropVariant` and do not perform any parallel generated/legacy source lookup in
 this component. The shared resolver's legacy-first map is therefore renderer
 authority on exact collisions.
 
-- [ ] **Step 5: Prove DungeonEnvironment shares the dispatch**
+- [ ] **Step 4: Prove DungeonEnvironment shares the dispatch**
 
 Extend `DungeonEnvironment.test.tsx` with an atlas prop using the promoted
 Alchemy Tools exact ref. Mock `AtlasPropModel` and assert the ref, authored
@@ -1315,7 +1396,7 @@ facing, and offset are passed unchanged. This pins that builder preview and
 session rendering both reach the same dispatcher rather than adding a
 builder-only renderer.
 
-- [ ] **Step 6: Run renderer, parser-guard, and scene regressions**
+- [ ] **Step 5: Run renderer, parser-guard, and scene regressions**
 
 ```bash
 npm test -- --run \
@@ -1331,26 +1412,27 @@ npm test -- --run \
 npm run typecheck
 ```
 
-Expected: all pass; compositions, lights, monsters, legacy props, four-category
-missing exact refs, and legacy family fallback retain their specified behavior.
+Expected: all pass; compositions, lights, monsters, legacy props, the mapped
+Plushie family alias, the unknown-family placeholder, four-category missing exact
+refs, and exact collision authority retain their specified behavior.
 
-- [ ] **Step 7: Commit and review renderer authority**
+- [ ] **Step 6: Commit and review renderer authority**
 
 ```bash
 git add \
-  src/utils/refs.ts \
-  src/utils/refs.test.ts \
   src/components/session/AtlasPropModel.tsx \
   src/components/session/AtlasPropModel.test.tsx \
   src/components/session/DungeonEnvironment.test.tsx
 git commit -m "feat: render generated scenery in authored dungeons"
 ```
 
-Review must confirm: composition first; one shared scenery resolution; legacy
-renderer authority on an exact generated collision; all four missing exact
-namespaces render empty; legacy family fallback remains; no double
-scale/grounding; offsets apply once; and no ref split or generated-file edit was
-introduced.
+Review must confirm: composition first; one shared scenery resolution; the
+mapped `dnd5e:props:plushie` alias renders its existing skeleton-dog variant; an
+unknown one-part prop renders the neutral placeholder; exact refs and
+`items`/`weapons`/`env` never use prop-family fallback; legacy renderer authority
+holds on an exact generated collision; all four missing exact namespaces render
+empty; no double scale/grounding; offsets apply once; and no ref split or
+generated-file edit was introduced.
 
 ---
 
@@ -1463,9 +1545,12 @@ Update `src/author/CONTRACT.md` with:
 ```text
 Generated props/items/weapons/env are DungeonSpec scenery. Their exact visual
 ref is authored; blocking remains per placement. One neutral catalog and
-legacy-first scenery resolver serve both builders and AtlasPropModel. Missing
-exact scenery refs render empty while legacy family fallback remains. Visual
-category grants no inventory/equipment meaning. Every placement affects one
+legacy-first scenery resolver serve both builders and AtlasPropModel. It checks
+the exact index first, then preserves mapped non-exact props aliases such as
+dnd5e:props:plushie through the existing skeleton-dog Plushie variant. Missing
+exact scenery refs render empty; an unknown one-part prop uses the neutral
+placeholder; items/weapons/env never use prop-family fallback. Visual category
+grants no inventory/equipment meaning. Every placement affects one
 anchor cell in this slice. Compositions are assembled technical scenery props
 represented by one anchor ref; malformed records stay visible but cannot arm.
 Monsters remain actors; NPC appearance inputs remain explicitly non-placeable.
@@ -1533,7 +1618,7 @@ The final independent reviewer reads the approved design, this plan, all task re
 - generated refs compile through merged Toolkit/API and render through `WorldAssetModel`;
 - exact refs, authored blocking values, offsets, and one-anchor behavior survive;
 - no licensed bytes are tracked;
-- all four missing exact scenery namespaces remain empty, legacy family fallback remains, and exact-ref collisions use legacy renderer authority;
+- all four missing exact scenery namespaces remain empty; `dnd5e:props:plushie` resolves and renders the existing skeleton-dog variant; an unknown one-part prop retains the neutral placeholder; `items`/`weapons`/`env` never use prop-family fallback; and exact-ref collisions use legacy renderer authority;
 - no ref colon split or parser-guard allowlist expansion was introduced;
 - Critical/Important findings are zero before merge readiness.
 
@@ -1545,13 +1630,13 @@ Push only the reviewed head and open the Web PR against `dev`. Record the review
 
 - [ ] Toolkit PR merged to `main`; normal CI-published Encounter module version recorded.
 - [ ] API consumes the published Encounter version and merges real authoring/session acceptance to `dev`.
-- [ ] One neutral Web catalog/resolver feeds the World Builder adapter, Dungeon palette, and Atlas renderer with legacy authority on exact-ref collisions.
+- [ ] One neutral Web catalog/resolver feeds the World Builder adapter, Dungeon palette, and Atlas renderer; it checks the legacy-first exact index before the narrowly gated mapped non-exact `props` family branch.
 - [ ] Web static catalog includes legacy scenery, all generated scenery categories, model-backed monsters, dynamic composition adapter, and an explicit synthetic-tested non-placeable NPC input seam.
 - [ ] Dungeon palette has fixed category filters, counts, search, collection grouping, and empty state.
 - [ ] World Builder still discovers every generated category and keeps current search behavior.
 - [ ] Dungeon preview and play use `WorldAssetModel` for generated exact refs.
 - [ ] Existing legacy props, default-dungeon monsters, and compositions retain behavior; malformed composition records remain visible but uncounted and unarmable under filtering.
-- [ ] Missing exact refs for props/items/weapons/env render empty, legacy family fallback remains, and all collection parsing uses `parseRef`/`idParts` without a guard exception.
+- [ ] Missing exact refs for props/items/weapons/env render empty; `dnd5e:props:plushie` resolves/renders the existing skeleton-dog variant; an unknown one-part prop renders the neutral placeholder; non-prop namespaces never use family fallback; and all collection parsing uses `parseRef`/`idParts` without a guard exception.
 - [ ] Provider check, focused tests, full CI, and real browser authoring pass.
 - [ ] No generated file is hand-edited and no licensed GLB is tracked.
 - [ ] Current large assets remain explicitly single-anchor until a separate multi-hex design.
