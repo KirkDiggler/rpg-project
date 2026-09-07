@@ -1,6 +1,6 @@
 # Trusted guild-derived world context — composition first
 
-*Design proposal for [rpg-project#399](https://github.com/KirkDiggler/rpg-project/issues/399), under journey [#169](https://github.com/KirkDiggler/rpg-project/issues/169). No implementation is authorized by this document.*
+*Approved design for [rpg-project#399](https://github.com/KirkDiggler/rpg-project/issues/399), under journey [#169](https://github.com/KirkDiggler/rpg-project/issues/169). Approval: [Kirk's PR #402 receipt](https://github.com/KirkDiggler/rpg-project/pull/402#issuecomment-5571604359). Implementation remains separately gated by owning-repository issues and branches.*
 
 ## Outcome and fixed boundary
 
@@ -23,7 +23,7 @@ The Activity's `guild_id` is currently URL-derived debug context and never reach
 
 The existing proto already carries `world_id` on each composition request and result ([contract](https://github.com/KirkDiggler/rpg-api-protos/blob/d95769dca9005cdbd3693dc9f7310cbefec1b7d4/api/composition/v1alpha1/service.proto#L9-L63)). Redis is already partitioned as `composition:<WorldID>` and validates the stored envelope ([repository](https://github.com/KirkDiggler/rpg-api/blob/c206c568b2af27bdc6181f05e3be7478444b5c6b/internal/repositories/composition/redis.go#L68-L73), [decode check](https://github.com/KirkDiggler/rpg-api/blob/c206c568b2af27bdc6181f05e3be7478444b5c6b/internal/repositories/composition/redis.go#L155-L167)). The missing part is the trusted derivation of that ID.
 
-## Proposed contract for approval
+## Approved contract
 
 ### 1. Deterministic one-to-one identity, not a registry
 
@@ -33,7 +33,7 @@ For this slice, define the toolkit-domain `WorldID` string to be the canonical d
 verified GuildID "123456789012345678" -> WorldID "123456789012345678"
 ```
 
-This is an **implementation proposal requiring design approval**, not a previously approved registry decision. It is the smallest exact one-to-one mapping: no database, lifecycle service, mapping roundtrip, or empty-library bootstrap problem. The Activity already knows its guild selector, so it can set both the guild header and existing request `world_id`; the server independently verifies and derives the same value. Client agreement is never authority.
+This is the approved one-to-one identity decision, not a registry decision. It is the smallest exact one-to-one mapping: no database, lifecycle service, mapping roundtrip, or empty-library bootstrap problem. The Activity already knows its guild selector, so it can set both the guild header and existing request `world_id`; the server independently verifies and derives the same value. Client agreement is never authority.
 
 The tradeoff is explicit. Direct identity puts a Discord-shaped value into otherwise platform-neutral WorldID storage. A deterministic namespace such as `discord:guild:<id>` would avoid cross-provider collisions while retaining no-registry behavior, but would add a mapping rule that every client must share. A separate random opaque WorldID would improve provider independence, but would require durable mapping/lifecycle and a resolve response even when `ListCompositions` is empty. There is no present need for that machinery. If later evidence earns it, the migration should be designed then; toolkit code must still know only WorldID, never GuildID or Discord APIs.
 
@@ -77,19 +77,19 @@ This preserves the current simple `composition:<WorldID>` Redis partition and to
 
 ## Web source and consent lifecycle
 
-The Activity's SDK guild value creates an untrusted candidate source; the successful server check makes its requests usable. With the proposed direct identity, `CompositionSource.worldId` is the canonical guild snowflake. Its adapter sends that value in every composition request while the transport sends the guild selector. The existing response checks remain defense in depth.
+The Activity's SDK guild value creates an untrusted candidate source; the successful server check makes its requests usable. With the approved direct identity, `CompositionSource.worldId` is the canonical guild snowflake. Its adapter sends that value in every composition request while the transport sends the guild selector. The existing response checks remain defense in depth.
 
 A source is scoped to **authenticated token session + GuildID + WorldID**. When the Activity guild changes, authentication changes, re-consent occurs, or the user signs out, discard the entire source object before creating another. Browser sign-out also clears local authentication; this source, state, and cache teardown is client-local. Clear list, palette, composition-resolution, error, and in-flight state; late results from an old source must not publish into the new one. Cache keys remain at least `(source identity, WorldID, composition ID)`, as the existing resolution hook already intends ([cache reset](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/758c3b16a570531c215f677ae928bd572c227841/src/compositions/useCompositionResolutions.ts#L39-L71), [late-result guard](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/758c3b16a570531c215f677ae928bd572c227841/src/compositions/useCompositionResolutions.ts#L80-L110)). A composition reference is always resolved through the current source's WorldID; an ID learned in one world must never probe or populate another world's cache.
 
 If there is no Activity guild, production creates no world source and makes no composition call. The World Builder entry is hidden or disabled with a clear “Open this Activity in a server to access its world” state. It must not choose the first guild, offer a picker, or fall back to `test-world`. Other global signed-in UI may continue because it has not opted into world context.
 
-The SDK authorize request adds `guilds.members.read`. Existing users have tokens granted only `identify` and `applications.commands`; current `prompt: 'none'` cannot be assumed to upgrade consent interactively. **Proposal:** remove the forced `prompt: 'none'` for this authorization path and let Discord present required consent. A cancelled or denied grant clears auth and world-source state and shows a retry/reconnect action; it does not continue with an old token or stale world.
+The SDK authorize request adds `guilds.members.read`. Existing users have tokens granted only `identify` and `applications.commands`; current `prompt: 'none'` cannot be assumed to upgrade consent interactively. **Approved:** remove the forced `prompt: 'none'` for this authorization path and let Discord present required consent. A cancelled or denied grant clears auth and world-source state and shows a retry/reconnect action; it does not continue with an old token or stale world.
 
 The SDK's returned scopes may improve the UI message, but they are not server authority. The deployed proof must exercise the real consent screen and endpoint response.
 
 ## Failure and cache policy
 
-The proposed external behavior is deliberately fail-closed:
+The approved external behavior is deliberately fail-closed:
 
 | Condition | Server result | UI behavior |
 |---|---|---|
@@ -102,7 +102,7 @@ The proposed external behavior is deliberately fail-closed:
 
 Do not invent a Discord error distinction the provider did not send. In particular, a `403` can be surfaced as missing scope only when the authenticated scope list actually proves that; otherwise it remains a generic access denial.
 
-**Cache proposal for approval:** cache successful `(token digest, GuildID) -> PlayerID/WorldID` membership decisions in process for at most 30 seconds and a fixed maximum entry count. Key by a non-reversible digest rather than a raw bearer token, never log keys, never cache denials, and never serve an expired entry. Evict relevant identity and membership entries when a provider `401` is observed. Browser sign-out sends no server signal and is not token revocation, so it does not synchronously evict server entries; positive decisions in this proposed cache instead expire within the bounded 30-second TTL. This slice adds no logout RPC or logout framework. Once the positive entry expires, provider failure is `Unavailable`; there is no stale-while-error behavior. This intentionally accepts at most the short TTL of membership/revocation lag. Starting without a membership cache is also correct but adds a Discord roundtrip to every composition RPC.
+**Approved cache policy:** cache successful `(token digest, GuildID) -> PlayerID/WorldID` membership decisions in process for at most 30 seconds and a fixed maximum entry count. Key by a non-reversible digest rather than a raw bearer token, never log keys, never cache denials, and never serve an expired entry. Evict relevant identity and membership entries when a provider `401` is observed. Browser sign-out sends no server signal and is not token revocation, so it does not synchronously evict server entries; positive decisions in this cache instead expire within the bounded 30-second TTL. This slice adds no logout RPC or logout framework. Once the positive entry expires, provider failure is `Unavailable`; there is no stale-while-error behavior. This intentionally accepts at most the short TTL of membership/revocation lag. Starting without a membership cache is also correct but adds a Discord roundtrip to every composition RPC.
 
 ## Development-only world
 
@@ -158,4 +158,4 @@ The current OAuth request uses an empty `state`, while Discord recommends a sess
 
 ---
 
-**Human approval gate:** Kirk must approve this written design—including the direct GuildID/WorldID identity, `x-rpg-guild-id` contract, error mapping, and cache choice—before `plan.md` or any implementation slice is created.
+**Approval status:** Kirk approved this written design at `2ad5f9c515fecb16496384fa0f05009e45612e38`; see the [approval receipt](https://github.com/KirkDiggler/rpg-project/pull/402#issuecomment-5571604359). Deferred hardening remains separate in [rpg-project#403](https://github.com/KirkDiggler/rpg-project/issues/403) (OAuth transaction/session binding) and [rpg-api#937](https://github.com/KirkDiggler/rpg-api/issues/937) (existing identity-cache hardening); neither is an acceptance gate for this slice.
