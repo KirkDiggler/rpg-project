@@ -2,11 +2,11 @@
 
 **Date:** 2026-09-06
 **Status:** Brainstorm. Territory mapped against the composable stack as it stands on
-`rpg-toolkit` main (`3477eb44`). No slice cut yet; the candidate first slice is in §7.
+`rpg-toolkit` main (`3477eb44`). No slice cut yet; the candidate first slice is in §8.
 **Umbrella:** levels 1–3 — get every class from level 1 to level 3 and make the level-3
 choices real.
 **Journey:** none adopted. rpg-project#243 (*Cast a Spell in Play*) is prior art from the
-old stack and is not carried; see §9.
+old stack and is not carried; see §10.
 
 ---
 
@@ -281,46 +281,168 @@ lands:
 
 ---
 
-## 6. The ranger as the use case
+## 6. Shapes — what exists, and what spellcasting asks for
 
-Kirk's proposal: bring in a simple caster and prove the cast shape on a solid use case. The
-ranger, checked against the goal:
+Kirk's ruling, and the frame for everything below: **plan on the new places only.** The
+composable `play` and `world` packages are the system — resolution machines, the door, the
+bus, the world graph. If a thing exists only as a legacy file — `conditions/helped.go`,
+`conditions/shield_spell.go`, Second Wind's private healing path, the dead `effects`
+package, the web class allowlist — then for this plan **it is missing**, and naming it as
+prior art is the most it gets.
 
-- Rangers get spellcasting at level 2, an archetype at 3, and nothing usable at 1. One
-  character walked 1→3 touches level-up twice, spell choice, slot growth and a subclass pick.
-- No cantrips, so the first spell cannot dodge slots — which is why §5.1 comes first.
-- Its first spells land on the missing places in a useful order, without touching the big
-  one:
-  - **Hunter's Mark** — bonus action, a slot, concentration, self. A caster-side condition
-    that owns a link to one target and adds d6 to weapon strikes against it (a chain
-    subscriber shaped like Sneak Attack). The cleanest test of §3.2, composing with the
-    strike we have.
-  - **Cure Wounds** — action, a slot, touch, heal an ally. The heal arm, the cast view's
-    `IsAllied`, the healing beat that already exists.
-  - **Ensnaring Strike** — adds a Strength save and *restrained* (§3.3, §3.6).
-  - **Hail of Thorns** — adds a burst and half-on-save (§3.1, §3.4).
-  - **Fog Cloud** — an area with no targets at all; heavily obscured is a sight problem.
+Second ruling: **a machine exists only when we need a new shape or different steps.** Never a
+spell-named machine. There is no thunderwave machine. A spell is *shapes × effect kinds*, and
+if a spell seems to need its own machine, the shapes are wrong.
 
-Each rung reuses the previous one, and the class never leaves levels 1–3.
+### 6.1 Shapes today
 
-Alternative considered: a level-1 cleric (Sacred Flame, Cure Wounds, Bless) exercises more
-arms at once but skips the level-2 moment entirely and needs the save beat in slice one.
+Every sequence the composable stack actually runs. A row is here only if a non-test caller
+drives it.
+
+| Shape | Steps | What makes it special | Callers today |
+|---|---|---|---|
+| Strike | Start → attack roll → damage chain → riders → Done, every phase boundary a yielded step | the machine's fields are its whole state between phases, so a window can be inserted without rebuilding it (`strike.go:96-101`) | `resolution/action.go:27` (Attack arm), `resolution/movement.go:313` (opportunity attack) |
+| Save | one Gather, then Done | the smallest machine that folds a chain, and it never touches the bus — the fold happens once inside `saves.MakeSavingThrow` (`save.go:66-88`) | `resolution/contest.go:241` — the only one |
+| Contest | Request(save) → outcome policy → Gather(impose) → Done (`contest.go:144-213`) | the only machine that composes another and resumes with its outcome | `resolution/strike.go:909` |
+| Activation | Start(find actor and target in the cast) → Gather(run, collect typed effects) → Done | it charges **nothing** at the door on purpose: the ability spends its own slot, so a `Cost` beside it would bill twice (`activation.go:357-363`, effects `activation.go:61-124`) | `session/activate.go:228` |
+| Movement | Start → Gather(announce, fold the chain) → Request(strike) per trigger → Done | the only machine that produces reaction triggers and resolves them inline (`movement.go:158-180`, `:313`) | `session/mover.go:95` |
+| Boundary | Start → one Gather per crossing, sealed kind→topic lookup → Done | publishes the clock, and refuses a kind this build does not know at the door rather than publishing nothing (`boundary.go:76-110`) | `session/announcer.go:60` |
+| Dispatch | not a machine: `NewAction` reads the definition's profile arm and returns one | the one place content chooses a sequence; one arm (`action.go:19-34`) | `session/attack.go:254`, `session/striker.go:98` |
+| The door | `payAtTheDoor` charges a `combat.SpendProfile` all-or-none, after pure preflight and before the first step | the only place a price moves; `Pools` and `Requires` are expressible and unexercised (`cost.go:127-173`, `combat/spend_profile.go:37-45,59-95`) | every priced verb through `Resolve` (`resolve.go:299-427`) |
+| Afford | compiles `Declaration`s off the sheet: verb, slot, available, shortfall, candidates | the server authors the offer and the label; five verbs, none of them a cast (`session/afford.go:36-95`) | session read path, web action dock |
+| Condition on the bus | attach → subscribe (clock topics, chains) → publish removal → detach | the only ongoing effect, persisted as opaque JSON (`conditions/raging.go:88,118,148`, `events/events.go:1009-1016`) | 6 of 14 core conditions have behavior |
+| World trigger | a `TriggerFact` on a disposition's `until`, folded per faction mind into graph edges | nothing stores the stance: it is derived on every question from declaration plus facts, and six of the seven trigger forms are refused on an `until` (`encounter/disposition.go:125-149`, `encounter/world.go:395-425`) | `encounter.IsHostile`/`IsAllied` → `resolution/cast.go:115-120` |
+| Placement | validate content → place → reveal | placement is shared with monsters and spawning is not: `PlaceNPC` takes already-built content and never forms a fight (`session/write.go:653`), `Spawn` does (`write.go:539`) | session write path |
+
+**What is not in this table, and why.** The pause. `Step` is sealed to `Gather | Request |
+Done`; `Pose` is named in ADR-0038 and not built (`step.go:26-33`), and `Request` says so in
+its own doc — "No suspension yet. The requested machine runs to Done inside this one's step
+loop" (`step.go:66-71`). The custody half *is* built — `play/interrupt` has a ledger with
+Pose and Answer — and it has **zero non-test importers**. So the interrupt window is a design
+that exists and a shape that does not.
+
+### 6.2 Shapes spellcasting asks for
+
+`state` is judged against the new stack only. "Partial" means some steps exist and the shape
+does not.
+
+| Shape | Steps | What makes it special | Nearest existing shape, and the delta | First customer | Also serves | State |
+|---|---|---|---|---|---|---|
+| **Grant** | pay at the door → deliver to a willing target → one beat | no roll at all, because the target does not resist | Activation, which charges nothing at the door and acts on self (`activation.go:357-363`) — the delta is a price and a target who is not the actor | Bardic Inspiration | Healing Word, Cure Wounds, Bless, Aid | **partial** — heal effects and a range check exist (`activation.go:61-124`, `delivery.go:12-39`) |
+| **Save-then-effect** | set a DC → target rolls → read an outcome policy (full / half / nothing) → deliver → beat | the outcome policy; today success means the effect simply never happened | Contest — the steps are already Request(save) → policy → deliver → Done. The delta is two refusals: `OnSuccess` must be `Negated` (`contest.go:70`, and again at the data layer `combat/actions/attack.go:258-261`) and recurrence is refused outright (`contest.go:69-74`) | Vicious Mockery | Sacred Flame, the wolf's knockdown, ghoul paralysis, every save-or-suffer | **partial** |
+| **Fan-out** | resolve one shape once per target in a set or an area → one beat per target | N outcomes from one declaration; every machine input holds one target and every outcome describes one | none. Movement's per-trigger `Request` loop (`movement.go:313`) is the only precedent for repeating a sub-machine | Thunderwave — and the first monster with multiattack gets there first | every area spell, breath weapons, Sweeping Attack, healing word on a group | **missing** — shape queries have no non-test caller (`tools/spatial/hex_grid.go:174,185`); `TargetKind` is NONE\|MEMBER\|PATH |
+| **Post-roll window** | roll → **pause** → offer a window to someone who is not the actor → read the answer → read the outcome | it is the first step that leaves the process | none. `Step` is sealed and `Pose` is unbuilt (`step.go:26-33,66-71`); the custody ledger in `play/interrupt` has no importer | Cutting Words | Shield, Silvery Barbs, Bardic Inspiration's spend, every reaction | **missing**, custody partial |
+| **Concentration — an owning condition** | own N effects → on damage taken, request a CON save as Save-then-effect → on failure drop everything owned → a second concentration cast drops the first | ownership and cascade. One owner, many owned, and ending one ends all of them | a condition on the bus. `ConditionApplication` carries `Ref`, `Parameters`, `Save` and **no source binding** (`combat/actions/attack.go:240-244`), so nothing records who owns what. The DC is already in the roster (`saves/gate.go:115`) and the trigger constant exists with no driver (`events/events.go:386-387`) | any concentration spell | Hunter's Mark, Hex, Bless ending when the caster drops it, Dispel Magic | **missing** — this is §3.2, and it is the largest single piece |
+| **Ritual / out-of-bubble cast** | declare with no turn and no round → pay a price that is not a slot on a turn → resolve | the action economy is the whole gate today, and it exists only inside a fight | the standing verbs (Search, Loot, Interact, Trade) run outside a bubble but carry no action definition and no price. Rounds are explicit that they exist only inside one (`encounter/field.go:1106-1113`) | Charm Person on a guard in a corridor | rituals, Detect Magic, every social spell, Song of Rest | **missing** |
+| **Upcast** | choose a level at the door → charge that level's pool → the effect reads what was paid | the price is an input rather than a constant, and the effect is a function of it | `SpendProfile.Pools` (`spend_profile.go:82-84`) — expressible, unexercised, and compiled before the declaration, so nothing lets a player choose | Healing Word at 2nd | Thunderwave, Magic Missile, every scaling spell | **missing**, the pool half partial |
+| **Persistent area with recurrence** | place a shape on the map → it persists → re-apply at a clock boundary → end | an effect owned by a region rather than by a member, plus a recurrence step | `saves.SaveGate.Recurrence` is declarable and refused (`ErrRecurrenceUnsupported`, `contest.go:69-74`); `MembersIn(region)` exists with no combat caller (`encounter/region.go:108`) | Fog Cloud, Web | Spirit Guardians, Darkness, authored hazards | **missing** — §3.4 plus a region-owned effect |
+| **Summon / placement** | author a participant → place it → it acts | nothing about the placement; the delta is who authored the content and whether it takes a turn | `PlaceNPC` places already-built content and forms no fight (`session/write.go:653`); `Spawn` forms one (`write.go:539`) | Find Familiar | Animate Dead, conjurations, summoned swarms | **partial** — placement exists, a caster-authored participant does not |
+| **Reaction to a cast** | a declaration is made → **pause** → offer a window → the declaration may not happen | the producer is the door rather than a step or a roll | Post-roll window: same custody, different trigger point | Counterspell | any declaration-time interrupt | **missing**, and there is no cast verb to hang it on |
+| **Teleport** | leave → arrive, with no path between | it must produce no movement chain, so no opportunity attack reads it | Movement, which refuses `From == To` and folds a chain the mover's reactions read (`movement.go:158-180`, `session/mover.go:330`) — the delta is skipping the fold | Misty Step | Dimension Door, Thunder Step, and a push's forced displacement | **missing** |
+| **Detection / illusion — a per-player beat** | resolve once → describe the same board differently to different members | audience. The wire carries one description of a beat for everyone | the grain already exists on the world side: a fact is judged on the *truth* grain or a mind's *audience* grain (`encounter/field.go:1129-1135`), and `Sight` is supplied never defaulted (`resolve.go:198-216`) | Detect Magic, Silent Image | fog of war, hidden creatures, rpg-toolkit#940 | **missing** — the grain exists, the wire does not |
+| **Duration boundary** | a clock boundary is crossed → subscribed effects end | nothing; it is the one shape on this list that is finished | Boundary, publishing turn topics that conditions subscribe to (`boundary.go:76-110`) | already served | every timed condition | **exists** — with one gap: "10 minutes" and "1 hour" are not turn boundaries, and outside a bubble nothing crosses one |
+
+### 6.3 Which kind of change each one is
+
+Sorting the rows above by what they actually add, because most of them are not machines:
+
+- **A new machine — two.** Fan-out, which is a loop over a target source with a per-target
+  sub-machine, and the out-of-bubble cast, which is a resolution with no economy to gate it.
+- **A new step, once, for two rows.** Post-roll window and reaction-to-a-cast are the *same*
+  new `Step` (Pose) plus the ledger that already exists in `play/interrupt`. Built once, they
+  serve both, and Teleport is Movement with a step removed rather than a machine added.
+- **A new arm on a machine we have — two.** **Save-then-effect is the contest with an
+  outcome policy and a delivery, not a new machine.** Its steps are already Request(save) →
+  policy → deliver → Done (`contest.go:144-213`); what is hardcoded is that the policy is
+  `Negated` and the delivery is a condition. Grant is the activation with a target and a
+  price. Both are edits inside a machine that runs today.
+- **An effect kind, not a shape.** Damage, heal, condition, push, world fact. Damage, heal and
+  condition all have a delivery and a beat; push and world fact have neither.
+- **A condition on the bus.** The held die, Charmed, and concentration's ownership — the last
+  needing the source binding `ConditionApplication` does not carry.
+- **A fact in the world graph.** A social spell's result lands on the existing fact → mind →
+  disposition fold (`encounter/world.go:395-425`). There is no runtime stance API and this
+  does not ask for one.
+- **A field on the spend profile.** Upcast.
+
+So: two machines, one step, two arms, and the rest is content, conditions and facts. No spell
+gets a machine. Thunderwave is Fan-out × Save-then-effect(half) × {damage, push}.
 
 ---
 
-## 7. Candidate first slice (not cut)
+## 7. The bard as the use case
 
-**Done-when:** a ranger created at level 1 reaches level 3 on the local stack, chooses two
-spells at 2 and an archetype at 3, casts Hunter's Mark and Cure Wounds in a fight, and the
-client shows the slot as the price, the mark on the target, and the heal with its roll.
+The bard replaces the ranger as the pilot. Not because the ranger is wrong, but because the
+bard's 1–3 kit is a **tour of the missing places** and the ranger's is a tour of the ones we
+have.
+
+- Bardic Inspiration is a condition granted to another creature that the recipient later
+  spends — §3.2's owning condition and the pause, in the first feature the class gets.
+- Vicious Mockery is a save that is not a contest and not an attack — §3.3's save beat, made
+  visible on the client, with no slot to hide behind.
+- Thunderwave is one declaration and many targets — §3.1 and §3.4 together.
+- Charm Person lands on the world graph — §3.5's territory, reached through the fact fold
+  that already exists rather than through a new stance API.
+
+The bard also carries more spell choices than the ranger — `CantripsKnown: 2`,
+`SpellsKnown: 4`, two first-level slots at level 1 (`classes/data.go:251-254`), against the
+ranger's nothing until level 2 — and §5.2's ruling makes spells known **content refs we
+author onto the sheet**, so the choice count is ours to gate. More choices is the goal, not a
+cost.
+
+### Rungs
+
+| # | Spell or feature | Shapes × effect kinds | Places | Done-when |
+|---|---|---|---|---|
+| 1 | Bardic Inspiration | Grant × condition(held die) | the door with an inspiration pool (`spend_profile.go:82-84`, `character/ledger.go:178-195`); a bus condition on another member | a level-1 bard pays one use at the door, an ally carries a visible die, and a `resolution` test scene shows the pool decrement and the condition applied. The die's *spend* wants rung 4; until then it is spent automatically on the recipient's next strike, and that default is what rung 4 deletes |
+| 2 | Healing Word | Grant × heal | the Cast door with slots as pools (§5.1); spells known on the sheet (§5.2); the range check (`delivery.go:12-39`) and the healing beat that already exists | walked: a bard casts it at range on a downed ally, and the client shows the slot as the price and the heal with its roll |
+| 3 | Vicious Mockery | Save-then-effect × {damage, condition} | the outcome policy on the contest (§3.3); one of the inert conditions gets behavior (§3.6) | walked: the client shows a WIS save with its roll and DC, and the target's next attack rolls at disadvantage. Adds a proto enum row — Vicious Mockery is not in the `Spell` enum |
+| 4 | Cutting Words | Post-roll window | the pause (§3.7) — its second producer, and the first that is not a reaction to being attacked | walked: an enemy's attack roll is seen, a bard at range is offered a window, and the answer changes whether the hit lands. Needs the College choice at 3, so it lands after level-up |
+| 5 | Charm Person / Calm Emotions | Save-then-effect × {condition Charmed, world fact} | the fact → mind → disposition fold (`encounter/disposition.go:125-149`, `world.go:395-425`); the out-of-bubble cast | walked: a charmed guard's faction reads neutral through `IsHostile` inside the same run, with **no new stance API**. Per-member directed disposition stays on §3.5's shelf; this rung deliberately lands on the fold that exists |
+| 6 | Thunderwave | Fan-out × Save-then-effect(half) × {damage, push} | §3.1, §3.4, a `TargetKind` for a shape, and push — which has no delivery anywhere today | walked: one declaration produces one beat per target with differing outcomes, and the board shows them moved |
+
+### The precursor, and two hazards
+
+**Level-up still comes first**, and it is class-agnostic (§4). No `LevelUp`, `GainLevel` or
+`AdvanceLevel` symbol exists; the class tables' spellcasting rows are level-1 only; and
+`classes.GetGrants` is a switch over four classes that returns nil for the bard
+(`classes/grant.go:77-91`), so a bard compiles today with no features at all. §4's table,
+pool-max and choice-pipeline work is the gate on any pilot.
+
+Two things that will bite the day a slot is charged:
+
+- `resolution.LongRest` **clones** the spell-slot map rather than resetting `Used`
+  (`long_rest.go:130`). Invisible while nothing spends a slot. §5.1's pools delete the map and
+  the bug with it.
+- **There is no CAST anywhere in the wire vocabulary.** The session `Verb` enum has six values
+  and none is a cast; `CombatAbilityId`, `ActionId` and `ActionType` have none; `TargetKind`
+  is NONE | MEMBER | PATH. Every rung from 2 on adds a proto row, and rung 6 adds a target
+  kind.
+
+### The ranger, for the record
+
+Passed over, not refuted. Its first two rungs are Hunter's Mark — a strike rider, the shape
+Sneak Attack already is — and Cure Wounds, a heal, which is Second Wind with a target. Both
+re-walk places we have, and the ranger reaches a missing one only at Ensnaring Strike. It also
+gets no spells at level 1 (`character/draft.go:1202`), which made §5.1 a gate rather than a
+choice. It stays the natural second class through the same rungs once the shapes exist.
+
+---
+
+## 8. Candidate first slice (not cut)
+
+**Done-when:** a bard created at level 1 reaches level 3 on the local stack, chooses cantrips
+and spells at creation and again at 2 and 3, picks a college at 3, grants Bardic Inspiration
+to an ally and casts Healing Word in a fight, and the client shows the pool and the slot as
+the price, the die on the ally, and the heal with its roll. That is §7's rungs 1 and 2.
 
 Modules, one PR each, bottom-up:
 
 1. toolkit `classes` — tables per level 1–3 (features, spellcasting rows, subclass level).
 2. toolkit `character` — slots as pools; spells-known field; choice pipeline lands on the
    sheet; level-up verb shaped like `LongRest`.
-3. toolkit `resolution` — cast machine with heal and condition arms; owning condition with
-   a target link; concentration.
+3. toolkit `resolution` — the Grant shape: a price at the door for another creature's
+   benefit, a heal arm and a condition arm, and the source binding an owning condition needs.
 4. toolkit `session` — `Cast` verb, `VerbCast` in Afford, cast beat reusing healing and
    condition bodies.
 5. protos / rpg-api / web — the per-verb pattern; level-up RPC; cost badge already renders a
@@ -332,7 +454,7 @@ customer, not a band-aid inside one.
 
 ---
 
-## 8. Shelf — nothing here is lost
+## 9. Shelf — nothing here is lost
 
 - Multiattack and area as one loop (§3.1); the first monster with two attacks is a customer before any spell is.
 - Owning conditions and concentration (§3.2); Dispel Magic follows.
@@ -355,7 +477,7 @@ customer, not a band-aid inside one.
 
 ---
 
-## 9. Prior art, for the record
+## 10. Prior art, for the record
 
 Read, not carried: rpg-project#243; toolkit ADR-0027 (reactions; Shield worked end to end on
 the old stack), ADR-0039 (the save gate), ADR-0045 (actions are data; §92 says a fireball
