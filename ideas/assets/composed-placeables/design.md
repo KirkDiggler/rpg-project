@@ -1,127 +1,97 @@
-# Deployed world-building composition — architectural decision
+# World composition library — accepted design
 
-Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under [Dungeon Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
+Design slice: [rpg-project#378](https://github.com/KirkDiggler/rpg-project/issues/378), under the still-open [Composable Dungeon Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 
-**Status: the foundation and bounded vertical slice are approved in conversation; concrete implementation planning is next. Guild ownership was settled on 2026-09-05.** The previous private-pipeline publisher proposal at `f8d100d` is withdrawn as a recommendation. It assumed a developer-assisted workflow where the user needs a deployed authoring product, and treated one-prop-per-hex as a fixed requirement instead of examining it. Hardware/export performance thresholds remain unmeasured.
+**Status (2026-09-07): shipped and accepted for the bounded local/development slice.** API [#924](https://github.com/KirkDiggler/rpg-api/pull/924) and web [#954](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/954) are merged. This document records what was actually delivered, not the earlier proposed publication/revision framework.
 
-## Governing principle
+## Accepted design
 
-Kirk, 2026-09-05:
+### A composition is simple world-owned data
 
-> We are not here to make things work. Full stop. We are here to make composable, extensible components that can build a solid foundation that will allow our game to evolve on.
+The domain owner is `WorldID`. A saved composition is the toolkit's deliberately small `world/composition.Data`:
 
-The future feature path is unknown. A workaround that satisfies the current table example is not sufficient justification for the architecture. Neither is a speculative universal framework. The design must identify focused parts, explicit ownership, and contracts that let one part change without forcing unrelated parts to change. This standing principle is recorded in [the shared startup context](../../../CLAUDE.md#design-principle--composable-foundations).
+```go
+type Data struct {
+    ID      string
+    WorldID string
+    JSON    json.RawMessage
+}
+```
 
-## What the product must support
+The API treats `JSON` as valid but otherwise opaque authored source. It does not define a typed composition schema, interpret asset semantics, or turn this slice into a general content framework. The web owns the current scene envelope and validation.
 
-- DMs/streamers author through the deployed web application, initially on Kirk's Discord server.
-- An author composes existing assets, saves the editable source, and makes reusable content available to the dungeon builder and players.
-- Publishing cannot depend on a developer committing a recipe to a private repository or running Blender on their workstation.
-- The current concept's scene/library files prove editing and reuse, not deployed persistence, authorization, publication, or delivery.
-- The first composition may behave as one gameplay prop. Individual pickups/interactions are not required now, but file packaging must not silently decide the domain model.
-- Changing engine placement rules is allowed if it is the better foundation. Avoiding such changes is not an acceptance criterion.
-- The private base-asset ingestion pipeline remains a separate responsibility. This decision must not commandeer its active work or violate its execution guardrails.
+The local API receives both authenticated caller identity and `world_id`. The current alpha handler accepts only its configured world. `WorldID` remains the ownership boundary; an eventual verified Discord guild/header-to-world mapping belongs at the trusted handler/server edge, before repository access. The repository must not authenticate callers or derive worlds from Discord data.
 
-## Agreed first vertical slice and ownership
+### The library is immutable-create, read, list, and permanent delete
 
-Kirk approved: a composition repository following the existing API/Redis conventions; immutable definition revisions; the lab's save/load path becoming API-backed; composition selection and placement in the real dungeon builder; appearance/spatial behavior surviving move, save/reopen, and play; and a separate proof of two independent props sharing one hex under explicit construction/movement rules.
+The protobuf service has `CreateComposition`, `GetComposition`, `ListCompositions`, and `DeleteComposition`. Records contain `id`, `world_id`, and a JSON string.
 
-The ownership boundary is the **Discord guild**, not the individual author. Each server has its own world and composition library. The creator's player identity is attribution within that guild. While this is being built, only Kirk's guild is enabled. Opening other servers, cross-guild sharing/discovery, or broader UGC publishing is a deliberate future product decision, not part of this slice. This does not mandate a separate physical deployment per guild.
+- Create assigns a fresh opaque ID and stores one immutable snapshot. Saving an edit creates another ID; there is no update or mutable head.
+- Get and List are scoped by `WorldID`.
+- Delete is permanent and idempotent when the record is already absent.
+- There are no revisions, head pointers, receipts, TTLs, Lua operations, archives, tombstones, or reference counts.
 
-Repository and API contracts must carry explicit guild scope and prevent cross-guild list/get/write/reference resolution. A world placement pins a revision within its guild; changing or removing a library entry cannot silently change already-placed content. Base game assets remain the supplied asset catalog, not duplicated user publications per guild.
+Redis stores one hash per world at `composition:<WorldID>`. The composition ID is the hash field. Create uses `HSETNX`; Get/List/Delete use `HGET`, `HGETALL`, and `HDEL`. This follows the existing repository/orchestrator/handler boundaries without introducing a generic document store or adding composition behavior to the dungeon file registry. See [API reuse](api-reuse.md).
 
-The source inspection found web Discord context has `guildId`, while the inspected API auth context provides only player identity. The implementation plan must name how trusted guild scope reaches the handler/orchestrator/repository and runtime definition reader. It must not assume that context already exists or conflate a client-provided guild identifier with authorization. One enabled guild is the initial rollout boundary; no public UGC platform or generic tenancy framework is needed.
+### One world prop can have a multipart appearance
 
-For the table's first integration, the composition is one gameplay prop with multiple visual parts. The engine co-location case is a distinct capability/proof, not a reason to turn every decorative part into a rules entity. Blocking contributions belong to their physical object/footprint and follow its location; appearance assets do not decide them. Fixed terrain/edge declarations remain distinct.
+A composition source keeps authored part IDs, asset refs, labels, transforms, optional group/support relationships, and optional visual point-light declarations. Saving freezes those ref strings and authoring facts in the JSON snapshot; it does **not** copy or bind the referenced GLB bytes.
 
-## Concrete forcing case
+The dungeon builder places a saved composition through the existing opaque prop ref as `composition:props:<composition-id>`. Each placement has its own required placement ID, cell position, facing, and YAML/Atlas lifecycle. Resolving that ref renders every authored part beneath one placement root. The part IDs remain distinct for rendering and authoring, but they do not become independent gameplay entities.
 
-Kirk supplied a five-placement scene: one existing skeleton-table (skeleton and table are already one asset), two candles, and two book piles. Its SHA-256 is `c6e50c800d869eecaac74dac6670a37a30ba5bbbade49ca6ccead5ecd1cdf2c8`. It contains explicit transforms and no formal group/support links. The source asset set includes candle companion geometry.
+Deleting a library record never rewrites a dungeon. Existing references remain visible, selectable, and explicitly marked deleted/missing until the author removes them. This preserves authored dungeon intent without inventing archival or referential-integrity machinery.
 
-The scene and its screenshot establish the intended appearance. They do not require a baked GLB, one runtime entity per mesh, or preservation of today's cell-exclusivity rule.
+### One editor, with distinct local and world data
 
-## Questions that must remain separate
+The existing World Building editor is reused from the development main menu as **World Builder**; no second editor or scene dialect was created. Its local scene draft, local arrangement library, import/export, continuous placement, grouping/supports, and transform tools remain available.
 
-1. **Authoring composition:** what is saved, how components are positioned/grouped, how saved content is copied, and how the source remains editable.
-2. **Gameplay representation:** which things have identity/behavior, what an instance is, how occupancy and sight/movement contributions work, and which facts the engine owns.
-3. **Visual representation:** how a published appearance references reusable base assets, how transforms/materials are represented, and whether render artifacts are derived from that source.
-4. **Deployed content lifecycle:** who can save/publish/use content, where source and published revisions live, how dungeon/run snapshots resolve them, and how clients receive/cache them.
-5. **Render execution:** scene nodes, primitives, materials, geometry sharing, instancing/batching, texture memory, loading, and frame cost.
+The world library is separate. Its real RPC-backed controls save, list, open, and permanently delete immutable composition snapshots. Opening a world snapshot preserves the latest local draft and marks the open workspace as world-origin; subsequent edits do not overwrite that local draft unless the author explicitly chooses **Save local draft**. This fixes the earlier draft-origin overwrite failure.
 
-JSON and GLB are representations. Choosing either does not answer the identity, ownership, or lifecycle questions. One GLB is not necessarily one mesh, one material, one draw call, or less GPU work.
+World-library rows and dungeon palette entries use authored names and tooltips. Client thumbnail generation is serialized through one R3F renderer and cached by world plus complete immutable snapshot; the implementation handles the renderer's observed asynchronous setup rather than claiming synchronous generation or a server thumbnail service.
 
-## Options to compare
+The dungeon builder retains its existing real Save and Save & Play path. Composition placement survives YAML save/reopen and Atlas/play resolution with its own placement identity, ref, facing, and offset.
 
-These are candidates, not preselected decisions. Some can be combined cleanly.
+### Visual point lights are optional presentation data
 
-### A. Published JSON visual assembly, one gameplay prop
+Each authored part may carry an explicit point light with:
 
-The deployed service stores an immutable assembly definition referencing bound asset versions and transforms. The renderer resolves it into a visual hierarchy; the engine sees an explicit gameplay prop/appearance reference.
+- `enabled`;
+- a part-local offset;
+- `#RRGGBB` color;
+- render intensity in the supported `0..20` range; and
+- range in scene units in the supported `0.01..24` range.
 
-Potential strengths: small publish payloads, retained structure, reusable source geometry/materials, no mandatory bake job. Questions: assembly resolver ownership, source/version binding, aggregate bounds versus gameplay footprint, caching, nesting policy, and whether this preserves a sound distinction between presentation components and game objects.
+Offsets rotate with the part, then the full composition placement is applied once, including the same dungeon-surface alignment as the rendered multipart prop. A shared collector chooses at most 12 lights for the scene using the existing nearest-to-view policy. These lights illuminate rendered meshes only: they do not create gameplay illumination, visibility facts, shadows, flicker, or crypt floor-light pools.
 
-### B. Browser-generated GLB at publish time
+## Why this boundary
 
-The deployed editor exports a selected visual composition and uploads/registers the artifact. Editable source is retained separately; the runtime can consume a model file.
+The shipped shape is intentionally functional and small. It earns reuse at explicit seams:
 
-Potential strengths: reuse of a single-model delivery path, no mandatory server graphics toolchain. Questions: supported materials/effects, export memory and main-thread work, data duplication, untrusted binary validation, upload/storage quotas, reproducibility, and whether the generated file should be an authority or only a derived artifact.
+- toolkit owns the transport-neutral data envelope;
+- API owns world-scoped persistence and caller/world checks;
+- web owns the current authored JSON and rendering behavior;
+- dungeon YAML keeps gameplay placement identity separate from visual-part identity.
 
-### C. Server-generated GLB or other optimized artifact
+JSON remains editable source. A GLB is neither required nor treated as a semantic authority, and a single GLB would not automatically reduce draws, materials, or textures. The slice also does not claim that logical asset refs are permanent byte bindings. Those decisions can be made from measured needs later without pretending a hypothetical final-version framework is already approved.
 
-The deployed editor publishes source data. A server-side build step derives the render artifact from trusted asset inputs, with explicit failure/status handling.
+## Explicitly open
 
-Potential strengths: controlled toolchain and resource validation, possible optimization, consistent generation. Questions: latency, resource isolation, retries/idempotence, storage and invalidation, asset access, and whether a bake is necessary for the first supported workload. A bounded build step does not imply a new generalized job framework or a Blender-specific domain model.
+Do not treat these as implemented:
 
-### D. Multiple props per hex with authoring groups
+1. production/header-derived `WorldID` authorization, including verified Discord guild mapping, before promotion to `main`;
+2. durable Redis composition data across a full local-stack teardown;
+3. local-template/arrangement versus world-library UX, including missing local arrangement deletion;
+4. pack grouping and any custom asset drawer;
+5. absolute asset-version/byte binding and retention for saved source refs.
 
-The engine represents multiple placements in a cell; authoring groups can be instantiated as multiple objects rather than one compound appearance.
+The destructive API CI-check problem already has issues [rpg-api#906](https://github.com/KirkDiggler/rpg-api/issues/906), [#901](https://github.com/KirkDiggler/rpg-api/issues/901), [#883](https://github.com/KirkDiggler/rpg-api/issues/883), and related records; this design does not create another duplicate.
 
-Potential strengths: removal of an artificial exclusivity rule, independently addressable world objects where needed. Questions: actual core/index support, movement/LOS aggregation, placement offsets/heights, instance identity, targeting, snapshot/projection behavior, and whether visual-only decorations would acquire unnecessary gameplay identity. Removing one validation check is not proof this option is complete.
+## Delivery
 
-### E. Separate semantic source from derived representations
+- Toolkit `world/composition.Data`: [rpg-toolkit#1543](https://github.com/KirkDiggler/rpg-toolkit/pull/1543), consumed as `world/v0.4.1`.
+- Proto create/get/list contract: [rpg-api-protos#300](https://github.com/KirkDiggler/rpg-api-protos/pull/300); permanent delete: [#304](https://github.com/KirkDiggler/rpg-api-protos/pull/304).
+- API world library: [rpg-api#924](https://github.com/KirkDiggler/rpg-api/pull/924).
+- Web editor, world library, placement, rendering, lights, and delete UX: [rpg-dnd5e-web#954](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/954).
+- Earlier editor concept: [rpg-dnd5e-web#938](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/938).
 
-An authoring composition can produce gameplay declarations and visual representations through explicit independent contracts. A renderer may use source instances, a compiled GLB, batching, or another supported artifact without redefining the saved source.
-
-This is a combination to evaluate, not a mandate to build every option or an abstract scene engine. Its value must be demonstrated by real current consumers and clear boundaries, not hypothetical future features.
-
-## Decision criteria
-
-Evaluate each candidate against:
-
-- deployed author usability and complete save/publish/use lifecycle;
-- coherent domain ownership and authoritative engine behavior;
-- preservation of source editing, independent copies, and existing dungeon/run meaning;
-- source and published identity/version binding without accidental mutation;
-- ability to change rendering/packaging without changing gameplay semantics;
-- concrete implementation and migration cost, including coupled invariants;
-- observable loading/frame/memory cost, not file-count assumptions;
-- clear failure, authorization, validation, and resource-limit behavior;
-- testability and a bounded first implementation that earns its extensibility.
-
-Current editor safety caps are not hardware or engine performance limits. Measurements must state scene contents, resource sharing, device/browser, camera/visibility, cold versus warm cache, and what was actually measured. Counts of meshes/primitives/textures are not measured FPS.
-
-## Source findings
-
-[The evidence record](evidence.md) binds the investigation to exact source revisions and includes parent verification of the remaining spatial-policy uncertainty.
-
-- Core spatial storage is collection-valued. Blanket cell exclusivity is enforced by authoring/construction, but a lower placement-admission rule also rejects new entities behind existing movement blockers. Simply deleting duplicate-cell checks would make table/decoration construction order-dependent.
-- Runtime hold/drop projection can already place multiple props at the same cell. This is not proof that every physical-index and mutable-blocking path supports it; the projection and spatial index must be tested together.
-- Placement IDs, opaque visual/content refs, and explicit gameplay flags already differ in the engine. Preserve that distinction instead of treating each mesh as a rules entity.
-- The deployed dungeon registry provides mutable keyed YAML, not owned, immutable content publication. Every proposed representation needs a real deployed persistence/authorization/revision lifecycle.
-- The example uses four unique cached GLB resources and eight model mesh instances. A plain exported GLB does not automatically consolidate that work. Batching, texture sharing, instancing, and derived optimization must be evaluated separately from packaging.
-
-## Recommendation for discussion
-
-Choose the semantic and ownership boundaries first; do not let a file format or today's cell guard choose them.
-
-1. **Authored composition is editable semantic source.** It identifies parts, exact visual sources, local transforms and grouping. Published revisions are immutable; authoring copies remain independently editable. JSON is a suitable encoding, not the definition of those semantics.
-2. **A world object owns gameplay identity and spatial/behavior declarations.** One object may have a multipart appearance; multiple objects may legitimately share a cell under explicit rules. Not every candle mesh needs its own engine identity. Authoring groups are not automatically gameplay objects.
-3. **Appearance resolution and render execution are replaceable.** Initially resolve structured appearances to the already-supported shared model resources. A compiled GLB or instanced/optimized batch can later be a derived representation bound to the source revision and rendering profile, rather than the only surviving source of truth. Do not add mandatory baking until fidelity/performance measurements justify it.
-4. **Deployed content owns lifetime and access.** Definition identity/revisions, scope/permissions, retrieval and run bindings belong to the deployed application, not the private base-asset repository. The [focused API follow-up](api-reuse.md) identifies the existing Redis domain-repository pattern as the appropriate first storage implementation; no new database technology or generic store framework is needed. Keep the composition repository separate from the dungeon-specific registry and reuse existing handler/orchestrator/DI conventions. Whether Save and Publish need to be distinct operations remains a product-contract decision, not an assumed workflow.
-5. **Engine co-location is an explicit independent capability.** Do not preserve one-prop-per-cell as a design law. Separate world registration/construction from movement admission and validate the resulting occupancy/LOS/identity contract. Do not route every presentation part through that capability merely to draw a composition.
-
-For the first table, these boundaries can produce one world prop referring to a published multipart appearance. That is a semantic decision for this prop, not a permanent limitation on world objects, and it does not require baking a file. The same foundation must also account coherently for two independent world objects at one cell. A later interactable component still needs an explicit gameplay declaration; retaining editable structure does not claim pickups become automatic.
-
-Before implementation, agree those boundaries and prove the discriminators in the evidence record: both registration orders/blocking combinations, authored versus dropped/reloaded props, immutable source revision resolution, and identical visuals through alternate rendering representations. The first implementation should exercise the actual table and these seams, not implement every possible future capability.
-
-The agreed slice is now ready for an implementation plan. Concrete wire contracts, trusted guild-context integration, revision operations, and the runtime resolution point must be made explicit there before execution. No publisher, runtime assembly resolver, uploaded-asset service, or engine occupancy change has been implemented. The merged World Building concept remains the practical authoring test surface.
+Exact revisions and verification are recorded in [evidence.md](evidence.md).

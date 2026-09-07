@@ -1,103 +1,75 @@
-# World-building architecture evidence
+# World composition evidence and handoff
 
-Read-only investigation, 2026-09-05. This records current facts and unresolved measurements, not an implementation verdict. See [the decision frame](design.md).
+This record separates delivered facts from useful pre-delivery investigation. The accepted design is [design.md](design.md).
 
-## Source pins
+## Verified delivery
 
-| Seam | Inspected revision |
-| --- | --- |
-| Toolkit | `23eda87beb1709f194bc8ee0827173c7543e6e27` |
-| API | `d4cbcab0d36fed09ae3f65347de2d78ab643b639` |
-| API-pinned protos | `1bb4fe24891a380d86319a10c81ef3b1800ba355` |
-| Latest fetched protos, distinguished from API pin | `365d579b7566b5074206955806e6a9779e05c755` |
-| World Building/shared renderer | `6ecbf1613235b571b7967de39b437f294bacb66d` (concept subsequently squash-merged in web#938) |
-| Private asset-provider baseline | `45fc7798c8037029e6d0260b2d300e09700ae136` |
+GitHub reports the following PRs merged. Local Git object inspection confirmed each reviewed implementation head has the same tree as its squash-merge commit.
 
-The API pins encounter/session v0.59.0. The toolkit root snapshot and the API's independently tagged modules are identified separately; latest proto fields are not presumed adopted by that API.
+| Delivery | Reviewed head | Merge commit | Tree equality |
+| --- | --- | --- | --- |
+| API [#924](https://github.com/KirkDiggler/rpg-api/pull/924) | `757e6b79d59fe654a3cb1c3ba855c34d1e6e4419` | `7732bfb4342b59e7bfdc76927d5ee475533779aa` | `eb36e8704348e83c6d992337313bf173595da94c` |
+| Web [#954](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/954) | `b02b4cd090a5ad09be94b777f6ee69fe18a4d3ba` | `6683f02a396e69d190a01e80c4390ed6cd1a85b1` | `f9c300a66ae4d7298d127c650919ded25353f833` |
+| Protos [#300](https://github.com/KirkDiggler/rpg-api-protos/pull/300) | `e06d022af0b0006359d24af51da24245df886c21` | `a4bfa7762cb64cc1ff62ec85649a5f4eaa9e2ad8` | `4bd1413592cbfaa1068bd390c398bbcf0c532e69` |
+| Protos [#304](https://github.com/KirkDiggler/rpg-api-protos/pull/304) | `7108d76382862a56f13408c4fd8ee82709dd3a18` | `266e11ca436e6b02bf08128e3968073817c2ba21` | `878b1630937ac4bd8d92dcecc41ae23958f5a0cd` |
 
-The first engine scout exceeded its 30-minute limit without a report and made no tracked/index/untracked changes. A bounded native-protocol retry completed the missing evidence. The parent then directly checked the admission-policy and canvas-construction code to resolve an important uncertainty in that report. All source investigation was read-only.
+Toolkit [#1543](https://github.com/KirkDiggler/rpg-toolkit/pull/1543) merged as `9fbb407e96ed4f328b3fc71b8636ef2f15e89dce` and supplies the API's pinned `world/v0.4.1` `composition.Data`. The earlier web concept [#938](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/938) merged as `6ff789e355c2c65dfe3d10aa788bd05b3c016c87`.
 
-## Engine: plurality is supported by storage, restricted by admission
+Hosted checks are green for the merged heads: API build/test; web lint/type check, security audit, tests, and deploy preview; proto generation/test and lint/format; toolkit changed-world tests. The parent also freshly ran full API and web CI locally, all green. Native final review records are public at:
 
-`tools/spatial/room.go:26-28` stores occupancy as `map[Position][]string`, with entities and positions keyed separately by entity ID. `GetEntitiesAt` returns all occupants. There is no fundamental one-entity slot in this index.
+- API permanent Delete: [comment 5564045202](https://github.com/KirkDiggler/rpg-api/pull/924#issuecomment-5564045202), accepted 0 Critical / 0 Important / 0 Minor.
+- Web permanent Delete UI: [comment 5564229744](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/954#issuecomment-5564229744), accepted 0 Critical / 0 Important / 0 Minor.
 
-There are nevertheless multiple active constraints:
+The implementation issues [rpg-api#921](https://github.com/KirkDiggler/rpg-api/issues/921), [rpg-dnd5e-web#951](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/951), and [rpg-dnd5e-web#935](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/935) are closed as completed. Parent journey [rpg-project#169](https://github.com/KirkDiggler/rpg-project/issues/169) remains open.
 
-- `rulebooks/dnd5e/encounter/dungeonspec/validate.go` rejects duplicate authored placement cells and conflicting start/placement declarations.
-- `encounter/compilefield.go:368-407` independently rejects two authored props at one cell.
-- `encounter/field.go:253-296` declares an integral floor-cell location, an eight-compass presentation facing, and visual-only offsets. `dungeonspec/validate.go:693-704` limits the two planar offset components to `[-0.5, 0.5]` and the height component to `[0, 3]`.
-- `encounter/compilefield.go:740-768` constructs the canvas by calling `BasicRoom.PlaceEntity` for each prop in declaration order. Physical-index IDs are `prop-<index>`, distinct from authored placement IDs.
-- `tools/spatial/room.go:438-460` rejects placement if any existing occupant reports `BlocksMovement()`. It does not distinguish static scene registration from creature movement admission.
+## Delivered behavior evidenced by source and tests
 
-**Consequence:** removing the two explicit duplicate-cell guards would not create a sound multi-prop contract. With those guards removed, adding nonblocking candles before a blocking table can be admitted, while adding them after that table is refused. This order-dependence is source-derived, not a production failure claim: today's earlier guards keep that construction input unreachable.
+### API
 
-A proper change must decide what world construction/registration validates, what spatial membership stores, and what movement admission asks. It must not globally disable movement blocking to make authoring overlap succeed.
+- Toolkit `composition.Data` is exactly `{ID, WorldID, JSON RawMessage}`.
+- The protobuf surface is Create/Get/List/Delete with `id`, `world_id`, and JSON string; missing Delete is successful.
+- Redis uses one `composition:<WorldID>` hash and `HSETNX`/`HGET`/`HGETALL`/`HDEL`, with no TTL.
+- Handler inputs derive caller identity from auth context and compare the requested world to the configured alpha world before service access.
+- Tests across repository, orchestrator, and handler layers cover round trips, no TTL, atomic create conflict, world isolation, malformed stored data, authorization/gating, and idempotent delete.
 
-## Engine: behavior, visual refs, and instance identities already differ
+### Web
 
-`PropInput`, `PropData`, and `AtlasProp` separate an authored placement ID from the opaque content/visual ref. Movement and LOS flags are explicit required booleans; behavior is not derived from the ref (`encounter/field.go:145-296`, `data.go:258-296`, `atlas.go:185-219`). A holdable prop requires an ID; an unaddressed scenery prop may have none. That existing separation should be preserved rather than replacing every mesh with a new rules entity.
+- The development main menu mounts the reused World Building editor as World Builder with the real RPC source by default; the fixed fixture requires the explicit development flag.
+- World save/open/list/delete remains distinct from browser-local drafts and arrangements. Tests cover preservation of the local draft when opening or deleting a world record and explicit transfer back to local ownership.
+- Authored scene names drive library labels, palette labels, and tooltips. Malformed records fall back to IDs and remain deletable.
+- Thumbnail work is serialized through one R3F canvas and cached by world plus complete snapshot. Tests bind the behavior to the observed asynchronous renderer setup.
+- A dungeon placement has an independent instance ID and `composition:props:<id>` ref. Facing, cell, offset, YAML round-trip, Atlas projection, multipart rendering, and Save & Play use the real builder/game paths.
+- Confirmed permanent Delete refreshes the list and resolution caches but leaves dungeon references untouched. Missing compositions stay visible/selectable with an explicit missing marker until author removal.
+- Explicit per-part point lights preserve enabled/offset/color/intensity/range through scene and arrangement operations. Projection matches the prop's surface alignment; one shared nearest-focus collector caps the dungeon scene at 12 and does not create gameplay illumination or crypt floor pools.
 
-The interfaces named `Standing` and `Sight` do not own prop geometry: the inspected `Standing` supplies downed member state, and `Sight` supplies member sight distances. Actual spatial checks consult geometry and blocking capabilities. `BasicRoom.blocksLineOfSightUnsafe` returns true if any indexed occupant blocks LOS (`tools/spatial/room.go:653-669`), subject to the higher-level lane/edge LOS rules. Multiple opaque objects in one cell are not automatically a wider wall.
+## Local runtime handoff (not a product guarantee)
 
-## Runtime projection already permits same-cell dropped props
+At cleanup time the owned local path is API `8090` plus web `3031`, with the main-menu World Builder using real RPC against `test-world` and the fixed composition fixture off.
 
-`encounter/holdings.go:435-454` drops every carried PropID at the departing member's cell. `propPlacements` folds state into a map keyed by PropID, so different props may have equal positions (`:315-339`). Atlas applies those locations independently (`atlas.go:343-360`).
+- Web `3031` serves the merged runtime checkout `/home/kirk/game-dev/.runtime/local/compositions/sources/rpg-dnd5e-web` at `6683f02a396e69d190a01e80c4390ed6cd1a85b1`.
+- API source is `7732bfb4342b59e7bfdc76927d5ee475533779aa`; the running container was built from tree-equivalent reviewed head `757e6b79d59fe654a3cb1c3ba855c34d1e6e4419` and was not restarted for documentation cleanup.
+- The browser origin remains `3031`; the old `3030` preview is retired. No full-stack reset was performed because Redis is ephemeral.
+- Composition/content data was preserved byte-identical. The backup and cleanup manifest is `/home/kirk/game-dev/.runtime/local/compositions/cleanup-receipt.olI34G`.
+- Primary user assets remain dirty and the pinned provider is still `/home/kirk/game-dev/.runtime/local/compositions/assets-0fc2ced`.
 
-This proves that projected runtime prop locations can overlap even though authored construction refuses the same layout. It does **not** prove that every physical-index/mutable-blocker path already implements general multi-occupancy: the observed holdings fold does not itself update the BasicRoom occupancy index. Authoring, runtime placement projection, and physical indexing must be tested together instead of assuming they share a single admission path.
+The former feature worktrees were removed after merge verification and backup; they are not active dependencies.
 
-## Deployed lifecycle: current authoring is not a publishing system
+## Historical investigation retained as context
 
-At the inspected API, `PutDungeon` takes a key, YAML, and validate-only flag. `internal/dungeons/registry.go:90-192,282-392` compiles source, writes it through a temporary-file rename, and replaces a keyed in-memory entry. `GetDungeon` returns source bytes. The same key can be overwritten.
+These findings shaped the boundary but are **not** claims that additional systems shipped.
 
-This seam has no authored-content owner/scope, immutable published revision, publish state, or asset-definition/artifact store. Authoring is feature-gated and authenticates the caller, but caller identity is not passed into the registry as an ownership decision (`internal/handlers/dnd5e/authoring/v1alpha1/handler.go:51-60`, `internal/orchestrators/authoring/orchestrator.go:21-107`). This is a finding about the authoring seam, not a claim that all authenticated gameplay/session operations lack access checks.
+### Forcing scene and rendering
 
-Starting a run copies the compiled world into persisted encounter state (`internal/orchestrators/lobby/start_encounter_session_stack.go`, `internal/sessionworld/sessionworld.go`). Existing runs retain copied game facts, but the source key/revision is not retained as an immutable content provenance pointer. A mutable visual catalog behind the same opaque ref could still change the appearance of an old run.
+Kirk's five-placement specimen contained one existing skeleton-table, two candles, and two book piles. The source JSON SHA-256 was `c6e50c800d869eecaac74dac6670a37a30ba5bbbade49ca6ccead5ecd1cdf2c8`. Static inspection found four unique cached GLB resources, 1,291,516 source bytes, eight model-mesh instances/candidates, and 7,984 instance-expanded triangles.
 
-The pinned proto already has separate `AtlasProp.id` and `AtlasProp.ref`, and repeated AtlasProp records. It has no published assembly, GLB upload/artifact, or asset-revision retrieval contract. The deployed content lifecycle is work required by every proposed publishing representation; neither JSON nor GLB removes it.
+Those counts were not frame-time or draw-call measurements. Three's browser `GLTFExporter` could produce a GLB, but one GLB would not automatically merge primitives, materials, textures, or ordinary cloned meshes. This is why the delivered slice retained editable JSON and existing shared `PropModel` resources rather than requiring browser/server baking. Asset refs are frozen as strings, not absolute source bytes; binding and retention remain future work.
 
-The focused [API reuse follow-up](api-reuse.md) establishes that durable JSON records in Redis are already the API's entity-repository convention: characters use ordinary JSON values, no TTL, owner set indexes, typed repository interfaces and injected Redis clients. The composition lifecycle is a missing domain responsibility, not missing storage infrastructure. The dungeon file registry is intentionally specific and must not become a generic definition store.
+### Spatial identity
 
-## Renderer: what the actual table costs before any bake
+Toolkit spatial storage was already collection-valued (`map[Position][]string`), while authored dungeon validation and compilation rejected duplicate placement cells. A lower `BasicRoom.PlaceEntity` rule also rejected placement behind an existing movement blocker, so simply deleting duplicate-cell checks would have made construction order matter. Held/dropped projection could show same-cell prop locations without proving every physical-index path supported general co-location.
 
-The supplied five-placement scene resolves to seven GLB occurrences but four unique URL/cache resources:
+That investigation supports separating gameplay object identity from visual parts. The delivered composition is one independently identified dungeon prop with a multipart appearance; it did not change engine occupancy rules or turn each candle/book mesh into a gameplay entity.
 
-| Resource | File bytes | Primitives | Materials | Triangles |
-| --- | ---: | ---: | ---: | ---: |
-| Existing skeleton-table | 702,228 | 2 | 2 | 7,028 |
-| Candles primary | 114,616 | 1 | 1 | 133 |
-| Candles companion | 101,400 | 1 | 1 | 1 |
-| Book pile | 373,272 | 1 | 1 | 344 |
+### Asset and licensing boundary
 
-Static inspection totals:
-
-- 1,291,516 bytes across the four unique source GLBs;
-- eight model mesh instances / draw-call candidates for this composition;
-- 7,984 instance-expanded triangles;
-- repeated candles/books already reuse URL-keyed loader resources;
-- identical atlas image bytes appear in three separate GLBs, while the current code does not deduplicate textures across those URL-local resources.
-
-`PropModel` uses `useGLTF` plus `scene.clone(true)`, which shares geometry/material resources for clones but does not merge meshes or create InstancedMesh batches. Companions are additional loaded siblings. See web `PropModel.tsx:140-224` and `propManifest.ts:248-325`.
-
-These are resource/file/graph measurements, **not measured frame times or a claim of exactly eight draw calls per complete frame**. Transparency, passes, visibility, lighting, and renderer behavior affect actual work. A static texture-size estimate suggested four 1024-square decoded texture resources, but actual GPU allocation is unmeasured. `renderer.info.memory` exposes geometry/texture counts, not a material-memory counter; material instances need separate traversal and memory needs an explicitly labeled estimate or profiling method.
-
-The older two-entry `synty-web-assets.json` visual-anchor catalog is not the whole prop catalog. Do not equate its enrollment count with all supported assets. The newer compact prop-catalog path belongs to the separately evolving #365/#936 workflow; the inspected concept still uses the legacy mirrored prop resolver.
-
-## GLB generation is feasible, not automatically an optimization
-
-The installed Three r181 addon `examples/jsm/exporters/GLTFExporter.js` supports `parseAsync(scene, { binary: true })`. A deployed browser can generate a static GLB and upload it at publication time. The implementation uses browser canvas/Blob/FileReader facilities; main-thread/export memory limits still need measurement.
-
-The exporter caches by object identity and does not automatically content-deduplicate separate same-byte textures or merge ordinary cloned meshes. InstancedMesh can use its supported instancing extension, but current PropModel clones are not InstancedMesh. ShaderMaterial/custom rendering behavior is not automatically portable into glTF, and semantic groups/support/game-object identities do not become a durable gameplay contract just because nodes are exported.
-
-One GLB may reduce separate network resources. It does not by itself reduce primitive draws, material changes, GPU textures, or preserve all future rendering features. Geometry/material consolidation and instancing are separate render choices. Server generation offers more controlled processing but adds a deployed build/status/resource-management responsibility; a private workstation pipeline is not a deployed publisher.
-
-## Discriminating next proofs
-
-Before committing implementation scope, use small tests/measurements that distinguish designs:
-
-1. Register two named props at the same cell, in both declaration orders and with every blocking combination. Assert construction, membership, movement admission, and LOS separately. Include a blocking table with nonblocking decoration.
-2. Exercise authored props and held/dropped props through save/load, Atlas, replay and stable targeting IDs. Check physical index behavior rather than only rendered positions.
-3. Separate one gameplay object with a multipart appearance from two independent world objects at the same cell. Both should be expressible without file packaging deciding object identity.
-4. Publish an immutable definition, start a run, publish a changed revision, then load both old and new runs/clients. Check ownership and which exact content each resolves. Current key-overwrite authoring is not this contract.
-5. Compare the same visual source as shared model instances, a plain exported GLB, and an actually optimized/instanced representation under the same camera. Measure cold/warm requests, renderer calls/triangles, resource counts, export/load time and long tasks. Sweep repeated arrangements and diverse asset families on representative devices before choosing budgets or mandatory baking.
-
-No source implementation, publish operation, engine policy change, or hardware-performance benchmark was performed by this investigation.
+The private provider remains the authority for licensed source assets and catalog promotion. No licensed GLB or screenshot source was added to this public design repository or to the web composition records. The composition snapshot stores catalog refs and transforms only. Provider pack grouping, custom asset browsing, and absolute asset-version binding were deliberately not absorbed into this slice.
