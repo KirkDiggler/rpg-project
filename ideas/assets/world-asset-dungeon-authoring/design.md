@@ -37,9 +37,10 @@ existed. It is now unnecessary friction during pre-playtest development.
 ## Outcome
 
 Every valid entry in the synchronized generated world-asset catalog appears
-automatically in both builders. A Dungeon Builder author can place it using its
-exact visual reference, edit the existing placement fields, compile it through
-the authoring service, preview it, save it, and see the same model in play.
+automatically in both builders. A Dungeon Builder author can find it by search,
+visual category, or collection; place it using its exact visual reference; edit
+the existing placement fields; compile it through the authoring service;
+preview it; save it; and see the same model in play.
 
 No second hand-maintained palette list or per-asset Web mapping is required.
 
@@ -74,6 +75,9 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 - Treat generated `props`, `items`, `weapons`, and `env` refs as scenery when
   used in DungeonSpec `place[]`.
 - Feed the generated world-asset catalog into the Dungeon Builder palette.
+- Add Dungeon Builder search, visual-category filters, collection grouping,
+  result counts, and empty-state feedback so automatic discovery remains
+  usable as the catalog grows.
 - Preserve existing legacy props and monster authoring.
 - Replace builder-local category lists with a discriminated shared catalog seam
   whose scenery side includes legacy assets, generated world assets, and
@@ -100,6 +104,8 @@ No second hand-maintained palette list or per-asset Web mapping is required.
 - Multi-hex occupancy, rotated footprint masks, or per-cell collision.
 - New placement defaults or changes to the existing movement/LoS controls.
 - Runtime fetching of the private provider catalog.
+- A broader World Builder palette redesign; its existing search remains, while
+  this slice's shared facets make later organization additive.
 - Making arbitrary local files or unsynchronized refs authorable.
 
 These are future designs informed by playtest evidence. In particular, a
@@ -235,6 +241,20 @@ kind-specific. A scenery entry never acquires monster behavior because both
 appear in one palette, and an NPC entry never silently becomes scenery while its
 placement contract is still absent.
 
+The shared presentation adapter also exposes non-authoritative discovery
+facets:
+
+- authoring kind: scenery or actor;
+- visual category: props, items, weapons, environment, monsters, NPCs, or
+  compositions;
+- collection: the stable collection segment when present, such as
+  `dark-fortress`, otherwise a disclosed legacy/default bucket;
+- normalized search text built from display name, exact ref, explicit tags, and
+  collection.
+
+These facets organize the palette only. Parsing `items` from a ref can place an
+entry under the Items filter; it cannot make the scenery grant an item.
+
 For this slice, the Dungeon Builder's scenery entries become the deterministic
 union of:
 
@@ -267,6 +287,29 @@ source of authored values. This slice does not decide new defaults.
 
 Because the palette reads the generated catalog, the next successful
 `world-assets:sync` adds new entries without another palette edit.
+
+### Dungeon Builder findability
+
+The Dungeon Builder palette adds one case-insensitive search field and filters
+for All, Props, Items, Weapons, Environment, Monsters, NPCs, and Compositions.
+Search matches display name, exact ref, explicit tags, and collection. Filters
+and search compose, preserve deterministic catalog order, report the visible
+result count, and show an explicit empty state rather than a blank panel.
+
+All category filters remain visible with counts, including zero, so incoming
+catalog types do not silently change the navigation model. Selecting a zero-count
+filter shows the explicit empty state. Selecting or clearing a filter never
+mutates the DungeonSpec. Existing placement interactions remain unchanged.
+
+Generated collections group by the stable ref collection segment—for example,
+`dnd5e:props:dark-fortress:altar_01` belongs to `dark-fortress`. Legacy refs
+without that segment remain in a labeled legacy/default group. Collection
+parsing is presentation metadata only and does not replace provider category or
+tags.
+
+The World Builder keeps its current search behavior in this slice. It consumes
+the same catalog facet shape, so a later issue can add matching groups/filters
+without changing generated provider data or reference semantics.
 
 ## Web rendering
 
@@ -346,6 +389,11 @@ resolvers.
 
 - Generated catalog entries from all four scenery categories appear in the
   Dungeon palette without a hand-written list.
+- Dungeon search matches display name, exact ref, tags, and collection;
+  category filters compose with search, counts are accurate, deterministic
+  ordering is retained, and empty results are explained.
+- Collection grouping follows stable ref parts without becoming gameplay
+  authority.
 - Legacy palette ordering and entries remain stable.
 - Existing monster choices are preserved and derived through the monster
   adapter; default-dungeon monster refs still parse, display, preview, and play.
@@ -382,7 +430,8 @@ arrive; their absence today does not justify a production restriction.
 
 1. **Toolkit:** expand DungeonSpec scenery routing and prove compatibility.
 2. **API:** consume the Toolkit version and prove real authoring compilation.
-3. **Web:** feed all generated categories to the Dungeon palette and dispatch
+3. **Web:** feed all generated categories to the Dungeon palette, add the
+   shared discovery facets and Dungeon findability controls, and dispatch
    generated atlas refs through `WorldAssetModel`.
 4. **Integrated gate:** synchronize the merged provider, run repository CI,
    then exercise real authoring preview/save/play.
