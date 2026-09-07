@@ -4,7 +4,7 @@
 
 **Goal:** Make every synchronized `props`, `items`, `weapons`, and `env` world asset automatically discoverable and placeable as DungeonSpec scenery while preserving monsters, future NPC seams, compositions, exact refs, and current one-anchor placement behavior.
 
-**Architecture:** Toolkit expands its existing prop-like scenery route to four visual namespaces without changing the wire shape. API consumes the published Toolkit module and proves exact refs survive real authoring compilation. Web adds one discriminated builder-catalog adapter, Dungeon palette search/facets, and an `AtlasPropModel` dispatch to `WorldAssetModel`; existing legacy prop, monster, NPC seam, and composition paths remain separate behind the shared catalog surface.
+**Architecture:** Toolkit expands its existing prop-like scenery route to four visual namespaces without changing the wire shape. API consumes the published Toolkit Encounter module and proves exact refs survive real authoring compilation. Web adds one neutral discriminated builder-catalog authority and legacy-first scenery resolver consumed by the World Builder adapter, Dungeon palette, and `AtlasPropModel`; source-specific legacy/generated metadata, monsters, an explicit non-placeable NPC-input seam, and dynamic compositions remain discriminated behind that shared surface.
 
 **Tech Stack:** Go, `rpg-toolkit` DungeonSpec, `rpg-api` authoring/session projection, TypeScript, React, Three.js/R3F, Vitest, Testing Library, Playwright/Chromium.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Work in one issue worktree per repository; never implement in canonical roots.
+- Work in one issue worktree per repository; never implement in canonical roots. Each lane records its absolute worktree path, runs commands with that worktree as the explicit working directory, and hands other lanes only immutable commit/version receipts. Concurrent lanes never change branches, dependencies, or files in another lane's worktree.
 - Toolkit branches from and merges to `main`; Toolkit CI publishes module tags after merge. Never create a tag manually.
 - API and Web branch from and merge to `dev`.
 - Use one writer per worktree and a fresh reviewer gate for every task-sized commit.
@@ -25,7 +25,9 @@
 - Compositions are technical scenery props assembled from other assets and represented by one anchor placement.
 - A visual item or weapon does not grant inventory or equipment behavior.
 - NPC and monster appearances do not acquire rules, AI, faction, or placement behavior from visual promotion.
-- Unsupported exact refs render empty; never substitute a family/default or unrelated asset.
+- Parser-valid exact `props`, `items`, `weapons`, and `env` refs missing from the shared catalog render empty; never substitute a family/default or unrelated asset. Existing one-ID-part legacy family fallback remains.
+- `src/utils/refs.ts` remains the only ref parser/colon-split site. Production and test code use `parseRef`/`idParts`; never expand `src/utils/refs.guard.test.ts`'s allowlist for this work.
+- Shared scenery deduplication and rendering use the same resolver, with existing legacy authority on exact-ref collisions.
 - Multi-hex occupancy and inferred footprints remain out of scope.
 - No protobuf shape change is expected. Discovery of a required proto change stops execution and returns to the director.
 - Preserve the paused Assets weapon worktree `/home/kirk/.pi/worktrees/rpg-game-assets/115-final-weapon-remainder` unchanged.
@@ -61,9 +63,10 @@ Before executing each repository lane, the coordinator creates a repository-owne
 - Produces: `isSceneryRefType(kind string) bool`; `refKind(ref)` accepting `props|items|weapons|env|monsters`; compiled `encounter.PropInput` entries retaining exact scenery refs.
 - Task 2 consumes: the CI-published `rulebooks/dnd5e/encounter` module version from this merged PR. The parent `rulebooks/dnd5e` module is unchanged because `encounter/` is its own nested Go module.
 
-- [ ] **Step 1: Create the failing namespace acceptance tests**
+- [ ] **Step 1: Create the failing namespace and scenery-validation tests**
 
-Create `world_asset_scenery_test.go` with a compact valid dungeon and table-driven exact refs:
+Create `world_asset_scenery_test.go` with a compact dungeon helper whose final
+placement fields are supplied by each case:
 
 ```go
 package dungeonspec_test
@@ -78,7 +81,7 @@ import (
     "github.com/KirkDiggler/rpg-toolkit/tools/spatial"
 )
 
-func worldAssetSceneryYAML(ref string) string {
+func worldAssetSceneryYAML(ref, placementFields string) string {
     return fmt.Sprintf(`version: 2
 key: world-assets
 orientation: pointy
@@ -91,8 +94,8 @@ regions:
       - [[0,0],[1,0]]
 start: [0,0]
 place:
-  - { ref: %q, at: [1,0], blocks_movement: false, blocks_los: true, facing: ne, offset: [0.2,-0.1,0.3] }
-`, ref)
+  - { ref: %q, at: [1,0], %s }
+`, ref, placementFields)
 }
 
 func TestWorldAssetNamespacesCompileAsScenery(t *testing.T) {
@@ -104,7 +107,10 @@ func TestWorldAssetNamespacesCompileAsScenery(t *testing.T) {
     }
     for _, ref := range refs {
         t.Run(ref, func(t *testing.T) {
-            compiled, err := dungeonspec.Load([]byte(worldAssetSceneryYAML(ref)))
+            compiled, err := dungeonspec.Load([]byte(worldAssetSceneryYAML(
+                ref,
+                "blocks_movement: false, blocks_los: true, facing: ne, offset: [0.2,-0.1,0.3]",
+            )))
             require.NoError(t, err)
             require.Len(t, compiled.Field.Props, 1)
             prop := compiled.Field.Props[0]
@@ -118,17 +124,66 @@ func TestWorldAssetNamespacesCompileAsScenery(t *testing.T) {
     }
 }
 
+func TestNonPropsSceneryUsesPropValidation(t *testing.T) {
+    tests := []struct {
+        name, ref, fields, path, message string
+    }{
+        {
+            name: "item missing blocks_movement",
+            ref: "dnd5e:items:dark-fortress:health_potion_01",
+            fields: "blocks_los: true",
+            path: "place[0].blocks_movement",
+            message: "there is no default",
+        },
+        {
+            name: "weapon missing blocks_los",
+            ref: "dnd5e:weapons:dark-fortress:sword_01",
+            fields: "blocks_movement: false",
+            path: "place[0].blocks_los",
+            message: "there is no default",
+        },
+        {
+            name: "environment with targeting",
+            ref: "dnd5e:env:dark-fortress:gate_01",
+            fields: "blocks_movement: true, blocks_los: true, targeting: lowest-health",
+            path: "place[0].targeting",
+            message: "not a monster",
+        },
+        {
+            name: "item marked boss",
+            ref: "dnd5e:items:dark-fortress:health_potion_01",
+            fields: "blocks_movement: false, blocks_los: false, boss: true",
+            path: "place[0].boss",
+            message: "not a monster",
+        },
+    }
+
+    for _, tc := range tests {
+        t.Run(tc.name, func(t *testing.T) {
+            defects := dungeonspec.Validate(mustDecodeWorldAsset(
+                t,
+                worldAssetSceneryYAML(tc.ref, tc.fields),
+            ))
+            require.Len(t, defects, 1)
+            require.Equal(t, tc.path, defects[0].Path)
+            require.Contains(t, defects[0].Message, tc.message)
+        })
+    }
+}
+
 func TestNonWorldAssetNamespaceStillCannotBePlaced(t *testing.T) {
-    defects := dungeonspec.Validate(mustDecodeWorldAsset(t,
-        worldAssetSceneryYAML("dnd5e:spells:fireball")))
+    defects := dungeonspec.Validate(mustDecodeWorldAsset(
+        t,
+        worldAssetSceneryYAML(
+            "dnd5e:spells:fireball",
+            "blocks_movement: false, blocks_los: false",
+        ),
+    ))
     require.NotEmpty(t, defects)
+    require.Equal(t, "place[0].ref", defects[0].Path)
     require.Contains(t, defects[0].Message, `type "spells"`)
 }
-```
 
-Add this uniquely named local helper in the same file:
-
-```go
 func mustDecodeWorldAsset(t *testing.T, raw string) *dungeonspec.Spec {
     t.Helper()
     spec, err := dungeonspec.Decode([]byte(raw))
@@ -137,13 +192,18 @@ func mustDecodeWorldAsset(t *testing.T, raw string) *dungeonspec.Spec {
 }
 ```
 
+The four negative cases deliberately use only `items`, `weapons`, and `env`.
+They prove that the expanded routing reaches the complete existing scenery
+validation body, including exact error paths, rather than merely compiling as a
+prop-shaped output.
+
 - [ ] **Step 2: Run the focused test and verify the current restriction**
 
 Run:
 
 ```bash
 cd rpg-toolkit/rulebooks/dnd5e/encounter
-go test ./dungeonspec -run 'TestWorldAssetNamespaces|TestNonWorldAssetNamespace' -count=1
+go test ./dungeonspec -run 'TestWorldAssetNamespaces|TestNonPropsScenery|TestNonWorldAssetNamespace' -count=1
 ```
 
 Expected: `props` passes; `items`, `weapons`, and `env` fail with unsupported ref-type validation or produce no compiled prop.
@@ -222,7 +282,7 @@ Run:
 
 ```bash
 cd rpg-toolkit/rulebooks/dnd5e/encounter
-go test ./dungeonspec -run 'TestWorldAssetNamespaces|TestNonWorldAssetNamespace|TestCompileSuite|TestScenerySuite' -count=1
+go test ./dungeonspec -run 'TestWorldAssetNamespaces|TestNonPropsScenery|TestNonWorldAssetNamespace|TestCompileSuite|TestScenerySuite' -count=1
 go test ./dungeonspec -count=1
 go test . -count=1
 ```
@@ -399,27 +459,37 @@ Obtain independent review, open the API PR against `dev`, and merge before enabl
 
 ---
 
-### Task 3: Build one discriminated Web builder catalog
+### Task 3: Build the neutral shared Web catalog and scenery resolver
 
 **Files:**
-- Create: `rpg-dnd5e-web/src/author/builderCatalog.ts`
-- Create: `rpg-dnd5e-web/src/author/builderCatalog.test.ts`
+- Create: `rpg-dnd5e-web/src/catalog/builderCatalog.ts`
+- Create: `rpg-dnd5e-web/src/catalog/builderCatalog.test.ts`
+- Create: `rpg-dnd5e-web/src/concepts/world-building/catalog.test.ts`
+- Modify: `rpg-dnd5e-web/src/concepts/world-building/catalog.ts`
 - Modify: `rpg-dnd5e-web/src/components/hex-grid/monsterModels.ts`
 - Modify: `rpg-dnd5e-web/src/components/hex-grid/monsterModels.test.ts`
 - Modify: `rpg-dnd5e-web/src/author/paletteData.ts`
 - Modify: `rpg-dnd5e-web/src/author/paletteData.test.ts`
 - Read only: `rpg-dnd5e-web/src/generated/worldAssetCatalog.ts`
-- Read only: `rpg-dnd5e-web/src/concepts/world-building/catalog.ts`
 
 **Interfaces:**
-- Consumes: `GENERATED_WORLD_ASSETS`, legacy `PROP_KEYS`, authoritative monster model keys, current composition refs.
-- Produces:
-  - `BuilderCatalogEntry` discriminated by `authoringKind`, `source`, and `visualCategory`;
-  - `STATIC_BUILDER_CATALOG`;
-  - `compositionBuilderEntry(...)`;
+- Consumes: `GENERATED_WORLD_ASSETS`, legacy `PROP_KEYS`/
+  `resolvePropVariant`, authoritative monster model keys, and an explicit array
+  of NPC appearance inputs.
+- Produces from `src/catalog/builderCatalog.ts`:
+  - `BuilderCatalogEntry`, a real discriminated union;
+  - `STATIC_BUILDER_CATALOG` and `STATIC_BUILDER_SCENERY_BY_REF`;
+  - `resolveBuilderScenery(ref)` as the only non-composition scenery source
+    resolver used by render dispatch;
+  - `compositionBuilderEntry(...)` for dynamic current-world records;
   - `filterBuilderCatalog(entries, query, category)`;
-  - stable `collection` and `searchText` presentation metadata.
-- Tasks 4 and 5 consume these exact exports.
+  - `NpcAppearanceCatalogInput` and `npcAppearanceEntries(inputs)` producing
+    explicitly non-placeable actors.
+- Task 4 consumes the union, static catalog, composition adapter, and filter.
+- Task 5 consumes `ResolvedBuilderScenery` and `resolveBuilderScenery`.
+- The World Builder retains `WORLD_BUILDING_CATALOG` and
+  `WORLD_BUILDING_CATALOG_BY_REF` as compatibility exports, but they become an
+  adapter over the shared catalog rather than a second source union.
 
 - [ ] **Step 1: Export authoritative authorable monster keys**
 
@@ -446,9 +516,8 @@ Run:
 npm test -- --run src/components/hex-grid/monsterModels.test.ts
 ```
 
-Expected: fail because the export does not exist.
-
-Then add beside `MONSTER_REF_MODELS`:
+Expected: fail because the export does not exist. Then add beside
+`MONSTER_REF_MODELS`:
 
 ```ts
 export const AUTHORABLE_MONSTER_REF_IDS: readonly string[] = Object.freeze(
@@ -458,9 +527,10 @@ export const AUTHORABLE_MONSTER_REF_IDS: readonly string[] = Object.freeze(
 
 Do not export mutable candidate arrays and do not add unbound NPC appearances.
 
-- [ ] **Step 2: Define the catalog types and category vocabulary with failing tests**
+- [ ] **Step 2: Define the discriminated union and adapter inputs with failing tests**
 
-Create `builderCatalog.test.ts` first. Test a supplied fixture set rather than mutating generated code:
+Create `src/catalog/builderCatalog.test.ts` first. Import `parseRef` in fixture
+helpers; no test helper may split a ref. The world-asset fixture uses:
 
 ```ts
 const worldAsset = (
@@ -468,66 +538,24 @@ const worldAsset = (
   displayName: string,
   category: GeneratedWorldAsset['category'],
   tags: string[]
-): GeneratedWorldAsset => ({
-  ref,
-  displayName,
-  category,
-  tags,
-  url: `/models/${category}/${ref.split(':').at(-1)}.glb`,
-  glbSha256: 'a'.repeat(64),
-  sizeBytes: 1,
-  boundsMeters: [1, 1, 1],
-  supportsDecoration: false,
-});
-
-const legacyEntry = (ref: string): BuilderCatalogEntry => ({
-  ref,
-  label: 'Legacy Altar',
-  short: 'LA',
-  authoringKind: 'scenery',
-  source: 'legacy',
-  visualCategory: 'props',
-  collection: 'legacy',
-  tags: [],
-  blocksMovement: true,
-  blocksLoS: false,
-  searchText: `legacy altar ${ref}`.toLowerCase(),
-});
-
-const generated = [
-  worldAsset('dnd5e:props:dark-fortress:altar_01', 'Altar 01', 'props', ['ritual']),
-  worldAsset('dnd5e:items:dark-fortress:health_potion_01', 'Health Potion', 'items', ['healing']),
-  worldAsset('dnd5e:weapons:dark-fortress:sword_01', 'Sword 01', 'weapons', []),
-  worldAsset('dnd5e:env:dark-fortress:gate_01', 'Gate 01', 'env', ['fortress']),
-];
-
-it('adapts every generated category as scenery without inventing rules', () => {
-  const entries = generatedWorldAssetEntries(generated);
-  expect(entries.map(({ authoringKind, visualCategory, collection }) => ({
-    authoringKind,
-    visualCategory,
-    collection,
-  }))).toEqual([
-    { authoringKind: 'scenery', visualCategory: 'props', collection: 'dark-fortress' },
-    { authoringKind: 'scenery', visualCategory: 'items', collection: 'dark-fortress' },
-    { authoringKind: 'scenery', visualCategory: 'weapons', collection: 'dark-fortress' },
-    { authoringKind: 'scenery', visualCategory: 'env', collection: 'dark-fortress' },
-  ]);
-  expect(entries.every((entry) => entry.gameplayRef === undefined)).toBe(true);
-});
+): GeneratedWorldAsset => {
+  const parsed = parseRef(ref);
+  if (!parsed) throw new Error(`invalid test ref: ${ref}`);
+  return {
+    ref,
+    displayName,
+    category,
+    tags,
+    url: `/models/${category}/${parsed.idParts.at(-1)}.glb`,
+    glbSha256: 'a'.repeat(64),
+    sizeBytes: 1,
+    boundsMeters: [1, 1, 1],
+    supportsDecoration: false,
+  };
+};
 ```
 
-Run:
-
-```bash
-npm test -- --run src/author/builderCatalog.test.ts
-```
-
-Expected: fail because the module does not exist.
-
-- [ ] **Step 3: Implement the focused catalog model**
-
-Create `builderCatalog.ts` with these public types:
+Test these public union members and literal discriminants:
 
 ```ts
 export type BuilderVisualCategory =
@@ -541,134 +569,268 @@ export type BuilderVisualCategory =
 
 export type BuilderCatalogFilter = 'all' | BuilderVisualCategory;
 
-export interface BuilderCatalogEntry {
-  ref: string;
-  label: string;
-  short: string;
-  authoringKind: 'scenery' | 'actor';
-  source: 'legacy' | 'generated' | 'composition' | 'monster' | 'npc';
-  visualCategory: BuilderVisualCategory;
-  collection: string;
-  tags: readonly string[];
-  thumbnail?: string;
-  blocksMovement?: boolean;
-  blocksLoS?: boolean;
-  actorKind?: 'monster' | 'npc';
-  gameplayRef?: string;
-  searchText: string;
-}
+export type BuilderCatalogEntry =
+  | LegacyBuilderSceneryEntry
+  | GeneratedBuilderSceneryEntry
+  | CompositionBuilderSceneryEntry
+  | MonsterBuilderActorEntry
+  | NpcBuilderActorEntry;
+
+export type StaticBuilderCatalogEntry = Exclude<
+  BuilderCatalogEntry,
+  CompositionBuilderSceneryEntry
+>;
+
+export type ResolvedBuilderScenery =
+  | LegacyBuilderSceneryEntry
+  | GeneratedBuilderSceneryEntry;
 ```
 
-Expose pure functions with exact signatures:
+Every member shares `ref`, `label`, `short`, `authoringKind`, `source`,
+`placeable`, `visualCategory`, `collection`, `tags`, optional `thumbnail`, and
+`searchText`. Pin the source-specific payloads:
+
+- legacy scenery: `authoringKind: 'scenery'`, `source: 'legacy'`,
+  `placeable: true`, `visualCategory: 'props'`, plus `variant`, `role`,
+  `blocksMovement`, and `blocksLoS`;
+- generated scenery: `source: 'generated'`, `placeable: true`, and the complete
+  `asset: GeneratedWorldAsset` without a `gameplayRef`;
+- composition scenery: `source: 'composition'`, `placeable: true`, and no
+  expanded children;
+- monster actor: `source: 'monster'`, `actorKind: 'monster'`,
+  `placeable: true`, plus `gameplayRef`, `modelRefId`, `sub`, and current
+  `bossable` metadata;
+- NPC actor: `source: 'npc'`, `actorKind: 'npc'`, `placeable: false`,
+  `appearanceRef`, and `unavailableReason: 'npc-placement-deferred'`; it has no
+  `gameplayRef`.
+
+Run:
+
+```bash
+npm test -- --run src/catalog/builderCatalog.test.ts
+```
+
+Expected: fail because the neutral module does not exist.
+
+- [ ] **Step 3: Implement adapters, collision authority, filtering, and the resolver**
+
+In `builderCatalog.ts`, expose these exact construction seams:
 
 ```ts
+export interface NpcAppearanceCatalogInput {
+  appearanceRef: string;
+  label: string;
+  tags: readonly string[];
+  thumbnail?: string;
+  collection?: string;
+}
+
 export function generatedWorldAssetEntries(
   assets: readonly GeneratedWorldAsset[]
-): BuilderCatalogEntry[];
+): GeneratedBuilderSceneryEntry[];
+
+export function monsterBuilderEntries(
+  refIds: readonly string[]
+): MonsterBuilderActorEntry[];
+
+export function npcAppearanceEntries(
+  inputs: readonly NpcAppearanceCatalogInput[]
+): NpcBuilderActorEntry[];
 
 export function buildStaticBuilderCatalog(input: {
-  legacy: readonly BuilderCatalogEntry[];
+  legacy: readonly LegacyBuilderSceneryEntry[];
   generated: readonly GeneratedWorldAsset[];
-  monsters: readonly BuilderCatalogEntry[];
-}): BuilderCatalogEntry[];
+  monsters: readonly MonsterBuilderActorEntry[];
+  npcs: readonly NpcAppearanceCatalogInput[];
+}): StaticBuilderCatalogEntry[];
+
+export function createBuilderSceneryIndex(
+  entries: readonly StaticBuilderCatalogEntry[]
+): ReadonlyMap<string, ResolvedBuilderScenery>;
 
 export function compositionBuilderEntry(input: {
   ref: string;
   label: string;
   thumbnail?: string;
-}): BuilderCatalogEntry;
+}): CompositionBuilderSceneryEntry;
 
 export function filterBuilderCatalog(
   entries: readonly BuilderCatalogEntry[],
   query: string,
   filter: BuilderCatalogFilter
 ): BuilderCatalogEntry[];
-
-export const STATIC_BUILDER_CATALOG: readonly BuilderCatalogEntry[];
 ```
 
-Rules:
+The production constants and resolver are:
 
 ```ts
-const collectionOf = (ref: string, source: BuilderCatalogEntry['source']) => {
-  const parts = ref.split(':');
-  return source === 'generated' && parts.length >= 4 ? parts[2] : 'legacy';
-};
-
-const searchTextOf = (entry: Pick<
-  BuilderCatalogEntry,
-  'label' | 'ref' | 'tags' | 'collection'
->) => [entry.label, entry.ref, entry.collection, ...entry.tags]
-  .join(' ')
-  .toLocaleLowerCase();
+export const NPC_APPEARANCE_CATALOG_INPUTS: readonly NpcAppearanceCatalogInput[] =
+  Object.freeze([]);
+export const STATIC_BUILDER_CATALOG: readonly StaticBuilderCatalogEntry[];
+export const STATIC_BUILDER_SCENERY_BY_REF: ReadonlyMap<
+  string,
+  ResolvedBuilderScenery
+>;
+export function resolveBuilderScenery(
+  ref: string
+): ResolvedBuilderScenery | undefined;
 ```
 
-`filterBuilderCatalog` trims and lowercases the query, filters by exact visual category unless `all`, preserves input order, and matches `searchText.includes(query)`.
+Implementation rules:
 
-Build `STATIC_BUILDER_CATALOG` by adapting legacy `PALETTE_PROPS`, all `Object.values(GENERATED_WORLD_ASSETS)` not colliding with a legacy exact ref, and model-backed monsters. Keep current monster labels, bossability, and thumbnail behavior in `paletteData`; do not infer NPC bindings. NPC entries are an empty adapter in this slice, but `npcs` remains in the type/filter vocabulary.
+1. Adapt legacy entries from every `PROP_KEYS` key whose
+   `resolvePropVariant(ref)` succeeds. Retain the resolved variant, role, and
+   current Dungeon placement defaults. Preserve manifest order in this shared
+   input; consumer-specific ordering remains an adapter concern.
+2. Adapt every `Object.values(GENERATED_WORLD_ASSETS)` entry. Extract a generated
+   collection only with `parseRef(ref)?.idParts`: `idParts[0]` when there are at
+   least two ID parts, otherwise the disclosed `legacy` bucket. Never use a
+   colon split and never expand `src/utils/refs.guard.test.ts`'s allowlist.
+3. Derive monster inclusion from `AUTHORABLE_MONSTER_REF_IDS`. Move the existing
+   label/sub/boss presentation constants out of `paletteData.ts` into the
+   neutral adapter; metadata may decorate an authoritative key but must not add
+   a key absent from the model mapping.
+4. `monsterBuilderEntries` admits only supplied authoritative model keys and
+   retains current presentation metadata. `npcAppearanceEntries` maps
+   `appearanceRef` to the entry `ref` and adapts every supplied appearance as a
+   non-placeable NPC actor. The production NPC input array is intentionally
+   empty; this is an executable input seam, not an `npcs` string in a type union
+   only.
+5. `buildStaticBuilderCatalog` appends legacy scenery, non-colliding generated
+   scenery, monsters, and adapted NPCs in that order. Remove generated entries
+   whose exact ref already appears in legacy before building the map.
+6. `createBuilderSceneryIndex` accepts only legacy/generated scenery. On any
+   accidental duplicate it retains the first entry, so the catalog's
+   legacy-first collision rule is also the resolver rule.
+7. `filterBuilderCatalog` trims and lowercases the query, applies exact visual
+   category unless `all`, matches precomputed `searchText`, excludes nothing on
+   source alone, and preserves input order.
 
-- [ ] **Step 4: Pin collision, actor, composition, and search behavior**
+- [ ] **Step 4: Pin generated, collision, actor, composition, and search behavior**
 
-Add tests:
+Add table-driven/pure tests that prove:
 
 ```ts
-it('keeps legacy authority when generated and legacy refs collide', () => {
-  const entries = buildStaticBuilderCatalog({
-    legacy: [legacyEntry('dnd5e:props:altar')],
-    generated: [worldAsset('dnd5e:props:altar', 'Generated Altar', 'props', [])],
+it('adapts all generated categories as scenery with parser-derived collections', () => {
+  const entries = generatedWorldAssetEntries(generated);
+  expect(entries.map(({ authoringKind, visualCategory, collection }) => ({
+    authoringKind,
+    visualCategory,
+    collection,
+  }))).toEqual([
+    { authoringKind: 'scenery', visualCategory: 'props', collection: 'dark-fortress' },
+    { authoringKind: 'scenery', visualCategory: 'items', collection: 'dark-fortress' },
+    { authoringKind: 'scenery', visualCategory: 'weapons', collection: 'dark-fortress' },
+    { authoringKind: 'scenery', visualCategory: 'env', collection: 'dark-fortress' },
+  ]);
+  expect(entries.every((entry) => !('gameplayRef' in entry))).toBe(true);
+});
+
+it('uses one legacy-first rule for both catalog and scenery resolver', () => {
+  const catalog = buildStaticBuilderCatalog({
+    legacy: [legacyEntry('dnd5e:props:dark-fortress:altar_01')],
+    generated: [worldAsset(
+      'dnd5e:props:dark-fortress:altar_01',
+      'Generated Altar',
+      'props',
+      []
+    )],
     monsters: [],
+    npcs: [],
   });
-  expect(entries.filter((entry) => entry.ref === 'dnd5e:props:altar')).toEqual([
+  const index = createBuilderSceneryIndex(catalog);
+  expect(catalog.filter((entry) => entry.ref.endsWith('altar_01'))).toEqual([
     expect.objectContaining({ source: 'legacy' }),
   ]);
+  expect(index.get('dnd5e:props:dark-fortress:altar_01')).toMatchObject({
+    source: 'legacy',
+  });
 });
 
-it('searches label, exact ref, tags, and collection while preserving order', () => {
-  expect(filterBuilderCatalog(entries, 'healing', 'all').map((e) => e.ref))
-    .toEqual(['dnd5e:items:dark-fortress:health_potion_01']);
-  expect(filterBuilderCatalog(entries, 'DARK-FORTRESS', 'weapons').map((e) => e.ref))
-    .toEqual(['dnd5e:weapons:dark-fortress:sword_01']);
-});
-
-it('models a composition as single-anchor scenery', () => {
-  expect(compositionBuilderEntry({ ref: 'composition:props:altar-set', label: 'Altar set' }))
-    .toMatchObject({
-      authoringKind: 'scenery',
-      source: 'composition',
-      visualCategory: 'compositions',
-      collection: 'legacy',
-    });
-});
-
-it('keeps monsters as actors and exposes no invented NPC', () => {
-  expect(
-    entries
-      .filter((entry) => entry.visualCategory === 'monsters')
-      .every((entry) => entry.authoringKind === 'actor' && entry.actorKind === 'monster')
-  ).toBe(true);
-  expect(entries.filter((entry) => entry.visualCategory === 'npcs')).toEqual([]);
+it('adapts a synthetic NPC appearance without making it placeable', () => {
+  const [entry] = npcAppearanceEntries([{
+    appearanceRef: 'dnd5e:npcs:townsfolk:apothecary_01',
+    label: 'Apothecary',
+    tags: ['townsfolk'],
+  }]);
+  expect(entry).toMatchObject({
+    authoringKind: 'actor',
+    source: 'npc',
+    actorKind: 'npc',
+    placeable: false,
+    unavailableReason: 'npc-placement-deferred',
+  });
+  expect('gameplayRef' in entry).toBe(false);
 });
 ```
 
-- [ ] **Step 5: Run catalog and existing palette tests**
+Also test `compositionBuilderEntry` as one placeable scenery ref, monster entries
+as placeable actors, no production NPC entries, and search over label, exact ref,
+tags, and collection without reordering.
+
+- [ ] **Step 5: Turn both existing catalog surfaces into adapters**
+
+In `src/author/paletteData.ts`, retain thumbnail lookup, role colors, public
+compatibility types, and `paletteNameForRef`, but derive `PALETTE_PROPS` and
+`PALETTE_MONSTERS` from `STATIC_BUILDER_CATALOG`. Remove its independent
+monster membership list. Pin unchanged legacy defaults, labels, bossability,
+and model-backed monster refs in `paletteData.test.ts`.
+
+In `src/concepts/world-building/catalog.ts`, export this pure adapter in addition
+to its existing constants:
+
+```ts
+export function adaptWorldBuildingCatalog(
+  entries: readonly StaticBuilderCatalogEntry[]
+): WorldBuildingCatalogEntry[];
+```
+
+It filters to legacy/generated scenery and preserves the World Builder's current
+contract exactly:
+
+- legacy output retains `source`, `role`, `variant`, legacy label, thumbnail,
+  and the existing `SUPPORT_REFS` decision;
+- generated output retains `source`, `category`, the complete `asset`, provider
+  `supportsDecoration`, display name, and provider order;
+- current first-case/alphabetical legacy ordering remains, followed by generated
+  order;
+- actors are not silently admitted to the World Builder.
+
+Build `WORLD_BUILDING_CATALOG` only by calling this adapter with
+`STATIC_BUILDER_CATALOG`, then build `WORLD_BUILDING_CATALOG_BY_REF` from the
+result. Delete the local legacy/generated union construction and local
+collision set. In `catalog.test.ts`, inject a shared-catalog fixture and assert
+legacy `role`/`variant`/support metadata and generated `asset` metadata survive,
+actors are excluded, and a legacy exact-ref collision remains the only adapted
+entry. Existing `WorldBuildingConcept` search/serialization imports stay
+unchanged.
+
+- [ ] **Step 6: Run catalog, parser-guard, and existing builder tests**
 
 ```bash
 npm test -- --run \
-  src/author/builderCatalog.test.ts \
+  src/catalog/builderCatalog.test.ts \
+  src/concepts/world-building/catalog.test.ts \
   src/author/paletteData.test.ts \
   src/components/hex-grid/monsterModels.test.ts \
-  src/concepts/world-building/WorldBuildingConcept.test.tsx
+  src/concepts/world-building/WorldBuildingConcept.test.tsx \
+  src/concepts/world-building/WorldBuildingViewport.test.tsx \
+  src/utils/refs.guard.test.ts
 npm run typecheck
 ```
 
-Expected: all pass; the World Builder still contains all generated categories.
+Expected: all pass; the World Builder still contains all generated categories,
+its metadata and ordering remain stable, and there is no colon-split guard
+exception.
 
-- [ ] **Step 6: Commit and review the catalog boundary**
+- [ ] **Step 7: Commit and review the shared authority**
 
 ```bash
 git add \
-  src/author/builderCatalog.ts \
-  src/author/builderCatalog.test.ts \
+  src/catalog/builderCatalog.ts \
+  src/catalog/builderCatalog.test.ts \
+  src/concepts/world-building/catalog.ts \
+  src/concepts/world-building/catalog.test.ts \
   src/author/paletteData.ts \
   src/author/paletteData.test.ts \
   src/components/hex-grid/monsterModels.ts \
@@ -676,7 +838,12 @@ git add \
 git commit -m "feat: share a discriminated builder catalog"
 ```
 
-Review must explicitly confirm: compositions are scenery; monsters remain actors; NPC is a seam without invented behavior; all four generated categories are included; legacy exact refs win collisions; no generated file changed.
+Review must explicitly confirm: this is one neutral catalog authority rather
+than parallel World/Dungeon unions; the scenery resolver shares the catalog's
+legacy-first exact collision policy; World Builder source metadata is preserved
+by its adapter; all four generated categories are included; monsters remain
+placeable actors; the synthetic NPC input becomes a non-placeable actor; no ref
+split or guard exception was added; and no generated file changed.
 
 ---
 
@@ -685,20 +852,31 @@ Review must explicitly confirm: compositions are scenery; monsters remain actors
 **Files:**
 - Create: `rpg-dnd5e-web/src/author/Palette.test.tsx`
 - Modify: `rpg-dnd5e-web/src/author/Palette.tsx`
+- Modify: `rpg-dnd5e-web/src/author/Palette.compositions.test.tsx`
 - Modify: `rpg-dnd5e-web/src/author/DungeonBuilder.css`
 - Modify: `rpg-dnd5e-web/src/author/DungeonBuilder.test.tsx`
+- Modify: `rpg-dnd5e-web/src/compositions/compositionRef.ts`
+- Modify: `rpg-dnd5e-web/src/compositions/compositionRef.test.ts`
 - Modify: `rpg-dnd5e-web/src/author/CompositionThumbnailTiles.tsx`
 - Modify: `rpg-dnd5e-web/src/author/CompositionThumbnailTiles.test.tsx`
-- Read only: `rpg-dnd5e-web/src/author/types.ts` (retain `PaletteItem.kind: 'prop' | 'monster'`)
+- Read only: `rpg-dnd5e-web/src/author/types.ts` (retain
+  `PaletteItem.kind: 'prop' | 'monster'`)
 
 **Interfaces:**
-- Consumes: Task 3 `STATIC_BUILDER_CATALOG`, `compositionBuilderEntry`, `filterBuilderCatalog`, and `BuilderCatalogFilter`.
-- Produces: one searchable/filterable Dungeon Builder asset palette; existing `onArm(PaletteItem)` and `place` tool behavior remain compatible.
+- Consumes: Task 3 `STATIC_BUILDER_CATALOG`, `compositionBuilderEntry`,
+  `filterBuilderCatalog`, `BuilderCatalogFilter`, and discriminated placeability.
+- Produces: one searchable/filterable Dungeon Builder asset palette; existing
+  `onArm(PaletteItem)` and `place` tool behavior remain compatible.
+- Adds `tryCompositionRef(id): string | null` as the non-throwing authoring-list
+  boundary. The strict `compositionRef(id)` remains available to callers that
+  already hold a valid ID.
 - Task 6 consumes: accessible labels/test IDs for browser proof.
 
 - [ ] **Step 1: Write failing visible findability tests**
 
-Create `Palette.test.tsx` with the current required props and a controlled composition source. Mock only the dynamic composition hook, not the static catalog. Add tests with these assertions:
+Create `Palette.test.tsx` with the current required props and a controlled
+composition source. Mock only the dynamic composition hook or thumbnail
+renderer, not the static catalog. Add tests with these assertions:
 
 ```tsx
 it('offers stable all-category filters and counts', () => {
@@ -724,49 +902,112 @@ it('searches generated display names and exact refs', async () => {
 it('composes category filters with search and explains an empty result', async () => {
   const user = userEvent.setup();
   renderPalette();
+  await user.type(screen.getByRole('searchbox', { name: /find assets/i }), 'no such asset');
   await user.click(screen.getByRole('button', { name: /^Items \(/ }));
   expect(screen.getByText(/0 assets shown/i)).toBeVisible();
   expect(screen.getByText(/No Items match the current search and filter/i)).toBeVisible();
 });
 ```
 
-Add a composition fixture and prove searching/filtering Compositions retains the one armed composition ref.
+Add a valid composition fixture and prove searching/filtering Compositions
+retains one armed composition ref.
 
-- [ ] **Step 2: Run the Palette tests and verify failure**
+- [ ] **Step 2: Add the failing malformed-composition filtering regression**
+
+Extend `Palette.compositions.test.tsx` with the existing three-record shape: one
+valid record, `table:with space`, and one syntactically valid ID with malformed
+metadata. With the Compositions filter active and a query that excludes the
+valid record, assert all of the following together:
+
+- the filter label remains `Compositions (1)` and the visible-result text says
+  `0 assets shown`; neither malformed record contributes to a count;
+- both original malformed records still reach
+  `CompositionThumbnailTiles` and render its existing
+  `Unsupported composition …` visible error labels;
+- no placement button exists for either malformed record and neither `onArm`
+  nor `onTool` fires;
+- selecting Items hides those error rows, then selecting Compositions restores
+  them; presentation filtering never drops them permanently.
+
+Run:
 
 ```bash
-npm test -- --run src/author/Palette.test.tsx
+npm test -- --run \
+  src/author/Palette.test.tsx \
+  src/author/Palette.compositions.test.tsx
 ```
 
-Expected: fail because search, category controls, generated entries, counts, and empty state do not exist.
+Expected: fail because search/category controls and safe pre-filter partitioning
+do not exist.
 
-- [ ] **Step 3: Implement palette state and accessible controls**
+- [ ] **Step 3: Add a non-throwing composition-ref boundary**
 
-In `Palette.tsx`, add local presentation-only state:
+In `compositionRef.ts`, add:
+
+```ts
+export function tryCompositionRef(compositionId: string): string | null {
+  try {
+    return compositionRef(compositionId);
+  } catch {
+    return null;
+  }
+}
+```
+
+Pin valid and invalid IDs in `compositionRef.test.ts`. Change
+`CompositionThumbnailTiles.tsx` to call `tryCompositionRef`; a `null` result
+uses its existing unsupported-ID error entry. Retain `compositionMetadata`'s
+existing result-based error route. Update the focused tile test to prove both
+invalid-ID and malformed-metadata rows remain visible. No list/preprocessing
+code introduced by this task directly calls throwing `compositionRef`.
+
+- [ ] **Step 4: Safely partition dynamic compositions before filtering**
+
+In `Palette.tsx`, add a pure local/exported helper with this result shape:
+
+```ts
+interface PaletteCompositionPartition {
+  ready: ReadonlyArray<{
+    composition: Composition;
+    entry: CompositionBuilderSceneryEntry;
+  }>;
+  malformed: ReadonlySet<Composition>;
+}
+
+export function partitionPaletteCompositions(
+  compositions: readonly Composition[]
+): PaletteCompositionPartition;
+```
+
+For each record, call `tryCompositionRef(composition.id)` and
+`compositionMetadata(composition)` before constructing a catalog entry. Add a
+record to `ready` only when the ref is non-null and metadata status is `ready`;
+otherwise put the original `Composition` object into `malformed`. The helper
+must not throw, count, or synthesize a ref for a malformed record.
+
+Use `partition.ready.map(({ entry }) => entry)` in the combined catalog. After
+`filterBuilderCatalog`, make a set of visible valid composition refs. Derive the
+records passed to `CompositionThumbnailTiles` by filtering the original
+`compositionList.compositions` array in place-order:
+
+- a ready record is included only when its entry ref is visible;
+- a malformed record is included unchanged whenever the active filter is
+  `all` or `compositions`, regardless of the search query, so the visible error
+  route cannot be filtered away;
+- every composition record is excluded for the other category filters.
+
+Malformed rows are out-of-band errors: they are not entries in the combined
+catalog, category counts, result counts, search matches, or arming logic.
+Thumbnail production remains exclusively in `CompositionThumbnailTiles`.
+
+- [ ] **Step 5: Implement palette state and accessible controls**
+
+In `Palette.tsx`, add presentation-only state:
 
 ```ts
 const [assetQuery, setAssetQuery] = useState('');
 const [assetFilter, setAssetFilter] = useState<BuilderCatalogFilter>('all');
 ```
-
-Import `useState` and Task 3 helpers. Adapt `compositionList.compositions` through `compositionBuilderEntry`, then filter the combined entries:
-
-```ts
-const compositionEntries = compositionList.compositions.map((composition) => {
-  const metadata = compositionMetadata(composition);
-  return compositionBuilderEntry({
-    ref: compositionRef(composition.id),
-    label: metadata.status === 'ready' ? metadata.name : composition.id,
-  });
-});
-const entries = filterBuilderCatalog(
-  [...STATIC_BUILDER_CATALOG, ...compositionEntries],
-  assetQuery,
-  assetFilter
-);
-```
-
-Keep thumbnail production exclusively in `CompositionThumbnailTiles`. Build a `Set` of the filtered composition refs and pass that component only composition records whose `compositionRef(id)` is in the set. Malformed composition IDs remain visible through that component's existing error entry rather than being armed.
 
 Render one search input:
 
@@ -780,31 +1021,36 @@ Render one search input:
 />
 ```
 
-Render all fixed filters with counts computed from the unfiltered combined catalog. Labels must be accessible as `Items (0)`, not conveyed only by color. Keep all filters visible at zero.
+Render all fixed filters with counts computed from the unsearched combined
+catalog of static entries plus valid compositions. Labels are accessible as
+`Items (0)`, not conveyed only by color, and remain visible at zero. The visible
+result count comes only from `filterBuilderCatalog`.
 
-- [ ] **Step 4: Preserve kind-specific arming and existing renderers**
-
-For generated and legacy scenery, retain the placement tool contract:
-
-```ts
-onArm({ kind: 'prop', ref: entry.ref });
-onTool('place');
-```
-
-For monsters:
+Respect union discrimination when arming:
 
 ```ts
-onArm({ kind: 'monster', ref: entry.ref });
-onTool('place');
+if (entry.authoringKind === 'scenery' && entry.placeable) {
+  onArm({ kind: 'prop', ref: entry.ref });
+  onTool('place');
+}
+if (
+  entry.authoringKind === 'actor' &&
+  entry.actorKind === 'monster' &&
+  entry.placeable
+) {
+  onArm({ kind: 'monster', ref: entry.gameplayRef });
+  onTool('place');
+}
 ```
 
-For compositions, keep `CompositionThumbnailTiles` and its `{ kind: 'prop' }` arming contract. Filter its input list by the refs returned from `filterBuilderCatalog`; do not flatten composition thumbnails into generic swatches and do not expand compositions in the palette.
+Compositions keep their `{ kind: 'prop' }` arming inside
+`CompositionThumbnailTiles`. A future synthetic NPC entry is disabled/non-armed
+by its `placeable: false` discriminant; the production NPC count remains zero.
 
-NPC count remains zero and cannot arm an entry because Task 3 exposes no NPC entries.
+- [ ] **Step 6: Group visible entries without changing their order**
 
-- [ ] **Step 5: Group visible scenery by collection without changing order**
-
-Create collection sections from the already-filtered sequence with insertion-order maps:
+Create collection sections from the already-filtered, non-composition scenery
+sequence with insertion-order maps:
 
 ```ts
 const byCollection = new Map<string, BuilderCatalogEntry[]>();
@@ -815,13 +1061,22 @@ for (const entry of visibleScenery) {
 }
 ```
 
-Render disclosed labels such as `dark-fortress` and `legacy`. Do not alphabetically reshuffle entries inside a collection. Category filters and search must not mutate the armed item or DungeonDoc.
+Render labels such as `dark-fortress` and `legacy`. Do not alphabetically
+reshuffle entries inside a collection. Static scenery buttons use
+`entry.thumbnail ?? thumbForRef(entry.ref)` so existing legacy thumbnails and
+the non-broken text fallback remain. Render monster actors in their existing
+section and dynamic compositions through their existing tile component.
+Category filters and search must not mutate the armed item or DungeonDoc.
 
-Add focused `.dg-asset-search`, `.dg-asset-filters`, `.dg-asset-count`, and `.dg-asset-empty` styles in `DungeonBuilder.css`; preserve the existing narrow left rail and keyboard focus visibility.
+Add focused `.dg-asset-search`, `.dg-asset-filters`, `.dg-asset-count`, and
+`.dg-asset-empty` styles in `DungeonBuilder.css`; preserve the existing narrow
+left rail and keyboard focus visibility.
 
-- [ ] **Step 6: Pin placement defaults and document stability**
+- [ ] **Step 7: Pin placement defaults and document stability**
 
-In `DungeonBuilder.test.tsx`, place a generated exact ref from the palette and assert emitted YAML includes the same ref and the current fallback values:
+In `DungeonBuilder.test.tsx`, place a generated exact ref from the palette and
+assert emitted YAML includes the same ref and the current unknown-scenery
+fallback values:
 
 ```ts
 expect(sourceText().textContent).toContain(
@@ -831,111 +1086,195 @@ expect(sourceText().textContent).toContain('blocks_movement: true');
 expect(sourceText().textContent).toContain('blocks_los: false');
 ```
 
-Then toggle both Inspector checkboxes and assert YAML follows the author. This test freezes “existing fallback, author-controlled afterward” without declaring the fallback a new semantic rule.
+Then toggle both Inspector checkboxes and assert YAML follows the author. This
+test freezes “existing fallback, author-controlled afterward” without declaring
+the fallback a new semantic rule.
 
-- [ ] **Step 7: Run UI, composition, and authoring regressions**
+- [ ] **Step 8: Run UI, composition, parser-guard, and authoring regressions**
 
 ```bash
 npm test -- --run \
-  src/author/builderCatalog.test.ts \
+  src/catalog/builderCatalog.test.ts \
   src/author/Palette.test.tsx \
   src/author/Palette.compositions.test.tsx \
   src/author/CompositionThumbnailTiles.test.tsx \
   src/author/DungeonBuilder.test.tsx \
   src/author/DungeonBuilder.compositions.test.tsx \
-  src/author/paletteData.test.ts
+  src/author/paletteData.test.ts \
+  src/compositions/compositionRef.test.ts \
+  src/utils/refs.guard.test.ts
 npm run typecheck
 npm run lint -- --quiet
 ```
 
-Expected: all pass; existing region/tools sections and composition behavior remain.
+Expected: all pass; malformed composition records remain visibly safe under
+filtering, and existing region/tools and composition behavior remain.
 
-- [ ] **Step 8: Commit and review findability**
+- [ ] **Step 9: Commit and review findability**
 
 ```bash
 git add \
   src/author/Palette.tsx \
   src/author/Palette.test.tsx \
+  src/author/Palette.compositions.test.tsx \
   src/author/DungeonBuilder.css \
   src/author/DungeonBuilder.test.tsx \
+  src/compositions/compositionRef.ts \
+  src/compositions/compositionRef.test.ts \
   src/author/CompositionThumbnailTiles.tsx \
   src/author/CompositionThumbnailTiles.test.tsx
 git commit -m "feat: make dungeon assets searchable and filterable"
 ```
 
-Review must exercise zero-count filters, combined search/filter, stable collection order, composition filtering, monster preservation, and no document mutation from presentation controls. `src/author/types.ts` remains unchanged.
+Review must exercise zero-count filters, combined search/filter, stable
+collection order, composition filtering, the malformed-record visible error
+route, monster preservation, non-placeable NPC discrimination, and no document
+mutation from presentation controls. `src/author/types.ts` remains unchanged.
 
 ---
 
-### Task 5: Render generated DungeonSpec scenery in preview and play
+### Task 5: Render shared-catalog DungeonSpec scenery in preview and play
 
 **Files:**
+- Modify: `rpg-dnd5e-web/src/utils/refs.ts`
+- Modify: `rpg-dnd5e-web/src/utils/refs.test.ts`
 - Modify: `rpg-dnd5e-web/src/components/session/AtlasPropModel.tsx`
 - Modify: `rpg-dnd5e-web/src/components/session/AtlasPropModel.test.tsx`
 - Modify: `rpg-dnd5e-web/src/components/session/DungeonEnvironment.test.tsx`
+- Read only: `rpg-dnd5e-web/src/catalog/builderCatalog.ts`
 - Read only: `rpg-dnd5e-web/src/components/hex-grid/WorldAssetModel.tsx`
 - Read only: `rpg-dnd5e-web/src/generated/worldAssetCatalog.ts`
 
 **Interfaces:**
-- Consumes: exact generated refs from `GENERATED_WORLD_ASSETS`; `WorldAssetModel`; existing `SceneProp3D` world position/facing/offset conversion.
-- Produces: `AtlasPropModel` dispatch order `composition → generated world asset → legacy prop → unsupported exact empty → legacy placeholder` shared by builder preview and gameplay.
-- Task 6 consumes: real generated asset rendering in the Dungeon Builder and session route.
+- Consumes: Task 3 `resolveBuilderScenery(ref)` and
+  `ResolvedBuilderScenery`; `WorldAssetModel`; existing `SceneProp3D` world
+  position/facing/offset conversion.
+- Produces: parser-based `isExactSceneryRef(ref)` and `AtlasPropModel` dispatch
+  order `composition → shared resolved scenery source → missing exact scenery
+  empty → legacy family placeholder`, shared by builder preview and gameplay.
+- Task 6 consumes: real generated asset rendering in the Dungeon Builder and
+  session route.
 
-- [ ] **Step 1: Add failing generated-dispatch tests**
+- [ ] **Step 1: Add the central exact-scenery predicate tests**
 
-In `AtlasPropModel.test.tsx`, mock `WorldAssetModel` separately from the existing composition mock:
+In `refs.test.ts`, add `isExactSceneryRef` to the existing imports and pin the
+four allowed namespaces as individually named table cases:
+
+```ts
+describe('isExactSceneryRef', () => {
+  it.each([
+    ['props', 'dnd5e:props:dark-fortress:missing'],
+    ['items', 'dnd5e:items:dark-fortress:missing'],
+    ['weapons', 'dnd5e:weapons:dark-fortress:missing'],
+    ['env', 'dnd5e:env:dark-fortress:missing'],
+  ])('recognizes exact %s refs', (_kind, ref) => {
+    expect(isExactSceneryRef(ref)).toBe(true);
+  });
+
+  it('rejects a legacy family, another type, and malformed input', () => {
+    expect(isExactSceneryRef('dnd5e:props:altar')).toBe(false);
+    expect(isExactSceneryRef('dnd5e:monsters:crypt:skeleton')).toBe(false);
+    expect(isExactSceneryRef('dnd5e:items:')).toBe(false);
+  });
+});
+```
+
+Run:
+
+```bash
+npm test -- --run src/utils/refs.test.ts
+```
+
+Expected: fail because the central predicate does not exist.
+
+- [ ] **Step 2: Implement the parser-owned predicate without widening the guard**
+
+In `refs.ts`, retain `isExactPropRef` for existing callers and add:
+
+```ts
+const SCENERY_REF_TYPES = new Set(['props', 'items', 'weapons', 'env']);
+
+export function isExactSceneryRef(ref: string): boolean {
+  const parsed = parseRef(ref);
+  return (
+    parsed !== null &&
+    SCENERY_REF_TYPES.has(parsed.type) &&
+    parsed.idParts.length >= 2
+  );
+}
+```
+
+This is structural exactness, not catalog availability: the parser proves the
+ref has one of the four scenery types and at least two ID parts; the shared
+catalog resolver separately decides whether the exact ref is supported. Do not
+add an entry to `refs.guard.test.ts`'s allowlist.
+
+- [ ] **Step 3: Add failing shared-resolver dispatch and four missing-ref tests**
+
+In `AtlasPropModel.test.tsx`, mock `WorldAssetModel` separately from the existing
+composition and `PropModel` probes. Mock Task 3's resolver at its module boundary
+with typed legacy/generated fixtures; do not mock or assert a direct generated
+catalog lookup in `AtlasPropModel`.
+
+Use table cases for valid fixture refs in `props`, `items`, `weapons`, and `env`.
+For each generated resolved entry, assert the exact ref reaches
+`WorldAssetModel` and no legacy model/placeholder mesh renders.
+
+Add four missing-ref cases, one per exact scenery namespace:
 
 ```tsx
-vi.mock('../hex-grid/WorldAssetModel', () => ({
-  WorldAssetModel: ({ assetRef }: { assetRef: string }) => (
-    <group name="world-asset-model-probe" userData={{ assetRef }} />
-  ),
-}));
-
-it('routes a generated exact world ref through WorldAssetModel', async () => {
-  const renderer = await renderAtlasProp({
-    ref: 'dnd5e:props:dark-fortress:alchemy_tools_01',
-    position: { x: 1, y: -1, z: 0 },
-    facing: 'ne',
-    offset: { x: 0.2, y: -0.3, z: 0.4 },
-  });
-  const probe = renderer.scene.findByProps({ name: 'world-asset-model-probe' });
-  expect(probe.props.userData.assetRef).toBe(
-    'dnd5e:props:dark-fortress:alchemy_tools_01'
-  );
+it.each([
+  ['props', 'dnd5e:props:missing-collection:missing-model'],
+  ['items', 'dnd5e:items:missing-collection:missing-model'],
+  ['weapons', 'dnd5e:weapons:missing-collection:missing-model'],
+  ['env', 'dnd5e:env:missing-collection:missing-model'],
+])('renders empty for a missing exact %s ref', async (_kind, ref) => {
+  mockResolveBuilderScenery.mockReturnValueOnce(undefined);
+  const renderer = await renderAtlasProp({ ref });
+  expect(renderer.scene.findAllByProps({ name: 'world-asset-model-probe' }))
+    .toHaveLength(0);
+  expect(renderer.scene.findAllByProps({ name: 'legacy-prop-model-probe' }))
+    .toHaveLength(0);
   expect(meshes(renderer)).toHaveLength(0);
 });
 ```
 
-Use table cases to repeat the routing assertion for fixture refs in `items`, `weapons`, and `env` by mocking `GENERATED_WORLD_ASSETS` with all four categories. Add separate assertions that legacy and composition refs retain their old dispatch, and an unsupported exact ref renders no model probe.
+Add these separate authority regressions:
 
-- [ ] **Step 2: Run the focused test and verify failure**
+1. composition refs still bypass the shared static resolver;
+2. a normal resolved legacy ref reaches `PropModel`;
+3. for a synthetic exact ref represented by both legacy and generated test
+   inputs, Task 3's index resolves the legacy entry and `AtlasPropModel` renders
+   the legacy `variant`, never `WorldAssetModel`;
+4. an unresolved one-ID-part legacy prop family still renders the existing
+   placeholder, proving family fallback remains.
 
-```bash
-npm test -- --run src/components/session/AtlasPropModel.test.tsx
-```
+The collision test may use `createBuilderSceneryIndex` to establish the
+legacy-selected fixture and have the resolver mock return that exact entry. It
+must assert renderer choice, not only index contents.
 
-Expected: generated world refs currently miss `resolvePropVariant` and render empty rather than invoking `WorldAssetModel`.
+- [ ] **Step 4: Dispatch only from the shared resolved scenery entry**
 
-- [ ] **Step 3: Implement generated dispatch without changing generated code**
-
-In `AtlasPropModel.tsx`, import:
+In `AtlasPropModel.tsx`, delete imports of `GENERATED_WORLD_ASSETS`,
+`resolveWorldAsset`, and `resolvePropVariant` if present. Import only:
 
 ```ts
+import { resolveBuilderScenery } from '@/catalog/builderCatalog';
+import { isExactSceneryRef } from '@/utils/refs';
 import { WorldAssetModel } from '../hex-grid/WorldAssetModel';
-import { GENERATED_WORLD_ASSETS } from '@/generated/worldAssetCatalog';
 ```
 
-After the existing composition branch and before the legacy placeholder/variant branch, add:
+Keep composition detection first. Then resolve exactly once and switch on its
+discriminant:
 
 ```tsx
-const worldAsset = GENERATED_WORLD_ASSETS[prop.ref];
-if (worldAsset) {
+const scenery = resolveBuilderScenery(prop.ref);
+if (scenery?.source === 'generated') {
   return (
     <Suspense fallback={null}>
       <ErrorBoundary fallback={null}>
         <WorldAssetModel
-          assetRef={prop.ref}
+          assetRef={scenery.ref}
           position={[world.x, world.y, world.z]}
           rotationY={facingToYaw(prop.facing)}
         />
@@ -943,26 +1282,46 @@ if (worldAsset) {
     </Suspense>
   );
 }
+if (scenery?.source === 'legacy') {
+  return (
+    <Suspense fallback={placeholder}>
+      <ErrorBoundary fallback={placeholder}>
+        <PropModel
+          variant={scenery.variant}
+          position={[world.x, world.y, world.z]}
+          rotationY={facingToYaw(prop.facing)}
+        />
+      </ErrorBoundary>
+    </Suspense>
+  );
+}
+if (isExactSceneryRef(prop.ref)) return null;
+return placeholder;
 ```
 
-`propWorldPosition` remains the sole position/offset conversion. `WorldAssetModel` remains the sole provider normalization/runtime-scale renderer. Do not copy generated entries into `PropVariant` and do not call diagnostic-producing exact lookup on every legacy ref.
+Construct `placeholder` before this switch, but only return it for legacy load
+failures or unresolved non-exact/family refs. `propWorldPosition` remains the
+sole position/offset conversion. `WorldAssetModel` remains the sole provider
+normalization/runtime-scale renderer. Do not copy generated entries into
+`PropVariant` and do not perform any parallel generated/legacy source lookup in
+this component. The shared resolver's legacy-first map is therefore renderer
+authority on exact collisions.
 
-Keep the existing final branch:
+- [ ] **Step 5: Prove DungeonEnvironment shares the dispatch**
 
-```ts
-if (!variant) return isExactPropRef(prop.ref) ? null : placeholder;
-```
+Extend `DungeonEnvironment.test.tsx` with an atlas prop using the promoted
+Alchemy Tools exact ref. Mock `AtlasPropModel` and assert the ref, authored
+facing, and offset are passed unchanged. This pins that builder preview and
+session rendering both reach the same dispatcher rather than adding a
+builder-only renderer.
 
-This retains fail-closed unsupported exact refs.
-
-- [ ] **Step 4: Prove DungeonEnvironment shares the dispatch**
-
-Extend `DungeonEnvironment.test.tsx` with an atlas prop using the promoted Alchemy Tools exact ref. Mock `AtlasPropModel` and assert the ref, authored facing, and offset are passed unchanged. This pins that builder preview and session rendering both reach the same dispatcher rather than adding a builder-only renderer.
-
-- [ ] **Step 5: Run renderer and scene regressions**
+- [ ] **Step 6: Run renderer, parser-guard, and scene regressions**
 
 ```bash
 npm test -- --run \
+  src/utils/refs.test.ts \
+  src/utils/refs.guard.test.ts \
+  src/catalog/builderCatalog.test.ts \
   src/components/session/AtlasPropModel.test.tsx \
   src/components/session/DungeonEnvironment.test.tsx \
   src/components/hex-grid/WorldAssetModel.test.tsx \
@@ -972,19 +1331,26 @@ npm test -- --run \
 npm run typecheck
 ```
 
-Expected: all pass; compositions, lights, monsters, legacy props, and unsupported exact refs retain behavior.
+Expected: all pass; compositions, lights, monsters, legacy props, four-category
+missing exact refs, and legacy family fallback retain their specified behavior.
 
-- [ ] **Step 6: Commit and review renderer authority**
+- [ ] **Step 7: Commit and review renderer authority**
 
 ```bash
 git add \
+  src/utils/refs.ts \
+  src/utils/refs.test.ts \
   src/components/session/AtlasPropModel.tsx \
   src/components/session/AtlasPropModel.test.tsx \
   src/components/session/DungeonEnvironment.test.tsx
 git commit -m "feat: render generated scenery in authored dungeons"
 ```
 
-Review must confirm exact dispatch precedence, no double scale/grounding, offsets applied once, legacy and composition paths unchanged, and no substitute for unsupported exact refs.
+Review must confirm: composition first; one shared scenery resolution; legacy
+renderer authority on an exact generated collision; all four missing exact
+namespaces render empty; legacy family fallback remains; no double
+scale/grounding; offsets apply once; and no ref split or generated-file edit was
+introduced.
 
 ---
 
@@ -1034,16 +1400,21 @@ If the repository uses a different tracked-metadata location after concurrent ch
 
 ```bash
 npm test -- --run \
-  src/author/builderCatalog.test.ts \
+  src/catalog/builderCatalog.test.ts \
   src/author/Palette.test.tsx \
+  src/author/Palette.compositions.test.tsx \
   src/author/paletteData.test.ts \
   src/author/DungeonBuilder.test.tsx \
   src/author/DungeonBuilder.compositions.test.tsx \
   src/author/CompositionThumbnailTiles.test.tsx \
   src/author/dungeonYaml.test.ts \
+  src/compositions/compositionRef.test.ts \
+  src/utils/refs.test.ts \
+  src/utils/refs.guard.test.ts \
   src/components/session/AtlasPropModel.test.tsx \
   src/components/session/DungeonEnvironment.test.tsx \
   src/components/hex-grid/WorldAssetModel.test.tsx \
+  src/concepts/world-building/catalog.test.ts \
   src/concepts/world-building/WorldBuildingConcept.test.tsx \
   src/concepts/world-building/WorldBuildingViewport.test.tsx \
   src/concepts/world-building/serialization.test.ts \
@@ -1080,7 +1451,8 @@ Start the API version containing Task 2 and the exact Web worktree. The ignored 
 9. start/play the dungeon through a seeded local character, then verify the session atlas retains the exact ref; inability to seed/start is a blocked acceptance gate, not a skipped assertion;
 10. clear search, select Monsters, and prove an existing default-dungeon monster remains available;
 11. select Compositions and prove one current-world composition remains one armed/placed ref;
-12. record console errors, page errors, failed requests, HTTP errors, and WebGL errors as empty arrays.
+12. with a malformed current-world composition fixture, prove its visible error row remains while it is absent from counts and cannot be armed;
+13. record console errors, page errors, failed requests, HTTP errors, and WebGL errors as empty arrays.
 
 Use role/name locators instead of CSS internals. Save screenshots under `/tmp/web-${WEB_ISSUE_NUMBER}-world-asset-dungeon-authoring/`, record their SHA-256 values in the evidence README, and commit only the textual README/JSON receipt. Do not commit licensed model pixels to the public Web repository.
 
@@ -1090,10 +1462,13 @@ Update `src/author/CONTRACT.md` with:
 
 ```text
 Generated props/items/weapons/env are DungeonSpec scenery. Their exact visual
-ref is authored; blocking remains per placement. Visual category grants no
-inventory/equipment meaning. Every placement affects one anchor cell in this
-slice. Compositions are assembled technical scenery props represented by one
-anchor ref. Monsters remain actors; NPC placement remains a future contract.
+ref is authored; blocking remains per placement. One neutral catalog and
+legacy-first scenery resolver serve both builders and AtlasPropModel. Missing
+exact scenery refs render empty while legacy family fallback remains. Visual
+category grants no inventory/equipment meaning. Every placement affects one
+anchor cell in this slice. Compositions are assembled technical scenery props
+represented by one anchor ref; malformed records stay visible but cannot arm.
+Monsters remain actors; NPC appearance inputs remain explicitly non-placeable.
 ```
 
 Update the World Builder contract to state that generated all-category discovery remains unchanged and its shared facets are non-authoritative presentation metadata.
@@ -1152,12 +1527,14 @@ The final independent reviewer reads the approved design, this plan, all task re
 
 - all four generated categories automatically enter the Dungeon catalog;
 - search/filter/collection behavior is usable and non-authoritative;
-- existing monsters/default dungeon and compositions are preserved;
-- NPC is an explicit adapter seam with no invented placement semantics;
+- existing monsters/default dungeon and compositions are preserved, including the filtered malformed-composition error route;
+- a synthetic NPC input is explicitly non-placeable with no invented placement semantics;
+- the World Builder, Dungeon palette, and `AtlasPropModel` consume the neutral shared catalog/resolver while World Builder metadata remains intact;
 - generated refs compile through merged Toolkit/API and render through `WorldAssetModel`;
 - exact refs, authored blocking values, offsets, and one-anchor behavior survive;
 - no licensed bytes are tracked;
-- unsupported exact refs remain empty;
+- all four missing exact scenery namespaces remain empty, legacy family fallback remains, and exact-ref collisions use legacy renderer authority;
+- no ref colon split or parser-guard allowlist expansion was introduced;
 - Critical/Important findings are zero before merge readiness.
 
 Push only the reviewed head and open the Web PR against `dev`. Record the reviewed head and check commands in the PR body/comment, then move implementation issues to In Review. The human director retains merge authority.
@@ -1168,11 +1545,13 @@ Push only the reviewed head and open the Web PR against `dev`. Record the review
 
 - [ ] Toolkit PR merged to `main`; normal CI-published Encounter module version recorded.
 - [ ] API consumes the published Encounter version and merges real authoring/session acceptance to `dev`.
-- [ ] Web static catalog includes legacy scenery, all generated scenery categories, model-backed monsters, composition adapter, and empty NPC seam.
+- [ ] One neutral Web catalog/resolver feeds the World Builder adapter, Dungeon palette, and Atlas renderer with legacy authority on exact-ref collisions.
+- [ ] Web static catalog includes legacy scenery, all generated scenery categories, model-backed monsters, dynamic composition adapter, and an explicit synthetic-tested non-placeable NPC input seam.
 - [ ] Dungeon palette has fixed category filters, counts, search, collection grouping, and empty state.
 - [ ] World Builder still discovers every generated category and keeps current search behavior.
 - [ ] Dungeon preview and play use `WorldAssetModel` for generated exact refs.
-- [ ] Existing legacy props, default-dungeon monsters, and compositions retain behavior.
+- [ ] Existing legacy props, default-dungeon monsters, and compositions retain behavior; malformed composition records remain visible but uncounted and unarmable under filtering.
+- [ ] Missing exact refs for props/items/weapons/env render empty, legacy family fallback remains, and all collection parsing uses `parseRef`/`idParts` without a guard exception.
 - [ ] Provider check, focused tests, full CI, and real browser authoring pass.
 - [ ] No generated file is hand-edited and no licensed GLB is tracked.
 - [ ] Current large assets remain explicitly single-anchor until a separate multi-hex design.
