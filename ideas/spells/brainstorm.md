@@ -239,6 +239,12 @@ derivations of "how many slots at 2" appear and drift.
 **Recommendation: level-up's table and choice work first, as its own slice; the verb and the
 first spell can then land in either order.**
 
+**Amended by §7.** "First" means first among the things that need a level, not first overall.
+A level-1 bard needs none of this: its features and its spells are both granted at creation,
+where the choice pipeline already runs. Level-up gates the level-2 and level-3 rows — Jack of
+All Trades, Song of Rest, the College choice — and step 3's "creation" moment is the one that
+matters for slice one.
+
 ---
 
 ## 5. Rulings this asks for
@@ -388,9 +394,14 @@ gets a machine. Thunderwave is Fan-out × Save-then-effect(half) × {damage, pus
 
 ---
 
-## 7. The bard as the use case
+## 7. The bard as the use case — a 1–3 pilot whose first slice is level 1 alone
 
-The bard replaces the ranger as the pilot. Not because the ranger is wrong, but because the
+**Slice one is rung 1 and nothing else: a level-1 bard with Bardic Inspiration and no spells.**
+The pilot spans levels 1–3; the slice does not. Rung 1 needs no cast verb, no slot, no
+spell-known field and no level-up — a die granted to an ally at the door and spent on a roll.
+Everything below rung 1 in the table is the pilot, one rung per slice after it.
+
+The bard replaces the ranger as that pilot. Not because the ranger is wrong, but because the
 bard's 1–3 kit is a **tour of the missing places** and the ranger's is a tour of the ones we
 have.
 
@@ -419,13 +430,33 @@ cost.
 | 5 | Charm Person / Calm Emotions | Save-then-effect × {condition Charmed, world fact} | the fact → mind → disposition fold (`encounter/disposition.go:125-149`, `world.go:395-425`); the out-of-bubble cast | walked: a charmed guard's faction reads neutral through `IsHostile` inside the same run, with **no new stance API**. Per-member directed disposition stays on §3.5's shelf; this rung deliberately lands on the fold that exists |
 | 6 | Thunderwave | Fan-out × Save-then-effect(half) × {damage, push} | §3.1, §3.4, a `TargetKind` for a shape, and push — which has no delivery anywhere today | walked: one declaration produces one beat per target with differing outcomes, and the board shows them moved |
 
-### The precursor, and two hazards
+### The precursor, and what is not one
 
-**Level-up still comes first**, and it is class-agnostic (§4). No `LevelUp`, `GainLevel` or
-`AdvanceLevel` symbol exists; the class tables' spellcasting rows are level-1 only; and
-`classes.GetGrants` is a switch over four classes that returns nil for the bard
-(`classes/grant.go:77-91`), so a bard compiles today with no features at all. §4's table,
-pool-max and choice-pipeline work is the gate on any pilot.
+**Level-up is not a precursor for a level-1 bard, and §4 overstated the gate.** A bard gets
+its cantrips and its first spells **at creation**, not at a level-up, and creation already has
+a choice pipeline end to end. The web picker is built and live — `SpellSelectionModal.tsx`
+fetches real spells through `listSpellsByLevel` (`:214`, `:237`) — the draft protos carry
+`CHOICE_CATEGORY_SPELLS` and `CHOICE_CATEGORY_CANTRIPS`, and the toolkit's draft records a
+cantrip or spell answer as a choice like any other (`character/draft.go:268-272`, `:383-392`).
+
+**Three seams drop the answer, and that is the whole gap.**
+
+- The web picker's result lands in local state and is never sent:
+  `InteractiveCharacterSheet.tsx:1872` — `// TODO: Add spell selection to character draft`.
+- rpg-api discards spell choices in both draft arms — `handler.go:236` (race) and `:302-303`
+  (class, *"For now, skip spells"*) — and cannot read slots back (`converters.go:1249`).
+- The toolkit's character sheet has **no field to land them in**: grep `character/data.go` for
+  a spells or cantrips field and there is none.
+
+So **rung 2's seam fix is "spells known from creation land on the sheet"** (§5.2's content
+refs), not a level-up verb. That is three small edits along a pipeline that already runs, and
+it is what makes a level-1 bard a caster.
+
+Level-up *is* the precursor for the **level-2 and level-3 rows** and nothing before them: Jack
+of All Trades and Song of Rest arrive at 2, the College choice at 3, and `classes.GetGrants`
+is a switch over four classes that returns nil for the bard today
+(`classes/grant.go:77-91`), so a bard compiles with no features at all. §4's table,
+pool-max and choice work is a **later slice**, gating rungs 3 and 4, not rungs 1 and 2.
 
 Two things that will bite the day a slot is charged:
 
@@ -449,22 +480,25 @@ choice. It stays the natural second class through the same rungs once the shapes
 
 ## 8. Candidate first slice (not cut)
 
-**Done-when:** a bard created at level 1 reaches level 3 on the local stack, chooses cantrips
-and spells at creation and again at 2 and 3, picks a college at 3, grants Bardic Inspiration
-to an ally and casts Healing Word in a fight, and the client shows the pool and the slot as
-the price, the die on the ally, and the heal with its roll. That is §7's rungs 1 and 2.
+**Done-when:** a level-1 bard on the local stack grants a Bardic Inspiration die to an ally at
+the door, the client shows the inspiration pool as the price and the die on the ally, and the
+ally spends it on a roll. That is §7's rung 1 and only rung 1 — no spells, no slots, no
+level-up, and nothing about levels 2 or 3.
 
 Modules, one PR each, bottom-up:
 
-1. toolkit `classes` — tables per level 1–3 (features, spellcasting rows, subclass level).
-2. toolkit `character` — slots as pools; spells-known field; choice pipeline lands on the
-   sheet; level-up verb shaped like `LongRest`.
+1. toolkit `classes` — bard grants at level 1: Bardic Inspiration as a feature ref, so
+   `GetGrants` stops returning nil for the bard.
+2. toolkit `character` — the inspiration pool as a resource key with its max off the class
+   table, refilled on long rest.
 3. toolkit `resolution` — the Grant shape: a price at the door for another creature's
-   benefit, a heal arm and a condition arm, and the source binding an owning condition needs.
-4. toolkit `session` — `Cast` verb, `VerbCast` in Afford, cast beat reusing healing and
-   condition bodies.
-5. protos / rpg-api / web — the per-verb pattern; level-up RPC; cost badge already renders a
-   pool.
+   benefit, and a condition arm carrying the held die.
+4. toolkit `session` — the grant as an `Activate` declaration with a target, and a beat
+   reusing the condition bodies that exist.
+5. protos / rpg-api / web — the per-verb pattern; the cost badge already renders a pool.
+
+Rungs 2 and beyond add the cast verb, slots as pools, spells-known on the sheet and the
+level-up table work. None of them is in this slice.
 
 Multi-target (§3.1), the save beat (§3.3), half/recurrence (§3.4) and directed disposition
 (§3.5) are **explicitly not in it**, and each gets its own design section before its first
