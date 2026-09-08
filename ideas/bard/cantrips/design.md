@@ -112,16 +112,17 @@ Three, named rather than smoothed over.
    save it takes 1d4 psychic damage and has disadvantage on its next attack roll"* — a
    successful save negates **both** halves. `Negated` is exactly right, and stays. The delta
    is damage, not policy. Half-on-success arrives with a spell that has one.
-2. **Vicious Mockery cannot ride the contest machine.** `ContestInput` is a saver, a gate,
-   one condition application and a damage-taken integer (`contest.go:21-28`). A cast needs a
-   caster, a target, a range, a spell ref, N conditions and damage to deal. Widening contest
-   to hold those makes every field optional and hollows out what "contest" means: it is the
-   damage rider's save, and it should stay that. See R2.
+2. **Contest's delivery is condition-only, and that is a missing effect kind rather than a
+   missing machine.** The steps Vicious Mockery needs already run: Request(save) → policy →
+   deliver → Done (`contest.go:144-215`). What is absent is a way for the delivery to be
+   damage. `ImposedEffect` is `{Ref, Description}` (`contest.go:32-35`) and there is exactly
+   one delivery `Gather` (`publishPreparedCondition`, `:111-131`). An earlier draft of this
+   design answered that with a `castMachine`; Kirk's ruling deletes it. **An effect kind
+   never adds a machine.**
 3. **A cast IS paid at the door, and it is the first thing that is.** Slice one's R1 failed
-   because `activateFeature` charges the economy underneath an activation. A cast is not an
-   ability; nothing underneath it charges anything. So `Input.Cost` is non-nil, `payAtTheDoor`
-   (`resolution/cost.go:148-173`) charges the action all-or-none, and the open ruling on
-   rpg-project#397 is answered in the cast's favour rather than re-opened.
+   because `activateFeature` charges the economy underneath an activation. A cast has nothing
+   underneath it, so the open ruling on rpg-project#397 is answered in the cast's favour
+   rather than re-opened. R10.
 
 ## Ownership — every noun, and who holds it
 
@@ -157,27 +158,53 @@ declaration id already names it, exactly as `service.proto:500-507` argues for A
 *Scope:* the verb and the request shape. Not what a slot costs, and not who may interrupt a
 cast; both arrive with their own customer.
 
-**R2 — One new machine, `castMachine`, and it is the slice's only new shape.**
-§6.2 calls Save-then-effect *"the contest with an outcome policy and a delivery"*. Read
-against the code, that is not available: contest's input, outcome and imposed-effect types
-are all saver-and-condition shaped (`contest.go:21-44`), and making them optional leaves a
-machine whose name describes one of its two modes. `castMachine`'s steps, each of which
-exists in another machine already:
+**R2 — No new machine. Vicious Mockery is the contest with a damage effect kind, and the
+widening is additive.**
+§6 of the brainstorm is the rule: *a machine exists only when we need a new shape or
+different steps.* Vicious Mockery needs neither. The contest already runs Request(save) →
+outcome policy → deliver → Done (`contest.go:144-215`), which is save-then-effect exactly.
+Its delivery is condition-only, and that is a **missing effect kind**.
 
-```
-Start   → resolve caster + target, check range, build the definition's effects
-[Request(NewSave) → outcome policy]   ← only when the profile carries a gate
-Gather  → deliver: damage through combat.ApplyDamage, conditions on the bus
-Done    → outcome carries the save (roll, total, DC, success), damage, conditions
-```
+Four additive widenings, and nothing else moves:
 
-It requests `NewSave` (`save.go:80`) the way contest does (`contest.go:238-246`) and applies
-damage through the seam strike uses (`strike.go:692`, `combat/combatant.go:157`).
-**Contest is untouched.** True Strike is the same machine with no gate: the request step is
-absent, which is a step a profile did not declare rather than a step that ran and did
-nothing. *Zero values tell the truth:* `CastOutcome.Save` is a pointer, so a True Strike
-outcome cannot be read as "saved on a 0 against DC 0".
-*Scope:* one target, one gate. Fan-out is §3.1; recurrence stays refused everywhere.
+| Type | Today | Delta |
+|---|---|---|
+| `ContestInput` (`contest.go:21-29`) | `Gate, SaverID, Application, Cause, DamageTaken, Roller` | one field, `Damage []damage.Damage` — the declared consequence beside the declared condition |
+| `ImposedEffect` (`contest.go:32-35`) | `Ref, Description` | a `Kind` (`condition` \| `damage`) and the damage's amount and components; the existing path sets `Kind: condition` and reads identically |
+| the delivery step (`publishPreparedCondition`, `contest.go:111-131`) | one `Gather` publishing `ConditionAppliedTopic` | a sibling `Gather` applying damage through `combat.ApplyDamage` (`combat/combatant.go:157`), chained through the `next()` the existing one already takes |
+| `resolve` (`contest.go:201-215`) | success → `Done`; failure → publish, then `Imposed` | failure chains damage then condition; **the success branch is untouched** |
+
+**A negated save still delivers nothing.** `resolve` returns `Done` on success at
+`contest.go:209-210` before any delivery runs, so the policy refusal at `:69-71`
+(`Negated` only) and the recurrence refusal at `:72-74` both stay exactly as they are. RAW
+2014 agrees: a successful Wisdom save negates the damage *and* the rider. Half-on-success
+arrives with a spell that has one.
+
+`ContestOutcome` (`contest.go:38-45`) does not change shape at all — `Imposed
+[]ImposedEffect` simply now carries two kinds.
+
+*Rename note, deliberately not taken:* with a damage kind, "contest" describes one of the
+machine's two consequences rather than the machine. The honest name is closer to *the save
+and what it costs*. Renaming is a mechanical change across one exported constructor and its
+one caller, and it should ride the third customer rather than this slice — a rename here
+would be the largest diff in a slice whose point is that no machine was added.
+*Scope:* one saver, one gate, one condition, one damage set. Fan-out is §3.1.
+
+**R2a — True Strike enters no machine of its own either; it is a delivery.**
+A cantrip with no gate has nothing to resolve. Its condition is published on the bus and
+read back by **the collector the activation results already use**:
+`newActivationEffectCollector` subscribes to `ConditionAppliedTopic`
+(`resolution/activation.go:145-160`), `captureConditionApplied` turns the event into an
+`ActivationEffect{Kind: EffectConditionApplied}` (`:230-250`), and the whole thing runs
+inside one `Gather` (`activationMachine.step`, `:503-560`). The publish itself is
+`contest.go:111-131`'s body verbatim. The session then records those effects through the
+path it already walks — `activationResults` (`session/activate.go:327`) into
+`RecordActivation` (`:296-305`).
+So the gateless arm is the **activation machine's delivery**, given a prepared condition
+instead of an ability ref — one additive arm on `ActivationInput` (`activation.go:23-59`)
+beside the ability contract at `:469`. No new machine, no new collector, no new beat path.
+*Scope:* a condition on the caster or on one target. Healing rides the same collector the
+day a cantrip heals.
 
 **R3 — A cantrip is content that compiles to an `actions.Definition`, and `Definition` gains
 its second profile arm.** It already says *"exactly one profile must be populated"* and holds
@@ -186,6 +213,11 @@ one (`definition.go:14-20`). This adds `Cast *CastProfile`, a second branch in `
 names a spell**, so a warlock's Eldritch Blast or a monster's innate cast declares a profile
 rather than asking for a case (ADR-0045, `resolution/ARCHITECTURE.md:89-97`). The 11 bard
 cantrips live in `rulebooks/dnd5e/spells/`, two with a profile and nine with none.
+**The word "cast" lives at the door and nowhere below it.** `Cast` is a verb on Afford, a
+verb on the wire and a profile arm on a definition. `resolution` never learns the word: it
+sees a definition whose cast arm carries a gate or does not, and picks the contest or the
+delivery accordingly (R2, R2a). Nothing in `resolution`, `conditions` or `encounter` names a
+spell, a cantrip or a school.
 *Scope:* cantrips. A levelled spell adds a pool to `Cost` and nothing to this shape.
 
 **R4 — The spell save DC is answered by the caster, and travels as `DCStatic`.**
@@ -252,18 +284,41 @@ label**, which is Kirk's to apply. The enum stays declared, because `SourceRef.s
 it here would be an unrelated break in the same PR. *Ids are hyphenated:*
 `dnd5e:spells:true-strike`, `dnd5e:spells:vicious-mockery` (`refs/spells.go:48-49`).
 
+**R10 — A cantrip is paid at the door, and it is the first thing in the stack that really
+is.** The whole price of a cantrip is one action: no pool, no slot, no charge on any
+feature. The session compiles `SpendProfile{Slots: {ActionStandard: 1}}`, hands it to
+`Resolve` as a non-nil `Input.Cost`, and `payAtTheDoor` charges it after pure machine
+preflight and before the first yielded step (`resolution/cost.go:148-173`, `Input.Cost`'s own
+doc at `resolve.go:83-92`). The charge is all-or-none by the gate's construction, so a bard
+with no action left is refused **before anything moves** — no publish, no roll, no dirty
+sheet — and the price is what Afford already showed on the row.
+This is what slice one could not have. rpg-project#397's R1 tried to charge an activation at
+the door and failed, because `activateFeature` checks the economy and the feature spends its
+own pool underneath, so a door that charged either one made the feature refuse itself. A cast
+has nothing underneath it: no `ActivateAbility`, no feature-owned spend, no second currency.
+The door charges once and the machine is never told, which is the ignorance
+`resolve.go:83-92` asks for.
+*Scope:* cantrips, whose only price is an action. A levelled spell adds a pool entry to the
+same profile and changes nothing about who charges it.
+
 **R9 — All 11 bard cantrips are offered, and nine of them cast nothing.**
 `bard-cantrips-1` returns to `getBardRequirements` with count 2 over the 11-cantrip list. A
 known cantrip whose content carries no `CastProfile` mints **no Cast row** — the Afford
 compiler skips it, fail closed, rather than offering a row that resolves to nothing. The
 consequence is real: **a bard who picks Mage Hand and Light gets no Cast rows at all**, and
 the walk below exercises exactly that.
-*The alternative*, which I recommend Kirk weigh on the walk, is gating the option list to
-castable cantrips, the way the class list is gated to classes with behaviour
-(`ClassSelectionModal.tsx:27-33`). It is one line in the requirement builder. It is not taken
-now because "choose 2 of 2" is not a choice, and because the fix belongs in the content
-table — the nine become castable, they do not become hidden.
-*Trigger to revisit:* if the empty pick reads as broken on the walk, gate the list.
+**Both options stay open; Kirk has not ruled.** The alternative is to gate the option list
+to castable cantrips, the way the class list is gated to classes with behaviour — *"A CLASS
+IS ADDED HERE WHEN IT HAS BEHAVIOUR"* (`ClassSelectionModal.tsx:27-33`). Its cost is **one
+line** in `getBardRequirements` (`choices/requirements.go:366`): the `Options` slice is the
+two castable refs rather than the eleven.
+**Recommend the gate.** It is the rule this stack already applies one level up, it is
+fail-closed rather than fail-quiet, and a menu that offers nine picks which produce no row is
+exactly the shape rpg-project#397's walk kept finding — an affordance with nothing behind it.
+The cost is that "choose 2 of 2" is not a choice at level 1, which is honest about where the
+build is and disappears the moment a third cantrip gets a profile.
+*Trigger to revisit either way:* the ninth cantrip with a profile, at which point the gate
+and the full list are the same list.
 
 ## Shape, per module (bottom-up)
 
@@ -289,9 +344,12 @@ returns `CantripRequirement{ID: BardCantrips1, Count: 2, Options: <11 refs>}`, w
 `Options` changing from `[]spells.Spell` to ref-id strings — which is what
 `compileKnownSpells` already resolves (`draft.go:1210`).
 
-**5. `resolution`** — `NewCast(*CastInput)`, and the `Definition.Cast != nil` branch in
-`NewAction` (`action.go:19-34`). `CastOutcome{Save *SaveOutcome, DC, Ability, Succeeded,
-Damage, Conditions}`.
+**5. `resolution`** — the `Definition.Cast != nil` branch in `NewAction`
+(`action.go:19-34`), which reads the profile's arms and returns a machine that already
+exists: **gated → `NewContest`** (`contest.go:136`), **gateless → the activation machine's
+delivery** (`activation.go:503-560`). The contest's four additive widenings are in R2's
+table; `ActivationInput` (`:23-59`) gains one arm for a prepared condition. **No new machine
+and no new file.**
 
 **6. `encounter`** — `RecordCast` beside `RecordActivation` (`activation.go:22-37`): one
 `cast` beat, one `saved` beat when the profile carried a gate, one result beat per delivered
@@ -353,9 +411,10 @@ returns with slots because a cantrip needs no pool.
 gave it to the caster rather than to the gate's sealed formula set. **Rulings carry scope** —
 every ruling names what it does not settle. **Load-bearing or deferred** — concentration,
 half-on-success, recurrence, fan-out, slots and hearing are all deferred with a named
-trigger. **Zero values tell the truth** — `CastOutcome.Save` is a pointer (R2), `Saved` is
-its own body rather than eleven death-save fields reading zero (R7), and a cantrip with no
-profile mints no row rather than an unavailable one (R9). **Call sites read as statements** —
+trigger. **Zero values tell the truth** — `ImposedEffect` gains a `Kind` rather than an amount that
+reads 0 for a condition (R2), `Saved` is its own body rather than eleven death-save fields
+reading zero (R7), and a cantrip with no profile mints no row rather than an unavailable one
+(R9). **Call sites read as statements** —
 `NewAction` still reads "content chose the arm". **Record tells the truth same-day** — cast,
 save and one result beat per effect, through `RecordCast`. **Fail closed loudly** — an
 unknown spell ref is refused at compile (`draft.go:1212`), an unknown condition id at
@@ -364,8 +423,9 @@ range is a candidate shortfall before it is chosen rather than an error after.
 
 ## Done-when — Kirk's walk
 
-1. Create a level-1 bard. The class modal shows a **choose 2** cantrip grid over 11 options,
-   in the same checkbox grid the skills use. Pick Vicious Mockery and True Strike. The
+1. Create a level-1 bard. The class modal shows a **choose 2** cantrip grid — over 11
+   options, or over the 2 castable ones if Kirk takes R9's gate — in the same checkbox grid
+   the skills use. Pick Vicious Mockery and True Strike. The
    character finalizes and the sheet lists both cantrips.
 2. Enter a fight. The dock shows two **Cast** rows, each priced as an action.
 3. **True Strike** on the skeleton. The log shows the cast and the condition on the bard.
@@ -385,7 +445,7 @@ range is a candidate shortfall before it is chosen rather than an error after.
 - **Concentration — the owning condition** (§3.2), the largest missing shape, and the reason
   R5's divergence is a divergence rather than a bug.
 - **Half on success and recurrence** (§3.4). Both still refused at `contest.go:69-74`, and
-  the cast machine refuses them for the same reason.
+  the contest's success branch returns `Done` before any delivery runs (`:209-210`).
 - **Fan-out** (§3.1) — one declaration, many targets. Thunderwave, and the first monster
   multiattack, arrive on the same loop.
 - **Hearing, deafness and silence** as a capability, so R6's range-and-sight rule can narrow.
@@ -402,10 +462,10 @@ range is a candidate shortfall before it is chosen rather than an error after.
 
 - **If Kirk gates the cantrip list to castable spells** (R9's alternative), the requirement
   builder changes by one line and nothing else in this design moves.
-- **If a second gated cast arrives before this merges** — any save-or-suffer, the wolf's
-  knockdown included — then `castMachine` and `contestMachine` both run
-  Request(save) → policy → deliver, and the policy step should be factored out below both
-  rather than written a third time. That is the trigger to revisit R2.
+- **If a third and fourth consequence kind arrive** — a push, a forced move, a world fact —
+  then `ImposedEffect`'s `Kind` is carrying a vocabulary rather than a discriminator, and the
+  delivery `Gather`s should become a list the machine walks rather than a chain it hand-rolls.
+  That is the trigger to revisit R2, and the trigger to take the rename with it.
 - **If concentration lands first**, R5's divergence is deleted rather than kept, and True
   Strike becomes the shape's first customer instead of its excuse.
 - **If the `breaking-change-approved` label is refused**, the ref-string swap becomes a
@@ -463,23 +523,26 @@ finalizes on the walk env with two cantrips on the sheet.
 
 **Depends on.** Nothing (toolkit-internal). Ships before resolution.
 
-### rpg-toolkit `resolution` — `castMachine` and the second dispatch branch
+### rpg-toolkit `resolution` — contest delivers damage, and `NewAction` gains its cast branch
 
 **Assumptions.**
-1. `NewSave` can be requested by a second machine with no change (`save.go:80`,
-   precedent `contest.go:238-246`).
-2. `combat.ApplyDamage` over the `Combatant` interface (`combat/combatant.go:157`) is
-   reachable outside `strikeMachine`; the injectable seam at `strike.go:127` is the pattern.
-3. `contestMachine` is untouched by this change.
-4. `payAtTheDoor` charges a non-nil `Input.Cost` before the first step, and nothing beneath
-   a cast charges the action a second time (`cost.go:148-173`).
+1. `ContestInput`, `ImposedEffect` and the delivery step can be widened additively; every
+   existing caller is the strike rider (`strike.go:752`) and reads `Imposed` unchanged.
+2. `combat.ApplyDamage` over `combat/combatant.go:157` is reachable from a contest `Gather`;
+   `Participants.Character`/`Monster` give the concrete `Combatant`.
+3. The success branch (`contest.go:209-210`) needs no change, so the `Negated`-only refusal
+   (`:69-71`) and the recurrence refusal (`:72-74`) stay exactly as they are.
+4. `ActivationInput` can carry a prepared condition instead of an ability ref without
+   disturbing the ability contract at `activation.go:469`.
+5. `NewAction` picks the arm from the profile and never reads a spell id.
 
-**Definition of done.** Scenes: a gated cast against a failing saver deals damage and applies
-the condition; against a succeeding saver does neither and still records the roll; an
-ungated cast applies its condition with `Outcome.Save == nil`; a cast out of range is refused
-before anything moves; a cast with an empty action budget is refused at the door and charges
-nothing; a strike is byte-identical to today (the regression that matters). Must survive: the
-walk's step 3 and step 4.
+**Definition of done.** Scenes: a failed save delivers damage **and** the condition, in that
+order, and `Imposed` carries both kinds; a successful save delivers neither and still records
+roll, total and DC; a contest with no damage declared is byte-identical to today (the
+regression that matters); a gateless cast applies its condition and the collector reports one
+`EffectConditionApplied`; a cast with an empty action budget is refused at the door and
+charges nothing; a strike with a save rider is unchanged. Must survive: the walk's steps 3
+and 4.
 
 **Depends on.** toolkit root.
 
