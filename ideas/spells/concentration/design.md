@@ -1,7 +1,9 @@
 # Concentration — one condition owns what a spell left behind
 
 **Date:** 2026-09-08
-**Status:** Design. One slice, cut. Slice three of the bard/spells initiative.
+**Status:** Design **approved by Kirk 2026-09-08**. One slice, cut. Slice three of the bard/spells
+initiative. Both open rulings closed YES: R7 (a caster dropped to 0 loses concentration with no
+roll) and R11 (one additive `bool concentrating` on the roster row). Issues filed per module.
 **Umbrella:** `ideas/spells/` — levels 1–3, and the choices at 3 made real.
 **Brainstorm:** rpg-project#391 (`ideas/spells/brainstorm.md`) §3.2, §6.2 ("Concentration — an
 owning condition", the row marked *missing* and *the largest single piece*).
@@ -84,6 +86,12 @@ address the removal fact takes. The nearest existing shape is
 `TrueStrikeConditionData{Ref, MemberID, TargetID, SourceRef, TurnEndsLeft}`
 (`conditions/true_strike.go:35`) — a caster-side condition that names another member. This is
 that, with a list.
+
+**The child always knows who owns it.** Each child condition carries its source spell ref and the
+caster's id in its own blob, the way True Strike already does
+(`conditions/true_strike.go:35`, `vicious_mockery.go:27`), so the recipient can read *Bless, from
+the cleric* off its own sheet. The owner's address list is the reverse index, and it exists so the
+owner can strip — not so the child can be told.
 
 **Why hop 2 is not free today, and what it costs.** `onConditionRemoved`
 (`character/character.go:1195-1216`, mirror `monster/monster.go:553-573`) matches on the ref
@@ -399,6 +407,7 @@ affordance-with-nothing-behind-it that slice one's walk kept finding.
 *Scope:* the owner watches its own children and nothing else.
 
 **R7 — Four reasons, and `caster_down` is the fourth. Incapacitated as a condition is deferred.**
+**RULED YES, Kirk, 2026-09-08.**
 The reasons are `damage` (a failed check), `recast`, `duration`, `combat_end`, `spell_ended` (R6)
 and `caster_down`. `Incapacitated` is a ref with **no behavior at all** — no file, no factory arm,
 no loader entry (`refs/conditions.go:64` and nothing else) — and building the general condition is
@@ -407,9 +416,8 @@ a different slice.
 fact, so the concentrating condition reads it in the handler it already has and ends **with no
 check at all** — no follow-up, no nested contest, no save beat, because a caster at 0 does not
 roll to keep a spell. Zero lines outside `concentrating.go`.
-**Recommend taking it.** The cost of leaving it out is a downed bard who concentrates forever,
-which the walk will find on its first knockdown. **Open ruling — this is the one place the slice
-reaches past its smallest cut, and it is Kirk's call.**
+Taken. The cost of leaving it out was a downed bard who concentrates forever, which the walk
+would have found on its first knockdown.
 *Scope:* dropping to 0 HP. Paralysis, stunning, sleep and the general Incapacitated condition stay
 on the shelf with the rest of the thirteen inert refs.
 
@@ -456,6 +464,7 @@ read as random drops.
 
 **R11 — Other players see a concentrating member through one bool on the roster lane; the caster
 sees a badge for free.**
+**RULED YES, Kirk, 2026-09-08.**
 The caster's own view costs **zero proto**: `character.StatusView.Conditions`
 (`character/status_view.go:115`) already reaches `CharacterData.conditions`
 (`encounter/types.proto:440`) and renders through a ref-keyed table
@@ -465,9 +474,16 @@ which is a hard error on an unknown ref.
 For everyone else there is nothing: `Participant` (`types.proto:879`) carries no conditions and no
 flags, and `PublicMemberInfo` says in its own comment that it is identity, not per-turn state. So
 `bool concentrating = 8` on `Participant`, mirroring `bool active = 5`.
-**Recommend taking it.** A break beat about a member whose concentrating state was never visible is
-a beat with no setup. **Open ruling — the alternative is to defer it and ship the caster's badge
-alone.**
+Taken. A break beat about a member whose concentrating state was never visible is a beat with no
+setup.
+**The bool is only for people who cannot see the sheet.** A recipient always knows who is
+concentrating on them, because every child condition carries its source spell ref and the caster's
+id in its own blob — the shape True Strike already ships
+(`TrueStrikeConditionData{SourceRef, MemberID, TargetID}`, `conditions/true_strike.go:35`, and
+`ViciousMockeryConditionData.SourceID` at `vicious_mockery.go:27`). A blessed fighter reads *Bless,
+from the cleric* off its own condition view with no proto change at all. The roster bool answers a
+different question: what the rest of the table can see about a member whose sheet they do not
+hold.
 
 **R12 — Monsters do not concentrate, and nothing pretends they do.**
 No monster casts today; `spells.CastDefinition` is reached only from `session/casts.go:83` over a
@@ -665,10 +681,10 @@ renders off `participant.concentrating`.
 
 ## What would change the design
 
-- **If Kirk refuses R7**, `caster_down` comes out and a downed caster keeps its badge until the
-  fight ends. One reason less, no structural change, and a known lie until Incapacitated exists.
-- **If Kirk refuses R11's roster bool**, the caster's badge still ships for free and only they see
-  it. The break beat then arrives with no setup for everyone else.
+- **R7 and R11 are ruled** (2026-09-08). If `caster_down` were ever pulled, a downed caster keeps
+  its badge until the fight ends — one reason less and no structural change. If the roster bool
+  were pulled, the caster's badge and the recipient's source line both still ship for free, and
+  only the rest of the table loses the setup for a break beat.
 - **If a second subscriber ever appends a follow-up** — a trap that triggers a Dex save on damage,
   a feature that checks on being bloodied — then `DamageTakenEvent` is a real seam rather than
   concentration's private channel, and the follow-up vocabulary deserves its own ADR. One customer
