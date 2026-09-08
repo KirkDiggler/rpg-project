@@ -1,337 +1,496 @@
-# Bane — one declaration, three targets, and a die the machine rolls
+# Bane — one paid declaration, three saves, one visible d4
 
 **Date:** 2026-09-08
-**Status:** Design proposed. Slice four of the bard/spells initiative. **Open rulings R1–R7
-below need Kirk before any issue is filed.**
+**Status:** Proposed design, revised after bounded R&D and Kirk's oldest-source ruling.
 **Umbrella:** `ideas/spells/` — levels 1–3, and the choices at 3 made real.
-**Brainstorm:** rpg-project#391 (`ideas/spells/brainstorm.md`) §6.2 — the row **Fan-out**,
-marked *missing*, and the line in §6.3 that says the held die is *"a condition on the bus"*.
-**Slice three:** rpg-project#407 (`ideas/spells/concentration/design.md`), shipped 2026-09-08
-as dnd5e v0.149.0 / encounter v0.68.0 / resolution v0.37.0 / session v0.69.0, protos v0.1.178,
-rpg-api#951, web#1000.
+**Related journey:** [rpg-project#243](https://github.com/KirkDiggler/rpg-project/issues/243).
+**Research:** [rpg-toolkit#1593](https://github.com/KirkDiggler/rpg-toolkit/issues/1593) and [#1595](https://github.com/KirkDiggler/rpg-toolkit/issues/1595).
 
-Kirk's rulings that chose this slice:
-
-- **Bane, not Thunderwave.** Kirk: *"no bane sounds way better."* Thunderwave is three new
-  shapes stacked — an area selector, half-damage-on-success, and forced movement — and this
-  stack has just spent a slice learning what happens when three arrive together. Bane is the
-  same fan-out with the simplest selector: a range check and a chosen list.
-- **Lay the cleric's foundation while building the bard.** Bane is a bard spell, so the slice
-  is bard progress; it is also Bless's mirror image, so the cleric's headline spell arrives
-  next for almost nothing.
-- **Spatial waits for the slice that needs it.** Bane names creatures. Nothing here queries a
-  shape, and `tools/spatial` gains no caller. Area templates arrive with Thunderwave.
+This is a design, not an implementation report or plan; names are candidate contracts unless called existing.
 
 ---
 
-## What this slice is
+## The player promise
 
-**Bane (2014):** 1st-level enchantment, range 30 feet, concentration up to 1 minute. The caster
-chooses **up to three creatures within range**. Each makes a **Charisma saving throw**. On a
-failed save, the creature **subtracts a d4 from every attack roll and every saving throw** it
-makes for the duration.
+A bard chooses Bane, selects one to three creatures within 30 feet, and casts once. One spell slot
+and one action are charged once. Each target makes its own Charisma save in the order selected.
+Targets that fail become baned under one concentration hold on the bard; targets that save do not.
+If all save, the cast is still paid and the bard still holds a zero-child concentration owner.
 
-Three things the stack has never done, and one it has done only in tests:
+Later, an affected creature's attack or saving throw visibly includes the selected Bane d4:
 
-| | Shape | State today |
-|---|---|---|
-| 1 | **Fan-out** — one declaration, N targets, N outcomes, one record | **missing**; every machine input holds one target |
-| 2 | **A described die** — an effect says *"subtract 1d4"* and the machine rolls it | **missing**; both pre-roll chains carry settled integers |
-| 3 | **Save-then-effect, per target** — CHA save, negate on success | **exists**, shipped with Vicious Mockery |
-| 4 | **N children under one concentration owner** | **exists, unexercised** — two children appear in unit tests only, never from a spell |
+```text
+the goblin attacks the bard       d20 14 + 4 - d4 3 (Bane, bard A) = 15 · misses
+the goblin makes a DEX save       d20 12 + 2 - d4 1 (Bane, bard A) = 13 · fails
+```
 
-Everything in row 3 and row 4 is a machine doing what it already does with one more input. Rows
-1 and 2 are the design.
+The UI receives the selected contributor's entity ID and the resolved dice facts. It looks up that
+player's dice set for presentation. Dice styles or skins are not rule facts, and Bane adds no manual
+roll, confirmation, or second player interaction.
+
+The clean responsibility chain is:
+
+```text
+D&D rulebook compiles a concrete price and cast profile
+  -> the existing action door preflights and pays once
+  -> the cast fans out through the existing per-target contest
+  -> one caster-side concentration owner holds every delivered child
+  -> eligible conditions describe unsigned dice contributions
+  -> the attack/save roller evaluates those descriptions
+  -> generic RollCalculation retains faces, sign, content, and source entity
+  -> records and wire project the same facts
+  -> the UI presents them
+```
+
+API and UI do not re-derive class progression, slot counts, Bane arithmetic, or overlap selection.
+Dice presentation policy belongs to the UI, not the rulebook.
 
 ---
 
-## Shape 1 — Fan-out: the target is a list, everywhere
+## Rules and slice boundary
 
-Today a cast has exactly two parties, and the code says so on purpose:
+This slice chooses **Bane rather than Thunderwave**. Bane (2014) is a 1st-level enchantment, range 30
+feet, concentration up to 1 minute: up to three creatures make Charisma saves, and each failure
+subtracts 1d4 from its attack rolls and saving throws for the duration.
 
-> `CastOutcome.TargetID` — *"CasterID and TargetID are the cast's two parties. TargetID is EMPTY
-> for a self-targeted profile, which is the one spelling: a caster repeated into both fields
-> would be a second way to say the same thing."*
-> — `rulebooks/dnd5e/resolution/action.go:130-136`
+Bane combines one paid declaration, per-target save gates, one-to-many ownership, and an automatic
+contributed die without also requiring an area or movement system.
 
-That sentence is the reason fan-out cannot be bolted on. `CastTargetRule` is
-`self | one_creature` (`combat/actions/cast.go:20-29`); `RecordCastInput` carries one `Target`,
-one `Save`, and one `Results` list (`encounter/cast.go:194-224`). A second, parallel
-"multi-target" spelling beside the singular one would be exactly the two-ways-to-say-it that
-this type's own doc refuses.
+This slice deliberately does **not** add:
 
-**So the singular becomes the list, and a one-target cast is a list of one.**
+- Bless content; Bless is a later customer of the same additive contribution mechanism.
+- Upcasting or cast-level selection.
+- Area templates, line-of-sight rules, half damage on a save, or forced movement.
+- A modifier to ability checks; Bane affects attacks and saving throws only.
+- A dice-expression language, signed dice notation, or mixed fixed/dice term union.
+- Dice skins, UI-selected rollers, or a confirmation step for an automatic d4.
+- A speculative multiclass, Pact Magic, Arcane Recovery, or general spell-recovery rewrite.
 
+Kirk previously chose Bane over Thunderwave. Kirk's latest overlap ruling is also settled here:
+for overlapping equal-potency Bane applications, the **oldest active source contributes**. It
+supersedes the earlier research recommendation of newest.
+
+---
+
+## Current truth versus this proposal
+
+The bounded R&D reviewed exact toolkit head
+`b3f899c51f4adfa3eecb75d2c518bb92bb756be1`. At that head, these are shipped facts:
+
+- `combat.SpendProfile` and the existing door check/debit an action plus keyed resource pools once;
+  `Character.Resources` participates in that door, persistence, dirty marking, and reset.
+- Dedicated `SpellSlots` persists and **already resets on LongRest**, but cannot pay through the
+  current character ledger.
+- Cast ingress iterates `KnownCantrips`, adds an action-only price in session, and resolves one target.
+  `KnownSpells` persists but is not current cast-offer ingress.
+- Attack/save chains have fixed lanes but no unresolved described-dice lane. Generic
+  `RollComponent`/`RollCalculation` keeps positive dice facts but always adds the dice subtotal.
+- The version 1 Inspiration freeze stores scalar arithmetic, not a contributed-die trace.
+- Concentration child addresses are recipient plus condition ref. Ref-wide removal can remove both
+  same-ref applications and make another owner forget its child.
+- Recipient condition JSON preserves application order; subscription order and source-ID sort do not.
+- One concentration owner counts its caster's turn ends, not every creature's turn.
+
+The disposable R&D exposed these seams and tested candidate composition. It did **not** ship Bane,
+fan-out, qualified keepers, described-dice production fields, attack/save calculation projection, or
+levelled spell ingress. Its passing tests are not passing Bane acceptance. Everything below is proposed.
+
+---
+
+## 1. Spell knowledge, slot authority, and one payment
+
+### Rulebook-owned compilation
+
+The D&D rulebook owns whether Bane is known/prepared and castable, the class progression and slot
+seeding, and Bane's level, target profile, save gate, duration, and concrete price. That price uses the
+existing `combat.SpendProfile`:
+
+```text
+Slots[standard action] = 1
+Pools[SpellSlotResourceKey(1)] = 1
 ```
-                    one declaration
-                          │
-       CastProfile{ Target: up_to_n, MaxTargets: 3, Save: CHA gate, ... }
-                          │
-        preflight: every named target distinct, in range, in the interaction
-                          │           (refused BEFORE the door — see R5)
-                          ▼
-        ┌───────── per target, in the order the caster named them ─────────┐
-        │   Request(contest)  →  save rolled  →  negate or deliver         │
-        └──────────────────────────────────────────────────────────────────┘
-                          │
-             CastOutcome{ CasterID, Targets: [ {TargetID, Save, Applied}, … ] }
-                          │
-             RecordCastInput{ Actor, Spell, Targets: [ … ] }
-                          │
-        one cast beat naming N targets, then per target: saved beat, then results
+
+`SpellSlotResourceKey(level)` is a candidate typed constructor in the existing resource-key vocabulary,
+not a new currency. `combat.Pay` sees only an action cost and typed pool key. The game server/session
+projects the compiled definition and targets; it carries no class table, slot maximum, authorization
+rule, or ref-to-level inference.
+
+### Levelled-spell ingress
+
+Bane enters through a rulebook-owned levelled-spell authorization list: a bard's known levelled
+spells, not `KnownCantrips`; a prepared caster's prepared levelled spells when supported. Both produce
+concrete priced cast definitions, so session need not know the class authorization model. Existing
+cantrip ingress remains action-only and Bane is never relabeled as a cantrip.
+
+### One mutable slot authority
+
+Canonical slot state is one recoverable resource per spell level. `SpellSlots` and `Resources` must not
+both mutate the same capacity; payment, post-payment persistence, and recovery use resources only.
+Dedicated slots already reset on LongRest—the gap is payment reachability and dual representation, not
+basic recovery. Legacy records still need the migration/load choice under Remaining decisions, but
+either choice converges on one writer and authority.
+
+### Payment boundary and failure claim
+
+Before charging, validate every knowable target-list error: count, empty/duplicate IDs, interaction
+membership, target eligibility, and existing 30-foot reach for each target. Offer construction limits
+choices; execution revalidates stale declarations. The complete list and every child contest preflight
+before the door.
+
+The door checks the whole profile and either refuses without any debit or pays once. Refusal preserves
+action, level-1 resource, old owner/children, and dice stream. This design does **not** claim rollback
+after an unforeseen runtime, event-publication, repository, or persistence failure; its narrower claim
+is that known declaration errors preflight and ordinary inability to pay mutates nothing.
+
+---
+
+## 2. One cast fans out through existing contests
+
+A cast declaration carries an ordered target list. Singular casts use a list of one rather than a
+parallel singular spelling.
+
+```text
+CastTargetOutcome { TargetID, Save, Applied }
+CastOutcome       { Spell, CasterID, Targets []CastTargetOutcome, FollowUps }
 ```
 
-**Why the loop is the contest again and not a new machine.** The brainstorm called fan-out a new
-machine, and it is the smallest one on the list: a loop over a target source that yields
-`Request(sub-machine)` once per target and collects the outcomes. Movement already does exactly
-this — `Request` per trigger inside one machine (`resolution/movement.go:313`). The cast machine
-gains the loop; the contest it requests is untouched.
+For Bane the target rule accepts one to three distinct creatures in range. The machine preserves the
+caster's target order. It requests the existing save-then-effect contest once per target, collecting
+one save and one applied-effect list per target. A successful save has an empty applied list; a failed
+save delivers one Baned condition.
 
-**Names this proposes** (`resolution`):
+This produces:
+
+- one player declaration and one cast record/beat naming the ordered target list;
+- one payment for the declaration;
+- one per-target result list, including successful saves rather than silently dropping them;
+- one concentration owner on the caster;
+- zero to three source-qualified child effects under that owner.
+
+If every target saves, the paid cast still creates the proposed zero-child owner. That is a deliberate
+Bane rule proposal retained from the original design, not evidence of current shipped behavior.
+
+For a new concentration cast, ordering is fixed:
+
+```text
+whole-list preflight -> payment -> synchronously drop old owner and children
+                     -> ordered target contests and delivery -> install new owner
+```
+
+Old concentration is not dropped during preflight and is not dropped when payment is refused. It is
+dropped after successful payment and before any new target receives Bane. Every newly delivered child
+carries the source-qualified address described below.
+
+A post-payment failure is reported honestly; no compensating refund or resurrection of old
+concentration is promised without separate transactional evidence.
+
+---
+
+## 3. One duration clock, with an honest expiry boundary
+
+Bane creates one `ConcentratingCondition` on the caster. That owner contains all child addresses and
+is the only duration clock. A target that saved has no child. A suppressed overlapping Bane remains a
+normal child of its own caster's owner.
+
+“Up to 1 minute” means **10 rounds**, not ten arbitrary turns while walking the roster. Other
+creatures' turn ends do not decrement the Bane owner. A child never starts or resets its own clock.
+
+Current concentration decrements at the caster's turn end, including the casting turn's end. The exact
+Bane boundary is therefore not automatic: decide whether that end consumes tick one or is graced to
+the corresponding boundary ten rounds later. This design neither silently changes the shared clock
+nor asserts `TurnEnds: 10` is necessarily 60 seconds; Kirk's remaining ruling appears below.
+
+Breaking concentration, dropping it, reaching the chosen expiry boundary, or otherwise ending the
+owner removes all of that owner's source-qualified children together.
+
+---
+
+## 4. Conditions describe dice; rolling machinery evaluates them
+
+### A separate described-dice lane
+
+Attack and saving-throw chain events gain a collection beside their existing fixed modifier lanes:
 
 ```go
-// CastTargetOutcome is what one cast did to ONE creature it named.
-type CastTargetOutcome struct {
-    TargetID string
-    Save     *ContestOutcome  // nil when the profile carried no gate
-    Applied  []ImposedEffect  // empty when the save was made
+type DiceContribution struct {
+    Source   RollSource // authored content ref, display name, optional role
+    SourceID string     // entity whose effect contributes; the Bane caster here
+    Dice     string     // one unsigned homogeneous pool, e.g. "1d4"
+    Subtract bool       // false adds; true subtracts
 }
 
-type CastOutcome struct {
-    Spell     core.Ref
-    CasterID  string
-    Targets   []CastTargetOutcome  // replaces TargetID, Save, Applied
-    FollowUps []FollowUpOutcome
-}
+DiceContributions []DiceContribution
 ```
 
-Inside the toolkit this is a free refactor: rpg-api pins tags, so a shape change costs nothing
-until it is adopted. The call sites that move are True Strike's and Vicious Mockery's, which
-become one-element lists and read the same.
+This is not a fixed-or-dice union. Existing fixed attack and save fields keep their current jobs.
+A Baned condition appends one description when it is selected as applicable. It receives no roller,
+rolls no d4, stores no face, and cannot flatten `-3` into an anonymous scalar.
 
-**The fork, named and rejected.** The band-aid is a second outcome type for multi-target casts,
-leaving `CastOutcome` alone. It is smaller today and it forks every consumer of a cast — the
-record, the wire, the client — for a difference the player never sees, which is the fork this
-outcome type was sealed to prevent. The primitive is one list.
+Descriptions validate completely before any roll consumes RNG: content source and source entity are
+present, notation is one unsigned homogeneous positive pool, and no sign, composite term, or
+expression grammar is accepted.
 
----
+### One generic evaluator and result vocabulary
 
-## Shape 2 — The described die, and why it is not a number
-
-Bane subtracts a d4. Bless adds one. Neither is a choice, neither is spent, and both land on a
-roll **somebody else** makes.
-
-Both pre-roll chains are live and conditions already subscribe to them:
-
-| Chain | Carries | Live subscribers |
-|---|---|---|
-| `AttackChain` | advantage/disadvantage sources, `AttackBonus int`, crit threshold | Improved Critical, Helped, Pack Tactics |
-| `SavingThrowChain` | advantage/disadvantage sources, `BonusSources []SaveBonusSource{Bonus int}` | Dodging |
-
-**The two chains disagree about sourcing, and that is the first thing to fix.** A save's bonus
-is a *list of sources* — `BonusSources []SaveBonusSource{Name, SourceRef, EntityID, Bonus}`
-(`events/events.go:436-449`) — so a save can say *who* changed it. An attack's bonus is a bare
-scalar, `AttackBonus int` (`events/events.go:311`), and the codebase has already been annoyed by
-this: `conditions/inspired.go:44-54` names that scalar as the thing it refused to write into.
-Bane needs to say "− 3, Bane" on an attack roll, and today the attack chain has nowhere to say
-the second half.
-
-**And a condition could roll the die itself.** This is the real fork, not a strawman:
-`conditions/roller_binding.go:31` `RollerBinder.BindRoller` exists and three conditions use it
-(`sneak_attack.go:239`, `brutal_critical.go:200`,
-`fighting_style_great_weapon_fighting.go:192`). So the small version of Bane is available today:
-the condition binds a roller, rolls a d4 in its own chain handler, and appends
-`SaveBonusSource{Bonus: -face}` on the save side and `AttackBonus -= face` on the attack side.
-**The save half of Bane would need no root change at all.**
-
-**The fork, stated plainly.**
-
-- **The special case above:** Bane rolls its own d4 and hands over a number. Ships sooner. The
-  attack roll shows a total nobody can explain, because the scalar carries no source. Every
-  future die-lending effect — Bless, Guidance, Cutting Words, Bardic Inspiration's automatic
-  cousins — repeats the roll-and-flatten, and each one has to remember not to cache its face.
-- **The primitive below:** the chains learn to carry a **die notation**, and the machine that
-  rolls the d20 rolls it too. One type serves both chains, both signs, and every later effect.
-  Freshness stops being a discipline: a subscriber that cannot roll cannot cache a stale face.
-
-*Recommend the primitive*, and the codebase has already made this exact call once, in the one
-place it faced the question:
-
-> *"`Die` is the notation of what would be rolled and added — "1d6". A notation rather than a
-> number because nothing has been rolled: whoever takes the offer rolls it, with their own
-> roller."*
-> — `rulebooks/dnd5e/events/offer.go:34-38`
-
-`Offer` is the **post-roll, spendable, chooseable** lane, built for Bardic Inspiration, and its
-own doc draws the line at exactly the case Bane sits on the other side of: *"A subscriber to
-[AttackChain] writes a number into a roll nobody has seen yet"* (`offer.go:12-15`). Bane belongs
-in that pre-roll lane, and what the lane is missing is the notation.
-
-**One type, both chains:**
+Attack and save rolling machinery share the same contribution evaluator. The physical pool always
+contains positive faces. A narrow evolution of the existing generic result records the arithmetic
+operator:
 
 ```go
-// DieSource is a die an effect DESCRIBES and the rolling machine ROLLS.
-//
-// A notation rather than a number, for the same reason an Offer carries one:
-// nothing has been rolled. The machine that rolls the d20 rolls this too, in
-// the same breath, and reports the face — so a fresh die every roll is
-// structural rather than a thing each subscriber has to remember.
-type DieSource struct {
-    Name      string     // "Bane" — display name, authored, never derived
-    SourceRef *core.Ref  // dnd5e:conditions:baned
-    EntityID  string     // who imposed it — the caster
-    Die       string     // "1d4"
-    Subtract  bool       // Bane subtracts; the zero value adds, which is Bless
-}
-
-// DieResult is that die after the machine rolled it, reported so the client can
-// show the d4 that changed the number.
-type DieResult struct {
-    Name      string
-    SourceRef *core.Ref
-    Die       string
-    Face      int
-    Subtract  bool
+type RollComponent struct {
+    Source       RollSource
+    SourceID     string     // selected contributing entity, separate from Source.Ref
+    Dice         *DiceTrace
+    Modifier     *int
+    SubtractDice bool       // applies only to Dice.Subtotal; default remains additive
 }
 ```
 
-`AttackChainEvent` and `SavingThrowChainEvent` each gain `DieSources []DieSource`; the attack
-fold (`resolution/strike.go:362`) and `saves.MakeSavingThrow` (`saves/saves.go:160-216`) each
-roll them with the roller they already hold, fold the faces into the total they already compute,
-and report `DieResults` on their result.
+`SubtractDice` is a candidate name. `DiceTrace.OriginalRolls`, rerolls, final faces, kept indices, and
+subtotal remain positive physical facts. Validation adds or subtracts that subtotal exactly once.
+A subtractive component does not use a negative face, signed notation, or a compensating negative
+modifier. Existing signed fixed modifiers remain fixed modifiers.
 
-**The subscription itself has a shipped precedent.** A condition that sits on one creature and
-reaches another creature's roll is `conditions/vicious_mockery.go:188-209`: it lives on the
-target, filters on `AttackerID`, and appends to the attack chain at `combat.StageConditions`.
-Bane's condition is that subscription with a die instead of disadvantage, and without the
-self-consume.
+The result-side `RollComponent` may already carry dice and a fixed modifier from one source; the
+Params-side contribution intentionally describes only dice. That asymmetry avoids redesigning fixed
+lanes without a Bane requirement.
 
-**Bless is then this design with one bool flipped and the save removed.** That is the whole
-reason Bane goes first.
+There is no `BaneDieResult`, Bane-specific proto result, or proposed `RollModifier` wire lane. The
+existing generic `RollCalculation` is the authoritative explanation for both additive and subtractive
+components.
+
+### Eligibility and deterministic RNG order
+
+D&D applicability selects contributors **before any roll**. After that selection:
+
+1. roll one d20, or the existing two d20s for advantage/disadvantage and keep the existing winner;
+2. evaluate each selected dice contribution once, in the selected persisted-application order;
+3. build and validate the generic calculation total;
+4. apply existing attack natural-1/natural-20 policy or ordinary save arithmetic.
+
+Advantage changes only the d20 pool. It never creates a second Bane d4. Each eligible application
+contributes at most one pool to one roll.
+
+Natural attack miss/critical policy stays in attack settlement. Saving-throw natural 1/20 remains
+informational. The generic dice evaluator owns neither rule.
+
+### Every save path, including concentration
+
+The same calculation travels through:
+
+- ordinary attack outcomes and attack records;
+- ordinary saving-throw results and per-target cast-save records;
+- concentration saving-throw results and records;
+- encounter/session mirrors and the generic wire projection used by the UI.
+
+The existing scalar roll/total fields may remain compatibility projections, but they must equal the
+validated authoritative calculation. Concentration conversion must not narrow a resolved save back
+to only roll, total, DC, and success.
+
+A creature affected by Bane therefore subtracts the selected d4 from a concentration save too. Bane
+has no exception for the save made to maintain another spell.
+
+### Inspiration freezes the settled calculation
+
+The attack machine settles the d20 and automatic contributions before posing Inspiration. The frozen
+payload retains the full calculation, including selected source ID, content ref, notation, positive
+face, operator, and total. Resume validates and reuses that calculation. It does not refold conditions,
+reselect a Bane source, reroll a d4, or reconstruct a face from a stale scalar. A spent Inspiration die
+is appended as its own sourced component and the total is revalidated.
+
+This proposal bumps the exact `frozenStrikeVersion` from v1 to a new version and fails closed on
+already-open v1 windows. It deliberately does not translate scalar v1 windows into invented dice
+facts. This is an explicit compatibility break: those windows cannot resume through the new reader.
+No automatic action reopening, refund, or recovery is promised; existing sessions with such windows
+need deliberate operational handling before adoption. A silent reroll or false attribution is not recovery.
 
 ---
 
-## Shape 3 and 4 — what is already built
+## 5. Source-qualified application ownership
 
-**The save.** `CastProfile.Save` is a `saves.SaveGate`, negate-on-success only, contested before
-anything is delivered — shipped with Vicious Mockery. Bane's gate is CHA against the caster's
-spell save DC, which is computed (`character/character.go:1641`) and already wired into cast
-definitions (`session/casts.go:104`). Nothing new.
+For this slice, a durable spell-owned condition address is:
 
-**The concentration.** `CastProfile.Concentration{TurnEnds: 10}` puts the concentrating
-condition on the caster, and every `baned` condition placed becomes a child address under it.
-When the bard's concentration breaks, all three come off together. Slice three built this and
-tested **two** children by hand (`conditions/concentrating_test.go:174-175`, `:262-263`); the
-only production caller adds one child per delivered condition from a single-target cast
-(`resolution/action.go:264`), so today the ceiling is one. Bane is the first spell that produces
-three, which makes this slice the multi-child owner's first real exercise.
-
-**Range.** `CastProfile.RangeFeet: 30` exists, and distance is the grid's own
-(`encounter/encounter.go:1038`). No new geometry.
-
----
-
-## What the streamer sees
-
-The story, not the log. Six cards for a three-target cast where one holds:
-
+```text
+{ recipient entity ID, condition ref, source entity ID }
 ```
-  the bard casts Bane on the skeleton, the goblin and the wolf
-  the skeleton fights the words off          d20 15 + 2 = 17 against DC 13 · Saved
-  Bane takes hold of the goblin              d20 4 + 1 = 5 against DC 13 · Failed
-  Bane takes hold of the wolf                d20 8 + 0 = 8 against DC 13 · Failed
-  ...
-  the goblin swings at the bard              d20 14 + 4 − 3 (Bane) = 15  · misses
-```
 
-That last line is the whole point of shape 2, and it is why the die's face travels to the
-client rather than being folded away into a bonus nobody can see. It is the same thing Kirk
-asked for on the concentration design: *the d4 is in your hand.*
+For Bane, `SourceID` is the caster. `SourceRef` is adjacent provenance naming the Bane spell/content.
+It is not the caster, is not part of address equality, and must never be repurposed as an application
+address. “What rule is this?” and “who imposed this instance?” remain separate facts.
 
----
+The same qualified address is common across:
 
-## Module cut
+- Baned condition runtime/data and JSON;
+- character and monster condition keepers;
+- condition-removal facts;
+- the concentrating owner's child list, matching, and JSON;
+- imposed-effect/result facts used to register new children.
 
-| # | Module | What it adds | Depends on |
-|---|---|---|---|
-| 1 | **protos** (additive) | `repeated string targets` on `CastRequest` and on the cast beat body, singular `target` `[deprecated = true]` in both; a `RollModifier{name, ref, die, face, subtract}` message, `repeated` on the saved beat and the attack beat | — |
-| 2 | **toolkit root** | `DieSource` / `DieResult`; `DieSources` on both chain events; the fold + roll in `saves.MakeSavingThrow`; `CastTargetUpToN` + `CastProfile.MaxTargets`; `conditions.NewBanedCondition`; `refs.Conditions.Baned()`; Bane content | — |
-| 3 | **toolkit resolution** | the fan-out loop in the cast machine; `CastTargetOutcome`; the attack-roll die fold in `strike.go` | 2 |
-| 4 | **toolkit encounter** | `RecordCastInput.Targets`; one cast beat naming N, then per-target saved + result beats; roll modifiers on the beats | 2 |
-| 5 | **toolkit session** | the per-target outcomes and the modifier traces onto the wire | 3, 4 |
-| 6 | **rpg-api** | pass-through; the declaration carries a target list | 1, 5 |
-| 7 | **rpg-dnd5e-web** | the target picker takes up to three; the story cards above; the die on the roll line | 1, 6 |
+Qualified removals compare all three fields. Ending bard A's concentration removes bard A's Bane and
+bard A's child entry only. It cannot remove bard B's condition or cause bard B's owner to forget its
+child. Acceptance must use two actual owners because one-owner coverage misses the bookkeeping bug.
 
-Modules 2 is one PR, 3 and 4 are parallel, 5 gates on both. Same train as slice three.
+Existing unqualified lifecycle facts remain ref-wide for legacy conditions until deliberately
+migrated. Compatibility is explicit, not a wildcard for new work: every spell-owned Bane effect and
+child must have a non-empty source entity, and new qualified removal paths must not silently fall back
+to `{recipient, ref}` matching.
 
-## Done-when Kirk walks it
+No minted application ID is justified. The supported concentration cast path synchronously removes a
+same-caster old Bane before delivering the new one, so old and new generations with the same address
+do not coexist. An application ID becomes necessary only if a supported rule later permits concurrent
+same-source/same-recipient/same-condition applications or genuinely deferred cleanup.
 
-1. A level-1 bard casts Bane and names three creatures; the picker refuses a fourth and refuses
-   anything past 30 feet.
-2. Three saves are rolled and shown, each with its own roll, total and DC.
-3. A creature that saved is unaffected and says so on a card.
-4. An affected creature's next attack roll visibly shows `− N (Bane)` and the d4's face.
-5. An affected creature's next saving throw shows the same.
-6. Breaking the bard's concentration removes Bane from **all** affected creatures in one beat
-   run, and their rolls go back to normal.
+The test-only ownership model used upsert behavior for convenience; that is not shipped behavior and
+is not this design's reapply contract. Same-address reapplication on this cast path means
+**drop old synchronously, then deliver new**.
 
 ---
 
-## Open rulings
+## 6. Overlap: oldest active equal-potency source contributes
 
-**R1 — one cast beat naming N targets, or N cast beats?**
-*Recommend one.* The declaration happened once and the player made one choice; N cast beats
-would make the record say the bard cast Bane three times. The per-target detail lives in the
-saved and result beats that follow.
+Ownership answers which application exists and which owner may remove it. Selection answers which
+existing application contributes to a roll. They are deliberately different operations.
 
-**R2 — is a made save a beat?**
-*Recommend yes.* "The skeleton fights the words off" is story, and a target that silently
-disappears from the record reads as a bug. It costs one saved beat with `succeeded: true`,
-which the wire already carries.
+For this Bane slice:
 
-**R3 — `Subtract bool`, or a signed notation like `"-1d4"`?**
-*Recommend the bool.* A signed notation has to be parsed to be understood, and the zero value
-of the bool is *adds*, which is Bless — the common case says nothing and the unusual one
-declares itself.
+- all Bane applications have equal potency because upcasting is out of scope;
+- the oldest active Bane application on the recipient contributes;
+- newer Bane applications remain active, owned, persisted, and counting down on their original
+  concentration clocks;
+- when the oldest ends, the next-oldest surviving Bane contributes on subsequent rolls;
+- no suppressed duration restarts or pauses when the winner changes;
+- Bane and Bless belong to different stacking groups, so one selected Bane and one selected Bless may
+  both contribute to the same eligible roll.
 
-**R4 — `MaxTargets` on the profile, or fixed in content?**
-*Recommend the profile.* It is the field the UI reads to stop the player at three, and Bless
-declares the same three with a different sign. Note this is exactly the cap-versus-headroom
-question from the ref-ids slice: the number is 3 because Bane and Bless both say 3, not because
-some future spell might want more.
+The age authority is the recipient's persisted condition application order. Reload must preserve it.
+The selector must not use bus registration order, load-time subscription order, lexical source IDs,
+content-ref sort, or the face rolled.
 
-**R5 — where is an illegal target list refused?**
-*Recommend both places it is refused today, unchanged in kind.* Range is checked twice already:
-once when the offer is compiled, so the client can grey out what is unreachable
-(`session/offers.go:701` → `session/reach.go:28`, `Distance <= CellsFromFeet(rangeFeet)`), and
-again at execution, which answers `ErrStaleDeclaration` when the board has moved. Both become
-per-target. Duplicates and targets not in the interaction are refused in the cast machine's
-preflight, which already runs before the door for exactly this reason
-(`resolution/action.go:157-165`): after the door, the bard has paid a slot for a cast that
-cannot run. Note there is no line-of-sight check in the cast path today and this slice adds
-none; the candidate list is built from currently-sighted intel holdings
-(`session/offers.go:711`), which is the nearest thing and is unchanged.
+The selector belongs to the **D&D recipient-condition applicability layer**, which owns ordered active
+applications and D&D stacking. It receives recipient ID, roll kind, and persisted-order condition views
+with qualified addresses and source spell refs. Bane's rule selects the first active Bane application;
+this slice needs no potency ranking or generic dice-description capability on the view. Before RNG,
+it emits ordered eligible addresses; only those conditions append descriptions. That projection is
+also evaluation order, so collection must materialize against it rather than event-subscriber append order.
 
-**R6 — all three save. Does the bard stay concentrating?**
-RAW says yes: the spell is cast, the duration runs, and nobody is affected. *Recommend RAW,*
-because the alternative silently returns a spell slot's worth of concentration on a die roll,
-and the player can drop it themselves. Flagged rather than assumed — it is a concentration with
-zero children, which is the first time that state means something.
-
-**R7 — does Bane touch ability checks?**
-No. RAW is attack rolls and saving throws only. `AbilityCheckChainEvent` exists and this slice
-deliberately does not fold a die into it — the day a spell says "ability checks", it adds the
-same `DieSources` field to that chain and nothing else.
+Generic dice arithmetic never groups by `SourceRef`, chooses a winner, or rolls all Banes. The UI also
+never selects. Current `MakeSavingThrow` has bus+saver ID but no ordered condition projection, so the
+exact local keeper-to-roll carrier is absent. Implementation must choose an explicit recipient-local
+input seam—not a global registry or subscription order. This is a boundary choice, not an open rule.
 
 ---
 
-## What this slice deliberately does not do
+## 7. Records, wire, and presentation
 
-- **No area, no shape query, no spatial caller.** Bane names creatures. Thunderwave brings the
-  area selector.
-- **No half-damage-on-success.** The gate stays negate-only, refused where it is refused today.
-- **No push.** Forced movement has no delivery anywhere and is its own conversation.
-- **No upcast.** Bane at 2nd level targets more creatures; the spend profile cannot let a player
-  choose a level yet, and that is a separate row on the shelf.
-- **No Bless.** Named as the next customer and built by whoever brings the cleric online, on the
-  mechanism this slice lands.
+One cast record names the caster, Bane content ref, and ordered target list. Each target entry retains
+its complete Charisma contest and whether/what was applied. Saved targets remain visible. Applied
+Baned effects retain their qualified source for ownership and attribution.
+
+Every affected attack/save record carries the generic `RollCalculation`. The selected component
+includes:
+
+- Bane's content ref and authored display name;
+- the selected caster's source entity ID;
+- unsigned notation and positive original/final faces;
+- the subtract operator;
+- the checked component subtotal and calculation total.
+
+The wire mirrors those generic facts rather than creating a Bane field. The UI uses content metadata
+to label Bane, source entity ID to look up that player's dice set, and resolved dice facts to present
+the actual roll. It receives only the selected contributor, never suppressed candidate sources and
+never dice-style data from the toolkit.
+
+A content ref remains useful when the source entity is absent for non-player content, but Bane's new
+spell-owned contribution rejects a missing source entity rather than degrading to content-only
+attribution.
+
+---
+
+## Acceptance scenes — future proof, not current evidence
+
+These scenes define implementation acceptance. They are not passing today.
+
+1. **Payment refusal:** without a level-1 resource or standard action, refusal changes neither currency, old concentration/children, nor dice stream.
+2. **Invalid third target:** an absent, duplicate, ineligible, or out-of-range third target fails the whole declaration before payment or concentration drop.
+3. **Mixed saves:** three valid targets pay once and roll three ordered Charisma contests; only failures receive source-qualified Baned conditions.
+4. **All save:** the action and one level-1 resource are spent once, old concentration drops, and one new zero-child Bane owner remains.
+5. **One payment, many results:** one three-target cast record has one debit, three ordered target results, and one owner—not three casts/prices.
+6. **Two source-specific owners:** ending bard A's owner removes only A's effect/child; bard B's effect and owner child list remain.
+7. **Oldest winner switches:** A contributes while oldest; after A ends, B contributes with its original remaining duration and no clock reset.
+8. **Reload ordering:** two overlapping Banes retain application order and select the same oldest contributor after reload.
+9. **Attack trace:** advantage/disadvantage rolls its normal d20 pool plus one selected Bane d4; calculation/wire show content, caster ID, positive face, subtract operator, and checked total.
+10. **Save trace:** an ordinary save retains contributor identity and actual dice facts through result, encounter record, session projection, and wire.
+11. **Concentration save:** a baned creature's concentration save subtracts one selected Bane d4 through the same generic calculation lane.
+12. **Inspiration resume:** keep/spend reuses the frozen Bane calculation without reselect/reroll; spending adds only Inspiration.
+13. **Bane and Bless groups:** a synthetic additive contributor may prove the mechanism without implementing Bless; it and selected Bane each contribute once.
+14. **Unchanged cantrips:** one-target cantrips remain lists of one with action-only prices and existing player flow.
+15. **Expiry boundary:** an explicit scene pins Kirk's ten-round convention; roster turns do not decrement the owner.
+
+---
+
+## Affected modules — scope, not a train
+
+This table names the likely ownership surface. It is not sequencing, issue slicing, or an
+implementation plan.
+
+| Surface | Scope of the proposed contract |
+|---|---|
+| D&D character/spell rules | known/prepared levelled ingress, class slot seeding, typed level resource key, concrete price |
+| D&D combat/actions | up-to-three target profile and ordered list validation |
+| D&D resolution | whole-list preflight, one payment, ordered contest fan-out, freeze/reuse, generic calculation |
+| D&D conditions/events | Baned description, applicability input, qualified address/removal, one owner with N children |
+| D&D saves/encounter/session | contribution evaluation and full generic calculation through ordinary/concentration records |
+| API protos | target/result lists and generic roll-calculation source entity/operator projection |
+| rpg-api | reference/ID translation and pass-through only; no Bane or class rules |
+| rpg-dnd5e-web | up-to-three picker, per-target story, resolved d4 display, source-player dice-set lookup |
+
+---
+
+## Rejected alternatives and trade-offs
+
+- **Dedicated spell-slot currency:** widens/bridges the generic payer; existing resource pools already traverse the real door.
+- **Dual mutable `SpellSlots` plus `Resources`:** can disagree on spend/recovery; compatibility may read old data, but only resources write.
+- **A second multi-target cast type or N records:** forks consumers and misreports one declaration; canonical targets are a list.
+- **Condition-owned d4 rolling:** erases dice/source facts; conditions describe and rolling machines roll.
+- **A fixed-or-dice Params union:** buys mixed-category narration order without a Bane/Bless customer.
+- **Bane-specific `DieResult`/`RollModifier`:** duplicates generic calculation; evolve `RollComponent` once.
+- **Negative faces or subtractive face plus `-face`:** falsifies physical dice or subtracts twice.
+- **Content-only attribution:** cannot identify whose dice set contributed; retain content and source entity separately.
+- **Application IDs now:** add allocation/persistence without a supported same-source concurrent Bane lifecycle.
+- **Newest, source-ID sort, or roll-all/select-face:** contradicts Kirk or uses incidental/non-durable facts.
+- **A global effect registry:** duplicates the recipient keeper; use its local ordered projection.
+
+---
+
+## Remaining decisions before implementation
+
+These are the only unresolved choices in this revision; the oldest-source and entity-attribution
+rulings are closed.
+
+1. **Legacy slot records:** choose one-way migration or one bounded release of read-only legacy load translation; only resources write/mutate.
+2. **Ten-round expiry boundary:** Kirk chooses whether casting-turn end consumes tick one or is graced to the corresponding boundary ten rounds later.
+3. **Recipient-order carrier:** select the explicit local keeper-to-roll input seam; shipped save entrypoints lack it, and subscription order/global registry are disallowed.
+
+Runtime failure compensation after a successful payment is not presented as an unresolved promise:
+this design makes no rollback guarantee. Stronger/unequal-potency stacking, upcasting, multiclass slot
+math, Pact Magic, and Bless content are outside this level-1 Bane slice rather than hidden decisions.
+
+---
+
+## Research record and evidence boundary
+
+The research trackers are on Project 19 as **Cross-team / Learn / In Review**:
+
+- [toolkit#1593 — paid cast](https://github.com/KirkDiggler/rpg-toolkit/issues/1593) and its [reviewed receipt](https://github.com/KirkDiggler/rpg-toolkit/issues/1593#issuecomment-5588458819).
+- [toolkit#1595 — contributions/ownership](https://github.com/KirkDiggler/rpg-toolkit/issues/1595) and its [reviewed receipt](https://github.com/KirkDiggler/rpg-toolkit/issues/1595#issuecomment-5593172235).
+- [Kirk's final oldest-source ruling](https://github.com/KirkDiggler/rpg-project/pull/409#issuecomment-5593394554).
+
+Those experiments used disposable test scaffolding around real shipped entrypoints. Their real evidence
+covers the existing payment door, resource persistence/rest, current frozen-window information loss,
+and the current same-ref ownership failure. Their models compare candidate fan-out, signed dice facts,
+and source-qualified addresses. They do not constitute production Bane tests or adopt architecture by
+themselves.
+
+This design incorporates their bounded recommendation while preserving that distinction.
+
+— cross-team agent, on behalf of KirkDiggler
