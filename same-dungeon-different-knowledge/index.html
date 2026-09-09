@@ -87,8 +87,13 @@ footer { margin:2rem auto 3rem; width:var(--text); font:.75rem/1.7 "IBM Plex Mon
 <p>I gave it a piece of intel called <code>treasure-1</code> and configured that intel to reveal the artifact’s door. The clue’s placement has three zombies guarding it; I removed them for the discovery demonstration below so the change in the two players’ views is easy to follow.</p>
 <figure style="--image-width:1058px">
   <a class="image-link" href="images/room-secret.webp" aria-label="Open full-size image: The scroll composition placed in the dungeon, carrying treasure-1 and marked holdable."><img src="images/room-secret.webp" width="1058" height="523" alt="The scroll composition placed in the dungeon, carrying treasure-1 and marked holdable." loading="lazy" decoding="async"></a>
-  <figcaption>The creator chooses where the clue lives and what learning it reveals. This relationship is authored in the editor, not written as custom code for this dungeon. <a class="enlarge" href="images/room-secret.webp">View full size ↗</a></figcaption>
+  <figcaption>The scroll is the carrier, identified as <code>room-secret</code>. It holds the intel <code>treasure-1</code>. <a class="enlarge" href="images/room-secret.webp">View full size ↗</a></figcaption>
 </figure>
+<figure style="--image-width:489px">
+  <a class="image-link" href="images/intel-setup.webp" aria-label="Open full-size image: Intel configuration: treasure-1 reveals the concealed artifact-door and is held by room-secret."><img src="images/intel-setup.webp" width="489" height="462" alt="Intel configuration: treasure-1 reveals the concealed artifact-door and is held by room-secret." loading="lazy" decoding="async"></a>
+  <figcaption>The intel record makes the connection: <code>treasure-1</code> reveals <code>artifact-door</code>, and <code>room-secret</code> carries it. This earlier configuration capture still shows the placeholder prop; the scroll uses the same <code>room-secret</code> ID. <a class="enlarge" href="images/intel-setup.webp">View full size ↗</a></figcaption>
+</figure>
+<p>The intel is what ties the object to the discovery. I choose what the knowledge reveals and where players can acquire it, without writing custom code for this dungeon.</p>
 </section>
 <section>
 <h2 id="finding-the-clue-changes-one-characters-knowledge">Finding the clue changes one character’s knowledge</h2>
