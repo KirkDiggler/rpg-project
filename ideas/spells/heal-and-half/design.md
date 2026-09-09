@@ -30,6 +30,26 @@ Neither needs multi-target, neither needs a contributed die, and neither needs c
 That is the point of picking them: after Bane, the next two spells should cost content and one
 arm each, not another architecture.
 
+### Three castable spells is what makes creation a choice again
+
+The bard's creation is honest but thin, and the code says so out loud. `spells.Castable` gates
+the cantrip option list to the cantrips this build can actually cast, and its own comment names
+the cost: *"The cost is that 'choose 2 of 2' is not a choice, which is honest about where the
+build is and disappears the moment a third cantrip gets a profile."*
+
+Bane's acquisition has the same shape one level up — `BardSpells1`, `Count: 1`, `Options:
+[spells.Bane]`. **Correct, and still not a choice.** A player picks the one supported spell.
+
+These two spells are what turn it into one: `Count: 1` over `[Bane, CureWounds,
+DissonantWhispers]` is a real decision with three genuinely different answers — debuff the
+room, keep the party standing, or burst one target. That is the point of shipping them
+together rather than one per wave, and it is the reason to prefer three cheap spells over one
+more expensive one.
+
+It also spreads the bard across the three things a bard does, which is what makes the class
+worth testing at all: **Bane** is control, **Cure Wounds** is support, **Dissonant Whispers**
+is damage. Two of the three cost one arm each.
+
 ### What they need from Bane, and it is one thing
 
 **The leveled spell slot at the door.** Nothing else. Not the ordered target list, not the
