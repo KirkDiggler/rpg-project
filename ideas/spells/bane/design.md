@@ -145,10 +145,10 @@ Pools[SpellSlotLevel1] = 1
 Cantrip definitions remain action-only. `combat.CanPay` and `combat.Pay` remain the atomic door;
 character resource persistence, dirty marking, and `LongRest` remain the spend/recovery path.
 
-The speculative character `SpellSlots` runtime/data field and the unused `Character.spell_slots` proto
-field are deleted. The proto field number and name are reserved. There is no migration, converter,
-legacy reader, dual writer, or fallback. This is an intentional pre-playtest contract retirement, not
-a request to wipe any environment.
+The speculative character `SpellSlots` runtime/data field is deleted. The unused
+`Character.spell_slots` proto field remains at its original tag with `[deprecated = true]` so the
+schema stays non-breaking; new projection leaves it unset. This does not restore toolkit slot state,
+a storage migration, a legacy state reader, or a second mutable authority. No environment wipe is requested.
 
 ### Rulebook-owned authorization and price
 
@@ -425,19 +425,21 @@ One generic calculation shape crosses:
 - version-2 frozen Inspiration windows;
 - encounter/session mirrors and API wire.
 
-Proto contract changes use one clean alpha shape:
+Proto contract changes preserve schema compatibility while the new toolkit path uses one canonical shape:
 
-- singular `CastRequest.target` and `Cast.target` are retired; their numbers and names are reserved, and
-  new repeated `targets` fields use new tags;
+- singular `CastRequest.target` and `Cast.target` retain their original tags with `[deprecated = true]`;
+  new repeated `targets` fields use their new tags and are canonical for new code;
 - `Declaration.max_targets` carries `1` for current member-targeted cantrips and `3` for Bane;
 - `RollSource.source_id` and `RollComponent.subtract_dice` extend the generic trace;
 - attack response, Struck, Missed, Saved, DeathSave response/event, and RollWindowOpened carry the same
   `RollCalculation`;
 - ConditionApplied/ConditionRemoved carry `source_id` for qualified ownership;
-- `Character.spell_slots` tag/name are retired and reserved.
+- `Character.spell_slots` retains its original tag with `[deprecated = true]`, without a toolkit writer.
 
-This is field/tag allocation and an intentional alpha contract break, not a data migration. Retired
-numbers are never reused. There are no dual target writers/readers and no old SpellSlots converter.
+`buf breaking` must pass normally; no breaking-change override is required for this schema extension.
+Deprecation keeps generated wire fields available, not a second target representation inside the toolkit
+or an old SpellSlots runtime model. This proto change alone makes no claim about legacy-client behavior;
+new implementation uses the canonical target list and performs no storage migration.
 
 Scalar roll/total fields may remain as domain summaries where current consumers need them, but they must
 equal the authoritative calculation and are never used to reconstruct missing components. The web's
@@ -461,7 +463,7 @@ Implementation acceptance uses production entrypoints and persistence boundaries
    `dnd5e:spells:bane`; finalization/reload preserves that one `KnownSpells` ref and seeds two level-1
    resource uses.
 5. **Resource lifecycle:** one Bane spends one slot use; persistence retains the spend; LongRest restores
-   two; no `SpellSlots` state or proto projection remains.
+   two; no toolkit `SpellSlots` state remains, and new projection leaves the deprecated wire field unset.
 6. **Mixed saves:** one three-target cast pays once, rolls three ordered Charisma contests, applies Bane
    only to failures, and records one Cast plus all three outcomes.
 7. **All-save replacement:** begin with the caster's old concentration owner and qualified children plus

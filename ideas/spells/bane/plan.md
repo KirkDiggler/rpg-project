@@ -16,7 +16,7 @@
 
 - Implement exactly the 16 acceptance scenes in the design; every test named below is future acceptance and is not claimed to pass today.
 - Bane is the one supported level-1 Bard choice through existing `BardSpells1`, `SpellbookRequirement`, and `CHOICE_CATEGORY_SPELLS`; keep the factual four-known-spells class table unchanged.
-- Recoverable resources are the sole mutable slot authority. Delete speculative `SpellSlots`; add no migration, legacy reader, dual writer, converter, or data wipe.
+- Recoverable resources are the sole mutable slot authority. Delete speculative toolkit `SpellSlots`; add no storage migration, old-state reader, dual slot writer, or data wipe. Deprecated proto fields may remain for schema compatibility without restoring runtime state.
 - One cast is one ordered target list, one pure whole-list preflight, one atomic price, and one concentration owner. The casting turn does not tick; ten subsequent caster turn ends do.
 - The recipient condition owner chooses the oldest active equal-potency Bane from persisted order. Conditions describe, resolution rolls, and session does neither.
 - Keep strict `RollCalculation` source-ref validation. Every base d20, fixed modifier, reroll, Inspiration, and Bane component has a valid canonical rule/content ref; Bane additionally has its selected caster entity ID.
@@ -44,7 +44,7 @@ Paths below are relative to their named repository.
 | `rpg-toolkit/rulebooks/dnd5e/encounter/{cast.go,outcome.go,roll_trace.go,activation.go}` | Bus-free neutral ordered cast/result and calculation records; no Bane selection or arithmetic. |
 | `rpg-toolkit/rulebooks/dnd5e/resolution/{action.go,cast.go,contest.go,save.go,death_save.go,strike.go,concentration.go}` | Whole-list preflight/fan-out, one payment, condition lookup, roll evaluation, natural-d20 settlement, and frozen calculation custody. |
 | `rpg-toolkit/rulebooks/dnd5e/session/{casts.go,cast.go,castoutcome.go,death_save.go,afford.go,offers.go,attack.go,react_post_roll.go,types.go,events.go}` | Offer/candidate/cost compilation, action/resource recheck, participant repository access, and opaque result projection. |
-| `rpg-api-protos/dnd5e/api/v1alpha1/{character.proto,choices.proto}`, `dnd5e/api/session/v1alpha1/{service.proto,types.proto,events.proto}` | Clean alpha target-list, cost/cap, resource retirement, qualified condition, and generic calculation wire. Generated artifacts remain CI-owned. |
+| `rpg-api-protos/dnd5e/api/v1alpha1/{character.proto,choices.proto}`, `dnd5e/api/session/v1alpha1/{service.proto,types.proto,events.proto}` | Non-breaking target-list, cost/cap, qualified condition and generic calculation additions; old target/slot wire fields stay deprecated. Generated artifacts remain CI-owned. |
 | `rpg-api/internal/handlers/dnd5e/v1alpha1/character/{handler.go,converters.go,spell_refs.go}` | Existing spell choice/ref projection only. |
 | `rpg-api/internal/handlers/dnd5e/session/v1alpha1/{cast.go,convert.go}` | Field-for-field target/cost/calculation/source projection only. |
 | `rpg-api/internal/integration/{character/creation_test.go,session/cast_acceptance_test.go,session/bard_inspiration_acceptance_test.go}` | Real Character/Session handler + Redis acceptance. |
@@ -173,7 +173,7 @@ type CastInput struct {
 
 `Cost` is projected from the same `SpendProfile` the door charges: one action component and, for Bane, one generic charges component labelled “Level 1 spell slot.” It is display data, not authorization. Execution always regenerates and revalidates the declaration.
 
-Proto source uses corresponding `min_targets`, `max_targets`, repeated generic cost components, and repeated `targets`. Implementers must inspect the current source branch and allocate/reserve tags there; this plan deliberately does not invent field numbers. Retired singular target and `spell_slots` names/numbers are reserved, not read or written.
+Proto source uses corresponding `min_targets`, `max_targets`, repeated generic cost components, and repeated `targets`. Keep existing singular `target` and `Character.spell_slots` fields at their original tags with `[deprecated = true]`; do not reserve a field that remains declared. The new target lists remain canonical inside toolkit; no old slot runtime state is restored. Verify actual field numbers from source and require normal `make breaking` success without an override label.
 
 ## Reusable role prompts
 
@@ -234,7 +234,7 @@ Rerun the scoped obsolete-symbol grep with `!`; expected: no stale matches. Revi
 - Modify: `rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto`
 - Modify: `rpg-api-protos/dnd5e/api/session/v1alpha1/events.proto`
 
-**Interfaces:** Produces the exact field names in Cross-task contracts: repeated cast targets; declaration min/max and generic cost; `RollSource.source_id`; `RollComponent.subtract_dice`; calculation on attack response, Struck, Missed, Saved, death-save response/event, and RollWindowOpened; qualified condition source ID. Retires and reserves singular targets and character `spell_slots`. No dual fields/readers. Kirk approved this deliberate alpha breaking change.
+**Interfaces:** Produces the exact field names in Cross-task contracts: repeated cast targets; declaration min/max and generic cost; `RollSource.source_id`; `RollComponent.subtract_dice`; calculation on attack response, Struck, Missed, Saved, death-save response/event, and RollWindowOpened; qualified condition source ID. Retains the singular targets and character `spell_slots` at their original tags as deprecated wire fields. Kirk requested a non-breaking schema update; this does not reintroduce runtime slot storage or a second toolkit target shape.
 
 - [ ] **Step 1: Verify the new contract is absent**
 
@@ -251,36 +251,27 @@ Expected: both commands pass, proving the current singular/source-less contract 
 
 - [ ] **Step 2: Edit proto source only**
 
-Use the next verified free tags in the checked-out feature branch; reserve retired names/numbers. Define generic cost as currency/needed/label, not a spell-slot enum or resource-key registry. Do not edit generated Go or TypeScript and do not invent fields beyond the approved contract.
+Use verified free tags for new fields. Preserve the old target/slot fields and their original numbers/types, marking them `[deprecated = true]`; no conflicting reservations. Define generic cost as currency/needed/label, not a spell-slot enum or resource-key registry. Do not edit generated Go or TypeScript or add fields beyond the approved contract.
 
-- [ ] **Step 3: Format/generate, then observe the intentional breaking report**
+- [ ] **Step 3: Format, generate, compile and prove schema compatibility**
 
 ```bash
 : "${PROTOS_WORKTREE:?parent must bind the verified protos issue worktree}"
 cd "$PROTOS_WORKTREE"
 buf format -w
 make test
-if make breaking; then
-  echo 'expected the approved alpha retirements to be reported' >&2
-  exit 1
-fi
+make compile-go
+make compile-ts
+make breaking
 ```
 
-Expected: formatting, lint, and generation checks succeed. `make breaking` is intentionally **not green**: inspect its report and confirm it contains only the approved singular-target and `spell_slots` retirements. Any unrelated breaking finding blocks the task. Rerun both `sed` pipelines without leading `!` to prove the new fields separately; do not misreport the breaking check as passing.
+Expected: every gate succeeds, including `make breaking`. Use the existing lockfile's `npm ci` setup if local TypeScript dependencies are absent. Verify the original three target/slot fields retain their tags/types and are deprecated, while the new ordered target fields remain. Any breaking finding blocks publication; no override is needed.
 
-- [ ] **Step 4: Commit, push, open the proto PR, and apply the approval label**
+- [ ] **Step 4: Commit, push and open/update the non-breaking proto PR**
 
-Commit the four proto files and push the wave branch. Open the real PR, apply the repository's explicit `breaking-change-approved` label, and verify it before relying on the intentional-breaking CI override:
+Commit the four proto files and push the wave branch after review. Open the real PR, or update existing PR #318. If the previous iteration carried `breaking-change-approved`, remove it after the compatible revision passes local gates and verify the label is absent. Confirm the current-head CI runs the normal breaking check.
 
-```bash
-: "${PROTOS_WORKTREE:?parent must bind the verified protos issue worktree}"
-cd "$PROTOS_WORKTREE"
-PROTO_PR=$(gh pr view --json number --jq .number)
-gh pr edit "$PROTO_PR" --add-label breaking-change-approved
-gh pr view "$PROTO_PR" --json labels --jq '.labels[].name' | grep -Fx breaking-change-approved
-```
-
-Wait for CI to publish the generated Go/TypeScript package versions; record the actual versions from CI output. Do not guess them and do not start API/web compilation against handwritten generated files. The label does not replace formatting/lint/generation checks; it only approves the reviewed intentional break.
+Wait for normal owner-authorized merge/CI to publish generated Go/TypeScript packages; record actual versions from CI output. Do not guess versions, merge automatically, or compile consumers against handwritten generated files.
 
 ---
 
@@ -885,10 +876,10 @@ The PR comment names exact reviewed heads, verdict, Critical/Important/Minor cou
 - [ ] Every new test was first observed failing for the intended missing behavior, then passing.
 - [ ] Run `git diff --check` in every changed repository.
 - [ ] Run `go test -race ./...` and `golangci-lint run ./...` in all four changed toolkit modules; run toolkit `make test-all` and `make lint-all`.
-- [ ] Run proto `buf format -w` and `make test` green; observe `make breaking` report the approved retirements, verify no unrelated break, and verify the PR has `breaking-change-approved`.
+- [ ] Run proto format, generation, Go/TS compilation and `make breaking` successfully; verify deprecated fields keep original tags/types and the PR has no `breaking-change-approved` override.
 - [ ] Run API `go test ./...`, named real integration acceptance, `make ci-check`, and `scripts/verify-release-pin.sh`.
 - [ ] Run focused web tests and `npm run ci-check`.
-- [ ] Search for forbidden residue: committed `replace`, `go.work`, dual target fields/readers, `SpellSlots`, missing source refs, sibling contributor-ID fields, Bane ref comparisons outside rulebook/conditions, session dice/bus code, UI dice-set/preset additions, invented tags/versions, primary-root `cd`, shared-primary overlays, or local-file links.
+- [ ] Search for forbidden residue: committed `replace`, `go.work`, duplicate canonical toolkit target representations, restored runtime `SpellSlots` (deprecated wire fields are allowed), missing source refs, sibling contributor-ID fields, Bane ref comparisons outside rulebook/conditions, session dice/bus code, UI dice-set/preset additions, invented tags/versions, primary-root `cd`, shared-primary overlays, or local-file links.
 - [ ] The code-local layer overview is linked from README entrypoints, reflects actual seam signatures and proving tests, and distinguishes any remaining proposed capabilities. The project overview is a design record, not a competing live policy store.
 - [ ] Diff scope contains only planned files; no dependency changed except generated proto/toolkit pins and no environment state is committed.
 - [ ] Independent review is bound to exact tested heads; local pseudo-version proof and eventual real-tag adoption are reported as separate stages.
