@@ -118,6 +118,22 @@ HealingReceivedEvent on the interaction bus        (features/second_wind.go:172)
 
 **EXISTS**, all of it. Cure Wounds does not build a heal; it points the cast door at one.
 
+Two facts sharpen that further.
+
+**The door is the topic, not a Second Wind private path.** `Character` exposes no
+`Heal`/`ApplyHealing`/`RestoreHP` writer at all — the HP move is the *private*
+`onHealingReceived`, reached only because the sheet keeper subscribed it
+(`character/sheet_keeper.go:161-166`). So healing enters exactly one way: publish
+`HealingReceivedEvent` on the interaction bus. **Two publishers already do**
+(`features/second_wind.go:173` and `Character.SpendHitDice`, `character.go:314`). A cast
+becoming the third is the established pattern, not a new mechanism.
+
+**The record layer is already cast-ready.** `RecordCastInput.Results` is
+`[]ActivationResult` (`encounter/cast.go:207`) — the *same* vocabulary that already contains
+`ResultHealingApplied` (`encounter/activation.go:27`). So the encounter beat for a cast would
+accept a healing result **today**; the only thing that cannot produce one is resolution's cast
+branch. That is a one-sided gap, which is the cheapest kind.
+
 ### What is NEW, and where
 
 Four touch points. Three of them are places that already name this gap in their own comments.
@@ -153,11 +169,12 @@ no supported 5e content does both, and permitting it would invent a rule.
 publisher shape — Second Wind's — and is what the collector is subscribed to.
 
 > **Named asymmetry, deliberately not resolved here.** Damage is applied bus-free by a direct
-> `target.ApplyDamage` call (`resolution/contest.go:355`); healing goes *through* the bus
-> because the sheet subscribes. This wave uses the bus path because the collector depends on
-> it. Whether resolution should eventually gain a symmetric `ApplyHealing` on the combatant
-> and publish the applied fact itself is a real question and a separate one. Naming it beats
-> quietly building a second healing path.
+> `target.ApplyDamage` call (`resolution/contest.go:355`); healing has **no writer to call** and
+> enters only by publishing on the bus. So this is not a choice between two available paths —
+> the bus is the door, and using it is the only honest option this wave has. Whether resolution
+> should eventually gain a symmetric `ApplyHealing` on the combatant, so both consequences are
+> applied the same way, is a real question and a separate one. Naming it beats quietly building
+> a second healing path.
 
 **1.3 — `deliveredConditions` gains a heal arm.** It refuses any effect kind but a condition,
 and says so plainly: *"a gateless cast delivers conditions"* (`resolution/action.go:387-408`).
@@ -269,7 +286,7 @@ Three touch points, and the third is the real work.
   a narrower rule — `Half` is permitted **only** when the profile declares damage and no
   delivered condition. A halved condition is meaningless, and permitting one would be an
   affordance with nothing behind it.
-- `resolution/contest.go:167` `validateConditionGate`: same widening, same restriction. (Its
+- `resolution/contest.go:179` (in `validateConditionGate`): same widening, same restriction. (Its
   name stops being accurate once a damage-only gate reaches it; rename to `validateGate`.)
 
 **2.2 — the success branch delivers.** Today it returns `Done` before any delivery exists, which
@@ -331,6 +348,37 @@ type RollCalculation struct {
 
 `ValidateRollCalculation` then checks `Total == sum/2` when `Halved`, and `Total == sum`
 otherwise — so the guard above keeps its meaning instead of being weakened.
+
+**2.4 — the halved damage must still answer what came back, or a concentrating target
+silently skips its concentration check.**
+
+This is the easiest thing in the whole wave to get wrong, because the success branch is being
+built from nothing and the requirement is invisible from the spell's own rules.
+
+Damage does not merely land. The failed-save path says what landed and then runs what came
+back — `reportDamage` publishes the `DamageTakenEvent` pointer fact, concentration's subscriber
+appends a `FollowUp` (a CON check at `max(10, damage/2)`), and `runFollowUps` executes each one
+as a nested `Request` before the condition is delivered (`resolution/contest.go:664-686`,
+`resolution/damagetaken.go:96,131`). The code names this as the extension point in so many
+words:
+
+```go
+// Say what landed, then answer what came back — the same two steps
+// the strike calls, in the same order, right after the apply. A
+// third damage source gets concentration by calling them too, which
+// is the whole reason they are named once.
+```
+
+**A new success-branch delivery is that third damage source.** Half damage from Dissonant
+Whispers is real damage: a wizard concentrating on a spell who *makes* the Wisdom save still
+takes 3d6/2 psychic and still owes a concentration check. If the half path applies damage
+without `reportDamage`/`runFollowUps`, that check never happens — and nothing fails. No test
+breaks, no error is raised, the damage is correct, and concentration quietly becomes
+unbreakable by any half-damage effect we ever ship.
+
+So the success branch reuses the *same* two steps in the same order, and the acceptance
+contract tests it directly (scene 10). `refuseFollowUpDamage` (`damagetaken.go:199`) already
+bounds recursion at exactly one, so nothing new is needed to make this safe.
 
 ### The content declaration
 
@@ -451,18 +499,25 @@ Through production entrypoints and persistence boundaries, not research models.
 9. **The trace explains the number.** On a successful save the recorded calculation's components
    sum to the pre-halving total, `Halved` is true, and `Total` is the halved value.
    `ValidateRollCalculation` refuses a calculation whose total matches neither rule.
-10. **The save is visible.** The client receives the WIS save's roll, DC and outcome, and the
+10. **Half damage still breaks concentration.** A target **concentrating on its own spell**
+    that **succeeds** on the Wisdom save takes the halved damage **and owes a Constitution
+    check** at `max(10, halved/2)`, resolved as a nested follow-up before the cast completes,
+    with the check recorded. This is the scene that fails if the success branch applies damage
+    without `reportDamage`/`runFollowUps` — and it is the only thing that would catch it, since
+    a missed follow-up raises no error and produces correct damage.
+11. **The save is visible.** The client receives the WIS save's roll, DC and outcome, and the
     damage beat, for both branches.
-11. **Regression.** Sacred Flame and Vicious Mockery still negate on success and record
-    identically. A `Half` gate on a profile with a delivered condition is refused.
+12. **Regression.** Sacred Flame and Vicious Mockery still negate on success and record
+    identically. A `Half` gate on a profile with a delivered condition is refused. A failed-save
+    concentration check still runs exactly as it does today.
 
 **Both**
 
-12. **Acquisition.** Real creation offers the supported level-1 spells, finalization stores the
+13. **Acquisition.** Real creation offers the supported level-1 spells, finalization stores the
     chosen refs in `KnownSpells`, and reload preserves them.
-13. **Slot lifecycle.** Each cast spends one level-1 use, persistence retains the spend, and
+14. **Slot lifecycle.** Each cast spends one level-1 use, persistence retains the spend, and
     LongRest restores two. No `Data.SpellSlots` state or proto projection remains.
-14. **Afford honesty.** After one cast, a refreshed Afford reports the spell unavailable for the
+15. **Afford honesty.** After one cast, a refreshed Afford reports the spell unavailable for the
     spent action, and a second same-turn cast is refused before mutation or RNG.
 
 ---
@@ -488,6 +543,15 @@ Through production entrypoints and persistence boundaries, not research models.
   ownership question of its own. Kirk's call is to defer it and record the cost.
 - **Adding a willing-creature target rule to prove the heal.** The candidate universe is not
   hostility-filtered today, so the heal arm can be proven without it. Recorded as a nicety.
+- **Other level-1 bard spells, and why not.** Checked so the next planning pass does not
+  re-derive it. **Heroism** and **False Life** need temporary hit points, and temp HP **does not
+  exist anywhere** — a repo-wide search across `rulebooks/dnd5e/` and `play/` finds one comment
+  in the dead legacy `effects/types.go:36` and no implementation; Heroism also needs per-turn
+  recurrence. **Hideous Laughter** and **Sleep** need `RecurrenceEndOfTurn` (declarable, refused)
+  and inert conditions with no behavior. **Thunderwave** and **Faerie Fire** need fan-out.
+  **Charm Person** needs directed disposition and the out-of-bubble cast. **Healing Word** is the
+  one genuinely cheap alternative — Cure Wounds' twin at 60 feet on a bonus action — and it stays
+  available as a near-free follow-on once the heal arm lands.
 
 ---
 
