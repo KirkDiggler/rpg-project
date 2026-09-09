@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Same Dungeon. Different Knowledge. — Kirk Gilmore</title>
+<meta name="description" content="A screenshot walkthrough of authoring a concealed room, placing a clue, and discovering it through two players' different views.">
+<link rel="icon" type="image/svg+xml" href="/rpg-project/favicon.svg">
+<link rel="apple-touch-icon" href="/rpg-project/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans+Condensed:wght@500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+:root { color-scheme: dark; --ground:#11141a; --ink:#f1f3f5; --muted:#c2c8d0; --faint:#9da7b4; --line:#343b46; --accent:#95a8e6; --text: min(100%, 40rem); }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--ground); color:var(--ink); font:1.1rem/1.75 "Source Serif 4",Georgia,serif; }
+a { color:var(--accent); text-underline-offset:4px; }
+a:hover { color:var(--ink); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:5px; }
+.skip { position:absolute; top:-100px; left:1rem; padding:.7rem; background:var(--ground); }
+.skip:focus { top:1rem; z-index:1; }
+.wrap { max-width:1232px; margin:auto; padding:0 2rem; }
+.draft { margin:1.3rem 0 0; padding:.65rem 0; border-block:1px solid var(--line); font:.75rem/1.5 "IBM Plex Mono",monospace; color:var(--faint); }
+header { width:var(--text); margin:4rem auto 3rem; }
+h1,h2 { font-family:"IBM Plex Sans Condensed","Arial Narrow",sans-serif; font-weight:600; text-wrap:balance; }
+h1 { font-size:clamp(3rem,6.5vw,5.4rem); line-height:1.02; letter-spacing:-.035em; margin:0 0 1.5rem; }
+h1 span { color:var(--accent); }
+.dek { color:var(--muted); font-size:1.2rem; line-height:1.6; margin:0; }
+.byline { font:.78rem/1.6 "IBM Plex Mono",monospace; color:var(--faint); margin-top:1.7rem; }
+.intro { width:var(--text); margin:0 auto 3.5rem; }
+p { margin:0 0 1.3rem; }
+section { padding:2.8rem 0 1rem; border-top:1px solid var(--line); }
+section > p, section > h2, section > hr { width:var(--text); margin-left:auto; margin-right:auto; }
+h2 { font-size:clamp(2rem,4vw,2.8rem); line-height:1.12; margin:0 auto 1.6rem; letter-spacing:-.015em; }
+code { font:.82em "IBM Plex Mono",monospace; color:var(--accent); overflow-wrap:anywhere; }
+figure { width:min(100%,var(--image-width)); margin:2.4rem auto 3rem; }
+.image-link { display:block; }
+img { display:block; width:100%; height:auto; border:1px solid var(--line); }
+figcaption { margin:.85rem 0 0; max-width:50rem; color:var(--muted); font:.8rem/1.65 "IBM Plex Mono",monospace; }
+.enlarge { display:block; width:fit-content; margin-top:.55rem; font-size:.72rem; }
+hr { border:0; border-top:1px solid var(--line); margin-top:2.5rem; margin-bottom:2rem; }
+footer { margin:2rem auto 3rem; width:var(--text); font:.75rem/1.7 "IBM Plex Mono",monospace; color:var(--faint); }
+@media(max-width:640px) {
+  body { font-size:1.02rem; }
+  .wrap { padding:0 1.1rem; }
+  header { margin:2.7rem auto 2.2rem; }
+  .dek { font-size:1.08rem; }
+  .draft { font-size:.67rem; }
+  section { padding-top:2.2rem; }
+  figure { margin:1.8rem auto 2.2rem; }
+}
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#walkthrough">Skip to the walkthrough</a>
+<div class="wrap">
+<p class="draft">Working draft · September 2026 · Standalone preview</p>
+<header>
+<h1>Same Dungeon.<br><span>Different Knowledge.</span></h1>
+<p class="dek">A current look at the multiplayer RPG platform I’m building for Discord communities.</p>
+<p class="byline">Kirk Gilmore · Rules, authoring tools, and a shared world</p>
+</header>
+<main id="walkthrough">
+<div class="intro"><p>At a tabletop, everyone might hear the DM describe something only one character noticed. Players are expected to separate what they heard from what their character knows. I wanted the game to make that distinction real.</p>
+<p>In my game, two people can stand in the same dungeon and see different things. A monster one character can see might be hidden from another. When it leaves sight, a shadow marks where that character last saw it—not where it is now. A concealed door can be known to one player and still look like a wall to their teammate.</p>
+<p>Here’s a small adventure built around that idea, using the authoring tools and gameplay available today.</p>
+</div>
+<section>
+<h2 id="give-the-creator-an-objective-not-a-prescribed-route">Give the creator an objective, not a prescribed route</h2>
+<p>The scenario is simple: retrieve an artifact and leave through the designated exit. I could put both beside the starting position and call it done. The objective would still work.</p>
+<p>Instead, I placed the artifact behind a concealed door.</p>
+<figure style="--image-width:489px">
+  <a class="image-link" href="images/scenario-config.webp" aria-label="Open full-size image: Scenario configuration selecting the artifact and the exit."><img src="images/scenario-config.webp" width="489" height="311" alt="Scenario configuration selecting the artifact and the exit." fetchpriority="high" decoding="async"></a>
+  <figcaption>The scenario asks which object to recover and which exit counts as escaping with it. <a class="enlarge" href="images/scenario-config.webp">View full size ↗</a></figcaption>
+</figure>
+<figure style="--image-width:1089px">
+  <a class="image-link" href="images/conceled-door-perception-30.webp" aria-label="Open full-size image: Dungeon canvas and concealed-door inspector, with a DC 30 Perception check."><img src="images/conceled-door-perception-30.webp" width="1089" height="551" alt="Dungeon canvas and concealed-door inspector, with a DC 30 Perception check." loading="lazy" decoding="async"></a>
+  <figcaption>I configured a DC 30 Perception check for finding the door directly. Then I authored another way to discover it. <a class="enlarge" href="images/conceled-door-perception-30.webp">View full size ↗</a></figcaption>
+</figure>
+</section>
+<section>
+<h2 id="put-the-knowledge-somewhere-in-the-dungeon">Put the knowledge somewhere in the dungeon</h2>
+<p>My prop builder lets me assemble assets into reusable compositions and place them in a dungeon. For this clue, I used an envelope-like prop, named “scroll” in the editor.</p>
+<p>I gave it a piece of intel called <code>treasure-1</code> and configured that intel to reveal the artifact’s door. The clue’s placement has three zombies guarding it; I removed them for the discovery demonstration below so the change in the two players’ views is easy to follow.</p>
+<figure style="--image-width:1058px">
+  <a class="image-link" href="images/room-secret.webp" aria-label="Open full-size image: The scroll composition placed in the dungeon, carrying treasure-1 and marked holdable."><img src="images/room-secret.webp" width="1058" height="523" alt="The scroll composition placed in the dungeon, carrying treasure-1 and marked holdable." loading="lazy" decoding="async"></a>
+  <figcaption>The creator chooses where the clue lives and what learning it reveals. This relationship is authored in the editor, not written as custom code for this dungeon. <a class="enlarge" href="images/room-secret.webp">View full size ↗</a></figcaption>
+</figure>
+</section>
+<section>
+<h2 id="finding-the-clue-changes-one-characters-knowledge">Finding the clue changes one character’s knowledge</h2>
+<p>These are two clients connected to the same session: Staniel on the left and the fighter on the right.</p>
+<figure style="--image-width:1160px">
+  <a class="image-link" href="images/found-secret.webp" aria-label="Open full-size image: Two player views before the clue is picked up; Staniel has the pickup action available."><img src="images/found-secret.webp" width="3435" height="1305" alt="Two player views before the clue is picked up; Staniel has the pickup action available." loading="lazy" decoding="async"></a>
+  <figcaption>Staniel reaches the clue. The pickup action is available, but the concealed doorway has not yet been revealed. <a class="enlarge" href="images/found-secret.webp">View full size ↗</a></figcaption>
+</figure>
+<figure style="--image-width:1160px">
+  <a class="image-link" href="images/found-door.webp" aria-label="Open full-size image: After Staniel picks up the clue, his view shows the door while the fighter’s view still shows a wall."><img src="images/found-door.webp" width="3435" height="1305" alt="After Staniel picks up the clue, his view shows the door while the fighter’s view still shows a wall." loading="lazy" decoding="async"></a>
+  <figcaption>The log records “Staniel holds the room secret.” His view now shows the door. His teammate’s still shows a wall. <a class="enlarge" href="images/found-door.webp">View full size ↗</a></figcaption>
+</figure>
+<p>The knowledge belongs to the character who acquired it. Being in the same party doesn’t automatically give both characters the same discoveries.</p>
+</section>
+<section>
+<h2 id="opening-the-door-changes-what-both-can-see">Opening the door changes what both can see</h2>
+<figure style="--image-width:1160px">
+  <a class="image-link" href="images/open-door.webp" aria-label="Open full-size image: Staniel opens the discovered door, exposing the passage in both players’ views."><img src="images/open-door.webp" width="3435" height="1305" alt="Staniel opens the discovered door, exposing the passage in both players’ views." loading="lazy" decoding="async"></a>
+  <figcaption>Staniel opens the door. In this scene, both characters can now see the passage. <a class="enlarge" href="images/open-door.webp">View full size ↗</a></figcaption>
+</figure>
+<p>That’s the distinction I wanted: finding the clue changes what one character knows. Opening the door changes the world they’re both looking at.</p>
+<p>The scenario still asks for the same thing—recover the artifact and escape. The creator decides what stands between the players and that goal. This walkthrough stops at opening the passage; it demonstrates discovery, not the completed victory condition.</p>
+</section>
+<section>
+<h2 id="still-gathered-around-the-same-dice">Still gathered around the same dice</h2>
+<p>Separate knowledge doesn’t mean separate experiences. Attack dice roll in the dungeon itself, where the players can watch them together.</p>
+<figure style="--image-width:1093px">
+  <a class="image-link" href="images/rolling-dice.webp" aria-label="Open full-size image: A blue twenty-sided attack die rolling on the dungeon floor beside the party."><img src="images/rolling-dice.webp" width="1093" height="861" alt="A blue twenty-sided attack die rolling on the dungeon floor beside the party." loading="lazy" decoding="async"></a>
+  <figcaption>An attack roll during multiplayer play. I wanted rolling the dice to feel like something happening at the table, not just a number appearing in a panel. <a class="enlarge" href="images/rolling-dice.webp">View full size ↗</a></figcaption>
+</figure>
+</section>
+<section>
+<h2 id="how-im-building-it">How I’m building it</h2>
+<p>I use agentic AI throughout development, but my starting point is the behavior I want someone to experience. Here, it’s two players learning different things in one shared world.</p>
+<p>From there, I work through ownership: the toolkit owns rules and knowledge, the API coordinates state and transport, and the client presents the player’s view and sends their intent. I delegate scoped implementation, inspect the code and architectural boundaries, use independent reviews and automated tests, and return to the game to check what actually happens.</p>
+<p>Professional Synty assets removed a major visual-production bottleneck. The recent work on composable play and world systems has opened up the other side: places for exploration, knowledge, and relationships to belong alongside combat. This small scenario is one visible result.</p>
+<p>That’s why I’m building the tools as well as the game. I want a streamer or moderator to make an adventure for their community—not just rearrange the adventure I thought of first.</p>
+<hr />
+<p><a href="https://kirkdiggler.github.io/rpg-project/">Read the architectural journey: Where Everything Meets</a> · <a href="https://github.com/KirkDiggler/rpg-toolkit">Explore rpg-toolkit</a></p>
+<p><em>Screenshots are from the current development build. Game artwork uses purchased Synty assets; the composition tools, dungeon authoring, and gameplay systems are part of this project.</em></p>
+</section>
+</main>
+<footer>This working draft is public at its direct URL but is not linked from the main story.</footer>
+</div>
+</body>
+</html>
