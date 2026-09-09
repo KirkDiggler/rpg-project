@@ -10,6 +10,8 @@
 
 **Spec:** `ideas/spells/bane/design.md`
 
+**Start with the layer map:** [Composable play — responsibilities and seams](overview.md). It explains why each task belongs in its layer before describing how to implement it.
+
 ## Global constraints
 
 - Implement exactly the 16 acceptance scenes in the design; every test named below is future acceptance and is not claimed to pass today.
@@ -34,7 +36,7 @@ Paths below are relative to their named repository.
 
 | Repository / files | Responsibility |
 |---|---|
-| `rpg-toolkit/rulebooks/dnd5e/{README.md,character/CLAUDE.md}`, `docs/architecture/components/rulebook-dnd5e.md`, `docs/how-to/add-a-mechanic.md` | Narrowly refresh stale ownership/API guidance before implementation; do not rewrite ADR history. |
+| `rpg-toolkit/rulebooks/dnd5e/{README.md,overview.md,resolution/README.md,character/CLAUDE.md}`, `docs/architecture/components/rulebook-dnd5e.md`, `docs/how-to/add-a-mechanic.md` | Publish one colocated layer overview, link it from README entrypoints, and narrowly refresh stale ownership/API guidance. Do not duplicate package contracts or rewrite ADR history. |
 | `rpg-toolkit/rulebooks/dnd5e/resources/keys.go`, `character/{data.go,character.go,draft.go,load.go,ledger_test.go,known_spells_test.go,long_rest_test.go,character_test.go}`, `character/choices/{requirements.go,requirements_detail_test.go,class_comprehensive_test.go}` | Canonical level-1 recoverable resource, removal of duplicate `SpellSlots`, and Bane-only Bard acquisition. Existing `classes/data.go` and `choice_ids.go` are read-only inputs. |
 | `rpg-toolkit/rulebooks/dnd5e/events/{events.go,damage_taken.go,roll_trace.go}`, `conditions/{baned.go,loader.go,concentrating.go,display.go}`, `refs/conditions.go`, `combat/actions/cast.go`, `character/{sheet_keeper.go,character.go}`, `monster/{monster.go,load.go}` | Task 4 vocabulary and behavior: canonical source metadata and contribution description, `refs.Conditions.Baned`, loader plus `conditions.DISPLAY` registration, qualified matching, recipient-owned oldest selection, and per-profile owner timing. |
 | `rpg-toolkit/rulebooks/dnd5e/events/roll_trace.go`, `saves/{saves.go,death_saves.go}`, `refs/actions.go`, `spells/{cast.go,cast_test.go}`, `combat/actions/{cast.go,cast_test.go}` | Task 5 calculation/evaluation plus the complete Bane cast definition, action+pool cost, condition effect, and generic min/max target profile. Existing `spells/data.go` and `refs/spells.go` remain the factual Bane identity/catalog. |
@@ -51,7 +53,20 @@ Paths below are relative to their named repository.
 
 ## Cross-task contracts
 
-These are concrete implementation proposals under the approved behavior. They are the single spelling later tasks consume; a task may adjust private helpers but must preserve these public facts.
+These are concrete implementation proposals under the approved behavior. They are the single spelling later tasks consume; a task may adjust private helpers but must preserve these public facts. New or changed operation seams use named inputs, not positional scalar lists or general-purpose context bags.
+
+```go
+// rulebooks/dnd5e/spells — changed compiler entry, introduced in Task 5
+// SpellSaveDC is a difficulty class, not a spell/slot/character level.
+type CastDefinitionInput struct {
+    Spell       Spell
+    SpellSaveDC int
+}
+
+func CastDefinition(input CastDefinitionInput) *actions.Definition
+```
+
+Keep the existing definition result and unsupported-content nil semantics. Add no unused future fields. Task 8 adapts the session caller to this input when it adopts the root provider.
 
 ```go
 // rulebooks/dnd5e/events
@@ -174,9 +189,11 @@ Keep one role-task prompt per task; do not turn these references into a broad po
 
 ---
 
-### Task 1: Align the four stale toolkit guides
+### Task 1: Publish the layer overview and align the scoped guides
 
 **Files:**
+- Create: `rpg-toolkit/rulebooks/dnd5e/overview.md`
+- Modify: `rpg-toolkit/rulebooks/dnd5e/resolution/README.md`
 - Modify: `rpg-toolkit/rulebooks/dnd5e/README.md`
 - Modify: `rpg-toolkit/docs/architecture/components/rulebook-dnd5e.md`
 - Modify: `rpg-toolkit/rulebooks/dnd5e/character/CLAUDE.md`
@@ -199,11 +216,13 @@ Expected: the mapped obsolete symbols/claims are present. Review the changed exa
 
 - [ ] **Step 2: Make only the mapped pointer/example corrections**
 
-Replace old composition and signature examples; do not rewrite historical rationale, valid resolution-local `gamectx` usage, or publication policy.
+Use this PR's `overview.md` as the reviewed seed for `rulebooks/dnd5e/overview.md`. Link the code-local overview beside the rulebook README and from `resolution/README.md`; use repository-local code/test links there. Keep existing versus proposed capabilities explicit until the corresponding implementation lands, then reconcile diagrams and seam cards with the actual code/tests. The overview explains the layer, its responsibilities, why mechanics belong there, and how future mechanics fit; Bane is only the worked example. Do not maintain an independent runtime-policy copy in rpg-project or copy role charters.
+
+Replace old composition and signature examples in the scoped guides; do not rewrite historical rationale, valid resolution-local `gamectx` usage, or publication policy.
 
 - [ ] **Step 3: Verify GREEN and commit**
 
-Rerun the scoped obsolete-symbol grep with `!`; expected: no stale matches. Review the edited examples against their mapped source interfaces, run `git diff --check`, then commit only these four files with `docs: align dnd5e mechanic guidance`.
+Rerun the scoped obsolete-symbol grep with `!`; expected: no stale matches. Review the edited examples against their mapped source interfaces, run `git diff --check`, then commit only the listed overview/guidance files with `docs: explain composable dnd5e layers and seams`.
 
 ---
 
@@ -401,7 +420,10 @@ Subtract only positive `Dice.Subtotal`; continue adding signed fixed modifiers. 
 - [ ] **Step 4: Write the complete Bane definition RED test**
 
 ```go
-definition := spells.CastDefinition(spells.Bane, 13)
+definition := spells.CastDefinition(spells.CastDefinitionInput{
+    Spell:       spells.Bane,
+    SpellSaveDC: 13,
+})
 require.NotNil(t, definition)
 require.NotNil(t, definition.Cost)
 require.NotNil(t, definition.Cast)
@@ -419,7 +441,7 @@ Use `coreCombat` for `github.com/KirkDiggler/rpg-toolkit/core/combat`; the exist
 
 - [ ] **Step 5: Enable Bane using only now-existing contracts**
 
-Compile the complete Bane definition and concrete `SpendProfile` using Task 3's resource and Task 4's condition/ref/timing types. Keep cantrip definitions action-only. Add atomic `CanPay`/`Pay` tests proving either action or pool shortage preserves both balances; do not introduce any new type consumed by an earlier task.
+Introduce `CastDefinitionInput` and adapt spell-builder tests to named `Spell`/`SpellSaveDC` fields. Compile the complete Bane definition and concrete `SpendProfile` using Task 3's resource and Task 4's condition/ref/timing types. Keep cantrip definitions action-only. Add atomic `CanPay`/`Pay` tests proving either action or pool shortage preserves both balances; do not introduce any new type consumed by an earlier task.
 
 - [ ] **Step 6: Run GREEN, commit, and push the coherent root provider**
 
@@ -523,7 +545,7 @@ Pause after a Bane-adjusted attack, serialize/reload, then answer the actual pub
 
 - [ ] **Step 7: Implement roll custody, run GREEN, then commit pins with code**
 
-Resolution asks the target owner for descriptions before RNG, evaluates generically, and stores the calculation before the post-roll pose. Run the focused suite, then `go test -race ./...` and `golangci-lint run ./...`. Commit `resolution/go.mod`, `resolution/go.sum`, and the adapting resolution code/tests as one green consumer unit; then push the toolkit wave branch. Do not commit an isolated pseudo-pin.
+Resolution asks the current roll's participant owner for descriptions when the roll step executes, after prior mutations such as old-concentration removal—not during whole-cast preflight. Add a recast regression proving the ended source contributes no cached die to the new save, while any other surviving source remains eligible. Evaluate selected descriptions through exactly one chain path and store the settled calculation before the post-roll pose; do not also add the same contribution through a second subscriber path. Run the focused suite, then `go test -race ./...` and `golangci-lint run ./...`. Commit `resolution/go.mod`, `resolution/go.sum`, and the adapting resolution code/tests as one green consumer unit; then push the toolkit wave branch. Do not commit an isolated pseudo-pin.
 
 ---
 
@@ -574,7 +596,7 @@ Expected: FAIL on cantrip-only offers, singular targets, and missing calculation
 
 - [ ] **Step 5: Implement opaque compilation/projection**
 
-Use `Definition.Cost`, `KnownSpells`, and current candidate/reach seams. Regenerate the selected offer before execution. Copy calculations and addresses field for field; add no Bane ref comparisons.
+Call `spells.CastDefinition` with `spells.CastDefinitionInput{Spell: spells.Spell(ref.ID), SpellSaveDC: dc}`. Use `Definition.Cost`, `KnownSpells`, and current candidate/reach seams. Regenerate the selected offer before execution. Copy calculations and addresses field for field; add no Bane ref comparisons.
 
 - [ ] **Step 6: Run GREEN, commit pins with code, and push**
 
@@ -867,5 +889,6 @@ The PR comment names exact reviewed heads, verdict, Critical/Important/Minor cou
 - [ ] Run API `go test ./...`, named real integration acceptance, `make ci-check`, and `scripts/verify-release-pin.sh`.
 - [ ] Run focused web tests and `npm run ci-check`.
 - [ ] Search for forbidden residue: committed `replace`, `go.work`, dual target fields/readers, `SpellSlots`, missing source refs, sibling contributor-ID fields, Bane ref comparisons outside rulebook/conditions, session dice/bus code, UI dice-set/preset additions, invented tags/versions, primary-root `cd`, shared-primary overlays, or local-file links.
+- [ ] The code-local layer overview is linked from README entrypoints, reflects actual seam signatures and proving tests, and distinguishes any remaining proposed capabilities. The project overview is a design record, not a competing live policy store.
 - [ ] Diff scope contains only planned files; no dependency changed except generated proto/toolkit pins and no environment state is committed.
 - [ ] Independent review is bound to exact tested heads; local pseudo-version proof and eventual real-tag adoption are reported as separate stages.

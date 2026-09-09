@@ -6,6 +6,9 @@
 **Related journey:** [rpg-project#243](https://github.com/KirkDiggler/rpg-project/issues/243).
 **Research:** [rpg-toolkit#1593](https://github.com/KirkDiggler/rpg-toolkit/issues/1593) and [#1595](https://github.com/KirkDiggler/rpg-toolkit/issues/1595), both In Review on Project 19.
 
+Start with [the layer overview](overview.md) for responsibilities, named seams, and lifecycle diagrams.
+It explains the composable layer Bane joins; this document specifies the Bane behavior within it.
+
 This document is the approved behavior and architecture for the Bane slice. It does not claim that
 production code exists, that production tests pass, or that a release has occurred.
 
@@ -148,6 +151,10 @@ legacy reader, dual writer, or fallback. This is an intentional pre-playtest con
 a request to wipe any environment.
 
 ### Rulebook-owned authorization and price
+
+The compiler uses a named `CastDefinitionInput` with `Spell` and `SpellSaveDC` fields. The DC is not a
+spell, slot, or character level. No unused future fields, target list, roller, bus, or whole character
+are added to this compilation input; execution has its own resolution input.
 
 `spells.CastDefinition` continues to return nil for content this build cannot cast. It now returns a
 complete cost as well as the profile for supported player-cast content. Session intersects
@@ -355,9 +362,14 @@ replaces `Source.Ref`. `SubtractDice` applies only to `Dice.Subtotal`; an option
 same component remains signed and additive. Physical original/final faces, rerolls, kept indices, and
 subtotal are always positive. Existing calculations default to additive.
 
+Read the recipient's current attached condition state when the roll step executes, after earlier
+interaction mutations such as ending old concentration. Do not cache contribution selection during
+whole-cast preflight. The ordering convention is preserved by serialization; the input is not a stale
+repository snapshot.
+
 The authoritative order is:
 
-1. select applicable conditions from recipient-owned persisted order;
+1. select applicable conditions from the recipient's current application order;
 2. roll the normal one/two d20 pool and apply existing advantage/disadvantage keep policy;
 3. roll each selected contribution once in selected order;
 4. build and validate one `RollCalculation`;
