@@ -1,7 +1,7 @@
 # One shared d20, a later choice, then an outcome
 
-Status: proposed contract; player-facing behavior approved in conversation,
-implementation awaits this design's review.
+Status: design approved by Kirk in conversation. Implementation checkpoints are
+in [plan.md](plan.md); runtime delivery is not yet complete.
 
 Issue: #410. Parent: #289 (Roll Dice Together).
 Related: rpg-dnd5e-web#964, #996 / PR #1003; #408 (both d20 faces).
@@ -16,10 +16,13 @@ it does not request another d20 or keep its target artificially standing.
 
 ## Verified current code
 
-- Toolkit `session/attack.go:poseAttackWindow` persists a private RollWindowOpened
-  and returns roll/total plus a provider presentation ID. Resolution is paused
+- Toolkit `session/attack.go:poseAttackWindow` persists RollWindowOpened and
+  returns roll/total plus a provider presentation ID. Resolution is paused
   before its final outcome. `answerPostRoll` records Struck/Missed later, reusing
-  the presentation ID at a different Story sequence.
+  the presentation ID at a different Story sequence. Planning verified that the
+  current window payload is broadcast to the full roster and filtered in the
+  web; the actor-private wire delivery specified below is a change, not an
+  existing invariant.
 - Protos `session/presentation/v1alpha1/service.proto:DiceThrowPlan` carries
   session, bound roller, presentation ID, attempt, collider fingerprint and
   physical states. **It does not carry the authoritative d20 result.**
@@ -93,7 +96,8 @@ when inspiration changes the final total.
   audience policy, including the actor. Do not widen unrelated perception rules.
   The two-player inspiration case must supply both clients with the same roll
   payload even though their Event.seq values differ.
-- RollWindowOpened remains actor-private. AttackRolled must not expose whether
+- RollWindowOpened becomes actor-private on the wire, matching its existing
+  actor-only controls. AttackRolled must not expose whether
   that actor possesses a spendable offer. The private offer cannot be actionable
   on a witness client.
 - **Protos** transcribe these typed facts. **API** translates them without adding
