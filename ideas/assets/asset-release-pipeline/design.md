@@ -1,6 +1,6 @@
 # Palette-aware, Resumable Asset Release Design
 
-Status: approved direction for detailed human review; implementation is not complete
+Status: human approved; planning complete; implementation is not complete
 
 Journey: [rpg-project#365](https://github.com/KirkDiggler/rpg-project/issues/365)
 
