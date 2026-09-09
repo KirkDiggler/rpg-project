@@ -1,7 +1,9 @@
 # Cure Wounds and Dissonant Whispers — the heal arm, and half on a save
 
 **Date:** 2026-09-09
-**Status:** Proposed. No implementation has started; no production test is claimed to pass.
+**Status:** **HELD until Bane lands** — Kirk's call, 2026-09-09. The design is liked and settled in
+shape; implementation does not begin until Bane's slot is real, because both spells are paid for
+with it. No implementation has started; no production test is claimed to pass.
 **Umbrella:** `ideas/spells/` — levels 1–3, and the choices at 3 made real.
 **Journey:** [rpg-project#243](https://github.com/KirkDiggler/rpg-project/issues/243) — *Cast a Spell in Play*.
 **Sibling slice:** [Bane, PR #409](https://github.com/KirkDiggler/rpg-project/pull/409) — approved, not yet implemented.
@@ -95,6 +97,10 @@ stands in the fight again. The client shows the slot as the price and the heal w
 ### Why this is the cheapest possible next spell
 
 A gateless cast is **already an activation**, and an activation **already heals**.
+
+Kirk's read, confirming the shape, 2026-09-09: *"we have second wind in place and it carries the
+same shape just has a target."* That is the whole delta in one sentence — Cure Wounds is Second
+Wind with a target and a price.
 
 `newGatelessCast` does not build a machine of its own — it returns
 `NewActivation(&ActivationInput{…, cast: &preparedCast{…}})` (`resolution/action.go:495-527`).
@@ -438,6 +444,18 @@ First customers when it lands: Dissonant Whispers' flee, Thunderwave's push, Tho
 Command's approach. It is a primitive with four customers, which is why it deserves its own
 slice rather than a corner of this one.
 
+**And the destination is deliberately not set.** Kirk, 2026-09-09: *"dissonant whispers will bring
+in the monster movement. if not then it could be command that does it and our work can ride that or
+go a new path because we are not setting the destination."*
+
+So this is not "Dissonant Whispers minus a feature, to be completed later by Dissonant Whispers."
+The move arrives with **whichever spell first genuinely needs it** — this one on a second pass,
+Command, or something not yet named — and when it does, this spell rides the shape that landed
+rather than the shape this document guessed at. Writing the requirement down now and picking its
+owner later is the point, not a compromise. That is also why §2.4's follow-up rule is stated in
+terms of *any* new damage delivery rather than in terms of Dissonant Whispers: the rule outlives
+the spell that discovered it.
+
 ---
 
 ## 3. One small correction this wave should carry
@@ -543,15 +561,18 @@ Through production entrypoints and persistence boundaries, not research models.
   ownership question of its own. Kirk's call is to defer it and record the cost.
 - **Adding a willing-creature target rule to prove the heal.** The candidate universe is not
   hostility-filtered today, so the heal arm can be proven without it. Recorded as a nicety.
-- **Other level-1 bard spells, and why not.** Checked so the next planning pass does not
-  re-derive it. **Heroism** and **False Life** need temporary hit points, and temp HP **does not
-  exist anywhere** — a repo-wide search across `rulebooks/dnd5e/` and `play/` finds one comment
-  in the dead legacy `effects/types.go:36` and no implementation; Heroism also needs per-turn
-  recurrence. **Hideous Laughter** and **Sleep** need `RecurrenceEndOfTurn` (declarable, refused)
-  and inert conditions with no behavior. **Thunderwave** and **Faerie Fire** need fan-out.
-  **Charm Person** needs directed disposition and the out-of-bubble cast. **Healing Word** is the
-  one genuinely cheap alternative — Cure Wounds' twin at 60 feet on a bonus action — and it stays
-  available as a near-free follow-on once the heal arm lands.
+- **Other level-1 bard spells, and why not *this* wave.** Checked so the next planning pass does
+  not re-derive it, and stated as cost rather than as blockage. **Heroism** and **False Life**
+  would each need temporary hit points, which do not exist anywhere in `rulebooks/dnd5e/` or
+  `play/` — a repo-wide search finds one comment in the dead legacy `effects/types.go:36` and no
+  implementation. **That absence is correct, not a gap.** Temp HP arrives with the first spell
+  that genuinely needs it, and that spell is its use case; we do not build a mechanism because we
+  expect to want it. Heroism would additionally need per-turn recurrence. **Hideous Laughter** and
+  **Sleep** need `RecurrenceEndOfTurn` (declarable, refused) and conditions that are currently
+  names without behavior. **Thunderwave** and **Faerie Fire** need fan-out. **Charm Person** needs
+  directed disposition and the out-of-bubble cast. **Healing Word** is the one genuinely cheap
+  alternative — Cure Wounds' twin at 60 feet on a bonus action — and it stays available as a
+  near-free follow-on once the heal arm lands.
 
 ---
 
@@ -559,6 +580,8 @@ Through production entrypoints and persistence boundaries, not research models.
 
 Develop outside-in, merge inside-out; one branch per repo per wave.
 
+0. **HELD until Bane lands.** Kirk's call, 2026-09-09. This design is settled in shape and waits;
+   it is not a queue-jumper. The PR stays open as the tracking surface.
 1. **Gated on one Bane task** — the `SpellSlotLevel1` pool charged at the door. Until it lands,
    neither spell can be paid for honestly.
 2. **Dissonant Whispers is additionally gated on Bane's `RollCalculation` work**, so the trace
