@@ -64,11 +64,10 @@ The Lab supplies an editable `batchId` field plus an explicit collision-safe Gen
 
 ### Versioned palette-selection descriptor
 
-New palette-aware review/provider exports use schema version 2 and add a required nested `paletteSelection` for each selected alternative:
+New palette-aware review/provider exports use schema version 2 at the document level, retaining the batch envelope and adding a required nested `paletteSelection` per palette-aware entry. The following is an illustrative entry fragment, not a complete export; bracketed hashes/paths describe fields rather than literal values:
 
 ```json
 {
-  "schemaVersion": 2,
   "source": {
     "packSlug": "polygon-dark-fortress",
     "packVersion": "v3",
@@ -106,14 +105,15 @@ Proposed command surface:
 ```bash
 python3 scripts/world_asset_release.py review-prepare --workspace dark-fortress --match 'SourceFiles/DarkFortress/FBX/SM_Prop_*.fbx'
 python3 scripts/world_asset_release.py start --workspace dark-fortress --ready ~/asset-releases/tiny-dark-fortress-ready.json
-python3 scripts/world_asset_release.py status --workspace dark-fortress
-python3 scripts/world_asset_release.py resume --workspace dark-fortress
+python3 scripts/world_asset_release.py status --workspace dark-fortress --batch tiny-dark-fortress
+python3 scripts/world_asset_release.py resume --workspace dark-fortress --batch tiny-dark-fortress
 ```
 
 `review-prepare` is optional and separate; it may prepare the ignored queue but cannot start a release.
 `start` freezes and hashes the existing Ready export, obtains a per-batch execution lock, creates/reconciles issue worktrees, invokes stage/validate/apply/check, prepares scripted evidence, and—when workspace policy requests it—commits, pushes, and opens the Provider PR.
 Commit and PR bodies include Team/operator attribution, exact inputs, outputs, warnings, commands, and links.
 `resume` advances only the next verified checkpoint; there is no daemon, scheduled polling, auto-approval, or auto-merge.
+`start` takes the batch identity from the frozen Ready JSON; `status` and `resume` explicitly select that batch and never guess which export is active. The example file above carries `batchId: tiny-dark-fortress`.
 
 A schema-versioned receipt and append-only checkpoint journal live under the configured local receipt base, outside the tracked provider and Web trees.
 They record workflow/tool versions, frozen Ready hash, selected source/palette/config/atlas/GLB hashes, warnings and acceptance binding, stage/apply/check results, commits, remote heads, PR links, merge commits, Web catalog hash, and proof outputs.
@@ -131,6 +131,7 @@ Human decisions remain: visual review and Ready, acceptance of each new warning,
 Normal validators, regression checks, browser/visual proof capture, and concise PR/evidence summaries are scripted; premium-agent availability is not a prerequisite.
 Warning approval binds the exact sorted warning set, Ready/input hashes, selected artifact hashes, stage hash, and validator versions.
 Any warning delta reopens the gate; there is no blanket `accept-all`, count threshold, or hard-limit bypass.
+When warning approval is needed, status prints the affected assets, reasons, and an exact approval command: `resume --workspace NAME --batch ID --approve-warnings DIGEST`. The digest identifies the complete warning/input/artifact binding above; the runner revalidates it before apply and records the operator's explicit approval.
 Human documentation includes a concise worked outcome with commands, receipt link, Provider/Web PR links, merge commits, warnings, and visible result—not hundreds of shell assertions.
 
 ## Retry and checkpoint rules
@@ -181,7 +182,11 @@ The worked human doc records receipt and both PR links plus the visible accepted
 - Multi-hex occupancy or work from paused #400/#975.
 - Mutation of canonical checkouts, licensed source/cache bytes, legacy schema-v1 recipes, default palette-C bytes, historical weapon seals, or thumbnail identity.
 
-## Genuine remaining decisions
+## Initial operating defaults
 
-Detailed review still needs to choose the concrete workspace/receipt file locations and retention window, command flag names for PR automation policy, and the exact issue-branch naming template.
-Those operational names do not reopen the approved trust boundary, palette identity, two human merge gates, or retry semantics above.
+- Named workspace config: `${XDG_CONFIG_HOME:-$HOME/.config}/rpg-game-assets/workspaces/NAME.json`; explicitly created by a setup command, never silently installed globally. It stores paths and allowed repositories, not credentials.
+- Local evidence/journal: `${XDG_STATE_HOME:-$HOME/.local/state}/rpg-game-assets/releases/WORKSPACE/BATCH_ID/`. No automatic expiry or deletion; explicit cleanup is separate from release execution and retains the final receipt/PR links.
+- Workspace `publicationMode: pr` enables the requested commit/push/PR automation. An explicit `--local-only` stops before push/PR and cannot change policy for later invocations. Both modes prohibit automatic merge.
+- Assets branch: `asset/ISSUE-world-assets-BATCH_ID`; Web branch: `asset/ISSUE-world-assets-BATCH_ID` in its separate repository. Names are validated, existing branches are reconciled, and unrelated branches are never reused or overwritten.
+
+These are technical defaults for detailed review, not additional product decisions or a broader configuration framework.
