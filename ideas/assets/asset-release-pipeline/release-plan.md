@@ -84,6 +84,7 @@ Expected: imports fail because the state/command modules do not exist.
   "teamCharter": "docs/teams/roles/assets/prompt.md",
   "assets": {"root": "/absolute/rpg-game-assets", "repo": "KirkDiggler/rpg-game-assets", "remote": "origin", "base": "main"},
   "web": {"root": "/absolute/rpg-dnd5e-web", "repo": "KirkDiggler/rpg-dnd5e-web", "remote": "origin", "base": "dev"},
+  "reviewWeb": {"root": "/absolute/worktrees/review-lab", "mode": "detached-review-only"},
   "worktreeBase": "/absolute/worktrees/asset-releases",
   "stageBase": "/absolute/state/asset-release-stages",
   "receiptBase": "/absolute/state/rpg-game-assets/releases",
@@ -93,7 +94,7 @@ Expected: imports fail because the state/command modules do not exist.
 }
 ```
 
-The cache registration digest binds real root identity, pack/version, checked manifest hashes, and pack-config hash. Source is optional for normal runner use and is used only by `review-prepare`. Setup stores no credentials.
+The cache registration digest binds real root identity, pack/version, checked manifest hashes, and pack-config hash. Source is optional for normal runner use and is used only by `review-prepare`. Setup stores no credentials. The sample absolute paths describe user-supplied setup values, not hard-coded defaults. `reviewWeb.root` is a separately registered, reusable clean Lab worktree (setup may create it detached from the configured Web base); it receives ignored queue/dependency files only. It is neither canonical `web.root` nor the per-batch Web publication worktree. Setup validates those roots separately and never resets an existing Lab worktree silently.
 - [ ] **Step 4: Implement evidence-only state and safe commands**
 Use `fcntl.flock`: exclusive for every mutating command and shared for local status reads. Store immutable Ready copies at `inputs/revision-NNNN.json`; fsync copy and directory, then rehash. Journal events are canonical one-line JSON with sequence, previous hash, event hash, RFC-3339 observation time, workflow version, revision number, and payload; command events include exact argv, cwd, tool version, exit code, and output hashes. Mutating workflows rewrite `receipt.json`/`summary.md` only as deterministic projections of verified events and live observations; `status` never rewrites them, and neither file can create a checkpoint.
 Probe and record `python`, `git --version`, `gh --version`, `node --version`, `npm --version`, and `blender --version`. Invoke every process as an argv list with `shell=False`, validated cwd, closed stdin unless supplied, captured stdout/stderr, and a minimal explicit environment. Do not concatenate refs, paths, titles, or warning digests into shell text.
@@ -144,17 +145,17 @@ def test_warning_delta_requires_exact_digest_before_apply(self):
     self.assertIn("resume --workspace ws --batch batch --approve-warnings", stop.command)
     self.assertFalse(self.commands.called_with("promote_world_assets.py", "apply"))
     with self.assertRaisesRegex(ValueError, "warning approval digest"):
-        workflow.resume(approve_warnings="0" * 64)
+        workflow.resume(self.batch_id, approve_warnings="0" * 64)
 def test_interrupted_apply_reconciles_only_known_prestate_or_intended_bytes(self):
     self.fixture.install_mixed_known_apply_state()
-    workflow.resume()
+    workflow.resume(self.batch_id)
     self.assertTrue(self.fixture.every_target_matches_stage())
     self.fixture.corrupt_one_target()
     with self.assertRaisesRegex(ValueError, "unknown canonical target state"):
-        workflow.resume()
+        workflow.resume(self.batch_id)
 ```
 
-Also prove start rejects non-Ready/empty/malformed input, freezes before mutation, takes batch ID only from JSON, never calls prepare/reset, reuses an exact stage, restages only through the engine, and detects input/descriptor/cache/config/tool drift.
+Also prove start rejects review-progress exports and empty/malformed provider recipes, freezes before mutation, takes batch ID only from JSON, never calls prepare/reset, reuses an exact stage, restages only through the engine, and detects input/descriptor/cache/config/tool drift. Ready-only provenance is the operator's exported declaration; the runner validates recipe/source eligibility, not browser decision fields that provider JSON intentionally omits.
 - [ ] **Step 2: Run workflow tests red**
 
 ```bash
@@ -166,7 +167,7 @@ Expected: failure because stage reports and workflow transitions do not exist.
 Extend promotion results with sorted install/removal targets and records `{path,state,sizeBytes,sha256}`. `stage_seal` calls current validation, hashes the validated release targets, records recipe/catalog/inventory/mesh/live-#117 pointer hashes, and extracts warning rows from staged mesh stats. Add `--result-json PATH` to promotion commands for the runner; ordinary CLI behavior remains compatible.
 The runner invokes, in order, existing `stage`, `validate`, `apply`, and canonical `check` argv. It never deletes stage itself. The stage digest is SHA-256 of canonical target/removal records plus revision/input/variant/config hashes and promotion/normalizer versions.
 
-Implement `review-prepare` as a separate delegation that requires registered cache facts and revalidates optional source facts when present, then runs `prepare_asset_review.py prepare --pack-root CACHE/library/PACK/VERSION --source-match MATCH --web-root WEB`. It forwards `--reset` only when the operator supplied that flag, never opens a release store, and cannot call `start`.
+Implement `review-prepare` as a separate delegation that requires registered cache facts and revalidates optional source facts when present, then runs `prepare_asset_review.py prepare --pack-root CACHE/library/PACK/VERSION --source-match MATCH --web-root REVIEW_WEB_ROOT`. Resolve `REVIEW_WEB_ROOT` exclusively from the registered `reviewWeb.root`, not canonical Web or a not-yet-created release worktree. If requested alternatives are not prebuilt, stop with the exact existing variant-builder command and required source/config roots; do not silently generate or bless missing alternatives inside release start. It forwards `--reset` only when the operator supplied that flag, never opens a release store, and cannot call `start`.
 
 ```bash
 python3 scripts/world_asset_release.py review-prepare \
@@ -274,7 +275,7 @@ Expected: repeated start/resume yields the same issue, worktree, commit, remote 
 def test_provider_resume_validates_recorded_merge_not_newer_main(self):
     github.merge_provider(self.provider_merge)
     github.advance_main_with_unrelated_commit()
-    workflow.resume()
+    workflow.resume(self.batch_id)
     self.assertEqual(self.provider_merge, store.receipt()["provider"]["mergeCommit"])
     self.assertEqual(self.provider_merge, store.receipt()["web"]["providerCommit"])
 def test_status_is_read_only_and_completes_only_after_exact_web_merge(self):
@@ -288,7 +289,7 @@ def test_status_is_read_only_and_completes_only_after_exact_web_merge(self):
 
 Cover closed-unmerged PR, wrong merge/base/head, merge tree without exact recipe/selected output, newer unrelated main, dirty canonical roots, duplicate Web PR ambiguity, and local receipt that falsely claims a remote mutation.
 - [ ] **Step 2: Validate the exact merged Provider snapshot in isolation**
-Read Provider PR state/merge commit from GitHub; do not infer merge from local receipt. Create/reuse a disposable snapshot clone under batch state, fetch the exact merge SHA, and detach at it. Run canonical provider `check` from that snapshot against registered cache and frozen recipe. Additionally compare frozen recipe bytes and each incoming selected source/output/receipt record with the validated stage binding. Allow unrelated files incorporated by a concurrent base update only when cumulative generators validate them at that exact merge.
+Read Provider PR state/merge commit from GitHub; do not infer merge from local receipt. Create/reuse a disposable snapshot clone under batch state, fetch the exact merge SHA, and detach at it. Run canonical provider `check` from that snapshot against registered cache and frozen recipe. Additionally compare the canonical recipe produced by parsing the frozen Ready export and each incoming selected source/output/receipt record with the validated stage binding. Do not compare raw download bytes with canonical recipe bytes: key order and numeric normalization legitimately differ. Preserve the original download hash separately. Cumulative receipt fields may change with a valid base integration; distinguish batch-owned source/output facts from recomputed merged cumulative facts and stop if the former drift. Allow unrelated files incorporated by a concurrent base update only when cumulative generators validate them at that exact merge.
 Web sync must use this clean detached snapshot as `RPG_GAME_ASSETS_PATH`, so generated metadata binds the recorded merge even if `origin/main` later advances. Do not fast-forward or alter the configured canonical Assets checkout.
 - [ ] **Step 3: Add bounded browser evidence without a hosted/premium dependency**
 The Assets-owned `.mjs` script resolves Playwright from the configured Web root, checks its package/version, and accepts validated argv values `--web-root`, `--url`, repeated `--ref`, and `--output-root`. It listens for console/page/request/WebGL/asset-load errors, searches the World Builder's `Search assets` input, requires exactly one `[data-asset-ref="REF"]`, drags it to `world-building-canvas`, waits for `Real models loaded 1/1`, exports scene JSON, verifies the ref, saves/reloads/reopens, and verifies it remains. Store screenshot/video only under local state; write license-safe JSON with URL, refs, HTTP statuses, error arrays, visible labels, generated provider commit/catalog hash, and screenshot hash.
@@ -305,14 +306,18 @@ test('normalizes evidence without embedding image bytes or local roots', () => {
 
 The workflow starts Vite as a bounded child on loopback, waits for readiness, runs the script, and terminates the child in `finally`; it never leaves a daemon. Fake executor tests prove cleanup on success/failure. Require a zero-error report before Web commit/PR.
 - [ ] **Step 4: Prepare Web once, stop at the second human gate, and complete read-only**
-Create/reconcile the Web issue/worktree from configured `origin/dev`. Run exact argv/environment for:
+Create/reconcile the Web issue/worktree from configured `origin/dev`. Install its locked dependencies with `npm ci` before using npm or resolving Playwright. Run exact argv/environment for:
 
 ```text
+npm ci
 npm run world-assets:sync
 npm run world-assets:check
 npm test -- --run src/components/hex-grid/WorldAssetModel.test.tsx src/concepts/world-building/WorldBuildingViewport.test.tsx
 npm run typecheck
+npm run ci-check
 ```
+
+Run the configured Assets repository's normal provider checks and full required script-test gate before the Provider PR; run the Web repository's `ci-check` once per changed candidate before its push/PR. Cache success only against the exact input/tree/tool/environment identity, never across changed code. Stop with the named failing command rather than silently reducing gates. Do not repeat a full suite merely to repeat an unchanged checkpoint.
 
 Commit only generated license-safe metadata/integration files; synchronized GLBs and screenshots remain ignored/untracked and are never pushed. Reconcile the Web remote branch/PR exactly as Task 3 and stop with `web-merge-required`. No command merges either PR.
 After human Web merge, `status` uses GitHub read APIs to verify exact repo/base/head, merged state/commit, expected generated-file blob and Provider commit binding; it does not fetch, write journals, touch worktrees, or acquire an exclusive lock. `resume` may append the final checkpoint and regenerate local `receipt.json`/`summary.md`. `summary.md` contains commands, warning digest/disposition, receipt link, both PR URLs/merge commits, selected hashes, and visible browser result—no licensed pixels or local source paths.

@@ -50,7 +50,7 @@ registered private cache -> optional review preparation -> palette selection -> 
 A pack exposes an alternative only when its reviewed config names the palette and material audit proves that the source is `ready-default` or `ready-explicit` under that main-atlas substitution.
 Generation retains the physical identity `(packSlug, packVersion, sourcePath)` and every reviewed auxiliary binding.
 It produces one verified GLB per offered palette; arbitrary texture upload, shader editing, and silent material fallback are forbidden.
-The Lab dropdown points at those local prebuilt GLBs; it does not rebuild assets in the browser.
+The Lab dropdown points at those local prebuilt GLBs; it does not rebuild assets in the browser. Each alternative carries its own measured bounds, eligibility and budget facts; the original candidate's eligibility cannot approve different selected bytes.
 Exactly one appearance is selected per review entry and promoted ref; this is not simultaneous runtime variants.
 
 Current palette comparison output is preview-only: its derived conversion manifest uses a suffixed pack slug such as `polygon-dark-fortress-palette-A`, while review preparation requires one original pack slug.
@@ -64,7 +64,7 @@ The Lab supplies an editable `batchId` field plus an explicit collision-safe Gen
 
 ### Versioned palette-selection descriptor
 
-New palette-aware review/provider exports use schema version 2 at the document level, retaining the batch envelope and adding a required nested `paletteSelection` per palette-aware entry. The following is an illustrative entry fragment, not a complete export; bracketed hashes/paths describe fields rather than literal values:
+New palette-aware review/provider exports use schema version 2 at the document level, retaining the batch envelope and requiring `paletteSelection` on each entry. Explicit null selects its original/default hash-bound source; an object selects a verified alternative. This permits mixed original/alternate batches and candidates with no available alternates without forcing a texture change. The following is an illustrative entry fragment, not a complete export; bracketed hashes/paths describe fields rather than literal values:
 
 ```json
 {

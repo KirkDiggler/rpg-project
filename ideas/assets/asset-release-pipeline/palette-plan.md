@@ -83,7 +83,7 @@ def test_descriptor_is_source_matched_and_binds_auxiliary_materials(self):
     )
 ```
 
-Also mutate, one subtest at a time: descriptor hash/path, config bytes, palette name, atlas path/hash, source hash/path, selected path/hash, material status, binding texture hash, symlink component, traversal, and duplicate `(sourcePath,palette)`. Each must raise before a candidate is copied. Include a fixture whose derived manifest still says `polygon-dark-fortress-palette-A`; prove that manifest alone is rejected and becomes usable only through the validated source-matched descriptor.
+Also mutate, one subtest at a time: descriptor hash/path, config bytes, palette name, atlas path/hash, source hash/path, selected path/hash, material status, binding texture hash, symlink component, traversal, and duplicate `(sourcePath,palette)`. Measure bounds and planned normalized-image costs from each selected alternative itself; test a trusted original whose alternative exceeds the image budget so original eligibility cannot bless invalid selected bytes. Each must raise before a candidate is copied. Include a fixture whose derived manifest still says `polygon-dark-fortress-palette-A`; prove that manifest alone is rejected and becomes usable only through the validated source-matched descriptor.
 - [ ] **Step 2: Run the focused tests red**
 
 ```bash
@@ -140,6 +140,8 @@ git commit -m "feat: prepare audited palette alternatives"
 - Modify: `scripts/promote_world_assets.py`
 - Modify: `scripts/test_promote_world_assets.py`
 - Modify: `scripts/test_build_web_asset_catalog.py`
+- Test: `scripts/test_build_world_asset_catalog.py` (v2 canonical recipe compatibility)
+- Read: `scripts/build_world_asset_catalog.py` (shared recipe loader consumer)
 - Modify: `docs/human/asset-ingestion/world-asset-promotion.md`
 - Modify: `docs/human/asset-ingestion/asset-review-lab.md`
 **Interfaces:**
@@ -161,7 +163,7 @@ def test_schema_v1_dark_fortress_still_resolves_existing_default_c_bytes(self):
     self.assertEqual(self.canonical_default_c, resolve_world_asset_source(batch.entries[0], self.cache, self.review_config))
 ```
 
-Reject mixed/unknown schema keys, v2 entries without `paletteSelection`, and changes to descriptor version/comparison/palette/descriptor hash/config hash/atlas/selected path/hash. Assert canonical bytes for an existing v1 fixture are unchanged.
+Reject unknown schema keys, v2 entries missing the `paletteSelection` key, and changes to descriptor version/comparison/palette/descriptor hash/config hash/atlas/selected path/hash. Schema-v2 uses explicit `paletteSelection: null` for the original/default appearance and a complete descriptor object for an alternate. Test one batch containing both kinds and a candidate with no alternatives. Null follows the original source-hash/trust resolver; it never means an arbitrary current palette. Assert canonical bytes for an existing v1 fixture are unchanged.
 - [ ] **Step 2: Run provider tests red**
 
 ```bash
@@ -170,8 +172,8 @@ python3 -m unittest -v scripts.test_world_asset_review scripts.test_promote_worl
 
 Expected: v2 is rejected because `batch.schemaVersion` currently requires integer 1.
 - [ ] **Step 3: Add schema-v2 parsing and selected-byte promotion by delegation**
-Add an exact nested dataclass matching the approved JSON. For schema 1, retain the current exact entry keys and return `palette_selection=None`. For schema 2, require `paletteSelection` on every entry and validate exact keys/types before delegating all cache/config/atlas/material/containment/hash checks to Task 1's resolver. Do not copy descriptor validation into `world_asset_review.py` or `promote_world_assets.py`.
-Update `_entry_document` and `canonical_recipe_bytes` to serialize the matching version. Update `_source_for_entry` so original manifest trust remains mandatory, then choose the validated selected GLB for normalization. Existing `run_blender_normalizer`, `planned_runtime_image_facts`, `inspect_normalized_glb`, catalog generation, and `atomic_apply_targets` remain unchanged. Add `selectedAppearance` only to schema-v2 receipt entries; retain existing v1 receipt shape and semantics.
+Add an exact nested dataclass matching the approved JSON. For schema 1, retain the current exact entry keys and return `palette_selection=None`. For schema 2, require the `paletteSelection` key on every entry. Explicit null uses the original/default resolver; a descriptor object validates exact keys/types before delegating all cache/config/atlas/material/containment/hash checks to Task 1's resolver. Do not copy descriptor validation into `world_asset_review.py` or `promote_world_assets.py`.
+Update `_entry_document` and `canonical_recipe_bytes` to serialize the matching version. Update `_source_for_entry` so original manifest trust remains mandatory, then choose the validated selected GLB for normalization. Existing `run_blender_normalizer`, `planned_runtime_image_facts`, `inspect_normalized_glb`, catalog generation, and `atomic_apply_targets` remain unchanged. Add `selectedAppearance` only to schema-v2 receipt entries (explicit null for the original/default path); retain existing v1 receipt shape and semantics. Verify the strict consumer of `canonical_recipe_bytes`, including `scripts/build_world_asset_catalog.py`, accepts v2 through the shared loader and computes the correct recipe hashes; extend its existing tests without changing runtime catalog fields.
 - [ ] **Step 4: Make cumulative count/hash movement generated, narrow, and independently checked**
 `refresh_live_provider_metadata` must parse #117, replace only `providerMetadata.inventory` and `.meshStats` with path/size/hash/count/tree facts computed from the staged files, preserve every other JSON value, and return canonical bytes. Add `evidence/117-all-race-hair/verification.json` to Task 2's promotion targets. Validation recomputes those facts from files; it must not compare generated output with a second copy generated from itself.
 In `test_build_web_asset_catalog.py`, remove moving assertions against literal `3225` and `472607…`, but keep:
@@ -196,6 +198,7 @@ python3 -m unittest -v \
   scripts.test_world_asset_review \
   scripts.test_promote_world_assets \
   scripts.test_world_asset_cumulative_metadata \
+  scripts.test_build_world_asset_catalog \
   scripts.test_build_web_asset_catalog \
   scripts.test_modular_race_class_contract \
   scripts.test_specialist_weapon_provider_closure
@@ -211,13 +214,14 @@ Document schema 1 as canonical/default and schema 2 as exact selected appearance
 git add scripts/world_asset_review.py scripts/test_world_asset_review.py \
   scripts/promote_world_assets.py scripts/test_promote_world_assets.py \
   scripts/world_asset_cumulative_metadata.py scripts/test_world_asset_cumulative_metadata.py \
-  scripts/test_build_web_asset_catalog.py docs/human/asset-ingestion/world-asset-promotion.md \
+  scripts/test_build_web_asset_catalog.py scripts/test_build_world_asset_catalog.py \
+  docs/human/asset-ingestion/world-asset-promotion.md \
   docs/human/asset-ingestion/asset-review-lab.md
 git diff --cached --check
 git commit -m "feat: promote selected palette bytes"
 ```
 
-After Task 2, run the Assets repository's full documented unit suite and open one Assets PR. Merge it by human approval before Task 3 begins.
+After Task 2, run the Assets repository's full documented unit suite and open one Assets PR. Merge it by human approval before Task 3 begins. The new default/alternate mixed-batch behavior must already pass shared parser, transaction, catalog and legacy regression tests before Web adopts it.
 
 ## Task 3: Deliver the single-dropdown Lab and hash-bound exports
 
@@ -260,11 +264,11 @@ npm test -- --run src/dev/asset-review/model.test.ts
 
 Expected: failure because palette types/helpers and schema-v2 parsing do not exist.
 - [ ] **Step 3: Implement strict model transitions before UI wiring**
-Parse schema 1 with the current exact keys. Parse schema 2 with exact `paletteAlternatives`/`paletteSelection` keys and lower-case hashes, normalized cache-relative paths, a selected GLB URL whose 12-character prefix matches the selected hash, and one selected option present byte-for-byte in the current candidate alternatives.
+Parse schema 1 with the current exact keys. Parse schema 2 with exact `paletteAlternatives`/`paletteSelection` keys and lower-case hashes, normalized cache-relative paths, and selected GLB URLs generated by the existing content-addressed filename rule. Null selects the original/default source and its original URL; a descriptor selects one option present byte-for-byte in current alternatives. For an alternate, use its measured bounds, eligibility, reasons and selected hash rather than the original candidate's facts.
 Use physical source key only to locate the same candidate during import; use `appearanceIdentity` to decide whether `decision: ready` and `loadedSuccessfully` may survive. When identities differ, retain useful draft metadata and report the stale appearance, but force Keep/false. `recordPreviewLoad` ignores callbacks for a URL other than `entryPreviewUrl(entry)`; loading and error both clear success and demote Ready. `selectPaletteAppearance` performs the same invalidation even when only descriptor/config/atlas hashes changed.
 Keep `ASSET_REVIEW_STORAGE_KEY = 'rpg.asset-review.batch.v1'` so old local progress can be parsed and merged. Schema-v2 serialization includes nested selection and never local URL. `generateBatchId` returns `REFERENCE-world-assets-YYYYMMDD-UUID`, uses `crypto.randomUUID()` and the current date by default, permits both inputs to be injected in tests, and validates through `setBatchId`.
 - [ ] **Step 4: Wire one dropdown, batch controls, and exact scene load handling**
-Render one `<select aria-label="Palette">` for candidates with alternatives; options are the descriptor's sorted configured palettes. Do not render texture upload, color chips, or additional published refs. Display original and selected SHA-256 separately in Prepared source. Pass `entryPreviewUrl(activeEntry)` to `AssetReviewScene`.
+Render one `<select aria-label="Palette">` for candidates with alternatives; options include `Original / default` (null selection) and the descriptor's sorted configured palettes. Do not render texture upload, color chips, or additional published refs. Display original and selected SHA-256 separately in Prepared source. Pass `entryPreviewUrl(activeEntry)` to `AssetReviewScene`.
 Add `<input aria-label="Batch ID">` and `<button>Generate batch ID</button>` near export actions. Disable exports for invalid batch IDs and show the existing field-error style. Route every scene callback through `recordPreviewLoad`; on `loading`, success from the previous appearance must disappear immediately.
 - [ ] **Step 5: Add UI regressions and run green**
 
@@ -301,7 +305,7 @@ git diff --cached --check
 git commit -m "feat: review exact palette appearances"
 ```
 
-Prepare a tiny, unpromoted, trusted Dark Fortress source with A/B/C alternatives. In the loopback Lab verify auxiliary chain color/normal/wrapping and slot assignment remain visible, select a nondefault palette, mark Ready only after its exact URL succeeds, export schema v2, then change palette and confirm immediate Keep. Record hashes and textual visual verdict outside the Web repository; do not commit licensed screenshots or GLBs.
+Prepare a tiny, unpromoted, trusted Dark Fortress source with A/B/C alternatives. In the loopback Lab verify auxiliary chain color/normal/wrapping and slot assignment remain visible, select a nondefault palette, mark Ready only after its exact URL succeeds, export schema v2, then change palette and confirm immediate Keep. Record hashes and textual visual verdict outside the Web repository; do not commit licensed screenshots or GLBs. Run `npm run ci-check` once on the final candidate before push/PR, in addition to the focused gates above; do not omit the repository-required build/production checks.
 
 ## Validation and Self-review Gate
 
