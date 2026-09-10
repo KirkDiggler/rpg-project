@@ -259,9 +259,69 @@ the caster. Implicit precedence between two fields is how one value comes to mea
 - `CastTargetArea` requires `Area != nil`, and `MinTargets == MaxTargets == 0` (the caller names
   nobody).
 - `Area != nil` requires `Target == CastTargetArea`.
-- **`encounter.CellsFromFeet(SizeFeet) >= 1`.** `encounter/units.go:33` is `feet / FeetPerCell`,
-  integer division — a 1-to-4-foot footprint validates and can then never catch anything. Refuse it
-  at declaration. (Same class as the goblin shipped with `ReachFeet: 1`, which cannot melee at all.)
+- **A footprint that floors to zero cells.** `encounter/units.go:33` is `feet / FeetPerCell`,
+  integer division — a 1-to-4-foot footprint validates and can then never catch anything. Same class
+  as the goblin shipped with `ReachFeet: 1`, which cannot melee at all.
+
+  **This check cannot live in `Validate`, and finding that out corrected the design.**
+  `combat/actions` is in the rulebook root module, and `rulebooks/dnd5e/go.mod` **does not require
+  `rulebooks/dnd5e/encounter`** — so `CellsFromFeet` is not reachable from where the profile
+  validates itself. See §2.5b.
+
+### 2.5a Two gates in `resolution` already stand between a derived list and a cast
+
+Both were found by reading the code rather than by designing against it, and the second one
+constrains what a footprint can ever be.
+
+**`checkCastTargets` (`resolution/action.go:502`) re-enforces the count.**
+`len(targetIDs) < MinTargets || > MaxTargets`, independently of session's own check. Note *when* it
+runs: for a self cast it sees the **caller's** list (empty, against `0..0`) and passes, and only
+afterwards does `newCast` rewrite `targetIDs` to `[casterID]`. So `Min/MaxTargets` already means
+**what the caller may name**, not who ends up receiving the spell — and that meaning is exactly what
+an area needs to preserve.
+
+**`validateCastTarget` (`resolution/action.go:466`) re-measures range from the caster, per target:**
+
+```go
+maximum := float64(encounter.CellsFromFeet(rangeFeet))
+if distance := room.GetGrid().Distance(casterPosition, targetPosition); distance > maximum {
+```
+
+That is a **radius-from-the-caster** test, not a footprint-containment test. Thunderclap survives it
+by coincidence — its footprint *is* a caster-centred 5-foot radius, so every derived member is
+within `RangeFeet` by construction. **Thunderwave and everything after it do not.** A 20-foot
+Fireball dropped at 150 feet catches creatures 170 feet from the caster, and this gate refuses them
+one at a time with `ErrBadAction`.
+
+So the gate silently constrains the shape of any area that can be expressed. It must learn the
+difference between *the caster could reach the point where this lands* and *this member is inside
+the shape* — which are two different questions that `RangeFeet` currently answers as one.
+
+### 2.5b A derived list is not a named list, and should not travel as one
+
+The two gates above both key off `TargetIDs`, and both are **right** for a list the caller named.
+The fix is not to weaken them. It is to stop pretending a derived set is a named one:
+
+> **Derived members travel in their own field on `ActionInput`, not in `TargetIDs`.**
+> `TargetIDs` keeps its exact current meaning — what the caller asked for — and `Min/MaxTargets`
+> keeps governing it.
+
+That falls out of the three-universes point rather than being invented for convenience. A named
+target was clicked, was offered, and must be re-checked against the offer and the caster's reach. A
+derived member was never clicked, was never offered, and its membership was decided by geometry.
+Giving them one field forces every gate downstream to guess which kind it is holding, and the guess
+is invisible when it is wrong.
+
+Concretely it also settles three things that were otherwise awkward:
+
+- the offer's per-candidate `available` gate is bypassed for derived members **structurally**,
+  rather than by a comment asking the next reader not to apply it;
+- `checkCastTargets` needs no area arm — the caller still names nobody, so `0..0` still holds;
+- `validateCastTarget` applies to named targets unchanged, and the containment question for derived
+  members is asked once, where the footprint is known.
+
+**The grid scale needs to be reachable from where it is checked, and today it is not.** This is the
+one place slice 1 touches an existing structural problem rather than adding to it — see §4.
 
 ### 2.6 The shopkeeper — caught, and not resolvable
 
@@ -405,6 +465,37 @@ not yet paid.
 
 ---
 
+## 3a. One existing structural problem this slice runs into — your call
+
+`encounter/units.go:11-13` says `FeetPerCell` and `CellsFromFeet` are **the one place** the
+feet→cells conversion happens, and names `FightingStyleProtectionCondition` and
+`SneakAttackCondition` among the call sites it unified.
+
+**Those two cannot call it.** They live in `rulebooks/dnd5e/conditions`, in the rulebook root
+module, and `rulebooks/dnd5e/go.mod` does not require `rulebooks/dnd5e/encounter`. Accordingly
+`conditions/fighting_style_protection.go:202` is a bare `if distance > 1` with the comment *"within
+5 feet (adjacent on grid = distance 1)"* — the exact re-derivation the constant exists to abolish.
+The constant is structurally out of reach of half its stated customers, and its doc says otherwise.
+
+This slice walks into it because the "footprint floors to zero cells" refusal wants to run where the
+profile is declared, and that is `combat/actions` — same module, same missing import. Two ways out:
+
+**(a) Check it in `session`, where the conversion is reachable.** Smallest cut. `Validate` refuses
+only what it can see (shape/origin/target-rule coherence), and the cells check is one more refusal
+in the fold. Cost: a footprint that can never hit is caught at cast time rather than at declaration
+time, so bad content ships and fails later.
+
+**(b) Move `FeetPerCell`/`CellsFromFeet` down to `tools/spatial`.** The rulebook root **does**
+require `tools/spatial` (`go.mod:13`), as does `encounter` — so every module that needs the scale
+could reach it, `Validate` included. This is the primitive-below move, and it repairs an existing
+lie with more customers than us: Protection's bare literal, Sneak Attack, and every future reach
+comparison in the rulebook.
+
+**I recommend (b), as its own small slice ahead of slice 1**, and I am flagging it rather than
+taking it because it is a widening — it fixes something that is broken today for reasons that have
+nothing to do with areas, and whether that gets pulled into this arc is yours to decide. If you want
+slice 1 minimal, (a) works and the refusal still exists; it just refuses later.
+
 ## 4. What this deliberately does not build
 
 - **Runtime-mintable regions.** Regions are authored cell sets today, with no runtime minting, and
@@ -471,3 +562,18 @@ Recorded rather than dropped, because the reasoning was sound on the evidence av
 4. **The `BardCantrips` question was escalated as a content-policy ruling for Kirk.** That was the
    wrong question. We are building capabilities, and the published lists are a supply of proof cases
    rather than a scope to complete. It is an ordinary honest edit. §2.8.
+
+## 8. Corrections this document made to itself
+
+Kept visible rather than rewritten away, because each was a plausible-looking claim that survived
+until somebody read the code:
+
+1. **"Resolution cannot see the map."** False. `resolve.go:438` installs the room and a live
+   `*encounter.Encounter` before `Machine.Start` runs. The real argument is the universe one. §2.2.
+2. **"Refuse a sub-cell footprint in `CastProfile.Validate`."** Impossible as written — the module
+   that validates cannot import the module that converts feet to cells. §2.5b, §3a.
+3. **"The derived list travels as `TargetIDs`."** It cannot: two gates in `resolution` would refuse
+   it, and both of them are correct for a list the caller named. §2.5a, §2.5b.
+
+All three were found by writing the seam documentation in rpg-toolkit#1620/#1621/#1622 — which is
+the argument for having written it.
