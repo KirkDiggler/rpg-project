@@ -263,10 +263,10 @@ the caster. Implicit precedence between two fields is how one value comes to mea
   integer division — a 1-to-4-foot footprint validates and can then never catch anything. Same class
   as the goblin shipped with `ReachFeet: 1`, which cannot melee at all.
 
-  **This check cannot live in `Validate`, and finding that out corrected the design.**
-  `combat/actions` is in the rulebook root module, and `rulebooks/dnd5e/go.mod` **does not require
-  `rulebooks/dnd5e/encounter`** — so `CellsFromFeet` is not reachable from where the profile
-  validates itself. See §2.5b.
+  This check could not live in `Validate` as the tree stood: `combat/actions` is in the rulebook
+  root, and `rulebooks/dnd5e/go.mod` does not require `rulebooks/dnd5e/encounter`. Kirk's ruling
+  (§3a) moves the scale to `tools/spatial`, which the rulebook root **does** require, so the
+  refusal lands in `Validate` — gated on rpg-toolkit#1625 landing first.
 
 ### 2.5a Two gates in `resolution` already stand between a derived list and a cast
 
@@ -505,7 +505,7 @@ not yet paid.
 
 ---
 
-## 3a. One existing structural problem this slice runs into — your call
+## 3a. One existing structural problem this slice runs into — DECIDED
 
 `encounter/units.go:11-13` says `FeetPerCell` and `CellsFromFeet` are **the one place** the
 feet→cells conversion happens, and names `FightingStyleProtectionCondition` and
@@ -518,23 +518,26 @@ module, and `rulebooks/dnd5e/go.mod` does not require `rulebooks/dnd5e/encounter
 The constant is structurally out of reach of half its stated customers, and its doc says otherwise.
 
 This slice walks into it because the "footprint floors to zero cells" refusal wants to run where the
-profile is declared, and that is `combat/actions` — same module, same missing import. Two ways out:
+profile is declared, and that is `combat/actions` — same module, same missing import.
 
-**(a) Check it in `session`, where the conversion is reachable.** Smallest cut. `Validate` refuses
-only what it can see (shape/origin/target-rule coherence), and the cells check is one more refusal
-in the fold. Cost: a footprint that can never hit is caught at cast time rather than at declaration
-time, so bad content ships and fails later.
+**Kirk's ruling, 2026-09-10: `tools/spatial` owns the grid questions.** `FeetPerCell` and
+`CellsFromFeet` move there, as their own slice ahead of slice 1 (rpg-toolkit#1625).
 
-**(b) Move `FeetPerCell`/`CellsFromFeet` down to `tools/spatial`.** The rulebook root **does**
-require `tools/spatial` (`go.mod:13`), as does `encounter` — so every module that needs the scale
-could reach it, `Validate` included. This is the primitive-below move, and it repairs an existing
-lie with more customers than us: Protection's bare literal, Sneak Attack, and every future reach
-comparison in the rulebook.
+The ruling is not a tradeoff being taken; it removes an anomaly. **Spatial already owns every grid
+question except this one, at interface level** (`tools/spatial/interfaces.go`): `Distance` (`:32`),
+`GetLineOfSight` (`:40`), `GetPositionsInRange` (`:44`), `GetEntitiesInRange` (`:73`),
+`IsLineOfSightBlocked` (`:88`), `IsBoundaryLineOfSightBlocked` (`:113`). How many cells is N feet is
+the same kind of fact as all of those, and it is the only one parked in a composition — which is
+precisely why two of its three documented customers cannot reach it.
 
-**I recommend (b), as its own small slice ahead of slice 1**, and I am flagging it rather than
-taking it because it is a widening — it fixes something that is broken today for reasons that have
-nothing to do with areas, and whether that gets pulled into this arc is yours to decide. If you want
-slice 1 minimal, (a) works and the refusal still exists; it just refuses later.
+All four modules already require `tools/spatial`, and the 13 non-test call sites (8 in `encounter`,
+2 in `session`, 3 in `resolution`) are all reachable after the move. What gains access for the first
+time is the rulebook root: `combat/actions` for this slice's refusal, and Protection's bare
+`if distance > 1` and Sneak Attack for their own.
+
+**Consequence for slice 1:** the sub-cell refusal lands in `CastProfile.Validate` after all, which
+is where it belonged — a footprint that can never catch anything is refused at declaration rather
+than shipping and failing at cast time.
 
 ## 4. What this deliberately does not build
 
@@ -610,8 +613,10 @@ until somebody read the code:
 
 1. **"Resolution cannot see the map."** False. `resolve.go:438` installs the room and a live
    `*encounter.Encounter` before `Machine.Start` runs. The real argument is the universe one. §2.2.
-2. **"Refuse a sub-cell footprint in `CastProfile.Validate`."** Impossible as written — the module
-   that validates cannot import the module that converts feet to cells. §2.5b, §3a.
+2. **"Refuse a sub-cell footprint in `CastProfile.Validate`."** Impossible *as the tree stood* — the
+   module that validates cannot import the module that converts feet to cells. Kirk's ruling moves
+   the scale to `tools/spatial`, which every module already requires, so the refusal returns to
+   `Validate` where it belonged. The original instruction was right and its seat was wrong. §3a.
 3. **"The derived list travels as `TargetIDs`."** It cannot: two gates in `resolution` would refuse
    it, and both of them are correct for a list the caller named. §2.5a, §2.5b.
 
