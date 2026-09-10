@@ -362,6 +362,13 @@ that do that already exist.
 - A `CastTargetArea` profile with `Area == nil`, and an `Area` on any other target rule, are both
   refused.
 - Members are placed by **axial** coordinate in every test that reasons about distance.
+- **Slice 1 brings one test it did not create the need for.** `castTargets`' refusal of a populated
+  target on a self cast (`session/cast.go:416-419`) executes **zero** times at 85.1% package
+  coverage — measured, and filed as rpg-toolkit#1624. The comment above it argues the refusal at
+  length; nothing drives it. `CastTargetArea` lands as a new arm *immediately beside* it, where the
+  caller likewise names nobody but the engine derives the list, so the two are one confusion away
+  from each other. Landing a new arm next to an unproven refusal is how that confusion gets built
+  in. The test comes with this slice.
 
 ---
 
