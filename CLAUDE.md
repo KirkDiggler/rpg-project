@@ -46,6 +46,48 @@ have illusion in it.
 
 
 
+## Mistakes are not the problem
+
+> *"we make mistakes. that's fine. there's no problem making mistakes and it
+> might actually be a good thing. mistakes show us ways that we can get better.
+> we don't acknowledge them and learn from them. that's a problem but a mistake
+> happening that can help us that can improve our process is a really good thing
+> and should be treated as such. mistakes aren't the problem repeating mistakes
+> is the problem."*
+>
+> — Kirk, 2026-09-10
+
+The response to a mistake is never "be more careful next time." **Careful is not
+a mechanism.** The response is to find what let it through, and change that.
+
+- **Say it plainly.** A mistake nobody names is one nobody can learn from. Quietly
+  rewriting a design so it looks like it was always right destroys the only
+  valuable thing the mistake produced.
+- **Fix what permitted it, not just the instance.** If a rule allowed it, the rule
+  was testing the wrong thing. If a doc failed to prevent it, the doc was not
+  clear enough to be load-bearing. Correcting only the instance leaves the cause
+  in place, armed.
+- **Leave the correction visible.** A record showing what was believed, and why it
+  changed, is worth more than one showing only the conclusion — the reasoning is
+  what stops the next person walking the same path.
+- **A repeat is the real defect.** A second occurrence is evidence the first fix
+  addressed the symptom.
+
+The worked example this was written from: an area spell's target derivation was
+designed into `session` for two drafts. The seam doc already said *"geometry,
+placement → `encounter`"*, but the work did not read as *geometry* from inside —
+it read as *deriving a target set* — and the predicate/producer rule beside it is
+a **mechanism** test that a `session`-side fold passes cleanly. The rule licensed
+the error rather than catching it. The fix was not "remember that placement is
+encounter's"; it was to add an **ownership test** ahead of the mechanism test in
+all three seam docs, so the wrong answer now looks wrong on the page.
+
+This is also why the shape is worth getting right while the system is small. Today
+a misplaced responsibility is visible in an afternoon. That will not last, and the
+same mistake in a system three times this size is not caught by being careful — it
+is caught by the seams and the rules being clear enough that the wrong answer
+cannot look reasonable.
+
 ## What the foundation is
 
 ```
