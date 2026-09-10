@@ -135,15 +135,101 @@ A background agent that hits a prompt waits forever, because nobody is watching.
 If something prompts anyway, route around it with an equivalent that does not, and
 note the substitution in your report.
 
-## 9. Model tiers
+## 9. Match the model and context to the task
 
-Pin the model explicitly on every dispatch; never inherit by accident.
+Pin the available model explicitly on dispatch; never inherit by accident or
+choose a tier solely from a role title. A precise brief is part of making a
+smaller model effective, not work to omit because a larger model is available.
 
-| Work | Model |
-|------|-------|
-| Coordinating / directing | Opus — stays thin, orchestrates and verifies |
-| Implementation, refactors, test rewrites | Sonnet |
-| Broad read-only search | Haiku |
+For bounded toolkit checkpoints, try Terra with the toolkit role's module brief
+rather than defaulting every implementation to Sol. This is a working hypothesis,
+not a claim of proven equivalence: assess correctness, interventions, and total
+reported tokens including rework. Use Sol when the task's ambiguity or observed
+failure warrants it; state that reason rather than silently upgrading. Model
+selection does not authorize changing execution protocols after a launch failure.
 
-The point is to keep bulk file-by-file work out of the coordinating context, where
-it is most expensive and least useful.
+Read the required startup guidance, then progressively load the selected module
+and linked evidence. Do not preload every role context file or unrelated history.
+Return a compact receipt (scope, head, checks, gaps, artifact links), not a whole
+transcript. Inspect detailed logs when a failure or claim needs investigation.
+
+## 10. Make work visible early; keep toolkit releases module-sized
+
+**Drafts provide visibility, not a readiness claim.** Open and link a draft PR on
+the first working push. Update it at meaningful checkpoints with what changed,
+what decisions need the human, current validation, and known gaps. Do not wait
+for the whole feature, all checks, or an agent review loop before the human can
+see the work. Keep these states distinct:
+
+- **Draft:** implementation/integration is in progress; checkpoint feedback is
+  welcome and pending checks or decisions are visible.
+- **Ready for review:** the declared scope is implemented, applicable checks are
+  green, and remaining dependency/review status is explicit. A completed review
+  is not required merely to enter the review queue.
+- **Merge-ready:** required review findings are dispositioned and release
+  prerequisites, including provider tag adoption, are satisfied. This state is
+  not permission to merge without the operator's authorization.
+
+**One toolkit Go module per PR.** Toolkit modules build and tag independently in
+CI. A feature spanning modules needs separate PRs, identified by the nearest
+`go.mod`; directory nesting does not make child modules part of their parent.
+Bane therefore has four toolkit PRs: `rulebooks/dnd5e`, `encounter`, `resolution`,
+and `session` (the latter three nested under `rulebooks/dnd5e`). Repository-wide
+instructions may accompany the relevant module, but another module's files may
+not be bundled into that PR.
+
+Draft consumers can expose work using verified pushed provider pseudo-versions.
+Before merging a consumer, adopt the provider's actual successful CI-generated
+tag in the consumer's own PR and rerun its checks. Never fabricate tags or merge
+a multi-module batch to evade release sequencing. Preserve working branches
+while dependency pins still reference them.
+
+Use stable, issue-linked feature/module branch names, such as
+`feat/1601-bane-session`, rather than runtime/session-generated names for published
+work. Runtime IDs belong in execution metadata. Preserve existing PRs and pinned
+branches rather than rewriting their history just to improve naming.
+
+Expose each layer while it is being worked on. Do not build the whole dependent
+wave before the human can inspect the first contract. Parallel work is useful
+when scopes and interfaces are already agreed; it must not bypass that feedback.
+
+These are Kirk's Bane review corrections (2026-09-10): the implementation was
+visible too late and the initial toolkit PR incorrectly bundled four release
+units. The toolkit's AGENTS.md must state both rules explicitly.
+
+## 11. Spend ceremony on uncertainty, not repetition
+
+Follow the shared review policy in `rpg-project/AGENTS.md`: substantive engine or
+interface changes merit independent review; docs, exact pin bumps, and small
+mechanical changes can use direct verification without another agent-review
+round. A new ownership/lifecycle seam needs human alignment before dependent
+layers build on it. Do not turn either category into a universal review pipeline.
+
+Use focused tests while editing and the owning repository's full readiness gate
+at its stated boundary. Reuse evidence tied to the same head, inputs, and relevant
+environment; do not repeat the same full suite just because a different agent is
+reporting. Material changes or uncertainty require fresh evidence. Required CI
+and hooks are never bypassed to save tokens.
+
+A rule-layer pass is not proof of every adapter or UI interaction. Exercise the
+changed seam with concrete provider facts, preserving identity, operators and
+presence, and make user-facing controls observable early. In Bane, the live
+`10 + 4 - 3 = 11` attack was correct while condition-source projection and the
+confirmation affordance still exposed consumer gaps.
+
+## 12. Improve the prompts as we learn; respect the chosen focus
+
+After a repeated trap or a useful correction, update the canonical role prompt or
+owning repository guidance where the next contributor will read it. State the
+observed problem and the actionable correction; remove contradictory or obsolete
+instructions instead of accumulating an ever-growing appendix. One-module PRs
+are one lesson, not the last improvement the toolkit role will need.
+
+When the human owns a merge, IDE operation, or live playthrough, leave that step
+with them unless they request help. A mention of trouble is not permission to
+redirect an explicitly chosen process discussion into implementation/recovery.
+
+**Deferred by Kirk:** dependency-manifest design and chain automation. The existing
+`game-dev/scripts/bump-toolkit-pin.sh` handles individual bumps, not a full chain.
+Do not invent a manifest schema, location, lifecycle, or rollout as part of these
+process updates. Revisit it from observed need; recording an idea does not adopt it.

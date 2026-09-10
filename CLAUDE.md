@@ -277,7 +277,14 @@ version to pin. Two ways through:
   `rpg-api/docs/how-to/local-toolkit-override.md`. Only ever override ONE module; needing
   several at once is the signal that the wave was sliced too thin.
 
-### Reviews — one independent round, with the verdict published on the PR
+### Reviews — visible drafts, then proportionate review
+
+Publish the draft on the first working push and show checkpoints while building.
+**Ready for review** means the declared scope is implemented and applicable checks
+are green; **merge-ready** additionally requires completed review and release
+prerequisites. Neither label authorizes an automatic merge. See
+[`working agreements §§9–12`](docs/teams/roles/working-agreements.md#9-match-the-model-and-context-to-the-task)
+for model/context budgets, module-sized PRs, branch naming, and evolving role prompts.
 
 **Not every PR needs a review round.** Feature PRs and rules/engine changes do; doc-only PRs,
 pin bumps, and small mechanical fixes may skip it (Kirk, 2026-08-22, on a converter null→{}
@@ -292,16 +299,18 @@ Kirk may disable a hosted reviewer temporarily. While it is disabled, **do not r
 use a fresh independent session until Kirk explicitly re-enables it. Fresh-session review is
 not a lesser fallback; use the reviewer that produces the stronger project-aware result.
 
-**A local review file is not the review record.** Before calling a PR ready, publish the final
-verdict as a PR comment. The comment must name the reviewed head, readiness verdict,
+**A local review file is not the review record.** Before calling a PR merge-ready, publish the final
+verdict as a PR comment when an independent review round is required. The comment must name the reviewed head, readiness verdict,
 Critical/Important/Minor counts, review scope, verification evidence considered, and the
 disposition of any findings or fix rereviews. If the head changes materially, rerun or rebind
 the review and publish an updated final verdict. `.superpowers` and other scratch reports may
 support the work, but reviewers should not need access to the operator's filesystem to know
 what was reviewed.
 
-When Copilot is the selected reviewer, request it exactly once when the PR opens. The quota is
-monthly and shared, so a round spent on a typo fix is a round some engine PR does not get.
+When Copilot is the selected reviewer, request it once for the substantive review
+checkpoint, normally when the draft becomes ready for review—not automatically on
+its first working push. The quota is monthly and shared, so a round spent on a typo
+fix or an unfinished placeholder is a round some engine PR does not get.
 
 **Requesting it.** GraphQL `requestReviews` with `botIds: ["BOT_kgDOCnlnWA"]`, then verify
 by reading the PR node back — `gh pr view` does not show bot reviewers, so it will tell you
@@ -331,19 +340,14 @@ down does not prevent it: you request the review, report the PR in the same brea
 on — and the review lands four minutes later, addressed to nobody. It has happened twice
 after the rule was already written, once on the very next PR after writing it.
 
-So the mechanism, not the intention: **never report a PR in the same turn you requested its
-review.** Come back for it. Before calling anything ready, run the count and make it match:
-
-```bash
-R=repos/OWNER/REPO/pulls/N/comments
-echo "open threads:  $(gh api $R --jq '[.[]|select(.in_reply_to_id==null)]|length')"
-echo "with a reply:  $(gh api $R --jq '[.[]|select(.in_reply_to_id!=null)]|length')"
-```
-
-Unequal means the hosted-review round is open, whatever the PR page looks like. A review
-nobody answered is worse than one nobody requested — it cost the quota and produced nothing.
-A fresh-session review may have no inline threads; its closure mechanism is the published
-current-head verdict comment, including every finding's disposition.
+**Report the PR link immediately, with review explicitly pending.** Return for the
+review when it arrives; visibility must not be withheld while a reviewer runs.
+Before claiming merge readiness, check each finding for a recorded disposition and
+publish the current-head verdict. Raw comment/reply counts do not prove closure:
+one thread can have several replies, and a reply can leave the finding unresolved.
+A review nobody answers wastes its cost. A fresh-session review may have no inline
+threads; its closure mechanism is the published current-head verdict comment,
+including every finding's disposition.
 
 **What a good round looks like** — rpg-toolkit#1254, 2026-08-26, three findings, all valid:
 
