@@ -373,6 +373,39 @@ in advance:
 
 Slice 1 is the proven executor that comment was waiting for.
 
+### 2.7a The offer needs a third arm, because both existing ones answer a different question
+
+`compileCastOffer` branches once, at `session/casts.go:179`, on
+`profile.Target == combatActions.CastTargetSelf`, and the two arms are not symmetric:
+
+| | self arm (`casts.go:181`) | targeted arm (`casts.go:236-247`) |
+|---|---|---|
+| `Available` | `budgetOK` | `dependencyWhy == nil && budgetOK && anyReachable` |
+| `Why` | `budgetWhy` only | full precedence: unreadable → budget → `ShortfallNoTargetInReach` |
+| candidates | `[]TargetCandidate{}` | the compiled universe |
+
+So **which arm an area cast falls into silently decides whether emptiness is expressible.** Through
+the self arm it is `Available: true` over an empty footprint with no `Why` — the player is offered a
+spell that will catch nobody and told nothing. Through the targeted arm it is `Available: false,
+Why: ShortfallNoTargetInReach` — refused, when casting Thunderclap into an empty room is perfectly
+legal and simply does nothing.
+
+Neither is right, and the reason is structural rather than a bug in either arm: **a derived cast has
+no candidate list by construction**, so `anyReachable` has nothing to range over. The verdict *"your
+footprint is empty"* has no home in `Declaration` today.
+
+**Decision for slice 1: a third arm, `Available: budgetOK`, `TargetKind: TargetArea`, empty
+candidates.** Casting into an empty room is legal — the spell resolves, catches nobody, and the beat
+says so. That is the honest answer and it needs no new vocabulary.
+
+**Deferred, with the reason named:** previewing *who* a footprint would catch. Session could compute
+it at offer time — it holds the roster then too, and the offer path already does geometry via
+`targetPreflight` — but nothing needs it until a client wants to draw the ring with the caught
+members highlighted. That is a real product want and it is not what makes this slice true. When it
+arrives it brings its own field rather than overloading `Candidates`, for the same reason derived
+members do not travel in `TargetIDs` (§2.5b): a candidate is something you may **choose**, and
+nobody chooses these.
+
 ### 2.8 What ships knowingly wrong, and why that is not a gap
 
 **Damage rolls once per target, not once for the area.** `newGatedCast` carries `profile.Damage` into
@@ -418,6 +451,13 @@ that do that already exist.
 - The caster is never in the derived set under `AreaCatchesOthers`.
 - A `world`-kind member adjacent to the caster is returned as *caught but unresolved*, and the
   recorded beat names it.
+- Casting into an empty footprint is **allowed**, resolves, catches nobody, and says so — it is not
+  refused as "no target in reach" (§2.7a).
+- A two-target gated cast reports **both** saves. `CastOutput.Saved` collapses to nil for any list
+  longer than one today (`session/cast.go:370-372`) — nil being the same value a gateless cast
+  returns, which `castoutcome.go:66` argues at length is "the honest zero". Bane can produce it now;
+  filed as rpg-toolkit#1628. An area cast makes 2+ targets the normal case rather than the edge, so
+  this is a prerequisite rather than a nicety.
 - Declaring a footprint of 4 feet is refused by `Validate`, with a message naming cells.
 - A `CastTargetArea` profile with `Area == nil`, and an `Area` on any other target rule, are both
   refused.
