@@ -1,12 +1,15 @@
 # Cure Wounds and Dissonant Whispers — the heal arm, and half on a save
 
 **Date:** 2026-09-09
-**Status:** **HELD until Bane lands** — Kirk's call, 2026-09-09. The design is liked and settled in
-shape; implementation does not begin until Bane's slot is real, because both spells are paid for
-with it. No implementation has started; no production test is claimed to pass.
+**Status:** **UNBLOCKED 2026-09-10 — the hold was Bane's slot, and Bane has landed.** Verified in
+the toolkit rather than assumed: `resources.SpellSlotLevel1` exists (`resources/keys.go:54`), the
+cast door charges it (`spells/cast.go:124`, `Pools: {SpellSlotLevel1: 1}`), Bane's own content row
+is at `spells/cast.go:132`, and `RollCalculation` is in `encounter/roll_trace.go:75` with its
+validator. Both gates in §6 are released. The design is otherwise unchanged and still settled in
+shape. No implementation has started; no production test is claimed to pass.
 **Umbrella:** `ideas/spells/` — levels 1–3, and the choices at 3 made real.
 **Journey:** [rpg-project#243](https://github.com/KirkDiggler/rpg-project/issues/243) — *Cast a Spell in Play*.
-**Sibling slice:** [Bane, PR #409](https://github.com/KirkDiggler/rpg-project/pull/409) — approved, not yet implemented.
+**Sibling slice:** [Bane, PR #409](https://github.com/KirkDiggler/rpg-project/pull/409) — approved and **shipped**.
 **Layer overview:** [Bane's overview](../bane/overview.md) describes the composable layer all
 three spells join. This document does not restate it.
 
@@ -580,12 +583,13 @@ Through production entrypoints and persistence boundaries, not research models.
 
 Develop outside-in, merge inside-out; one branch per repo per wave.
 
-0. **HELD until Bane lands.** Kirk's call, 2026-09-09. This design is settled in shape and waits;
-   it is not a queue-jumper. The PR stays open as the tracking surface.
-1. **Gated on one Bane task** — the `SpellSlotLevel1` pool charged at the door. Until it lands,
-   neither spell can be paid for honestly.
-2. **Dissonant Whispers is additionally gated on Bane's `RollCalculation` work**, so the trace
-   grows one operator vocabulary in two named steps rather than two in parallel.
+0. **~~HELD until Bane lands.~~ RELEASED 2026-09-10.** Bane shipped; the PR stays open as the
+   tracking surface.
+1. **~~Gated on one Bane task~~ — the `SpellSlotLevel1` pool charged at the door.** Landed:
+   `resources/keys.go:54`, charged at `spells/cast.go:124`. Both spells can now be paid for
+   honestly.
+2. **~~Dissonant Whispers is additionally gated on Bane's `RollCalculation` work.~~** Landed:
+   `encounter/roll_trace.go:75`, with `ValidateRollCalculation` beside it.
 3. **Cure Wounds is gated on nothing else** and is the smaller of the two. It can land first.
 4. Toolkit work stays on one wave branch; provider commits are pushed and resolved to actual
    pseudo-versions for a named local stack. No pseudo-version is written by hand.
