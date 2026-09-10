@@ -147,3 +147,30 @@ Pin the model explicitly on every dispatch; never inherit by accident.
 
 The point is to keep bulk file-by-file work out of the coordinating context, where
 it is most expensive and least useful.
+
+## 10. Make work visible early; keep toolkit releases module-sized
+
+**Drafts provide visibility, not a readiness claim.** Open and link a draft PR on
+the first working push. Update it at meaningful checkpoints with what changed,
+what decisions need the human, current validation, and known gaps. Do not wait
+for the whole feature, all checks, or an agent review loop before the human can
+see the work. Required checks and review still govern promotion to ready and
+merge; they are not a gate on publishing an honest draft.
+
+**One toolkit Go module per PR.** Toolkit modules build and tag independently in
+CI. A feature spanning modules needs separate PRs, identified by the nearest
+`go.mod`; directory nesting does not make child modules part of their parent.
+Bane therefore has four toolkit PRs: `rulebooks/dnd5e`, `encounter`, `resolution`,
+and `session` (the latter three nested under `rulebooks/dnd5e`). Repository-wide
+instructions may accompany the relevant module, but another module's files may
+not be bundled into that PR.
+
+Draft consumers can expose work using verified pushed provider pseudo-versions.
+Before merging a consumer, adopt the provider's actual successful CI-generated
+tag in the consumer's own PR and rerun its checks. Never fabricate tags or merge
+a multi-module batch to evade release sequencing. Preserve working branches
+while dependency pins still reference them.
+
+These are Kirk's Bane review corrections (2026-09-10): the implementation was
+visible too late and the initial toolkit PR incorrectly bundled four release
+units. The toolkit's AGENTS.md must state both rules explicitly.
