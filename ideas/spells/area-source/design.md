@@ -55,92 +55,72 @@ on its own:
    different facts and must not share a representation.
 4. **A footprint that can never catch anything is refused at declaration**, not shipped.
 
-### 2.2 Where the derivation can live — three seats, and why only one works
+### 2.2 Where the derivation lives — encounter answers, session asks
 
-This was the open question. It has an answer, and the answer falls out of the existing seams rather
-than needing a new one.
+**Corrected after Kirk's review.** The first two drafts of this section put the fold in `session`, on
+the grounds that `Members()` and `Distance()` already compose there in fifteen lines. That is an
+argument about **code economy**, and the lens says ownership comes first. Asked the ownership
+question instead — *whose question is "who is standing in this shape"?* — the answer is not close.
 
-**Seat A — `resolution`, inside the cast machine.** This is where the profile is read, so it is the
-obvious home, and it is **mechanically possible** — a first pass through this document claimed
-otherwise and was wrong. `resolve.go:438` calls `installTruth(ctx, room, cast, enc)` with a live
-`*encounter.Encounter`, and it does so *before* `start(ctx, in.Machine, cast)`. A machine's `Start`
-therefore runs with `gamectx.Room` already installed and could measure positions.
+**It is `encounter`'s.** That module owns where things are. It already answers exactly this question
+for an authored footprint, and the method reads like a template for the one we need:
 
-It is still the wrong seat, and the reason is the one that matters most in this design:
+> *"`MembersIn` reports who is standing in a region, in the same stable order (and with the same
+> placement) `Encounter.Members` reports them. **A ROSTER READ, filtered** — deliberately built from
+> the same projection every other member read uses (`placementOf`), because Members and MembersIn
+> disagreeing about where somebody stands is the dual-state defect this composition has paid for
+> before."* — `encounter/region.go:95`
 
-**Resolution's universe is not the universe that gets caught.** Session builds participants with
-`compileResolutionCast(ctx, scope.data, roster, readied)` — from roster members that *have sheets*.
-The `kind=world` shopkeeper the spike caught has none, so it is not a participant, and
-`gamectx.Cast.Members()` will never return it. A fold ranging over the cast would produce a target
-list that is silently, correctly-looking short by exactly the members §2.6 exists to make visible.
+So the shape is:
 
-Folding over the *room* instead is worse, not better: `Canvas()`'s range reads
-(`encounter/canvas.go:197`) return every entity the composition placed — **members and props** — and
-declare no universe at all. That is precisely the undeclared producer this design is about.
+| Seam | Its part | Why |
+|---|---|---|
+| `encounter` | **answers** who is standing in a shape | It owns placement, and the roster is its own declared universe |
+| `session` | **asks**, and injects the answer | The injector: it loads the world, puts data into the interaction, and guards integrity |
+| `resolution` | **runs** the machine over what it was handed | The machine never sees a map, and does not need to |
 
-So Seat A can see *a* map and *a* cast, and neither is the right set.
+Session does not *compute* geometry — it *asks for it*. That distinction is the whole correction, and
+it is what my own `session/AGENTS.md:196` already says: *"Geometry, placement, perception, an ending
+→ **encounter**. The composition is the world; the verb reports what it says happened."* The design
+contradicted a doc written the same day.
 
-**Seat B — `encounter`, as a new query.** Encounter owns geometry and the roster, so a
-`MembersWithin(origin, cells, excluding)` would be trivial to write. **It should not be written.**
-It is a *producer*: an API that returns a set. Encounter already exposes the two pieces such a
-producer would be built from, and exposes them in exactly the right shapes:
+**Encounter still learns nothing about spells.** The footprint reaches it as plain geometry — an
+origin cell and a radius in cells — the way every other rulebook fact reaches it: told, carried,
+never branched on. It returns everyone standing there, `Kind`-tagged, including the caster. The
+*rulebook* layer then applies what the spell says: "every creature other than you" is a projection
+of the answer, and whether a `world`-kind member can be resolved is a rulebook question (§2.6).
+Encounter is not asked to make either call.
 
-- `Members()` (`encounter/encounter.go:975`) — the **declared universe**. Everyone the composition
-  places, with `Kind` and dungeon-absolute `Position`.
-- `Distance(a, b)` (`encounter/encounter.go:1038`) — the **predicate**, in the same units the
-  composition's own reach and sight checks use.
+### 2.2a The argument that settles it: transient and persistent areas are the same question
 
-`Distance`'s own doc already argues this: it "takes cells rather than member IDs because every
-caller with a reach question already has both positions in hand." Adding a producer beside it would
-be the special case above rather than the primitive below — and the primitive is already there.
+This is what makes it more than a tidiness preference.
 
-**Seat C — `session`, folding the roster with the predicate.** This is the answer, and the reason is
-that **session is the only layer that sees both universes at once.** It holds the roster (it already
-calls `scope.enc.Members()` at `session/cast.go:179`) *and* it is the layer that decides which roster
-members become participants. Only there can "caught" and "resolvable" be computed as two answers and
-their difference reported rather than lost.
+Fireball's burning floor is a footprint that **persists**. §4 records that its home is a
+runtime-mintable region, and that `MembersIn` — encounter's existing projection — is what will answer
+it. Thunderclap's footprint is the same shape asked **once**.
 
-It is also already doing this exact arithmetic: session uses `enc.Distance` to gate Attack on weapon
-reach. And the fold contains no die, no modifier and no threshold the content did not state — the
-spell decided the shape, session finds who is standing in it. That is the `standing.go` precedent
-exactly: *what this package contributes is the lookup, not the rule.*
+Put the transient answer in `session` and the two diverge permanently: one question, two mechanisms,
+in two modules, and the day a lingering area needs "who is in it *now*" on every tick, nothing that
+was built for Thunderclap helps. Put both in `encounter` and they converge — the ad-hoc query and
+`MembersIn` are the same roster read against two ways of naming a shape, and the persistent case
+becomes "mint the region, then ask the question we already ask."
 
-One check worth making explicitly, because session's own charter is strict about it: the package
-carries exactly three numbers about the game (`helpReachFeet = 5`, `inspirationReachFeet = 60`,
-`defaultSightFeet = 120`), each documented as a ruling, and a fourth arriving without an argument is
-the charter slipping. **This slice adds none.** The radius is `CastArea.Footprint.SizeFeet`, declared
-by content and read, never a constant this package chose.
+**One question, one owner.** That is the test, and it is the one the earlier drafts skipped.
 
-**The spike.** Written, run against a live encounter, and deleted:
+### 2.2b What this costs, honestly
 
-```go
-func caughtBy(enc *encounter.Encounter, origin encounter.MemberID, radiusCells float64) ([]encounter.Member, error) {
-    all, err := enc.Members()
-    // ...
-    for _, m := range all {
-        if m.ID == origin { continue }                       // "other than you"
-        if enc.Distance(at.Position, m.Position) <= radiusCells {
-            caught = append(caught, m)
-        }
-    }
-}
-```
+A new producer on `encounter`, which the earlier drafts spent a section arguing against. That
+argument was: the universe and the predicate already exist separately, so composing them at the
+caller is the primitive-below move.
 
-Output: `vendor pos=(1,2) dist=1.00 kind=world` — caught, kind-tagged, from the roster. **Fifteen
-lines, zero new methods on any module.** The capability's cost is a declaration and a fold, not a
-geometry project.
+It was the wrong reading of the rule. **The predicate/producer rule does not forbid producers — it
+requires a producer to name the universe it ranges over.** A producer that lives *in* the module
+owning that universe names it by construction. That is the safest possible place for one, not the
+most suspect, and `MembersIn` is the proof: it names the roster, reuses `placementOf`, and refuses an
+unknown region rather than answering empty.
 
-**And this is not a novel move — session already does it in production.** `Witness`
-(`session/conceal.go:209`), which answers who currently perceives an open concealed door, is the same
-fold: take `enc.Members()` as the universe, ask `enc.Distance` and the canvas's sightline predicate
-per member, keep those that pass. The area derivation is that function with a simpler predicate. If
-a `MembersWithin` producer were the right shape for encounter to own, `Witness` would already have
-forced it.
-
-*(The spike also caught its own trap and it is worth recording: members were placed with a test
-helper that takes **offset** coordinates while `Distance` reasons in **axial**, so the first
-"adjacent" ally measured 2.00. Same class as rpg-toolkit#1141 and #1150. The acceptance tests below
-place members by axial coordinate for this reason.)*
+The spike (below) is not wasted — it proved the derivation needs no *new geometry*, only
+`Distance()` and the roster. That remains true. It just belongs on the other side of the seam.
 
 ### 2.3 Three universes, not one — and the offer's is the wrong one
 
@@ -565,7 +545,7 @@ than shipping and failing at cast time.
 | Alternative | Why not |
 |---|---|
 | Derive inside `resolution` | Possible — `installTruth` runs before `Start` — but its two visible sets are both wrong: the participant cast omits every member without a sheet, and the room's range reads return props and declare no universe. |
-| A new `MembersWithin` on `encounter` | A producer where the universe and the predicate already exist separately and compose in fifteen lines. The special case above instead of the primitive below. |
+| The fold in `session` | **Rejected after review.** Session would be computing geometry, which its own decision table assigns to `encounter`; and the transient area would then answer in a different module from the persistent one (§2.2a). |
 | Reuse `buildTargetPreflight` | Its universe is the caster's intel, not the roster. Thunder would spare the unseen, and no test anybody thought to write would fail. |
 | `Area *CastArea` with no new target rule | Precedence-by-nil between two fields; `newCast`'s self arm would rewrite targets to the caster for a spell that must never hit the caster. |
 | Reuse `TargetNone` for an area | One value meaning both "lands on you" and "lands on everyone but you." |
@@ -611,13 +591,18 @@ Recorded rather than dropped, because the reasoning was sound on the evidence av
 Kept visible rather than rewritten away, because each was a plausible-looking claim that survived
 until somebody read the code:
 
-1. **"Resolution cannot see the map."** False. `resolve.go:438` installs the room and a live
+1. **"The fold belongs in `session`."** Wrong, and it survived two drafts. It was argued on code
+   economy — fifteen lines at the caller versus a new method — when the question was ownership.
+   "Who is standing in this shape" is `encounter`'s, it already answers it for authored regions via
+   `MembersIn`, and putting the transient case elsewhere would split one question across two
+   modules. Caught by Kirk on review. §2.2, §2.2a.
+2. **"Resolution cannot see the map."** False. `resolve.go:438` installs the room and a live
    `*encounter.Encounter` before `Machine.Start` runs. The real argument is the universe one. §2.2.
-2. **"Refuse a sub-cell footprint in `CastProfile.Validate`."** Impossible *as the tree stood* — the
+3. **"Refuse a sub-cell footprint in `CastProfile.Validate`."** Impossible *as the tree stood* — the
    module that validates cannot import the module that converts feet to cells. Kirk's ruling moves
    the scale to `tools/spatial`, which every module already requires, so the refusal returns to
    `Validate` where it belonged. The original instruction was right and its seat was wrong. §3a.
-3. **"The derived list travels as `TargetIDs`."** It cannot: two gates in `resolution` would refuse
+4. **"The derived list travels as `TargetIDs`."** It cannot: two gates in `resolution` would refuse
    it, and both of them are correct for a list the caller named. §2.5a, §2.5b.
 
 All three were found by writing the seam documentation in rpg-toolkit#1620/#1621/#1622 — which is
