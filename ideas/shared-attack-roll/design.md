@@ -1,7 +1,8 @@
 # Correlate the existing roll window with the shared d20
 
-Status: revised design approved by Kirk in conversation after a read-only data
-trace. Supersedes this PR's earlier AttackRolled/snapshot proposal.
+Status: delivered through the owning PRs; see [implementation.md](implementation.md)
+for exact revisions, verification and remaining limits. This revised design,
+approved after a read-only trace, supersedes the earlier AttackRolled/snapshot proposal.
 
 Issue: #410. Parent: #289 (Roll Dice Together).
 Related: rpg-dnd5e-web#964, #996 / PR #1003; implementation [plan](plan.md).
@@ -54,8 +55,10 @@ playtest branch `93636165`. Refresh before execution and trust current code.
 Add `PresentationID string` to the existing encounter RollWindowInput and its
 recorded payload. Session passes the already-minted `presentationID` into it.
 Preserve it in the existing Session RollWindowOpenedBody, then add
-`string presentation_id = 5` to the existing proto RollWindowOpened and map it
-unchanged in API conversion. Verify field 5 is still free before editing.
+`string presentation_id = 6` to the existing proto RollWindowOpened and map it
+unchanged in API conversion. The local prototype used field 5 while it was free;
+concurrent proto #318 assigned 5 to calculation before publication. Published
+API and web therefore both consume the regenerated field-6 contract.
 
 No new roll source, machine snapshot, optional reporter, outcome type, event
 kind or stream. No dice calculation, timer extension or change to resolution.

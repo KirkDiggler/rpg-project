@@ -1,5 +1,9 @@
 # Existing Roll-Window Correlation Implementation Plan
 
+**Execution status: delivered.** Retained below as the implementation plan, not
+a request to repeat the work. See [implementation.md](implementation.md) for
+actual merged revisions, verified evidence and explicitly unverified limits.
+
 > **For agentic workers:** Use `superpowers:executing-plans` for direct execution,
 > one checkpoint at a time. Kirk selected parent-driven implementation.
 > Independent read-only review remains required for substantive PRs.
@@ -69,10 +73,10 @@ PresentationID string `json:"presentation_id,omitempty"`
 **File:** `rpg-api-protos/dnd5e/api/session/v1alpha1/events.proto`.
 
 ```proto
-// Add to the EXISTING RollWindowOpened, after verifying tag 5 is free:
+// Add to the EXISTING RollWindowOpened; tag 5 was taken by proto #318:
 // Same provider token used by AttackResponse, the throw plan and final outcome.
 // Absent on legacy recorded windows; never synthesize it from Event.seq.
-string presentation_id = 5;
+string presentation_id = 6;
 ```
 
 - [ ] Create/adopt the owning issue on Project 19 and isolate from fresh main.
