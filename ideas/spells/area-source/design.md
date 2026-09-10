@@ -60,13 +60,25 @@ on its own:
 This was the open question. It has an answer, and the answer falls out of the existing seams rather
 than needing a new one.
 
-**Seat A — `resolution`, inside the cast machine.** This is where the profile is read, so it looks
-like the obvious home. **It cannot work.** `resolution`'s participants are *sheets*
-(`resolution/doc.go`, R2/R3): character data, conditions, ledgers. There is no map in there. A
-machine is built by `NewAction` before `Resolve` is ever called, and `Machine.Start` is pure
-preflight over attached sheets. Positions live in the encounter and never cross into resolution as
-anything a machine could measure. Seat A would require teaching resolution about geometry — blurring
-a seam the lens says is deliberate.
+**Seat A — `resolution`, inside the cast machine.** This is where the profile is read, so it is the
+obvious home, and it is **mechanically possible** — a first pass through this document claimed
+otherwise and was wrong. `resolve.go:438` calls `installTruth(ctx, room, cast, enc)` with a live
+`*encounter.Encounter`, and it does so *before* `start(ctx, in.Machine, cast)`. A machine's `Start`
+therefore runs with `gamectx.Room` already installed and could measure positions.
+
+It is still the wrong seat, and the reason is the one that matters most in this design:
+
+**Resolution's universe is not the universe that gets caught.** Session builds participants with
+`compileResolutionCast(ctx, scope.data, roster, readied)` — from roster members that *have sheets*.
+The `kind=world` shopkeeper the spike caught has none, so it is not a participant, and
+`gamectx.Cast.Members()` will never return it. A fold ranging over the cast would produce a target
+list that is silently, correctly-looking short by exactly the members §2.6 exists to make visible.
+
+Folding over the *room* instead is worse, not better: `Canvas()`'s range reads
+(`encounter/canvas.go:197`) return every entity the composition placed — **members and props** — and
+declare no universe at all. That is precisely the undeclared producer this design is about.
+
+So Seat A can see *a* map and *a* cast, and neither is the right set.
 
 **Seat B — `encounter`, as a new query.** Encounter owns geometry and the roster, so a
 `MembersWithin(origin, cells, excluding)` would be trivial to write. **It should not be written.**
@@ -82,13 +94,22 @@ producer would be built from, and exposes them in exactly the right shapes:
 caller with a reach question already has both positions in hand." Adding a producer beside it would
 be the special case above rather than the primitive below — and the primitive is already there.
 
-**Seat C — `session`, folding the universe with the predicate.** This is the answer. Session already
-holds both halves at the moment it needs them: `session/cast.go:179` calls `scope.enc.Members()` for
-the roster, and session already uses `enc.Distance` to gate Attack on weapon reach. Deriving "who is
-inside a declared 5-foot radius" is arithmetic over facts it already has, and — the test that
-matters — **it contains no die, no modifier and no threshold.** The spell decided the shape; session
-finds who is standing in it. That is precisely the `standing.go` precedent: *what this package
-contributes is the lookup, not the rule.*
+**Seat C — `session`, folding the roster with the predicate.** This is the answer, and the reason is
+that **session is the only layer that sees both universes at once.** It holds the roster (it already
+calls `scope.enc.Members()` at `session/cast.go:179`) *and* it is the layer that decides which roster
+members become participants. Only there can "caught" and "resolvable" be computed as two answers and
+their difference reported rather than lost.
+
+It is also already doing this exact arithmetic: session uses `enc.Distance` to gate Attack on weapon
+reach. And the fold contains no die, no modifier and no threshold the content did not state — the
+spell decided the shape, session finds who is standing in it. That is the `standing.go` precedent
+exactly: *what this package contributes is the lookup, not the rule.*
+
+One check worth making explicitly, because session's own charter is strict about it: the package
+carries exactly three numbers about the game (`helpReachFeet = 5`, `inspirationReachFeet = 60`,
+`defaultSightFeet = 120`), each documented as a ruling, and a fourth arriving without an argument is
+the charter slipping. **This slice adds none.** The radius is `CastArea.Footprint.SizeFeet`, declared
+by content and read, never a constant this package chose.
 
 **The spike.** Written, run against a live encounter, and deleted:
 
@@ -109,12 +130,19 @@ Output: `vendor pos=(1,2) dist=1.00 kind=world` — caught, kind-tagged, from th
 lines, zero new methods on any module.** The capability's cost is a declaration and a fold, not a
 geometry project.
 
+**And this is not a novel move — session already does it in production.** `Witness`
+(`session/conceal.go:209`), which answers who currently perceives an open concealed door, is the same
+fold: take `enc.Members()` as the universe, ask `enc.Distance` and the canvas's sightline predicate
+per member, keep those that pass. The area derivation is that function with a simpler predicate. If
+a `MembersWithin` producer were the right shape for encounter to own, `Witness` would already have
+forced it.
+
 *(The spike also caught its own trap and it is worth recording: members were placed with a test
 helper that takes **offset** coordinates while `Distance` reasons in **axial**, so the first
 "adjacent" ally measured 2.00. Same class as rpg-toolkit#1141 and #1150. The acceptance tests below
 place members by axial coordinate for this reason.)*
 
-### 2.3 The two universes — the sharpest reason this must not reuse the offer path
+### 2.3 Three universes, not one — and the offer's is the wrong one
 
 Session already computes something that looks exactly like what an area needs: `buildTargetPreflight`
 (`session/offers.go:701`) walks candidates around the actor and marks each in or out of range. It is
@@ -126,12 +154,24 @@ offer, which answers *"who may you choose?"*, and wrong for an area, which answe
 standing there?"* An invisible creature adjacent to the bard is not a legal click target and **is**
 caught by a thunderclap.
 
-Two questions, two universes:
+It is narrowed a **second** time for exactly the members this design cares about: `session/casts.go:197`
+applies `excludeWorldNPCs` before compiling candidates. The shopkeeper is deliberately not offerable
+— which is right, because you may not *aim* a spell at the merchant — and says nothing whatsoever
+about whether a blast centred on the bard reaches them. Two deliberate narrowings, both correct for
+the offer, both wrong for a footprint.
 
-| Question | Universe | Producer |
-|---|---|---|
-| Who may the caster choose? | the caster's intel — what they perceive | the compiled offer |
-| Who is caught by this footprint? | the roster — what is actually there | the fold in §2.2 |
+Three questions live within a hair of each other in this call, and each has a **different** correct
+universe. Confusing any two is a bug that never throws:
+
+| Question | Universe | Held by | Missing from it |
+|---|---|---|---|
+| Who may the caster *choose*? | the caster's intel — what they perceive | the compiled offer | anything unseen |
+| Who is *caught* by this footprint? | the roster | `encounter.Members()` | nothing — this is the full set |
+| Who can be *resolved*? | the participants | `resolution`'s cast | everything with no sheet |
+
+The roster is the widest and the participant list is the narrowest, and **the gap between those two
+is exactly the shopkeeper** — which is why §2.6 is a required part of this slice rather than a nicety.
+Derive from the roster, resolve against the participants, and report the difference.
 
 **This is the predicate/producer rule with a body.** A set-producing question is only as correct as
 the universe it ranges over, and the universe must be *declared* — because when it is implicit, the
@@ -252,9 +292,13 @@ appearing on its own — which is what a cost not yet paid should look like.
 proven executor for it, never in advance"* (`session/types.go:2414-2424`). Slice 1 **is** that
 executor, so `TargetArea` lands here.
 
-It must not reuse `TargetNone`. Blade Ward already uses `TargetNone` for a self cast that prompts
-for nobody; an area centred on the caster also prompts for nobody, and collapsing them makes one
-value mean both *"lands on you"* and *"lands on everyone but you."* There is a product reason too —
+It must not reuse `TargetNone`. That value is already four rulebook values wearing one seam name: for
+a cast it is keyed off `combatActions.CastTargetSelf` (`session/casts.go:179`), and for an ability
+`targetKindOfAbility` collapses Self, None, Position and Area into it. That collapse is *deliberate*
+— the client is being told "do not prompt" — and it holds precisely until a cast is centred on the
+caster and sprays everyone else, at which point the same value would have to mean both *"lands on
+you"* and *"lands on everyone but you."* This slice is that day. The fix is a new `TargetKind`, not
+a new reading of this one. There is a product reason too —
 a client that knows the shape can preview the ring and say "everyone within 5 feet" instead of
 offering no selector and explaining nothing.
 
@@ -379,7 +423,7 @@ not yet paid.
 
 | Alternative | Why not |
 |---|---|
-| Derive inside `resolution` | Resolution's participants are sheets. There is no map in there, and putting one there blurs a deliberate seam. |
+| Derive inside `resolution` | Possible — `installTruth` runs before `Start` — but its two visible sets are both wrong: the participant cast omits every member without a sheet, and the room's range reads return props and declare no universe. |
 | A new `MembersWithin` on `encounter` | A producer where the universe and the predicate already exist separately and compose in fifteen lines. The special case above instead of the primitive below. |
 | Reuse `buildTargetPreflight` | Its universe is the caster's intel, not the roster. Thunder would spare the unseen, and no test anybody thought to write would fail. |
 | `Area *CastArea` with no new target rule | Precedence-by-nil between two fields; `newCast`'s self arm would rewrite targets to the caster for a spell that must never hit the caster. |
