@@ -2,6 +2,45 @@
 
 This is the shared brain for the RPG platform. Read this first in any session.
 
+## The lens — read this before anything else
+
+**We are building architecture that makes a complex ruleset simple.** Every piece
+of work in every repository is read through this, and nothing below overrides it.
+
+> *"we are not here to make things work, we are here to build composeable,
+> extensible components that we can build a solid foundation for our game to
+> evolve on. the play and world packages we made fit that description. the seams
+> in session — resolution and encounter are deliberate. we are not making
+> independent features, we are architecting this thing so it can do a full DND
+> implementation. that will never happen if we put a band aid in. our goal is
+> never 1 feature, it is the game becoming more than we ever dreamed."*
+>
+> — Kirk, 2026-09-10
+
+What that means when you are actually deciding something:
+
+- **`play/*` and `world` are the model to copy.** One concern each, composable,
+  deliberately ignorant of everything else. A new primitive should look like them.
+- **The seams in `session`, `resolution` and `encounter` are deliberate.** They are
+  not incidental module boundaries to route around when a feature is inconvenient.
+  A change that wants to blur one is the thing that is wrong — not the seam.
+- **A band-aid is a non-starter.** Not a cheaper option to be weighed against the
+  proper fix and traded away under time pressure. When the fork is "special case
+  above" versus "give the lower layer the primitive it lacks", take the primitive.
+  Ask what a shortcut makes permanently **impossible**, not merely what it makes ugly.
+- **Judge a slice by the tool it adds, never by the feature it closes.** One feature
+  is never the goal. Work earns its place by what it makes possible next.
+- **Full D&D is the target, and it is the test.** Read every design against it: does
+  this shape still hold when the rest of the ruleset arrives, or does it only hold
+  for the handful of spells implemented today?
+
+The failure this exists to prevent is not ugliness. It is a shortcut that quietly
+forecloses something the game was always going to need — the reason a fact an
+observer can be wrong about must be snapshotted per observer rather than read live,
+because a live read can only ever be true, and a game with no way to lie can never
+have illusion in it.
+
+
 ## Startup — shared board first, local continuity second
 
 1. Derive the operator identity with `gh api user --jq .login`; use that login in Team signatures.
