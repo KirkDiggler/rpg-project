@@ -161,6 +161,22 @@ working. The mistake is three versions *of one thing*.
 3. Read the **owning repository's** `CLAUDE.md`/`AGENTS.md` and nearest scoped
    instructions. That is where the commands and invariants are.
 
+- **Work in a worktree, in every child repository.** `rpg-toolkit`, `rpg-api`,
+  `rpg-api-protos` and `rpg-dnd5e-web` each keep theirs under `.worktrees/<name>`.
+  A branch checked out in the shared clone makes that clone's state a shared
+  mutable resource: two pieces of work cannot proceed at once, a half-finished
+  edit is visible to anything else reading the tree, and switching away strands
+  whatever was uncommitted. A worktree per line of work removes all three.
+
+  `game-dev` itself is the exception, and says so: it is a single-operator
+  bootstrap repo, worked on directly on its issue branch.
+
+  This is the rule that line in `game-dev/CLAUDE.md` points at when it says
+  child repositories follow their own worktree rules. It was never written
+  down — all four repos had `.worktrees/` on disk and not one doc mentioned it,
+  so the convention was learned by noticing the directory, which works right up
+  until somebody starts in a repo where they did not happen to look.
+
 - One issue per PR. No branch without an issue. No issue without a board entry.
 - Publish the draft on the first working push and report the PR link immediately,
   with review explicitly pending. Visibility is not withheld while a reviewer runs.
