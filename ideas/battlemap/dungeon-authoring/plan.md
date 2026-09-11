@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (toolkit modules `encounter`, `rulebooks/dnd5e`; rpg-api), `gopkg.in/yaml.v3` (strict, KnownFields), go:embed, testify.
 
-**Spec:** `rpg-project/ideas/dungeon-authoring/design.md` — the original v1 design (approved via rpg-project PR #117, merged 2026-07-24) plus its `§Design delta — static placement` section (approved in session 2026-07-24, same file, before implementation began). One delta vs the v1 spec, flagged: `ObstacleSpec.PreferBorder` (added by rpg-toolkit#840 after the v1 design froze) is exposed as optional `prefer_border` in the room-obstacle schema — additive, default false, consistent with the design's honest-to-the-engine rule.
+**Spec:** `rpg-project/ideas/battlemap/dungeon-authoring/design.md` — the original v1 design (approved via rpg-project PR #117, merged 2026-07-24) plus its `§Design delta — static placement` section (approved in session 2026-07-24, same file, before implementation began). One delta vs the v1 spec, flagged: `ObstacleSpec.PreferBorder` (added by rpg-toolkit#840 after the v1 design froze) is exposed as optional `prefer_border` in the room-obstacle schema — additive, default false, consistent with the design's honest-to-the-engine rule.
 
 **Milestones (this plan is organized by them, matching design.md §Design delta):**
 - **M1 — "The Tomb, walkable."** This plan's primary scope: Slice A (registry, unchanged), Slice B (schema/validation/compiler, extended for `place`), a new engine placement path, Slice D (workbench, extended), and a lightened Slice E (content hosting for one new dungeon key; the crypt's legacy hardcoded path stays untouched).
@@ -163,7 +163,7 @@ func TestDecode_UnknownFieldFailsLoudly(t *testing.T) {
 }
 ```
 
-The `referenceYAML` fixture is the design doc's reference example verbatim (the sunken-crypt 4-room file, §Schema v1) — copy it from `ideas/dungeon-authoring/design.md`, don't retype from memory.
+The `referenceYAML` fixture is the design doc's reference example verbatim (the sunken-crypt 4-room file, §Schema v1) — copy it from `ideas/battlemap/dungeon-authoring/design.md`, don't retype from memory.
 
 - [ ] **Step 2: Run → FAIL** (`cd encounter && go test ./dungeonspec/ -v`) — package doesn't exist yet
 - [ ] **Step 3: Implement structs + decode**
