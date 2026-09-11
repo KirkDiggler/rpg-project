@@ -161,6 +161,8 @@ working. The mistake is three versions *of one thing*.
 3. Read the **owning repository's** `CLAUDE.md`/`AGENTS.md` and nearest scoped
    instructions. That is where the commands and invariants are.
 
+- **Work in a worktree, one per line of work**, under `.worktrees/<name>` in
+  every child repository.
 - One issue per PR. No branch without an issue. No issue without a board entry.
 - Publish the draft on the first working push and report the PR link immediately,
   with review explicitly pending. Visibility is not withheld while a reviewer runs.
