@@ -224,8 +224,16 @@ condition. Anchor is the caster. `Validate`: `MoveLine` requires
 **Order on a failure, ruled here.** Damage first, then the push. A creature
 the damage drops is not pushed: `Direct` already stops when the mover is
 down, and a body sliding across the floor is not a story we tell. Targets
-resolve in the stable order the cast already uses, so two pushes never race:
-the second sees the first's result.
+resolve in the stable order the cast already uses, so two pushes never race.
+**As built (toolkit#1660), not quite "the second sees the first's result":**
+every route is computed before any push walks, because the cast beat is
+recorded once for all targets and carries each route's length, and the
+walks follow it. So two creatures shoved along one line are routed with both
+still standing, and the nearer stops in front of the farther even though the
+farther is about to leave. Nothing is ever pushed through anybody, which is
+the conservative answer; a chain of shoves that closes up behind itself is a
+later ruling with its own customer. Recorded here so the sentence above is
+not read as a promise the code makes.
 
 **One roll for all.** The 2d8 is rolled once and applied to every failure,
 per ward-and-area §3's trap and its acceptance #10.
