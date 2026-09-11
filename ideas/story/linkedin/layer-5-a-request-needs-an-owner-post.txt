@@ -1,0 +1,21 @@
+The last field note ended with a condition that knew what should change and a question:
+
+How could it ask the Character that owned the state to change it?
+
+The rpg-api dungeon prototype was deliberately where questions like that became real. Its job was to make the interactions work long enough to reveal the seams.
+
+The first answer was a boundary.
+
+A rule could describe the change it needed. The state owner could decide how to apply it correctly.
+
+Then Actions became things a Character could hold. Some came from basic combat. Others could be granted temporarily by a Feature.
+
+Flurry of Blows tested both ideas at once. One Feature granted two temporary strikes, Character owned them, and the available action became something the player could see.
+
+This fifth architecture field note is about the birth of that request and Action model:
+
+https://kirkdiggler.github.io/rpg-toolkit/a-request-needs-an-owner/
+
+It ends with the next seam becoming visible.
+
+The request had an owner. The interaction still needed a driver.

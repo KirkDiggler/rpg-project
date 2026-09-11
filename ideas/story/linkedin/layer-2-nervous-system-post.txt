@@ -1,0 +1,23 @@
+The first field note ended with a Barbarian and a question.
+
+Well, Rage is part of that data, right?
+
+The answer became the next layer of the toolkit.
+
+I needed rules that could survive being saved, return as behavior, and react to the game without combat knowing each one by name.
+
+The path ran through Ref, an external Artificer, Rage, and then Bless.
+
+It became a pattern I still use: build the smallest useful seam, give it the hardest real example, then give it the next one. Keep going until the connections no longer fit in my head.
+
+Sometimes the abstraction survived. Sometimes it deadlocked. Eventually it produced AttackChain.On(bus).
+
+That line let me sleep. When I saw it, I knew we were going to be okay.
+
+This second architecture field note is the story of that nervous system:
+
+https://kirkdiggler.github.io/rpg-toolkit/the-nervous-system/
+
+It ends at a limit we could not see yet.
+
+The event bus could ask every rule in memory. It could not wait for a person who was not there yet.

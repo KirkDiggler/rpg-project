@@ -1,0 +1,23 @@
+The last field note ended on the line that finally let me go to sleep:
+
+AttackChain.On(bus)
+
+When I saw it, I knew we were going to be okay.
+
+Then I gave the architecture the next real thing: Rage.
+
+At first, Rage was one object trying to own everything that happened before, during, and after activation. It worked until Go refused the dependency graph.
+
+That compiler error revealed a distinction hidden by one D&D word.
+
+Rage is the capability a Barbarian owns. Raging is the temporary state that follows. They needed different responsibilities, even if the game calls both of them Rage.
+
+The solution was not another layer above everything. It was putting each responsibility with the thing that could do it well and own the result.
+
+This third architecture field note is the story of that split, the handoff it unlocked, and the moment the invisible rules could finally explain themselves:
+
+https://kirkdiggler.github.io/rpg-toolkit/rage-is-not-raging/
+
+It ends with a very simple question.
+
+Why is this 13 damage?

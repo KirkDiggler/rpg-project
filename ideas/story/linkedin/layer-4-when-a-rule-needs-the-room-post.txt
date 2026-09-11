@@ -1,0 +1,21 @@
+The last field note ended with a rule that could explain its own contribution.
+
+Once Rage worked, the pattern started moving faster. New rules kept revealing the next reusable seam.
+
+Then Dueling asked a different kind of question.
+
+What is this character holding?
+
+Sneak Attack widened the question to nearby allies. Protection needed the room, a shield, and an available reaction.
+
+Conditions worked beautifully while they only needed their own state and the event in front of them. These rules needed to understand the world around that event.
+
+I tried several places to put that knowledge. None fit until I realized it was runtime context for one publish, which is exactly what context.Context in Go is built to carry.
+
+This fourth architecture field note is the story of that breakthrough:
+
+https://kirkdiggler.github.io/rpg-toolkit/when-a-rule-needs-the-room/
+
+It ends where the successful read model crossed a line.
+
+A condition knew what should change. How could it ask the Character that owned the state to change it?
