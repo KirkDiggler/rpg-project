@@ -253,26 +253,35 @@ publishes the same `SpendRequestedEvent` the opportunity attack publishes
 (`ActionReaction`, amount 1, attributed to the spell), then describes the
 move. Paid first, walked after; a wall two cells in does not refund.
 
-**A monster gets a reaction meter.** Today the request would pass a monster
-by, so a monster would flee for free every round and could still swing an
-opportunity attack after fleeing. The primitive the lower layer lacks is
-one meter per creature per turn. The monster's keeper (the loader that
-already persists `UsedThisTurn` on the blob) gains `ReactionSpent bool`,
-subscribes to `SpendRequestedTopic` for `ActionReaction`, clears it on the
-monster's turn start, and `Monster.CanReact()` reads it. The opportunity
-attack's own spend request then debits it too, so a monster that swung on
-the fighter's turn cannot be made to flee on the bard's, and one that fled
-cannot swing. The condition's `UsedThisTurn` stays as it is, the
-once-per-condition gate it was written as.
+**A monster gets a reaction meter, and it replaces the once-per-turn
+flag.** Today the request would pass a monster by, so a monster would flee
+for free every round and could still swing an opportunity attack after
+fleeing. The primitive the lower layer lacks is one meter per creature per
+turn. Kirk, 2026-09-11: *"monsters should have reaction and it should
+replace that used once hack."* So:
+
+- The monster's keeper (the loader that persists the monster's blob) holds
+  `ReactionSpent bool`, subscribes to `SpendRequestedTopic` for
+  `ActionReaction`, clears it on the monster's turn start, and
+  `Monster.CanReact()` reads it. A character's meter stays
+  `ReactionsRemaining`, already there.
+- The opportunity-attack condition's `UsedThisTurn` is deleted, with its
+  turn-start reset, its rest reset, and its persistence
+  (`carryingFreeReactions`). The condition's gate is `CanReact()` alone,
+  which it already asks, and its bill is the spend request it already
+  publishes. Protection fighting style reads the same question today and
+  needs nothing.
+- One meter, one question, one bill, for both kinds of creature. A monster
+  that swung on the fighter's turn cannot be made to flee on the bard's;
+  one that fled cannot swing; a monster's reaction comes back at the start
+  of its own turn, exactly as a character's does.
 
 This reverses one sentence of a recorded ruling (`monstertraits/loader.go:454`,
 "a monster has no action economy at all") and none of its reasoning: the
 ruling was that a monster's reaction is metered by the reacting condition
 because nothing else ever asked. Whispers asks. The meter is the smallest
 economy a monster can have, and it is not a `SpendProfile`, not slots, not
-the character's ledger. Kirk rules whether this is the cut or whether
-monsters keep no meter and Whispers on a monster stays free; the cost of
-the second is that "if available" is a lie for every monster forever.
+the character's ledger.
 
 ## 6. The provoke, and the held walk
 
@@ -369,9 +378,11 @@ Through production entrypoints.
 7. **Pay first.** A target with no reaction left is dealt damage and
    records a move not taken; a target with one is debited before the first
    step; a wall two cells in does not refund.
-8. **A monster pays.** A monster that fled on the bard's turn cannot swing
-   an opportunity attack until its next turn starts; one that swung cannot
-   be made to flee.
+8. **A monster pays, from one meter.** A monster that fled on the bard's
+   turn cannot swing an opportunity attack until its next turn starts; one
+   that swung cannot be made to flee; a monster that swung once cannot
+   swing again that round, with no `UsedThisTurn` left in the tree to say
+   so.
 9. **The flee provokes.** A monster fleeing out of the fighter's reach is
    struck by the fighter (automatically, when the fighter is a monster;
    after a window, when a player), and the beats interleave in walking
@@ -413,8 +424,10 @@ Through production entrypoints.
 
 1. **events / combat / saves** (dnd5e root): `MoveAway`; the three `Half`
    refusals narrowed to damage-only; the halving component's source label.
-2. **monster / monstertraits** (dnd5e root, same PR as 1 or its own): the
-   reaction meter, subscription, turn-start clear, `CanReact` reads it.
+2. **monster / monstertraits / conditions** (dnd5e root, same PR as 1 or
+   its own): the reaction meter, subscription, turn-start clear, `CanReact`
+   reads it; the opportunity-attack condition's `UsedThisTurn` and its
+   resets and persistence deleted.
 3. **encounter**: `MoveAway` in `Route` (flood with `Limit`, farthest by
    ruler); the held directive and its resume; `DirectOutput.Paused`.
 4. **resolution**: `validateGate`; the success branch delivering half with
