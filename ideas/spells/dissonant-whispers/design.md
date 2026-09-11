@@ -275,6 +275,29 @@ replace that used once hack."* So:
   that swung on the fighter's turn cannot be made to flee on the bard's;
   one that fled cannot swing; a monster's reaction comes back at the start
   of its own turn, exactly as a character's does.
+- **The meter is also the guard.** The flag was doing a second job: it
+  stopped a duplicate reaction-taken event from billing twice, and the
+  character's ledger has no floor (`character/ledger.go:97-116`). With the
+  flag gone, the meter answers it: a reaction spend never takes a meter
+  below empty, and the monster's bool is idempotent by nature. You cannot
+  spend a reaction you do not have; the publisher does not need to
+  remember that you already did.
+- **Same triggers, new home.** The flag cleared on the reactor's turn
+  start and on a long rest naming it. The monster's meter clears on the
+  same two events, from the monster's keeper. That is a keeper subscribing
+  to turn start, which no keeper does today (the character's economy is
+  reseeded by a verb session calls), and it is the least wiring: the
+  boundary already publishes turn start for every crossing, monsters
+  included (`resolution/boundary.go:105-110`), and the handler only clears a
+  bool, so the attach-time context caveat in `resolution/truth.go:50-59`
+  does not bite. The five packages whose tests read the flag off the
+  condition blob read the meter off the monster blob instead, and the
+  character-side ones go, because a character's rule did not change: the
+  slot was always its meter.
+- The meter is a new field on the monster's persisted data
+  (`monster/data.go`, read in `loadMonster`, written in `ToData`, or it
+  joins the known round-trip gaps). Sneak Attack keeps its own
+  `UsedThisTurn`; it is a damage rider, not a reaction, and is not swept.
 
 This reverses one sentence of a recorded ruling (`monstertraits/loader.go:454`,
 "a monster has no action economy at all") and none of its reasoning: the
@@ -291,18 +314,41 @@ in reach is offered the swing. When the reactor is a player, the seam asks
 instead of swinging (rpg-project#316), and today that pause is `Direct`'s
 error.
 
-**The answer: a directed walk can be held.** Encounter gains a held
-directive beside the held turn: `{Mover, Cause, Remaining []Position,
-Provokes, Moved int}`. When `walkPath` returns a pause inside `Direct`, the
-remainder is held on the encounter (persisted with the composition, as the
-paused turn is), `Direct` returns `DirectOutput{Paused: true, Moved: n}`,
-and the same window that holds a monster's paused walk holds this one: the
-player answers, and the resume path continues `Direct` with the remainder
-instead of `ResumeTurn`. The beats land in walking order with the reaction
-attack beats interleaved, exactly as a monster's own paused walk lands
-them. A player caster whose own window it is (the bard beside the
-skeleton) answers on their own turn; nothing about that is new to the
-window.
+**The answer: a directed walk can be held.** The survey of the pause
+path made this smaller than it read: the resume verb takes no answer,
+because the strike is fully resolved and recorded by the react verb before
+it is called (`session/react.go:160-194`); `ResumeTurn` is a continue, and
+its only caller is that one line. So encounter gains a held directive
+beside the held turn, `{Mover, From, To, Remaining, Moved, At, Audience,
+Cause, Forced}` (the paused turn's walk fields plus the two a turn never
+needed), persisted the way the paused turn is, and a sibling continue-verb
+`ResumeDirective(ctx) (DirectOutput, error)`. When `walkPath` returns a
+pause inside `Direct`, the remainder is held, the same window-opened beat
+is appended (with the cause, additively), and `Direct` returns
+`DirectOutput{Paused: true, Moved: n}`. The react verb's one gate grows one
+branch: no windows left and a held directive, resume it; no windows left
+and a paused turn, resume that. `ResumeDirective` copies the paused turn's
+continuation exactly: standing first (a dropped mover clears the hold and
+is done), the announced cell stepped by hand without a second announce and
+with its cause set, every later cell through `walkPath` with the cause and
+the stance, a second pause re-held with the moved count accumulated, sight
+settled. `Paused()` and `PausedMember()` gain the hold as a second source,
+so the drive entries and `EndTurn` freeze the table while a player decides,
+which is the right freeze for a directive too. The beats land in walking
+order with the reaction attack beats interleaved, exactly as a monster's
+own paused walk lands them. A player caster whose own window it is (the
+bard beside the skeleton) answers on their own turn; nothing about that is
+new to the window.
+
+**The cast verb returns with the table frozen.** Today a `Direct` failure
+after `RecordCast` is reported as an unrecorded error. A pause is not a
+failure: the pose has already written the windows into the session record,
+so the cast commits and returns `CastOutput{Paused: true}`, the way
+`EndTurn` reports a pause. The window's replay already builds the right
+step for a provoking directive, because the seam never reads a cause when
+the step is not forced (`session/mover.go:277-290`); the comment at
+`react.go:293-298` predates that and is rewritten, with a test that proves
+the replayed swing lands on the fleeing creature.
 
 Why not swing for the player automatically during a forced move: it
 forecloses declining, which is the whole reason #316 asks, and it makes the
@@ -450,16 +496,15 @@ draft.
 ## 11. Where the evidence is thin
 
 - Not run. No production code, no test claimed passing.
-- Whether `combat.FinalDamage` accepts a negative modifier component of a
-  damage type without complaint was not read; the builder verifies it
-  first.
-- The resume path for a held directive was sketched from `pause.go` and
-  `react.go` by their docs, not traced line by line; how the react answer
-  distinguishes a held turn from a held directive is the builder's first
-  question.
-- Whether the monster's keeper can subscribe on the same bus the condition
-  publishes on at `Attach` time was inferred from `carryingFreeReactions`,
-  not read.
-- rpg-api's sandbox seed was not opened.
+- `combat.FinalDamage` sums a negative modifier component into its type
+  group and drops a group that nets zero or less
+  (`combat/final_damage.go:74-131`); 3d6 halved is never below 1, so the
+  guard at `contest.go:427` holds, but a 1-point pool halved to 0 would
+  reach a zero-versus-zero comparison the builder should test once.
+- Two provoking pushes from one cast, where the first pauses, are not
+  designed: Whispers has one target. Recorded so the next multi-target
+  provoking spell does not read this as solved.
+- The resume path was traced by survey (`pause.go:396-630`,
+  `react.go:118-210`), not run.
 
 — cross-team agent, on behalf of KirkDiggler
