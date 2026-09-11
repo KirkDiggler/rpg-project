@@ -58,8 +58,13 @@ BFS exact; the argument is right and is not the defect.
 **Spatial's pathfinder serves nobody.** `SimplePathFinder.FindPath(start, goal
 CubeCoordinate, blocked map[CubeCoordinate]bool)` (`tools/spatial/pathfinder.go:61`)
 is hex-cube A\* typed on cube coordinates, not `Position`, so it fits none of
-the three grid families the encounter runs. Zero production callers. Square
-and gridless have no pathfinder (#614, open since 2026-05). Its own `doc.go`
+the three grid families the encounter runs. Its one caller is
+`tools/environments.BasicEnvironment.FindPathCube` (`environment.go:245`), and
+`tools/environments` is imported only by `tools/spawn` and the legacy
+`rulebooks/dnd5e/dungeon` package; nothing live, and not rpg-api, reaches it.
+(An earlier draft of this document said "zero callers". That was wrong, and
+the correction is left visible.) Square and gridless have no pathfinder
+(#614, open since 2026-05). Its own `doc.go`
 lists "pathfinding algorithms" under non-goals. ADR-0008 anticipated a
 `tools/movement/` that never came.
 
@@ -188,8 +193,10 @@ func (f FieldOutput) PathTo(goal Position) ([]Position, bool)
 
 Dijkstra over `Grid.GetNeighbors`, which degenerates to the existing BFS while
 every cost is 1. Typed on `Position`, so it serves square, hex, and gridless
-alike and closes #614 as a side effect. It replaces both `bfsShortestPath` and
-`SimplePathFinder`; the latter has no callers, so its removal is free.
+alike and closes #614 as a side effect. It replaces `bfsShortestPath`.
+`SimplePathFinder` stays where it is for the legacy `tools/environments` tree
+and is deleted when that tree is retired; reaching into environments to
+remove it would widen this slice for no live customer.
 
 What one field serves:
 
@@ -323,7 +330,8 @@ Each rung leaves the game walkable and adds one tool.
 
 1. **Field + fold, proven by #1652.** `Grid.Field` on `Position`; `CellAt`
    folding walls and props (one cell each, as today); `bfsShortestPath` and
-   `validateWalk` both read it; `SimplePathFinder` removed. Regression test:
+   `validateWalk` both read it; `SimplePathFinder` left for environments,
+   with a note in `doc.go` that `Field` is the search. Regression test:
    a monster behind a pillar routes around it. The web preview is unchanged
    and now merely agrees.
 2. **Footprint + coverage, proven by one prop that does not fit.** The
