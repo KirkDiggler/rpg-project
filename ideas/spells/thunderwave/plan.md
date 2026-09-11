@@ -308,7 +308,7 @@ func (e *Encounter) MembersCovered(in *MembersCoveredInput) (MembersCoveredOutpu
 
 **Files:** create `rulebooks/dnd5e/encounter/directive.go`, `directive_test.go`; modify `clocks.go` (share `floodFrom`/`nearestStop`), `encounter.go:1291` (`appendMovementBeat` gains a cause)
 
-Build exactly the directed-movement design §3 (`RouteInput{Mover, Policy, Anchor, Budget}`, `RouteOutput{Path}`) and §4 (`DirectInput{Mover, Cause, Route, Provokes}`, `DirectOutput{Moved, StoppedBy}`). This PR implements **`MoveLine` only**; `MoveAway`/`MoveToward` are declared as constants and `Route` refuses them with `ErrUnsupportedPolicy` until their customer (Dissonant Whispers) lands. That is a closed switch failing closed, not a stub.
+Build exactly the directed-movement design §3 (`RouteInput{Mover, Policy, Anchor, Budget}`, `RouteOutput{Path}`) and §4 (`DirectInput{Mover, Cause, Route, Provokes}`, `DirectOutput{Moved, StoppedBy}`). This PR implements **`MoveLine` only**, and **only `MoveLine` is declared anywhere** (ruled 2026-09-11 on the root-module builder's flag: "a new kind arrives only with a proven executor for it, never in advance" — `MoveAway`/`MoveToward` arrive with Dissonant Whispers). `Route` keeps a closed switch and refuses any other policy string with `ErrUnsupportedPolicy`.
 
 - [ ] **Step 1: failing tests**
 
@@ -377,11 +377,7 @@ Branch `feat/thunderwave-profile`; title `feat(dnd5e): AreaBox, AreaOriginCaster
 
 ```go
 type MovePolicy string
-const (
-	MoveLine   MovePolicy = "line"
-	MoveAway   MovePolicy = "away"
-	MoveToward MovePolicy = "toward"
-)
+const MoveLine MovePolicy = "line" // Away and Toward arrive with their customers (rpg-project#431 §0)
 type MovePays string
 const (
 	PaysNothing  MovePays = ""          // zero value: the push
@@ -406,7 +402,7 @@ and `CastProfile.Move *CastMove \`json:"move,omitempty"\`` with its `Validate` a
 **Files:** modify `spells/cast.go`, `spells/cast_test.go`, `character/choices/requirements.go`, its test
 
 - [ ] **Step 1: failing tests:** `castContent[Thunderwave]` exists and its profile validates; `Options` of the bard's levelled pick contains `Thunderwave` and `Bane` (assert membership, not length); a level-1 bard with no slot is not offered it (mirror Bane's test).
-- [ ] **Step 2: implement:** generalise `baneCost()` to `slotCost(level resources.ResourceKey) *combat.SpendProfile` and have Bane call it; add the profile from design §5 verbatim (`Cost: slotCost(resources.SpellSlotLevel1)`, `RangeFeet: 0`, `CastTargetArea`, `Area{Footprint{AreaBox, 15, AreaOriginCasterEdge}, AreaCatchesOthers}`, CON gate `Negated` with a comment naming #414, `Damage 2d8 Thunder`, `Move{MoveLine, Cells: 2}`); `Options: []spells.Spell{spells.Bane, spells.Thunderwave}`. Delete the leftover Thunderwave row in `spells/data.go:161` if the profile now carries name and description; if `data.go` is load-bearing for the catalogue, update it instead and say which in the commit.
+- [ ] **Step 2: implement:** generalise `baneCost()` to `slotCost(pool coreResources.ResourceKey) *combat.SpendProfile` and have Bane call it; add the profile from design §5 (`Cost: slotCost(resources.SpellSlotLevel1)`, `RangeFeet: 15` — **not 0**: `CastProfile.Validate` requires a positive range because a UI draws it, and the caster-centred range check reads it; Thunderclap's precedent, `CastTargetArea`, `Area{Footprint{AreaBox, 15, AreaOriginCasterEdge}, AreaCatchesOthers}`, CON gate `Negated` with a comment naming #414, `Damage 2d8 Thunder`, `Move{MoveLine, Cells: 2}`); `Options: []spells.Spell{spells.Bane, spells.Thunderwave}`. Delete the leftover Thunderwave row in `spells/data.go:161` if the profile now carries name and description; if `data.go` is load-bearing for the catalogue, update it instead and say which in the commit.
 - [ ] **Step 3: run the root module's tests; commit** `feat(spells): Thunderwave — the profile, a level-1 slot, and the bard's 1-of-2`
 - [ ] **Step 4: push; draft PR.** Expected tag `rulebooks/dnd5e/v0.X` per the module's bump.
 
