@@ -178,6 +178,22 @@ Cross-repo designs live here in `ideas/<topic>/design.md`, reviewed as an
 rpg-project PR before implementation, and that PR stays open as the tracking
 surface until the implementing repos have landed.
 
+## When you hit a gap
+
+A convention nobody wrote down, a doc that contradicts practice, a pointer that
+resolves to nothing — that is a finding, and it is worth more than the workaround
+you are about to apply. Open an issue naming the gap and what it cost, then carry
+on with the work.
+
+**Do not write the rule from the session that hit it.** That session is saturated
+with its own incident and will shape a general rule around the one example in
+front of it.
+
+**The case belongs in the issue or PR; the rule belongs in the doc.** Evidence and
+measurement stay permanent in git, one hop away. A doc every session loads carries
+the instruction and as much of the spirit as the rule will need when it is
+inconvenient — no more.
+
 ## Pointers
 
 | For | Read |
