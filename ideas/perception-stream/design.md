@@ -1,6 +1,6 @@
 # The Perception Stream — what an observer knows, and how they get it back
 
-## Status: slices 1 and 3 SHIPPED and walked 2026-09-11. Slices 2 and 4 open.
+## Status: slices 1 and 3 SHIPPED and walked 2026-09-11. Slices 2 and 4 open. Knowledge model ruled 2026-09-12 — see that section first; it supersedes the pass-context framing.
 
 Provider issue: [rpg-toolkit#1615](https://github.com/KirkDiggler/rpg-toolkit/issues/1615) — **closed** by slice 3; its "observed changes" clause is met. Adjacent: [rpg-api#681](https://github.com/KirkDiggler/rpg-api/issues/681) (live-push of equipment changes), [rpg-toolkit#850](https://github.com/KirkDiggler/rpg-toolkit/issues/850) (per-viewer visibility reconciliation).
 
@@ -90,7 +90,131 @@ This is cheap to reverse because `audienceFor` already sits at every append site
 
 **The expensive part is not the server policy, it is the client's habit.** If the client's rule becomes "I receive everything and decide for myself what I may know," then enabling filtering later is not a flag — every one of those decisions becomes dead code and the client has to learn a different model mid-flight. So the client's rule stays **"render what the server says I perceive."**
 
-## The pass context — the enabler, not an alternative
+## The knowledge model — ruled by Kirk, 2026-09-12
+
+Three rulings from one conversation. They supersede the framing below, which
+had treated the standing leak as a mechanism problem.
+
+### 1. A global table is truth. It never feeds a per-observer view.
+
+> *"we have a global who is up and who is down and we are referencing that to
+> maintain what I see. i think that's the break… the global table is fine, but
+> my player would never actually know the whole table and it should not feed
+> into my intel. if i dont know someone is down, i dont know it."*
+
+The world keeps one authoritative table of who is standing — that is correct and
+stays. The defect is that `projectSightings` **joins it into `Seen` at read
+time**, so a memory of a creature reports that creature's *current*
+consciousness. It is the same ruling as "intel can contain lies", one layer
+down: anything an observer can be wrong about comes from their testimony, never
+from a lookup.
+
+**It is three tables, not one.** The projection takes `names`, `kinds` and
+`down`. The first two were *decided* — `Sighting.Name` and `.Kind` carry doc
+comments ruling that naming is not a perception question. `down` was never
+decided; it was inherited from before testimony existed, and it is the only one
+of the three that feeds `Seen`, the struct whose whole job is what this observer
+believes. Position and equipment come from the payload; standing came from the
+join. `Seen` was built from two sources and only one of them was the observer's.
+
+**The test, stated so it can be checked:**
+
+```go
+projectSeen(channel, payload)   // and nothing else
+```
+
+If that function still takes a global map, the ruling has not landed. `View`
+stops calling `standingSet` for sightings entirely.
+
+**This demotes the pass context** (below) from the point to an implementation
+detail: the ruling is *stop joining at read time*, and the pass context is only
+how the composition gets a legal answer at **write** time, once, when it
+snapshots.
+
+**It forces one decision: what "I do not know" looks like.** `STANDING_UNSPECIFIED`
+exists and the web already defends against it. This is not a migration artifact
+to backfill — **hearing makes it permanent.** You hear someone through a door,
+you know they are there, and you have no idea whether they are on their feet.
+
+**Why standing differs from name**, written down so the next reader does not
+reopen it: a name does not change under you. Standing does.
+
+Tracked: [rpg-toolkit#1668](https://github.com/KirkDiggler/rpg-toolkit/issues/1668).
+
+### 2. The combat log narrows to what a member can perceive
+
+> *"i think i need to think about the combat log going to everyone. I see now I
+> am trying to have it both ways… the thing i think makes this game cool is the
+> individual views and I am breaking that."*
+
+Every subject and bubble beat is addressed to the full roster today. The
+argument that settles it is **hearing**: "you hear fighting behind the door" is
+only a moment because you did not already receive the strike events. Broadcast
+the sight events and hearing becomes flavour text on information the player
+already has — and illusion has nothing to bite on, because the log handed
+everyone the truth.
+
+This is [rpg-toolkit#940](https://github.com/KirkDiggler/rpg-toolkit/issues/940),
+open since before the shelf existed, and the shelf was built for it:
+`audienceFor` already classifies every beat, pinned by
+`TestCallSiteClassification`, and its own doc says the flip "lands as a change to
+THIS function's body alone. No call site moves."
+
+**The enabler shipped in slice 1.** Narrowing `moved` used to be unsafe — a peer
+walking back into view arrives on *their* movement beat, so cutting it froze
+your picture of them permanently. `sighted` closes that hole.
+
+Still to decide: bubble beats scope by **bubble membership**, not perception (in
+the fight, you need the clock; not in it, not knowing is the point); the actor
+always hears their own beat; exits and endings stay table-wide.
+
+**The end-of-match transcript is a different read, not a weaker stream.** The
+live stream stays per-observer; an omniscient transcript is a separate
+projection over a log the server already holds in full. #940 names the mechanism
+— an empty audience already means "no viewer" in `record`, the natural home for
+a spectator channel.
+
+**One honest cost:** a player alone in a corridor gets a very quiet client. That
+is the tension working, but the UI has to read as *quiet* rather than *broken*.
+
+Tracked: [rpg-toolkit#940](https://github.com/KirkDiggler/rpg-toolkit/issues/940),
+ruled in a comment of 2026-09-12.
+
+### 3. The hearing ladder — a spec for the channel, captured before it is built
+
+Kirk's own words, because they are a better specification than anything that
+will be reconstructed later:
+
+> *"if i am in an entrance way and I have seen 0 monsters, I have no idea how
+> many monsters are here. I might hear things in a room, but without sight it is
+> inferred. if i hear voices that i know are not my party members then I know a
+> little more. maybe if I heard the language and knew it was goblin I would know
+> a little more. if i speak goblin then a little more."*
+
+**This is why a filtered global table cannot work.** A standing table has exactly
+one shape of answer — *is this named creature down*. No amount of per-member
+filtering yields "there are several voices and they are arguing in Goblin." The
+global table is not merely too wide, it is **the wrong shape**; each channel
+yields a different *kind* of knowledge, and only testimony can hold different
+kinds.
+
+**The modelling question this opens, and it is not standing.** `intel` is keyed
+by **subject** — a holding is what I know about `goblin-3`. Voices in a room
+**name nobody**: not which creature, not how many. So the hearing channel needs
+knowledge about an *unidentified contact*, which sight has never needed, and a
+notion of **promotion** — a contact becoming a known member when you finally see
+it. That promotion is the ladder above.
+
+Nothing in the primitive blocks it: `intel.Subject` and `intel.Channel` are both
+free strings and `Sight` is the only channel anyone has declared. What is absent
+is the design — what a contact's payload holds, and what promotion does to the
+holdings on both sides of it.
+
+Tracked: [rpg-toolkit#1669](https://github.com/KirkDiggler/rpg-toolkit/issues/1669).
+**No use case has paid for this yet**, and none should be invented for it — it is
+written down so the ladder survives.
+
+## The pass context — the mechanism, not the ruling
 
 A single coherent per-observer write says "here is what you now perceive about X" — which needs position, standing and hands answerable **at one point**.
 
@@ -108,15 +232,23 @@ Three shapes considered:
 
 ## Open — needs a ruling
 
-- **The pass context**, as above. Nothing currently shipped depends on it; the standing leak has existed since standing shipped.
+- ~~**The pass context.**~~ **Ruled 2026-09-12** — see "The knowledge model". The
+  ruling is that `Seen` is built from testimony alone; the pass context is only
+  the write-time mechanism, and no longer a question about whether to fix this.
 - **Slice boundaries.** The `sighted` beat is worth doing on its own and needs none of this. The equipment-change beat needs the doorbell from rpg-api. The cursor stitch is a third, independent piece.
 
 ## Slices
 
+0. **Audience narrowing** — the combat log stops going to everyone
+   ([#940](https://github.com/KirkDiggler/rpg-toolkit/issues/940)). Ruled
+   2026-09-12; one function body, and slice 1 is its enabler.
 1. **`sighted` beat** — ✅ **SHIPPED 2026-09-11.**
 2. **Cursor stitch** — `GetView` returns its seq; `StreamEvents` accepts a from-seq; define the too-old answer. Fixes reconnect as a class rather than per-fact. **Open.**
 3. **Equipment-change beat** — ✅ **SHIPPED 2026-09-11**, closed [#1615](https://github.com/KirkDiggler/rpg-toolkit/issues/1615).
-4. **Pass context**, then standing into the snapshot — closes the ghost leak and makes `Seen` uniform. **Open**, and still needs the ruling above.
+4. **`Seen` from testimony alone** — standing into the snapshot, and the global
+   join deleted ([#1668](https://github.com/KirkDiggler/rpg-toolkit/issues/1668)).
+   **Ruled 2026-09-12**; no longer waiting on a decision, only on the write-time
+   mechanism.
 
 ## What slices 1 and 3 turned out to be
 
