@@ -464,14 +464,14 @@ Branch `feat/cast-cell`; title `feat(session): CastRequest.cell and TargetKind C
 
 - [ ] `service.proto:579-592`: add `// The cell a caster-edge shape is aimed toward. Set only when the selected declaration's target_kind is CELL; a reference the engine reads, never a computed shape.` `Position cell = 6;`
 - [ ] `types.proto:474-484`: add `TARGET_KIND_CELL = 5;` with a comment in the file's voice.
-- [ ] Add `moved_cells` and `stopped_by` to the per-target cast outcome message if one exists (find where `Caught` is reported: `CastResponse` at `:594`); additive.
+- [ ] ~~Add `moved_cells` and `stopped_by` to the per-target cast outcome message~~ **Built as (rpg-api-protos#328):** `ActivationResult.move_imposed` (field 7), a new `MoveImposed{target, moved_cells, stopped_by}` message in `events.proto`, because per-target results live on the event stream by `CastResponse`'s own law and `ActivationResult` is a oneof holding exactly one result. So PR 5.4's `ResultMoved` maps to that arm and PR 7 has **no** `CastResponse` change.
 - [ ] `buf lint && buf format -d && buf breaking --against '.git#branch=main'` clean; generate; the generated Go compiles. No hand-written tests. Draft PR; tag on merge (`v0.1.186` or next).
 
 ## PR 7 — `rpg-api`: copy it through
 
 Branch `feat/cast-cell` off `dev`. Pin protos at the minted tag and session at its tag (or pseudo-versions while drafting).
 
-- [ ] `cast.go:40-71`: `Cell: positionFromProto(req.GetCell())` (the same converter `move.go:18-21` uses, returning `nil` for an unset message); `CastResponse` gains the moved fields if PR 6 added them.
+- [ ] `cast.go:40-71`: `Cell: positionFromProto(req.GetCell())` (the same converter `move.go:18-21` uses, returning `nil` for an unset message). No `CastResponse` change (see PR 6); the event converter gains the `move_imposed` arm where `DamageApplied` is converted.
 - [ ] `internal/sandboxseed/sandboxseed.go:188`: the bard's `SpellRefs` becomes `[]string{baneRef, thunderwaveRef}` — **check the choice's `Count: 1`** first: if the seed picks one known spell per the pick, seed Thunderwave for the walk and say so in the manifest.
 - [ ] Handler tests mirror the existing cast handler test with a cell. Draft PR to `dev`.
 
