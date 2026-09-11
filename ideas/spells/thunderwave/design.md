@@ -129,10 +129,16 @@ Thresholds stay out of spatial.
 
 **The cube.** A 15-foot cube is a box 15 wide and 15 deep in the plane.
 `AreaOriginCasterEdge` anchors its near edge on the caster's hex boundary
-along the bearing from the caster's cell to the chosen cell, so the caster is
-never under it and the far edge is three cells out. Encounter applies
+along the bearing from the caster's cell to the chosen cell, so the far edge
+is three cells out and the caster's own cell falls below the threshold. (Not
+"never under it": measured in rpg-toolkit#1656, off a grid axis the caster's
+cell is covered at about one percent because its own corner pokes past the
+near edge. The half rule is what keeps the caster out, and encounter asserts
+that after the threshold, not before.) Encounter applies
 `CoverageThreshold = 0.5`, the tabletop's half rule and ours, as a named
-constant in `encounter/shape.go` beside `MembersWithin`.
+constant in `encounter/shape.go` beside `MembersWithin`, comparing with a
+small tolerance: four cells on an axis bearing sit at exactly one half, and
+"at least half" must not turn on the last bit of a float.
 
 ```go
 // encounter
