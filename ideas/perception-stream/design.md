@@ -1,8 +1,8 @@
 # The Perception Stream — what an observer knows, and how they get it back
 
-## Status: peer equipment SHIPPED and walked 2026-09-10. Stream model agreed with Kirk 2026-09-10/11; not yet sliced.
+## Status: slices 1 and 3 SHIPPED and walked 2026-09-11. Slices 2 and 4 open.
 
-Provider issue: [rpg-toolkit#1615](https://github.com/KirkDiggler/rpg-toolkit/issues/1615) — **open**, because its "observed changes" clause is not met. Adjacent: [rpg-api#681](https://github.com/KirkDiggler/rpg-api/issues/681) (live-push of equipment changes), [rpg-toolkit#850](https://github.com/KirkDiggler/rpg-toolkit/issues/850) (per-viewer visibility reconciliation).
+Provider issue: [rpg-toolkit#1615](https://github.com/KirkDiggler/rpg-toolkit/issues/1615) — **closed** by slice 3; its "observed changes" clause is met. Adjacent: [rpg-api#681](https://github.com/KirkDiggler/rpg-api/issues/681) (live-push of equipment changes), [rpg-toolkit#850](https://github.com/KirkDiggler/rpg-toolkit/issues/850) (per-viewer visibility reconciliation).
 
 North star: **what a player knows about another creature is that player's own testimony — taken when they looked, theirs to keep, and capable of being wrong.** Not a read of the other creature's sheet.
 
@@ -111,11 +111,42 @@ Three shapes considered:
 - **The pass context**, as above. Nothing currently shipped depends on it; the standing leak has existed since standing shipped.
 - **Slice boundaries.** The `sighted` beat is worth doing on its own and needs none of this. The equipment-change beat needs the doorbell from rpg-api. The cursor stitch is a third, independent piece.
 
-## Slices, smallest first
+## Slices
 
-1. **`sighted` beat** — emit on perception change, where the composition already knows who newly sees whom. No new questions, no pass context needed.
-2. **Cursor stitch** — `GetView` returns its seq; `StreamEvents` accepts a from-seq; define the too-old answer. Fixes reconnect as a class rather than per-fact.
-3. **Equipment-change beat** — rpg-api tells the session after an equip; session re-looks, writes testimony for live-sight observers, emits the nudge. Closes #1615.
-4. **Pass context**, then standing into the snapshot — closes the ghost leak and makes `Seen` uniform.
+1. **`sighted` beat** — ✅ **SHIPPED 2026-09-11.**
+2. **Cursor stitch** — `GetView` returns its seq; `StreamEvents` accepts a from-seq; define the too-old answer. Fixes reconnect as a class rather than per-fact. **Open.**
+3. **Equipment-change beat** — ✅ **SHIPPED 2026-09-11**, closed [#1615](https://github.com/KirkDiggler/rpg-toolkit/issues/1615).
+4. **Pass context**, then standing into the snapshot — closes the ghost leak and makes `Seen` uniform. **Open**, and still needs the ruling above.
+
+## What slices 1 and 3 turned out to be
+
+Written after the fact, because two things were not what the plan said.
+
+**Slice 1 needed a primitive the plan did not know was missing.** `play/intel` reported `FirstContact`, `Refreshed` and `Faded`, and the one transition a consumer acts on was not among them: a ghost becoming current again landed in `Refreshed`, indistinguishable from a subject the observer never looked away from. `Refreshed` fires every pass for every perceived subject, so a beat built on it would have been noise. Building the beat by diffing holdings in `encounter` would have been a second computation of a truth `intel` already owns and throws away one line later — so the leaf got `Reacquired`, the exact inverse of `Faded`.
+
+**One event, three lists, not two event kinds.** `Sighted` carries `gained`, `lost` and `changed`. All three answer one question — *what do I perceive now that I did not a moment ago* — and a client's answer to all three is the same re-read of `GetView`. Kirk's ruling: *"I do not want two paths for 1 thing."* The evidence it was right: the web needed **no new refresh row** for `changed`.
+
+**The beat names who, never what.** The server does not say a weapon was drawn. Saying so would hand a recipient a fact rather than the news that their own view is stale — and the fact is exactly what an illusion has to be able to lie about. Pinned by a test that counts the body's fields.
+
+**A ghost-holder is never told.** `changed` is the declared members intersected with what THAT observer refreshed on this pass, so a member across the map hears nothing and — the case that matters — neither does one holding the subject as a ghost. Their testimony is a memory of an older moment and must not acquire news they never witnessed.
+
+**The doorbell needed no new index.** An early read of rpg-api said no character→session mapping existed and slice 3 needed new infrastructure. Wrong: the lobby is that index. A player sits in at most one lobby (`GetByPlayerID`), which carries the `EncounterID` of the stack it started — the same id as the session, with members seated under their character id.
+
+**Two writers, one path.** The first walk found equipping visible and unequipping not: `EquipItem` and `UnequipItem` are byte-identical where they write, and only one had been decorated. The fix was not the missing line — it was that "the sheet changed" and "watchers are told" were two facts kept in step by hand. They are now one `writeEquipment`, the only place equipment is persisted, so a third writer cannot repeat it.
+
+### Shipped versions
+
+| module | version |
+| --- | --- |
+| `play/intel` | v0.2.0 |
+| `rulebooks/dnd5e/encounter` | v0.72.0 |
+| `rulebooks/dnd5e/session` | v0.74.0 |
+| `rpg-api-protos` | v0.1.185 |
+| `rpg-api` | dev ([#964](https://github.com/KirkDiggler/rpg-api/pull/964)) |
+| `rpg-dnd5e-web` | dev ([#1037](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1037)) |
+
+### Known, left deliberately
+
+Unequipping an **already empty** slot does not refuse — it writes a no-op patch and now rings the bell for a change nobody made. It costs one spurious refetch. Closing it means deciding what a no-op write should mean, which is its own question.
 
 — cross-team agent, on behalf of KirkDiggler
