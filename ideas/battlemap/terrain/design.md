@@ -72,13 +72,17 @@ lists "pathfinding algorithms" under non-goals. ADR-0008 anticipated a
 
 | reader | where | walls | props | creatures |
 |---|---|---|---|---|
-| player walk validation | toolkit `session/move.go` `validateWalk` | yes | yes | yes |
+| player step | encounter `Step` (`step.go:201` `isStandable`, then the canvas's `CanPlaceEntity`) | yes | yes | only if the member is flagged `BlocksMovement`, default false |
 | monster route | encounter `bfsShortestPath` | yes | no | no |
 | client preview | web `components/session/atlasPath.ts:169` `edgePassable` | yes | yes | yes |
 
-`rpg-api` holds no path logic: the move handler forwards the client's whole
-path to the session SDK (`handlers/dnd5e/session/v1alpha1/move.go:18-21`).
-That shape is right and is kept.
+Session is not an author. `validateWalk` (`session/move.go:611`) checks
+adjacency and nothing else, and its comment says the rest was deliberately
+moved into `Step` (rpg-toolkit#1059). That is right and is kept. `rpg-api`
+holds no path logic either: the move handler forwards the client's whole path
+to the session SDK (`handlers/dnd5e/session/v1alpha1/move.go:18-21`). So the
+duplication is inside encounter (a step and a route disagree) plus the
+client's preview. An earlier draft named session as an author; it was wrong.
 
 **Everything occupies exactly one cell.** `Placeable.GetSize() int`
 (`tools/spatial/interfaces.go:123`) is serialised (`data.go:188`) and never
@@ -232,7 +236,7 @@ threshold, and every boundary on the way in, and combine by policy:
 | wall / shut door | Blocked (edge) | spatial boundary, unchanged |
 | prop, `blocks_movement` | Blocked | coverage past half |
 | thin prop | Blocked (edge) | coverage's `Edges` |
-| hostile creature | Blocked, unless two sizes different | coverage past half |
+| hostile creature | Blocked (the two-sizes exception waits for size to exist on a member; today `GetSize` is a hardcoded 1 at `encounter.go:2463`) | coverage past half |
 | nonhostile creature | PassThrough | coverage past half |
 | burning ground | Standable, `OnEnter` carries the effect | coverage past half |
 | difficult terrain (later) | Standable, `Cost: 2` | coverage past half |
@@ -244,9 +248,10 @@ ignoring occupancy was half right: allies *are* passable. No divergence from
 the letter is taken yet.
 
 The three-valued `Passage` is what the field's `Passable` reads for routing,
-and what `validateWalk` reads for the player. One fold, four readers: walk
-validation, monster routing, flee, and the atlas the web previews from. The
-web's `edgePassable` becomes a rendering of the fold, not a fourth author.
+and what `Step` reads for the player. One fold, four readers: the step, the
+route, flee, and the atlas the web previews from. The web's `edgePassable`
+becomes a rendering of the fold, not a fourth author. Session keeps checking
+adjacency only.
 
 `OnEnter` is a fact on the log, not a resolution. Stepping onto burning ground
 publishes "member entered cell carrying `dnd5e:effects:burning`"; the spell's
@@ -328,12 +333,13 @@ Read against full D&D, which is the test:
 
 Each rung leaves the game walkable and adds one tool.
 
-1. **Field + fold, proven by #1652.** `Grid.Field` on `Position`; `CellAt`
-   folding walls and props (one cell each, as today); `bfsShortestPath` and
-   `validateWalk` both read it; `SimplePathFinder` left for environments,
-   with a note in `doc.go` that `Field` is the search. Regression test:
-   a monster behind a pillar routes around it. The web preview is unchanged
-   and now merely agrees.
+1. **Field + fold, proven by #1652.** Two modules, merged bottom-up:
+   `tools/spatial` gains `Grid.Field` on `Position` (and `doc.go` says so;
+   `SimplePathFinder` is left for environments); `encounter` gains `CellAt`
+   folding walls, props, and creatures by stance (one cell each, as today),
+   and both `Step` and the route read it, so a step and a route can no longer
+   disagree. Session is untouched. Regression test: a monster behind a pillar
+   routes around it. The web preview is unchanged and now merely agrees.
 2. **Footprint + coverage, proven by one prop that does not fit.** The
    embedding moves to spatial; `Coverage` with cells and edges; the two
    booleans move to the definition; the tomb's placements migrate; the world
@@ -347,7 +353,7 @@ Each rung leaves the game walkable and adds one tool.
 5. **Flee, proven by a monster that runs.** Threat field against reach field
    in the behavior package, which computes no geometry of its own.
 
-Rungs 1 and 2 are toolkit-only. Rung 2 touches content and the world builder.
+Rung 1 is two toolkit modules. Rung 2 touches content and the world builder.
 Rung 3 touches protos only if an area preview needs a new shape on the wire
 (ward-and-area §8 flagged this as unknown, not zero). Nothing here authorises
 a merge, a force-push, or a shared-stack change.
