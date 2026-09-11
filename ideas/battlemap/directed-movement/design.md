@@ -86,8 +86,14 @@ members by stance into Blocked / PassThrough / Standable. `routeTo` and
 goal" with a stable tie-break. This design adds policies beside them.
 
 **Dissonant Whispers is absent entirely.** No data row, no cast profile, no
-condition. Thunderwave has a row (`spells/data.go:161`) and no profile. Half on
-a save does not exist: `contestMachine.resolve` returns `Done` on success
+condition. Thunderwave has a row (`spells/data.go:161`) and no profile, and
+that row is a leftover, not a decision: Kirk, 2026-09-11, *"any spell traces
+you find in there was from a different architecture than we have today and
+should not be seen as a decision made … bane, true strike and the other spells
+that can be slotted in a bard are the new way."* The new way is the
+`castContent` profile map (`spells/cast.go:55`, six entries). A spell exists
+when it has a profile there; a row or a constant without one is nothing to
+build on and nothing to preserve. Half on a save does not exist: `contestMachine.resolve` returns `Done` on success
 (`contest.go:668-676`) and `saves.Half` is read only by validation. Those are
 heal-and-half's (#414, open) to land; §7 says what this slice borrows.
 
