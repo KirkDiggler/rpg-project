@@ -1,6 +1,6 @@
 ---
 status: DESIGN, proposed 2026-09-11
-journey: rpg-project#430 · builds on: ../terrain/design.md (the field and the fold, rung 1 landed 2026-09-11) · fills the gap recorded in ../../spells/heal-and-half/design.md §"The forced move is deliberately deferred" (rpg-project#414, open)
+journey: rpg-project#430 · step 1: Thunderwave (Kirk 2026-09-11, "shapes into spatial will have a lot of use cases and we get forced movement to boot") · builds on: ../terrain/design.md (the field and the fold, rung 1 landed 2026-09-11) · fills the gap recorded in ../../spells/heal-and-half/design.md §"The forced move is deliberately deferred" (rpg-project#414, open)
 law: resolution DESCRIBES a move, encounter COMPUTES and EXECUTES it; the fold gets a fifth reader, never a second author
 ---
 
@@ -17,15 +17,19 @@ Customers, in the order they arrive:
 
 | customer | policy | budget | pays | provokes | when |
 |---|---|---|---|---|---|
-| **Dissonant Whispers** (first proof) | away from the caster | the target's speed | its reaction, if available | yes | during the cast, on a failed save |
-| **Thunderwave** | straight line away from the caster | 2 cells | nothing | no | during the cast, on a failed save |
+| **Thunderwave** (first proof) | straight line away from the caster | 2 cells | nothing | no | during the cast, on a failed save |
+| **Dissonant Whispers** (second) | away from the caster | the target's speed | its reaction, if available | yes | during the cast, on a failed save |
 | **monster flee** (behavior lane) | away from threats | its own movement | its own turn | yes | its own turn |
 | Thorn Whip | toward the caster | 2 cells | nothing | no | during the cast, on a hit |
 | Command: Approach, Flee | toward / away | the target's speed | its own turn | yes | the target's next turn |
 
-Kirk, 2026-09-09 (heal-and-half): *"dissonant whispers will bring in the monster
-movement. if not then it could be command that does it."* It does. The last
-two rows are named so the shape is tested against them, not built for them.
+Kirk, 2026-09-11, choosing the first proof: *"we are not bound to 2014 and the
+PHB. see thunder clap. we are here to prove the engine works … shapes into
+spatial will have a lot of use cases and we get forced movement to boot."*
+Thunderwave goes first because it pays for two tools, coverage and the
+directive, where Whispers pays for one. Whispers goes second and exercises the
+directive's harder fields, the reaction and the provoke. The last two rows are
+named so the shape is tested against them, not built for them.
 
 ## 1. What is true today
 
@@ -227,27 +231,41 @@ show "it fled 6 cells and was struck once" without re-deriving it.
 No new target kind. Dissonant Whispers targets one creature the caster can
 see, which is Bane's single-target shape.
 
-## 6. Dissonant Whispers, the proof
+## 6. Thunderwave, the proof — and what it adds beyond this design
 
-Content row and cast profile (the profile map holds six today). Save:
-Wisdom. On a failed save, two imposed effects from one contest: `3d6`
-psychic damage and the directive `{Away, caster, Speed, PaysReaction, Provokes: true}`.
-On a successful save: half, which is heal-and-half's; see §7.
+Cast profile in the bard's level-1 choice (which offers Bane alone today).
+Save: Constitution. Area: a 15-foot cube on the caster's edge, which is a box
+footprint anchored at the caster and oriented toward a chosen cell. The
+client sends that cell as a reference; it is the point-origin target kind
+ward-and-area §3 said Fireball would force, arriving one spell early and
+serving both. Coverage (terrain design §3.2, pulled forward to this slice)
+turns the box into cells at half. Every creature on those cells makes the
+save; on a failure, two imposed effects from one contest: `2d8` thunder and
+the directive `{Line, caster, 2 cells, PaysNothing, Provokes: false}`.
 
-The walk: the bard casts it on the skeleton standing next to the fighter. The
-skeleton fails, takes the damage, spends its reaction, and runs as far from
-the bard as its speed allows. Leaving the fighter's reach provokes; the
-fighter's opportunity attack resolves inline. The story shows the skeleton
-moved *because of the whispers*, then the fighter's swing. That is the spell's
-identity as a tool, the half heal-and-half said it was not shipping.
+The walk: the bard stands in the hall with two skeletons in front and the
+pillar behind one of them. Thunderwave. Both fail. The one with open floor
+behind it slides two cells and stops; the one in front of the pillar slides
+one and stops against it, and the story says the pillar stopped it. Nobody's
+opportunity attack fires. That proves the shape, the coverage rule, the
+directive's least permissive case, and the fold as the thing a push obeys.
+
+Dissonant Whispers follows as the second proof and exercises what Thunderwave
+cannot: `Away` with a speed budget, a reaction paid before the walk, and a
+provoke resolved inline by the movement machine. Its walk is the skeleton
+that flees the bard past the fighter and is struck for it.
 
 ## 7. What this slice borrows, said plainly
 
 - **Half on a save.** Not built here and not this slice's to build. Until
-  #414 lands, the walk declares Dissonant Whispers `saves.Negated` and says so
-  in its content row's comment. That is a temporary content divergence from
-  the letter, chosen so the directive can be walked; the row flips to `Half`
-  the day half exists, with no code change here.
+  #414 lands, the walk declares Thunderwave (and later Whispers) `saves.Negated`
+  and says so in the content row's comment. We are not bound to the 2014
+  letter; the row flips to `Half` the day half exists, with no code change
+  here.
+- **Coverage.** Owned by the terrain design (§3.2) and pulled forward to this
+  slice as its first customer, without the footprint-on-the-definition half,
+  which waits for the builder. The cube is the first shape through it; cones
+  and Fireball's spread follow as their spells arrive.
 - **The reaction meter for monsters.** A monster's reaction is never debited
   today, so `CanReact()` on a monster answers from a meter nobody spends.
   This slice spends through the same request and asks the same query; making
@@ -287,12 +305,14 @@ identity as a tool, the half heal-and-half said it was not shipping.
 
 ## 10. Sequence
 
-1. **Directive + `Route` + `Direct` + the `Away` policy, proven by Dissonant
-   Whispers.** Toolkit: resolution (kind, producer, pay), encounter (`Route`,
-   `Direct`, beat cause), session (one arm), spells content. One additive
-   proto field. Walk as §6, with `Negated` per §7.
-2. **`Line`, no-provoke, proven by Thunderwave's push.** With coverage for
-   the cube from the terrain design, pulled forward as its own slice.
+1. **Thunderwave.** Coverage in spatial (the embedding moves out of
+   `dungeonspec/geometry.go`); the directive kind in resolution; `Route` and
+   `Direct` with `Line` in encounter, beats carrying a cause; one session arm
+   and the point-origin target kind; a cast profile in the bard's choice;
+   the client picks a cell. Walk as §6, `Negated` per §7. Merged bottom-up,
+   one module per PR.
+2. **Dissonant Whispers.** `Away` with a speed budget, `PaysReaction`,
+   `Provokes`. The monster reaction meter gap (§7) is fixed here or before.
 3. **Monster flee** in the behavior lane, reading `Route`.
 4. **Command**, after the compelled-turn ruling.
 
