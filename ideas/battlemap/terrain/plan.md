@@ -381,7 +381,7 @@ cd <worktree>/rulebooks/dnd5e/encounter && go test -run 'TestMonsterTurnTestSuit
 
 (Confirm the suite name at the top of `monsterturn_test.go` and use it; a filter that matches nothing prints PASS.)
 
-- [ ] **Step 3: commit the red test alone** `test(encounter): a monster behind a pillar is routed through it (#1652)`
+- [ ] **Step 3: do not commit yet.** Keep the red failure output; it goes in the PR body as the before. (An earlier version of this plan said "commit the red test alone". That contradicts the repo's pre-commit hook, which runs `go test -race` on changed packages, and led the builder to bypass the hook on three commits, disclosed. The plan was wrong; a red commit is never asked for again.)
 
 ### Task B2: `CellAt`, the fold
 
@@ -579,6 +579,12 @@ func (e *Encounter) routeTo(mover MemberID, from spatial.Position, goal func(spa
 ## The walk
 
 After PR B merges and the local stack pins the encounter tag (`game-dev/scripts/bump-toolkit-pin.sh`, then rpg-api's normal pin PR): load the reference tomb, stand a player where the skeleton at `[13,5]` can see them across the pillar at `[12,5]`, end turn. The skeleton moves. Record the walk on rpg-toolkit#1652 and the journey #428; that record is what lets #429 advance to rung 2.
+
+## What differed in execution (2026-09-11, left visible)
+
+- PR A (#1653): `AxialHexGridConfig` uses `SpanWidth`/`SpanHeight` and is origin-centred; the blocked column runs across the real R range; `(-1,-1)` is a valid hex so the unreached probe is out of bounds; `heap.Pop`'s assertion lives in one typed helper for `errcheck`; `doc.go`'s Scope line was corrected too.
+- PR B (#1655): suite is `TestMonsterTurnSuite`; `PropInput.BlocksLineOfSight`, `At` is an authored `[col,row]`; `propEntity.GetID()` is index-derived so `ContribRef` carries `Ref` (the content ref) and `Blocks` (an ally is a contributor, not a blocker); `memberEntity.id` is a string; `cellAt(0,0)` is owned, so the sealed test uses `FieldInput.Sealed`; a monster cannot `Step` off-turn, so step tests drive the player; `Step` asks the boundary before the fold so a refusal never names what stands behind a door (intel rule); `routeTo` keeps `(nil, true)` when the goal already holds at `from` (rpg-project#254).
+- Open ruling put to Kirk on #1652: whether a downed hostile still blocks its cell. As built, it does.
 
 ## Self-review against the design
 
