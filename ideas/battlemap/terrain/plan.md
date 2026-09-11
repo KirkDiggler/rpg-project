@@ -40,7 +40,13 @@ issues: rpg-toolkit#614 (spatial PR) · rpg-toolkit#1652 (encounter PR) · journ
 
 Branch `feat/614-distance-field` in a worktree of `rpg-toolkit`. Title prefix `feat(spatial):` so the squash mints a minor tag.
 
-### Task A1: `Field` with one source on an open grid
+### Task A1: `Field` with one source on an open hex grid
+
+The game is hex by choice, so the field's primary tests run on the
+`AxialHexGrid` the encounter runs (`hex_grid.go:319`), and distances are
+asserted through the grid's own `Distance`, never as literals a square
+reader would recognise. One square test arrives in A2 as the evidence that
+closes #614; it is not the model.
 
 **Files:**
 - Create: `tools/spatial/field.go`
@@ -59,29 +65,41 @@ import (
 
 type FieldTestSuite struct {
 	suite.Suite
-	grid *SquareGrid
+	grid Grid // the axial hex grid the encounter runs
 }
 
 func (s *FieldTestSuite) SetupTest() {
-	s.grid = NewSquareGrid(SquareGridConfig{Width: 5, Height: 5})
+	s.grid = NewAxialHexGrid(AxialHexGridConfig{Width: 7, Height: 7})
 }
 
-func (s *FieldTestSuite) TestOpenGridDistancesAreChebyshev() {
+func (s *FieldTestSuite) TestOpenHexDistancesMatchTheGrid() {
+	origin := Position{X: 3, Y: 3}
 	out, err := Field(s.grid, FieldInput{
-		Sources:  []Position{{X: 0, Y: 0}},
+		Sources:  []Position{origin},
 		Passable: func(from, to Position) bool { return true },
 	})
 	s.Require().NoError(err)
-	s.Equal(0, out.Dist[Position{X: 0, Y: 0}])
-	s.Equal(1, out.Dist[Position{X: 1, Y: 1}])
-	s.Equal(4, out.Dist[Position{X: 4, Y: 4}])
-	s.Len(out.Dist, 25)
+	s.Equal(0, out.Dist[origin])
+	for cell, d := range out.Dist {
+		s.Equal(int(s.grid.Distance(origin, cell)), d, "field distance is the grid's distance on open ground: %v", cell)
+	}
+	s.Equal(6, countAt(out, 1), "a hex has six neighbours")
+}
+
+func countAt(out FieldOutput, d int) int {
+	n := 0
+	for _, v := range out.Dist {
+		if v == d {
+			n++
+		}
+	}
+	return n
 }
 
 func TestFieldTestSuite(t *testing.T) { suite.Run(t, new(FieldTestSuite)) }
 ```
 
-Check `NewSquareGrid`'s real constructor name and config type in `tools/spatial/square_grid.go:26` before running, and use that.
+Check the real constructor name and config type at `tools/spatial/hex_grid.go:319-340` before running, and use those. Do not assert the total cell count: it pins a collection's length and tests nothing.
 
 - [ ] **Step 2: run it, expect a compile failure naming `Field`**
 
@@ -203,49 +221,81 @@ func (q *fieldQueue) Pop() any           { old := *q; n := len(old); it := old[n
 
 **Files:** modify `tools/spatial/field.go`, `tools/spatial/field_test.go`
 
-- [ ] **Step 1: write the failing tests**
+- [ ] **Step 1: write the failing tests.** The wall is a full column of blocked hexes with one gap at the bottom, so every route from west to east must go through the gap; assert the path through the grid's own facts, never through a literal count.
 
 ```go
-func (s *FieldTestSuite) TestAWallOfBlockedCellsForcesADetour() {
-	blocked := map[Position]bool{{X: 2, Y: 0}: true, {X: 2, Y: 1}: true, {X: 2, Y: 2}: true, {X: 2, Y: 3}: true}
+func (s *FieldTestSuite) blockedColumn(x float64, gapY float64) map[Position]bool {
+	blocked := map[Position]bool{}
+	for y := 0.0; y < 7; y++ {
+		if y != gapY {
+			blocked[Position{X: x, Y: y}] = true
+		}
+	}
+	return blocked
+}
+
+func (s *FieldTestSuite) TestABlockedColumnForcesTheRouteThroughTheGap() {
+	blocked := s.blockedColumn(3, 6)
+	from, goal := Position{X: 1, Y: 3}, Position{X: 5, Y: 3}
 	out, err := Field(s.grid, FieldInput{
-		Sources:  []Position{{X: 0, Y: 2}},
+		Sources:  []Position{from},
 		Passable: func(_, to Position) bool { return !blocked[to] },
 	})
 	s.Require().NoError(err)
-	_, reached := out.Dist[Position{X: 2, Y: 1}]
-	s.False(reached, "a blocked cell is never entered")
-	s.Equal(4, out.Dist[Position{X: 4, Y: 2}], "around the wall's open end at y=4")
+	for cell := range blocked {
+		_, reached := out.Dist[cell]
+		s.False(reached, "a blocked cell is never entered: %v", cell)
+	}
+	s.Greater(out.Dist[goal], int(s.grid.Distance(from, goal)), "the detour is longer than the crow flies")
+	path, ok := out.PathTo(goal)
+	s.Require().True(ok)
+	s.Contains(path, Position{X: 3, Y: 6}, "the only way east is the gap")
 }
 
 func (s *FieldTestSuite) TestLimitStopsTheFlood() {
+	origin := Position{X: 3, Y: 3}
 	out, err := Field(s.grid, FieldInput{
-		Sources:  []Position{{X: 0, Y: 0}},
+		Sources:  []Position{origin},
 		Passable: func(Position, Position) bool { return true },
 		Limit:    2,
 	})
 	s.Require().NoError(err)
-	_, far := out.Dist[Position{X: 3, Y: 3}]
-	s.False(far)
-	s.Equal(2, out.Dist[Position{X: 2, Y: 2}])
+	for cell, d := range out.Dist {
+		s.LessOrEqual(d, 2, "nothing past the limit is in the field: %v", cell)
+	}
+	s.Equal(6, countAt(out, 1))
+	s.Equal(12, countAt(out, 2), "the second hex ring")
 }
 
 func (s *FieldTestSuite) TestPathToWalksPrevBackToASource() {
-	blocked := map[Position]bool{{X: 2, Y: 0}: true, {X: 2, Y: 1}: true, {X: 2, Y: 2}: true, {X: 2, Y: 3}: true}
+	from, goal := Position{X: 1, Y: 3}, Position{X: 5, Y: 3}
 	out, err := Field(s.grid, FieldInput{
-		Sources:  []Position{{X: 0, Y: 2}},
-		Passable: func(_, to Position) bool { return !blocked[to] },
+		Sources:  []Position{from},
+		Passable: func(Position, Position) bool { return true },
 	})
 	s.Require().NoError(err)
-	path, ok := out.PathTo(Position{X: 4, Y: 2})
+	path, ok := out.PathTo(goal)
 	s.Require().True(ok)
-	s.Equal(Position{X: 4, Y: 2}, path[len(path)-1], "path ends at the goal")
-	s.NotContains(path, Position{X: 0, Y: 2}, "path excludes the source, matching bfsShortestPath's contract")
-	for _, p := range path {
-		s.False(blocked[p])
+	s.Equal(goal, path[len(path)-1], "path ends at the goal")
+	s.NotContains(path, from, "path excludes the source, matching bfsShortestPath's contract")
+	s.Len(path, out.Dist[goal], "one cell per unit of distance on open ground")
+	for i := 1; i < len(path); i++ {
+		s.True(s.grid.IsAdjacent(path[i-1], path[i]), "every step is a neighbour")
 	}
-	_, ok = out.PathTo(Position{X: 2, Y: 1})
+	_, ok = out.PathTo(Position{X: -1, Y: -1})
 	s.False(ok, "an unreached cell has no path")
+}
+
+func (s *FieldTestSuite) TestTheFieldIsGridGeneric() {
+	// The evidence that closes #614: the same function runs on a square grid.
+	// Not the model — the game is hex by choice.
+	sq := NewSquareGrid(SquareGridConfig{Width: 5, Height: 5})
+	out, err := Field(sq, FieldInput{
+		Sources:  []Position{{X: 0, Y: 0}},
+		Passable: func(Position, Position) bool { return true },
+	})
+	s.Require().NoError(err)
+	s.Equal(int(sq.Distance(Position{X: 0, Y: 0}, Position{X: 4, Y: 4})), out.Dist[Position{X: 4, Y: 4}])
 }
 
 func (s *FieldTestSuite) TestNoSourcesAndNoPredicateFailClosed() {

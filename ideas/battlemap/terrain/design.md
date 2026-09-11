@@ -57,8 +57,12 @@ BFS exact; the argument is right and is not the defect.
 
 **Spatial's pathfinder serves nobody.** `SimplePathFinder.FindPath(start, goal
 CubeCoordinate, blocked map[CubeCoordinate]bool)` (`tools/spatial/pathfinder.go:61`)
-is hex-cube A\* typed on cube coordinates, not `Position`, so it fits none of
-the three grid families the encounter runs. Its one caller is
+is hex-cube A\* typed on `CubeCoordinate`, the addressing of the
+`tools/environments` tree it was born in, while the encounter runs an axial
+hex grid addressed by `Position` (session refuses any other family,
+`session/move.go:690`). Kirk, 2026-09-11: environments predates the
+encounter, and that pathfinding landed in spatial from there is the sign it
+was built on assumptions the encounter never shared. Its one caller is
 `tools/environments.BasicEnvironment.FindPathCube` (`environment.go:245`), and
 `tools/environments` is imported only by `tools/spawn` and the legacy
 `rulebooks/dnd5e/dungeon` package; nothing live, and not rpg-api, reaches it.
@@ -296,7 +300,10 @@ Read against full D&D, which is the test:
 - **Forced movement** (Thunderwave's push) reads the same cell facts to find
   where a shove stops. No owner yet, by design; the fold is where it will look.
 - **Squares.** Nothing in §3 is hex-specific. The grid answers neighbours,
-  distance, and cell polygons; everything above it is the same code.
+  distance, and cell polygons; everything above it is the same code. The
+  game is hex by choice (Kirk: a diagonal counted as one square is a rule he
+  will not carry), so squares are a property the primitive keeps, not a
+  customer it serves.
 
 ## 6. Rejected alternatives
 
