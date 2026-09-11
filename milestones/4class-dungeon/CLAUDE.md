@@ -14,7 +14,7 @@ Three pillars:
 
 ## Related Ideas
 - `ideas/action-feature-system/` - Two-level action economy (core implemented)
-- `ideas/multi-room-dungeons/` - Absolute positioning system (PRs open)
+- `ideas/battlemap/multi-room-dungeons/` - Absolute positioning system (PRs open)
 - `ideas/rest-system/` - Resource recovery between rooms (in progress)
 - `ideas/death-saves/` - Unconscious mechanics (todo)
 

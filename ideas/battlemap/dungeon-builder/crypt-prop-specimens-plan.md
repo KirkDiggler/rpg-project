@@ -8,7 +8,7 @@
 
 **Tech Stack:** Blender 5.x, Python 3 stdlib/unittest, GLB/glTF, React 19, TypeScript 5.8, React Three Fiber, Three.js, Vitest, Playwright, GitHub Project 19.
 
-**Spec:** `ideas/dungeon-builder/crypt-prop-specimens.md`
+**Spec:** `ideas/battlemap/dungeon-builder/crypt-prop-specimens.md`
 
 ## Global Constraints
 
@@ -1470,8 +1470,8 @@ Request one Copilot review. For every inline finding, verify validity, fix valid
 ## Task 7: Reconcile the Journey Record and Retire Stale Trackers
 
 **Files:**
-- Modify: `rpg-project/ideas/dungeon-builder/crypt-prop-specimens.md` — append landed ledger with exact PRs, merge SHAs, asset hashes, evidence path, and Kirk verdict.
-- Modify: `rpg-project/ideas/dungeon-builder/crypt-prop-specimens-plan.md` — check completed boxes only after command/evidence verification.
+- Modify: `rpg-project/ideas/battlemap/dungeon-builder/crypt-prop-specimens.md` — append landed ledger with exact PRs, merge SHAs, asset hashes, evidence path, and Kirk verdict.
+- Modify: `rpg-project/ideas/battlemap/dungeon-builder/crypt-prop-specimens-plan.md` — check completed boxes only after command/evidence verification.
 
 **Interfaces:**
 - Consumes: merged provider/web PRs and final evidence.
@@ -1560,9 +1560,9 @@ Progress`; authored lighting remains its next visual-fidelity lane.
 cd /home/kirk/.pi/worktrees/rpg-project/275-crypt-prop-specimens
 git diff --check
 rg -n 'Landed|rpg-game-assets|rpg-dnd5e-web|sha256|Kirk' \
-  ideas/dungeon-builder/crypt-prop-specimens.md
-git add ideas/dungeon-builder/crypt-prop-specimens.md \
-  ideas/dungeon-builder/crypt-prop-specimens-plan.md
+  ideas/battlemap/dungeon-builder/crypt-prop-specimens.md
+git add ideas/battlemap/dungeon-builder/crypt-prop-specimens.md \
+  ideas/battlemap/dungeon-builder/crypt-prop-specimens-plan.md
 git commit -m 'docs(dungeon-builder): record crypt prop specimen delivery (#275)'
 git push
 ```

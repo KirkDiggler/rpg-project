@@ -10,7 +10,7 @@ Phases 1-2 of the multi-room dungeon design are complete:
 This spec covers phases 3-5: rendering the accumulated map, camera behavior, and basic room navigation.
 
 **Issues:** rpg-dnd5e-web #312, #313, #310
-**Design doc:** rpg-project/ideas/multi-room-dungeons/design.md
+**Design doc:** rpg-project/ideas/battlemap/multi-room-dungeons/design.md
 
 ## Scope
 

@@ -8,7 +8,7 @@ confidence: medium — design locked; toolkit-type-reuse question open
 
 # Plan: Coordinate Types refactor
 
-Implements `rpg-project/ideas/coordinate-types/design.md`.
+Implements `rpg-project/ideas/battlemap/coordinate-types/design.md`.
 Tracked as: **rpg-api issue #471**.
 Supersedes: paused PRs #459, #461, #463, #466, #467, #468.
 
@@ -148,7 +148,7 @@ The rpg-api-development skill says "Use toolkit types directly. Don't create API
 
 ## Citations
 
-- Design: `rpg-project/ideas/coordinate-types/design.md`
+- Design: `rpg-project/ideas/battlemap/coordinate-types/design.md`
 - Tracking: rpg-api issue #471
 - rpg-api architecture overview: `rpg-api/docs/architecture/overview.md` (PR #470, merged 2026-05-02)
 - Skill guidance: `rpg-api/.claude/skills/rpg-api-development`
