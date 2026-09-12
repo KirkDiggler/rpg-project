@@ -343,8 +343,10 @@ type Routed struct {
 
 Execution in `driveOneMonsterTurn`: `Route{Mover, Policy, Anchor, Budget:
 remaining movement in cells}`; walk the path per cell through the existing
-step (turn budget charged, `MoveStep.Forced` set with the cause so the OA
-fold reads a forced step exactly as a directed walk's); on `ErrStepPaused`
+step (turn budget charged; the step carries the cause and is NOT `Forced`,
+because a forced step is one the movement fold treats as pushed and does
+not provoke, and Approach and Flee provoke; the encounter builder caught
+this sentence saying the opposite on 2026-09-12); on `ErrStepPaused`
 the turn is held and `ResumeTurn` finishes the walk and the turn, exactly as
 a monster's own paused walk today; on exhaustion or `StoppedBy`, end the
 turn with the `"turn-ended"` beat. Moved beats carry `cause:
