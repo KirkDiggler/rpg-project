@@ -168,8 +168,10 @@ Singularity: one compelled turn per creature. The condition's identity
 includes its caster, as Bane's does (walk finding 2026-09-12: the beat
 showed no source until it did), so a same-caster recast replaces the
 instance and the log says so, while two casters' Commands may both stand;
-the compelled turn obeys the NEWEST word on the sheet and removes nobody
-else's spell. One participation answer per member per
+the compelled turn obeys the FIRST word applied and removes nobody else's
+spell. Kirk, 2026-09-12: "for something like bane or bless, both can
+coexist and the one that got there first will be the applied one." Bane's
+contribution group is the precedent; one rule across the tree. One participation answer per member per
 assessment, as today. One `Routed` walk per compelled turn, then the turn
 ends.
 
@@ -249,7 +251,7 @@ is left behind.
 Replacement: resolution replaces an instance with the same address (member,
 ref, caster) before applying the new one (`ConditionRemoved`, reason
 "replaced"). A different caster's word is a different instance; the driver
-obeys the newest.
+obeys the first applied.
 
 It contributes nothing to any roll. Its one reader is §5.
 
