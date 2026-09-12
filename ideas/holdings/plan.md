@@ -14,9 +14,12 @@ Confirmed before planning, because it decides the shape of the wave:
 
 - **`STANDING_UNSPECIFIED = 0` already exists** in the `Standing` proto enum, so
   "standing was not observed" has a wire value today.
-- **`name` and `kind` stay where they are.** They were ruled out of perception
-  deliberately (design §4.1) — an earlier draft of this plan wrongly called
-  them unfiled siblings of #1668. Only `down` moves.
+- **`name` and `kind` stay out of `Observed`** — ruled out of perception
+  deliberately (design §4.1); an earlier draft of this plan wrongly called them
+  unfiled siblings of #1668. Only `down` moves into the row.
+- **But every parallel map still goes.** That is a separate question from which
+  columns are perception, and an earlier draft collapsed the two. `names` and
+  `kinds` come off one roster and travel as one row.
 
 **Therefore: no `rpg-api-protos` PR, and no rpg-api *code* change.** The wire
 shape does not change; what fills it does.
@@ -94,8 +97,11 @@ rpg-toolkit#1668
    position and equipment. Its own doc comment currently says *"STANDING IS
    STILL THE LIVE ANSWER, and that is a known defect rather than a design"* —
    that paragraph gets deleted, not amended.
-3. `projectSightings` loses **one parameter** — `down`. `names` and `kinds`
-   stay: they were ruled out of perception deliberately (design §4.1).
+3. `projectSightings` becomes
+   `projectSightings(in []intel.Holding, roster map[MemberID]*Actual)`. `down`
+   is gone entirely — standing comes off the testimony. `names` and `kinds`
+   are gone **as maps**: they stay facts of the roster (design §4.1) and are
+   read off one row, so no fact travels as its own map.
 4. `read.go:370` and `write.go:910` stop computing `standingSet` **for
    sightings**. Check each other caller of `standingSet` on its own merits —
    a roster read is a legitimate engine read (design §6) and must not be

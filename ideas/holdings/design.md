@@ -150,8 +150,34 @@ existed."* The distinction was recorded before this design started, and the
 draft asserted its absence without checking — the exact failure this document
 complains about in §1, committed while writing §1.
 
-**So `down` alone moves into the row.** `projectSightings` loses one parameter,
-not three.
+**So `down` alone moves into `Observed`.** But **every parallel map still
+goes** — that is a separate question, and collapsing the two was the second
+mistake. The ruling decides which columns are *perception*; it says nothing
+about how many maps carry the rest. `names` and `kinds` come off the same
+`enc.Members()` roster and should arrive as **one row**:
+
+```go
+projectSightings(in []intel.Holding, roster map[MemberID]*Actual) []Sighting
+```
+
+One map to one row, here exactly as in `rebuildPercepts`. No fact travels as
+its own map anywhere.
+
+### 4.1.2 The distinction that actually separates them
+
+> The defect is not **joining**. It is joining a fact that can **change while
+> you are not looking.**
+
+Standing changes after you look away — that is the leak, and it is the whole of
+#1668. Name and kind do not, so joining them discloses nothing the observer
+does not already hold, and they are gated by the holding regardless: no row, no
+name. That is why the existing ruling was right.
+
+Stated as a working distinction rather than a law (§1), because it has a
+horizon: **polymorph makes `kind` change while you are not looking**, and on
+that day kind stops qualifying and moves into `Observed` like standing did. It
+also says which future columns are dangerous before they are written — hit
+points and facing both change unobserved; a display name does not.
 
 ### 4.1.1 Where the existing ruling will come under pressure
 
