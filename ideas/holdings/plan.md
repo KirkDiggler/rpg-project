@@ -19,9 +19,16 @@ Confirmed before planning, because it decides the shape of the wave:
   `rosterNames(roster)` / `rosterKinds(roster)` off `enc.Members()` — so moving
   them into the row needs no new capability, just a different source.
 
-**Therefore: no `rpg-api-protos` PR, no `rpg-api` PR.** The wire shape does not
-change; what fills it does. One web check at the end (below), which may be a
-no-op.
+**Therefore: no `rpg-api-protos` PR, and no rpg-api *code* change.** The wire
+shape does not change; what fills it does.
+
+**An rpg-api PR is still required** — the pin bump. rpg-api pins the toolkit
+modules, so encounter and session minting new versions means rpg-api moves or
+`dev` never sees any of this. It is also the PR that carries the walk: pinned
+at pseudo-versions while we integrate, swapped to real tags at merge, per
+`integrate-before-pr`. See PR 4.
+
+One web check at the end (below), which may be a no-op.
 
 That is a much smaller wave than the design's scope implies, and it is worth
 saying why out loud: the previous wave already paid for the wire.
@@ -111,6 +118,34 @@ no roster join left in the sighting path to leak through.
 
 ---
 
+## PR 4 — rpg-api: bump the toolkit pin
+
+**Repo:** `rpg-api` · branch off `dev` · **no code change expected**
+
+1. Pin `encounter` and `session` to the pseudo-versions from PRs 2 and 3 while
+   integrating, and stand the walk env up on it. This PR exists from the start
+   of the walk, not after it.
+2. Swap to the real tags at merge, bottom-up, each tag verified by **content**
+   before the next consumer pins it (`newest-tag-is-not-the-merge`).
+3. `scripts/bump-toolkit-pin.sh` in `game-dev` does the swap.
+
+**Two traps this PR has hit before, both recorded:**
+
+- **`go.sum` untidy reaching CI.** A pin-only commit stages no `.go` files, so
+  rpg-toolkit's pre-commit hook runs nothing and CI is the first thing to
+  notice. Run `go mod tidy` and inspect `go.sum` by hand before pushing — the
+  hook will not save this commit (`pin-only-commits-skip-the-hook`).
+- **Fallout in tests that constructed sightings by hand.** PR 3 changes
+  `projectSightings`' signature; anything in rpg-api that built a `Sighting`
+  fixture with a standing it supplied itself will now be asserting the old
+  model. Fix those to assert what they claim rather than bumping expectations
+  (`transcript-tests-pin-too-much`).
+
+**Acceptance:** `dev` green, walk env up, no behaviour change visible except
+the one the walk is looking for.
+
+---
+
 ## Walk
 
 One local env, one question: **stand where you can see a monster, break line of
@@ -133,8 +168,8 @@ is *"draw no standing indicator"*, which is probably already what an
 unspecified arm does. **Check it on the walk; only open a web PR if the walk
 shows it wrong.**
 
-`rpg-api` should need nothing — it passes `Seen` through. Verify, do not
-assume.
+`rpg-api` needs no code change — it passes `Seen` through — but it does need
+the pin bump in PR 4. Verify the no-code-change half; do not assume it.
 
 ---
 
@@ -149,6 +184,8 @@ Per the repo convention (no branch without an issue), wave 1 needs:
   and splitting them would put two PRs in one module for no reviewing benefit.
 - PR 1 is a refactor enabling both; it can ride the same issue rather than
   invent a third.
+- PR 4 is a pin bump and follows whatever rpg-api's convention is for those —
+  it does not need an issue of its own if pin bumps ride the consumer wave.
 
 Board entries are Kirk's call.
 
