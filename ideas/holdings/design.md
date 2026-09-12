@@ -1,500 +1,98 @@
-# Holdings — each member's own version of the world
+# Holdings — a member's own knowledge is not a view of the world's
 
-**Status:** design, ruled in conversation 2026-09-12. Not yet built.
-**Tracking:** this PR stays open until the rungs below have landed.
-**Neighbours:** [`perceive/`](../perceive/design.md) (the #940 audience shelf) ·
-[`monster-intel/`](../monster-intel/) (acting on a ghost) ·
-[`perception-stream/`](../perception-stream/design.md) (delivery) · `fog-of-war/`
+**Status:** the ruling below is settled. The change it implies is small and
+stated in full here. Everything else this document once contained was struck —
+see *What was struck* at the end.
 
 ---
 
-## 1. The ruling
+## The ruling
 
 > *"we have a global who is up and who is down and we are referencing that to
-> maintain what I see. i think that's the break. if we are using that to build
-> what I see then I should have my own who I know who is up and who is down.
-> the global table is fine, but my player would never actually know the whole
-> table and it should not feed into my intel. if i dont know someone is down, i
-> dont know it."*
+> maintain what I see. i think that's the break. the global table is fine, but
+> my player would never actually know the whole table and it should not feed
+> into my intel. if i dont know someone is down, i dont know it."*
 >
-> — Kirk, 2026-09-12
-
-And the constructive half, from the same conversation:
-
 > *"if I have a holding on goblin-1 I do not get any info from the world ledger
 > on that."*
 >
-> *"the things I know or think I know will never come from the ledger."*
+> — Kirk, 2026-09-12
 
-That is the whole design. Everything below is what it costs to make true.
-
-### What is deliberately NOT a law
-
-Kirk, same session:
-
-> *"for the record I say a lot of things, sometimes I even think they may be
-> laws. I never mean for them to be interpreted that way and they often are. we
-> have 'laws' that come back and bite us all the time."*
-
-Two specific non-laws, recorded so nobody codifies them later:
-
-- **"If a holding is current, it should match the ledger"** is true today and
-  must NOT become a test. A charmed observer's *current* holding has to be
-  allowed to disagree with the world, or we re-foreclose illusion with an
-  assertion. The honest invariant is *a current holding equals what this pass
-  wrote*, which is identical in every case we have and still leaves the door
-  open.
-- **Turn order is global**, and that is a decision for now, not a principle.
-  The door left open — *you know a slot exists but not who is in it* — is
-  recorded as over-the-top at this stage. The table analogy Kirk gave: everyone
-  hears the DM and is told when their character didn't.
-
-### A worked example of the cost
-
-`encounter.go:1984` carries a comment saying `SightTestimony.Down` cannot be
-written because the pass has no participation reading to draw on and
-composition law C8 permits only one ask per pass. That was true when written.
-`rebuildPercepts` has asked `sightNow()` and `equipmentNow()` once before its
-loop since equipment landed — the C8-compliant pattern arrived and nobody
-re-read the comment. The claim was then copied, in spirit, into
-`session/convert.go`'s `projectSeen` doc.
-
-One remark became a law, the law became a doc comment, the comment reached a
-second repo, and it has been telling both repos the fix is impossible ever
-since. **rpg-toolkit#1668 has had no blocker for a whole wave.**
-
-Treat a blocking comment as evidence to re-check, never as a settled answer.
+**Vocabulary:** the **ledger** is the world's truth; **holdings** are what one
+member knows. `play/intel` already owns holdings and does not change.
 
 ---
 
-## 2. Vocabulary
+## The defect
 
-| word | meaning |
-|---|---|
-| **ledger** | the world's truth. One row per member. Never read by anything addressed to one member. |
-| **holdings** | what one member knows or believes. `play/intel`'s existing `map[observer]map[subject]`. |
-| **`Actual`** | one row of the ledger — what is true of a member this pass. |
-| **`Observed`** | one row of a member's holdings — what an observer perceived of a subject. Same columns. |
-| **ghost** | a holding with `CurrentVia` empty: held, sustained by no channel. A memory. |
+`session/read.go:370` computes standing across the whole roster and stamps it
+onto every one of a member's sightings, live or memory. So a ghost reports the
+world's current standing rather than the standing its observer last saw.
 
-`ledger` and `holdings` are Kirk's words and supersede earlier drafts that used
-"table", "sheet" (collides with the character sheet — the one thing you are
-never wrong about) and "view"/"testimony" (both already taken in code).
+Position and equipment already come from the testimony. Standing is the one
+that was never moved — rpg-toolkit#1668, whose own body records that `Name` and
+`Kind` were *decided* not to be perception facts while `down` was simply
+inherited from before testimony existed.
 
----
+## What #1668 is, whole
 
-## 3. What already exists
+1. `refreshSight` takes the participation reading **once at its top** and hands
+   it to both `rebuildPercepts` and `applyTrigger` → `noticeDown`. Net consults
+   unchanged; `noticeDown` takes one today.
+2. `rebuildPercepts` writes `Down` into `SightTestimony`. The field already
+   exists and is already `*bool`, because "not observed" and "observed upright"
+   are different claims.
+3. `projectSeen` reads standing off the testimony instead of the live map, and
+   its doc paragraph beginning *"STANDING IS STILL THE LIVE ANSWER"* is deleted
+   rather than amended.
+4. `projectSightings` drops the `down` parameter.
 
-We have built this machinery five times in five places and never named the
-thing it was machinery for.
+**The walk:** see a monster, break line of sight, have it go down — your ghost
+should still show it on its feet.
 
-| what | where | direction |
-|---|---|---|
-| `play/intel` — per-observer, payload-opaque, ghosts, `Reacquired` | `play/intel` | ✅ the core |
-| `SightTestimony` — the row, for sight | `encounter/testimony.go` | ✅ prototype of `Observed` |
-| capabilities supplied, never defaulted (rpg-toolkit#1033) | `Sight`, `Equipment`, `Participation` | ✅ the asking side is already right |
-| monsters decide from holdings, never the world | `decider.go`, `intel/doc.go` | ✅ "declare from holdings" proven |
-| interaction requires a **current** holding | `interact.go:167` | ✅ same rule, one verb |
-| negative evidence, in miniature | `testimony.go:273` `correctArrivedLocations` | ✅ the verb exists |
-| the `sighted` beat | `encounter/sightedbeat.go` | ✅ the delivery half |
-| `audienceFor` / `beatClass` | `encounter.go:1196` | ⏸ built, returns full roster — the shelf for #940 |
-| `projection.go`, member-scoped `GetDoors`/`GetAtlas` | structure | ❌ same need, solved **read-time** |
-
-The last row is the tell. The need for per-member knowledge was strong enough
-to build a second mechanism, and it got built the other way round — filtering
-truth at read time — because there was no named thing to build it into. A
-read-time filter can only ever be right, which forecloses the illusory wall
-exactly as reading position live foreclosed the illusory ogre.
-
-The same is true one layer up: `perceive`, `monster-intel`, `perception-stream`
-and `fog-of-war` are four folders that are all facets of this one primitive,
-written before it had a name.
+**Wire:** unchanged. `STANDING_UNSPECIFIED` already exists in the proto enum.
+No protos PR, and no rpg-api code change — but rpg-api needs a **pin bump PR**,
+which is also what carries the walk.
 
 ---
 
-## 4. The defect, which is one defect
+## Known, not designed
 
-| property | what's wrong | issues |
-|---|---|---|
-| **incomplete** | the row has no standing | #1668 |
-| **not exclusive** | readers reach past the row | #1668, #940, `projection.go` |
-| **batched** | one write per walk, not one per observation | #1670 |
-| **only positive** | looking somewhere and seeing nothing is discarded | unfiled |
+Three further defects are real and recorded, with no design behind them yet:
 
-### 4.1 Incomplete
+- **Beats reach everyone.** Kirk's rule for it: *"writing is happening wherever
+  it is. if I have a holding on it then I get the event."* That needs
+  `HoldersOf(subject)` in `play/intel` — the inverse of the existing
+  `HeldBy(observer)`, the same map read the other way, and the one thing intel
+  is genuinely missing. rpg-toolkit#940.
+- **Walk testimony is batched.** `walkPath` beats per cell; `settleWalk`
+  testifies once, so a fleeing monster ghosts on its START cell.
+  rpg-toolkit#1670.
+- **Ghosts are never disproved.** `correctArrivedLocations` flips a remembered
+  location to unknown, but only for a driven move, only for the mover, only at
+  the exact cell it landed on. Looking somewhere and seeing nothing is
+  information we discard. Unfiled.
 
-`SightTestimony.Down` exists and is never written (§1).
-
-```go
-projectSightings(in []intel.Holding, names map[string]string,
-                 kinds map[string]MemberKind, down map[string]bool)
-```
-
-Three global maps — but **only one of them is a defect.**
-
-**CORRECTION, and it is mine.** An earlier draft of this document claimed
-`names` and `kinds` were "two unfiled siblings of #1668, the identical defect."
-That is wrong. Both were **decided**, with reasoning, and carry doc comments on
-`Sighting` saying so:
-
-> *"Names are not a perception question: anything an observer can sight, they
-> can name."*
->
-> *"kind is not a perception question either, anything an observer can sight,
-> they can classify at a glance. A memory (CurrentVia empty) keeps its kind
-> exactly as it keeps its name."*
-
-rpg-toolkit#1668's own body already draws the line: *"`Name` and `Kind` were
-decided… **`down` was never decided.** It was inherited from before testimony
-existed."* The distinction was recorded before this design started, and the
-draft asserted its absence without checking — the exact failure this document
-complains about in §1, committed while writing §1.
-
-**So `down` alone moves into `Observed`.** But **every parallel map still
-goes** — that is a separate question, and collapsing the two was the second
-mistake. The ruling decides which columns are *perception*; it says nothing
-about how many maps carry the rest. `names` and `kinds` come off the same
-`enc.Members()` roster and should arrive as **one row**:
-
-```go
-projectSightings(in []intel.Holding, roster map[MemberID]*Actual) []Sighting
-```
-
-One map to one row, here exactly as in `rebuildPercepts`. No fact travels as
-its own map anywhere.
-
-### 4.1.2 The distinction that actually separates them
-
-> The defect is not **joining**. It is joining a fact that can **change while
-> you are not looking.**
-
-Standing changes after you look away — that is the leak, and it is the whole of
-#1668. Name and kind do not, so joining them discloses nothing the observer
-does not already hold, and they are gated by the holding regardless: no row, no
-name. That is why the existing ruling was right.
-
-Stated as a working distinction rather than a law (§1), because it has a
-horizon: **polymorph makes `kind` change while you are not looking**, and on
-that day kind stops qualifying and moves into `Observed` like standing did. It
-also says which future columns are dangerous before they are written — hit
-points and facing both change unobserved; a display name does not.
-
-### 4.1.1 Where the existing ruling will come under pressure
-
-Not now, and not as a defect — recorded so the revisit is deliberate when it
-arrives.
-
-- **The ruling is scoped to SIGHT.** *"Anything an observer can sight, they can
-  name"* is true and holds for everything we have. It says nothing about a
-  channel that is not sight. At rung 5 you hear fighting through a door and can
-  neither name nor classify it — so the ruling does not extend to hearing, it
-  simply does not reach it. A hearing row carries whatever hearing conveys
-  (design §8), which is the ruling's scope working correctly rather than
-  failing.
-- **Disguise is the other pressure, and it is a door, not work.** A
-  doppelgänger is a case where what you saw was a lie about identity. There is
-  no such use case today, so the cost has not been paid and the absence is not
-  a gap. Worth knowing it is reachable without redesign: a disguised creature
-  can be given a different **subject** — `intel.Subject` is explicitly
-  *"caller-chosen identification within an observer's fidelity"* — before
-  anything needs a name column.
-
-### 4.1.3 What #1668 actually needs — and what it does not
-
-**CORRECTION, and it is the third in this document from the same session.**
-Earlier revisions of §4.1.3 said #1668 was blocked on a participation-ordering
-question and offered four shapes to resolve it, then a fifth via a materialized
-world row. All of it was scaffolding for a problem that does not exist.
-
-Kirk collapsed it with one question: *"how does a goblin up vs down on first
-sighting differ?"*
-
-**It does not.** You look, and you see whether they are on their feet, exactly
-as you see where they are. One observation, one write, one column. There is no
-first-contact special case, so there is nothing for a world row to be the
-source of.
-
-**What #1668 needs, complete:** `rebuildPercepts` needs the standing reading
-while it writes. `refreshSight` already takes that reading — just later, inside
-`noticeDown`. So take it once at the top of `refreshSight` and hand it to both.
-Net consults unchanged, no beat reordered, no new type.
-
-**What #1668 does NOT need**, all of it proposed in this document and struck:
-
-| invented | why it was invented | why it is gone |
-|---|---|---|
-| `Actual` / `Now` — a world row per member | to be the source a testimony is copied *from* | nothing needs a source. Looking is the source |
-| a god observer inside `intel` | to give the world row a home that was not a parallel structure | there is no world row |
-| write-on-change to `HoldersOf(subject)` | to deliver standing changes to watchers | the next refresh sees them. Looking already covers it |
-| four shapes for the participation consult | to resolve an ordering hazard | one reading at the top of `refreshSight`, handed to both |
-
-**`intel` does not change for this.** It stays a leaf, payload-opaque,
-per-observer. The world stays where it is — `e.members` plus the capabilities —
-and is never a stored row.
-
-### 4.1.4 The fold, reduced to what it is
-
-The three parallel maps still become one row per member inside the pass. That is
-**tidiness, not architecture**: a local shape so `projectSightings` takes one
-thing instead of four, and so "not observed" has somewhere to live that a bare
-`bool` cannot express. It is not a ledger, it is not stored, and nothing reads
-the world through it.
-
-### 4.1.5 The one real gap in `intel`
-
-```go
-HeldBy(observer)   // exists: what does Alice hold?
-HoldersOf(subject) // missing: who holds goblin-1?
-```
-
-The same map read the other way, and the thing Kirk's event rule needs:
-
-> *"writing is happening wherever it is. if I have a holding on it then I get
-> the event."*
-
-The audience for a beat about goblin-1 is `HoldersOf("goblin-1")`. That is
-rpg-toolkit#940's answer, and it is better than the `beatClass` shelf we built
-for it. **It belongs to rung 5, not to #1668** — recorded here so it is not
-rediscovered, and deliberately not built now.
-
-### 4.2 Not exclusive
-
-`session/read.go` computes `standingSet(...)` over the whole roster and stamps
-it onto every one of a member's sightings, live or memory. Reading the ledger
-was fine. Reading it **for one member** is the defect.
-
-### 4.3 Batched
-
-`walkPath` appends a `moved` beat per cell; `settleWalk` runs **one**
-`refreshSight` per intent. So a fleeing monster's four steps reach observers as
-four beats and one testimony write — which, landing after it was occluded,
-records `lost` while the last testified position is still the START cell. That
-is rpg-toolkit#1670. Players are unaffected only because `session/move.go`
-steps them one `Step` at a time.
-
-The precedent for the fix is in the same loop: `standingNow()` is already asked
-per cell, with the comment *"The batched once-per-walk answer elsewhere in this
-rulebook rests on a move being unable to down anyone; announcing steps is what
-made that false."*
-
-### 4.4 Only positive
-
-`correctArrivedLocations` does exactly the right thing — finds held sight
-holdings and `Report`s them back as `SightTestimony{State: LocationUnknown}` —
-but its own doc says it is *"deliberately narrower than a general sight
-correction."* It fires only when **all three** hold: after a **driven**
-fight-time move, for the **mover** as observer, for ghosts remembered at
-**exactly the cell the mover landed on**.
-
-So: *"I got shoved into a square where I thought you were, and you're not
-here."* Walking in normally does not do it. Looking across the room at the cell
-you remember does not do it.
-
-Without the general rule, ghosts accumulate over a dungeon into memories the
-observer has no way to correct. **Looking somewhere and seeing nothing is
-information**, and we throw it away.
+`encounter/projection.go` filters structure (doors, regions) at read time,
+which is the same need solved the other way round. Noted, not judged.
 
 ---
 
-## 5. The shape
+## What was struck
 
-### 5.1 Why three maps become one row
+This document previously proposed an `Actual` world-row type, a god observer
+inside `intel`, write-on-change delivery, and a four-way fork over participation
+ordering. All of it was scaffolding for a first-contact problem that does not
+exist — Kirk: *"how does a goblin up vs down on first sighting differ?"* It
+does not. You look, and you see whether they are on their feet, exactly as you
+see where they are.
 
-Each map is one supplied capability's answer:
+It also claimed `names` and `kinds` were unfiled defects. They were decided,
+with reasoning, in doc comments on `Sighting`.
 
-| capability | question | answer |
-|---|---|---|
-| `Sight` | how far can each member see? | `map[MemberID]int` |
-| `Equipment` | what is each member holding? | `map[MemberID]*HeldEquipment` |
-| `Participation` → `Standing` | which members are down? | `map[MemberID]bool` |
+Left visible rather than quietly rewritten, per this repo's own rule. The
+process failure behind all of it is rpg-project#442, which is where that
+conversation belongs rather than here.
 
-**Asking separately is correct and stays.** Different owners, different
-questions, each asked once per pass (C8). Collapsing them into one
-"tell-me-everything" capability would put the encounter back in the business of
-knowing what a member *is*.
-
-What is wrong is that the answers are **never composed**. They travel as N
-parallel maps to the point of use and every consumer re-does the join by hand.
-Four costs:
-
-1. **Nothing ties them to one instant.** `projectSightings` takes three maps as
-   three arguments; a stale one type-checks.
-2. **Every new column is a new parameter at every seam** — the signature grows
-   linearly with the model, at each of three layers.
-3. **No value anywhere means "what is true of goblin-1."**
-4. **`map[MemberID]bool` cannot say "not observed."** The bool has no name, so
-   the map carries the meaning — which is why it reads as a verb. And the third
-   state has to be invented at the conversion into `*bool`, in a place that
-   does not know it. A noun carries all three from the start.
-
-### 5.2 The types
-
-```go
-// Actual — what is true of one member this pass. The ledger's row.
-// Composed from the capability answers immediately after asking them.
-type Actual struct {
-    Position  spatial.Position
-    Standing  Standing        // Up | Downed — a noun, not a bare bool
-    Equipment *HeldEquipment
-    Name      string
-    Kind      MemberKind
-}
-
-// Observed — what one observer perceived of one subject. Same columns.
-// Every field a pointer, because "not observed" is a real and different
-// answer from "observed to be the zero value".
-type Observed struct {
-    State     LocationState   // known | unknown
-    Position  *spatial.Position
-    Standing  *Standing
-    Equipment *HeldEquipment
-}
-
-// Name and Kind are deliberately NOT columns of Observed: ruled out of
-// perception (§4.1) — anything you can sight, you can name and classify.
-// They stay on Actual, which the roster read serves. Revisit at rung 5,
-// where a hearing row can name nothing.
-```
-
-The pass becomes one sentence: **for each observer, for each member, copy the
-columns this observer can perceive.** *"Project the global table for each
-member"* stops being an analogy and becomes the implementation.
-
-### 5.3 They live in separate containers, deliberately
-
-`Actual` is **one per member**. `Observed` is **one per (observer, subject)
-pair** — Alice's view of goblin-1 and Bob's are different rows.
-
-A single `map[MemberID]{Actual, Observed}` has nowhere to put the second key.
-A nested form does close — `Holdings[M] = {Actual: truth about M, Observed:
-map[subject]Observed}` — but we are still splitting them, for the reason that
-is the point of the exercise: **if truth and belief share a struct, reaching
-for truth from a per-observer path is a field access.** In separate containers
-it is a visible lookup someone has to justify. The bug we are fixing was easy
-to write and invisible to read; the new shape should make it awkward.
-
-So: `map[MemberID]*Actual` for the ledger, and `Observed` stays exactly where
-`intel` already puts it. **`play/intel` does not change.** It stays a leaf,
-payload-opaque; `Actual` and `Observed` are encounter-owned, as
-`SightTestimony` already is.
-
----
-
-## 6. When the ledger IS read
-
-Three things, and "what I see" is none of them.
-
-1. **To write the holdings.** The refresh pass reads the ledger to decide what
-   each observer perceives and what to snapshot. The ledger is the **write
-   source**, not a read fallback — which is why "only source" vs "override"
-   was never a real fork.
-2. **To resolve.** *Declare from your holdings, resolve against the ledger.*
-   You may only target what you hold; what your swing actually hits is the
-   world's business. Already true in `decider.go` and `interact.go:167`.
-3. **To be you.** Your own hit points, cell and sheet. `rebuildPercepts` skips
-   self outright, so you never hold intel about yourself. Not a leak —
-   ownership. Your sheet was never perception.
-
-Plus the readers that are not players: the freeroam workbench, persistence,
-adjudication. Truth by definition.
-
-### The test
-
-> The ledger may be read by the **engine**. Never by anything addressed to
-> **one member**.
-
-Checkable at the call site by asking who the answer is for. It catches the bug
-we have, and — unlike "current holdings must match" — nothing about it forbids
-a pass that writes a lie.
-
----
-
-## 7. How it scales
-
-| what grows | today | folded |
-|---|---|---|
-| **new column** (facing, conditions, HP band) | capability + map + parameter at 3 seams + testimony field + allowlist key + proto field | capability + field on `Actual` + one line in the copy |
-| **new channel** (hearing, tremorsense) | nowhere to put it — nothing answers *"what does this channel yield"* | the copy gains a per-channel answer per column; the hearing ladder becomes a **table**, not a rewrite |
-| **new fidelity rule** (dim light, stealth #1020, disguise) | scattered | all are *"this column doesn't copy, or copies a lie"* — one place |
-| **new subject kind** (doors, props) | a whole second mechanism | different columns, same copy step |
-
-**The copy step becomes the only place perception lives**, and every direction
-we grow, grows there.
-
-### Costs, named
-
-- One `Actual` per member per pass — and rung 4 wants per-cell passes, so
-  ×cells. Measurable; `encounter/voidcost_internal_test.go` is the home.
-- `sightPayloadFields` is a **closed allowlist** that refuses unknown keys, so
-  every column is a deliberate coordinated change. That is right for testimony
-  — a key we do not understand must not land in something that then reads as
-  confident — but columns are never free, which argues for settling the set
-  now rather than discovering it four at a time.
-- `Actual` must never reach a player-facing seam (§6).
-
----
-
-## 8. Rungs
-
-Each is shippable on its own.
-
-| # | rung | closes |
-|---|---|---|
-| 1 | **Fold** — capability answers become `map[MemberID]*Actual`; `standingNow()` joins the pass. Pure refactor, no behaviour change. | unblocks #1668 |
-| 2 | **The row** — `Observed` carries standing. | #1668 |
-| 3 | **Exclusivity** — session reads holdings only; the three global joins in `projectSightings` are deleted. | makes the rule enforced rather than intended |
-| 4 | **Per observation** — testimony per cell; negative evidence generalized out of `correctArrivedLocations`. | #1670, both halves |
-| 5 | **Channel projection** — a beat degrades by the channel that carried it. | #940; makes the hearing ladder buildable |
-| 6 | **Structure** — doors and props get `Actual`/`Observed`. | retires `projection.go` |
-
-Rung 5 is worth stating precisely, because it changes what #940 *is*: the
-question stops being *"do I get the beat"* and becomes *"what does this beat
-look like through the channel that carried it to me."*
-
-| the ledger's beat | by sight | by hearing |
-|---|---|---|
-| `struck` goblin→Alice, 6, cell (12,7) | "The goblin hits Alice for 6" | "Steel on steel, and a woman cries out" |
-| `downed` goblin | "The goblin drops" | "Something heavy hits the floor" |
-| `moved` goblin | the cell | nothing, or "footsteps, closer" |
-
-And a product constraint that is also a design argument: forty lines of *"you
-hear a blow land"* is worse than silence. Hearing should write a **row** —
-subject `"beyond the north door"`, payload *"fighting, several voices, one you
-don't know"*, updated as it goes — not a stream. If that holds, **the log is a
-rendering of holdings changes** and there is no second mechanism anywhere.
-
-`intel` is already shaped for it: `Subject` is documented as *"opaque,
-caller-chosen identification within an observer's fidelity"*, so a hearing
-contact is legitimately keyed `"north-door"` rather than a monster ID.
-
----
-
-## 9. Doors left open, not scheduled
-
-- **Subjects never merge.** Hearing through the north door is subject
-  `north-door`; a goblin you have seen is subject `goblin-1`; a second door is
-  a third row. Holdings honestly record separate things you know. The inference
-  that they are one creature is the **player's**, not the engine's — the same
-  place Kirk put *"voices I know aren't my party"* and *"if I speak goblin"*.
-  This removes a reconciliation problem an earlier draft had invented.
-- **Speech as a channel.** *"Three goblins, one's down!"* is ordinary testimony
-  written into your holdings — and can be wrong, or a lie. Falls out of the
-  model for free. Not scheduled.
-- **A motion column.** *"Was it fleeing or did it stop?"* — a ghost today is a
-  position, so *"stopped in that doorway"* and *"ran through it and I lost
-  them"* are the same row. Real, and deliberately not built: rung 4 gets the
-  ghost onto the right cell, which is most of the value, and *"what they were
-  doing"* generalizes to casting, drinking and readying — a much bigger column
-  than it looks.
-- **Turn-order slots without occupants** (§1).
-- **Swinging at a ghost.** Under *declare from holdings, resolve against the
-  ledger*, you may legally declare an attack on a memory and be told you hit
-  air. Not work — a consequence, and the sharpest test that the split is real.
-
-## 10. What does not change
-
-- `play/intel` — no API change. Leaf, payload-opaque, no `context.Context`.
-- The capabilities stay separate and supplied. Ask separately, fold locally.
-- Composition law C8 — one ask per capability per pass — is respected by every
-  rung. Rung 1 adds a third ask *beside* the existing two, which is the
-  established pattern, not an exception to it.
+**This is a record of a fix, not a design.** It describes the mechanism we
+have. A design that starts from what we *want* should not start from this file.
