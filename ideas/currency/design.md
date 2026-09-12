@@ -17,6 +17,17 @@ supersedes that issue's `Money`/`Wallet` sections specifically; its `ItemRef`/`S
 - Nothing resembling `Money`, a wallet, or currency arithmetic exists anywhere in the toolkit.
   This is genuinely new, not a rename of something half-built.
 
+**Correction (rpg-toolkit#1522, caught by actually running `ParseCost` against the live
+catalogs rather than trusting this section):** the "no compounds anywhere" claim above was
+wrong. `ammunition.Arrows50`/`Bolts50` carried `Cost: "2 gp 5 sp"` — a homebrew 50-bundle SKU,
+not PHB — and got normalized to `"25 sp"` (250 cp exactly, lossless) rather than teaching
+`ParseCost` a compound grammar for two data points. Also not mentioned here at all:
+`weapons.UnarmedStrike` has an empty `Cost` (not a purchasable good); `ParseCost` correctly
+refuses an empty string, and the "every real cost parses" test excludes it by name rather than
+via a blanket empty-string skip, so a future priced item shipping with an accidentally-empty
+`Cost` still fails the test. Lesson for future design docs generally: a "verified" claim about
+existing data is only as good as actually running the parser against it, not eyeballing a grep.
+
 ## 2. Why a package, not a type on its own
 
 `currency` is the domain ("things a vendor can be paid in"); `Money` is its first concrete type
@@ -126,21 +137,84 @@ touch):
 - `session.Trade`'s refusal narrows: `Give.Items` stays refused (no item-for-item yet), but
   `Give.Currency` becomes a *new legal case* — check `Wallet.CanAfford`, `Wallet.Sub`, otherwise
   unchanged (decrement stock, add item, exactly as today).
+
+**Corrected before implementation (caught reviewing this section, not after shipping it):** the
+wording above is dangerously incomplete on its own — "check `Wallet.CanAfford`" only proves the
+actor's wallet covers whatever `Give.Currency` amount the CALLER supplied. Nothing in that
+sentence ties the offered amount to the item's actual price. As literally written, a client could
+send `Give.Currency: 1cp` for a 500gp longsword and it would go through, because nothing checks
+the offered amount against the real price — only that the wallet can afford whatever was offered.
+That is a server trusting client-supplied pricing, a real vulnerability class, not a taste
+question.
+
+**The rule, stated explicitly so it survives to the sell wave too**: `Trade` computes the
+required price itself, server-side, via `equipment.PriceOf(item.ID)` scaled by `item.Quantity` —
+never the other way around. Refuse (new sentinel, `ErrWrongPrice`, distinct from `ErrOutOfStock`)
+unless the offered `Give.Currency` exactly equals that computed price — no partial-credit
+tolerance, no accepting "close enough." A client reads `VendorStockEntry.price` to *display* the
+number and pre-populate what to send; the server is the only authority on whether it's correct.
+This is a general rule, not a buy-specific one: the same "server computes, client never asserts a
+price" law applies symmetrically once selling exists (`Give.Items`/`Receive.Currency`) — worth
+remembering then rather than relearning it.
+
 - **rpg-api-protos**: `TradeOffer` gains `currency`; `VendorStockEntry` gains `price` (doesn't
   exist today — web's PR #920 flagged this gap directly).
 - **rpg-api**: bump pins, thread the new fields through the existing `Trade`/`Interact`
-  converters.
-- **rpg-dnd5e-web**: show price per stock row, show the player's own balance (needs Wave 3's
-  visibility decision), a real "Buy for 15gp" confirm, balance updates on success.
+  converters, add the `ErrWrongPrice` error-table row.
+- **rpg-dnd5e-web**: show price per stock row (read-only, display purposes — never sent back as
+  the authoritative number), show the player's own balance (separate, small, parallel piece —
+  rpg-api-protos#294), a real "Buy for 15gp" confirm, balance updates on success.
 
 **Beyond Wave 4, not yet designed:**
 - **`Quote`** (multi-item cart) — rpg-toolkit#1275's `Quote{Lines []QuoteLine, Total}` is already
   a multi-line shape; this is where "buy several different items in one transaction" lands,
   generalizing Wave 4's single-item case rather than needing its own separate multi-item project.
 - **Selling / barter** — `Give.Items` stays refused through every wave above. Unlocking it means
-  resolving what rpg-project#370 left open: does a vendor accept unlisted items? What's the sell
-  price (half of `PriceOf`, the usual convention, or something else)? Does a sold item reappear in
-  vendor stock? None of that is decided; it's its own design conversation when it's time.
+  resolving what rpg-project#370 left open: does a vendor accept unlisted items? Does a sold item
+  reappear in vendor stock? None of that is decided; it's its own design conversation when it's
+  time.
+
+  **Pricing is not `Trade`'s concern, corrected here — this was mis-scoped in an earlier draft of
+  this section.** `Trade`'s only contract is "ask for the required price, compare to what was
+  offered, exact match or refuse" (Wave 4). It has no opinion about how that price is computed.
+  Reputation discounts, intimidation, a vendor's per-item markup, a sell-back ratio below buy
+  price — all of that lives entirely behind whatever `Trade` calls for "the required price"
+  (`PriceOf` today, something richer later), never inside `Trade` itself. **First implementation
+  of sell is 1:1 with `PriceOf`** — the same number buying uses, no discount, no economy-balancing
+  logic, no reputation system. Don't build pricing policy to test a mechanism; prove the
+  mechanism first, exactly like buying did.
+- **`Unpack`** — surfaced by Wave 2's own item-catalog fix: `compileInventory` resolves a starting
+  pack (Explorer's Pack, etc.) as ONE opaque `InventoryItem`, never decomposing `packs.PackItem`'s
+  `Contents` into individual stacks — verified directly, no code path reads `Contents` anywhere.
+  Same gap hits a pack bought later from a vendor (packs are ordinary, re-purchasable shop goods
+  in 5e, not a character-creation-only concept), so this needs one generic mechanism, not a
+  creation-time special case. Considered and rejected: `Trade` (wrong shape — no counterparty,
+  you'd be "trading" with yourself); `Loot` (wrong `Target` type — `MemberID`, gated on the target
+  being down, neither of which describes an item you already possess; wrong content model —
+  holdings/intel, not typed item stacks); a nested/partial-pack inventory (5e itself has no pack
+  "capacity" or partial-pack rule — a pack is a shopping-list convenience, not an in-fiction
+  container with slots; nesting would double every query's surface for zero gameplay benefit).
+  Landing: its own small verb (`Unpack`, name TBD) — own target (an item already in the actor's
+  inventory), own validation, full decomposition (no partial state), sharing `AddInventoryItem` as
+  the underlying primitive with Wave 4's receive side, same way `Trade` shared `encounter.Interact`
+  without being it. UI can reuse the peek-then-take pattern `Interact`+`Trade` already established
+  for vendors (a popup showing contents, take one or take all) even though the server verb is
+  separate — that's a client-side pattern reuse, not a server-side one. Not designed further here;
+  its own wave once the currency waves above are done.
+
+  **Dependency found while building `Sell`, worth carrying forward rather than rediscovering**:
+  `CharacterData.inventory`'s wire `kind` (weapon/shield/armor/gear — a display vocabulary) is
+  lossy for anything that collapses into `"gear"` — the real `shared.EquipmentType` (tool, pack,
+  item, ammunition) isn't recoverable from it. `Sell`'s own primitive (`RemoveInventoryItem`)
+  matches on the real type, so a client can't reliably sell a `"gear"`-kind item until
+  `CharacterData.Item` also carries the real type (same shape as the `price` field this wave
+  added — a small protos+api addition, no toolkit change). **This wasn't caught earlier because
+  it couldn't have been**: nothing produced an individually-sellable `"gear"`-kind item to test
+  against until `Sell` itself existed to try selling one. `Unpack`'s entire output — a torch, rope,
+  rations, tinderbox — is exactly this class of item. Unpack's own "done when" (an unpacked item is
+  actually usable — sellable, tradeable) isn't met without this fix landing first or alongside it;
+  building and testing `Unpack` without it would mean discovering the identical bug a second time,
+  or worse, testing against a scope narrowed to avoid it without noticing why.
 
 ## 6. Done when
 
