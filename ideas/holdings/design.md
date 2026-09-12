@@ -264,9 +264,12 @@ type Observed struct {
     Position  *spatial.Position
     Standing  *Standing
     Equipment *HeldEquipment
-    Name      *string
-    Kind      *MemberKind
 }
+
+// Name and Kind are deliberately NOT columns of Observed: ruled out of
+// perception (§4.1) — anything you can sight, you can name and classify.
+// They stay on Actual, which the roster read serves. Revisit at rung 5,
+// where a hearing row can name nothing.
 ```
 
 The pass becomes one sentence: **for each observer, for each member, copy the
@@ -354,7 +357,7 @@ Each is shippable on its own.
 | # | rung | closes |
 |---|---|---|
 | 1 | **Fold** — capability answers become `map[MemberID]*Actual`; `standingNow()` joins the pass. Pure refactor, no behaviour change. | unblocks #1668 |
-| 2 | **The row** — `Observed` carries standing, name, kind. | #1668 + the two unfiled siblings |
+| 2 | **The row** — `Observed` carries standing. | #1668 |
 | 3 | **Exclusivity** — session reads holdings only; the three global joins in `projectSightings` are deleted. | makes the rule enforced rather than intended |
 | 4 | **Per observation** — testimony per cell; negative evidence generalized out of `correctArrivedLocations`. | #1670, both halves |
 | 5 | **Channel projection** — a beat degrades by the channel that carried it. | #940; makes the hearing ladder buildable |
