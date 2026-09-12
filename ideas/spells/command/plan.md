@@ -21,7 +21,7 @@ Recorded here, and as §12 of the design, so the reasoning stays visible.
 |---|---|---|
 | §3 first draft: a declaration per word, no proto change | the selector is a SHA-256 of the whole marshaled `Definition` (`session/declaration_id.go:257-261`) so the word would have had to be hashed in; Kirk read the flow back: crowded dock, client logic, a band-aid | the option is a CAST-TIME INPUT like the aimed cell (`CastInput.Cell`, `session/cast.go:74`; `CastRequest.cell = 6`): `Declaration.Options` lists the menu, `CastInput.Option` carries the choice, two additive proto fields |
 | §4 "caster filled by resolution", §11 "templating has no precedent" | `CounterpartKey` is the precedent (`combat/actions/cast.go:165-175`, `resolution/action.go:718-745`); Vicious Mockery uses it | `CounterpartKey: "caster_id"`; the word reaches the parameters by a sibling `OptionKey` bound the same way |
-| §4 "a second Command replaces the first" | no replacement exists; both sheets append (`character.go:1186`, `monster.go:405`); removal is by ref across the list (`character.go:1230+`); **Bane from two casters stacks two −1d4 today** | resolution removes an existing instance of the same ref on the recipient before publishing the new one — general, not Command-only; Bane's stacking is fixed as a consequence and noted on the PR |
+| §4 "a second Command replaces the first" | no replacement exists; both sheets append (`character.go:1186`, `monster.go:405`). ~~Bane from two casters stacks two −1d4 today~~ — **WRONG, caught by the resolution reviewer 2026-09-12:** `BanedContributionGroup` already makes them non-stacking and removal compares full addresses; keying replacement on the REF would have let a second caster's Bane end the first caster's concentration | resolution removes an existing instance with the same ADDRESS on the recipient before publishing the new one; bit-identical for Commanded; Bane's two-caster case untouched; the gateless path does not see it (shelf) |
 | §5.1 "session decides Driven in `participationNow`" | that name is encounter's (`encounter/participation.go:85`), whose validation switch (`:130-141`) rejects unknown values; session's is `standingSeam.participation` (`session/participation.go:62`) + `encounterParticipation` (`:156-178`), and it already holds each record's raw `Conditions` | both switches gain `Driven`; session answers it from the raw conditions with one new helper |
 | §5.2 "`turnDriverSeam` becomes two layers holding a sheet map" | the seam is built ONCE at `session/session.go:168` with nothing session-scoped in hand | the compelled driver is built per verb at the three encounter-construction sites (`read.go:560`, `start.go:167`, `write.go:1194`), the lifetime rule `standingSeam` already follows (`standing.go:49-66`) |
 | §5.3 `imposeCondition` | the body is `publishCondition` (`resolution/contest.go:416`) via `prepareCondition` (`:332`) and `publishPreparedCondition` (`:387`) | names corrected |
@@ -368,9 +368,12 @@ Pins root at PR 1's sha.
   first is the use case that brought the rule." The `ImposedEffect` for the
   replaced one: an `ImposedConditionRemoved` (exists, `contest.go:102`)
   with description "replaced by …" so the trace says it.
-- Tests `contest_test.go`/`cast_action_test.go`: Bane twice on one target
-  leaves one Baned and one removal in the trace; a different ref does not
-  remove; a monster recipient works the same.
+- Tests `contest_test.go`/`cast_action_test.go`: Command twice on one
+  target leaves one Commanded and one removal in the trace; Bane from two
+  casters leaves BOTH standing and both concentrations held; a different
+  ref does not remove; a monster recipient works the same. (Corrected
+  2026-09-12: the first draft said "Bane twice ⇒ one Baned", on a wrong
+  premise; see §0.)
 
 ### 3.3 `Obey`
 

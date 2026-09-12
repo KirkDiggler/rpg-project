@@ -484,7 +484,8 @@ where to flee; the engine picks the cell, as it does for Whispers.
 6. Flee walks the farthest reachable cell by ruler from the caster within
    the turn's movement, then ends the turn. A pinned target ends its turn
    where it stands with the reason recorded.
-7. Grovel: the target is prone (source `Commanded`) and its turn ends.
+7. Grovel: the target is prone and its turn ends. (Prone keeps no source
+   field; that the fall came from Command is in the trace, not the sheet.)
 8. The condition is gone after the compelled turn's end, and the creature
    acts normally on its following turn.
 9. A commanded **player** is driven identically: their client gets no
@@ -582,9 +583,12 @@ Recorded rather than rewritten, so the reasoning stays visible. The plan
 - **§4, §11** said the caster is "filled by resolution" with no precedent.
   `CounterpartKey` is the precedent; the word gets a sibling `OptionKey`.
 - **§4** said a second Command replaces the first. No replacement existed
-  anywhere; Bane from two casters stacked two penalties. The rule is now
-  general in resolution: one instance of a ref per member, newer replaces
-  older. Command's use case brought it; Bane is its second customer.
+  anywhere. The plan first claimed Bane from two casters stacked, and
+  keyed the new rule on the ref; the resolution reviewer proved the premise
+  wrong (Bane's contribution group already prevents stacking) and that
+  ref-keying would end another caster's concentration. The rule is keyed on
+  the condition's ADDRESS: one instance per address per member, newer
+  replaces older. Identical for Command; Bane untouched.
 - **§5.1** named session's participation function wrongly; both the
   encounter's validation switch and session's mapping gain `Driven`.
 - **§5.2** said the seam "becomes two layers holding a sheet map"; the seam
