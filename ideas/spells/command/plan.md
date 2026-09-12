@@ -414,7 +414,7 @@ publishes after apply" caught (order pinned: removal seq < applied seq).
 ## 6. PR 4 — session
 
 Worktree `cmd-session`, branch `feat/command-compelled-turn`, title
-`feat(session): one row per word, Driven, the compelled driver, Routed across the seam`.
+`feat(session): the cast option, Driven, the compelled driver, Routed across the seam`.
 Pins root, encounter, resolution at PRs 1–3 (check the branch is not behind
 a same-day tag before pinning pseudo-versions).
 
