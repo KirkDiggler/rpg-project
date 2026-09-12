@@ -164,9 +164,12 @@ zombie, skeleton captain, ghoul: `monster/monsters/registry.go`).
 | `Routed` intent, `Toward` policy, walking a routed turn | `encounter` | geometry and the clock; the intent says WHAT, the encounter finds WHERE |
 | the sandbox bard's fourth spell | `rpg-api` | seed |
 
-Singularity: one compulsion per creature at a time (a second Command
-replaces the first: the newer word wins, the condition is replaced not
-stacked, and the log says so). One participation answer per member per
+Singularity: one compelled turn per creature. The condition's identity
+includes its caster, as Bane's does (walk finding 2026-09-12: the beat
+showed no source until it did), so a same-caster recast replaces the
+instance and the log says so, while two casters' Commands may both stand;
+the compelled turn obeys the NEWEST word on the sheet and removes nobody
+else's spell. One participation answer per member per
 assessment, as today. One `Routed` walk per compelled turn, then the turn
 ends.
 
@@ -243,9 +246,10 @@ auto-passed by life state, a `TurnEndEvent` is still announced
 (`clocks.go:~424 autoPassTurn`), and the condition expires unused. Nothing
 is left behind.
 
-Replacement: applying a second `Commanded` to a member that holds one
-removes the first (`ConditionRemoved`, reason "replaced") and applies the
-second. Two words on one creature is not a state this design allows.
+Replacement: resolution replaces an instance with the same address (member,
+ref, caster) before applying the new one (`ConditionRemoved`, reason
+"replaced"). A different caster's word is a different instance; the driver
+obeys the newest.
 
 It contributes nothing to any roll. Its one reader is §5.
 
