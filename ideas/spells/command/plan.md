@@ -6,8 +6,9 @@ surveys: survey-command.md, survey-command-plan.md (job tmp; every file:line bel
 
 # Command — implementation plan
 
-Five PRs, one module each, merged bottom-up: **root → encounter → resolution
-→ session → rpg-api**. No proto change. No web change. Each PR is built in
+Seven PRs, merged inside-out: **protos → root → encounter → resolution →
+session → rpg-api → web**. Root and encounter build in parallel once the
+proto tag exists. Each PR is built in
 its own worktree by one builder and reviewed by a different agent before
 merge. A builder who finds the plan wrong says so in the PR and stops;
 they do not improvise a seam.
@@ -18,7 +19,7 @@ Recorded here, and as §12 of the design, so the reasoning stays visible.
 
 | design said | code says | what the plan does |
 |---|---|---|
-| §3 a `Label` on `CastOption`, "one row per option, no shape change" | the only string that reaches a client is `Definition.Name` (`session/casts.go:169` → `SpellRef{Name}`); the selector is a SHA-256 of the whole marshaled `Definition` (`session/declaration_id.go:257-261`), so three rows with the word outside the definition collide (`declaration_id.go:43`, `offers.go:869-890`) | the word lives INSIDE the definition (`CastProfile.Option`) and the row's `Name` is `"Command: Approach"`; content expands one profile into N definitions |
+| §3 first draft: a declaration per word, no proto change | the selector is a SHA-256 of the whole marshaled `Definition` (`session/declaration_id.go:257-261`) so the word would have had to be hashed in; Kirk read the flow back: crowded dock, client logic, a band-aid | the option is a CAST-TIME INPUT like the aimed cell (`CastInput.Cell`, `session/cast.go:74`; `CastRequest.cell = 6`): `Declaration.Options` lists the menu, `CastInput.Option` carries the choice, two additive proto fields |
 | §4 "caster filled by resolution", §11 "templating has no precedent" | `CounterpartKey` is the precedent (`combat/actions/cast.go:165-175`, `resolution/action.go:718-745`); Vicious Mockery uses it | `CounterpartKey: "caster_id"`; the word reaches the parameters by a sibling `OptionKey` bound the same way |
 | §4 "a second Command replaces the first" | no replacement exists; both sheets append (`character.go:1186`, `monster.go:405`); removal is by ref across the list (`character.go:1230+`); **Bane from two casters stacks two −1d4 today** | resolution removes an existing instance of the same ref on the recipient before publishing the new one — general, not Command-only; Bane's stacking is fixed as a consequence and noted on the PR |
 | §5.1 "session decides Driven in `participationNow`" | that name is encounter's (`encounter/participation.go:85`), whose validation switch (`:130-141`) rejects unknown values; session's is `standingSeam.participation` (`session/participation.go:62`) + `encounterParticipation` (`:156-178`), and it already holds each record's raw `Conditions` | both switches gain `Driven`; session answers it from the raw conditions with one new helper |
@@ -109,25 +110,46 @@ Recorded here, and as §12 of the design, so the reasoning stays visible.
   identity at `internal/handlers/dnd5e/v1alpha1/character/converters.go:
   ~3249` may need a `Command` arm (check).
 
-## 2. PR 1 — dnd5e root (`rulebooks/dnd5e`)
+## 2. PR 0 — rpg-api-protos
+
+Branch `feat/cast-options` off `main`. Additive only, per the protos repo's
+rules (buf lint/format/breaking; generate compiles; no hand-written tests).
+
+- `dnd5e/api/session/v1alpha1/types.proto`, `message Declaration`
+  (`:1031`): after `cost = 18`:
+  ```proto
+  // The menu a cast offers when the spell has one (Command's words). The
+  // choice is a cast-time input like `cell`: the client sends one id in
+  // CastRequest.option. Empty means the cast has no choice.
+  repeated CastOption options = 19;
+  ```
+  and `message CastOption { string id = 1; string label = 2; }` beside
+  `SpellRef` (`:1242`), the label authored by the spell, never derived.
+- `dnd5e/api/session/v1alpha1/service.proto`, `message CastRequest`
+  (`:579`): after `cell = 6`:
+  ```proto
+  // The id of one of the selected declaration's options. Set when — and
+  // only when — the declaration lists options, where it is required.
+  string option = 7;
+  ```
+- Merge and tag before PR 5 pins; PRs 1–4 need nothing from it.
+
+## 3. PR 1 — dnd5e root (`rulebooks/dnd5e`)
 
 Worktree `dw-root` is gone; use `cmd-root`. Branch `feat/command-content`.
 Title `feat(spells): Command — the word, the compulsion, Toward, the turn budget`.
 
-### 1.1 `combat/actions`: the option, the option key, Toward, the turn budget
+### 1.1 `combat/actions`: the option menu, the option key, Toward, the turn budget
 
 - `cast.go` after `Concentration` (`:126`):
   ```go
   // Options is the menu a cast offers when the spell has one: Command's
-  // words. A profile with Options is not castable as it stands; content
-  // expands it into one definition per option (spells.CastDefinitions),
-  // each carrying that option in Option. Absent means the spell has no
-  // choice, which is every profile before Command.
+  // words. The choice is a cast-time input, the way an aimed cell is: the
+  // declaration lists the menu, the request carries one id, and the engine
+  // writes it into the parameters of every effect that names an OptionKey.
+  // Absent means the spell has no choice, which is every profile before
+  // Command.
   Options []CastOption `json:"options,omitempty"`
-  // Option is the one chosen, set only on an expanded definition. It is
-  // inside the profile, not beside it, because the declaration selector
-  // hashes the definition and two words must be two selectors.
-  Option string `json:"option,omitempty"`
   ```
   ```go
   type CastOption struct {
@@ -135,12 +157,9 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
       Label string `json:"label"` // "Approach", the client's word
   }
   ```
-  `Validate`: `Options` ids non-empty and unique; `Option` non-empty ⇒ must
-  match an `Options` id; `Options` non-empty and `Option` empty ⇒ error
-  "a profile with options must be expanded before it is cast" (the
-  unexpanded menu is content, never a definition). A profile with `Options`
-  MUST have at least one `Effects` row with `OptionKey` set, or the option
-  reaches nothing: refuse.
+  `Validate`: ids non-empty and unique, labels non-empty; `Options`
+  non-empty with no `Effects` row carrying an `OptionKey` is refused (a
+  menu nothing reads). `func (p CastProfile) HasOption(id string) bool`.
 - `CastEffect` after `CounterpartKey` (`:175`):
   ```go
   // OptionKey names the parameter the chosen option is written under, the
@@ -148,6 +167,7 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
   // not read the option.
   OptionKey string `json:"option_key,omitempty"`
   ```
+  `Validate`: an `OptionKey` on a profile with no `Options` is refused.
 - `move.go`: `MoveToward MovePolicy = "toward"` after `MoveAway` (`:35`),
   doc: shortest walking route to a cell adjacent to the anchor, stopping
   there; if none, the reachable cell nearest the anchor by ruler. Rewrite
@@ -158,9 +178,10 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
   mover's turn, which resolution's Obey produces and no cast does." `Validate`
   (`:92-120`): policy switch adds `MoveToward`; the exclusivity expression
   at `:109` becomes a count: exactly one of `Cells > 0`, `Speed`, `Turn`.
-  Tests in `combat/actions/cast_test.go` (there is no `move_test.go`; add
-  one): each of the three budgets alone passes, any two refused, none
-  refused, `Toward` accepted.
+  Tests in `combat/actions/cast_test.go` and a new `move_test.go`: each of
+  the three budgets alone passes, any two refused, none refused, `Toward`
+  accepted; `Options` without a key refused; key without `Options` refused;
+  `HasOption`.
 
 ### 1.2 `conditions`: `Commanded`
 
@@ -204,7 +225,7 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
   wire shape; hand-authored blob keeps its fields; ctor refusals; `HoldsRef`
   true/false/garbage.
 
-### 1.3 `spells`: the profile and the expansion
+### 1.3 `spells`: the profile
 
 - `spells/cast.go`: consts `CommandRangeFeet = 60`, `CommandTurnEnds = 1`,
   `CommandCasterParameter = "caster_id"`, `CommandWordParameter = "word"`.
@@ -215,13 +236,8 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
   OptionKey: CommandWordParameter}`. Comments carry §7's three rulings
   (undead diverged until goblins; language deferred; Drop deferred on the
   weapon-posing initiative) and that Halt is a one-row addition.
-- `spells.CastDefinitions(input CastDefinitionInput) []*actions.Definition`:
-  the existing `CastDefinition` (`:469-490`) keeps its contract for a
-  profile with no `Options` and returns **nil for one that has them** (an
-  unexpanded menu is not a definition). `CastDefinitions` returns the one
-  definition for an option-less spell, and for a spell with `Options` one
-  per option: profile cloned, `Option = id`, `Name = content.name + ": " +
-  label`, same `Ref`, same `Cost`. Order = `Options` order.
+  `spells.CastDefinition` (`:469-490`) is unchanged: one definition, whose
+  profile carries the menu.
 - `spells/data.go`: a `Command` row (level 1, enchantment, V, 1 round; the
   bard requirement test reads `Level`).
 - The bard's level-1 pick: wherever Whispers made it 3 of 3
@@ -229,13 +245,11 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
   `{Bane, Thunderwave, DissonantWhispers, Command}`. Comment: the count
   tracks the catalogue and stops at four (rpg-toolkit#1661). The domain
   cleric grant (`subclass_modifications.go:257`) now names a spell that
-  exists; no change, but its test, if any, may start asserting more.
+  exists.
 - Tests `spells/cast_test.go` (suite `CastContentSuite`): Command's
-  profile carries the gate, three options, the effect with both keys;
-  `CastDefinitions` mints three definitions with distinct names and
-  options and equal refs; `CastDefinition` returns nil for Command; every
-  other spell mints exactly one from both functions (loop the catalogue,
-  no counts pinned); the requirements test for the bard's pick.
+  profile carries the gate, three options, the effect with both keys; every
+  other profile has no options (loop the catalogue, no counts pinned); the
+  requirements test for the bard's pick.
 
 ### 1.4 Gate
 
@@ -243,7 +257,7 @@ Title `feat(spells): Command — the word, the compulsion, Toward, the turn budg
 `.go` changes. Reviewer: mutation the exclusivity count (allow two budgets)
 and the `Options`-without-`OptionKey` refusal; both must be caught.
 
-## 3. PR 2 — encounter
+## 4. PR 2 — encounter
 
 Worktree `cmd-encounter`, branch `feat/command-driven-turn`, title
 `feat(encounter): Driven participation, Routed intent, Toward`. Pins root at
@@ -320,7 +334,7 @@ commit runs no hook, run build+tests by hand).
 ignores terminal" must be caught; mutant "Routed charges no budget" must be
 caught (a second Routed in the same turn would walk again).
 
-## 4. PR 3 — resolution
+## 5. PR 3 — resolution
 
 Worktree `cmd-resolution`, branch `feat/command-obey`, title
 `feat(resolution): Obey, option binding, same-ref replacement, Toward and the turn budget`.
@@ -328,15 +342,19 @@ Pins root at PR 1's sha.
 
 ### 3.1 The option reaches the parameters
 
-- `action.go`: `bindOption(effect, option string) (json.RawMessage, error)`
-  beside `bindCounterpart` (`:718-745`), same shape: no `OptionKey` ⇒
-  verbatim; key set and option empty ⇒ error; else write under the key.
-  Call it where `bindCounterpart` is called on BOTH paths (gateless `:688`;
-  find the gated one via `cast_action_test.go:543`'s pin) with
-  `definition.Cast.Option`.
-- Test `cast_action_test.go`: the word is written where content said; a
-  keyed effect on a definition with no `Option` is refused; unkeyed
-  effects untouched.
+- `ActionInput` (`action.go`, the struct `NewAction` takes at
+  `session/cast.go:315-328`) gains `Option string`: the chosen id, already
+  validated by session against the profile; resolution re-checks
+  `definition.Cast.HasOption` and refuses a mismatch or an empty option on
+  a profile with `Options` (fail closed twice, once per owner).
+- `bindOption(effect, option string) (json.RawMessage, error)` beside
+  `bindCounterpart` (`:718-745`), same shape: no `OptionKey` ⇒ verbatim;
+  else write the id under the key. Call it where `bindCounterpart` is
+  called on BOTH paths (gateless `:688`; find the gated one via
+  `cast_action_test.go:543`'s pin).
+- Test `cast_action_test.go`: the word is written where content said on a
+  gated cast; a profile with options and an empty input option is refused;
+  an id not in the menu is refused; unkeyed effects untouched.
 
 ### 3.2 Same-ref replacement
 
@@ -393,27 +411,34 @@ Pins root at PR 1's sha.
 option on gateless path only" caught by a gated test; mutant "replacement
 publishes after apply" caught (order pinned: removal seq < applied seq).
 
-## 5. PR 4 — session
+## 6. PR 4 — session
 
 Worktree `cmd-session`, branch `feat/command-compelled-turn`, title
 `feat(session): one row per word, Driven, the compelled driver, Routed across the seam`.
 Pins root, encounter, resolution at PRs 1–3 (check the branch is not behind
 a same-day tag before pinning pseudo-versions).
 
-### 4.1 One row per word
+### 4.1 The menu on the declaration, the choice on the input
 
-- `buildCastOffers` (`casts.go:88-121`): replace `spells.CastDefinition`
-  with `spells.CastDefinitions` and loop the slice; each compiles through
-  `compileCastOffer` unchanged. `sortCastOffers` (`:342-346`) and
-  `sortDeclarations` (`offers.go:955-961`): secondary key `Spell.Name` so
-  three rows of one ref are ordered by word, not by insertion.
-- `Cast` (`cast.go:282-297`) needs nothing: `selected.spell` is the expanded
-  definition and its `Option` rides into `resolution.NewAction`.
-- Tests `cast_test.go` beside `:469`: a bard knowing Command gets three
-  rows with names "Command: Approach/Flee/Grovel", three distinct ids, one
-  ref; casting the Flee row lands `Commanded{word: flee, caster: bard}` on
-  the target on a failed save (`conditions_test.go` pattern), nothing on a
-  made save; `declaration_id_test.go`'s golden unmoved.
+- `Declaration` (`session/afford.go:191-297`): `Options []CastOption`
+  (session's own twin `{ID, Label}`, beside `SpellRef` at `types.go:2356`),
+  copied from `profile.Options` in `compileCastOffer` (`casts.go:149`,
+  next to `MinTargets/MaxTargets` at `:286`). Empty for every other spell.
+  The selector is unchanged: one Command row, one id.
+- `CastInput` (`cast.go:25-75`): `Option string` after `Cell` (`:74`), doc
+  in the cell's voice: "the id of one of the selected declaration's
+  Options; required when it lists any, refused when it lists none, refused
+  when not listed." Validation in `Cast` right after `selectCompiledOffer`
+  (`:288`), before `resolution.NewAction` (`:315`), which receives it as
+  `ActionInput.Option`.
+- Tests `cast_test.go`: a bard knowing Command gets ONE row whose
+  `Options` are the three words in content order; casting with
+  `Option: "flee"` lands `Commanded{word: flee, caster: bard}` on a failed
+  save (`conditions_test.go` pattern), nothing on a made save; casting
+  Command with no option is refused; with `"halt"` refused; casting Bane
+  with an option is refused; `declaration_id_test.go`'s golden unmoved
+  (the definition did not change shape for existing spells, and Command's
+  menu is content, so its own id is stable).
 
 ### 4.2 `Driven`
 
@@ -474,14 +499,19 @@ a same-day tag before pinning pseudo-versions).
 `go build ./... && go test ./...` in `session`. Reviewer full rigor: this
 PR carries the new verb semantics.
 
-## 6. PR 5 — rpg-api
+## 7. PR 5 — rpg-api
 
 Branch `feat/command` in `rpg-api/.worktrees/cmd-api` off `dev`. Pin the
-four toolkit TAGS (verify each tag's content by commit and a grep) with
-`game-dev/scripts/bump-toolkit-pin.sh <go.mod dir> <module> <tag>` from
-`/home/kirk/game-dev`, three separate args, once per module; it commits
-and pushes itself.
+protos tag and the four toolkit TAGS (verify each tag's content by commit
+and a grep) with `game-dev/scripts/bump-toolkit-pin.sh <go.mod dir>
+<module> <tag>` from `/home/kirk/game-dev`, three separate args, once per
+module; it commits and pushes itself.
 
+- Declaration → proto converter (`internal/handlers/dnd5e/session/v1alpha1/
+  convert*.go`, the `Spell` copy near `convert_test.go:524`'s fixture):
+  copy `Options` out. Cast handler
+  (`internal/handlers/dnd5e/session/v1alpha1/cast.go:54`): `Option:
+  req.GetOption()` beside `DeclarationID`. Tests beside the existing ones.
 - `sandboxseed.go:52` `commandRef = "dnd5e:spells:command"`; `:204` fourth
   element; comment `:36-49` now says the count reached four.
 - `creation_test.go:1795` `s.Contains(..., commandRef)`; sweep
@@ -491,7 +521,19 @@ and pushes itself.
   arm only if the creation flow maps spells to an enum there.
 - Full suite; `make ci-check` only after committing (rpg-api#795).
 
-## 7. Walk manifest
+## 8. PR 6 — rpg-dnd5e-web
+
+Branch `feat/cast-options` off `dev`, after the protos tag and the api
+are on dev. One change: when a declaration's `options` is non-empty, the
+cast flow asks for one before sending and puts its id in `option`. Read
+the cast send sites in `useSessionCombatExperience.ts` (`:1059`, `:1155`,
+`:1265`) and the dock (`ActionDock.tsx:531-561`, `castLabel.ts`). No
+grouping, no inference: draw the menu that was sent. Tests beside
+`castFlow.test.tsx`. Kirk's dock note (multi-target "Cast at Targets"
+belongs in the action panel, not the top menu) is a separate web issue,
+not this PR.
+
+## 9. Walk manifest
 
 `local/command` env (copy `envs/local/whispers.env`, ports 8098/3017,
 `RPG_API_PATH` at the api worktree). Cast Approach on the far ghoul,
@@ -500,16 +542,17 @@ skeleton past the fighter, answer the window; Grovel and see Prone on the
 sheet; recast on a commanded creature and read "replaced" in the log. Kirk
 walks once.
 
-## 8. Self-review
+## 10. Self-review
 
-- Every design section has a task: §3 → 1.1/1.3/4.1; §4 → 1.2/3.1/3.2; §5.1
+- Every design section has a task: §3 → PR 0/1.1/1.3/3.1/4.1/PR 5/PR 6; §4 → 1.2/3.1/3.2; §5.1
   → 2.1/4.2; §5.2 → 4.3; §5.3 → 3.3; §5.4 → 2.2/2.3/4.3; §6 → 1.3; §7 →
   comments in 1.3; §8 acceptance → 4.3 tests; §10 → the PR order.
-- Types agree: `CastOption{ID, Label}`; `CastProfile.Options/Option`;
-  `CastEffect.OptionKey`; `MoveToward`; `CastMove.Turn`/`MoveDirective.Turn`;
+- Types agree: `CastOption{ID, Label}` in content, session and proto;
+  `CastProfile.Options` + `HasOption`; `CastEffect.OptionKey`;
+  `CastInput.Option` → `ActionInput.Option`; `Declaration.Options`; `MoveToward`; `CastMove.Turn`/`MoveDirective.Turn`;
   `TurnParticipationDriven`; `Routed{Policy, Anchor, Cause}` in both
   vocabularies; `pausedTurn.terminal`; `conditions.HoldsRef` /
   `DecodeCommanded`; `resolution.Obey/ObeyInput/ObeyOutput`;
-  `spells.CastDefinitions`.
+  `Routed.Cause`.
 - Not in this plan, on purpose: Halt, Drop, undead, language, a
-  turn-started beat, any web change, any proto change.
+  turn-started beat, dock grouping or layout.

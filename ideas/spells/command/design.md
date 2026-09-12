@@ -1,5 +1,5 @@
 ---
-status: DESIGN, approved 2026-09-12 (Kirk ruled §7; first slice = Approach, Flee, Grovel)
+status: DESIGN, approved 2026-09-12 (Kirk ruled §7; first slice = Approach, Flee, Grovel; §3 reshaped the same day: option = cast-time input, two additive proto fields)
 journey: rpg-project#430 (directed movement, step 4) · rpg-project#243 (cast a spell) · builds on: ../../battlemap/directed-movement/design.md (the directive) and ../dissonant-whispers/design.md (Away, the held walk, the monster reaction meter; landed 2026-09-12)
 law: the word is content; the compulsion is a condition on the target; the compelled turn is DRIVEN by the engine, not obeyed by a brain; a player and a monster are compelled through the one seam built for a member nobody is playing
 ---
@@ -38,7 +38,7 @@ never consulted. Consequences:
    moves under them.
 
 What it proves for the engine, in order: a cast that carries a chosen
-option; a condition that expires at the end of the **target's** next turn;
+option, the way it carries an aimed cell; a condition that expires at the end of the **target's** next turn;
 a participation answer that hands a player's turn to the driver; a turn
 intent that asks the encounter for a route instead of handing it a path
 (the same intent monster flee will use); `Toward` as a route policy.
@@ -155,7 +155,7 @@ zombie, skeleton captain, ghoul: `monster/monsters/registry.go`).
 
 | noun | owner | why there |
 |---|---|---|
-| the word, its list, its declaration label | `spells` (content) | the option is content the same way the damage die is; a declaration per word |
+| the word and its menu | `spells` (content) | the option is content the same way the damage die is; the declaration carries the menu, the request the choice |
 | `Commanded` condition (`word`, `caster`, one turn end) | `conditions` (rules) | a fact on the target with a clock, persisted with the sheet like every condition |
 | what a word means (route policy, prone, pass) | `resolution` | the compulsion's consequences are rules; resolution DESCRIBES them as imposed effects, exactly as a cast's are |
 | `TurnParticipationDriven` | `encounter` | the clock consequence of "nobody plays this turn"; the encounter owns no reason |
@@ -170,16 +170,31 @@ stacked, and the log says so). One participation answer per member per
 assessment, as today. One `Routed` walk per compelled turn, then the turn
 ends.
 
-## 3. The word is a declaration
+## 3. The word is a cast-time input
 
-`Afford` compiles **one declaration per word** for a known Command:
-`Command: Approach`, `Command: Flee`, `Command: Grovel`.
-Each carries the same range, target rule, save, and cost, and a distinct
-`option` the profile knows. The client draws them as it draws any castable
-row and echoes the chosen `declaration_id`. **No proto change. No new cast
-input field.** `CastInput.DeclarationID`'s own doc is the argument: the
-selector names the row, and a row is now allowed to be a spell plus an
-option.
+Kirk, 2026-09-12, on the first draft's row-per-word: *"that dock is pretty
+crowded … I would prefer less logic in the client … this shape feels like a
+band aid."* It was. A row per word forecloses every spell with a cast-time
+choice: Chromatic Orb's damage type, Enhance Ability's ability, and a spell
+with two choices becomes a grid of rows.
+
+The option is an input the cast carries, exactly as Thunderwave's aimed cell
+is. The cell is not a row per cell: the declaration says a cell is needed
+and the request brings one. So:
+
+- **The declaration carries the menu.** `Declaration.Options []CastOption`
+  (id, label), present when the profile declares options. One Command row.
+- **The request carries the choice.** `CastInput.Option string`: required
+  when the selected declaration lists options, refused when it does not,
+  refused when it names an id the declaration did not list.
+- **The engine binds it.** The chosen id is written into the effect's
+  parameters under the effect's `OptionKey`, the way the counterpart's id
+  is written under `CounterpartKey`. Content never sees the choice as
+  anything but a parameter.
+- **The wire is additive.** `Declaration.options` (repeated id + label) and
+  `CastRequest.option` (string). Protos merge first; rpg-api passes both
+  through; the client renders a picker when a declaration lists options and
+  otherwise nothing new.
 
 Content shape, in `combat/actions`:
 
@@ -188,19 +203,19 @@ Content shape, in `combat/actions`:
 Options []CastOption `json:"options,omitempty"`
 
 type CastOption struct {
-    ID    string `json:"id"`    // "approach" | "flee" | "grovel" | "halt"
-    Label string `json:"label"` // "Approach"
+    ID    string `json:"id"`    // "approach" | "flee" | "grovel"
+    Label string `json:"label"` // "Approach", the client's word
 }
 ```
 
-A profile with `Options` compiles one declaration per option; a profile
-without compiles one, as today. `Validate` refuses an empty `ID`, a
-duplicate `ID`, and `Options` on a profile that declares no consumer of the
-option (today: an `Effects` row whose `Parameters` template names it; see
-§4). The chosen option reaches the effect's parameters as `{"word": "flee"}`.
+`Validate` refuses an empty or duplicate `ID`, and refuses `Options` on a
+profile with no `Effects` row carrying an `OptionKey` (a menu nothing
+reads). Zero values tell the truth: a profile with no `Options` needs no
+option, and every existing profile and every existing request is unchanged.
 
-Zero values tell the truth: a profile with no `Options` has no option, and
-every existing profile is unchanged.
+The client logic is "draw what was sent": a button per declaration, a
+picker when it lists options. Grouping, submenus and inference stay out of
+the client.
 
 ## 4. The compulsion is a condition
 
@@ -354,15 +369,16 @@ might.
 
 ### 5.5 What the client sees
 
-Nothing new is required. A compelled turn produces the beats that already
-exist: `"moved"` with a cause, `"window_opened"` when a player is asked to
+A compelled turn produces the beats that already exist: `"moved"` with a cause, `"window_opened"` when a player is asked to
 swing, `"turn-ended"`. The cast itself produces `"cast"` and `"saved"`. A
 turn-started beat is not added here; the Whispers walk's perception finding
 (toolkit#1670) is Kirk's lane and this design does not touch testimony.
 
-The web needs the declaration rows to show their labels, which they already
-do for every castable entry. If the client hides or collapses same-spell
-rows, that is the one client change and it is cosmetic.
+The one client change is the option picker: when a declaration lists
+options the dock asks for one before sending the cast, and sends its id.
+Kirk's dock note, 2026-09-12, filed as a forward note on the web repo:
+"Cast at Targets" for a multi-target spell sits in the top menu and belongs
+in the action panel.
 
 ## 6. The cast
 
@@ -495,9 +511,10 @@ where to flee; the engine picks the cell, as it does for Whispers.
 - **A `PaysTurn` price.** The turn is not a price paid before a walk; it is
   the budget the walk spends. `Budget: Turn` says it; `MovePays` stays
   closed.
-- **The word as a new cast input and proto field.** The declaration already
-  carries a choice; a second channel for the same decision is the
-  disagreement `CastInput`'s doc warns against.
+- **A declaration per word (the first draft).** Hashed the word into the
+  definition so three rows had three selectors; crowded the dock; forced
+  the client to group; and made every future cast-time choice a
+  multiplication of rows. Kirk named it a band-aid and it was.
 - **A `Compelled` participation that still consults the brain.** Then the
   brain must know to return the compelled intent, which is the first bullet
   again.
@@ -514,6 +531,8 @@ where to flee; the engine picks the cell, as it does for Whispers.
 
 ## 10. Sequence, one module per PR, merged bottom-up
 
+0. **rpg-api-protos** first: additive `Declaration.options` and
+   `CastRequest.option`. Merged and tagged before any consumer pins.
 1. **dnd5e root** (`combat/actions`, `conditions`, `refs`, `spells`):
    `CastOption` + `Options` + validation; `Commanded` condition with
    loader, factory, display, replacement; `Toward` in `MovePolicy`; `Turn`
@@ -523,13 +542,14 @@ where to flee; the engine picks the cell, as it does for Whispers.
    `Route`; walking a routed turn to its end, with hold and resume.
 3. **resolution**: `Obey`; `Turn` on `MoveDirective`; `Toward` accepted
    where `Away` is.
-4. **session**: `Afford` compiles one declaration per option and threads
-   the word into the effect's parameters; `participationNow` answers
-   `Driven`; the compelled driver wraps the host's; `Routed` and `Toward`
-   cross the seam.
-5. **rpg-api**: the sandbox bard knows Command. No proto change.
-6. **rpg-dnd5e-web**: nothing required; cosmetic grouping of same-spell
-   rows if wanted.
+4. **session**: the declaration carries `Options`; `CastInput.Option` is
+   validated against them and bound into the effect's parameters;
+   participation answers `Driven`; the compelled driver wraps the host's;
+   `Routed` and `Toward` cross the seam.
+5. **rpg-api**: converts `options` out and `option` in; the sandbox bard
+   knows Command.
+6. **rpg-dnd5e-web**: the option picker on a declaration that lists
+   options.
 
 ## 11. Where the evidence is thin
 
@@ -538,9 +558,9 @@ where to flee; the engine picks the cell, as it does for Whispers.
 - `driveOneMonsterTurn`'s intent-execution switch was read through its doc
   and callers, not line by line; the `Routed` execution in §5.4 assumes the
   per-cell step it calls for `Move` is reusable with a cause.
-- How `Afford` compiles declarations and labels them was read from
-  `CastInput`'s doc, not from `afford.go`; §3 assumes one row per castable
-  entry can become one row per option without a shape change on the offer.
+- How the web sends a cast was read from one hook's call sites
+  (`useSessionCombatExperience.ts:1059,1155,1265`); the picker's exact home
+  in the dock is the web builder's to find.
 - Whether the web collapses or lists same-spell declarations is unsurveyed.
 - The `Effects` parameter templating (a per-cast value reaching a
   condition's parameters) has no precedent; every shipped `Parameters` is a
@@ -551,12 +571,12 @@ where to flee; the engine picks the cell, as it does for Whispers.
 Recorded rather than rewritten, so the reasoning stays visible. The plan
 (`plan.md` §0) carries the same table with the code it is built on.
 
-- **§3** said a `Label` on the option and "no shape change on the offer".
-  The declaration selector is a hash of the whole marshaled definition and
-  the only string a client sees is the definition's name. So the chosen
-  word lives INSIDE the profile (`Option`) and content expands one menu into
-  one definition per word, named `"Command: Approach"`. The offer still
-  changes shape not at all.
+- **§3**, first draft: a declaration per word, hashed into the definition
+  so the selectors differed, "no proto change". Kirk read the flow back and
+  called it a band-aid; it was, and §3 now carries the primitive instead:
+  the option is a cast-time input like the aimed cell, the declaration
+  lists the menu, the request carries the choice, two additive proto
+  fields.
 - **§4, §11** said the caster is "filled by resolution" with no precedent.
   `CounterpartKey` is the precedent; the word gets a sibling `OptionKey`.
 - **§4** said a second Command replaces the first. No replacement existed
