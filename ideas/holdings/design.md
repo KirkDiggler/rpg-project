@@ -199,70 +199,63 @@ arrives.
   *"caller-chosen identification within an observer's fidelity"* — before
   anything needs a name column.
 
-### 4.1.3 The real blocker, which is not the one the comment names
+### 4.1.3 What #1668 actually needs — and what it does not
 
-**CORRECTION, also mine.** §1 of this document says `encounter.go:1984`'s C8
-claim is stale and that `standingNow()` is "three lines beside" `sightNow()`
-and `equipmentNow()`. That checked one half of a two-part claim.
+**CORRECTION, and it is the third in this document from the same session.**
+Earlier revisions of §4.1.3 said #1668 was blocked on a participation-ordering
+question and offered four shapes to resolve it, then a fifth via a materialized
+world row. All of it was scaffolding for a problem that does not exist.
 
-| the comment's claim | status |
-|---|---|
-| *"this choke point has no pass-scoped reading to draw on"* | **stale** — the `sightNow`/`equipmentNow` pattern exists |
-| *C8 forbids a second participation ask* | **standing** |
+Kirk collapsed it with one question: *"how does a goblin up vs down on first
+sighting differ?"*
 
-`participationNow()` is **not memoized**: every call runs
-`e.participation.Assess(roster)`. And carrying the answer forward is explicitly
-refused, at `encounter.go:1565`:
+**It does not.** You look, and you see whether they are on their feet, exactly
+as you see where they are. One observation, one write, one column. There is no
+first-contact special case, so there is nothing for a world row to be the
+source of.
 
-> *"This is the SECOND consult in a Pump — refreshSight runs another at the
-> end, through noticeDown… Deliberate, both ways round: the answer is not
-> carried forward because carrying it is a cache ([Standing])."*
+**What #1668 needs, complete:** `rebuildPercepts` needs the standing reading
+while it writes. `refreshSight` already takes that reading — just later, inside
+`noticeDown`. So take it once at the top of `refreshSight` and hand it to both.
+Net consults unchanged, no beat reordered, no new type.
 
-So adding `standingNow()` to `rebuildPercepts` puts **two participation
-consults inside one `refreshSight`** — one at the start writing testimony, one
-at the end through `noticeDown` narrating the down beat. Two answers that may
-differ, inside one refresh: a member's testimony would record a standing the
-same refresh's own beat contradicts. That is precisely the incoherence
-`equipmentNow`'s doc exists to prevent — *"one pass writes one consistent
-reading of the world into every observer's testimony."*
+**What #1668 does NOT need**, all of it proposed in this document and struck:
 
-**#1668 has a real blocker. It is just a different one, and it is a design
-question rather than three lines.** Three shapes, none picked here:
-
-| | shape | cost |
+| invented | why it was invented | why it is gone |
 |---|---|---|
-| **a** | `rebuildPercepts` asks; `applyTrigger`/`noticeDown` reuses that reading | the thing `Standing`'s doc calls a cache, and refuses by name |
-| **b** | `noticeDown`'s reading is taken first and threaded **into** `rebuildPercepts` | inverts the current order inside `refreshSight`; a down beat's narration currently must come after the tick beat |
-| **c** | two consults per `refreshSight`, deliberate, as a Pump already has two | honest, but the capability may answer differently between them and the testimony is written from the earlier one |
-| **d** ← recommended | `refreshSightDeclaring` asks **once at its top** and threads the reading into `rebuildPercepts` (writes testimony) and down through `applyTrigger` → `noticeDown` (narrates) | **no new consult on an open encounter** — noticeDown asks one today, this asks one instead. One wrinkle below |
+| `Actual` / `Now` — a world row per member | to be the source a testimony is copied *from* | nothing needs a source. Looking is the source |
+| a god observer inside `intel` | to give the world row a home that was not a parallel structure | there is no world row |
+| write-on-change to `HoldersOf(subject)` | to deliver standing changes to watchers | the next refresh sees them. Looking already covers it |
+| four shapes for the participation consult | to resolve an ordering hazard | one reading at the top of `refreshSight`, handed to both |
 
-**Why (d) is not the cache `Standing`'s doc refuses.** That doc refuses
-*carrying the answer forward* — remembering it past the work it was asked for.
-(d) never stores it: it is a parameter with the lifetime of one call, which is
-exactly what `reach` and `hands` already are. Nobody calls `sightNow()`'s result
-a cache.
+**`intel` does not change for this.** It stays a leaf, payload-opaque,
+per-observer. The world stays where it is — `e.members` plus the capabilities —
+and is never a stored row.
 
-**Why it is safe.** Between the top of `refreshSightDeclaring` and the
-`applyTrigger` that reaches `noticeDown`, the only things that run are
-`rebuildPercepts`, `appendSightedBeats` and `sweepConcealment`. None of them can
-damage anyone, so participation cannot change across that span. The reading is
-the same reading either way; (d) only moves *when it is taken* earlier, and
-moves no beat.
+### 4.1.4 The fold, reduced to what it is
 
-**The one wrinkle, named rather than buried.** `refreshSightDeclaring` returns
-early when `e.outcome != nil`, before `applyTrigger` — so a **closed** encounter
-consults participation zero times today. Asking at the top unconditionally makes
-that one. Harmless, but it is a real behaviour change on a path that currently
-has none, and any test counting capability calls should catch it. Asking lazily
-instead would avoid it at the cost of a conditional in the seam.
+The three parallel maps still become one row per member inside the pass. That is
+**tidiness, not architecture**: a local shape so `projectSightings` takes one
+thing instead of four, and so "not observed" has somewhere to live that a bare
+`bool` cannot express. It is not a ledger, it is not stored, and nothing reads
+the world through it.
 
-The choice is Kirk's. Recorded rather than decided, because a fix is a
-hypothesis (`rulings-carry-their-scope`) and this one changes an ordering law.
+### 4.1.5 The one real gap in `intel`
 
-**Process note.** This correction was written roughly fifteen minutes after
-filing rpg-project#442, by the session that filed it, in the document #442
-cites. The move was identical to the one #442 describes: a record was found
-stale in one respect and read as carrying no constraint at all.
+```go
+HeldBy(observer)   // exists: what does Alice hold?
+HoldersOf(subject) // missing: who holds goblin-1?
+```
+
+The same map read the other way, and the thing Kirk's event rule needs:
+
+> *"writing is happening wherever it is. if I have a holding on it then I get
+> the event."*
+
+The audience for a beat about goblin-1 is `HoldersOf("goblin-1")`. That is
+rpg-toolkit#940's answer, and it is better than the `beatClass` shelf we built
+for it. **It belongs to rung 5, not to #1668** — recorded here so it is not
+rediscovered, and deliberately not built now.
 
 ### 4.2 Not exclusive
 
