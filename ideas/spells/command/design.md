@@ -1,5 +1,5 @@
 ---
-status: DESIGN, proposed 2026-09-12
+status: DESIGN, approved 2026-09-12 (Kirk ruled §7; first slice = Approach, Flee, Grovel)
 journey: rpg-project#430 (directed movement, step 4) · rpg-project#243 (cast a spell) · builds on: ../../battlemap/directed-movement/design.md (the directive) and ../dissonant-whispers/design.md (Away, the held walk, the monster reaction meter; landed 2026-09-12)
 law: the word is content; the compulsion is a condition on the target; the compelled turn is DRIVEN by the engine, not obeyed by a brain; a player and a monster are compelled through the one seam built for a member nobody is playing
 ---
@@ -49,8 +49,8 @@ yet; the log says the ghoul is commanded. Initiative reaches the ghoul. It
 does not get its turn: the engine walks it toward the bard by the shortest
 path, as far as its speed allows, provoking as it passes the fighter, who is
 asked whether to swing. It stops beside the bard and its turn ends. Next
-round it acts normally. Then *Command: Halt* on the skeleton: it fails, its
-turn arrives, and it passes. Then *Command: Flee* on the fighter's own
+round it acts normally. Then *Command: Grovel* on the skeleton: it fails,
+its turn arrives, it falls prone and passes. Then *Command: Flee* on the fighter's own
 player, cast by an enemy in a later slice, and the fighter's turn is
 walked away from the caster without the human being asked anything.
 
@@ -173,7 +173,7 @@ ends.
 ## 3. The word is a declaration
 
 `Afford` compiles **one declaration per word** for a known Command:
-`Command: Approach`, `Command: Flee`, `Command: Grovel`, `Command: Halt`.
+`Command: Approach`, `Command: Flee`, `Command: Grovel`.
 Each carries the same range, target rule, save, and cost, and a distinct
 `option` the profile knows. The client draws them as it draws any castable
 row and echoes the chosen `declaration_id`. **No proto change. No new cast
@@ -289,7 +289,6 @@ session applies them the way it already applies a cast's:
 | Approach | `ImposedMove{Policy: Toward, AnchorID: caster, Budget: the turn, Provokes: true}` |
 | Flee | `ImposedMove{Policy: Away, AnchorID: caster, Budget: the turn, Provokes: true}` |
 | Grovel | `ImposedCondition{Prone}` on the owner |
-| Halt | nothing |
 
 Every word ends the turn after its effects; that is not a fourth effect,
 it is the intent's terminal nature (§5.4). "Budget: the turn" is the third
@@ -342,8 +341,9 @@ adjacent to the anchor, stopping there ("ending its turn if it moves within
 ruler distance to the anchor, and if that is the mover's own cell, the walk
 is empty with `StoppedBy "no path toward …"`. `Away` is reused unchanged.
 
-Halt and Grovel need no route: the compelled driver returns `Pass{}` for
-them after `Obey`'s effects are applied.
+Grovel needs no route: the compelled driver returns `Pass{}` after
+`Obey`'s effects are applied. Halt, when added, is the same `Pass{}` with
+no effects.
 
 **Why this intent is the foundation piece.** The brain cannot call `Route`
 (§1). A monster that decides to flee needs exactly `Routed{Away, threat}`,
@@ -382,11 +382,13 @@ Command: {
                 OnSuccess:  saves.Negated,
                 Recurrence: saves.RecurrenceNone,
             },
+            // Three words in the first slice (§7.4). Halt and Drop are
+            // rows here when their day comes; undead and language are
+            // divergences recorded in §7.1 and §7.2.
             Options: []actions.CastOption{
                 {ID: "approach", Label: "Approach"},
                 {ID: "flee", Label: "Flee"},
                 {ID: "grovel", Label: "Grovel"},
-                {ID: "halt", Label: "Halt"},
             },
             Effects: []actions.CastEffect{{
                 Recipient:  actions.CastRecipientTarget,
@@ -403,44 +405,53 @@ level-1 pick becomes 4 of `{Bane, Thunderwave, DissonantWhispers, Command}`
 (the count tracks the catalogue, rpg-toolkit#1661). The domain cleric grant
 at `subclass_modifications.go:257` now points at a spell that exists.
 
-## 7. Rulings for Kirk
+## 7. Rulings (Kirk, 2026-09-12)
 
-Three places the text and the engine part, each with the letter, the
-divergence, and a recommendation.
+Three places the text and the engine part. Each ruled the same morning.
 
 **7.1 Undead.** Letter: "the spell has no effect if the target is undead."
 Engine: no creature type exists on `monster.Data`, and every tomb monster
-is undead, so honoring the letter makes Command do nothing on the whole
-sandbox and cannot be walked. Recommendation: **diverge now.** Command
-works on anything with a Wisdom save. Leave a named shelf: a creature-type
-field on the monster definition and a `Save.Immune []CreatureType` gate,
-stocked when a second spell (Turn Undead, Hold Person's "humanoid") brings
-the use case. Record the divergence on the profile.
+is undead, so honoring the letter makes Command unwalkable. **Ruled:
+diverge.** Command works on anything with a Wisdom save. Kirk: *"agree,
+when we get the goblins in we can circle back."* Shelf: a creature-type
+field on the monster definition and an immunity gate on the save, stocked
+when goblins arrive and the tomb has something the clause can spare.
 
-**7.2 Language.** Letter: "if it doesn't understand your language." Engine:
-no language exists. Recommendation: **ignore, no shelf.** Nothing else in
-the catalogue reads a language; a shelf with no second customer is a
-non-goal, not a joint.
+**7.2 Language.** Letter: "if it doesn't understand your language."
+Engine: no language exists. **Ruled: defer, leave a note.** The note is
+this paragraph and the comment on the profile; no shelf is carved because
+nothing else reads a language.
 
 **7.3 Drop.** Letter: "the target drops whatever it is holding and then
-ends its turn." Engine: monsters hold nothing (`HasShieldEquipped` is a
-hard false; actions are definitions), and a character's `UnequipItem` moves
-an item to inventory, not the floor. On every sandbox creature the word
-would do nothing but end the turn, which Halt already does.
-Recommendation: **ship four words, shelve Drop.** Its whole value is a
-disarm, and a disarm needs an item on the floor and a creature that holds
-things, which is an equipment slice with its own use case. The `Options`
-list makes adding the fifth row content when that lands.
+ends its turn." Engine: monsters hold nothing, a character's `UnequipItem`
+moves an item to inventory not the floor; on every sandbox creature Drop
+would equal Halt. **Ruled: defer, leave a note.** Kirk's forward note, kept
+here because it moves an initiative: *"I have been thinking about posing
+the monsters with weapons so I can see if the skele has a bow or sword, so
+this pressure could move that initiative up. we will need drop separate
+from equip but I would want that when I could see it. suppose I also need
+props for the weapons that could be holdable and deliver the weapon to
+their hand."* So Drop waits on three things, in order: a monster that
+visibly HOLDS a weapon (the posing initiative), a holdable weapon prop
+delivered to the hand, and a drop primitive distinct from equip that puts
+the item on the floor. When the first lands, Drop is the use case that
+brings the third.
 
-Also confirmed rather than asked: the compelled turn is fully engine-driven
-for players and monsters alike (Kirk, 2026-09-12, reading the shape back
-and calling it "way better"). The human behind a commanded player is not
-asked where to flee; the engine picks the farthest cell by ruler, as it does
-for Whispers.
+**7.4 The first slice.** Kirk: *"I think flee, approach and setting them
+prone is a good first slice at it."* The profile ships **Approach, Flee,
+Grovel**. Halt is not in the slice; it is the one word with no effect and
+no route (a `Pass`), so it is a one-row addition to `Options` whenever
+wanted, and it is left out so the slice proves the three mechanisms the
+words exercise (Toward, Away, an imposed condition) and no filler.
+
+Confirmed rather than asked: the compelled turn is fully engine-driven for
+players and monsters alike (Kirk, reading the shape back: *"way better than
+what I was thinking"*). The human behind a commanded player is not asked
+where to flee; the engine picks the cell, as it does for Whispers.
 
 ## 8. Acceptance contract
 
-1. `Afford` for a bard who knows Command lists four declarations, one per
+1. `Afford` for a bard who knows Command lists three declarations, one per
    word, each castable, each with the spell's range and save.
 2. A cast with the Approach declaration on a ghoul that fails: the ghoul
    holds `Commanded{word: approach, caster: bard}`; the log shows the cast
@@ -455,18 +466,17 @@ for Whispers.
 6. Flee walks the farthest reachable cell by ruler from the caster within
    the turn's movement, then ends the turn. A pinned target ends its turn
    where it stands with the reason recorded.
-7. Halt: the turn ends with no movement and no attack.
-8. Grovel: the target is prone (source `Commanded`) and its turn ends.
-9. The condition is gone after the compelled turn's end, and the creature
+7. Grovel: the target is prone (source `Commanded`) and its turn ends.
+8. The condition is gone after the compelled turn's end, and the creature
    acts normally on its following turn.
-10. A commanded **player** is driven identically: their client gets no
+9. A commanded **player** is driven identically: their client gets no
     turn, their verbs would be refused, the beats read the same.
-11. A commanded creature that is downed before its turn auto-passes by
+10. A commanded creature that is downed before its turn auto-passes by
     life state and the condition expires unused.
-12. A second Command on a creature already commanded replaces the word.
-13. Every existing profile compiles exactly the declarations it compiled
+11. A second Command on a creature already commanded replaces the word.
+12. Every existing profile compiles exactly the declarations it compiled
     before; `Options` absent means one declaration.
-14. Thunderwave's and Whispers' directed walks are byte-for-byte the same
+13. Thunderwave's and Whispers' directed walks are byte-for-byte the same
     beats as before (`Routed` and `Toward` change nothing on the cast path).
 
 ## 9. Rejected alternatives
