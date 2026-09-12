@@ -234,6 +234,27 @@ question rather than three lines.** Three shapes, none picked here:
 | **a** | `rebuildPercepts` asks; `applyTrigger`/`noticeDown` reuses that reading | the thing `Standing`'s doc calls a cache, and refuses by name |
 | **b** | `noticeDown`'s reading is taken first and threaded **into** `rebuildPercepts` | inverts the current order inside `refreshSight`; a down beat's narration currently must come after the tick beat |
 | **c** | two consults per `refreshSight`, deliberate, as a Pump already has two | honest, but the capability may answer differently between them and the testimony is written from the earlier one |
+| **d** ← recommended | `refreshSightDeclaring` asks **once at its top** and threads the reading into `rebuildPercepts` (writes testimony) and down through `applyTrigger` → `noticeDown` (narrates) | **no new consult on an open encounter** — noticeDown asks one today, this asks one instead. One wrinkle below |
+
+**Why (d) is not the cache `Standing`'s doc refuses.** That doc refuses
+*carrying the answer forward* — remembering it past the work it was asked for.
+(d) never stores it: it is a parameter with the lifetime of one call, which is
+exactly what `reach` and `hands` already are. Nobody calls `sightNow()`'s result
+a cache.
+
+**Why it is safe.** Between the top of `refreshSightDeclaring` and the
+`applyTrigger` that reaches `noticeDown`, the only things that run are
+`rebuildPercepts`, `appendSightedBeats` and `sweepConcealment`. None of them can
+damage anyone, so participation cannot change across that span. The reading is
+the same reading either way; (d) only moves *when it is taken* earlier, and
+moves no beat.
+
+**The one wrinkle, named rather than buried.** `refreshSightDeclaring` returns
+early when `e.outcome != nil`, before `applyTrigger` — so a **closed** encounter
+consults participation zero times today. Asking at the top unconditionally makes
+that one. Harmless, but it is a real behaviour change on a path that currently
+has none, and any test counting capability calls should catch it. Asking lazily
+instead would avoid it at the cost of a conditional in the seam.
 
 The choice is Kirk's. Recorded rather than decided, because a fix is a
 hypothesis (`rulings-carry-their-scope`) and this one changes an ordering law.
