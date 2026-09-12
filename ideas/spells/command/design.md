@@ -545,3 +545,28 @@ where to flee; the engine picks the cell, as it does for Whispers.
 - The `Effects` parameter templating (a per-cast value reaching a
   condition's parameters) has no precedent; every shipped `Parameters` is a
   literal. §3's validation rule is the design's, not the code's.
+
+## 12. Corrections from the plan survey (2026-09-12)
+
+Recorded rather than rewritten, so the reasoning stays visible. The plan
+(`plan.md` §0) carries the same table with the code it is built on.
+
+- **§3** said a `Label` on the option and "no shape change on the offer".
+  The declaration selector is a hash of the whole marshaled definition and
+  the only string a client sees is the definition's name. So the chosen
+  word lives INSIDE the profile (`Option`) and content expands one menu into
+  one definition per word, named `"Command: Approach"`. The offer still
+  changes shape not at all.
+- **§4, §11** said the caster is "filled by resolution" with no precedent.
+  `CounterpartKey` is the precedent; the word gets a sibling `OptionKey`.
+- **§4** said a second Command replaces the first. No replacement existed
+  anywhere; Bane from two casters stacked two penalties. The rule is now
+  general in resolution: one instance of a ref per member, newer replaces
+  older. Command's use case brought it; Bane is its second customer.
+- **§5.1** named session's participation function wrongly; both the
+  encounter's validation switch and session's mapping gain `Driven`.
+- **§5.2** said the seam "becomes two layers holding a sheet map"; the seam
+  is built once with no session in hand. The compelled driver is built per
+  verb where the standing seam is, for the same lifetime reason.
+- **§5.4** said `Routed` is terminal; a paused turn resumes into another
+  `Act`. The paused turn now remembers `terminal` and ends without one.
