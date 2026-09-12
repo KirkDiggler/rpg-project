@@ -116,35 +116,62 @@ written before it had a name.
 
 | property | what's wrong | issues |
 |---|---|---|
-| **incomplete** | the row has no standing, no name, no kind | #1668 + two unfiled |
+| **incomplete** | the row has no standing | #1668 |
 | **not exclusive** | readers reach past the row | #1668, #940, `projection.go` |
 | **batched** | one write per walk, not one per observation | #1670 |
 | **only positive** | looking somewhere and seeing nothing is discarded | unfiled |
 
 ### 4.1 Incomplete
 
-`SightTestimony.Down` exists and is never written (§1). Worse, two siblings of
-standing were never even filed:
+`SightTestimony.Down` exists and is never written (§1).
 
 ```go
 projectSightings(in []intel.Holding, names map[string]string,
                  kinds map[string]MemberKind, down map[string]bool)
 ```
 
-Three global maps. `down[subject]` is #1668. `names[subject]` and
-`kinds[subject]` are the identical defect.
+Three global maps — but **only one of them is a defect.**
 
-Equipment already moved into the row for exactly this reason and name/kind did
-not, though they are the same kind of fact:
+**CORRECTION, and it is mine.** An earlier draft of this document claimed
+`names` and `kinds` were "two unfiled siblings of #1668, the identical defect."
+That is wrong. Both were **decided**, with reasoning, and carry doc comments on
+`Sighting` saying so:
 
-- **Name in the row is what makes disguise possible.** A doppelgänger's whole
-  point is that what you saw was a lie. Name from a global map forecloses it.
-- **Kind in the row is the fidelity case.** A shape at 100 feet in dim light —
-  do you know it is a hobgoblin *specifically*? Global says yes, from the first
-  glimpse.
+> *"Names are not a perception question: anything an observer can sight, they
+> can name."*
+>
+> *"kind is not a perception question either, anything an observer can sight,
+> they can classify at a glance. A memory (CurrentVia empty) keeps its kind
+> exactly as it keeps its name."*
 
-It is invisible today because a goblin is always named "Goblin", so the join is
-*correct*. The defect appears the moment something can lie.
+rpg-toolkit#1668's own body already draws the line: *"`Name` and `Kind` were
+decided… **`down` was never decided.** It was inherited from before testimony
+existed."* The distinction was recorded before this design started, and the
+draft asserted its absence without checking — the exact failure this document
+complains about in §1, committed while writing §1.
+
+**So `down` alone moves into the row.** `projectSightings` loses one parameter,
+not three.
+
+### 4.1.1 Where the existing ruling will come under pressure
+
+Not now, and not as a defect — recorded so the revisit is deliberate when it
+arrives.
+
+- **The ruling is scoped to SIGHT.** *"Anything an observer can sight, they can
+  name"* is true and holds for everything we have. It says nothing about a
+  channel that is not sight. At rung 5 you hear fighting through a door and can
+  neither name nor classify it — so the ruling does not extend to hearing, it
+  simply does not reach it. A hearing row carries whatever hearing conveys
+  (design §8), which is the ruling's scope working correctly rather than
+  failing.
+- **Disguise is the other pressure, and it is a door, not work.** A
+  doppelgänger is a case where what you saw was a lie about identity. There is
+  no such use case today, so the cost has not been paid and the absence is not
+  a gap. Worth knowing it is reachable without redesign: a disguised creature
+  can be given a different **subject** — `intel.Subject` is explicitly
+  *"caller-chosen identification within an observer's fidelity"* — before
+  anything needs a name column.
 
 ### 4.2 Not exclusive
 

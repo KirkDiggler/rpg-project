@@ -14,10 +14,9 @@ Confirmed before planning, because it decides the shape of the wave:
 
 - **`STANDING_UNSPECIFIED = 0` already exists** in the `Standing` proto enum, so
   "standing was not observed" has a wire value today.
-- **`name` and `kind` already exist** on `Sighting`.
-- **The encounter already knows both.** `session/read.go:370` builds them with
-  `rosterNames(roster)` / `rosterKinds(roster)` off `enc.Members()` — so moving
-  them into the row needs no new capability, just a different source.
+- **`name` and `kind` stay where they are.** They were ruled out of perception
+  deliberately (design §4.1) — an earlier draft of this plan wrongly called
+  them unfiled siblings of #1668. Only `down` moves.
 
 **Therefore: no `rpg-api-protos` PR, and no rpg-api *code* change.** The wire
 shape does not change; what fills it does.
@@ -68,18 +67,13 @@ not a refactor.
 **Module:** `rulebooks/dnd5e/encounter` · stacked on PR 1 · closes the encounter
 half of rpg-toolkit#1668
 
-1. `SightTestimony` gains `Down` **written for the first time** (the field
-   already exists), plus `Name *string` and `Kind *MemberKind`. All pointers:
-   "not observed" and "observed to be X" are different claims (the type's own
-   doc already argues this for `Down` and `Equipment`).
-2. `sightPayloadFields` gains `name` and `kind`. The allowlist is closed by
-   design — a key we do not understand must not land in something that then
-   reads as confident — so this is a deliberate, enumerated change.
-3. `EncodeSightTestimony` / `DecodeSightTestimony` carry both. **Unknown
-   testimony still carries nothing** (design §5.2, and the existing refusal
-   stands): no position, no standing, no name, no kind.
-4. Older testimony decodes with all three nil and says so honestly until the
-   next refresh — which is the very next beat.
+1. `SightTestimony.Down` is **written for the first time** — the field already
+   exists, and it is already a `*bool` because "not observed" and "observed to
+   be upright" are different claims.
+2. No new payload keys, so `sightPayloadFields` does not change. `Name` and
+   `Kind` stay out of the row by the existing ruling (design §4.1).
+3. Older testimony decodes with `Down` nil and says so honestly until the next
+   refresh — which is the very next beat.
 
 **Acceptance:** a testimony round-trip test per field, including the
 never-observed case. One test that a ghost's standing does **not** change when
@@ -91,7 +85,7 @@ the layer that owns it.
 ## PR 3 — session: read the holdings and nothing else
 
 **Module:** `rulebooks/dnd5e/session` · pins encounter's pseudo-version · closes
-rpg-toolkit#1668 and the two unfiled siblings
+rpg-toolkit#1668
 
 1. `session.Standing` gains a third value for "not observed", projected to
    `STANDING_UNSPECIFIED`. Today it has exactly two (`up` / `downed`), and a
@@ -100,9 +94,8 @@ rpg-toolkit#1668 and the two unfiled siblings
    position and equipment. Its own doc comment currently says *"STANDING IS
    STILL THE LIVE ANSWER, and that is a known defect rather than a design"* —
    that paragraph gets deleted, not amended.
-3. `projectSightings` loses **three parameters**. Name and kind come off the
-   testimony; standing comes off the testimony; the signature becomes
-   `projectSightings(in []intel.Holding) []Sighting`.
+3. `projectSightings` loses **one parameter** — `down`. `names` and `kinds`
+   stay: they were ruled out of perception deliberately (design §4.1).
 4. `read.go:370` and `write.go:910` stop computing `standingSet` **for
    sightings**. Check each other caller of `standingSet` on its own merits —
    a roster read is a legitimate engine read (design §6) and must not be
@@ -178,12 +171,9 @@ the pin bump in PR 4. Verify the no-code-change half; do not assume it.
 Per the repo convention (no branch without an issue), wave 1 needs:
 
 - **rpg-toolkit#1668** exists and covers standing. PRs 2 and 3 close it.
-- **One new issue** for the unfiled siblings: *name and kind are global-map
-  joins in `projectSightings`, exactly as standing is*. One issue rather than
-  two — they are the same defect in the same function, fixed by the same lines,
-  and splitting them would put two PRs in one module for no reviewing benefit.
-- PR 1 is a refactor enabling both; it can ride the same issue rather than
-  invent a third.
+- **No second issue.** An earlier draft asked for one covering name and kind;
+  that was based on a mistake (design §4.1). #1668 alone covers wave 1.
+- PR 1 is a refactor enabling it and rides #1668.
 - PR 4 is a pin bump and follows whatever rpg-api's convention is for those —
   it does not need an issue of its own if pin bumps ride the consumer wave.
 
