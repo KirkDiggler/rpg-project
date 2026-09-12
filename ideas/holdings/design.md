@@ -199,6 +199,50 @@ arrives.
   *"caller-chosen identification within an observer's fidelity"* — before
   anything needs a name column.
 
+### 4.1.3 The real blocker, which is not the one the comment names
+
+**CORRECTION, also mine.** §1 of this document says `encounter.go:1984`'s C8
+claim is stale and that `standingNow()` is "three lines beside" `sightNow()`
+and `equipmentNow()`. That checked one half of a two-part claim.
+
+| the comment's claim | status |
+|---|---|
+| *"this choke point has no pass-scoped reading to draw on"* | **stale** — the `sightNow`/`equipmentNow` pattern exists |
+| *C8 forbids a second participation ask* | **standing** |
+
+`participationNow()` is **not memoized**: every call runs
+`e.participation.Assess(roster)`. And carrying the answer forward is explicitly
+refused, at `encounter.go:1565`:
+
+> *"This is the SECOND consult in a Pump — refreshSight runs another at the
+> end, through noticeDown… Deliberate, both ways round: the answer is not
+> carried forward because carrying it is a cache ([Standing])."*
+
+So adding `standingNow()` to `rebuildPercepts` puts **two participation
+consults inside one `refreshSight`** — one at the start writing testimony, one
+at the end through `noticeDown` narrating the down beat. Two answers that may
+differ, inside one refresh: a member's testimony would record a standing the
+same refresh's own beat contradicts. That is precisely the incoherence
+`equipmentNow`'s doc exists to prevent — *"one pass writes one consistent
+reading of the world into every observer's testimony."*
+
+**#1668 has a real blocker. It is just a different one, and it is a design
+question rather than three lines.** Three shapes, none picked here:
+
+| | shape | cost |
+|---|---|---|
+| **a** | `rebuildPercepts` asks; `applyTrigger`/`noticeDown` reuses that reading | the thing `Standing`'s doc calls a cache, and refuses by name |
+| **b** | `noticeDown`'s reading is taken first and threaded **into** `rebuildPercepts` | inverts the current order inside `refreshSight`; a down beat's narration currently must come after the tick beat |
+| **c** | two consults per `refreshSight`, deliberate, as a Pump already has two | honest, but the capability may answer differently between them and the testimony is written from the earlier one |
+
+The choice is Kirk's. Recorded rather than decided, because a fix is a
+hypothesis (`rulings-carry-their-scope`) and this one changes an ordering law.
+
+**Process note.** This correction was written roughly fifteen minutes after
+filing rpg-project#442, by the session that filed it, in the document #442
+cites. The move was identical to the one #442 describes: a record was found
+stale in one respect and read as carrying no constraint at all.
+
 ### 4.2 Not exclusive
 
 `session/read.go` computes `standingSet(...)` over the whole roster and stamps

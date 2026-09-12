@@ -47,9 +47,12 @@ The reviewable half. A pure refactor, which is exactly why it is its own PR.
    immediately after the capability asks, replacing the parallel `reach` /
    `hands` maps at the point of use. `reach` is an **observer** property and
    stays keyed separately — it is not a column of `Actual`.
-2. Add `standingNow()` to the pass, **beside** `sightNow()` and
-   `equipmentNow()`, asked once before the loop. This is the established C8
-   pattern, not an exception to it.
+2. **BLOCKED pending a ruling — see design §4.1.3.** `standingNow()` cannot
+   simply join `sightNow()`/`equipmentNow()`: `participationNow()` is not
+   memoized, and a second consult inside one `refreshSight` means testimony
+   written from one reading and the down beat narrated from another. Three
+   shapes are recorded in §4.1.3; the choice changes an ordering law and is
+   Kirk's.
 3. Introduce `Standing` as a named encounter type (`Up` / `Downed`) rather than
    a bare `bool`, so the third state has somewhere to live in PR 2.
 4. **Delete the stale comment at `encounter.go:1984`** and replace it with what
@@ -59,6 +62,11 @@ The reviewable half. A pure refactor, which is exactly why it is its own PR.
 **Acceptance:** every existing test green, untouched. No new beat, no wire
 change, no testimony change. If a test had to move, something in this PR was
 not a refactor.
+
+**PR 1 can still land without the ruling** — folding `reach`/`hands` into
+`Actual`, naming the `Standing` type, and correcting `encounter.go:1984` to say
+what is actually true are all independent of how participation gets read. The
+ruling gates step 2 and therefore PR 2, not this one.
 
 **Cost check:** one `Actual` per member per pass. Record the number in
 `voidcost_internal_test.go` now, before rung 4 multiplies it by cells.
