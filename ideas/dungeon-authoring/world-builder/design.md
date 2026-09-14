@@ -1,7 +1,9 @@
 # World Builder dungeon authoring
 
-**Status:** draft for Kirk's review, 2026-09-14. Direction agreed in conversation;
-contract recommendations below are proposals, not new project policy or laws.
+**Status:** architecture approved by Kirk in conversation, 2026-09-14:
+"the design matches exactly what we talked about." This is a scoped design,
+not new project policy or laws. Detailed provider contracts and execution plans
+remain separately reviewable.
 **Journey:** [Composable Dungeon Builder #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 **Related:** [terrain #428](https://github.com/KirkDiggler/rpg-project/issues/428)
 and its [design PR #429](https://github.com/KirkDiggler/rpg-project/pull/429).
@@ -143,7 +145,7 @@ and engine-derived obstruction. A drag may preview the rectangle locally; an
 engine-derived preview is explicitly pending/stale until the matching revision
 returns. Mesh bounds are never labelled as authoritative occupancy.
 
-## 4. Document and export contract — proposed for review
+## 4. Document and export direction
 
 The new dungeon format needs to retain three kinds of authored information:
 
@@ -159,8 +161,8 @@ document. The world library seeds a definition rather than remaining its only
 copy. Reopening an export therefore does not depend on an ephemeral Redis
 composition ID or the browser's local draft. External licensed model assets
 remain references; they are not embedded in YAML or committed to public Git.
-This portability choice is a recommendation in this draft, not something Kirk
-already specified.
+This portability choice began as an assistant recommendation and was accepted
+with the architecture review; it was not inferred from the original request.
 
 Importing an existing composition copies its authored snapshot, preserves its
 provenance reference, and allocates dungeon-local identity. There is no live
@@ -338,12 +340,22 @@ separates two sizeable questions before code is assigned:
 2. The **cover contract and consumers**: explicit prop capability through the
    source/target geometry and D&D rule application. Prove it through Proof B.
 
-Kirk reviews this direction, especially the proposed document-local definitions
-and the two-proof decomposition, before those contracts and their plans are
-written. Follow current owning-repository release rules when implementation is
-authorized; do not copy the historical PR sequence from older dungeon designs.
-No code, publication, merge, deployment, shared-stack change, or content
-migration is authorized by this draft.
+Kirk approved this direction, including document-local definitions and the
+two-proof decomposition, and chose `dungeon-authoring` as its home. The original
+July YAML design remains at the parent directory; this wave does not overwrite
+that history.
+
+The first provider is described in [Placed footprint geometry](geometry.md),
+with its executable [geometry plan](geometry-plan.md). That plan covers one
+spatial module PR, not all of Proof A or the cover implementation. The next
+consumer contract is dungeon-authored definitions and placements into encounter;
+it must use the released provider and demonstrate the authoring/preview/game
+flow, rather than minting another geometry implementation.
+
+Follow current owning-repository release rules when implementation is authorized;
+do not copy the historical PR sequence from older dungeon designs. Approval of
+the architecture does not authorize a merge, deployment, shared-stack change,
+or content migration.
 
 ### Corrections left visible
 
