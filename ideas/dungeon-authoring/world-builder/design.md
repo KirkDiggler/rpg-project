@@ -38,6 +38,19 @@ The examples about illusions were illustrations, not requests for illusion
 rules. Automatic height-derived cover, crouching, a take-cover action, physics,
 and scale controls were assistant extrapolations, not agreed requirements.
 
+### Next verification checkpoint (scope clarified 2026-09-14)
+
+Kirk approved [one-room authoring first](ui-first-look.md): painted walkable
+space and prop movement/LOS declarations, with one implicit region. Walls are
+the next authoring interaction. Secret rooms, region-management UI, and in-game
+pickup/drop do not gate this first look.
+
+The first hands-on check is the editor interaction in a dedicated web-branch
+environment, before backend integration or a broad review cycle. It is labelled
+an authoring draft, not an engine-validated playable dungeon. The parked
+encounter contract will follow this actual consumer's data rather than narrow
+World Builder to an invented ref-only format.
+
 ## 2. What exists, and what does not
 
 Source inspection used these snapshots; no new gameplay or test result is
@@ -373,9 +386,12 @@ and its [plan](sight-lanes-plan.md) extract that existing evaluator so footprint
 consumers can supply obstruction facts without copying the LOS algorithm.
 This keeps the promised use of spatial rather than inventing encounter geometry.
 
-The next consumer contract is dungeon-authored definitions and placements into
-encounter. It must use the released providers and demonstrate the
-authoring/preview/game flow, rather than minting another geometry implementation.
+Shared sight lanes shipped as `tools/spatial/v0.15.0` through toolkit PR #1752.
+The consumer proposal in toolkit #1753 is parked without code while the
+[one-room UI checkpoint](ui-first-look.md) establishes the actual authoring
+payload and interaction. After that look, the encounter/YAML contract uses the
+released providers and the complete visual data; it does not mint another
+geometry implementation or discard composition pieces/lights.
 
 Follow current owning-repository release rules when implementation is authorized;
 do not copy the historical PR sequence from older dungeon designs. Approval of
