@@ -199,6 +199,15 @@ responsible for updating the props it can move.
 
 ## 5. Engine ownership and data flow
 
+**RPC direction agreed with Kirk, 2026-09-14:** reuse the existing
+`AuthoringService.PutDungeon` for validation (`validate_only`) and save, and
+`GetDungeon` for reopen. Keep `ListDungeons` and `StartEncounter` for the
+choose/play flow. Evolve the YAML and returned atlas messages rather than
+creating a new service or a per-gesture movement/footprint RPC. Gizmo previews
+remain local; committed edits use the existing debounced validation path and
+its stale-preview handling. A separate geometry-preview RPC needs measured
+consumer evidence, not speculation.
+
 ```text
 World Builder document + user edits
   -> YAML / authoring request
