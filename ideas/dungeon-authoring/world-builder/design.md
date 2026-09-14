@@ -99,6 +99,14 @@ encounter occupants can obstruct it. Erasing floor does not silently delete its
 props, start marker, or monsters; the draft remains editable and validation
 identifies the now-invalid gameplay placements.
 
+**Standing policy refinement, Kirk 2026-09-14:** keep the test adjustable rather
+than bake in a fixed covered percentage. Start with a blocking footprint covering
+the hex centre; retain percentage coverage as an alternative with an explicit
+threshold. Configure the policy separately from individual assets. Crossing a
+footprint's interior remains a distinct movement test; this is not the authored
+D&D half-cover property. These are initial choices to tune through play, not
+permanent rules for every future shape or creature.
+
 The dungeon workspace uses its authored extent instead of the composition
 editor's small fixed circle and +/-12 coordinate limit. Retain explicit input
 and complexity limits; do not remove validation to make the canvas larger.
@@ -355,11 +363,19 @@ July YAML design remains at the parent directory; this wave does not overwrite
 that history.
 
 The first provider is described in [Placed footprint geometry](geometry.md),
-with its executable [geometry plan](geometry-plan.md). That plan covers one
-spatial module PR, not all of Proof A or the cover implementation. The next
-consumer contract is dungeon-authored definitions and placements into encounter;
-it must use the released provider and demonstrate the authoring/preview/game
-flow, rather than minting another geometry implementation.
+with its executable [geometry plan](geometry-plan.md); it shipped as
+`tools/spatial/v0.14.0` through toolkit PR #1749. That provider is not all of
+Proof A or the cover implementation.
+
+The encounter seam check exposed one prerequisite: BasicRoom's sight-lane walk
+is bound to private cell-occupancy reads. [Shared sight lanes](sight-lanes.md)
+and its [plan](sight-lanes-plan.md) extract that existing evaluator so footprint
+consumers can supply obstruction facts without copying the LOS algorithm.
+This keeps the promised use of spatial rather than inventing encounter geometry.
+
+The next consumer contract is dungeon-authored definitions and placements into
+encounter. It must use the released providers and demonstrate the
+authoring/preview/game flow, rather than minting another geometry implementation.
 
 Follow current owning-repository release rules when implementation is authorized;
 do not copy the historical PR sequence from older dungeon designs. Approval of
