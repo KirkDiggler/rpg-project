@@ -82,3 +82,35 @@ the human interaction check, not before it. No automatic merge or cleanup.
 The backend consumer #1753 is parked until this real consumer contract is
 available. Geometry v0.14.0 and shared sight v0.15.0 remain useful released work;
 this changes the next proof, not their implementation.
+
+## Approved follow-up: explicit workspace growth
+
+Kirk accepted the painting interaction and chose an explicit **Expand workspace**
+button as the next step, before walls. First preserve the current working UI as
+a local normal-hook checkpoint, then implement the bounded growth interaction.
+
+- Expansion changes editor capacity only: drawn hex grid, ground interaction
+  surface, room-mode horizontal position validation, and necessary camera travel
+  limits grow together. Hex size/units, existing transforms, painted cells,
+  identities and camera pose do not change.
+- No region is created, selected, or required by this action. Region-first
+  coupling is not a new authoring invariant. Any old implicit-region marker is
+  compatibility data, not the source of the painted floor.
+- Persist workspace extent explicitly in the local draft. Read existing drafts
+  safely; if wider bounds change the format contract, use an honest versioned
+  migration rather than let an old reader silently clip it. Do not reset or
+  overwrite an older good draft on failure.
+- The original prop composer retains its existing bounds, library and behavior.
+  Room editing must not globally enlarge WORLD_LIMIT or accidentally narrow
+  another caller. Check creation, transform commit, duplicate/stamp and reload
+  paths, not only the drawn grid.
+- Technical allocation/rendering/input budgets remain explicit and bounded.
+  Reaching a limit is visible; no silent truncation or unbounded grid generation.
+  This is not an infinite-world/virtualization framework or a new game rule.
+- Prove one expansion beyond radius 6, painting outside the old workspace,
+  placement/transform beyond the old X/Z bound, saved-draft reload and unchanged
+  pre-existing content. Use focused checks and one short real-browser proof on
+  :3030, then return to Kirk. No full CI/review/push cycle before that look.
+
+Walls, backend integration, region management, and the minor freehand brush hint
+remain outside this follow-up.
