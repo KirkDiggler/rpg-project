@@ -132,16 +132,20 @@ func (c *Character) Advance(input *AdvanceInput) (*AdvanceOutput, error)
 ### 4.1 What it does, in order
 
 1. Validate the input (§4.2). Reject before mutating anything.
-2. `newLevel = len(c.levels) + 1`.
-3. `grants := classes.GetGrantsGainedAtLevel(input.ClassID, newLevel)`.
-4. Validate that `choices.GetClassRequirementsAtLevel` for `newLevel` is satisfied by
+2. `characterLevel = len(c.levels) + 1` — the total, and what §5 derives from.
+3. `classLevel` = the number of existing entries whose `ClassID` equals
+   `input.ClassID`, plus one. **Grants are indexed by class level, never by character
+   level** (§4.4).
+4. `grants := classes.GetGrantsGainedAtLevel(input.ClassID, classLevel)`.
+5. Validate that `choices.GetClassRequirementsAtLevel` for `classLevel` is satisfied by
    `input.Choices`, ignoring requirements already satisfied at a previous level.
-5. Build features and conditions from the grants' refs via the existing
+6. Build features and conditions from the grants' refs via the existing
    `features.CreateFromRef` / `conditions.CreateFromRef` factories, and attach them.
-6. Recompute every level-derived number: proficiency bonus (§5), resource maxima via the
-   existing `initializeClassResources` math, max hit points.
-7. Append the entry, mark the sheet dirty.
-8. Return what was gained.
+7. Recompute every level-derived number: proficiency bonus from `characterLevel` (§5),
+   resource maxima from `classLevel` via the existing `initializeClassResources` math,
+   max hit points.
+8. Append the entry, mark the sheet dirty.
+9. Return what was gained.
 
 ### 4.2 Rules
 
@@ -162,6 +166,26 @@ func (c *Character) Advance(input *AdvanceInput) (*AdvanceOutput, error)
 - No `SetLevel`. Level moves only by appending a record entry.
 - No `AddFeature` as public surface. Features arrive through a grant, never loose.
 - No un-advance, no respec, no level-down.
+
+### 4.4 Class level and character level are different numbers
+
+Kirk, 2026-09-15: *"I think it will even work with multiclassing when we get there."* It
+does, and this rule is what makes that true rather than accidentally true.
+
+Today R2.4 forces every entry to the same class, so the count of entries in that class
+and the total count are the same number, and either would compute correctly. Writing the
+distinction down now costs one variable; discovering it later means auditing every
+level-derived number in the engine.
+
+- **R4.6** Grants and class resources MUST be indexed by **class level** — the number of
+  entries in that class. A fighter's Action Surge arrives at his second *fighter* level,
+  not his second level.
+- **R4.7** Proficiency bonus MUST be derived from **character level** — the total number
+  of entries, regardless of class. This is the 5e rule and the reason the two numbers
+  cannot be collapsed into one.
+
+Nothing here builds multiclassing. It only refuses to write down a falsehood that
+multiclassing would later have to unpick.
 
 ## 5. Proficiency bonus
 
@@ -247,6 +271,9 @@ Sense as feature builds.
    `Levels == nil, Level != 1` character fails to load (R2.7).
 3. `GetGrantsGainedAtLevel(Fighter, 2)` returns exactly the Action Surge grant, and
    `GetGrantsForLevel(Fighter, 2)` still returns the cumulative set.
+3a. Grants and resources are computed from class level and the proficiency bonus from
+   character level (R4.6, R4.7), with a test that would fail if the two were swapped —
+   they are equal today, so the test must assert the derivation, not the value.
 4. A level-1 fighter that calls `Advance` reaches level 2, holds Action Surge as a usable
    feature with its resource, and has a two-entry record.
 5. `Advance` refuses inside an encounter (R4.1) and leaves the character untouched on any
@@ -256,7 +283,7 @@ Sense as feature builds.
 
 ## 10. Out of scope, with the seam named
 
-Multiclassing (R2.4 names the seam; a level taken in another class is another entry) ·
+Multiclassing (R2.4 and R4.6/R4.7 name the seam; a level taken in another class is another entry) ·
 XP and its persistence (journey #242; the field exists on the wire and is never written) ·
 ability score improvements and feats at level 4 (the record gives them a home) · spell
 slot progression for casters (`classes.Data` pins slots, cantrips and spells known as
