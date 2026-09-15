@@ -1,5 +1,15 @@
 # Handoff: room-authoring checkpoint → style-driven walls
 
+## Latest planning checkpoint
+
+Kirk chose individual straight runs, whole-piece snapping, and ordinary editable
+pieces/groups; keep the tool simple so later discoveries can change its shape.
+Dark Fantasy is his next imported style. **Use the existing Crypt wall for the
+first proof rather than waiting for that import.** The proposed technical slice
+is [Repeat placement](repeat-placement.md), awaiting Kirk's review before an
+implementation plan/code. Discovery also verified a double-scaled bounds-report
+bug that must not become the repeat-spacing input. No implementation is running.
+
 ## Start here after compaction
 
 Kirk requested a compact before the next chapter. **Do not start wall work as
