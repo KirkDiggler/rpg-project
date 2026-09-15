@@ -36,6 +36,12 @@ at design head `7121be8e0e54053685723004d026fa1d4b2602d0` (Project PR451).
   boundary. No full unrelated Assets development suite. Human owns merges.
 - Paths below are relative to the named owning repo. Plan/design live in Project.
 
+## Delivery status
+
+Tasks1–4 are implemented in Assets PR219 and Web PR1087. See [execution.md](execution.md)
+for exact heads, checks, the real synthetic launcher/browser proof, review state
+and installation order. No real pack was repaired or released as acceptance.
+
 ## Scope and next boundary
 
 This plan covers design slices1–2: resolver/profile, prepared options, viewer and
