@@ -8,6 +8,7 @@ and `living-world`, not a code package.
 | design | what it owns |
 |---|---|
 | [terrain](terrain/design.md) | what stands on the map and what that does to a cell: footprints, coverage, the cell-fact fold, the distance field. The primitive the group is named around. |
+| [directed-movement](directed-movement/design.md) | an effect moves a creature: a directive (away / toward / line, budget, pays, provokes) resolution describes and encounter routes and walks. First proof Thunderwave, then Dissonant Whispers. |
 | [coordinate-types](coordinate-types/design.md) | room-local vs dungeon-absolute positions, and the one bridge between them |
 | [dungeon-walls](dungeon-walls/design.md) | straight modular walls at the room envelope |
 | [multi-room-dungeons](multi-room-dungeons/design.md) | rooms with absolute positioning, connected |
