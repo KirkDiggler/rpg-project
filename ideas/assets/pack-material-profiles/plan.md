@@ -184,7 +184,7 @@ No `readyEligible`, provider refs or runtime-promotion fields exist in this sche
 and `resolve_material_overrides`. **Produces:** the Python interfaces above and
 strict, deterministic profile/catalogue documents.
 
-- [ ] Write profile tests using literal small documents. First failing case:
+- [x] Write profile tests using literal small documents. First failing case:
 
 ```python
 def test_unknown_family_is_not_silently_ignored(self):
@@ -201,26 +201,31 @@ def test_unknown_family_is_not_silently_ignored(self):
   `(b.fbx, MeshB, 0)` only; trim must not be reassigned. All files are temporary
   synthetic data. Add null/missing selection, wrong pack/version, extra keys,
   unknown option, cross-family option and source/texture drift cases.
-- [ ] Run `PYTHONPATH=scripts python3 -m unittest test_synty_material_profile -v`;
+- [x] Run `PYTHONPATH=scripts python3 -m unittest test_synty_material_profile -v`;
   observe the missing contract/behavior, not a broken fixture import.
-- [ ] Implement the records/parser and resolver. Assemble existing bindings with
+- [x] Implement the records/parser and resolver. Assemble existing bindings with
   pack-relative checked files and hashes; do not construct Blender shaders here.
   Compare profile/catalogue pack identities before resolving any selection.
-- [ ] Add discovery fixtures with a vendor declaration, minimal configured FBX
+- [x] Add discovery fixtures with a vendor declaration, minimal configured FBX
   placeholders for pure discovery, and named image files: Stone_Texture_01,
   Stone_Normals_01, atlas01 A/B/C and atlas04 C. Add conflicting normal candidates,
   a similarly named but unrelated image, a missing map, a material alias and an
   FX/custom case. Shuffled directory order must give identical catalogue bytes.
-- [ ] Run discovery tests red, then implement evidence-ranked candidates:
+- [x] Run discovery tests red, then implement evidence-ranked candidates:
   existing reviewed bindings first; exact declared family/number texture pairs
   second. Filename token normalization is for suggestions only. Never merge
   conflicting material identities or suffix aliases merely by normalized name.
   Keep numbered atlas layouts separate. Unknown compatibility/shader behavior
   stays unresolved; surface substitution options require supported family facts,
   not an asset filename substring. Report why every candidate was suggested.
-- [ ] Verify all fixture cases and commit with normal hooks:
+- [x] Verify all fixture cases and commit with normal hooks:
   `git add scripts/synty_material_profile.py scripts/synty_material_discovery.py scripts/test_synty_material_profile.py scripts/test_synty_material_discovery.py`;
   `git commit -m "feat: resolve editable pack material profiles"`.
+
+Task1 checkpoint: Assets draft [PR219](https://github.com/KirkDiggler/rpg-game-assets/pull/219),
+commit `f34df20`. 46 focused profile/discovery/binding/preflight tests pass. Synthetic
+files only; no Blender conversion or viewer work claimed. Keep the Assets PR draft
+for the remaining work rather than merging this as a usable operator.
 
 ## Task 2: Slot-preserving proposal conversion and staged preview producer
 
