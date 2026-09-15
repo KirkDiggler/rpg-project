@@ -1,15 +1,19 @@
 # Repeat placement — first wall slice
 
-**Status:** Kirk approved this design ("it matches"). Implementation planning
-subsequently exposed the provider-enrollment assumption below; that decision is
-pending. No implementation has started.
+**Status:** approved, including Kirk's subsequent barricade-first decision:
+"the barricade is a possible makeshift wall as well. we can do that".
+**Active slice is web-only:** use the already-cataloged
+`dnd5e:props:dark-fortress:barricade_02`. No provider enrollment/promotion or wall
+import work is part of this slice. The enrollment discussion below is history.
 
 ## Intent and limits
 
 Choose a wall asset, drag a straight line, and get aligned copies without placing
-each one by hand. The first proof uses the existing Crypt wall. **Dark Fantasy is
-the next style case, not a prerequisite.** Making its import a blocker was an
-incorrect dependency introduced during discovery; Kirk corrected it.
+each one by hand. The first proof uses the existing cataloged barricade.
+**Dark Fantasy is the next style case, not a prerequisite.** Making its import a
+blocker was an incorrect dependency introduced during discovery; Kirk corrected
+it. He subsequently chose the barricade to avoid a provider detour; his wall
+imports remain his separate work.
 
 This is a placement convenience in the existing room-authoring editor, not a new
 wall subsystem. No live regeneration, patterns, randomness, automatic enclosure,
@@ -55,7 +59,7 @@ ownership; do not copy the old brush's pre-fix pointer behavior.
   before allocating a preview. Reject an invalid result as a whole rather than
   silently placing part of the requested run.
 
-### Existing asset enrollment, not a URL shortcut
+### Historical enrollment investigation — NOT implementation scope
 
 `Crypt_Wall_Body_01.glb` is already available in the retained editor's licensed
 asset tree and returns HTTP 200 at :3030. However, it is not yet a World Builder
@@ -80,8 +84,8 @@ Do not fake a Dark Fortress source identity or hand-edit generated metadata.
 The unresolved choice is proper provider support for the existing authored wall
 before the first UI proof, versus using an already-cataloged barricade for the
 initial generic repeat-tool proof and addressing wall enrollment separately.
-Neither change to the approved preparation has been selected. This is not a
-reason to wait for the Dark Fantasy import or to modify Kirk's ongoing imports.
+**Resolved by Kirk:** use the already-cataloged barricade; no enrollment work.
+Do not wait for the Dark Fantasy import or modify Kirk's ongoing imports.
 
 ### Correct reported dimensions before consuming them
 
@@ -113,9 +117,9 @@ alignment, not an unrelated asset-system redesign.
 - First hands-on checkpoint: the existing wall repeated in :3030, movable as a
   group, undoable once, and restored unchanged after reload. Destructive storage
   probes use isolated contexts, never Kirk's saved draft.
-- Prepare the asset through its owning Team; implement the UI in one fresh issue
-  worktree from current `origin/dev` (discovery head `e83dd2db`, including #1071
-  touch-pan). Do not add code to the completed #1068 branch.
+- Implement web#1080 in one fresh issue worktree from current `origin/dev`
+  (base `e83dd2db`, including #1071 touch-pan). Use existing catalog/runtime bytes;
+  no provider work or generated-catalog edits. Do not add code to completed #1068.
 - Keep :3030 and its storage origin; plan source repointing without erasing the
   environment's data. API/toolkit consumer #1753 stays parked.
 - One complete web `ci-check` at the PR boundary and one scoped GLM review. Bring

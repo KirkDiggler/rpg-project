@@ -6,13 +6,15 @@ Kirk chose individual straight runs, whole-piece snapping, and ordinary editable
 pieces/groups; keep the tool simple so later discoveries can change its shape.
 Dark Fantasy is his next imported style. **Use the existing Crypt wall for the
 first proof rather than waiting for that import.** The proposed technical slice
-is [Repeat placement](repeat-placement.md), now approved by Kirk. Planning found
-that ordinary generic-world-asset promotion only registers Dark Fortress sources;
-existing authored Crypt shell enrollment is not a ready-made recipe row. Read the
-visible planning correction before proceeding; do not fabricate source custody.
-The first-proof asset/enrollment decision is pending. Discovery also verified a
-double-scaled bounds-report bug that must not become repeat spacing. No
-implementation is running.
+is [Repeat placement](repeat-placement.md), approved by Kirk, with the subsequent
+**barricade-first** decision: the already-cataloged barricade is a useful makeshift
+wall; Kirk owns the wall imports. No provider work is part of this slice. The
+[implementation plan](repeat-placement-plan.md) implements web#1080 in
+`rpg-dnd5e-web/.worktrees/1080-repeat-placement`, branch
+`concept/1080-repeat-placement`, base `e83dd2db`. One fresh UI builder through the
+hands-on checkpoint, then one scoped GLM review after the PR gate. Discovery's
+double-scaled bounds-report bug is included; rendered model scale stays unchanged.
+No merge/cleanup authority. See the new task ledger rather than reusing #1068's.
 
 ## Start here after compaction
 
