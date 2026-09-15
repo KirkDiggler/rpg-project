@@ -1,6 +1,8 @@
 # Editable pack material profiles
 
-Status: proposed design following Kirk's agreed operator workflow.
+Status: approved by Kirk in chat at design head `7121be8e0e54053685723004d026fa1d4b2602d0`.
+The first profile-and-preview slice is planned in [plan.md](plan.md); trusted cache
+activation remains the subsequent delivery boundary described below.
 
 Tracking: [project #450](https://github.com/KirkDiggler/rpg-project/issues/450),
 [Assets #217](https://github.com/KirkDiggler/rpg-game-assets/issues/217).
