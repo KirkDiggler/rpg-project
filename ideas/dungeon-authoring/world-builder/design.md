@@ -1,5 +1,7 @@
 # World Builder dungeon authoring
 
+Current checkpoint and next chapter: [handoff](handoff.md).
+
 **Status:** architecture approved by Kirk in conversation, 2026-09-14:
 "the design matches exactly what we talked about." This is a scoped design,
 not new project policy or laws. Detailed provider contracts and execution plans
