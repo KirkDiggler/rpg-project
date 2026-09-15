@@ -38,14 +38,15 @@ Driving acceptance case: **in The Three Minds, place two goblin archers — one 
 4. **Definitions become weapon refs too.** The goblin constructor says shortbow and scimitar rather than typing +4 and 1d6+2. This is how the goblin scimitar's reach-1 defect (`goblin.go`, "its unit defect is separate") goes away: it stops being authored.
 5. **Fail closed at author time, not turn time.** A weapon ref the catalog does not know refuses the file in `PutDungeon`'s field errors and refuses boot for a shipped file, the same as a bad monster ref today. Spawn refuses an unknown ref; a turn never meets one.
 6. **Nothing is spent to switch, and no hand is tracked.** Rules-as-written would charge an object interaction to stow and draw; nothing is asking for that, and RAW is not the authority here. If a weapon-swap cost ever earns its way in, it arrives with a use case, not with this slice.
-7. **Minds are untouched.** A coward with a bow keeps its room and shoots. A berserker with only a crossbow still closes, because a mind says what it cares about, not what it is armed with (the MindCoward doc already says this). The two knobs — mind on the definition, weapons on the placement — are the story an author tells together.
+7. **Proficient by default; the author may say otherwise (Kirk, 2026-09-16).** Proficiency is the creature's, not the weapon's, so the assembly asks the wielder whether it is proficient with the weapon handed to it — the same question it already asks a character. A monster answers YES for every weapon unless told otherwise. That reproduces every SRD line and makes a picked-up weapon right with no extra field. The switch is a reserved seat on the placement, whole-monster and not per weapon (`proficient: false`, meaning the proficiency bonus is left off every weapon this placement lists; damage keeps its ability bonus, which never came from proficiency): the shape is fixed here so the field can be added without a design, and it is NOT built by this slice. A per-weapon flag was considered and rejected as impractical to author. A definition-owned training set (categories and specific weapons, like a character's sheet) was considered and set aside: it answers a question nobody has asked yet, and the default-plus-switch covers the case that was.
+8. **Minds are untouched.** A coward with a bow keeps its room and shoots. A berserker with only a crossbow still closes, because a mind says what it cares about, not what it is armed with (the MindCoward doc already says this). The two knobs — mind on the definition, weapons on the placement — are the story an author tells together.
 
 ## Components
 
 ### rpg-toolkit — rulebooks/dnd5e (root)
 
 - The weapon-to-attack assembly moves to where a monster can reach it. Today it is `character.assembleWeaponAttack`, over a `*Character`. The slice extracts the wielder-facing part behind a small interface (ability modifier, proficiency bonus, proficiency-with-weapon) so `character` and `monster` both call one assembly; the character path's behaviour is pinned by its existing tests and must not change.
-- `monster.Monster` gains `AddWeapon(weapons.WeaponID) error` (name to taste at build time; the door assembles and appends). Monster proficiency with weapons: SRD monsters are proficient with the weapons on their stat block; the slice treats a monster as proficient with every weapon it is handed, and records that as the rule.
+- `monster.Monster` gains `AddWeapon(weapons.WeaponID) error` (name to taste at build time; the door assembles and appends). The monster answers the assembly's proficiency question YES for every weapon (decision 7); the seam is the interface, so the reserved `proficient: false` switch lands as one field carried to that answer, not as a second assembly.
 - `monsters/*.go`: skeleton, goblin, thug re-authored as weapon refs; a bandit definition added (CR 1/8, SRD scores, scimitar + light crossbow) as the proof that a new archer costs a stat block and two words.
 - The `monster_actions` ref namespace loses its weapon members (`skeleton-shortsword`, `skeleton-shortbow`, `goblin-scimitar`, `thug-mace`) — an action's ref is now the weapon's ref, as it is for a character. Non-weapon actions keep the namespace. Check every reader of those refs (encounter `field.go` mentions one in a comment; tests pin several).
 
@@ -84,6 +85,7 @@ In The Three Minds: two goblins at the entrance, both cowards. Walk a player up 
 
 - Hands, stow/draw cost, two-handed grip, off-hand: none of it. The action carries the weapon ref so any of these can read it later.
 - The retaliator excusing a monster: it reads a character's hands today and keeps doing so. Symmetry arrives when a scenario asks for it.
+- `proficient: false` on the placement: the seat is reserved in decision 7 and the shape fixed; it is built when an author reaches for it.
 - Loadout presets by word (`archer`, `blade`): a new word per tune is the cost #1745 just paid; a placement lists weapons instead. If the palette wants presets, they are palette-side templates over this list.
 - Non-weapon authored actions (claw, bite, multiattack) keep their per-monster refs; nothing here changes them.
 
