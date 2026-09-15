@@ -1,8 +1,8 @@
 # Repeat placement — first wall slice
 
-**Status:** proposed technical design for Kirk's review. Kirk approved individual
-runs, whole-piece snapping, and ordinary editable pieces/groups rather than a
-persistent run object. No implementation has started.
+**Status:** Kirk approved this design ("it matches"). Implementation planning
+subsequently exposed the provider-enrollment assumption below; that decision is
+pending. No implementation has started.
 
 ## Intent and limits
 
@@ -68,6 +68,20 @@ no new pack import, generated-file hand edit, arbitrary-URL scene entry, or
 Crypt-specific renderer branch. Preserve the existing game shell artifacts.
 If enrollment exposes a missing provider capability, report it before expanding
 scope or bypassing the provider's checks.
+
+**Planning correction, left visible:** checking current provider main
+`4c069294895518a2571bada1797aab244935f5b0` showed that the generic world-asset
+promotion path registers only `polygon-dark-fortress`. Its source contract names
+a reviewed pack/version/FBX-source path/hash; it does not directly enroll an
+already-promoted authored shell artifact. The Crypt GLB really is present and
+served, but the claim that its catalog enrollment was routine was premature.
+Do not fake a Dark Fortress source identity or hand-edit generated metadata.
+
+The unresolved choice is proper provider support for the existing authored wall
+before the first UI proof, versus using an already-cataloged barricade for the
+initial generic repeat-tool proof and addressing wall enrollment separately.
+Neither change to the approved preparation has been selected. This is not a
+reason to wait for the Dark Fantasy import or to modify Kirk's ongoing imports.
 
 ### Correct reported dimensions before consuming them
 

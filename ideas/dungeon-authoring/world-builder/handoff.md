@@ -6,9 +6,13 @@ Kirk chose individual straight runs, whole-piece snapping, and ordinary editable
 pieces/groups; keep the tool simple so later discoveries can change its shape.
 Dark Fantasy is his next imported style. **Use the existing Crypt wall for the
 first proof rather than waiting for that import.** The proposed technical slice
-is [Repeat placement](repeat-placement.md), awaiting Kirk's review before an
-implementation plan/code. Discovery also verified a double-scaled bounds-report
-bug that must not become the repeat-spacing input. No implementation is running.
+is [Repeat placement](repeat-placement.md), now approved by Kirk. Planning found
+that ordinary generic-world-asset promotion only registers Dark Fortress sources;
+existing authored Crypt shell enrollment is not a ready-made recipe row. Read the
+visible planning correction before proceeding; do not fabricate source custody.
+The first-proof asset/enrollment decision is pending. Discovery also verified a
+double-scaled bounds-report bug that must not become repeat spacing. No
+implementation is running.
 
 ## Start here after compaction
 
