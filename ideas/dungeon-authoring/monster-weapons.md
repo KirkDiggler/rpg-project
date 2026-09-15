@@ -1,6 +1,6 @@
 # Monster weapons — an author names what a placed monster can do
 
-## Status: Design — resolved in session with Kirk 2026-09-15; this PR is the review surface. Sibling of [design.md](design.md) (the authoring file) and of rpg-project#191 (targeting keys); hangs off the Composable Dungeon Builder journey, rpg-project#169.
+## Status: Design — resolved in session with Kirk 2026-09-15; this PR is the review surface. Sibling of [design.md](design.md) (the authoring file) and of rpg-project#191 (targeting keys); hangs off the Composable Dungeon Builder journey, rpg-project#169. Tracking issue: rpg-project#448.
 
 North star (Kirk): **we are making a game based on the rules, not bound by them. The DM who authored the dungeon decides what each monster can do — some archers carry a short sword as backup, others do not — and the builder is the tool that lets them create rich experiences.**
 
