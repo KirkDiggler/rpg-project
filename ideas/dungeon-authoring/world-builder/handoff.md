@@ -2,19 +2,30 @@
 
 ## Latest planning checkpoint
 
-Kirk chose individual straight runs, whole-piece snapping, and ordinary editable
-pieces/groups; keep the tool simple so later discoveries can change its shape.
-Dark Fantasy is his next imported style. **Use the existing Crypt wall for the
-first proof rather than waiting for that import.** The proposed technical slice
-is [Repeat placement](repeat-placement.md), approved by Kirk, with the subsequent
-**barricade-first** decision: the already-cataloged barricade is a useful makeshift
-wall; Kirk owns the wall imports. No provider work is part of this slice. The
-[implementation plan](repeat-placement-plan.md) implements web#1080 in
-`rpg-dnd5e-web/.worktrees/1080-repeat-placement`, branch
-`concept/1080-repeat-placement`, base `e83dd2db`. One fresh UI builder through the
-hands-on checkpoint, then one scoped GLM review after the PR gate. Discovery's
-double-scaled bounds-report bug is included; rendered model scale stays unchanged.
-No merge/cleanup authority. See the new task ledger rather than reusing #1068's.
+**Repeat placement delivered:** [web#1083](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083)
+merged into dev as `950cdb295b9c886fb7f39e3c49bc30617eb4f6c1`; web#1080 is closed /
+Done. Kirk accepted the look/group movement, then updated the base and enabled
+auto-merge. Hosted checks passed at integrated `38e4bac9`; parent verified all
+repeat-feature files unchanged from independently closed `e72f13fd`. Six Minor
+findings were fixed; the cleanup-removal finding was rebutted and the reviewer
+conceded. [Closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083#pullrequestreview-5208124536).
+The first proof used an already-cataloged barricade, not a new provider enrollment.
+The bounds-report double scaling was fixed without changing rendered asset scale.
+
+**Current bounded slice:** [web#1088](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1088),
+whole-workspace basic floor underlay in room-authoring only. Kirk approved existing
+basic floor underneath later tiles/broken pieces, covering the whole workspace
+for now. This is visual only, independent of walkability, with no layer-manager
+or new persistence. Existing profile/texture is available; no ingestion dependency.
+
+Fresh source: `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
+`concept/1088-floor-underlay`, base `d45d1a69` (also includes Kirk's landed
+`45 Wall 01` catalog entry from #1085). One fresh UI worker through a hands-on
+checkpoint; no full gate/publication/review until the first look. Local recovery
+map: `/tmp/dungeon-authoring-floor/execution.json`. Current live :3030 still serves
+retained #1080 until the parent's Vite-only source handoff. API/Redis and drafts
+must survive. No merge or cleanup is authorized for the new slice; backend#1753
+and all provider/import work remain outside it.
 
 ## Start here after compaction
 
@@ -62,8 +73,10 @@ worktree, environment, or data cleanup was requested.
 - **API:** http://localhost:8110
 - Named stack: `local/dungeon-authoring`; manifest:
   `game-dev/envs/local/dungeon-authoring.env`.
-- Web source is the retained `rpg-dnd5e-web/.worktrees/1068-room-authoring`, branch
-  `concept/1068-room-authoring`, clean at reviewed head `645bde32`.
+- Web source currently is retained `rpg-dnd5e-web/.worktrees/1080-repeat-placement`,
+  branch `concept/1080-repeat-placement`, local reviewed head `e72f13fd`. The runtime
+  manifest/state is authority for the subsequent #1088 first-look source handoff.
+  Older #1068 worktree is also preserved.
 - API is an isolated **dev baseline**, not the parked toolkit consumer branch.
 - Use **localhost**, not another hostname/port, for Kirk's browser-local drafts.
 - Shared dev is **:3001/:8080**, not our feature environment. Do not disturb it
