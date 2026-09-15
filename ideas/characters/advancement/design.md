@@ -1,7 +1,7 @@
 # Character advancement — design
 
 **Date:** 2026-09-15
-**Status:** Design, PROPOSED. One ruling open (§7.1).
+**Status:** Design, RATIFIED. Both rulings taken (§7).
 **Brainstorm:** `ideas/characters/advancement/brainstorm.md`
 **Initiative:** rpg-project#231 · **Journeys:** rpg-project#242, #241
 **Scope:** `rpg-toolkit` only. No proto, rpg-api or web change in rung 1.
@@ -187,9 +187,9 @@ Not in this design at all, because they are absent code rather than absent data:
 Cunning Action and Barbarian's Danger Sense. Each is an ordinary feature build, and
 Cunning Action composes only things that already exist.
 
-## 7. Open ruling
+## 7. Rulings
 
-### 7.1 Inputs, not effects — CONFIRM
+### 7.1 Inputs, not effects — RULED 2026-09-15
 
 Kirk, 2026-09-15: *"I would definitely want a record of each level and what changed."*
 
@@ -202,15 +202,26 @@ happened, with no way to reconcile it against the sheet. Inputs replay; effects 
 replayed backward into inputs. The stored hit-point result is the one exception, stored
 because a roll cannot be re-derived — the same call already made for authored wall runs.
 
-**Confirm or overturn before implementation.**
+Kirk, 2026-09-15, confirming: *"Def inputs."* **Ruled. This is the shape.**
 
-### 7.2 Not adopted: `CHOICE_SOURCE_LEVEL_UP`
+### 7.2 Not adopted: `CHOICE_SOURCE_LEVEL_UP` — RULED 2026-09-15
 
 The wire already declares `CHOICE_SOURCE_LEVEL_UP = 6` beside `RACE`, `CLASS`,
 `BACKGROUND` and `PLAYER`. Those are **provenance**; a level is **when**. A choice made at
 level 2 that comes from your class can only be tagged one of the two, and either tag
 loses the other fact. The record entry carries the when and `ChoiceSource` keeps carrying
 the where-from. No toolkit `SourceLevelUp` is added.
+
+Kirk, 2026-09-15: *"there is probably a lot of older style in here — that level up proto
+seems like it was left over from the data driven choices stage."* The history agrees. The
+value entered in `map to the toolkit's new structure` (rpg-api-protos#74, 2025-09-13), the
+same commit that created `choices.proto`, and in the year since **no code in rpg-api or
+rpg-dnd5e-web has ever referenced it**. It is vocabulary from a superseded era, not a
+decision this design is overturning.
+
+**R7.1** `CHOICE_SOURCE_LEVEL_UP` SHOULD be marked `[deprecated = true]` so the next
+consumer does not adopt it — additive, never an in-place change. That is a protos change
+with its own PR and is **not** part of rung 1; it is recorded here so the reason survives.
 
 ## 8. Rungs
 
