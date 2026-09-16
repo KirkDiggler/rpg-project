@@ -4,9 +4,14 @@
 
 Time/token budget is critical. The parent supplies tight briefs, coordinates
 seams, and verifies worker evidence rather than running elaborate ceremony.
-Default implementation worker: `ollama/glm-5.3-flash:cloud`, in fresh context for
-new slices, through the existing worker/subagent protocol. Do not change global
-agent/provider configuration. Escalate concrete blockers, not speculative risks.
+Default implementation worker: the full-capability `worker` role with explicit
+`openai-codex/gpt-5.6-luna`, using tight briefs and fresh context for new slices.
+GLM 5.3 Flash is available for review/alternate work; Kirk also has GLM 5.3,
+Ornith and DeepSeek through Ollama, but their exact IDs must be verified in the
+session registry before dispatch (currently only GLM 5.2/5.3 Flash appear there).
+Reserve Sol/Astra usage for concrete hard decisions/escalations; keep parent
+supervision concise. Do not change global agent/provider configuration or stall
+available Luna work while configuring optional models.
 
 Deliver useful end-to-end slices and a working URL early. Kirk manually verifies
 the important visible behavior. Keep focused tests for the changed behavior and
