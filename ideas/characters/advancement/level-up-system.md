@@ -597,6 +597,17 @@ Each entry names the fact that forced it, so the change is a consequence and not
   authored.** A content gap the rule makes visible, beside the subclass gate (#1767) that
   also holds level 3. The SDK spells the refusal "level-1 spells" rather than copying
   the rulebook's ordinal form, on purpose: one spelling of a content fact, in one place.
+- **The final matrix, on the SDK path (rpg-api 7a286dd5 → session 90f848ef → dnd5e
+  21d8ee9b, 2026-09-16):** nine classes take level 2 exactly as in the first matrix —
+  barbarian, bard (only Healing Word offered), cleric, fighter (Action Surge), monk (Ki
+  0→2), paladin (slots 0→2), rogue, sorcerer, warlock — and three are refused at the
+  **read**, before any screen: druid and wizard ("requires choosing a subclass, which this
+  seam cannot offer yet", #1767) and ranger ("asks for 2 level-1 spells and this build
+  offers 0", content). The screen reads "Unable to load the next level" with the engine's
+  sentence. **Only two of twelve classes ask anything at level 2** — bard and sorcerer —
+  so the confirmation is what three quarters of the roster exercises, and it was worth
+  making a screen. The rpg-api character orchestrator carries nothing about level-up;
+  every rule and every refusal in the table is the toolkit's, reached through the SDK.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
