@@ -73,11 +73,27 @@ An Intimidate row in the ActionDock with a target pick; the roll surfaces where 
 3. The fighter tells the thug the same thing. The thug's next turn is a charge at the fighter, whoever else is closer.
 4. Optional, on the raider camp: the sergeant placement carries `on: { intimidated: { fact: sergeant-cowed } }` and the camp's disposition `until: { fact: sergeant-cowed }`; cowing the sergeant in front of the camp turns it.
 
+## What this makes possible — the outcome Kirk named (2026-09-16)
+
+> "Intimidate one goblin and it runs away from us into another room, possibly to get its friends, and once around its friends it can lose the intimidation and come back for us with reinforcements."
+
+That is three slices, and slice one is shaped so the next two are additions, not rewrites.
+
+| Slice | The claim the ladder gains | What exists | What is new |
+|---|---|---|---|
+| 1. **Cowed** (this doc) | Away from the one who scared me, as far as I can see it | rung 0 Away; `AwayPath` is the encounter's `routeAway`, one cell, corner-aware | `Fear{Patience}` on the preset; `Keep` answers per creature |
+| 2. **Regroup** | Toward my friends while I am afraid, and courage in their company | `Remembered`/`Seen` on the view already carry allies; Toward exists for enemies | Toward an *ally* (a new use of rung 2); `Fear.Company`: fear lapses early when this many live allies are in sight. Zero value = never lapses early |
+| 3. **Alarm** | Tell my friends where the party was | `deed.Deed` carries `Where`; a perception `Report` moves the channel without sustaining it — "a rumour is not a sighting" is the package's own law | The runner lands a rumour of the party's last-known position on allied witnesses; they rank a rumoured target and go Toward it. This pays "word spreads" for the mind's half; the world's half (the faction mind learning a fact) stays its own |
+
+Two things slice one must not foreclose, and does not: `Fear` is a struct, not a number, so `Company` is a field added later; and fear is keyed by the deed's actor, so "afraid of X" and "toward Y" can hold at once.
+
+One thing to watch on the walk: whether `routeAway` crosses a doorway into the next room, or only backs into the same room's far corner. If it stops at the door, "into another room" is a `routeAway` finding, not a mind finding, and it goes to the encounter (rpg-toolkit#1758 is the sibling: a fleeing coward orbits its pursuer).
+
 ## Unpaid, on purpose
 - **Failure is free.** A missed roll lands no deed. Whether a failed threat provokes a berserker is an open item, not a hidden default.
 - **No monster Insight roll.** The DC is passive Insight; the live contest waits for a monster checker (rpg-project#351's shelf).
 - **No `Frightened`.** The condition ref stays unwired; the mind is the outcome.
-- **No word spreads.** A witness learns; nobody tells anyone. The runner is a separate primitive.
+- **No word spreads.** A witness learns; nobody tells anyone. Regroup and Alarm above are slices two and three, not this PR.
 - **No per-character stance.** `on: intimidated` flips a faction pair, the only edge the stance table has. Disguise needs a per-character edge and brings it itself.
 
 ## Open items (for Kirk on the PR)

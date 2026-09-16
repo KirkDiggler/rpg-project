@@ -32,7 +32,8 @@ Each verb is a mind capability, added on its own use case, never a general "soci
 | Persuade | CHA (Persuasion) | "this one is not my enemy" | needs a *stand-down* the ladder does not have (Pass while the party is in reach) | not designed |
 | Deceive / disguise | CHA (Deception) vs monster insight | "this one is the lieutenant" | the camp's stance toward *that character*; §13 of the living-world brainstorm: a disguise opens verbs | not designed; needs a per-character stance, today stance is a faction pair |
 | Take command | Deception, then orders | "the lieutenant said hold" | a mind that takes an *order* as an intent | not designed; the far end of the ladder |
-| The runner | none — the monster's own | "there is a fight at the gate" | an ally who did not see it | "word spreads" on the living-world shelf: a hearsay testimony source |
+| Regroup | none — the monster's own | "I am safer with my friends" | the frightened coward runs *toward* remembered allies, and fear lapses in their company | slice two, named in [intimidate.md](intimidate.md) §"What this makes possible" |
+| Alarm | none — the monster's own | "there is a fight at the gate, they were HERE" | allies who never saw the party: a **rumour** — perception already distinguishes a Report from a sighting ("a rumour is not a sighting", `mind/perception`) | slice three; this pays "word spreads" |
 
 ## Laws this folder keeps
 
