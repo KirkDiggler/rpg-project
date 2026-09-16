@@ -156,9 +156,11 @@ derived client-side from `path`.
 
 ### Editor geometry
 
-Existing prepared preview GLBs already preserve slots and remain usable as
-editor geometry. Sources the sampler did not cover (e.g. the curved wall) get
-one neutral, slot-preserving editor GLB on explicit request (launcher/prepare
+Do not reuse the old baked/neutral review GLBs as editor geometry: their shared
+neutral material merges equal-looking slots into one exported target, so they do
+not preserve editable slot identity (corrected by slice 2's export/reload proof).
+Sources the sampler did not cover (e.g. the curved wall) get one neutral,
+slot-preserving editor GLB on explicit request (launcher/prepare
 `--editor-source`, repeatable; deterministic sampler never silently omits a
 named source). **Source-slot identity is never inferred from GLB indexing**:
 exporters may reorder, share or merge materials/primitives, and the existing
