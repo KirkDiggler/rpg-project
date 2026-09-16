@@ -543,6 +543,25 @@ Each entry names the fact that forced it, so the change is a consequence and not
   the API — the tendency Kirk named — and rung 1's deferred "between runs" refusal can
   only be held by the layer that knows the roster, which is the SDK. A session-module
   toolkit PR carries the verb; #995 becomes handler → SDK → projection.
+- **The SDK verbs landed outside-in** (rpg-toolkit#1787, `feat/level-up-session`): the
+  rpg-api handler was written first against the types the wire needs, and that consumer
+  list — class as a canonical ref plus a display name, choices carrying id, label, kind,
+  count, spell level and ref options, resource changes keyed by the toolkit's own key —
+  became the SDK's exported types. Sentinels: `ErrCannotAdvance` (unearned or refused
+  level → FailedPrecondition), `ErrLevelNotOffered` (a row this seam cannot offer →
+  FailedPrecondition), `ErrBadLevelRequest` (→ InvalidArgument). rpg-api's error table
+  moved to one shared package with two callers rather than being copied. One mutant
+  survived as *equivalent*: swapping character level for class level cannot be told apart
+  while load refuses a record with an entry in another class — the multiclass seam again.
+- **Walk finding 4 (from #1787's projection, logged, not fixed this wave):** the spell
+  constant `spells.Thornwhip` is spelled `"thornwhip"` and the ref catalog spells it
+  `"thorn-whip"`, so a druid's level-4 and level-10 cantrip rows carry an option with no
+  ref. The SDK refuses the read rather than offering ten of eleven, which is the rule; the
+  cure is one spelling in `rulebooks/dnd5e`, next dnd5e wave. Druid is not on the roster.
+- **A fact for #1767, from the same projection:** across all twelve classes and levels 2
+  through 20 only three requirement kinds exist above level 1 — subclass, cantrips,
+  spellbook. Subclass is the only kind this seam refuses, and it blocks level 3 for six
+  classes and wizard's level 2. That is the whole size of the next gate.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
