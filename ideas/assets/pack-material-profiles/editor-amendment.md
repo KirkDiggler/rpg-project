@@ -1,7 +1,9 @@
 # Direct material editing and ingestion handoff
 
-Status: direction approved by Kirk in conversation; this written amendment awaits
-his review before implementation. Supplements [design.md](design.md) and supersedes
+Status: approved by Kirk at amendment commit `9901ec0`; implementation authorized.
+Execution: GLM Flash implementation without elevated thinking, followed by bounded
+Luna xhigh review; parent retains decisions, acceptance and publication authority.
+Supplements [design.md](design.md) and supersedes
 its restricted prepared-option menu and proposed unresolved-only editing rule.
 
 ## Correction and goal
@@ -115,5 +117,6 @@ can continue while this capability is implemented.
 - A small approved subset travels through generated authority, verified cache
   preparation/activation and the normal review/provider-export boundary, with
   unresolved neighbours retained and published bytes unchanged.
-- Keep this work inline and pragmatic. No autonomous agent campaign and no
-  per-asset repair PRs. A working editor alone is not completion of this delivery.
+- Keep this work pragmatic: one implementer at a time and bounded independent
+  review, not an autonomous agent campaign or per-asset repair PRs. A working
+  editor alone is not completion of this delivery.

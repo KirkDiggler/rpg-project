@@ -7,7 +7,7 @@ activation remains the subsequent delivery boundary described below.
 **Next-delivery correction:** Kirk has approved the direction of a free material
 editor, not an inferred-option picker. Read [editor-amendment.md](editor-amendment.md)
 first for independent color/normal/emissive settings, direct preview and the full
-normal-ingestion handoff. That written amendment awaits his review. The restricted
+normal-ingestion handoff. Kirk approved the written amendment at `9901ec0`. The restricted
 menu, compatibility-gated image choices and preview-only delivery below are
 retained as the earlier design history, not requirements for the new editor.
 
