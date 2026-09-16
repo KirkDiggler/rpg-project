@@ -439,6 +439,29 @@ Each entry names the fact that forced it, so the change is a consequence and not
     whole list over — but that is the behaviour if it ever is.
   Built as `(*Character).NextLevelRequirements()`; every refusal a level can make now
   happens before the hit die is rolled, not merely before the sheet changes.
+- **Walk finding 2 (2026-09-16, from the per-class fixture set on rpg-api#995): a ranger
+  cannot be created at all**, by any client, with any choices. `character/draft.go`
+  `getClassSubmissions` builds the fighting-style submission with the fighter's choice id
+  for every class (its own comment: "Would need mapping for other classes"); a ranger's
+  requirement is `ranger-fighting-style`, the validator never sees it answered, and
+  finalize refuses forever. Ranger is the only class hit because it is the only
+  non-fighter with a level-1 fighting style. Nobody had created a ranger before a fixture
+  tried every class. Fixed on #1781: the submission carries the requirement's own id, no
+  constant, no per-class map.
+- **Walk finding 3 (same source), logged, not fixed this wave: expertise options are
+  invented in the API.** `ExpertiseRequirement` names no options, so rpg-api fills the
+  wire with all eighteen skills and the engine refuses the illegal ones at finalize
+  ("expertise skill animal-handling must be from a proficient skill"). A client can only
+  compute the legal set by intersecting with the skills it just chose, which is a rule in
+  the wrong place. The seam is the character-aware view (R4.4e): when a level asks for
+  expertise (bard 3, rogue 6), its options are the character's proficient skills. Not
+  reachable this wave.
+- **The per-class shape at level 2, read from the real service** (rpg-api#995's
+  fixtures): bard, sorcerer and wizard ask one spell; fighter gains Action Surge; the
+  other seven are confirmations with nothing but a hit die. Warlock asks nothing because
+  its known-spells column is deferred with Pact Magic (2014 says 2 → 3); wizard and druid
+  are then refused at confirm by the subclass wall (#1767). R4.14 carries most of the
+  roster, which is why the confirmation is a screen and not a button.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
