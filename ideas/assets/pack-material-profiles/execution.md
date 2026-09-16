@@ -1,5 +1,50 @@
 # Profile-and-preview delivery checkpoint
 
+## Source-first correction — 2026-09-16
+
+The original preview PRs219/1087 were merged and installed. Real pack use then
+exposed what the synthetic fixture did not: a vendor prefab declaration is not
+guaranteed to describe the raw FBX one-to-one. Missing declarations, mesh-data
+aliases and a five-used-slot source with four declared slots invalidated the
+assumption. Isolated fixes passing did not establish full workflow readiness;
+PR223 was explicitly returned to draft after the full real-pack run failed.
+
+Kirk approved the shared correction: audit original FBXs before assigning
+proposals; preserve strict correspondence; show unresolved sources as exceptions
+without blocking valid representatives; generate exception-only inspection blends.
+Tool/import failures and corrupt evidence remain fatal. Blender supports human
+judgment, not automatic shader-graph import or implicit approval.
+
+Implemented in Assets [223](https://github.com/KirkDiggler/rpg-game-assets/pull/223)
+at `6e792c5` and paired Web [1092](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1092)
+at `d672a598`. Both are unmerged/uninstalled at this checkpoint; human review and
+merge remain pending. No trusted-cache activation or asset publication is included.
+
+Evidence from the full real pack, not a substituted synthetic run:
+
+- 825 original sources audited before binding:811 reconciled layouts,14 explicit
+ exceptions. Counts do not establish material/shader approval.
+- Actual launcher completed all56 families and served48 prepared views from43 jobs.
+ Browser rendered planks, atlas01_A and floor atlas04_C; verified all43 HTTP GLB
+ hashes; showed source exceptions and blocked-family state; exported/imported
+ profile choices without browser errors.
+- Second normal launcher invocation consumed the browser-exported JSON: audit
+ reuse,48 views,11 new context-dependent jobs. Second browser/hash/profile pass.
+- Generated gate inspection blend reopened with original objects, material names,
+ slots, face assignments and UVs identical to the audited source.
+- 99 focused Assets checks;12 focused Web checks; complete local Web ci-check exit0.
+ Synthetic tests protect editable blend files, cache receipts, source changes,
+ fatal execution failures and valid alternate representatives.
+- User profile and registered workspace config byte-identical; trusted cache and
+ published outputs untouched. All proof servers stopped. Licensed proof outputs
+ remain private; none committed to the public Web repository.
+
+Merge the paired consumer and producer before installing the updated capability.
+The new launcher refuses older Web checkouts before preparation. Kirk is holding
+his normal command until explicit installation confirmation.
+
+## Historical initial preview checkpoint
+
 The approved first slice (plan Tasks1–4) is implemented. This is not trusted
 profile activation or asset publication; design slice3 remains separate.
 
