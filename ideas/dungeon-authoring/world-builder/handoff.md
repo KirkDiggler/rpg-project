@@ -2,6 +2,22 @@
 
 ## Resume here
 
+**Current next slice: monsters + one playable authored room.** Kirk deferred doors
+while making assets, accepted existing monster weapon/mind defaults, and explicitly
+approved hex-snapped monster/party-start markers with freeform scenery.
+[single-room-play.md](single-room-play.md) is the concrete contract **draft for
+his review**, not implementation authorization. Parent corrected the returned
+scratch drafts against actual source types and verified the YAML graph/cell
+example and asymmetric coordinate/yaw conversion. No implementation has started.
+
+Height shipped in [web#1105](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1105)
+via Kirk's auto-merge at `258b180501812d4d0e5c01d50d4a00654dae8563`;
+issue1103 is Closed / Project19 Done. Reviewed height head `3438f64b` had no
+Critical/Important findings; owner base update `c3d307b4` and merge retained all
+height feature files. Optional notes are in #1106. Kirk's verdict: “works great”.
+Height uses numeric percent + Apply, single Undo, group-aware selection and
+complete persistence; Shift-click remains sufficient (Ctrl-click was dropped).
+
 **Workspace delivery landed.** With Kirk's explicit approval,
 [web PR#1099](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1099) merged into dev
 at `de29612c12fbd703169cb958e45231a0e47c5558` (2026-09-16 09:24:05Z).
@@ -17,15 +33,18 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
 - Publication worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-publication`
 - Branch: `feat/1097-world-builder-workspace`
 - Published/reviewed head: `2f5692ecc06b3bcb6db3f1fdcc95bf239795cc0c`
-- Live preview worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-workspace`,
-  detached at `d04fd63ea459e5fe46c26b670bf5a93e383be3f8`, still serving3030 unchanged.
-  **The merged Back fix is not yet in that live preview.**
-- Actual next-session record: `/tmp/dungeon-authoring-workspace/execution.json`.
+- Last configured preview: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1103-piece-height`,
+  detached at `3438f64bfda06a27ec2ce1ca03ea2e51d7f64a47`; includes Back protection
+  and height. Feature branch lives in `.worktrees/1103-height-publication`.
+- Temporary `/tmp/dungeon-authoring-*` recovery notes/evidence **expired between
+  sessions**. Don't assume old paths exist or infer game data loss from their
+  absence. Canonical Git docs, GitHub reviews and home-directory subagent
+  artifacts remain the durable records. Current temporary design record is
+  `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** clarify wall-height tallness versus elevation, then a
-bounded design/issue/working slice. Don't redo workspace delivery. Any live source
-handoff still requires a save/export checkpoint for unsaved world edits. The
-completed merge authorization covered only1099; no cleanup or later merge implied.
+**Immediate next step:** Kirk reviews the single-room contract, then scoped
+implementation planning/provider issues. Do not redo shipped UI or revive the
+lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction
 
@@ -75,10 +94,13 @@ possible navigation/unload path. Do not claim comprehensive navigation safety.
 - Named stack `local/dungeon-authoring`; root manifest
   `/home/kirk/game-dev/envs/local/dungeon-authoring.env`.
 - Runtime authority: `/home/kirk/game-dev/.runtime/local/dungeon-authoring/state.env`.
-  Current WEB_SOURCE is the1097 worktree; VITE_PGID `1185139` at last verification.
+  Last manifest read: WEB_SOURCE is `1103-piece-height`, VITE_PGID `2193450`.
+  Verify actual process identity/liveness before any operation; these are not
+  promises that a process survives a session restart.
 - API/Redis containers were not restarted during handoff; IDs/start times/restart
-  counts matched. Parent used a Vite-only switch with rollback records under
-  `/tmp/dungeon-authoring-workspace/vite-handoff-1097/`.
+  counts matched during the height Vite-only handoff. Its former temporary
+  rollback/proof files were under `/tmp/dungeon-authoring-height/`; see the
+  expiration warning above.
 - **Before another live reload/source switch, have Kirk save/export unsaved
   world-origin edits.** Browser-local bytes don't protect unsaved in-memory edits
   to an opened world snapshot.
@@ -118,17 +140,17 @@ Don't claim Publish/Play, movement/LOS enforcement or gameplay lighting is wired
 
 ## Next product sequence
 
-1. Full-space World Builder shipped (#1097 / #1099).
-2. Wall-height control: Kirk asked for adjustable wall height. Confirm tallness
-   with grounded base versus elevation before implementation; that question was
-   asked but not explicitly answered. Preserve snapshots when extending visuals.
-3. Real monster/door placement and faithful Publish → Play. This tool takes the
-   dungeon-authoring role while keeping prop assembly as a capability. Reference
-   current authored monster/weapon/mind definitions; don't duplicate engine rules
-   or present decorative meshes as real gameplay entities. Check current contracts
-   with a narrow Luna scout before briefing implementation.
-4. Concealment and intel deferred. Intel may be a small follow-up if supported;
-   it isn't a gate for the first useful tool.
+1. Workspace and grounded visual height shipped (#1099, #1105).
+2. **Now:** approve the single-room contract, then real monster placement using
+   existing defaults, party start and faithful Publish → Play. Whole scene remains
+   document-local; the approved architecture already rejects ephemeral-only
+   composition IDs as the sole room copy. Monster AI Mind is not faction knowledge
+   Mind. Runtime actors remain cell-native; do not invent continuous spawns.
+3. Doors deferred while Kirk makes/bakes assets. Preserve prior findings for
+   later: encounter supports one door over multiple edges, old DoorSpec only one
+   crossing, and encounter.CloseDoor lacks the current SDK/API exposure.
+4. Concealment/intel, multi-room traversal and #1094/#1100/#1106 polish remain off
+   the critical path. No placeholder asset or provider work.
 
 World first, optional named areas later. No forced region-first placement, fake
 per-hex entities, shadow anchors or lossy visual-ref-only export. Keep complete
