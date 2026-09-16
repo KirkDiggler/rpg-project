@@ -1,213 +1,166 @@
-# Handoff: room-authoring checkpoint → style-driven walls
+# World Builder — current handoff
 
-## Delivery mode for this push — Kirk's current direction
+## Resume here
 
-Time/token budget is critical. The parent supplies tight briefs, coordinates
-seams, and verifies worker evidence rather than running elaborate ceremony.
-Default implementation worker: the full-capability `worker` role with explicit
-`openai-codex/gpt-5.6-luna`, using tight briefs and fresh context for new slices.
-GLM 5.3 Flash is available for review/alternate work; Kirk also has GLM 5.3,
-Ornith and DeepSeek through Ollama, but their exact IDs must be verified in the
-session registry before dispatch (currently only GLM 5.2/5.3 Flash appear there).
-Reserve Sol/Astra usage for concrete hard decisions/escalations; keep parent
-supervision concise. Do not change global agent/provider configuration or stall
-available Luna work while configuring optional models.
+Kirk requested compaction after the full-space workspace first look. **No active
+subagent fleet. No new implementation batch should be launched merely to compact.**
 
-Deliver useful end-to-end slices and a working URL early. Kirk manually verifies
-the important visible behavior. Keep focused tests for the changed behavior and
-non-visible/data-loss risks, normal hooks and required CI. Batch the required
-independent review at a useful PR checkpoint; no duplicate per-task/spec/quality
-review seats or automatic minor-fix cycles. Defer nonblocking polish and exhaustive
-coverage explicitly rather than holding the working tool for them. Ordinary
-implementation details do not need another approval round; scope/data-risk/merge
-and real blockers still belong with Kirk.
+Current task: [web#1097](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1097),
+UI/UX / The Dungeon / Build / In Progress. Normal Home → World Builder now opens
+Rooms, with Prop compositions as a secondary workflow using the same editor.
 
-Next delivery priority is a faithful build → save → reopen → play loop, not more
-editor polish unless a walk establishes a real need. Backend design still must
-preserve complete authored meaning; the rejected lossy proposal is not revived.
+- Worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-workspace`
+- Branch: `feat/1097-world-builder-workspace`
+- Base: `e7bdc05865410a59b4a4ff7d77bf2159f303b09e`
+- Current clean local head: `d04fd63ea459e5fe46c26b670bf5a93e383be3f8`
+- Two local commits; **not pushed, no PR, no full PR-boundary ci-check yet**.
+- First look is live on **http://localhost:3030/** → **World Builder**, NOT the
+  Concepts route. Kirk replied “ok” and requested a compact; do not invent a
+  detailed manual QA verdict beyond that.
 
-## Latest planning checkpoint
+**Immediate next step:** finish #1097 delivery, subject to any blocking walk
+feedback: inspect current dev delta, integrate only understood changes, run one
+full `npm run ci-check`, publish Draft PR to dev, one focused independent review.
+Don't rebuild the feature or repeat completed browser campaigns. No merge or
+cleanup authority is implied; Kirk has handled recent merges himself.
 
-**Repeat placement delivered:** [web#1083](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083)
-merged into dev as `950cdb295b9c886fb7f39e3c49bc30617eb4f6c1`; web#1080 is closed /
-Done. Kirk accepted the look/group movement, then updated the base and enabled
-auto-merge. Hosted checks passed at integrated `38e4bac9`; parent verified all
-repeat-feature files unchanged from independently closed `e72f13fd`. Six Minor
-findings were fixed; the cleanup-removal finding was rebutted and the reviewer
-conceded. [Closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083#pullrequestreview-5208124536).
-The first proof used an already-cataloged barricade, not a new provider enrollment.
-The bounds-report double scaling was fixed without changing rendered asset scale.
+## Delivery style — current human direction
 
-**Floor underlay reviewed:** [web#1089](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1089)
-implements #1088 at `bcccb92de1557588e63d7c504228c8e7b5d66fe8`. Whole-workspace
-basic floor is visual only, with corrected outline alignment and no walkability
-or persistence change. Kirk accepted its look. All three review findings are
-Addressed in [closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1089#pullrequestreview-5217547381);
-local and hosted checks passed. Kirk offered to take it out of draft and merge;
-parent recommended doing so, with a base update if required (GitHub last reported
-behind). Do not call it merged until GitHub confirms.
+Time/token budget matters. Parent owns scope, precise prompts, integration and
+verification. **Luna first** (`worker` with explicit
+`openai-codex/gpt-5.6-luna:medium`), fresh context for new slices. GLM 5.3 Flash is
+available for focused review/alternate work. Sol/Astra are not routine coders.
+Kirk also has other Ollama models; verify exact registry IDs before using them,
+and don't stall available work to configure optional models or alter globals.
 
-Source/live :3030: `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
-`concept/1088-floor-underlay`, reviewed head `bcccb92d`. API/Redis and drafts must
-survive. Local recovery map: `/tmp/dungeon-authoring-floor/execution.json`.
-No cleanup or backend/provider implementation has started.
+Working URL + Kirk's hands-on acceptance come early. Keep essential data-safety
+regressions, normal hooks and required CI. No duplicate per-task/spec/quality
+review seats, automatic minor-fix cycles, or exhaustive-polish detours. Defer
+nonblocking work explicitly. Ordinary implementation details don't need repeated
+approval; scope, data-risk, merge and concrete blockers still belong with Kirk.
 
-## Start here after compaction
+## What #1097 contains and what was verified
 
-Kirk requested a compact before the next chapter. **Do not start wall work as
-part of this handoff.** The current UI checkpoint is merged; the next chapter
-needs fresh, narrowly scoped context rather than resuming a giant old worker.
+Only one mode's editor is mounted, keyed by mode. Switching has explicit
+**Switch editor / Cancel switch** confirmation. Local mode drafts and shared
+arrangements survive round trips; world-edit Cancel preserves in-memory changes.
+The app route fills width/height, uses internal panel scrolling, and has World
+Builder rather than First Look chrome. Concepts and the legacy playable Dungeon
+Builder remain available until the new tool has gameplay parity.
 
-**New intent, not yet a settled design:** Kirk dislikes the single visual style
-of existing walls. He is importing multiple area-style asset sets, including
-walls. He wants enclosing a space and placing/repeating those assets to feel
-simple and repeatable, while retaining World Builder's free manipulation.
-Explore style/kit selection and reusable wall/enclosure placement. Do not assume
-one dungeon-wide style, compulsory regions, a particular draw-vs-stamp gesture,
-or that all incoming assets have already been promoted. Kirk owns the ongoing
-imports; do not duplicate or disturb that pipeline.
+Evidence:
+- `/tmp/dungeon-authoring-workspace/execution.json` — recovery map.
+- `/tmp/dungeon-authoring-workspace/recovery/fixed-browser/partial-before-api-host.json`
+  — same-page 1600×1000 → 960×640, no document overflow, hidden-delete and shared
+  arrangement checks passed at current code.
+- `/tmp/dungeon-authoring-workspace/recovery/world-leave/receipt.json` and
+  `runner.json` — actual API8110 binding, existing snapshot read, Cancel preserves
+  unsaved world edits/local bytes, no API writes/errors, owned server stopped.
+- Parent verified normal entry on3030: `vite-handoff-1097/browser-ready.json` and
+  `3030-workspace.png` under the same local task directory.
+- Focused concept/workspace tests, typecheck/build/lint/hooks passed per worker.
+  The full PR gate has NOT run. Do not call it merge-ready.
 
-## What shipped
-
-| Slice | Delivered / evidence |
-|---|---|
-| Spatial footprint geometry | toolkit #1747 / [PR #1749](https://github.com/KirkDiggler/rpg-toolkit/pull/1749), `tools/spatial/v0.14.0`: `FootprintPlacement`, `PlacedCoverage`, `TraceFootprint` |
-| Shared sight lanes | toolkit #1751 / [PR #1752](https://github.com/KirkDiggler/rpg-toolkit/pull/1752), `tools/spatial/v0.15.0`: `SightLanes`; BasicRoom retains its established sight behavior |
-| Room-authoring UI concept | web #1068 / [PR #1070](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1070), merged into **dev** as `5b0a0485d8b5c04fcb99170991a0526049efc711`; issue closed / Project 19 Done |
-
-UI reviewed head: `645bde32e7c747b48af5c2cebed6ca29bb15ed2d`. Reviewed and merged
-repository trees are identical (`bf9658befe5163ed28aafd3b83374f0e501a397c`). Final
-local `npm run ci-check`, hosted checks, and post-merge CI passed.
-[GLM closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1070#pullrequestreview-5204890648)
-records all three findings Addressed: failed-load autosave data loss, no-op
-history, and brush pointer ownership.
-
-Kirk released first: web [PR #1072](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1072)
-merged to main at 02:49:19Z on 2026-09-15 (`fa05f690`); our UI merged to dev at
-02:52:26Z. At verification, main did not contain `roomDraft.ts`. Production
-release/deployment was Kirk's operation; we verified Git ordering, not a fresh
-production health check.
-
-**The merge hold is historical:** Kirk subsequently performed the merge. There
-is no pending merge and no standing permission to merge future PRs. No branch,
-worktree, environment, or data cleanup was requested.
+Important scope limit: the browser proof establishes mode Cancel, not every
+possible navigation/unload path. Do not claim comprehensive navigation safety.
 
 ## Live environment — preserve it
 
-- **UI:** http://localhost:3030/?concept=room-authoring
-- **API:** http://localhost:8110
-- Named stack: `local/dungeon-authoring`; manifest:
-  `game-dev/envs/local/dungeon-authoring.env`.
-- Web source currently is `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
-  `concept/1088-floor-underlay`, local reviewed head `bcccb92d`. Runtime
-  manifest/state remains authoritative if a subsequent handoff occurs.
-  Older #1068 worktree is also preserved.
-- API is an isolated **dev baseline**, not the parked toolkit consumer branch.
-- Use **localhost**, not another hostname/port, for Kirk's browser-local drafts.
-- Shared dev is **:3001/:8080**, not our feature environment. Do not disturb it
-  or the separate organized-HUD stack (:3024/:8104).
-- Named Redis is ephemeral (`RPG_REDIS_PERSIST=0`). The helper permits persistence
-  only for default `dev`; setting 1 here caused an early startup failure and was
-  corrected. Room-draft durability is browser storage/export-owned.
-- Workspace commands run from `/home/kirk/game-dev`, e.g.
-  `./scripts/dev-env.sh status local/dungeon-authoring`. Do not run them from a
-  game-dev worktree. Do not restart/repoint/tear down the stack during compaction;
-  plan any later branch/environment handoff deliberately, preserving data.
+- UI **http://localhost:3030/**; API **http://localhost:8110**.
+- Named stack `local/dungeon-authoring`; root manifest
+  `/home/kirk/game-dev/envs/local/dungeon-authoring.env`.
+- Runtime authority: `/home/kirk/game-dev/.runtime/local/dungeon-authoring/state.env`.
+  Current WEB_SOURCE is the1097 worktree; VITE_PGID `1185139` at last verification.
+- API/Redis containers were not restarted during handoff; IDs/start times/restart
+  counts matched. Parent used a Vite-only switch with rollback records under
+  `/tmp/dungeon-authoring-workspace/vite-handoff-1097/`.
+- **Before another live reload/source switch, have Kirk save/export unsaved
+  world-origin edits.** Browser-local bytes don't protect unsaved in-memory edits
+  to an opened world snapshot.
+- Keep hostname/port: localhost3030 owns his local drafts. Named Redis is
+  ephemeral (`RPG_REDIS_PERSIST=0`); world snapshots do not survive an environment
+  reset by promise. Do not run `dev-env up/down` just to change web code.
+- Workspace commands run from `/home/kirk/game-dev`. Shared dev3001/8080 and other
+  stacks are not ours. No worktree/branch/data cleanup requested.
 
-## What the UI actually does
+## Delivery record
 
-One reused World Builder (`roomMode`), not a second editor:
+- Spatial geometry: toolkit#1749, `tools/spatial/v0.14.0` — continuous footprint
+  placement/coverage/trace. Sight lanes: toolkit#1752, `tools/spatial/v0.15.0`.
+- Room editor: web#1070 → dev `5b0a0485`; issue1068 closed. Free placement,
+  groups/supports/lights, walkability paint/rectangle, local footprints/flags,
+  safe local storage/history. Workspace presets6/12 →10/20 →14/28 (631 centres),
+  editor capacity only. Original composer ±12 preserved; room fog removed.
+- Repeat: web#1083 → dev `950cdb29`; issue1080 closed. Whole copies along a free
+  X/Z line become ordinary props/group with one Undo, not a live run object.
+- Floor: web#1089 → dev `3da02a55`; issue1088 closed. Existing basic floor is a
+  continuous whole-workspace underlay, separate from walkability; aligned border,
+  world-anchored UVs, loading-safe pointer target. Optional future floor pieces
+  can reveal that underlay through gaps.
+- Room save/reopen: web#1093 → dev `e7bdc058`; issue1090 closed. Typed
+  `{kind:'room-authoring-draft',version:1,draft:RoomDraft}` snapshots through existing
+  CompositionService opaque-JSON storage. Full draft retained, room docs excluded
+  from prop palettes, stale opens fenced, local autosave restored by successful
+  local Save/Reload/Import, oversized saves refused. No new API/toolkit/RPC.
+  [Closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1093#pullrequestreview-5218832284).
+- [web#1094](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1094) holds deferred
+  snapshot-label/copy/coverage notes. Not on the critical path.
 
-- Paint/Erase walkable-ground declarations and Rectangle selection in world X/Z.
-- Painted fills use shared pointy `hexCorners`; Rectangle previews complete hexes
-  by centre-in-box, commits once on release, and cancels safely.
-- Free prop placement, surface support, groups, arrangements, lights, transforms,
-  explicit movement/LOS declarations and owner-local rectangular footprints.
-- Separate room-draft persistence, stable ID remapping and combined undo/redo.
-- Explicit **Expand workspace**: prototype steps are hex-radius/XZ-limit **6/12 →
-  10/20 → 14/28**, maximum 631 candidate centres. Extent is editor capacity, not
-  a region or world-layout rule. Expansion moves/paints nothing.
-- Original composer/library stays at ±12; room-only widened validation is explicit.
-  Other existing guards remain (Y 0–8, 200 props, 80 groups, 500k JSON).
-- Room-only distance fog is disabled: old fog 15–31 hid the larger workspace at
-  far zoom. Original composer atmosphere and game lighting remain unchanged.
-- Failed stored-draft loads preserve raw bytes across StrictMode/effect replay
-  until successful explicit recovery/reset/save/import intent; notices stay useful.
+**These are room authoring drafts, NOT playable DungeonSpec.** Local RoomDraft v2
+and canonical dungeon YAML v2 are different contracts. Composition storage accepts
+opaque JSON; existing PutDungeon compiles strict canonical YAML before writing.
+Don't claim Publish/Play, movement/LOS enforcement or gameplay lighting is wired.
 
-**Local room-draft JSON v2 is NOT canonical dungeon YAML v2.** It retains the
-complete WorldScene and room/gameplay metadata, with explicit scene units/frame
-and workspace. It migrates local v1 drafts safely. The existing engine
-`dungeonspec` version 2 is a different, older region/cell-based format.
+## Next product sequence
 
-There is still **no canonical YAML export or Save & Play integration for this
-new draft**. Its declarations are not yet consumed by gameplay collision/LOS/
-cover. A wall tool, secret-room UI, region manager, and in-game pickup/drop are
-also outside this UI slice. Existing game mechanics still work on legacy content;
-do not rebuild them or describe the new concept as the finished dungeon builder.
+1. Ship current full-space World Builder (#1097).
+2. Wall-height control: Kirk asked for adjustable wall height. Confirm tallness
+   with grounded base versus elevation before implementation; that question was
+   asked but not explicitly answered. Preserve snapshots when extending visuals.
+3. Real monster/door placement and faithful Publish → Play. This tool takes the
+   dungeon-authoring role while keeping prop assembly as a capability. Reference
+   current authored monster/weapon/mind definitions; don't duplicate engine rules
+   or present decorative meshes as real gameplay entities. Check current contracts
+   with a narrow Luna scout before briefing implementation.
+4. Concealment and intel deferred. Intel may be a small follow-up if supported;
+   it isn't a gate for the first useful tool.
 
-## Parked backend work
+World first, optional named areas later. No forced region-first placement, fake
+per-hex entities, shadow anchors or lossy visual-ref-only export. Keep complete
+pieces/transforms/groups/supports/lights and explicit gameplay declarations.
 
-[toolkit #1753](https://github.com/KirkDiggler/rpg-toolkit/issues/1753) is parked
-(Todo), with **no implementation or PR**. Worktree
-`rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
-`feat/1753-encounter-footprints`, clean at `1773806f`.
+Toolkit#1753 is parked, with no implementation: worktree
+`rpg-toolkit/.worktrees/1753-encounter-footprints` at1773806f. Do not revive its
+rejected lossy proposal. `Room.GetEntityPosition` is cell-native, not planar feet.
+Existing PutDungeon(validate_only)/PutDungeon/GetDungeon and choose/play are the
+preferred future seams; a new RPC needs a concrete reason.
 
-Its initial proposal was not approved: a visual-ref-only v3 would lose composition
-pieces/supports/groups/lights. The now-real UI payload should drive the next
-contract. Also, `spatial.Room.GetEntityPosition` returns cell coordinates, not
-planar feet; do not relabel units or invent shadow anchors/fake per-hex entities.
-A precise separate continuous-prop read was discussed, not implemented.
+## Recovery lessons — don't repeat these
 
-Agreed direction:
-- Reuse existing `PutDungeon` validation/save, `GetDungeon`, and choose/play RPCs.
-- Build the world first; paint walkability independently; annotate useful areas
-  afterward. Do not make regions compulsory floor/prop containers.
-- Current engine regions bundle lighting/style, concealment/search, membership
-  queries, seating/placement and floor ownership. That coupling is not a new
-  authoring requirement. Secret areas remain useful later.
-- Prop standing policy should be adjustable: centre-covered initially; percentage
-  coverage as an alternative. Centre uses stationary `TraceFootprint.Contact`,
-  percentage uses `PlacedCoverage`; thin crossing is separate. Half cover is
-  another future rulebook proof, not this percentage.
-- Valid unused definitions are allowed. No automatic loss of recoverable data.
+- Parent now mechanically prepares each writer's locked dependencies, normal
+  Husky support and baseline typecheck. The initial1090 Luna commit lacked setup;
+  its “pre-existing errors / hooks ran” claims were corrected, history preserved.
+- Keeping both editors mounted and hiding one with CSS was unsafe: Rooms Delete
+  deleted the selected hidden prop and autosaved that loss. Isolated before/after
+  evidence is in `recovery/confirmed-blocker/`; current single-active design fixes it.
+- The large GLM browser harness continued after entry failure and was paused.
+  **Do not resume it:** run0594f016-d4f5-4bf4-829c-fcfde03b5bfd. No active fleet now.
+- The last missing-fixture failure was a launcher error: API_HOST was set on the
+  probe, not Vite. Fixture existed. Parent's `run-world-leave.py` sets server env,
+  verifies actual API binding, fails fast and stops only its owned process group.
+- Latest1097 retained worker: `f84b8bed-b429-4461-b6ea-f0438c9f0d94` (Luna); current
+  mission `fbffc886-4842-4542-8a2c-325d9e000b7c`. Check actual resumability/status.
+- Native async completion wakes the parent: no polling loops. Infrastructure
+  failures require exact failure/state evidence and same-protocol recovery, not
+  unapproved agent CLI/foreground fallback. One writer per worktree.
+- Workflow inline output may append a human receipt: don't parse the whole string
+  as JSON. Use explicit machine payload/structured output or bound artifact.
+  Omit/normalize undefined optional fields before JSON emit/return.
+- Keep scratch outside web, or format ignored Markdown before ci-check. Never
+  bypass hooks. One full gate at PR boundary, not redundant full suites.
 
-## Files and work records
-
-- Parent journey: [rpg-project #169](https://github.com/KirkDiggler/rpg-project/issues/169).
-- Cross-repo design/tracking [PR #446](https://github.com/KirkDiggler/rpg-project/pull/446)
-  remains open. Owned project worktree: `rpg-project/.worktrees/169-world-builder-dungeons`,
-  branch `idea/169-world-builder-dungeons`.
-- Design home: `ideas/dungeon-authoring/world-builder/`. The original July
-  `ideas/dungeon-authoring/{design.md,plan.md,visual-walkthrough.html}` is preserved
-  historical material; do not overwrite or implement it as current truth.
-- Current web: `src/concepts/world-building/{WorldBuildingConcept,
-  WorldBuildingViewport,WorldBuildingInteraction,roomDraft,roomHexGeometry,
-  sceneState,serialization}` and `src/concepts/ConceptsView.tsx`.
-- Current merged UI is in dev: start the next line of work in a **fresh issue
-  worktree from current origin/dev**, after checking instructions/board. Do not
-  keep adding unrelated wall work to the completed #1068 branch.
-- Old execution details: UI worktree `.superpowers/sdd/room-first-look/` and local
-  `/tmp/dungeon-authoring-ui/{execution,merge-authority,review-state}.json`.
-  These are recovery evidence, not a second project board.
-
-## Working preferences and traps
-
-- **Bring Kirk in early.** Real branch URL/new behavior before broad polishing.
-  One writer, focused tests, one meaningful full gate at PR boundary, one bounded
-  independent review; no automatic review/fix loops.
-- Reviews use **GLM 5.3 Flash** (`glm-reviewer`,
-  `ollama/glm-5.3-flash:cloud`) and
-  `rpg-project/.agents/skills/pr-review/SKILL.md`. Publish individual findings as
-  inline threads and a verdict on the PR; keep evidence claims honest.
-- Web requires `npm run ci-check` before PR creation/update; do not run an extra
-  standalone full suite first. Prettier scans ignored Markdown notes too: keep
-  scratch outside the web tree or format those notes before the gate.
-- Native async completion wakes the parent; no waiting/polling loops. Subagent
-  infrastructure failures stop the lane: capture state/diff and recover through
-  the same protocol, not an unapproved CLI-agent fallback.
-- Toolkit: one nearest Go module per PR; serial provider release before consumer
-  pins; real CI-issued tags, no hand tags or parallel dependent PR stack.
-- Licensed source/GLBs remain local/private (`rpg-game-assets` canonical). Check
-  the incoming styles and owning asset instructions before touching anything.
-- Re-check Git/current source when returning. Do not copy shared policy into
-  AGENTS or overwrite another line's `active.md` continuity.
+Cross-repo design/tracking remains [project PR#446](https://github.com/KirkDiggler/rpg-project/pull/446),
+branch `idea/169-world-builder-dungeons` in its named project worktree. Original
+July design is historical; current design home is this world-builder directory.
+Kirk owns ongoing licensed asset ingestion. Never commit licensed GLBs publicly,
+change global runtime configuration, or overwrite another task's active.md.
