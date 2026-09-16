@@ -1,5 +1,26 @@
 # Handoff: room-authoring checkpoint → style-driven walls
 
+## Delivery mode for this push — Kirk's current direction
+
+Time/token budget is critical. The parent supplies tight briefs, coordinates
+seams, and verifies worker evidence rather than running elaborate ceremony.
+Default implementation worker: `ollama/glm-5.3-flash:cloud`, in fresh context for
+new slices, through the existing worker/subagent protocol. Do not change global
+agent/provider configuration. Escalate concrete blockers, not speculative risks.
+
+Deliver useful end-to-end slices and a working URL early. Kirk manually verifies
+the important visible behavior. Keep focused tests for the changed behavior and
+non-visible/data-loss risks, normal hooks and required CI. Batch the required
+independent review at a useful PR checkpoint; no duplicate per-task/spec/quality
+review seats or automatic minor-fix cycles. Defer nonblocking polish and exhaustive
+coverage explicitly rather than holding the working tool for them. Ordinary
+implementation details do not need another approval round; scope/data-risk/merge
+and real blockers still belong with Kirk.
+
+Next delivery priority is a faithful build → save → reopen → play loop, not more
+editor polish unless a walk establishes a real need. Backend design still must
+preserve complete authored meaning; the rejected lossy proposal is not revived.
+
 ## Latest planning checkpoint
 
 **Repeat placement delivered:** [web#1083](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083)
@@ -12,20 +33,19 @@ conceded. [Closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1083#pullr
 The first proof used an already-cataloged barricade, not a new provider enrollment.
 The bounds-report double scaling was fixed without changing rendered asset scale.
 
-**Current bounded slice:** [web#1088](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1088),
-whole-workspace basic floor underlay in room-authoring only. Kirk approved existing
-basic floor underneath later tiles/broken pieces, covering the whole workspace
-for now. This is visual only, independent of walkability, with no layer-manager
-or new persistence. Existing profile/texture is available; no ingestion dependency.
+**Floor underlay reviewed:** [web#1089](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1089)
+implements #1088 at `bcccb92de1557588e63d7c504228c8e7b5d66fe8`. Whole-workspace
+basic floor is visual only, with corrected outline alignment and no walkability
+or persistence change. Kirk accepted its look. All three review findings are
+Addressed in [closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1089#pullrequestreview-5217547381);
+local and hosted checks passed. Kirk offered to take it out of draft and merge;
+parent recommended doing so, with a base update if required (GitHub last reported
+behind). Do not call it merged until GitHub confirms.
 
-Fresh source: `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
-`concept/1088-floor-underlay`, base `d45d1a69` (also includes Kirk's landed
-`45 Wall 01` catalog entry from #1085). One fresh UI worker through a hands-on
-checkpoint; no full gate/publication/review until the first look. Local recovery
-map: `/tmp/dungeon-authoring-floor/execution.json`. Current live :3030 still serves
-retained #1080 until the parent's Vite-only source handoff. API/Redis and drafts
-must survive. No merge or cleanup is authorized for the new slice; backend#1753
-and all provider/import work remain outside it.
+Source/live :3030: `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
+`concept/1088-floor-underlay`, reviewed head `bcccb92d`. API/Redis and drafts must
+survive. Local recovery map: `/tmp/dungeon-authoring-floor/execution.json`.
+No cleanup or backend/provider implementation has started.
 
 ## Start here after compaction
 
@@ -73,9 +93,9 @@ worktree, environment, or data cleanup was requested.
 - **API:** http://localhost:8110
 - Named stack: `local/dungeon-authoring`; manifest:
   `game-dev/envs/local/dungeon-authoring.env`.
-- Web source currently is retained `rpg-dnd5e-web/.worktrees/1080-repeat-placement`,
-  branch `concept/1080-repeat-placement`, local reviewed head `e72f13fd`. The runtime
-  manifest/state is authority for the subsequent #1088 first-look source handoff.
+- Web source currently is `rpg-dnd5e-web/.worktrees/1088-floor-underlay`, branch
+  `concept/1088-floor-underlay`, local reviewed head `bcccb92d`. Runtime
+  manifest/state remains authoritative if a subsequent handoff occurs.
   Older #1068 worktree is also preserved.
 - API is an isolated **dev baseline**, not the parked toolkit consumer branch.
 - Use **localhost**, not another hostname/port, for Kirk's browser-local drafts.
