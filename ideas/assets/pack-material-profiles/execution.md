@@ -17,10 +17,13 @@ Follow-up list:
   renderer/material interpretation problem. Kirk suspects emissive/image settings;
   that is a hypothesis, not established source-material authority.
 
-Kirk will inspect in Blender. His direction is to keep this follow-up list for
-now, not start another repair campaign. Pause implementation and subset handoff;
-no choice/profile approval, cache activation or publication is authorized by
-these observations. The698 sources with a proposal for every declared slot are
+Kirk will inspect difficult cases in Blender and keep this follow-up list rather
+than start another repair campaign. He clarified that **this must not pause asset
+ingestion**: continue reviewing eligible assets from the existing registered cache
+in the normal Asset Review Lab, defer problematic rows, and export only human-marked
+Ready rows. The new material-profile authority handoff remains unimplemented, but
+it is not required to review existing trusted-cache candidates. No material choice,
+new-profile approval or cache activation is authorized by these observations. The698 sources with a proposal for every declared slot are
 only potential coverage, **not698 usable or visually approved assets**. Successful
 loading/layout checks from the earlier proof do not establish correct appearance.
 
