@@ -1,9 +1,13 @@
 # The level-up system — design
 
 **Date:** 2026-09-16
-**Status:** Design, **BUILDING** — Kirk 2026-09-16: *"let's get started on the proper
-foundation for leveling up."* Amended the same day after fact-finding against the live
-code; every amendment is logged in §11 with the fact that forced it.
+**Status:** **SHIPPED 2026-09-16.** rpg-api-protos#337 → v0.1.193 · rpg-toolkit#1781 →
+`rulebooks/dnd5e/v0.175.0` · rpg-toolkit#1787 → `rulebooks/dnd5e/session/v0.91.0` ·
+rpg-api#995 → dev `9a0be2b1` · rpg-dnd5e-web#1095 → dev `d1b6b81a` · game-dev#107 →
+main `6e06421`. Built the same day it was ruled (*"let's get started on the proper
+foundation for leveling up"*), amended after fact-finding, walked twelve ways twice,
+reviewed independently, merged bottom-up. Every amendment is logged in §11 with the fact
+that forced it.
 **Foundation:** `ideas/characters/advancement/design.md` (rung 1, built as rpg-toolkit#1766,
 shipped as dnd5e v0.173.0)
 **Initiative:** rpg-project#231 · **Journeys:** rpg-project#242, #241
