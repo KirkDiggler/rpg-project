@@ -260,13 +260,22 @@ its record entry, and whatever its table does carry.
 
 - **R6.1** The level-up is a **verb of the session SDK** (`rulebooks/dnd5e/session`), the
   one interface rpg-api has to the toolkit: load the stored sheet through the SDK's own
-  character repository adapter, refuse a character that is seated in a run — the
-  caller-held "between runs" refusal rung 1 deferred, which only the SDK can hold because
-  only it knows the roster — call `Advance` with the SDK's supplied roller, save through
-  the adapter, return what was gained. The read ("what does the next level bring") is a
-  sibling verb on the same manager. rpg-api's handler calls the SDK and projects; the
-  character orchestrator carries **nothing** for level-up, and the "next level is level
-  plus one" it briefly computed goes with it.
+  character repository adapter, call `Advance` with the SDK's supplied roller, save
+  through the adapter, return what was gained. The read ("what does the next level
+  bring") is a sibling verb on the same manager, projected in SDK-owned types because
+  the boundary law forbids a toolkit type on its signatures. rpg-api's handler calls the
+  SDK and projects; the character orchestrator carries **nothing** for level-up, and the
+  "next level is level plus one" it briefly computed goes with it.
+  *Corrected the same day:* I first wrote that the SDK could hold rung 1's deferred
+  "between runs" refusal because it knows the roster. It knows a roster **given a session
+  id**; a between-runs verb has none, and the SDK has no index from a character to a
+  session. So the verb holds the sheet's own signal, exactly as `Advance` does, and the
+  index is the named seam — not built until a use case brings it.
+- **R6.1a** A next-level row containing a requirement kind the SDK cannot offer (today: a
+  subclass, #1767) is **refused at the read**, so a client is never shown a confirmation
+  the write will refuse. This is the package's existing "a kind this seam was never
+  taught is refused" shape, and it replaces the druid/wizard observation in §11 with a
+  rule.
 - **R6.2** Translation between the wire and the toolkit's shapes (proto `ChoiceData` to
   `choices.ChoiceData`, error codes, ownership of the calling player) stays in rpg-api.
   That is transport, not rules. Any line in rpg-api that *decides* a game quantity is a
