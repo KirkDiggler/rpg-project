@@ -469,6 +469,32 @@ Each entry names the fact that forced it, so the change is a consequence and not
   its known-spells column is deferred with Pact Magic (2014 says 2 → 3); wizard and druid
   are then refused at confirm by the subclass wall (#1767). R4.14 carries most of the
   roster, which is why the confirmation is a screen and not a button.
+- **The matrix (2026-09-16, every class levelled through the real screen and API, confirm
+  included; Kirk could not walk and went off the report).** Ten of twelve take the level;
+  two are refused; ranger's row follows its creation fix. Every gain is the class die's
+  average plus CON; every refusal leaves the sheet untouched.
+
+  | class | asked | engine | after |
+  |---|---|---|---|
+  | barbarian | — | +9 HP, Hit Dice 1→2 | L2 23/23 |
+  | bard | 1 spell, **only Healing Word offered** | +7, Hit Dice 1→2, 1st slots 2→3 | L2 17/17 |
+  | cleric | — | +7, Hit Dice 1→2, 1st slots 2→3 | L2 17/17 |
+  | druid | — | **refused**: subclass wall (#1767), verbatim below | L1, unchanged |
+  | fighter | — (names Action Surge) | +8, Action Surge, Hit Dice 1→2 | L2 20/20 |
+  | monk | — | +7, Hit Dice 1→2, **Ki 0→2** | L2 17/17 |
+  | paladin | — | +8, Hit Dice 1→2, **1st slots 0→2** | L2 20/20 |
+  | rogue | — | +7, Hit Dice 1→2 | L2 17/17 |
+  | sorcerer | 1 spell | +6, Hit Dice 1→2, 1st slots 2→3 | L2 14/14 |
+  | warlock | — (known column deferred) | +7, Hit Dice 1→2 | L2 17/17 |
+  | wizard | 2 spellbook spells, only the 5 unknown offered | **refused**: subclass wall | L1, unchanged |
+
+  The refusal, verbatim from the toolkit through the wire to the screen: *"wizard level 2
+  requires choosing a subclass, which advancement cannot apply; taking the level would
+  record the choice and change nothing on the sheet."* Observation for #1767: the read
+  RPC cannot carry a subclass question, so druid and wizard are shown a confirmation the
+  write then refuses. Honest, and the right place for it to fail until a subclass is a
+  choice; a pre-emptive "cannot be taken yet" on the read is #1767's to add, not a
+  band-aid here.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
