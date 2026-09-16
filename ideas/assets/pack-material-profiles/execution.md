@@ -1,5 +1,29 @@
 # Profile-and-preview delivery checkpoint
 
+## Operator visual follow-ups — paused for Blender inspection
+
+After installation, Kirk tried the material screen and clarified that he has
+**chosen no materials**. Some proposals look good from one angle, but edges become
+transparent when orbiting and the interior becomes visible. White regions did not
+change when selecting options. Neither symptom is diagnosed or approved.
+
+Follow-up list:
+
+- [ ] Angle-dependent visibility: distinguish material alpha handling, backface
+  culling/sidedness and source geometry. Do not assume emissive settings or an
+  atlas replacement fixes it.
+- [ ] Persistent white regions: identify the actual object/slot and whether it is
+  intentionally neutral context, missing material channels/images or another
+  renderer/material interpretation problem. Kirk suspects emissive/image settings;
+  that is a hypothesis, not established source-material authority.
+
+Kirk will inspect in Blender. His direction is to keep this follow-up list for
+now, not start another repair campaign. Pause implementation and subset handoff;
+no choice/profile approval, cache activation or publication is authorized by
+these observations. The698 sources with a proposal for every declared slot are
+only potential coverage, **not698 usable or visually approved assets**. Successful
+loading/layout checks from the earlier proof do not establish correct appearance.
+
 ## Source-first correction — 2026-09-16
 
 The original preview PRs219/1087 were merged and installed. Real pack use then
