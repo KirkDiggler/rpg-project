@@ -431,6 +431,14 @@ Each entry names the fact that forced it, so the change is a consequence and not
     duplicate is refused at load, not repaired — the discipline `parseSpellRefs` already
     applies to a spell this build cannot read. Repair would hide a level taken wrongly,
     and the record cannot be corrected anyway.
+  - **R4.4f** The character-aware view removes *options*, never the *count*. How many
+    spells a level teaches is the class's rule, not a property of who is taking it; a
+    level whose remaining options cannot satisfy its count is refused as unanswerable
+    rather than quietly teaching fewer than the table says (the builder's call on #1781,
+    accepted). Not reachable today — no class both derives above level 1 and hands its
+    whole list over — but that is the behaviour if it ever is.
+  Built as `(*Character).NextLevelRequirements()`; every refusal a level can make now
+  happens before the hit die is rolled, not merely before the sheet changes.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
