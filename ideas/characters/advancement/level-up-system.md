@@ -608,6 +608,23 @@ Each entry names the fact that forced it, so the change is a consequence and not
   so the confirmation is what three quarters of the roster exercises, and it was worth
   making a screen. The rpg-api character orchestrator carries nothing about level-up;
   every rule and every refusal in the table is the toolkit's, reached through the SDK.
+- **The independent review round (2026-09-16, before merging out; the working agreement's
+  one round for engine and interface changes).** Three reviewers from sessions that did
+  not implement: rpg-toolkit#1787, rpg-api#995, rpg-dnd5e-web#1095 — all *approve with
+  findings*, no Critical, no behaviour defect. What the reviewers verified rather than
+  read: the served rpg-api binary cannot reach an experience write (`go list -deps` of the
+  server does not contain the fixture package); the character orchestrator has no
+  advancement code; the SDK's boundary test is AST-based so S2 is enforced not asserted;
+  the "equivalent mutant" disclosure reproduces. Findings were missing test rows for
+  correct refusals (a failing roller, the in-combat sentence, a sentinel's gRPC code, the
+  gained-features projection), a prompt naming the entitled level where the screen offers
+  level plus one, an unknown SDK choice kind still packing options, and stale PR bodies —
+  all fixed on the branches with a disposition per thread. Deferred on the record with
+  issues: the renderer's silent dead end for an unrenderable category (unreachable now
+  that the SDK refuses at the read); expertise options computed by a client (R4.4e's
+  seam); and one ownership question — the seam refuses options below the count while the
+  rulebook refuses only an empty list, so the rulebook's own check widens to the count in
+  the next dnd5e wave and the seam translates.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
