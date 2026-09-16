@@ -562,6 +562,17 @@ Each entry names the fact that forced it, so the change is a consequence and not
   through 20 only three requirement kinds exist above level 1 — subclass, cantrips,
   spellbook. Subclass is the only kind this seam refuses, and it blocks level 3 for six
   classes and wizard's level 2. That is the whole size of the next gate.
+- **The bind main moved into (2026-09-16), and why the merge order is what it is.** While
+  the wave walked, an unrelated merge cut `dnd5e v0.174.0` (from #1778) and bumped
+  `resolution` to v0.50.0, which requires it. #1781's pseudo-version sorts *below*
+  v0.174.0, so any consumer that also needs resolution v0.50.0 — the session module on
+  main — has module selection pick v0.174.0, which carries none of the rung. The session
+  PR (#1787) therefore conflicts with main on `go.mod` alone, and neither resolution of
+  the conflict builds. The cure is the order we already had: merge main into #1781 so its
+  head descends from v0.174.0's commit, **merge #1781** (walked twelve ways; unchanged by
+  the SDK move), and let CI cut a tag above v0.174.0 that carries the rung; #1787 then
+  pins a real tag. The rule underneath: a pseudo-version is only safe while nothing on
+  main outranks it, and the newest tag is not the merge — verify by content.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
