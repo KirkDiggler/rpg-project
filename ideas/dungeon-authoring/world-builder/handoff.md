@@ -2,27 +2,30 @@
 
 ## Resume here
 
-Kirk requested compaction after the full-space workspace first look. **No active
-subagent fleet. No new implementation batch should be launched merely to compact.**
+**Workspace delivery landed.** With Kirk's explicit approval,
+[web PR#1099](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1099) merged into dev
+at `de29612c12fbd703169cb958e45231a0e47c5558` (2026-09-16 09:24:05Z).
+[web#1097](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1097) is Closed /
+Project19 Done, UI/UX / The Dungeon / Build. No active workers.
 
-Current task: [web#1097](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1097),
-UI/UX / The Dungeon / Build / In Progress. Normal Home → World Builder now opens
-Rooms, with Prop compositions as a secondary workflow using the same editor.
+Normal Home → World Builder opens Rooms, retaining Prop compositions through the
+same editor. Publication additionally fixed Back-to-main confirmation. Review
+5220658824 found no Critical/Important findings; five Minor threads are explicitly
+deferred to Project19 Todo [web#1100](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1100).
+Local gate and hosted checks passed; reviewed and merged trees are identical.
 
-- Worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-workspace`
+- Publication worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-publication`
 - Branch: `feat/1097-world-builder-workspace`
-- Base: `e7bdc05865410a59b4a4ff7d77bf2159f303b09e`
-- Current clean local head: `d04fd63ea459e5fe46c26b670bf5a93e383be3f8`
-- Two local commits; **not pushed, no PR, no full PR-boundary ci-check yet**.
-- First look is live on **http://localhost:3030/** → **World Builder**, NOT the
-  Concepts route. Kirk replied “ok” and requested a compact; do not invent a
-  detailed manual QA verdict beyond that.
+- Published/reviewed head: `2f5692ecc06b3bcb6db3f1fdcc95bf239795cc0c`
+- Live preview worktree: `/home/kirk/game-dev/rpg-dnd5e-web/.worktrees/1097-world-builder-workspace`,
+  detached at `d04fd63ea459e5fe46c26b670bf5a93e383be3f8`, still serving3030 unchanged.
+  **The merged Back fix is not yet in that live preview.**
+- Actual next-session record: `/tmp/dungeon-authoring-workspace/execution.json`.
 
-**Immediate next step:** finish #1097 delivery, subject to any blocking walk
-feedback: inspect current dev delta, integrate only understood changes, run one
-full `npm run ci-check`, publish Draft PR to dev, one focused independent review.
-Don't rebuild the feature or repeat completed browser campaigns. No merge or
-cleanup authority is implied; Kirk has handled recent merges himself.
+**Immediate next step:** clarify wall-height tallness versus elevation, then a
+bounded design/issue/working slice. Don't redo workspace delivery. Any live source
+handoff still requires a save/export checkpoint for unsaved world edits. The
+completed merge authorization covered only1099; no cleanup or later merge implied.
 
 ## Delivery style — current human direction
 
@@ -58,8 +61,10 @@ Evidence:
   unsaved world edits/local bytes, no API writes/errors, owned server stopped.
 - Parent verified normal entry on3030: `vite-handoff-1097/browser-ready.json` and
   `3030-workspace.png` under the same local task directory.
-- Focused concept/workspace tests, typecheck/build/lint/hooks passed per worker.
-  The full PR gate has NOT run. Do not call it merge-ready.
+- Final full PR gate passed at2f5692ec; hosted checks green, focused reviewer tests
+  passed. Logs and dispositions are under `/tmp/dungeon-authoring-workspace/publication/`.
+  An earlier gate caught an App navigation assertion that needed the new explicit
+  confirmation; that test was updated before the final changed-head gate.
 
 Important scope limit: the browser proof establishes mode Cancel, not every
 possible navigation/unload path. Do not claim comprehensive navigation safety.
@@ -113,7 +118,7 @@ Don't claim Publish/Play, movement/LOS enforcement or gameplay lighting is wired
 
 ## Next product sequence
 
-1. Ship current full-space World Builder (#1097).
+1. Full-space World Builder shipped (#1097 / #1099).
 2. Wall-height control: Kirk asked for adjustable wall height. Confirm tallness
    with grounded base versus elevation before implementation; that question was
    asked but not explicitly answered. Preserve snapshots when extending visuals.
@@ -148,8 +153,13 @@ preferred future seams; a new RPC needs a concrete reason.
 - The last missing-fixture failure was a launcher error: API_HOST was set on the
   probe, not Vite. Fixture existed. Parent's `run-world-leave.py` sets server env,
   verifies actual API binding, fails fast and stops only its owned process group.
-- Latest1097 retained worker: `f84b8bed-b429-4461-b6ea-f0438c9f0d94` (Luna); current
-  mission `fbffc886-4842-4542-8a2c-325d9e000b7c`. Check actual resumability/status.
+- First-look worker: `f84b8bed-b429-4461-b6ea-f0438c9f0d94` (Luna), completed mission
+  `fbffc886-4842-4542-8a2c-325d9e000b7c` belongs to the preview worktree. Publication
+  used worker `dd090fd1-f7c8-4fd3-aa83-fda5b6fad5ab` and independent reviewer
+  `f304388c-089e-4324-ba2d-01108ea0dc17`; its completed mission
+  `76bbb3ac-f00d-463b-83ea-37add41c380c` belongs to the publication worktree.
+  Mission IDs are cwd-scoped: cross-worktree attachment fails before launch.
+  Check actual resumability/status instead of copying an old mission blindly.
 - Native async completion wakes the parent: no polling loops. Infrastructure
   failures require exact failure/state evidence and same-protocol recovery, not
   unapproved agent CLI/foreground fallback. One writer per worktree.
