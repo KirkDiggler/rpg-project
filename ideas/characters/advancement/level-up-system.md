@@ -446,8 +446,15 @@ Each entry names the fact that forced it, so the change is a consequence and not
   requirement is `ranger-fighting-style`, the validator never sees it answered, and
   finalize refuses forever. Ranger is the only class hit because it is the only
   non-fighter with a level-1 fighting style. Nobody had created a ranger before a fixture
-  tried every class. Fixed on #1781: the submission carries the requirement's own id, no
-  constant, no per-class map.
+  tried every class. Fixed on #1781, one step past the literal instruction and accepted:
+  `getClassSubmissions` no longer has its own choice-to-submission switch at all; it
+  routes the draft's class choices through `choices.SubmissionsFrom`, the one translation
+  creation validation and advancement already share. It was the second bug of that exact
+  shape from the same function (its own comment records the first, the bard whose spells
+  it did not convert). Two translations of what a choice means is the mechanism; fixing
+  only the id would have left it armed. The test is table-driven over every class whose
+  requirement row carries a fighting style, so the next one is covered the day its row
+  lands.
 - **Walk finding 3 (same source), logged, not fixed this wave: expertise options are
   invented in the API.** `ExpertiseRequirement` names no options, so rpg-api fills the
   wire with all eighteen skills and the engine refuses the illegal ones at finalize
