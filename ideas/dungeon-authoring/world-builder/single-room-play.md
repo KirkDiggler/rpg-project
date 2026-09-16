@@ -1,5 +1,7 @@
 # One playable World Builder room
 
+**Toolkit provider plan:** [single-room-play-provider-plan.md](single-room-play-provider-plan.md)
+
 **Approved by Kirk in conversation.** Implementation follows the scoped plan;
 merge, environment changes and cleanup still need their own authority. This narrows the
 approved [architecture](design.md) to one real playable room. Kirk approved
