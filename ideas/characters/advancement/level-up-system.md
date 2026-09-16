@@ -406,6 +406,14 @@ Each entry names the fact that forced it, so the change is a consequence and not
   levelled and learned nothing would be a sheet quietly missing half a level. The cure is
   castable ranger spells, a content table, not a code change. Neither class is a proof
   case of this wave.
+- **Every class's spell list above spell level 1 is empty in this build** (#1781, the
+  builder's note). So every caster reaches an unanswerable level the moment its table
+  asks for a spell at a level it has no content for: bard, wizard and sorcerer at 3,
+  ranger at 2. The refusal names the class and the spell level; the cure is the class
+  spell table (`choices.classSpellOptions`), a content edit. And the subclass wall
+  (#1767) fires *before* the spell question for wizard at 2 and cleric at 1, so a wizard
+  cannot reach its spellbook question until a subclass can be expressed as a choice.
+  Neither changes this wave's proof cases; both are why the proof cases are what they are.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
