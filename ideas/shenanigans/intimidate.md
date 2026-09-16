@@ -1,6 +1,6 @@
 # Intimidate — a scared goblin can be told to run
 
-## Status: SHIPPED 2026-09-16 (walked by Kirk: "saw intimidate take effect. looks good to me.") — rulebooks/dnd5e v0.176.0 · mind/behavior v0.4.0 · encounter v0.85.0 · dnd5e/behavior v0.6.0 · session v0.92.0 · rpg-api-protos #339 · rpg-api #998 · rpg-dnd5e-web #1102. Decisions the build corrected are marked CORRECTED below and gathered in "What the build corrected". Originally resolved in session with Kirk 2026-09-16 (design PR #455). First customer of [README.md](README.md). Tracking issue: rpg-project#454.
+## Status: SHIPPED 2026-09-16 (walked by Kirk: "saw intimidate take effect. looks good to me.") — rulebooks/dnd5e v0.176.0 · mind/behavior v0.4.0 · encounter v0.85.0 · dnd5e/behavior v0.6.0 · session v0.92.0 · rpg-api-protos #339 · rpg-api #998 (dev 26a10d94) · rpg-dnd5e-web #1102 (dev 5b697a60). Decisions the build corrected are marked CORRECTED below and gathered in "What the build corrected". Originally resolved in session with Kirk 2026-09-16 (design PR #455). First customer of [README.md](README.md). Tracking issue: rpg-project#454.
 
 North star (Kirk): **we want to see somebody make the roll, and the outcome shapes the encounter.** The author plants the setup; the player finds the interesting way to win.
 
