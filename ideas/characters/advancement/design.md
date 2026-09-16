@@ -81,8 +81,22 @@ Levels []LevelEntry `json:"levels"`
 - **R2.6** A character loaded with `Levels == nil` and `Level == 1` MUST be given a
   synthesized level-1 entry (`ClassID` from the sheet, `HitPointMethod: max`,
   `HitPointGain` = hit die + CON modifier, `Choices` empty). It loads normally.
-- **R2.7** A character loaded with `Levels == nil` and `Level != 1` MUST fail. No such
-  character can exist today, and guessing at one would invent history.
+- **R2.7** A character loaded with `Levels == nil` and `Level != 1` MUST fail. Guessing at
+  a history would invent one.
+
+  **Correction, 2026-09-16.** This rule was first justified with "no such character can
+  exist today." **That was false, and only a consumer could see it.** `session` builds
+  level 3, 4 and 5 characters with no record in twelve test fixtures and in
+  `cmd/session-workbench/main.go` — non-test code; `resolution` has four more. Building
+  `session` against the rung-1 branch fails 390 tests on this rule alone. The toolkit
+  module could not see any of it because `session` sits on a published pin
+  (dnd5e v0.172.0) — a stale pin hides a break from the module that has it.
+
+  **The rule stands.** Those failures are R2.7 working: it found fourteen places
+  asserting a level with no history behind it, which is exactly what the record exists to
+  prevent. What was wrong was the justification, not the requirement. The fix is to give
+  those fixtures real records, not to soften the rule — roughly eighteen mechanical sites
+  across `session` and `resolution` (`encounter` and `behavior` are clean).
 
 ### 2.4 Level 1 is a level
 
@@ -254,8 +268,22 @@ derived proficiency bonus, Fighter level 2. Proof is a toolkit integration test:
 fighter advances, gains Action Surge, spends it, persists, reloads with the feature and
 the record intact.
 
-**Rung 2 — the walk.** A level on the wire and a way to trigger it, so a fighter can be
-levelled and played in the local stack. Needs: a level field on the creation/requirements
+**Rung 1.5 — walk it without the door.** Kirk, 2026-09-16: *"this could be propped up
+using our local stack can't it?"* It can, and the house rule is that a wave walks before
+it merges. No wire change is needed to SEE a level-2 fighter — only to create one through
+the UI. Sequence: give the ~18 recordless fixtures real records (R2.7 correction above),
+pseudo-version pin dnd5e into rpg-api (which pins dnd5e directly, so MVS carries it
+without cutting a session release — but `session` must build against it first), seed a
+level-2 fighter, bring up the local stack.
+
+**The seed must be GENERATED, not authored.** `character/load.go` reconstitutes features
+from persisted blobs rather than re-deriving them from grants. A hand-written character
+JSON carrying a two-entry record and no Action Surge blob loads as a level-2 fighter with
+no Action Surge — it looks correct on the sheet and is empty in the combat dock. Produce
+the seed by running `Advance` and dumping `ToData()`.
+
+**Rung 2 — the door.** A level on the wire and a way to trigger it, so a fighter can be
+levelled from the UI rather than seeded. Needs: a level field on the creation/requirements
 contract, and a level-up door on `CharacterService` (there is none — after `FinalizeDraft`
 the only character mutations on the wire are the four equipment RPCs). This is where
 journey #242's between-run flow lands. **Rung 1 cannot be walked; its evidence is a test.**
