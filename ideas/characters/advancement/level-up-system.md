@@ -253,6 +253,28 @@ its record entry, and whatever its table does carry.
 
 ## 6. Ownership
 
+> *"To be clear, the API is dumb, correct? This is all toolkit control. We have had a
+> tendency of adding logic into the API … we added the session package to act as the SDK
+> to the API. So we should not need an orchestrator in API anymore and our level up
+> should be contained in our session package."* — Kirk, 2026-09-16
+
+- **R6.1** The level-up is a **verb of the session SDK** (`rulebooks/dnd5e/session`), the
+  one interface rpg-api has to the toolkit: load the stored sheet through the SDK's own
+  character repository adapter, refuse a character that is seated in a run — the
+  caller-held "between runs" refusal rung 1 deferred, which only the SDK can hold because
+  only it knows the roster — call `Advance` with the SDK's supplied roller, save through
+  the adapter, return what was gained. The read ("what does the next level bring") is a
+  sibling verb on the same manager. rpg-api's handler calls the SDK and projects; the
+  character orchestrator carries **nothing** for level-up, and the "next level is level
+  plus one" it briefly computed goes with it.
+- **R6.2** Translation between the wire and the toolkit's shapes (proto `ChoiceData` to
+  `choices.ChoiceData`, error codes, ownership of the calling player) stays in rpg-api.
+  That is transport, not rules. Any line in rpg-api that *decides* a game quantity is a
+  finding.
+
+The first build of this wave put the verb in rpg-api's character orchestrator (#995 as
+first opened) — the tendency Kirk named — and is being moved. Logged in §11.
+
 - **Toolkit (`rulebooks/dnd5e`, one module, one PR)** owns the thresholds, the per-level
   tables, what a level requires, what it grants, what a chosen option does to the sheet,
   and whether an `Advance` is legal. `cloneCharacterData` in resolution starts from a
@@ -504,6 +526,14 @@ Each entry names the fact that forced it, so the change is a consequence and not
   write then refuses. Honest, and the right place for it to fail until a subclass is a
   choice; a pre-emptive "cannot be taken yet" on the read is #1767's to add, not a
   band-aid here.
+- **R6.1 / R6.2 added — the verb moves out of rpg-api into the session SDK** (Kirk,
+  2026-09-16, after the walk). Fact: rpg-api#995 as first built put "load the sheet, call
+  `Advance`, save" in `internal/orchestrators/character/level_up.go`, with a
+  `Config.Roller` and a locally computed "next level is level plus one" to look up
+  grants. Every *rule* was the toolkit's, but the orchestration of a toolkit verb was in
+  the API — the tendency Kirk named — and rung 1's deferred "between runs" refusal can
+  only be held by the layer that knows the roster, which is the SDK. A session-module
+  toolkit PR carries the verb; #995 becomes handler → SDK → projection.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
