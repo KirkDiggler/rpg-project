@@ -299,4 +299,58 @@ exist; which one the game uses is not decided here).
 - **rpg-toolkit#1760** — the class catalog offers subclass options a level-1 character
   cannot choose. The same seam from the creation side.
 
+## 12. Rulings taken during the build (rpg-toolkit#1766)
+
+Amendments accumulated while rung 1 was implemented. Each extends or diverges from the
+text above and is recorded here rather than folded in silently.
+
+- **`Advance` takes a `ctx`.** §4's signature had none, but the step that attaches to a
+  bus and the step that rolls a die both need one, and every other `Character` verb takes
+  one. Accepted.
+- **`AdvanceInput.Roller`, nil defaulting to `dice.NewRoller()`.** R4.3 said the toolkit
+  computes the hit point gain but named no randomness source. Matches the shape
+  `MakeSavingThrowInput` and `SpendHitDiceInput` already carry. Accepted.
+- **A grant carrying proficiencies, equipment, spells or languages is REFUSED.** §4.1
+  applies features and conditions only. No grant above level 1 carries anything else
+  today, so this forbids nothing real — and it fails closed and loudly instead of
+  silently dropping half a grant. Accepted; the next grant that needs them must implement
+  them deliberately.
+- **A level requiring no choices refuses choices it was handed.** The record is
+  append-only; it should not accept entries nothing asked for. Accepted.
+- **A level never lifts a character off zero hit points.** Maximum always grows; current
+  grows only when conscious. Otherwise advancement quietly stands a dying character up
+  while their death saves sit on the sheet. Not in the design text. **Accepted, and worth
+  keeping** — it is the kind of rule that is invisible until it is wrong in front of a
+  player.
+- **Resource resizing grants the difference unspent and keeps what was spent spent** — a
+  character at 0/1 hit dice becomes 1/2, not 2/2. RAW for hit dice and the only
+  non-surprising generalisation. Accepted.
+- **Advancing to fighter 3 is REFUSED**, because a subclass cannot be expressed as a
+  `choices.ChoiceData`. Correct behaviour, and a real wall: see §13.
+
+Implementation improved on §2.2 rather than following it. The design kept `level` and
+`proficiencyBonus` as stored projections guarded by a load-time check; the build
+**removed the fields entirely**, so `GetLevel()` is `len(levels)` and `ProficiencyBonus()`
+is derived. There is no stored number left that can disagree with the record. The load
+check survives for `Data`, which still carries both for the wire. This is stronger than
+what was specified and the design is amended to it.
+
+**Known limit:** R4.1 is implemented via `Character.InCombat()`, the only signal the sheet
+has. A character seated in an encounter who has not yet taken a turn reads false and would
+be allowed to advance. Narrower than the rule, documented at the refusal, and inert while
+nothing can trigger advancement over the wire. Rung 2 closes it by having the caller hold
+the refusal.
+
+## 13. What rung 1 does not reach
+
+**Level 3.** `choices.SubclassRequirement` exists, so `GetClassRequirementsAtLevel(Fighter, 3)`
+duly asks for a Martial Archetype — but `shared.ChoiceCategory` has fifteen values and no
+subclass among them, so nothing can answer. Creation gets away with it because the draft
+carries the subclass as its own field, set through `SetClass` beside the class rather than
+through the choice pipeline. Advancement cannot, because at level 3 the class is already
+fixed and only the subclass is in question.
+
+A subclass is the one requirement the engine can pose and cannot receive. Tracked as
+**rpg-toolkit#1767**, and it is the gate in front of the level-3 dungeon initiative.
+
 — cross-team agent, on behalf of KirkDiggler
