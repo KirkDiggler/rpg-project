@@ -483,10 +483,19 @@ Each entry names the fact that forced it, so the change is a consequence and not
   | fighter | — (names Action Surge) | +8, Action Surge, Hit Dice 1→2 | L2 20/20 |
   | monk | — | +7, Hit Dice 1→2, **Ki 0→2** | L2 17/17 |
   | paladin | — | +8, Hit Dice 1→2, **1st slots 0→2** | L2 20/20 |
+  | ranger | — | **refused**: *"ranger level 2 requires choosing from the 1st-level spells ranger knows, and this build has none"* | L1, unchanged |
   | rogue | — | +7, Hit Dice 1→2 | L2 17/17 |
   | sorcerer | 1 spell | +6, Hit Dice 1→2, 1st slots 2→3 | L2 14/14 |
   | warlock | — (known column deferred) | +7, Hit Dice 1→2 | L2 17/17 |
   | wizard | 2 spellbook spells, only the 5 unknown offered | **refused**: subclass wall | L1, unchanged |
+
+  **The roster, per Kirk 2026-09-16:** *"we don't have wizard yet … We have our 4 martial
+  classes, bard and cleric. Wizard is next though."* All six supported classes take level
+  2 cleanly above. The other six rows are the test of §1's claim — a class nobody has
+  written yet levels correctly the day its table is filled — and each refusal names its
+  own cure. Wizard's cost is already visible in its row: Arcane Tradition is level 2, so
+  the wizard wave is gated on #1767 before its spellbook question, which the screen
+  already renders.
 
   The refusal, verbatim from the toolkit through the wire to the screen: *"wizard level 2
   requires choosing a subclass, which advancement cannot apply; taking the level would
