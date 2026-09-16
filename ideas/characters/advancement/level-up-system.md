@@ -396,5 +396,19 @@ Each entry names the fact that forced it, so the change is a consequence and not
   `App.tsx:481-566`, and creation is a single-page sheet bound to `CharacterDraftContext`.
   A level-up screen inside that context would need a draft that does not exist.
 - **#1770 removed from §9.** Fixed by rpg-toolkit#1773 and the dnd5e v0.173.0 line.
+- **Ranger's known-spells column is the real 2014 one, not a placeholder** (built as
+  rpg-toolkit#1781, ruled on the builder's question). Ranger is a known caster, not a
+  prepared one, so the placeholder rule for cleric, druid and paladin does not fit it.
+  Consequence, accepted: a ranger taking level 2 is asked for two spells, this build can
+  cast none from its list, and `Advance` refuses with *"requires choosing from the spells
+  ranger knows, and this build has none"* — the same refusal a wizard meets at level 3
+  for second-level spells. That is R4.4c's fail-closed shape, not a bug: a ranger who
+  levelled and learned nothing would be a sheet quietly missing half a level. The cure is
+  castable ranger spells, a content table, not a code change. Neither class is a proof
+  case of this wave.
+- **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
+  Fact: the derivation reads the slot row to know it is asking for a first-level spell,
+  so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
+  behaviour is unchanged at every level and Pact Magic stays the named seam.
 
 — cross-team agent, on behalf of KirkDiggler
