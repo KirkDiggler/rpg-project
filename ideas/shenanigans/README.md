@@ -28,7 +28,7 @@ Each verb is a mind capability, added on its own use case, never a general "soci
 
 | Verb | Check | What the mind learns | Who reads it | State |
 |---|---|---|---|---|
-| **Intimidate** | CHA (Intimidation) vs authored DC | "this one frightened me" | coward keeps away; berserker takes it as a provocation; retaliator shrugs | [intimidate.md](intimidate.md) — first slice |
+| **Intimidate** | CHA (Intimidation) vs authored DC | "this one frightened me" | coward keeps away; berserker takes it as a provocation; retaliator shrugs | [intimidate.md](intimidate.md) — **SHIPPED 2026-09-16** |
 | Persuade | CHA (Persuasion) | "this one is not my enemy" | needs a *stand-down* the ladder does not have (Pass while the party is in reach) | not designed |
 | Deceive / disguise | CHA (Deception) vs monster insight | "this one is the lieutenant" | the camp's stance toward *that character*; §13 of the living-world brainstorm: a disguise opens verbs | not designed; needs a per-character stance, today stance is a faction pair |
 | Take command | Deception, then orders | "the lieutenant said hold" | a mind that takes an *order* as an intent | not designed; the far end of the ladder |
