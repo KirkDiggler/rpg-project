@@ -288,6 +288,12 @@ contract, and a level-up door on `CharacterService` (there is none — after `Fi
 the only character mutations on the wire are the four equipment RPCs). This is where
 journey #242's between-run flow lands. **Rung 1 cannot be walked; its evidence is a test.**
 
+**Rung 2 — the level-up system.** Designed in `level-up-system.md` beside this file.
+Experience, threshold entitlement, per-level requirement and progression tables, and a
+level-up screen carrying no class-specific branch. Kirk, 2026-09-16: *"I want the level up
+system built and what is filled in is available … we are building a game here not showing
+things off."* The deliverable is the machinery; class tables are configuration.
+
 **Rung 3 — the rest of level 2.** Barbarian, Monk data rows; Cunning Action and Danger
 Sense as feature builds.
 
