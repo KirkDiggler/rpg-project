@@ -414,6 +414,23 @@ Each entry names the fact that forced it, so the change is a consequence and not
   (#1767) fires *before* the spell question for wizard at 2 and cleric at 1, so a wizard
   cannot reach its spellbook question until a subclass can be expressed as a choice.
   Neither changes this wave's proof cases; both are why the proof cases are what they are.
+- **Walk finding 1 (2026-09-16, headless render check before Kirk's walk): a level-up
+  offered, and `Advance` accepted, a spell the character already knew.** The bard fixture
+  knowing bane / thunderwave / dissonant whispers / command was offered all four again;
+  taking level 2 with bane returned no error and left the known list holding bane twice,
+  with the choice in the append-only record. Cause: `GetClassRequirementsGainedAtLevel`
+  is class-and-level only, so it cannot subtract what a character knows, and nothing in
+  `Advance` checked. Every toolkit test passed. Rulings, fixed on #1781:
+  - **R4.4d** `Advance` MUST refuse a spell or cantrip the character already knows,
+    before any mutation, naming the spell.
+  - **R4.4e** The requirements a character is *offered* for its next level are a
+    character-aware view — row N with already-known spells and cantrips removed from the
+    options — exposed on `Character`, and that is what rpg-api's `GetNextLevel` projects.
+    The class-and-level function stays for creation, where nothing is known yet.
+  - **R2.8 (load)** A stored sheet whose known-spell or known-cantrip list holds a
+    duplicate is refused at load, not repaired — the discipline `parseSpellRefs` already
+    applies to a spell this build cannot read. Repair would hide a level taken wrongly,
+    and the record cannot be corrected anyway.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
