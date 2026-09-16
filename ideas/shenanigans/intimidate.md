@@ -14,14 +14,14 @@ Driving acceptance case: **in The Three Minds, the fighter walks up to the arche
 - **Every mind consults only the attack deed.** The retaliator's `Judge` and `grudge` both test `Verb == DeedAttack`. `scenarios.md` records provocation as unpaid: "an attack on me is hardcoded".
 - **The coward is `Room: 2` and no grudge.** It has no ladder of its own: rung 0 of the shared ladder backs away from any live named creature nearer than `Keep`, and the coward's `Keep` answers two steps. So the coward already flinches from anyone adjacent, and at range it shoots (rpg-toolkit#1758: a fleeing coward orbits its pursuer).
 - **The world remembers facts, not deeds.** A fact is an authored id that an intel record `reveals`; a member learns it by presence or by taking the record; a disposition `until: { fact: … }` flips the stance once the faction's mind knows. The raider camp fixture is the live example.
-- **The mind's store and the world's store are separate.** Deeds live in the intel log as holdings; facts live in the journal. "Word spreads" between them is shelved (ideas/living-world/disposition, round 3).
+- **Two records, two purposes.** Deeds live in the play record as holdings — what happened in the run, the mind's memory. Facts live in the world journal — what carries out of the run. Both are records; neither is the other's cache.
 - **Search costs nothing; Attack, Cast, Move, Activate are priced** through `Afford` and `CostOf*` spend profiles. `VERB_*` on the wire has no social entry.
 - **A monster has Wisdom** (the goblin's is 8) and a private skill map with no getter. `Frightened` exists as a condition ref with no behavior; this design does not use it.
 
 ## The two cuts that broke, and why (recorded so they are not proposed again)
 
 1. **"On success, set the goblin to fleeing."** A flee flag on the member is state the driver would have to read live, which rule A2 forbids, and it would make the outcome the verb's instead of the mind's. A berserker told to run does not run. The preset must decide.
-2. **"One fact that both the mind and the disposition read."** Proposed in session, withdrawn against the code: deeds and facts are two stores with two readers and two learning rules. Folding them is the "word spreads" bridge, a primitive of its own. Intimidate lands into both from one seam and copies nothing.
+2. **"One fact that both the mind and the disposition read."** Proposed in session, withdrawn: the play record (deeds, what happened in the run) and the world journal (facts, what carries out of the run) are both records with different purposes, by design — Kirk's correction, 2026-09-16. Intimidate writes to each from one seam and copies nothing; there is no missing bridge to build.
 
 ## Decisions (resolved in the 2026-09-16 session)
 
