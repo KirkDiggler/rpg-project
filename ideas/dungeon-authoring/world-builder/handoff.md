@@ -5,10 +5,10 @@
 **Current next slice: monsters + one playable authored room.** Kirk deferred doors
 while making assets, accepted existing monster weapon/mind defaults, and explicitly
 approved hex-snapped monster/party-start markers with freeform scenery.
-[single-room-play.md](single-room-play.md) is the concrete contract **draft for
-his review**, not implementation authorization. Parent corrected the returned
+[single-room-play.md](single-room-play.md) is **approved by Kirk**. Next is scoped
+implementation planning, then the toolkit provider. Parent corrected the returned
 scratch drafts against actual source types and verified the YAML graph/cell
-example and asymmetric coordinate/yaw conversion. No implementation has started.
+example and asymmetric coordinate/yaw conversion. No implementation code yet.
 
 Height shipped in [web#1105](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1105)
 via Kirk's auto-merge at `258b180501812d4d0e5c01d50d4a00654dae8563`;
@@ -42,8 +42,8 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Kirk reviews the single-room contract, then scoped
-implementation planning/provider issues. Do not redo shipped UI or revive the
+**Immediate next step:** Write the scoped single-room implementation plan, then
+create provider/consumer issues and start the toolkit provider. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction

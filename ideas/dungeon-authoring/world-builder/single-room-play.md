@@ -1,6 +1,7 @@
 # One playable World Builder room
 
-**Draft for Kirk review — not implementation authorization.** This narrows the
+**Approved by Kirk in conversation.** Implementation follows the scoped plan;
+merge, environment changes and cleanup still need their own authority. This narrows the
 approved [architecture](design.md) to one real playable room. Kirk approved
 existing monster weapon/mind defaults and visibly hex-snapped monster/start
 markers; scenery stays freely placed. Doors are parked while he makes assets.
