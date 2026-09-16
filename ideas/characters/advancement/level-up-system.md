@@ -573,6 +573,21 @@ Each entry names the fact that forced it, so the change is a consequence and not
   the SDK move), and let CI cut a tag above v0.174.0 that carries the rung; #1787 then
   pins a real tag. The rule underneath: a pseudo-version is only safe while nothing on
   main outranks it, and the newest tag is not the merge — verify by content.
+- **rpg-api#995 rebuilt on the SDK (head 6fef7bf9): the twelve-class integration test
+  caught a projection bug the unit tests had encoded.** `NextLevelOutput.Level` is the
+  level the sheet *holds*; `CharacterLevel` is the one being *taken*. The handler
+  projected `Level` onto the wire's "level you would take" and every response said
+  "Level 1" for a character about to be 2 — and the handler's own fixtures set only
+  `Level: 2`, so they agreed with the mistake. The suite that levels every class through
+  the real Manager failed on all ten answering classes at once. Fixtures now set all
+  three numbers. Lesson for the log: a fixture that sets one of two sibling fields is how
+  a projection reads the wrong one.
+- **R6.1a refined: options fewer than the count are refused at the read too.** The SDK
+  first projected ranger's `ranger-spells-2` with a count of two and zero options — a
+  screen with a disabled confirm and no message. R4.4f already says such a level is
+  unanswerable at the write; the read matches it (`ErrLevelNotOffered`, naming class,
+  level, kind and counts). Ranger joins druid and wizard as a refusal at the read, each
+  naming its own cure.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
