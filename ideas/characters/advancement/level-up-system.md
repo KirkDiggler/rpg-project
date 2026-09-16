@@ -588,6 +588,15 @@ Each entry names the fact that forced it, so the change is a consequence and not
   unanswerable at the write; the read matches it (`ErrLevelNotOffered`, naming class,
   level, kind and counts). Ranger joins druid and wizard as a refusal at the read, each
   naming its own cure.
+- **The reach of the count rule, computed against the pinned rulebook (#1787):** only
+  spell level 1 has authored option lists, so every caster is refused from the level its
+  progression first reaches second-level spells — ranger from 2 (10 levels refused), bard
+  from 3 (14), sorcerer from 3 (12), wizard from 3 (18). Barbarian, cleric, druid,
+  fighter, monk, paladin, rogue and warlock are untouched. So: **level 2 is takeable for
+  every roster class; level 3 is not for the casters until their spell lists are
+  authored.** A content gap the rule makes visible, beside the subclass gate (#1767) that
+  also holds level 3. The SDK spells the refusal "level-1 spells" rather than copying
+  the rulebook's ordinal form, on purpose: one spelling of a content fact, in one place.
 - **Warlock keeps its level-1 slot row, with a `SlotReset` on the progression** (#1781).
   Fact: the derivation reads the slot row to know it is asking for a first-level spell,
   so the row cannot be empty; pool sizing builds only long-rest pools, so warlock's
