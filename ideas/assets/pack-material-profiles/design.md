@@ -4,6 +4,13 @@ Status: approved by Kirk in chat at design head `7121be8e0e54053685723004d026fa1
 The first profile-and-preview slice is planned in [plan.md](plan.md); trusted cache
 activation remains the subsequent delivery boundary described below.
 
+**Next-delivery correction:** Kirk has approved the direction of a free material
+editor, not an inferred-option picker. Read [editor-amendment.md](editor-amendment.md)
+first for independent color/normal/emissive settings, direct preview and the full
+normal-ingestion handoff. That written amendment awaits his review. The restricted
+menu, compatibility-gated image choices and preview-only delivery below are
+retained as the earlier design history, not requirements for the new editor.
+
 Tracking: [project #450](https://github.com/KirkDiggler/rpg-project/issues/450),
 [Assets #217](https://github.com/KirkDiggler/rpg-game-assets/issues/217).
 
