@@ -102,10 +102,29 @@ pre-existing lint warnings; only minimal behavior-preserving lint cleanup is sco
 Parent also found the first launch test used an empty scene and omitted the promised
 reload/snapshot/capacity proof despite passing by name. Completion brief is durable
 at `.runtime/local/dungeon-authoring/api1003-completion.md` in game-dev.
-Workflow `9637f8dc-dcc4-436c-b334-dc2af75c51d8` (same API mission84be7791/worktree)
-runs a fresh full-capability GLM implementer, then a **separate fresh independent**
-GLM reviewer. Native gate now requires registry, launch, stored-snapshot and
-capacity-refusal tests to execute; parent/reviewer still inspect real assertions.
+GLM completion9637f8dc finished API functionality/gates but exposed a real hook
+isolation bug: `ci-checks.test.sh` inherited linked-worktree Git context and its
+scratch fixture changed the feature ref/index and shared repo config. Worker
+restored its feature base; parent backed up/restored proven common-config damage.
+A later malformed worker identity-read command wrote `--show-origin` as identity;
+parent proved/removes only that exact addition. Worker was restricted to source
+and scratch tests; **parent owns real Git publication** after these incidents.
+Durable recovery notes: `.runtime/local/dungeon-authoring/api1003-hook-recovery.md`.
+
+Parent safely published [API PR1004](https://github.com/KirkDiggler/rpg-api/pull/1004)
+at `423e7cd8b74203f575ef75e1727641a1c8fc422e` after normal hooks/CI passed. Hook
+repair now clears complete Git-local context, fails closed on discovery failure,
+and permanently tests both primary and linked-worktree metadata/bytes safety.
+Parent also preserved seeder nil behavior and corrected staged-fixture EOFs.
+Commit parent/tree matched exactly; common config, stash and unrelated refs were
+unchanged; post-push config changed only the intended feature upstream. Evidence:
+`.runtime/local/dungeon-authoring/checkpoints/api1003-publication-20260917T093739Z/`.
+
+**FIRST actual independent API/safety review is running** in workflow
+`271678a8-1d46-4bf6-ace1-1d2d1b1eb7ee` (same API mission84be7791/worktree), fresh
+GLM reviewer. Previous declared review lanes never launched due writer failures.
+Native public registry/launch/reload/capacity tests passed; reviewer checks actual
+semantics too. Draft PR1004 is not merged; hosted checks/review remain pending.
 Kirk freed HDD space and directed continuation;26GB/home was verified free, no
 cleanup was performed. Live3030/8110 remain untouched.
 Go proto dependency is the published v0.1.198 generated commit6ea2b2e6, which
