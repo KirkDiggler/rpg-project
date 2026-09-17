@@ -5,10 +5,18 @@
 **Current next slice: monsters + one playable authored room.** Kirk deferred doors
 while making assets, accepted existing monster weapon/mind defaults, and explicitly
 approved hex-snapped monster/party-start markers with freeform scenery.
-[single-room-play.md](single-room-play.md) is **approved by Kirk**. Next is scoped
-implementation planning, then the toolkit provider. Parent corrected the returned
-scratch drafts against actual source types and verified the YAML graph/cell
-example and asymmetric coordinate/yaw conversion. No implementation code yet.
+[single-room-play.md](single-room-play.md) is **approved by Kirk**. The checked
+[provider plan](single-room-play-provider-plan.md) is published; toolkit#1753 is
+In Progress. Luna is implementing Task1 (typed source/strict decoder) in
+`rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
+`feat/1753-encounter-footprints`, starting at3a9dbf6e. Module baseline passed;
+normal hooks/tooling verified. Tasks2–4 are pending; no playable compiler yet.
+Progress ledger: that worktree's
+`.superpowers/sdd/single-room-play-provider-plan/progress.md`.
+Workflow `cb9a0312-784b-4c50-bfda-34958dcf5328`, mission
+`c506ca66-5582-4e18-a53b-3cc3068b867b` (toolkit worktree scoped).
+Parent corrected draft source shapes/frame math and plan module boundaries,
+existing PartyStart/Load contracts, and C1 monster-resolution ownership.
 
 Height shipped in [web#1105](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1105)
 via Kirk's auto-merge at `258b180501812d4d0e5c01d50d4a00654dae8563`;
@@ -42,8 +50,9 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Write the scoped single-room implementation plan, then
-create provider/consumer issues and start the toolkit provider. Do not redo shipped UI or revive the
+**Immediate next step:** Consume Task1's actual code/tests/Draft PR, then continue
+Task2 shared footprint integration. Do not restart completed planning or ask for
+another execution-choice approval. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction
@@ -156,9 +165,9 @@ World first, optional named areas later. No forced region-first placement, fake
 per-hex entities, shadow anchors or lossy visual-ref-only export. Keep complete
 pieces/transforms/groups/supports/lights and explicit gameplay declarations.
 
-Toolkit#1753 is parked, with no implementation: worktree
-`rpg-toolkit/.worktrees/1753-encounter-footprints` at1773806f. Do not revive its
-rejected lossy proposal. `Room.GetEntityPosition` is cell-native, not planar feet.
+Toolkit#1753 has been resumed under the approved complete-room contract; its
+previously clean worktree was fast-forwarded from1773806f to3a9dbf6e before work.
+Do not revive its rejected lossy proposal. `Room.GetEntityPosition` is cell-native, not planar feet.
 Existing PutDungeon(validate_only)/PutDungeon/GetDungeon and choose/play are the
 preferred future seams; a new RPC needs a concrete reason.
 
