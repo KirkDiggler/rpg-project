@@ -8,20 +8,27 @@ approved hex-snapped monster/party-start markers with freeform scenery.
 [single-room-play.md](single-room-play.md) is **approved by Kirk**. The checked
 [provider plan](single-room-play-provider-plan.md) is published; toolkit#1753 is
 In Progress with [Draft toolkit#1798](https://github.com/KirkDiggler/rpg-toolkit/pull/1798).
-All four provider milestones are implemented at
-`1b9258d6a4a748fcd97e28389f70f610899eeac2` in
+All four provider milestones are implemented and reviewed at
+`f13570448b9f24176122107ad89fd726593aee85` in
 `rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
 `feat/1753-encounter-footprints`, base3a9dbf6e. Parent runtime/load/member-atlas
 and v3 compiler probes pass; hosted required checks green. Source validation,
 shared footprints, full compile and presentation persistence are present.
-**Independent whole-PR review is running; Draft1798 is not merge-ready.**
+**PR1798 is ready for Kirk's explicit merge decision; not merged.** Whole review
+5230677406, closure5231061232 and main-integration verification5231155443 are
+published. The Important source-path error was fixed at37f8f937; Minor follow-ups
+are explicitly tracked in toolkit#1803. Kirk confirmed fixed Crypt floor/style,
+no theme selector (contract16d0ff6). Main's Persuade update was merged into the
+feature branch atf1357044, retaining both reserve standing and new memberFacts
+validation; module/race/lint/parent probes and hosted checks passed.
 No browser Play claim: proto/API/session adoption and web consumers remain.
 Progress ledger: that worktree's
 `.superpowers/sdd/single-room-play-provider-plan/progress.md`.
 Implementation mission `c506ca66-5582-4e18-a53b-3cc3068b867b` is scoped to the
-writer worktree. Current review workflow `50fea07b-863c-40f3-aa03-d37ab193a512`,
-mission `ee4560fc-9588-4537-8a49-0a3494b64fca`, uses the separate read-only
-`.worktrees/1753-room-review` at the exact head and a fresh GLM reviewer.
+writer worktree. Review mission `ee4560fc-9588-4537-8a49-0a3494b64fca` used the
+separate `.worktrees/1753-room-review`; whole review, scoped closure and integration
+passes are complete. Latest retained reviewer: `af174328-24ec-4809-93b6-0f8c919d6c56`
+from workflow `ed0cb7d3-7d11-4360-9ec7-69cf6c26a72b`. No active workers.
 Reports are bound under home-directory subagent-artifacts; temporary recovery
 map `/tmp/dungeon-authoring-playable-room/execution.json` names current evidence.
 Parent corrected draft source shapes/frame math and plan module boundaries,
@@ -59,10 +66,10 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Consume the independent published review, resolve real
-blockers and explicitly defer optional work. No automatic fix loops or merge.
-Then release/pin/adopt through owning repo rules and implement the web play path.
-Do not redispatch completed provider milestones or restart design approval. Do not redo shipped UI or revive the
+**Immediate next step:** Await explicit permission to merge1798 into main. Then
+recheck head/checks, merge only that PR, verify the actual encounter tag and adopt
+through owning repo release rules. No hand tags, automatic cleanup or environment
+changes. Do not redispatch completed milestones/reviews or restart design approval. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction
