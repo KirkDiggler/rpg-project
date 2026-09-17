@@ -14,7 +14,8 @@ All four provider milestones are implemented and reviewed at
 `feat/1753-encounter-footprints`, base3a9dbf6e. Parent runtime/load/member-atlas
 and v3 compiler probes pass; hosted required checks green. Source validation,
 shared footprints, full compile and presentation persistence are present.
-**PR1798 is ready for Kirk's explicit merge decision; not merged.** Whole review
+**Kirk merged PR1798** at `3e20eaa1a318827d034d32d47d0d19b2830c92b9`;
+released `rulebooks/dnd5e/encounter/v0.87.0` resolves to that merge. Whole review
 5230677406, closure5231061232 and main-integration verification5231155443 are
 published. The Important source-path error was fixed at37f8f937; Minor follow-ups
 are explicitly tracked in toolkit#1803. Kirk confirmed fixed Crypt floor/style,
@@ -66,10 +67,21 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Await explicit permission to merge1798 into main. Then
-recheck head/checks, merge only that PR, verify the actual encounter tag and adopt
-through owning repo release rules. No hand tags, automatic cleanup or environment
-changes. Do not redispatch completed milestones/reviews or restart design approval. Do not redo shipped UI or revive the
+**Immediate next step:** Implement the remaining consumers for an early local
+integrated walk; Kirk explicitly chose local-first, not a hosted deployment gate.
+A read-only current-ref map is running (workflow49a8fb95, missionde121643, cwdgame-dev)
+before owning issues/worktrees and scoped implementation. Use encounterv0.87.0;
+consumer branches may be exercised locally before their PRs merge. No hand tags,
+cleanup, further merge authority or re-approval of the existing design.
+
+**Local restoration checkpoint:** Kirk confirmed the room saved/exported. Resumed
+only the existing six `rpg-local--dungeon-authoring` containers with their identities
+unchanged; no recreation, reseeding, asset sync or other-stack starts. :8110 health
+SERVING and :3030 World Builder rendered in a fresh browser. Web still pinned to
+height3438f64; Vite PGID567088 (verify liveness before acting). Durable evidence:
+`.runtime/local/dungeon-authoring/checkpoints/restore-20260917T052754Z/` in game-dev.
+This restores the existing authoring tool, **not** the pending Play feature. Renew
+the save/export checkpoint before a later handoff if Kirk has made new edits. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction
