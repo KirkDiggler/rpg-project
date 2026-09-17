@@ -1,6 +1,7 @@
 # Authored GLBs through the original Asset Review Lab
 
-Status: proposed technical design; operator workflow and two-asset trial approved in chat.
+Status: approved in chat, including explicit source switching between the full
+cached library and the focused authored trial; implementation pending.
 Tracking: [#459](https://github.com/KirkDiggler/rpg-project/issues/459).
 Parent journey: [#365](https://github.com/KirkDiggler/rpg-project/issues/365).
 Builds on [#412](https://github.com/KirkDiggler/rpg-project/issues/412).
@@ -24,6 +25,11 @@ and node names do not grant interactive behavior.
 The browser material editor remains parked. No full-pack conversion, material
 rewriting, texture downsampling, automatic Ready, publication or merges.
 
+The full existing pack catalogue remains a first-class browsing source, including
+material-review, FX-review and broken-preview entries. A focused trial must not
+replace that library or require ingesting/converting it again. Browsing an asset
+is distinct from marking it Ready or publishing it.
+
 ## Verified current seams
 
 Inspected Assets `d632f42` and the installed Web review implementation:
@@ -45,6 +51,10 @@ Inspected Assets `d632f42` and the installed Web review implementation:
 - `AssetReviewScene.tsx::CandidatePreview` already previews nested GLB scenes.
   Its calibration is centering/flooring followed by scale/offset and yaw, with
   the existing shared Synty scale. The authored output must match this screen.
+- `asset_review_launcher.py` already selects named registered workspaces and
+  prepares a cached queue without conversion. However, `AssetReviewLab.tsx`
+  hardcodes one `catalog.json` URL and one `rpg.asset-review.batch.v1` storage
+  key. A source switcher with isolated drafts is new work, not an existing UI.
 
 ## Ownership and scope
 
@@ -58,7 +68,54 @@ Only two active implementation worktrees are needed, one per owning repository.
 Parked editor worktrees, user Blender files, old cache generations, existing
 browser drafts and historical releases remain untouched.
 
-## 1. Explicit source kind, not converter impersonation
+## 1. One Lab, explicit selectable sources
+
+Add a small **Source** selector to the original Lab. Initial choices are the
+existing complete Dark Fortress library and the focused authored-export trial.
+Changing source changes the catalogue being browsed; it does not ingest, convert,
+refresh, merge catalogues, clear drafts or approve assets. The chosen source name
+stays visible alongside its counts/status. The two-asset restriction applies to
+the trial source and release, not to the user's ability to browse the full pack.
+
+The launcher generates an ignored `sources.json` index with schemaVersion1,
+`defaultSourceId`, and `sources` rows containing exactly `id`, `label`, `kind`
+(`converted-fbx` or `authored-glb`) and `catalogUrl`. IDs are stable workspace
+registration identities, not catalogue hashes or display labels. Catalogue URLs
+are same-origin prepared paths under the review asset root, not arbitrary
+filesystem paths or remote URLs. No human maintains this index.
+
+Use namespaced prepared locations for new sources, with content-hashed GLB URLs.
+Register the existing legacy catalogue at its existing path without rewriting or
+deleting its prepared models. Reuse verified cached files on subsequent launches;
+switching an already registered source only loads its prepared catalogue. Source
+preparation and index installation use the review checkout's existing writer
+lock and atomic writes. Preparing the authored source must never overwrite the
+legacy catalogue or reset the shared serving directory. No unowned server stops.
+
+Keep blocked/material/FX-review candidates searchable. A valid catalogue row
+whose preview cannot load stays visible with a reason and no Ready eligibility;
+do not hide it or substitute an approved-looking fake preview. Integrity failures
+remain explicit failures, not trusted material status. A failed source refresh
+must preserve its previous prepared catalogue and other sources' usability.
+
+Store review batches under source-scoped keys and remember the selected source
+separately. Names, calibration, decisions and selected-item/filter context belong
+to that source; switching out and back restores them. Persist edits before the
+switch and gate asynchronous catalogue/model results by active source identity,
+so a late old request cannot overwrite the new source or its load/Ready state.
+Exports and imports operate on the active source only; never silently combine
+Ready entries from both sources.
+
+Legacy compatibility: if no source index exists, retain the current single-source
+path and storage behavior. On first indexed launch, migrate the old global draft
+only to the uniquely matching legacy source, preserving the original stored JSON
+as a backup. Never copy it into the authored trial or clear it on ambiguity; show
+a recoverable migration message instead. V1/v2 catalogue payloads remain unchanged.
+
+This is catalogue selection, not a material editor or a filesystem picker. The
+existing workspace setup/launcher owns which sources can be offered.
+
+## 2. Explicit source kind, not converter impersonation
 
 Introduce schema **v3** for authored review catalogues, persisted review batches
 and exported Ready batches. V1/v2 retain their current exact behavior and bytes.
@@ -91,7 +148,7 @@ Candidate identity includes source kind, pack/version, relative source path and
 GLB hash. Two files cannot collide merely because their basenames match; reject
 ambiguous proposed refs rather than silently suffixing or overwriting a release.
 
-## 2. Immutable capture and refresh
+## 3. Immutable capture and refresh
 
 Register a separate authored workspace. Keep export folder and archive root
 separate from each other, existing converter caches and publication destinations.
@@ -139,7 +196,7 @@ JSON cannot silently select new bytes. Removing a working export does not delete
 its archived revision. An in-flight release stays bound to its frozen captures,
 not whatever the working folder contains later.
 
-## 3. Calibration without losing the authored graph
+## 4. Calibration without losing the authored graph
 
 For authored inputs, add a hierarchy-preserving normalizer. It repacks the GLB
 JSON with one new calibration parent above the original default-scene roots.
@@ -175,7 +232,7 @@ Keep legacy identity-matrix validation for legacy normalized outputs. Add an
 explicit authored-output validator; do not weaken the legacy validator globally
 or pretend the hierarchy-preserving output has identity node transforms.
 
-## 4. Existing release custody and consumption
+## 5. Existing release custody and consumption
 
 Extend source resolution by source kind. Legacy entries still require their
 trusted converter manifests. Authored entries require the exact captured receipt
@@ -201,12 +258,15 @@ path and regression tests rather than changing historical receipt semantics.
 The source hierarchy survives future gameplay integration, but this trial neither
 exposes a working door action nor treats the upper part as already resizable.
 
-## 5. Delivery sequence and evidence
+## 6. Delivery sequence and evidence
 
-1. **Contract/intake + original Lab checkpoint.** Capture synthetic fixtures and
-   then the two private exports. Display both in the original Lab; demonstrate
-   metadata, calibration, Ready-only export, defer, unchanged refresh and changed
-   source invalidation. This is the first human-visible implementation checkpoint.
+1. **Source selection + contract/intake + original Lab checkpoint.** Preserve the
+   complete cached library, capture synthetic fixtures and then the two private
+   exports. Switch between the full library (including blocked entries) and the
+   two-asset trial in the original Lab without conversion or catalogue replacement.
+   Demonstrate isolated/restored drafts, legacy draft migration, metadata,
+   calibration, active-source Ready-only export, defer, unchanged refresh and
+   changed-source invalidation. This is the first human-visible checkpoint.
 2. **Preserving normalization + release adapter.** Prove graph/image preservation,
    preview/output calibration parity, strict kind separation, durable private
    custody, tamper refusal and idempotent frozen-source resume. Produce a real
@@ -239,6 +299,10 @@ only synthetic fixtures to public repositories. Never overwrite parked work.
 ## Acceptance checklist
 
 - [ ] V1/v2 converter reviews and historical outputs remain valid and unchanged.
+- [ ] Full cached pack remains browsable, including blocked/broken-preview rows.
+- [ ] Source switching preserves separate catalogues/drafts and does no conversion.
+- [ ] Late source responses cannot overwrite another source's state or Ready status.
+- [ ] Legacy drafts migrate only to their matching source, with originals retained.
 - [ ] Real floor and door enter the existing Lab from authored captures.
 - [ ] Human metadata/Ready controls and Ready-only JSON are the operator handoff.
 - [ ] Changed bytes cannot reuse old Ready authority; unchanged captures can.
