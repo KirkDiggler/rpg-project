@@ -142,9 +142,16 @@ left all setup UI/history unimplemented. Parent preserved it at game-dev
 `.runtime/local/dungeon-authoring/checkpoints/web1112-m1-20260917T102137Z/` and found
 real codec gaps (order-sensitive play comparison, presence/type/bounds/size checks,
 missing fixed-legacy/storage proof and unrelated helper/comment churn).
-Completion workflow `d5942887-91e3-4a0e-a529-0ec10b7c0fda` (same mission4b6a5e3f/
-web worktree) now uses a fresh full-capability GLM worker at medium thinking for
-BOTH corrected foundation and actual snapped actor UI. Durable brief:
+GLM completiond5942887 implemented actual controls/RoomActorMarkers and rich
+regressions, then hit30min timeout while finishing viewport tests. Parent saved
+all work at `.runtime/local/dungeon-authoring/checkpoints/web1112-timeout-20260917T105555Z/`.
+HEAD remains3a0ad05c; no Git/runtime changes. Parent ran the five focused suites:
+92pass/5fail, failures in new viewport tests; type errors are test-scaffolding only.
+Retained GLM worker62675476 is finishing those exact errors in workflow
+`609259df-8096-41db-bfb2-1b7873ace611` (same mission4b6a5e3f/worktree), not restarting
+implementation. No additional test matrix/refactor/M2. Parent must consume its
+actual green evidence next. Origin/dev advanced one commit; reconcile only at
+publication barrier. Original durable brief remains
 `.runtime/local/dungeon-authoring/web1112-m1-completion.md` in game-dev.
 Worker owns only source/focused tests; **parent owns all real Git publication and services**. Parent
 will inspect and show an early temporary preview, then run one full ci-check at the
