@@ -2,6 +2,18 @@
 
 ## Resume here
 
+**Human acceptance confirmed at web86164eb9 / APId5dfed99:** Kirk confirms he can
+load his saved room, roll dice, and start on his authored start hex. The slice
+is functioning. DeepSeek's bounded follow-up fixed resumed-character selection,
+truthful leave wording, and named/focused overwrite confirmation; parent restored
+the omitted existing custom-dice preview bundle. Full web CI6778tests and hosted
+checks pass; GLM verified the bounded browser surfaces. Explicit camera
+start-direction pointer and other UI cleanup are follow-ups, not current blockers.
+Both PR1116 and PR1004 remain OPEN/non-Draft/MERGEABLE; no merge authority given.
+Complete preview3032 is pinned at86164eb9 (startup PGID2710141, verify before use).
+Original3030/8110 and setup-only3031 remain untouched. Sections below retain the
+historical delivery trail; their pending-walk statements are superseded here.
+
 **Latest delivery gate:** complete web candidate [PR1116](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1116)
 is pushed at `a5fd4ebd52f3269105dc68c7a637b18cf75344d1`; review closed and local/hosted
 checks green, not merged. Whole review5237950102 found a real New-room overwrite
