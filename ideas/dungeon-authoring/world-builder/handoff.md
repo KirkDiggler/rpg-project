@@ -6,8 +6,8 @@
 while making assets, accepted existing monster weapon/mind defaults, and explicitly
 approved hex-snapped monster/party-start markers with freeform scenery.
 [single-room-play.md](single-room-play.md) is **approved by Kirk**. The checked
-[provider plan](single-room-play-provider-plan.md) is published; toolkit#1753 is
-In Progress with [Draft toolkit#1798](https://github.com/KirkDiggler/rpg-toolkit/pull/1798).
+[provider plan](single-room-play-provider-plan.md) shipped through
+[toolkit#1798](https://github.com/KirkDiggler/rpg-toolkit/pull/1798), linked to toolkit#1753.
 All four provider milestones are implemented and reviewed at
 `f13570448b9f24176122107ad89fd726593aee85` in
 `rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
@@ -22,14 +22,18 @@ are explicitly tracked in toolkit#1803. Kirk confirmed fixed Crypt floor/style,
 no theme selector (contract16d0ff6). Main's Persuade update was merged into the
 feature branch atf1357044, retaining both reserve standing and new memberFacts
 validation; module/race/lint/parent probes and hosted checks passed.
-No browser Play claim: proto/API/session adoption and web consumers remain.
+No browser Play claim: SDK bridge, API adoption and web consumers remain.
+Kirk merged [protos#343](https://github.com/KirkDiggler/rpg-api-protos/pull/343)
+at9dec1605; generated v0.1.198 carries RoomSceneJson (verified at tag6ea2b2e6).
+Review5231667363 passed the source; parent corrected the PR-body signature/adoption
+notes without changing a91e93e. SDK implementation is now toolkit#1804, below.
 Progress ledger: that worktree's
 `.superpowers/sdd/single-room-play-provider-plan/progress.md`.
 Implementation mission `c506ca66-5582-4e18-a53b-3cc3068b867b` is scoped to the
 writer worktree. Review mission `ee4560fc-9588-4537-8a49-0a3494b64fca` used the
 separate `.worktrees/1753-room-review`; whole review, scoped closure and integration
 passes are complete. Latest retained reviewer: `af174328-24ec-4809-93b6-0f8c919d6c56`
-from workflow `ed0cb7d3-7d11-4360-9ec7-69cf6c26a72b`. No active workers.
+from workflow `ed0cb7d3-7d11-4360-9ec7-69cf6c26a72b`. Those provider workers are complete.
 Reports are bound under home-directory subagent-artifacts; temporary recovery
 map `/tmp/dungeon-authoring-playable-room/execution.json` names current evidence.
 Parent corrected draft source shapes/frame math and plan module boundaries,
@@ -69,10 +73,21 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
 
 **Immediate next step:** Implement the remaining consumers for an early local
 integrated walk; Kirk explicitly chose local-first, not a hosted deployment gate.
-A read-only current-ref map is running (workflow49a8fb95, missionde121643, cwdgame-dev)
-before owning issues/worktrees and scoped implementation. Use encounterv0.87.0;
-consumer branches may be exercised locally before their PRs merge. No hand tags,
-cleanup, further merge authority or re-approval of the existing design.
+Current-ref map49a8fb95 is complete. Parent corrected two important scout claims:
+API StartEncounter already checks actual-party capacity before writes; SDK
+`types.go`/`projectAtlas` drops RoomScene, so pinning encounter alone is insufficient.
+Kirk approved the bounded **session-module** bridge: [plan](single-room-play-session-plan.md),
+[toolkit#1804](https://github.com/KirkDiggler/rpg-toolkit/issues/1804), worktree
+`.worktrees/1804-session-room-scene`, branch `feat/1804-session-room-scene`.
+Parent baseline session tests/hooks/tooling passed at3e20eaa1. Workflow
+`8fc87967-b948-47f9-b3fc-75126760c2f7` (mission08f29cc0, that worktree) runs Luna
+implementation then fresh independent GLM review. Consume those results next.
+Only session module is writable in that lane; encounter and other modules stay
+read-only. RoomSceneJSON preserves the canonical scene without leaking an inner
+type through S2. No rules or duplicate scene DTOs. API must use version-neutral
+Load + Compiled.Key/Name and keep the existing capacity gate and offset conversion.
+Use encounterv0.87.0/protov0.1.198; consumer branches may be exercised locally
+before merge. No hand tags, cleanup or further merge authority.
 
 **Local restoration checkpoint:** Kirk confirmed the room saved/exported. Resumed
 only the existing six `rpg-local--dungeon-authoring` containers with their identities
@@ -90,8 +105,11 @@ Time/token budget matters. Parent owns scope, precise prompts, integration and
 verification. **Luna first** (`worker` with explicit
 `openai-codex/gpt-5.6-luna:medium`), fresh context for new slices. GLM 5.3 Flash is
 available for focused review/alternate work. Sol/Astra are not routine coders.
-Kirk also has other Ollama models; verify exact registry IDs before using them,
-and don't stall available work to configure optional models or alter globals.
+**Kirk added DeepSeek and recommends it as an option where Sol would normally be
+used.** It was not yet listed by this session's native model inventory when that
+preference was recorded; recheck the exact registered provider/id before selecting
+it. Do not guess an ID, stall available work or alter global model configuration.
+This does not change Luna as the default writer.
 
 Working URL + Kirk's hands-on acceptance come early. Keep essential data-safety
 regressions, normal hooks and required CI. No duplicate per-task/spec/quality
