@@ -10,6 +10,13 @@ markers; scenery stays freely placed. Doors are parked while he makes assets.
 Multi-room traversal, cover, concealment/intel, height physics, pickup/drop,
 loadout/AI editors and region-management UI are not prerequisites.
 
+**Presentation decision, confirmed by Kirk:** this first playable format keeps
+World Builder's current Crypt floor/style, with no theme selector. The compiler
+therefore explicitly supplies `Archetype: "crypt"` for the implicit region.
+This is a fixed presentation choice of this slice, not an inferred fact from the
+room's name or meshes, and never a gameplay rule. Authored scene assets remain
+unchanged; other themes require a separately authored/validated choice later.
+
 ## 1. The user loop
 
 Build and paint the room; choose an existing monster from the existing palette;
