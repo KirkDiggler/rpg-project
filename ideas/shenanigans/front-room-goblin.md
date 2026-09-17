@@ -1,6 +1,29 @@
 # The front room goblin — an authored reaction table
 
-**Status:** RULED 2026-09-17 (rpg-project#457). Rulings R1–R4 closed by Kirk on the PR; tracking issue follows.
+**Status:** SHIPPED 2026-09-17 (tracking rpg-project#458). Walked by Kirk: "pretty cool and what I was looking for. Getting text back from the goblin makes the game feel different and a lot more D&D."
+
+| Repo | Release |
+|---|---|
+| rpg-api-protos | v0.1.196 (#340: Persuade, Persuaded, Answered, AnswerWord, Sighting.stance) · v0.1.197 (#341: `Answered.fact` deprecated) |
+| rpg-toolkit | rulebooks/dnd5e v0.179.0 (#1799) · resolution v0.52.0 (#1801) · encounter v0.86.0 (#1800, includes dungeonspec) · session v0.93.0 (#1802) |
+| rpg-api | dev __API_HEAD__ (#1001), ships `content/reference-front-room.yaml` |
+| rpg-dnd5e-web | dev __WEB_HEAD__ (#1108), pays rpg-dnd5e-web#1104 (one verb registry; there were seven lists, not six) |
+
+## What the build corrected (kept visible)
+
+- **"Reaction" is D&D's word.** The wire and the toolkit call the author's list the **answer table** (`Answered`, `AnswerWord`, `Answers`, `BeatAnswered`), because Reaction is the rules term the React verb already spends. This doc's "reaction table" below is the older wording; the YAML `on:` key is unchanged.
+- **`tell` is not a word.** Teaching the party a fact is `fact`; witnesses include players; a fact is an id with no truth bit. The trap is authored as the bandits arriving on the false tip.
+- **The allied flip does not exist.** The "what already exists" table below claimed `until` flips "to neutral or allied". The hold-out shipped hostile → neutral only, and its ruling is that no predicate turns a pair allied. Not widened: an allied goblin this slice would only stop being a target, which a neutral one already is. The goblin ships static-neutral. The flip waits for the wave where allied means something.
+- **A fact never rides a broadcast beat** (Kirk). `Answered.fact` is deprecated on the wire and left empty; a per-viewer "what I know" projection is the only lawful road and is not built.
+- **Minds reading stance is not built.** No consumer: a neutral creature never enters a fight.
+- **A creature in no faction has no stance.** `BelievedStance` reported neutral for a world NPC; that collapses an absence into an answer. Fixed to unknown, matching the wire's "empty is no word for it".
+- **The untrained rule is applied but not yet seen.** Measured on the walk (160 rolls, far below a straight d20) but `Intimidated`/`Persuaded` carry no dice trace, so the log cannot show two dice or name the source. Kirk's ruling for the next slice: **disadvantage rolls are first class; the dice know to roll one or two and report each face.**
+
+## Next
+
+1. The check roll is seen: both faces and the source on the two social beats, as `Struck` carries a calculation.
+2. The world clock advances as the party moves and creatures are driven on it (Kirk: the arrived thug should walk to the front room). This is the door `flee` opened, applied every tick; Regroup and Alarm ride it.
+
 
 ## The scenario, in Kirk's words
 
