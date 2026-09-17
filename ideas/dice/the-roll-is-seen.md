@@ -1,8 +1,66 @@
 # The roll is seen — advantage and disadvantage carry both faces
 
-**Status:** DESIGN, panel-back (tracking rpg-project#462). Follows the front room
-goblin (`ideas/shenanigans/front-room-goblin.md`), whose untrained rule shipped
-applied but invisible.
+**Status:** SHIPPED 2026-09-17 (tracking rpg-project#462). Walked by Kirk: the
+untrained Intimidate shows two faces and the kept one on every surface. Follows
+the front room goblin (`ideas/shenanigans/front-room-goblin.md`), whose
+untrained rule shipped applied but invisible.
+
+| Repo | Release |
+|---|---|
+| rpg-api-protos | v0.1.199 (#344: `KeepRule`, `DiceKeep`, `DiceTrace.keep`, `calculation` on `Intimidated`/`Persuaded`/`DoorChanged`, `Struck` source lists deprecated) |
+| rpg-toolkit | rulebooks/dnd5e v0.180.0 (#1806) · encounter v0.88.0 (#1807) · resolution v0.53.0 (#1808) · session v0.95.0 (+ #1810 pin-only, tags in go.mod) (#1809) |
+| rpg-api | dev 98b6d753 (#1002) |
+| rpg-dnd5e-web | dev 560e4115 (#1110) |
+
+## What the build corrected (kept visible)
+
+- **The build order table below was wrong.** Encounter depends on neither
+  resolution nor dnd5e; that is what its mirror types are for. The real graph
+  is dnd5e and encounter first, then resolution, then session. Two stale pins
+  surfaced on the way (resolution seven encounter minors behind main).
+- **The offered die had no granter.** R7 says a contributed die is its
+  granter's, but the offer carried only who was *asked*. `Offer.SourceID` was
+  added and filled from the granter each condition already records.
+- **The advantage input flags are gone.** No non-test caller ever set
+  `HasAdvantage`/`HasDisadvantage`; a boolean brings neither a ref nor an
+  entity, so R7 could not record it. Advantage arrives only on the chain.
+- **Encounter's mirror refuses an anonymous pool after all.** The builder
+  reverted that check as "structural by charter, no rulebook to judge from",
+  and I accepted it. The independent review overturned both of us: `SourceID`
+  presence is data provenance, not 5e eligibility, the mirror already
+  enforces provenance on subtractive dice and on keep sources, and session's
+  persisted-JSON decoder relies on this validator, so an anonymous pool would
+  have survived persistence and reached the log. Fixed on the review round.
+- **Calculation carriers are optional on the types, strict at the producer.**
+  Intimidate, Persuade and Unlock refuse a nil calculation (`ErrNoCalculation`)
+  on both the direct and the resumed-pose path; a verb that rolled nothing
+  never calls the rule. rpg-api maps it to Internal: a producer defect, not a
+  precondition a player can act on.
+- **"Drawn struck through" cannot happen in the log.** The formatter returns a
+  plain string three text surfaces print. The line says `kept 18`; the
+  discarded die's look belongs to the tray slice. Kirk: the debug log is JSON
+  and its formatting does not matter.
+- **The old combat log stays untouched.** It renders the dead encounter view's
+  v1alpha2 events, which have no calculation. The live debug feed was the
+  target, and its trace renderer now prints the keep wherever a trace is
+  printed, instead of a second renderer keyed off the beat.
+- **Every d20 now names its roller, and the web's "worth attributing" test
+  was "names an entity".** Left alone, a check line ends with the roller's own
+  name, as saves and concentration lines already did. Not changed in this
+  slice; ruling open below.
+- **Walk finding that was not a bug.** Kirk expected an arrival on a failed
+  check; the front room table brings the bandits only on a failed Persuade
+  (the false fact), and both persuades landed. The journals proved the answer
+  and arrival path live. The author's table is the tool, and it is
+  configurable there.
+
+## Open after shipping
+
+- Whether a die is named on the line only when its entity differs from the
+  beat's actor (recommended), so "Bless (from Alice)" shows and your own d20
+  does not. Four lines and three expectations in web.
+- The tray draws the second physical die from the keep record.
+- A builder palette for `intimidate:` and `on:` (carried from the front room).
 
 ## Kirk's ruling, 2026-09-17
 
