@@ -137,9 +137,16 @@ client legality gate, no second compiled-preview pane, omitted absent start, and
 no fictional pending-dungeon route (AuthorView already creates/readies/starts the
 lobby and calls App). Shared worldToCube already rounds; render HEX_SIZE=1.
 
-Workflow `018e95f3-09bc-4cf2-af04-eb72ade7899d` (mission4b6a5e3f, web worktree) runs
-Luna for safe v3 codecs/storage and snapped monster/start setup. Worker owns only
-source/focused tests; **parent owns all real Git publication and services**. Parent
+Initial workflow018e95f3 failed criterion1: Luna wrote a partial codec patch but
+left all setup UI/history unimplemented. Parent preserved it at game-dev
+`.runtime/local/dungeon-authoring/checkpoints/web1112-m1-20260917T102137Z/` and found
+real codec gaps (order-sensitive play comparison, presence/type/bounds/size checks,
+missing fixed-legacy/storage proof and unrelated helper/comment churn).
+Completion workflow `d5942887-91e3-4a0e-a529-0ec10b7c0fda` (same mission4b6a5e3f/
+web worktree) now uses a fresh full-capability GLM worker at medium thinking for
+BOTH corrected foundation and actual snapped actor UI. Durable brief:
+`.runtime/local/dungeon-authoring/web1112-m1-completion.md` in game-dev.
+Worker owns only source/focused tests; **parent owns all real Git publication and services**. Parent
 will inspect and show an early temporary preview, then run one full ci-check at the
 first Draft boundary. One branch/PR continues into milestone2 Save/Play and full
 runtime rendering; independent feature review comes after complete scope. No
