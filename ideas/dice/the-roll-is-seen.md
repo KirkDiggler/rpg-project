@@ -93,6 +93,17 @@ lie in a fourth way. One d20 roller, one trace shape, one keep record.
    the kept index, and the keep record below. It is the only place that knows
    advantage means two dice. It takes the roller's id and writes it as the
    d20's `SourceID`: the d20 stops being anonymous.
+   **`RollD20` is one pool, not the roll.** The roll is the
+   `RollCalculation`. `RollD20` fills its first component (the operation's d20,
+   the contract `validateRecordedD20` already checks). Every die added to the
+   roll — Bless's d4, Bardic Inspiration's d6, a Guidance offer — is its own
+   component with its own source, rolled by `rolls.ResolveContributions` as
+   saves and attacks do today, or appended by the pose door as checks do for
+   Guidance. Advantage never touches those pools; `Keep` lives on the d20's
+   trace only. A later effect that adds a die to a d20 roll adds a component;
+   it never changes `RollD20`. (Kirk on the panel: "the RollD20 function could
+   have additional dice in the case of being blessed or other effects." It
+   doesn't; the calculation does.)
 2. **The keep record on the trace.** `DiceTrace` gains `Keep *DiceKeep`, the
    sibling of `Rerolls`: `Rerolls` explains why `FinalRolls` differ from
    `OriginalRolls`; `Keep` explains why `KeptIndices` is what it is.
