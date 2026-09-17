@@ -7,13 +7,16 @@ while making assets, accepted existing monster weapon/mind defaults, and explici
 approved hex-snapped monster/party-start markers with freeform scenery.
 [single-room-play.md](single-room-play.md) is **approved by Kirk**. The checked
 [provider plan](single-room-play-provider-plan.md) is published; toolkit#1753 is
-In Progress. Luna is implementing Task1 (typed source/strict decoder) in
-`rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
-`feat/1753-encounter-footprints`, starting at3a9dbf6e. Module baseline passed;
-normal hooks/tooling verified. Tasks2–4 are pending; no playable compiler yet.
+In Progress with [Draft toolkit#1798](https://github.com/KirkDiggler/rpg-toolkit/pull/1798).
+Source checkpoint `abaa9c5c` now passes the25-case parent guard and94 source
+subtests after a fresh GLM implementation closed gaps left by two Luna passes.
+Worktree `rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
+`feat/1753-encounter-footprints`, base3a9dbf6e. Fresh GLM is implementing Task2
+(shared standing/crossing/sight), first closing one reproduced extreme-integer
+floor-bound guard. Tasks3–4 pending; no playable compiler yet.
 Progress ledger: that worktree's
 `.superpowers/sdd/single-room-play-provider-plan/progress.md`.
-Workflow `cb9a0312-784b-4c50-bfda-34958dcf5328`, mission
+Current workflow `c1e29efa-2583-450c-b99d-b5e8a24accad`, mission
 `c506ca66-5582-4e18-a53b-3cc3068b867b` (toolkit worktree scoped).
 Parent corrected draft source shapes/frame math and plan module boundaries,
 existing PartyStart/Load contracts, and C1 monster-resolution ownership.
@@ -50,9 +53,10 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Consume Task1's actual code/tests/Draft PR, then continue
-Task2 shared footprint integration. Do not restart completed planning or ask for
-another execution-choice approval. Do not redo shipped UI or revive the
+**Immediate next step:** Consume Task2's actual code/query regressions and host
+checks, then Task3 complete v3 compilation and Task4 persistence/atlas. Keep the
+approved SightLanes soft footprint/Contact-origin semantics, not a harder policy.
+Do not restart planning or ask for another execution-choice approval. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction

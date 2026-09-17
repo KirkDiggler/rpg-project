@@ -36,9 +36,9 @@ Keep `Decode`/`Compile` v2 signatures unchanged. Add the following typed v3
 entries; only milestone3 wires `Load`'s version dispatch:
 
 ```go
-type DecodeSingleRoomInput struct { Source []byte }
-type DecodeSingleRoomOutput struct { Spec *SingleRoomSpec }
-func DecodeSingleRoom(in DecodeSingleRoomInput) (*DecodeSingleRoomOutput, error)
+type SingleRoomDecodeInput struct { Source []byte }
+type SingleRoomDecodeResult struct { Spec *SingleRoomSpec }
+func DecodeSingleRoom(in SingleRoomDecodeInput) (*SingleRoomDecodeResult, error)
 
 type CompileSingleRoomInput struct { Spec *SingleRoomSpec }
 func CompileSingleRoom(in CompileSingleRoomInput) (Compiled, error)
@@ -104,7 +104,7 @@ transform coordinates or flags to zero/false while decoding.
   assertions before implementation:
 
 ```go
-out, err := DecodeSingleRoom(DecodeSingleRoomInput{Source: s.raw})
+out, err := DecodeSingleRoom(SingleRoomDecodeInput{Source: s.raw})
 s.Require().NoError(err)
 s.Require().NotNil(out.Spec)
 s.Equal(-2.25, out.Spec.Room.Scene.Items[0].Transform.X)
