@@ -182,15 +182,28 @@ member actors remain in their established roles. Checkpoint before the next writ
 (child5fe30a5a) ended with an unfinished sentence/no acceptance report. Parent
 verified it had added only the shared-hook draft, not the actual UI/route wiring
 or tests. Patch saved under game-dev `.runtime/local/dungeon-authoring/checkpoints/web1112-launch-partial-20260917T125106Z/`.
-Retained GLM context is continuing in workflow `ce9c5367-66c9-4355-ba55-f39dc58601ce`
-(same mission4b6a5e3f/writerWT), explicitly without another discovery pass. Parent
-also flagged its missing monotonic generation (character A→B→A must not revive
-an old continuation). It preserves the runtime patch and adds explicit root-key/collision
+Retained GLM completionce9c5367 (childa11bb1e0) implemented the UI/shared flow
+and reported360 focused tests green. Parent added three deferred component probes
+and reproduced required bugs: an old save launches a newly selected character;
+a same-ID source change still permits stale YAML saving; a new room retires the
+request but strands busy state. All three are red in
+`/tmp/dungeon-authoring-playable-room/web1112/launch-parent-races-red.log`.
+Bounded fix workflow `e6a6dd87-7f6e-4892-a36e-34b7d3e22f18` (same mission4b6a5e3f/
+writerWT) resumes that context for full source/key/character/mount retirement,
+owned cleanup and child-launch cancellation. No new feature or runtime changes.
+It preserves the runtime patch and adds explicit root-key/collision
 handling, generation-fenced exact source save and shared existing AuthorView lobby
 launch with Home-selected character. No key field in RoomDraft or arbitrary
 workshop-room default; no stale redirect/source replacement. Parent owns later
 safe local integration, full PR gate, publication and first whole-feature review.
 Both3031 setup preview and original3030/API8110 remain unchanged.
+Parent prepared a SEPARATE proof stack `rpg-local--dungeon-playtest` on loopback8111,
+APIimage from clean423e7cd8, own Redis and own authored-content bind (not the
+existing deployment's shared content). API healthSERVING; all prior container IDs/
+running states preserved, no cache prune/seed/reset. Metadata/commands/evidence:
+`.runtime/local/dungeon-playtest/state.json` in game-dev. Candidate web3032 is NOT
+started yet; start only after the race fix is verified, with its API binding set
+on Vite to8111. Real character/authored-room Play proof is still pending.
 Leave3031 pinned for Kirk's edits. Original durable M1 brief remains
 `.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
 Worker owns only source/focused tests; **parent owns all real Git publication and services**.
