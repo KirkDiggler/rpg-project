@@ -12,6 +12,46 @@ applied but invisible.
 And the standing law from the same wave: everything is visible in the log, the
 debug log for sure.
 
+On the panel, the same day, Kirk widened it past the d20:
+
+> "This isn't just about the d20 roll. We may have better insight into the
+> damage and other rolls. I know Bardic Inspiration is a d6. Long term, players
+> will have the appearance they are rolling all the dice. Knowing the source of
+> the dice will be important: if you are using my Bardic Inspiration or
+> someone's Bless, you use their dice style from their set. While a d20 function
+> is good for this slice, we will want the additions later to fit in with our
+> choices here."
+
+## Every die knows whose it is (the invariant this slice must honor)
+
+The trace shape already carries entity provenance: `RollSource.SourceID` is
+"the responsible character or entity when this contribution has entity
+provenance", and the contributed dice fill it today — Bless's d4 names the
+caster, Bardic Inspiration's d6 names the bard, Guidance's d4 names the caster,
+Help's advantage names the helper. A tray that draws each die in its owner's
+set has the data for every die **except the one rolled most: the d20 is
+anonymous.** Attacks source it to the weapon definition, saves to the rule
+ref, checks to the approach, and none of them names the roller. A client that
+wants the roller's d20 in the roller's style has to guess it from the beat's
+actor, which is the client calculating.
+
+The rule, stated so later additions fit:
+
+- **Every dice pool on a calculation names the entity whose rule threw it.**
+  The d20 is the roller's (`SourceID` = actor). A contributed die is its
+  granter's. A damage die is the wielder's, a monster trait's die the
+  monster's. `ValidateRollCalculation` refuses a dice component with an empty
+  `SourceID`. A roll with no entity behind it does not exist in this game.
+- **Whose die and whose rule are different facts and both are kept.** `Ref`
+  and `Name` say the rule (Bless, Longsword, Untrained); `SourceID` says the
+  entity. The bard's d6 is `Ref: Bardic Inspiration, SourceID: bard`.
+- **The web picks a dice style by `SourceID`, never by the beat's actor.**
+  This slice only prints; the tray slice draws. The fact is on the wire from
+  this slice on.
+- The three Go spellings of the trace (`events` for rules, `encounter` for
+  persistence, `session` for the seam) stay. They are the seams doing their
+  job, not duplication to clean.
+
 ## The break this closes
 
 Three machines roll a d20. Two of them keep both faces; one throws the second
@@ -32,8 +72,8 @@ even that at `encounter.ResolveCheckOutput{Beaten, Applied, Total}`, so
 
 Cancellation is unrepresentable everywhere. All three compute
 `effective := has && !hasOther`, roll one die, and the trace is
-indistinguishable from a straight roll. A player with Bless who rolled untrained
-sees a plain d20 and never learns the two rules met.
+indistinguishable from a straight roll. A player who was Helped and rolled
+untrained sees a plain d20 and never learns the two rules met.
 
 **Why this is a primitive, not a patch.** Every d20 the game will ever roll —
 attack, save, check, initiative, death save, contest — takes advantage and
@@ -51,7 +91,8 @@ lie in a fourth way. One d20 roller, one trace shape, one keep record.
    `checks.MakeAbilityCheck`. Input: the roller, the granted sources, the
    imposed sources. Output: the kept face and a `DiceTrace` with every face,
    the kept index, and the keep record below. It is the only place that knows
-   advantage means two dice.
+   advantage means two dice. It takes the roller's id and writes it as the
+   d20's `SourceID`: the d20 stops being anonymous.
 2. **The keep record on the trace.** `DiceTrace` gains `Keep *DiceKeep`, the
    sibling of `Rerolls`: `Rerolls` explains why `FinalRolls` differ from
    `OriginalRolls`; `Keep` explains why `KeptIndices` is what it is.
@@ -145,7 +186,7 @@ The log line, story and debug, reads the trace and names the rule:
 ```
 2d20 [7, 18] kept 7 · disadvantage: Untrained
 2d20 [7, 18] kept 18 · advantage: Reckless Attack
-1d20 [11] · advantage (Bless) cancelled by disadvantage (Untrained)
+1d20 [11] · advantage (Help, from Alice) cancelled by disadvantage (Untrained)
 ```
 
 The discarded face is drawn struck through. `formatDice`'s
@@ -159,8 +200,13 @@ adapter from a live `RollCalculation` to it is its own web slice.
 - **R1 — the keep record lives on the trace, not beside it.** A parallel list
   can disagree with the dice it describes. `Keep` beside `KeptIndices` cannot.
 - **R2 — cancellation is a recorded rule, not an absence.** RAW rolls one die;
-  we roll one die and say why. A log that cannot show "your Bless was eaten by
-  untrained" hides the one thing the player needed to learn.
+  we roll one die and say why. A log that cannot show "Alice's Help was eaten
+  by untrained" hides the one thing the player needed to learn.
+- **R7 — every dice pool names its entity, and validation refuses one that
+  does not.** The d20 gets the roller's id from `rolls.RollD20`. The builder
+  of the dnd5e PR lists every `DiceTrace` constructor it touched and which
+  entity each now names; a damage or trait die found anonymous is fixed in
+  that PR, not left for the tray slice to discover.
 - **R3 — checks build their calculation in the rules package, like saves.**
   Attacks build theirs in resolution because offers rewrite it after the roll.
   Checks pose too (Guidance), and the posed die is appended in
@@ -173,6 +219,14 @@ adapter from a live `RollCalculation` to it is its own web slice.
   proto field is already there.
 - **R6 — the tray's second physical die is the follow-up, not this slice.**
   #462's done-when is the log.
+
+## Corrected on the panel (kept visible)
+
+- **"Bless cancelled by Untrained" was wrong.** The first draft used Bless as
+  the advantage in the cancellation example. Bless adds a d4 to the roll; it
+  grants no advantage. Help does. The example and R2 now say Help. The rule
+  shape was not affected, the illustration was, and a wrong illustration in a
+  design is how a builder ships a wrong test.
 
 ## Not in this slice
 
@@ -192,7 +246,7 @@ pseudo-versions → api → web, walked once, merged inside-out.
 
 | PR | Module | What |
 |---|---|---|
-| toolkit 1 | rulebooks/dnd5e | `DiceKeep`, `KeepRule`, `rolls.RollD20`, validation; checks and saves call it; `AbilityCheckResult.Calculation` |
+| toolkit 1 | rulebooks/dnd5e | `DiceKeep`, `KeepRule`, `rolls.RollD20` (writes the roller's `SourceID`), validation incl. anonymous-pool refusal; checks and saves call it; `AbilityCheckResult.Calculation`; every anonymous `DiceTrace` constructor named |
 | toolkit 2 | resolution | strike calls `rolls.RollD20`, `rollAttackD20` deleted, `checkCalculationFor` deleted, `StrikeOutcome` sources come from the trace |
 | toolkit 3 | encounter | mirror `DiceKeep`; `ResolveCheckOutput.Calculation`; Intimidate/Persuade/Unlock inputs and beat payloads carry it; `validateRecordedD20` checks the keep record |
 | toolkit 4 | session | bodies `IntimidatedBody`/`PersuadedBody`/`DoorBody`/`RollWindowOpenedBody` gain `Calculation`; `StruckBody` loses the lists; decoders |
@@ -201,8 +255,9 @@ pseudo-versions → api → web, walked once, merged inside-out.
 | web | dev | the log line; debug feed reads `Keep` |
 
 **Unit tests, not walk samples:** the four trace facts above, cancellation,
-validation refusals, and the mapping from `CheckModifierSource` to
-`RollSource`. The walk is one click per seam.
+validation refusals (an anonymous dice pool included), the d20's `SourceID`
+being the roller on attack, save and check, and the mapping from
+`CheckModifierSource` to `RollSource`. The walk is one click per seam.
 
 **Done when** (the walk): an untrained character's Intimidate shows two d20
 faces, the kept one, and the word "Untrained" in the story and debug logs; a
