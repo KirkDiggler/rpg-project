@@ -3,24 +3,41 @@
 ## Resume here
 
 **Latest delivery gate:** complete web candidate [PR1116](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1116)
-is pushed at `3b8de3a0b082b0fd5783e65328fe9601b25a8a1c`, still Draft/unmerged.
-Parent real-browser proof launched the copied existing saved room (18props,
-4groups,139floorcells) with a normally created Human Fighter and existing skeleton.
-Full scene/frame/workspace matched exactly; actual UI movement/default Shortsword
-reaction, declared-altar crossing refusal and current→held sight behind it were
-observed. Later author save and isolated API restart preserved the running room.
-Durable proof: game-dev `.runtime/local/dungeon-playtest/evidence/integrated-proof.md`.
-Parent fixed/regressed StrictMode save lifetime and the false Reference Tomb caption.
-One full M2 CI gate passed490files/6775tests (1file/6tests skipped); normal commit
-preserved intended tree, shared Git config and existing stash identities.
+is pushed at `a5fd4ebd52f3269105dc68c7a637b18cf75344d1`; review closed and local/hosted
+checks green, not merged. Whole review5237950102 found a real New-room overwrite
+risk: the factory generated/stored a fresh draft but its in-memory commit retained
+the previous identity/name. Corrected at ba830df3 with a red→green Save→New room→
+same old key regression (new Get/confirmation, no second write on Cancel, complete
+Undo/Redo). All four findings Addressed; scoped closure5238346399 is READY.
+Final a5fd4ebd changes tests only: hosted CI exposed background validate-only
+requests being mistaken for saves; reproduced deliberately before fixing the
+mock, and genuinely held the launch promise. Full CI6776tests/490files pass
+(1file/6tests skipped); hosted lint/type/test/security/deploy-preview all green.
 
-**Next:** consume the FIRST independent whole-web review, workflow
-`0d72dec0-b1b2-4a67-8699-39134080a4cc` (web mission4b6a5e3f, writer worktree), fresh
-GLM UI/UX reviewer. Verify exact-head hosted checks and explicit dispositions;
-no automatic merge. API1004 remains Ready/unmerged at last check. Candidate3032
-was stopped for publication; isolatedAPI8111/Redis retain the proof session.
-Original3030/API8110 and pinned M1preview3031 are unchanged. Human walk and merge
-decisions remain Kirk's. Details below retain the implementation/recovery trail.
+API [PR1004](https://github.com/KirkDiggler/rpg-api/pull/1004) remains Ready/unmerged,
+now at `d5dfed99480dac217fd8d450bf2703a10d141df1`. Current dev98b6d753 was merged;
+only dependency files conflicted. Adopted its released root0.180/encounter0.88/
+session0.95/proto v0.1.199 graph, retaining room presentation and upstream full-roll
+transport. Required rich lifecycle suites, full API CI, normal hooks and hosted
+checks pass. Config/stashes preserved. Recreated only isolated proof API8111;
+every Redis/other container retained its identity/state. Fresh browser/public RPC
+confirmed the same live session, exact original full scene and position (1,-5).
+Receipt: `.runtime/local/dungeon-playtest/evidence/api-integrated-pins-proof.json`.
+
+Parent browser proof retains the copied saved room (18props,4groups,139floorcells),
+normally created Human Fighter and existing skeleton. Complete scene match,
+movement/default Shortsword, explicit-altar crossing refusal, current→held LOS,
+author-edit isolation and restart persistence were demonstrated. Durable proof:
+game-dev `.runtime/local/dungeon-playtest/evidence/integrated-proof.md`.
+
+**Next: Kirk's human walk and explicit merge decisions.** Complete Play preview
+is live at `http://localhost:3032/?playerId=world-builder-play-proof`, detached
+`.worktrees/1112-play-preview` at reviewed production ba830df3 (final web head
+adds tests only), Vite PGID2166533 at startup. Verify actual PID/cwd before touching.
+Own API8111/Redis retain the proof character (1/12HP after the reaction test),
+session and content. Original3030/API8110 and setup-only3031 are unchanged. No
+merge/deployment authority inferred; renew save/export checkpoint before replacing
+any user-editing environment. Details below are the historical delivery trail.
 
 **Current next slice: monsters + one playable authored room.** Kirk deferred doors
 while making assets, accepted existing monster weapon/mind defaults, and explicitly
