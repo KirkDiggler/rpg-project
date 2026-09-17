@@ -169,12 +169,23 @@ with matching SHA receipts, no generation/sync/promotion.
 M2 planning214e820a is complete; parent corrected unsafe scout assumptions:
 empty proto string means legacy absence; canonical presentation has only frame/
 workspace/scene, not declarations or actors; no arbitrary workshop-room key default.
-[Runtime substep plan](single-room-play-web-runtime-plan.md) is now implementing
-in workflow `6aab2c73-4e8a-437d-b790-1c5f74120275` (same mission4b6a5e3f/writerWT),
-fresh GLM medium, source/focused tests only. Runtime first, then Save/Play/key UI.
-Important boundary: invalid CURRENT nonempty JSON must not reuse cached old scene
-as valid; empty field alone gets legacy behavior. Shared WorldPropModel, Crypt
-workspace floor and existing light helper are reused; member actors stay untouched.
+[Runtime substep](single-room-play-web-runtime-plan.md) is implemented in the
+writer's uncommitted patch (child57b4386e/workflow6aab2c73). Parent inspected it,
+removed an unnecessary already-parsed-object decoder path (wire string or absence
+only, red→green test), then ran six focused suites174tests plus typecheck green.
+Invalid CURRENT nonempty JSON blocks the cached old map instead of rendering it
+as valid; empty string gets legacy behavior. Shared props/floor/light leaves and
+member actors remain in their established roles. Checkpoint before the next writer:
+`.runtime/local/dungeon-authoring/checkpoints/web1112-runtime-before-launch/`.
+
+[Save/launch substep](single-room-play-web-launch-plan.md) is now implementing in
+workflow `757b399f-9a5d-464b-960a-89f4c480b7e3` (same mission4b6a5e3f/writerWT),
+fresh GLM medium. It preserves the runtime patch and adds explicit root-key/collision
+handling, generation-fenced exact source save and shared existing AuthorView lobby
+launch with Home-selected character. No key field in RoomDraft or arbitrary
+workshop-room default; no stale redirect/source replacement. Parent owns later
+safe local integration, full PR gate, publication and first whole-feature review.
+Both3031 setup preview and original3030/API8110 remain unchanged.
 Leave3031 pinned for Kirk's edits. Original durable M1 brief remains
 `.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
 Worker owns only source/focused tests; **parent owns all real Git publication and services**.
