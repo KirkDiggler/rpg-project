@@ -178,9 +178,14 @@ as valid; empty string gets legacy behavior. Shared props/floor/light leaves and
 member actors remain in their established roles. Checkpoint before the next writer:
 `.runtime/local/dungeon-authoring/checkpoints/web1112-runtime-before-launch/`.
 
-[Save/launch substep](single-room-play-web-launch-plan.md) is now implementing in
-workflow `757b399f-9a5d-464b-960a-89f4c480b7e3` (same mission4b6a5e3f/writerWT),
-fresh GLM medium. It preserves the runtime patch and adds explicit root-key/collision
+[Save/launch substep](single-room-play-web-launch-plan.md) first run757b399f
+(child5fe30a5a) ended with an unfinished sentence/no acceptance report. Parent
+verified it had added only the shared-hook draft, not the actual UI/route wiring
+or tests. Patch saved under game-dev `.runtime/local/dungeon-authoring/checkpoints/web1112-launch-partial-20260917T125106Z/`.
+Retained GLM context is continuing in workflow `ce9c5367-66c9-4355-ba55-f39dc58601ce`
+(same mission4b6a5e3f/writerWT), explicitly without another discovery pass. Parent
+also flagged its missing monotonic generation (character A→B→A must not revive
+an old continuation). It preserves the runtime patch and adds explicit root-key/collision
 handling, generation-fenced exact source save and shared existing AuthorView lobby
 launch with Home-selected character. No key field in RoomDraft or arbitrary
 workshop-room default; no stale redirect/source replacement. Parent owns later
