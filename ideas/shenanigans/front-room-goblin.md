@@ -1,6 +1,6 @@
 # The front room goblin — an authored reaction table
 
-**Status:** DESIGN, opened 2026-09-17 in session with Kirk. Panel-back before any build. Tracking issue to follow once the rulings below close.
+**Status:** RULED 2026-09-17 (rpg-project#457). Rulings R1–R4 closed by Kirk on the PR; tracking issue follows.
 
 ## The scenario, in Kirk's words
 
@@ -95,7 +95,7 @@ Rules of the table:
 1. **The player's check.** Unchanged from Intimidate: `resolution.MakeCheck`, best listed approach, pose window for Bardic Inspiration, the beat carries roll, total, DC, beaten.
 2. **The world's reaction roll.** The engine picks one entry from the table for the outcome that occurred. The pick is a roll through the shared dice path so it is reproducible and, if ruled visible, shown.
 
-**Ruling needed (R1):** is the reaction roll visible in the log? Kirk's north star says "the outcome of the world really shapes the encounter" and "we wanted to see somebody make the roll." My recommendation: the reaction is a beat that names the entry that fired and the creature's line, and the die itself stays behind the screen. The player sees "the goblin bolts, shouting for its boss," not "world rolled 28 of 100." If Kirk wants the die seen, it is one more field on the same beat.
+**R1, RULED 2026-09-17 (Kirk): "everything visible in the log now, probably not story but the debug log for sure."** The reaction beat carries the die, the weights' total, the entry that fired and the creature's line. Web's story rendering shows the outcome and the line; the debug log shows the roll. Full data down the log until v1, as every beat does.
 
 ## The untrained rule
 
@@ -105,7 +105,9 @@ Rules of the table:
 
 **Where it lives.** The character supplies the fact (proficiency level in the skill; today only the total is exposed, so a small read is added). Resolution applies the rule as a named source on the roll, so the log can say "untrained imposed disadvantage" the way it says "Raging granted advantage." Session and web change nothing. Rules stay in resolution; the sheet only answers questions about itself.
 
-**Scope (R2, ruling needed):** every ability check a character makes, or only skill verbs (Intimidate, Persuade, later Deceive)? Kirk's words, "if you have intimidation you get to do this," read as verbs. Recommendation: verbs only, and the doc that adds a verb says it takes the rule.
+**Scope, R2 RULED 2026-09-17 (Kirk):** skill verbs only (Intimidate, Persuade, later Deceive). "The disadvantage is to make taking Intimidation worth something." The doc that adds a verb says it takes the rule.
+
+**It must be one removable piece.** Kirk: "I am aware I am diverging from RAW. Ideally flipping that to RAW would be an easy refactor." So the rule is ONE named source in resolution (`untrained`), applied in one place, with one test that asserts it and one that asserts its absence when removed. Returning to the letter is deleting that source, not hunting for a special case in the modifier math. A build that spreads the rule across the sheet, the check and the offer has built it wrong.
 
 **A wrinkle for later, named now:** a check with several listed approaches picks the character's best by modifier. Once untrained means disadvantage, an untrained +3 is worse than a trained +2 and "best" has to know it. No shipped check lists both a trained and an untrained approach for one character today; the first one that does brings the comparison.
 
@@ -122,7 +124,7 @@ Two verbs is where a hand-listed verb becomes a cost: session names Intimidate i
 The front room has no fight. That is the whole point, and it is where the engine is thinnest:
 
 - **Offering the verb.** Afford compiles rows on the turn clock and blocks "not your turn." A social verb must be offered on the world clock too, priced there in whatever the world clock prices (Search and Unlock already spend there, so there is a precedent to read).
-- **Driving the creature.** `flee`, `alarm` and `lure` all need the goblin to move when no bubble exists. Today monsters act only inside a bubble. This is the primitive Regroup ("toward my friends") and Alarm ("run to the next room") were already going to need. **Ruling needed (R3):** does this slice bring "a creature acts outside a fight," or does the front room goblin ship with `fact`, `say`, `tell` and the ring only, and `flee` waits for Regroup? Recommendation: bring it here. Without it the 30% table entry Kirk asked for cannot fire, and a table that lists words the engine cannot do is a lie to the author.
+- **Driving the creature.** `flee`, `alarm` and `lure` all need the goblin to move when no bubble exists. Today monsters act only inside a bubble. This is the primitive Regroup ("toward my friends") and Alarm ("run to the next room") were already going to need. **R3, RULED 2026-09-17 (Kirk): this slice brings it.** "This will be the first getting verbs outside combat." The front room goblin ships with `flee` able to fire, which means a creature acts on the world clock and a social verb is offered there.
 - **Minds must read stance.** A neutral goblin that gets a turn must not attack. Target selection reads "opposed," which the encounter already answers per pair. Small, and load-bearing the moment any neutral creature acts.
 
 ## The ring: what a player believes about a creature
@@ -143,12 +145,14 @@ This gives Insight its use case beside Intimidation and Persuasion, and it is th
 - **Word spreads** stays shelved, still. A `fact` on witnesses plus a disposition is enough for a camp to turn; who else hears is a later verb.
 - **Author-written speech** on every beat that has a creature in it, once it exists on this one.
 
-## Rulings needed before the tracking issue
+## Rulings
 
-- **R1** reaction roll visible, or only the outcome and the line.
-- **R2** untrained disadvantage on every check, or on skill verbs only.
-- **R3** "a creature acts outside a fight" lands in this slice, or `flee` waits for Regroup.
-- **R4** an allied goblin: stops being a target only (recommended, it is what ships), or fights for the party (a later slice, minds would need to read stance on both sides).
+All four ruled by Kirk on 2026-09-17, on rpg-project#457:
+
+- **R1** the reaction roll is in the beat and the debug log; the story log shows the outcome and the line.
+- **R2** untrained disadvantage on skill verbs only, built as one removable source so returning to RAW is a deletion.
+- **R3** this slice brings "a creature acts outside a fight" and the social verb on the world clock. First verbs outside combat.
+- **R4** an allied goblin stops being a target. Fighting for the party is a later wave.
 
 ## Build order, once ruled
 
