@@ -6,8 +6,8 @@
 |---|---|
 | rpg-api-protos | v0.1.196 (#340: Persuade, Persuaded, Answered, AnswerWord, Sighting.stance) · v0.1.197 (#341: `Answered.fact` deprecated) |
 | rpg-toolkit | rulebooks/dnd5e v0.179.0 (#1799) · resolution v0.52.0 (#1801) · encounter v0.86.0 (#1800, includes dungeonspec) · session v0.93.0 (#1802) |
-| rpg-api | dev __API_HEAD__ (#1001), ships `content/reference-front-room.yaml` |
-| rpg-dnd5e-web | dev __WEB_HEAD__ (#1108), pays rpg-dnd5e-web#1104 (one verb registry; there were seven lists, not six) |
+| rpg-api | dev 9aa9422b (#1001), ships `content/reference-front-room.yaml` |
+| rpg-dnd5e-web | dev 144e6125 (#1108), pays rpg-dnd5e-web#1104 (one verb registry; there were seven lists, not six) |
 
 ## What the build corrected (kept visible)
 
