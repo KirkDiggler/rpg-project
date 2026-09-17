@@ -142,17 +142,34 @@ left all setup UI/history unimplemented. Parent preserved it at game-dev
 `.runtime/local/dungeon-authoring/checkpoints/web1112-m1-20260917T102137Z/` and found
 real codec gaps (order-sensitive play comparison, presence/type/bounds/size checks,
 missing fixed-legacy/storage proof and unrelated helper/comment churn).
-GLM completiond5942887 implemented actual controls/RoomActorMarkers and rich
-regressions, then hit30min timeout while finishing viewport tests. Parent saved
-all work at `.runtime/local/dungeon-authoring/checkpoints/web1112-timeout-20260917T105555Z/`.
-HEAD remains3a0ad05c; no Git/runtime changes. Parent ran the five focused suites:
-92pass/5fail, failures in new viewport tests; type errors are test-scaffolding only.
-Retained GLM worker62675476 is finishing those exact errors in workflow
-`609259df-8096-41db-bfb2-1b7873ace611` (same mission4b6a5e3f/worktree), not restarting
-implementation. No additional test matrix/refactor/M2. Parent must consume its
-actual green evidence next. Origin/dev advanced one commit; reconcile only at
-publication barrier. Original durable brief remains
-`.runtime/local/dungeon-authoring/web1112-m1-completion.md` in game-dev.
+M1 is now published in [Draft web PR1116](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1116)
+at `5b3c2b49205b845f27cfc0415000700f4ff929cd` (feature919cc2f4 plus latestdev ec833650).
+Retained completion7f289386 finished97 focused tests/types/lint/format after the
+30min timeout. Parent real-browser proof then caught a raw skinned-clone bug:
+the mesh stayed at origin while the ring moved. Parent replaced it with the
+existing ClassCharacterModel (skeleton-safe clone/calibration/idle), added a
+red→green renderer-reuse guard and verified actual model/ring alignment.
+One full ci-check at published head passed:485 files/6704 tests,1 file/6 tests skipped.
+Full transcript inspected. M1 files unchanged through upstream integration;
+proto dependency nowv0.1.199 from dev. No independent full-feature review yet.
+
+**Pinned early setup preview: http://localhost:3031/** (Home→World Builder).
+Source `.worktrees/1112-setup-preview`, detached at5b3c2b49; PGID1881252/node1881270
+(verify live identity before acting). Writer stays in the separate1112 worktree.
+API binding is set on Vite to8110. Original3030 remains height3438f64. Port3031 is
+a separate browser origin: use exported JSON or an existing world snapshot, not
+an assumption that3030 local storage is shared. M1 has no Play yet.
+Durable process/evidence under game-dev `.runtime/local/dungeon-authoring/setup-preview/`.
+Fresh-browser proof at the exact pinned head: richv2 upgrade/oldbytes unchanged,
+skeleton0,1→move-1,2, start2,0, Undo/Redo/remove/clear/Undo, reloadexact,
+invalidcurrentv3protected; no pageerrors/failedmodels. Existing private runtime
+models copied only to ignored local paths; two upstream-promoted assets copied
+with matching SHA receipts, no generation/sync/promotion.
+
+Next consume grounded M2 plan workflow `214e820a-ae3d-4095-9da7-27bbad9a04af`
+(missiondd1fddd8, writer web worktree), read-only Luna planning. Implement actual
+Save/Play and runtime scene on writer ONLY; leave3031 pinned for Kirk's edits.
+Original durable M1 brief remains `.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
 Worker owns only source/focused tests; **parent owns all real Git publication and services**. Parent
 will inspect and show an early temporary preview, then run one full ci-check at the
 first Draft boundary. One branch/PR continues into milestone2 Save/Play and full
