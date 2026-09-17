@@ -79,9 +79,16 @@ API StartEncounter already checks actual-party capacity before writes; SDK
 Kirk approved the bounded **session-module** bridge: [plan](single-room-play-session-plan.md),
 [toolkit#1804](https://github.com/KirkDiggler/rpg-toolkit/issues/1804), worktree
 `.worktrees/1804-session-room-scene`, branch `feat/1804-session-room-scene`.
-Parent baseline session tests/hooks/tooling passed at3e20eaa1. Workflow
-`8fc87967-b948-47f9-b3fc-75126760c2f7` (mission08f29cc0, that worktree) runs Luna
-implementation then fresh independent GLM review. Consume those results next.
+[SDK PR1805](https://github.com/KirkDiggler/rpg-toolkit/pull/1805) is **Ready, not
+merged**, at `11d63b818d752b4bbd84a6687b869c916757eca9`. Whole review5231856375
+required missing public SDK regressions; closure5231922264 verified the new real
+preview/live/reloaded-records suite at707afff1. Parent then fixed only formatting
+and the missing internal-test license header at11d63b81; local module checks and
+exact-head hosted CI are green. All review threads have explicit dispositions;
+parent readiness comment5709910590 records completion. No extra review loop.
+Workflows8fc87967/d77adfcb are complete (mission08f29cc0, that worktree).
+Next is API/web adoption for local walking, not redoing SDK implementation.
+No merge authority was inferred; verify the actual SDK tag if Kirk merges it.
 Only session module is writable in that lane; encounter and other modules stay
 read-only. RoomSceneJSON preserves the canonical scene without leaking an inner
 type through S2. No rules or duplicate scene DTOs. API must use version-neutral
