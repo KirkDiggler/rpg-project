@@ -25,8 +25,31 @@ other populated side of the same shape `Trade` was built with from the start.
 3. The vendor's payout is checked against its own `Wallet` first — see §3.
 4. The item goes into the vendor's stock — see §2. Not discarded.
 
-**Beat:** `sold` (from the actor's perspective) — not the generic `traded`, matching the
-"a verb is named by what the record will say" law already applied to `Unpack`.
+**Beat:** `sold` (from the actor's perspective). `OutcomeSold` already exists in `encounter/
+outcome.go`, built ahead of this design, with its own doc comment stating exactly why: *"'Alice
+sold her longsword' is a different statement from 'Alice traded for one,' so it gets its own kind
+rather than reusing `OutcomeTraded` with a flipped flag."*
+
+**Rename `OutcomeTraded`→`OutcomeBought` while touching this area, for consistency the current
+code doesn't quite have.** Today buy uses the generic `"traded"` and only sell got a specific
+word — an artifact of buy shipping first, before the "different statement" reasoning existed to
+apply consistently. The same reasoning that earned `sold` its own kind applies equally to buy:
+"Alice bought a longsword" is a different, truer statement than "Alice traded for one." Low cost
+to fix now (this project's own stance: pre-pre-alpha, breaking an outcome-kind string from
+tonight is not a gate) and it's already the area of code this wave touches.
+
+**`Bartered` is reserved, not built.** Barter (item-for-item) isn't in scope this wave (`Give.Items`
+stays refused when `Receive.Items` is also populated), but when it lands, it earns its own kind
+for the same reason — not because "traded" reads badly for it (it doesn't, of the three it fits
+best), but for symmetry: every real transaction shape gets an honest word, none defaults to the
+generic one. Explicitly NOT `Bartered`-for-NPC vs. some other name for player-to-player — a
+player counterparty needs a consent mechanism and is almost certainly its own verb entirely, not
+a naming variant of this one (see rpg-project#369/#370's original scoping). That verb, whenever
+designed, earns its own outcome kind from its own design — not decided here, in the abstract,
+ahead of it existing.
+
+So: three real outcome kinds once this wave and the rename land — `Bought`, `Sold`, and
+`Bartered` reserved for later. No case defaults to a bare `Traded` anymore.
 
 ## 2. Sold items become real vendor stock — this makes buyback free
 
@@ -68,7 +91,26 @@ caught earlier: the check code exists and is exercised now; content simply doesn
 yet. Whoever eventually builds NPC content authoring (rpg-api#903 Phase 2) gets a real, working
 knob for free, not a redesign.
 
-## 4. What's still open, deliberately not solved here
+## 4. Cross-repo — checked directly, this is NOT toolkit-only
+
+Unlike `Money`/`Wallet`, `Sell` touches all four repos:
+
+- **rpg-toolkit** — §1-3 above.
+- **rpg-api-protos** — smaller than expected: `TradeOffer.items` (field 1) **already exists on
+  the wire** — it was always structurally there for `Give` too, only ever server-refused. Zero new
+  fields needed for the core transaction. The one real addition: `VendorStockEntry` gains a new
+  `player_sold`/`source` field to carry the tag from §2 — doesn't exist today, checked directly.
+- **rpg-api** — bump pins, thread the new tag through the `VendorStockEntry` converter, add an
+  error-table row for a genuinely new sentinel: none of Buy's existing errors (`ErrOutOfStock`,
+  `ErrWrongPrice`, `ErrInsufficientFunds`) cover "you don't possess this item to sell." The
+  vendor-side insufficient-funds case reuses the *existing* `ErrInsufficientFunds` mapping —
+  nothing new there.
+- **rpg-dnd5e-web** — the real surprise: **no existing UI lets a player pick an item from their
+  own inventory and sell it** — everything built so far (`InventoryLight`, `EquipmentPopover`) is
+  equip/buy-oriented. This is real, non-trivial new UI, arguably bigger than the toolkit mechanism
+  itself. Plus rendering the player-sold tag visually on vendor stock rows.
+
+## 5. What's still open, deliberately not solved here
 
 - **Price preview for the client.** Buy got this for free (`VendorStockEntry.price` already
   exists). Sell has no equivalent — nothing on the wire lets a client show "sell for 7gp" before
@@ -77,7 +119,7 @@ knob for free, not a redesign.
   doesn't block anything in this design.
 - **Item-protection filtering** (§2).
 
-## 5. Done when
+## 6. Done when
 
 A player can sell an item they possess for its exact 1:1 price, see it land in their `Wallet`, see
 it appear in the vendor's stock (tagged `player_sold`), and buy it back through the ordinary buy
