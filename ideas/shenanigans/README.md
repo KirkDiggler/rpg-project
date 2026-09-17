@@ -29,15 +29,20 @@ Each verb is a mind capability, added on its own use case, never a general "soci
 | Verb | Check | What the mind learns | Who reads it | State |
 |---|---|---|---|---|
 | **Intimidate** | CHA (Intimidation) vs authored DC | "this one frightened me" | coward keeps away; berserker takes it as a provocation; retaliator shrugs | [intimidate.md](intimidate.md) — **SHIPPED 2026-09-16** |
-| Persuade | CHA (Persuasion) | "this one is not my enemy" | needs a *stand-down* the ladder does not have (Pass while the party is in reach) | not designed |
+| Persuade | CHA (Persuasion) | "this one is not my enemy" | needs a *stand-down* the ladder does not have (Pass while the party is in reach) | [front-room-goblin.md](front-room-goblin.md) — DESIGN 2026-09-17 |
 | Deceive / disguise | CHA (Deception) vs monster insight | "this one is the lieutenant" | the camp's stance toward *that character*; §13 of the living-world brainstorm: a disguise opens verbs | not designed; needs a per-character stance, today stance is a faction pair |
 | Take command | Deception, then orders | "the lieutenant said hold" | a mind that takes an *order* as an intent | not designed; the far end of the ladder |
 | Regroup | none — the monster's own | "I am safer with my friends" | the frightened coward runs *toward* remembered allies, and fear lapses in their company | slice two, named in [intimidate.md](intimidate.md) §"What this makes possible" |
 | Alarm | none — the monster's own | "there is a fight at the gate, they were HERE" | allies who never saw the party: a **rumour** — perception already distinguishes a Report from a sighting ("a rumour is not a sighting", `mind/perception`) | slice three; this pays "word spreads" |
+
+## The author's table
+
+A placement's `on:` block grows from one fact per verb into a **reaction table**: per verb, per outcome (success and failure), weighted entries, each one word of the outcome vocabulary plus a line the creature says. The world rolls the entry. Designed in [front-room-goblin.md](front-room-goblin.md) (2026-09-17), which also carries the per-viewer stance ring and the untrained rule.
 
 ## Laws this folder keeps
 
 - **The outcome is testimony, never state.** A shenanigan writes into what the monster holds; the preset says what it is worth. No verb sets a flee flag.
 - **The audience is the witnesses.** Who learns is answered by the witness seam (living-world §22, `witnessesOf`): sight and line of sight from the actor's cell. A scared goblin does not turn the camp unless the author planted the fact that says so.
 - **Nothing is gated; everything is a check** (living-world §13). Every character may attempt every verb on every monster. The DC is the monster's, authored or derived, never a lock on the attempt.
+  - **Revised 2026-09-17 (Kirk):** the attempt stays open to everyone, but the roll is not the same for everyone. A character without proficiency in the verb's skill rolls at disadvantage. The letter of the 2014 rules has no such penalty; we diverge so that the skill a player chose at creation is a choice that matters at the table. The rule and its scope live in [front-room-goblin.md](front-room-goblin.md).
 - **The roll is seen.** The die goes through the shared dice path and the beat carries the total, the DC and whether it beat it, the way `DoorChanged` does.
