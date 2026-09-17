@@ -91,10 +91,23 @@ Workflows8fc87967/d77adfcb are complete (mission08f29cc0, that worktree).
 API adoption is now [API#1003](https://github.com/KirkDiggler/rpg-api/issues/1003),
 [plan](single-room-play-api-plan.md), branch `feat/1003-world-builder-play` in
 `rpg-api/.worktrees/1003-world-builder-play`, base9aa9422b (dev). Parent baseline
-checks passed and normal hooks are active. Workflow `f8942b1c-5f59-4f5a-b1b8-fc5acde83b14`
-(mission84be7791, that API worktree) runs Luna implementation then fresh GLM review.
-Native acceptance explicitly executes named public registry and real-lobby tests;
-parent/reviewer still inspect the actual assertions and source, not test names.
+affected-package tests/format checks passed and normal hooks are active. Initial
+workflowf8942b1c stopped at the existing linter/toolchain mismatch (childc26b46ac);
+no commit/PR/review. Patch+untracked files are backed up under game-dev
+`.runtime/local/dungeon-authoring/checkpoints/api1003-toolchain-20260917T083633Z/`.
+Compatible official/checksummed linter2.4.0 now lives only at
+`.runtime/tools/golangci-lint/2.4.0/golangci-lint-2.4.0-linux-amd64`; use scoped PATH,
+not the unchanged global2.3.1 binary. A clean detached baseline reproduces four
+pre-existing lint warnings; only minimal behavior-preserving lint cleanup is scoped.
+Parent also found the first launch test used an empty scene and omitted the promised
+reload/snapshot/capacity proof despite passing by name. Completion brief is durable
+at `.runtime/local/dungeon-authoring/api1003-completion.md` in game-dev.
+Workflow `9637f8dc-dcc4-436c-b334-dc2af75c51d8` (same API mission84be7791/worktree)
+runs a fresh full-capability GLM implementer, then a **separate fresh independent**
+GLM reviewer. Native gate now requires registry, launch, stored-snapshot and
+capacity-refusal tests to execute; parent/reviewer still inspect real assertions.
+Kirk freed HDD space and directed continuation;26GB/home was verified free, no
+cleanup was performed. Live3030/8110 remain untouched.
 Go proto dependency is the published v0.1.198 generated commit6ea2b2e6, which
 resolves as v0.0.0-20260917055155-6ea2b2e6dffc. No local replacements needed.
 Next consume that API result, then web adoption/local walking; no additional merge
