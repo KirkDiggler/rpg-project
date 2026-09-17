@@ -2,6 +2,26 @@
 
 ## Resume here
 
+**Latest delivery gate:** complete web candidate [PR1116](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1116)
+is pushed at `3b8de3a0b082b0fd5783e65328fe9601b25a8a1c`, still Draft/unmerged.
+Parent real-browser proof launched the copied existing saved room (18props,
+4groups,139floorcells) with a normally created Human Fighter and existing skeleton.
+Full scene/frame/workspace matched exactly; actual UI movement/default Shortsword
+reaction, declared-altar crossing refusal and current→held sight behind it were
+observed. Later author save and isolated API restart preserved the running room.
+Durable proof: game-dev `.runtime/local/dungeon-playtest/evidence/integrated-proof.md`.
+Parent fixed/regressed StrictMode save lifetime and the false Reference Tomb caption.
+One full M2 CI gate passed490files/6775tests (1file/6tests skipped); normal commit
+preserved intended tree, shared Git config and existing stash identities.
+
+**Next:** consume the FIRST independent whole-web review, workflow
+`0d72dec0-b1b2-4a67-8699-39134080a4cc` (web mission4b6a5e3f, writer worktree), fresh
+GLM UI/UX reviewer. Verify exact-head hosted checks and explicit dispositions;
+no automatic merge. API1004 remains Ready/unmerged at last check. Candidate3032
+was stopped for publication; isolatedAPI8111/Redis retain the proof session.
+Original3030/API8110 and pinned M1preview3031 are unchanged. Human walk and merge
+decisions remain Kirk's. Details below retain the implementation/recovery trail.
+
 **Current next slice: monsters + one playable authored room.** Kirk deferred doors
 while making assets, accepted existing monster weapon/mind defaults, and explicitly
 approved hex-snapped monster/party-start markers with freeform scenery.
@@ -188,9 +208,10 @@ and reproduced required bugs: an old save launches a newly selected character;
 a same-ID source change still permits stale YAML saving; a new room retires the
 request but strands busy state. All three are red in
 `/tmp/dungeon-authoring-playable-room/web1112/launch-parent-races-red.log`.
-Bounded fix workflow `e6a6dd87-7f6e-4892-a36e-34b7d3e22f18` (same mission4b6a5e3f/
-writerWT) resumes that context for full source/key/character/mount retirement,
-owned cleanup and child-launch cancellation. No new feature or runtime changes.
+Bounded fix e6a6dd87 completed (childc634b83b): full source/key/character/client/
+mount retirement, owned cleanup and child-launch cancellation. Parent red cases
+and related hook suites39tests passed; real browser subsequently found the
+StrictMode live-lifetime bug, fixed with another red→green regression (40tests).
 It preserves the runtime patch and adds explicit root-key/collision
 handling, generation-fenced exact source save and shared existing AuthorView lobby
 launch with Home-selected character. No key field in RoomDraft or arbitrary
@@ -201,9 +222,9 @@ Parent prepared a SEPARATE proof stack `rpg-local--dungeon-playtest` on loopback
 APIimage from clean423e7cd8, own Redis and own authored-content bind (not the
 existing deployment's shared content). API healthSERVING; all prior container IDs/
 running states preserved, no cache prune/seed/reset. Metadata/commands/evidence:
-`.runtime/local/dungeon-playtest/state.json` in game-dev. Candidate web3032 is NOT
-started yet; start only after the race fix is verified, with its API binding set
-on Vite to8111. Real character/authored-room Play proof is still pending.
+`.runtime/local/dungeon-playtest/state.json` in game-dev. Candidate3032 ran against
+8111 for the completed full-room proof, then its exact owned Vite group was stopped
+for publication. The isolated API/Redis remain. See the latest delivery gate above.
 Leave3031 pinned for Kirk's edits. Original durable M1 brief remains
 `.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
 Worker owns only source/focused tests; **parent owns all real Git publication and services**.
