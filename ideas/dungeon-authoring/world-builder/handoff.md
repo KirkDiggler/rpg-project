@@ -79,16 +79,26 @@ API StartEncounter already checks actual-party capacity before writes; SDK
 Kirk approved the bounded **session-module** bridge: [plan](single-room-play-session-plan.md),
 [toolkit#1804](https://github.com/KirkDiggler/rpg-toolkit/issues/1804), worktree
 `.worktrees/1804-session-room-scene`, branch `feat/1804-session-room-scene`.
-[SDK PR1805](https://github.com/KirkDiggler/rpg-toolkit/pull/1805) is **Ready, not
-merged**, at `11d63b818d752b4bbd84a6687b869c916757eca9`. Whole review5231856375
+Kirk merged [SDK PR1805](https://github.com/KirkDiggler/rpg-toolkit/pull/1805)
+at `bea10c1b6837e39601f46f24d7025faeba6926b9`; published sessionv0.94.0 resolves
+to that merge. Final accepted head was11d63b81. Whole review5231856375
 required missing public SDK regressions; closure5231922264 verified the new real
 preview/live/reloaded-records suite at707afff1. Parent then fixed only formatting
 and the missing internal-test license header at11d63b81; local module checks and
 exact-head hosted CI are green. All review threads have explicit dispositions;
 parent readiness comment5709910590 records completion. No extra review loop.
 Workflows8fc87967/d77adfcb are complete (mission08f29cc0, that worktree).
-Next is API/web adoption for local walking, not redoing SDK implementation.
-No merge authority was inferred; verify the actual SDK tag if Kirk merges it.
+API adoption is now [API#1003](https://github.com/KirkDiggler/rpg-api/issues/1003),
+[plan](single-room-play-api-plan.md), branch `feat/1003-world-builder-play` in
+`rpg-api/.worktrees/1003-world-builder-play`, base9aa9422b (dev). Parent baseline
+checks passed and normal hooks are active. Workflow `f8942b1c-5f59-4f5a-b1b8-fc5acde83b14`
+(mission84be7791, that API worktree) runs Luna implementation then fresh GLM review.
+Native acceptance explicitly executes named public registry and real-lobby tests;
+parent/reviewer still inspect the actual assertions and source, not test names.
+Go proto dependency is the published v0.1.198 generated commit6ea2b2e6, which
+resolves as v0.0.0-20260917055155-6ea2b2e6dffc. No local replacements needed.
+Next consume that API result, then web adoption/local walking; no additional merge
+authority is implied and the restored live stack remains unchanged.
 Only session module is writable in that lane; encounter and other modules stay
 read-only. RoomSceneJSON preserves the canonical scene without leaking an inner
 type through S2. No rules or duplicate scene DTOs. API must use version-neutral
