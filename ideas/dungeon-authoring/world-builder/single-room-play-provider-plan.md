@@ -47,7 +47,7 @@ func CompileSingleRoom(in CompileSingleRoomInput) (Compiled, error)
 The earlier draft wrongly mixed root-module commands, possible spatial edits,
 `Compiled.Seats`, and a source-only compiled stub. Those directions are withdrawn.
 
-## 1. Typed source and strict lossless decode — first executable milestone
+## Task 1: Typed source and strict lossless decode — first executable milestone
 
 **Files:** create encounter `room_scene.go`, `room_scene_test.go`; dungeonspec
 `single_room.go`, `single_room_decode.go`, `single_room_decode_test.go`, and
@@ -130,7 +130,7 @@ s.Equal("furniture", out.Spec.Room.Scene.Items[1].ParentID)
   Commit the meaningful source checkpoint normally; first working push opens a
   **Draft** PR explicitly listing the remaining three milestones.
 
-## 2. Shared placed-footprint facts
+## Task 2: Shared placed-footprint facts
 
 **Files:** new `placed_props.go`/tests; modify existing `compilefield.go`,
 `cellfacts.go`, `canvas.go`, `step.go`, `clocks.go` only at shared fact/traversal
@@ -165,7 +165,7 @@ crossing, err := spatial.TraceFootprint(spatial.FootprintTraceInput{
   module gates before commit. If the released geometry cannot express a required
   query, report the exact limitation instead of changing another module.
 
-## 3. Complete v3 compilation and host dispatch
+## Task 3: Complete v3 compilation and host dispatch
 
 **Files:** new `dungeonspec/single_room_compile.go`/tests, change `compile.go`'s
 Load version dispatch only after the new compile path is complete.
@@ -195,7 +195,7 @@ s.Empty(compiled.Monsters[0].Actions) // definition defaults, not new loadout
   leave monster definition loading to SDK. Never return partially ready Compiled.
 - [ ] Green: v3 suite plus legacy dungeonspec fixtures/module gates; commit.
 
-## 4. Persistence, atlas projection and downstream handoff
+## Task 4: Persistence, atlas projection and downstream handoff
 
 **Files:** `data.go`, `atlas.go`, `projection.go`, new focused scene/contributor
 round-trip tests and module docs. FieldData/Atlas additions use the same types
