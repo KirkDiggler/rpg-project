@@ -120,11 +120,21 @@ Commit parent/tree matched exactly; common config, stash and unrelated refs were
 unchanged; post-push config changed only the intended feature upstream. Evidence:
 `.runtime/local/dungeon-authoring/checkpoints/api1003-publication-20260917T093739Z/`.
 
-**FIRST actual independent API/safety review is running** in workflow
-`271678a8-1d46-4bf6-ace1-1d2d1b1eb7ee` (same API mission84be7791/worktree), fresh
-GLM reviewer. Previous declared review lanes never launched due writer failures.
-Native public registry/launch/reload/capacity tests passed; reviewer checks actual
-semantics too. Draft PR1004 is not merged; hosted checks/review remain pending.
+**API PR1004 is Ready, not merged**, at423e7cd8. Independent review5233922810
+(child31de8f9f, workflow271678a8) found no Critical/Important findings. Its own
+mutation probes killed broken scene carriage, ByRef preflight and cellOf conversion;
+real public suites and hook safety checks passed. The sole Minor wording note was
+explicitly Declined for this slice in reply4035436811 (correct named refusal;
+no optional polish cycle). Parent verified hosted build/test green, clean worktree
+and CLEAN/MERGEABLE exact head; PR is non-Draft/Project19 In Review.
+
+**Next: web consumer.** Read-only grounded implementation planning is running in
+workflow `3bf738ed-d598-4456-ab10-12c284208e57` (mission9f93ea00, cwdwebroot) at
+webdev3a0ad05c. Target two milestones on one branch/PR: safe v3 codecs/storage and
+snapped monster/start setup with an early preview, then existing save/character/lobby
+Play flow and full retained-scene rendering. No web source changes yet. Parent must
+validate the plan's actual interfaces/frame math, create the UI/UX issue/worktree
+and verify baseline before implementation. API merge remains Kirk's decision.
 Kirk freed HDD space and directed continuation;26GB/home was verified free, no
 cleanup was performed. Live3030/8110 remain untouched.
 Go proto dependency is the published v0.1.198 generated commit6ea2b2e6, which
