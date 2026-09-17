@@ -8,16 +8,22 @@ approved hex-snapped monster/party-start markers with freeform scenery.
 [single-room-play.md](single-room-play.md) is **approved by Kirk**. The checked
 [provider plan](single-room-play-provider-plan.md) is published; toolkit#1753 is
 In Progress with [Draft toolkit#1798](https://github.com/KirkDiggler/rpg-toolkit/pull/1798).
-Source checkpoint `abaa9c5c` now passes the25-case parent guard and94 source
-subtests after a fresh GLM implementation closed gaps left by two Luna passes.
-Worktree `rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
-`feat/1753-encounter-footprints`, base3a9dbf6e. Fresh GLM is implementing Task2
-(shared standing/crossing/sight), first closing one reproduced extreme-integer
-floor-bound guard. Tasks3–4 pending; no playable compiler yet.
+All four provider milestones are implemented at
+`1b9258d6a4a748fcd97e28389f70f610899eeac2` in
+`rpg-toolkit/.worktrees/1753-encounter-footprints`, branch
+`feat/1753-encounter-footprints`, base3a9dbf6e. Parent runtime/load/member-atlas
+and v3 compiler probes pass; hosted required checks green. Source validation,
+shared footprints, full compile and presentation persistence are present.
+**Independent whole-PR review is running; Draft1798 is not merge-ready.**
+No browser Play claim: proto/API/session adoption and web consumers remain.
 Progress ledger: that worktree's
 `.superpowers/sdd/single-room-play-provider-plan/progress.md`.
-Current workflow `c1e29efa-2583-450c-b99d-b5e8a24accad`, mission
-`c506ca66-5582-4e18-a53b-3cc3068b867b` (toolkit worktree scoped).
+Implementation mission `c506ca66-5582-4e18-a53b-3cc3068b867b` is scoped to the
+writer worktree. Current review workflow `50fea07b-863c-40f3-aa03-d37ab193a512`,
+mission `ee4560fc-9588-4537-8a49-0a3494b64fca`, uses the separate read-only
+`.worktrees/1753-room-review` at the exact head and a fresh GLM reviewer.
+Reports are bound under home-directory subagent-artifacts; temporary recovery
+map `/tmp/dungeon-authoring-playable-room/execution.json` names current evidence.
 Parent corrected draft source shapes/frame math and plan module boundaries,
 existing PartyStart/Load contracts, and C1 monster-resolution ownership.
 
@@ -53,10 +59,10 @@ Local gate and hosted checks passed; reviewed and merged trees are identical.
   artifacts remain the durable records. Current temporary design record is
   `/tmp/dungeon-authoring-playable-room/execution.json`.
 
-**Immediate next step:** Consume Task2's actual code/query regressions and host
-checks, then Task3 complete v3 compilation and Task4 persistence/atlas. Keep the
-approved SightLanes soft footprint/Contact-origin semantics, not a harder policy.
-Do not restart planning or ask for another execution-choice approval. Do not redo shipped UI or revive the
+**Immediate next step:** Consume the independent published review, resolve real
+blockers and explicitly defer optional work. No automatic fix loops or merge.
+Then release/pin/adopt through owning repo rules and implement the web play path.
+Do not redispatch completed provider milestones or restart design approval. Do not redo shipped UI or revive the
 lossy1753 proposal. No cleanup, new merge or environment-change authority.
 
 ## Delivery style — current human direction
