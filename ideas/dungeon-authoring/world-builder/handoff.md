@@ -166,13 +166,20 @@ invalidcurrentv3protected; no pageerrors/failedmodels. Existing private runtime
 models copied only to ignored local paths; two upstream-promoted assets copied
 with matching SHA receipts, no generation/sync/promotion.
 
-Next consume grounded M2 plan workflow `214e820a-ae3d-4095-9da7-27bbad9a04af`
-(missiondd1fddd8, writer web worktree), read-only Luna planning. Implement actual
-Save/Play and runtime scene on writer ONLY; leave3031 pinned for Kirk's edits.
-Original durable M1 brief remains `.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
-Worker owns only source/focused tests; **parent owns all real Git publication and services**. Parent
-will inspect and show an early temporary preview, then run one full ci-check at the
-first Draft boundary. One branch/PR continues into milestone2 Save/Play and full
+M2 planning214e820a is complete; parent corrected unsafe scout assumptions:
+empty proto string means legacy absence; canonical presentation has only frame/
+workspace/scene, not declarations or actors; no arbitrary workshop-room key default.
+[Runtime substep plan](single-room-play-web-runtime-plan.md) is now implementing
+in workflow `6aab2c73-4e8a-437d-b790-1c5f74120275` (same mission4b6a5e3f/writerWT),
+fresh GLM medium, source/focused tests only. Runtime first, then Save/Play/key UI.
+Important boundary: invalid CURRENT nonempty JSON must not reuse cached old scene
+as valid; empty field alone gets legacy behavior. Shared WorldPropModel, Crypt
+workspace floor and existing light helper are reused; member actors stay untouched.
+Leave3031 pinned for Kirk's edits. Original durable M1 brief remains
+`.runtime/local/dungeon-authoring/web1112-m1-completion.md`.
+Worker owns only source/focused tests; **parent owns all real Git publication and services**.
+Parent completed M1 browser proof, its one full ci-check and Draft publication;
+do not repeat that full gate before the next changed-head PR boundary. One branch/PR continues into milestone2 Save/Play and full
 runtime rendering; independent feature review comes after complete scope. No
 live3030/8110 change or asset pipeline mutation. API merge remains Kirk's decision.
 Kirk freed HDD space and directed continuation;26GB/home was verified free, no
