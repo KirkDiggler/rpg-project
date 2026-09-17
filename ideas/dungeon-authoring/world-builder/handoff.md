@@ -128,13 +128,22 @@ explicitly Declined for this slice in reply4035436811 (correct named refusal;
 no optional polish cycle). Parent verified hosted build/test green, clean worktree
 and CLEAN/MERGEABLE exact head; PR is non-Draft/Project19 In Review.
 
-**Next: web consumer.** Read-only grounded implementation planning is running in
-workflow `3bf738ed-d598-4456-ab10-12c284208e57` (mission9f93ea00, cwdwebroot) at
-webdev3a0ad05c. Target two milestones on one branch/PR: safe v3 codecs/storage and
-snapped monster/start setup with an early preview, then existing save/character/lobby
-Play flow and full retained-scene rendering. No web source changes yet. Parent must
-validate the plan's actual interfaces/frame math, create the UI/UX issue/worktree
-and verify baseline before implementation. API merge remains Kirk's decision.
+**Web consumer is now implementing milestone1** under [web#1112](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1112),
+UI/UX / The Dungeon / Build. Worktree `.worktrees/1112-world-builder-play`, branch
+`feat/1112-world-builder-play`, basewebdev3a0ad05c. Parent installed deps/verified
+normal Husky hook, typecheck and four focused baseline suites. Grounded
+[setup plan](single-room-play-web-setup-plan.md) corrects scout ambiguities: no
+client legality gate, no second compiled-preview pane, omitted absent start, and
+no fictional pending-dungeon route (AuthorView already creates/readies/starts the
+lobby and calls App). Shared worldToCube already rounds; render HEX_SIZE=1.
+
+Workflow `018e95f3-09bc-4cf2-af04-eb72ade7899d` (mission4b6a5e3f, web worktree) runs
+Luna for safe v3 codecs/storage and snapped monster/start setup. Worker owns only
+source/focused tests; **parent owns all real Git publication and services**. Parent
+will inspect and show an early temporary preview, then run one full ci-check at the
+first Draft boundary. One branch/PR continues into milestone2 Save/Play and full
+runtime rendering; independent feature review comes after complete scope. No
+live3030/8110 change or asset pipeline mutation. API merge remains Kirk's decision.
 Kirk freed HDD space and directed continuation;26GB/home was verified free, no
 cleanup was performed. Live3030/8110 remain untouched.
 Go proto dependency is the published v0.1.198 generated commit6ea2b2e6, which
