@@ -2,6 +2,19 @@
 
 ## Resume here
 
+**Merged and cleaned up (Kirk authorized):** web PR1116 merged as
+`11755d8ae0362130efc4d69bef0e1a5d95249c15`; API PR1004 merged as
+`c49a64c12c3e4ed042bcdc26595e12ac914967df`. Removed17 clean owned worktrees
+(including runtime source checkouts), three Vite previews, both dungeon stacks
+(12containers/2networks/8volumes). Ports3030/3031/3032/8110/8111 are closed.
+Verified Redis dumps, all volume archives, authored content, review artifacts and
+original runtime evidence are preserved in game-dev
+`.runtime/archives/world-builder-20260917T234755Z/` (README/result/checksums).
+All33 unrelated containers were preserved; the authoring API image remains because
+rpg-dev still uses it. No local branches deleted. **This project worktree is retained
+because project PR446 remains OPEN.** Camera start-direction pointer/UI cleanup
+are follow-ups. Older live-preview/pending-merge statements below are historical.
+
 **Human acceptance confirmed at web86164eb9 / APId5dfed99:** Kirk confirms he can
 load his saved room, roll dice, and start on his authored start hex. The slice
 is functioning. DeepSeek's bounded follow-up fixed resumed-character selection,
