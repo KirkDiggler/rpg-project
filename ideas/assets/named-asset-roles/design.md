@@ -114,6 +114,14 @@ to the placement-level identity when it binds the doorway.
 Named and **not built**: `below`, `inner`, `handle`, `chain`. They keep their
 refusal until a use case pays for them — the shenanigans vocabulary's rule.
 
+**A `leaf` is a MOVING PANEL, not a claim that the thing is openable.** The
+role says only which mesh swings and where its hinge is; whether a given
+swinging piece is a door with open/closed/locked state, a gate, or pure
+scenery is the authored binding's business (rpg-project#467 / PR #468). The
+World Builder can configure one swinging piece to mean whatever it wants, and
+that is what opens up open, closed, or locked on it — the asset role never
+decides it.
+
 **Which leaf is which is deliberately NOT in the vocabulary.** For a double
 door the two leaves hinge on opposite sides, and the consumer must know that
 — but it must derive it from each leaf's own geometry and position within the
