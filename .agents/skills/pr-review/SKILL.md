@@ -45,6 +45,12 @@ In order, before reading a line of the diff:
 - Run the applicable gates yourself (`go test -race`, `gofmt -l`, vet,
   lint — or the owning repo's equivalents). Do not repeat CI claims you
   did not run.
+- **Check what the diff's suite mocks.** A green suite is not evidence about
+  a seam the tests replace: a change whose central wiring sits behind a
+  component the suite doubles has untested wiring, and the failure mode is
+  invisible by construction. Ask whether any test exercises the real path.
+  If none does, say so in the verdict — that is a finding about the evidence,
+  not a preference about testing.
 - Reproduce before asserting: run the mutation check, write the probe,
   exercise the edge case. Verification-before-completion applies to review
   claims in both directions — a bug is shown, not suspected, and so is its
