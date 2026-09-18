@@ -2,7 +2,6 @@
 
 **Status:** RULED 2026-09-18 (Kirk: "alright i like it. ready to proceed"; R1–R8 all yes). Supersedes the mind ladder and
 the decider as the way a creature decides. Absorbs the slice named next in
-the decider as the way a creature decides. Absorbs the slice named next in
 [shenanigans/front-room-goblin.md](../shenanigans/front-room-goblin.md) §Next ("the world
 clock advances as the party moves and creatures are driven on it") as the `time` trigger.
 
