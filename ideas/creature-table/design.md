@@ -118,7 +118,7 @@ on:
     - { when: { enemy: reach },            attack: enemy }
     - { when: { enemy: seen },             toward: enemy }
     - { when: { enemy: remembered },       toward: enemy }
-    - { hold: {} }
+    - { when: { enemy: none },             hold: {} }
 ```
 
 **The front room, rewritten on this shape.** The goblin keeps the shipped four social keys.
@@ -247,6 +247,8 @@ stance graph, arrivals, the Announcer.
 ## What the build corrected (kept visible)
 
 - **`enemy: seen` could not close.** As first written, `seen → attack` and `remembered → toward` were the only movement entries, and `attack` out of reach is a pass by the driver's own law (it does not turn one word into another). A creature that saw the party across a room stood still forever; the raider camp's chief never left his door. Found by the session builder against the hold-out tests. Fixed as a vocabulary ruling, not content: `enemy:` gains `reach`, and the bands are exclusive. The shipped default is reach → attack, seen → toward, remembered → toward, with `fled` and `attacked` above them.
+- **An unconditional entry competes on every roll.** The first default (and this doc's own thug example) ended in `{ hold: {} }` with no `when`, so it was eligible beside `attack` and a skeleton in reach did nothing half its turns. Found by the api builder on the real stack. Every entry in the shipped default now carries a `when`; the engine already answers a silent table with hold and says so in the beat.
+- **A placement's key replaces the default's key wholesale, and that cost is real for an author.** The bandits' one-line standing order removed their fighting entries. Written as the design says (both, on the placement); whether a placement's entries should merge in above the default's is a question for Kirk after the walk.
 - **The rulebook's default ships one generic table**, not one per kind. The design's "a thug's table, a goblin's table" is the door (`table.Default(ref)`), and only the generic stands behind it until a kind needs its own.
 - **The default's `when:` words are the author's past tense** (`attacked`, `intimidated`, `persuaded`, `fled`); the encounter maps them onto its deed kinds at compile in one place. The first build validated against the deed kinds and refused the design's own example.
 - **The default source is headerless.** `CompileTable` takes the contents of an `on:` mapping; the first content shipped the header.
