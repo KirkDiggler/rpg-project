@@ -1,6 +1,31 @@
-# Project467 — selectable authored door appearance
+# Project467 — authored doors in the World Builder
 
-## Decision
+## Scope correction — earlier proposal below is not approved for implementation
+
+Kirk clarified that the target is the NEW World Builder, where visual placement
+and occupied space are explicitly authored. The goal is to make the door look
+right, not constrain it to the older atlas renderer's one-unit doorway gap.
+
+Verified at Web11755d8: `DungeonEnvironment` selects `RoomSceneEnvironment` when
+`scene.roomScene` is present and bypasses `DungeonShell`/`AtlasWalls`. The saved
+scene item already carries `assetRef` and placement. Therefore the earlier
+proposal to add an appearance field through the old DoorSpec/AtlasDoorway path
+must not drive this implementation without tracing the canonical room-scene
+interaction and occupancy seams first.
+
+Revised direction: preserve intentionally authored visual proportions/placement;
+author the opening and blocking space to match; bind the placed item's door
+parts to authoritative interactive state. Keep fixed frame/wall occupancy
+separate from the passage obstruction changed by opening. Never derive gameplay
+blocking solely from mesh bounds or fake shared door state in local storage.
+
+Next design pass must trace World Builder saved room-scene/gameplay data through
+play/session rendering and identify the minimal item-to-interaction binding.
+It must establish which existing door-state machinery can genuinely be reused.
+No product implementation has started. Retain the old proposal below as the
+record of the assumption being corrected, not as an implementation specification.
+
+## Earlier proposal — superseded target assumption
 
 Add an optional, per-door opaque `appearance` reference to the authored dungeon
 file. This is a selectable appearance, not a global replacement: absence keeps
