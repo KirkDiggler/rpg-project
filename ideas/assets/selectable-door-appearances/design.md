@@ -22,25 +22,28 @@ The names below are **proposed contract names**, not existing API fields.
 
 ## Exact authored contract (v4 proposal)
 
-Bump the single-room root and `RoomSource` version to 4 because the current
-strict v3 decoder rejects unknown gameplay keys. Version 3 remains accepted
-unchanged. The v4 document adds an optional `doorBindings` map under
-`room.room`, keyed by the stable `scene.items[].id`:
+Bump the single-room YAML root, room draft/source, and portable room-draft
+envelope to version 4 because the strict v3 decoder rejects unknown gameplay
+keys. Version 3 remains accepted unchanged. The v4 document adds optional
+`doorBindings` under `room.room`, keyed by the stable scene-item ID. This is an
+excerpt; existing required key/play/scene/workspace fields are omitted:
 
 ```yaml
 version: 4
 room:
   version: 4
-  # existing implicitRegionId, walkableHexes, propDeclarations, ...
-  doorBindings:
-    door-west:
-      doorId: west-gate
-      state: locked
-      locked: [{ability: dex, tool: 'dnd5e:item:thieves-tools', dc: 12}]
-      concealed: [{ability: perception, dc: 15}]
-      passage:
-        closed: {width: 1.8, depth: 0.20, offsetX: 0, offsetZ: 0}
-        open: null
+  # existing id, coordinateFrame, workspace, scene, ...
+  room:
+    # existing implicitRegionId, walkableHexes, propDeclarations, ...
+    doorBindings:
+      door-west:
+        doorId: west-gate
+        state: locked
+        locked: [{ability: dex, tool: 'dnd5e:item:thieves-tools', dc: 12}]
+        concealed: [{ability: perception, dc: 15}]
+        passage:
+          closed: {width: 1.8, depth: 0.20, offsetX: 0, offsetZ: 0}
+          open: null
 ```
 
 `door-west` must name one live `scene.items[]` prop. `doorId` is a required,
@@ -57,9 +60,7 @@ existing `CheckSpec` list. Existing probe/knowledge semantics apply.
 both movement and sight while the state is `closed` or `locked`.
 `passage.open` is required and must be `null` in this first slice: `null` means
 OPEN has no placed passage obstruction. This is explicit, not an omitted
-fallback. A future use case may add a non-null state-specific obstruction, but
-it must preserve the existing DoorState meaning that OPEN blocks neither
-movement nor sight.
+fallback. Other state-specific obstruction behavior is not part of this slice.
 
 Absent `doorBindings` means no interactive placed doors and exactly the current
 room behavior. Unknown item IDs, non-prop items, duplicate `doorId`s, malformed
@@ -68,7 +69,11 @@ an unlocked state, or a concealed empty list are compile errors with YAML paths.
 A visual item may also have an existing `propDeclarations[itemId]`: that is a
 separate fixed frame/wall contributor. It is optional because surrounding
 walls may already supply it; the author is not forced to duplicate occupancy.
-The door binding itself contributes only the changing passage.
+The door binding itself contributes only the changing passage. The editor
+creates stable IDs; the author does not hand-maintain mappings. Duplication
+remaps item and door IDs together, and deletion removes the binding. Bound-door
+arrangement stamping must preserve/remap the binding or refuse explicitly;
+silently downgrading an interactive door to scenery is not supported.
 
 ## Canonical input and persisted runtime (proposed)
 
@@ -113,6 +118,15 @@ construction-time descriptor and transcribe it in
 `GetAtlasResponse.room_scene_doors` field:
 
 ```proto
+message PlacedFootprint {
+  double origin_x = 1;
+  double origin_y = 2;
+  double facing_degrees = 3;
+  double width = 4;  // spatial Footprint.Box.W (across)
+  double depth = 5;  // spatial Footprint.Box.D (along)
+  double local_offset_x = 6;
+  double local_offset_y = 7;
+}
 message RoomSceneDoorBinding {
   string scene_item_id = 1; // visual stable ID
   string door = 2;          // compiled authoritative door ID
@@ -121,11 +135,15 @@ message RoomSceneDoorBinding {
 repeated RoomSceneDoorBinding room_scene_doors = 15;
 ```
 
-`PlacedFootprint` is proposed wire data (origin, facing, width, depth), all in
-the existing canonical session plane; it is gameplay geometry, not GLB pose.
+`PlacedFootprint` transcribes `spatial.FootprintPlacement`, including its
+local offset, double precision and degree-based facing, in the canonical plane.
+It is gameplay geometry, not GLB pose; API/Web must not redo source conversion.
 The binding is omitted for a member who does not know a concealed door, just as
 that member's doorway knowledge is omitted. `DoorInfo` remains the live state
 and lock answer, keyed by `door`; no duplicate state is added to this binding.
+On `DoorRevealed`, refresh member-scoped atlas bindings as well as `GetDoors`;
+refetching live state alone cannot restore an initially omitted binding. Test
+that only the newly knowing member receives it; do not fabricate portal edges.
 
 `OpenDoor`/`Unlock` already persist state and publish `DoorChanged`; Web's
 `useSessionDoors`/event refresh updates the state map. `RoomSceneEnvironment`
@@ -133,8 +151,9 @@ receives the binding list, `doors`, and `onDoorClick`; it joins item ID to the
 member-visible `DoorInfo`. The client preview index can use the canonical
 closed placement while closed/locked and remove it when the event says OPEN.
 The server's encounter fold is authoritative for actual movement and sight; a
-preview is only an aid. If a preview cannot represent continuous geometry, it
-must under-claim rather than block or invent a route.
+preview is only an aid. If it cannot represent continuous geometry, show the
+preview as unavailable rather than asserting passability or suppressing the
+server-bound movement intent on an invented obstruction.
 
 ## Rendering contract
 
@@ -174,7 +193,7 @@ deferred.
 | Owner | Narrow responsibility | Proof |
 |---|---|---|
 | Web editor (`rpg-dnd5e-web`) | v4 draft/YAML decode, declaration UI, room-scene door join, GLB role loader, rigid pose | round-trip/validation tests; `RoomSceneEnvironment` tests; real browser Save & Play |
-| Toolkit `encounter/dungeonspec` module | decode/validate `doorBindings`, `CanonicalPlacedDoors`, `PlacedDoorInput`, movement/LOS fold | compiler, malformed-source, closed/open, concealment, ToData/Load tests |
+| Toolkit `rulebooks/dnd5e/encounter` module (includes `dungeonspec`) | decode/validate `doorBindings`, `CanonicalPlacedDoors`, `PlacedDoorInput`, movement/LOS fold | compiler, malformed-source, closed/open, concealment, ToData/Load tests |
 | Toolkit `session` module | session verbs/state persistence and `Atlas` descriptor projection | door verb/event/member-knowledge and atlas projection tests |
 | `rpg-api-protos` | transcribe proposed binding/footprint field only after SDK shape is proven | buf format/lint/breaking/generate |
 | `rpg-api` | registry/authoring unchanged byte flow; SDK↔proto mapping in `convert.go` | registry, GetAtlas, real session integration |
