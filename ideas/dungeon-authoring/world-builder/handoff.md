@@ -406,6 +406,15 @@ Don't claim Publish/Play, movement/LOS enforcement or gameplay lighting is wired
 4. Concealment/intel, multi-room traversal and #1094/#1100/#1106 polish remain off
    the critical path. No placeholder asset or provider work.
 
+**Authoring a creature's behaviour: see `docs/howto/author-a-creature.md`.** A
+creature's behaviour is now one authored surface — an `on:` block of weighted
+entries keyed by what happened, and a `temper` word or faction mix that loads
+the die — so the palette's eventual job here is exposing those two rather than
+a Mind dropdown: a per-outcome entry list with a weight, a line of speech and
+one word, and a temperament picked per placement or dealt from a mix on the
+faction. The `mind:` word on a monster placement is gone; `temper:` replaces it
+(rpg-project#466).
+
 World first, optional named areas later. No forced region-first placement, fake
 per-hex entities, shadow anchors or lossy visual-ref-only export. Keep complete
 pieces/transforms/groups/supports/lights and explicit gameplay declarations.
