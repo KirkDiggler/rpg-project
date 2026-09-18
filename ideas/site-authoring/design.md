@@ -1,4 +1,4 @@
-# Authoring an adventure — inhabitants and policy in the World Builder
+# Authoring a site — inhabitants and policy in the World Builder
 
 **Status:** DESIGN 2026-09-18, for review. Tracking issue: rpg-project#476.
 **Consumers:** the World Builder (`rpg-dnd5e-web`), the strict single-room decoder
@@ -7,7 +7,7 @@ and compiler (`rpg-toolkit`, `rulebooks/dnd5e/encounter/dungeonspec`).
 
 ## The one sentence
 
-An author writes what the creatures in their adventure are and do — a
+An author writes what the creatures in their site are and do — a
 faction's temperament mix and its shared answer table, a creature's overrides
 and its weapons — through the visual builder, instead of hand-writing `on:`
 and `temper` into YAML.
@@ -37,7 +37,7 @@ modelling problem before it is a UI problem.
 ## The world shape
 
 ```yaml
-adventure:
+site:
   key: reference-front-room
   name: The Front Room
   factions:
@@ -57,7 +57,7 @@ adventure:
 
 Three layers, and each one already exists somewhere:
 
-1. **The adventure** — identity, factions, dispositions, and its rooms. This
+1. **The site** — identity, factions, dispositions, and its rooms. This
    is v2's document root (`key`, `name`, `regions`, `factions`,
    `dispositions`, `endings`), which the World Builder has no equivalent of.
 2. **The room** — geometry: walkable cells, props, the party start, creature
@@ -67,7 +67,17 @@ Three layers, and each one already exists somewhere:
 
 ## Decisions taken (Kirk, 2026-09-18)
 
-### 1. The root is `adventure`
+### 1. The root is `site`
+
+**`adventure` is reserved, not rejected.** In D&D an adventure sits *above* a
+single place: a published module spans several sites, a campaign spans several
+adventures. Calling one authored place an `adventure` would consume the word for
+the level above, so a real multi-site adventure would have no name left — the
+shortcut that forecloses the thing the game will need. `site` claims only what
+is true: *"this is a site where things happened."*
+
+Consequently the deferred word for a collection of sites is **`adventure`**, and
+the hierarchy reads `campaign -> adventure -> site -> room`.
 
 It covers dungeon, cave, town and camp; *"dungeon is a very specific thing …
 a free roam town could be built here."*
@@ -87,7 +97,7 @@ Three candidates were rejected on **verified** collisions, not taste:
 **The toolkit and wire names do not change.** Kirk: *"protos are versioned …
 what it is called in the toolkit can stay and that's fine. maybe the module
 move to 1.0 will change it. that is what versions are for."* So the authored
-model says `adventure`, the wire keeps `dungeon`, and the beta pass or the 1.0
+model says `site`, the wire keeps `dungeon`, and the beta pass or the 1.0
 module move is the revisit point. **The divergence is deliberate and is recorded
 here**, in this design. An ADR is owed by whichever repository next touches the
 dialect, so the divergence is visible one hop from the code rather than only in
@@ -95,10 +105,10 @@ a design doc.
 
 ### 2. `rooms[]` is flat, and there is no `sites` layer yet
 
-v2 is flat today, and nothing needs grouping. A town with a shop *and* a dungeon
-beneath it would want `adventure.sites[].rooms[]`, and that is a versioned
-change the day a multi-site adventure arrives. Named here so it is visibly
-deferred rather than unconsidered.
+v2 is flat today, and nothing needs grouping. Nested places — a town with a
+dungeon beneath it — are the business of the level ABOVE a site, not of a site.
+So this is not a limitation nobody noticed: see `adventure` below for the named,
+deferred word that owns them.
 
 ### 3. There is no `kind` field yet
 
@@ -138,7 +148,7 @@ binding when its creature is removed.
 
 | Noun | Owner |
 |---|---|
-| The adventure document, factions, dispositions, rooms | the **authored content** — the builder writes it, the compiler reads it |
+| The site document, factions, dispositions, rooms | the **authored content** — the builder writes it, the compiler reads it |
 | What a creature does with time | the rulebook's tables + the encounter's `TurnDriver` (rpg-project#465) |
 | Temperament's arithmetic | rulebook content; the placement or the faction's mix names one |
 | Whom a creature opposes | the stance graph, projected per observer |
@@ -197,13 +207,13 @@ So:
   declarations. No save/load in the chrome.
 - **Prop compositions** — its own screen, as it already is. The orange anchor
   belongs here and nowhere else.
-- **The adventure** — the scope that belongs to **no single selection**:
+- **The site** — the scope that belongs to **no single selection**:
   identity, factions, temperament mixes, dispositions. It is a **document
   section**, not a property panel, and it is deliberately different in shape
   from everything else because its nouns are inherited rather than selected.
 - **Library** — saving, loading, snapshots, arrangements. A place you *go*.
 
-Factions are the reason the adventure scope cannot be avoided: a shared table is
+Factions are the reason the site scope cannot be avoided: a shared table is
 inherited by many creatures and belongs to none of them, so a
 select-then-declare panel can never show it.
 
@@ -211,10 +221,10 @@ select-then-declare panel can never show it.
 
 Each ends in something observable, and slice 1 is the one that makes room.
 
-1. **Shape only.** The document carries the `adventure` root and
+1. **Shape only.** The document carries the `site` root and
    `monsterBindings`; it round-trips through the web encode and the toolkit's
    strict decode; **no UI**. Proof: a hand-written binding saves, reloads and
-   plays unchanged, and an adventure without one is byte-identical.
+   plays unchanged, and a site without one is byte-identical.
 2. **Read-only.** The panel shows what a creature **inherits** (its faction's
    table and temperament) versus what it **overrides**. Inheritance is what
    will confuse authors, so making it legible precedes making it editable.
@@ -229,7 +239,7 @@ Each ends in something observable, and slice 1 is the one that makes room.
   and the engine rolls the table the author wrote.
 - A faction's answer table is inherited by every placement in it, and a
   placement that overrides one key replaces that key wholesale.
-- An adventure with no bindings is byte-identical to today's.
+- A site with no bindings is byte-identical to today's.
 - The builder never decides which entry fires, never sums weights, and never
   reads a `when` — it writes a document.
 - A declaration can never outlive the creature it names.
@@ -239,7 +249,7 @@ Each ends in something observable, and slice 1 is the one that makes room.
 
 - **`kind: dungeon | town | camp | cave`** — when a rule, the library, or a mode
   reads it.
-- **`sites`** — when an adventure spans more than one place.
+- **`sites`** — when a site spans more than one place.
 - **List-valued entries** (two things happening from one entry) — when a use
   case needs it; today one entry does one thing, which is what keeps an
   author from guessing an ordering the engine does not promise.
@@ -254,11 +264,11 @@ Each ends in something observable, and slice 1 is the one that makes room.
   editor against the declaration means each arrives by adding a row — but if
   the engine's shape differs from the ruling, the editor, not the engine, is
   what moves.
-- **`adventure` versus the wire's `dungeon`** is a deliberate divergence, and
+- **`site` versus the wire's `dungeon`** is a deliberate divergence, and
   divergences rot. **No ADR exists yet** — this design is currently the only
   record. Whichever repository next touches the dialect owes one, and together
   with the beta/1.0 revisit point that is the mitigation; if neither happens
   this becomes two words for one thing.
-- **The adventure scope is the first noun in this UI that is not a selection.**
+- **The site scope is the first noun in this UI that is not a selection.**
   Everything else the panel does is keyed to a selected thing. Getting this one
   surface wrong is what would push the whole UI back into one flat stack.
