@@ -79,9 +79,13 @@ does not hold is not on the table for this roll. Conditions:
 
 | `when` | Holds when |
 |---|---|
-| `enemy: seen` | an opposed member is in this creature's sight |
+| `enemy: reach` | an opposed member is within this creature's reach (the same reach `attack` tests) |
+| `enemy: seen` | an opposed member is in sight and **none is in reach** |
 | `enemy: remembered` | none in sight, but one is held from an earlier sighting |
-| `enemy: none` | neither |
+| `enemy: none` | none of the above |
+
+The four `enemy:` bands are **exclusive by definition**, so an author never writes two entries that
+both hold for one situation without meaning to. (Corrected during the build; see below.)
 | `<deed>: { within: N }` for `attacked`, `intimidated`, `persuaded`, `fled` | this creature holds that deed against itself, landed at most N rounds ago (the clock's unit, §5). This is the preset's "patience", moved from Go into the author's sight |
 
 **Words.** One per entry.
@@ -111,7 +115,8 @@ has time.
 on:
   time:
     - { when: { attacked: { within: 3 } }, attack: attacker, weight: 3 }
-    - { when: { enemy: seen },             attack: enemy }
+    - { when: { enemy: reach },            attack: enemy }
+    - { when: { enemy: seen },             toward: enemy }
     - { when: { enemy: remembered },       toward: enemy }
     - { hold: {} }
 ```
@@ -238,6 +243,19 @@ Kept, because they are mechanisms the words drive: `TurnDriver` as the seam (one
 implementation, the table), `Striker`, `Routed` and the compelled-turn driver, `Route`/`Direct`
 and the `MoveAway`/`Toward` policies, perception holdings and `Report`, deeds with `At`, the
 stance graph, arrivals, the Announcer.
+
+## What the build corrected (kept visible)
+
+- **`enemy: seen` could not close.** As first written, `seen → attack` and `remembered → toward` were the only movement entries, and `attack` out of reach is a pass by the driver's own law (it does not turn one word into another). A creature that saw the party across a room stood still forever; the raider camp's chief never left his door. Found by the session builder against the hold-out tests. Fixed as a vocabulary ruling, not content: `enemy:` gains `reach`, and the bands are exclusive. The shipped default is reach → attack, seen → toward, remembered → toward, with `fled` and `attacked` above them.
+- **The rulebook's default ships one generic table**, not one per kind. The design's "a thug's table, a goblin's table" is the door (`table.Default(ref)`), and only the generic stands behind it until a kind needs its own.
+- **The default's `when:` words are the author's past tense** (`attacked`, `intimidated`, `persuaded`, `fled`); the encounter maps them onto its deed kinds at compile in one place. The first build validated against the deed kinds and refused the design's own example.
+- **The default source is headerless.** `CompileTable` takes the contents of an `on:` mapping; the first content shipped the header.
+- **`rulebooks/dnd5e/resolution` is a fifth toolkit PR.** It imported `Decider`. The wave plan missed it.
+- **The roller is a construction-time capability** on the encounter, optional and refused at the roll, because a fight round raises the clock inside `EndTurn`, which takes no die.
+- **A world round refreshes sight itself.** Five verbs that pay a round deliberately refresh no sight; once a round can move somebody inside them, that stopped being safe.
+- **An authored cell is walked onto**, not up to. A member anchor is stood beside.
+- **Open word, not built:** a creature whose `toward: enemy` reaches the remembered cell and finds nobody holds. "Walk through that door and look" is a later word.
+- **On the wire**, temperament is an enum with an explicit `TEMPER_NONE` (zero stays "the producer failed"), and the dealt-temperament beat names the faction whose die was thrown.
 
 ## Ownership
 
