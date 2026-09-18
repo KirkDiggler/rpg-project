@@ -1,145 +1,194 @@
 # Project467 — authored doors in the new World Builder
 
-## Scope (corrected)
+## Scope and decisions
 
-This is a **new World Builder** slice. The author chooses an existing scene
-item's `assetRef` and its continuous placement; that is the appearance choice.
-The goal is to make that authored door look right. Do not add a second style
-system, fit to the old aperture, widen a legacy map, or route this through
-`DoorSpec`/`AtlasDoorway` by default. Existing v2/legacy worlds retain their
-current renderer and behavior.
+This is a **new World Builder** slice. A scene item's existing `assetRef` and
+continuous authored transform are the appearance choice. The goal is to make
+that authored door look right. There is no second appearance/style field, no
+legacy aperture fit, no silent map widening, and no `DoorSpec`/`AtlasDoorway`
+route by default. Existing v2/legacy worlds retain their current renderer and
+behavior.
 
-The approved example is
-`dnd5e:env:dark-fortress:wall_door_double_01`. The private Assets release and
-Web catalog already carry it. Its reviewed roles are `Door_Frame`, `Door_Left`,
-`Door_Right`, and `Door_Wall_Above`, under the normalized parent (human yaw
-−180); original GLBs remain untouched. The role binding is explicit. At load
-time derive rest transforms and leaf pivots from the actual GLB. The reviewed
-binding declares the intended hinge axis/open angle; geometry alone cannot tell
-us that intent. Do not duplicate numeric transforms in YAML or a proto.
+The approved asset is
+`dnd5e:env:dark-fortress:wall_door_double_01`. Its private release and Web
+catalog already carry it. Its reviewed roles are `Door_Frame`, `Door_Left`,
+`Door_Right`, and `Door_Wall_Above` under the normalized parent (human yaw
+−180); source GLBs remain untouched. The binding declares intended hinge axis
+and open angle, while runtime derives each role's rest transform and pivot from
+the loaded GLB hierarchy. No numeric GLB transform is copied into YAML,
+proto, or a second registry.
 
-## Current chain and ownership
+The names below are **proposed contract names**, not existing API fields.
 
-* **Authoring/editor:** `rpg-dnd5e-web/src/concepts/world-building/`
-  (`WorldBuildingConcept.tsx`, `roomDraft.ts`, `serialization.ts`,
-  `singleRoomDungeon.ts`). A room `WorldProp` already persists `id`, `assetRef`,
-  and authored `transform`; `RoomPropDeclaration` currently persists one
-  explicit owner-local footprint plus independent movement/LOS flags. The UI's
-  “Movement & sight declaration” is an authored declaration, not mesh bounds.
-* **Save:** `useRoomPublishing.ts` emits the exact v3 YAML; `PutDungeon`'s
-  `validate_only` path is the compiler proof, and `FileRegistry` stores the
-  accepted bytes verbatim (`rpg-api/internal/dungeons/`,
-  `internal/handlers/dnd5e/authoring/v1alpha1/`). Local storage is a draft,
-  never shared gameplay state.
-* **Compile:** `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/` decodes
-  `RoomSource`, `CanonicalPlacedProps` converts declared scene items into
-  canonical `PlacedPropInput`, and `CompileSingleRoom` creates the field's
-  room-scene presentation plus gameplay geometry. `PlacedPropInput` is explicit
-  geometry, but is immutable after construction and has no door identity/state.
-* **Session/persistence:** `rpg-api/internal/sessionworld/` and the registry
-  start the SDK session. `encounter.RoomScenePresentation` is copied through
-  `Field.RoomScene`, `ToData`/`LoadEncounter`, `Atlas`, and `AtlasFor`; the
-  canonical scene is visual presentation, while field folds own movement/sight.
-* **Play/render:** `GetAtlasResponse.room_scene_json` is decoded by
-  `src/components/session/roomSceneJson.ts`. At Web
-  `11755d8ae0362130efc4d69bef0e1a5d95249c15`,
-  `GameView → SessionEncounterView → SessionCanvas → DungeonEnvironment` sends
-  a room scene to `RoomSceneEnvironment` and bypasses `DungeonShell/AtlasWalls`.
-  `RoomSceneEnvironment.tsx` currently renders each item through
-  `WorldPropModel` at its source pose and renders the workspace floor.
+## Exact authored contract (v4 proposal)
 
-## Minimal gameplay contract
+Bump the single-room root and `RoomSource` version to 4 because the current
+strict v3 decoder rejects unknown gameplay keys. Version 3 remains accepted
+unchanged. The v4 document adds an optional `doorBindings` map under
+`room.room`, keyed by the stable `scene.items[].id`:
 
-A door is an explicit binding from one stable scene-item ID to one authoritative
-interactive door identity. It is not inferred from `assetRef`, labels, GLB
-bounds, adjacency, or local storage. The room author must author separately:
+```yaml
+version: 4
+room:
+  version: 4
+  # existing implicitRegionId, walkableHexes, propDeclarations, ...
+  doorBindings:
+    door-west:
+      doorId: west-gate
+      state: locked
+      locked: [{ability: dex, tool: 'dnd5e:item:thieves-tools', dc: 12}]
+      concealed: [{ability: perception, dc: 15}]
+      passage:
+        closed: {width: 1.8, depth: 0.20, offsetX: 0, offsetZ: 0}
+        open: null
+```
 
-1. the fixed frame/wall occupancy (which remains blocked in every door state); and
-2. the passage obstruction (movement/LOS geometry for CLOSED/LOCKED, and an
-   explicitly authored open passage for OPEN).
+`door-west` must name one live `scene.items[]` prop. `doorId` is a required,
+stable, dungeon-local ID and compiles to the existing `<dungeon-key>/<doorId>`
+identity. `state` is required and is exactly `open`, `closed`, or `locked`; no
+zero-value default is invented. `locked` is absent for `open`/`closed`, and is
+required and non-empty for `locked`, using the existing `CheckSpec` approach
+shape and validation (`ability` non-empty, `dc >= 1`, optional `tool`).
+`concealed` is absent for an ordinary door and, when present, is a non-empty
+existing `CheckSpec` list. Existing probe/knowledge semantics apply.
 
-The current single `RoomPropDeclaration` cannot express that split: its one
-static footprint can never become passable. The missing primitive is therefore
-a **stateful placed obstruction bound to an item**, with explicit closed/open
-geometry and a stable door ID. The encounter composition must fold that
-obstruction into its existing movement, sight, persistence, and snapshot paths;
-no client-side bounds test or `localStorage` toggle is a substitute. The
-compiler owns the source-frame→canonical conversion once; neither API nor Web
-recomputes it.
+`passage.closed` is required and is the authored owner-local `RoomFootprint`
+(shape, bounds, finite-value checks) converted once by the compiler. It blocks
+both movement and sight while the state is `closed` or `locked`.
+`passage.open` is required and must be `null` in this first slice: `null` means
+OPEN has no placed passage obstruction. This is explicit, not an omitted
+fallback. A future use case may add a non-null state-specific obstruction, but
+it must preserve the existing DoorState meaning that OPEN blocks neither
+movement nor sight.
 
-Reuse the genuine door machinery where it fits: the existing `DoorState`
-(open/closed/locked), lock/concealment knowledge, `OpenDoor`/`Unlock`, member
-scoping, `DoorChanged`/reveal events, and `Doors` state read. Existing
-`DoorInput`/`AtlasDoorway` remains valid for a real adjacent cross-cell portal;
-it is **not** the geometry contract for an arbitrary in-room placed door. The
-new placed-door primitive must expose the same state/verb seam without
-pretending every authored frame is a portal edge. A Close verb remains deferred;
-do not add one unless implementation evidence makes it a separate decision.
+Absent `doorBindings` means no interactive placed doors and exactly the current
+room behavior. Unknown item IDs, non-prop items, duplicate `doorId`s, malformed
+footprints, duplicate bindings, unknown keys, missing required fields, a lock on
+an unlocked state, or a concealed empty list are compile errors with YAML paths.
+A visual item may also have an existing `propDeclarations[itemId]`: that is a
+separate fixed frame/wall contributor. It is optional because surrounding
+walls may already supply it; the author is not forced to duplicate occupancy.
+The door binding itself contributes only the changing passage.
 
-The exact source/proto names for the binding are intentionally not invented
-here. The consumer owning the room interaction must define the narrow shape:
-scene item ID, authoritative door ID, explicit closed/open obstruction facts,
-and any existing lock/concealment data. Do not put gameplay declarations into
-the presentation-only `RoomScenePresentation` or add an appearance field to
-legacy atlas doorways. If a separate atlas/session descriptor is required to
-join item ID to member-scoped `DoorInfo`, it must be designed and transcribed
-from the proven SDK contract before API/Web implementation.
+## Canonical input and persisted runtime (proposed)
 
-## Saved, played, and observed state
+In `rpg-toolkit/rulebooks/dnd5e/encounter` add a door-specific sibling to
+`PlacedPropInput`, not a generic FSM:
 
-World Builder edits the scene item, fixed occupancy, and passage declaration as
-one room-draft history transaction. Save/reload round-trips them in v3 YAML;
-`PutDungeon` validates and `FileRegistry` preserves exact bytes. Compilation
-creates visual scene data and authoritative static/stateful geometry. A newly
-started session snapshots both; changing the published room later cannot mutate
-that running session. `ToData`/`LoadEncounter` preserves the binding, geometry,
-and current door state by stable identity.
+```go
+type PlacedDoorInput struct {
+    ID          DoorID                 // compiled dungeon-key/doorId
+    SceneItemID string                 // stable visual item id
+    Closed      spatial.FootprintPlacement // canonical, movement+LOS blocker
+    State       DoorState              // existing open/closed/locked interface
+    Concealed   []CheckApproach        // existing knowledge fact
+}
+```
 
-On play, `GetAtlas` carries the canonical visual scene and the authoritative
-mechanical map. `GetDoors` remains the member-scoped live state and stream beats
-remain the refresh path. `SessionEncounterView.handleDoorClick` continues to
-call existing Open/Unlock; the canonical room branch must pass that intent and
-state into `RoomSceneEnvironment`, not invent a local toggle. The server's
-movement/sight answer remains authoritative even where the current atlas path
-cannot preview a continuous placed footprint.
+`CompileSingleRoom` gets `CanonicalPlacedDoors`, using the same single
+source-frame→canonical conversion as placed props. `Closed` is copied and
+validated at construction. The encounter stores `placedDoors` separately from
+static `placed` contributors; state selects whether the closed contributor is
+active. OPEN removes it from both movement and sight, while static frame/wall
+contributors remain. `DoorState`, `OpenDoor`, `Unlock`, `DoorsFor`, concealment,
+door events, and the existing stable ID rules are reused unchanged in meaning.
+`DoorInput` remains for adjacent edge portals; it is not adapted to arbitrary
+in-room geometry.
 
-## Visual binding and motion
+Persistence adds the placed-door record beside existing edge-door data (proposed
+`PlacedDoorData`: ID, SceneItemID, canonical Closed placement, state/lock/
+concealment). `ToData` and `LoadEncounter` reconstruct the same
+`PlacedDoorInput`; current state is session truth, not room YAML after start.
+Every snapshot performs the same deep-copy/validation boundary as existing
+field and door data. A running session is isolated from later author edits.
+No close verb is added.
 
-`RoomSceneEnvironment` must render the authored item at its exact transform and
-proportions, then bind only the named door parts. Frame and wall-above stay
-static. Each leaf is an isolated instance with a rigid pivot derived from its
-loaded GLB rest hierarchy; open motion rotates that leaf around its own pivot.
-Never apply non-uniform parent scaling to a moving assembly, infer a hinge from
-bounds, or silently narrow/widen the authored opening. Keep the existing asset
-catalog and failure markers: an unknown binding is a named refusal, not a
-replacement model. Height/UV automation remains deferred.
+## Smallest wire join and changed obstruction (proposed)
 
-## Early proof and acceptance
+Keep gameplay declarations out of `RoomScenePresentation` and
+`room_scene_json`. Extend the SDK `session.Atlas` with a member-visible,
+construction-time descriptor and transcribe it in
+`rpg-api-protos/dnd5e/api/session/v1alpha1/service.proto` and
+`rpg-api/internal/handlers/dnd5e/session/v1alpha1/convert.go` as a proposed
+`GetAtlasResponse.room_scene_doors` field:
 
-1. Author a room in the real World Builder: place the published double-door
-   asset, set its visual pose, and author distinct fixed-frame and passage
-   occupancy. Save, reload, reopen, and verify exact authored pose/asset ID.
-2. Publish with `Save & Play`; start a real session, verify the saved room
-   reaches `RoomSceneEnvironment` (not the legacy shell), and verify two
-   independent door instances remain isolated.
-3. With authoritative CLOSED and LOCKED states, leaves are closed, frame/wall
-   occupancy remains, and a server movement attempt through the passage is
-   refused. Open/unlock through the real handler; state events/refetch update
-   every member, leaves swing rigidly, fixed occupancy remains, and passage
-   movement succeeds where the server allows it.
-4. Reload persisted session data and repeat state/render assertions. Test
-   missing/invalid binding and missing asset with visible named failure. Use
-   visual screenshots/browser evidence as the primary gate; unit tests alone or
-   an old `AtlasWalls`/`SyntyHexWall` fixture do not prove this slice.
+```proto
+message RoomSceneDoorBinding {
+  string scene_item_id = 1; // visual stable ID
+  string door = 2;          // compiled authoritative door ID
+  PlacedFootprint closed = 3; // canonical placement for client preview
+}
+repeated RoomSceneDoorBinding room_scene_doors = 15;
+```
 
-## Narrow unresolved decisions
+`PlacedFootprint` is proposed wire data (origin, facing, width, depth), all in
+the existing canonical session plane; it is gameplay geometry, not GLB pose.
+The binding is omitted for a member who does not know a concealed door, just as
+that member's doorway knowledge is omitted. `DoorInfo` remains the live state
+and lock answer, keyed by `door`; no duplicate state is added to this binding.
 
-* The room compiler/encounter owner must name the stateful placed-obstruction
-  primitive and its exact open/closed geometry representation.
-* The SDK consumer and proto owner must choose the smallest authoritative
-  carriage joining scene-item ID to member-visible door ID/state; no parallel
-  Web-only mapping or appearance field is approved.
-* Assets/Web must approve the actual GLB-derived role/pivot binding and a
-  visually verified open-angle convention. No manual transform registry,
-  manual motion claim, map widening, Close verb, or height/UV system is
-  authorized by this design.
+`OpenDoor`/`Unlock` already persist state and publish `DoorChanged`; Web's
+`useSessionDoors`/event refresh updates the state map. `RoomSceneEnvironment`
+receives the binding list, `doors`, and `onDoorClick`; it joins item ID to the
+member-visible `DoorInfo`. The client preview index can use the canonical
+closed placement while closed/locked and remove it when the event says OPEN.
+The server's encounter fold is authoritative for actual movement and sight; a
+preview is only an aid. If a preview cannot represent continuous geometry, it
+must under-claim rather than block or invent a route.
+
+## Rendering contract
+
+`RoomSceneEnvironment` renders every item at its exact authored transform and
+proportions, then applies the named door binding only to the loaded asset. The
+frame and `Door_Wall_Above` remain static. The loader verifies the four named
+roles, clones the source scene per instance, and derives each leaf's rest local
+transform, hinge pivot, and axis from that instance's actual hierarchy. The
+reviewed binding supplies the intended axis and open-angle convention; it does
+not supply copied rest numbers. OPEN applies isolated rigid rotation to
+`Door_Left` and `Door_Right` around their own derived pivots. CLOSED/LOCKED
+restores the derived rest pose. No parent non-uniform scale, bounds-inferred
+hinge, filename behavior, or local toggle is allowed. Unknown binding/asset is
+a named renderer failure, never substitute scenery. Height/UV automation stays
+deferred.
+
+## End-to-end proof
+
+1. In the real World Builder, place two copies of the published asset, author
+   different transforms, bind each explicitly, and author passage geometry;
+   optionally declare fixed frame occupancy only where walls do not already
+   supply it. Save, reopen, and verify exact YAML/item IDs/transforms.
+2. `Save & Play` → real `PutDungeon` → registry → `CompileSingleRoom` →
+   `StartSession` → member `GetAtlas` must reach canonical
+   `RoomSceneEnvironment`, not `DungeonShell/AtlasWalls`. Verify the proposed
+   wire join names both instances and preserves authored proportions.
+3. CLOSED and LOCKED render closed and refuse a server crossing. Real Open or
+   Unlock updates every member through the existing event/refetch path; leaves
+   swing rigidly, fixed occupancy remains, OPEN passage movement/sight succeeds
+   where the server allows it, and preview state changes without localStorage.
+4. Reload `ToData`/`LoadEncounter`, repeat state and movement/sight assertions,
+   and test unknown bindings/assets with named failures. Browser visual evidence
+   is the primary gate; legacy wall-only fixtures are not acceptance.
+
+## Ownership, test scope, and merge dependencies
+
+| Owner | Narrow responsibility | Proof |
+|---|---|---|
+| Web editor (`rpg-dnd5e-web`) | v4 draft/YAML decode, declaration UI, room-scene door join, GLB role loader, rigid pose | round-trip/validation tests; `RoomSceneEnvironment` tests; real browser Save & Play |
+| Toolkit `encounter/dungeonspec` module | decode/validate `doorBindings`, `CanonicalPlacedDoors`, `PlacedDoorInput`, movement/LOS fold | compiler, malformed-source, closed/open, concealment, ToData/Load tests |
+| Toolkit `session` module | session verbs/state persistence and `Atlas` descriptor projection | door verb/event/member-knowledge and atlas projection tests |
+| `rpg-api-protos` | transcribe proposed binding/footprint field only after SDK shape is proven | buf format/lint/breaking/generate |
+| `rpg-api` | registry/authoring unchanged byte flow; SDK↔proto mapping in `convert.go` | registry, GetAtlas, real session integration |
+| `rpg-game-assets` | preserve reviewed asset/catalog identity; no gameplay authority | manifest/hash and GLB-role evidence |
+
+Develop outside-in from Web contract to proto and providers; merge the proto
+exception first, then toolkit encounter, toolkit session, API, and Web/Assets
+consumers. Adopt real provider tags before each consumer merge. The design PR
+remains the written contract and must be reviewed before implementation.
+
+## Residual risk
+
+The proposed `room_scene_doors` field and `PlacedFootprint` are new wire/API
+surface, and the current client path index does not yet model continuous placed
+geometry. Both are deliberately named so they can be rejected or narrowed in
+review before code. No gameplay state lives in visual JSON, no GLB numbers are
+repeated, and no cross-cell portal assumption is hidden in the contract.
