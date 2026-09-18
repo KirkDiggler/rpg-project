@@ -1,9 +1,16 @@
 # The creature's table — one authored surface for what a creature does
 
-**Status:** RULED 2026-09-18 (Kirk: "alright i like it. ready to proceed"; R1–R8 all yes). Supersedes the mind ladder and
-the decider as the way a creature decides. Absorbs the slice named next in
-[shenanigans/front-room-goblin.md](../shenanigans/front-room-goblin.md) §Next ("the world
-clock advances as the party moves and creatures are driven on it") as the `time` trigger.
+**Status:** SHIPPED 2026-09-18 (tracking rpg-project#466; RULED R1–R8 by Kirk; walked by a scripted pass Kirk could not take himself, proven from the record; review round skipped by Kirk: "we can merge away").
+
+| Repo | Release |
+|---|---|
+| rpg-api-protos | v0.1.200 (#346: `AnswerKey`, `AnswerCandidate`, `Answered.key/candidates/temper`, `Temper` enum with `TEMPER_NONE`, `Tempered` beat with `faction`) · v0.1.202 (#347: `Stayed` beat) |
+| rpg-toolkit | mind/behavior v0.5.0 (#1819, the table primitive) · rulebooks/dnd5e v0.182.0 (#1815) · encounter v0.90.0 (#1816) · resolution v0.54.1 (#1821) · session v0.97.0 (#1818) · `rulebooks/dnd5e/behavior` deleted (#1820) · hook fix #1822 |
+| rpg-api | dev de83ffd6 (#1005) |
+| rpg-dnd5e-web | dev 20330c9a (#1123); story rendering of `time` picks and `tempered` is web#1122; picker/header/raw-id web#1128 |
+| rpg-project | author's guide `docs/howto/author-a-creature.md` (#474); corrections #469, #472, #473 |
+
+Supersedes the mind ladder and the decider as the way a creature decides.
 
 **Where it came from (Kirk, 2026-09-18, thinking out loud, then adopted):** "the answer table
 can be where choices come from … I liked the mind behavior to give different monster types
