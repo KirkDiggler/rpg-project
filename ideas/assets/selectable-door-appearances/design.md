@@ -14,8 +14,9 @@ The approved example is
 Web catalog already carry it. Its reviewed roles are `Door_Frame`, `Door_Left`,
 `Door_Right`, and `Door_Wall_Above`, under the normalized parent (human yaw
 −180); original GLBs remain untouched. The role binding is explicit. At load
-time derive rest transforms, leaf pivots, and motion axes from the actual GLB;
-do not duplicate numeric transforms in YAML, a manifest, or a proto.
+time derive rest transforms and leaf pivots from the actual GLB. The reviewed
+binding declares the intended hinge axis/open angle; geometry alone cannot tell
+us that intent. Do not duplicate numeric transforms in YAML or a proto.
 
 ## Current chain and ownership
 
@@ -25,7 +26,7 @@ do not duplicate numeric transforms in YAML, a manifest, or a proto.
   and authored `transform`; `RoomPropDeclaration` currently persists one
   explicit owner-local footprint plus independent movement/LOS flags. The UI's
   “Movement & sight declaration” is an authored declaration, not mesh bounds.
-* **Save:** `useRoomPublishing.ts` emits the exact v3 YAML; `PutDungeon`'
+* **Save:** `useRoomPublishing.ts` emits the exact v3 YAML; `PutDungeon`'s
   `validate_only` path is the compiler proof, and `FileRegistry` stores the
   accepted bytes verbatim (`rpg-api/internal/dungeons/`,
   `internal/handlers/dnd5e/authoring/v1alpha1/`). Local storage is a draft,
