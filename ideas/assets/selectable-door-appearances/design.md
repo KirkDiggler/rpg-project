@@ -1,151 +1,144 @@
-# Project467 — authored doors in the World Builder
+# Project467 — authored doors in the new World Builder
 
-## Scope correction — earlier proposal below is not approved for implementation
+## Scope (corrected)
 
-Kirk clarified that the target is the NEW World Builder, where visual placement
-and occupied space are explicitly authored. The goal is to make the door look
-right, not constrain it to the older atlas renderer's one-unit doorway gap.
+This is a **new World Builder** slice. The author chooses an existing scene
+item's `assetRef` and its continuous placement; that is the appearance choice.
+The goal is to make that authored door look right. Do not add a second style
+system, fit to the old aperture, widen a legacy map, or route this through
+`DoorSpec`/`AtlasDoorway` by default. Existing v2/legacy worlds retain their
+current renderer and behavior.
 
-Verified at Web11755d8: `DungeonEnvironment` selects `RoomSceneEnvironment` when
-`scene.roomScene` is present and bypasses `DungeonShell`/`AtlasWalls`. The saved
-scene item already carries `assetRef` and placement. Therefore the earlier
-proposal to add an appearance field through the old DoorSpec/AtlasDoorway path
-must not drive this implementation without tracing the canonical room-scene
-interaction and occupancy seams first.
+The approved example is
+`dnd5e:env:dark-fortress:wall_door_double_01`. The private Assets release and
+Web catalog already carry it. Its reviewed roles are `Door_Frame`, `Door_Left`,
+`Door_Right`, and `Door_Wall_Above`, under the normalized parent (human yaw
+−180); original GLBs remain untouched. The role binding is explicit. At load
+time derive rest transforms, leaf pivots, and motion axes from the actual GLB;
+do not duplicate numeric transforms in YAML, a manifest, or a proto.
 
-Revised direction: preserve intentionally authored visual proportions/placement;
-author the opening and blocking space to match; bind the placed item's door
-parts to authoritative interactive state. Keep fixed frame/wall occupancy
-separate from the passage obstruction changed by opening. Never derive gameplay
-blocking solely from mesh bounds or fake shared door state in local storage.
+## Current chain and ownership
 
-Next design pass must trace World Builder saved room-scene/gameplay data through
-play/session rendering and identify the minimal item-to-interaction binding.
-It must establish which existing door-state machinery can genuinely be reused.
-No product implementation has started. Retain the old proposal below as the
-record of the assumption being corrected, not as an implementation specification.
+* **Authoring/editor:** `rpg-dnd5e-web/src/concepts/world-building/`
+  (`WorldBuildingConcept.tsx`, `roomDraft.ts`, `serialization.ts`,
+  `singleRoomDungeon.ts`). A room `WorldProp` already persists `id`, `assetRef`,
+  and authored `transform`; `RoomPropDeclaration` currently persists one
+  explicit owner-local footprint plus independent movement/LOS flags. The UI's
+  “Movement & sight declaration” is an authored declaration, not mesh bounds.
+* **Save:** `useRoomPublishing.ts` emits the exact v3 YAML; `PutDungeon`'
+  `validate_only` path is the compiler proof, and `FileRegistry` stores the
+  accepted bytes verbatim (`rpg-api/internal/dungeons/`,
+  `internal/handlers/dnd5e/authoring/v1alpha1/`). Local storage is a draft,
+  never shared gameplay state.
+* **Compile:** `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/` decodes
+  `RoomSource`, `CanonicalPlacedProps` converts declared scene items into
+  canonical `PlacedPropInput`, and `CompileSingleRoom` creates the field's
+  room-scene presentation plus gameplay geometry. `PlacedPropInput` is explicit
+  geometry, but is immutable after construction and has no door identity/state.
+* **Session/persistence:** `rpg-api/internal/sessionworld/` and the registry
+  start the SDK session. `encounter.RoomScenePresentation` is copied through
+  `Field.RoomScene`, `ToData`/`LoadEncounter`, `Atlas`, and `AtlasFor`; the
+  canonical scene is visual presentation, while field folds own movement/sight.
+* **Play/render:** `GetAtlasResponse.room_scene_json` is decoded by
+  `src/components/session/roomSceneJson.ts`. At Web
+  `11755d8ae0362130efc4d69bef0e1a5d95249c15`,
+  `GameView → SessionEncounterView → SessionCanvas → DungeonEnvironment` sends
+  a room scene to `RoomSceneEnvironment` and bypasses `DungeonShell/AtlasWalls`.
+  `RoomSceneEnvironment.tsx` currently renders each item through
+  `WorldPropModel` at its source pose and renders the workspace floor.
 
-## Earlier proposal — superseded target assumption
+## Minimal gameplay contract
 
-Add an optional, per-door opaque `appearance` reference to the authored dungeon
-file. This is a selectable appearance, not a global replacement: absence keeps
-today's frame/leaf renderer and existing default available. It changes no door
-identity, state, walkability, concealment, or Open/Unlock behavior. Close remains
-out of scope; this slice presents closed/locked and open poses.
+A door is an explicit binding from one stable scene-item ID to one authoritative
+interactive door identity. It is not inferred from `assetRef`, labels, GLB
+bounds, adjacency, or local storage. The room author must author separately:
 
-The reference is transport metadata. Toolkit/API must not know GLB node names,
-materials, pivots, or motion. Assets/Web owns the binding from the stable
-appearance reference to a reviewed assembly (runtime file, named roles, rest
-transforms, hinge axes/angles). Unknown or invalid references fail visibly in the
-renderer and fall back to the old default; they never silently become scenery or
-an unrelated appearance. A missing reference is not an error.
+1. the fixed frame/wall occupancy (which remains blocked in every door state); and
+2. the passage obstruction (movement/LOS geometry for CLOSED/LOCKED, and an
+   explicitly authored open passage for OPEN).
 
-## Verified live chain and ownership
+The current single `RoomPropDeclaration` cannot express that split: its one
+static footprint can never become passable. The missing primitive is therefore
+a **stateful placed obstruction bound to an item**, with explicit closed/open
+geometry and a stable door ID. The encounter composition must fold that
+obstruction into its existing movement, sight, persistence, and snapshot paths;
+no client-side bounds test or `localStorage` toggle is a substitute. The
+compiler owns the source-frame→canonical conversion once; neither API nor Web
+recomputes it.
 
-At Web `11755d8ae0362130efc4d69bef0e1a5d95249c15`, the running route is:
-`GameView` → `SessionEncounterView` → `SessionCanvas` →
-`DungeonEnvironment` → `DungeonShell` → `AtlasWalls`. `GameView` explicitly
-calls the old `EncounterView` wire legacy; a legacy-only test is not acceptance.
-The canonical room-scene branch intentionally bypasses `DungeonShell`; the
-integration fixture for this slice must use the atlas branch and reach
-`AtlasWalls`.
+Reuse the genuine door machinery where it fits: the existing `DoorState`
+(open/closed/locked), lock/concealment knowledge, `OpenDoor`/`Unlock`, member
+scoping, `DoorChanged`/reveal events, and `Doors` state read. Existing
+`DoorInput`/`AtlasDoorway` remains valid for a real adjacent cross-cell portal;
+it is **not** the geometry contract for an arbitrary in-room placed door. The
+new placed-door primitive must expose the same state/verb seam without
+pretending every authored frame is a portal edge. A Close verb remains deferred;
+do not add one unless implementation evidence makes it a separate decision.
 
-- Web authoring owns `src/author/dungeonYaml.ts` (`DoorDoc`, strict parse,
-deterministic emit, `addDoor`/`updateDoor`) and `src/author/Inspector.tsx`
-(`DoorPanel`). `DungeonBuilder.tsx` turns the document into YAML, debounces
-`PutDungeon{validate_only}`, and saves the exact YAML. `draftStorage.ts` is
-only a best-effort local draft, never shared persistence. The existing picker
-pattern is preferred; add a door-appearance picker, not a material editor.
-- Toolkit dungeonspec owns the authored `DoorSpec` and compilation. In the
-current API pin (`rulebooks/dnd5e/encounter` v0.88.0), `DoorSpec`,
-`encounter.DoorInput`, `doorRecord`, and `AtlasDoorway` have no appearance.
-Add the neutral optional value through this existing compile/atlas path; do not
-put asset knowledge in `dungeonspec` or API.
-- API `internal/sessionworld/sessionworld.go` compiles content through toolkit;
-`internal/dungeons/registry.go` stores YAML verbatim and the compiled atlas;
-`internal/handlers/dnd5e/authoring/v1alpha1/put_dungeon.go` and
-`internal/handlers/dnd5e/session/v1alpha1/convert.go` are the conversion seams.
-- Proto `dnd5e/api/session/v1alpha1/types.proto` currently has only
-`AtlasDoorway.connection/from/to`; add the opaque optional appearance there.
-`DoorInfo` remains identity/state/lock only. `DoorChanged` remains state-only;
-`DoorRevealed.doorways` must carry the same static appearance metadata.
-- Web `useSessionDoors(sessionId, member)` is member-scoped and refetched on
-door events. `SessionEncounterView` joins `DoorInfo.door` to
-`AtlasDoorway.connection`, then passes both unchanged to `SessionCanvas`.
-`handleDoorClick` calls the existing Open/Unlock RPCs and ignores OPEN; no
-Close RPC is invented. `AtlasWalls` is the only live target for this slice.
+The exact source/proto names for the binding are intentionally not invented
+here. The consumer owning the room interaction must define the narrow shape:
+scene item ID, authoritative door ID, explicit closed/open obstruction facts,
+and any existing lock/concealment data. Do not put gameplay declarations into
+the presentation-only `RoomScenePresentation` or add an appearance field to
+legacy atlas doorways. If a separate atlas/session descriptor is required to
+join item ID to member-scoped `DoorInfo`, it must be designed and transcribed
+from the proven SDK contract before API/Web implementation.
 
-Thus this is broader interface work (authoring YAML → toolkit neutral carry →
-proto/API atlas → Web binding), not a Web-only or Assets-only implementation.
-The outside-in wave starts with the authored consumer contract and proto, then
-API/toolkit transport and finally Web/Assets rendering; merge inside-out after
-provider contracts are available.
+## Saved, played, and observed state
 
-## Contract and fallback
+World Builder edits the scene item, fixed occupancy, and passage declaration as
+one room-draft history transaction. Save/reload round-trips them in v3 YAML;
+`PutDungeon` validates and `FileRegistry` preserves exact bytes. Compilation
+creates visual scene data and authoritative static/stateful geometry. A newly
+started session snapshots both; changing the published room later cannot mutate
+that running session. `ToData`/`LoadEncounter` preserves the binding, geometry,
+and current door state by stable identity.
 
-`doors[i].appearance` is absent or a non-empty opaque reference. The authoring
-editor writes it verbatim and reloads it through `GetDungeon`; `PutDungeon`
-validation and the compiled `GetAtlas` answer are the same source of truth.
-The selected value is joined by door ID, not by position or array index.
-Server/session state continues to be keyed by the authored compiled door ID
-(`dungeon-key/door-id`). A concealed door's appearance remains hidden until its
-normal atlas/door-reveal knowledge arrives.
+On play, `GetAtlas` carries the canonical visual scene and the authoritative
+mechanical map. `GetDoors` remains the member-scoped live state and stream beats
+remain the refresh path. `SessionEncounterView.handleDoorClick` continues to
+call existing Open/Unlock; the canonical room branch must pass that intent and
+state into `RoomSceneEnvironment`, not invent a local toggle. The server's
+movement/sight answer remains authoritative even where the current atlas path
+cannot preview a continuous placed footprint.
 
-Web's Assets-owned binding declares, per reference, frame/static roles, leaf
-roles, each leaf's rest transform and hinge axis/pivot, closed pose, open angle,
-and compatible fit policy. No filename heuristic or duplicate numeric transform
-registry is allowed. Cached source scenes/materials are cloned per instance;
-one door's fit or tint cannot mutate another.
+## Visual binding and motion
 
-## Fit and pose
+`RoomSceneEnvironment` must render the authored item at its exact transform and
+proportions, then bind only the named door parts. Frame and wall-above stay
+static. Each leaf is an isolated instance with a rigid pivot derived from its
+loaded GLB rest hierarchy; open motion rotates that leaf around its own pivot.
+Never apply non-uniform parent scaling to a moving assembly, infer a hinge from
+bounds, or silently narrow/widen the authored opening. Keep the existing asset
+catalog and failure markers: an unknown binding is a named refusal, not a
+replacement model. Height/UV automation remains deferred.
 
-Measured current geometry and route facts are load-bearing:
-`atlasWallRuns.ts`'s `GAP_LENGTH` is `DOOR_FRAME_CALIBRATED_WIDTH = 1.0`.
-The candidate stable asset is `dnd5e:env:dark-fortress:wall_door_double_01`;
-its reviewed provider catalog records bounds about 1.875 × 2.255 × 0.264 m,
-and the GLB's named roles are `Door_Frame`, `Door_Left`, `Door_Right`, and
-`Door_Wall_Above` under its calibration parent. The two leaf hinge positions
-are x=.25 and x=2.25 in the authored geometry: after the renderer's shared
-scale .75, hinge span is 1.5 while the mechanical gap is 1.0. Native-size fit
-is therefore not evidence of correctness.
+## Early proof and acceptance
 
-The assembly must first derive a closed-pose fit from the reviewed role bounds
-and both hinge positions. Keep the frame/header static; place each leaf below
-its own fixed hinge root, then apply a rigid Y rotation around that root for
-OPEN. Fit translation/scaling belongs below the moving hinge, never on a
-non-uniform parent that would deform the swing. Preserve authored height for
-this slice: no adjustable header, wall-height/UV system, or vertical-lift
-motion. Reuse existing measured fit primitives only after they are generalized
-to named multi-leaf roles; do not copy constants from the candidate GLB into a
-registry or proto.
+1. Author a room in the real World Builder: place the published double-door
+   asset, set its visual pose, and author distinct fixed-frame and passage
+   occupancy. Save, reload, reopen, and verify exact authored pose/asset ID.
+2. Publish with `Save & Play`; start a real session, verify the saved room
+   reaches `RoomSceneEnvironment` (not the legacy shell), and verify two
+   independent door instances remain isolated.
+3. With authoritative CLOSED and LOCKED states, leaves are closed, frame/wall
+   occupancy remains, and a server movement attempt through the passage is
+   refused. Open/unlock through the real handler; state events/refetch update
+   every member, leaves swing rigidly, fixed occupancy remains, and passage
+   movement succeeds where the server allows it.
+4. Reload persisted session data and repeat state/render assertions. Test
+   missing/invalid binding and missing asset with visible named failure. Use
+   visual screenshots/browser evidence as the primary gate; unit tests alone or
+   an old `AtlasWalls`/`SyntyHexWall` fixture do not prove this slice.
 
-Human choice remains explicit: preserve the authoritative 1.0 gap and fit the
-candidate's leaf roles to it (recommended, protecting movement/LOS geometry),
-or widen the rendered gap to the measured 1.5 hinge span (which changes wall
-run geometry and needs a separate acceptance). Do not choose silently in code.
+## Narrow unresolved decisions
 
-## Delivery and proof
-
-1. Web authoring adds the optional field, picker, strict round-trip tests, and
-editor preview; proto adds only the opaque atlas metadata; toolkit compiles and
-projects it without interpreting it; API maps it in both PutDungeon/GetAtlas
-and DoorRevealed paths.
-2. Assets promotes a portable role binding for the stable reference and Web
-syncs the exact provider revision. Web adds the atlas-branch assembly and
-state-driven rigid leaf presentation, retaining the legacy default/fallback.
-3. Test at the real route: two independent doors (old/new styles), persisted
-selection through save, reload, and a fresh session; IDs/clicks remain distinct;
-server-driven CLOSED, LOCKED, and OPEN states render correctly; unknown and
-missing references diagnose/fallback safely; closed geometry fits the 1.0
-aperture and OPEN leaves rotate rigidly from measured hinges. Include a browser
-proof with old/new side by side, not a local-only toggle demo. Keep legacy
-`EncounterView` fixtures separate and non-accepting.
-
-### Open decisions before implementation
-
-- Human chooses 1.0-gap fit (recommended) versus a deliberate 1.5-gap geometry
-  wave; this design does not authorize widening the atlas gap.
-- Human/Assets approves the final role binding and open-angle convention after
-  visual evidence; the existing 90-degree legacy guess is not reused blindly.
-- Proto/API/toolkit owners confirm the exact optional field name/presence rules
-  and release sequencing; no consumer should invent a parallel local override.
+* The room compiler/encounter owner must name the stateful placed-obstruction
+  primitive and its exact open/closed geometry representation.
+* The SDK consumer and proto owner must choose the smallest authoritative
+  carriage joining scene-item ID to member-visible door ID/state; no parallel
+  Web-only mapping or appearance field is approved.
+* Assets/Web must approve the actual GLB-derived role/pivot binding and a
+  visually verified open-angle convention. No manual transform registry,
+  manual motion claim, map widening, Close verb, or height/UV system is
+  authorized by this design.
