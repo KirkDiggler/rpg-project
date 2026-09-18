@@ -76,8 +76,8 @@ The catalog entry gains one optional key:
 ```jsonc
 "roles": [
   { "role": "frame", "node": "Door_Frame" },
-  { "role": "leaf",  "node": "Door_Left" },
-  { "role": "leaf",  "node": "Door_Right" },
+  { "role": "leaf",  "node": "Door_Left",  "door": "gate" },
+  { "role": "leaf",  "node": "Door_Right", "door": "gate" },
   { "role": "above", "node": "Door_Wall_Above" }
 ]
 ```
@@ -85,12 +85,30 @@ The catalog entry gains one optional key:
 A **list**, not a map, because `leaf` legitimately appears more than once and
 order is part of what the reviewer wrote.
 
+`door` is an **asset-local opening id**, present on the moving parts that belong
+to an opening and absent on the static ones. It is what makes **one asset with
+several doors** expressible: the authored corner piece
+`SM_Bld_Wall_L_Corner_Doorway_Double_01` is a wall body with two door meshes, so
+its entry names both openings and the consumer learns there are two bindable
+doors, where each is, and which nodes move for it.
+
+```jsonc
+"roles": [
+  { "role": "leaf", "node": "Door_North", "door": "north" },
+  { "role": "leaf", "node": "Door_East",  "door": "east" }
+]
+```
+
+A whole single-mesh door is one `leaf`; a split pair is two `leaf`s sharing a
+`door`. The asset-local id is not a dungeon door id — the World Builder maps it
+to the placement-level identity when it binds the doorway.
+
 ### The vocabulary is sealed, and grows one word per use case
 
 | Word | What it means | Consumer may |
 |---|---|---|
 | `frame` | the fixed surround | leave it exactly where the asset put it |
-| `leaf` | a moving panel; may appear more than once | move it, hinged per its own geometry |
+| `leaf` | a moving panel; may appear more than once, and names its `door` opening | move it, hinged per its own geometry |
 | `above` | masonry above the opening that absorbs height | grow it to take the height, and nothing else |
 
 Named and **not built**: `below`, `inner`, `handle`, `chain`. They keep their
