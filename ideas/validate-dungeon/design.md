@@ -36,9 +36,11 @@ typo trigger key  factions[0].on.intimdate_failed: "intimdate_failed" is not a t
 unknown key       line 129: field tempre not found in type dungeonspec.FactionSpec
 ```
 
-The third is the one defect in the contract: in the v2 dialect an unknown key surfaces as a
-YAML decode error with a line number and a Go type name, not as a `FieldError` with a path. The
-single-room dialect already walks the shape and names unknown keys by path.
+The third is the one defect in the contract: an unknown key surfaces as a YAML decode error
+with a line number and a Go type name, not as a `FieldError` with a path. **Corrected 2026-09-19
+by the build:** this is true of BOTH dialects. The first draft claimed the single-room dialect
+already named unknown keys by path; it does not (`DecodeSingleRoom` hands the decoder's error
+through as one pathless defect, and its test pinned the Go text). toolkit#1843 fixes both.
 
 ## The shape
 
@@ -52,9 +54,18 @@ applies to the WRITE, not the grade. Reading content mutates nothing (the proto'
 
 ### The engine's one fix (toolkit, `rulebooks/dnd5e/encounter`)
 
-Unknown keys in the v2 dialect become `FieldError`s with a path, as the single-room dialect
-already does, so the response never carries a Go type name or a line number. That is the only
-engine change, and it is a fix to the existing contract, not a new grammar.
+Unknown keys in both dialects become `FieldError`s with a path and the sentence form
+`validation.placeOn` already uses (`"tempre" is not a key this build reads: they are id, mind,
+on, temper`), so the response never carries a Go type name or a line number. Every unknown key
+in the file is reported. That is the only engine change, a fix to the existing contract.
+
+**Deferred, with the reason:** the most-authored shape reads its own keys in a custom
+unmarshaler, so its refusal offers no "they are" list; hoisting the list so the unmarshaler and
+the sentence share it is a follow-up (toolkit issue filed by the ship record). And with
+`RPG_AUTHORING_ENABLED` off the server registers no AuthoringService at all, so a read-only
+server cannot grade a file, nor serve `GetDungeon`, even after rpg-api#1018; every shipped
+environment sets the flag on, so registering the service always and gating only the write is
+deferred until an environment needs it.
 
 ### The web
 
