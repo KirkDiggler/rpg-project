@@ -1,6 +1,6 @@
 # Authored doors in the single-room dialect — scene from the document, state from the atlas, joined by item id
 
-**Status:** PROPOSED 2026-09-19; AMENDED the same day after Kirk, from inside the World Builder: "walls are currently just props that block los and movement. Placing a door 'in' a wall no longer makes sense." The edge lowering (old R1/R3) is withdrawn; a single-room door is a prop whose footprint's blocking follows door state. Re-base of rpg-project#468 (merged doc `ideas/assets/selectable-door-appearances/design.md`, parent #467 still open) on the seam rpg-project#479 shipped. Builds on the grammar split (#484, building). Lane: toolkit (platform) for the engine slice; the web slice is a wire-anchored brief for Kirk's lane.
+**Status:** PROPOSED 2026-09-19; AMENDED the same day after Kirk, from inside the World Builder: "walls are currently just props that block los and movement. Placing a door 'in' a wall no longer makes sense." The edge lowering (old R1/R3) is withdrawn; a single-room door is a prop whose footprint's blocking follows door state. Re-base of rpg-project#468 (merged doc `ideas/assets/selectable-door-appearances/design.md`, parent #467 still open) on the seam rpg-project#479 shipped. Builds on the grammar split (#484, building). Lane: toolkit (platform) for the engine slice; the World Builder lane asked for this ruling as rpg-toolkit#1846 and owns the web half (rpg-dnd5e-web#1117).
 
 **Where it came from (Kirk, 2026-09-19):** "once we have our door assets configured properly we
 will be back in multi room authoring" and, today, "We have the roles needed for doors in our new
@@ -104,10 +104,9 @@ remaps through `roomDraft.ts:371-372`, and a door does the same when a use bring
 
 ### 2. The geometry: a footprint whose blocking follows state
 
-A door item carries two declarations, both by its id: its **prop declaration** (footprint,
-`blocksMovement`, `blocksLos`) exactly as any prop, lowered by the existing `placedPropFrom`; and
-its **door binding** (`closed`, `locked`). The blocking flags now read "while closed or locked".
-Open blocks nothing. The engine addition is one thing: the spatial canvas learns a placed
+A door item carries two declarations, both by its id: its **prop declaration** (footprint only; the blocking flags are refused on a door, since the
+state decides them), lowered by the existing `placedPropFrom`; and its **door binding**
+(`closed`, `locked`). Closed or locked blocks movement and sight; open blocks nothing. The engine addition is one thing: the spatial canvas learns a placed
 footprint whose contribution is gated by a `DoorState`, registered beside the edge door, not
 instead of it. `DoorInput` gains a second geometry (edge for v2, footprint here); the state
 machine, the lock check, `Step`'s refusal on a locked door, and the DOOR beats do not change.
@@ -163,8 +162,10 @@ join.
 - **R2.** `doorBindings[<itemId>]{closed, locked}` inside root v4; room draft stays 3; the state
   keys are v2's `DoorSpec` keys, validated once by the shared grammar. `concealed` refused here
   until a use brings it.
-- **R3.** The door's geometry is its prop declaration, lowered by `placedPropFrom`. A door
-  without one is refused by name.
+- **R3.** The door's geometry is its prop declaration's footprint, lowered by `placedPropFrom`.
+  A door without one is refused by name. **State wins:** `blocksMovement` / `blocksLineOfSight`
+  on a door item are refused at their path; closed and locked block movement and sight, open
+  blocks nothing (rpg-toolkit#1846's collision, ruled the World Builder lane's way).
 - **R4.** `DoorID` = `<key>/<itemId>`, v2's minting; the web derives it, nothing carries it twice.
   `AtlasDoorway` lists edge doors only.
 - **R5.** A door inside an arrangement is refused in this slice.
