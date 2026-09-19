@@ -1,6 +1,6 @@
 # One gameplay grammar, two geometry dialects — the `siteSpec` adapter goes
 
-**Status:** PROPOSED 2026-09-19. Second wave of rpg-project#479 (§4, R6). Lane: toolkit (platform), one module: `rulebooks/dnd5e/encounter`. No proto, api, or web change.
+**Status:** RULED 2026-09-19 (rpg-project#484, Kirk: "Agree", R1–R5 stand). BUILDING: one encounter PR. Second wave of rpg-project#479 (§4, R6). Lane: toolkit (platform), one module: `rulebooks/dnd5e/encounter`. No proto, api, or web change.
 
 **Where it came from (Kirk, 2026-09-19):** "we are meant to be composable but it feels like we
 are making another application again … before we build on this let's get it cleaned up." And
