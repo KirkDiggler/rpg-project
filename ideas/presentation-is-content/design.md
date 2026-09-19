@@ -1,6 +1,17 @@
 # Presentation is content — the encounter stops carrying the World Builder's scene
 
-**Status:** RULED 2026-09-19 (rpg-project#479): Kirk took R1–R6 as written, with one long-term note: "long term these scenes will have revisions that are immutable. for our current stage your call is fine." So serve-by-key is the current stage; an immutable scene revision pinned on the session is the registry's future, never the encounter's. Lane: toolkit (platform). Building in the R6 order.
+**Status:** SHIPPED 2026-09-19 (rpg-project#479 RULED R1–R6; built as five PRs on pseudo-versions, walked by a scripted pass on `local/pic` (7/7, screenshots) and by Kirk on the v2 front room ("went through the normal dungeon and fought like normal"); merged inside-out).
+
+| Repo | Release |
+|---|---|
+| rpg-api-protos | v0.1.204 (#349: `GetAtlasResponse.dungeon_key = 15`; `room_scene_json` deprecated) |
+| rpg-toolkit | rulebooks/dnd5e/encounter v0.94.0 (#1836: presentation deleted, `single_room_lowering.go` reads frame radius, workspace radius, scene name, and x/z/rotationY per declared item; review: non-positive workspace radius is one defect, `RoomSource` YAML-only) · rulebooks/dnd5e/session v0.99.0 (#1838: `RoomSceneJSON` gone; `StartSessionInput.Dungeon`, `SessionData.Dungeon`, `AtlasOfInput.Dungeon`, `Atlas.DungeonKey`) |
+| rpg-api | dev a70306f7 (#1015: converter fills `dungeon_key`, leaves the deprecated field unset; lobby passes the resolved key; registry passes each entry's key; `WorkshopRoomScene` deleted) |
+| rpg-dnd5e-web | dev 59b0a296 (#1156: `useDungeonScene` fetches by key through `GetDungeon` and decodes with the world-building codec; `roomSceneJson.ts` deleted; a fetch or decode failure is the named "Can't draw this room" refusal; the view waits for the room read) |
+
+**What the build corrected.** The goldens never carried the presentation (the picture struct was atlas-and-compile only), so "byte-identical" held with zero diff. `scene.name` is read too: `Compiled.Name` comes from it and the lobby list shows it. `kind` is not read: nothing ever read it. The workshop room is an api testdata fixture nothing seeds (rpg-api#1016).
+
+**Next (R6, second wave):** §4, the grammar split — one package-level gameplay grammar under two geometry dialects, the #1834 `siteSpec` adapter deleted, the two deferred #1834 review threads (faction-level `at:` pin, orders helper) closed there. Then rpg-project#468 (doors) re-based on "scene from the document, door state from the atlas, joined by item id".
 
 **Where it came from (Kirk, 2026-09-19):** "so a downstream consumer is shaping the internal of
 our encounter? … we are meant to be composable but it feels like we are making another
