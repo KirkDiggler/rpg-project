@@ -1,6 +1,6 @@
 # The engine grades the file — `ValidateDungeon` for the World Builder
 
-**Status:** DRAFT for Kirk's rulings (2026-09-19). Lane: toolkit (platform). Small: one additive RPC, one api handler, one web call.
+**Status:** RULED 2026-09-19 (rpg-project#481, Kirk: "Let's do it", R1–R3 as written). Lane: toolkit (platform). Building: protos ∥ encounter fix → api → web.
 
 **Where it came from (Kirk, 2026-09-19):** "I was thinking the web could send us a yaml and if we
 supported it we could give it the passing grade … I only want us to validate that the engine
