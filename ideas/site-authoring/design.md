@@ -398,19 +398,31 @@ violations to fix, all of them observed:
 
 So:
 
-- **Rooms** — building. Tools, palette, canvas, the selected thing's
-  declarations. No save/load in the chrome.
-- **Prop compositions** — its own screen, as it already is. The orange anchor
-  belongs here and nowhere else.
-- **The site** — the scope that belongs to **no single selection**:
-  identity, factions, temperament mixes, dispositions. It is a **document
-  section**, not a property panel, and it is deliberately different in shape
-  from everything else because its nouns are inherited rather than selected.
-- **Library** — saving, loading, snapshots, arrangements. A place you *go*.
+- **Site** — the document, and the top level of the YAML: one contiguous floor at
+  absolute positions, one identity, one revision history. It carries the canvas,
+  the working set, and the navigation.
+  - **Rooms are camera targets, not scopes.** A room has no coordinate space of
+    its own, so it cannot exist in isolation — it is a region of the one floor.
+    Clicking one moves the camera to it and changes nothing else. That is the
+    test: if a room click changes what policy is shown, the room has been rebuilt
+    as a scope.
+  - **The working set is on the right, and it belongs to the site**: monsters,
+    doors, policies. It stays put whichever room the camera is on, because those
+    nouns are the site's and not a room's. A creature's faction, mind table and
+    weapons live with the creature, so the actor carries identity and placement
+    while the binding carries the orders (Decision 4).
+  - **The left is two collapsible sections**: `Rooms` (the navigation list) and
+    `Props` (the palette and the scene's contents together — *add a prop* and
+    *find a prop already placed* are the same noun).
+- **Prop compositions** — the single prop builder, its own screen as it already
+  is. The orange anchor belongs here and nowhere else. Deferred this wave.
+- **Identity** — identity and revisions. Document admin is not building, so it is
+  not on the canvas: it is a control in the header that opens a panel.
 
 Factions are the reason the site scope cannot be avoided: a shared table is
-inherited by many creatures and belongs to none of them, so a
-select-then-declare panel can never show it.
+inherited by many creatures and belongs to none of them, so a select-then-declare
+panel can never show it — which is why the working set is a document panel and
+not a property panel.
 
 ## Slices
 
@@ -492,6 +504,9 @@ the document, and allegiance changes what the run does with it.
   record. Whichever repository next touches the dialect owes one, and together
   with the beta/1.0 revisit point that is the mitigation; if neither happens
   this becomes two words for one thing.
-- **The site scope is the first noun in this UI that is not a selection.**
-  Everything else the panel does is keyed to a selected thing. Getting this one
-  surface wrong is what would push the whole UI back into one flat stack.
+- **The site's nouns are the first in this UI that are not a selection.**
+  Everything else the panel does is keyed to a selected thing; the working set
+  (monsters, doors, policies) and the revision history are keyed to the document.
+  Two ways to get this wrong, and both put the UI back into one flat stack:
+  flattening the site's nouns into the selection panel, or promoting them to peer
+  destinations of the site they belong to.
