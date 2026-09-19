@@ -1,6 +1,6 @@
 # Presentation is content — the encounter stops carrying the World Builder's scene
 
-**Status:** DRAFT for Kirk's rulings (2026-09-19). Lane: toolkit (platform). Nothing is built until R1–R6 are answered.
+**Status:** RULED 2026-09-19 (rpg-project#479): Kirk took R1–R6 as written, with one long-term note: "long term these scenes will have revisions that are immutable. for our current stage your call is fine." So serve-by-key is the current stage; an immutable scene revision pinned on the session is the registry's future, never the encounter's. Lane: toolkit (platform). Building in the R6 order.
 
 **Where it came from (Kirk, 2026-09-19):** "so a downstream consumer is shaping the internal of
 our encounter? … we are meant to be composable but it feels like we are making another
@@ -96,11 +96,11 @@ own codec. The api stays dumb: one string field, no scene RPC, no scene DTO. The
 player sees and the field the engine compiled come from the same bytes, because the registry
 compiled that entry from them.
 
-**What this forecloses, honestly:** a running session no longer carries its own visuals. If the
+**What this forecloses, honestly (and Kirk's answer):** a running session no longer carries its own visuals. If the
 file under a key is re-Put while a session is live, the geometry stays what was compiled at
 launch and the scene changes underneath it. Pre-v1 that is acceptable and visible. When it
 stops being acceptable, the fix is the registry's (a content hash on the entry, pinned on the
-session), never the encounter's.
+session), never the encounter's. Kirk, ruling R1: "long term these scenes will have revisions that are immutable" — the session will one day pin a revision, not a mutable key; that revision is content's noun.
 
 ### 2. The engine carries nothing it does not read
 
