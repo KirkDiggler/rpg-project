@@ -1,6 +1,6 @@
 # Authored doors in the single-room dialect — scene from the document, state from the atlas, joined by item id
 
-**Status:** PROPOSED 2026-09-19. Re-base of rpg-project#468 (merged doc `ideas/assets/selectable-door-appearances/design.md`, parent #467 still open) on the seam rpg-project#479 shipped. Builds on the grammar split (#484, building). Lane: toolkit (platform) for the engine slice; the web slice is a wire-anchored brief for Kirk's lane.
+**Status:** PROPOSED 2026-09-19; AMENDED the same day after Kirk, from inside the World Builder: "walls are currently just props that block los and movement. Placing a door 'in' a wall no longer makes sense." The edge lowering (old R1/R3) is withdrawn; a single-room door is a prop whose footprint's blocking follows door state. Re-base of rpg-project#468 (merged doc `ideas/assets/selectable-door-appearances/design.md`, parent #467 still open) on the seam rpg-project#479 shipped. Builds on the grammar split (#484, building). Lane: toolkit (platform) for the engine slice; the web slice is a wire-anchored brief for Kirk's lane.
 
 **Where it came from (Kirk, 2026-09-19):** "once we have our door assets configured properly we
 will be back in multi room authoring" and, today, "We have the roles needed for doors in our new
@@ -8,10 +8,11 @@ door in web now too."
 
 ## The one sentence
 
-A door the World Builder places is the engine's existing edge door: the document says which item
-is a door and whether it starts closed, locked, or concealed; the dialect lowers the item's pose
-to the hex edge it stands on; the atlas and `GetDoors` carry what they carry today; the web joins
-state to the item by id and swings the leaf the asset's roles already describe.
+A door the World Builder places is a prop like every other placed thing, plus one declaration:
+its starting state. Its footprint blocks while it is closed or locked and blocks nothing while it
+is open; the engine's door state machine, `OpenDoor`, `Unlock`, `DoorInfo` and the DOOR beats
+are unchanged; the web joins state to the item by id and swings the leaf the asset's roles
+already describe. One door grammar, two geometries: an edge in v2, a footprint here.
 
 ## What is true today, measured
 
@@ -101,24 +102,27 @@ the prop path's own sentences. `arrangementDeclarations` gets no door form in th
 stamped inside an arrangement is refused by name (#468 `:59-62` named the remap; the prop path
 remaps through `roomDraft.ts:371-372`, and a door does the same when a use brings it).
 
-### 2. The lowering: a pose becomes an edge
+### 2. The geometry: a footprint whose blocking follows state
 
-`placedDoorFrom(id, binding, pose)` lowers `transform.x/z/rotationY` to a `DoorEdge`: the hex
-edge nearest the door's origin, crossed along the door's facing, whose two cells are both in the
-room's walkable set. It produces `DoorInput{ID: <key>/<itemId>, Edge, State, Concealed}` and
-the compiler sets `FieldInput.Doors`, which the field already validates
-(`compilefield.go:667-711`). Refusals by name: the door stands on no edge (origin too far from
-any edge midpoint, threshold the dialect owns, in the same feet-per-cell frame as
-`placedPropFrom`), or the edge's far cell is not floor ("a door needs floor on both sides").
-The door has no footprint and no `Placed` entry: closed-blocks-movement-and-sight is the door
-primitive's own behaviour, unchanged.
+A door item carries two declarations, both by its id: its **prop declaration** (footprint,
+`blocksMovement`, `blocksLos`) exactly as any prop, lowered by the existing `placedPropFrom`; and
+its **door binding** (`closed`, `locked`). The blocking flags now read "while closed or locked".
+Open blocks nothing. The engine addition is one thing: the spatial canvas learns a placed
+footprint whose contribution is gated by a `DoorState`, registered beside the edge door, not
+instead of it. `DoorInput` gains a second geometry (edge for v2, footprint here); the state
+machine, the lock check, `Step`'s refusal on a locked door, and the DOOR beats do not change.
 
-### 3. Identity and the join
+A door with no prop declaration is refused ("a door needs a footprint: declare it under
+`propDeclarations`"). `concealed` is refused in this dialect for now, with an `at:`-style
+sentence: a concealed door prop is a picture question the builder has not asked yet.
 
-`DoorID` is minted exactly as v2 mints it: `<dungeon key>/<item id>`. `AtlasDoorway`,
-`DoorInfo`, `OpenDoor`, `Unlock`, the DOOR beats: unchanged. No proto change. The web derives
-the door id from the item id and the dungeon key it already fetched by, and looks `DoorInfo` up
-by it. `AtlasPlacedProp` is the precedent: item id in, item id out.
+### 3. Identity, the atlas, and the join
+
+`DoorID` is minted exactly as v2 mints it: `<dungeon key>/<item id>`. `AtlasDoorway` stays
+edge-shaped and lists no footprint doors; the canonical branch never read it, and the atlas
+placed-prop entry still carries the door's footprint. `DoorInfo` from `GetDoors` carries the
+state, keyed by that id. No proto change. The web derives the id from the item id and the
+dungeon key it already fetched by. `AtlasPlacedProp` is the precedent: item id in, item id out.
 
 ### 4. The web slice (wire-anchored, Kirk's lane)
 
@@ -131,9 +135,10 @@ rpg-dnd5e-web#1124, the regenerated catalog with `roles`.
 
 ### 5. Not in this design
 
-Multi-room. In one room both cells of every door edge are inside the room; the door blocks and
-opens but leads nowhere new. When the sites layer joins rooms, the door edge is the seam and its
-two cells are in two rooms; that is the sites wave and it changes nothing here. Also not here:
+Multi-room. In one room a door blocks and opens but leads nowhere new. When the sites layer
+joins rooms, a boundary is wall props and the door between two rooms is this same stateful prop
+standing on the seam; which cells belong to which room is the sites layer's own declaration,
+not a property of the door. Nothing here changes then. Also not here:
 exits through a door, endings, a door on a room boundary, and any World Builder UI beyond the
 join.
 
@@ -143,39 +148,44 @@ join.
 |---|---|---|
 | Which item is a door and its starting state | the document | `doorBindings` |
 | closed / locked / concealed legality | the grammar (post-#484) | shared with v2 `DoorSpec` |
-| Pose → edge | the single-room dialect | `placedDoorFrom` beside `placedPropFrom` |
-| Door state at play, the edge, blocking | the engine | `door.go`, unchanged |
+| Pose → footprint | the single-room dialect | `placedPropFrom`, unchanged |
+| A footprint gated by door state | the engine (canvas) | new, beside the edge door |
+| Door state at play | the engine | `door.go`, unchanged |
 | Door id | the engine's existing minting | `<key>/<itemId>` |
 | How a door looks and which part swings | the asset's roles | rpg-game-assets catalog → `WorldAssetModel` |
 | The join and the click | the web | `RoomSceneEnvironment` |
 
 ## Rulings needed
 
-- **R1.** A single-room door is the existing edge door. No new engine primitive, no new
-  proto, no new atlas field, no new footprint message.
-- **R2.** `doorBindings[<itemId>]{closed, locked, concealed}` inside root v4; room draft stays
-  3; the state keys are v2's `DoorSpec` minus `at`, validated once by the shared grammar.
-- **R3.** The dialect lowers pose to edge (`placedDoorFrom`); no edge or no floor across it
-  refuses by name. A door has no footprint and no prop declaration.
+- **R1.** A single-room door is a prop plus a state: the existing door state machine over a
+  footprint whose blocking follows that state. One new canvas capability; no new proto, atlas
+  field, footprint message, or item kind.
+- **R2.** `doorBindings[<itemId>]{closed, locked}` inside root v4; room draft stays 3; the state
+  keys are v2's `DoorSpec` keys, validated once by the shared grammar. `concealed` refused here
+  until a use brings it.
+- **R3.** The door's geometry is its prop declaration, lowered by `placedPropFrom`. A door
+  without one is refused by name.
 - **R4.** `DoorID` = `<key>/<itemId>`, v2's minting; the web derives it, nothing carries it twice.
+  `AtlasDoorway` lists edge doors only.
 - **R5.** A door inside an arrangement is refused in this slice.
-- **R6.** The web slice is Kirk's lane; rpg-dnd5e-web#1124 is its precondition and the assets
-  lane's issue, not ours.
+- **R6.** The web slice is Kirk's lane; rpg-dnd5e-web#1124 is its precondition.
 
 ## Slices
 
 1. **encounter** (toolkit, one module, after #484 merges): `doorBindings` decode + grammar
-   validation + `placedDoorFrom` + `FieldInput.Doors`; the v4 fixture gains a door; a golden
-   picture shows the doorway. Session and rpg-api need no change; the door reaches `GetDoors`
+   validation; the state-gated footprint on the canvas; `FieldInput.Doors` with the footprint
+   geometry; the v4 fixture gains a door; a golden picture shows it. Session and rpg-api need no change; the door reaches `GetDoors`
    through the seam they already have. Ready PR, minor bump (new authored key).
 2. **web** (Kirk's lane, brief on request): join + click + roles precondition.
 
 ## Done when
 
-- The v4 fixture with a door compiles to a picture whose atlas has one `AtlasDoorway` with the
-  door's two cells and id `<key>/<itemId>`; every other golden byte-identical.
-- Refusals pinned by path and sentence: unknown item, no transform, prop-and-door, no edge, no
-  floor across, arrangement door.
+- The v4 fixture with a door compiles to a picture whose placed props carry the door's footprint
+  and whose doors list has `<key>/<itemId>` closed; every other golden byte-identical.
+- A unit test moves a creature into the door's cells: refused while closed, allowed after
+  `OpenDoor`; sight across it likewise.
+- Refusals pinned by path and sentence: unknown item, no transform, door without footprint, concealed,
+  arrangement door.
 - `grep -rn 'PlacedDoorInput\|placedDoors\|room_scene_doors' rpg-toolkit rpg-api-protos` empty.
 - On the local stack: put the fixture, start a session, `GetDoors` lists the door closed,
   `OpenDoor` opens it, the DOOR beat arrives. One click per seam.
