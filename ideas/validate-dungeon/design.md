@@ -1,6 +1,6 @@
 # The engine grades the file — `ValidateDungeon` for the World Builder
 
-**Status:** RULED 2026-09-19 (rpg-project#481, Kirk: "Let's do it", R1–R3 as written). Lane: toolkit (platform). Building: protos ∥ encounter fix → api → web.
+**Status:** RULED 2026-09-19 (rpg-project#481, Kirk: "Let's do it"), then CORRECTED before build: `PutDungeon.validate_only` already exists and the builder already calls it per edit, so R1 is not a new RPC — it is ungating validate-only (the registry refuses it before the validate branch when authoring is disabled). R2 and R3 stand. Lane: toolkit (platform). Building: encounter fix ∥ api ungate ∥ web.
 
 **Where it came from (Kirk, 2026-09-19):** "I was thinking the web could send us a yaml and if we
 supported it we could give it the passing grade … I only want us to validate that the engine
@@ -16,8 +16,12 @@ the editor's bounds (rpg-project#479).
 
 - `AuthoringService.PutDungeon` already compiles the file through `dungeonspec.Load` and returns
   `repeated FieldError { path, message }` (`authoring/v1alpha1/service.proto:90-115`,
-  `put_dungeon.go:39`). But it PERSISTS on success and is gated behind `RPG_AUTHORING_ENABLED`.
-  There is no validate-only door.
+  `put_dungeon.go:39`), and it already has `validate_only = 3`, documented as *"the builder's
+  per-edit preview"* (`service.proto:72-77`). The web already calls it on every edit
+  (`src/author/authoringRpc.ts:118`). **The first draft of this note missed that and proposed a
+  new RPC; corrected 2026-09-19.** What IS missing: `FileRegistry.Put` returns
+  `ErrAuthoringDisabled` at its top, before the `ValidateOnly` branch (`registry.go:291` vs the
+  branch below it), so a read-only registry cannot grade a file at all.
 - The web mirrors the gameplay grammar in four files: `src/author/answerVocabulary.ts`,
   `src/author/factionVocabulary.ts`, `src/concepts/world-building/answerTableShape.ts`,
   `strictShape.ts`. A mirror drifts; rpg-dnd5e-web#1119 was the web refusing a file the engine
@@ -38,25 +42,13 @@ single-room dialect already walks the shape and names unknown keys by path.
 
 ## The shape
 
-### The RPC, additive
+### No new RPC: ungate `validate_only`
 
-```proto
-// ValidateDungeon compiles a dungeon file exactly as PutDungeon would and reports
-// every defect, persisting nothing. Ungated: it mutates nothing. An empty errors
-// list is the engine saying "this file plays"; it says nothing about the room's
-// appearance, which the World Builder's own codec judges (rpg-project#479).
-rpc ValidateDungeon(ValidateDungeonRequest) returns (ValidateDungeonResponse);
-message ValidateDungeonRequest  { string yaml = 1; }
-message ValidateDungeonResponse { repeated FieldError errors = 1; string key = 2; string name = 3; }
-```
-
-`key` and `name` come back so the builder can show what the engine thinks it was handed. Same
-`FieldError` message `PutDungeon` uses; no second shape.
-
-### The api handler
-
-Decode, validate, compile through `dungeonspec.Load`; map `*ValidationError` to the list. No
-registry, no Redis, no gate. Transport only.
+`PutDungeon{validate_only: true}` is the door. The change is in rpg-api only: a validate-only
+request compiles and answers whether or not the registry is writable; `ErrAuthoringDisabled`
+applies to the WRITE, not the grade. Reading content mutates nothing (the proto's own words for
+`GetDungeon`), and grading a file the caller supplies mutates nothing either. The proto doc for
+`validate_only` gains one sentence saying so; no field changes.
 
 ### The engine's one fix (toolkit, `rulebooks/dnd5e/encounter`)
 
@@ -82,8 +74,8 @@ to offer completions. Those lists can come from an RPC later; not now.
 
 ## Rulings needed
 
-- **R1.** Additive `ValidateDungeon` on the AuthoringService, ungated, same `FieldError`, no
-  persistence; `key`/`name` echoed.
+- **R1 (corrected).** No new RPC. `PutDungeon{validate_only}` answers on a read-only registry;
+  the gate moves to the write.
 - **R2.** The v2 dialect's unknown-key refusal becomes a pathed `FieldError` (engine fix, one
   module) before the RPC ships, so the contract holds for both dialects.
 - **R3.** The web deletes its gameplay verdicts (keeps word lists) in the same wave.
@@ -92,10 +84,10 @@ to offer completions. Those lists can come from an RPC later; not now.
 
 | # | Repo | What | Proof |
 |---|---|---|---|
-| 1 | rpg-api-protos | the RPC and two messages | buf lint/breaking, generate compiles |
-| 2 | rpg-toolkit encounter | v2 unknown key → `FieldError{path}` | the probe above returns `factions[0].tempre: …` with no Go type name |
-| 3 | rpg-api | handler; test: the three probes above through the RPC | handler tests |
-| 4 | rpg-dnd5e-web | call + render; delete mirrored verdicts | a file with a missing faction shows the engine's sentence at the path; #1145's `temper` case passes with no web rule |
+| 1 | rpg-toolkit encounter | v2 unknown key → `FieldError{path}` | the probe above returns `factions[0].tempre: …` with no Go type name |
+| 2 | rpg-api | validate-only answers on a read-only registry; the three probes through `PutDungeon{validate_only}` | orchestrator + handler tests, one with authoring disabled |
+| 3 | rpg-api-protos (doc only, optional) | one sentence on `validate_only`: ungated | buf lint |
+| 4 | rpg-dnd5e-web | render the engine's grade as the verdict; delete mirrored verdicts, keep word lists | a file with a missing faction shows the engine's sentence at the path; #1145's `temper` case passes with no web rule |
 
 Walk: in the World Builder, misspell a faction, see the engine's sentence at the path; fix it,
 see the grade pass; save.
