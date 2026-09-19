@@ -208,6 +208,21 @@ engine will roll on. That boundary is why the placement compile path
 (`CanonicalPlacedProps`, `single_room_placement.go`) is the model to copy: a
 pure source-to-canonical conversion with no interpretation.
 
+**The builder is a form builder, and nothing more.** It renders controls over the
+configuration the toolkit already accepts; it does not decide what that
+configuration means, and it does not decide what it should become. Kirk,
+2026-09-19: *"we are here to allow the configuration the toolkit accepts … we are
+the form builder, nothing more. we get into trouble when we get involved in the
+engine decisions. there is already a team dedicated to that."*
+
+The reference is what runs — `reference-front-room.yaml` already carries
+`factions`, `dispositions`, `doors` and a placement with `faction` and its `on:`
+table. None of that is ours to invent. Factions and policy will keep moving as the
+engine is implemented; when the accepted shape changes, the form follows. The
+failure to avoid is a builder that has opinions about the rules, because that is
+how authored content and engine semantics drift apart and it puts this work in the
+position of deciding for the team that owns it.
+
 ## Allegiance, and what changes it
 
 Kirk, 2026-09-18: *"being able to spawn a new faction at runtime and make it
