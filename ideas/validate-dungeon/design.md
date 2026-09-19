@@ -1,6 +1,14 @@
 # The engine grades the file — `ValidateDungeon` for the World Builder
 
-**Status:** RULED 2026-09-19 (rpg-project#481, Kirk: "Let's do it"), then CORRECTED before build: `PutDungeon.validate_only` already exists and the builder already calls it per edit, so R1 is not a new RPC — it is ungating validate-only (the registry refuses it before the validate branch when authoring is disabled). R2 and R3 stand. Lane: toolkit (platform). Building: encounter fix ∥ api ungate ∥ web.
+**Status:** SHIPPED 2026-09-19 (rpg-project#481 RULED, corrected in #482 before build; three PRs on pseudo-versions, merged inside-out; the web slice is Kirk's lane in the new World Builder).
+
+| Repo | Release |
+|---|---|
+| rpg-toolkit | rulebooks/dnd5e/encounter v0.94.1 (#1843: an unknown key in EITHER dialect is a pathed `FieldError` — `"<key>" is not a key this build reads: they are <list>` — by reflection over the spec shapes, every unknown key reported, not just the first) |
+| rpg-api | dev 16584f93 (#1018: the registry's authoring gate moved to writes only — `if !in.ValidateOnly && !r.authoring` — so a read-only registry grades a file; wire test probes missing faction, typo trigger, unknown key, and asserts the unknown key comes back pathed) |
+| rpg-dnd5e-web | NOT MERGED. #1162 (`feat/engine-grades-the-file`) stands as a draft with the refusal map in its comment; Kirk is authoring in the new World Builder and takes, cherry-picks, or closes it. The contract the web needs: `PutDungeon({key, yaml, validateOnly: true}) → {errors: FieldError[{path, message}]}`; empty errors = plays; a gRPC status only for a request the engine cannot name; the scene is not graded; authoring off = Unimplemented. |
+
+**What the build corrected.** The RULED text claimed the single-room dialect already named unknown keys by path; it did not (its `KnownFields` decode surfaced the same YAML line-and-Go-type error as v2). #1843 fixed both dialects. Deferred, with owners: the hand-read shape's refusal carries no "they are" list (rpg-toolkit#1844); ungating validate-only is unobservable when `AuthoringService` is not registered — every deployed env sets `RPG_AUTHORING_ENABLED=1`, so it is documented, not built.
 
 **Where it came from (Kirk, 2026-09-19):** "I was thinking the web could send us a yaml and if we
 supported it we could give it the passing grade … I only want us to validate that the engine
