@@ -1,6 +1,8 @@
 # One gameplay grammar, two geometry dialects — the `siteSpec` adapter goes
 
-**Status:** RULED 2026-09-19 (rpg-project#484, Kirk: "Agree", R1–R5 stand). BUILDING: one encounter PR. Second wave of rpg-project#479 (§4, R6). Lane: toolkit (platform), one module: `rulebooks/dnd5e/encounter`. No proto, api, or web change.
+**Status:** SHIPPED 2026-09-19 (rpg-project#484 RULED R1–R5; rpg-toolkit#1845 merged as **rulebooks/dnd5e/encounter v0.94.2**, patch bump, no consumer repin). Walked on `local/gs` with rpg-api dev 16584f93 pinned to the pseudo-version: the v4 site fixture's goblin held on its compiled answer table while its two unbound room-mates attacked (orders through the shared `ordersOf`); the v2 reference rooms played as before.
+
+**What the build corrected.** `ordersOf` takes a config struct (`creatureOrders`, `inherited`), not seven positional arguments, three of which were adjacent strings. There is no AGENTS.md in the package; the two-dialect note lives at the top of `spec.go`. The `cells` resolver returns a framed bit because the no-frame refusal preempts the word check; that shipped behaviour was untested and is now pinned under `attack:` as well as `toward:`. **And a correction to this note:** it said "no walk needed beyond the goldens"; a refactor wave still walks, and this one did.
 
 **Where it came from (Kirk, 2026-09-19):** "we are meant to be composable but it feels like we
 are making another application again … before we build on this let's get it cleaned up." And
