@@ -172,6 +172,14 @@ one mechanism question this design leaves to the slice.
 
 ## Rulings — RULED by Kirk 2026-09-21
 
+- **What #488 got wrong (found by the #1853 builder, 2026-09-21):** this design
+  claimed the props half was threading only. It is not. A v4 item compiles to
+  `PlacedPropInput`, a footprint that by its own doc is not holdable and never
+  arrives; holdable/holds/arrives hang off the legacy `PropInput`, which needs a
+  content ref and an anchor cell a v4 item does not have. The primitive is
+  rpg-toolkit#1854 (a placed footprint that can be held and can arrive). Until it
+  lands, `propBindings` decodes with every refusal and is then REFUSED at compile
+  by name at its path, never carried inert.
 - **R1 — `propBindings` is the fourth declaration kind. RULED YES.** `propDeclarations`
   is the prop's definition (footprint, blocking; World Builder owns it).
   `holdable`, `holds`, `arrives` are what a PLACED prop does, which is a
@@ -197,6 +205,9 @@ one mechanism question this design leaves to the slice.
   from the other side. When the sites layer joins rooms, that hex is where a
   crossing happens, and an exit cell that IS a door hex composes with it
   without a second spelling. Exit-as-door is deferred to sites, not rejected.
+  Kirk's easy solve for now: you must OPEN the door to stand on the hex it is
+  in — which is already DoorState's law (closed/locked block movement, open
+  blocks nothing), so an exit cell on a door hex needs no new rule.
 - **R3 — `reveals: { door }` is REFUSED in v4.** Kirk: "reject the reveal or at
   least return a warning." There is no warning channel, so it is a refusal by
   name at `intel[<i>].reveals.door`, in the sentence `doorBindings.<id>.concealed`
