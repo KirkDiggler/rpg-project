@@ -96,8 +96,9 @@ room:
 door's *state grammar*; after #484 it is validated by the shared grammar under both dialects,
 and `at` is the geometry the dialect supplies. Root stays v4; the room draft stays 3.
 
-An item is one declaration kind: an id in both `propDeclarations` and `doorBindings` is refused
-at its path. A binding naming no live item, or an item with no authored transform, refuses by
+A door item carries exactly two declarations by its id: its prop declaration (the footprint)
+and its door binding (the state). *(Corrected 2026-09-20 during the build: this paragraph
+earlier said an id in both maps is refused, pre-amendment text that contradicted §2.)* A binding naming no live item, or an item with no authored transform, refuses by
 the prop path's own sentences. `arrangementDeclarations` gets no door form in this slice: a door
 stamped inside an arrangement is refused by name (#468 `:59-62` named the remap; the prop path
 remaps through `roomDraft.ts:371-372`, and a door does the same when a use brings it).
@@ -164,8 +165,10 @@ join.
   until a use brings it.
 - **R3.** The door's geometry is its prop declaration's footprint, lowered by `placedPropFrom`.
   A door without one is refused by name. **State wins:** `blocksMovement` / `blocksLineOfSight`
-  on a door item are refused at their path; closed and locked block movement and sight, open
-  blocks nothing (rpg-toolkit#1846's collision, ruled the World Builder lane's way).
+  set `true` on a door item are refused at their path (`false` is accepted and inert, because
+  the World Builder seeds every fresh declaration with `blocksMovement: false`); closed and
+  locked block movement and sight, open blocks nothing (rpg-toolkit#1846's collision, ruled the
+  World Builder lane's way).
 - **R4.** `DoorID` = `<key>/<itemId>`, v2's minting; the web derives it, nothing carries it twice.
   `AtlasDoorway` lists edge doors only.
 - **R5.** A door inside an arrangement is refused in this slice.
@@ -182,7 +185,10 @@ join.
 ## Done when
 
 - The v4 fixture with a door compiles to a picture whose placed props carry the door's footprint
-  and whose doors list has `<key>/<itemId>` closed; every other golden byte-identical.
+  and whose doors list has `<key>/<itemId>` closed. *(Corrected 2026-09-20: the committed
+  picture carried neither `placed` nor `doors` before rpg-toolkit#1851, so showing them adds one
+  key to every golden; no existing key's value changes. The v2 fixtures' edge doors become
+  visible in their pictures, which is the picture telling the truth.)*
 - A unit test moves a creature into the door's cells: refused while closed, allowed after
   `OpenDoor`; sight across it likewise.
 - Refusals pinned by path and sentence: unknown item, no transform, door without footprint, concealed,
