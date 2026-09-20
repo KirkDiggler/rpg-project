@@ -194,8 +194,11 @@ one mechanism question this design leaves to the slice.
   - A prop that `arrives` is NOWHERE until its predicate holds, exactly as a
     monster is. The scene still carries its node (presentation is content);
     what is on the floor is the engine's `placed` answer, never the scene.
-    The web already reads `placed` since the doors wave; this is the second
-    reason it must.
+    CORRECTION (2026-09-21, found by the #1854 walk): `placed` is in the
+    dungeonspec goldens and in the engine's atlas, but NOT on the wire —
+    `GetAtlasResponse` has no placed field, so no client can draw or offer a
+    placed prop today. That is a World Builder-lane wire gap, filed separately;
+    the engine half (#1857) does not wait on it.
   - Keyed by item id only. An arrangement's members get no orders, the same
     refusal an arrangement door gets.
   - Web pass-through: web#1177 carries the monster-binding keys and root
