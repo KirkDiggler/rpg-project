@@ -1,6 +1,6 @@
 # The v4 gameplay shape: every key the engine can run, and where it goes
 
-**Status:** proposed 2026-09-20 — Kirk reviews. Sources checked at
+**Status:** RULED 2026-09-21 (R1–R5 below); slices building. Sources checked at
 rpg-toolkit main `494ef265` (`rulebooks/dnd5e/encounter/dungeonspec`) and the
 five seeded rpg-api reference dungeons (`rpg-api/content/*.yaml`, all
 `version: 2`).
@@ -65,7 +65,7 @@ dispositions:                                    # TODAY (#477)
 
 intel:                                           # NEW  — v2 `intel`, verbatim
   - { id: wisemans-letter, reveals: { fact: saved-wiseman } }
-  - { id: vault-map,       reveals: { door: vault } }     # legal and inert until sites (see §Rulings R3)
+  # reveals: { door } is REFUSED in v4 until the sites layer (R3)
 
 exits:                                           # NEW  — v2 `exits`, cell in this dialect's own frame
   - { id: entrance, cell: { q: 1, r: 3 } }
@@ -120,7 +120,7 @@ already exist.
 
 | Capability | v4 home | v2 spelling | Engine field | Proof | Status |
 |---|---|---|---|---|---|
-| A record of knowledge | root `intel[]{id, reveals{fact\|door}}` | `Spec.Intel` (`spec.go:212`) | `FieldInput.Intel` | raider-camp (fact), tomb-heirloom (door) | NEW |
+| A record of knowledge | root `intel[]{id, reveals{fact}}` (`door` refused, R3) | `Spec.Intel` (`spec.go:212`) | `FieldInput.Intel` | raider-camp | NEW |
 | Who carries it | `monsterBindings[id].holds[]`, `propBindings[id].holds[]` | `PlaceSpec.Holds` (`spec.go:1529`) | `MemberInput.Holds`, `PropInput.Holds` | tomb-heirloom, raider-camp | NEW |
 | A prop the party can take | `propBindings[id].holdable` | `PlaceSpec.Holdable` (`spec.go:1544`) | `PropInput.Holdable` | tomb-heirloom (heirloom, scroll) | NEW |
 | Something that comes in later | `monsterBindings[id].arrives`, `propBindings[id].arrives` | `PlaceSpec.Arrives` (`spec.go:1645`) | `MemberInput.Arrives`, `PropInput.Arrives` | raider-camp (`{round: 6}`, `{down: chief}`) | NEW |
@@ -170,32 +170,50 @@ validate-only verdict at the sink's path, the channel the web already reads;
 whether `validateSingleRoom` gains a non-refusing verdict list for it is the
 one mechanism question this design leaves to the slice.
 
-## Rulings needed
+## Rulings — RULED by Kirk 2026-09-21
 
-- **R1 — `propBindings` is the fourth declaration kind.** `propDeclarations`
+- **R1 — `propBindings` is the fourth declaration kind. RULED YES.** `propDeclarations`
   is the prop's definition (footprint, blocking; World Builder owns it).
   `holdable`, `holds`, `arrives` are what a PLACED prop does, which is a
-  binding by rule 1. Alternative considered: putting them on
-  `propDeclarations`. Rejected: a declaration is per-prop-kind data the
-  engine reads as geometry, and "arrives on round 6" is not a property of the
-  scroll's shape.
-- **R2 — an exit has `partyStart`'s shape.** v2's own law: "an exit is authored
-  beside `start` and the two have the same shape." So `exits[].cell: {q, r}`,
-  a walkable hex, refused when it is not. Alternative: exit rides a door
-  binding. Rejected for now: a room with an open edge and no door still needs
-  a way out, and the sites layer decides what a door leads to.
-- **R3 — `reveals: { door }` is accepted and inert.** v2's law already says a
-  record revealing an unconcealed door is legal and tells nobody anything. It
-  stays accepted so the tomb-heirloom records survive; it does something the
-  day `concealed` lifts with the sites layer. No new refusal.
-- **R4 — no `boss` key.** The single-room dialect started without it. What the
-  flag did (end the run when that creature falls) is one ending:
-  `endings: [{ id: captain-down, when: { down: captain } }]`. If the web or
-  the run's presentation reads `Boss` for anything else, that is the evidence
-  to bring it back; grep before the slice.
-- **R5 — `intimidate`/`persuade` on the binding.** The web already reserved the
-  home (`roomDraft.ts:89-91`: "have a home here when a use case brings them").
-  The use case is the front room in v4.
+  binding by rule 1. Implications, so nobody discovers them in the slice:
+  - A placed item may carry up to three declarations: definition (required,
+    it is where the footprint comes from), door state, orders. An id in BOTH
+    `doorBindings` and `propBindings` is refused by name until a use case
+    says what a door that is also taken means.
+  - A holdable prop is walked onto to be taken; v2's holdables all declare
+    `blocks_movement: false`. The slice pins whatever v2 already refuses here
+    and adds nothing.
+  - A prop that `arrives` is NOWHERE until its predicate holds, exactly as a
+    monster is. The scene still carries its node (presentation is content);
+    what is on the floor is the engine's `placed` answer, never the scene.
+    The web already reads `placed` since the doors wave; this is the second
+    reason it must.
+  - Keyed by item id only. An arrangement's members get no orders, the same
+    refusal an arrangement door gets.
+  - Web pass-through: web#1177 carries the monster-binding keys and root
+    `intel`; `propBindings` is one more block for the same rule.
+- **R2 — an exit has `partyStart`'s shape (`cell: {q, r}`). Kept, with a note.**
+  Kirk: a placed door's hex is a threshold — step into it and you are seen
+  from the other side. When the sites layer joins rooms, that hex is where a
+  crossing happens, and an exit cell that IS a door hex composes with it
+  without a second spelling. Exit-as-door is deferred to sites, not rejected.
+- **R3 — `reveals: { door }` is REFUSED in v4.** Kirk: "reject the reveal or at
+  least return a warning." There is no warning channel, so it is a refusal by
+  name at `intel[<i>].reveals.door`, in the sentence `doorBindings.<id>.concealed`
+  already uses: the word means something, it is simply not built until the
+  sites layer. `reveals: { fact }` is the only target in v4.
+- **R4 — `boss` DEFERRED.** No key in this design; Kirk suspects no and wants
+  the decision left open. The ending `when: { down: <id> }` says what the flag
+  said. Nothing here forecloses adding it.
+- **R5 — `intimidate`/`persuade` on the monster binding. RULED YES, with a
+  direction.** The DOCUMENT carries the DCs as orders (this slice). Kirk's
+  direction for the VERBS, not this slice: both are offered OUT OF COMBAT ONLY,
+  when interacting with a non-hostile creature, and the options offered are
+  the ones CONFIGURED on that creature — the seed of a dialogue system that
+  can grant intel. That changes how session prices and offers the verbs
+  (today Intimidate is a combat action and Persuade is priced on both clocks),
+  and it retires the derived passive-Insight default for the OFFER. Separate
+  design; the document shape is unaffected.
 
 ## Slices — one module, three PRs, each walks
 
