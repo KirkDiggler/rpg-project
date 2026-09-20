@@ -1,6 +1,6 @@
 # The v4 gameplay shape: every key the engine can run, and where it goes
 
-**Status:** RULED 2026-09-21 (R1–R5 below); slices building. Sources checked at
+**Status:** RULED 2026-09-21 (R1–R5 below). Slice 2+3 SHIPPED: rpg-toolkit#1855 → encounter v0.96.0 (intel, holds, intimidate/persuade, arrives; propBindings fails closed pending rpg-toolkit#1854). Slice 1 (exits/endings/scenarios) next. Sources checked at
 rpg-toolkit main `494ef265` (`rulebooks/dnd5e/encounter/dungeonspec`) and the
 five seeded rpg-api reference dungeons (`rpg-api/content/*.yaml`, all
 `version: 2`).
