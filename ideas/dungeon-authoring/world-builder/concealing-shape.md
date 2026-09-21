@@ -1,6 +1,6 @@
 # Concealing: one noun, everything hidden belongs to it
 
-**Status:** RULED 2026-09-21 (Kirk), NOT SCHEDULED. No slice, no build. This
+**Status:** RULED 2026-09-21 (Kirk). **BUILDING** from 2026-09-21 (Kirk: "let's implement the backend the builder can follow") — see "Engine mapping" and "Wave" below. This
 note exists so the sites-layer work deferred at v4 R3 (`v4-gameplay-shape.md`)
 starts from these rulings when a use case brings it. "A use case brings the
 mechanism" still applies.
@@ -30,9 +30,17 @@ detection is per observer from birth; reveal-segments exist for growing an
 observer's atlas. v4 refuses `reveals: { door }` (R3 of the v4 shape) — its
 true target is a concealment, see below.
 
-Not verified while writing this: what the atlas wire sends today for a
-concealed door or region, and whether the api filters the atlas per observer.
-First check at slice time, not a ruling.
+Verified 2026-09-21 (scout report, cited in the wave section): the atlas IS
+per observer already — `Encounter.AtlasFor(member)` withholds a hidden
+region's cells/props/walls and masks an unfound concealed door's edge as an
+ordinary wall at the neighbouring run's height; the session SDK and
+rpg-api's `GetAtlas` are member-scoped; reveal beats are per recipient.
+Knowledge is a journal fact (`known:door:<id>`, `known:region:<id>`) folded
+through a graph, one reveal writer (`revealDoorTo`/`revealRegionTo`), five
+causes (Search find, perceived open, crossed, looted intel, seen occupied).
+Footprint doors may NOT be concealed today (refused by name). Placed props
+are withheld wholesale from the atlas and are not on the wire
+(rpg-api-protos#351).
 
 ## Rulings
 
@@ -111,12 +119,77 @@ so the rogue gets a "hm" and still has to search. An author who wants RAW
 sets `notice` equal to `checks`. A session-level rules profile may pick the
 default later; that is a rules-profile question, not a concealment one.
 
+## Engine mapping — RULED 2026-09-21 (Fable, on Kirk's "implement the backend")
+
+The noun becomes the engine's ONE concealment primitive; the two flags it
+replaces are retired (no backcompat baggage — nothing runs on this).
+
+- **E1 — `encounter.ConcealmentInput{ID, Checks, Notice, Cells, Doors, Props}`
+  on `FieldInput.Concealments`.** `DoorInput.Concealed` and
+  `RegionInput.Concealed` are REMOVED. One knowledge fact kind
+  `known:concealment:<id>` replaces `known:door`/`known:region`; one reveal
+  writer; the graph pierce per concealment. `AtlasFor` withholds the
+  concealment's cells (and everything standing on them), withholds member
+  props, masks member door edges as wall; footprint member doors are withheld
+  like props and their cells masked — the "nothing has built yet" refusal is
+  built. Wide/edge doors keep working.
+- **E2 — Search is unchanged in shape** (`SearchInput{Member, Region}`): it
+  rolls the `checks` of every unknown concealment TOUCHING the region — a
+  concealment cell adjacent to a region cell, or a member door with an edge
+  in the region — one roll per concealment, not per door.
+- **E3 — Reveal causes, as today, re-targeted at the concealment:** Search
+  find; looted/held intel `reveals: { concealment }`; crossing into its
+  cells; perceiving a member door standing open; perceiving a creature on
+  its cells. **Divergence from R3 as Kirk phrased it ("everyone would see
+  it"):** the engine's standing law is "revealed to whoever PERCEIVES it"
+  through the witness seam, per observer, and this wave keeps that law. A
+  member across the dungeon learns when they see it. Kirk may overrule to
+  strictly public; it is one line.
+- **E4 — Beat:** one new per-recipient beat `concealment_revealed` carrying
+  the concealment id, its cells, props, member doorways, boundaries, the
+  segments DIFFERENCE and the sealed REPLACEMENT — the `region_revealed`
+  payload shape, plus doors. `door_revealed` and `region_revealed` retire
+  when nothing emits them. Protos: additive `EVENT_KIND_CONCEALMENT_REVEALED`
+  + body; the old kinds deprecated, never changed in place.
+- **E5 — dungeonspec, both dialects, one lowering.** v4: root
+  `concealments` (shape above) → `FieldInput.Concealments`; `intel.reveals:
+  { concealment }` accepted, `{ door }` stays refused in v4 by name. v2:
+  each `concealed: true` region lowers to a concealment with its cells and
+  every concealed door touching it as a member (checks = union, "beaten by
+  any listed route"); a concealed door touching no concealed region lowers
+  to a cell-less concealment with one member (a hidden crossing); v2
+  `reveals: { door }` lowers to the concealment holding that door. The v2
+  goldens change accordingly and the change is pinned, not hidden.
+- **E6 — `notice` (slice 2):** a second fact kind `noticed:concealment:<id>`;
+  the `CheckResolver` seam gains `ResolvePassive(member, approaches)` and the
+  session answers 10 + skill modifier ±5 (Perception exists; Investigation
+  is `GetSkillModifier(skills.Investigation)`); evaluated inside
+  `sweepConcealment` for observers with line of sight to a cell adjacent to
+  the concealment; per-recipient beat `concealment_noticed` naming the
+  concealment and nothing else. Slice 2 starts after slice 1 lands.
+
+## Wave
+
+| # | Repo / module | Content | Gate |
+|---|---|---|---|
+| P0 | rpg-api-protos | `EVENT_KIND_CONCEALMENT_REVEALED` + `ConcealmentRevealed` body; old two kinds `[deprecated = true]` | READY PR, merges first |
+| P1 | rpg-toolkit `rulebooks/dnd5e/encounter` (+ dungeonspec) | E1–E5 | DRAFT until walk |
+| P2 | rpg-toolkit `rulebooks/dnd5e/session` | pin, beat decode, seam | DRAFT on pseudo-version |
+| P3 | rpg-api dev | pins + event conversion | DRAFT on pseudo-version |
+| P4 | slice 2: E6 across the same four | | after P1–P3 |
+
+**The World Builder lane's landing item, load-bearing:** on the authored-room
+render path the web draws the scene from `GetDungeon` (the AUTHOR's truth,
+fetched once) and never draws atlas walls. Concealment cannot reach the
+player's picture on v4 until the player view derives floor, walls and placed
+things from the per-observer atlas — which needs placed props on the wire
+(rpg-api-protos#351) and the atlas's `segments`/`sealed` honoured. That is
+theirs; this wave makes the atlas say the right thing.
+
 ## Mechanisms this asks for later, named so nobody briefs them as presentation
 
-- A per-observer atlas: the api withholding cells and placed things per
-  observer, and growing an observer's atlas on reveal (reveal-segments is
-  the precedent).
-- A public reveal beat (R3) that every observer's atlas grows on.
+- Placed props on the per-observer atlas wire (rpg-api-protos#351) — the
+  thing that lets the v4 picture honour a concealment.
 - A placed prop LEAVING the field (the bookcase swinging away when the door
   opens). Props can arrive today; nothing removes one. Not needed for the
   shape above; named because it is the first thing an author will ask for.
