@@ -147,8 +147,11 @@ replaces are retired (no backcompat baggage — nothing runs on this).
   strictly public; it is one line.
 - **E4 — Beat:** one new per-recipient beat `concealment_revealed` carrying
   the concealment id, its cells, props, member doorways, boundaries, the
-  segments DIFFERENCE and the sealed REPLACEMENT — the `region_revealed`
-  payload shape, plus doors. `door_revealed` and `region_revealed` retire
+  segments DIFFERENCE, the sealed REPLACEMENT, and the touched `regions` as
+  a REPLACEMENT (an unaware observer's region entry has the concealment's
+  cells dropped, or is withheld when every cell is hidden; on reveal each
+  touched region arrives whole) — the `region_revealed` payload shape, plus
+  doors. Protos: rpg-api-protos#352. `door_revealed` and `region_revealed` retire
   when nothing emits them. Protos: additive `EVENT_KIND_CONCEALMENT_REVEALED`
   + body; the old kinds deprecated, never changed in place.
 - **E5 — dungeonspec, both dialects, one lowering.** v4: root
