@@ -1,6 +1,6 @@
 # Concealing: one noun, everything hidden belongs to it
 
-**Status:** RULED 2026-09-21 (Kirk). **BUILDING** from 2026-09-21 (Kirk: "let's implement the backend the builder can follow") — see "Engine mapping" and "Wave" below. This
+**Status:** RULED 2026-09-21 (Kirk). **BUILT** 2026-09-21/22 (protos v0.1.206, encounter v0.99.0, session v0.101.0; api#1026 landing); walk deferred to Kirk's World Builder day. Building started (Kirk: "let's implement the backend the builder can follow") — see "Engine mapping" and "Wave" below. This
 note exists so the sites-layer work deferred at v4 R3 (`v4-gameplay-shape.md`)
 starts from these rulings when a use case brings it. "A use case brings the
 mechanism" still applies.
@@ -193,10 +193,10 @@ replaces are retired (no backcompat baggage — nothing runs on this).
 
 | # | Repo / module | Content | Gate |
 |---|---|---|---|
-| P0 | rpg-api-protos | `EVENT_KIND_CONCEALMENT_REVEALED` + `ConcealmentRevealed` body (incl. `regions` replacement); old two kinds `[deprecated = true]` — rpg-api-protos#352 | READY, merges first |
-| P1 | rpg-toolkit `rulebooks/dnd5e/encounter` (+ dungeonspec) | E1–E5, E7 — rpg-toolkit#1862 | DRAFT until walk |
-| P2 | rpg-toolkit `rulebooks/dnd5e/session` | pin, beat decode, seam | DRAFT on pseudo-version |
-| P3 | rpg-api dev | pins + event conversion | DRAFT on pseudo-version |
+| P0 | rpg-api-protos | `EVENT_KIND_CONCEALMENT_REVEALED` + `ConcealmentRevealed` body (incl. `regions` replacement); old two kinds `[deprecated = true]` — rpg-api-protos#352 | MERGED → v0.1.206 |
+| P1 | rpg-toolkit `rulebooks/dnd5e/encounter` (+ dungeonspec) | E1–E5, E7 — rpg-toolkit#1862 → **encounter v0.99.0** | MERGED 2026-09-22 |
+| P2 | rpg-toolkit `rulebooks/dnd5e/session` | pin, one reveal event, `perceptibleCells` witness — rpg-toolkit#1863 → **session v0.101.0** | MERGED 2026-09-22 |
+| P3 | rpg-api dev | pins + one `ConcealmentRevealed` conversion — rpg-api#1026 | repinning to tags |
 | P4 | slice 2: E6 across the same four | | after P1–P3 |
 
 **The World Builder lane's landing item, load-bearing:** on the authored-room
