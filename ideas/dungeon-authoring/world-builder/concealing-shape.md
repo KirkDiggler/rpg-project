@@ -22,10 +22,13 @@ That is the first check at slice time, not a ruling.
 
 ## Rulings
 
-**R1 — Two faces, one owner.** A concealed thing has a face for the observer
-who does not know and its true self. Both are authored. The engine chooses
+**R1 — Two faces, one owner, ONE ID.** A concealed thing has a face for the
+observer who does not know and its true self. Both are authored, but only the
+true thing is PLACED: the disguise has no id of its own, no declaration, no
+entry in the file beyond the binding that names its look. The engine chooses
 which face THIS observer receives; the client renders one thing per placed
-id and never holds both. The alternative (the web carrying the disguise and
+id and never holds both. Search targets the concealed thing's own id; the
+ignorant observer simply sees it wearing the disguise's face. The alternative (the web carrying the disguise and
 the underlying asset together and swapping on a check) was considered and
 refused: a client that already holds the door cannot be told it does not
 know, and that forecloses illusion.
@@ -57,10 +60,18 @@ keying law as `doorBindings` / `propBindings`:
 
 ```yaml
 concealed:
-  appearsAs: bookcase                  # a prop DECLARATION id; omitted = absent from an ignorant observer's atlas
+  appearsAs: "dnd5e:props:bookcase"    # a DEFINITION ref (the same kind a placed prop's `ref` carries), NOT a placed id;
+                                       # omitted = absent from an ignorant observer's atlas
   notice:  [{ ability: investigation, dc: 12 }]   # passive tell, optional
   checks:  [{ ability: perception, dc: 17 }, { ability: investigation, dc: 15 }]   # Search rolls these
 ```
+
+`appearsAs` names a World Builder definition because the disguise needs an
+asset and nothing else — its footprint and blocking are the true thing's in
+its current state (R2). It is NOT a `propDeclarations` key: in v4 that block
+is keyed by the placed item's id, so pointing at it would mean "looks like
+that other bookcase over there", a second placed thing that does not exist.
+(The first merged version of this note said "declaration id"; Kirk caught it.)
 
 Three ways to know, one fact: beat `checks` by Search, hold intel that
 reveals it, or watch someone open it (R2).
