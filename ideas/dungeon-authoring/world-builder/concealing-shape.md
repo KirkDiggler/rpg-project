@@ -163,6 +163,24 @@ replaces are retired (no backcompat baggage — nothing runs on this).
   to a cell-less concealment with one member (a hidden crossing); v2
   `reveals: { door }` lowers to the concealment holding that door. The v2
   goldens change accordingly and the change is pinned, not hidden.
+- **E7 — the masquerade is geometry for the unaware** (ruled 2026-09-21 on
+  the P1 builder's finding that stepping onto hidden floor across a bare
+  adjacency was legal). "A wall is a wall is a wall" cuts both ways: a wall
+  the picture shows and the geometry lets you through is a tell and a cheat
+  vector. For a mover who does not know the concealment, every masquerade
+  boundary `AtlasFor` would synthesize or mask for them is geometry —
+  voluntary movement across it is refused with the authored wall's own
+  sentence. A knower walks through as today. FORCED movement (a push, a
+  directed walk) is not gated: being shoved through the wall is the illusion
+  breaking, and it reveals the secret to the mover. "Crossing into its
+  cells" as a reveal cause therefore means through a member door or by
+  forced movement. P1 deviations accepted: `PerceiversInput.Cells` (a
+  footprint door stands in no crossing; exactly one geometry filled);
+  `Atlas.Placed` FILTERED per observer rather than withheld wholesale; a
+  region entry TRIMMED, withheld only when no cell survives; v2 secret
+  SUITES (concealed regions joined through hidden space) merge into one
+  concealment — the v2 ADAPTER's rule, pinned, not the primitive's; a v2
+  `reveals: { door }` naming an unconcealed door is refused.
 - **E6 — `notice` (slice 2):** a second fact kind `noticed:concealment:<id>`;
   the `CheckResolver` seam gains `ResolvePassive(member, approaches)` and the
   session answers 10 + skill modifier ±5 (Perception exists; Investigation
@@ -175,8 +193,8 @@ replaces are retired (no backcompat baggage — nothing runs on this).
 
 | # | Repo / module | Content | Gate |
 |---|---|---|---|
-| P0 | rpg-api-protos | `EVENT_KIND_CONCEALMENT_REVEALED` + `ConcealmentRevealed` body; old two kinds `[deprecated = true]` | READY PR, merges first |
-| P1 | rpg-toolkit `rulebooks/dnd5e/encounter` (+ dungeonspec) | E1–E5 | DRAFT until walk |
+| P0 | rpg-api-protos | `EVENT_KIND_CONCEALMENT_REVEALED` + `ConcealmentRevealed` body (incl. `regions` replacement); old two kinds `[deprecated = true]` — rpg-api-protos#352 | READY, merges first |
+| P1 | rpg-toolkit `rulebooks/dnd5e/encounter` (+ dungeonspec) | E1–E5, E7 — rpg-toolkit#1862 | DRAFT until walk |
 | P2 | rpg-toolkit `rulebooks/dnd5e/session` | pin, beat decode, seam | DRAFT on pseudo-version |
 | P3 | rpg-api dev | pins + event conversion | DRAFT on pseudo-version |
 | P4 | slice 2: E6 across the same four | | after P1–P3 |
