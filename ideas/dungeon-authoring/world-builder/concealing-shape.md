@@ -41,13 +41,12 @@ hides: cells, and placed things by id. Nothing else in the file says
 "hidden". No `concealed: true` on a region, no `concealed` on a door binding,
 no face, no derivation.
 
-**R2 — Cells are authored walkable, and hidden only by membership.** The
-author sees the vault at the table. An unaware observer is not sent those
-cells, and the web draws wall on the boundary exactly as it does for any edge
-of the walkable set. Nobody places a wall to hide a room; omission is the
-wall. A concealment's `cells` are SITE-GLOBAL absolute hexes, not a subset of
-one room's `walkableHexes`: a concealment may sit outside a room or between
-rooms, and a room has no coordinate space of its own for cells to live in.
+**R2 — Cells stay in `walkableHexes`.** The author sees the vault at the
+table. An unaware observer is not sent those cells, and the web draws wall on
+the boundary exactly as it does for any edge of the walkable set. Nobody
+places a wall to hide a room; omission is the wall. Whether a listed cell is
+walkable is the ENGINE's refusal at publish, not the web's — the web carries
+the list, the engine grades it (the same split `doorBindings` keeps).
 
 **R3 — Detection is per observer; a concealment goes PUBLIC on two
 events.** (a) A door belonging to it is opened. (b) Any observer sees a
@@ -90,17 +89,17 @@ concealments:
   vault:
     notice: [{ ability: investigation, dc: 12 }]                                  # optional
     checks: [{ ability: perception, dc: 17 }, { ability: investigation, dc: 15 }] # REQUIRED
-    cells:  [{ q: 12, r: 3 }, { q: 13, r: 3 }, { q: 12, r: 4 }]                    # SITE-GLOBAL absolute hexes — not a room's subset
+    cells:  [{ q: 12, r: 3 }, { q: 13, r: 3 }, { q: 12, r: 4 }]                    # subset of walkableHexes; the engine grades that at publish
     props:  [vault-door, inner-wall-1, heirloom]                                   # placed ids: doors, wall props, anything
 
 intel:
   - { id: vault-map, reveals: { concealment: vault } }
 ```
 
-Refusals the validator owes: an unknown cell (not a walkable cell in any
-room — the engine's judgement, not a shape rule); an unknown placed id; a
-cell or id in two concealments (R4); a concealment with no `checks`; a
-concealment that hides nothing; intel naming no such concealment. Internal walls are wall props in this dialect and need nothing
+Refusals the engine owes: an unknown cell (not in `walkableHexes`); an
+unknown placed id; a cell or id in two concealments (R4); a concealment with
+no `checks`; a concealment that hides nothing; intel naming no such
+concealment. Internal walls are wall props in this dialect and need nothing
 special. A bookcase in front of the hidden door is an ordinary placed prop
 with no link to the concealment.
 

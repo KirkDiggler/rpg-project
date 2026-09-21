@@ -1,13 +1,13 @@
 # Concealing in the World Builder — authoring the noun
 
-**Status:** authored design, 2026-09-21 (waiting Kirk ruling). Parent ruling:
+**Status:** authoring design, 2026-09-21, reviewed by Kirk (via monster-ai) the same day. NOT SCHEDULED, and sequenced AFTER the runtime — see "Sequencing" below. Parent ruling:
 [concealing-shape.md](concealing-shape.md) — RULED, NOT SCHEDULED ("a use case
 brings the mechanism"). This doc is the authoring slice: how the World Builder
 lets an author write the `concealments.<id>` noun the ruling landed on. It is
 not the runtime (per-observer atlas, public reveal beat, a prop leaving the
 field) and names those as out of scope rather than briefing them as presenters.
 
-## Two rulings made while this was written
+## One authoring choice made while this was written (Kirk agreed)
 
 1. **Cells reuse the walkable paint gesture.** No new tool noun to start. The
    author paints a concealment's cells with the same brush/rectangle gesture
@@ -15,35 +15,24 @@ field) and names those as out of scope rather than briefing them as presenters.
    claimed by concealment `vault`". A new "select cells for a concealment" tool
    appears only when a use case asks for it.
 
-2. **A concealment is a SITE noun, not a room noun.** It can sit outside a room
-   or between rooms. Because the multi-room model gives every room an absolute
-   origin and no room-local coordinate space (rpg-project
-   `ideas/multi-room-dungeons/design.md`), a cell is already a site-global
-   `{ q, r }`. A concealment that names cells therefore survives `rooms[]`
-   without re-homing: its `cells` never became "this room's cells".
+## Sequencing — the form lands last
 
-## The one consequence load-bearing enough to state in its own line
+Today the engine refuses `concealments` as a key it does not read, so a form
+that writes it produces rooms `PutDungeon` rejects. And a key the toolkit
+ACCEPTED before the per-observer atlas existed would give the author a knob
+that does nothing in play — a lie to a streamer, and a fail-silent. So:
 
-**`cells` are site-global absolute hexes, NOT a subset of the authoring room's
-`walkableHexes`.** This is the correction the "between rooms" ruling forces, and
-an authoring rule, not a nice-to-have:
+1. runtime shape in rpg-toolkit (per-observer atlas, public reveal beat) —
+   brought by a use case, not scheduled;
+2. `concealments` accepted and graded by dungeonspec, in the same wave;
+3. THEN this form.
 
-- The form must let an author paint a cell that is not in *this* room's walkable
-  set — a hiding cell in another room, or a cell in a gap the single-room slice
-  does not model yet.
-- The web therefore REFUSES only what it cannot represent (a non-integral cell,
-  a cell outside the workspace bound, a prop id no placed item owns). Whether a
-  cell is walkable at all, in which room, is the ENGINE's judgement at
-  `PutDungeon`, with a path and a sentence — the exact "carried, not graded"
-  discipline `doorBindings` already keeps.
-- If the web pre-judged `cells ⊆ walkableHexes`, it would have re-introduced the
-  room-scope coupling the site-noun ruling exists to avoid. In the single-room
-  slice the engine's sentence for a cell outside the one walkable set is the
-  honest answer; the same form already accepts cross-room cells because it never
-  scoped them.
-
-The table view keeps showing the vault's cells because they are still walked /
-still what the author drew: omission is the wall (R2), never a placed prop.
+`cells` are a subset of the room's `walkableHexes` (parent R2). Whether a
+listed cell is walkable is the engine's refusal at publish; the web carries
+the list. (An earlier draft of this doc ruled cells "site-global" and able to
+sit between rooms, citing the February multi-room design. That design is a
+legacy tree — v4 has no `rooms[]` — and the ruling was not this doc's to
+make; it is withdrawn.)
 
 ## The author always sees, the player never does — one list, two truths
 
@@ -85,14 +74,14 @@ concealments:
   vault:
     notice: [{ ability: investigation, dc: 12 }]                                   # optional
     checks: [{ ability: perception, dc: 17 }, { ability: investigation, dc: 15 }] # REQUIRED
-    cells:  [{ q: 12, r: 3 }, { q: 13, r: 3 }, { q: 12, r: 4 }]                    # absolute hexes
+    cells:  [{ q: 12, r: 3 }, { q: 13, r: 3 }, { q: 12, r: 4 }]                    # subset of walkableHexes
     props:  [vault-door, inner-wall-1, heirloom]                                   # placed ids
 
 intel:
   - { id: vault-map, reveals: { concealment: vault } }
 ```
 
-`concealments` is a site-root key beside `factions`/`dispositions`/`intel`,
+`concealments` is a root key beside `factions`/`dispositions`/`intel`,
 joined to the same v4 seam those opened. It is a key inside v4, not a new
 version — the note already live in `singleRoomDungeon.ts` ("a `doorBindings`
 wave adds a key here, not a version") applies verbatim.
@@ -165,24 +154,11 @@ The refusal split is the discipline already on the page in `roomDraft.ts` and
 
 - whether a `checks`/`notice` `ability` ref resolves;
 - whether an intel `reveals.concealment` names a real concealment (R7);
-- whether a cell is walkable, and in which room (the site-global consequence
-  above);
+- whether a cell is walkable (parent R2);
 - R3's two public events and the per-observer atlas growth.
 
 The publish panel already surfaces those sentences verbatim (`CONTRACT.md` §The
 site scope, `validate_only`).
-
-## "A hidden room" is not a distinct noun
-
-A concealment hides cells and placed things by id; it has no concept of "room."
-Whether an author thinks of what they drew as "a secret room," "a secret alcove,"
-or "a hidden nook" is presentational. The authored fact is always the same: a
-set of cells + props + checks under one `concealments.<id>`. When `rooms[]`
-arrives, "a concealed room" is simply a room whose cells are wholly inside some
-`concealment.cells` — the concealment itself never names a room and does not
-need to, because its cells are already absolute and site-global. This is the
-site-noun ruling restated: a concealment spanning or sitting between rooms is
-the same shape as one inside a single room.
 
 ## Out of scope, named (deferred to the runtime wave)
 
@@ -204,7 +180,7 @@ atlas, which the editor's preview mode only *imitates* against the same lists):
 ## Concrete landing list
 
 1. `siteScope.ts` — `SiteConcealment` + `validateSiteConcealments` (representational
-   refusals only; NO `cells ⊆ walkableHexes`), joined to `SCOPE_KEYS` and
+   refusals only; walkability is the engine's), joined to `SCOPE_KEYS` and
    `validateSiteScope`, "absent when none".
 2. `singleRoomDungeon.ts` — `concealments` added to `ROOT_KEYS` and
    `carriesV4Keys`; no version bump.
@@ -217,10 +193,9 @@ atlas, which the editor's preview mode only *imitates* against the same lists):
    concealment-id picker, replace the unconditional door refusal with
    "names a real concealment".
 
-## Open question left for the ruling
+## Ability vocabulary — answered
 
-Whether `notice`/`checks`' `ability` field is the engine's sealed rulebook ref
-vocabulary (as `RoomCheckApproach` already uses) or the looser "abilities" the
-parent doc's prose implies. The form reuses the sealed vocabulary unless the
-ruling says otherwise; worth one sentence so the picker's options and the
-engine's sealed refs cannot drift.
+`notice`/`checks`' `ability` is the engine's sealed rulebook ref vocabulary,
+exactly as `RoomCheckApproach` already uses for a door's `locked` and a
+monster's `intimidate`/`persuade`. The picker's options and the engine's
+sealed refs are one list; nothing looser.
