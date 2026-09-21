@@ -1,6 +1,6 @@
 # The v4 gameplay shape: every key the engine can run, and where it goes
 
-**Status:** RULED 2026-09-21 (R1–R5 below). Slice 2+3 SHIPPED: rpg-toolkit#1855 → encounter v0.96.0 (intel, holds, intimidate/persuade, arrives; propBindings fails closed pending rpg-toolkit#1854). **#1854 SHIPPED: rpg-toolkit#1857 → encounter v0.97.0** (placed props hold/arrive; propBindings compiles; walked by Kirk 2026-09-21: held the letter, intimidated the skeleton). Slice 1 (exits/endings/scenarios) next; wire gap rpg-api-protos#351. Sources checked at
+**Status:** SHIPPED 2026-09-21. Slice 2+3: rpg-toolkit#1855 → encounter v0.96.0 (intel, holds, intimidate/persuade, arrives). Placed-prop primitive rpg-toolkit#1854 → #1857 → encounter v0.97.0 (propBindings compiles; walked by Kirk: held the letter, intimidated the skeleton). Door reach found on that walk → #1859 → encounter v0.97.1, session v0.100.1. **Slice 1: rpg-toolkit#1861 → encounter v0.98.0** (exits/endings/scenarios at the v4 root; v2 helpers factored to serve both dialects; scenarios bind monsters, declared props, exits AND factions, as v2 does). rpg-api dev carries the pins (#1022, #1023, #1024, #1025). Slice 1 walk DEFERRED by Kirk to his next World Builder session, together with the web pass-through of the three root keys (rpg-dnd5e-web#1171). Wire gap rpg-api-protos#351.
 rpg-toolkit main `494ef265` (`rulebooks/dnd5e/encounter/dungeonspec`) and the
 five seeded rpg-api reference dungeons (`rpg-api/content/*.yaml`, all
 `version: 2`).
@@ -278,6 +278,7 @@ not exist.
 - All `NEW` keys accept in v4 with their v2 refusal sentences at the v4 path.
 - tomb-heirloom, front-room, raider-camp each exist as a v4 document in
   dungeonspec testdata with a compile-equivalence test against the v2 file.
-- The three walks above are recorded on the slice PRs.
+- The three walks above are recorded on the slice PRs. Slices 2+3 walked 2026-09-21; slice 1's walk is deferred
+  to Kirk's next World Builder session (gated on rpg-dnd5e-web#1171 passing `exits`, `endings`, `scenarios`).
 - `single_room.go`'s doc comment lists `propBindings` as the fourth
   declaration kind, keyed by the same law.
