@@ -109,6 +109,21 @@ was hurt exactly as one hit by a sword does. A beneficial effect asks no
 provocation. R4's "a save is not a swing" stays what it was ruled for: the
 NPC target refusal, which already covers casts.
 
+**R5 amended (review of rpg-toolkit#1868, 2026-09-22):** the swing and the
+save were two doors; the DELIVERY is the third (magic missile: no attack
+roll, no save, harm delivered). Provocation and the `attacked` deed bind to
+ANY delivery to a member of another faction that is not wholly a kindness,
+whatever door it came through. A gateless debuff on an enemy provokes; a
+gateless buff on an ally is a kindness and does not. One predicate reads
+the delivery, not the arm.
+
+**R4 extended (same review):** "not targetable" covers every hostile door. A
+world member (`KindWorld`, what a `dnd5e:npcs:*` becomes) cannot be asked
+for a save or handed a harmful gateless delivery either — refused at the
+verb with the same sentence, nothing appended. A kindness to a vendor (heal
+the merchant) is allowed. A vendor that could hold an `attacked` deed could
+be provoked into its attack rows, which is the opposite of the ruling.
+
 **Correction to R2's example:** "the guards turn at midnight" is
 `until: { round: N }`, and a round is a FIGHT's round (hold-out R9) — it
 never holds outside a fight. An author who means world time has no
