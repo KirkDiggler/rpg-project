@@ -379,6 +379,8 @@ walked: deliver the letter (walk 3) and kill the chief (walk 5).
   mind knows. A skeleton who knows before the edge flips hesitates only if
   behavior reads per-member knowledge (Billy's record). Step A is latency 0
   by presence in the mind's region.
+  Taken further 2026-09-22: at campaign clock this same scheduled fact is how
+  word reaches the next run — ../campaign-journal/design.md, "shelves".
 - **Take, the pocket verb** (Kirk 2026-09-05: "take is like holding but goes
   into inventory. hold is meant to be a temp state and possibly taking up 1 or
   2 hands. we trade from our inventory"). Two verbs, two nouns, two lifetimes:
@@ -400,6 +402,8 @@ walked: deliver the letter (walk 3) and kill the chief (walk 5).
   Kirk 2026-09-05: Trade lands first, and Take is "trading an object for
   nothing" — Trade's shape with an empty give side and the field as the
   counterparty; it breaks out into its own verb only if it needs more shape.
+  Stocked 2026-09-22: ../item-ledger/design.md fills (a), (b) and (c), and the
+  two breaks dissolve because the story outcome is a fact, not the item.
 - **A hold costs a hand** (Kirk: "we could even configure the scenario to say
   it takes away a hand"): `holdable: { hands: 1 | 2 }` on a prop, read by the
   rulebook's equipment rules when hands exist (`hold.go`'s named shelf).
