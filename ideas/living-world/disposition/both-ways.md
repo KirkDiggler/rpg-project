@@ -1,6 +1,6 @@
 # Dispositions turn both ways: `until` on a neutral pair, and aggression as a law
 
-**Status:** RULED 2026-09-22 (Kirk), BUILDING. Follows the hold-out design
+**Status:** RULED 2026-09-22 (Kirk). **SHIPPED** in rpg-toolkit: encounter **v0.100.0** (#1864), session **v0.102.0** (#1865); rpg-api pin in flight. Walk deferred to Kirk's World Builder day. Follows the hold-out design
 (`../hold-out/design.md`, R2/R11) and the reference map
 `ideas/dungeon-authoring/world-builder/minds-factions-intel.md`.
 
