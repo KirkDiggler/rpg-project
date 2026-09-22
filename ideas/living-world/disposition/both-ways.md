@@ -79,6 +79,25 @@ attack verb will not point at them.
   own `until` made neutral — the betrayed truce, pinned); fact-untils stay
   on the mind's grain; one mind learning is enough in either direction.
 
+## Free roam: the item is the trigger, not a swing (Kirk, 2026-09-22)
+
+A party in free roam has no attack verb (Attack and Cast are fight-only at
+the session seam), and the ruling is that it does not need one: in free
+roam the thing that turns a camp is what the party DOES, and the first use
+case is taking their thing. That is already spellable with no new key:
+
+```yaml
+intel:        [{ id: the-toy, reveals: { fact: stole-toy } }]
+propBindings: { toy: { holdable: true, holds: [the-toy] } }
+dispositions: [{ between: [goblins, party], stance: neutral, until: { fact: stole-toy } }]
+```
+
+Hold teaches the holder the fact; standing in the goblin mind's region
+(a single room is one region) hands it to the mind by presence transfer;
+R1 turns the pair hostile and the stance site forms the fight. The swing
+path (R3) is for a fight already running with a neutral faction in the
+room. No `{ held }` predicate and no free-roam Attack verb are brought.
+
 ## What this makes possible
 - A neutral camp the party can provoke, and that provokes back as a camp.
 - "The guards are civil until midnight."
