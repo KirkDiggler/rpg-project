@@ -54,6 +54,31 @@ disposition; the monster configuration is what gives it a table to fight
 with. NPC roles remain fadedpez's lane; this ruling only says the engine's
 attack verb will not point at them.
 
+## Two corrections from the build (2026-09-22, accepted)
+
+- **"NPC ref" is `KindWorld` at this seam.** The encounter module carries no
+  member ref and cannot import the rulebook's refs (C1). What a
+  `dnd5e:npcs:*` becomes when placed is a member of Kind `world` (session's
+  PlaceNPC). So R4 is implemented as "a member of Kind world cannot be the
+  target of an attack", refused at the verb before anything is appended, and
+  R3 then applies to any landed attack between two faction members. A
+  literal ref check would need a member-ref wave through session and api;
+  not brought.
+- **A stance turn must FORM the fight; a later sight refresh will not.**
+  Fight formation reads only first contact, by law: a subject already
+  watched is not news. A camp the party was already looking at, turned
+  hostile by aggression or by `until`, would therefore never go to
+  initiative — a second fail-silent the design's opening paragraph did not
+  see. So the stance site synthesizes the first contact that just became
+  true (each member's currently-sighted members on the newly opposed side)
+  and feeds it through the one classify/formation path: precedence,
+  surprise, straggler-join and the formed beat stay one set of rules.
+  Strangers becoming enemies is first contact with an enemy.
+- Graph shape: a pair's PUBLIC stance is now a journal fact (two settled
+  kinds, hostile declared after neutral so aggression re-turns a pair its
+  own `until` made neutral — the betrayed truce, pinned); fact-untils stay
+  on the mind's grain; one mind learning is enough in either direction.
+
 ## What this makes possible
 - A neutral camp the party can provoke, and that provokes back as a camp.
 - "The guards are civil until midnight."
