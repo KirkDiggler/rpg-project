@@ -98,6 +98,23 @@ R1 turns the pair hostile and the stance site forms the fight. The swing
 path (R3) is for a fight already running with a neutral faction in the
 room. No `{ held }` predicate and no free-roam Attack verb are brought.
 
+**R5 — Provocation binds to hostile intent delivered, not to the swing**
+(ruled 2026-09-22 from the independent review of rpg-toolkit#1864, which
+probed a failed-save Vicious Mockery leaving a neutral camp neutral). An
+attack roll against a member of another faction, hit or miss, OR a cast
+that asks such a member for a saving throw against a harmful effect
+(damage or a condition), landed or not, provokes under R3 and lands the
+`attacked` deed on the target — so a creature hurt by a spell learns it
+was hurt exactly as one hit by a sword does. A beneficial effect asks no
+provocation. R4's "a save is not a swing" stays what it was ruled for: the
+NPC target refusal, which already covers casts.
+
+**Correction to R2's example:** "the guards turn at midnight" is
+`until: { round: N }`, and a round is a FIGHT's round (hold-out R9) — it
+never holds outside a fight. An author who means world time has no
+spelling yet; that is a use case for a world-clock predicate, not this
+slice.
+
 ## What this makes possible
 - A neutral camp the party can provoke, and that provokes back as a camp.
 - "The guards are civil until midnight."
