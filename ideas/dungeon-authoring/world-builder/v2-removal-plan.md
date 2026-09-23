@@ -76,18 +76,46 @@ Named in advance because **two of them invert the obvious reading**:
   load-bearing for the port, not cleanup — it is the last thing deleted, not the
   first.
 
-### Rooms — 21, pruned to one
+### Rooms — pruned to exactly one, and it is specified
 
-| Tree | v2 | v3/v4 |
-|---|---|---|
-| rpg-toolkit `dungeonspec/testdata/` | 5 | 8 |
-| rpg-api `content/` (shipped) | 5 | 0 |
-| rpg-api `internal/dungeons/testdata/` | 0 | 3 |
+Kirk, 2026-09-24, correcting this plan's first draft:
 
-**Keep: the reference tomb, as v4.** Everything else is either covered by it or
-belongs as a unit test over a small fixture. The per-file disposition is
-step 3's work; this plan deliberately does not enumerate it, for
-`one-room-one-shape.md`'s reason — an inventory buries the ruling.
+> "The testator at dungeons are fine. It is the eight that's in the RPG API. We
+> only need the reference tomb that has the merchant in the front room, the two
+> monsters in the second and the captain and the third that is sufficient for
+> now."
+
+**Measured against that:**
+
+| Tree | v2 | v3/v4 | Disposition |
+|---|---|---|---|
+| rpg-toolkit `dungeonspec/testdata/` | 5 | 8 | **13 → 1** (the tomb) |
+| rpg-api `content/` (shipped) | 5 | 0 | **→ the v4 tomb** |
+| rpg-api `internal/dungeons/testdata/` | 0 | 3 | **→ 0** |
+
+**The correction that matters:** rpg-api's `internal/dungeons/testdata/` holds
+**zero v2 files** — all three are v3/v4 (`placed-table-room` v4,
+`workshop-one-seat` v3, `workshop-room` v3). So they are *not* swept away by
+removing v2; they are **deleted by the pruning rule** ("we only need the
+reference tomb"), which is a separate decision from the dialect removal and
+needs to be stated as one. An earlier draft of this plan conflated the two.
+
+### The one tomb, specified
+
+The surviving room is **the reference tomb as v4**, with three parts:
+
+1. **The merchant in the front room.**
+2. **Two monsters in the second.**
+3. **The captain in the third.**
+
+That is the whole authored corpus for now, and it is enough: it exercises a
+non-combatant, a group, and a leader — a faction, an intel-bearing NPC, and a
+boss-shaped creature — which is what the slices in flight need to be walked
+against.
+
+**The per-file disposition of the other 20 is step 3's work**; this plan
+deliberately does not enumerate it, for `one-room-one-shape.md`'s reason — an
+inventory buries the ruling.
 
 ### Consumers
 
