@@ -1,11 +1,23 @@
 # Facts, not conditions — what a creature can know, and why `when` is not the bottleneck
 
-**Status:** IDEA — not yet ruled. Written 2026-09-22/23 from a World-Builder walk
-(rpg-dnd5e-web#1192) and a set of runnable experiments (six unit tests in
-`mind/behavior`, no board, no clock, no rulebook). Supersedes the first draft of
-this idea, which framed the problem as "named parameterized regimes" and was
-wrong about where the gap is. Builds on the shipped creature-table design
-(`ideas/creature-table/design.md`, SHIPPED 2026-09-18).
+**Status:** RULED 2026-09-23 — IMPLEMENTED, in review. Written 2026-09-22/23
+from a World-Builder walk (rpg-dnd5e-web#1192) and a set of runnable experiments
+(six unit tests in `mind/behavior`, no board, no clock, no rulebook). Supersedes
+the first draft of this idea, which framed the problem as "named parameterized
+regimes" and was wrong about where the gap is. Builds on the shipped
+creature-table design (`ideas/creature-table/design.md`, SHIPPED 2026-09-18).
+
+**The ruling:** widen the fact projection — a deed against the creature's own
+side, and its own actions as facts it holds — and let `when` gain forms that read
+them. The implementation is issue rpg-toolkit#1883 (spec), provider
+rpg-toolkit#1884, consumer rpg-toolkit#1890, and the stack that walked it
+rpg-api#1043. **Walked 2026-09-23**: a goblin authored with `attack: attacker`
+pursued the fighter that struck it and died to an opportunity attack on the way,
+the `answered` beat naming `"selector": "attacker"`.
+
+The ruling also confirmed what this doc argued: named reusable tables are the
+**site's** business and are not in this slice (see the pointer at
+`ideas/dungeon-authoring/world-builder/named-behavior-tables.md`).
 
 ## The one sentence
 
