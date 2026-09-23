@@ -55,6 +55,15 @@ In order, before reading a line of the diff:
   exercise the edge case. Verification-before-completion applies to review
   claims in both directions — a bug is shown, not suspected, and so is its
   absence.
+- Name the mechanism a probe trips, and check the failure comes from it. A
+  probe that trips the defect through some OTHER guard — a target the intent
+  refuses, an entry that never reached the roll — has not shown the filed
+  defect, and a fix tested by such a probe can pass while the defect lives.
+- The probe rides with the finding. A defect whose reproduction is obvious
+  from prose is cheap to answer; one whose fixture is not (a view, a row, a
+  disposition to flip) carries the minimal shape in the thread itself, so
+  the implementing agent re-verifies the defect instead of reconstructing it
+  from a paragraph.
 - Never review code you did not read. If the diff is too large for one
   pass, review it in passes and say so in the verdict.
 
@@ -65,6 +74,11 @@ In order, before reading a line of the diff:
   strengths specifically — accurate praise buys trust for the rest.
 - Each finding states: file:line, what is wrong, why it matters, and the
   fix if not obvious.
+- When the fix is prescriptive, find the package's existing general
+  mechanism first — a shared helper, a documented convention — and
+  prescribe that. A hand-copied fix where a mechanism exists is itself the
+  band-aid the lens forbids, and the nearest precedent is not the
+  mechanism doc.
 - Judge by the tool the change adds, never by the feature it closes. Test
   the design against full D&D scale, not today's handful of features.
 - Test the standing invariants: Input/Output types on every function;
@@ -122,7 +136,9 @@ performative agreement, no gratitude.
 
 Every thread closes with exactly one disposition, stated in the thread:
 
-- **Addressed** — fixed, commit SHA (or follow-up PR) linked.
+- **Addressed** — fixed, commit SHA (or follow-up PR) linked. When one
+  commit carries several fixes, the head SHA named once suffices — say
+  that it does.
 - **Rebutted** — the finding is wrong; the reasoning is stated. The
   reviewer concedes in-thread if persuaded.
 - **Deferred** — real but not now: the reason, and the board entry that
@@ -134,7 +150,11 @@ complete while one exists.
 ## Closure
 
 - After dispositions, the reviewer verifies fixes at the new head with a
-  fresh review.
+  fresh review, and states per thread what was re-run to concede it —
+  re-running the original probes is the cheapest honest evidence. Verifying
+  a fix is reading the fix, not only the claim: a fix may be better than
+  the one prescribed, and new findings the closure pass turns up are filed
+  the same way as the first round's.
 - The summary verdict is updated to reflect the dispositions. The verdict
   published on the PR **is** the record — a local review file is not.
 - Merge-ready requires: declared scope implemented, applicable checks
