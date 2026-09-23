@@ -207,6 +207,14 @@ against a stack whose content is v4-only.
 4. **The unclassified seven.** They were not caught by either marker; each needs
    a human call rather than a grep.
 
+## The rename that follows this
+
+`the-single-room-name.md` records that the dialect's **name**, not its shape, is
+what reads wrong: "single room" is residual vocabulary from a comparison to v2's
+three-room chain, and the author-facing surface already says `room`. That rename
+is sequenced **after** this plan, because until v2 is gone "single" is doing real
+work distinguishing the two.
+
 ## What this plan does not do
 
 - Does not migrate any v2 document. Kirk: *"we do not need to migrate anything."*
