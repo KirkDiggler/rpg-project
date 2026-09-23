@@ -34,9 +34,14 @@ And then the reframe that actually landed:
 
 The draft was wrong in one specific way worth recording: it treated the gap as a
 **document-shape** problem (a place to put a reusable named block) when the
-evidence says it is a **fact-projection** problem. Naming regimes may still be
-worth doing, but it is not what unblocks guard or morale, and building it first
-would have added surface without adding capability.
+evidence says it is a **fact-projection** problem.
+
+Kirk's ruling on the deleted half, kept here because it is the reason the idea
+does not linger: *"we will be building them in the site. I think we name them
+there to start and when we want to carry over one dungeon's creature facts to
+another, then that idea flows out of there."* Names are the **site's** business;
+the engine never learns one. Building the named block first would have added
+surface without adding capability — the same failure this doc exists to avoid.
 
 ## The evaluator, seen plainly
 
@@ -127,11 +132,15 @@ spans for the pause; the existing deed verbs for the rest).
   is dealt **once at the door** with a `tempered` beat, and making it dynamic
   raises its own questions (does it re-deal? does the beat fire again? is it a
   second computable layer?). **Its own doc.**
-- **Named reusable regimes.** Still a real idea (guard/patrol as referenced
-  blocks), but it does not unblock anything above and was the first draft's
-  wrong shape.
 - **Storage repository, loader/embed.** Unchanged from the first draft: defer,
   lean into the encounter.
+
+**NOT deferred — deleted.** Named reusable regimes do not belong in this idea at
+all. Kirk: *"we will be building them in the site. I think we name them there to
+start and when we want to carry over one dungeon's creature facts to another,
+then that idea flows out of there."* A named block is therefore a **site-document**
+idea, born when a site needs it, and the engine learns nothing about names. It
+appears in this doc only as the first draft's mistake, never as a queued idea.
 
 ## Evidence
 
@@ -148,13 +157,17 @@ test file describes its method:
 | `TestPauseIsNotExpressibleToday` | a pause row is dead weight, silently |
 | `TestTheTargetIsPresentAndThenDiscarded` | the deed carries `Target`; the projection drops it |
 
-## The question to rule on
+## What is being ruled on
 
-**Do we widen the fact projection (a deed against my side, and my own actions as
-facts I hold), and let `when` gain forms that read them — rather than widening
-the document shape with named regimes?**
+**Widen the fact projection — a deed against my side, and my own actions as facts
+I hold — and let `when` gain forms that read them.**
 
-If yes, the first slice is small and testable: one projection change in
+There is no competing option to weigh. The document-shape answer (named reusable
+regimes) was the first draft's mistake and is deleted: names belong to the site,
+and the engine will learn them when a site needs to carry creature facts between
+dungeons. What remains is one question with a small, testable answer.
+
+If ruled yes, the first slice is small: one projection change in
 `encounter/facts.go`, one or two `When` forms, and a guard's pause plus
 attrition morale become expressible with machinery already built.
 
