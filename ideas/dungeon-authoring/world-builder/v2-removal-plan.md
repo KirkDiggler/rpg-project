@@ -76,46 +76,36 @@ Named in advance because **two of them invert the obvious reading**:
   load-bearing for the port, not cleanup — it is the last thing deleted, not the
   first.
 
-### Rooms — pruned to exactly one, and it is specified
+### Rooms — the API's are pruned, the toolkit's are kept
 
-Kirk, 2026-09-24, correcting this plan's first draft:
+Kirk, 2026-09-24, correcting this plan twice over:
 
-> "The testator at dungeons are fine. It is the eight that's in the RPG API. We
-> only need the reference tomb that has the merchant in the front room, the two
-> monsters in the second and the captain and the third that is sufficient for
-> now."
+> "The test dungeons we can keep it is the eight dungeons and RPG API that is a
+> bit much. We just need the reference room."
 
-**Measured against that:**
+**Measured — 8 dungeons in rpg-api, not 9** (an earlier count of mine included
+`envoy/envoy.yaml`, which is proxy configuration, not a dungeon):
 
-| Tree | v2 | v3/v4 | Disposition |
-|---|---|---|---|
-| rpg-toolkit `dungeonspec/testdata/` | 5 | 8 | **13 → 1** (the tomb) |
-| rpg-api `content/` (shipped) | 5 | 0 | **→ the v4 tomb** |
-| rpg-api `internal/dungeons/testdata/` | 0 | 3 | **→ 0** |
+| Tree | Count | Disposition |
+|---|---|---|
+| rpg-toolkit `dungeonspec/testdata/` | 13 | **KEPT** |
+| rpg-api `content/` (shipped) | 5 (all v2) | **→ the reference room** |
+| rpg-api `internal/dungeons/testdata/` | 3 (all v3/v4) | **→ the reference room** |
 
-**The correction that matters:** rpg-api's `internal/dungeons/testdata/` holds
-**zero v2 files** — all three are v3/v4 (`placed-table-room` v4,
-`workshop-one-seat` v3, `workshop-room` v3). So they are *not* swept away by
-removing v2; they are **deleted by the pruning rule** ("we only need the
-reference tomb"), which is a separate decision from the dialect removal and
-needs to be stated as one. An earlier draft of this plan conflated the two.
+**TWO CORRECTIONS FROM THE FIRST DRAFT, both Kirk's:**
 
-### The one tomb, specified
+1. **The toolkit's test dungeons are KEPT.** The first draft pruned them to one
+   ("we only need the reference tomb"). That was wrong — the excess is the
+   **API's**, where eight dungeons duplicate what the toolkit already covers.
+   The toolkit's 13 are unit fixtures for a compiler and they stay.
+2. **The API's 3 testdata files are not removed by the dialect work.** They are
+   all v3/v4 — zero v2 — so they are untouched by removing v2 and are removed
+   only by this pruning rule. A draft conflated the two decisions.
 
-The surviving room is **the reference tomb as v4**, with three parts:
-
-1. **The merchant in the front room.**
-2. **Two monsters in the second.**
-3. **The captain in the third.**
-
-That is the whole authored corpus for now, and it is enough: it exercises a
-non-combatant, a group, and a leader — a faction, an intel-bearing NPC, and a
-boss-shaped creature — which is what the slices in flight need to be walked
-against.
-
-**The per-file disposition of the other 20 is step 3's work**; this plan
-deliberately does not enumerate it, for `one-room-one-shape.md`'s reason — an
-inventory buries the ruling.
+**The survivor is one reference room**, and only in the API. It is the tomb with
+**the merchant in the front room, two monsters in the second, and the captain in
+the third** — enough to exercise a non-combatant, a group, and a leader, which is
+what the slices in flight need walked against.
 
 ### Consumers
 
@@ -169,19 +159,32 @@ same goldens. They are one edit to one shape.
 **Done when:** the module builds with `PlaceSpec` gone, `version: 2` is refused
 by a sentence naming v4, and no KEEP file was touched.
 
-### Step 3 — prune the rooms and the tests
+### Step 3 — delete the v2 tests, keep the toolkit's rooms
 
-**One toolkit PR.** Delete the 16 v2-only test files and their fixtures; resolve
-the unclassified seven; prune `testdata/` to the v4 tomb.
+**One toolkit PR.** Delete the **16 v2-only test files** and **only the fixtures
+that exist to feed them**. Resolve the **8 unclassified** files.
 
-**Done when:** `dungeonspec/testdata/` holds the tomb and nothing that exists
-only to give a deleted test a file.
+**Explicitly NOT done here: `testdata/` is not pruned to one room.** Kirk ruled
+the toolkit's test dungeons are kept — they are unit fixtures for a compiler, and
+the duplication problem is in the API. An earlier draft of this plan pruned them,
+and that was wrong.
 
-### Step 4 — rpg-api content and tests
+**Done when:** every deleted test's fixture is gone with it, `golden_test.go` has
+been replaced by its v4 equivalent (not deleted — see below), and **the toolkit's
+room count is the same minus the v2-only fixtures**.
 
-**One rpg-api PR.** Delete the five v2 content files; repoint or delete the
-tests that read them; make the seeded content the v4 tomb so a fresh box seeds
-something that compiles.
+### Step 4 — rpg-api: one reference room
+
+**One rpg-api PR.** This is where the pruning actually happens.
+
+- Delete the **5 v2 content files** and the **3** `internal/dungeons/testdata/`
+  rooms; replace them with **one reference room** — the tomb with the merchant in
+  the front, two monsters in the second, the captain in the third.
+- Repoint or delete the tests that read the removed rooms (13 references in
+  `convert_test.go`, 9 each in `seed_test.go`/`registry_test.go`, 6 in a lobby
+  stack test, plus several `sessionworld` tests).
+- `SeedShipped` then seeds the reference room, so a fresh box seeds something
+  that compiles.
 
 **Depends on Step 1's tomb existing as v4** and on a toolkit tag carrying Steps
 1–3. This is the one place a pin genuinely gates work, so it is sequenced last.

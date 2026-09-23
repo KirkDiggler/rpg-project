@@ -1,116 +1,102 @@
-# "Single room" is a limit, not a name
+# "Single room" is a name for an implementation detail
 
-**Status:** FINDING 2026-09-24. Records a naming problem that turned out to be a
-real ceiling, so the rename is not the fix. Not a design; the design is what
-comes after the ruling.
+**Status:** FINDING 2026-09-24, CORRECTED the same day. This doc first claimed the
+name hid a **ceiling** — that the dialect's one region was a capability gap
+needing three rulings. **Kirk ruled there is no use case for regions and no need
+for them** (concealment now contains what it hides), and the correction is right:
+a capability nothing wants is not a gap. What survives is the naming point, on
+its own and much smaller.
 
 ## What Kirk said
 
 > "The whole wording around single room is a little disturbing too. We draw walls
 > and separate different areas and we have doors that can be opened."
 
-The instinct was right, and it is tracking more than wording. **"Single room" is
-accurate about the implementation today.** The name is the symptom; the ceiling
-is the thing.
+> "I didn't think we need regions where? At least we don't have a use case for it
+> yet. With our new concealment method where concealed contains everything that
+> it's hiding, I don't have a use case for regions."
 
-## The ceiling, in one line of code
+## What is actually true
 
-`single_room_compile.go` builds the whole field as **one region**:
+The dialect compiles **one region** (`single_room_compile.go`):
 
 ```go
-field := encounter.FieldInput{
-    Regions: []encounter.RegionInput{{
-        ID:        spec.Room.Gameplay.ImplicitRegionID,
-        Name:      spec.Room.Name,
-        Cells:     cells,
-        Archetype: "crypt",
-        Lighting:  &bright,
-    }},
-    ...
+Regions: []encounter.RegionInput{{
+    ID: spec.Room.Gameplay.ImplicitRegionID,
+    Name: spec.Room.Name,
+    Cells: cells,
+    Archetype: "crypt",
+    Lighting: &bright,
+}},
 ```
 
-Every part of that is fixed:
+And an author can already:
 
-- **One region**, from one `Cells` list — every walkable hex is in it.
-- **`ImplicitRegionID`** is a field on the spec (`RoomGameplaySource`), so the
-  document itself carries the assumption that there is exactly one.
-- **`Archetype: "crypt"`** and **`Lighting: bright`** are constants the author
-  cannot write.
+- **draw walls** — derived lines with footprints, crossings and sealing;
+- **place doors** — footprints with `open`/`closed` state;
+- **separate areas physically** — walls divide space, and that is what an author
+  means by "a different area".
 
-So the dialect supports:
+So "single room" is **not** describing a limitation an author hits. It is
+describing **the region count**, which is an implementation fact no author
+thinks in. Walls and doors are how areas are made, and they work.
 
-- **walls** — yes, as derived lines with footprints, crossings and sealing.
-- **doors** — yes, as footprints with state (`open`/`closed`), and a shut one
-  refuses a step by name.
-- **different areas** — **no.** There is one region, and a region is what the
-  engine means by an area ([ADR-0044](../../../../rpg-toolkit/docs/adr/0044-regions-replace-rooms.md),
-  "regions replace rooms").
+## Why the wording still reads wrong (the whole surviving finding)
 
-Walls and doors *subdivide space physically* without producing areas the engine
-knows about. That is why the wording reads wrong: an author drawing a corridor
-and three chambers has made four areas, and the document can only say "one".
+The name answers a question nobody asked, and it **understates the dialect**:
 
-## Why the name and the ceiling are the same finding
+- An author drawing a corridor and three chambers has made four areas, and the
+  document says "one room". It reads as a limit even though nothing is refused.
+- **The author-facing surface already says "room"** in the places an author
+  reads — `RoomGameplaySource`, `room.room`, `RoomMonsterBinding`,
+  `propDeclarations`. The *dialect identifier* is the odd one out.
+- It is a **migration artifact**: the name distinguished this dialect from v2's
+  three-room chain. With v2 being removed
+  ([`one-room-one-shape.md`](./one-room-one-shape.md)), the name distinguishes
+  nothing — there is no other dialect to be "single" against.
 
-They are not two problems. The name **"single room" describes the region count**,
-and the region count is what is capped. Renaming the dialect without raising the
-ceiling would make the code *less* honest — it would call itself general while
-still compiling one region, and the next reader would trust the name.
+**That last one is the real find.** The name is residual vocabulary from a
+comparison that is about to stop existing. When v2 goes, "single room" has no
+referent.
 
-**So the order is: decide whether the ceiling comes up, then name it for what it
-is.** Naming first is the mistake this doc exists to prevent.
+## What to do about it
 
-## What is actually blocked by the ceiling
+**Rename, and name it for what an author writes.** The candidates belong in the
+work, not here — but the constraint does not: the name must describe *a floor
+with walls and doors*, not a count of engine nouns. `room` is already the word
+the surface uses, so the honest options are variants of that.
 
-Not geometry — the author can already *draw* separate areas with walls. What is
-blocked is everything that keys off a region:
+**Sequencing: after v2 is removed.** Until then "single" means "not the v2
+chain", and the rename would lose that distinction mid-flight.
 
-| Wants | Needs |
-|---|---|
-| a name for each area ("the vault", "the hall") | more than one region |
-| per-area lighting | per-region `Lighting`, which exists in `RegionInput` but is one constant here |
-| per-area archetype | per-region `Archetype`, same |
-| "the party is in the front room" | `RegionAt`, which answers for one region today |
-| a monster bound to an area, not a cell | region membership |
+## What this doc got wrong, kept visible
 
-`RegionAt`, `MembersIn(region)` and `Region` all exist and are general
-(`region.go`, `field.go`) — **the composition is ready and the dialect is not.**
-That is the usual shape of this kind of gap: the lower layer has the primitive
-and the authored surface cannot express it.
+The first version of this doc turned the region count into a **ceiling** with
+three rulings attached — raise it, or name it, or drop `ImplicitRegionID`. That
+was over-design, and Kirk's correction is the cleaner read:
 
-## What this does not mean
+- **A use case brings the mechanism.** There is no use case for per-area
+  lighting, per-area archetype, or a monster bound to an area. Concealment,
+  built since, contains what it hides — so even hiding does not want a region.
+- **Regions are not what an author means by an area.** Walls are. So the missing
+  noun was never missing.
+- **I read a hardcoded constant as a gap.** `Archetype: "crypt"` and
+  `Lighting: bright` are constants because nothing has needed them to vary. That
+  is a value not yet paid for, which is the stated standard — not a defect.
 
-- **Not a bug.** Nothing is wrong; one region is a coherent slice, and the
-  engine honours it.
-- **Not urgent by itself.** Nothing in flight needs per-area lighting.
-- **Not the wall/door defect.** That is rpg-toolkit#1894 and is separate: a wall
-  along a cell edge seals nothing, so a member can stand in it. That is a
-  geometry defect *within* one region and does not depend on this.
+The lesson is the one this project already writes down: **a finding is not a
+ruling.** I found a real fact (one region, constants, an `ImplicitRegionID`) and
+promoted it to a decision the project owed, when the honest response was "noted,
+no use case, move on". The naming observation was the whole of the finding; the
+ceiling was invented around it.
 
-## What to rule on
+## Not this doc
 
-1. **Does the ceiling come up** — does the v4 dialect gain authored regions
-   (several `Cells` lists, each with its own name/archetype/lighting), or does it
-   stay one region and the walls-and-doors story remain purely physical?
-2. **If it stays one region, what is it called?** The name must describe what the
-   document *is* — a floor with walls and doors — and must not imply areas the
-   engine cannot see. Candidates belong in the design, not here; the point is
-   that the name follows the answer.
-3. **Does `ImplicitRegionID` survive at all?** If several regions arrive, it is a
-   migration artifact; if one region stays, it is honest.
-
-## Why this is worth deciding now rather than later
-
-It is the **same class** as the rest of this session's findings, and it is the
-third instance today:
-
-- `place[]` mixes two vocabularies on one object (v2, being removed).
-- `intimidate`/`persuade` are a social shape on a combatant.
-- **one region is a ceiling the name admits and the document cannot exceed.**
-
-Each is a shape that was right for its slice and is now load-bearing beyond it.
-The lens says to spend the pre-pre-alpha window fixing shape. This one is cheap
-to decide now — nothing depends on per-area lighting yet — and expensive once
-content is authored against a one-region assumption and then has to be split.
+- **The wall bug** — a wall along a cell edge seals nothing, so a member stands
+  in it and sees through. rpg-toolkit#1894. Separate, and real.
+- **The door half of it** — see rpg-toolkit#1894's thread: `Step` onto a shut
+  leaf IS refused for the geometry it was tested in, and the geometry it was not
+  tested in is unguarded.
+- **v2 removal** — [`v2-removal-plan.md`](./v2-removal-plan.md).
 
 — rpg-toolkit agent, on behalf of KirkDiggler
