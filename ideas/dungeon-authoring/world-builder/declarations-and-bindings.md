@@ -252,27 +252,11 @@ ruling.
 2. **Can a faction reference a table by name?** §3 writes `factions[].table`.
    Today a faction carries its table INLINE under `on:`. Whether the two
    spellings both survive, or the inline one dies, is not decided here.
-3. **`mind` — and it COLLIDES with this doc's own proposal.** What it means:
-   *the faction knows what its mind knows* (design R3). A **group** comes to
-   know a fact through one of its members, which matters because knowing drives
-   the intel and disposition machinery. `factions.go`'s `minds()` refuses three
-   things: an id that names no placement; a **prop** ("a mind is a monster in
-   the faction"); and a monster **in another faction** ("a mind is a monster in
-   its own faction"). Two defaults: a faction of one *is* its own mind
-   (`singletonMind` — you do not write it), and a faction of many that waits for
-   a fact and names no mind is refused ("name a mind, or the faction cannot
-   learn").
-
-   **THE COLLISION, stated because this doc created it.** §3 moves `faction`
-   onto the binding, which makes membership *mutable*. But `mind` is a
-   **permanent** field on the faction naming a creature whose membership is now
-   **changeable** — and rule 3 above says a mind must be *in its own faction*. So
-   re-binding `guard-1` to another side would leave the watch's `mind` pointing
-   at something the validator refuses. **Three ways out, none chosen here:**
-   (a) `mind` also moves to a binding; (b) `mind` stays declared and a re-bind
-   is refused while it is the mind; (c) membership is not as freely mutable as
-   §2 claims. This is the sharpest open question in the doc, and the reason §7's
-   rule of thumb is a rule of thumb and not a law.
+3. **`mind` — what it is, what it is working around, and why we are leaving it.**
+   Written up separately in §8, because the field turned out to be more
+   interesting than its name: **it is a workaround for the fact that a faction
+   cannot have a mind of its own.** It does not need moving anywhere, and §8
+   records the purpose and the reason to wait.
 4. **`actions` — VERIFIED, and the answer is no.** `inherited` carries exactly
    `on` and `temper` (`compile.go`), and `FactionSpec` has **no** `actions`
    field. So a faction does **not** supply arms: `ordersOf` reads `c.Actions`
@@ -300,5 +284,122 @@ And the test for whether the whole shape is right: **write the front room in it.
 Four goblins, one table, one faction, three of them plain. If that document is
 still readable, the shape is holding. If the control case got noisier, the rule
 is being paid for by the thing it was meant to serve.
+
+## 8. `faction.mind` — the purpose, and why it does not move
+
+Kirk, working it out:
+
+> "so then it would be like the leader? are we thinking the intel guard-1 has
+> flows through the faction? … mind is not a great name then especially that we
+> have a mind package. before we go moving anything around let's find the
+> purpose of it. I suspect we just need to be a little more honest with what it
+> is."
+
+### What it does today — measured
+
+**A faction knows what its mind knows** (design R3). The engine's own words
+(`field.go`):
+
+> "Mind is the member whose knowledge is the faction's — **the hub word spreads
+> through**."
+
+So a fact known by that one member becomes known by the whole side, and the
+`disposition` `until:` predicate reads *the faction's* knowledge. A faction with
+no mind **cannot learn**, which the doc calls "a consequence, not a loss": an
+`until:` naming a fact simply never fires for it.
+
+Three refusals (`factions.go`, `minds()`), each naming what is wrong:
+
+| written | refused with |
+|---|---|
+| an id no placement has | "no placement in this dungeon has that id" |
+| a **prop** | "a mind is a monster in the faction" |
+| a monster in **another** faction | "a mind is a monster in its own faction" |
+
+Two defaults do real work. **A faction of one *is* its own mind** — `singletonMind`,
+never written. And a faction of many that waits for a fact with no mind is
+refused: *"name a mind, or the faction cannot learn."*
+
+### It is NOT a leader — but it is implementing a leader's plumbing
+
+**Nothing flows through it but knowledge.** No orders, no authority, no
+cohesion. If "the captain whose knowledge becomes the group's" is the fiction
+you want, this is already the mechanism — what is missing is *authority*, and
+that is a different concern with no field today.
+
+So the honest sentence is: **`mind` is the faction's eyes, not its captain.**
+
+### What it is really working around
+
+**A faction cannot have a mind of its own.** `FactionInput` carries exactly two
+fields — an `ID` and a `Mind MemberID`. It has no knowledge store and no
+behaviour table. It is a *label* plus a *pointer to a member who does the
+knowing*.
+
+**And the architecture is already built for the alternative.** The `mind/`
+packages split an agent in two, and neither half knows a game:
+
+| package | owns | its own words |
+|---|---|---|
+| `mind/perception` | what an agent **KNOWS** — testimony, which may be false and stale | "what an observer holds" |
+| `mind/behavior` | what it **DOES** with that — tables, deeds, temperament | "the mind's POLICY primitive" |
+
+Neither says "creature": they say *observer* and *decider*. **A faction owning
+its own `perception` store and its own `behavior` table would be an agent on
+exactly the same two primitives a creature uses.**
+
+There is a tell that this was always the shape: the reserved `monsters` faction
+**"MAY be declared, which is how the unauthored monsters' side is given a
+mind"** (`field.go`). The *side itself* is being given a mind. Today it borrows
+one from a member. **The natural next step is that it does not need to borrow.**
+
+### Why it stays where it is, and nothing moves
+
+Kirk:
+
+> "I do not think we need a faction to have a mind to get started right? I think
+> when a use case arrives we can see it more clearly"
+
+**Agreed, and it is the project's own rule**: *a use case brings the mechanism;
+absent is a cost not yet paid, not a gap.* No room exists that needs a side to
+know something no member knows, and guessing the shape now would produce the
+kind of answer this whole doc exists to correct.
+
+**And it is safe to wait, because the workaround works.** A faction of many that
+must learn names a mind and gets the behaviour; a faction of one gets it free.
+The only thing missing is knowledge that routes through no member — and when
+that use case arrives it will arrive as **a room that cannot be authored**,
+which teaches far more than speculation would.
+
+**So: `mind` does not move to the bindings, and it is not renamed here.** One
+thing worth noting precisely, because it looks like the engine already
+disagreeing with §2 and does not: `field.go` says the mind is **"validated when
+that member ENTERS THE RUN rather than at construction, because the authored
+roster is not how monsters get in"** — the host spawns each one through
+`Encounter.Join`. `validateMemberFaction` (`disposition.go`) is therefore asked
+**at construction and at Join**, and refuses a member that is some faction's
+mind from joining another.
+
+**That is DEFERRAL, not mutability.** The check is not skipped, it is asked at
+the moment the member arrives. So the engine is not declaring the mind mutable —
+it is holding the same invariant at two doors. Whether a mind may *change* is
+still unanswered, and §8's point is that the question goes away if the faction
+gets its own mind.
+
+**When a use case arrives, the question to ask is not "where does `mind` go" but
+"does the faction get its own mind."** If it does, the field disappears rather
+than moving.
+
+### The name
+
+`mind` is a poor name for a *member reference*, and the collision is not only
+stylistic: `mind/perception` and `mind/behavior` are packages, and `play/intel`
+is the *store* of what `perception` describes. So one word covers a package
+family, a member pointer, and a store.
+
+**Renaming it is deliberately not done here**, because §8's finding is that the
+field may not survive its use case. Renaming a field we may delete is churn. If
+it does survive, `knowsThrough` or `witness` says what it is; `leader` would say
+something it does not yet do.
 
 — rpg-project agent, on behalf of KirkDiggler
