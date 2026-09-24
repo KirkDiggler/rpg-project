@@ -48,6 +48,7 @@ open `feat/1897-root-tables`.
 | **`cell` is never written back from a live position** | nothing assigns `.Cell` outside construction |
 | A faction declares `id`, `mind`, `on` (a table), `temper` — and **no `actions`** | `spec.go:364-389` |
 | **A faction does NOT supply arms.** `inherited` carries only `on` and `temper` | `compile.go` — `type inherited struct` |
+| **`mind` names a MONSTER in its OWN faction** — a prop, a stranger or a missing id are each refused by name | `factions.go` — `minds()`, three refusals |
 | A binding carries `on`, `temper`, `actions`, `holds`, `intimidate`, `persuade`, `arrives` | `single_room.go:256+` |
 | **A faction's table and a monster's table are ONE mechanism** | `compile.go:1131` — `encounter.Layer(tableOf(from.on[side]), tableOf(c.On))` |
 | A factioned monster with NO binding is real and load-bearing | `rpg-api/content/reference-front-room.yaml` — four goblins, one faction, three with no orders |
@@ -103,7 +104,9 @@ Four blocks, two kinds.
 ```yaml
 factions:
   - id: watch
-    mind: guard-1           # what the side knows through — one of its members
+    mind: guard-1           # the side KNOWS WHAT THIS MEMBER KNOWS — see §6.3,
+                            # which is where this field collides with §2: it is
+                            # permanent here but names a changeable membership
     temper: soldier         # a word, or a mix — dealt per member
     table: watch-drill      # PROPOSED. Today this is written inline under `on:`
 
@@ -249,13 +252,27 @@ ruling.
 2. **Can a faction reference a table by name?** §3 writes `factions[].table`.
    Today a faction carries its table INLINE under `on:`. Whether the two
    spellings both survive, or the inline one dies, is not decided here.
-3. **`mind` — and it is the interesting one.** VERIFIED: `FactionSpec.Mind` is a
-   reference to a **monster placement** ("MUST name a MONSTER placement in this
-   faction"), and the faction "knows what its mind knows". So a *declaration*
-   names another *declaration* — the one case in this shape where the reference
-   does not point at a shared, permanent noun but at a creature. That is not
-   obviously wrong (a side's memory living in one of its members is a real
-   thing), but it does not fit §2's rule cleanly, and §3 does not place it.
+3. **`mind` — and it COLLIDES with this doc's own proposal.** What it means:
+   *the faction knows what its mind knows* (design R3). A **group** comes to
+   know a fact through one of its members, which matters because knowing drives
+   the intel and disposition machinery. `factions.go`'s `minds()` refuses three
+   things: an id that names no placement; a **prop** ("a mind is a monster in
+   the faction"); and a monster **in another faction** ("a mind is a monster in
+   its own faction"). Two defaults: a faction of one *is* its own mind
+   (`singletonMind` — you do not write it), and a faction of many that waits for
+   a fact and names no mind is refused ("name a mind, or the faction cannot
+   learn").
+
+   **THE COLLISION, stated because this doc created it.** §3 moves `faction`
+   onto the binding, which makes membership *mutable*. But `mind` is a
+   **permanent** field on the faction naming a creature whose membership is now
+   **changeable** — and rule 3 above says a mind must be *in its own faction*. So
+   re-binding `guard-1` to another side would leave the watch's `mind` pointing
+   at something the validator refuses. **Three ways out, none chosen here:**
+   (a) `mind` also moves to a binding; (b) `mind` stays declared and a re-bind
+   is refused while it is the mind; (c) membership is not as freely mutable as
+   §2 claims. This is the sharpest open question in the doc, and the reason §7's
+   rule of thumb is a rule of thumb and not a law.
 4. **`actions` — VERIFIED, and the answer is no.** `inherited` carries exactly
    `on` and `temper` (`compile.go`), and `FactionSpec` has **no** `actions`
    field. So a faction does **not** supply arms: `ordersOf` reads `c.Actions`
