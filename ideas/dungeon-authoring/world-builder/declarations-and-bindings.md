@@ -8,9 +8,11 @@ belongs in, and renders the shape that follows. It is written to be *checkable*
 — every claim in §1 was re-run before it was written down, and §6 names what is
 still open rather than pretending the design is finished.
 
-**It is not a migration plan, and it is not a ruling.** Nothing here has been
-implemented. Two fields named below (`tables:` at the root, `table:` on a
-binding) are in an open PR; everything else is a proposal.
+**It is not a migration plan, and it is not a ruling on its own.** Two fields
+named below (`tables:` at the root, `table:` on a binding) are in an open PR.
+**§6 records Kirk's decisions of 2026-09-24** on five of the six questions this
+doc raised; where a question is settled it says so, and the residue is named
+per item rather than left to be re-litigated.
 
 ## 0. Where this came from, honestly
 
@@ -108,7 +110,8 @@ factions:
                             # which is where this field collides with §2: it is
                             # permanent here but names a changeable membership
     temper: soldier         # a word, or a mix — dealt per member
-    table: watch-drill      # PROPOSED. Today this is written inline under `on:`
+    table: watch-drill      # DECIDED (§6.2). Today inline under `on:`; the
+                            # by-name spelling is added.
 
 tables:
   watch-drill:              # a table written once, named by many
@@ -170,12 +173,13 @@ second is the one that matters:
 world-space and therefore valid under both hex orientations. The vocabulary
 already exists on props and in the builder.
 
-**A NOTE ON WHAT THIS DOC DOES NOT DECIDE.** Whether `startingCell` is spelled as
-a nested `{location, facing}` or as two sibling fields (`startingCell` +
-`facing`) is not settled here. The argument for nesting is Kirk's — a cell that
-has a location has a facing, so they are one noun. The argument against is that
-`facing` is optional and `location` is required, and nesting an optional field
-inside a required one is exactly the shape §4 is about. §6 carries this.
+**SETTLED (§6.1): the NESTED shape.** `location` is required, `facing` is
+optional, and they are one noun. Kirk: *"I liked your starting cell shape."*
+
+The argument that decided it is his own — **a hex with a location has an
+orientation**, so they are one thing and the nesting says so. The argument on the
+other side is worth keeping in view even though it lost: `facing` is optional
+inside a required noun, which is the exception §4 names rather than hides.
 
 ## 4. What a declaration requires, and the one exception
 
@@ -242,35 +246,96 @@ and lost: a block naming a faction is a binding doing its one job. The
 alternative — `faction` on the declaration — buys those three lines back and
 costs the ability to ever re-bind a side.
 
-## 6. What is open
+## 6. The decisions (2026-09-24), and what remains open
 
-Named rather than answered, so the next reader does not mistake this doc for a
-ruling.
+Kirk ruled on five of the six. **The decisions are decisions; the residue is
+named per item** so a settled question is not re-opened and an unsettled one is
+not mistaken for settled.
 
-1. **`startingCell` nesting.** One noun (`{location, facing}`) or two sibling
-   fields? §3 carries both arguments.
-2. **Can a faction reference a table by name?** §3 writes `factions[].table`.
-   Today a faction carries its table INLINE under `on:`. Whether the two
-   spellings both survive, or the inline one dies, is not decided here.
-3. **`mind` — what it is, what it is working around, and why we are leaving it.**
-   Written up separately in §8, because the field turned out to be more
-   interesting than its name: **it is a workaround for the fact that a faction
-   cannot have a mind of its own.** It does not need moving anywhere, and §8
-   records the purpose and the reason to wait.
-4. **`actions` — VERIFIED, and the answer is no.** `inherited` carries exactly
-   `on` and `temper` (`compile.go`), and `FactionSpec` has **no** `actions`
-   field. So a faction does **not** supply arms: `ordersOf` reads `c.Actions`
-   from the creature alone. "The faction's weapons, overridden per monster" is
-   **not implemented**, and whether a side should own its own armoury is a real
-   question this doc leaves open. It also means §3's `factions[].table` spelling
-   is the *only* thing a faction currently shares by name.
-5. **The `intimidate`/`persuade` removal.** Kirk has ruled they come off the
-   builder. They are live fields on `RoomMonsterBinding` in v4 (**correcting an
-   earlier claim that they were v2-only** — they are declared at
-   `single_room.go:296+` and validated in `single_room_site.go`). Removing them
-   from the builder stops it authoring something the engine still reads.
-6. **Whether any of this is implemented at all.** This is a design doc. The
-   renames and the `faction` move are proposals.
+### 6.1 `startingCell` — SETTLED: the nested shape
+
+```yaml
+startingCell: { location: { q: 2, r: 0 }, facing: ne }
+```
+
+Kirk: *"I liked your starting cell shape."* So `location` is required, `facing`
+is optional, and they are **one noun** — a hex with a location has an
+orientation, and the nesting says so.
+
+### 6.2 `factions[].table` — SETTLED: added
+
+Kirk: *"i think we add table to faction."* A faction may name a root table. A
+faction's table and a monster's table are one mechanism (§1), so naming both the
+same way is the shape the rule points at.
+
+**Residue:** whether a faction keeps its INLINE `on:` spelling beside the new
+by-name one. Not answered, and not urgent — the inline spelling is what every
+existing document uses.
+
+### 6.3 `mind` — SETTLED: it stays, and it learns from another member
+
+Kirk: *"ok with leaving mind a faction that can have the mind updated can learn
+from another member of the faction… for now getting what a member knows is
+enough. we will want to update that field to another member possibly but can
+leave it for now."*
+
+**This is a capability, not a rename.** Today the mind is validated at `Join`
+and a member that is a mind **cannot join another faction** (`validateMemberFaction`).
+So the field reads as **fixed once set**. Kirk's answer states the want:
+**a faction's mind may be UPDATED to another member**, and the faction then
+learns from that one.
+
+**That settles §2's classification of the field, and against its current home.**
+If the mind can change, it is a binding-shaped fact by §2's own rule — it is a
+reference, and it is mutable. It does **not** need to move today, but the reason
+is *"we are not building it yet"*, **not** *"it is permanent."* §8 records why
+moving it now would be churn.
+
+**And it strengthens §8's finding rather than weakening it.** "The mind can be
+updated" is a step toward a faction that manages its own knowledge. Faction-level
+perception is the further step, and Kirk deferred it: *"will be tricky keeping it
+coherent and feeding it intel so when we have a use case we can circle back."*
+
+### 6.4 `actions` — SETTLED: monster overrides, imperfect, to be improved
+
+Kirk: *"actions are monster overrides and will need improving. for now they allow
+us to add ranged or melee to simple monsters."*
+
+So `actions` stays on the **binding** — it is an override, which is exactly what
+a binding is for. **The measured gap is real and now stated as known debt:** a
+faction does **not** supply arms (`inherited` carries only `on` and `temper`;
+`FactionSpec` has no `actions` field), so today the list is a way to give a plain
+monster a melee or ranged option, not a real equipment layer. Improving it is
+future work, not this doc's.
+
+### 6.5 `intimidate`/`persuade` — SETTLED: remove, and defer
+
+Kirk: *"remove intimidate and persuade. they will come back when we have the use
+case but monsters that are hostile cannot have them and they should come from
+interacting with an npc so remove and deferred."*
+
+**Remove them from the builder, and record the reason rather than the fact.** The
+reason is the useful part: these come from **interacting with an NPC**, and a
+**hostile** monster cannot have them — so their presence on every monster binding
+was wrong, not merely unused.
+
+They are live v4 fields on `RoomMonsterBinding` (**correcting an earlier claim
+that they were v2-only** — declared at `single_room.go:296+`, validated in
+`single_room_site.go`). Removing them from the builder stops it authoring
+something the engine still reads; the engine side is deferred with the use case.
+
+### 6.6 The builder YAML — SETTLED: clean it up
+
+Kirk: *"I am ready to cleanup our world builder yaml."* That is the work, and it
+is where the other five decisions land.
+
+**What remains genuinely open**, and nowhere else in this doc:
+
+- a faction's inline `on:` versus the new `table:` name (§6.2 residue)
+- whether `mind` moves to a binding when the update capability is built (§6.3 —
+  §2 says it is binding-shaped; today it stays put)
+- whether any of §3's renames (`monsters` → `monsterDeclarations`) are
+  implemented, and when
 
 ## 7. The rule of thumb, for the next field
 
