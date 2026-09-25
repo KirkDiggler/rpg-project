@@ -38,6 +38,11 @@ A design doc carries four sections and nothing else:
 4. **Open** — the unsettled questions, named per item, so a settled question
    is not re-opened and an unsettled one is not mistaken for settled.
 
+An idea's working documents — brainstorming notes, use-cases, plans — take
+whatever shape the idea needs; the design doc is where an idea graduates
+into law, and the graduation is declared: a law doc carries a `## Rulings`
+section, which is what the genre check keys on.
+
 Everything else is the **case file**: the transcript, the approaches that
 lost, the evidence table pinned to a commit, the corrections. It lives in the
 issue or the PR, one hop from the doc — visible for the archaeology, absent
