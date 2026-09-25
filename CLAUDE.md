@@ -44,6 +44,11 @@ observer can be wrong about must be snapshotted per observer rather than read li
 because a live read can only ever be true, and a game with no way to lie can never
 have illusion in it.
 
+The living contracts behind the exemplars named here — `play/*`, the `session`,
+`resolution` and `encounter` seams — live in `rpg-toolkit/CLAUDE.md` and its own
+docs. This file keeps the principle; the mechanism lives with the code that
+implements it.
+
 
 
 ## Mistakes are not the problem
@@ -68,25 +73,23 @@ a mechanism.** The response is to find what let it through, and change that.
   clear enough to be load-bearing. Correcting only the instance leaves the cause
   in place, armed.
 - **Leave the correction visible.** A record showing what was believed, and why it
-  changed, is worth more than one showing only the conclusion — the reasoning is
-  what stops the next person walking the same path.
+  changed, is worth more than one showing only the conclusion. But the record is
+  the **case file** — the PR thread, the issue, a doc under `docs/case-files/` —
+  one hop from the law, where the reasoning teaches without occupying every
+  future session's context.
 - **A repeat is the real defect.** A second occurrence is evidence the first fix
   addressed the symptom.
 
-The worked example this was written from: an area spell's target derivation was
-designed into `session` for two drafts. The seam doc already said *"geometry,
-placement → `encounter`"*, but the work did not read as *geometry* from inside —
-it read as *deriving a target set* — and the predicate/producer rule beside it is
-a **mechanism** test that a `session`-side fold passes cleanly. The rule licensed
-the error rather than catching it. The fix was not "remember that placement is
-encounter's"; it was to add an **ownership test** ahead of the mechanism test in
-all three seam docs, so the wrong answer now looks wrong on the page.
+The worked example that named the **ownership test** — an area spell's target
+derivation living in `session` for two drafts, licensed by a mechanism test the
+wrong answer passed cleanly — is kept as a case file:
+`docs/case-files/2026-09-area-spell-placement.md`. The doctrine above is the
+law; the case file is the reasoning, one hop away.
 
-This is also why the shape is worth getting right while the system is small. Today
-a misplaced responsibility is visible in an afternoon. That will not last, and the
-same mistake in a system three times this size is not caught by being careful — it
-is caught by the seams and the rules being clear enough that the wrong answer
-cannot look reasonable.
+And the shape is worth getting right while the system is small: the same
+mistake in a system three times this size is not caught by being careful — it
+is caught by the seams being clear enough that the wrong answer cannot look
+reasonable.
 
 ## What the foundation is
 
@@ -155,6 +158,9 @@ working. The mistake is three versions *of one thing*.
 
 ## Getting to work
 
+One focus per session, stated out loud — *working on X, done means Y* — and
+only what serves it gets loaded.
+
 1. **Project 19** — https://github.com/users/KirkDiggler/projects/19 — is the
    shared state. Boards #11–#13 are historical records, not work sources.
 2. Read the Team lens for the assigned work in `docs/teams/roles/`.
@@ -178,7 +184,9 @@ working. The mistake is three versions *of one thing*.
 
 Cross-repo designs live here in `ideas/<topic>/design.md`, reviewed as an
 rpg-project PR before implementation, and that PR stays open as the tracking
-surface until the implementing repos have landed.
+surface until the implementing repos have landed. The design skill
+(`.agents/skills/design/SKILL.md`) governs the conversation and the doc's
+shape.
 
 ## When you hit a gap
 
@@ -206,4 +214,6 @@ inconvenient — no more.
 | Extended glossary | `docs/vocabulary.md` |
 | What each layer knows and doesn't | `docs/boundaries.md` |
 | Running the game locally | `docs/howto/` |
+| Designing anything | `.agents/skills/design/SKILL.md` |
+| The independent review round | `.agents/skills/pr-review/SKILL.md` |
 | Cutting a release (`dev` -> `main`) | `game-dev/scripts/release.sh` |
