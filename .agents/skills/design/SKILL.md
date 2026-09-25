@@ -45,6 +45,10 @@ from every future session's context. Everything a loaded doc carries is
 co-equal input; law and case file compete for the same salience, and the case
 file loses on purpose. Evidence obeys the same rule: the invariant is stated
 in the doc; `file:line @ commit` rides with the ruling that established it.
+The tell is greppable and the check makes it a mechanism: run
+`game-dev/scripts/check-doc-genres.sh` before publishing the design PR — a
+finding is the smell of case file in law, exempt only by the operator's
+inline `<!-- case-file -->` ruling.
 
 ## The gate
 

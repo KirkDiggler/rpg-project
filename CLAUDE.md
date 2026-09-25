@@ -204,6 +204,12 @@ measurement stay permanent in git, one hop away. A doc every session loads carri
 the instruction and as much of the spirit as the rule will need when it is
 inconvenient — no more.
 
+**The tell is greppable, so the rule is a mechanism.** Case-file material in a
+loaded doc smells: past-tense decision narration, attributed quotes, commit
+pins. Name the hazard in the present tense instead, and check the prose before
+publishing: `game-dev/scripts/check-doc-genres.sh`. A line the operator rules
+case-file carries `<!-- case-file -->` inline and is skipped.
+
 ## Pointers
 
 | For | Read |
