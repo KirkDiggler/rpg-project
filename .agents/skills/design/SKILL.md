@@ -38,6 +38,11 @@ A design doc carries four sections and nothing else:
 4. **Open** — the unsettled questions, named per item, so a settled question
    is not re-opened and an unsettled one is not mistaken for settled.
 
+An idea's working documents — brainstorming notes, use-cases, plans — take
+whatever shape the idea needs; the design doc is where an idea graduates
+into law, and the graduation is declared: a law doc carries a `## Rulings`
+section, which is what the genre check keys on.
+
 Everything else is the **case file**: the transcript, the approaches that
 lost, the evidence table pinned to a commit, the corrections. It lives in the
 issue or the PR, one hop from the doc — visible for the archaeology, absent
@@ -45,6 +50,10 @@ from every future session's context. Everything a loaded doc carries is
 co-equal input; law and case file compete for the same salience, and the case
 file loses on purpose. Evidence obeys the same rule: the invariant is stated
 in the doc; `file:line @ commit` rides with the ruling that established it.
+The tell is greppable and the check makes it a mechanism: run
+`game-dev/scripts/check-doc-genres.sh` before publishing the design PR — a
+finding is the smell of case file in law, exempt only by the operator's
+inline `<!-- case-file -->` ruling.
 
 ## The gate
 
