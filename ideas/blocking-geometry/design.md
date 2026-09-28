@@ -22,6 +22,8 @@ the visible mesh bounds. Existing movement and LOS settings remain available.
 **Blocking geometry** declares a solid barrier whose effective restrictions
 include movement, sight and physical attack paths. It is a property of authored
 geometry, not a wall asset category, and requires no height in this 2D model.
+This version uses asset-owned footprints only. The authored box follows its
+asset's existing placement transform; its dimensions remain author-controlled.
 
 The declaration belongs to dungeon gameplay content. The compiler converts the
 document coordinate frame into the canonical spatial plane once. Encounter
@@ -37,9 +39,8 @@ under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/is
 ## Law
 
 - **R1 — Explicit geometry.** The author controls the blocking footprint;
-  visible mesh bounds do not determine its effective extent. A truly
-  independent blocker does not move when an unrelated asset moves. The
-  ownership and placement representation is subject to R11.
+  visible mesh bounds do not determine its effective extent. This version
+  uses the existing asset-owned placement and transform under R17.
 - **R2 — Independent declarations.** Movement and LOS can be declared
   separately for ordinary footprints. Appearance implies neither answer.
 - **R3 — Continuous obstruction.** Sight respects the authored rectangle
@@ -53,7 +54,7 @@ under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/is
   sizes the footprint to cover the centers of doorway cells that must be
   unavailable while closed.
 - **R6 — Contributor composition.** Opening a door does not disable an
-  independent overlapping blocker. Any active contributor can obstruct a
+  overlapping footprint belonging to another asset. Any active contributor can obstruct a
   query; removing one does not subtract the others. Static wall footprints
   leave the intended opening clear when passage through an open door is wanted.
 - **R8 — Standing and crossing.** Creatures stand at hex centers. An active
@@ -81,6 +82,18 @@ under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/is
   respect their exact authored geometry without requiring the new blocking
   geometry setting. A valid view around a prop does not relocate the observer
   through it. The new setting is not a prerequisite for fixing a sight leak.
+- **R17 — Asset-owned scope.** Blocking geometry is authored on assets using
+  their existing footprints. Asset-free blockers and a separate placement
+  store are outside this version.
+- **R18 — Geometric access.** Access to one unblocked portion of a hex does
+  not establish access to a creature across an intervening footprint. Sight
+  and physical attacks evaluate their actual geometric paths to the target,
+  not only target-cell membership or adjacency. Creatures remain centered;
+  no relocation within their hex is implied.
+- **R19 — Overlapping authoring.** Authors can overlap boxes to form a
+  continuous barrier. The overlapping union remains blocked. Wall-adjacent
+  standing can be excluded through authored footprint extent or the walkable
+  set without introducing a new partial-cell standing model.
 - Authoring reuses the existing footprint controls, outlines and blocking
   declarations. A new drawing tool or overlay is not part of this contract.
   Save, reopen, compile and reload preserve the authored meaning.
@@ -96,12 +109,12 @@ PR before dependent implementation. The PR remains the tracking surface.
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
-| R1 | settled | explicit authored geometry; independent identity intent, representation under R11 | KirkDiggler | 2026-09-28 |
+| R1 | settled | explicit authored geometry; asset-owned scope under R17 | KirkDiggler | 2026-09-28 |
 | R2 | settled | independent movement and LOS declarations | KirkDiggler | 2026-09-28 |
 | R3 | settled | continuous obstruction and no sight-origin jump through geometry | KirkDiggler | 2026-09-28 |
 | R4 | settled | partial-hex visibility intent; mechanism under R10 | KirkDiggler | 2026-09-28 |
 | R5 | settled | authored closed-door footprint and open-state removal | KirkDiggler | 2026-09-28 |
-| R6 | settled | door state does not remove independent blockers | KirkDiggler | 2026-09-28 |
+| R6 | settled | door state does not remove other assets' blocking contributions | KirkDiggler | 2026-09-28 |
 | R7 | deferred-until-open-door-footprint-design | distinct geometry for an open leaf or smaller opening | KirkDiggler | 2026-09-28 |
 | R8 | settled | hex-center standing and continuous crossing | KirkDiggler | 2026-09-28 |
 | R9 | settled | explicit clearance without inferred door cells | KirkDiggler | 2026-09-28 |
@@ -112,6 +125,9 @@ PR before dependent implementation. The PR remains the tracking surface.
 | R14 | superseded | separate wall-specific seal distinction; replaced by R15 and R16 | KirkDiggler | 2026-09-28 |
 | R15 | settled | blocking geometry intent as a superset including physical attacks; representation under R11 | KirkDiggler | 2026-09-28 |
 | R16 | settled | correct existing LOS independently of the new setting | KirkDiggler | 2026-09-28 |
+| R17 | settled | asset-owned footprints only in this version | KirkDiggler | 2026-09-28 |
+| R18 | settled | geometric target access rather than whole-hex permission | KirkDiggler | 2026-09-28 |
+| R19 | settled | overlapping boxes and explicit exclusion of wall-adjacent standing | KirkDiggler | 2026-09-28 |
 
 ## Open
 
@@ -119,20 +135,19 @@ PR before dependent implementation. The PR remains the tracking surface.
   and how obstruction between the endpoint and alternate origin is tested in
   both directions. Preserve legitimate views around ordinary props. Confirm
   the reported leak against compiled geometry before selecting the algorithm.
-- **R10: contact semantics.** Specify tangency, corner contact, shared edges
-  and numerical tolerance for sight and physical attacks. Abutting barriers
-  cannot admit a sightline through their shared seam. Standing and movement
-  retain the contact/interior distinction in R8.
+- **R10: contact semantics.** Specify tangency, corner contact and numerical
+  tolerance for sight and physical attacks. Overlapping boxes must form a
+  continuous barrier; exact edge-to-edge snapping is not an authoring
+  prerequisite. Standing and movement retain R8's contact/interior distinction.
 - **R10: partial visibility output.** Specify observer origins, existing
   range and light composition, and the authority-to-renderer result for
   partial cells. Reuse existing creature sight and memory. Determine whether
   continuous terrain visibility requires a new projection, persistence or
   protocol surface; an atlas cell list alone does not express a clipped region.
 - **R11: declaration and ownership.** Propose the exact field spelling and
-  canonical type. Reconcile the existing owner-local prop footprint with the
-  independent-blocker intent, without inventing a new authoring tool or
-  copying one rectangle into multiple authoritative stores. Decide whether
-  asset-free placements are needed in the first implementation.
+  canonical type on the existing asset-owned footprint declaration. Reuse
+  its transform and coordinate conversion without copying the rectangle into
+  multiple authoritative stores. Asset-free ownership is outside this version.
 - **R11: effective flags.** Specify validation, absent-field behavior, and
   what disabling blocking geometry does to the ordinary movement/LOS flags.
   Preserve existing authored declarations and make implied restrictions clear.
