@@ -45,7 +45,7 @@
     {
       "id": "active-005",
       "summary": "Upcoming: Position int32 migration",
-      "details": "Per rpg-project/ideas/coordinate-types/design.md, api.v1alpha1.Position will move from double X/Y/Z to int32 X/Y/Z. Cube coordinate invariant (X+Y+Z=0) is integer; the current double signature is the root cause of int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change. Must follow the rpg-api types landing first (per design.md). Likely a v1alpha2 package bump rather than in-place rename.",
+      "details": "Per rpg-project/ideas/battlemap/coordinate-types/design.md, api.v1alpha1.Position will move from double X/Y/Z to int32 X/Y/Z. Cube coordinate invariant (X+Y+Z=0) is integer; the current double signature is the root cause of int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change. Must follow the rpg-api types landing first (per design.md). Likely a v1alpha2 package bump rather than in-place rename.",
       "added": "2026-05-02",
       "status": "design-complete-blocked-on-rpg-api"
     }

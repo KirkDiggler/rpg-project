@@ -1,7 +1,7 @@
 # Dungeon Walls: straight modular walls at the room envelope
 
 **Status:** design for review
-**Parent:** rpg-project#132 (Dungeon visual fidelity umbrella) · relates to `ideas/dungeon-authoring/` (PR #121) · supersedes the render layer of rpg-toolkit#848 (whose findings report is this design's data reference)
+**Parent:** rpg-project#132 (Dungeon visual fidelity umbrella) · relates to `ideas/battlemap/dungeon-authoring/` (PR #121) · supersedes the render layer of rpg-toolkit#848 (whose findings report is this design's data reference)
 
 ## Problem
 

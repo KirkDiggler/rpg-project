@@ -8,7 +8,7 @@
 
 **Tech Stack:** Blender Python, Python 3 stdlib/unittest, glTF/GLB, SHA-256, React 19, TypeScript, React Three Fiber, drei, Three.js, Vitest, Testing Library, GitHub Project 19.
 
-**Spec:** `ideas/dungeon-builder/crypt-shell.md`
+**Spec:** `ideas/battlemap/dungeon-builder/crypt-shell.md`
 
 ## Global Constraints
 
@@ -1139,9 +1139,9 @@ Agents do not merge. After Kirk merges, verify merge tree equals reviewed head o
 ### Task 12: Record the Landed Wave and Keep Lighting Active
 
 **Files:**
-- Modify: `rpg-project/ideas/dungeon-builder/crypt-shell.md`
-- Modify: `rpg-project/ideas/dungeon-builder/crypt-shell-plan.md`
-- Create: `rpg-project/ideas/dungeon-builder/evidence/crypt-shell/README.md`
+- Modify: `rpg-project/ideas/battlemap/dungeon-builder/crypt-shell.md`
+- Modify: `rpg-project/ideas/battlemap/dungeon-builder/crypt-shell-plan.md`
+- Create: `rpg-project/ideas/battlemap/dungeon-builder/evidence/crypt-shell/README.md`
 - Copy only accepted public-safe final builder/game PNGs into the project evidence folder.
 
 **Interfaces:**
@@ -1156,9 +1156,9 @@ Record exact provider/web issue+PR links, reviewed heads, merge SHAs/trees, mani
 
 ```bash
 ! git ls-files | grep -E '\.(glb|blend)$|shell-profiles\.json$'
-sha256sum ideas/dungeon-builder/evidence/crypt-shell/*.png
+sha256sum ideas/battlemap/dungeon-builder/evidence/crypt-shell/*.png
 git diff --check
-rg -n 'TBD|TODO|FIXME|<approved|<exact|<selected|<number|<filename|<diffuse|<named' ideas/dungeon-builder/crypt-shell*.md && exit 1 || true
+rg -n 'TBD|TODO|FIXME|<approved|<exact|<selected|<number|<filename|<diffuse|<named' ideas/battlemap/dungeon-builder/crypt-shell*.md && exit 1 || true
 ```
 
 Expected: no licensed/provider runtime files tracked; no placeholders; exact accepted hashes.
@@ -1166,9 +1166,9 @@ Expected: no licensed/provider runtime files tracked; no placeholders; exact acc
 - [ ] **Step 3: Commit and push the project record**
 
 ```bash
-git add ideas/dungeon-builder/crypt-shell.md \
-  ideas/dungeon-builder/crypt-shell-plan.md \
-  ideas/dungeon-builder/evidence/crypt-shell
+git add ideas/battlemap/dungeon-builder/crypt-shell.md \
+  ideas/battlemap/dungeon-builder/crypt-shell-plan.md \
+  ideas/battlemap/dungeon-builder/evidence/crypt-shell
 git commit -m 'docs(dungeon-builder): record crypt shell landing (#284)'
 git push
 ```

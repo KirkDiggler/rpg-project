@@ -7,7 +7,7 @@
 1. **The board already knows the next step.** Journey rpg-project#169 (Composable Dungeon Builder, In Progress, Kirk) names **rpg-api#806** — rebuild `PutDungeon` + `ListDungeons` on the session stack, honour `dungeon_key`, unblock the picker (#131) and Save & Play. Nothing has started.
 2. **#806's premise is false.** It says "the web's `/author` already emits v0.4 YAML; this is the server that receives it." There are **two dialects both called v0.4** and they are different languages. #806 is a dialect decision first, a server rebuild second.
 3. **Recommendation:** grow the new `rulebooks/dnd5e/encounter/dungeonspec` toward spec v0.4's authoring vocabulary and re-cut the spec against the session **atlas** (not the dead `FloorPlan`). Then the builder's preview can feed the game's own `buildScene3D`, making "what you author is what you play" structural.
-4. **Process:** one design doc in `rpg-project/ideas/dungeon-builder/` written from the panel back → Kirk rules once → protos first → toolkit / rpg-api / web in parallel → one walk → bottom-up merge.
+4. **Process:** one design doc in `rpg-project/ideas/battlemap/dungeon-builder/` written from the panel back → Kirk rules once → protos first → toolkit / rpg-api / web in parallel → one walk → bottom-up merge.
 
 ---
 
@@ -174,7 +174,7 @@ Gap: `Compiled.Field` is a `FieldInput`, but `session.StartSession` wants `*Enco
 
 | | **Spec v0.4** (the builder's dialect) | **`rulebooks/.../dungeonspec`** (what the new stack runs) |
 |---|---|---|
-| Spec | `rpg-project/ideas/dungeon-builder/spec/v0.4/spec.md` (536 lines, branch `origin/spec/v0.4-proposal`, PR #203) | none — `spec.go` godoc is the spec |
+| Spec | `rpg-project/ideas/battlemap/dungeon-builder/spec/v0.4/spec.md` (536 lines, branch `origin/spec/v0.4-proposal`, PR #203) | none — `spec.go` godoc is the spec |
 | Compiler | OLD `rpg-toolkit/encounter/dungeonspec` (`encounter/v0.54.0`, zero consumers) | NEW `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec` (born 2026-08-20) |
 | Topology | `canvas {width,height,floor_source: bounds\|regions}` + painted `regions[].cells` | room chain, one row west→east, hex only |
 | Walls | authored `walls[]` (+ client-only `wallLines`); implicit envelope at floor/void boundary | seam walls **generated**; no wall grammar |
@@ -204,7 +204,7 @@ The v0.3 README (`:21-26`) declared skew permanent: "the builder authors spec vN
 5. **`GetDungeon`** — reopen is in #169's Done-when and no RPC exists for it.
 6. **The dialect ruling** (§4).
 7. **`Compiled.Field` (`FieldInput`) → `EncounterData` bridge** — toolkit#1139; retires rpg-api's throwaway encounter.
-8. **A lighting ruling** — emergent ("placing braziers IS authoring the light pools", `ideas/dungeon-authoring/design.md:262`) vs authored render-only `lighting.ambient` (v0.4 tranche D). Toolkit reserved the slot (`void.go:66-70`, #1113) and built nothing; nothing about light is on any wire.
+8. **A lighting ruling** — emergent ("placing braziers IS authoring the light pools", `ideas/battlemap/dungeon-authoring/design.md:262`) vs authored render-only `lighting.ambient` (v0.4 tranche D). Toolkit reserved the slot (`void.go:66-70`, #1113) and built nothing; nothing about light is on any wire.
 9. **Coordinate-frame unification in the client** — odd-q builder, odd-r wall runs, axial wire.
 10. **Square grids / 2-D layout** — one-file compiler changes if wanted.
 
@@ -233,7 +233,7 @@ Pure, combat-free, takes a structural `Pick<>` — the builder can hand it a syn
 
 ## 6. Proposed next steps (per how-we-build)
 
-1. **Design doc, panel-back** — `rpg-project/ideas/dungeon-builder/design.md` (rewrite): what the builder shows → the YAML it writes → the atlas the stack serves → what `dungeonspec` must grow. One slice under #169; Kirk rules once. Subsumes #806 and settles the dialect + lighting questions on the record.
+1. **Design doc, panel-back** — `rpg-project/ideas/battlemap/dungeon-builder/design.md` (rewrite): what the builder shows → the YAML it writes → the atlas the stack serves → what `dungeonspec` must grow. One slice under #169; Kirk rules once. Subsumes #806 and settles the dialect + lighting questions on the record.
 2. **Protos first** — retire `authoring.v1alpha1`'s `FloorPlan`; `PutDungeon` returns an atlas-shaped preview; add `GetDungeon`. `ListDungeons` / `dungeon_key` shapes stay.
 3. **Parallel builds** — toolkit: dungeonspec growth + #1139 · rpg-api: content source, registry, `dungeon_key`, `ListDungeons`, `GetDungeon` · web: `/author` retargeted to the session atlas, preview via `buildScene3D`.
 4. **Board hygiene first** — add #806 / toolkit#1139 / rpg-api#803 to Project 19 as sub-issues of #169; close rpg-api#782/#794, web#748/#742, rpg-api#749/#751; fix #169's stale "game route" line; move web#662/#666 out of In Review.
@@ -261,5 +261,5 @@ Pure, combat-free, takes a structural `Pick<>` — the builder can hand it a syn
 | Stale authoring contract | `rpg-api-protos/dnd5e/api/authoring/v1alpha1/service.proto` |
 | Client scene seam | `rpg-dnd5e-web/src/components/session/atlasToScene3D.ts:64-80` |
 | Existing builder | `rpg-dnd5e-web/src/author/` (+ `CONTRACT.md`, `TARGET-YAML.md`) |
-| Ratified spec v0.4 | `rpg-project/ideas/dungeon-builder/spec/v0.4/` on branch `spec/v0.4-proposal` |
+| Ratified spec v0.4 | `rpg-project/ideas/battlemap/dungeon-builder/spec/v0.4/` on branch `spec/v0.4-proposal` |
 | Decisions digest | `rpg-toolkit/docs/adr/DECISIONS.md` |

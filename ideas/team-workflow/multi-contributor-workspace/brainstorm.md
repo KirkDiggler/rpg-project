@@ -219,7 +219,7 @@ ideas/
 Examples include:
 
 - `ideas/character-progression/level-up-screen/`;
-- `ideas/dungeon-authoring/composable-builder/`;
+- `ideas/battlemap/dungeon-authoring/composable-builder/`;
 - `ideas/team-workflow/project-19-journeys/`; and
 - `ideas/team-workflow/multi-contributor-workspace/`.
 

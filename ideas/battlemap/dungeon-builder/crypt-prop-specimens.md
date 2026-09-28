@@ -373,7 +373,7 @@ provider and consumer evidence earn the disposition.
 - Shared renderer rule: `DUNGEON_SURFACE_Y = 0.2` lifts the Synty floor and all
   props uniformly in builder and game; no specimen-specific repair remained.
 - Public landed evidence lives at
-  `ideas/dungeon-builder/evidence/crypt-prop-specimens/README.md`, with
+  `ideas/battlemap/dungeon-builder/evidence/crypt-prop-specimens/README.md`, with
   `final-builder.png`
   `29f965fa4d38440a62d0250763d8e773aaa2f3278247fd04f7e39af1c59efb59` and
   `final-game.png`

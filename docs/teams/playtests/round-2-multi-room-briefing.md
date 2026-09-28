@@ -19,7 +19,7 @@ All PRs merged to main across all repos. See `docs/teams/playtests/round-1-monk-
 
 **"Player clears room 1, walks through door, enters room 2 with new encounter"**
 
-This is the multi-room dungeon experience. The design exists at `ideas/multi-room-dungeons/design.md` with a 5-phase plan. The critical blocker is **Phase 1 (API)** — room origin coordinates aren't being threaded through to the client.
+This is the multi-room dungeon experience. The design exists at `ideas/battlemap/multi-room-dungeons/design.md` with a 5-phase plan. The critical blocker is **Phase 1 (API)** — room origin coordinates aren't being threaded through to the client.
 
 ## Current State by Layer
 
@@ -33,7 +33,7 @@ This is the multi-room dungeon experience. The design exists at `ideas/multi-roo
 - `convertRoomDataToProto()` doesn't set `Origin` field
 - `OpenDoor()` returns `RoomOffset: nil` with TODO
 - Room positions not stored on dungeon entity
-- Existing design: `ideas/multi-room-dungeons/design.md` Phase 1
+- Existing design: `ideas/battlemap/multi-room-dungeons/design.md` Phase 1
 - Key issues: #426 (plan), #397, #393, #399, #407
 
 ### Web (BLOCKED on API)
@@ -63,8 +63,8 @@ This is the multi-room dungeon experience. The design exists at `ideas/multi-roo
 - Phased approach (learned from PR #400 being too large)
 
 ## Files to Read
-- `rpg-project/ideas/multi-room-dungeons/design.md` — Full architecture
-- `rpg-project/ideas/multi-room-dungeons/CLAUDE.md` — Scope and key files
+- `rpg-project/ideas/battlemap/multi-room-dungeons/design.md` — Full architecture
+- `rpg-project/ideas/battlemap/multi-room-dungeons/CLAUDE.md` — Scope and key files
 - `rpg-project/docs/teams/roles/` — Team role prompts with context directories
 - `rpg-project/ideas/scenario-rounds/design.md` — How rounds work
 

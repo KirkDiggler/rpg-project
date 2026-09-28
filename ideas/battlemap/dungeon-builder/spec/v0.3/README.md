@@ -241,7 +241,7 @@ rather than resolved silently.
    rectangles for regions; `extent:` may return in a future spec level as authoring
    *sugar* that expands to `cells:` at parse time, but never as the storage/acceptance
    grammar. `spec.md` §4.10.1 states this as a bare rule. **Named debt, not fixed in
-   this PR**: `ideas/dungeon-builder/design.md:5` and `ideas/dungeon-builder/plan.md:7`,
+   this PR**: `ideas/battlemap/dungeon-builder/design.md:5` and `ideas/battlemap/dungeon-builder/plan.md:7`,
    both on `main` today, still open by pointing to that same superseded comment as
    "the target grammar and acceptance authority" — an implementer starting from
    `plan.md` (the merged wave doc, where they will start) follows that line straight
@@ -257,7 +257,7 @@ rather than resolved silently.
    exception, and its "Open questions" section does not mention nesting at all. This
    reflects the client's *current* implementation (`regionGeometry.ts`,
    `validateRegionCells`), which predates the five-comment "regions are scopes"
-   refinement on rpg-project#180 (2026-08-04 19:27–21:50). `ideas/dungeon-builder/design.md`/
+   refinement on rpg-project#180 (2026-08-04 19:27–21:50). `ideas/battlemap/dungeon-builder/design.md`/
    `plan.md` already carry the *later*, nesting-capable language ("the parent is the
    smallest strict superset... disjoint regions are siblings; equal or partial overlap
    is invalid"). **Resolution: the nesting-by-containment model wins for this
@@ -409,7 +409,7 @@ now, not a gap.
 
 ## Pointers
 
-- `ideas/dungeon-builder/design.md`, `ideas/dungeon-builder/plan.md` — the platform's
+- `ideas/battlemap/dungeon-builder/design.md`, `ideas/battlemap/dungeon-builder/plan.md` — the platform's
   two-wave delivery structure this spec's level cut stays consistent with.
 - rpg-project#180 — Wave 1 tracker; read every comment, not just the issue body, for
   the regions-as-scopes model `spec.md` §4.10 states as bare rules and this file

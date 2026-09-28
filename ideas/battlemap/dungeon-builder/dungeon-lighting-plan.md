@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, TypeScript, Three.js, React Three Fiber, `@react-three/test-renderer`, Vitest, Testing Library, Vite.
 
-**Spec:** `ideas/dungeon-builder/dungeon-lighting.md`
+**Spec:** `ideas/battlemap/dungeon-builder/dungeon-lighting.md`
 
 ## Global Constraints
 

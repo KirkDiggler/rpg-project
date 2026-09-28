@@ -30,7 +30,7 @@
     {
       "id": "disc-004",
       "summary": "Position is currently `double X/Y/Z`, slated for int32 breaking change",
-      "details": "api/v1alpha1/room_common.proto:9 — Position uses `double x = 1; double y = 2; double z = 3;`. Per rpg-project/ideas/coordinate-types/design.md, this needs to move to int32 to match the cube coordinate invariant (X+Y+Z=0) used by the dungeon component. The double signature is the root cause of the int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change; design says rpg-api types must land first. Likely v1alpha2 package bump rather than in-place edit.",
+      "details": "api/v1alpha1/room_common.proto:9 — Position uses `double x = 1; double y = 2; double z = 3;`. Per rpg-project/ideas/battlemap/coordinate-types/design.md, this needs to move to int32 to match the cube coordinate invariant (X+Y+Z=0) used by the dungeon component. The double signature is the root cause of the int↔float64 casts that produced 5 coordinate bugs in Round 2 (rpg-api PRs #459, #461, #463, #466, #467). Breaking wire change; design says rpg-api types must land first. Likely v1alpha2 package bump rather than in-place edit.",
       "added": "2026-05-02"
     },
     {
