@@ -54,7 +54,8 @@ A downed occupant cannot make a wall, closed door, prop, or another blocking
 occupant passable.
 
 Creature-size exceptions and new terrain pricing are outside this slice.
-Movement retains its current cost until a separate cost rule is approved.
+The per-cell movement price remains unchanged; only cells actually traversed
+consume movement capacity.
 
 ### R3 — Walk endpoints and interruption
 
@@ -78,8 +79,11 @@ a legal voluntary endpoint.
 
 A newly discovered obstacle may shorten a requested walk. Successfully walked
 cells remain real and are reported as the actual path; discovery is an ordinary
-movement outcome, not a transaction-wide failure that erases progress. Proposed accounting, pending the ruling in Open: movement capacity accounts
-for actual traversal rather than charging unwalked cells.
+movement outcome, not a transaction-wide failure that erases progress. Movement
+capacity is charged only for cells actually traversed. Discovery, reactions,
+and other early stops never charge for the unwalked remainder. A paused walk
+charges its completed steps once; resuming it charges only additional steps
+actually taken.
 The result distinguishes completion, a reaction pause, and an early stop.
 
 A conscious walker with no legal continuation from a pass-through cell requires
@@ -139,7 +143,7 @@ must not reuse it across a mutation that can change participation.
 |---|---|---|---|---|
 | R1 | settled | Toolkit owns passage; traversal is separate from stopping; extend the existing contract across preview and execution | KirkDiggler | 2026-09-28 |
 | R2 | settled | A downed monster permits passage and voluntary stopping; downed-party policy is not included | KirkDiggler | 2026-09-28 |
-| R3 | settled | An ally cell is intermediate; reactions may pause there, but a walker who is not downed must continue when able | KirkDiggler | 2026-09-28 |
+| R3 | settled | An ally cell is intermediate; reactions may pause there, but a walker who is not downed must continue when able; charge only actual traversal, never unused movement | KirkDiggler | 2026-09-28 |
 | R4 | settled | Provider-owned permissions follow runtime dispositions; fog permits uncertain destination planning and discovery may shorten execution | KirkDiggler | 2026-09-28 |
 | R5 | settled | Passage and participation failures preserve their errors; unknown knowledge is distinct from a failed query | KirkDiggler | 2026-09-28 |
 
@@ -151,9 +155,6 @@ must not reuse it across a mutation that can change participation.
   changes disposition, or closes every exit while they overlap an ally, what
   happens until a legal continuation becomes possible? The ordinary reaction
   continuation is settled; automatic displacement is not authorized.
-- **R3 accounting:** Proposed: charge only actually traversed cells on a normal
-  discovery stop, retaining already completed movement and reaction effects.
-  This changes whole-request charging and needs an explicit ruling before build.
 - **R4 geometry:** Fog destinations on known floor and requests into wholly
   unexplored floor need distinct input contracts. Define the candidate-cell
   source and preview extent without transmitting concealed geometry. The fog
