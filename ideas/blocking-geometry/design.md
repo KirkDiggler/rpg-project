@@ -31,9 +31,9 @@ composes the active contributors; spatial supplies geometric answers without
 interpreting doors or game rules. Attack consumers use that same obstruction
 geometry. Session and API transport results; the web renders them.
 
-This design scopes the behavior and its owning seams. R10 and R11 remain open
-technical contracts; publishing this document does not authorize implementation
-against unspecified contracts. The tracking surface is [issue #506](https://github.com/KirkDiggler/rpg-project/issues/506),
+This design scopes the behavior and its owning seams. R10 and R11 track
+engineering contracts to resolve through reproduction and consumer checks;
+the behavior rulings authorize that work. The tracking surface is [issue #506](https://github.com/KirkDiggler/rpg-project/issues/506),
 under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/issues/169).
 
 ## Law
@@ -94,6 +94,13 @@ under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/is
   continuous barrier. The overlapping union remains blocked. Wall-adjacent
   standing can be excluded through authored footprint extent or the walkable
   set without introducing a new partial-cell standing model.
+- **R20 — Checkbox restoration.** Disabling blocking geometry restores the
+  ordinary movement and LOS selections. The restoration interaction is polish
+  and does not block geometric correctness work.
+- **R21 — Connected sight lanes.** Each alternate sight lane has a clear
+  connecting segment to its original endpoint. Hard or soft obstruction on
+  that connection disqualifies the alternate origin. The same condition
+  applies from either end; errors propagate rather than granting sight.
 - Authoring reuses the existing footprint controls, outlines and blocking
   declarations. A new drawing tool or overlay is not part of this contract.
   Save, reopen, compile and reload preserve the authored meaning.
@@ -104,8 +111,9 @@ under [World Builder journey #169](https://github.com/KirkDiggler/rpg-project/is
 ## Rulings
 
 Settled rows record conversational rulings for this design's stated behavior
-only. Open rows require a concrete proposal and operator ruling on the design
-PR before dependent implementation. The PR remains the tracking surface.
+only. Open rows track unresolved engineering detail, not additional authoring
+or gameplay choices. A change to the agreed behavior requires a new operator
+ruling. The PR remains the tracking surface.
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
@@ -128,13 +136,16 @@ PR before dependent implementation. The PR remains the tracking surface.
 | R17 | settled | asset-owned footprints only in this version | KirkDiggler | 2026-09-28 |
 | R18 | settled | geometric target access rather than whole-hex permission | KirkDiggler | 2026-09-28 |
 | R19 | settled | overlapping boxes and explicit exclusion of wall-adjacent standing | KirkDiggler | 2026-09-28 |
+| R20 | settled | restore ordinary selections; checkbox polish is non-blocking | KirkDiggler | 2026-09-28 |
+| R21 | open | engineering realization of R3/R16: connected alternate sight origins | — | — |
 
 ## Open
 
-- **R10: lawful sight origins.** Specify which alternate origins are allowed
-  and how obstruction between the endpoint and alternate origin is tested in
-  both directions. Preserve legitimate views around ordinary props. Confirm
-  the reported leak against compiled geometry before selecting the algorithm.
+- **R10/R21: sight integration.** Validate connected alternate origins
+  against consumer footprints and legitimate views around ordinary props.
+  Distinguish a primitive-level reproduction from the saved dungeon's exact
+  compiled geometry. An adapter reporting an endpoint inside opacity cannot
+  borrow a viewpoint through that opacity.
 - **R10: contact semantics.** Specify tangency, corner contact and numerical
   tolerance for sight and physical attacks. Overlapping boxes must form a
   continuous barrier; exact edge-to-edge snapping is not an authoring
@@ -148,8 +159,8 @@ PR before dependent implementation. The PR remains the tracking surface.
   canonical type on the existing asset-owned footprint declaration. Reuse
   its transform and coordinate conversion without copying the rectangle into
   multiple authoritative stores. Asset-free ownership is outside this version.
-- **R11: effective flags.** Specify validation, absent-field behavior, and
-  what disabling blocking geometry does to the ordinary movement/LOS flags.
+- **R11: effective flags.** Specify validation and absent-field behavior.
+  Disabling blocking geometry follows R20.
   Preserve existing authored declarations and make implied restrictions clear.
 - **R11: attack seam.** Name the obstruction query consumed by physical
   attack offers, execution, NPC reach and route destinations. Do not equate
