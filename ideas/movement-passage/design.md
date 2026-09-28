@@ -25,8 +25,8 @@ restrictions. The mover never contributes an obstacle to itself.
 
 ## Law
 
-The rules below are proposed except where the Rulings table marks their
-scope settled.
+The Rulings table scopes each settled rule. Unsettled extensions are named in
+Open and do not grant implementation authority.
 
 ### R1 — One owner, distinct passage and stopping
 
@@ -41,13 +41,15 @@ result; a preview is not execution authority.
 |---|---|---|
 | Upright nonhostile creature, including an ally | Yes | No |
 | Upright hostile creature | No | No |
-| Downed creature | Yes | Open: proposed yes |
+| Downed monster | Yes | Yes |
+| Downed party member | Open | Open |
 | World NPC with blocking movement policy | No | No |
 | World NPC with passable movement policy | Yes | No |
 
 Downed means the rulebook's participation answer, not a client HP comparison,
-a model filename, or absence from initiative. The same downed policy applies
-to party members and monsters; recovery restores their ordinary contribution.
+a model filename, or absence from initiative. Recovery restores the ordinary
+occupant contribution. The downed-monster ruling does not decide downed-party
+occupancy.
 A downed occupant cannot make a wall, closed door, prop, or another blocking
 occupant passable.
 
@@ -56,17 +58,33 @@ Movement retains its current cost until a separate cost rule is approved.
 
 ### R3 — Walk endpoints and interruption
 
-The encounter supplies a voluntary-destination check. Session invokes it before
-charging or announcing a requested walk, and execution rechecks changing
-occupancy as it traverses the path. Refused voluntary destinations preserve
-persisted state and movement capacity.
+The encounter distinguishes a chosen destination from an intermediate cell.
+Known invalid voluntary destinations are refused before movement or spend.
+Unknown occupancy does not cause an omniscient preflight refusal: execution
+validates each newly encountered crossing and cell against current truth.
 
-A pass-through cell is a legal intermediate position. Involuntary pauses and
-stops preserve the cell actually reached: reactions, a downed mover, combat
-formation, and encounter completion do not teleport the mover to another cell
-or erase events that already occurred. Resuming a held walk revalidates its
-remaining path. A voluntary new walk from an overlapping position must end on
-a standable cell.
+A reaction may pause a walker on an ally's cell in the middle of a path. The
+pending walk retains its continuation. If the walker is not downed and can
+continue, resolving the reaction resumes movement toward a standable cell;
+the pause is not permission to finish the walk on the ally. The client cannot
+turn that pause into a voluntary stop by discarding the remainder.
+
+A reaction that downs the walker leaves them where the reaction occurred.
+No teleport or rollback changes that causal position. Each resumed step
+rechecks current occupancy, disposition, and movement restrictions. A change
+of clock or combat formation must preserve the obligation to leave a
+pass-through cell; it cannot silently convert the intermediate position into
+a legal voluntary endpoint.
+
+A newly discovered obstacle may shorten a requested walk. Successfully walked
+cells remain real and are reported as the actual path; discovery is an ordinary
+movement outcome, not a transaction-wide failure that erases progress. Proposed accounting, pending the ruling in Open: movement capacity accounts
+for actual traversal rather than charging unwalked cells.
+The result distinguishes completion, a reaction pause, and an early stop.
+
+A conscious walker with no legal continuation from a pass-through cell requires
+the separate ruling in Open; neither automatic displacement nor permission to
+remain indefinitely is implied.
 
 This distinction governs voluntary walking. Forced movement retains its
 existing restrictions; it does not acquire permission to shove creatures into
@@ -85,15 +103,23 @@ the current sighting. The client does not derive passage from `MemberKind`,
 `Standing`, or `stance`. Static geometry and live door restrictions remain
 independent contributors to the route graph.
 
-The contract distinguishes unavailable knowledge from all three passage values.
-Missing or unknown permission cannot silently become standable or hostile.
-The exact preview behavior for unavailable permission remains an open ruling.
-A world NPC's authored blocking policy must have an explicit observation path;
-preview cannot infer it from the NPC's kind.
+The contract distinguishes unknown world knowledge from a missing or invalid
+provider contract. A player may request a destination in fog and see an
+uncertain route through unobserved space. Unknown knowledge is not proof of
+standability, nor a reason to fabricate hostility or block all planning.
+Execution discovers obstacles as the walker reaches them and may cut the walk
+short. A missing required permission field or failed query is an error, not fog.
 
-Preview can differ from execution when knowledge differs from reality. A refusal
-must respect the existing information boundary and cannot identify an unseen
-occupant or reveal a concealed crossing through a preview response.
+The provider's permission is relative to the mover and refreshes when a
+relation changes. A creature's kind cannot fix its movement permission for the
+encounter's lifetime. The preview uses observed standing and believed relations;
+execution uses their current authoritative answers through the same policy.
+A world NPC's authored blocking policy requires an explicit observation path.
+
+Fog targeting does not reveal unauthored or concealed map truth. The exact
+source of candidate cells in wholly unexplored geometry is scoped in Open.
+A stop reports only what the mover is entitled to discover at that point;
+preview must not identify an unseen occupant or expose a concealed crossing.
 
 ### R5 — Freshness and failure
 
@@ -112,23 +138,29 @@ must not reuse it across a mutation that can change participation.
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
 | R1 | settled | Toolkit owns passage; traversal is separate from stopping; extend the existing contract across preview and execution | KirkDiggler | 2026-09-28 |
-| R2 | open | Exact occupant matrix, including downed-body destinations, parity for downed players, and unchanged pricing | — | — |
-| R3 | open | Voluntary endpoint enforcement and involuntary overlap during an interrupted walk | — | — |
-| R4 | open | Knowledge-scoped projection, unknown permission behavior, and NPC blocking observation | — | — |
-| R5 | open | Refresh, reload, and participation failure semantics | — | — |
+| R2 | settled | A downed monster permits passage and voluntary stopping; downed-party policy is not included | KirkDiggler | 2026-09-28 |
+| R3 | settled | An ally cell is intermediate; reactions may pause there, but a walker who is not downed must continue when able | KirkDiggler | 2026-09-28 |
+| R4 | settled | Provider-owned permissions follow runtime dispositions; fog permits uncertain destination planning and discovery may shorten execution | KirkDiggler | 2026-09-28 |
+| R5 | settled | Passage and participation failures preserve their errors; unknown knowledge is distinct from a failed query | KirkDiggler | 2026-09-28 |
 
 ## Open
 
-- **R2:** Allow passing through an ally but not stopping on it; allow both passing
-  and stopping on a downed creature? The alternative is passage-only for both.
-- **R3:** Preserve involuntary overlap when a walk pauses or stops on a
-  pass-through cell? The proposed rule preserves causal location and avoids
-  automatic displacement or skipping a reaction.
-- **R4:** For missing permission, withhold the preview for that route and surface
-  the missing contract, or permit a clearly uncertain preview that execution
-  may refuse? Neither alternative assigns a fabricated allegiance.
-- **R4:** Specify which observable fact establishes a world NPC's blocking
-  policy, then settle the exact sighting field and update carriers. Do not
-  expose hidden true relations to make the preview appear exact.
-- **R5:** Settle the error-capable passage API and assessment lifetime before
-  changing consumers; the cell query and route callbacks must preserve errors.
+- **R2 extension:** Does the downed-monster stopping rule also apply to a downed
+  party member? The monster ruling does not settle that case.
+- **R3 edge:** If a walker remains conscious but a reaction removes movement,
+  changes disposition, or closes every exit while they overlap an ally, what
+  happens until a legal continuation becomes possible? The ordinary reaction
+  continuation is settled; automatic displacement is not authorized.
+- **R3 accounting:** Proposed: charge only actually traversed cells on a normal
+  discovery stop, retaining already completed movement and reaction effects.
+  This changes whole-request charging and needs an explicit ruling before build.
+- **R4 geometry:** Fog destinations on known floor and requests into wholly
+  unexplored floor need distinct input contracts. Define the candidate-cell
+  source and preview extent without transmitting concealed geometry. The fog
+  interaction is approved; this boundary remains to be measured and specified.
+- **R4 observation:** Specify how authored NPC blocking policy becomes observed,
+  and the exact permission field and refresh carriers. Missing contract data
+  must not be interpreted as ordinary fog.
+- **R5 mechanism:** Settle the error-capable passage API and assessment lifetime;
+  cell queries and route callbacks must preserve errors. These are implementation
+  details under the settled error-preservation rule, not new gameplay rulings.
