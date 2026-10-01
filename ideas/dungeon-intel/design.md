@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TD
     W[World state] --> O[Encounter: lawful observation and discovery]
-    O --> K[Individual latest knowledge]
+    O --> K[Individual geometry discovery and latest mutable intel]
     I[Existing intel and perception primitives] --> K
     G[Shared fixed geometry] --> P[Toolkit: observer knowledge projection]
     K --> P
@@ -25,22 +25,25 @@ The [first-slice proof](first-slice-proof.md) defines the approved behavioral go
 investigation
 and evidence stay on [#508](https://github.com/KirkDiggler/rpg-project/issues/508).
 
-The first-slice goal is **two characters knowing the same area differently**:
-one door, one pickup-able prop, and obstruction that lets their observations
-differ. The Reference Tomb (with the heirloom) is the preferred existing walk
-candidate; a dedicated listed dungeon is also permitted if needed. A known door
-in that dungeon can exercise state memory without bringing secret-door discovery
-into this slice.
+The first-slice goal is **discovering an unknown room without receiving its
+layout in advance, then remembering its changeable contents independently**.
+Two characters start in room 1 with room 2 unseen behind a closed ordinary door.
+A character looks through the opening, learns the geometry and fixed scenery it
+observes, and sees a holdable prop. Withdrawing around a corner leaves that prop
+and observed door state remembered, as with creature intel. A further door at
+the end of room 2 does not deliver the layout of room 3 behind it.
 
-The bounded proof area's fixed layout is explicitly pre-explored; this is not a
-default for newly entered dungeons. The slice proves observed, remembered, and
-replaced changeable state through the real player path and reload. The exact
-fixture and positions require a sight check before they become the walk.
+The Reference Tomb (with the heirloom) is an existing walk candidate; a dedicated
+listed dungeon is also permitted. The fixture and positions must support unknown
+layout, lawful sight separation and pickup without ending the run. Room 2 is not
+pre-explored. Secret-door checks remain outside the slice.
 
-Shared fixed geometry need not be copied into every character's memory. Which
-parts a character knows is individual. Mutable prop and door observations cannot
-be replaced by references to their unseen live state. Exact observation units,
-indexes and payload types remain open.
+One authoritative geometry map includes fixed non-holdable scenery; it is shared
+on the server, not downloaded whole by every player. Which geometry each
+character has discovered is individual. Fixed scenery does not require a mutable
+intel record per prop. Creatures, holdable props and door open/closed state use
+current/remembered intel. Their unseen live state cannot replace the character's
+latest observation. Exact discovery units, indexes and payload types remain open.
 
 Appearance remains content, not a rendering document embedded in encounter
 state. Player delivery selects only permitted content; separate builder authority
@@ -48,8 +51,8 @@ may permit the complete authored document. The mechanism and responsibility spli
 for that selection require a ruling before implementation.
 
 The endpoint is sight-shaped exploration with undiscovered content absent from
-player delivery. Slice 1 is not a claim that unexplored geometry, secret-door
-checks or arbitrary authored dungeons already satisfy that endpoint. A
+player delivery. Slice 1 proves unknown geometry delivery in its bounded fixture, not
+secret-door checks or compatibility with arbitrary authored dungeons. A
 fixture-only or local-only proof is labeled as such, not shipped as complete
 production knowledge protection.
 
@@ -82,11 +85,16 @@ production knowledge protection.
 
 ### First-slice behavioral contract
 
-- **R7 — Bounded vertical proof.** The first slice uses the bounded fixture in
-  Shape, real toolkit observation, session persistence, authenticated player
-  delivery and the existing game renderer. Pre-explored fixed geometry is a
-  fixture condition, not a substitute for exploration or permission to download
-  the complete authored document.
+- **R12 — Unknown-room vertical proof.** The first slice starts in room 1 with
+  room 2 unseen behind a closed door. Room 2's layout and positioned content are
+  absent from that player's client until lawful observation teaches them. A
+  visible further door does not disclose room 3's interior. The proof uses real
+  toolkit observation, persistence, authenticated delivery and the game renderer.
+- **R13 — Fixed geometry, mutable intel.** Fixed non-holdable scenery belongs to
+  the shared geometry map, with individual discovery controlling delivery.
+  Creatures, holdable props and door state use current/remembered observations.
+  Loss of sight preserves those observations without maintaining a mutable
+  memory record for every fixed prop.
 - **R8 — Existing knowledge mechanism.** The slice composes existing intel
   replacement semantics rather than creating an observation-history store. It
   supplies evidence using encounter-owned perception rules, including range,
@@ -124,16 +132,19 @@ implementation.
 | R4 | settled | Witnessed absence replaces stale location, not unseen truth | KirkDiggler | 2026-09-30 |
 | R5 | settled | End-state player disclosure excludes undiscovered content | KirkDiggler | 2026-09-30 |
 | R6 | settled | Incremental delivery with explicit compromises | KirkDiggler | 2026-09-30 |
-| R7 | settled | Bounded vertical goal; existing Tomb or dedicated dungeon candidate | KirkDiggler | 2026-10-01 |
+| R7 | superseded | Pre-explored mutable-state proof; replaced by R12 | KirkDiggler | 2026-10-01 |
 | R8 | settled | Reuse intel and authoritative observation; exact representation open | KirkDiggler | 2026-10-01 |
 | R9 | settled | First-slice read/event/content and identity boundary | KirkDiggler | 2026-10-01 |
 | R10 | settled | First-slice refresh/reload behavior and interaction distinction | KirkDiggler | 2026-10-01 |
 | R11 | settled | SDK disclosure ownership; stream interface investigation only | KirkDiggler | 2026-10-01 |
+| R12 | settled | Unknown room 2 absent until observed; further door does not deliver room 3 | KirkDiggler | 2026-10-01 |
+| R13 | settled | Fixed scenery in shared geometry; creatures, holdable props and door state in intel | KirkDiggler | 2026-10-01 |
 
 ## Open
 
-- **Observation unit.** Select how observed places, props and doors contribute to
-  knowledge without storing competing answers about the same placement. The
+- **Observation unit.** Select spatial discovery units for fixed geometry and
+  observation support for creature, holdable-prop and door intel without storing
+  competing answers about the same placement. The
   absence witness must describe the area it actually observed; partial footprint
   visibility, concealment and unavailable senses cannot silently count as a
   complete empty observation.
@@ -163,7 +174,7 @@ implementation.
   ordering, cursors and recovery contracts remain to be measured and shaped.
 - **Scale.** Choose representative geometry, prop and observer counts and a
   measured budget before selecting new indexing or compression.
-- **Later slices.** Specify sight-shaped floor/wall discovery and the two-room
-  secret-door proof, then broaden content delivery and compatibility coverage.
+- **Later slices.** Specify the secret-door discovery proof, then broaden
+  sight-shaped content delivery and compatibility beyond the first fixture.
   Later acceptance includes every player-facing path, not just the first-slice
   fixture.

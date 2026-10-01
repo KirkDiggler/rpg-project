@@ -5,6 +5,14 @@ and [#509](https://github.com/KirkDiggler/rpg-project/pull/509), not design law,
 a production implementation, or a checked implementation plan. Recommendations
 below are **proposed**, not new operator rulings.
 
+**Scope correction after this checkpoint:** the operator's first proof starts in
+room 1 with room 2 unseen behind a closed door; observing its further door must
+not deliver room 3. Fixed non-holdable scenery belongs to the shared geometry,
+while creatures, holdable props and door state use current/remembered intel.
+The revised [design](design.md) and [proof](first-slice-proof.md) carry that scope.
+The pre-explored experiments below remain historical capability evidence, not
+completion of the corrected first proof.
+
 ## Revisions and method
 
 | Repository | Inspected revision |

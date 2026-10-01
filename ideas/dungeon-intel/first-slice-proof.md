@@ -1,4 +1,4 @@
-# First-slice proof: a room remembered differently
+# First-slice proof: an unknown room, then remembered contents
 
 Walk for the approved first-slice goal of [individual dungeon knowledge](design.md),
 tracked in [rpg-project#508](https://github.com/KirkDiggler/rpg-project/issues/508).
@@ -7,69 +7,74 @@ plan. The design's named mechanism questions remain open.
 
 ## Fixture
 
-Prefer a bounded area of the Reference Tomb (with the heirloom), using its
-holdable heirloom and an operable door both characters know. A dedicated dungeon
-in the list is also permitted if the existing one cannot provide the proof.
-Choosing the existing Tomb does not add secret-door mechanics, combat changes or
-new exploration to this slice; any discovery needed for the setup precedes the
-memory walk.
+Use ordinary doors and three bounded areas: room 1, unseen room 2 behind its
+closed door, and room 3 behind a further door at the end of room 2. Prefer the
+Reference Tomb if it supports the actual sight cases; a dedicated listed dungeon
+is also permitted. Recheck the fixture against this unknown-layout goal rather
+than treating the earlier pre-explored geometry experiment as its proof.
 
-The minimum scene has an opaque obstruction, an operable known door, two
-separately authenticated characters, and one prop the existing pickup verb can
-remove. Choose positions against the actual sight queries, not a diagram's
-assumption about what the obstruction blocks. Verify that taking the prop does
-not end the run before the memory/reconnect checks.
+Two separately authenticated player characters start knowing room 1 and its
+closed door. Neither has explored room 2 or room 3. Room 2 contains fixed
+non-holdable scenery and one holdable prop. An opaque corner lets A withdraw
+out of sight while B later gains a view and can act. Verify positions with real
+sight queries and ensure pickup does not end the run.
 
-The bounded area's fixed layout is explicitly pre-explored for both characters.
-Both initially observe the prop on the floor and the open door. The fixture does
-not make unknown layout visible by default in normal play. A can withdraw to a
-position that prevents observation of both the prop and door, while B remains
-able to observe and act on them.
+The fixed layout and fixed scenery have one authoritative shared geometry map
+on the server, with individual discovery determining what reaches each player.
+There is no full-map download followed by client-side hiding, and no mutable
+intel record for every fixed prop. Creatures, holdable props and door state use
+current/remembered intel; discovering a door does not discover its interior.
 
-Full authored-document access is not a way to provide the fixture's player
-visuals. The design must settle a permitted-content path before implementing the
-vertical proof. A player principal used for the walk has no separate builder
-privilege.
+Player principals have no separate builder privilege. Full authored-document
+access is not a way to provide their visuals. Exact geometry discovery and
+permitted-content delivery mechanisms require shaping before implementation.
 
 ## Walk and assertions
 
 | Step | A's permitted knowledge | B's permitted knowledge | Assert at the boundary |
 |---|---|---|---|
-| Both look | Prop at its observed position; door open | Same observed facts | Correct identity-bound initial reads; no world document download |
-| A withdraws | Same facts, remembered | Current observations | Loss of sight does not erase or refresh A's memory |
-| B picks up the prop | Prop still remembered on the floor | Observed removal; own holding | A gets no disclosure of removal or carrier through reads, events or action metadata |
-| B closes the door | Door remembered open | Door observed closed | A receives no unseen door-state update |
-| Save and reconnect both clients | Same stale memory | Same permitted current/latest knowledge | Fresh hydration agrees with each identity's pre-disconnect knowledge |
-| A approaches and can see the closed door, but not the prop's old position | Door now closed; prop still remembered | B's own view only | Updating the door does not also refresh the room's contents |
-| The door opens and A can observe the prop's old position empty | Old prop-location belief replaced; no inferred destination or carrier | B's own view only | Observation of absence is distinct from losing sight |
-| Save and reconnect again | Corrected knowledge stays corrected | B's knowledge stays independent | Reload neither resurrects stale placement nor copies B's knowledge to A |
+| Start in room 1, door closed | Room 1 and observed closed door; no room 2 or 3 interior | Own room 1 observation only | Room 2/3 layout and positioned content absent from network bodies and client scene/cache |
+| A opens the door and looks into room 2; B remains obstructed | Observed room 2 geometry/fixed scenery, holdable prop and door state | No room 2 knowledge without B's own view | Opening alone does not send both players the room; delivery follows each observer |
+| A sees the further door at the end of room 2 | Door at its observed position/state; no room 3 interior | Own knowledge only | A may suspect another room, but receives none of its layout or contents |
+| A withdraws around the corner | Discovered fixed geometry retained; prop and observed door state become remembered | Own knowledge only | Fixed scenery is not forgotten; mutable subjects fade without revealing live truth |
+| B obtains a view into room 2 | A's remembered observations unchanged | B learns its own observed geometry, prop and door state | No automatic sharing or refresh of A's memory |
+| B picks up the prop and closes the first door out of A's sight | Prop remembered at its old position; door remembered open | Observed removal, own holding and closed door | No unseen state/carrier disclosure to A through reads, events or metadata |
+| Save and reconnect both clients | A's discovered geometry and stale mutable observations | B's own latest knowledge | Fresh hydration preserves different views; room 3 remains absent |
+| A approaches and sees the closed door, but not the prop's old position | Door updated to closed; prop still remembered | B's own view only | Door observation does not refresh contents behind it |
+| The door opens and A observes the old prop position empty | Disproved location replaced, no inferred destination/carrier | B's own view only | Absence follows observation, not arrival or omission from a roster |
+| Save and reconnect again | Corrected knowledge stays corrected; known geometry retained | B's knowledge stays independent | Reload neither resurrects stale placement nor supplies undiscovered room 3 |
 
-The prop remains known to exist; the walk does not require erasing its identity
-or keeping a history of its former position. Whether B's carried item is itself
-observable to A is controlled explicitly by the fixture so the absence test does
-not accidentally gain a second source of knowledge.
+The prop remains known to exist; no historical collection of former positions
+is required. Control whether B's carried item is observable to A so the absence
+check does not accidentally obtain another source of knowledge. Creature intel
+is the existing behavioral model, not permission to change creature absence
+semantics implicitly.
 
 ## Negative controls
 
-- Keep the old prop position out of A's sight after pickup: repeated refreshes
-  and reconnects must leave A's memory alone.
-- Let A observe the empty position without walking onto it: correction follows
-  observation, not an arrival-only special case.
-- Repeat an unchanged observation: it does not create another historical entry.
-- Use B's member ID in an A-authenticated read or subscription: it must not grant
-  B's view.
-- Request the source document or an undisclosed placement directly as a player:
-  there is no bypass to undiscovered content or unseen current state.
-- Reconnect A with an empty client cache and inspect network bodies, not only the
-  rendered screen. The server restores A's remembered values, not current truth
-  that the browser must hide.
+- Before first observation, repeatedly refresh and reconnect with an empty client
+  cache: room 2/3 layout must remain absent, not merely hidden on screen.
+- Open a door remotely or keep B obstructed while A opens it: B receives no
+  interior solely because the world door changed.
+- Observe the far door without seeing through it: no room 3 layout is delivered.
+- Keep the old prop position out of A's sight after pickup: refresh and reconnect
+  leave A's remembered position alone.
+- Observe the empty position without walking onto it: replacement follows sight.
+- Repeat unchanged observations: no historical entries or redundant fixed-prop
+  snapshots are added.
+- Use B's member ID in an A-authenticated read or subscription: no inherited view.
+- Request the source document, unknown geometry or an undisclosed placement
+  directly as a player: no bypass to undiscovered content or unseen current state.
+- Inspect initial reads, refreshes, events/replay, reconnect bodies and the
+  client's loaded scene/content, not only screenshots.
 
 ## Evidence required
 
-Record toolkit tests, API identity/projection tests, event/reconnect coverage and
-the real browser walk separately. An overlay primitive probe does not satisfy the
-vertical proof; a screenshot does not prove non-disclosure. Publish exact tested
-revisions and distinguish baseline behavior from new acceptance tests.
+Record toolkit observation/discovery tests, API identity/projection tests,
+event/reconnect coverage and the real browser walk separately. Primitive and
+geometry overlays do not satisfy the vertical proof; a screenshot does not
+prove non-disclosure. Publish tested revisions and distinguish baseline behavior
+from new acceptance tests.
 
 If a slice cannot meet an assertion, identify the specific limitation and ask for
 its ruling before weakening the assertion. Keep that exception and the later
@@ -77,13 +82,11 @@ proof that removes it on the tracking issue.
 
 ## Not proved by this walk
 
-- First exploration of unknown floor and walls.
-- Finding a concealed door without discovering its room, or observing only a
-  portion of a newly opened room.
+- Secret-door discovery checks and concealment-group changes.
 - Arbitrary multi-cell props, every authored dialect, illusion or special sense.
 - New-encounter/campaign persistence or changes to the authored content revision.
-- Whole-product authorization closure beyond the explicitly exercised player
-  paths, including catalogs, previews and shared content caches.
+- Whole-product authorization closure beyond the exercised player paths,
+  including catalogs, previews and shared content caches.
 - A representative production performance budget.
 
 Those are explicit next proofs, not reasons to add a second knowledge engine or
