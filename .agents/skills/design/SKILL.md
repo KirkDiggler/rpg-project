@@ -23,6 +23,22 @@ Follow the operator's move toward making an idea concrete; if that intent is
 unclear, ask whether to keep exploring or start shaping it. This is a conversational
 transition, not a new approval ceremony. Exploration can reopen during design.
 
+## Converge on a brief
+
+Once there is a direction to shape, write back a short understanding the operator
+can recognize and correct:
+
+- the intended outcome and who it serves;
+- constraints and non-goals;
+- concrete success scenarios — what someone can observe when it works;
+- settled decisions versus assumptions and unresolved questions.
+
+Use what the operator already supplied; do not ask them to repeat it or approve
+another stage. Invite correction and carry the corrected brief into design.
+Keep it in the issue or a linked working document. Check proposed structure and
+behavior against it: agreement on a diagram alone is not agreement on what the
+system must do.
+
 ## The design order
 
 1. **Probe before propose.** Measure the current state first — read the code,
@@ -78,6 +94,21 @@ The tell is greppable and the check makes it a mechanism: run
 finding is the smell of case file in law, exempt only by the operator's
 inline `<!-- case-file -->` ruling.
 
+## Design completeness
+
+Before deriving implementation tasks, check that the agreement settles the
+in-scope responsibilities and interfaces, inputs and outputs, state changes and
+lifecycle, failure/absence/invalid-input behavior, and observable acceptance
+scenarios. Name exclusions explicitly; do not invent requirements to make a
+checklist look complete. For each unit, make clear what it owns, how its consumer
+uses it, and what it depends on.
+
+Put durable rules in the existing law sections; examples, acceptance scenarios
+and investigation evidence can live in linked working documents or the issue.
+Do not add implementation sections to the four-section law artifact. Resolve
+missing detail from the agreement where possible; return only unsettled design
+decisions to the operator, using the gap judgment below.
+
 ## From design to implementation
 
 Design with the operator in terms they can judge: responsibilities, boundaries,
@@ -100,19 +131,22 @@ check it, then execute without asking for a second approval. Planning is real
 work before implementation, not a retrospective list of edits. Keep it in the
 issue or PR, or a linked working document, separate from the design's law.
 
-The plan is as small as the work allows and names:
+After design agreement, **read [the implementation planning guide](planning.md)
+and complete its task contracts and visible checks before implementation**.
+A list of repositories or intended edits is not an implementation plan. The
+plan must let a fresh implementer execute a bounded task without reconstructing
+the design conversation or inventing its contracts.
 
-- the design requirements each step delivers, including acceptance checks;
-- the owning repositories/modules and affected contracts, based on inspection;
-- the development sequence, dependencies and applicable merge/release order;
-- verification at the changed seams and observable proof of the intended result;
-- assumptions and gaps, resolved or explicitly deferred within the agreed scope.
+Scale the plan to the work, not the precision down to an outline. The guide
+requires concrete files, interfaces, test assertions and verification commands,
+plus requirement coverage and provider/consumer seam checks against inspected
+code. Keep the plan separate from the design's law, link both in the paper trail,
+and update affected tasks when implementation reveals a gap.
 
-Before implementation, walk the plan against both the design and the current
-code. Check for missing owners, unavailable provider capabilities, integration
-steps and requirements without proof. Resolve what the design answers; bring
-back only decisions it does not authorize. Do not invent extra features to fill
-hypothetical gaps.
+Planning ends with a checked, handoff-ready plan. Execute directly or delegate
+only as authorized by the operator and applicable instructions; readiness is not
+permission to spawn agents. Repository review, release and merge gates remain
+in force.
 
 ## Gap judgment
 
