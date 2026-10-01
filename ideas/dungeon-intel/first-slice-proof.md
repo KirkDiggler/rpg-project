@@ -1,18 +1,26 @@
 # First-slice proof: a room remembered differently
 
-Proposed walk for [individual dungeon knowledge](design.md), tracked in
-[rpg-project#508](https://github.com/KirkDiggler/rpg-project/issues/508).
-This is an acceptance sketch for ruling, not a working feature or implementation
-plan. Design R7–R10 and the named mechanism questions remain open.
+Walk for the approved first-slice goal of [individual dungeon knowledge](design.md),
+tracked in [rpg-project#508](https://github.com/KirkDiggler/rpg-project/issues/508).
+This is an acceptance sketch, not a working feature or a settled implementation
+plan. The design's named mechanism questions remain open.
 
 ## Fixture
 
-One room with an opaque partition and an ordinary operable door, two separately
-authenticated characters, and one prop that the existing pickup verb can remove.
-Choose positions against the actual sight queries, not a diagram's assumption
-about what the partition blocks.
+Prefer a bounded area of the Reference Tomb (with the heirloom), using its
+holdable heirloom and an operable door both characters know. A dedicated dungeon
+in the list is also permitted if the existing one cannot provide the proof.
+Choosing the existing Tomb does not add secret-door mechanics, combat changes or
+new exploration to this slice; any discovery needed for the setup precedes the
+memory walk.
 
-The fixed layout is explicitly pre-explored for both characters in this fixture.
+The minimum scene has an opaque obstruction, an operable known door, two
+separately authenticated characters, and one prop the existing pickup verb can
+remove. Choose positions against the actual sight queries, not a diagram's
+assumption about what the obstruction blocks. Verify that taking the prop does
+not end the run before the memory/reconnect checks.
+
+The bounded area's fixed layout is explicitly pre-explored for both characters.
 Both initially observe the prop on the floor and the open door. The fixture does
 not make unknown layout visible by default in normal play. A can withdraw to a
 position that prevents observation of both the prop and door, while B remains

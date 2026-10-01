@@ -21,14 +21,21 @@ are different answers. Observation changes knowledge; the client does not derive
 knowledge from world truth. The delivery boundary uses the toolkit's disclosure
 answer and does not implement another perception algorithm.
 
-The [first-slice proof](first-slice-proof.md) is the walk for ruling; investigation
+The [first-slice proof](first-slice-proof.md) defines the approved behavioral goal;
+investigation
 and evidence stay on [#508](https://github.com/KirkDiggler/rpg-project/issues/508).
 
-The proposed first slice is **one room, two characters, one ordinary door and one
-pickup-able prop**, with an opaque partition that lets their observations differ.
-The room's fixed layout is explicitly pre-explored in this proof fixture; this is
-not a default for newly entered dungeons. The slice proves observed, remembered,
-and replaced changeable state through the real player path and reload.
+The first-slice goal is **two characters knowing the same area differently**:
+one door, one pickup-able prop, and obstruction that lets their observations
+differ. The Reference Tomb (with the heirloom) is the preferred existing walk
+candidate; a dedicated listed dungeon is also permitted if needed. A known door
+in that dungeon can exercise state memory without bringing secret-door discovery
+into this slice.
+
+The bounded proof area's fixed layout is explicitly pre-explored; this is not a
+default for newly entered dungeons. The slice proves observed, remembered, and
+replaced changeable state through the real player path and reload. The exact
+fixture and positions require a sight check before they become the walk.
 
 Shared fixed geometry need not be copied into every character's memory. Which
 parts a character knows is individual. Mutable prop and door observations cannot
@@ -73,9 +80,9 @@ production knowledge protection.
   explicit scope and ruling; permission to work incrementally grants no unnamed
   exception.
 
-### Proposed first-slice contract — R7–R10 remain open
+### First-slice behavioral contract
 
-- **R7 — Bounded vertical proof.** The first slice uses the one-room fixture in
+- **R7 — Bounded vertical proof.** The first slice uses the bounded fixture in
   Shape, real toolkit observation, session persistence, authenticated player
   delivery and the existing game renderer. Pre-explored fixed geometry is a
   fixture condition, not a substitute for exploration or permission to download
@@ -96,12 +103,18 @@ production knowledge protection.
   latest knowledge; they do not regenerate remembered state from live world
   state. Remembered state is not itself permission to interact with an unseen
   object.
+- **R11 — SDK disclosure, host transport.** The session SDK owns the observer and
+  permitted-content answer across reads, live updates and replay. The API binds
+  authenticated identity and implements transport/storage without adding game
+  visibility rules. An SDK stream interface is an investigation target, not a
+  requirement to rewrite pub/sub or select Redis as part of this slice.
 
 ## Rulings
 
-The settled rows bind the behavior and endpoint of this design, not a storage
-schema or implementation wave. Open rows are proposals. Publication of this
-draft does not authorize implementation.
+The settled rows authorize the first-slice behavioral goal and its architectural
+boundaries. They do not select the storage schema, content-delivery mechanism or
+stream interface; the corresponding Open items need resolution before their
+implementation.
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
@@ -111,10 +124,11 @@ draft does not authorize implementation.
 | R4 | settled | Witnessed absence replaces stale location, not unseen truth | KirkDiggler | 2026-09-30 |
 | R5 | settled | End-state player disclosure excludes undiscovered content | KirkDiggler | 2026-09-30 |
 | R6 | settled | Incremental delivery with explicit compromises | KirkDiggler | 2026-09-30 |
-| R7 | open | First-slice fixture and vertical proof boundary | — | — |
-| R8 | open | Composition of observation and existing intel | — | — |
-| R9 | open | First-slice read/event/content and identity boundary | — | — |
-| R10 | open | First-slice refresh/reload behavior and interaction distinction | — | — |
+| R7 | settled | Bounded vertical goal; existing Tomb or dedicated dungeon candidate | KirkDiggler | 2026-10-01 |
+| R8 | settled | Reuse intel and authoritative observation; exact representation open | KirkDiggler | 2026-10-01 |
+| R9 | settled | First-slice read/event/content and identity boundary | KirkDiggler | 2026-10-01 |
+| R10 | settled | First-slice refresh/reload behavior and interaction distinction | KirkDiggler | 2026-10-01 |
+| R11 | settled | SDK disclosure ownership; stream interface investigation only | KirkDiggler | 2026-10-01 |
 
 ## Open
 
@@ -140,8 +154,13 @@ draft does not authorize implementation.
   prop/door proof.
 - **Knowledge lifetime.** Distinguish reloading/reconnecting to the same encounter
   from leaving and returning to it, starting a new encounter, or revisiting a
-  different revision of a dungeon. The first-slice proposal covers reload and
+  different revision of a dungeon. The first slice covers reload and
   reconnect only.
+- **SDK stream seam.** Trace existing audience selection, event persistence,
+  replay and reconnect before proposing an interface. A replay must not disclose
+  an event's hidden facts merely because the observer acquired related knowledge
+  later. A possible Redis Streams implementation belongs to the host adapter;
+  ordering, cursors and recovery contracts remain to be measured and shaped.
 - **Scale.** Choose representative geometry, prop and observer counts and a
   measured budget before selecting new indexing or compression.
 - **Later slices.** Specify sight-shaped floor/wall discovery and the two-room
