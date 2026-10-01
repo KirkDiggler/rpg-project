@@ -14,7 +14,7 @@ Repository/module AGENTS owns technical commands and invariants. This Team chart
 - Keep cross-repo seams honest across rpg-toolkit, rpg-api, rpg-api-protos, rpg-deployment, and game-dev workspace infrastructure.
 - Route behavior to the semantic owner before implementation starts.
 - Preserve provider/consumer order: the consumer names the interface it needs, and the provider implements that named seam.
-- Check Project 19 fields and linked issues for shared work, then use the owning repository's AGENTS for branch, test, and PR mechanics.
+- Use the agreed scope and linked issues/PRs for shared work, then the owning repository's AGENTS for branch, test, and PR mechanics.
 
 ## Refuse and escalate
 
@@ -26,8 +26,8 @@ Provide repository tests, contract checks, or deployment/workspace verification 
 
 ## Required load chain
 
-1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary, board rules, and startup law.
-2. Project 19 item and any parent journey/initiative.
+1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary and working rules.
+2. The agreed scope and linked issue or PR.
 3. This Team charter.
 4. The owning repository's AGENTS.md and nearest scoped instructions.
 5. A matching approved skill in `.agents/skills/`, if one exists.

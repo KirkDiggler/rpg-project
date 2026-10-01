@@ -124,18 +124,23 @@ this skill or the owning guidance. Do not turn every incident into a new gate.
 
 ## The gate
 
-No implementation before the design doc is ruled on by the operating human —
-the doc as a PR, rulings entered in the table with attribution. A ruling
-records its scope: one that binds a single doc's shape must say so, or it
-will be read as doctrine. Once this gate is satisfied, a faithful checked plan
-needs no separate approval. A change to the design returns only the affected
-ruling to the operator. This authorization does not replace repository review,
-release, merge or other explicit safety gates.
+Game additions and architectural changes need the operator's design agreement
+before implementation. Agreement can be given in conversation and recorded in
+the linked issue or design PR; a separate design PR is not required for every
+change. When a law doc is produced, enter its rulings with attribution and scope.
+A ruling about one doc does not become workspace-wide doctrine.
 
-Where the doc lives: cross-repo designs in
-`rpg-project/ideas/<topic>/design.md` (that PR stays open as the tracking
-surface); toolkit-scoped designs in `rpg-toolkit/docs/ideas/<name>/`; other
-repos by their own convention.
+Once the design is agreed, a faithful checked plan needs no separate approval.
+A change to the design returns only the affected decision to the operator.
+Routine documentation and mechanical work do not need a separate design cycle.
+This authorization does not replace repository review, release, merge or other
+explicit safety gates.
+
+Where a design doc is needed: cross-repo designs in
+`rpg-project/ideas/<topic>/design.md`; toolkit-scoped designs in
+`rpg-toolkit/docs/ideas/<name>/`; other repos by their own convention. Package
+rules and seams remain documented with their owning source. The issue can track
+multiple implementing PRs; a design PR need not stay open to track execution.
 
 ## The language
 
@@ -146,6 +151,6 @@ assumes nothing about who is at the wheel.
 
 ## Deliberately not in this version
 
-Classification ladders, staged approval gates, spec directories and vocabulary
-borrowed from other processes. The house gate is the one that exists: the
-operator rules on the PR'd design doc.
+Classification ladders, staged approval gates, mandatory design-PR ceremonies,
+spec directories and vocabulary borrowed from other processes. The meaningful
+gate is the operator's agreement on what is being built.
