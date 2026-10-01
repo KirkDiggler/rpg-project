@@ -26,14 +26,13 @@ honest.
 | Cross-team | [`cross-team/prompt.md`](cross-team/prompt.md) | initiative seams, integration, coordination, and end-to-end verification |
 
 These five Team charters are the stable paths for new multi-contributor work.
-Project 19's Team field selects the outcome lens; the owning repository still
-selects the technical law.
+The task's outcome selects the Team lens; the owning repository selects the
+technical law. No board field is required.
 
 ## Required load order for new work
 
-1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary, Project 19 rules,
-   and startup procedure.
-2. The Project 19 item, including its parent journey/initiative when present.
+1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary and working rules.
+2. The agreed scope and linked issue or PR.
 3. The selected Team charter above.
 4. The owning repository's AGENTS.md and nearest scoped instructions.
 5. A matching approved skill in `.agents/skills/`, if one exists.
@@ -55,7 +54,7 @@ runtime migration is complete. Keep them in place:
   `bug-fix-coordinator/`, and `platform-simplifier/`.
 
 Those directories are **temporary compatibility inputs**, not the standing
-ownership model for new Project 19 work. Do not delete, rename, or migrate them
+ownership model for new work. Do not delete, rename, or migrate them
 until the game-dev runtime migration that consumes the five Team charters has
 landed and been verified.
 

@@ -16,8 +16,8 @@ base or a "dead" file turns out to be load-bearing.
 Every new dispatch prompt names, before its task description:
 
 - `rpg-project/AGENTS.md` — the boundary rule and the vocabulary
-- `rpg-project/CLAUDE.md` — startup, base branches, board rules, proto versioning
-- the Project 19 issue or PR that owns the slice, plus its parent journey when relevant
+- `rpg-project/CLAUDE.md` — shared vocabulary, boundaries and working rules
+- the issue or PR carrying the work's agreed scope
 - the relevant `docs/teams/roles/<team>/prompt.md`
 - the owning repository's AGENTS.md and nearest scoped instructions
 - `.agents/skills/` only when a matching approved skill exists
@@ -25,7 +25,7 @@ Every new dispatch prompt names, before its task description:
 `sessions/active.md` remains a shared handoff for cold-start orientation, but new
 dispatch briefs do not depend on it as a per-agent task store. Local continuity
 belongs in ignored `active.md`, copied from `docs/templates/local-active.md`, and
-shared work remains on Project 19.
+shared work remains in linked issues and PRs. Do not require a project board.
 
 **Corollary: a process fact that is not in rpg-project does not exist.** The web
 `development` branch flow lived only in rpg-dnd5e-web#630, so a session that
@@ -153,49 +153,45 @@ and linked evidence. Do not preload every role context file or unrelated history
 Return a compact receipt (scope, head, checks, gaps, artifact links), not a whole
 transcript. Inspect detailed logs when a failure or claim needs investigation.
 
-## 10. Make work visible early; keep toolkit releases module-sized
+## 10. Issues are the paper trail; drafts signal unfinished integration
 
-**Drafts provide visibility, not a readiness claim.** Open and link a draft PR on
-the first working push. Update it at meaningful checkpoints with what changed,
-what decisions need the human, current validation, and known gaps. Do not wait
-for the whole feature, all checks, or an agent review loop before the human can
-see the work. Keep these states distinct:
+**Visibility does not require draft status.** Link PRs to the issue carrying
+scope and decisions; one issue may follow multiple PRs, including across repos.
+Use closing keywords only when that PR completes the issue's remaining scope.
+No board entry, one-issue-per-branch mapping or separate checkpoint ceremony is
+required. Update the paper trail when scope, evidence or a decision changes.
 
-- **Draft:** implementation/integration is in progress; checkpoint feedback is
-  welcome and pending checks or decisions are visible.
-- **Ready for review:** the declared scope is implemented, applicable checks are
-  green, and remaining dependency/review status is explicit. A completed review
-  is not required merely to enter the review queue.
-- **Merge-ready:** required review findings are dispositioned and release
-  prerequisites, including provider tag adoption, are satisfied. This state is
-  not permission to merge without the operator's authorization.
+- **Draft:** unfinished work, or a local-stack integration PR awaiting the
+  agreed verification or replacement of pseudo-version pins with released tags.
+  Technical review can happen while draft; draft here signals not for merging.
+- **Ready for review:** scope implemented and applicable checks complete. Open
+  directly in this state when appropriate; awaiting human or independent review
+  is not itself a reason to mark a PR draft.
+- **Merge-ready:** required review, verification and release prerequisites are
+  satisfied. This state does not authorize an automatic merge.
 
-**One toolkit Go module per PR.** Toolkit modules build and tag independently in
-CI. A feature spanning modules needs separate PRs, identified by the nearest
-`go.mod`; directory nesting does not make child modules part of their parent.
-Bane therefore has four toolkit PRs: `rulebooks/dnd5e`, `encounter`, `resolution`,
-and `session` (the latter three nested under `rulebooks/dnd5e`). Repository-wide
-instructions may accompany the relevant module, but another module's files may
-not be bundled into that PR.
+For a local-stack wave, protos are the early-merge exception: they express the
+agreed design contract, and merge CI publishes the bindings needed to build the
+stack. They do not wait for the full-stack walk; their own checks and human
+merge authorization still apply.
 
-Draft consumers can expose work using verified pushed provider pseudo-versions.
-Before merging a consumer, adopt the provider's actual successful CI-generated
-tag in the consumer's own PR and rerun its checks. Never fabricate tags or merge
-a multi-module batch to evade release sequencing. Preserve working branches
+Use the local development scripts for ephemeral integration environments and
+pushed provider pseudo-versions while building the wave. After verification,
+merge providers, adopt their actual successful CI-generated tags in consumers,
+and rerun the affected checks before consumer merges. Preserve provider branches
 while dependency pins still reference them.
 
-Use stable, issue-linked feature/module branch names, such as
-`feat/1601-bane-session`, rather than runtime/session-generated names for published
-work. Runtime IDs belong in execution metadata. Preserve existing PRs and pinned
+Use stable, descriptive feature/module branch names rather than runtime/session-
+generated names for published work. Issue references are useful, not a naming
+gate. Runtime IDs belong in execution metadata. Preserve existing PRs and pinned
 branches rather than rewriting their history just to improve naming.
 
 Expose each layer while it is being worked on. Do not build the whole dependent
 wave before the human can inspect the first contract. Parallel work is useful
 when scopes and interfaces are already agreed; it must not bypass that feedback.
 
-These are Kirk's Bane review corrections (2026-09-10): the implementation was
-visible too late and the initial toolkit PR incorrectly bundled four release
-units. The toolkit's AGENTS.md must state both rules explicitly.
+Toolkit release and package-boundary mechanics live in the toolkit's own
+instructions and source-owning packages; shared guidance does not duplicate them.
 
 ## 11. Spend ceremony on uncertainty, not repetition
 

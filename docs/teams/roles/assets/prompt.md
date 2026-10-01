@@ -26,8 +26,8 @@ Provide manifest checks, asset sync output, render/screenshot evidence, or anima
 
 ## Required load chain
 
-1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary, board rules, and startup law.
-2. Project 19 item and any parent journey/initiative.
+1. `rpg-project/AGENTS.md` / `CLAUDE.md` for shared vocabulary and working rules.
+2. The agreed scope and linked issue or PR.
 3. This Team charter.
 4. The owning repository's AGENTS.md and nearest scoped instructions.
 5. A matching approved skill in `.agents/skills/`, if one exists.

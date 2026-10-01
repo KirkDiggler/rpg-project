@@ -1,6 +1,6 @@
 ---
 name: design
-description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam. Governs the conversation (probe before propose, shape before detail) and the artifact (shape, law, rulings, open) so the doc stays law and the case file stays in the PR.
+description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam. Governs collaborative design, a checked implementation plan authorized by that design, and execution with architectural-gap judgment. Keeps the design doc law and the case file in the PR.
 ---
 
 # Design
@@ -16,10 +16,13 @@ description: Use when a session designs anything — a new capability, a changed
    head; detail that arrives first has nowhere to go.
 3. **Approaches before design.** Two or three, with trade-offs and a
    recommendation. YAGNI ruthlessly — remove anything no ruling asked for.
-4. **One question at a time**, multiple choice preferred. A design
-   conversation is steered, not surveyed.
-5. **The ratchet.** Complexity discovered mid-design upgrades the
-   conversation. Say so; nothing downgrades silently.
+4. **One question at a time**, multiple choice preferred, when an unresolved
+   decision needs the operator. This limits interruptions; it does not require
+   a question at every step. Carry settled decisions forward. Investigation,
+   progress updates and routine next steps are not permission gates.
+5. **The ratchet.** New complexity prompts a check against the agreed shape,
+   not an automatic stop. Bring back a changed architectural decision; handle
+   implementation detail within the design.
 
 ## The artifact
 
@@ -55,17 +58,89 @@ The tell is greppable and the check makes it a mechanism: run
 finding is the smell of case file in law, exempt only by the operator's
 inline `<!-- case-file -->` ruling.
 
+## From design to implementation
+
+Design with the operator in terms they can judge: responsibilities, boundaries,
+behavior and what done means. The session then translates that agreement into
+an implementation plan; the operator need not supervise that translation.
+
+```mermaid
+flowchart TD
+    D[Design together] --> A[Operator approves design]
+    A --> P[Derive and check implementation plan]
+    P --> I[Implement and verify]
+    P -->|Architectural gap| Q[Resolve the specific design decision]
+    I -->|Architectural gap| Q
+    Q --> P
+    I --> R[Report results and remaining gaps]
+```
+
+**A faithful plan is authorized by the approved design.** Make the plan visible,
+check it, then execute without asking for a second approval. Planning is real
+work before implementation, not a retrospective list of edits. Keep it in the
+issue or PR, or a linked working document, separate from the design's law.
+
+The plan is as small as the work allows and names:
+
+- the design requirements each step delivers, including acceptance checks;
+- the owning repositories/modules and affected contracts, based on inspection;
+- the development sequence, dependencies and applicable merge/release order;
+- verification at the changed seams and observable proof of the intended result;
+- assumptions and gaps, resolved or explicitly deferred within the agreed scope.
+
+Before implementation, walk the plan against both the design and the current
+code. Check for missing owners, unavailable provider capabilities, integration
+steps and requirements without proof. Resolve what the design answers; bring
+back only decisions it does not authorize. Do not invent extra features to fill
+hypothetical gaps.
+
+## Gap judgment
+
+- **Implementation detail:** local algorithms, helpers, file organization or
+  test fixtures that preserve the agreed contracts and responsibilities. Choose,
+  verify and continue; update the plan when useful.
+- **Gap answered by the design:** a missing step or adapter whose owner and
+  behavior follow from the agreement. Add it to the plan and continue.
+- **Architectural gap:** proceeding requires changing or inventing an ownership
+  boundary, public contract, source of truth, lifecycle, dependency direction,
+  user-visible behavior or acceptance scope not settled by the design. Pause
+  the affected work and bring back the specific decision with evidence, its
+  consequence and a recommendation. Do not reopen settled parts of the design.
+
+Difficulty, extra edits or a failing test alone are not architectural gaps.
+Reversibility alone does not authorize changing the architecture. When unsure,
+name the invariant that might change; investigate first if evidence can settle
+it, otherwise ask about that decision rather than seeking blanket permission.
+
+Apply the same test during planning, implementation and verification. A gap
+found after implementation is reported plainly: what was found, impact on the
+agreement, and whether it blocks completion or is a proposed follow-up. Do not
+silently weaken acceptance criteria, claim completion with a known blocking gap,
+or defer a required architectural decision on the operator's behalf.
+
+Operator corrections calibrate this judgment. Keep the concrete example and
+reasoning in the issue or PR; carry the confirmed reusable distinction into
+this skill or the owning guidance. Do not turn every incident into a new gate.
+
 ## The gate
 
-No implementation before the design doc is ruled on by the operating human —
-the doc as a PR, rulings entered in the table with attribution. A ruling
-records its scope: one that binds a single doc's shape must say so, or it
-will be read as doctrine.
+Game additions and architectural changes need the operator's design agreement
+before implementation. Agreement can be given in conversation and recorded in
+the linked issue or design PR; a separate design PR is not required for every
+change. When a law doc is produced, enter its rulings with attribution and scope.
+A ruling about one doc does not become workspace-wide doctrine.
 
-Where the doc lives: cross-repo designs in
-`rpg-project/ideas/<topic>/design.md` (that PR stays open as the tracking
-surface); toolkit-scoped designs in `rpg-toolkit/docs/ideas/<name>/`; other
-repos by their own convention.
+Once the design is agreed, a faithful checked plan needs no separate approval.
+A change to the design returns only the affected decision to the operator.
+Routine documentation and mechanical work do not need a separate design cycle.
+This authorization does not replace repository review, release, merge or other
+explicit safety gates.
+
+Where a design doc is needed: cross-repo designs in
+`rpg-project/ideas/<topic>/design.md`; toolkit-scoped designs in
+`rpg-toolkit/docs/ideas/<name>/`; other repos by their own convention. Package
+rules and seams remain documented with their owning source. The issue can track
+multiple implementing PRs; a design PR need not stay open to track execution.
 
 ## The language
 
@@ -76,6 +151,6 @@ assumes nothing about who is at the wheel.
 
 ## Deliberately not in this version
 
-Classification ladders, staged approval gates, spec directories and vocabulary
-borrowed from other processes. The house gate is the one that exists: the
-operator rules on the PR'd design doc.
+Classification ladders, staged approval gates, mandatory design-PR ceremonies,
+spec directories and vocabulary borrowed from other processes. The meaningful
+gate is the operator's agreement on what is being built.

@@ -161,32 +161,45 @@ working. The mistake is three versions *of one thing*.
 One focus per session, stated out loud — *working on X, done means Y* — and
 only what serves it gets loaded.
 
-1. **Project 19** — https://github.com/users/KirkDiggler/projects/19 — is the
-   shared state. Boards #11–#13 are historical records, not work sources.
-2. Read the Team lens for the assigned work in `docs/teams/roles/`.
+1. Follow the operator's stated task. Ask for focus only when it is missing.
+   Issues and PRs are the shared paper trail; no project board is required.
+2. Read the Team lens for the work in `docs/teams/roles/`.
 3. Read the **owning repository's** `CLAUDE.md`/`AGENTS.md` and nearest scoped
-   instructions. That is where the commands and invariants are.
+   instructions. Toolkit rules and package seams belong in their source-owning
+   packages, not in a parallel project-management specification.
 
 - **Work in a worktree, one per line of work**, under `.worktrees/<name>` in
   every child repository.
-- One issue per PR. No branch without an issue. No issue without a board entry.
-- Publish the draft on the first working push and report the PR link immediately,
-  with review explicitly pending. Visibility is not withheld while a reviewer runs.
-- **Ready for review** means the declared scope is implemented and applicable
-  checks are green. **Merge-ready** additionally requires completed review and
-  release prerequisites. Neither label authorizes an automatic merge.
+- PRs link to an issue explaining the deliberate work. One issue may follow
+  multiple PRs across repositories; do not manufacture an issue for every branch
+  or require a board entry. Close the issue when its scope is complete, not when
+  the first linked PR lands.
+- Publish work for visibility without making every PR a draft. Completed,
+  checked work can open ready for review; pending review alone is not a draft
+  condition.
+- Local-stack integration PRs stay draft while verification or replacement of
+  pseudo-version pins with released provider tags is outstanding. They may be
+  technically reviewable, but are not mergeable. Protos expressing the agreed
+  design contract can merge before stack verification so CI publishes bindings.
+- **Ready for review** and **merge-ready** are distinct. Merge readiness requires
+  applicable verification, review and release prerequisites; neither label
+  authorizes an automatic merge.
 - Feature PRs and rules/engine changes get one independent review round from a
   session that did not implement the change; doc-only PRs, pin bumps and small
   mechanical fixes may skip it. The record is a verdict published on the PR — a
   local review file is not the review record.
-- Anything on your own machine is yours and binds nobody. Shared work is the
-  board and the PRs.
+- Anything on your own machine is yours and binds nobody. Shared work is
+  recorded in linked issues and PRs.
 
-Cross-repo designs live here in `ideas/<topic>/design.md`, reviewed as an
-rpg-project PR before implementation, and that PR stays open as the tracking
-surface until the implementing repos have landed. The design skill
-(`.agents/skills/design/SKILL.md`) governs the conversation and the doc's
-shape.
+Adding to the game starts with designing the change with the operator. Record
+that agreement, then derive and check a faithful plan and implement it without
+another approval ceremony. Approval can happen in conversation and be recorded
+in the issue or design PR; a separate design PR is not a universal prerequisite.
+Cross-repo design documents live in `ideas/<topic>/design.md`. The linked issue
+can follow the implementing PRs; a design PR need not stay open as a task store.
+The design skill (`.agents/skills/design/SKILL.md`) governs design, planning and
+architectural-gap judgment. Routine documentation and mechanical work do not
+need a separate design process.
 
 ## When you hit a gap
 
