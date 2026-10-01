@@ -4,15 +4,18 @@
 
 ```mermaid
 flowchart TD
-    W[World state] --> O[Encounter: lawful observation and discovery]
-    O --> K[Individual geometry discovery and latest mutable intel]
-    I[Existing intel and perception primitives] --> K
-    G[Shared fixed geometry] --> P[Toolkit: observer knowledge projection]
-    K --> P
-    P --> S[Session: load, act, save and observer reads]
-    S --> D[Player delivery: identity-bound knowledge and permitted content]
+    G[Shared fixed room geometry] --> K[Encounter: individual room discovery]
+    W[Mutable world state] --> O[Encounter: observation and latest intel]
+    K --> S[Session: load, act, save and permitted projection]
+    O --> S
+    S --> D[API: identity-bound reads and existing event delivery]
+    D --> N[Snapshot: known rooms and latest observations]
+    D --> R[Room revealed: newly known fixed room data]
+    D --> U[Observation updates: creatures, mutable props and door state]
+    N --> V[Client: retain known geometry and render current or remembered intel]
+    R --> V
+    U --> V
     C[Authored appearance content] --> D
-    D --> V[Client: render current or remembered knowledge]
     C --> B[Separately authorized builder access]
 ```
 
@@ -28,31 +31,42 @@ and evidence stay on [#508](https://github.com/KirkDiggler/rpg-project/issues/50
 The first-slice goal is **discovering an unknown room without receiving its
 layout in advance, then remembering its changeable contents independently**.
 Two characters start in room 1 with room 2 unseen behind a closed ordinary door.
-A character looks through the opening, learns the geometry and fixed scenery it
-observes, and sees a holdable prop. Withdrawing around a corner leaves that prop
-and observed door state remembered, as with creature intel. A further door at
-the end of room 2 does not deliver the layout of room 3 behind it.
+Opening the door reveals room 2's complete fixed layout and scenery to the
+opener. First observing any part of a room also reveals its fixed layout to that
+observer. Internal LOS obstructions do not withhold floor or fixed scenery within
+a revealed room. A holdable prop behind an altar remains absent until observed,
+like a creature. Withdrawing around a corner leaves an observed prop and door
+state remembered. A further closed door at the end of room 2 does not deliver
+room 3's interior.
 
 The Reference Tomb (with the heirloom) is an existing walk candidate; a dedicated
 listed dungeon is also permitted. The fixture and positions must support unknown
 layout, lawful sight separation and pickup without ending the run. Room 2 is not
 pre-explored. Secret-door checks remain outside the slice.
 
-One authoritative geometry map includes fixed non-holdable scenery; it is shared
-on the server, not downloaded whole by every player. Which geometry each
-character has discovered is individual. Fixed scenery does not require a mutable
-intel record per prop. Creatures, holdable props and door open/closed state use
-current/remembered intel. Their unseen live state cannot replace the character's
-latest observation. Exact discovery units, indexes and payload types remain open.
+One authoritative geometry map includes fixed scenery; it is shared on the
+server, not downloaded whole by every player. Room discovery is individual.
+Within a revealed room, fixed data remains known and unchanged for the first
+slice; visibility may grey its presentation without removing that data. Fixed
+scenery does not require a mutable intel record per prop. Creatures, movable or
+holdable props and door open/closed state use current/remembered intel. Their
+unseen live state cannot replace the character's latest observation.
+
+The snapshot restores known room records and latest mutable observations. A
+room-revealed event carries the newly known room's fixed data, not a replacement
+of the entire known atlas. Mutable observations update independently through the
+creature-style observation/memory lifecycle. Existing read, event and recovery
+mechanisms carry these answers; exact DTOs and indexes remain open.
 
 Appearance remains content, not a rendering document embedded in encounter
 state. Player delivery selects only permitted content; separate builder authority
 may permit the complete authored document. The mechanism and responsibility split
 for that selection require a ruling before implementation.
 
-The endpoint is sight-shaped exploration with undiscovered content absent from
-player delivery. Slice 1 proves unknown geometry delivery in its bounded fixture, not
-secret-door checks or compatibility with arbitrary authored dungeons. A
+The first-slice endpoint is room-level fixed discovery plus sight-shaped mutable
+observation, with undiscovered rooms and unobserved mutable subjects absent from
+player delivery. Finer LOS-clipped geometry discovery is deferred. Slice 1 does
+not prove secret-door checks or compatibility with arbitrary authored dungeons. A
 fixture-only or local-only proof is labeled as such, not shipped as complete
 production knowledge protection.
 
@@ -65,8 +79,8 @@ production knowledge protection.
   explicit intel sharing is outside this work's first slice.
 - **R2 — Discovery is not interior sight.** Finding a concealed door teaches the
   discoverer about that door, not the room behind it. A character who perceives it
-  standing open can discover it independently; room contents still require their
-  own observation.
+  standing open can discover it independently; mutable room contents still
+  require their own observation.
 - **R3 — Latest knowledge, not history.** Loss of sight preserves the last-known
   observation. New evidence that disproves it replaces the stale knowledge rather
   than retaining an additional historical version.
@@ -86,15 +100,29 @@ production knowledge protection.
 ### First-slice behavioral contract
 
 - **R12 — Unknown-room vertical proof.** The first slice starts in room 1 with
-  room 2 unseen behind a closed door. Room 2's layout and positioned content are
-  absent from that player's client until lawful observation teaches them. A
-  visible further door does not disclose room 3's interior. The proof uses real
-  toolkit observation, persistence, authenticated delivery and the game renderer.
-- **R13 — Fixed geometry, mutable intel.** Fixed non-holdable scenery belongs to
-  the shared geometry map, with individual discovery controlling delivery.
-  Creatures, holdable props and door state use current/remembered observations.
+  room 2 undiscovered behind a closed door. Its fixed data is absent until room
+  discovery; mutable subjects remain absent until their own observation. A
+  visible further closed door does not disclose room 3's interior. The proof uses
+  real toolkit discovery/observation, persistence, authenticated delivery and the
+  game renderer.
+- **R13 — Fixed geometry, mutable intel.** Fixed scenery belongs to the shared
+  geometry map, with individual room discovery controlling delivery. Fixed room
+  data excludes mutable placements and unobserved door state. Creatures, movable
+  or holdable props and door state use current/remembered observations.
   Loss of sight preserves those observations without maintaining a mutable
   memory record for every fixed prop.
+- **R14 — Room-level fixed discovery (first slice).** Opening a door into an
+  undiscovered room reveals its full fixed layout and scenery to the opener.
+  First observing any part of the room also reveals its fixed data to that
+  observer. LOS obstructions within the revealed room do not clip that delivery;
+  they still gate creature, mutable-prop and door-state observations. Known fixed
+  room data remains retained when visibility is lost.
+- **R15 — Delivery follows the two lifecycles.** A snapshot supplies known room
+  records and latest mutable observations. A room-revealed event carries a newly
+  known room's fixed data rather than replacing the entire known atlas. Mutable
+  subjects update through the creature-style observation/memory lifecycle,
+  independently of room revelation. Reconnect restores the character's own
+  knowledge through existing read and event recovery mechanisms.
 - **R8 — Existing knowledge mechanism.** The slice composes existing intel
   replacement semantics rather than creating an observation-history store. It
   supplies evidence using encounter-owned perception rules, including range,
@@ -137,17 +165,18 @@ implementation.
 | R9 | settled | First-slice read/event/content and identity boundary | KirkDiggler | 2026-10-01 |
 | R10 | settled | First-slice refresh/reload behavior and interaction distinction | KirkDiggler | 2026-10-01 |
 | R11 | settled | SDK disclosure ownership; stream interface investigation only | KirkDiggler | 2026-10-01 |
-| R12 | settled | Unknown room 2 absent until observed; further door does not deliver room 3 | KirkDiggler | 2026-10-01 |
-| R13 | settled | Fixed scenery in shared geometry; creatures, holdable props and door state in intel | KirkDiggler | 2026-10-01 |
+| R12 | settled | Undiscovered room 2 absent until room discovery; mutable subjects require observation; further closed door does not deliver room 3 | KirkDiggler | 2026-10-01 |
+| R13 | settled | Fixed scenery in shared geometry; creatures, movable/holdable props and door state in intel | KirkDiggler | 2026-10-01 |
+| R14 | settled | First-slice whole-room fixed discovery on opening a door or first observing part of the room; mutable LOS remains | KirkDiggler | 2026-10-01 |
+| R15 | settled | Snapshot of known records; room-revealed fixed data; separate mutable observation updates; exact DTOs open | KirkDiggler | 2026-10-01 |
 
 ## Open
 
-- **Observation unit.** Select spatial discovery units for fixed geometry and
-  observation support for creature, holdable-prop and door intel without storing
-  competing answers about the same placement. The
-  absence witness must describe the area it actually observed; partial footprint
-  visibility, concealment and unavailable senses cannot silently count as a
-  complete empty observation.
+- **Mutable observation support.** Select observation support for creature,
+  movable/holdable-prop and door intel without storing competing answers about
+  the same placement. The absence witness must describe the area it actually
+  observed; partial footprint visibility, concealment and unavailable senses
+  cannot silently count as a complete empty observation.
 - **Shared geometry.** Choose the explored-geometry representation and its
   association with the content revision. A shared definition does not imply
   shared discovery, nor may a mutable content key rewrite a remembered picture.
@@ -167,14 +196,18 @@ implementation.
   from leaving and returning to it, starting a new encounter, or revisiting a
   different revision of a dungeon. The first slice covers reload and
   reconnect only.
-- **SDK stream seam.** Trace existing audience selection, event persistence,
-  replay and reconnect before proposing an interface. A replay must not disclose
-  an event's hidden facts merely because the observer acquired related knowledge
-  later. A possible Redis Streams implementation belongs to the host adapter;
-  ordering, cursors and recovery contracts remain to be measured and shaped.
+- **Delivery payloads and existing stream seam.** Select the snapshot's room
+  records, the room-revealed fixed-data payload and mutable observation updates
+  using existing DTOs and mechanisms where they fit. Room discovery does not
+  require a replacement transport or generic whole-atlas synchronization event.
+  Preserve original recipient knowledge in replay; later discovery does not
+  retroactively authorize hidden facts in earlier events. Exact payload types,
+  ordering, cursors and recovery details remain to be checked against existing
+  mechanisms.
 - **Scale.** Choose representative geometry, prop and observer counts and a
   measured budget before selecting new indexing or compression.
-- **Later slices.** Specify the secret-door discovery proof, then broaden
-  sight-shaped content delivery and compatibility beyond the first fixture.
+- **Later slices.** Revisit finer LOS-clipped fixed-geometry discovery, specify
+  the secret-door discovery proof, then broaden content delivery and compatibility
+  beyond the first fixture.
   Later acceptance includes every player-facing path, not just the first-slice
   fixture.
