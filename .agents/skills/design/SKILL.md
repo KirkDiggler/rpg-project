@@ -1,11 +1,29 @@
 ---
 name: design
-description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam. Governs collaborative design, a checked implementation plan authorized by that design, and execution with architectural-gap judgment. Keeps the design doc law and the case file in the PR.
+description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam. Governs open brainstorming, collaborative design, a checked implementation plan authorized by that design, and execution with architectural-gap judgment. Keeps the design doc law and the case file in the PR.
 ---
 
 # Design
 
-## The order
+## Brainstorming — throwing noodles at the wall
+
+When the operator is exploring an idea, stay loose. We are discovering what
+might be worth building, not selecting from a menu the session has invented.
+Offer possibilities, follow tangents, connect ideas and ask open-ended questions
+when useful. Do not use multiple-choice questions to funnel the exploration.
+Examples are sparks, not an exhaustive set of options.
+
+The structured design order below applies once there is a direction to shape,
+not to every speculative thought. Brainstorming does not require a diagram,
+a shortlist of approaches, rulings or a design document. Check facts when they
+matter, but do not turn each possibility into a code investigation or plan.
+An interesting idea is not an approved requirement or permission to implement.
+
+Follow the operator's move toward making an idea concrete; if that intent is
+unclear, ask whether to keep exploring or start shaping it. This is a conversational
+transition, not a new approval ceremony. Exploration can reopen during design.
+
+## The design order
 
 1. **Probe before propose.** Measure the current state first — read the code,
    run the check, read the owning package's godoc and design doc. A design
@@ -16,10 +34,12 @@ description: Use when a session designs anything — a new capability, a changed
    head; detail that arrives first has nowhere to go.
 3. **Approaches before design.** Two or three, with trade-offs and a
    recommendation. YAGNI ruthlessly — remove anything no ruling asked for.
-4. **One question at a time**, multiple choice preferred, when an unresolved
-   decision needs the operator. This limits interruptions; it does not require
-   a question at every step. Carry settled decisions forward. Investigation,
-   progress updates and routine next steps are not permission gates.
+4. **One question at a time**, when an unresolved decision needs the operator.
+   Multiple choice can help with a genuinely bounded design decision once we
+   know what we are building; it is not the default and never an exploration
+   funnel. This limits interruptions; it does not require a question at every
+   step. Carry settled decisions forward. Investigation, progress updates and
+   routine next steps are not permission gates.
 5. **The ratchet.** New complexity prompts a check against the agreed shape,
    not an automatic stop. Bring back a changed architectural decision; handle
    implementation detail within the design.
