@@ -1,0 +1,238 @@
+# Weapon and spell information — working plan
+
+Status: design investigation, not an implementation-ready handoff. R1, R2 and
+R6–R8 in [design.md](design.md) are settled; the remaining contracts in R3–R5
+remain open. No gameplay or contract changes are authorized by this working
+document.
+
+Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
+Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-project/issues/307).
+
+## Current design artifact
+
+[Toolkit contract proposal](toolkit-contract.md) is the current concrete draft:
+package dependencies, shared values, operation-specific assessments, composition,
+worked cases, migration owners and measured baseline tests. It is not implemented
+output, an approved wire schema or an implementation-ready handoff.
+
+[Contribution contract sketch](contribution-sketch.md) is the introductory worked
+example. R8 settles the Inspiration opportunity/offer behavior and frozen
+continuation; the remaining contracts in R3–R5 remain open.
+
+## Immediate next design step
+
+The first concrete toolkit proposal is written and checked against current source
+and focused baseline tests. Before deriving endpoint fields or starting gameplay
+implementation, complete the following contract checks:
+
+1. **Drafted:** shared data vocabulary below an action-specific assessment
+   package, with proposed rule interfaces, the resolution read entry and the
+   detached result projected by session. The production import graph was checked
+   to avoid an actions → saves → contributions → actions cycle.
+2. **Drafted; ordering decision open:** payload variants, missing-context and
+   stacking semantics, with opportunities distinct from contributions and concrete
+   asks. Source inspection shows that nominal chain stages do not settle
+   normalization versus incidental insertion/roll order.
+3. **Worked on paper, not implemented:** Bless + Rage, an ability/die replacement,
+   target-dependent eligibility, and Inspiration's advance read → frozen offer →
+   spend/keep continuation; also save/healing spells and authored non-numeric
+   content. Paired-rule ordering and visibility require discriminating tests,
+   not only these examples.
+4. Identify required migrations from chain-only handlers, assembly provenance,
+   and consumption callbacks. No tooltip-only predicates and no quiet omissions
+   from an answer claimed to be complete.
+5. Resolve only architectural decisions uncovered by those examples. Then derive
+   the concrete module/API/web handoffs and verification commands in the checked
+   implementation plan, preserving provider-first release adoption.
+
+## Objective
+
+A player can understand a weapon or spell while choosing a character and while
+using that character's current actions. Active effects such as Rage and Bless
+are required information, not a deferred enhancement. The layout redesign is
+separate from delivering truthful information.
+
+## Measured starting point
+
+Snapshots: project `c0010a0`, toolkit `b784cf79`, API `fa1a0779`, protos
+`729defe`, web `9cfd4ca6`. All inspection paths are under each repository's
+`.worktrees/choice-info-scout`. Findings are source inspection, not browser or
+runtime acceptance.
+
+- Creation weapon choices already carry enriched equipment information.
+- Creation spells use ref choices plus `ListSpellsByLevel`. `SpellInfo` already
+  carries `description` (`rpg-api-protos/dnd5e/api/v1alpha1/character.proto:1014`).
+  Web retains the catalog objects but supplies only the name to the picker
+  (`rpg-dnd5e-web/src/components/ChoiceRenderer.tsx:212`). The catalog hook only
+  requests levels 0 and 1 (`src/api/useSpellCatalog.ts:14`).
+- In-play identity messages are deliberately thin: AttackRef is ref/name/damage
+  type, SpellRef is ref/name (`rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto:1411,1458`).
+  The action tooltip explicitly records missing weapon arithmetic
+  (`rpg-dnd5e-web/src/components/session/combat-experience/actionTooltip.ts:10`).
+  Existing issue: https://github.com/KirkDiggler/rpg-project/issues/307 (open,
+  previously deferred; narrower than this effort).
+- The API scout verified the relevant fields against its pinned generated Go
+  module and toolkit versions: dnd5e v0.197.0 and session v0.112.0. Toolkit HEAD
+  and an API pin are distinct evidence; do not assume changing the former changes
+  the latter.
+- Spell content holds execution profiles and a separate incomplete prose catalog
+  (`rpg-toolkit/rulebooks/dnd5e/spells/cast.go`, `spells/data.go`). Do not turn a
+  catalog completeness fix into implementing every catalogued spell.
+- `character.AssembleAttack` explicitly compiles static evidence only; situational
+  effects contribute during resolution (`character/attack_definition.go:24`).
+  The shared assembler makes the same boundary explicit
+  (`combat/weaponattack/weaponattack.go:21`). Therefore an action definition
+  alone does not establish a complete current-action explanation.
+- Bless/Bane already implement a pure unresolved-contribution capability:
+  `events/roll_trace.go:47`, `conditions/blessed.go:151`,
+  `conditions/baned.go:152`. The recipient selects one provider per declared
+  stacking group before asking it to describe (`conditions/baned.go:190`).
+  Strike consumes those descriptions before rolling (`resolution/strike.go:477`).
+- Rage's damage predicate and contribution live inside the damage chain
+  (`conditions/raging.go:413`). It checks the effective ability after earlier
+  modifiers, not just the initial action's ability. The contribution extraction
+  must preserve that ordering.
+- Damage dice are rolled before the damage chain (`resolution/strike.go:651`).
+  Running a live chain as a tooltip dry run is not established as safe.
+
+## Approaches to resolve for R3
+
+1. **Independent informational rules.** Add tooltip-only calculations or tables.
+   This duplicates applicability, stacking and arithmetic. It conflicts with the
+   workspace's source-of-truth rule and is not recommended.
+2. **Execute on copied state and discard the result.** Reuses more existing code,
+   but current paths roll, consume effects, and invoke execution behavior. A clone
+   alone does not establish read purity or correctly explain unknown context.
+   Not recommended as the information primitive.
+3. **Shared, unresolved rule contributions.** Extend the existing describe-before-
+   roll direction: a rule decides its contribution once; explanation reads that
+   decision, while execution rolls/applies it and performs consumption at the
+   correct lifecycle point. Recommended direction, not yet a settled interface.
+   Preserve staged transformations, known/unknown context, and sourced modifiers.
+   Do not build a general expression language merely to describe this content.
+
+## Candidate information requirements (R5 proposal)
+
+- Shared content: name, concise effect, damage/healing, range/reach, targeting,
+  costs, saving throw semantics, concentration/duration and relevant restrictions.
+- Current action: resolved weapon/grip/ability, sourced attack and damage/healing
+  contributions, current costs and availability, applicable active effects.
+- Explain the contribution, not just an effect badge: Bless adds a die to an
+  attack roll, not weapon damage; Rage changes eligible melee Strength damage,
+  not every action of a raging character.
+- Retain conditional alternatives where a target or outcome is not known. Do not
+  promise one exact final damage number before a hit, save or resistance resolves.
+- Read responses must preserve absence versus zero and must not grant authority
+  to execute. Existing action selectors/availability remain the execution contract.
+
+## Proposed proof obligations
+
+These are requirements to check, not claims of passing tests.
+
+1. Normally create and finalize a martial and caster; inspect their offered
+   weapon/spell choices and current actions through API and browser.
+2. Compare descriptions with execution's sourced contributions at the same state.
+   Include unbuffed, Rage-eligible/ineligible and Bless/Bane cases, not just names.
+3. Prove information reads do not roll, spend, refresh duration, consume a one-use
+   effect, sustain Rage, or mutate any participant; repeat the read and compare.
+4. Show current information updating when effects begin/end, including a buff
+   caused by another player, concentration ending, and state reloading.
+5. Cover grip and off-hand rules, attack-roll versus save spells, healing, and a
+   non-damaging effect. Preserve damage types and source identity.
+6. Check stacking and advantage/disadvantage cancellation using the same rules as
+   execution. Do not silently drop a modifier unsupported by the explanation path.
+7. Resolve R4 before adding selected-target proof. If implemented, prove the read
+   cannot reveal hidden target state or missing participants through its output.
+8. Verify provider, API mapping and browser separately at exact revisions; a green
+   provider test is not end-to-end proof.
+
+## Ownership and sequence to refine
+
+- **Root dnd5e module:** canonical content, contribution vocabulary and rule-owned
+  selectors; migrate touched execution consumers to the same decisions.
+- **Resolution module:** interaction interpretation and any read entry requiring
+  cross-participant rule evaluation; no new rules in the host seam.
+- **Session module:** load/coordinate/project current information as detached data.
+- **Protos:** the agreed public information contract, without exporting execution
+  internals or condition JSON to the client.
+- **API:** mapping and access control, preserving presence and source identity.
+- **Web:** creation details and action information, rendering rather than deriving.
+
+Develop the consumer requirement first. Protos can publish the agreed contract;
+Go providers publish before consumer adoption. Toolkit changes follow nearest-
+`go.mod` PR boundaries. Exact changed interfaces, module handoffs, commands,
+branch/release sequence and acceptance cases must be filled in after R3–R5; this
+outline is not a substitute for a concrete checked implementation plan.
+
+## Follow-up findings and R4 proposal
+
+The background modifier scout completed; parent inspection confirms the essential
+split between descriptive dice providers and execution handlers. Source-level
+checks, not the scout's rule summaries, govern exact mechanics.
+
+- Bless/Bane describe unresolved dice. They are a real shared-read precedent, not
+  proof that every modifier is already queryable.
+- `conditions/helped.go:157` consumes the one-use benefit in its attack-chain
+  handler. A read cannot safely reuse that handler unchanged.
+- `conditions/sneak_attack.go:200` checks turn state and context, rolls dice, and
+  then marks the use spent (`:279`). Extracting only a formula is not enough;
+  eligibility and consumption must have distinct homes in the shared design.
+- `conditions/divine_favor.go:184` contributes a sourced radiant dice pool during
+  the damage fold. It rolls one d4, or two for a critical, not a per-level pool.
+  The scout's per-level shorthand is incorrect and is not a design requirement.
+- Source correction: Sneak Attack currently uses DEX as a proxy for weapon
+  eligibility (`sneak_attack.go:215`), explicitly marked TODO. This is not proof
+  of full finesse/ranged eligibility. Do not silently bundle a rules correction
+  into information work or author text promising a rule execution does not use.
+- Guiding Bolt's consumption is a post-roll handler (`guiding_bolt.go:267`), not
+  the same lifecycle point as Helped. One generic 'consume on inspection/attack'
+  callback would erase an important distinction.
+
+The information must distinguish contributions that apply, requirements not yet
+settled, and optional future choices. An active effect is not necessarily an
+applicable modifier to every action. Inspiration is available to choose after a
+roll, not already added to it; target-dependent effects are not unconditional
+actor bonuses.
+
+**R4 recommendation, pending operator agreement:** before target selection, show
+current actor contributions and explicit conditional requirements. With a selected
+target, refine what can be established from the player's permitted information.
+Do not turn that refinement into a query for hidden defenses, unseen creatures,
+or another player's future reaction choice. A non-applicable or unknown result
+must not be mistaken for a missing effect.
+
+Selected-target refinement needs a ruled visibility contract before its API shape
+is chosen. Its architectural fit must be designed now; shipping a selected-target
+UI is a separate delivery decision, not the next prerequisite to understanding
+the component.
+
+## Architecture-first direction
+
+Operator clarification: prioritize the component, its composition, and how future
+uses fit rather than choosing UI slices. R7 settles the layer ownership: session
+carries inputs and answers; resolution assembles the explanation using supplied
+context and rule-owned contributions. Shared rule-owned evaluation producing
+unresolved contributions, with explanation and execution as distinct consumers,
+is the mechanism to refine inside that boundary. Its interfaces are not settled.
+
+Test that boundary against these questions before enumerating endpoint fields:
+
+- Can catalog information exist without inventing a character or a zero modifier?
+- Can actor and action context establish contributions without selecting a target?
+- Can missing target context remain explicitly unresolved rather than false?
+- Can additional permitted context refine the same explanation without a second
+  rules implementation or leaking private truth?
+- Can a rule replace a die or ability before another rule tests applicability,
+  preserving staged ordering rather than adding every modifier in a flat list?
+- Can optional spending and outcome-dependent effects remain alternatives rather
+  than being included in a guaranteed total?
+- Can execution consume the same rule decisions while keeping rolls, spending,
+  effect consumption and state changes out of the explanatory read?
+- Can another effect compose through an existing contribution shape without
+  changing session, API or client logic by effect identity?
+
+The result need not be one universal object containing all rules. Keep authored
+content, evaluation context, unresolved mechanical contributions, presentation,
+visibility, and execution lifecycle as distinct responsibilities. Use current
+rules to justify the smallest typed vocabulary; do not invent a general-purpose
+predicate language to represent hypothetical content.
