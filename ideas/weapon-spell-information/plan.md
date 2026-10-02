@@ -1,9 +1,11 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R10 in [design.md](design.md) are settled; the remaining contracts in R3–R5
-remain open. No gameplay or contract changes are authorized by this working
-document.
+R6–R11 in [design.md](design.md) are settled. The operator approves designing the
+connection together and delivering the catalogue first, independently of the
+heavier current-action/resolution work. Catalogue-specific R5 details and the
+resolution-specific R3–R5 contracts still need checked handoffs; this document
+is not itself an implementation-ready plan.
 
 Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
 Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-project/issues/307).
@@ -15,19 +17,46 @@ package dependencies, shared values, operation-specific assessments, composition
 worked cases, migration owners and measured baseline tests. R10 settles initial
 information access independent of command eligibility and selection. Section 11
 separates catalogue alternatives from actual character actions and proposes the
-remaining bounded-context and freshness rules. It is not implemented output, an approved wire schema or an
-implementation-ready handoff.
+remaining bounded-context and freshness rules. It is not implemented output,
+an approved wire schema or an implementation-ready handoff.
 
 [Contribution contract sketch](contribution-sketch.md) is the introductory worked
 example. R8 settles the Inspiration opportunity/offer behavior and frozen
 continuation; R9 settles explicit action-fact normalization. The remaining
 contracts in R3–R5 remain open.
 
-## Immediate next design step
+## Immediate next step — catalogue delivery plan (R11)
+
+Define and check the first increment across root dnd5e content, protos, API and
+web. It does not require the contribution packages or resolution read to ship.
+
+1. Inventory the canonical weapon/spell information already available; identify
+   missing descriptions and structured base facts for the permitted choices.
+   Keep authored content and executable mechanics connected rather than create
+   a second table of numbers for display.
+2. Define the catalogue read contract by canonical ref, including the exact
+   choices/grants and later inspection of unchosen alternatives. Do not rely on
+   the UI's hardcoded level-0/1 fetch or require a current executable offer.
+3. Name the provider functions, proto fields/endpoints, API mappings and existing
+   UI consumers. Use the existing enriched equipment path where it fits.
+4. Cover honest base information and implementation status without introducing
+   new spells, imaginary character modifiers or a dummy resolution interaction.
+   Current-action values and live effects are explicitly not catalogue claims.
+5. Prove normal creation, saved selection/reload, and reading alternatives without
+   changing choices or affordability. Add provider coverage, API mapping and
+   browser checks with exact handoff/release dependencies.
+6. Keep the UI work to exposing and inspecting the information, not a general
+   UX redesign. The catalogue increment is independently useful but does not
+   complete the initiative's current-action/Rage/Bless requirements.
+
+This is the plan to derive next, not a substitute for the concrete per-repo
+implementation handoffs it calls for.
+
+## Resolution follow-on — not catalogue prerequisites
 
 The first concrete toolkit proposal is written and checked against current source
-and focused baseline tests. Before deriving endpoint fields or starting gameplay
-implementation, complete the following contract checks:
+and focused baseline tests. Before starting its gameplay implementation, complete
+the following contract checks:
 
 1. **Drafted:** shared data vocabulary below an action-specific assessment
    package, with proposed rule interfaces, the resolution read entry and the
