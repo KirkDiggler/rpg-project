@@ -25,10 +25,15 @@ example. R8 settles the Inspiration opportunity/offer behavior and frozen
 continuation; R9 settles explicit action-fact normalization. The remaining
 contracts in R3–R5 remain open.
 
-## Immediate next step — catalogue delivery plan (R11)
+## Catalogue execution (R11)
 
-Define and check the first increment across root dnd5e content, protos, API and
-web. It does not require the contribution packages or resolution read to ship.
+[Catalogue implementation plan](catalogue-implementation-plan.md) records the
+fresh worktree bases, a checked first provider checkpoint, red/green evidence and
+the remaining source/transport/UI handoffs. Catalogue metadata implementation is
+underway in the root dnd5e module; no API or UI delivery is claimed yet.
+
+Complete the increment across root dnd5e content, protos, API and web. It does not
+require the contribution packages or resolution read to ship.
 
 1. Inventory the canonical weapon/spell information already available; identify
    missing descriptions and structured base facts for the permitted choices.
