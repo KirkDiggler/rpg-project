@@ -118,11 +118,21 @@ session stream is a role-gate test server, not the real gameplay handler.
 3. **Live inputs — required for S0/S7, not a code-design blocker.** Two guilds,
    their owners/role IDs, consenting test members, and a reachable Discord
    Activity are needed. Local Dev fixtures do not establish real membership.
-4. **No measured proto/toolkit change is required.** The consumed SDK repositories
-   receive `context.Context`; the Manager holds capabilities, not cached game
-   state, and passes context to storage/event calls. Keep WorldID in the host.
-   If an implementation finds a real lost-context/provider capability gap,
-   report that seam; do not add guild ownership to game rules speculatively.
+4. **Measured SDK prerequisite; no proto change.** S2 integration exposed lost
+   context in synchronous encounter callbacks, missed by the initial interface
+   inspection. Announcer, driven Striker and Mover receive Background and session
+   forwards it to host storage. [Toolkit #1925](https://github.com/KirkDiggler/rpg-toolkit/issues/1925)
+   and [PR #1926](https://github.com/KirkDiggler/rpg-toolkit/pull/1926) repair the
+   session-only callback binding (task T-context below). WorldID remains in the
+   host; SDK signatures/rules stay unchanged. Do not add an API default-world
+   bridge or skip the now-failing real-SDK tests. Consume the actual provider
+   release before claiming S2's full gate.
+5. **Local two-world simulation — approved for current iteration.** Only one real
+   Discord server is currently available. #522 defines an opt-in Dev-only
+   `RPG_DEV_WORLD_IDS` allowlist and matching web selector, with the same account
+   and two world IDs on one backend/store. Discord credentials still require
+   membership verification; production cannot use this fixture. Use it for local
+   isolation and browser proof, without relabeling it as a live two-guild walk.
 
 ## Sequence and delegation boundaries
 
@@ -162,6 +172,7 @@ storage shape. The real reset remains part of coordinated cutover.
 ```mermaid
 flowchart TD
     S0[S0: finish existing Discord access proof] --> C4[Slice 4: S7 integrated walk and cutover]
+    T[T-context: preserve SDK callback context and release] --> C1
     C1[Slice 1: S1 + S2 + S6a characters] --> C2[Slice 2: S3 + S4 + S6b parties and runs]
     C2 --> C3[Slice 3: S5 + S6c database dungeons]
     C3 --> C4
@@ -187,10 +198,12 @@ flowchart TD
   `.worktrees/discord-world-content` in each owning repo as its slice starts.
   Assign one writer per branch/worktree; hand the next worker its predecessor's
   commit and evidence. No automatic merges or environment resets.
-- Develop outside-in; merge inside-out. No scheduled proto/toolkit wave. If a
-  measured contract change is approved, protos publish through CI, toolkit
-  providers release, then API/web adopt released pins and recheck. No local proto
-  generation and no pseudo-version pins in a merge-ready consumer.
+- Develop outside-in; merge inside-out. T-context is the measured session-only
+  provider prerequisite for S2; no proto wave is needed. Owning toolkit policy
+  requires its CI-published release before API adoption. Do not merge to bypass
+  review or fabricate a tag. After an authorized provider merge/release, repin
+  the API and rerun the real-SDK failures/full gate. No local proto generation
+  or committed local replacements/temporary dependency versions.
 - Each feature PR gets the applicable single independent review round, reusing
   evidence and resolving findings; do not add repeated automatic review rounds.
   S7 reconciles that evidence rather than rerunning a review ceremony by default.
@@ -219,6 +232,33 @@ Do not silently expand a task into a new public contract, owner, lifecycle or
 user-visible behavior. Ordinary implementation choices within the contracts
 below need no further approval. S0 and S7 are proof tasks, not artificial
 red/green coding exercises.
+
+### T-context — Preserve the host context through SDK callbacks
+
+**Delivers:** R3/R4 provider prerequisite discovered during #522 integration.
+**Owner:** Toolkit `rulebooks/dnd5e/session` only; parent writer, separate
+`.worktrees/world-character-context`, `fix/session-call-context`.
+**Prerequisites:** Existing context-bearing host repository contracts; current
+provider evidence at toolkit `b784cf79`, fix candidate `0c35a38e` in #1926.
+**Files:** `rulebooks/dnd5e/session/{write.go,announcer.go,striker.go,mover.go,doc.go}`;
+new `callback_context_test.go`.
+**Interfaces/behavior:** Store the current Manager verb's context on its ephemeral
+`writeScope`; synchronous Announce/Strike/Move adapters use it rather than the
+composition's Background context. Keep it across adoption within that call,
+recreate it for the next verb. Preserve request values, deadlines and cancellation.
+No Manager-global/persisted context, Discord type, public signature or game-rule
+change; no encounter-module edits.
+**Tests:** `CallbackContextSuite` actual Manager verbs: boundary reads/writes and
+dodge expiry, driven strike and persisted HP loss, driven movement and actual
+reaction offer, successive call contexts, cancellation during the driven turn.
+Reintroducing Background in each callback independently must fail its named test.
+**Verification:** In the session module, `go test -race ./...`, `go vet ./...`,
+`golangci-lint run ./...`; root `make pre-commit`, actual changed-module commit
+hook, `git diff --check`. Use an isolated v2 lint binary, not global changes.
+**Completion evidence:** Provider tests/lint pass at candidate `0c35a38e`, with
+three independent overlay mutants failing as intended. Independent review and
+owner-authorized merge/CI release are pending. S2 then adopts the real tag and
+reruns lobby/session integration; provider green alone does not close #522.
 
 ### S0 — Finish existing admission/configuration slice
 
@@ -294,7 +334,9 @@ contract tests, exact interface diff and commit for S2.
 
 **Delivers:** R3/R4/R8: complete character slice, not merely hidden list entries.
 **Owner:** API character/dice application boundary and session character adapter.
-**Prerequisites:** S1 storage contract; keep SDK session v0.112.0 behavior intact.
+**Prerequisites:** S1 storage contract and T-context's released provider fix;
+SDK public signatures/gameplay behavior remain unchanged. Independent S2 tests
+can proceed before release, but the real-SDK/full gate stays visibly blocked.
 **Files:** `internal/orchestrators/character/{service.go,orchestrator.go,view.go}`;
 `internal/handlers/dnd5e/v1alpha1/character/{handler.go,level_up.go}`;
 `internal/handlers/dnd5e/v2/character/handler.go`;
@@ -629,10 +671,13 @@ first rather than editing the root checkout.
 **Interfaces/fixtures:** Two worlds A=`123456789012345678`,
 B=`223456789012345678`; identical authenticated player P in both, another player Q,
 independent owners/roles; all tests share one API instance and one Redis namespace.
-HTTP Discord fixture verifies the selected guild for the same token. Dev auth's
-fixed `RPG_DEV_WORLD_ID` ignores arbitrary selectors: two disconnected dev stacks
-alone are not shared-backend isolation proof. Use the composed Discord fixture
-for automated tests and real Discord for final admission proof.
+HTTP Discord fixture verifies the selected guild for the same token. Baseline
+Dev auth ignores arbitrary selectors; #522 adds explicit allowlisted selection
+for the local same-backend A/B walk. Two disconnected dev stacks alone are not
+shared-backend isolation proof. Use the composed Discord fixture for automated
+membership-path tests and label the Dev browser walk as simulated-world evidence.
+Actual two-guild Discord admission proof remains unavailable until those real
+server/member inputs exist; do not mark that acceptance complete from fixtures.
 
 **Behavior/tests:** Proposed `TestTwoWorldJourney` creates drafts/characters in
 both worlds, attempts every foreign direct-ID operation, creates independent
@@ -686,8 +731,8 @@ Labels identify #518's agreed behavior, not additional rulings.
 |---|---|---|
 | R1: independent owner setup and multiple delegated admins | S0, S7 | Two owners + two admin-role members; settings persist independently. |
 | R2: hierarchy, owner-only admin authority, denial and revocation | S0, S4, S7 | Builder/player/no-role matrix, owner-only role replacement, actual idle-stream cancellation. |
-| R3: world/player-owned characters and drafts, all direct IDs | S1, S2, S6, S7 | Same-player lists, foreign/wrong-player method matrix, replacement/finalization, UI switch. |
-| R4: items/currency/scrolls/known spells/rewards/XP do not transfer | S1, S2, S3, S7 | Scoped complete payloads and SDK saves; Trade/Unpack/Loot/LevelUp in A leave B bytes unchanged. |
+| R3: world/player-owned characters and drafts, all direct IDs | T-context, S1, S2, S6, S7 | Same-player lists, foreign/wrong-player method matrix, replacement/finalization, UI switch. |
+| R4: items/currency/scrolls/known spells/rewards/XP do not transfer | T-context, S1, S2, S3, S7 | Scoped complete payloads and SDK saves; Trade/Unpack/Loot/LevelUp in A leave B bytes unchanged. |
 | R5: lobby/join/resume/run/presentation/events are world-local | S3, S4, S6, S7 | Separate resume indexes after restart, direct stream refusal, no cross-world fanout/presentation. |
 | R6: reusable authored keys, correct launch/atlas/render | S5, S6, S7 | Same `trial-room`, different layouts before/after restart; selected world's GetDungeon matches launch. |
 | R7: browser caches and direct-ID/stream authority survive switches | S2, S4, S6, S7 | Held A responses/events released after B transition; first B paint empty of A; server negatives independent of UI. |
@@ -701,7 +746,7 @@ Labels identify #518's agreed behavior, not additional rulings.
 |---|---|---|---|---|
 | Existing role/auth interceptors | S2-S5 handlers/adapters | `worldcontext.Value.WorldID`, authenticated PlayerID; no client-trusted world | Exists at baseline; renewal already implemented | Real production-order auth fixture feeding actual handlers in S7. |
 | S1 character/draft/dice repos | S2 orchestrators + SDK character adapter | Mandatory explicit WorldID; ownership wrappers; NotFound/invalid/corrupt distinctions | New S1 contract; S2 same branch | CharacterRPCWorldMatrix, FinalizePreservesWorld, SDKSavePreservesOwnership. |
-| Existing SDK repository interfaces | S2/S3 host adapters | Context + ID/data; toolkit types unchanged; world metadata stays outside payload | Inspected session v0.112.0; no provider release scheduled | Real NextLevel/LevelUp and launch/load/save tests using scoped adapters. |
+| SDK repository interfaces + T-context callback binding | S2/S3 host adapters | Original verb context + ID/data; toolkit payloads unchanged; world metadata stays in host | v0.112.0 callback defect measured; T-context release required for S2 adoption | Provider callback suite plus real API NextLevel/LevelUp and lobby/session load/save checks after repin. |
 | S2 character ownership | S3 lobby admission; S4 session access | `(world,character ID)` scoped read, separate player ownership gate | S2 precedes both | ForeignJoinRefAndCharacterRejected; SameWorldPartySaveAllowed. |
 | S3 session/encounter persistence | All SDK session verbs and S4 roster gates | Scoped SDK get/save, foreign world as missing; no ownerless fallback | S3 before S4 | ForeignSessionReadAndMutationRefused; exact seat checks before streaming. |
 | S3 lobby repository | Lifecycle/resume + S4 presence | World-bearing Input/Output operations; world-scoped indexes | Both adapters and all callers updated together | Two active worlds, restart, leave/disconnect do not affect B. |
@@ -722,6 +767,8 @@ Labels identify #518's agreed behavior, not additional rulings.
   is not conflated with world membership or character ownership.
 - **No unnecessary providers:** no toolkit rules change, proto generation wave,
   new transfer/admin reward mechanism or distributed broker project is scheduled.
+  T-context is a demonstrated host-context propagation defect, not speculative
+  world ownership in the rules engine; its release is an explicit S2 dependency.
 - **Ordered overlapping files:** S2→S3→S4→S5 API handoffs; S6a→S6b→S6c web
   handoffs paired with those outcomes, one active writer per repo/outcome; shared
   fixtures/mocks updated on the same outcome branch, not competing writer trees.
