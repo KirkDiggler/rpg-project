@@ -88,15 +88,18 @@ session stream is a role-gate test server, not the real gameplay handler.
 
 ## Decisions and readiness
 
-1. **Legacy data disposition — OPEN, blocks cutover/storage-slice completion.**
-   Old character/draft/roll/run records lack trustworthy world ownership. Do not
-   assign them to whichever world first reads them. Recommendation: explicit
-   pre-alpha reset of mutable gameplay data, retaining a backup/quarantine and
-   the already scoped world configuration/compositions. No deletion is authorized
-   by this plan. If preservation is wanted, replace the reset step with an
-   explicit operator-supplied source-to-guild migration, including index rebuild,
-   foreign-reference refusal and restart tests. Schema/tests can be developed
-   with legacy reads denied; do not claim rollout-ready before this decision.
+1. **Legacy data disposition — SETTLED: clean reset, no preservation.**
+   KirkDiggler confirmed that this runs only on their Discord server and no
+   existing data needs preservation. Plan a database reset at cutover; do not
+   build migration, backfill, backup/quarantine requirements or compatibility
+   reads. World configuration and compositions need not survive either: repeat
+   owner bootstrap and seed only deliberate new-world fixtures after reset.
+   Old ownerless records must never be assigned to whichever world reads first.
+   Legacy server-authored files and unscoped browser drafts may be discarded;
+   immutable shipped content and source repositories are not reset targets.
+   This settles the data policy, not the timing of a destructive operation.
+   No running database is reset during planning; S7 identifies the exact target
+   and performs the reset as part of the coordinated cutover.
 2. **Shipped-key collision policy — OPEN, blocks S5 implementation.** The issue
    permits shared immutable shipped content but does not decide what saving a
    world-authored `reference-tomb` means. Recommendation: world-local copy-on-write
@@ -209,8 +212,8 @@ leave #514 open if live proof is incomplete. No permission to merge #111 implied
 
 **Delivers:** R3/R4/R8 storage foundation, including draft replacement and rolls.
 **Owner:** API `entities`, `repositories/character`, `character_draft`, `dice_session`.
-**Prerequisites:** Verified world context exists; legacy disposition recorded
-before completion. S2's caller requirements below are the consumer contract.
+**Prerequisites:** Verified world context exists; clean-reset disposition above
+is settled. S2's caller requirements below are the consumer contract.
 **Files:** Modify `internal/entities/character.go`, `character_draft.go`;
 `internal/repositories/{character,character_draft,dice_session}/{repository.go,redis.go,redis_contract_test.go}`;
 regenerate their existing `mock/` files. Proposed new regression files:
@@ -486,9 +489,9 @@ fence late success, error and mutation callbacks so A cannot repopulate B or
 trigger a follow-up write carrying B's credentials for A's resource. Revalidate
 admission and refetch B's data. World-scoped draft autosave must not write the
 old document under the new world's key. Keep A's saved local draft recoverable
-when returning to A. Old unscoped local drafts are not silently adopted; retain
-unread/quarantined pending the legacy decision. Immutable rule catalogs and
-personal theme/layout preferences may remain shared.
+when returning to A. Old unscoped local drafts are not silently adopted; discard
+only the known legacy game-draft keys under the settled reset policy. Immutable
+rule catalogs and personal theme/layout preferences may remain shared.
 
 **Tests (proposed):** In `App.worldIsolation.test.tsx`, same player switches A→B
 while A list/resume/scene/mutation responses and stream events are held pending;
@@ -550,12 +553,16 @@ runtime URL recorded in #518.
 Walk the same account in the two real Discord servers alongside owner/admin/
 builder/player/no-role actors. Verify reload/switch, role removal, owner-only
 admin authority, direct IDs, content and progression. Do not record tokens.
-Before cutover inventory and back up old Redis keys and content files; apply only
-the agreed reset/migration to an isolated verified target. Stop/drain old writers
-for the change; never run mixed old/new writers against the cutover data. A
-rollback restores a matching application+data backup in maintenance, not a
-compatibility fallback that re-enables global records. No reset/rollout command
-is prescribed until the target and legacy choice are known.
+At cutover verify the exact environment, Redis database/namespace and mutable
+content directory before resetting them; do not flush unrelated databases or
+remove shipped/source assets. No data backup or migration is required. Stop/drain
+old writers for the change; never run mixed old/new writers against the cutover
+data. Start with empty mutable stores, repeat owner configuration and create
+explicitly world-owned fixtures. Recovery uses a known-good compatible build and
+fresh empty stores/reseeding in maintenance, not restoration of legacy global
+records or a compatibility fallback. Record and rehearse the reset/recovery
+steps before running them against the operator's server; no reset command is
+prescribed until its exact target and cutover timing are established.
 
 **Completion evidence:** Named build refs, automated matrix results, inspected
 rendered screenshots, live two-server walk, documented cutover/rollback rehearsal,
@@ -608,8 +615,9 @@ Labels identify #518's agreed behavior, not additional rulings.
 - **Ordered overlapping files:** S2→S3→S4→S5 API handoffs; one S6 web owner; shared
   fixtures/mocks updated on the same outcome branch, not competing writer trees.
 - **Readiness is qualified:** contracts are executable within the agreed shape;
-  S5 is blocked on shipped-key behavior, and data-slice completion/cutover is
-  blocked on legacy disposition. S0/S7 require live access. These are not hidden
+  legacy disposition is settled as a clean reset without preservation, removing
+  that design blocker. S5 still needs shipped-key behavior settled; S0/S7 require
+  live access and S7 coordinates the reset target/timing. These are not hidden
   TODOs assigned to workers to decide, and no completed isolation is claimed.
 
 ## Dispatch brief wrapper
