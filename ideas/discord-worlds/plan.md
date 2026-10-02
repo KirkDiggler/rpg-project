@@ -22,7 +22,9 @@ and [working agreements](../../docs/teams/roles/working-agreements.md) at dispat
 
 Non-goals: billing, player/concurrency quotas, role discovery, bot installation,
 character transfer, multiple worlds per guild, a new rewards/admin-grant feature,
-a new guild-picker UI, distributed event delivery, or a general storage rewrite.
+a new guild-picker UI, distributed event delivery, cross-server dungeon sharing,
+a schema-generated editor form, or a general storage rewrite. Sharing and
+schema-driven forms are future directions, not prerequisites for database storage.
 Unimplemented character RPCs need not become implemented to close this goal.
 
 ### Existing agreed shape, carried forward
@@ -32,7 +34,7 @@ flowchart LR
     A[Discord Activity: account + selected guild] --> B[API: verify identity, membership, roles]
     B --> C[Trusted WorldID + player identity]
     C --> D[World-owned records and indexes]
-    C --> E[World-local authored content]
+    C --> E[Database-backed world-local authored content]
     D --> F[Toolkit session SDK: unchanged rules]
     F --> G[API storage adapters and event routing]
     G --> D
@@ -100,15 +102,19 @@ session stream is a role-gate test server, not the real gameplay handler.
    This settles the data policy, not the timing of a destructive operation.
    No running database is reset during planning; S7 identifies the exact target
    and performs the reset as part of the coordinated cutover.
-2. **Shipped-key collision policy — OPEN, blocks S5 implementation.** The issue
-   permits shared immutable shipped content but does not decide what saving a
-   world-authored `reference-tomb` means. Recommendation: world-local copy-on-write
-   overlay; resolve selected world's key first, then the explicit shipped
-   catalog, never another world's directory or an unclassified legacy directory.
-   This retains edit/save behavior without changing shared bytes. Alternative:
-   reserve shipped keys and require authors to rename. Record the operator's
-   choice before implementing the precedence/error behavior. S5 below specifies
-   the recommended overlay contract, **conditional on that choice**.
+2. **Authored ownership and storage — SETTLED: server-owned database records.**
+   KirkDiggler confirmed that editing a shipped dungeon creates a version owned
+   by that server; cross-server sharing is a later feature. Resolve the selected
+   world's key first, then the explicit immutable shipped catalog. Saving never
+   changes the shared original. The operator's main persistence requirement is
+   database storage, with content type and optional record-level comments; either
+   YAML or JSON content is acceptable. This supersedes this plan's first proposal
+   for per-world writable directories. S5 introduces an API-owned repository,
+   initially Redis, carrying the authored document rather than a compiled run.
+   Keep the existing YAML wire/editor path initially, stamp `application/yaml`,
+   and do not force a format conversion for assumed size savings. Schema-driven
+   forms and JSON import/export can be separate consumer-led work; no second
+   content format is advertised until its codec and round-trip are implemented.
 3. **Live inputs — required for S0/S7, not a code-design blocker.** Two guilds,
    their owners/role IDs, consenting test members, and a reachable Discord
    Activity are needed. Local Dev fixtures do not establish real membership.
@@ -410,53 +416,96 @@ and removing a role must close an otherwise idle actual stream.
 **Completion evidence:** No cross-world bytes, same-world fanout preserved,
 disconnect/index state correct, and bounded revocation timing recorded.
 
-### S5 — World-local authored content, catalog resolution and launch
+### S5 — Database-backed authored content, catalog resolution and launch
 
-**Delivers:** R6/R8; same key in two worlds survives save, restart, launch and render.
-**Owner:** API content registry, authoring and launch integration.
-**Prerequisites:** S3/S4; **shipped-key policy settled first**. Contract below is
-conditional on the recommended world-first overlay. Legacy authored files need
-explicit classification; they must not become the shared shipped catalog.
-**Files:** `internal/dungeons/{registry.go,registry_test.go,seed.go,seed_test.go}`;
+**Delivers:** R6/R8/R10; server-owned source records with content type/comments;
+same key in two worlds survives save, restart, launch and render.
+**Owner:** API dungeon repository, content compilation/resolution, authoring and
+launch integration. Toolkit retains document validation and game rules.
+**Prerequisites:** S3/S4; database and world-local copy-on-write decisions above
+are settled. Legacy authored files are reset, never adopted as shared content.
+**Files:** New `internal/entities/dungeon.go` and
+`internal/repositories/dungeon/{repository.go,redis.go,redis_test.go}` with
+consumer-driven mocks; modify `internal/dungeons/{registry.go,registry_test.go,seed.go,seed_test.go}`;
 `internal/orchestrators/authoring/orchestrator.go`;
 `internal/handlers/dnd5e/authoring/v1alpha1/{get_dungeon.go,put_dungeon.go}`;
 `internal/orchestrators/lobby/{list_dungeons.go,start_encounter_session_stack.go}`;
 `cmd/server/server.go`; new `internal/dungeons/world_registry_test.go`;
 existing `internal/orchestrators/lobby/start_encounter_dungeon_key_test.go`.
 
-**Interfaces:** Registry consumes explicit WorldID: proposed
+**Interfaces:** Proposed `entities.Dungeon` has string fields `WorldID`, `Key`,
+`Name`, `ContentType`, `Content`, `Comments`, JSON keys `world_id`, `key`, `name`,
+`content_type`, `content`, `comments`. Name comes from the validated authored
+source, not an independently editable competing title. Content is UTF-8 source
+text, not a base64-encoded byte slice or compiled encounter payload. Comments
+are optional record metadata (empty is valid), not extracted/synchronized YAML
+comments. Keep inline source text intact for the current editor contract.
+
+Repository `Get(ctx,*GetInput{WorldID,Key}) (*GetOutput{Dungeon *entities.Dungeon},error)`,
+`List(ctx,*ListInput{WorldID}) (*ListOutput{Dungeons []*entities.Dungeon},error)`,
+`Save(ctx,*SaveInput{WorldID,Dungeon *entities.Dungeon}) (*SaveOutput{Dungeon *entities.Dungeon},error)`;
+WorldID/Key fields are strings. JSON records live in a world-scoped Redis hash
+`dungeon:v1:<WorldID>`, with dungeon key as the field; atomic HSET replaces the
+complete record, no TTL. Require nonempty world/key, matching stored ownership
+and record key; Get misses return a specific NotFound error, lists return empty
+slices, I/O/corruption remains an error. Never enumerate other worlds.
+
+Registry consumes explicit WorldID: proposed
 `List(ctx,*ListInput{WorldID}) (*ListOutput{Dungeons []Summary},error)`,
 `Get(ctx,*GetInput{WorldID,Key}) (*GetOutput{Entry *Entry},error)`;
 existing `PutInput` gains WorldID, result preserves Entry/Errors. Authoring
 GetDungeon/PutDungeon inputs and lobby ListDungeons input gain WorldID; launch
-uses the lobby's verified world. Wire dungeon keys and GetAtlas `dungeon_key`
-remain unchanged. `Entry`/cache identity distinguishes selected world and key;
-shared source selection is explicit rather than inferred from an empty world.
+uses the lobby's verified world. Existing PutDungeon.yaml/GetDungeon.yaml and
+GetAtlas.dungeon_key stay unchanged: the current ingress produces content type
+`application/yaml`. Preserve existing record Comments on a YAML-only update;
+new saves use empty Comments until an actual metadata-editing consumer exists.
+No comments editor, schema-form engine or speculative proto fields in this slice.
 
-**Behavior:** Separate read-only `RPG_SHIPPED_CONTENT_DIR`/image catalog from
-world-authored subdirectories under `RPG_CONTENT_DIR`. Safe encoding of world
-path segments, no caller-controlled filesystem traversal. Compile-before-write,
-atomic file replacement, verbatim YAML, validation-only no-write semantics and
-per-world/key locks are retained. Conditional overlay: a save always writes the
-selected world, even if the key exists in shipped content; list returns the
-world-visible union with one row per key; get/launch/render resolve the same
-world-first entry. Missing authored key can resolve only an explicit shipped
-entry, never another world or legacy root file. Startup validates the shipped
-default without requiring every world to contain a private default copy.
+**Behavior:** Compile/validate before saving to the dungeon repository; commit
+the complete authored source only on success. Preview remains no-write. Load
+world-authored source from the database and compile through the existing toolkit
+path for editor preview/launch. Initially support `application/yaml`; reject
+unsupported stored content types explicitly rather than guessing a parser or
+falling through to shipped content. The discriminator permits later codecs, not
+an untested promise that JSON works today. A failed save leaves the old document;
+a failed load is not a successful empty dungeon or a shipped fallback.
 
-**Tests (proposed):** `TestSameKeyDifferentWorldDocuments`,
-`TestWorldCatalogAndLaunchAgree`, `TestShippedBytesNeverMutated`,
-`TestWorldOverrideIsLocal`, `TestValidateOnlyWritesNothing`,
-`TestWorldContentReload`, `TestUnknownKeyDoesNotFallAcrossWorlds`,
-`TestUnsafeWorldPathRejected`. A/B each save `trial-room` with distinguishable
-name/layout; Get/List/StartEncounter/Atlas identify the right entry before and
-after restart. Test existing scoped composition reads with a foreign explicit
-WorldID and ensure content rendering never uses another world's composition.
+Use the shipped/image catalog read-only. Saving a shipped key writes the selected
+world's database record, leaving shared bytes and every other world unchanged.
+List returns the world-visible union with one row per key; get/launch/render use
+the same world-first resolver. Fall back to the shipped catalog only on a genuine
+world-record miss, never on storage/compile errors or missing world identity.
+Keep runtime session/encounter JSON separate; gameplay mutations never update
+the authored source record.
 
-**Verification:** `go test -race ./internal/dungeons ./internal/orchestrators/authoring ./internal/handlers/dnd5e/authoring/v1alpha1 ./internal/orchestrators/lobby ./internal/repositories/composition ./cmd/server`.
-S7 pairs actual web GetDungeon rendering with the launched atlas.
-**Completion evidence:** Durable world content paths, explicit shipped/legacy
-classification, collision ruling, launch/render key agreement, no new proto field.
+Remove filesystem writes/seeding of mutable authored content from server wiring;
+`RPG_CONTENT_DIR` must no longer be an alternate authored source of truth. Keep
+explicit shipped-directory loading and validation of the shared default. Do not
+load all worlds at startup. Read world records on demand; initially compile on
+read rather than retaining a process-long authored cache that misses another
+writer's updates. Shared immutable compiled entries may remain cached. No
+filesystem fallback and no dual-write migration.
+
+**Tests (proposed):** Repository `TestDungeonRecordRoundTrip` checks all six
+fields, optional Comments, no TTL and JSON without base64 source;
+`TestDungeonOwnershipMismatchRejected`, `TestDatabaseFailureNotNotFound`.
+Registry `TestSameKeyDifferentWorldDocuments`, `TestWorldCatalogAndLaunchAgree`,
+`TestShippedBytesNeverMutated`, `TestWorldOverrideIsLocal`,
+`TestValidateOnlyWritesNothing`, `TestWorldContentReload`,
+`TestUnknownKeyDoesNotFallAcrossWorlds`, `TestUnsupportedContentTypeRefused`,
+`TestYAMLSavePreservesRecordComments`, `TestFreshReaderSeesDatabaseSave`.
+A/B each save `trial-room` with distinct name/layout; construct a fresh registry
+against the same database with no authored files and assert Get/List/launch
+still resolve correctly. Test that Redis errors/corrupt world records never
+expose a shipped dungeon under the same key. Existing composition foreign-world
+selector checks remain in force for rendering.
+
+**Verification:** `go test -race ./internal/repositories/dungeon ./internal/dungeons ./internal/orchestrators/authoring ./internal/handlers/dnd5e/authoring/v1alpha1 ./internal/orchestrators/lobby ./internal/repositories/composition ./cmd/server`.
+S7 pairs web GetDungeon rendering with launch, and checks Redis persistence/volume
+configuration plus a database-service restart: no TTL alone is not durability.
+**Completion evidence:** Inspected database source records, fresh-process load,
+no authored-file dependency, selected-world launch/render agreement, no new proto
+field. Update the owning repository/data-model and content configuration docs.
 
 ### S6 — Browser world/auth lifecycle and scoped local drafts
 
@@ -510,7 +559,7 @@ stream cleanup, screenshots and joined API proof after adopting S2-S5.
 
 ### S7 — Integrated same-player/two-server proof and rollout
 
-**Delivers:** R1-R9 together; no isolated-unit-test substitution for this task.
+**Delivers:** R1-R10 together; no isolated-unit-test substitution for this task.
 **Owner:** Platform integration, with API/web fixes returned to the owning slice.
 **Prerequisites:** S0-S6 complete, both decisions above recorded, review findings
 disposed, released pins and runtime build refs known. Live guild/member inputs.
@@ -538,7 +587,11 @@ records remain unchanged. Cover Trade/Unpack/Loot and advancement save seams,
 not a new grant RPC. Save `trial-room` differently in A/B; launch both and fetch
 world-correct atlas and authored presentation. Publish events/dice presentation
 in A while B listens; B receives none. Restart API against the same stores and
-repeat lists/resume/content checks. Parameterized resource-method coverage must
+repeat lists/resume/content checks. Inspect the dungeon's content_type/content/
+comments record and prove authored dungeons reload without writable content
+files. In the isolated stack, restart Redis with its configured persistence and
+volume retained and confirm saved records survive; do not confuse an API-only
+restart or Redis no-TTL key with database durability. Parameterized resource-method coverage must
 include reads, mutations, and all three stream families.
 
 **Verification:** `go test -race ./internal/integration/world ./internal/integration/character ./internal/integration/session ./internal/integration/sessionpresentation`;
@@ -585,6 +638,7 @@ Labels identify #518's agreed behavior, not additional rulings.
 | R7: browser caches and direct-ID/stream authority survive switches | S2, S4, S6, S7 | Held A responses/events released after B transition; first B paint empty of A; server negatives independent of UI. |
 | R8: explicit legacy handling, no silent global fallback | S1-S3, S5-S7 | Old ownerless keys/files never read as selected world; decision recorded; cutover/rollback rehearsal. |
 | R9: automated shared-backend and actual Discord two-server proof | S0, S7 | Real-handler composed tests plus separately recorded live owner/member walk. |
+| R10: database-backed authored dungeons with content type and optional comments | S5, S7 | All-field repository round trip; save/edit metadata preservation; fresh registry with no authored files; Redis persistence restart. |
 
 ### Provider/consumer seam checks
 
@@ -597,7 +651,8 @@ Labels identify #518's agreed behavior, not additional rulings.
 | S3 session/encounter persistence | All SDK session verbs and S4 roster gates | Scoped SDK get/save, foreign world as missing; no ownerless fallback | S3 before S4 | ForeignSessionReadAndMutationRefused; exact seat checks before streaming. |
 | S3 lobby repository | Lifecycle/resume + S4 presence | World-bearing Input/Output operations; world-scoped indexes | Both adapters and all callers updated together | Two active worlds, restart, leave/disconnect do not affect B. |
 | S4 broker/presentation storage | Session/lobby/presentation streams | Same WorldID used on publish/subscribe/idempotency; SDK Publish keeps ctx | New host routing contracts; no wire change | Identical-ID broker collision tests + real gated stream tests. |
-| S5 registry | Authoring, ListDungeons, StartEncounter, web GetDungeon | World-scoped key resolution, opaque existing wire key; explicit shared catalog only | Conditional on collision ruling | Same key/layout through Put→launch→Atlas→GetDungeon→render. |
+| S5 dungeon repository | S5 registry/authoring | World/key lookup, six-field source entity, atomic no-TTL save, distinct miss/error | New API repository; database decision settled | Source/metadata round trip and fresh reader after save, failure does not fall back. |
+| S5 registry | Authoring, ListDungeons, StartEncounter, web GetDungeon | World-first database lookup, existing YAML wire/key, explicit immutable shipped catalog | Copy-on-write settled; repository before resolver integration | Same key/layout through Put→database→launch→Atlas→GetDungeon→render. |
 | Existing Discord provider + S6 GameIdentity | Stateful game subtree, async callbacks, local drafts | Runtime scope includes epoch; durable draft scope includes world/player, not epoch | Existing auth epoch; new consumer identity join | A→B pending callbacks, auth expiry, reload and local draft tests. |
 | Scoped API + S6 UI + released dependencies | S7 runtime | One configured build, one shared store, two independently verified worlds | All slices; live test inputs | Full two-server journey and restart/cutover evidence. |
 
@@ -614,11 +669,13 @@ Labels identify #518's agreed behavior, not additional rulings.
   new transfer/admin reward mechanism or distributed broker project is scheduled.
 - **Ordered overlapping files:** S2→S3→S4→S5 API handoffs; one S6 web owner; shared
   fixtures/mocks updated on the same outcome branch, not competing writer trees.
-- **Readiness is qualified:** contracts are executable within the agreed shape;
-  legacy disposition is settled as a clean reset without preservation, removing
-  that design blocker. S5 still needs shipped-key behavior settled; S0/S7 require
-  live access and S7 coordinates the reset target/timing. These are not hidden
-  TODOs assigned to workers to decide, and no completed isolation is claimed.
+- **Design decisions settled:** clean reset without preservation, server-owned
+  copy-on-write edits and database-backed authored source with a content-type
+  discriminator/optional comments. S5's filesystem proposal is superseded, not a
+  second supported path. No migration, JSON conversion or form-engine prerequisite.
+- **Execution readiness remains qualified:** S0/S7 need live access; S7 coordinates
+  reset timing/target and verifies database durability. No completed isolation
+  is claimed merely because the planning decisions are settled.
 
 ## Dispatch brief wrapper
 
