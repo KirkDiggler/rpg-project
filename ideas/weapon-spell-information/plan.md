@@ -1,7 +1,7 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R9 in [design.md](design.md) are settled; the remaining contracts in R3–R5
+R6–R10 in [design.md](design.md) are settled; the remaining contracts in R3–R5
 remain open. No gameplay or contract changes are authorized by this working
 document.
 
@@ -12,9 +12,10 @@ Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-pro
 
 [Toolkit contract proposal](toolkit-contract.md) is the current concrete draft:
 package dependencies, shared values, operation-specific assessments, composition,
-worked cases, migration owners and measured baseline tests. Section 11 proposes
-initial information access independent of command eligibility, bounded context
-and freshness rules. It is not implemented output, an approved wire schema or an
+worked cases, migration owners and measured baseline tests. R10 settles initial
+information access independent of command eligibility and selection. Section 11
+separates catalogue alternatives from actual character actions and proposes the
+remaining bounded-context and freshness rules. It is not implemented output, an approved wire schema or an
 implementation-ready handoff.
 
 [Contribution contract sketch](contribution-sketch.md) is the introductory worked
@@ -45,11 +46,12 @@ implementation, complete the following contract checks:
 4. **Mapped; migration details pending:** chain-only handlers, assembly provenance
    and consumption callbacks. No tooltip-only predicates and no quiet omissions
    from an answer claimed to be complete.
-5. **Read-boundary proposal added:** current `Afford` omits specific action
-   identities off-turn and while frozen. Explanation must be usable independently
-   of executable offers; selector IDs must not be used as information revisions.
-   Settle the public read/choice-detail delivery shape without changing command
-   legality. Current Afford/selector baseline tests pass.
+5. **Independent inspection settled, R10:** current `Afford` omits specific action
+   identities off-turn and while frozen. Information remains accessible without
+   an executable offer, including unchosen catalogue alternatives after selection.
+   Existing affordability messages and legality stay unchanged. Define the exact
+   public read/choice-detail delivery shape and independent freshness; selector
+   IDs are not information revisions. Current Afford/selector baseline tests pass.
 6. Resolve only architectural decisions uncovered by those examples. Then derive
    the concrete module/API/web handoffs and verification commands in the checked
    implementation plan, preserving provider-first release adoption.

@@ -26,6 +26,12 @@ wire contract remain open.
 ## Law
 
 - Character choices expose information about the weapon or spell being chosen.
+- Permitted catalogue alternatives remain inspectable after choosing, including
+  weapons or spells the player did not select. Inspection changes no selection,
+  ownership, equipment, spell access or execution permission.
+- Information access is independent of current action affordability. Existing
+  offers and refusals remain authoritative for costs and whether an action can
+  be performed; the information component does not duplicate those decisions.
 - In-play information describes the character's current action, including active
   effects that change it; base character numbers alone are insufficient.
 - Rage, Bless and other applicable effects are part of the information scope,
@@ -74,6 +80,7 @@ wire contract remain open.
 | R7 | settled | Session carries inputs and answers; resolution assembles supplied context using rule-owned contributions | KirkDiggler | 2026-10-02 |
 | R8 | settled | Contributions, advance opportunities and frozen offers are distinct; Inspiration is noted before acting and asked at its post-roll pause; resume preserves settled facts | KirkDiggler | 2026-10-02 |
 | R9 | settled | Explicit normalization of action facts before evaluating dependent contributions | KirkDiggler | 2026-10-02 |
+| R10 | settled | Information remains inspectable independently of affordability and after selection, including unchosen alternatives; existing affordability UI/authority remains unchanged | KirkDiggler | 2026-10-02 |
 
 ## Open
 
@@ -93,5 +100,7 @@ wire contract remain open.
 - **R5 — What crosses the wire.** Settle prose versus structured fields, sources
   and conditional explanations, and completeness for currently offered content.
   Missing descriptions and unavailable mechanics must not be conflated. Separate
-  information access/freshness from executable-offer eligibility and identity.
-  Define the proof through normal creation, play, effect changes and reload.
+  information freshness from executable-offer identity. R10 settles independent
+  inspection, including unchosen catalogue alternatives; it does not specify the
+  transport or authorize hypothetical character-build calculations. Define the
+  proof through normal creation, play, effect changes and reload.

@@ -1,6 +1,6 @@
 # Toolkit contract proposal
 
-Concrete proposal for R3–R5. R1, R2 and R6–R9 are settled in
+Concrete proposal for R3–R5. R1, R2 and R6–R10 are settled in
 [design.md](design.md); the types below are design notation, not implemented APIs.
 [contribution-sketch.md](contribution-sketch.md) contains the introductory example.
 This document replaces its deliberately unspecified package placement with a
@@ -533,7 +533,8 @@ Before implementation:
 
 ## 11. Initial information: read scope, delivery and freshness
 
-Proposal for the remaining R4/R5 contract, not yet a ruled endpoint shape.
+R10 settles independent inspection, including alternatives after selection.
+The remaining R4/R5 details below are proposals, not yet a ruled endpoint shape.
 The user-facing addition is the information available before committing an action.
 Existing combat-log reroll presentation is not a new feature in this effort;
 execution and its trace are the reference the initial explanation must match.
@@ -557,19 +558,28 @@ information solely to compiled offers would make specific weapon/spell details
 disappear at those boundaries. Do not widen turn legality or synthesize fake
 executable rows to keep information visible.
 
-**Recommendation:** separate information access from execution eligibility. The
-session-facing information read resolves only provider-owned identities/variants
-for the authorized character, while the existing declaration selector continues
-to authorize the actual command. A ref is not enough to identify an equipment
-instance or grip; any precise read request must use the provider's existing
+**Settled direction, R10:** separate information access from execution eligibility.
+The player can inspect permitted catalogue entries they did not choose, including
+after finalizing a selection. A catalogue ref must not require proof that the
+character owns that weapon or knows that spell. Reading never grants or equips it.
+
+The character-specific read is a different question: resolve the authorized
+character's actual equipment/action variant and current effects, while the
+existing declaration selector continues to authorize the actual command. A ref
+alone does not identify an equipment instance or grip; use the provider's
 owned-item/slot and action-variant semantics, not a name match. Exact request
 fields remain a contract task, not an arbitrary new identifier scheme.
+
+Looking up an unchosen spell does not fabricate a character who knows it or
+quietly simulate rebuilding the character. It returns the catalogue explanation.
+Hypothetical build/equipment comparisons would require an explicitly named
+scenario contract; they are not implied by post-selection inspection.
 
 ### Three kinds of inputs, not one omniscient preview
 
 | Read | Inputs allowed | What it can honestly say |
 |---|---|---|
-| Catalog choice | Canonical authored content | Effect, base mechanics, costs/range/restrictions; no fabricated character DC or modifiers |
+| Catalog inspection, during or after choices | Permitted canonical authored content, whether selected or not | Effect, base mechanics, costs/range/restrictions; no fabricated character DC or modifiers |
 | Current actor action | Authorized actor facts, current actor-carried effects and provider-assembled action | Current actor-side terms, applicable automatic policies, own opportunities, explicit context needs |
 | Refined context | The same action plus explicitly permitted target/spatial facts and a declared universe | Refine only the decisions that those facts can settle |
 
@@ -661,6 +671,10 @@ current actor. R8 remains the lifecycle boundary.
   assessments; missing context is not treated as a failed predicate.
 - All returned creation choice/grant refs have truthful content information;
   no name-only fallback silently passes the completeness check.
+- After selecting one option, other permitted catalogue alternatives remain
+  readable without modifying the saved choice, inventory or spell access.
+- A catalogue inspection carries no fake current-character bonuses or executable
+  selector. Existing affordability messages and command refusals remain unchanged.
 - An unsupported informational rule yields an explicit information failure, not
   a complete-looking partial formula or a new permission to execute.
 
