@@ -126,16 +126,45 @@ session stream is a role-gate test server, not the real gameplay handler.
 
 ## Sequence and delegation boundaries
 
+### Outcome slices to iterate and land
+
+S0-S7 below are technical handoff contracts, not eight independently shippable
+features. Use these four remaining outcome slices, plus completion of existing
+#514. Each slice includes its UI adoption and joined proof; S7 does not become a
+place to defer the earlier slices' missing tests. No implementation is started
+by this iteration map; create a child issue only when that slice starts.
+
+| Outcome slice | Handoffs / exclusive owners | Done means | Not included |
+|---|---|---|---|
+| **1. World-owned characters and creation** | API S1→S2; web S6a | Same player has independent drafts, rolls and characters in A/B; every implemented private direct-ID/advance/equip path refuses a foreign world/player; switching identity clears prior game state and character UI. | Run ownership, content persistence, new character/game-rule features. |
+| **2. World-local parties and running games** | API S3→S4; web S6b | Same player can run/resume separately in A/B; wrong-world joins, session actions and all stream families refuse; leave/disconnect/reload and presentation cannot touch the other world. | Authored dungeon storage; new lobby policy or distributed messaging. |
+| **3. Database-backed server-owned dungeons** | API S5; web S6c | A/B save the same key independently in the database; source/type/comments round-trip; restart, launch and render select the right world; shipped edits stay local; local drafts do not cross worlds. | Cross-server sharing, compression, schema-generated forms or forced JSON conversion. |
+| **4. Two-server integration and cutover** | Platform S7; S0 live proof complete | Same-account real Discord journey passes with other role actors; final build/CI/review evidence reconciled; verified target reset and fresh owner setup completed at coordinated cutover. | Migration, data preservation or automatic merge/deployment. |
+
+**Existing access slice (#514 / S0):** finish the real owner/member/role-removal
+walk alongside the implementation iterations. It is not another access-system
+rewrite and does not block local work on slice 1; it remains required for final
+completion.
+
+**First implementation handoff:** start slice 1 with one API owner for S1→S2 and
+one web owner for S6a. Their joined fixture is one backend/store, worlds A/B,
+the same player in both and a second player. The API worker delivers the scoped
+storage/RPC/SDK-save seam; the web worker delivers the identity boundary and
+character-screen regressions. One scoped child issue follows both PRs. Do not
+split inventory, spells and XP into separate storage projects: they are fields
+of the same owned character and SDK-save path.
+
+Intermediate slices can land on dev after their own gates, but are not claims
+that the full game is multi-server safe. Exercise each in an isolated fresh
+stack; do not reset or switch the operator's running database to a half-adopted
+storage shape. The real reset remains part of coordinated cutover.
+
 ```mermaid
 flowchart TD
-    S0[S0: finish admission proof] --> S7[S7: integrated two-server walk and rollout]
-    S1[S1: character, draft and roll storage] --> S2[S2: character access and SDK save integration]
-    S2 --> S3[S3: lobby and run persistence/lifecycle]
-    S3 --> S4[S4: streams and presentation]
-    S4 --> S5[S5: world-authored content and launch]
-    S5 --> S7
-    S6[S6: browser world lifecycle] --> S7
-    S2 --> S7
+    S0[S0: finish existing Discord access proof] --> C4[Slice 4: S7 integrated walk and cutover]
+    C1[Slice 1: S1 + S2 + S6a characters] --> C2[Slice 2: S3 + S4 + S6b parties and runs]
+    C2 --> C3[Slice 3: S5 + S6c database dungeons]
+    C3 --> C4
 ```
 
 - Start with **S1+S2 as the character outcome slice**, the recommended next child
@@ -147,13 +176,15 @@ flowchart TD
   intentional: session adapters, launch and handler fixtures overlap. Do not
   dispatch concurrent writers to these files or multiply branches for fixes
   found within the same slice.
-- One **web owner for S6** may work in parallel with API after these contracts are
-  published; S0's live proof can proceed alongside both. Land/adopt API provider
-  changes before claiming the joined web behavior. Do not postpone browser
-  isolation until after declaring backend multi-server readiness.
+- One **web owner per outcome slice** may work in parallel with its API owner:
+  S6a with characters, S6b with runs, S6c with content. Each stage adopts the prior
+  stage's completed identity contract; do not run competing S6 writers on App,
+  hooks or authoring files. S0's live proof can proceed alongside both. Land/adopt
+  API provider changes before claiming joined web behavior. Browser isolation
+  is part of each outcome, not one final PR waiting until the end.
 - Bases: API/web `origin/dev`, project `origin/main`; isolated
-  `.worktrees/discord-world-characters`, `discord-world-runs`,
-  `discord-world-content`, `discord-world-ui` as the respective work starts.
+  `.worktrees/discord-world-characters`, `.worktrees/discord-world-runs`,
+  `.worktrees/discord-world-content` in each owning repo as its slice starts.
   Assign one writer per branch/worktree; hand the next worker its predecessor's
   commit and evidence. No automatic merges or environment resets.
 - Develop outside-in; merge inside-out. No scheduled proto/toolkit wave. If a
@@ -510,9 +541,33 @@ field. Update the owning repository/data-model and content configuration docs.
 ### S6 — Browser world/auth lifecycle and scoped local drafts
 
 **Delivers:** R7 plus client proof for R3/R5/R6. UI hiding is never the server gate.
-**Owner:** Web application identity boundary; one web worker may run alongside API.
+**Owner:** Web application identity boundary; one web worker per outcome slice,
+not a parallel writer for each screen.
 **Prerequisites:** Existing Discord auth epoch and guild metadata; S2-S5 are needed
-for joined proof, not initial UI regression tests. No new guild-selection feature.
+for their respective joined proof, not initial UI regression tests. No new
+guild-selection feature.
+
+**Bounded stage handoffs:**
+- **S6a, with slice 1:** establish GameIdentity and the keyed stateful subtree;
+  fence character/draft/roll/level-up/equipment responses and callbacks. Own
+  App/auth/client identity wiring, creation hooks and character cache scopes.
+  Prove A→B, sign-out, same-world reauthentication and different-player transitions
+  cannot retain A's selected character/draft or restore stale game state. Export
+  the same GameIdentity/scopeKey contract consumed by S6b/S6c.
+- **S6b, with slice 2, after S6a:** adopt that identity in active-lobby lookup,
+  resume/seat resolution and session/lobby/presentation stream lifecycle. Own
+  run hooks and SessionEncounterView adoption; prove independent A/B resume,
+  cancellation of old streams/retries, and late run callbacks cannot route or
+  mutate the new world. Join tests use S3/S4's real API boundaries.
+- **S6c, with slice 3, after S6b:** scope authoring drafts, debounce/save callbacks,
+  content-list/scene loads and composition resolution by the same identity. Own
+  authoring/scene paths; prove same-key A/B content and safe local draft restore,
+  paired with S5's database-backed save/load/launch. A format-conversion or
+  schema-form editor is not needed.
+
+The file, interface and assertion inventory below is shared by these ordered
+stages. Include the relevant stage and subset of this contract in each dispatch;
+do not ask a worker to implement all S6 stages before the first outcome lands.
 **Files:** `src/App.tsx`, `src/discord/{DiscordProvider.tsx,types.ts}` as needed for
 observable identity; `src/api/{auth.ts,client.ts,hooks.ts,useMyActiveLobby.ts,useCharacterData.ts}`;
 `src/character/creation/useCharacterDraft.ts`; `src/components/session/{SessionEncounterView.tsx,useDungeonScene.ts,useSessionEventStream.ts}`;
@@ -667,7 +722,8 @@ Labels identify #518's agreed behavior, not additional rulings.
   is not conflated with world membership or character ownership.
 - **No unnecessary providers:** no toolkit rules change, proto generation wave,
   new transfer/admin reward mechanism or distributed broker project is scheduled.
-- **Ordered overlapping files:** S2→S3→S4→S5 API handoffs; one S6 web owner; shared
+- **Ordered overlapping files:** S2→S3→S4→S5 API handoffs; S6a→S6b→S6c web
+  handoffs paired with those outcomes, one active writer per repo/outcome; shared
   fixtures/mocks updated on the same outcome branch, not competing writer trees.
 - **Design decisions settled:** clean reset without preservation, server-owned
   copy-on-write edits and database-backed authored source with a content-type
