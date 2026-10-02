@@ -12,8 +12,10 @@ Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-pro
 
 [Toolkit contract proposal](toolkit-contract.md) is the current concrete draft:
 package dependencies, shared values, operation-specific assessments, composition,
-worked cases, migration owners and measured baseline tests. It is not implemented
-output, an approved wire schema or an implementation-ready handoff.
+worked cases, migration owners and measured baseline tests. Section 11 proposes
+initial information access independent of command eligibility, bounded context
+and freshness rules. It is not implemented output, an approved wire schema or an
+implementation-ready handoff.
 
 [Contribution contract sketch](contribution-sketch.md) is the introductory worked
 example. R8 settles the Inspiration opportunity/offer behavior and frozen
@@ -40,10 +42,15 @@ implementation, complete the following contract checks:
    content and GWF's pre-roll policy/post-roll trace. Paired-rule ordering and
    visibility require discriminating tests, not only these examples. The existing
    GWF suite also passes; this does not test the proposed assessment component.
-4. Identify required migrations from chain-only handlers, assembly provenance,
+4. **Mapped; migration details pending:** chain-only handlers, assembly provenance
    and consumption callbacks. No tooltip-only predicates and no quiet omissions
    from an answer claimed to be complete.
-5. Resolve only architectural decisions uncovered by those examples. Then derive
+5. **Read-boundary proposal added:** current `Afford` omits specific action
+   identities off-turn and while frozen. Explanation must be usable independently
+   of executable offers; selector IDs must not be used as information revisions.
+   Settle the public read/choice-detail delivery shape without changing command
+   legality. Current Afford/selector baseline tests pass.
+6. Resolve only architectural decisions uncovered by those examples. Then derive
    the concrete module/API/web handoffs and verification commands in the checked
    implementation plan, preserving provider-first release adoption.
 

@@ -526,6 +526,153 @@ Before implementation:
 2. Settle R4's member-visible context construction; never read hidden truth then
    hide only its source label. Current observations do not automatically expose
    every target condition needed for a complete evaluator.
-3. Settle coverage/error semantics and the public delivery shape in R5.
+3. Settle coverage/error semantics and the public delivery shape in R5; §11
+   separates information lifetime from permission lifetime.
 4. Derive exact module-isolated handoffs and tests from this contract. This is a
    measured design proposal, not a claim of an implementation-ready plan.
+
+## 11. Initial information: read scope, delivery and freshness
+
+Proposal for the remaining R4/R5 contract, not yet a ruled endpoint shape.
+The user-facing addition is the information available before committing an action.
+Existing combat-log reroll presentation is not a new feature in this effort;
+execution and its trace are the reference the initial explanation must match.
+
+### An explanation is not an executable offer
+
+An action remains describable when a character cannot currently execute it. Do
+not make `resolution.ExplainAction` accept or require a current declaration
+selector. It consumes a provider-assembled action and permitted facts, not proof
+that the actor has an action left or owns the current turn.
+
+An executable offer may carry that explanation, but it is only one consumer.
+The same read must fit character inspection and future target refinement without
+minting an attack, bypassing a frozen window, or reinterpreting a display key as
+an execution selector.
+
+This is a concrete constraint of the current API: `session.Afford` returns
+identity-less generic blockers off-turn, social rows on the world clock, and
+window-related rows while frozen (`session/afford.go:542–620`). Attaching rich
+information solely to compiled offers would make specific weapon/spell details
+disappear at those boundaries. Do not widen turn legality or synthesize fake
+executable rows to keep information visible.
+
+**Recommendation:** separate information access from execution eligibility. The
+session-facing information read resolves only provider-owned identities/variants
+for the authorized character, while the existing declaration selector continues
+to authorize the actual command. A ref is not enough to identify an equipment
+instance or grip; any precise read request must use the provider's existing
+owned-item/slot and action-variant semantics, not a name match. Exact request
+fields remain a contract task, not an arbitrary new identifier scheme.
+
+### Three kinds of inputs, not one omniscient preview
+
+| Read | Inputs allowed | What it can honestly say |
+|---|---|---|
+| Catalog choice | Canonical authored content | Effect, base mechanics, costs/range/restrictions; no fabricated character DC or modifiers |
+| Current actor action | Authorized actor facts, current actor-carried effects and provider-assembled action | Current actor-side terms, applicable automatic policies, own opportunities, explicit context needs |
+| Refined context | The same action plus explicitly permitted target/spatial facts and a declared universe | Refine only the decisions that those facts can settle |
+
+The current-actor read is not a promise to know everything surrounding the actor.
+An effect whose applicability depends on nearby participants remains pending if
+that context is unavailable. Future aura/target support supplies that context to
+the existing evaluator; it is not permission to silently skip other participants
+and claim a complete interaction prediction.
+
+The toolkit must not substitute a hidden true value for an unavailable observed
+fact. Nor can it enumerate unseen opponent effects and then merely hide their
+source labels: a changed formula, a new pending row or a different error can leak
+the same secret. Sources carried by the actor's own effect record retain their
+existing disclosure policy; a display label does not justify looking up an
+otherwise unseen caster.
+
+**Recommended R4 boundary:** actor-side information does not inspect unpermitted
+opponent state. A target-specific result consumes a bounded observation/fact
+projection, rather than full opponent sheets exposed to informational evaluators.
+Execution remains a separate authoritative evaluation with its required complete
+participant universe. Context construction is owned below session by encounter
+and rulebook projections; session does not decide which rules a hidden fact would
+have changed.
+
+At initial presentation, target-dependent statements are conditional because the
+question lacks that context, not because a hidden-world probe discovered a secret.
+No target-aware UI is required merely to establish this contract.
+
+### Information content and rendering
+
+The public projection needs these distinct parts:
+
+- Authored description and restrictions from the content owner.
+- Typed calculations with provider-formatted expressions and their sourced terms.
+- Automatic policies, such as GWF, attached to the calculation/pool they affect.
+- Opportunities, such as Inspiration, with timing and source but no offer token.
+- Pending context and explicit scope/assumptions for each affected result.
+
+Cost, target shape and availability already carried on a concrete declaration
+remain authoritative there; the information projector must not invent another
+price or independently derive whether the button is enabled. Catalog cost means
+base authored cost, not a claim that every cast by every actor pays that price.
+
+The UI chooses layout and expansion, not mechanical applicability. It need not
+parse formulas to extract dice, invent prose from condition refs, infer policy
+from a previous combat log, or fetch whole low-level effect blobs.
+
+Creation spell details should be supplied for the exact choices/grants the
+provider returns, using one canonical content projector. Do not make coverage
+depend on the UI guessing spell levels `[0, 1]`. Inline enrichment and a
+ref-complete catalog read are the transport alternatives; neither changes the
+choice refs that authorize selection. The exact transport remains open.
+
+### An action selector is not an information revision
+
+`session/declaration_id.go` hashes the compiled definition for attacks/casts.
+It does not hash all execution-time effects. A Bless/Rage change can therefore
+change the explanation without changing that ID. The component must not cache
+current information indefinitely by declaration ID or by the content ref alone.
+
+Build a concrete offer and any attached explanation from the same loaded
+actor/action inputs. This is per-request consistency, not a claim that the current
+repositories provide an atomic snapshot of the entire world. A separate
+information read has its own freshness; it cannot make an older command offer
+fresh or overwrite a newer actor's data.
+
+Web already retains last-good declarations separately from `fresh` and discards
+superseded response generations (`src/api/useSessionAfford.ts`). Every delivered
+session event invalidates authority and schedules Turn/Afford refresh
+(`src/components/session/SessionEncounterView.tsx:1131`). The information path
+must follow the relevant state invalidation—including effects caused by another
+player—not start a second permanent ref-only cache. Same-ID responses still
+replace their informational values. Stale information may be retained as visibly
+stale data, never described as current or used as authority.
+
+A frozen question is the exception in the opposite direction: its calculation is
+read from the frozen record, not refreshed into a different calculation from the
+current actor. R8 remains the lifecycle boundary.
+
+### Required distinguishing checks
+
+- Off-turn/no-resource/frozen states do not require minting an executable offer
+  merely to describe an owned action. Existing command refusals remain intact.
+- Bless begins/ends while a declaration ID stays the same: the information
+  changes on a successful current read; an older response cannot restore it.
+- Alter only hidden opponent state while permitted inputs remain identical:
+  informational output, including sources/pending/error shape, stays identical.
+- An unknown spatial fact and a known negative fact produce different internal
+  assessments; missing context is not treated as a failed predicate.
+- All returned creation choice/grant refs have truthful content information;
+  no name-only fallback silently passes the completeness check.
+- An unsupported informational rule yields an explicit information failure, not
+  a complete-looking partial formula or a new permission to execute.
+
+Additional current-behavior baseline, session module, offline and read-only pins:
+
+```sh
+GOWORK=off GOPROXY=off go test -mod=readonly . \
+  -run 'TestAffordSuite|TestDeclarationIDChangedProfileChangesID|TestDeclarationIDSameStateRecurrence' \
+  -count=1
+```
+
+Result: PASS, using session's pinned dnd5e v0.197.0, encounter v0.109.0 and
+resolution v0.59.0. This checks the existing offer/selector behavior; the proposed
+independent information read and visibility guarantees are not implemented or
+runtime-verified.

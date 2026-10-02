@@ -54,8 +54,9 @@ wire contract remain open.
   re-evaluating or rerolling completed stages.
 - Accepting an Inspiration offer rolls its die and consumes the benefit;
   declining preserves it. Inspecting either view changes nothing.
-- The effort supplies information to character creation and play. It does not
-  depend on a general UI redesign.
+- The effort supplies information to character creation and play before an action
+  is committed. Existing combat-log traces are its consistency reference, not a
+  new presentation feature. It does not depend on a general UI redesign.
 - Component boundaries and extensibility govern the design before delivery
   slices. Future target-aware information tests the shape without automatically
   requiring its UI in the first delivery.
@@ -91,5 +92,6 @@ wire contract remain open.
   selected-target UI ships.
 - **R5 — What crosses the wire.** Settle prose versus structured fields, sources
   and conditional explanations, and completeness for currently offered content.
-  Missing descriptions and unavailable mechanics must not be conflated. Define
-  the proof through normal creation, play, effect changes and reload.
+  Missing descriptions and unavailable mechanics must not be conflated. Separate
+  information access/freshness from executable-offer eligibility and identity.
+  Define the proof through normal creation, play, effect changes and reload.
