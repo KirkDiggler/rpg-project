@@ -1,8 +1,11 @@
 # Explicit world scope at the host seam — proposal
 
-Working proposal for #518, not accepted law or an implementation instruction.
-The paused plan and code candidates do not authorize this shape. This document
-re-derives the host contract from the operator's correction and current source.
+**Superseded proposal, retained as design evidence.** Requiring WorldID across
+SDK verb inputs made a host authorization concern look like a toolkit input
+requirement. The current direction is API-owned scoped dependencies, described
+in [design.md](./design.md). This proposal was not accepted law and must not be
+used as an implementation instruction. Its source inventory remains evidence to
+recheck, not authority for the interface shape below.
 
 ## Shape
 
