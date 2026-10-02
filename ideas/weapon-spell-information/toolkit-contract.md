@@ -1,6 +1,6 @@
 # Toolkit contract proposal
 
-Concrete proposal for R3–R5. R1, R2 and R6–R8 are settled in
+Concrete proposal for R3–R5. R1, R2 and R6–R9 are settled in
 [design.md](design.md); the types below are design notation, not implemented APIs.
 [contribution-sketch.md](contribution-sketch.md) contains the introductory example.
 This document replaces its deliberately unspecified package placement with a
@@ -247,7 +247,7 @@ ExplainActionOutput
   Assessments: sourced decisions and stacking selections
   Calculations:
     attack roll, normal-hit damage, healing, or other applicable typed result
-    each with terms, completeness and declared assumptions
+    each with terms, declared roll policies, completeness and assumptions
   Opportunities: informational, not selectable offer tokens
   Pending: typed needs, scoped to the affected result
 ```
@@ -291,14 +291,14 @@ An unknown earlier provider in an oldest-applicable stacking group cannot simply
 be skipped so a later provider becomes a certain winner. The selection remains
 pending where that distinction can change the result.
 
-### The real ordering question
+### Explicit normalization (R9)
 
 The current stage vocabulary is not itself a sufficient contract. Within each
 stage, `events.StagedChain` runs modifiers in insertion order. Some current
 modifiers roll first and then replace dice or ability information. The sketch's
 promise to merely 'preserve the stages' did not settle those interactions.
 
-**Recommendation:** explicitly separate fact-changing assembly/normalization
+**Settled direction, R9:** explicitly separate fact-changing assembly/normalization
 from the contribution collection that depends on those facts, at the relevant
 machine boundary. Resolution still owns sequencing; there is no dependency solver
 or generic predicate language. A rule using a genuinely later outcome remains
@@ -306,10 +306,13 @@ at that later boundary rather than being moved before the roll.
 
 This gives a stable meaning to 'the ability used by this action' before Rage tests
 it and lets a replacement die be selected before it is rolled. It may change
-incidental RNG consumption and expose existing ordering defects. That is an
-architectural decision to rule, not a silent cleanup within a tooltip change.
-Do not claim all existing behavior is preserved just because nominal stage names
-match. Add explicit paired-rule and roll-count regressions before migration.
+incidental RNG consumption and expose existing ordering defects. Do not claim
+all existing behavior is preserved just because nominal stage names match. Add
+explicit paired-rule and roll-count regressions before migration.
+
+The phase distinction matters: selecting a d8 instead of a d6 is normalization;
+rerolling a face of 1 on that die is a post-roll operation. GWF belongs to the
+second case, not to a blanket rule that all replacements happen before rolling.
 
 ## 8. Worked cases
 
@@ -403,6 +406,45 @@ Content owns the prose explaining consequences and duration/restrictions that
 are not yet uniformly projected. Resolution may ask a content-owned projector;
 it never decodes unknown condition JSON to reverse-engineer descriptions.
 
+### G. Great Weapon Fighting: a roll policy, then a trace
+
+GWF is not a flat bonus and not a question to pose. Before rolling, the assessment
+can describe its automatic policy on the qualifying weapon pool:
+
+```text
+Weapon damage: 2d6 + 3 slashing
+Great Weapon Fighting: reroll each 1 or 2 once; keep its replacement.
+```
+
+The notation does not turn into an invented expected-damage bonus. The policy is
+attached to the exact marked weapon pool; it does not apply to every pool with
+the same damage type or every extra die contributed by a spell/feature.
+
+After a real roll, the existing trace can show:
+
+```text
+Original weapon dice: [1, 4]
+GWF reroll: die 0, 1 → 5
+Final weapon dice: [5, 4]
+```
+
+The current implementation already preserves original faces, appends sourced
+ordered rerolls, and stages updates so a failed reroll leaves the caller's trace
+unchanged. It evaluates the current face after earlier reroll rules, rather than
+restarting from the original face. Tests pin all of those properties. The new
+work is a shared rule-owned policy available before rolling, not a second reroll
+history or a client that infers the rule from a previous result.
+
+Only execution applies the policy to faces and requests new dice. Reading its
+description requests none. A successful replacement of 1 with another 1 does not
+loop within the same GWF application.
+
+Source: `conditions/fighting_style_great_weapon_fighting.go:136` and its suite.
+The source handler's eligibility currently checks actor and marked primary pool;
+a complete weapon/grip eligibility audit remains necessary before publishing
+stronger applicability claims. That audit must not silently change gameplay rules
+as part of authoring the description.
+
 ## 9. Migration boundaries and proof
 
 | Owner | Required work | Proof that matters |
@@ -466,9 +508,21 @@ combined modules or the proposed component. No new
 contract is compiled, no implementation is merged, and API/browser acceptance is
 unrun.
 
+Additional baseline check after the GWF discussion, using the same root module
+and offline/read-only dependency flags:
+
+```sh
+go test -mod=readonly ./conditions \
+  -run '^TestFightingStyleGreatWeaponFightingSuite$' -count=1
+```
+
+Result: PASS. The suite includes current-face ordering, immutable original faces,
+source attribution, primary-pool selection and failure atomicity.
+
 Before implementation:
 
-1. Rule on normalization versus preserving incidental chain insertion order.
+1. R9 settles explicit normalization; specify the concrete phase boundaries and
+   paired-rule/roll-count regressions for its migration.
 2. Settle R4's member-visible context construction; never read hidden truth then
    hide only its source label. Current observations do not automatically expose
    every target condition needed for a complete evaluator.

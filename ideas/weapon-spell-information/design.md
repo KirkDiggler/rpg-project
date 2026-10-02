@@ -38,6 +38,9 @@ wire contract remain open.
   effect and encounter context using rule-owned contributions.
 - Each contributing rule owns its applicability and contribution. Resolution owns
   their composition; encounter owns spatial facts and observations.
+- Action-fact normalization is explicit: settle the applicable die and ability
+  before evaluating contributions that depend on them. Handler registration
+  order does not implicitly define that dependency.
 - A contribution already participates in a calculation; an opportunity describes
   a possible later choice; a posed offer is a concrete question on a frozen
   interaction. They are distinct data, not interchangeable modifiers.
@@ -69,6 +72,7 @@ wire contract remain open.
 | R6 | settled | Prioritize component shape, composition and future fit over selecting immediate UI slices | KirkDiggler | 2026-10-02 |
 | R7 | settled | Session carries inputs and answers; resolution assembles supplied context using rule-owned contributions | KirkDiggler | 2026-10-02 |
 | R8 | settled | Contributions, advance opportunities and frozen offers are distinct; Inspiration is noted before acting and asked at its post-roll pause; resume preserves settled facts | KirkDiggler | 2026-10-02 |
+| R9 | settled | Explicit normalization of action facts before evaluating dependent contributions | KirkDiggler | 2026-10-02 |
 
 ## Open
 
@@ -76,9 +80,10 @@ wire contract remain open.
   contract within R7's ownership, preserving modifier ordering, stacking and
   consumption. Reading information must not accidentally run an action. The
   exact extraction and interfaces need agreement before implementation. R8 fixes
-  the opportunity/offer distinction and pause/resume custody. The working
+  the opportunity/offer distinction and pause/resume custody; R9 fixes explicit
+  normalization before dependent contributions. The working
   [toolkit contract proposal](toolkit-contract.md) names the proposed types and
-  the normalization/ordering decision.
+  distinguishes pre-roll normalization from post-roll face operations.
 - **R4 — What is known before choosing a target.** Specify how current effects,
   applicable contributions and target-dependent conditions are distinguished.
   Design how selected-target context can refine an explanation and how visibility

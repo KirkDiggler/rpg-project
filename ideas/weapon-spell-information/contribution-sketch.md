@@ -300,11 +300,12 @@ assembled action + available facts
   → sourced unresolved terms and alternatives
 ```
 
-Preserve the established semantics of `combat.ModifierStages` and the ordering
-inside each stage. Do not casually reorder replacements ahead of additions if
-that changes today's execution behavior. The current Martial Arts and Rage
-handlers illustrate why the final ability matters; extracting a pure path must
-be checked against their actual fold and tests.
+R9 chooses explicit action-fact normalization before dependent contributions,
+rather than allowing incidental handler insertion order to define that dependency.
+The migration must identify changed ordering and RNG consumption and pin the
+intended semantics with tests. The current Martial Arts and Rage handlers show
+why the final ability matters; GWF shows why replacing a die before rolling and
+rerolling a face afterward must remain separate operations.
 
 If an unresolved transformation affects an input needed by a later rule, the
 later assessment is unresolved too—not computed from the unmodified base value

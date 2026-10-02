@@ -1,7 +1,7 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R8 in [design.md](design.md) are settled; the remaining contracts in R3–R5
+R6–R9 in [design.md](design.md) are settled; the remaining contracts in R3–R5
 remain open. No gameplay or contract changes are authorized by this working
 document.
 
@@ -17,7 +17,8 @@ output, an approved wire schema or an implementation-ready handoff.
 
 [Contribution contract sketch](contribution-sketch.md) is the introductory worked
 example. R8 settles the Inspiration opportunity/offer behavior and frozen
-continuation; the remaining contracts in R3–R5 remain open.
+continuation; R9 settles explicit action-fact normalization. The remaining
+contracts in R3–R5 remain open.
 
 ## Immediate next design step
 
@@ -29,15 +30,16 @@ implementation, complete the following contract checks:
    package, with proposed rule interfaces, the resolution read entry and the
    detached result projected by session. The production import graph was checked
    to avoid an actions → saves → contributions → actions cycle.
-2. **Drafted; ordering decision open:** payload variants, missing-context and
-   stacking semantics, with opportunities distinct from contributions and concrete
-   asks. Source inspection shows that nominal chain stages do not settle
-   normalization versus incidental insertion/roll order.
+2. **Normalization direction settled, R9:** complete payload, missing-context and
+   stacking contracts around explicit normalization before dependent contributions.
+   Keep actual face operations such as GWF rerolls at their post-roll boundary,
+   with the existing sourced trace preserved.
 3. **Worked on paper, not implemented:** Bless + Rage, an ability/die replacement,
    target-dependent eligibility, and Inspiration's advance read → frozen offer →
    spend/keep continuation; also save/healing spells and authored non-numeric
-   content. Paired-rule ordering and visibility require discriminating tests,
-   not only these examples.
+   content and GWF's pre-roll policy/post-roll trace. Paired-rule ordering and
+   visibility require discriminating tests, not only these examples. The existing
+   GWF suite also passes; this does not test the proposed assessment component.
 4. Identify required migrations from chain-only handlers, assembly provenance,
    and consumption callbacks. No tooltip-only predicates and no quiet omissions
    from an answer claimed to be complete.
