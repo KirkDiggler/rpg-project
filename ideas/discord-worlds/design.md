@@ -95,6 +95,10 @@ or copy its records. The factory is API code, not a toolkit tenancy abstraction.
 
 ## Open
 
+The [code-level implementation plan](./implementation-plan.md) supplies proposed
+contracts, file destinations, request flows and verification. Its recommendations
+for these open items are not additional settled rulings.
+
 - **Private-character authorization.** Determine whether the first SDK-triggered
   character read checks both world and caller ownership through a target-specific
   API adapter, or whether caller ownership remains a pre-call API check. The

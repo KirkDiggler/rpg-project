@@ -1,13 +1,14 @@
 # Discord worlds — verified implementation and delegation plan
 
-> **PAUSED / technical plan superseded by operator correction.** Do not execute
-> these task contracts or merge their candidates as an accepted design. The
-> operator rejected implicit SDK world scope in context and the compensating
-> `_ context.Context` / `scope.ctx` callback fix. The API trust boundary must
-> pass verified world identity explicitly into the toolkit; protobuf concerns
-> are separate. Start from the
+> **Historical / superseded.** Do not execute these task contracts or merge
+> their candidates as an accepted design. The current direction is
+> [API-owned access-scoped dependencies](./design.md), not WorldID throughout
+> SDK inputs or a `_ context.Context` / `scope.ctx` workaround. The
+> [code-level planning draft](./implementation-plan.md) names replacement files,
+> contracts, usage and tests. The
 > [corrective handoff](../../docs/case-files/2026-10-discord-worlds-restart.md)
-> before replanning. The remainder is preserved as evidence of the prior plan.
+> preserves the earlier pause; it is not the current design. The remainder below
+> is retained as evidence of the prior plan.
 
 ## Brief and authority
 

@@ -1,5 +1,12 @@
 # Discord worlds: corrective handoff for a fresh start
 
+> **Historical pause packet.** Subsequent design discussion distinguishes explicit
+> API scope from WorldID fields on SDK verbs. Start from the current
+> [API-scoped dependency design](../../ideas/discord-worlds/design.md) and
+> [code-level planning draft](../../ideas/discord-worlds/implementation-plan.md).
+> The instructions and candidate heads below preserve the earlier failure and
+> are not the current implementation contract. Code candidates remain paused.
+
 ## Read this before resuming #518 / #522
 
 **Operator: KirkDiggler. Work is paused at the operator's request.**
