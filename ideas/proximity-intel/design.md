@@ -83,8 +83,9 @@ catch-up service.
 - **R15 — Distance re-arm.** A repeatable check becomes eligible for another
   allowed attempt only after that character leaves the trigger range, reaches
   at least the check's configured reset distance of X hexes, and returns within
-  one hex. X measures distance from the checked content, not accumulated steps.
-  Reaching X only re-arms the check; returning triggers the next roll. Standing
+  one hex. X defaults to **3 hexes** for repeatable checks and is configurable
+  per check in the World Builder. It measures distance from the checked content,
+  not accumulated steps. Reaching X only re-arms the check; returning triggers the next roll. Standing
   nearby or returning before reaching X does not. Re-arming never replenishes
   an exhausted attempt budget or turns a single-try check into a repeatable one.
 
@@ -106,15 +107,15 @@ catch-up service.
 | R12 | settled | Retry policy authored per check in the World Builder alongside skill and DC | KirkDiggler | 2026-10-03 |
 | R13 | settled | Single try by default; repeated attempts require explicit configuration | KirkDiggler | 2026-10-03 |
 | R14 | deferred-until-sharing-recovery | Disconnect-edge recovery and historical catch-up | KirkDiggler | 2026-10-03 |
-| R15 | settled | Repeat requires reaching configured X-hex reset distance and returning within one hex | KirkDiggler | 2026-10-03 |
+| R15 | settled | Repeat requires reaching configured reset distance (default 3 hexes) and returning within one hex | KirkDiggler | 2026-10-03 |
 | R16 | open | Remaining action-surface and delivery contracts | — | — |
-| R17 | open | Reset-distance default, persistent check identity and edits | — | — |
+| R17 | open | Persistent check identity and edits | — | — |
 
 ## Open
 
-- **R17 — Retry configuration and identity.** Specify the default reset distance
-  for a repeatable check. Define persistent character/site/check identity across
-  authored revisions and the effect of editing a check on already spent attempts.
+- **R17 — Persistent identity and edits.** Define persistent
+  character/site/check identity across authored revisions and the effect of
+  editing a check on already spent attempts.
   Old saves without attempt history cannot silently claim a history the system
   never recorded.
 - **R16 — Bounded delivery and action surface.** Reconcile the meaning of loaded
