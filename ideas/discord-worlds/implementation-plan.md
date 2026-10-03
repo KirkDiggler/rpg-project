@@ -103,8 +103,9 @@ on other legitimate world members remain possible.
 must not require the existing Discord server to configure new access before the
 operator is ready to test it. This precedes every implementation task below.
 
-The narrow admission fix is API PR #1069 (`fix/world-access-rollout`, `1392bdbf`),
-separate from the paused isolation candidate. It adds
+The narrow admission fix, API PR #1069, is **merged to dev** at `66a36417`
+(operator-authorized, 2026-10-03). Its clean worktree and local branch have been
+removed; the paused isolation candidates remain intact. It adds
 `cmd/server/world_access_rollout.go` and its tests, changes server interceptor
 selection, and documents `RPG_WORLD_ACCESS_ENFORCEMENT`:
 
@@ -122,10 +123,11 @@ unauthenticated/invalid-token refusal, production refusal of Dev credentials,
 composition membership checks and strict opt-in behavior. Compare compatibility
 with the production main interceptor chain, not an invented permissive mode.
 
-**Release gate:** land the reviewed rollout fix with owner authorization before
-cutting the next release, or hold that release. Do not set enforcement=true in
-normal local/production manifests as a side effect of shipping the code. Verify
-the actual deployment setting and perform the appropriate smoke checks.
+**Release gate:** the source prerequisite is satisfied on dev. The next release
+must include `66a36417`; do not set enforcement=true in normal local/production
+manifests as a side effect of shipping the code. Verify the actual deployment
+setting and perform the appropriate smoke checks. Merge does not itself rebuild
+the running local image or deploy to Discord.
 
 **Storage is separate:** #1069 only gates already-merged role admission. Later
 Tasks A–I must not replace active handlers with mandatory-world factories while
@@ -137,8 +139,9 @@ the new adapters. Do not enable strict storage on existing records before the
 separately authorized cutover/reset.
 
 Local incident evidence and the temporary Dev builder override are recorded on
-#1069/#518. The override is not the durable rollout solution; an ordinary launcher
-recreate can drop it before the default-off fix lands.
+#1069/#518. The running environment and override are left untouched during
+worktree cleanup. A normal rebuild from merged dev picks up the default-off fix;
+the temporary override is no longer needed once that image is running.
 
 ## 4. Task A — API request identity and stored ownership
 
