@@ -9,7 +9,7 @@ agreement and checked handoffs; this document is not an implementation-ready pla
 
 Current contract: [read-contract.md](read-contract.md).
 Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is
-implemented in draft toolkit#1932, and C2's observed-context provider is merged
+implemented in toolkit#1932 (current PR status on #520), and C2's observed-context provider is merged
 via toolkit#1933 and published as encounter v0.111.0. Both have owning-module
 checks green; consumer adoption and the target-aware assessment/read handoffs
 remain ahead. The source/projection gaps are explicit there. This working

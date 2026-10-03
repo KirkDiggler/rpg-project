@@ -1,6 +1,6 @@
 # Effect information — implementation handoffs
 
-**Readiness: partial.** C1 is implemented in draft
+**Readiness: partial.** C1 is implemented in
 [toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `f94ed5a7`;
 its owning-module checks pass. C2
 [toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933) is merged as
@@ -138,8 +138,10 @@ and the normal uncached commit hook passed at that head. The full root gate was
 not repeated for the two-line copy correction. The finding has an Addressed
 thread disposition; reviewer closure at the new head remains pending.
 
-The PR remains draft; no merge, released provider adoption, API or real browser
-tooltip acceptance is claimed.
+C1 is ready for review with green PR CI at `f94ed5a7`; the scoped fix's reviewer
+closure remains pending. Current PR/merge status is maintained on #1932 and #520's
+checklist rather than used as a prerequisite for other development. This checkpoint
+provides no API or real browser tooltip acceptance.
 
 ## Task C2: Detached observed context from encounter
 
@@ -305,7 +307,7 @@ new event types need an actual uncovered producer/consumer requirement.
 
 | In-scope requirement / acceptance | Task or status | Concrete proof |
 |---|---|---|
-| Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in draft #1932 | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
+| Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in #1932; current status on the issue checklist | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
 | Rule-owned applicability/reason and shared execution | Required, blocked on full root assessment handoff | Inventory's paired consumer/execution and no-duplicate-predicate assertions; not covered by C1 |
 | Explicit normalization and frozen/consumption custody | Required, blocked on root/resolution handoffs | Paired-rule and RNG-count/freeze tests in inventory; not covered by C1 |
 | Permitted selected-target context | C2 merged/tagged via #1933 for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
