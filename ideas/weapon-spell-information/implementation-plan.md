@@ -1,10 +1,11 @@
 # Effect information — implementation handoffs
 
-**Readiness: partial.** Task C1 is a bounded, implementation-ready content
-checkpoint. The shared assessment and target-aware read wave is **not** ready to
-execute from this document: the required context producer contracts listed below
-are not closed. C1 is not a substitute for that component and does not complete
-#520. No implementation is claimed here.
+**Readiness: partial.** C1 is implemented in draft
+[toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `9b127988`;
+its owning-module checks pass, but repository-wide gate/review/release readiness
+is not claimed. The shared assessment and target-aware read wave is **not** ready
+to execute from this document: required context producer contracts below are not
+closed. C1 is not a substitute for that component and does not complete #520.
 
 ## Goal, authority and constraints
 
@@ -87,14 +88,16 @@ unchanged. Reading content mutates no condition or character.
 - Existing rogue status-view test plus new
   `TestStatusViewProjectsCanonicalEffectDetails`: detail matches `DisplayFor`,
   refs/source identities remain correct and serialized character data before and
-  after the read is equal. Use existing fixture construction patterns.
+  after the read is equal, normalizing only `ToData`'s generated `UpdatedAt` stamp.
+  That field is serialization time, not mutable character state. Use existing
+  fixture construction patterns.
 - Existing unknown-ref and Shield exclusion regressions remain green.
 
-- [ ] Add nonempty-detail assertions; demonstrate they fail against name-only entries.
-- [ ] Author checked canonical copy in the existing three entries.
-- [ ] Update exact display expectations and status projection tests.
-- [ ] Run focused and owning-module gates; record actual outputs on the PR body.
-- [ ] Publish a root-module checkpoint PR linked to #520; do not claim live tooltips.
+- [x] Add nonempty-detail assertions; demonstrate they fail against name-only entries.
+- [x] Author checked canonical copy in the existing three entries.
+- [x] Update exact display expectations and status projection tests.
+- [x] Run focused and owning-module gates; record actual outputs on the PR body.
+- [x] Publish a root-module checkpoint PR linked to #520; do not claim live tooltips.
 
 **Verification:** from the task worktree's `rulebooks/dnd5e` directory:
 
@@ -110,9 +113,21 @@ Before commit, run `git diff --check` and the repository's required hooks/gates
 without bypassing them. Full module/lint checks apply at the provider readiness
 boundary, not after each prose edit.
 
-**Completion evidence:** root PR/head, observed red/green assertions, focused/full
-module gates and exact source-copy scope. Released provider adoption and real
-browser tooltip acceptance remain separate later evidence.
+**Observed checkpoint evidence:** toolkit#1932 at `9b127988`; descriptor/status
+regressions red then green; full root-dnd5e race suite passed; root lint reported
+zero issues; normal commit hook passed with cache disabled and no bypass. Tooling:
+Go 1.24.6 and repo-pinned golangci-lint v2.3.1. No dependency changes.
+
+Repository-wide `make pre-commit` failed at the documented core coverage parsing
+problem (#769): package output enters `bc`, and the target reports 78.4%. This is
+not a successful repository-wide gate. Log: `/tmp/effect-info-content-repo-gate.log`;
+root test/lint logs: `/tmp/effect-info-content-race.log` and
+`/tmp/effect-info-content-lint.log`. The read-state assertion initially included
+`ToData`'s generated timestamp; correcting that measurement left the intended
+missing-description regressions red before the content fix.
+
+The PR remains draft; no independent review, merge, released provider adoption,
+API or real browser tooltip acceptance is claimed.
 
 ## Remaining wave — not executable handoffs yet
 
@@ -142,7 +157,7 @@ new event types need an actual uncovered producer/consumer requirement.
 
 | In-scope requirement / acceptance | Task or status | Concrete proof |
 |---|---|---|
-| Canonical descriptions for Sneak Attack/Raging/Blessed | C1 ready | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
+| Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in draft #1932 | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
 | Rule-owned applicability/reason and shared execution | Required, blocked on full root assessment handoff | Inventory's paired consumer/execution and no-duplicate-predicate assertions; not covered by C1 |
 | Explicit normalization and frozen/consumption custody | Required, blocked on root/resolution handoffs | Paired-rule and RNG-count/freeze tests in inventory; not covered by C1 |
 | Permitted selected-target context | Required, blocked on exact observation contract | Hidden-state noninterference and unknown-versus-negative proofs; not covered by C1 |

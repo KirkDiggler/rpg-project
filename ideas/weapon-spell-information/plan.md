@@ -8,9 +8,9 @@ creation-description checkpoint. Resolution-specific R3–R5 contracts still nee
 agreement and checked handoffs; this document is not an implementation-ready plan.
 
 Current contract: [read-contract.md](read-contract.md).
-Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is a
-bounded canonical-content checkpoint; the target-aware assessment/read wave is
-not yet handoff-ready. The source/projection gaps are explicit there. This working
+Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is
+implemented in draft toolkit#1932 with owning-module checks green; the target-aware
+assessment/read wave is not yet handoff-ready. The source/projection gaps are explicit there. This working
 exploration remains background, not the executable task list.
 
 Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
