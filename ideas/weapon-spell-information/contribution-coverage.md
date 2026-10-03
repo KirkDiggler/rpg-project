@@ -29,7 +29,10 @@ known defects remain separate issues rather than fixes in the explanation layer.
 “Attack” here means the roll, keep policy and critical threshold. “Damage” means
 normal/critical hit branches before target defenses. Save, defense, movement and
 post-hit consequences are named separately so a bounded answer cannot masquerade
-as a complete interaction forecast. The delivery scope still needs a ruling.
+as a complete interaction forecast. R14 settles attack/pre-defense damage,
+spell DC/potential healing, conditional effects and opportunities as the initial
+scope, refined by permitted target facts. The inventory's adjacent behaviors are
+not a promise to predict their outcomes.
 
 ## Condition loader: all 40 entries
 

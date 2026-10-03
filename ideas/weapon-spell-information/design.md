@@ -65,6 +65,13 @@ wire contract remain open.
 - The effort supplies information to character creation and play before an action
   is committed. Existing combat-log traces are its consistency reference, not a
   new presentation feature. It does not depend on a general UI redesign.
+- Current-action information explains effects in play and their contributions,
+  not predicted results. Its initial scope is attack-roll contributions,
+  normal/critical-hit damage before target defenses, spell save DC or potential
+  healing as appropriate, and conditional contributions and optional benefits.
+- Selected-target context refines contributions only where permitted facts can
+  establish applicability. Informational reads simulate no rolls and predict no
+  hit probability or final HP loss after defenses and reactions.
 - Component boundaries and extensibility govern the design before delivery
   slices. Future target-aware information tests the shape without automatically
   requiring its UI in the first delivery.
@@ -103,6 +110,7 @@ wire contract remain open.
 | R11 | settled | Design the shared connection now; deliver catalogue independently first, then current-action/resolution information | KirkDiggler | 2026-10-02 |
 | R12 | settled | Unsupported assessment makes the affected calculation unavailable; retain description and independent action legality | KirkDiggler | 2026-10-03 |
 | R13 | settled | Explanation uses permitted character knowledge with no hidden-state inference; unknown stays unresolved; execution uses authoritative state | KirkDiggler | 2026-10-03 |
+| R14 | settled | Explain participating effects/contributions, not predicted outcomes: attack, pre-defense normal/critical damage, spell DC/healing, conditions and opportunities; permitted target facts refine applicability | KirkDiggler | 2026-10-03 |
 
 ## Open
 
@@ -129,8 +137,8 @@ wire contract remain open.
   and conditional explanations, and completeness for currently offered content.
   Missing descriptions and unavailable mechanics must not be conflated. Separate
   information freshness from executable-offer identity. R12 settles unsupported
-  assessment behavior, not the exact error/wire representation or initial
-  operation scope. R10 settles independent inspection, including unchosen
+  assessment behavior and R14 settles the initial calculation scope, not the
+  exact error/wire representation or end-to-end acceptance details. R10 settles independent inspection, including unchosen
   catalogue alternatives; it does not specify the transport or authorize
   hypothetical character-build calculations. Define the proof through normal
   creation, play, effect changes and reload. Catalogue delivery does not settle

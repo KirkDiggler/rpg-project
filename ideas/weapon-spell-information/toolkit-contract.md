@@ -1,6 +1,6 @@
 # Toolkit contract proposal
 
-Concrete proposal for R3–R5. R1, R2 and R6–R13 are settled in
+Concrete proposal for R3–R5. R1, R2 and R6–R14 are settled in
 [design.md](design.md); the types below are design notation, not implemented APIs.
 [contribution-sketch.md](contribution-sketch.md) contains the introductory example.
 This document replaces its deliberately unspecified package placement with a
@@ -484,8 +484,9 @@ formula. Independently supported calculations remain available. Information
 failure does not change the action's independently established legality. Release
 acceptance requires coverage for all currently offered content within the claimed
 operation scope; the runtime error path is a regression guard, not permission to
-omit hard rules. The exact public representation and initial operation scope
-remain R5 decisions.
+omit hard rules. R14 settles the initial scope as participating effects and
+contributions, not outcome prediction; the exact public representation and
+acceptance details remain R5 work.
 
 Historical execution paths that remain live must either consume the extracted
 rule decision or be retired as part of the owning migration. Leaving one handler
@@ -546,10 +547,10 @@ Before implementation:
    context construction without reading hidden truth and hiding only its source
    label. Current observations do not automatically expose every target condition
    needed for a complete evaluator.
-3. R12 settles unsupported-assessment failure behavior. Settle the concrete
-   coverage/error representation, claimed operation scope and public delivery
-   shape still open in R5; §11 separates information lifetime from permission
-   lifetime.
+3. R12 settles unsupported-assessment failure behavior; R14 settles the initial
+   calculation scope. Specify the concrete coverage/error representation,
+   acceptance and public delivery shape still open in R5; §11 separates
+   information lifetime from permission lifetime.
 4. Derive exact module-isolated handoffs and tests from this contract. This is a
    measured design proposal, not a claim of an implementation-ready plan.
 

@@ -2,7 +2,9 @@
 
 Status: proposed R3/R4 interfaces, not implemented APIs or an implementation
 handoff. R12 settles unsupported-assessment behavior; R13 settles the permitted-
-knowledge visibility boundary, not its exact projection interface. This document
+knowledge visibility boundary, not its exact projection interface. R14 settles
+the initial calculation scope as explanation of effects, not outcome prediction.
+This document
 refines the interfaces in [toolkit-contract.md](toolkit-contract.md) §§3–7;
 that document retains the package dependency picture and worked examples.
 The [coverage inventory](contribution-coverage.md) identifies current producers,
@@ -290,8 +292,10 @@ Before implementation handoffs:
    remaining R5), including target selection and equipment/action variant identity.
 2. Confirm the concrete assessment/capability shape above (R3), including how
    loader-owned snapshots and per-facet coverage are exposed without bus attachment.
-3. Choose the initial claimed operation scope explicitly. AC, final target damage,
-   movement and later reaction outcomes are inventoried, not silently promised by
-   an actor-side attack/damage/healing explanation.
+3. Derive coverage and acceptance for R14's settled scope: attack contributions,
+   normal/critical damage before defenses, spell DC/potential healing, conditional
+   effects and opportunities, refined by permitted selected-target facts. AC,
+   final target damage, movement and later reaction outcomes are inventoried,
+   not promised predictions. Do not build a simulator to supply this explanation.
 4. Derive exact provider/consumer interfaces, files and test tasks using the design
    skill's planning guide. No interface here is claimed compiled or verified yet.

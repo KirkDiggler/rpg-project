@@ -1,7 +1,7 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R13 in [design.md](design.md) are settled. Catalogue and current-action work
+R6–R14 in [design.md](design.md) are settled. Catalogue and current-action work
 share the designed connection but remain separate delivery increments. The current
 focus is the contribution contract and coverage inventory after the bounded
 creation-description checkpoint. Resolution-specific R3–R5 contracts still need
@@ -47,15 +47,19 @@ contract and coverage inventory, not finishing the catalogue browser first.
   hidden-state inference and unknown facts left unresolved. Execution still uses
   authoritative state; the exact projected fields and observation sources remain
   R4 work.
+- R14 settles the initial scope as effects/contributions, not outcome prediction:
+  attack roll, normal/critical damage before defenses, spell DC/potential healing,
+  conditional effects and opportunities. Permitted selected-target facts refine
+  applicability; no simulated rolls, hit probabilities or predicted final HP loss.
 - Sneak Attack's Dexterity-as-weapon proxy is toolkit#1929, deliberately separate.
   Both consumers use its owning predicate; information contains no compensating
   rule. The inventory identifies broader extraction needs without authorizing
   unrelated gameplay corrections.
 
-Next architectural decisions: member-visible context construction, concrete
-assessment capabilities and the claimed initial operation/read scope. After those
-are settled, derive the checked implementation handoffs rather than treating this
-inventory as an executable task plan.
+Next contract work: map the member-visible context to its observation sources,
+complete the shared assessment interfaces and public read shape, and derive
+acceptance within R14's settled scope. Then derive checked implementation handoffs
+rather than treating this inventory as an executable task plan.
 
 ## Broader catalogue follow-on (separate from current focus)
 
