@@ -74,6 +74,11 @@ wire contract remain open.
   is attack-roll contributions,
   normal/critical-hit damage before target defenses, spell save DC or potential
   healing as appropriate, and conditional contributions and optional benefits.
+- Hover or keyboard focus inspects a target's applicable effects before acting;
+  clicking retains the existing attack/cast behavior without a new confirmation
+  step. Touch has an explicit read-only inspection affordance.
+- Inspection and effect tooltips send no action command. Ineligible effect details
+  remain accessible, and information freshness does not grant command authority.
 - Selected-target context refines contributions only where permitted facts can
   establish applicability. Informational reads simulate no rolls and predict no
   hit probability or final HP loss after defenses and reactions.
@@ -116,6 +121,7 @@ wire contract remain open.
 | R12 | settled | Unsupported assessment makes the affected calculation unavailable; retain description and independent action legality | KirkDiggler | 2026-10-03 |
 | R13 | settled | Explanation uses permitted character knowledge with no hidden-state inference; unknown stays unresolved; execution uses authoritative state | KirkDiggler | 2026-10-03 |
 | R14 | settled | Explain participating effects/contributions, not predicted outcomes: attack, pre-defense normal/critical damage, spell DC/healing, conditions and opportunities; permitted target facts refine applicability | KirkDiggler | 2026-10-03 |
+| R15 | settled | Hover/focus target inspection with readable effect tooltips and explicit touch inspection; preserve click-to-act, no added confirmation | KirkDiggler | 2026-10-03 |
 
 ## Open
 
@@ -150,4 +156,5 @@ wire contract remain open.
   the current-action contribution or effect-freshness contracts; each increment
   needs its own acceptance scope under R11. The
   [effect-information consumer trace](effect-info-delivery.md) records the tooltip
-  acceptance and the unresolved pre-commit target-inspection interaction.
+  acceptance and R15's pre-commit target-inspection interaction; the exact public
+  read and projection interfaces remain to be specified.

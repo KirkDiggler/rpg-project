@@ -206,7 +206,7 @@ Canonical description and contextual reason have different jobs: what the effect
 is versus why it can/cannot apply here. A name-only entry is not sufficient tooltip
 content. Reuse and fill the owning content projection rather than introducing an
 API/web description table. The [consumer trace](effect-info-delivery.md) gives the
-concrete source paths, scenarios and remaining target-inspection decision.
+concrete source paths, scenarios and R15's settled hover/focus inspection behavior.
 
 The calculation structures below support the shared assessment/execution machinery
 and any explicitly requested mechanical detail. Rendering them as a standalone
@@ -307,8 +307,9 @@ Before implementation handoffs:
 
 1. Settle the member-visible fact projection and current-action read inputs (R4,
    remaining R5), including target inspection and equipment/action variant identity.
-   Current target clicks execute immediately; decide the pre-commit inspection
-   interaction identified in the consumer trace before prescribing UI changes.
+   R15 settles pre-commit hover/focus/touch inspection while target clicks retain
+   immediate execution. The consumer trace separates inspection state from command
+   selection and pins accessible tooltip behavior.
 2. Confirm the concrete assessment/capability shape above (R3), including how
    loader-owned snapshots and per-facet coverage are exposed without bus attachment.
 3. Derive coverage and acceptance for R14's settled scope: attack contributions,

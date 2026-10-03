@@ -1,7 +1,7 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R14 in [design.md](design.md) are settled. Catalogue and current-action work
+R6–R15 in [design.md](design.md) are settled. Catalogue and current-action work
 share the designed connection but remain separate delivery increments. The current
 focus is the contribution contract and coverage inventory after the bounded
 creation-description checkpoint. Resolution-specific R3–R5 contracts still need
@@ -32,9 +32,9 @@ with tooltips describing them. An active Sneak Attack indication with a useful
 tooltip is the proof, not a results-preview panel. The shared mechanical contract
 serves that presentation and execution; it does not authorize a dashboard redesign.
 The [consumer trace](effect-info-delivery.md) pins the existing source paths and
-acceptance scenarios. It also identifies a concrete UI decision: target clicks
-currently execute immediately, so information needs a pre-commit inspection
-interaction rather than being attached after the command is sent.
+acceptance scenarios. R15 settles the measured UI gap: hover/focus inspects effects,
+touch gets an explicit read-only inspection affordance, and target clicks retain
+immediate execution. No new confirmation step or information-fetch command gate.
 
 The character-creation description checkpoint is implemented separately from the
 broader catalogue proposal: toolkit#1927 merged; web#1218 has a scoped passing
@@ -65,8 +65,8 @@ contract and coverage inventory, not finishing the catalogue browser first.
   rule. The inventory identifies broader extraction needs without authorizing
   unrelated gameplay corrections.
 
-Next contract work: resolve that target-inspection interaction, complete the
-member-visible context projection and shared assessment/public-read interfaces,
+Next contract work: complete the member-visible context projection and shared
+assessment/public-read interfaces for R15's settled inspection interaction,
 and derive acceptance within R14's settled scope. Existing position/standing
 observations are mapped in the consumer trace; observer-known relationships
 between two other participants and target-effect knowledge need provider work.

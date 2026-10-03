@@ -3,7 +3,7 @@
 Working design record, not an implementation-ready plan. The player sees which
 effects can apply and can inspect what they do. Numerical terms remain the shared
 rule machinery's evidence, not a requirement for a new results-preview panel.
-Authority: R7–R14 in [design.md](design.md) and the operator's clarification on
+Authority: R7–R15 in [design.md](design.md) and the operator's clarification on
 [#521](https://github.com/KirkDiggler/rpg-project/pull/521).
 
 ## What the player should see
@@ -50,27 +50,27 @@ and target-effect rows are concrete R4 provider work, not permission to substitu
 live whole-world truth. Unknown facts remain unknown under R13. Geometric queries
 stay in encounter; rule applicability stays with its rule; session carries values.
 
-## Interaction decision still open
+## Settled interaction — R15
 
-The required effect indication is **before committing**. Putting it beside the
-current selected target after `onTargetClick` would be too late: the RPC has
-already been sent. This is a measured interaction gap, not a request to reopen
-rule ownership, visibility or scope.
+The effect indication is **before committing**: hover/focus inspects, clicking
+still performs the armed action. The operator accepted this recommendation rather
+than adding a select-then-confirm step. The earlier alternatives and source finding
+remain in the PR record.
 
-Two possible integrations:
-
-1. **Inspect without changing click-to-act.** Hover/focus a candidate to inspect
-   its effects; clicking still performs the armed action. Connect the existing
-   `SessionCanvas.onHoverEntity`; the target list supplies keyboard focus. Touch
-   needs an explicit inspect affordance rather than a fictional hover event.
-2. **Select, inspect, then confirm.** A target click only selects; a separate action
-   confirms the attack/single-target cast. This gives pointer, keyboard and touch
-   a stable inspectable state but deliberately changes current command behavior.
-
-Recommendation: the first path preserves existing command interaction and the
-no-general-redesign boundary. It must include a non-hover-only way to inspect the
-same information. Neither path is approved by the source trace. The affected UI
-interaction/transport task cannot be called handoff-ready until this is decided.
+- Connect the existing `SessionCanvas.onHoverEntity`; the target list supplies
+  keyboard focus and an explicit read-only inspection control for touch.
+- Keep inspection state separate from `selectedCandidateMember`, which currently
+  participates in action dispatch. Inspecting never calls `onTargetClick`.
+- Keep the inspected target associated with its effect list while the pointer or
+  focus moves into that list to read a tooltip. A hover-out event must not make the
+  tooltip disappear before it can be read. Clear/change inspection on explicit
+  dismissal, a different inspected target, or a changed session/member/action.
+- Distinguish the last inspected target from current information freshness. A
+  delivered state change invalidates its answer; an older response cannot restore
+  it as current. No click is delayed until an informational request completes.
+- Leave attack/cast selection, command availability, refusal handling and existing
+  multi-target cast confirmation unchanged. Inspection neither adds an action
+  confirmation nor dismisses an execution refusal.
 
 ## Concrete acceptance to carry into the checked plan
 
@@ -99,15 +99,16 @@ These are expected assertions, not tests claimed to have run:
   state changes cannot alter rows, reasons, availability or errors.
 - **Unsupported rule:** retain description, mark assessment/affected calculation
   unavailable, and leave command eligibility unchanged.
-- **Input modalities:** the selected interaction must make effects/tooltips
-  inspectable before command submission by pointer, keyboard and touch. Inspection
-  itself sends zero Attack/Cast/Activate calls. Existing command/refusal behavior
-  is preserved unless the operator explicitly chooses a new confirmation step.
+- **Input modalities:** pointer hover, keyboard focus and touch inspection expose
+  the same provider effect facts before submission. Moving into an effect tooltip
+  preserves the inspected target. Inspection sends zero Attack/Cast/Activate calls.
+  A normal target click still dispatches once without a new confirmation or a wait
+  for informational completion; existing command/refusal behavior remains intact.
 - **No dashboard prerequisite:** prove the effect indicator and tooltip directly;
   a formula panel, hit probability or simulated outcome cannot stand in for this
   acceptance.
 
-After the interaction decision, derive task contracts for canonical effect content,
+With the interaction settled, derive task contracts for canonical effect content,
 shared assessments, permitted context, SDK/wire/API transport, UI rendering and
 joined acceptance. The existing contribution inventory supplies the rule migration
 universe; this trace supplies the consumer requirement. Neither is by itself a
