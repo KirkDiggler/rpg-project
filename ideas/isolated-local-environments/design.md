@@ -2,11 +2,11 @@
 
 **Issue:** rpg-project#221 / game-dev#63
 
-**Status:** Proposed replacement for the over-engineered game-dev#70 runtime
+**Status:** Launcher contract. Toolkit source-copy selectors are legacy compatibility, not the current development workflow. Use pushed toolkit commits and API pseudo-version pins; see `rpg-api/docs/how-to/toolkit-pseudo-versions.md`.
 
 ## Goal
 
-A developer names the API branch, web branch, API port, web port, and optional local toolkit source in one small manifest. One command starts that exact local game; one command stops it.
+A developer names the API branch, web branch, API port and web port in one small manifest. The selected API's `go.mod` determines its toolkit dependencies. One command starts that exact local game; one command stops it.
 
 This wraps the manual local workflow Kirk already uses. It is not a deployment system and does not attempt production-grade crash recovery.
 
@@ -20,10 +20,6 @@ RPG_API_REF=feat/combat-api
 RPG_DND5E_WEB_REF=feat/combat-web
 RPG_API_HOST_PORT=8082
 RPG_WEB_HOST_PORT=3002
-
-# Optional: iterate on one local toolkit module through the API build.
-RPG_TOOLKIT_PATH=/home/kirk/game-dev/rpg-toolkit/.worktrees/combat
-RPG_TOOLKIT_TARGET=rulebooks/dnd5e
 ```
 
 Shared manifests may live at `envs/<name>.env`. The commands are:
@@ -34,7 +30,7 @@ Shared manifests may live at `envs/<name>.env`. The commands are:
 ./scripts/dev-env.sh down local/combat
 ```
 
-A manifest may select `RPG_API_PATH` or `RPG_DND5E_WEB_PATH` instead of the corresponding pushed ref when the developer wants uncommitted local source. An optional toolkit source may likewise use `RPG_TOOLKIT_PATH` or `RPG_TOOLKIT_REF`.
+A manifest may select `RPG_API_PATH` or `RPG_DND5E_WEB_PATH` instead of the corresponding pushed ref when the developer wants uncommitted local API/web source. Toolkit changes are pushed to origin and adopted through the consumer's Go-generated pseudo-version, not a toolkit path/ref selector.
 
 ## What `up` does
 
@@ -43,7 +39,7 @@ A manifest may select `RPG_API_PATH` or `RPG_DND5E_WEB_PATH` instead of the corr
 3. Refuse if either requested host port is still occupied.
 4. For each `*_REF`, fetch that pushed ref from the existing workspace clone and create or update a detached worktree under `.runtime/<environment>/sources/`. For each `*_PATH`, use that checkout directly without changing its Git state.
 5. Fetch `rpg-deployment/origin/main` into another environment-owned detached worktree. Deployment is not a manifest selector; this avoids relying on a stale primary checkout whose older Compose files hard-code port 8080.
-6. When a toolkit source is selected, require a ref-backed managed API worktree and call the API's existing `scripts/toolkit-local-override.sh` for `rulebooks/dnd5e` (default) or `encounter`.
+6. Retain validation of toolkit source selectors only for existing legacy manifests. New development uses the API's module pins and normal Dockerfile; it does not enter the source-copy override path.
 7. Build one environment-tagged API image from the selected API source.
 8. Start the managed deployment Compose files with a project name derived from the environment, `RPG_API_HOST_PORT`, and the environment-tagged API image.
 9. Sync game assets into the selected web source, run `npm ci` only when `node_modules` is absent, and start host Vite on exactly `RPG_WEB_HOST_PORT` with `--strictPort` and `VITE_API_HOST` pointed at the selected API port.
@@ -88,16 +84,16 @@ The launcher will not implement:
 - platform installation or Docker Desktop configuration;
 - a separate toolkit lifecycle facade.
 
-Toolkit refresh is simply another `up` for the same environment. Web edits continue through normal Vite HMR.
+Toolkit edits enter through another pushed commit and an updated consumer pseudo-version, followed by rebuilding the selected API checkout. `restart` does not fetch a newer ref-backed snapshot. Web edits continue through normal Vite HMR.
 
 ## Verification
 
 A small shell contract will prove:
 
 - manifest refs/paths and both ports reach the expected Git, Docker, Compose, and Vite commands;
-- optional toolkit configuration invokes the existing API override helper before the API build;
+- retained legacy toolkit-selector validation remains compatible without making source overrides the normal workflow;
 - occupied ports fail before build/start;
 - `down` targets only the named Compose project and recorded Vite group;
 - primary checkout HEAD and tracked files are unchanged.
 
-The final manual check is the workflow itself: create one local manifest, run `up`, open the printed URL, edit web code and observe HMR, optionally edit toolkit code and rerun `up`, then run `down`.
+The final manual check is the workflow itself: create one local manifest, run `up`, open the printed URL, and observe web HMR. For toolkit changes, push the provider commit, update the consumer pin and rebuild the selected API source. Account for disposable state before re-resolving refs with `up`.

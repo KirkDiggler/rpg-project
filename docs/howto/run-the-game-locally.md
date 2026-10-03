@@ -1,15 +1,18 @@
 # Run the game locally
 
-The fast loop is **backend in containers, web on the host**. Vite serves the
-client with HMR; everything else runs from `rpg-deployment`'s compose files.
+The fast loop is **backend in containers, web on the host**. Use the named-stack
+workflow in `game-dev/docs/dev-environments.md`, running workspace commands from
+the game-dev root checkout. Vite serves the client with HMR; backend services use
+`rpg-deployment`'s Compose files. The Compose examples below are manual reference,
+not a separate toolkit iteration workflow.
 
 > Do **not** use `docker-compose.local-src.yml` for visual work. It
 > containerizes the web app too — read-only mount, no `node_modules` — which
 > kills Vite HMR and puts a Docker rebuild in the middle of every UI tweak.
 
-## Start everything (default: pull the `dev` image)
+## Manual Compose reference: pull the `dev` image
 
-The default flow **pulls** `rpg-api`'s image — there is no build step. That's
+This manual flow **pulls** `rpg-api`'s image — there is no build step. That's
 what makes "what am I playing?" answerable: the answer is "whatever's on the
 `dev` branch," not an archaeology exercise through local Docker images and
 half-remembered rebuilds.
@@ -98,34 +101,24 @@ Rebuild first, then `up -d` — that recreates the container against the new
 image. Leave redis/mongo/5e-srd-api/envoy/nginx alone; they run prebuilt images
 and rarely need touching.
 
-## Toolkit local override
+## Toolkit changes: push, pin, run
 
-**Toolkit changes are not in the loops above.** `rpg-api/go.mod` normally pins
-published `rpg-toolkit` versions with no `replace` directives, so toolkit work
-needs publish → tag → `go get` before the API can see it — impractical if
-you're mid-way through several edit-and-look cycles on an unpublished change.
+Push the toolkit commit to origin. In its consuming module's worktree, run
+`go get <module>@<pushed-commit>` and commit the Go-generated pseudo-version and
+checksums. Repeat outward through changed modules until the API pins the intended
+graph. No provider merge or hand-created tag is required for this development
+loop.
 
-For that, rpg-api has a local override loop: `scripts/toolkit-local-override.sh
-{on|off|status}` plus `Dockerfile.local-toolkit` (rpg-api#741). Read the
-script's own header comment (`rpg-api/scripts/toolkit-local-override.sh`) and
-`rpg-api/docs/how-to/local-toolkit-override.md` for the mechanics — it
-explains itself well, so this is just the two rules that matter beyond that:
+Run the named local stack against that API ref or worktree using its normal
+Dockerfile. Toolkit source selectors, `replace`/`go.work`, source-copy helpers
+and `Dockerfile.local-toolkit` are not the current workflow. The actual commands
+and release transition live in `rpg-api/docs/how-to/toolkit-pseudo-versions.md`;
+manifest/ref/path behavior lives in `game-dev/docs/dev-environments.md`.
 
-- **One module at a time.** The script hardcodes a single `MODULE`
-  (`github.com/KirkDiggler/rpg-toolkit/encounter`) and validates that the
-  source `go.mod` actually declares it. Sibling toolkit modules stay at
-  whatever published versions they're already pinned to — this is
-  deliberately not a "sync the whole toolkit" tool. Same principle as
-  CLAUDE.md's [How a wave is shaped](../../CLAUDE.md#how-a-wave-is-shaped):
-  one branch per wave, one version of a module at a time, just at a smaller
-  scale.
-- **Local loop only — must never reach a merged branch or CI.** The
-  `replace` it adds points at a directory (`local-toolkit/`) that exists only
-  on your machine. The exit path is always: publish the toolkit change → tag
-  the version → `scripts/toolkit-local-override.sh off` → bump rpg-api's pin
-  to the real tag. Check `git diff go.mod` before committing or opening a
-  PR — a `replace ... => ./local-toolkit/encounter` line means the override
-  is still on.
+After verification, merge providers inside-out, let toolkit CI publish each
+module tag, and adopt those actual releases before consumer merges. Keep
+referenced provider commits reachable while a consumer still uses their
+pseudo-versions. Proto SDK publication follows its own merge/CI workflow.
 
 ## Parallel lab api
 
