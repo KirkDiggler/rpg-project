@@ -9,6 +9,9 @@ flowchart TD
     Eligible -->|No| NoRoll[No roll]
     Eligible -->|Yes| Check[Roll with this character's capabilities]
     Check --> Attempt[Remember the attempt]
+    Attempt -->|Repeats allowed and budget remains| Away[Leave range and reach X hexes away]
+    Away --> Return[Return within one hex]
+    Return --> Eligible
     Check -->|Failure| Log[Combat log names the failed skill check]
     Check -->|Success| Learn[Character learns the discovery]
     Learn --> Sharing{Character shares intel?}
@@ -77,6 +80,13 @@ catch-up service.
 - **R13 — Single-try default.** A check without explicit permission for repeat
   attempts permits one try per character. Multiple attempts are opt-in content,
   not a default inherited from repeated movement or client requests.
+- **R15 — Distance re-arm.** A repeatable check becomes eligible for another
+  allowed attempt only after that character leaves the trigger range, reaches
+  at least the check's configured reset distance of X hexes, and returns within
+  one hex. X measures distance from the checked content, not accumulated steps.
+  Reaching X only re-arms the check; returning triggers the next roll. Standing
+  nearby or returning before reaching X does not. Re-arming never replenishes
+  an exhausted attempt budget or turns a single-try check into a repeatable one.
 
 ## Rulings
 
@@ -96,16 +106,17 @@ catch-up service.
 | R12 | settled | Retry policy authored per check in the World Builder alongside skill and DC | KirkDiggler | 2026-10-03 |
 | R13 | settled | Single try by default; repeated attempts require explicit configuration | KirkDiggler | 2026-10-03 |
 | R14 | deferred-until-sharing-recovery | Disconnect-edge recovery and historical catch-up | KirkDiggler | 2026-10-03 |
-| R15 | open | Repeat scheduling, persistent check identity and edits | — | — |
+| R15 | settled | Repeat requires reaching configured X-hex reset distance and returning within one hex | KirkDiggler | 2026-10-03 |
 | R16 | open | Remaining action-surface and delivery contracts | — | — |
+| R17 | open | Reset-distance default, persistent check identity and edits | — | — |
 
 ## Open
 
-- **R15 — Attempt lifecycle.** Specify how an explicitly repeatable check earns
-  another attempt: re-entry, later run, or another authored condition. Define
-  persistent character/site/check identity across authored revisions and the
-  effect of editing a check on already spent attempts. Old saves without attempt
-  history cannot silently claim a history the system never recorded.
+- **R17 — Retry configuration and identity.** Specify the default reset distance
+  for a repeatable check. Define persistent character/site/check identity across
+  authored revisions and the effect of editing a check on already spent attempts.
+  Old saves without attempt history cannot silently claim a history the system
+  never recorded.
 - **R16 — Bounded delivery and action surface.** Reconcile the meaning of loaded
   party characters with the existing membership/delivery contract without adding
   the deferred disconnect-recovery system. Specify the failed-check log audience
