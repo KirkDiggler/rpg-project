@@ -58,8 +58,9 @@ The exact typed representation of partial facts remains to be chosen.
 Explanation and execution share rule evaluators, not necessarily identical
 knowledge. Execution has authoritative context; a member-facing explanation
 must use permitted knowledge and cannot query hidden truth then leak its answer
-through totals, applicability flags, sources, or omissions. The visibility
-projection is an explicit R4 contract still to define.
+through totals, applicability flags, sources, or omissions. R13 settles this
+permitted-knowledge boundary; the exact visibility projection remains an R4
+interface to define.
 
 ## 2. Rule assessment
 

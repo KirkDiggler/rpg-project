@@ -1,7 +1,7 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R12 in [design.md](design.md) are settled. Catalogue and current-action work
+R6–R13 in [design.md](design.md) are settled. Catalogue and current-action work
 share the designed connection but remain separate delivery increments. The current
 focus is the contribution contract and coverage inventory after the bounded
 creation-description checkpoint. Resolution-specific R3–R5 contracts still need
@@ -43,6 +43,10 @@ contract and coverage inventory, not finishing the catalogue browser first.
   migration assertions and freshly executed baseline checks.
 - R12 settles unsupported-assessment behavior: retain description, make the
   affected calculation unavailable, leave independent legality unchanged.
+- R13 settles permitted character knowledge as the information boundary, with no
+  hidden-state inference and unknown facts left unresolved. Execution still uses
+  authoritative state; the exact projected fields and observation sources remain
+  R4 work.
 - Sneak Attack's Dexterity-as-weapon proxy is toolkit#1929, deliberately separate.
   Both consumers use its owning predicate; information contains no compensating
   rule. The inventory identifies broader extraction needs without authorizing
@@ -270,17 +274,18 @@ applicable modifier to every action. Inspiration is available to choose after a
 roll, not already added to it; target-dependent effects are not unconditional
 actor bonuses.
 
-**R4 recommendation, pending operator agreement:** before target selection, show
-current actor contributions and explicit conditional requirements. With a selected
-target, refine what can be established from the player's permitted information.
+**Visibility boundary settled, R13:** information uses permitted character
+knowledge, not hidden authoritative facts. The concrete R4 projection proposal
+shows current actor contributions and conditional requirements before selection,
+then refines them with permitted selected-target context.
 Do not turn that refinement into a query for hidden defenses, unseen creatures,
 or another player's future reaction choice. A non-applicable or unknown result
 must not be mistaken for a missing effect.
 
-Selected-target refinement needs a ruled visibility contract before its API shape
-is chosen. Its architectural fit must be designed now; shipping a selected-target
-UI is a separate delivery decision, not the next prerequisite to understanding
-the component.
+R13 settles visibility; selected-target refinement still needs the concrete
+projection fields, observation sources and API shape. Its architectural fit must
+be designed now; shipping a selected-target UI is a separate delivery decision,
+not the next prerequisite to understanding the component.
 
 ## Architecture-first direction
 

@@ -1,6 +1,6 @@
 # Toolkit contract proposal
 
-Concrete proposal for R3–R5. R1, R2 and R6–R12 are settled in
+Concrete proposal for R3–R5. R1, R2 and R6–R13 are settled in
 [design.md](design.md); the types below are design notation, not implemented APIs.
 [contribution-sketch.md](contribution-sketch.md) contains the introductory example.
 This document replaces its deliberately unspecified package placement with a
@@ -542,9 +542,10 @@ Before implementation:
 
 1. R9 settles explicit normalization; specify the concrete phase boundaries and
    paired-rule/roll-count regressions for its migration.
-2. Settle R4's member-visible context construction; never read hidden truth then
-   hide only its source label. Current observations do not automatically expose
-   every target condition needed for a complete evaluator.
+2. R13 settles the permitted-knowledge boundary. Specify R4's member-visible
+   context construction without reading hidden truth and hiding only its source
+   label. Current observations do not automatically expose every target condition
+   needed for a complete evaluator.
 3. R12 settles unsupported-assessment failure behavior. Settle the concrete
    coverage/error representation, claimed operation scope and public delivery
    shape still open in R5; §11 separates information lifetime from permission
@@ -617,13 +618,16 @@ the same secret. Sources carried by the actor's own effect record retain their
 existing disclosure policy; a display label does not justify looking up an
 otherwise unseen caster.
 
-**Recommended R4 boundary:** actor-side information does not inspect unpermitted
-opponent state. A target-specific result consumes a bounded observation/fact
-projection, rather than full opponent sheets exposed to informational evaluators.
-Execution remains a separate authoritative evaluation with its required complete
-participant universe. Context construction is owned below session by encounter
-and rulebook projections; session does not decide which rules a hidden fact would
-have changed.
+**Settled visibility boundary, R13:** information uses the character's permitted
+knowledge, not unpermitted opponent state; insufficient knowledge stays unresolved.
+Execution remains a separate authoritative evaluation. An explanation is not a
+guaranteed outcome, and a visible target does not grant access to its full sheet.
+
+**Remaining R4 projection proposal:** a target-specific result consumes a bounded
+observation/fact projection rather than full opponent sheets. Context construction
+is owned below session by encounter and rulebook projections; session does not
+decide which rules a hidden fact would have changed. Exact fields and their
+observation sources remain to be specified.
 
 At initial presentation, target-dependent statements are conditional because the
 question lacks that context, not because a hidden-world probe discovered a secret.

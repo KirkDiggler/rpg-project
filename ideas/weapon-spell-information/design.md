@@ -74,6 +74,12 @@ wire contract remain open.
 - Catalogue reads require no dummy character, invented modifiers or resolution
   interaction. Later action explanations reuse the content authority instead of
   creating a second description/mechanics catalogue.
+- Player-facing assessments use the character's permitted knowledge, not hidden
+  authoritative target state. Seeing a target does not grant its full sheet.
+- Hidden state cannot alter informational totals, applicability, sources, pending
+  rows or error shape when the permitted inputs are identical.
+- Insufficient knowledge remains unresolved rather than a definite negative.
+  Execution uses authoritative state; an explanation is not a guaranteed outcome.
 - An unsupported assessment makes the affected calculation unavailable, never an
   apparently complete total with the unsupported contribution omitted.
 - Assessment unavailability preserves the action's content description and does
@@ -87,7 +93,7 @@ wire contract remain open.
 | R1 | settled | Catalog facts for choosing; character-specific facts for using; both surfaces in scope | KirkDiggler | 2026-10-02 |
 | R2 | settled | Current-action information includes active effects such as Rage and Bless, not only base numbers | KirkDiggler | 2026-10-02 |
 | R3 | open | Shared contribution mechanism, ownership and side-effect-free read contract | — | — |
-| R4 | open | Target-dependent and unresolved information; observer-visible limits | — | — |
+| R4 | open | Concrete target/context projection and refinement contract within R13's visibility boundary | — | — |
 | R5 | open | Information payload, catalog coverage and end-to-end acceptance | — | — |
 | R6 | settled | Prioritize component shape, composition and future fit over selecting immediate UI slices | KirkDiggler | 2026-10-02 |
 | R7 | settled | Session carries inputs and answers; resolution assembles supplied context using rule-owned contributions | KirkDiggler | 2026-10-02 |
@@ -96,6 +102,7 @@ wire contract remain open.
 | R10 | settled | Information remains inspectable independently of affordability and after selection, including unchosen alternatives; existing affordability UI/authority remains unchanged | KirkDiggler | 2026-10-02 |
 | R11 | settled | Design the shared connection now; deliver catalogue independently first, then current-action/resolution information | KirkDiggler | 2026-10-02 |
 | R12 | settled | Unsupported assessment makes the affected calculation unavailable; retain description and independent action legality | KirkDiggler | 2026-10-03 |
+| R13 | settled | Explanation uses permitted character knowledge with no hidden-state inference; unknown stays unresolved; execution uses authoritative state | KirkDiggler | 2026-10-03 |
 
 ## Open
 
@@ -111,12 +118,13 @@ wire contract remain open.
   [coverage inventory](contribution-coverage.md) records the current producers and
   migration proofs. These resolution-specific interfaces are not prerequisites
   for R11's catalogue increment.
-- **R4 — What is known before choosing a target.** Specify how current effects,
-  applicable contributions and target-dependent conditions are distinguished.
-  Design how selected-target context can refine an explanation and how visibility
-  constrains it. Keep that architectural fit separate from deciding when the
-  selected-target UI ships. The catalogue increment needs only its permitted
-  content visibility; it does not evaluate target facts.
+- **R4 — Concrete permitted context.** R13 settles the visibility boundary, not
+  the exact projected fields, their observation sources or the refinement API.
+  Define how permitted current effects, spatial facts and target context reach
+  the same rule evaluator without exposing hidden sheets. Keep that architectural
+  fit separate from deciding when the selected-target UI ships. The catalogue
+  increment needs only its permitted content visibility; it does not evaluate
+  target facts.
 - **R5 — What crosses the wire.** Settle prose versus structured fields, sources
   and conditional explanations, and completeness for currently offered content.
   Missing descriptions and unavailable mechanics must not be conflated. Separate

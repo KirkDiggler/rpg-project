@@ -1,7 +1,8 @@
 # Shared assessments — concrete contract proposal
 
 Status: proposed R3/R4 interfaces, not implemented APIs or an implementation
-handoff. R12 settles the unsupported-assessment behavior below. This document
+handoff. R12 settles unsupported-assessment behavior; R13 settles the permitted-
+knowledge visibility boundary, not its exact projection interface. This document
 refines the interfaces in [toolkit-contract.md](toolkit-contract.md) §§3–7;
 that document retains the package dependency picture and worked examples.
 The [coverage inventory](contribution-coverage.md) identifies current producers,
@@ -270,17 +271,18 @@ completion of the extraction.
 
 ## 7. Context boundary and remaining decisions
 
-Proposed R4 boundary: informational assessment receives only the permitted fact
-projection. Do not enumerate hidden opponent effects and redact labels afterward:
+Settled visibility boundary, R13: informational assessment uses only the
+character's permitted knowledge; execution uses authoritative state. The proposed
+R4 mechanism supplies that knowledge as a bounded fact projection. Do not enumerate hidden opponent effects and redact labels afterward:
 changed totals, pending rows and error shape all leak information. Generic scope
 statements about omitted target context must not depend on whether a hidden effect
 actually exists. A known qualifying neighbor can establish a positive existential
 predicate; a negative requires the relevant complete facts, as decided by the rule.
 
-No selected-target UI is required just to establish this fit. The member-visible
-projection and access contract still need agreement; the current encounter's
-observations are not automatically a complete model of target effects, resources
-or what the target can see.
+No selected-target UI is required just to establish this fit. The exact
+member-visible projection fields, observation sources and access interface remain
+open; the current encounter's observations are not automatically a complete model
+of target effects, resources or what the target can see.
 
 Before implementation handoffs:
 
