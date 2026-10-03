@@ -55,8 +55,9 @@ hidden member. The World Builder labels this as one automatic discovery check
 with its approaches; retry settings live beside those approaches, not on the
 site/world and not on the lock's active checks.
 
-Add `AttemptPolicy` to the concealment input/persistence and `attempts` to the
-v4 authored concealment, with optional fields:
+The policy checkpoint adds `ConcealmentInput.Attempts *DiscoveryPolicyInput`,
+normalizes through `ResolveDiscoveryPolicy`, and stores a detached effective
+`ConcealmentData.Attempts *DiscoveryPolicy`. V4 `attempts` has optional fields:
 
 - `max`: positive integer; absent = 1. This is the total permitted attempts,
   including the first, not a count of additional retries.
@@ -66,8 +67,9 @@ v4 authored concealment, with optional fields:
   with reset on a new run requiring an explicit author choice).
 
 Use pointer/presence fields at decoding boundaries so explicit zero, negatives,
-unknown lifetime and null/empty malformed policy can be refused rather than
-silently treated as omitted. Normalize once in the owning compiler. The existing
+unknown lifetime, null, and wrong-shaped policy can be refused rather than
+silently treated as omitted. An empty mapping omits all fields and therefore
+requests the same single-try defaults as an empty Go policy input. Normalize once in the owning compiler. The existing
 v2 lowering has no retry editor; it produces the same single-try defaults.
 Do not add unlimited retries or a second counter until a use case asks for them.
 
@@ -139,14 +141,20 @@ New session-owned persistence aggregate `ExplorationData`:
 `Checks map[string]encounter.DiscoveryMemoryData`. This is a persistence-type
 boundary exception, not a runtime encounter object exposed to the host.
 
-New required `ExplorationRepository`, with key-value methods
+New `ExplorationRepository` capability, required for retained discovery and
+sharing-preference operations but not an unconditional new constructor
+requirement on existing hosts, with key-value methods
 `GetExploration(ctx, characterID) (*ExplorationData, error)` and
 `SaveExploration(ctx, *ExplorationData) error`. Missing uses `ErrNotFound`;
 `nil,nil` is a repository defect. The SDK initializes genuinely missing profiles
 under the agreed defaults. API storage keys include trusted world context and
 character ID and do not inherit the expiring session TTL. No new game rule goes
 in the Redis adapter. `ExplorationData` contains opaque provider memory; the SDK
-carries it and encounter interprets/merges it.
+carries it and encounter interprets/merges it. API supplies the capability
+explicitly. A world/operation requiring it must refuse before dice or mutation
+when it is absent; never silently downgrade retained attempts to run-only state.
+This follows the SDK's existing optional-capability adoption contract rather
+than turning a compatible-looking Config addition into a universal runtime break.
 
 New SDK verb:
 `SetDiscoverySharing(ctx, *SetDiscoverySharingInput) (*SetDiscoverySharingOutput, error)`;
@@ -236,6 +244,16 @@ before consumer merge. Independent review, release and deployment are pending.
 
 ## T1 — Authored policy and automatic discovery composition
 
+**Checkpoint:** authoring/persistence policy implemented in draft
+[toolkit#1931](https://github.com/KirkDiggler/rpg-toolkit/pull/1931), `2efc1234`,
+branch `feat/523-automatic-discovery`, worktree `.worktrees/proximity-intel-encounter`.
+Root policy and YAML refusal/round-trip tests pass; full encounter race suite,
+pinned lint and actual hook pass. The two content pictures only gain omitted
+Attempts fields; geometry is unchanged. Policy is compiled/frozen but **not yet
+used for automatic rolls or to limit Search**. Continue this same module branch
+with the sweep/counters/audiences, then retire Search. Do not release this partial
+checkpoint as if T1 were complete.
+
 **Delivers:** R1–R4, R6–R13, R15–R17; C1–C3.
 **Owner:** toolkit `rulebooks/dnd5e/encounter` (including its dungeonspec package).
 **Prerequisites:** existing CheckResolver and individual knowledge writers.
@@ -316,7 +334,8 @@ shared repository/test fixtures, `boundary_test.go`, `doc.go`.
 **New files:** `exploration.go`, `exploration_test.go`, `discovery_sharing.go`,
 `discovery_sharing_test.go`, `automatic_discovery_test.go`.
 
-**Interfaces:** required ExplorationRepository and C4 public types/verb; add the
+**Interfaces:** conditionally required ExplorationRepository capability and C4
+public types/verb; add the
 new persistence type to the intentional boundary allow-list. Project the new
 beat through both live delivery and Story with existing dense recipient Seq.
 
@@ -352,7 +371,8 @@ partial-save reports and no publication before saves. `DiscoverySharingSuite`
 proves explicit off persistence, toggle ownership/member refusals, snapshot bool,
 no catch-up on on-toggle/late Join, identical captured audiences in live/Story.
 
-- [ ] Introduce required repository and update every constructor fixture.
+- [ ] Introduce the repository capability, enforce it at discovery-world/verb
+  admission before mutation, and update the affected host/constructor fixtures.
 - [ ] Wire staging, current record reuse and durable state through the common seam.
 - [ ] Add toggle/snapshot/result projection and delete SDK Search types/method.
 - [ ] Replace existing Search test setup with proximity or lawful fixture knowledge.
