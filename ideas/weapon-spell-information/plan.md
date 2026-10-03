@@ -1,11 +1,11 @@
 # Weapon and spell information — working plan
 
 Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R11 in [design.md](design.md) are settled. The operator approves designing the
-connection together and delivering the catalogue first, independently of the
-heavier current-action/resolution work. Catalogue-specific R5 details and the
-resolution-specific R3–R5 contracts still need checked handoffs; this document
-is not itself an implementation-ready plan.
+R6–R12 in [design.md](design.md) are settled. Catalogue and current-action work
+share the designed connection but remain separate delivery increments. The current
+focus is the contribution contract and coverage inventory after the bounded
+creation-description checkpoint. Resolution-specific R3–R5 contracts still need
+agreement and checked handoffs; this document is not an implementation-ready plan.
 
 Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
 Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-project/issues/307).
@@ -25,15 +25,44 @@ example. R8 settles the Inspiration opportunity/offer behavior and frozen
 continuation; R9 settles explicit action-fact normalization. The remaining
 contracts in R3–R5 remain open.
 
-## Catalogue execution (R11)
+## Contributions continuation
+
+The character-creation description checkpoint is implemented separately from the
+broader catalogue proposal: toolkit#1927 merged; web#1218 has a scoped passing
+review. That does not establish full catalogue browsing, API release adoption or
+current-action contributions. The operator's current focus is the contribution
+contract and coverage inventory, not finishing the catalogue browser first.
+
+- [Assessment contract](assessment-contract.md): concrete proposed operation
+  inputs/outputs, rule binding, per-facet coverage, normalization, calculation
+  availability and execution custody. R3/R4 and remaining R5 interfaces are still
+  proposals; no gameplay implementation is claimed.
+- [Coverage inventory](contribution-coverage.md): source-checked census of 40
+  condition-loader keys, 12 feature-loader arms, four monster-trait arms and the
+  inherent rule/assembly producers. It includes lifecycle boundaries, required
+  migration assertions and freshly executed baseline checks.
+- R12 settles unsupported-assessment behavior: retain description, make the
+  affected calculation unavailable, leave independent legality unchanged.
+- Sneak Attack's Dexterity-as-weapon proxy is toolkit#1929, deliberately separate.
+  Both consumers use its owning predicate; information contains no compensating
+  rule. The inventory identifies broader extraction needs without authorizing
+  unrelated gameplay corrections.
+
+Next architectural decisions: member-visible context construction, concrete
+assessment capabilities and the claimed initial operation/read scope. After those
+are settled, derive the checked implementation handoffs rather than treating this
+inventory as an executable task plan.
+
+## Broader catalogue follow-on (separate from current focus)
 
 [Catalogue implementation plan](catalogue-implementation-plan.md) records the
-fresh worktree bases, a checked first provider checkpoint, red/green evidence and
-the remaining source/transport/UI handoffs. Catalogue metadata implementation is
-underway in the root dnd5e module; no API or UI delivery is claimed yet.
+earlier provider checkpoint, red/green evidence and remaining source/transport/UI
+handoffs. The bounded creation work is distinguished above; the broader catalogue
+read/browser is not complete and is not a prerequisite for this continuation.
 
-Complete the increment across root dnd5e content, protos, API and web. It does not
-require the contribution packages or resolution read to ship.
+The following remains the catalogue follow-on outline across root dnd5e content,
+protos, API and web. It does not require the contribution packages or resolution
+read to ship.
 
 1. Inventory the canonical weapon/spell information already available; identify
    missing descriptions and structured base facts for the permitted choices.
@@ -77,9 +106,11 @@ the following contract checks:
    content and GWF's pre-roll policy/post-roll trace. Paired-rule ordering and
    visibility require discriminating tests, not only these examples. The existing
    GWF suite also passes; this does not test the proposed assessment component.
-4. **Mapped; migration details pending:** chain-only handlers, assembly provenance
-   and consumption callbacks. No tooltip-only predicates and no quiet omissions
-   from an answer claimed to be complete.
+4. **Inventoried; implementation handoffs pending:** chain-only handlers, assembly
+   provenance, inherent visibility/healing producers, feature/trait paths and
+   distinct lifecycle boundaries. No tooltip-only predicates, generic consumption
+   callback or quiet omissions from an answer claimed to be complete. See
+   [contribution-coverage.md](contribution-coverage.md).
 5. **Independent inspection settled, R10:** current `Afford` omits specific action
    identities off-turn and while frozen. Information remains accessible without
    an executable offer, including unchosen catalogue alternatives after selection.

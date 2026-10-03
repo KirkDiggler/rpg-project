@@ -42,8 +42,10 @@ wire contract remain open.
   modifier eligibility or combine game arithmetic.
 - Resolution assembles current-action information from supplied action, character,
   effect and encounter context using rule-owned contributions.
-- Each contributing rule owns its applicability and contribution. Resolution owns
-  their composition; encounter owns spatial facts and observations.
+- Each contributing rule owns its applicability, contribution and explanation.
+  Resolution composes the rule's answer; encounter owns spatial facts and
+  observations. Information consumers do not implement effect-specific eligibility
+  or compensate for defects in an owning rule.
 - Action-fact normalization is explicit: settle the applicable die and ability
   before evaluating contributions that depend on them. Handler registration
   order does not implicitly define that dependency.
@@ -72,6 +74,11 @@ wire contract remain open.
 - Catalogue reads require no dummy character, invented modifiers or resolution
   interaction. Later action explanations reuse the content authority instead of
   creating a second description/mechanics catalogue.
+- An unsupported assessment makes the affected calculation unavailable, never an
+  apparently complete total with the unsupported contribution omitted.
+- Assessment unavailability preserves the action's content description and does
+  not change independently established execution permission. Missing context and
+  rule-established ineligibility remain distinct from unsupported evaluation.
 
 ## Rulings
 
@@ -88,6 +95,7 @@ wire contract remain open.
 | R9 | settled | Explicit normalization of action facts before evaluating dependent contributions | KirkDiggler | 2026-10-02 |
 | R10 | settled | Information remains inspectable independently of affordability and after selection, including unchosen alternatives; existing affordability UI/authority remains unchanged | KirkDiggler | 2026-10-02 |
 | R11 | settled | Design the shared connection now; deliver catalogue independently first, then current-action/resolution information | KirkDiggler | 2026-10-02 |
+| R12 | settled | Unsupported assessment makes the affected calculation unavailable; retain description and independent action legality | KirkDiggler | 2026-10-03 |
 
 ## Open
 
@@ -97,10 +105,12 @@ wire contract remain open.
   exact extraction and interfaces need agreement before implementation. R8 fixes
   the opportunity/offer distinction and pause/resume custody; R9 fixes explicit
   normalization before dependent contributions. The working
-  [toolkit contract proposal](toolkit-contract.md) names the proposed types and
-  distinguishes pre-roll normalization from post-roll face operations. These
-  resolution-specific interfaces are not prerequisites for R11's catalogue
-  increment.
+  [toolkit contract proposal](toolkit-contract.md) names the proposed packages;
+  the [assessment contract](assessment-contract.md) refines their interfaces,
+  phase boundaries and per-facet coverage. The linked
+  [coverage inventory](contribution-coverage.md) records the current producers and
+  migration proofs. These resolution-specific interfaces are not prerequisites
+  for R11's catalogue increment.
 - **R4 — What is known before choosing a target.** Specify how current effects,
   applicable contributions and target-dependent conditions are distinguished.
   Design how selected-target context can refine an explanation and how visibility
@@ -110,9 +120,11 @@ wire contract remain open.
 - **R5 — What crosses the wire.** Settle prose versus structured fields, sources
   and conditional explanations, and completeness for currently offered content.
   Missing descriptions and unavailable mechanics must not be conflated. Separate
-  information freshness from executable-offer identity. R10 settles independent
-  inspection, including unchosen catalogue alternatives; it does not specify the
-  transport or authorize hypothetical character-build calculations. Define the
-  proof through normal creation, play, effect changes and reload. Under R11,
-  settle and check the catalogue read/coverage/UI contract first; current-action
-  contributions and effect freshness belong to the following increment.
+  information freshness from executable-offer identity. R12 settles unsupported
+  assessment behavior, not the exact error/wire representation or initial
+  operation scope. R10 settles independent inspection, including unchosen
+  catalogue alternatives; it does not specify the transport or authorize
+  hypothetical character-build calculations. Define the proof through normal
+  creation, play, effect changes and reload. Catalogue delivery does not settle
+  the current-action contribution or effect-freshness contracts; each increment
+  needs its own acceptance scope under R11.

@@ -343,7 +343,11 @@ An optional descriptive interface that silently skips all other effects cannot
 establish completeness. The migration needs an explicit inventory and coverage
 check for current action-affecting rules, plus read-versus-execution tests. Rules
 without an explanatory capability must not silently disappear from an answer
-advertised as complete. Exact unsupported-data behavior remains to be ruled.
+advertised as complete. R12 settles unsupported-assessment behavior: retain the
+description, make the affected calculation unavailable, and leave action legality
+unchanged. The concrete [assessment contract](assessment-contract.md) and
+[coverage inventory](contribution-coverage.md) refine this sketch without making
+individual game rules the information consumer's responsibility.
 
 ## 7. Spells and creation still fit
 

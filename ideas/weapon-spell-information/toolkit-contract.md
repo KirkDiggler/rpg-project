@@ -1,11 +1,15 @@
 # Toolkit contract proposal
 
-Concrete proposal for R3–R5. R1, R2 and R6–R11 are settled in
+Concrete proposal for R3–R5. R1, R2 and R6–R12 are settled in
 [design.md](design.md); the types below are design notation, not implemented APIs.
 [contribution-sketch.md](contribution-sketch.md) contains the introductory example.
 This document replaces its deliberately unspecified package placement with a
 proposed dependency shape and names the remaining decisions rather than treating
-them as implementation detail.
+them as implementation detail. The continuation's
+[assessment contract](assessment-contract.md) refines §§3–7 into operation-specific
+inputs/outputs, coverage and execution custody. Its
+[coverage inventory](contribution-coverage.md) includes inherent producers and
+feature/trait loading paths, not only condition subscriptions.
 
 **Delivery boundary, R11:** catalogue information ships first as an independent
 increment. This document's contribution/assessment packages and resolution read
@@ -143,7 +147,8 @@ type AttackRule interface {
 }
 
 type RuleBinding struct {
-    Address     ConditionAddress
+    ID          BindingID // Evaluation-local, not a selector or persisted identity.
+    Address     *ConditionAddress // Only when the producer is a condition.
     Source      contributions.Source
     Boundary    Boundary
     Stage       Stage
@@ -158,6 +163,10 @@ identity schema. `Stage` refers to the rulebook's declared order; registration
 ordinal preserves the applicable deterministic ordering, not map iteration.
 The exact source-owner relocation must not introduce an imports-back-to-events
 cycle in the shared package.
+
+The continuation separates normalization, attack and damage capabilities rather
+than making this illustrative attack capability answer every operation. Base
+rules and features have binding identities without fabricated condition addresses.
 
 `AttackFrame` contains the current action profile, detached actor facts,
 optional/unknown target facts, operation-relevant spatial facts, and already
@@ -462,17 +471,21 @@ as part of authoring the description.
 | session | Carry records/context and project results | No bus/rule arithmetic or inner runtime type on public surface |
 | protos/API/web | Describe and carry the agreed result; render its sourced data | Presence and sources survive; normal character creation and in-play browser proof |
 
-Add coverage declarations to the existing condition registration/loading path;
-do not create a second ref-to-tooltip registry. Every loaded rule must be
-explicitly classified as relevant to supported action-information operations,
-not relevant, or unsupported by the new evaluator. An optional interface check
-that quietly skips a chain-only rule cannot prove completeness.
+Add operation/facet coverage declarations to existing condition, feature and
+monster-trait registration/loading paths and to inherent assembly/rule producers;
+do not create a second ref-to-tooltip registry. Every producer must be explicitly
+classified as supported, not relevant to the requested scope, or unsupported by
+the new evaluator. An optional interface check that quietly skips a chain-only
+rule cannot prove completeness. See the [coverage inventory](contribution-coverage.md).
 
-**Recommended unsupported behavior, still a decision:** return an explicit
-information error/status rather than an apparently complete partial answer.
-Information failure does not itself change the action's independently established
-legality. Release acceptance requires coverage for all currently offered content;
-the runtime error path is a regression guard, not permission to omit hard rules.
+**Settled unsupported behavior, R12:** retain the content description, but mark the
+affected calculation unavailable rather than return an apparently complete partial
+formula. Independently supported calculations remain available. Information
+failure does not change the action's independently established legality. Release
+acceptance requires coverage for all currently offered content within the claimed
+operation scope; the runtime error path is a regression guard, not permission to
+omit hard rules. The exact public representation and initial operation scope
+remain R5 decisions.
 
 Historical execution paths that remain live must either consume the extracted
 rule decision or be retired as part of the owning migration. Leaving one handler
@@ -532,8 +545,10 @@ Before implementation:
 2. Settle R4's member-visible context construction; never read hidden truth then
    hide only its source label. Current observations do not automatically expose
    every target condition needed for a complete evaluator.
-3. Settle coverage/error semantics and the public delivery shape in R5; §11
-   separates information lifetime from permission lifetime.
+3. R12 settles unsupported-assessment failure behavior. Settle the concrete
+   coverage/error representation, claimed operation scope and public delivery
+   shape still open in R5; §11 separates information lifetime from permission
+   lifetime.
 4. Derive exact module-isolated handoffs and tests from this contract. This is a
    measured design proposal, not a claim of an implementation-ready plan.
 
@@ -681,8 +696,10 @@ current actor. R8 remains the lifecycle boundary.
   readable without modifying the saved choice, inventory or spell access.
 - A catalogue inspection carries no fake current-character bonuses or executable
   selector. Existing affordability messages and command refusals remain unchanged.
-- An unsupported informational rule yields an explicit information failure, not
-  a complete-looking partial formula or a new permission to execute.
+- An unsupported informational rule leaves the description readable but makes
+  the affected calculation unavailable, not a complete-looking partial formula
+  or a new command refusal/permission. Unsupported evaluation, missing context
+  and known ineligibility remain distinguishable.
 
 Additional current-behavior baseline, session module, offline and read-only pins:
 
