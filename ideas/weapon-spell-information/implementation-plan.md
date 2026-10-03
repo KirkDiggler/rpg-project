@@ -2,11 +2,12 @@
 
 **Readiness: partial.** C1 is implemented in draft
 [toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `9b127988`;
-its owning-module checks pass. C2 is implemented in draft
-[toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933) at `01e429e6`,
-with encounter-module race tests/lint and its normal commit hook green. Neither
-checkpoint claims repository-wide gate/review/release readiness. The full shared
-assessment/read/UI wave is not yet an executable handoff; the remaining contracts
+its owning-module checks pass. C2
+[toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933) is merged as
+`f06cacf2`; CI published `rulebooks/dnd5e/encounter/v0.111.0`, verified to point at
+that merge. Its encounter-module race tests/lint and normal commit hook passed.
+Consumer adoption and joined acceptance remain pending. The full shared
+assessment/read/UI wave is not yet an executable handoff; remaining contracts
 below stay explicit. These provider checkpoints do not complete #520.
 
 ## Goal, authority and constraints
@@ -259,8 +260,12 @@ known core coverage/parser failure (#769), not a successful gate. Retry log:
 `/tmp/effect-observed-context-repo-gate-retry.log`. Tooling remains Go 1.24.6 and
 repo-pinned golangci-lint v2.3.1; no hook was bypassed.
 
-Independent review, consumer integration, release adoption and browser evidence
-remain pending. Later consumers must mirror these fields without an inner
+The operator merged C2 on 2026-10-03 as `f06cacf2`. CI's auto-tag run
+[37160884903](https://github.com/KirkDiggler/rpg-toolkit/actions/runs/37160884903)
+succeeded; the annotated `rulebooks/dnd5e/encounter/v0.111.0` tag dereferences to
+that merge commit. No independent review record is claimed here. Consumer pin
+adoption, integration and browser evidence remain pending; tagging is not proof
+of those boundaries. Later consumers must mirror these fields without an inner
 encounter type crossing session's host surface.
 
 ## Remaining wave — not executable handoffs yet
@@ -272,7 +277,7 @@ told to invent the open contracts while coding.
 | Owner / source | Required deliverable | Readiness dependency |
 |---|---|---|
 | Root dnd5e: `events/roll_trace.go`, `conditions`, `features`, `monstertraits`, weapon/cast assembly | Shared values, detached assessments, per-facet coverage, normalization and lifecycle-preserving adapters for the inventory | Close concrete frame/change/binding interfaces and full coverage tasks; C1 only supplies three descriptions |
-| Encounter: C2 above; remaining observed projections | C2 supplies current observed positions/distances and existing public relationship policy; target-carried effects/senses stay separate | C2 implemented in draft #1933; additional target-effect/sense knowledge still needs its own permitted source, never a hidden-truth fallback |
+| Encounter: C2 above; remaining observed projections | C2 supplies current observed positions/distances and existing public relationship policy; target-carried effects/senses stay separate | C2 merged/tagged via #1933 (encounter v0.111.0); additional target-effect/sense knowledge still needs its own permitted source, never a hidden-truth fallback |
 | Resolution: `strike.go`, `strike_pose.go`, `visibility.go`, new information read | Assemble/fold rule-owned assessments and return effect information without rolling/mutating; migrate execution consumers to the same decisions | Root and encounter contracts above; preserve per-boundary frozen state |
 | Session: `offers.go`, `casts.go`, `read.go`, `types.go`, new inspection verb | Enumerate actual action variants independent of affordability; carry permitted context; project detached information refs/effects | Root variant enumerator, resolution read, final `InspectActions` semantics |
 | Protos/API: session service/types and session handler/converters | Inspection request/response, informational action ref on declarations, authorization and one mapping point | Concrete SDK output and absence/error states; publish generated bindings before consumer integration |
@@ -294,7 +299,7 @@ new event types need an actual uncovered producer/consumer requirement.
 | Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in draft #1932 | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
 | Rule-owned applicability/reason and shared execution | Required, blocked on full root assessment handoff | Inventory's paired consumer/execution and no-duplicate-predicate assertions; not covered by C1 |
 | Explicit normalization and frozen/consumption custody | Required, blocked on root/resolution handoffs | Paired-rule and RNG-count/freeze tests in inventory; not covered by C1 |
-| Permitted selected-target context | C2 implemented in draft #1933 for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
+| Permitted selected-target context | C2 merged/tagged via #1933 for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
 | Independent read, freshness and command legality | Proposed read contract; transport tasks not ready | Off-turn/spent/frozen reads, exact action identity and stale response cases |
 | Active/gray/conditional/opportunity UI and accessible tooltips | R15 settled; implementation handoff pending transport | Pointer/keyboard/touch acceptance and zero command calls on inspection |
 | End-to-end normal character acquisition/reload/effect changes | Required; integration task not ready | Real API/native browser proof, not seeded-provider tests alone |
@@ -305,7 +310,7 @@ new event types need an actual uncovered producer/consumer requirement.
 |---|---|---|---|---|
 | C1 / conditions | Existing character status projection | `Display.Detail` → `ConditionView.Detail`, same canonical ref | Existing compiled interface; no new dependency | New status-detail equality and no-mutation test |
 | Root variant/assessment work | Resolution and session | Typed action identity, frames, decisions and coverage | Proposed, not implemented/handoff-ready | Must compare exact signatures and execute joined provider/consumer tests before coding downstream |
-| C2 / encounter | Resolution information read | `ObservedContextOutput` members/pairs; optional observation facts remain optional | Produced at #1933 `01e429e6`; consumer handoff still pending | Snapshot/current-only/detachment tests at provider; joined information noninterference still required |
+| C2 / encounter | Resolution information read | `ObservedContextOutput` members/pairs; optional observation facts remain optional | Published as encounter v0.111.0 via #1933; consumer handoff/adoption still pending | Snapshot/current-only/detachment tests at provider; joined information noninterference still required |
 | Session → protos/API → web | Effect indicators and tooltips | `InspectActions` / `ActionInformation` / `EffectInformation` semantics | Proposed; generated SDKs and published provider pins needed for integration | Real mapping tests and browser effect/tooltip proof remain to be specified |
 
 **Check findings:** the previous source inventory was not an implementation plan;
