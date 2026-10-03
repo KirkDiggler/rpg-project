@@ -85,9 +85,18 @@ catch-up service.
   at least the check's configured reset distance of X hexes, and returns within
   one hex. X defaults to **3 hexes** for repeatable checks and is configurable
   per check in the World Builder. It measures distance from the checked content,
-  not accumulated steps. Reaching X only re-arms the check; returning triggers the next roll. Standing
-  nearby or returning before reaching X does not. Re-arming never replenishes
-  an exhausted attempt budget or turns a single-try check into a repeatable one.
+  not accumulated steps. Reaching X only re-arms the check; returning triggers
+  the next roll. Standing nearby or returning before reaching X does not.
+  Re-arming never replenishes an exhausted attempt budget or turns a single-try
+  check into a repeatable one.
+- **R16 — Remove Search; share failures.** Automatic discovery replaces the
+  stopgap room-wide Search button and gameplay verb. Failed-check log entries
+  use the same sharing audience as successful discoveries: the roller alone
+  when sharing is off, or the roller and loaded party when sharing is on.
+- **R17 — Author before load.** A dungeon's authored definition, including its
+  checks and retry policy, is fixed for the lifetime of the loaded run. Editing
+  is an authoring activity before load, not an operation on a live dungeon.
+  Runtime play can still open doors, expose traps and change world state.
 
 ## Rulings
 
@@ -108,22 +117,16 @@ catch-up service.
 | R13 | settled | Single try by default; repeated attempts require explicit configuration | KirkDiggler | 2026-10-03 |
 | R14 | deferred-until-sharing-recovery | Disconnect-edge recovery and historical catch-up | KirkDiggler | 2026-10-03 |
 | R15 | settled | Repeat requires reaching configured reset distance (default 3 hexes) and returning within one hex | KirkDiggler | 2026-10-03 |
-| R16 | open | Remaining action-surface and delivery contracts | — | — |
-| R17 | open | Persistent check identity and edits | — | — |
+| R16 | settled | Remove stopgap Search; failed-check logs follow discovery sharing | KirkDiggler | 2026-10-03 |
+| R17 | settled | Authored checks fixed at dungeon load; no live dungeon editing | KirkDiggler | 2026-10-03 |
 
 ## Open
 
-- **R17 — Persistent identity and edits.** Define persistent
-  character/site/check identity across authored revisions and the effect of
-  editing a check on already spent attempts.
-  Old saves without attempt history cannot silently claim a history the system
-  never recorded.
-- **R16 — Bounded delivery and action surface.** Reconcile the meaning of loaded
-  party characters with the existing membership/delivery contract without adding
-  the deferred disconnect-recovery system. Specify the failed-check log audience
-  and the sharing-toggle persistence. Resolve whether manual Search remains;
-  any retained active Search must respect the same authored discovery attempt
-  budget rather than bypass it.
+- **Implementation contract check.** The plan maps loaded party characters to
+  the existing membership boundary and names durable attempt identity and
+  sharing-preference storage. It must not invent a live-edit migration system,
+  infer historic attempts from old saves, or silently add connection recovery.
+  A code-discovered conflict with the settled behavior returns as a specific gap.
 - **R14 — Deferred recovery.** Late-join backfill and disconnect/reconnect
   catch-up are not completion prerequisites. An already learned discovery
   remains the character's knowledge; this deferral does not authorize dropping
