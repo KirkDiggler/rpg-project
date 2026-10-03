@@ -35,11 +35,27 @@ or copy its records. The factory is API code, not a toolkit tenancy abstraction.
   not, by itself, change toolkit rules or character identity.
 - Character IDs identify characters independently of world ownership. WorldID
   is not encoded into character identity to enforce authorization.
-- Current gameplay admits world-owned characters without cross-world transfers
-  or shared progression. This is API policy, not a toolkit restriction on what
-  relationships a host can support.
+- The world-isolation runtime admits world-owned characters without cross-world
+  transfers or shared progression. This is API policy, not a toolkit restriction
+  on what relationships a host can support.
 - Toolkit rules determine mechanical outcomes. API access decisions do not
   calculate damage, choose spell targets, or reproduce other game rules.
+
+### Rollout and readiness
+
+- Publishing code does not enable new world-access restrictions. Ordinary local
+  use and the existing Discord deployment retain their authenticated behavior
+  until enforcement is deliberately enabled in a ready environment.
+- Gameplay world-role enforcement defaults off and is explicitly enabled with
+  `RPG_WORLD_ACCESS_ENFORCEMENT=true` in the environment under test. Compatibility
+  mode retains existing authentication, resource checks, composition membership
+  checks and administrative ownership protections.
+- New world-owned storage/factory wiring is not activated by an ordinary release
+  before its complete access path and cutover are ready. Unready work stays out
+  of the active release path; strict adapters never accept missing scope as a
+  compatibility shortcut.
+- Isolated testing precedes deliberate enforcement and any separately authorized
+  data reset. A gameplay-admission flag is not a storage-migration switch.
 
 ### Dependencies and lifetime
 
@@ -92,6 +108,7 @@ or copy its records. The factory is API code, not a toolkit tenancy abstraction.
 | R5 | open | Exact private-character authorization placement and factory/access contracts | — | — |
 | R6 | open | Storage write-guard/concurrency contract and creation/update distinctions | — | — |
 | R7 | open | Complete consumer adoption and independent execution-context repair plan | — | — |
+| R8 | settled | No new local/Discord lockout before readiness; enforcement and cutover are deliberate opt-ins, not release side effects | KirkDiggler | 2026-10-03 |
 
 ## Open
 

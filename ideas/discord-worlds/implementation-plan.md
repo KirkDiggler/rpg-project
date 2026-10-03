@@ -97,6 +97,49 @@ A world adapter is **not a grant to impersonate every player in that world**.
 Handlers still authorize acting members and private resources. Engine effects
 on other legitimate world members remain possible.
 
+### Task 0 — preserve ordinary access before any isolation activation
+
+**Rollout requirement:** local use must remain available, and the next release
+must not require the existing Discord server to configure new access before the
+operator is ready to test it. This precedes every implementation task below.
+
+The narrow admission fix is API PR #1069 (`fix/world-access-rollout`, `1392bdbf`),
+separate from the paused isolation candidate. It adds
+`cmd/server/world_access_rollout.go` and its tests, changes server interceptor
+selection, and documents `RPG_WORLD_ACCESS_ENFORCEMENT`:
+
+- Unset/false: preserve the existing authenticated gameplay chain, including the
+  already-shipped composition membership boundary. Do not require new gameplay
+  guild/role setup. WorldService owner/admin checks remain separate and strict.
+- true: use strict role admission and stream refresh in the environment
+  deliberately testing it. Dev fixtures need explicit permissions; real Discord
+  credentials still need real verified membership/configured roles.
+- Invalid values fail startup; no silent policy choice.
+
+Default-off coverage includes ordinary Dev use without role fixtures, ordinary
+Discord use without new guild/role setup, and streams. Negative coverage retains
+unauthenticated/invalid-token refusal, production refusal of Dev credentials,
+composition membership checks and strict opt-in behavior. Compare compatibility
+with the production main interceptor chain, not an invented permissive mode.
+
+**Release gate:** land the reviewed rollout fix with owner authorization before
+cutting the next release, or hold that release. Do not set enforcement=true in
+normal local/production manifests as a side effect of shipping the code. Verify
+the actual deployment setting and perform the appropriate smoke checks.
+
+**Storage is separate:** #1069 only gates already-merged role admission. Later
+Tasks A–I must not replace active handlers with mandatory-world factories while
+compatibility admission supplies no world. Develop/test the complete graph in an
+isolated environment and keep unready activation out of ordinary releases. If
+parts must ship early, first specify and test a complete, explicitly selected
+compatibility wiring path; never make empty WorldID mean unrestricted access in
+the new adapters. Do not enable strict storage on existing records before the
+separately authorized cutover/reset.
+
+Local incident evidence and the temporary Dev builder override are recorded on
+#1069/#518. The override is not the durable rollout solution; an ordinary launcher
+recreate can drop it before the default-off fix lands.
+
 ## 4. Task A — API request identity and stored ownership
 
 ### Files
@@ -836,6 +879,7 @@ recording their old heads; do not reset/delete their evidence or force-push.
 
 | Step | Work / exit evidence | Dependency |
 |---|---|---|
+| 0 | Preserve normal local/Discord access; review/land default-off admission rollout fix before release; no unready storage activation | Operator's explicit no-lockout requirement |
 | 1 | Confirm P1/P3 and scope disposition P7; align design Open items with the selected behavior | This planning conversation |
 | 2 | API ownership records + guarded storage tests (Tasks A/B) | None beyond existing released providers |
 | 3 | Scoped Manager factory, private adapters, session/encounter guards, scoped publisher (C/D) | Step 2 |
@@ -936,6 +980,9 @@ Required proofs, with exact revisions:
    identities; normally created characters work end-to-end.
 8. All live boundaries not exercised (especially actual two-guild Discord) are
    named pending, not inferred from SDK/unit tests.
+9. Default/unset enforcement preserves ordinary local and Discord unary/stream
+   behavior. Only the explicitly opted-in test environment enforces new roles;
+   release configuration cannot accidentally activate an unfinished storage graph.
 
 ### Named regression targets
 
