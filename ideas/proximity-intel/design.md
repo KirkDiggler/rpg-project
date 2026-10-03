@@ -4,7 +4,8 @@
 
 ```mermaid
 flowchart TD
-    Near[Character comes within one space] --> Tried{Already attempted this concealment?}
+    Near[Character comes within one space] --> Tried{Attempt spent under the configured retry policy?}
+    Policy[Per run or across visits] --> Tried
     Tried -->|Yes| NoRoll[No additional roll]
     Tried -->|No| Check[Resolve the character's authored discovery check]
     Check --> Attempt[Remember the attempt]
@@ -48,6 +49,10 @@ on proximity remains an explicit scope question.
 - **R7 — No unlearning on toggle-off.** Disabling sharing stops further
   sharing from that character. It does not remove knowledge recipients have
   already learned.
+- **R8 — Configurable attempt lifetime.** Retry policy selects one attempt per
+  character/concealment per run, or one attempt that remains spent across future
+  visits to the same site. Neither policy grants another attempt on movement,
+  reconnect, or save/load of the same run.
 
 ## Rulings
 
@@ -60,17 +65,19 @@ on proximity remains an explicit scope question.
 | R5 | settled | Easy per-character sharing toggle, shared by default | KirkDiggler | 2026-10-02 |
 | R6 | settled | Party receives character intel, not an omniscient world view | KirkDiggler | 2026-10-02 |
 | R7 | settled | Turning sharing off retains already learned knowledge | KirkDiggler | 2026-10-02 |
-| R8 | open | Attempt identity and lifetime beyond the active run | — | — |
+| R8 | settled | Configurable attempt lifetime: per run or retained across visits | KirkDiggler | 2026-10-03 |
 | R9 | open | Non-discovery checks and the manual Search action | — | — |
 | R10 | open | Sharing activation, provenance and competing testimony | — | — |
 | R11 | open | Eligible proximity observation and initial placement | — | — |
+| R12 | open | Retry-policy ownership, default, identity and changes | — | — |
 
 ## Open
 
-- **R8 — Attempt lifetime.** Does a character get another try when a new run
-  starts at the same site, or does its used attempt survive subsequent visits?
-  Character/site/concealment identity and reset behavior follow that decision;
-  reconnecting an existing run never resets it.
+- **R12 — Retry-policy configuration.** Specify whether policy belongs to the
+  site or the world, who changes it, and its default. Define persistent
+  character/site/concealment identity across authored revisions and the effect
+  of changing policy on already spent attempts. Configurability does not imply
+  a particular reset or migration behavior.
 - **R9 — Check scope and manual Search.** Discovery is automatic. Clarify
   whether proximity also attempts non-discovery checks such as unlocking or
   forcing a door, and whether manual Search remains. A retained manual path
