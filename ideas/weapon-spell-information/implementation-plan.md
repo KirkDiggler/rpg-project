@@ -129,6 +129,125 @@ missing-description regressions red before the content fix.
 The PR remains draft; no independent review, merge, released provider adoption,
 API or real browser tooltip acceptance is claimed.
 
+## Task C2: Detached observed context from encounter
+
+**Delivers:** R7/R13's spatial/relationship input to shared assessments: the
+observer's own position, current sighted member snapshots and pairwise distance/
+relationship facts. It never decides whether a game effect applies.
+
+**Owner:** `rpg-toolkit`, independent `rulebooks/dnd5e/encounter` module.
+Worktree `.worktrees/effect-observed-context`, branch `feat/effect-observed-context`,
+base `a088baa9` (same encounter source as inspected `3955eaf7`). No dependency on
+C1's root-module changes; no root rulebook import or dependency bump.
+
+**Prerequisites:** existing `Encounter.View`, `DecodeSightTestimony`, `placementOf`,
+`Distance` and the current `BelievedStance` policy. The latter already specifies
+that, absent deception, a creature shows the derived stance. C2 shares that owner
+with an explicit observer for a pair of other sighted members; it does not infer
+relationships from two ring colors or query a target's private viewpoint.
+
+**Files:** create `encounter/observed_context.go` and
+`encounter/observed_context_test.go`; modify `encounter/world.go` only to factor
+`BelievedStance` through its shared observer-aware pair helper; update
+`encounter/doc.go` with the read's bounded contract. All paths are inside the
+encounter module. Existing `believedstance_test.go` remains regression coverage.
+
+**Interfaces:**
+
+```go
+// Proposed here; implemented by C2 before a consumer may import it.
+func (e *Encounter) ObservedContext(in *ViewInput) (*ObservedContextOutput, error)
+
+type ObservedContextOutput struct {
+    Observer MemberID
+    Position spatial.Position // Observer's own canonical placement.
+    Members []ObservedContextMember // Other members in CURRENT sight only.
+    Pairs []ObservedContextPair // Ordered distinct pairs over observer + Members.
+}
+type ObservedContextMember struct {
+    ID MemberID
+    Position spatial.Position
+    Down *bool // Nil = unobserved, not standing or incapacitation inferred.
+    Equipment *HeldEquipment // Nil = unobserved, not empty hands.
+}
+type ObservedContextPair struct {
+    From MemberID
+    To MemberID
+    DistanceCells float64
+    Stance *Stance // Nil = no known relation; present neutral is a real fact.
+}
+```
+
+**Behavior:**
+
+- Validate through the existing member read: nil input is `ErrNilInput`; an absent
+  or nonmember observer is `ErrNotMember`. Return no partial output on error.
+- Own placement comes through `placementOf`. Other positions, standing and hands
+  come only from that observer's current sight testimony. Exclude memories,
+  unknown remembered locations and non-sight channels; never refill missing
+  observation fields from the roster or capability providers. Invalid current sight testimony
+  is an `ErrInvalidData` failure, not a guessed position.
+- Sort member IDs; pairs are sorted by From then To, omit self pairs, and range
+  only over the observer and those current sightings. Distances use `Distance`
+  over the projected positions, not live target positions. Each ordered pair
+  carries the relationship answered by encounter's shared believed-stance owner
+  for the original observer; no faction means nil, not neutral.
+- Preserve the existing stance policy and the old `BelievedStance(viewer,subject)`
+  answers. Factor a private `believedStanceBetween(observer,from,to)` helper so
+  future observer-specific stance belongs at one owner, not inside information
+  projection. The known participant set is what authorizes pair enumeration.
+- Return detached values. Read no live Sight/Equipment/Participation capability,
+  publish nothing, resurvey nothing and change no persisted encounter data.
+- The result enumerates **observations, not a complete world neighborhood**. It
+  cannot prove absence of unseen participants, reveal target effects/senses, or
+  turn observed standing into general reaction eligibility. Those fields remain
+  unavailable to the later assessment unless another permitted provider supplies
+  them. C2 is not a complete target-effect observation system.
+
+**Tests:** new `TestObservedContextSuite` in the external encounter test package:
+
+- `TestCurrentMembersAndPairs`: observer at `cellAt(0,0)`, ally at `cellAt(1,0)`,
+  hostile target at `cellAt(2,0)`, world NPC at `cellAt(4,0)`. Assert sorted member
+  IDs, exact pair count/order, ally-target distance 1, observer-target distance 2,
+  known hostile target/ally relation and nil NPC relation (not neutral).
+- `TestSnapshotFactsWinOverLiveState`: snapshot hands/standing, change their live
+  providers to different answers or errors, read twice; output stays identical and
+  provider call counts do not increase. A loaded known sight position differing
+  from the true target cell supplies the projected position and pair distances.
+- `TestMemoryAndOtherChannelsAreExcluded`: reload a holding with CurrentVia empty,
+  an unknown remembered location, or another channel; it appears in neither
+  Members nor Pairs. Hidden subject changes do not alter the observed output.
+- `TestUnknownObservedFieldsStayUnknown`: a current known location with nil Down
+  and Equipment remains nil in the result; no fallback consult occurs.
+- `TestDetachedAndReadOnly`: mutate returned positions/pointers/rows and verify a
+  fresh read is unchanged; compare full serialized encounter data before/after.
+- `TestInputErrors`: nil, empty observer and stranger return the existing errors
+  with nil output. Existing strict testimony-load tests still reject malformed
+  current records; no reader-side repair is introduced.
+- Existing `TestBelievedStanceSuite` stays green, pinning unchanged relation rules.
+
+- [ ] Add the named tests and demonstrate the missing API fails to compile.
+- [ ] Implement the bounded projection and shared stance helper.
+- [ ] Run focused and full module/race/lint gates; check no other module changes.
+- [ ] Publish a draft encounter-provider PR linked from the #520 body.
+
+**Verification:** from the worktree's `rulebooks/dnd5e/encounter`:
+
+```sh
+GOWORK=off go test -mod=readonly . -run 'TestObservedContextSuite|TestBelievedStanceSuite|TestPassageSuite' -count=1
+GOWORK=off go test -mod=readonly -race ./...
+golangci-lint run ./...
+```
+
+Also run the normal commit hook without bypasses and report the repository-wide
+gate separately. No API, browser or released-consumer adoption is proven by these
+provider tests. Do not merge before the wave's applicable review/integration gates.
+
+**Completion evidence:** exact encounter PR/head, red/green tests, detached/read-
+only and hidden-state regressions, unchanged stance tests, module gates and
+unchanged `go.mod`. Later consumers must mirror these fields without an inner
+encounter type crossing session's host surface.
+
 ## Remaining wave — not executable handoffs yet
 
 These are required workstreams, **not approved deferrals or complete task briefs**.
@@ -138,7 +257,7 @@ told to invent the open contracts while coding.
 | Owner / source | Required deliverable | Readiness dependency |
 |---|---|---|
 | Root dnd5e: `events/roll_trace.go`, `conditions`, `features`, `monstertraits`, weapon/cast assembly | Shared values, detached assessments, per-facet coverage, normalization and lifecycle-preserving adapters for the inventory | Close concrete frame/change/binding interfaces and full coverage tasks; C1 only supplies three descriptions |
-| Encounter: `testimony.go`, `world.go`, `encounter.go:View`, observed projections | Bounded observer context, measured distances, permitted three-party relationships, explicit missing facts | Exact observation source/fields for relationships and any target-carried effects/senses; no hidden-truth fallback |
+| Encounter: C2 above; remaining observed projections | C2 supplies current observed positions/distances and existing public relationship policy; target-carried effects/senses stay separate | C2 handoff ready; any additional target-effect/sense knowledge still needs its own permitted observation source, never a hidden-truth fallback |
 | Resolution: `strike.go`, `strike_pose.go`, `visibility.go`, new information read | Assemble/fold rule-owned assessments and return effect information without rolling/mutating; migrate execution consumers to the same decisions | Root and encounter contracts above; preserve per-boundary frozen state |
 | Session: `offers.go`, `casts.go`, `read.go`, `types.go`, new inspection verb | Enumerate actual action variants independent of affordability; carry permitted context; project detached information refs/effects | Root variant enumerator, resolution read, final `InspectActions` semantics |
 | Protos/API: session service/types and session handler/converters | Inspection request/response, informational action ref on declarations, authorization and one mapping point | Concrete SDK output and absence/error states; publish generated bindings before consumer integration |
@@ -160,7 +279,7 @@ new event types need an actual uncovered producer/consumer requirement.
 | Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in draft #1932 | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
 | Rule-owned applicability/reason and shared execution | Required, blocked on full root assessment handoff | Inventory's paired consumer/execution and no-duplicate-predicate assertions; not covered by C1 |
 | Explicit normalization and frozen/consumption custody | Required, blocked on root/resolution handoffs | Paired-rule and RNG-count/freeze tests in inventory; not covered by C1 |
-| Permitted selected-target context | Required, blocked on exact observation contract | Hidden-state noninterference and unknown-versus-negative proofs; not covered by C1 |
+| Permitted selected-target context | C2 ready for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
 | Independent read, freshness and command legality | Proposed read contract; transport tasks not ready | Off-turn/spent/frozen reads, exact action identity and stale response cases |
 | Active/gray/conditional/opportunity UI and accessible tooltips | R15 settled; implementation handoff pending transport | Pointer/keyboard/touch acceptance and zero command calls on inspection |
 | End-to-end normal character acquisition/reload/effect changes | Required; integration task not ready | Real API/native browser proof, not seeded-provider tests alone |
@@ -171,10 +290,12 @@ new event types need an actual uncovered producer/consumer requirement.
 |---|---|---|---|---|
 | C1 / conditions | Existing character status projection | `Display.Detail` → `ConditionView.Detail`, same canonical ref | Existing compiled interface; no new dependency | New status-detail equality and no-mutation test |
 | Root variant/assessment work | Resolution and session | Typed action identity, frames, decisions and coverage | Proposed, not implemented/handoff-ready | Must compare exact signatures and execute joined provider/consumer tests before coding downstream |
-| Encounter observed context | Resolution information read | Bounded permitted facts, not full participant sheets | Source gaps named in read contract | Hidden-world variations with identical permitted inputs must give identical outputs |
+| C2 / encounter | Resolution information read | `ObservedContextOutput` members/pairs; optional observation facts remain optional | C2 produces the named API; consumer handoff still pending | Snapshot/current-only/detachment tests at provider; joined information noninterference still required |
 | Session → protos/API → web | Effect indicators and tooltips | `InspectActions` / `ActionInformation` / `EffectInformation` semantics | Proposed; generated SDKs and published provider pins needed for integration | Real mapping tests and browser effect/tooltip proof remain to be specified |
 
 **Check findings:** the previous source inventory was not an implementation plan;
-this document does not relabel it as one. C1 consumes only inspected existing APIs.
-The remaining rows still have unproduced required inputs and are not ready. No
+this document does not relabel it as one. C1 consumes only inspected existing APIs;
+C2 produces the bounded observed-context API from inspected owners without changing
+stance/visibility policy. The remaining rows still have unproduced required inputs
+and are not ready. No
 user-visible scope has been deferred to make the readiness table look complete.

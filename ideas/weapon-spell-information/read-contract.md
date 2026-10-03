@@ -142,10 +142,10 @@ session/API/web. Feature and inherent-rule rows use their own content owners.
 | Needed fact | Existing source | Required work / restriction |
 |---|---|---|
 | Actual actor/equipment/effect usage | Pure character load; current attack/cast assemblers | Root provides the inspectable variant enumerator and detached assessment snapshots. No bus attachment or target-sheet scan during the read. |
-| Actor position and observed target/neighbors | Encounter `View` + strict `DecodeSightTestimony`; own placement | New encounter-owned bounded projection consumes the observer's current testimony. It measures distances below session; no stale memory substituted for current placement. |
+| Actor position and observed target/neighbors | Encounter `View` + strict `DecodeSightTestimony`; own placement | C2's `ObservedContext(*ViewInput)` consumes current testimony and emits detached members/pairs, measuring distances below session. No stale memory substituted for current placement. |
 | Observed standing/equipment | `SightTestimony.Down`, `Equipment` with presence | Preserve unknown. “Observed standing” is not a general proof of every condition's absence or ability to react. |
 | Relationship between actor and subject | `BelievedStance(viewer, subject)` | Already viewer-shaped, but must not be used to infer a relationship between two other subjects. |
-| Observer-known target↔neighbor relationship | No equivalent three-party public projection found | Encounter provider work; do not call `BelievedStance(target, neighbor)` and pretend it is the actor's knowledge. Rule eligibility still belongs to Sneak Attack/Pack Tactics, not this projection. |
+| Observer-known target↔neighbor relationship | Existing believed-stance policy: absent deception, what is shown equals derived stance | C2 factors the same owner into `believedStanceBetween(observer,from,to)` and includes pairs only over the observer and current sighted members. Preserve the actual observer; do not infer from ring colors or query the target's viewpoint. No new stance policy. |
 | Target-carried effects and their perceived facts | Current `Seen`/`SightTestimony` has no effect snapshot | Exact observation contract remains a gap. A full target sheet is not an acceptable substitute; an unknown fact stays unknown. |
 | Whether target can see actor | Execution has directional sight capability | An execution answer about another creature's senses is not automatically information the actor knows. Its permitted observation source must be specified or the field remains Unknown. |
 | Universe completeness | Current observer holdings enumerate known subjects | Complete holdings are not a guarantee that no unseen creature exists. Name the scope explicitly; no negative existential answer from an incomplete universe. |
@@ -180,10 +180,15 @@ provider-authored action identity, effect row semantics, canonical descriptions,
 request-generation handling and preservation of existing command/freeze behavior.
 These follow R7–R15; the names above remain a concrete interface proposal.
 
-**Required source gap before a complete target-aware handoff:** close the
-observer-known relationship and target-effect/sense projections. Name exact fields,
-who produces them and when they are observed; give tests where hidden truth changes
-without changing those observations. Do not hide this as “wire context” in a task,
+C2 in the [implementation handoffs](implementation-plan.md) now closes the bounded
+positions/distance/relationship provider contract with exact fields and tests.
+It shares the existing public believed-stance policy; it does not create a second
+relationship rule or claim observations describe every actual participant.
+
+**Remaining source gap before a complete target-aware handoff:** specify any
+required target-effect/sense projections. Name exact facts and observation sources;
+unavailable facts stay Unknown, and hidden target rules are not enumerated. C2
+must not be described as filling those gaps. Do not hide them as “wire context”,
 substitute live target truth, or defer required visible behavior without agreement.
 
 The [plan](plan.md) separates this blocker from the bounded content checkpoint and
