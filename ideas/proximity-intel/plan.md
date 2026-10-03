@@ -8,8 +8,9 @@ Implement [design.md](design.md), R1–R17, recorded in
 The operator's final scope decisions remove Search, put failed checks through
 sharing, and make authored checks immutable after dungeon load.
 
-This is a plan, not evidence of feature implementation. Tasks below are pending.
-The baseline tests at the end have run; the proposed feature tests have not.
+This is a plan, not evidence of feature implementation. T0's serialization
+prerequisite is implemented in draft PRs; the automatic-discovery tasks remain
+pending. The baseline and T0 tests have run; the proposed feature tests have not.
 
 **In scope:** automatic authored discovery rolls at distance <= 1 hex; one try
 by default; explicitly configured repeat allowance, reset distance default 3;
@@ -181,13 +182,57 @@ The encounter and session task branches/PRs must therefore be separate release
 units, with the same wave recorded in #523.
 
 Protos needs its operator-authorized merge/generated release before real Go/TS
-consumers can compile. No plan entry itself authorizes merging. During local
-work use supported local module overrides or pushed toolkit pseudo-versions,
-never commit local replaces. Walk the integrated wave before toolkit publication.
+consumers can compile. No plan entry itself authorizes merging. Develop consumers
+against pushed toolkit commits with real Go pseudo-versions, using the same graph
+locally and in CI. No local replaces, go.work or source-copy build loop. Walk the
+integrated wave before toolkit publication.
 Then publish encounter, adopt its minted tag in session, publish session, repin
 API, and release API/web against the published contracts. Re-run joined checks
 after replacing development pins. Do not hand-tag or merge to make development
 possible. No independent worker delegation is requested by this plan.
+
+## T0 — Complete-operation serialization prerequisite
+
+**Status:** implemented, verified, draft/unmerged:
+[toolkit#1930](https://github.com/KirkDiggler/rpg-toolkit/pull/1930) at `f6cec060`,
+[API#1072](https://github.com/KirkDiggler/rpg-api/pull/1072) at `d604f13f`.
+This is not automatic-discovery completion or release authorization.
+
+**Contract:** SDK `Config.Locker SessionLocker` is optional only for hosts that
+already serialize externally. `LockSession(ctx, *LockSessionInput{Session})`
+returns `*LockSessionOutput{Release func()}`. Every public session-shaped Manager
+operation acquires before repository access and defers release through its final
+save/delivery or error. Reads and StartSession participate; AtlasOf and unseated
+character operations do not. No mutex, lock data or timers live in the SDK.
+Invalid successful lock responses refuse, and callback re-entry into the same
+session is prohibited. Nil capability is not a concurrency guarantee.
+
+**Ownership/files:** toolkit session `locking.go`, `locking_test.go`,
+`locking_coverage_test.go`, Config/Manager in `session.go`, entry points in the
+36 session-shaped methods, `doc.go`, `repositories.go`, sentinel allow-list.
+API `internal/orchestrators/session/locker.go`, `locker_test.go`,
+`orchestrator.go`, and `internal/integration/session/session_serialization_test.go`.
+
+**Host implementation:** an in-process, cancellable keyed locker with reference
+cleanup and idempotent release. API injects it at construction; custom/shared
+coordinators can be supplied without a verb facade. All callers of one
+Orchestrator share it. Separate managers over the same sessions must share the
+coordination domain; independent process-local lockers do not protect replicas.
+No cross-session character/profile exclusion or transaction guarantee is claimed.
+
+**Proof:** SDK public-surface tests were red before guarding; full module race
+suite and pinned lint now pass. Actual commit hook passes. Root make pre-commit
+still hits the unrelated Core coverage-extraction defect (#769). API regression
+pauses Move before encounter save: before wiring, a read sees the old position
+and the next move refuses from that stale origin; after wiring, a waiting read
+cancels and the next move observes the committed position. Covers one manager
+and two managers sharing a coordinator. Host unit tests cover cancellation,
+independent keys, idempotence, 12x100 contended updates and idle cleanup. Three
+race repetitions, `make pre-commit` and `make ci-check` pass.
+
+**Dependencies:** API pins the actual pushed session pseudo-version
+`v0.113.1-0.20261003051441-f6cec060ed4c`. Replace it with a real provider release
+before consumer merge. Independent review, release and deployment are pending.
 
 ## T1 — Authored policy and automatic discovery composition
 
@@ -514,7 +559,7 @@ all-fail/private/shared/retry walkthrough, review verdict, pending gaps named.
 | Requirement / scenario | Tasks | Concrete proof |
 | --- | --- | --- |
 | R1/R9 automatic skill rolls; no active-action side effects | T1,T2,T5,T6 | OneHex; four skill cases; no unlock/force; no manual dice gesture |
-| R2/R8/R13 one try, optional repeats, retained/run lifetime | T1,T2,T4,T6 | DefaultAttempt; ThreeHex; RunAndCharacterLifetimes; real Redis reload/new run |
+| R2/R8/R13 one try, optional repeats, retained/run lifetime | T0,T1,T2,T4,T6 | Guarded same-session operations; DefaultAttempt; ThreeHex; RunAndCharacterLifetimes; real Redis reload/new run |
 | R3/R16 failure log follows sharing, Search removed | T1–T6 | Captured audiences, typed conversion, story prose; old RPC/UI removed |
 | R4 every failed roll still permits completion | T5,T6 | Builder guidance and deterministic all-fail objective/exit walk |
 | R5/R7 sharing on by default, off durable, no unlearning | T1,T2,T4,T5,T6 | Profile/snapshot/toggle tests; browser off then reload |
@@ -529,6 +574,7 @@ all-fail/private/shared/retry walkthrough, review verdict, pending gaps named.
 
 | Provider | Consumer | Produced vs consumed contract | Availability | Joined proof |
 | --- | --- | --- | --- | --- |
+| T0 API locker | T0 SDK entry points | LockSession named Input/Output, guard through read/act/save/delivery | Implemented, unmerged #1930/#1072 | Real overlapping Move/read over miniredis; shared-coordinator managers |
 | Existing resolution.MakeCheck | T2 checkSeam | Beaten/Applied/Total/Calculation and DirtyCharacter | Present; reads real skills and conditions | Multiple automatic checks preserve sheet changes and movement |
 | T5 authored YAML | T1 dungeonspec | C1 `attempts` plus unchanged approach list | New producer/parser together | Export→compile→load then distance-driven attempt |
 | T1 encounter | T2 session | C2 memory, C3 audience, discovery_checked | New provider APIs specified above | SDK Move/Join, persistence, live+Story |
@@ -552,17 +598,18 @@ all-fail/private/shared/retry walkthrough, review verdict, pending gaps named.
    boundary already supports R17. Test that boundary rather than invent hot edits.
 6. **Settings, counters and authored policy are not player intel payloads.** Keep
    private counter/check IDs out of public failure events and player snapshots.
-7. **Repository failure and concurrency limits remain explicit.** Existing SDK
-   writes are not a multi-repository transaction and its repository contract
-   requires host serialization. This plan does not claim crash-atomic cross-store
-   commits or safe simultaneous unsynchronized worlds. Integration must inspect
-   the actual host serialization path before declaring one-attempt behavior
-   proven for concurrent requests; a missing guard is a blocking technical
-   finding, not permission to weaken R2 or build a rules-side mutex silently.
-8. **Plan readiness:** gameplay decisions are settled. T1/T3/T5 task contracts
-   are concrete; T2/T4 durable-profile integration must close the serialization
-   finding in item 7 before the whole wave is execution-ready. No claim of a
-   fully checked executable wave is made while that seam remains unproven.
+7. **Session-scoped serialization is proved by T0, with explicit limits.**
+   Operations sharing the host coordinator no longer race a session's
+   load-act-save. This does not make SDK writes a multi-repository transaction,
+   coordinate unseated character writers or serialize distinct sessions touching
+   the same durable exploration profile. T2/T4 must preserve the latter's
+   consistency as part of their profile contract, not infer it from a session
+   lock. No crash-atomic or uncoordinated-replica guarantee is claimed.
+8. **Plan readiness:** gameplay decisions are settled and the immediate
+   session-write prerequisite is implemented. T1 can proceed on its named
+   contract. T2/T4 must complete their durable-profile concurrency contract before
+   that integration is called execution-ready; this is a bounded technical seam,
+   not a new gameplay vote. No whole-wave completion/release claim is made.
 
 ### Checks actually run during planning
 
