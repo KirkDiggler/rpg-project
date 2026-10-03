@@ -303,6 +303,11 @@ member-visible projection fields, observation sources and access interface remai
 open; the current encounter's observations are not automatically a complete model
 of target effects, resources or what the target can see.
 
+The [read contract](read-contract.md) now specifies the proposed host read and
+informational action/effect identities, with source gaps named. The
+[implementation handoffs](implementation-plan.md) mark the independent content
+checkpoint ready without claiming that the remaining wave is executable.
+
 Before implementation handoffs:
 
 1. Settle the member-visible fact projection and current-action read inputs (R4,

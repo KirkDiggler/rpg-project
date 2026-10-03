@@ -7,6 +7,12 @@ focus is the contribution contract and coverage inventory after the bounded
 creation-description checkpoint. Resolution-specific R3–R5 contracts still need
 agreement and checked handoffs; this document is not an implementation-ready plan.
 
+Current contract: [read-contract.md](read-contract.md).
+Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is a
+bounded canonical-content checkpoint; the target-aware assessment/read wave is
+not yet handoff-ready. The source/projection gaps are explicit there. This working
+exploration remains background, not the executable task list.
+
 Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
 Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-project/issues/307).
 
@@ -65,8 +71,9 @@ contract and coverage inventory, not finishing the catalogue browser first.
   rule. The inventory identifies broader extraction needs without authorizing
   unrelated gameplay corrections.
 
-Next contract work: complete the member-visible context projection and shared
-assessment/public-read interfaces for R15's settled inspection interaction,
+Next contract work: close the member-visible context sources in
+[read-contract.md](read-contract.md) and complete the shared assessment interfaces
+for R15's settled inspection interaction,
 and derive acceptance within R14's settled scope. Existing position/standing
 observations are mapped in the consumer trace; observer-known relationships
 between two other participants and target-effect knowledge need provider work.

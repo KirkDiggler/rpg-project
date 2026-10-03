@@ -141,9 +141,9 @@ wire contract remain open.
   the exact projected fields, their observation sources or the refinement API.
   Define how permitted current effects, spatial facts and target context reach
   the same rule evaluator without exposing hidden sheets. Keep that architectural
-  fit separate from deciding when the selected-target UI ships. The catalogue
-  increment needs only its permitted content visibility; it does not evaluate
-  target facts.
+  fit separate from unrelated UI changes. The [read contract](read-contract.md)
+  maps current sources and missing observer projections. The catalogue increment
+  needs only its permitted content visibility; it does not evaluate target facts.
 - **R5 — What crosses the wire.** Settle prose versus structured fields, sources
   and conditional explanations, and completeness for currently offered content.
   Missing descriptions and unavailable mechanics must not be conflated. Separate
@@ -157,4 +157,6 @@ wire contract remain open.
   needs its own acceptance scope under R11. The
   [effect-information consumer trace](effect-info-delivery.md) records the tooltip
   acceptance and R15's pre-commit target-inspection interaction; the exact public
-  read and projection interfaces remain to be specified.
+  read and projection interfaces are proposed in [read-contract.md](read-contract.md).
+  The [implementation handoffs](implementation-plan.md) distinguish the ready
+  content checkpoint from the still-incomplete target-aware wave.
