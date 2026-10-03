@@ -65,8 +65,13 @@ wire contract remain open.
 - The effort supplies information to character creation and play before an action
   is committed. Existing combat-log traces are its consistency reference, not a
   new presentation feature. It does not depend on a general UI redesign.
+- The player-facing proof is the applicable effect indication and its canonical
+  tooltip. Ineligible effects remain inspectable in a grayed-out state with the
+  rule's reason; unresolved applicability remains conditional. A contextual reason
+  does not replace the description of what the effect is.
 - Current-action information explains effects in play and their contributions,
-  not predicted results. Its initial scope is attack-roll contributions,
+  not predicted results or a separate calculation dashboard. Its mechanical scope
+  is attack-roll contributions,
   normal/critical-hit damage before target defenses, spell save DC or potential
   healing as appropriate, and conditional contributions and optional benefits.
 - Selected-target context refines contributions only where permitted facts can
@@ -143,4 +148,6 @@ wire contract remain open.
   hypothetical character-build calculations. Define the proof through normal
   creation, play, effect changes and reload. Catalogue delivery does not settle
   the current-action contribution or effect-freshness contracts; each increment
-  needs its own acceptance scope under R11.
+  needs its own acceptance scope under R11. The
+  [effect-information consumer trace](effect-info-delivery.md) records the tooltip
+  acceptance and the unresolved pre-commit target-inspection interaction.

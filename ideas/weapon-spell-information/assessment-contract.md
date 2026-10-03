@@ -195,6 +195,23 @@ The explanation layer must not fabricate “does not apply” on either path.
 
 ## 5. Composition and calculation availability
 
+The primary consumer is an effect indication with a canonical tooltip, not a
+calculation dashboard. The proposed public effect record carries source identity,
+name, canonical description, assessment availability, applicability when known,
+contextual reason/need, and contribution-versus-opportunity participation. Preserve
+stacking selection separately; a suppressed applicable source is not an ineligible
+one. These are detached presentation facts, not a rule evaluator or command token.
+
+Canonical description and contextual reason have different jobs: what the effect
+is versus why it can/cannot apply here. A name-only entry is not sufficient tooltip
+content. Reuse and fill the owning content projection rather than introducing an
+API/web description table. The [consumer trace](effect-info-delivery.md) gives the
+concrete source paths, scenarios and remaining target-inspection decision.
+
+The calculation structures below support the shared assessment/execution machinery
+and any explicitly requested mechanical detail. Rendering them as a standalone
+panel is not a prerequisite or substitute for effect/tooltip acceptance.
+
 At each relevant execution/read boundary:
 
 1. Validate input identity, declared scope, detached facts and coverage.
@@ -289,7 +306,9 @@ of target effects, resources or what the target can see.
 Before implementation handoffs:
 
 1. Settle the member-visible fact projection and current-action read inputs (R4,
-   remaining R5), including target selection and equipment/action variant identity.
+   remaining R5), including target inspection and equipment/action variant identity.
+   Current target clicks execute immediately; decide the pre-commit inspection
+   interaction identified in the consumer trace before prescribing UI changes.
 2. Confirm the concrete assessment/capability shape above (R3), including how
    loader-owned snapshots and per-facet coverage are exposed without bus attachment.
 3. Derive coverage and acceptance for R14's settled scope: attack contributions,

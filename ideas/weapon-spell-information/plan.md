@@ -27,6 +27,15 @@ contracts in R3–R5 remain open.
 
 ## Contributions continuation
 
+The operator clarified the player-facing requirement: show which effects can apply
+with tooltips describing them. An active Sneak Attack indication with a useful
+tooltip is the proof, not a results-preview panel. The shared mechanical contract
+serves that presentation and execution; it does not authorize a dashboard redesign.
+The [consumer trace](effect-info-delivery.md) pins the existing source paths and
+acceptance scenarios. It also identifies a concrete UI decision: target clicks
+currently execute immediately, so information needs a pre-commit inspection
+interaction rather than being attached after the command is sent.
+
 The character-creation description checkpoint is implemented separately from the
 broader catalogue proposal: toolkit#1927 merged; web#1218 has a scoped passing
 review. That does not establish full catalogue browsing, API release adoption or
@@ -56,10 +65,13 @@ contract and coverage inventory, not finishing the catalogue browser first.
   rule. The inventory identifies broader extraction needs without authorizing
   unrelated gameplay corrections.
 
-Next contract work: map the member-visible context to its observation sources,
-complete the shared assessment interfaces and public read shape, and derive
-acceptance within R14's settled scope. Then derive checked implementation handoffs
-rather than treating this inventory as an executable task plan.
+Next contract work: resolve that target-inspection interaction, complete the
+member-visible context projection and shared assessment/public-read interfaces,
+and derive acceptance within R14's settled scope. Existing position/standing
+observations are mapped in the consumer trace; observer-known relationships
+between two other participants and target-effect knowledge need provider work.
+Then derive checked implementation handoffs rather than treating these source
+inventories as an executable task plan.
 
 ## Broader catalogue follow-on (separate from current focus)
 
