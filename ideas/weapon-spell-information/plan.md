@@ -9,7 +9,8 @@ agreement and checked handoffs; this document is not an implementation-ready pla
 
 Current contract: [read-contract.md](read-contract.md).
 Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is
-implemented in draft toolkit#1932 with owning-module checks green; the target-aware
+implemented in draft toolkit#1932, and C2's observed-context provider is implemented
+in draft toolkit#1933. Both have owning-module checks green; the target-aware
 assessment/read wave is not yet handoff-ready. The source/projection gaps are explicit there. This working
 exploration remains background, not the executable task list.
 

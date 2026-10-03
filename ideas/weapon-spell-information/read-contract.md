@@ -1,9 +1,11 @@
 # Effect inspection — provider/read contract
 
 Concrete R3–R5 proposal derived from the agreed behavior in
-[design.md](design.md), especially R10 and R12–R15. **Not implemented and not a
-claim that the whole wave is handoff-ready.** The source gaps at the end block the
-affected tasks, not the settled player-facing behavior.
+[design.md](design.md), especially R10 and R12–R15. **The host inspection read is
+not implemented or handoff-ready as a whole.** C2's bounded encounter context is
+implemented separately in draft [toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933).
+Remaining source gaps block the affected tasks, not the settled player-facing
+behavior.
 
 ## Shape
 
@@ -180,8 +182,9 @@ provider-authored action identity, effect row semantics, canonical descriptions,
 request-generation handling and preservation of existing command/freeze behavior.
 These follow R7–R15; the names above remain a concrete interface proposal.
 
-C2 in the [implementation handoffs](implementation-plan.md) now closes the bounded
-positions/distance/relationship provider contract with exact fields and tests.
+C2 in the [implementation handoffs](implementation-plan.md) supplies the bounded
+positions/distance/relationship provider at toolkit#1933 `01e429e6`, with exact
+fields and passing provider tests; consumer integration remains unverified.
 It shares the existing public believed-stance policy; it does not create a second
 relationship rule or claim observations describe every actual participant.
 

@@ -2,10 +2,12 @@
 
 **Readiness: partial.** C1 is implemented in draft
 [toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `9b127988`;
-its owning-module checks pass, but repository-wide gate/review/release readiness
-is not claimed. The shared assessment and target-aware read wave is **not** ready
-to execute from this document: required context producer contracts below are not
-closed. C1 is not a substitute for that component and does not complete #520.
+its owning-module checks pass. C2 is implemented in draft
+[toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933) at `01e429e6`,
+with encounter-module race tests/lint and its normal commit hook green. Neither
+checkpoint claims repository-wide gate/review/release readiness. The full shared
+assessment/read/UI wave is not yet an executable handoff; the remaining contracts
+below stay explicit. These provider checkpoints do not complete #520.
 
 ## Goal, authority and constraints
 
@@ -226,10 +228,10 @@ type ObservedContextPair struct {
   current records; no reader-side repair is introduced.
 - Existing `TestBelievedStanceSuite` stays green, pinning unchanged relation rules.
 
-- [ ] Add the named tests and demonstrate the missing API fails to compile.
-- [ ] Implement the bounded projection and shared stance helper.
-- [ ] Run focused and full module/race/lint gates; check no other module changes.
-- [ ] Publish a draft encounter-provider PR linked from the #520 body.
+- [x] Add the named tests and demonstrate the missing API fails to compile.
+- [x] Implement the bounded projection and shared stance helper.
+- [x] Run focused and full module/race/lint gates; check no other module changes.
+- [x] Publish a draft encounter-provider PR linked from the #520 body.
 
 **Verification:** from the worktree's `rulebooks/dnd5e/encounter`:
 
@@ -243,9 +245,22 @@ Also run the normal commit hook without bypasses and report the repository-wide
 gate separately. No API, browser or released-consumer adoption is proven by these
 provider tests. Do not merge before the wave's applicable review/integration gates.
 
-**Completion evidence:** exact encounter PR/head, red/green tests, detached/read-
-only and hidden-state regressions, unchanged stance tests, module gates and
-unchanged `go.mod`. Later consumers must mirror these fields without an inner
+**Observed checkpoint evidence:** toolkit#1933 at `01e429e6`. The new API's absence
+was demonstrated red; the observed-context, existing stance and passage tests
+passed. Full encounter-module race tests passed, full lint reported zero issues,
+and the normal commit hook passed with cache disabled. No dependency changes.
+The suite also pins known empty hands, an empty observed universe and another
+observer's conflicting testimony. Logs: `/tmp/effect-observed-context-focused.log`,
+`/tmp/effect-observed-context-race.log`, `/tmp/effect-observed-context-lint.log`.
+
+The repository-wide gate first hit a disk/cache failure. Available space was
+rechecked; no cleanup was needed. Retrying with task-local caches reached the same
+known core coverage/parser failure (#769), not a successful gate. Retry log:
+`/tmp/effect-observed-context-repo-gate-retry.log`. Tooling remains Go 1.24.6 and
+repo-pinned golangci-lint v2.3.1; no hook was bypassed.
+
+Independent review, consumer integration, release adoption and browser evidence
+remain pending. Later consumers must mirror these fields without an inner
 encounter type crossing session's host surface.
 
 ## Remaining wave — not executable handoffs yet
@@ -257,7 +272,7 @@ told to invent the open contracts while coding.
 | Owner / source | Required deliverable | Readiness dependency |
 |---|---|---|
 | Root dnd5e: `events/roll_trace.go`, `conditions`, `features`, `monstertraits`, weapon/cast assembly | Shared values, detached assessments, per-facet coverage, normalization and lifecycle-preserving adapters for the inventory | Close concrete frame/change/binding interfaces and full coverage tasks; C1 only supplies three descriptions |
-| Encounter: C2 above; remaining observed projections | C2 supplies current observed positions/distances and existing public relationship policy; target-carried effects/senses stay separate | C2 handoff ready; any additional target-effect/sense knowledge still needs its own permitted observation source, never a hidden-truth fallback |
+| Encounter: C2 above; remaining observed projections | C2 supplies current observed positions/distances and existing public relationship policy; target-carried effects/senses stay separate | C2 implemented in draft #1933; additional target-effect/sense knowledge still needs its own permitted source, never a hidden-truth fallback |
 | Resolution: `strike.go`, `strike_pose.go`, `visibility.go`, new information read | Assemble/fold rule-owned assessments and return effect information without rolling/mutating; migrate execution consumers to the same decisions | Root and encounter contracts above; preserve per-boundary frozen state |
 | Session: `offers.go`, `casts.go`, `read.go`, `types.go`, new inspection verb | Enumerate actual action variants independent of affordability; carry permitted context; project detached information refs/effects | Root variant enumerator, resolution read, final `InspectActions` semantics |
 | Protos/API: session service/types and session handler/converters | Inspection request/response, informational action ref on declarations, authorization and one mapping point | Concrete SDK output and absence/error states; publish generated bindings before consumer integration |
@@ -279,7 +294,7 @@ new event types need an actual uncovered producer/consumer requirement.
 | Canonical descriptions for Sneak Attack/Raging/Blessed | C1 implemented in draft #1932 | Nonempty descriptor regression, unchanged names/refs, status detail equals canonical content |
 | Rule-owned applicability/reason and shared execution | Required, blocked on full root assessment handoff | Inventory's paired consumer/execution and no-duplicate-predicate assertions; not covered by C1 |
 | Explicit normalization and frozen/consumption custody | Required, blocked on root/resolution handoffs | Paired-rule and RNG-count/freeze tests in inventory; not covered by C1 |
-| Permitted selected-target context | C2 ready for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
+| Permitted selected-target context | C2 implemented in draft #1933 for positions/observed standing/equipment/distances/relations; target-effect/sense projections remain open | Snapshot, current-only, no-live-provider, unknown and pair-scope tests; not a claim of complete target knowledge |
 | Independent read, freshness and command legality | Proposed read contract; transport tasks not ready | Off-turn/spent/frozen reads, exact action identity and stale response cases |
 | Active/gray/conditional/opportunity UI and accessible tooltips | R15 settled; implementation handoff pending transport | Pointer/keyboard/touch acceptance and zero command calls on inspection |
 | End-to-end normal character acquisition/reload/effect changes | Required; integration task not ready | Real API/native browser proof, not seeded-provider tests alone |
@@ -290,7 +305,7 @@ new event types need an actual uncovered producer/consumer requirement.
 |---|---|---|---|---|
 | C1 / conditions | Existing character status projection | `Display.Detail` → `ConditionView.Detail`, same canonical ref | Existing compiled interface; no new dependency | New status-detail equality and no-mutation test |
 | Root variant/assessment work | Resolution and session | Typed action identity, frames, decisions and coverage | Proposed, not implemented/handoff-ready | Must compare exact signatures and execute joined provider/consumer tests before coding downstream |
-| C2 / encounter | Resolution information read | `ObservedContextOutput` members/pairs; optional observation facts remain optional | C2 produces the named API; consumer handoff still pending | Snapshot/current-only/detachment tests at provider; joined information noninterference still required |
+| C2 / encounter | Resolution information read | `ObservedContextOutput` members/pairs; optional observation facts remain optional | Produced at #1933 `01e429e6`; consumer handoff still pending | Snapshot/current-only/detachment tests at provider; joined information noninterference still required |
 | Session → protos/API → web | Effect indicators and tooltips | `InspectActions` / `ActionInformation` / `EffectInformation` semantics | Proposed; generated SDKs and published provider pins needed for integration | Real mapping tests and browser effect/tooltip proof remain to be specified |
 
 **Check findings:** the previous source inventory was not an implementation plan;
