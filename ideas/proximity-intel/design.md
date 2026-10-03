@@ -5,7 +5,8 @@
 ```mermaid
 flowchart TD
     Near[Character comes within one space] --> Tried{Attempt spent under the configured retry policy?}
-    Policy[Per run or across visits] --> Tried
+    Builder[World Builder authors each check: skill, DC, retry policy] --> Policy[This check: per run or across visits]
+    Policy --> Tried
     Tried -->|Yes| NoRoll[No additional roll]
     Tried -->|No| Check[Resolve the character's authored discovery check]
     Check --> Attempt[Remember the attempt]
@@ -53,6 +54,9 @@ on proximity remains an explicit scope question.
   character/concealment per run, or one attempt that remains spent across future
   visits to the same site. Neither policy grants another attempt on movement,
   reconnect, or save/load of the same run.
+- **R12 — Check-owned configuration.** Each check carries its own retry policy,
+  authored in the World Builder alongside its skill and difficulty. Policy is
+  part of the authored check definition, not a world-wide or site-wide setting.
 
 ## Rulings
 
@@ -69,15 +73,16 @@ on proximity remains an explicit scope question.
 | R9 | open | Non-discovery checks and the manual Search action | — | — |
 | R10 | open | Sharing activation, provenance and competing testimony | — | — |
 | R11 | open | Eligible proximity observation and initial placement | — | — |
-| R12 | open | Retry-policy ownership, default, identity and changes | — | — |
+| R12 | settled | Retry policy authored per check in the World Builder alongside skill and DC | KirkDiggler | 2026-10-03 |
+| R13 | open | Check-policy default, persistent identity and changes | — | — |
 
 ## Open
 
-- **R12 — Retry-policy configuration.** Specify whether policy belongs to the
-  site or the world, who changes it, and its default. Define persistent
-  character/site/concealment identity across authored revisions and the effect
-  of changing policy on already spent attempts. Configurability does not imply
-  a particular reset or migration behavior.
+- **R13 — Check-policy lifecycle.** Specify the default for a newly authored
+  check and the treatment of existing checks without a policy. Define persistent
+  character/site/check identity across authored revisions and the effect of
+  changing a check's policy on already spent attempts. Configurability does not
+  imply a particular reset or migration behavior.
 - **R9 — Check scope and manual Search.** Discovery is automatic. Clarify
   whether proximity also attempts non-discovery checks such as unlocking or
   forcing a door, and whether manual Search remains. A retained manual path
