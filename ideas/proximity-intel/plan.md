@@ -8,9 +8,18 @@ Implement [design.md](design.md), R1–R17, recorded in
 The operator's final scope decisions remove Search, put failed checks through
 sharing, and make authored checks immutable after dungeon load.
 
-This is a plan, not evidence of feature implementation. T0's serialization
-prerequisite is implemented in draft PRs; the automatic-discovery tasks remain
-pending. The baseline and T0 tests have run; the proposed feature tests have not.
+**Local-playtest checkpoint (2026-10-04):** `local/discovery` is running on web
+3023 / API 8093. Protos #373 is merged/generated as v0.1.220; encounter #1931
+(`66306c9f`) and session #1930 (`aca32f8b`) supply the automatic path. Local API
+commit `23f50fb2` and web commit `22fb3ceb` contain the consumers; these two latest
+consumer checkpoints are not yet pushed. Builds/type-check and focused checks
+pass. Native rendered smoke confirms an automatic failed Perception check, no
+Search button, no second attempt after an observed departure/return, and private
+sharing surviving reload. The smoke used `level-up-fighter`, not the fresh
+sandbox fighter/barbarian offered to the operator. Broader party/authoring,
+regression and independent-review work remains pending, following the operator's
+walk-first direction. No provider merge, deployment or whole-wave completion
+is implied by this local checkpoint.
 
 **In scope:** automatic authored discovery rolls at distance <= 1 hex; one try
 by default; explicitly configured repeat allowance, reset distance default 3;
@@ -147,8 +156,10 @@ requirement on existing hosts, with key-value methods
 `GetExploration(ctx, characterID) (*ExplorationData, error)` and
 `SaveExploration(ctx, *ExplorationData) error`. Missing uses `ErrNotFound`;
 `nil,nil` is a repository defect. The SDK initializes genuinely missing profiles
-under the agreed defaults. API storage keys include trusted world context and
-character ID and do not inherit the expiring session TTL. No new game rule goes
+under the agreed defaults. The implemented API store follows the existing
+canonical character ID/authority rather than inventing a second identity from an
+ambient player/world selector. Records do not inherit the expiring session TTL.
+This does not close the separate world-isolation initiative. No new game rule goes
 in the Redis adapter. `ExplorationData` contains opaque provider memory; the SDK
 carries it and encounter interprets/merges it. API supplies the capability
 explicitly. A world/operation requiring it must refuse before dice or mutation
@@ -177,8 +188,11 @@ total=4, calculation=5; add `EVENT_KIND_DISCOVERY_CHECKED=42` and Event body tag
 private is distinguishable from an older server lacking the field. Current
 producer always sets it. Add `SetDiscoverySharing` request session=1, member=2,
 optional sharing=3 (missing is invalid); response sharing=1, saved=2, delivery=3.
-Delete Search RPC and its unused request/response messages, deliberately breaking
-this alpha contract. No compatibility endpoint may continue rolling.
+The generated contract retains Search as a deprecated wire tombstone during
+consumer migration. The API removes its handler, so the inherited implementation
+returns UNIMPLEMENTED and cannot roll. Automatic toolkit hosts also refuse Search;
+older toolkit hosts without the automatic capability retain their prior contract.
+The game UI no longer wires the Search action.
 
 ## Sequence and release order
 
@@ -249,10 +263,12 @@ before consumer merge. Independent review, release and deployment are pending.
 branch `feat/523-automatic-discovery`, worktree `.worktrees/proximity-intel-encounter`.
 Root policy and YAML refusal/round-trip tests pass; full encounter race suite,
 pinned lint and actual hook pass. The two content pictures only gain omitted
-Attempts fields; geometry is unchanged. Policy is compiled/frozen but **not yet
-used for automatic rolls or to limit Search**. Continue this same module branch
-with the sweep/counters/audiences, then retire Search. Do not release this partial
-checkpoint as if T1 were complete.
+Attempts fields; geometry is unchanged. That initial checkpoint was followed by `96d12c3b` / `66306c9f`: the automatic
+sweep, counters/re-arm state, shared/private audiences, and own retained-memory
+restore are implemented. Supplying DiscoveryCheckResolver enables them and
+refuses Search. Runtime tests and the local SDK/browser path exercise this
+capability; older hosts' fixtures remain compatible. Full wave acceptance and
+review are still separate from this module checkpoint.
 
 **Delivers:** R1–R4, R6–R13, R15–R17; C1–C3.
 **Owner:** toolkit `rulebooks/dnd5e/encounter` (including its dungeonspec package).
