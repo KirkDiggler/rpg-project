@@ -1,7 +1,7 @@
 # Effect information — implementation handoffs
 
 **Readiness: partial.** C1 is implemented in draft
-[toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `9b127988`;
+[toolkit#1932](https://github.com/KirkDiggler/rpg-toolkit/pull/1932) at `f94ed5a7`;
 its owning-module checks pass. C2
 [toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933) is merged as
 `f06cacf2`; CI published `rulebooks/dnd5e/encounter/v0.111.0`, verified to point at
@@ -72,8 +72,8 @@ represented by `Detail`.
 **Behavior:** add original, truthful descriptions of the implemented benefits.
 Sneak Attack explains extra damage, once-per-turn use and the advantage/nearby-
 enemy alternatives without claiming its known weapon-eligibility defect is fixed.
-Raging explains the eligible melee-Strength damage benefit, STR check/save
-advantage and physical resistance; do not bake its current instance's level-based
+Raging explains the eligible melee-Strength damage benefit, advantage on
+Strength-based skill checks and Strength saves, and physical resistance; do not bake its current instance's level-based
 bonus into universal copy. Blessed explains its d4 on attacks/saves and nonstacking
 of duplicate Bless instances, not a damage bonus. Instance-specific amounts and
 contextual eligibility reasons remain the future shared assessor's responsibility.
@@ -129,8 +129,17 @@ root test/lint logs: `/tmp/effect-info-content-race.log` and
 `ToData`'s generated timestamp; correcting that measurement left the intended
 missing-description regressions red before the content fix.
 
-The PR remains draft; no independent review, merge, released provider adoption,
-API or real browser tooltip acceptance is claimed.
+Independent review at `9b127988` reported no Critical/Important findings and one
+Minor: the raw-Strength-check path does not receive Rage advantage. A real-chain
+probe confirmed one d20 for an unset skill versus two for Athletics. Copy and its
+expected string were narrowed at `f94ed5a7`; the underlying governing-ability gap
+is tracked separately in toolkit#1934. Focused descriptor/status/Rage race tests
+and the normal uncached commit hook passed at that head. The full root gate was
+not repeated for the two-line copy correction. The finding has an Addressed
+thread disposition; reviewer closure at the new head remains pending.
+
+The PR remains draft; no merge, released provider adoption, API or real browser
+tooltip acceptance is claimed.
 
 ## Task C2: Detached observed context from encounter
 
