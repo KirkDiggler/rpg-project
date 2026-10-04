@@ -328,7 +328,8 @@ and C1 content. Root baseline `f94ed5a7`; the inventory's functional rule source
 remain the same as `3955eaf7` (C1 changed content/projection tests only).
 **Files:** create `contributions/{doc.go,source.go,fact.go,decision.go}` and their
 `*_test.go` files; modify `events/roll_trace.go`; create
-`combat/assessment/{doc.go,frame.go,binding.go,evaluate.go}` and corresponding tests.
+`combat/assessment/{doc.go,context.go,damage.go,frame.go,binding.go,evaluate.go}`
+and corresponding tests; context/damage contracts are the first implemented part.
 All these paths are relative to `rulebooks/dnd5e/`.
 
 **Shared vocabulary:** `contributions.Source` is the existing RollSource shape
@@ -347,7 +348,8 @@ invalid is an error, not unknown.
 `Facet` names AttackRoll, DamageNormal, DamageCritical, SpellDC, Healing.
 `Applicability` names Applies, DoesNotApply, NeedsContext; its zero is invalid.
 `Need` has `Kind`, `Subject`, `Other` (selection, distance, relationship,
-directional sight, observed universe, target effects, reaction readiness).
+directional sight, observed universe, target effects, reaction readiness,
+normalized action facts).
 `Decision` contains applicability, owner-authored reason and needs. Applies and
 DoesNotApply reject needs; NeedsContext requires at least one valid need. Validation
 is distinct from calculation availability and never converts an error to a row.
@@ -395,8 +397,11 @@ selection pending; duplicate oldest-wins sources retain suppressed evidence;
 unsupported damage removes only damage's expression; returned data cannot mutate
 bindings/action. No concrete rule-ref switch belongs in this evaluator.
 
-- [ ] Add the named leaf/contract regressions; demonstrate pre-change failure.
-- [ ] Move source/unresolved values with aliases and implement validated contracts.
+- [x] Leaf source/fact/decision contracts and bounded context/damage contracts,
+  demonstrated red then green at `acf5fdda` / `1f73c0c8`.
+- [ ] Complete the remaining operation/selection/fold regressions.
+- [x] Move source/unresolved values with aliases; validate facts and decisions.
+- [ ] Complete normalization/attack operation contracts and coverage validation.
 - [ ] Implement ordered pure evaluation and facet availability.
 - [ ] Run focused tests and normal commit hooks; publish on the existing draft.
 
@@ -465,7 +470,12 @@ all 56 inventory registrations and inherent producers classified. Normally final
 rogue/barbarian/cleric/bard, serialize/load, then enumerate actions. Spent/off-turn/
 paused reads still enumerate; same weapon ref in distinct slots does not collide.
 
-- [ ] Add detached snapshot and loader coverage contracts/tests.
+- [x] First owner: Rage outgoing damage has a detached snapshot and the real
+  damage chain uses the same decision/amount (`1f73c0c8`). Paired tests cover
+  STR/DEX, melee/ranged, changed/zero bonuses and no sustain/consumption on reads.
+  Existing Rage lifecycle/resistance tests and full root race suite pass;
+  normal uncached commit hook passes with zero lint issues. No full-wave claim.
+- [ ] Complete other detached snapshots and loader-wide coverage contracts/tests.
 - [ ] Extract owner decisions group-by-group with paired execution/read tests.
 - [ ] Emit shared assembly evidence and actual action identities.
 - [ ] Add remaining canonical descriptions used by supported effect rows.
@@ -499,6 +509,11 @@ Effect fields follow the read contract: local instance, source/ref, description,
 availability, optional decision/needs, participation, selection and benefit detail.
 Issues name affected facets and provider-authored scope/reason; unsupported is not
 an action refusal. Canonical content is not replaced by contextual reason text.
+For one source spanning phases, the generic row projection is conservative:
+unsupported assessment precedes pending context; otherwise any participating phase
+makes the row applicable, and all known negatives make it ineligible. Preserve
+owner-authored phase reasons/known benefits and per-facet issues; a row summary
+never erases a supported calculation or invents another eligibility predicate.
 
 Extract visibility's pure two-direction rule under its owning rule layer and use
 it from this read and execution. At execution boundaries, existing adapters call
@@ -569,11 +584,12 @@ normal module hook.
 **Owners:** protos from main; API from origin/dev, each own
 `.worktrees/effect-information` worktree. **Prerequisites:** C3–C6 contract fields
 above for authoring; published proto SDK + pushed session commit for API compilation.
-**Proto files:** new `dnd5e/api/session/v1alpha1/{information_ref.proto,information.proto}`;
-existing `types.proto` (Declaration's next free tag 21) and `service.proto`
-(RPC/messages). The identity file is a leaf; information imports existing types
-and events to reuse CastOption and RollSource without a types↔events import cycle.
-Proto authoring baseline was refreshed to `11372b0`; tag 21 remains free.
+**Proto files:** existing `dnd5e/api/session/v1alpha1/{types.proto,events.proto,service.proto}`.
+Identity and Declaration tag 21 live in types.proto; sourced information output
+lives beside RollSource in events.proto; RPC/messages live in service.proto.
+The attempted new-file layout hit Buf package-option consistency against legacy
+options. Existing homes avoid copied options, policy changes, duplicate source
+vocabulary and import cycles. Proto baseline: `11372b0`.
 **API files:** new `internal/handlers/dnd5e/session/v1alpha1/inspect_actions.go` and
 `inspect_actions_test.go`; extend `convert.go`'s declaration mapper and the
 `handler.go`'s Manager interface and regenerated `mock/mock_manager.go`; update Go pins.
@@ -592,7 +608,9 @@ participation=6,selection=7,benefit_detail=8`. Source reuses existing RollSource
 (and session.RollSource / rollSourceToProto), not another identity vocabulary.
 The assessment oneof contains assessed applicability/reason/needs or unavailable
 facets/reason. No raw blobs. Applicability UNSPECIFIED is invalid, not false.
-Participation/selection are explicit enums with UNSPECIFIED meaning absent.
+Participation is an enum with UNSPECIFIED meaning absent. Optional selection is
+`EffectSelection{state=1,reason=2}`; a present message requires selected/suppressed
+state and its provider-authored reason. Absence means no selection decision.
 No terms/expressions are required in the public wire for a tooltip. SDK retains
 internal calculation evidence; UI receives provider-authored benefit detail.
 Declaration tag 21 is `information`, optional and non-authorizing.
@@ -609,8 +627,12 @@ known content versus unavailable mechanics, absent selection, typed SDK errors.
 Use a real session-output fixture for converter coverage in addition to the mock
 manager; no new orchestration layer.
 
-- [ ] Author proto contract from these fields; run `make format`, `make test`.
-- [ ] Publish proto PR for operator inspection; generated bindings require merge.
+- [x] Author proto contract: protos#374 at `72d18c9`; `make format`/`make test`
+  and PR lint/generated-SDK checks pass. No generated bindings were hand-committed.
+- [x] Publish proto PR for operator inspection. Independent contract review at
+  `72d18c9` found no findings ([record](https://github.com/KirkDiggler/rpg-api-protos/pull/374#pullrequestreview-5403966081));
+  CI generated-SDK checks also pass. Ready for operator merge under the proto
+  exception; actual CI publication is still required before API/web SDK adoption.
 - [ ] Adopt actual generated SDK and pushed session provider in API.
 - [ ] Implement mapping/tests; run `make ci-check` and publish API draft.
 
@@ -746,7 +768,8 @@ C2 produces the bounded observed-context API from inspected owners without chang
 stance/visibility policy. C3–C9 now name the remaining producers and consumers. Unknown is a valid produced
 fact under R13, not a promise to build a new observation system or a hidden-truth
 fallback. Checked corrections: C2 distances are float64 cells; weapon Override
-lives in weaponattack.go; wire identity is split from output to avoid a proto import
-cycle while reusing RollSource; real provider pins—not sibling directories—drive
+lives in weaponattack.go; wire identity stays in types while sourced output stays
+beside RollSource, avoiding cycles and incompatible new-file options; real provider
+pins—not sibling directories—drive
 consumer builds. No user-visible scope was deferred to make this table complete.
 Implementation and joined proof remain unchecked above.

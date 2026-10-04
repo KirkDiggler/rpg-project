@@ -1,19 +1,18 @@
 # Weapon and spell information — working plan
 
-Status: design investigation, not an implementation-ready handoff. R1, R2 and
-R6–R15 in [design.md](design.md) are settled. Catalogue and current-action work
-share the designed connection but remain separate delivery increments. The current
-focus is the contribution contract and coverage inventory after the bounded
-creation-description checkpoint. Resolution-specific R3–R5 contracts still need
-agreement and checked handoffs; this document is not an implementation-ready plan.
+Status: retained design investigation, not the current executable task list.
+R1, R2 and R6–R15 in [design.md](design.md) supply the behavior/ownership agreement.
+The historical exploration below explains the proposals; current C1–C9 build
+contracts and evidence live in [implementation-plan.md](implementation-plan.md),
+and #520's body is the running checklist and decision record.
 
 Current contract: [read-contract.md](read-contract.md).
 Concrete task handoffs: [implementation-plan.md](implementation-plan.md) — C1 is
-implemented in toolkit#1932 (current PR status on #520), and C2's observed-context provider is merged
-via toolkit#1933 and published as encounter v0.111.0. Both have owning-module
-checks green; consumer adoption and the target-aware assessment/read handoffs
-remain ahead. The source/projection gaps are explicit there. This working
-exploration remains background, not the executable task list.
+implemented in toolkit#1932, which now also carries the shared-value contracts and
+first Rage assessment/execution adapter. C2 is published as encounter v0.111.0.
+Protos#374 carries the inspection wire contract. Other rule migrations, the
+inspection read, API/UI integration and stack acceptance remain ahead; current PR
+states are on #520. This exploration remains background, not a second task list.
 
 Tracking: [rpg-project#520](https://github.com/KirkDiggler/rpg-project/issues/520).
 Related earlier weapon-damage gap: [#307](https://github.com/KirkDiggler/rpg-project/issues/307).

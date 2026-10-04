@@ -5,8 +5,9 @@ Concrete R3–R5 proposal derived from the agreed behavior in
 not implemented or handoff-ready as a whole.** C2's bounded encounter context is
 published separately as encounter v0.111.0 via
 [toolkit#1933](https://github.com/KirkDiggler/rpg-toolkit/pull/1933).
-Remaining source gaps block the affected tasks, not the settled player-facing
-behavior.
+The [implementation handoffs](implementation-plan.md) carry the concrete build
+contracts. Unsupported target facts are explicit Unknown inputs under R13, not a
+requirement to build a new observation system before starting this wave.
 
 ## Shape
 
@@ -190,12 +191,15 @@ and integration remain unverified.
 It shares the existing public believed-stance policy; it does not create a second
 relationship rule or claim observations describe every actual participant.
 
-**Remaining source gap before a complete target-aware handoff:** specify any
-required target-effect/sense projections. Name exact facts and observation sources;
-unavailable facts stay Unknown, and hidden target rules are not enumerated. C2
-must not be described as filling those gaps. Do not hide them as “wire context”,
-substitute live target truth, or defer required visible behavior without agreement.
+**Build treatment of unavailable facts:** C5 receives C2's actual pair facts and
+leaves reverse sight/target effects Unknown. It never loads target sheets or
+selectively binds hidden providers. This is R13's permitted conditional answer,
+not proof that those target properties are absent. Known observed facts can still
+establish positive applicability; incomplete observation cannot establish a
+negative existential claim. C2 does not supply a complete target sheet.
 
-The [plan](plan.md) separates this blocker from the bounded content checkpoint and
-records which downstream tasks depend on it. Planning completion is not claimed
-until its producer/consumer seam table has no unproduced required inputs.
+C3–C9 in the [implementation handoffs](implementation-plan.md) name the matching
+contracts, typed unknowns, tests and delivery sequence. The earlier blanket
+“source gap blocks planning” wording was too broad: the agreement already answers
+what unavailable facts mean. A genuinely new observed fact/lifecycle would still
+need its own source and design, not a hidden-truth fallback.
