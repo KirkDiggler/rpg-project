@@ -138,10 +138,11 @@ and the normal uncached commit hook passed at that head. The full root gate was
 not repeated for the two-line copy correction. The finding has an Addressed
 thread disposition; reviewer closure at the new head remains pending.
 
-C1 is ready for review with green PR CI at `f94ed5a7`; the scoped fix's reviewer
-closure remains pending. Current PR/merge status is maintained on #1932 and #520's
-checklist rather than used as a prerequisite for other development. This checkpoint
-provides no API or real browser tooltip acceptance.
+C1 has green PR CI at `f94ed5a7`, but is held for #520's local-stack wave rather
+than merged as a standalone checkpoint. Its outstanding integration acceptance,
+not further copy polishing, is the draft reason. Current PR/merge status lives on
+#1932 and #520's checklist; unmerged provider commits remain usable during
+integration. This checkpoint provides no API or browser tooltip acceptance.
 
 ## Task C2: Detached observed context from encounter
 
