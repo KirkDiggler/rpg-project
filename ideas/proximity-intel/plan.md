@@ -304,9 +304,11 @@ reveal may refresh perception but must not recursively launch another sweep.
 Re-evaluate eligibility before each roll because an earlier shared discovery
 may already have taught a later candidate.
 
-Delete the `Search` method, types and region-sweep helper after replacing their
-callers/tests. Do not retain it as a hidden attempt-budget bypass or spend a
-world action on automatic checks. Export only persistence data, not host storage.
+Retain deprecated `Search` types, method and region-sweep support only for older
+hosts without `DiscoveryCheckResolver`, as specified by C4. Automatic hosts must
+refuse Search with the named `ErrSearchRetired` sentinel before it can roll or
+spend a world action. Automatic-discovery tests use real placement/movement,
+not Search as an attempt-budget bypass. Export only persistence data, not host storage.
 
 **Tests (new `DiscoverySuite` unless noted):**
 - `TestOneHexRollsButTwoDoesNot`, including player initially placed in range.
@@ -329,7 +331,8 @@ world action on automatic checks. Export only persistence data, not host storage
 
 - [ ] Add failing feature cases; retain appropriate existing privacy tests.
 - [ ] Implement policy, state machine, captured audiences and carry-forward.
-- [ ] Remove Search; replace search-driven fixtures with real proximity moves.
+- [ ] Refuse Search for automatic hosts; use real proximity moves in their fixtures.
+  Preserve explicit-search compatibility tests for hosts without the capability.
 - [ ] Update `doc.go` and owning concealment comments to the new rules.
 - [ ] Run focused cases, then full module race suite and pinned lint.
 
@@ -393,8 +396,10 @@ no catch-up on on-toggle/late Join, identical captured audiences in live/Story.
 - [ ] Introduce the repository capability, enforce it at discovery-world/verb
   admission before mutation, and update the affected host/constructor fixtures.
 - [ ] Wire staging, current record reuse and durable state through the common seam.
-- [ ] Add toggle/snapshot/result projection and delete SDK Search types/method.
-- [ ] Replace existing Search test setup with proximity or lawful fixture knowledge.
+- [ ] Add toggle/snapshot/result projection; preserve the deprecated SDK Search
+  surface for older hosts and translate the automatic-host refusal to SDK ErrSearchRetired.
+- [ ] Use proximity or lawful fixture knowledge for automatic-host tests; keep
+  older-host Search compatibility tests.
 - [ ] Run focused suites, boundary/no-rule/no-bus tests, full module race and lint.
 
 **Verification:** from session:
@@ -412,18 +417,18 @@ SDK using a local override is not proof of released dependency adoption.
 Search. No hand-edited generated code or proto serialization tests.
 
 **Interfaces/behavior:** exactly C4. Preserve recipient-local envelope fields and
-existing `RollCalculation`. Remove Search completely; keep active Unlock untouched.
-This is an intentional alpha RPC removal, not an excuse to suppress other Buf
-findings. Follow `docs/how-to/breaking-change-workflow.md`; apply an intentional
-breaking-change approval only through its documented review process.
+existing `RollCalculation`. Retain Search as the deprecated wire tombstone in C4;
+keep active Unlock untouched. The API removes the implementation, not the wire
+shape. Follow `docs/how-to/breaking-change-workflow.md` for any actual breaking
+change; do not suppress unrelated Buf findings.
 
-- [ ] Add event, snapshot preference and toggle RPC; remove Search contract.
+- [ ] Add event, snapshot preference and toggle RPC; deprecate the Search contract.
 - [ ] Recheck all new tags against the current branch before assigning them.
-- [ ] Run `make format`, `make test`; enumerate expected Search-removal findings.
+- [ ] Run `make format`, `make test`; confirm the additive/deprecation-only contract.
 - [ ] Verify generation/SDK CI and wait for the operator-authorized merge/tag.
 
 **Verification:** repository `make format && make test`; breaking detection must
-report only the deliberately retired Search contract. CI owns generated bindings.
+pass with the deprecated Search wire shape retained. CI owns generated bindings.
 **Evidence:** contract PR and generated tag, not a locally authored fake version.
 
 ## T4 — API storage, authentication and event translation
