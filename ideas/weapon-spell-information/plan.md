@@ -61,7 +61,7 @@ rpg-api pins session `v0.113.0`. Web pins protos `v0.1.219`.
   - Bless on spell attacks is included, because execution already routes them through `NewStrike` (`resolution/action.go` `newAttackCast`) and `describeRollContributions(...RollKindAttack)` (`strike.go` `afterAttackChain`).
 - *Rename:* `contributions.NeedsContext` becomes `contributions.Depends`, one word matching the wire.
 - *Explicit deferrals:* R12, R14, toolkit#1929, toolkit#1934.
-- *Ruled by the operator:* Martial Arts' ability and die move to assembly in this wave (Task 2A) unless the move proves distracting; its stop condition is in the task. One encounter stance read serves both frames, and a member with no faction is known neutral (Task 2E).
+- *Ruled by the operator:* Martial Arts' ability and die move to assembly in this wave (Task 2A) unless the move proves distracting; its stop condition is in the task. A member with no faction has no stance and the frame carries that as a known no side, never neutral (Task 2E, T2, T3).
 
 ---
 
@@ -149,7 +149,7 @@ Implementation note: rename the local variables named `contributions` in `charac
 **Interfaces (produced; T3 consumes).**
 
 In `contributions`:
-- `type Stance string`, with `StanceHostile = "hostile"`, `StanceNeutral = "neutral"`, `StanceAllied = "allied"`.
+- `type Stance string`, with `StanceHostile = "hostile"`, `StanceNeutral = "neutral"`, `StanceAllied = "allied"`, `StanceNone = "none"` (no side: a member with no faction; known, and not hostile).
 - `type ActionFacts struct { Roll Fact[RollKind]; Ability Fact[abilities.Ability]; Melee Fact[bool]; WeaponPool Fact[bool]; Advantage Fact[bool] }`. `Ability` Known("") means "the attack declares no governing ability", which is a stat block's honest answer.
 - `type PairFacts struct { From, To string; DistanceCells Fact[float64]; Stance Fact[Stance] }`
 - `type Frame struct { Actor string; Target Fact[string]; Action ActionFacts; Pairs []PairFacts; Complete bool }`
@@ -310,37 +310,36 @@ Steps:
 
 ---
 
-### Task 2E: Toolkit encounter — one stance read, no faction is neutral
+### Task 2E: Toolkit encounter — one authoritative stance read
 
-**Delivers:** O9 (R5) with one source for a relationship; closes the difference between the information frame and the execution frame for members with no faction.
+**Delivers:** O9 (R5): one authoritative read for a relationship, with no faction answered as no stance, matching the believed read.
 
 **Owner:** rpg-toolkit module `rulebooks/dnd5e/encounter`, its own PR from `origin/main`.
 
 **Prerequisites:** none.
 
 **Files:**
-- Modify `encounter/world.go`: `believedStanceBetween` (the owner `BelievedStance` and `ObservedContext` share). Add the public authoritative read named below.
-- Modify `encounter/observed_context_test.go` and the stance tests beside `world.go`; update `encounter/doc.go` where stance reads are described.
+- Modify `encounter/world.go`: add the public read below. `believedStanceBetween` and `BelievedStance` are unchanged.
+- Create `encounter/stance_between_test.go`; one line in `encounter/doc.go`.
 
 **Interfaces:**
-- `func (e *Encounter) StanceBetween(a, b MemberID) (Stance, bool)`: the authoritative stance between two members. `known` is false only when either is not a member. A member with no faction gives `StanceNeutral, true`. Hostile, allied and neutral otherwise follow the existing fold (`opposed`, the allied edge).
-- `believedStanceBetween` gives `StanceNeutral, true` for a pair where either member has no faction, and is otherwise unchanged.
-- `IsHostile` and `IsAllied` keep their signatures and answers.
+- `func (e *Encounter) StanceBetween(a, b MemberID) (Stance, bool)`: the authoritative stance between two members. The bool is false when no stance exists: either is not a member, or either has no faction. Hostile, neutral and allied otherwise follow the existing fold.
+- `IsHostile` and `IsAllied` keep their signatures and answers, including known false for a member with no faction.
 
-**Behavior:** for every pair of members, `StanceBetween` hostile ⇔ `IsHostile` true, allied ⇔ `IsAllied` true. Absent deception, `believedStanceBetween` equals `StanceBetween` for sighted members.
+**Behavior:** for every pair of members, `StanceBetween` hostile ⇔ `IsHostile` true and allied ⇔ `IsAllied` true. For sighted members and absent deception, `BelievedStance` and `StanceBetween` agree, including on no stance.
 
 **Tests:**
-- `TestStanceBetweenFactionlessIsKnownNeutral`.
-- `TestStanceBetweenUnknownForNonMember`.
-- `TestStanceBetweenAgreesWithIsHostileAndIsAllied`: table over a three-faction fixture.
-- `TestObservedContextPairWithWorldNPCIsNeutral`: the pair's `Stance` is non-nil and neutral.
-- Existing `BelievedStance` consumers: report any caller whose visible behaviour changes for a factionless subject.
+- `TestStanceBetweenFactionlessHasNoStance`.
+- `TestStanceBetweenNoStanceForNonMember`.
+- `TestStanceBetweenAgreesWithIsHostileAndIsAllied`: every ordered pair of a party, three factions and a world NPC.
+- `TestStanceBetweenAgreesWithBelievedStance`: same fixture.
+- The existing tests pinning that a world NPC has no stance to believe stay untouched and passing.
 
 **Verification:** `cd rpg-toolkit/rulebooks/dnd5e/encounter && go test -race ./... && golangci-lint run ./...`.
 
-**Completion evidence:** named tests pass; PR open; the list of `BelievedStance` callers checked.
+**Completion evidence:** named tests pass; PR open; no change to `BelievedStance`, `ObservedContext` or any sighting on the wire.
 
-T3 consumes this: the execution frame takes its stance from `StanceBetween` through the cast view, replacing the `IsHostile`/`IsAllied` composition.
+The frame's relationship fact carries four known values: hostile, neutral, allied and no side (`contributions.StanceNone`, T2). T3's execution frame maps two placed members with no stance to known no side; the information frame maps a nil observed stance to unknown. A rule reads no side as known and not hostile.
 
 ---
 
@@ -376,7 +375,7 @@ T3 consumes this: the execution frame takes its stance from `StanceBetween` thro
   - Actor, Target Known.
   - Advantage = Known(len(Folded.AdvantageSources) > 0 && len(Folded.DisadvantageSources) == 0), the existing `effectiveAdvantage`.
   - Pairs over every cast member that `gamectx.Room(ctx)` places, with distance `room.GetGrid().Distance`. This is the same grid primitive as `encounter.Distance`, and so the same metric as ObservedContext.
-  - Stance from `gamectx.CastOf(ctx)`: Hostile if IsHostile; else Allied if IsAllied; else Neutral if both are known; else Unknown.
+  - Stance from the cast's authoritative `StanceBetween` (Task 2E): its stance when one exists; known `StanceNone` when both are placed members and no stance exists. Never unknown for two placed members.
   - Complete = true. No room → error.
 - `type InformAttackInput struct { Observed *encounter.ObservedContextOutput; Actor *character.Character; Attack *combatActions.AttackProfile; Targets []string }`
 - `type InformAttackOutput struct { Effects []contributions.Effect; ByTarget map[string][]contributions.Effect }`. `ByTarget` lists hold the same IDs in the same order as `Effects`.
