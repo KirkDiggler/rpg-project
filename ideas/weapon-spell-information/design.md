@@ -97,6 +97,9 @@ differ. The arrows show information flow, not Go imports.
 - A change to a member's conditions refreshes the sightings of that member,
   the same way an equipment change does, because a row must not outlive the
   condition it describes.
+- A target's armour class and resistances are not the attacker's to know. An
+  effect whose only bearing on an attack is the target's armour class or its
+  resistance produces no row for the attacker, whoever holds it.
 - An empty or partial set of sightings does not prove that no qualifying
   creature exists. A rule needing that proof answers that it depends.
 
@@ -158,6 +161,7 @@ differ. The arrows show information flow, not Go imports.
 | R18 | settled | A target-held effect is a full row on its target candidate; declaration rows stay the actor's own | KirkDiggler | 2026-10-05 |
 | R19 | settled | A condition change refreshes sightings of that member at commit, as an equipment change does | KirkDiggler | 2026-10-05 |
 | R20 | deferred-until-a-use-case | Rows for general rules no condition owns (unseen attacker, range); In Fog shows no row | KirkDiggler | 2026-10-05 |
+| R21 | settled | A target's armour-class and resistance effects produce no row for the attacker; they are not the attacker's to know | KirkDiggler | 2026-10-05 |
 
 ## Open
 
