@@ -60,6 +60,9 @@ differ. The arrows show information flow, not Go imports.
 - A relationship between two members is their stance on the disposition graph
   at the moment of asking: hostile, neutral or allied. It is not a boolean and
   it is not cached, because dispositions change during an encounter.
+- A member with no faction has no stance with anyone. That is a known fact,
+  no side, and is never reported as neutral, because neutral is a real
+  disposition that can turn hostile or allied.
 - Toolkit owns rules and their answers. API transports them. Web renders them
   and recognises no effect by name.
 
@@ -115,7 +118,7 @@ differ. The arrows show information flow, not Go imports.
 | R2 | settled | Rules return decision, reason and contribution as data; resolution builds the frame; one rule function serves execution and information | KirkDiggler | 2026-10-05 |
 | R3 | settled | Information does not fold | KirkDiggler | 2026-10-05 |
 | R4 | settled | Rows ride declarations and target candidates; no separate read, action identity or variant enum | KirkDiggler | 2026-10-05 |
-| R5 | settled | Relationships are the disposition-graph stance at the moment of asking | KirkDiggler | 2026-10-05 |
+| R5 | settled | Relationships are the disposition-graph stance at the moment of asking; a member with no faction is a known no side, never neutral | KirkDiggler | 2026-10-05 |
 | R6 | settled | Information uses the character's permitted knowledge; unknown stays unresolved; execution uses authoritative state | KirkDiggler | 2026-10-03 |
 | R7 | settled | Three visible states; an unanswerable rule is unavailable, not negative; availability and applicability are independent | KirkDiggler | 2026-10-03 |
 | R8 | settled | Hover or focus inspects, click acts unchanged, touch has a read-only path | KirkDiggler | 2026-10-03 |
