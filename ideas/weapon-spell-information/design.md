@@ -48,8 +48,17 @@ differ. The arrows show information flow, not Go imports.
 - Execution and information call the same rule function, and a rule keeps no
   second predicate, because a tooltip that disagrees with the swing is worse
   than no tooltip.
-- Resolution builds the frame, once per action and target. No rule assembles its
-  own facts.
+- Resolution builds every frame. No rule and no handler assembles its own
+  facts.
+- An executing attack has two frame moments: before the attack roll, where
+  advantage is unknown, and after it, where advantage is known. The later frame
+  only adds knowledge; every other fact is the same in both, because both come
+  from one derivation.
+- The frame carries the weapon facts rules ask about: the weapon used, whether
+  it is finesse or a ranged weapon, the grip, and whether the attack is an
+  off-hand or an opportunity attack. A ranged weapon is not the same fact as an
+  attack that is not melee, because a thrown melee weapon is the second and not
+  the first.
 - A frame holds typed facts, each known or unknown. Unknown is never read as
   false, and a known false, zero or empty value stays known.
 - At execution a rule that answers that it depends fails the action with an
@@ -76,6 +85,9 @@ differ. The arrows show information flow, not Go imports.
   give identical rows.
 - The information frame draws from the observer's sightings only, never from
   the target sheets offer compilation loads for its own purposes.
+- A sighting carries every condition on the sighted member, as part of the
+  snapshot. It is testimony from the moment of sighting, never a live read of
+  the member's sheet. No condition is filtered as imperceptible.
 - An empty or partial set of sightings does not prove that no qualifying
   creature exists. A rule needing that proof answers that it depends.
 
@@ -128,7 +140,11 @@ differ. The arrows show information flow, not Go imports.
 | R12 | deferred-until-a-use-case | Rows outside the member's own turn or during a frozen window | KirkDiggler | 2026-10-05 |
 | R13 | settled | At execution a rule that cannot answer fails the action loudly; never a silent non-application | KirkDiggler | 2026-10-05 |
 | R14 | deferred-until-a-use-case | Resolution assembling execution's contributions in place of each handler adding its own | KirkDiggler | 2026-10-05 |
+| R15 | settled | Resolution hands the attack roll its frame; two frame moments per attack differing only in advantage; the frame carries weapon facts | KirkDiggler | 2026-10-05 |
+| R16 | settled | A sighting carries every condition on the sighted member; a perceivability filter waits for a condition that must be secret | KirkDiggler | 2026-10-05 |
 
 ## Open
 
-None.
+- **Rows for effects the target holds.** How a rule held by the target answers
+  for the actor's attack when information has no target sheet, and where a row
+  that exists for one target only sits on the declaration.
