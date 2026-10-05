@@ -48,8 +48,9 @@ differ. The arrows show information flow, not Go imports.
 - An effect held by the target of an attack answers through a rule keyed by
   the condition's reference, not through the target's loaded condition, because
   information has no target sheet to load. That rule reads the frame's list of
-  what each member holds and nothing else; at execution the target's loaded
-  condition asks the same function.
+  what each member holds and nothing else; at execution, whoever applies the
+  effect — the target's loaded condition, or resolution where the check lives
+  there — asks the same function.
 - Execution and information call the same rule function, and a rule keeps no
   second predicate, because a tooltip that disagrees with the swing is worse
   than no tooltip.
@@ -93,6 +94,9 @@ differ. The arrows show information flow, not Go imports.
 - A sighting carries every condition on the sighted member, as part of the
   snapshot. It is testimony from the moment of sighting, never a live read of
   the member's sheet. No condition is filtered as imperceptible.
+- A change to a member's conditions refreshes the sightings of that member,
+  the same way an equipment change does, because a row must not outlive the
+  condition it describes.
 - An empty or partial set of sightings does not prove that no qualifying
   creature exists. A rule needing that proof answers that it depends.
 
@@ -150,8 +154,10 @@ differ. The arrows show information flow, not Go imports.
 | R14 | deferred-until-a-use-case | Resolution assembling execution's contributions in place of each handler adding its own | KirkDiggler | 2026-10-05 |
 | R15 | settled | Resolution hands the attack roll its frame; two frame moments per attack differing only in advantage; the frame carries weapon facts | KirkDiggler | 2026-10-05 |
 | R16 | settled | A sighting carries every condition on the sighted member; a perceivability filter waits for a condition that must be secret | KirkDiggler | 2026-10-05 |
-| R17 | settled | A target-held effect answers through a rule keyed by condition reference, read from the frame's held conditions; the loaded condition asks the same function at execution | KirkDiggler | 2026-10-05 |
+| R17 | settled | A target-held effect answers through a rule keyed by condition reference, read from the frame's held conditions; at execution whoever applies it — the loaded condition, or resolution where the check lives — asks the same function | KirkDiggler | 2026-10-05 |
 | R18 | settled | A target-held effect is a full row on its target candidate; declaration rows stay the actor's own | KirkDiggler | 2026-10-05 |
+| R19 | settled | A condition change refreshes sightings of that member at commit, as an equipment change does | KirkDiggler | 2026-10-05 |
+| R20 | deferred-until-a-use-case | Rows for general rules no condition owns (unseen attacker, range); In Fog shows no row | KirkDiggler | 2026-10-05 |
 
 ## Open
 

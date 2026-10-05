@@ -1,80 +1,13 @@
 # Plan: effect information, target-held effects (rpg-project#520)
 
-## Decisions needed
+## Rulings this plan carries
 
-Two decisions block parts of this plan. Every other task can start without
-them. Each one says which tasks it blocks.
-
-### D1 — What refreshes a sighting when only a condition changes (blocks Task 5's freshness step and the walk)
-
-**Evidence.**
-- R16 makes conditions part of the sight snapshot. A snapshot is written only
-  when sight refreshes. In `encounter`, that happens in
-  `(*Encounter).refreshSightDeclaring`, which is called from movement
-  (`step.go`, `clocks.go` `settleWalk`), join/exit (`encounter.go`), doors,
-  hold, reserve, world time, and `Recheck` (`sightedbeat.go`).
-- `RecordCast` (`cast.go`) and `RecordActivation` (`activation.go`) record
-  condition-applied and condition-removed results, but they do not refresh
-  sight. Ending a turn does not refresh sight either. Turn-boundary removals
-  (Dodging at its holder's turn start, Guiding Bolt at its caster's turn end)
-  go through the same commit path without a re-look.
-- So without a trigger: the cleric casts Faerie Fire on a goblin, the turn
-  passes to the rogue, and the rogue's Attack candidate shows no Faerie Fire
-  row until somebody moves. A Guiding Bolt row would also stay after the bolt
-  is spent.
-- The workspace already has a pattern for "an observable fact changed
-  without movement": `encounter.(*Encounter).Recheck` and
-  `session.(*Manager).Recheck`. The writer says *who* changed, never *what*,
-  and every watcher re-reads their own testimony. Equipment uses it today.
-- The session commit path (`session/write.go` `(*Manager).commit`) is the one
-  place every verb passes through before numbering. It already holds
-  commit-time settlements: `reconcileFogMembership`,
-  `exitDissolvedCombatants`, `settleExperience`.
-
-**Consequence.** Any trigger that goes through `Recheck` also emits a
-sighting "changed" beat to each watcher of the declared member. That is a new
-user-visible story event on every condition change a watcher can see. With no
-trigger, the rows go stale and the Task 8 walk fails.
-
-**Recommendation.** At commit, before numbering, the session declares every
-member whose set of condition addresses differs from what it was when the
-verb opened. It does this through `encounter.Recheck`, and skips the call on
-a closed encounter. This is the equipment precedent applied to conditions:
-one writer, the composition is told who changed, and testimony stays per
-observer. Task 5 builds this.
-
-### D2 — In Fog does not answer by gaining a "sees" fact (it changes the brief's expectation; blocks nothing in this plan)
-
-**Evidence.**
-- `conditions/in_fog.go` `InFogCondition` subscribes to no attack event. Its
-  godoc says "this condition never adds Blinded or an attack-roll modifier".
-- What fog does to an attack comes from the generic sight rule in
-  `resolution/visibility.go` `addSightAttackModifiers`:
-  - an attacker that cannot see its target has disadvantage;
-  - a target that cannot see its attacker gives the attacker advantage.
-  That rule is called from `strike.go` (in `effectiveACStep`), reads
-  `gamectx.Visibility`, and is keyed to no condition.
-- If an In Fog row answered "disadvantage, you cannot see the target", that
-  would be a second predicate for a modifier owned by another function. The
-  law forbids that ("a rule keeps no second predicate").
-- Hidden needs no sight fact. `conditions/hidden.go` `onAttackChain` applies:
-  - advantage to the holder's attacks (an answering rule on the batch1
-    branch);
-  - disadvantage to attacks against the holder, unconditionally.
-  So the target-held Hidden rule answers unconditionally, matching execution.
-  Gating it on sight would be a gameplay change no ruling asks for.
-
-**Consequence.**
-- In Fog stays not-yet-answering in both censuses.
-- Only Faerie Fire reads the new sight fact.
-- The unseen-combatant rule stays invisible to information. That is a gap in
-  what the tooltip covers, not a disagreement with the swing, because no row
-  claims otherwise.
-
-**Recommendation.** Defer. Showing the generic sight rule as a row needs its
-own ruling: it has no condition source and no census entry, so the row would
-have no owner. The `Sees` pair fact this plan adds reads in both directions,
-which is exactly what that rule needs. So this wave does not rule that out.
+The operator ruled on 2026-10-05 (design R19, R20):
+- **R19.** A condition change refreshes the sightings of that member at
+  commit, the same way an equipment change does. Task 5 builds this.
+- **R20.** In Fog shows no row: it owns no rule, so it is not bearing. Rows
+  for general rules no condition owns (unseen attacker, range) wait for a use
+  case. Task 2 classifies In Fog accordingly.
 
 ---
 
@@ -110,7 +43,8 @@ execution frame, and the frame now carries held conditions and sight.
 - Rows for save spells or checks.
 - Off-turn rows (R12).
 - A perceivability filter (R16).
-- The generic unseen-combatant rule as a row (D2).
+- Rows for general rules no condition owns, such as the unseen-combatant
+  rule in `resolution/visibility.go` (R20).
 - Reckless Attack's "attacks against you" half. It is classified as
   not-yet-answering, with a flag to follow up.
 - Projecting seen conditions onto the session's sighting wire. Testimony
@@ -118,7 +52,7 @@ execution frame, and the frame now carries held conditions and sight.
 - Fixing the Sanctuary cast-path predicate (see Open items).
 
 **Authority.** `ideas/weapon-spell-information/design.md` on branch
-`docs/effect-frame-moments` (rpg-project PR #533): law plus R1–R18,
+`docs/effect-frame-moments` (rpg-project PR #533): law plus R1–R20,
 "Open: None". Issue rpg-project#520. This plan sits beside the design and the
 first-delivery `plan.md`.
 
@@ -220,7 +154,14 @@ first-delivery `plan.md`.
 - *Follow-up candidate.* Reckless Attack's target half is the same shape as
   Dodging (the target is the holder, so attackers get advantage). It is
   classified not-yet-answering here.
-- *Explicit deferrals.* R12, R14, D2, third-party effects, catalogue
+- *Why only Faerie Fire reads `Sees`.* Hidden needs no sight fact:
+  `conditions/hidden.go` `onAttackChain` applies disadvantage to attacks
+  against its holder unconditionally, so its rule answers unconditionally.
+  In Fog adds no attack modifier (`in_fog.go`); fog acts through
+  `resolution/visibility.go` `addSightAttackModifiers`, which no condition
+  owns (R20). The `Sees` fact reads in both directions, which is what that
+  rule would read if R20 is ever taken up.
+- *Explicit deferrals.* R12, R14, R20, third-party effects, catalogue
   descriptions.
 
 ---
@@ -422,16 +363,19 @@ unexported helper:
 *Target census.* The lists are the classification. The test enforces them
 against `conditionLoaders`.
 - **Answers (6).** FaerieFire, GuidingBolt, Dodging, Prone, Sanctuary, Hidden.
-- **Not yet answering (9).**
+- **Not yet answering (8).**
   - RecklessAttack (target half).
   - Raging (resistance as defender).
   - BladeWard (`DamageChain`).
   - ShieldOfFaith, UnarmoredDefense, FightingStyleDefense (`combat.ACChain`).
   - `refs.Spells.Shield` (`PostAttackRollChain`).
-  - InFog (D2).
-- **Not bearing.** Every other loader key. That includes Unconscious: no
-  handler in `conditions/unconscious.go` acts on an attack against its holder,
-  so a row would claim what execution does not do.
+- **Not bearing.** Every other loader key. That includes:
+  - Unconscious: no handler in `conditions/unconscious.go` acts on an attack
+    against its holder, so a row would claim what execution does not do.
+  - InFog, in both censuses, as `notBearingAction` with the census comment
+    "Owns no rule; fog acts through the general sight rule (R20)". The
+    holder-side entry is #1948's `notYetAnswering`; T2 moves it.
+    `TestNotBearingYieldsNoRow` gains an In Fog case for both censuses.
 
 *Fan-out: `AssessTargetHeldEffects`.*
 1. Validate the frame. Error if `Target` is not known.
@@ -802,16 +746,15 @@ cd rpg-toolkit/rulebooks/dnd5e/resolution && go test -race ./... && golangci-lin
 
 ---
 
-### Task 5: Toolkit session — candidates carry held rows; the seam answers conditions; condition changes re-look (D1)
+### Task 5: Toolkit session — candidates carry held rows; the seam answers conditions; condition changes re-look (R19)
 
-**Delivers:** H-ATTACH (R18), H-SEAM (R16's source), H-FRESH (D1), H-WIRE
+**Delivers:** H-ATTACH (R18), H-SEAM (R16's source), H-FRESH (R19), H-WIRE
 (session half).
 
 **Owner:** rpg-toolkit module `rulebooks/dnd5e/session`.
 
 **Prerequisites:**
 - T2, T3 and T4 SHAs pinned.
-- D1 ruled, for the freshness step only.
 
 **Files:**
 - Modify:
@@ -857,7 +800,7 @@ cd rpg-toolkit/rulebooks/dnd5e/resolution && go test -race ./... && golangci-lin
   - An effect no candidate holds appears nowhere.
 - Afford's early returns (off-turn, frozen, world clock) and blockers get no
   held rows, because attach does not run for them.
-- **Freshness (D1).** In `commit`, after `settleExperience` and before
+- **Freshness (R19).** In `commit`, after `settleExperience` and before
   `buildStreamNumbers`:
   1. Ask the seam again.
   2. Collect the members whose key differs from `conditionsAtOpen`, in
@@ -865,6 +808,8 @@ cd rpg-toolkit/rulebooks/dnd5e/resolution && go test -race ./... && golangci-lin
   3. If any, and the encounter is not closed, call
      `scope.enc.Recheck(&encounter.RecheckInput{Members: changed})`.
   The resulting beats are numbered and delivered with this act.
+  Accepted cost: every condition change a watcher can see sends that watcher
+  a sighting "changed" beat naming the member, never the condition.
 
 **Tests** (`EffectRowsSuite` fixtures from `afford_test.go` `aFight`, plus
 the condition-seating pattern in `clockboundary_test.go`):
@@ -881,7 +826,7 @@ the condition-seating pattern in `clockboundary_test.go`):
 - `TestConditionSeamReportsSheets`: a player set in order; a monster set; a
   world member nil; a missing player nil; a stranger in the question is
   answered only for those asked.
-- `TestConditionChangeRechecksWatchers` (D1):
+- `TestConditionChangeRechecksWatchers` (R19):
   1. The cleric casts Faerie Fire on G1, through the verb.
   2. With no movement, the rogue's next Afford candidate G1 carries the FF
      held row.
@@ -988,7 +933,7 @@ fact, freshness, and the execution agreeing.
 **Owner:** rpg-project#520 holds the evidence. The walk runs T5's pins
 through T6's image and T7's dev server.
 
-**Prerequisites:** T1–T7 pushed, and D1 ruled. Follow
+**Prerequisites:** T1–T7 pushed. Follow
 `rpg-project/docs/howto/run-the-game-locally.md`. Use a level-1+ Cleric with
 Faerie Fire and Guiding Bolt prepared, plus a Rogue and a Fighter, against two
 goblins.
@@ -1054,9 +999,10 @@ dependent task starts.
 | No prediction, totals or folding (R1, R3) | T2, T7 | `Answer` holds no total; `AttackMode` is a per-rule contribution, not a fold; web renders verbatim |
 | Toolkit owns, API transports, web renders and names no effect | T6, T7 | `TestTargetCandidateToProto_CarriesHeldEffects`; web held-row tests render verbatim |
 | The wire names no feature or variant | T1 | Reuses the generic `EffectRow` |
-| H-FRESH: testimony refreshes when a condition changes (D1) | T5, T8 | `TestConditionChangeRechecksWatchers`; `TestGuidingBoltRowLeavesWhenSpent`; walk steps 2 and 4 |
+| H-FRESH: a change to a member's conditions refreshes the sightings of that member, as an equipment change does (R19) | T5, T8 | `TestConditionChangeRechecksWatchers`; `TestGuidingBoltRowLeavesWhenSpent`; `TestUnchangedConditionsDoNotRecheck`; walk steps 2 and 4 |
+| H-NOFOG: In Fog shows no row; it owns no rule (R20) | T2 | `TestNotBearingYieldsNoRow` In Fog cases in both censuses; `TestEveryConditionLoaderIsClassifiedForTargetHeld` |
 | H-WALK | T8 | Walk evidence on #520 |
-| Deferred, not covered: third-party effects, save/check rows, R12, R14, the unseen-combatant row (D2), Reckless target half, Dodging sight, Sanctuary cast-path predicate | — | Brief non-goals and the flags above |
+| Deferred, not covered: third-party effects, save/check rows, R12, R14, rows for general rules no condition owns (R20), Reckless target half, Dodging sight, Sanctuary cast-path predicate | — | Brief non-goals and the flags above |
 
 ## Provider/consumer seams
 
@@ -1084,8 +1030,7 @@ dependent task starts.
 - T3 and T4 do not share files.
 - T4 and the R15 branch share `resolution/frame.go` and `strike.go`. T4
   stacks on R15.
-- Within T5, the `write.go` freshness step is the only D1-dependent change.
-  It is a separate commit so the rest can land if D1 changes.
+- Within T5, the `write.go` freshness step (R19) is its own commit.
 
 **Check findings.**
 - Every consumed capability is either an inspected existing symbol
@@ -1097,7 +1042,7 @@ dependent task starts.
 - The T2 and T4 pairing risk is recorded in Sequence.
 - Each handler's prescribed behavior agrees with its test: the zero frame,
   unknown sight and missing distance all error.
-- The plan has no placeholders. D1 blocks only T5's freshness commit and T8.
+- The plan has no placeholders and no blocking decision.
 
 ## Current code that contradicts a ruling
 
