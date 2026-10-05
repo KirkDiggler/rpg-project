@@ -1,6 +1,6 @@
 # Plan: effect information, target-held effects (rpg-project#520)
 
-## Rulings this plan carries
+## Operator rulings this plan carries
 
 The operator ruled on 2026-10-05 (design R19, R20):
 - **R19.** A condition change refreshes the sightings of that member at
