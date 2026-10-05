@@ -45,6 +45,11 @@ differ. The arrows show information flow, not Go imports.
   returns the decision, the reason and what it contributes as data.
 - A rule answering that question reads nothing but the frame. It does not query
   the world, roll, spend, publish or change state.
+- An effect held by the target of an attack answers through a rule keyed by
+  the condition's reference, not through the target's loaded condition, because
+  information has no target sheet to load. That rule reads the frame's list of
+  what each member holds and nothing else; at execution the target's loaded
+  condition asks the same function.
 - Execution and information call the same rule function, and a rule keeps no
   second predicate, because a tooltip that disagrees with the swing is worse
   than no tooltip.
@@ -103,6 +108,9 @@ differ. The arrows show information flow, not Go imports.
   still carries its rows, and no row grants or refuses an action.
 - A declaration that carries no action content carries no rows. Rows are not
   delivered outside the member's own turn or during a frozen window.
+- An effect the target holds is a full row on that target candidate. The
+  declaration's own rows are the actor's effects only, so an effect no
+  candidate holds appears nowhere.
 - A row carries the effect's source reference and name, its description, its
   state, the rule's reason, whether it contributes now or is a later choice, and
   an optional rule-authored line stating the benefit.
@@ -142,9 +150,9 @@ differ. The arrows show information flow, not Go imports.
 | R14 | deferred-until-a-use-case | Resolution assembling execution's contributions in place of each handler adding its own | KirkDiggler | 2026-10-05 |
 | R15 | settled | Resolution hands the attack roll its frame; two frame moments per attack differing only in advantage; the frame carries weapon facts | KirkDiggler | 2026-10-05 |
 | R16 | settled | A sighting carries every condition on the sighted member; a perceivability filter waits for a condition that must be secret | KirkDiggler | 2026-10-05 |
+| R17 | settled | A target-held effect answers through a rule keyed by condition reference, read from the frame's held conditions; the loaded condition asks the same function at execution | KirkDiggler | 2026-10-05 |
+| R18 | settled | A target-held effect is a full row on its target candidate; declaration rows stay the actor's own | KirkDiggler | 2026-10-05 |
 
 ## Open
 
-- **Rows for effects the target holds.** How a rule held by the target answers
-  for the actor's attack when information has no target sheet, and where a row
-  that exists for one target only sits on the declaration.
+None.
