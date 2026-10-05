@@ -52,6 +52,9 @@ differ. The arrows show information flow, not Go imports.
   own facts.
 - A frame holds typed facts, each known or unknown. Unknown is never read as
   false, and a known false, zero or empty value stays known.
+- At execution a rule that answers that it depends fails the action with an
+  error. It is never treated as not applying, because a frame missing a fact
+  would otherwise switch a rule off silently.
 - The action's effective ability and dice are settled before any rule that
   depends on them is asked. Handler registration order does not define that.
 - A relationship between two members is their stance on the disposition graph
@@ -83,6 +86,8 @@ differ. The arrows show information flow, not Go imports.
   is refreshed when state changes.
 - Availability and applicability are independent. An unavailable declaration
   still carries its rows, and no row grants or refuses an action.
+- A declaration that carries no action content carries no rows. Rows are not
+  delivered outside the member's own turn or during a frozen window.
 - A row carries the effect's source reference and name, its description, its
   state, the rule's reason, whether it contributes now or is a later choice, and
   an optional rule-authored line stating the benefit.
@@ -117,18 +122,10 @@ differ. The arrows show information flow, not Go imports.
 | R9 | settled | Later-choice benefits are shown as available, not added; reading changes nothing; a resumed action keeps its frozen calculation | KirkDiggler | 2026-10-02 |
 | R10 | settled | Effective ability and dice are settled before dependent rules are asked | KirkDiggler | 2026-10-02 |
 | R11 | settled | Descriptions are content beside the rule; catalogue information is delivered separately | KirkDiggler | 2026-10-02 |
-| R12 | open | Whether rows are wanted when it is not the member's turn or a window is frozen | — | — |
-| R13 | open | What execution does when a fact a rule requires is unknown | — | — |
+| R12 | deferred-until-a-use-case | Rows outside the member's own turn or during a frozen window | KirkDiggler | 2026-10-05 |
+| R13 | settled | At execution a rule that cannot answer fails the action loudly; never a silent non-application | KirkDiggler | 2026-10-05 |
 | R14 | deferred-until-a-use-case | Resolution assembling execution's contributions in place of each handler adding its own | KirkDiggler | 2026-10-05 |
 
 ## Open
 
-- **R12 — Rows off-turn and during a frozen window.** In those states a
-  declaration carries no action content, so there is nothing for a row to ride.
-  Carrying content there costs an actor load on a read that deliberately avoids
-  one. Decide whether the first delivery needs rows outside the member's own
-  turn.
-- **R13 — A required fact unknown at execution.** At information this is the
-  depends state. At execution it means the frame builder left something out.
-  Decide whether that fails the action loudly before the damage chain runs, or
-  is treated as not applying.
+None.
