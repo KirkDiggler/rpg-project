@@ -22,7 +22,7 @@ Bane answers too, because it uses the same roll-contribution seam as Bless at no
 **Authority.** `rpg-project` `origin/design/effect-information-rewrite:ideas/weapon-spell-information/design.md` @ `106794a` (law plus R1–R14, "Open: None"), and issue rpg-project#520. This plan lives beside the design as `ideas/weapon-spell-information/plan.md`, linked from #520.
 
 **Constraints (only the binding ones).**
-- Toolkit: one nearest-go.mod module per PR. Root `rulebooks/dnd5e`, `resolution` and `session` are separate PRs. Encounter is untouched.
+- Toolkit: one nearest-go.mod module per PR. Root `rulebooks/dnd5e`, `encounter`, `resolution` and `session` are separate PRs.
 - Session S2: `TestNoInnerTypeCrossesTheBoundary` (`session/boundary_test.go`) means new session wire types hold only strings and string enums.
 - Protos: authored contract only, `make test`, no new `.proto` file (avoids the new-file options policy). Protos merge first so CI publishes bindings.
 - rpg-api: base `origin/dev`, `make ci-check`. Its `release-pin-check` keeps a pseudo-pinned PR in draft until real tags are adopted.
@@ -51,6 +51,7 @@ rpg-api pins session `v0.113.0`. Web pins protos `v0.1.219`.
 **Sequence.**
 - Develop outside-in: protos contract (T1) → web concept against T1 bindings (T6, begins on a fixture) → API mapping (T5) → toolkit root (T2) → resolution (T3) → session (T4). Each consumer pins its provider's pushed commit with `go get <module>@<sha>`. T5 pins T4's commit (plus root and resolution indirectly), then the walk (T7).
 - Merge inside-out: T1 merges first (protos exception) → T2 → tag → T3 repins root tag → tag → T4 repins root and resolution tags → tag → T5 repins session tag and `gen/go@generated` → T6 adopts the protos tag → re-walk on released pins (T7 final check).
+- Task 2A rides the root PR after T2's core work. Task 2E is its own encounter PR; it merges and tags before T3 and T4 pin encounter.
 - T2 and T3 must ship as a pair. T2's handlers refuse a zero frame, so session must never combine new root with old resolution. T4's go.mod pins both.
 
 **Open items.**
@@ -60,7 +61,7 @@ rpg-api pins session `v0.113.0`. Web pins protos `v0.1.219`.
   - Bless on spell attacks is included, because execution already routes them through `NewStrike` (`resolution/action.go` `newAttackCast`) and `describeRollContributions(...RollKindAttack)` (`strike.go` `afterAttackChain`).
 - *Rename:* `contributions.NeedsContext` becomes `contributions.Depends`, one word matching the wire.
 - *Explicit deferrals:* R12, R14, toolkit#1929, toolkit#1934.
-- *Awaiting the operator:* A1 and A2 under Architectural gaps. They do not block T1, T5 or T6. They affect T2/T3 behaviour only in states unreachable today (A1) or in a safe direction (A2).
+- *Ruled by the operator:* Martial Arts' ability and die move to assembly in this wave (Task 2A) unless the move proves distracting; its stop condition is in the task. One encounter stance read serves both frames, and a member with no faction is known neutral (Task 2E).
 
 ---
 
@@ -270,6 +271,76 @@ Steps:
 **Verification:** `cd rpg-toolkit/rulebooks/dnd5e && go test -race ./... && golangci-lint run ./...`. Expect a pass, and `grep -rn "gamectx" conditions/sneak_attack.go` empty. Push and record the commit SHA for T3.
 
 **Completion evidence:** #1932 diff no longer contains `combat/assessment` or `Facet|Coverage|Need`. Named tests pass. Pushed SHA recorded.
+
+---
+
+### Task 2A: Toolkit root — Martial Arts settles ability and die at assembly
+
+**Delivers:** O8 (R10) for a monk's unarmed strike and monk weapons: the frame's ability and the damage die are the ones the swing uses.
+
+**Owner:** rpg-toolkit module `rulebooks/dnd5e`, same PR as T2, as its own commit after T2's core work.
+
+**Prerequisites:** T2's frame and `attackActionFacts` contract (the frame reads the assembled profile).
+
+**Files:**
+- Modify `conditions/martial_arts.go`: implement the existing override provider method `WeaponAttackOverride(slot, itemID string) *weaponattack.Override` (the one `conditions/shillelagh.go` implements and `character/attack_definition.go` `AssembleAttack` consults). Delete the ability swap and the die replacement from `onDamageChain` and `onAttackChain`; delete a handler entirely when nothing remains in it.
+- Modify `character/martial_arts_attack.go` `AssembleMartialArtsBonusAttack` so the bonus unarmed strike is assembled with the same override.
+- Update `conditions/martial_arts_test.go` and the character assembly tests.
+
+**Interfaces:** no new exported type. `weaponattack.Override{Dice, Ability}` is consumed as it stands.
+
+**Behavior:**
+- Unarmed strike or monk weapon: ability is Dexterity when its modifier is higher than Strength's, otherwise unchanged; an unarmed strike's die is the Martial Arts die for the monk's level.
+- The die is selected before it is rolled. No roll is made and then discarded.
+- A non-monk weapon is untouched.
+
+**Stop condition:** if the override provider cannot carry this without changing `weaponattack.Override`'s shape, changing the provider method's signature, or touching non-monk weapon assembly, stop, leave Martial Arts as it is on main, classify it not-yet-answering, and report. The gap is then recorded on #520 and not built here.
+
+**Tests:**
+- `TestMartialArtsOverridesUnarmedAbilityAndDieAtAssembly`: monk level 1, DEX 16, STR 10, unarmed → assembled profile ability DEX, die `1d4`.
+- `TestMartialArtsKeepsStrengthWhenHigher`: STR 16, DEX 10 → ability STR.
+- `TestMartialArtsLeavesNonMonkWeaponAlone`: greataxe → no override.
+- `TestMartialArtsBonusAttackUsesSameOverride`.
+- `TestMartialArtsRollsItsDieOnce`: a counting roller sees exactly one damage roll for an unarmed hit.
+- `TestAttackActionFactsForMonkUnarmedIsDexterity` (asserted in T3 against this commit).
+
+**Verification:** `cd rpg-toolkit/rulebooks/dnd5e && go test -race ./... && golangci-lint run ./...`.
+
+**Completion evidence:** named tests pass; `grep -n "AbilityUsed = " conditions/martial_arts.go` is empty; or the stop-condition report.
+
+---
+
+### Task 2E: Toolkit encounter — one stance read, no faction is neutral
+
+**Delivers:** O9 (R5) with one source for a relationship; closes the difference between the information frame and the execution frame for members with no faction.
+
+**Owner:** rpg-toolkit module `rulebooks/dnd5e/encounter`, its own PR from `origin/main`.
+
+**Prerequisites:** none.
+
+**Files:**
+- Modify `encounter/world.go`: `believedStanceBetween` (the owner `BelievedStance` and `ObservedContext` share). Add the public authoritative read named below.
+- Modify `encounter/observed_context_test.go` and the stance tests beside `world.go`; update `encounter/doc.go` where stance reads are described.
+
+**Interfaces:**
+- `func (e *Encounter) StanceBetween(a, b MemberID) (Stance, bool)`: the authoritative stance between two members. `known` is false only when either is not a member. A member with no faction gives `StanceNeutral, true`. Hostile, allied and neutral otherwise follow the existing fold (`opposed`, the allied edge).
+- `believedStanceBetween` gives `StanceNeutral, true` for a pair where either member has no faction, and is otherwise unchanged.
+- `IsHostile` and `IsAllied` keep their signatures and answers.
+
+**Behavior:** for every pair of members, `StanceBetween` hostile ⇔ `IsHostile` true, allied ⇔ `IsAllied` true. Absent deception, `believedStanceBetween` equals `StanceBetween` for sighted members.
+
+**Tests:**
+- `TestStanceBetweenFactionlessIsKnownNeutral`.
+- `TestStanceBetweenUnknownForNonMember`.
+- `TestStanceBetweenAgreesWithIsHostileAndIsAllied`: table over a three-faction fixture.
+- `TestObservedContextPairWithWorldNPCIsNeutral`: the pair's `Stance` is non-nil and neutral.
+- Existing `BelievedStance` consumers: report any caller whose visible behaviour changes for a factionless subject.
+
+**Verification:** `cd rpg-toolkit/rulebooks/dnd5e/encounter && go test -race ./... && golangci-lint run ./...`.
+
+**Completion evidence:** named tests pass; PR open; the list of `BelievedStance` callers checked.
+
+T3 consumes this: the execution frame takes its stance from `StanceBetween` through the cast view, replacing the `IsHostile`/`IsAllied` composition.
 
 ---
 
@@ -607,8 +678,3 @@ Shared files: none across tasks. T2, T3 and T4 are disjoint modules. Within T6, 
    - Candidates render in `TargetSurface.tsx`'s target list.
    - `SessionCanvas` exposes `onHoverEntity`, but `SessionEncounterView` does not wire it.
    - Smallest honest path: extend `buildActionTooltip` and its two renderers; add hover/focus plus a read-only toggle on target-list rows; wire `onHoverEntity` for canvas mouse hover.
-
-## Architectural gaps awaiting the operator
-
-- **A1 (R10 vs Martial Arts).** `conditions/martial_arts.go` swaps `AbilityUsed` to DEX inside the damage and attack chains (StageFeatures), so the effective ability is decided by handler order, not before rules are asked. A frame built from the assembled profile will carry STR for a monk's unarmed strike. This is unreachable for the first delivery's ability-reading rules today, because multiclassing is refused (`character/advance.go`). Martial Arts is classified UNAVAILABLE. Question: must this wave move the swap to assembly time? `weaponattack.Override{Dice, Ability}` (used by Shillelagh via `WeaponAttackOverride`) fits exactly. Or is this recorded as a known R10 gap until a rule that reads ability can co-occur with Martial Arts?
-- **A2 (factionless relationships).** `encounter.believedStanceBetween` answers "unknown" when either member has no faction (a world NPC), so the information frame has an Unknown stance. At execution, `castView.IsHostile` / `IsAllied` return known false/false for the same pair, giving Neutral. The relationship fact differs between the two paths for world NPCs. It is safe for Sneak Attack (information says DEPENDS, never a contradiction), but it is a divergence between one fact's two sources. Question: should the frame's relationship carry a distinct "no side" value, or should encounter expose one authoritative member-pair stance read used by both frames, with factionless meaning known-not-hostile? Note that making execution Unknown would turn into R13 errors for attacks near vendors.
