@@ -144,24 +144,25 @@ operation adds overlapping, underlying or behind-the-object cells to the
 concealment. Nor does it select a different authored object such as an attached
 door when only its wall was selected.
 
-### Current implementation violation
+### Correction in the encounter draft
 
-`Encounter.hiddenCellsOf` in `concealment.go` currently returns:
+The earlier `Encounter.hiddenCellsOf` implementation returned:
 
 ```text
 explicit c.cells ∪ placedCells(each concealed footprint door)
 ```
 
-That inferred union feeds `hiddenFrom`, room-knowledge projection and reveal
-payload construction. It explains the floor-hole symptom. It contradicts the
-explicit-membership contract; it is not a new requirement to solve general
-continuous concealment geometry.
+That inferred union fed member projection and reveal payloads, causing the
+floor-hole symptom. The provider draft now returns only explicit cells and also
+removes support-cell-based occupancy discovery. It retains door footprint support
+separately for manual search and automatic discovery distance.
 
-The same helper is also used by discovery distance and search-region queries.
-The correction must separate **membership** from **spatial query support**, not
-remove the ability to locate a door for discovery. `memberPropCells` already
-expresses this distinction for props: their footing is usable for reach without
-becoming hidden floor.
+This separates **membership** from **spatial query support**, rather than removing
+the ability to locate a door or introducing a new concealment model.
+`memberPropCells` expresses the same distinction for props: their footing is usable
+for reach without becoming hidden floor. Provider tests cover unchanged floor,
+discovery support and anonymous physical refusals; integrated browser verification
+of this correction is still pending.
 
 Required coverage is correspondence between authored membership, member snapshot
 and reveal payload, with door/wall overlap unable to grow the concealed-cell set.
@@ -226,8 +227,12 @@ Floor-surface authoring and room assembly remain separate work under
   the extracted CloseDoor work.
 - **Local consumers:** structural API mappings and shared builder/game rendering;
   not yet published as their own consumer PRs.
-- **Next implementation:** additive replacement wire contract, encounter producer
-  and explicit-membership correction, session/API adapters, atomic web reducer.
+- **Implemented provider checkpoints:** additive wire contract in
+  [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380) (reviewed, awaiting
+  merge/publication); encounter replacements/membership correction in #1935;
+  typed session adapter in #1947. Go module tests/race/vet/lint pass.
+- **Next implementation:** API mappings and atomic web reducer/hydration recovery,
+  using the actual generated bindings after #380 publishes.
 - **Outstanding acceptance:** bounded placement verification;
   regular-builder publish/play acceptance; document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.

@@ -14,6 +14,16 @@ contains the parallel effect work and merged CloseDoor. Reconcile upstream befor
 provider delivery; do not downgrade its dependencies or overwrite the dirty
 consumer worktrees. Existing PR1935/1947 remain the module delivery branches.
 
+## Execution checkpoint
+
+T1 is implemented in proto PR380, independently reviewed with findings closed and
+CI green; merge/publication is the remaining binding prerequisite. T2's provider
+checkpoint055995bb is pushed on toolkit1935. T3's adapter12845c58 is pushed on1947,
+after reconciling current main and released CloseDoor. Full module tests/race,
+vet/lint and normal hooks pass on both. These are provider checkpoints, not full
+T6 acceptance or merge-readiness of the broader toolkit PRs. T4/T5 await actual
+published proto bindings; no substitute/local generation is used.
+
 ## Sequence
 
 T1 wire and T2 encounter do not depend on generated bindings. T3 consumes T2's
