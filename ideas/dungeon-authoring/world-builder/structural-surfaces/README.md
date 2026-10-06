@@ -112,11 +112,17 @@ For a concealed attached door, the member projection omits its layout and the
 corresponding cut in the wall's drawing description. This is an entity/layout
 projection, **not a reason to conceal surrounding floor**.
 
-Existing room/concealment reveal events carry newly permitted or changed
-**complete records**, keyed by identity. The web upserts those records. A known
-wall can therefore acquire a newly revealed opening without a new event family
-or client-side interpretation of secret source data. Snapshot and event replay
-must agree for the original recipient.
+The agreed update model is **complete snapshots, full entity introductions, then
+typed component replacements** on the existing room/concealment reveal events.
+A known wall acquires a newly permitted opening through a replace-openings patch;
+its asset, dimensions and endpoints are not resent. Door introductions travel in
+the same atomic layout update. Historical complete-record updates stay decodable.
+Snapshot and event replay must agree for the original recipient.
+
+The [concrete patch contract](layout-patch-contract.md) specifies the wire shape,
+empty/default semantics, sequencing, malformed input and missing-baseline recovery.
+The [checked task plan](layout-patch-plan.md) maps it onto the existing PRs and
+acceptance tests. These are the next bounded implementation slices.
 
 State changes continue through existing door verbs and observations. The new
 layout channel does not become a second door-state channel.
@@ -198,7 +204,7 @@ or ignore independent blockers.
 | Appearance separate from blocking | Presentation changes cannot alter rules | Authoring must expose/validate the intended relationship |
 | Fixed layout in toolkit knowledge | No unrestricted source fetch in gameplay | Additional persisted definitions and DTO mappings |
 | Flat independent door projection | Explicit membership and parent privacy survive delivery | Renderer joins layout and observation by canonical ID |
-| Whole-record reveal updates | Idempotent replay and simple snapshot parity | Larger updates than field-level patches |
+| Snapshot + full introductions + typed component replacements | Smaller updates for known walls; snapshot remains the recovery baseline | Explicit replacement/presence semantics and atomic missing-baseline recovery |
 | Bounded authoring support | Avoids expanding the geometry contract without a demonstrated need | Placement guidance and representative acceptance cases become part of delivery |
 
 This remains a planar, hex-based gameplay model with continuous authored
@@ -220,7 +226,9 @@ Floor-surface authoring and room assembly remain separate work under
   the extracted CloseDoor work.
 - **Local consumers:** structural API mappings and shared builder/game rendering;
   not yet published as their own consumer PRs.
-- **Outstanding:** explicit-membership correction; bounded placement verification;
+- **Next implementation:** additive replacement wire contract, encounter producer
+  and explicit-membership correction, session/API adapters, atomic web reducer.
+- **Outstanding acceptance:** bounded placement verification;
   regular-builder publish/play acceptance; document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
 
