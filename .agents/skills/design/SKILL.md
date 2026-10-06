@@ -1,6 +1,6 @@
 ---
 name: design
-description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam. Governs open brainstorming, collaborative design, a checked implementation plan authorized by that design, and execution with architectural-gap judgment. Keeps the design doc law and the case file in the PR.
+description: Use when a session designs anything — a new capability, a changed shape, a rules or schema change, an ideas/ design doc, a refactor that moves a seam, or an explanation of a design's contracts, seams and trade-offs for a teammate. Governs open brainstorming, collaborative design, a checked implementation plan authorized by that design, and execution with architectural-gap judgment. Keeps the design doc law and the case file in the PR.
 ---
 
 # Design
@@ -47,7 +47,9 @@ system must do.
 2. **Shape before detail.** Give the operating human the shape first — a
    mermaid diagram of the structure or flow — and confirm it before
    elaborating. The shape gives the details a place to live in the reader's
-   head; detail that arrives first has nowhere to go.
+   head; detail that arrives first has nowhere to go. Once the shape holds,
+   grow it into the walkthrough (below) — owners, contracts, refusals and
+   costs — and seek agreement on that, not on the picture alone.
 3. **Approaches before design.** Two or three, with trade-offs and a
    recommendation. YAGNI ruthlessly — remove anything no ruling asked for.
 4. **One question at a time**, when an unresolved decision needs the operator.
@@ -60,7 +62,29 @@ system must do.
    not an automatic stop. Bring back a changed architectural decision; handle
    implementation detail within the design.
 
-## The artifact
+## The artifacts
+
+A design produces two documents for two readers, plus the case file. The
+**design doc** is law: terse, present tense, what must hold. The
+**walkthrough** is understanding: a teammate who codes, reading it cold, learns
+which component owns each noun, what crosses each seam in which type, what
+each boundary refuses to do, and what each decision costs. Law without the
+walkthrough is obeyed without being understood. A walkthrough without law is
+rationale with no authority.
+
+### The walkthrough
+
+`ideas/<topic>/README.md` (or `walkthrough.md` when README is already the
+folder's index) beside the design doc: component shape,
+ownership-and-contracts table with each boundary's refusals, one value walked
+source to screen, separations that look like one thing, a trade-offs table
+naming what was not taken, edges, where a likely change lands, and a source
+map. It cites rulings by ID, never restates them, and carries no delivery
+status or correction stories — those are case file. **Read
+[the walkthrough guide](walkthrough.md) before writing one.** It is the surface
+the operator agrees on, and it changes in the same PR as any law it explains.
+
+### The design doc
 
 A design doc carries four sections and nothing else:
 
@@ -101,7 +125,8 @@ in-scope responsibilities and interfaces, inputs and outputs, state changes and
 lifecycle, failure/absence/invalid-input behavior, and observable acceptance
 scenarios. Name exclusions explicitly; do not invent requirements to make a
 checklist look complete. For each unit, make clear what it owns, how its consumer
-uses it, and what it depends on.
+uses it, and what it depends on — the walkthrough's ownership table is where
+that becomes visible; a row that cannot be filled is an unsettled design.
 
 Put durable rules in the existing law sections; examples, acceptance scenarios
 and investigation evidence can live in linked working documents or the issue.
