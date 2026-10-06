@@ -45,11 +45,26 @@ differ. The arrows show information flow, not Go imports.
   returns the decision, the reason and what it contributes as data.
 - A rule answering that question reads nothing but the frame. It does not query
   the world, roll, spend, publish or change state.
+- An effect held by the target of an attack answers through a rule keyed by
+  the condition's reference, not through the target's loaded condition, because
+  information has no target sheet to load. That rule reads the frame's list of
+  what each member holds and nothing else; at execution, whoever applies the
+  effect — the target's loaded condition, or resolution where the check lives
+  there — asks the same function.
 - Execution and information call the same rule function, and a rule keeps no
   second predicate, because a tooltip that disagrees with the swing is worse
   than no tooltip.
-- Resolution builds the frame, once per action and target. No rule assembles its
-  own facts.
+- Resolution builds every frame. No rule and no handler assembles its own
+  facts.
+- An executing attack has two frame moments: before the attack roll, where
+  advantage is unknown, and after it, where advantage is known. The later frame
+  only adds knowledge; every other fact is the same in both, because both come
+  from one derivation.
+- The frame carries the weapon facts rules ask about: the weapon used, whether
+  it is finesse or a ranged weapon, the grip, and whether the attack is an
+  off-hand or an opportunity attack. A ranged weapon is not the same fact as an
+  attack that is not melee, because a thrown melee weapon is the second and not
+  the first.
 - A frame holds typed facts, each known or unknown. Unknown is never read as
   false, and a known false, zero or empty value stays known.
 - At execution a rule that answers that it depends fails the action with an
@@ -76,6 +91,15 @@ differ. The arrows show information flow, not Go imports.
   give identical rows.
 - The information frame draws from the observer's sightings only, never from
   the target sheets offer compilation loads for its own purposes.
+- A sighting carries every condition on the sighted member, as part of the
+  snapshot. It is testimony from the moment of sighting, never a live read of
+  the member's sheet. No condition is filtered as imperceptible.
+- A change to a member's conditions refreshes the sightings of that member,
+  the same way an equipment change does, because a row must not outlive the
+  condition it describes.
+- A target's armour class and resistances are not the attacker's to know. An
+  effect whose only bearing on an attack is the target's armour class or its
+  resistance produces no row for the attacker, whoever holds it.
 - An empty or partial set of sightings does not prove that no qualifying
   creature exists. A rule needing that proof answers that it depends.
 
@@ -91,6 +115,9 @@ differ. The arrows show information flow, not Go imports.
   still carries its rows, and no row grants or refuses an action.
 - A declaration that carries no action content carries no rows. Rows are not
   delivered outside the member's own turn or during a frozen window.
+- An effect the target holds is a full row on that target candidate. The
+  declaration's own rows are the actor's effects only, so an effect no
+  candidate holds appears nowhere.
 - A row carries the effect's source reference and name, its description, its
   state, the rule's reason, whether it contributes now or is a later choice, and
   an optional rule-authored line stating the benefit.
@@ -128,6 +155,13 @@ differ. The arrows show information flow, not Go imports.
 | R12 | deferred-until-a-use-case | Rows outside the member's own turn or during a frozen window | KirkDiggler | 2026-10-05 |
 | R13 | settled | At execution a rule that cannot answer fails the action loudly; never a silent non-application | KirkDiggler | 2026-10-05 |
 | R14 | deferred-until-a-use-case | Resolution assembling execution's contributions in place of each handler adding its own | KirkDiggler | 2026-10-05 |
+| R15 | settled | Resolution hands the attack roll its frame; two frame moments per attack differing only in advantage; the frame carries weapon facts | KirkDiggler | 2026-10-05 |
+| R16 | settled | A sighting carries every condition on the sighted member; a perceivability filter waits for a condition that must be secret | KirkDiggler | 2026-10-05 |
+| R17 | settled | A target-held effect answers through a rule keyed by condition reference, read from the frame's held conditions; at execution whoever applies it — the loaded condition, or resolution where the check lives — asks the same function | KirkDiggler | 2026-10-05 |
+| R18 | settled | A target-held effect is a full row on its target candidate; declaration rows stay the actor's own | KirkDiggler | 2026-10-05 |
+| R19 | settled | A condition change refreshes sightings of that member at commit, as an equipment change does | KirkDiggler | 2026-10-05 |
+| R20 | deferred-until-a-use-case | Rows for general rules no condition owns (unseen attacker, range); In Fog shows no row | KirkDiggler | 2026-10-05 |
+| R21 | settled | A target's armour-class and resistance effects produce no row for the attacker; they are not the attacker's to know | KirkDiggler | 2026-10-05 |
 
 ## Open
 
