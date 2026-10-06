@@ -1,267 +1,241 @@
-# Wall work: a plain-language walkthrough
+# Structural walls — architecture and boundaries
 
-**Start here, not with the implementation plan.** This explains the proposed wall
-experience and the implementation currently under review. It is not a claim that
-the whole feature has shipped, or approval to implement the remaining geometry
-proposal. [Issue #527](https://github.com/KirkDiggler/rpg-project/issues/527) carries
-the work and its acceptance record.
+This is an architecture overview of [#527](https://github.com/KirkDiggler/rpg-project/issues/527),
+not a new implementation authorization. The CloseDoor SDK/API slice has shipped;
+the structural-wall providers and consumers remain work in progress.
 
-## The idea in one minute
-
-**Draw a wall once. Put holes in it. Optionally put doors in those holes.**
-
-The wall is not a row of individually placed stone models. Those models are its
-appearance. The toolkit receives the wall's authored blocking geometry and uses
-the existing movement, sight, door and knowledge systems.
-
-There are three distinct facts:
-
-| Fact | Example | Who owns the answer? |
-|---|---|---|
-| Appearance | Stone wall, 8 feet high, with a wooden door | Author chooses; renderer draws |
-| Gameplay geometry/state | This strip blocks movement; this door is closed | Toolkit |
-| Player knowledge | This player knows the doorway, but not its current state | Toolkit, per observer |
-
-Changing the stone asset must not change whether an arrow or a character can
-pass. Knowing a doorway exists must not automatically reveal whether it is open.
+## Component shape
 
 ```mermaid
-flowchart TD
-    A[Builder: wall line, appearance, blocker, openings] --> C[Toolkit compiler]
-    C --> B[Existing blocking rectangles and gameplay doors]
-    C --> L[Fixed wall and door layout definitions]
-    B --> G[Existing movement, sight and door rules]
-    L --> K[Toolkit member knowledge]
-    G --> K
-    K --> S[Existing Knowledge snapshots and reveal events]
-    S --> R[Game renderer: draw permitted layout and observed state]
-    R --> I[Open or close intent through API and session]
-    I --> G
+flowchart LR
+    subgraph Authoring
+        D[RoomDraft: walls, openings, door bindings, explicit concealments]
+    end
+    subgraph Toolkit
+        C[dungeonspec compiler]
+        F[Field: mechanical contributors and fixed layout]
+        E[Encounter: state, movement, observation, knowledge]
+        P[Member projection and reveal production]
+    end
+    subgraph Delivery
+        S[Session DTO adapters]
+        A[API / generated wire types]
+    end
+    subgraph Web
+        K[Knowledge state / event application]
+        R[Shared structural renderer]
+    end
+    D --> C --> F --> E --> P --> S --> A --> K --> R
+    R -- door intent --> A
+    A -- authenticated member intent --> S
+    S -- existing encounter verb --> E
 ```
 
-**The client does not fetch the full builder document to discover what to draw.**
-That would expose the author's secrets. It receives the toolkit's permitted
-records through the existing session channel.
+The new authoring abstraction is a structural wall. It does not introduce a new
+collision engine, a second visibility authority, or a gameplay read of the full
+builder document.
 
-## 1. What you edit
+## Ownership and contracts
 
-A wall has:
+| Component | Owns | Input → output |
+|---|---|---|
+| Builder | Editable structure and explicit selections | `room.walls`, existing `doorBindings`, existing concealment declarations |
+| `encounter/dungeonspec` | Validation and lowering | Authored wall → existing `PlacedPropInput` / `DoorInput`, plus `StructuralWallInput` |
+| Encounter field/persistence | Compiled world definitions | Mechanical contributors and fixed layout → `FieldData` / encounter save-load |
+| Encounter runtime | Door state, movement, observation, discovery | Existing verbs and world transitions → authoritative state and observer knowledge |
+| Encounter projection | What a member may receive | `AtlasFor(member)` and existing reveal beats → permitted layout records |
+| Session | Host seam and type boundary | Encounter answers → session-owned Atlas/Knowledge/reveal DTOs |
+| API | Authorization and wire translation | Caller-owned member + SDK result → generated proto messages |
+| Web | Event application and presentation | Permitted layout + supplied door observations → rendered assets; user intent → RPC |
 
-- A stable identity and a straight start/end line. Placement is free; snapping is
-  optional. It is not restricted to hex edges.
-- An appearance asset, visible height, thickness and elevation.
-- A separate rectangular blocker: length, depth, offsets along/across the line,
-  and independent movement-blocking and sight-blocking flags.
-- Openings, each with a position along the wall and a width.
-- An optional door attached to each opening.
+The API and session adapters do not independently filter visibility or reconstruct
+wall geometry. The renderer does not calculate gameplay from mesh bounds.
 
-The opening owns an attached door's position and orientation. There is no second
-free-standing door transform to keep aligned. The door keeps its own identity and
-its existing initial-state binding: open, closed or locked.
+## Authoring model → compiled model
 
-**Editing behaviors in the current implementation:**
+An authored wall contains:
 
-- Moving or rotating the whole wall carries its openings, doors and local blocker
-  offsets with it.
-- Changing the wall's length preserves the doorway's world position. Shortening
-  stops before cutting through an opening. The blocker preserves its end margins.
-- Changing the appearance does not rewrite the blocker.
-- Removing a door leaves the opening. Removing the opening removes its attached
-  door and state binding. These are undoable edits using the existing room history.
-- Overlapping openings, duplicate identities and invalid geometry are refused,
-  rather than silently repaired.
+- Stable wall ID and a continuous line.
+- Appearance reference and visible dimensions.
+- An independent rectangular blocker, including local offsets and separate
+  movement/LOS flags.
+- Openings as intervals along the line; each may bind a door ID and appearance.
 
-These are **full-height gaps**, not a general system for windows, arches or holes
-at arbitrary heights. The blocker remains planar gameplay geometry. A visual
-height/elevation setting does not introduce 3D sight or multilevel movement.
+The opening owns an attached door's pose. Its mutable state remains in the
+existing door model, not in the layout record. Existing standalone doors are not
+migrated into attachments implicitly.
 
-## 2. What the toolkit builds
+The compiler produces two different views of that one authored structure:
 
-Consider a 20-foot wall with a 5-foot doorway centred halfway along it. Assume
-its blocker follows the full wall length:
+### Mechanical contributors
+
+1. Resolve the authored blocker extent and offsets.
+2. Subtract opening intervals from that extent.
+3. Emit the remaining spans as existing placed-footprint contributors.
+4. Emit attached doors through the existing footprint-door path.
+
+A nonblocking presence entry retains the wall's identity independently of how many
+blocking spans remain. It cannot refill an opening. Span IDs are derived;
+authored wall and door IDs are stable.
+
+This preserves the current movement/sight contributor model. Opening a door
+removes that door's blocking contribution, not any overlapping contributor.
+
+### Fixed layout definitions
+
+`StructuralWallInput` carries the authored line, appearance dimensions, openings
+and bindings to existing identities. It is needed because mechanical fragments
+do not preserve enough information to reconstruct the authored wall or safely
+project a conditional opening.
+
+This is **compiled presentation data, not another editable source or another
+collider**. The compiler derives it once from the source; encounter validates and
+persists it. Asset references remain opaque to the toolkit.
+
+The runtime-facing geometry uses canonical feet (`FootprintPoint` / spatial
+points). The web converts to scene units at the rendering boundary. Asset fitting
+cannot modify the gameplay rectangle.
+
+## Runtime projection and event contract
+
+The member-facing Atlas contains two flat collections:
+
+- `StructuralWalls`: permitted wall lines, dimensions and opening intervals.
+- `StructuralDoors`: permitted door identity, appearance and resolved pose.
+
+Door layout is separate from mutable door observations. Missing observation does
+not mean closed. It is also separate from parent-wall delivery: withholding a
+wall must not hide an independently permitted door or disclose a hidden parent
+association through that door.
+
+For a concealed attached door, the member projection omits its layout and the
+corresponding cut in the wall's drawing description. This is an entity/layout
+projection, **not a reason to conceal surrounding floor**.
+
+Existing room/concealment reveal events carry newly permitted or changed
+**complete records**, keyed by identity. The web upserts those records. A known
+wall can therefore acquire a newly revealed opening without a new event family
+or client-side interpretation of secret source data. Snapshot and event replay
+must agree for the original recipient.
+
+State changes continue through existing door verbs and observations. The new
+layout channel does not become a second door-state channel.
+
+## Concealment membership is not spatial support
+
+These are separate contracts:
+
+| Query | Source of truth |
+|---|---|
+| Which floor cells are explicitly concealed? | Authored concealment cell membership |
+| Which wall, door or prop is concealed? | Authored object membership, expanded only to that object's compiled representations |
+| Where can an actor reach or attempt discovery of an object? | Its existing spatial support / reach rules |
+| Which ordinary room geometry is not yet known? | Existing room knowledge, separately from explicit concealment |
+
+Concealing a wall can include the generated spans representing that same wall.
+Concealing a door can include its gameplay and drawing identities. Neither
+operation adds overlapping, underlying or behind-the-object cells to the
+concealment. Nor does it select a different authored object such as an attached
+door when only its wall was selected.
+
+### Current implementation violation
+
+`Encounter.hiddenCellsOf` in `concealment.go` currently returns:
 
 ```text
-Author's wall:     |--------------------|
-Opening:                 |-----|
-Compiled blockers:|-------|     |-------|
-                         optional door
+explicit c.cells ∪ placedCells(each concealed footprint door)
 ```
 
-The compiler subtracts the opening from the blocker, leaving two rectangles,
-7.5 feet long each. Those are the **same kind of blocking contributors the
-existing footprint system already understands**, not a new wall collision engine.
+That inferred union feeds `hiddenFrom`, room-knowledge projection and reveal
+payload construction. It explains the floor-hole symptom. It contradicts the
+explicit-membership contract; it is not a new requirement to solve general
+continuous concealment geometry.
 
-If a door occupies the opening:
+The same helper is also used by discovery distance and search-region queries.
+The correction must separate **membership** from **spatial query support**, not
+remove the ability to locate a door for discovery. `memberPropCells` already
+expresses this distinction for props: their footing is usable for reach without
+becoming hidden floor.
 
-- Closed: the door contributes its existing blocking behavior in the gap.
-- Open: that door stops blocking; the wall pieces on either side remain.
-- A separate pillar or overlapping blocker remains effective. Opening a door
-  does not erase other contributors.
+Required coverage is correspondence between authored membership, member snapshot
+and reveal payload, with door/wall overlap unable to grow the concealed-cell set.
+The fix belongs in encounter. The client must not fill in withheld cells as a
+workaround.
 
-For an offset or differently sized blocker, the compiler defines that rectangle
-**first**, then subtracts the opening corridors. Offsetting the pieces after
-cutting would accidentally move blocking material back into the doorway.
+## Bounding geometry and supported authoring
 
-The attached door's mechanical width comes from the opening; its depth and
-cross-wall offset follow the wall's blocker strip. Its mesh does not set these.
+The editor already has authored blocking rectangles, and those rectangles are
+available to the runtime. They remain the gameplay geometry; model bounds are not
+a competing authority.
 
-There is also a nonblocking wall identity record. Think of it as the wall's index
-card: it remains identifiable even if openings remove every blocking span. Its
-movement and sight flags are both false, so it cannot secretly plug the holes.
+The current footprint-observation path uses support cells. Some freely positioned
+thin doors expose limitations of that approximation. That does **not** establish
+a requirement to support every arbitrary placement or introduce a new
+continuous-surface visibility contract.
 
-The source is one editable wall. Generated rectangle pieces are compiled output,
-not extra author-managed props. Their IDs are deterministic for a given shape,
-but editing the cuts can renumber the pieces; the authored wall ID stays stable.
+The operator's direction is to permit supported placement conventions, validation
+and authoring best practices. Placement on the approach side of a hex is one
+candidate to verify against the intended authored encounter. It is not yet a
+claim that the same placement solves every approach direction.
 
-## 3. Why the toolkit also carries visual layout
+Accordingly:
 
-Blocking rectangles alone cannot tell a renderer:
+- Preserve existing connected-sight rules and the authored bounding geometry.
+- Verify representative supported placements using the same geometry in editor
+  and play; make any supported-placement limits explicit.
+- Do not use universal edge-case coverage as the completion bar for this slice.
+- Park the proposed terminal-contact spatial extension. Its need has not been
+  established against a bounded authoring contract.
 
-- which pieces came from one authored wall;
-- which asset to repeat at which visible dimensions;
-- which cut belongs to a door that this player has not discovered.
+This is a scope decision, not permission to infer state from the rendered asset
+or ignore independent blockers.
 
-The draft therefore adds **fixed layout definitions**, alongside the existing
-mechanical contributors. They carry wall endpoints, dimensions, appearance
-references and openings. The compiler resolves them from the same authoring
-input, and encounter persistence saves/loads them.
+## Architectural trade-offs
 
-This is not a second editable wall or a second source of door state. It is the
-compiled drawing description needed for a player-safe runtime view. The toolkit
-carries asset references without loading models or consulting the asset catalog.
-
-At the session/wire boundary, lengths and points use canonical feet. The web
-converts them to scene units once. This keeps model scale out of gameplay math.
-
-## 4. How secrets and door state reach the game
-
-A player's layout contains only what the toolkit permits. A concealed attached
-door is omitted, and its cut is omitted from that player's wall description, so
-the intended appearance is continuous wall rather than an obvious empty doorway.
-
-When discovery permits the door, an existing room/concealment reveal event carries:
-
-1. The complete updated wall record, now including the opening.
-2. The newly permitted door layout record.
-
-The client replaces records by identity rather than inventing a special "punch a
-hole" operation. Replaying the same event does not add another wall or door.
-A fresh Knowledge snapshot agrees with those updates.
-
-**Door layout and door state are separate.** Existing observations supply the
-state. If the layout is known but no state observation is supplied, the current
-renderer uses a neutral marker instead of pretending the door is closed. That
-marker is a truthful fallback, not a promise that the final interaction UX is done.
-
-Door records are delivered independently of wall records. That matters because
-concealment selection is explicit:
-
-- Selecting a wall hides that wall and its generated parts, not an unselected door.
-- Selecting a door does not select every object that overlaps it.
-- Concealing floor cells does not automatically select unrelated walls or props.
-
-An undiscovered room can still withhold its contents through the existing room
-knowledge rules. **Unexplored space and explicit concealment are different things.**
-
-## 5. What the game renderer does—and does not do
-
-It repeats/fits wall assets along the permitted solid spans, and fits the chosen
-door assembly into the supplied opening. Builder and game reuse the same visual
-components instead of maintaining two implementations of wall fitting.
-
-It sends open/close/unlock intentions through the existing session API. The server
-still decides ownership, reach, state changes, refusal and persistence. The renderer
-does not run sight checks against Three.js meshes or decide who discovered a secret.
-
-Exact authored dimensions take precedence over the model's native dimensions.
-That can stretch repeated pieces or expose unsuitable trim. Current fitting uses
-the door assembly's outer bounds, not a separately modelled clear aperture. A model
-with bundled masonry or an unfinished reverse face may simply be the wrong asset.
-We should improve/select the asset rather than change the game's blockers to hide it.
-
-## 6. The trade-offs
-
-| Choice | What it buys | What it costs / does not promise |
+| Decision | Benefit | Cost / boundary |
 |---|---|---|
-| One line with openings, rather than many placed props | Coherent resizing, movement and door attachment | Less arbitrary per-piece dressing; props remain available for decoration |
-| Appearance separate from blocking | Art swaps cannot change rules; deliberate independent flags/offsets | More authoring controls; a badly authored picture and blocker can disagree |
-| Compile to existing rectangle contributors | Reuses movement/sight/overlap rules and persistence | Generated pieces need identity bookkeeping; corners/joins are not automatic mesh booleans |
-| Fixed layout beside mechanical data | Safe rendering without downloading secret source content | Additional validated/persisted fields and DTO mappings across the existing seams |
-| Explicit concealment membership | Predictable selection; no accidental hiding of unrelated objects | Authors must select what they intend; a visible door on a concealed wall is possible |
-| Whole-record reveal updates | Straightforward replay and snapshot agreement | More payload than a tiny cut-only patch |
-| Exact asset fitting | Author's dimensions remain authoritative | Some distortion; asset curation and join polish still matter |
-| Free wall placement in a hex-based game | Walls need not follow hex edges | Existing cell-based observation assumptions become visible and need careful correction |
+| Structural source compiled into existing contributors | Reuses the established rules engine | Compiler owns fragment generation and identity mapping |
+| Appearance separate from blocking | Presentation changes cannot alter rules | Authoring must expose/validate the intended relationship |
+| Fixed layout in toolkit knowledge | No unrestricted source fetch in gameplay | Additional persisted definitions and DTO mappings |
+| Flat independent door projection | Explicit membership and parent privacy survive delivery | Renderer joins layout and observation by canonical ID |
+| Whole-record reveal updates | Idempotent replay and simple snapshot parity | Larger updates than field-level patches |
+| Bounded authoring support | Avoids expanding the geometry contract without a demonstrated need | Placement guidance and representative acceptance cases become part of delivery |
 
-Drawing walls does **not** automatically partition floor into rooms or define
-room-discovery boundaries. Room assembly and floor-surface painting are separate
-work, tracked by [#528](https://github.com/KirkDiggler/rpg-project/issues/528).
+This remains a planar, hex-based gameplay model with continuous authored
+rectangles. Visible height/elevation does not add 3D LOS or multilevel traversal.
+Drawing walls does not derive room membership or discovery regions automatically.
+Floor-surface authoring and room assembly remain separate work under
+[#528](https://github.com/KirkDiggler/rpg-project/issues/528).
 
-## 7. What exists, what has shipped, and what is still fuzzy
+## Delivery boundaries
 
-| Slice | Status / where to look |
+- **Merged:** standalone CloseDoor [SDK #1957](https://github.com/KirkDiggler/rpg-toolkit/pull/1957)
+  and [API #1075](https://github.com/KirkDiggler/rpg-api/pull/1075).
+- **Merged contract:** structural wire records in
+  [protos #376](https://github.com/KirkDiggler/rpg-api-protos/pull/376).
+- **Draft provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
+  containing compilation, layout, persistence, projection and reveal production.
+- **Draft adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
+  carrying those answers across the session boundary; needs reconciliation with
+  the extracted CloseDoor work.
+- **Local consumers:** structural API mappings and shared builder/game rendering;
+  not yet published as their own consumer PRs.
+- **Outstanding:** explicit-membership correction; bounded placement verification;
+  regular-builder publish/play acceptance; document migration and UX/asset polish.
+  "Builder v5" is not an agreed serialization version.
+
+## Source map
+
+Under [encounter's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/structural-surfaces/rulebooks/dnd5e/encounter):
+
+| Concern | Source |
 |---|---|
-| CloseDoor host verb and API adapter | Merged: [toolkit #1957](https://github.com/KirkDiggler/rpg-toolkit/pull/1957), [API #1075](https://github.com/KirkDiggler/rpg-api/pull/1075). Does not require the new wall system |
-| Structural layout wire records | Merged: [protos #376](https://github.com/KirkDiggler/rpg-api-protos/pull/376). Contract availability is not full runtime delivery |
-| Wall compilation, fixed layout, member projection, persistence and reveal production | Draft [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935) |
-| Carry those answers across the session SDK | Draft [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947). Must reconcile the now-extracted CloseDoor work before delivery |
-| Structural API mappings and shared builder/game rendering | Implemented in local wall worktrees; not yet published as consumer PRs |
-| Final regular-builder publish/play flow, version migration and UX/asset polish | Not complete. "Builder v5" is not a settled serialization contract |
+| Source validation / lowering | `dungeonspec/single_room_walls.go` |
+| Fixed definitions and identity validation | `structural_walls.go` |
+| Member projection / ordinary room knowledge | `projection.go`, `roomknowledge.go` |
+| Reveal deltas | `structural_reveal.go`, `revealbeat.go` |
+| Explicit membership vs inferred support-cell coupling | `concealment.go`, `discovery.go`, `search.go` |
 
-Real local game checks exercised visible wall/door rendering, closed movement
-refusal, clicking to open/close, reload persistence, and automatic discovery
-carrying an updated opening through the existing reveal event. Those are useful
-checkpoints, **not** proof that the complete builder-to-game feature is ready.
-
-Two concrete blockers prevent that claim:
-
-### A. Seeing the door itself
-
-An existing footprint-observation path asks whether you can see a representative
-hex for the door. For a thin closed door between hexes, that hex can be on its far
-side: the near-side player is effectively asked to see *through* the door before
-being told its state. Conversely, a door and another blocker inside one hex can
-be treated as visible just because they share that hex.
-
-The bounded direction discussed is to end a permitted sight ray at the door's
-actual first contact, while retaining the existing finite connected-sight rules.
-A candidate eye across a blocker is still unavailable. Simply choosing another
-hex or ignoring the target as a blocker is not an adequate fix.
-
-**This extension is not implemented or approved for full implementation.** The
-investigation found that the current cell-ray API cannot accurately answer which
-hard wall edges a physical terminal segment crosses. Contact construction and
-that traversal belong in spatial, not in the web/API. Edge/tangent behavior and
-exact interfaces still need a checked contract. No new "any visible sliver means
-visible" optical model has been agreed.
-
-### B. A concealed door still leaves a floor-hole tell
-
-The current live test hides the door and correctly fills its visual opening, but
-the old support-cell concealment also removes a floor hex beside it. That visibly
-marks where the secret is, even though the author selected only the door.
-
-This needs a toolkit projection/masking correction. Painting the missing floor in
-the client is not safe: the client must not invent space the toolkit withheld.
-Restoring the floor while leaving an invisible full-hex movement refusal would
-also be wrong. Disclosure of generated blocker pieces needs checking alongside it.
-
-## 8. How to inspect the implementation without reading everything
-
-Start with the two toolkit PRs above. Within
-[the encounter branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/structural-surfaces/rulebooks/dnd5e/encounter):
-
-- `dungeonspec/single_room_walls.go`: source validation, opening subtraction and
-  attached-door lowering.
-- `structural_walls.go`: fixed layout definitions and validation.
-- `projection.go` and `roomknowledge.go`: permitted member-facing data.
-- `structural_reveal.go`: changed whole records carried by existing reveal events.
-- The corresponding tests: examples of intended behavior, including negative cases.
-
-[The session branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/527-structural-session/rulebooks/dnd5e/session)
-adds `structural.go` and projection/decoder tests. Its job is to carry answers,
-not decide visibility.
-
-**The useful next design conversation is about this shape and its boundaries.**
-The unresolved observation and concealment work should not turn into a surprise
-visibility rewrite, and a working preview should not be mistaken for a shipped
-builder feature. Implementation remains paused while that understanding is shared.
+[Session's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/527-structural-session/rulebooks/dnd5e/session)
+adds `structural.go` and the corresponding conversion/replay tests. It carries
+encounter answers; it does not own their geometry or disclosure policy.
