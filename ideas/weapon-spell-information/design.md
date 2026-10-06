@@ -60,6 +60,9 @@ differ. The arrows show information flow, not Go imports.
   advantage is unknown, and after it, where advantage is known. The later frame
   only adds knowledge; every other fact is the same in both, because both come
   from one derivation.
+- A strike resumed after a frozen window rebuilds its attack-roll frame from
+  current state. The damage that follows reads that rebuilt frame, not the one
+  the attack chain folded under; the frozen roll itself is never recomputed.
 - The frame carries the weapon facts rules ask about: the weapon used, whether
   it is finesse or a ranged weapon, the grip, and whether the attack is an
   off-hand or an opportunity attack. A ranged weapon is not the same fact as an
@@ -72,6 +75,10 @@ differ. The arrows show information flow, not Go imports.
   would otherwise switch a rule off silently.
 - The action's effective ability and dice are settled before any rule that
   depends on them is asked. Handler registration order does not define that.
+- When more than one effect offers the attack a different ability or die, the
+  pick is the player's. Each offer is shown as available until chosen; the
+  assembly never resolves it by the order effects sit on the sheet, and with
+  no pick taken it fails closed rather than choosing.
 - A relationship between two members is their stance on the disposition graph
   at the moment of asking: hostile, neutral or allied. It is not a boolean and
   it is not cached, because dispositions change during an encounter.
@@ -162,6 +169,7 @@ differ. The arrows show information flow, not Go imports.
 | R19 | settled | A condition change refreshes sightings of that member at commit, as an equipment change does | KirkDiggler | 2026-10-05 |
 | R20 | deferred-until-a-use-case | Rows for general rules no condition owns (unseen attacker, range); In Fog shows no row | KirkDiggler | 2026-10-05 |
 | R21 | settled | A target's armour-class and resistance effects produce no row for the attacker; they are not the attacker's to know | KirkDiggler | 2026-10-05 |
+| R22 | settled | Competing ability or die offers on one attack are the player's choice; shown as available, never resolved by sheet order; fail closed without a pick (design: rpg-project#535) | KirkDiggler | 2026-10-06 |
 
 ## Open
 
