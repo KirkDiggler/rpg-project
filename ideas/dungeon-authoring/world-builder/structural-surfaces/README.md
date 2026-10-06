@@ -161,8 +161,8 @@ This separates **membership** from **spatial query support**, rather than removi
 the ability to locate a door or introducing a new concealment model.
 `memberPropCells` expresses the same distinction for props: their footing is usable
 for reach without becoming hidden floor. Provider tests cover unchanged floor,
-discovery support and anonymous physical refusals; integrated browser verification
-of this correction is still pending.
+discovery support and anonymous physical refusals. The integrated regular-builder
+walk also retains all authored floor across a door-only reveal.
 
 Required coverage is correspondence between authored membership, member snapshot
 and reveal payload, with door/wall overlap unable to grow the concealed-cell set.
@@ -225,16 +225,18 @@ Floor-surface authoring and room assembly remain separate work under
 - **Draft adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
   carrying those answers across the session boundary; needs reconciliation with
   the extracted CloseDoor work.
-- **Local consumers:** structural API mappings and shared builder/game rendering;
-  not yet published as their own consumer PRs.
-- **Implemented provider checkpoints:** additive wire contract in
-  [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380) (reviewed, awaiting
-  merge/publication); encounter replacements/membership correction in #1935;
-  typed session adapter in #1947. Go module tests/race/vet/lint pass.
-- **Next implementation:** API mappings and atomic web reducer/hydration recovery,
-  using the actual generated bindings after #380 publishes.
-- **Outstanding acceptance:** bounded placement verification;
-  regular-builder publish/play acceptance; document migration and UX/asset polish.
+- **Draft consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
+  and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226), including
+  replacement mappings and atomic cache/hydration recovery; full local gates pass.
+- **Merged patch wire:** [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380),
+  published as v0.1.225 and adopted by both consumers. Encounter replacements /
+  membership correction are in #1935; the typed session adapter is in #1947.
+- **Joined proof:** regular World Builder import/Save & Play, live event application
+  while snapshot responses were held, unchanged floor, snapshot/reload agreement,
+  and model-click door operation passed for the authored fixture. Independent
+  reviews of the four implementation PRs are running; toolkit release pins remain.
+- **Outstanding acceptance:** additional authored scenarios and placement guidance;
+  document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
 
 ## Source map

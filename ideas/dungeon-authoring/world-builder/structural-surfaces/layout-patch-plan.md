@@ -16,13 +16,18 @@ consumer worktrees. Existing PR1935/1947 remain the module delivery branches.
 
 ## Execution checkpoint
 
-T1 is implemented in proto PR380, independently reviewed with findings closed and
-CI green; merge/publication is the remaining binding prerequisite. T2's provider
-checkpoint055995bb is pushed on toolkit1935. T3's adapter12845c58 is pushed on1947,
-after reconciling current main and released CloseDoor. Full module tests/race,
-vet/lint and normal hooks pass on both. These are provider checkpoints, not full
-T6 acceptance or merge-readiness of the broader toolkit PRs. T4/T5 await actual
-published proto bindings; no substitute/local generation is used.
+T1 is merged; CI published proto v0.1.225/d93483accf9f. T2 provider055995bb is on
+toolkit1935; T3 adapter12845c58 is on1947. T4 API85fcf98 is published as1077;
+T5 web2c8fec20 as1226. Full API gate passes; web full gate passes7593 tests/5 skipped.
+Current dev discovery/held-effect work is preserved.
+
+T6 partial joined proof: regular Home → World Builder import → Save & Play,35
+floor cells before/after door-only reveal, live component update with TWO real
+snapshot requests held and zero responses during the hold, snapshot/reload parity,
+then actual model open/close/blocking/crossing/reload. Evidence is published on
+issue527 comment6027478699. This is a tested configuration/approach, not all T6
+cases or final migration/UX acceptance. Independent reviews of all four
+implementation PRs are running; released Go pins remain a consumer merge gate.
 
 ## Sequence
 
