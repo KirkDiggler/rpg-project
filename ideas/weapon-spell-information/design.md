@@ -60,6 +60,9 @@ differ. The arrows show information flow, not Go imports.
   advantage is unknown, and after it, where advantage is known. The later frame
   only adds knowledge; every other fact is the same in both, because both come
   from one derivation.
+- A strike resumed after a frozen window rebuilds its attack-roll frame from
+  current state. The damage that follows reads that rebuilt frame, not the one
+  the attack chain folded under; the frozen roll itself is never recomputed.
 - The frame carries the weapon facts rules ask about: the weapon used, whether
   it is finesse or a ranged weapon, the grip, and whether the attack is an
   off-hand or an opportunity attack. A ranged weapon is not the same fact as an
