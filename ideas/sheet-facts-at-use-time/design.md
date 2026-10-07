@@ -87,8 +87,9 @@ carry a sheet fact.
   none of them, in memory or in its blob.
 - Sight is asked through the existing Sight capability. The session answers it
   from the member's sheet; the stated default range for a sheet that states
-  none is the rulebook's answer, given by the sheet, never a session constant
-  applied to a missing row.
+  none is the rulebook's answer, held on the sheet (the race table for a
+  character, the stat block for a monster), never a session constant applied
+  to a missing row.
 - The session answers every encounter capability from the sheets the verb
   holds, refuses a member it holds no sheet for, and keeps no cache between
   consults. A session reading a member's speed for its own purpose asks the
@@ -96,7 +97,8 @@ carry a sheet fact.
 - Armour class is a projection folded through the resolution door. rpg-api
   fills every armour class it returns from that projection and stores none. A
   sheet the door cannot project fails the request that asked; no fallback
-  number is sent.
+  number is sent. A list fails whole when any one of its sheets cannot be
+  projected.
 - A cached armour class projection is the API's to add when a measured cost
   asks for one. A cache refreshes on every write of the sheet it describes,
   whichever layer writes it.
@@ -138,30 +140,17 @@ carry a sheet fact.
 | R1 | settled | Retire `Data.ArmorClass`; armour class is only a projection; a list screen that needs it without a cast gets a projection the API caches, never a sheet field | KirkDiggler | 2026-10-07 |
 | R2 | settled | Tier 2 order: this design (C) first, then B+G+H, F, A, E, D | KirkDiggler | 2026-10-07 |
 | R3 | settled | A ward records its save DC at cast; that recorded DC is the cast's fact, not a sheet copy | KirkDiggler | 2026-10-07 |
-| R4 | settled | Pre-alpha saved data: an old ward blob loads and is refused at use, never migrated silently (ward blobs only; its application to the copies here is O3) | KirkDiggler | 2026-10-07 |
-| R5 | open | No effect stores a class level or a number derived from one; rules read the actor's class levels from the frame, features ask their owner, overrides are handed the record | — | — |
-| R6 | open | Encounter persists no speed, sight, attacks or targeting; one capability answers speed, attacks and targeting; sight stays on the Sight capability answered from the sheet | — | — |
-| R7 | open | rpg-api fills every armour class it returns from the projection; no cache in this design | — | — |
+| R4 | settled | Pre-alpha saved data: an old ward blob loads and is refused at use, never migrated silently (ward blobs; extended to the copies here by R13) | KirkDiggler | 2026-10-07 |
+| R5 | settled | No effect stores a class level or a number derived from one; rules read the actor's class levels from the frame, features ask their owner, overrides are handed the record | KirkDiggler | 2026-10-07 |
+| R6 | settled | Encounter persists no speed, sight, attacks or targeting; one capability answers speed, attacks and targeting; sight stays on the Sight capability answered from the sheet | KirkDiggler | 2026-10-07 |
+| R7 | settled | rpg-api fills every armour class it returns from the projection; no cache in this design | KirkDiggler | 2026-10-07 |
 | R8 | deferred-until-a-speed-modifier-ships | How Unarmored Movement and any other modifier contributes to the speed answer (owner unset; meets open question 2 of the descriptor design) | — | — |
 | R9 | deferred-until-a-measured-cost | A cached armour class projection for list screens (owner unset) | — | — |
 | R10 | deferred-until-a-light-model | Sight beyond the stated default range (owner unset) | — | — |
+| R11 | settled | A list carrying armour class fails loudly when any one sheet in it cannot be projected; no per-row absence, no fallback number | KirkDiggler | 2026-10-07 |
+| R12 | settled | The stated default sight range for a sheet that states none lives on the sheet — the race table for a character, the stat block for a monster — never a session constant; the number and its same-for-both-kinds rule are unchanged | KirkDiggler | 2026-10-07 |
+| R13 | settled | Old saved copies (effect levels, encounter member facts, `armor_class`) load and are ignored; this is R4's treatment for data whose truth is always present | KirkDiggler | 2026-10-07 |
 
 ## Open
 
-- **O1 — a list with one unprojectable sheet.** ListCharacters fills armour
-  class per character from the projection. Recommendation: one sheet the door
-  refuses fails the whole list loudly, because pre-alpha a corrupt sheet is a
-  defect to see, and `int32 armor_class` cannot say "absent" without a new
-  field. The alternative is a per-row absence, which needs an additive proto
-  field.
-- **O2 — where the stated sight default lives.** The default range for a sheet
-  that states none is a ruled number; this design moves the decision from a
-  session constant onto the sheet (character and monster) so the seam can
-  refuse a missing member instead of defaulting it. The number and the
-  "silence means the same for both kinds" rule are unchanged; the location is
-  the question.
-- **O3 — old saved copies.** Effect JSON carrying a level, encounter blobs
-  carrying member facts and character blobs carrying `armor_class` load, and
-  the copy is ignored. Recommendation: confirm this as R4's treatment here; it
-  is not a migration (the level record and the sheet always answer) and nothing
-  is refused because nothing is missing.
+None.

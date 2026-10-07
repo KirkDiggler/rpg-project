@@ -86,7 +86,7 @@ Done when:
 ## 4. toolkit session
 
 Lands: the capability answered from the sheets each verb holds; the Sight seam
-answered from each member's sheet with the rulebook's stated default (O2),
+answered from each member's sheet with the stated default held on the sheet (R12),
 refusing a member it holds no sheet for; Join and Spawn stop copying the four
 facts; the push budget reads speed from the same sheet answer.
 
@@ -105,7 +105,7 @@ Done when:
 Lands: every armour class in a response — FinalizeDraft, GetCharacter,
 ListCharacters, LevelUp, Equip, Unequip — filled from the resolution door's
 projection; the repository's armour class write and field gone; a sheet the
-door refuses fails its request (O1 decides the list).
+door refuses fails its request (a list fails whole, R11).
 
 Done when:
 
