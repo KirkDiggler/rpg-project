@@ -222,7 +222,18 @@ or ignore independent blockers.
 
 This remains a planar, hex-based gameplay model with continuous authored
 rectangles. Visible height/elevation does not add 3D LOS or multilevel traversal.
-Drawing walls does not derive room membership or discovery regions automatically.
+Builder compilation derives ordinary discovery regions from the painted floor and
+its blocking geometry. Door topology is measured closed so opening a door does not
+rename or merge those regions. Existing encounter discovery then controls what each
+observer learns; neither floor nor ordinary props need secret declarations simply
+because they are behind an opaque wall. Finding a secret door is not seeing through
+its closed leaf. Authored sight-blocking flags remain authoritative.
+
+Permanent opaque boundary footing uses the existing scenery path, not a phantom
+room and not a connection between adjoining rooms. Door and movable-prop cells must
+retain ownership wherever their changing state permits standing. This correction
+is under review; its status is separate from the earlier structural-layout gate.
+
 Floor-surface authoring and room assembly remain separate work under
 [#528](https://github.com/KirkDiggler/rpg-project/issues/528).
 
@@ -232,37 +243,42 @@ Floor-surface authoring and room assembly remain separate work under
   and [API #1075](https://github.com/KirkDiggler/rpg-api/pull/1075).
 - **Merged contract:** structural wire records in
   [protos #376](https://github.com/KirkDiggler/rpg-api-protos/pull/376).
-- **Draft provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
+- **Open provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
   containing compilation, layout, persistence, projection and reveal production.
+  The newer ordinary-discovery delta has an Important footing finding under repair.
 - **Draft adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
-  carrying those answers across the session boundary; needs reconciliation with
-  the extracted CloseDoor work.
+  carrying those answers across the session boundary on pushed provider pins.
 - **Draft consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
   and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226), including
-  replacement mappings and atomic cache/hydration recovery; full local gates pass.
+  replacement mappings and atomic cache/hydration recovery. The separate local
+  wall-control edits still need a successful full web gate and independent review.
 - **Merged patch wire:** [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380),
   published as v0.1.225 and adopted by both consumers. Encounter replacements /
   membership correction are in #1935; the typed session adapter is in #1947.
-- **Joined proof:** regular World Builder import/Save & Play, live event application
-  while snapshot responses were held, unchanged floor, snapshot/reload agreement,
-  and model-click door operation passed for the authored fixture. Independent
-  reviews of the four implementation PRs are running; toolkit release pins remain.
+- **Joined proof:** regular World Builder import/Save & Play, model-click door
+  operation and event-only rendering while snapshot responses are held. The earlier
+  unchanged-floor proof concerns explicit door-only concealment, not permission to
+  reveal an ordinary far-side room. The newer ordinary-discovery walk withholds that
+  floor and reveals it on opening; its opaque-footing gap is not claimed complete.
+  Actual toolkit release pins and focused review closure remain.
 - **Outstanding acceptance:** additional authored scenarios and placement guidance;
   document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
 
 ## Walk findings still open
 
-- Wall selection is not yet connected to the normal Move gizmo and cardinal
-  rotation controls. Numeric form edits do not satisfy the promoted workflow.
+- Wall selection is connected locally to the normal Move/Rotate gizmo and cardinal
+  buttons, with pointer/undo/reload proof. Those edits are still uncommitted and
+  require full CI plus their own review; numeric transforms are secondary.
 - Generic free-placed prop appearance is not yet carried through the same permitted
   runtime layout path as walls/doors. A permitted placement without appearance data
   can remain invisible. Restoring an unrestricted builder-document fetch is not
   an acceptable repair.
 
-The cross-run discovery leak has a correction on the local stack and regression
-coverage; its new lifecycle delta is under independent review. These other two
-findings are not claimed fixed by that correction.
+The cross-run discovery correction is independently reviewed and active locally.
+That closure does not cover ordinary-room partitioning, wall controls or prop
+appearance. Existing encounters keep their saved geometry and learned facts; the
+new compiler behavior is exercised by new playthroughs, never a profile reset.
 
 ## Source map
 
@@ -272,6 +288,7 @@ Under [encounter's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tr
 |---|---|
 | Source validation / lowering | `dungeonspec/single_room_walls.go` |
 | Fixed definitions and identity validation | `structural_walls.go` |
+| Builder discovery-region derivation | `partition_region.go`, `dungeonspec/single_room_regions.go` |
 | Member projection / ordinary room knowledge | `projection.go`, `roomknowledge.go` |
 | Reveal deltas | `structural_reveal.go`, `revealbeat.go` |
 | Explicit membership vs inferred support-cell coupling | `concealment.go`, `discovery.go`, `search.go` |
