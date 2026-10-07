@@ -87,7 +87,9 @@ are the recomputations and copies this design retires.
 - The target step is a fold and poses no question to the host. A reaction that
   changes the damage a target takes answers in a window that closes before the
   step opens; its answer reaches the step as a target reduction or multiplier,
-  rolled by the machine that holds the window.
+  rolled by the machine that holds the window. A choice that depends on what
+  the step settled (Deflect Missiles' catch when the damage reaches 0) is
+  offered after the step, never inside it.
 
 ### Rules as written
 
@@ -106,6 +108,9 @@ are the recomputations and copies this design retires.
 - Nothing persists membership. No condition on a sheet records it, and no pass
   reconciles one from geometry. A member is in an area exactly when the
   encounter says so, at the moment it is asked.
+- The In Fog condition does not exist. An old saved sheet carrying one loads
+  and drops it. No sheet row replaces it: what stands inside fog is shown to
+  the player through perception's remembered shadow.
 - Resolution reports the areas an interaction opens (the area input) and closes
   (the source whose areas end) as typed output. The session applies them to
   the live encounter through encounter's own verbs. No layer replaces the area
@@ -115,6 +120,8 @@ are the recomputations and copies this design retires.
   area by its spell ref.
 - A rule that bears on membership asks the encounter at use, through the frame,
   and the question is added with that rule.
+- A rule fired by entering an area resolves at the step that enters it, through
+  the walk's interrupting resolve, and its outcome can end the move.
 
 ### What an observer believes and reaches
 
@@ -164,30 +171,14 @@ are the recomputations and copies this design retires.
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
 | R1 | settled | Tier 2 items B, G and H are one design, "encounter answers, resolution asks", after sheet facts at use time and before session verbs | KirkDiggler | 2026-10-07 |
-| R2 | deferred-until-the-pause-envelope-design | The window a damage-changing reaction answers in (Deflect Missiles, Uncanny Dodge) and its envelope; its position before the target step is this design's law (owner unset) | — | — |
-| R3 | deferred-until-an-entry-triggered-area-ships | How a rule fired by entering an area resolves inside a walk (owner unset; see Open 3) | — | — |
+| R2 | deferred-until-the-pause-envelope-design | The window a damage-changing reaction answers in (Deflect Missiles, Uncanny Dodge) and its envelope, and the window after the step for a choice that depends on the settled damage (Deflect Missiles' catch and throw); their positions relative to the step are R6 (owner unset) | — | — |
+| R3 | deferred-until-an-entry-triggered-area-ships | The mechanism for a rule fired by entering an area; when it resolves is R8 (owner unset) | — | — |
 | R4 | deferred-until-a-sourceless-damage-ships | The frame for damage with no acting member: falling, a trap, an environment (owner unset) | — | — |
 | R5 | deferred-until-a-rule-asks | An exported area-membership question for a rule that bears on membership (owner unset) | — | — |
+| R6 | settled | The target step is a fold and poses no question to the host; a damage-changing reaction answers in a window that closes before the step; a choice depending on the settled damage is offered after it | KirkDiggler | 2026-10-08 |
+| R7 | settled | The In Fog condition retires outright; old saved sheets load and drop it; no sheet row replaces it, because fog shows through perception's remembered shadow | KirkDiggler | 2026-10-08 |
+| R8 | settled | A rule fired by entering an area resolves at the entering step, through the walk's interrupting resolve | KirkDiggler | 2026-10-08 |
 
 ## Open
 
-1. **Does the target step pose a question to the host?** Recommendation: no.
-   The step stays a fold. Deflect Missiles and Uncanny Dodge are both decided
-   when the attack hits, before damage is known, so their window sits between
-   the settled hit and the damage roll, owned by the strike and shaped by the
-   pause envelope design. The answer reaches the step as a target reduction or
-   multiplier the machine rolled. One place holds windows, and the step stays
-   re-entrant-free.
-2. **Retire the In Fog condition outright?** Recommendation: yes. No rule reads
-   it (its own contract adds no Blinded and no attack modifier; both censuses
-   mark it not bearing), visibility already comes from the area's geometry,
-   and the story already tells entry and exit from encounter's own
-   transitions. The cost is the "In Fog" line on the sheet's condition list.
-   Old saved sheets carrying it load and drop it — the treatment sheet facts
-   gave its copies, asked here for this one rather than assumed.
-3. **When a rule fires on entering an area (Spirit Guardians, Web, Moonbeam),
-   does it resolve at the step or at the end of the move?** Recommendation: at
-   the step, through the walk's existing interrupting resolve (the
-   opportunity attack's channel), because the tabletop resolves it mid-move
-   and its outcome can end the move. Nothing ships it now; encounter already
-   reports the entry at the step, which is all this design needs to fix.
+None.

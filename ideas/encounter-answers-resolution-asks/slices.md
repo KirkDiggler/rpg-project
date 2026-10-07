@@ -35,7 +35,7 @@ resistance and Blade Ward answering on the incoming topic, Blade Ward deciding
 "weapon attack" from the frame; Raging's damage bonus staying on the dealt
 fold; the dealt topic's documentation saying it carries no target answer; the
 In Fog condition type, its factory, census, display and status-view entries
-retired, its loader dropping an old saved entry (Open 2); the In Fog ref kept
+retired, its loader dropping an old saved entry (R7); the In Fog ref kept
 as the area's membership label for the story.
 
 Done when:
