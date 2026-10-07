@@ -47,7 +47,7 @@ flowchart TB
     Art -->|runtime asset URLs| Inspect
 ```
 
-The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. Open live boundaries are R9–R13.
+The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. Open live boundaries are R10–R13. R9 excludes favorites from this slice so live play can inform their design.
 
 ## Ownership and contracts
 
@@ -58,8 +58,8 @@ Paths in this table are relative to the web repository unless another owner is n
 | Session provider | Offers and rules answers | `Declaration` with `id`, `verb`, `targetKind`, `available`, `why`, `candidates`, `minTargets`, `maxTargets`, `options` and effect rows → current offers; commands → response and authoritative events |
 | `SessionEncounterView` | Live composition and scope | Session/member identity, hook results and `CharacterData` → `CombatExperience` props, `renderMap` and callbacks |
 | `liveActionPresentation` | Display joins | `Declaration[]`, known cantrip/spell refs and `FeatureView[]` → `CombatExperienceActionPresentation`; desktop category/art joins are the R10 boundary |
-| `DesktopActionSurface`, `DesktopActionSection` | Icon layout, pages, edit UI and inspection | Declarations plus `OrganizedActionPresentation` → buttons and declaration intent; `DesktopHotbarCustomization` carries `DesktopHotbarLayout` and `onChange` |
-| `desktopHotbarGroups`, `desktopHotbarLayout` | Pure grouping and packing | Declarations and explicit hints → `HotbarGroup[]`; offers, rows and favorites → `FavoritePage<T>` |
+| `DesktopActionSurface`, `DesktopActionSection` | Icon layout, pages and inspection | Declarations plus `OrganizedActionPresentation` → buttons and declaration intent; `DesktopHotbarCustomization` carries `DesktopHotbarLayout` and `onChange`. The concept's favorite/edit controls are outside this live slice (R9). |
+| `desktopHotbarGroups`, `desktopHotbarLayout` | Pure grouping and packing | Declarations and explicit hints → `HotbarGroup[]`; offers, rows and an empty favorite set in this slice → `FavoritePage<T>` |
 | `useSessionCombatExperience` | Live interaction and command lifecycle | Current declarations, authority and user intent → `CombatExperiencePresentationState`, callbacks and typed RPC input |
 | `memberTargeting`, `MapFirstTargeting` | Selection projection and controls | `MemberTargetingInput` → `MemberTargetingView`; chosen member IDs → target-click/confirm intent |
 | `SessionCanvas`, `EntityTargetMarker` | Map picking and visible markers | Candidate IDs, optional `selectedTargets`, `onTargetClick` → member intent and rings/checks; positions come from the map's existing entity data |
@@ -70,7 +70,7 @@ Paths in this table are relative to the web repository unless another owner is n
 
 **The presentation adapter does not become a rules adapter.** It may join exact provider refs for display; it may not identify a feature by the word “Rage,” guess a cantrip from resource cost, or mint an offer (R1, R3).
 
-The layout functions do not own durable preferences or interpret an opaque selector as character identity (R9). A star is not permission to execute a withdrawn offer.
+The layout functions do not own durable preferences or interpret an opaque selector as character identity. R9 keeps favorite identity and storage out of this slice rather than treating fixture IDs as a persistence contract.
 
 The controller does not calculate range, faction eligibility or effects. It checks that intent still names a current provider offer and carries the required input; the server decides the result (R1, R11).
 
@@ -99,14 +99,14 @@ A rejected or withdrawn selection stops at the corresponding boundary and leaves
 |---|---|
 | May this exact offer execute now? | Current `Declaration.id`, availability and command owner checks; final provider response |
 | Which category should display it? | Explicit presentation facts joined from provider identity, not selector spelling (R10) |
-| Which favorite should survive a new offer generation? | Durable preference identity/lifetime contract (R9), not `Declaration.id` |
+| Which favorite should survive a new offer generation? | A deferred identity/lifetime contract (R9); not part of this slice and not answered by `Declaration.id` |
 | Is Rage a button or information? | An activation declaration versus an effect row for a named action/target context |
 | What does Command's chosen word do? | Provider-authored option information; `CastOption.label` alone supplies no explanation (R10) |
 | Is a member selected or currently selectable? | Local picks versus current `TargetCandidate` answers |
 | Is an entry retained or newly announced? | Story identity/history versus live delivery provenance and presentation release |
 | Is art available locally or approved for shipping? | Ignored preview files versus the private runtime promotion contract |
 
-Merging these questions makes a plausible UI lie: a favorite can execute a stale offer, a green marker can promise eligibility, or recovered history can look like a new action. A single `streamState === 'live'` flag is not a substitute for per-entry delivery provenance during background catch-up.
+Merging these questions makes a plausible UI lie: a captured selector can execute a stale offer, a green marker can promise eligibility, or recovered history can look like a new action. A single `streamState === 'live'` flag is not a substitute for per-entry delivery provenance during background catch-up.
 
 ## Trade-offs
 
@@ -116,7 +116,7 @@ Merging these questions makes a plausible UI lie: a favorite can execute a stale
 | Explicit category/ref joins | New classes do not require HUD class branches | Provider/adapter owners must expose and join missing facts (R10) | Name parsing or spell-cost heuristics |
 | Provider-driven target controls | Allies and enemies use the same UI model | Controller owners must prove each live verb's input contract (R11) | A Bane-specific selector |
 | Separate transient cards and history view | Quiet map without losing narrative access | Presentation owners retain identity, provenance and pacing | Another event-to-prose interpreter |
-| Four favorites with horizontal pressure relief | Stars and row choice remain predictable | The player may scroll narrow sections | Silently removing stars or adding rows |
+| Rows and paging without favorites (R4, R9) | Live play can inform useful customization without a premature identity contract | The player cannot pin frequent actions in this slice and may scroll narrow sections | Shipping fixture IDs as durable favorites |
 | Private runtime art | Licensed visual assets can ship inside builds | Asset owners curate/promote; web builds must stage the assets | Committing preview PNGs to the public web repo |
 
 ## Edges
@@ -127,7 +127,7 @@ R6 describes a shared selection interaction, not a universal multi-target RPC. T
 
 The live spell catalog and combat declaration are different seams. A description available to character creation is not automatically present in combat inspection (R10). Missing prose remains missing rather than becoming local rules copy.
 
-Preference scope, reset behavior, removed favorites and ambiguous semantic matches belong together in R9. The fixture-local layout type does not settle them.
+Favorite scope, reset behavior, removed favorites and ambiguous semantic matches belong together in the deferred R9 design. They do not block this slice. The fixture-local layout type does not settle them.
 
 Activation on the real route is R13. The accepted concept, a passing isolated component test, and a production rollout are different claims.
 
@@ -137,7 +137,7 @@ A new icon belongs in private asset curation and the presentation mapping. It do
 
 A new target-list verb belongs first at the live command contract and controller boundary, then uses the shared selection view. Teaching only `MapFirstTargeting` about it cannot make the RPC support it.
 
-A favorite that follows a character across sessions belongs at the R9 preference owner. The button continues to render a star and emit intent; the layout algorithm need not learn account storage.
+A future favorite that follows a character across sessions requires the deferred R9 ownership and identity decision. That change belongs at the preference boundary, not in layout packing; this slice introduces no account storage.
 
 ## Source map
 
