@@ -68,12 +68,12 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Behavior:** Re-click selected member removes it in desktop multi-selection; re-click armed multi-command preserves picks. Reaching max does not dispatch. Chosen option survives toggling. Confirm checks current unique offer, option, candidate availability and bounds; pending RPC suppresses repeats. Withdrawal/loss of authority resets executable interaction with existing notice; no semantic remapping of stale IDs. A late callback from cancelled/replaced selection or prior session/member must not select for the new action. CELL targeting and WORLD movement/social gates remain unchanged. A non-CAST multi shape unsupported by its scalar RPC must fail closed with readable unsupported-contract feedback, never submit the first member as if complete.
 **Tests:** Real hook with mocked RPC: choose ally/self for Bless and enemies for Bane; add/remove via the same callback, preserve order/option, no RPC until confirm, exact ordered IDs once after confirm. Max-bound clicks do not send; unavailable/duplicate/withdrawn candidates and stale options cannot submit. Saved callbacks invoked after cancel/rearm/scope change do nothing. Same-command click preserves list. Scalar Attack/Help/social cases still send exactly their existing request; legacy CAST mode remains unchanged. CELL entity miss does not cast or walk.
 
-- [ ] Add failing controller tests before changing callbacks.
-- [ ] Implement opt-in toggling and selection/scope fencing without RPC side effects in state updaters.
-- [ ] Run controller/selection checks and existing scalar regression files.
+- [x] Add failing controller tests before changing callbacks.
+- [x] Implement opt-in toggling and selection/scope fencing without RPC side effects in state updaters.
+- [x] Run controller/selection checks and existing scalar regression files.
 
 **Verification:** Web worktree: `npm run test:run -- src/components/session/combat-experience/castFlow.test.tsx src/components/session/combat-experience/activationTargetingFlow.test.tsx src/components/session/combat-experience/intimidateFlow.test.tsx src/components/session/combat-experience/persuadeFlow.test.tsx src/components/session/combat-experience/memberTargeting.test.ts`; `npm run typecheck`. Joined canvas/RPC assertions belong to Task 6.
-**Completion evidence:** Request capture assertions, stale-callback proofs and preserved legacy cases.
+**Completion evidence:** Web `42d4dc1a`; 68 target/controller tests pass, typecheck and changed-file lint pass. Three pre-change failures exposed append-only picks, stale callbacks and unsupported scalar-list dispatch. Added batched clicks, self/ally plus opaque option, withdrawn candidate removal, authority loss, same-ID cancel/rearm and scope/mode reset coverage. Interaction updates synchronously record local intent outside React updater side effects; selection epochs fence old callbacks. The wider 812-test combat/concept run also passes.
 
 ### Task 4: Recovery-safe notices from the existing story
 
@@ -85,12 +85,12 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Behavior:** Preserve story ID, text and source through pacing filters and dice/reaction release. Initial/scope/resume snapshots establish baseline without announcements. Catch-up arriving while aggregate state is live never announces; duplicate delivery cannot upgrade old history into a new card. TTL starts at visible release, each card expires independently, newest three retained, history unaffected. Clearing/scope change cannot leak old notices.
 **Tests:** Live/catchup facts project identical prose with distinct provenance; missing provenance remains history-only. Periodic catchup under `streamState='live'` produces no notice. Live entry withheld for dice announces once after release; mount/resume does not replay. A duplicate story ID never extends expiry. New cards do not extend old cards; six-second expiry preserves history and three-card cap. Preserve current-dev discovery story assertions.
 
-- [ ] Add provenance and background-recovery failures.
-- [ ] Thread metadata through the one story projection and update explicit fixture intent.
-- [ ] Run story/notice/pacing tests.
+- [x] Add provenance and background-recovery failures.
+- [x] Thread metadata through the one story projection and update explicit fixture intent.
+- [x] Run story/notice/pacing tests.
 
 **Verification:** Web worktree: `npm run test:run -- src/components/session/combat-experience/story.test.ts src/components/session/combat-experience/useStoryNotices.test.tsx src/components/session/combat-experience/useCombatStoryPacing.test.tsx src/components/session/combat-experience/CombatExperience.test.tsx`; `npm run typecheck`.
-**Completion evidence:** Timer, provenance and released-story assertions; integrated recovery walk in Task 6.
+**Completion evidence:** Web `154e915e`; 812 tests across shared combat and the desktop concept pass, including timer/provenance/release cases. The new background-catch-up case failed before implementation. Replay-equality tests now assert unchanged prose with explicit different source metadata; duplicate tests retain original provenance. Real-route expiry/history/reload checks are recorded under Task 6.
 
 ### Task 5: Private runtime promotion of the accepted icon set
 
@@ -102,12 +102,12 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Behavior:** Promotion checks source-member and output hashes, PNG dimensions, duplicate/output path safety and exact declared output set before publishing. `--check` compares canonical bytes without mutation; no deletion from Downloads and no replacement of unrelated runtime files. Existing runtime sync consumes the private Synty root independently from custom dice.
 **Tests:** Missing source, changed hash, invalid PNG and path traversal fail without partial publication; a clean run yields the declared exact subset; `--check` detects drift. All web art URLs resolve in a freshly staged runtime tree, not just the developer's ignored preview directory.
 
-- [ ] Bind the accepted subset to source hashes in private metadata.
-- [ ] Add promotion validation/negative tests; promote and regenerate inventory.
-- [ ] Run provider gates and stage a clean consumer tree.
+- [x] Bind the accepted subset to source hashes in private metadata.
+- [x] Add promotion validation/negative tests; promote and regenerate inventory.
+- [x] Run provider gates and stage a clean consumer tree.
 
 **Verification:** Assets worktree: `python3 -m unittest discover -s scripts -p 'test_promote_desktop_hotbar.py'`; `python3 scripts/promote_desktop_hotbar.py --check`; `python3 scripts/build_synty_complete_inventory.py --check`; `python3 scripts/verify_web_asset_stage.py --verify-only`. Exact sync contract check from web worktree: `RPG_GAME_ASSETS_PATH=<assets-worktree> RPG_WEB_ROOT=<web-worktree> ASSETS_SYNC_SKIP_UPDATE=1 sh scripts/sync-game-assets.sh --runtime-assets` after preserving ignored preview assets as needed. Commands using the new script are prescribed verification, not claims that it exists yet.
-**Completion evidence:** Private provenance/inventory checks and image load evidence. Provider release/merge precedes consumer release; obtain the asset owner's review under its charter. No public source/archive/PNG commit.
+**Completion evidence:** Private assets `4ebe029e192d2a5d4643cb7c527c627cbdba1eec`, [PR #289](https://github.com/KirkDiggler/rpg-game-assets/pull/289). Fifteen 256px PNGs match both the source archive and accepted preview byte-for-byte. Eight promotion tests, check mode, complete inventory (3,521 files) and provider stage verification pass. Runtime sync from the clean commit to a fresh local consumer root passes; all 15 URLs served by the web match provider hashes. The launcher uses separate pinned model subtrees, so only the additive reviewed icon subtree is copied from that clean stage afterward. Existing worktree-local model links/preview art were preserved before launcher sync to avoid writes through shared-checkout symlinks. Provider review/merge remains before consumer release. No public binary commit.
 
 ### Task 6: Real encounter activation and integrated verification
 
@@ -115,18 +115,18 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Owner:** Web live composition and regression verification.
 **Prerequisites:** Tasks 1–5, real local API/session fixtures, production-equivalent private asset staging. Review current upstream once more before final gate.
 **Files:** Modify `src/components/session/SessionEncounterView.tsx` and `.test.tsx`, shared `CombatExperience.tsx`/tests where joining props; add `src/components/session/combat-experience/useDesktopHotbarFrame.ts` and `.test.tsx`; update `docs/architecture/components/combat-v2.md`, `src/concepts/desktop-hotbar/CONTRACT.md`. Existing `SessionCanvas.test.tsx` and `EntityTargetMarker.test.tsx` cover map identity/markers.
-**Interfaces:** `useDesktopHotbarFrame(container: HTMLElement | null): boolean` observes the actual encounter content, false until measurable or without ResizeObserver; desktop iff width >=1000 and height >500. Use the same result for adapter `desktop`, controller `memberTargetingMode`, and story feedback. A stable composed callback ref retains existing `encounterContentRef` semantics while providing the observer node. `renderMap` forwards optional `selectedTargets` to `SessionCanvas`; omit it on the legacy path. Story feedback scope is session/member; no storage. Keep canvas element identity stable while changing marker props.
+**Interfaces:** `useDesktopHotbarFrame(container: HTMLElement | null): boolean` observes the actual encounter content, false until measurable or without ResizeObserver; desktop iff width >=1000 and height >500. Use the same result for adapter `desktop`, controller `memberTargetingMode`, and story feedback. A stable state-setter ref provides the observer node; inspection established that the old `encounterContentRef` had no readers, so no extra composed-ref adapter is needed. Encounter-owned `desktopRows` feeds `desktopCustomization` with an empty favorite map and survives temporary dock unmounts without persistence. `renderMap` forwards optional `selectedTargets` to `SessionCanvas`; omit it on the legacy path. Story feedback scope is session/member; no storage. Keep canvas element identity stable while changing marker props.
 **Behavior:** Desktop default is the new bar; smaller containers keep existing organized HUD and controller mode. Resize must not issue an RPC or silently execute pending selections. Cancel/review an active selection if switching interaction mode rather than carrying incompatible UI state. Existing navigation, discovery sharing, equipment, CELL/path clicks, reactions, death saves, world clock and run-ended state keep their owners. Preserve private missing/stale status, including absent AC (never synthesize 10). Default-closed log and notices apply only to desktop.
 **Tests:** Observer 999/1000px widths and 500/501px heights choose correct surface; cleanup disconnects; missing observer uses legacy. Real encounter props wire the same desktop state through adapter/controller/map/story. No favorite controls/storage; current provider categories only. Map entity self/ally clicks reach CAST candidates; confirm reaches the mocked RPC with exact IDs; resize/cancel/stale scope cannot send. Canvas identity survives selection and mode change. Mobile, death-save/reaction, world/social, stale private status and discovery-sharing regression assertions remain passing.
 
-- [ ] Add responsive and joined-path tests; implement live wiring.
-- [ ] Run focused encounter/map/controller checks, then inspect real-route browser evidence.
-- [ ] Update owning docs; ensure production modules import no concept fixtures.
+- [x] Add responsive and joined-path tests; implement live wiring.
+- [x] Run focused encounter/map/controller checks, then inspect real-route browser evidence.
+- [x] Update owning docs; ensure production modules import no concept fixtures.
 - [ ] Run one complete `npm run ci-check` at the PR boundary; publish actual results.
 - [ ] Open linked PR(s), run the required independent review round and publish its verdict; reverify released provider dependencies before readiness.
 
 **Verification:** Web worktree: `npm run test:run -- src/components/session/SessionEncounterView.test.tsx src/components/session/SessionCanvas.test.tsx src/components/hex-grid/EntityTargetMarker.test.tsx src/components/session/combat-experience/useDesktopHotbarFrame.test.tsx`; `npm run typecheck`; then `npm run ci-check` once before opening/updating PR. Real route: join a live fixture session, inspect an attack with no effects, cast a supported multi-target spell with map/list removal and confirm, exercise unavailable/stale offers, wait for notice expiry, recover history without replay, inspect debug overlay, resize through desktop and mobile widths. Capture requests, screenshots and browser errors. Do not substitute the concept route for this walk.
-**Completion evidence:** Joined test outputs, live-route request/visual evidence, full CI result and published independent-review verdict. Neither these gates nor this plan authorizes merge/deployment.
+**Completion evidence:** Web `1326a39d`; 244 joined encounter/canvas/frame tests pass, then 149 focused cases cover the live-walk refinements and 135 cover the row-lifecycle check (overlapping sets, not additive totals). Isolated `local/desktop-hotbar`: web 3032/API 8112, API revision `c68267270549c0140ec2339b5639bdee8e3202cc`. Real seeded Bard entered Reference Tomb, selected/toggled Skeleton and Zombie for Bane, preserved picks on re-click, and sent exactly one decoded CAST with those ordered IDs after confirmation. Canvas identity held; three result notices expired into retained history; reload replay stayed quiet. Desktop/short/four-row/mobile screenshots inspected; debug JSON preserved bar geometry and sent no commands. Worktree-local `evidence/desktop-hotbar/live-integration.json` and screenshots retain the proof. The first probe treated valid304 cache responses as errors; read-only verification confirmed loaded image dimensions and exact served bytes. Live walking exposed delayed desktop default-log initialization and legacy world-clock rows, both corrected with regressions. Encounter-owned row state survives compact/desktop remounts without storage. The first completed full gate passed format/lint/types/build, then reported 7,516 passing tests, five skips and one unchanged `RoomPublishingPanel.test.tsx` focus assertion failure. That file has no diff against dev and passes all 29 cases in isolation; the complete gate is being rerun once, not waived. Independent review is running against the exact web/asset heads. Neither gates nor this plan authorize merge/deployment.
 
 ## Requirement coverage
 
@@ -164,4 +164,4 @@ The plan assigns every slice requirement to an owner and joined proof. Existing 
 
 Task contracts are ready for execution in dependency order. The exact private source hashes are Task 5's measured inputs, not invented values in this public plan. If the accepted source files cannot be matched or the live fixtures expose an unsupported required command contract, report that concrete blocker and update the affected task instead of substituting assets or weakening dispatch checks.
 
-Tasks 1–2 have the evidence recorded above and in the issue. Checks in Tasks 3–6 remain planned. No full application CI, real-route verification walk or independent review is claimed; the live route is not yet opted in.
+Tasks 1–5 and Task 6's live wiring/walk have evidence recorded above. The real local route is opted in. Full application CI and independent review remain pending. An initial gate was stopped before completion to add the row-lifecycle fix. The first completed gate then found the unrelated focus assertion described above; the full rerun and independent review are active on the resulting source. No deployment or merge-ready claim.
