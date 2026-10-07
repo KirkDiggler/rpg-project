@@ -46,6 +46,18 @@ Visual point light: Enabled, Offset (local planar feet), OffsetElevation (feet),
 Color (#RRGGBB), Intensity (nonnegative renderer scalar), Range (positive feet).
 This is not mechanical region lighting or sight range.
 
+Identity is the SAME PropID namespace used by AtlasProp/AtlasPlacedProp and the
+observed shape in PropSighting; matching IDs denote one object, not duplicate art.
+Fixed collections are sorted by ID. Opening-attached doors belong ONLY to the
+AtlasStructuralDoor rendering channel and MUST NOT also emit PropPresentation;
+validate this at minting, never guess a client tie-break. Standalone bound doors
+may use PropPresentation with their supplied canonical DoorID.
+
+All numbers are finite. A present light requires offset, #RRGGBB color and positive
+range; disabled records are still validated. Numeric offsets/elevation and intensity
+default to0, enabled defaults false. These are explicit wire zeros, not inferred
+asset style. Presentation paired with observed_empty=true is malformed/refused.
+
 Fixed records: `Atlas.PropPresentations`; full new introductions via both existing
 room/concealment reveal payloads. Collections are ID keyed; absence is no addition,
 not a request to delete. Validate a whole update before committing it. Historical
@@ -95,7 +107,10 @@ existing placement/journal owns live movement. Use the existing support/knowledg
 masks; decoration has no mechanical contributor. Explicit concealment names that
 identity without requiring collision; extend existing identity/support lookups,
 not a second secrets table or concealment membership inferred from footprint.
-Read source appearance only at construction. Preserve legacy mechanical-only
+Mint in the existing PropID namespace; never also mint an opening-attached door
+already represented by AtlasStructuralDoor. Assert one visual representation per
+identity and fail on conflicting definitions. Read source appearance only at
+construction. Preserve legacy mechanical-only
 fixtures; validate any present appearance record rather than guessing missing pose.
 
 Assertions: declared books + undeclared vase/altar retain correct ref/pose; arbitrary
@@ -166,6 +181,13 @@ then release chain only on operator merge authorization.
 | P2 encounter | SDK P3 | typed immutable definitions/permitted rows/captured observation; pushed commit pin |
 | SDK P3 | API P3 | SDK-owned DTOs; no inner type boundary escape |
 | API/proto | P4 shared renderer | supplied full records, canonical pose, supplied observation currency |
+
+P1 checkpoint: proto PR381 @248b97a183a201124a35cd002fc251855a4292aa is published
+as a draft. make format/make test and normal commit hooks pass. Independent
+contract workflow a1b7f2eb-36ea-484a-a935-b79dde16333f is running, bound output
+/tmp/prop-presentation-contract-review.md. Generated bindings are not published
+for this change yet; no runtime repair is claimed. P2–P5 remain implementation
+work, not completed prerequisites.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against
