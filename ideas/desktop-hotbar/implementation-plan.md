@@ -34,12 +34,12 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Behavior:** Rows/pages work with no favorites. Hover/focus inspection stays read-only. Base information is present for zero-effect attacks; changing action clears pinned effect inspection. Idle has an honest no-selection state, not an unrelated attack. Private status remains separate. Retain concept favorites only behind explicit opt-in; do not erase the experiment.
 **Tests:** No Edit bar button/stars when the flag is absent, even with populated favorite IDs; rows 1/4 and final-page overlap still work. Explicit concept opt-in retains favorite tests. A longsword declaration with cost and slashing damage, `effects=[]`, displays name/type/cost. Switching from an effect-bearing declaration drops its effect text. Missing declaration does not show reference-attack data. Stale authority shows stale feedback, not readiness. Hovering an unavailable icon does not issue intent.
 
-- [ ] Add/update named assertions and observe relevant pre-change failures.
-- [ ] Implement controls and inspection; update superseded concept documentation.
-- [ ] Run focused checks and record outputs.
+- [x] Add/update named assertions and observe relevant pre-change failures.
+- [x] Implement controls and inspection; update superseded concept documentation.
+- [x] Run focused checks and record outputs.
 
 **Verification:** From web worktree: `npm run test:run -- src/components/session/combat-experience/DesktopActionSurface.test.tsx src/components/session/combat-experience/DesktopEffects.test.tsx src/components/session/combat-experience/CombatExperience.test.tsx`; `npm run typecheck`. Browser check idle/zero-effects/effects/rows, including keyboard inspection.
-**Completion evidence:** Test output plus inspected desktop screenshots; no application completion claimed by this plan.
+**Completion evidence:** Web `9564b83c`, after upstream reconciliation `2dc060b3`. Five expected pre-change failures; 110 focused tests pass across seven files, typecheck passes, lint has zero errors and five warnings in untouched files. Browser Chrome/SwiftShader at 1280×900 verifies idle/zero-effect/combined-effect inspection; 393×844 retains compact UI. Screenshots inspected, no page errors; ignored evidence `evidence/desktop-hotbar/hotbar-slice1-{plain,effects,mobile}.png`. The first browser probe needed the collapsed lab Controls opened before selecting Martial; rerun passed. These are shared-presentation/concept checks, not real-route or full-CI proof.
 
 ### Task 2: Live classification and artwork projection
 
@@ -51,12 +51,12 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 **Behavior:** Exact known-cantrip match has precedence as in the current adapter; known leveled refs use leveled band; unknowns remain Other spells. Features use the same exact serialized `FeatureView.ref` join as the current adapter. Cost/exhaustion/level/name/opaque selector spelling never classify. No actual item-use offer means no Items category, not a disabled placeholder or inventory-derived command. Semantic art identity survives reminted selectors by producing a fresh ID-keyed map each render.
 **Tests:** Adversarial names and selector strings cannot change classification. Unavailable feature/cantrip stays in its section. Missing private metadata retains every executable offer; unknown spell stays Other spells. Gaining/losing exact feature/spell metadata changes presentation only. A renamed display name retains art by exact ref, while an unknown ref gets fallback. Desktop false preserves legacy adapter assertions. Hint-only categories cannot mint offers.
 
-- [ ] Add failing adapter/art cases.
-- [ ] Implement exact joins and pure art mapping.
-- [ ] Run adapter/group checks; verify no fixture import in production modules.
+- [x] Add failing adapter/art cases.
+- [x] Implement exact joins and pure art mapping.
+- [x] Run adapter/group checks; verify no fixture import in production modules.
 
 **Verification:** Web worktree: `npm run test:run -- src/components/session/combat-experience/liveActionPresentation.test.ts src/components/session/combat-experience/liveActionArt.test.ts src/components/session/combat-experience/desktopHotbarGroups.test.ts`; `npm run typecheck`. `rg 'concepts/|fixture:' src/components/session/combat-experience/liveAction*.ts` must reveal no production fixture dependency.
-**Completion evidence:** Typed mappings and passing absence/identity assertions. Task 5 proves image availability separately.
+**Completion evidence:** Web `c76591ae`: 14 adapter/art/group tests pass, typecheck and changed-file lint pass. Pre-change tests exposed absent desktop mappings and the missing art module. Exact canonical art refs were checked against existing web request fixtures and toolkit `refs/{weapons,spells,features}.go`; unknown refs use generic fallback. No production fixture import. Task 5 still must prove runtime image availability; Task 6 still must activate the adapter on the real route.
 
 ### Task 3: Desktop target toggling through the real controller
 
@@ -164,4 +164,4 @@ The plan assigns every slice requirement to an owner and joined proof. Existing 
 
 Task contracts are ready for execution in dependency order. The exact private source hashes are Task 5's measured inputs, not invented values in this public plan. If the accepted source files cannot be matched or the live fixtures expose an unsupported required command contract, report that concrete blocker and update the affected task instead of substituting assets or weakening dispatch checks.
 
-All check commands above are planned until their outputs are recorded in the issue. This plan has not run full application CI, a live verification walk or an independent review.
+Tasks 1–2 have the evidence recorded above and in the issue. Checks in Tasks 3–6 remain planned. No full application CI, real-route verification walk or independent review is claimed; the live route is not yet opted in.
