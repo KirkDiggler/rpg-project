@@ -8,7 +8,9 @@ Bring the accepted desktop bar into the live experience: visible commands, reada
 
 Favorites, star/edit controls and favorite identity/persistence are explicitly excluded, not unresolved blockers. Rows and paging remain in scope. The concept's favorite experiment may remain available separately; it is not silently enabled on the live route.
 
-This document is investigation, **not a checked implementation plan**. No live behavior changes are made by these documents. R10, R11 and R13 remain architectural questions, not tasks silently delegated to an implementer; R9 is deferred and non-blocking, and R12 is settled. Resolve the affected live contracts, then derive task contracts, requirement coverage and provider/consumer seam checks using the design skill's planning guide. Merge and deployment remain separate gates.
+This document retains the investigation, **not the execution contract**. The [implementation plan](implementation-plan.md) resolves the live questions against inspected code and carries bounded tasks, coverage and seam checks. R9 is deferred; R10/R11/R13 use existing provider and responsive contracts; R12 is settled. Merge and deployment remain separate gates.
+
+Process correction: the operator pointed out that the session was stopping after every scope answer. Continue from an agreed answer into investigation, plan checks and authorized execution; only an actual changed ownership/behavior decision needs another interruption. The concrete correction stays here in the case file rather than becoming a new policy gate.
 
 ## Inspected baseline
 
@@ -16,12 +18,14 @@ This document is investigation, **not a checked implementation plan**. No live b
 |---|---|---|
 | Web concept worktree, `feat/desktop-hotbar` | `4b57ce973c369ac3a556ea0141b473501d8ae675` | Accepted renderer, fixture selection, local favorites and category mounting |
 | Web base of concept | `7d4bcb1e9f9cc5be46504f7ddd62c034d55b40d6` | Live controller and encounter inspected in the concept worktree |
-| Fetched web `origin/dev` | `08e77999a29e4e2e272ac40bd6043e2344032e52` | Includes discovery-sharing and character-creation spell-description changes absent from the concept base |
+| Fetched web `origin/dev` | `45ad8f571fb24a0c08da401f5e2d6a5aa9fb6d65` | Includes discovery-sharing, character-creation spell descriptions and absent-AC rendering; preserve them during integration |
 | Project design worktree | `f7813385e01c934c9b5d172cd7356b48dc5d55ef` | Updated design skill, walkthrough guide and planning guide |
 
 Web changes must reconcile the current encounter/discovery/story code rather than overwrite it with the older concept base. The new spell-description work addresses character creation, not proof that `Declaration` or `CastOption` supplies combat explanation text.
 
 ## Measured seams and consequences
+
+These findings motivated the plan; their initial question wording below is investigation history, not an unresolved execution blocker. The plan's Resolved questions section and task contracts give their current disposition.
 
 | Seam | What inspection establishes | Consequence / unresolved decision |
 |---|---|---|
@@ -65,7 +69,7 @@ The implementation plan must therefore test a selected attack with `effects = []
 
 ## Sequence and review checkpoints
 
-Explain the shape and decide only unresolved architecture with the operator, one decision at a time. Then make a checked plan naming exact files, introduced/consumed contracts, negative tests and runnable commands. Reconcile against current web dev before implementing it.
+Execute the linked plan in dependency order, reconciling current web dev first. Continue through implementation details and questions already answered by existing contracts. Bring back only a concrete architectural change, with its evidence and consequence; do not ask for permission to take each planned step.
 
 Development follows the consumer need outward to any missing provider primitive. Any required provider contract, generated bindings, asset release or dependency pin must be named in the plan; do not presume the work is web-only. Merge dependencies go inside-out, and released pins need joined verification. No new provider work is authorized by this investigation alone.
 

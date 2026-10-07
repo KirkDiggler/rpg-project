@@ -1,6 +1,6 @@
 # Desktop hotbar: how the pieces fit
 
-This walkthrough accompanies [web issue #1225](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1225) and the [design law](design.md). It explains a desktop presentation of the existing combat experience, not a second combat engine. The shared renderer serves both the concept harness and the live encounter; the harness supplies fixtures where the encounter supplies authoritative data and command callbacks. Unsettled live contracts are named by their open ruling IDs. If this explanation and the law disagree, the law wins.
+This walkthrough accompanies [web issue #1225](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1225) and the [design law](design.md). It explains a desktop presentation of the existing combat experience, not a second combat engine. The shared renderer serves both the concept harness and the live encounter; the harness supplies fixtures where the encounter supplies authoritative data and command callbacks. The live slice uses the existing provider contracts; optional richer information remains a named follow-up. If this explanation and the law disagree, the law wins.
 
 ## Component shape
 
@@ -47,7 +47,7 @@ flowchart TB
     Art -->|runtime asset URLs| Inspect
 ```
 
-The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. Open live boundaries are R10, R11 and R13. R12 settles the inspection context. R9 excludes favorites from this slice so live play can inform their design.
+The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. R10, R11 and R13 bind the live joins, command lifecycle and responsive activation. R12 settles the inspection context. R9 excludes favorites from this slice so live play can inform their design.
 
 ## Ownership and contracts
 
@@ -57,7 +57,7 @@ Paths in this table are relative to the web repository unless another owner is n
 |---|---|---|
 | Session provider | Offers and rules answers | `Declaration` with `id`, `verb`, `targetKind`, `available`, `why`, `candidates`, `minTargets`, `maxTargets`, `options` and effect rows → current offers; commands → response and authoritative events |
 | `SessionEncounterView` | Live composition and scope | Session/member identity, hook results and `CharacterData` → `CombatExperience` props, `renderMap` and callbacks |
-| `liveActionPresentation` | Display joins | `Declaration[]`, known cantrip/spell refs and `FeatureView[]` → `CombatExperienceActionPresentation`; desktop category/art joins are the R10 boundary |
+| `liveActionPresentation` | Display joins | `Declaration[]`, known cantrip/spell refs and `FeatureView[]` → `CombatExperienceActionPresentation`; exact joins classify known offers, while unknowns remain visible (R10) |
 | `DesktopActionSurface`, `DesktopActionSection` | Icon layout, pages and inspection | Declarations plus `OrganizedActionPresentation` → buttons and declaration intent; `DesktopHotbarCustomization` carries `DesktopHotbarLayout` and `onChange`. The concept's favorite/edit controls are outside this live slice (R9). |
 | `desktopHotbarGroups`, `desktopHotbarLayout` | Pure grouping and packing | Declarations and explicit hints → `HotbarGroup[]`; offers, rows and an empty favorite set in this slice → `FavoritePage<T>` |
 | `useSessionCombatExperience` | Live interaction and command lifecycle | Current declarations, authority and user intent → `CombatExperiencePresentationState`, callbacks and typed RPC input |
@@ -85,10 +85,10 @@ The notice hook does not interpret raw events again or create a second history. 
 The Bane fixture in `src/concepts/desktop-hotbar/fixtures.ts` is a concrete example of a member-list spell. Its fixture selector is `bane`; **that string is not a proposed production identity**.
 
 1. The source supplies a `Declaration`: `verb = CAST`, `targetKind = MEMBER`, candidate member IDs, availability and target bounds. In production these values arrive through Afford. The UI neither supplies enemies by faction nor counts targets from spell knowledge.
-2. `OrganizedActionPresentation.desktopSectionByDeclarationId` places the offer in Spells, and `desktopSpellKindByDeclarationId` supplies its band. `desktopHotbarGroups` produces a `HotbarGroup` containing the same declaration. Section/band labels are presentation; `Declaration.id` remains the executable selector. Live coverage of those hints is R10.
+2. `OrganizedActionPresentation.desktopSectionByDeclarationId` places the offer in Spells, and `desktopSpellKindByDeclarationId` supplies its band. `desktopHotbarGroups` produces a `HotbarGroup` containing the same declaration. Section/band labels are presentation; `Declaration.id` remains the executable selector. Live hints use exact known-spell refs, retaining unknowns in Other spells (R10).
 3. `DesktopActionSection` renders an icon and sends the selected declaration through its callback. Selecting it arms the interaction; it does not mean the spell has resolved. A spell with `CastOption[]` first needs one of those exact option IDs, independently of its target picks.
 4. A map click produces a member ID. `MemberTargetingInput` combines the declaration with `selectedMembers`, authority and option state; `memberTargetingView` produces available/selected members and confirmation state. Rings, checks, chips and the optional list all describe those same IDs, not parallel selections.
-5. Separate confirmation sends the accumulated IDs to the command owner. The live `onCastTargets` boundary checks the current declaration, current option, unique candidates and provider bounds before `useSessionCast` sends `session`, `member`, `declarationId`, `targets` and optional `option`. R11 governs bringing the concept's toggle lifecycle through this boundary; the generic view alone does not add list support to other RPCs.
+5. Separate confirmation sends the accumulated IDs to the command owner. The live `onCastTargets` boundary checks the current declaration, current option, unique candidates and provider bounds before `useSessionCast` sends `session`, `member`, `declarationId`, `targets` and optional `option`. R11 brings the toggle lifecycle through this boundary while retaining scalar inputs for other RPCs; the generic view alone does not add list support.
 6. The response is not a client-authored success story. Authoritative events enter `useSessionEventStream`, retaining sequence and delivery provenance. The combat presentation/pacing path produces `CombatExperienceStoryExchange` entries. History and temporary cards read those entries, preserving their story IDs; cards add an expiry, not a second outcome.
 
 A rejected or withdrawn selection stops at the corresponding boundary and leaves readable feedback. It does not fall back to another similarly named spell or substitute another target.
@@ -123,7 +123,7 @@ Merging these questions makes a plausible UI lie: a captured selector can execut
 
 R5 describes base action information with contextual effects, not an inventory of every passive trait. R12 separates no inspected action from an inspected action with no effects: the former has no action context; the latter still has action information. Choosing a convenient first attack supplies neither a valid default context nor permission to hide the selected action.
 
-R6 describes a shared selection interaction, not a universal multi-target RPC. The live CAST path accepts target lists; other verbs need their own established contract (R11).
+R6 describes a shared selection interaction, not a universal multi-target RPC. The live CAST path accepts target lists; other verbs keep their existing scalar contract and cannot silently truncate a list (R11).
 
 The live spell catalog and combat declaration are different seams. A description available to character creation is not automatically present in combat inspection (R10). Missing prose remains missing rather than becoming local rules copy.
 
@@ -141,7 +141,7 @@ A future favorite that follows a character across sessions requires the deferred
 
 ## Source map
 
-The concept-specific symbols live on web branch `feat/desktop-hotbar`; the project documents do not establish their release status. Revision/evidence and integration readiness belong in the [working notes](integration-notes.md) and issue.
+The concept-specific symbols live on web branch `feat/desktop-hotbar`; the project documents do not establish their release status. Revision/evidence belong in the [working notes](integration-notes.md) and issue; executable task contracts and seam checks are in the [implementation plan](implementation-plan.md).
 
 | Concern | Owning source |
 |---|---|

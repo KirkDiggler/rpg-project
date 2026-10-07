@@ -27,6 +27,9 @@ flowchart LR
 - **R6 — Member targeting.** Map selection and the optional list share one selection. Selected members have visible map markers and removable chips. Multi-target actions require separate confirmation; re-clicking an armed multi-target command preserves its picks. Candidate membership, availability and bounds come from the provider.
 - **R7 — Feedback.** The log is optional and initially closed. Temporary notices present released actor/action/result story entries, with at most three visible for six seconds, without deleting those entries from history. Initial and recovered history does not replay as new notices. Debug inspection does not reflow the toolbar or pass clicks through to the map.
 - **R8 — Assets.** Licensed source and runtime artwork remain in the private canonical asset store or ignored local previews, never in public source control. Production consumes reviewed runtime assets through the owning asset contract.
+- **R10 — Live metadata.** Display classification joins exact existing provider refs. Unclassified offers remain visible; unknown spell kinds remain in Other spells. Inventory does not mint item-use offers. Inspection displays available provider facts without fabricating missing descriptions or attack statistics.
+- **R11 — Live interaction.** The controller retains current-selector, authority, option and candidate checks. Desktop member-list selection uses existing CAST list input; scalar verbs retain their existing protocol. Unsupported list shapes fail closed rather than dispatching a partial action. Cancelled, replaced or invalidated selections cannot act through delayed callbacks.
+- **R13 — Activation.** The real encounter uses the desktop bar in desktop-sized containers and the existing surface in smaller containers. Responsive changes do not remount the map or execute an action. Merge and deployment remain separate gates.
 
 ## Rulings
 
@@ -41,14 +44,14 @@ flowchart LR
 | R7 | settled | Optional history and transient feedback | KirkDiggler | 2026-10-07 |
 | R8 | settled | Existing licensed-asset boundary | Workspace law | — |
 | R9 | deferred-until-post-bar-playtest | Favorites and their identity, ownership and lifetime; excluded from this slice | KirkDiggler | 2026-10-08 |
-| R10 | open | Live classification and description contracts | — | — |
-| R11 | open | Live target-controller coverage and invalidation lifecycle | — | — |
+| R10 | settled | Existing provider joins and honest absence; no new content contract in this slice | ui-ux, derived from R1/R3 and accepted slice | 2026-10-08 |
+| R11 | settled | Existing live RPC shapes and fail-closed lifecycle; no new game capability | ui-ux, derived from R1/R6 and existing controller contracts | 2026-10-08 |
 | R12 | settled | No arbitrary idle context; action information remains visible without effects | KirkDiggler | 2026-10-08 |
-| R13 | open | Live rollout scope and activation | — | — |
+| R13 | settled | Responsive live bar; mobile preserved; no automatic merge/deploy | ui-ux, derived from KirkDiggler's live-bar goal and R2 | 2026-10-08 |
 
 ## Open
 
 - **R9 (deferred, non-blocking):** Does play with the bar justify favorites? If so, what follows the character across encounters, refreshes and devices, and which provider identity distinguishes offers without persisting executable declaration IDs?
-- **R10:** Which exact live fields classify every offered feature/item and distinguish spell kinds, including granted spells? Where do combat descriptions and option explanations come from when the declaration lacks them?
-- **R11:** Which live verb contracts support member lists? How do pending picks behave across authoritative refresh, option change, cancellation and scope change while retaining current-selector dispatch checks?
-- **R13:** How is the desktop surface activated on the live route, and what is the rollback boundary? The slice brings in the bar without favorites; merge and deployment remain separate gates.
+- **R10 (follow-up, non-blocking):** Richer attack statistics and option descriptions need a provider contract when that information is added. The live bar does not claim that existing declaration fields supply it.
+
+No unresolved architectural decision blocks the defined slice. The [implementation plan](implementation-plan.md) names the concrete joins, lifecycle checks and verification.
