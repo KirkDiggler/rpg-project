@@ -182,12 +182,18 @@ then release chain only on operator merge authorization.
 | SDK P3 | API P3 | SDK-owned DTOs; no inner type boundary escape |
 | API/proto | P4 shared renderer | supplied full records, canonical pose, supplied observation currency |
 
-P1 checkpoint: proto PR381 @248b97a183a201124a35cd002fc251855a4292aa is published
-as a draft. make format/make test and normal commit hooks pass. Independent
-contract workflow a1b7f2eb-36ea-484a-a935-b79dde16333f is running, bound output
-/tmp/prop-presentation-contract-review.md. Generated bindings are not published
-for this change yet; no runtime repair is claimed. P2–P5 remain implementation
-work, not completed prerequisites.
+P1 checkpoint: proto PR381 @69e55ab61fdb83c1f343ada4284f2fa512775842 is published
+and marked ready after closure. make format/make test and normal commit hooks pass. Review5449536486
+at248b97a raised two Important identity/exclusive-door-channel findings and three
+Minor validation clarifications. All five have pushed changes and in-thread
+Addressed responses. Same-reviewer closure5449596356 @69e55ab verified all five;
+parent read back concessions4213025860/4213025997/4213026097/4213026179/4213026299,
+verified exact PR head and passing GitHub CI37701395254, and resolved all threads.
+No findings remain. Bound output /tmp/prop-presentation-contract-review.md.
+Generated bindings are not published for this change yet; operator merge is still
+required for CI publication. P2 toolkit work does not depend on that merge and can
+proceed independently. API/web binding adoption does. No runtime repair is claimed;
+P2–P5 remain implementation work, not completed prerequisites.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against
