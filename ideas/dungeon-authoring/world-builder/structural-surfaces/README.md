@@ -96,6 +96,18 @@ The runtime-facing geometry uses canonical feet (`FootprintPoint` / spatial
 points). The web converts to scene units at the rendering boundary. Asset fitting
 cannot modify the gameplay rectangle.
 
+## Run lifecycle and discovery ownership
+
+The dungeon key identifies authored content, not a live encounter. Each playthrough
+creates its own encounter from that content and applies the normal first-admission
+long rest. Encounter persistence owns its learned facts and attempt history:
+reloading or rejoining that encounter preserves them; a new encounter using the
+same character and dungeon key starts undiscovered with fresh attempts.
+
+The character profile retains sharing preferences only. It must not export or
+restore discoveries across encounters. Old profile JSON may contain check memory;
+the corrected SDK ignores it without clearing the operator's active encounter.
+
 ## Runtime projection and event contract
 
 The member-facing Atlas contains two flat collections:
@@ -238,6 +250,19 @@ Floor-surface authoring and room assembly remain separate work under
 - **Outstanding acceptance:** additional authored scenarios and placement guidance;
   document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
+
+## Walk findings still open
+
+- Wall selection is not yet connected to the normal Move gizmo and cardinal
+  rotation controls. Numeric form edits do not satisfy the promoted workflow.
+- Generic free-placed prop appearance is not yet carried through the same permitted
+  runtime layout path as walls/doors. A permitted placement without appearance data
+  can remain invisible. Restoring an unrestricted builder-document fetch is not
+  an acceptable repair.
+
+The cross-run discovery leak has a correction on the local stack and regression
+coverage; its new lifecycle delta is under independent review. These other two
+findings are not claimed fixed by that correction.
 
 ## Source map
 
