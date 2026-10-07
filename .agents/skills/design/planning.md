@@ -19,7 +19,9 @@ weaken acceptance criteria.
 
 ## Ground and decompose
 
-1. Read the approved design, brief, rulings and acceptance scenarios. Identify
+1. Read the approved design, its walkthrough, brief, rulings and acceptance
+   scenarios. The walkthrough's owners, contracts and refusals seed the seam
+   table below. Identify
    in-scope requirements and explicit deferrals. Give requirements stable labels
    when they do not already have them; labels identify agreed behavior, not new
    rulings.
