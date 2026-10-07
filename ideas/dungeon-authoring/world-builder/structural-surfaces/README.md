@@ -231,8 +231,9 @@ its closed leaf. Authored sight-blocking flags remain authoritative.
 
 Permanent opaque boundary footing uses the existing scenery path, not a phantom
 room and not a connection between adjoining rooms. Door and movable-prop cells must
-retain ownership wherever their changing state permits standing. This correction
-is under review; its status is separate from the earlier structural-layout gate.
+retain ownership wherever their changing state permits standing. The ordinary
+room-discovery and footing correction has completed its independent review;
+release adoption remains separate from that gate.
 
 Floor-surface authoring and room assembly remain separate work under
 [#528](https://github.com/KirkDiggler/rpg-project/issues/528).
@@ -245,7 +246,8 @@ Floor-surface authoring and room assembly remain separate work under
   [protos #376](https://github.com/KirkDiggler/rpg-api-protos/pull/376).
 - **Open provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
   containing compilation, layout, persistence, projection and reveal production.
-  The newer ordinary-discovery delta has an Important footing finding under repair.
+  The newer ordinary-discovery delta and its footing correction are independently
+  reviewed; both findings are verified addressed.
 - **Draft adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
   carrying those answers across the session boundary on pushed provider pins.
 - **Draft consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
@@ -259,8 +261,9 @@ Floor-surface authoring and room assembly remain separate work under
   operation and event-only rendering while snapshot responses are held. The earlier
   unchanged-floor proof concerns explicit door-only concealment, not permission to
   reveal an ordinary far-side room. The newer ordinary-discovery walk withholds that
-  floor and reveals it on opening; its opaque-footing gap is not claimed complete.
-  Actual toolkit release pins and focused review closure remain.
+  floor and reveals it on opening. A follow-up walk verified all35 authored cells
+  after opening, including the corrected wall footing, while snapshot responses
+  were held. Actual toolkit release pins and consumer-base reconciliation remain.
 - **Outstanding acceptance:** additional authored scenarios and placement guidance;
   document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.

@@ -151,7 +151,12 @@ footing knowledge, and admits fixed opaque boundary props on their own known
 coverage. New tests assert two rooms + one scenery cell (not a third region),
 visibility from both sides, no far-room leak, stable order/IDs, blocked standing,
 reload parity, explicit floor concealment independence and unchanged ownership
-for doors/sight-only/movable props. Same-reviewer focused closure remains required.
+for doors/sight-only/movable props. Same-reviewer focused closure is published:
+provider5441438405, SDK5441439270, API5441439442; both original threads are resolved
+after parent verification. No Critical/Important findings remain. The corrected
+live walk uses21→35 cells, with event-only rendering, intact footing and reload
+memory; generic prop appearance is not claimed fixed. Actual release pins and
+base reconciliation still precede consumer merges.
 
 Open risks: finer subcell observation remains outside this correction;
 compile-time performance and diagnostic paths. These are not
