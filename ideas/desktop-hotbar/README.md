@@ -47,7 +47,7 @@ flowchart TB
     Art -->|runtime asset URLs| Inspect
 ```
 
-The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. Open live boundaries are R10–R13. R9 excludes favorites from this slice so live play can inform their design.
+The callback arrows describe the live integration boundary, not permission for a child component to import the controller. The parent supplies callbacks. Concept callbacks end in fixture state; live callbacks end in current-selector validation and an RPC. Open live boundaries are R10, R11 and R13. R12 settles the inspection context. R9 excludes favorites from this slice so live play can inform their design.
 
 ## Ownership and contracts
 
@@ -63,7 +63,7 @@ Paths in this table are relative to the web repository unless another owner is n
 | `useSessionCombatExperience` | Live interaction and command lifecycle | Current declarations, authority and user intent → `CombatExperiencePresentationState`, callbacks and typed RPC input |
 | `memberTargeting`, `MapFirstTargeting` | Selection projection and controls | `MemberTargetingInput` → `MemberTargetingView`; chosen member IDs → target-click/confirm intent |
 | `SessionCanvas`, `EntityTargetMarker` | Map picking and visible markers | Candidate IDs, optional `selectedTargets`, `onTargetClick` → member intent and rings/checks; positions come from the map's existing entity data |
-| `DesktopStatusSection`, `DesktopEffects` | Read-only information | Private status data or a named `Declaration` and target member → inspection; `effectLinesFor` projects the provider's contextual effect rows |
+| `DesktopStatusSection`, `DesktopEffects` inspection boundary | Read-only status and action information | Private status data or a named `Declaration` and target member → inspection; `buildActionTooltip` projects base information, and `effectLinesFor` projects contextual effects. The action-inspection contract includes zero-effect declarations (R5, R12). |
 | `useSessionEventStream` | Ordered, deduplicated delivery and recovery | `Event` → callback with `SessionEventDeliveryMetadata.source` (`live` or `catchup`) |
 | `CombatExperience`, `StoryLog`, `useStoryNotices` | Released narration and its presentation lifetime | `CombatExperienceStoryExchange[]`, stream state and scope → history and temporary cards; `holdStoryUntilSettled` preserves dice/reaction pacing |
 | Private asset store; web `ActionArt` | Reviewed image bytes; their rendering | Private `harness/models/synty/` → ignored/runtime `/models/synty/` URLs; `ActionIconPresentation` → image or readable fallback |
@@ -76,7 +76,7 @@ The controller does not calculate range, faction eligibility or effects. It chec
 
 The canvas does not choose a target from screen proximity when an entity was not picked, and a missed member click must not become movement. Its markers visualize selection, not authorization (R6).
 
-The effects panel does not turn an attack-specific answer into a character-wide passive claim (R5, R12).
+The inspection panel does not turn an attack-specific answer into a character-wide passive claim, or require an effect before showing the action's base information (R5, R12).
 
 The notice hook does not interpret raw events again or create a second history. The asset renderer does not supply a description or gameplay category based on an image (R1, R7, R8).
 
@@ -121,7 +121,7 @@ Merging these questions makes a plausible UI lie: a captured selector can execut
 
 ## Edges
 
-R5 describes contextual information, not an inventory of every passive trait. The default context is R12; choosing a convenient first attack is not a neutral implementation detail.
+R5 describes base action information with contextual effects, not an inventory of every passive trait. R12 separates no inspected action from an inspected action with no effects: the former has no action context; the latter still has action information. Choosing a convenient first attack supplies neither a valid default context nor permission to hide the selected action.
 
 R6 describes a shared selection interaction, not a universal multi-target RPC. The live CAST path accepts target lists; other verbs need their own established contract (R11).
 

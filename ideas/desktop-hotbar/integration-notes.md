@@ -8,7 +8,7 @@ Bring the accepted desktop bar into the live experience: visible commands, reada
 
 Favorites, star/edit controls and favorite identity/persistence are explicitly excluded, not unresolved blockers. Rows and paging remain in scope. The concept's favorite experiment may remain available separately; it is not silently enabled on the live route.
 
-This document is investigation, **not a checked implementation plan**. No live behavior changes are made by these documents. R10–R13 remain architectural questions, not tasks silently delegated to an implementer; R9 is deferred and non-blocking. Resolve the affected live contracts, then derive task contracts, requirement coverage and provider/consumer seam checks using the design skill's planning guide. Merge and deployment remain separate gates.
+This document is investigation, **not a checked implementation plan**. No live behavior changes are made by these documents. R10, R11 and R13 remain architectural questions, not tasks silently delegated to an implementer; R9 is deferred and non-blocking, and R12 is settled. Resolve the affected live contracts, then derive task contracts, requirement coverage and provider/consumer seam checks using the design skill's planning guide. Merge and deployment remain separate gates.
 
 ## Inspected baseline
 
@@ -30,7 +30,7 @@ Web changes must reconcile the current encounter/discovery/story code rather tha
 | Map/list → controller | Concept uses `toggleMemberTarget` and committed-snapshot callback protection. Live `onTargetClick` appends CAST members, rejects already selected members, and immediately dispatches single-target CAST. | Multi-target deselection and re-click preservation require real controller work; copying JSX is insufficient (R11). |
 | Confirmation → RPC | Live `onConfirmTargets` delegates to `onCastTargets`; that path requires CAST/MEMBER, current option, unique current available candidates and provider bounds. | A generic multi-member fixture is not evidence of non-CAST list dispatch. Inventory supported live contracts before extending scope (R11). |
 | Refresh → pending selection | Controller compares the armed selector to current declarations and gates authority/turn. Move alone has an explicit selection-mode remapping path. | Decide pending-pick invalidation without transferring stale executable IDs or copying Move's special lifecycle blindly (R11). |
-| Effects → inspection | `DesktopEffects` consumes one declaration and optional target through `effectLinesFor`. Concept may supply `desktopEffectsDeclarationId`. | No global passive catalog is established. Settle the unselected context (R12). |
+| Action → inspection | `DesktopEffects` consumes one declaration and optional target through `effectLinesFor`; it uses only the title from `buildActionTooltip`. `CombatExperience.selectedEffectSources` filters out declarations with no effects and can fall back to `desktopEffectsDeclarationId`. | R5/R12 require changing both the source selection and the window: an inspected zero-effect action retains base information; no arbitrary reference attack supplies idle context. This is not a global passive catalog. |
 | Options → tray | `CastOption` supplies an opaque ID and label. | Detailed option explanation requires an owning provider contract, not client-written spell rules (R10). |
 | Stream → notices | Stream callback retains per-event `live`/`catchup` metadata. `useStoryNotices` receives story entries, scope and aggregate stream state, not per-entry provenance. | Prove background catch-up, not just initial mount/reconnect. Aggregate live state alone cannot establish that an added entry should announce. Preserve release pacing while threading the needed provenance. This is an integration gap answered by R7, not permission to weaken it. |
 | Art → deployed build | Preview art uses ignored `interface-preview` files; private provider has reviewed runtime roots; Docker packaging invokes runtime sync. | Promote the selected set through the asset owner before claiming build availability. A local successful image load proves no release custody (R8). |
@@ -49,11 +49,19 @@ These alternatives explain the integration choice; they do not reopen accepted l
 |---|---|---|
 | R1, R3 | Real offers gain/lose categories without class branches; unavailable offers retain their category and provider refusal. Unknown refs do not invent a type or disappear. | Live metadata contract R10 open |
 | R2, R4, R9 | Live desktop at wide/narrow/short viewports; 1–4 balanced rows and overlapping final pages. No favorite stars, favorite-edit controls or preference storage are mounted/written. Mobile retains its controls and interaction. | Favorites explicitly excluded; activation R13 open |
-| R5 | Current private status, stale/unavailable status, contextual effect inspection and actual option IDs displayed on the real encounter route. Missing descriptions stay honest. | R10/R12 open |
+| R5, R12 | Current private status, stale/unavailable status, base action information with zero effects, base information plus contextual effects when present, and actual option IDs displayed on the real encounter route. With nothing inspected, no unrelated attack supplies context. Missing descriptions stay honest. | Inspection behavior settled; additional provider information remains R10 |
 | R6 | Real multi-target CAST: map/list/chips agree; self/allies are selectable when offered; repeated command click preserves picks; separate confirm sends exact IDs once. Cancel/rearm, delayed clicks, scope changes and authority refresh cannot execute stale picks. | R11 open; fixture proof is not live proof |
 | R7 | Live event announces once after presentation release; initial, reconnect and periodic/focus catch-up entries remain history-only. Expiry leaves history; scope changes do not leak cards. Discovery narration from current dev remains intact. | Provenance integration needs task contract |
 | R8 | Clean production-style asset stage loads all selected icons, checks private custody, and provides readable missing-image behavior without public binary additions. | Provider selection/promotion needed |
 | R13 | Real route and mobile walk, complete `npm run ci-check`, independent PR review verdict and all relevant released provider pins. | No promotion-ready claim; no PR opened |
+
+## Action information scope clarification
+
+On 2026-10-08 the operator confirmed that the contextual window belongs to the action, not only its effects. An attack has base information even when no effects apply; effects join that information when present. No arbitrary attack populates an idle window. The operator permits this addition now or as a follow-up.
+
+Recommended split: include the base information already supplied by the provider in this slice, and scope richer provider data separately if needed. The inspected `buildActionTooltip` already exposes an attack name, damage type, declaration costs and provider refusal, independently of its effect list. Session `AttackRef` supplies `ref`, `name` and `damageType`, not damage dice, attack arithmetic or a full description. This investigation does not establish another safe source for those missing values.
+
+The implementation plan must therefore test a selected attack with `effects = []` displaying its provider name/type/cost, switching from an effect-bearing action to that attack without retaining unrelated effects, and clearing inspection without selecting a reference attack. Do not merely add text inside the existing effects-only source filter. Full attack statistics remain an explicit data-contract question under R10 rather than a reason to fabricate numbers or block the available information.
 
 ## Sequence and review checkpoints
 
