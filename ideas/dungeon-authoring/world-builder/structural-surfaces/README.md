@@ -254,7 +254,8 @@ Floor-surface authoring and room assembly remain separate work under
   and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226), including
   replacement mappings and atomic cache/hydration recovery. The prop repair and
   wall-control/default edits are now published with a green full web gate;
-  their fresh implementation review is in progress.
+  their implementation findings and focused reviewer closure are complete.
+  Current-base integration and released dependency adoption remain gates.
 - **Merged patch wire:** [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380),
   published as v0.1.225 and adopted by both consumers. Encounter replacements /
   membership correction are in #1935; the typed session adapter is in #1947.
@@ -269,23 +270,32 @@ Floor-surface authoring and room assembly remain separate work under
   document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
 
-## Walk findings still open
+## Runtime restoration and remaining acceptance
 
 - Wall selection uses the normal Move/Rotate gizmo and cardinal buttons, with
   pointer/undo/reload proof. New walls default to blocking movement and sight;
   existing authored values remain unchanged. Numeric transforms are secondary.
-  Full CI passes; fresh review of this UI delta is in progress.
+  Full web CI and independent review pass. Every wall edit crosses the shared
+  workspace-validation gate before history or autosave.
 - Ordinary prop appearance now uses recipient-permitted records through the
   existing knowledge/reveal transport and shared renderer. Declared books and
   undeclared vase/altar GLBs are verified in the normal builder/play route, including
-  event-only room discovery. The v2 renderer path remains. Fresh implementation
-  review is in progress; no unrestricted source fetch was restored. Older encounters
+  event-only room discovery. The v2 renderer path remains. Independent implementation
+  review and finding closure pass; no unrestricted source fetch was restored. Older encounters
   without captured definitions require a normal new playthrough, not a profile reset.
 
 The cross-run discovery correction is independently reviewed and active locally.
 That closure does not cover ordinary-room partitioning, wall controls or prop
 appearance. Existing encounters keep their saved geometry and learned facts; the
 new compiler behavior is exercised by new playthroughs, never a profile reset.
+
+Standalone bound doors use their supplied canonical identity to participate in
+known-boundary presentation without teaching adjoining room floor. Explicit door
+concealment withholds both that appearance and its linked placed identity. Opening
+attachments remain exclusively in the structural-door channel.
+
+Runtime visual scale preserves the positive finite value supplied by the provider.
+Editor slider limits are authoring affordances, not a second runtime clamp.
 
 ## Source map
 

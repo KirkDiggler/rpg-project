@@ -207,11 +207,35 @@ memory and no gameplay source fetch/page errors. V2 provider/legacy-render tests
 remain green. New compiled worlds receive captured appearance; existing worlds
 without it are not silently rewritten from a mutable content key.
 
-Fresh implementation workflow4c5b8e24-e4f0-475a-8166-fa12ac1aa5d3 is running with
-separate provider, transport and web reviewers. Reports bound to
-/tmp/prop-presentation-review-{provider,transport,web}.md. No implementation review
-closure or merge readiness is claimed yet. Release pins and base reconciliation
-remain; no automatic merges.
+Implementation review workflow4c5b8e24-e4f0-475a-8166-fa12ac1aa5d3 completed:
+provider two Important coverage gaps/one Minor; SDK three Minor; API no findings;
+web one Important bounds defect/two Minor. All nine dispositions were verified by
+the same reviewers in closure workflow942e124a-e33b-4876-8b74-4fec114c6313 and
+read back before thread resolution. Closure publications are toolkit#1935
+review5451082389 at830e4c2a, toolkit#1947 review5451096844 at0d24c76d,
+API#1077 review5451097130 at7367f9f7, web#1226 review5451075174 at7d266ad4.
+No implementation findings remain in this slice.
+
+Closure adds full concealment/reload, standalone-door, malformed-data, mutable
+capture, decoder-channel, hook/cache and shared-renderer regression coverage.
+Standalone DoorID links now use existing boundary permission without revealing
+far-side floor. All wall edits validate before history/autosave. Runtime GLB leaves
+preserve valid supplied scales outside editor slider limits. Independent mutation
+checks bind the tests to these mechanisms. Backend gates and full web CI pass at
+these branch heads, with normal hooks and pushed pins.
+
+The rebuilt stack passes /tmp/prop-review-live-proof.json: actual books/vase/altar
+GLBs, event-only reveal with a positive-control snapshot held, no snapshot responses,
+close/reload, no gameplay source fetch or page errors. The wall pointer walk also
+passes; its receipt honestly retains 21 unrelated Fantasy Kingdom catalog failures.
+Operator data remains untouched; the prop replay uses only the dedicated test run.
+
+This is NOT overall merge readiness. Toolkit CI37721958333 tests synthetic merge
+d8b421f (head830e4c2a into current main46bf76dd) and fails because current main
+requires Sheets capability in fixtures. That current-base integration differs from
+the reviewed branch head; reconcile its host/test contracts and rerun integration
+before release. Actual released dependency pins, downstream base reconciliation
+and remaining authored-placement/asset acceptance still apply. No automatic merges.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against
