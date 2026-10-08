@@ -247,10 +247,14 @@ run preserves sequence9, all35 cells and captured props exactly
 (/tmp/sheets-reload-{before,after}.json). A normal dedicated-test new playthrough
 passes real-GLB/event-only/close/reload proof again (/tmp/sheets-live-proof.json),
 with no page errors or gameplay source fetch. Operator data is untouched.
-Focused reconciliation review is running separately; its result must be consumed
-before calling the new heads independently verified. Actual released provider pins,
-remaining authored-placement/asset acceptance and operator merge authorization
-still apply. No PR merges.
+Focused reconciliation review is complete with zero findings on all three heads:
+toolkit#1935 review5453086874, toolkit#1947 review5453087459, API#1077
+review5453087994. Parent verified the published commit IDs, verdicts and green
+checks after consuming the report. The reviewer independently ran gates and a
+missing-sheet mutation probe. Base-owned proof-load comment drift is tracked
+separately as toolkit#1984; it is not a gameplay capability failure.
+Actual released provider pins, remaining authored-placement/asset acceptance and
+operator merge authorization still apply. No PR merges.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against
