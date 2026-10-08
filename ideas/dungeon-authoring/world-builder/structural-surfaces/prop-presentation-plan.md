@@ -230,12 +230,27 @@ close/reload, no gameplay source fetch or page errors. The wall pointer walk als
 passes; its receipt honestly retains 21 unrelated Fantasy Kingdom catalog failures.
 Operator data remains untouched; the prop replay uses only the dedicated test run.
 
-This is NOT overall merge readiness. Toolkit CI37721958333 tests synthetic merge
-d8b421f (head830e4c2a into current main46bf76dd) and fails because current main
-requires Sheets capability in fixtures. That current-base integration differs from
-the reviewed branch head; reconcile its host/test contracts and rerun integration
-before release. Actual released dependency pins, downstream base reconciliation
-and remaining authored-placement/asset acceptance still apply. No automatic merges.
+The operator confirmed the working walk and authorized adopting the new sheet
+contract. Toolkit branches now include main46bf76dd, and API includes deved4db4f6:
+encounter8a3f92e8, SDKceacbee4, APIf4e856ef. The SDK uses the upstream per-verb
+sheet capability rather than stored speed/action/targeting copies; the join conflict
+preserves encounter-owned discovery and does not restore profile check imports.
+Tests explicitly supply fixture sheets. A new real-SDK structural walk proves
+six-cell human pacing, five-cell dwarf pacing after a repository sheet change,
+retained learned layout, and missing-sheet refusal without encounter mutation.
+Root rulebookv0.205.0 and resolutionv0.65.0 are released dependencies; encounter and
+SDK remain actual pushed development pins. No dungeon source/wire schema change.
+
+The prior Sheets CI failure is cleared: both toolkit branches and API pass their
+published checks and local gates. Read-only before/after reload of an existing
+run preserves sequence9, all35 cells and captured props exactly
+(/tmp/sheets-reload-{before,after}.json). A normal dedicated-test new playthrough
+passes real-GLB/event-only/close/reload proof again (/tmp/sheets-live-proof.json),
+with no page errors or gameplay source fetch. Operator data is untouched.
+Focused reconciliation review is running separately; its result must be consumed
+before calling the new heads independently verified. Actual released provider pins,
+remaining authored-placement/asset acceptance and operator merge authorization
+still apply. No PR merges.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against
