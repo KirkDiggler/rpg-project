@@ -122,7 +122,7 @@ for hands is R9.
 
 ## Edges
 
-- No in-run long rest and no world time for a rest (R5).
+- No in-run long rest (R13); a short rest in a run costs the world clock its hour (R5).
 - No Afford row for equip; a client learns a refusal by asking (R12).
 - Prop holdings and equipment hands are separate models (R9).
 - Authored world NPCs are not placed by Launch yet (R11).

@@ -60,7 +60,8 @@ Done when:
 Lands: the equip and rest beats as exported kinds, recorded by verbs that
 validate the member, refuse an equip off the member's turn in a fight and a
 rest while the member is in a fight, and tell the beat to the audience the
-encounter tells that member's acts; monster member-id minting moved into the
+encounter tells that member's acts; the short rest's hour advanced on the
+world clock, adding an hour unit if the clock has none (R5); monster member-id minting moved into the
 dungeon compiler, so a compiled dungeon carries every monster's member id.
 
 Done when:
@@ -69,6 +70,8 @@ Done when:
   with the not-your-turn sentinel and writes no beat.
 - Recording a rest for a member in a fight refuses; in free roam it writes one
   beat naming the member and the kind.
+- A short rest moves the world clock by one hour and nothing else in the run
+  moves.
 - An equip beat reaches every member that perceives the actor and no member
   that does not.
 - Compiling a dungeon with two unnamed goblins and one named placement yields
@@ -167,5 +170,5 @@ Done when:
   likewise (tier 3, dead).
 - The compile-only constructors lose their last host caller with slice 6;
   retiring them is tier 2 D's.
-- `StartSession` and `Spawn` are deprecated as host verbs when R7 is settled;
+- `StartSession` and `Spawn` are deprecated as host verbs when Launch lands (R7);
   their deletion joins the tier 3 deletion PR.

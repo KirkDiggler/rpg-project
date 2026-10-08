@@ -136,6 +136,12 @@ call.
 - The first admission of a character to a run is a long rest, saved before the
   board is touched. It is one rule, applied by Launch and by Join alike, never
   repeated on a rejoin.
+- A short rest inside a run advances the world clock by one hour, the letter's
+  duration. The encounter owns the world clock and advances it; the session
+  asks for the hour and never counts rounds itself. A clock that has no hour
+  unit gains one in the encounter, never a round count in the session.
+- The long rest is the first-admission rest only; no verb long-rests a member
+  inside a run (R13).
 - A rest tells a beat naming the member, the kind and what it restored.
 
 ### Launch
@@ -176,34 +182,17 @@ call.
 | R1 | settled | Swapping weapons costs the action: stowing a held weapon is the action, drawing into an empty hand is the free interaction; no drop exists. In a fight, equip is a turn action; outside one, a plain sheet verb with no cost | KirkDiggler | 2026-10-07 |
 | R2 | settled | Remaining tier 2 order: this design (F), then D, E, A | KirkDiggler | 2026-10-08 |
 | R3 | settled | Character verbs (level-up, equip, rest) live on the session SDK Manager; rpg-api keeps transport only | KirkDiggler | 2026-09-16 |
-| R4 | open | The seat lives in a session-owned repository keyed by character (Open 1) | — | — |
-| R5 | open | A rest inside a run is a short rest outside a fight, with no world time passing; the long rest is the first-admission rest only (Open 2) | — | — |
-| R6 | open | A shield is not a weapon: donning or doffing it costs the action; body armour cannot change in a fight (Open 3) | — | — |
-| R7 | open | Launch replaces StartSession and Spawn as host verbs; Join stays for a rejoin (Open 4) | — | — |
-| R8 | open | Every seated equip tells a beat, a draw into an empty hand included (Open 5) | — | — |
+| R4 | settled | The seat lives in a session-owned repository keyed by character (S12, S13), not on the character record | KirkDiggler | 2026-10-08 |
+| R5 | settled | A rest inside a run is a short rest outside a fight, and it advances the world clock by its hour (no divergence on time); the long rest is the first-admission rest only | KirkDiggler | 2026-10-08 |
+| R6 | settled | A shield is not a weapon: donning or doffing it costs the action; body armour cannot change in a fight | KirkDiggler | 2026-10-08 |
+| R7 | settled | Launch replaces StartSession and Spawn as host verbs; Join stays for a rejoin; PlaceNPC stays for the demo vendor until R11 | KirkDiggler | 2026-10-08 |
+| R8 | settled | Every seated equip tells a beat, a draw into an empty hand included | KirkDiggler | 2026-10-08 |
 | R9 | deferred-until-hands-are-one-model | Whether a held prop occupies a hand an equipped item needs (owner unset) | — | — |
 | R10 | deferred-until-a-measured-cost | A verb-scoped sheet cache in the store; it stays write-through when it comes (owner unset) | — | — |
 | R11 | deferred-until-authored-world-npcs | Launch places authored world NPCs; the temporary demo vendor stays a separate PlaceNPC call (owner unset) | — | — |
 | R12 | deferred-until-a-use-case | An Afford row for equip, so a client can show a draw's price before asking (owner unset) | — | — |
+| R13 | deferred-until-a-use-case | A long rest inside a run: the party camps and someone keeps watch; the owner expects to want it (owner unset) | — | — |
 
 ## Open
 
-1. **Where the seat lives.** Recommendation: a session-owned seat record keyed
-   by character id, through its own host repository (S12, S13). The
-   alternative is a field on the character record, which saves a port and a
-   read but puts a session-written fact inside the rulebook's own record type.
-2. **Rest inside a run.** Recommendation: a short rest is allowed in a run for
-   a member not in a fight; no world time passes for it (divergence: the letter
-   is an hour of light activity), and the long rest stays the first-admission
-   rest, so the once-per-24-hours limit never needs a clock. Outside a run there
-   is no rest verb: Launch already rests everyone.
-3. **Shield and armour in a fight.** Recommendation: the letter — donning or
-   doffing a shield is the action; body armour takes minutes, so an equip that
-   changes it refuses in a fight.
-4. **Launch versus StartSession.** Recommendation: Launch replaces
-   StartSession and Spawn as host verbs (deprecated when Launch lands, deleted
-   with the tier 3 deletions); Join stays for a member rejoining after Exit,
-   and PlaceNPC for the demo vendor until R11.
-5. **Does a draw into an empty hand tell a beat?** Recommendation: yes. A draw
-   changes what every watcher sees, and the story is where a watcher learns it;
-   only an unseated equip is silent.
+None.
