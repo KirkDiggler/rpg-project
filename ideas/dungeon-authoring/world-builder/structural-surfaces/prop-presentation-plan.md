@@ -190,10 +190,28 @@ Addressed responses. Same-reviewer closure5449596356 @69e55ab verified all five;
 parent read back concessions4213025860/4213025997/4213026097/4213026179/4213026299,
 verified exact PR head and passing GitHub CI37701395254, and resolved all threads.
 No findings remain. Bound output /tmp/prop-presentation-contract-review.md.
-Generated bindings are not published for this change yet; operator merge is still
-required for CI publication. P2 toolkit work does not depend on that merge and can
-proceed independently. API/web binding adoption does. No runtime repair is claimed;
-P2–P5 remain implementation work, not completed prerequisites.
+Operator merged PR381 at3189bddadd15857810e4bcfb49155dfab1b9f305. CI37703215913
+published v0.1.226/generated67c8075222637b749beca38926704cbc7a92be47; both consumers
+adopt that actual output.
+
+Implementation checkpoints (pushed, normal hooks): encounter49590c826a385fd359258e2bf4c2124c4ded5ae2,
+SDK a91ef7c4b6547f48cad6ec89fa9d18c2b90daaeb, API ad84d040df9edc70a4238f82d5ff4664e1c6b985,
+web0dc84561af4ccb4671b1d6fcad2d14b2ca587c3f. Full backend race/vet/lint and API
+ci-check pass. Full web Node22 ci-check passes:7623 tests/5 skipped. The web commit
+also publishes the previously local wall controls/defaults; review includes them.
+
+Native /tmp/prop-presentation-live-proof.json verifies actual declared books and
+undeclared vase/altar GLBs, known-room presence, far-room absence, event-only reveal
+while a positive-control GetKnowledge request is held (0 responses), close/reload
+memory and no gameplay source fetch/page errors. V2 provider/legacy-render tests
+remain green. New compiled worlds receive captured appearance; existing worlds
+without it are not silently rewritten from a mutable content key.
+
+Fresh implementation workflow4c5b8e24-e4f0-475a-8166-fa12ac1aa5d3 is running with
+separate provider, transport and web reviewers. Reports bound to
+/tmp/prop-presentation-review-{provider,transport,web}.md. No implementation review
+closure or merge readiness is claimed yet. Release pins and base reconciliation
+remain; no automatic merges.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against

@@ -252,8 +252,9 @@ Floor-surface authoring and room assembly remain separate work under
   carrying those answers across the session boundary on pushed provider pins.
 - **Draft consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
   and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226), including
-  replacement mappings and atomic cache/hydration recovery. The separate local
-  wall-control edits still need a successful full web gate and independent review.
+  replacement mappings and atomic cache/hydration recovery. The prop repair and
+  wall-control/default edits are now published with a green full web gate;
+  their fresh implementation review is in progress.
 - **Merged patch wire:** [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380),
   published as v0.1.225 and adopted by both consumers. Encounter replacements /
   membership correction are in #1935; the typed session adapter is in #1947.
@@ -270,13 +271,16 @@ Floor-surface authoring and room assembly remain separate work under
 
 ## Walk findings still open
 
-- Wall selection is connected locally to the normal Move/Rotate gizmo and cardinal
-  buttons, with pointer/undo/reload proof. Those edits are still uncommitted and
-  require full CI plus their own review; numeric transforms are secondary.
-- Generic free-placed prop appearance is not yet carried through the same permitted
-  runtime layout path as walls/doors. A permitted placement without appearance data
-  can remain invisible. Restoring an unrestricted builder-document fetch is not
-  an acceptable repair.
+- Wall selection uses the normal Move/Rotate gizmo and cardinal buttons, with
+  pointer/undo/reload proof. New walls default to blocking movement and sight;
+  existing authored values remain unchanged. Numeric transforms are secondary.
+  Full CI passes; fresh review of this UI delta is in progress.
+- Ordinary prop appearance now uses recipient-permitted records through the
+  existing knowledge/reveal transport and shared renderer. Declared books and
+  undeclared vase/altar GLBs are verified in the normal builder/play route, including
+  event-only room discovery. The v2 renderer path remains. Fresh implementation
+  review is in progress; no unrestricted source fetch was restored. Older encounters
+  without captured definitions require a normal new playthrough, not a profile reset.
 
 The cross-run discovery correction is independently reviewed and active locally.
 That closure does not cover ordinary-room partitioning, wall controls or prop
