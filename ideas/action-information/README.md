@@ -1,8 +1,8 @@
 # Action information
 
-[Tracking issue #543](https://github.com/KirkDiggler/rpg-project/issues/543) · [Design law](design.md) · [Implementation plan](implementation-plan.md)
+[Tracking issue #543](https://github.com/KirkDiggler/rpg-project/issues/543) · [Design law](design.md) · [UI implementation plan](ui-implementation-plan.md) · [Provider handoff plan](implementation-plan.md)
 
-This extends the existing offered-action inspection, not the game's action engine. An action explains itself before the player commits: what it does, its assembled base facts, and then the contextual effects that bear on it. The same read-only rendering is shared by the hover card and pinned information panel.
+This extends the existing offered-action inspection, not the game's action engine. An action explains itself before the player commits: what it does, its assembled base facts, and then the contextual effects that bear on it. The same read-only rendering is shared by the hover card and pinned information panel. The UI owns consumption only; toolkit and API own the facts and their delivery, and gameplay repairs stay with their owning teams (R8).
 
 ## Component shape
 

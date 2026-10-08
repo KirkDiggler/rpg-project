@@ -21,6 +21,7 @@ flowchart LR
 - **R5 — Every choice.** Offered gameplay actions and their nested options carry explanations. Unavailable offers remain inspectable. Missing information is identified as missing, never synthesized from an identity or interpreted as an action with no consequences.
 - **R6 — Reading is inert.** Hover, keyboard and touch inspection do not select, submit, spend, roll or change gameplay state. Existing activation and targeting behavior remains authoritative.
 - **R7 — One current offer.** Live information shares the declaration's identity and refresh lifecycle. Presentation text is not selector material and does not change availability. A selected target's effect answers are used only for that same declaration; unrelated inspections never borrow them.
+- **R8 — UI lane.** The UI consumes provider facts and reports gaps to their owning teams. It does not repair gameplay, author replacement rule descriptions or implement missing toolkit/API projections as part of the UI slice.
 
 ## Rulings
 
@@ -33,9 +34,8 @@ flowchart LR
 | R5 | settled | Explain offered actions and nested choices, including unavailable choices | KirkDiggler | 2026-10-08 |
 | R6 | settled | Preserve existing gameplay interaction and accessible inspection | KirkDiggler | 2026-10-08 |
 | R7 | settled | Preserve provider identity, authority and contextual scope | KirkDiggler | 2026-10-08 |
+| R8 | settled | Keep implementation in UI; file gameplay and provider-delivery gaps for owning teams | KirkDiggler | 2026-10-08 |
 
 ## Open
 
-- **Patient Defense scope:** include a repair of its underlying condition delivery in this wave, or describe its current limitation without changing behavior? The provider case is [toolkit#1986](https://github.com/KirkDiggler/rpg-toolkit/issues/1986); no repair or eligibility change is authorized yet.
-
-New gameplay, expanded effect applicability, roll prediction and new item-use capabilities otherwise remain outside this change.
+None for the UI slice. Gameplay repairs, expanded effect applicability, roll prediction and new item-use capabilities remain outside this change. Provider gaps stay with their owning teams (R8).

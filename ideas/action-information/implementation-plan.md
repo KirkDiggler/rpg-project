@@ -2,6 +2,16 @@
 
 Tracking: [project#543](https://github.com/KirkDiggler/rpg-project/issues/543). Authority: operator agreement recorded there, [law](design.md), [walkthrough](README.md).
 
+## Execution-scope correction
+
+The operator has kept this session in the UI lane. The active execution plan is
+[ui-implementation-plan.md](ui-implementation-plan.md). T3–T5 below are handed off
+to toolkit#1987, and T6 to API#1084. The partial root checkpoint in draft#1985 is
+preserved, not continued by this team. Patient Defense repair remains separately
+filed in toolkit#1986 and is not included. No frontend rule text or calculations
+replace provider work. Protos#384 is merged and generated v0.1.230 is adopted by
+the UI consumer.
+
 ## Goal, constraints and baseline
 
 Explain the current gameplay offer before commitment: description and base facts above its existing contextual effects. Include nested option explanations. Preserve action authority, selectors, targets, effects semantics, accessible reading and mobile. Do not add gameplay, item-use offers, totals, predicted rolls or a browser rulebook. No merge/deployment is authorized.
@@ -68,7 +78,7 @@ No new persistence domain or stream event is needed. Descriptions copied into fr
 **Verification:** from toolkit `rulebooks/dnd5e`, `go test ./combat/actions ./combat/weaponattack ./damage ./spells ./character ./conditions ./features`; module `go test ./...`; repository hooks/lint as required by `docs/how-to/run-tests.md`. No local replace/go.work.
 **Completion evidence:** first root-module checkpoint `f68a3389` published as [toolkit draft#1985](https://github.com/KirkDiggler/rpg-toolkit/pull/1985). Description/base-fact types and projection, actual weapon assembly, spell catalogue reuse and shared off-hand inclusion policy are implemented. Full root `go test -race ./...` passes; full root lint passes with `GOTOOLCHAIN=go1.24.1` (installed linter cannot parse the machine's newer default Go standard library). Normal pre-commit gate passed. Feature/ability projection, option text, resolution adoption and all later tasks remain incomplete.
 
-**Scope finding:** the current Patient Defense implementation spends ki and emits telemetry without delivering Dodging. A temporary probe reused its existing successful activation test, asserted ki falls from3 to2, and failed specifically because zero `ConditionAppliedEvent`s arrived. Source search found no production consumer of the legacy event in toolkit/API. Probe source/log are retained under `/tmp/action-information-patient-defense-*`; the temporary test was removed and source remains clean. [Toolkit#1986](https://github.com/KirkDiggler/rpg-toolkit/issues/1986) records the reproduction. Pause the affected feature explanation/repair pending the operator's scope decision; do not claim a missing benefit or silently change gameplay. No native Patient Defense walk has been run.
+**Scope finding:** the current Patient Defense implementation spends ki and emits telemetry without delivering Dodging. A temporary probe reused its existing successful activation test, asserted ki falls from3 to2, and failed specifically because zero `ConditionAppliedEvent`s arrived. Source search found no production consumer of the legacy event in toolkit/API. Probe source/log are retained under `/tmp/action-information-patient-defense-*`; the temporary test was removed and source remains clean. [Toolkit#1986](https://github.com/KirkDiggler/rpg-toolkit/issues/1986) records the reproduction. Operator disposition: keep the repair filed for another team and stay in the UI lane. Metadata production is handed off to toolkit#1987 and transport to API#1084; the UI renders supplied values and marks missing information without claiming a missing benefit or changing gameplay. No native Patient Defense walk has been run.
 
 ## Task 4 — Resolution shares the base rule and preserves option prose
 
