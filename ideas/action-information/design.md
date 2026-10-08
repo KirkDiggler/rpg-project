@@ -36,4 +36,6 @@ flowchart LR
 
 ## Open
 
-None for the agreed presentation outcome. New gameplay, expanded effect applicability, roll prediction and new item-use capabilities are outside this change.
+- **Patient Defense scope:** include a repair of its underlying condition delivery in this wave, or describe its current limitation without changing behavior? The provider case is [toolkit#1986](https://github.com/KirkDiggler/rpg-toolkit/issues/1986); no repair or eligibility change is authorized yet.
+
+New gameplay, expanded effect applicability, roll prediction and new item-use capabilities otherwise remain outside this change.
