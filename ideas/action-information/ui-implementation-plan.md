@@ -40,7 +40,7 @@ Baseline: web39c9c401; merged protos#384 (2b67e9b5), successful publication, gen
 **Tests:** real composition/controller regression with generated declaration data, read-only hover/focus/inspection, existing cast/target behaviors unchanged; browser1440/1000/393 and short desktop, long description scroll, current-data replacement, no page errors or horizontal overflow. Verify source has no spell/feature description table outside explicitly labelled fixtures.
 - [x] Render/read screenshots and save exact fixture/network scope.
 - [x] Complete `npm run ci-check` before opening/updating web PR.
-- [ ] Fresh independent UI review, publish findings and dispositions.
+- [x] Fresh independent UI review, publish findings and dispositions.
 - [x] Report UI readiness separately from provider delivery; no automatic merge/deploy.
 **Verification:** full local gate once at PR boundary, normal hooks; published review at exact head. Backend-populated live encounter proof is a remaining owning-team integration dependency, not waived by UI tests. Evidence pending.
 
@@ -95,5 +95,41 @@ ordering assertion now requires the fact text to exist before comparing order.
 The consumer harness uses the production HUD styling scope, rather than testing
 an unscoped ActionDock and mistaking clipped fixture layout for live behavior.
 
-Independent UI review is running against that exact head. No merge/deployment,
+The [initial independent review](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1238#pullrequestreview-5455868963)
+found no Critical/Important issues and four Minor findings, each published inline.
+
+## Review follow-up
+
+Current web head: `ab7c4075f3721767b84406294e3c97a4691d71a5`.
+M1/M2/M4 are addressed: one visual/native/accessibility missing-cell formatter;
+per-option focusable notes instead of landmarks; common targeting-clearance
+placement and height budget for the choice tray. M3 is explicitly deferred to
+the existing toolkit#1987/API#1084 metadata-delivery issues: keep the agreed
+absence marker, not a frontend rule description or hidden gap.
+
+Suggested compact lifecycle tests exposed pin resurrection after withdrawal;
+withdrawn readonly IDs now clear. Both the new missing-cell and withdrawal tests
+failed before the fixes. Escape is pinned as closing inspection while preserving
+the collection and submitting nothing. Focused tests pass62/62; the complete
+local gate passes at this head:569 files/1 skipped,7,791 tests/6 skipped.
+Logs: `/tmp/action-information-ui-review-ci.log`,
+`/tmp/rpg-dnd5e-web-ci-check.dDHR94/tests.log`.
+
+The browser proof reran at clean `ab7c4075`, with native touch and keyboard
+inspection and an additional supplied60px targeting-clearance geometry check.
+Evidence is under web `evidence/action-information/review-followup/`; updated
+screenshots were read. No gameplay HTTP commands or viewport overflow.
+
+The original review checkout was removed by the runtime and exact retained
+resume rejected it. [Focused independent closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1238#pullrequestreview-5456407990)
+is published and read back at `ab7c4075`, under a disclosed same-role fallback in
+a parent-owned isolated checkout. The reviewer ran831 tests and typecheck;
+M1/M2/M4 are verified addressed, M3's provider deferral is accepted, and no
+Critical/Important findings remain. Additional optional M5 (one legacy inline
+hover-card blank-marker DOM assertion) is deferred to project#543's remaining
+integration checks; shared helper and other rendered-path coverage already pass.
+All five finding threads carry dispositions and are resolved. All GitHub checks
+pass on the same head; the worktree is clean and the PR reports CLEAN.
+
+The UI consumer is ready for the operator's merge decision. No merge/deployment,
 provider metadata delivery or Patient Defense repair is claimed by this receipt.
