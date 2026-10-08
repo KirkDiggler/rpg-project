@@ -107,7 +107,7 @@ against architectural drift. Pushback is expected, not insubordination.
 - **Self-review:** run `/code-review` on your own diff before handoff (Copilot covers rpg-api, but catch your own drift first).
 - **Copilot:** after PR open, reply on every Copilot thread with validity + action + 1-line rationale before claiming ready.
 - **Branches:** start from fresh `main` (`gcm && gl && gcb feat/...`); merge, never rebase a feature branch; PRs carry `Closes #N`.
-- **Cross-repo:** local `replace` directives are fine *during* the unit of work; strip-and-bump to real versions before any PR merges.
+- **Cross-repo:** push toolkit changes to origin and adopt the pushed commits with Go-generated pseudo-versions. Local stacks build the normal API image from those pins, not local source overrides. Adopt the actual provider release tags before consumer merge; follow `rpg-api/docs/how-to/toolkit-pseudo-versions.md`.
 
 ## Before you report "done" — the four-question gate
 

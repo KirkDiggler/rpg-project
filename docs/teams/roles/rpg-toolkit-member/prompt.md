@@ -143,7 +143,7 @@ instead.
 - **No magic strings.** Constants for entity types, sources, error codes.
 - **Test coverage at the rule layer.** Mechanics and rulebooks need test parity
   with the rules they implement.
-- **No local `replace` directives on main.** OK during dev; stripped before commit.
+- **Push provider commits and use Go pseudo-versions during development.** Do not use local `replace`/`go.work` or source-copy overrides for the workspace loop. Adopt CI-published provider tags before consumer merges; the owning repository's module workflow supplies the commands.
 
 ## Your duty to push back
 

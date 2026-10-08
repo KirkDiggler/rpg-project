@@ -1,5 +1,8 @@
 # Repair permitted prop presentation
 
+Status: implemented, independently reviewed and merged. The checkpoints below
+retain the development record; the merge-out checkpoint is the current delivery state.
+
 ## Goal / authority / baseline
 
 Operator: repair props that rendered before web#1217 disabled gameplay source reads.
@@ -253,8 +256,25 @@ review5453087994. Parent verified the published commit IDs, verdicts and green
 checks after consuming the report. The reviewer independently ran gates and a
 missing-sheet mutation probe. Base-owned proof-load comment drift is tracked
 separately as toolkit#1984; it is not a gameplay capability failure.
-Actual released provider pins, remaining authored-placement/asset acceptance and
-operator merge authorization still apply. No PR merges.
+That checkpoint preceded operator merge authorization; the release step follows.
+
+## Merge-out checkpoint
+
+The operator authorized merging the five-PR chain and repinning CI-generated tags.
+Encounter#1935 merged at7472c728; Auto Tag Modules (Safe) run37744801831 published
+encounterv0.118.0 at that exact commit. SDK#1947 adopted it at e3be2740, passed its
+full gates and merged at4bd0653e; run37747000220 published sessionv0.121.0 at that
+exact merge commit. API#1077 adopted both release tags at0268e62a, passed full CI
+and merged to dev at6351e5f1. Web#1226 reconciled current dev at32758a57 with no
+manual merge resolutions, passed full Node22 CI, and merged to dev atc2a75fe8.
+
+The final release-pinned API/web combination passes the same normal dedicated-test
+playthrough: real declared books and undeclared vase/altar GLBs, far-room absence
+before opening, event-only reveal with GetKnowledge held, close/reload memory,
+no page errors and no unrestricted gameplay source fetch. Evidence is
+/tmp/mergeout-live-proof.json and /tmp/mergeout-live-event-only-open.png.
+No operator data or unrelated worktrees were cleared. Floor assembly#528 and
+placement/migration/asset polish remain separate follow-ups, not missing release pins.
 
 No implementation is called complete before its tests and joined evidence exist.
 Public constructor details and any new lifetime decision must be checked against

@@ -1,8 +1,8 @@
 # Structural walls — architecture and boundaries
 
 This is an architecture overview of [#527](https://github.com/KirkDiggler/rpg-project/issues/527),
-not a new implementation authorization. The CloseDoor SDK/API slice has shipped;
-the structural-wall providers and consumers remain work in progress.
+not a new implementation authorization. CloseDoor and the structural-wall providers
+and consumers are merged. Content assembly and asset/authoring polish remain separate.
 
 ## Component shape
 
@@ -244,28 +244,28 @@ Floor-surface authoring and room assembly remain separate work under
   and [API #1075](https://github.com/KirkDiggler/rpg-api/pull/1075).
 - **Merged contract:** structural wire records in
   [protos #376](https://github.com/KirkDiggler/rpg-api-protos/pull/376).
-- **Open provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
-  containing compilation, layout, persistence, projection and reveal production.
-  The newer ordinary-discovery delta and its footing correction are independently
-  reviewed; both findings are verified addressed.
-- **Draft adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
-  carrying those answers across the session boundary on pushed provider pins.
-- **Draft consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
-  and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226), including
-  replacement mappings and atomic cache/hydration recovery. The prop repair and
-  wall-control/default edits are now published with a green full web gate;
-  their implementation findings and focused reviewer closure are complete.
-  Current-base integration and released dependency adoption remain gates.
+- **Merged provider:** [toolkit #1935](https://github.com/KirkDiggler/rpg-toolkit/pull/1935),
+  released as encounter v0.118.0: compilation, layout, persistence, ordinary
+  discovery, prop presentation and reveal production.
+- **Merged adapter:** [toolkit #1947](https://github.com/KirkDiggler/rpg-toolkit/pull/1947),
+  released as session v0.121.0 with the released encounter dependency.
+- **Merged consumers:** [API #1077](https://github.com/KirkDiggler/rpg-api/pull/1077)
+  and [web #1226](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1226) on dev.
+  API pins the released encounter/session modules; web retains the published
+  v0.1.226 proto contract. Both are reconciled with their current bases.
 - **Merged patch wire:** [protos #380](https://github.com/KirkDiggler/rpg-api-protos/pull/380),
   published as v0.1.225 and adopted by both consumers. Encounter replacements /
   membership correction are in #1935; the typed session adapter is in #1947.
+- **Merged appearance wire:** [protos #381](https://github.com/KirkDiggler/rpg-api-protos/pull/381),
+  published as v0.1.226: permitted fixed prop records and captured mutable appearance.
 - **Joined proof:** regular World Builder import/Save & Play, model-click door
   operation and event-only rendering while snapshot responses are held. The earlier
   unchanged-floor proof concerns explicit door-only concealment, not permission to
   reveal an ordinary far-side room. The newer ordinary-discovery walk withholds that
   floor and reveals it on opening. A follow-up walk verified all35 authored cells
   after opening, including the corrected wall footing, while snapshot responses
-  were held. Actual toolkit release pins and consumer-base reconciliation remain.
+  were held. The release-pinned stack with the current desktop hotbar passes the
+  same real-GLB, event-only, close/reload and source-access checks.
 - **Outstanding acceptance:** additional authored scenarios and placement guidance;
   document migration and UX/asset polish.
   "Builder v5" is not an agreed serialization version.
@@ -284,10 +284,10 @@ Floor-surface authoring and room assembly remain separate work under
   review and finding closure pass; no unrestricted source fetch was restored. Older encounters
   without captured definitions require a normal new playthrough, not a profile reset.
 
-The cross-run discovery correction is independently reviewed and active locally.
-That closure does not cover ordinary-room partitioning, wall controls or prop
-appearance. Existing encounters keep their saved geometry and learned facts; the
-new compiler behavior is exercised by new playthroughs, never a profile reset.
+Run-owned discovery, ordinary-room partitioning, wall controls and prop appearance
+have their own independent review coverage. Existing encounters keep their saved
+geometry and learned facts; new compiler behavior is exercised by new playthroughs,
+never a profile reset.
 
 Standalone bound doors use their supplied canonical identity to participate in
 known-boundary presentation without teaching adjoining room floor. Explicit door
@@ -299,7 +299,7 @@ Editor slider limits are authoring affordances, not a second runtime clamp.
 
 ## Source map
 
-Under [encounter's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/structural-surfaces/rulebooks/dnd5e/encounter):
+In the [encounter package](https://github.com/KirkDiggler/rpg-toolkit/tree/main/rulebooks/dnd5e/encounter):
 
 | Concern | Source |
 |---|---|
@@ -310,6 +310,6 @@ Under [encounter's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tr
 | Reveal deltas | `structural_reveal.go`, `revealbeat.go` |
 | Explicit membership vs inferred support-cell coupling | `concealment.go`, `discovery.go`, `search.go` |
 
-[Session's feature branch](https://github.com/KirkDiggler/rpg-toolkit/tree/feat/527-structural-session/rulebooks/dnd5e/session)
-adds `structural.go` and the corresponding conversion/replay tests. It carries
+The [session package](https://github.com/KirkDiggler/rpg-toolkit/tree/main/rulebooks/dnd5e/session)
+contains `structural.go` and the corresponding conversion/replay tests. It carries
 encounter answers; it does not own their geometry or disclosure policy.
