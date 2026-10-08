@@ -124,7 +124,7 @@ Execute Tasks 1–4 in order in the web worktree because they share types/compos
 - [x] Update owning docs; ensure production modules import no concept fixtures.
 - [x] Run one complete `npm run ci-check` at the PR boundary; publish actual results.
 - [x] Open linked PR(s), run the required independent review round and publish its verdict.
-- [ ] After operator-authorized provider merge, reverify the merged runtime dependency before consumer release.
+- [x] After operator-authorized provider merge, reverify the merged runtime dependency before consumer release.
 
 **Verification:** Web worktree: `npm run test:run -- src/components/session/SessionEncounterView.test.tsx src/components/session/SessionCanvas.test.tsx src/components/hex-grid/EntityTargetMarker.test.tsx src/components/session/combat-experience/useDesktopHotbarFrame.test.tsx`; `npm run typecheck`; then `npm run ci-check` once before opening/updating PR. Real route: join a live fixture session, inspect an attack with no effects, cast a supported multi-target spell with map/list removal and confirm, exercise unavailable/stale offers, wait for notice expiry, recover history without replay, inspect debug overlay, resize through desktop and mobile widths. Capture requests, screenshots and browser errors. Do not substitute the concept route for this walk.
 **Completion evidence:** Web `1326a39d`; 244 joined encounter/canvas/frame tests pass, then 149 focused cases cover the live-walk refinements and 135 cover the row-lifecycle check (overlapping sets, not additive totals). Isolated `local/desktop-hotbar`: web 3032/API 8112, API revision `c68267270549c0140ec2339b5639bdee8e3202cc`. Real seeded Bard entered Reference Tomb, selected/toggled Skeleton and Zombie for Bane, preserved picks on re-click, and sent exactly one decoded CAST with those ordered IDs after confirmation. Canvas identity held; three result notices expired into retained history; reload replay stayed quiet. Desktop/short/four-row/mobile screenshots inspected; debug JSON preserved bar geometry and sent no commands. Worktree-local `evidence/desktop-hotbar/live-integration.json` and screenshots retain the proof. The first probe treated valid304 cache responses as errors; read-only verification confirmed loaded image dimensions and exact served bytes. Live walking exposed delayed desktop default-log initialization and legacy world-clock rows, both corrected with regressions. Encounter-owned row state survives compact/desktop remounts without storage. The first completed full gate passed format/lint/types/build, then reported 7,516 passing tests, five skips and one unchanged `RoomPublishingPanel.test.tsx` focus assertion failure. That file has no diff against dev and passes all 29 cases in isolation. The complete gate rerun passes: 548 files passed/one skipped, 7,517 tests passed/five skipped, plus format/lint/types/build, exit0. [Web PR #1228](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1228) retains the initial failure and full successful gate output. Initial independent review is published on assets#289 and web#1228, with no Critical/Important findings and one Minor W-1. The asset verdict is clear. W-1 has an Addressed disposition with pushed `06f766bb` in its inline thread; the independent closure review verifies that fix and its thread is resolved. Its new complete boundary gate passes (7,519 tests, five skipped), with exact output added to the web PR; all GitHub checks on `06f766bb` also pass. Neither gates nor this plan authorize merge/deployment.
@@ -165,7 +165,7 @@ The plan assigns every slice requirement to an owner and joined proof. Existing 
 
 Task contracts are ready for execution in dependency order. The exact private source hashes are Task 5's measured inputs, not invented values in this public plan. If the accepted source files cannot be matched or the live fixtures expose an unsupported required command contract, report that concrete blocker and update the affected task instead of substituting assets or weakening dispatch checks.
 
-Tasks 1–5 and Task 6's live wiring/walk have evidence recorded above. The real local route is opted in. Full application CI passes on the implemented source. An initial gate was stopped before completion to add the row-lifecycle fix; the first completed gate found the unrelated focus assertion described above, and one complete rerun passed. Implementation and independent review are complete: W-1 is fixed, independently verified and resolved; complete local CI and all GitHub checks pass on `06f766bb`. Provider merge and consumer release remain pending, operator-controlled actions. Merge private assets#289 before releasing web#1228, then reverify the merged runtime dependency. `06f766bb` is the reviewed consumer head. The published records are web#1228, assets#289 and project#540. No deployment or merge-ready claim.
+Tasks 1–5 and Task 6's live wiring/walk have evidence recorded above. The real local route is opted in. Full application CI passes on the implemented source. An initial gate was stopped before completion to add the row-lifecycle fix; the first completed gate found the unrelated focus assertion described above, and one complete rerun passed. Implementation and independent review are complete: W-1 is fixed, independently verified and resolved; complete local CI and all GitHub checks pass on current consumer head `ed009335`. The operator merged private assets#289, and the merged runtime dependency is reverified below. Web merge and release remain operator-controlled actions. The published records are web#1228, assets#289 and project#540. No web merge or deployment performed.
 
 ## Operator walkthrough refinement: compact free roam
 
@@ -192,5 +192,26 @@ format/lint/types/build green, exit0. The retained reviewer reports no findings
 on the four-file delta after 216 focused tests, typecheck and lint; its exact-head
 [review is published](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1228#pullrequestreview-5450066917).
 Fresh GitHub checks run on the pushed refinement. Prior gates/reviews above
-describe `06f766bb`; `ed009335` is now the consumer head. Asset merge and release
-remain operator-controlled.
+describe `06f766bb`; `ed009335` is now the consumer head. Asset merge is complete;
+web merge and release remain operator-controlled.
+
+## Merged provider verification
+
+The operator merged assets#289 at `b23b03de06a9e7b3768df8776a973c9a0d25366c`.
+Its selected sprite/provenance/inventory bytes are identical to the independently
+reviewed `4ebe029` provider. A clean detached provider worktree at the merged
+commit passes `promote_desktop_hotbar.py --check`, complete-inventory verification
+and `verify_web_asset_stage.py --verify-only`.
+
+The web worktree is synced from this merged provider with `--pinned-runtime`,
+retaining its existing character/NPC/world catalog pins and restoring the ignored
+concept preview art afterward. Production-mode `--runtime-assets` also succeeds
+into a fresh staging destination. All 15 sprite hashes match the merged manifest
+in the local web tree, the production-style stage and the running web's HTTP
+responses. The public web source tree stays clean.
+
+No web dependency bump is required: UI sprites have no committed provider pin;
+production packaging clones the asset default branch and performs runtime sync.
+Do not regenerate unrelated catalogs merely to adopt this additive icon set.
+The asset blocker is cleared, and current web GitHub checks are all green. This
+verification does not authorize a web merge or deployment.
