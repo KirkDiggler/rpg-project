@@ -166,3 +166,31 @@ The plan assigns every slice requirement to an owner and joined proof. Existing 
 Task contracts are ready for execution in dependency order. The exact private source hashes are Task 5's measured inputs, not invented values in this public plan. If the accepted source files cannot be matched or the live fixtures expose an unsupported required command contract, report that concrete blocker and update the affected task instead of substituting assets or weakening dispatch checks.
 
 Tasks 1–5 and Task 6's live wiring/walk have evidence recorded above. The real local route is opted in. Full application CI passes on the implemented source. An initial gate was stopped before completion to add the row-lifecycle fix; the first completed gate found the unrelated focus assertion described above, and one complete rerun passed. Implementation and independent review are complete: W-1 is fixed, independently verified and resolved; complete local CI and all GitHub checks pass on `06f766bb`. Provider merge and consumer release remain pending, operator-controlled actions. Merge private assets#289 before releasing web#1228, then reverify the merged runtime dependency. `06f766bb` is the reviewed consumer head. The published records are web#1228, assets#289 and project#540. No deployment or merge-ready claim.
+
+## Operator walkthrough refinement: compact free roam
+
+The operator's `Screenshot_20261008_091906.png` shows the desktop WORLD bar
+stacking the old exploration banner, standalone utilities, action surface and
+footer. Pushed web `ed009335` uses the same offers-plus-utility-footer composition
+as combat, with a small movement/freshness hint. Compact/mobile composition,
+provider offers, availability and command callbacks are unchanged.
+
+A regression fails on the old composition because the hint/utilities sit outside
+the desktop surface. The new layout passes 213 focused tests serially, typecheck
+and changed-file lint. One parallel run hit the previously observed unchanged
+scene-identity assertion; its full file passes 133 tests alone, and investigation
+is tracked separately in web#1229 rather than weakening the assertion.
+
+Real free-roam verification uses the separate seeded level-up-fighter session,
+leaving the Bard session untouched. The one-row dock measures 134.5px at
+1440/1280/1000px viewport widths, including a 501px-high frame; no page overflow,
+page errors or gameplay commands during layout checks. Screenshots inspected;
+393px mobile retains its old exploration panel. Evidence is local/ignored under
+`evidence/desktop-hotbar/hotbar-free-roam*`. Full boundary CI passes on
+`ed009335`: 548 files passed/one skipped, 7,522 tests passed/five skipped,
+format/lint/types/build green, exit0. The retained reviewer reports no findings
+on the four-file delta after 216 focused tests, typecheck and lint; its exact-head
+[review is published](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1228#pullrequestreview-5450066917).
+Fresh GitHub checks run on the pushed refinement. Prior gates/reviews above
+describe `06f766bb`; `ed009335` is now the consumer head. Asset merge and release
+remain operator-controlled.
