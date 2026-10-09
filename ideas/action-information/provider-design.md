@@ -60,8 +60,10 @@ flowchart LR
 | R12 | settled | Session owns prose for session-owned verbs; the root's basic-action information does not ship | KirkDiggler | 2026-10-09 |
 | R13 | settled | Draft toolkit#1985 is the root base, merged forward from main; one nearest-go.mod module per PR; dependents pin only gate-approved heads; no behaviour or wire change beyond the additive information fields; Patient Defense (toolkit#1986) untouched | KirkDiggler | 2026-10-09 |
 | R14 | settled | Cast facts stated now: save abilities, DC, success outcome, damage, applied conditions by ref, healing, range, targets, area, concentration; condition prose from its owner; absent stays absent | KirkDiggler | 2026-10-09 |
+| R15 | settled | Display names already in selector material stay there: `Definition.Name`, `CastOption.Label`, `MembershipName`, `contributions.Source.Name`/`Label`; every existing golden stays byte-identical; a selector-version bump waits for a use case. Any field named `*Description` is prose by guard | KirkDiggler | 2026-10-09 |
+| R16 | settled | A feature whose code does not deliver its benefit returns an empty description: Patient Defense (toolkit#1986) and Deflect Missiles (toolkit#1992); the test names the allowed empties with their issues | KirkDiggler | 2026-10-09 |
+| R17 | settled | Session reads `saves` TYPES and CONSTANTS to project a fact; the boundary test refuses any call through the saves import; string stand-ins for constants are refused | KirkDiggler (platform ruling) | 2026-10-09 |
 
 ## Open
 
-- **O1 — Display names in selector material.** `Definition.Name` and `CastOption.Label` are display words that already reach the selector. Removing them is a selector-version bump that invalidates every held ID. Recommendation: keep both in the projection so every existing golden stays byte-identical. R11 governs new prose; a version bump waits for a use case.
-- **O2 — Patient Defense prose.** The feature must implement `Description()`, but it spends ki without delivering its benefit (toolkit#1986). Recommendation: it returns an empty description, so the card shows missing information rather than a benefit the code does not deliver. Prose lands with the #1986 repair.
+None. O1–O3 are settled as R14–R16.

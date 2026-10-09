@@ -223,7 +223,7 @@ offer prose is a named constant beside its existing `…Name` constant.
   - `TestBaneReusesCatalogue`: Bane's description equals `spells.GetData(spells.Bane).Description`.
   - `TestBaneCastFacts`: built with `SpellSaveDC: 13`. Save is CHA (the code's Bane is a Charisma save), DC 13 with `DCKnown`, `OnSuccess` Negated. One effect, `dnd5e:conditions:baned`, recipient target, `OnFailedSave`. Targets one_creature 1 to 3, range 30, concentration present, no damage.
   - `TestThunderwaveCastFacts`: CON save, `OnSuccess` Half, damage `2d8` thunder with no ability fact. Area box 15 ft from the caster's edge, catches others.
-  - `TestCureWoundsCastFacts`: healing `1d8` with the input's modifiers in order (spellcasting modifier, then Disciple of Life when supplied). No save, no effects, touch, 1 to 1.
+  - `TestCureWoundsCastFacts`: healing `1d8` with the input's modifiers in order (spellcasting modifier, then Disciple of Life when supplied); session renders each as ` + <name> (%+d)`, e.g. `1d8 + WIS modifier (+3) + Disciple of Life (+2)`, a negative as `(-1)`, zero as `(+0)`. No save, no effects, touch, 1 to 1.
   - `TestNonStaticDCIsUnknown`: a gate with `saves.DCFivePlusDamageTaken()` gives `DCKnown == false` and `DC == 0`.
   - `TestNilAndInvalidInputRefused`
 - `AbilityModifierInformationSuite`: unchanged and green.
@@ -322,7 +322,7 @@ Description string `json:"description,omitempty"`
 
 | Fact | Label | Value |
 |---|---|---|
-| each `DamageFact` | `Base damage` | dice, then ` %+d` when `FlatBonus != 0`, then ` + STR modifier (%+d)` when `Ability != nil && Participates`, then ` · ` and `Type.Display()` |
+| each `DamageFact` | `Base damage` | dice, then ` + 2` / ` - 2` (operator spaced both sides) when `FlatBonus != 0`, then ` + STR modifier (%+d)` when `Ability != nil && Participates` (zero shown as `(+0)`), then ` · ` and `Type.Display()` — e.g. `1d8 + 2 + DEX modifier (+3) · Piercing` |
 | each `Cast.DamageIfInjured` | `Damage if injured` | same form as base damage |
 | `Grip` when not none | `Grip` | `One-handed` / `Two-handed` / `Off-hand` |
 | `Cast.Save` | `Save` | abilities joined by ` or `, then ` save`; then ` · DC %d` when `DCKnown`; then ` · success: negated` or ` · success: half damage`; then ` · repeats at end of turn` for end_of_turn. Example: `CHA save · DC 13 · success: negated` |
