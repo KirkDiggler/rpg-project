@@ -79,8 +79,10 @@ full interactive, scrollable action-information card. Explicit full inspection
 stays on its named target until closed or explicitly changed. Close/Escape
 dismisses information without cancelling the action or changing its picks.
 
-The automatic peek puts the contextual effect lists first: the target name and
-current action identify what the answers are about. Full inspection keeps the
+The automatic peek prioritizes observed target-held rows, then the actor's
+target-specific answers: the target name and current action identify what those
+answers are about. It stays out of the way while other dock controls are being
+inspected. Full inspection keeps the
 agreed description/base-facts-before-effects layout. Stale information is labelled;
 a candidate withdrawal or action change cannot leave another target's old rows
 on screen. Compact targeting already has its own target-effect path; preserve it.

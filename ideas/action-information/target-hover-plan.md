@@ -60,9 +60,9 @@ change, selected chips, focus, touch-not-auto-hover, pointer-transparent preview
 explicit full-reader priority and Close/Escape. Keep prior selection/confirmation
 regressions intact.
 
-- [ ] Add regressions and observe the intended pre-change failure.
-- [ ] Implement the UI-only state/render path and bounded preview style.
-- [ ] Run focused tests and typecheck; retain compact-target parity.
+- [x] Add regressions and observe the intended pre-change failure.
+- [x] Implement the UI-only state/render path and bounded preview style.
+- [x] Run focused tests and typecheck; retain compact-target parity.
 
 **Verification:** web cwd `npm run test:run -- src/components/session/combat-experience/MapFirstTargeting.test.tsx src/components/session/combat-experience/memberTargeting.test.ts`; `npm run typecheck`.
 **Evidence:** pending.
@@ -87,9 +87,9 @@ fixtures, keyboard/touch and narrow/short frame bounds. Fixture proof is labelle
 as such; a live provider-backed run remains an integration acceptance item in
 [delivery.md](delivery.md), not a fabricated completed check.
 
-- [ ] Add joined-route assertions with generated provider data.
-- [ ] Read browser screenshots; record commands, callbacks and geometry.
-- [ ] Run full `npm run ci-check` before publishing the web PR.
+- [x] Add joined-route assertions with generated provider data.
+- [x] Read browser screenshots; record commands, callbacks and geometry.
+- [x] Run full `npm run ci-check` before publishing the web PR.
 - [ ] Independent review with published findings/dispositions.
 
 **Verification:** focused route tests, actual browser renderer, then complete
@@ -117,3 +117,31 @@ Plan check: preserve initial closed information with no hover, keep explicit
 inspection distinct from automatic pointer-transparent peeking, and do not let a
 new overlay intercept the original map-target click. No second target identity,
 inspection RPC or condition catalogue is introduced.
+
+## Checkpoint
+
+Web [PR#1241](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241), head
+`713056cc670eba5702ddafb9f5e7ab34d595a339`, implements H1 and the consumer checks
+in H2. Six new component regressions plus a joined route extension cover the
+new behavior; the initial four hover tests failed against the old implementation.
+Focused component/helper/route tests pass161/161, and complete local CI passes:
+569 files/1 skipped,7,798 tests/5 skipped. Logs: `/tmp/target-hover-ci.log`,
+`/tmp/rpg-dnd5e-web-ci-check.elFc8L/tests.log`.
+
+Browser proof uses production SessionCanvas and combat components with generated
+fixture offers, at1440 desktop and1000×900/501. Guard hover shows its held Faerie
+Fire separately from the actor's target-specific Sneak Attack answer; the
+unavailable archer shows a different answer and no inherited held rows. Peeks are
+pointer-transparent, take no focus/intent, and hide over other dock inspections.
+Explicit full-reader keyboard scrolling/closing, keyboard list preview and
+native touch Info/Close remain read-only; a deliberate scalar map click still
+emits the original fixture intent and the canvas node remains identical. A stale
+fixture change withdraws the old targeting scope. Screenshots were inspected;
+no page errors/gameplay HTTP requests or tested viewport overflow.
+
+Evidence: ignored web `evidence/target-hover/` browser/touch scripts, JSON and PNGs.
+Preview: `http://localhost:3041/?concept=desktop-hotbar&preview=1`, Martial profile,
+Longsword, hover a target. Private runtime roots were synced with pinned catalog
+subtrees; no licensed binaries enter the public diff. Independent review is
+running. Real provider-backed description delivery remains the separate gate
+listed in delivery.md; no follow-up merge/deployment is claimed.
