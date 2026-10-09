@@ -1,0 +1,65 @@
+# Action information — provider
+
+The provider half of [action information](design.md): how the toolkit and API
+supply what the game's card reads. Plan: [provider slices](provider-slices.md).
+Rulings continue the folder's numbering; R1–R9 live in [design.md](design.md).
+
+## Shape
+
+```mermaid
+flowchart LR
+  subgraph Root["rulebooks/dnd5e (root)"]
+    Content["Content owners<br/>spell catalogue · combat ability · feature<br/>cast-option producer · reaction producer"]
+    Def["actions.Definition<br/>Description + profiles"]
+    Facts["actions.Describe<br/>typed BaseFacts, no strings"]
+    Rule["damage.IncludesAbilityModifier"]
+    Content --> Def --> Facts
+    Rule --> Facts
+  end
+  subgraph Res["resolution"]
+    Strike["strike rollDamage"]
+    Pose["Pose / Choice<br/>carries option prose through freeze"]
+  end
+  Rule --> Strike
+  Content --> Pose
+  subgraph Ses["session"]
+    Attach["attachInformation (Afford only)<br/>renders facts into label/value rows"]
+    Verbs["session-owned verb prose<br/>Move · End Turn · Death Save · social · OA"]
+    Sel["declaration selector<br/>allow-list projection of Definition"]
+  end
+  Facts --> Attach
+  Verbs --> Attach
+  Pose --> Attach
+  Def --> Sel
+  Attach --> Decl["Declaration.Information<br/>CastOption.Description"]
+  Decl --> API["rpg-api convert<br/>field for field"]
+  API --> Web["web card<br/>description · base facts · effects"]
+```
+
+## Law
+
+- **R10 — Facts are typed below the projection.** The root states an action's base facts as typed values. No root or resolution code formats a display string for them. Session renders each fact into one wire `label/value` row; API and web copy it and never re-derive it.
+- **R10 — One inclusion answer.** Whether an ability modifier joins base damage has exactly one implementation, `damage.IncludesAbilityModifier`. `actions.Describe` and strike damage both ask it; neither keeps its own conditional.
+- **R10 — Facts state, the projection filters.** A fact the projection does not show is still stated below it: a non-participating modifier is a fact with `Participates == false`, not an absent field.
+- **R11 — The selector is an allow-list.** A declaration ID hashes an explicit mechanical projection of the definition. A field reaches the selector only by being written into that projection. Prose fields are never in it.
+- **R11 — Every field is classified.** Each field in the definition's type tree is classified as mechanical or prose by a test. An unclassified field fails the build, so a new mechanical field cannot silently escape identity and new prose cannot silently enter it.
+- **R12 — Prose lives with its noun's owner.** A spell's description comes from the spell catalogue. An ability's comes from its combat ability or feature. A choice's comes from the producer that declares the option. A reaction's comes from the condition or feature that offers it. Session authors prose only for the verbs it owns and the opportunity attack it names.
+- **One attach point.** Information is attached in `Afford` alone, beside effect rows. No execution path computes or reads it, and it never changes `Available`, `Why`, `ID`, `Candidates` or `Effects`.
+- **Absent stays absent.** An empty description stays empty and no facts means no detail rows. Nothing is synthesised from a ref, an ID or a name. A declaration with neither carries no information.
+- **Prose survives a freeze, mechanics resume.** Option and offer prose rides frozen payloads and window payloads unchanged. Resuming a frozen action reads only its frozen mechanics.
+- **The wire is fixed.** `Declaration.information` and `CastOption.description` carry everything. No proto change, new RPC or stream event is part of this work.
+
+## Rulings
+
+| ID | status | scope | ruled by | date |
+|---|---|---|---|---|
+| R10 | settled | Root exposes typed base facts; session renders the wire's label/value rows; wire unchanged | KirkDiggler | 2026-10-09 |
+| R11 | settled | Declaration selector hashes an explicit allow-list projection of the definition; prose never reaches it | KirkDiggler | 2026-10-09 |
+| R12 | settled | Session owns prose for session-owned verbs; the root's basic-action information does not ship | KirkDiggler | 2026-10-09 |
+| R13 | settled | Draft toolkit#1985 is the root base, merged forward from main; one nearest-go.mod module per PR; dependents pin only gate-approved heads; no behaviour or wire change beyond the additive information fields; Patient Defense (toolkit#1986) untouched | KirkDiggler | 2026-10-09 |
+
+## Open
+
+- **O1 — Display names in selector material.** `Definition.Name` and `CastOption.Label` are display words that already reach the selector. Removing them is a selector-version bump that invalidates every held ID. Recommendation: keep both in the projection so every existing golden stays byte-identical. R11 governs new prose; a version bump waits for a use case.
+- **O2 — Patient Defense prose.** The feature must implement `Description()`, but it spends ki without delivering its benefit (toolkit#1986). Recommendation: it returns an empty description, so the card shows missing information rather than a benefit the code does not deliver. Prose lands with the #1986 repair.
+- **O3 — Save and area spell facts.** `Describe` states attack-profile damage, reach and range. A save spell's DC, save ability and save damage are not stated as facts. Recommendation: defer until a walk names the gap; the catalogue description already explains these spells.
