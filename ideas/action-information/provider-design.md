@@ -9,9 +9,9 @@ Rulings continue the folder's numbering; R1–R9 live in [design.md](design.md).
 ```mermaid
 flowchart LR
   subgraph Root["rulebooks/dnd5e (root)"]
-    Content["Content owners<br/>spell catalogue · combat ability · feature<br/>cast-option producer · reaction producer"]
+    Content["Content owners<br/>spell catalogue · combat ability · feature<br/>cast-option producer · reaction producer<br/>condition display catalogue"]
     Def["actions.Definition<br/>Description + profiles"]
-    Facts["actions.Describe<br/>typed BaseFacts, no strings"]
+    Facts["actions.Describe<br/>typed BaseFacts + CastFacts, no strings"]
     Rule["damage.IncludesAbilityModifier"]
     Content --> Def --> Facts
     Rule --> Facts
@@ -41,6 +41,8 @@ flowchart LR
 - **R10 — Facts are typed below the projection.** The root states an action's base facts as typed values. No root or resolution code formats a display string for them. Session renders each fact into one wire `label/value` row; API and web copy it and never re-derive it.
 - **R10 — One inclusion answer.** Whether an ability modifier joins base damage has exactly one implementation, `damage.IncludesAbilityModifier`. `actions.Describe` and strike damage both ask it; neither keeps its own conditional.
 - **R10 — Facts state, the projection filters.** A fact the projection does not show is still stated below it: a non-participating modifier is a fact with `Participates == false`, not an absent field.
+- **R14 — Cast facts are stated.** A cast states, as typed facts: its save abilities, DC and what success buys (negated or half), its damage pools, the conditions it applies by ref with whether a failed save gates them, healing, range, targets, area and concentration. A DC is stated as a number only when its source is static; otherwise it is stated unknown, never guessed.
+- **R14 — A condition's prose is its owner's.** An applied condition is named and explained from the condition display catalogue (`conditions.DisplayFor`), never by the spell or session. A condition without catalogue detail is shown by name alone.
 - **R11 — The selector is an allow-list.** A declaration ID hashes an explicit mechanical projection of the definition. A field reaches the selector only by being written into that projection. Prose fields are never in it.
 - **R11 — Every field is classified.** Each field in the definition's type tree is classified as mechanical or prose by a test. An unclassified field fails the build, so a new mechanical field cannot silently escape identity and new prose cannot silently enter it.
 - **R12 — Prose lives with its noun's owner.** A spell's description comes from the spell catalogue. An ability's comes from its combat ability or feature. A choice's comes from the producer that declares the option. A reaction's comes from the condition or feature that offers it. Session authors prose only for the verbs it owns and the opportunity attack it names.
@@ -57,9 +59,9 @@ flowchart LR
 | R11 | settled | Declaration selector hashes an explicit allow-list projection of the definition; prose never reaches it | KirkDiggler | 2026-10-09 |
 | R12 | settled | Session owns prose for session-owned verbs; the root's basic-action information does not ship | KirkDiggler | 2026-10-09 |
 | R13 | settled | Draft toolkit#1985 is the root base, merged forward from main; one nearest-go.mod module per PR; dependents pin only gate-approved heads; no behaviour or wire change beyond the additive information fields; Patient Defense (toolkit#1986) untouched | KirkDiggler | 2026-10-09 |
+| R14 | settled | Cast facts stated now: save abilities, DC, success outcome, damage, applied conditions by ref, healing, range, targets, area, concentration; condition prose from its owner; absent stays absent | KirkDiggler | 2026-10-09 |
 
 ## Open
 
 - **O1 — Display names in selector material.** `Definition.Name` and `CastOption.Label` are display words that already reach the selector. Removing them is a selector-version bump that invalidates every held ID. Recommendation: keep both in the projection so every existing golden stays byte-identical. R11 governs new prose; a version bump waits for a use case.
 - **O2 — Patient Defense prose.** The feature must implement `Description()`, but it spends ki without delivering its benefit (toolkit#1986). Recommendation: it returns an empty description, so the card shows missing information rather than a benefit the code does not deliver. Prose lands with the #1986 repair.
-- **O3 — Save and area spell facts.** `Describe` states attack-profile damage, reach and range. A save spell's DC, save ability and save damage are not stated as facts. Recommendation: defer until a walk names the gap; the catalogue description already explains these spells.

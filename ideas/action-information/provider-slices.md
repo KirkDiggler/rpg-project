@@ -1,6 +1,6 @@
 # Action information — provider slices
 
-Authority: [provider law](provider-design.md) R10–R13, the folder's [design](design.md)
+Authority: [provider law](provider-design.md) R10–R14, the folder's [design](design.md)
 R1–R9, toolkit#1987 hand-off and rulings, protos#384 wire. This plan replaces the
 provider half of [implementation-plan.md](implementation-plan.md) (T3–T7); T1–T2 stand.
 
@@ -25,9 +25,9 @@ walk: root tag, resolution, session, then API.
 
 | Slice | Write sites | New files |
 |---|---|---|
-| S1 root | 33 plus the merge | 0 (two exist on #1985) |
+| S1 root | 39 plus the merge | 0 (two exist on #1985) |
 | S2 resolution | 5 | 1 test file |
-| S3 session | 31 | 4 |
+| S3 session | 31 (the renderer grows inside the new `information.go`) | 4 |
 | S4 API | 3 + go.mod | 0 |
 | S5 web | 0 expected | walk script only |
 
@@ -66,10 +66,53 @@ type DescribeOutput struct {
 }
 
 type BaseFacts struct {
-    Damage []DamageFact     // one per attack damage pool, declared order; nil when none
+    Damage []DamageFact     // attack pools, then Cast.Damage pools, declared order; nil when none
     Grip   Grip             // GripNone unless the attack carries weapon context
     Melee  *MeleeDelivery   // copy of the attack's melee delivery, nil when ranged
     Ranged *RangedDelivery  // copy of the attack's ranged delivery, nil when melee
+    Cast   *CastFacts       // nil unless Definition.Cast is set (R14)
+}
+
+type CastFacts struct {
+    RangeFeet       int                // CastProfile.RangeFeet        combat/actions/cast.go:113
+    Targets         TargetsFact        // Target, MinTargets, MaxTargets cast.go:117, :121, :122
+    Save            *SaveFact          // CastProfile.Save              cast.go:132
+    DamageIfInjured []DamageFact       // CastProfile.DamageIfInjured   cast.go:147
+    Effects         []EffectFact       // CastProfile.Effects           cast.go:150
+    Healing         *HealingFact       // CastProfile.Healing           cast.go:102
+    Area            *CastArea          // copy of CastProfile.Area      cast.go:158 (Footprint, Catches: area.go:140)
+    Concentration   *CastConcentration // copy of CastProfile.Concentration cast.go:175 (TurnEnds: cast.go:226)
+}
+
+type TargetsFact struct {
+    Rule CastTargetRule // cast.go:20
+    Min  int
+    Max  int
+}
+
+type SaveFact struct {
+    Abilities  []abilities.Ability // SaveGate.Abilities   saves/gate.go:157
+    DC         int                 // SaveGate.DC.DC(saves.DCInput{}) when Kind() == saves.DCKindStatic (gate.go:84, :97)
+    DCKnown    bool                // false for any non-static DC source; DC is then 0
+    OnSuccess  saves.SaveEffect    // SaveGate.OnSuccess: Negated or Half (gate.go:20, :24, :163)
+    Recurrence saves.Recurrence    // SaveGate.Recurrence: none or end_of_turn (gate.go:33, :37)
+}
+
+type EffectFact struct {
+    Ref          core.Ref      // CastEffect.Ref        cast.go:248
+    Recipient    CastRecipient // CastEffect.Recipient  cast.go:245
+    OnFailedSave bool          // Save != nil; a gated cast delivers only to its target
+                               // (resolution/action.go:928 refuses anything else)
+}
+
+type HealingFact struct {
+    Dice      string          // healing.Declaration.Dice       healing/healing.go:33
+    Modifiers []ModifierFact  // healing.Declaration.Modifiers  healing/healing.go:34
+}
+
+type ModifierFact struct {
+    Name   string // healing.Modifier.Source.Name, already content-authored (character/casting.go:26)
+    Amount int
 }
 
 type DamageFact struct {
@@ -96,7 +139,10 @@ const (
 func Describe(in *DescribeInput) (*DescribeOutput, error)
 ```
 
-`Describe` reads `Definition.Attack`, else `Definition.Cast.Attack`. Grip is
+`Describe` reads `Definition.Attack`, else `Definition.Cast.Attack`, for attack
+pools and delivery. When `Definition.Cast` is set it also fills `Cast`. It appends
+`Cast.Damage` (cast.go:137) to `Damage`. It never resolves a non-static DC
+against a guessed input. Grip is
 `GripOffHand` when `IsOffHandAttack`, else `GripTwoHanded`/`GripOneHanded` from
 `WeaponContext.TwoHanded`, else `GripNone`. It imports no `fmt` for output and
 returns no string other than `Description`.
@@ -135,7 +181,23 @@ returns no string other than `Description`.
    - `events/attack_roll_offer.go:11` `AttackRollOffer`
    - `events/post_hit.go:24` `PostHitOffer`
    - `events/post_hit.go:34` `PostHitOption`
-10. Reaction producers fill it:
+10. Condition display detail (R14), the source for an applied condition's prose.
+    `conditions.DisplayFor(ref)` (`conditions/display.go:29`) already returns
+    `{Name, Detail}` per ref. These conditions are applied by a spell's `Effects`
+    but have an empty `Detail`, so author it beside their names:
+    - `conditions/display.go:87` Blade Ward
+    - `conditions/display.go:91` Commanded
+    - `conditions/display.go:112` Shield of Faith
+    - `conditions/display.go:113` Guided
+    - `conditions/display.go:114` Resistance
+    - `conditions/display.go:116` Sanctuary Immune
+
+    The catalogue's voice rule applies: a condition that bears on attacks against
+    its holder is written in the third person. Filling `Detail` only removes
+    existing refusal paths (`conditions/action_effects.go:67`,
+    `conditions/target_held.go:243`). The holder's status view also shows the new
+    text (`character/status_view.go:260`), which is the intended additive display.
+11. Reaction producers fill it:
    - `conditions/inspired.go:239`
    - `conditions/guided.go:212`
    - `conditions/resistance.go:215`
@@ -159,6 +221,10 @@ offer prose is a named constant beside its existing `…Name` constant.
   - `TestReachAndRange`
   - `TestDescribeDoesNotMutate`: JSON before equals JSON after.
   - `TestBaneReusesCatalogue`: Bane's description equals `spells.GetData(spells.Bane).Description`.
+  - `TestBaneCastFacts`: built with `SpellSaveDC: 13`. Save is CHA (the code's Bane is a Charisma save), DC 13 with `DCKnown`, `OnSuccess` Negated. One effect, `dnd5e:conditions:baned`, recipient target, `OnFailedSave`. Targets one_creature 1 to 3, range 30, concentration present, no damage.
+  - `TestThunderwaveCastFacts`: CON save, `OnSuccess` Half, damage `2d8` thunder with no ability fact. Area box 15 ft from the caster's edge, catches others.
+  - `TestCureWoundsCastFacts`: healing `1d8` with the input's modifiers in order (spellcasting modifier, then Disciple of Life when supplied). No save, no effects, touch, 1 to 1.
+  - `TestNonStaticDCIsUnknown`: a gate with `saves.DCFivePlusDamageTaken()` gives `DCKnown == false` and `DC == 0`.
   - `TestNilAndInvalidInputRefused`
 - `AbilityModifierInformationSuite`: unchanged and green.
 - `features`:
@@ -166,6 +232,8 @@ offer prose is a named constant beside its existing `…Name` constant.
   - `TestPatientDefenseDescriptionIsAbsent`: pins Open O2.
 - `character`:
   - `TestAvailableAbilitiesCarryDescriptions`: Dodge equals `combatabilities` Dodge's description. A spent Dodge (`CanUse == false`) keeps its text.
+- `conditions`:
+  - `TestEveryCastAppliedConditionHasDetail`: every `Effects` ref in every spell's cast profile has a non-empty `DisplayFor` detail.
 - `spells`:
   - `TestEveryDeclaredCastOptionIsDescribed`: every spell in `castContent` plus two-weapon Shillelagh; every option has a non-empty description.
 - Reaction producers:
@@ -180,6 +248,9 @@ offer prose is a named constant beside its existing `…Name` constant.
 - Return `""` from `Rage.Description`. Expected red: `TestEveryLoadableFeatureDescribesItself`.
 - Remove one Command option description. Expected red: `TestEveryDeclaredCastOptionIsDescribed`.
 - Drop the copy at `action_economy.go:355`. Expected red: `TestAvailableAbilitiesCarryDescriptions`.
+- Hard-code `OnSuccess` to Negated in `Describe`. Expected red: `TestThunderwaveCastFacts`.
+- Resolve every DC source as known. Expected red: `TestNonStaticDCIsUnknown`.
+- Blank the Commanded detail. Expected red: `TestEveryCastAppliedConditionHasDetail`.
 
 ---
 
@@ -252,12 +323,29 @@ Description string `json:"description,omitempty"`
 | Fact | Label | Value |
 |---|---|---|
 | each `DamageFact` | `Base damage` | dice, then ` %+d` when `FlatBonus != 0`, then ` + STR modifier (%+d)` when `Ability != nil && Participates`, then ` · ` and `Type.Display()` |
+| each `Cast.DamageIfInjured` | `Damage if injured` | same form as base damage |
 | `Grip` when not none | `Grip` | `One-handed` / `Two-handed` / `Off-hand` |
-| `Melee` | `Reach` | `%d ft` |
-| `Ranged` | `Range` | `%d ft`, or `%d ft (long %d ft)` when long > 0 |
+| `Cast.Save` | `Save` | abilities joined by ` or `, then ` save`; then ` · DC %d` when `DCKnown`; then ` · success: negated` or ` · success: half damage`; then ` · repeats at end of turn` for end_of_turn. Example: `CHA save · DC 13 · success: negated` |
+| each `Cast.Effects` | `On a failed save` when `OnFailedSave`, else `On the target` / `On you` by recipient | the condition's `DisplayFor` name, for example `Baned` |
+| that effect's detail, when non-empty | the condition's name | `DisplayFor(ref).Detail` verbatim |
+| `Cast.Healing` | `Healing` | dice, then ` + %d (%s)` per modifier in order, for example `1d8 + 3 (Wisdom)` |
+| `Melee`, only when `Cast == nil` | `Reach` | `%d ft` |
+| `Ranged`, only when `Cast == nil` | `Range` | `%d ft`, or `%d ft (long %d ft)` when long > 0 |
+| `Cast.RangeFeet` | `Range` | `Self` for the self rule, `Touch` for touch, else `%d ft` |
+| `Cast.Targets`, only for one_creature and known_creature | `Targets` | `%d creature` when min equals max (plural above one), else `%d to %d creatures` |
+| `Cast.Area` | `Area` | `%d ft` plus the shape word (`radius`, `cube` for box, `cone` for triangle), then ` from you` / ` from your edge` / ` at a point` by origin, then ` · affects others` or ` · affects everyone` by catches |
+| `Cast.Concentration` | `Concentration` | `Required` |
 
 The ability abbreviation is the upper-cased ability key. The expected warhammer
 string is `1d8 + STR modifier (+3) · Bludgeoning`, which matches the web fixture.
+Weapon delivery rows are skipped for casts because the cast's own range is what
+the player reads; the facts are still stated below.
+
+**Condition prose source (R14).** Session looks up `conditions.DisplayFor(ref)`
+(`conditions/display.go:29`); session already imports `conditions`. A ref with no
+catalogue entry fails `Afford` closed, matching the catalogue's own contract. An
+entry with an empty detail renders the name row alone. The six empty details on
+spell-applied conditions are filled by S1.
 
 ### Prose ownership (R12, in `information.go`)
 
@@ -334,7 +422,9 @@ Offer builders with **no edit**, because information arrives by verb in `attachI
   - All existing `TestDeclarationID…` tests stay green.
 - `information_test.go`, through real `Afford` on a built world:
   - `TestAffordWarhammerFactsAboveUnchangedEffects`: the rendered rows, plus `EffectRowsSuite` rows equal to their pre-change values.
-  - `TestAffordBaneDescribedWithZeroEffects`
+  - `TestAffordBaneDescribedWithZeroEffects`: also asserts the rows `Save: CHA save · DC 13 · success: negated`, `On a failed save: Baned`, the Baned detail row, `Range: 30 ft`, `Targets: 1 to 3 creatures` and `Concentration: Required`, in that order.
+  - `TestAffordThunderwaveFacts`: `Base damage: 2d8 · Thunder`, `Save: CON save · DC 13 · success: half damage`, `Area: 15 ft cube from your edge · affects others`.
+  - `TestAffordCureWoundsFacts`: `Healing: 1d8 + <mod> (<ability>)`, `Range: Touch`, and no save row.
   - `TestAffordSpentDodgeStillDescribed`: `Available == false`, description present.
   - `TestAffordCommandOptionsDescribed`
   - `TestAffordSessionVerbsDescribedIncludingBlocked`: off-turn rows for Move, End Turn and social carry prose; blocked Attack carries none.
@@ -351,6 +441,8 @@ Offer builders with **no edit**, because information arrives by verb in `attachI
 - Remove the `attachInformation` call. Expected red: `TestAffordBaneDescribedWithZeroEffects`.
 - Drop the copy in `castOptions`. Expected red: `TestAffordCommandOptionsDescribed`.
 - Drop `OfferDescription` at `react_post_hit.go:56`. Expected red: `TestReactWindowKeepsOfferAndOptionProseAcrossReload`.
+- Render the save outcome as negated unconditionally. Expected red: `TestAffordThunderwaveFacts`.
+- Drop the detail row lookup. Expected red: `TestAffordBaneDescribedWithZeroEffects`.
 - Skip the `Participates` check in the renderer. Expected red: an off-hand case in `TestAffordWarhammerFactsAboveUnchangedEffects`.
 
 ---
@@ -392,9 +484,10 @@ in the consumer.
 
 Walk, on an isolated local stack built from the S1–S4 pushed heads, one click per seam:
 1. **Weapon with effects.** A raging barbarian hovers a Warhammer. Base damage, grip and reach show above the Rage row, with no combined total.
-2. **Bane, zero effects.** Bane's catalogue description shows with an empty effects section.
-3. **Dodge spent.** Use Dodge, then hover it. It is unavailable with its description intact.
-4. **Command choice.** Approach, Flee and Grovel each show their description before confirmation. The network log shows only the original option ID sent.
+2. **Bane, zero effects.** Bane's catalogue description shows with an empty effects section. Its facts read: CHA save with the caster's DC, success negates, Baned on a failed save with Baned's detail, range, up to three targets, and concentration.
+3. **Thunderwave.** Inspect it. It shows 2d8 thunder, a CON save where success halves the damage, and the 15 ft cube from your edge that affects others.
+4. **Dodge spent.** Use Dodge, then hover it. It is unavailable with its description intact.
+5. **Command choice.** Approach, Flee and Grovel each show their description before confirmation. The network log shows only the original option ID sent.
 
 Then reload once. The same text returns and the IDs do not change. Hovering
 causes no gameplay RPC. Read each screenshot; do not only save it.
@@ -408,6 +501,7 @@ causes no gameplay RPC. Read each screenshot; do not only save it.
 | R10 typed facts, session renders | S1, S3 | `InformationSuite`, `TestAffordWarhammerFactsAboveUnchangedEffects` |
 | R10 one inclusion rule | S1, S2 | `AbilityModifierInformationSuite`, off-hand suites, mutants |
 | R11 allow-list selector | S3 | classification guard, prose/option-ID tests, goldens |
+| R14 cast facts and condition prose | S1, S3, S5 | `TestBaneCastFacts`, `TestThunderwaveCastFacts`, `TestCureWoundsCastFacts`, `TestEveryCastAppliedConditionHasDetail`, Afford Bane, Thunderwave and Cure Wounds rows, walk |
 | R12 prose with its owner | S1, S3 | feature, option and reaction producer tests; session verb tests |
 | R5 every choice, unavailable described | S1–S5 | spent Dodge, Command, Wrath, blocked rows, walk |
 | R7 one offer, prose not selector material | S3, S5 | `TestSelectorIgnoresProse`, reload in walk |
