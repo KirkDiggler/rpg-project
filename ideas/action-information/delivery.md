@@ -80,8 +80,10 @@ focus inspect; they do not pick, confirm, cast or attack. Selected targets remai
 unchanged. Non-candidates and ambiguous candidate IDs do not supply information.
 
 The last target preview remains readable when the pointer leaves the map for the
-HUD. Hovering another candidate replaces it. The automatic preview is
-pointer-transparent so it cannot intercept a click intended for the map.
+HUD, including travel across empty ground or a non-candidate model. Hovering
+another unique candidate replaces it. The visible preview accepts mouse/keyboard
+scrolling and consumes clicks on its own surface instead of passing them through
+to the map. A Close preview control dismisses it without cancelling the action.
 Existing **Inspect target / Info / selected-target inspection** controls open the
 full interactive, scrollable action-information card. Explicit full inspection
 stays on its named target until closed or explicitly changed. Close/Escape

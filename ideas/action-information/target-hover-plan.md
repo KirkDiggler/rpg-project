@@ -18,8 +18,9 @@ button. Candidate overrides and target-held rows already have shared renderers.
 The compact target-effect path already responds to inspection and is retained.
 
 **Done:** a unique offered target's mouse/pen hover or list keyboard focus shows
-provider effect answers without selecting/confirming or obscuring map clicks;
-explicit full inspection stays available. No general condition browser, hidden
+provider effect answers without selecting/confirming. Its visible scrollbar is
+reachable; reading input belongs to the panel rather than passing to the map.
+Explicit full inspection stays available. No general condition browser, hidden
 stats, outcome prediction, gameplay repair or backend implementation.
 
 ## Task H1 — Target-effect peek and explicit full reader
@@ -35,9 +36,10 @@ last unique inspected candidate; `LocalView.details` owns explicit full inspecti
 
 **Behavior:**
 - A new nonempty map hover resolves by exact, unique candidate member ID. A valid
-  candidate updates `preview`; a foreign/ambiguous ID clears it. Leaving the map
-  (`null`) keeps the last preview readable, never selects it.
-- With no explicit full reader, a valid preview shows a pointer-transparent
+  candidate updates `preview`; a foreign ID supplies no replacement. Empty map
+  space/non-candidate transit keeps the last named preview readable. Withdrawal
+  or ambiguity of the inspected candidate clears invalid information.
+- With no explicit full reader, a valid preview shows a pointer-reachable, keyboard-focusable
   `role=tooltip` containing the action/target context and the selected action's
   supplied base facts, followed by target-held rows and the actor-effect answers
   for that target. Both action and target cards share the same fact renderer. Missing rows say no
@@ -57,7 +59,7 @@ last unique inspected candidate; `LocalView.details` owns explicit full inspecti
 candidate overrides plus full held rows. Hover A/B shows each answer in the
 proper list; no choose/confirm/cancel call and selected IDs unchanged. Exercise
 unavailable/stale, zero rows, foreign/duplicate IDs, withdrawal/re-offer, action
-change, selected chips, focus, touch-not-auto-hover, pointer-transparent preview,
+change, selected chips, focus, touch-not-auto-hover, focusable/read-only preview,
 explicit full-reader priority and Close/Escape. Keep prior selection/confirmation
 regressions intact.
 
@@ -82,8 +84,8 @@ candidate, render its supplied effects, and retain the exact same map/selection.
 No input inferred from effect text. Data refresh changes rows, not authority.
 **Tests:** joined SessionEncounterView regression invokes the actual canvas prop
 callback; effect content appears before a target click; RPC spies remain zero.
-Browser exercises mouse transfer from target to toolbar, transparent peek (a map
-click is not stolen), full-reader scrolling, target switches, stale/withdrawn
+Browser exercises mouse transfer from target to panel, real wheel/keyboard
+scrolling with no click-through or camera motion, target switches, stale/withdrawn
 fixtures, keyboard/touch and narrow/short frame bounds. Fixture proof is labelled
 as such; a live provider-backed run remains an integration acceptance item in
 [delivery.md](delivery.md), not a fabricated completed check.
@@ -102,7 +104,7 @@ local gate at PR boundary. No automatic merge/deployment of this follow-up.
 | Requirement | Task | Proof |
 |---|---|---|
 | Hover/focus reveals target effect answers | H1,H2 | Two-candidate overrides/held rows + joined canvas callback |
-| Inspection is not selection or execution | H1,H2 | Callback/RPC counts, unchanged picks, pointer-transparent peek |
+| Inspection is not selection or execution | H1,H2 | Callback/RPC counts, unchanged picks, panel click/wheel ownership |
 | Missing/stale/ambiguous data stays honest | H1 | Generated absence, freshness and uniqueness tests |
 | Full readable information remains available | H1,H2 | Info controls, focus, Close/Escape and bounded scroll |
 | No new provider or proto work | H1,H2 | Existing props/messages only; named owning-team handoffs |
@@ -115,11 +117,22 @@ local gate at PR boundary. No automatic merge/deployment of this follow-up.
 | UI gesture | Existing selection controller | Original choose/confirm callbacks only on deliberate controls | Hover/focus must not call them |
 
 Plan check: preserve initial closed information with no hover, keep explicit
-inspection distinct from automatic pointer-transparent peeking, and do not let a
-new overlay intercept the original map-target click. No second target identity,
+inspection distinct from automatic opening. Any window with scrollable content
+must accept reading input; it must not click through to the map. No second target identity,
 inspection RPC or condition catalogue is introduced.
 
-## Checkpoint
+## Interaction correction — reachable scrolling
+
+The operator found that the automatic window displayed a scrollbar but could
+not be entered with the mouse. The old pointer-transparent policy below is
+historical evidence, not current acceptance. Replace it with a stable,
+pointer-reachable and keyboard-focusable reader. Preserve the last named valid
+candidate during pointer travel, add a Close preview control, and prove that
+scroll/click/close change neither selection nor the camera. A real browser wheel
+input and hit-test assertion are required; programmatically setting scrollTop
+would not prove this repair. No toolkit/API scope changes.
+
+## Initial checkpoint (before the interaction correction)
 
 Web [PR#1241](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241), head
 `713056cc670eba5702ddafb9f5e7ab34d595a339`, implements H1 and the consumer checks

@@ -45,9 +45,10 @@ Bane follows the same route for its description, sourced from `spells.GetData`. 
 While a member-targeted action is selected, the canvas's existing hover identity
 reaches `MapFirstTargeting`. A unique current candidate supplies its actor-row
 answers through `effectLinesFor` and its separate held rows through
-`heldEffectLinesFor`. A pointer-transparent preview shows those answers without
-intercepting a target click; explicit Info controls open the full scrollable
-reader. These are two access paths to the same received data, not another rule
+`heldEffectLinesFor`. The preview stays open while the pointer travels into it
+and owns its scrolling/click input, so reading cannot click through to the map.
+It does not select or execute an action; explicit Info controls still open the
+full reader. These are two access paths to the same received data, not another rule
 assessment or an all-conditions query (R9).
 
 ## Separations that look like one thing
