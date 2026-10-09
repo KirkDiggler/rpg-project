@@ -19,6 +19,12 @@ the walk) happened before.
   current head (`gh pr view <n> --json headRefOid`; compare to the review).
 - The walk's QA checklist on the tracking issue is ticked, or the operator
   said QA passed, on the record.
+- **No open gap.** A walk finding that blocks approval is not a QA pass. The
+  wave's PRs stay open and un-merged; the gap gets its own tracking issue,
+  short design and slices, merges first, and the wave's stack comes back up on
+  the merged gap for a fresh walk. Only then does this skill run. (Ruled by
+  KirkDiggler, 2026-10-09, after the action-information walk found the
+  stranded-seat gap, rpg-project#548.)
 - The brief names the PRs **in order** with their module path, e.g.
   `rpg-toolkit#1988 rulebooks/dnd5e/encounter → #1989 rulebooks/dnd5e/resolution → #1990 rulebooks/dnd5e/session → #1991 (stacked on #1990) → rpg-api#1085 → rpg-dnd5e-web#…`.
 - The brief names who re-pins each consumer (the PR's builder, by agent name,
