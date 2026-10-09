@@ -90,11 +90,11 @@ as such; a live provider-backed run remains an integration acceptance item in
 - [x] Add joined-route assertions with generated provider data.
 - [x] Read browser screenshots; record commands, callbacks and geometry.
 - [x] Run full `npm run ci-check` before publishing the web PR.
-- [ ] Independent review with published findings/dispositions.
+- [x] Independent review with published findings/dispositions.
 
 **Verification:** focused route tests, actual browser renderer, then complete
 local gate at PR boundary. No automatic merge/deployment of this follow-up.
-**Evidence:** joined route and production-renderer fixture proof recorded below; independent closure pending. Live provider delivery remains a separate owning-team acceptance item.
+**Evidence:** joined route and production-renderer fixture proof recorded below; independent closure published. Live provider delivery remains a separate owning-team acceptance item.
 
 ## Coverage and seam check
 
@@ -156,5 +156,13 @@ hovered member, and described-by linkage while peeking/pinned/suppressed. Only
 the test file changed; production and browser-proof code are identical to the
 reviewed implementation. The added assertions pass, and full CI is green:
 569 files/1 skipped,7,800 tests/5 skipped. Logs: `/tmp/target-hover-review-ci.log`
-and `/tmp/rpg-dnd5e-web-ci-check.MPypVD/tests.log`. Retained focused closure is
-running; this follow-up is not merged/deployed.
+and `/tmp/rpg-dnd5e-web-ci-check.MPypVD/tests.log`.
+
+[Retained independent closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5464797461)
+is published and read back at `2e8cdb7d`. All four coverage dispositions were
+re-verified; no new findings, Critical or Important issues. All four threads are
+resolved. The reviewer reran26 focused tests, typecheck and formatting/lint on
+the changed test file. Parent inspected pixels; reviewer checked code and DOM
+observation evidence rather than claiming image-reading capability. GitHub's
+latest test job remains pending at this checkpoint; local full CI is green.
+This follow-up is not merged/deployed.
