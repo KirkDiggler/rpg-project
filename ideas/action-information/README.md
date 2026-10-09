@@ -93,3 +93,13 @@ A better spell explanation changes the existing spell content. A new choice expl
 | Wire | `rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto` |
 | API projection | `rpg-api/internal/handlers/dnd5e/session/v1alpha1/convert.go` |
 | Shared information body (new) | `rpg-dnd5e-web/src/components/session/combat-experience/ActionInformationContent.tsx` |
+
+## Provider pass
+
+The provider half has its own law and plan: [provider law](provider-design.md)
+and [provider slices](provider-slices.md). They adopt toolkit#1987's hand-off
+with the operator's rulings R10–R12. The root states typed base facts, and the
+session projection renders them into the wire's label/value rows (R10). The
+declaration selector hashes an allow-list projection that prose cannot reach
+(R11). Session authors prose only for the verbs it owns (R12). The slices run
+root, resolution, session, API, then a web walk, one module per PR.
