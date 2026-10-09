@@ -165,28 +165,11 @@ encounter's one refusing value; nothing else does.
 | R6 | settled | The session has one resolution input builder and one output landing that owns the order (record, areas held or landed, windows, save, report) | KirkDiggler | 2026-10-09 |
 | R7 | settled | `StartSession` and `Spawn` are deleted; `Join` stays for a rejoin; `PlaceNPC` stays | KirkDiggler | 2026-10-09 |
 | R8 | settled | This wave changes no behaviour and no wire; its gate is every output field landing exactly once from one place, proved by a deletion-mutant sweep over the landing; the walk is one fight, one cast, one rest, one launch | KirkDiggler | 2026-10-09 |
-| R9 | open | Concentration an output carries on a path that tells no beat today (Open: untold concentration) | — | — |
-| R10 | open | A failure after the landing's first durable write always reports what landed (Open: one error shape) | — | — |
-| R11 | open | Whether `Resolve` refuses an input whose actors are not `resolution.Actors` (Open: foreign actors) | — | — |
+| R9 | settled | Concentration on a path that tells no beat today is dropped by name through the landing's one `Untold` arm, test-pinned; the encounter verb that tells it ships with E | KirkDiggler | 2026-10-09 |
+| R10 | settled | Every failure after the landing's first durable write reports what landed; the wave's one behaviour change, failure paths only | KirkDiggler | 2026-10-09 |
+| R11 | settled | `Resolve` does not refuse foreign actors; `resolution.Actors` is installed in one place and the session's structural test proves it | KirkDiggler | 2026-10-09 |
 
 ## Open
 
-1. **Untold concentration.** Several landings can carry concentration checks
-   and breaks that no beat tells today: the announcer's boundary (a
-   concentration that runs out at a turn end, or ends with the fight), a
-   compelled turn, an activation, and every landing that poses a window without
-   a settled hit. The areas those breaks close still land. Slices lists each
-   arm. Telling them needs an encounter verb that records a break with no
-   outcome beat. Recommendation: in this wave the landing drops them by name,
-   through one `untold` arm a test pins, and the verb ships with E, whose
-   envelope carries settled facts whole.
-2. **One error shape.** Some landings wrap a failure after the dirty sheets are
-   written in a `SaveError` naming what landed, and some return it bare. The
-   landing applies one rule. Recommendation: every failure after the first
-   durable write reports what landed (the existing S6 law). Only failure paths
-   change.
-3. **Foreign actors.** A host could hand `Resolve` real actors. They would never
-   be called, so the only loss is a bug named by a refusing actor. Refusing them
-   means comparing interface values, which panics on a seam that holds a slice
-   or map. Recommendation: no refusal; `resolution.Actors` is installed in one
-   place and the session's structural test proves it.
+None. Rulings R9–R11 settled the three questions this design opened; their
+reasoning is kept in the PR thread.
