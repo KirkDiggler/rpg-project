@@ -164,5 +164,5 @@ re-verified; no new findings, Critical or Important issues. All four threads are
 resolved. The reviewer reran26 focused tests, typecheck and formatting/lint on
 the changed test file. Parent inspected pixels; reviewer checked code and DOM
 observation evidence rather than claiming image-reading capability. GitHub's
-latest test job remains pending at this checkpoint; local full CI is green.
-This follow-up is not merged/deployed.
+checks now all pass on the same head, alongside the full local gate. This UI
+follow-up is ready for the operator's merge decision, not merged/deployed.
