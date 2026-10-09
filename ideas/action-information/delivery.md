@@ -87,9 +87,11 @@ full interactive, scrollable action-information card. Explicit full inspection
 stays on its named target until closed or explicitly changed. Close/Escape
 dismisses information without cancelling the action or changing its picks.
 
-The automatic peek prioritizes observed target-held rows, then the actor's
-target-specific answers: the target name and current action identify what those
-answers are about. It stays out of the way while other dock controls are being
+The automatic peek shows the selected action's supplied base facts, including
+its damage expression/type when supplied, before observed target-held rows and
+the actor's target-specific answers. These are the same base facts as the action
+card, not a target-adjusted total. The target name and current action identify
+what the answers are about. It stays out of the way while other dock controls are being
 inspected. Full inspection keeps the
 agreed description/base-facts-before-effects layout. Stale information is labelled;
 a candidate withdrawal or action change cannot leave another target's old rows

@@ -38,8 +38,9 @@ last unique inspected candidate; `LocalView.details` owns explicit full inspecti
   candidate updates `preview`; a foreign/ambiguous ID clears it. Leaving the map
   (`null`) keeps the last preview readable, never selects it.
 - With no explicit full reader, a valid preview shows a pointer-transparent
-  `role=tooltip` containing the action/target context, provider actor-effect
-  answers for that target and separate target-held rows. Missing rows say no
+  `role=tooltip` containing the action/target context and the selected action's
+  supplied base facts, followed by target-held rows and the actor-effect answers
+  for that target. Both action and target cards share the same fact renderer. Missing rows say no
   information was supplied, not that the target has no conditions.
 - Mouse/pen entry and keyboard focus on list rows/selected chips take the same
   inspection path. Touch still has explicit Info/selected-target controls.

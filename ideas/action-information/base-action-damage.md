@@ -20,6 +20,10 @@ Effects
 …existing provider effect rows, shown separately…
 ```
 
+The same supplied base-damage facts appear in the target-hover preview above
+its effect lists. Hovering a different target changes those effect answers, not
+the base expression, and does not turn the expression into predicted damage.
+
 The +3 is an example fixture value, not an inference about a live character.
 Two-handed use would carry the assembled 1d10 profile instead. A weapon using
 DEX or a provider-selected alternative must name that actual ability rather
