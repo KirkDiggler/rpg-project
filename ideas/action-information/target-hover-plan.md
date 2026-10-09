@@ -140,8 +140,11 @@ the pane, scrolls via actual wheel input, checks unchanged camera geometry and
 intent after click/scroll/close, and exercises keyboard Home and1000×501 bounds.
 Screenshots were inspected. [Independent review](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5465793470)
 is published at46ae8d32 with no blocking findings. Its minor assertion-quality
-note is addressed at828ba49d; retained focused closure is pending. No provider
-work, merge or deployment is claimed.
+note is addressed at828ba49d; [retained focused closure](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5465837381)
+is published/read back and the thread resolved. No blocking findings or requested
+changes remain; all GitHub checks pass at the same head, source is clean and the
+PR reports CLEAN. UI ready for operator merge decision. No provider work, merge
+or deployment is claimed.
 
 ## Initial checkpoint (before the interaction correction)
 
