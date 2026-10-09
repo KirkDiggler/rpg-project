@@ -1,6 +1,6 @@
 # Action information
 
-[Tracking issue #543](https://github.com/KirkDiggler/rpg-project/issues/543) · [Design law](design.md) · [UI implementation plan](ui-implementation-plan.md) · [Provider handoff plan](implementation-plan.md)
+[Tracking issue #543](https://github.com/KirkDiggler/rpg-project/issues/543) · [Design law](design.md) · [Delivery to the game](delivery.md) · [Target-hover plan](target-hover-plan.md) · [UI implementation plan](ui-implementation-plan.md) · [Provider handoff plan](implementation-plan.md)
 
 This extends the existing offered-action inspection, not the game's action engine. An action explains itself before the player commits: what it does, its assembled base facts, and then the contextual effects that bear on it. The same read-only rendering is shared by the hover card and pinned information panel. The UI owns consumption only; toolkit and API own the facts and their delivery, and gameplay repairs stay with their owning teams (R8).
 
@@ -41,6 +41,14 @@ The content owner does not infer execution eligibility from its prose. Session d
 Session carries that result beside the declaration's unchanged selector and effect rows. API copies the values. The web prints the description, then the supplied base-damage line, then `EffectRows`. A Rage row can explain its contribution without the client converting the base line into a new total (R1, R4).
 
 Bane follows the same route for its description, sourced from `spells.GetData`. Its description explains the curse it can cause; it does not mint a contextual effect merely to fill an empty effects section.
+
+While a member-targeted action is selected, the canvas's existing hover identity
+reaches `MapFirstTargeting`. A unique current candidate supplies its actor-row
+answers through `effectLinesFor` and its separate held rows through
+`heldEffectLinesFor`. A pointer-transparent preview shows those answers without
+intercepting a target click; explicit Info controls open the full scrollable
+reader. These are two access paths to the same received data, not another rule
+assessment or an all-conditions query (R9).
 
 ## Separations that look like one thing
 
