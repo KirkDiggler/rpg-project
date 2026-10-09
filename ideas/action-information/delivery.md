@@ -33,6 +33,14 @@ with an example before expanding the contract.
 The preview renders generated fixtures through real UI components. It is useful
 consumer evidence, not evidence that the current API returns those fixture facts.
 
+## First data milestone: the action's own damage
+
+The immediate gap is not another effects system: the Longsword card needs its
+actual assembled dice, participating ability modifier and damage type above the
+already-flowing effect rows. [Base action damage](base-action-damage.md) spells
+out the fields, example payload, owner tasks and proof cases. The concept authors
+an illustrative one-handed/STR +3 payload; no live value is inferred by the UI.
+
 ## Remaining owners and deliverables
 
 | Owner | Work | Existing record |
