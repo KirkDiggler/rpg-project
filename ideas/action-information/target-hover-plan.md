@@ -65,7 +65,7 @@ regressions intact.
 - [x] Run focused tests and typecheck; retain compact-target parity.
 
 **Verification:** web cwd `npm run test:run -- src/components/session/combat-experience/MapFirstTargeting.test.tsx src/components/session/combat-experience/memberTargeting.test.ts`; `npm run typecheck`.
-**Evidence:** pending.
+**Evidence:** implemented and checked in web#1241; source and test receipts below.
 
 ## Task H2 — Joined route and browser proof
 
@@ -94,7 +94,7 @@ as such; a live provider-backed run remains an integration acceptance item in
 
 **Verification:** focused route tests, actual browser renderer, then complete
 local gate at PR boundary. No automatic merge/deployment of this follow-up.
-**Evidence:** pending.
+**Evidence:** joined route and production-renderer fixture proof recorded below; independent closure pending. Live provider delivery remains a separate owning-team acceptance item.
 
 ## Coverage and seam check
 
@@ -145,3 +145,16 @@ Longsword, hover a target. Private runtime roots were synced with pinned catalog
 subtrees; no licensed binaries enter the public diff. Independent review is
 running. Real provider-backed description delivery remains the separate gate
 listed in delivery.md; no follow-up merge/deployment is claimed.
+
+## Independent review follow-up
+
+The [initial review](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5464733774)
+found no Critical/Important issues and four minor coverage suggestions. All four
+have Addressed replies at `2e8cdb7db7de316da31deda81a5552e21b418780`: unfiltered
+focusin suppression, same-ID provider refresh, a new action under the same
+hovered member, and described-by linkage while peeking/pinned/suppressed. Only
+the test file changed; production and browser-proof code are identical to the
+reviewed implementation. The added assertions pass, and full CI is green:
+569 files/1 skipped,7,800 tests/5 skipped. Logs: `/tmp/target-hover-review-ci.log`
+and `/tmp/rpg-dnd5e-web-ci-check.MPypVD/tests.log`. Retained focused closure is
+running; this follow-up is not merged/deployed.
