@@ -132,6 +132,17 @@ scroll/click/close change neither selection nor the camera. A real browser wheel
 input and hit-test assertion are required; programmatically setting scrollTop
 would not prove this repair. No toolkit/API scope changes.
 
+Implemented at `46ae8d32`; current `828ba49d` changes only one assertion to
+verify the retained pane's exact identity. Full local CI passes at the current
+head:569 files/1 skipped,7,802 tests/5 skipped. Browser proof in
+`evidence/target-hover/scroll-proof.*` uses real stepped pointer travel, hit-tests
+the pane, scrolls via actual wheel input, checks unchanged camera geometry and
+intent after click/scroll/close, and exercises keyboard Home and1000×501 bounds.
+Screenshots were inspected. [Independent review](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5465793470)
+is published at46ae8d32 with no blocking findings. Its minor assertion-quality
+note is addressed at828ba49d; retained focused closure is pending. No provider
+work, merge or deployment is claimed.
+
 ## Initial checkpoint (before the interaction correction)
 
 Web [PR#1241](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241), head
