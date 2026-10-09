@@ -167,3 +167,22 @@ the changed test file. Parent inspected pixels; reviewer checked code and DOM
 observation evidence rather than claiming image-reading capability. GitHub's
 checks now all pass on the same head, alongside the full local gate. This UI
 follow-up is ready for the operator's merge decision, not merged/deployed.
+
+## Base-facts walkthrough refinement
+
+The operator's target-panel screenshot clarified that the same action base
+facts belong above the target peek's effect lists. `d358cc82` extracts the
+shared `ActionInformationFacts` renderer and uses the declaration's supplied
+details in both paths; it does not derive target-adjusted damage. The preceding
+concept-only `6c2ac388` supplies an illustrative Longsword payload, not a runtime
+lookup or character-stat inference. The ordering regression failed before the
+peek change; browser screenshot was inspected and inspection remains inert.
+
+Current head `d358cc825ed6d7759212a5c5bf775e32eaee90d2` passes the full local gate:
+569 files/1 skipped,7,801 tests/5 skipped, plus format/lint/typecheck/build.
+All GitHub checks pass. [Independent delta review](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1241#pullrequestreview-5465596712)
+is published/read back at this head:69 focused tests, typecheck/lint/format and
+mutation checks; no Critical/Important findings or requested corrections.
+The same-role review replaces the unavailable retained run after restart.
+UI ready for the operator's merge decision; provider delivery and deployment
+remain distinct.
