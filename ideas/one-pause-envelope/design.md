@@ -120,6 +120,7 @@ type Offer struct {
 
 // Answer is Take(option) or Decline(). The zero Answer is refused.
 type Answer struct {
+	given  bool // set by Take and Decline; the zero Answer is refused
 	take   bool
 	option string
 }
@@ -294,6 +295,7 @@ func (e *Encounter) TellConcentration(in *TellConcentrationInput) (*RecordOutput
 ```go
 // Answer is Take(option) or Decline(). The zero Answer is ErrNotOffered.
 type Answer struct {
+	given  bool // set by Take and Decline; the zero Answer is refused
 	take   bool
 	option string
 }
@@ -499,6 +501,7 @@ continuation, commit. What changes is what each site hands it:
 | E4 | settled | One `Offer` type and one `Answer{Take option \| Decline}`. `ReactStrike`/`ReactHold` retire. Where this reaches the React proto, the change is additive with `[deprecated = true]`. | KirkDiggler | 2026-10-09 |
 | E5 | settled | Old frozen blobs are refused with a sentinel. A table mid-reaction across the deploy loses that window; pre-release, accepted. | KirkDiggler | 2026-10-09 |
 | E6 | settled | A dedicated encounter verb tells concentration checks and breaks with no causing outcome, sharing `Record`'s preparation. Not a kind-less `Record`. First case: a cast that ends the caster's own earlier concentration, dropped by name today. | KirkDiggler | 2026-10-09 |
+| E8 | settled | The opportunity ask stops the step. The mover's step has not settled when the ask is posed; it lands on the resume after every asked reactor answered and the swings settled. Reach is measured in the live (pre-step) world; nothing is measured at a remembered cell. Session never lands the step at an opportunity pause; `MovementOutcome.From/To` on the resumed output is its one landing. | KirkDiggler | 2026-10-10 |
 | E7 | settled | Deflect Missiles (#1992) is E's first consumer after the wave, not an E slice. The envelope's proof cases already exist: post-hit inside a multiattack, an opportunity attack, a save inside a cast. | KirkDiggler | 2026-10-09 |
 
 What each ruling makes true here:
@@ -526,6 +529,10 @@ What each ruling makes true here:
   run is reset. Pre-release, accepted.
 - **E6.** `TellConcentration` replaces the `Untold` arm at the two sites that
   can carry concentration with no unit.
+- **E8.** `PauseOpportunity` is posed before the step lands. The paused
+  `MovementOutcome` reports no step; the resumed one reports `From`/`To` once.
+  Found by the resolution gate (#1998): a Take resumed after a landed step
+  measured reach against a mover already gone.
 - **E7.** No Deflect Missiles slice. The four proof cases above gate the wave.
 
 ## Open
