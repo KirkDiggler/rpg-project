@@ -77,7 +77,7 @@ The physical repeat default requires an explicit calibration check in the browse
 
 Proposed finish setting belongs on the existing `AuthoringRegion`. It names a material ref, not image URLs, GLB paths, or raw shader configuration. Exact persistence/version extension is pending R8. Existing scene3 readers reject unknown region keys, so adding fields under scene3 without a compatibility/version decision is unsafe.
 
-Suggested mapping intent includes a persistent source-wall/direction anchor and a vertical origin. A label move must not move the brick pattern. Replacing/deleting the anchor must produce a named unresolved mapping until repaired; do not silently choose a different wall and move every texture. The closure policy is the R12 decision below. Store intent, not a second polygon or a copy of every derived UV.
+Suggested mapping intent includes a persistent source-wall/direction anchor and a vertical origin. A label move must not move the brick pattern. Replacing/deleting the anchor must produce a named unresolved mapping until repaired; do not silently choose a different wall and move every texture. The closure policy follows R12 below; anchor creation, repair and persistence remain R7/R8 details. Store intent, not a second polygon or a copy of every derived UV.
 
 The proposed transient renderer input is a list of **wall-side intervals**, not whole-wall ownership:
 
@@ -116,13 +116,11 @@ For the demonstrated equal-thickness 90-degree join, the proposed visual fitter 
 
 Web already owns visual fitting, so the proposal extends that shared fitter rather than adding mechanical corner logic. The renderer must receive enough permitted fit information for identical corner geometry even when a neighboring wall is withheld. It must not reconstruct hidden room topology from an unrestricted authoring fetch.
 
-### R12: closed-loop seam — operator decision
+### Closed-loop seam (R12)
 
-A repeating texture generally cannot retain fixed physical scale and also join perfectly around an arbitrary closed perimeter. The open L-shaped proof does not establish loop closure.
+A repeating texture generally cannot retain fixed physical scale and also join perfectly around an arbitrary closed perimeter. **The room keeps fixed brick size and places the pattern-phase seam at its explicit mapping anchor** (R12). The anchor can be a corner; its authoring controls and persisted identity remain R7/R8 work.
 
-Recommend **keep brick size fixed and put the unavoidable texture-phase seam at one explicit room mapping anchor/corner**. Moving that anchor is an authoring adjustment. Do not distribute stretch across the room or silently rescale the material to fit the circumference. This seam concerns the repeat pattern, not a geometric crack or mismatched vertical brick courses. Matching top/bottom height and normal-map coordinates still apply.
-
-Alternative: adjust repeat scale to an integer number of repeats around each room. That closes the pattern but changes brick size between rooms, counter to the fixed-scale direction. Closed-loop phase policy remains open until ruled.
+This seam concerns the repeat pattern, not a geometric crack or mismatched vertical brick courses. Color and normal-map coordinates remain paired. The renderer does not adjust repeat scale to an integer number of repeats around each room. The open L-shaped proof is not evidence of a complete loop implementation.
 
 ## Loading, absence and rendering lifecycle — proposed behavior
 

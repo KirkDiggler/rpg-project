@@ -4,7 +4,7 @@
 
 Turn the accepted Blender appearance into reusable provider assets/materials and a room-owned Studio/runtime surface path. Authority is [design R1–R6/R11](design.md), operator visual acceptance on [Assets #290](https://github.com/KirkDiggler/rpg-game-assets/issues/290), and [design PR #549](https://github.com/KirkDiggler/rpg-project/pull/549). The [contract proposal](contract-proposal.md) is not yet an accepted schema.
 
-**Not handoff-ready for production implementation.** This document records the source probe, concrete candidate work and coverage check. R7/R8 public contracts and the closed-loop policy R12 still block affected implementation. Do not treat this outline as permission to fill those decisions in a worker. No gameplay-material rules, general arbitrary-mesh deformation, whole-library enrollment, or replacement region model is included.
+**Not handoff-ready for production implementation.** This document records the source probe, concrete candidate work and coverage check. R7/R8 public contracts still block affected implementation. R12 settles fixed repeat size with one deliberate mapping-anchor phase seam; its persistence and repair mechanism remains part of R7/R8. Do not treat this outline as permission to fill those decisions in a worker. No gameplay-material rules, general arbitrary-mesh deformation, whole-library enrollment, or replacement region model is included.
 
 ## Inspected baseline
 
@@ -88,7 +88,7 @@ Develop from the shared renderer's required inputs toward provider declarations.
 
 ### C — Directed side spans, fitted geometry and mapping
 
-**Owner:** Web shared geometry/rendering. **Prerequisites:** R7/R12 mapping policy and provider fit declaration. The accepted miter appearance does not settle its general schema.
+**Owner:** Web shared geometry/rendering. **Prerequisites:** R7 mapping/anchor contract and provider fit declaration; R12 fixed-size seam policy is settled. The accepted miter appearance does not settle its general schema.
 
 **Existing files:** `src/concepts/world-building/regionBoundaryGeometry.ts`, `regionBoundaryGeometry.test.ts`, `structuralWallEditing.ts`, `structuralWallEditing.test.ts`, `StructuralWallSurfaces.tsx`, `StructuralWallFit.test.tsx`, `structuralWallGeometry.ts`.
 
@@ -96,13 +96,13 @@ Develop from the shared renderer's required inputs toward provider declarations.
 
 **Candidate interface:** `WallSideFinishSpan` from the proposal plus an explicitly enrolled fit-capable body contract. Derive final face-path coordinates; keep doorway intervals in mapping distance; apply geometry changes only to cloned enrolled end regions. No mechanical blocker edits or arbitrary mesh inference.
 
-**Required assertions:** one source wall shared by two rooms; T-junctions yield distinct subintervals; opening/closing a leaf does not change mapping; resizing adds repeats, not stretch; placement rotations update normal basis; bound trim excluded; matching inner/outer 90-degree joins; no positive-volume overlap or geometric gaps; source mesh unchanged; unsupported fit/topology names the refusal. Closed-loop test must distinguish R12's selected behavior from silent scale adjustment. Tests for anchor removal, label movement, reversed source direction, unresolved regions and incompatible explicit areas follow the final lifecycle contract.
+**Required assertions:** one source wall shared by two rooms; T-junctions yield distinct subintervals; opening/closing a leaf does not change mapping; resizing adds repeats, not stretch; placement rotations update normal basis; bound trim excluded; matching inner/outer 90-degree joins; no positive-volume overlap or geometric gaps; source mesh unchanged; unsupported fit/topology names the refusal. Closed-loop test must use a perimeter that is not an integer repeat multiple: physical repeat size stays unchanged, phase differs only at the designated anchor, color and normal maps share that phase, and wall geometry still closes. Tests for anchor removal, label movement, reversed source direction, unresolved regions and incompatible explicit areas follow the final lifecycle contract.
 
 **Checks:** focused mapping/geometry/fit tests; browser front/back/corner normal lighting renders; a two-room fit test at different lengths/heights and after Undo/reload. Prove the material physical-unit conversion once, with a declared default repeat fixture.
 
 ### D — Region finish authoring and persistence
 
-**Owner:** Web's existing room document/session facade. **Prerequisites:** accepted R8 scene/version and R12 anchor lifecycle; A/B/C available for real preview.
+**Owner:** Web's existing room document/session facade. **Prerequisites:** accepted R8 scene/version and R7 anchor lifecycle implementing R12; A/B/C available for real preview.
 
 **Existing files:** `src/concepts/world-building/authoringRegions.ts`, `regionEdits.ts`, `types.ts`, `serialization.ts`, `roomDraft.ts`, `mapLabelEdits.ts`, `WorldBuildingConcept.tsx`, `studioArrange.ts`, `singleRoomDungeon.ts`; `src/concepts/encounter-studio/studioSession.ts`, `StudioArrangePanel.tsx`, `StudioArrangeFields.tsx`, `EncounterStudioIntegration.test.tsx`; associated codec/region/Arrange tests and `world-building/CONTRACT.md`.
 
@@ -128,7 +128,7 @@ No unrestricted source fetch is an acceptable shortcut. The #1245 opaque source-
 |---|---|---|
 | Geometry once, materials reused | A/B: one GLB across two map sets | Schema agreement required |
 | Independent shared-wall sides | A/C/D: opposite sides + source subintervals | Existing room owner reusable; side-span API new |
-| No stretch / continuous joins | C: fit/UV/normal assertions and room resize | R7/R12 and fit contract required |
+| No stretch / continuous joins | C: fit/UV/normal assertions and non-integer-repeat closed loop | R12 settled; R7 and fit contract required |
 | Normal maps and protected trim | A/B/C: actual primitive bindings, tangent basis, frame exclusion | Blender visual proof accepted; browser/export proof still required |
 | Door leaf omission independent of finish | A/C: static frame and complete leaf group | Reuse #290 part/fit handoff, not a duplicate role schema |
 | History/version/save/reload | D: codec, no-op, legacy and native checks | R8 version/lifecycle required |
@@ -147,4 +147,4 @@ No unrestricted source fetch is an acceptable shortcut. The #1245 opaque source-
 
 ## Readiness disposition
 
-Reuse existing region, document, structural renderer and promotion owners. Do not create a parallel room model or asset export per finish. The source probe and baseline checks are complete; the production plan is not. Resolve R12 with the operator, finish R7/R8 fit/schema/lifecycle and the current-provider brief, then replace these conditional contracts with runnable tasks and repeat this coverage/seam check before implementation.
+Reuse existing region, document, structural renderer and promotion owners. Do not create a parallel room model or asset export per finish. The source probe and baseline checks are complete; the production plan is not. Carry settled R12 into the closed-loop test, finish R7/R8 fit/schema/lifecycle and the current-provider brief, then replace these conditional contracts with runnable tasks and repeat this coverage/seam check before implementation.
