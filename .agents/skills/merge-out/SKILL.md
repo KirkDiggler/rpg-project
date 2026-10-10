@@ -17,6 +17,11 @@ the walk) happened before.
 
 - Every PR in the wave has a published gate verdict of MERGE-READY at its
   current head (`gh pr view <n> --json headRefOid`; compare to the review).
+  The verdict is a GitHub **comment review** (`gh pr review --comment`), not
+  an issue comment: the merge permission classifier looks for a review at the
+  head and refuses `gh pr merge` as "Merge Without Review" otherwise
+  (rpg-toolkit#2006, 2026-10-11). A Minor-fix or re-pin commit after the
+  verdict needs a fresh one-line head verdict in the same shape.
 - The walk's QA checklist on the tracking issue is ticked, or the operator
   said QA passed, on the record.
 - **No open gap.** A walk finding that blocks approval is not a QA pass. The
