@@ -70,8 +70,9 @@ The author writes `guard` with `con: 12`, `hitDice: 2d8` and `armor: chain-shirt
    from the override), reads `2d8` as two dice averaging 4.5 each, adds the +1 constitution
    modifier per die, and stores 11 hit points. Chain shirt's rule gives 13 plus a dexterity
    modifier capped at 2, so AC is 13 at dexterity 10. `spear` is assembled through
-   `AddWeapon` from strength 10 and proficiency 2 into +2 to hit, 1d6.
-4. The compile echo carries `{ hp: 11, ac: 13, attacks: [spear +2 1d6], passive perception: 12 }`
+   `AddWeapon` from strength 13 and proficiency 2 into +3 to hit, 1d6+1. The block has no
+   name, so its name is the template id, `guard`; the base's name never crosses.
+4. The compile echo carries `{ hp: 11, ac: 13, attacks: [spear +3 1d6+1], passive perception: 12 }`
    back to the studio. The author sees the consequence of `con: 12` without the studio
    knowing what a constitution modifier is.
 5. At spawn, `session` finds no constructor for `guard`, finds the compiled template, calls

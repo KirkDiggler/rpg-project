@@ -132,7 +132,8 @@ behavior, named in the PR).
 **Tests** (`monster/template_test.go`, `monsters/human_test.go`):
 - `TestFromTemplate_GuardDerivesTheSRDNumbers`: base Human, `{con:12, hitDice:"2d8",
   armor: chain-shirt, skills:[perception], actions:[spear]}` → HP 11, AC 13, spear attack bonus
-  +2 and damage `1d6` flat 0, passive perception 12, proficiencies `[{perception, 2}]`.
+  +3 (STR 13 +1, proficiency 2) and damage `1d6` with the +1 ability modifier, passive
+  perception 12, proficiencies `[{perception, 2}]`.
 - `TestFromTemplate_CaptainWithProficiency3`: `{str:15,dex:14,con:14,cha:14, hitDice:"10d8",
   armor: breastplate, proficiency:3, actions:[longsword, javelin]}` → HP 65, AC 16, longsword
   +5 `1d8` flat +2.
@@ -269,7 +270,9 @@ present. Conversion `TemplateSpec → monster.Template` lives here (one function
 `templateOf(spec) (monster.Template, error)`), refusing unknown armor/weapon/skill ids with
 `ErrUnknownContent` as `arm()` does today. The call is
 `FromTemplate(&FromTemplateInput{ID, Ref: parsedPlacementRef, Template, Base})` with
-`Template.Base` set from `spec.Base` and `Base` from `BaseByRef(spec.Base)`.
+`Template.Base` set from `spec.Base`, `Base` from `BaseByRef(spec.Base)`, and `Template.Name`
+from `spec.Name` or, when absent, the template id: name is identity like the ref, never the
+base's. `DerivedAttack.Damage` is notation with the ability modifier folded in (`1d6+1`).
 
 **Behavior:**
 - ref resolves to a constructor and no template → today's path.
