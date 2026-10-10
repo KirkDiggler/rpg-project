@@ -56,6 +56,8 @@ Consider an author choosing a small-brick finish for a room containing a wall an
 | Is this mechanically a wooden or iron door? | Game content/rules, not the visual shader |
 | How wide is the usable passage? | Provider-owned fit facts, not outer bounds |
 
+The two sides of a shared wall answer to different rooms (R11); sharing geometry does not share finish selection. Doorway trim can belong to the same mesh as the wall body while retaining its own surface binding. Face direction alone cannot distinguish them.
+
 A node role is not a material slot: a leaf can contain both boards and straps. An identical texture image is not identical alignment: independent UV origins can restart the pattern at every join.
 
 ## Trade-offs
@@ -71,7 +73,7 @@ A node role is not a material slot: a leaf can contain both boards and straps. A
 
 Palette-atlas UVs can address flat color swatches instead of surface distance. Those meshes need preparation before a tiling material is meaningful. Geometry with modeled large bricks cannot become genuinely small-brick geometry through a texture swap. Such assets can remain fixed-appearance assets rather than pretending to support the room finish.
 
-Room corners, shared-wall faces, and origin changes need the R7 decision. Arbitrary meshes and compound multi-opening assemblies are not evidence of general compatibility. Per-wall overrides and coordinated wood/metal palettes remain R10 questions. Missing resources and absent capability need explicit consumer behavior under R8, not an invisible or silently guessed result.
+Room corners, exposed tops/ends/reveals, and origin changes need the R7 decision. Shared-wall room-facing finishes are independent under R11. Arbitrary meshes and compound multi-opening assemblies are not evidence of general compatibility. Per-wall overrides and coordinated wood/metal palettes remain R10 questions. Missing resources and absent capability need explicit consumer behavior under R8, not an invisible or silently guessed result.
 
 A useful proof under R9 shows two wall lengths, an adjacent-piece seam, a rotated wall and corner under directional light, and the doorway closed/open/leafless. Changing room A must leave room B unchanged; saving and reloading must preserve the finish and alignment. The provider checks the actual exported bindings and maps; Web checks the rendered room and authoring lifecycle.
 
