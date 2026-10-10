@@ -390,10 +390,13 @@ shadowing check (constructor OR template) and the field-for-field map of
 
 **Walk scenario (owned here):** PutDungeon the castle yaml; launch; (1) roster shows two guards,
 a captain, two cooks, all monster-kind, none hostile; (2) inspect guard-1: HP 11, AC 13,
-spear; (3) attack cook-1 → attack lands (not refused), stance beat `kitchen → hostile`, fight
-forms with both cooks, guards stay neutral; (4) new session: take the captain's held item →
-`alarm-raised` fact → `watch` turns hostile, guards and captain join. Each step is one `- [ ]`
-on #555 with what was seen.
+spear +3; (3) take the alarm prop → `alarm-raised` fact → `watch` turns hostile, guards and
+captain form a fight, cooks stay neutral. Each step is one `- [ ]` on #555 with what was seen.
+There is no free-roam attack step: the standing ruling (disposition both-ways, 2026-09-22) is
+that the ITEM triggers hostility and no attack verb exists off the turn clock; R1's
+"attackable and turns hostile" pin is T3's unit test, which authors the turn clock. The alarm
+is a holdable prop, not a `holds:` on the captain, because a mind never reveals a record it
+already holds.
 
 **Verification:** `cd rpg-api && make ci-check 2>&1 | tee /tmp/ci.log; grep -E 'FAIL|error' /tmp/ci.log`
 empty; walk checklist on #555 all checked.
@@ -500,3 +503,7 @@ golden is the only testdata diff.
 - *AC math lives on Character*; extracting it is in T1 because R6 needs it, and the character
   tests are the behavior pin.
 - No task consumes an unbuilt interface: T3 waits on T1+T2, T5 on T1–T4, T6 on T4+T5.
+- *Derivation refusals carry no field path* through `session.DeriveTemplate`; the api lands
+  them at `templates.<id>` with session's sentence, and only shadowing and an unknown base get
+  their own paths. Open, non-blocking: a later round has session name the field (rpgerr meta)
+  so the studio can place the error inline.
