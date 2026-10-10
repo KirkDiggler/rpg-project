@@ -250,11 +250,19 @@ encounter module's testdata or a session testdata copy.
 **Interfaces:** exported for rpg-api (R6, one assembly; the api never mirrors the conversion):
 ```go
 type DeriveTemplateInput struct { ID string; Ref string; Spec dungeonspec.TemplateSpec }
-type DeriveTemplateOutput struct { Monster *monster.Monster }
+type DerivedBlock struct {
+    ID, Ref, Name string; HitPoints, ArmorClass, PassivePerception, ProficiencyBonus int
+    Abilities map[string]int; Attacks []DerivedAttack; Experience int
+}
+type DerivedAttack struct { WeaponRef string; AttackBonus int; Damage string }
+type DeriveTemplateOutput struct { Block DerivedBlock }
 func DeriveTemplate(in *DeriveTemplateInput) (*DeriveTemplateOutput, error)
 ```
 Session is the one package that imports both the dialect and the rulebook, so the
-authoring-time derivation (T5) and the launch-time one share this function. Internal:
+authoring-time derivation (T5) and the launch-time one share one assembly. The output is a
+session-owned view read off the assembled monster: session's boundary law admits neither
+`monster.Monster` nor an inspected `monster.Data` in an exported signature, and the api maps
+the view field-for-field onto the proto. Internal:
 `instantiate(id, ref string, actions []string, template *dungeonspec.TemplateSpec)
 (*monster.Data, error)`; `resolveLaunchMonsters` passes `dungeon.Templates[idOf(ref)]` when
 present. Conversion `TemplateSpec → monster.Template` lives here (one function
@@ -350,8 +358,8 @@ stack on pseudo-versions for the walk.
 `type Compiled struct { ...; Templates []DerivedStatBlock }` (api-internal type, converted at
 the handler). Derivation calls `session.DeriveTemplate` from T3 (R6: one assembly; the api calls it, it
 does not reimplement or mirror the string-to-template conversion). The api keeps only the
-shadowing check (constructor OR template) and the projection of `*monster.Monster` into
-`DerivedStatBlock`.
+shadowing check (constructor OR template) and the field-for-field map of
+`session.DerivedBlock` onto the proto `DerivedStatBlock`.
 
 **Behavior:**
 - Ref check extended: `monsters.ByRef(ref)` or `compiled.Templates[idOf(ref)]`; both → FieldError
