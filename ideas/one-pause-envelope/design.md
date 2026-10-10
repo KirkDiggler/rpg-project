@@ -530,8 +530,7 @@ What each ruling makes true here:
 
 ## Open
 
-1. **A cast's told unit.** This design tells a cast as one beat when it
-   completes, so a cast paused on its third target tells its first two targets
-   on the resume. The law read strictly would split the cast beat at the pause.
-   Recommendation: keep the cast one unit, as the law section states, because a
-   cast beat is one train and its board changes already land at the pause.
+None. The cast's told unit was ruled on the design PR (2026-10-10): a cast is
+one told unit; nothing is processed until every save is in; its board changes
+land at each pause. The ruling covers a monster's multi-target save or a PvP
+cast when one arrives.
