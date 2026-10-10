@@ -91,12 +91,22 @@ type Template struct {
     Actions       []weapons.WeaponID    // absent = base's; present replaces wholesale
     Experience    int                   // 0 = worth nothing (R8), not inherited
 }
-func FromTemplate(id string, t Template, base Template) (*Monster, error)
+type FromTemplateInput struct {
+    ID       string
+    Ref      *core.Ref   // the TEMPLATE's ref (dnd5e:monsters:guard), never the base's
+    Template Template
+    Base     Template    // must itself be a base: names no Base of its own
+}
+func FromTemplate(in *FromTemplateInput) (*Monster, error)
 func (t Template) Merge(base Template) Template
 ```
 `FromTemplate` is the only derivation site (R6). The caller (T3) looks up the base and passes
-it; `FromTemplate` refuses a `Template` whose merged result still lacks hit dice, a ref, or
-abilities, naming the field.
+it; `FromTemplate` refuses a nil input, a nil ref, a base that is itself derived, and a merged
+result that still lacks hit dice or abilities, naming the field. The sheet's `Ref` is the
+template's; `CreatureType` comes from the base. `Template.Speed` (zero = base's) rides along so
+no derived creature walks 0. Heavy armor applies no DEX modifier in either direction
+(`armor.DexContribution` is the one rule; this corrects the character's prior negative-DEX
+behavior, named in the PR).
 
 **Behavior:**
 - Merge is per field (R4): a stated key wins, an unstated key is the base's. `Experience`
@@ -234,7 +244,8 @@ encounter module's testdata or a session testdata copy.
 (*monster.Data, error)`; `resolveLaunchMonsters` passes `dungeon.Templates[idOf(ref)]` when
 present. Conversion `TemplateSpec → monster.Template` lives here (one function
 `templateOf(spec) (monster.Template, error)`), refusing unknown armor/weapon/skill ids with
-`ErrUnknownContent` as `arm()` does today.
+`ErrUnknownContent` as `arm()` does today. The call is
+`FromTemplate(&FromTemplateInput{ID, Ref: parsedPlacementRef, Template, Base})`.
 
 **Behavior:**
 - ref resolves to a constructor and no template → today's path.
