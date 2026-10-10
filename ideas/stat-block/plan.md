@@ -247,7 +247,15 @@ before merge).
 tests `launch_test.go` or `entities_internal_test.go`; fixture yaml reused from T2 via the
 encounter module's testdata or a session testdata copy.
 
-**Interfaces:** `instantiate(id, ref string, actions []string, template *dungeonspec.TemplateSpec)
+**Interfaces:** exported for rpg-api (R6, one assembly; the api never mirrors the conversion):
+```go
+type DeriveTemplateInput struct { ID string; Ref string; Spec dungeonspec.TemplateSpec }
+type DeriveTemplateOutput struct { Monster *monster.Monster }
+func DeriveTemplate(in *DeriveTemplateInput) (*DeriveTemplateOutput, error)
+```
+Session is the one package that imports both the dialect and the rulebook, so the
+authoring-time derivation (T5) and the launch-time one share this function. Internal:
+`instantiate(id, ref string, actions []string, template *dungeonspec.TemplateSpec)
 (*monster.Data, error)`; `resolveLaunchMonsters` passes `dungeon.Templates[idOf(ref)]` when
 present. Conversion `TemplateSpec → monster.Template` lives here (one function
 `templateOf(spec) (monster.Template, error)`), refusing unknown armor/weapon/skill ids with
@@ -340,8 +348,10 @@ stack on pseudo-versions for the walk.
 **Files:** as above plus tests beside each.
 **Interfaces:** `sessionworld.Compile` returns derived blocks alongside the compiled dungeon:
 `type Compiled struct { ...; Templates []DerivedStatBlock }` (api-internal type, converted at
-the handler). Derivation uses `monsters.BaseByRef` + `monster.FromTemplate` from T1, the same
-function session uses (R6: one assembly; the api calls it, it does not reimplement it).
+the handler). Derivation calls `session.DeriveTemplate` from T3 (R6: one assembly; the api calls it, it
+does not reimplement or mirror the string-to-template conversion). The api keeps only the
+shadowing check (constructor OR template) and the projection of `*monster.Monster` into
+`DerivedStatBlock`.
 
 **Behavior:**
 - Ref check extended: `monsters.ByRef(ref)` or `compiled.Templates[idOf(ref)]`; both → FieldError
