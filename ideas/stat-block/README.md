@@ -41,15 +41,16 @@ flowchart LR
 | `monster.Template` | the authored record: `Base`, `Abilities`, `HitDice`, `Armor`, `Proficiency`, `Skills`, `Actions`, `Experience` | yaml mapping → typed template; refuses an unknown field, a bad die string, an unknown armor or weapon ref |
 | `monster.FromTemplate` | the one derivation | template + base → `*Monster` with HP, AC, attacks and proficiencies set; refuses a missing base by name |
 | rulebook content `human` | the base block as a template literal | none; assembled through `FromTemplate` like any other |
-| `dungeonspec` | the `templates:` dialect and the shadowing refusal | yaml → `Compiled.Templates map[id]Template`; refuses an id that names a rulebook monster |
-| `session` spawn | choosing the source of a monster ref | ref → rulebook constructor if one exists, else the compiled template, else refused |
-| rpg-api compile and validate | transport of the derived echo | yaml → existing compile result plus one derived block per template |
+| `dungeonspec` | the `templates:` dialect, shape checks only | yaml → `Compiled.Templates map[id]TemplateSpec` of authored strings; refuses a malformed ref, die string or score, and a template deriving from a template |
+| `session` spawn | choosing the source of a monster ref | ref → rulebook constructor, or the compiled template; both is refused as shadowing, neither is refused as unknown |
+| rpg-api compile and validate | authoring-time resolution and the derived echo | yaml → existing compile result plus one derived block per template; shadowing and unknown refs as field errors |
 | encounter studio | editing the template record | form edits → yaml; shows the echoed derived block |
 
 Refusals, one per boundary:
 
 - `FromTemplate` does not accept an authored hit point or armor class total.
-- `dungeonspec` does not derive anything; it carries the template and checks names.
+- `dungeonspec` does not derive anything and does not resolve a ref; it carries the template
+  and checks shape.
 - `session` does not merge a template over a constructor; a ref has exactly one source.
 - rpg-api does not compute a modifier, a bonus or a total; it forwards the toolkit's echo.
 - The studio does not compute a derived number, even for a live preview; an unanswered
@@ -62,8 +63,9 @@ The author writes `guard` with `con: 12`, `hitDice: 2d8` and `armor: chain-shirt
 1. The studio writes the yaml above. No number is derived; `con: 12` is the only
    constitution fact that exists.
 2. rpg-api hands the yaml to `dungeonspec`, which produces `Compiled.Templates["guard"]`
-   with `Base: dnd5e:monsters:human` and the three stated fields. The ref
-   `dnd5e:monsters:guard` is checked against the rulebook registry and is not shadowing.
+   with `Base: dnd5e:monsters:human` and the three stated fields as strings. rpg-api then
+   checks `dnd5e:monsters:guard` against the rulebook registry and finds no constructor, so
+   the template is the ref's one source.
 3. `FromTemplate` loads `human`, merges per field (strength 10 from the base, constitution 12
    from the override), reads `2d8` as two dice averaging 4.5 each, adds the +1 constitution
    modifier per die, and stores 11 hit points. Chain shirt's rule gives 13 plus a dexterity

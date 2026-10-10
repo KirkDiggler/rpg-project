@@ -56,8 +56,9 @@ monsterDeclarations:
   targeting rule; the stance graph, aggression law and `until` predicates apply unchanged.
 - **R2 — A template is a monster ref.** A declared template is referenced as
   `dnd5e:monsters:<id>` and routes through the monster placement path. A template id that
-  names an existing rulebook monster is refused at compile, so an author never shadows the
-  rulebook silently.
+  names an existing rulebook monster is refused wherever the ref is resolved, at authoring
+  and at launch, so an author never shadows the rulebook silently. The compiler checks the
+  template's shape only; it never knows what a ref resolves to.
 - **R3 — Stored is authored, live is derived.** A template stores ability scores, hit dice,
   armor, proficiency bonus, proficient skills, weapons and experience. Hit points, armor
   class, attack bonus, damage and passive perception are derived by the rulebook at assembly
