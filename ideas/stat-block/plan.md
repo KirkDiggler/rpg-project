@@ -242,8 +242,10 @@ shows only the new pair).
 **Delivers:** R1, R2 (resolution half), R6 at launch. A placement whose ref names a declared
 template spawns through `FromTemplate`; shadowing refused.
 **Owner:** rpg-toolkit module `rulebooks/dnd5e/session`, `launch.go` + `entities.go`.
-**Prerequisites:** T1 and T2 built (local go.work replace for development; pins to tags
-before merge).
+**Prerequisites:** T1 and T2 pushed. Preferred local form is a pseudo-version pin of each
+pushed provider head (the toolkit's rule: develop on pushed commits); an out-of-repo go.work
+replace is the fallback while a provider head is still moving, never committed. Pins move to
+tags before merge.
 **Files:** modify `launch.go` `resolveLaunchMonsters`; modify `entities.go` `instantiate`;
 tests `launch_test.go` or `entities_internal_test.go`; fixture yaml reused from T2 via the
 encounter module's testdata or a session testdata copy.
