@@ -91,19 +91,26 @@ type Template struct {
     Actions       []weapons.WeaponID    // absent = base's; present replaces wholesale
     Experience    int                   // 0 = worth nothing (R8), not inherited
 }
+type Base struct {            // a rulebook base block with its identity
+    Ref      *core.Ref         // dnd5e:monsters:human
+    Template Template          // names no Base of its own
+}
 type FromTemplateInput struct {
     ID       string
     Ref      *core.Ref   // the TEMPLATE's ref (dnd5e:monsters:guard), never the base's
-    Template Template
-    Base     Template    // must itself be a base: names no Base of its own
+    Template Template    // Template.Base is REQUIRED and must equal Base.Ref
+    Base     Base
 }
 func FromTemplate(in *FromTemplateInput) (*Monster, error)
 func (t Template) Merge(base Template) Template
+// monsters.BaseByRef(ref string) (monster.Base, bool); monsters.Human is a Base
 ```
-`FromTemplate` is the only derivation site (R6). The caller (T3) looks up the base and passes
-it; `FromTemplate` refuses a nil input, a nil ref, a base that is itself derived, and a merged
-result that still lacks hit dice or abilities, naming the field. The sheet's `Ref` is the
-template's; `CreatureType` comes from the base. `Template.Speed` (zero = base's) rides along so
+`FromTemplate` is the only derivation site (R6). The caller (T3) looks up `BaseByRef(spec.Base)`
+and passes it; `FromTemplate` refuses a nil input, a nil ref, a template with no base, a template
+whose named base differs from the base given, a base that names a base, and a merged result that
+still lacks hit dice or abilities, naming the field. The pairing is checked inside the assembly,
+never left as the caller's promise. The sheet's `Ref` is the template's; `CreatureType` comes
+only from `Base.Ref`. `Template.Speed` (zero = base's) rides along so
 no derived creature walks 0. Heavy armor applies no DEX modifier in either direction
 (`armor.DexContribution` is the one rule; this corrects the character's prior negative-DEX
 behavior, named in the PR).
@@ -245,7 +252,8 @@ encounter module's testdata or a session testdata copy.
 present. Conversion `TemplateSpec → monster.Template` lives here (one function
 `templateOf(spec) (monster.Template, error)`), refusing unknown armor/weapon/skill ids with
 `ErrUnknownContent` as `arm()` does today. The call is
-`FromTemplate(&FromTemplateInput{ID, Ref: parsedPlacementRef, Template, Base})`.
+`FromTemplate(&FromTemplateInput{ID, Ref: parsedPlacementRef, Template, Base})` with
+`Template.Base` set from `spec.Base` and `Base` from `BaseByRef(spec.Base)`.
 
 **Behavior:**
 - ref resolves to a constructor and no template → today's path.
