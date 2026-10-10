@@ -252,7 +252,7 @@ encounter module's testdata or a session testdata copy.
 
 **Interfaces:** exported for rpg-api (R6, one assembly; the api never mirrors the conversion):
 ```go
-type DeriveTemplateInput struct { ID string; Ref string; Spec dungeonspec.TemplateSpec }
+type DeriveTemplateInput struct { Ref string; Spec dungeonspec.TemplateSpec }  // block ID = the template id
 type DerivedBlock struct {
     ID, Ref, Name string; HitPoints, ArmorClass, PassivePerception, ProficiencyBonus int
     Abilities map[string]int; Attacks []DerivedAttack; Experience int
@@ -265,7 +265,9 @@ Session is the one package that imports both the dialect and the rulebook, so th
 authoring-time derivation (T5) and the launch-time one share one assembly. The output is a
 session-owned view read off the assembled monster: session's boundary law admits neither
 `monster.Monster` nor an inspected `monster.Data` in an exported signature, and the api maps
-the view field-for-field onto the proto. Internal:
+the view field-for-field onto the proto. Shadowing (`ErrShadowedRef` when the template's ref
+names a rulebook monster or base) is refused inside the one shared assembly, so authoring and
+launch cannot disagree; the api maps that error to a field error at `templates.<id>`. Internal:
 `instantiate(id, ref string, actions []string, template *dungeonspec.TemplateSpec)
 (*monster.Data, error)`; `resolveLaunchMonsters` passes `dungeon.Templates[idOf(ref)]` when
 present. Conversion `TemplateSpec → monster.Template` lives here (one function
