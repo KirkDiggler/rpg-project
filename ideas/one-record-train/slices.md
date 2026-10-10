@@ -30,6 +30,12 @@ Encounter carries `!`: it deletes `Record` and `RecordOutput` and changes
 `TellConcentration`'s return type. Session carries none: no exported verb,
 input or output changes, and the event bodies gain one optional field.
 
+> Ruled on the design PR: slice 1 also folds `RecordActivation` into the
+> train (a train of one activation unit); its separate append + consult is
+> deleted. Done-when: `TestAnActivationIsATrainOfOne` — the activation's beats
+> land, then one standing consult with the standing refresh; grep for a second
+> `appendBeat` path for outcomes/activations finds none.
+
 ## 1. toolkit encounter
 
 ### Types

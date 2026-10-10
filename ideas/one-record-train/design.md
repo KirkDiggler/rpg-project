@@ -335,11 +335,7 @@ What each ruling makes true here:
 
 ## Open
 
-1. **`RecordActivation` keeps its own append and consult.** Its consult runs
-   `noticeDown` without the observed-standing refresh. Making it a train of
-   one activation would add that refresh to every activation verb, which no
-   ruling covers. Recommendation: fold it in a follow-up once a heal that
-   stands a member up shows the stale testimony.
-2. **The marker does not reach the wire.** The web cannot yet tell a
-   Multiattack's swing from a lone pick. Carrying `sequence` is an additive
-   proto field on the swing events when the web asks for it.
+None. Ruled on the design PR (2026-10-10): `RecordActivation` folds into the
+train as a train of one, so the append-and-notice helper is the only path and
+an activation gains the standing refresh; the sequence marker reaches the wire
+by an additive proto field when the web asks for it, not in this wave.
