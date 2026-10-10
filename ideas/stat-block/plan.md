@@ -412,13 +412,13 @@ empty; walk checklist on #555 all checked.
 
 ### T6: Studio template panel
 
-**Delivers:** R7 (client half). The studio edits `templates:` and shows the echoed block.
+**Delivers:** R7 (client half: no derivation, no preview). The studio edits `templates:` in
+the document and places a declared template like any monster ref. (Amended 2026-10-11 with the
+echo's retirement: the panel shows nothing derived; an author sees a block's numbers in play.)
 **Owner:** rpg-dnd5e-web, lane ui-ux (charter `docs/teams/roles/ui-ux/prompt.md`), branch
 based on the studio line (`feat/1234-studio-doorways` or its successor on dev).
-**Prerequisites:** T4 bindings published (`@kirkdiggler/rpg-api-protos` bump); T5 running
-locally for the echo. The studio does not call PutDungeon today; `usePutDungeonPreview`
-(`src/author/DungeonBuilder.tsx`) and `useRoomPublishing` (`WorldBuildingConcept.tsx`) are
-the existing validate-only callers to reuse.
+**Prerequisites:** T2 merged (the yaml dialect is what PutDungeon accepts); T5 merged on dev so
+a panel-authored yaml is refused by field at save time. No protos change.
 **Files:** create `src/concepts/encounter-studio/StudioTemplatePanel.tsx` + test; modify
 `studioSession.ts` (`templateEditing` beside `wallEditing`); modify
 `src/concepts/world-building/singleRoomDungeon.ts` `encodeSingleRoomDungeon` /
@@ -428,32 +428,33 @@ templates beside the rulebook palette.
 
 **Interfaces:** panel edits produce `templates` in the document; the document encodes to the
 T2 yaml shape exactly (field names `base, name, abilities, hitDice, armor, proficiency,
-skills, actions, experience`). The echo is read from `PutDungeonResponse.templates` by
-`template_id`.
+skills, actions, experience`). PutDungeon `FieldError.path` values `templates.<id>` and
+`templates.<id>.<field>` are rendered where the existing publish flow renders field errors.
 
 **Behavior:**
-- Fields: base (select with the single option `dnd5e:monsters:human`; the list grows with the
-  rulebook, and listing bases over the wire is deferred until a second base exists), name, six ability inputs (blank = inherited, shown as the echoed
-  merged value), hit dice text, armor select (from the existing armor palette data), skills
-  multi-select, weapons (reuse the `actions` weapon picker from `SitePolicies`), experience.
-- Derived strip: HP, AC, passive perception, attacks — **only** from the echo; while a
-  validate call is in flight or errored, the strip reads "unanswered", never a locally
-  computed number (R7 refusal).
-- A FieldError at `templates.<id>.<field>` renders inline on that field.
+- Fields: base (select with the single option `dnd5e:monsters:human`; listing bases over the
+  wire is deferred until a second base exists), name, six ability inputs (blank = inherited;
+  the panel shows "inherited", never a number it computed), hit dice text, armor select (from
+  the existing armor palette data), skills multi-select, weapons (reuse the `actions` weapon
+  picker from `SitePolicies`), experience.
+- No derived strip. The panel does not compute or preview HP, AC or attacks (R7 refusal).
+- A FieldError at `templates.<id>` or `templates.<id>.<field>` renders inline on the block or
+  field through the existing validate-only publish flow.
 - Placing: the arrange ref picker offers `dnd5e:monsters:<id>` for each declared template.
 
 **Tests (vitest):**
 - `StudioTemplatePanel.test.tsx`: editing con to 12 encodes `templates.guard.abilities.con: 12`
-  and nothing else; derived strip shows "unanswered" with no response; shows 11/13 given a
-  stubbed response; inline error for a stubbed FieldError.
+  and nothing else; a blank score renders "inherited"; a stubbed FieldError at
+  `templates.guard.hitDice` renders on that field; no element in the panel renders a number
+  the document does not contain.
 - `singleRoomDungeon.test.ts`: encode/decode round-trip of the castle yaml preserves
   `templates:` byte-for-byte modulo key order.
 - `EncounterStudioIntegration.test.tsx`: a declared template appears in the ref picker.
 
 - [ ] Tests first; implement; `npm run lint && npm run typecheck && npm test` (fresh
       worktree: `npm ci` first, tsc false-green trap).
-- [ ] Local walk with T5 running: author guard in the panel, see 11/13 appear after the
-      validate round trip; place it; screenshot via `node tools/browser/screenshot.mjs`.
+- [ ] Local walk with T5 on dev: author guard in the panel, save, launch, read HP 11 / AC 13
+      off the roster; screenshot via `node tools/browser/screenshot.mjs`.
 
 **Verification:** commands above; screenshot attached to the PR.
 **Completion evidence:** PR, test output, screenshot.
@@ -502,9 +503,9 @@ golden is the only testdata diff.
   substance (refused, never silent) is unchanged.
 - *`Config` cannot set senses or proficiencies* today; T1 adds the fields rather than writing
   through `Data` after construction, so a derived monster is complete at `New`.
-- *The studio does not validate today*; T6 inherits the existing validate-only hook rather
-  than adding a second caller shape. If the studio line lands its own publish flow first, T6
-  reuses that instead; the contract (echo in, "unanswered" otherwise) does not move.
+- *The studio does not validate today*; T6 inherits the existing validate-only publish flow for
+  field errors rather than adding a second caller shape. If the studio line lands its own
+  publish flow first, T6 reuses that instead.
 - *AC math lives on Character*; extracting it is in T1 because R6 needs it, and the character
   tests are the behavior pin.
 - No task consumes an unbuilt interface: T3 waits on T1+T2, T5 on T1–T4, T6 on T4+T5.
