@@ -41,10 +41,12 @@ Geometry, material resources, and room appearance are separate identities. A roo
 | R9 | open | First representative asset/material set and visual acceptance | — | — |
 | R10 | open | Per-surface overrides and non-masonry room finish selection | — | — |
 | R11 | settled | Independent room-facing finishes on shared geometry | KirkDiggler | 2026-10-09 |
+| R12 | open | Closed-room texture-phase seam versus repeat-scale adjustment | — | — |
 
 ## Open
 
 - **R7 — Mapping.** Choose room-local projection, continuous wall-distance mapping, or another measured approach. Define origin stability when rooms move or resize, inside/outside corners, UV seams, normal-map basis, and ownership of exposed tops, ends, and doorway reveals. Room-facing side independence follows R11. Arbitrary projections do not promise seamless wrapping.
 - **R8 — Concrete contract.** Agree stable material identities, surface-to-primitive bindings, compatibility declarations, map paths/hashes, color-space and normal conventions, default parameters, and room document fields. Define old-document behavior, missing/invalid resources, incompatible selection, loading/cache/disposal behavior, and reload determinism. No JSON example in the walkthrough is an accepted schema.
 - **R9 — Proof set.** Select one suitable wall and one complete framed doorway, plus contrasting brick finishes with normal maps. Establish whether each asset needs UV preparation or replacement geometry. Verify seams, corners, room resizing, closed/open/leafless doorway states, and material isolation between rooms before broad enrollment.
+- **R12 — Loop closure.** A fixed-size repeat need not divide an arbitrary room perimeter. Choose whether a deliberate phase seam remains at a stable mapping anchor or the room adjusts repeat scale to close the pattern. Neither behavior is implicit in the accepted open-corner appearance. The [contract proposal](contract-proposal.md) recommends fixed size and an explicit phase seam; geometry must still close.
 - **R10 — Overrides.** Room-owned masonry is the initial direction. Whether authors can override individual walls/frames, and how room wood/metal finishes interact with authored defaults, requires a concrete consumer use case and agreement.

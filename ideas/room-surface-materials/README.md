@@ -4,6 +4,8 @@
 
 This [design](design.md) extends the appearance conversation around [Assets #290](https://github.com/KirkDiggler/rpg-game-assets/issues/290) and [Encounter Studio #1234](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1234). **The room chooses a finish; an asset declares which surfaces can receive it.** It reuses the asset catalog and doorway part roles, not a separate family of model exports for every texture. Doorway classification and fit remain their own provider contract; runtime materials do not replace that work.
 
+The [contract proposal](contract-proposal.md) describes candidate provider bindings, material sets and the existing Studio/runtime seams. The [implementation outline and readiness check](implementation-plan.md) records inspected evidence and remaining blockers; it is not an execution-ready implementation plan.
+
 ## Component shape
 
 ```mermaid
@@ -93,7 +95,9 @@ A useful proof under R9 shows two wall lengths, an adjacent-piece seam, a rotate
 | Provider promotion workflow | `rpg-game-assets/docs/human/asset-ingestion/world-asset-promotion.md` |
 | Existing private environment maps | `rpg-game-assets/harness/models/synty/textures/` |
 | Consumer catalog accept boundary | `rpg-dnd5e-web/scripts/generate-world-asset-catalog.mjs` |
-| Existing room environment rendering surface | `rpg-dnd5e-web/src/components/session/RoomSceneEnvironment.tsx` |
+| Room identity and boundary intent | `rpg-dnd5e-web/src/concepts/world-building/authoringRegions.ts`, `regionBoundaryGeometry.ts` |
+| Shared authored structural surfaces | `rpg-dnd5e-web/src/concepts/world-building/StructuralWallSurfaces.tsx`, `structuralWallEditing.ts` |
+| Permitted play layout adapter and renderer | `rpg-dnd5e-web/src/components/session/structuralLayout.ts`, `StructuralLayoutEnvironment.tsx` |
 | Studio integration request | [Web #1234](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1234) |
 
 The source map identifies existing seams, not a checked implementation plan. Concrete material publication and Studio document types are R8 design work.
