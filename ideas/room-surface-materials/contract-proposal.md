@@ -73,6 +73,12 @@ Use source hash-pinned recipes and existing publication/inventory custody, not a
 
 The physical repeat default requires an explicit calibration check in the browser: the inspected catalog's `boundsMeters` already includes `SHARED_RUNTIME_SCALE = 0.75`, while gameplay layout is in feet. Do not multiply material scale by `SYNTY_SCALE` again or copy the proof's five Blender units into the wire as five feet. Convert a material's meter repeat to feet using 0.3048 meters/foot, then through the existing `sceneUnitsPerFoot` conversion. Author-selected physical scale and the precise initial repeat values require measured fixtures, not an asset-bounds-derived rule.
 
+### External-image custody
+
+The proposed reusable-image path requires an explicit opt-in resource contract for enrolled assets. Every external image URI must resolve to a declared, hash-bound file inside the staged private runtime bundle; arbitrary network URLs, escaping paths, symlinks and undeclared dependencies refuse. Resolve dependencies relative to the actual GLB location, not the process working directory. Geometry buffers remain embedded. A GLB digest alone does not bind its external images.
+
+Publication, runtime texture policy, inventory/staging and consumer verification must all account for that dependency closure. Existing embedded-only asset profiles remain unchanged; a broad `allowExternalImages` switch is insufficient. The final schema must cover default trim/leaf images as well as selectable masonry maps, so preserving authored appearance does not reintroduce hidden dependencies. The flat local prototype does not settle production directory layout or its nested relative-path validation.
+
 ## Room authoring and derived spans
 
 Proposed finish setting belongs on the existing `AuthoringRegion`. It names a material ref, not image URLs, GLB paths, or raw shader configuration. Exact persistence/version extension is pending R8. Existing scene3 readers reject unknown region keys, so adding fields under scene3 without a compatibility/version decision is unsafe.

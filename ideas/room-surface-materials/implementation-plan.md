@@ -54,6 +54,21 @@ npm run test:run -- \
 
 Result with the Studio worktree's existing dependencies: **117/117 passed, five files**. No dependencies installed or lockfiles changed. Initial reuse of root `node_modules` produced 14 schema-construction failures because that checkout pins proto v0.1.224, while Studio pins v0.1.226. Corrected the isolated worktree's dependency symlink to the Studio dependency tree and reran. This was probe setup error, not a surface feature regression. No full Web gate or new-feature test pass is claimed.
 
+## Blender → GLB → browser seam probe
+
+An isolated local prototype now exports a straight wall and a doorway assembly from the accepted Blender checkpoint, without baked room-placement UVs. Front/back material-slot identity survives export and resolves under the real Three `GLTFLoader`: two declared bindings per asset, with trim and the leaf unclaimed. Triangulating the disposable exports avoids Blender's initial tangent-generation warnings. The browser computes shared per-placement UVs and new tangents on instance-owned geometry.
+
+Private local artifacts live under Assets `.worktrees/290-runtime-surfaces/.stage/surface-export-probe/`; these are ignored experiments, not promoted or durable provider artifacts. `export_kit.py`, `pack_probe.py`, `validate_probe.py`, `probe.html` and `browser_probe.mjs` reproduce the bounded export/load proof. `export-verification.json` and `browser-verification.json` retain facts. The temporary localhost server and isolated browser close after verification; no live Blender or Studio document is changed.
+
+Observed results:
+
+- Wall GLB: 6,540 bytes; doorway GLB: 93,040 bytes; five content-addressed image files shared by references across the two geometry resources (large/small color+normal pairs plus the door palette).
+- The isolated browser loads exactly two GLBs. Changing the front large→small→large keeps geometry and material instance identities stable; the back finish and protected trim/leaf maps do not change. Leaf hiding keeps the frame. Four screenshots were inspected, with no page errors and all resource responses HTTP 200.
+- Selectable finishes share texture objects across their bound wall/doorway surfaces. The probe still loads default GLB image references as well; it does not prove deduplicated default GPU resources or one network fetch per image. Those remain lifecycle/performance work.
+- Ten local validation tests pass: valid shared dependency closure; bad GLB digest; image drift; undeclared image; unsafe paths; symlink; missing surface node; ambiguous named material identity; duplicate primitive claims; multiple primitives belonging to one named material.
+- The existing production `runtime_image_facts` gate intentionally rejects this prototype with `runtime image 0 must be embedded`. This is a measured integration gap, not a gate bypass or a published asset. `normalize_prop_for_runtime.py` and `authored_world_asset_source.py` enforce embedded resources; publication and consumer stage verification need a coordinated opt-in dependency contract.
+- The first browser launch found no downloaded Playwright Chromium; rerunning with installed `/usr/bin/google-chrome` passed. No browser package was installed. Native Studio integration and the normalized promotion round trip remain unproved.
+
 ## Conditional work sequence
 
 Develop from the shared renderer's required inputs toward provider declarations. Coordinate Web schema acceptance before provider emission. Publish verified assets before consumer adoption of their exact revision/hash. Integrate gameplay delivery only on released provider bindings, then verify save/play/reload. Production tasks below remain conditional; no merge is authorized.
@@ -62,13 +77,13 @@ Develop from the shared renderer's required inputs toward provider declarations.
 
 **Owner:** Assets. **Prerequisite:** R8 binding/material schema agreement; real GLB round-trip of the accepted straight wall/doorway checkpoint. Corner-end capabilities require the separate fit declaration in C, not inferred face directions.
 
-**Existing files:** `scripts/world_asset_review.py`, `scripts/build_world_asset_catalog.py`, `scripts/normalize_authored_world_asset.py`, `scripts/promote_world_assets.py`, `scripts/test_world_asset_review.py`, `scripts/test_build_world_asset_catalog.py`, `scripts/test_promote_world_assets.py`, `docs/human/asset-ingestion/world-asset-promotion.md`.
+**Existing files:** `scripts/world_asset_review.py`, `scripts/build_world_asset_catalog.py`, `scripts/normalize_authored_world_asset.py`, `scripts/normalize_prop_for_runtime.py`, `scripts/authored_world_asset_source.py`, `scripts/promote_world_assets.py`, `scripts/test_world_asset_review.py`, `scripts/test_build_world_asset_catalog.py`, `scripts/test_promote_world_assets.py`, `docs/human/asset-ingestion/world-asset-promotion.md`.
 
 **Proposed new files:** `scripts/world_asset_surfaces.py`, `scripts/test_world_asset_surfaces.py`, `scripts/build_surface_material_catalog.py`, `scripts/test_build_surface_material_catalog.py`; exact recipe/runtime filenames follow schema agreement and the existing promotion workflow.
 
 **Candidate interface:** `AssetSurfaceBinding` and `SurfaceMaterial` in the proposal. Resolve `(node, material)` against final GLB primitives; refuse zero/ambiguous matches, duplicate claims, non-finite geometry, incompatible declared side or unverified map resources. Missing declarations preserve existing assets byte-for-byte. Image paths remain private runtime-root-relative; no source paths in consumer output.
 
-**Required assertions:** front and back bindings resolve only their wall-body primitives; trim/leaf untouched; duplicate node/material names and overlapping bindings refuse; a re-export changing primitive identity invalidates the receipt; bad digest/path/color-space/normal convention refuses; two finishes reference one geometry file; changing one map cannot publish a half-valid material set.
+**Required assertions:** front and back bindings resolve only their wall-body primitives; trim/leaf untouched; duplicate node/material names and overlapping bindings refuse; a re-export changing primitive identity invalidates the receipt; bad digest/path/color-space/normal convention refuses; external image dependency closure is exact and hash-bound, including retained default trim/leaf resources, with legacy embedded-only gates unchanged; two finishes reference one geometry file; changing one map cannot publish a half-valid material set.
 
 **Checks:** focused named Python tests, `build_world_asset_catalog.py --check`, complete inventory/staging checks and real Blender→GLB→browser node/material readback. Do not promote ignored proof files as though they already satisfy custody.
 
