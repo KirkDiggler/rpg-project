@@ -313,7 +313,12 @@ test ./...`.
 
 ---
 
-### T4: Derived block on the authoring wire
+### T4: Derived block on the authoring wire — RETIRED 2026-10-11
+
+Closed unmerged (rpg-api-protos#387) by ruling: a stat block authors like a table and its
+numbers are seen in play; the echo was a preview for a panel that does not exist. T5 and T6
+below carry no echo. The contract is kept for the record only.
+
 
 **Delivers:** R7 (wire half). `PutDungeonResponse` carries one derived block per template.
 **Owner:** rpg-api-protos `dnd5e/api/authoring/v1alpha1/service.proto`.

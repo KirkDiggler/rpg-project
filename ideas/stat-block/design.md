@@ -15,12 +15,13 @@ flowchart LR
     Assemble --> Member[encounter member, KindMonster]
     Place[placement ref dnd5e:monsters:guard] --> Member
     Member --> Stance[faction stance graph, unchanged]
-    Compiled -->|echo derived block| Studio[encounter studio: template panel]
+    Yaml --> Studio[encounter studio: template panel edits the yaml]
 ```
 
 A **template** is a named block in the dungeon yaml: a base, scores, hit dice, armor,
 proficient skills and weapons. The compiler carries it; the rulebook derives the live numbers
-from it in one place; a placement names it like any monster ref. Nothing after assembly learns
+from it in one place, at authoring to refuse and at launch to play; a placement names it
+like any monster ref. Nothing after assembly learns
 that a template existed.
 
 ```yaml
@@ -75,8 +76,8 @@ monsterDeclarations:
   existing `AddWeapon` path; armor class derives through the armor catalogue's own rule;
   hit points are the hit dice average plus the constitution modifier per die.
 - **R7 — Derivation lives in the toolkit.** The studio and the API never compute a derived
-  number. The compile answer echoes each template's derived block, and the studio shows what
-  it is told.
+  number. A template is authored like a table: yaml in, effect seen in play through the
+  existing roster and sheet views. No derived block rides the authoring wire.
 - **R8 — Zero values tell the truth.** An unstated score is the base's; an unstated weapon
   list is the base's; experience absent is worth nothing; a template with no base is refused
   by name. Absence never means zero hit points or zero armor class.
@@ -94,7 +95,7 @@ monsterDeclarations:
 | R4 | settled | base plus per-field override; not a table layer | KirkDiggler | 2026-10-10 |
 | R5 | settled | one rulebook base `human` | KirkDiggler | 2026-10-10 |
 | R6 | settled | one assembly in the monster package | KirkDiggler | 2026-10-10 |
-| R7 | settled | derived numbers echoed by compile, never computed by a client | KirkDiggler | 2026-10-10 |
+| R7 | settled | no client derivation; no authoring-wire echo (echo retired 2026-10-11: a preview for a panel that does not exist) | KirkDiggler | 2026-10-11 |
 | R8 | settled | absence inherits or refuses; never zero | KirkDiggler | 2026-10-10 |
 | R9 | settled | only `actions:` overrides per placement in this slice | KirkDiggler | 2026-10-10 |
 | R10 | deferred-until-a-second-dungeon-reuses-a-template | templates shared across dungeons through a content registry | KirkDiggler | 2026-10-10 |

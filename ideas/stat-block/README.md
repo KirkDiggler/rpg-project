@@ -24,14 +24,13 @@ flowchart LR
         S[session spawn: ref → constructor or compiled template]
     end
     subgraph rpg-api
-        C[compile and validate: echoes derived blocks]
+        C[compile and validate: refuses bad templates]
     end
     subgraph rpg-dnd5e-web
         P[encounter studio: template panel]
     end
     P -->|yaml| C --> D --> T --> F --> M --> S
     H --> F
-    C -->|derived block per template| P
 ```
 
 ## Ownership and contracts
@@ -43,8 +42,8 @@ flowchart LR
 | rulebook content `human` | the base block as a template literal | none; assembled through `FromTemplate` like any other |
 | `dungeonspec` | the `templates:` dialect, shape checks only | yaml → `Compiled.Templates map[id]TemplateSpec` of authored strings; refuses a malformed ref, die string or score, and a template deriving from a template |
 | `session` spawn | choosing the source of a monster ref | ref → rulebook constructor, or the compiled template; both is refused as shadowing, neither is refused as unknown |
-| rpg-api compile and validate | authoring-time resolution and the derived echo | yaml → existing compile result plus one derived block per template; shadowing and unknown refs as field errors |
-| encounter studio | editing the template record | form edits → yaml; shows the echoed derived block |
+| rpg-api compile and validate | authoring-time resolution | yaml → existing compile result; shadowing, unknown base and derivation refusals as field errors at `templates.<id>` |
+| encounter studio | editing the template record | form edits → yaml; shows nothing derived |
 
 Refusals, one per boundary:
 
@@ -52,9 +51,10 @@ Refusals, one per boundary:
 - `dungeonspec` does not derive anything and does not resolve a ref; it carries the template
   and checks shape.
 - `session` does not merge a template over a constructor; a ref has exactly one source.
-- rpg-api does not compute a modifier, a bonus or a total; it forwards the toolkit's echo.
-- The studio does not compute a derived number, even for a live preview; an unanswered
-  field shows as unanswered.
+- rpg-api does not compute a modifier, a bonus or a total; it asks session to derive and
+  keeps only the refusal.
+- The studio does not compute a derived number, and does not preview one; the number is
+  seen in play.
 
 ## Walk one thing through
 
@@ -72,9 +72,8 @@ The author writes `guard` with `con: 12`, `hitDice: 2d8` and `armor: chain-shirt
    modifier capped at 2, so AC is 13 at dexterity 10. `spear` is assembled through
    `AddWeapon` from strength 13 and proficiency 2 into +3 to hit, 1d6+1. The block has no
    name, so its name is the template id, `guard`; the base's name never crosses.
-4. The compile echo carries `{ hp: 11, ac: 13, attacks: [spear +3 1d6+1], passive perception: 12 }`
-   back to the studio. The author sees the consequence of `con: 12` without the studio
-   knowing what a constitution modifier is.
+4. rpg-api keeps none of those numbers. It ran the derivation to learn that nothing refused;
+   the result is discarded and the yaml is stored as written.
 5. At spawn, `session` finds no constructor for `guard`, finds the compiled template, calls
    `FromTemplate`, and places the member as `KindMonster` in faction `watch`. The faction's
    `stance: neutral, until: {fact: alarm-raised}` governs it from here. Nothing downstream
@@ -102,7 +101,7 @@ can stand on opposite sides of a truce.
 | Derive, never store totals (R3) | an override always takes | hit points are the average; the author cannot type `hp: 11` | authored totals with a derived fallback |
 | Base plus per-field merge (R4) | one-line overrides | a second merge grammar beside the table's wholesale rule, written down | reuse the table's layer law |
 | One base block, `human` (R5) | the smallest content that proves the shape | every castle NPC descends from `human` until a second base is needed | base per race from the DMG tables |
-| Echoed derivation (R7) | the client never computes | a studio preview is a round trip | a shared derivation library in TypeScript |
+| No authoring echo (R7) | the client never computes and the wire does not grow | an author sees a block's numbers in play, not in the panel | a derived-block echo on PutDungeon; a derivation library in TypeScript |
 | Per-dungeon templates (R10) | no registry, no cross-dungeon versioning | a template is retyped per dungeon until reuse is wanted | a content registry on day one |
 
 Who pays: the compiler pays the shadowing check; the author pays the round trip and the
@@ -123,9 +122,8 @@ average hit points; the toolkit pays the one assembly function.
   binding, merged by R4's rule, assembled by the same `FromTemplate`. Touches `dungeonspec`
   and the binding; nothing else.
 - **A second base, `dwarf`**: one more template literal in rulebook content. Nothing else.
-- **Hit dice rolled at spawn**: `FromTemplate` takes a roller; the compile echo shows a range
-  instead of a total; the studio shows the range. Touches the monster package, the echo and
-  the panel, which is the finding that the preview seam is the one place variance shows.
+- **Hit dice rolled at spawn**: `FromTemplate` takes a roller. Touches the monster package
+  and the launch path only; nothing on the wire changes.
 
 ## Source map
 
@@ -136,5 +134,4 @@ average hit points; the toolkit pays the one assembly function.
 | armor class rule | `rpg-toolkit/rulebooks/dnd5e/armor` (`MaxDexBonus`) |
 | yaml dialect and compile | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec` (`single_room.go`, `compile.go`, `Compiled`) |
 | spawn source selection | `rpg-toolkit/rulebooks/dnd5e/session` (`entities.go` `arm`, spawn path) |
-| derived echo on the wire | `rpg-api-protos` dungeon validate/compile response; `rpg-api` dungeon orchestrator |
 | template panel | `rpg-dnd5e-web/src/concepts/encounter-studio` |
