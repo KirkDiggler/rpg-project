@@ -357,39 +357,36 @@ commit, not the merge).
 
 ---
 
-### T5: rpg-api resolves templates and echoes the derived block
+### T5: rpg-api refuses bad templates at authoring
 
-**Delivers:** R2 (authoring-time refusal), R7. Also the integration deliverable: the whole
-stack on pseudo-versions for the walk.
+**Delivers:** R2 (authoring-time refusal), R6 (the api calls the one assembly, keeps nothing
+derived). Also the integration deliverable: the whole stack on pseudo-versions for the walk.
+(Amended 2026-10-11: the wire echo is retired with T4; the api derives only to refuse.)
 **Owner:** rpg-api `internal/sessionworld/sessionworld.go`, `internal/dungeons/registry.go`,
 `internal/orchestrators/authoring/orchestrator.go`, handler `put_dungeon.go`, content
 `content/castle-kitchen.yaml` (new reference dungeon for the walk).
 **Prerequisites:** T1, T2, T3 (pseudo-versions, then tags), T4 bindings.
 **Files:** as above plus tests beside each.
-**Interfaces:** `sessionworld.Compile` returns derived blocks alongside the compiled dungeon:
-`type Compiled struct { ...; Templates []DerivedStatBlock }` (api-internal type, converted at
-the handler). Derivation calls `session.DeriveTemplate` from T3 (R6: one assembly; the api calls it, it
-does not reimplement or mirror the string-to-template conversion). The api keeps only the
-shadowing check (constructor OR template) and the field-for-field map of
-`session.DerivedBlock` onto the proto `DerivedStatBlock`.
+**Interfaces:** `sessionworld.Compile` calls `session.DeriveTemplate` for every declared
+template and keeps only the refusals as `FieldError`s. No derived value is stored, returned
+or carried toward the handler. The api keeps the shadowing-to-field-error map and the
+unknown-base pre-check at `templates.<id>.base`.
 
 **Behavior:**
 - Ref check extended: `monsters.ByRef(ref)` or `compiled.Templates[idOf(ref)]`; both → FieldError
   at `templates.<id>` "shadows rulebook monster"; neither → today's "unknown monster".
-- Each template is derived at compile; a derivation error becomes a FieldError at
-  `templates.<id>.<field>`; success produces a `DerivedStatBlock`.
-- `PutDungeon` with `validate_only` returns `templates` populated when `errors` is empty.
+- Each template is derived at compile; a derivation refusal becomes a FieldError at
+  `templates.<id>` (session's sentence) or `templates.<id>.base`; success leaves no trace.
+- `PutDungeon` is unchanged on the wire.
 - `content/castle-kitchen.yaml`: the walk dungeon — factions `watch` (guards, captain) and
   `kitchen` (two cooks), both `stance: neutral`; `watch` has `until: {fact: alarm-raised}`;
   a `holds:` intel fact on the captain so stealing from him raises the alarm through presence
   transfer; party start in the kitchen.
 
 **Tests:**
-- `TestCompile_TemplatesDerive`: castle yaml → 3 derived blocks, guard HP 11 AC 13.
+- `TestCompile_TemplatesWithNoDefectsCompileClean`: castle yaml → no errors, three declared templates.
 - `TestCompile_TemplateShadowRefused`: template `goblin` → FieldError path `templates.goblin`.
 - `TestCompile_TemplateUnknownBaseRefused`: path `templates.guard.base`.
-- `TestPutDungeon_ValidateOnlyEchoesTemplates` (handler): response `templates` has 3 entries,
-  `errors` empty.
 - Existing: all reference dungeons still compile with zero `templates`.
 
 - [ ] Tests first; implement; `make ci-check` and grep the log (exit code lies).
@@ -398,7 +395,7 @@ shadowing check (constructor OR template) and the field-for-field map of
 - [ ] Repin to toolkit tags after T1–T3 merge; `go mod tidy`; CI green; draft → ready.
 
 **Walk scenario (owned here):** PutDungeon the castle yaml; launch; (1) roster shows two guards,
-a captain, two cooks, all monster-kind, none hostile; (2) inspect guard-1: HP 11, AC 13,
+a captain, two cooks, all monster-kind, none hostile; (2) inspect guard-1 on the launched sheet: HP 11, AC 13,
 spear +3; (3) take the alarm prop → `alarm-raised` fact → `watch` turns hostile, guards and
 captain form a fight, cooks stay neutral. Each step is one `- [ ]` on #555 with what was seen.
 There is no free-roam attack step: the standing ruling (disposition both-ways, 2026-09-22) is
@@ -474,7 +471,7 @@ skills, actions, experience`). The echo is read from `PutDungeonResponse.templat
 | R4 base + per-field merge | T1 | `TestFromTemplate_CookInheritsEverythingButTheKnife` |
 | R5 rulebook base `human` | T1 | `TestHuman_IsAssembledByFromTemplate` |
 | R6 one assembly | T1, T3, T5 | api and session both call `FromTemplate`; grep shows no second HP/AC formula |
-| R7 derived echo; client never computes | T4, T5, T6 | `TestPutDungeon_ValidateOnlyEchoesTemplates`; panel "unanswered" test |
+| R7 no client derivation; no authoring echo | T5, T6 | api diff carries no rule arithmetic and no derived field (review at ede415cb); T6 shows nothing derived |
 | R8 absence inherits or refuses | T1, T2 | `TestFromTemplate_RefusesByName`; `TestTemplateShapeRefusals`; cook experience 0 |
 | R9 placement `actions:` replaces | T3 | `TestLaunch_PlacementActionsReplaceTemplateWeapons` |
 | Studio authors a template and places it | T6 | panel tests; integration picker test; screenshot |
@@ -491,8 +488,7 @@ skills, actions, experience`). The echo is read from `PutDungeonResponse.templat
 | T2 placement ref carried verbatim | T3 | `MonsterPlacement.Ref` unchanged | existing | existing goldens |
 | dice v0.3.2 `ParseNotation`, `Average` | T1 | `"2d8"` → avg 9.0 | pinned today | T1 HP tests |
 | `weapons.UnarmedStrike`, `AlwaysProficient` | T1 Human | exists in `SpecialWeapons`; `GetByID` accepts it | existing | `TestHuman_IsAssembledByFromTemplate` |
-| T4 `PutDungeonResponse.templates`, `DerivedStatBlock` | T5 handler, T6 panel | field names/numbers above; empty when errors present | protos tag → go bindings (T5), npm bump (T6) | `TestPutDungeon_ValidateOnlyEchoesTemplates`; panel stub test uses the generated type |
-| T5 running stack | T6 walk, #555 checklist | validate_only round trip | dev-env on T5 branch | screenshot; checklist |
+| T5 running stack | T6 walk, #555 checklist | PutDungeon of panel-authored yaml | dev-env on T5 branch | screenshot; checklist |
 | T6 encode `templates:` | T2 decode (strict) | exact key names | T2 merged | `singleRoomDungeon.test.ts` round-trip; a live validate of panel output |
 
 **Shared files / ordering:** T1 touches `character/character.go` (refactor only) and
