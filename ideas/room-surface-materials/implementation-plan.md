@@ -69,6 +69,12 @@ Observed results:
 - The existing production `runtime_image_facts` gate intentionally rejects this prototype with `runtime image 0 must be embedded`. This is a measured integration gap, not a gate bypass or a published asset. `normalize_prop_for_runtime.py` and `authored_world_asset_source.py` enforce embedded resources; publication and consumer stage verification need a coordinated opt-in dependency contract.
 - The first browser launch found no downloaded Playwright Chromium; rerunning with installed `/usr/bin/google-chrome` passed. No browser package was installed. Native Studio integration and the normalized promotion round trip remain unproved.
 
+## Independent next delivery: provider thumbnails
+
+[Assets #291](https://github.com/KirkDiggler/rpg-game-assets/issues/291) records Kirk's request to move world-asset thumbnail generation out of Encounter Studio. It can ship before room-surface contracts are complete. The measured consumer captures `WorldPropModel` through `CompositionThumbnailRenderer` at 128×128; `worldAssetThumbnailKey` currently binds only ref + GLB hash.
+
+The first thumbnail slice is representative offline rendering, private receipt/inventory publication and direct-image consumption by Studio, then catalog backfill. Use one authored-default image per asset, not a room-finish cross-product. With external textures, thumbnail identity must include those default dependencies and the rendering recipe as well as the GLB. This also exercises the resource-custody work needed by materials. It does not require shipping selectable room materials first. Its checked implementation plan and exact consumer schema belong to #291, not an implicit addition to tasks A–E.
+
 ## Conditional work sequence
 
 Develop from the shared renderer's required inputs toward provider declarations. Coordinate Web schema acceptance before provider emission. Publish verified assets before consumer adoption of their exact revision/hash. Integrate gameplay delivery only on released provider bindings, then verify save/play/reload. Production tasks below remain conditional; no merge is authorized.
