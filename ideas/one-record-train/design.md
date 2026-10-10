@@ -210,7 +210,7 @@ func sequenceUnits(story windowStory, sequence resolution.SequenceOutcome) ([]en
 
 ### The train
 
-- One landing tells all its beats, then asks who is standing once. The consult
+- One landing tells all its beats, then asks who is standing and whether the fight is over, once. The consult
   answers from sheets the landing already wrote, so asking before the last
   beat reports a fall ahead of the blow that caused it.
 - `RecordTrain` prepares every unit before it appends any. A bad unit anywhere
@@ -316,6 +316,7 @@ of one. `TellConcentration` is unchanged at its two sites.
 | T2 | settled | A single `Record` is a train of one. The append-and-notice helper is the only path; the duplicate goes. | KirkDiggler | 2026-10-10 |
 | T3 | settled | `down` lands after the last beat of the train, which is the blow that caused it. | KirkDiggler | 2026-10-10 |
 | T4 | settled | A swing inside a multiattack carries the sequence's ref on its beat, additive, so the log can tell a Multiattack from a lone pick. | KirkDiggler | 2026-10-10 |
+| T5 | settled | Endings are asked after the train. Deeds still land per unit (a stance change is a fact of that blow, told in place), but every ending — stance endings included — is evaluated once after the last unit, together with the standing consult, and before any turn is driven; `party_defeated` from the consult wins over a parked stance ending. Nothing can close the encounter mid-train by construction. Found by the #2006 gate: a neutral camp turned hostile by swing one fired an authored ending and refused swing two. | KirkDiggler | 2026-10-10 |
 
 What each ruling makes true here:
 
