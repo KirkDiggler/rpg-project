@@ -22,6 +22,77 @@ slice's unruled rows may start at once. Where a ruling is answered against the
 recommendation, the rows it names are dropped from the slice, not rewritten
 here.
 
+## Where each row lives
+
+The file and line for each audit row of [design.md](design.md), at the commits
+named at the top of this file.
+
+| # | Item | Where |
+|---|---|---|
+| 1 | Binary `Standing` (encounter interface, resolution entry, `ErrNoParticipation`, session helper) | `encounter/standing.go:15-25`, `participation.go:70-76`, `errors.go:318-325`, `standins.go:57-59`, `capabilities.go:29`; `resolution/standing.go:1-73`; `session/standing.go:117-129,251`, `rosterlookup.go:55-65` |
+| 2 | Deprecated `Search` verb and `ErrSearchRetired`, `ErrElsewhere` | `encounter/search.go:11-114`, `errors.go:380-390`; `session/search.go:20-125`, `errors.go:524-533`, `read.go:817-823`; rpg-api `sdkerr/errors.go:53,234` |
+| 3 | Discovery mode chosen by type assertion and a nil `Explorations` | `encounter/discovery.go:16-22,244`; `session/exploration.go:33,94,149,197-203` |
+| 4 | Exploration memory stored twice: the session copy is gone (session v0.121.0); the encounter's explicit import survives | `encounter/discovery.go:40-80,126-154`, `field.go:867-870,1612-1614`, `encounter.go:888,2059,2184`, `discovery_policy.go:8-17,35-38`, `data.go:3226-3232`, `dungeonspec/single_room.go:625`; rpg-api `content/reference-discovery-checks.yaml:13,17` |
+| 5 | `TurnDriver` alias | — |
+| 6 | `Equipment` capability field that also carries `Conditions` | `encounter/conditions.go:55-68`, `capabilities.go:49`, `standins.go:14`; `session/conditions_seen.go:30`, `capabilities.go` |
+| 7 | `Character.MakeSavingThrow` and its input | `character/character.go:381-442` |
+| 8 | `Character.SpendHitDice` | — |
+| 9 | `Character.ShortRest` | — |
+| 10 | `Character.Cleanup` | `character/character.go:1873-1911`; test teardown in `integration/` |
+| 11 | `StructurallyPermanentConditionRefs` | — |
+| 12 | `monstertraits.AllTraitRefs` | — |
+| 13 | `conditions/types.go` | — |
+| 14 | `ConditionAppliedEvent.Type` and the `ConditionType` constants | `events/events.go:21-108,670`; publishers `character/draft.go:759`, `combatabilities/{hide,disengage,help,dodge}.go`, `features/{step_of_the_wind,reckless_attack,bardic_inspiration,rage}.go`, `resolution/contest.go:566`, `resolution/action.go:650` |
+| 15 | `loadedEffect` and the routed-ref use of `peekEffectRef` | `character/load.go:47-56,601-605`, `character.go:120`, `advance.go:644-680` |
+| 16 | `HeldAddresses` free-reaction merge | `conditions/holds.go:115-168`; `character/load.go:729-738`; `monstertraits/loader.go:162,352` |
+| 17 | `Data.ClassResources` | — |
+| 18 | `DecodeSightPayload` and the `SightPayload` type | `encounter/testimony.go:394-401`, `encounter.go:20-28` |
+| 19 | `events.ChildRef` alias | `events/damage_taken.go:24-26`; users `resolution/contest.go:1391`, `damagetaken.go:58`, tests in `character`, `session` |
+| 20 | `resolution.AttackFacts`: characters project one main-hand attack, monsters every definition | `resolution/projection.go:48,84-111,285-322`; `session/write.go:619-631` |
+| 21 | Strike decides the hit twice | `resolution/strike.go:594-601` (then `settleHit` at :602) |
+| 22 | Empty `afterDamage` step (and its pass-through `afterNotify`) | `resolution/strike.go:956-990`, callers :717, :808 |
+| 23 | Unknown Unarmored Defense variant defaults to barbarian | `conditions/unarmored_defense.go:134-157` (`loadJSON` accepts any type; `SecondaryAbility` answers `default: CON`) |
+| 24 | `GetSpeed` answers 30 for an unknown race | `character/character.go:269-275` |
+| 25 | `NobodyPerceives` installed beside a real `Sight` on the read path | `session/capabilities.go:85`; `encounter/standins.go:111-128` |
+| 26 | `CompileOnlySetup` passes where `CompileOnlyLoad` refuses | — |
+| 27 | Two attack offers surface as `ShortfallUnreadable` / `ErrBadAttack` | `character/attack_definition.go:98-101`; `session/offers.go:375-392`; `resolution/projection.go:296-301` |
+| 28 | "No side" encoded two ways | residual reader: row 58 |
+| 29 | One journal saved under two keys, losing interleaving | `encounter/data.go:63-98,826-846,1930-1972,2814-2835` |
+| 30 | Refusal codes: `ErrNoMember` for non-empty ids, duplicates and authored defects; missing `encounter:` prefixes; sentinel-less roll-trace errors; session maps both member sentinels to one | `encounter/errors.go:33`, `field.go:1084-1091`, `board.go:154`, `clocks.go:2292`, `data.go:2434`, `encounter.go:620,1983`, `reserve.go:164-172`, `roll_trace.go:123-415`; `session/read.go:775` |
+| 31 | `ErrOutOfRange` vs `ErrOutOfReach` for one refusal | — |
+| 32 | `Len(…, N)` count pins across resolution, encounter, session, character | — |
+| 33 | `ConditionAddress` prose calls an empty `SourceID` "legacy unqualified" | `events/damage_taken.go:11-13`, `events/events.go:162-164,691`, `conditions/concentrating.go:138,197`, `character/character.go:1675` |
+| 34 | resolution AGENTS.md says a runtime area belongs to nobody | — |
+| 35 | dnd5e CLAUDE.md cites `character.HasCondition` | `CLAUDE.md:63` |
+| 36 | Stale root prose | `CHARACTER_CLEANUP_ANALYSIS.md`, `CHARACTER_CLEANUP_ANALYSIS_DETAILED.md`, `HANDOFF.md`, `MIGRATION_ISSUE.md`, `REFS_PACKAGE_HANDOFF.md` |
+| 37 | Case-file narration in the display catalog | — |
+| 38 | Case-file narration in the compelled driver's doc | `session/compelled.go:168-173` |
+| 39 | Guiding Bolt loader error says "sanctuary immune" | — |
+| 40 | Q1: is a monster trait a condition | — |
+| 41 | Q2: a condition that never subscribes | — |
+| 42 | Q3: who owns the stored AC | — |
+| 43 | Q4: a ward-on-attempt primitive | — |
+| 44 | Q5: untagged sight testimony read as known; `PerceptionSubjects == 0` upgraded in place | `encounter/testimony.go:244-250,306-319`, `observation_subject.go:113-140`, `data.go:48-50` |
+| 45 | Q5: room-local dialect refused loudly | — |
+| 46 | Q6: Shield | — |
+| 47 | Q7: `PausedTurn` / `HeldDirective` as one sum type | — |
+| 48 | Q7: the v2 map format and its "legacy" `PropInput` | `encounter/dungeonspec/compile.go:301-330`; `encounter/placed_props.go`, `field.go:578` |
+| 49 | Q7: monk Unarmored Defense while holding a shield | `conditions/unarmored_defense.go:45,171-174` |
+| 50 | Q7: a saving-throw frame kind with no producer | — |
+| 51 | Q7: which rolls carry a presentation id | — |
+| 52 | `combat` exports the effective damage multiplier | — |
+| 53 | A target-answer trace line carries `sourceId: ""` | `conditions/trait_immunity.go:152`, `trait_vulnerability.go:152`, `raging.go:504`, `blade_ward.go:206`; `events/incoming_damage.go:59,91` |
+| 54 | Session `Arrival` and `ArrivesAt*` / `ArrivesOn*` | `session/reserve.go:37-78` |
+| 55 | `UnconsciousCondition` compatibility shell | `conditions/unconscious.go:1-187` |
+| 56 | Rage converges on a life-state condition | — |
+| 57 | Sanctuary modelled as concentration | — |
+| 58 | `gamectx.Cast.StanceBetween` has no reader | `gamectx/cast.go:105-117`; `resolution/cast.go:153` |
+| 59 | Two Launch refusals flatten their inner sentinel | — |
+| 60 | #2018-2: resolution prints a full ref where a reader wants the name | `resolution/contest.go:512,1394`, `movement.go:461` |
+| 61 | #2018-3: rpg-api v1alpha1 keeps its own condition display names | rpg-api `internal/handlers/dnd5e/v1alpha1/character/converters.go:1446-1447,3580-3614` |
+| 62 | The retired condition set (a reader of old blobs, from tier 2 A) | `conditions/loader.go:16-57`, `holds.go:149-151`, `character/load.go:584-586` |
+| 63 | Lenient `character.LoadFromData` drops what it cannot read | `character/data.go:223-241`; rpg-api `orchestrators/character/orchestrator.go:760` |
+
 ## Order
 
 ```mermaid
@@ -92,7 +163,12 @@ enum value, and no rendered string changes shape.
     `monstertraits/loader.go:59`). `refs.Conditions.InFog` and
     `refs.Conditions.UnarmoredMovement` stay: Fog Cloud's area membership and
     rpg-api's wire enum name them.
-14. **R9.** `UnarmoredDefenseCondition.onACChain` returns unchanged for a
+14. Row 23: `UnarmoredDefenseCondition.loadJSON`
+    (`conditions/unarmored_defense.go:134-146`) refuses a type other than
+    barbarian or monk, empty included, with `CodeInvalidArgument` naming it;
+    `SecondaryAbility`'s `default: CON` (`:149-157`) is deleted, so the switch
+    names both variants and nothing else.
+15. **R9.** `UnarmoredDefenseCondition.onACChain` returns unchanged for a
     monk when `event.HasShield` (`conditions/unarmored_defense.go:171-174`);
     the doc at `:45` says which variant allows a shield.
 
@@ -108,7 +184,8 @@ enum value, and no rendered string changes shape.
 **Callers to move.** The eleven `Type:` lines on `ConditionAppliedEvent`
 literals: `character/draft.go:759`, `combatabilities/hide.go:128`,
 `disengage.go:119`, `help.go:96`, `dodge.go:110`, and the four in `features/`.
-Resolution's two move in slice 3.
+Resolution's two move in slice 3. The doc link to `[MakeSavingThrowInput]` at
+`character/advance.go:47` names `saves.SavingThrowInput` instead.
 
 **Tests.** Delete `character_test.go`'s `MakeSavingThrow` cases,
 `conditions/unconscious_test.go`, the retired-blob tests
@@ -128,6 +205,8 @@ edits become membership assertions.
 - `Load` of a sheet with race `"nope"` fails `CodeInvalidArgument`.
 - A monk with a shield folds AC without Unarmored Defense; a barbarian with a
   shield folds it with.
+- A stored Unarmored Defense blob with an empty or unknown type fails
+  `LoadJSON`.
 - A struck raging barbarian's `resisted` line carries the barbarian's id as
   `SourceID`; a multiplier with an empty `SourceID` fails the fold.
 - `go build ./... && go test ./...` green; `golangci-lint run` green.
@@ -170,7 +249,10 @@ branch keyed on the barbarian; any answerer leaving its line unowned.
    lifetime defaulting at load (`data.go:3226-3232`), and the authored
    `lifetime:` key (`dungeonspec/single_room.go:625` and its lowering).
    `initializeDiscovery` loses its memory parameter. `RestoreDiscovery`
-   returns an output carrying only the preference. Row 4.
+   returns an output carrying only the preference. `DiscoverySharing`
+   (`discovery.go:116`) takes a new `DiscoverySharingInput{Member}` in place
+   of the deleted `DiscoveryMemoryInput`; session's two callers move in
+   slice 4. Row 4.
 6. `SightPayload` (`encounter.go:20-28`), `DecodeSightPayload`
    (`testimony.go:394-401`), the untagged branch of `DecodeSightTestimony`
    (`testimony.go:306-319`) and its doc (`:244-250`). Rows 18, 44.
@@ -195,14 +277,23 @@ branch keyed on the barbarian; any answerer leaving its line unowned.
     prefix gains it. `ValidateRollCalculation` and its helpers
     (`roll_trace.go:123-415`) wrap `ErrInvalidData`. Every remaining
     `ErrNoMember` site is an empty-id check; the slice greps
-    `ErrNoMember` and checks each of the eighty-three.
+    `ErrNoMember` and checks every site.
 11. **R8.** "legacy" leaves `PropInput`'s docs (`placed_props.go`,
     `field.go:578`, `concealment.go:255,335`, `atlas.go:366,473`,
     `reserve.go:276,478-480`, `holdings.go:355`); it is the v2 prop.
 
-**Callers to move.** `encounter/cmd/freeroam-workbench/main.go:149,584`
-(`Standing:` → `Participation:`, and `rollAllStanding` loses its `Standing`
-method). Test helpers that build `Capabilities`.
+**Callers to move.** `encounter/cmd/freeroam-workbench/main.go`:
+`Standing:` → `Participation:` at `:149,584`, and `rollAllStanding` loses its
+`Standing` method; `Conditions: encounter.UnobservedEquipment{}` beside
+`Equipment:` at `:147,582`; the `encounter.SightPayload` decode at `:317`
+reads `encounter.DecodeSightTestimony` and its known position. Test helpers
+that build `Capabilities`.
+
+**Docs.** `encounter/README.md:184-185,216,238`, `doc.go:45-46,393` and
+`AGENTS.md:43-45,250` name the participation capability and its `Down` field,
+not a `Standing` interface. "Standing still is free" (`README.md:126`,
+`doc.go:101`) and the floor's standing area (`doc.go:428`) are other words and
+stay.
 
 **Tests.** Delete `sightdecode_test.go`'s `DecodeSightPayload` cases and the
 untagged-form cases; the search tests (`search_test.go` and kin); the
@@ -252,9 +343,10 @@ Re-pins dnd5e (slice 1) and encounter (slice 2).
 - `dnd5eEvents.ChildRef` → `dnd5eEvents.ConditionAddress` at
   `contest.go:1391`, `damagetaken.go:58`. Row 19.
 - The two `Type:` lines at `contest.go:566`, `action.go:650`. Row 14.
-- Row 60: `contest.go:512` and `:1394` describe the condition by
-  `conditions.DisplayFor(ref).Name`; `removalEffect` returns an error for an
-  unregistered ref and its callers propagate it. `movement.go:461` names the
+- Row 60: `contest.go:512` and `:1394` describe the condition by the
+  `Display.Name` that `conditions.DisplayFor(ref)` returns; when its `ok` is
+  false, `removalEffect` returns an error wrapping
+  `conditions.ErrUnknownCondition` and its callers propagate it. `movement.go:461` names the
   step from the trigger's display name. The "replaced by a newer instance"
   suffix stays.
 - **R5.** `factsOf` (`projection.go:296-301`) wraps
@@ -292,7 +384,11 @@ Re-pins dnd5e, encounter and resolution.
    `ArrivesOnStance` (`reserve.go:37-78`). Row 54.
 4. `standingSeam.Standing` (`standing.go:117-129`). `refuseIfDown`
    (`:251`) and `standingSet` (`rosterlookup.go:55-65`) read the
-   participation assessment's `Down`. Row 1.
+   participation assessment's `Down`. Every parameter typed
+   `encounter.Standing` takes `encounter.Participation`:
+   `activations.go:52,307,325`, `inspiration.go:46,87`,
+   `rosterlookup.go:56`, and `discoveryStanding` (`write.go:405`) through
+   `standingSet`. Row 1.
 5. The doc narration at `compelled.go:168-173`. Row 38.
 
 **Cleanups.**
@@ -301,8 +397,8 @@ Re-pins dnd5e, encounter and resolution.
   `Standing:`, and `Conditions:` beside `Equipment:`.
   `readCapabilities` installs `encounter.RefusingWitness{}`
   (`capabilities.go:85`). Rows 1, 6, 25.
-- `launch.go:384` and `entities.go:210-214` wrap the inner error with `%w`
-  beside the outer sentinel. Row 59.
+- `exploration.go:107` and `knowledge.go:117` call `DiscoverySharing` with
+  `encounter.DiscoverySharingInput`. Row 4.
 - **R2.** The monster mint in `entities.go` writes
   `conditions.FreeReactions(id)` into the new monster's stored conditions.
 - **R3.** `memberActionsFrom` (`write.go:619-631`) is deleted; the sheet seam
@@ -324,11 +420,10 @@ shared helper). Count pins in edited test files become membership assertions.
 
 **Acceptance.** A session without `Explorations` fails `New`. Walking next to
 a concealed door reveals it. A downed member's verb refuses `ErrDowned`
-through the assessment. A Launch with a field that has no regions answers
-`ErrInvalidWorld` and `errors.Is(err, encounter.ErrNoField)`.
+through the assessment.
 
 **What would have to break:** a nil repository silently turning discovery
-off; two answers to who is down; an inner sentinel flattened to text.
+off; two answers to who is down.
 
 ## 5. rpg-api carry
 
@@ -340,13 +435,27 @@ Re-pins dnd5e, encounter, resolution and session.
    `ErrAlreadyMember` to the FailedPrecondition list.
 2. `internal/handlers/dnd5e/v1alpha1/character/converters.go`:
    `conditionIDToDisplayName` (`:3580-3614`) is deleted; the loop at
-   `:1446-1447` names a condition by `conditions.DisplayFor(ref).Name`, and an
-   unregistered ref fails the conversion instead of skipping. The enum
+   `:1446-1447` names a condition by the `Display.Name` that
+   `conditions.DisplayFor(ref)` returns; when its `ok` is false the conversion
+   fails instead of skipping. The enum
    mapping `conditionIDToEnum` (`:3522`) stays unchanged: it is the wire
    contract. Row 61.
 3. `content/reference-discovery-checks.yaml:13,17` drops `lifetime: run`.
    Row 4.
-4. Pins: `go get` each module at its tag, then `go mod tidy`.
+4. **R1.** `Config.AutomaticDiscovery`
+   (`internal/orchestrators/session/orchestrator.go:54-58`) is deleted. `New`
+   always wires `redisExplorationRepository` and wraps the in-process locker
+   in `sharedStoreLocker` when no locker is given (`:155-165`);
+   `cmd/server/server.go:259` drops the field. Every `sessionorch.Config` in
+   `internal/integration/` compiles without it and now runs automatic
+   discovery. `concealed_reveal_acceptance_test.go:149` and
+   `holdings_acceptance_test.go:275` stop calling `Manager.Search`: each walks
+   the member onto a cell within one hex of the concealed content and asserts
+   the reveal beat the move produces.
+5. **R3.** `orchestrators/character/view.go:114,241` call `ProjectCharacter`;
+   a test asserts that a sheet whose off-hand weapon does not compile fails
+   `GetCharacter` with the same status as a main-hand one.
+6. Pins: `go get` each module at its tag, then `go mod tidy`.
 
 **Acceptance.** `make pre-commit` green. A v1alpha1 character holding
 Raging reads `name: "Raging"` from the registry.
@@ -386,8 +495,9 @@ rpg-toolkit#1965 before merging. Rows that delete dead code carry no box.
       observed conditions show Raging.
 - [ ] **A target's line names its owner.** Strike a raging barbarian; the
       `resisted` line carries the barbarian's id as `sourceId`.
-- [ ] **A monk with a shield** (R9). Equip a shield on a monk; the AC drops by
-      the Wisdom modifier.
+- [ ] **A monk with a shield** (R9). On the home panel of a level-1 monk with
+      Dexterity 14 and Wisdom 16, equip a shield. The AC reads 14
+      (10 + 2 Dexterity + 2 shield), not 17.
 - [ ] **v1alpha1 names.** A raging barbarian's character sheet lists
       "Raging".
 - [ ] **A new character after the reset.** Create a fighter; it loads, joins
