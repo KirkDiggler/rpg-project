@@ -33,9 +33,8 @@ flowchart LR
 | 3 | `rulebooks/dnd5e/session` | `refactor(session): react prose from the offer; inspiration asks HoldsRef (toolkit#1965 A)` |
 | 4 | rpg-api `dev` | `chore(deps): pin dnd5e, resolution and session for the condition descriptor (toolkit#1965 A)` |
 
-Slice 1 does not merge until A6 is ruled (design, Open 1); if A6 rules a
-reset, the reset step below runs first. No slice touches the Commanded
-seams until A5 is ruled (design, Open 2).
+The reset step below runs at merge-out (A6). No slice touches the Commanded
+seams (A5).
 
 Root carries `!`: it removes `weaponattack.OverrideProvider`,
 `refs.Features.SneakAttack`, `contributions.Answer.Participation`,
@@ -411,9 +410,19 @@ until then.
 7. Fix the docs that describe `monstertraits`' own dispatch and leniency:
    `standing.go:41` and `resolve.go:483`. The monster branch loads every
    blob through `conditions.LoadJSON`, which refuses an unregistered ref.
+8. `contest.go` `conditionDescription` (`:430`): return
+   `conditions.DisplayFor(ref).Name`, with an error naming the ref when
+   `DisplayFor` answers false. The function becomes
+   `conditionDescription(ref core.Ref) (string, error)`; its three callers,
+   `atStake` (`contest.go:421`), `publishPreparedCondition` (`:439`) and
+   `action.go:785`, return the error before anything is published. Delete the `"the %s condition"` format string.
 
 ### Done when
 
+- `TestAnImposedConditionReadsItsRegistryName` (`contest` test): a cast that
+  imposes Commanded reports the imposed effect's `Description` as
+  `conditions.DisplayFor(refs.Conditions.Commanded()).Name`, and an imposed
+  ref the registry does not hold is an error with nothing published.
 - Every existing Bless and Bane test (`strike_test.go`, `sanctuary_test.go`,
   `death_save_test.go`, `strike_pose_test.go`) passes unchanged.
 - `TestAnOpportunityOfferCarriesItsProse` (`movement_test.go`): the posed
@@ -513,11 +522,11 @@ Builds on session's gate-approved head. Draft until the toolkit tags exist.
 - `go build ./...`, `go test ./... -count=1`, `golangci-lint run` green.
 - At merge-out, the pins name the toolkit tags.
 
-## Reset (conditional on A6)
+## Reset (A6)
 
-Runs only if A6 rules "reset" (design, Open 1). It runs after slice 1's gate
-approves and before slice 1 merges, in every store, so no character sheet or
-session record naming `dnd5e:features:sneak_attack` survives. The keys come
+Runs at merge-out, scoped to the four key patterns below and not to whole
+stores, so no character sheet or session record naming
+`dnd5e:features:sneak_attack` survives. The keys come
 from rpg-api `dev`: character sheets and their indexes are `character:*`
 (`internal/repositories/character/redis.go`); session records, encounter
 records holding testimony, and seats are `session:v1alpha1:*`,
@@ -530,18 +539,18 @@ records holding testimony, and seats are `session:v1alpha1:*`,
    (`clean` removes only `local/*` environments). A `dev` environment with
    `RPG_REDIS_PERSIST=1` keeps its data in the Docker volume
    `rpg-dev-redis-data`, which `down` does not remove. Delete the four key
-   patterns above from that Redis, or remove the volume while `dev` is down.
+   patterns above from that Redis.
 2. **The local base compose Redis.** rpg-deployment
    `docker-compose.base.yml` runs container `rpg-redis-dev` on volume
-   `redis_dev_data`. Delete the four key patterns above from it, or remove
-   the volume.
+   `redis_dev_data`. Delete the four key patterns above from it.
 3. **The deployed store.** rpg-deployment `docker-compose.prod.yml` runs
    container `rpg-redis` on volume `redis_data`, which rpg-api reaches as
    `REDIS_ADDR=redis:6379`; `scripts/startup.sh` brings it up on the host.
    Delete the four key patterns above from it. This touches shared data, so
    the operator runs or approves it.
 
-Done when a scan of each store for `features:sneak_attack` finds nothing.
+Done when a scan of each store finds no key matching any of the four
+patterns.
 
 ## Walk
 
@@ -561,7 +570,7 @@ rpg-toolkit#1965 before merging.
       react row carries "Use your reaction to make one melee attack against a
       creature that leaves your reach."
 - [ ] **Bless.** Cast Bless. Each target shows Blessed.
-- [ ] **An existing rogue loads** (after the reset, if A6 rules one).
+- [ ] **An existing rogue loads** (after the reset).
       Create a rogue, leave the session, and rejoin. The sheet loads, Sneak
       Attack is listed, and an attack shows its row.
 - [ ] **Bardic Inspiration twice.** Inspire an ally, then open the ability
