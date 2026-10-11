@@ -104,10 +104,10 @@ flowchart LR
 
 | # | Module | PR title |
 |---|---|---|
-| 1 | `rulebooks/dnd5e` | `refactor!(dnd5e): tier 3 close-out — dead methods, one identity per fact, target lines name their owner (toolkit#1965)` |
-| 2 | `rulebooks/dnd5e/encounter` | `refactor!(encounter): tier 3 close-out — Participation and Conditions fields, Search and discovery import gone, one journal key, one meaning per refusal (toolkit#1965)` |
-| 3 | `rulebooks/dnd5e/resolution` | `refactor!(resolution): tier 3 close-out — Standing gone, one hit decision, actions like monsters, names not refs (toolkit#1965, #2018)` |
-| 4 | `rulebooks/dnd5e/session` | `refactor!(session): tier 3 close-out — Search verb gone, discovery required, one down answer (toolkit#1965)` |
+| 1 | `rulebooks/dnd5e` | `refactor(dnd5e)!: tier 3 close-out — dead methods, one identity per fact, target lines name their owner (toolkit#1965)` |
+| 2 | `rulebooks/dnd5e/encounter` | `refactor(encounter)!: tier 3 close-out — Participation and Conditions fields, Search and discovery import gone, one journal key, one meaning per refusal (toolkit#1965)` |
+| 3 | `rulebooks/dnd5e/resolution` | `refactor(resolution)!: tier 3 close-out — Standing gone, one hit decision, actions like monsters, names not refs (toolkit#1965, #2018)` |
+| 4 | `rulebooks/dnd5e/session` | `refactor(session)!: tier 3 close-out — Search verb gone, discovery required, one down answer (toolkit#1965)` |
 | 5 | rpg-api `dev` | `refactor: tier 3 close-out carry — pins, sdkerr arms, v1alpha1 condition names from the registry (toolkit#1965, #2018)` |
 
 Encounter does not import dnd5e, so slices 1 and 2 are independent. No protos
@@ -409,7 +409,7 @@ Re-pins dnd5e, encounter and resolution.
   verb refuses with new `session.ErrConflictingOffers`.
 - **R6.** `read.go:775` splits: `encounter.ErrNoMember` →
   `ErrNoMemberID`, `encounter.ErrNotMember` → `ErrNoMember`,
-  `encounter.ErrDuplicateMember` → new `ErrAlreadyMember`,
+  `encounter.ErrDuplicateMember` → the existing `ErrDuplicateMember`,
   `encounter.ErrBadMember` → `ErrInvalidWorld`.
 - `ChildRef` → `ConditionAddress` in `concentration_break_test.go`,
   `depart_test.go`, `rest_test.go`.
@@ -432,7 +432,7 @@ Re-pins dnd5e, encounter, resolution and session.
 1. `internal/handlers/dnd5e/sdkerr/errors.go`: delete the `ErrSearchRetired`
    arm (`:53`) and `ErrElsewhere` from its list (`:234`) with their test rows
    (`errors_test.go:95,106`); add `ErrConflictingOffers` and
-   `ErrAlreadyMember` to the FailedPrecondition list.
+   `ErrDuplicateMember` already has its InvalidArgument arm; no new arm.
 2. `internal/handlers/dnd5e/v1alpha1/character/converters.go`:
    `conditionIDToDisplayName` (`:3580-3614`) is deleted; the loop at
    `:1446-1447` names a condition by the `Display.Name` that
@@ -502,3 +502,15 @@ rpg-toolkit#1965 before merging. Rows that delete dead code carry no box.
       "Raging".
 - [ ] **A new character after the reset.** Create a fighter; it loads, joins
       and fights.
+
+## As shipped (2026-10-11)
+
+| Slice | PR | Tag |
+|---|---|---|
+| 1 dnd5e | rpg-toolkit#2025 | v0.211.1 (patch: the title's `!` sat before the scope; the tagger reads `type(scope)!:` only) |
+| 2 encounter | rpg-toolkit#2024 | v0.126.0 (cut by the tagger-fix commit rpg-toolkit#2028 after the merge's own run died with SIGPIPE; module tree identical) |
+| 3 resolution | rpg-toolkit#2026 | v0.71.0 |
+| 4 session | rpg-toolkit#2027 | v0.131.0 |
+| 5 rpg-api | rpg-api#1096 | dev 105c2fe9 |
+
+Duplicate joins map to session's existing `ErrDuplicateMember`; no `ErrAlreadyMember` was added. Follow-ups are on rpg-toolkit (see #1965's close-out).
