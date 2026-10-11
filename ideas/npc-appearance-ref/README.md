@@ -65,13 +65,20 @@ A UI-only selector avoids provider work but loses the choice at persistence or
 play. The chosen path pays for explicit field carriage and one captured fact;
 it reuses the existing sight refresh rather than introducing polling.
 
+Style and skin controls are three views of one complete-look choice (R9). The
+provider publishes the available combinations and the family/default relationship;
+the client performs exact lookup rather than constructing ref suffixes. Complete
+GLBs cost duplicated geometry bytes but avoid another runtime material-mutation
+path. Only the selected look loads, and observer memory keeps that whole look.
+
 ## Edges and where change lands
 
 Absent fields retain legacy rendering. An explicit unresolvable ref is visible
 as unavailable. Unknown-location legacy testimony remains empty; it is not a
 request to consult live appearance. Existing known-location memories retain
 their captured ref. This slice provides no runtime appearance-change verb,
-palette customization or stat-block changes (R8).
+equipment fitting or stat-block changes (R8). Palette choices use the existing
+captured-ref path (R9).
 
 New model choices belong in the provider/catalog. New appearance-changing game
 behavior belongs with its rule owner and must refresh observation through the

@@ -5,7 +5,9 @@
 Implement the operator-approved [contract](design.md) and [walkthrough](README.md):
 Studio chooses a model independently of stats/faction, saved source carries it,
 perception captures it, and Web renders the observer's projected choice. No new
-stats or faction wire shape, no source-document lookup in play, no art changes.
+stats or faction wire shape or source-document lookup in play. The base appearance
+slice keeps art unchanged; the operator-approved palette extension below adds
+atlas-only complete looks while retaining original default assets.
 The stat-block initiative is project#555; this wave does not own its template
 assembly or panel. Consumer issue: Web#1253.
 
@@ -106,6 +108,22 @@ then focused fixes and the operator QA pass; no repeated broad review rounds.
 Merge only on operator authorization: proto contract/SDK; encounter tag → session
 released pin/tag → API pins → Web SDK/API integration. Source-only design record
 can accompany the wave; there is no automatic merge in this plan.
+
+## Palette extension — provider #303
+
+The operator approved publishing Appearance / Style / Skin palette controls after
+the base path's QA. `npc_palette_looks.py` uses the existing atlas resize and
+embedded-image replacement helpers, pins every packed source image and base,
+checks non-image semantics and publishes explicit `look` family/style/skin metadata.
+Default 01_A refs/bytes stay unchanged; 187 additional pairs make 204 Kingdom looks.
+The Web catalog validates family/default/tuple identity and the Arrange form stages
+one complete look ref; no extra actor/proto fields or runtime material mutation.
+The detailed provider task/proof contract is in provider issue #303.
+
+Verification: palette/source corruption and metadata tests, complete provider gates,
+family/default/choice tests, actual owner undo/reload, and a native Style03/SkinB
+save-and-play walk using the already-integrated observer path. One PR-boundary Web
+gate and a bounded review of this extension only; no backend re-review.
 
 ## Coverage and seam check
 
