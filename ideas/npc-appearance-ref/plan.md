@@ -30,12 +30,14 @@ real consumer-build prerequisite.
 ## Task 2 — encounter source/persistence/observation
 
 Owner: toolkit encounter module only. Files: `dungeonspec/single_room.go`,
-`single_room_decode.go`, `single_room_compile.go`, `single_room_site.go`,
-`compile.go`, `spec.go`, `validate.go`; `field.go`, `data.go`, `encounter.go`,
+`single_room_decode.go`, `single_room_compile.go`, `compile.go`;
+`field.go`, `data.go`, `encounter.go`,
 `testimony.go`, and owning godoc/tests.
 
-Add optional authored `appearanceRef` to monster placements and compiled
-MonsterPlacement. Validate with the existing core ref parser; no catalog lookup.
+Add optional authored `appearanceRef` to room monster declarations and compiled
+MonsterPlacement. Legacy v2 PlaceSpec grammar stays unchanged (it refuses the new
+key instead of silently dropping it); its compiled appearance remains empty.
+Validate with the existing core ref parser; no catalog lookup.
 Refuse malformed/non-string/empty explicit source values. Carry through the room
 and shared compiler path without changing rules ref, faction, stats or placement.
 Add opaque AppearanceRef to MemberInput/JoinInput, internal member record and
