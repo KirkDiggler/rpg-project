@@ -146,7 +146,7 @@ apply when the attacker cannot see.
 | Traits move into `conditions` | `HeldAddresses` and `LoadJSON` enumerate traits with no import cycle | `monstertraits` keeps its name while holding only attach composition | A registry hook `monstertraits` fills at init |
 | `descriptor` is unexported | The public surface stays the reads hosts already call | A new kind of read is added in `conditions` | Exporting the descriptor for other packages to walk |
 | Undead Fortitude gets its roller through `RollerBinder` | Every load path is the same one-argument loader | A missing roller is refused at the save, not at load | A roller parameter on every loader |
-| Sneak Attack keeps the condition ref | The grant, the factory and the API enum already name it | Stored blobs with the feature ref are unregistered (Open 1) | Keeping the feature ref and moving the grant |
+| Sneak Attack keeps the condition ref | The grant, the factory and the API enum already name it | Stored data with the feature ref is reset, not translated (A6) | Keeping the feature ref and moving the grant |
 | Retired Unarmored Movement and Shield blobs are dropped | A stored sheet keeps loading | Nothing tells a player the entry left | Refusing those sheets |
 
 ## Edges
@@ -157,6 +157,8 @@ apply when the attacker cannot see.
 - Extra Attack, the resource and feature catalogs in the status view, and
   the Bardic Inspiration ability switch are not conditions (A1) and stay
   outside the registry.
+- A condition's own driver, such as session's Commanded driver, may name the
+  condition it drives by full ref (A5).
 - The character loader's lenient policy still drops a blob `LoadJSON`
   refused. The error is reported at the source; dropping it is that caller's
   ruled policy.

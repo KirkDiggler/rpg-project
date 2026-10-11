@@ -251,6 +251,9 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
   `FreeReactions` stays the one list.
 - Resolution's contest builds every imposed condition with one
   `CreateFromRef` call.
+- Resolution's `conditionDescription`, the name a delivered condition reads
+  as in a step log and a record, is `conditions.DisplayFor(ref).Name`. An
+  unregistered ref is an error.
 - An opportunity attack's trigger carries its descriptor's name and detail,
   read through `DisplayFor`. Resolution's movement pose copies both onto the
   offer. Session's react row reads the offer and names no reaction.
@@ -298,7 +301,8 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
   `dnd5e:spells:shield` joins the retired set.
 - Sneak Attack has one ref, `refs.Conditions.SneakAttack`, the ref the rogue
   grant names. `refs.Features.SneakAttack` is deleted. A stored blob carrying
-  the feature ref is unregistered (Open 1).
+  the feature ref is unregistered; pre-release data carrying it is reset
+  (A6).
 
 ### Seams that name a condition
 
@@ -306,7 +310,7 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 |---|---|
 | `session/inspiration.go` `holdsInspiration` | Replaced. `conditions.HoldsRef` on the full Inspired ref. A missing character sheet is `false`; any other sheet error is returned. |
 | `session/inspiration.go` `allyCandidatesFor` | Stays. It switches on the Bardic Inspiration feature, which is not a condition. |
-| `session/participation.go` `holdsCompulsion`, `session/compelled.go` `commandedIn`, the compelled `Source` and `Cause` | No verdict. A4 lists them among the seams it deletes; keeping them needs a ruling (Open 2). |
+| `session/participation.go` `holdsCompulsion`, `session/compelled.go` `commandedIn`, the compelled `Source` and `Cause` | Stay (A5). They ask for Commanded by full ref through `HoldsRef` and `DecodeCommanded` and act on its stored config. |
 | `resolution/contest.go` Bless and Bane branches | Replaced by their `create`. |
 | `resolution/truth.go` `freeReactions` | Replaced by `FreeReactionRefs`. |
 | `session/information.go` `reactionDescription` and its fallback in `session/window.go` | Replaced by the offer's description. The opportunity attack fills `ReactionTriggerEvent.Description` from its descriptor and resolution's movement pose copies it. |
@@ -370,6 +374,8 @@ Tier 3 that waits for its own deletion PR:
 
 22. The Blessed and Baned branches of `prepareCondition`.
 23. `freeReactions`.
+27. The `"the %s condition"` format string in `conditionDescription`, which
+    named a condition from its ref id.
 
 **dnd5e session**
 
@@ -381,7 +387,7 @@ Tier 3 that waits for its own deletion PR:
 26. The two `refs.Features.SneakAttack` cases in the v1alpha1 feature
     converters.
 
-Twenty-six deletions. Six parallel tables keyed by condition ref become one
+Twenty-seven deletions. Six parallel tables keyed by condition ref become one
 registry.
 
 ### Proof
@@ -415,6 +421,8 @@ registry.
 | A2 | settled | Monster traits are conditions and live in the one registry. The "not a condition" branch in `HeldAddresses` goes; an unregistered ref on a stored blob is an error, not "not held". | KirkDiggler | 2026-10-11 |
 | A3 | settled | A listener of nothing is not a condition: Unarmored Movement is deleted. Martial Arts and Shillelagh stay conditions; their attack-assembly override becomes a declared bearing on the descriptor and the `weaponattack.OverrideProvider` type-assertion walk goes. | KirkDiggler | 2026-10-11 |
 | A4 | settled | One entry per condition type: loader, factory constructor, display, bearing on the holder's own action, bearing on attacks against the holder with its held-rule constructor, and the attack-assembly override. Everything else derived. The parallel tables and id-naming seams listed under A in rpg-toolkit#1965 are deleted. | KirkDiggler | 2026-10-11 |
+| A5 | settled | A condition's own driver may name the condition it drives, by full ref. What A4 deletes is a seam that answers for a condition by id in place of the registry: a display string, a participation, a factory case, a readiness list. | KirkDiggler | 2026-10-11 |
+| A6 | settled | Pre-release character data is reset, not translated. Stored sheets and testimony carrying `dnd5e:features:sneak_attack` are wiped rather than carried by a loader translation; all characters can be reset. | KirkDiggler | 2026-10-11 |
 | Q6 | settled | Shield is retired now and ported onto the post-roll window when a playable sheet can hold it, so the descriptor carries no dead entry. | KirkDiggler | 2026-10-07 |
 
 What each ruling makes true here:
@@ -429,39 +437,15 @@ What each ruling makes true here:
   retired rather than refused, because the type is gone, not unknown.
 - **A4.** The descriptor fields are exactly the six A4 lists, plus the ref
   that keys it. Participation rides the bearing, so it is declared once.
+- **A5.** Session's `holdsCompulsion`, `commandedIn` and the compelled
+  `Source` and `Cause` stay unchanged. Resolution's `conditionDescription`
+  answered for a condition by id, so it reads the registry.
+- **A6.** No loader translation exists. The slices' reset step deletes the
+  four key patterns it names, on the local stacks and the deployed Redis, at
+  merge-out.
 - **Q6.** `ShieldSpellCondition` is deleted in the root slice and its blob is
   retired.
 
 ## Open
 
-1. **Stored data naming `dnd5e:features:sneak_attack` (needs A6).** After the
-   root slice that ref is unregistered, and three readers meet it:
-   - **Lenient load.** The character loader drops the blob with a warning.
-     The next save writes the sheet back without it, so the rogue loses
-     Sneak Attack for good and nothing tells the player.
-   - **Strict reads.** `HeldAddresses` returns `ErrUnknownCondition` for that
-     sheet, as A2 intends. Resolution's frame read fails, so every attack by
-     or against an existing rogue fails. Session's observed condition sets
-     report the rogue's holdings as unknown.
-   - **Stored testimony.** A sighting recorded before the slice names the
-     feature ref. `AssessTargetHeldEffects` fails the information of any
-     attacker who saw that rogue.
-
-   This is durable sheet and encounter data, so the frozen-pause precedent
-   (E5) does not cover it. Recommendation: reset the character sheets and
-   session records in every store before slice 1 merges (slices, "Reset").
-   The alternative is a loader translation from the old ref, which is a
-   compatibility path this design does not otherwise carry.
-
-2. **The Commanded seams (needs A5).** A4 deletes the id-naming seams listed
-   under A in rpg-toolkit#1965, and that list includes
-   `session/participation.go` `holdsCompulsion` and `session/compelled.go`
-   `commandedIn` with the compelled `Source` and `Cause`. On the code they
-   already read through `HoldsRef` and `DecodeCommanded` on the full
-   Commanded ref, so nothing compares by id alone. They are Commanded's own
-   driver, and naming the condition it drives is the driver's job. Their
-   per-blob leniency is deliberate: each doc ties it to the character
-   loader's lenient policy and its tested rulings, and the two readers must
-   agree so a member called Driven always has a driver. Recommendation: rule
-   that they stay unchanged, recorded as A5. Until then the design gives them
-   no verdict.
+None.
