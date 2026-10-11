@@ -26,7 +26,7 @@ flowchart LR
     subgraph resolution
         PREP[prepareCondition] --> AT[atStake]
         COL[captureConditionApplied] --> DE[deliveredEffects]
-        AT -->|ImposedEffect.Detail| OUT[cast / contest / strike outcome]
+        AT -->|ImposedEffect.Detail| OUT[cast / contest / retaliation outcome]
         DE -->|ImposedEffect.Detail| OUT
         COL -->|ActivationEffect.Detail| ACT[ActivationOutcome]
     end
@@ -54,8 +54,8 @@ flowchart LR
 |---|---|---|
 | a condition type's file | Whether its instances have anything to say, and what | instance → `InstanceDetail() string`, or no method |
 | `conditions.InstanceDetailOf` | The one read of an instance's detail | `ConditionBehavior` → `string`, empty when the type does not implement `InstanceDetailProvider` |
-| resolution `prepareCondition` | Building an imposed condition and reading its name and detail once | `ConditionApplication`, target, source → `preparedCondition{behavior, name, detail}` |
-| resolution `preparedCondition.atStake` | The imposed-condition effect | `preparedCondition`, recipient → `ImposedEffect{Kind: ImposedCondition, Ref, Description: name, Detail, Address}` |
+| resolution `prepareCondition` | Building an imposed condition and reading its name once | `ConditionApplication`, target, source → `preparedCondition{behavior, name}` |
+| resolution `preparedCondition.atStake` | The imposed-condition effect, its detail read off the prepared instance | `preparedCondition`, recipient → `ImposedEffect{Kind: ImposedCondition, Ref, Description: name, Detail: InstanceDetailOf(behavior), Address}` |
 | resolution `captureConditionApplied` | The activation collector's condition fact | `ConditionAppliedEvent` → `ActivationEffect{Kind: EffectConditionApplied, Name, Detail, Address}` |
 | resolution `deliveredEffects` | A gateless cast's applied effects | `[]ActivationEffect` → `[]ImposedEffect`, `Detail` copied |
 | session `imposedResult` | A cast's result for the record | `ImposedEffect` → `encounter.ActivationResult{Kind: ResultConditionApplied, Address, Name, Detail}` |
@@ -89,10 +89,10 @@ Wisdom save.
    today.
 2. The contest calls `prepareCondition`. `CreateFromRef` builds a
    `CommandedCondition` whose word is `grovel`. `prepareCondition` reads the
-   registry name, `Commanded`, and the instance's detail through
-   `InstanceDetailOf`, `grovel`, and keeps both on `preparedCondition`.
+   registry name, `Commanded`, and keeps it beside the instance on
+   `preparedCondition`.
 3. The save fails. The contest appends `atStake("goblin")` to its imposed
-   effects: `ImposedEffect{Kind: ImposedCondition, Ref:
+   effects. `atStake` reads the instance's detail through `InstanceDetailOf`: `ImposedEffect{Kind: ImposedCondition, Ref:
    dnd5e:conditions:commanded, Description: "Commanded", Detail: "grovel"}`.
 4. Session's `imposedResult` turns it into an `ActivationResult` with
    `Name: "Commanded"` and `Detail: "grovel"`.
@@ -135,7 +135,7 @@ another, and the guard that forbids it would have to know which.
 |---|---|---|---|
 | An optional method on the instance | The knowledge stays with the instance; a silent type writes nothing | One method per type that speaks, paid by its author | A field on `ImposedEffect` written by the Command driver |
 | `InstanceDetail`, not `Detail` | The type's text and the instance's word cannot be mistaken for each other in `conditions` | The beat key `detail` and the method name differ | One `Detail` name for both |
-| One read, `InstanceDetailOf`, at two sites in resolution | Every path that imposes a condition carries it, built or captured | Two call sites to keep in step | Reading only in `prepareCondition`, which loses the gateless and activation paths |
+| One read, `InstanceDetailOf`, at two sites in resolution | Every path that imposes a condition carries it, built or captured | Two call sites to keep in step | Reading only at the prepared condition, which loses the gateless and activation paths |
 | A new `Detail` field on every carrier | Each existing field keeps one meaning | One more field on four structs and one proto message | Reusing `Description` and relaxing its guards |
 | Free text | Any condition can speak without a proto change | No consumer can branch on it | A structured per-condition payload |
 | Omit when empty | A beat with nothing to say has no key, and an old stored beat reads the same | A present empty `detail` is refused on read | Always writing the key |

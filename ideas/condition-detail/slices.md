@@ -57,10 +57,10 @@ v0.123.0 to slice 3's tag, which also brings encounter v0.124.x.
 **Files:**
 - new `conditions/instance_detail.go`: `InstanceDetailProvider`, `InstanceDetailOf`, as in [design.md](design.md). Precedents: `RollerBinder` at `conditions/roller_binding.go:30`, `ConditionAddressOf` at `conditions/baned.go:283`.
 - `conditions/commanded.go`: add `InstanceDetail() string { return c.word }` beside `Word` (`commanded.go:132`), and a compile-time assertion `var _ InstanceDetailProvider = (*CommandedCondition)(nil)`.
-- new `conditions/instance_detail_test.go`.
+- new `conditions/instance_detail_test.go`, `package conditions` like `commanded_test.go`. It uses literal words: `spells` imports `conditions`, so its word constants would be an import cycle.
 
 **Tests:**
-- `TestCommandedTellsItsWordAsItsDetail`: for each of `spells.CommandWordApproach`, `CommandWordFlee`, `CommandWordGrovel`, build with `NewCommandedCondition("goblin", <command ref>, "bard", word, 1)`; `InstanceDetailOf(c)` equals `word`. Three distinct words, so a constant return fails.
+- `TestCommandedTellsItsWordAsItsDetail`: for each of the literal words `"approach"`, `"flee"`, `"grovel"`, build with `NewCommandedCondition("goblin", <command ref>, "bard", word, 1)`; `InstanceDetailOf(c)` equals `word`. Three distinct words, so a constant return fails.
 - `TestALoadedCommandedTellsTheSameWord`: `ToJSON` then `LoadJSON` of a `grovel` instance; `InstanceDetailOf(loaded)` is `"grovel"`.
 - `TestAConditionWithNothingToSayHasNoDetail`: `InstanceDetailOf` of a `BlessedCondition` is `""`.
 
@@ -73,18 +73,19 @@ v0.123.0 to slice 3's tag, which also brings encounter v0.124.x.
 **Delivers:** "Carried, never derived", resolution half.
 **Prerequisites:** slice 1 head as a pseudo-version.
 **Files:**
-- `resolution/contest.go`: `ImposedEffect` (`:183`) gains `Detail string` with the doc in [design.md](design.md). `preparedCondition` (`:272`) gains `detail`. `prepareCondition` (`:361`) sets `detail: conditions.InstanceDetailOf(built.Condition)`. `preparedCondition.atStake` (`:383`) writes `Detail: p.detail`.
+- `resolution/contest.go`: `ImposedEffect` (`:183`) gains `Detail string` with the doc in [design.md](design.md). `preparedCondition` (`:272`) is unchanged and stores no detail. `preparedCondition.atStake` (`:383`) writes `Detail: conditions.InstanceDetailOf(p.behavior)`.
 - `resolution/activation.go`: `ActivationEffect` (`:162`) gains `Detail string`. `captureConditionApplied` (`:315`) writes `Detail: conditions.InstanceDetailOf(event.Condition)`.
-- `resolution/action.go`: `deliveredEffects` (`:752`) copies `effect.Detail` onto the `ImposedCondition` it builds (`:786`).
-- No other site builds an `ImposedCondition`: the contest, strike rider (`strike.go:1010`), obey (`obey.go:263`) and pending delivery (`activation.go:137`) all go through `prepareCondition` and `atStake`.
+- `resolution/action.go`: `deliveredEffects` (`:752`) copies `effect.Detail` onto the `ImposedCondition` it builds (`:787`).
+- No other site builds an `ImposedCondition`: the contest, strike rider (`strike.go:1010`), obey (`obey.go:263`) and pending delivery (`activation.go:137`) all go through `prepareCondition` and `atStake`. Only the contest's, the gateless delivery's and a retaliation's effects reach a beat; the strike rider and obey carry the detail and session does not record it.
 
 **Tests:**
 - `cast_action_test.go` `TestTheChosenWordIsWrittenOnAGatedCast` (`:805`): in each word's run, find the `ImposedCondition` in `outcome.Targets[0].Applied` whose ref is `refs.Conditions.Commanded()`; assert `Detail == word` and `Description == display.Name`.
 - `cast_action_test.go` new `TestAGatelessConditionWithNothingToSayCarriesNoDetail`: a Bless cast; every `ImposedCondition` in `Applied` has `Detail == ""`.
 - `activation_test.go` new `TestTheCollectorReadsTheInstanceDetail`: publish a `ConditionAppliedEvent` whose `Condition` is a `grovel` `CommandedCondition` on a collector's bus; the captured `ActivationEffect.Detail` is `"grovel"`. A second event with a `BlessedCondition` captures `""`.
+- new internal test `TestAtStakeReadsTheInstanceNotTheBlob` (`package resolution`): build `preparedCondition{declaration: <Commanded application whose parameter blob says "grovel">, behavior: <conditions.NewCommandedCondition("goblin", <command ref>, "bard", "flee", 1)>, name: "Commanded"}`; `atStake("goblin").Detail` is `"flee"`.
 - `action_test.go` or the nearest `deliveredEffects` test: an `ActivationEffect{Kind: EffectConditionApplied, Detail: "grovel", …}` becomes an `ImposedEffect` with `Detail == "grovel"`.
 
-**What would have to break:** deleting the `detail` assignment in `prepareCondition`, or `Detail: p.detail` in `atStake`, turns the gated-cast test red; writing `Detail` from `ActionInput.Option` instead of the instance passes that test, so the collector test is the one that pins the instance as the source, and a constant `"grovel"` fails the approach and flee runs.
+**What would have to break:** deleting the `Detail` assignment in `atStake` turns the gated-cast test red; filling it from the declaration's parameter blob or from `ActionInput.Option` passes that test, and `TestAtStakeReadsTheInstanceNotTheBlob` is the one that turns red, because its instance and its blob say different words; the collector test pins the same for the capture path; a constant `"grovel"` fails the approach and flee runs.
 
 **Acceptance:** `go test ./...` green in `rulebooks/dnd5e/resolution`; lint clean; draft until slice 1's tag, then re-pin.
 
@@ -120,7 +121,7 @@ v0.123.0 to slice 3's tag, which also brings encounter v0.124.x.
 - `bless_test.go`: in an existing Bless cast test, every activation-result beat's `ConditionApplied.Detail` is `""` and its marshalled body has no `detail` key.
 - `activation_events_test.go`: payloads read by `activationResultBody`: condition-applied with `"detail":"grovel"` gives `Detail == "grovel"`; without the key gives `""`; `"detail":""` and `"detail":null` give nil; condition-removed with `"detail":"x"` gives nil.
 - `activationResults` unit: an `ActivationEffect` with `Detail: "grovel"` gives a result with `Detail: "grovel"`.
-- A golden that records a Command cast gains the `detail` key; regenerate it and read the diff. Any other golden change is a defect.
+- No golden records a Command cast, so no golden changes; a golden diff in this slice is a defect.
 
 **What would have to break:** dropping `Detail` from `imposedResult` or from the body arm reddens the Command beat test; dropping `omitempty` reddens the Bless assertion; deleting either guard reddens its payload case.
 
@@ -168,7 +169,7 @@ One click per seam: the Command cast proves instance → resolution → encounte
 |---|---|---|
 | The instance tells its word | 1 | `TestCommandedTellsItsWordAsItsDetail`, `TestALoadedCommandedTellsTheSameWord` |
 | A silent type has no detail | 1, 2, 4 | `TestAConditionWithNothingToSayHasNoDetail`; Bless assertions in 2 and 4 |
-| Read off the instance, not cast input | 2 | `TestTheCollectorReadsTheInstanceDetail`; three distinct words in the gated-cast test |
+| Read off the instance, not cast input | 2 | `TestAtStakeReadsTheInstanceNotTheBlob`, `TestTheCollectorReadsTheInstanceDetail`; three distinct words in the gated-cast test |
 | Every imposing path carries it | 2 | gated-cast, gateless, collector, `deliveredEffects` tests |
 | Detail only on condition-applied | 3, 4 | `TestDetailIsRefusedOnEveryOtherKind`; decoder cases |
 | Omitted when empty | 3, 4 | `TestConditionAppliedWithoutDetailOmitsTheKey`; Bless marshalled body |

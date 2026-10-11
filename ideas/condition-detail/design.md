@@ -17,7 +17,7 @@ flowchart TB
         IDP --> OF
     end
     subgraph res[toolkit resolution]
-        PREP["prepareCondition<br/>preparedCondition.detail"]
+        PREP["preparedCondition.atStake<br/>reads its instance"]
         COL["activation collector<br/>captureConditionApplied"]
         IE["ImposedEffect.Detail"]
         AE["ActivationEffect.Detail"]
@@ -51,7 +51,7 @@ flowchart TB
 
 A condition instance may say one thing about itself that its type cannot:
 Command's instance says which word it was given. It says it through one
-optional method. Resolution reads it once, where the instance is in hand, and
+optional method. Resolution reads it where the instance is in hand and
 carries it as `Detail` beside the condition's name. Encounter writes it into
 the condition-applied payload, session reads it back onto the beat body, and
 the API copies it onto the proto. A condition with nothing to say does not
@@ -98,7 +98,8 @@ type preparedCondition struct {
 	declaration combatActions.ConditionApplication
 	behavior    dnd5eEvents.ConditionBehavior
 	name        string
-	detail      string // read once from behavior when prepared
+	// no detail field: atStake reads InstanceDetailOf(behavior), so the
+	// effect's detail cannot come from anything but the instance
 }
 ```
 
@@ -176,9 +177,10 @@ message ConditionApplied {
 
 ### Carried, never derived
 
-- Resolution reads the detail where it holds the instance: once in
-  `prepareCondition`, kept on `preparedCondition`, and once in the activation
-  collector's `captureConditionApplied`. Every `ImposedEffect` of kind
+- Resolution reads the detail where it holds the instance: in
+  `preparedCondition.atStake`, from the prepared `behavior`, and in the
+  activation collector's `captureConditionApplied`, from the event's
+  condition. `preparedCondition` stores no copy. Every `ImposedEffect` of kind
   `ImposedCondition` built from a prepared condition carries it.
   `deliveredEffects` copies `ActivationEffect.Detail` onto the effect it
   builds.
@@ -205,9 +207,12 @@ message ConditionApplied {
 
 ### Who writes a detail
 
-- A condition imposed through a contest, a strike's rider, a gateless cast or
-  an activation writes whatever its instance says. Today that is Command and
-  nothing else.
+- A condition-applied beat from a cast, a retaliation or an activation
+  writes whatever its instance says. Today that is Command and nothing else.
+- A strike's rider and the obey machine carry the detail on their
+  `ImposedEffect` and write no beat with it: session records a strike as an
+  attack beat and does not read its conditions, and the compelled turn does
+  not record its conditions.
 - Encounter's sight-area membership writes no detail. Membership is not a
   dnd5e condition instance, and encounter holds none.
 - The compelled turn records no condition-applied result, so Grovel's Prone
