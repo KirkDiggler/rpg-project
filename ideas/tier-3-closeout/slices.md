@@ -409,7 +409,7 @@ Re-pins dnd5e, encounter and resolution.
   verb refuses with new `session.ErrConflictingOffers`.
 - **R6.** `read.go:775` splits: `encounter.ErrNoMember` →
   `ErrNoMemberID`, `encounter.ErrNotMember` → `ErrNoMember`,
-  `encounter.ErrDuplicateMember` → new `ErrDuplicateMember (existing)`,
+  `encounter.ErrDuplicateMember` → the existing `ErrDuplicateMember`,
   `encounter.ErrBadMember` → `ErrInvalidWorld`.
 - `ChildRef` → `ConditionAddress` in `concentration_break_test.go`,
   `depart_test.go`, `rest_test.go`.
@@ -432,7 +432,7 @@ Re-pins dnd5e, encounter, resolution and session.
 1. `internal/handlers/dnd5e/sdkerr/errors.go`: delete the `ErrSearchRetired`
    arm (`:53`) and `ErrElsewhere` from its list (`:234`) with their test rows
    (`errors_test.go:95,106`); add `ErrConflictingOffers` and
-   `ErrDuplicateMember (existing)` to the FailedPrecondition list.
+   `ErrDuplicateMember` already has its InvalidArgument arm; no new arm.
 2. `internal/handlers/dnd5e/v1alpha1/character/converters.go`:
    `conditionIDToDisplayName` (`:3580-3614`) is deleted; the loop at
    `:1446-1447` names a condition by the `Display.Name` that
