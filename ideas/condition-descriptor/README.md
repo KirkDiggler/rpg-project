@@ -61,7 +61,7 @@ flowchart LR
 |---|---|---|
 | a condition type's file | Its type, its rules, its one `descriptor` | → `descriptor{ref, display, load, create, ownAction, againstHolder, heldRule, attackOverride}` |
 | `conditions` registry | The set of condition types and the check that each entry is whole | `[]descriptor` → `map[ref.String()]descriptor`, or a refusal at package load |
-| `LoadJSON` | Restoring a stored blob | `json.RawMessage` → `ConditionBehavior`, `ErrRetiredCondition` or `ErrUnknownCondition` |
+| `LoadJSON` | Restoring a stored blob | `json.RawMessage` → `ConditionBehavior` or `ErrUnknownCondition` |
 | `CreateFromRef` | Building a type from a ref | `CreateFromRefInput{Ref, Config, MemberID, SourceRef}` → `ConditionBehavior`, `ErrUnknownCondition` or `ErrNotCreatable` |
 | `DisplayFor` | A type's name and detail | `core.Ref` → `(Display, bool)` |
 | `AssessActionEffects` | Rows for the holder's own action | loaded conditions, `Frame` → `[]contributions.Effect`, participation from `ownAction` |
@@ -147,7 +147,7 @@ apply when the attacker cannot see.
 | `descriptor` is unexported | The public surface stays the reads hosts already call | A new kind of read is added in `conditions` | Exporting the descriptor for other packages to walk |
 | Undead Fortitude gets its roller through `RollerBinder` | Every load path is the same one-argument loader | A missing roller is refused at the save, not at load | A roller parameter on every loader |
 | Sneak Attack keeps the condition ref | The grant, the factory and the API enum already name it | Stored data with the feature ref is reset, not translated (A6) | Keeping the feature ref and moving the grant |
-| Retired Unarmored Movement and Shield blobs are dropped | A stored sheet keeps loading | Nothing tells a player the entry left | Refusing those sheets |
+| A removed type's blob is an unknown ref (T3-R7) | One answer for every ref the registry does not hold | Stored data naming one is reset (A6) | A retired list that drops those blobs |
 
 ## Edges
 
@@ -183,7 +183,7 @@ apply when the attacker cannot see.
 |---|---|
 | The descriptor and bearings | `conditions/descriptor.go` |
 | The registry and its derived reads | `conditions/registry.go` |
-| Loading and the retired set | `conditions/loader.go` `LoadJSON`, `retiredConditions` |
+| Loading | `conditions/loader.go` `LoadJSON` |
 | Building from a ref | `conditions/factory.go` `CreateFromRef` |
 | Display | `conditions/display.go` `DisplayFor` |
 | Effect rows | `conditions/action_effects.go`, `conditions/target_held.go` |

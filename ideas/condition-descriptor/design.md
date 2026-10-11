@@ -42,8 +42,8 @@ A condition is a type that listens to chain events and makes modifications
 those descriptors, keyed by each one's full ref. Every answer that names a
 condition — how to load it, how to build it, what it is called, how it bears
 on an action, what it offers at attack assembly — is a read of the registry.
-No other table keyed by a condition ref exists in the toolkit. The retired
-set is the one list beside it, and it names refs that have no type.
+No other table keyed by a condition ref exists in the toolkit, and no list
+of removed refs stands beside it (T3-R7).
 
 ### dnd5e conditions
 
@@ -155,7 +155,7 @@ the registry:
 
 | Read | Answers from |
 |---|---|
-| `LoadJSON` | retired set, then `descriptor.load` |
+| `LoadJSON` | `descriptor.load` |
 | `CreateFromRef` | `descriptor.create`, routed by the whole parsed ref |
 | `DisplayFor` | `descriptor.display` |
 | `AssessActionEffects` | `descriptor.ownAction`, `descriptor.display` |
@@ -230,8 +230,7 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 
 ### What is derived
 
-- `LoadJSON` drops a retired ref with `ErrRetiredCondition`, then loads
-  through the descriptor. `CreateFromRef` parses the ref and looks up its
+- `LoadJSON` loads through the descriptor. `CreateFromRef` parses the ref and looks up its
   whole string; module and type checks are the lookup.
 - `DisplayFor` is a lookup of `descriptor.display`. The status view, the
   information facts, the activation identity and the offer prose all read it.
@@ -279,11 +278,10 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 - Every registry read handed an unregistered ref returns an error wrapping
   `ErrUnknownCondition`. An unregistered ref on a stored blob is never read as
   "not held".
-- A retired ref is not unregistered. `HeldAddresses` skips a blob for which
-  `IsRetired` is true before it calls `LoadJSON`, as the sheet loaders do.
-  `AssessTargetHeldEffects` skips a held ref in the retired set. Both read one
-  list through `isRetiredRef(ref string) bool`, beside `IsRetired`. A sheet or
-  a stored sighting that names a retired ref keeps answering.
+- A removed type's ref is unregistered (T3-R7). A stored blob naming one
+  fails `LoadJSON`, `HeldAddresses` and `AssessTargetHeldEffects` with
+  `ErrUnknownCondition`, like any ref nothing registers. Pre-release data
+  carrying one is reset (A6).
 - `CreateFromRef` on a registered type with no `create` returns
   `ErrNotCreatable`.
 - A caller's lenient load policy may drop a blob `LoadJSON` refused, with its
@@ -295,10 +293,10 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 ### Removed kinds and refs
 
 - Unarmored Movement is not a condition (A3). Its type, entry and factory
-  case are deleted, and `dnd5e:conditions:unarmored_movement` joins the
-  retired set, so a stored blob is dropped.
+  case are deleted. `dnd5e:conditions:unarmored_movement` is unregistered
+  (T3-R7).
 - The Shield spell condition is retired (Q6). Its type is deleted and
-  `dnd5e:spells:shield` joins the retired set.
+  `dnd5e:spells:shield` is unregistered as a condition (T3-R7).
 - Sneak Attack has one ref, `refs.Conditions.SneakAttack`, the ref the rogue
   grant names. `refs.Features.SneakAttack` is deleted. A stored blob carrying
   the feature ref is unregistered; pre-release data carrying it is reset
@@ -423,6 +421,7 @@ registry.
 | A4 | settled | One entry per condition type: loader, factory constructor, display, bearing on the holder's own action, bearing on attacks against the holder with its held-rule constructor, and the attack-assembly override. Everything else derived. The parallel tables and id-naming seams listed under A in rpg-toolkit#1965 are deleted. | KirkDiggler | 2026-10-11 |
 | A5 | settled | A condition's own driver may name the condition it drives, by full ref. What A4 deletes is a seam that answers for a condition by id in place of the registry: a display string, a participation, a factory case, a readiness list. | KirkDiggler | 2026-10-11 |
 | A6 | settled | Pre-release character data is reset, not translated. Stored sheets and testimony carrying `dnd5e:features:sneak_attack` are wiped rather than carried by a loader translation; all characters can be reset. | KirkDiggler | 2026-10-11 |
+| T3-R7 | open | Amends this design's error posture and removed kinds: the retired set is deleted and a removed type's blob is `ErrUnknownCondition` (`ideas/tier-3-closeout/` R7). | — | — |
 | Q6 | settled | Shield is retired now and ported onto the post-roll window when a playable sheet can hold it, so the descriptor carries no dead entry. | KirkDiggler | 2026-10-07 |
 
 What each ruling makes true here:
@@ -434,7 +433,7 @@ What each ruling makes true here:
   `ErrUnknownCondition` is the error every read returns.
 - **A3.** `attackOverride` is the descriptor field; `WeaponAttackOverride` is
   the read; `OverrideProvider` is deleted. Unarmored Movement's blob is
-  retired rather than refused, because the type is gone, not unknown.
+  unregistered once its type is gone (T3-R7).
 - **A4.** The descriptor fields are exactly the six A4 lists, plus the ref
   that keys it. Participation rides the bearing, so it is declared once.
 - **A5.** Session's `holdsCompulsion`, `commandedIn` and the compelled
@@ -443,9 +442,13 @@ What each ruling makes true here:
 - **A6.** No loader translation exists. The slices' reset step deletes the
   four key patterns it names, on the local stacks and the deployed Redis, at
   merge-out.
-- **Q6.** `ShieldSpellCondition` is deleted in the root slice and its blob is
-  retired.
+- **Q6.** `ShieldSpellCondition` is deleted in the root slice; its blob is
+  unregistered (T3-R7).
+- **T3-R7.** No retired set exists. `ErrRetiredCondition`, `IsRetired` and
+  `isRetiredRef` are deleted; a removed type's blob is an unknown ref.
 
 ## Open
 
-None.
+- T3-R7 is open in `ideas/tier-3-closeout/`. The text above reads as amended.
+  If the operator refuses R7, the tier 3 close-out PR restores the retired-set
+  text before it merges.
