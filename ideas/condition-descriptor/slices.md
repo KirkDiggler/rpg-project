@@ -33,6 +33,10 @@ flowchart LR
 | 3 | `rulebooks/dnd5e/session` | `refactor(session): react prose from the offer; inspiration asks HoldsRef (toolkit#1965 A)` |
 | 4 | rpg-api `dev` | `chore(deps): pin dnd5e, resolution and session for the condition descriptor (toolkit#1965 A)` |
 
+Slice 1 does not merge until A6 is ruled (design, Open 1); if A6 rules a
+reset, the reset step below runs first. No slice touches the Commanded
+seams until A5 is ruled (design, Open 2).
+
 Root carries `!`: it removes `weaponattack.OverrideProvider`,
 `refs.Features.SneakAttack`, `contributions.Answer.Participation`,
 `fightingstyles.Name`/`Description`, `character.StructurallyPermanentConditionRefs`,
@@ -177,12 +181,18 @@ func lookup(ref string) (descriptor, error)
    `var _ RollerBinder = (*undeadFortitudeCondition)(nil)` and `BindRoller`,
    which ignores nil. Where it rolls (`undead_fortitude.go:140`), a nil
    roller returns `rpgerr.New(rpgerr.CodeInvalidArgument, "undead fortitude
-   has no roller bound")` instead of rolling.
+   has no roller bound")` instead of rolling. `UndeadFortitude(ownerID,
+   conModifier, roller)` keeps its roller parameter: a condition built in
+   process is built with its roller, and a loaded one is bound at attach, as
+   Sneak Attack is.
 7. **`conditions/loader.go`**: delete `conditionLoaders`. `LoadJSON` keeps its
    peek and retired check, then `lookup(peek.Ref.String())` and `load`. Add
    `refs.Conditions.UnarmoredMovement().String()` and
    `refs.Spells.Shield().String()` to `retiredConditions`, each with one
-   sentence saying what it was and why it carries no rule.
+   sentence saying what it was and why it carries no rule. Add
+   `isRetiredRef(ref string) bool`, the membership read of
+   `retiredConditions`; `IsRetired` and `LoadJSON` call it, so every reader
+   uses one list.
 8. **`conditions/factory.go`**: `CreateFromRef` keeps its nil, empty-ref and
    empty-member checks and its `core.ParseString`. Delete the module and type
    checks and the switch. Then `lookup(ref.String())`; a nil `create` returns
@@ -206,19 +216,30 @@ func lookup(ref string) (descriptor, error)
     `target_held.go`, delete `targetHeldRules`; `AssessTargetHeldEffects`
     reads `lookup` where it reads `targetCensus` (`:231`) and asks
     `againstHolder.kind`; `assessHeld` and `ExecuteHeldEffect` build the rule
-    from `descriptor.heldRule`. `ExecuteHeldEffect` on an unregistered ref
+    from `descriptor.heldRule`. In `AssessTargetHeldEffects`, a held ref for
+    which `isRetiredRef` is true is skipped before `lookup`: it yields no row
+    and no error, because a sighting recorded before a type retired may still
+    name it. `ExecuteHeldEffect` on an unregistered ref
     returns `ErrUnknownCondition`; on a registered ref with no `heldRule` it
     keeps today's `has no held rule` refusal.
 11. **`contributions/effect.go`**: delete `Answer.Participation` and fix its
     doc. Delete the five setters: `attack_roll_rule.go:71` (`assessed`),
     `blessed.go:222`, `inspired.go:270`, `raging_assessment.go:53`,
-    `sneak_attack.go:327`.
+    `sneak_attack.go:327`. Delete the participation assertion in each of the
+    four tests that read the field: `sneak_attack_rule_test.go:78`,
+    `raging_assessment_test.go:55`, `attack_effect_rules_test.go:39`,
+    `action_effects_test.go:162`. `TestParticipationIsTheDescriptors`
+    replaces them.
 12. **`conditions/holds.go` `HeldAddresses`**: delete the skip branch
-    (`:147-149`). Every blob goes through `LoadJSON`; an unregistered ref
-    returns an error wrapping `ErrUnknownCondition`, wrapped as today
-    (`stored condition %d (%s) does not load`). Rewrite the paragraph about
-    traits: a trait is a condition and is listed. Keep the free-reaction
-    merge.
+    (`:147-149`). In its place, a blob for which `IsRetired` is true is
+    skipped, as the sheet loaders skip it (`character/load.go:583`). Every
+    other blob goes through `LoadJSON`; an unregistered ref returns an error
+    wrapping `ErrUnknownCondition`, wrapped as today (`stored condition %d
+    (%s) does not load`). Rewrite the paragraph about traits: a trait is a
+    condition and is listed; a retired blob is left out. Keep the
+    free-reaction merge. Delete `held_addresses_test.go:42`
+    `TestLeavesOutATraitWhichIsNotACondition`; `TestStoredTraitsAreHeld`
+    inverts it.
 13. **Sneak Attack's one ref.** In `sneak_attack.go`, `Ref` (`:73`), the damage
     component source (`:254`) and `ToJSON` (`:396`) return
     `refs.Conditions.SneakAttack()`. Fix the `Ref` doc. Delete
@@ -226,11 +247,20 @@ func lookup(ref string) (descriptor, error)
     (`:28`, `:66`).
 14. **Delete** `conditions/unarmored_movement.go`,
     `unarmored_movement_test.go`, `shield_spell.go`, `shield_spell_test.go`,
-    `conditions/types.go`. Fix every reference
+    `conditions/types.go`. Delete
+    `character/participation_view_test.go`
+    `TestParticipationViewLoadsShieldWithoutConsultingDisplayCatalog`: it
+    uses Shield as a loadable condition with no display entry, and the
+    registry makes that case unrepresentable. The status view's "not in the
+    status-view display catalog" refusal can no longer be reached by a loaded
+    condition; keep it as the fail-closed answer. Fix every other reference
     `go build ./... && go vet ./...` reports.
 15. **`conditions/opportunity_attack.go`** (`:289-305`): publish
     `Description: display.Detail` beside `Name`. Add `Description` to
-    `ReactionTriggerEvent` in `events/events.go` with the design's doc.
+    `ReactionTriggerEvent` in `events/events.go` with the design's doc. Fix
+    the event's `Name` doc, which says Shield has none, and its
+    `ConditionRef` example, which names `dnd5e:conditions:shield`: the
+    opportunity attack is the example.
 16. **`combat/weaponattack/weaponattack.go`**: delete `OverrideProvider`
     (`:293-299`). Point `OverrideInput`'s doc at
     `conditions.WeaponAttackOverride`.
@@ -281,6 +311,13 @@ func lookup(ref string) (descriptor, error)
   `dnd5e:features:sneak_attack` both wrap `ErrUnknownCondition`.
 - `TestATypeWithNoCreateIsNotCreatable`: `CreateFromRef` for the opportunity
   attack and for `monster_traits:immunity` wraps `ErrNotCreatable`.
+- `TestARetiredBlobIsNotHeldAndDoesNotFail` (`holds_test.go`):
+  `HeldAddresses("gob", [in_fog blob, prone blob])` returns one address, for
+  Prone, and no error. The same holds with an `unarmored_movement` blob and
+  with a `spells:shield` blob in place of `in_fog`.
+- `TestARetiredHeldRefYieldsNoTargetRow` (`target_held_test.go`): a frame
+  whose target holds `dnd5e:conditions:unarmored_movement` and Prone yields
+  Prone's row alone and no error from `AssessTargetHeldEffects`.
 - `TestBlessAndBaneAreCreatedFromARef`: each builds with
   `{"source_id":"cleric"}` and a Bless or Bane source ref; its address has
   `SourceID` `cleric`.
@@ -300,8 +337,11 @@ func lookup(ref string) (descriptor, error)
 - `TestEveryFightingStyleIsCreatedThroughTheFactory` (`character`): Finalize
   for each of the six styles yields a condition whose `Ref` equals
   `fightingstyles.ConditionRef(style)`.
-- `TestEveryFightingStyleNamesARegisteredCondition` (`conditions`): each
-  `fightingstyles.All()` ref is in `RegisteredRefs()`.
+- `TestEveryFightingStyleNamesARegisteredCondition` (`conditions`): for
+  each style in `fightingstyles.All()`, `fightingstyles.ConditionRef(style)`
+  is ok and its `String()` is in `RegisteredRefs()`. The test in package
+  `conditions` imports `fightingstyles`, which imports only `shared`, `refs`
+  and `core`, so no cycle forms.
 - `TestUnarmoredDefenseRefusesAMissingOrUnknownVariant`: config `{}` and
   `{"variant":"druid"}` are each `CodeInvalidArgument`.
 - `TestSneakAttackHasOneRef`: the rogue grant's ref, `Ref()`, the `ToJSON`
@@ -310,10 +350,14 @@ func lookup(ref string) (descriptor, error)
 - `TestTheOpportunityTriggerCarriesItsDetail`: the published
   `ReactionTriggerEvent.Description` equals `DisplayFor`'s detail for the
   opportunity attack.
-- `TestUndeadFortitudeRollsTheAttachRoller` (`monstertraits`): a zombie
-  attached with a scripted roller rolls that roller's face on a drop to 0;
-  `TestUndeadFortitudeWithNoRollerRefusesItsSave`: attached with a nil roller,
-  the same damage returns an error.
+- `TestUndeadFortitudeRollsTheAttachRoller` (`monstertraits`): no stat
+  block authors Undead Fortitude, so the fixture is a `monster.Data` whose
+  `Conditions` holds one blob marshalled from
+  `conditions.UndeadFortitudeData{Ref: refs.MonsterTraits.UndeadFortitude(),
+  OwnerID: <the monster's id>, ConModifier: 3}`. Attached with a scripted
+  roller, a drop to 0 rolls that roller's face.
+  `TestUndeadFortitudeWithNoRollerRefusesItsSave`: the same fixture attached
+  with a nil roller returns an error on the same damage.
 - `TestAnsweringLoadersImplementActionAssessor` and the reader-neutral detail
   test read the registry and pass.
 - `grep` from task 23 finds nothing; `grep -rn 'Features\.SneakAttack\|UnarmoredMovementCondition\|ShieldSpellCondition\|fightingstyles\.\(Name\|Description\)' --include='*.go' .`
@@ -330,6 +374,9 @@ func lookup(ref string) (descriptor, error)
 - Reading participation from the answer instead of the bearing does not
   compile; the field is gone.
 - Dropping `bindRoller` fails `TestUndeadFortitudeRollsTheAttachRoller`.
+- Removing the retired skip in `HeldAddresses` fails
+  `TestARetiredBlobIsNotHeldAndDoesNotFail`; removing it in
+  `AssessTargetHeldEffects` fails `TestARetiredHeldRefYieldsNoTargetRow`.
 - Restoring the barbarian default fails
   `TestUnarmoredDefenseRefusesAMissingOrUnknownVariant`.
 - Dropping `Description` from the opportunity trigger fails
@@ -357,6 +404,13 @@ until then.
    `grep -rn 'Features\.SneakAttack\|monstertraits\.LoadJSON\|AllTraitRefs\|OverrideProvider\|Participation: contributions\|UnarmoredMovement\|ShieldSpell' --include='*.go' .`.
    A test that pins a Sneak Attack source ref pins
    `refs.Conditions.SneakAttack()`.
+6. Delete `participation_test.go`
+   `TestShieldRecordDoesNotMakeParticipationOrStandingADisplayProjection`. It
+   uses Shield as a loadable condition with no display entry, and the
+   registry makes that case unrepresentable.
+7. Fix the docs that describe `monstertraits`' own dispatch and leniency:
+   `standing.go:41` and `resolve.go:483`. The monster branch loads every
+   blob through `conditions.LoadJSON`, which refuses an unregistered ref.
 
 ### Done when
 
@@ -399,8 +453,19 @@ at merge-out. Draft until then.
    returned. Then return `conditions.HoldsRef(data.Conditions,
    refs.Conditions.Inspired())`. Rewrite the doc: a full-ref lookup through
    the conditions reader; a sheet that is not a character's holds no die this
-   seam can see; an unreadable blob is an error. Delete the peek struct.
-5. Fix every test and comment that names a symbol slice 1 deleted, with
+   seam can see; an unreadable blob is an error. Delete the peek struct. Fix
+   the `inspirationCandidates` doc, which says a sheet it cannot read leaves
+   the candidate available: that case is now an error.
+5. `conditions_seen.go`: rewrite the `Conditions` doc paragraph "A trait is
+   not a condition … left out". A trait is a condition and is listed; a
+   stored condition that cannot be read still makes the member's holdings
+   unknown. Rewrite `conditions_seen_test.go:60-81`: the goblin's expected
+   set is the vulnerability trait at
+   `dnd5e:monster_traits:vulnerability` with no source, then Dodging, then
+   the opportunity attack, and the assertion message drops "a trait is not a
+   condition". The bare `{"ref":{...vulnerability}}` blob loads under
+   `loaderOf`, because the trait's `loadJSON` validates no field.
+6. Fix every test and comment that names a symbol slice 1 deleted, with
    slice 2's grep.
 
 ### Done when
@@ -411,8 +476,9 @@ at merge-out. Draft until then.
 - `TestAnInspiredAllyIsAlreadyInspired` (`inspire_test.go`, existing
   `already inspired` case at `:227`) passes.
 - `TestAnUnreadableAllySheetRefusesInspirationCandidates`: an ally whose
-  stored conditions hold a blob with no readable ref makes the candidate
-  build return an error.
+  stored conditions hold `json.RawMessage("not json")` makes the candidate
+  build return an error. The blob must not parse: `{}` or `{"ref":null}`
+  parses, compares unequal and answers `false, nil`.
 - `TestABlobNamedInspiredUnderAnotherTypeIsNotADie` (internal): with the
   package's fake character repository holding one sheet whose only condition
   blob names `dnd5e:features:inspired`, `holdsInspiration` returns
@@ -447,6 +513,36 @@ Builds on session's gate-approved head. Draft until the toolkit tags exist.
 - `go build ./...`, `go test ./... -count=1`, `golangci-lint run` green.
 - At merge-out, the pins name the toolkit tags.
 
+## Reset (conditional on A6)
+
+Runs only if A6 rules "reset" (design, Open 1). It runs after slice 1's gate
+approves and before slice 1 merges, in every store, so no character sheet or
+session record naming `dnd5e:features:sneak_attack` survives. The keys come
+from rpg-api `dev`: character sheets and their indexes are `character:*`
+(`internal/repositories/character/redis.go`); session records, encounter
+records holding testimony, and seats are `session:v1alpha1:*`,
+`session-enc:v1alpha1:*` and `session-seat:v1alpha1:*`
+(`internal/orchestrators/session/redis_repos.go`, `seats.go`).
+
+1. **Local dev-env stacks.** A `local/*` environment and a `dev` environment
+   without `RPG_REDIS_PERSIST=1` get a fresh Redis volume on every `up`, so
+   `scripts/dev-env.sh down <env>` then `up` starts them empty
+   (`clean` removes only `local/*` environments). A `dev` environment with
+   `RPG_REDIS_PERSIST=1` keeps its data in the Docker volume
+   `rpg-dev-redis-data`, which `down` does not remove. Delete the four key
+   patterns above from that Redis, or remove the volume while `dev` is down.
+2. **The local base compose Redis.** rpg-deployment
+   `docker-compose.base.yml` runs container `rpg-redis-dev` on volume
+   `redis_dev_data`. Delete the four key patterns above from it, or remove
+   the volume.
+3. **The deployed store.** rpg-deployment `docker-compose.prod.yml` runs
+   container `rpg-redis` on volume `redis_data`, which rpg-api reaches as
+   `REDIS_ADDR=redis:6379`; `scripts/startup.sh` brings it up on the host.
+   Delete the four key patterns above from it. This touches shared data, so
+   the operator runs or approves it.
+
+Done when a scan of each store for `features:sneak_attack` finds nothing.
+
 ## Walk
 
 One click per seam on the local stack, every slice on its gate-approved head.
@@ -465,6 +561,9 @@ rpg-toolkit#1965 before merging.
       react row carries "Use your reaction to make one melee attack against a
       creature that leaves your reach."
 - [ ] **Bless.** Cast Bless. Each target shows Blessed.
+- [ ] **An existing rogue loads** (after the reset, if A6 rules one).
+      Create a rogue, leave the session, and rejoin. The sheet loads, Sneak
+      Attack is listed, and an attack shows its row.
 - [ ] **Bardic Inspiration twice.** Inspire an ally, then open the ability
       again. That ally reads "already inspired".
 

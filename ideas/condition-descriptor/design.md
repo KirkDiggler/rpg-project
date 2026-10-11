@@ -191,6 +191,11 @@ type ReactionTriggerEvent struct {
 }
 ```
 
+The narrower alternative is for `askOpportunity` to read `DisplayFor` itself
+and leave the event unchanged. The field is kept because the offerer's prose
+belongs beside the offerer's name, which the event already carries from the
+same display read.
+
 ### dnd5e fightingstyles
 
 ```go
@@ -271,6 +276,11 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 - Every registry read handed an unregistered ref returns an error wrapping
   `ErrUnknownCondition`. An unregistered ref on a stored blob is never read as
   "not held".
+- A retired ref is not unregistered. `HeldAddresses` skips a blob for which
+  `IsRetired` is true before it calls `LoadJSON`, as the sheet loaders do.
+  `AssessTargetHeldEffects` skips a held ref in the retired set. Both read one
+  list through `isRetiredRef(ref string) bool`, beside `IsRetired`. A sheet or
+  a stored sighting that names a retired ref keeps answering.
 - `CreateFromRef` on a registered type with no `create` returns
   `ErrNotCreatable`.
 - A caller's lenient load policy may drop a blob `LoadJSON` refused, with its
@@ -296,12 +306,13 @@ func ConditionRef(f FightingStyle) (ref *core.Ref, ok bool)
 |---|---|
 | `session/inspiration.go` `holdsInspiration` | Replaced. `conditions.HoldsRef` on the full Inspired ref. A missing character sheet is `false`; any other sheet error is returned. |
 | `session/inspiration.go` `allyCandidatesFor` | Stays. It switches on the Bardic Inspiration feature, which is not a condition. |
-| `session/participation.go` `holdsCompulsion`, `session/compelled.go` `commandedIn`, the compelled `Source` and `Cause` | Stay. They are Commanded's own driver, and naming the condition it drives is the driver's job. Their per-blob reading pairs with the character loader's lenient policy, which this design does not change. |
+| `session/participation.go` `holdsCompulsion`, `session/compelled.go` `commandedIn`, the compelled `Source` and `Cause` | No verdict. A4 lists them among the seams it deletes; keeping them needs a ruling (Open 2). |
 | `resolution/contest.go` Bless and Bane branches | Replaced by their `create`. |
 | `resolution/truth.go` `freeReactions` | Replaced by `FreeReactionRefs`. |
 | `session/information.go` `reactionDescription` and its fallback in `session/window.go` | Replaced by the offer's description. The opportunity attack fills `ReactionTriggerEvent.Description` from its descriptor and resolution's movement pose copies it. |
 | `character/status_view.go` `projectConditions` | Stays a `DisplayFor` read. The resource and feature catalogs in the same file name resources and features, not conditions. |
 | `character/character.go` `GetExtraAttacksCount` | Stays. Extra Attack listens to nothing; it is a class fact, not a condition (A1). |
+| `character/equipment_conditions.go` `removeReleasedEquipmentConditions`, its two inline interfaces | Stay. Which hand an enchanted weapon is bound to is per-instance state, not a fact about the type, so no descriptor field can carry it. |
 | `character/spend_profile.go` Martial Arts check, `resolution/short_rest.go` Concentrating check | Stay. Each is one condition's own rule naming that condition. |
 
 ### Tier 3 that rides along
@@ -379,6 +390,8 @@ registry.
   address from `HeldAddresses`.
 - A stored blob whose ref nothing registers fails `HeldAddresses`,
   `LoadJSON` and `CreateFromRef` with `ErrUnknownCondition`.
+- A stored sheet carrying an `in_fog`, `unarmored_movement` or `spells:shield`
+  blob beside Prone reports Prone alone from `HeldAddresses`, with no error.
 - Bless and Bane are imposed by a cast through `CreateFromRef`.
 - A monk's unarmed swing deals the Martial Arts die through
   `WeaponAttackOverride`; Shillelagh on a club beside Martial Arts refuses the
@@ -421,9 +434,34 @@ What each ruling makes true here:
 
 ## Open
 
-1. **Stored rogue sheets carrying `dnd5e:features:sneak_attack`.** After the
-   root slice, a strict load refuses such a sheet with `ErrUnknownCondition`
-   and a lenient load drops the blob. Recommendation: reset the affected
-   pre-release character data, as the frozen-pause refusal accepted. The
-   alternative is a loader translation from the old ref, which is a
+1. **Stored data naming `dnd5e:features:sneak_attack` (needs A6).** After the
+   root slice that ref is unregistered, and three readers meet it:
+   - **Lenient load.** The character loader drops the blob with a warning.
+     The next save writes the sheet back without it, so the rogue loses
+     Sneak Attack for good and nothing tells the player.
+   - **Strict reads.** `HeldAddresses` returns `ErrUnknownCondition` for that
+     sheet, as A2 intends. Resolution's frame read fails, so every attack by
+     or against an existing rogue fails. Session's observed condition sets
+     report the rogue's holdings as unknown.
+   - **Stored testimony.** A sighting recorded before the slice names the
+     feature ref. `AssessTargetHeldEffects` fails the information of any
+     attacker who saw that rogue.
+
+   This is durable sheet and encounter data, so the frozen-pause precedent
+   (E5) does not cover it. Recommendation: reset the character sheets and
+   session records in every store before slice 1 merges (slices, "Reset").
+   The alternative is a loader translation from the old ref, which is a
    compatibility path this design does not otherwise carry.
+
+2. **The Commanded seams (needs A5).** A4 deletes the id-naming seams listed
+   under A in rpg-toolkit#1965, and that list includes
+   `session/participation.go` `holdsCompulsion` and `session/compelled.go`
+   `commandedIn` with the compelled `Source` and `Cause`. On the code they
+   already read through `HoldsRef` and `DecodeCommanded` on the full
+   Commanded ref, so nothing compares by id alone. They are Commanded's own
+   driver, and naming the condition it drives is the driver's job. Their
+   per-blob leniency is deliberate: each doc ties it to the character
+   loader's lenient policy and its tested rulings, and the two readers must
+   agree so a member called Driven always has a driver. Recommendation: rule
+   that they stay unchanged, recorded as A5. Until then the design gives them
+   no verdict.
