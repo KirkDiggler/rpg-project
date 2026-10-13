@@ -41,7 +41,7 @@ rulings.
 | O4 | A successful check lands the deed of its **skill** (`intimidated` for Intimidation, `persuaded` for Persuasion, none for other skills) on witnesses. The untrained disadvantage source stays attached to the skill in resolution. | R3 |
 | O5 | The verb-keyed table triggers (`intimidated`, `intimidate_failed`, `persuaded`, `persuade_failed`) retire from the table vocabulary; reference content migrates to options. | R2 |
 | H1 | A heard thing is a report of `{ kind, position, when }` on a per-observer channel. Loudness is a DC per deed kind stamped by the rulebook; the DC rises per region hop (door-to-door), one more for a closed door; the listener's passive Perception answers; no roll. | R4, R5 |
-| H2 | `when: { heard: { kind, within: N } }` is a table condition reading the creature's own sound holdings. | R4 |
+| H2 | `when: { heard: { kind, within: N } }` is a table condition reading the creature's own sound holdings; `toward: sound` / `away: sound` select the freshest heard position (R10). | R4, R10 |
 | H3 | `fact: id` is legal on a `time` row; its audience is the hearers of the speaking creature's cell. Every `say` on a time row lands a `voice` sound. | R6 |
 | H4 | `when: { fact: id }` is a table condition reading the creature's own fact holdings. | R6 |
 | H5 | A player whose passive Perception beats a sound's DC receives a `Heard` beat with kind and direction; others do not. | R5, perception law |

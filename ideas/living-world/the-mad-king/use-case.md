@@ -98,13 +98,13 @@ tables:                                                       # TODAY (named roo
   gate-patrol:
     time:
       - { when: { enemy: none },                       toward: { path: [[2,3],[6,3],[6,8],[2,8]] } }   # NEW: path
-      - { when: { heard: { kind: clang, within: 2 } }, toward: enemy }                                  # NEW: heard
+      - { when: { heard: { kind: clang, within: 2 } }, toward: sound }                                  # NEW: heard, and `sound` = the freshest heard position
       - { when: { enemy: seen }, say: "To arms! Intruders in the yard!", fact: alarm-raised }           # NEW: fact on time
       - { when: { enemy: reach },                      attack: enemy }
   keep-patrol:
     time:
       - { when: { enemy: none },                       toward: { path: [[12,4],[18,4],[18,10]] } }
-      - { when: { heard: { kind: voice, within: 3 } }, toward: enemy }
+      - { when: { heard: { kind: voice, within: 3 } }, toward: sound }
       - { when: { heard: { kind: boom,  within: 3 } }, toward: { at: [20,12] } }      # fall back to the throne room
       - { when: { fact: alarm-raised },                toward: { at: [20,12] } }       # NEW: when fact
       - { when: { enemy: seen }, say: "Protect the king!", fact: alarm-raised }
@@ -322,6 +322,11 @@ conversation tree; word spreads; the challenge (§5, on the list).
   wraps a negative.** Row ordering is rejected: a rolled table must not be
   secretly ordered. One form for storm-the-keep, the challenge, and the
   talker.
+- **R10 — `sound` is a selector word: the position of the freshest sound
+  the creature holds** (ruled by the session lead 2026-10-13 on the B1
+  build; the operator may veto). A heard report names no enemy by R4, so
+  `toward: enemy` cannot walk a guard to a clang; `toward: sound` does.
+  Legal on `toward` and `away`, refused on `attack`.
 - **R9 — `requires` is judged against the actor's own holdings.** The
   character who was in the kitchen is the one who can use what the cook
   said. Sharing intel between characters is an out for later if a use
