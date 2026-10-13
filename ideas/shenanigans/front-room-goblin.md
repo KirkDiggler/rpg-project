@@ -120,7 +120,10 @@ Rules of the table:
 
 **R1, RULED 2026-09-17 (Kirk): "everything visible in the log now, probably not story but the debug log for sure."** The reaction beat carries the die, the weights' total, the entry that fired and the creature's line. Web's story rendering shows the outcome and the line; the debug log shows the roll. Full data down the log until v1, as every beat does.
 
-## The untrained rule
+## The untrained rule — REVERSED 2026-10-13
+
+**Kirk, on the wave A walk (rpg-project#569): "that was an experiment but that is not the way dnd works. no skill just means no plus."** The `untrained` source is deleted from resolution; an untrained check rolls one d20 plus the ability modifier. The section below is kept as the record of the experiment and of why it was built as one removable piece.
+
 
 **The letter.** 2014 rules put no penalty on an untrained ability check: d20 plus the ability modifier, and proficiency adds its bonus.
 
@@ -173,7 +176,7 @@ This gives Insight its use case beside Intimidation and Persuasion, and it is th
 All four ruled by Kirk on 2026-09-17, on rpg-project#457:
 
 - **R1** the reaction roll is in the beat and the debug log; the story log shows the outcome and the line.
-- **R2** untrained disadvantage on skill verbs only, built as one removable source so returning to RAW is a deletion.
+- **R2** untrained disadvantage on skill verbs only, built as one removable source so returning to RAW is a deletion. **Superseded 2026-10-13: deleted.**
 - **R3** this slice brings "a creature acts outside a fight" and the social verb on the world clock. First verbs outside combat.
 - **R4** an allied goblin stops being a target. Fighting for the party is a later wave.
 
