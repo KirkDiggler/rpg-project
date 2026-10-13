@@ -326,7 +326,11 @@ conversation tree; word spreads; the challenge (§5, on the list).
   the creature holds** (ruled by the session lead 2026-10-13 on the B1
   build; the operator may veto). A heard report names no enemy by R4, so
   `toward: enemy` cannot walk a guard to a clang; `toward: sound` does.
-  Legal on `toward` and `away`, refused on `attack`.
+  Legal on `toward` and `away`, refused on `attack`. **Refined on the B1
+  review:** a row using `sound` must carry a `heard` condition (as `actor`
+  requires a deed), and `sound` resolves to the freshest held sound of the
+  kind that condition names — a row that fired on a clang never walks to a
+  later voice.
 - **R9 — `requires` is judged against the actor's own holdings.** The
   character who was in the kitchen is the one who can use what the cook
   said. Sharing intel between characters is an out for later if a use
