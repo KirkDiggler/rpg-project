@@ -99,7 +99,7 @@ tables:                                                       # TODAY (named roo
     time:
       - { when: { enemy: none },                       toward: { path: [[2,3],[6,3],[6,8],[2,8]] } }   # NEW: path
       - { when: { heard: { kind: clang, within: 2 } }, toward: sound }                                  # NEW: heard, and `sound` = the freshest heard position
-      - { when: { enemy: seen }, say: "To arms! Intruders in the yard!", fact: alarm-raised }           # NEW: fact on time
+      - { when: [{ enemy: seen }, { not: { fact: alarm-raised } }], say: "To arms! Intruders in the yard!", fact: alarm-raised }   # NEW: fact on time; shout once
       - { when: { enemy: reach },                      attack: enemy }
   keep-patrol:
     time:
@@ -107,7 +107,7 @@ tables:                                                       # TODAY (named roo
       - { when: { heard: { kind: voice, within: 3 } }, toward: sound }
       - { when: { heard: { kind: boom,  within: 3 } }, toward: { at: [20,12] } }      # fall back to the throne room
       - { when: { fact: alarm-raised },                toward: { at: [20,12] } }       # NEW: when fact
-      - { when: { enemy: seen }, say: "Protect the king!", fact: alarm-raised }
+      - { when: [{ enemy: seen }, { not: { fact: alarm-raised } }], say: "Protect the king!", fact: alarm-raised }
       - { when: { enemy: reach },                      attack: enemy }
   storm-the-keep:
     time:
