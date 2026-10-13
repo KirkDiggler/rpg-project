@@ -361,7 +361,7 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | O2 `requires` fact / holds, actor-scoped | A1, A2 | `option_test.go` hide/show; `speak_test.go` offer lists only holding actors' options |
 | O3 one Speak verb; offer and door agree | A0, A2, A3, A4 | `ErrNoOption` at the door; dock hides on `NO_OPTION`; A-walk |
 | O4 deed is the skill | A1 | Intimidation lands `intimidated`, Religion lands nothing |
-| O5 social keys retire; content migrates | A1, A3 | `unknown_key_test.go` sentence; `grep intimidate: content/` empty |
+| O5 social keys retire; content migrates | A1, A3, A5 | `unknown_key_test.go` sentence; `grep intimidate: content/` empty; the studio offers only `time` as a trigger and refuses the retired keys by name (found by the A5 review) |
 | H1 report kind/position/when; hop DC; passive | B1, B2, B3 | `noise_test.go` door hop cases; `land_test.go` no actor |
 | H2 `heard` condition | B1, B2 | `table_test.go` window; `answer_test.go` eligibility |
 | H3 `fact` on time rows, hearers | B2 | `answer_test.go` teaches hearers not the far room |
