@@ -346,6 +346,13 @@ conversation tree; word spreads; the challenge (§5, on the list).
   wraps a negative.** Row ordering is rejected: a rolled table must not be
   secretly ordered. One form for storm-the-keep, the challenge, and the
   talker.
+- **R11 — an enemy is "in reach" only when the creature can attack this
+  pick** (ruled 2026-10-13 on the B-walk; the operator may veto). Found by
+  the walker: `enemy: reach` was any action's range, the bands are
+  exclusive, and a bandit's crossbow put a thug sixteen cells away "in
+  reach", clearing "seen"; on the world clock the attack row is
+  unaffordable, so a ranged creature in sight of an enemy had no eligible
+  row — no alarm, and a frozen patrol. Reach is a statement about striking.
 - **R10 — `sound` is a selector word: the position of the freshest sound
   the creature holds** (ruled by the session lead 2026-10-13 on the B1
   build; the operator may veto). A heard report names no enemy by R4, so
