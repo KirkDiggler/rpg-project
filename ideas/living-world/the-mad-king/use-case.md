@@ -1,6 +1,6 @@
 ---
 name: The mad king — castle use case (UC-5)
-status: DRAFT, noodled in session 2026-10-13 (Kirk + cross-team); rulings R1–R9 in §6; plan.md agreed 2026-10-13; **wave A (Speak) SHIPPED 2026-10-13**: protos v0.1.234 · encounter v0.128.0 · session v0.134.0 · api dev f1d67fa9 · web dev 84bb912a; untrained disadvantage reversed (resolution v0.73.0)
+status: DRAFT, noodled in session 2026-10-13 (Kirk + cross-team); rulings R1–R9 in §6; plan.md agreed 2026-10-13; **wave A (Speak) SHIPPED 2026-10-13**: protos v0.1.234 · encounter v0.128.0 · session v0.134.0 · api dev f1d67fa9 · web dev 84bb912a; untrained disadvantage reversed (resolution v0.73.0); **wave B (hearing) SHIPPED 2026-10-13**: protos v0.1.235 · dnd5e v0.213.0 · mind/behavior v0.7.0 · encounter v0.129.0 · session v0.135.0 · api dev 8f22676a · web dev 1ec90316
 purpose: the next living-world use case after the bandit camp, hostage population, weekend goal and tomb — one castle, many ways in, many endings, authored entirely in the studio by a UGC author
 plan: plan.md (derived 2026-10-13)
 related: ../use-cases.md (UC-1..4) · ../brainstorm.md §13–14 · ../../shenanigans/README.md · ../../shenanigans/front-room-goblin.md · ../dialogue/social-offer-from-the-npc.md · ../disposition/both-ways.md · ../../creature-table/design.md · rpg-toolkit#1020 (stealth against perception)
