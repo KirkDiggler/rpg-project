@@ -324,7 +324,11 @@ conversation tree; word spreads; the challenge (§5, on the list).
   never "any shortest walk" (a band on a hex grid); a route whose legs share
   a cell is refused at the door, fail closed — so a two-point corridor pace
   (A↔B) is refused today and is the named next use case for a direction
-  derivation. **Dialect limit found:** the
+  derivation. Built as the hex line between waypoints (pure geometry, so the
+  door can check it): the creature walks the line cut to its budget and
+  carries on past waypoints; legs must run through floor; legs meeting at
+  an acute angle share the cell beside the joint and are refused, so routes
+  are drawn with right angles. **Dialect limit found:** the
   v4 World Builder dialect has no frame for authored cells, so `path` and
   `at` are v2-only until the sites layer; the studio-authored castle cannot
   carry patrols until then.
