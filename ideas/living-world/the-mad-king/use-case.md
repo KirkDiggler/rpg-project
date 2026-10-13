@@ -319,7 +319,12 @@ conversation tree; word spreads; the challenge (§5, on the list).
 - **R7 — patrol is `toward: { path }`** with the next waypoint derived, so
   the table keeps holding no state. Refined on the B2 build: on a segment →
   walk to its end; on a waypoint → the next; off the route → the nearest
-  waypoint (a long leg no longer oscillates). **Dialect limit found:** the
+  waypoint (a long leg no longer oscillates). Third refinement on the B2
+  review: a leg is the pathfinder's own deterministic route for that pair,
+  never "any shortest walk" (a band on a hex grid); a route whose legs share
+  a cell is refused at the door, fail closed — so a two-point corridor pace
+  (A↔B) is refused today and is the named next use case for a direction
+  derivation. **Dialect limit found:** the
   v4 World Builder dialect has no frame for authored cells, so `path` and
   `at` are v2-only until the sites layer; the studio-authored castle cannot
   carry patrols until then.
