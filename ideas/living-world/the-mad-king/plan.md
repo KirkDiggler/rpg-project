@@ -1,6 +1,6 @@
 ---
 name: The mad king — implementation plan
-status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); not started
+status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); **wave A SHIPPED 2026-10-13** (protos v0.1.234, encounter v0.128.0, session v0.134.0, api dev f1d67fa9, web dev 84bb912a; walked, QA passed on #569); waves B–D not started
 authority: use-case.md (rulings R1–R7, routes §3, primitives §4); rpg-project#569; PR #570; the operator's agreement in session 2026-10-13 ("enough to make the plan")
 planning guide: ../../../.agents/skills/design/planning.md
 ---
@@ -399,7 +399,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 - `encounter.SheetFacts` has no perception field today and `session/activate.go:48` carries an unfilled `ObserverPassivePerceptions` shelf; B2/B3 fill the former and delete the latter rather than wiring a stale shape (build on the new places).
 - `patrol` stays a refused word; the author writes `path`. The use case's table sketch says `path` already.
 - A-walk needs A5 before A4 is useful to Kirk (he authors, then plays); the sequence lists them in parallel and the walk waits for both.
-- No task touches `resolution`; the untrained source and the check machine are consumed as they are.
+- No task touches `resolution`. (Superseded 2026-10-13 on the wave A walk: the untrained-disadvantage source was deleted in resolution v0.73.0 by the operator's ruling; session adopts it in its own slice. Wave B's checks roll plain.)
 - R8 settled as the list form before any task started; no open architectural decision remains.
 
 — cross-team agent, on behalf of KirkDiggler
