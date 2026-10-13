@@ -247,24 +247,50 @@ garrison both target loyalists is enough; allied waits for a use case where
 "fights for you" differs from "fights the same enemy"); per-character stance;
 any monster-initiated check (hearing and noticing are passive on the monster
 side, on purpose); the campaign journal (the castle is one run); an authored
-conversation tree; word spreads; a neutral faction challenging a party it
-sees but does not know.
+conversation tree; word spreads; the challenge (§5, on the list).
 
 ## 5. What this surfaces (findings to file, not to fix here)
 
 - **`requires` is one predicate.** No `and`. The castle lives within it by
   chaining facts (the `ashford` line requires `feast-tonight`), which is the
   same move the journal ruling made for quest trees. Record; do not widen.
-- **A neutral faction cannot challenge.** A garrison guard who watches the
-  party climb the kitchen wall at midnight does nothing, because a sighting
-  is not a fact and the pair is not opposed. That is word-spreads territory
-  (a witnessed deed becoming a fact). Named, shelved, and the castle is
-  authored so it does not need it.
+- **The challenge: a neutral guard approaches for questioning (on the
+  list, Kirk 2026-10-13).** A garrison guard who watches the party climb
+  the kitchen wall at midnight does nothing today, because the enemy bands
+  are opposed-only and a sighting is not a fact. The shape it wants, each
+  piece one word: a `stranger: seen` band (a non-opposed party member in
+  sight), an `approach` word that walks to them, and the exchange opening
+  from the guard's side — his `say` poses the question and the party's
+  options are the answers, with failure writing `party-recognized`. "Some
+  guards do nothing and others follow up" is the table and the temper doing
+  their job: `stranger: seen` rolls two `hold` against one `approach`, and a
+  lazy temper tilts it. Not brought here; the castle is authored so it does
+  not need it. It is the first use case for a creature opening an exchange.
+- **The faction mind can be more than one knower (Kirk 2026-10-13).** Not
+  any member — the audience grain exists so one lieutenant can see through
+  a disguise while the camp stays fooled — but `mind: [captain, lieutenant]`,
+  any of whom knowing is enough. A list on the existing field, the same
+  fold. A quorum or a declared derivation beyond that waits for its use
+  case; nobody reaches for a `quorum` field.
+- **Word spreads is creatures talking, now that hearing exists.** The
+  shelved version was a scheduled fact reaching the mind N rounds later.
+  With hearing, a guard who holds a fact has a `time` row that says it
+  aloud and writes the same fact to hearers; the captain learns it when
+  that guard walks within earshot. The author decides who gossips and a
+  thick door stops it. The one thing to design before using it is the
+  loop: a creature that knows the fact would repeat it every round. A
+  `within` window on the row or a once-per-knower rule on `fact` are the
+  two cheap answers.
+- **Rows keep wanting a second condition.** Three instances now: storm the
+  keep yielding to `enemy: seen`; the challenge not re-challenging a troupe
+  it already admitted (`stranger: seen` and not `fact: troupe-admitted`);
+  the talker not repeating itself. By the second-instance law the grammar
+  earns the answer, and it should be one answer for all three.
 - **"Storm the keep" wants two conditions.** The row `when: { fact:
   guards-turned }` should yield to `enemy: seen`; today a `when` is one
   condition and rows are rolled, not ordered. The sketch above shows the
   wart (`when_not_enemy_seen`) rather than hiding it. Two honest answers:
-  row precedence by order, or `when` as a small list. Decide on the walk.
+  row precedence by order, or `when` as a small list. See the last finding.
 - **The studio dropped the check routes.** `intimidate:` and `persuade:`
   bindings are read from files but not editable, and exits, endings and
   concealments live only in the older editors. Options are where that form
