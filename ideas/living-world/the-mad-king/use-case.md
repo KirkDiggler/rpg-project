@@ -1,6 +1,6 @@
 ---
 name: The mad king — castle use case (UC-5)
-status: DRAFT, noodled in session 2026-10-13 (Kirk + cross-team); rulings in §6 made in that session; nothing scheduled, nothing built
+status: DRAFT, noodled in session 2026-10-13 (Kirk + cross-team); rulings R1–R9 in §6 made in that session; plan.md derived and agreed 2026-10-13; nothing built
 purpose: the next living-world use case after the bandit camp, hostage population, weekend goal and tomb — one castle, many ways in, many endings, authored entirely in the studio by a UGC author
 plan: plan.md (derived 2026-10-13)
 related: ../use-cases.md (UC-1..4) · ../brainstorm.md §13–14 · ../../shenanigans/README.md · ../../shenanigans/front-room-goblin.md · ../dialogue/social-offer-from-the-npc.md · ../disposition/both-ways.md · ../../creature-table/design.md · rpg-toolkit#1020 (stealth against perception)
@@ -111,7 +111,7 @@ tables:                                                       # TODAY (named roo
       - { when: { enemy: reach },                      attack: enemy }
   storm-the-keep:
     time:
-      - { when: { fact: guards-turned }, when_not_enemy_seen: true, toward: { at: [20,12] } }   # see §5, open
+      - { when: [{ fact: guards-turned }, { not: { enemy: seen } }], toward: { at: [20,12] } }   # R8 list form
       - { when: { enemy: reach }, attack: enemy }
       - { when: { enemy: seen },  toward: enemy }
 
@@ -282,16 +282,14 @@ conversation tree; word spreads; the challenge (§5, on the list).
   loop: a creature that knows the fact would repeat it every round. A
   `within` window on the row or a once-per-knower rule on `fact` are the
   two cheap answers.
-- **Rows keep wanting a second condition.** Three instances now: storm the
+- **Rows keep wanting a second condition.** Three instances: storm the
   keep yielding to `enemy: seen`; the challenge not re-challenging a troupe
   it already admitted (`stranger: seen` and not `fact: troupe-admitted`);
-  the talker not repeating itself. By the second-instance law the grammar
-  earns the answer, and it should be one answer for all three.
+  the talker not repeating itself. Answered by R8.
 - **"Storm the keep" wants two conditions.** The row `when: { fact:
   guards-turned }` should yield to `enemy: seen`; today a `when` is one
-  condition and rows are rolled, not ordered. The sketch above shows the
-  wart (`when_not_enemy_seen`) rather than hiding it. Two honest answers:
-  row precedence by order, or `when` as a small list. See the last finding.
+  condition and rows are rolled, not ordered. R8 answers it: the sketch
+  above uses the list form.
 - **The studio dropped the check routes.** `intimidate:` and `persuade:`
   bindings are read from files but not editable, and exits, endings and
   concealments live only in the older editors. Options are where that form
@@ -320,6 +318,14 @@ conversation tree; word spreads; the challenge (§5, on the list).
   table conditions.** Alarm is a loud fact; no `alarm` word.
 - **R7 — patrol is `toward: { path }`** with the next waypoint derived, so
   the table keeps holding no state.
+- **R8 — a row's `when` is a list; every entry must hold; `not: { … }`
+  wraps a negative.** Row ordering is rejected: a rolled table must not be
+  secretly ordered. One form for storm-the-keep, the challenge, and the
+  talker.
+- **R9 — `requires` is judged against the actor's own holdings.** The
+  character who was in the kitchen is the one who can use what the cook
+  said. Sharing intel between characters is an out for later if a use
+  case asks.
 - **Direction, not ruled:** social options' home is non-hostile creatures.
   Whether a hostile creature in a fight still offers an Intimidation option
   (front-room R4 left it) is a question for the walk, not this doc.

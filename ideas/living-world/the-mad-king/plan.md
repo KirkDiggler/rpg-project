@@ -1,6 +1,6 @@
 ---
 name: The mad king — implementation plan
-status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); not started
+status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); not started
 authority: use-case.md (rulings R1–R7, routes §3, primitives §4); rpg-project#569; PR #570; the operator's agreement in session 2026-10-13 ("enough to make the plan")
 planning guide: ../../../.agents/skills/design/planning.md
 ---
@@ -106,13 +106,13 @@ branch with it.
 
 | item | state |
 |---|---|
-| **R8 — a row with two conditions.** Three instances in the use case. Recommendation: `when:` accepts a list, every entry must hold, with `not: { … }` as a wrapper. Row ordering is rejected because it makes rolled tables secretly ordered. | **OPEN — blocks** the storm-the-keep row in D1 only; B1/B2 ship the single form and add the list when ruled |
-| `requires: { fact }` is judged against the **actor's own holdings** (per-player knowledge: the character who was in the kitchen is the one who can use what the cook said). | assumption, carried into A1; say if wrong |
-| `requires: { holds: <prop-id> }` means the actor currently holds that placed prop. | assumption, carried into A1 |
-| Speaking to a prop: witnesses are those who see the actor; no deed lands; the check still runs through resolution. | assumption, A1 |
-| Sound DCs (content, tuned on the walk): `boom` 5, `crash` 8, `clang` 10, `voice` 10; +5 per region hop; a closed door is one more hop. `growl` is not stamped by anything yet and is not added. | assumption, B2 |
-| Which deeds make which sound: an attack landing `clang`; a forced door `crash`; a damaging cast `boom`; every `say` `voice`. | assumption, B2 |
-| Deprecated `Intimidate`/`Persuade` RPCs: handlers answer `Unimplemented` with a sentence naming `Speak`. | assumption, A3 (pre-release, no backcompat baggage) |
+| **R8 — a row's `when` is a list; every entry must hold; `not: { … }` wraps a negative.** Row ordering rejected. | **settled** (operator, 2026-10-13); B1 ships the list form, B2 parses it; D1's storm-the-keep row unblocked |
+| **R9 — `requires: { fact }` is judged against the actor's own holdings.** | settled (operator, 2026-10-13); A1 |
+| `requires: { holds: <prop-id> }` means the actor currently holds that placed prop. | confirmed, A1 |
+| Speaking to a prop: witnesses are those who see the actor; no deed lands; the check still runs through resolution. | confirmed, A1 |
+| Sound DCs (content, tuned on the walk): `boom` 5, `crash` 8, `clang` 10, `voice` 10; +5 per region hop; a closed door is one more hop. `growl` not added. | confirmed, B2 |
+| Which deeds make which sound: an attack landing `clang`; a forced door `crash`; a damaging cast `boom`; every `say` `voice`. | confirmed, B2 |
+| Deprecated `Intimidate`/`Persuade` RPCs answer `Unimplemented` naming `Speak`. | confirmed, A3 |
 
 ---
 
@@ -284,9 +284,9 @@ On the local stack from pushed pins (`dev-env.sh up`, api worktree path, web `de
 **Delivers:** H2, H4, P1 (vocabulary); H1's report type.
 **Owner:** rpg-toolkit `mind/behavior` (one module; `deed`, `stage` are packages in it).
 **Prerequisites:** none.
-**Files:** new package `mind/behavior/sound`: `const Channel = "sounds"`, `Sound{Kind string; Where spatial.Position; At int}`, `Land(store, hearers, Sound)` mirroring `stage.Land` (`stage.go:79`) but never blanking (a sound carries no figures). `table.go`: `When` (:289) gains `Heard *HeardWhen{Kind string; Within int}` and `Fact string`; `holds` (:618) reads them; `Facts` (:508) gains `Sounds []Sound` and `Known []string`; `Selector` (:374) gains `Path []spatial.Position`; one-condition rule unchanged (R8 pending). `answer.go`: no new words.
-**Behavior:** a `When` with more than one of `Enemy`/`Deed`/`Heard`/`Fact` set is refused by `When.validate` (exists? if not, add beside `holds`); `heard` holds when any sound of that kind in `Facts.Sounds` has `Now - At <= Within`; `fact` holds when the id is in `Known`; a `Selector` with `Path` is legal only on `toward`.
-**Tests:** `table_test.go`: `heard` within/outside the window; `fact` present/absent; a `When` with two conditions refused; `sound/land_test.go`: three hearers each hold the sound, a non-hearer does not, the sound names no actor.
+**Files:** new package `mind/behavior/sound`: `const Channel = "sounds"`, `Sound{Kind string; Where spatial.Position; At int}`, `Land(store, hearers, Sound)` mirroring `stage.Land` (`stage.go:79`) but never blanking (a sound carries no figures). `table.go`: `When` (:289) gains `Heard *HeardWhen{Kind string; Within int}` and `Fact string`; `holds` (:618) reads them; `Facts` (:508) gains `Sounds []Sound` and `Known []string`; `Selector` (:374) gains `Path []spatial.Position`; `Answer.When` becomes `[]When` under R8 (a single mapping still parses as a one-element list in dungeonspec), with `When.Not *When` for the negative. `answer.go`: no new words.
+**Behavior:** each `When` entry sets exactly one of `Enemy`/`Deed`/`Heard`/`Fact`/`Not`, refused otherwise; an entry is eligible only when every `When` in the list holds; `Not` holds when its inner condition does not; `heard` holds when any sound of that kind in `Facts.Sounds` has `Now - At <= Within`; `fact` holds when the id is in `Known`; a `Selector` with `Path` is legal only on `toward`.
+**Tests:** `table_test.go`: `heard` within/outside the window; `fact` present/absent; an entry with two conditions in one `When` refused; a two-entry list holds only when both hold; `not: { enemy: seen }` holds with no enemy in sight; `sound/land_test.go`: three hearers each hold the sound, a non-hearer does not, the sound names no actor.
 
 - [ ] RED; implement; `go test ./...`; gorelease MINOR (`feat(mind/behavior):`); push; DRAFT.
 
@@ -374,7 +374,7 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | C1 content + every §3 route | D1 | `MadKing` test count = §3 rows |
 | C2 the walk | D-walk | checklist on #569 |
 | §3 "Scout" row (guard without option turns nothing) | D1 | asserted: `guards-turned` absent after speaking to `gate-1` |
-| Storm the keep yields to a sighting | D1 | **blocked on R8** |
+| Storm the keep yields to a sighting | B1, D1 | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
 
 Deferrals (by the use case, not by this plan): allied, per-character stance, challenge, journal, tree, word-spreads mechanism, mind list.
 
@@ -387,7 +387,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 | A1 `dungeonspec` v4 `options` shape + goldens | A5 studio | YAML key names, refusal sentences | pushed sha (goldens are the contract) | A5 fixture byte-equal to A1's |
 | A2 `Manager.Speak`, Afford `Speak` row | A3 api | one target kind; `ShortfallNoOption` ↔ `NO_OPTION` | pushed sha | A3 handler tests |
 | A3 api on local stack | A4, A5 | wire | running stack | A-walk |
-| B1 `sound.Sound`, `When.Heard/Fact`, `Selector.Path`, `Facts.Sounds/Known` | B2 encounter | one condition per `When` (until R8) | pushed sha | B2 tests compile against it |
+| B1 `sound.Sound`, `When.Heard/Fact/Not`, `[]When`, `Selector.Path`, `Facts.Sounds/Known` | B2 encounter | one condition per `When` entry; list = all hold (R8) | pushed sha | B2 tests compile against it |
 | B2 `SheetFacts.PassivePerception`; `Heard` beat | B3 session; C1 | zero = hears nothing (fail closed) | merged tag for C1; pushed sha for B3 | B3 scene; C1 scene |
 | B0 `Heard` | B4, B5 | kind string sealed by rulebook content | merged first | convert test; story render test |
 | A1 and B2 both edit `answer.go`, `grammar.go` | — | B2 branches from A1's merged tag | ordering | B2's PR base sha ≥ A1 tag |
@@ -400,6 +400,6 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 - `patrol` stays a refused word; the author writes `path`. The use case's table sketch says `path` already.
 - A-walk needs A5 before A4 is useful to Kirk (he authors, then plays); the sequence lists them in parallel and the walk waits for both.
 - No task touches `resolution`; the untrained source and the check machine are consumed as they are.
-- R8 is the only unsettled architectural decision and it blocks one assertion in D1, nothing earlier.
+- R8 settled as the list form before any task started; no open architectural decision remains.
 
 — cross-team agent, on behalf of KirkDiggler
