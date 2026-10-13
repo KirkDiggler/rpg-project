@@ -317,7 +317,12 @@ conversation tree; word spreads; the challenge (§5, on the list).
 - **R6 — `fact` becomes legal on a `time` row and `when: { fact }` joins the
   table conditions.** Alarm is a loud fact; no `alarm` word.
 - **R7 — patrol is `toward: { path }`** with the next waypoint derived, so
-  the table keeps holding no state.
+  the table keeps holding no state. Refined on the B2 build: on a segment →
+  walk to its end; on a waypoint → the next; off the route → the nearest
+  waypoint (a long leg no longer oscillates). **Dialect limit found:** the
+  v4 World Builder dialect has no frame for authored cells, so `path` and
+  `at` are v2-only until the sites layer; the studio-authored castle cannot
+  carry patrols until then.
 - **R8 — a row's `when` is a list; every entry must hold; `not: { … }`
   wraps a negative.** Row ordering is rejected: a rolled table must not be
   secretly ordered. One form for storm-the-keep, the challenge, and the
