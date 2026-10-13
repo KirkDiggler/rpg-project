@@ -129,7 +129,7 @@ branch with it.
 - `Verb` gains `VERB_SPEAK`; `VERB_INTIMIDATE` and `VERB_PERSUADE` marked `[deprecated = true]`.
 - `EventKind` gains `EVENT_KIND_SPOKE`; message `Spoke { actor, target, option_id, line, skill, check { roll faces, total, dc, beaten, sources } }` — the check block is the same shape `Intimidated` carries today, copied not referenced. `Intimidated`, `Persuaded` and their kinds deprecated.
 - `Answered` gains `option_id` (string, empty for `time` picks). `AnswerKey` values for the four social keys deprecated; `ANSWER_KEY_SUCCESS`/`ANSWER_KEY_FAILURE` added for option picks.
-- Afford: the row for `VERB_SPEAK` lists `repeated SpeakOption { target, option_id, line, available, shortfall }`. `ShortfallReason` gains `SHORTFALL_REASON_NO_OPTION` (also closes the gap that `no_social_entry` has no proto value today, `types.proto:321`).
+- Afford: the row for `VERB_SPEAK` lists `repeated SpeakOption { target, option_id, line, available, shortfall }` as `Declaration.speak_options` (field 23; `options` = 19 is already the cast menu — found by A0). `ShortfallReason` gains `SHORTFALL_REASON_NO_OPTION` (also closes the gap that `no_social_entry` has no proto value today, `types.proto:321`).
 **Behavior:** additive only; `buf breaking` against main passes.
 **Tests:** not applicable (no hand-written tests in protos); evidence is `buf lint`, `buf format --diff`, `buf breaking --against .git#branch=main`, and the generate job.
 
@@ -382,7 +382,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 
 | provider | consumer | contract | availability | proof |
 |---|---|---|---|---|
-| A0 protos `Speak`/`Spoke`/`SpeakOption`/`NO_OPTION` | A3 api, A4 web | names and field types above; `option_id` empty = time pick | merged first; gen/go tag | A3 convert tests; A4 registry test |
+| A0 protos `Speak`/`Spoke`/`SpeakOption`/`NO_OPTION` (rpg-api-protos#391) | A3 api, A4 web | names and field types above; menu field is `speak_options`; `option_id` empty = time pick | merged first; gen/go tag | A3 convert tests; A4 registry test |
 | A1 `encounter.Option`, `OptionsFor`, `Speak`, `TriggerHolds` | A2 session | actor-scoped `requires`; `ErrNoOption`; `ErrUnwitnessed` | pushed sha → pseudo-version | `speak_test.go` through the real encounter |
 | A1 `dungeonspec` v4 `options` shape + goldens | A5 studio | YAML key names, refusal sentences | pushed sha (goldens are the contract) | A5 fixture byte-equal to A1's |
 | A2 `Manager.Speak`, Afford `Speak` row | A3 api | one target kind; `ShortfallNoOption` ↔ `NO_OPTION` | pushed sha | A3 handler tests |
