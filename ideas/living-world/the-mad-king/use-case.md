@@ -353,6 +353,9 @@ conversation tree; word spreads; the challenge (§5, on the list).
   reach", clearing "seen"; on the world clock the attack row is
   unaffordable, so a ranged creature in sight of an enemy had no eligible
   row — no alarm, and a frozen patrol. Reach is a statement about striking.
+  Consequence, named: on the turn clock a creature that has spent its attack
+  reads `seen` on re-consult, so a `seen` row with `away` or `toward` can
+  fire after the swing — hit-and-run is now authorable, on purpose.
 - **R10 — `sound` is a selector word: the position of the freshest sound
   the creature holds** (ruled by the session lead 2026-10-13 on the B1
   build; the operator may veto). A heard report names no enemy by R4, so
