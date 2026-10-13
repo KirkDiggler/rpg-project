@@ -282,6 +282,13 @@ conversation tree; word spreads; the challenge (§5, on the list).
   loop: a creature that knows the fact would repeat it every round. A
   `within` window on the row or a once-per-knower rule on `fact` are the
   two cheap answers.
+- **A tick that changes the clocks must re-read them (found on the B-walk).**
+  A `fact` on a time row can turn a disposition and form a fight mid-pass;
+  a creature the pass transferred to the turn clock must not be picked or
+  charged on the world clock for the rest of that pass. The world think now
+  asks the clock before every pick and every spend, never a list taken at
+  the start. The first alarm tick in the hearing room wedged every End Turn
+  before this.
 - **Two opposed monsters never form a fight (found on the B-walk).** Sight,
   witnesses, deeds and the `enemy` bands are kind-agnostic — a guard sees a
   thug — but fight formation pairs players × monsters only, the aggression
