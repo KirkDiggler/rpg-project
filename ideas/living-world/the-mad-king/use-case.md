@@ -282,6 +282,16 @@ conversation tree; word spreads; the challenge (§5, on the list).
   loop: a creature that knows the fact would repeat it every round. A
   `within` window on the row or a once-per-knower rule on `fact` are the
   two cheap answers.
+- **Two opposed monsters never form a fight (found on the B-walk).** Sight,
+  witnesses, deeds and the `enemy` bands are kind-agnostic — a guard sees a
+  thug — but fight formation pairs players × monsters only, the aggression
+  law's stance turn forms nothing between two monster factions, and a
+  world-clock creature has no attack budget. A guard can shout at and walk
+  to a thug and never swing. The three-sided fight in §3 ("turn the
+  garrison") needs classify over unordered opposed pairs of any kind, a
+  one-sided monster↔monster first contact forming (the drop arm stays
+  player-only), and the session's striker checked for monster targets.
+  Wave D's first task.
 - **Rows keep wanting a second condition.** Three instances: storm the
   keep yielding to `enemy: seen`; the challenge not re-challenging a troupe
   it already admitted (`stranger: seen` and not `fact: troupe-admitted`);

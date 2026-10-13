@@ -335,6 +335,15 @@ Two rooms, a door, a guard patrolling a square, a thug in the next room. Fight t
 
 ## Wave D — The castle
 
+### Task D0: encounter — fights form between opposed monsters
+
+**Delivers:** the three-sided fight (§3 "turn the garrison"); found on the B-walk.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (+ a session read of the Striker for monster targets; its own PR if anything changes).
+**Prerequisites:** wave B merged.
+**Files:** `trigger.go` `classify` (pairs players × monsters today), `sidesInContactOrder`; `turning.go` `formOnStance`; `worldtime.go` `thinkFor` (`AttacksLeft: 0` on the world clock — dissolves once the pair joins a bubble).
+**Behavior:** classify iterates unordered pairs of contact members whose factions are opposed, any kind; a one-sided monster↔monster first contact forms (`spotted`), the drop arm stays player-only (toolkit#1020); once formed, the existing driver gives both sides turn budgets and `enemy: reach → attack` fires.
+**Tests:** two monster factions declared hostile form a bubble on sight; the aggression law's stance turn between two monster factions forms the fight; a guard that turned on the thugs joins the party's bubble against them and never targets the party; pinned bubble order/size assertions in trigger and turn tests re-asserted as claims.
+
 ### Task D1: content + route scenarios
 
 **Delivers:** C1.
