@@ -2,6 +2,7 @@
 name: The mad king — castle use case (UC-5)
 status: DRAFT, noodled in session 2026-10-13 (Kirk + cross-team); rulings in §6 made in that session; nothing scheduled, nothing built
 purpose: the next living-world use case after the bandit camp, hostage population, weekend goal and tomb — one castle, many ways in, many endings, authored entirely in the studio by a UGC author
+plan: plan.md (derived 2026-10-13)
 related: ../use-cases.md (UC-1..4) · ../brainstorm.md §13–14 · ../../shenanigans/README.md · ../../shenanigans/front-room-goblin.md · ../dialogue/social-offer-from-the-npc.md · ../disposition/both-ways.md · ../../creature-table/design.md · rpg-toolkit#1020 (stealth against perception)
 ---
 
