@@ -388,7 +388,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 | A2 `Manager.Speak`, Afford `Speak` row | A3 api | one target kind; `ShortfallNoOption` ↔ `NO_OPTION` | pushed sha | A3 handler tests |
 | A3 api on local stack | A4, A5 | wire | running stack | A-walk |
 | B1 `sound.Sound`, `When.Heard/Fact/Not`, `[]When`, `Selector.Path`, `Facts.Sounds/Known` | B2 encounter | one condition per `When` entry; list = all hold (R8) | pushed sha | B2 tests compile against it |
-| B2 `SheetFacts.PassivePerception`; `Heard` beat | B3 session; C1 | supplied on every sheet-facts pull; zero = hears nothing (fail closed) | merged tag for C1; pushed sha for B3 | B3 scene; C1 scene |
+| B2 `SheetFacts.PassivePerception`; `Heard` beat | B3 session; C1 | supplied on every sheet-facts pull; zero = deaf to EVERYTHING, even a DC-0 boom (zero only ever means "not supplied"; no rules passive is 0) | merged tag for C1; pushed sha for B3 | B3 scene; C1 scene |
 | B0 `Heard` | B4, B5 | kind string sealed by rulebook content | merged first | convert test; story render test |
 | A1 and B2 both edit `answer.go`, `grammar.go` | — | B2 branches from A1's merged tag | ordering | B2's PR base sha ≥ A1 tag |
 | D1 content | D1 tests, D-walk | the §2 file under both dialects | A–C tagged | compile test + `MadKing` tests |
