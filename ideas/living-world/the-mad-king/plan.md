@@ -110,7 +110,7 @@ branch with it.
 | **R9 — `requires: { fact }` is judged against the actor's own holdings.** | settled (operator, 2026-10-13); A1 |
 | `requires: { holds: <prop-id> }` means the actor currently holds that placed prop. | confirmed, A1 |
 | Speaking to a prop: witnesses are those who see the actor; no deed lands; the check still runs through resolution. | confirmed, A1 |
-| Sound DCs (content, tuned on the walk): `boom` 5, `crash` 8, `clang` 10, `voice` 10; +5 per region hop; a closed door is one more hop. `growl` not added. | confirmed, B2 |
+| Sound DCs (content, tuned on the walk): **retuned on the B-walk** — `boom` 0, `crash` 5, `clang` 5, `voice` 5; +5 per region hop; a closed door is one more hop. At the first numbers (clang 10) a passive-10 guard heard nothing beyond its own room. Now: open door 1 hop = DC 10, heard by passive 10; closed door DC 15, not heard; two rooms DC 15, not heard; a boom carries two rooms. `growl` not added. | retuned 2026-10-13, B2 |
 | Which deeds make which sound: an attack landing `clang`; a forced door `crash`; a damaging cast `boom`; every `say` `voice`. | confirmed, B2 |
 | Deprecated `Intimidate`/`Persuade` RPCs answer `Unimplemented` naming `Speak`. | confirmed, A3 |
 
