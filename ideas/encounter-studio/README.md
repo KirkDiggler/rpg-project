@@ -179,7 +179,7 @@ or a prop (`propBindings.<id>.options`); the form is the same.
 
 | Field | Writes | Authored by | Widget |
 |---|---|---|---|
-| Size | `room.workspace` | human | number, or drag on the map; grows up and right, another side on request with a shift warning (R13) |
+| Size | `room.workspace` | human | number, or drag on the map; grows up and right by default, any side on request; no cell moves (R13) |
 | Default finishes | `room.scene` finishes | human | pick-from-list with thumbnails |
 | Void, lighting, standing | `play.void`, `play.lighting`, `play.standing` | human | pick-from-list |
 | Notes | `room.scene` labels | human | text |
@@ -223,7 +223,6 @@ or a prop (`propBindings.<id>.options`); the form is the same.
 | Field | Writes | Authored by | Widget |
 |---|---|---|---|
 | Look | `room.scene` item `assetRef`: an exact catalog ref within the prop's family (R14) | human | pick-from-list with thumbnails |
-| Surface material | a new optional field on the `room.scene` item, for assets that take one (R14) | human | pick-from-list from the world material catalog |
 | Footprint, blocking | `propDeclarations.<id>` | human | map handles, toggles |
 | Light | `room.scene` | human | pick-from-list |
 | Holdable, holds | `propBindings.<id>.holdable`, `.holds` | either | toggle, pick-from-list: intel |
@@ -381,8 +380,9 @@ The three approaches to the configuration surface:
 - **Multi-room sites (rpg-project#528).** The home's unplaced nouns move up
   to the site; the inspector and palette are unchanged; the overview's room
   list gains rooms; the row editor gains a map cell selector.
-- **Multi-select (R9).** The selection owner holds a set; the inspector
-  shows fields the set shares. The home forms are untouched.
+- **Multi-select as an editing mode (R9).** The selection owner holds a set;
+  the inspector shows fields the set shares. The Shift-pick that builds a
+  group is unchanged, and the home forms are untouched.
 - **A new placed kind, such as a trap.** One inspector view, one overview
   glyph, one encode path. The home is untouched unless the kind brings an
   unplaced noun.
@@ -400,7 +400,7 @@ The three approaches to the configuration surface:
 | Layout 2D | web `encounter-studio/{LayoutViewport.tsx,LayoutWallOverlay.tsx,RegionBoundaryOverlay.tsx,MapLabelOverlay.tsx,StudioRegions.tsx}` |
 | 3D view and markers | web `world-building/{WorldBuildingConcept.tsx,WorldBuildingViewport.tsx,RoomActorMarkers.tsx}` |
 | Workspace size | web `world-building/roomDraft.ts` `resizeRoomWorkspace`, `world-building/workspaceGeometry.ts` `centeredRoomWorkspace`: the workspace is centred on the origin, a resize grows or shrinks every side evenly, and cell coordinates are never rewritten |
-| Prop variants and materials | web `world-building/catalog.ts` with `components/hex-grid/propManifest.ts` `resolvePropVariant` (a key resolves to its first variant); `world-building/useWorldMaterialCatalog.ts`; scene props are `WorldProp` in `world-building/types.ts` |
+| Prop variants | web `world-building/catalog.ts` with `components/hex-grid/propManifest.ts` `resolvePropVariant` (a key resolves to its first variant); scene props are `WorldProp` in `world-building/types.ts` |
 | Castle fixture | web `encounter-studio/fixtures/castleWorkspace.ts` |
 | Codec | web `world-building/roomDraft.ts` |
 | Document shape, layering, refusals | toolkit `rulebooks/dnd5e/encounter/dungeonspec/{single_room.go,spec.go,predicate.go,single_room_compile.go,factions.go}` |
