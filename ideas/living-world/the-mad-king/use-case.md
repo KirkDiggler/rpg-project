@@ -189,6 +189,7 @@ propBindings:
         success: [{ say: "The sigils are the Pale One's. The king keeps a shrine to it.", fact: king-is-cultist }]
         failure: [{ say: "Old stone, old candles." }]
   ledger: { holdable: true, holds: [cooks-ledger] }           # TODAY
+  purse: { holdable: true }                                     # the party's coin; the cook's bribe needs it in hand
 
 endings:                                                      # TODAY
   - { id: king-slain,   when: { down: king } }
