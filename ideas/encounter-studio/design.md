@@ -41,7 +41,15 @@ flowchart LR
     Home -->|edit| Doc
     Doc -->|read-back prose| Insp
     Doc --> Facts
+    Doc -->|Save and Play: the encoder's bytes| Reg[(API registry, by key)]
+    Reg -->|refusals at the field| Insp
+    Reg -->|StartEncounter key| Play[The running encounter]
 ```
+
+Save and Play sits in the header's Save group, beside the local draft and the
+draft file, on every home and both views. The saved file is the file the
+draft-file export writes, under the same key, and play launches that key with
+the character picked on Home.
 
 | Selection | Inspector shows |
 |---|---|
@@ -136,6 +144,37 @@ flowchart LR
   studio shows each refusal at the field that caused it and does not save a
   file the decoder would refuse.
 
+- **Play is the saved file (R15).** Save and Play writes the encoder's bytes
+  to the registry under the draft's key and launches a lobby on that key with
+  the character picked on Home. Nothing is launched that was not saved, and
+  the control is one control on every home and both views. Why: what the
+  author played is a file another author can read.
+- **One key per draft (R16).** The draft-file export and the server save share
+  one key, defaulting to the slug of the room name, editable, adopted from an
+  import. The server's grammar is lowercase letters, digits and dashes, and the
+  studio shows the server's sentence at the key field. The first save to a key
+  that already exists asks before overwriting; later saves to it in the same
+  editor session do not. Why: two keys for one draft is two files.
+- **A refusal lands at the thing (R17).** A server refusal whose field path
+  maps to a placed thing, a cast member, a table, a faction or a door becomes a
+  jump that selects it and opens its inspector. One that maps to nothing stays
+  a sentence under the Save group. Why: the author fixes the thing, not the
+  path.
+- **The studio says why it cannot (R18).** With authoring disabled on the
+  server the control is present and disabled with that reason. Without a
+  character picked on Home, Play is disabled with that reason. The studio does
+  not pick a character, does not invent one and never launches a fallback
+  encounter. Why: a disabled control with a sentence beats a missing one.
+- **Edits wait for a publish (R15).** While a save or launch is in flight the
+  studio refuses edits, undo and view changes that would change the captured
+  bytes, and a response for a retired capture saves and launches nothing.
+  Why: the file on the server must be the file the author pressed Save on.
+- **What play does not render is said (R19).** Wall and region finishes and
+  region lighting stay in the studio's presentation block and do not reach
+  play; their fields say so in one line. Finishes reach play with the look
+  catalog (R14b); region lighting is open. Why: an author must know a finish
+  is a note to the studio, not to the game.
+
 ## Rulings
 
 | ID | status | scope | ruled by | date |
@@ -155,13 +194,19 @@ flowchart LR
 | R13 | settled | default growth up and right; any side choosable; no cell moves, no warning (amended 2026-10-14: the plan found explicit bounds make the warning never true) | operator | 2026-10-14 |
 | R14 | settled | props have a look per placement: the catalog variant; the shuffle stays with cast members | operator | 2026-10-14 |
 | R14b | deferred-until-look-catalog | per-prop surface material and provider-published look choices; picker is rpg-dnd5e-web#1268 | operator | 2026-10-14 |
+| R15 | settled | Save and Play in the studio header's Save group on every home and view; the existing publishing and launch hooks reused unchanged; edits refused while a publish is in flight | operator | 2026-10-14 |
+| R16 | settled | one key per draft shared by the draft file and the server save; slug of the room name by default; overwrite asked once per key per editor session | operator | 2026-10-14 |
+| R17 | settled | a server refusal with a field path that maps to a studio noun is a jump to that noun's inspector; otherwise a sentence under the Save group | operator | 2026-10-14 |
+| R18 | settled | authoring off or no character picked disables the control with the reason; no in-studio character picker, no fallback encounter | operator | 2026-10-14 |
+| R19 | deferred-until-look-catalog | wall and region finishes reach play with the look catalog, not before; region lighting does not reach play and is open; the fields say they are studio-only | operator | 2026-10-14 |
 
 ## Open
 
 - **The document's on-screen word.** Encounter, site and room all appear
   today; the screen needs one.
-- **Save & Play ordering (rpg-dnd5e-web#1236).** Whether play-from-studio
-  lands before or after the inspector slice.
+- **Region lighting in play.** Play lights every derived region at full
+  intensity with one archetype; whether an authored region's lighting should
+  reach play is unsettled and separate from the look catalog (R19).
 - **Opening a reference encounter.** How an author opens a shipped encounter,
   such as the castle, as a starting point rather than a blank room.
 - **The sites layer (rpg-project#528).** Doors on shared walls between

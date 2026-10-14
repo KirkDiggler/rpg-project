@@ -25,6 +25,11 @@ flowchart LR
         Insp[Inspector by selection kind]
         RB[Read-back and fact index renderers]
         Codec[Document encode and decode]
+        Pub[Save and Play: publish and launch]
+    end
+    subgraph API[rpg-api, authoring and lobby]
+        Reg[(File registry by key)]
+        Lobby[CreateLobby and StartEncounter]
     end
     subgraph TK[rpg-toolkit, dungeonspec]
         Dec[SingleRoomSpec strict decode]
@@ -41,6 +46,10 @@ flowchart LR
     RB --> Home
     Codec -->|saved file| Dec
     Dec --> Comp
+    Codec -->|the same bytes, by key| Pub
+    Pub -->|PutDungeon validate-only, then save| Reg
+    Reg -->|refusals with field paths| Insp
+    Pub -->|StartEncounter key, picked character| Lobby
 ```
 
 ## Ownership and contracts
@@ -54,6 +63,7 @@ flowchart LR
 | Layout overview | Showing placed nouns and regions in 2D | draft → region fills, placement glyphs, room list with sizes; click → selection | human |
 | Palette | Listing the cast; dropping one | cast member id + cell → `monsterDeclarations[]` entry + `monsterBindings.<id>` | human |
 | Document encode and decode | The file round trip | draft ↔ YAML/JSON of `SingleRoomSpec` | none |
+| Save and Play | Publishing the encoded file and launching it (R15) | `{draft, key, characterId}` → `PutDungeon{key, yaml}` then `CreateLobby` → `StartEncounter{lobby_id, dungeon_key}` → `onPlay(encounterId)`; a refusal → `{path, sentence}` to the inspector (R17) | human |
 
 The refusals, one per boundary:
 
@@ -72,6 +82,11 @@ The refusals, one per boundary:
   any rule.
 - **The palette does not copy a stat block.** A drop writes a ref to the
   template, never the template's fields.
+- **Save and Play does not re-encode on the way out, and launches nothing it
+  did not save.** It sends the bytes the draft-file export would write, under
+  the same key (R16); a response for a retired capture, after an edit, a key
+  change or a character change, saves and launches nothing; with authoring
+  off or no character it says so and does nothing (R18).
 - **Encode does not invent keys, and decode refuses what the toolkit
   refuses.** An unknown key refuses the whole file; `at` and `path` cells are
   refused in this dialect; a declaration ref must resolve to a template or a
@@ -263,8 +278,16 @@ The gate guard's table, from the Tables form to its read-back line.
    toolkit refuses an undeclared id by name at
    `monsterBindings.gate-1.table`, and the studio shows that refusal on the
    guard's Table field.
-7. **Play.** The compiler's `ordersOf` builds the same layered table the
-   read-back described, and the engine rolls it.
+7. **Save and Play.** The author presses Save and Play in the header. The
+   bytes from step 6 go to `PutDungeon` under the draft's key; a first save to
+   an existing key asks before overwriting. The server compiles the file and
+   writes `<key>.yaml`; then a lobby is created for the character picked on
+   Home and `StartEncounter` is called with the key. The studio hands the
+   encounter id to the app, which opens the game view on it.
+8. **Play.** The compiler's `ordersOf` builds the same layered table the
+   read-back described, and the engine rolls it. The guard stands where it
+   was placed, wearing the look its placement carries; the wall's base look
+   and the props are there; the wall's face finish is not (R19).
 
 ## Read-back, as rendered (R5)
 
@@ -345,6 +368,10 @@ wrong side for a placement whose faction was changed after placing.
 | Read-back from the document (R5) | it cannot describe what is not authored | the kind's default is named, not listed | a renderer that simulates the engine |
 | Derived fact index (R5) | no second store to drift | recomputed on every edit | a declared fact list, which the dialect has no key for |
 | Overview on Layout (R7) | a 3,504-hex keep is readable in 2D | Layout draws placed nouns | an overview in 3D only |
+| Reuse the publishing and launch hooks unchanged (R15) | the owner-token lock, the overwrite ask and the launch sequence are already proven by World Builder's tests | the studio session gains a publish lock for edits, undo and view changes | a studio-owned publish flow; a server-side overwrite guard |
+| One key per draft (R16) | the file on disk is the file the export writes | the studio's default key (slug of the name) differs from World Builder's `room-<id>` | a key field on the document, which the dialect has no key for |
+| Refusals as jumps (R17) | the author lands on the thing to fix | a path-to-selection map the studio maintains per noun kind | a refusal list the author reads against the map |
+| Finishes stay studio-only for now (R19) | no wire field for a shape the look catalog will replace | the played room has plain walls; the field says so | carrying today's finish ref over the wire ahead of the catalog |
 
 The three approaches to the configuration surface:
 
@@ -374,6 +401,18 @@ The three approaches to the configuration surface:
   shuffle over props is not trivial and stays out (R14).
 - **The kind's default table** is not in the document, so the read-back
   names it and does not list its rows.
+- **An exit under a blocking prop.** The studio offers exits on walkable
+  hexes and adds no standability check; the toolkit refuses the file at
+  compile with the exit's path, and Save and Play shows that refusal as a
+  jump to the hex (R17).
+- **A refusal path the studio cannot map.** The server's path grammar is the
+  dialect's; a path to a noun with no studio selection kind, such as a
+  concealment, stays a sentence under the Save group.
+- **The key changes after a save.** The next save asks again, because the
+  overwrite memory is per key; the old file stays on the server.
+- **Play with authoring off.** The validate-only preview also answers
+  Unimplemented, so the control is disabled and no refusal list is shown; the
+  draft-file export still works.
 
 ## Where a change lands
 
@@ -403,4 +442,6 @@ The three approaches to the configuration surface:
 | Prop variants | web `world-building/catalog.ts` with `components/hex-grid/propManifest.ts` `resolvePropVariant` (a key resolves to its first variant); scene props are `WorldProp` in `world-building/types.ts` |
 | Castle fixture | web `encounter-studio/fixtures/castleWorkspace.ts` |
 | Codec | web `world-building/roomDraft.ts` |
+| Save and Play | web `world-building/{useRoomPublishing.ts,singleRoomDungeon.ts}` (`encodeSingleRoomDungeon`), `author/{usePlayAuthoredDungeon.ts,useAuthoringGate.ts,authoringRpc.ts}`, `encounter-studio/{StudioDraftFile.tsx,draftFile.ts}` (the shared key), `App.tsx` (character from Home, `onPlay` into the game view) |
+| Registry and launch | api `internal/dungeons/registry.go` (`^[a-z0-9-]+$`, `<RPG_CONTENT_DIR>/<key>.yaml`, registered only with `RPG_AUTHORING_ENABLED=1`), lobby service `CreateLobby`/`StartEncounter{dungeon_key}` |
 | Document shape, layering, refusals | toolkit `rulebooks/dnd5e/encounter/dungeonspec/{single_room.go,spec.go,predicate.go,single_room_compile.go,factions.go}` |
