@@ -27,7 +27,7 @@ workspace up and to the right without moving a cell.
 
 **Non-goals** (each is a later slice or a design deferral):
 
-- The cast, per-placement looks, the shuffle, prop variants and materials (S1, #575).
+- The cast, per-placement looks, the shuffle and prop variants (S1, #575). Per-prop surface material waits for the look catalog contract (rpg-game-assets#226, rpg-dnd5e-web#1268).
 - Read-back prose, the fact index, rows heaviest first (S2, #576).
 - Layout glyphs for placed nouns, region colours, the room list (S3, #577).
 - Door state, concealments, exits, endings (S4, #578). The door and hex views in S0 leave those fields out.
