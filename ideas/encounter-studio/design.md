@@ -154,7 +154,10 @@ flowchart LR
   import. The server's grammar is lowercase letters, digits and dashes, and the
   studio shows the server's sentence at the key field. The first save to a key
   that already exists asks before overwriting; later saves to it in the same
-  editor session do not. Why: two keys for one draft is two files.
+  editor session do not. The editor session is the draft's life in this
+  browser: the memory follows the draft, not the studio's mount. Why: two
+  keys for one draft is two files, and a play-tweak-play loop must not ask
+  every time.
 - **A refusal lands at the thing (R17).** A server refusal whose field path
   maps to a placed thing, a cast member, a table, a faction or a door becomes a
   jump that selects it and opens its inspector. One that maps to nothing stays
