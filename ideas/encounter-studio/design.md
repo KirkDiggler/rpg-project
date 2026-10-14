@@ -51,6 +51,9 @@ flowchart LR
 | placed cast member | read-back prose; look, facing, faction, table, says, holds |
 | prop | read-back prose; look, footprint, light, holds, options |
 | floor hex | region, lighting, exit |
+| group | members, ungroup, duplicate, delete |
+| label | text, cell |
+| party start | cell, move |
 
 A cast member is one document template plus studio defaults. Placing it
 stamps a declaration and a binding; only the template is followed by id.
@@ -106,7 +109,10 @@ flowchart LR
   frames a region on select and shows its size.
 - **No saved noun is invisible (R8).** Exits, endings, concealments and door
   state each have a studio view in the inspector or on the home.
-- **One selection at a time (R9).**
+- **One thing at a time (R9).** The inspector shows one thing. The existing
+  Shift-pick that feeds the group gesture keeps working as it does today, and
+  a selected group is one thing with its own view. Multi-select as an editing
+  mode waits for a use case.
 - **The screen never says single room (R10).** The dialect's name stays in
   code; the word the screen uses is open (see Open).
 - **The two surfaces point at each other (R11).** Selecting a cast member on
@@ -116,11 +122,10 @@ flowchart LR
   list a table's rows by weight, highest first, equal weights in authored
   order, and the studio saves them in that order. Why: a heavy row in the
   middle of a list is misread, and row order carries no meaning in the roll.
-- **The workspace grows up and to the right (R13).** By default a resize adds
-  room on those sides, so every placed cell keeps its coordinate. An author
-  who needs room on another side chooses it, and the studio says before the
-  edit that existing cells will shift. Why: a resize must not silently move
-  what was placed.
+- **The workspace grows up and to the right (R13).** The workspace grows up
+  and to the right by default; the author may choose another side. No cell
+  moves on any side, because the workspace carries explicit bounds. Why: a
+  resize must not move what was placed.
 - **A prop's look belongs to the placement (R14).** The prop inspector offers
   the catalog's variants of the prop. Why: one barrel asset is many barrels.
   The shuffle stays with cast members (R4). Surface material waits for the
@@ -143,11 +148,11 @@ flowchart LR
 | R6 | settled | humans own layout and placement; an agent may write configuration; the studio lets a human read it back | operator | 2026-10-14 |
 | R7 | settled | Layout overview: placed nouns in 2D, one colour per region, room list that frames and sizes; shared-wall doors between separate rooms out of scope | operator | 2026-10-14 |
 | R8 | settled | exits, endings, concealments and door state get studio views | operator | 2026-10-14 |
-| R9 | settled | single selection only in the first cut; multi-select and apply-to-all wait for a use case | operator | 2026-10-14 |
+| R9 | settled | the inspector shows one thing; Shift-pick for the group gesture keeps working, and a group is one thing with its own view; multi-select as an editing mode waits for a use case (amended 2026-10-14: grouping already needs a multi-pick, epic #545 keeps grouping) | operator | 2026-10-14 |
 | R10 | settled | the screen does not say single room; the dialect's name stays in code; the on-screen word is undecided | operator | 2026-10-14 |
 | R11 | settled | selecting a cast member on the home selects it on the map, and the reverse | operator | 2026-10-14 |
 | R12 | settled | table rows display and save heaviest first, ties in authored order | operator | 2026-10-14 |
-| R13 | settled | the workspace grows up and to the right by default; another side is the author's choice, with a warning that cells shift | operator | 2026-10-14 |
+| R13 | settled | default growth up and right; any side choosable; no cell moves, no warning (amended 2026-10-14: the plan found explicit bounds make the warning never true) | operator | 2026-10-14 |
 | R14 | settled | props have a look per placement: the catalog variant; the shuffle stays with cast members | operator | 2026-10-14 |
 | R14b | deferred-until-look-catalog | per-prop surface material and provider-published look choices; picker is rpg-dnd5e-web#1268 | operator | 2026-10-14 |
 
@@ -162,7 +167,8 @@ flowchart LR
 - **The sites layer (rpg-project#528).** Doors on shared walls between
   separately authored rooms, and authored cells for `at` and `path`, wait for
   it.
-- **Multi-select.** R9 holds until a use case brings apply-to-all.
+- **Multi-select as an editing mode.** R9 holds until a use case brings
+  apply-to-all; the Shift-pick for grouping is not that mode.
 - **What the shuffle randomises.** Appearance only, or also style and skin
   palette within one appearance family.
 - **The look catalog (R14b).** Per-prop surface material and look choices
