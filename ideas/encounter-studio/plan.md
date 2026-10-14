@@ -1814,6 +1814,8 @@ scenario bindings.
 - **Concealments.** `ConcealmentPanel.tsx`, over `concealmentEdits.ts`, adds members by clicking hexes, walls, doors and props while `activeConcealmentId` is armed in the owner. It is mounted only on the non-studio path.
 - **Endings.** `src/author/EndingsPanel.tsx` `EndingsSection` edits an id and a predicate. The studio has no endings view. S2's `factIndex.ts` already lists ending `when` as a reader, and its comment notes that endings have no studio view yet.
 - **Exits.** `SiteExit { id, cell }` in `siteScope.ts`; the studio has no exit view. The toolkit requires the cell to be standable (`RoomExit` doc).
+- **Concealment members.** `ConcealmentSpec` (`single_room.go`) accepts walkable cells and, in `props`, declared prop ids, attached door ids and structural wall ids, each in at most one concealment.
+- **Exits at compile.** An exit cell that is not standable decodes, and is refused at compile (S4-Q4).
 - **The attempts mismatch.** The web's `SiteDiscoveryAttempts` has `max`, `reset_hexes` and `lifetime`. The toolkit's `DiscoveryAttemptsSpec` has `max` and `reset_hexes` only. A throwaway decode at rpg-toolkit `origin/main`, in a scratch worktree since removed, added `attempts: { max: 2, lifetime: run }` to `testdata/world-builder-v4-tomb-vault.yaml`. The result: `concealments.vault.attempts.lifetime: "lifetime" is not a key this build reads: they are max, reset_hexes`. The control `{ max: 2, reset_hexes: 3 }` decoded. So the web accepts a key the toolkit refuses (S4-Q1).
 - **Export and import exist in the World Builder.** `RoomPublishingPanel.tsx` has a "Canonical YAML" disclosure that downloads the encoder's YAML as `single-room-dungeon.yaml`, and imports pasted YAML. Import goes through `useRoomPublishing` `importYaml`, then `decodeSingleRoomDungeon`, then the owner's `importCanonicalRoomYaml`, which pushes the old document onto history. The dungeon key lives in `useRoomPublishing`'s state, inside that panel. The studio mounts neither.
 - **Dialects.** `readSingleRoomDungeon` returns `{ dialect: 'other', version }` below version 3. The decoder throws one sentence for the first refusal, naming its field (for example, "Unsupported single-room field: x").
@@ -1839,12 +1841,11 @@ One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and 
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S4-Q1 | **`attempts.lifetime`.** The web validator accepts it and the toolkit refuses it (evidence above). Should the web validator refuse it with the toolkit's sentence? A stored draft carrying it would then fail to load until it is removed. Or should the toolkit add the key? **Assumption:** S4's form never offers `lifetime`, and the validator question goes to the operator. | open | the validator change only |
-| S4-Q2 | **The dungeon key for export.** A local draft has no key. **Assumption:** Export asks for a key, defaulting to the last imported file's key for this draft, else a slug of the draft's name, with the encoder's key rule. The key is held in studio state and is never a document field. | assumption | S4-T6 |
-| S4-Q3 | **"At the field" for an import refusal.** The file is not loaded, so no form field exists to mark. **Assumption:** the refusal sentence, which names its YAML path, shows in the import dialog, and nothing changes. The web decoder reports the first refusal, not every one. | assumption | S4-T6 |
-| S4-Q4 | **Exit cells must be standable.** The toolkit checks standability at decode. **Assumption:** the hex view offers Add exit only on a walkable hex. Anything finer is the decoder's refusal at Save & Play. | assumption | S4-T2 |
-| S4-Q5 | **Concealment members beyond doors and props.** The legacy panel also lets walls be clicked into `props`. **Assumption:** S4 keeps exactly the legacy member kinds. | assumption | S4-T4 |
-
+| S4-Q1 | **`attempts.lifetime`.** The toolkit refuses it (evidence above), and the document's refusals are the studio's. | **lead-resolved 2026-10-14:** the web validator refuses `lifetime` with the toolkit's sentence; no toolkit change. A stored draft that carries it opens with the key stripped. A one-line notice names the concealment: "lifetime is not read by the engine; removed from {id}, attempts keep max and reset_hexes". **Deviation, for confirmation:** the strip is a load migration, not an undoable edit. A document carrying `lifetime` cannot pass the gate every commit and save goes through, so an undo entry restoring it would hold a draft that can never be saved. | S4-T4 |
+| S4-Q2 | **The dungeon key for export.** | **lead-resolved:** the last imported file's key for this draft, else a slug of the draft's name, under the encoder's key rule. It is held in studio state and is never a document field. | nothing |
+| S4-Q3 | **"At the field" for an import refusal.** | **lead-resolved:** the first refusal with its YAML path is enough for S4. Listing every refusal is a follow-up noted on #578. | nothing |
+| S4-Q4 | **Exits only on walkable hexes.** | **lead-resolved, verified:** a throwaway test at rpg-toolkit `origin/main`, in a scratch worktree since removed, moved `testdata/world-builder-v4-tomb-vault.yaml`'s exit to `{ q: 40, r: 40 }`. It decoded, and `CompileSingleRoom` refused it with `exits[0].cell: at author's axial q=40 r=40: is not standable`. The control on its own cell decoded and compiled. The UI rule matches a real refusal, which the toolkit makes at compile (Save & Play), not at decode. Walkable is weaker than standable: a walkable hex under a blocking prop is still refused at compile. | nothing |
+| S4-Q5 | **Concealment member kinds.** | **lead-resolved, verified against `single_room.go` `ConcealmentSpec`:** `cells` must be `walkableHexes` cells, with no cell in two concealments. `props` takes a declared prop id (`propDeclarations`), an attached door id, or a structural wall id, with no id in two concealments. Walls stay. An undeclared scene prop is not offered. | S4-T4 |
 ---
 
 ## Task S4-T1: The door view
@@ -1869,7 +1870,7 @@ One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and 
 
 **Delivers:** H3, S4-Q4.
 **Owner:** rpg-dnd5e-web; `StudioInspector.tsx` (`HexView`); `studioSession.ts` (`exits.set(cell, id | null): boolean`).
-**Behavior:** a walkable hex with no exit shows Add exit, which asks for an id. A hex with an exit shows its id, with rename and Remove. Ids are unique, and a duplicate is refused at the field, using the validator's sentence. An unwalkable hex shows no Add exit. The Layout overview draws an exit marker at its cell, using the S3 placed-overlay layer.
+**Behavior:** a walkable hex with no exit shows Add exit, which asks for an id. A hex with an exit shows its id, with rename and Remove. Ids are unique, and a duplicate is refused at the field, using the validator's sentence. An unwalkable hex shows no Add exit, matching the compile-time refusal `exits[i].cell: … is not standable` (S4-Q4). A walkable hex under a blocking prop can still be refused at Save & Play. The Layout overview draws an exit marker at its cell, using the S3 placed-overlay layer.
 **Tests:** › `adding an exit writes exits[] with its cell`; › `a duplicate exit id is refused at the field`; › `an unwalkable hex offers no exit`; › `the exit marker draws at its cell`.
 **Verification:** `npx vitest run src/concepts` passes.
 
@@ -1890,14 +1891,14 @@ One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and 
 ## Task S4-T4: Concealments on the Encounter home
 
 **Delivers:** H5, H10, S4-Q1 (form side), S4-Q5.
-**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioConcealments.tsx`; `studioSession.ts` (`concealments.update`, `concealments.armMembers(id) / disarm()`); `WorldBuildingConcept.tsx` (expose `activeConcealmentId` to the studio); `EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS` gains `concealments`).
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioConcealments.tsx`; `studioSession.ts` (`concealments.update`, `concealments.armMembers(id) / disarm()`); `WorldBuildingConcept.tsx` (expose `activeConcealmentId` to the studio); `EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS` gains `concealments`); `siteScope.ts` (`validateSiteConcealments` refuses `lifetime`); `roomDraft.ts` (the stored-draft read strips it, S4-Q1).
 **Behavior:**
 - Each concealment shows its id; Notice checks; Search checks (at least one, as the validator requires); attempts with max and reset hexes; and members (cells, props and doors). It also shows "Revealed by", the intel records whose `reveals` names it, as read-only links.
-- "Add members on the map" switches to Build with the concealment armed. Clicking hexes, props and doors toggles membership, as the legacy panel does, and Done or Escape disarms.
-- `lifetime` is never offered.
+- "Add members on the map" switches to Build with the concealment armed. Clicking a walkable hex, a declared prop, a door or a structural wall toggles membership; an undeclared prop or an unwalkable hex is not pickable (S4-Q5). A member already in another concealment is refused at the click, naming that concealment. Done or Escape disarms.
+- `lifetime` is never offered. `validateSiteConcealments` refuses it with "lifetime is not a key this build reads: they are max, reset_hexes". The stored-draft read strips it before validation and returns the ids it removed it from; the studio shows the S4-Q1 notice once per open.
 - Member cells are drawn in Layout with a hatch, using the S3 overlay layer, only while that concealment is armed or selected.
 
-**Tests:** › `a concealment needs one search check`; › `members picked on the map toggle in one step each`; › `revealed by lists the intel that names it`; › `lifetime is not offered`; › `removing a concealment clears its door's Hidden by`.
+**Tests:** › `a concealment needs one search check`; › `members picked on the map toggle in one step each`; › `revealed by lists the intel that names it`; › `lifetime is not offered`; › `validateSiteConcealments refuses lifetime with the toolkit's sentence`; › `a stored draft with lifetime opens stripped and shows the notice naming the concealment`; › `a wall can be a member and an undeclared prop cannot`; › `a member already in another concealment is refused`; › `removing a concealment clears its door's Hidden by`.
 **Verification:** `npx vitest run src/concepts` passes.
 
 ## Task S4-T5: Scenarios, read-only
@@ -1958,6 +1959,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 7. Clear the studio's local storage and reload: a blank draft.
 8. Import the file. Confirm, and everything from steps 2–5 is back. Undo returns the blank draft; redo returns the castle.
 9. Import a v2 file such as rpg-api `content/reference-hearing.yaml`: the dialect sentence, and nothing changes. Import a file with a typo'd root key: the refusal names it.
+10. Seed a stored draft whose concealment carries `lifetime`, and open it: the notice names the concealment, and the key is gone from the next export.
 
 ## S4 requirement coverage
 
@@ -1972,7 +1974,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 | H7 export | S4-T6 | `export writes exactly encodeSingleRoomDungeon's bytes`; walk 6 |
 | H8 import | S4-T6 | the round-trip, dialect, refusal and undo tests; walk 7–9 |
 | H9 fact index | S4-T3 | `the fact index opens the ending it names`; walk 2 |
-| H10 nothing the toolkit refuses | S4-T4 | `lifetime is not offered`; S4-Q1 |
+| H10 nothing the toolkit refuses | S4-T2, T4 | `validateSiteConcealments refuses lifetime …`; `a stored draft with lifetime opens stripped …`; `a wall can be a member …`; `an unwalkable hex offers no exit` |
 
 ## S4 provider/consumer seams
 
