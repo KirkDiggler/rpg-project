@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0, S1, S5, S2, S3 and S4, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 planned 2026-10-14 against the S2 branch (S3 not yet pushed)
+status: PLAN for slices S0, S1, S5, S2, S3 and S4, all SHIPPED to web dev 2026-10-14 (head e623c2b3), derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 planned 2026-10-14 against the S2 branch (S3 not yet pushed)
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -957,6 +957,8 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 
 # Encounter studio S5 — density: words, wrapping, panel width
 
+**S5 SHIPPED 2026-10-14:** web dev e9a822ec (rpg-dnd5e-web#1277); follow-ups web#1278, web#1280.
+
 Planned 2026-10-14, pulled ahead of S2. S2 adds read-back prose to the top
 of the same inspector, so the inspector's type and grouping settle first.
 Authority: design.md (the inspector forms in README.md; R10's on-screen word
@@ -1233,6 +1235,8 @@ export function FieldHelp(props: { field: string; children: ReactNode }): React.
 ---
 
 # Encounter studio S2 — read it back
+
+**S2 SHIPPED 2026-10-14:** web dev 59653543 (rpg-dnd5e-web#1279); follow-up: engine law text over the wire (design.md Open).
 
 Planned 2026-10-14 against the S5 branch; S5 merges first and S2 branches
 from `dev` after it. Authority: design.md R5 and R12; README.md's read-back
@@ -1524,6 +1528,8 @@ export function factIndexOf(document: Readonly<RoomDraftDocument>):
 
 # Encounter studio S3 — the overview on Layout
 
+**S3 SHIPPED 2026-10-14:** web dev c573e6cc (rpg-dnd5e-web#1281); follow-up: a prop footprint can cover a label.
+
 Planned 2026-10-14 against the S2 branch. S3 builds after S5 and S2 merge,
 and branches from `dev` then. Authority: design.md R7; README.md's Layout
 overview row and the overview refusal ("a region fill is an annotation");
@@ -1753,6 +1759,8 @@ interface LayoutPlacedEditing {
 ---
 
 # Encounter studio S4 — the hidden nouns, and the draft as a file
+
+**S4 SHIPPED 2026-10-14:** web dev e623c2b3 (rpg-dnd5e-web#1282); follow-ups: a concealment as a selection kind; list every import refusal.
 
 Planned 2026-10-14. The S3 branch (`feat/studio-s3-overview`) was not yet
 pushed when this was planned, so the baseline is the S2 branch at 6abde8ac,
@@ -1998,3 +2006,5 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 - S3, overview on Layout: rpg-project#577, planned above. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
 - S4, the hidden nouns: exits, endings, concealments, door state, and the draft as a file: rpg-project#578, planned above.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
+
+All six slices are on web `dev` (e623c2b3). Operator QA on dev pending; next candidate slices: Save & Play (web#1236), open a reference encounter, look picker (web#1268, waits on assets#226).
