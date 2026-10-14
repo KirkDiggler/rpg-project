@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0, S1, S5 and S2, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3–S4 are stubs
+status: PLAN for slices S0, S1, S5, S2 and S3, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 is a stub
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -1520,10 +1520,230 @@ export function factIndexOf(document: Readonly<RoomDraftDocument>):
 
 **Shared files.** `SitePolicies.tsx` is edited by T1, T3 and T4, in that order.
 
+---
+
+# Encounter studio S3 — the overview on Layout
+
+Planned 2026-10-14 against the S2 branch. S3 builds after S5 and S2 merge,
+and branches from `dev` then. Authority: design.md R7; README.md's Layout
+overview row and the overview refusal ("a region fill is an annotation");
+rpg-project#577 and its comment that S3 retires the Regions home; S0's Q5
+resolution. The operator's reference picture of the keep is a visual target
+only, recorded with the keep scout's comparison. It is not a specification.
+
+## S3 goal and scope
+
+Layout shows the whole encounter. It draws one colour per region with its
+label, door markers, and every placed noun (creatures in rings coloured by
+cast member, with their names; props with their footprints; the party
+start). A room list beside the map frames a region when selected and gives
+its size. A footer counts areas, creatures, hexes and doors, and "Show
+entire" frames the whole keep. Clicking a drawn thing selects it, as in 3D.
+The Regions home retires, and its forms move into the inspector and the room
+list.
+
+**Repositories.** Web only, rpg-dnd5e-web, from `dev` after S5 and S2. No
+toolkit, API or proto change; no document key. Colours are derived, never
+stored.
+
+**Non-goals:** multi-room sites and shared-wall doors (rpg-project#528);
+deriving membership from a fill; editing in the overview beyond today's
+gestures. 3D region labels are an optional last task, because they are cheap
+(S3-T7).
+
+## S3 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| V1 | One colour per region, derived and stable, with the region's label drawn in it. | R7 |
+| V2 | Placed nouns drawn in 2D: creatures as rings in their cast member's colour with their display name, props as their footprint (declared) or a marker (undeclared) with their label, the party start, and doors as today. | R7 |
+| V3 | A room list of the regions. Selecting one selects its label in the inspector and frames it; each row shows its size in hexes. | R7 |
+| V4 | "Show entire" frames the whole workspace's content. | lead brief |
+| V5 | A footer: areas · placed creatures · walkable hexes · doors. | lead brief |
+| V6 | Clicking a drawn creature, prop or party start in Layout selects it through the S0 contract. Shift on a prop extends the pick, as in 3D. | S0, R9 |
+| V7 | The Regions home retires. Region list and New region go to the room list. Boundary repair, explicit-area painting, background light, room wall finish and Remove region go to the inspector's label view for a region label. The hex view's Edit region selects that label instead of switching home. | #577 comment; S0-Q5 |
+| V8 | Pan and zoom on the 73 × 48 castle fixture (3,504 hexes) stay usable, measured before and after. | lead brief |
+| V9 | A fill never means membership. No rule, read-back or count calls a creature "in" a region because it sits inside a colour. | README refusal |
+
+## S3 constraints
+
+- **No document key.** `AuthoringRegion` has no colour field (`authoringRegions.ts`), and no other presentation colour exists for regions or cast members. Colours are derived from ids (S3-Q1).
+- **The S0 selection contract.** Layout clicks call the existing intents: `creatures.select(id)`, `viewportProps.onSelect([id])` for props, the party-start target, `doorEditing.select`, and `mapLabelSelection.select`.
+- **One render per layer.** New layers are memoised on their inputs, as `LayoutGrid` is, so pan and zoom do not re-render them.
+- **Region size comes from the resolution, never from geometry the studio guesses.** A polygon region counts the workspace cells whose centre is inside its ring, the rule `regionsAtCell` already uses. A hex-union counts its cells.
+
+## S3 inspected baseline (2026-10-14)
+
+| repo | revision |
+|---|---|
+| rpg-dnd5e-web `feat/studio-s2-readback` | 6abde8ac |
+
+- **Layout** (`LayoutViewport.tsx`) is one SVG. `LayoutGrid` draws one memoised `polygon` per workspace cell. `RegionBoundaryOverlay` draws each resolved region's ring or cells as a dashed outline with a faint fill, highlighting the selected one. `LayoutWallOverlay` draws walls and doors. `MapLabelOverlay` draws labels. No creature, prop or party start is drawn in Layout.
+- **The Regions home** (`EncounterStudioWorkspace.tsx`, `home === 'regions'`) holds the following:
+  - `StudioRegions` (the region list, "finish unapplied" status, New region);
+  - the region label's `StudioArrangePanel`, with its boundary-repair and background-light fields from `StudioArrangeFields`, `onDefineRegion`, and `StudioRegionFinishes`;
+  - the room-label `labels.controls` (`placementKind: 'room'`);
+  - the explicit-area tool group (Paint, Erase, Rectangle region; Clear explicit area; Done).
+  - The inspector's `HexView` sends Edit region to `changeHome('regions')`.
+- **Colours.** `AuthoringRegion` is `{ id, labelId, lighting?, wallFinish?, boundary }`, with no colour. The only colour field in the scene is `WorldPointLight.color`.
+- **3D labels.** `RoomActorMarkers.tsx` already draws actor chips with drei `Html`. 3D draws no region label.
+- **Footprints.** `RoomPropDeclaration.footprint` (`roomDraft.ts`) is the authored footprint of a declared prop. Undeclared props have only a transform.
+- **Framing.** `StudioDimensions` frames the committed workspace through `workspaceBounds`.
+
+## S3 sequence
+
+```
+S3-T1 colours and region fills ──▶ S3-T2 placed nouns ──▶ S3-T3 room list, Show entire, footer ──▶ S3-T4 Regions home retires ──▶ S3-T6 integration
+S3-T5 frame-time driver (before set, on dev, first) ──────────────────────────────────────────────────────────────────────────────┘
+S3-T7 3D region labels (optional) ──▶ S3-T6
+```
+
+One branch off `dev`, one PR to `dev`. T5's before set is taken on `dev` before T1 starts. T1–T4 edit `LayoutViewport.tsx` and `EncounterStudioWorkspace.tsx` in order, by one builder.
+
+## S3 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S3-Q1 | **How colours are derived.** No field exists. **Assumption:** a fixed palette of 12, indexed by a stable hash of the region id, and a second palette for cast members by a hash of the cast ref. Two adjacent regions may share a colour. Hashing the id keeps a colour when another region is deleted, which indexing by order would not. | assumption, for the operator | S3-T1 |
+| S3-Q2 | **Undeclared props.** **Assumption:** a small marker at the transform with the prop's label. A declared prop draws its footprint. | assumption | S3-T2 |
+| S3-Q3 | **"Usable" frame time.** **Assumption:** record the median and 95th-percentile frame time for a scripted pan and zoom, before and after. The after median stays within one 60 Hz frame (16.7 ms) on the walk machine, and its 95th percentile is no worse than 1.25 times the before. | assumption, for the operator | S3-T5, T6 |
+| S3-Q4 | **Region size.** **Assumption:** the hex count only. | assumption | S3-T3 |
+| S3-Q5 | **Overlapping regions** are both drawn translucent, in authored order. | assumption | S3-T1 |
+
+---
+
+## Task S3-T1: Region colours and fills
+
+**Delivers:** V1, V9, S3-Q1, S3-Q5.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/overviewColours.ts`; `RegionBoundaryOverlay.tsx`; `MapLabelOverlay.tsx`.
+**Interfaces:** `regionColour(id: string): string` and `castColour(ref: string): string`, each a stable hash into its own 12-colour palette.
+**Behavior:** each resolved region fills in its colour at a fixed opacity, with its outline in the same hue. The selected region's outline thickens. A region label is drawn in its region's colour. Unresolved regions are drawn as today, with no fill.
+**Tests:** › `the same id always gets the same colour`; › `deleting a region leaves the others' colours unchanged`; › `a resolved region renders a fill in its colour`; › `an unresolved region renders no fill`.
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+
+## Task S3-T2: Placed nouns in 2D
+
+**Delivers:** V2, V6, S3-Q2.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/LayoutPlacedOverlay.tsx`; `LayoutViewport.tsx`; `studioSession.ts` (`LayoutViewportProps` gains `placedEditing`).
+**Interfaces:**
+
+```ts
+interface LayoutPlacedEditing {
+  selected: StudioSelection;
+  selectCreature(id: string): boolean;       // session.creatures.select
+  selectProp(id: string, extend: boolean): void; // viewportProps.onSelect([id]) or extend the pick
+  selectPartyStart(): boolean;               // the existing start target
+}
+```
+
+**Behavior:**
+- Creatures are a ring at their starting cell in `castColour`, with the display name from S5's `placementDisplayNames` below. A ring is highlighted when selected, or when its cast member is selected (S1).
+- Declared props draw their footprint, rotated by their transform; undeclared props draw a marker. Each shows its label at a zoom where it fits.
+- The party start draws a distinct marker.
+- In the select tool, a click on a glyph selects it, and Shift on a prop extends the pick. Glyphs ignore clicks under any other tool, so painting is unchanged.
+- The layer is memoised on the draft's declarations, scene items and selection.
+
+**Tests:** `LayoutPlacedOverlay.test.tsx` › `a creature ring sits at its cell in its cast colour`; › `clicking a ring selects that creature`; › `clicking a prop footprint selects the prop and shift extends the pick`; › `the party start marker selects the party start`; › `the paint tool ignores glyph clicks`.
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+
+## Task S3-T3: Room list, Show entire and the footer
+
+**Delivers:** V3, V4, V5, S3-Q4.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/LayoutRoomList.tsx`; new `world-building/regionSize.ts`; `EncounterStudioWorkspace.tsx` (Layout gains a left `aside`).
+**Interfaces:** `regionHexCount(draft, resolution): number | null` (null when unresolved). `frameOf(bounds, viewport): LayoutFrame`, reusing the framing `StudioDimensions` uses.
+**Behavior:**
+- The room list shows each region's label, colour swatch and "N hexes", or "unresolved". Clicking a row selects its label through `mapLabelSelection.select`, opening the label view (S3-T4), and frames the region's bounds.
+- New region arms the room-label tool exactly as the Regions home does today.
+- "Show entire" frames the bounds of the walkable floor, walls and placed nouns, or the workspace when empty.
+- The footer reads "{areas} areas · {creatures} creatures · {hexes} hexes · {doors} doors". Areas counts regions, hexes counts walkable cells, and doors counts wall openings with a door.
+
+**Tests:** › `a hex-union region's size is its cell count`; › `a polygon region's size counts cells whose centre is inside`; › `selecting a room selects its label and frames it`; › `Show entire frames the content bounds`; › `the footer counts areas, creatures, hexes and doors`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S3-T4: The Regions home retires
+
+**Delivers:** V7.
+**Owner:** rpg-dnd5e-web; `EncounterStudioWorkspace.tsx`, `StudioInspector.tsx` (`LabelView`, `HexView`), `studioSession.ts` (`StudioHome`), `StudioRegions.tsx`, `StudioArrangePanel.tsx`.
+**Behavior:**
+- `StudioHome` becomes `'build' | 'encounter'`, and the home nav shows Build and Encounter.
+- The label view of a region label gains a "Region" section, holding exactly today's region-label fields:
+  - boundary mode, with Use enclosing walls;
+  - Define explicit area, which arms the region tool in Layout, with the Paint, Erase and Rectangle region group shown as an armed tool (S0 A2);
+  - Clear explicit area;
+  - background light (%);
+  - the room wall finish (`StudioRegionFinishes`);
+  - Remove region.
+- The hex view's Edit region selects the label and stays on Build.
+- `StudioRegions.tsx` is removed once the room list replaces it. Every `home === 'regions'` branch is removed.
+
+**Tests:** › `the home nav shows Build and Encounter only`; › `a region label's view edits background light through one intent`; › `Define explicit area arms the region tool in Layout`; › `the hex view's Edit region selects the label without changing home`; › `Remove region removes the region and its label`. Each existing Regions-home test is retargeted to the label view and keeps its document assertion.
+**Verification:** `npx vitest run src/concepts` passes; `git grep -n "'regions'" src/concepts/encounter-studio` prints nothing.
+
+## Task S3-T5: The frame-time driver
+
+**Delivers:** V8, S3-Q3.
+**Owner:** game-dev, `tools/browser/_job_s3_overview.mjs` (local by name).
+**Behavior:** the driver seeds the castle fixture by the S5-Q6 path and opens Layout at 1280×800. It scripts a 3-second pan and a zoom in and out, and records frame intervals with `requestAnimationFrame`. It prints the median and 95th percentile. It runs on `dev` before T1 (the before set) and on the branch after T4 (the after set). It also takes the walk's screenshots.
+**Verification:** the two measurements are pasted in the PR and meet S3-Q3.
+
+## Task S3-T6: Integration and the walk
+
+**Prerequisites:** S3-T1–T5, and S3-T7 if built.
+- [ ] `npm ci`; `npm run ci-check` once; grep the log.
+- [ ] Run the S3-T5 driver for the after set.
+- [ ] Post the checklist below on #577 as `- [ ]` boxes before the PR leaves draft.
+
+**Walk and #577 checklist** (castle fixture as the local draft):
+
+1. Layout, Show entire: the whole keep is framed. Each region is filled in its own colour with its label.
+2. Doors, creature rings with names, prop footprints and the party start are all drawn.
+3. The footer reads areas · creatures · hexes · doors, and matches the fixture.
+4. Select each region in the room list. Each one is framed, its size in hexes is shown, and the inspector shows its label view with the Region section.
+5. Click a creature ring in 2D. The inspector opens on it, the same view as clicking it in 3D.
+6. Click a prop, then Shift-click a second: the pick strip. Click the party start: its view.
+7. The home nav shows Build and Encounter, with no Regions. Change a region's background light from its label view, then undo.
+8. The frame-time numbers before and after meet S3-Q3.
+9. (S3-T7 only) In 3D, each region's label floats over it.
+
+## Task S3-T7 (optional): Region labels in 3D
+
+**Delivers:** an S3 extra, not a ruling.
+**Owner:** rpg-dnd5e-web; `world-building/WorldBuildingViewport.tsx`.
+**Behavior:** one drei `Html` label per resolved region, at its label's world point, in its `regionColour`. It is pointer-transparent, like the actor chips.
+**Cost:** one `Html` per region, following the actor-chip pattern. It is cheap enough to include last.
+**Tests:** › `each resolved region renders one 3D label`.
+
+## S3 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| V1 region colours | S3-T1 | the colour tests; walk 1 |
+| V2 placed nouns | S3-T2 | the overlay tests; walk 2 |
+| V3 room list | S3-T3 | `selecting a room selects its label and frames it`; the size tests; walk 4 |
+| V4 Show entire | S3-T3 | `Show entire frames the content bounds`; walk 1 |
+| V5 footer | S3-T3 | `the footer counts …`; walk 3 |
+| V6 select in 2D | S3-T2 | `clicking a ring selects that creature`; walk 5–6 |
+| V7 Regions home retires | S3-T4 | the T4 tests; the grep; walk 7 |
+| V8 frame time | S3-T5, T6 | the before and after numbers; walk 8 |
+| V9 fill is not membership | S3-T1, T3 | no count uses fills: the footer counts regions, not occupants; code review |
+
+## S3 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| S3-T1 `regionColour`, `castColour` | region fills, labels, rings, the room list, S3-T7 | stable colour per id | new | the colour tests |
+| S3-T2 `LayoutPlacedEditing` | `LayoutPlacedOverlay` | existing selection intents | the intents exist from S0 and S1 | the click tests |
+| S3-T3 `regionHexCount` | the room list | the count rule `regionsAtCell` uses | new, over S0's `pointInRing` use | the size tests |
+| S0 `StudioSelection` and the label view | S3-T4 Region section | label selection | S0 | the T4 tests |
+| S5 `placementDisplayNames` | ring labels | display names | S5 | S5 tests |
+| S1 cast selection | ring highlight | `castMember` selection | S1 | `… highlighted when its cast member is selected` |
+
+**Shared files.** `LayoutViewport.tsx` (T1, T2) and `EncounterStudioWorkspace.tsx` (T3, T4) are edited in order by one builder.
+
 ## Later slices
 
 - S1, the cast and per-placement looks: rpg-project#575, planned above. A cast member selected on the home highlights its placements on the map, and the inspector shows the cast member. It is not a multi-selection (Q8).
 - S2, read it back: prose, fact index, tables heaviest first: rpg-project#576, planned above.
-- S3, overview on Layout: rpg-project#577. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
+- S3, overview on Layout: rpg-project#577, planned above. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
 - S4, the hidden nouns: exits, endings, concealments, door state: rpg-project#578.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
