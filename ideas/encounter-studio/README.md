@@ -276,8 +276,8 @@ The gate guard's table, from the Tables form to its read-back line.
 5. **Fact index.** `alarm-raised` gains gate-patrol as a writer and a reader.
 6. **Save and decode.** Encode writes the binding key unchanged. On load the
    toolkit refuses an undeclared id by name at
-   `monsterBindings.gate-1.table`, and the studio shows that refusal on the
-   guard's Table field.
+   `monsterBindings.gate-1.table`, and the studio shows that refusal as a
+   jump that selects the guard and opens its inspector (R17).
 7. **Save and Play.** The author presses Save and Play in the header. The
    bytes from step 6 go to `PutDungeon` under the draft's key; a first save to
    an existing key asks before overwriting. The server compiles the file and
@@ -406,8 +406,13 @@ The three approaches to the configuration surface:
   compile with the exit's path, and Save and Play shows that refusal as a
   jump to the hex (R17).
 - **A refusal path the studio cannot map.** The server's path grammar is the
-  dialect's; a path to a noun with no studio selection kind, such as a
-  concealment, stays a sentence under the Save group.
+  dialect's; a path to a noun with no studio selection kind, such as the
+  party start or a wall, stays a sentence under the Save group. A path into
+  a home noun without per-row focus, such as a concealment, opens its
+  section.
+- **The studio is reopened after a play.** The saved-key memory follows the
+  draft in the studio's own storage, so pressing Save and Play again does not
+  ask; a different draft, or an imported file, starts with no memory (R16).
 - **The key changes after a save.** The next save asks again, because the
   overwrite memory is per key; the old file stays on the server.
 - **Play with authoring off.** The validate-only preview also answers
