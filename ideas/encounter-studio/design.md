@@ -49,7 +49,7 @@ flowchart LR
 | wall | finish, endpoints, place a door |
 | door | open, closed or locked; the concealment that hides it |
 | placed cast member | read-back prose; look, facing, faction, table, says, holds |
-| prop | read-back prose; footprint, light, holds, options |
+| prop | read-back prose; look and material, footprint, light, holds, options |
 | floor hex | region, lighting, exit |
 
 A cast member is one document template plus studio defaults. Placing it
@@ -112,6 +112,19 @@ flowchart LR
 - **The two surfaces point at each other (R11).** Selecting a cast member on
   the home selects its placements on the map, and selecting a placement
   highlights its cast member.
+- **Rows read heaviest first (R12).** The Tables form and every read-back
+  list a table's rows by weight, highest first, equal weights in authored
+  order, and the studio saves them in that order. Why: a heavy row in the
+  middle of a list is misread, and row order carries no meaning in the roll.
+- **The workspace grows up and to the right (R13).** By default a resize adds
+  room on those sides, so every placed cell keeps its coordinate. An author
+  who needs room on another side chooses it, and the studio says before the
+  edit that existing cells will shift. Why: a resize must not silently move
+  what was placed.
+- **A prop's look belongs to the placement (R14).** The prop inspector offers
+  the catalog's variants of the prop and, where the asset takes one, a
+  surface material from the world material catalog. Why: one barrel asset is
+  many barrels. The shuffle stays with cast members (R4).
 - **The document's refusals are the studio's.** An unknown key refuses the
   whole file; a binding naming an undeclared table, record or template is
   refused by name; `at` and `path` cells are refused in this dialect. The
@@ -133,6 +146,9 @@ flowchart LR
 | R9 | settled | single selection only in the first cut; multi-select and apply-to-all wait for a use case | operator | 2026-10-14 |
 | R10 | settled | the screen does not say single room; the dialect's name stays in code; the on-screen word is undecided | operator | 2026-10-14 |
 | R11 | settled | selecting a cast member on the home selects it on the map, and the reverse | operator | 2026-10-14 |
+| R12 | settled | table rows display and save heaviest first, ties in authored order | operator | 2026-10-14 |
+| R13 | settled | the workspace grows up and to the right by default; another side is the author's choice, with a warning that cells shift | operator | 2026-10-14 |
+| R14 | settled | props have a look per placement: catalog variant and, where taken, a surface material; the shuffle stays with cast members | operator | 2026-10-14 |
 
 ## Open
 

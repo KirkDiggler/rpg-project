@@ -110,9 +110,14 @@ read-back must let a human judge it.
 | Trigger | `tables.<id>.<trigger>` | either | pick-from-list: the dialect's triggers |
 | Row conditions | `rows[].when`, a list; `not` wraps one | either | pick-from-list per condition; fact ids from the fact index or a new id |
 | Word and selector | `attack`, `toward`, `away`, `hold`, `flee`, `fact` | either | pick-from-list |
-| Weight | `rows[].weight` | either | number, blank is 1 |
+| Weight | `rows[].weight` | either | number, blank is 1; rows sort heaviest first (R12) |
 | Line | `rows[].say` | either | text |
 | Used by | read-only: factions and placements that name it | derived | list, click selects |
+
+Rows are listed and saved heaviest first, equal weights in authored order
+(R12). Every eligible row is a candidate whatever its position, so the sort
+changes no outcome. The beat's entry index points at the row's position in
+the file as saved.
 
 **Factions.**
 
@@ -174,7 +179,7 @@ or a prop (`propBindings.<id>.options`); the form is the same.
 
 | Field | Writes | Authored by | Widget |
 |---|---|---|---|
-| Size | `room.workspace` | human | number, or drag on the map |
+| Size | `room.workspace` | human | number, or drag on the map; grows up and right, another side on request with a shift warning (R13) |
 | Default finishes | `room.scene` finishes | human | pick-from-list with thumbnails |
 | Void, lighting, standing | `play.void`, `play.lighting`, `play.standing` | human | pick-from-list |
 | Notes | `room.scene` labels | human | text |
@@ -217,6 +222,8 @@ or a prop (`propBindings.<id>.options`); the form is the same.
 
 | Field | Writes | Authored by | Widget |
 |---|---|---|---|
+| Look | `room.scene` item `assetRef`: an exact catalog ref within the prop's family (R14) | human | pick-from-list with thumbnails |
+| Surface material | a new optional field on the `room.scene` item, for assets that take one (R14) | human | pick-from-list from the world material catalog |
 | Footprint, blocking | `propDeclarations.<id>` | human | map handles, toggles |
 | Light | `room.scene` | human | pick-from-list |
 | Holdable, holds | `propBindings.<id>.holdable`, `.holds` | either | toggle, pick-from-list: intel |
@@ -272,7 +279,8 @@ until the sites layer.
 > whatever the file says. Its temper is dealt at spawn from the garrison's
 > mix: soldier 2, coward 1.
 >
-> **On its time** it follows *gate-patrol*, shared with gate-2. If it heard
+> **On its time** it follows *gate-patrol*, shared with gate-2, every row
+> weighted alike. If it heard
 > a clang within 2 rounds, it walks toward the sound. If it sees an enemy
 > and does not know *alarm-raised*, it shouts "To arms! Intruders in the
 > yard!" and raises *alarm-raised*. If an enemy is in reach, it attacks.
@@ -362,6 +370,9 @@ The three approaches to the configuration surface:
   (rpg-project#528); the row editor offers no cell selector.
 - **Doors between separately authored rooms** are out of scope (R7).
 - **Comments and key order** do not survive a save.
+- **No prop shuffle.** The catalog resolves a prop key to its first
+  variant, and choosing a variant per instance is rpg-dnd5e-web#523, so a
+  shuffle over props is not trivial and stays out (R14).
 - **The kind's default table** is not in the document, so the read-back
   names it and does not list its rows.
 
@@ -388,6 +399,8 @@ The three approaches to the configuration surface:
 | Door state, concealments | web `world-building/{DoorStates.tsx,ConcealmentPanel.tsx}`, mounted by `WorldBuildingConcept.tsx` |
 | Layout 2D | web `encounter-studio/{LayoutViewport.tsx,LayoutWallOverlay.tsx,RegionBoundaryOverlay.tsx,MapLabelOverlay.tsx,StudioRegions.tsx}` |
 | 3D view and markers | web `world-building/{WorldBuildingConcept.tsx,WorldBuildingViewport.tsx,RoomActorMarkers.tsx}` |
+| Workspace size | web `world-building/roomDraft.ts` `resizeRoomWorkspace`, `world-building/workspaceGeometry.ts` `centeredRoomWorkspace`: the workspace is centred on the origin, a resize grows or shrinks every side evenly, and cell coordinates are never rewritten |
+| Prop variants and materials | web `world-building/catalog.ts` with `components/hex-grid/propManifest.ts` `resolvePropVariant` (a key resolves to its first variant); `world-building/useWorldMaterialCatalog.ts`; scene props are `WorldProp` in `world-building/types.ts` |
 | Castle fixture | web `encounter-studio/fixtures/castleWorkspace.ts` |
 | Codec | web `world-building/roomDraft.ts` |
 | Document shape, layering, refusals | toolkit `rulebooks/dnd5e/encounter/dungeonspec/{single_room.go,spec.go,predicate.go,single_room_compile.go,factions.go}` |
