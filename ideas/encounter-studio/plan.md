@@ -1265,7 +1265,7 @@ simulating a roll, and patrol cells (`path` is refused in this dialect).
 | B1 | Prose heads the creature and prop views, rendered from the draft only. | R5 |
 | B2 | Orders read in the compiler's layers, per trigger, nearest wins wholesale: the creature's own rows, its named table, its faction's own rows, the faction's named table, then the kind's default. Each surviving row is one sentence naming its source and its other users. | R5; README walk step 4; toolkit `inheritedOrders`, `ordersOf`, single-room binding layering |
 | B3 | A trigger no layer names is stated as "the kind's default". Its rows are never listed. | R5; scout item 1 |
-| B4 | Engine laws are stated as laws, each with a toolkit source: what `until` turns a stance to, a fact `until` judged on the faction's mind, provocation by a hostile act, temper dealt at spawn from a mix, and hearing by passive Perception against a DC that rises per region hop. No law without a source. | R5; scout item 2 |
+| B4 | Engine laws are stated as laws, each with a toolkit source: what `until` turns a stance to, a fact `until` judged on the faction's mind, provocation by a hostile act, temper dealt at spawn from a mix, hearing by passive Perception against a DC that rises per region hop, and holding when no row holds. No law without a source. | R5; scout item 2 |
 | B5 | Prose uses the row editor's vocabulary, from one shared module. | lead brief |
 | B6 | Every row in prose carries its weight as the number, with the weight law stated once per table (S2 weight decision below). | lead brief |
 | B7 | Options read with their line, each check and DC, the gate (fact or held prop), and both outcomes. | R5; README cook prose |
@@ -1324,15 +1324,14 @@ One branch off `dev`, one PR to `dev`, one builder in this order: T1, T2, T3, T4
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S2-Q1 | **Person.** The row editor speaks in the first person ("I heard a sound") and the walkthrough's prose in the third ("If it heard a clang …"). **Assumption:** the vocabulary module holds each phrase once, with a subject slot. The editor renders "I" and the prose "it". | assumption | S2-T1 |
-| S2-Q2 | **Law numbers.** Sound DCs and the per-hop rise are rulebook content, not in the document or on the wire. **Assumption:** the hearing law is stated in words with no numbers. | assumption | S2-T5 |
-| S2-Q3 | **"When no row holds, it holds its post."** The walkthrough says it, but no toolkit doc for it was found. **Assumption:** omitted until a source is cited, under the laws-carry-sources constraint. | open | S2-T5's list |
-| S2-Q4 | **R12's reach.** **Assumption:** every weighted row list, meaning `tables.<id>`, faction and binding `on`, and option success and failure rows. | assumption | S2-T2 |
-| S2-Q5 | **Sorting rewrites saved files.** A draft with unsorted rows saves sorted on its next save, and committed goldens with unsorted rows change. **Assumption:** accepted; the goldens are regenerated and their diffs read. | assumption | S2-T2 |
-| S2-Q6 | **Castle content for the walk.** No single-room castle exists. **Assumption:** S2 authors `fixtures/castleReadBack.ts` from the walkthrough, and a throwaway toolkit decode proves it is a valid document. Should it later become the mad-king plan's wave D reference content instead of staying a web fixture? | open | nothing; T8 authors it |
-| S2-Q7 | **Laws in the client.** `engineLaws.ts` copies engine law into the web. Should a later slice receive law text over the wire? | open | nothing in S2 |
+| S2-Q1 | **Person.** | **lead-resolved 2026-10-14:** one phrase per term with a subject slot; the editor renders "I", the prose "it" | nothing |
+| S2-Q2 | **Law numbers.** | **lead-resolved:** the hearing law is stated in words only; sound DCs are content and not on the wire | nothing |
+| S2-Q3 | **"When no row holds, it holds its post."** | **lead-resolved:** kept as the law `holds`, sourced to rpg-toolkit `mind/behavior/table.go` `holdPick` (a `time` table with nothing eligible means the creature stands there, and the beat records it; confirmed at `origin/main`) | nothing |
+| S2-Q4 | **R12's reach.** | **lead-resolved:** every weighted row list, including option `success` and `failure` rows | nothing |
+| S2-Q5 | **Sorting rewrites saved files.** | **lead-resolved:** the next save of an unsorted draft rewrites its row order; weights are unchanged and order carries no meaning. Web goldens are updated as needed. The studio never touches rpg-api content files. | nothing |
+| S2-Q6 | **Castle content for the walk.** | **lead-resolved:** S2-T8 authors `fixtures/castleReadBack.ts` from the walkthrough. It is the seed for the mad-king plan's wave D reference content (rpg-project#569, PR #570), and that plan's task D1 owns promoting it to rpg-api content. | nothing |
+| S2-Q7 | **Engine law text over the wire.** The S2 contract is client-side text with a toolkit source per law. Receiving law text from the server is a later question. | open, not S2; see design.md Open | nothing in S2 |
 | S2-Q8 | **Rulebook catalog over the wire for pick-lists** (S1-Q3). | open; not in S2 | nothing |
-
 ---
 
 ## Task S2-T1: One vocabulary
@@ -1372,9 +1371,10 @@ export function layeredOrders(document: Readonly<RoomDraftDocument>, placementId
 // per trigger key in ANSWER_TRIGGERS; sharedWith = other placements (display names, S5) whose same trigger resolves to the same source
 ```
 
-- `validateAnswerTable` returns each trigger's rows stable-sorted by `weight ?? 1`, descending. The options validator does the same to `success` and `failure`.
+- `validateAnswerTable` returns each trigger's rows stable-sorted by `weight ?? 1`, descending. The options validator does the same to `success` and `failure` (S2-Q4).
+- Web goldens whose rows move are regenerated. No rpg-api content file is touched (S2-Q5).
 
-**Tests:** `layeredOrders.test.ts`: › `own rows beat the named table key by key`; › `the binding's named table beats the faction's rows`; › `the faction's own rows beat the faction's named table`; › `a trigger no layer names is the kind default`; › `sharedWith lists gate-2 for gate-patrol`. `answerTableShape.test.ts`: › `rows sort heaviest first with ties in authored order`; › `an absent weight counts as 1`. `singleRoomDungeon.test.ts`: › `an unsorted table encodes heaviest first`. Regenerate any golden whose rows move, and read the diff.
+**Tests:** `layeredOrders.test.ts`: › `own rows beat the named table key by key`; › `the binding's named table beats the faction's rows`; › `the faction's own rows beat the faction's named table`; › `a trigger no layer names is the kind default`; › `sharedWith lists gate-2 for gate-patrol`. `answerTableShape.test.ts`: › `rows sort heaviest first with ties in authored order`; › `an absent weight counts as 1`. `singleRoomDungeon.test.ts`: › `an unsorted table encodes heaviest first`. › `option success and failure rows sort heaviest first`. Regenerate any web golden whose rows move, and read the diff.
 **Verification:** `npx vitest run src/concepts/world-building` passes.
 
 ## Task S2-T3: The faction readout reads its named table
@@ -1407,7 +1407,7 @@ export function layeredOrders(document: Readonly<RoomDraftDocument>, placementId
 
 ```ts
 export interface EngineLaw { id: string; sentence: string; source: string } // "rpg-toolkit rulebooks/dnd5e/encounter/dungeonspec/factions.go turnsTo"
-export const ENGINE_LAWS: Readonly<Record<'untilTurns' | 'untilOnMind' | 'provocation' | 'temperAtSpawn' | 'hearing' | 'weights', EngineLaw>>;
+export const ENGINE_LAWS: Readonly<Record<'untilTurns' | 'untilOnMind' | 'provocation' | 'temperAtSpawn' | 'hearing' | 'weights' | 'holds', EngineLaw>>;
 ```
 
 Sentences, in words, with no rulebook numbers:
@@ -1417,8 +1417,9 @@ Sentences, in words, with no rulebook numbers:
 - `temperAtSpawn`: a mix is dealt once at spawn.
 - `hearing`: a sound is heard when the listener's passive Perception meets its DC, which rises per region hop and per closed door.
 - `weights`: among the rows that hold, one is picked in proportion to its weight.
+- `holds`: when no `time` row holds, it stands where it is. Source: rpg-toolkit `mind/behavior/table.go` `holdPick`.
 
-**Behavior:** the builder confirms each source exists at rpg-toolkit `origin/main` and records the file and symbol. A law whose source cannot be found is left out, such as S2-Q3's holding sentence.
+**Behavior:** the builder confirms each source exists at rpg-toolkit `origin/main` and records the file and symbol. A law whose source cannot be found is left out.
 **Tests:** › `every law has a nonblank source naming an rpg-toolkit path`; › `no law sentence contains a digit`.
 **Verification:** `npx vitest run src/concepts/world-building/engineLaws.test.ts` passes, and the PR lists each law's source as confirmed.
 
@@ -1437,13 +1438,13 @@ export function readBackOf(document: Readonly<RoomDraftDocument>,
 
 **Behavior** (creature; a prop has no "who" stance or orders paragraph):
 - **Who:** "{name}, a {cast member} of the {faction}", plus "and the {faction}'s mind" when it is. Each disposition naming its faction becomes one sentence, through `predicateSentence`. Then the provocation law, and the temper: its own word, or "dealt at spawn from the {faction}'s mix: soldier 2, coward 1".
-- **On its time:** "it follows *gate-patrol*, shared with gate-2", then the weight law or "every row weighted alike". Each row is `conditionPhrase('it')`, then `wordPhrase('it')`, then the `say` line in quotes, then "(weight n)". A trigger the table names says "the kind's default {trigger} rows do not apply". A trigger no layer names says "it answers with the kind's default".
+- **On its time:** "it follows *gate-patrol*, shared with gate-2", then the weight law or "every row weighted alike". Each row is `conditionPhrase('it')`, then `wordPhrase('it')`, then the `say` line in quotes, then "(weight n)". A trigger the table names says "the kind's default {trigger} rows do not apply". A trigger no layer names says "it answers with the kind's default". A `time` layer ends with the `holds` law: "When no row holds, it stands where it is."
 - **Spoken to:** "Nothing can be said to it. It has no options", or one bullet per option: the line in quotes; each check as "{Skill} DC n"; the gate ("Offered to a speaker who knows *x*", or "… carrying the {prop name}"); "Success: …" and "Failure: …" each as their lines and facts.
 - **Knows:** "It knows nothing at spawn; it carries no intel", or "It carries {record}, which reveals *x*". Then "It writes *a*, *b*; it reads *c*", from its rows, options and `arrives`.
 - Arrives: "It is held in reserve until …" through `predicateSentence`.
 - The prose sits at the top of the view, above S5's Placement section, inside a `StudioSection` titled "Read back". A ref in a sentence is a link that selects or opens its target.
 
-**Tests:** `readBack.test.ts` over the S2-T8 fixture: › `gate-1 follows gate-patrol shared with gate-2`; › `gate-1's rows read in the editor's vocabulary with their weights`; › `the cook answers with the kind's default`; › `the cook's three options read with check, gate and both outcomes`; › `the garrison's disposition reads until the captain knows party-recognized, then hostile`; › `a creature with no options says nothing can be said to it`; › `a prop that holds intel says what it reveals`. `StudioInspector.test.tsx`: › `the creature view opens with the read-back above Placement`.
+**Tests:** `readBack.test.ts` over the S2-T8 fixture: › `gate-1 follows gate-patrol shared with gate-2`; › `gate-1's rows read in the editor's vocabulary with their weights`; › `the cook answers with the kind's default`; › `gate-1's time paragraph ends with the holds law`; › `the cook's three options read with check, gate and both outcomes`; › `the garrison's disposition reads until the captain knows party-recognized, then hostile`; › `a creature with no options says nothing can be said to it`; › `a prop that holds intel says what it reveals`. `StudioInspector.test.tsx`: › `the creature view opens with the read-back above Placement`.
 **Verification:** `npx vitest run src/concepts` passes.
 
 ## Task S2-T7: The fact index
@@ -1470,7 +1471,7 @@ export function factIndexOf(document: Readonly<RoomDraftDocument>):
 ## Task S2-T8: The castle fixture, integration and the walk
 
 **Delivers:** proof of B1–B12; S2-Q6.
-- [ ] Author `encounter-studio/fixtures/castleReadBack.ts` from README.md: gate-1 and gate-2 on `gate-patrol`; the garrison with its mind the captain, temper mix soldier 2 and coward 1, and the two dispositions; the cook with its three options; the intel `cooks-ledger`; and the altar's examine option writing `king-is-cultist`.
+- [ ] Author `encounter-studio/fixtures/castleReadBack.ts` from README.md. It seeds the mad-king plan's wave D reference content, and that plan's task D1 promotes it to rpg-api content (S2-Q6). It holds gate-1 and gate-2 on `gate-patrol`; the garrison with its mind the captain, temper mix soldier 2 and coward 1, and the two dispositions; the cook with its three options; the intel `cooks-ledger`; and the altar's examine option writing `king-is-cultist`.
 - [ ] Throwaway toolkit decode of the fixture's encoded file in a scratch worktree, as S1 did; record the output; commit nothing to the toolkit.
 - [ ] `npm ci`; `npm run ci-check` once; grep the log.
 - [ ] Walk with the fixture as the local draft, seeded by S5-Q6's path. Screenshot each step.
