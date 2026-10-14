@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0, S1 and S5, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2–S4 are stubs
+status: PLAN for slices S0, S1, S5 and S2, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3–S4 are stubs
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -1230,10 +1230,299 @@ export function FieldHelp(props: { field: string; children: ReactNode }): React.
 
 **Shared files.** `SitePolicies.tsx` is edited by S5-T3, T4 and T5, in that order on one branch. `encounterStudio.css` is edited by T1, T2 and T5; T1 lands first.
 
+---
+
+# Encounter studio S2 — read it back
+
+Planned 2026-10-14 against the S5 branch; S5 merges first and S2 branches
+from `dev` after it. Authority: design.md R5 and R12; README.md's read-back
+prose for gate-1 and the cook, its fact-index rows, and its "Separations that
+look like one thing" hazard; rpg-project#576; the config scout's four items
+that are not in the document (the kind's default table, engine laws, a fact
+cross-reference, patrol cells).
+
+## S2 goal and scope
+
+A placed creature's or prop's inspector opens with prose rendered from the
+draft: who it is and whose side it is on, what it does on its time, what can
+be said to it, and what it knows. The Encounter home gains a derived fact
+index. Every weighted row list displays and saves heaviest first. The faction
+readout shows the faction's named table, and a disposition's `until` reads
+as a sentence.
+
+**Repositories.** Web only, rpg-dnd5e-web, branched from `dev` after S5
+(`feat/studio-s5-density`) merges. No toolkit, API or proto change; no new
+document key.
+
+**Non-goals:** the Layout overview (S3), the hidden nouns' editors (S4), the
+contents of the kind's default table (not in the document or on the wire),
+simulating a roll, and patrol cells (`path` is refused in this dialect).
+
+## S2 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| B1 | Prose heads the creature and prop views, rendered from the draft only. | R5 |
+| B2 | Orders read in the compiler's layers, per trigger, nearest wins wholesale: the creature's own rows, its named table, its faction's own rows, the faction's named table, then the kind's default. Each surviving row is one sentence naming its source and its other users. | R5; README walk step 4; toolkit `inheritedOrders`, `ordersOf`, single-room binding layering |
+| B3 | A trigger no layer names is stated as "the kind's default". Its rows are never listed. | R5; scout item 1 |
+| B4 | Engine laws are stated as laws, each with a toolkit source: what `until` turns a stance to, a fact `until` judged on the faction's mind, provocation by a hostile act, temper dealt at spawn from a mix, and hearing by passive Perception against a DC that rises per region hop. No law without a source. | R5; scout item 2 |
+| B5 | Prose uses the row editor's vocabulary, from one shared module. | lead brief |
+| B6 | Every row in prose carries its weight as the number, with the weight law stated once per table (S2 weight decision below). | lead brief |
+| B7 | Options read with their line, each check and DC, the gate (fact or held prop), and both outcomes. | R5; README cook prose |
+| B8 | "It knows" lists the intel it holds and what each reveals, then the facts its rows and options write and read. | lead brief |
+| B9 | The fact index lists every fact id the draft mentions, with its writers and readers named, and marks a fact written and never read, or read and never written. It stores nothing. Clicking a writer or reader selects that thing. | R5; scout item 3 |
+| B10 | Every weighted row list displays and saves heaviest first, ties in authored order. | R12 |
+| B11 | The faction readout reads the faction's named table under its own rows. | #576; README hazard |
+| B12 | A disposition's `until`, a binding's `arrives` and an ending's `when` render as sentences, never JSON or "fact x". | lead brief |
+
+**S2 weight decision: the number, not an adjective.** The engine picks among
+the rows whose conditions hold at that moment, so a row's real share depends
+on which others are eligible. "Most often" would claim a share the read-back
+cannot know without simulating, and the read-back never simulates (README
+refusal). The prose therefore says "(weight 3)" on each row. Each table
+states once: "Among the rows that hold, one is picked in proportion to its
+weight." When every row has the same weight it says "every row weighted
+alike", as the walkthrough does.
+
+## S2 constraints
+
+- **The draft is the only input.** No API call, no rulebook lookup beyond the names the studio already shows (`paletteNameForRef`, the cast name).
+- **One vocabulary.** Prose and the row editor read one module. A phrase changes in one place.
+- **Laws carry sources.** `engineLaws.ts` holds every law sentence with the toolkit file and symbol it states. Changing the engine's law means changing that entry.
+- **Layering mirrors the compiler.** The orders function cites `inheritedOrders`, `ordersOf` and the single-room binding layering in rpg-toolkit `dungeonspec`, and its tests mirror those functions' cases.
+- **Refusals unchanged.** S2 adds no gate. The R12 sort happens inside the existing validators.
+
+## S2 inspected baseline (2026-10-14)
+
+| repo | revision |
+|---|---|
+| rpg-dnd5e-web `feat/studio-s5-density` | 3416490b |
+| rpg-toolkit `origin/main` | 2f570aa9 |
+| rpg-project `origin/main` | as S1 |
+
+- **Vocabulary.** The condition and word labels live inline in `SitePolicies.tsx` `AnswerEntryRow`: "no enemy is seen or remembered", "an enemy is in reach", "I was attacked", "an ally was attacked", "I heard a sound", "I know a fact", and the word pickers. `entryText` and `predicateText` render plain strings such as "when …", "weight 3" and "fact x" for `AnswerTableReadout` and the `until` and `arrives` readouts.
+- **The faction bug.** `CreatureOrders`' Inherits section and `FactionTableEditor` read only `faction.on`. A faction with `table:` and no `on:` reads "No shared table is authored."
+- **JSON.** `WorldBuildingConcept.tsx`'s authored-dispositions list renders `<code>{JSON.stringify(entry.until)}</code>`.
+- **Toolkit layering.** `inheritedOrders` (`compile.go`) sets a faction's base as `layerSpecs(rootTableOn(tables, fa.Table), fa.On)`. The single-room binding is `layerSpecs(rootTableOn(spec.Tables, b.Table), b.On)` (`single_room_compile.go`). `ordersOf` lays the creature's layer over its faction's, key by key, the nearer winning wholesale. `turnsTo` (`factions.go`) turns hostile and neutral into each other; an allied pair cannot carry `until`.
+- **Row order.** `validateAnswerTable` (`answerTableShape.ts`) is the one gate for `tables.<id>`, `factions[].on` and `monsterBindings.<id>.on` (`siteScope.ts`, `roomDraft.ts`). Option outcomes are validated in the options validator.
+- **Scope keys.** `templates`, `tables`, `factions`, `dispositions`, `intel`, `exits`, `endings`, `scenarios`, `concealments` (`siteScope.ts` `SCOPE_KEYS`).
+- **The castle.** `fixtures/castleWorkspace.ts` is structural: walls, floor and two labels, with no gate guard, cook or tables. No repository holds the walkthrough's castle as a single-room document. rpg-api `content/reference-hearing.yaml` carries `gate-patrol` in the v2 dialect, and the mad-king plan's wave D reference content is not started.
+- **Home sections.** `ENCOUNTER_SECTIONS` is Cast, Tables, Factions, Dispositions, Intel.
+
+## S2 sequence
+
+```
+S2-T1 vocabulary ──▶ S2-T4 predicate sentences ──▶ S2-T6 read-back ──▶ S2-T8 integration
+S2-T2 layers and R12 ──▶ S2-T3 faction readout ─────┤
+S2-T5 engine laws ──────────────────────────────────┤
+S2-T7 fact index (needs T4 for reader names) ────────┘
+```
+
+One branch off `dev`, one PR to `dev`, one builder in this order: T1, T2, T3, T4, T5, T6, T7, T8. T1, T3 and T4 all edit `SitePolicies.tsx`.
+
+## S2 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S2-Q1 | **Person.** The row editor speaks in the first person ("I heard a sound") and the walkthrough's prose in the third ("If it heard a clang …"). **Assumption:** the vocabulary module holds each phrase once, with a subject slot. The editor renders "I" and the prose "it". | assumption | S2-T1 |
+| S2-Q2 | **Law numbers.** Sound DCs and the per-hop rise are rulebook content, not in the document or on the wire. **Assumption:** the hearing law is stated in words with no numbers. | assumption | S2-T5 |
+| S2-Q3 | **"When no row holds, it holds its post."** The walkthrough says it, but no toolkit doc for it was found. **Assumption:** omitted until a source is cited, under the laws-carry-sources constraint. | open | S2-T5's list |
+| S2-Q4 | **R12's reach.** **Assumption:** every weighted row list, meaning `tables.<id>`, faction and binding `on`, and option success and failure rows. | assumption | S2-T2 |
+| S2-Q5 | **Sorting rewrites saved files.** A draft with unsorted rows saves sorted on its next save, and committed goldens with unsorted rows change. **Assumption:** accepted; the goldens are regenerated and their diffs read. | assumption | S2-T2 |
+| S2-Q6 | **Castle content for the walk.** No single-room castle exists. **Assumption:** S2 authors `fixtures/castleReadBack.ts` from the walkthrough, and a throwaway toolkit decode proves it is a valid document. Should it later become the mad-king plan's wave D reference content instead of staying a web fixture? | open | nothing; T8 authors it |
+| S2-Q7 | **Laws in the client.** `engineLaws.ts` copies engine law into the web. Should a later slice receive law text over the wire? | open | nothing in S2 |
+| S2-Q8 | **Rulebook catalog over the wire for pick-lists** (S1-Q3). | open; not in S2 | nothing |
+
+---
+
+## Task S2-T1: One vocabulary
+
+**Delivers:** B5, S2-Q1.
+**Owner:** rpg-dnd5e-web; new `world-building/answerVocabulary.ts`, `SitePolicies.tsx`.
+**Files:** new `answerVocabulary.ts` and its test; `SitePolicies.tsx` (`AnswerEntryRow`'s option labels and `entryText` read the module).
+**Interfaces:**
+
+```ts
+export type Subject = 'I' | 'it';
+export function conditionPhrase(c: AnswerWhenCondition, subject: Subject): string;
+// "no enemy is seen or remembered" · "an enemy is in reach" · "{subject} was attacked within 3 rounds"
+// · "{subject} heard a clang within 2 rounds" · "{subject} knows alarm-raised" · "not …"
+export function wordPhrase(entry: AnswerEntryShape, subject: Subject): string | undefined;
+// "attacks the attacker" · "walks toward the sound" · "holds" · "flees" · "raises alarm-raised"
+export function triggerPhrase(trigger: string): string;   // "On its time"
+```
+
+**Behavior:** the editor's visible text is unchanged; existing tests pin it.
+**Tests:** `answerVocabulary.test.ts` gives one case per condition kind and per word, in both subjects. The existing `AnswerEntrySentence.test.tsx` and `SitePolicies.test.tsx` stay green unchanged.
+**Verification:** `npx vitest run src/concepts/world-building` passes.
+
+## Task S2-T2: The layers, and heaviest first
+
+**Delivers:** B2 (data), B10, S2-Q4, S2-Q5.
+**Owner:** rpg-dnd5e-web; new `world-building/layeredOrders.ts`, `answerTableShape.ts`, the options validator.
+**Interfaces:**
+
+```ts
+export type OrdersSource =
+  | { kind: 'own' } | { kind: 'table'; id: string }
+  | { kind: 'faction'; id: string } | { kind: 'faction-table'; faction: string; id: string }
+  | { kind: 'kind-default' };
+export function layeredOrders(document: Readonly<RoomDraftDocument>, placementId: string):
+  Record<string, { source: OrdersSource; rows: readonly AnswerEntryShape[]; sharedWith: readonly string[] }>;
+// per trigger key in ANSWER_TRIGGERS; sharedWith = other placements (display names, S5) whose same trigger resolves to the same source
+```
+
+- `validateAnswerTable` returns each trigger's rows stable-sorted by `weight ?? 1`, descending. The options validator does the same to `success` and `failure`.
+
+**Tests:** `layeredOrders.test.ts`: › `own rows beat the named table key by key`; › `the binding's named table beats the faction's rows`; › `the faction's own rows beat the faction's named table`; › `a trigger no layer names is the kind default`; › `sharedWith lists gate-2 for gate-patrol`. `answerTableShape.test.ts`: › `rows sort heaviest first with ties in authored order`; › `an absent weight counts as 1`. `singleRoomDungeon.test.ts`: › `an unsorted table encodes heaviest first`. Regenerate any golden whose rows move, and read the diff.
+**Verification:** `npx vitest run src/concepts/world-building` passes.
+
+## Task S2-T3: The faction readout reads its named table
+
+**Delivers:** B11.
+**Owner:** rpg-dnd5e-web; `SitePolicies.tsx` (`CreatureOrders` Inherits; `FactionTableEditor` and the Factions form readout).
+**Behavior:** a faction with `table:` shows "Inherits gate-patrol" and that table's readout under its own rows, with each trigger labelled by its layer, as `layeredOrders` resolves it. "No shared table is authored" appears only when the faction names no table and has no rows.
+**Tests:** › `a faction naming a table and no rows shows that table, not "No shared table"`; › `a faction's own time rows are labelled as overriding its table's time rows`; › `a faction naming an undeclared table says so by name`.
+**Verification:** `npx vitest run src/concepts/world-building/SitePolicies.test.tsx` passes.
+
+## Task S2-T4: Predicates as sentences
+
+**Delivers:** B12.
+**Owner:** rpg-dnd5e-web; new `world-building/predicateSentence.ts`; `SitePolicies.tsx` (`predicateText` callers); `WorldBuildingConcept.tsx` (the JSON line).
+**Interfaces:** `predicateSentence(p: PredicateDoc, ctx: { mindName?: string; names: ReadonlyMap<string, string> }): string`.
+- fact: "the captain, the garrison's mind, knows *party-recognized*", or "*x* is known" with no mind;
+- round: "round 12 begins";
+- down: "gate-1 is down";
+- stance: "the garrison and the party are hostile".
+
+**Behavior:** a disposition reads "Neutral to the party until …; then hostile", with the turn taken from `engineLaws` (S2-T5). An allied pair never shows `until`, because the decoder refuses it. No `JSON.stringify` of a predicate remains in the studio.
+**Tests:** one case per form; › `the authored dispositions list renders no JSON`; `git grep -n "JSON.stringify(entry.until" src/` prints nothing.
+**Verification:** `npx vitest run src/concepts/world-building` passes.
+
+## Task S2-T5: Engine laws, with sources
+
+**Delivers:** B4, S2-Q2, S2-Q3.
+**Owner:** rpg-dnd5e-web; new `world-building/engineLaws.ts`.
+**Interfaces:**
+
+```ts
+export interface EngineLaw { id: string; sentence: string; source: string } // "rpg-toolkit rulebooks/dnd5e/encounter/dungeonspec/factions.go turnsTo"
+export const ENGINE_LAWS: Readonly<Record<'untilTurns' | 'untilOnMind' | 'provocation' | 'temperAtSpawn' | 'hearing' | 'weights', EngineLaw>>;
+```
+
+Sentences, in words, with no rulebook numbers:
+- `untilTurns`: when it holds, hostile becomes neutral and neutral becomes hostile.
+- `untilOnMind`: a fact `until` is judged on the faction's mind.
+- `provocation`: a hostile act against a creature turns its side hostile to the actor, whatever the file says.
+- `temperAtSpawn`: a mix is dealt once at spawn.
+- `hearing`: a sound is heard when the listener's passive Perception meets its DC, which rises per region hop and per closed door.
+- `weights`: among the rows that hold, one is picked in proportion to its weight.
+
+**Behavior:** the builder confirms each source exists at rpg-toolkit `origin/main` and records the file and symbol. A law whose source cannot be found is left out, such as S2-Q3's holding sentence.
+**Tests:** › `every law has a nonblank source naming an rpg-toolkit path`; › `no law sentence contains a digit`.
+**Verification:** `npx vitest run src/concepts/world-building/engineLaws.test.ts` passes, and the PR lists each law's source as confirmed.
+
+## Task S2-T6: The read-back in the inspector
+
+**Delivers:** B1, B2 (prose), B3, B6, B7, B8.
+**Owner:** rpg-dnd5e-web; new `world-building/readBack.ts`, new `encounter-studio/ReadBack.tsx`, `StudioInspector.tsx` (`CreatureView`, `PropView`).
+**Interfaces:**
+
+```ts
+export interface ReadBackParagraph { heading: 'who' | 'on-its-time' | 'spoken-to' | 'knows'; sentences: readonly ReadBackSentence[] }
+export type ReadBackSentence = { text: string; refs: readonly ReadBackRef[] }; // refs select things (table, faction, intel, fact, placement)
+export function readBackOf(document: Readonly<RoomDraftDocument>,
+  selection: { kind: 'creature' | 'prop'; id: string }): readonly ReadBackParagraph[];
+```
+
+**Behavior** (creature; a prop has no "who" stance or orders paragraph):
+- **Who:** "{name}, a {cast member} of the {faction}", plus "and the {faction}'s mind" when it is. Each disposition naming its faction becomes one sentence, through `predicateSentence`. Then the provocation law, and the temper: its own word, or "dealt at spawn from the {faction}'s mix: soldier 2, coward 1".
+- **On its time:** "it follows *gate-patrol*, shared with gate-2", then the weight law or "every row weighted alike". Each row is `conditionPhrase('it')`, then `wordPhrase('it')`, then the `say` line in quotes, then "(weight n)". A trigger the table names says "the kind's default {trigger} rows do not apply". A trigger no layer names says "it answers with the kind's default".
+- **Spoken to:** "Nothing can be said to it. It has no options", or one bullet per option: the line in quotes; each check as "{Skill} DC n"; the gate ("Offered to a speaker who knows *x*", or "… carrying the {prop name}"); "Success: …" and "Failure: …" each as their lines and facts.
+- **Knows:** "It knows nothing at spawn; it carries no intel", or "It carries {record}, which reveals *x*". Then "It writes *a*, *b*; it reads *c*", from its rows, options and `arrives`.
+- Arrives: "It is held in reserve until …" through `predicateSentence`.
+- The prose sits at the top of the view, above S5's Placement section, inside a `StudioSection` titled "Read back". A ref in a sentence is a link that selects or opens its target.
+
+**Tests:** `readBack.test.ts` over the S2-T8 fixture: › `gate-1 follows gate-patrol shared with gate-2`; › `gate-1's rows read in the editor's vocabulary with their weights`; › `the cook answers with the kind's default`; › `the cook's three options read with check, gate and both outcomes`; › `the garrison's disposition reads until the captain knows party-recognized, then hostile`; › `a creature with no options says nothing can be said to it`; › `a prop that holds intel says what it reveals`. `StudioInspector.test.tsx`: › `the creature view opens with the read-back above Placement`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S2-T7: The fact index
+
+**Delivers:** B9.
+**Owner:** rpg-dnd5e-web; new `world-building/factIndex.ts`, new `encounter-studio/StudioFacts.tsx`, `EncounterStudioWorkspace.tsx`.
+**Interfaces:**
+
+```ts
+export interface FactUse { kind: 'option' | 'table-row' | 'intel' | 'disposition' | 'arrives' | 'ending' | 'requires';
+  label: string; target: StudioSelection | { home: 'tables' | 'factions' | 'dispositions' | 'intel'; id: string } }
+export function factIndexOf(document: Readonly<RoomDraftDocument>):
+  readonly { fact: string; writers: readonly FactUse[]; readers: readonly FactUse[] }[]; // sorted by fact id
+```
+
+- Writers: option `success` and `failure` rows with `fact` (creature and prop), table and `on` rows with `fact`, intel `reveals` with a fact.
+- Readers: option `requires`, table and `on` `when` with `fact`, disposition `until`, binding `arrives`, ending `when`, at any nesting.
+- `ENCOUNTER_SECTIONS` gains `facts: 'Facts'`, after Intel.
+
+**Behavior:** each row reads "fact · written by … · read by …". A row with no readers is marked "written, never read"; one with no writers, "read, never written". Clicking a use selects its placement, or opens its home section on that id. Nothing is stored.
+**Tests:** › `feast-tonight lists the cook's gossip and bribe as writers and ashford and the captain's troupe as readers` (fixture); › `king-is-cultist is marked written, never read`; › `a fact read only by an until is marked read, never written`; › `nested not and list conditions are found`; › `clicking a writer selects the cook`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S2-T8: The castle fixture, integration and the walk
+
+**Delivers:** proof of B1–B12; S2-Q6.
+- [ ] Author `encounter-studio/fixtures/castleReadBack.ts` from README.md: gate-1 and gate-2 on `gate-patrol`; the garrison with its mind the captain, temper mix soldier 2 and coward 1, and the two dispositions; the cook with its three options; the intel `cooks-ledger`; and the altar's examine option writing `king-is-cultist`.
+- [ ] Throwaway toolkit decode of the fixture's encoded file in a scratch worktree, as S1 did; record the output; commit nothing to the toolkit.
+- [ ] `npm ci`; `npm run ci-check` once; grep the log.
+- [ ] Walk with the fixture as the local draft, seeded by S5-Q6's path. Screenshot each step.
+- [ ] Post the checklist below on #576 as `- [ ]` boxes before the PR leaves draft.
+
+**Walk and #576 checklist:**
+
+1. Select gate-1: the read-back sits above Placement. Compare it with the walkthrough's gate-1 prose sentence by sentence, and list every wording difference in the PR. Weights read as numbers, under one weight-law sentence.
+2. Select the cook: it answers with the kind's default, and its three options read with checks, gates and outcomes. Compare with the walkthrough's cook prose the same way.
+3. Open Facts: feast-tonight, king-burned-village, alarm-raised and king-is-cultist match the walkthrough's rows, and king-is-cultist is marked. Click a writer: that thing is selected.
+4. In Tables, give a row weight 5: it moves to the top, in the form and in gate-1's read-back. Save and reload: it is first in the encoded file.
+5. Factions: the garrison shows gate-patrol inherited, not "No shared table".
+6. Dispositions and the creature view: every `until` reads as a sentence; no JSON anywhere.
+7. Undo after the weight change restores the order; the read-back follows.
+
+## S2 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| B1 prose heads the view | S2-T6 | `the creature view opens with the read-back above Placement`; walk 1 |
+| B2 layers | S2-T2, T6 | the `layeredOrders` tests; `gate-1 follows gate-patrol shared with gate-2` |
+| B3 kind's default stated | S2-T2, T6 | `the cook answers with the kind's default` |
+| B4 laws with sources | S2-T5, T6 | `every law has a … source`; the PR's source list |
+| B5 one vocabulary | S2-T1 | `answerVocabulary.test.ts`; editor tests unchanged |
+| B6 weights | S2-T6 | `gate-1's rows read … with their weights`; walk 1 |
+| B7 options | S2-T6 | `the cook's three options read …`; walk 2 |
+| B8 knows | S2-T6 | `a prop that holds intel says what it reveals`; the knows sentences |
+| B9 fact index | S2-T7 | the fact-index tests; walk 3 |
+| B10 heaviest first | S2-T2 | `rows sort heaviest first …`; `an unsorted table encodes heaviest first`; walk 4 |
+| B11 faction named table | S2-T3 | `a faction naming a table and no rows shows that table …`; walk 5 |
+| B12 sentences, not JSON | S2-T4 | the predicate tests; the grep; walk 6 |
+
+## S2 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| S2-T1 `answerVocabulary` | `AnswerEntryRow`, `entryText`, S2-T6 | one phrase, subject slot | new | its tests; editor tests unchanged |
+| S2-T2 `layeredOrders` | S2-T3, T6, T7 | per-trigger source and rows; mirrors toolkit layering | new; toolkit at 2f570aa9 | the layering tests |
+| S2-T2 sorted `validateAnswerTable` | every editor, encoder and readout | rows heaviest first, stable | changes an existing gate | the sort and codec tests |
+| S2-T4 `predicateSentence` | dispositions, `arrives`, endings, S2-T6, T7 | a sentence per predicate form | new | the predicate tests |
+| S2-T5 `ENGINE_LAWS` | S2-T4, T6 | law sentences with sources | new | the laws tests |
+| S2-T6 `readBackOf` | `ReadBack` in the creature and prop views | paragraphs with selectable refs | new | `readBack.test.ts` |
+| S2-T7 `factIndexOf` | `StudioFacts` | derived rows with uses | new | the fact-index tests |
+| S5 `StudioSection`, `placementDisplayNames` | S2-T6, T7 | section layout; display names | S5 (lands first) | S5's tests |
+| encoded file | rpg-toolkit decoder | unchanged keys, rows reordered | baseline | the T8 throwaway decode |
+
+**Shared files.** `SitePolicies.tsx` is edited by T1, T3 and T4, in that order.
+
 ## Later slices
 
 - S1, the cast and per-placement looks: rpg-project#575, planned above. A cast member selected on the home highlights its placements on the map, and the inspector shows the cast member. It is not a multi-selection (Q8).
-- S2, read it back: prose, fact index, tables heaviest first: rpg-project#576.
+- S2, read it back: prose, fact index, tables heaviest first: rpg-project#576, planned above.
 - S3, overview on Layout: rpg-project#577. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
 - S4, the hidden nouns: exits, endings, concealments, door state: rpg-project#578.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
