@@ -2007,4 +2007,269 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 - S4, the hidden nouns: exits, endings, concealments, door state, and the draft as a file: rpg-project#578, planned above.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
 
-All six slices are on web `dev` (e623c2b3). Operator QA on dev pending; next candidate slices: Save & Play (web#1236), open a reference encounter, look picker (web#1268, waits on assets#226).
+All six slices are on web `dev` (e623c2b3). S6 below is Save and Play (web#1236); after it: open a reference encounter, look picker (web#1268, waits on assets#226).
+
+---
+
+# Section S6: Save and Play
+
+Tracking issue: rpg-dnd5e-web#1236 (its acceptance walk is the QA list).
+Law: design.md R15–R19 (rpg-project#583, merged 4dfce75f).
+
+## S6 goal and scope
+
+The author presses Save and Play in the studio header and is standing in the
+room with the character picked on Home. The file saved is the file the
+draft-file export writes, under one key. A server refusal is a jump to the
+thing that caused it. With authoring off on the server, or no character, the
+control says why and does nothing.
+
+**Repositories.** Web only, rpg-dnd5e-web, from `dev` (e623c2b3). No toolkit,
+API or proto change: `PutDungeon{validate_only}`, `GetDungeon`, `CreateLobby`,
+`StartEncounter{dungeon_key}` and the file registry exist and are what World
+Builder plays through today.
+
+**Non-goals:** wall and region finishes or region lighting in play (R19);
+opening a saved encounter from the server; a character picker in the studio;
+a server-side overwrite guard; any change to `useRoomPublishing`'s or
+`usePlayAuthoredDungeon`'s transaction logic.
+
+## S6 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| P1 | One Save and Play control in the header's Save group, on both homes and both views. Pressing it saves then launches; the app opens the game view on the returned encounter id with the picked character. | R15 |
+| P2 | The saved bytes are `encodeSingleRoomDungeon({key, draft, ...renderScope(scope)})`, the same call the draft-file export makes. | R15, R16 |
+| P3 | One key per draft: the Draft file panel and the publish row read and write the same key; default is the slug of the room name (`defaultDraftKey`), editable, adopted from an import. The server's key refusal shows at the key field. | R16 |
+| P4 | The first save to a key the server already holds asks before overwriting; later saves to that key in the same editor session do not ask; changing the key drops the memory. | R16 |
+| P5 | A refusal whose path maps to a placed creature, prop, door, exit hex, cast member, table, faction, disposition, intel, ending or concealment is a jump that selects it or opens its home section. Any other path, or an empty path, is a sentence under the Save group. The live validate-only preview's refusals and the save's refusals both jump. | R17 |
+| P6 | Authoring off on the server: the control is present, disabled, with "The server is not accepting authored encounters." Server unreachable: disabled with "The server could not be reached." and a retry. No character on Home: Play is disabled with "Pick a character on Home to play." Save to server stays available. | R18 |
+| P7 | While a save or launch is in flight, edits, undo, redo, selection changes and the local-draft save are refused with the owner's existing notice; a response for a retired capture (key, draft, character or client changed) saves and launches nothing. | R15 |
+| P8 | Save failure and launch failure each show one sentence naming the seam, the draft is untouched and recoverable, and no "Saved as" or launch is claimed early. | #1236 scope |
+| P9 | The wall-finish and region-finish fields and the region lighting field carry one help line: "Play does not render this yet; it stays in the studio until the look catalog." | R19 |
+
+## S6 constraints
+
+- **The hooks are reused unchanged.** `useRoomPublishing` (`world-building/useRoomPublishing.ts`) and `usePlayAuthoredDungeon` (`author/usePlayAuthoredDungeon.ts`) keep their contracts: owner token, `isCurrent`, overwrite memory, launch sequence `createLobby → setReady → startEncounter → onPlay`. The studio hosts the hook and builds its own row and panel; `RoomPublishingPanel.tsx` is untouched.
+- **The key is the hook's key.** `useRoomPublishing` returns `key`/`setKey`, and `setKey` already drops an armed overwrite and the saved memory. The studio seeds it (P3) and passes it down; `StudioDraftFile` loses its local key state.
+- **The lock is the owner's.** `WorldBuildingConcept` already refuses every edit, undo, redo, selection and `saveNow` while `publishBusy` (`refuseWhilePublishing`, 56 sites) and forces the tool to select. S6 only lets the studio set it. Home, view and frame changes are workspace state, not document changes, and stay ungated.
+- **The path grammar is the server's.** `FieldError{path, message}` (rpg-api-protos `authoring/v1alpha1`), path into the file as written: the draft under `room.room.*` (for example `room.room.monsterBindings.goblin-1.faction`, `room.room.doorBindings.cellar-door.locked`), root policies at the root (`exits[0].cell`, `tables.gate-patrol.…`, `factions.garrison.…`, `endings[0].when`, `concealments.vault.cells[0]`), `line N` for a parse failure, empty for a whole-file failure. The map is prefix-based and tolerant: an unknown tail still jumps to the noun.
+- **No studio-side standability.** An exit under a blocking prop is refused by the toolkit at compile (`exits[i].cell: … is not standable`, S4-Q4) and reaches the studio as a jump to that hex (P5).
+- **No new document key.** The key lives in studio state; `RoomDraft` has `id` and `name` only.
+
+## S6 inspected baseline (2026-10-14)
+
+| repo | revision |
+|---|---|
+| rpg-dnd5e-web `origin/dev` | e623c2b3 |
+| rpg-api `origin/dev` | `internal/dungeons/registry.go`: `^[a-z0-9-]+$`, request key must equal the file's `key:`, writes refused unless authoring, `<RPG_CONTENT_DIR>/<key>.yaml` by temp file and rename, no overwrite guard; `AuthoringService` registered only with `RPG_AUTHORING_ENABLED=1` (`cmd/server/server.go`) |
+| rpg-api-protos `origin/main` | `PutDungeonResponse{errors: FieldError[], atlas}`, `FieldError{path, message}` |
+| rpg-deployment | `docker-compose.local-dev.yml` sets `RPG_AUTHORING_ENABLED=1` and `RPG_CONTENT_DIR=/content`, so `scripts/dev-env.sh` stacks accept saves |
+
+- **Publishing hook.** `useRoomPublishing({draft, scope, capability: {characterId, onPlay}, client?, onImportDraft, onBusyChange?})` → `{key, setKey, yaml, encodeError, preview, busy, phase, error, overwritePending, saver, savedFor, launch, save, saveAndPlay, confirmOverwrite, cancelOverwrite, importYaml}`. `preview` is `usePutDungeonPreview`'s `{status: 'idle'|'validating'|'compiled'|'errors'|'unreachable', errors: FieldError[], atlas, message}`, debounced 400 ms on every edit. `saver` is `useSaveDungeon`'s `{status: 'idle'|'saving'|'saved'|'invalid'|'error', errors, message, savedKey}`. Key default today is `room-<id>`.
+- **Launch hook.** `usePlayAuthoredDungeon` → `play(key)`, `cancel()`, `{launching, phase, error}`; lobby on `DEV_CAMPAIGN_ID`; retires on character change and unmount; its error names the failing seam.
+- **Gate.** `useAuthoringGate()` probes `GetDungeon("")`: Unimplemented → `gate-off`; Unavailable/Unknown → `unreachable`; else `live`; module-level cache; `retry()`. Consumer today: `DungeonBuilderHomeButton.tsx`.
+- **App.** `EncounterStudioWorkspace` gets `compositionSource` and `onBack` only. `WorldBuilderWorkspace` gets `characterId` (Home's `selectedId` when `selectedType === 'character'`) and `onPlay={handlePlayAuthored}`; `handlePlayAuthored(encounterId, characterId)` sets the lobby character and the resume id and switches to the game view.
+- **Studio header.** `StudioSurface` (`EncounterStudioWorkspace.tsx`) renders `es-save` with the local-draft status, `session.saveLocalDraft`, and the Draft file toggle; `fileKey: {key, roomId} | null` state is set only by an import; `StudioDraftFile` keeps the typed key in its own state and never lifts it.
+- **Selection.** `StudioSelection` kinds: nothing, wall, door (`StudioDoorTarget{wallId, openingId, doorId}`), creature (`monsterDeclarations[].id`, equal to the `monsterBindings` key), prop and group (scene ids, equal to the `propDeclarations`/`propBindings` keys), hex (cell), label, partyStart, castMember (ref). Setters: `selectHex`, `selectScene`, `creatures.select`, `cast.select`, `doorEditing.select`, `wallEditing.select`, `selectPartyStart`. Home sections: `openDefinitions(section)` with `ENCOUNTER_SECTIONS`; `focusEnding({id})` opens one ending's form; no focus for cast, tables, factions, concealments.
+- **Lock.** `WorldBuildingConcept` props `roomPublishing?` and `onPublishBusyChange?`; `handlePublishBusy` is called only by `RoomPublishingPanel`, which the studio branch never renders; `EncounterStudioWorkspace.test.tsx` asserts the studio passes neither.
+- **Tests.** `RoomPublishingPanel.test.tsx` has a file-local `fakeClient(): AuthoringClient` over deferreds plus `vi.mock`s of `useCreateLobby`, `useSetLobbyReady`, `useStartLobbyEncounter`. `EncounterStudioIntegration.test.tsx` mounts the real owner with `compositionSource, storage, idFactory` and asserts no Save & Play button (lines 1689–1693). `usePlayAuthoredDungeon.test.tsx` covers the launch sequence.
+
+## S6 sequence
+
+```
+S6-T1 the lock and the capability ──▶ S6-T3 the row and panel ──▶ S6-T5 integration and the walk
+S6-T2 one key ───────────────────────┤                            │
+S6-T4 refusal jumps ─────────────────┘                            │
+S6-T6 finishes say studio-only ───────────────────────────────────┘
+```
+
+One branch off `dev`, one PR to `dev`. T1 and T2 before T3; T4 is a pure module T3 consumes. `EncounterStudioWorkspace.tsx` is edited by T1, T2, T3 in that order by one builder.
+
+## S6 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S6-Q1 | **Where the hook lives.** `StudioSurface` is rendered inside the owner through `studioPresentation.render(session)`, and `session.document` is `{draft, scope}`. | **lead-resolved:** the hook is called in `StudioSurface`, where the key, the panel and the header are; busy reaches the owner through the session (S6-T1). | nothing |
+| S6-Q2 | **Which key default.** The hook defaults to `room-<id>`; the studio's export defaults to the slug of the name (S4-Q2). | **R16:** slug of the name. The studio seeds the hook's key once per draft id with `defaultDraftKey(document)`, or the imported key when `fileKey.roomId` matches. | nothing |
+| S6-Q3 | **The live preview against the API.** `usePutDungeonPreview` sends a validate-only put 400 ms after every edit. | **lead-resolved:** keep it, gated on the authoring gate being `live`, because it is what makes the exit-under-a-prop refusal appear before Save and because World Builder already runs it. `enabled: gate === 'live'`. | nothing |
+| S6-Q4 | **Home sections without a focus.** Tables, factions, concealments and cast have no focus prop. | **lead-resolved:** a jump to one of those opens the section (`openDefinitions`); the row id is carried in the sentence. Per-row focus for them is a follow-up noted on #1236. Endings already focus by id; creatures, props, doors, hexes and cast members select. | nothing |
+| S6-Q5 | **Two buttons or one.** | **lead-resolved:** the header has one button, Save and Play (R15). The panel it opens carries Save to server for an author who wants the file without playing, the key field, the overwrite ask, the refusal list and the status line. | nothing |
+| S6-Q6 | **The character on the walk.** The scripted walk needs a character on Home. | **lead-resolved:** the driver creates one through the existing character flow as the wave B walk driver did (`tools/browser/_job_*.mjs` history), or reuses the one the operator's stack holds; it never seeds redis by hand. | S6-T5 |
+
+## Task S6-T1: The lock and the capability
+
+**Delivers:** P1 (the plumbing), P7.
+**Owner:** rpg-dnd5e-web; `App.tsx`, `encounter-studio/EncounterStudioWorkspace.tsx`, `encounter-studio/studioSession.ts`, `world-building/WorldBuildingConcept.tsx`.
+**Prerequisites:** none.
+**Files:** modify `App.tsx` (pass `characterId` and `onPlay` to `EncounterStudioWorkspace`, the same values `WorldBuilderWorkspace` gets); modify `EncounterStudioWorkspace.tsx` (props `characterId: string | null`, `onPlay: (encounterId: string, characterId: string) => void`; pass `onPublishBusyChange` to the owner; pass both through `StudioSurfaceProps`); modify `studioSession.ts` and the owner's studio session construction; tests `EncounterStudioWorkspace.test.tsx`, `EncounterStudioIntegration.test.tsx`.
+**Interfaces:**
+
+```ts
+// studioSession.ts — new member
+publishing: {
+  busy: boolean;                       // mirrors the owner's publishBusy
+  setBusy(next: boolean): void;        // calls the owner's handlePublishBusy
+};
+// EncounterStudioWorkspace props
+characterId: string | null;
+onPlay: (encounterId: string, characterId: string) => void;
+```
+
+**Behavior:** `session.publishing.setBusy(true)` makes the owner refuse edits, undo, redo, selection and `saveLocalDraft` with its existing notice and forces the tool to select; `setBusy(false)` releases and clears the notice. Home, view and frame changes are not gated. `characterId` and `onPlay` reach `StudioSurface` unchanged.
+**Tests:**
+- › `publishing.setBusy(true) makes an edit a refusal and canUndo false; setBusy(false) releases` (integration test, real owner);
+- › `the studio passes onPublishBusyChange to the owner and characterId/onPlay to the surface` (workspace test; replaces the assertion that they are absent).
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+
+## Task S6-T2: One key
+
+**Delivers:** P3.
+**Owner:** rpg-dnd5e-web; `encounter-studio/StudioDraftFile.tsx`, `encounter-studio/draftFile.ts`, `EncounterStudioWorkspace.tsx`.
+**Prerequisites:** S6-T1 (the surface hosts the hook).
+**Files:** modify `StudioDraftFile.tsx` (props `key: string`, `onKeyChange(next: string)`; remove the local key state; keep `onFileKey` on import); modify `EncounterStudioWorkspace.tsx` (`StudioSurface` calls `useRoomPublishing` and seeds its key).
+**Interfaces:**
+
+```ts
+// StudioSurface
+const publishing = useRoomPublishing({
+  draft: session.document.draft, scope: session.document.scope,
+  capability: { characterId, onPlay }, client: authoringClient,
+  onImportDraft: session.importDocument, onBusyChange: session.publishing.setBusy,
+});
+// seed, once per draft id: fileKey?.roomId === draft.id ? fileKey.key : defaultDraftKey(session.document)
+```
+
+**Behavior:** the Draft file panel and the publish panel show the same key field value; typing in either updates the hook's key (which drops an armed overwrite and the saved memory); export names the file `{key}.yaml`; an import sets `fileKey` and the hook's key to the file's key; a new draft id reseeds from the name. The server's key refusal (`FieldError` with an empty path and the registry's invalid-key sentence, or the mismatch sentence) renders under the key field.
+**Tests:**
+- › `export and publish share one key: typing in Draft file changes the key the publish row shows`;
+- › `the key seeds from the room name slug on a fresh draft`;
+- › `an import adopts the file's key for both`;
+- › `changing the key drops an armed overwrite` (hook behavior, asserted through the studio panel).
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+
+## Task S6-T3: The row and the panel
+
+**Delivers:** P1, P4, P6, P8, S6-Q5.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioPublish.tsx`; `EncounterStudioWorkspace.tsx` (`es-save` group); `author/useAuthoringGate.ts` unchanged.
+**Prerequisites:** S6-T1, S6-T2, S6-T4.
+**Files:** create `StudioPublish.tsx` and `StudioPublish.test.tsx`; modify `EncounterStudioWorkspace.tsx` (button in `es-save` after the Draft file toggle; panel below the header beside the Draft file panel, same `es-panel` styling from S5); extract `RoomPublishingPanel.test.tsx`'s `fakeClient` into `author/testing/fakeAuthoringClient.ts` (move, no behavior change; the World Builder test imports it).
+**Interfaces:**
+
+```ts
+export interface StudioPublishProps {
+  publishing: ReturnType<typeof useRoomPublishing>;
+  gate: AuthoringGateState;            // from useAuthoringGate(), with retry
+  characterId: string | null;
+  jumps: RefusalJump[];                // from S6-T4, computed by the surface
+  onJump(target: RefusalTarget): void; // the surface routes it (S6-T4)
+}
+```
+
+**Behavior:**
+- Header button "Save & Play": disabled with the P6 sentence as its help when `gate !== 'live'` or `characterId === null`; otherwise calls `publishing.saveAndPlay()`. Pressing it opens the panel. A status span beside it reads the phase: "Checking key…", "Saving…", "Starting…", "Saved as {key}", or nothing.
+- Panel: the key field (T2); "Save to server" (enabled when `gate === 'live'`); the overwrite ask "{key} already exists on the server. Replace it?" with Replace and Keep both, focus moving to Replace; the refusal list (T4) for whichever of `preview.errors` or `saver.errors` is current; "Save failed: {message}. Your draft is unchanged." for `saver.status === 'error'`; the launch error sentence from `launch.error`; the gate sentence with Retry when `gate === 'unreachable'`.
+- The preview runs with `enabled: gate === 'live'` (S6-Q3); the studio does not render its atlas.
+- After `onPlay` the app leaves the studio; nothing in the studio clears the local draft.
+**Tests (StudioPublish.test.tsx, fake client, launch hooks mocked as in the World Builder test):**
+- › `gate-off disables Save & Play with the server sentence and leaves export usable`;
+- › `no character disables Save & Play with the Home sentence and leaves Save to server enabled`;
+- › `Save & Play on a new key: GetDungeon NotFound, PutDungeon with the exact export bytes, then createLobby, setReady, startEncounter with the key, then onPlay(encounterId, characterId)`;
+- › `Save & Play on an existing key asks; Keep saves nothing; Replace saves and plays`;
+- › `a second Save & Play to the same key does not ask`;
+- › `PutDungeon invalid shows the refusals and launches nothing`;
+- › `transport failure shows "Save failed" and the draft is unchanged`;
+- › `startEncounter failure shows the seam sentence and no onPlay`;
+- › `edits during a save are refused and the saved bytes are the captured bytes` (integration: change the name after pressing, resolve the put, assert the put's yaml equals the capture and the notice fired).
+**Verification:** `npx vitest run src/concepts/encounter-studio src/concepts/world-building/RoomPublishingPanel.test.tsx` passes.
+
+## Task S6-T4: Refusal jumps
+
+**Delivers:** P5, S6-Q4.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/refusalJump.ts` and `refusalJump.test.ts`; the routing in `StudioSurface`.
+**Prerequisites:** none for the module; S6-T1 for the routing.
+**Interfaces:**
+
+```ts
+export type RefusalTarget =
+  | { kind: 'creature'; id: string }
+  | { kind: 'prop'; id: string }
+  | { kind: 'door'; target: StudioDoorTarget }
+  | { kind: 'hex'; cell: HexCoordinate }
+  | { kind: 'castMember'; ref: string }
+  | { kind: 'home'; section: 'tables'|'factions'|'dispositions'|'intel'|'concealments'; id?: string }
+  | { kind: 'ending'; id: string };
+export interface RefusalJump { path: string; message: string; target: RefusalTarget | null; }
+export function refusalJumps(errors: FieldError[], document: Readonly<RoomDraftDocument>): RefusalJump[];
+```
+
+**Behavior (prefix map, longest match, trailing segments ignored):**
+- `room.room.monsterBindings.<id>` or `room.room.monsterDeclarations[<i>]` → creature `<id>` or `monsterDeclarations[i].id`;
+- `room.room.propBindings.<id>` or `room.room.propDeclarations.<id>` → prop `<id>` when it is a scene item;
+- `room.room.doorBindings.<id>` → door target found by scanning `walls[].openings[].door.id`;
+- `exits[<i>]` → hex at `scope.exits[i].cell`;
+- `templates.<id>` → castMember `dnd5e:monsters:<id>`;
+- `tables.<id>`, `factions.<id>`, `dispositions[<i>]`, `intel[<i>]`, `concealments.<id>` → home section with the id;
+- `endings[<i>]` → ending `endings[i].id`;
+- anything else, `line N`, or empty → `target: null`.
+A target whose id no longer exists in the document is `null`. The surface routes: creature → `creatures.select`; prop → `selectScene([id])`; door → `doorEditing.select`; hex → `selectHex`; castMember → `cast.select`; home → `openDefinitions(section)`; ending → `focusEnding`. The row renders as a button "{message}" with the noun name when `target` is set, otherwise a sentence with the path in small type.
+**Tests (`refusalJump.test.ts`, castle fixture plus a door and an exit):**
+- one case per bullet above, plus › `an unknown id is a sentence`, › `an empty path is a sentence`, › `line 12 is a sentence`, › `a deeper tail still jumps` (`room.room.monsterBindings.goblin-1.on.time[0].toward.at` → creature goblin-1).
+**Verification:** `npx vitest run src/concepts/encounter-studio/refusalJump.test.ts` passes.
+
+## Task S6-T5: Integration and the walk
+
+- [ ] `npm ci`; `npm run ci-check` once; grep the log.
+- [ ] Stack `local/studio-s6`: web :3030, api :8115 (memory `studio-walk-port-is-fixed`), `RPG_API_REF=dev`, web from a detached `rpg-dnd5e-web/.worktrees/studio-s6-walk` at the PR head. Confirm the API log prints `AuthoringService registered`.
+- [ ] Driver `tools/browser/_job_s6_play.mjs` in the job tmp dir, run from `tools/browser/`; screenshots per step; the character per S6-Q6.
+- [ ] Post the checklist below on rpg-dnd5e-web#1236 as `- [ ]` boxes before the PR leaves draft.
+
+**Walk and #1236 checklist:**
+1. Open the studio from Home with a character picked; the header shows Save & Play enabled.
+2. Load the castle fixture as the local draft; the key reads the slug of its name in both the Draft file panel and the publish panel.
+3. Press Save & Play on a fresh key: the status runs Checking key, Saving, Starting; the game view opens on the room; the cast stand where placed in their looks; the props are there; the authored door opens through the existing interaction.
+4. Back on Home, reopen the studio: the draft is the same; press Save & Play again: no overwrite ask.
+5. Change the key to one that exists: the ask appears; Keep saves nothing; Replace saves and plays.
+6. Put an exit under a blocking prop: within a second the refusal list shows the exit's refusal; clicking it selects the hex and opens its inspector; remove the exit and the list clears.
+7. Clear the character on Home and reopen the studio: Save & Play is disabled with the Home sentence; Save to server still saves.
+8. Bring the stack up with `RPG_AUTHORING_ENABLED` unset once: the control is disabled with the server sentence; the Draft file export still downloads.
+9. Press Save & Play, then try an edit and undo before the put resolves: both are refused with the notice; the saved file's bytes equal the capture.
+10. Stop the API mid-save: "Save failed … draft is unchanged"; bring it back; Save & Play succeeds.
+11. Wall inspector: the finish field carries the studio-only help line (P9).
+
+## Task S6-T6: Finishes say studio-only
+
+**Delivers:** P9.
+**Owner:** rpg-dnd5e-web; the wall view and the hex view's region fields in `encounter-studio/` (S0's `StudioArrangeFields.tsx` or its S5 successor, found by the `wallFinish` and lighting field labels).
+**Behavior:** one `FieldHelp` line (S5) under the wall finish, region wall finish and region lighting fields: "Play does not render this yet; it stays in the studio until the look catalog."
+**Tests:** › `the wall finish field carries the studio-only help line`.
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+
+## S6 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| P1 one control, both homes and views, saves then launches | T1, T3 | T3 `Save & Play on a new key …` and the workspace test; walk 1, 3 |
+| P2 same bytes as the export | T2, T3 | T3 new-key test asserts the put's yaml equals `exportDraftYaml(document, key)` |
+| P3 one key, slug default, import adopts | T2 | T2 tests; walk 2 |
+| P4 overwrite asked once per key | T3 | T3 existing-key and second-save tests; walk 4, 5 |
+| P5 refusals jump | T4, T3 | T4 tests; T3 invalid test renders jumps; walk 6 |
+| P6 gate off, unreachable, no character | T3 | T3 gate and character tests; walk 7, 8 |
+| P7 lock and stale responses | T1, T3 | T1 lock test; T3 edits-during-save test; the hook's own tests for retired captures; walk 9 |
+| P8 failures named, draft kept | T3 | T3 transport and launch-failure tests; walk 10 |
+| P9 finishes say studio-only | T6 | T6 test; walk 11 |
+
+## S6 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| existing `useRoomPublishing` | S6-T2, S6-T3 | the input and result shapes in the baseline; `setKey` drops overwrite memory; `saveAndPlay` = save then `play(key)` | baseline | `RoomPublishingPanel.test.tsx` (unchanged) and the T3 tests |
+| existing `usePlayAuthoredDungeon` through the hook | S6-T3 | `createLobby → setReady → startEncounter{dungeonKey} → onPlay(encounterId, characterId)` | baseline | `usePlayAuthoredDungeon.test.tsx`; T3 new-key test |
+| existing `useAuthoringGate` | S6-T3 | `'probing'|'live'|'gate-off'|'unreachable'`, `retry()` | baseline | T3 gate tests |
+| existing `encodeSingleRoomDungeon` / S4 `exportDraftYaml` | S6-T2 | the same bytes for the same key, draft and scope | baseline | T3 asserts equality |
+| S6-T1 `session.publishing.setBusy` | S6-T2's `onBusyChange` | boolean, calls the owner's `handlePublishBusy` | new | T1 lock test; T3 edits-during-save test |
+| S6-T4 `refusalJumps` | S6-T3 panel, surface routing | `RefusalJump[]` with `target | null` | new | T4 tests; walk 6 |
+| App `characterId`, `onPlay` | S6-T1 | the same values `WorldBuilderWorkspace` receives | baseline in App, new on the studio | workspace test; walk 1, 3 |
+| rpg-api registry, lobby service | the hooks | `PutDungeon`, `GetDungeon`, `CreateLobby`, `StartEncounter{dungeon_key}`; authoring flag | baseline, `local-dev` compose sets the flag | the walk |
+
+**Shared files.** `EncounterStudioWorkspace.tsx` (T1, T2, T3) and `StudioDraftFile.tsx` (T2) are edited in task order by one builder. `RoomPublishingPanel.test.tsx` changes only its import of the fake client.
