@@ -7,6 +7,8 @@ planning guide: ../../.agents/skills/design/planning.md
 
 # Encounter studio S0 — the selection inspector
 
+**S0 SHIPPED 2026-10-14:** web dev 543396d5 (rpg-dnd5e-web#1270, with #1272 and #1273; design #581 on main); follow-ups web#1274, rpg-project#582, stale strings → #579.
+
 ## Goal and scope
 
 One inspector, keyed by the single current selection, replaces the Build
@@ -613,7 +615,7 @@ the stat block is followed by id. A look is per placement, with a shuffle.
 A cast member selected on the home lights up its placements on the map.
 A prop's variant pick is not in S1.
 
-**Repositories.** Web only, stacked on rpg-dnd5e-web `feat/studio-s0-inspector`.
+**Repositories.** Web only. S0 has shipped, so S1 branches from rpg-dnd5e-web `dev` (543396d5 or later).
 rpg-toolkit, rpg-api and rpg-api-protos are not touched: every edit writes
 keys the dialect already declares (`templates`, `monsterDeclarations[].ref`
 and `.appearanceRef`, `monsterBindings.<id>.faction`) or the studio's own
@@ -667,7 +669,7 @@ and `.appearanceRef`, `monsterBindings.<id>.faction`) or the studio's own
 
 | repo | revision |
 |---|---|
-| rpg-dnd5e-web `feat/studio-s0-inspector` | f0e0ef8e |
+| rpg-dnd5e-web `feat/studio-s0-inspector` | f0e0ef8e (inspected; S0 merged to `dev` as 543396d5) |
 | rpg-toolkit `origin/main` | as S0 |
 | rpg-project `origin/main` | 1c89e08 (design amendments #573, #581) |
 
@@ -688,7 +690,7 @@ S1-T1 cast model ──▶ S1-T2 cast on the home ──▶ S1-T3 palette and st
                                                           └──▶ S1-T6 shuffle ──────────────────────────────────┘
 ```
 
-One web branch stacked on `feat/studio-s0-inspector`, one PR to `dev`, opened as a draft until S0 merges; it catches up by merging `dev` in, never by a rebase or force-push. Tasks are commits in order; one builder, no parallel writes.
+One web branch off `dev`, one PR to `dev`. It catches up by merging `dev` in, never by a rebase or force-push.
 
 ## S1 open items
 
@@ -947,7 +949,7 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 
 **S1 deferrals:** the per-instance prop variant pick and surface material (R14, R14b); armor, weapon and base pick-lists from a rulebook catalog (S1-Q3, S5); renaming a table (#575 decision 4's table half).
 
-**Shared files.** S1 stacks on S0 and edits S0's `StudioInspector.tsx`, `studioSession.ts` and `WorldBuildingConcept.tsx`. S1 starts only from S0's final head, and takes later S0 fixes by merging the S0 branch in.
+**Shared files.** S1 edits S0's `StudioInspector.tsx`, `studioSession.ts` and `WorldBuildingConcept.tsx`, now on `dev`. S1 branches from `dev` after 543396d5.
 
 ## Later slices
 
