@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0, S1, S5, S2 and S3, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 is a stub
+status: PLAN for slices S0, S1, S5, S2, S3 and S4, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 planned 2026-10-14 against the S2 branch (S3 not yet pushed)
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -1750,10 +1750,248 @@ interface LayoutPlacedEditing {
 
 **Shared files.** `LayoutViewport.tsx` (T1, T2) and `EncounterStudioWorkspace.tsx` (T3, T4) are edited in order by one builder.
 
+---
+
+# Encounter studio S4 — the hidden nouns, and the draft as a file
+
+Planned 2026-10-14. The S3 branch (`feat/studio-s3-overview`) was not yet
+pushed when this was planned, so the baseline is the S2 branch at 6abde8ac,
+which S3 stacks on. S4 builds after S3 merges and branches from `dev` then.
+The builder re-checks every path below against `dev` first. Authority:
+design.md R8, with R1 and R2 for placement; README.md's door, floor-hex and
+"Endings and concealments" forms; rpg-project#578 and the operator's scope
+addition on it (export and import of the local draft as a file).
+
+## S4 goal and scope
+
+Every saved noun has a studio view. A door's inspector edits open, closed or
+locked, its lock's checks, and the concealment that hides it. A floor hex's
+inspector edits its exit. The Encounter home gains Endings and Concealments,
+and shows Scenarios read-only. The author can export the draft as the file
+the decoder accepts, and import one. Import refuses what the decoder
+refuses, naming the field.
+
+**Repositories.** Web only, rpg-dnd5e-web, from `dev` after S3. No toolkit,
+API or proto change. No new document key: `doorBindings`, `exits`,
+`endings`, `concealments` and `scenarios` already exist and survive save.
+
+**Non-goals:** Save & Play (rpg-dnd5e-web#1236), opening a reference
+encounter from the API, multi-room sites (rpg-project#528), and editing
+scenario bindings.
+
+## S4 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| H1 | The door view edits the state: open, closed or locked. Locked carries one or more lock checks (ability, optional tool, DC); any one beats the lock. | R8; README door form |
+| H2 | The door view's Hidden by picks the concealment whose `props` list the door. Hiding a door never hides its wall or floor. | R8; epic #545 boundary |
+| H3 | The hex view edits the hex's exit: add one with an id, rename it, remove it. | R8; README floor-hex form |
+| H4 | Endings on the Encounter home: an id and a `when` predicate, edited with the same predicate vocabulary as `until` and `arrives`. | R8, R2 |
+| H5 | Concealments on the Encounter home: an id; notice and search checks; attempts (max, reset hexes); members (cells painted, props and doors clicked on the map); and a read-only "revealed by" list of intel. | R8, R2 |
+| H6 | Scenarios on the Encounter home are read-only: each scenario id and its field → id bindings. | lead brief |
+| H7 | Export writes the exact bytes `encodeSingleRoomDungeon` produces, as a `.yaml` file named by its dungeon key. | #578 scope addition |
+| H8 | Import decodes through the existing decoder. A refusal names its field and changes nothing. A v2 file is refused with one plain sentence naming the dialect. An accepted import replaces the draft in one undoable step. | #578 scope addition |
+| H9 | The fact index's ending readers link to the new Endings form. Concealments carry no fact, so their reveal links appear on the concealment form. | lead brief; S2-T7 |
+| H10 | The studio never offers a field the toolkit refuses (S4-Q1). | design Law: the document's refusals |
+
+## S4 constraints
+
+- **No new key.** Every form writes a key the dialect declares, confirmed against rpg-toolkit `single_room.go`. That file has `RoomDoorBinding { closed, locked: CheckSpec }`, `RoomExit { id, cell }`, `EndingSpec { id, when }`, `ConcealmentSpec { attempts { max, reset_hexes }, notice, checks, cells, props }`, and `scenarios: map[string]map[string]string`.
+- **One predicate grammar.** The predicate grammar has exactly one key per predicate: fact, round, down or stance (`predicate.go`). An ending's `when` refuses `holds`, as the decoder does. "Either" is two endings, because any ending ends the run.
+- **One vocabulary.** Checks pick abilities from the same `APPROACH_ABILITIES` list the option checks use, and predicates read through S2's `predicateSentence`.
+- **The decoder is the gate.** Import uses `readSingleRoomDungeon` and `decodeSingleRoomDungeon`, then the owner's `importCanonicalRoomYaml`. No second parser.
+- **Reuse field lists, not UI.** `DoorStates.tsx`, `ConcealmentPanel.tsx` and `src/author/EndingsPanel.tsx` supply the fields and edit functions (`doorBindingEdits.ts`, `concealmentEdits.ts`), and the studio builds its own views.
+
+## S4 inspected baseline (2026-10-14)
+
+| repo | revision |
+|---|---|
+| rpg-dnd5e-web `feat/studio-s2-readback` | 6abde8ac (S3 not yet pushed) |
+| rpg-toolkit `origin/main` | 2f570aa9 |
+| rpg-api `origin/dev` | registry reads `content/*.yaml` (`internal/dungeons/registry.go`) |
+
+- **Door state.** `DoorStates.tsx` renders open, closed or locked with lock rows over `doorBindingEdits.ts`: `setDoorBindingState`, `addDoorApproach`, `patchDoorApproach`, `removeDoorApproach` and `normalizeDoorBinding`. It is mounted only on the non-studio path.
+- **Concealments.** `ConcealmentPanel.tsx`, over `concealmentEdits.ts`, adds members by clicking hexes, walls, doors and props while `activeConcealmentId` is armed in the owner. It is mounted only on the non-studio path.
+- **Endings.** `src/author/EndingsPanel.tsx` `EndingsSection` edits an id and a predicate. The studio has no endings view. S2's `factIndex.ts` already lists ending `when` as a reader, and its comment notes that endings have no studio view yet.
+- **Exits.** `SiteExit { id, cell }` in `siteScope.ts`; the studio has no exit view. The toolkit requires the cell to be standable (`RoomExit` doc).
+- **The attempts mismatch.** The web's `SiteDiscoveryAttempts` has `max`, `reset_hexes` and `lifetime`. The toolkit's `DiscoveryAttemptsSpec` has `max` and `reset_hexes` only. A throwaway decode at rpg-toolkit `origin/main`, in a scratch worktree since removed, added `attempts: { max: 2, lifetime: run }` to `testdata/world-builder-v4-tomb-vault.yaml`. The result: `concealments.vault.attempts.lifetime: "lifetime" is not a key this build reads: they are max, reset_hexes`. The control `{ max: 2, reset_hexes: 3 }` decoded. So the web accepts a key the toolkit refuses (S4-Q1).
+- **Export and import exist in the World Builder.** `RoomPublishingPanel.tsx` has a "Canonical YAML" disclosure that downloads the encoder's YAML as `single-room-dungeon.yaml`, and imports pasted YAML. Import goes through `useRoomPublishing` `importYaml`, then `decodeSingleRoomDungeon`, then the owner's `importCanonicalRoomYaml`, which pushes the old document onto history. The dungeon key lives in `useRoomPublishing`'s state, inside that panel. The studio mounts neither.
+- **Dialects.** `readSingleRoomDungeon` returns `{ dialect: 'other', version }` below version 3. The decoder throws one sentence for the first refusal, naming its field (for example, "Unsupported single-room field: x").
+- **Format.** rpg-api's registry stores and loads `<key>.yaml` (`internal/dungeons/registry.go`). Publishing sends the encoder's YAML. JSON is not a registry format.
+
+**Export format: YAML.** It is the one format the API registry stores and
+publishing sends, the encoder already produces it, and the decoder reads
+it. A JSON export would be a second format with no reader on the server.
+
+## S4 sequence
+
+```
+S4-T1 door view ──▶ S4-T4 concealments ──▶ S4-T7 integration
+S4-T2 exits on the hex view ─────────────┤
+S4-T3 endings ───────────────────────────┤
+S4-T5 scenarios read-only ───────────────┤
+S4-T6 export and import ─────────────────┘
+```
+
+One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and concealment membership meet on `concealments.<id>.props`. `EncounterStudioWorkspace.tsx` is edited by T3, T4, T5 and T6 in that order.
+
+## S4 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S4-Q1 | **`attempts.lifetime`.** The web validator accepts it and the toolkit refuses it (evidence above). Should the web validator refuse it with the toolkit's sentence? A stored draft carrying it would then fail to load until it is removed. Or should the toolkit add the key? **Assumption:** S4's form never offers `lifetime`, and the validator question goes to the operator. | open | the validator change only |
+| S4-Q2 | **The dungeon key for export.** A local draft has no key. **Assumption:** Export asks for a key, defaulting to the last imported file's key for this draft, else a slug of the draft's name, with the encoder's key rule. The key is held in studio state and is never a document field. | assumption | S4-T6 |
+| S4-Q3 | **"At the field" for an import refusal.** The file is not loaded, so no form field exists to mark. **Assumption:** the refusal sentence, which names its YAML path, shows in the import dialog, and nothing changes. The web decoder reports the first refusal, not every one. | assumption | S4-T6 |
+| S4-Q4 | **Exit cells must be standable.** The toolkit checks standability at decode. **Assumption:** the hex view offers Add exit only on a walkable hex. Anything finer is the decoder's refusal at Save & Play. | assumption | S4-T2 |
+| S4-Q5 | **Concealment members beyond doors and props.** The legacy panel also lets walls be clicked into `props`. **Assumption:** S4 keeps exactly the legacy member kinds. | assumption | S4-T4 |
+
+---
+
+## Task S4-T1: The door view
+
+**Delivers:** H1, H2.
+**Owner:** rpg-dnd5e-web; `StudioInspector.tsx` (`DoorView`), `studioSession.ts`, `WorldBuildingConcept.tsx`.
+**Files:** as Owner; tests in `StudioInspector.test.tsx` and `WorldBuildingConcept.test.tsx`.
+**Interfaces:** the session gains:
+- `doors.setBinding(doorId: string, next: RoomDoorBinding | undefined): boolean`, one transaction through `normalizeDoorBinding` and `withDoorBinding`;
+- `concealments.setDoorHiddenBy(doorId: string, concealmentId: string | null): boolean`, which removes the door id from every concealment's `props` and adds it to the chosen one, in one transaction.
+
+**Behavior:**
+- State is a pick-list: open, closed, locked. It applies on change, per S5-Q1.
+- Locked shows lock rows: ability from `APPROACH_ABILITIES`, an optional tool ref, and a DC. Add and Remove call the existing edits. A locked door is shut by definition, as `DoorStates` says.
+- Hidden by lists the concealments, plus "not hidden".
+- The wall and the floor are never added to the concealment by this field.
+
+**Tests:** › `setting locked writes a lock check and one history entry`; › `removing the last lock check returns the door to closed`; › `Hidden by moves the door between concealments in one step`; › `hiding a door leaves its wall out of the concealment`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T2: Exits on the hex view
+
+**Delivers:** H3, S4-Q4.
+**Owner:** rpg-dnd5e-web; `StudioInspector.tsx` (`HexView`); `studioSession.ts` (`exits.set(cell, id | null): boolean`).
+**Behavior:** a walkable hex with no exit shows Add exit, which asks for an id. A hex with an exit shows its id, with rename and Remove. Ids are unique, and a duplicate is refused at the field, using the validator's sentence. An unwalkable hex shows no Add exit. The Layout overview draws an exit marker at its cell, using the S3 placed-overlay layer.
+**Tests:** › `adding an exit writes exits[] with its cell`; › `a duplicate exit id is refused at the field`; › `an unwalkable hex offers no exit`; › `the exit marker draws at its cell`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T3: Endings on the Encounter home
+
+**Delivers:** H4, H9.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioEndings.tsx`; new `world-building/PredicateEditor.tsx`, extracted from `SitePolicies.tsx`'s `until` editor and `ArrivesEditor`; `EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS` gains `endings`); `factIndex.ts`.
+**Interfaces:** `PredicateEditor({ value, onChange, forms })`, where `forms` lists the allowed predicate forms. Endings pass fact, round, down and stance, never `holds`. Each value reads back through `predicateSentence`.
+**Behavior:**
+- Endings lists each ending as "{id}: when {sentence}", in authored order, with Add, rename, Edit when, Remove and reorder.
+- An ending with no `when` cannot be applied, because the decoder requires one.
+- The fact index's ending readers now open this form at that ending.
+- The `until` and `arrives` editors render through the same `PredicateEditor`, with their current forms.
+
+**Tests:** › `an ending reads as its sentence`; › `holds is not offered for an ending`; › `the fact index opens the ending it names`; › `the until and arrives editors behave as before` (existing tests green).
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T4: Concealments on the Encounter home
+
+**Delivers:** H5, H10, S4-Q1 (form side), S4-Q5.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioConcealments.tsx`; `studioSession.ts` (`concealments.update`, `concealments.armMembers(id) / disarm()`); `WorldBuildingConcept.tsx` (expose `activeConcealmentId` to the studio); `EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS` gains `concealments`).
+**Behavior:**
+- Each concealment shows its id; Notice checks; Search checks (at least one, as the validator requires); attempts with max and reset hexes; and members (cells, props and doors). It also shows "Revealed by", the intel records whose `reveals` names it, as read-only links.
+- "Add members on the map" switches to Build with the concealment armed. Clicking hexes, props and doors toggles membership, as the legacy panel does, and Done or Escape disarms.
+- `lifetime` is never offered.
+- Member cells are drawn in Layout with a hatch, using the S3 overlay layer, only while that concealment is armed or selected.
+
+**Tests:** › `a concealment needs one search check`; › `members picked on the map toggle in one step each`; › `revealed by lists the intel that names it`; › `lifetime is not offered`; › `removing a concealment clears its door's Hidden by`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T5: Scenarios, read-only
+
+**Delivers:** H6.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioScenarios.tsx`; `EncounterStudioWorkspace.tsx`.
+**Behavior:** lists each scenario id and its bindings as "field → {display name of the thing named}", using S5's names for placements. "None" when absent. Nothing is editable.
+**Tests:** › `a scenario binding reads with the bound placement's name`; › `scenarios render no inputs`.
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T6: Export and import the draft
+
+**Delivers:** H7, H8, S4-Q2, S4-Q3.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioDraftFile.tsx` (in the toolbar's Save group); `studioSession.ts` (`importDocument(draft, scope): boolean`, wrapping `importCanonicalRoomYaml`); `WorldBuildingConcept.tsx`.
+**Interfaces:**
+
+```ts
+export function exportDraftYaml(document: Readonly<RoomDraftDocument>, key: string): string;
+// encodeSingleRoomDungeon({ key, draft, ...scope }), the exact bytes; throws the encoder's sentence
+export type ImportResult =
+  | { ok: true; key: string }
+  | { ok: false; refusal: string };   // one sentence naming the field, or the dialect sentence
+export function importDraftYaml(text: string, session: Pick<EncounterStudioSession, 'importDocument'>): ImportResult;
+```
+
+**Behavior:**
+- Export asks for the key (S4-Q2) and downloads `{key}.yaml` with type `text/yaml;charset=utf-8`. If the encoder refuses, the sentence shows and no file is written.
+- Import reads a chosen `.yaml` file and calls `readSingleRoomDungeon`.
+  - For the other dialect, it refuses with: "This file is a version {n} dungeon, the multi-room dialect. The studio opens single-room files, version 3 or 4."
+  - Otherwise it decodes. A refusal shows "Could not import: {decoder sentence}" and changes nothing.
+  - An accepted import asks to replace the current draft, then replaces it through `importDocument` in one undoable step, and remembers the file's key for the next export.
+- The World Builder's Canonical YAML disclosure is untouched.
+
+**Tests:**
+- › `export writes exactly encodeSingleRoomDungeon's bytes`;
+- › `an exported file imports back to an equal document` (round trip on the S2 castle fixture plus the S4 walk's additions);
+- › `a v2 file is refused with the dialect sentence and changes nothing`;
+- › `a file with an unknown root key is refused naming the key`;
+- › `an accepted import is one history entry and undo restores the previous draft`;
+- › `the next export defaults to the imported key`.
+
+**Verification:** `npx vitest run src/concepts` passes.
+
+## Task S4-T7: Integration and the walk
+
+- [ ] `npm ci`; `npm run ci-check` once; grep the log.
+- [ ] Walk on the castle fixture as the local draft (S5-Q6 path), with a screenshot per step.
+- [ ] Post the checklist below on #578 as `- [ ]` boxes before the PR leaves draft.
+
+**Walk and #578 checklist:**
+
+1. Encounter home: Endings, Concealments and Scenarios sections are present. Scenarios is read-only.
+2. Place a King cast member. Add two endings: `king-slain` when the King is down, and `king-deposed` when *king-deposed* is known. Each reads as a sentence. The fact index lists the second as a reader.
+3. Add the concealment `stash`, with a Search check (Investigation DC 14) and a notice check (Perception DC 12). Add members on the map: two hexes and a chest. Layout hatches them while selected.
+4. Select a door. Set it to locked with Dexterity DC 15 and Thieves' Tools. Set Hidden by to `stash`. The stash lists the door; its wall is not listed.
+5. Select a walkable hex and add exit `postern`. The overview draws its marker.
+6. Export: `{key}.yaml` downloads.
+7. Clear the studio's local storage and reload: a blank draft.
+8. Import the file. Confirm, and everything from steps 2–5 is back. Undo returns the blank draft; redo returns the castle.
+9. Import a v2 file such as rpg-api `content/reference-hearing.yaml`: the dialect sentence, and nothing changes. Import a file with a typo'd root key: the refusal names it.
+
+## S4 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| H1 door state and lock | S4-T1 | the lock tests; walk 4 |
+| H2 hidden by | S4-T1, T4 | `Hidden by moves the door …`; `hiding a door leaves its wall out …`; walk 4 |
+| H3 exits | S4-T2 | the exit tests; walk 5 |
+| H4 endings | S4-T3 | the ending tests; walk 2 |
+| H5 concealments | S4-T4 | the concealment tests; walk 3 |
+| H6 scenarios read-only | S4-T5 | `scenarios render no inputs`; walk 1 |
+| H7 export | S4-T6 | `export writes exactly encodeSingleRoomDungeon's bytes`; walk 6 |
+| H8 import | S4-T6 | the round-trip, dialect, refusal and undo tests; walk 7–9 |
+| H9 fact index | S4-T3 | `the fact index opens the ending it names`; walk 2 |
+| H10 nothing the toolkit refuses | S4-T4 | `lifetime is not offered`; S4-Q1 |
+
+## S4 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| existing `doorBindingEdits.ts` | `DoorView` through `doors.setBinding` | binding normalisation | baseline | the T1 tests |
+| existing `concealmentEdits.ts` and `activeConcealmentId` | `StudioConcealments`, `setDoorHiddenBy` | membership toggles | baseline, owner-only until T4 exposes them | the T4 tests |
+| S4-T3 `PredicateEditor` | endings, `until`, `arrives` | allowed forms; sentences from S2 | new, extracted | T3 tests; existing editor tests |
+| S2 `predicateSentence`, `factIndexOf` | S4-T3 | sentences; ending readers | S2 | T3 tests |
+| S3 placed overlay | S4-T2 exit marker, S4-T4 hatch | a Layout layer | S3 | T2 and T4 tests |
+| existing `encodeSingleRoomDungeon`, `readSingleRoomDungeon`, `decodeSingleRoomDungeon`, `importCanonicalRoomYaml` | S4-T6 | exact bytes; dialect read; first refusal; undoable replace | baseline | the T6 tests |
+| encoded file | rpg-api registry and the toolkit decoder | `<key>.yaml`, the keys the dialect declares | baseline | the round-trip test; Save & Play later (#1236) |
+
+**Shared files.** `EncounterStudioWorkspace.tsx` (T3, T4, T5, T6) and `studioSession.ts` (T1, T2, T4, T6) are edited in task order by one builder.
+
 ## Later slices
 
 - S1, the cast and per-placement looks: rpg-project#575, planned above. A cast member selected on the home highlights its placements on the map, and the inspector shows the cast member. It is not a multi-selection (Q8).
 - S2, read it back: prose, fact index, tables heaviest first: rpg-project#576, planned above.
 - S3, overview on Layout: rpg-project#577, planned above. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
-- S4, the hidden nouns: exits, endings, concealments, door state: rpg-project#578.
+- S4, the hidden nouns: exits, endings, concealments, door state, and the draft as a file: rpg-project#578, planned above.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
