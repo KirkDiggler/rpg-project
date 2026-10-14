@@ -600,6 +600,8 @@ it in place.
 
 # Encounter studio S1 — the cast and per-placement looks
 
+**S1 SHIPPED 2026-10-14:** web dev 5c43f571 (rpg-dnd5e-web#1275); follow-up web#1276; the walk's density feedback → S5 (#579).
+
 Planned 2026-10-14 against the S0 branch, which S1 stacks on. Authority:
 design.md (R3, R4, R11; R14 and R14b deferred for S1), rpg-project#575, and
 the seven cast decisions the operator accepted on 2026-10-14, recorded on
@@ -969,7 +971,7 @@ and how it behaves, words instead of ids, help off the main flow, rows that
 summarise until opened, and no horizontal scroll at 1280 pixels.
 
 **Repositories.** Web only, rpg-dnd5e-web. S5 builds after S1
-(`feat/studio-s1-cast`, rpg-dnd5e-web#1275) merges to `dev`, and branches from that `dev`. No
+(`feat/studio-s1-cast`, rpg-dnd5e-web#1275) merges to `dev`. S1 has merged, so S5 branches from `dev` at 5c43f571 or later. No
 toolkit, API or proto change; no document change.
 
 **Non-goals:**
@@ -1006,7 +1008,7 @@ toolkit, API or proto change; no document change.
 
 | repo | revision |
 |---|---|
-| rpg-dnd5e-web `feat/studio-s1-cast` | bfdb0283 |
+| rpg-dnd5e-web `feat/studio-s1-cast` | bfdb0283 (inspected; S1 merged to `dev` as 5c43f571) |
 | rpg-project `origin/main` | as S1 |
 
 - **Type.** No type tokens exist. `encounterStudio.css` has 15 `font-size` declarations and `worldBuilding.css` 47, from 0.62rem to 0.78rem. Policy blocks use `h4`, `h5` and `h6` with no shared scale.
