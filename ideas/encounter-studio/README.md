@@ -179,7 +179,7 @@ or a prop (`propBindings.<id>.options`); the form is the same.
 
 | Field | Writes | Authored by | Widget |
 |---|---|---|---|
-| Size | `room.workspace` | human | number, or drag on the map; grows up and right, another side on request with a shift warning (R13) |
+| Size | `room.workspace` | human | number, or drag on the map; grows up and right by default, any side on request; no cell moves (R13) |
 | Default finishes | `room.scene` finishes | human | pick-from-list with thumbnails |
 | Void, lighting, standing | `play.void`, `play.lighting`, `play.standing` | human | pick-from-list |
 | Notes | `room.scene` labels | human | text |
@@ -380,8 +380,9 @@ The three approaches to the configuration surface:
 - **Multi-room sites (rpg-project#528).** The home's unplaced nouns move up
   to the site; the inspector and palette are unchanged; the overview's room
   list gains rooms; the row editor gains a map cell selector.
-- **Multi-select (R9).** The selection owner holds a set; the inspector
-  shows fields the set shares. The home forms are untouched.
+- **Multi-select as an editing mode (R9).** The selection owner holds a set;
+  the inspector shows fields the set shares. The Shift-pick that builds a
+  group is unchanged, and the home forms are untouched.
 - **A new placed kind, such as a trap.** One inspector view, one overview
   glyph, one encode path. The home is untouched unless the kind brings an
   unplaced noun.
