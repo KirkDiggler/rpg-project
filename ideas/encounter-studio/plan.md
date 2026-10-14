@@ -1841,10 +1841,11 @@ One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and 
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S4-Q1 | **`attempts.lifetime`.** The toolkit refuses it (evidence above), and the document's refusals are the studio's. | **lead-resolved 2026-10-14:** the web validator refuses `lifetime` with the toolkit's sentence; no toolkit change. A stored draft that carries it opens with the key stripped. A one-line notice names the concealment: "lifetime is not read by the engine; removed from {id}, attempts keep max and reset_hexes". **Deviation, for confirmation:** the strip is a load migration, not an undoable edit. A document carrying `lifetime` cannot pass the gate every commit and save goes through, so an undo entry restoring it would hold a draft that can never be saved. | S4-T4 |
+| S4-Q1 | **`attempts.lifetime`.** The toolkit refuses it (evidence above), and the document's refusals are the studio's. | **lead-resolved 2026-10-14:** the web validator refuses `lifetime` with the toolkit's sentence; no toolkit change. A stored draft that carries it opens with the key stripped. A one-line notice names the concealment: "lifetime is not read by the engine; removed from {id}, attempts keep max and reset_hexes". **Lead-accepted deviation:** the strip is a load migration, not an undoable edit. A document carrying `lifetime` cannot pass the gate every commit and save goes through, so an undo entry restoring it would hold a draft that can never be saved. | S4-T4 |
 | S4-Q2 | **The dungeon key for export.** | **lead-resolved:** the last imported file's key for this draft, else a slug of the draft's name, under the encoder's key rule. It is held in studio state and is never a document field. | nothing |
 | S4-Q3 | **"At the field" for an import refusal.** | **lead-resolved:** the first refusal with its YAML path is enough for S4. Listing every refusal is a follow-up noted on #578. | nothing |
-| S4-Q4 | **Exits only on walkable hexes.** | **lead-resolved, verified:** a throwaway test at rpg-toolkit `origin/main`, in a scratch worktree since removed, moved `testdata/world-builder-v4-tomb-vault.yaml`'s exit to `{ q: 40, r: 40 }`. It decoded, and `CompileSingleRoom` refused it with `exits[0].cell: at author's axial q=40 r=40: is not standable`. The control on its own cell decoded and compiled. The UI rule matches a real refusal, which the toolkit makes at compile (Save & Play), not at decode. Walkable is weaker than standable: a walkable hex under a blocking prop is still refused at compile. | nothing |
+| S4-Q4 | **Exits only on walkable hexes.** | **lead-resolved, verified:** a throwaway test at rpg-toolkit `origin/main`, in a scratch worktree since removed, moved `testdata/world-builder-v4-tomb-vault.yaml`'s exit to `{ q: 40, r: 40 }`. It decoded, and `CompileSingleRoom` refused it with `exits[0].cell: at author's axial q=40 r=40: is not standable`. The control on its own cell decoded and compiled. **Lead adjustment:** Add exit is offered only on standable hexes, so the UI rule matches the real refusal rather than a weaker one (S4-T2, S4-Q6). | nothing |
+| S4-Q6 | **Standability in the client.** The toolkit decides standability in its compiled field: `ValidateStaticPlacements` and `isStandable` in `rulebooks/dnd5e/encounter/cellfacts.go`. A cell must be standable, and not occupied by a blocks-movement prop. The web has no such helper. S4-T2 mirrors the rule as `standableCells(draft)`, citing that source, with tests mirrored from the toolkit's cases. That copies an engine rule into the client. The alternative is the API's `ValidateOnly` compile (`internal/dungeons/registry.go`), already used by the World Builder's publish preview, which answers for a whole file rather than per cell. | open, recorded; S4-T2 ships the mirror | nothing |
 | S4-Q5 | **Concealment member kinds.** | **lead-resolved, verified against `single_room.go` `ConcealmentSpec`:** `cells` must be `walkableHexes` cells, with no cell in two concealments. `props` takes a declared prop id (`propDeclarations`), an attached door id, or a structural wall id, with no id in two concealments. Walls stay. An undeclared scene prop is not offered. | S4-T4 |
 ---
 
@@ -1870,8 +1871,9 @@ One branch off `dev`, one PR to `dev`. T1 goes before T4, because Hidden by and 
 
 **Delivers:** H3, S4-Q4.
 **Owner:** rpg-dnd5e-web; `StudioInspector.tsx` (`HexView`); `studioSession.ts` (`exits.set(cell, id | null): boolean`).
-**Behavior:** a walkable hex with no exit shows Add exit, which asks for an id. A hex with an exit shows its id, with rename and Remove. Ids are unique, and a duplicate is refused at the field, using the validator's sentence. An unwalkable hex shows no Add exit, matching the compile-time refusal `exits[i].cell: … is not standable` (S4-Q4). A walkable hex under a blocking prop can still be refused at Save & Play. The Layout overview draws an exit marker at its cell, using the S3 placed-overlay layer.
-**Tests:** › `adding an exit writes exits[] with its cell`; › `a duplicate exit id is refused at the field`; › `an unwalkable hex offers no exit`; › `the exit marker draws at its cell`.
+**Interfaces:** new `world-building/standableCells.ts`: `standableCells(draft): ReadonlySet<string>`. A cell is in the set when it is in `walkableHexes`, its centre is not covered by a `blocksMovement` declared footprint or a wall, and no blocks-movement prop stands on it. The rule mirrors rpg-toolkit `encounter/cellfacts.go` `ValidateStaticPlacements` and `isStandable` under `play.standing: centre-covered` (S4-Q6).
+**Behavior:** a standable hex with no exit shows Add exit, which asks for an id. A hex with an exit shows its id, with rename and Remove. Ids are unique, and a duplicate is refused at the field, using the validator's sentence. A hex that is not standable (unwalkable, or under a blocking prop or wall) shows no Add exit, matching the compile-time refusal `exits[i].cell: … is not standable` (S4-Q4). The Layout overview draws an exit marker at its cell, using the S3 placed-overlay layer.
+**Tests:** › `adding an exit writes exits[] with its cell`; › `a duplicate exit id is refused at the field`; › `an unwalkable hex offers no exit`; › `a walkable hex under a blocking prop offers no exit`; › `standableCells matches the toolkit's cases: open floor, blocking footprint over the centre, non-blocking prop, wall`; › `the exit marker draws at its cell`.
 **Verification:** `npx vitest run src/concepts` passes.
 
 ## Task S4-T3: Endings on the Encounter home
@@ -1954,7 +1956,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 2. Place a King cast member. Add two endings: `king-slain` when the King is down, and `king-deposed` when *king-deposed* is known. Each reads as a sentence. The fact index lists the second as a reader.
 3. Add the concealment `stash`, with a Search check (Investigation DC 14) and a notice check (Perception DC 12). Add members on the map: two hexes and a chest. Layout hatches them while selected.
 4. Select a door. Set it to locked with Dexterity DC 15 and Thieves' Tools. Set Hidden by to `stash`. The stash lists the door; its wall is not listed.
-5. Select a walkable hex and add exit `postern`. The overview draws its marker.
+5. Select a standable hex and add exit `postern`; a hex under a blocking prop offers no Add exit. The overview draws its marker.
 6. Export: `{key}.yaml` downloads.
 7. Clear the studio's local storage and reload: a blank draft.
 8. Import the file. Confirm, and everything from steps 2–5 is back. Undo returns the blank draft; redo returns the castle.
@@ -1974,7 +1976,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 | H7 export | S4-T6 | `export writes exactly encodeSingleRoomDungeon's bytes`; walk 6 |
 | H8 import | S4-T6 | the round-trip, dialect, refusal and undo tests; walk 7–9 |
 | H9 fact index | S4-T3 | `the fact index opens the ending it names`; walk 2 |
-| H10 nothing the toolkit refuses | S4-T2, T4 | `validateSiteConcealments refuses lifetime …`; `a stored draft with lifetime opens stripped …`; `a wall can be a member …`; `an unwalkable hex offers no exit` |
+| H10 nothing the toolkit refuses | S4-T2, T4 | `validateSiteConcealments refuses lifetime …`; `a stored draft with lifetime opens stripped …`; `a wall can be a member …`; `an unwalkable hex offers no exit`; `a walkable hex under a blocking prop offers no exit` |
 
 ## S4 provider/consumer seams
 
