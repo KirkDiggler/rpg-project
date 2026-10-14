@@ -969,7 +969,7 @@ and how it behaves, words instead of ids, help off the main flow, rows that
 summarise until opened, and no horizontal scroll at 1280 pixels.
 
 **Repositories.** Web only, rpg-dnd5e-web. S5 builds after S1
-(`feat/studio-s1-cast`) merges to `dev`, and branches from that `dev`. No
+(`feat/studio-s1-cast`, rpg-dnd5e-web#1275) merges to `dev`, and branches from that `dev`. No
 toolkit, API or proto change; no document change.
 
 **Non-goals:**
@@ -1035,10 +1035,11 @@ One branch off `dev`, one PR to `dev`. T1 goes first because T2–T5 use its tok
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S5-Q1 | **Apply-on-change.** The owner commits one transaction per intent, so a self-contained picker (look, facing, faction) could apply on change. **Assumption:** pickers that are a whole edit apply on change; text and number fields stay staged behind Apply and Cancel. Mixed staging inside one form is the cost. | assumption, for the operator | S5-T4 |
-| S5-Q2 | **Help placement.** **Assumption:** a field-specific sentence becomes that field's help affordance; a sentence about the whole panel moves into one "About this panel" disclosure. | assumption | S5-T4 |
-| S5-Q3 | **Two placements with one map name** in a mind picker. **Assumption:** the map name, else the kind name, with " (2)" and so on in document order; the id stays the value and the `title`. | assumption | S5-T3 |
-| S5-Q4 | **Inspector width.** **Assumption:** keep the current width, `min(24rem, 100%)`, and remove the overflow's causes rather than widen. | assumption | S5-T2 |
+| S5-Q1 | **Apply-on-change.** | **lead-resolved 2026-10-14:** self-contained pickers (look, facing, faction) apply on change, each its own undo step; text and number fields stay staged behind Apply and Cancel | nothing |
+| S5-Q2 | **Help placement.** | **lead-resolved:** a field's help sits behind that field's "?"; panel-level help sits in one "About this panel" | nothing |
+| S5-Q3 | **Two placements with one map name.** | **lead-resolved:** "Guard", "Guard (2)" in document order; the id stays the value and the `title` | nothing |
+| S5-Q4 | **Inspector width.** | **lead-resolved:** the width stays `min(24rem, 100%)`; the overflow causes are fixed | nothing |
+| S5-Q6 | **Seeding the castle fixture as a local draft.** Static check at bfdb0283: `createCastleWorkspaceDocument()` (`encounter-studio/fixtures/castleWorkspace.ts`) returns a validated `RoomDraftDocument`, and the room owner persists drafts with `stringifyRoomDraft` under `rpg.concepts.world-building.room-draft.v3` (`ROOM_DRAFT_STORAGE_KEY`, `roomDraft.ts`). **Path:** a throwaway vitest writes `stringifyRoomDraft` of the fixture to JSON in the job tmp directory, and the driver sets that key in `localStorage` before opening the studio. The driver records whether the studio opened the castle; if it did not, it builds the room by hand and records that path instead. Not yet run. | **lead-resolved:** path recorded; the builder confirms at run time | nothing |
 | S5-Q5 | **Rulebook catalog over the wire for pick-lists.** | open; not in S5 (S1-Q3) | nothing in S5 |
 
 ---
@@ -1152,7 +1153,7 @@ export function FieldHelp(props: { field: string; children: ReactNode }): React.
 
 **Tests:** › `no button, status or message in the studio contains Arrange`: a render sweep over each view's text, plus a source grep in T6. › `Map name has a help affordance and no inline sentence`; › `the About this panel disclosure is collapsed by default`; › `changing facing commits one intent without Apply`; › `typing a map name commits only on Apply`; new `world-building/wallCornerFits.test.ts` › `the appearance-mismatch message does not say Arrange`.
 
-- [ ] Tests first; implement; update `CONTRACT.md`.
+- [ ] Tests first; implement; update `CONTRACT.md`. Test › `each apply-on-change picker edit is its own history entry` (S5-Q1).
 
 **Verification:** `npx vitest run src/concepts` passes; `git grep -nE "Apply Arrange|Cancel Arrange|in Arrange|Arrange to save" src/` prints nothing.
 **Completion evidence:** named tests; the grep.
@@ -1183,7 +1184,7 @@ export function FieldHelp(props: { field: string; children: ReactNode }): React.
 **Delivers:** proof of E1–E10.
 **Prerequisites:** S5-T1–T5.
 - [ ] `npm ci`; `npm run ci-check` once; grep the log.
-- [ ] Write `tools/browser/_job_s5_density.mjs` in game-dev (local by name). It seeds the studio's local draft from `encounter-studio/fixtures/castleWorkspace.ts`, exported to JSON by a one-off script. If that fixture cannot load as a draft, it authors an equivalent room by hand and records which it used. Then, at 1280×800, it opens each view and form listed in S5-T2, and records `scrollWidth` and `clientWidth`. It also screenshots the creature inspector in 3D, the prop inspector, one table with one entry open, and one option row.
+- [ ] Write `tools/browser/_job_s5_density.mjs` in game-dev (local by name). It seeds the studio's local draft from the castle fixture by the S5-Q6 path, and records in its output whether the castle loaded or the room was built by hand. Then, at 1280×800, it opens each view and form listed in S5-T2, and records `scrollWidth` and `clientWidth`. It also screenshots the creature inspector in 3D, the prop inspector, one table with one entry open, and one option row.
 - [ ] Run it on `dev` before the branch (the before set) and on the branch (the after set).
 - [ ] Post the checklist below on #579 as `- [ ]` boxes, with the before/after pairs, before the PR leaves draft.
 
