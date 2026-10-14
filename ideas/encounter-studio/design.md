@@ -107,8 +107,8 @@ flowchart LR
 - **No saved noun is invisible (R8).** Exits, endings, concealments and door
   state each have a studio view in the inspector or on the home.
 - **One selection at a time (R9).**
-- **The screen says open, not single room (R10).** The dialect's name stays
-  in code.
+- **The screen never says single room (R10).** The dialect's name stays in
+  code; the word the screen uses is open (see Open).
 - **The two surfaces point at each other (R11).** Selecting a cast member on
   the home selects its placements on the map, and selecting a placement
   highlights its cast member.
@@ -131,7 +131,7 @@ flowchart LR
 | R7 | settled | Layout overview: placed nouns in 2D, one colour per region, room list that frames and sizes; shared-wall doors between separate rooms out of scope | operator | 2026-10-14 |
 | R8 | settled | exits, endings, concealments and door state get studio views | operator | 2026-10-14 |
 | R9 | settled | single selection only in the first cut; multi-select and apply-to-all wait for a use case | operator | 2026-10-14 |
-| R10 | settled | on-screen word is open; single room stays the dialect's name | operator | 2026-10-14 |
+| R10 | settled | the screen does not say single room; the dialect's name stays in code; the on-screen word is undecided | operator | 2026-10-14 |
 | R11 | settled | selecting a cast member on the home selects it on the map, and the reverse | operator | 2026-10-14 |
 
 ## Open
