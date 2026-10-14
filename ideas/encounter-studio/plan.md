@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0 and S1, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S2–S5 are stubs
+status: PLAN for slices S0, S1 and S5, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2–S4 are stubs
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -951,10 +951,286 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 
 **Shared files.** S1 edits S0's `StudioInspector.tsx`, `studioSession.ts` and `WorldBuildingConcept.tsx`, now on `dev`. S1 branches from `dev` after 543396d5.
 
+---
+
+# Encounter studio S5 — density: words, wrapping, panel width
+
+Planned 2026-10-14, pulled ahead of S2. S2 adds read-back prose to the top
+of the same inspector, so the inspector's type and grouping settle first.
+Authority: design.md (the inspector forms in README.md; R10's on-screen word
+stays open); rpg-project#579 and its two comments: the operator's S1-walk
+feedback on the creature inspector, and the S0 review's stale strings.
+
+## S5 goal and scope
+
+The inspector and the Encounter home read as a document: headings at a
+scale, labels distinct from values, one break between what a placement is
+and how it behaves, words instead of ids, help off the main flow, rows that
+summarise until opened, and no horizontal scroll at 1280 pixels.
+
+**Repositories.** Web only, rpg-dnd5e-web. S5 builds after S1
+(`feat/studio-s1-cast`) merges to `dev`, and branches from that `dev`. No
+toolkit, API or proto change; no document change.
+
+**Non-goals:**
+
+- Read-back prose (S2, #576), the Layout overview (S3, #577), the hidden nouns (S4, #578).
+- **Rulebook catalog over the wire for pick-lists** (S1-Q3). It stays open. The web has no armor, weapon or base list beyond `PALETTE_MONSTERS`, so S5 changes no picker source.
+- The on-screen word for the document (R10, design Open).
+- The old World Builder's look. Every style change is scoped to `.encounter-studio`.
+- Behaviour: no field moves between owners, and no intent changes shape.
+
+## S5 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| E1 | One studio type scale: panel title, section heading, sub-heading, field label, value, help. Labels and values differ in weight; every section begins with a heading. | #579 operator feedback |
+| E2 | One visual break between the placement form (what it is, where) and the configuration (how it behaves). Inherits and Overrides are proper sub-sections with headings, not small caps among body text. | #579 |
+| E3 | No horizontal scroll in the inspector or any home form at a 1280-pixel window. | #579 issue scenario 3 |
+| E4 | The retired word Arrange leaves every button, status line and message. Buttons read Apply and Cancel. | #579, S0 review comment |
+| E5 | A raw id or ref is never the primary line. A placement shows its map name or kind name; its id sits behind a copy affordance. A rules ref shows as the kind's display name, with the ref on hover. | #579 |
+| E6 | Help sentences leave the main flow: one help affordance per field, and one "About this panel" disclosure for panel-level text. Status and refusal lines stay inline. | #579 |
+| E7 | Option rows wrap by word: the line field, the check rows and the summary. | #579 issue scenario 2 |
+| E8 | A table entry is one summary line until opened. A table's collapsed summary shows its entry count and who uses it. | lead brief, measured at about 300 pixels per entry |
+| E9 | The studio section of `world-building/CONTRACT.md` and the wall-corner message describe the inspector, not Arrange. | S0 review comment on #579 |
+| E10 | Faction mind suggestions show authored map names, with placement ids kept as values. | absorbs rpg-dnd5e-web#1262's mind-suggestion item |
+
+## S5 constraints
+
+- **No behaviour change.** Every edit still crosses the intents S0 and S1 defined. The one-candidate-per-form contract (`StudioArrangeIntent`) stays.
+- **Scoped styles.** `worldBuilding.css` (`wb-*`) is shared with the old World Builder. S5 overrides `wb-*` rules only under `.encounter-studio`, and adds `es-*` tokens.
+- **Ids stay addressable.** A hidden id stays in the copy affordance, in `title`, and in `aria-label`s that tests and the walk rely on.
+- **Words come from the document or the catalog.** Map names from `scene.actorNames`, kind names from `paletteNameForRef` or the cast member's name. The studio invents no name.
+
+## S5 inspected baseline (2026-10-14)
+
+| repo | revision |
+|---|---|
+| rpg-dnd5e-web `feat/studio-s1-cast` | bfdb0283 |
+| rpg-project `origin/main` | as S1 |
+
+- **Type.** No type tokens exist. `encounterStudio.css` has 15 `font-size` declarations and `worldBuilding.css` 47, from 0.62rem to 0.78rem. Policy blocks use `h4`, `h5` and `h6` with no shared scale.
+- **The creature inspector** (`StudioInspector.tsx` `CreatureView`, over `StudioArrangePanel.tsx` `SelectedArrange` and `session.socialControls.selection`):
+  - `StudioArrangePanel.tsx` prints "Rules: {ref}. Map name is an authoring label, not a stat-block change." and has buttons "Apply Arrange" and "Cancel Arrange".
+  - `SitePolicies.tsx` `CreatureOrders` prints "Selected creature" then "{kind name} · {placement id}", which is the raw UUID line. It also has `h5` Inherits and Overrides inside `wb-policy-block`.
+  - "Configuration" is an `h3` directly under the form, with no break.
+- **Other Arrange strings.** `StudioWallFinishes.tsx` "Wall finish staged · Apply Arrange to save."; `wallCornerFits.ts` "…Enter the same value on both walls in Arrange."; `CONTRACT.md` names Arrange in the studio section, including "options contain Arrange, Walls, Doors and Notes"; `encounterStudio.css` has a comment; `studioTestNavigation.ts` has an `'Arrange'` alias.
+- **Tables.** `TablesPanel.tsx` renders each table as `<details>` whose summary is "{id} · N triggers". Every entry is an `AnswerEntryRow` (`SitePolicies.tsx`), fully expanded with its condition, word, selector, weight and line controls. A one-line sentence renderer already exists and is tested in `AnswerEntrySentence.test.tsx`.
+- **Options.** `OptionsEditor` (`SitePolicies.tsx`) uses a single-line `input` for the line; its summary is `"{id}: “{say}” · {check}{gate}"`.
+- **Mind and member pickers.** `SitePolicies.tsx` lists placements as "{id} · {kind}" or "{kind} · {id}" in three selects.
+- **Browser checks.** The web has no browser test runner. Walks use game-dev `tools/browser/` drivers.
+
+## S5 sequence
+
+```
+S5-T1 type scale and grouping ──▶ S5-T2 overflow ──▶ S5-T6 integration
+S5-T3 words not ids ──────────────────────────────┤
+S5-T4 Apply, Cancel and help ─────────────────────┤
+S5-T5 table and option rows ──────────────────────┘
+```
+
+One branch off `dev`, one PR to `dev`. T1 goes first because T2–T5 use its tokens and section components. After T1, T3, T4 and T5 touch different files except `SitePolicies.tsx`, which T3 (labels), T4 (help) and T5 (rows) each edit. They run in order T3, T4, T5 by one builder.
+
+## S5 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S5-Q1 | **Apply-on-change.** The owner commits one transaction per intent, so a self-contained picker (look, facing, faction) could apply on change. **Assumption:** pickers that are a whole edit apply on change; text and number fields stay staged behind Apply and Cancel. Mixed staging inside one form is the cost. | assumption, for the operator | S5-T4 |
+| S5-Q2 | **Help placement.** **Assumption:** a field-specific sentence becomes that field's help affordance; a sentence about the whole panel moves into one "About this panel" disclosure. | assumption | S5-T4 |
+| S5-Q3 | **Two placements with one map name** in a mind picker. **Assumption:** the map name, else the kind name, with " (2)" and so on in document order; the id stays the value and the `title`. | assumption | S5-T3 |
+| S5-Q4 | **Inspector width.** **Assumption:** keep the current width, `min(24rem, 100%)`, and remove the overflow's causes rather than widen. | assumption | S5-T2 |
+| S5-Q5 | **Rulebook catalog over the wire for pick-lists.** | open; not in S5 (S1-Q3) | nothing in S5 |
+
+---
+
+## Task S5-T1: Type scale and grouping
+
+**Delivers:** E1, E2.
+**Owner:** rpg-dnd5e-web; `encounter-studio/encounterStudio.css`, new `encounter-studio/StudioSection.tsx`, `StudioInspector.tsx`, `StudioArrangePanel.tsx`, `SitePolicies.tsx` `CreatureOrders`.
+**Prerequisites:** S1 merged.
+**Files:** `encounterStudio.css` (tokens and scoped `wb-*` overrides); new `StudioSection.tsx`; `StudioInspector.tsx` (each view composes sections); `StudioArrangePanel.tsx` (the "Configuration" heading becomes a section); `SitePolicies.tsx` (`CreatureOrders` Inherits and Overrides become sections); tests in `StudioInspector.test.tsx` and a new `StudioSection.test.tsx`.
+**Interfaces:**
+
+```ts
+// encounterStudio.css, on .encounter-studio
+--es-text-title; --es-text-section; --es-text-subsection;
+--es-text-label; --es-text-value; --es-text-help;
+--es-weight-label; --es-weight-value; --es-space-section;
+
+export function StudioSection(props: {
+  title: string;
+  level: 'section' | 'subsection';   // h3 or h4 inside the inspector's h2
+  children: ReactNode;
+  about?: ReactNode;                 // S5-T4's panel help, optional
+}): React.JSX.Element;               // <section aria-labelledby> with a heading
+```
+
+**Behavior:**
+- The inspector `h2` uses `--es-text-title`. A placed creature has two sections, "Placement" (cast member, map name, look, cell, facing, Move) and "Behaviour" (faction, table, orders, says, holds, dispositions), separated by `--es-space-section` and a rule.
+- Inherits and Overrides are "Inherits" and "Overrides" sub-sections in title case.
+- A prop splits into "Placement" and "Behaviour" the same way. A wall, door, hex, label and party start have one section.
+- Field labels use `--es-weight-label` and values `--es-weight-value`. Every `dt`/`dd` pair and every form row follows that rule.
+
+**Tests:** `StudioSection.test.tsx` › `renders a labelled section with an h3 or h4`. `StudioInspector.test.tsx` › `a creature view has a Placement and a Behaviour section in that order`; › `Inherits and Overrides are subsection headings`; › `a prop view has Placement and Behaviour`; › `a wall view has one section`.
+
+- [ ] Tests first; tokens; `StudioSection`; compose the views.
+
+**Verification:** `npx vitest run src/concepts/encounter-studio` passes.
+**Completion evidence:** named tests.
+
+## Task S5-T2: No horizontal scroll
+
+**Delivers:** E3, S5-Q4.
+**Owner:** rpg-dnd5e-web; `encounterStudio.css`.
+**Prerequisites:** S5-T1.
+**Files:** `encounterStudio.css` only.
+**Behavior:** inside `#studio-sidebar` and `.es-encounter-home`:
+- values and inline code take `overflow-wrap: anywhere`;
+- every `input`, `select` and `textarea` takes `max-width: 100%` and `min-width: 0`;
+- flex and grid children take `min-width: 0`;
+- no rule sets `overflow-x: hidden` to mask an overflow.
+
+**Tests:** jsdom cannot measure layout, so the proof is the T6 driver's measurement. A CSS assertion test is not written.
+
+- [ ] Change the rules; run the T6 driver's measurement.
+
+**Verification:** the T6 driver reports `scrollWidth <= clientWidth` for `#studio-sidebar` and each home form at 1280×800, for the creature, prop, wall and hex views and the Cast, Tables, Factions, Dispositions and Intel forms.
+**Completion evidence:** the driver's output table in the PR.
+
+## Task S5-T3: Words, not ids
+
+**Delivers:** E5, E10, S5-Q3.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/CopyId.tsx`, `StudioArrangePanel.tsx`, `SitePolicies.tsx`, `StudioInspector.tsx`.
+**Prerequisites:** S5-T1.
+**Files:** new `CopyId.tsx`; new `world-building/placementNames.ts`; `StudioArrangePanel.tsx` (the Rules line); `SitePolicies.tsx` (`CreatureOrders`' "Selected creature" line and the three placement selects); tests.
+**Interfaces:**
+
+```ts
+export function CopyId(props: { id: string; label: string }): React.JSX.Element;
+// a button "Copy id" with title=id and aria-label="Copy <label> id"; writes id to the clipboard; shows "Copied"
+
+export function placementDisplayNames(input: {
+  declarations: readonly RoomMonsterPlacement[];
+  actorNames?: Readonly<Record<string, string>>;
+  castName(ref: string): string;          // cast member name, else paletteNameForRef
+}): ReadonlyMap<string, string>;          // id -> "Guard", "Guard (2)", ...
+```
+
+**Behavior:**
+- The creature view's primary line is the map name, else the kind name, followed by `CopyId`. The id is never printed as text.
+- "Rules: dnd5e:monsters:x" becomes "Kind: Prisoner", with the ref in `title`.
+- The three placement selects in `SitePolicies.tsx` show `placementDisplayNames`, with the id as the option `value` and `title`.
+- No change to which id is stored.
+
+**Tests:** `placementNames.test.ts` › `a map name wins over the kind name`; › `two equal names get (2) in document order`; › `an unnamed placement shows its kind name`. `StudioInspector.test.tsx` › `the creature view never prints the placement id as text`; › `Copy id copies the placement id`; › `the kind shows its name with the ref on hover`. `SitePolicies.test.tsx` › `the mind picker shows map names and keeps ids as values`.
+
+- [ ] Tests first; implement.
+
+**Verification:** `npx vitest run src/concepts/encounter-studio src/concepts/world-building/SitePolicies.test.tsx src/concepts/world-building/placementNames.test.ts` passes.
+**Completion evidence:** named tests.
+
+## Task S5-T4: Apply, Cancel and help off the flow
+
+**Delivers:** E4, E6, E9, S5-Q1, S5-Q2.
+**Owner:** rpg-dnd5e-web; `StudioArrangePanel.tsx`, `StudioArrangeFields.tsx`, `StudioWallFinishes.tsx`, `wallCornerFits.ts`, `CONTRACT.md`, new `encounter-studio/FieldHelp.tsx`, `SitePolicies.tsx`, `StudioCast.tsx`.
+**Prerequisites:** S5-T1.
+**Files:** as Owner; plus `encounterStudio.css` (the comment), `studioTestNavigation.ts` (drop the `'Arrange'` alias, and update its callers), and their tests.
+**Interfaces:**
+
+```ts
+export function FieldHelp(props: { field: string; children: ReactNode }): React.JSX.Element;
+// a "?" button, aria-label="About <field>", aria-expanded; reveals the text below the field
+```
+
+`StudioArrangeField` gains an optional `help?: string`, rendered through `FieldHelp`. `ArrangeField.applyOnChange?: true` marks a self-contained picker (S5-Q1).
+
+**Behavior:**
+- Buttons read "Apply" and "Cancel". Status lines read "… staged · Apply to save".
+- The wall-corner message ends "Enter the same value on both walls." `CONTRACT.md`'s studio section describes the inspector, its nine views and the pick strip, and keeps no sentence saying the sidebar holds Arrange, Walls, Doors and Notes.
+- Field-specific sentences in the inspector, the cast form and `CreatureOrders` move into `FieldHelp`. For example, "Map name is an authoring label, not a stat-block change" moves to Map name. Panel-level sentences move into the section's `about`. `role="status"` and `role="alert"` lines stay inline.
+- A picker marked `applyOnChange` (look family, style, skin palette, facing, faction) commits on change through its existing intent, and Cancel no longer covers it. Text and number fields stay staged.
+
+**Tests:** › `no button, status or message in the studio contains Arrange`: a render sweep over each view's text, plus a source grep in T6. › `Map name has a help affordance and no inline sentence`; › `the About this panel disclosure is collapsed by default`; › `changing facing commits one intent without Apply`; › `typing a map name commits only on Apply`; new `world-building/wallCornerFits.test.ts` › `the appearance-mismatch message does not say Arrange`.
+
+- [ ] Tests first; implement; update `CONTRACT.md`.
+
+**Verification:** `npx vitest run src/concepts` passes; `git grep -nE "Apply Arrange|Cancel Arrange|in Arrange|Arrange to save" src/` prints nothing.
+**Completion evidence:** named tests; the grep.
+
+## Task S5-T5: Table and option rows
+
+**Delivers:** E7, E8.
+**Owner:** rpg-dnd5e-web; `TablesPanel.tsx`, `SitePolicies.tsx` (`AnswerEntryRow`, `OptionsEditor`).
+**Prerequisites:** S5-T1.
+**Files:** `TablesPanel.tsx`; `SitePolicies.tsx`; `encounterStudio.css`; tests in `TablesPanel.test.tsx`, `SitePolicies.test.tsx`.
+**Interfaces:**
+- `AnswerEntryRow` gains `collapsed` (default true in the studio). Collapsed, it renders the existing entry sentence on one line with "Edit" and "Remove". Open, it renders today's controls. Opening one row closes none of the others.
+- `tableUsers(scope, room, id): { factions: string[]; placements: string[] }`, where factions have `table === id` and placements have `monsterBindings.<p>.table === id`.
+- The table summary becomes "{id} · N entries · used by garrison, Guard, Guard (2)" (placement names from S5-T3), or "· not used".
+- `OptionsEditor`'s line field becomes a `textarea` that grows with its text and wraps by word. The option summary, check rows and fact ids wrap.
+
+**Behavior:** no entry, table or option changes shape, and the save order is unchanged.
+
+**Tests:** › `a collapsed entry shows one sentence and opens on Edit`; › `editing an opened entry commits exactly as before`; › `the table summary counts entries, not triggers`; › `the summary names the factions and placements that use the table`; › `an unused table says not used`; › `the option line is a textarea and keeps its text on commit`.
+
+- [ ] Tests first; implement.
+
+**Verification:** `npx vitest run src/concepts/world-building/TablesPanel.test.tsx src/concepts/world-building/SitePolicies.test.tsx` passes.
+**Completion evidence:** named tests.
+
+## Task S5-T6: Integration, measurement and before/after
+
+**Delivers:** proof of E1–E10.
+**Prerequisites:** S5-T1–T5.
+- [ ] `npm ci`; `npm run ci-check` once; grep the log.
+- [ ] Write `tools/browser/_job_s5_density.mjs` in game-dev (local by name). It seeds the studio's local draft from `encounter-studio/fixtures/castleWorkspace.ts`, exported to JSON by a one-off script. If that fixture cannot load as a draft, it authors an equivalent room by hand and records which it used. Then, at 1280×800, it opens each view and form listed in S5-T2, and records `scrollWidth` and `clientWidth`. It also screenshots the creature inspector in 3D, the prop inspector, one table with one entry open, and one option row.
+- [ ] Run it on `dev` before the branch (the before set) and on the branch (the after set).
+- [ ] Post the checklist below on #579 as `- [ ]` boxes, with the before/after pairs, before the PR leaves draft.
+
+**Walk and #579 checklist:**
+
+1. Before/after: the creature inspector in 3D. The after has a Placement section and a Behaviour section separated by a break. Its first line is the map name with Copy id. Kind shows a name, not a ref. No inline help sentence; Map name has a help button.
+2. Before/after: the prop inspector, with Placement and Behaviour sections.
+3. Before/after: a table with one entry. Collapsed, the entry is one line; the summary shows the entry count and its users.
+4. Before/after: an option row whose 200-character line wraps by word.
+5. The buttons read Apply and Cancel. Change facing: it applies at once. Type a map name: it applies on Apply.
+6. The driver's table shows no horizontal overflow in any listed view or form at 1280.
+7. The faction mind picker shows map names, and two Guards read Guard and Guard (2).
+8. Undo after each edit above restores it: behaviour is unchanged.
+9. Save the local draft and reload; nothing changed shape.
+
+## S5 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| E1 type scale | S5-T1 | `StudioSection` tests; walk 1–2 |
+| E2 the break; Inherits and Overrides | S5-T1 | `a creature view has a Placement and a Behaviour section …`; `Inherits and Overrides are subsection headings` |
+| E3 no horizontal scroll | S5-T2, T6 | the driver's measurement table; walk 6 |
+| E4 Arrange retired | S5-T4 | the render sweep; the source grep |
+| E5 words not ids | S5-T3 | `the creature view never prints the placement id as text`; `Copy id …`; walk 1 |
+| E6 help off the flow | S5-T4 | `Map name has a help affordance …`; `About this panel … collapsed` |
+| E7 option rows wrap | S5-T5 | `the option line is a textarea …`; walk 4 |
+| E8 table rows summarise | S5-T5 | `a collapsed entry shows one sentence …`; `the table summary counts entries …`; walk 3 |
+| E9 stale strings | S5-T4 | the new `wallCornerFits.test.ts`; the `CONTRACT.md` diff; the grep |
+| E10 mind picker names | S5-T3 | `the mind picker shows map names …`; walk 7 |
+
+## S5 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| S5-T1 tokens and `StudioSection` | S5-T2–T5, and S2's read-back later | CSS custom properties on `.encounter-studio`; a labelled section | new | `StudioSection.test.tsx` |
+| S5-T3 `placementDisplayNames` | `CreatureOrders`, the mind and member selects, S5-T5's table users | id to display name; ids unchanged | new | `placementNames.test.ts` |
+| S5-T3 `CopyId` | creature view; later S2 | button with the id in `title` and the clipboard | new | `Copy id copies the placement id` |
+| S5-T4 `FieldHelp` and `ArrangeField.help`, `.applyOnChange` | inspector, cast form, `CreatureOrders` | per-field help; picker commit on change through existing intents | new | the T4 tests |
+| S5-T5 `tableUsers` | `TablesPanel` summary | factions and placements naming a table | new, over `scope` and `room` | `the summary names the factions and placements …` |
+| existing intents (`commitArrange`, binding, cast) | all views | unchanged | baseline | walk 8 |
+
+**Shared files.** `SitePolicies.tsx` is edited by S5-T3, T4 and T5, in that order on one branch. `encounterStudio.css` is edited by T1, T2 and T5; T1 lands first.
+
 ## Later slices
 
 - S1, the cast and per-placement looks: rpg-project#575, planned above. A cast member selected on the home highlights its placements on the map, and the inspector shows the cast member. It is not a multi-selection (Q8).
 - S2, read it back: prose, fact index, tables heaviest first: rpg-project#576.
 - S3, overview on Layout: rpg-project#577. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
 - S4, the hidden nouns: exits, endings, concealments, door state: rpg-project#578.
-- S5, density: words, wrapping, panel width: rpg-project#579.
+- S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
