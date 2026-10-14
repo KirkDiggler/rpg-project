@@ -1593,7 +1593,7 @@ gestures. 3D region labels are an optional last task, because they are cheap
 ## S3 sequence
 
 ```
-S3-T1 colours and region fills ──▶ S3-T2 placed nouns ──▶ S3-T3 room list, Show entire, footer ──▶ S3-T4 Regions home retires ──▶ S3-T6 integration
+S3-T1 sizes, colours and region fills ──▶ S3-T2 placed nouns ──▶ S3-T3 room list, Show entire, footer ──▶ S3-T4 Regions home retires ──▶ S3-T6 integration
 S3-T5 frame-time driver (before set, on dev, first) ──────────────────────────────────────────────────────────────────────────────┘
 S3-T7 3D region labels (optional) ──▶ S3-T6
 ```
@@ -1604,21 +1604,31 @@ One branch off `dev`, one PR to `dev`. T5's before set is taken on `dev` before 
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S3-Q1 | **How colours are derived.** No field exists. **Assumption:** a fixed palette of 12, indexed by a stable hash of the region id, and a second palette for cast members by a hash of the cast ref. Two adjacent regions may share a colour. Hashing the id keeps a colour when another region is deleted, which indexing by order would not. | assumption, for the operator | S3-T1 |
-| S3-Q2 | **Undeclared props.** **Assumption:** a small marker at the transform with the prop's label. A declared prop draws its footprint. | assumption | S3-T2 |
-| S3-Q3 | **"Usable" frame time.** **Assumption:** record the median and 95th-percentile frame time for a scripted pan and zoom, before and after. The after median stays within one 60 Hz frame (16.7 ms) on the walk machine, and its 95th percentile is no worse than 1.25 times the before. | assumption, for the operator | S3-T5, T6 |
-| S3-Q4 | **Region size.** **Assumption:** the hex count only. | assumption | S3-T3 |
-| S3-Q5 | **Overlapping regions** are both drawn translucent, in authored order. | assumption | S3-T1 |
-
+| S3-Q1 | **How colours are derived.** | **lead-resolved 2026-10-14:** each region's slot starts at a stable hash of its id in a 12-colour palette. Then the regions are walked in authored order, and a region whose slot equals an already-assigned neighbour's steps to the next free slot. Neighbours are regions whose counted cells touch or overlap. Cast members use a second palette, hashed by cast ref, with no adjacency step. A delete leaves other colours unchanged unless it removes a collision another region had stepped around. | nothing |
+| S3-Q2 | **Undeclared props.** | **lead-resolved:** a marker with the label; declared props draw their footprint | nothing |
+| S3-Q3 | **"Usable" frame time.** | **lead-resolved:** the after median stays within 16.7 ms on the walk machine; the after 95th percentile is no worse than 1.25 times the before. The before numbers go in the PR body. | nothing |
+| S3-Q4 | **Region size.** | **lead-resolved:** both, as "27 hexes · 9 × 4": the hex count, then the bounding width × height in hexes (odd-r columns × rows of the counted cells); built in S3-T1 | nothing |
+| S3-Q5 | **Overlapping regions.** | **lead-resolved:** both translucent, in authored order | nothing |
 ---
 
 ## Task S3-T1: Region colours and fills
 
 **Delivers:** V1, V9, S3-Q1, S3-Q5.
-**Owner:** rpg-dnd5e-web; new `encounter-studio/overviewColours.ts`; `RegionBoundaryOverlay.tsx`; `MapLabelOverlay.tsx`.
-**Interfaces:** `regionColour(id: string): string` and `castColour(ref: string): string`, each a stable hash into its own 12-colour palette.
+**Owner:** rpg-dnd5e-web; new `world-building/regionSize.ts`; new `encounter-studio/overviewColours.ts`; `RegionBoundaryOverlay.tsx`; `MapLabelOverlay.tsx`.
+**Interfaces:**
+
+```ts
+export function regionColours(input: {
+  regions: readonly AuthoringRegion[];                 // authored order
+  cellsOf(regionId: string): readonly RoomHexCell[];   // the S3-T3 counted cells
+}): ReadonlyMap<string, string>;  // hash slot, then step past an already-assigned neighbour's slot
+export function castColour(ref: string): string;       // stable hash, own palette
+export function regionSize(draft, resolution):
+  { cells: readonly RoomHexCell[]; hexes: number; width: number; height: number } | null;
+// null when unresolved; width and height are the odd-r column and row spans of the counted cells
+```
 **Behavior:** each resolved region fills in its colour at a fixed opacity, with its outline in the same hue. The selected region's outline thickens. A region label is drawn in its region's colour. Unresolved regions are drawn as today, with no fill.
-**Tests:** › `the same id always gets the same colour`; › `deleting a region leaves the others' colours unchanged`; › `a resolved region renders a fill in its colour`; › `an unresolved region renders no fill`.
+**Tests:** › `a hex-union region's size is its cell count`; › `a polygon region's size counts cells whose centre is inside`; › `a region's width and height are its column and row spans`; › `the same regions always get the same colours`; › `two adjacent regions never share a slot on the castle fixture`; › `a collision steps to the next free slot in authored order`; › `deleting a region with no collisions leaves the others' colours unchanged`; › `a resolved region renders a fill in its colour`; › `an unresolved region renders no fill`.
 **Verification:** `npx vitest run src/concepts/encounter-studio` passes.
 
 ## Task S3-T2: Placed nouns in 2D
@@ -1649,15 +1659,15 @@ interface LayoutPlacedEditing {
 ## Task S3-T3: Room list, Show entire and the footer
 
 **Delivers:** V3, V4, V5, S3-Q4.
-**Owner:** rpg-dnd5e-web; new `encounter-studio/LayoutRoomList.tsx`; new `world-building/regionSize.ts`; `EncounterStudioWorkspace.tsx` (Layout gains a left `aside`).
-**Interfaces:** `regionHexCount(draft, resolution): number | null` (null when unresolved). `frameOf(bounds, viewport): LayoutFrame`, reusing the framing `StudioDimensions` uses.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/LayoutRoomList.tsx`; `EncounterStudioWorkspace.tsx` (Layout gains a left `aside`).
+**Interfaces:** consumes S3-T1's `regionSize`. `frameOf(bounds, viewport): LayoutFrame`, reusing the framing `StudioDimensions` uses.
 **Behavior:**
-- The room list shows each region's label, colour swatch and "N hexes", or "unresolved". Clicking a row selects its label through `mapLabelSelection.select`, opening the label view (S3-T4), and frames the region's bounds.
+- The room list shows each region's label, colour swatch and size as "27 hexes · 9 × 4", or "unresolved". Clicking a row selects its label through `mapLabelSelection.select`, opening the label view (S3-T4), and frames the region's bounds.
 - New region arms the room-label tool exactly as the Regions home does today.
 - "Show entire" frames the bounds of the walkable floor, walls and placed nouns, or the workspace when empty.
 - The footer reads "{areas} areas · {creatures} creatures · {hexes} hexes · {doors} doors". Areas counts regions, hexes counts walkable cells, and doors counts wall openings with a door.
 
-**Tests:** › `a hex-union region's size is its cell count`; › `a polygon region's size counts cells whose centre is inside`; › `selecting a room selects its label and frames it`; › `Show entire frames the content bounds`; › `the footer counts areas, creatures, hexes and doors`.
+**Tests:** › `selecting a room selects its label and frames it`; › `Show entire frames the content bounds`; › `the footer counts areas, creatures, hexes and doors`.
 **Verification:** `npx vitest run src/concepts` passes.
 
 ## Task S3-T4: The Regions home retires
@@ -1684,21 +1694,21 @@ interface LayoutPlacedEditing {
 **Delivers:** V8, S3-Q3.
 **Owner:** game-dev, `tools/browser/_job_s3_overview.mjs` (local by name).
 **Behavior:** the driver seeds the castle fixture by the S5-Q6 path and opens Layout at 1280×800. It scripts a 3-second pan and a zoom in and out, and records frame intervals with `requestAnimationFrame`. It prints the median and 95th percentile. It runs on `dev` before T1 (the before set) and on the branch after T4 (the after set). It also takes the walk's screenshots.
-**Verification:** the two measurements are pasted in the PR and meet S3-Q3.
+**Verification:** the before numbers are in the PR body from the first push. The after numbers are added beside them and meet S3-Q3.
 
 ## Task S3-T6: Integration and the walk
 
-**Prerequisites:** S3-T1–T5, and S3-T7 if built.
+**Prerequisites:** S3-T1–T5. S3-T7 is built last, and only if T1–T6 are green.
 - [ ] `npm ci`; `npm run ci-check` once; grep the log.
 - [ ] Run the S3-T5 driver for the after set.
 - [ ] Post the checklist below on #577 as `- [ ]` boxes before the PR leaves draft.
 
 **Walk and #577 checklist** (castle fixture as the local draft):
 
-1. Layout, Show entire: the whole keep is framed. Each region is filled in its own colour with its label.
+1. Layout, Show entire: the whole keep is framed. Each region is filled in its own colour with its label, and no two neighbouring regions share a colour.
 2. Doors, creature rings with names, prop footprints and the party start are all drawn.
 3. The footer reads areas · creatures · hexes · doors, and matches the fixture.
-4. Select each region in the room list. Each one is framed, its size in hexes is shown, and the inspector shows its label view with the Region section.
+4. Select each region in the room list. Each one is framed, its size reads like "27 hexes · 9 × 4", and the inspector shows its label view with the Region section.
 5. Click a creature ring in 2D. The inspector opens on it, the same view as clicking it in 3D.
 6. Click a prop, then Shift-click a second: the pick strip. Click the party start: its view.
 7. The home nav shows Build and Encounter, with no Regions. Change a region's background light from its label view, then undo.
@@ -1731,9 +1741,9 @@ interface LayoutPlacedEditing {
 
 | provider | consumer | contract | availability | proof |
 |---|---|---|---|---|
-| S3-T1 `regionColour`, `castColour` | region fills, labels, rings, the room list, S3-T7 | stable colour per id | new | the colour tests |
+| S3-T1 `regionColours`, `castColour` | region fills, labels, rings, the room list, S3-T7 | stable colour per id | new | the colour tests |
 | S3-T2 `LayoutPlacedEditing` | `LayoutPlacedOverlay` | existing selection intents | the intents exist from S0 and S1 | the click tests |
-| S3-T3 `regionHexCount` | the room list | the count rule `regionsAtCell` uses | new, over S0's `pointInRing` use | the size tests |
+| S3-T1 `regionSize` | the room list; S3-T1's neighbour step | counted cells, hexes, width, height; the count rule `regionsAtCell` uses | new, over S0's `pointInRing` use | the size tests |
 | S0 `StudioSelection` and the label view | S3-T4 Region section | label selection | S0 | the T4 tests |
 | S5 `placementDisplayNames` | ring labels | display names | S5 | S5 tests |
 | S1 cast selection | ring highlight | `castMember` selection | S1 | `… highlighted when its cast member is selected` |
