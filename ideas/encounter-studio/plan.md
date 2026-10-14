@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slice S0 only, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; S1–S5 are stubs
+status: PLAN for slice S0 only, derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14 (Q6 and Q7 await operator confirmation); S1–S5 are stubs
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -14,7 +14,8 @@ home's Arrange, Walls, Doors and Notes sidebar tabs and the toolbar's Size
 button. Clicking a thing in Layout or 3D opens the inspector on it; with
 nothing selected the inspector answers for the room. The selection is one
 owner shared by the map and the Encounter home, and a resize grows the
-workspace up and to the right without moving a cell.
+workspace up and to the right by default, or on any side the author
+chooses, without moving a cell.
 
 **Repositories.** S0 is web-only: rpg-dnd5e-web, branch off `dev`.
 
@@ -32,21 +33,21 @@ workspace up and to the right without moving a cell.
 - Layout glyphs for placed nouns, region colours, the room list (S3, #577).
 - Door state, concealments, exits, endings (S4, #578). The door and hex views in S0 leave those fields out.
 - Words, wrapping, panel width (S5, #579).
-- Multi-select and apply-to-all (R9).
+- Multi-select and apply-to-all (R9). The existing scene multi-pick that feeds Group selection stays exactly as it is (Q7).
 - Any change to the Encounter home's forms or its section list.
-- The Regions home. It keeps its own sidebar in S0 (open item Q5).
+- The Regions home. It stays untouched in S0, and S3 retires it (Q5).
 
 ## Requirement labels
 
 | label | requirement | source |
 |---|---|---|
 | I1 | The Build home has no Arrange, Walls, Doors or Notes tabs and no Size toolbar button. Every field they held is reached through the inspector or an armed tool. | R1 |
-| I2 | The inspector is keyed by one selection: nothing, wall, door, creature, prop or hex. Each kind has one view. | R1, design Shape table |
+| I2 | The inspector is keyed by one selection, one of nine kinds: nothing, wall, door, creature, prop, group, hex, label or party start. Each kind has one view. Labels and party start are placed things, so they get views. | R1, design Shape table, resolutions Q1 and Q7 |
 | I3 | Clicking a thing selects it and opens the inspector even when it is hidden. N toggles the inspector. N keeps its current input-focus and modifier exclusions. | R1 |
-| I4 | One selection at a time. A selection is never a set. | R9 |
+| I4 | The inspector always shows one thing. The scene multi-pick that feeds Group selection is a pick, not a selection, and works exactly as today. | R9 as read in Q7 |
 | I5 | A selection made on the Encounter home is the selection on the map, and the reverse. Switching homes keeps it. | R11 (cast half in S1) |
 | I6 | A resize adds columns on the right and rows on top by default. Every cell, wall, prop, label and creature keeps its coordinate. | R13 |
-| I7 | Growing another side is the author's explicit choice, stated before the edit. | R13 (blocked, Q6) |
+| I7 | The author may choose the side a resize grows or shrinks: left or right, and top or bottom. No side moves a cell, so there is no shift warning. | R13 as read in Q6 |
 | I8 | An inspector edit that the owner refuses shows the refusal at the form and changes nothing. No save writes a file the strict decoder refuses. | design Law, the document's refusals |
 | K1 | Undo and redo, from the toolbar and Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y, keep working. Undo keeps the selection while its noun exists, and falls back to nothing when it does not. | must keep working |
 | K2 | 3D drag placement of props from the palette, move, rotate, repeat, stacking and creature placement keep working. A dropped prop becomes the selection. | must keep working, epic #545 |
@@ -134,8 +135,17 @@ Findings that shape the tasks, with paths at the web revision:
 - **`play` is fixed.** The encoder writes `PLAY_CONTRACT` (`void:
   transparent`, `lighting: bright`, `standing: centre-covered`), and the
   toolkit refuses any other value (`playValues`). See Q3.
-- **No room-wide default finish exists.** Finishes are per wall
-  (`scene.wallFinishes`) and per region (`AuthoringRegion.wallFinish`). See Q4.
+- **The room-default wall finish is per region.** rpg-dnd5e-web#1265 (merged
+  to `dev`, in the baseline) stores it as `scene.authoringRegions[].wallFinish`,
+  shaped `{ materialRef, patternStart }` (`RoomWallFinish` in
+  `regionFinishTypes.ts`). Per-wall overrides are `scene.wallFinishes`. The
+  draft has no single document-wide wall default and no floor default
+  (`types.ts` `WorldScene`). See Q4.
+- **Grouping needs a multi-pick.** Group selection (`groupUngroupActions` in
+  the owner, `groupSelection` in `sceneState.ts`) groups the current
+  `selectedIds` and refuses fewer than two. The author picks them with Shift
+  in 3D or Shift, Ctrl or Meta in the scene tree (`selectTreeRow`). A group
+  is one scene root; Ungroup needs exactly one selected group. See Q7.
 - **Layout's screen-up is decreasing `r`.** `layoutGeometry.ts` maps world
   `z` to screen `y` with the same sign, and `z` grows with `r`.
 
@@ -158,17 +168,16 @@ so there is no merge order beyond the one PR.
 
 | id | item | state | blocks |
 |---|---|---|---|
-| Q1 | **Map labels and party start.** Both are selectable today (`label` and `start` targets) but are not among the design's six kinds. Do they stay selectable with their own views, or fold into the room and hex views? | open, for the operator | the final `StudioSelection` shape in T1. **Assumption until answered:** both stay as the provisional kinds `note` and `start`, with exactly their current Arrange fields inside the inspector, so nothing that works today stops working. |
-| Q2 | **Reaching nothing.** If every floor click selects a hex, the room is reached only by Escape or a click off the floor. Is that the gesture? | open | T2 click mapping. **Assumption:** a floor-cell click selects the hex in both views; Escape and a click outside the workspace select nothing. |
-| Q3 | **The play contract.** The design lists void, lighting and standing as pick-from-list in the room view, but the dialect accepts one value each. Editing them is a toolkit change. | open | the editable form. **S0 shows them read-only**, stated as the dialect's fixed values. |
-| Q4 | **Default finishes.** The room view lists default finishes, but no room-wide finish key exists. Is it a new `room.scene` key, or the existing per-region finishes reached from the hex view? | open | the room view's finishes field. S0 ships the room view without it. |
-| Q5 | **The Regions home.** The design has two surfaces; the code has three homes. Does Regions fold into the map inspector (a region selected from the hex view), or stay a home? | open | nothing in S0. The hex view links to the Regions home. |
-| Q6 | **Growing another side.** With explicit bounds, a workspace grows on any side without moving a cell, so R13's warning that cells shift would never be true. Is the other-side choice still a shift, with the origin pinned to a corner, or is the warning dropped? | open | I7. **T6 ships the default up-and-right growth only.** |
-| Q7 | **Grouping under R9.** Scene groups are made by multi-selecting props (Shift, Ctrl or Meta in the tree and Shift in 3D), and the epic keeps grouping. R9 forbids a multi-selection. Does grouping get its own gesture, or does the scene multi-select stay as a tool rather than a selection? | open | the R9 narrowing step in T2. **Until answered, T2 leaves scene multi-select as it is and the inspector shows the existing "N scenery roots" view for it.** |
-| Q8 | **R11 and R9 together.** S1's "select a cast member, select its placements" selects several placements. Is a cast-member selection its own kind that highlights placements, rather than a multi-selection? | open | nothing in S0; S1's selection shape |
-| A1 | Shrinking removes columns from the right and rows from the top, and is refused, as today, when content falls outside. | assumption | T6 |
+| Q1 | **Map labels and party start** are placed things, so they get inspector views. | **resolved by the team lead:** kinds `label` (text and cell) and `partyStart` (cell and the move gesture) | nothing |
+| Q2 | **Reaching nothing.** | **resolved:** Escape and a click off the floor both select nothing. A floor-cell click selects the hex in Layout and 3D. | nothing |
+| Q3 | **The play contract.** Void, lighting and standing accept one value each in the dialect. **Editing them is a toolkit change** and is not in S0. | **resolved for S0:** the hex view shows each as a read-only value, the one the dialect accepts | nothing in S0 |
+| Q4 | **Default finishes.** S0 invents no document key. | **resolved:** the room view lists each region's room-default wall finish from `scene.authoringRegions[].wallFinish`, read-only with a link to that region. It shows nothing for a floor default, because none exists. | nothing |
+| Q5 | **The Regions home.** | **resolved:** untouched in S0. S3 (#577) retires it: region and lighting move to the hex view, and the room list moves to the Layout overview. | nothing in S0 |
+| Q6 | **Growing another side.** With explicit bounds no cell moves on any side, which serves R13's reason better than the ruled warning. | **R13's warning is dropped, pending operator confirmation; the design row is to be amended.** T6 plans default growth up and right, any side choosable, and no warning. | nothing |
+| Q7 | **R9 and grouping.** Grouping needs a multi-pick (baseline). | **R9 is read as a single inspected thing, pending operator confirmation; the design row is to be amended.** The multi-pick stays exactly as today and shows as a pick strip; a selected group is one thing with a `group` view. | nothing |
+| Q8 | **A cast member selected on the home.** | **resolved, for S1:** it highlights its placements, and the inspector shows the cast member. It is not a multi-selection. See Later slices. | nothing in S0 |
+| A1 | Shrinking moves the chosen edges inward, and is refused, as today, when content falls outside. | assumption | T6 |
 | A2 | Wall, door and note tools are toolbar tools in Layout. While one is armed, its options (wall appearance and snaps, door assembly, note text) show at the top of the inspector, and disarming removes them. Tool options are transient state, not document configuration. | assumption | T3 |
-
 ---
 
 ## Task T1: The selection contract
@@ -180,7 +189,7 @@ so there is no merge order beyond the one PR.
 - `world-building/studioArrange.ts`: `StudioArrangeTarget` gains `{ kind: 'hex'; cell: RoomHexCell }`; `StudioArrangeSelection` gains the hex projection; `projectStudioArrange` projects it.
 - `world-building/WorldBuildingConcept.tsx`: `studioTargetKey` keys `hex` by `{q, r}`.
 - New `world-building/regionAtCell.ts`: `regionsAtCell`.
-- `encounter-studio/studioSession.ts`: exports `StudioSelection`, `studioSelectionOf`, and re-exports the new names.
+- `encounter-studio/studioSession.ts`: exports `StudioSelection`, `StudioInspection`, `studioInspectionOf`, and re-exports the new names.
 - Tests: `world-building/studioArrange.test.ts`, new `world-building/regionAtCell.test.ts`, new `encounter-studio/studioSelection.test.ts`.
 
 **Interfaces:**
@@ -202,37 +211,43 @@ export function regionsAtCell(input: {
   cell: RoomHexCell;
 }): AuthoringRegion[];
 
-// studioSession.ts — the inspector's key, derived, never stored
+// studioSession.ts — the inspector's key, derived, never stored. Nine kinds.
 export type StudioSelection =
   | { readonly kind: 'nothing' }
   | { readonly kind: 'wall'; readonly id: string }
   | { readonly kind: 'door'; readonly target: StudioDoorTarget }
   | { readonly kind: 'creature'; readonly id: string }   // monsterDeclarations[].id
-  | { readonly kind: 'prop'; readonly id: string }       // one scene root id: an item or a group
+  | { readonly kind: 'prop'; readonly id: string }       // one scene root that is an item
+  | { readonly kind: 'group'; readonly id: string }      // one scene root that is a group
   | { readonly kind: 'hex'; readonly cell: RoomHexCell }
-  // provisional until Q1 is answered:
-  | { readonly kind: 'note'; readonly id: string }       // a map label, with or without a region
-  | { readonly kind: 'start' }
-  // provisional until Q7 is answered:
-  | { readonly kind: 'props'; readonly ids: readonly string[] };
+  | { readonly kind: 'label'; readonly id: string }      // a map label, with or without a region
+  | { readonly kind: 'partyStart' };
 
-export function studioSelectionOf(
-  arrange: StudioArrangeSelection | null
-): StudioSelection;
+// The multi-pick that feeds Group selection is a pick, not a selection (Q7).
+export interface StudioInspection {
+  readonly selection: StudioSelection;          // 'nothing' while a pick is active
+  readonly pick: readonly string[] | null;      // scene root ids when two or more are picked
+}
+
+export function studioInspectionOf(
+  arrange: StudioArrangeSelection | null,
+  scene: Readonly<WorldScene>
+): StudioInspection;
 ```
 
 **Behavior:**
 - `projectStudioArrange` returns null for a hex target whose cell is outside the workspace (`isCellWithinWorkspace`), so the arbiter masks it, as it masks an absent noun.
 - A hex projection with an empty `walkableHexes` membership still projects; `walkable: false`.
 - `regionsAtCell` includes a region when its resolution is `resolved` and the hex centre is inside its polygon ring (`pointInRing`, `regionBoundaryPredicates.ts`), or the cell is in its `hex-union`. Unresolved regions are excluded. Overlaps return every match.
-- `studioSelectionOf` maps null to `nothing`; `actor` to `creature`; `scene` with one root to `prop` and with more to `props`; `label` to `note`; `start`, `wall`, `door` and `hex` to themselves.
+- `studioInspectionOf` maps null to `nothing`; `actor` to `creature`; `start` to `partyStart`; `scene` with one root to `prop` when the root is in `scene.items` and to `group` when it is in `scene.groups`; `label`, `wall`, `door` and `hex` to themselves. Every mapping has `pick: null`.
+- A `scene` target with two or more roots maps to `{ selection: nothing, pick: rootIds }`. The inspector then shows only the pick strip (T4), never the room view under it.
 
 **Tests:**
 - `studioArrange.test.ts` › `projects a hex inside the workspace with walkable and regions`: a 6×6 draft, cell `{q:1, r:1}` walkable and inside an explicit region `hall`; expect `kind 'hex'`, `walkable true`, `regions[0].id === 'hall'`.
 - › `masks a hex outside the workspace`: cell `{q:40, r:0}`; expect `null`.
 - › `projects a non-walkable hex`: expect `walkable false`.
 - `regionAtCell.test.ts` › `polygon region contains its interior hex`, `hex-union region contains listed cells only`, `unresolved region is never reported`, `overlapping regions are both reported in authored order`.
-- `studioSelection.test.ts` › one case per mapping above, including `scene with two roots maps to props`.
+- `studioSelection.test.ts` › one case per mapping above, including `a group root maps to group`, `an item root maps to prop`, `start maps to partyStart`, and `two scene roots map to a pick with nothing selected`.
 
 - [ ] Write the tests; run them and confirm they fail on the missing kinds.
 - [ ] Implement the target, projection, key, helper and mapping.
@@ -243,30 +258,31 @@ export function studioSelectionOf(
 
 ## Task T2: Selection gestures
 
-**Delivers:** I3 (the click half), I4, the hex selection gesture (Q2 assumption).
+**Delivers:** I3 (the click half), I4, the hex selection gesture, and the two ways to select nothing (Q2).
 **Owner:** rpg-dnd5e-web; `LayoutViewport.tsx`, `WorldBuildingViewport.tsx`, `WorldBuildingConcept.tsx`.
 **Prerequisites:** T1.
 **Files:**
 - `encounter-studio/studioSession.ts`: `EncounterStudioSession` gains `selectHex(cell: RoomHexCell | null): boolean` and `clearSelection(): boolean`. `LayoutViewportProps` gains `onSelectHex?(cell: RoomHexCell): void`.
 - `encounter-studio/LayoutViewport.tsx` `pointerDown`: in `select`, a left click on a workspace cell that hits no wall, door, label or endpoint calls `onSelectHex(cell)` (cell from `workspaceCellAtPoint`) after clearing the others, as the bare-floor branch does today. A click outside the workspace clears every selection.
-- `world-building/WorldBuildingViewport.tsx`: the ground `onPointerDown` in `select` with a room cell under the pointer calls a new `roomAuthoring.onSelectHex?(cell)` instead of `onSelect([])`. The Shift exception stays (Q7).
+- `world-building/WorldBuildingViewport.tsx`: the ground `onPointerDown` in `select` with a workspace cell under the pointer calls a new `roomAuthoring.onSelectHex?(cell)` instead of `onSelect([])`. With no workspace cell under the pointer it calls `onSelect([])`, which selects nothing. The Shift exception stays, because Shift extends the pick (Q7).
 - `world-building/WorldBuildingConcept.tsx`: implements `selectHex` and `clearSelection` through `activateStudioTarget`, clearing `selectedIds`, `selectedWallId`, `selectedLabelId`, `selectedActorId` and the door preview as the existing select functions do. The `Escape` branch of `handleKey` calls `clearSelection` in studio mode. Wraps both with `guardSnapshotIntent`.
 - Tests: `LayoutViewport.test.tsx`, `WorldBuildingViewport.test.tsx`, `WorldBuildingConcept.test.tsx`.
 
 **Interfaces:** `selectHex(cell)` returns false and changes nothing when the cell is outside the workspace, while publishing is busy, or from a retired snapshot. `clearSelection()` returns true and sets the target to null.
 
 **Behavior:**
-- A hex selection and a wall, door, note, creature or prop selection replace each other; there is never more than one target.
+- A hex selection and any other selection replace each other; there is never more than one target.
+- Escape and a click off the floor both select nothing, in Layout and in 3D.
 - Selecting a hex never paints, erases or edits the floor. The floor tools are unchanged.
 - Escape inside an input, a select or a dialog keeps its local meaning. The window handler already returns early for those targets, and that guard stays.
-- Scene multi-select through Shift, Ctrl or Meta is unchanged until Q7 is answered.
+- The scene multi-pick through Shift in 3D and Shift, Ctrl or Meta in the scene tree is unchanged. It feeds Group selection exactly as today (Q7).
 
 **Tests:**
 - `LayoutViewport.test.tsx` › `select click on bare floor selects that hex`: `onSelectHex` called once with the cell under the pointer; `wallEditing.select(null)` and `labelEditing.onSelect(null)` called.
 - › `select click on a wall selects the wall, not a hex`: `onSelectHex` not called.
 - › `click outside the workspace selects nothing`: `onSelectHex` not called; the three clears called.
 - › `paint tool on bare floor never selects a hex`: `onCommit` path unchanged; `onSelectHex` not called.
-- `WorldBuildingViewport.test.tsx` › `ground click in select mode selects the hex under the pointer`; › `shift ground click keeps the current scene selection`.
+- `WorldBuildingViewport.test.tsx` › `ground click in select mode selects the hex under the pointer`; › `click off the workspace floor selects nothing`; › `shift ground click keeps the current pick`.
 - `WorldBuildingConcept.test.tsx` › `Escape clears a studio wall selection to nothing`; › `selectHex refuses a cell outside the workspace without a history entry`.
 
 - [ ] Write the tests and confirm they fail.
@@ -293,7 +309,7 @@ export function studioSelectionOf(
 ```ts
 export function StudioInspector(props: {
   session: EncounterStudioSession;
-  selection: StudioSelection;           // studioSelectionOf(session.arrange)
+  inspection: StudioInspection;         // studioInspectionOf(session.arrange, scene)
   view: EncounterStudioView;
   layoutTool: LayoutTool;
   armedTool: ReactNode | null;          // StudioWallControls | StudioDoorControls | labels.controls, per A2
@@ -304,7 +320,7 @@ export function StudioInspector(props: {
 }): React.JSX.Element;
 ```
 
-The inspector's root is `<section aria-label="Inspector">` with an `h2` naming the selection: "Room" for nothing, otherwise the name `selectionName` gives today. T4 fills the per-kind body; T3 renders the existing `SelectedArrange` body for every kind except nothing and hex, so the slice stays working between commits.
+The inspector's root is `<section aria-label="Inspector">` with an `h2` naming the selection: "Room" for nothing, "N props picked" for a pick, otherwise the name `selectionName` gives today. T4 fills the per-kind body; T3 renders the existing `SelectedArrange` body for every kind except nothing and hex, so the slice stays working between commits.
 
 **Behavior:**
 - `StudioSurface` opens the sidebar whenever `session.arrange?.selectionKey` changes to a different non-null key. A key that stays the same, such as a preview rerender, never reopens a sidebar the author hid.
@@ -330,36 +346,40 @@ The inspector's root is `<section aria-label="Inspector">` with an `h2` naming t
 
 ## Task T4: The inspector views
 
-**Delivers:** I2 (one view per kind), I8, K4; the room, wall, door, creature, prop and hex views.
+**Delivers:** I2 (one view per kind), I4 (the pick strip), I8, K4; the nine views and the pick strip.
 **Owner:** rpg-dnd5e-web; `StudioInspector.tsx`, `StudioArrangePanel.tsx`, `StudioArrangeFields.tsx`, `WorldBuildingConcept.tsx`.
 **Prerequisites:** T3. T6 for the room view's Size field, or T6 adds that field itself.
 **Files:**
-- `encounter-studio/StudioInspector.tsx`: one view component per kind: `RoomView`, `WallView`, `DoorView`, `CreatureView`, `PropView`, `HexView`, plus the provisional `NoteView`, `StartView` and `PropsView`.
+- `encounter-studio/StudioInspector.tsx`: one view component per kind: `RoomView`, `WallView`, `DoorView`, `CreatureView`, `PropView`, `GroupView`, `HexView`, `LabelView` and `PartyStartView`, plus `PickStrip` for a multi-pick.
 - `encounter-studio/StudioArrangePanel.tsx`: `SelectedArrange` splits into the per-kind field forms the views reuse. The form keeps `aria-label="Arrange selected noun"` and the one-transaction submit. The empty-selection branch and the "Arrange" heading are removed.
 - `encounter-studio/StudioDimensions.tsx`: rendered in `RoomView`; `onDismiss` becomes optional and the form stays open after Apply.
-- `encounter-studio/studioSession.ts` and `WorldBuildingConcept.tsx`: the session gains `armPartyStart(): boolean`, which wraps the owner's `armStartPlacement` with `guardSnapshotIntent` and `refuseWhilePublishing`.
+- `encounter-studio/studioSession.ts` and `WorldBuildingConcept.tsx`: the session gains `armPartyStart(): boolean`, which wraps the owner's `armStartPlacement` with `guardSnapshotIntent` and `refuseWhilePublishing`. Place party start in the room view and Move in the party-start view both call it. The session also exposes `propControls.groupActions` (today's `groupUngroupActions`) separately from `arrangeExtras`, so the group view and the pick strip can each mount the half they need.
 - Tests: `StudioInspector.test.tsx`, `StudioArrangePanel.test.tsx`, `EncounterStudioIntegration.test.tsx`.
 
 **Interfaces:** each view takes `{ session, selection }` narrowed to its kind. Field edits use the existing intents only:
 
 | view | fields, in order | intents |
 |---|---|---|
-| Room (nothing) | Size; Notes (the existing `useStudioLabels` controls: create, rename, move, delete); Party start (cell or "not placed", and Place party start); Play: void, lighting, standing, read-only (Q3) | `resizeWorkspace`, the label intents, `armPartyStart` |
+| Room (nothing) | Size, with the side to grow or shrink (T6); Notes (the existing `useStudioLabels` controls: create a note, and the list of notes, each of which selects its label); Party start (cell or "not placed", and Place party start); Room-default wall finishes: one read-only row per region that has `scene.authoringRegions[].wallFinish`, naming the region and its material, with "Edit region", which opens the Regions home on that region's label. There is **no floor-default field**, because the document has no floor default, and S0 adds no key (Q4). | `resizeWorkspace`, the label create intent, `armPartyStart`, `mapLabelSelection.select` |
 | Wall | finish (`StudioWallFinishes`); appearance (`StudioWallAppearanceChoices`); start, end, length, fixed endpoint, height and thickness (`arrangeFields`); constraints (`StudioWallConstraints`); Place a door; Remove wall | `commitArrange` `wall-edit` and `wall-remove`; Place a door calls `doorEditing.setActive(true)` and arms the Door tool |
 | Door | position, width, model; Remove door | `commitArrange` `door-edit` and `door-remove` |
 | Creature | map name; look (family, style, skin palette); cell and facing; Move; then `socialControls.selection` (`CreatureOrders`: faction, table, own rows, temper, weapons, says, holds, arrives) and the authored-dispositions list; then links to the Encounter home definitions | `commitArrange` `actor-start`; the binding intents behind `CreatureOrders` |
-| Prop | position, rotation, height; `propControls.arrangeExtras` (duplicate, delete, group, ungroup, light); the declaration editor and `PropOrders` from `socialControls.selection` | `commitArrange` `scene-edit`; the prop binding intents |
-| Hex | cell coordinates; walkable or not; the drawn regions at the cell with their lighting, each with "Edit region", which opens the Regions home with that region's label selected | read-only in S0; `mapLabelSelection.select` |
-| Note, Start, Props (provisional) | exactly their current Arrange fields | as today |
+| Prop | position, rotation, height; `propControls.arrangeExtras` (duplicate, delete, light); the declaration editor and `PropOrders` from `socialControls.selection` | `commitArrange` `scene-edit`; the prop binding intents |
+| Group | position, rotation, height (today's fields for one scene root); its members, listed by label, each of which selects that member; Ungroup; duplicate and delete | `commitArrange` `scene-edit`; `propControls.groupActions` |
+| Hex | cell coordinates; walkable or not; the drawn regions at the cell with their lighting, each with "Edit region", which opens the Regions home with that region's label selected; Play: void, lighting and standing, read-only, each the one value the dialect accepts (Q3) | read-only in S0; `mapLabelSelection.select` |
+| Label | text; cell (world X and Z); Delete; for a region's label, "Edit region", which opens the Regions home | `commitArrange` `label-edit` and `label-remove`, as today |
+| Party start | its cell; Move, which arms the party-start gesture, and the next floor click places it | `armPartyStart`; `commitArrange` `start-position`, as today |
+| Pick strip (two or more scene roots picked) | "N props picked"; today's multi-root position, relative rotation and height fields; Group selection; duplicate and delete. No room view shows under it. | `commitArrange` `scene-edit`; `propControls.groupActions` |
 
 **Behavior:**
 - A view shows only its own selection's fields. A faction's table, a table's rows and intel records are never edited from a creature or prop view; the links open the Encounter home (README refusal).
 - A refused submit leaves the form's staged values and shows the refusal in `role="alert"` inside the view, as `#arrange-error` does today.
 - A hex with no drawn region says "No region is drawn here". An unwalkable hex says so.
-- The room view states play's values as the dialect's fixed contract: "Void: transparent · Lighting: bright · Standing: centre-covered".
+- The hex view states play's values as the dialect's fixed contract: "Void: transparent · Lighting: bright · Standing: centre-covered". Editing them is a toolkit change (Q3).
+- A selected group is one thing. Picking a second root with Shift turns the inspector into the pick strip; Group selection then makes one group and selects it.
 
 **Tests:**
-- `StudioInspector.test.tsx`, one per view: `room view shows size, notes, party start and the fixed play values`; `wall view shows finish, endpoints, height and Place a door, and Place a door arms the door tool`; `door view shows position and width and removes the door through one intent`; `creature view shows look, facing and the creature orders form`; `prop view shows position, the arrange extras and prop orders for a declared prop`; `hex view names the region and lighting and opens that region`; `hex view with no region says none is drawn`.
+- `StudioInspector.test.tsx`, one per view: `room view shows size, notes, party start and each region's room-default wall finish, and no floor default`; `group view lists its members and ungroups through one intent`; `label view shows text and cell and renames through one intent`; `party start view shows its cell and Move arms the gesture`; `two picked roots show only the pick strip, and Group selection selects the new group`; `hex view shows the fixed play values read-only`; `wall view shows finish, endpoints, height and Place a door, and Place a door arms the door tool`; `door view shows position and width and removes the door through one intent`; `creature view shows look, facing and the creature orders form`; `prop view shows position, the arrange extras and prop orders for a declared prop`; `hex view names the region and lighting and opens that region`; `hex view with no region says none is drawn`.
 - › `a refused wall edit keeps the staged height and shows the refusal`: a `commitArrange` stub returns false; expect the alert and the input value kept.
 - › `a creature view never renders the Factions form`: query the factions form by name; expect null.
 - `StudioArrangePanel.test.tsx`: existing field tests stay green, reached through the views.
@@ -399,16 +419,17 @@ The inspector's root is `<section aria-label="Inspector">` with an `h2` naming t
 **Verification:** `npx vitest run src/concepts/encounter-studio/EncounterStudioIntegration.test.tsx` passes.
 **Completion evidence:** named tests passing.
 
-## Task T6: The workspace grows up and to the right
+## Task T6: The workspace grows up and to the right, or on a chosen side
 
-**Delivers:** I6, A1. I7 is blocked on Q6.
+**Delivers:** I6, I7, A1.
 **Owner:** rpg-dnd5e-web; `world-building/workspaceGeometry.ts`, `roomDraft.ts`, the kind's consumers, `StudioDimensions.tsx`.
 **Prerequisites:** none. It may run in parallel with T1–T5 on its own worktree.
 **Files:**
 - `world-building/workspaceGeometry.ts`: `RoomWorkspace` gains the kind `odd-r-rect`; new `rectangleOf`, `anchoredRoomWorkspace` and `growRoomWorkspace`; `validateWorkspace`, `containsWorkspaceCell`, `workspaceCells` and `workspaceBounds` accept it.
 - Every consumer listed in the baseline replaces `kind === 'centered-odd-r'` with `rectangleOf(workspace) !== null` and reads `minCol`, `minRow`, `widthHexes` and `heightHexes` from the result.
 - `world-building/roomDraft.ts`: `resizeRoomWorkspace` calls `growRoomWorkspace`; the version gate that requires scene version 2 for a centred workspace applies to `odd-r-rect` too.
-- `encounter-studio/StudioDimensions.tsx`: reads the rectangle through `rectangleOf`; after Apply it frames the workspace centre (`workspaceBounds`), not the origin; the help line says "Adds columns on the right and rows on top".
+- `encounter-studio/StudioDimensions.tsx`: reads the rectangle through `rectangleOf`; gains two selects, "Columns change on" (Right, default; Left) and "Rows change on" (Top, default; Bottom); after Apply it frames the workspace centre (`workspaceBounds`), not the origin; the help line says "No cell moves, whichever side changes". There is no shift warning (Q6).
+- `encounter-studio/studioSession.ts`: `resizeWorkspace(width, height, edges?: ResizeEdges)`, with `edges` absent meaning right and top.
 - `world-building/CONTRACT.md`: the saved-rectangle section documents `odd-r-rect`.
 - Tests: `workspaceGeometry.test.ts`, `roomDraft.test.ts`, `singleRoomDungeon.test.ts`, `EncounterStudioWorkspace.test.tsx`.
 
@@ -433,28 +454,36 @@ export function anchoredRoomWorkspace(rect: {
   minCol: number; minRow: number; widthHexes: number; heightHexes: number;
 }): RoomWorkspace; // derives hexRadius and horizontalLimit exactly as centeredRoomWorkspace does
 
+export interface ResizeEdges {
+  columns: 'right' | 'left';   // default 'right'
+  rows: 'top' | 'bottom';      // default 'top'; top is the smallest r
+}
 export function growRoomWorkspace(
-  current: RoomWorkspace, widthHexes: number, heightHexes: number
+  current: RoomWorkspace, widthHexes: number, heightHexes: number,
+  edges: ResizeEdges = { columns: 'right', rows: 'top' }
 ): RoomWorkspace;
-// Keeps minCol. Sets minRow = old minRow - (heightHexes - old heightHexes).
-// So the right edge and the top edge move, and the left and bottom edges stay.
+// dw = widthHexes - old widthHexes; dh = heightHexes - old heightHexes (either may be negative).
+// columns 'right': minCol kept.            columns 'left': minCol = old minCol - dw.
+// rows 'top':      minRow = old minRow - dh. rows 'bottom': minRow kept.
+// Only the chosen edges move; no cell coordinate changes on any side.
 // A legacy radius workspace is not a rectangle, so it has no edges to keep: it is
 // replaced by centeredRoomWorkspace(widthHexes, heightHexes), exactly as resize does today.
 ```
 
 **Behavior:**
 - Growing keeps every cell's `{q, r}`. Walls, props, labels and regions hold world points or cells and are not rewritten.
-- Shrinking moves the same two edges inward (A1). `validateWorkspaceContent` still refuses a shrink that leaves content outside, with today's message.
+- Growing on the left or bottom also keeps every cell's `{q, r}`; there is no warning, because nothing shifts (Q6).
+- Shrinking moves the chosen edges inward (A1). `validateWorkspaceContent` still refuses a shrink that leaves content outside, with today's message.
 - A `centered-odd-r` document still decodes unchanged. Its first resize saves `odd-r-rect`; an unresized document saves byte-identical.
 - `validateWorkspace` refuses an `odd-r-rect` whose `hexRadius` or `horizontalLimit` does not match its derivation, with the sentence the centred kind uses.
 - The toolkit's floor check passes because `hexRadius` covers every cell by derivation.
 
 **Tests:**
 - `workspaceGeometry.test.ts` › `growing 20x20 to 24x22 keeps every old cell and adds 4 columns right and 2 rows on top`: every old cell is in the new workspace; the new cells are exactly those with `col >= oldMaxCol + 1` or `r < oldMinRow`.
-- › `shrinking moves the right and top edges`; › `a centred workspace reads as its rectangle`; › `a mismatched hexRadius on odd-r-rect is refused`; › `hexRadius covers the farthest cell of an off-centre rectangle`.
+- › `growing on the left and bottom keeps every old cell and moves only those edges`; › `shrinking moves the chosen edges`; › `a centred workspace reads as its rectangle`; › `a mismatched hexRadius on odd-r-rect is refused`; › `hexRadius covers the farthest cell of an off-centre rectangle`.
 - `roomDraft.test.ts` › `resize keeps a monster's starting cell, the party start and every walkable cell`; › `a shrink that cuts a wall is refused with no history entry`.
 - `singleRoomDungeon.test.ts` › `an off-centre workspace encodes and round-trips through parse`; › `an unresized centred document encodes byte-identical`.
-- `EncounterStudioWorkspace.test.tsx`: the staged-dimensions tests updated; › `apply frames the new workspace centre`.
+- `EncounterStudioWorkspace.test.tsx`: the staged-dimensions tests updated; › `apply frames the new workspace centre`; › `choosing Left passes columns left to resizeWorkspace and shows no warning`.
 
 - [ ] Write the tests; confirm the growth test fails against today's even resize.
 - [ ] Add the kind, helpers and consumers; update `CONTRACT.md`.
@@ -480,17 +509,18 @@ export function growRoomWorkspace(
 
 **Walk** (fresh local draft, Build home):
 
-1. Layout, nothing selected: no Arrange, Walls, Doors, Notes or Size buttons. The inspector reads Room, with size, notes, party start and the play values.
+1. Layout, nothing selected: no Arrange, Walls, Doors, Notes or Size buttons. The inspector reads Room, with size, notes, party start and the room-default wall finishes. It has no floor-default field.
 2. Arm Wall from the toolbar, choose an appearance in the inspector, and draw two walls. Press Escape.
 3. Press N to hide the inspector. Click a wall: the inspector opens on it. Change its height and press Undo. The old height returns, and the wall stays selected.
 4. Press Place a door, then click the wall. Click the new door: the door view shows position and width.
-5. Click an empty floor hex: the hex view names the cell and says whether it is walkable. Press Escape: Room.
-6. Switch to 3D. Drag a prop from the palette onto the floor: the prop view opens. Place a creature from the Monsters and NPCs palette, click it, and see its look, facing and orders.
+5. Click an empty floor hex: the hex view names the cell, says whether it is walkable, and shows void, lighting and standing read-only. Press Escape: Room. Click a hex, then click outside the floor: Room.
+5a. Add a note, then click its label: the label view shows its text and cell. Click the party start marker in 3D: its view shows the cell and Move.
+6. Switch to 3D. Drag a prop from the palette onto the floor: the prop view opens. Drag a second prop, Shift-click the first: the pick strip reads 2 props picked. Press Group selection: the group view lists both members. Place a creature from the Monsters and NPCs palette, click it, and see its look, facing and orders.
 7. Open the Encounter home, then Creatures. The creature is pressed in Placed instances. Click Show on map: Build, with the creature selected and the inspector open.
-8. In the room view, set the size from 20 by 20 to 24 by 22. New columns appear on the right and new rows on top. The walls, prop, creature and floor are where they were.
+8. In the room view, set the size from 20 by 20 to 24 by 22. New columns appear on the right and new rows on top. The walls, props, creature and floor are where they were. Set Columns change on to Left and the width to 26: two columns appear on the left, no warning shows, and nothing moves.
 9. Save the local draft and reload. Everything above is still there.
 
-**Verification:** `ci-check` log clean; nine screenshots; the checklist on #574 ticked.
+**Verification:** `ci-check` log clean; one screenshot per walk step; the checklist on #574 ticked.
 **Completion evidence:** the PR body carries the `ci-check` output, the screenshot list and the T6 toolkit decode output.
 
 ---
@@ -500,12 +530,12 @@ export function growRoomWorkspace(
 | requirement / scenario | task(s) | proof |
 |---|---|---|
 | I1 tabs and Size retire | T3, T7 | `Build has no Arrange, Walls, Doors or Notes buttons and no Size button`; the StudioSidebar grep; walk 1 |
-| I2 one view per kind | T1, T4 | `studioSelection.test.ts` mappings; one `StudioInspector.test.tsx` case per view |
+| I2 one view per kind, nine kinds | T1, T4 | `studioSelection.test.ts` mappings; one `StudioInspector.test.tsx` case per view; walk 5a |
 | I3 click opens, N toggles | T2, T3 | `selecting a different thing reopens a hidden inspector`; the retargeted N test; walk 3 |
-| I4 one selection | T1, T2 | `StudioSelection` has no set except the provisional `props` (Q7); `select click on a wall selects the wall, not a hex` |
+| I4 one inspected thing; the pick stays | T1, T2, T4 | `two scene roots map to a pick with nothing selected`; `two picked roots show only the pick strip…`; `select click on a wall selects the wall, not a hex`; walk 6 |
 | I5 one selection across homes | T5 | `a placed instance selected on the home is the map selection with the inspector open`; `a creature selected on the map is pressed in the home's placed list`; walk 7 |
 | I6 grows up and right | T6 | `growing 20x20 to 24x22 keeps every old cell…`; `resize keeps a monster's starting cell…`; walk 8 |
-| I7 another side, with warning | none | **blocked on Q6**; not a deferral |
+| I7 any side, no warning | T6 | `growing on the left and bottom keeps every old cell…`; `choosing Left passes columns left…`; walk 8 |
 | I8 refusals at the form | T4, T6 | `a refused wall edit keeps the staged height and shows the refusal`; `a shrink that cuts a wall is refused with no history entry`; T6 toolkit decode |
 | K1 undo and redo | T4 | `wall height edited in the inspector is one history entry…`; `undo of a creature placement falls back to the room view`; walk 3 |
 | K2 3D drag placement | T4, T7 | `a prop dropped in 3D becomes the selection and opens the prop view`; walk 6 |
@@ -516,24 +546,27 @@ export function growRoomWorkspace(
 | #574 scenario 3 | T2, T4 | walk 5 and 6 |
 | #574 scenario 4 | T1, T4 | `hex view names the region and lighting and opens that region`; walk 5 |
 | #574 scenario 5 | T4 | walk 3 |
-| #574 scenario 6 | T6 | walk 8; the other-side half is blocked on Q6 |
+| #574 scenario 6 | T6 | walk 8 |
 
-**Explicit deferrals:** the editable play contract (Q3), the room-wide
-default finish (Q4), and the creature view's read-back prose, which is S2.
+**Explicit deferrals:** editing the play contract, which is a toolkit
+change (Q3); a floor-default finish, which has no document key (Q4); and
+the creature view's read-back prose, which is S2.
 
 ## Provider/consumer seams
 
 | provider | consumer | produced vs consumed contract | availability | proof |
 |---|---|---|---|---|
 | T1 `StudioArrangeTarget` `hex` and its projection | T2 owner intents, T4 `HexView` | `{kind:'hex', cell}` with `walkable` and `regions`; null when outside the workspace | new in T1 | `projects a hex inside the workspace…`; `masks a hex outside the workspace` |
-| T1 `studioSelectionOf` | T3 `StudioInspector` key, T4 views | eight variants; `nothing` for null | new in T1 | `studioSelection.test.ts` |
+| T1 `studioInspectionOf` | T3 `StudioInspector` key, T4 views and pick strip | nine selection kinds plus a pick of two or more roots; `nothing` for null | new in T1 | `studioSelection.test.ts` |
 | T1 `regionsAtCell` | T4 `HexView` | resolved regions at the cell, authored order; an annotation | new in T1, over the existing `pointInRing` | `regionAtCell.test.ts` |
 | T2 `selectHex`, `clearSelection` on the session | T2 `LayoutViewport` and `WorldBuildingViewport` | boolean; false without a history entry on refusal | new in T2, through the existing `activateStudioTarget` | `selectHex refuses a cell outside the workspace…` |
-| T4 `armPartyStart` | T4 `RoomView` | boolean; wraps the existing `armStartPlacement` | the owner function exists; the session member is new | `room view shows … party start` |
+| T4 `armPartyStart` | T4 `RoomView` and `PartyStartView` | boolean; wraps the existing `armStartPlacement` | the owner function exists; the session member is new | `room view shows … party start`; `party start view shows its cell and Move arms the gesture` |
+| T4 `propControls.groupActions` | T4 `GroupView` and `PickStrip` | today's Group selection and Ungroup buttons, split out of `arrangeExtras` | the owner node exists; the session member is new | `group view lists its members and ungroups…`; `two picked roots show only the pick strip…` |
+| existing `scene.authoringRegions[].wallFinish` (rpg-dnd5e-web#1265) | T4 `RoomView` | `{ materialRef, patternStart }` per region, read-only | in the baseline | `room view shows … each region's room-default wall finish` |
 | existing `commitArrange` and `StudioArrangeIntent` | T4 views | unchanged; one transaction per form | exists at the baseline | existing `StudioArrangePanel.test.tsx` cases |
 | existing `socialControls.selection` and `propControls.arrangeExtras` | T4 creature and prop views | unchanged ReactNodes from the owner | exist at the baseline | `creature view shows … creature orders form`; `prop view shows …` |
 | existing `session.creatures.select` | T5 | unchanged | exists at the baseline | `a placed instance selected on the home…` |
-| T6 `odd-r-rect`, `rectangleOf`, `growRoomWorkspace` | T4 `RoomView` through `resizeWorkspace`, and every listed consumer | rectangle fields; `hexRadius` derived | new in T6 | `growing 20x20…`; codec round-trip |
+| T6 `odd-r-rect`, `rectangleOf`, `growRoomWorkspace`, `ResizeEdges` | T4 `RoomView` through `resizeWorkspace(width, height, edges?)`, and every listed consumer | rectangle fields; `hexRadius` derived; absent `edges` means right and top | new in T6 | `growing 20x20…`; `growing on the left and bottom…`; codec round-trip |
 | T6 saved `room.workspace` | rpg-toolkit single-room decoder | opaque node; `hexRadius` bounds walkable cells by cube distance | toolkit at the baseline, unchanged | the T6 toolkit decode with no floor refusal |
 
 **Shared files.** T1–T5 edit `WorldBuildingConcept.tsx` and
@@ -547,10 +580,11 @@ it in place.
 
 - **Implementation against assertions.** T3's open-on-select rule keys on
   `selectionKey`, which matches both T3 tests: a new key reopens, a preview
-  rerender does not. T6's growth formula moves `minRow` down by the added
-  height, which matches the growth test's new-cell set.
-- **Unowned requirements.** I7 has no task and is blocked on Q6. That is a
-  blocker, not a deferral.
+  rerender does not. T6's growth formula moves only the chosen edges,
+  which matches both growth tests' new-cell sets.
+- **Unowned requirements.** None. Q6 and Q7 are planned on the team lead's
+  reading and await operator confirmation; the design rows for R13 and R9
+  are to be amended to match.
 - **Persistence.** T6 changes the saved workspace and is covered by the
   codec round-trip, the byte-identical test and the toolkit decode. T1–T5
   add no saved data; the selection is never persisted.
@@ -558,14 +592,13 @@ it in place.
   is touched.
 - **Removal of replaced paths.** T3 retires the sections; T7 greps for the
   leftovers.
-- **Decisions left open.** Q1, Q2, Q7 and A2 carry assumptions that keep
-  today's behaviour or the narrowest reading. Q3, Q4 and Q6 block exactly
-  the fields named.
+- **Decisions left open.** Q1–Q5 and Q8 are resolved. Q6 and Q7 await
+  operator confirmation. A1 and A2 are planning assumptions.
 
 ## Later slices
 
-- S1, the cast and per-placement looks: rpg-project#575.
+- S1, the cast and per-placement looks: rpg-project#575. A cast member selected on the home highlights its placements on the map, and the inspector shows the cast member. It is not a multi-selection (Q8).
 - S2, read it back: prose, fact index, tables heaviest first: rpg-project#576.
-- S3, overview on Layout: rpg-project#577.
+- S3, overview on Layout: rpg-project#577. It retires the Regions home: region and lighting move to the hex view, and the room list moves to the Layout overview (Q5).
 - S4, the hidden nouns: exits, endings, concealments, door state: rpg-project#578.
 - S5, density: words, wrapping, panel width: rpg-project#579.
