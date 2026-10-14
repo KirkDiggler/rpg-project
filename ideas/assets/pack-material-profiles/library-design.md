@@ -5,10 +5,11 @@
 ```mermaid
 flowchart LR
   subgraph Web[Web asset-review workbench]
-    W[Experimental slot profile] -->|Copy complete channels| L[Texture-pack library]
-    L -->|Explicit trial| W
-    L --> P[Named packs and sets]
-    L --> A[Allowed packs on actual source slots]
+    B[Pack Builder: colors and optional shared maps] -->|Save pack| L[Texture-pack library]
+    L --> V[Asset Viewer: pack and choice preview]
+    V -->|Match checkbox on actual surface| L
+    L --> F[Separate saved-library file view]
+    W[Advanced per-slot workbench]
   end
   subgraph Assets[Private asset provider]
     I[Prepared image inventory and source targets] --> L
@@ -23,6 +24,8 @@ A set is one complete color-map look with optional normal/emissive channels. A p
 
 ## Law
 
+- Pack building and asset viewing occupy separate views. Pack Builder starts the workflow: select color images, optionally select shared normal/emissive images, then save the named pack.
+- Asset Viewer selects a saved pack and choice for immediate preview; its match checkbox records support on the visibly selected actual surface. Library-file operations and advanced material/batch experiments stay outside both primary views.
 - The texture-pack library owns named complete sets and explicit allowed-pack membership. The experimental slot profile owns the currently applied workbench recipe; neither document infers the other's choices.
 - A set owns a color image and explicit normal/emissive absence or settings, including channel strengths, emission color and repeat/clamp sampling. Images remain independent artistic choices.
 - The library defines each set once. Assignments reference pack identities rather than copying sets into every asset or GLB.
@@ -48,6 +51,7 @@ A set is one complete color-map look with optional normal/emissive channels. A p
 | R5 | settled | Provider-owned shared resources and supported-choice metadata; Studio implementation belongs to its owning team | KirkDiggler | 2026-10-14 |
 | R6 | settled | Original/default appearance and existing source/cache/review custody remain preserved | KirkDiggler | 2026-10-14 |
 | R7 | open | Exact released catalog/resource/selector contract and pinned consumer integration | — | — |
+| R8 | settled | Pack-first separate views, optional shared maps, saved-pack preview and explicit match checkbox | KirkDiggler | 2026-10-14 |
 
 ## Open
 

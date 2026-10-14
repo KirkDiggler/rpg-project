@@ -12,11 +12,14 @@ flowchart LR
     D --> R[Runtime publication boundary]
   end
   subgraph Workbench[Web dev/asset-review]
-    M --> L[MaterialEditorLab]
-    L --> P[TexturePackPanel]
-    P --> A[texturePackLibrary state/codec]
+    M --> L[MaterialEditorLab entry] --> P[TexturePackWorkspace]
+    P --> B[Pack Builder]
+    P --> E[Asset Viewer]
+    P --> F[Library files]
+    B -->|Save| A[texturePackLibrary state/codec]
+    E -->|Match| A
     A --> V
-    A -->|Complete set preview| L
+    A -->|Complete choices| E
   end
   R --> S[Studio's pinned runtime catalog consumer]
 ```
@@ -26,8 +29,10 @@ flowchart LR
 | Component | Owns | Input → output |
 |---|---|---|
 | `prepare_material_review` | Source/image custody and slot-addressable preview preparation | Source audit/profile → `MaterialEditorManifest` schema3 |
-| `MaterialEditorLab` | Current experimental channels and preview lifecycle | `EditingProfile` schema2 + selected actual slot → per-slot scene materials |
-| `TexturePackPanel` | Operator naming, explicit selections and library persistence UI | Inventory/current complete definition → pack/library actions, durable JSON and explicit preview callback |
+| `MaterialEditorLab` / `TexturePackWorkspace` | View routing and shared library/draft persistence | Manifest3 + saved library1 → separate Builder, Viewer and Library files views |
+| `TexturePackBuilder` | Named pack draft, explicit color selection and optional shared maps | Inventory + draft → complete set definitions on Save pack |
+| `TexturePackAssetViewer` | Selected asset/surface/pack/choice and temporary preview profile | Library1 + manifest3 → profile2 scene preview and explicit match/unmatch actions |
+| `MaterialEditorWorkbench` | Advanced independent channel/batch experiments | `EditingProfile` schema2 + selected actual slot → per-slot scene materials |
 | Web `texturePackLibrary` | Immutable library state and strict codec | Library schema1 + manifest3 → validated pack sets and allowed memberships |
 | Assets `texture_pack_library` | Independent source-bound validation and review custody expansion | Exact library file bytes + manifest3 → review-only declaration |
 | Runtime publication boundary | Released model/resource identities and compatibility | Reviewed authoring choices + verified promoted models → released supported-choice catalog |
@@ -37,11 +42,11 @@ The workbench does not turn a visually acceptable trial into declared or release
 
 ## Walk one choice through
 
-The operator checks the actual `PolygonFantasyKingdom_Texture_01_A.png` inventory row. `TexturePackPanel` creates a set labeled `01_A` inside a named Kingdom pack. The set keeps the source-relative image identity, complete optional-channel settings and wrap; its display label does not become a filename detector.
+The operator checks the actual `PolygonFantasyKingdom_Texture_01_A.png` inventory row. `TexturePackBuilder` creates a set labeled `01_A` inside a named Kingdom pack on **Save pack**, then opens Asset Viewer. The set keeps the source-relative image identity, complete optional-channel settings and wrap; its display label does not become a filename detector.
 
 The operator checks the actual Fancy Chair01 and Chair02 slots. Their `TexturePackLibrary.assignments` rows contain the same pack ID, not two copies of its twelve sets. Adding membership does not touch the current `EditingProfile` or the promoted models (R1, R6).
 
-An explicit **Preview** sends one complete `EditingProfileDefinition` back to `MaterialEditorLab`; the selected slot's draft changes, but the saved set and memberships do not. Exported library JSON travels to the Python validator. `review_declaration` adds the exact library-byte SHA, registered image hashes and prepared source/editor identities. It does not add an `assetRef` or claim a runtime material binding. The released-selector/resource contract is R7, not a rule a renderer may guess.
+Selecting a pack/choice in `TexturePackAssetViewer` applies one complete `EditingProfileDefinition` to a temporary slot profile; the selected surface previews it, but the saved set and memberships do not change. The match checkbox updates only that surface's allowed pack references. Camera fitting changes projection rather than source geometry. Exported library JSON travels to the Python validator. `review_declaration` adds the exact library-byte SHA, registered image hashes and prepared source/editor identities. It does not add an `assetRef` or claim a runtime material binding. The released-selector/resource contract is R7, not a rule a renderer may guess.
 
 ## Separations that look like one thing
 
@@ -64,7 +69,7 @@ Conflating membership with preview changes defaults when an operator merely orga
 | Pack membership references actual slots | Different wall/floor choices and safe bulk scope | Operator inspects multi-material target lists | Apply to every material by model name |
 | Separate library authority from transient slot trials | Saved packs survive further experiments | UI names save/preview/assign as different verbs | Per-asset copies of every look |
 | Review-only declaration binds exact library bytes | Reproducible source custody without a second JSON number canonicalizer | Provider keeps the exported file; declaration remains private | User-maintained hashes/trust flags |
-| Metadata-only pack lists | No eager full-library image decode/load | Operator uses the existing image browser and explicit live Preview | Loading all full-resolution variants for a list |
+| Separate pack/image selection and asset preview views | One task and broad usable space per view | Builder owns thumbnails; Viewer loads only the selected complete look | Three narrow columns carrying every workflow |
 
 ## Edges
 
@@ -72,14 +77,15 @@ This is static PBR set authoring, not Blender shader-node import, automatic comp
 
 ## Where a change lands
 
-A new library editing action lands in Web `texturePackLibrary` and `TexturePackPanel`, with mirrored codec validation only if the wire changes. A new source/image custody check lands in Assets `texture_pack_library` or preparation, not Studio. A new released placement Look control lands in Studio once the publication owner supplies the released contract.
+A new library editing action lands in Web `texturePackLibrary` and the owning Builder/Viewer/File view, with mirrored codec validation only if the wire changes. A new source/image custody check lands in Assets `texture_pack_library` or preparation, not Studio. A new released placement Look control lands in Studio once the publication owner supplies the released contract.
 
 ## Source map
 
 | Concern | Owning path |
 |---|---|
-| Workbench/preview | Web `src/dev/asset-review/MaterialEditorLab.tsx`, `MaterialEditorScene.tsx` |
-| Pack/library UI and pure state | Web `src/dev/asset-review/TexturePackPanel.tsx`, `texturePackLibrary.ts` |
+| Entry / advanced workbench / shared preview | Web `src/dev/asset-review/MaterialEditorLab.tsx`, `MaterialEditorWorkbench.tsx`, `MaterialEditorScene.tsx`, `materialEditorVisuals.ts` |
+| Pack/library views and pure state | Web `src/dev/asset-review/TexturePackWorkspace.tsx`, `TexturePackBuilder.tsx`, `TexturePackAssetViewer.tsx`, `texturePackLibrary.ts` |
+| Camera-only model framing | Web `src/dev/asset-review/materialEditorFraming.ts` |
 | Definition semantics | Web `materialRecipe.ts`; Assets `scripts/synty_material_recipe.py` |
 | Source-bound library validation/declaration | Assets `scripts/texture_pack_library.py` |
 | Operator workflow | Assets `docs/human/asset-ingestion/texture-pack-library.md` |
