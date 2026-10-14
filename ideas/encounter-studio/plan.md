@@ -599,9 +599,9 @@ it in place.
 # Encounter studio S1 — the cast and per-placement looks
 
 Planned 2026-10-14 against the S0 branch, which S1 stacks on. Authority:
-design.md (R3, R4, R11, R14; R14b deferred), rpg-project#575, and the
-team lead's cast recommendations (listed under Constraints; they are not on
-the PR #572 record, so S1-Q8 asks where they are recorded).
+design.md (R3, R4, R11; R14 and R14b deferred for S1), rpg-project#575, and
+the seven cast decisions the operator accepted on 2026-10-14, recorded on
+#575 (https://github.com/KirkDiggler/rpg-project/issues/575#issuecomment-6161987171).
 
 ## S1 goal and scope
 
@@ -611,6 +611,7 @@ monster — plus the studio's defaults for new placements. The palette lists
 the cast. Placing stamps the default look and faction onto the placement;
 the stat block is followed by id. A look is per placement, with a shuffle.
 A cast member selected on the home lights up its placements on the map.
+A prop's variant pick is not in S1.
 
 **Repositories.** Web only, stacked on rpg-dnd5e-web `feat/studio-s0-inspector`.
 rpg-toolkit, rpg-api and rpg-api-protos are not touched: every edit writes
@@ -620,7 +621,7 @@ and `.appearanceRef`, `monsterBindings.<id>.faction`) or the studio's own
 
 **Non-goals:**
 
-- Per-prop surface material and provider look choices (R14b; rpg-game-assets#226, rpg-dnd5e-web#1268). No material field.
+- Per-prop surface material, provider look choices **and the per-instance prop variant pick** (R14, R14b; rpg-game-assets#226, rpg-dnd5e-web#1268). No family exists to pick within, so the variant pick waits with the look catalog. No material field, no variant field.
 - A prop shuffle (R14).
 - Read-back prose (S2, #576), and any change to Tables, Factions, Dispositions or Intel.
 - Multi-select as an editing mode (R9). Selecting a cast member is one thing, not a set of placements.
@@ -631,20 +632,32 @@ and `.appearanceRef`, `monsterBindings.<id>.faction`) or the studio's own
 |---|---|---|
 | C1 | The cast is derived, never a second list: one member per monster ref used by a template, a studio-defaults entry or a placement. | R3 |
 | C2 | A template-backed member's stat block lives only in `templates.<id>`. Editing it reaches every placement by id. | R3 |
-| C3 | A bare rulebook monster is a cast member without a template. A legacy placement with no template and no defaults entry appears as its rulebook kind. | lead recommendation |
+| C3 | A bare rulebook monster is a cast member without a template. A legacy placement with no template and no defaults entry appears as its rulebook kind. | #575 decisions 2 and 3 |
 | C4 | The Stat blocks free-text form becomes the cast member's override fields: base, abilities, hit dice, armor, proficiency, skills, weapons, experience. Editing an override on a bare member first gives it a template. | lead brief |
-| C5 | Renaming a cast member's id rewrites every reference: the template key, every placement's ref, and its defaults entry. | lead recommendation |
-| C6 | Deleting a cast member that has placements is refused, naming them. Deleting one with none removes its template and defaults. | lead recommendation; absorbs rpg-dnd5e-web#1262's removal item |
+| C5 | Renaming a cast member's id rewrites every reference: the template key, every placement's ref, and its defaults entry. | #575 decision 4 (its table half is outside S1) |
+| C6 | Deleting a cast member that has placements is refused with the count, naming them. Deleting one with none removes its template and defaults. | #575 decision 5; absorbs rpg-dnd5e-web#1262's removal item |
 | C7 | The palette lists the cast. A drop writes a ref to the stat block, never its fields. | R3, README refusal |
 | C8 | Placing stamps the default look onto `appearanceRef` and the default faction onto `monsterBindings.<id>.faction`. A later default change reaches no placed creature. The inspector labels both as stamped. | R3, R4 |
 | C9 | A placement's look may be overridden in its inspector. A shuffle gives one cast member's placements different looks from its default family. | R4 |
 | C10 | A cast member selected on the home lights up its placements on the map, and the inspector shows the cast member. A selected placement presses its cast member's row. | R11 |
-| C11 | A prop's catalog variant is chosen per placement, by swapping its `assetRef` within its family. | R14, rpg-dnd5e-web#523 |
-| C12 | A placement whose ref names no template is told so in its inspector, which offers the cast to choose from. | README edge |
+| C12 | A placement whose ref names no template and no listed rulebook monster is warned in its inspector, which offers the cast. Local save does not refuse; the decoder's refusal surfaces at Save & Play. | README edge, as resolved |
+| C13 | A template id that names a rulebook monster is warned, never refused. | #575 decision 6 |
+| C14 | A cast member's defaults (faction, look) live in `room.scene` beside the palette entries, never on the template. | #575 decision 1 |
 
 ## S1 constraints
 
-- **No new document key.** The cast reads `templates` and `scene.creaturePalette`. One field is needed beyond that for the default faction, and S1-Q1 asks whether it may be added; only S1-T3's faction stamp waits on it.
+- **No new document key outside the studio's presentation.** The cast reads
+  `templates` and `scene.creaturePalette`. The one added field is an optional
+  `faction` on a `scene.creaturePalette` entry (#575 decision 1). It is in
+  because the toolkit carries `room.scene` through unread. **Evidence:** a
+  throwaway test at rpg-toolkit `origin/main` (2f570aa9), in a scratch
+  worktree since removed, injected
+  `creaturePalette: [{id, name, ref, modelRef, faction: garrison}]` into
+  `room.scene` of `testdata/world-builder-v4-castle-kitchen.yaml`.
+  `DecodeSingleRoom` and `CompileSingleRoom` both returned no error. A
+  control in the same test put `bogusKey` under `room.room` and was refused
+  ("`bogusKey` is not a key this build reads"), so the test detects
+  refusals. Output: `--- PASS: TestZZSceneCreaturePaletteFactionOpaque`.
 - **The owner stays the owner.** Every cast edit is one `commitRoomDocument` transaction that may touch `scope.templates`, `draft.scene.creaturePalette`, `draft.scene.actorNames` and `draft.room.monsterDeclarations` together, so undo reverses a rename or a placement in one step.
 - **The web does not resolve the rulebook.** Whether a ref names a real rulebook monster, and whether a template id shadows one, are the rulebook's questions (`dungeonspec/single_room.go`, `spec.go`). The studio never refuses on them.
 - **Refusal at the boundary.** `validateMonsterTemplates` and `validateCreaturePalette` keep their gates; the cast form shows their sentences at the field.
@@ -673,7 +686,6 @@ and `.appearanceRef`, `monsterBindings.<id>.faction`) or the studio's own
 ```
 S1-T1 cast model ──▶ S1-T2 cast on the home ──▶ S1-T3 palette and stamped placement ──▶ S1-T4 creature inspector ──▶ S1-T5 cast selection ──▶ S1-T8 integration
                                                           └──▶ S1-T6 shuffle ──────────────────────────────────┘
-S1-T7 prop variant pick (blocked on S1-Q2) ───────────────────────────────────────────────────────────────────────┘
 ```
 
 One web branch stacked on `feat/studio-s0-inspector`, one PR to `dev`, opened as a draft until S0 merges; it catches up by merging `dev` in, never by a rebase or force-push. Tasks are commits in order; one builder, no parallel writes.
@@ -682,15 +694,14 @@ One web branch stacked on `feat/studio-s0-inspector`, one PR to `dev`, opened as
 
 | id | item | state | blocks |
 |---|---|---|---|
-| S1-Q1 | **Where the default faction lives.** The only studio-owned home is a new optional `faction` on `scene.creaturePalette` entries. That is a new field inside the studio's scene, opaque to the toolkit. Is it allowed under "no new document key", or is there another home? | open | the faction stamp in S1-T3 and the default-faction field in S1-T2. The look stamp proceeds. |
-| S1-Q2 | **Where a prop's family comes from.** Swapping `assetRef` within a family needs the family's members. The generated world-asset catalog publishes none, the generated prop catalog has one family default and no member list, and a legacy key's extra variants can only be picked with a new item field. Should the provider publish families (rpg-game-assets), or is splitting a ref's name allowed? | open | S1-T7 entirely |
-| S1-Q3 | **Armor and weapon pick-lists.** The README asks for pick-lists, but the web has no armor or weapon catalog. S1 keeps typed refs with the grammar check. A list needs a provider: an API listing or a generated catalog. | open | nothing; S1-T2 ships typed refs |
-| S1-Q4 | **Two recipes on one ref.** Existing drafts may hold two recipes with the same `ref` (Guard in red, Guard in blue). The cast has one member per ref. **Assumption:** the first entry is the member's defaults; later ones stay in the file, are listed on the member as "Unused defaults", and the author may remove them. Nothing is dropped silently. | assumption | S1-T1 |
-| S1-Q5 | **A stat block that resolves to nothing.** The web cannot tell a rulebook monster it does not list from a deleted template. The README edge says Save refuses. **Assumption:** the inspector warns when a ref names no template and no listed rulebook monster, and local save does not refuse. Publish refusal stays with the toolkit. | assumption | S1-T4 |
-| S1-Q6 | **What the shuffle varies** (design Open). **Assumption:** looks within the member's default family (style and skin palette), never another family. | assumption | S1-T6 |
-| S1-Q7 | **A template id that names a rulebook monster.** Shadowing is the rulebook's question. The studio neither refuses nor warns. Should it warn? | open | nothing |
-| S1-Q8 | **The cast recommendations' record.** The bare-member, legacy-kind, rename and delete rules come from the team lead's brief. PR #572 carries only the merge verdict. Where are they recorded? | open | nothing |
-
+| S1-Q1 | **Where the default faction lives.** | **resolved:** an optional `faction` on `scene.creaturePalette` entries; the toolkit decodes and compiles it (see Constraints for the evidence) | nothing |
+| S1-Q2 | **The prop variant pick.** No family exists to pick within, and the look work is being redone (rpg-game-assets#226, rpg-dnd5e-web#1268). | **resolved:** dropped from S1 and deferred with R14b | nothing; no S1 task |
+| S1-Q3 | **Rulebook catalog over the wire for pick-lists.** Armor, weapon and base pick-lists need a provider listing the rulebook's refs. S1 keeps typed refs with the grammar check. | open, routed to S5 (rpg-project#579) | nothing in S1 |
+| S1-Q4 | **Two recipes on one ref.** | **resolved:** the first entry is the defaults; later ones stay in the file and are listed on the member as unused looks, which the author may remove | nothing |
+| S1-Q5 | **A stat block that resolves to nothing.** | **resolved:** the inspector warns; local save does not refuse; the decoder's refusal surfaces at Save & Play | nothing |
+| S1-Q6 | **What the shuffle varies.** | **resolved:** looks within the cast member's appearance family only (#575 decision 7) | nothing |
+| S1-Q7 | **A template id that names a rulebook monster.** | **resolved:** warned, never refused (#575 decision 6) | nothing |
+| S1-Q8 | **The cast decisions' record.** | **resolved:** the #575 comment cited in the authority line | nothing |
 ---
 
 ## Task S1-T1: The cast model
@@ -698,7 +709,7 @@ One web branch stacked on `feat/studio-s0-inspector`, one PR to `dev`, opened as
 **Delivers:** C1, C3, C5, C6 and the S1-Q4 assumption, as pure functions.
 **Owner:** rpg-dnd5e-web, new `src/concepts/world-building/cast.ts`.
 **Prerequisites:** none.
-**Files:** new `world-building/cast.ts` and `world-building/cast.test.ts`.
+**Files:** new `world-building/cast.ts` and `world-building/cast.test.ts`; `world-building/creaturePalette.ts`: `CreaturePaletteEntry` gains `faction?: string`, and `validateCreaturePalette` accepts the key (nonblank text up to 120 characters).
 **Interfaces:**
 
 ```ts
@@ -708,7 +719,8 @@ export interface CastMember {
   readonly source: 'template' | 'rulebook';// template when templates[id] exists
   readonly template?: Readonly<MonsterTemplate>;
   readonly defaults?: Readonly<CreaturePaletteEntry>; // first entry with this ref
-  readonly unusedDefaults: readonly CreaturePaletteEntry[]; // later entries with this ref
+  readonly unusedDefaults: readonly CreaturePaletteEntry[]; // later entries with this ref, shown as unused looks
+  readonly shadowsRulebook: boolean;       // template id equals a PALETTE_MONSTERS id; warned only
   readonly placements: readonly string[];  // monsterDeclarations[].id with this ref, authored order
   readonly name: string;                   // template.name, else defaults.name, else paletteNameForRef(ref)
 }
@@ -737,12 +749,16 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 - `renameCastMember` refuses an id that is already a template key or fails the template-id grammar, with `validateMonsterTemplates`'s sentence. It refuses a rulebook member: "A rulebook monster's id is its kind. Give it a stat block to rename it."
 - `adoptCastMember` refuses an existing template id. Every placement of the rulebook ref moves to the new ref, so the kind and its placements stay one member.
 - `removeCastMember` with placements throws `CastMemberInUse` with the message: "Guard has 2 placements: gate-1, gate-2. Remove them from the map or change their cast member first." With none, it deletes the template and every palette entry with that ref.
+- `saveCastMember` refuses a default faction that is not a `scope.factions` id, naming it.
+- A template id that equals a rulebook monster id saves; `shadowsRulebook` is true and the form warns (C13).
 - Each function returns a document that `validateRoomDocument` accepts, or throws.
 
 **Tests** (`cast.test.ts`):
 - `a template, a recipe on it and two placements are one member`.
 - `a placement of a rulebook monster with no recipe is a rulebook member with no defaults`.
-- `two recipes on one ref: the first is the defaults and the second is unused` (S1-Q4).
+- `two recipes on one ref: the first is the defaults and the second is an unused look` (S1-Q4).
+- `a recipe's faction round-trips through validateCreaturePalette`; `a default faction naming no faction is refused`.
+- `a template id equal to a rulebook monster id saves and is marked as shadowing`.
 - `rename rewrites the template key, both placements and the recipe`; `rename refuses an existing template id`; `rename refuses a rulebook member`.
 - `adopt gives a rulebook member a template and moves its placements`.
 - `remove with placements throws CastMemberInUse naming them`; `remove without placements deletes the template and its recipes`.
@@ -776,21 +792,22 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 | Base | `templates.<id>.base` | pick-from-list: `PALETTE_MONSTERS` plus Human, and the current value if it is unlisted |
 | STR … CHA | `.abilities` | number per score; blank is the base's |
 | Hit dice, proficiency, experience | `.hitDice`, `.proficiency`, `.experience` | text, number, number |
-| Armor, weapons | `.armor`, `.actions` | typed refs checked by `validateMonsterTemplates` (S1-Q3); weapons one per row, in order |
+| Armor, weapons | `.armor`, `.actions` | typed refs checked by `validateMonsterTemplates`; weapons one per row, in order. A pick-list waits for a rulebook catalog over the wire (S1-Q3, S5) |
 | Skills | `.skills` | pick-from-list of the 18 skill ids |
 | Default look | the defaults `modelRef` | pick-from-list of `NPC_APPEARANCE_FAMILIES` with their thumbnails |
-| Default faction | the defaults `faction` | pick-from-list of `scope.factions` (**blocked on S1-Q1**) |
+| Default faction | the defaults `faction` (`scene.creaturePalette[].faction`) | pick-from-list of `scope.factions` |
 | Placements | read-only | list; clicking one selects it on the map (R11) |
-| Unused defaults | read-only, with Remove | list (S1-Q4) |
+| Unused looks | read-only, with Remove | list (S1-Q4) |
 | Delete | `remove` | button; shows `CastMemberInUse`'s sentence in an alert when refused |
 
 **Behavior:**
 - An override field edited on a rulebook member opens the Id field and saves through `adopt` first, then `save`, in one transaction.
 - Every field change is staged; Apply is one transaction; Cancel discards; a refusal shows at the form and keeps the staged values.
 - The member list names each member, its source ("stat block" or "rulebook"), and its placement count.
+- A member whose id shadows a rulebook monster shows "This id also names a rulebook monster; the rulebook decides which is used". Saving is not refused (C13).
 
 **Tests:**
-- `StudioCast.test.tsx` › `the home lists Cast, Tables, Factions, Dispositions and Intel, and no Creatures or Stat blocks`; › `editing armor on a template member is one transaction that reaches both placements`; › `an override on a rulebook member asks for an id and adopts it`; › `renaming the id rewrites the placements`; › `delete with placements shows the refusal naming them and changes nothing`; › `delete without placements removes the member`; › `skills are picked from the eighteen skill ids`.
+- `StudioCast.test.tsx` › `the home lists Cast, Tables, Factions, Dispositions and Intel, and no Creatures or Stat blocks`; › `a shadowing id warns and still saves`; › `editing armor on a template member is one transaction that reaches both placements`; › `an override on a rulebook member asks for an id and adopts it`; › `renaming the id rewrites the placements`; › `delete with placements shows the refusal naming them and changes nothing`; › `delete without placements removes the member`; › `skills are picked from the eighteen skill ids`.
 - `EncounterStudioIntegration.test.tsx` › `undo after a cast rename restores the old id on every placement`.
 
 - [ ] Write the tests; confirm they fail.
@@ -804,16 +821,17 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 
 **Delivers:** C7, C8.
 **Owner:** rpg-dnd5e-web; `StudioCreaturePalette.tsx`, `WorldBuildingConcept.tsx` `placeMonsterAt`.
-**Prerequisites:** S1-T2. The faction stamp also needs S1-Q1.
+**Prerequisites:** S1-T2.
 **Files:** `encounter-studio/StudioCreaturePalette.tsx`; `world-building/WorldBuildingConcept.tsx` (`armPlacement`, `placeMonsterAt`, the `armedCreature` state); `encounter-studio/studioSession.ts` (`creatures.armPlacement(ref, appearanceRef)`, keyed by the member's ref instead of the recipe id); tests in `EncounterStudioIntegration.test.tsx` and `WorldBuildingConcept.test.tsx`.
 **Interfaces:** `armPlacement(ref: string, appearanceRef: string): boolean` refuses a ref that is not a cast member, and an `appearanceRef` outside the member's default family. A member without a default look is listed but cannot be armed: "Choose a default look in the cast to place it."
 **Behavior:**
 - One transaction writes the declaration (`ref`, `appearanceRef`, cell), the map name (the member's name), and, when the defaults carry a faction, `monsterBindings.<id>.faction` through `setMonsterFaction` and `withBinding`.
 - The declaration never copies template fields (C7).
+- A default faction that no longer names a faction refuses the placement: "Guard's default faction kitchen no longer exists. Choose another in the cast."
 **Tests:**
 - › `the palette lists every cast member, including a rulebook member`.
 - › `placing writes the ref, the chosen look and the name in one history entry`.
-- › `placing stamps the default faction onto the binding` (after S1-Q1).
+- › `placing stamps the default faction onto the binding`; › `a stale default faction refuses the placement without a history entry`.
 - › `changing the default faction afterwards leaves the placed binding unchanged`.
 - › `a member without a default look cannot be armed`.
 
@@ -832,8 +850,8 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 - The view opens with "Cast member: Guard · stat block guard", linked to the member (S1-T5 selects it), and "Changes to Guard reach every placement."
 - Look shows "Stamped at placement" when the placement's `appearanceRef` differs from the member's default, and "Cast member's default" when equal. The look fields edit this placement only, through `actor-start` `appearanceRef`, as in S0.
 - Faction shows "Stamped at placement. Changing Guard's default faction does not change this."
-- A ref that names no template and no listed rulebook monster shows "This placement's stat block, dnd5e:monsters:x, is not in the cast", and a cast pick-list that writes through `creatures.setDefinition` (S1-Q5).
-**Tests:** › `the creature view names its cast member and links to it`; › `a look equal to the default reads as the default, a changed one as stamped`; › `changing one placement's look leaves its sibling unchanged`; › `a placement whose stat block is missing offers the cast and reassigns through one intent`.
+- A ref that names no template and no listed rulebook monster shows the warning "This placement's stat block, dnd5e:monsters:x, is not in the cast", and a cast pick-list that writes through `creatures.setDefinition`. Local save does not refuse; if the decoder refuses the file, the refusal surfaces at Save & Play (S1-Q5).
+**Tests:** › `the creature view names its cast member and links to it`; › `a look equal to the default reads as the default, a changed one as stamped`; › `changing one placement's look leaves its sibling unchanged`; › `a placement whose stat block is missing warns, offers the cast and reassigns through one intent`; › `a placement with a missing stat block still saves locally`.
 
 - [ ] Tests first; implement; run `StudioInspector.test.tsx`.
 
@@ -872,24 +890,10 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 **Verification:** `npx vitest run src/concepts/world-building/cast.test.ts src/concepts/encounter-studio/StudioCast.test.tsx` passes.
 **Completion evidence:** named tests.
 
-## Task S1-T7: A prop's variant (blocked on S1-Q2)
-
-**Delivers:** C11.
-**Owner:** rpg-dnd5e-web; `world-building/catalog.ts`, `studioArrange.ts`, `StudioInspector.tsx` `PropView`.
-**Prerequisites:** S1-Q2 answered with a family source.
-**Interfaces:** `propVariantChoices(assetRef): readonly { ref; label; thumbnail? }[]`, reading only provider-declared families and empty for a prop without one. `StudioSceneArrangeEdit` gains `assetRef?: string`, an intent field, not a document key, accepted only when the target is one item and the ref is in `propVariantChoices` of its current ref.
-**Behavior:** the prop view lists the variants with thumbnails; picking one swaps that item's `assetRef` in one transaction. Its transform, label, declaration and bindings are kept. No shuffle.
-**Tests:** › `a prop with a declared family lists its variants`; › `picking a variant swaps only that item's assetRef`; › `a prop with no family shows no variant field`; › `an assetRef outside the family is refused`.
-
-- [ ] Wait for S1-Q2; then tests first; implement.
-
-**Verification:** `npx vitest run src/concepts/world-building/studioArrange.test.ts src/concepts/encounter-studio/StudioInspector.test.tsx` passes.
-**Completion evidence:** named tests.
-
 ## Task S1-T8: Integration and the walk
 
 **Delivers:** proof of C1–C12 on the running studio.
-**Prerequisites:** S1-T1–T6, and S1-T7 if unblocked.
+**Prerequisites:** S1-T1–T6.
 - [ ] `npm ci`; `npm run ci-check` once; grep the log.
 - [ ] Walk on the local dev server, one screenshot per step.
 - [ ] Post the checklist below on #575 as `- [ ]` boxes before the PR leaves draft.
@@ -906,8 +910,7 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 8. Rename Guard's id to gate-guard. Both placements follow. Undo: both return.
 9. Delete Guard: refused, naming both placements. Remove one from the map, delete again: still refused, naming the other.
 10. Load a draft with a bare goblin placement: Goblin is in the cast as a rulebook member. Give it 12 STR: it asks for an id, adopts, and the goblin follows.
-11. (S1-T7 only) Select a barrel, pick another variant: only that barrel changes.
-12. Save the local draft and reload: everything above is still there.
+11. Save the local draft and reload: everything above is still there.
 
 **Verification:** `ci-check` clean; screenshots; the checklist on #575 ticked.
 
@@ -922,11 +925,12 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 | C5 rename rewrites | S1-T1, S1-T2 | `rename rewrites …`; `undo after a cast rename …`; walk 8 |
 | C6 delete refused with placements | S1-T1, S1-T2 | `remove with placements throws …`; `delete with placements shows the refusal …`; walk 9 |
 | C7 palette lists the cast; ref only | S1-T3 | `the palette lists every cast member …`; `placing writes the ref …` |
-| C8 stamped look and faction | S1-T3, S1-T4 | `placing stamps the default faction` (after S1-Q1); `changing the default faction afterwards …`; walk 3, 5 |
+| C8 stamped look and faction | S1-T3, S1-T4 | `placing stamps the default faction onto the binding`; `changing the default faction afterwards …`; walk 3, 5 |
 | C9 override and shuffle | S1-T4, S1-T6 | `changing one placement's look leaves its sibling unchanged`; shuffle tests; walk 6 |
 | C10 cast selection | S1-T5 | `selecting a cast member highlights exactly its placements`; walk 7 |
-| C11 prop variant | S1-T7 | **blocked on S1-Q2** |
-| C12 missing stat block | S1-T4 | `a placement whose stat block is missing …` |
+| C12 missing stat block | S1-T4 | `a placement whose stat block is missing warns …`; `… still saves locally` |
+| C13 shadowing warned | S1-T1, S1-T2 | `a template id equal to a rulebook monster id saves …`; `a shadowing id warns and still saves` |
+| C14 defaults in the scene | S1-T1 | `a recipe's faction round-trips …`; the toolkit decode evidence under Constraints |
 
 ## S1 provider/consumer seams
 
@@ -938,8 +942,10 @@ export class CastMemberInUse extends Error { readonly placements: readonly strin
 | existing `setMonsterFaction`, `withBinding` | S1-T3 | pure binding edit | baseline | `placing stamps the default faction …` |
 | existing `npcAppearanceOptions` | S1-T3, T4, T6 | family and looks of a ref | baseline | shuffle tests |
 | S1-T5 `{kind:'cast'}` target and `castMember` selection | S0 `StudioInspector`, `RoomActorMarkers` | one selection; `highlightedActorIds` | new, extending S0's T1 contract | `selecting a cast member highlights …` |
-| S1-T7 `propVariantChoices` | `PropView` | provider-declared family members | **missing; S1-Q2** | — |
 | `templates`, `monsterDeclarations[].ref`, `monsterBindings.<id>.faction` | rpg-toolkit decoder | keys already declared; refs checked for grammar only | baseline toolkit | `ci-check` codec tests; no toolkit change |
+| `scene.creaturePalette[].faction` | rpg-toolkit decoder | carried through `room.scene` unread | baseline toolkit, verified | the throwaway decode and compile under Constraints |
+
+**S1 deferrals:** the per-instance prop variant pick and surface material (R14, R14b); armor, weapon and base pick-lists from a rulebook catalog (S1-Q3, S5); renaming a table (#575 decision 4's table half).
 
 **Shared files.** S1 stacks on S0 and edits S0's `StudioInspector.tsx`, `studioSession.ts` and `WorldBuildingConcept.tsx`. S1 starts only from S0's final head, and takes later S0 fixes by merging the S0 branch in.
 
