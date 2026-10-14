@@ -49,7 +49,7 @@ flowchart LR
 | wall | finish, endpoints, place a door |
 | door | open, closed or locked; the concealment that hides it |
 | placed cast member | read-back prose; look, facing, faction, table, says, holds |
-| prop | read-back prose; look and material, footprint, light, holds, options |
+| prop | read-back prose; look, footprint, light, holds, options |
 | floor hex | region, lighting, exit |
 
 A cast member is one document template plus studio defaults. Placing it
@@ -122,9 +122,9 @@ flowchart LR
   edit that existing cells will shift. Why: a resize must not silently move
   what was placed.
 - **A prop's look belongs to the placement (R14).** The prop inspector offers
-  the catalog's variants of the prop and, where the asset takes one, a
-  surface material from the world material catalog. Why: one barrel asset is
-  many barrels. The shuffle stays with cast members (R4).
+  the catalog's variants of the prop. Why: one barrel asset is many barrels.
+  The shuffle stays with cast members (R4). Surface material waits for the
+  look catalog (R14b).
 - **The document's refusals are the studio's.** An unknown key refuses the
   whole file; a binding naming an undeclared table, record or template is
   refused by name; `at` and `path` cells are refused in this dialect. The
@@ -148,7 +148,8 @@ flowchart LR
 | R11 | settled | selecting a cast member on the home selects it on the map, and the reverse | operator | 2026-10-14 |
 | R12 | settled | table rows display and save heaviest first, ties in authored order | operator | 2026-10-14 |
 | R13 | settled | the workspace grows up and to the right by default; another side is the author's choice, with a warning that cells shift | operator | 2026-10-14 |
-| R14 | settled | props have a look per placement: catalog variant and, where taken, a surface material; the shuffle stays with cast members | operator | 2026-10-14 |
+| R14 | settled | props have a look per placement: the catalog variant; the shuffle stays with cast members | operator | 2026-10-14 |
+| R14b | deferred-until-look-catalog | per-prop surface material and provider-published look choices; picker is rpg-dnd5e-web#1268 | operator | 2026-10-14 |
 
 ## Open
 
@@ -164,3 +165,8 @@ flowchart LR
 - **Multi-select.** R9 holds until a use case brings apply-to-all.
 - **What the shuffle randomises.** Appearance only, or also style and skin
   palette within one appearance family.
+- **The look catalog (R14b).** Per-prop surface material and look choices
+  wait on the provider publishing reviewed look choices per asset
+  (rpg-game-assets#226); the Studio picker for them is
+  rpg-dnd5e-web#1268. That published catalog is the contract the picker
+  reads.
