@@ -43,7 +43,8 @@ conversation and where it landed:
    cells. Props may stand on any floor.
 4. **Scenery** is floor that is not standable. Three producers, one state:
    the author's brush (owner none), the cells a wall cuts (owner as painted),
-   and the footing of a presented wall (projection only, §4.6).
+   and the footing a wall's face has shown to the recipient (fog-of-war R9;
+   §4.6).
 5. **A wall is a straight line between two positions, and the file holds
    nothing else.** The crossings it blocks and the cells it cuts are derived.
 6. **A position is the midpoint of one of a hex's six sides, or its
@@ -369,9 +370,10 @@ doors:
 ### 4.6 Projection (slice 2)
 
 - **C18. Footing — superseded by fog-of-war R9.** A presented wall adds no
-  footing cell to the recipient's atlas; its footprint hexes enter the atlas
-  only as sight learns them. The black-sliver tell C18 removed belonged to
-  whole-room discovery, which per-cell fog retired.
+  footing cell to the recipient's atlas; a footprint hex enters it as sealed
+  scenery nobody owns when sight reaches that hex's wall face. The twin
+  invariant C18 protected still holds: for a non-knower the masquerade is the
+  wall, so its face teaches the hex exactly as the twin's would (C19).
 - **C19. Masquerade on a wall.** A concealed door in a wall is presented to a
   non-knower as the wall's whole segment without the gap. `maskHeight`
   reads the wall's height; it no longer reconstructs a chain.
@@ -427,9 +429,9 @@ a segment it already holds, so no segment rides `DoorRevealed`. The two
 fields are applied differently, and the difference is load-bearing
 (measured 2026-09-03): segments **append** (a difference can only add);
 sealed **replaces within the revealed region's cells** and keeps the rest,
-because cells leave the list on a reveal — footing that reached a
-non-knower as ownerless scenery (C18) is sealed for them and becomes the
-room's standable floor once the room is theirs. Exactly:
+because cells leave the list on a reveal — footing a non-knower learned
+from a wall's face as ownerless scenery (fog-of-war R9) is sealed for them
+and becomes the room's standable floor once the room is theirs. Exactly:
 `after.sealed = (before.sealed − region.cells) ∪ event.sealed`. A client
 that appends leaves a revealed room's edges unwalkable: a room you can see
 and cannot enter. After a reveal, `AtlasFor` and the reveal agree
@@ -446,7 +448,7 @@ byte-for-byte on both. The session module's `Atlas` and
 | can a prop sit on an ownerless cell | refused | accept scenery (C3) |
 | which crossings does a wall block | the pairs as written | derived (C7), still delivered as pairs |
 | which crossing does a door open | its listed pair | its side's crossing (C14), still delivered as a doorway |
-| who sees a cut cell | n/a | footing (C18) |
+| who sees a cut cell | n/a | whoever sight has shown its wall face (fog-of-war R9) |
 
 Mechanics on the wire do not move. rpg-api is a pin in slice 1 and a pin plus
 a translation in slice 2.
@@ -495,8 +497,9 @@ Slice 2:
   full segment and no doorway; the knower's carries the gap. Yardstick twin
   identical.
 - **A11.** The hugging layout with a quarter-line wall: the non-knower's atlas
-  shows floor on both sides of the wall (C18) and equals the twin authored
-  with scenery where the footprint falls.
+  shows the footprint hexes whose wall face sight has reached, as scenery, and
+  equals the twin authored with scenery where the footprint falls (fog-of-war
+  R9).
 - **A12.** Two walls carrying the same position at an end close a corner on
   the board: thin at a midpoint for 60°, 90°, and 120°, keeping the corner
   cell; thick at a centre for the same three; thin-to-thick at a flat-side

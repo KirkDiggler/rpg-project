@@ -504,7 +504,8 @@ south corner, draws only its corner piece (rpg-project#600).
 
 **Owners, in build order (outside-in on pseudo-versions, inside-out merge):**
 
-**T8a — rpg-api-protos** `dnd5e/api/session/v1alpha1/types.proto`:
+**T8a — rpg-api-protos** (DONE: rpg-api-protos#395 → v0.1.238)
+`dnd5e/api/session/v1alpha1/types.proto`:
 `AtlasStructuralWall` gains `repeated Position footprint_cells = 9;`. Doc: the
 floor cells this wall's blocker footprint overlaps by positive area, in order
 along the wall from `from` to `to`; the client grades the wall's stretches by
@@ -518,10 +519,21 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   becomes `hidden`. The presentation rule itself (a boundary is presented when
   any support cell is known, `footprintObservationCells`) does not change.
 - `AtlasStructuralWall` (the atlas record the session converts) gains
-  `FootprintCells []spatial.Position`: `spatial.PlacedCoverage` of the wall's
-  presence placement over the field's floor cells, sorted by projection onto the
-  wall line (`from` → `to`). Every cell, known or not: the record is the wall's
-  geometry, the recipient's knowledge is in `Atlas.Cells`.
+  `FootprintCells []spatial.Position`: the SAME answer that decides
+  presentation, `footprintObservationCells(p.Placement)` (positive-area
+  coverage), so a presented wall never carries an empty list; sorted by
+  projection of each cell centre onto the wall line (`from` → `to`), ties by
+  the existing position ordering. Every cell, known or not: the record is the
+  wall's geometry, the recipient's knowledge is in `Atlas.Cells`.
+- The masquerade covers (R9, second law): in `screensOf`/`seesCell`, for an
+  observer who has not found a concealment, an unfound bound door's footprint
+  and a concealment mask standing in a wall count as wall cover that teaches
+  the hex from its face exactly as a span does. `AtlasFor` presents such a
+  learned hex as sealed scenery nobody owns even when it lies in a concealed
+  region, so the non-knower's atlas equals the solid-wall twin's. Without this,
+  dropping presentation footing leaves a hole at every unfound secret door
+  (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true` fails) and stubs on
+  the walls of secret rooms.
 - Tests: `footing_test.go` `TestA11_APresentedWallStandsOnFloorTheWatcherCanSee`
   becomes `TestA11_APresentedWallFootsNothing` (the vault's cells are exactly the
   learned cells; no sealed footing appears); `TestA11_AWithheldWallDoesNotFoot`
@@ -530,18 +542,24 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   straddled neighbours; order follows the line). New
   `TestSightLearnsAWallsFootingByItsFace` (a member who reaches the floor beside
   a wall span learns the footing hex behind that face and no other footing hex;
-  this is the existing `seesCell` cover rule, pinned for walls). Update
-  `dungeonspec/single_room_discovery_test.go`
-  `TestOrdinaryDiscoveryOpaqueFootingIsVisibleFromBothSides`,
+  this is the existing `seesCell` cover rule, pinned for walls). New
+  `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould` (non-knower in the
+  corridor learns the threshold hex under an unfound secret door exactly as
+  under its twin; the knower's atlas unchanged). UNCHANGED and passing:
   `dungeonspec/door_threshold_floor_test.go` `TestKnownWallKeepsFloorUnderAClosedDoor`
-  and `cells_revealed`/`sealed` assertions to the new rule: footing appears where
-  sight learned it, nowhere else. The full-atlas golden (author's view) must not
+  (both arms; it is the twin gate), `dungeonspec/single_room_discovery_test.go`
+  `TestOrdinaryDiscoveryOpaqueFootingIsVisibleFromBothSides`, the explicit
+  concealment tests. Updated to the new rule: `revealsegments_test.go`
+  `TestSealedIsAReplacementWithinTheRoomAndNotAnAddition` and the
+  `cells_revealed`/`sealed` assertions: footing appears where sight learned
+  it, nowhere else. The full-atlas golden (author's view) must not
   change except for the new `FootprintCells` field.
 
-**T8c — rpg-toolkit `rulebooks/dnd5e/session`:** pass `FootprintCells` through
-in the atlas conversion (`atlasmap`/convert) if the session copies the record
-field by field; otherwise no change. Test: `convert_internal_test.go` round-trips
-the field.
+**T8c — rpg-toolkit `rulebooks/dnd5e/session`:** the session has its own wall
+type and copies the record field by field, and the same record rides the
+reveal bodies: add `FootprintCells` to the session wall type, the atlas
+conversion and the `cells_revealed`/structural reveal bodies. Test:
+`convert_internal_test.go` round-trips the field; a reveal-body test carries it.
 
 **T8d — rpg-api** `internal/handlers/dnd5e/session/v1alpha1/convert_structural.go`:
 map `FootprintCells` → `footprint_cells`. Test: the structural wall convert test
@@ -551,11 +569,15 @@ asserts the positions and order. Pin T8b/T8c pseudo-versions, draft until tags.
 `cellBorders.ts`:
 - Structural walls: replace `stretchesBesideLine(line…)` with
   `stretchesAlongCells(line, footprintCells, stateOf)`: each footprint cell is a
-  sample at its centre's projection onto the line (t clamped 0–1); samples
-  sorted by t; stretches split midway between samples whose state differs,
-  exactly as `stretchesBesideLine` splits today. A wall with no
-  `footprint_cells` (older server) keeps today's side sampling, so dev ahead of
-  the api does not go blank.
+  sample at its centre's projection onto the line (t clamped 0–1); samples are
+  grouped by t (cells straddling an edge share a t, within 1e-6 of the length)
+  and a group takes the brightest state of its cells; groups sorted by t;
+  stretches split midway between groups whose state differs, exactly as
+  `stretchesBesideLine` splits today. `footprint_cells` reaches the render unit
+  through the atlas → `StructuralWallSurface` conversion (`structuralLayout.ts`),
+  cells keyed as atlas cells are keyed today. A wall with no `footprint_cells`
+  (older server) keeps today's side sampling, so dev ahead of the api does not
+  go blank.
 - Ordinary hex-edge wall runs and structural doors keep side sampling (an
   edge run's two side cells are exact).
 - Tests in `atlasToScene3D.test.ts`: "a centre-line wall known at one footing
