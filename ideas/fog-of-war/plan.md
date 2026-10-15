@@ -14,7 +14,7 @@ single cells.
 Stealth, hearing and passive Perception changes. The sites layer. More than one
 screen per seat. The legacy v1alpha2 encounter route and its
 `HexKnowledgeChanged` stream, which nothing here builds on. Pooling remembered
-under discovery sharing (design O1). R8 (default off) is its OWN slice after this wave: a tri-state preference on the wire (rpg-project issue "Fog of war R8"), because the persisted bool's zero value means shared and a web-only flip reset an opted-in player on reload (tried on rpg-dnd5e-web#1287, reverted 2026-10-15).
+under discovery sharing (design O1). R8 (default off) is Task 7, its own slice after this wave (rpg-project#595): the choice lives in the session's character profile, because the persisted bool's zero value means shared and a web-only flip reset an opted-in player on reload.
 
 **Authority.** design.md R1–R5 and R8, operator rulings of 2026-10-15 on rpg-project#586.
 
@@ -405,6 +405,75 @@ rpg-project#586 before merge; re-walk after pins are released.
 
 **Completion evidence:** the checked list on the issue.
 
+## Task 7: Sharing is a choice (rpg-toolkit session) — R8
+
+**Delivers:** R8. A character who has never chosen sees privately; a party pools
+by choosing to; the stored preference tells "never chosen" from "chose shared"
+so a later default change moves only the undecided.
+
+**Owner:** rpg-toolkit, module `rulebooks/dnd5e/session`. The encounter module,
+the wire and the web do not change: `KnowledgeOutput.DiscoverySharing` already
+carries the resolved value, the web checkbox already reads it and writes only on
+a click, and `SetDiscoverySharingRequest.sharing` is already explicit.
+
+**Prerequisites:** Tasks 1–6 shipped (session v0.137.0).
+
+**Files:** modify `exploration.go` (`ExplorationData`, `prepareExploration`,
+`saveExploration`, `SetDiscoverySharing`), `write.go` (`joinInputFor`),
+`doc.go` (the discovery paragraph). Tests: `exploration_test.go`,
+`exploration_review_test.go`.
+
+**Interfaces:**
+- `ExplorationData` gains `DiscoverySharing *bool` (JSON `discovery_sharing`,
+  omitted when nil). Nil means the character has not chosen. `PrivateDiscoveries`
+  (JSON `private`) stays as the legacy field, read only when `DiscoverySharing`
+  is nil, so an old record keeps its meaning.
+- Resolution, one function used by `prepareExploration` and `joinInputFor`:
+  a record with `DiscoverySharing` set → that value; a record without it →
+  `!PrivateDiscoveries` (legacy: absent meant shared); no record (`ErrNotFound`)
+  → private. The resolved bool is what `RestoreDiscoveryInput.Private` and
+  `JoinInput.PrivateDiscoveries` receive; the profile itself is never mutated by
+  resolution, so a default is never written down as a choice.
+- `SetDiscoverySharing` is the only writer: it sets `DiscoverySharing` to the
+  explicit value (and `PrivateDiscoveries` to its complement, so the two fields
+  never disagree) on the staged profile before `commit`. `saveExploration` no
+  longer derives the preference from the encounter; it saves a staged profile
+  only when it differs from the loaded one. Choosing the value the default
+  already resolves to is still a choice and is saved.
+
+**Tests (names and the assertion that fails on the old code):**
+- `TestUnchosenSharingResolvesPrivate`: a character with no profile joins;
+  `Knowledge` reports `DiscoverySharing` false; after the run, the repository
+  holds no record for that character (resolution wrote nothing).
+- `TestLegacyRecordWithoutPrivateStaysShared`: repository seeded with
+  `{"character":"alice"}` → `DiscoverySharing` true; seeded with
+  `{"character":"alice","private":true}` → false.
+- `TestChoiceIsSavedAndSurvivesReload`: `SetDiscoverySharing` true on an
+  unchosen character saves `{"character":…,"discovery_sharing":true}`; a new
+  manager over the same repository and the same saved encounter resolves
+  shared; setting false saves `discovery_sharing:false, private:true` and
+  resolves private.
+- `TestChoosingTheDefaultIsStillAChoice`: `SetDiscoverySharing` false on an
+  unchosen character writes a record with `discovery_sharing:false`.
+- Existing tests that assert `profiles.data["alice"].PrivateDiscoveries` after a
+  set move to the new field; existing legacy-JSON tests keep passing.
+
+**Verification:** `make test` and `make lint` in `rulebooks/dnd5e/session`;
+rpg-api draft PR pinning the session pseudo-version with
+`internal/orchestrators/session/exploration_test.go` round-tripping
+`DiscoverySharing`; walk on the castle stack: a fresh character's "Share
+discoveries with party" box is unchecked, stays checked across a reload after
+one click, stays unchecked across a reload after a second click, and a redis
+record `character-exploration:v1:<id>` seeded as `{"character":"<id>"}` shows
+checked.
+
+**Completion evidence:** the walk checklist on rpg-project#595; tag
+`rulebooks/dnd5e/session/vNEXT`; rpg-api dev re-pinned.
+
+**Cost named:** a member of an already-saved encounter whose profile has no
+record and who was shared by absence becomes private at the next prepare. R8
+accepts this; nothing else moves.
+
 ## Requirement coverage
 
 | In-scope requirement / acceptance scenario | Implementing task(s) | Concrete proof |
@@ -416,6 +485,7 @@ rpg-project#586 before merge; re-walk after pins are released.
 | R3 remembered grey with props and creatures as last seen | T1, T5 | `TestRememberedCellsSurviveLossOfSightAndReload`, `atlasToScene3D.test.ts`, walk 3 |
 | R4 memory per seat | T1 | `known:cells` audience in `TestInvalidCellKnowledgeIsRejectedOnLoad`, `TestCellsRevealedBeatIsOnePerPassAndRecipientScoped`, walk 6 |
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
+| R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |
@@ -434,6 +504,7 @@ Deferred by the design, not covered: O1 pooling, O2 tint.
 | T2 session `ViewOutput.VisibleCells` | T4 api `GetView`, `GetKnowledge` | JSON `visible_cells` → proto field 5 | T2 pseudo-version, then tag | `TestGetViewCarriesVisibleCells` |
 | T2 session `EventCellsRevealed` | T4 api `convert.go`, `stream_events.go` | `CellsRevealedBody` → `CellsRevealed` | same | `TestConvertCellsRevealed`, `TestStreamCellsRevealedReachesOnlyItsRecipient` |
 | T3 protos `visible_cells`, `CellsRevealed` | T4 api, T5 web | field and message names in T3 | T3 merge publishes bindings | T4 compile; T5 `ci-check` |
+| T7 session resolved preference | existing api `GetKnowledge` → web checkbox | `KnowledgeOutput.DiscoverySharing *bool` unchanged; value now resolves nil-profile to false | session tag, api re-pin | `TestUnchosenSharingResolvesPrivate`, walk on #595 |
 | T4 api stream and reads | T5 web `useSessionKnowledge`, `sessionRefreshKeys` | `Event.body.case 'cellsRevealed'`; `GetViewResponse.visibleCells` | T4 walk server | T6 walk 1–6 |
 | Existing web refresh map | T5 seen-now freshness | events that schedule `view` today, plus `cellsRevealed` and the member's own `moved` | inspected `sessionRefreshKeys.ts` at the baseline: own `moved` does not schedule `view` | `sessionRefreshKeys.test.ts`, T6 walk 3 and 4 |
 
