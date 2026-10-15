@@ -1,6 +1,6 @@
 # Shared texture packs: the seam walkthrough
 
-[Assets #226](https://github.com/KirkDiggler/rpg-game-assets/issues/226) owns authoring and ingestion. [Library law](library-design.md) governs reusable choices alongside the [source/recipe law](design.md) and [direct-editor agreement](editor-amendment.md). [Web #1268](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1268) owns the Studio consumer. A saved pack declares complete looks and available membership; it does not introduce another model conversion engine or approval authority.
+[Assets #226](https://github.com/KirkDiggler/rpg-game-assets/issues/226) owns authoring and ingestion. [Library law](library-design.md) governs reusable choices alongside the [source/recipe law](design.md) and [direct-editor agreement](editor-amendment.md). [Web #1268](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1268) owns the Studio consumer. A saved pack declares complete looks and editor matches; it does not introduce another model conversion engine or approval authority. Bulk authored-UV preparation follows the [atlas provider design](atlas-provider-design.md) and [walkthrough](atlas-provider-walkthrough.md). Editor matching is not a mandatory admission path for Studio assets (R9).
 
 ## Component shape
 
@@ -33,12 +33,12 @@ flowchart LR
 | `TexturePackBuilder` | Named pack draft, explicit color selection and optional shared maps | Inventory + draft → complete set definitions on Save pack |
 | `TexturePackAssetViewer` | Selected asset/surface/pack/choice and temporary preview profile | Library1 + manifest3 → profile2 scene preview and explicit match/unmatch actions |
 | `MaterialEditorWorkbench` | Advanced independent channel/batch experiments | `EditingProfile` schema2 + selected actual slot → per-slot scene materials |
-| Web `texturePackLibrary` | Immutable library state and strict codec | Library schema1 + manifest3 → validated pack sets and allowed memberships |
+| Web `texturePackLibrary` | Immutable library state and strict codec | Library schema1 + manifest3 → validated pack sets and editor matches |
 | Assets `texture_pack_library` | Independent source-bound validation and review custody expansion | Exact library file bytes + manifest3 → review-only declaration |
-| Runtime publication boundary | Released model/resource identities and compatibility | Reviewed authoring choices + verified promoted models → released supported-choice catalog |
+| Runtime publication boundary | Released model/resource identities and technical targeting | Prepared shared choices + verified promoted models → resource/binding catalog with recommendations |
 | Studio consumer | Per-placement choice and instance-owned rendering | Pinned released metadata + chosen references → saved and rendered appearance |
 
-The workbench does not turn a visually acceptable trial into declared or released support. The library codec does not infer slot compatibility from source names. The provider validator does not publish preview targets as promoted-model selectors. Studio does not repair missing metadata by maintaining its own texture catalog. These refusals enforce R3–R5.
+The workbench does not turn a visually acceptable trial into declared or released support. The library codec does not infer slot compatibility from source names. The provider validator does not publish preview targets as promoted-model selectors. Studio does not repair missing metadata by maintaining its own texture catalog. These refusals enforce R3, R5 and R9; technical facts are distinct from artistic recommendations.
 
 ## Walk one choice through
 
@@ -46,7 +46,7 @@ The operator checks the actual `PolygonFantasyKingdom_Texture_01_A.png` inventor
 
 The operator checks the actual Fancy Chair01 and Chair02 slots. Their `TexturePackLibrary.assignments` rows contain the same pack ID, not two copies of its twelve sets. Adding membership does not touch the current `EditingProfile` or the promoted models (R1, R6).
 
-Selecting a pack/choice in `TexturePackAssetViewer` applies one complete `EditingProfileDefinition` to a temporary slot profile; the selected surface previews it, but the saved set and memberships do not change. The match checkbox updates only that surface's allowed pack references. Camera fitting changes projection rather than source geometry. Exported library JSON travels to the Python validator. `review_declaration` adds the exact library-byte SHA, registered image hashes and prepared source/editor identities. It does not add an `assetRef` or claim a runtime material binding. The released-selector/resource contract is R7, not a rule a renderer may guess.
+Selecting a pack/choice in `TexturePackAssetViewer` applies one complete `EditingProfileDefinition` to a temporary slot profile; the selected surface previews it, but the saved set and memberships do not change. The match checkbox updates only that surface's editor match references. Camera fitting changes projection rather than source geometry. Exported library JSON travels to the Python validator. `review_declaration` adds the exact library-byte SHA, registered image hashes and prepared source/editor identities. It does not add an `assetRef` or claim a runtime material binding. The released-selector/resource contract is R7, not a rule a renderer may guess.
 
 ## Separations that look like one thing
 
@@ -54,12 +54,12 @@ Selecting a pack/choice in `TexturePackAssetViewer` applies one complete `Editin
 |---|---|
 | What is currently on the experimental surface? | Slot profile/workbench state |
 | What complete choices does this pack contain? | Library `packs[id].sets` |
-| Which packs are explicitly allowed on this source slot? | Library `assignments` |
+| Which packs were explicitly matched in this editor? | Library `assignments` |
 | Which source/editor bytes were inspected? | Generated review declaration |
 | What is available on a released game model? | Verified released provider metadata |
 | What does a placement without a choice display? | Original promoted GLB |
 
-Conflating membership with preview changes defaults when an operator merely organizes assets. Conflating the preview target with a runtime selector recolors a different material or no material at all. Conflating an image filename with support makes unreviewed artistic combinations appear compatible.
+Conflating membership with preview changes defaults when an operator merely organizes assets. Conflating the preview target with a runtime selector recolors a different material or no material at all. Conflating an image filename with technical support makes unverified targets appear valid. Treating a missing recommendation as a prohibition prevents useful Studio experimentation.
 
 ## Trade-offs
 
