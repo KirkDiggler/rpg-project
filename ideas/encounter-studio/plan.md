@@ -2742,3 +2742,7 @@ Deferred by the design, not uncovered: retiring the v2 files (rpg-api#1105).
 **Shared files.** `registry.go` is A2's alone; `world_interceptor.go` is A4's; `server.go` and the harness are A5's; `EncounterStudioWorkspace.tsx` is W3 then W4 by one builder; `studioPublishing.ts` is W2's.
 
 **Plan check findings.** With world enforcement off, the local-dev default, no world reaches the authoring or lobby handlers today, so A4 extends the world-scoped method set (S7-Q9). The role policy classifies every RPC explicitly, so the three new authoring methods are added in A4 (an unclassified method would be refused). The web gate's probe depends on `GetDungeon("")` answering `InvalidArgument`; A4 pins it. `DungeonBuilder`'s Open menu reads the lobby list and so loses the v2 references with no code change, which is R23's intent.
+
+## S7 record
+
+Built on rpg-api-protos `feat/s7-dungeon-library` (#393, v0.1.236), rpg-api `feat/s7-dungeon-library` (#1106; review MERGE-READY at 9ab85e1e pending the walk, closure at 4d381119) and rpg-dnd5e-web `feat/studio-s7-open` (#1285; one Important finding, the client-side v2 filter, removed; closure at 85999919, e21229fd test-only timing fix, be685f70 header no longer scrolls sideways after operator QA). Walk at api 4d381119 / web 85999919: 11 of 11 on the mechanism; step 4 content-only (no shipped single-room reference opens: rpg-dnd5e-web#1286, rpg-api#1105). Operator QA passed on the castle stack. Record on rpg-project#585.
