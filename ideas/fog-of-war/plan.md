@@ -111,8 +111,13 @@ atlas withholds unknown cells; `VisibleCellsFor` answers seen-now.
   all as differences of `AtlasFor` before and after.
 
 **Behavior:**
-- Sight pass: for each observer, every field cell that is not known, not
-  concealed from it, and answers `reachesCell` true is learned in one fact.
+- Sight pass: for each observer, every field cell that is not known and
+  answers `reachesCell` true is learned in one fact, concealed cells included:
+  concealment keeps withholding a concealed cell from the atlas and from
+  seen-now (both start from `hiddenFrom`), and the `known:cells` fact is per
+  member and never on the wire, so a known concealed cell surfaces nothing.
+  (Corrected 2026-10-15 on rpg-toolkit#2056: skipping concealed cells hid
+  unlisted props on secret floor, against the concealment law.)
 - Opening a door teaches the actor that door's edge cells (both sides); a
   world-side open with no actor teaches nothing. The sight pass after the open
   teaches what is seen.
