@@ -153,6 +153,7 @@ exists, and this design adds nothing.
 | a creature going down (`down: <id>`) | `endings[].when` |
 | the round clock (`round: N`) | a scenario's own field (`convince:` is sugar for a `stance` ending) |
 | a disposition ending (`stance`) | `on:` entry `when:` |
+| `doorBindings[].opened.fact` — taught to the opener and whoever can see the door when it opens (the mad king R12) | |
 
 So "a message that changes sides" is already three lines: a record with
 `reveals: { fact }`, a `holds:` naming it, and a disposition with
