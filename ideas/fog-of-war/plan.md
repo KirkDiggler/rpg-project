@@ -434,6 +434,15 @@ a click, and `SetDiscoverySharingRequest.sharing` is already explicit.
   → private. The resolved bool is what `RestoreDiscoveryInput.Private` and
   `JoinInput.PrivateDiscoveries` receive; the profile itself is never mutated by
   resolution, so a default is never written down as a choice.
+- Where "no record" lives: `prepareExploration` is the only place that sees
+  `ErrNotFound`, and it stages a not-found character as a bare
+  `{Character: id}`, which is indistinguishable from a legacy shared record.
+  So `prepareExploration` resolves once and writes the result into a new
+  `writeScope.explorationSharing map[string]bool`; `joinInputFor` reads that
+  map (a missing entry is private) instead of resolving from the staged copy.
+- `ExplorationData` now holds a pointer, so `cloneExploration` copies the
+  pointee and the changed-check in `saveExploration` compares values
+  (`DiscoverySharing` nil-ness and pointee), never addresses.
 - `SetDiscoverySharing` is the only writer: it sets `DiscoverySharing` to the
   explicit value (and `PrivateDiscoveries` to its complement, so the two fields
   never disagree) on the staged profile before `commit`. `saveExploration` no
@@ -457,6 +466,14 @@ a click, and `SetDiscoverySharingRequest.sharing` is already explicit.
   unchosen character writes a record with `discovery_sharing:false`.
 - Existing tests that assert `profiles.data["alice"].PrivateDiscoveries` after a
   set move to the new field; existing legacy-JSON tests keep passing.
+- Existing tests that lean on the shared default: `conceal_test.go`
+  `TestAJoinIntoHiddenSpaceStaysHidden` asserts alice and bob hear david's find
+  check because sharing was on by default; it is about the join staying hidden,
+  so david chooses shared (`SetDiscoverySharing` true) before the walk and the
+  assertion stands. The `walkToFind` comment stops claiming a shared default.
+  Any other test that goes red for the same reason gets the same treatment:
+  seed or choose shared where sharing is the subject, flip the assertion where
+  the default is.
 
 **Verification:** `make test` and `make lint` in `rulebooks/dnd5e/session`;
 rpg-api draft PR pinning the session pseudo-version with
@@ -464,15 +481,17 @@ rpg-api draft PR pinning the session pseudo-version with
 `DiscoverySharing`; walk on the castle stack: a fresh character's "Share
 discoveries with party" box is unchecked, stays checked across a reload after
 one click, stays unchecked across a reload after a second click, and a redis
-record `character-exploration:v1:<id>` seeded as `{"character":"<id>"}` shows
-checked.
+record `character-exploration:v1:<id>` seeded as `{"character":"<id>"}` BEFORE
+that character joins shows checked (the encounter's persisted preference is
+restored only at prepare, never on a knowledge read).
 
 **Completion evidence:** the walk checklist on rpg-project#595; tag
 `rulebooks/dnd5e/session/vNEXT`; rpg-api dev re-pinned.
 
 **Cost named:** a member of an already-saved encounter whose profile has no
-record and who was shared by absence becomes private at the next prepare. R8
-accepts this; nothing else moves.
+record and who was shared by absence becomes private at the next prepare. Old
+records that exist only because they carry legacy `checks` stay shared, as
+their absence of `private` always meant. R8 accepts both; nothing else moves.
 
 ## Requirement coverage
 
