@@ -468,9 +468,11 @@ a click, and `SetDiscoverySharingRequest.sharing` is already explicit.
   set move to the new field; existing legacy-JSON tests keep passing.
 - Existing tests that lean on the shared default: `conceal_test.go`
   `TestAJoinIntoHiddenSpaceStaysHidden` asserts alice and bob hear david's find
-  check because sharing was on by default; it is about the join staying hidden,
-  so david chooses shared (`SetDiscoverySharing` true) before the walk and the
-  assertion stands. The `walkToFind` comment stops claiming a shared default.
+  check because sharing was on by default; it is about the join staying hidden.
+  David's find check rolls inside `Join` itself, before he could choose, so the
+  test seeds his profile with `DiscoverySharing` true before the join; the
+  conceal suite keeps a handle to its fake explorations repository (for example
+  `s.explorations`) so a scene can seed it. The assertion stands. The `walkToFind` comment stops claiming a shared default.
   Any other test that goes red for the same reason gets the same treatment:
   seed or choose shared where sharing is the subject, flip the assertion where
   the default is.
