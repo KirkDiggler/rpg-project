@@ -1,6 +1,6 @@
 ---
 name: Encounter studio S0 — implementation plan
-status: PLAN for slices S0, S1, S5, S2, S3 and S4, all SHIPPED to web dev 2026-10-14 (head e623c2b3), derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 planned 2026-10-14 against the S2 branch (S3 not yet pushed)
+status: PLAN for slices S0, S1, S5, S2, S3 and S4, all SHIPPED to web dev 2026-10-14 (head e623c2b3), derived 2026-10-14 from design.md and the S0 issue; checked against the inspected baseline below; open items resolved by the team lead 2026-10-14; S1 planned 2026-10-14 against the S0 branch; S5 planned 2026-10-14 against the S1 branch, ahead of S2; S2 planned 2026-10-14 against the S5 branch; S3 planned 2026-10-14 against the S2 branch; S4 planned 2026-10-14 against the S2 branch (S3 not yet pushed); S7 (open from the server, two stores) planned 2026-10-15 against api dev 2b5b51cb, protos main 1ca0df2 and web dev 61d79511
 authority: design.md (rulings R1, R9, R11, R13 and the document's refusals); README.md (the inspector forms); rpg-project#574 (S0 acceptance); epic rpg-project#545
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -2007,7 +2007,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 - S4, the hidden nouns: exits, endings, concealments, door state, and the draft as a file: rpg-project#578, planned above.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
 
-All six slices are on web `dev` (e623c2b3). **S6 Save and Play SHIPPED** (rpg-dnd5e-web#1283 → dev 61d79511); next: open a reference encounter, castle wave D, look picker (web#1268, waits on assets#226).
+All six slices are on web `dev` (e623c2b3). **S6 Save and Play SHIPPED** (rpg-dnd5e-web#1283 → dev 61d79511). **S7 open from the server, two stores: PLANNED below** (rpg-project#585, law #587); then castle wave D and the look picker (web#1268, waits on assets#226).
 
 ---
 
@@ -2285,3 +2285,433 @@ Built on `feat/studio-s6-play`, PR rpg-dnd5e-web#1283; independent review 552593
 | rpg-api registry, lobby service | the hooks | `PutDungeon`, `GetDungeon`, `CreateLobby`, `StartEncounter{dungeon_key}`; authoring flag | baseline, `local-dev` compose sets the flag | the walk |
 
 **Shared files.** `EncounterStudioWorkspace.tsx` (T1, T2, T3) and `StudioDraftFile.tsx` (T2) are edited in task order by one builder. `RoomPublishingPanel.test.tsx` changes only its import of the fake client.
+
+---
+
+# Section S7: Open an encounter from the server (two stores)
+
+Tracking issue: rpg-project#585 (its walk is the QA list; the operator's four rulings of 2026-10-15 are its comment).
+Law: design.md R20–R24 (rpg-project#587). Retiring the v2 files is rpg-api#1105, not this slice.
+
+## S7 goal and scope
+
+The author opens an encounter from the server into the studio: one of their
+own saved encounters, or a shipped reference as a starting copy. They rename
+and delete their own. A save never lands in the content directory again; it
+lands in the author's own store, and a key names one file for each author.
+
+**Repositories,** developed outside-in on pseudo-versions and merged inside-out:
+
+| repo | touched | branch |
+|---|---|---|
+| rpg-api-protos | `DungeonSummary.source`, authoring `ListDungeons`, `DeleteDungeon`, `RenameDungeon`; additive only | `feat/studio-s7-two-stores` from `main` |
+| rpg-api | user store repository, the registry split, owner plumbing through lobby and authoring, server wiring | `feat/studio-s7-two-stores` from `dev` |
+| rpg-dnd5e-web | Open panel, seeding, key refusal, lobby picker labels | `feat/studio-s7-open` from `dev` |
+| rpg-toolkit | no. The dialect, `Load` and its version dispatch are used as they are | none |
+
+**Non-goals:** multi-room sites (#528); sharing between players; textures;
+converting or deleting the v2 references (rpg-api#1105); a server-side
+overwrite guard; a migration of files already in the content directory;
+World Builder's `DungeonBuilder` changes (it reads the lobby list unchanged).
+
+## S7 requirement labels
+
+| label | requirement | source |
+|---|---|---|
+| O1 | `PutDungeon` writes only to the caller's user store, owner `auth.GetPlayerID(ctx)`. A Put, validate-only or not, whose key names a shipped reference is refused `PermissionDenied` with exactly "that key is a reference; save it under your own key", and nothing is written. | R20 |
+| O2 | Get resolves for the caller: their store, then shipped. `GetDungeon` (the studio, the overwrite check and the play view's scene read) and the lobby's `StartEncounter` (as the host) resolve this way. Two owners hold the same key independently. | R21 |
+| O3 | The lobby `ListDungeons` and authoring `ListDungeons` both answer, for the caller, Mine sorted by key with `source = MINE`, then References sorted by key with `source = SHIPPED`. A reference whose key is also one of the caller's is left out of that caller's list. | R21 |
+| O4 | `RenameDungeon{key, new_key}` moves one of the caller's files atomically and rewrites its root `key:` line to `new_key`, every other byte unchanged. Refusals: `new_key` outside the grammar, `InvalidArgument`; `new_key` already the caller's or equal to `key`, `AlreadyExists` "new key already names one of your encounters"; `new_key` shipped, `PermissionDenied` with the O1 sentence; `key` shipped and not the caller's, `PermissionDenied` "that key is a reference; references cannot be renamed or deleted"; `key` absent, `NotFound`. | R22 |
+| O5 | `DeleteDungeon{key}` removes one of the caller's files. `key` shipped and not the caller's: `PermissionDenied` with the O4 rename-or-delete sentence. Absent: `NotFound`. | R22 |
+| O6 | Shipped files below root `version: 3` are left out of both lists. `Get` by key still resolves them; an empty `dungeon_key` still plays `reference-tomb`; the demo vendor still rides `DefaultKey`. | R23 |
+| O7 | `RPG_AUTHORING_ENABLED` still gates writes: the AuthoringService is registered only with it, and the registry refuses Put, Rename and Delete with `ErrAuthoringDisabled` without it. The lobby list answers with authoring off. | R18, R20 |
+| O8 | The studio header carries an Open button beside Save and Play. With the authoring gate not `live` it is disabled with the same sentence Save and Play shows. The panel lists Mine and References from authoring `ListDungeons`. | R24, R18 |
+| O9 | Open reads `GetDungeon{key}` and passes the text to `readDraftYaml`. A refusal is shown in the panel as that reader's sentence and the draft is untouched. Success asks "Replace the current draft with {name}? Undo brings it back." and on Replace calls `session.importDocument`. | R24 |
+| O10 | Opening one's own file seeds the key field with its key and the saved-key memory with `{roomId: draft.id, key}`, so the next Save and Play does not ask. Opening a reference seeds `freshKeyFor`: the slug of the room name (`defaultDraftKey`), suffixed `-2`, `-3`, … until it names none of the listed keys, and clears the saved-key memory. | R24, R16 |
+| O11 | Rename and Delete in the panel for Mine rows only. Rename takes an inline key field; Delete asks "Delete {key} from the server? This cannot be undone." Both refresh the list and show the server's sentence on the row when refused. A rename of the remembered key moves the memory to the new key; a delete of it clears the memory. | R22 |
+| O12 | The key field shows the reference sentence when the preview or the save is refused with it. | R20, R16 |
+| O13 | The lobby picker labels each option "{name} (yours)" or "{name} (reference)" in the server's order; no v2 reference appears. | R21, R23 |
+
+## S7 constraints
+
+- **Protos are additive.** New field 3 on `DungeonSummary`, new enum, three new RPCs and their messages; no field renumbered, renamed or deprecated (memory `protos-deprecate-dont-break`). `buf breaking` against `main` passes.
+- **One owner value.** The owner is `auth.GetPlayerID(ctx)`, read in the handlers and carried as `Owner`/`PlayerID` on every input. An empty owner is refused at the registry with `ErrNoOwner`; it never means "shipped only".
+- **The user store does not compile.** `internal/repositories/userdungeons` stores bytes under `dungeon:user:<owner>`, field = key. Grammar, compile, reference refusals and the key-line rewrite are the registry's.
+- **The registry does not write shipped files.** `FileRegistry` loses `Put` and its `authoring` argument; `writeAtomic` stays for `SeedShipped`. `SeedShipped` is unchanged.
+- **The bytes are verbatim.** Put stores the request bytes; Get returns them; Rename changes the one root `key:` line and nothing else.
+- **The import is the reader.** The Open panel calls `readDraftYaml` and `session.importDocument`; it decodes nothing itself (README refusal).
+- **Save and Play is unchanged.** `useRoomPublishing` and `usePlayAuthoredDungeon` keep their transactions; S7 changes what the studio seeds, not how it saves.
+- **Walk ports are fixed:** web :3030, api :8115 (memory `studio-walk-port-is-fixed`).
+
+## S7 inspected baseline (2026-10-15)
+
+| repo | revision |
+|---|---|
+| rpg-api `origin/dev` | 2b5b51cb |
+| rpg-api-protos `origin/main` | 1ca0df2 (latest tag v0.1.235) |
+| rpg-dnd5e-web `origin/dev` | 61d79511 (pins protos `#v0.1.235`) |
+| rpg-toolkit `origin/main` | `dungeonspec.Load` dispatches on root `version >= 3` to `DecodeSingleRoom` |
+
+- **Registry.** `internal/dungeons/registry.go`: `Registry` interface `List(ctx) ([]Summary, error)`, `Get(ctx, key) (*Entry, error)`, `Put(ctx, *PutInput) (*PutResult, error)`, mockgen into `mock/mock_registry.go` (`dungeonsmock`). `FileRegistry{dir, authoring, projector, entries, putLocks}` loads every `*.yaml` at `NewFileRegistry(dir, authoring, projector)`, refuses construction without `DefaultKey = "reference-tomb"`, and its `Put` writes `<dir>/<key>.yaml` by `writeAtomic`. `Summary{Key, Name}`; `Entry{Key, Name, YAML, Dungeon, Atlas}`, cloned on Get; sentinels `ErrNotFound`, `ErrInvalidKey`, `ErrKeyMismatch`, `ErrAuthoringDisabled`; `keyPattern ^[a-z0-9-]+$`; `compileEntry` and `compileErrors`.
+- **Seeding.** `seed.go` `SeedShipped(dir, shipped)` copies each shipped `*.yaml` the directory lacks, never overwriting. `cmd/server/server.go` seeds `RPG_CONTENT_DIR` from `RPG_SHIPPED_CONTENT_DIR`, then constructs the one `FileRegistry` and passes it to the lobby and authoring orchestrators.
+- **Content.** `content/`: version 4 `castle-kitchen`, `creature-facts-walk`, `reference-discovery-checks`; version 2 `reference-front-room`, `reference-hearing`, `reference-minds`, `reference-raider-camp`, `reference-tomb-heirloom`, `reference-tomb`.
+- **Lobby.** `orchestrators/lobby/start_encounter_session_stack.go`: `StartEncounterInput{PlayerID, LobbyID, DungeonKey}`, PlayerID is the host (checked); empty key → `DefaultKey`; `o.dungeons.Get(ctx, key)`; demo vendor when `key == DefaultKey`; `LaunchInput.DungeonKey` reaches `GetAtlasResponse.dungeon_key`. `list_dungeons.go` `ListDungeonsInput{}`. Handler `handlers/dnd5e/lobby/v1alpha1/list_dungeons.go` requires a player id and maps `Summary` to `DungeonSummary{Key, Name}`.
+- **Authoring.** `orchestrators/authoring/orchestrator.go` `PutDungeonInput{Key, YAML, ValidateOnly}`, `GetDungeonInput{Key}`. Handler `handler.go` `requireAuthenticated` checks `auth.GetPlayerID(ctx)` "and not yet used"; `statusError` maps the sentinels; `get_dungeon.go` refuses an empty key `InvalidArgument "key is required"` (the web gate's probe relies on a non-Unimplemented answer).
+- **Role policy.** `internal/auth/role_policy.go` `GameMethodPermission` classifies AuthoringService `PutDungeon, GetDungeon, ListScenarios, ListWeapons` as `PermissionBuild` and LobbyService `ListDungeons` as `PermissionPlay`; an unclassified method is refused.
+- **Redis precedent.** `internal/repositories/composition/{repository.go,redis.go,redis_test.go}`: Input/Output per verb, `redisclient.Client` (a `redis.UniversalClient`), `apierr` validation, hash per scope, miniredis suite.
+- **Registry consumers in tests.** `internal/dungeons/{registry_test.go,registry_single_room_test.go,heirloom_fixture_test.go,atlas_fixture_test.go,…}`, `internal/dungeons/dungeonstest/dungeonstest.go`, `internal/integration/harness/harness.go`, `orchestrators/lobby/{lobby_test.go,orchestrator_test.go,start_encounter_armed_test.go,start_encounter_dungeon_key_test.go}`, `handlers/dnd5e/authoring/v1alpha1/handler_test.go`.
+- **Protos.** `dnd5e/api/authoring/v1alpha1/service.proto`: `PutDungeon`, `GetDungeon`, `ListScenarios`, `ListWeapons`; imports `session/v1alpha1/service.proto`. `dnd5e/api/lobby/v1alpha1/service.proto`: `ListDungeonsRequest {}`, `DungeonSummary{key = 1, name = 2}`, `ListDungeonsResponse{dungeons = 1}`. CI generates and tags on merge to `main`; `make test` runs lint, format-check, proto-options and breaking.
+- **Web.** `src/api/useListDungeons.ts` (lobby list, fires on mount); `components/game/DungeonPicker.tsx` maps `{value: key, label: name}` into `Select` (no option groups); `author/DungeonBuilder.tsx` `OpenMenu` reads `useListDungeons`. `author/authoringRpc.ts` `AuthoringClient = Pick<…, 'putDungeon' | 'getDungeon' | 'listScenarios'>`; `author/testing/fakeAuthoringClient.ts` (S6). Studio: `draftFile.ts` `readDraftYaml(text) → {ok, key, draft, scope} | {ok: false, refusal}` (refuses version < 3 with the dialect sentence), `defaultDraftKey(document)`; `studioSession.importDocument(draft, scope): boolean`; `EncounterStudioWorkspace.tsx` `StudioSurface` holds `fileKey`, `remembered` (`publicationMemory.ts` `readPublication`/`writePublication`/`clearPublication`), seeds the hook key once per draft id from `fileKey`, then `remembered`, then `defaultDraftKey`, and `adoptFileKey` sets the key and clears the memory; the `es-save` group holds Save local draft, Draft file, `StudioPlayButton`. `studioPublishing.ts` `keyRefusalOf` matches `InvalidArgument: (key…)` and path-empty `key…` field errors. `components/session/useDungeonScene.ts` reads `GetDungeon(dungeonKey)` for the play view's presentation. Dev auth sends `authorization: Dev <playerId>` (`api/client.ts`).
+
+## S7 sequence
+
+```
+S7-P1 protos ──merge to main, CI tag──▶ S7-A1 user store ──▶ S7-A2 registry split ──▶ S7-A3 lobby owner ──┐
+                                   │                                              └──▶ S7-A4 authoring verbs ──┴──▶ S7-A5 wiring and api seam test
+                                   └──▶ S7-W1 bindings ──▶ S7-W2 library and fresh key ──▶ S7-W3 Open panel ──▶ S7-W4 seeding and memory ──▶ S7-W6 integration and the walk
+                                                          S7-W5 lobby picker labels ─────────────────────────────────────────────────────────┘
+```
+
+- **Development dependencies.** P1 merges first: it is additive and expresses the agreed contract, so CI publishes the tag (expected v0.1.236) and the generated Go. The api branch pins `rpg-api-protos/gen/go` at the generated commit for that tag; the web branch pins `#v0.1.236`. A1 before A2 (A2 consumes `userdungeons.Repository`); A2 before A3 and A4 (the new `Registry` signatures); A5 last. W1 before W2–W5.
+- **Merge order.** protos (P1) → api PR to `dev` (A1–A5, one PR, one branch) → web PR to `dev` (W1–W6, one PR). The api PR does not need a pin change after P1 because P1 is already released; the web PR stays draft until the walk runs against the api branch head and then against api `dev` after the api merge.
+- **Shared files.** `internal/dungeons/registry.go` is edited by A2 only; `cmd/server/server.go` by A5 only; `EncounterStudioWorkspace.tsx` by W3 and then W4, in that order, by one builder.
+
+## S7 open items
+
+| id | item | state | blocks |
+|---|---|---|---|
+| S7-Q1 | **Where `DungeonSource` lives.** The lobby and authoring lists share one summary. | **planner-resolved:** the enum and the `source` field live beside `DungeonSummary` in `lobby/v1alpha1/service.proto`; authoring `ListDungeonsResponse` imports and repeats `dnd5e.api.lobby.v1alpha1.DungeonSummary`. One message, one enum, no copy. | nothing |
+| S7-Q2 | **The reference refusal's wire form.** The agreed sentence is fixed; the code is not. | **planner-resolved:** `PermissionDenied` with the sentence as the status message, for both the save and the validate-only grade, so the live preview surfaces it at the key field before Save. Two sentinels carry two sentences: `ErrReferenceKey` (writing to a shipped key) and `ErrReferenceReadOnly` (renaming or deleting one). | nothing |
+| S7-Q3 | **How the v2 references are told apart.** The summary carries no dialect. | **planner-resolved:** `FileRegistry` records `SingleRoom bool` per entry with the toolkit's own rule (root `version >= 3`, the `dungeonspec.Load` dispatch) and the registry's `List` drops shipped entries that are not single-room. The rule lives server-side so every list, present and future, obeys R23. | nothing |
+| S7-Q4 | **How Rename keeps the file naming itself.** The registry refuses a file whose `key:` line disagrees with its key. | **planner-resolved:** the registry rewrites the one root-level `key:` line (column 0, optional quotes, trailing comment kept) inside the user store's transaction, recompiles, and refuses with an internal error when there is not exactly one such line. Every other byte is unchanged. | nothing |
+| S7-Q5 | **Files already in the content directory.** Saves from World Builder and S6 walks live in the mounted directory. | **planner-resolved:** they are shipped references from now on, listed if single-room (README edge). No migration; an author opens one and saves it under their key. | nothing |
+| S7-Q6 | **A party member who is not the host.** The play view reads `GetDungeon(dungeon_key)` as its own caller (R21), so that member resolves their own store first. | **open in design.md** ("Whose file a party member's view reads"). S7 implements R21 as written; the walk is single-seat. No task depends on the answer. | nothing in S7 |
+| S7-Q7 | **The first save after a rename.** `useRoomPublishing.setKey` drops the hook's in-memory saved key, and `rememberedSavedKey` seeds only on mount. | **planner-resolved:** after renaming the draft's own key the record moves to the new key, and the first Save and Play in that mount asks once; a reopened studio does not ask. The hook's transactions are not changed for this. | nothing |
+| S7-Q8 | **The second player on the walk.** The web takes its dev player id at build time. | **planner-resolved:** the driver writes player B's `my-castle` with a direct Connect `PutDungeon` call carrying `authorization: Dev walk-player-b`, then reads it back the same way; player A's side is the browser. | S7-W6 |
+
+## Task S7-P1: The contract
+
+**Delivers:** the wire for O1–O5, O13.
+**Owner:** rpg-api-protos; `dnd5e/api/lobby/v1alpha1/service.proto`, `dnd5e/api/authoring/v1alpha1/service.proto`.
+**Prerequisites:** none.
+**Files:** modify the two files above. No hand-written tests (memory `no-handwritten-tests-in-protos`); generated code is CI's.
+**Interfaces:**
+
+```proto
+// lobby/v1alpha1/service.proto
+enum DungeonSource {
+  DUNGEON_SOURCE_UNSPECIFIED = 0;
+  DUNGEON_SOURCE_SHIPPED = 1;  // a reference the server ships; read-only
+  DUNGEON_SOURCE_MINE = 2;     // in the caller's own store
+}
+message DungeonSummary {
+  string key = 1;
+  string name = 2;
+  DungeonSource source = 3;    // new
+}
+
+// authoring/v1alpha1/service.proto (imports lobby/v1alpha1/service.proto)
+rpc ListDungeons(ListDungeonsRequest) returns (ListDungeonsResponse);
+rpc DeleteDungeon(DeleteDungeonRequest) returns (DeleteDungeonResponse);
+rpc RenameDungeon(RenameDungeonRequest) returns (RenameDungeonResponse);
+message ListDungeonsRequest {}
+message ListDungeonsResponse { repeated dnd5e.api.lobby.v1alpha1.DungeonSummary dungeons = 1; }
+message DeleteDungeonRequest { string key = 1; }
+message DeleteDungeonResponse {}
+message RenameDungeonRequest { string key = 1; string new_key = 2; }
+message RenameDungeonResponse {}
+```
+
+**Behavior:** comments on each RPC state the O3–O5 order and refusals, including the exact sentences, and that `PutDungeon` now writes the caller's store and refuses a shipped key (O1). `LobbyService.ListDungeons`' comment gains "for the caller, Mine then References".
+**Tests:** n/a (proto repository); the checks below are the evidence.
+**Verification:** from the protos worktree, `make test` passes (lint, format-check, proto-options, breaking against `main`); `make generate` succeeds locally and the TS output contains `DungeonSource` and `AuthoringService.renameDungeon`. Merge to `main`; record the CI tag.
+**Completion evidence:** the tag name, the generated-branch commit for it.
+
+## Task S7-A1: The user store
+
+**Delivers:** O1, O2, O4, O5 (storage half).
+**Owner:** rpg-api; new `internal/repositories/userdungeons`.
+**Prerequisites:** none (no proto types).
+**Files:** create `repository.go`, `redis.go`, `redis_test.go`, `mock/mock_repository.go` (mockgen line as composition's).
+**Interfaces:**
+
+```go
+// Package userdungeons stores each owner's authored dungeon files, verbatim.
+type Repository interface {
+	Get(ctx context.Context, in *GetInput) (*GetOutput, error)          // {Owner, Key} → {YAML}; ErrNotFound
+	List(ctx context.Context, in *ListInput) (*ListOutput, error)       // {Owner} → {Files []File{Key string; YAML []byte}} sorted by key; empty for a new owner
+	Put(ctx context.Context, in *PutInput) (*PutOutput, error)          // {Owner, Key, YAML}; upsert
+	Delete(ctx context.Context, in *DeleteInput) (*DeleteOutput, error) // {Owner, Key}; ErrNotFound when absent
+	Rename(ctx context.Context, in *RenameInput) (*RenameOutput, error) // {Owner, Key, NewKey, Rewrite func(old []byte) ([]byte, error)}
+}
+var ErrNotFound = errors.New("user dungeon not found")
+var ErrKeyExists = errors.New("user dungeon key already exists")
+```
+
+**Behavior:** one Redis hash per owner, `dungeon:user:<owner>`, field = key, value = the bytes. Empty owner or key → `apierr.InvalidArgument`. Get, Put, List copy bytes in and out. Rename runs under `WATCH dungeon:user:<owner>`: `HGET key` (absent → `ErrNotFound`), `HEXISTS new` (present, or `NewKey == Key` → `ErrKeyExists`), `next := Rewrite(old)` (error → returned, nothing written), then `MULTI HSET new next; HDEL key; EXEC`; a `TxFailedErr` retries up to three times, then returns an error naming the owner and key.
+**Tests (`redis_test.go`, miniredis suite as composition's):**
+- › `TestPutGetIsVerbatim`: bytes with a comment and trailing spaces come back identical;
+- › `TestOwnersAreSeparate`: alice and bob each put `my-castle` with different bytes; each Get returns their own;
+- › `TestHashShape`: `server.HGet("dungeon:user:alice", "my-castle")` equals the bytes;
+- › `TestListSortedAndEmptyForNewOwner`;
+- › `TestDeleteRemovesAndAbsentIsNotFound`;
+- › `TestRenameMovesRewrittenBytes`: after, `key` is absent and `new` holds `Rewrite(old)`;
+- › `TestRenameRefusesExistingAndSameKey`: both fields untouched, `ErrKeyExists`;
+- › `TestRenameMissingIsNotFound`; › `TestRenameRewriteErrorWritesNothing`;
+- › `TestRenameRetriesWhenTheHashChanges`: the first `Rewrite` call writes another field of the hash through a second client, the rename still lands once;
+- › `TestValidationAndCommandErrors`: empty owner or key; a closed server returns an error.
+**Verification:** `go test ./internal/repositories/userdungeons/...` and `golangci-lint run ./internal/repositories/userdungeons/...` from the rpg-api worktree.
+
+## Task S7-A2: The registry, two stores
+
+**Delivers:** O1–O7 (resolution and refusals).
+**Owner:** rpg-api; `internal/dungeons`.
+**Prerequisites:** S7-A1.
+**Files:** modify `registry.go` (the interface, types, sentinels; `FileRegistry` becomes the shipped store); create `stores.go` (the two-store registry) and `stores_test.go`; create `keyline.go` and `keyline_test.go`; modify `dungeonstest/dungeonstest.go` and every test listed in the baseline that constructs `NewFileRegistry` or mocks `Registry`; regenerate `mock/mock_registry.go`.
+**Interfaces:**
+
+```go
+type Source int
+const (
+	SourceShipped Source = iota + 1
+	SourceMine
+)
+type Summary struct { Key, Name string; Source Source }
+// Entry gains Source; FileRegistry entries also record SingleRoom bool (root version >= 3).
+type PutInput struct { Owner, Key string; YAML []byte; ValidateOnly bool }
+type RenameInput struct { Owner, Key, NewKey string }
+
+type Registry interface {
+	List(ctx context.Context, owner string) ([]Summary, error)
+	Get(ctx context.Context, owner, key string) (*Entry, error)
+	Put(ctx context.Context, in *PutInput) (*PutResult, error)
+	Delete(ctx context.Context, owner, key string) error
+	Rename(ctx context.Context, in *RenameInput) error
+}
+var (
+	ErrNoOwner           = errors.New("dungeon owner is required")
+	ErrReferenceKey      = errors.New("that key is a reference; save it under your own key")
+	ErrReferenceReadOnly = errors.New("that key is a reference; references cannot be renamed or deleted")
+	ErrKeyExists         = errors.New("new key already names one of your encounters")
+)
+// NewFileRegistry(dir string, projector AtlasProjector) (*FileRegistry, error) — List() and Get(key) only.
+type RegistryConfig struct {
+	Shipped   *FileRegistry
+	User      userdungeons.Repository
+	Authoring bool
+	Projector AtlasProjector
+}
+func NewRegistry(cfg *RegistryConfig) (Registry, error)
+func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
+```
+
+**Behavior:**
+- Every verb: empty owner → `ErrNoOwner`.
+- `List`: Mine from `User.List`, each named from its file's `name:` (a file whose name cannot be read is listed under its key), `SourceMine`, by key; then shipped entries with `SingleRoom` whose key is not in Mine, `SourceShipped`, by key.
+- `Get`: the user store first; a hit compiles through `compileEntry` and returns `Source: SourceMine` (a stored file that no longer compiles is an error naming owner and key); a miss falls to the shipped store, `Source: SourceShipped`; neither → `ErrNotFound`.
+- `Put`: grammar → `ErrInvalidKey`; a shipped key → `ErrReferenceKey`, before compiling, validate-only or not; compile → `PutResult{Errors}`; key line mismatch → `ErrKeyMismatch`; validate-only → the entry, nothing written; not authoring → `ErrAuthoringDisabled`; `User.Put`; the per-key lock is per owner and key.
+- `Delete`: not authoring → `ErrAuthoringDisabled`; grammar; `User.Delete`; `userdungeons.ErrNotFound` → `ErrReferenceReadOnly` when shipped, else `ErrNotFound`.
+- `Rename`: not authoring; grammar of both keys; `NewKey` shipped → `ErrReferenceKey`; `User.Rename` with a `Rewrite` that calls `rewriteKeyLine`, compiles, and errors unless the compiled key is `NewKey`; `userdungeons.ErrKeyExists` → `ErrKeyExists`; `userdungeons.ErrNotFound` → `ErrReferenceReadOnly` when `Key` is shipped, else `ErrNotFound`.
+- `rewriteKeyLine`: exactly one line matching `^key:[ \t]*(["']?)OLD(["']?)[ \t]*(#.*)?$`; the line becomes `key: NEW` plus the kept comment; zero or two matches → an error.
+- `FileRegistry` loses `Put`, its `authoring` field and the per-key locks; construction refusals are unchanged.
+**Tests (`stores_test.go`, real `FileRegistry` over a temp copy of `content/`, real `userdungeons` over miniredis, the existing test projector):**
+- › `TestPutWritesTheCallersStoreAndNotTheDirectory`: the directory listing is unchanged, the hash holds the bytes;
+- › `TestPutUnderAShippedKeyIsTheReferenceRefusal`: `castle-kitchen`, with `ValidateOnly` true and false, `errors.Is(err, ErrReferenceKey)`, nothing written;
+- › `TestPutWithoutAuthoringAnswersTheGradeOnly`;
+- › `TestGetResolvesMineThenShipped`: alice's `my-castle` is `SourceMine`; bob's Get of it is `ErrNotFound`; alice's `castle-kitchen` is `SourceShipped`;
+- › `TestTwoOwnersHoldTheSameKey`;
+- › `TestListIsMineThenSingleRoomReferences`: the `Source` and order exactly; no `reference-tomb`, `reference-hearing`, or other version 2 key; `castle-kitchen` present;
+- › `TestListLeavesOutAReferenceTheCallerHolds`: alice's store seeded directly with a `castle-kitchen` field;
+- › `TestGetStillResolvesAVersionTwoReference`: `reference-tomb`;
+- › `TestRenameRewritesOnlyTheKeyLine`: Get under the new key returns the old bytes with that one line changed; the old key is `ErrNotFound`;
+- › `TestRenameRefusals` (table): new key the caller's, same key, shipped new key, invalid new key, shipped old key, absent old key, authoring off;
+- › `TestDeleteMineAndRefusals`: own key gone; `castle-kitchen` → `ErrReferenceReadOnly`; absent → `ErrNotFound`;
+- › `TestEveryVerbRefusesAnEmptyOwner`;
+- › `keyline_test.go`: kept comment, quoted key, zero matches, two matches, a nested `key:` under a mapping is not the root line.
+**Verification:** `go test ./internal/dungeons/...` (including the atlas fixture suites, unchanged in what they assert) and `go generate ./internal/dungeons/...`, then `go build ./...`.
+
+## Task S7-A3: The lobby resolves as the host
+
+**Delivers:** O2, O3, O6, O13 (server side).
+**Owner:** rpg-api; `internal/orchestrators/lobby`, `internal/handlers/dnd5e/lobby/v1alpha1`.
+**Prerequisites:** S7-P1 (the `source` field), S7-A2.
+**Files:** modify `list_dungeons.go` (orchestrator: `ListDungeonsInput{PlayerID string}`, calls `o.dungeons.List(ctx, in.PlayerID)`), `start_encounter_session_stack.go` (`o.dungeons.Get(ctx, in.PlayerID, key)`; demo vendor unchanged), the lobby handler `list_dungeons.go` (pass `auth.GetPlayerID(ctx)`; map `SourceMine → DUNGEON_SOURCE_MINE`, `SourceShipped → DUNGEON_SOURCE_SHIPPED`); tests `list_dungeons_test.go` (handler), `start_encounter_dungeon_key_test.go`, `orchestrator_test.go`, `lobby_test.go`, `start_encounter_armed_test.go`.
+**Behavior:** the lobby list is the caller's (O3); the launch resolves the key for the host; an empty key still plays `reference-tomb` with the vendor (O6); the list stays ungated by authoring (O7).
+**Tests:**
+- › `ListDungeons maps source and passes the caller`: mock expects `List(ctx, "player-1")`, the response carries both sources in order;
+- › `StartEncounter resolves the key for the host`: mock expects `Get(ctx, "host-1", "my-castle")`;
+- › `an empty key plays the default for the host`: `Get(ctx, "host-1", "reference-tomb")`, vendor placed;
+- existing start-encounter tests pass with the owner argument.
+**Verification:** `go test ./internal/orchestrators/lobby/... ./internal/handlers/dnd5e/lobby/...`.
+
+## Task S7-A4: The authoring verbs
+
+**Delivers:** O1–O5 (wire), O7.
+**Owner:** rpg-api; `internal/orchestrators/authoring`, `internal/handlers/dnd5e/authoring/v1alpha1`, `internal/auth/role_policy.go`.
+**Prerequisites:** S7-P1, S7-A2.
+**Files:** modify `orchestrators/authoring/orchestrator.go` (`Owner` on `PutDungeonInput` and `GetDungeonInput`; new `ListDungeons`, `DeleteDungeon`, `RenameDungeon` with Input/Output types); modify `handler.go` (`ownerOf(ctx) (string, error)` replacing `requireAuthenticated` at every RPC; `statusError` cases below), `put_dungeon.go`, `get_dungeon.go`; create `list_dungeons.go`, `delete_dungeon.go`, `rename_dungeon.go` and their tests; modify `role_policy.go` and its test.
+**Interfaces:** `statusError` adds `ErrReferenceKey → PermissionDenied "that key is a reference; save it under your own key"`, `ErrReferenceReadOnly → PermissionDenied "that key is a reference; references cannot be renamed or deleted"`, `ErrKeyExists → AlreadyExists "new key already names one of your encounters"`, `ErrNoOwner → Unauthenticated`. `GameMethodPermission`: `ListDungeons`, `DeleteDungeon`, `RenameDungeon` on AuthoringService are `PermissionBuild`.
+**Behavior:** every RPC passes the caller as owner; `GetDungeon("")` still answers `InvalidArgument "key is required"`; empty `key` or `new_key` on Delete or Rename is `InvalidArgument`; the list response uses the lobby's `DungeonSummary` with source.
+**Tests (handler, mock registry):**
+- › `PutDungeon passes the caller as owner`; › `PutDungeon under a reference is PermissionDenied with the sentence`;
+- › `GetDungeon passes the caller`; › `GetDungeon with an empty key is still InvalidArgument`;
+- › `ListDungeons returns both sources in order`;
+- › `RenameDungeon` table: OK, `AlreadyExists`, `PermissionDenied` for each sentence, `NotFound`, `InvalidArgument`, `FailedPrecondition` for authoring off;
+- › `DeleteDungeon` table: OK, `PermissionDenied`, `NotFound`;
+- › role policy: the three new methods are `PermissionBuild`; an unknown authoring method is still unclassified.
+**Verification:** `go test ./internal/orchestrators/authoring/... ./internal/handlers/dnd5e/authoring/... ./internal/auth/...`.
+
+## Task S7-A5: Wiring and the api seam
+
+**Delivers:** O1–O7 joined; the server boots with two stores.
+**Owner:** rpg-api; `cmd/server/server.go`, `internal/integration/harness/harness.go`.
+**Prerequisites:** S7-A1–A4.
+**Files:** modify `server.go` (construct `userdungeons.NewRedis(&userdungeons.RedisConfig{Client: redisClient})`, `dungeons.NewFileRegistry(contentDir, projector)`, `dungeons.NewRegistry(&dungeons.RegistryConfig{Shipped, User, Authoring: authoringEnabled, Projector})`; pass the registry to the lobby and authoring orchestrators; the log line names both stores); modify the harness the same way over its Redis; add one wire test beside `validate_only_wire_test.go`, `two_stores_wire_test.go`.
+**Behavior:** `RPG_CONTENT_DIR` seeding is unchanged; the directory is never written by a request.
+**Tests (`two_stores_wire_test.go`, the real handler over the real registry, two `Dev` callers):**
+- › alice `PutDungeon my-castle` → alice `ListDungeons` shows it as MINE first; bob's does not; bob `GetDungeon my-castle` is `NotFound`;
+- › alice `PutDungeon castle-kitchen` is `PermissionDenied` with the sentence; the content file is byte-identical;
+- › alice `RenameDungeon my-castle → my-keep` then `GetDungeon my-keep` returns `key: my-keep`; `DeleteDungeon my-keep` then the lobby `ListDungeons` lacks it.
+**Verification:** `make pre-commit` from the rpg-api worktree (its `release-pin-check` passes because P1 is released); boot the server against the local stack and see the log line and `AuthoringService registered`.
+
+## Task S7-W1: Bindings
+
+**Delivers:** the web side of the contract.
+**Owner:** rpg-dnd5e-web; `package.json`, `author/authoringRpc.ts`, `author/testing/fakeAuthoringClient.ts`.
+**Prerequisites:** S7-P1 tag.
+**Files:** bump `@kirkdiggler/rpg-api-protos` to the P1 tag; `AuthoringClient` adds `'listDungeons' | 'deleteDungeon' | 'renameDungeon'`; the fake client gains deferred-backed implementations of the three.
+**Tests:** existing suites compile and pass; the fake's new methods are exercised by W2.
+**Verification:** `npm ci`; `npx tsc --noEmit`; `npx vitest run src/author`.
+
+## Task S7-W2: The library and the fresh key
+
+**Delivers:** O8 (data), O10 (`freshKeyFor`), O11 (verbs), O12.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/dungeonLibrary.ts` and `dungeonLibrary.test.ts`; `encounter-studio/studioPublishing.ts`.
+**Prerequisites:** S7-W1.
+**Interfaces:**
+
+```ts
+export interface DungeonLibrary {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  mine: DungeonSummary[];        // source MINE, server order
+  references: DungeonSummary[];  // source SHIPPED, server order
+  message: string | null;
+  refetch(): Promise<void>;
+  read(key: string): Promise<{ ok: true; yaml: string } | { ok: false; refusal: string }>;
+  rename(key: string, newKey: string): Promise<{ ok: true } | { ok: false; refusal: string }>;
+  remove(key: string): Promise<{ ok: true } | { ok: false; refusal: string }>;
+}
+export function useDungeonLibrary(input: { client?: AuthoringClient; enabled: boolean }): DungeonLibrary;
+export function freshKeyFor(document: Readonly<RoomDraftDocument>, taken: ReadonlySet<string>): string;
+```
+
+**Behavior:** fetches on enable and on `refetch`; a summary with `UNSPECIFIED` source is a reference; `rename` and `remove` refetch on success; a refusal is the status message without the code prefix. `freshKeyFor` returns `defaultDraftKey(document)` when free, else the first free `-2`, `-3`, …. `keyRefusalOf` also matches `PermissionDenied: (that key is a reference.*)$` from the save, the launch and the preview.
+**Tests:** › `splits Mine and References in server order`; › `does not fetch while disabled`; › `rename refetches and returns ok`; › `rename AlreadyExists returns the sentence`; › `remove PermissionDenied returns the sentence`; › `freshKeyFor returns the slug when free`, › `…suffixes -2 then -3`; › `keyRefusalOf shows the reference sentence from a preview refusal`.
+**Verification:** `npx vitest run src/concepts/encounter-studio/dungeonLibrary.test.ts src/concepts/encounter-studio/studioPublishing.test.ts`.
+
+## Task S7-W3: The Open panel
+
+**Delivers:** O8, O9, O11 (surface).
+**Owner:** rpg-dnd5e-web; new `encounter-studio/StudioOpen.tsx` and `StudioOpen.test.tsx`; `EncounterStudioWorkspace.tsx` (`es-save`).
+**Prerequisites:** S7-W2.
+**Interfaces:**
+
+```ts
+export interface StudioOpenProps {
+  library: DungeonLibrary;
+  gate: AuthoringGateState;
+  onOpen(opened: { read: Extract<DraftFileRead, { ok: true }>; key: string; source: 'mine' | 'reference' }): void;
+  onRenamed(from: string, to: string): void;
+  onDeleted(key: string): void;
+  onClose(): void;
+}
+```
+
+**Behavior:** an Open button in `es-save` immediately before `StudioPlayButton`, toggling the panel (`id="studio-open"`, the S5 `es-panel` styling), disabled with the gate's sentence when `gate.state !== 'live'`. The panel shows Mine then References, each row the name and the key in small type; an empty Mine reads "Nothing saved yet. Save and Play saves here." Open calls `library.read`, then `readDraftYaml`; a refusal is shown on the row and nothing changes; success shows the replace question with Replace and Keep; Replace calls `onOpen`. Mine rows also carry Rename (inline key field, Save and Cancel) and Delete (the O11 question, Delete and Keep).
+**Tests (fake client):** › `gate-off disables Open with the server sentence`; › `lists Mine then References with keys`; › `a version 2 file read from the server shows the dialect sentence and imports nothing`; › `Open asks before replacing; Keep imports nothing; Replace calls onOpen with the source`; › `rename sends key and new_key and shows the AlreadyExists sentence on refusal`; › `delete asks, sends the key, and the row is gone after the refetch`; › `References rows offer neither Rename nor Delete`.
+**Verification:** `npx vitest run src/concepts/encounter-studio/StudioOpen.test.tsx`.
+
+## Task S7-W4: Seeding the key and the memory
+
+**Delivers:** O10, O11 (memory).
+**Owner:** rpg-dnd5e-web; `EncounterStudioWorkspace.tsx` (`StudioSurface`).
+**Prerequisites:** S7-W3.
+**Behavior:** `onOpen` calls `session.importDocument(read.draft, read.scope)`; on `true`:
+- own file: `setFileKey({key, roomId: read.draft.id})`, the hook key to `key`, `writePublication(storage, {roomId: read.draft.id, key})`, `setRemembered` to that record;
+- reference: `fresh = freshKeyFor({draft: read.draft, scope: read.scope}, all listed keys)`, `setFileKey({key: fresh, roomId})`, the hook key to `fresh`, `clearPublication`, `setRemembered(null)`.
+On `false` the owner's notice stands and nothing else changes. `onRenamed(from, to)`: when the remembered key is `from`, write the record with `to`; when the hook key is `from`, set it to `to` (S7-Q7). `onDeleted(key)`: when the remembered key is `key`, clear the record; the key field is unchanged.
+**Tests (`EncounterStudioIntegration.test.tsx`, real owner, fake client):**
+- › `opening my own file then Save and Play does not ask and puts under its key`;
+- › `opening a reference seeds the fresh key and the first Save and Play to it does not ask (NotFound) and puts under the fresh key`;
+- › `opening a reference whose slug is taken seeds -2`;
+- › `undo after Open restores the previous draft`;
+- › `renaming the remembered key moves the record`; › `deleting the remembered key clears it`;
+- › `a reopened studio after opening my own file does not ask`.
+**Verification:** `npx vitest run src/concepts/encounter-studio`.
+
+## Task S7-W5: The lobby picker says the source
+
+**Delivers:** O13.
+**Owner:** rpg-dnd5e-web; `components/game/DungeonPicker.tsx`.
+**Prerequisites:** S7-W1.
+**Behavior:** label `"{name} (yours)"` for MINE, `"{name} (reference)"` otherwise; order as served; value stays the key. `useListDungeons` and `DungeonBuilder`'s `OpenMenu` are unchanged.
+**Tests:** › `DungeonPicker labels yours and reference in server order` (new `DungeonPicker.test.tsx`); `LobbyFlow.test.tsx` fixtures gain `source` and still pass.
+**Verification:** `npx vitest run src/components/game`.
+
+## Task S7-W6: Integration and the walk
+
+- [ ] Web: `npm ci`; `npm run ci-check` once; grep the log. API: the S7-A5 verification.
+- [ ] Stack `local/studio-s7`: web :3030, api :8115, api from the S7 api branch head, web from a detached `rpg-dnd5e-web/.worktrees/studio-s7-walk` at the web PR head (memory `walk-never-serves-a-builders-worktree`). Confirm `AuthoringService registered` and the two-store log line.
+- [ ] Driver `tools/browser/_job_s7_open.mjs` in the job tmp dir, run from `tools/browser/`; screenshots per step; the character as S6-Q6; player B per S7-Q8.
+- [ ] Post the checklist below on rpg-project#585 as `- [ ]` boxes before the web PR leaves draft.
+
+**Walk and #585 checklist:**
+1. Author a room named "The cells" in the studio and press Save and Play: the game opens on it. Back in the studio, Open lists The cells under Mine, keyed `the-cells`, and no multi-room reference anywhere.
+2. Open The cells: the replace question appears; Replace loads it; the key reads `the-cells`.
+3. Change a row's weight on the Tables form and press Save and Play: no overwrite ask; the game opens with the change.
+4. Open the castle kitchen reference: the key reads `the-castle-kitchen`; Save and Play saves without an ask and plays; Open now lists it under Mine and the reference is unchanged (`GetDungeon castle-kitchen` returns the shipped bytes).
+5. Type `castle-kitchen` into the key field: within a second the key field reads "that key is a reference; save it under your own key"; pressing Save and Play saves nothing.
+6. Rename `the-castle-kitchen` to `kitchen-copy` in the Open panel: the row shows the new key; renaming it to `the-cells` shows "new key already names one of your encounters"; renaming it to `castle-kitchen` shows the reference sentence.
+7. Delete `kitchen-copy`: the question appears; Delete removes it from the Open panel and from the lobby picker.
+8. The lobby picker lists The cells "(yours)" and the castle kitchen "(reference)", and no tomb; creating a lobby with no pick still plays the tomb.
+9. Player B (direct calls, S7-Q8) saves `my-castle` with B's room name; player A saves `my-castle` from the studio; A's Open shows A's room name; B's `GetDungeon my-castle` returns B's bytes.
+10. Bring the stack up once with `RPG_AUTHORING_ENABLED` unset: Open is disabled with the server sentence; the lobby picker still lists A's encounters and the references.
+
+## S7 requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| O1 Put to the caller's store; shipped key refused | A1, A2, A4, A5 | A2 put tests; A4 PermissionDenied test; A5 wire test; walk 4, 5 |
+| O2 resolution mine then shipped, per owner | A2, A3, A4 | A2 Get and two-owner tests; A3 host Get test; walk 9 |
+| O3 lists Mine then References | A2, A3, A4, W2 | A2 list tests; A3 and A4 list tests; W2 split test; walk 1, 8 |
+| O4 Rename atomic, key line, refusals | A1, A2, A4, W3 | A1 rename tests; A2 rename and keyline tests; A4 table; walk 6 |
+| O5 Delete and refusals | A1, A2, A4, W3 | A1 and A2 delete tests; A4 table; walk 7 |
+| O6 v2 out of lists, default stays | A2, A3 | A2 list and v2 Get tests; A3 empty-key test; walk 1, 8 |
+| O7 authoring still gates writes | A2, A4, A5 | A2 authoring-off tests; A4 FailedPrecondition; walk 10 |
+| O8 Open button and panel, gate | W2, W3 | W3 gate and list tests; walk 1, 10 |
+| O9 Open is the import | W3, W4 | W3 dialect and replace tests; W4 undo test; walk 2 |
+| O10 key and memory seeding | W2, W4 | W2 freshKeyFor tests; W4 own and reference tests; walk 3, 4 |
+| O11 Rename and Delete in the panel, memory follows | W3, W4 | W3 rename and delete tests; W4 memory tests; walk 6, 7 |
+| O12 reference sentence at the key field | A4, W2 | A4 sentence test; W2 keyRefusalOf test; walk 5 |
+| O13 lobby picker labels | P1, A3, W5 | A3 source mapping; W5 picker test; walk 8 |
+
+Deferred by the design, not uncovered: retiring the v2 files (rpg-api#1105); a non-host member's scene read (design Open, S7-Q6).
+
+## S7 provider/consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| S7-P1 protos | A3, A4, W1–W5 | `DungeonSummary{key, name, source}`, `DungeonSource` values 0/1/2; authoring `ListDungeons`, `DeleteDungeon{key}`, `RenameDungeon{key, new_key}` with empty responses | new; tag before api and web pin it | `make test`; A4 and W1 compile against it |
+| S7-A1 `userdungeons.Repository` | S7-A2 | Input/Output shapes above; `ErrNotFound`, `ErrKeyExists`; `Rename` calls `Rewrite` inside the transaction and writes nothing when it errors | new | A1 tests; A2 tests over the real repository |
+| S7-A2 `dungeons.Registry` | A3, A4, A5 | owner on every verb; `Source` on `Summary` and `Entry`; sentinels `ErrNoOwner`, `ErrReferenceKey`, `ErrReferenceReadOnly`, `ErrKeyExists` plus the existing ones | new | A2 tests; A3/A4 mocks regenerated from the interface |
+| existing `FileRegistry` load and `SeedShipped` | A2 | construction refusals and seeding unchanged; `Put` removed; `SingleRoom` added | baseline | the existing registry, seed and atlas fixture tests |
+| existing toolkit `dungeonspec.Load` rule | A2 `SingleRoom` | root `version >= 3` is the single-room dialect | baseline (`compile.go` `Load`) | A2 list test excludes every version 2 file |
+| S7-A3 lobby handler | W5, `useListDungeons` | the caller's list with source | new field on an existing RPC | A3 test; walk 8 |
+| S7-A4 authoring handler | W2, W3 | status codes and exact sentences in O1, O4, O5; `GetDungeon("")` still `InvalidArgument` | new RPCs; existing gate probe | A4 tests; W2 refusal tests; walk 5–7 |
+| existing `readDraftYaml`, `importDocument` | W3, W4 | `{ok, key, draft, scope}` or the refusal sentence; `importDocument` boolean, undoable | baseline | W3 dialect test; W4 undo test |
+| existing `publicationMemory`, `useRoomPublishing.setKey`, `rememberedSavedKey` | W4 | record `{roomId, key}`; `setKey` drops the in-memory saved key; memory seeds on mount | baseline (S6-T7) | W4 tests; S7-Q7 |
+| existing `useDungeonScene` | play | `GetDungeon(dungeon_key)` as the caller | baseline; resolution changes under it | walk 1, 3, 4 play steps |
+
+**Shared files.** `registry.go` is A2's alone; `server.go` and the harness are A5's; `EncounterStudioWorkspace.tsx` is W3 then W4 by one builder; `studioPublishing.ts` is W2's.
+
+**Plan check findings.** The role policy classifies every RPC explicitly, so the three new authoring methods are added in A4 (an unclassified method would be refused). The web gate's probe depends on `GetDungeon("")` answering `InvalidArgument`; A4 pins it. `DungeonBuilder`'s Open menu reads the lobby list and so loses the v2 references with no code change, which is R23's intent.
