@@ -51,6 +51,36 @@ draft file, on every home and both views. The saved file is the file the
 draft-file export writes, under the same key, and play launches that key with
 the character picked on Home.
 
+Behind the registry are two stores. The shipped references are files the
+image seeds into the content directory, read-only over the wire. The world
+store holds the encounters authors save, one store per world (the Discord
+server), each record carrying its owner. A key names one encounter in a
+world, and it is resolved for a caller in their world's store, then in the
+references. The Open
+panel sits beside Save and Play and reads both lists through the same import
+the draft file uses.
+
+```mermaid
+flowchart LR
+    subgraph Header[Studio header, Save group]
+        Open[Open panel: This world and References]
+        SP[Save and Play]
+    end
+    subgraph Registry[Registry, resolved for the caller]
+        Res{world, then shipped}
+        User[(World store, one per world, owner per record)]
+        Ship[(Shipped references, read-only)]
+    end
+    Open -->|ListDungeons, GetDungeon| Res
+    Open -->|RenameDungeon, DeleteDungeon| User
+    SP -->|PutDungeon| User
+    Res --> User
+    Res --> Ship
+    Lobby[Lobby picker and launch] -->|ListDungeons, StartEncounter key| Res
+    Open -->|the file, through the import| Draft[(Draft)]
+    Ship -.->|Put, Rename and Delete refused| No[Reference refusal]
+```
+
 | Selection | Inspector shows |
 |---|---|
 | nothing | the room: size, default finishes, notes, party start |
@@ -177,6 +207,52 @@ flowchart LR
   play; their fields say so in one line. Finishes reach play with the look
   catalog (R14b); region lighting is open. Why: an author must know a finish
   is a note to the studio, not to the game.
+- **Saves land in the world's store, owned by the author (R20).**
+  PutDungeon writes to the store of the caller's world, the Discord server
+  the authenticated request is admitted to, and the record carries the
+  caller's player id as its owner. A Put under a key the caller already owns
+  replaces it, after the studio's ask (R16). A Put under a key another
+  member of the world owns is refused with "that key belongs to another member of this world". A shipped reference
+  is never written over the wire: a Put whose key names one is refused with
+  "that key is a reference; save it under your own key". The validate-only
+  grade refuses both the same way. Why: a reference is the same file for
+  every author and an encounter belongs to the author who saved it, so no
+  other save may change either.
+- **A key names one thing in a world (R21).** A key is unique within a
+  world: two authors in one world cannot both hold `my-castle`. The registry
+  resolves a key in the caller's world store, then in the shipped
+  references. The lists, GetDungeon, the play view's read of the file and
+  the lobby's launch all resolve this way, and the lobby launches in its
+  host's world. The world comes from the request's verified identity, never
+  from a request field, and there is no qualified key on the wire. Why: one
+  name for one file in a world keeps the studio, the lobby and play
+  agreeing about what a key means for everyone at that table.
+- **Rename and Delete are the owner's verbs (R22).** RenameDungeon moves one
+  of the caller's encounters to a new key in one step, rewriting the file's
+  own key line and nothing else. It is refused when the new key is already
+  taken in the world, names a shipped reference or breaks the key grammar.
+  DeleteDungeon removes one of the caller's encounters. Either verb by anyone
+  but the owner is refused with "that key belongs to another member of this world", and neither
+  touches a reference. Why: a rename built from a save and a delete leaves
+  two files, or none, when it fails halfway.
+- **The older dialect is listed nowhere (R23).** A shipped reference in the
+  multi-room dialect is left out of every list a user reads: the studio's
+  Open panel and the lobby's picker. Its file stays, the lobby's default
+  still plays one, and a launch by key still resolves them until they are
+  retired. Why: they are superseded stepping stones, and a list entry the
+  studio cannot open is a trap.
+- **Open is the import (R24).** The Open panel sits beside Save and Play and
+  lists This world, every encounter in the caller's world with its owner
+  and the caller's own marked Mine, and References. Every member of a world
+  sees the world's encounters; only the owner edits one (R22). The lobby's
+  picker lists the same, so a host can launch any member's. Opening reads
+  the file with GetDungeon and passes it through the draft-file import, so a
+  file from the server and a file from disk are refused alike. Opening
+  one's own seeds its key as saved, so the next Save and Play does not ask
+  (R16). Opening another member's or a reference opens a copy: a fresh key
+  and no remembered save. Save and Play is unchanged. Why: one reading path
+  means the studio cannot open what it could not import, and a table plays
+  what its members made.
 
 ## Rulings
 
@@ -202,6 +278,11 @@ flowchart LR
 | R17 | settled | a server refusal with a field path that maps to a studio noun is a jump to that noun's inspector; otherwise a sentence under the Save group | operator | 2026-10-14 |
 | R18 | settled | authoring off or no character picked disables the control with the reason; no in-studio character picker, no fallback encounter | operator | 2026-10-14 |
 | R19 | deferred-until-look-catalog | wall and region finishes reach play with the look catalog, not before; region lighting does not reach play and is open; the fields say they are studio-only | operator | 2026-10-14 |
+| R20 | settled | PutDungeon writes only to the caller's world store, each record owned by the auth player id; the same owner's Put under an existing key is the overwrite case; another owner's key is refused with the another-member sentence and a shipped key with the reference sentence, validate-only or not; opening a reference and saving writes a copy under the author's key | operator | 2026-10-15 |
+| R21 | settled | a key is unique within a world, duplicates refused; it resolves world store, then shipped, in the lists, GetDungeon, the play view's file read and the lobby launch (the host's world); the world comes from the verified request identity; no qualified key on the wire | operator | 2026-10-15 |
+| R22 | settled | `RenameDungeon{key, new_key}` on the world store, atomic, refused when `new_key` is taken in the world, shipped or outside the grammar; `DeleteDungeon{key}` on the world store; both refused with the another-member sentence for anyone but the owner; references are neither renamed nor deleted (owner checked on each record) | operator | 2026-10-15 |
+| R23 | settled | multi-room-dialect references are removed from the studio Open panel and the lobby picker; their files, the lobby default and launch by key stay until rpg-api#1105 | operator | 2026-10-15 |
+| R24 | settled | the Open panel beside Save and Play lists This world (every world encounter, owner shown, the caller's own marked Mine) and References and opens through the draft-file import; one's own seeds its key as saved; another member's or a reference opens as a copy, a fresh key and no remembered save; the lobby picker lists the world's encounters; Save and Play unchanged (amended 2026-10-15: the world's encounters are listed) | operator | 2026-10-15 |
 
 ## Open
 
@@ -210,8 +291,6 @@ flowchart LR
 - **Region lighting in play.** Play lights every derived region at full
   intensity with one archetype; whether an authored region's lighting should
   reach play is unsettled and separate from the look catalog (R19).
-- **Opening a reference encounter.** How an author opens a shipped encounter,
-  such as the castle, as a starting point rather than a blank room.
 - **The sites layer (rpg-project#528).** Doors on shared walls between
   separately authored rooms, and authored cells for `at` and `path`, wait for
   it.
@@ -219,6 +298,11 @@ flowchart LR
   apply-to-all; the Shift-pick for grouping is not that mode.
 - **What the shuffle randomises.** Appearance only, or also style and skin
   palette within one appearance family.
+- **Retiring the v2 references (rpg-api#1105).** The multi-room-dialect
+  files leave the content directory once the lobby's default, the walk
+  scenes and the atlas fixtures stop needing them (R23).
+- **Draw what the party knows (rpg-project#586).** Unobserved doors drawn
+  as wall, then rendering scoped to sight.
 - **The look catalog (R14b).** Per-prop surface material and look choices
   wait on the provider publishing reviewed look choices per asset
   (rpg-game-assets#226); the Studio picker for them is

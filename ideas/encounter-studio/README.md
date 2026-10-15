@@ -13,6 +13,13 @@ presentation the dialect carries opaquely (`room.scene`). It introduces **no
 second creature list, no second fact store and no studio-side rules**: the
 read-back renders the document, and the fact index is computed from it.
 
+The server keeps two stores behind one registry: the shipped references,
+which no author can write, and a world store per Discord server, which
+holds what each author saves there under a key unique in that world, each
+record carrying its owner. The Open panel reads either through the draft-file import, so
+it adds **no second reading path**: a file from the server is refused
+exactly where the same file from disk would be.
+
 ## Component shape
 
 ```mermaid
@@ -26,9 +33,12 @@ flowchart LR
         RB[Read-back and fact index renderers]
         Codec[Document encode and decode]
         Pub[Save and Play: publish and launch]
+        Open[Open panel: This world and References]
     end
     subgraph API[rpg-api, authoring and lobby]
-        Reg[(File registry by key)]
+        Reg{Registry: world, then shipped}
+        User[(World store: Redis hash per world)]
+        Ship[(Shipped references: RPG_CONTENT_DIR files)]
         Lobby[CreateLobby and StartEncounter]
     end
     subgraph TK[rpg-toolkit, dungeonspec]
@@ -50,6 +60,11 @@ flowchart LR
     Pub -->|PutDungeon validate-only, then save| Reg
     Reg -->|refusals with field paths| Insp
     Pub -->|StartEncounter key, picked character| Lobby
+    Open -->|ListDungeons, GetDungeon, RenameDungeon, DeleteDungeon| Reg
+    Open -->|the file's text, through the import| Codec
+    Reg --> User
+    Reg --> Ship
+    Lobby -->|Get for the host| Reg
 ```
 
 ## Ownership and contracts
@@ -64,6 +79,11 @@ flowchart LR
 | Palette | Listing the cast; dropping one | cast member id + cell → `monsterDeclarations[]` entry + `monsterBindings.<id>` | human |
 | Document encode and decode | The file round trip | draft ↔ YAML/JSON of `SingleRoomSpec` | none |
 | Save and Play | Publishing the encoded file and launching it (R15) | `{draft, key, characterId}` → `PutDungeon{key, yaml}` then `CreateLobby` → `StartEncounter{lobby_id, dungeon_key}` → `onPlay(encounterId)`; a refusal → `{path, sentence}` to the inspector (R17) | human |
+| Open panel | Listing the world's encounters and the references, and the owner's verbs on the caller's own (R22, R24) | authoring `ListDungeons` → `DungeonSummary{key, name, source, owner}` split into This world (owner shown; Mine where `owner` is the caller's player id) and References; Open → `GetDungeon{key}` → `yaml` → `readDraftYaml` → `importDocument(draft, scope)` plus the seeded key and saved-key memory; `RenameDungeon{key, new_key}`, `DeleteDungeon{key}` | human |
+| Registry | Resolving a key for a caller and routing each verb to a store (R20–R23) | `(caller{world, owner}, key)` → `Entry{key, name, source, owner, yaml, dungeon, atlas}`, world store then shipped; `List(caller)` → every record in the caller's world with its owner, then single-room References; `Put{caller, key, yaml}` compiles, then writes the world store; `Rename`, `Delete` on the world store; a shipped key in a write → the reference refusal; another owner's key → the another-member refusal | none |
+| World store | Each world's encounters, verbatim, with their owners (R20, R21) | Redis hash `dungeon:world:<worldID>`, field = key, value = `{owner, yaml}`; `Get`, `List`, `Put`, `Delete`, `Rename` with the new bytes, each write checking the record's owner in the same transaction | none |
+| Shipped references | The files the image ships, compiled once at boot | `RPG_CONTENT_DIR/*.yaml`, seeded from the image → entries with their dialect; read-only | none |
+| Lobby picker | Choosing the key a lobby launches | lobby `ListDungeons` → the same world encounters and References for the host, each option naming its owner or that it is a reference → `StartEncounter{dungeon_key}` | human |
 
 The refusals, one per boundary:
 
@@ -87,6 +107,22 @@ The refusals, one per boundary:
   the same key (R16); a response for a retired capture, after an edit, a key
   change or a character change, saves and launches nothing; with authoring
   off or no character it says so and does nothing (R18).
+- **The Open panel does not parse YAML itself.** It hands the file's text
+  to `readDraftYaml`, the draft file's reader, and shows that reader's
+  sentence when it refuses; it never decodes, repairs or converts a file.
+- **The registry does not write shipped files.** Put, Rename and Delete
+  reach only the world store; a shipped key in any of them is the reference
+  refusal (R20, R22), and no flag turns it off.
+- **The world store does not compile.** It holds bytes by world and key
+  and never reads them; every compile, every key-grammar check and the
+  key-line rewrite of a rename are the registry's. It does refuse a write to
+  another owner's record, inside the write's own transaction, because only
+  there can two authors racing for one key be told apart.
+- **The lobby does not choose a world.** It resolves the key in the world
+  of the host who presses Start (R21); the other party members play the
+  host's compiled copy.
+- **No handler reads a world from the request body.** The world is the one
+  the auth boundary admitted the request to (R21).
 - **Encode does not invent keys, and decode refuses what the toolkit
   refuses.** An unknown key refuses the whole file; `at` and `path` cells are
   refused in this dialect; a declaration ref must resolve to a template or a
@@ -289,6 +325,39 @@ The gate guard's table, from the Tables form to its read-back line.
    was placed, wearing the look its placement carries; the wall's base look
    and the props are there; the wall's face finish is not (R19).
 
+### Open the cells, change a row, save, play
+
+The author's own room, the cells under the keep, from the server back to
+play.
+
+1. **List.** The author opens the Open panel. Authoring `ListDungeons`
+   answers `DungeonSummary{key: the-cells, name: The cells, source: WORLD,
+   owner: <the author's player id>}` among This world, marked Mine because
+   the owner is the author, and `castle-kitchen` among the References. The
+   multi-room references are not in the answer at all (R23).
+2. **Read.** The author presses Open on The cells. `GetDungeon{key:
+   the-cells}` resolves in the author's world store first (R21) and returns the
+   bytes the last save wrote, verbatim.
+3. **Import.** The text goes to `readDraftYaml`, the draft file's reader. It
+   decodes to a `RoomDraft` and a `SiteScope`, and `importDocument` replaces
+   the draft in one undoable step. **The key that survives is the server's
+   key**, `the-cells`; because the file is the author's own, it is seeded as
+   already saved (R24, R16).
+4. **Edit.** The author raises the watch row's weight in `cell-watch` on the
+   Tables form. The row moves to the top, heaviest first (R12).
+5. **Save and Play.** The draft is encoded to the export's bytes under
+   `the-cells`. The existence check finds the key, but the remembered save
+   names it, so nothing asks. `PutDungeon` compiles the file and writes it
+   to `dungeon:world:<worldID>` under `the-cells`, owned by the author.
+6. **Play.** The lobby launches `the-cells` as the host, the registry
+   resolves it in the host's world store, and the session plays its
+   compiled copy.
+
+Opening `castle-kitchen` instead differs at step 3: the key seeded is a
+fresh one, `the-castle-kitchen` from the room name, and no save is
+remembered. Pressing Save and Play writes a copy into the world store, owned
+by the author; the reference never changes (R20).
+
 ## Read-back, as rendered (R5)
 
 The castle in this dialect carries no patrol row, because `path` is refused
@@ -353,10 +422,19 @@ The same document gives the fact index these rows, among others:
 | What a creature does on its time | the layered orders: kind default, faction, named table, own rows |
 | Where a region is drawn | `room.scene` regions, an annotation |
 
+| What a key names for this caller | the registry: the caller's world store, then the shipped references |
+| Who may change an encounter | the owner on its world-store record |
+| Who may see an encounter | every member of its world |
+| Whether a key is a reference | the shipped store alone |
+| Whether this draft was saved under its key | the studio's saved-key memory for the draft |
+
 **The hazard is reading one layer as the answer.** A readout that reads only
 a faction's inline rows reports "no shared table" for a faction that names
 one, and a readout that reads a cast member's default faction reports the
 wrong side for a placement whose faction was changed after placing.
+A Save that asks the server "does this key exist?" learns that a file
+answers to the key for this caller; it does not learn whether that file is
+the author's own or a reference, nor whether this draft wrote it.
 
 ## Trade-offs
 
@@ -372,6 +450,10 @@ wrong side for a placement whose faction was changed after placing.
 | One key per draft (R16) | the file on disk is the file the export writes | the studio's default key (slug of the name) differs from World Builder's `room-<id>` | a key field on the document, which the dialect has no key for |
 | Refusals as jumps (R17) | the author lands on the thing to fix | a path-to-selection map the studio maintains per noun kind | a refusal list the author reads against the map |
 | Finishes stay studio-only for now (R19) | no wire field for a shape the look catalog will replace | the played room has plain walls; the field says so | carrying today's finish ref over the wire ahead of the catalog |
+| Two stores behind one registry (R20, R21) | a reference cannot be overwritten, and an author's encounters are theirs by owner | the registry resolves every key twice and compiles a world file on each read; a Redis outage hides Mine | one content directory written by every author |
+| Keys unique per world (R21) | everyone at one table means one file by one key, so the lobby and every member's play view agree | authors in one world compete for names; a taken key is refused as another member's | a separate store for each author, where two authors in a world could each hold `my-castle` |
+| Rename as a verb (R22) | a rename is atomic, and the server rewrites the file's own key line | the registry edits one line of a file it otherwise never touches | save under the new key, then delete the old |
+| Remove the older dialect from lists (R23) | the studio and the lobby list only what the studio can open | the lobby picker loses the tomb and its siblings until they are retired; the default still plays the tomb | list them disabled with the reason |
 
 The three approaches to the configuration surface:
 
@@ -415,6 +497,32 @@ The three approaches to the configuration surface:
   ask; a different draft, or an imported file, starts with no memory (R16).
 - **The key changes after a save.** The next save asks again, because the
   overwrite memory is per key; the old file stays on the server.
+- **The same key from two authors in one world.** The first save of
+  `my-castle` owns it; the second author's save is refused with "that key belongs to another member of this world",
+  before and at Save (R20, R21). Two authors in different
+  worlds each hold their own `my-castle`.
+- **A party in one world.** Every member resolves the launched key in the
+  same world store, so the host's and each member's play view read the
+  same bytes (R21).
+- **Another member's encounter in the world.** It is listed under This
+  world with its owner, and a host can launch it. Opening it opens a copy
+  under a fresh key; the caller cannot rename, delete or overwrite it.
+- **A reference opened, then saved under its own key.** The author typed
+  the reference's key back into the key field. The validate-only preview
+  already shows the reference sentence at the key field; pressing Save is
+  refused with it, and nothing is written (R20).
+- **Delete while a lobby launched it.** The session keeps its compiled
+  copy and plays on. A play view that reloads cannot read the file again,
+  so it says it could not load the dungeon and draws without the studio's
+  presentation.
+- **A new reference with a key the world already holds.** The world's
+  encounter answers to the key, and the reference is left out of the
+  world's lists (R21).
+- **A file saved before the two stores.** It is a file in the content
+  directory, so it is listed as a reference. Opening it and saving under the
+  author's key makes it theirs.
+- **A world file in the older dialect.** It is listed under This world, and
+  Open shows the import's dialect sentence; it plays from the lobby.
 - **Play with authoring off.** The validate-only preview also answers
   Unimplemented, so the control is disabled and no refusal list is shown; the
   draft-file export still works.
@@ -427,6 +535,9 @@ The three approaches to the configuration surface:
 - **Multi-select as an editing mode (R9).** The selection owner holds a set;
   the inspector shows fields the set shares. The Shift-pick that builds a
   group is unchanged, and the home forms are untouched.
+- **Sharing across worlds.** The registry gains a resolution step
+  between the world and shipped, and the Open panel a third list; the world
+  store and the import are unchanged.
 - **A new placed kind, such as a trap.** One inspector view, one overview
   glyph, one encode path. The home is untouched unless the kind brings an
   unplaced noun.
@@ -448,5 +559,10 @@ The three approaches to the configuration surface:
 | Castle fixture | web `encounter-studio/fixtures/castleWorkspace.ts` |
 | Codec | web `world-building/roomDraft.ts` |
 | Save and Play | web `world-building/{useRoomPublishing.ts,singleRoomDungeon.ts}` (`encodeSingleRoomDungeon`), `author/{usePlayAuthoredDungeon.ts,useAuthoringGate.ts,authoringRpc.ts}`, `encounter-studio/{StudioDraftFile.tsx,draftFile.ts}` (the shared key), `App.tsx` (character from Home, `onPlay` into the game view) |
-| Registry and launch | api `internal/dungeons/registry.go` (`^[a-z0-9-]+$`, `<RPG_CONTENT_DIR>/<key>.yaml`, registered only with `RPG_AUTHORING_ENABLED=1`), lobby service `CreateLobby`/`StartEncounter{dungeon_key}` |
+| Registry and launch | api `internal/dungeons/registry.go` (the `Registry` interface, `^[a-z0-9-]+$`, writes only with `RPG_AUTHORING_ENABLED=1`), `internal/dungeons/seed.go` (`SeedShipped`), lobby `orchestrators/lobby/{start_encounter_session_stack.go,list_dungeons.go}` |
+| World store | api `internal/repositories/worlddungeons`, after `internal/repositories/composition` |
+| The caller's world | api `internal/worldcontext`, installed by `internal/auth/{world_interceptor.go,role_interceptor.go}` |
+| Wire | protos `dnd5e/api/authoring/v1alpha1/service.proto` (`ListDungeons`, `RenameDungeon`, `DeleteDungeon`), `dnd5e/api/lobby/v1alpha1/service.proto` (`DungeonSummary.source`) |
+| Open panel | web `encounter-studio/{StudioOpen.tsx,draftFile.ts,publicationMemory.ts,EncounterStudioWorkspace.tsx}` |
+| Lobby picker | web `api/useListDungeons.ts`, `components/game/DungeonPicker.tsx` |
 | Document shape, layering, refusals | toolkit `rulebooks/dnd5e/encounter/dungeonspec/{single_room.go,spec.go,predicate.go,single_room_compile.go,factions.go}` |
