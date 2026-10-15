@@ -14,9 +14,9 @@ single cells.
 Stealth, hearing and passive Perception changes. The sites layer. More than one
 screen per seat. The legacy v1alpha2 encounter route and its
 `HexKnowledgeChanged` stream, which nothing here builds on. Pooling remembered
-under discovery sharing (design O1).
+under discovery sharing (design O1); the switch's default flips to off in T1 (R8).
 
-**Authority.** design.md R1–R5, operator rulings of 2026-10-15 on rpg-project#586.
+**Authority.** design.md R1–R5 and R8, operator rulings of 2026-10-15 on rpg-project#586.
 
 **Constraints.**
 - One sight test: every seen-now and learning answer comes from
