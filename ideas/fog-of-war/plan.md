@@ -261,6 +261,9 @@ format-check, proto-options, breaking) and `make generate` completing.
 
 ## Task 4: Convert and pin (rpg-api)
 
+**Contract added 2026-10-15 (lead):** `GetViewResponse.visible_cells` is never empty for a seated member: a seat that sees nothing still receives its own cell, so the web may treat an EMPTY list as "this server does not send visible cells" and draw every known cell lit (the pre-fog look). proto3 cannot tell absent from empty; this rule is what lets rpg-dnd5e-web#1287 sit on dev ahead of Tasks 1, 2 and 4 without greying the board.
+
+
 **Delivers:** R1, R5 on the wire for each caller's seat.
 
 **Owner:** rpg-api, `internal/handlers/dnd5e/session/v1alpha1`.
