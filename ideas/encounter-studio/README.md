@@ -80,7 +80,7 @@ flowchart LR
 | Document encode and decode | The file round trip | draft ↔ YAML/JSON of `SingleRoomSpec` | none |
 | Save and Play | Publishing the encoded file and launching it (R15) | `{draft, key, characterId}` → `PutDungeon{key, yaml}` then `CreateLobby` → `StartEncounter{lobby_id, dungeon_key}` → `onPlay(encounterId)`; a refusal → `{path, sentence}` to the inspector (R17) | human |
 | Open panel | Listing the caller's encounters and the references, and the owner's verbs on them (R22, R24) | authoring `ListDungeons` → `DungeonSummary{key, name, source}` split into Mine and References; Open → `GetDungeon{key}` → `yaml` → `readDraftYaml` → `importDocument(draft, scope)` plus the seeded key and saved-key memory; `RenameDungeon{key, new_key}`, `DeleteDungeon{key}` | human |
-| Registry | Resolving a key for a caller and routing each verb to a store (R20–R23) | `(caller{world, owner}, key)` → `Entry{key, name, source, owner, yaml, dungeon, atlas}`, world store then shipped; `List(caller)` → the caller's own records as Mine, then single-room References; `Put{caller, key, yaml}` compiles, then writes the world store; `Rename`, `Delete` on the world store; a shipped key in a write → the reference refusal; another owner's key → the someone-else's refusal | none |
+| Registry | Resolving a key for a caller and routing each verb to a store (R20–R23) | `(caller{world, owner}, key)` → `Entry{key, name, source, owner, yaml, dungeon, atlas}`, world store then shipped; `List(caller)` → the caller's own records as Mine, then single-room References; `Put{caller, key, yaml}` compiles, then writes the world store; `Rename`, `Delete` on the world store; a shipped key in a write → the reference refusal; another owner's key → the another-member refusal | none |
 | World store | Each world's encounters, verbatim, with their owners (R20, R21) | Redis hash `dungeon:world:<worldID>`, field = key, value = `{owner, yaml}`; `Get`, `List`, `Put`, `Delete`, `Rename` with the new bytes, each write checking the record's owner in the same transaction | none |
 | Shipped references | The files the image ships, compiled once at boot | `RPG_CONTENT_DIR/*.yaml`, seeded from the image → entries with their dialect; read-only | none |
 | Lobby picker | Choosing the key a lobby launches | lobby `ListDungeons` → the same Mine and References for the host, each option naming its source → `StartEncounter{dungeon_key}` | human |
@@ -449,7 +449,7 @@ the author's own or a reference, nor whether this draft wrote it.
 | Refusals as jumps (R17) | the author lands on the thing to fix | a path-to-selection map the studio maintains per noun kind | a refusal list the author reads against the map |
 | Finishes stay studio-only for now (R19) | no wire field for a shape the look catalog will replace | the played room has plain walls; the field says so | carrying today's finish ref over the wire ahead of the catalog |
 | Two stores behind one registry (R20, R21) | a reference cannot be overwritten, and an author's encounters are theirs by owner | the registry resolves every key twice and compiles a world file on each read; a Redis outage hides Mine | one content directory written by every author |
-| Keys unique per world (R21) | everyone at one table means one file by one key, so the lobby and every member's play view agree | authors in one world compete for names; a taken key is refused as someone else's | a store per owner, where two authors in a world could each hold `my-castle` |
+| Keys unique per world (R21) | everyone at one table means one file by one key, so the lobby and every member's play view agree | authors in one world compete for names; a taken key is refused as another member's | a separate store for each author, where two authors in a world could each hold `my-castle` |
 | Rename as a verb (R22) | a rename is atomic, and the server rewrites the file's own key line | the registry edits one line of a file it otherwise never touches | save under the new key, then delete the old |
 | Remove the older dialect from lists (R23) | the studio and the lobby list only what the studio can open | the lobby picker loses the tomb and its siblings until they are retired; the default still plays the tomb | list them disabled with the reason |
 
@@ -496,9 +496,12 @@ The three approaches to the configuration surface:
 - **The key changes after a save.** The next save asks again, because the
   overwrite memory is per key; the old file stays on the server.
 - **The same key from two authors in one world.** The first save of
-  `my-castle` owns it; the second author's save is refused as someone
-  else's encounter, before and at Save (R20, R21). Two authors in different
+  `my-castle` owns it; the second author's save is refused with "that key belongs to another member of this world",
+  before and at Save (R20, R21). Two authors in different
   worlds each hold their own `my-castle`.
+- **A party in one world.** Every member resolves the launched key in the
+  same world store, so the host's and each member's play view read the
+  same bytes (R21).
 - **Another author's encounter in the world.** It is not in the caller's
   lists, and the caller cannot rename, delete or overwrite it; a lobby
   launched by key plays it, because the key names one thing in the world.

@@ -212,8 +212,7 @@ flowchart LR
   the authenticated request is admitted to, and the record carries the
   caller's player id as its owner. A Put under a key the caller already owns
   replaces it, after the studio's ask (R16). A Put under a key another
-  author owns in the world is refused with "that key is someone else's
-  encounter in this world; save it under your own key". A shipped reference
+  member of the world owns is refused with "that key belongs to another member of this world". A shipped reference
   is never written over the wire: a Put whose key names one is refused with
   "that key is a reference; save it under your own key". The validate-only
   grade refuses both the same way. Why: a reference is the same file for
@@ -232,8 +231,8 @@ flowchart LR
   of the caller's encounters to a new key in one step, rewriting the file's
   own key line and nothing else. It is refused when the new key is already
   taken in the world, names a shipped reference or breaks the key grammar.
-  DeleteDungeon removes one of the caller's encounters. Either verb on
-  another author's encounter is refused as someone else's, and neither
+  DeleteDungeon removes one of the caller's encounters. Either verb by anyone
+  but the owner is refused with "that key belongs to another member of this world", and neither
   touches a reference. Why: a rename built from a save and a delete leaves
   two files, or none, when it fails halfway.
 - **The older dialect is listed nowhere (R23).** A shipped reference in the
@@ -275,9 +274,9 @@ flowchart LR
 | R17 | settled | a server refusal with a field path that maps to a studio noun is a jump to that noun's inspector; otherwise a sentence under the Save group | operator | 2026-10-14 |
 | R18 | settled | authoring off or no character picked disables the control with the reason; no in-studio character picker, no fallback encounter | operator | 2026-10-14 |
 | R19 | deferred-until-look-catalog | wall and region finishes reach play with the look catalog, not before; region lighting does not reach play and is open; the fields say they are studio-only | operator | 2026-10-14 |
-| R20 | settled | PutDungeon writes only to the caller's world store, each record owned by the auth player id; the same owner's Put under an existing key is the overwrite case; another owner's key and a shipped key are refused with their sentences, validate-only or not; opening a reference and saving writes a copy under the author's key (amended 2026-10-15: one store per world, not per owner) | operator | 2026-10-15 |
-| R21 | settled | a key is unique within a world, duplicates refused; it resolves world store, then shipped, in the lists, GetDungeon, the play view's file read and the lobby launch (the host's world); the world comes from the verified request identity; no qualified key on the wire (amended 2026-10-15: unique per world, not per owner) | operator | 2026-10-15 |
-| R22 | settled | `RenameDungeon{key, new_key}` on the world store, atomic, refused when `new_key` is taken in the world, shipped or outside the grammar; `DeleteDungeon{key}` on the world store; both refused for another owner's encounter; references are neither renamed nor deleted (amended 2026-10-15: owner checked per record) | operator | 2026-10-15 |
+| R20 | settled | PutDungeon writes only to the caller's world store, each record owned by the auth player id; the same owner's Put under an existing key is the overwrite case; another owner's key is refused with the another-member sentence and a shipped key with the reference sentence, validate-only or not; opening a reference and saving writes a copy under the author's key | operator | 2026-10-15 |
+| R21 | settled | a key is unique within a world, duplicates refused; it resolves world store, then shipped, in the lists, GetDungeon, the play view's file read and the lobby launch (the host's world); the world comes from the verified request identity; no qualified key on the wire | operator | 2026-10-15 |
+| R22 | settled | `RenameDungeon{key, new_key}` on the world store, atomic, refused when `new_key` is taken in the world, shipped or outside the grammar; `DeleteDungeon{key}` on the world store; both refused with the another-member sentence for anyone but the owner; references are neither renamed nor deleted (owner checked on each record) | operator | 2026-10-15 |
 | R23 | settled | multi-room-dialect references are removed from the studio Open panel and the lobby picker; their files, the lobby default and launch by key stay until rpg-api#1105 | operator | 2026-10-15 |
 | R24 | settled | the Open panel beside Save and Play lists Mine and References and opens through the draft-file import; a reference seeds a fresh key and no remembered save; one's own seeds its key as saved; Save and Play unchanged | operator | 2026-10-15 |
 
@@ -300,11 +299,6 @@ flowchart LR
   scenes and the atlas fixtures stop needing them (R23).
 - **Draw what the party knows (rpg-project#586).** Unobserved doors drawn
   as wall, then rendering scoped to sight.
-- **A party member from another world.** The play view reads the
-  launched key in its own caller's world (R21). A member admitted to a
-  different world than the host's resolves the key there, so the host's
-  encounter can draw without its studio presentation on that member's
-  screen. Whether a lobby can span worlds is unsettled.
 - **The look catalog (R14b).** Per-prop surface material and look choices
   wait on the provider publishing reviewed look choices per asset
   (rpg-game-assets#226); the Studio picker for them is
