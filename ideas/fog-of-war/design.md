@@ -62,7 +62,7 @@ session delivers them; the client draws the state it is sent.
   audience that member alone. Memory is never forgotten within the run. (R4)
 - **Unseen is absent.** `AtlasFor(member)` withholds every unknown cell, and
   every wall, door, doorway, fixed prop and placement that touches only unknown
-  cells. A door on the edge of a known cell is presented; a door with no known
+  cells. A presented wall adds no cell of its own to the atlas. (R2, R9) A door on the edge of a known cell is presented; a door with no known
   cell on any edge is absent, exactly like the wall it stands in. (R2)
 - **Unknown floor is not a wall.** Withholding unexplored space adds no
   synthesized boundary; only concealment masquerades as wall. The two masks stay
@@ -84,6 +84,19 @@ session delivers them; the client draws the state it is sent.
   with its shape readable, its fixed layout, and its props and creatures as
   last seen. An absent cell draws nothing. Walls and doors take the brightest
   state of the cells they border. (R3)
+- **A wall is known where sight reached its footprint (R9).** A presented
+  wall carries the hexes its blocker footprint overlaps; a stretch of it is
+  known only where one of those hexes is known, and presenting a wall teaches
+  no footing hex. A footprint hex is learned by the cover rule, from the wall
+  face sight reaches. Why: footing that arrives with the wall is evidence of
+  the wall, not of sight, and grading by it drew the wall where nobody had
+  looked.
+- **The masquerade is the wall (R9).** For a member who has not found a
+  concealment, the wall it masquerades as covers and teaches: an unfound bound
+  door's threshold and a concealed room's wall hexes are learned from their
+  face and presented as sealed scenery, so the member's atlas equals the
+  solid-wall twin's. Why: a gap or a stub where the secret stands is the tell
+  concealment exists to remove.
 - **Sharing is a choice (R8).** Discovery sharing defaults off, so each
   player's map is what that player has seen until the party turns sharing on.
   Why: a default of off shows more in playtests than a default of on.
@@ -104,6 +117,7 @@ session delivers them; the client draws the state it is sent.
 | R6 | superseded by R1 | The region partition as the unit of reveal, including the engine's whole-room discovery | KirkDiggler | 2026-10-15 |
 | R7 | superseded by R4 | Remembered map shared by the whole party by default | KirkDiggler | 2026-10-15 |
 | R8 | settled | discovery sharing defaults off; a party pools memory by choosing to; playtests may move the default | KirkDiggler | 2026-10-15 |
+| R9 | settled | the blocker footprint that stops sight is what reveals a wall: a wall is known where sight reached a hex its footprint overlaps; presentation footing (wall-geometry C18) is superseded under fog; for a non-knower the masquerade is the wall (C19 extended into sight) | KirkDiggler | 2026-10-16 |
 
 ## Open
 

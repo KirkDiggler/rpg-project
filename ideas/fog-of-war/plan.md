@@ -495,6 +495,123 @@ record and who was shared by absence becomes private at the next prepare. Old
 records that exist only because they carry legacy `checks` stay shared, as
 their absence of `private` always meant. R8 accepts both; nothing else moves.
 
+## Task 8: A wall is known where sight reached its footprint (R9)
+
+**Delivers:** R9 end to end. A presented wall no longer foots the atlas; the
+wall record carries the hexes its blocker footprint overlaps; the web grades
+each stretch by those hexes. The west wall of the cell block, seen only at its
+south corner, draws only its corner piece (rpg-project#600).
+
+**Owners, in build order (outside-in on pseudo-versions, inside-out merge):**
+
+**T8a — rpg-api-protos** (DONE: rpg-api-protos#395 → v0.1.238)
+`dnd5e/api/session/v1alpha1/types.proto`:
+`AtlasStructuralWall` gains `repeated Position footprint_cells = 9;`. Doc: the
+floor cells this wall's blocker footprint overlaps by positive area, in order
+along the wall from `from` to `to`; the client grades the wall's stretches by
+the knowledge of these cells and never re-derives them from the line. Additive;
+`make test` breaking check.
+
+**T8b — rpg-toolkit `rulebooks/dnd5e/encounter`:**
+- `projection.go`: delete presentation footing, both the legacy-segment loop
+  (`seg.Footprint` → footing) and the structural-wall loop (`TraceFootprint` at
+  cell centres). `footing` ceases to exist; the output loop's `hidden && !footing`
+  becomes `hidden`. The presentation rule itself (a boundary is presented when
+  any support cell is known, `footprintObservationCells`) does not change.
+- `AtlasStructuralWall` (the atlas record the session converts) gains
+  `FootprintCells []spatial.Position`: the SAME answer that decides
+  presentation, `footprintObservationCells(p.Placement)` (positive-area
+  coverage), so a presented wall never carries an empty list; sorted by
+  projection of each cell centre onto the wall line (`from` → `to`), ties by
+  the existing position ordering. Every cell, known or not: the record is the
+  wall's geometry, the recipient's knowledge is in `Atlas.Cells`.
+- The masquerade covers (R9, second law): in `screensOf`/`seesCell`, for an
+  observer who has not found a concealment, an unfound bound door's footprint
+  and a concealment mask standing in a wall count as wall cover that teaches
+  the hex from its face exactly as a span does. `AtlasFor` presents such a
+  learned hex as sealed scenery nobody owns even when it lies in a concealed
+  region, so the non-knower's atlas equals the solid-wall twin's. Without this,
+  dropping presentation footing leaves a hole at every unfound secret door
+  (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true` fails) and stubs on
+  the walls of secret rooms.
+- `AtlasFor` predicate, exactly: a cell enters `Cells` when the member knows
+  it (journal `known:cells`) and is not withheld by concealment; a known cell
+  that concealment hides but that lies in a presented wall's `FootprintCells`
+  enters `Cells` and `Sealed` only, as scenery nobody owns, and stays hidden
+  for regions, props and placements. The journal stores cells, not how they
+  were learned.
+- Tests: `footing_test.go` `TestA11_APresentedWallStandsOnFloorTheWatcherCanSee`
+  becomes `TestA11_APresentedWallEqualsItsSceneryTwin`: a twin comparison, the
+  non-knower's `AtlasFor` equals the scenery twin's `AtlasFor` on `Cells` and
+  `Sealed`, never the twin's full `Atlas()`. The fixture must use a structural
+  wall with placed blocking spans (the hugging layout authored as a structural
+  wall), not the legacy `hugSeam` segment, which has no placed face for
+  `screensOf` to fire on; `TestA11_AWithheldWallDoesNotFoot`
+  stays. New `TestStructuralWallCarriesItsFootprintCells` (an edge wall lists the
+  hex on either side; a centre-line wall lists its footing hexes and the
+  straddled neighbours; order follows the line). New
+  `TestSightLearnsAWallsFootingByItsFace` (a member who reaches the floor beside
+  a wall span learns the footing hex behind that face and no other footing hex;
+  this is the existing `seesCell` cover rule, pinned for walls). New
+  `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould` (non-knower in the
+  corridor learns the threshold hex under an unfound secret door exactly as
+  under its twin; the knower's atlas unchanged). UNCHANGED and passing:
+  `dungeonspec/door_threshold_floor_test.go` `TestKnownWallKeepsFloorUnderAClosedDoor`
+  (both arms; it is the twin gate), `dungeonspec/single_room_discovery_test.go`
+  `TestOrdinaryDiscoveryOpaqueFootingIsVisibleFromBothSides`, the explicit
+  concealment tests. Updated to the new rule: `revealsegments_test.go`
+  `TestSealedIsAReplacementWithinTheRoomAndNotAnAddition` and the
+  `cells_revealed`/`sealed` assertions: footing appears where sight learned
+  it, nowhere else. The full-atlas golden (author's view) must not
+  change except for the new `FootprintCells` field.
+
+**T8c — rpg-toolkit `rulebooks/dnd5e/session`:** the session has its own wall
+type and copies the record field by field, and the same record rides the
+reveal bodies: add `FootprintCells` to the session wall type, the atlas
+conversion and the `cells_revealed`/structural reveal bodies. Test:
+`convert_internal_test.go` round-trips the field; a reveal-body test carries it.
+
+**T8d — rpg-api** `internal/handlers/dnd5e/session/v1alpha1/convert_structural.go`:
+map `FootprintCells` → `footprint_cells`. Test: the structural wall convert test
+asserts the positions and order. Pin T8b/T8c pseudo-versions, draft until tags.
+
+**T8e — rpg-dnd5e-web** `src/components/session/atlasToScene3D.ts`,
+`cellBorders.ts`:
+- Structural walls: replace `stretchesBesideLine(line…)` with
+  `stretchesAlongCells(line, footprintCells, stateOf)`: each footprint cell is a
+  sample at its centre's projection onto the line (t clamped 0–1); samples are
+  grouped by t (cells straddling an edge share a t, within 1e-6 of the length)
+  and a group takes the brightest state of its cells; groups sorted by t;
+  stretches split midway between groups whose state differs, exactly as
+  `stretchesBesideLine` splits today. `footprint_cells` reaches the render unit
+  through the atlas → `StructuralWallSurface` conversion (`structuralLayout.ts`),
+  cells keyed as atlas cells are keyed today. A wall with no `footprint_cells`
+  (older server) keeps today's side sampling, so dev ahead of the api does not
+  go blank.
+- Ordinary hex-edge wall runs and structural doors keep side sampling (an
+  edge run's two side cells are exact).
+- Tests in `atlasToScene3D.test.ts`: "a centre-line wall known at one footing
+  hex draws only that stretch" (the replay case: a 23-sample vertical wall with
+  footing hexes on odd rows, only the south corner's hexes known → one stretch
+  at the corner, nothing else); "a wall whose footprint straddles an edge takes
+  the brighter side"; "a wall without footprint_cells grades as before".
+  `cellBorders.test.ts` (new) pins the projection and the split rule.
+
+**Walk (T8f, castle stack :3030/:8115, api at T8d head, web at T8e head):**
+1. Enter the cell block from the north door; stand so the west wall's south
+   corner is in sight and the room interior is not: the west wall draws only
+   its corner piece, no stubs, no floor beside the stubs.
+2. Walk into the room: the wall fills in stretch by stretch as footing hexes
+   are seen; the north wall with the door stays whole.
+3. Replay script from the investigation re-run against the new atlas: zero
+   absent-between-known stretches on the west wall.
+Checklist on rpg-project#600.
+
+**Cost named:** a member who learned a room by sight before this change keeps
+its journal; the sealed footing they were shown disappears from the atlas
+until sight reaches it. A closed door's threshold floor draws when its door is
+seen (cover rule), not before.
+
 ## Requirement coverage
 
 | In-scope requirement / acceptance scenario | Implementing task(s) | Concrete proof |
@@ -507,6 +624,8 @@ their absence of `private` always meant. R8 accepts both; nothing else moves.
 | R4 memory per seat | T1 | `known:cells` audience in `TestInvalidCellKnowledgeIsRejectedOnLoad`, `TestCellsRevealedBeatIsOnePerPassAndRecipientScoped`, walk 6 |
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
 | R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
+| R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallEqualsItsSceneryTwin`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
+| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door or secret room | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestA11_APresentedWallEqualsItsSceneryTwin` |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |
@@ -526,6 +645,7 @@ Deferred by the design, not covered: O1 pooling, O2 tint.
 | T2 session `EventCellsRevealed` | T4 api `convert.go`, `stream_events.go` | `CellsRevealedBody` → `CellsRevealed` | same | `TestConvertCellsRevealed`, `TestStreamCellsRevealedReachesOnlyItsRecipient` |
 | T3 protos `visible_cells`, `CellsRevealed` | T4 api, T5 web | field and message names in T3 | T3 merge publishes bindings | T4 compile; T5 `ci-check` |
 | T7 session resolved preference | existing api `GetKnowledge` → web checkbox | `KnowledgeOutput.DiscoverySharing *bool` unchanged; value now resolves nil-profile to false | session tag, api re-pin | `TestUnchosenSharingResolvesPrivate`, walk on #595 |
+| T8b encounter `AtlasStructuralWall.FootprintCells` | T8c session → T8d api `footprint_cells` → T8e web grading | positions in line order; empty from an older server keeps side sampling | T8b pseudo-version, then tag; T8a bindings | `TestStructuralWallCarriesItsFootprintCells`, api convert test, web "without footprint_cells grades as before" |
 | T4 api stream and reads | T5 web `useSessionKnowledge`, `sessionRefreshKeys` | `Event.body.case 'cellsRevealed'`; `GetViewResponse.visibleCells` | T4 walk server | T6 walk 1–6 |
 | Existing web refresh map | T5 seen-now freshness | events that schedule `view` today, plus `cellsRevealed` and the member's own `moved` | inspected `sessionRefreshKeys.ts` at the baseline: own `moved` does not schedule `view` | `sessionRefreshKeys.test.ts`, T6 walk 3 and 4 |
 
