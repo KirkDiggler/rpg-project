@@ -2245,6 +2245,18 @@ A target whose id no longer exists in the document is `null`. The surface routes
 **Tests:** › `the wall finish field carries the studio-only help line`.
 **Verification:** `npx vitest run src/concepts/encounter-studio` passes.
 
+## Task S6-T7: The saved key outlives the studio mount
+
+Added from the walk at 2b72b705 (step 4 failed: after a play, Back and reopen, the second Save and Play asked to replace the draft's own file, because `savedRef` died with the mount). R16 as clarified (rpg-project#584): the editor session is the draft's life in this browser.
+
+**Delivers:** P4 per draft.
+**Owner:** rpg-dnd5e-web; new `encounter-studio/publicationMemory.ts` (localStorage record `rpg.concepts.encounter-studio.publication.v1` = `{roomId, key}`, reads and writes in try/catch, malformed ignored); `useRoomPublishing` gains one optional input `rememberedSavedKey?: string | null` that seeds the saved memory on mount, transactions unchanged; `StudioSurface` seeds the key and the memory from a record with the draft's id, writes the record after each successful save of the current key, and an import clears it.
+**Tests:** reopen after a save does not ask; a different draft id asks; an import clears the memory; a malformed record is ignored.
+
+## S6 record
+
+Built on `feat/studio-s6-play`, PR rpg-dnd5e-web#1283; independent review 5525939635 MERGE-READY at 42b01832 (four Minor threads, dispositions in-thread; follow-ups on #1236), closure 5526243472 MERGE-READY at fa1e6dee. Walk at fa1e6dee: 11 of 11 (steps 8 and 10 with the API toggled). Operator QA checklist on #1236. Design corrections from the build: rpg-project#584.
+
 ## S6 requirement coverage
 
 | requirement | task(s) | proof |
@@ -2252,7 +2264,7 @@ A target whose id no longer exists in the document is `null`. The surface routes
 | P1 one control, both homes and views, saves then launches | T1, T3 | T3 `Save & Play on a new key …` and the workspace test; walk 1, 3 |
 | P2 same bytes as the export | T2, T3 | T3 new-key test asserts the put's yaml equals `exportDraftYaml(document, key)` |
 | P3 one key, slug default, import adopts | T2 | T2 tests; walk 2 |
-| P4 overwrite asked once per key | T3 | T3 existing-key and second-save tests; walk 4, 5 |
+| P4 overwrite asked once per key, per draft | T3, T7 | T3 existing-key and second-save tests; T7 reopen test; walk 4, 5 |
 | P5 refusals jump | T4, T3 | T4 tests; T3 invalid test renders jumps; walk 6 |
 | P6 gate off, unreachable, no character | T3 | T3 gate and character tests; walk 7, 8 |
 | P7 lock and stale responses | T1, T3 | T1 lock test; T3 edits-during-save test; the hook's own tests for retired captures; walk 9 |
