@@ -624,7 +624,8 @@ seen (cover rule), not before.
 | R4 memory per seat | T1 | `known:cells` audience in `TestInvalidCellKnowledgeIsRejectedOnLoad`, `TestCellsRevealedBeatIsOnePerPassAndRecipientScoped`, walk 6 |
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
 | R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
-| R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallFootsNothing`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
+| R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallEqualsItsSceneryTwin`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
+| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door or secret room | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestA11_APresentedWallEqualsItsSceneryTwin` |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |
