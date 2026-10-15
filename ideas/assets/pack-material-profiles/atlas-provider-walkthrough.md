@@ -4,7 +4,7 @@
 
 This prepares one shared material candidate from registered source images and
 exact published models. It reuses image identity/derivation and preserves the
-wall catalog rather than introducing a live prop-only texture catalog (A1/A5).
+wall catalog rather than introducing a live prop-only texture catalog (A1/A7).
 
 ## Component shape
 
@@ -27,7 +27,7 @@ flowchart LR
 | Provider recipe | Source member choices and selected roster | registered IDs, category/count → explicit preparation inputs |
 | Shared image helpers | Immutable derived resource identity | verified source bytes and runtime policy → PNG facts/bytes |
 | `inspect_target` | Final-byte scope and UV/sampler facts | exact published GLB and derived baseline image hash → one bound surface plus proof |
-| Candidate validator | Proposed versioned data integrity | wall records, authored-UV choices, collections and bindings → validated review catalog |
+| Candidate validator | Schema2 data integrity | wall records, authored-UV choices, collections and bindings → validated review catalog |
 | Source-bound bundle | Reproducible preparation evidence | candidate/resource/model facts → catalog plus private receipt |
 | Studio owner | Consumer acceptance and placement lifecycle | agreed released records → selectable/saved appearance |
 
@@ -70,8 +70,8 @@ silently recolor the wrong material. Neither is acceptable (A3).
 |---|---|---|---|
 | Shared maps with bindings | No model variants or per-model alternate images | Consumer needs an authored-UV adapter | One GLB per look |
 | Conservative initial target profile | Bulk evidence is reproducible | Complex targets need their own scope verifier | Guessing merged/multi-material scope |
-| Staged versioned catalog | Existing wall consumers remain intact | Consumer accepts the new wire before release | Replacing v1 with unreadable data |
-| Color-only atlas choices | No invented normal pairing | Optional channels need separate proof | Adding a fake normal to satisfy wall schema |
+| Staged versioned catalog | Existing wall consumers remain intact | Reader/adapter and publication checks implement and accept schema2 before release | Replacing v1 with unreadable data |
+| Color-only atlas choices (A8) | No invented normal pairing or optional-channel delivery blocker | Future optional channels need separate proof | Adding a fake normal to satisfy wall schema |
 
 The candidate does not prove that every color produces a visible change on every
 prop. Some UV regions sample identical pixels across alternatives. It does not
