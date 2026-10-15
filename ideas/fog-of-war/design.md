@@ -84,6 +84,9 @@ session delivers them; the client draws the state it is sent.
   with its shape readable, its fixed layout, and its props and creatures as
   last seen. An absent cell draws nothing. Walls and doors take the brightest
   state of the cells they border. (R3)
+- **Sharing is a choice (R8).** Discovery sharing defaults off, so each
+  player's map is what that player has seen until the party turns sharing on.
+  Why: a default of off shows more in playtests than a default of on.
 - **Soft edges, no wedges.** The boundary between seen-now and remembered is a
   short gradient over at most two cells, computed from the per-cell states the
   client was sent. It never extends into an absent cell and never draws a cone,
@@ -100,15 +103,14 @@ session delivers them; the client draws the state it is sent.
 | R5 | settled | No cone wedges: hex-based reveal with soft edges; the client computes no visibility, the session projection owns delivery (rpg-project#541) | KirkDiggler | 2026-10-15 |
 | R6 | superseded by R1 | The region partition as the unit of reveal, including the engine's whole-room discovery | KirkDiggler | 2026-10-15 |
 | R7 | superseded by R4 | Remembered map shared by the whole party by default | KirkDiggler | 2026-10-15 |
+| R8 | settled | discovery sharing defaults off; a party pools memory by choosing to; playtests may move the default | KirkDiggler | 2026-10-15 |
 
 ## Open
 
-- **O1 — pooling remembered under discovery sharing.** R4 names the switch;
-  the fold is not built. Pooling would add a sharing member's learned cells to
-  every placed player's remembered set, as `discoveryAudience` already does for
-  concealment results. The switch defaults to sharing on, so building the fold
-  as written makes pooled memory the default; the default needs a ruling before
-  the fold is built.
+- **O1 — the pooling fold under discovery sharing.** R4 names the switch and
+  R8 sets its default; the fold itself is not built. When it is, a sharing
+  member's learned cells join every placed player's remembered set, as
+  `discoveryAudience` already does for concealment results.
 - **O2 — remembered tint.** Grey or sepia (R3). The client's remembered
   material is one value; the choice does not touch the wire.
 - **O3 — older working documents.** `production-design.md`, `handoff.md` and
