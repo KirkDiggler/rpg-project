@@ -368,10 +368,10 @@ doors:
 
 ### 4.6 Projection (slice 2)
 
-- **C18. Footing.** In `AtlasFor`, every footprint cell of a *presented* wall
-  is in the recipient's atlas as scenery with no owner, even when its owner
-  is hidden. Only presented walls foot: the footing of a withheld wall would
-  trace the secret. This is rpg-dnd5e-web#898, built.
+- **C18. Footing — superseded by fog-of-war R9.** A presented wall adds no
+  footing cell to the recipient's atlas; its footprint hexes enter the atlas
+  only as sight learns them. The black-sliver tell C18 removed belonged to
+  whole-room discovery, which per-cell fog retired.
 - **C19. Masquerade on a wall.** A concealed door in a wall is presented to a
   non-knower as the wall's whole segment without the gap. `maskHeight`
   reads the wall's height; it no longer reconstructs a chain.

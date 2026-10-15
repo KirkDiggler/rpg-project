@@ -66,6 +66,7 @@ flowchart TB
 | `undiscoveredFrom` (encounter) | The unexplored delivery mask | Known cells → `hiddenView.unexploredCells` per cell; concealment's `hiddenView.cells` unchanged |
 | `AtlasFor` (encounter) | The member's fixed map | `MemberID` → `Atlas` with unknown cells and everything touching only them withheld |
 | `VisibleCellsFor` (encounter, new) | The member's seen-now set | `MemberID` → sorted `[]spatial.Position`, known cells whose `reachesCell` is true now |
+| Wall footprint hexes (encounter, new) | Which hexes a presented wall stands over | `AtlasStructuralWall.FootprintCells`: the floor cells the wall's blocker footprint overlaps by positive area, in line order; `AtlasFor` adds no footing cell of its own (R9) |
 | Cells-revealed beat (encounter, replaces `appendRoomRevealedBeat`) | Delivery of new fixed records | `AtlasFor` before/after one pass → one recipient-scoped beat `cells_revealed` |
 | Observations (encounter) | Mutable props, door state, creatures | `PropSightings`, `DoorSightings`, perception holdings; `CurrentVia` empty means remembered |
 | `projectView` / `Manager.Knowledge` (session) | One coherent seat snapshot | Encounter reads → `ViewOutput{…, VisibleCells}`, `KnowledgeOutput{Atlas, View, …}` |
@@ -86,7 +87,7 @@ two answers. `VisibleCellsFor` refuses to store anything; a stored visible set
 outlives the pass whose readings made it. The session refuses to filter,
 compute or union; it passes the encounter's per-member answers through. rpg-api
 refuses to read any member but the caller's (`callerActingAs`) and refuses to
-derive cells. The web refuses to run line of sight, to draw a cell absent from
+derive cells. `AtlasFor` refuses to foot a presented wall: a footprint hex enters the atlas only when the member learned it (R9). The web refuses to run line of sight, to re-derive a wall's hexes from its line, to draw a cell absent from
 its atlas, and to draw a cone, ray or polygon.
 
 ## Walk one thing through
@@ -177,6 +178,10 @@ back the whole-room reveal R1 rejects.
   with no change here.
 - **Pooling memory under discovery sharing.** It lands in cell learning, which
   widens the fact audience the way `discoveryAudience` does, and nowhere else.
+- **A wall drawn where nobody looked.** Grading reads only the wall's
+  `footprint_cells` and their per-cell states; if a wall shows where no hex
+  it stands over is known, the defect is in which cells the engine sent, never
+  in client geometry (R9).
 - **A sepia remembered tint.** It lands in the web's remembered material
   constant; no wire or engine change.
 
