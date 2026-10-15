@@ -95,7 +95,7 @@ session delivers them; the client draws the state it is sent.
   door, the wall it masquerades as covers and teaches: the door's threshold hex
   is learned from the wall face and presented as sealed scenery, so the
   member's atlas equals the solid-wall twin's. Concealed cells under a wall are
-  withheld as they always were. Why: a gap where the secret door stands is the
+  withheld as they always were, a threshold that is itself concealed included. Why: a gap where the secret door stands is the
   tell concealment exists to remove.
 - **Sharing is a choice (R8).** Discovery sharing defaults off, so each
   player's map is what that player has seen until the party turns sharing on.
@@ -125,14 +125,14 @@ session delivers them; the client draws the state it is sent.
   R8 sets its default; the fold itself is not built. When it is, a sharing
   member's learned cells join every placed player's remembered set, as
   `discoveryAudience` already does for concealment results.
+- **O2 — remembered tint.** Grey or sepia (R3). The client's remembered
+  material is one value; the choice does not touch the wire.
+- **O3 — older working documents.** `production-design.md`, `handoff.md` and
+  `progress.json` predate this design and describe the web concept route. They
+  are not law; where they disagree, this document wins.
 - **O4 — walls of a secret room.** A structural wall whose footprint hexes are
   a concealed region's cells withholds those hexes for a non-knower, so under
   R9 such a wall grades by its corridor-side hexes only; a centre-line wall
   through concealed cells would show stubs. No authored secret room exists yet
   to say what the non-knower should see; the twin of a concealment that is the
   footing hex itself is not obvious. Settle with the first such room.
-- **O2 — remembered tint.** Grey or sepia (R3). The client's remembered
-  material is one value; the choice does not touch the wire.
-- **O3 — older working documents.** `production-design.md`, `handoff.md` and
-  `progress.json` predate this design and describe the web concept route. They
-  are not law; where they disagree, this document wins.

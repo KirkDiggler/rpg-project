@@ -372,8 +372,10 @@ doors:
 - **C18. Footing — superseded by fog-of-war R9.** A presented wall adds no
   footing cell to the recipient's atlas; a footprint hex enters it as sealed
   scenery nobody owns when sight reaches that hex's wall face. The twin
-  invariant C18 protected still holds: for a non-knower the masquerade is the
-  wall, so its face teaches the hex exactly as the twin's would (C19).
+  invariant C18 protected still holds at a bound door: for a non-knower the
+  unfound door is the wall it stands in, so its face teaches the threshold
+  hex exactly as the twin's would (C19). Concealed footing stays withheld;
+  the walls of a secret room are fog-of-war O4.
 - **C19. Masquerade on a wall.** A concealed door in a wall is presented to a
   non-knower as the wall's whole segment without the gap. `maskHeight`
   reads the wall's height; it no longer reconstructs a chain.
@@ -496,10 +498,11 @@ Slice 2:
 - **A10.** A concealed door in a wall: the non-knower's atlas carries the
   full segment and no doorway; the knower's carries the gap. Yardstick twin
   identical.
-- **A11.** The hugging layout with a quarter-line wall: the non-knower's atlas
-  shows the footprint hexes whose wall face sight has reached, as scenery, and
-  equals the twin authored with scenery where the footprint falls (fog-of-war
-  R9).
+- **A11.** The hugging layout with a quarter-line wall beside an unexplored
+  room: the non-knower's atlas shows the footprint hexes whose wall face sight
+  has reached, as scenery, and equals the twin authored with scenery where the
+  footprint falls (fog-of-war R9). The concealed-vault variant is fog-of-war
+  O4.
 - **A12.** Two walls carrying the same position at an end close a corner on
   the board: thin at a midpoint for 60°, 90°, and 120°, keeping the corner
   cell; thick at a centre for the same three; thin-to-thick at a flat-side
