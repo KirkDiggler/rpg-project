@@ -14,7 +14,7 @@ single cells.
 Stealth, hearing and passive Perception changes. The sites layer. More than one
 screen per seat. The legacy v1alpha2 encounter route and its
 `HexKnowledgeChanged` stream, which nothing here builds on. Pooling remembered
-under discovery sharing (design O1); the switch's default flips to off on the WEB (the "Share discoveries" checkbox defaults unchecked, so the client sends private discoveries unless the party opts in), not in the encounter: the persisted preference fields (`PrivateDiscoveries`, `RestoreDiscoveryInput.Private`, `DiscoveryStateData.Private`, session `ExplorationData` private) keep their meaning, because their zero value cannot mean off without a new field (lead, 2026-10-15, on rpg-toolkit#2056). A server-side default for clients that never send the preference stays shared and is an Open item.
+under discovery sharing (design O1). R8 (default off) is its OWN slice after this wave: a tri-state preference on the wire (rpg-project issue "Fog of war R8"), because the persisted bool's zero value means shared and a web-only flip reset an opted-in player on reload (tried on rpg-dnd5e-web#1287, reverted 2026-10-15).
 
 **Authority.** design.md R1–R5 and R8, operator rulings of 2026-10-15 on rpg-project#586.
 
