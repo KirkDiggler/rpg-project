@@ -91,12 +91,12 @@ session delivers them; the client draws the state it is sent.
   face sight reaches. Why: footing that arrives with the wall is evidence of
   the wall, not of sight, and grading by it drew the wall where nobody had
   looked.
-- **The masquerade is the wall (R9).** For a member who has not found a
-  concealment, the wall it masquerades as covers and teaches: an unfound bound
-  door's threshold and a concealed room's wall hexes are learned from their
-  face and presented as sealed scenery, so the member's atlas equals the
-  solid-wall twin's. Why: a gap or a stub where the secret stands is the tell
-  concealment exists to remove.
+- **The masquerade is the wall (R9).** For a member who has not found a bound
+  door, the wall it masquerades as covers and teaches: the door's threshold hex
+  is learned from the wall face and presented as sealed scenery, so the
+  member's atlas equals the solid-wall twin's. Concealed cells under a wall are
+  withheld as they always were, a threshold that is itself concealed included. Why: a gap where the secret door stands is the
+  tell concealment exists to remove.
 - **Sharing is a choice (R8).** Discovery sharing defaults off, so each
   player's map is what that player has seen until the party turns sharing on.
   Why: a default of off shows more in playtests than a default of on.
@@ -117,7 +117,7 @@ session delivers them; the client draws the state it is sent.
 | R6 | superseded by R1 | The region partition as the unit of reveal, including the engine's whole-room discovery | KirkDiggler | 2026-10-15 |
 | R7 | superseded by R4 | Remembered map shared by the whole party by default | KirkDiggler | 2026-10-15 |
 | R8 | settled | discovery sharing defaults off; a party pools memory by choosing to; playtests may move the default | KirkDiggler | 2026-10-15 |
-| R9 | settled | the blocker footprint that stops sight is what reveals a wall: a wall is known where sight reached a hex its footprint overlaps; presentation footing (wall-geometry C18) is superseded under fog; for a non-knower the masquerade is the wall (C19 extended into sight) | KirkDiggler | 2026-10-16 |
+| R9 | settled | the blocker footprint that stops sight is what reveals a wall: a wall is known where sight reached a hex its footprint overlaps; presentation footing (wall-geometry C18) is superseded under fog; for a non-knower an unfound bound door masquerades as the wall it stands in (C19 extended into sight); concealed footing stays withheld (O4) | KirkDiggler | 2026-10-16 |
 
 ## Open
 
@@ -130,3 +130,9 @@ session delivers them; the client draws the state it is sent.
 - **O3 — older working documents.** `production-design.md`, `handoff.md` and
   `progress.json` predate this design and describe the web concept route. They
   are not law; where they disagree, this document wins.
+- **O4 — walls of a secret room.** A structural wall whose footprint hexes are
+  a concealed region's cells withholds those hexes for a non-knower, so under
+  R9 such a wall grades by its corridor-side hexes only; a centre-line wall
+  through concealed cells would show stubs. No authored secret room exists yet
+  to say what the non-knower should see; the twin of a concealment that is the
+  footing hex itself is not obvious. Settle with the first such room.
