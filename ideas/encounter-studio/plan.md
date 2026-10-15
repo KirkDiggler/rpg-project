@@ -2007,7 +2007,7 @@ export function importDraftYaml(text: string, session: Pick<EncounterStudioSessi
 - S4, the hidden nouns: exits, endings, concealments, door state, and the draft as a file: rpg-project#578, planned above.
 - S5, density: words, wrapping, panel width: rpg-project#579, planned above, ahead of S2.
 
-All six slices are on web `dev` (e623c2b3). S6 below is Save and Play (web#1236); after it: open a reference encounter, look picker (web#1268, waits on assets#226).
+All six slices are on web `dev` (e623c2b3). **S6 Save and Play SHIPPED** (rpg-dnd5e-web#1283 → dev 61d79511); next: open a reference encounter, castle wave D, look picker (web#1268, waits on assets#226).
 
 ---
 
