@@ -63,11 +63,11 @@ the draft file uses.
 ```mermaid
 flowchart LR
     subgraph Header[Studio header, Save group]
-        Open[Open panel: Mine and References]
+        Open[Open panel: This world and References]
         SP[Save and Play]
     end
     subgraph Registry[Registry, resolved for the caller]
-        Res{mine, then shipped}
+        Res{world, then shipped}
         User[(World store, one per world, owner per record)]
         Ship[(Shipped references, read-only)]
     end
@@ -242,13 +242,17 @@ flowchart LR
   retired. Why: they are superseded stepping stones, and a list entry the
   studio cannot open is a trap.
 - **Open is the import (R24).** The Open panel sits beside Save and Play and
-  lists the caller's own encounters in their world as Mine and the
-  references as References. Opening reads the file with GetDungeon and passes it through
-  the draft-file import, so a file from the server and a file from disk are
-  refused alike. Opening a reference seeds a fresh key and no remembered
-  save; opening one's own seeds its key as saved, so the next Save and Play
-  does not ask (R16). Save and Play is unchanged. Why: one reading path means
-  the studio cannot open what it could not import.
+  lists This world, every encounter in the caller's world with its owner
+  and the caller's own marked Mine, and References. Every member of a world
+  sees the world's encounters; only the owner edits one (R22). The lobby's
+  picker lists the same, so a host can launch any member's. Opening reads
+  the file with GetDungeon and passes it through the draft-file import, so a
+  file from the server and a file from disk are refused alike. Opening
+  one's own seeds its key as saved, so the next Save and Play does not ask
+  (R16). Opening another member's or a reference opens a copy: a fresh key
+  and no remembered save. Save and Play is unchanged. Why: one reading path
+  means the studio cannot open what it could not import, and a table plays
+  what its members made.
 
 ## Rulings
 
@@ -278,7 +282,7 @@ flowchart LR
 | R21 | settled | a key is unique within a world, duplicates refused; it resolves world store, then shipped, in the lists, GetDungeon, the play view's file read and the lobby launch (the host's world); the world comes from the verified request identity; no qualified key on the wire | operator | 2026-10-15 |
 | R22 | settled | `RenameDungeon{key, new_key}` on the world store, atomic, refused when `new_key` is taken in the world, shipped or outside the grammar; `DeleteDungeon{key}` on the world store; both refused with the another-member sentence for anyone but the owner; references are neither renamed nor deleted (owner checked on each record) | operator | 2026-10-15 |
 | R23 | settled | multi-room-dialect references are removed from the studio Open panel and the lobby picker; their files, the lobby default and launch by key stay until rpg-api#1105 | operator | 2026-10-15 |
-| R24 | settled | the Open panel beside Save and Play lists Mine and References and opens through the draft-file import; a reference seeds a fresh key and no remembered save; one's own seeds its key as saved; Save and Play unchanged | operator | 2026-10-15 |
+| R24 | settled | the Open panel beside Save and Play lists This world (every world encounter, owner shown, the caller's own marked Mine) and References and opens through the draft-file import; one's own seeds its key as saved; another member's or a reference opens as a copy, a fresh key and no remembered save; the lobby picker lists the world's encounters; Save and Play unchanged (amended 2026-10-15: the world's encounters are listed) | operator | 2026-10-15 |
 
 ## Open
 
