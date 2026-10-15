@@ -381,6 +381,17 @@ conversation tree; word spreads; the challenge (§5, on the list).
   Whether a hostile creature in a fight still offers an Intimidation option
   (front-room R4 left it) is a question for the walk, not this doc.
 
+- **R12 — a door is a source: `opened: { fact }` (2026-10-15).** A door
+  binding may carry `opened: { fact: <id> }`; when the door becomes open, by
+  Open or by a beaten lock, picked or forced, the fact is taught to the door
+  beat's audience: the actor and the members who can see the door. Hearers
+  are not taught (a forced door's crash already lands as a sound, and a
+  `heard` row may write a fact from it); a door nobody saw open teaches
+  nobody; a beaten lock and an open are one event, so there is no
+  `unlocked`. No predicate reads door state: the predicate set stays closed
+  and the door writes a fact like `reveals` does. Found on the cells (the
+  first studio-authored room): a "cells opened" ending was not expressible.
+
 ## 7. Done when
 
 - The file above compiles in both dialects with `New()` refusing each

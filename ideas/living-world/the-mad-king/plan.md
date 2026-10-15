@@ -335,6 +335,19 @@ Two rooms, a door, a guard patrolling a square, a thug in the next room. Fight t
 
 ## Wave D — The castle
 
+Order ruled 2026-10-15: D3 → D0 → D1 (rooms authored in the studio on the content shelf, one scenario test per §3 route; the v2 hand-written file in D1 is superseded by the studio file); D2 shipped with studio S4; wave C after D3; the draw-what-the-party-knows design round (rpg-project#586) runs beside D0.
+
+### Task D3: encounter — a door writes a fact (R12)
+
+**Delivers:** R12; the cells' `freed` ending; the kitchen route's forced door as a fact source. Ordered first in wave D (operator, 2026-10-15): it unblocks authoring the next rooms.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (one module, one PR). Web follow-up (ui-ux): the studio door view gains the field and the fact index lists the door as a writer.
+**Prerequisites:** none; encounter v0.130.0 on main.
+**Files:** `door.go` (`DoorInput` gains `Opened FactID`), `data.go` (`DoorData` persists it), `doorverbs.go` (`setDoorState`: when the next state is open, `learnFact` for each member of the captured audience, cause "opened door <id>"), `world.go` (`mintedFactIDs` collects door facts so saved runs load); `dungeonspec/single_room.go` (`RoomDoorBinding.Opened`), `single_room_doors.go` (shape: `opened` legal beside closed/locked; value: `opened.fact` through the fact grammar; lowering in both door paths), `grammar.go`; v2 `spec.go`/`compile.go` only if free.
+**Interfaces:** YAML `doorBindings.<id>.opened: { fact: <id> }`; `encounter.DoorInput.Opened encounter.FactID` (empty = none).
+**Behavior:** OpenDoor and a beaten Unlock (picked or forced) teach the fact to the actor plus sight witnesses of the door, once each (learnFact is idempotent); CloseDoor teaches nothing; a host open with no actor and no witnesses teaches nobody; an `opened` fact is mintable; an `opened` key with no `fact`, or a fact outside the id grammar, is refused at `doorBindings.<id>.opened.fact` in form-filler words.
+**Tests:** › opened by hand teaches the actor and a watching ally, not a member behind the wall; › a picked lock teaches; › a forced lock teaches the opener and the witnesses, and the crash still lands as a sound without teaching hearers; › close then reopen teaches once; › an ending `when: { fact }` on the door's fact fires at the open; › a saved run with a door fact loads (mint list); › decoder refusals by path; › the cells content (rpg-api dev) with `opened` added compiles and its `freed` ending fires in a scenario.
+**Verification:** `go test ./... -count=1` in the module; goldens unchanged except the new fixture; the walk: the cells on the castle stack with `opened: { fact: cells-opened }` and ending `freed`: pick the lock → run ends freed with the guards alive; the sergeant opens it out of the party's sight → no ending.
+
 ### Task D0: encounter — fights form between opposed monsters
 
 **Delivers:** the three-sided fight (§3 "turn the garrison"); found on the B-walk.
