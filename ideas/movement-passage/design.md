@@ -9,7 +9,7 @@ flowchart TD
     Rules --> Actual[Authoritative cell passage]
     Rules --> Preview[Observed occupant contributions]
     Actual --> Walk[Traverse cells; validate voluntary destination]
-    Walk --> Entry[Visible teammate in combat: join before entering their hex]
+    Walk --> Entry[Spotted by a hostile in combat: join before the next step]
     Actual --> Routes[Creature route search]
     Preview --> Seam[Session projection and proto contract]
     Seam --> Web[Preview routes and valid destinations]
@@ -65,13 +65,16 @@ Known invalid voluntary destinations are refused before movement or spend.
 Unknown occupancy does not cause an omniscient preflight refusal: execution
 validates each newly encountered crossing and cell against current truth.
 
-When a free-roaming walker sees a teammate already in a combat bubble,
-the walker joins that bubble from their current cell before entering the
-teammate's occupied hex. Joining does not require seeing a hostile directly.
-The transition ends the free-roam walk; further movement follows the bubble's
-turn order. The unentered hex is not a completed step and consumes no movement.
-This join uses current sight of the teammate, not hidden roster membership
-or a remembered sighting. It does not move either creature or rewind a step.
+A free-roaming walker is admitted to a running combat bubble only by
+contact with a hostile: an opposed member of the bubble currently sees the
+walker (the walker is spotted), or the walker's own sight of a hostile makes
+first contact under the drop rule. Seeing a teammate already in the bubble
+admits nobody, and neither does seeing a neutral. When admission happens it
+is from the walker's current cell before the next step: the transition ends
+the free-roam walk, further movement follows the bubble's turn order, and the
+unentered hex is not a completed step and consumes no movement. Admission uses
+current sight, not hidden roster membership or a remembered sighting, and
+moves no creature and rewinds no step. (R7; supersedes R6.)
 
 A reaction may pause a walker on an ally's cell in the middle of a path. The
 pending walk retains its continuation. If the walker is not downed and can
@@ -155,7 +158,8 @@ must not reuse it across a mutation that can change participation.
 | R3 | settled | An ally cell is intermediate; reactions may pause there, but a walker who is not downed must continue when able; charge only actual traversal, never unused movement | KirkDiggler | 2026-09-28 |
 | R4 | settled | Provider-owned permissions follow runtime dispositions; fog permits uncertain destination planning and discovery may shorten execution | KirkDiggler | 2026-09-28 |
 | R5 | settled | Passage and participation failures preserve their errors; unknown knowledge is distinct from a failed query | KirkDiggler | 2026-09-28 |
-| R6 | settled | Seeing a teammate in a bubble joins the walker from the current cell before entering the teammate's occupied hex; further movement follows initiative and the unentered step costs nothing | KirkDiggler | 2026-09-28 |
+| R6 | superseded by R7 | Seeing a teammate in a bubble joins the walker from the current cell before entering the teammate's occupied hex; further movement follows initiative and the unentered step costs nothing | KirkDiggler | 2026-09-28 |
+| R7 | settled | Only contact with a hostile admits a walker to a bubble: an opposed member sees the walker, or the walker's sight of a hostile makes first contact under the drop rule; seeing a teammate or a neutral admits nobody; admission is from the current cell before the next step and the unentered step costs nothing | KirkDiggler | 2026-10-15 |
 
 ## Open
 
