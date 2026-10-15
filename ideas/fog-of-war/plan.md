@@ -534,9 +534,19 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   dropping presentation footing leaves a hole at every unfound secret door
   (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true` fails) and stubs on
   the walls of secret rooms.
+- `AtlasFor` predicate, exactly: a cell enters `Cells` when the member knows
+  it (journal `known:cells`) and is not withheld by concealment; a known cell
+  that concealment hides but that lies in a presented wall's `FootprintCells`
+  enters `Cells` and `Sealed` only, as scenery nobody owns, and stays hidden
+  for regions, props and placements. The journal stores cells, not how they
+  were learned.
 - Tests: `footing_test.go` `TestA11_APresentedWallStandsOnFloorTheWatcherCanSee`
-  becomes `TestA11_APresentedWallFootsNothing` (the vault's cells are exactly the
-  learned cells; no sealed footing appears); `TestA11_AWithheldWallDoesNotFoot`
+  becomes `TestA11_APresentedWallEqualsItsSceneryTwin`: a twin comparison, the
+  non-knower's `AtlasFor` equals the scenery twin's `AtlasFor` on `Cells` and
+  `Sealed`, never the twin's full `Atlas()`. The fixture must use a structural
+  wall with placed blocking spans (the hugging layout authored as a structural
+  wall), not the legacy `hugSeam` segment, which has no placed face for
+  `screensOf` to fire on; `TestA11_AWithheldWallDoesNotFoot`
   stays. New `TestStructuralWallCarriesItsFootprintCells` (an edge wall lists the
   hex on either side; a centre-line wall lists its footing hexes and the
   straddled neighbours; order follows the line). New
