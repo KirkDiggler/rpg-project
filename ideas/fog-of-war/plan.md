@@ -458,3 +458,7 @@ T5 catches up by commit on top, never rebase.
   the own-move keys.
 - The full-atlas golden is the author's view and must not change.
   Disposition: stated in T1 tests.
+
+## Record
+
+Shipped 2026-10-16: rpg-toolkit#2056 → encounter v0.133.0 · rpg-toolkit#2058 → session v0.137.0 · rpg-api-protos#394 → v0.1.237 · rpg-api#1109 → dev ff90305e · rpg-dnd5e-web#1287 → dev 5842e048. Walk on the real stack: six scenarios, re-walked after four web fixes (reveal race, absent stretches not drawn per the operator, structural piece cuts, remembered surface tint). Open: R8 as its own slice (rpg-project#595); seen-now lag after own move (rpg-dnd5e-web issue); per-seat view read cost on large floors. Record on rpg-project#586.
