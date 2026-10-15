@@ -2310,7 +2310,7 @@ author, and a key names one encounter in that world.
 | rpg-dnd5e-web | Open panel, seeding, key refusal, lobby picker labels | `feat/studio-s7-open` from `dev` |
 | rpg-toolkit | no. The dialect, `Load` and its version dispatch are used as they are | none |
 
-**Non-goals:** multi-room sites (#528); sharing between players; textures;
+**Non-goals:** multi-room sites (#528); sharing across worlds; textures;
 converting or deleting the v2 references (rpg-api#1105); a server-side
 overwrite guard; a migration of files already in the content directory;
 World Builder's `DungeonBuilder` changes (it reads the lobby list unchanged).
@@ -2321,18 +2321,18 @@ World Builder's `DungeonBuilder` changes (it reads the lobby list unchanged).
 |---|---|---|
 | O1 | `PutDungeon` writes only to the caller's world store; the record's owner is `auth.GetPlayerID(ctx)`. Under a key the caller owns it replaces the record (the studio's existing ask stays). Under a key another owner holds in the world it is refused `PermissionDenied` "that key belongs to another member of this world". Under a shipped key it is refused `PermissionDenied` "that key is a reference; save it under your own key". Both refusals hold for validate-only too, and nothing is written. | R20 |
 | O2 | Get resolves for the caller: their world store, then shipped. `GetDungeon` (the studio, the overwrite check and the play view's scene read) and the lobby's `StartEncounter` (in the host's world) resolve this way. A key is unique within a world; two worlds hold the same key independently. | R21 |
-| O3 | The lobby `ListDungeons` and authoring `ListDungeons` both answer, for the caller, their own records in their world sorted by key with `source = MINE`, then References sorted by key with `source = SHIPPED`. Another owner's records are not listed. A reference whose key is held in the caller's world is left out. | R21 |
+| O3 | The lobby `ListDungeons` and authoring `ListDungeons` both answer, for the caller, every record in their world sorted by key with `source = WORLD` and `owner` set to the record's owner, then References sorted by key with `source = SHIPPED` and `owner` empty. A reference whose key is held in the caller's world is left out. | R21, R24 |
 | O4 | `RenameDungeon{key, new_key}` moves one of the caller's records atomically and rewrites its root `key:` line to `new_key`, every other byte and the owner unchanged. Refusals: `new_key` outside the grammar, `InvalidArgument`; `new_key` the caller's own or equal to `key`, `AlreadyExists` "new key already names one of your encounters"; `new_key` another owner's, `PermissionDenied` with the O1 another-member sentence; `new_key` shipped, `PermissionDenied` with the O1 reference sentence; `key` another owner's, `PermissionDenied` with the O1 another-member sentence; `key` shipped and not in the world, `PermissionDenied` "that key is a reference; references cannot be renamed or deleted"; `key` absent, `NotFound`. | R22 |
 | O5 | `DeleteDungeon{key}` removes one of the caller's records. Another owner's: `PermissionDenied` with the O1 another-member sentence. Shipped and not in the world: `PermissionDenied` with the O4 reference sentence. Absent: `NotFound`. | R22 |
 | O6 | Shipped files below root `version: 3` are left out of both lists. `Get` by key still resolves them; an empty `dungeon_key` still plays `reference-tomb`; the demo vendor still rides `DefaultKey`. | R23 |
 | O7 | `RPG_AUTHORING_ENABLED` still gates writes: the AuthoringService is registered only with it, and the registry refuses Put, Rename and Delete with `ErrAuthoringDisabled` without it. The lobby list answers with authoring off. | R18, R20 |
-| O8 | The studio header carries an Open button beside Save and Play. With the authoring gate not `live` it is disabled with the same sentence Save and Play shows. The panel lists Mine and References from authoring `ListDungeons`. | R24, R18 |
+| O8 | The studio header carries an Open button beside Save and Play. With the authoring gate not `live` it is disabled with the same sentence Save and Play shows. The panel lists This world (owner shown; Mine where `owner` equals the caller's player id) and References from authoring `ListDungeons`. | R24, R18 |
 | O9 | Open reads `GetDungeon{key}` and passes the text to `readDraftYaml`. A refusal is shown in the panel as that reader's sentence and the draft is untouched. Success asks "Replace the current draft with {name}? Undo brings it back." and on Replace calls `session.importDocument`. | R24 |
-| O10 | Opening one's own file seeds the key field with its key and the saved-key memory with `{roomId: draft.id, key}`, so the next Save and Play does not ask. Opening a reference seeds `freshKeyFor`: the slug of the room name (`defaultDraftKey`), suffixed `-2`, `-3`, … until it names none of the listed keys, and clears the saved-key memory. | R24, R16 |
-| O11 | Rename and Delete in the panel for Mine rows only. Rename takes an inline key field; Delete asks "Delete {key} from the server? This cannot be undone." Both refresh the list and show the server's sentence on the row when refused. A rename of the remembered key moves the memory to the new key; a delete of it clears the memory. | R22 |
+| O10 | Opening one's own file seeds the key field with its key and the saved-key memory with `{roomId: draft.id, key}`, so the next Save and Play does not ask. Opening another member's file or a reference opens a copy: it seeds `freshKeyFor`: the slug of the room name (`defaultDraftKey`), suffixed `-2`, `-3`, … until it names none of the listed keys, and clears the saved-key memory. | R24, R16 |
+| O11 | Rename and Delete in the panel for Mine rows only; another member's rows and References offer neither. Rename takes an inline key field; Delete asks "Delete {key} from the server? This cannot be undone." Both refresh the list and show the server's sentence on the row when refused. A rename of the remembered key moves the memory to the new key; a delete of it clears the memory. | R22 |
 | O12 | The key field shows the reference sentence when the preview or the save is refused with it. | R20, R16 |
 | O14 | The world is the one the auth boundary installed in `worldcontext`; no request carries it. A dungeon RPC with no trusted world is refused `FailedPrecondition` "trusted world context is required". | R21 |
-| O13 | The lobby picker labels each option "{name} (yours)" or "{name} (reference)" in the server's order; no v2 reference appears. | R21, R23 |
+| O13 | The lobby picker lists the world's encounters and the references, labelled "{name} (yours)", "{name} ({owner})" or "{name} (reference)", in the server's order, so a host can launch any member's; no v2 reference appears. | R21, R23, R24 |
 
 ## S7 constraints
 
@@ -2393,7 +2393,7 @@ S7-P1 protos ──merge to main, CI tag──▶ S7-A1 world store ──▶ S7
 | S7-Q7 | **The first save after a rename.** `useRoomPublishing.setKey` drops the hook's in-memory saved key, and `rememberedSavedKey` seeds only on mount. | **planner-resolved:** after renaming the draft's own key the record moves to the new key, and the first Save and Play in that mount asks once; a reopened studio does not ask. The hook's transactions are not changed for this. | nothing |
 | S7-Q8 | **The Dev header's world, and a second world on the walk.** Under `AUTH_DEV_MODE` the `Dev <player>` scheme maps every player to one world, `RPG_DEV_WORLD_ID` (default `test-world`; the local-dev compose sets neither, so the walk stack is `test-world`). | **planner-resolved:** the walk's player A is the browser; player B is the driver's direct Connect calls with `authorization: Dev walk-player-b`, in A's world `test-world`, where B's save of `my-castle` is refused. For B's own world the driver restarts the API once with `RPG_DEV_WORLD_ID=walk-world-b` over the same Redis and saves `my-castle` there, which succeeds; it then restarts the API back on `test-world`. The A5 wire test proves the same with contexts in two worlds. | S7-W6 |
 | S7-Q9 | **The world in compatibility mode.** With enforcement off, authoring and lobby handlers see no world today. | **planner-resolved:** `compositionWorldMethods` becomes `worldScopedMethods` and gains AuthoringService `PutDungeon`, `GetDungeon`, `ListDungeons`, `DeleteDungeon`, `RenameDungeon` and LobbyService `ListDungeons`, `StartEncounter` (S7-A4). A Discord caller without a guild selector is then refused on those methods `FailedPrecondition "guild selector is required"`, the composition precedent. The web gate's empty-key probe still gets a non-Unimplemented answer. | nothing |
-| S7-Q10 | **The fresh key and other owners' keys.** The Open panel lists only the caller's keys and the references. | **planner-resolved:** `freshKeyFor` avoids the listed keys only. A fresh key another author already holds in the world is refused at the key field by the preview with the another-member sentence, and the author picks another. | nothing |
+| S7-Q10 | **The fresh key and other members' keys.** The Open panel lists every world encounter and the references. | **planner-resolved:** `freshKeyFor` avoids every listed key, other members' included. A key taken after the list was read is refused at the key field by the preview with the another-member sentence, and the author picks another. | nothing |
 
 ## Task S7-P1: The contract
 
@@ -2408,12 +2408,13 @@ S7-P1 protos ──merge to main, CI tag──▶ S7-A1 world store ──▶ S7
 enum DungeonSource {
   DUNGEON_SOURCE_UNSPECIFIED = 0;
   DUNGEON_SOURCE_SHIPPED = 1;  // a reference the server ships; read-only
-  DUNGEON_SOURCE_MINE = 2;     // in the caller's own store
+  DUNGEON_SOURCE_WORLD = 2;    // in the caller's world store; `owner` says whose
 }
 message DungeonSummary {
   string key = 1;
   string name = 2;
   DungeonSource source = 3;    // new
+  string owner = 4;            // new: the owning player id for WORLD, empty for SHIPPED; the client marks Mine by comparing it to its own player id
 }
 
 // authoring/v1alpha1/service.proto (imports lobby/v1alpha1/service.proto)
@@ -2428,7 +2429,7 @@ message RenameDungeonRequest { string key = 1; string new_key = 2; }
 message RenameDungeonResponse {}
 ```
 
-**Behavior:** comments on each RPC state the O3–O5 order and refusals, including the exact sentences, and that `PutDungeon` now writes the caller's store and refuses a shipped key (O1). `LobbyService.ListDungeons`' comment gains "for the caller, Mine then References".
+**Behavior:** comments state that ownership is read from `owner`, not from `source`; comments on each RPC state the O3–O5 order and refusals, including the exact sentences, and that `PutDungeon` now writes the caller's store and refuses a shipped key (O1). `LobbyService.ListDungeons`' comment gains "for the caller, Mine then References".
 **Tests:** n/a (proto repository); the checks below are the evidence.
 **Verification:** from the protos worktree, `make test` passes (lint, format-check, proto-options, breaking against `main`); `make generate` succeeds locally and the TS output contains `DungeonSource` and `AuthoringService.renameDungeon`. Merge to `main`; record the CI tag.
 **Completion evidence:** the tag name, the generated-branch commit for it.
@@ -2488,11 +2489,11 @@ The two `ErrOwnedByOther` cases in Rename are told apart by the registry, which 
 type Source int
 const (
 	SourceShipped Source = iota + 1
-	SourceMine
+	SourceWorld
 )
 // Caller is who is asking, from the auth boundary: never a request field.
 type Caller struct { WorldID, PlayerID string }
-type Summary struct { Key, Name string; Source Source }
+type Summary struct { Key, Name, Owner string; Source Source }
 // Entry gains Source and Owner ("" for shipped); FileRegistry entries also record SingleRoom bool (root version >= 3).
 type PutInput struct { Caller Caller; Key string; YAML []byte; ValidateOnly bool }
 type RenameInput struct { Caller Caller; Key, NewKey string }
@@ -2524,8 +2525,8 @@ func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
 
 **Behavior:**
 - Every verb: empty `WorldID` or `PlayerID` → `ErrNoCaller`.
-- `List`: the world's records whose owner is the caller, each named from its file's `name:` (a file whose name cannot be read is listed under its key), `SourceMine`, by key; then shipped entries with `SingleRoom` whose key no record in the world holds, `SourceShipped`, by key.
-- `Get`: the world store first; a hit compiles through `compileEntry` and returns `Source: SourceMine` with the record's `Owner` (any owner: the key names one thing in the world; a stored file that no longer compiles is an error naming world and key); a miss falls to the shipped store, `Source: SourceShipped`; neither → `ErrNotFound`.
+- `List`: every record in the caller's world, each named from its file's `name:` (a file whose name cannot be read is listed under its key), `SourceWorld` with the record's `Owner`, by key; then shipped entries with `SingleRoom` whose key no record in the world holds, `SourceShipped`, by key.
+- `Get`: the world store first; a hit compiles through `compileEntry` and returns `Source: SourceWorld` with the record's `Owner` (any owner: the key names one thing in the world; a stored file that no longer compiles is an error naming world and key); a miss falls to the shipped store, `Source: SourceShipped`; neither → `ErrNotFound`.
 - `Put`: grammar → `ErrInvalidKey`; a shipped key → `ErrReferenceKey`; a world record under the key with another owner → `ErrOwnedByOther`; these three before compiling, validate-only or not; compile → `PutResult{Errors}`; key line mismatch → `ErrKeyMismatch`; validate-only → the entry, nothing written; not authoring → `ErrAuthoringDisabled`; `World.Put`, whose `ErrOwnedByOther` (a race lost) maps to `ErrOwnedByOther`. The per-key lock is per world and key.
 - `Delete`: not authoring → `ErrAuthoringDisabled`; grammar; `World.Delete`; `ErrOwnedByOther` → `ErrOwnedByOther`; `ErrNotFound` → `ErrReferenceReadOnly` when shipped, else `ErrNotFound`.
 - `Rename`: not authoring; grammar of both keys; `NewKey` shipped → `ErrReferenceKey`; the source record: absent → `ErrReferenceReadOnly` when shipped, else `ErrNotFound`; another owner → `ErrOwnedByOther`; then `World.Rename` with a `Rewrite` that calls `rewriteKeyLine`, compiles, and errors unless the compiled key is `NewKey`; `ErrKeyExists` → `ErrKeyExists`; `ErrOwnedByOther` now means the new key → `ErrOwnedByOther`.
@@ -2537,13 +2538,13 @@ func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
 - › `TestPutUnderAnotherOwnersKeyIsRefused`: bob, after alice saved `my-castle`, `ValidateOnly` true and false, `errors.Is(err, ErrOwnedByOther)`, alice's bytes unchanged;
 - › `TestPutReplacesTheCallersOwn`;
 - › `TestPutWithoutAuthoringAnswersTheGradeOnly`;
-- › `TestGetResolvesWorldThenShipped`: for alice and for bob in `w1`, `my-castle` resolves to alice's record (`SourceMine`, `Owner: alice`, the same bytes) and `castle-kitchen` to the reference (`SourceShipped`); carol in `w2` gets `ErrNotFound` for `my-castle`;
+- › `TestGetResolvesWorldThenShipped`: for alice and for bob in `w1`, `my-castle` resolves to alice's record (`SourceWorld`, `Owner: alice`, the same bytes) and `castle-kitchen` to the reference (`SourceShipped`); carol in `w2` gets `ErrNotFound` for `my-castle`;
 - › `TestTwoWorldsHoldTheSameKey`: alice in `w1` and carol in `w2`;
-- › `TestListIsTheCallersOwnThenSingleRoomReferences`: bob's list lacks alice's records; no version 2 key; `castle-kitchen` present;
+- › `TestListIsTheWorldThenSingleRoomReferences`: after alice saves `my-castle` and bob saves `bob-keep` in `w1`, alice's list holds `bob-keep` with `Owner: bob` and `my-castle` with `Owner: alice`, both `SourceWorld`, then `castle-kitchen` `SourceShipped` with no owner; no version 2 key; carol in `w2` sees neither world record;
 - › `TestListLeavesOutAReferenceHeldInTheWorld`: `w1` seeded directly with a `castle-kitchen` record owned by alice; bob's list lacks the reference too;
 - › `TestGetStillResolvesAVersionTwoReference`: `reference-tomb`;
 - › `TestRenameRewritesOnlyTheKeyLine`;
-- › `TestRenameRefusals` (table): own new key, same key, another owner's new key, shipped new key, invalid new key, another owner's source, shipped source, absent source, authoring off;
+- › `TestRenameRefusals` (table): alice's rename of bob's `bob-keep` is `ErrOwnedByOther`; own new key, same key, another owner's new key, shipped new key, invalid new key, another owner's source, shipped source, absent source, authoring off;
 - › `TestDeleteRefusals`: own gone; another owner's → `ErrOwnedByOther`; `castle-kitchen` → `ErrReferenceReadOnly`; absent → `ErrNotFound`;
 - › `TestEveryVerbRefusesAnIncompleteCaller`: empty world, empty player;
 - › `keyline_test.go`: kept comment, quoted key, zero matches, two matches, a nested `key:` under a mapping is not the root line.
@@ -2554,7 +2555,7 @@ func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
 **Delivers:** O2, O3, O6, O13 (server side).
 **Owner:** rpg-api; `internal/orchestrators/lobby`, `internal/handlers/dnd5e/lobby/v1alpha1`.
 **Prerequisites:** S7-P1 (the `source` field), S7-A2; S7-A4's method set for compatibility mode.
-**Files:** modify `list_dungeons.go` (orchestrator: `ListDungeonsInput{Caller dungeons.Caller}`, calls `o.dungeons.List(ctx, in.Caller)`); `start_encounter_session_stack.go` (`StartEncounterInput` gains `WorldID`; `o.dungeons.Get(ctx, dungeons.Caller{WorldID: in.WorldID, PlayerID: in.PlayerID}, key)`; demo vendor unchanged); the lobby handlers `list_dungeons.go` and `start_encounter.go` (read the world with `worldcontext.Get`, refuse its absence `FailedPrecondition "trusted world context is required"`; map `SourceMine → DUNGEON_SOURCE_MINE`, `SourceShipped → DUNGEON_SOURCE_SHIPPED`); tests `list_dungeons_test.go`, `start_encounter_test.go` (handler), `start_encounter_dungeon_key_test.go`, `orchestrator_test.go`, `lobby_test.go`, `start_encounter_armed_test.go`.
+**Files:** modify `list_dungeons.go` (orchestrator: `ListDungeonsInput{Caller dungeons.Caller}`, calls `o.dungeons.List(ctx, in.Caller)`); `start_encounter_session_stack.go` (`StartEncounterInput` gains `WorldID`; `o.dungeons.Get(ctx, dungeons.Caller{WorldID: in.WorldID, PlayerID: in.PlayerID}, key)`; demo vendor unchanged); the lobby handlers `list_dungeons.go` and `start_encounter.go` (read the world with `worldcontext.Get`, refuse its absence `FailedPrecondition "trusted world context is required"`; map `SourceWorld → DUNGEON_SOURCE_WORLD` with `owner`, `SourceShipped → DUNGEON_SOURCE_SHIPPED`); tests `list_dungeons_test.go`, `start_encounter_test.go` (handler), `start_encounter_dungeon_key_test.go`, `orchestrator_test.go`, `lobby_test.go`, `start_encounter_armed_test.go`.
 **Behavior:** the lobby list is the caller's (O3); the launch resolves the key in the host's world; an empty key still plays `reference-tomb` with the vendor (O6); the list stays ungated by authoring (O7).
 **Tests:**
 - › `ListDungeons maps source and passes the caller`: mock expects `List(ctx, Caller{"w1", "player-1"})`;
@@ -2591,7 +2592,7 @@ func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
 **Files:** modify `server.go` (construct `worlddungeons.NewRedis(&worlddungeons.RedisConfig{Client: redisClient})`, `dungeons.NewFileRegistry(contentDir, projector)`, `dungeons.NewRegistry(&dungeons.RegistryConfig{Shipped, World, Authoring: authoringEnabled, Projector})`; pass the registry to the lobby and authoring orchestrators; the log line names both stores); modify the harness the same way over its Redis; add one wire test beside `validate_only_wire_test.go`, `two_stores_wire_test.go`.
 **Behavior:** `RPG_CONTENT_DIR` seeding is unchanged; the directory is never written by a request.
 **Tests (`two_stores_wire_test.go`, the real handler over the real registry, contexts carrying `worldcontext` and a player directly):**
-- › alice in `w1` `PutDungeon my-castle` → alice's `ListDungeons` shows it as MINE first; bob in `w1` does not list it, `GetDungeon my-castle` returns alice's bytes, and `PutDungeon my-castle` is `PermissionDenied` with the another-member sentence; carol in `w2` gets `NotFound` and saves her own `my-castle`;
+- › alice in `w1` `PutDungeon my-castle` → alice's and bob's `ListDungeons` both show it as WORLD with `owner: alice`; bob's `GetDungeon my-castle` returns alice's bytes, and `PutDungeon my-castle` is `PermissionDenied` with the another-member sentence; carol in `w2` gets `NotFound` and saves her own `my-castle`;
 - › alice `PutDungeon castle-kitchen` is `PermissionDenied` with the reference sentence; the content file is byte-identical;
 - › alice `RenameDungeon my-castle → my-keep`, then `GetDungeon my-keep` returns `key: my-keep`; bob's `DeleteDungeon my-keep` is `PermissionDenied` with the another-member sentence; alice's `DeleteDungeon my-keep`, then the lobby `ListDungeons` lacks it.
 **Verification:** `make pre-commit` from the rpg-api worktree (its `release-pin-check` passes because P1 is released); boot the server against the local stack and see the log line and `AuthoringService registered`.
@@ -2615,8 +2616,9 @@ func rewriteKeyLine(raw []byte, oldKey, newKey string) ([]byte, error)
 ```ts
 export interface DungeonLibrary {
   status: 'idle' | 'loading' | 'ready' | 'error';
-  mine: DungeonSummary[];        // source MINE, server order
+  world: DungeonSummary[];       // source WORLD, server order; owner on each
   references: DungeonSummary[];  // source SHIPPED, server order
+  isMine(summary: DungeonSummary): boolean; // owner === the caller's player id
   message: string | null;
   refetch(): Promise<void>;
   read(key: string): Promise<{ ok: true; yaml: string } | { ok: false; refusal: string }>;
@@ -2628,7 +2630,7 @@ export function freshKeyFor(document: Readonly<RoomDraftDocument>, taken: Readon
 ```
 
 **Behavior:** fetches on enable and on `refetch`; a summary with `UNSPECIFIED` source is a reference; the another-member sentence, like the reference sentences, reaches the key field; `rename` and `remove` refetch on success; a refusal is the status message without the code prefix. `freshKeyFor` returns `defaultDraftKey(document)` when free, else the first free `-2`, `-3`, …. `keyRefusalOf` also matches `PermissionDenied: (that key (is a reference|belongs to another member of this world).*)$` from the save, the launch and the preview.
-**Tests:** › `splits Mine and References in server order`; › `does not fetch while disabled`; › `rename refetches and returns ok`; › `rename AlreadyExists returns the sentence`; › `remove PermissionDenied returns the sentence`; › `freshKeyFor returns the slug when free`, › `…suffixes -2 then -3`; › `keyRefusalOf shows the reference sentence from a preview refusal`; › `…and the another-member sentence`.
+**Tests:** › `splits This world and References in server order`; › `isMine compares owner to the player id`; › `does not fetch while disabled`; › `rename refetches and returns ok`; › `rename AlreadyExists returns the sentence`; › `remove PermissionDenied returns the sentence`; › `freshKeyFor returns the slug when free`, › `…suffixes -2 then -3`; › `keyRefusalOf shows the reference sentence from a preview refusal`; › `…and the another-member sentence`.
 **Verification:** `npx vitest run src/concepts/encounter-studio/dungeonLibrary.test.ts src/concepts/encounter-studio/studioPublishing.test.ts`.
 
 ## Task S7-W3: The Open panel
@@ -2642,15 +2644,15 @@ export function freshKeyFor(document: Readonly<RoomDraftDocument>, taken: Readon
 export interface StudioOpenProps {
   library: DungeonLibrary;
   gate: AuthoringGateState;
-  onOpen(opened: { read: Extract<DraftFileRead, { ok: true }>; key: string; source: 'mine' | 'reference' }): void;
+  onOpen(opened: { read: Extract<DraftFileRead, { ok: true }>; key: string; source: 'mine' | 'copy' }): void; // copy: another member's or a reference
   onRenamed(from: string, to: string): void;
   onDeleted(key: string): void;
   onClose(): void;
 }
 ```
 
-**Behavior:** an Open button in `es-save` immediately before `StudioPlayButton`, toggling the panel (`id="studio-open"`, the S5 `es-panel` styling), disabled with the gate's sentence when `gate.state !== 'live'`. The panel shows Mine then References, each row the name and the key in small type; an empty Mine reads "Nothing saved yet. Save and Play saves here." Open calls `library.read`, then `readDraftYaml`; a refusal is shown on the row and nothing changes; success shows the replace question with Replace and Keep; Replace calls `onOpen`. Mine rows also carry Rename (inline key field, Save and Cancel) and Delete (the O11 question, Delete and Keep).
-**Tests (fake client):** › `gate-off disables Open with the server sentence`; › `lists Mine then References with keys`; › `a version 2 file read from the server shows the dialect sentence and imports nothing`; › `Open asks before replacing; Keep imports nothing; Replace calls onOpen with the source`; › `rename sends key and new_key and shows the AlreadyExists sentence on refusal`; › `delete asks, sends the key, and the row is gone after the refetch`; › `References rows offer neither Rename nor Delete`.
+**Behavior:** an Open button in `es-save` immediately before `StudioPlayButton`, toggling the panel (`id="studio-open"`, the S5 `es-panel` styling), disabled with the gate's sentence when `gate.state !== 'live'`. The panel shows This world then References, each row the name and the key in small type, a world row also its owner and "Mine" when it is the caller's; an empty world reads "Nothing saved in this world yet. Save and Play saves here." Open calls `library.read`, then `readDraftYaml`; a refusal is shown on the row and nothing changes; success shows the replace question with Replace and Keep; Replace calls `onOpen` with `source: 'mine'` for the caller's own and `'copy'` for another member's or a reference. Mine rows also carry Rename (inline key field, Save and Cancel) and Delete (the O11 question, Delete and Keep).
+**Tests (fake client):** › `gate-off disables Open with the server sentence`; › `lists This world with owners, the caller's own marked Mine, then References`; › `another member's row offers Open only and opens as a copy`; › `a version 2 file read from the server shows the dialect sentence and imports nothing`; › `Open asks before replacing; Keep imports nothing; Replace calls onOpen with the source`; › `rename sends key and new_key and shows the AlreadyExists sentence on refusal`; › `delete asks, sends the key, and the row is gone after the refetch`; › `References rows offer neither Rename nor Delete`.
 **Verification:** `npx vitest run src/concepts/encounter-studio/StudioOpen.test.tsx`.
 
 ## Task S7-W4: Seeding the key and the memory
@@ -2660,10 +2662,11 @@ export interface StudioOpenProps {
 **Prerequisites:** S7-W3.
 **Behavior:** `onOpen` calls `session.importDocument(read.draft, read.scope)`; on `true`:
 - own file: `setFileKey({key, roomId: read.draft.id})`, the hook key to `key`, `writePublication(storage, {roomId: read.draft.id, key})`, `setRemembered` to that record;
-- reference: `fresh = freshKeyFor({draft: read.draft, scope: read.scope}, all listed keys)`, `setFileKey({key: fresh, roomId})`, the hook key to `fresh`, `clearPublication`, `setRemembered(null)`.
+- a copy (another member's file or a reference): `fresh = freshKeyFor({draft: read.draft, scope: read.scope}, all listed keys)`, `setFileKey({key: fresh, roomId})`, the hook key to `fresh`, `clearPublication`, `setRemembered(null)`.
 On `false` the owner's notice stands and nothing else changes. `onRenamed(from, to)`: when the remembered key is `from`, write the record with `to`; when the hook key is `from`, set it to `to` (S7-Q7). `onDeleted(key)`: when the remembered key is `key`, clear the record; the key field is unchanged.
 **Tests (`EncounterStudioIntegration.test.tsx`, real owner, fake client):**
 - › `opening my own file then Save and Play does not ask and puts under its key`;
+- › `opening another member's file seeds a fresh key and no remembered save`;
 - › `opening a reference seeds the fresh key and the first Save and Play to it does not ask (NotFound) and puts under the fresh key`;
 - › `opening a reference whose slug is taken seeds -2`;
 - › `undo after Open restores the previous draft`;
@@ -2676,8 +2679,8 @@ On `false` the owner's notice stands and nothing else changes. `onRenamed(from, 
 **Delivers:** O13.
 **Owner:** rpg-dnd5e-web; `components/game/DungeonPicker.tsx`.
 **Prerequisites:** S7-W1.
-**Behavior:** label `"{name} (yours)"` for MINE, `"{name} (reference)"` otherwise; order as served; value stays the key. `useListDungeons` and `DungeonBuilder`'s `OpenMenu` are unchanged.
-**Tests:** › `DungeonPicker labels yours and reference in server order` (new `DungeonPicker.test.tsx`); `LobbyFlow.test.tsx` fixtures gain `source` and still pass.
+**Behavior:** label `"{name} (yours)"` for a WORLD entry whose `owner` is the player's id, `"{name} ({owner})"` for another member's, `"{name} (reference)"` otherwise; order as served; value stays the key. `useListDungeons` and `DungeonBuilder`'s `OpenMenu` are unchanged.
+**Tests:** › `DungeonPicker labels yours, another member's and reference in server order` (new `DungeonPicker.test.tsx`); `LobbyFlow.test.tsx` fixtures gain `source` and still pass.
 **Verification:** `npx vitest run src/components/game`.
 
 ## Task S7-W6: Integration and the walk
@@ -2688,15 +2691,15 @@ On `false` the owner's notice stands and nothing else changes. `onRenamed(from, 
 - [ ] Post the checklist below on rpg-project#585 as `- [ ]` boxes before the web PR leaves draft.
 
 **Walk and #585 checklist:**
-1. Author a room named "The cells" in the studio and press Save and Play: the game opens on it. Back in the studio, Open lists The cells under Mine, keyed `the-cells`, and no multi-room reference anywhere.
+1. Author a room named "The cells" in the studio and press Save and Play: the game opens on it. Back in the studio, Open lists The cells under This world marked Mine, keyed `the-cells`, and no multi-room reference anywhere.
 2. Open The cells: the replace question appears; Replace loads it; the key reads `the-cells`.
 3. Change a row's weight on the Tables form and press Save and Play: no overwrite ask; the game opens with the change.
-4. Open the castle kitchen reference: the key reads `the-castle-kitchen`; Save and Play saves without an ask and plays; Open now lists it under Mine and the reference is unchanged (`GetDungeon castle-kitchen` returns the shipped bytes).
+4. Open the castle kitchen reference: the key reads `the-castle-kitchen`; Save and Play saves without an ask and plays; Open now lists it under This world marked Mine and the reference is unchanged (`GetDungeon castle-kitchen` returns the shipped bytes).
 5. Type `castle-kitchen` into the key field: within a second the key field reads "that key is a reference; save it under your own key"; pressing Save and Play saves nothing.
 6. Rename `the-castle-kitchen` to `kitchen-copy` in the Open panel: the row shows the new key; renaming it to `the-cells` shows "new key already names one of your encounters"; renaming it to `castle-kitchen` shows the reference sentence.
 7. Delete `kitchen-copy`: the question appears; Delete removes it from the Open panel and from the lobby picker.
 8. The lobby picker lists The cells "(yours)" and the castle kitchen "(reference)", and no tomb; creating a lobby with no pick still plays the tomb.
-9. Player A saves `my-castle` from the studio in `test-world`. Player B (direct calls, S7-Q8) puts `my-castle` in A's world and reads "that key belongs to another member of this world"; B's `RenameDungeon` and `DeleteDungeon` of it are refused the same way; B's `GetDungeon my-castle` returns A's bytes, and B's `ListDungeons` does not list it. With the API restarted on `RPG_DEV_WORLD_ID=walk-world-b`, B's put of `my-castle` succeeds; back on `test-world`, A's Open still shows A's room name.
+9. Player A saves `my-castle` from the studio in `test-world`. Player B (direct calls, S7-Q8) puts `my-castle` in A's world and reads "that key belongs to another member of this world"; B's `RenameDungeon` and `DeleteDungeon` of it are refused the same way; B's `GetDungeon my-castle` returns A's bytes, and B's `ListDungeons` lists it with `owner` A. In the browser, A's lobby picker would equally list B's encounters saved in `test-world` with B's id, which the driver checks by saving `b-keep` as B and reading A's picker label "(walk-player-b)". With the API restarted on `RPG_DEV_WORLD_ID=walk-world-b`, B's put of `my-castle` succeeds; back on `test-world`, A's Open still shows A's room name.
 10. Bring the stack up once with `RPG_AUTHORING_ENABLED` unset: Open is disabled with the server sentence; the lobby picker still lists A's encounters and the references.
 
 ## S7 requirement coverage
@@ -2705,7 +2708,7 @@ On `false` the owner's notice stands and nothing else changes. `onRenamed(from, 
 |---|---|---|
 | O1 Put to the world store, owned; another owner's and shipped keys refused | A1, A2, A4, A5 | A1 owner and race tests; A2 put tests; A4 sentence tests; A5 wire test; walk 4, 5, 9 |
 | O2 resolution world then shipped, unique per world | A1, A2, A3, A4 | A1 two-world test; A2 Get and two-world tests; A3 host Get test; A5 wire test; walk 9 |
-| O3 lists Mine then References | A2, A3, A4, W2 | A2 list tests; A3 and A4 list tests; W2 split test; walk 1, 8 |
+| O3 lists the world then References, owner on each | A2, A3, A4, W2 | A2 list tests; A3 and A4 list tests; W2 split test; walk 1, 8 |
 | O4 Rename atomic, key line, refusals | A1, A2, A4, W3 | A1 rename tests; A2 rename and keyline tests; A4 table; walk 6 |
 | O5 Delete and refusals | A1, A2, A4, W3 | A1 and A2 delete tests; A4 table; walk 7 |
 | O6 v2 out of lists, default stays | A2, A3 | A2 list and v2 Get tests; A3 empty-key test; walk 1, 8 |
