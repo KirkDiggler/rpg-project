@@ -525,21 +525,19 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   projection of each cell centre onto the wall line (`from` → `to`), ties by
   the existing position ordering. Every cell, known or not: the record is the
   wall's geometry, the recipient's knowledge is in `Atlas.Cells`.
-- The masquerade covers (R9, second law): in `screensOf`/`seesCell`, for an
-  observer who has not found a concealment, an unfound bound door's footprint
-  and a concealment mask standing in a wall count as wall cover that teaches
-  the hex from its face exactly as a span does. `AtlasFor` presents such a
-  learned hex as sealed scenery nobody owns even when it lies in a concealed
-  region, so the non-knower's atlas equals the solid-wall twin's. Without this,
-  dropping presentation footing leaves a hole at every unfound secret door
-  (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true` fails) and stubs on
-  the walls of secret rooms.
+- The masquerade covers (R9, second law): in `seesCell`, for an observer who
+  has not found a bound door, the door set in a structural wall's opening
+  counts as that wall's face and teaches the threshold hex as a span does.
+  `AtlasFor` presents a learned threshold under a still-withheld bound door as
+  sealed scenery nobody owns, so the non-knower's atlas equals the solid-wall
+  twin's. Without this, dropping presentation footing leaves a hole at every
+  unfound secret door (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true`
+  fails). Concealed footing under a wall stays withheld (design O4).
 - `AtlasFor` predicate, exactly: a cell enters `Cells` when the member knows
-  it (journal `known:cells`) and is not withheld by concealment; a known cell
-  that concealment hides but that lies in a presented wall's `FootprintCells`
-  enters `Cells` and `Sealed` only, as scenery nobody owns, and stays hidden
-  for regions, props and placements. The journal stores cells, not how they
-  were learned.
+  it (journal `known:cells`) and is not withheld by concealment; a learned
+  threshold hex under a still-withheld bound door enters `Cells` and `Sealed`
+  only, as scenery nobody owns. Concealed footing stays withheld as on
+  origin/main (design O4). The journal stores cells, not how they were learned.
 - Tests: `footing_test.go` `TestA11_APresentedWallStandsOnFloorTheWatcherCanSee`
   becomes `TestA11_APresentedWallEqualsItsSceneryTwin`: a twin comparison, the
   non-knower's `AtlasFor` equals the scenery twin's `AtlasFor` on `Cells` and
@@ -555,11 +553,13 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   this is the existing `seesCell` cover rule, pinned for walls). New
   `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould` (non-knower in the
   corridor learns the threshold hex under an unfound secret door exactly as
-  under its twin; the knower's atlas unchanged). UNCHANGED and passing:
+  under its twin; the knower's atlas unchanged). UNCHANGED and passing (byte-identical):
   `dungeonspec/door_threshold_floor_test.go` `TestKnownWallKeepsFloorUnderAClosedDoor`
   (both arms; it is the twin gate), `dungeonspec/single_room_discovery_test.go`
-  `TestOrdinaryDiscoveryOpaqueFootingIsVisibleFromBothSides`, the explicit
-  concealment tests. Updated to the new rule: `revealsegments_test.go`
+  `TestOrdinaryDiscoveryOpaqueFootingIsVisibleFromBothSides` (a concealment
+  that selects only the footing hex stays withheld), the explicit
+  concealment tests. The A11 twin fixture uses an ordinary unexplored room,
+  not a concealed one. Updated to the new rule: `revealsegments_test.go`
   `TestSealedIsAReplacementWithinTheRoomAndNotAnAddition` and the
   `cells_revealed`/`sealed` assertions: footing appears where sight learned
   it, nowhere else. The full-atlas golden (author's view) must not
@@ -625,7 +625,7 @@ seen (cover rule), not before.
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
 | R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
 | R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallEqualsItsSceneryTwin`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
-| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door or secret room | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestA11_APresentedWallEqualsItsSceneryTwin` |
+| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestA11_APresentedWallEqualsItsSceneryTwin` |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |
