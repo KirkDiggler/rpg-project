@@ -1,6 +1,6 @@
 ---
 name: The mad king — implementation plan
-status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); **wave A SHIPPED 2026-10-13** (protos v0.1.234, encounter v0.128.0, session v0.134.0, api dev f1d67fa9, web dev 84bb912a); **wave B SHIPPED 2026-10-13** (protos v0.1.235, dnd5e v0.213.0, mind/behavior v0.7.0, encounter v0.129.0, session v0.135.0, api dev 8f22676a, web dev 1ec90316; walked, QA passed on #569; rulings R10, R11 and the R7/DC refinements recorded in use-case.md); waves C–D not started, D0 added
+status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); **wave A SHIPPED 2026-10-13** (protos v0.1.234, encounter v0.128.0, session v0.134.0, api dev f1d67fa9, web dev 84bb912a); **wave B SHIPPED 2026-10-13** (protos v0.1.235, dnd5e v0.213.0, mind/behavior v0.7.0, encounter v0.129.0, session v0.135.0, api dev 8f22676a, web dev 1ec90316; walked, QA passed on #569; rulings R10, R11 and the R7/DC refinements recorded in use-case.md); waves A, B, D3, D0, D1 shipped; wave C (#606) and D1d (#2066) open; D-walk pending
 authority: use-case.md (rulings R1–R7, routes §3, primitives §4); rpg-project#569; PR #570; the operator's agreement in session 2026-10-13 ("enough to make the plan")
 planning guide: ../../../.agents/skills/design/planning.md
 ---
