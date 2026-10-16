@@ -313,7 +313,12 @@ conversation tree; word spreads; the challenge (§5, on the list).
   concealments live only in the older editors. Options are where that form
   comes back, and it is where a UGC author spends most of their time.
 - **Found by D1 (rpg-project#605).** A studio wall door emits no region
-  Edges, so hearing never crosses it (rpg-toolkit#2066, plan D1d).
+  Edges, so hearing never crosses it (rpg-toolkit#2066, plan D1d). Fixed
+  by D1d (rpg-toolkit#2071, encounter v0.133.5).
+- **Found by D1d (rpg-project#605).** The castle's alarm cannot reach the
+  keep at the file's numbers: a voice is DC 5, passive Perception 10, and
+  the keep is 4 to 6 hops away. A content question for the operator: a
+  louder alarm kind, keener ears, or a relay.
 - **Found by D1.** Sight lanes ignore the void, and the single-room dialect
   refuses `void: opaque` (rpg-toolkit#2068).
 - **Found by D1.** A march cannot open a door; the throne door is authored
