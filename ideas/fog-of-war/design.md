@@ -93,8 +93,8 @@ session delivers them; the client draws the state it is sent.
   looked.
 - **The masquerade is the wall (R9).** For a member who has not found a bound
   door, the wall it masquerades as covers and teaches: the door's threshold hex
-  is learned from the wall face and presented as sealed scenery, so the
-  member's atlas equals the solid-wall twin's. Concealed cells under a wall are
+  is learned from the wall face and presented as sealed footing in its region,
+  so the member's atlas equals the solid-wall twin's. Concealed cells under a wall are
   withheld as they always were, a threshold that is itself concealed included. Why: a gap where the secret door stands is the
   tell concealment exists to remove.
 - **Sharing is a choice (R8).** Discovery sharing defaults off, so each
@@ -136,3 +136,12 @@ session delivers them; the client draws the state it is sent.
   through concealed cells would show stubs. No authored secret room exists yet
   to say what the non-knower should see; the twin of a concealment that is the
   footing hex itself is not obvious. Settle with the first such room.
+- **O5 — a bound door in a hidden wall.** When the parent wall is itself
+  withheld from a member, the unfound leaf blocks sight into its threshold and
+  teaches nothing, while the twin shows that hex as the wall's body would:
+  floor if the body does not block, nothing if it does. The engine cannot
+  answer because a structural wall declares no body blocker of its own; its
+  blocking spans are separate placements linked only by name. This predates
+  R9. The primitive is a wall that declares whether its body blocks movement
+  and sight; the masquerade then answers exactly as the twin's solid wall
+  would. Settle when a hidden wall with a secret door is authored.
