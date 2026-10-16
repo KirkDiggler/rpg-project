@@ -397,7 +397,7 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | U2 studio endings | D2 | emitted YAML compiles |
 | C1 content + every §3 route | D1b | seven `MadKing` tests, one per shipped §3 row; the two kitchen rows under wave C (#606) |
 | C2 the walk | D-walk | checklist on #569 |
-| §3 "Scout" row (guard without option turns nothing) | D1 | asserted: `guards-turned` absent after speaking to `gate-1` |
+| §3 "Scout" row (guard without option turns nothing) | D1b | asserted: `guards-turned` absent after speaking to `gate-1` |
 | Storm the keep yields to a sighting | B1, D1a, D1b | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
 
 Deferrals (by the use case, not by this plan): allied, per-character stance, challenge, journal, tree, word-spreads mechanism, mind list.
@@ -415,7 +415,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 | B2 `SheetFacts.PassivePerception`; `Heard` beat | B3 session; C1 | supplied on every sheet-facts pull; zero = deaf to EVERYTHING, even a DC-0 boom (zero only ever means "not supplied"; no rules passive is 0) | merged tag for C1; pushed sha for B3 | B3 scene; C1 scene |
 | B0 `Heard` | B4, B5 | kind string sealed by rulebook content | merged first | convert test; story render test |
 | A1 and B2 both edit `answer.go`, `grammar.go` | — | B2 branches from A1's merged tag | ordering | B2's PR base sha ≥ A1 tag |
-| D1 content | D1 tests, D-walk | the §2 file under both dialects | A–C tagged | compile test + `MadKing` tests |
+| D1 content | D1 tests, D-walk | the studio file in the single-room dialect (D1b) | A–C tagged | compile test + `MadKing` tests |
 
 ## Plan check findings
 
