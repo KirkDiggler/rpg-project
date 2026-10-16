@@ -162,14 +162,16 @@ slice issues get filed when the freeze lifts and Kirk adopts.
 - Intent parsing (rung 3; where the local model enters).
 - Noise reactions (monster-ai lane's side of the seam).
 - NPC scenes / dialogue transcripts.
-- The quest/journal noun.
+- The quest/journal noun — designed 2026-09-22 as the fact system's third
+  grain: living-world/campaign-journal/design.md.
 - audienceFor stocking (per-player secrecy at v1.0 — ideas/perceive).
 - Advantage → +5 on passive scores.
 - The objective/goal component (promote the run-ending predicate when the
   second goal type arrives — see §9).
 - World places as the dungeon graph at a different zoom (noodle: village
   square is a room, the road is a corridor; travel reuses graph, walk, and
-  door-distance noise). Written down, not claimed.
+  door-distance noise). Written down, not claimed. Taken up 2026-09-22 for the
+  first town, against §11's lobby — living-world/town/design.md, choice open.
 - Escortable friendly NPCs (rescue archetype = behavior-driven actor — the
   monster-ai lane's pattern, third recurrence of the seat).
 - Shared / overlapping worlds (journal facts are party-attributed from birth
