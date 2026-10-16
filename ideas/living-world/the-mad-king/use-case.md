@@ -111,7 +111,7 @@ tables:                                                       # TODAY (named roo
       - { when: { enemy: reach },                      attack: enemy }
   storm-the-keep:
     time:
-      - { when: [{ fact: guards-turned }, { not: { enemy: seen } }], toward: { at: [20,12] } }   # R8 list form
+      - { when: [{ fact: guards-turned }, { enemy: none }], toward: { at: [20,12] } }   # R8 list form; enemy: none, not not: { enemy: seen } (R11 bands are exclusive; D1b)
       - { when: { enemy: reach }, attack: enemy }
       - { when: { enemy: seen },  toward: enemy }
 
@@ -312,6 +312,12 @@ conversation tree; word spreads; the challenge (§5, on the list).
   bindings are read from files but not editable, and exits, endings and
   concealments live only in the older editors. Options are where that form
   comes back, and it is where a UGC author spends most of their time.
+- **Found by D1 (rpg-project#605).** A studio wall door emits no region
+  Edges, so hearing never crosses it (rpg-toolkit#2066, plan D1d).
+- **Found by D1.** Sight lanes ignore the void, and the single-room dialect
+  refuses `void: opaque` (rpg-toolkit#2068).
+- **Found by D1.** A march cannot open a door; the throne door is authored
+  shut and the party opens it (rpg-toolkit#2069).
 - **Loudness vocabulary needs a home.** `clang`, `boom`, `voice`, `crash`,
   `growl` are rulebook content stamped on deeds. The castle uses four.
 
