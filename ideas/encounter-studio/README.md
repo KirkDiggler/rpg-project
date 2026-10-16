@@ -360,8 +360,9 @@ by the author; the reference never changes (R20).
 
 ## Read-back, as rendered (R5)
 
-The castle in the S2 fixture carries no patrol row; D1a (the mad king,
-2026-10-16) gives this dialect `path` in the room frame, `{ q, r }`.
+The castle in the S2 fixture carries no patrol row; `path` is refused in this
+dialect today. Planned: D1a (rpg-project#605, operator may veto) gives it
+`path` in the room frame, `{ q, r }`.
 
 > **gate-1, a Guard of the garrison.** Neutral to the party until the
 > captain, the garrison's mind, knows *party-recognized*; then hostile.

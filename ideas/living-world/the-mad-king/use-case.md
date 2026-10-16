@@ -73,7 +73,7 @@ fools the door and not the court. "Word spreads" stays shelved.
 
 ## 2. The file (studio document, v4 dialect, keys marked)
 
-Keys marked `TODAY` compile on main. Keys marked `NEW` are this use case's
+Its `[x, y]` cells are illustrative; the studio file writes `{ q, r }` (planned D1a, rpg-project#605). Keys marked `TODAY` compile on main. Keys marked `NEW` are this use case's
 primitives (§4). Presentation keys omitted.
 
 ```yaml
@@ -349,8 +349,9 @@ conversation tree; word spreads; the challenge (§5, on the list).
   are drawn with right angles. **Dialect limit found:** the
   v4 World Builder dialect has no frame for authored cells, so `path` and
   `at` are v2-only until the sites layer; the studio-authored castle cannot
-  carry patrols until then. Lifted by D1a (2026-10-16): the room's own
-  axial frame is the frame; `{ q, r }` in the single-room dialect.
+  carry patrols until then. Planned lift, D1a (rpg-project#605, ruled
+  2026-10-16, operator may veto): the room's own axial frame is the frame;
+  `{ q, r }` in the single-room dialect.
 - **R8 — a row's `when` is a list; every entry must hold; `not: { … }`
   wraps a negative.** Row ordering is rejected: a rolled table must not be
   secretly ordered. One form for storm-the-keep, the challenge, and the
@@ -395,7 +396,7 @@ conversation tree; word spreads; the challenge (§5, on the list).
 
 ## 7. Done when
 
-- The file above compiles in both dialects with `New()` refusing each
+- The file above compiles in the single-room dialect with `New()` refusing each
   missing field in form-filler words (a `requires` naming a fact nothing
   writes is refused by name, like a disposition naming a missing faction).
 - Every row of §3 is an encounter-level scenario test; the toolkit's
