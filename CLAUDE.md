@@ -159,7 +159,10 @@ working. The mistake is three versions *of one thing*.
 ## Getting to work
 
 One focus per session, stated out loud — *working on X, done means Y* — and
-only what serves it gets loaded.
+only what serves it gets loaded. For multi-step work, follow the shared
+[execution brief and finish-line contract](docs/teams/roles/working-agreements.md#13-execute-the-agreed-brief-to-its-finish-line).
+Carry the agreed outcome through execution and handoff; a progress update does
+not create another permission gate.
 
 1. Follow the operator's stated task. Ask for focus only when it is missing.
    Issues and PRs are the shared paper trail; no project board is required.
@@ -227,7 +230,7 @@ case-file carries `<!-- case-file -->` inline and is skipped.
 
 | For | Read |
 |-----|------|
-| Model/context budgets, PR sizing, branch naming | `docs/teams/roles/working-agreements.md` |
+| Execution briefs, stopping points, model/context budgets and PR workflow | `docs/teams/roles/working-agreements.md` |
 | Team charters and role lenses | `docs/teams/roles/` |
 | Layer model, trust boundaries, data flow | `docs/architecture.md` |
 | Extended glossary | `docs/vocabulary.md` |

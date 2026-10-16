@@ -31,13 +31,19 @@ can recognize and correct:
 - the intended outcome and who it serves;
 - constraints and non-goals;
 - concrete success scenarios — what someone can observe when it works;
-- settled decisions versus assumptions and unresolved questions.
+- the delivery finish line: required artifacts, evidence and PR state, not just
+  the next implementation step;
+- settled decisions versus assumptions and unresolved questions, including
+  operator-owned judgments or actions that require a pause.
 
 Use what the operator already supplied; do not ask them to repeat it or approve
 another stage. Invite correction and carry the corrected brief into design.
-Keep it in the issue or a linked working document. Check proposed structure and
-behavior against it: agreement on a diagram alone is not agreement on what the
-system must do.
+Keep it in the issue or a linked working document, following the shared
+[execution brief and finish-line contract](../../../docs/teams/roles/working-agreements.md#13-execute-the-agreed-brief-to-its-finish-line).
+Carry that same brief through planning, execution and resume; brainstorming is
+not a new approval loop at each phase. Check proposed structure and behavior
+against it: agreement on a diagram alone is not agreement on what the system
+must do.
 
 ## The design order
 
@@ -168,10 +174,12 @@ plus requirement coverage and provider/consumer seam checks against inspected
 code. Keep the plan separate from the design's law, link both in the paper trail,
 and update affected tasks when implementation reveals a gap.
 
-Planning ends with a checked, handoff-ready plan. Execute directly or delegate
-only as authorized by the operator and applicable instructions; readiness is not
-permission to spawn agents. Repository review, release and merge gates remain
-in force.
+Planning produces a checked, handoff-ready plan; it does not replace the agreed
+delivery finish line or create a pause before implementation. Execute directly
+or delegate only as authorized by the operator and applicable instructions;
+readiness is not permission to spawn agents. Apply the shared execution contract
+when deciding whether to continue, request human judgment or report completion.
+Repository review, release and merge gates remain in force.
 
 ## Gap judgment
 
