@@ -529,8 +529,11 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   has not found a bound door, the door set in a structural wall's opening
   counts as that wall's face and teaches the threshold hex as a span does.
   `AtlasFor` presents a learned threshold under a still-withheld bound door as
-  sealed footing in its region, so the non-knower's atlas equals the
-  solid-wall twin's. The masquerade fires only for a PRESENTED parent whose
+  sealed footing, in its region only when that region is otherwise on the
+  member's map (compiled content makes a door-boxed threshold its own one-hex
+  region, which would name the door) and ownerless otherwise, so the
+  non-knower's atlas equals the solid-wall twin's; pinned by a dungeonspec
+  Regions twin test. The masquerade fires only for a PRESENTED parent whose
   presence covers the threshold centre; a hidden parent gets none, exactly as
   on main (design O5, pre-existing). Without the masquerade, dropping
   presentation footing leaves a hole at every unfound secret door

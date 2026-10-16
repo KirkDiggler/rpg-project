@@ -93,8 +93,9 @@ session delivers them; the client draws the state it is sent.
   looked.
 - **The masquerade is the wall (R9).** For a member who has not found a bound
   door, the wall it masquerades as covers and teaches: the door's threshold hex
-  is learned from the wall face and presented as sealed footing in its region,
-  so the member's atlas equals the solid-wall twin's. Concealed cells under a wall are
+  is learned from the wall face and presented as sealed footing, in its region
+  only when that region is otherwise on the member's map and ownerless
+  otherwise, so the member's atlas equals the solid-wall twin's. Concealed cells under a wall are
   withheld as they always were, a threshold that is itself concealed included. Why: a gap where the secret door stands is the
   tell concealment exists to remove.
 - **Sharing is a choice (R8).** Discovery sharing defaults off, so each

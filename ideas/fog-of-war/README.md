@@ -87,7 +87,7 @@ two answers. `VisibleCellsFor` refuses to store anything; a stored visible set
 outlives the pass whose readings made it. The session refuses to filter,
 compute or union; it passes the encounter's per-member answers through. rpg-api
 refuses to read any member but the caller's (`callerActingAs`) and refuses to
-derive cells. `AtlasFor` refuses to foot a presented wall: a footprint hex enters the atlas, sealed and in its region, only when the member learned it (R9). The web refuses to run line of sight, to re-derive a wall's hexes from its line, to draw a cell absent from
+derive cells. `AtlasFor` refuses to foot a presented wall: a footprint hex enters the atlas sealed, in its region only when that region is otherwise on the member's map, and only when the member learned it (R9). The web refuses to run line of sight, to re-derive a wall's hexes from its line, to draw a cell absent from
 its atlas, and to draw a cone, ray or polygon.
 
 ## Walk one thing through
