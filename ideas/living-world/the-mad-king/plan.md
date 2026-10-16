@@ -92,7 +92,7 @@ A0 protos ──▶ A1 encounter ──▶ A2 session ──▶ A3 api ──▶
                                                     └──▶ A5 studio ──┘
 B0 protos ──▶ B1 mind/behavior ──▶ B2 encounter ──▶ B3 session ──▶ B4 api ──▶ B5 web ──▶ B-walk
 C1 encounter (needs B2's passive Perception on SheetFacts) ──▶ C-walk
-D1 content + scenario tests (needs A, B, C) ──▶ D2 studio endings ──▶ D-walk (C2)
+D1 content + scenario tests (needs A, B, D0, D3; C only for the kitchen rows, #606) ──▶ D2 studio endings ──▶ D-walk (C2)
 ```
 
 Development dependencies are arrows. Merge order inside every wave is
@@ -359,11 +359,13 @@ Order ruled 2026-10-15: D3 → D0 → D1 (rooms authored in the studio on the co
 
 ### Task D1: content + route scenarios
 
-**Delivers:** C1.
-**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (tests) and rpg-api `content/` (the file).
-**Prerequisites:** A, B, C merged and tagged; R8 ruled (or the storm-the-keep row authored with two rows and the assertion for it marked pending in the test).
-**Files:** `rpg-api/content/the-mad-king.yaml` (v2 dialect, the §2 file; stat blocks `guard`, `guard-captain`, `commoner`, `knight`, `mad-king` authored as templates per the stat-block initiative); `encounter/madking_test.go`: one test per §3 row, driving the compiled content with scripted dice through `Speak`, movement, attacks and ticks, asserting the facts in the journal (attributed, audience-scoped), the stance folds, the endings fired, and — for the kitchen-door rows — that no sighting landed. Zero castle names in non-test Go.
-**Verification:** `go test ./ -run MadKing -v | grep -c '=== RUN'` equals the number of §3 rows; the content compile test in rpg-api is green.
+**Delivers:** C1. **Tracking:** rpg-project#605 (the slice issue; #569 is the umbrella only). Restated 2026-10-16 as three PRs, one per sub-task, in order.
+
+- **D1a — encounter: `toward: { at }` and `toward: { path }` in the single-room dialect, in the room's own frame.** Ruling (lead, 2026-10-16, operator may veto): rpg-toolkit#1826 ruling 1 left `at` "defined against the room's frame when the sites layer gives a creature somewhere to walk to", and `path`'s refusal was added later as its twin; the castle is that use case, and the room already has its frame — the axial `{ q, r }` every `startingCell.location` is written in. The single-room dialect decodes `at` and each `path` waypoint into its own axial cell type (`RoomCell`, `{ q, r }`), never `[x, y]`, so bytes can never be confused with the v2 offset form; the dialect's cells frame answers the grammar's floor and route questions in axial. v2 keeps `SelectorSpec.At *[2]int` and is untouched. The two refusal sentences in `single_room_site.go` are replaced by the floor and route checks v2 has (waypoint must be floor; legs through floor; legs sharing a cell refused), and the leg and retrace refusals name `{ q, r }` in this dialect. **Prerequisites:** none. Tests: a v4 fixture with a patrol row compiles to the same route and target positions (compiled encounter cells, not `SelectorSpec`) as the v2 front-room patrol; `at: [x, y]` in v4 is refused by path with a sentence naming `{ q, r }`; a waypoint off the floor is refused by index; goldens for existing fixtures byte-identical.
+- **D1b — encounter tests + fixture.** `dungeonspec/testdata/world-builder-v4-castle.yaml` and one scenario test per §3 route the shipped primitives play: front door, troupe, troupe blown, turn the garrison, deposed, slain, scout (seven; the two kitchen-door rows are wave C, rpg-project#606). The file is the studio-exported castle geometry (web fixtures `castleS4.ts`/`castleKeep.ts` through the studio encoder) with the §2 gameplay keys written in single-room form, and the five stat blocks as file-local `templates:` (`guard`, `guard-captain`, `commoner`, `knight`, `mad-king`; base `dnd5e:monsters:human`, stored-is-authored like `castle-kitchen.yaml`). Precedent: `castle_cells_test.go`/`castle_cells_fight_test.go`. The §2 file in the use case is the content, not its spelling. Zero castle names in non-test Go. **Prerequisites:** D1a merged and tagged; D0; D3.
+- **D1c — rpg-api: the file on the shelf.** `content/the-mad-king.yaml`, the `templated` map in `sessionworld/templates_test.go`, the atlas golden `internal/dungeons/testdata/atlas/the-mad-king.atlas.json`, the encounter pin. `the-mad-king.yaml` absorbs neither shelf file: `castle-kitchen.yaml` (the stat-block walk) and `the-mad-king-cells.yaml` (the fog walk) stay as single-room references; retiring them is rpg-api#1105's question, as is the default dungeon, which stays as is. **Prerequisites:** D1b.
+
+**Verification:** `go test ./ -run MadKing -v` in the encounter module runs seven tests green; the castle stack opens the file in the studio; Kirk walks the gate and the throne room. QA checklist on #605.
 
 ### Task D2: studio endings (U2)
 
@@ -393,10 +395,10 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | S1 contact Stealth | C1 | rogue passes / fails scene; #1020 closed |
 | U1 studio options | A5 | integration test authors the goblin |
 | U2 studio endings | D2 | emitted YAML compiles |
-| C1 content + every §3 route | D1 | `MadKing` test count = §3 rows |
+| C1 content + every §3 route | D1b | seven `MadKing` tests, one per shipped §3 row; the two kitchen rows under wave C (#606) |
 | C2 the walk | D-walk | checklist on #569 |
-| §3 "Scout" row (guard without option turns nothing) | D1 | asserted: `guards-turned` absent after speaking to `gate-1` |
-| Storm the keep yields to a sighting | B1, D1 | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
+| §3 "Scout" row (guard without option turns nothing) | D1b | asserted: `guards-turned` absent after speaking to `gate-1` |
+| Storm the keep yields to a sighting | B1, D1a, D1b | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
 
 Deferrals (by the use case, not by this plan): allied, per-character stance, challenge, journal, tree, word-spreads mechanism, mind list.
 
@@ -413,7 +415,7 @@ Deferrals (by the use case, not by this plan): allied, per-character stance, cha
 | B2 `SheetFacts.PassivePerception`; `Heard` beat | B3 session; C1 | supplied on every sheet-facts pull; zero = deaf to EVERYTHING, even a DC-0 boom (zero only ever means "not supplied"; no rules passive is 0) | merged tag for C1; pushed sha for B3 | B3 scene; C1 scene |
 | B0 `Heard` | B4, B5 | kind string sealed by rulebook content | merged first | convert test; story render test |
 | A1 and B2 both edit `answer.go`, `grammar.go` | — | B2 branches from A1's merged tag | ordering | B2's PR base sha ≥ A1 tag |
-| D1 content | D1 tests, D-walk | the §2 file under both dialects | A–C tagged | compile test + `MadKing` tests |
+| D1 content | D1 tests, D-walk | the studio file in the single-room dialect (D1b) | A, B, D0, D3 tagged; C only for the kitchen rows (#606) | compile test + `MadKing` tests |
 
 ## Plan check findings
 

@@ -360,8 +360,9 @@ by the author; the reference never changes (R20).
 
 ## Read-back, as rendered (R5)
 
-The castle in this dialect carries no patrol row, because `path` is refused
-until the sites layer.
+The castle in the S2 fixture carries no patrol row; `path` is refused in this
+dialect today. Planned: D1a (rpg-project#605, operator may veto) gives it
+`path` in the room frame, `{ q, r }`.
 
 > **gate-1, a Guard of the garrison.** Neutral to the party until the
 > captain, the garrison's mind, knows *party-recognized*; then hostile.

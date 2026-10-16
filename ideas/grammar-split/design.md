@@ -105,7 +105,10 @@ shipped sentence. This closes #1834's first deferred thread. The v2 counterpart
 No key, sentence, or path changes in either dialect. `PlaceSpec` stays a union of prop and
 monster; the single-room split of actor and binding stays. `SelectorSpec.At` stays `*[2]int`:
 when the sites layer answers the frame question (rpg-project#479 §5), the cell type inside the
-grammar becomes the dialect's, and that is that wave's change, not this one.
+grammar becomes the dialect's, and that is that wave's change, not this one. Planned D1a (the mad
+king, rpg-project#605, operator may veto) answers it for the single-room dialect only: the dialect
+decodes `at`/`path` into its own axial cell type (`RoomCell`, `{ q, r }`) and its cells frame answers
+the grammar in axial; v2 keeps `SelectorSpec.At *[2]int`.
 
 ### 5. The proof is the pictures
 
