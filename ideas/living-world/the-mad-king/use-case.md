@@ -349,7 +349,8 @@ conversation tree; word spreads; the challenge (§5, on the list).
   are drawn with right angles. **Dialect limit found:** the
   v4 World Builder dialect has no frame for authored cells, so `path` and
   `at` are v2-only until the sites layer; the studio-authored castle cannot
-  carry patrols until then.
+  carry patrols until then. Lifted by D1a (2026-10-16): the room's own
+  axial frame is the frame; `{ q, r }` in the single-room dialect.
 - **R8 — a row's `when` is a list; every entry must hold; `not: { … }`
   wraps a negative.** Row ordering is rejected: a rolled table must not be
   secretly ordered. One form for storm-the-keep, the challenge, and the

@@ -105,7 +105,8 @@ shipped sentence. This closes #1834's first deferred thread. The v2 counterpart
 No key, sentence, or path changes in either dialect. `PlaceSpec` stays a union of prop and
 monster; the single-room split of actor and binding stays. `SelectorSpec.At` stays `*[2]int`:
 when the sites layer answers the frame question (rpg-project#479 §5), the cell type inside the
-grammar becomes the dialect's, and that is that wave's change, not this one.
+grammar becomes the dialect's, and that is that wave's change, not this one. D1a (the mad
+king, 2026-10-16) is that change for the single-room dialect: the room frame, `{ q, r }`.
 
 ### 5. The proof is the pictures
 

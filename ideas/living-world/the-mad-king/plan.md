@@ -359,11 +359,13 @@ Order ruled 2026-10-15: D3 → D0 → D1 (rooms authored in the studio on the co
 
 ### Task D1: content + route scenarios
 
-**Delivers:** C1.
-**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (tests) and rpg-api `content/` (the file).
-**Prerequisites:** A, B, C merged and tagged; R8 ruled (or the storm-the-keep row authored with two rows and the assertion for it marked pending in the test).
-**Files:** `rpg-api/content/the-mad-king.yaml` (v2 dialect, the §2 file; stat blocks `guard`, `guard-captain`, `commoner`, `knight`, `mad-king` authored as templates per the stat-block initiative); `encounter/madking_test.go`: one test per §3 row, driving the compiled content with scripted dice through `Speak`, movement, attacks and ticks, asserting the facts in the journal (attributed, audience-scoped), the stance folds, the endings fired, and — for the kitchen-door rows — that no sighting landed. Zero castle names in non-test Go.
-**Verification:** `go test ./ -run MadKing -v | grep -c '=== RUN'` equals the number of §3 rows; the content compile test in rpg-api is green.
+**Delivers:** C1. **Tracking:** rpg-project#605 (the slice issue; #569 is the umbrella only). Restated 2026-10-16 as three PRs, one per sub-task, in order.
+
+- **D1a — encounter: `toward: { at }` and `toward: { path }` in the single-room dialect, in the room's own frame.** Ruling (lead, 2026-10-16, operator may veto): rpg-toolkit#1826 ruling 1 refused them "until the sites layer gives a creature somewhere to walk to"; the castle is that use case, and the room already has its frame — the axial `{ q, r }` every `startingCell.location` is written in. In this dialect `at` is `{ q, r }` and a `path` is a list of `{ q, r }`, never `[x, y]`, so bytes can never be confused with the v2 offset form. The two refusal sentences in `single_room_site.go` are replaced by the floor and route checks v2 has (waypoint must be floor; legs through floor; legs sharing a cell refused). v2 untouched. Tests: a v4 fixture with a patrol row compiles to the same `SelectorSpec`/compiled route as the v2 front-room patrol; `at: [x, y]` in v4 is refused by path with a sentence naming `{ q, r }`; a waypoint off the floor is refused by index; goldens for existing fixtures byte-identical.
+- **D1b — encounter tests + fixture.** `dungeonspec/testdata/world-builder-v4-castle.yaml` and one scenario test per §3 route the shipped primitives play: front door, troupe, troupe blown, turn the garrison, deposed, slain, scout (seven; the two kitchen-door rows are wave C, rpg-project#606). The file is the studio-exported castle geometry (web fixtures `castleS4.ts`/`castleKeep.ts` through the studio encoder) with the §2 gameplay keys written in single-room form, and the five stat blocks as file-local `templates:` (`guard`, `guard-captain`, `commoner`, `knight`, `mad-king`; base `dnd5e:monsters:human`, stored-is-authored like `castle-kitchen.yaml`). Precedent: `castle_cells_test.go`/`castle_cells_fight_test.go`. The §2 file in the use case is the content, not its spelling. Zero castle names in non-test Go.
+- **D1c — rpg-api: the file on the shelf.** `content/the-mad-king.yaml`, the `templated` map in `sessionworld/templates_test.go`, the atlas golden `internal/dungeons/testdata/atlas/the-mad-king.atlas.json`, the encounter pin. The default dungeon stays as is (rpg-api#1105 is separate).
+
+**Verification:** `go test ./ -run MadKing -v` in the encounter module runs seven tests green; the castle stack opens the file in the studio; Kirk walks the gate and the throne room. QA checklist on #605.
 
 ### Task D2: studio endings (U2)
 
@@ -393,10 +395,10 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | S1 contact Stealth | C1 | rogue passes / fails scene; #1020 closed |
 | U1 studio options | A5 | integration test authors the goblin |
 | U2 studio endings | D2 | emitted YAML compiles |
-| C1 content + every §3 route | D1 | `MadKing` test count = §3 rows |
+| C1 content + every §3 route | D1b | seven `MadKing` tests, one per shipped §3 row; the two kitchen rows under wave C (#606) |
 | C2 the walk | D-walk | checklist on #569 |
 | §3 "Scout" row (guard without option turns nothing) | D1 | asserted: `guards-turned` absent after speaking to `gate-1` |
-| Storm the keep yields to a sighting | B1, D1 | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
+| Storm the keep yields to a sighting | B1, D1a, D1b | `MadKing` turn-the-garrison row asserts the walk stops when a loyalist is seen |
 
 Deferrals (by the use case, not by this plan): allied, per-character stance, challenge, journal, tree, word-spreads mechanism, mind list.
 
