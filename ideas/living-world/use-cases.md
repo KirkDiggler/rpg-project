@@ -192,6 +192,16 @@ seat, tenancy, and any change to the `world` module's API — the tomb must
 be expressible with what v0.1.0 ships; friction is a finding, not a
 license to grow the kernel.
 
+## UC-5: The mad king (opened 2026-10-13)
+
+One castle, many ways in, many endings, authored in the studio by a UGC
+author rather than as a Go package. Fight in, pass the gate as a troupe,
+sneak by the kitchen door, or turn the garrison on its king. Written in
+full at [the-mad-king/use-case.md](the-mad-king/use-case.md): the file,
+the routes and assertions, the primitives with their state (options on a
+binding, hearing, `when: { fact }`, patrol), the rulings made, and the
+findings it surfaces.
+
 ## Seeds (named, not written)
 
 - The sight seam (F15→F26): who witnesses an act, from position and
