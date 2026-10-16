@@ -370,8 +370,9 @@ doors:
 ### 4.6 Projection (slice 2)
 
 - **C18. Footing — superseded by fog-of-war R9.** A presented wall adds no
-  footing cell to the recipient's atlas; a footprint hex enters it as sealed
-  scenery nobody owns when sight reaches that hex's wall face. The twin
+  footing cell to the recipient's atlas; a footprint hex enters it sealed, in
+  its region only when that region is otherwise on the member's map, when
+  sight reaches that hex's wall face. The twin
   invariant C18 protected still holds at a bound door: for a non-knower the
   unfound door is the wall it stands in, so its face teaches the threshold
   hex exactly as the twin's would (C19). Concealed footing stays withheld;

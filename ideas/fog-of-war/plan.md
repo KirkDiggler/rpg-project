@@ -529,10 +529,17 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   has not found a bound door, the door set in a structural wall's opening
   counts as that wall's face and teaches the threshold hex as a span does.
   `AtlasFor` presents a learned threshold under a still-withheld bound door as
-  sealed scenery nobody owns, so the non-knower's atlas equals the solid-wall
-  twin's. Without this, dropping presentation footing leaves a hole at every
-  unfound secret door (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true`
-  fails). Concealed footing under a wall stays withheld (design O4).
+  sealed footing, in its region only when that region is otherwise on the
+  member's map (compiled content makes a door-boxed threshold its own one-hex
+  region, which would name the door) and ownerless otherwise, so the
+  non-knower's atlas equals the solid-wall twin's; pinned by
+  `dungeonspec` `TestUnfoundSecretDoorRegionsEqualTheSolidTwin` (secret arm vs
+  solid twin, Regions equal). The masquerade fires only for a PRESENTED parent whose
+  presence covers the threshold centre; a hidden parent gets none, exactly as
+  on main (design O5, pre-existing). Without the masquerade, dropping
+  presentation footing leaves a hole at every unfound secret door
+  (`TestKnownWallKeepsFloorUnderAClosedDoor/secret=true` fails). Concealed
+  footing under a wall stays withheld (design O4).
 - `AtlasFor` predicate, exactly: a cell enters `Cells` when the member knows
   it (journal `known:cells`) and is not withheld by concealment; a learned
   threshold hex under a still-withheld bound door enters `Cells` and `Sealed`
@@ -578,12 +585,16 @@ asserts the positions and order. Pin T8b/T8c pseudo-versions, draft until tags.
 **T8e — rpg-dnd5e-web** `src/components/session/atlasToScene3D.ts`,
 `cellBorders.ts`:
 - Structural walls: replace `stretchesBesideLine(line…)` with
-  `stretchesAlongCells(line, footprintCells, stateOf)`: each footprint cell is a
-  sample at its centre's projection onto the line (t clamped 0–1); samples are
-  grouped by t (cells straddling an edge share a t, within 1e-6 of the length)
-  and a group takes the brightest state of its cells; groups sorted by t;
-  stretches split midway between groups whose state differs, exactly as
-  `stretchesBesideLine` splits today. `footprint_cells` reaches the render unit
+  `stretchesAlongCells(line, footprintCells, stateOf)`: a hex covers a SPAN of
+  the wall, not a point. Each footprint cell covers [min, max] of its six
+  corners projected onto the line, clamped to 0–1; the state at any t is the
+  brightest over the cells whose span covers t, absent where none does; the
+  line splits at the sorted span boundaries where that state changes, with cut
+  points within 1e-6 of the length treated as one cut and a span covering its
+  ends within the same tolerance (abutting cells differ by ~1e-16). Why not
+  points: an east-west wall sits between two rows offset half a hex, so its
+  cells project to alternating t and never share a sample; the walk showed 13
+  absent stretches on the south wall under point grouping. `footprint_cells` reaches the render unit
   through the atlas → `StructuralWallSurface` conversion (`structuralLayout.ts`),
   cells keyed as atlas cells are keyed today. A wall with no `footprint_cells`
   (older server) keeps today's side sampling, so dev ahead of the api does not
@@ -594,8 +605,11 @@ asserts the positions and order. Pin T8b/T8c pseudo-versions, draft until tags.
   hex draws only that stretch" (the replay case: a 23-sample vertical wall with
   footing hexes on odd rows, only the south corner's hexes known → one stretch
   at the corner, nothing else); "a wall whose footprint straddles an edge takes
-  the brighter side"; "a wall without footprint_cells grades as before".
-  `cellBorders.test.ts` (new) pins the projection and the split rule.
+  the brighter side"; "an east-west wall between staggered rows with one row
+  known draws as one stretch" (fails under point grouping); "two abutting
+  same-state spans with real coordinates give one stretch"; "a wall without
+  footprint_cells grades as before". `cellBorders.test.ts` (new) pins the
+  span projection and the split rule.
 
 **Walk (T8f, castle stack :3030/:8115, api at T8d head, web at T8e head):**
 1. Enter the cell block from the north door; stand so the west wall's south
@@ -625,7 +639,7 @@ seen (cover rule), not before.
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
 | R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
 | R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallEqualsItsSceneryTwin`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
-| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould` |
+| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestUnfoundSecretDoorRegionsEqualTheSolidTwin` |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |
