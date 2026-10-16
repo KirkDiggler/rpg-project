@@ -532,8 +532,9 @@ the knowledge of these cells and never re-derives them from the line. Additive;
   sealed footing, in its region only when that region is otherwise on the
   member's map (compiled content makes a door-boxed threshold its own one-hex
   region, which would name the door) and ownerless otherwise, so the
-  non-knower's atlas equals the solid-wall twin's; pinned by a dungeonspec
-  Regions twin test. The masquerade fires only for a PRESENTED parent whose
+  non-knower's atlas equals the solid-wall twin's; pinned by
+  `dungeonspec` `TestUnfoundSecretDoorRegionsEqualTheSolidTwin` (secret arm vs
+  solid twin, Regions equal). The masquerade fires only for a PRESENTED parent whose
   presence covers the threshold centre; a hidden parent gets none, exactly as
   on main (design O5, pre-existing). Without the masquerade, dropping
   presentation footing leaves a hole at every unfound secret door
@@ -638,7 +639,7 @@ seen (cover rule), not before.
 | R5 no cone, soft edge | T5 | `cellKnowledge.test.ts` edge weights, walk 4 |
 | R8 sharing defaults off; never-chosen is distinguishable; legacy keeps meaning | T7 | `TestUnchosenSharingResolvesPrivate`, `TestLegacyRecordWithoutPrivateStaysShared`, `TestChoiceIsSavedAndSurvivesReload`, `TestChoosingTheDefaultIsStillAChoice`, walk on #595 |
 | R9 wall known where sight reached its footprint; no presentation footing | T8a–T8e | `TestA11_APresentedWallEqualsItsSceneryTwin`, `TestStructuralWallCarriesItsFootprintCells`, `TestSightLearnsAWallsFootingByItsFace`, web "centre-line wall known at one footing hex", walk 1–3 on #600 |
-| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould` |
+| R9 the masquerade is the wall: a non-knower's atlas equals the solid-wall twin's at a secret door | T8b | `TestKnownWallKeepsFloorUnderAClosedDoor` (both arms, unchanged), `TestAnUnfoundSecretDoorTeachesItsThresholdAsTheWallWould`, `TestUnfoundSecretDoorRegionsEqualTheSolidTwin` |
 | R5 client computes no visibility | T5 | review check: no raycast or line-of-sight import under `src/components/session` |
 | Unknown floor is not a wall | T1 | `TestUnexploredCellsSynthesizeNoWall` |
 | Sight areas and concealment stay separate | T1 | `TestVisibleCellsExcludesSightAreaAndConcealment` |

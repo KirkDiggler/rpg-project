@@ -143,6 +143,6 @@ session delivers them; the client draws the state it is sent.
   floor if the body does not block, nothing if it does. The engine cannot
   answer because a structural wall declares no body blocker of its own; its
   blocking spans are separate placements linked only by name. This predates
-  R9. The primitive is a wall that declares whether its body blocks movement
-  and sight; the masquerade then answers exactly as the twin's solid wall
+  R9. One candidate primitive is a wall that declares whether its body blocks
+  movement and sight, so the masquerade can answer as the twin's solid wall
   would. Settle when a hidden wall with a secret door is authored.
