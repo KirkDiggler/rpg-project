@@ -1,7 +1,8 @@
 # Working agreements
 
-Cross-cutting rules for **every** dispatched agent, regardless of role. A charter
-(`<role>/prompt.md`) says who you are; this says how we all work.
+Cross-cutting rules for **every workspace session and dispatched agent**,
+regardless of role. A charter (`<role>/prompt.md`) says who you are; this says
+how we all work.
 
 Each item below was paid for. The date is when it bit us.
 
@@ -202,10 +203,12 @@ round. A new ownership/lifecycle seam needs human alignment before dependent
 layers build on it. Do not turn either category into a universal review pipeline.
 
 Use focused tests while editing and the owning repository's full readiness gate
-at its stated boundary. Reuse evidence tied to the same head, inputs, and relevant
-environment; do not repeat the same full suite just because a different agent is
-reporting. Material changes or uncertainty require fresh evidence. Required CI
-and hooks are never bypassed to save tokens.
+at its stated boundary. Identify the revision, inputs and relevant environment
+behind evidence, and reuse it while the checked behavior remains unchanged. A
+new reporter or session is not a reason to repeat a suite or review. When inputs
+or implementation change, identify the affected guarantees and refresh that
+proof; do not silently reuse invalidated evidence. Required CI and hooks are
+never bypassed to save tokens. Human-judgment handoffs follow §13.
 
 A rule-layer pass is not proof of every adapter or UI interaction. Exercise the
 changed seam with concrete provider facts, preserving identity, operators and
@@ -229,3 +232,58 @@ redirect an explicitly chosen process discussion into implementation/recovery.
 `game-dev/scripts/bump-toolkit-pin.sh` handles individual bumps, not a full chain.
 Do not invent a manifest schema, location, lifecycle, or rollout as part of these
 process updates. Revisit it from observed need; recording an idea does not adopt it.
+
+## 13. Execute the agreed brief to its finish line
+
+For multi-step work, keep one resumable execution brief on the linked issue/PR
+or in a working document linked there. Use the operator's existing decisions;
+do not make them repeat the task or approve another stage. A short issue comment
+can be enough. Do not create an issue or a new task store for every command or
+ordinary question.
+
+The brief names:
+
+- **Outcome and scope:** the deliverable, its owner, constraints and non-goals.
+- **Finish line:** observable evidence and required artifacts, including the PR
+  state when a PR is part of the task. One finished subtask is not the whole goal.
+- **Authority and stops:** what can proceed without another prompt, what remains
+  operator-owned, and the specific decisions or conditions that require a pause.
+- **Resume point:** current branches/worktrees, completed and remaining work,
+  relevant evidence/decisions, and the next unblocked action.
+
+Agreement authorizes faithful execution through that finish line: ordinary
+implementation, investigation, fixes, tests and documentation, plus commits and
+opening the PR when they are part of the agreed delivery. Progress updates are
+informational, not permission requests. Do not end after X merely announcing Y
+and Z, or ask whether to continue work the operator has already authorized.
+Repository gates still apply; this is not permission to delegate, merge, deploy,
+change global configuration or take destructive actions without their required
+authority.
+
+**Bound verification; do not halt execution at every check.** Run meaningful
+mechanical checks and repair failures. When repeated automated reviews, renders
+or checks are circling a visual, artistic or experiential question the operator
+can judge faster, stop that loop. Provide one focused artifact or reproducible
+walk, what the mechanical evidence establishes, and the specific remaining
+question with a recommendation. Human judgment does not replace mandatory
+technical checks or prove claims it did not exercise. After the answer, carry
+it into the brief and continue the remaining authorized work without another
+blanket go-ahead. Reopen accepted evidence only when a relevant change or new
+finding invalidates it.
+
+Pause affected work for a real scope/contract/authority decision or an external
+blocker that bounded investigation cannot resolve; name the consequence and
+what would unblock it. Keep independent authorized work moving. Respect an
+operator's change of focus, including choosing discussion rather than execution.
+
+Before ending a work response, check the brief. Either report the delivered
+artifact and actual readiness, ask the concrete decision question with its
+artifact/evidence, or explain the real blocker and resume condition. If none
+applies and authorized work is unblocked, continue working. A promise of the
+next step is not a completion report. Do not invent a question when work is done
+or only an external wait remains.
+
+On resume, read the linked brief and reconcile it with git and actual artifacts.
+Continue from the next unblocked action; do not restart brainstorming, reopen
+settled decisions or rerun unchanged verification solely because the session
+changed. Local continuity may point to the brief but is not its only copy.

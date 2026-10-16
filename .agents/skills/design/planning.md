@@ -51,6 +51,9 @@ whole result. Independent unit tests are not proof of a changed wire or UI seam.
 Every plan names:
 
 - **Goal and scope:** the intended outcome and explicit non-goals.
+- **Finish line:** required delivery artifacts, evidence and PR state, plus any
+  operator-owned judgments/actions. Decomposing the work does not narrow the
+  approved goal to the first task.
 - **Authority:** links to the approved design/brief and recorded agreement.
 - **Constraints:** binding invariants and exact agreed values, plus references
   to the owning instructions. Do not copy entire policy documents.
@@ -183,8 +186,12 @@ The final readiness test is:
 If not, repair the plan before starting affected work. A worker may choose local
 implementation details; a worker must not rediscover the design.
 
-For direct execution, work task-by-task from the same checked plan. For
-operator-authorized delegation, provide the selected task, relevant constraints,
+For direct execution, work task-by-task through the agreed finish line under
+the shared [execution contract](../../../docs/teams/roles/working-agreements.md#13-execute-the-agreed-brief-to-its-finish-line).
+A task-level success or a progress update does not require another permission
+prompt. Keep the issue-linked resume point and evidence current; on resumption,
+reconcile the actual state rather than restarting completed work or approvals.
+For operator-authorized delegation, provide the selected task, relevant constraints,
 design/issue links, exact prerequisite interfaces, workspace/base and required
 instruction chain from the working agreements. Linked material must be reachable
 from the worker's environment. Handoff readiness does not authorize delegation,
