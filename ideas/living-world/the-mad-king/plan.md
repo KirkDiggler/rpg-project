@@ -1,6 +1,6 @@
 ---
 name: The mad king — implementation plan
-status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); **wave A SHIPPED 2026-10-13** (protos v0.1.234, encounter v0.128.0, session v0.134.0, api dev f1d67fa9, web dev 84bb912a); **wave B SHIPPED 2026-10-13** (protos v0.1.235, dnd5e v0.213.0, mind/behavior v0.7.0, encounter v0.129.0, session v0.135.0, api dev 8f22676a, web dev 1ec90316; walked, QA passed on #569; rulings R10, R11 and the R7/DC refinements recorded in use-case.md); waves A, B, D3, D0, D1, D1d shipped; D2 shipped with studio S4; wave C (#606) open; D-walk pending
+status: PLAN, derived 2026-10-13 from use-case.md §4–§6; checked against inspected code (baseline below); AGREED by the operator 2026-10-13 (R8 and the assumptions settled); **wave A SHIPPED 2026-10-13** (protos v0.1.234, encounter v0.128.0, session v0.134.0, api dev f1d67fa9, web dev 84bb912a); **wave B SHIPPED 2026-10-13** (protos v0.1.235, dnd5e v0.213.0, mind/behavior v0.7.0, encounter v0.129.0, session v0.135.0, api dev 8f22676a, web dev 1ec90316; walked, QA passed on #569; rulings R10, R11 and the R7/DC refinements recorded in use-case.md); waves A, B, D3, D0, D1, D1d, the fold (#611) shipped; D2 shipped with studio S4; wave C (#606) open; D-walk pending
 authority: use-case.md (rulings R1–R7, routes §3, primitives §4); rpg-project#569; PR #570; the operator's agreement in session 2026-10-13 ("enough to make the plan")
 planning guide: ../../../.agents/skills/design/planning.md
 ---
@@ -372,6 +372,15 @@ Order ruled 2026-10-15: D3 → D0 → D1 (rooms authored in the studio on the co
 
 **Verification:** `go test ./ -run MadKing -v` in the encounter module runs eleven tests green (seven routes; the one-way-in and wall-boundary pins; the gate-door and keen-ear hearing tests from D1d); the castle stack opens the file in the studio; Kirk walks the gate and the throne room. QA checklist on #605.
 **Walked:** scripted walks on the castle stack (gate, yard, hall, kitchen door on the world clock; studio open with the patrol read back in words). Kirk's walk pending on #605. Issues filed from the walks: rpg-toolkit#2066 (hearing through studio doors), #2068 (sight lanes ignore the void; the single-room dialect refuses `void: opaque`), #2069 (a march cannot open a door); rpg-dnd5e-web#1291 (movement readout), #1292 (read-back "the speaker learns" vs the audience); #940 reproduced (unseen creatures' moves and table answers in the story; #2067 closed as its duplicate).
+
+### Task Fold (#611): one castle
+
+**SHIPPED 2026-10-17.** Operator ruling: one castle entry, kept up to date. rpg-toolkit#2072 → main 71282ee5 → encounter v0.133.6.
+- **The cells:** a 12×8 block under the barracks. Its locked door is DC 13 with thieves' tools; `opened` writes `cells-opened`, which ends the run `freed`. A sergeant and a turnkey stand outside the door in the garrison; the prisoners are their own neutral faction.
+- **The kitchen:** the prop `orders` holds `captains-orders` and reveals `party-recognized`, so carrying the orders to the captain turns the garrison. A scullion is added.
+- **The yard** is cut to rows -6..6. `guard-bribed` is dropped; the file's header notes the authoring hook. New tests: `TestMadKingPickingTheCellLockEndsTheRunFreed`, `TestMadKingTheOrdersTurnTheGarrison`.
+- **The shelf:** rpg-api#1115 (in flight; re-pinned to the tag) moves `castle-kitchen.yaml` to test content and deletes `the-mad-king-cells.yaml`, leaving one castle. rpg-dnd5e-web#1295 (in flight) re-syncs the fixtures. The default dungeon, the v2 retirement and clearing mounted content are deferred to rpg-api#1105.
+- **Walked** on the stack: the lock picked under the guards' eyes ends the run `freed` with no fight; the orders turn the garrison hostile in the gatehouse. Filed from the walks: rpg-dnd5e-web#1296, #1297, rpg-api-protos#396 (no door verb in Afford). Open content question in use-case §5: the cells' `freed` timing.
 
 ### Task D2: studio endings (U2)
 
