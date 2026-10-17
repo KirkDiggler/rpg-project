@@ -379,7 +379,7 @@ Order ruled 2026-10-15: D3 → D0 → D1 (rooms authored in the studio on the co
 - **The cells:** a 12×8 block under the barracks. Its locked door is DC 13 with thieves' tools; `opened` writes `cells-opened`, which ends the run `freed`. A sergeant and a turnkey stand outside the door in the garrison; the prisoners are their own neutral faction.
 - **The kitchen:** the prop `orders` holds `captains-orders` and reveals `party-recognized`, so carrying the orders to the captain turns the garrison. A scullion is added.
 - **The yard** is cut to rows -6..6. `guard-bribed` is dropped; the file's header notes the authoring hook. New tests: `TestMadKingPickingTheCellLockEndsTheRunFreed`, `TestMadKingTheOrdersTurnTheGarrison`.
-- **The shelf:** rpg-api#1115 (merged at dev b2a5f601, pinned to the tag) moves `castle-kitchen.yaml` to test content and deletes `the-mad-king-cells.yaml`, leaving one castle. rpg-dnd5e-web#1295 (in flight) re-syncs the fixtures. The default dungeon, the v2 retirement and clearing mounted content are deferred to rpg-api#1105.
+- **The shelf:** rpg-api#1115 (merged at dev b2a5f601, pinned to the tag) moves `castle-kitchen.yaml` to test content and deletes `the-mad-king-cells.yaml`, leaving one castle. rpg-dnd5e-web#1295 (merged at dev 7212ec48) re-syncs the fixtures. The default dungeon, the v2 retirement and clearing mounted content are deferred to rpg-api#1105.
 - **Walked** on the stack: the lock picked under the guards' eyes ends the run `freed` with no fight; the orders turn the garrison hostile in the gatehouse. Filed from the walks: rpg-dnd5e-web#1296, #1297, rpg-api-protos#396 (no door verb in Afford). Open content question in use-case §5: the cells' `freed` timing.
 
 ### Task D2: studio endings (U2)
