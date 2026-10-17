@@ -319,6 +319,10 @@ conversation tree; word spreads; the challenge (§5, on the list).
   keep at the file's numbers: a voice is DC 5, passive Perception 10, and
   the keep is 4 to 6 hops away. A content question for the operator: a
   louder alarm kind, keener ears, or a relay.
+- **Found by the fold (rpg-project#611).** The cells' `freed` ending fires
+  when the door opens, so the prisoners' lines are never reachable. A
+  content question for the operator: should the ending wait for a prisoner
+  at the postern?
 - **Found by D1.** Sight lanes ignore the void, and the single-room dialect
   refuses `void: opaque` (rpg-toolkit#2068).
 - **Found by D1.** A march cannot open a door; the throne door is authored
