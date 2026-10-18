@@ -1,0 +1,383 @@
+---
+name: Sneaking — implementation plan
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1
+authority: design.md rulings R1–R5 (operator, 2026-10-18, rpg-project#606); R6–R16 take effect on the operator's agreement on the design PR (design.md O1)
+planning guide: ../../.agents/skills/design/planning.md
+---
+
+# Sneaking — implementation plan
+
+## Goal and scope
+
+A player declares sneaking in free roam; each watcher's red zone triggers one
+Stealth roll per entry; a win keeps the sneaker out of that watcher's sight;
+the sneaking player sees the zones as a red floor. Facing ships first, cones
+last. Four slices, in order, one module per PR:
+
+| slice | delivers | slice issue | closes |
+|---|---|---|---|
+| **C-facing** | members carry a facing; steps, targets and authored facing set it; sightings carry it; the web draws it | rpg-project#582 | #582 on F4 |
+| **C-sneak** | the mode, the roll at the reach seam, suppression, the `Snuck` beat, half pace, the kitchen-door routes | rpg-project#606 | rpg-toolkit#1020 and #606 on S1 |
+| **C-zone** | the red floor: watch zones on `GetView`, drawn by the web | new slice issue, opened when the slice starts | that issue on Z4 |
+| **C-cone** | an arc per watcher narrows its zone; authored on the placement | new slice issue, opened when the slice starts | that issue on K1 or K3, whichever lands last |
+
+**Non-goals (R16):** footfall sounds; surprise costing a turn; a monster that
+sneaks; the drop arm stopping a walk; sneaking on the turn clock.
+
+## Finish line
+
+Every slice: its PRs merged inside-out on released tags; its one-off
+studio-authored site in the encounter module's testdata with ONE scenario
+test green; the walk on the castle stack (web :3030, api :8115) with the QA
+checklist posted on the slice issue as `- [ ]` boxes and ticked from the walk;
+the record (this plan's task marked shipped with versions, the mad king use
+case's route rows updated). C-sneak additionally lands the two kitchen-door
+route assertions on the castle content (use case §3), which closes #606.
+Operator-owned: agreement on R6–R16 before S1 starts; the walk sign-off on
+each slice issue.
+
+## Constraints
+
+- One nearest-`go.mod` module per toolkit PR; develop outside-in on pushed
+  pseudo-versions; protos merge first; inside-out merge only after the walk;
+  CI mints tags (`rpg-toolkit/CLAUDE.md`).
+- Protos additive, `[deprecated = true]` never in-place; `buf format -w`,
+  `buf lint`, `buf breaking` against main (`rpg-api-protos/CLAUDE.md`).
+- Zero castle names in non-test Go.
+- The encounter never compares a Stealth total, never halves a speed and
+  never rolls (C1, C8; design R8, R10).
+- Fog-of-war law stands: one sight test (its R5), per seat, no client
+  visibility.
+- Toolkit/api/web PRs on pseudo-versions open draft; protos and this
+  repository's PRs open ready.
+
+## Inspected baseline (2026-10-18)
+
+| repo / module | revision |
+|---|---|
+| rpg-toolkit main | 71282ee5 |
+| `rulebooks/dnd5e/encounter` | v0.133.6 |
+| `rulebooks/dnd5e/session` | v0.137.2 |
+| rpg-api-protos main | 1353bb7f (v0.1.238) |
+| rpg-api dev | b2a5f601 |
+| rpg-dnd5e-web dev | 7212ec48 |
+
+Inspected seams: `sight.go` (`Sight`; its doc names the stealth answer's home
+beside reach in `rebuildPercepts`), `sightreach.go` (`sightReach.Reaches`,
+`reachesCell`, `newSightReach`), `encounter.go` (`rebuildPercepts`),
+`trigger.go` (`classify`, the drop arm), `conceal.go` (`CheckResolver`,
+`ResolveCheckInput`/`Output`), `discovery.go` (`sweepDiscoveryChecks`,
+`BeatDiscoveryChecked`, persisted attempts), `sheets.go` (`SheetFacts`),
+`worldtime.go` (pace from `SpeedFeet`), `testimony.go` (`SightTestimony`),
+`field.go` (`MemberInput`, `JoinInput`, `memberRecord`), `dungeonspec/compile.go`
+(`MonsterPlacement.Facing`, `StartFacing`); session `conceal.go`
+(`checkSeam`, `resolveStagedCheckPoseable`), `exploration.go` (every player
+staged as a discovery observer), `sheets.go`, `launch.go`, `capabilities.go`;
+protos `types.proto` (`Sighting`), `service.proto` (`GetViewResponse`),
+`events.proto` (`EVENT_KIND_HEARD` 46, `EVENT_KIND_CELLS_REVEALED` 47,
+`DiscoveryChecked`, `RollCalculation`); web `hex-grid/useEntityFacing.ts`,
+`hex-grid/facingYaw.ts` (`facingToYaw`).
+
+## Sequence
+
+```
+F0 protos ─▶ F1 encounter ─▶ F2 session ─▶ F3 api ─▶ F4 web ─▶ F-walk ─▶ F-record
+S0 protos ─▶ S1 encounter ─▶ S2 session ─▶ S3 api ─▶ S4 web ─▶ S-walk ─▶ S-record
+Z0 protos ─▶ Z1 encounter ─▶ Z2 session ─▶ Z3 api ─▶ Z4 web ─▶ Z-walk ─▶ Z-record
+K1 encounter ─▶ K2 session ─▶ K3 web (studio field) ─▶ K-walk ─▶ K-record
+```
+
+S1 develops on F1's pushed pseudo-version (the zone's cone is not needed, but
+the persisted member shape is shared). Z1 needs S1 (the zone and the mode).
+K1 needs F1 (facing) and Z1 (the zone function it narrows). Merge order in
+each slice: protos → encounter → session → api → web. No slice shares a
+branch with another; each catches up by a commit on top of the merged tag.
+
+## Open items
+
+| item | state |
+|---|---|
+| R6–R16 agreed on the design PR | **blocks S1, Z1, K1**; F-slice proceeds on R4 alone |
+| The kitchen route's inner door is forceable on the castle file | S1 verifies; if it is not authored `locked`, S1 adds the lock in the castle fixture (content, same module) |
+| A forced door's crash reaches the keep knights | S1 measures the hop count at the file's numbers; the use case's "within 2 hops" is a content number, tuned in the castle file, never in Go |
+| An unset authored facing seeds 180 (south) | matches the web's heading 0 = south today; F4 pins both sides agree |
+| Half speed rounds through `CellsFromFeet` | no rounding of its own in session |
+
+---
+
+## C-facing (rpg-project#582)
+
+### Task F0: protos — facing on a sighting
+
+**Delivers:** R13 (wire half).
+**Owner:** rpg-api-protos, `dnd5e/api/session/v1alpha1/types.proto`.
+**Prerequisites:** none.
+**Files:** `types.proto` `message Sighting`.
+**Interfaces:** `optional float facing_degrees = <next free>;` with the doc:
+bearing in degrees, 0 is map north, clockwise, `[0, 360)`; absent means the
+testimony predates facing; testimony, so a remembered sighting carries the
+facing last seen.
+**Behavior:** additive only.
+**Tests:** none hand-written (no hand-written tests in protos).
+- [ ] Add the field and doc; `buf format -w`; `buf lint`; `buf breaking --against main`; `buf generate` compiles.
+**Verification:** the four buf commands green in the protos repo root.
+**Completion evidence:** merged PR, released tag.
+
+### Task F1: encounter — facing as member state and testimony
+
+**Delivers:** R4, R13.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (includes `dungeonspec`).
+**Prerequisites:** none.
+**Files:** `field.go` (`MemberInput.Facing *float64`, `JoinInput.Facing *float64`, `memberRecord.Facing float64`, `Member.Facing`), `data.go` (member data `facing`, `*float64`, nil on load seeds 180), `facing.go` (new: `FacingFromCompass(word string) (float64, error)` for the eight words n=0 … nw=315, and `bearing(from, to spatial.Position) float64` through the field's `Orientation` to map space), `step.go` (`Encounter.Step` writes the step's bearing), the table driver's walk end in `tabledriver.go` and the turn driver's attack intent in `turndriver.go` (face the intent's target member), `outcome.go` record path for an attack (`RecordTrain`: attacker faces target), `testimony.go` (`SightTestimony.Facing *float64`), `encounter.go` (`rebuildPercepts` snapshots facing), `dungeonspec/compile.go` (placement `Facing` lowered through `FacingFromCompass` into `MemberInput.Facing`; `StartFacing` exposed for the session).
+**Interfaces:** `Member.Facing float64`; `SightTestimony.Facing *float64`; `FacingFromCompass` exported because content and the session need the one conversion.
+**Behavior:** a member seeded with no facing faces 180; each step sets the bearing from the old cell to the new; a walk whose intent names a target member ends facing that member's cell; an attack record turns the attacker toward its target; an unknown compass word is refused at the dialect by path; facing persists and round-trips.
+**Tests:**
+- `dungeonspec/testdata/facing-site.yaml` (one-off studio-authored site: one room, a patrol knight on a four-waypoint path with authored `facing: e`, a guard with `toward: enemy`) and one scenario test `TestFacingSite`: the knight starts at 90; after one world round its facing equals the bearing of its first patrol step; a player walks into the guard's sight, the guard walks and stops adjacent, its facing equals the bearing to the player; the player's own sighting of the knight carries the knight's facing; a save and load keeps all three.
+- `facing_test.go`: the six axial step directions under pointy and flat orientation give the six expected bearings (table); `FacingFromCompass` for all eight words and a refusal.
+- [ ] Write the tests; run `go test ./ -run 'Facing' -count=1`; confirm failure.
+- [ ] Implement; run `go test ./... -count=1`; goldens unchanged except fixtures that now carry facing.
+**Verification:** `go test ./... -count=1` and `-race` on the castle suite in `rulebooks/dnd5e/encounter`.
+**Completion evidence:** green run, PR, pseudo-version for F2.
+
+### Task F2: session — authored facing reaches play
+
+**Delivers:** R13 (session half).
+**Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
+**Prerequisites:** F1 pseudo-version.
+**Files:** `launch.go` (placement `Facing` into `MemberInput.Facing` via the compiled member input; players seated with `JoinInput.Facing` from `StartFacing`), the sighting projection in `convert.go` (carry `SightTestimony.Facing` onto the session's sighting type), `go.mod` encounter pin.
+**Interfaces:** session sighting type gains `Facing *float64`.
+**Behavior:** a launched castle's knights start at their authored facing; an absent facing projects as absent.
+**Tests:** `launch_test.go`: a placement with `facing: w` launches a member facing 270, and its sighting carries 270.
+- [ ] Test, implement, `go test ./... -count=1`.
+**Verification:** module tests green.
+**Completion evidence:** PR, pseudo-version for F3.
+
+### Task F3: rpg-api — convert facing
+
+**Delivers:** R13 (api half).
+**Owner:** rpg-api session v1alpha1 convert.
+**Prerequisites:** F0 tag, F2 pseudo-version.
+**Files:** the sighting conversion in the session handler's `convert.go`; `go.mod` pins.
+**Behavior:** `Sighting.facing_degrees` set when the toolkit sighting has a facing; unset otherwise.
+**Tests:** convert table test: present → set, absent → unset.
+**Verification:** `make pre-commit` (or the repo's gate) green.
+**Completion evidence:** PR (draft until tags), pseudo-version pins replaced at merge.
+
+### Task F4: web — draw the wire's facing
+
+**Delivers:** R13 (web half); closes #582.
+**Owner:** rpg-dnd5e-web `src/components/hex-grid`.
+**Prerequisites:** F0 bindings, F3 on the stack.
+**Files:** `facingYaw.ts` (add `degreesToYaw(deg: number): number`, composing the existing table-angle step), `useEntityFacing.ts` (when the sighting has `facingDegrees`, use it; derive from movement only when absent).
+**Behavior:** a sighting with a facing draws that facing; the studio and play agree for the eight compass words.
+**Tests:** `facing.test.ts`: for each compass word, `degreesToYaw(FacingFromCompass-equivalent)` equals `facingToYaw(word)`; `useEntityFacing.test.ts`: a sighting with `facingDegrees: 90` yields the east yaw and ignores movement history.
+**Verification:** `npm run typecheck && npm test` green; screenshot of the facing site in play showing the knight facing east.
+**Completion evidence:** PR body `Closes KirkDiggler/rpg-project#582`.
+
+### F-walk and F-record
+
+Walk the castle: the keep knights face along their patrol; a guard that stops
+faces the player; reload keeps facings. QA checklist on #582. Record: mark F0–F4
+shipped here with versions.
+
+---
+
+## C-sneak (rpg-project#606)
+
+### Task S0: protos — the verb, the mode on the view, the beat
+
+**Delivers:** R6, R12 (wire half).
+**Owner:** rpg-api-protos.
+**Files:** `service.proto` (`rpc SetSneaking(SetSneakingRequest) returns (SetSneakingResponse)`; request `{session_id, member, sneaking bool}`, response `{sneaking bool}`; `GetViewResponse.sneaking bool = 6`), `events.proto` (`EVENT_KIND_SNUCK = 48`; `message Snuck { string member = 1; string watcher = 2; int32 dc = 3; int32 total = 4; bool beaten = 5; RollCalculation calculation = 6; }` with doc: recipient-scoped to the mover; `watcher` empty when the mover does not see it; the oneof gains `Snuck snuck = <next free>`).
+**Tests:** buf lint/format/breaking/generate.
+**Completion evidence:** merged PR, released tag.
+
+### Task S1: encounter — mode, judgement, suppression, beat, kitchen-door routes
+
+**Delivers:** R1–R3, R6, R7, R9–R12, R16; closes rpg-toolkit#1020 and rpg-project#606.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
+**Prerequisites:** R6–R16 agreed; F1 merged or its pseudo-version.
+**Files:**
+- `sneak.go` (new): `SetSneakingInput{Member MemberID; Sneaking bool}`, `SetSneakingOutput{Sneaking bool}`, `Encounter.SetSneaking`, `Encounter.Sneaking(member) bool`; `BeatSnuck = "snuck"`; `sneakVerdict{Beaten bool; At uint64}`; `watchZone(watcher MemberID, reach sightReach) map[spatial.Position]bool`; `judgeSneakers(reach sightReach, at uint64) error`; `endSneaking(member MemberID)`.
+- `field.go` / `data.go`: `memberRecord.Sneaking bool`; `EncounterData.SneakVerdicts map[MemberID]map[MemberID]SneakVerdictData` (persisted; validated: both ids members, mover a player).
+- `sightreach.go`: `sightReach` gains `sneaking map[MemberID]bool` and `suppressed map[MemberID]map[MemberID]bool`; `Reaches` answers false when `subject` is sneaking and `observer`→`subject` is suppressed or the subject's cell is outside the observer's zone. `reachesCell` is unchanged (zones, fog and discovery keep asking it).
+- `encounter.go` `rebuildPercepts`: after `geometry := e.newSightReach(...)` and before `intelLog.Observe`, call `judgeSneakers(geometry, clockReading)`, then set the suppression map on the geometry.
+- Verbs that end the mode: `Speak` (`option.go`), `RecordCast` (`cast.go`), the attack record (`RecordTrain`), `Exit`, and `formation` in `trigger.go` (every engaged member).
+- `sheets.go` doc: `PassivePerception` is the DC for hearing and for a sneaker's Stealth.
+- `conceal.go` doc: `ResolveDiscoveryCheck` decides any automatic attempt the composition triggers, a sneak roll included.
+- `dungeonspec/testdata/sneak-site.yaml` (one-off studio-authored site: two rooms, a doorway, a knight with passive 10 pacing the far room, a civil cook in the near room).
+- `dungeonspec/testdata/world-builder-v4-castle.yaml`: header lines for the kitchen-door routes; the inner kitchen door's lock if absent (Open items).
+- `dungeonspec/castle_king_kitchen_test.go` (new).
+**Interfaces:** `CheckResolver.ResolveDiscoveryCheck(&ResolveCheckInput{Member: mover, Approaches: []CheckApproach{{Ability: "stealth", DC: max(passive, 1)}}})`. Beat payload `{"beat":"snuck","member":…, "watcher":… (omitted unless the mover holds it live), "dc":…, "total":…, "beaten":…, "calculation":…}`, audience `[mover]`, tag `snuck`.
+**Behavior:**
+- `SetSneaking` refuses a non-player (`ErrNotMember`), a member in a bubble (`ErrNotFreeRoam`, new, or the existing turn-clock refusal if one fits), a closed run (`ErrClosed`), and an encounter whose `checkResolver` is nil (`ErrNoCheckResolver`). It spends no time and refreshes nothing.
+- `judgeSneakers`: for each sneaking placed player (sorted) and each placed non-player watcher (sorted): in zone and no verdict → resolve, store, beat; out of zone and a verdict → clear; in zone with a verdict → nothing.
+- A resolver error aborts the verb atomically (R5 of the encounter).
+- Ending the mode clears every verdict the mover holds.
+**Tests:**
+- `TestSneakSite` (the one scenario test, on `sneak-site.yaml`, scripted resolver): the rogue declares sneaking and walks through the doorway; one `snuck` beat, audience the rogue alone, names the knight; the knight's holdings never gain the rogue; no bubble forms; the walk continues to its end; the rogue leaves the zone and re-enters, and a second beat lands; the resolver is asked exactly twice over the whole walk. Variant in the same test: a scripted loss forms the fight with the existing surprise label; a loss against the cook forms no fight and the cook holds the rogue.
+- `sneak_test.go` focused cases: `SetSneaking` refusals (four); attack, cast, speak and formation each clear the mode and its verdicts; a non-sneaking mover in the same doorway is seen exactly as before (R2); the watcher's prior holding fades to a ghost after a won roll, never removed (R11); a watcher the rogue cannot see gets a beat with no `watcher`; save and load between two steps does not re-roll.
+- `castle_king_kitchen_test.go`: `TestMadKingKitchenDoorSneaksPastTheKnights` (rogue +7, scripted 15 against the knights' passive: no keep knight holds the party, no bubble forms before the throne room, the party reaches the throne room door); `TestMadKingKitchenDoorHeard` (the fighter forces the inner door: the crash lands on the knights in range; the knight's `heard` row walks it to the door; the sneaking party is in its zone; a scripted 2 loses; its `enemy: seen` row shouts; `alarm-raised` lands on hearers; reserves arrive).
+- [ ] Tests first; `go test ./ -run 'Sneak' -count=1` fails; `go test ./dungeonspec -run 'MadKingKitchen' -count=1` fails.
+- [ ] Implement; full `go test ./... -count=1`; castle suite with `-race`.
+**Verification:** as above, in `rulebooks/dnd5e/encounter`.
+**Completion evidence:** PR body `Closes KirkDiggler/rpg-toolkit#1020` and `Closes KirkDiggler/rpg-project#606`.
+
+### Task S2: session — the verb, staging, half pace, the event
+
+**Delivers:** R6, R8, R10 (roll half), R12 (stream half).
+**Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
+**Prerequisites:** S1 pseudo-version.
+**Files:** `sneak.go` (new: `SetSneakingInput{Member string; Sneaking bool}`, `SetSneakingOutput{Sneaking bool}`, `Manager.SetSneaking`), the write scope's staging in `exploration.go` (stage every sneaking player for checks on every write verb, beside the discovery observers), `sheets.go` (`SpeedFeet` halved when `enc.Sneaking(id)`), `view.go`/`projectView` (`ViewOutput.Sneaking`), events (`EventSnuck`, `SnuckBody`), `go.mod` pin.
+**Behavior:** the roll runs through `checkSeam.ResolveDiscoveryCheck` on `m.dice`; a verb by player B that walks a knight into sneaking player A rolls for A with A's staged record; half speed only while sneaking.
+**Tests:** `sneak_test.go`: the verb round-trips and persists; a sneaking player's world-clock pace is half (cells per round); a monster's walk on another player's verb rolls for the sneaker (resolver asked with the sneaker's id); the `Snuck` event reaches the sneaker's stream only.
+**Verification:** `go test ./... -count=1` in the module.
+**Completion evidence:** PR, pseudo-version for S3.
+
+### Task S3: rpg-api — the handler and the conversions
+
+**Delivers:** R6, R12 (api half).
+**Owner:** rpg-api.
+**Prerequisites:** S0 tag, S2 pseudo-version.
+**Files:** the session v1alpha1 handler (`SetSneaking`, caller bound as in `SetDiscoverySharing`), `convert.go` (`GetViewResponse.sneaking`, `Event.snuck`), pins.
+**Tests:** handler test: a caller cannot set another member's mode; convert test for `Snuck` with and without a watcher.
+**Verification:** the repo's pre-commit gate.
+
+### Task S4: web — the toggle and the roll
+
+**Delivers:** R1, R5 (web half).
+**Owner:** rpg-dnd5e-web.
+**Prerequisites:** S0 bindings, S3 on the stack.
+**Files:** a `SneakToggle` in the free-roam action bar (hidden while in a fight), the story renderer for `snuck` (the roll as a seen roll with its calculation; "something is watching" when `watcher` is empty), the session event switch.
+**Tests:** toggle sends `SetSneaking` and reflects `GetViewResponse.sneaking`; story line for both `Snuck` shapes.
+**Verification:** typecheck, tests, screenshot.
+
+### S-walk and S-record
+
+Walk the kitchen door on the castle stack: sneak past the keep knights; force
+the inner door and get caught; stop sneaking in a knight's zone and be seen.
+QA checklist on #606. Record: mark S0–S4 shipped; the use case's two
+kitchen-door rows asserted; the mad king plan's C1 line already points here.
+
+---
+
+## C-zone (slice issue opened at start)
+
+### Task Z0: protos — watch zones on the view
+
+**Delivers:** R15 (wire half).
+**Files:** `service.proto`: `message WatchZone { string watcher = 1; repeated Position cells = 2; }`; `GetViewResponse.watch_zones = 7` with the doc: only while the viewer sneaks; one per watcher the viewer sees now; cells a subset of the viewer's atlas cells, sorted as `visible_cells`.
+**Tests:** buf checks.
+
+### Task Z1: encounter — `WatchZonesFor`
+
+**Delivers:** R9, R15.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
+**Prerequisites:** S1.
+**Files:** `watchzones.go` (new: `WatchZonesInput{Member}`, `WatchZonesOutput{Zones []WatchZone}`, `WatchZone{Watcher MemberID; Cells []spatial.Position}`, `Encounter.WatchZonesFor`), reusing `newSightReach` and `watchZone` from S1; `dungeonspec/testdata/zone-site.yaml`.
+**Behavior:** empty when the viewer does not sneak or is unplaced; one zone per watcher whose holding by the viewer has `CurrentVia` non-empty; cells ∩ the viewer's known cells minus cells concealed from the viewer; sorted by the atlas comparator.
+**Tests:** `TestZoneSite` (one scenario): a sneaking viewer sees one knight and not a second behind a wall; one zone, the first knight's; no zone cell outside the viewer's known cells; not sneaking → no zones; the knight walks and the zone moves with it.
+**Verification:** module tests.
+
+### Task Z2: session — project the zones
+
+**Files:** `projectView` (`ViewOutput.WatchZones` unchanged pass-through), pin.
+**Tests:** a view of a sneaking member carries the encounter's zones byte-equal.
+
+### Task Z3: rpg-api — convert zones
+
+**Files:** `convert.go` for `GetViewResponse.watch_zones`. **Tests:** convert table test.
+
+### Task Z4: web — the red floor
+
+**Delivers:** R5, R15 (web half).
+**Files:** `WatchZoneFloor` in the session scene, fed from the view's `watchZones`, drawn over the fog-of-war floor state; no zone math.
+**Tests:** a view with two zones tints exactly their cells; an empty list tints nothing.
+**Verification:** typecheck, tests, screenshot of the castle keep with the floor red at the knights' reach.
+**Completion evidence:** PR body closes the slice issue.
+
+### Z-walk and Z-record
+
+Walk: sneak into the keep and see the knights' zones move with their patrol;
+stop sneaking and the floor clears. QA checklist on the slice issue.
+
+---
+
+## C-cone (slice issue opened at start)
+
+### Task K1: encounter — the arc
+
+**Delivers:** R14.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (includes `dungeonspec`).
+**Prerequisites:** F1, Z1.
+**Files:** `field.go` (`MemberInput.WatchArc *float64`, `memberRecord.WatchArc float64`: nil seeds 120 for a monster, 360 for a player), `data.go` (persist), `sneak.go` `watchZone` (keep cells whose bearing from the watcher is within `WatchArc/2` of `Facing`, edge inclusive; the watcher's own cell is never in question), `dungeonspec/single_room.go` and `compile.go` (`watchArc` on a placement and on a template, integer degrees 1–360, refused by path outside that range), `dungeonspec/testdata/cone-site.yaml`.
+**Behavior:** the arc narrows only `watchZone`; `reachesCell`, `VisibleCellsFor` and a non-sneaking mover's sight never read it.
+**Tests:** `TestConeSite` (one scenario): a knight facing north with arc 120; a sneaking rogue walking behind it is never rolled for and never seen; stepping into its front third rolls; a non-sneaking rogue behind it is seen as today; fog's visible cells for a player are the same disc with and without arcs on the monsters.
+**Verification:** module tests; castle suite with `-race`.
+
+### Task K2: session — carry the authored arc
+
+**Files:** `launch.go` (placement `WatchArc` into `MemberInput.WatchArc`), pin. **Tests:** a placement with `watchArc: 90` launches a member whose zone is the 90-degree wedge.
+
+### Task K3: web — the studio arc field
+
+**Owner:** rpg-dnd5e-web studio (ui-ux).
+**Files:** the creature placement panel gains a `watch arc` number field (blank = default), round-tripped through the studio encoder; the read-back says "watches a 90° arc".
+**Tests:** the emitted YAML compiles in the encounter decoder fixture test; blank emits no key.
+
+### K-walk and K-record
+
+Walk: sneak behind a patrolling knight without a roll; step into its front and
+roll. Tune the default arc (design O6) and record the value.
+
+---
+
+## Requirement coverage
+
+| requirement | task(s) | proof |
+|---|---|---|
+| R1 declared, free roam only | S1, S2, S4 | `SetSneaking` refusals; toggle hidden in a fight |
+| R2 not sneaking unchanged | S1, K1 | non-sneaking mover seen as before in `sneak_test.go` and `TestConeSite` |
+| R3 one roll per watcher on entry, server-side | S1, S2 | `TestSneakSite` resolver asked twice over two entries; session rolls on shared dice |
+| R4 facing first; patrols; stopped faces target | F1–F4 | `TestFacingSite` patrol and stop bearings |
+| R5 the roll seen, the red floor | S4, Z4 | story line with calculation; red floor screenshot |
+| R6 the mode verb and state | S0–S3 | verb round-trip and persistence tests |
+| R7 what ends it | S1 | attack, cast, speak, formation, exit cases |
+| R8 half pace | S2 | cells-per-round test |
+| R9 the zone is sight reach | S1, Z1 | zone covers an unlooked corridor; `TestZoneSite` |
+| R10 verdict per pair until leaving | S1 | re-entry re-rolls; save/load does not re-roll |
+| R11 suppress, not erase | S1 | ghost after a won roll |
+| R12 beat to the mover, watcher only if seen | S1, S2, S3 | audience test; empty watcher case |
+| R13 facing state and testimony | F1–F4 | round-trip, sighting carries facing, web uses it |
+| R14 arc on the zone only | K1–K3 | `TestConeSite`; fog disc unchanged |
+| R15 red floor contract | Z0–Z4 | `TestZoneSite`; web tints exactly the sent cells |
+| R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
+| Kitchen-door rows (use case §3) | S1 | the two `TestMadKingKitchenDoor*` tests |
+
+## Provider / consumer seams
+
+| provider | consumer | contract | availability | proof |
+|---|---|---|---|---|
+| F1 `Member.Facing`, `SightTestimony.Facing` | F2 projection | degrees, `*float64` absent = no testimony | F1 pseudo-version | F2 launch test |
+| F0 `Sighting.facing_degrees` | F3, F4 | optional float, same convention | F0 tag | F3 convert test, F4 hook test |
+| F1 `FacingFromCompass` | F2 launch, F4 parity | eight words → degrees | F1 | F4 parity table equals F1's table |
+| existing `CheckResolver.ResolveDiscoveryCheck` | S1 `judgeSneakers` | approach `stealth`, DC passive | on main; session wires it always (`capabilities.go`) | S2 test with the real seam |
+| S1 `Encounter.Sneaking` | S2 `sheetSeam` speed | bool per member, read at use | S1 pseudo-version | S2 pace test |
+| S1 `snuck` beat payload | S2 `SnuckBody` → S3 `Snuck` | field names in S1 Interfaces | S1, S0 | S3 convert test |
+| S2 staging of sneakers | S1 resolver calls inside any verb | staged record for every sneaking player | S2 | S2 monster-walk test |
+| S1 `watchZone` | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
+| Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells | Z1, Z0 | Z2 byte-equal, Z4 tint test |
+| K1 `watchArc` grammar | K3 studio | integer degrees 1–360, blank = default | K1 | K3 compile fixture |
+
+## Plan check findings
+
+- The mad king plan's C1 rolled in the drop arm after percepts were built, so
+  a win could not keep the sighting from landing; S1 judges before the pass.
+- The drop arm never fires on the castle, because every character and knight
+  sees 120 ft; S1 does not depend on it.
+- `SheetFacts` has no Stealth and gains none: the roll goes through the
+  existing check seam so armour and every Stealth rule apply (design R10).
+- Session already stages every player as a discovery observer when the field
+  has concealments; S2 widens staging to every sneaking player regardless.
+- C-zone and C-cone have no issue yet; each is opened when its slice starts,
+  per one issue per slice.
