@@ -188,6 +188,8 @@ engine owns every piece; the client draws the zones it is sent.
 | R25 | settled at S1–S2, operator may veto | The `SetSneaking` verb reports Saved and Delivery, and in the encounter IntelDeltas and Formed: declaring off inside a hostile zone can form a fight in the same call; forbids a declaration whose consequences land on a later verb | lead | 2026-10-18 |
 | R26 | settled at S1, operator may veto | A deed's witnesses are the one sight answer: a sight-obscuring area (a Fog Cloud) screens a deed (a rest, an equip, a spoken line) from a member inside it exactly as it screens a sighting, sneaking or not; found when S1's `audienceOf` moved onto the sight reach (session test `TestAnAreaClosesAfterTheRestIsTold` now reads the order off the rester's own stream); forbids a witness list built from distance and line of sight alone | lead | 2026-10-18 |
 | R27 | settled at Z2, operator may veto | The session owns the view's shape: `encounter.WatchZone` never crosses the boundary; `ViewOutput.WatchZones` is the session's own `WatchZone{Watcher, Cells}`, a field-for-field copy (`TestNoInnerTypeCrossesTheBoundary` refused the inner type); forbids admitting a runtime read type to the boundary allow-list | lead | 2026-10-18 |
+| R28 | settled at K1, operator may veto | Under an arc, a sneaker that a watcher's ordinary sight reaches outside its wedge is unseen: the judgement writes an armed, un-rolled pair (`Armed`, not `InZone`) that suppression honours, only when the watcher does not already hold the mover live; a held mover at declaration gets R10's lost verdict with no roll; without arcs a no-op; forbids hiding from a watcher that holds you by stepping out of its wedge | lead | 2026-10-19 |
+| R29 | settled at K1, operator may veto | A watcher with PassivePerception 0 gets no cone: its zone is its ordinary sight, so the red floor never shows less than what sees you (R22); forbids narrowing a non-judging watcher's floor | lead | 2026-10-19 |
 
 ## Open
 
@@ -203,7 +205,15 @@ engine owns every piece; the client draws the zones it is sent.
   turn; that rule arrives with its own slice.
 - **O6 — the seeded arc and re-arm distance.** The session seeds 120 degrees
   and a re-arm distance until content states them; the walk on the castle
-  tunes the seeds, and a per-placement arc waits for a use case.
+  tunes the seeds, and a per-placement arc waits for a use case. The K-walk
+  kept the arc seed at 120: it reads right on the hall patrol
+  (`monsterWatchArc = 120` in the session's `sheets.go`).
 - **O7 — zone colour by stance.** The wire names each zone's watcher, so the
   web can tint a civil watcher's zone differently from a hostile one; the
   choice is presentation.
+- **O8 — re-arm after a held-live mover.** A mover the watcher holds live
+  has no stored verdict (R28). Once sight breaks, walking back behind the
+  watcher arms a pair at once, with no re-arm distance, unlike the lost
+  verdict's path (R10). Should a held-live mover owe the re-arm distance
+  too? The reviewer recorded it on rpg-toolkit#2084; behaviour is
+  unchanged.
