@@ -89,11 +89,18 @@ engine owns every piece; the client draws the zones it is sent.
   holds the mover's cell, gets a lost verdict with no roll. Why: a roll that
   could drop the mover out of a sight already on them is hiding from a
   creature that sees you, which R3 does not grant.
+- **A lost verdict is ordinary sight (R2, R10).** While a lost verdict
+  stands, that watcher sees the mover by ordinary sight, not by its zone, so
+  a mover behind a narrowed zone stays seen by a watcher that already sees
+  them. Why: hiding needs a broken line of sight first.
 - **A verdict holds until the pair re-arms (R10).** Verdicts are stored per
-  (mover, watcher) as discovery's attempts are: the verdict plus an `Armed`
-  flag, persisted with the encounter. A pair re-arms when the mover stands at
-  least the watcher's supplied re-arm distance outside its zone; the next
-  entry rolls again. A zero distance re-arms on the first refresh outside. A
+  (mover, watcher) as discovery's attempts are: the verdict, an `Armed` flag
+  and `InZone`, the zone's own answer at the last judging pass, never a
+  constant; all persist with the encounter. A beaten pair re-arms when the
+  mover stands at least the watcher's supplied re-arm distance outside its
+  zone. A lost pair re-arms only when the watcher's ordinary sight no longer
+  reaches the mover and the mover stands that distance outside the zone. The
+  next entry rolls again. A zero distance re-arms on the first refresh outside. A
   different watcher is a different pair and rolls on its own.
 - **Judgement covers the pass's observers (R10).** The judgement runs inside
   `rebuildPercepts`, before the pass is built, for every pair whose watcher is
@@ -106,8 +113,8 @@ engine owns every piece; the client draws the zones it is sent.
   before any copy of it is taken. A lost verdict changes nothing: the watcher
   sees the mover and contact proceeds as today.
 - **Outside the zone, a sneaker is unseen by that watcher (R9, R14).** For a
-  sneaking mover, a watcher sees them only inside its zone, and only without a
-  beaten verdict. With no supplied arc the zone equals today's sight, so this
+  sneaking mover with no lost verdict against a watcher, that watcher sees
+  them only inside its zone, and only without a beaten verdict. With no supplied arc the zone equals today's sight, so this
   adds nothing; with an arc, a sneaker behind a watcher is unseen by it.
 - **The roll is the mover's to see, and only theirs (R5, R12).** Each judged
   pair writes one `snuck` beat with audience the mover alone: the mover, the
@@ -156,12 +163,12 @@ engine owns every piece; the client draws the zones it is sent.
 | R2 | settled | Not sneaking: today's room-level sight detection stands | KirkDiggler | 2026-10-18 |
 | R3 | settled | Sneaking: entering a given monster's red zone makes a Stealth roll, per monster; server-side, always; the client draws what the server sends | KirkDiggler | 2026-10-18 |
 | R4 | settled | Facing is step 1 (rpg-project#582): members carry a facing; patrols face their path; a monster that stops walking faces its target; cones come after | KirkDiggler | 2026-10-18 |
-| R5 | settled | The roll reads like a sleight-of-hand check the player watches (sourced on [#606](https://github.com/KirkDiggler/rpg-project/issues/606) by the operator's own words, posted 2026-10-18); the player sees the floor where they would be detected drawn red, as Baldur's Gate does (the operator's wave C direction on #606) | KirkDiggler | 2026-10-18 |
+| R5 | settled | The operator's first impression was a sleight-of-hand check, settled as a Stealth roll per watcher (R3), in the operator's own words on [#606](https://github.com/KirkDiggler/rpg-project/issues/606), posted 2026-10-18; the player sees the floor where they would be detected drawn red, as Baldur's Gate does (the operator's wave C direction on #606) | KirkDiggler | 2026-10-18 |
 | R6 | open | The mode: one session verb `SetSneaking` on the world clock sets or clears `sneaking` on the encounter's member and refreshes sight; forbids a turn-clock sneak, a client-held flag, a monster sneaking and a declaration judged only at some later verb | design round | 2026-10-18 |
 | R7 | open | What ends it: attack, cast, speak, a fight engaging the mover (cleared before any turn budget reads speed), declaring it off, exit; forbids a sound ending it and a caught sneaker's first turn at half speed | design round | 2026-10-18 |
 | R8 | open | Cost: half speed while sneaking, answered by the session's speed fact; forbids a second free-roam movement budget and the encounter knowing the rule | design round | 2026-10-18 |
 | R9 | open | The zone is the watcher's sight reach from where it stands, by the one sight test; forbids building it from the watcher's known cells and computing it anywhere but the engine | design round | 2026-10-18 |
-| R10 | open | A roll only on entering a watcher's zone from outside, through the check resolver against the watcher's passive Perception; a watcher already seeing the mover, or already holding the mover's cell in its zone, when sneaking begins gets a lost verdict with no roll; verdicts re-arm as discovery's attempts do, at a supplied distance; forbids vanishing from a watcher that sees you, a roll per refresh, a Stealth number on sheet facts, the composition comparing totals, and one roll against the highest passive | lead, operator may veto | 2026-10-18 |
+| R10 | open | A roll only on entering a watcher's zone from outside, with either party moving (a watcher's walk or turn, or a door opening, can produce the entry), through the check resolver against the watcher's passive Perception; a watcher already seeing the mover, or already holding the mover's cell in its zone, when sneaking begins gets a lost verdict with no roll; a lost verdict is seen by ordinary sight and re-arms only once ordinary sight breaks and the mover is the re-arm distance outside the zone; verdicts re-arm as discovery's attempts do, at a supplied distance; forbids vanishing from a watcher that sees you, a roll per refresh, a Stealth number on sheet facts, the composition comparing totals, and one roll against the highest passive | lead, operator may veto | 2026-10-18 |
 | R11 | open | A beaten verdict suppresses that one pair in the sight pass; forbids erasing a holding and suppressing any other watcher | design round | 2026-10-18 |
 | R12 | open | The `snuck` beat goes to the mover alone and names only a watcher the mover sees; forbids a wider audience and naming an unseen watcher | design round | 2026-10-18 |
 | R13 | open | Facing is a persisted bearing set by steps and targets, unauthored = 180 as a rule, carried as testimony on `Seen` (rpg-toolkit ADR-0041); forbids a client-derived heading when the wire has one, a live read of facing, and facing as a loose field on `Sighting` | lead, operator may veto | 2026-10-18 |

@@ -77,9 +77,9 @@ flowchart TB
 | `memberRecord.Sneaking` (encounter) | Whether a member sneaks now | Set by `SetSneaking`; cleared by Attack, Cast, Speak by that member, by formation engaging them (before any turn budget reads speed), and by Exit; persisted on `EncounterData` |
 | `memberRecord.Facing` (encounter) | Which way a member faces | Seeded from `MemberInput.Facing` / `JoinInput.Facing`; written by each `takeStep` and by a walk or attack that ends on a target; persisted |
 | `watchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, sightReach, arc)` → cell set: every cell `reachesCell(watcher, cell)` accepts, inside `Facing ± WatchArc/2` when the supplied arc is non-zero (cone slice) |
-| `judgeSneakers` (encounter) | When a pair is rolled and what is stored | For each sneaking mover × each watcher in the pass: a crossing from outside to inside an armed pair's zone → `CheckResolver.ResolveDiscoveryCheck`, a stored verdict and a `snuck` beat; a declaration in plain view → a lost verdict, no roll; a mover the re-arm distance outside → `Armed` |
+| `judgeSneakers` (encounter) | When a pair is rolled and what is stored | For each sneaking mover × each watcher in the pass: a crossing from outside to inside an armed pair's zone → `CheckResolver.ResolveDiscoveryCheck`, a stored verdict and a `snuck` beat; a declaration in plain view → a lost verdict, no roll; `InZone` from the zone's own answer each pass; a mover the re-arm distance outside (and, for a lost pair, out of ordinary sight) → `Armed` |
 | `sneakVerdicts` (encounter) | The verdict per (mover, watcher) | `map[MemberID]map[MemberID]SneakVerdictData{Beaten, Armed, InZone bool}`, discovery's attempt shape; persisted; dropped when the mover stops sneaking |
-| `sightReach.Reaches` (encounter) | The sight pass's answer per pair | Unchanged geometry, plus: false for a pair with a beaten verdict, and false for a sneaking subject outside the observer's zone; set on the reach before `appendMutablePresences` copies it |
+| `sightReach.Reaches` (encounter) | The sight pass's answer per pair | Unchanged geometry, plus, for a sneaking subject: false for a pair with a beaten verdict; ordinary geometry for a pair with a lost verdict; otherwise false outside the observer's zone; set on the reach before `appendMutablePresences` copies it |
 | `WatchZonesFor` (encounter) | The red floor for one seat | `MemberID` → `[]WatchZone{Watcher, Cells}`: empty unless the viewer sneaks; one per watcher the viewer holds live; cells ∩ the viewer's known, unconcealed cells, sorted |
 | `SightTestimony.Facing` (encounter) | Facing as observed | Snapshotted per pass into the one payload each subject is encoded into |
 | `checkSeam` (session) | The roll | `ResolveCheckInput{Member: mover, Approaches: [{Ability: "stealth", DC: passive}]}` → `resolution.MakeCheck` on the shared dice → `ResolveCheckOutput{Beaten, Applied, Total, Calculation}` |
@@ -142,8 +142,10 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    knight's patrol then sweeps its zone over the rogue, that crossing rolls
    again.
 10. **Plain view.** Had the rogue declared sneaking while the knight already
-    saw them, the knight's pair would hold a lost verdict with no roll, and
-    the knight would keep seeing the rogue until the pair re-armed.
+    saw them, the knight's pair would hold a lost verdict with no roll. The
+    knight would keep seeing the rogue by ordinary sight, even behind its
+    cone, until the rogue broke its line of sight and stood the re-arm
+    distance outside its zone.
 
 With a d20 of 2 the total is 9, `Beaten` is false, the knight's percept holds
 the rogue, and today's contact law forms the fight with the existing surprise

@@ -220,8 +220,9 @@ shipped here with versions.
 **Interfaces:** `CheckResolver.ResolveDiscoveryCheck(&ResolveCheckInput{Member: mover, Approaches: []CheckApproach{{Ability: "stealth", DC: max(passive, 1)}}})`. Beat payload `{"beat":"snuck","member":…, "watcher":… (omitted unless the mover holds it live), "dc":…, "total":…, "beaten":…, "calculation":…}`, audience `[mover]`, tag `snuck`.
 **Behavior:**
 - `SetSneaking` refuses a non-player (`ErrNotMember`), a member in a bubble (`ErrNotFreeRoam`, new, or the existing turn-clock refusal if one fits), a closed run (`ErrClosed`), and an encounter whose `checkResolver` is nil (`ErrNoCheckResolver`). It spends no time and refreshes sight.
-- On declaring: each watcher that holds the mover live (`CurrentVia` non-empty) or whose zone holds the mover's cell gets `{Beaten: false, Armed: false, InZone: true}` with no roll and no beat.
-- `judgeSneakers`, for each sneaking placed player (sorted) and each non-player watcher in the pass (sorted): a crossing into an armed (or verdict-less) pair → resolve, store `{Beaten, Armed: false, InZone: true}`, beat; inside with a verdict → nothing; outside → `InZone: false`, and `Armed: true` once the mover's distance to the nearest zone cell is at least the watcher's `WatchResetCells`.
+- On declaring: each watcher that holds the mover live (`CurrentVia` non-empty) or whose zone holds the mover's cell gets `{Beaten: false, Armed: false, InZone: <the zone's answer for the mover's cell>}` with no roll and no beat.
+- `Reaches` for a sneaking subject: a beaten pair → false; a lost pair → ordinary geometry (`reachesCell`), never the zone; otherwise the zone.
+- `judgeSneakers`, for each sneaking placed player (sorted) and each non-player watcher in the pass (sorted): a crossing into an armed (or verdict-less) pair → resolve, store `{Beaten, Armed: false, InZone: true}` (true because the crossing just found the cell inside), beat; every pass sets `InZone` from the zone's answer, never a constant; `Armed: true` once the mover's distance to the nearest zone cell is at least the watcher's `WatchResetCells` and, for a lost pair, `reachesCell(watcher, mover)` is also false.
 - A resolver error aborts the verb atomically (R5 of the encounter).
 - Ending the mode clears every verdict the mover holds.
 **Tests:**
@@ -327,7 +328,7 @@ stop sneaking and the floor clears. QA checklist on the slice issue.
 **Prerequisites:** F1, Z1.
 **Files:** `sheets.go` (`SheetFacts.WatchArc int`, degrees: 0 = no arc = 360, 1–360 an arc, anything else refused), `sneak.go` `watchZone` (non-zero arc keeps cells whose bearing from the watcher is within `WatchArc/2` of `Facing`, edge inclusive; the watcher's own cell is never in question), `dungeonspec/testdata/cone-site.yaml`. No arc constant anywhere in the module.
 **Behavior:** the arc narrows only `watchZone`; `reachesCell`, `VisibleCellsFor` and a non-sneaking mover's sight never read it.
-**Tests:** `TestConeSite` (one scenario, sheets scripted with arc 120 for the knight): a knight facing north; a sneaking rogue walking behind it is never rolled for and never seen; stepping into its front third rolls; a non-sneaking rogue behind it is seen as today; fog's visible cells for a player are the same disc with arcs on the monsters as with none; a knight answered with 0 watches all around.
+**Tests:** `TestConeSite` (one scenario, sheets scripted with arc 120 for the knight): a knight facing north; a sneaking rogue walking behind it is never rolled for and never seen; stepping into its front third rolls; a non-sneaking rogue behind it is seen as today; fog's visible cells for a player are the same disc with arcs on the monsters as with none; a knight answered with 0 watches all around; declaring behind a watcher that sees you keeps you seen (the cook faces north, the rogue stands south in its ordinary sight and declares: the cook keeps holding the rogue, the pair is lost with `InZone: false`, and it re-arms only after the rogue breaks the cook's line of sight and stands the re-arm distance outside its zone).
 **Verification:** module tests; castle suite with `-race`.
 
 ### Task K2: session — supply the arc
