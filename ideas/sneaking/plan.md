@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev TBD; web unchanged; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -407,7 +407,7 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 
 ### Task K3: rpg-api — re-pin
 
-**SHIPPED TBD:** rpg-api#1119 → dev TBD. A re-pin only, with no code: encounter v0.135.0, session v0.140.0, protos gen 84717fe. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. No content suite failed under the south-facing seed. The web is unchanged: 0b9d37e8 draws what it is sent.
+**SHIPPED 2026-10-19:** rpg-api#1119 → dev 4c63ec2f. A re-pin only, with no code: encounter v0.135.0, session v0.140.0, protos gen 84717fe. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. No content suite failed under the south-facing seed. The web is unchanged: 0b9d37e8 draws what it is sent.
 
 ### Deferred: content arc (K-content) and the studio field
 
@@ -431,7 +431,7 @@ roll. Tune the session's seed (design O6) and record the value.
 - **Seed:** 120 reads right on the patrol; design O6 records the value.
 - **Timing aid:** `hall-1` moves 6 cells per tick round a 19-cell loop; a tick fires every 3 sneaking cells or 6 plain cells.
 
-All three PRs carried a MERGE-READY comment review at their final heads: encounter f0110589, session de79525f, api TBD.
+All three PRs carried a MERGE-READY comment review at their final heads: encounter f0110589, session de79525f, api ffbb65af.
 
 Findings from the walk. These are findings, not rulings: the tests verify the system, they are not the encounter's design.
 - An unstated facing is 180, so every stationary castle watcher cones at a wall or away from its door: the cook (kitchen door 90° off), the scullion (south wall), the captain and `gate-1`/`gate-2` (backs to the gate, facing the arrival road), the turnkey (cells wall, door 49–71° off) and the king (zone is its own cell, facing the throne wall). The engine is right; the content states no facing for its stationary watchers. Stated facings on the castle fixture, or a studio or stat-block field (K-content), is the operator's call.
