@@ -202,9 +202,9 @@ Filed from the walks:
 - rpg-toolkit#2074: a downed member still gets sighted beats.
 - rpg-toolkit#1892: the v2 multi-room dialect refuses monster facing.
 
-The final walk ran on the tagged heads and passed. The three gatehouse guards face 180. The captain stops at (-5,9) facing the hero at 210. A guard striking in place turns from 180 to 90, toward the hero. A reload keeps all of them. Two gaps filed as rpg-toolkit#2076:
-- An opportunity attack does not turn the striker, because the reaction path bypasses `faceHeld`.
-- A walk `toward: sound` ends keeping its last step's facing rather than facing the sound's cell.
+The final walk ran on the tagged heads and passed. The three gatehouse guards face 180. The captain stops at (-5,9) facing the hero at 210. A guard striking in place turns from 180 to 90, toward the hero. A reload keeps all of them. Two findings, filed as rpg-toolkit#2076:
+- An opportunity attack looked as if it did not turn the striker. It does: the attack is recorded through `RecordTrain`, whose landing calls `faceHeld`. The stale facing on the walk came from the train closing the fight, after which no sight refresh runs (design R21). Open rpg-toolkit#2077 pins the turn.
+- A walk `toward: sound` ends keeping its last step's facing rather than facing the sound's cell. Open rpg-toolkit#2077 carries the fix.
 
 ---
 
