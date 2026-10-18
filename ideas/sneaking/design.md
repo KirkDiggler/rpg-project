@@ -177,6 +177,10 @@ engine owns every piece; the client draws the zones it is sent.
 | R14 | settled | Cones: an arc supplied per member at use narrows the zone only; the encounter's only built-in answer is 360; the session supplies a monster's from `senses.watch_arc`, seeding 120; forbids an arc constant in encounter Go, an arc on fog-of-war sight or on non-sneaking detection | KirkDiggler | 2026-10-18 |
 | R15 | settled | The red floor: per live watcher, zone ∩ the viewer's known unconcealed cells, on GetView, only while the viewer sneaks; forbids a client zone algorithm, zones of unseen watchers, and zones for a viewer who is not sneaking | KirkDiggler | 2026-10-18 |
 | R16 | settled | Out of this design: footfall hearing, surprise costing anything, monster sneaking, the drop arm stopping a walk | KirkDiggler | 2026-10-18 |
+| R17 | settled at F1, operator may veto | Facing is set only by the creature's own steps and intents; a forced move (push, pull or rout through `Direct`) keeps its facing | lead | 2026-10-18 |
+| R18 | settled at F1, operator may veto | A walk paused for a reaction keeps its walk-end target (`turn.face`) | lead | 2026-10-18 |
+| R19 | settled at F1, operator may veto | One source for where a creature turns: the cell it holds for its target (`faceHeld`), used at walk ends, the driven attack and `RecordTrain`; no holding means no turn | lead | 2026-10-18 |
+| R20 | settled at F1, operator may veto | A Routed walk is the walker's own legs, so it sets facing | lead | 2026-10-18 |
 
 ## Open
 
