@@ -354,7 +354,7 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 **Tests:** a view with two zones tints exactly their cells; an empty list tints nothing.
 **Verification:** typecheck, tests, screenshot of the castle keep with the floor red at the knights' reach.
 **Completion evidence:** PR body closes the slice issue.
-**SHIPPED 2026-10-18:** rpg-dnd5e-web#1300 → dev TBD. `watchZoneCells.ts` unions the sent cells through the same reader as fog (x=q, y=r via `positionToCube`) into `Scene3D.watchZoneCells`. `SyntyHexFloor` tints a tile toward one red over its fog colour: seen red, remembered a darker red. `SeatKnowledgeProbe` exposes `data-watch-zone-cells`. No zone math, no sneaking gate, no per-watcher colour; protos pin v0.1.241. The slice issue closes on the Z-record PR, after the walk.
+**SHIPPED 2026-10-18:** rpg-dnd5e-web#1300 → dev TBD. The planned `WatchZoneFloor` component does not exist; the floor shipped as a tint inside `SyntyHexFloor`. `watchZoneCells.ts` unions the sent cells through the same reader as fog (x=q, y=r via `positionToCube`) into `Scene3D.watchZoneCells`. `SyntyHexFloor` tints a tile toward one red over its fog colour: seen red, remembered a darker red. `SeatKnowledgeProbe` exposes `data-watch-zone-cells`. No zone math, no sneaking gate, no per-watcher colour; protos pin v0.1.241. The slice issue closes on the Z-record PR, after the walk.
 
 ### Z-walk and Z-record
 
@@ -368,7 +368,7 @@ stop sneaking and the floor clears. QA checklist on the slice issue.
 - **Patrol:** one patrol tick moved `hall-1`'s zone: 22 cells left it and 39 joined; the atlas was unchanged.
 - **Draw:** the page's painted set equalled the wire union in all four states (0, 338, 456 and 0 cells). Screenshots: keep-red and keep-clear.
 
-All five PRs carried a MERGE-READY comment review at their final heads: protos 92e7e7b6, encounter c77057b3, session 844f5c6c, api TBD, web bccbdd01.
+All five PRs carried a MERGE-READY comment review at their final heads: protos 92e7e7b6, encounter c77057b3, session 844f5c6c, api 372d3e7d, web bccbdd01.
 
 Findings from the walk. These are findings, not rulings: the tests verify the system, they are not the encounter's design.
 - Neutral watchers (the cook, the scullion, the garrison) get zones under R9, so the kitchen paints red.
