@@ -187,6 +187,7 @@ engine owns every piece; the client draws the zones it is sent.
 | R24 | settled at S2, operator may veto | Half pace is the sneaker's own walking only; an imposed move (a cast push, a flee) uses full speed; forbids halving a move the sneaker did not choose | lead | 2026-10-18 |
 | R25 | settled at S1–S2, operator may veto | The `SetSneaking` verb reports Saved and Delivery, and in the encounter IntelDeltas and Formed: declaring off inside a hostile zone can form a fight in the same call; forbids a declaration whose consequences land on a later verb | lead | 2026-10-18 |
 | R26 | settled at S1, operator may veto | A deed's witnesses are the one sight answer: a sight-obscuring area (a Fog Cloud) screens a deed (a rest, an equip, a spoken line) from a member inside it exactly as it screens a sighting, sneaking or not; found when S1's `audienceOf` moved onto the sight reach (session test `TestAnAreaClosesAfterTheRestIsTold` now reads the order off the rester's own stream); forbids a witness list built from distance and line of sight alone | lead | 2026-10-18 |
+| R27 | settled at Z2, operator may veto | The session owns the view's shape: `encounter.WatchZone` never crosses the boundary; `ViewOutput.WatchZones` is the session's own `WatchZone{Watcher, Cells}`, a field-for-field copy (`TestNoInnerTypeCrossesTheBoundary` refused the inner type); forbids admitting a runtime read type to the boundary allow-list | lead | 2026-10-18 |
 
 ## Open
 

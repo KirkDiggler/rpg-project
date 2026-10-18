@@ -28,7 +28,7 @@ what they saw.
 flowchart TB
     subgraph web[rpg-dnd5e-web]
         Tog["SneakToggle<br/>(free roam only)"]
-        Red["WatchZoneFloor<br/>red cells from the view"]
+        Red["SyntyHexFloor tint<br/>red cells from watchZoneCells"]
         Head["HexEntity heading<br/>from Seen facing"]
         Sto["story: Snuck + dice"]
     end
@@ -88,7 +88,7 @@ flowchart TB
 | `projectView` (session) | One seat's snapshot | `ViewOutput.WatchZones`, `ViewOutput.Sneaking` passed through unchanged |
 | `EventSnuck` (session) | The stream body | `snuck` beat → `SnuckBody{Member, Watcher, DC, Total, Beaten, Calculation}`, recipient the mover |
 | rpg-api handlers | Seat binding and conversion | Caller → `SetSneakingResponse`; `GetViewResponse.watch_zones`, `.sneaking`; `Seen.facing_degrees`; `Event.snuck` |
-| `SneakToggle`, `WatchZoneFloor`, `HexEntity` heading (web) | Drawing and intent | View and events → a red tint on zone cells, the toggle state; `HexEntity` seeds and requests the heading from `seen.facingDegrees` when present and passes the move-path heading only when absent |
+| `SneakToggle`, `watchZoneCells` → `SyntyHexFloor` tint, `HexEntity` heading (web) | Drawing and intent | View and events → a red tint on zone cells (`watchZoneCells.ts` unions the sent cells; `SyntyHexFloor` tints them over the fog colour), the toggle state; `HexEntity` seeds and requests the heading from `seen.facingDegrees` when present and passes the move-path heading only when absent |
 
 **Refusals.** The encounter does not compare a Stealth total to a DC; the
 check resolver decides and the encounter carries `Beaten`. The encounter does
@@ -135,8 +135,9 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    first contact lands and no fight forms. The rogue's percept holds the
    knight, which classifies as the drop and is discarded, so the walk goes on.
 8. **Floor.** The rogue's `GetView` carries one `WatchZone{watcher: keep-1}`
-   whose cells are the knight's zone ∩ the rogue's known cells. The web tints
-   them red.
+   whose cells are the knight's zone ∩ the rogue's known cells. The web's
+   `watchZoneCells.ts` unions the sent cells into `Scene3D.watchZoneCells`, and
+   `SyntyHexFloor` tints those tiles red over their fog colour.
 9. **Leaving.** The rogue steps out of the knight's zone and on until they
    stand the re-arm distance outside it; the pair is armed again. If the
    knight's patrol then sweeps its zone over the rogue, that crossing rolls
