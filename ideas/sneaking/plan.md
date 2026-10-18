@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev TBD, web dev TBD; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -18,7 +18,7 @@ last. Four slices, in order, one module per PR:
 |---|---|---|---|
 | **C-facing** | members carry a facing; steps, targets and authored facing set it; `Seen` carries it; the web draws it | rpg-project#582 | #582 on F4 |
 | **C-sneak** | the mode, the roll at the reach seam on entering, suppression, the `Snuck` beat, half pace, the kitchen-door routes | rpg-project#606 | rpg-toolkit#1020 on S1; #606 on the S-record PR, after S4 and the walk |
-| **C-zone** | the red floor: watch zones on `GetView`, drawn by the web | new slice issue, opened when the slice starts | that issue on Z4 |
+| **C-zone** | the red floor: watch zones on `GetView`, drawn by the web | rpg-project#619 | #619 on the Z-record PR, after Z4 and the walk |
 | **C-cone** | a supplied arc per watcher narrows its zone | new slice issue, opened when the slice starts | that issue on K2 |
 
 C-sneak is independent of facing: its zone before cones is `reachesCell`
@@ -312,13 +312,14 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 
 ---
 
-## C-zone (slice issue opened at start)
+## C-zone (rpg-project#619)
 
 ### Task Z0: protos — watch zones on the view
 
 **Delivers:** R15 (wire half).
 **Files:** `service.proto`: `message WatchZone { string watcher = 1; repeated Position cells = 2; }`; `GetViewResponse.watch_zones = 7` with the doc: only while the viewer sneaks; one per watcher the viewer sees now; cells a subset of the viewer's atlas cells, sorted as `visible_cells`.
 **Tests:** buf checks.
+**SHIPPED 2026-10-18:** rpg-api-protos#400 → main e02cd37d, tag v0.1.241 (gen 84717fe).
 
 ### Task Z1: encounter — `WatchZonesFor`
 
@@ -329,15 +330,22 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 **Behavior:** empty when the viewer does not sneak or is unplaced; one zone per watcher whose holding by the viewer has `CurrentVia` non-empty; cells ∩ the viewer's known cells minus cells concealed from the viewer; sorted by the atlas comparator.
 **Tests:** `TestZoneSite` (one scenario): a sneaking viewer sees one knight and not a second behind a wall; one zone, the first knight's; no zone cell outside the viewer's known cells; not sneaking → no zones; the knight walks and the zone moves with it.
 **Verification:** module tests.
+**SHIPPED 2026-10-18:** rpg-toolkit#2081 → main b6caffca = encounter v0.134.0.
+- **Shape:** `Encounter.WatchZonesFor(WatchZonesInput{Member})` returns `WatchZonesOutput{Zones []WatchZone{Watcher MemberID; Cells []spatial.Position}}`. The watchers are `watchersIn` (placed non-players) filtered by `holdsLive`. The cells are `placedSightReach().inWatchZone`, the same geometry `judgeSneakers` rolls with, ∩ the viewer's known cells − hidden cells. Cells come in atlas order, zones in watcher-id order, and the list is never nil.
+- **Site:** the one-off `dungeonspec/testdata/zone-site.yaml` (a sentry knight pacing the rogue's room, a warden knight behind the wall) with `TestZoneSite` in `dungeonspec/zone_site_test.go`. One zone, the sentry's, and none for the warden. Every zone cell is known to the rogue. Far-room floor the sentry sees through the doorway but the rogue never saw is left out. The zone moves as the sentry walks. Not sneaking gives none.
+- **Castle:** `TestMadKingTheHallGuardsRedFloor` in `castle_king_zone_test.go`. The hero sneaks from the kitchen into the hall; Stealth is rolled at DC 10 on entry and won (a Beaten verdict against `hall-1`). Every zone's watcher is held live, and `hall-1`'s zone holds the hero's cell. Sneak off gives none. The castle fixture is unchanged.
+- **Mutants killed:** the live filter, the known cut, the sneaking guard, the zone predicate, the beaten-watcher drop. The concealment-cut mutant survives, because the site has no concealment; accepted for this slice.
 
 ### Task Z2: session — project the zones
 
 **Files:** `projectView` (`ViewOutput.WatchZones` unchanged pass-through), pin.
 **Tests:** a view of a sneaking member carries the encounter's zones byte-equal.
+**SHIPPED 2026-10-18:** rpg-toolkit#2082 → main d16aee58 = session v0.139.0. `ViewOutput.WatchZones []session.WatchZone{Watcher string; Cells []spatial.Position}` (json `watch_zones`) is a field-for-field copy, not the planned pass-through: `encounter.WatchZone` never crosses the boundary (`TestNoInnerTypeCrossesTheBoundary` refused it; the allow-list is untouched). The ruling is design R27.
 
 ### Task Z3: rpg-api — convert zones
 
 **Files:** `convert.go` for `GetViewResponse.watch_zones`. **Tests:** convert table test.
+**SHIPPED 2026-10-18:** rpg-api#1118 → dev TBD. `watchZonesToProto` in `convert.go` goes through the same `positionToProto` as `visible_cells` and is wired in `viewToProto` (`get_view.go`). The table test carries a literal x/y assertion, which catches a swap made in both converters, and a zero-cell zone. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. Pins: protos v0.1.241, encounter v0.134.0, session v0.139.0.
 
 ### Task Z4: web — the red floor
 
@@ -346,11 +354,28 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 **Tests:** a view with two zones tints exactly their cells; an empty list tints nothing.
 **Verification:** typecheck, tests, screenshot of the castle keep with the floor red at the knights' reach.
 **Completion evidence:** PR body closes the slice issue.
+**SHIPPED 2026-10-18:** rpg-dnd5e-web#1300 → dev TBD. `watchZoneCells.ts` unions the sent cells through the same reader as fog (x=q, y=r via `positionToCube`) into `Scene3D.watchZoneCells`. `SyntyHexFloor` tints a tile toward one red over its fog colour: seen red, remembered a darker red. `SeatKnowledgeProbe` exposes `data-watch-zone-cells`. No zone math, no sneaking gate, no per-watcher colour; protos pin v0.1.241. The slice issue closes on the Z-record PR, after the walk.
 
 ### Z-walk and Z-record
 
 Walk: sneak into the keep and see the knights' zones move with their patrol;
 stop sneaking and the floor clears. QA checklist on the slice issue.
+
+**SHIPPED 2026-10-18.** The castle stack runs on dev: api TBD, web TBD. Walked on the castle stack (api z3-zones 39951923 + web z4-zones 11f07229); the checklist is ticked on #619 ([walk comment](https://github.com/KirkDiggler/rpg-project/issues/619#issuecomment-6247627767)):
+- **Hall:** only `hall-1`'s zone, holding the hero's cell. One Snuck beat (DC 12, total 12, beaten).
+- **Kitchen:** zones for the cook, the scullion and `hall-1`, who sees in through the open kitchen door.
+- **Wire contract:** every zone cell is in GetAtlas, and the cells are sorted as `visible_cells`. Sneak off gives none. A held-but-not-current watcher (`gate-1`, seen from the courtyard) gets no zone (R15).
+- **Patrol:** one patrol tick moved `hall-1`'s zone: 22 cells left it and 39 joined; the atlas was unchanged.
+- **Draw:** the page's painted set equalled the wire union in all four states (0, 338, 456 and 0 cells). Screenshots: keep-red and keep-clear.
+
+All five PRs carried a MERGE-READY comment review at their final heads: protos 92e7e7b6, encounter c77057b3, session 844f5c6c, api TBD, web bccbdd01.
+
+Findings from the walk. These are findings, not rulings: the tests verify the system, they are not the encounter's design.
+- Neutral watchers (the cook, the scullion, the garrison) get zones under R9, so the kitchen paints red.
+- Watchers with passive Perception 0 get zones: ordinary sight is the zone until an arc narrows it (R22).
+- A lost roll against a neutral watcher forms no fight.
+- The world clock advances only on hero actions in free roam.
+- The web cannot resume a seat after the browser closes; a second session was started for the draw walk.
 
 ---
 
@@ -395,17 +420,17 @@ roll. Tune the session's seed (design O6) and record the value.
 | R2 not sneaking unchanged | S1, K1 | non-sneaking mover seen as before in `sneak_test.go` and `TestConeSite` |
 | R3 a roll on entering, server-side | S1, S2 | `TestSneakSite` resolver asked twice over two entries; session rolls on shared dice |
 | R4 facing first; patrols; stopped faces target | F1–F4 | **shipped**: `TestFacingSite` patrol and stop bearings; F-walk |
-| R5 the roll seen, the red floor | S4, Z4 | story line with calculation; red floor screenshot |
+| R5 the roll seen, the red floor | S4, Z4 | story line with calculation; **red floor shipped**: Z4 paints exactly the wire union (`data-watch-zone-cells`), keep-red / keep-clear screenshots on the Z-walk |
 | R6 the mode verb, state and refresh | S0–S3 | verb round-trip, persistence, stop-in-zone seen in the same call |
 | R7 what ends it, full-speed fight | S1 | attack, cast, speak, formation, exit cases; first turn budget at full speed |
 | R8 half pace | S2 | cells-per-round test |
-| R9 the zone is sight reach | S1, Z1 | zone covers an unlooked corridor; `TestZoneSite` |
+| R9 the zone is sight reach | S1, Z1 | zone covers an unlooked corridor; **shipped**: `TestZoneSite` (zone from `inWatchZone`, the geometry `judgeSneakers` rolls with) and `TestMadKingTheHallGuardsRedFloor` |
 | R10 entering only, plain view lost, re-arm | S1 | plain-view declaration gets no roll; pacing edge rolls once; re-entry past the distance re-rolls; save/load does not re-roll |
 | R11 suppress, not erase | S1 | a memory ghost survives a won roll; suppression through the real `rebuildPercepts` |
 | R12 beat to the mover, watcher only if seen | S1, S2, S3 | audience test; empty watcher case |
 | R13 facing state, unauthored 180, testimony on `Seen` | F0–F4 | **shipped**: round-trip; `Seen` carries facing; `HexEntity` uses it |
 | R14 supplied arc on the zone only | K1, K2 | `TestConeSite`; fog disc unchanged; no constant in encounter |
-| R15 red floor contract | Z0–Z4 | `TestZoneSite`; web tints exactly the sent cells |
+| R15 red floor contract | Z0–Z4 | **shipped**: `TestZoneSite` (live watchers only, known cells only, none when not sneaking); `TestMadKingTheHallGuardsRedFloor`; Z3 convert table test; web tints exactly the sent cells; Z-walk: a held-but-not-current watcher gets no zone |
 | R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
 | Kitchen-door rows (use case §3) | S1, S-record | **shipped**: `TestMadKingKitchenDoorSneaksPastTheHall` with its mutation; heard route measured (`TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`), content fix the operator's |
 
@@ -422,7 +447,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | S1 `snuck` beat payload | S2 `SnuckBody` → S3 `Snuck` | field names in S1 Interfaces | S1, S0 | S3 convert test |
 | S2 staging of sneakers | S1 resolver calls inside any verb | staged record for every sneaking player | S2 | S2 monster-walk test |
 | S1 `watchZone` | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
-| Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells | Z1, Z0 | Z2 byte-equal, Z4 tint test |
+| Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells; the session's own `WatchZone` from Z2 on (R27) | Z1, Z0 | Z2 field-for-field copy, Z3 convert table test, Z4 tint test |
 | K1 `SheetFacts.WatchArc` | K2 seed | int degrees, 0 = 360 | K1 | K2 seed test |
 
 ## Plan check findings
@@ -435,8 +460,8 @@ roll. Tune the session's seed (design O6) and record the value.
   existing check seam so armour and every Stealth rule apply (design R10).
 - Session already stages every player as a discovery observer when the field
   has concealments; S2 widens staging to every sneaking player regardless.
-- C-zone and C-cone have no issue yet; each is opened when its slice starts,
-  per one issue per slice.
+- C-cone has no issue yet; it is opened when its slice starts, per one issue
+  per slice. C-zone's is rpg-project#619.
 - Review of the design PR: a roll on "standing in the zone" let a sneaker
   vanish from a watcher that saw them; R10 now rolls on entering only.
 - The arc and re-arm distance are supplied through `SheetFacts`, seeded by the
