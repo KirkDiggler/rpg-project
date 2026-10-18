@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -217,6 +217,7 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 **Files:** `service.proto` (`rpc SetSneaking(SetSneakingRequest) returns (SetSneakingResponse)`; request `{session_id, member, sneaking bool}`, response `{sneaking bool}`; `GetViewResponse.sneaking bool = 6`), `events.proto` (`EVENT_KIND_SNUCK = 48`; `message Snuck { string member = 1; string watcher = 2; int32 dc = 3; int32 total = 4; bool beaten = 5; RollCalculation calculation = 6; }` with doc: recipient-scoped to the mover; `watcher` empty when the mover does not see it; the oneof gains `Snuck snuck = <next free>`).
 **Tests:** buf lint/format/breaking/generate.
 **Completion evidence:** merged PR, released tag.
+**SHIPPED 2026-10-18:** rpg-api-protos#399 → main 8c519a81, tag v0.1.240 (gen b52674c7).
 
 ### Task S1: encounter — mode, judgement, suppression, beat, kitchen-door routes
 
@@ -253,6 +254,13 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 - [ ] Implement; full `go test ./... -count=1`; castle suite with `-race`.
 **Verification:** as above, in `rulebooks/dnd5e/encounter`.
 **Completion evidence:** PR body `Closes KirkDiggler/rpg-toolkit#1020` and `Part of KirkDiggler/rpg-project#606`.
+**SHIPPED 2026-10-18:** rpg-toolkit#2078 → main 30e6e87c = encounter v0.133.9; closes rpg-toolkit#1020.
+- **Castle content:** the kitchen door into the hall is LOCKED. Thieves' tools, Dex DC 13, pick it silently; Str DC 15 forces it with a crash. `hall-1` walks the `hall-patrol` loop (-2,-12) → (6,-12) → (6,-15) → (1,-15), between the kitchen door and the throne door.
+- **Tests:** the one-off studio-exported `testdata/sneak-site.yaml` with `TestSneakSite`; `TestMadKingKitchenDoorSneaksPastTheHall`; `TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`.
+- **The crash, measured:** it reaches the hall at DC 10 and the throne room at DC 20. `TestMadKingKitchenDoorHeard` is NOT written; the route's content fix is the operator's.
+- The `CheckResolver` is now kept whenever it is supplied. The lost-pair re-arm mutant survives until cones (C-cone).
+- `audienceOf` moved onto the sight reach, so a sight-obscuring area now screens a deed's witnesses as it screens a sighting (design R26).
+- Rulings made here are in design.md R22–R26.
 
 ### Task S2: session — the verb, staging, half pace, the event
 
@@ -264,6 +272,7 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 **Tests:** `sneak_test.go`: the verb round-trips and persists; a sneaking player's world-clock pace is half (cells per round); a monster's walk on another player's verb rolls for the sneaker (resolver asked with the sneaker's id); the `Snuck` event reaches the sneaker's stream only.
 **Verification:** `go test ./... -count=1` in the module.
 **Completion evidence:** PR, pseudo-version for S3.
+**SHIPPED 2026-10-18:** rpg-toolkit#2079 → main 426cc58d = session v0.138.0. dnd5e moves to v0.213.0 for monsters' passive Perception. The standing seam gains a live slot. Staging was already universal.
 
 ### Task S3: rpg-api — the handler and the conversions
 
@@ -273,6 +282,7 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 **Files:** the session v1alpha1 handler (`SetSneaking`, caller bound as in `SetDiscoverySharing`), `convert.go` (`GetViewResponse.sneaking`, `Event.snuck`), pins.
 **Tests:** handler test: a caller cannot set another member's mode; convert test for `Snuck` with and without a watcher.
 **Verification:** the repo's pre-commit gate.
+**SHIPPED 2026-10-18:** rpg-api#1117 → dev d5c6dab8. `role_policy` gains `SetSneaking`. It also copies S1's castle file onto the shelf (`content/the-mad-king.yaml`, without the routes paragraph), so the lock and `hall-1`'s patrol are served; without that copy, S1's content change does not reach play.
 
 ### Task S4: web — the toggle and the roll
 
@@ -282,6 +292,7 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 **Files:** a `SneakToggle` in the free-roam action bar (hidden while in a fight), the story renderer for `snuck` (the roll as a seen roll with its calculation; "something is watching" when `watcher` is empty), the session event switch.
 **Tests:** toggle sends `SetSneaking` and reflects `GetViewResponse.sneaking`; story line for both `Snuck` shapes.
 **Verification:** typecheck, tests, screenshot.
+**SHIPPED 2026-10-18:** rpg-dnd5e-web#1299 → dev eeb3550e. The toggle sits beside Short rest; the eyebrow reads "Sneaking"; the roll shows in the toasts; spotted uses the danger tone.
 
 ### S-walk and S-record
 
@@ -292,6 +303,12 @@ sneaking in a watcher's zone and be seen at once; declare sneaking in plain
 view of the cook and stay seen. QA checklist on #606. Record (an rpg-project
 PR): mark S0–S4 shipped; the use case's kitchen-door rows asserted or their
 measured gap stated; its body carries `Closes KirkDiggler/rpg-project#606`.
+
+**SHIPPED 2026-10-18.** The castle stack runs on dev: api d5c6dab8, web eeb3550e. Walked on the castle stack (api s3-sneak beb07922 + web s4-sneak 8579a85d): the Sneak toggle reflects the server and is absent in a fight; half pace measured 3 cells per world tick against 6; crossing the great hall sneaking gave one Snuck beat against hall-1 (dc 12 — the guard template's passive — total 14, beaten) and no sighting or fight; standing inside the zone rolled nothing more, leaving past the re-arm distance and re-entering rolled once more; opening the throne door sneaking rolled against keep-1, keep-2 and the king (all won) and formed no fight until sneaking was turned off; Speak cleared the mode. Not walked: a loss against hall-1 (both rolls won), and forcing the door — the wire has no way to choose the Strength approach and the server applied dex + thieves' tools to a fighter with no tools (filed). The castle's kitchen door opens onto the hall, not the yard, so the use case's yard-side kitchen route is a content question for the operator (noted on #606). A re-walk on api f8588843 (encounter 2efd78b8) confirmed the witness fix as far as the wire shows: drawing a rapier inside hall-1's sight after a won roll drew no reaction, and a spoken line to the captain landed and ended sneaking; a Speak refused for no option keeps the mode (R5).
+
+Filed from the walk: rpg-toolkit#2080 (Unlock applies the first lock approach regardless of the picker's tools; no approach on the wire — rpg-api-protos#396 is the wire half; even the proficient rogue's picks add no tool proficiency), and the kitchen-door content question on rpg-project#606 (the castle's kitchen door opens onto the hall; the use case's yard-side kitchen door does not exist).
+
+Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPastTheHall`). For "Kitchen door, heard", the gap is measured: the forced door's crash reaches only the hall (DC 10; the throne room is DC 20), and the route's content fix is the operator's.
 
 ---
 
@@ -390,7 +407,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | R14 supplied arc on the zone only | K1, K2 | `TestConeSite`; fog disc unchanged; no constant in encounter |
 | R15 red floor contract | Z0–Z4 | `TestZoneSite`; web tints exactly the sent cells |
 | R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
-| Kitchen-door rows (use case §3) | S1, S-record | `TestMadKingKitchenDoorSneaksPastTheHall` with its mutation; the heard route after measurement |
+| Kitchen-door rows (use case §3) | S1, S-record | **shipped**: `TestMadKingKitchenDoorSneaksPastTheHall` with its mutation; heard route measured (`TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`), content fix the operator's |
 
 ## Provider / consumer seams
 
