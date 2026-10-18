@@ -326,7 +326,7 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 **Delivers:** R9, R15.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
 **Prerequisites:** S1.
-**Files:** `watchzones.go` (new: `WatchZonesInput{Member}`, `WatchZonesOutput{Zones []WatchZone}`, `WatchZone{Watcher MemberID; Cells []spatial.Position}`, `Encounter.WatchZonesFor`), reusing `newSightReach` and `watchZone` from S1; `dungeonspec/testdata/zone-site.yaml`.
+**Files:** `watchzones.go` (new: `WatchZonesInput{Member}`, `WatchZonesOutput{Zones []WatchZone}`, `WatchZone{Watcher MemberID; Cells []spatial.Position}`, `Encounter.WatchZonesFor`), reusing `newSightReach` and `watchZone` from S1 (shipped as `sightReach.inWatchZone`); `dungeonspec/testdata/zone-site.yaml`.
 **Behavior:** empty when the viewer does not sneak or is unplaced; one zone per watcher whose holding by the viewer has `CurrentVia` non-empty; cells ∩ the viewer's known cells minus cells concealed from the viewer; sorted by the atlas comparator.
 **Tests:** `TestZoneSite` (one scenario): a sneaking viewer sees one knight and not a second behind a wall; one zone, the first knight's; no zone cell outside the viewer's known cells; not sneaking → no zones; the knight walks and the zone moves with it.
 **Verification:** module tests.
