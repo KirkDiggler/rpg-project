@@ -1,7 +1,7 @@
 ---
 name: Sneaking — implementation plan
 status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1
-authority: design.md rulings R1–R5 (operator, 2026-10-18, rpg-project#606); R6–R16 take effect on the operator's agreement on the design PR (design.md O1)
+authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
 
@@ -37,7 +37,7 @@ the record (this plan's task marked shipped with versions, the mad king use
 case's route rows updated). C-sneak additionally lands the kitchen-door
 route assertions on the castle content (use case §3); #606 closes on the
 S-record PR, after the walk.
-Operator-owned: agreement on R6–R16 before S1 starts; the walk sign-off on
+Operator-owned: the walk sign-off on
 each slice issue.
 
 ## Constraints
@@ -103,7 +103,7 @@ branch with another; each catches up by a commit on top of the merged tag.
 
 | item | state |
 |---|---|
-| R6–R16 agreed on the design PR | **blocks S1, Z1, K1**; F-slice proceeds on R4 alone |
+| R6–R16 agreed on the design PR | settled (operator, 2026-10-18); nothing blocked |
 | **Risk: the castle has no watcher on the kitchen route.** The keep knights pace inside the throne room, every door is shut, and no creature opens a door (rpg-toolkit#2069), so a shut throne door hides the party from them with no sneaking at all. | S1's content step posts a watcher on the route (below); the sneak-past assertion is written to fail without sneaking |
 | **Content change: the inner kitchen door is locked.** It is not locked today; the use case's forced door needs a lock. Its DC and approaches are content values, proposed in S1's PR; the operator may veto. Every route crossing that door is re-run. | S1 |
 | **Content change: a watcher crosses the great hall.** `hall-1` walks a patrol leg across the hall between the kitchen door and the throne door (or a keep-patrol leg is moved there); the cells are measured on the file in S1. | S1 |
@@ -219,7 +219,7 @@ shipped here with versions.
 - `dungeonspec/castle_king_kitchen_test.go` (new).
 **Interfaces:** `CheckResolver.ResolveDiscoveryCheck(&ResolveCheckInput{Member: mover, Approaches: []CheckApproach{{Ability: "stealth", DC: max(passive, 1)}}})`. Beat payload `{"beat":"snuck","member":…, "watcher":… (omitted unless the mover holds it live), "dc":…, "total":…, "beaten":…, "calculation":…}`, audience `[mover]`, tag `snuck`.
 **Behavior:**
-- `SetSneaking` refuses a non-player (`ErrNotMember`), a member in a bubble (`ErrNotFreeRoam`, new, or the existing turn-clock refusal if one fits), a closed run (`ErrClosed`), and an encounter whose `checkResolver` is nil (`ErrNoCheckResolver`). It spends no time and refreshes sight.
+- `SetSneaking` refuses a non-player (`ErrNotMember`), a member in a bubble (`ErrNotFreeRoam`, new, or the existing turn-clock refusal if one fits), a closed run (`ErrClosed`), and an encounter whose `checkResolver` is nil (`ErrNoCheckResolver`). It spends no time and refreshes sight. Declaring the mode already held (on while on, off while off) returns the current mode and does nothing else: no roll, no re-arm, no refresh, no beat.
 - On declaring: each watcher that holds the mover live (`CurrentVia` non-empty) or whose zone holds the mover's cell gets `{Beaten: false, Armed: false, InZone: <the zone's answer for the mover's cell>}` with no roll and no beat.
 - `Reaches` for a sneaking subject: a beaten pair → false; a lost pair → ordinary geometry (`reachesCell`), never the zone; otherwise the zone.
 - `judgeSneakers`, for each sneaking placed player (sorted) and each non-player watcher in the pass (sorted): a crossing into an armed (or verdict-less) pair → resolve, store `{Beaten, Armed: false, InZone: true}` (true because the crossing just found the cell inside), beat; every pass sets `InZone` from the zone's answer, never a constant; `Armed: true` once the mover's distance to the nearest zone cell is at least the watcher's `WatchResetCells` and, for a lost pair, `reachesCell(watcher, mover)` is also false.
@@ -227,7 +227,7 @@ shipped here with versions.
 - Ending the mode clears every verdict the mover holds.
 **Tests:**
 - `TestSneakSite` (the one scenario test, on `sneak-site.yaml`, scripted resolver): the rogue declares sneaking out of the knight's sight and walks through the doorway; one `snuck` beat, audience the rogue alone, names the knight; the knight's holdings never gain the rogue; no bubble forms; the walk continues to its end; the rogue leaves past the re-arm distance and re-enters, and a second beat lands; the resolver is asked exactly twice over the whole walk. Variant in the same test: a scripted loss forms the fight with the existing surprise label, and the rogue's first turn budget is full speed; a loss against the cook forms no fight and the cook holds the rogue.
-- `sneak_test.go` focused cases: `SetSneaking` refusals (four); declaring in the cook's live sight gives a lost verdict, no roll, no beat, and the cook keeps holding the rogue (I1: nobody vanishes in plain view); declaring off inside the knight's zone after a won roll makes the knight hold the rogue in the same call (the refresh); attack, cast, speak and formation each clear the mode and its verdicts; a non-sneaking mover in the same doorway is seen exactly as before (R2); a watcher whose prior holding of the rogue is a MEMORY (a ghost from an earlier sighting) keeps that ghost after a won roll, never removed (R11); a knight whose zone edge paces over a still rogue rolls once, not once per step, until the rogue stands the re-arm distance away; a watcher the rogue cannot see gets a beat with no `watcher`; save and load between two steps does not re-roll; suppression asserted through the real `rebuildPercepts`, not a hand-built `sightReach`; a single-observer pass leaves another watcher's pair unchanged.
+- `sneak_test.go` focused cases: `SetSneaking` refusals (four); declaring in the cook's live sight gives a lost verdict, no roll, no beat, and the cook keeps holding the rogue (I1: nobody vanishes in plain view); declaring on while on, and off while off, changes no verdict, asks the resolver nothing, writes no beat and runs no refresh; declaring off inside the knight's zone after a won roll makes the knight hold the rogue in the same call (the refresh); attack, cast, speak and formation each clear the mode and its verdicts; a non-sneaking mover in the same doorway is seen exactly as before (R2); a watcher whose prior holding of the rogue is a MEMORY (a ghost from an earlier sighting) keeps that ghost after a won roll, never removed (R11); a knight whose zone edge paces over a still rogue rolls once, not once per step, until the rogue stands the re-arm distance away; a watcher the rogue cannot see gets a beat with no `watcher`; save and load between two steps does not re-roll; suppression asserted through the real `rebuildPercepts`, not a hand-built `sightReach`; a single-observer pass leaves another watcher's pair unchanged.
 - `castle_king_kitchen_test.go`:
   - `TestMadKingKitchenDoorSneaksPastTheHall`: every party member declares sneaking in the kitchen out of every watcher's sight, and the resolver is scripted one roll per (member, watcher) that the path crosses (a +7 rogue with a 15, and so on, against the hall watcher's passive). The party walks from the kitchen door across the great hall to the throne door. The hall watcher's holdings never gain a party member, no bubble forms, and the party stands at the throne door. **Mutation the test must kill:** the same path with no `SetSneaking`, or with `judgeSneakers` returning without suppressing, forms the fight with the hall watcher; the test runs that variant and asserts the bubble.
   - `TestMadKingKitchenDoorHeard`: written only after S1 measures the crash's reach (Open items). Shape if reachable: the fighter forces the locked inner door; the crash lands on the listeners the measurement names; that listener's `heard` row walks it toward the door; the sneaking party is crossed into its zone; a scripted 2 loses; its `enemy: seen` row shouts; `alarm-raised` lands on hearers; reserves arrive. If the measurement shows no listener can hear it, the PR says so and the route's content fix goes to the operator.

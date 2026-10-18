@@ -73,7 +73,7 @@ flowchart TB
 
 | Component | Owns | Input → output |
 |---|---|---|
-| `Encounter.SetSneaking` (encounter) | The mode | `SetSneakingInput{Member, Sneaking bool}` → `SetSneakingOutput{Sneaking bool}`; spends no time, then `refreshSight` over the roster; refuses a non-player, a member in a fight, a closed run, and an encounter without a `CheckResolver` |
+| `Encounter.SetSneaking` (encounter) | The mode | `SetSneakingInput{Member, Sneaking bool}` → `SetSneakingOutput{Sneaking bool}`; spends no time, then `refreshSight` over the roster; a no-op when the mode is already held; refuses a non-player, a member in a fight, a closed run, and an encounter without a `CheckResolver` |
 | `memberRecord.Sneaking` (encounter) | Whether a member sneaks now | Set by `SetSneaking`; cleared by Attack, Cast, Speak by that member, by formation engaging them (before any turn budget reads speed), and by Exit; persisted on `EncounterData` |
 | `memberRecord.Facing` (encounter) | Which way a member faces | Seeded from `MemberInput.Facing` / `JoinInput.Facing`; written by each `takeStep` and by a walk or attack that ends on a target; persisted |
 | `watchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, sightReach, arc)` → cell set: every cell `reachesCell(watcher, cell)` accepts, inside `Facing ± WatchArc/2` when the supplied arc is non-zero (cone slice) |
