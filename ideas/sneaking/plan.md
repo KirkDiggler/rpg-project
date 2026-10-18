@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -130,6 +130,7 @@ predates facing; a memory keeps the facing it last saw, as `equipment` does.
 - [ ] Add the field and doc; `buf format -w`; `buf lint`; `buf breaking --against main`; `buf generate` compiles.
 **Verification:** the four buf commands green in the protos repo root.
 **Completion evidence:** merged PR, released tag.
+**SHIPPED 2026-10-18:** rpg-api-protos#397 → main d39a2bc6, tag v0.1.239 (gen 585633e6). `Seen.facing_degrees` is a DOUBLE. Frame: 0 is north, which is −Y of the footprint plane; 90 is +X; clockwise. A prop's angle is (facing − 90) mod 360.
 
 ### Task F1: encounter — facing as member state and testimony
 
@@ -146,6 +147,7 @@ predates facing; a memory keeps the facing it last saw, as `equipment` does.
 - [ ] Implement; run `go test ./... -count=1`; goldens unchanged except fixtures that now carry facing.
 **Verification:** `go test ./... -count=1` and `-race` on the castle suite in `rulebooks/dnd5e/encounter`.
 **Completion evidence:** green run, PR, pseudo-version for F2.
+**SHIPPED 2026-10-18:** rpg-toolkit#2073 → main 994dbba5 = encounter v0.133.7. `dungeonspec/testdata/facing-site.yaml` and `TestFacingSite` as planned. On the castle, keep-1 ends its first round at (5,-20) facing 150. Sighted beats now name every subject the rebuild changed. Rulings made here are in design.md R17–R20.
 
 ### Task F2: session — authored facing reaches play
 
@@ -159,6 +161,7 @@ predates facing; a memory keeps the facing it last saw, as `equipment` does.
 - [ ] Test, implement, `go test ./... -count=1`.
 **Verification:** module tests green.
 **Completion evidence:** PR, pseudo-version for F3.
+**SHIPPED 2026-10-18:** rpg-toolkit#2075 → main 9477d715 = session v0.137.3.
 
 ### Task F3: rpg-api — convert facing
 
@@ -170,6 +173,7 @@ predates facing; a memory keeps the facing it last saw, as `equipment` does.
 **Tests:** convert table test: present → set, absent → unset.
 **Verification:** `make pre-commit` (or the repo's gate) green.
 **Completion evidence:** PR (draft until tags), pseudo-version pins replaced at merge.
+**SHIPPED 2026-10-18:** rpg-api#1116 → dev 829242b1.
 
 ### Task F4: web — draw the wire's facing
 
@@ -181,12 +185,26 @@ predates facing; a memory keeps the facing it last saw, as `equipment` does.
 **Tests:** `facing.test.ts`: for each compass word, `degreesToYaw` of its degrees equals `facingToYaw(word)`; a `HexEntity` test (or a small heading selector beside it): with `seen.facingDegrees: 90` the requested heading is east and the move path's heading is ignored; with none, the move path's heading is used.
 **Verification:** `npm run typecheck && npm test` green; screenshot of the facing site in play showing the knight facing east.
 **Completion evidence:** PR body `Closes KirkDiggler/rpg-project#582`.
+**SHIPPED 2026-10-18:** rpg-dnd5e-web#1298 → dev 172a7a35.
 
 ### F-walk and F-record
 
 Walk the castle: the keep knights face along their patrol; a guard that stops
 faces the player; reload keeps facings. QA checklist on #582. Record: mark F0–F4
 shipped here with versions.
+
+**SHIPPED 2026-10-18.** The castle stack runs on dev: api 829242b1, web 172a7a35. Two walks on the castle stack:
+- **Wire:** the guards face their last step, and six steps matched independent bearing math. The captain stops facing the hero at 150 and 210. A reload keeps the facings.
+- **Draw:** every drawn yaw equals `degreesToYaw` of the wire's facing.
+
+Filed from the walks:
+- rpg-api-protos#398: the viewer's own facing is not on the wire. The local player keeps the 2026-07-24 staging pose π, and the monster default is pinned to 180.
+- rpg-toolkit#2074: a downed member still gets sighted beats.
+- rpg-toolkit#1892: the v2 multi-room dialect refuses monster facing.
+
+The final walk ran on the tagged heads and passed. The three gatehouse guards face 180. The captain stops at (-5,9) facing the hero at 210. A guard striking in place turns from 180 to 90, toward the hero. A reload keeps all of them. Two findings, filed as rpg-toolkit#2076:
+- An opportunity attack looked as if it did not turn the striker. It does: the attack is recorded through `RecordTrain`, whose landing calls `faceHeld`. The stale facing on the walk came from the train closing the fight, after which no sight refresh runs (design R21). Open rpg-toolkit#2077 pins the turn.
+- A walk `toward: sound` ends keeping its last step's facing rather than facing the sound's cell. Open rpg-toolkit#2077 carries the fix.
 
 ---
 
@@ -359,7 +377,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | R1 declared, free roam only | S1, S2, S4 | `SetSneaking` refusals; toggle hidden in a fight |
 | R2 not sneaking unchanged | S1, K1 | non-sneaking mover seen as before in `sneak_test.go` and `TestConeSite` |
 | R3 a roll on entering, server-side | S1, S2 | `TestSneakSite` resolver asked twice over two entries; session rolls on shared dice |
-| R4 facing first; patrols; stopped faces target | F1–F4 | `TestFacingSite` patrol and stop bearings |
+| R4 facing first; patrols; stopped faces target | F1–F4 | **shipped**: `TestFacingSite` patrol and stop bearings; F-walk |
 | R5 the roll seen, the red floor | S4, Z4 | story line with calculation; red floor screenshot |
 | R6 the mode verb, state and refresh | S0–S3 | verb round-trip, persistence, stop-in-zone seen in the same call |
 | R7 what ends it, full-speed fight | S1 | attack, cast, speak, formation, exit cases; first turn budget at full speed |
@@ -368,7 +386,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | R10 entering only, plain view lost, re-arm | S1 | plain-view declaration gets no roll; pacing edge rolls once; re-entry past the distance re-rolls; save/load does not re-roll |
 | R11 suppress, not erase | S1 | a memory ghost survives a won roll; suppression through the real `rebuildPercepts` |
 | R12 beat to the mover, watcher only if seen | S1, S2, S3 | audience test; empty watcher case |
-| R13 facing state, unauthored 180, testimony on `Seen` | F0–F4 | round-trip; `Seen` carries facing; `HexEntity` uses it |
+| R13 facing state, unauthored 180, testimony on `Seen` | F0–F4 | **shipped**: round-trip; `Seen` carries facing; `HexEntity` uses it |
 | R14 supplied arc on the zone only | K1, K2 | `TestConeSite`; fog disc unchanged; no constant in encounter |
 | R15 red floor contract | Z0–Z4 | `TestZoneSite`; web tints exactly the sent cells |
 | R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
