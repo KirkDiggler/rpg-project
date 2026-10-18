@@ -408,7 +408,7 @@ Kirk authors the castle in the studio, shares the document, launches, and walks 
 | U1 studio options | A5 | integration test authors the goblin |
 | U2 studio endings | D2 | emitted YAML compiles |
 | C1 content + every §3 route | D1b | **shipped** (rpg-toolkit#2065): seven `MadKing` tests, one per shipped §3 row |
-| §3 kitchen door, kitchen door heard | C1, D1d | #606; the "heard" row is unblocked by D1d |
+| §3 kitchen door, kitchen door heard | sneaking S1 | kitchen door asserted (`TestMadKingKitchenDoorSneaksPastTheHall`); heard measured, not asserted (`TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`): the crash reaches the hall at DC 10 and the throne room at DC 20 against passive 10, and `hall-1` has no `heard` row; a content question for the operator |
 | §3 front-door alarm reaches the keep | D1d | **shipped** (rpg-toolkit#2071): asserted absent at the file's numbers; open content question in use-case §5 |
 | C2 the walk | D-walk | checklist on #569 |
 | §3 "Scout" row (guard without option turns nothing) | D1b | asserted: `guards-turned` absent after speaking to `gate-1` |
