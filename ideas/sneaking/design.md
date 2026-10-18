@@ -181,7 +181,7 @@ engine owns every piece; the client draws the zones it is sent.
 | R18 | settled at F1, operator may veto | A walk paused for a reaction keeps its walk-end target (`turn.face`); forbids a resumed walk forgetting its target | lead | 2026-10-18 |
 | R19 | settled at F1, operator may veto | One source for where a creature turns: the cell it holds for its target (`faceHeld`), used at walk ends, the driven attack and `RecordTrain`; no holding means no turn; forbids any turn toward a live cell and any turn without a holding | lead | 2026-10-18 |
 | R20 | settled at F1, operator may veto | A Routed walk is the walker's own legs, so it sets facing; forbids treating a Routed walk as imposed | lead | 2026-10-18 |
-| R21 | settled on the F-walk, operator may veto | A train that closes the encounter leaves every watcher's last testimony as it stood; the striker's own facing still turns; no sight refresh and no beat after `ended`; forbids a refresh or any beat appended after the ended beat, and a client reading a closed fight's last testimony as current | lead | 2026-10-18 |
+| R21 | settled on the F-walk, operator may veto | A train that closes the encounter leaves every watcher's last testimony as it stood; the striker's own facing still turns; no sight refresh and no beat after `ended`; forbids a refresh or any beat appended after the ended beat | lead | 2026-10-18 |
 
 ## Open
 
