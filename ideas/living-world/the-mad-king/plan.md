@@ -325,11 +325,8 @@ Two rooms, a door, a guard patrolling a square, a thug in the next room. Fight t
 
 ### Task C1: encounter — passive Stealth at first contact
 
-**Delivers:** S1.
-**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`. **Prerequisites:** B2 merged (passive Perception on `SheetFacts`); `SheetFacts` gains `Stealth int` (the mover's modifier, supplied by session as B3 did).
-**Files:** `trigger.go` `classify` (:205) drop arm (:253–257, :266–273): the discarded `drops` become a check: for each dropping mover, roll d20 + `Stealth` through the shared dice (die owner = the mover) against the highest `PassivePerception` among the opposed watchers in that contact; on success the pass is suppressed for those watchers this refresh and a recipient-scoped `Snuck` beat (roll, dc, beaten) goes to the mover only — protos add it in a C0 task mirroring B0; on failure the contact proceeds as today (formation, surprise rules unchanged). A later refresh with the mover on a new cell re-rolls.
-**Tests:** `holdingsscenes_test.go` scene: a rogue with +7 and a scripted 15 passes a passive 13 guard, no sighting lands, no fight forms; a scripted 2 fails and the fight forms with the existing surprise outcome; the beat reaches the rogue only.
-**Close:** rpg-toolkit#1020 when merged. Session supplies `Stealth` (C2, small, same shape as B3).
+**Superseded** by [`ideas/sneaking/plan.md`](../../sneaking/plan.md) (rpg-project#606): sneaking is a declared mode, and the roll runs per watcher's red zone before the sight pass, not in the drop arm.
+The kitchen-door rows of use case §3 land with that plan's Task S1.
 
 ---
 
