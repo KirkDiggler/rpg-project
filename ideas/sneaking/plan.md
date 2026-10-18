@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev TBD, web dev TBD; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -345,7 +345,7 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 ### Task Z3: rpg-api — convert zones
 
 **Files:** `convert.go` for `GetViewResponse.watch_zones`. **Tests:** convert table test.
-**SHIPPED 2026-10-18:** rpg-api#1118 → dev TBD. `watchZonesToProto` in `convert.go` goes through the same `positionToProto` as `visible_cells` and is wired in `viewToProto` (`get_view.go`). The table test carries a literal x/y assertion, which catches a swap made in both converters, and a zero-cell zone. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. Pins: protos v0.1.241, encounter v0.134.0, session v0.139.0.
+**SHIPPED 2026-10-18:** rpg-api#1118 → dev 2b6669ce. `watchZonesToProto` in `convert.go` goes through the same `positionToProto` as `visible_cells` and is wired in `viewToProto` (`get_view.go`). The table test carries a literal x/y assertion, which catches a swap made in both converters, and a zero-cell zone. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. Pins: protos v0.1.241, encounter v0.134.0, session v0.139.0.
 
 ### Task Z4: web — the red floor
 
@@ -354,14 +354,14 @@ Kitchen-door rows: "Kitchen door" is asserted (`TestMadKingKitchenDoorSneaksPast
 **Tests:** a view with two zones tints exactly their cells; an empty list tints nothing.
 **Verification:** typecheck, tests, screenshot of the castle keep with the floor red at the knights' reach.
 **Completion evidence:** PR body closes the slice issue.
-**SHIPPED 2026-10-18:** rpg-dnd5e-web#1300 → dev TBD. The planned `WatchZoneFloor` component does not exist; the floor shipped as a tint inside `SyntyHexFloor`. `watchZoneCells.ts` unions the sent cells through the same reader as fog (x=q, y=r via `positionToCube`) into `Scene3D.watchZoneCells`. `SyntyHexFloor` tints a tile toward one red over its fog colour: seen red, remembered a darker red. `SeatKnowledgeProbe` exposes `data-watch-zone-cells`. No zone math, no sneaking gate, no per-watcher colour; protos pin v0.1.241. The slice issue closes on the Z-record PR, after the walk.
+**SHIPPED 2026-10-18:** rpg-dnd5e-web#1300 → dev 0b9d37e8. The planned `WatchZoneFloor` component does not exist; the floor shipped as a tint inside `SyntyHexFloor`. `watchZoneCells.ts` unions the sent cells through the same reader as fog (x=q, y=r via `positionToCube`) into `Scene3D.watchZoneCells`. `SyntyHexFloor` tints a tile toward one red over its fog colour: seen red, remembered a darker red. `SeatKnowledgeProbe` exposes `data-watch-zone-cells`. No zone math, no sneaking gate, no per-watcher colour; protos pin v0.1.241. The slice issue closes on the Z-record PR, after the walk.
 
 ### Z-walk and Z-record
 
 Walk: sneak into the keep and see the knights' zones move with their patrol;
 stop sneaking and the floor clears. QA checklist on the slice issue.
 
-**SHIPPED 2026-10-18.** The castle stack runs on dev: api TBD, web TBD. Walked on the castle stack (api z3-zones 39951923 + web z4-zones 11f07229); the checklist is ticked on #619 ([walk comment](https://github.com/KirkDiggler/rpg-project/issues/619#issuecomment-6247627767)):
+**SHIPPED 2026-10-18.** The castle stack runs on dev: api 2b6669ce, web 0b9d37e8. Walked on the castle stack (api z3-zones 39951923 + web z4-zones 11f07229); the checklist is ticked on #619 ([walk comment](https://github.com/KirkDiggler/rpg-project/issues/619#issuecomment-6247627767)):
 - **Hall:** only `hall-1`'s zone, holding the hero's cell. One Snuck beat (DC 12, total 12, beaten).
 - **Kitchen:** zones for the cook, the scullion and `hall-1`, who sees in through the open kitchen door.
 - **Wire contract:** every zone cell is in GetAtlas, and the cells are sorted as `visible_cells`. Sneak off gives none. A held-but-not-current watcher (`gate-1`, seen from the courtyard) gets no zone (R15).
