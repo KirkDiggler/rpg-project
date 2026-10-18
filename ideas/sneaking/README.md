@@ -47,7 +47,7 @@ flowchart TB
     subgraph enc[rpg-toolkit · rulebooks/dnd5e/encounter]
         SS["SetSneaking / memberRecord.Sneaking"]
         FA["memberRecord.Facing<br/>(set by steps, targets, placement)"]
-        ZN["watchZone(watcher)<br/>reachesCell + supplied arc"]
+        ZN["inWatchZone(watcher, cell)<br/>reachesCell + supplied arc"]
         JD["judgeSneakers<br/>before intelLog.Observe"]
         VD["sneakVerdicts[mover][watcher]"]
         RC["sightReach.Reaches<br/>skips beaten pairs"]
@@ -76,7 +76,7 @@ flowchart TB
 | `Encounter.SetSneaking` (encounter) | The mode | `SetSneakingInput{Member, Sneaking bool}` → `SetSneakingOutput{Sneaking bool}`; spends no time, then `refreshSight` over the roster; a no-op when the mode is already held; refuses a non-player, a member in a fight, a closed run, and an encounter without a `CheckResolver` |
 | `memberRecord.Sneaking` (encounter) | Whether a member sneaks now | Set by `SetSneaking`; cleared by Attack, Cast, Speak by that member, by formation engaging them (before any turn budget reads speed), and by Exit; persisted on `EncounterData` |
 | `memberRecord.Facing` (encounter) | Which way a member faces | Seeded from `MemberInput.Facing` / `JoinInput.Facing`; written by each `takeStep` and by a walk or attack that ends on a target; persisted |
-| `watchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, sightReach, arc)` → cell set: every cell `reachesCell(watcher, cell)` accepts, inside `Facing ± WatchArc/2` when the supplied arc is non-zero (cone slice) |
+| `sightReach.inWatchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, cell)` → bool: `reachesCell(watcher, cell)` accepts the cell and, when the supplied `WatchArc` is non-zero, its bearing lies within `Facing ± WatchArc/2`, edge inclusive; the watcher's own cell is always in; a watcher with passive Perception 0 gets no cone (R29) |
 | `judgeSneakers` (encounter) | When a pair is rolled and what is stored | For each sneaking mover × each watcher in the pass: a crossing from outside to inside an armed pair's zone → `CheckResolver.ResolveDiscoveryCheck`, a stored verdict and a `snuck` beat; a declaration in plain view → a lost verdict, no roll; `InZone` from the zone's own answer each pass; a mover the re-arm distance outside (and, for a lost pair, out of ordinary sight) → `Armed` |
 | `sneakVerdicts` (encounter) | The verdict per (mover, watcher) | `map[MemberID]map[MemberID]SneakVerdictData{Beaten, Armed, InZone bool}`, discovery's attempt shape; persisted; dropped when the mover stops sneaking |
 | `sightReach.Reaches` (encounter) | The sight pass's answer per pair | Unchanged geometry, plus, for a sneaking subject: false for a pair with a beaten verdict; ordinary geometry for a pair with a lost verdict; otherwise false outside the observer's zone; set on the reach before `appendMutablePresences` copies it |
@@ -121,8 +121,11 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    knight's patrol steps set its facing along its path.
 4. **Zone.** At the step that brings the rogue into the throne room doorway,
    the refresh builds the knight's zone from `reachesCell(keep-1, cell)` under
-   its 24-cell sight range and the supplied arc. The rogue's last cell was
-   outside it and this one is inside, and the pair is armed: a crossing.
+   its 24-cell sight range, narrowed by `inWatchZone` to the cells within 60°
+   of the knight's facing under the session's seeded arc of 120. The rogue's
+   last cell was outside it and this one is inside, and the pair is armed: a
+   crossing. Had the rogue come in behind the knight's back, the cell would
+   lie outside the wedge: no roll, and the knight would not see the rogue.
 5. **Roll.** `judgeSneakers` asks `ResolveDiscoveryCheck{rogue, [{stealth,
    DC 10}]}`. The session's seam runs `resolution.MakeCheck` on the shared
    dice; the d20 shows 15, so the total is 22 and `Beaten` is true. The
@@ -156,7 +159,7 @@ label.
 
 | Query | Source of truth |
 |---|---|
-| Can this watcher see this cell now? | `sightReach.reachesCell`, plus the arc once cones land |
+| Can this watcher see this cell now? | `sightReach.reachesCell`; its zone adds the arc in `inWatchZone` |
 | What has this watcher seen? | The watcher's `known:cells` journal |
 | Does the watcher see the sneaking mover? | The pass's `Reaches`: zone membership and the stored verdict |
 | Does the viewer see the watcher? | The viewer's perception holding of it, `CurrentVia` non-empty |
@@ -174,7 +177,7 @@ lit cells are the viewer's own reach. **The arc is not sight.** An
 implementation that puts the arc on the `Sight` answer narrows every
 member's percepts and the fog-of-war lit set, which breaks R2 and draws the
 wedge fog-of-war R5 forbids. The arc travels on `SheetFacts` and is read only
-by `watchZone`. **Facing as drawn is testimony.** An observer
+by `inWatchZone`. **Facing as drawn is testimony.** An observer
 draws the facing it last saw, so a ghost keeps the heading it had when it
 faded.
 

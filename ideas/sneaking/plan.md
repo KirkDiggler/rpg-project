@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session TBD, api dev TBD; web unchanged; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -19,7 +19,7 @@ last. Four slices, in order, one module per PR:
 | **C-facing** | members carry a facing; steps, targets and authored facing set it; `Seen` carries it; the web draws it | rpg-project#582 | #582 on F4 |
 | **C-sneak** | the mode, the roll at the reach seam on entering, suppression, the `Snuck` beat, half pace, the kitchen-door routes | rpg-project#606 | rpg-toolkit#1020 on S1; #606 on the S-record PR, after S4 and the walk |
 | **C-zone** | the red floor: watch zones on `GetView`, drawn by the web | rpg-project#619 | #619 on the Z-record PR, after Z4 and the walk |
-| **C-cone** | a supplied arc per watcher narrows its zone | new slice issue, opened when the slice starts | that issue on K2 |
+| **C-cone** | a supplied arc per watcher narrows its zone | rpg-project#621 | #621 on the K-record PR, after K3 and the walk |
 
 C-sneak is independent of facing: its zone before cones is `reachesCell`
 alone, and only C-cone reads facing.
@@ -379,7 +379,7 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 
 ---
 
-## C-cone (slice issue opened at start)
+## C-cone (rpg-project#621)
 
 ### Task K1: encounter — the arc
 
@@ -390,25 +390,54 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 **Behavior:** the arc narrows only `watchZone`; `reachesCell`, `VisibleCellsFor` and a non-sneaking mover's sight never read it.
 **Tests:** `TestConeSite` (one scenario, sheets scripted with arc 120 for the knight): a knight facing north; a sneaking rogue walking behind it is never rolled for and never seen; stepping into its front third rolls; a non-sneaking rogue behind it is seen as today; fog's visible cells for a player are the same disc with arcs on the monsters as with none; a knight answered with 0 watches all around; declaring behind a watcher that sees you keeps you seen (the cook faces north, the rogue stands south in its ordinary sight and declares: the cook keeps holding the rogue, the pair is lost with `InZone: false`, and it re-arms only after the rogue breaks the cook's line of sight and stands the re-arm distance outside its zone).
 **Verification:** module tests; castle suite with `-race`.
+**SHIPPED 2026-10-19:** rpg-toolkit#2084 → main b6e99991 = encounter v0.135.0 (e70634e2).
+- **Shape:** `SheetFacts.WatchArc int`: 0 is no arc (360), 1–360 an arc, anything else is refused with `ErrInvalidData`. `inWatchZone` keeps the cells whose bearing from the watcher, through `facing.go`'s helper in one frame, lies within `WatchArc/2` of `Member.Facing`, edge inclusive. The watcher's own cell is always in. Only `inWatchZone` reads the arc; `reachesCell`, `Reaches` and `VisibleCellsFor` never do. An unstated facing is 180, so an unturned watcher cones south (R13).
+- **Site:** the one-off `dungeonspec/testdata/cone-site.yaml` (one open room, a civil knight and a civil cook facing north, arc 120 scripted) with `TestConeSite` in `dungeonspec/cone_site_test.go`. A sneaking rogue behind the knight is never rolled for and never seen. The roll fires on the cell exactly 60° off. A rogue who is not sneaking is seen from behind. Fog is identical with arcs 120 and 0, and an arc of 0 watches all round. Declaring behind the cook that sees you keeps you seen until sight breaks and the rogue stands the re-arm distance outside. In the deaf-knight phase (passive 0) there is no cone, and the zone holds the cell behind (R29). The held-live stage guards R28.
+- **Castle:** `TestMadKingTheHallGuardsBackIsNotWatched` in `castle_king_cone_test.go`. The hero waits inside the kitchen door; while the patrol faces 90 the hero is behind its back and nothing rolls; when it turns west the roll fires at DC 10. The castle fixture is unchanged; the castle host takes an optional arcs map, and a guard asserts that at least one hall cell was checked.
+- **Mutants killed (10 of 11 at review, the eleventh pinned at f0110589):** drop the arc; the arc in `reachesCell`; the arc on every reach (fog); out-of-zone hiding removed; edge exclusive; re-arm without broken sight; the R28 guard removed; a declaration ignoring live holding; cones unset at declaration or on the red floor; a roll on every refresh; R29 passive 0.
+- **Rulings:** design R28 (a sneaker outside the wedge is unseen only by a watcher that does not already hold them live) and R29 (a watcher with passive Perception 0 gets no cone). The reviewer's note on the held-live path is design O8.
 
 ### Task K2: session — supply the arc
 
 **Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
 **Files:** `sheets.go` (`WatchArc`: for a monster, its stat block's `senses.watch_arc` once that field exists, else the session's seed 120; for a character, 0), pin.
 **Tests:** a monster with no stated arc answers 120; a character answers 0.
-**Closes:** the C-cone slice issue.
+**Closes:** the C-cone slice issue, on the K-record PR after the walk.
+**SHIPPED TBD:** rpg-toolkit#2083 → main TBD = session TBD. `sheets.go` supplies `WatchArc`: a monster answers its stat block's `senses.watch_arc` once that field exists, else the session seed `monsterWatchArc = 120`, one constant whose doc cites R14 and O6; a character answers 0. Tests: a monster with no stated arc answers 120; a character answers 0. The sneak suite's goblin now faces west (270), toward the door it watches: an unstated facing is 180, and the 120 arc missed the door. That is test setup only.
 
-### Deferred: content arc (K-content) and the studio field (K3)
+### Task K3: rpg-api — re-pin
+
+**SHIPPED TBD:** rpg-api#1119 → dev TBD. A re-pin only, with no code: encounter v0.135.0, session TBD, protos gen 84717fe. The castle shelf is unchanged, verified equal to the fixture minus the routes paragraph. No content suite failed under the south-facing seed. The web is unchanged: 0b9d37e8 draws what it is sent.
+
+### Deferred: content arc (K-content) and the studio field
 
 A monster-data field `SensesData.WatchArc` (`watch_arc`, degrees) in
 `rulebooks/dnd5e/monster`, the session reading it, and a studio field on the
 creature panel, all wait until content asks for a creature that watches
-differently from the seed. They are a module PR each when they come.
+differently from the seed. They are a module PR each when they come. The K3
+label went to the rpg-api re-pin.
 
 ### K-walk and K-record
 
 Walk: sneak behind a patrolling knight without a roll; step into its front and
 roll. Tune the session's seed (design O6) and record the value.
+
+**SHIPPED 2026-10-19.** Walked 2026-10-18/19 on the castle stack (api k3-cone 39b06a00, then a re-walk at 14f8440e = encounter c016bc40, session c91a63ac); the checklist is ticked on #621 ([walk comment](https://github.com/KirkDiggler/rpg-project/issues/621#issuecomment-6251517700)):
+- **Wedge:** `hall-1`'s zone is 48 cells, against 312 in the Z-walk. 4,935 zone cells across 10 watchers all lie within ±60° of their watcher's facing.
+- **Behind the back:** over ticks 20–25 (facing 90) nothing rolled. One Snuck beat at the inclusive 60° edge (DC 12, total 18, beaten).
+- **Turning:** the wedge turns with the watcher (48 → 160 cells, disjoint, each within its facing).
+- **Draw:** the painted set equalled the wire in 47 browser states.
+- **Re-walk:** the recipe passed, plus a new case. Seen while not sneaking, the hero breaks sight, declares, and walks in behind at 177–180° off: no roll. The guard turns to 270: one Snuck beat (seq 3577, DC 12, total 22, beaten).
+- **Seed:** 120 reads right on the patrol; design O6 records the value.
+- **Timing aid:** `hall-1` moves 6 cells per tick round a 19-cell loop; a tick fires every 3 sneaking cells or 6 plain cells.
+
+All three PRs carried a MERGE-READY comment review at their final heads: encounter f0110589, session TBD, api TBD.
+
+Findings from the walk. These are findings, not rulings: the tests verify the system, they are not the encounter's design.
+- An unstated facing is 180, so every stationary castle watcher cones at a wall or away from its door: the cook (kitchen door 90° off), the scullion (south wall), the captain and `gate-1`/`gate-2` (backs to the gate, facing the arrival road), the turnkey (cells wall, door 49–71° off) and the king (zone is its own cell, facing the throne wall). The engine is right; the content states no facing for its stationary watchers. Stated facings on the castle fixture, or a studio or stat-block field (K-content), is the operator's call.
+- A lost roll against the neutral garrison forms no fight.
+- The guard's own fog is not on the wire, so "his sight reaches you" rests on the hero's line of sight to him.
+- Headless Playwright ignored wheel, pan and Center-on-me; screenshots were taken at 2600×1800.
 
 ---
 
@@ -417,7 +446,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | requirement | task(s) | proof |
 |---|---|---|
 | R1 declared, free roam only | S1, S2, S4 | `SetSneaking` refusals; toggle hidden in a fight |
-| R2 not sneaking unchanged | S1, K1 | non-sneaking mover seen as before in `sneak_test.go` and `TestConeSite` |
+| R2 not sneaking unchanged | S1, K1 | non-sneaking mover seen as before in `sneak_test.go`; **shipped**: `TestConeSite` sees a rogue who is not sneaking from behind the knight |
 | R3 a roll on entering, server-side | S1, S2 | `TestSneakSite` resolver asked twice over two entries; session rolls on shared dice |
 | R4 facing first; patrols; stopped faces target | F1–F4 | **shipped**: `TestFacingSite` patrol and stop bearings; F-walk |
 | R5 the roll seen, the red floor | S4, Z4 | story line with calculation; **red floor shipped**: Z4 paints exactly the wire union (`data-watch-zone-cells`), keep-red / keep-clear screenshots on the Z-walk |
@@ -428,8 +457,8 @@ roll. Tune the session's seed (design O6) and record the value.
 | R10 entering only, plain view lost, re-arm | S1 | plain-view declaration gets no roll; pacing edge rolls once; re-entry past the distance re-rolls; save/load does not re-roll |
 | R11 suppress, not erase | S1 | a memory ghost survives a won roll; suppression through the real `rebuildPercepts` |
 | R12 beat to the mover, watcher only if seen | S1, S2, S3 | audience test; empty watcher case |
-| R13 facing state, unauthored 180, testimony on `Seen` | F0–F4 | **shipped**: round-trip; `Seen` carries facing; `HexEntity` uses it |
-| R14 supplied arc on the zone only | K1, K2 | `TestConeSite`; fog disc unchanged; no constant in encounter |
+| R13 facing state, unauthored 180, testimony on `Seen` | F0–F4, K1 | **shipped**: round-trip; `Seen` carries facing; `HexEntity` uses it; the cone reads the unstated 180 (K-walk finding: stationary castle watchers cone south) |
+| R14 supplied arc on the zone only | K1, K2 | **shipped**: `TestConeSite` (behind never rolled, 60° edge rolls, fog identical at arcs 120 and 0, arc 0 all round); `TestMadKingTheHallGuardsBackIsNotWatched`; no constant in encounter; K2 seed test (monster 120, character 0); K-walk: every zone cell within ±60° of facing |
 | R15 red floor contract | Z0–Z4 | **shipped**: `TestZoneSite` (live watchers only, known cells only, none when not sneaking); `TestMadKingTheHallGuardsRedFloor`; Z3 convert table test; web tints exactly the sent cells; Z-walk: a held-but-not-current watcher gets no zone |
 | R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
 | Kitchen-door rows (use case §3) | S1, S-record | **shipped**: `TestMadKingKitchenDoorSneaksPastTheHall` with its mutation; heard route measured (`TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`), content fix the operator's |
@@ -448,7 +477,7 @@ roll. Tune the session's seed (design O6) and record the value.
 | S2 staging of sneakers | S1 resolver calls inside any verb | staged record for every sneaking player | S2 | S2 monster-walk test |
 | S1 `watchZone` | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
 | Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells; the session's own `WatchZone` from Z2 on (R27) | Z1, Z0 | Z2 field-for-field copy, Z3 convert table test, Z4 tint test |
-| K1 `SheetFacts.WatchArc` | K2 seed | int degrees, 0 = 360 | K1 | K2 seed test |
+| K1 `SheetFacts.WatchArc` | K2 seed | int degrees, 0 = 360, 1–360 an arc, else `ErrInvalidData` | K1 | K2 seed test |
 
 ## Plan check findings
 
@@ -460,8 +489,8 @@ roll. Tune the session's seed (design O6) and record the value.
   existing check seam so armour and every Stealth rule apply (design R10).
 - Session already stages every player as a discovery observer when the field
   has concealments; S2 widens staging to every sneaking player regardless.
-- C-cone has no issue yet; it is opened when its slice starts, per one issue
-  per slice. C-zone's is rpg-project#619.
+- Each slice has its own issue, per one issue per slice: C-zone's is
+  rpg-project#619 and C-cone's is rpg-project#621.
 - Review of the design PR: a roll on "standing in the zone" let a sneaker
   vanish from a watcher that saw them; R10 now rolls on entering only.
 - The arc and re-arm distance are supplied through `SheetFacts`, seeded by the
