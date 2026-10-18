@@ -43,23 +43,26 @@ flowchart LR
 
 A player declares sneaking in free roam. Every watcher has a red zone: the
 cells its sight would reach from where it stands, facing the way it faces.
-The first refresh that finds a sneaking mover inside a watcher's zone rolls
-that mover's Stealth against that watcher's passive Perception, once. A win
-keeps the mover out of that watcher's sight until the mover leaves the zone.
-A loss lets the watcher see the mover, and today's contact law proceeds. The
+When a sneaking mover enters a watcher's zone from outside it, the mover's
+Stealth is rolled against that watcher's passive Perception, once. A win
+keeps the mover out of that watcher's sight until the pair re-arms. A loss
+lets the watcher see the mover, and today's contact law proceeds. A watcher
+that already sees the mover when sneaking begins keeps seeing them: nobody
+vanishes in plain view. The
 engine owns every piece; the client draws the zones it is sent.
 
 ## Law
 
 - **Sneaking is a mode a player declares (R1, R6).** `SetSneaking` sets or
-  clears it on the member, on the world clock only, and spends no time. A
-  monster never sneaks. The mode is encounter state and persists with the
-  encounter.
+  clears it on the member, on the world clock only, and spends no time. It
+  refreshes sight, so the declaration is judged at once. A monster never
+  sneaks. The mode is encounter state and persists with the encounter.
 - **Showing yourself ends it (R7).** Sneaking ends when the mover attacks,
   casts or speaks, when a formed fight engages the mover, when the mover
   declares it off, and when the mover exits. Ending clears every verdict the
-  mover holds. A sound the mover makes does not end it; hearing is its own
-  channel.
+  mover holds. Formation clears the mode before any turn budget asks for the
+  mover's speed, so a caught sneaker fights at full speed. A sound the mover
+  makes does not end it; hearing is its own channel.
 - **Sneaking costs pace (R8).** While a member sneaks, the session's sheet
   answer for that member's speed is half the sheet's speed, so a world-clock
   round buys half the cells. The encounter never knows the halving.
@@ -67,32 +70,45 @@ engine owns every piece; the client draws the zones it is sent.
   any placed member that is not a player. Its zone is every cell
   `sightReach.reachesCell(watcher, cell)` answers true for in the current
   pass's geometry: the watcher's own `Sight` range, line of sight and sight
-  areas, plus its arc once cones land (R14). Why: the watcher's known cells
+  areas, narrowed by its supplied arc (R14). Why: the watcher's known cells
   are what it has seen, and a zone built from them would hide a lit corridor
   it has never looked down.
 - **Not sneaking, sight is unchanged (R2).** A mover who is not sneaking is
   seen exactly as today: zones, arcs and verdicts do not apply to them.
-- **One roll per entry, per watcher (R3, R10).** A pair is judged at the first
-  refresh in which a sneaking mover stands in the watcher's zone and the pair
-  holds no verdict, whoever moved. The judgement runs before the sight pass
-  and asks `CheckResolver.ResolveDiscoveryCheck` with one approach: ability
-  `stealth`, DC the watcher's `SheetFacts.PassivePerception`. Resolution rolls
-  it on the session's shared dice with the mover as the die's entity. The
-  composition carries the verdict and never compares a total.
-- **A verdict lasts while the mover stays in the zone (R10).** The verdict is
-  stored per (mover, watcher) and persists with the encounter. The first
-  refresh that finds the mover outside that watcher's zone clears it, so a
-  re-entry rolls again. A different watcher's zone is a different pair and
-  rolls on its own.
+- **A roll happens on entering, and only on entering (R3, R10).** A pair is
+  rolled when, between two refreshes, the sneaking mover's cell passes from
+  outside the watcher's zone to inside it and the pair is armed; the
+  sneaker's step, the watcher's walk and the watcher's turn all produce such
+  a crossing. The roll asks `CheckResolver.ResolveDiscoveryCheck` with one
+  approach: ability `stealth`, DC the watcher's
+  `SheetFacts.PassivePerception`. Resolution rolls it on the session's shared
+  dice with the mover as the die's entity. The composition carries the
+  verdict and never compares a total.
+- **Nobody vanishes in plain view (R10).** When sneaking begins, each watcher
+  that holds the mover live (`CurrentVia` non-empty), or whose zone already
+  holds the mover's cell, gets a lost verdict with no roll. Why: a roll that
+  could drop the mover out of a sight already on them is hiding from a
+  creature that sees you, which R3 does not grant.
+- **A verdict holds until the pair re-arms (R10).** Verdicts are stored per
+  (mover, watcher) as discovery's attempts are: the verdict plus an `Armed`
+  flag, persisted with the encounter. A pair re-arms when the mover stands at
+  least the watcher's supplied re-arm distance outside its zone; the next
+  entry rolls again. A zero distance re-arms on the first refresh outside. A
+  different watcher is a different pair and rolls on its own.
+- **Judgement covers the pass's observers (R10).** The judgement runs inside
+  `rebuildPercepts`, before the pass is built, for every pair whose watcher is
+  an observer of that pass. A pair whose watcher is absent from the pass is
+  left untouched, as the pass leaves that watcher's holdings untouched.
 - **A win suppresses; nothing is erased (R11).** While a beaten verdict
   stands, `Reaches(watcher, mover)` answers false for that pair alone. The
-  watcher's holding of the mover fades by the ordinary path to a ghost at the
-  last position it saw. A lost verdict changes nothing: the watcher sees the
-  mover and contact proceeds as today.
+  watcher's memory of the mover, if it has one, stays a ghost at the last
+  position it saw. The suppression is set on the reach the pass is handed,
+  before any copy of it is taken. A lost verdict changes nothing: the watcher
+  sees the mover and contact proceeds as today.
 - **Outside the zone, a sneaker is unseen by that watcher (R9, R14).** For a
   sneaking mover, a watcher sees them only inside its zone, and only without a
-  beaten verdict. Before cones, the zone equals today's sight, so this adds
-  nothing; with cones, a sneaker behind a watcher is unseen by it.
+  beaten verdict. With no supplied arc the zone equals today's sight, so this
+  adds nothing; with an arc, a sneaker behind a watcher is unseen by it.
 - **The roll is the mover's to see, and only theirs (R5, R12).** Each judged
   pair writes one `snuck` beat with audience the mover alone: the mover, the
   DC, the total, whether it beat the DC, and the calculation. It names the
@@ -101,19 +117,26 @@ engine owns every piece; the client draws the zones it is sent.
   identity its eyes never gave it.
 - **Facing is member state the engine sets (R4, R13).** Every member carries a
   facing: a bearing in degrees, 0 is map north, clockwise. It is seeded from
-  the authored placement facing, or the start facing for a player. Each step
+  the authored placement facing, or the start facing for a player. An
+  unauthored facing is a rules bearing of 180, south; it is no longer only a
+  presentation default, because cones read it. Each step
   sets it to that step's direction. A walk that ends with a target turns the
   walker toward that target, and an attack turns the attacker toward its
   target. Facing persists with the encounter.
-- **Facing is testimony (R13).** A sighting snapshots the subject's facing for
-  each observer, as it does position. The web draws the facing the sighting
-  carries and derives none when the wire carries one.
+- **Facing is testimony (R13).** The sight channel's `Seen` snapshots the
+  subject's facing for each observer, beside position, standing and
+  equipment, and a memory keeps the facing it last saw. The web draws the
+  facing `Seen` carries and derives none when the wire carries one.
+- **The arc is supplied, never picked (R14).** `SheetFacts.WatchArc` and
+  `SheetFacts.WatchResetCells` arrive per member at use, as range does
+  through `Sight`. The encounter's only built-in answer is no arc: zero
+  means 360. The session answers a monster's arc from its stat block's
+  `senses.watch_arc`, seeding 120 while content states none, and a
+  character's as zero. Content-level arc grammar waits until content asks.
 - **Cones narrow the zone, never sight (R14).** A watcher's zone keeps only
   the cells whose bearing from the watcher lies within half its arc of its
-  facing, edge inclusive. The arc is a per-member data field, authored on the
-  placement or its template; a monster with no authored arc watches 120
-  degrees, a player 360. Fog-of-war's seen-now set and non-sneaking detection
-  never read the arc.
+  facing, edge inclusive. Fog-of-war's seen-now set and non-sneaking
+  detection never read the arc.
 - **The red floor is server-derived (R15).** `GetView` carries, for a sneaking
   viewer only, one zone per watcher the viewer holds live, each the
   watcher's zone intersected with the viewer's known, unconcealed cells. The
@@ -133,23 +156,23 @@ engine owns every piece; the client draws the zones it is sent.
 | R2 | settled | Not sneaking: today's room-level sight detection stands | KirkDiggler | 2026-10-18 |
 | R3 | settled | Sneaking: entering a given monster's red zone makes a Stealth roll, per monster; server-side, always; the client draws what the server sends | KirkDiggler | 2026-10-18 |
 | R4 | settled | Facing is step 1 (rpg-project#582): members carry a facing; patrols face their path; a monster that stops walking faces its target; cones come after | KirkDiggler | 2026-10-18 |
-| R5 | settled | The roll reads like a sleight-of-hand check the player watches; the player sees the floor where they would be detected drawn red, as Baldur's Gate does | KirkDiggler | 2026-10-18 |
-| R6 | open | The mode: one session verb `SetSneaking` on the world clock sets or clears `sneaking` on the encounter's member; forbids a turn-clock sneak, a client-held flag and a monster sneaking | design round | 2026-10-18 |
-| R7 | open | What ends it: attack, cast, speak, a fight engaging the mover, declaring it off, exit; forbids a sound ending it | design round | 2026-10-18 |
+| R5 | settled | The roll reads like a sleight-of-hand check the player watches (sourced on [#606](https://github.com/KirkDiggler/rpg-project/issues/606) by the operator's own words, posted 2026-10-18); the player sees the floor where they would be detected drawn red, as Baldur's Gate does (the operator's wave C direction on #606) | KirkDiggler | 2026-10-18 |
+| R6 | open | The mode: one session verb `SetSneaking` on the world clock sets or clears `sneaking` on the encounter's member and refreshes sight; forbids a turn-clock sneak, a client-held flag, a monster sneaking and a declaration judged only at some later verb | design round | 2026-10-18 |
+| R7 | open | What ends it: attack, cast, speak, a fight engaging the mover (cleared before any turn budget reads speed), declaring it off, exit; forbids a sound ending it and a caught sneaker's first turn at half speed | design round | 2026-10-18 |
 | R8 | open | Cost: half speed while sneaking, answered by the session's speed fact; forbids a second free-roam movement budget and the encounter knowing the rule | design round | 2026-10-18 |
 | R9 | open | The zone is the watcher's sight reach from where it stands, by the one sight test; forbids building it from the watcher's known cells and computing it anywhere but the engine | design round | 2026-10-18 |
-| R10 | open | One check per (mover, watcher) per entry, through the check resolver against the watcher's passive Perception, verdict stored until the mover leaves the zone; forbids a roll per refresh, a Stealth number on sheet facts, the composition comparing totals, and one roll against the highest passive | design round | 2026-10-18 |
+| R10 | open | A roll only on entering a watcher's zone from outside, through the check resolver against the watcher's passive Perception; a watcher already seeing the mover, or already holding the mover's cell in its zone, when sneaking begins gets a lost verdict with no roll; verdicts re-arm as discovery's attempts do, at a supplied distance; forbids vanishing from a watcher that sees you, a roll per refresh, a Stealth number on sheet facts, the composition comparing totals, and one roll against the highest passive | lead, operator may veto | 2026-10-18 |
 | R11 | open | A beaten verdict suppresses that one pair in the sight pass; forbids erasing a holding and suppressing any other watcher | design round | 2026-10-18 |
 | R12 | open | The `snuck` beat goes to the mover alone and names only a watcher the mover sees; forbids a wider audience and naming an unseen watcher | design round | 2026-10-18 |
-| R13 | open | Facing is a persisted bearing set by steps and targets and carried as testimony; forbids a client-derived heading when the wire has one and a live read of facing | design round | 2026-10-18 |
-| R14 | open | Cones: an arc field per member narrows the zone only; default 120 for monsters, 360 for players; forbids an arc on fog-of-war sight or on non-sneaking detection | design round | 2026-10-18 |
+| R13 | open | Facing is a persisted bearing set by steps and targets, unauthored = 180 as a rule, carried as testimony on `Seen` (rpg-toolkit ADR-0041); forbids a client-derived heading when the wire has one, a live read of facing, and facing as a loose field on `Sighting` | lead, operator may veto | 2026-10-18 |
+| R14 | open | Cones: an arc supplied per member at use narrows the zone only; the encounter's only built-in answer is 360; the session supplies a monster's from `senses.watch_arc`, seeding 120; forbids an arc constant in encounter Go, an arc on fog-of-war sight or on non-sneaking detection | lead, operator may veto | 2026-10-18 |
 | R15 | open | The red floor: per live watcher, zone ∩ the viewer's known unconcealed cells, on GetView, only while the viewer sneaks; forbids a client zone algorithm, zones of unseen watchers, and zones for a viewer who is not sneaking | design round | 2026-10-18 |
 | R16 | open | Out of this design: footfall hearing, surprise costing anything, monster sneaking, the drop arm stopping a walk | design round | 2026-10-18 |
 
 ## Open
 
 - **O1 — agreement on R6–R16.** These are this design's answers to the
-  questions R1–R5 leave. Each becomes settled when the operator agrees on the
+  questions R1–R5 leave; R10, R13 and R14 carry the lead's decisions. Each becomes settled when the operator agrees on the
   design PR; a changed one returns only itself.
 - **O2 — the roll against an unseen watcher.** R12 shows the roll and hides
   the watcher. Whether a player should see a roll at all when they see no
@@ -161,8 +184,9 @@ engine owns every piece; the client draws the zones it is sent.
   intent to hide; monster AI's to bring with its use case.
 - **O5 — surprise that costs.** A surprised creature still acts on its first
   turn; that rule arrives with its own slice.
-- **O6 — the default arc.** 120 degrees is a starting value; the walk on the
-  castle tunes it.
+- **O6 — the seeded arc and re-arm distance.** The session seeds 120 degrees
+  and a re-arm distance until content states them; the walk on the castle
+  tunes the seeds, and a per-placement arc waits for a use case.
 - **O7 — zone colour by stance.** The wire names each zone's watcher, so the
   web can tint a civil watcher's zone differently from a hostile one; the
   choice is presentation.

@@ -29,7 +29,7 @@ flowchart TB
     subgraph web[rpg-dnd5e-web]
         Tog["SneakToggle<br/>(free roam only)"]
         Red["WatchZoneFloor<br/>red cells from the view"]
-        Head["entity heading<br/>from Sighting facing"]
+        Head["HexEntity heading<br/>from Seen facing"]
         Sto["story: Snuck + dice"]
     end
     subgraph api[rpg-api · session v1alpha1]
@@ -40,20 +40,20 @@ flowchart TB
         MS["Manager.SetSneaking"]
         ST["stage every sneaking player<br/>for automatic checks"]
         CS["checkSeam.ResolveDiscoveryCheck"]
-        SH["sheetSeam: SpeedFeet halved<br/>while sneaking"]
+        SH["sheetSeam: SpeedFeet halved<br/>while sneaking; WatchArc"]
         PV["projectView:<br/>WatchZones, Sneaking"]
         EV["EventSnuck"]
     end
     subgraph enc[rpg-toolkit · rulebooks/dnd5e/encounter]
         SS["SetSneaking / memberRecord.Sneaking"]
         FA["memberRecord.Facing<br/>(set by steps, targets, placement)"]
-        ZN["watchZone(watcher)<br/>reachesCell (+ arc)"]
+        ZN["watchZone(watcher)<br/>reachesCell + supplied arc"]
         JD["judgeSneakers<br/>before intelLog.Observe"]
         VD["sneakVerdicts[mover][watcher]"]
         RC["sightReach.Reaches<br/>skips beaten pairs"]
         SB["snuck beat, audience = mover"]
         WZ["WatchZonesFor(viewer)"]
-        TS["SightTestimony.Facing"]
+        TS["SightTestimony.Facing → Seen"]
     end
     Tog -. intent .-> H --> MS --> SS
     FA --> ZN --> JD
@@ -64,6 +64,7 @@ flowchart TB
     ZN --> WZ --> PV --> C
     FA --> TS --> C
     SS --> SH
+    SH --> ZN
     ST --> CS
     C --> Red & Head & Sto & Tog
 ```
@@ -72,29 +73,30 @@ flowchart TB
 
 | Component | Owns | Input → output |
 |---|---|---|
-| `Encounter.SetSneaking` (encounter) | The mode | `SetSneakingInput{Member, Sneaking bool}` → `SetSneakingOutput{Sneaking bool}`; refuses a non-player, a member in a fight, a closed run, and an encounter without a `CheckResolver` |
-| `memberRecord.Sneaking` (encounter) | Whether a member sneaks now | Set by `SetSneaking`; cleared by Attack, Cast, Speak by that member, by formation engaging them, and by Exit; persisted on `EncounterData` |
+| `Encounter.SetSneaking` (encounter) | The mode | `SetSneakingInput{Member, Sneaking bool}` → `SetSneakingOutput{Sneaking bool}`; spends no time, then `refreshSight` over the roster; refuses a non-player, a member in a fight, a closed run, and an encounter without a `CheckResolver` |
+| `memberRecord.Sneaking` (encounter) | Whether a member sneaks now | Set by `SetSneaking`; cleared by Attack, Cast, Speak by that member, by formation engaging them (before any turn budget reads speed), and by Exit; persisted on `EncounterData` |
 | `memberRecord.Facing` (encounter) | Which way a member faces | Seeded from `MemberInput.Facing` / `JoinInput.Facing`; written by each `takeStep` and by a walk or attack that ends on a target; persisted |
-| `watchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, sightReach)` → cell set: every cell `reachesCell(watcher, cell)` accepts, then (cone slice) inside `Facing ± Arc/2` |
-| `judgeSneakers` (encounter) | When a pair is judged and what is stored | Sneaking movers × watchers, zones, stored verdicts → new verdicts via `CheckResolver.ResolveDiscoveryCheck`, cleared verdicts, `snuck` beats |
-| `sneakVerdicts` (encounter) | The verdict per (mover, watcher) | `map[MemberID]map[MemberID]sneakVerdict{Beaten bool, At uint64}`; persisted; cleared when the mover is outside the zone or stops sneaking |
-| `sightReach.Reaches` (encounter) | The sight pass's answer per pair | Unchanged geometry, plus: false for a pair with a beaten verdict, and false for a sneaking subject outside the observer's zone |
+| `watchZone` (encounter) | One watcher's red zone this pass | `(watcher MemberID, sightReach, arc)` → cell set: every cell `reachesCell(watcher, cell)` accepts, inside `Facing ± WatchArc/2` when the supplied arc is non-zero (cone slice) |
+| `judgeSneakers` (encounter) | When a pair is rolled and what is stored | For each sneaking mover × each watcher in the pass: a crossing from outside to inside an armed pair's zone → `CheckResolver.ResolveDiscoveryCheck`, a stored verdict and a `snuck` beat; a declaration in plain view → a lost verdict, no roll; a mover the re-arm distance outside → `Armed` |
+| `sneakVerdicts` (encounter) | The verdict per (mover, watcher) | `map[MemberID]map[MemberID]SneakVerdictData{Beaten, Armed, InZone bool}`, discovery's attempt shape; persisted; dropped when the mover stops sneaking |
+| `sightReach.Reaches` (encounter) | The sight pass's answer per pair | Unchanged geometry, plus: false for a pair with a beaten verdict, and false for a sneaking subject outside the observer's zone; set on the reach before `appendMutablePresences` copies it |
 | `WatchZonesFor` (encounter) | The red floor for one seat | `MemberID` → `[]WatchZone{Watcher, Cells}`: empty unless the viewer sneaks; one per watcher the viewer holds live; cells ∩ the viewer's known, unconcealed cells, sorted |
 | `SightTestimony.Facing` (encounter) | Facing as observed | Snapshotted per pass into the one payload each subject is encoded into |
 | `checkSeam` (session) | The roll | `ResolveCheckInput{Member: mover, Approaches: [{Ability: "stealth", DC: passive}]}` → `resolution.MakeCheck` on the shared dice → `ResolveCheckOutput{Beaten, Applied, Total, Calculation}` |
-| `sheetSeam` (session) | Speed while sneaking | `SheetFacts.SpeedFeet` is half the sheet's speed for a member the encounter reports sneaking; pace rounds through `CellsFromFeet` |
+| `sheetSeam` (session) | Speed while sneaking; the watch terms | `SheetFacts.SpeedFeet` is half the sheet's speed for a member the encounter reports sneaking; pace rounds through `CellsFromFeet`. `SheetFacts.WatchArc` is a monster's `senses.watch_arc`, seeded 120 when unstated, and zero for a character; `SheetFacts.WatchResetCells` is the session's seed |
 | `Manager.SetSneaking` (session) | The verb's write scope | `SetSneakingInput{Member}` → encounter verb, save, `SetSneakingOutput{Sneaking}` |
 | `projectView` (session) | One seat's snapshot | `ViewOutput.WatchZones`, `ViewOutput.Sneaking` passed through unchanged |
 | `EventSnuck` (session) | The stream body | `snuck` beat → `SnuckBody{Member, Watcher, DC, Total, Beaten, Calculation}`, recipient the mover |
-| rpg-api handlers | Seat binding and conversion | Caller → `SetSneakingResponse`; `GetViewResponse.watch_zones`, `.sneaking`; `Sighting.facing_degrees`; `Event.snuck` |
-| `SneakToggle`, `WatchZoneFloor`, heading (web) | Drawing and intent | View and events → a red tint on zone cells, the toggle state, the entity's yaw from `facing_degrees` |
+| rpg-api handlers | Seat binding and conversion | Caller → `SetSneakingResponse`; `GetViewResponse.watch_zones`, `.sneaking`; `Seen.facing_degrees`; `Event.snuck` |
+| `SneakToggle`, `WatchZoneFloor`, `HexEntity` heading (web) | Drawing and intent | View and events → a red tint on zone cells, the toggle state; `HexEntity` seeds and requests the heading from `seen.facingDegrees` when present and passes the move-path heading only when absent |
 
 **Refusals.** The encounter does not compare a Stealth total to a DC; the
 check resolver decides and the encounter carries `Beaten`. The encounter does
-not know that sneaking halves speed; the session's speed answer does. The
-zone is never built from the watcher's known cells, because knowledge lags
-sight. `judgeSneakers` never rolls for a pair that already holds a verdict,
-so a six-step walk through one zone rolls once. `Reaches` never suppresses a
+not know that sneaking halves speed; the session's speed answer does. It
+picks no arc and no re-arm distance; the session supplies both. The zone is never built from the watcher's known cells, because knowledge lags
+sight. `judgeSneakers` rolls only on a crossing into an armed pair's zone,
+so a six-step walk through one zone rolls once, and a declaration in plain
+view never rolls. `Reaches` never suppresses a
 subject who is not sneaking, so R2 holds by construction. `WatchZonesFor`
 never returns a zone for a watcher the viewer does not hold live, and never a
 cell the viewer does not know. The session never filters or recomputes a
@@ -109,8 +111,9 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
 
 1. **Intent.** The web's toggle sends `SetSneaking{member: rogue}`. rpg-api
    binds the caller and calls `Manager.SetSneaking`. The encounter sets
-   `memberRecord.Sneaking = true` and spends no time. `GetView` now reports
-   `sneaking: true`.
+   `memberRecord.Sneaking = true`, spends no time, and refreshes sight. The
+   knight is behind a shut door and does not see the rogue, so no pair is
+   judged lost. `GetView` now reports `sneaking: true`.
 2. **Pace.** The rogue walks. Each step asks `Sheets` for speed; the session
    answers 15 ft for the rogue's 30, so a world-clock round buys three cells
    instead of six. The knight's patrol gets twice the time to walk.
@@ -118,8 +121,8 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    knight's patrol steps set its facing along its path.
 4. **Zone.** At the step that brings the rogue into the throne room doorway,
    the refresh builds the knight's zone from `reachesCell(keep-1, cell)` under
-   its 24-cell sight range. The rogue's cell is in it, and the pair holds no
-   verdict.
+   its 24-cell sight range and the supplied arc. The rogue's last cell was
+   outside it and this one is inside, and the pair is armed: a crossing.
 5. **Roll.** `judgeSneakers` asks `ResolveDiscoveryCheck{rogue, [{stealth,
    DC 10}]}`. The session's seam runs `resolution.MakeCheck` on the shared
    dice; the d20 shows 15, so the total is 22 and `Beaten` is true. The
@@ -134,9 +137,13 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
 8. **Floor.** The rogue's `GetView` carries one `WatchZone{watcher: keep-1}`
    whose cells are the knight's zone ∩ the rogue's known cells. The web tints
    them red.
-9. **Leaving.** Two steps later the rogue is outside the knight's zone; the
-   refresh clears the verdict. If the knight's patrol brings the rogue back
-   into its zone, the next refresh rolls again.
+9. **Leaving.** The rogue steps out of the knight's zone and on until they
+   stand the re-arm distance outside it; the pair is armed again. If the
+   knight's patrol then sweeps its zone over the rogue, that crossing rolls
+   again.
+10. **Plain view.** Had the rogue declared sneaking while the knight already
+    saw them, the knight's pair would hold a lost verdict with no roll, and
+    the knight would keep seeing the rogue until the pair re-armed.
 
 With a d20 of 2 the total is 9, `Beaten` is false, the knight's percept holds
 the rogue, and today's contact law forms the fight with the existing surprise
@@ -163,7 +170,8 @@ red cells are a watcher's reach clipped to what the viewer knows, while the
 lit cells are the viewer's own reach. **The arc is not sight.** An
 implementation that puts the arc on the `Sight` answer narrows every
 member's percepts and the fog-of-war lit set, which breaks R2 and draws the
-wedge fog-of-war R5 forbids. **Facing as drawn is testimony.** An observer
+wedge fog-of-war R5 forbids. The arc travels on `SheetFacts` and is read only
+by `watchZone`. **Facing as drawn is testimony.** An observer
 draws the facing it last saw, so a ghost keeps the heading it had when it
 faded.
 
@@ -172,13 +180,14 @@ faded.
 | Decision | Benefit | Cost / boundary | Not taken |
 |---|---|---|---|
 | The roll through `ResolveDiscoveryCheck` | Armour's Stealth disadvantage, expertise and every future Stealth rule arrive through resolution with no change here; the dice are the shared dice | The session must stage every sneaking player's record on every write verb, because another verb can move a watcher into them | A `Stealth int` on `SheetFacts` compared by the encounter |
-| One roll per (mover, watcher) per entry | A walk through one zone rolls once; the result reads as a check the player watches | A verdict is persisted state the encounter must clear on leaving and on ending the mode | A stored Stealth total compared afresh each pass (rpg-toolkit#1020's lean) |
+| One roll per (mover, watcher) per entry, re-armed at a distance | A walk through one zone rolls once; a zone edge pacing over a still sneaker does not roll every step; the result reads as a check the player watches | A verdict is persisted state with discovery's armed shape; the session owns the re-arm seed | A stored Stealth total compared afresh each pass (rpg-toolkit#1020's lean); clearing on the first refresh outside |
+| A declaration in plain view is a lost verdict | Nobody vanishes from a watcher that sees them | Sneaking past a watcher means starting out of its sight | Rolling to drop out of live sight |
 | Judging before the sight pass | The pass that would form contact already knows the verdict | The judgement runs in every refresh that has a sneaker | Rolling inside the drop arm of `classify`, after percepts are built |
 | The zone is the sight test | One geometry for the zone, the floor and the pass | The zone reveals the watcher's sight range to the sneaking player | The watcher's known cells; a client cone |
 | Half speed while sneaking | The cost is time, which patrols spend | Pace on the world clock changes for the sneaker; the session owns the halving | No cost; a separate movement budget |
 | No zones for a viewer who is not sneaking | The floor never teaches a rule that does not apply | A player declares sneaking to see the floor | Drawing every zone always |
 | Facing as a bearing in degrees | Six step directions and any bearing toward a target fit one type; cones need it | Authored compass words convert at the dialect | The eight compass words on the member |
-| The arc on the zone only | R2 holds; fog-of-war's lit set stays a disc | A sneaker's sight is unchanged by their own facing | An arc on the `Sight` answer |
+| The arc on the zone only, supplied by the session | R2 holds; fog-of-war's lit set stays a disc; tuning the arc is content, not Go | A sneaker's sight is unchanged by their own facing; a per-placement arc waits for a use case | An arc on the `Sight` answer; a default constant in the encounter |
 
 ## Edges
 
@@ -222,5 +231,6 @@ faded.
 | World-clock pace | `rpg-toolkit/rulebooks/dnd5e/encounter/worldtime.go` |
 | The check seam | `rpg-toolkit/rulebooks/dnd5e/session/conceal.go` (`checkSeam`), `exploration.go` (staging) |
 | Authored creature facing | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/single_room.go`, `compile.go` (`MonsterPlacement.Facing`) |
-| Wire | `rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto` (`Sighting`), `service.proto` (`GetViewResponse`), `events.proto` (`DiscoveryChecked`, `Heard`) |
-| Web heading | `rpg-dnd5e-web/src/components/hex-grid/useEntityFacing.ts`, `facingYaw.ts` |
+| Wire | `rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto` (`Seen`), `service.proto` (`GetViewResponse`), `events.proto` (`DiscoveryChecked`, `Heard`); rpg-toolkit `docs/adr/0041-sighting-carries-typed-channel-knowledge.md` |
+| Web heading | `rpg-dnd5e-web/src/components/hex-grid/HexEntity.tsx` (the gate), `useEntityFacing.ts`, `facingYaw.ts` |
+| Monster senses | `rpg-toolkit/rulebooks/dnd5e/monster/data.go` (`SensesData`) |
