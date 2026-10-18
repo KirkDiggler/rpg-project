@@ -225,7 +225,7 @@ The final walk ran on the tagged heads and passed. The three gatehouse guards fa
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
 **Prerequisites:** R6–R16 agreed. Not F1 (see Sequence).
 **Files:**
-- `sneak.go` (new): `SetSneakingInput{Member MemberID; Sneaking bool}`, `SetSneakingOutput{Sneaking bool}`, `Encounter.SetSneaking`, `Encounter.Sneaking(member) bool`; `BeatSnuck = "snuck"`; `watchZone(watcher MemberID, reach sightReach, arc int) map[spatial.Position]bool` (arc 0 = 360; C-cone fills the non-zero branch); `judgeSneakers(reach sightReach, observers []MemberID, at uint64) error`; `endSneaking(member MemberID)`.
+- `sneak.go` (new): `SetSneakingInput{Member MemberID; Sneaking bool}`, `SetSneakingOutput{Sneaking bool}`, `Encounter.SetSneaking`, `Encounter.Sneaking(member) bool`; `BeatSnuck = "snuck"`; `watchZone(watcher MemberID, reach sightReach, arc int) map[spatial.Position]bool` (arc 0 = 360; C-cone fills the non-zero branch; shipped as `sightReach.inWatchZone`); `judgeSneakers(reach sightReach, observers []MemberID, at uint64) error`; `endSneaking(member MemberID)`.
 - `field.go` / `data.go`: `memberRecord.Sneaking bool`; `EncounterData.SneakVerdicts map[MemberID]map[MemberID]SneakVerdictData` with `SneakVerdictData{Beaten bool; Armed bool; InZone bool}`, discovery's `{Used, Armed}` shape (persisted; validated: both ids members, mover a player). `InZone` is the last refresh's answer, so a crossing is `!InZone && nowInZone`.
 - `sheets.go`: `SheetFacts.WatchResetCells int` (zero = re-arm on the first refresh outside; negative refused). `PassivePerception` doc: the DC for hearing and for a sneaker's Stealth.
 - `sightreach.go`: `sightReach` gains `sneaking map[MemberID]bool` and `suppressed map[MemberID]map[MemberID]bool`; `Reaches` answers false when `subject` is sneaking and `observer`→`subject` is suppressed or the subject's cell is outside the observer's zone. `reachesCell` is unchanged (zones, fog and discovery keep asking it).
@@ -386,8 +386,8 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 **Delivers:** R14.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
 **Prerequisites:** F1, Z1.
-**Files:** `sheets.go` (`SheetFacts.WatchArc int`, degrees: 0 = no arc = 360, 1–360 an arc, anything else refused), `sneak.go` `watchZone` (non-zero arc keeps cells whose bearing from the watcher is within `WatchArc/2` of `Facing`, edge inclusive; the watcher's own cell is never in question), `dungeonspec/testdata/cone-site.yaml`. No arc constant anywhere in the module.
-**Behavior:** the arc narrows only `watchZone`; `reachesCell`, `VisibleCellsFor` and a non-sneaking mover's sight never read it.
+**Files:** `sheets.go` (`SheetFacts.WatchArc int`, degrees: 0 = no arc = 360, 1–360 an arc, anything else refused), `sneak.go` `watchZone` (shipped as `sightReach.inWatchZone`; non-zero arc keeps cells whose bearing from the watcher is within `WatchArc/2` of `Facing`, edge inclusive; the watcher's own cell is never in question), `dungeonspec/testdata/cone-site.yaml`. No arc constant anywhere in the module.
+**Behavior:** the arc narrows only `watchZone` (shipped as `sightReach.inWatchZone`); `reachesCell`, `VisibleCellsFor` and a non-sneaking mover's sight never read it.
 **Tests:** `TestConeSite` (one scenario, sheets scripted with arc 120 for the knight): a knight facing north; a sneaking rogue walking behind it is never rolled for and never seen; stepping into its front third rolls; a non-sneaking rogue behind it is seen as today; fog's visible cells for a player are the same disc with arcs on the monsters as with none; a knight answered with 0 watches all around; declaring behind a watcher that sees you keeps you seen (the cook faces north, the rogue stands south in its ordinary sight and declares: the cook keeps holding the rogue, the pair is lost with `InZone: false`, and it re-arms only after the rogue breaks the cook's line of sight and stands the re-arm distance outside its zone).
 **Verification:** module tests; castle suite with `-race`.
 **SHIPPED 2026-10-19:** rpg-toolkit#2084 → main b6e99991 = encounter v0.135.0 (e70634e2).
@@ -434,7 +434,7 @@ roll. Tune the session's seed (design O6) and record the value.
 All three PRs carried a MERGE-READY comment review at their final heads: encounter f0110589, session de79525f, api ffbb65af.
 
 Findings from the walk. These are findings, not rulings: the tests verify the system, they are not the encounter's design.
-- An unstated facing is 180, so every stationary castle watcher cones at a wall or away from its door: the cook (kitchen door 90° off), the scullion (south wall), the captain and `gate-1`/`gate-2` (backs to the gate, facing the arrival road), the turnkey (cells wall, door 49–71° off) and the king (zone is its own cell, facing the throne wall). The engine is right; the content states no facing for its stationary watchers. Stated facings on the castle fixture, or a studio or stat-block field (K-content), is the operator's call.
+- An unstated facing is 180, so every stationary castle watcher cones at a wall or away from its door: the cook (kitchen door 90° off), the scullion (south wall), the captain (back to the gate, facing the arrival road), the turnkey (cells wall, door 49–71° off) and the king (zone is its own cell, facing the throne wall). `gate-1` and `gate-2` patrol, but at the start they too stand with their backs to the gate, facing the arrival road, until their walk turns them (later 270). The engine is right; the content states no facing for its stationary watchers. Stated facings on the castle fixture, or a studio or stat-block field (K-content), is the operator's call.
 - A lost roll against the neutral garrison forms no fight.
 - The guard's own fog is not on the wire, so "his sight reaches you" rests on the hero's line of sight to him.
 - Headless Playwright ignored wheel, pan and Center-on-me; screenshots were taken at 2600×1800.
@@ -475,7 +475,7 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 | S1 `SheetFacts.WatchResetCells` | S2 seed | int cells, 0 = no hysteresis | S1 | S1 pacing test, S2 seed test |
 | S1 `snuck` beat payload | S2 `SnuckBody` → S3 `Snuck` | field names in S1 Interfaces | S1, S0 | S3 convert test |
 | S2 staging of sneakers | S1 resolver calls inside any verb | staged record for every sneaking player | S2 | S2 monster-walk test |
-| S1 `watchZone` | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
+| S1 `watchZone` (shipped as `sightReach.inWatchZone`) | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
 | Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells; the session's own `WatchZone` from Z2 on (R27) | Z1, Z0 | Z2 field-for-field copy, Z3 convert table test, Z4 tint test |
 | K1 `SheetFacts.WatchArc` | K2 seed | int degrees, 0 = 360, 1–360 an arc, else `ErrInvalidData` | K1 | K2 seed test |
 
