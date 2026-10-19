@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked); **P-dwell SHIPPED 2026-10-19** (mind/behavior v0.8.0, encounter TBD, api dev TBD; web unchanged; walked TBD)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -20,6 +20,9 @@ last. Four slices, in order, one module per PR:
 | **C-sneak** | the mode, the roll at the reach seam on entering, suppression, the `Snuck` beat, half pace, the kitchen-door routes | rpg-project#606 | rpg-toolkit#1020 on S1; #606 on the S-record PR, after S4 and the walk |
 | **C-zone** | the red floor: watch zones on `GetView`, drawn by the web | rpg-project#619 | #619 on the Z-record PR, after Z4 and the walk |
 | **C-cone** | a supplied arc per watcher narrows its zone | rpg-project#621 | #621 on the K-record PR, after K3 and the walk |
+| **P-dwell** | a patrol waypoint's `wait` and `facing`: the walker stands N rounds there, facing the stated way | rpg-project#624 | #624 on the P-record PR, after the api re-pin and the walk |
+
+P-dwell came after the four, from the C-cone walk's findings.
 
 C-sneak is independent of facing: its zone before cones is `reachesCell`
 alone, and only C-cone reads facing.
@@ -456,6 +459,58 @@ Findings from the walk. These are findings, not rulings.
 
 ---
 
+## P-dwell (rpg-project#624)
+
+The K-walk's follow-up gave the castle's stationary watchers a facing, but a
+patrol still faced only its next step. The operator asked for a facing at the
+pause: "I think a patrol should have a facing instruction at the pause areas".
+The pause is a stand, not a glance: "The pause I meant in a patrol … walk to
+some area and stand for 2 turns, then go to another". The use case is the gate:
+"guards watch who is coming to the gate".
+
+**Finding that shaped it.** Patrols never stopped at waypoints. A round with
+movement left walked straight through, so a facing alone would have been a
+zero-duration glance. The slice therefore carries a `wait` and makes the
+facing depend on it (design R31, R32).
+
+### Task P1: mind/behavior — the waypoint carries it
+
+**SHIPPED 2026-10-19:** rpg-toolkit#2086 → main 5ad566a6 = mind/behavior v0.8.0 (331baa93).
+- **Shape:** `Selector.Facings []*float64` and `Selector.Waits []int`, parallel to `Path`, `omitempty`. The behavior module carries them and never reads them.
+- **Refusals:** a length that is neither 0 nor `len(Path)`; a facing outside [0,360) or NaN; a negative wait.
+- **Mutants killed:** too many rows, NaN, and the exact edges 0 and 360, among others.
+- **Review:** MERGE-READY comment review at the final head 9b380274.
+
+### Task P2: encounter — the dialect and the dwell
+
+**SHIPPED 2026-10-19:** rpg-toolkit#2087 → main TBD = encounter TBD.
+- **Dialect:** an axial waypoint may read `{ q, r, wait: N, facing: <compass word> }`. The v2 `[x,y]` form cannot carry keys and is left as it is. Refusals land at `...path[i].facing` and `...path[i].wait`, in the placement's sentence. A facing without a wait is refused (R32).
+- **The member carries the dwell.** The route stays stateless. `memberRecord.Dwell` holds the waypoint cell and the rounds left, persisted as `MemberData.dwell`. A walk that ends on a waypoint with a wait starts the dwell, even with movement left, and turns the walker to the waypoint's facing. Each fresh turn spends one round. A turn resumed after a reaction window spends none (R18), and `TurnPauseData.face_pause` persists the pending turn. `MonsterView.Dwelling` holds the patrol's row while rows above it fire. A walker off the dwell cell at its turn ends the dwell.
+- **Site:** the one-off `dungeonspec/testdata/pause-facing-site.yaml` with `TestPauseFacingSite`. A guard walks to waypoint A and stands 2 rounds facing 180, with a sneaking rogue south of A inside his wedge. Reloaded at 2 rounds left, he stands at 1 and 0, then walks on facing the step, and the rogue is outside his wedge.
+- **Tests:** `TestAReactionWindowSpendsNoDwell`; `TestADwellReloadedWhilePausedSpendsNone` (load refuses a `face_pause` facing of 360 and a wait of −1); `TestARowAboveThePatrolInterruptsTheDwellAndLeavingEndsIt` (wait 9: a `heard` clang row walks him off with rounds left, leaving the cell ends the dwell, and the patrol walks him back to a fresh dwell); `TestANegativeDwellIsRefusedAtLoad`.
+- **Castle:** the gate-patrol corners read `{ q: -7, r: 9, wait: 2, facing: se }` and `{ q: -1, r: 9, wait: 2, facing: sw }`. Both face the party start, 15° off; a plain `s` put the start on the 60° edge. `castle_king_pause_facing_test.go` stands out a dwell at each corner, with the zone holding the party start. The branch merged main (#2085), and the compiled golden was regenerated.
+- **Mutants killed (all):** drop the pause turn; skip the stands-on check; never spend a dwell round; the driver ignores `Dwelling`; a resumed turn spends a round; `Act` passes whenever dwelling; `dwelling()` ignores the cell; the dwell dropped on load; a facing accepted without a wait.
+- **Review:** MERGE-READY comment review at the final head 429ff822.
+
+### Task P3: rpg-api — the shelf copy and the re-pin
+
+**SHIPPED 2026-10-19:** rpg-api#1121 → dev TBD. The castle shelf copy carries the two corners; encounter TBD, with behavior v0.8.0 indirect. MERGE-READY comment review at the final head TBD. The web is unchanged.
+
+### Deferred: the studio field
+
+The studio's patrol editor gains the waypoint's wait and facing on
+rpg-dnd5e-web#1303 (ui-ux), open. It waits on this dialect's spelling, which
+P2 fixes.
+
+### P-walk and P-record
+
+TBD
+
+Findings from the walk. These are findings, not rulings.
+- TBD
+
+---
+
 ## Requirement coverage
 
 | requirement | task(s) | proof |
@@ -476,6 +531,8 @@ Findings from the walk. These are findings, not rulings.
 | R14 supplied arc on the zone only | K1, K2 | **shipped**: `TestConeSite` (behind never rolled, 60° edge rolls, fog identical at arcs 120 and 0, arc 0 all round); `TestMadKingTheHallGuardsBackIsNotWatched`; no constant in encounter; K2 seed test (monster 120, character 0); K-walk: every zone cell within ±60° of facing |
 | R15 red floor contract | Z0–Z4 | **shipped**: `TestZoneSite` (live watchers only, known cells only, none when not sneaking); `TestMadKingTheHallGuardsRedFloor`; Z3 convert table test; web tints exactly the sent cells; Z-walk: a held-but-not-current watcher gets no zone |
 | R16 out of scope held | S1 | the drop arm still discards (walk continues in `TestSneakSite`) |
+| R31 a waypoint stands `wait` rounds, facing while standing | P1, P2 | **shipped**: `TestPauseFacingSite` (stands 2 rounds facing 180 through a reload, then faces the step); `TestAReactionWindowSpendsNoDwell`; `TestADwellReloadedWhilePausedSpendsNone`; `TestARowAboveThePatrolInterruptsTheDwellAndLeavingEndsIt`; the castle gate corners stand facing the party start |
+| R32 a facing requires a wait | P2 | **shipped**: the dialect refuses `facing` without `wait` at `...path[i].facing` (mutant: a facing accepted without a wait) |
 | Kitchen-door rows (use case §3) | S1, S-record | **shipped**: `TestMadKingKitchenDoorSneaksPastTheHall` with its mutation; heard route measured (`TestMadKingTheKitchenDoorsCrashReachesOnlyTheHall`), content fix the operator's |
 
 ## Provider / consumer seams
@@ -493,6 +550,7 @@ Findings from the walk. These are findings, not rulings.
 | S1 `watchZone` (shipped as `sightReach.inWatchZone`) | Z1 `WatchZonesFor`, K1 arc | cell set from one `sightReach` | S1 | `TestZoneSite`, `TestConeSite` |
 | Z1 `WatchZone` | Z2 → Z3 → Z4 | watcher id + sorted cells; the session's own `WatchZone` from Z2 on (R27) | Z1, Z0 | Z2 field-for-field copy, Z3 convert table test, Z4 tint test |
 | K1 `SheetFacts.WatchArc` | K2 seed | int degrees, 0 = 360, 1–360 an arc, else `ErrInvalidData` | K1 | K2 seed test |
+| P1 `Selector.Waits`, `Selector.Facings` | P2 dialect and dwell | parallel to `Path`; length 0 or `len(Path)`; facing in [0,360), wait ≥ 0 | mind/behavior v0.8.0 | P1 refusal tests; `TestPauseFacingSite` |
 
 ## Plan check findings
 

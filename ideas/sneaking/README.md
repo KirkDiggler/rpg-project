@@ -118,7 +118,8 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    answers 15 ft for the rogue's 30, so a world-clock round buys three cells
    instead of six. The knight's patrol gets twice the time to walk.
 3. **Facing.** Each step sets the rogue's facing to the step's bearing. The
-   knight's patrol steps set its facing along its path.
+   knight's patrol steps set its facing along its path. At a waypoint with a
+   `wait`, the knight stands those rounds facing the waypoint's `facing`.
 4. **Zone.** At the step that brings the rogue into the throne room doorway,
    the refresh builds the knight's zone from `reachesCell(keep-1, cell)` under
    its 24-cell sight range, narrowed by `inWatchZone` to the cells within 60°
@@ -236,6 +237,7 @@ faded.
 | Sheet facts | `rpg-toolkit/rulebooks/dnd5e/encounter/sheets.go`; `rulebooks/dnd5e/session/sheets.go` |
 | World-clock pace | `rpg-toolkit/rulebooks/dnd5e/encounter/worldtime.go` |
 | The check seam | `rpg-toolkit/rulebooks/dnd5e/session/conceal.go` (`checkSeam`), `exploration.go` (staging) |
+| Patrol waypoint wait and facing | `rpg-toolkit/mind/behavior/table.go` (`Selector.Waits`, `Selector.Facings`); `rpg-toolkit/rulebooks/dnd5e/encounter/dwell.go` |
 | Authored creature facing | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/single_room.go`, `compile.go` (`MonsterPlacement.Facing`) |
 | Wire | `rpg-api-protos/dnd5e/api/session/v1alpha1/types.proto` (`Seen`), `service.proto` (`GetViewResponse`), `events.proto` (`DiscoveryChecked`, `Heard`); rpg-toolkit `docs/adr/0041-sighting-carries-typed-channel-knowledge.md` |
 | Web heading | `rpg-dnd5e-web/src/components/hex-grid/HexEntity.tsx` (the gate), `useEntityFacing.ts`, `facingYaw.ts` |
