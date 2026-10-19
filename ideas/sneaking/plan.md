@@ -439,6 +439,21 @@ Findings from the walk. These are findings, not rulings: the tests verify the sy
 - The guard's own fog is not on the wire, so "his sight reaches you" rests on the hero's line of sight to him.
 - Headless Playwright ignored wheel, pan and Center-on-me; screenshots were taken at 2600×1800.
 
+**Follow-up 2026-10-19: stationary watchers face what they keep (rpg-project#623).** The first finding above is answered on the castle fixture.
+- **Operator direction (Kirk, 2026-10-19):** facing is settable on placement. The fixture's facings are test choices, not story: "The only encounter setup you should be thinking about is how to test what we are adding." "Guards watch who is coming to the gate", and "it is worth testing getting behind the cone".
+- **Encounter:** rpg-toolkit#2085 → main 4cb4f2f1 = encounter v0.135.1 (bfb6d7b5); the final review head 231a268e carried a MERGE-READY comment review. The fixture states the cook e, the scullion ne, the captain s (toward the party start), the turnkey w, the sergeant se and the king e; its header says they are test choices.
+- **Tests:** `castle_king_facings_test.go`. `TestMadKingStillWatchersFaceWhatTheyKeep` checks, per watcher under arc 120, that the cell it guards is in its zone; the cells-door keepers assert (-23,5), the barracks floor north of the door. `TestMadKingTheCaptainWatchesWhoComesToTheGate`: behind him at (-3,7), inside his sight, there is no roll, the hero is unseen and not in his zone; in his front third at (-4,9) the DC 13 roll fires and is beaten. It counts DC rolls, not stored verdicts, since an armed un-rolled pair exists while the hero is behind him (R28).
+- **Test-host finding:** `openTheCastleAs` had been dropping every authored facing; the host now carries them.
+- **Mutants:** removing each facing fails its subtest, except the captain's `s`, which equals the 180 default. His test fails with the arc dropped or with facing n.
+- **rpg-api:** rpg-api#1120 → dev 8cb927ee (the shelf copy and encounter v0.135.1); the final review head e7fcc974 carried a MERGE-READY comment review.
+- **Walk PASS 2026-10-19** (api f-facings 0aaea77a on encounter 231a268e; [checklist](https://github.com/KirkDiggler/rpg-project/issues/623#issuecomment-6257556683)). The wire's facings are 180, 90, 45, 270, 135 and 90. The captain: behind him at (-3,7) no roll; at (-4,9) one Snuck beat, DC 10, total 23, beaten. The cook (142 cells) and the scullion (135) hold the door cells, and opening the door brings Snuck beats. The turnkey (87) and the sergeant (119) hold (-23,5). The king (70) holds the throne door, with one Snuck beat, total 24. Every one of 2,014 zone cells lies within ±60° of its watcher's facing and inside the atlas. The probe is wire 247.
+
+Findings from the walk. These are findings, not rulings.
+- The sergeant's wedge reaches the gatehouse, about 23 hexes: a sneaker at (-3,7) draws a Snuck roll at DC 12.
+- The cook's and the scullion's wedges spill 24 hexes into the hall through the open door.
+- The prisoners remain unfaced; they are out of this slice's scope.
+- rpg-project#624 (a patrol waypoint's `wait` and `facing`) is in flight and will restate the gate corners.
+
 ---
 
 ## Requirement coverage
