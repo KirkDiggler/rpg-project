@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked); **P-dwell SHIPPED 2026-10-19** (mind/behavior v0.8.0, encounter TBD, api dev TBD; web unchanged; walked TBD)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked); **P-dwell SHIPPED 2026-10-19** (mind/behavior v0.8.0, encounter v0.136.0, api dev TBD; web unchanged; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -483,7 +483,7 @@ facing depend on it (design R31, R32).
 
 ### Task P2: encounter — the dialect and the dwell
 
-**SHIPPED 2026-10-19:** rpg-toolkit#2087 → main TBD = encounter TBD.
+**SHIPPED 2026-10-19:** rpg-toolkit#2087 → main 8dc5e829 = encounter v0.136.0 (3c108af5).
 - **Dialect:** an axial waypoint may read `{ q, r, wait: N, facing: <compass word> }`. The v2 `[x,y]` form cannot carry keys and is left as it is. Refusals land at `...path[i].facing` and `...path[i].wait`, in the placement's sentence. A facing without a wait is refused (R32).
 - **The member carries the dwell.** The route stays stateless. `memberRecord.Dwell` holds the waypoint cell and the rounds left, persisted as `MemberData.dwell`. A walk that ends on a waypoint with a wait starts the dwell, even with movement left, and turns the walker to the waypoint's facing. Each fresh turn spends one round. A turn resumed after a reaction window spends none (R18), and `TurnPauseData.face_pause` persists the pending turn. `MonsterView.Dwelling` holds the patrol's row while rows above it fire. A walker off the dwell cell at its turn ends the dwell.
 - **Site:** the one-off `dungeonspec/testdata/pause-facing-site.yaml` with `TestPauseFacingSite`. A guard walks to waypoint A and stands 2 rounds facing 180, with a sneaking rogue south of A inside his wedge. Reloaded at 2 rounds left, he stands at 1 and 0, then walks on facing the step, and the rogue is outside his wedge.
@@ -494,7 +494,7 @@ facing depend on it (design R31, R32).
 
 ### Task P3: rpg-api — the shelf copy and the re-pin
 
-**SHIPPED 2026-10-19:** rpg-api#1121 → dev TBD. The castle shelf copy carries the two corners; encounter TBD, with behavior v0.8.0 indirect. MERGE-READY comment review at the final head TBD. The web is unchanged.
+**SHIPPED 2026-10-19:** rpg-api#1121 → dev TBD. The castle shelf copy carries the two corners; encounter v0.136.0, with behavior v0.8.0 indirect. MERGE-READY comment review at the final head TBD. The web is unchanged.
 
 ### Deferred: the studio field
 
@@ -504,10 +504,19 @@ P2 fixes.
 
 ### P-walk and P-record
 
-TBD
+**Walk PASS 2026-10-19** on the castle stack (api p-dwell 9d7ccf52 on encounter 429ff822); the checklist is ticked on #624 ([walk comment](https://github.com/KirkDiggler/rpg-project/issues/624#issuecomment-6257937430)):
+- **Stand:** each gate guard reaches its corner and holds the cell for that tick and the two after it. Gate-1 faces 135 at (-7,9) and gate-2 faces 225 at (-1,9). Each standing tick writes a STAYED beat. Then each walks on, facing its step; the tick table is in the walk comment.
+- **Zone:** the party start (-5,11) is in the standing guard's zone on every standing tick, and out of it on every walk-on tick.
+- **Interruption:** walked through the `enemy: seen` row. The captain's line turned the garrison hostile, and both guards left their corners with a stored round left (story seqs 659–683). The `heard` interruption is covered by the unit test only: no clang can be made at the gate in free roam.
+- **Persistence:** at tick 9 Redis held gate-1 at (-7,9) with 2 rounds and gate-2 at (-1,9) with 1 round. After a browser reload both walked on at the same cadence.
+- **Draw:** `gate-dwell.png` at tick 9; the probe equalled the wire, 47 cells over three zones.
+- **Offline check:** 45 views, 129 zones and 4,131 cells; the largest off-arc bearing is 60.0°, and every cell lies inside the atlas.
+
+All three PRs carried a MERGE-READY comment review at their final heads: behavior 9b380274, encounter 429ff822, api TBD.
 
 Findings from the walk. These are findings, not rulings.
-- TBD
+- An interrupted dwell is stored as `dwell: {cell, rounds: 0}`, while a dwell that ran out is dropped. That is two stored shapes for "no dwell", and it is harmless.
+- No Snuck roll fired against the neutral gate guards when the hero stepped into a standing guard's zone. That lies outside #624. It is consistent with R10 and R30 if the guards already held the hero live at declaration, since the party start lies in their standing wedge.
 
 ---
 
