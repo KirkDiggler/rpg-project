@@ -32,11 +32,12 @@ The pass lands in order; each step is a slice with its own issue.
 
 ```mermaid
 flowchart LR
-    E1[E1 envelope<br/>#627] --> E2[E2 walk fold<br/>#628] --> E4[E4 dead kinds,<br/>dropped facts<br/>#630] --> E3[E3 vocabulary<br/>#629] --> W[web<br/>web#1301 · web#647 · web#1293]
+    E1[E1 envelope<br/>#627] --> E2[E2 walk fold<br/>#628] --> E3[E3 vocabulary<br/>#629] --> E4[E4 dead kinds,<br/>dropped facts<br/>#630] --> W[web<br/>web#1301 · web#647 · web#1293]
+    R17[R17 per-event story failure<br/>one item of E4] -.lands before the E3 enums.-> E3
 ```
 
-E4's per-event story failure lands before E3's new enums (R17); the rest of
-E4 may land in either order with E3.
+The slices land in R2's order. R17 alone moves ahead: it lands before E3
+adds any enum, because each new enum widens what a story read can refuse.
 
 ## Law
 
@@ -61,15 +62,15 @@ E4 may land in either order with E3.
    carries `roll`, `total`, `against` and `beaten`; a table roll carries `roll`
    and `of`. The verdict word is `beaten`.
 8. **Closed in code, enum on the wire; authored in content, string ref.**
-9. **A kind nothing emits is not on the wire.** Its number and name are
-   reserved, never reused.
+9. **A retired kind's number and name are reserved, never reused.** Whether
+   the never-emitted kinds are deleted is R8.
 10. **A fact crosses every layer or none.** A beat field that no layer
     above carries is either carried or deleted from the beat.
 11. **A refused body fails its event, not the read.** The event keeps its
     seq and arrives marked refused, so a catch-up never hides a hole.
-12. **Protos change additively, except where R6 rules otherwise.** A replaced
-    field is `[deprecated = true]` and unwritten; it never changes type in
-    place.
+12. **Protos change additively:** a replaced field is `[deprecated = true]`
+    and unwritten; it never changes type in place. Whether the vocabulary
+    slice may break in place is R6, open.
 
 ## Rulings
 
@@ -80,9 +81,9 @@ E4 may land in either order with E3.
 | R3 | Every beat carries the correlation of the verb or activation that caused it | settled | encounter, session | KirkDiggler | 2026-10-20 |
 | R4 | `at` gets a defined meaning or is replaced; tags reach the wire or leave the SDK | settled | session, protos | KirkDiggler | 2026-10-20 |
 | R5 | The walk fold is event-projection R4, built in the session projection and carried on the wire; the proto change is additive with deprecation | settled | encounter, session, protos, api | KirkDiggler | 2026-10-20 |
-| R6 | The vocabulary slice breaks the session v1alpha1 contract in place, under the proto-versioning trigger (rpg-project#156): consumers are few, all in the workspace, and move in one sitting. The package is alpha (protos team charter); the protos PR carries `breaking-change-approved` (`rpg-api-protos/docs/how-to/breaking-change-workflow.md`). The break is scoped to this slice | settled | protos, session, api, web | KirkDiggler | 2026-10-20 |
+| R6 | The vocabulary slice breaks the session v1alpha1 contract in place, under the proto-versioning trigger (rpg-project#156): consumers are few, all in the workspace, and move in one sitting. The package is alpha (protos team charter); the protos PR carries `breaking-change-approved` (`rpg-api-protos/docs/how-to/breaking-change-workflow.md`). Scoped to this slice | proposed | protos, session, api, web | — | 2026-10-20 |
 | R7 | `transferred`, `interacted`, `bought`, `sold` are early trading beats; they stay UNKNOWN and get kinds when trading brings its use case | settled | session, protos | KirkDiggler | 2026-10-20 |
-| R8 | The never-emitted deprecated kinds are deleted: DOOR_REVEALED, REGION_REVEALED, INTIMIDATED, PERSUADED, ROOM_REVEALED | settled | protos, session, api | KirkDiggler | 2026-10-20 |
+| R8 | The never-emitted deprecated kinds are deleted, number and name reserved: DOOR_REVEALED, REGION_REVEALED, INTIMIDATED, PERSUADED, ROOM_REVEALED | proposed | protos, session, api | — | 2026-10-20 |
 | R9 | Web forms and the debug filter build on the cleaned stream and live in the existing web issues | settled | web | KirkDiggler | 2026-10-20 |
 | R10 | Answered.fact stays deprecated and unfilled; a learned fact needs a per-viewer projection, not a broadcast field | settled | protos, api | KirkDiggler | 2026-09-17 |
 | R11 | Encounter mints a correlation once per act as `<verb>:<first seq>`, the equip form | proposed | encounter | — | 2026-10-20 |
@@ -103,6 +104,12 @@ E4 may land in either order with E3.
 
 ## Open
 
+- **R6, how the vocabulary reaches the wire.** In place: rename and reshape
+  under the #156 trigger, every consumer moved in one train. Additive: add the
+  new field beside the old (a `member` beside `actor`), deprecate the old, and
+  remove it later.
+- **R8, the never-emitted kinds.** Delete them with number and name reserved,
+  or leave them deprecated.
 - **Fold shape.** R16 extends Moved with a path. The alternative is a new
   kind (a `WALKED` with member, walk and path) beside a deprecated per-step
   MOVED; it reads cleaner in a switch but carries two kinds for one fact.
