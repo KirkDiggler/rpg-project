@@ -1,11 +1,13 @@
-# Event stream — searchable, folded, one vocabulary
+# Event stream — searchable, folded, one vocabulary, on session v1alpha2
 
 The session event stream is what every client reads to learn what happened.
-This pass makes it searchable by cause, folds a walk into one entry, and speaks
-one vocabulary across every body. It extends the event-projection design
-(`ideas/event-projection/design.md`, rpg-project#541) and does not reopen it:
-encounter states facts, the session projection shapes delivery, rpg-api
-transports. Tracking: rpg-project#631.
+This pass makes it searchable by cause, folds a walk into one entry, speaks one
+vocabulary, and says exactly what happened in every event. The cleaned stream
+lives in a new proto package, `dnd5e.api.session.v1alpha2`, holding only the
+event stream; the verbs stay in v1alpha1. The pass extends the
+event-projection design (`ideas/event-projection/design.md`, rpg-project#541)
+and does not reopen it. Explanation: [walkthrough.md](walkthrough.md).
+Tracking: rpg-project#631.
 
 ## Shape
 
@@ -15,29 +17,30 @@ flowchart LR
         A[act: verb or driven activation<br/>mints one correlation]
         B[beats<br/>every beat of the act carries it<br/>each step carries its walk id]
     end
-    subgraph session[toolkit session — projection]
+    subgraph session[toolkit session SDK — projection]
         F[fold: one entry per<br/>uninterrupted walk segment]
         V[bodies in one vocabulary]
+        S[per-step read<br/>for v1 only]
     end
     subgraph api[rpg-api — transport]
-        T[spine + body<br/>a refused body fails its event, not the read]
+        C2[v2 converter<br/>one oneof, raw arm<br/>a refused body fails its event]
+        C1[v1 converter<br/>maps SDK names to old wire names]
     end
-    subgraph web[web]
-        W[one form per kind · debug filter by kind + correlation<br/>the scene plays the walk's path]
+    subgraph wire[rpg-api-protos]
+        P2[session.v1alpha2<br/>Event · StreamEvents · GetStory]
+        P1[session.v1alpha1<br/>stream RPCs, untouched<br/>until deleted]
     end
-    A --> B --> F --> V --> T --> W
+    W[web]
+    A --> B --> F --> V --> C2 --> P2 --> W
+    B --> S --> C1 --> P1 -. until moved .-> W
 ```
-
-The pass lands in order; each step is a slice with its own issue.
 
 ```mermaid
 flowchart LR
-    E1[E1 envelope<br/>#627] --> E2[E2 walk fold<br/>#628] --> E3[E3 vocabulary<br/>#629] --> E4[E4 dead kinds,<br/>dropped facts<br/>#630] --> W[web<br/>web#1301 · web#647 · web#1293]
-    R17[R17 per-event story failure<br/>one item of E4] -.lands before the E3 enums.-> E3
+    E1[E1 envelope<br/>toolkit · #627] --> E2[E2 walk fold<br/>toolkit SDK · #628] --> E3[E3 vocabulary<br/>toolkit SDK + v1 converter · #629] --> E4[E4 session.v1alpha2 events<br/>protos + rpg-api · #630] --> W1[web moves StreamEvents<br/>and GetStory to v2] --> W2[web forms + kind and<br/>correlation filter on v2<br/>web#1301 · web#647 · web#1293] --> D[delete v1alpha1<br/>StreamEvents and GetStory<br/>protos + rpg-api]
 ```
 
-The slices land in R2's order. R17 alone moves ahead: it lands before E3
-adds any enum, because each new enum widens what a story read can refuse.
+The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R6).
 
 ## Law
 
@@ -46,83 +49,88 @@ adds any enum, because each new enum widens what a story read can refuse.
    all its effects. A beat outside any act carries none.
 2. **A reaction belongs to its trigger.** An opportunity attack or a roll
    window carries the correlation of the act that provoked it.
-3. **`at` is the world-clock reading in rounds** when the beat was recorded.
-   It is shared by every beat in a round; order is `seq`, never `at`.
+3. **The envelope is `seq`, `at` and `correlation`.** `at` is the world-clock
+   reading in rounds when the beat was recorded, shared by every beat in a
+   round; order is `seq`, never `at`.
 4. **Tags are the record's own query surface** and do not reach the session
    SDK event or the wire.
 5. **A step carries its walk.** Encounter opens a walk id at a walk's first
    step and closes it at the last step or the refusal; the fold is by identity,
    never by adjacency.
-6. **A walk reaches every reader as one entry per uninterrupted segment**,
-   carrying its ordered cells, live and in story catch-up through the same
-   projection code. Any other beat delivered to that recipient mid-walk closes
-   the segment.
-7. **One vocabulary.** The subject of a body is `member`; the other party is
-   `target`; a prop or faction subject is `prop` or `faction`. A rolled body
-   carries `roll`, `total`, `against` and `beaten`; a table roll carries `roll`
-   and `of`. The verdict word is `beaten`.
+6. **On v1alpha2 a walk is one entry per uninterrupted segment**, carrying its
+   ordered cells, live and in story catch-up through the same SDK projection.
+   Any other beat delivered to that recipient mid-walk closes the segment.
+   v1alpha2 has no per-step kind.
+7. **One vocabulary**, in the session SDK and on v1alpha2. The subject of a
+   body is `member`; the other party is `target`; a prop or faction subject is
+   `prop` or `faction`. A rolled body carries `roll`, `total`, `against` and
+   `beaten`; a table roll carries `roll` and `of`. The verdict word is `beaten`.
 8. **Closed in code, enum on the wire; authored in content, string ref.**
-9. **A retired kind's number and name are reserved, never reused.** Whether
-   the never-emitted kinds are deleted is R8.
-10. **A fact crosses every layer or none.** A beat field that no layer
-    above carries is either carried or deleted from the beat.
-11. **A refused body fails its event, not the read.** The event keeps its
-    seq and arrives marked refused, so a catch-up never hides a hole.
-12. **Protos change additively:** a replaced field is `[deprecated = true]`
-    and unwritten; it never changes type in place. Whether the vocabulary
-    slice may break in place is R6, open.
+9. **Every event says exactly what happened.** The v1alpha2 Event has one
+   oneof and no payload bytes; every mapped kind has a complete typed body.
+   Nothing is filtered before release (event-projection R5).
+10. **A fact crosses every layer or none.** A beat field is in its typed body
+    or deleted from the beat.
+11. **An unmapped beat is loud.** It arrives in the oneof's raw arm, named and
+    whole, never as an empty UNKNOWN (R28).
+12. **A refused body fails its event, not the read**, on v1alpha2. The event
+    keeps its seq and arrives marked refused, so a catch-up never hides a hole.
+13. **The stream moves by version.** v1alpha2 defines its own types and imports
+    nothing from v1alpha1; v1alpha1's stream is left as is until it is deleted.
+14. **Within a package, protos change additively:** a replaced field is
+    `[deprecated = true]` and unwritten; it never changes type in place.
 
 ## Rulings
 
 | ID | ruling | status | scope | ruled by | date |
 |----|--------|--------|-------|----------|------|
 | R1 | The pass extends event-projection R1–R5 and reopens none of them | settled | all | KirkDiggler | 2026-10-20 |
-| R2 | Order: envelope, walk fold, vocabulary, dead kinds and dropped facts, web | settled | all | KirkDiggler | 2026-10-20 |
+| R2 | Order: envelope, walk fold, vocabulary, the v1alpha2 events package, web on v2, then delete the v1alpha1 stream RPCs | settled | all | KirkDiggler | 2026-10-20 |
 | R3 | Every beat carries the correlation of the verb or activation that caused it | settled | encounter, session | KirkDiggler | 2026-10-20 |
-| R4 | `at` gets a defined meaning or is replaced; tags reach the wire or leave the SDK | settled | session, protos | KirkDiggler | 2026-10-20 |
-| R5 | The walk fold is event-projection R4, built in the session projection and carried on the wire; the proto change is additive with deprecation | settled | encounter, session, protos, api | KirkDiggler | 2026-10-20 |
-| R6 | The vocabulary slice breaks the session v1alpha1 contract in place, under the proto-versioning trigger (rpg-project#156): consumers are few, all in the workspace, and move in one sitting. The package is alpha (protos team charter); the protos PR carries `breaking-change-approved` (`rpg-api-protos/docs/how-to/breaking-change-workflow.md`). Scoped to this slice | proposed | protos, session, api, web | — | 2026-10-20 |
-| R7 | `transferred`, `interacted`, `bought`, `sold` are early trading beats; they stay UNKNOWN and get kinds when trading brings its use case | settled | session, protos | KirkDiggler | 2026-10-20 |
-| R8 | The never-emitted deprecated kinds are deleted, number and name reserved: DOOR_REVEALED, REGION_REVEALED, INTIMIDATED, PERSUADED, ROOM_REVEALED | proposed | protos, session, api | — | 2026-10-20 |
+| R4 | `at`, `seq` and `correlation` all stay; `at` is documented as the world-clock reading in rounds. Tags reach the wire or leave the SDK | settled | session, protos | KirkDiggler | 2026-10-20 |
+| R5 | The walk fold is event-projection R4, built in the toolkit session SDK; on the wire it exists only in v1alpha2. v1alpha1 keeps per-hex MOVED | settled | encounter, session, protos, api | KirkDiggler | 2026-10-20 |
+| R6 | The cleaned stream is a new package `dnd5e.api.session.v1alpha2` holding only the Event envelope, the bodies, StreamEvents and GetStory; verbs stay in v1alpha1 and move as their use cases arrive. The pass is done when the v1alpha1 StreamEvents and GetStory are deleted. Additive-and-deprecate leaves fifteen subject names beside the new one and an in-place break moves every consumer in one train; a version gives one vocabulary and per-RPC migration (the proto-versioning rule, rpg-project#156, triggered by cleanliness rather than consumer count) | settled | protos, session, api, web | KirkDiggler | 2026-10-20 |
+| R7 | `transferred`, `interacted`, `bought`, `sold` are early trading beats; they stay unmapped (UNKNOWN) and get typed kinds when trading brings its use case | settled | session, protos | KirkDiggler | 2026-10-20 |
+| R8 | Delete the never-emitted deprecated kinds — replaced by R6: v1alpha2 never defines them, v1alpha1 stays as is until deleted | superseded | protos | KirkDiggler | 2026-10-20 |
 | R9 | Web forms and the debug filter build on the cleaned stream and live in the existing web issues | settled | web | KirkDiggler | 2026-10-20 |
-| R10 | Answered.fact stays deprecated and unfilled; a learned fact needs a per-viewer projection, not a broadcast field | settled | protos, api | KirkDiggler | 2026-09-17 |
+| R10 | Answered.fact stays out; a learned fact needs a per-viewer projection, not a broadcast field | settled | protos, api | KirkDiggler | 2026-09-17 |
 | R11 | Encounter mints a correlation once per act as `<verb>:<first seq>`, the equip form | proposed | encounter | — | 2026-10-20 |
 | R12 | A reaction carries its trigger's correlation (Law 2) | proposed | encounter | — | 2026-10-20 |
-| R13 | `at` keeps its meaning and is documented; SCENE_OPENED carries the real reading instead of 0 | proposed | encounter, protos | — | 2026-10-20 |
+| R13 | `at` keeps its meaning — replaced by R4 | superseded | encounter, protos | KirkDiggler | 2026-10-20 |
 | R14 | Tags leave the session SDK event; the record keeps them | proposed | session | — | 2026-10-20 |
 | R15 | Encounter owns the walk id, not the session; the session already marks the last step | proposed | encounter, session | — | 2026-10-20 |
-| R16 | Fold shape: Moved gains `walk` and `repeated Position path`, and `to` is deprecated. One kind for any walk length; a single step is a path of one | proposed | protos, session, api | — | 2026-10-20 |
-| R17 | GetStory fails per event (Law 11), and lands before any new enum from the vocabulary slice | proposed | api, protos | — | 2026-10-20 |
+| R16 | Fold shape on v1alpha1, a path on Moved or a new kind — replaced by R6 and R27 | superseded | protos | KirkDiggler | 2026-10-20 |
+| R17 | GetStory fails per event natively in v1alpha2 (Law 12); v1alpha1 keeps its whole-read failure untouched | proposed | api, protos | — | 2026-10-20 |
 | R18 | Subject and roll vocabulary as Law 7; DeathSaveRolled keeps its calculation as the expansion; Saved `succeeded` becomes `beaten` | proposed | session, protos, web | — | 2026-10-20 |
 | R19 | Toolkit beat strings use snake_case, matching the wire enum names | proposed | encounter, session | — | 2026-10-20 |
-| R20 | Ability, skill and stance become wire enums; causes and reasons become enums where the toolkit holds them as a closed const set | proposed | session, protos | — | 2026-10-20 |
-| R21 | Moved `cause` is carried, once per walk entry | proposed | session, protos, api | — | 2026-10-20 |
-| R22 | Moved `doors` is not carried; a client derives a crossing from the atlas's doorways, the reason TRAVERSED retired | proposed | session | — | 2026-10-20 |
-| R23 | Answered `prop` is carried; exactly one of `member` and `prop` names who answered | proposed | protos, api | — | 2026-10-20 |
-| R24 | Answered's deprecated `verb` and `beaten` are removed and reserved; SPOKE carries the verdict. Answered `temper` stays | proposed | protos, api, web | — | 2026-10-20 |
+| R20 | Ability, skill and stance become v1alpha2 enums; causes and reasons become enums where the toolkit holds them as a closed const set | proposed | session, protos | — | 2026-10-20 |
+| R21 | A walk's `cause` is in the walk body, once per segment | proposed | session, protos, api | — | 2026-10-20 |
+| R22 | A walk's crossed doors are in the walk body, on the step that crossed them; a door a concealment holds never rides it (encounter already omits it) | proposed | session, protos, api | — | 2026-10-20 |
+| R23 | Answered `prop` is in the body; exactly one of `member` and `prop` names who answered | proposed | session, protos, api | — | 2026-10-20 |
+| R24 | v1alpha2 Answered has no `verb` or `beaten`; SPOKE carries the verdict. `temper` stays | proposed | protos, api, web | — | 2026-10-20 |
 | R25 | Rested stops inlining concentration; the ended concentration is its own CONCENTRATION_ENDED under the rest's correlation | proposed | session, protos | — | 2026-10-20 |
+| R26 | Every event carries enough detail in its typed body to say exactly what happened; the v1alpha2 Event has one oneof, a complete body for every mapped kind, and no raw `payload` bytes | settled | session, protos, api | KirkDiggler | 2026-10-20 |
+| R27 | v1alpha2 has no per-step MOVED; a walk is one entry with its ordered cells | settled | protos, api, web | KirkDiggler | 2026-10-20 |
+| R28 | An unmapped beat (the trading beats, anything future) arrives as a `Raw raw` arm of the same oneof: `string beat` plus the encounter fields as `google.protobuf.Struct`. Struct, because a form or the debug panel reads it as an object with no second decoder, and bytes would restore the passthrough payload R26 removes; the cost is that Struct numbers are doubles | proposed | protos, api, web | — | 2026-10-20 |
+| R29 | Shared types (Position, the Verb, Temper, AnswerWord and AnswerKey enums, ids) are redefined in v1alpha2, only what the stream needs; duplication until v1alpha1's stream RPCs are deleted is the price of the clean slate. Not taken: importing the v1alpha1 types, which ties v2 to v1's names and keeps v1 alive after its stream is gone | proposed | protos | — | 2026-10-20 |
+| R30 | The v1alpha2 walk is `EVENT_KIND_WALKED` with body `Walked { member, walk, repeated WalkStep path, cause }`, where `WalkStep { Position cell, repeated string doors }` | proposed | protos, api, web | — | 2026-10-20 |
+| R31 | The session SDK keeps its per-step event read for the v1 converter until the v1alpha1 stream is deleted; the folded read is what v2 serves. Per-step v1 seqs stay as they are | proposed | session, api | — | 2026-10-20 |
+| R32 | v1alpha2 declares `SessionService` with StreamEvents and GetStory only; verbs join it as they move | proposed | protos, api | — | 2026-10-20 |
 
 ## Open
 
-- **R6, how the vocabulary reaches the wire.** In place: rename and reshape
-  under the #156 trigger, every consumer moved in one train. Additive: add the
-  new field beside the old (a `member` beside `actor`), deprecate the old, and
-  remove it later.
-- **R8, the never-emitted kinds.** Delete them with number and name reserved,
-  or leave them deprecated.
-- **Fold shape.** R16 extends Moved with a path. The alternative is a new
-  kind (a `WALKED` with member, walk and path) beside a deprecated per-step
-  MOVED; it reads cleaner in a switch but carries two kinds for one fact.
-  Either takes a new tag; tag 2 stays reserved.
+- **Raw arm encoding.** R28 proposes Struct; the alternative is `bytes` with
+  the encounter JSON, exact for integers and opaque to clients.
+- **Seqs differ between versions.** A v2 seq counts folded entries and a v1 seq
+  counts steps, so a client never mixes the two streams' seqs. Confirm one
+  per-recipient seq per folded entry against story catch-up when building.
 - **Segments per recipient.** Under event-projection R5 every viewer receives
   everything, so every viewer's segments match. When filtering arrives, a beat
   a viewer does not receive does not close their segment; confirm when it does.
-- **Seq over folded entries**, carried from event-projection: one per-recipient
-  seq per folded entry; confirm against story catch-up when building.
 - **Answered `selector`** (where the answer sends the creature: at a cell, along
-  a path): carry or delete.
-- **Downed `kind`**: delete if the roster still names a downed member's kind,
-  otherwise carry.
+  a path): in the body or deleted from the beat.
+- **Downed `kind`**: in the body, or deleted if the roster still names a downed
+  member's kind.
 - **ExperienceGained `member`**, which repeats DOWNED's member: keep as the
   grant's source or delete now that correlation joins the two.
 - **Concentration break**, which emits CONCENTRATION_ENDED, ACTIVATION_RESULT
