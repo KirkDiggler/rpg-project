@@ -142,7 +142,7 @@ skips or repeats. Ordering by `at` puts every beat in a round in a tie.
 
 - No per-viewer filtering in either stream (R7); access to the record at
   release is an entitlement (R13).
-- The record reaches back only as far as encounter's retention window.
+- The record reaches back only as far as encounter's retention window (R25).
 - Trading beats have no act (R9).
 - A taught fact never rides a broadcast body (R10).
 - The verbs stay on v1alpha1 (R2).

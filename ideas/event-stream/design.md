@@ -106,32 +106,26 @@ The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R2).
 | R9 | The trading beats (`transferred`, `interacted`, `bought`, `sold`) need no kind: they appear in the record stream and produce no act | settled | session, protos | KirkDiggler | 2026-10-20 |
 | R10 | Answered `fact` stays out; a learned fact needs a per-viewer projection, not a broadcast field | settled | protos, api | KirkDiggler | 2026-09-17 |
 | R11 | An unmapped beat rides a raw arm of the act stream — replaced by R5 | superseded | protos | KirkDiggler | 2026-10-20 |
-| R12 | Two RPC pairs, not one stream with two arms: StreamRecord and GetRecord, StreamEvents and GetStory. The record seq is the record's own, not per recipient; an act segment names the record seq range it folded | proposed | protos, api | — | 2026-10-20 |
-| R13 | Record access is an entitlement (operator and developer at release); before release every client receives both streams | proposed | api, web | — | 2026-10-20 |
-| R14 | The player UI reads acts only; the debug panel reads the record (Law 8) | proposed | web | — | 2026-10-20 |
-| R15 | A record catch-up read, GetRecord, sits beside GetStory so the panel keeps history on reconnect | proposed | protos, api, web | — | 2026-10-20 |
-| R16 | The act families of the Shape table, one body each: act, reaction, table answer, state, perception, clock and roster | proposed | session, protos, web | — | 2026-10-20 |
-| R17 | Shared `Roll` (expression, raw dice, modifiers with sources, total, against, beaten) and `Party` (kind and id: member, prop, faction, world) | proposed | session, protos, web | — | 2026-10-20 |
-| R18 | v1alpha2 defines every type it needs and imports nothing from v1alpha1; the duplication lasts until v1alpha1's stream is deleted. Not taken: importing the v1alpha1 types, which ties v2 to v1's names | proposed | protos | — | 2026-10-20 |
-| R19 | An open act (a walk paused for a window, a roll window) delivers as segments; any other beat delivered to that recipient mid-act closes the segment | proposed | session | — | 2026-10-20 |
-| R20 | Encounter mints the act id once per act as `<verb>:<first seq>`, the equip form | proposed | encounter | — | 2026-10-20 |
-| R21 | The session SDK keeps a per-step read for the v1alpha1 converter, so v1alpha1 keeps per-step MOVED until it is deleted | proposed | session, api | — | 2026-10-20 |
-| R22 | GetStory on v1alpha2 fails one act, not the read: the act keeps its seq and arrives marked refused. v1alpha1 keeps its whole-read failure | proposed | api, protos | — | 2026-10-20 |
-| R23 | Tags stay the record's own query surface and leave the session SDK event | proposed | session | — | 2026-10-20 |
+| R12 | Two RPC pairs, not one stream with two arms: StreamRecord and GetRecord, StreamEvents and GetStory. The record seq is the record's own, not per recipient; an act segment names the record seq range it folded | settled | protos, api | KirkDiggler | 2026-10-20 |
+| R13 | Record access is an entitlement (operator and developer at release); before release every client receives both streams | settled | api, web | KirkDiggler | 2026-10-20 |
+| R14 | The player UI reads acts only; the debug panel reads the record (Law 8) | settled | web | KirkDiggler | 2026-10-20 |
+| R15 | A record catch-up read, GetRecord, sits beside GetStory so the panel keeps history on reconnect | settled | protos, api, web | KirkDiggler | 2026-10-20 |
+| R16 | The act families of the Shape table, one body each: act, reaction, table answer, state, perception, clock and roster | settled | session, protos, web | KirkDiggler | 2026-10-20 |
+| R17 | Shared `Roll` (expression, raw dice, modifiers with sources, total, against, beaten) and `Party` (kind and id: member, prop, faction, world) | settled | session, protos, web | KirkDiggler | 2026-10-20 |
+| R18 | v1alpha2 defines every type it needs and imports nothing from v1alpha1; the duplication lasts until v1alpha1's stream is deleted. Not taken: importing the v1alpha1 types, which ties v2 to v1's names | settled | protos | KirkDiggler | 2026-10-20 |
+| R19 | An open act (a walk paused for a window, a roll window) delivers as segments; any other beat delivered to that recipient mid-act closes the segment | settled | session | KirkDiggler | 2026-10-20 |
+| R20 | Encounter mints the act id once per act as `<verb>:<first seq>`, the equip form | settled | encounter | KirkDiggler | 2026-10-20 |
+| R21 | The session SDK keeps a per-step read for the v1alpha1 converter, so v1alpha1 keeps per-step MOVED until it is deleted | settled | session, api | KirkDiggler | 2026-10-20 |
+| R22 | GetStory on v1alpha2 fails one act, not the read: the act keeps its seq and arrives marked refused. v1alpha1 keeps its whole-read failure | settled | api, protos | KirkDiggler | 2026-10-20 |
+| R23 | Tags stay the record's own query surface and leave the session SDK event | settled | session | KirkDiggler | 2026-10-20 |
+| R24 | A driven activation that walks then attacks is several acts: an act is one verb, and a walk's act id is event-projection R4's walk id | settled | encounter, session | KirkDiggler | 2026-10-20 |
+| R25 | The record stays trimmed to encounter's retention window as it is today; a durable home for the record waits for its use case, and this pass is the learning step for it | deferred-until-use-case | encounter, session, api | KirkDiggler | 2026-10-20 |
+| R26 | The record stream shows every viewer every beat, per-observer beats included, before release under event-projection R5; R13 closes it at release | settled | session, api, web | KirkDiggler | 2026-10-20 |
 
 ## Open
 
-- **A driven activation: one act or several.** A monster that walks and then
-  attacks is either one act with a walk and an attack inside, or two acts under
-  two act ids. A player's walk and attack are two verbs, so two acts. If
-  several, a walk's act id is event-projection R4's walk id; if one, the walk
-  inside it needs its own key.
-- **Retention bounds the record.** Encounter trims its record to a retention
-  window, so GetRecord reaches back only as far as the window, and an act's
-  seq range can name beats already trimmed.
-- **The record is a disclosure surface.** Record entries carry audiences, and
-  perception beats are per observer. Before release every client receives
-  every beat (R13); at release R13's entitlement is the gate.
+- **What the record must reach** (R25): how far back the debug panel and an
+  act segment's seq range actually need to read, measured during this pass.
 - **Act seq.** One per-recipient seq per segment or per act; confirm against
   story catch-up when building.
 - **Family membership.** Where a beat folds when two families fit: a
