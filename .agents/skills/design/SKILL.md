@@ -68,6 +68,22 @@ must do.
    not an automatic stop. Bring back a changed architectural decision; handle
    implementation detail within the design.
 
+### Waiting on the operator
+
+When a decision is the operator's and the session is waiting for it:
+
+- **The questions live in the case file, not in chat.** Post the pending
+  decisions as a `- [ ]` checklist on the design PR or the issue: one box per
+  decision, the options in one line each, the recommendation, and the items
+  already settled listed beneath so the whole state reads in one place.
+- **The message to the operator is one line and the link.** Chat scrolls; the
+  checklist does not. Do not restate the questions in the terminal.
+- **Progress, duplicates and "still waiting" are not relayed.** A builder's
+  idle notice, a repeated report or a status line in the terminal buries the
+  one message that needs an answer.
+- **When the operator rules,** tick the box, enter the ruling in the design
+  doc's table with attribution, and reply on the same thread.
+
 ## The artifacts
 
 A design produces two documents for two readers, plus the case file. The
