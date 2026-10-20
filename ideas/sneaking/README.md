@@ -118,8 +118,8 @@ Knight `keep-1` paces the throne room's west side; its passive Perception is
    answers 15 ft for the rogue's 30, so a world-clock round buys three cells
    instead of six. The knight's patrol gets twice the time to walk.
 3. **Facing.** Each step sets the rogue's facing to the step's bearing. The
-   knight's patrol steps set its facing along its path. At a waypoint with a
-   `wait`, the knight stands those rounds facing the waypoint's `facing`.
+   knight's patrol steps set its facing along its path. A patrol waypoint with a
+   `wait` holds its walker for those rounds, facing the waypoint's `facing`.
 4. **Zone.** At the step that brings the rogue into the throne room doorway,
    the refresh builds the knight's zone from `reachesCell(keep-1, cell)` under
    its 24-cell sight range, narrowed by `inWatchZone` to the cells within 60°
