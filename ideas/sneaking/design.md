@@ -132,6 +132,11 @@ engine owns every piece; the client draws the zones it is sent.
   sets it to that step's direction. A walk that ends with a target turns the
   walker toward that target, and an attack turns the attacker toward its
   target. Facing persists with the encounter.
+- **A patrol stands where it is told to (R31, R32).** A waypoint may state a
+  `wait`, the world rounds the walker stands on it, and a `facing` it turns
+  to while standing; a facing needs a wait. The member carries the dwell, not
+  the route. A reaction pause spends no dwell round, and a row above the
+  patrol's own still fires during a dwell.
 - **Facing is testimony (R13).** The sight channel's `Seen` snapshots the
   subject's facing for each observer, beside position, standing and
   equipment, and a memory keeps the facing it last saw. The web draws the
@@ -190,6 +195,9 @@ engine owns every piece; the client draws the zones it is sent.
 | R27 | settled at Z2, operator may veto | The session owns the view's shape: `encounter.WatchZone` never crosses the boundary; `ViewOutput.WatchZones` is the session's own `WatchZone{Watcher, Cells}`, a field-for-field copy (`TestNoInnerTypeCrossesTheBoundary` refused the inner type); forbids admitting a runtime read type to the boundary allow-list | lead | 2026-10-18 |
 | R28 | settled at K1, operator may veto | Under an arc, a sneaker that a watcher's ordinary sight reaches outside its wedge is unseen: the judgement writes an armed, un-rolled pair (`Armed`, not `InZone`) that suppression honours, only when the watcher does not already hold the mover live; a held mover at declaration gets R10's lost verdict with no roll; without arcs a no-op; forbids hiding from a watcher that holds you by stepping out of its wedge | lead | 2026-10-19 |
 | R29 | settled at K1, operator may veto | A watcher with PassivePerception 0 gets no cone: its zone is its ordinary sight, so the red floor never shows less than what sees you (R22); forbids narrowing a non-judging watcher's floor | lead | 2026-10-19 |
+| R30 | settled | Closes O8: being seen costs no re-arm distance; only a lost Stealth roll does; reacting to the ghost is the answer table's job; forbids a re-arm distance owed by a mover the watcher only held live | KirkDiggler | 2026-10-19 |
+| R31 | settled | A patrol waypoint may state `wait: N`, the world rounds the walker stands there, and a `facing` it takes while standing; walking keeps facing the step (R17–R20 unchanged); a reaction pause (R18) consumes no dwell round; a higher table row (`heard`, `enemy: seen`) still fires during a dwell, which holds only the patrol's own row (rpg-project#624); forbids a waypoint facing applied while walking | KirkDiggler | 2026-10-19 |
+| R32 | settled at P2, operator may veto | A waypoint `facing` requires a `wait`: the dialect refuses `facing` without `wait` ("a facing is taken while standing; give the waypoint a wait"); the walk-end glance is not a mechanic; forbids a facing on a waypoint the walker passes through | lead | 2026-10-19 |
 
 ## Open
 
@@ -211,9 +219,6 @@ engine owns every piece; the client draws the zones it is sent.
 - **O7 — zone colour by stance.** The wire names each zone's watcher, so the
   web can tint a civil watcher's zone differently from a hostile one; the
   choice is presentation.
-- **O8 — re-arm after a held-live mover.** A mover the watcher holds live
-  has no stored verdict (R28). Once sight breaks, walking back behind the
-  watcher arms a pair at once, with no re-arm distance, unlike the lost
-  verdict's path (R10). Should a held-live mover owe the re-arm distance
-  too? The reviewer recorded it on rpg-toolkit#2084; behaviour is
-  unchanged.
+- **O8 — re-arm after a held-live mover.** Closed by R30 (operator,
+  2026-10-19): being seen costs no re-arm distance; only a lost Stealth roll
+  does.
