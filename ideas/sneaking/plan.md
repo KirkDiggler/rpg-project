@@ -1,6 +1,6 @@
 ---
 name: Sneaking — implementation plan
-status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked); **P-dwell SHIPPED 2026-10-19** (mind/behavior v0.8.0, encounter v0.136.0, api dev TBD; web unchanged; walked)
+status: PLAN, derived 2026-10-18 from design.md (R1–R16) and checked against the inspected baseline below; supersedes the mad king plan's Task C1; **C-facing SHIPPED 2026-10-18** (protos v0.1.239, encounter v0.133.7, session v0.137.3, api dev 829242b1, web dev 172a7a35; walked); **C-sneak SHIPPED 2026-10-18** (protos v0.1.240, encounter v0.133.9, dnd5e v0.213.0, session v0.138.0, api dev d5c6dab8, web dev eeb3550e; walked); **C-zone SHIPPED 2026-10-18** (protos v0.1.241, encounter v0.134.0, session v0.139.0, api dev 2b6669ce, web dev 0b9d37e8; walked); **C-cone SHIPPED 2026-10-19** (encounter v0.135.0, session v0.140.0, api dev 4c63ec2f; web unchanged; walked); **P-dwell SHIPPED 2026-10-19** (mind/behavior v0.8.0, encounter v0.136.0, api dev 0248749e; web unchanged; walked)
 authority: design.md rulings R1–R16, settled by the operator 2026-10-18 (rpg-project#606, agreement on PR #616)
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -494,7 +494,7 @@ facing depend on it (design R31, R32).
 
 ### Task P3: rpg-api — the shelf copy and the re-pin
 
-**SHIPPED 2026-10-19:** rpg-api#1121 → dev TBD. The castle shelf copy carries the two corners; encounter v0.136.0, with behavior v0.8.0 indirect. MERGE-READY comment review at the final head TBD. The web is unchanged.
+**SHIPPED 2026-10-21:** rpg-api#1121 → dev 0248749e. The castle shelf copy carries the two corners; encounter v0.136.0, with behavior v0.8.0 indirect. MERGE-READY comment review at the final head c21d30b3. The web is unchanged.
 
 ### Deferred: the studio field
 
@@ -512,7 +512,7 @@ P2 fixes.
 - **Draw:** `gate-dwell.png` at tick 9; the probe equalled the wire, 47 cells over three zones.
 - **Offline check:** 45 views, 129 zones and 4,131 cells; the largest off-arc bearing is 60.0°, and every cell lies inside the atlas.
 
-All three PRs carried a MERGE-READY comment review at their final heads: behavior 9b380274, encounter 429ff822, api TBD.
+All three PRs carried a MERGE-READY comment review at their final heads: behavior 9b380274, encounter 429ff822, api c21d30b3.
 
 Findings from the walk. These are findings, not rulings.
 - An interrupted dwell is stored as `dwell: {cell, rounds: 0}`, while a dwell that ran out is dropped. That is two stored shapes for "no dwell", and it is harmless.
