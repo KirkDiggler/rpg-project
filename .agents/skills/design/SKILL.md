@@ -84,6 +84,12 @@ When a decision is the operator's and the session is waiting for it:
 - **When the operator rules,** tick the box, enter the ruling in the design
   doc's table with attribution, and reply on the same thread.
 
+Worked example: the checklist thread on rpg-project#632 (event stream). One
+comment posts the decision with its options and a recommendation; a later
+comment adds the decisions a new proposal raised; the ruling comment ticks the
+boxes and names what stays open for veto. The terminal carried one line and a
+link each time.
+
 ## The artifacts
 
 A design produces two documents for two readers, plus the case file. The
