@@ -51,6 +51,11 @@ encounter in the studio.
   and the wire values that prove it (ids, act ids, bodies, response fields).
 - A walk on an ungated local stack does not prove access policy; the
   slice's test does.
+- A slice that adds a gRPC service or RPC runs one gated-mode smoke check.
+  Bring the walk api up with `RPG_WORLD_ACCESS_ENFORCEMENT=true` and the
+  local dev identities that gated mode needs (`envs/local/world-access.compose.yml`
+  is the template), then call the new RPC once as a seated player. A
+  PermissionDenied "RPC has no configured access policy" is the finding.
 - **Never fake evidence.** A step that cannot be produced on this stack is
   stated plainly with the reason; it is not inferred from a unit test.
 - **Two clients** whenever the slice touches delivery, toasts, presentation
