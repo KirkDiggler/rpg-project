@@ -18,7 +18,7 @@ flowchart LR
         B[record beats<br/>each carries its act id]
     end
     subgraph session[toolkit session SDK]
-        R[record read<br/>beat name · act id · seq · at · fields]
+        R[record read<br/>id · beat name · act id · at · fields]
         P[act projection<br/>beats to acts, delivered as segments]
         S1[per-step read<br/>for v1alpha1 until deleted]
     end
@@ -67,28 +67,32 @@ The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R2).
 2. **An act names itself.** Encounter mints one act id per act, and every beat
    appended inside the act carries it as `correlation`. A reaction carries its
    trigger's act id.
-3. **The envelope is `seq`, `at` and `correlation`.** `at` is the world-clock
-   reading in rounds, shared by every beat in a round; order is `seq`, never
-   `at`.
-4. **The record stream is the beat as written:** beat name, act id, record
-   seq, `at`, and the encounter fields as `google.protobuf.Struct`. It has no
+3. **The envelope is an id, `at` and `correlation`.** The id is an ordering
+   key, not a counter: it increases over time and is unique, and a gap between
+   two ids means nothing. `at` is the world-clock reading in rounds, shared by
+   every beat in a round; order is the id, never `at`.
+4. **Loss is the transport's contract.** A subscriber that falls behind is
+   told it lagged and catches up from the last id it saw; a client never
+   infers a miss from the numbers.
+5. **The record stream is the beat as written:** id, beat name, act id,
+   `at`, and the encounter fields as `google.protobuf.Struct`. It has no
    typed bodies. Its whole contract is that a reader can narrow it by act id
    and by beat name.
-5. **The unit of the act stream is the act.** An act is delivered as segments
+6. **The unit of the act stream is the act.** An act is delivered as segments
    under one act id and folds back into one act on replay; a walk is the
    model. Any other beat delivered to that recipient mid-act closes the
    segment (R19).
-6. **An act says what happened.** Its body names who, what, to whom, how it
+7. **An act says what happened.** Its body names who, what, to whom, how it
    was decided and what changed. The outcome lives inside the body; an attack
    is one act that hit, missed or was warded, never three kinds.
-7. **A beat with no act appears only in the record stream.**
-8. **The player UI reads acts; the debug panel reads the record** (R14). A
+8. **A beat with no act appears only in the record stream.**
+9. **The player UI reads acts; the debug panel reads the record** (R14). A
    form that needs a record detail means the detail belongs in the act body.
-9. **Filtering is outside both shapes.** Neither stream's bodies encode who
+10. **Filtering is outside both shapes.** Neither stream's bodies encode who
    may see them; event-projection R5 stands before release.
-10. **v1alpha2 imports nothing from v1alpha1.** v1alpha1's stream is left as
+11. **v1alpha2 imports nothing from v1alpha1.** v1alpha1's stream is left as
     is until it is deleted.
-11. **Within a package, protos change additively:** a replaced field is
+12. **Within a package, protos change additively:** a replaced field is
     `[deprecated = true]` and unwritten; it never changes type in place.
 
 ## Rulings
@@ -106,28 +110,31 @@ The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R2).
 | R9 | The trading beats (`transferred`, `interacted`, `bought`, `sold`) need no kind: they appear in the record stream and produce no act | settled | session, protos | KirkDiggler | 2026-10-20 |
 | R10 | Answered `fact` stays out; a learned fact needs a per-viewer projection, not a broadcast field | settled | protos, api | KirkDiggler | 2026-09-17 |
 | R11 | An unmapped beat rides a raw arm of the act stream — replaced by R5 | superseded | protos | KirkDiggler | 2026-10-20 |
-| R12 | Two RPC pairs, not one stream with two arms: StreamRecord and GetRecord, StreamEvents and GetStory. The record seq is the record's own, not per recipient; an act segment names the record seq range it folded | settled | protos, api | KirkDiggler | 2026-10-20 |
+| R12 | Two RPC pairs, not one stream with two arms: StreamRecord and GetRecord, StreamEvents and GetStory. The record stream carries the record's own id, not a per-recipient number. An act segment never names a range of record ids: the join runs the other way, because every record beat carries its act id | settled | protos, api | KirkDiggler | 2026-10-20 |
 | R13 | Record access is an entitlement (operator and developer at release); before release every client receives both streams | settled | api, web | KirkDiggler | 2026-10-20 |
-| R14 | The player UI reads acts only; the debug panel reads the record (Law 8) | settled | web | KirkDiggler | 2026-10-20 |
+| R14 | The player UI reads acts only; the debug panel reads the record (Law 9) | settled | web | KirkDiggler | 2026-10-20 |
 | R15 | A record catch-up read, GetRecord, sits beside GetStory so the panel keeps history on reconnect | settled | protos, api, web | KirkDiggler | 2026-10-20 |
 | R16 | The act families of the Shape table, one body each: act, reaction, table answer, state, perception, clock and roster | settled | session, protos, web | KirkDiggler | 2026-10-20 |
 | R17 | Shared `Roll` (expression, raw dice, modifiers with sources, total, against, beaten) and `Party` (kind and id: member, prop, faction, world) | settled | session, protos, web | KirkDiggler | 2026-10-20 |
 | R18 | v1alpha2 defines every type it needs and imports nothing from v1alpha1; the duplication lasts until v1alpha1's stream is deleted. Not taken: importing the v1alpha1 types, which ties v2 to v1's names | settled | protos | KirkDiggler | 2026-10-20 |
 | R19 | An open act (a walk paused for a window, a roll window) delivers as segments; any other beat delivered to that recipient mid-act closes the segment | settled | session | KirkDiggler | 2026-10-20 |
-| R20 | Encounter mints the act id once per act as `<verb>:<first seq>`, the equip form | settled | encounter | KirkDiggler | 2026-10-20 |
+| R20 | Encounter mints the act id once per act as `<verb>:<first seq>`, the equip form; on v1alpha2 the form is `<verb>:<id>` (R27) | settled | encounter | KirkDiggler | 2026-10-20 |
 | R21 | The session SDK keeps a per-step read for the v1alpha1 converter, so v1alpha1 keeps per-step MOVED until it is deleted | settled | session, api | KirkDiggler | 2026-10-20 |
-| R22 | GetStory on v1alpha2 fails one act, not the read: the act keeps its seq and arrives marked refused. v1alpha1 keeps its whole-read failure | settled | api, protos | KirkDiggler | 2026-10-20 |
+| R22 | GetStory on v1alpha2 fails one act, not the read: the act keeps its id and arrives marked refused. v1alpha1 keeps its whole-read failure | settled | api, protos | KirkDiggler | 2026-10-20 |
 | R23 | Tags stay the record's own query surface and leave the session SDK event | settled | session | KirkDiggler | 2026-10-20 |
 | R24 | A driven activation that walks then attacks is several acts: an act is one verb, and a walk's act id is event-projection R4's walk id | settled | encounter, session | KirkDiggler | 2026-10-20 |
 | R25 | The record stays trimmed to encounter's retention window as it is today; a durable home for the record waits for its use case, and this pass is the learning step for it | deferred-until-use-case | encounter, session, api | KirkDiggler | 2026-10-20 |
 | R26 | The record stream shows every viewer every beat, per-observer beats included, before release under event-projection R5; R13 closes it at release | settled | session, api, web | KirkDiggler | 2026-10-20 |
+| R27 | The wire id on both v1alpha2 streams is an ordering key, not a counter: an id that increases over time, ULID-style preferred (time-ordered, unique, monotonic within a millisecond). Gaps are normal and carry no meaning. The record keeps its global seq internally. On v1alpha2 the act id is `<verb>:<id>`; E1's `<verb>:<first seq>` stands on v1alpha1 until it is deleted. Refines R4 | settled | play/record, session, protos, api, web | KirkDiggler | 2026-10-20 |
+| R28 | Loss is the transport's contract: a lagging subscriber is told it lagged and catches up from its last seen id; a client never infers a miss from numbers (rpg-api#1122) | settled | api, web | KirkDiggler | 2026-10-20 |
+| R29 | The per-member StreamCursor and its persistence leave with the v1alpha1 stream | settled | session, api | KirkDiggler | 2026-10-20 |
+| R30 | The gap oracle's mechanism, dense per-recipient numbering so a delivered beat leaves no hole (rpg-project#351), is superseded; its goal, that no number tells a viewer about a beat they were not sent, is met by sparsity instead of density | settled | session, api, web | KirkDiggler | 2026-10-20 |
+| R31 | An act segment's wire id is the id of the last record beat it folds, so catching up after the last id seen resumes both streams the same way | proposed | session, protos | — | 2026-10-20 |
 
 ## Open
 
 - **What the record must reach** (R25): how far back the debug panel and an
-  act segment's seq range actually need to read, measured during this pass.
-- **Act seq.** One per-recipient seq per segment or per act; confirm against
-  story catch-up when building.
+  act catch-up actually need to read, measured during this pass.
 - **Family membership.** Where a beat folds when two families fit: a
   concentration break is a state change inside the act that caused it, or its
   own state act.
