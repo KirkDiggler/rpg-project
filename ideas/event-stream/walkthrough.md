@@ -9,9 +9,10 @@ The pass changes no owner. Encounter still writes beats into its record, the
 session SDK still shapes delivery, rpg-api still transports. It adds one
 identity to every beat, the act id, and reads the record two ways: as written,
 for the debug panel, and folded into acts, for players (R5). Session v1alpha2
-carries both streams and nothing else (R2). It introduces **no per-viewer
-filter (R7), no typed bodies on the record stream (Law 5) and no player view
-of raw beats (Law 9)**.
+carries both streams and nothing else (R2). It introduces **no filter on the record stream (R35), no typed bodies on
+the record stream (Law 5) and no player view of raw beats (Law 9)**. The act
+stream's per-viewer perception filter is a later delivery step in the session
+projection (R35).
 
 ## Component shape
 
@@ -103,16 +104,22 @@ each record beat already carries its act id (R12). On
 replay the two segments fold back into one walk `a, b, c, d, e`.
 
 ```
-id     act id      family    segment  body
-…K41   move:…K41   act       1        walk     {member: gate-1, path: [a, b]}
-…K42   move:…K41   reaction  —        attack   {by: member ranger, to: member gate-1, outcome: hit, damage: 6, roll: {expression: 1d20+5, raw: [14], total: 19, against: 16, beaten: true}}
-…K45   move:…K41   act       2        walk     {member: gate-1, path: [b, c, d, e], doors: [{at: c, door: gate}]}
-…M58   speak:…M57  act       —        speak    {by: member ranger, to: member captain, option: stand-aside, line: "Stand aside or bleed.", roll: {expression: 1d20+5 intimidation, raw: [12], total: 17, against: 14, beaten: true}, answer: {say: "…go on, then. I saw nothing.", roll: 2, of: 4}}
+id     act id      family    segment  run_end  body
+…K41   move:…K41   act       1        true     walk     {member: gate-1, path: [a, b]}
+…K42   move:…K41   reaction  —        true     attack   {by: member ranger, to: member gate-1, outcome: hit, damage: 6, roll: {expression: 1d20+5, raw: [14], total: 19, against: 16, beaten: true}}
+…K45   move:…K41   act       2        true     walk     {member: gate-1, path: [b, c, d, e], doors: [{at: c, door: gate}]}
+…M58   speak:…M57  act       —        true     speak    {by: member ranger, to: member captain, option: stand-aside, line: "Stand aside or bleed.", roll: {expression: 1d20+5 intimidation, raw: [12], total: 17, against: 14, beaten: true}, answer: {say: "…go on, then. I saw nothing.", roll: 2, of: 4}}
 ```
 
-The intimidate is one act. Its answer folds in; whether a table answer rides
-inside the act that drew it or as its own table-answer act is a family
-question for E3. The scene plays each walk segment as one move (web#1293).
+The intimidate is one act, and its answer folds in. A line that fails and sets
+off consequences (a stance turning, a fight forming) has those entries land
+before its answer, so the answer arrives as its own table answer under the
+same `speak:` id. The scene plays each walk segment as one move (web#1293).
+
+Every row above is a delivery unit of one, so each carries `run_end`. When one
+record entry folds into several acts, such as a rest and the concentrations it
+ended, those acts share the entry's id. Only the last of them carries
+`run_end`, and no page or lag close falls between them (Law 13, R32).
 
 **A trading beat.** A purchase appears in the record stream as `bought` under
 its act id and produces no act (R9, Law 8).
@@ -146,8 +153,9 @@ a tie.
 
 ## Edges
 
-- No per-viewer filtering in either stream (R7); access to the record at
-  release is an entitlement (R13).
+- The record stream is never filtered; access to it at release is an
+  entitlement (R13). The act stream is filtered per viewer by perception once
+  the forms have landed (R35).
 - The record reaches back only as far as encounter's retention window (R25).
 - Trading beats have no act (R9).
 - A taught fact never rides a broadcast body (R10).

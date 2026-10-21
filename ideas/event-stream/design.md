@@ -89,11 +89,16 @@ The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R2).
 9. **The player UI reads acts; the debug panel reads the record** (R14). A
    form that needs a record detail means the detail belongs in the act body.
 10. **Filtering is outside both shapes.** Neither stream's bodies encode who
-   may see them; event-projection R5 stands before release.
+   may see them. The record stream is unfiltered; the act stream is filtered
+   per viewer by perception as a delivery step in the session projection
+   (R35).
 11. **v1alpha2 imports nothing from v1alpha1.** v1alpha1's stream is left as
     is until it is deleted.
 12. **Within a package, protos change additively:** a replaced field is
     `[deprecated = true]` and unwritten; it never changes type in place.
+13. **Acts sharing an id are one delivery unit** (R32). The producer marks the
+    unit's last act with `run_end`; a transport closes on lag and ends a page
+    only after it.
 
 ## Rulings
 
@@ -129,7 +134,13 @@ The pass is done when the v1alpha1 StreamEvents and GetStory are deleted (R2).
 | R28 | Loss is the transport's contract: a lagging subscriber is told it lagged and catches up from its last seen id; a client never infers a miss from numbers (rpg-api#1122) | settled | api, web | KirkDiggler | 2026-10-20 |
 | R29 | The per-member StreamCursor and its persistence leave with the v1alpha1 stream | settled | session, api | KirkDiggler | 2026-10-20 |
 | R30 | The gap oracle's mechanism, dense per-recipient numbering so a delivered beat leaves no hole (rpg-project#351), is superseded; its goal, that no number tells a viewer about a beat they were not sent, is met by sparsity instead of density | settled | session, api, web | KirkDiggler | 2026-10-20 |
-| R31 | An act segment's wire id is the id of the last record beat it folds, so catching up after the last id seen resumes both streams the same way | proposed | session, protos | — | 2026-10-20 |
+| R31 | An act segment's wire id is the id of the last record beat it folds, so catching up after the last id seen resumes both streams the same way; it is also the lag point and the page boundary | settled | session, protos | KirkDiggler | 2026-10-21 |
+| R32 | Acts sharing an id are one delivery unit: the producer marks the unit's last act with `run_end` on the Act envelope, and a transport closes on lag and ends a page only between ids | proposed | session, protos, api, web | — | 2026-10-21 |
+| R33 | v1alpha2 redefines the atlas geometry the perception bodies carry, with a second converter in rpg-api; R18's cost accepted. Not taken: ids only with an atlas refetch, which breaks Law 7 | proposed | protos, api | — | 2026-10-21 |
+| R34 | Two v1alpha2 services: StoryService (StreamEvents, GetStory) beside RecordService (StreamRecord, GetRecord), so access attaches per service | proposed | protos, api, web | — | 2026-10-21 |
+| R35 | Events are needed, but not every event is story. The record stream stays unfiltered; only the act stream gets the perception filter, per viewer, in the session projection: a viewer receives their own acts, acts by creatures they see or hear, acts addressed to them, and the run's clock and roster acts. It is a slice after the forms (web#1301). Refines R7 and R26 and event-projection R5 for the act stream | settled | session, api, web | KirkDiggler | 2026-10-21 |
+| R36 | An idle `time` pick (word `hold`) produces no act and stays record-only; a pick that does something appears as the act of its own verb | proposed | session | — | 2026-10-21 |
+| R37 | `Roll` also carries what the beats hold (Law 10): its influences (advantage and disadvantage, each with its source and name, the keep rule reporting only the kept face) and its dice terms with their sources | proposed | session, protos, web | — | 2026-10-21 |
 
 ## Open
 
