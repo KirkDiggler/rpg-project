@@ -49,6 +49,8 @@ encounter in the studio.
 - Post on the slice issue, as a `- [ ]` checklist ticked per step: what the
   step showed, a screenshot (`node tools/browser/screenshot.mjs <url> <out>`)
   and the wire values that prove it (ids, act ids, bodies, response fields).
+- A walk on an ungated local stack does not prove access policy; the
+  slice's test does.
 - **Never fake evidence.** A step that cannot be produced on this stack is
   stated plainly with the reason; it is not inferred from a unit test.
 - **Two clients** whenever the slice touches delivery, toasts, presentation

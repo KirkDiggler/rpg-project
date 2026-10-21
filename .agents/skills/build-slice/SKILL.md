@@ -38,6 +38,15 @@ builder carries one task to a ready PR without inventing process.
 - No hand-written tests. The evidence is `buf lint`, `buf breaking` and code
   generation compiling (`make test`, `make generate`).
 
+## rpg-api
+
+A new gRPC service or RPC in rpg-api is classified in the role policy
+(`GameMethodPermission` in `internal/auth/role_policy.go`: `PermissionPlay`,
+`PermissionBuild`, and so on), with a test in `role_policy_test.go`, in the
+same PR. With world access enforced, an
+unclassified RPC is refused as PermissionDenied ("RPC has no configured
+access policy"), and local stacks are ungated, so a walk will not catch it.
+
 ## Tests and gates
 
 - Write the plan's named tests first and see them fail for the reason the
