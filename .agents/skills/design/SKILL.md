@@ -111,6 +111,8 @@ map. It cites rulings by ID, never restates them, and carries no delivery
 status or correction stories — those are case file. **Read
 [the walkthrough guide](walkthrough.md) before writing one.** It is the surface
 the operator agrees on, and it changes in the same PR as any law it explains.
+Where the standing QA script applies (the QA castle, rpg-project#639), the
+value walked is one of its steps.
 
 ### The design doc
 

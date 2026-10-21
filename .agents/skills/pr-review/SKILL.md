@@ -30,6 +30,19 @@ Use the cheapest evidence that answers the actual question:
   and the game worth playing? These questions need players, not another
   speculative code-review cycle.
 
+**The standing walk is the QA castle** (rpg-project#639): the-mad-king
+encounter, run as a script, with the walk reporting what each step showed.
+
+1. Start outside the castle, neutral, with guards in front of the gate door.
+2. Round a corner out of their sight and start sneaking; the watch cones show.
+3. Start sneaking in plain sight: nothing happens.
+4. Fight the gate guards: the next room is empty and nobody comes.
+5. Open the gate door while it is unguarded: guards come from the far room.
+
+A slice whose walk exercises the game runs these steps. A slice that changes
+what a step should show updates the encounter and this step list in the same
+PR; the operator loads, edits and saves the encounter in the studio.
+
 Do not demand exhaustive edge-case matrices, production hardening, or new
 verification machinery without a concrete risk in the current slice. Missing
 automation is not itself a blocker when a short QA walk answers the question.
@@ -194,10 +207,10 @@ complete while one exists.
 - Stop when findings have dispositions and blocking fixes are verified.
   Update the published verdict with remaining limitations and the focused
   QA/playtest handoff. A local review file is not the record.
-- Keep the handoff short: the changed player journey, what to try and
-  observe, who will run it, and whether it is required before merge or is
-  a later player-playtest question. Link existing results rather than
-  repeating the walk. Do not claim a planned pass has happened or take over
+- Keep the handoff short: the changed player journey, the QA castle steps it
+  touches, what to try and observe, who will run it, and whether it is
+  required before merge or is a later player-playtest question. Link
+  existing results rather than repeating the walk. Do not claim a planned pass has happened or take over
   the operator's playthrough unasked.
 - Review completion is not production certification or automatic merge
   permission. Merge-ready still requires declared scope implemented,
