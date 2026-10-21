@@ -22,6 +22,11 @@ the walk) happened before.
   head and refuses `gh pr merge` as "Merge Without Review" otherwise
   (rpg-toolkit#2006, 2026-10-11). A Minor-fix or re-pin commit after the
   verdict needs a fresh one-line head verdict in the same shape.
+- The verdict reads `MERGE-READY at <sha>` and is posted only when CI is
+  green at that sha (`gh pr checks <n>`). A focused local run is not CI.
+- A delta after the verdict that touches only docs, tests or pins may be
+  closed by the lead's own comment review at the new head, naming the delta.
+  Any code delta needs the reviewer's closure at the new head.
 - The walk's QA checklist on the tracking issue is ticked, or the operator
   said QA passed, on the record.
 - **No open gap.** A walk finding that blocks approval is not a QA pass. The
@@ -57,8 +62,11 @@ the walk) happened before.
    previous step produced (skip on the innermost PR):
    `cd <module dir> && go get <provider module>@<tag> && go mod tidy`,
    `go test ./... -count=1`, lint, commit `chore(<module>): pin <provider> <tag>`,
-   push. If the PR was stacked on another PR's branch, retarget it to `main`
-   first: `gh pr edit <n> --base main`, then `git merge origin/main`.
+   push. If the PR was stacked on another PR's branch, retarget it to its
+   final base **before its base merges**, because GitHub closes a PR whose
+   base branch is deleted:
+   `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -f base=main`
+   (`gh pr edit --base` fails on this account). Then `git merge origin/main`.
 2. **Mark ready** if it is still a draft: `gh pr ready <n>`.
 3. **Wait for CI green**: poll `gh pr checks <n>` in the foreground (never
    `tail -f`). A red `gorelease` check means the title prefix and the API
@@ -83,10 +91,13 @@ the walk) happened before.
 
 ## Close-out, in this order
 
-1. Post one comment on the tracking issue: the `<PR> → <tag>` table, the
-   rpg-api and web `dev` shas, and the follow-ups each PR body listed.
-2. Tear down the walk environment: `scripts/dev-env.sh clean local/<name>`
-   from the `game-dev` root.
+1. Post the ship comment on the slice issue: the `<PR> → <tag>` table, the
+   merge shas including rpg-api's and the web's on `dev`, a link to the walk
+   evidence, and the follow-ups each PR body listed. Then close the slice
+   issue.
+2. Tear down the walk environment per [the walk skill](../walk/SKILL.md):
+   `scripts/dev-env.sh clean local/<name>` from the `game-dev` root. Never
+   the operator's stack on :3030/:8115.
 3. Remove **only this wave's** worktrees and branches, by exact name, in each
    repo: `git worktree remove <path>` then `git branch -D <branch>` — never
    a glob.

@@ -30,18 +30,10 @@ Use the cheapest evidence that answers the actual question:
   and the game worth playing? These questions need players, not another
   speculative code-review cycle.
 
-**The standing walk is the QA castle** (rpg-project#639): the-mad-king
-encounter, run as a script, with the walk reporting what each step showed.
-
-1. Start outside the castle, neutral, with guards in front of the gate door.
-2. Round a corner out of their sight and start sneaking; the watch cones show.
-3. Start sneaking in plain sight: nothing happens.
-4. Fight the gate guards: the next room is empty and nobody comes.
-5. Open the gate door while it is unguarded: guards come from the far room.
-
-A slice whose walk exercises the game runs these steps. A slice that changes
-what a step should show updates the encounter and this step list in the same
-PR; the operator loads, edits and saves the encounter in the studio.
+**The standing walk is the QA castle** (rpg-project#639). Its steps, the
+walk's ports, and its evidence rules are in [the walk skill](../walk/SKILL.md).
+A slice that changes what a step should show updates the script in the same
+PR.
 
 Do not demand exhaustive edge-case matrices, production hardening, or new
 verification machinery without a concrete risk in the current slice. Missing
@@ -91,6 +83,11 @@ In order, before reading a line of the diff:
   If none does, check for real-path QA evidence. If that is also absent,
   name the gap and the smallest useful QA step in the verdict; do not turn
   every mock into a blocking demand for another automated test.
+- **Mutation checks are standard.** For each test the change adds or leans
+  on, ask what must break for it to fail, then break it: delete the guarded
+  line, flip the condition, drop the field. A test that survives its mutant
+  overclaims. A pinned collection length, or an assertion that cannot fail,
+  is a finding.
 - Support defect claims with a concrete code path or a minimal reproduction.
   Use a probe when it resolves uncertainty, not as a ritual for every finding.
   Label unverified risks as such; do not assert a bug or its absence without
@@ -201,6 +198,11 @@ complete while one exists.
   the affected paths at the new head. State what was checked or re-run per
   thread; reuse unaffected evidence. Do not restart whole-diff review or
   recruit another reviewer merely because fixes landed.
+- A closure re-runs the mutants behind every finding about a test, at the
+  new head.
+- A verdict on a draft head that still carries pseudo-versions is named as
+  one: `MERGE-READY at <sha>, pending re-pin`. The re-pin commit then needs
+  the head verdict merge-out requires.
 - Reopen review only for a concrete new blocker, a regression from the fix,
   or a material scope/seam change. Record other observations as non-blocking
   follow-ups or QA/playtest questions; they do not start another cycle.
@@ -210,8 +212,8 @@ complete while one exists.
 - Keep the handoff short: the changed player journey, the QA castle steps it
   touches, what to try and observe, who will run it, and whether it is
   required before merge or is a later player-playtest question. Link
-  existing results rather than repeating the walk. Do not claim a planned pass has happened or take over
-  the operator's playthrough unasked.
+  existing results rather than repeating the walk. Do not claim a planned
+  pass has happened or take over the operator's playthrough unasked.
 - Review completion is not production certification or automatic merge
   permission. Merge-ready still requires declared scope implemented,
   applicable checks and agreed pre-merge QA complete, release prerequisites
