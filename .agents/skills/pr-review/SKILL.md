@@ -116,6 +116,9 @@ In order, before reading a line of the diff:
   threads. A demonstrated failure of the promised journey is still a defect.
 - Each finding states: file:line, what is wrong, why it matters, and the
   fix if not obvious.
+- Check the PR body's Try-it section exists and matches what the PR actually
+  changes: every visible change has a step, and no step promises what the
+  diff does not do. A visible PR with "Nothing to try" is a finding.
 - When the fix is prescriptive, find the package's existing general
   mechanism first — a shared helper, a documented convention — and
   prescribe that. A hand-copied fix where a mechanism exists is itself the

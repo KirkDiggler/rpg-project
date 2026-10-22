@@ -71,6 +71,11 @@ layer above (event-stream Law 10). It is never an accepted loss.
   deviation from the plan and why, carries `Part of <repo>#<n>` and
   `Closes <repo>#<n>` for the issues it finishes, and ends with the
   signature.
+- **Try it**, required in every PR with a visible change: where to point
+  (the operator's stack on :3030/:8115, or the studio), then numbered steps
+  written for the operator, each "do this → expect that" and each tied to the
+  item of the issue it proves. A PR with no visible change says "Nothing to
+  try (api internals)" or "Nothing to try (toolkit)".
 - Scratch files (PR bodies, drivers) live in the job's temporary directory
   under a name carrying the repo, the PR and the builder.
 

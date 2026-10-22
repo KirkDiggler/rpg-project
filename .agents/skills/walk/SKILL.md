@@ -46,6 +46,10 @@ encounter in the studio.
 
 ## Evidence
 
+The walk's evidence, the ticked checklist, stays on the slice issue. Its
+operator-facing twin is the PR body's Try-it script: the same steps, written
+for the operator to drive on their own stack.
+
 - Post on the slice issue, as a `- [ ]` checklist ticked per step: what the
   step showed, a screenshot (`node tools/browser/screenshot.mjs <url> <out>`)
   and the wire values that prove it (ids, act ids, bodies, response fields).

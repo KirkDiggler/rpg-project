@@ -29,6 +29,10 @@ the walk) happened before.
   Any code delta needs the reviewer's closure at the new head.
 - The walk's QA checklist on the tracking issue is ticked, or the operator
   said QA passed, on the record.
+- **A visible PR waits for the operator's look.** Before merging it, the lead
+  puts its head on the operator's stack (:3030/:8115), sends the PR's Try-it
+  script, and merges after the operator has looked or says go. A PR whose
+  Try-it says "Nothing to try" merges on the verdict.
 - **No open gap.** A walk finding that blocks approval is not a QA pass. The
   wave's PRs stay open and un-merged; the gap gets its own tracking issue,
   short design and slices, merges first, and the wave's stack comes back up on
