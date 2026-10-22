@@ -47,6 +47,11 @@ same PR. With world access enforced, an
 unclassified RPC is refused as PermissionDenied ("RPC has no configured
 access policy"), and local stacks are ungated, so a walk will not catch it.
 
+The rpg-api gate is `make test` (`go test -short -race ./...`), never CI's
+package list. CI's `test.yml` excludes `cmd/server` (rpg-api#1133), so a green
+CI can hide a failing world-access rollout test; the builder's local gate
+covers every package.
+
 ## Tests and gates
 
 - Write the plan's named tests first and see them fail for the reason the
