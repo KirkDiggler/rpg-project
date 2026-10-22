@@ -8,6 +8,18 @@ description: Use when building one slice of an agreed plan across the RPG reposi
 The plan names the tasks, files, interfaces and tests. This skill is how a
 builder carries one task to a ready PR without inventing process.
 
+## Slice order
+
+1. **Build** the slice.
+2. **Boot it:** the stack comes up on the builder's own ports and its pages
+   load with no errors.
+3. **Report the head** to the lead for the operator's early view.
+4. **Only then** walk it and ask for review.
+
+The builder starts neither a walk nor a review request until the lead says
+the operator has looked, or that the slice has nothing to see. The operator
+may pivot on the early view, and a pivot then costs nothing.
+
 ## Worktrees and git
 
 - One plain git worktree per line of work, under `<repo>/.worktrees/<name>`:
@@ -96,4 +108,5 @@ After the base lands squashed, the child catches up with
 
 When the lead sends a fix list, acknowledge it in one line first, then do it.
 Reply in every review thread with what changed or why it did not, and the
-commit that answers it.
+commit that answers it: "fixed by <sha>", plus "mutant fails" where the
+finding was about a seam test.

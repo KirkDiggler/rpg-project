@@ -19,6 +19,9 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
 4. Fight the gate guards: the next room is empty and nobody comes.
 5. Open the gate door while it is unguarded: guards come from the far room.
 
+A slice is walked once, at its final head, after the operator's early view.
+A re-pin whose delta is only `go.mod` and `go.sum` does not walk again.
+
 Run the steps the slice touches, plus any step whose result the slice could
 change. A slice that changes what a step should show updates the encounter
 and this step list in the same PR. The operator loads, edits and saves the
