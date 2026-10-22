@@ -162,7 +162,9 @@ a tie.
   creature walking into view arrives as the sighting, then its walk from the
   step that brought it into view; walking out, its leaving step is the last
   thing delivered. Props arriving follow R39, windows R40, and an arrival out
-  of sight stays on the record only (R41).
+  of sight stays on the record only (R41). The filter is uniform: a party
+  member's fall, death save or activation out of sight is record-only too
+  (R42).
 - A heard sound delivers only the `heard` act: the beat names no source, so
   the act-stream filter cannot tie the sound to its maker's act.
 - The record reaches back only as far as encounter's retention window (R25).
