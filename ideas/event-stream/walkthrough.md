@@ -154,8 +154,17 @@ a tie.
 ## Edges
 
 - The record stream is never filtered; access to it at release is an
-  entitlement (R13). The act stream is filtered per viewer by perception once
-  the forms have landed (R35).
+  entitlement (R13). The act stream is filtered per viewer by perception
+  (R35, built in E6, rpg-toolkit#2108): a viewer receives their own acts, acts
+  addressed to them, acts by members they see, perceptions and doors (R38),
+  and clock and roster acts by kind. Who they see is replayed from their own
+  `sighted` beats, seeded by a prepass, so live and catch-up still agree. A
+  creature walking into view arrives as the sighting, then its walk from the
+  step that brought it into view; walking out, its leaving step is the last
+  thing delivered. Props arriving follow R39, windows R40, and an arrival out
+  of sight stays on the record only (R41).
+- A heard sound delivers only the `heard` act: the beat names no source, so
+  the act-stream filter cannot tie the sound to its maker's act.
 - The record reaches back only as far as encounter's retention window (R25).
 - Trading beats have no act (R9).
 - A taught fact never rides a broadcast body (R10).
@@ -178,6 +187,7 @@ a tie.
 | moved beat and walk entry points | `encounter/encounter.go` `appendMovementBeat`; `encounter/step.go`, `clocks.go`, `pause.go`, `held.go` |
 | record and retention | `rpg-toolkit/play/record/log.go` `AppendInput`, `All`, `TrimBefore`; `encounter/encounter.go` retention trim |
 | SDK story read | `rpg-toolkit/rulebooks/dnd5e/session/read.go` `Story`; `events.go`, `types.go` |
+| act-stream perception filter | `rpg-toolkit/rulebooks/dnd5e/session/act_filter.go` (`viewState`, `seedView`, `judge`); the hold for a step into view in `act.go` (`fold.entry`, `release`) |
 | player walk loop | `rpg-toolkit/rulebooks/dnd5e/session/move.go` |
 | v1 wire conversion | `rpg-api/internal/handlers/dnd5e/session/v1alpha1/convert.go` |
 | v1 wire contract | `rpg-api-protos/dnd5e/api/session/v1alpha1/events.proto`, `service.proto` |
