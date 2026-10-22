@@ -46,6 +46,20 @@ encounter in the studio.
   a served tree reloads the builder's uncommitted edits.
 - A studio walk the operator is asked to view keeps one fixed port, because
   the studio's draft lives in the browser per origin.
+- **Content is served from the env's deployment clone, not from the api
+  image.** `dev-env.sh up|restart` rebuilds the api from its ref and leaves
+  `.runtime/local/<env>/sources/rpg-deployment/content/` as it was, so a
+  content PR is invisible on the stack until its file is copied there. Before
+  reporting any stack as carrying a content change, copy the PR head's file
+  into that directory, restart, and show the hash of the file inside the
+  running api container equal to the PR head's (`docker exec <api> sha256sum
+  …` against `git show <sha>:content/<file> | sha256sum`). A walk report
+  states both hashes.
+- **An env ref names a branch or tag.** `RPG_API_REF`/`RPG_DND5E_WEB_REF`
+  resolve against origin by name, and changing them does not move an existing
+  env's source clone: check the clone out detached at the wanted commit
+  (`git -C .runtime/local/<env>/sources/<repo> checkout --detach origin/<branch>`)
+  before `restart`, and show `git log -1` of the clone in the walk report.
 
 ## Evidence
 
