@@ -83,11 +83,12 @@ In order, before reading a line of the diff:
   If none does, check for real-path QA evidence. If that is also absent,
   name the gap and the smallest useful QA step in the verdict; do not turn
   every mock into a blocking demand for another automated test.
-- **Mutation checks are standard.** For each test the change adds or leans
-  on, ask what must break for it to fail, then break it: delete the guarded
-  line, flip the condition, drop the field. A test that survives its mutant
-  overclaims. A pinned collection length, or an assertion that cannot fail,
-  is a finding.
+- **Mutation checks are standard on engine, record and auth seams.** For
+  each such test the change adds or leans on, ask what must break for it to
+  fail, then break it: delete the guarded line, flip the condition, drop the
+  field. A test that survives its mutant overclaims. A pinned collection
+  length, or an assertion that cannot fail, is a finding anywhere. Content,
+  docs, converters and tests-of-tests get no mutants.
 - Support defect claims with a concrete code path or a minimal reproduction.
   Use a probe when it resolves uncertainty, not as a ritual for every finding.
   Label unverified risks as such; do not assert a bug or its absence without
@@ -201,8 +202,10 @@ complete while one exists.
   the affected paths at the new head. State what was checked or re-run per
   thread; reuse unaffected evidence. Do not restart whole-diff review or
   recruit another reviewer merely because fixes landed.
-- A closure re-runs the mutants behind every finding about a test, at the
-  new head.
+- Closure is needed only for a fix that changes a seam the round did not
+  read. Otherwise the builder's "fixed by <sha>" per thread and CI green at
+  the new head close the round. A closure re-runs the seam mutants behind
+  the findings it closes.
 - A verdict on a draft head that still carries pseudo-versions is named as
   one: `MERGE-READY at <sha>, pending re-pin`. The re-pin commit then needs
   the head verdict merge-out requires.

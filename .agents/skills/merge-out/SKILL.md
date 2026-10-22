@@ -24,15 +24,18 @@ the walk) happened before.
   verdict needs a fresh one-line head verdict in the same shape.
 - The verdict reads `MERGE-READY at <sha>` and is posted only when CI is
   green at that sha (`gh pr checks <n>`). A focused local run is not CI.
-- A delta after the verdict that touches only docs, tests or pins may be
-  closed by the lead's own comment review at the new head, naming the delta.
-  Any code delta needs the reviewer's closure at the new head.
+- **One review round.** Fixes after it are closed by the builder's per-thread
+  "fixed by <sha>" and CI green at the new head, recorded by the lead's own
+  comment review at that head, naming the delta. Only a fix that changes a
+  seam the round did not read needs the reviewer's closure.
 - The walk's QA checklist on the tracking issue is ticked, or the operator
   said QA passed, on the record.
-- **A visible PR waits for the operator's look.** Before merging it, the lead
-  puts its head on the operator's stack (:3030/:8115), sends the PR's Try-it
-  script, and merges after the operator has looked or says go. A PR whose
-  Try-it says "Nothing to try" merges on the verdict.
+- **The operator's look comes first.** For a visible PR, the lead puts a
+  booted head on the operator's stack (:3030/:8115) with the PR's Try-it
+  script **before any review round**. Review, the walk and the merge follow
+  the operator's look, or their go. A pivot after the look costs nothing. A
+  PR whose Try-it says "Nothing to try" goes straight to review and merges
+  on the verdict.
 - **No open gap.** A walk finding that blocks approval is not a QA pass. The
   wave's PRs stay open and un-merged; the gap gets its own tracking issue,
   short design and slices, merges first, and the wave's stack comes back up on
