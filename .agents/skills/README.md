@@ -4,6 +4,7 @@ Shared repeatable procedures belong here only after individual review and approv
 
 The canonical skills:
 
+- `story/SKILL.md`: the story issue, its slice sub-issues, and the names (story, S<n>, R<n>) everyone uses.
 - `design/SKILL.md`: design, planning and architectural-gap judgment.
 - `build-slice/SKILL.md`: the builder's contract for one slice of a plan.
 - `walk/SKILL.md`: the walk on a real stack, run as the standing QA script.
