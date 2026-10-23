@@ -23,9 +23,10 @@ flowchart LR
 | noun | owner | crosses the seam as | refuses |
 |------|-------|---------------------|---------|
 | the words `lost`, `search` | mind/behavior | `EnemyWord`, `Answer.Search` carried as data | reading positions, resolving targets |
-| a decider's belief about a subject | play/intel, written by encounter | sight testimony payload (state, cell, facing) | telling a lie from the truth |
+| a decider's belief about a subject | play/intel, written by encounter | sight testimony payload (state `known`, `lost` or `unknown`; cell; facing) | telling a lie from the truth |
 | the band a decider is in | encounter facts | `Facts.EnemyLost` beside the other bands | a live read of the subject |
-| the search cell | encounter TableDriver, derived per turn | a routed walk toward a cell | keeping a step counter on the member |
+| the search trail | encounter view, derived per turn | `MonsterView.Lost[].Trail` | walking through a wall to keep the line |
+| the search cell | encounter TableDriver | a routed walk to the trail's Nth cell, naming whom it gives up on | keeping a step counter on the member |
 | giving up | encounter, after the walk | the decider's testimony rewritten to unknown | deleting the testimony |
 | returning | the author's `enemy: none` rows | an ordinary patrol or post row | a remembered "where I left" store |
 
@@ -38,8 +39,8 @@ The QA castle, gate guard on its loop (rpg-project#639):
 2. The hero steps round the corner wall. The next sweep drops currency; the
    testimony keeps the last cell and facing. Band `remembered`; `toward: enemy`
    walks the remembered route.
-3. The guard stands on that corner cell and sees nobody. Its testimony turns
-   lost. Band `lost`; `search: { distance: 6 }` walks to the cell six on along
+3. The guard stands on that corner cell and sees nobody. Its `toward` has
+   nowhere left to walk, so its testimony turns lost. Band `lost`; `search: { distance: 6 }` walks to the cell six on along
    the hero's last facing.
 4. The guard stands on the search cell. Its testimony turns unknown. Band
    `none`; the patrol row walks it back to the nearest waypoint of its loop.
@@ -62,11 +63,17 @@ The QA castle, gate guard on its loop (rpg-project#639):
 | return through `enemy: none` rows | a `return` word | the patrol already derives its next leg from where the walker stands; a `return` word needs a stored "where I left" and duplicates the rows the author wrote |
 | search state in the testimony | a counter on the member | the testimony is per observer and per subject already; a counter would need its own lifecycle and save shape |
 | a fifth band | arrival as a hidden driver rule | the author can write rows for "lost", such as a line or an alarm |
+| the `toward` decision turns a memory lost | arrival or a view build rewriting it | arriving on a cell does not revise a memory (rpg-toolkit#1691); the creature's own pursuit finding nobody does |
 
 ## Edges
 
 - No route to the remembered cell: the testimony turns lost where the guard
   stands, and the search starts from the lost cell's heading.
+- A heading that walks into a wall at once: the search cell is the lost cell
+  itself, and the guard gives up there.
+- The heading is the subject's facing as last seen. A subject that turned to
+  face the guard, by attacking it, leaves a heading that points back at the
+  guard.
 - No route to the search cell, or a wall in the way: the router walks as close
   as it can; the search ends when no route brings it closer.
 - A glimpse mid-search: fresh sight replaces the testimony and the band is
@@ -85,3 +92,4 @@ The QA castle, gate guard on its loop (rpg-project#639):
 - `rpg-toolkit/rulebooks/dnd5e/encounter/facts.go`: band projection.
 - `rpg-toolkit/rulebooks/dnd5e/encounter/testimony.go`: sight testimony and its states.
 - `rpg-toolkit/rulebooks/dnd5e/encounter/tabledriver.go`: rows to intents.
+- `rpg-toolkit/rulebooks/dnd5e/encounter/memory.go`: losing, giving up, the trail.

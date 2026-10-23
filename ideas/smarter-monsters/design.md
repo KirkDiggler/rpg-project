@@ -8,7 +8,7 @@ stateDiagram-v2
     none --> seen: sight lands
     seen --> remembered: sight lost (testimony kept, not current)
     remembered --> seen: sight lands again
-    remembered --> lost: decider stands on the remembered cell, or no route reaches it
+    remembered --> lost: its toward has nowhere left to walk (on the cell, or no route)
     lost --> seen: sight lands again
     lost --> none: search leg ends (testimony becomes unknown)
 ```
@@ -33,12 +33,17 @@ behaviour:
   opposed member that is not current and not lost.
 - `toward: enemy` with no opposed member in sight walks the route to the
   remembered cell. No second selector word names the same target.
-- A remembered testimony becomes lost when the decider stands on its cell, or
-  when no route reaches that cell. Lost keeps the cell and the heading.
+- A remembered testimony becomes lost when the decider's own `toward` has
+  nowhere left to walk to it: the decider stands on its cell, or no route
+  reaches that cell. Lost keeps the cell and the heading.
+- Only a driven creature's own decision revises its memory: a `toward` that
+  found nobody, or a search that ended. Arrival alone revises nothing, and a
+  player's memory is never revised.
 - `enemy: lost` holds when the decider's nearest opposed testimony is lost and
   none is seen, in reach or remembered. The bands stay exclusive.
-- `search: { distance: N }` walks toward the cell N cells from the lost cell
-  along the held heading. N defaults to 6 and is at least 1.
+- `search: { distance: N }` walks to the cell N cells from the lost cell
+  along the held heading, in a straight line that ends where the next cell
+  cannot be stepped to. N defaults to 6 and is at least 1.
 - The held heading is the subject's facing in the testimony. With none held,
   it is the decider's own facing on arriving, which is its direction of travel.
 - A search ends when the decider stands on the search cell or no route brings
@@ -66,6 +71,7 @@ behaviour:
 | R5 | a search's end turns the testimony unknown; return is the author's own `enemy: none` rows, not a word | open | table vocabulary, testimony | proposed | 2026-10-22 |
 | R6 | a decider that never saw the subject holds no testimony and never pursues | open | encounter bands | proposed | 2026-10-22 |
 | R7 | the words `lost` and `search` are sealed in mind/behavior, so the slice is two module PRs: mind/behavior first, then rulebooks/dnd5e/encounter on its pseudo-version | open | delivery | proposed | 2026-10-22 |
+| R8 | a memory is revised only by the creature's own `toward` finding nobody or its search ending, never by arriving and never for a player | open | encounter testimony | proposed | 2026-10-22 |
 
 ## Open
 
