@@ -73,6 +73,12 @@ covers every package.
 - Commit in the same turn a gate turns green.
 - A test earns its place by what must break for it to fail. A count pin or
   an assertion that cannot fail is replaced with one that states the fact.
+- A change to a persisted shape (an encounter table row, a member field,
+  anything under ToData/LoadFromData) is proven by a save → load → use test,
+  not by a test that only runs in memory. rpg-api saves and reloads the
+  encounter on every verb, so a field the saved copy drops reaches the
+  operator as a row with no word; a route test that never reloads cannot
+  see it. A route that depends on the new shape runs once through the blob.
 
 ## Facts across a port
 
