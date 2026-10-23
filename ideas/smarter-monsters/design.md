@@ -92,20 +92,31 @@ behaviour:
 | R6 | a decider that never saw the subject holds no testimony and never pursues | open | encounter bands | proposed | 2026-10-22 |
 | R7 | the words `lost` and `search` are sealed in mind/behavior, so the slice is two module PRs: mind/behavior first, then rulebooks/dnd5e/encounter on its pseudo-version | open | delivery | proposed | 2026-10-22 |
 | R8 | viewing and arriving never rewrite a memory; `lost` comes only from the driver's own `toward: enemy` with no route left, `unknown` only from its search ending; a player's memory is never revised | open | encounter testimony | proposed | 2026-10-23 |
+| R9 | a player's stale memory stays drawn as the ghost of where the creature was last seen; a player gets no observed-empty testimony, and whether to keep drawing is the client's (rpg-toolkit#1691) | ruled | player testimony, web | KirkDiggler | 2026-10-23 |
+| R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
+| R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
 
 ## Open
 
-- O1: whether a player who sees a remembered creature's cell empty gets the
-  same observed-empty (`lost`) testimony, or whether drawing a stale memory
-  stays the client's decision (rpg-toolkit#1691's case). Not built.
-- O2: whether the search heading is the last-seen facing (built) or the
-  subject's last-seen direction of travel, the walk's own vector. A subject
-  seen standing and facing one way, then leaving unseen another way, is
-  searched for in the way it faced (rpg-project#668 walk evidence).
-
+- Ruled 2026-10-23, from O1: the ghost is the behaviour. A player who looks at
+  a remembered creature's cell and sees it empty keeps the memory as drawn;
+  the client decides when to stop drawing it (rpg-toolkit#1691). No
+  observed-empty testimony for players. R9.
+- Ruled 2026-10-23, from O2: the engine built the facing heading, and that is
+  one option, not the rule. When the subject leaves view the observer holds
+  something about the way it went, so testimony should carry that heading
+  beside the facing, and the `search` row should say which one it follows. A
+  smart table follows the way they went; a plainer table rolls left or right
+  as two rows sharing the roll. R10. Not built; the need is filed on the
+  story (rpg-project#667).
+- Open: whether the table grammar needs a group that carries one load. Two
+  rows under `enemy: lost` today hold two loads, so a branch's share grows
+  with its row count against a `heard` row eligible at the same moment. That
+  is the S3 bundle question (rpg-project#670), not this slice's.
+- Open, its own story later: search as a behaviour of its own. Patterns,
+  sweeping while walking, an npc that knows where the valuables are and
+  checks there. This design's `search` is one straight leg.
 - Dash while out of reach (rpg-project#666, shared with #661) is not in this
-  slice. Pursuit walks at the decider's movement.
-- Whether a search leg should sweep, turning to face as it walks, or walk a
-  straight line. This design walks the router's route to the search cell.
+  story's pursuit slices (R11). Pursuit walks at the decider's movement.
 - Whether allies share a lost or unknown testimony by report. This design
   keeps each guard's search its own.
