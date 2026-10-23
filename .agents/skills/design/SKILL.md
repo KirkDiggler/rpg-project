@@ -25,6 +25,10 @@ transition, not a new approval ceremony. Exploration can reopen during design.
 
 ## Converge on a brief
 
+The brief belongs to a story issue, and every slice the plan names gets its
+sub-issue when the plan is written (story skill). A brief with no story issue
+is not yet a brief.
+
 Once there is a direction to shape, write back a short understanding the operator
 can recognize and correct:
 
@@ -69,6 +73,9 @@ must do.
    implementation detail within the design.
 
 ### Waiting on the operator
+
+A question about a slice goes on that slice's sub-issue; a question about the
+design goes on the design PR. Chat carries one line and the link.
 
 When a decision is the operator's and the session is waiting for it:
 
