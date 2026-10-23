@@ -32,9 +32,10 @@ flowchart LR
         Arch[(archive/YYYY-MM/)]
         Quar[(quarantine/: unreadable notes)]
     end
-    subgraph Proj[rpg-project]
+    subgraph Proj[rpg-project, or the repo that owns the feature]
         PR[PR: one per ingest run]
         Mem[docs/teams/roles/*/memory.md]
+        Feat[ideas/<topic>/memory.md]
         Harness[.pi/extensions/pi-team-harness]
     end
     Sessions --> Note --> Inbox
@@ -43,6 +44,8 @@ flowchart LR
     Ingest --> Inbox
     Ingest --> PR
     PR --> Mem
+    PR --> Feat
+    Feat -.->|elevation, its own PR (law 14)| Mem
     Collect --> Arch
     Collect --> Inbox
     Ingest --> Quar
@@ -60,6 +63,7 @@ flowchart LR
 | `collect.mjs` | Settling finished runs | the open ingest PRs → merged runs' note files moved to `archive/YYYY-MM/`; declined runs' files returned to `inbox/` |
 | `.lock` | Serialization | acquire-or-refuse; a second concurrent run exits with the first run's pid |
 | `memory.md` | What a role currently believes, in staging | `## Lessons`, `## Friction`, `## Open`; one line each, dated, linked (law 7) |
+| feature `memory.md` | What one feature needs and how it works, in staging | `ideas/<topic>/memory.md`, the same three sections under the same rules (law 13) |
 | the harness | Consumption | role resolution → charter bytes + `memory.md` bytes; absence of the file is empty sections (law 10) |
 | `active.md` | The operator's in-flight and parked stories | hand edits only (R1) |
 
@@ -77,6 +81,11 @@ The refusals, one per boundary:
 - **Sessions never write `memory.md`.** A lesson typed straight into the
   file bypasses review and recreates the many-writers failure this
   design exists to kill (R3).
+- **A team file never absorbs feature specifics.** Elevation lifts the
+  general lesson and names its origin; the feature's quirks stay home
+  (law 14).
+- **A feature file never speaks for the craft.** Workspace-wide guidance
+  lives in charters and design law, reached by graduation (law 8).
 - **The archive never feeds back into memory.** It is evidence for the
   archaeology tier (R10) and for audits; the curated files are the only
   load path.
@@ -124,11 +133,16 @@ game-dev note --type lesson --scope team:platform \
 | What the operator is doing, or parked | `active.md` |
 | Raw learnings not yet processed | a file's presence in `inbox/` |
 | What a role currently believes | its `memory.md` (staging) |
+| What one feature needs, how it works today | the feature folder's `memory.md` (staging); its use-case and design docs (settled) |
 | What the workspace holds durably | charters, CLAUDE.md, design law (destination) |
 | Everything that was ever captured | `archive/` |
 | The pain that should reopen a rule | the `## Friction` section that names it |
 
-**The hazard is treating staging as destination.** Let `memory.md` grow
+**The two feature hazards are mirrors.** Generality trapped in a feature
+folder means the next feature pays the same lesson twice; feature quirks
+parked in a team file turn that file into a drawer of other features'
+trivia. Elevation (law 14) is the reviewed move between them. **And the
+older hazard stands: treating staging as destination.** Let `memory.md` grow
 as the permanent home and it becomes the junk drawer that forty flat
 memory notes already demonstrated: everything retrieved means nothing
 found. The graduation move in law 8 is what keeps the file loadable. The
@@ -161,6 +175,12 @@ operator's one glanceable register for noise.
 - **A note whose lesson already exists, reworded** is dedupe's judgment
   call; when uncertain, ingest prefers a friction line over silently
   dropping or duplicating.
+- **A note scoped to a feature that reads as general** is proposed to
+  the team file with its origin named; the feature file keeps its own
+  line when the specifics still matter (law 14).
+- **A feature scope with no memory.md yet** is created by the ingest run
+  that first needs it — feature scopes are created lazily, in config and
+  in one commit.
 - **Notes on a machine with several checkouts** all land in the root
   game-dev checkout's inbox — the same rule as every workspace-level
   tool, so worktrees never hold hot state.
@@ -188,6 +208,7 @@ operator's one glanceable register for noise.
 | Hot state | game-dev `envs/local/notes/{inbox,archive,quarantine}` (git-ignored) |
 | Run serialization | game-dev `envs/local/notes/.lock` |
 | Curated memory | rpg-project `docs/teams/roles/*/memory.md` |
+| Feature memory | the feature's own docs folder, `ideas/<topic>/memory.md`, in the owning repo |
 | Consumption | game-dev `.pi/extensions/pi-team-harness` (charter resolution gains the memory read) |
 | Operator register | rpg-project `active.md` (git-ignored) |
 | Bootloader law narrows | game-dev `AGENTS.md`, "Make the call" step 2 |

@@ -85,6 +85,16 @@ flowchart LR
 12. Session-transcript archaeology is a separate tier and out of this
     design. Memory plugins may be trialed for it without touching anything
     here (R10).
+13. A scope names one of two families: `team:<role>`, whose file lives at
+    `docs/teams/roles/<role>/memory.md`, or `feature:<topic>`, whose file
+    lives beside the feature's own docs (`ideas/<topic>/memory.md`, in the
+    repo that owns the feature's design). Both carry the three sections of
+    law 7 under the same rules.
+14. A lesson lives at the **narrowest scope that can hold it** and
+    migrates outward as it proves general: feature → team → charter or
+    law, each move proposed in a PR that names the origin it elevates
+    from. Feature specifics never take residence in a team file; a general
+    lesson never stays trapped in a feature's.
 
 ## Rulings
 
@@ -100,6 +110,7 @@ flowchart LR
 | R8 | settled | scope vocabulary lives in config, not in this law | session, adopted by KirkDiggler | 2026-10-22 |
 | R9 | deferred-until-needed | scheduled ingest (cron/systemd) | KirkDiggler | 2026-10-22 |
 | R10 | deferred-until-needed | plugin-backed session-archaeology tier (e.g. pi-hermes-memory, pi-blackhole) | KirkDiggler | 2026-10-22 |
+| R11 | settled | scopes have two families, team and feature; feature memory lives beside the feature's docs; elevation migrates outward with origin named | KirkDiggler | 2026-10-22 |
 
 ## Open
 
