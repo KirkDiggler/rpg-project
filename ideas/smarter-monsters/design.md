@@ -26,6 +26,18 @@ behaviour:
 
 ## Law
 
+- A table is ROLLED, not matched in order. The candidates are every row of the
+  key whose whole `when` list holds and whose word the creature can pay for
+  this pick. Each candidate's load is its weight (1 when omitted) times its
+  temperament's percent for the row's word (100 for a soldier or no temper;
+  `search` uses the `toward` percent). One die of the summed loads is rolled
+  on the world's shared dice, and the candidate whose running total first
+  reaches the face is the answer. Row order decides only which faces belong to
+  which row, never priority: two rows eligible at once share the roll by
+  load.
+- The enemy bands are exclusive, so rows keyed on different bands never
+  compete. Rows on other conditions (`heard`, `fact`, deeds) can be eligible
+  beside a band row and then share the roll with it.
 - A pursuit reads only the decider's own testimony. The remembered cell and
   heading are what this observer last saw, stale or wrong, never the subject's
   live position.
@@ -71,6 +83,7 @@ behaviour:
 
 | ID | ruling | status | scope | ruled by | date |
 |----|--------|--------|-------|----------|------|
+| R0 | rows are rolled by load (weight × temperament percent) among every eligible row; order only maps die faces; exclusivity comes from conditions, never position | settled (existing mind/behavior law) | table selection | recorded from the code | 2026-10-23 |
 | R1 | `enemy: remembered` reads the decider's own non-current, placed, not-lost sight testimony of an opposed member | open | encounter bands | proposed | 2026-10-22 |
 | R2 | pursuit walks with the existing `toward: enemy`; no `toward: remembered` word | open | table vocabulary | proposed | 2026-10-22 |
 | R3 | arriving on the remembered cell, or finding no route to it, turns the testimony lost; `enemy: lost` is a fifth band | open | encounter bands, testimony | proposed | 2026-10-22 |
