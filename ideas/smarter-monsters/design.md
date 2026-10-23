@@ -48,8 +48,11 @@ behaviour:
 - `search: { distance: N }` walks to the cell N cells from the lost cell
   along the held heading, in a straight line that ends where the next cell
   cannot be stepped to. N defaults to 6 and is at least 1.
-- The held heading is the subject's facing in the testimony. With none held,
-  it is the decider's own facing on arriving, which is its direction of travel.
+- The held heading is the subject's facing in the testimony, as snapshotted at
+  the last sighting. A step turns the walker along it and an attack turns the
+  attacker, but speech does not, so the heading is the way the subject faced
+  when last seen, not the way it went after. With none held, it is the
+  decider's own facing on arriving, which is its direction of travel.
 - A search ends when the decider stands on the search cell or no route brings
   it closer. Its testimony of that subject then becomes unknown: known to
   exist, not placed.
@@ -82,6 +85,10 @@ behaviour:
 - O1: whether a player who sees a remembered creature's cell empty gets the
   same observed-empty (`lost`) testimony, or whether drawing a stale memory
   stays the client's decision (rpg-toolkit#1691's case). Not built.
+- O2: whether the search heading is the last-seen facing (built) or the
+  subject's last-seen direction of travel, the walk's own vector. A subject
+  seen standing and facing one way, then leaving unseen another way, is
+  searched for in the way it faced (rpg-project#668 walk evidence).
 
 - Dash while out of reach (rpg-project#666, shared with #661) is not in this
   slice. Pursuit walks at the decider's movement.
