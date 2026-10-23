@@ -36,9 +36,13 @@ behaviour:
 - A remembered testimony becomes lost when the decider's own `toward` has
   nowhere left to walk to it: the decider stands on its cell, or no route
   reaches that cell. Lost keeps the cell and the heading.
-- Only a driven creature's own decision revises its memory: a `toward` that
-  found nobody, or a search that ended. Arrival alone revises nothing, and a
-  player's memory is never revised.
+- Viewing never rewrites a memory, and neither does arriving on a cell. `lost`
+  comes only from the driver's own `toward: enemy` with no route left: the
+  creature stands on the remembered cell, or cannot reach it. `unknown` comes
+  only from the creature's own search ending. A player's memory is never
+  revised.
+- `lost` is the creature's own observation that the cell is empty, kept with
+  everything it saw there; it never erases the cell to patch staleness.
 - `enemy: lost` holds when the decider's nearest opposed testimony is lost and
   none is seen, in reach or remembered. The bands stay exclusive.
 - `search: { distance: N }` walks to the cell N cells from the lost cell
@@ -71,9 +75,13 @@ behaviour:
 | R5 | a search's end turns the testimony unknown; return is the author's own `enemy: none` rows, not a word | open | table vocabulary, testimony | proposed | 2026-10-22 |
 | R6 | a decider that never saw the subject holds no testimony and never pursues | open | encounter bands | proposed | 2026-10-22 |
 | R7 | the words `lost` and `search` are sealed in mind/behavior, so the slice is two module PRs: mind/behavior first, then rulebooks/dnd5e/encounter on its pseudo-version | open | delivery | proposed | 2026-10-22 |
-| R8 | a memory is revised only by the creature's own `toward` finding nobody or its search ending, never by arriving and never for a player | open | encounter testimony | proposed | 2026-10-22 |
+| R8 | viewing and arriving never rewrite a memory; `lost` comes only from the driver's own `toward: enemy` with no route left, `unknown` only from its search ending; a player's memory is never revised | open | encounter testimony | proposed | 2026-10-23 |
 
 ## Open
+
+- O1: whether a player who sees a remembered creature's cell empty gets the
+  same observed-empty (`lost`) testimony, or whether drawing a stale memory
+  stays the client's decision (rpg-toolkit#1691's case). Not built.
 
 - Dash while out of reach (rpg-project#666, shared with #661) is not in this
   slice. Pursuit walks at the decider's movement.
