@@ -38,7 +38,7 @@ flowchart LR
     Harness --> S
 ```
 
-## Law
+## Standing Rules
 
 1. A **note** is one JSON file, `{ id, ts, type, scope, source, content }`.
    `type` is `lesson`, `friction`, or `question`. Guidance content carries
@@ -70,11 +70,12 @@ flowchart LR
    its evidence (issue, PR, or note id). Status and narration live in the
    case file, never here.
 8. `memory.md` is **staging, not destination**. A settled lesson graduates
-   into the owning charter, CLAUDE.md, or design law; the grooming PR
+   into the owning charter, CLAUDE.md, or a design doc's standing rules;
+   the grooming PR
    removes what it promotes, so the file stays small enough to load.
 9. **Scopes are vocabulary in config** (`tools/team-memory/config.json`),
    mapping tags to role files. Renaming a team or folding a role is a
-   config change, not a change to this law.
+   config change, not a change to these rules.
 10. At role resolution the team harness loads the charter **and its
     `memory.md`**; a missing file means empty sections, not an error.
     Other runtimes read the same two files by convention.
@@ -89,10 +90,10 @@ flowchart LR
     `docs/teams/roles/<role>/memory.md`, or `feature:<topic>`, whose file
     lives beside the feature's own docs (`ideas/<topic>/memory.md`, in the
     repo that owns the feature's design). Both carry the three sections of
-    law 7 under the same rules.
+    rule 7 under the same rules.
 14. A lesson lives at the **narrowest scope that can hold it** and
     migrates outward as it proves general: feature → team → charter or
-    law, each move proposed in a PR that names the origin it elevates
+    standing rules, each move proposed in a PR that names the origin it elevates
     from. Feature specifics never take residence in a team file; a general
     lesson never stays trapped in a feature's.
 
@@ -107,7 +108,7 @@ flowchart LR
 | R5 | settled | ingest runs on command; no scheduler in this design | KirkDiggler | 2026-10-22 |
 | R6 | settled | capture metadata is stamped by the tool; hand-authored notes remain legal | session, adopted by KirkDiggler | 2026-10-22 |
 | R7 | settled | curated memory lives in git; plugin memory stores are excluded from this tier | KirkDiggler | 2026-10-22 |
-| R8 | settled | scope vocabulary lives in config, not in this law | session, adopted by KirkDiggler | 2026-10-22 |
+| R8 | settled | scope vocabulary lives in config, not in these standing rules | session, adopted by KirkDiggler | 2026-10-22 |
 | R9 | deferred-until-needed | scheduled ingest (cron/systemd) | KirkDiggler | 2026-10-22 |
 | R10 | deferred-until-needed | plugin-backed session-archaeology tier (e.g. pi-hermes-memory, pi-blackhole) | KirkDiggler | 2026-10-22 |
 | R11 | settled | scopes have two families, team and feature; feature memory lives beside the feature's docs; elevation migrates outward with origin named | KirkDiggler | 2026-10-22 |
@@ -117,6 +118,6 @@ flowchart LR
 - **Team-umbrella consolidation.** Platform, UI programming, UI/UX, QA,
   and perf/testing umbrellas, with the existing roles folded beneath
   them, is its own design item. Scope vocabulary absorbs the rename via
-  law 9, so this design does not wait on it.
+  rule 9, so this design does not wait on it.
 - **Rotating parked stories out of active.md.** Manual today; an
   automation asks for a use case, not anticipation.

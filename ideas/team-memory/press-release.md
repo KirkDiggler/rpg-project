@@ -1,6 +1,6 @@
 # Press release — Team memory
 
-*2026-10-22 · Issue: rpg-project#676 · Law: [design.md](design.md) · Walkthrough: [README.md](README.md)*
+*2026-10-22 · Issue: rpg-project#676 · Standing rules: [design.md](design.md) · Walkthrough: [README.md](README.md)*
 
 ## The team that remembers what it learned
 
@@ -20,8 +20,8 @@ Knowledge in this workspace has been complete and unfindable at the same
 time. The mad king's castle carried its story — routes, turnable factions,
 secrets — fully ruled and half-shipped, in a document too expensive to
 reload. The gap was never the story; it was the cost of remembering.
-Laws went stale silently because nothing watched for the pain that says
-so. Forty flat memory notes existed with no graduation path, so curated
+Rules went stale silently because nothing watched for the pain that
+says so. Forty flat memory notes existed with no graduation path, so curated
 knowledge and raw dumping competed in the same files.
 
 ## How it works
@@ -35,7 +35,7 @@ When the operator asks, **ingest** reads the inbox, files each note with
 its role, dedupes, and opens exactly one pull request — a diff of what
 the team learned, reviewable like code. A note that contradicts what a
 role believes is not silently adjudicated: it lands in that role's
-`## Friction` section, which is the tripwire for the law-review loop that
+`## Friction` section, which is the tripwire for the review loop that
 reaffirms, evolves, or retires the rule in daylight.
 
 `active.md` stops being a dumping ground and returns to its true job:

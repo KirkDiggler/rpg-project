@@ -1,6 +1,6 @@
 # Team memory — walkthrough
 
-Law: [design.md](design.md). Issue: rpg-project#676. Press release:
+Standing rules: [design.md](design.md). Issue: rpg-project#676. Press release:
 [press-release.md](press-release.md).
 
 ## What this is
@@ -45,7 +45,7 @@ flowchart LR
     Ingest --> PR
     PR --> Mem
     PR --> Feat
-    Feat -.->|elevation, its own PR (law 14)| Mem
+    Feat -.->|elevation, its own PR (rule 14)| Mem
     Collect --> Arch
     Collect --> Inbox
     Ingest --> Quar
@@ -62,9 +62,9 @@ flowchart LR
 | `config.json` | The scope vocabulary | scope tag → `docs/teams/roles/<role>/memory.md`; no other meaning attaches to a scope (R8) |
 | `collect.mjs` | Settling finished runs | the open ingest PRs → merged runs' note files moved to `archive/YYYY-MM/`; declined runs' files returned to `inbox/` |
 | `.lock` | Serialization | acquire-or-refuse; a second concurrent run exits with the first run's pid |
-| `memory.md` | What a role currently believes, in staging | `## Lessons`, `## Friction`, `## Open`; one line each, dated, linked (law 7) |
-| feature `memory.md` | What one feature needs and how it works, in staging | `ideas/<topic>/memory.md`, the same three sections under the same rules (law 13) |
-| the harness | Consumption | role resolution → charter bytes + `memory.md` bytes; absence of the file is empty sections (law 10) |
+| `memory.md` | What a role currently believes, in staging | `## Lessons`, `## Friction`, `## Open`; one line each, dated, linked (rule 7) |
+| feature `memory.md` | What one feature needs and how it works, in staging | `ideas/<topic>/memory.md`, the same three sections under the same rules (rule 13) |
+| the harness | Consumption | role resolution → charter bytes + `memory.md` bytes; absence of the file is empty sections (rule 10) |
 | `active.md` | The operator's in-flight and parked stories | hand edits only (R1) |
 
 The refusals, one per boundary:
@@ -73,8 +73,8 @@ The refusals, one per boundary:
   does not classify, route, or judge — that is ingest's job, done with
   the whole batch in view.
 - **Ingest never edits anything but `memory.md` files.** Charters,
-  CLAUDE.md, and design law absorb graduated lessons through their own
-  PRs (law 8), never through a memory run.
+  CLAUDE.md, and a design doc's standing rules absorb graduated lessons
+  through their own PRs (rule 8), never through a memory run.
 - **Ingest never adjudicates a contradiction.** Both entries are named
   under `## Friction`; settling it is the operator's review, not the
   run's (R4).
@@ -83,9 +83,9 @@ The refusals, one per boundary:
   design exists to kill (R3).
 - **A team file never absorbs feature specifics.** Elevation lifts the
   general lesson and names its origin; the feature's quirks stay home
-  (law 14).
+  (rule 14).
 - **A feature file never speaks for the craft.** Workspace-wide guidance
-  lives in charters and design law, reached by graduation (law 8).
+  lives in charters and standing rules, reached by graduation (rule 8).
 - **The archive never feeds back into memory.** It is evidence for the
   archaeology tier (R10) and for audits; the curated files are the only
   load path.
@@ -134,18 +134,18 @@ game-dev note --type lesson --scope team:platform \
 | Raw learnings not yet processed | a file's presence in `inbox/` |
 | What a role currently believes | its `memory.md` (staging) |
 | What one feature needs, how it works today | the feature folder's `memory.md` (staging); its use-case and design docs (settled) |
-| What the workspace holds durably | charters, CLAUDE.md, design law (destination) |
+| What the workspace holds durably | charters, CLAUDE.md, standing rules (destination) |
 | Everything that was ever captured | `archive/` |
 | The pain that should reopen a rule | the `## Friction` section that names it |
 
 **The two feature hazards are mirrors.** Generality trapped in a feature
 folder means the next feature pays the same lesson twice; feature quirks
 parked in a team file turn that file into a drawer of other features'
-trivia. Elevation (law 14) is the reviewed move between them. **And the
+trivia. Elevation (rule 14) is the reviewed move between them. **And the
 older hazard stands: treating staging as destination.** Let `memory.md` grow
 as the permanent home and it becomes the junk drawer that forty flat
 memory notes already demonstrated: everything retrieved means nothing
-found. The graduation move in law 8 is what keeps the file loadable. The
+found. The graduation move in rule 8 is what keeps the file loadable. The
 mirror hazard is letting `active.md` absorb dumps again, which trades the
 operator's one glanceable register for noise.
 
@@ -158,7 +158,7 @@ operator's one glanceable register for noise.
 | On command, no scheduler (R5) | the command is the stable interface; nothing runs unattended | the operator or a janitor role must run it; forgetting shows as a fat inbox, which is visible | cron from day one |
 | Plugin stores excluded from this tier (R7) | memory is diffable, reviewable, harness-neutral | semantic recall waits for the archaeology tier (R10) | pi-hermes-memory or pi-ltm as the store |
 | Plain markdown per role, given/because form | loadable whole, reviewable line by line, conditions self-name for review | no structure finer than the line; querying means grep | schema-typed lesson records in a store |
-| Scope vocabulary in config (R8) | team renames don't touch law | the vocabulary drifts unless the team-map design finishes | scopes fixed in the design doc |
+| Scope vocabulary in config (R8) | team renames don't touch the rules | the vocabulary drifts unless the team-map design finishes | scopes fixed in the design doc |
 
 ## Edges
 
@@ -177,7 +177,7 @@ operator's one glanceable register for noise.
   dropping or duplicating.
 - **A note scoped to a feature that reads as general** is proposed to
   the team file with its origin named; the feature file keeps its own
-  line when the specifics still matter (law 14).
+  line when the specifics still matter (rule 14).
 - **A feature scope with no memory.md yet** is created by the ingest run
   that first needs it — feature scopes are created lazily, in config and
   in one commit.
@@ -211,4 +211,4 @@ operator's one glanceable register for noise.
 | Feature memory | the feature's own docs folder, `ideas/<topic>/memory.md`, in the owning repo |
 | Consumption | game-dev `.pi/extensions/pi-team-harness` (charter resolution gains the memory read) |
 | Operator register | rpg-project `active.md` (git-ignored) |
-| Bootloader law narrows | game-dev `AGENTS.md`, "Make the call" step 2 |
+| Bootloader rule narrows | game-dev `AGENTS.md`, "Make the call" step 2 |
