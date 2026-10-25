@@ -245,6 +245,11 @@ Each gate guard's `time` table becomes `use: patrol { path: … }`, `use: pursue
 | R9 | a player's stale memory stays drawn as the ghost of where the creature was last seen; a player gets no observed-empty testimony, and whether to keep drawing is the client's (rpg-toolkit#1691) | ruled | player testimony, web | KirkDiggler | 2026-10-23 |
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
+| R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
+| R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
+| R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
+| R15 | a group none of whose rows is eligible is absent, not a hold (B3) | ruled | table selection | KirkDiggler | 2026-10-25 |
+| R16 | content speaks in authored names; a pattern is a value of an existing `when` kind, matches authored names only, and one matching nothing authored is refused at compile (rpg-project#684 L1–L3) | ruled in principle ("goes without saying"), written at #684 | content/engine seam | KirkDiggler | 2026-10-25 |
 
 ## Open
 
