@@ -102,7 +102,7 @@ Reading:
 
 - A is the band-aid shape for N3 and N4. It works today only because pursuit's rows are on exclusive bands; the first bundle with two rows eligible at once (left/right) breaks the "one line, one share" promise silently. Rejected.
 - C buys N3 with one die but forecloses nesting: a bundle inside a bundle needs a second marker, and the record shows a flat list of ids pretending to be a structure. It is B with the tree flattened and the flattening paid for forever. Rejected.
-- B is the primitive. A table is already a list of rows rolled by load; a row whose answer is a table is the same thing one level down. The same `Pick` serves both levels, the same verdicts explain both, and a bundle can hold a bundle. Base per kind (N2) is `use: guard-base` as the first line of the template's table, nothing new. The castle transcript is unchanged: with the route host's die of 1, the inner roll picks the first eligible inner row, as the flat row did. **Recommended.**
+- B is the primitive. A table is already a list of rows rolled by load; a row whose answer is a table is the same thing one level down. The same `Pick` serves both levels, the same verdicts explain both, and a bundle can hold a bundle. Base per kind (N2) is `use: guard-base` as the first row of each kind's table, nothing new. (A template `base:` was sketched first and withdrawn: in the v4 dialect `templates.<id>.base` names the stat block and templates carry no tables; rpg-project#683 D2 note, 2026-10-25.) The castle transcript is unchanged: with the route host's die of 1, the inner roll picks the first eligible inner row, as the flat row did. **Recommended.**
 
 Where the name lives: `bundles:` is a dungeonspec section; the compiler resolves `use: <name> { params }` into the row's `rows` arm with parameters substituted, so `mind/behavior` holds no names, only the tree. The engine never looks a bundle up at runtime.
 
@@ -143,10 +143,10 @@ bundles:
         toward: sound
         weight: 2
 
-templates:
-  guard:
-    base: guard-base             # the first line of every guard's time table
+tables:                          # v4: tables live at the root; a placement names one
+  gate-patrol:
     time:
+      - use: guard-base            # N2: the base per kind is the first row of its table
       - use: pursuer { distance: 8 }
         weight: 2
         as: toward               # the word this group counts as for temperament (B1 ii)
