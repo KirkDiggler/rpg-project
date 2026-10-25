@@ -114,6 +114,121 @@ Sub-decisions under B, for the operator:
 
 N5, patterns in conditions, is orthogonal to the group shape and is NOT this slice. `When` is already a sum type with a sealed set of kinds; a pattern is a new value form on an existing kind (`heard: { kind: /clang|bell/ }`, `fact: /guards-.*/`), added where the kind is sealed. Two guards for when it comes: patterns match authored names only (fact keys, sound kinds, prop ids), never engine payload fields, so content never learns the engine's shape; and the row verdict's shorthand prints the pattern so the panel stays readable. Filed as a note on the lane, picked up when a use case brings it.
 
+## Practical design: groups and patterns
+
+### What the author types
+
+```yaml
+bundles:
+  pursuer:                       # a named group, authored once
+    params: { distance: 6, heading: went }
+    rows:
+      - when: { enemy: remembered }
+        toward: enemy
+      - when: { enemy: lost }
+        search: { distance: $distance, heading: $heading }
+
+  guesser:                       # a branch that carries its own roll
+    rows:
+      - when: { enemy: lost }
+        search: { heading: left }
+      - when: { enemy: lost }
+        search: { heading: right }
+
+  alarm-reactor:                 # patterns over authored sound kinds
+    rows:
+      - when: { heard: { kind: /clang|bell/, within: 3 } }
+        toward: sound
+      - when: { heard: { kind: /shout-.*/, within: 2 } }
+        toward: sound
+        weight: 2
+
+templates:
+  guard:
+    base: guard-base             # the first line of every guard's time table
+    time:
+      - use: pursuer { distance: 8 }
+        weight: 2
+        as: toward               # the word this group counts as for temperament (B1 ii)
+      - use: alarm-reactor
+      - when: { enemy: none }
+        toward: { path: east-loop }
+```
+
+A `use:` line is a row. It takes `weight`, an optional `when` of its own (a gate on the whole group), `as`, and the bundle's parameters. Everything else a row can carry, a `use:` row cannot: it has no word, its rows do.
+
+### What it compiles to
+
+`dungeonspec` resolves names; `mind/behavior` holds the tree and never a name.
+
+```go
+// mind/behavior
+type Answer struct {
+    Weight int
+    When   []When
+    // exactly one of the arms below, sealed by Validate:
+    Hold, Attack, Toward, Away, Flee ...  // the words, as today
+    Search *Search
+    Rows   []Answer      // a GROUP: this row's answer is a table
+    As     string        // a group's temperament word, "" = none (loads at 100)
+    Say, Fact ...
+}
+```
+
+Parameters are substituted at compile (`$distance` → 8); an unknown or missing parameter is refused with the bundle and the line. The group row keeps `From: "pursuer"` and its parameters in the compiled form for the record, not for the engine.
+
+A pattern is a value form on an existing `when` kind, never a new kind:
+
+```go
+// mind/behavior
+type Name struct { Literal string; Pattern string }  // one set, sealed by Validate
+func (n Name) Matches(name string) bool
+// Heard.Kind, When.Fact, a prop selector: Name instead of string.
+```
+
+### How the pick walks it
+
+`Pick` is one function at every level.
+
+1. **Eligibility at a level.** A word row is a candidate when its `when` all hold and the creature can pay for its word, as today. A group row is a candidate when its own `when` (if any) hold AND at least one of its rows is a candidate (B3: an empty group is absent, not a hold).
+2. **Load.** A word row: weight × the temperament's percent for its word. A group row: weight × the percent for `as`, 100 when `as` is empty (B1).
+3. **Roll.** One die over the level's summed loads, the world's shared dice, authored order mapping faces (R0 unchanged).
+4. **Descend.** If the face lands on a group, roll again inside it over its candidates, with the same facts. Depth is bounded only by the validator's guard (B2).
+
+The flat table is the special case of depth one. With the castle route host's die of 1, every level picks its first candidate, so the castle transcript is unchanged by the rewrite.
+
+### What the record shows (S6 extended)
+
+- The `table` beat carries the tree: a group row has `from`, `params`, `as` and `rows`.
+- `answered` carries `path: [3, 1]` instead of `entry: 3`, and `rows` verdicts per level: a group's verdict holds its rows' verdicts.
+- The panel's sentence: `gate-1 · time · rolled 61 of 200 → pursuer (2×100) · rolled 7 of 100 → enemy lost → search 8 went`. Expanded: every row at every level, ✓ load or ✗ reason. A pattern prints as written: `heard /clang|bell/ within 3`.
+
+### What the compiler refuses (sentences for the form)
+
+- `use: <name>` naming no bundle in the file.
+- A parameter the bundle does not declare, or a declared parameter not given and without a default.
+- A `use:` row carrying a word, a `search`, or `say`.
+- A group whose rows are empty; a group nested past the depth guard; a bundle that uses itself.
+- `as` naming anything but a temperament word.
+- A pattern that matches no authored name of its kind in the file: no sound this file makes, no fact any row sets, no prop placed. Refused, never "never fires" (rpg-project#684 L3).
+- A pattern anywhere but as the value of a `when` kind that takes a name (#684 L2).
+
+### What the studio shows
+
+A `use:` row reads as one line, `pursuer { distance: 8 } ×2 as toward`, and expands read-only to the bundle's rows with the parameters filled. The `bundles:` section is edited in its own list. A pattern is typed as `/…/` in the same field as the literal.
+
+### Castle after the rewrite
+
+Each gate guard's `time` table becomes `use: patrol { path: … }`, `use: pursuer`, `use: alarm-reactor`, and the `enemy: none` return row, with `heading: went` living in the pursuer's defaults. Same transcript, one `table` beat per guard carrying the tree.
+
+### Slices
+
+- S3a `mind/behavior`: `Rows`, `As`, `Name`, recursive `Pick`, path and nested verdicts. Tests: a group loads once; an empty group is absent; a die of 1 reproduces the flat pick; a pattern matches a literal set; validation refusals.
+- S3b `rulebooks/dnd5e/encounter` + `dungeonspec`: `bundles:`, `use:`, parameters, `base:`, pattern-against-authored-names validation, table beat tree, `answered.path`; castle content rewritten; castle transcript test unchanged.
+- S3c session classification if a beat shape changes (it does not; `table` and `answered` keep their names), api pins.
+- S3d web: panel path rendering; studio `use:` line and `bundles:` list.
+- Patterns ship with S3a/S3b only if a castle row needs one; otherwise the `Name` type lands with a literal-only test and the `/…/` form waits for its use case (#683).
+
 ## Rulings
 
 | ID | ruling | status | scope | ruled by | date |
