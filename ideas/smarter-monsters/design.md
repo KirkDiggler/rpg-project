@@ -121,7 +121,7 @@ N5, patterns in conditions, is orthogonal to the group shape and is NOT this sli
 ```yaml
 bundles:
   pursuer:                       # a named group, authored once
-    params: { distance: 6, heading: went }
+    params: { distance: 6, heading: went }   # a parameter without a default is `path: ~`
     rows:
       - when: { enemy: remembered }
         toward: enemy
@@ -147,7 +147,8 @@ tables:                          # v4: tables live at the root; a placement name
   gate-patrol:
     time:
       - use: guard-base            # N2: the base per kind is the first row of its table
-      - use: pursuer { distance: 8 }
+      - use: pursuer
+        with: { distance: 8 }    # parameters are a sibling key; `use: x { … }` is not YAML
         weight: 2
         as: toward               # the word this group counts as for temperament (B1 ii)
       - use: alarm-reactor
@@ -155,11 +156,11 @@ tables:                          # v4: tables live at the root; a placement name
         toward: { path: east-loop }
 ```
 
-A `use:` line is a row. It takes `weight`, an optional `when` of its own (a gate on the whole group), `as`, and the bundle's parameters. Everything else a row can carry, a `use:` row cannot: it has no word, its rows do.
+A `use:` line is a row. It takes `weight`, an optional `when` of its own (a gate on the whole group), `as`, and the bundle's parameters under `with:`. Everything else a row can carry, a `use:` row cannot: it has no word, its rows do.
 
 ### What it compiles to
 
-`dungeonspec` resolves names; `mind/behavior` holds the tree and never a name.
+`dungeonspec` resolves names; `mind/behavior` holds the tree and never a name. The compiled picture golden (`world-builder-v4-castle.compiled.json`) carries the tree, so it moves once at the rewrite; flattened, it is identical, and the transcript holds.
 
 ```go
 // mind/behavior
