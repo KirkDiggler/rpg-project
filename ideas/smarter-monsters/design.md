@@ -79,6 +79,41 @@ behaviour:
   from the lost testimony and the row's distance, as a patrol's next leg is
   derived from where the walker stands.
 
+## Bundles (S3, rpg-project#670): the shape of a group
+
+What the story wants from a bundle, read off the lane (rpg-project#683):
+
+- N1 reuse: author a behaviour once, use it on many tables by one line, with parameters (`use: pursuer { distance: 6 }`).
+- N2 a base per kind: every guard starts from `guard-base`.
+- N3 one share for the group: a two-row branch must not take twice the share of a one-row `heard` row that is eligible at the same moment.
+- N4 branches that carry their own roll: left or right inside the pursuit, decided when the pursuit is picked, not beside it.
+- N5 flexible conditions: a pattern over an authored name (a fact key, a sound kind) instead of one literal.
+- N6 the record still explains it: the `table` beat and the row verdicts (S6) show the group and what happened inside it.
+
+Three shapes, against those needs and the seven principles:
+
+| shape | what the decider sees | N3 one share | N4 inner roll | N6 explains | cost |
+|-------|-----------------------|--------------|---------------|-------------|------|
+| **A. expansion** — the compiler splices the bundle's rows into the table; `use:` is gone by runtime | flat rows | no: share = sum of rows. Exact only when the bundle's rows sit on exclusive bands (pursuit does; left/right does not) | no: the two rows roll beside everything else | rows tagged `from: pursuer` in the table beat | compiler only |
+| **B. nested table** — `use:` becomes a row whose answer is a table: `{ weight, when?, rows: [...] }`; eligible when any inner row is; picked by the outer die, then an inner die over its eligible rows | a tree, one level or more | yes by construction | yes: the inner roll is the branch | the table beat carries the tree; `answered` carries the path `entry → entry`; the panel shows "pursuer → search left" | `Pick` recurses; `Answer` gains a `Rows` arm (sealed like `Search`); record and panel learn the path |
+| **C. group marker** — expansion, but every spliced row carries a group id and the group's weight; `Pick` loads the group once and splits it among its eligible rows by their own weights | flat rows with ids | yes | one die, faces mapped group → row | rows tagged with group id and group load | `Pick` grows a grouping step; no nesting without more markers |
+
+Reading:
+
+- A is the band-aid shape for N3 and N4. It works today only because pursuit's rows are on exclusive bands; the first bundle with two rows eligible at once (left/right) breaks the "one line, one share" promise silently. Rejected.
+- C buys N3 with one die but forecloses nesting: a bundle inside a bundle needs a second marker, and the record shows a flat list of ids pretending to be a structure. It is B with the tree flattened and the flattening paid for forever. Rejected.
+- B is the primitive. A table is already a list of rows rolled by load; a row whose answer is a table is the same thing one level down. The same `Pick` serves both levels, the same verdicts explain both, and a bundle can hold a bundle. Base per kind (N2) is `use: guard-base` as the first line of the template's table, nothing new. The castle transcript is unchanged: with the route host's die of 1, the inner roll picks the first eligible inner row, as the flat row did. **Recommended.**
+
+Where the name lives: `bundles:` is a dungeonspec section; the compiler resolves `use: <name> { params }` into the row's `rows` arm with parameters substituted, so `mind/behavior` holds no names, only the tree. The engine never looks a bundle up at runtime.
+
+Sub-decisions under B, for the operator:
+
+- **B1 the group's temperament percent.** A group row has no word, so what does a coward's `toward 50` do to a pursuer bundle? Options: (i) the group loads at 100 and temperament applies inside, so a coward's pursuer is picked like a soldier's and then flinches inside; (ii) the `use:` line names the word the group counts as (`as: toward`), default none; (iii) the group's percent is the maximum of its eligible inner rows' percents. *Proposed: (ii)*, because it is the author's statement and the panel can show it; (iii) is a hidden rule.
+- **B2 depth.** Nesting unbounded, or one level? *Proposed: unbounded*, refused only by the validator's recursion guard; the record path shows the depth.
+- **B3 the empty group.** A group none of whose rows is eligible is absent, not a hold. *Proposed: absent*, the same rule as a row.
+
+N5, patterns in conditions, is orthogonal to the group shape and is NOT this slice. `When` is already a sum type with a sealed set of kinds; a pattern is a new value form on an existing kind (`heard: { kind: /clang|bell/ }`, `fact: /guards-.*/`), added where the kind is sealed. Two guards for when it comes: patterns match authored names only (fact keys, sound kinds, prop ids), never engine payload fields, so content never learns the engine's shape; and the row verdict's shorthand prints the pattern so the panel stays readable. Filed as a note on the lane, picked up when a use case brings it.
+
 ## Rulings
 
 | ID | ruling | status | scope | ruled by | date |
