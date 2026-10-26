@@ -230,6 +230,90 @@ Each gate guard's `time` table becomes `use: patrol { path: … }`, `use: pursue
 - S3d web: panel path rendering; studio `use:` line and `bundles:` list.
 - Patterns ship with S3a/S3b only if a castle row needs one; otherwise the `Name` type lands with a literal-only test and the `/…/` form waits for its use case (#683).
 
+## Dash (S4, rpg-project#671): what decides a run
+
+Kirk, 2026-10-22 (#661, #666): "if they cannot attack, they should dash to
+close the gap quicker"; "they should pursue what they last remembered, and use
+dash when they are out of reach." S4 is the story's last slice.
+
+### What exists (measured on rpg-toolkit main ac1200a7)
+
+- A player's Dash is a combat ability: it costs the action and adds the
+  character's speed to the movement ledger once more
+  (`combatabilities/dash.go`, `combat/action_economy.go`).
+- A driven monster has its own budget, `TurnBudget{AttacksLeft, MovementFeet,
+  BonusActions}`, seeded with one attack and its speed in feet
+  (`encounter/clocks.go`). There is no action slot: attack spends
+  `AttacksLeft`, a move spends feet, and both happen in one turn ("it closed
+  and then it swung", pinned by `worldtime_test.go`). A monster has no dash.
+- A `toward` row becomes a move cut to the cells the budget affords
+  (`tabledriver.go` towardIntent). The driver is re-asked after every intent,
+  so the table rolls again after the move; the attack row is affordable once
+  in reach. Every cap on a walk reads the budget the view carries.
+- Outside the fight a creature thinks once per wrapped fight round with
+  `AttacksLeft: 0` and its speed (`worldtime.go` thinkFor). A reserve closes at
+  exactly one speed per round. If the round did not raise the high-water mark
+  it does not think at all: a party that walked far ahead earlier can starve
+  the reserve of turns. That is the first hypothesis for #661's "8 rounds
+  later the other guards never made it", and it is a record read, not a rule.
+- The table grammar has no pace. `Answer` arms today: Weight, Say, When, Fact,
+  Flee, Hold, Attack, Toward, Away, Search, and the group arms.
+
+### Three shapes
+
+**A. Engine rule.** A `toward` whose path is longer than the budget dashes:
+the encounter doubles `MovementFeet` and zeroes `AttacksLeft`. No new word.
+- For: RAW-right for a melee creature, since a target it cannot reach this
+  turn is a target it could not swing at anyway. Smallest cut.
+- Against: it hides a decision inside a rule, the shape this story has
+  refused twice (R10's heading; #687's self-triggering condition). A ranged
+  creature should close to range and shoot, not dash. A cautious creature
+  should not run at all. The record would show a dash no row asked for.
+
+**B. A row word, `dash`.** A sibling of `toward` with the same selector:
+`dash: enemy`, `dash: { at: ... }`, `dash: sound`. The row says "spend this
+turn running at it".
+- For: the row's choice, like R10. A `dash` row is affordable only while the
+  target is beyond reach, so the attack row wins when in reach and the table
+  needs no guard. The record reads `dash` in the row's own words. A bundle
+  (`pursuer`) writes the sensible default once; a plain table keeps walking.
+  The player's Dash is an action too, so the vocabulary matches the rules.
+- Against: one new `Answer` arm in `mind/behavior`, one intent in the
+  encounter, and the economy rule that did not exist: a dash costs the swing.
+
+**C. A pace on `toward`.** `toward: { enemy, pace: dash }`. Same decision as B
+spelled as a modifier.
+- For: no new arm; search could take the same pace later.
+- Against: a modifier on a selector that `attack` also uses; "toward at a
+  dash" and "toward at a walk" are two intents with different costs wearing
+  one word, which is what the record then has to explain.
+
+### Recommended: B
+
+`dash: <selector>` in the table; in the encounter, a Dash intent that doubles
+the turn's `MovementFeet`, sets `AttacksLeft` to zero, recomputes the inner
+bound, and walks the cut path like `toward`. On the world clock there is no
+swing to forfeit; the dash doubles the pace. Affordable only when the target
+is beyond reach (a dash at something in reach is absent, not a pass).
+`search` keeps walking: nobody searches at a run, and the use case has not
+arrived. Castle content: `pursuer`'s `remembered` row becomes `dash: enemy`;
+the reserves' route row becomes `dash`. The `pursuer` fixture (#672) proves
+it on the first try.
+
+### Slices
+
+- S4a `mind/behavior`: `Dash *Selector` arm, Validate (same rules as
+  `Toward`), affordability = target held placed and beyond reach.
+- S4b `rulebooks/dnd5e/encounter`: Dash intent and budget rule; test pins a
+  2x cells walk with no swing beside `TestARoutedTurnIsBoundedByItsOwnMovement`;
+  world-clock dash; castle route test: reserves at the gate within
+  distance / (2 x speed) rounds once the alarm is raised; #661's starvation
+  hypothesis confirmed or refuted from the record FIRST, with its own fix if
+  confirmed.
+- S4c castle content (rpg-api) and the Debug panel reading a `dash` row (web,
+  only if the panel does not already read an unknown arm by name).
+
+
 ## Rulings
 
 | ID | ruling | status | scope | ruled by | date |
@@ -246,6 +330,7 @@ Each gate guard's `time` table becomes `use: patrol { path: … }`, `use: pursue
 | R9 | a player's stale memory stays drawn as the ghost of where the creature was last seen; a player gets no observed-empty testimony, and whether to keep drawing is the client's (rpg-toolkit#1691) | ruled | player testimony, web | KirkDiggler | 2026-10-23 |
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
+| R17 | what decides a dash: the row (`dash: <selector>`, shape B), not an engine rule; a dash costs the swing; affordable only beyond reach (design §Dash) | proposed | table grammar, encounter economy | — | — |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
@@ -272,7 +357,7 @@ Each gate guard's `time` table becomes `use: patrol { path: … }`, `use: pursue
 - Open, its own story later: search as a behaviour of its own. Patterns,
   sweeping while walking, an npc that knows where the valuables are and
   checks there. This design's `search` is one straight leg.
-- Dash while out of reach (rpg-project#666, shared with #661) is not in this
-  story's pursuit slices (R11). Pursuit walks at the decider's movement.
+- Dash while out of reach (rpg-project#666, shared with #661) was outside the
+  pursuit slices (R11); it is S4 (#671), design §Dash, awaiting R17.
 - Whether allies share a lost or unknown testimony by report. This design
   keeps each guard's search its own.
