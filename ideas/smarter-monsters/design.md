@@ -296,7 +296,24 @@ bound, and walks the cut path like `toward`. On the world clock there is no
 swing to forfeit; the dash doubles the pace. Affordable only when the target
 is beyond reach (a dash at something in reach is absent, not a pass).
 `search` keeps walking: nobody searches at a run, and the use case has not
-arrived. Castle content: `pursuer`'s `remembered` row becomes `dash: enemy`;
+arrived.
+
+**When the row is affordable (Kirk, 2026-10-25: "we would want a monster to
+not run up in melee range and not be able to attack").** The threshold falls
+out of the rules. For a melee creature with speed s cells and reach r, let w
+be the gap to close. Up to s: walk and swing this turn. From s+1 to 2s: walking
+swings on turn two; dashing arrives adjacent on turn one and also swings on
+turn two, so the dash buys nothing and hands the target a free turn beside
+it. Above 2s: the dash swings a turn earlier. So `dash` is affordable only
+when the target is beyond 2s + r, the engine's own numbers, as `attack` is
+affordable only within reach. No authored cell count: `within` in this
+grammar is rounds, a bundle is shared by creatures of different speeds, and
+the author does not hold s or r. An author's knob, if one is ever wanted, is
+in walks (`dash: { enemy, walks: 1 }` for an eager runner against a fleeing
+target of equal speed, which a walk never closes); it waits for that author.
+Open check, not a ruling: if a driven monster takes opportunity attacks when
+the target steps away, the middle band is a threat rather than a wasted turn,
+and the default may loosen to one walk. Castle content: `pursuer`'s `remembered` row becomes `dash: enemy`;
 the reserves' route row becomes `dash`. The `pursuer` fixture (#672) proves
 it on the first try.
 
@@ -330,7 +347,7 @@ it on the first try.
 | R9 | a player's stale memory stays drawn as the ghost of where the creature was last seen; a player gets no observed-empty testimony, and whether to keep drawing is the client's (rpg-toolkit#1691) | ruled | player testimony, web | KirkDiggler | 2026-10-23 |
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
-| R17 | what decides a dash: the row (`dash: <selector>`, shape B), not an engine rule; a dash costs the swing; affordable only beyond reach (design §Dash) | proposed | table grammar, encounter economy | — | — |
+| R17 | what decides a dash: the row (`dash: <selector>`, shape B), not an engine rule; a dash costs the swing; affordable only when the target is beyond two walks plus reach, in the creature's own speed and reach (design §Dash) | proposed | table grammar, encounter economy | — | — |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
