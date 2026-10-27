@@ -288,7 +288,23 @@ spelled as a modifier.
   dash" and "toward at a walk" are two intents with different costs wearing
   one word, which is what the record then has to explain.
 
-### Recommended: B
+### Ruled: B, with the threshold authored (Kirk, 2026-10-26)
+
+"I like it being explicit in a row. I think it could even become a bundle: I
+will dash when, until or unless, or all of the above. You make a type of
+dasher and set it on the creature like pursuer." So the row word stands (R17
+ruled), and the affordability threshold below moves out of the engine and
+into the row's `when`: a `dasher` bundle whose rows say when the run is on the
+table. The engine keeps one floor of its own: a `dash` at a target already in
+reach is absent. What the enemy word needs for that is a distance value it
+does not have today (`within` in this grammar is ROUNDS, on deeds and sounds,
+so the distance value takes a different name, e.g. `beyond`). Its unit is the
+one open choice (R18): cells, tuned per creature through the bundle's params
+(`use: dasher with: { beyond: 16 }`), or walks, which the engine converts from
+the creature's own speed so one bundle fits every creature. Recommended:
+walks. "Until" and "unless" need no grammar: a row is on the table while its
+`when` holds, and a second row with another `when` is the unless.
+
 
 `dash: <selector>` in the table; in the encounter, a Dash intent that doubles
 the turn's `MovementFeet`, sets `AttacksLeft` to zero, recomputes the inner
@@ -347,7 +363,8 @@ it on the first try.
 | R9 | a player's stale memory stays drawn as the ghost of where the creature was last seen; a player gets no observed-empty testimony, and whether to keep drawing is the client's (rpg-toolkit#1691) | ruled | player testimony, web | KirkDiggler | 2026-10-23 |
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
-| R17 | what decides a dash: the row (`dash: <selector>`, shape B), not an engine rule; a dash costs the swing; affordable only when the target is beyond two walks plus reach, in the creature's own speed and reach (design §Dash) | proposed | table grammar, encounter economy | — | — |
+| R17 | what decides a dash: the row (`dash: <selector>`, shape B), explicit, composable into a `dasher` bundle; a dash costs the swing; a dash at a target in reach is absent (design §Dash) | ruled | table grammar, encounter economy | KirkDiggler | 2026-10-26 |
+| R18 | the dash threshold is authored in the row's `when` as a distance value on the enemy word (not `within`, which is rounds); unit: walks (engine converts from the creature's speed; recommended) or cells (tuned per creature via bundle params) | proposed | table grammar | — | — |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
