@@ -261,8 +261,9 @@ dash when they are out of reach." S4 is the story's last slice.
   hero steps back inside, and `answer-the-gate` has no row for it, so they
   hold every turn. Content fix, its own PR. The starvation is real for a
   second player who walked ahead and stays out of the fight; that is a
-  time-model ruling (lane #683, "what a wrapped fight round means to the
-  world"), not this slice.
+  time-model question, RULED 2026-10-27 as R19: clocks are content,
+  today's world clock is the default; the reserves on a fight-round clock
+  is the first use case when a story brings it.
 - The table grammar has no pace. `Answer` arms today: Weight, Say, When, Fact,
   Flee, Hold, Attack, Toward, Away, Search, and the group arms.
 
@@ -411,6 +412,7 @@ it on the first try.
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
 | R17 | what decides a dash: the row (`dash: <selector>`, shape B), explicit, composable into a `dasher` bundle; a dash costs the swing; a dash at a target in reach is absent (design §Dash) | ruled | table grammar, encounter economy | KirkDiggler | 2026-10-26 |
 | R18 | the dash threshold is not a number: the enemy word gains words for what a move buys the creature, computed by the engine from both speeds and reaches: `reach` (now), `walk` (a walk puts me in reach this turn), `dash` (only a dash does), `far` (not even a dash); the dasher row is `when: { enemy: dash }`; and a `threat` kind judged at the row's landing cell (`none`/`walk`/`dash`, the row's own target not counted) so a careful dasher writes `when: [{ enemy: far }, { threat: none }]` and the castle's dasher runs on `far`, walks on `dash`; cover joins this family of landing-cell facts later | ruled in principle, names proposed | table grammar, encounter facts | KirkDiggler | 2026-10-26 |
+| R19 | the clock a creature runs on is content: today's world clock (paces, a roamer's included; fight rounds when a fighter leads) is the default and everyone on it moves with it; a world builder binds a group to a clock with its own trigger (fight round, alarm) when wanted; no engine change now (ideas/world-clock-and-the-fight, rpg-project#683 D9) | ruled | time model, content | KirkDiggler | 2026-10-27 |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
