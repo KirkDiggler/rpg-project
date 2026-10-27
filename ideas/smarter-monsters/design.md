@@ -314,13 +314,18 @@ a row that does not move): `none` (no foe could reach that cell with a walk
 and a swing), `walk` (one could), `dash` (one could only by dashing). The
 row's own target does not count: dashing into reach of someone means they can
 hit back, and that is the point; `threat` asks who else can. The careful
-dasher is `when: { enemy: dash, threat: none }` + `dash: enemy`; the reckless
-one drops the threat word. Cover, when it comes, is one more word in this
+dasher is `when: [{ enemy: dash }, { threat: none }]` + `dash: enemy` (a row's
+`when` is a list and the list is the AND, rpg-project#569 R8; one mapping
+naming two conditions stays refused); the reckless one drops the threat
+entry. Cover, when it comes, is one more word in this
 family: facts about a cell relative to the foes (can I reach them from it, can
 they reach me on it, do they have a line to it), computed by the engine for
 the landing cell of whatever the row proposes. Names are proposed, for Kirk
-to veto. Builder check: a row's `when` must accept two kinds at once (AND);
-if today it names exactly one thing, that is the first change. "Until" and "unless" need no grammar: a row is on the table while its
+to veto. Built (rpg-toolkit#2132): `Facts.Threat` is a function of the row,
+because a walk and a dash in one pick land on different cells; the host is
+asked once per row that names a threat; nil or an empty answer holds nothing,
+`none` included (fail closed); the judged word is written on the row's verdict
+so the record reads why a careful row stood still. "Until" and "unless" need no grammar: a row is on the table while its
 `when` holds, and a second row with another `when` is the unless.
 
 
@@ -382,7 +387,7 @@ it on the first try.
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
 | R17 | what decides a dash: the row (`dash: <selector>`, shape B), explicit, composable into a `dasher` bundle; a dash costs the swing; a dash at a target in reach is absent (design §Dash) | ruled | table grammar, encounter economy | KirkDiggler | 2026-10-26 |
-| R18 | the dash threshold is not a number: the enemy word gains words for what a move buys the creature, computed by the engine from both speeds and reaches: `reach` (now), `walk` (a walk puts me in reach this turn), `dash` (only a dash does), `far` (not even a dash); the dasher row is `when: { enemy: dash }`; and a `threat` kind judged at the row's landing cell (`none`/`walk`/`dash`, the row's own target not counted) so a careful dasher writes `when: { enemy: dash, threat: none }`; cover joins this family of landing-cell facts later | ruled in principle, names proposed | table grammar, encounter facts | KirkDiggler | 2026-10-26 |
+| R18 | the dash threshold is not a number: the enemy word gains words for what a move buys the creature, computed by the engine from both speeds and reaches: `reach` (now), `walk` (a walk puts me in reach this turn), `dash` (only a dash does), `far` (not even a dash); the dasher row is `when: { enemy: dash }`; and a `threat` kind judged at the row's landing cell (`none`/`walk`/`dash`, the row's own target not counted) so a careful dasher writes `when: [{ enemy: dash }, { threat: none }]`; cover joins this family of landing-cell facts later | ruled in principle, names proposed | table grammar, encounter facts | KirkDiggler | 2026-10-26 |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
