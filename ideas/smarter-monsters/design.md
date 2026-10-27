@@ -320,7 +320,16 @@ walk → toward, dash → toward, far → dash. A table that wants to pin someon
 adjacent (a brute that lives on opportunity attacks) keys its run on `dash`
 instead; the word is there for it. A wolf and a guard share the bundle.
 (Built 2026-10-27, rpg-toolkit#2134: the first castle cut keyed the run on
-`dash`, and the reserves test showed reserve-2 swinging no sooner for it.) The mirror came the same hour (Kirk: "would I be in
+`dash`, and the reserves test showed reserve-2 swinging no sooner for it.)
+Two more things the castle copy taught (rpg-toolkit#2134, rpg-api#1148): the
+table draws by weight among every row that holds, so a bundle placed first
+has no priority; where a table uses the dasher its own plain `reach → attack`
+and `seen → toward` rows GO, the dasher is the whole approach. And the
+pursuer's `remembered → toward` row overlaps the run too (walk/dash/far hold
+for a remembered foe), so where the dasher is used `use: pursuer` is gated
+`when: { enemy: lost }` and contributes only the cold-trail search. The
+reserves test reads the record and requires exactly one candidate, so the run
+wins on every face of the die. The mirror came the same hour (Kirk: "would I be in
 range / are they in range… I don't mind dashing so long as that doesn't put
 me in range after the other gets their move step"): a second `when` kind,
 `threat`, judged at the cell the row's move would LAND on (where I stand, for
