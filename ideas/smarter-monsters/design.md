@@ -254,8 +254,15 @@ dash when they are out of reach." S4 is the story's last slice.
   `AttacksLeft: 0` and its speed (`worldtime.go` thinkFor). A reserve closes at
   exactly one speed per round. If the round did not raise the high-water mark
   it does not think at all: a party that walked far ahead earlier can starve
-  the reserve of turns. That is the first hypothesis for #661's "8 rounds
-  later the other guards never made it", and it is a record read, not a rule.
+  the reserve of turns. That was the first hypothesis for #661's "8 rounds
+  later the other guards never made it". The record REFUTED it for Kirk's
+  walk (2026-10-27): at the session's 120 ft sight the reserves see the hero
+  through the open gate, join, then fall into the `remembered` band when the
+  hero steps back inside, and `answer-the-gate` has no row for it, so they
+  hold every turn. Content fix, its own PR. The starvation is real for a
+  second player who walked ahead and stays out of the fight; that is a
+  time-model ruling (lane #683, "what a wrapped fight round means to the
+  world"), not this slice.
 - The table grammar has no pace. `Answer` arms today: Weight, Say, When, Fact,
   Flee, Hold, Attack, Toward, Away, Search, and the group arms.
 
@@ -363,9 +370,9 @@ it on the first try.
 - S4b `rulebooks/dnd5e/encounter`: Dash intent and budget rule; test pins a
   2x cells walk with no swing beside `TestARoutedTurnIsBoundedByItsOwnMovement`;
   world-clock dash; castle route test: reserves at the gate within
-  distance / (2 x speed) rounds once the alarm is raised; #661's starvation
-  hypothesis confirmed or refuted from the record FIRST, with its own fix if
-  confirmed.
+  distance / (2 x speed) rounds once the alarm is raised; #661's cause was read from the
+  record first (content: the reserves' table lacked the remembered rows) and
+  is fixed on its own; the harness now sees what the session sees (120 ft).
 - S4c castle content (rpg-api) and the Debug panel reading a `dash` row (web,
   only if the panel does not already read an unknown arm by name).
 
