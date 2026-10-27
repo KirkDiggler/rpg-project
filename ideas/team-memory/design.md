@@ -2,6 +2,12 @@
 
 Walkthrough: [README.md](README.md). Press release: [press-release.md](press-release.md). Issue: rpg-project#676.
 
+**How to read the standing rules.** They are working agreements, each with a
+measure that can prove it wrong, until the measures in [Measures](#measures)
+have run for real. A rule that the numbers contradict is amended in daylight,
+not defended. Rulings R1–R11 stand as settled; R12–R14 extend them and are the
+first to be measured.
+
 ## Shape
 
 ```mermaid
@@ -47,7 +53,13 @@ flowchart LR
 2. Unprocessed notes live in a local, git-ignored **inbox**
    (`envs/local/notes/inbox/`); processed notes live in
    `archive/YYYY-MM/`. The move is the watermark — bookkeeping that can
-   drift will drift, so there is none.
+   drift will drift, so there is none. A second capture path exists for
+   anyone without the workspace tooling (R13): a **run record** committed
+   on the work PR, under the `knowledge/runs/` of the level the PR's
+   changes bind, with four sections — shipped, decided, found, mistaken —
+   each line linked to its PR, issue or commit. Ingest reads both paths;
+   a run record's watermark is the `processed:` line ingest adds to it in
+   the knowledge PR.
 3. Capture runs through `game-dev note`, which stamps `id`
    (`<utc>-<random>`), `ts`, and `source` (runtime, session ref, repo).
    The schema is the tool's job, never the writer's; a hand-written note
@@ -86,16 +98,37 @@ flowchart LR
 12. Session-transcript archaeology is a separate tier and out of this
     design. Memory plugins may be trialed for it without touching anything
     here (R10).
-13. A scope names one of two families: `team:<role>`, whose file lives at
-    `docs/teams/roles/<role>/memory.md`, or `feature:<topic>`, whose file
-    lives beside the feature's own docs (`ideas/<topic>/memory.md`, in the
-    repo that owns the feature's design). Both carry the three sections of
-    rule 7 under the same rules.
-14. A lesson lives at the **narrowest scope that can hold it** and
-    migrates outward as it proves general: feature → team → charter or
-    standing rules, each move proposed in a PR that names the origin it elevates
-    from. Feature specifics never take residence in a team file; a general
-    lesson never stays trapped in a feature's.
+13. Knowledge lives **in the repository with the code it binds**, in a
+    `knowledge/` directory at the **lowest directory that contains
+    everything the entry binds** (R12). A rule about one module lives in
+    that module. A rule binding `play/clock` and `play/intel` lives in
+    `play/knowledge/`. A rule binding encounter, resolution and session
+    lives in `rulebooks/dnd5e/knowledge/`. Only layer rules reach a repo
+    root. Craft that binds no code — how a Team reviews, walks, dispatches
+    — binds nothing below rpg-project, so it lives at
+    `docs/teams/roles/<role>/memory.md` as before. The feature family of
+    the earlier rule 13 is retired: a feature's design doc stays in
+    `ideas/<topic>/`, and the standing rules it produces are routed to the
+    code they bind. Each `knowledge/` carries `decisions.md` (one line per
+    ruling: date, the words, the options, the link), `findings/` (case
+    files, present tense, evidence linked) and `runs/` (rule 2). A
+    directory is created by the first entry that needs it, never ahead of
+    one.
+14. A lesson lives at the **lowest level that can hold it** and migrates
+    outward only as it proves general: module → seam level → repo root →
+    charter or rpg-project standing rules, each move proposed in a PR that
+    names the origin it elevates from. Module specifics never take
+    residence at a seam level; a general lesson never stays trapped in one
+    module's directory.
+15. Every level that has a `knowledge/` also carries the **architecture
+    map for that level** (R14): one seam document and one diagram showing
+    exactly the things directly beneath it, what flows across each seam
+    and what must not, in both directions. A repo root's diagram composes
+    its levels' diagrams; it never redraws them. The diagram's nodes are
+    checked against the module tree (`go.mod` files, package directories)
+    by a script in CI, so a module added or retired without its map is a
+    red check, not a two-month-old picture. The map is the index the
+    knowledge directories hang from; the two are one slice.
 
 ## Rulings
 
@@ -111,7 +144,28 @@ flowchart LR
 | R8 | settled | scope vocabulary lives in config, not in these standing rules | session, adopted by KirkDiggler | 2026-10-22 |
 | R9 | deferred-until-needed | scheduled ingest (cron/systemd) | KirkDiggler | 2026-10-22 |
 | R10 | deferred-until-needed | plugin-backed session-archaeology tier (e.g. pi-hermes-memory, pi-blackhole) | KirkDiggler | 2026-10-22 |
-| R11 | settled | scopes have two families, team and feature; feature memory lives beside the feature's docs; elevation migrates outward with origin named | KirkDiggler | 2026-10-22 |
+| R11 | amended by R12 | scopes have two families, team and feature; feature memory lives beside the feature's docs; elevation migrates outward with origin named | KirkDiggler | 2026-10-22 |
+| R12 | settled, under measurement | knowledge lives in the repo with the code it binds, in `knowledge/` at the lowest directory containing everything it binds, organized as the architecture layers; role files keep craft that binds no code; the feature family is retired | KirkDiggler | 2026-10-27 |
+| R13 | settled, under measurement | a run record committed on the work PR (shipped / decided / found / mistaken, each line linked) is a second legal capture path; ingest reads the inbox and committed runs | KirkDiggler | 2026-10-27 |
+| R14 | settled, under measurement | every level with a `knowledge/` carries its seam document and diagram of what sits directly beneath it; a root composes, never redraws; a CI script diffs the diagram's nodes against the module tree | KirkDiggler | 2026-10-27 |
+
+## Measures
+
+What the first ingests count, so the agreements above can be proved wrong:
+
+- **Landed per ingest.** Entries proposed, entries merged, entries declined,
+  per knowledge PR. A declined share that stays high says the routing or
+  the line form is wrong.
+- **Re-taught.** Lines added to any `## Friction` section, and lessons the
+  operator restates in conversation that already exist in a knowledge file.
+  The second number is the one this whole design exists to drive to zero.
+- **Drift.** Red runs of the map check (rule 15): a module whose level has
+  no map, or a map naming a module that is gone.
+- **Reach.** Knowledge directories that exist, by repo and level, and the
+  share of merged work PRs that carried a run record.
+
+The numbers are posted on rpg-project#676 after each ingest. No target is
+set until three ingests have run.
 
 ## Open
 

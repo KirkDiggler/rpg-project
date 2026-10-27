@@ -32,20 +32,23 @@ flowchart LR
         Arch[(archive/YYYY-MM/)]
         Quar[(quarantine/: unreadable notes)]
     end
-    subgraph Proj[rpg-project, or the repo that owns the feature]
-        PR[PR: one per ingest run]
-        Mem[docs/teams/roles/*/memory.md]
-        Feat[ideas/<topic>/memory.md]
+    subgraph Repo[the repo whose code the entry binds]
+        WorkPR[work PR: carries knowledge/runs/… (R13)]
+        PR[knowledge PR: one per ingest run, per repo touched]
+        Know[knowledge/ at the lowest binding level: decisions.md, findings/, runs/, the level's map (R12, R14)]
+        Mem[rpg-project docs/teams/roles/*/memory.md: craft that binds no code]
         Harness[.pi/extensions/pi-team-harness]
     end
     Sessions --> Note --> Inbox
+    Sessions --> WorkPR
     Note -.reads scope from.-> Cfg
     Ingest --> Lock
     Ingest --> Inbox
+    Ingest -.reads committed runs.-> WorkPR
     Ingest --> PR
+    PR --> Know
     PR --> Mem
-    PR --> Feat
-    Feat -.->|elevation, its own PR (rule 14)| Mem
+    Know -.->|elevation outward, its own PR (rule 14)| Mem
     Collect --> Arch
     Collect --> Inbox
     Ingest --> Quar
@@ -62,8 +65,10 @@ flowchart LR
 | `config.json` | The scope vocabulary | scope tag → `docs/teams/roles/<role>/memory.md`; no other meaning attaches to a scope (R8) |
 | `collect.mjs` | Settling finished runs | the open ingest PRs → merged runs' note files moved to `archive/YYYY-MM/`; declined runs' files returned to `inbox/` |
 | `.lock` | Serialization | acquire-or-refuse; a second concurrent run exits with the first run's pid |
-| `memory.md` | What a role currently believes, in staging | `## Lessons`, `## Friction`, `## Open`; one line each, dated, linked (rule 7) |
-| feature `memory.md` | What one feature needs and how it works, in staging | `ideas/<topic>/memory.md`, the same three sections under the same rules (rule 13) |
+| `memory.md` | What a role currently believes about its craft, in staging | `## Lessons`, `## Friction`, `## Open`; one line each, dated, linked (rule 7) |
+| `knowledge/` at a level | What binds the code directly beneath that level | `decisions.md` (one line per ruling), `findings/` (case files), `runs/` (committed run records), the level's seam document and diagram (rules 13, 15) |
+| a run record | One session's shipped / decided / found / mistaken, linked | committed on the work PR under the binding level's `knowledge/runs/`; ingest adds `processed:` when it has read it (rule 2) |
+| the map check | Drift between a level's diagram and the module tree | a CI script: diagram nodes vs `go.mod` files and package directories → red on a missing or stale node (rule 15) |
 | the harness | Consumption | role resolution → charter bytes + `memory.md` bytes; absence of the file is empty sections (rule 10) |
 | `active.md` | The operator's in-flight and parked stories | hand edits only (R1) |
 
@@ -72,20 +77,24 @@ The refusals, one per boundary:
 - **The note tool never interprets content.** It stamps and stores; it
   does not classify, route, or judge — that is ingest's job, done with
   the whole batch in view.
-- **Ingest never edits anything but `memory.md` files.** Charters,
-  CLAUDE.md, and a design doc's standing rules absorb graduated lessons
-  through their own PRs (rule 8), never through a memory run.
+- **Ingest never edits anything but `knowledge/` and `memory.md` files.**
+  Charters, CLAUDE.md, and a design doc's standing rules absorb graduated
+  lessons through their own PRs (rule 8), never through a memory run.
+- **Ingest never writes above the lowest binding level.** An entry that
+  binds one module lands in that module; a level's directory holds only
+  what crosses the seams directly beneath it (rule 13).
 - **Ingest never adjudicates a contradiction.** Both entries are named
   under `## Friction`; settling it is the operator's review, not the
   run's (R4).
 - **Sessions never write `memory.md`.** A lesson typed straight into the
   file bypasses review and recreates the many-writers failure this
   design exists to kill (R3).
-- **A team file never absorbs feature specifics.** Elevation lifts the
-  general lesson and names its origin; the feature's quirks stay home
+- **A seam level never absorbs module specifics.** Elevation lifts the
+  general lesson and names its origin; the module's quirks stay home
   (rule 14).
-- **A feature file never speaks for the craft.** Workspace-wide guidance
-  lives in charters and standing rules, reached by graduation (rule 8).
+- **A knowledge directory never speaks for the craft.** How a Team works
+  binds no code, so it lives with the charter, reached by graduation
+  (rules 8, 13).
 - **The archive never feeds back into memory.** It is evidence for the
   archaeology tier (R10) and for audits; the curated files are the only
   load path.
@@ -132,16 +141,20 @@ game-dev note --type lesson --scope team:platform \
 |---|---|
 | What the operator is doing, or parked | `active.md` |
 | Raw learnings not yet processed | a file's presence in `inbox/` |
-| What a role currently believes | its `memory.md` (staging) |
-| What one feature needs, how it works today | the feature folder's `memory.md` (staging); its use-case and design docs (settled) |
+| What a role currently believes about its craft | its `memory.md` (staging) |
+| What binds a module, a seam level, or a repo | that level's `knowledge/decisions.md` and `findings/` (staging); the design docs in `ideas/` (settled) |
+| What sits beneath a level and what crosses its seams | that level's map: seam document plus diagram, checked against the tree |
 | What the workspace holds durably | charters, CLAUDE.md, standing rules (destination) |
 | Everything that was ever captured | `archive/` |
 | The pain that should reopen a rule | the `## Friction` section that names it |
 
-**The two feature hazards are mirrors.** Generality trapped in a feature
-folder means the next feature pays the same lesson twice; feature quirks
-parked in a team file turn that file into a drawer of other features'
-trivia. Elevation (rule 14) is the reviewed move between them. **And the
+**The two level hazards are mirrors.** Generality trapped in one module's
+directory means the next module pays the same lesson twice; module quirks
+parked at a seam level turn that level into a drawer of other modules'
+trivia. Elevation (rule 14) is the reviewed move between them. The same
+mirror holds for the seams themselves: a seam under-described leaks what
+should stay put, and a seam over-protected blocks what should flow. The
+level's map (rule 15) says both directions on purpose. **And the
 older hazard stands: treating staging as destination.** Let `memory.md` grow
 as the permanent home and it becomes the junk drawer that forty flat
 memory notes already demonstrated: everything retrieved means nothing
@@ -159,6 +172,9 @@ operator's one glanceable register for noise.
 | Plugin stores excluded from this tier (R7) | memory is diffable, reviewable, harness-neutral | semantic recall waits for the archaeology tier (R10) | pi-hermes-memory or pi-ltm as the store |
 | Plain markdown per role, given/because form | loadable whole, reviewable line by line, conditions self-name for review | no structure finer than the line; querying means grep | schema-typed lesson records in a store |
 | Scope vocabulary in config (R8) | team renames don't touch the rules | the vocabulary drifts unless the team-map design finishes | scopes fixed in the design doc |
+| Knowledge in the repo with the code, at the lowest binding level (R12) | the directory a reader opens tells them which seam they stand on; collaborators without the workspace find it by the repo's own AGENTS pointer | many small directories; an entry's level is a judgment ingest must make and the review must check | one ledger per repo, or per role |
+| A committed run record as a second capture path (R13) | works with no tooling, rides on the PR that is its evidence, reaches collaborators for free | run files accumulate in git; the `processed:` line is bookkeeping, bounded by one line per run | inbox only |
+| A seam map per level, drift-checked (R14) | the picture stays local and small enough to keep true; drift is a red check | every module move costs a map edit in the same PR | one hand-drawn repo diagram |
 
 ## Edges
 
@@ -175,12 +191,18 @@ operator's one glanceable register for noise.
 - **A note whose lesson already exists, reworded** is dedupe's judgment
   call; when uncertain, ingest prefers a friction line over silently
   dropping or duplicating.
-- **A note scoped to a feature that reads as general** is proposed to
-  the team file with its origin named; the feature file keeps its own
-  line when the specifics still matter (rule 14).
-- **A feature scope with no memory.md yet** is created by the ingest run
-  that first needs it — feature scopes are created lazily, in config and
-  in one commit.
+- **A note bound to one module that reads as general** is proposed one
+  level up with its origin named; the module keeps its own line when the
+  specifics still matter (rule 14).
+- **A level with no `knowledge/` yet** is created by the ingest run that
+  first needs it, map included — levels are created lazily, in one
+  commit, never ahead of an entry (rule 13).
+- **A run record on a PR whose changes bind two levels** lands at their
+  lowest common directory; with one module per toolkit PR this is rare,
+  and the record names both modules when it happens.
+- **A diagram node with no module beneath it, or a module with no node**
+  fails the map check in that repo's CI; the fix is a map edit in the
+  same PR that moved the module (rule 15).
 - **Notes on a machine with several checkouts** all land in the root
   game-dev checkout's inbox — the same rule as every workspace-level
   tool, so worktrees never hold hot state.
@@ -207,8 +229,10 @@ operator's one glanceable register for noise.
 | Capture, ingest, settle, vocabulary | game-dev `tools/team-memory/{note.mjs,ingest.mjs,collect.mjs,config.json}` |
 | Hot state | game-dev `envs/local/notes/{inbox,archive,quarantine}` (git-ignored) |
 | Run serialization | game-dev `envs/local/notes/.lock` |
-| Curated memory | rpg-project `docs/teams/roles/*/memory.md` |
-| Feature memory | the feature's own docs folder, `ideas/<topic>/memory.md`, in the owning repo |
+| Craft memory | rpg-project `docs/teams/roles/*/memory.md` |
+| Code-bound knowledge | `knowledge/` at the lowest binding level of the owning repo (for example `rpg-toolkit/rulebooks/dnd5e/knowledge/`, `rpg-toolkit/play/knowledge/`, `rpg-api/knowledge/`) |
+| Committed run records | `knowledge/runs/` at that level, carried by the work PR |
+| The map check | a script beside the workspace checks, run in each repo's CI |
 | Consumption | game-dev `.pi/extensions/pi-team-harness` (charter resolution gains the memory read) |
 | Operator register | rpg-project `active.md` (git-ignored) |
 | Bootloader rule narrows | game-dev `AGENTS.md`, "Make the call" step 2 |
