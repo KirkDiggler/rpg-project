@@ -171,3 +171,28 @@ table would do too.
    roamer back?
 4. Hold: concurrent fights stay one initiative per encounter until a scene
    needs two?
+
+## Ruled 2026-10-27
+
+Kirk: "I think we want to remain flexible in this time. Ideally having a
+roamer trigger non-combat monsters' turns is a configuration we can set. Our
+users will be using the encounter studio to build worlds; they should have
+the ultimate control. So for now: yes, roamers can trigger NPCs operating on
+the same world clock. Maybe that's it. The NPC clocks, if shared on the world
+clock, would be affected by it; other clocks would have their own trigger
+points."
+
+So: none of (b), (c), (d) as an engine law. The clock a creature runs on is
+CONTENT. Today's behaviour is the default: the world clock is driven by paces
+(a roamer's included) and by fight rounds when a fighter leads, and every
+creature on it moves with it. A world builder who wants reinforcements to
+live the fight's six seconds, or a watcher who only stirs on an alarm, binds
+that group to a clock whose trigger is the fight round, or the alarm. No
+engine change now. What stays true under the default, and is the author's
+to change: a world-clock creature does not move while nobody raises the
+clock (the freeze), and memory windows age on the creature's own clock.
+
+The first use case for an authored clock is the castle's own reserves
+(rpg-project#661): "arrive within the rounds the distance implies" is a
+fight-round trigger. It waits for the story that brings it. Concurrent
+fights remain one initiative per encounter until a scene needs two.
