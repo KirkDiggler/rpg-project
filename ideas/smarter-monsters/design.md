@@ -298,11 +298,18 @@ into the row's `when`: a `dasher` bundle whose rows say when the run is on the
 table. The engine keeps one floor of its own: a `dash` at a target already in
 reach is absent. What the enemy word needs for that is a distance value it
 does not have today (`within` in this grammar is ROUNDS, on deeds and sounds,
-so the distance value takes a different name, e.g. `beyond`). Its unit is the
-one open choice (R18): cells, tuned per creature through the bundle's params
-(`use: dasher with: { beyond: 16 }`), or walks, which the engine converts from
-the creature's own speed so one bundle fits every creature. Recommended:
-walks. "Until" and "unless" need no grammar: a row is on the table while its
+so the distance value takes a different name, e.g. `beyond`). Kirk, 2026-10-26, on
+its unit: "postpone any crazy walk conversions. Just word it in reach: do you
+need to dash to get there? The actual distance doesn't matter; what it means
+to the NPC does." So no number at all (R18): the enemy word gains words for
+what a move buys, computed by the engine from both creatures' speed and
+reach. `reach`: in melee now. `walk`: a walk this turn puts me in reach, I
+can still swing. `dash`: only a dash puts me in reach this turn. `far`: not
+even a dash. The dasher row is `when: { enemy: dash }` + `dash: enemy`; a
+wolf and a guard share it. The mirror, "could they hit me where I land"
+(`threatened`, from their speed and reach against my landing cell), waits
+for the cautious bundle that asks for it; the plain dasher lands in reach and
+is adjacent either way. Names are proposed, for Kirk to veto. "Until" and "unless" need no grammar: a row is on the table while its
 `when` holds, and a second row with another `when` is the unless.
 
 
@@ -364,7 +371,7 @@ it on the first try.
 | R10 | a search's heading is the row's choice, not the engine's: testimony carries the way the subject WENT (its last seen step) beside the way it faced, and `search` names which heading it follows; a table that wants a guess writes two rows (left and right) that share the roll by weight | ruled, not built | encounter testimony, table vocabulary | KirkDiggler | 2026-10-23 |
 | R11 | dash, and any choice that leads to a dash, is outside this story's pursuit slices (rpg-project#661, #666) | ruled | scope | KirkDiggler | 2026-10-23 |
 | R17 | what decides a dash: the row (`dash: <selector>`, shape B), explicit, composable into a `dasher` bundle; a dash costs the swing; a dash at a target in reach is absent (design §Dash) | ruled | table grammar, encounter economy | KirkDiggler | 2026-10-26 |
-| R18 | the dash threshold is authored in the row's `when` as a distance value on the enemy word (not `within`, which is rounds); unit: walks (engine converts from the creature's speed; recommended) or cells (tuned per creature via bundle params) | proposed | table grammar | — | — |
+| R18 | the dash threshold is not a number: the enemy word gains words for what a move buys the creature, computed by the engine from both speeds and reaches: `reach` (now), `walk` (a walk puts me in reach this turn), `dash` (only a dash does), `far` (not even a dash); the dasher row is `when: { enemy: dash }`; a `threatened` mirror word (they could reach where I land) waits for a cautious bundle | ruled in principle, names proposed | table grammar, encounter facts | KirkDiggler | 2026-10-26 |
 | R12 | a bundle is a NESTED TABLE: `use:` is a row whose answer is a table; the outer die picks the group by its one weight, the inner die picks inside; the record carries the tree and the path (design §Bundles, shape B) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R13 | a group's temperament percent is the word its `as:` names; none = 100 (B1 ii) | ruled | table grammar | KirkDiggler | 2026-10-25 |
 | R14 | nesting is unbounded, refused only by the validator's depth guard (B2) | ruled | table grammar | KirkDiggler | 2026-10-25 |
