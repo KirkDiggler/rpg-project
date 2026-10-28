@@ -120,6 +120,13 @@ In order, before reading a line of the diff:
 - Check the PR body's Try-it section exists and matches what the PR actually
   changes: every visible change has a step, and no step promises what the
   diff does not do. A visible PR with "Nothing to try" is a finding.
+- Check the run record exists (`knowledge/runs/<date>-<topic>.md` at the
+  lowest directory containing everything the diff changed), carries its four
+  sections, and every line's link resolves. A decided line with no because,
+  or a judgment visible in the diff that the record does not name, is a
+  Minor finding; a missing record is Important. Read it before the diff: it
+  is the builder's own account of what a reader could have decided
+  differently.
 - When the fix is prescriptive, find the package's existing general
   mechanism first — a shared helper, a documented convention — and
   prescribe that. A hand-copied fix where a mechanism exists is itself the
