@@ -10,6 +10,7 @@ The canonical skills:
 - `walk/SKILL.md`: the walk on a real stack, run as the standing QA script.
 - `pr-review/SKILL.md`: the independent review round and its QA handoff.
 - `merge-out/SKILL.md`: merging a wave inside-out and shipping the slice.
+- `ingest/SKILL.md`: the judgment that turns notes and run records into knowledge lines, between the team-memory tool's collect and apply.
 
 Changes to shared procedures follow the operator's agreement; a skill is not permission to add approval ceremonies.
 
