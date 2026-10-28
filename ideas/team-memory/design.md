@@ -110,8 +110,17 @@ flowchart LR
     the earlier rule 13 is retired: a feature's design doc stays in
     `ideas/<topic>/`, and the standing rules it produces are routed to the
     code they bind. Each `knowledge/` carries `decisions.md` (one line per
-    ruling: date, the words, the options, the link), `findings/` (case
-    files, present tense, evidence linked) and `runs/` (rule 2). A
+    ruling: date, the words, the options, the link, and **upheld**: the
+    later PRs, reviews or rulings that reached for the old way and were
+    stopped), `findings/` (case files, present tense, evidence linked) and
+    `runs/` (rule 2). A decision with no upheld link is made, not yet
+    proven; one that has held under pressure is foundation, and a proposal
+    that crosses it names it and the evidence it rests on (R15). Every line
+    carries its *because*, so that when no recorded decision answers a
+    question the first question is concrete: has the foundation this rested
+    on shifted, are the goals still the goals, have they been amended,
+    should they be. Nothing here is "never"; it depends, and the because
+    is what it depends on. A
     directory is created by the first entry that needs it, never ahead of
     one.
 14. A lesson lives at the **lowest level that can hold it** and migrates
@@ -148,6 +157,7 @@ flowchart LR
 | R12 | settled, under measurement | knowledge lives in the repo with the code it binds, in `knowledge/` at the lowest directory containing everything it binds, organized as the architecture layers; role files keep craft that binds no code; the feature family is retired | KirkDiggler | 2026-10-27 |
 | R13 | settled, under measurement | a run record committed on the work PR (shipped / decided / found / mistaken, each line linked) is a second legal capture path; ingest reads the inbox and committed runs | KirkDiggler | 2026-10-27 |
 | R14 | settled, under measurement | every level with a `knowledge/` carries its seam document and diagram of what sits directly beneath it; a root composes, never redraws; a CI script diffs the diagram's nodes against the module tree | KirkDiggler | 2026-10-27 |
+| R15 | settled, under measurement | a decision line carries where it was upheld; decisions made and upheld are the foundation each area is seeded with; a proposal that crosses one names it and its evidence, since big changes stay possible when they make us better and never for no reason | KirkDiggler | 2026-10-27 |
 
 ## Measures
 
@@ -163,6 +173,9 @@ What the first ingests count, so the agreements above can be proved wrong:
   no map, or a map naming a module that is gone.
 - **Reach.** Knowledge directories that exist, by repo and level, and the
   share of merged work PRs that carried a run record.
+- **Upheld.** Decision lines with at least one upheld link, against the
+  total. The share that rises is the foundation hardening; a line that
+  stays at zero for long is either untested or not really a decision.
 
 The numbers are posted on rpg-project#676 after each ingest. No target is
 set until three ingests have run.
