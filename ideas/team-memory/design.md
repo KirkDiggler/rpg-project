@@ -115,7 +115,12 @@ flowchart LR
     stopped), `findings/` (case files, present tense, evidence linked) and
     `runs/` (rule 2). A decision with no upheld link is made, not yet
     proven; one that has held under pressure is foundation, and a proposal
-    that crosses it names it and the evidence it rests on (R15). A
+    that crosses it names it and the evidence it rests on (R15). Every line
+    carries its *because*, so that when no recorded decision answers a
+    question the first question is concrete: has the foundation this rested
+    on shifted, are the goals still the goals, have they been amended,
+    should they be. Nothing here is "never"; it depends, and the because
+    is what it depends on. A
     directory is created by the first entry that needs it, never ahead of
     one.
 14. A lesson lives at the **lowest level that can hold it** and migrates
