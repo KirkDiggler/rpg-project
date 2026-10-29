@@ -19,8 +19,8 @@ flowchart LR
         Decode -->|one RegionInput per region| Compile[compileField]
         Compile --> Floor[floor = union of region cells − footprints]
         Compile --> Partitions[partitions = floor split by walls]
-        Floor --> Atlas[atlas: each cell carries region id and partition id]
-        Partitions --> Atlas
+        Floor --> Atlas[atlas: authored regions with their cells and lighting]
+        Partitions -.internal: hearing, seats, arrival.-> Play
     end
     Atlas -->|per seat, per cell| Play[play: floor and lighting per region, hearing per partition]
 ```
@@ -52,9 +52,10 @@ because nothing empty is stored.
 
 **Two divisions.** Authored regions and wall partitions are independent
 divisions of the same cells. A partition is what walls make and owns the
-mechanics: hearing hops, door footing, the hop count an alarm travels. An
-authored region owns presentation: name, lighting, sound, label. A cell carries
-both ids. An authored edge has no mechanical meaning of any kind, so an author
+mechanics: hearing hops, door footing, seat derivation, the hop count an alarm
+travels. An authored region owns presentation: name, lighting, sound, label. The
+compiled field answers both for a cell; the atlas and the wire carry only the
+authored region, because partitions are derived and nothing derived is sent. An authored edge has no mechanical meaning of any kind, so an author
 can split an open hall into two places without changing how sound or sight
 crosses it. The compiler reads a cell's lighting from its authored region.
 

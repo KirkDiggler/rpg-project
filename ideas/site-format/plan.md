@@ -54,9 +54,9 @@ needs an api built from S3's branch. Merge order S1 → S2 → S3 → S4.
 | F3 | A cell in two regions is refused with both paths. | Law Floor |
 | F4 | `implicitRegionId` names the region unassigned paint lands in; it is listed only when it owns cells. | Law Floor; gap G3 |
 | F5 | `room.workspace` does not exist; `room.coordinateFrame` stays. No decode bound depends on a workspace. | R3 |
-| F6 | The compiler emits one `RegionInput` per authored region with its own lighting; partitions are computed over the whole floor from walls and doors, persisted in the compiled snapshot, never on the wire. | R4, ADR-0035 |
-| F7 | Hearing hops, arrival-cell search and the intel flip read partitions. The atlas, `RegionAt`, member and outcome regions, and reveal grouping read authored regions. An authored edge adds no hop. | R4 |
-| F8 | Every existing content file converts once; each `.compiled.json` cell set, props, walls, doors, exits and start are unchanged; `regions`, `monsters[].region` and `party_start[].region` change only by region identity. | R6, Law Equality |
+| F6 | The compiler emits one `RegionInput` per authored region with its own lighting; partitions are derived over the whole floor from walls and doors at construction and at every load, never stored and never on the wire; door footing is subtracted from the region that owns it. | R4, Law Derivation; R8 pending |
+| F7 | Hearing hops, seat derivation, arrival-cell search and the intel flip (`sweepPresence`) read partitions. The atlas, `RegionAt`, member and outcome regions, `Seat.Region`, `MonsterPlacement.Region` and reveal grouping read authored regions. An authored edge adds no hop. | R4 |
+| F8 | Every existing content file converts once; each `.compiled.json` cell set, props, walls, doors, exits and start are unchanged; the union of `regions[].cells` is unchanged while the regions themselves regroup from partitions to authored regions; `monsters[].region` and `party_start[].region` carry authored ids. | R6, Law Equality |
 | F9 | Root `version: 5`; versions 3 and 4 are refused by name. | R6; gap G6 |
 | F10 | The studio paints into the active region, the implicit region by default; brushing with another region active reassigns; a region has a name and a lighting intensity; the map label is the name at the region's centroid; notes stay. | R5 |
 | F11 | The studio draws its grid from the content bounding box plus a margin; zoom 1 fits the content; the view is not stored; a cell anywhere is paintable. | R3 |
@@ -92,9 +92,9 @@ Probe reports (case file): the story's design PR #726 thread.
 | G2 lighting | required on every region in the dialect, `lighting: {intensity: 0..1}` (the encounter's word, as the v2 dialect spells it); the studio writes 1 by default and the implicit region is authored like any other | R4, "zero values tell the truth" |
 | G3 implicit region | `implicitRegionId` stays required; the region appears in `regions` only when it owns cells; the compiler still refuses an empty region | Law Floor |
 | G4 region presentation | the studio's look and construction live under `scene`, keyed by region id, as props already split `scene.items` from `room.propDeclarations`; `scene.authoringRegions` retires; `scene.mapLabels` keeps only notes (labels linked to no region); a region's label position is its cells' centroid, computed | R2, R5, "nothing derived is written" |
-| G5 partitions | computed once at compile over the union floor, persisted in `EncounterData` beside regions, recomputed only when absent; ids internal (`p<n>`), never on the wire; the `<id>/space/<q>,<r>` naming retires | R4, ADR-0035 |
+| G5 partitions | derived over the union floor at field construction and at every load from the persisted authored regions, walls and doors; never stored in `FieldData` (its charter holds authored truth only); ids internal (`p<n>`), never on the wire; the `<id>/space/<q>,<r>` naming retires; the castle's full load measures 94 ms today and the compiled-field cache sibling removes the per-verb repeat | R4, ADR-0044; **R8 pending the operator** |
 | G6 versions | root `version: 5`; the decoder refuses 3 and 4 with a sentence naming #725; the studio's `carriesV4Keys` retires and always writes 5; the draft envelope bumps to 6 and refuses 5 by name (precedent: 3 and 4) | R6 |
-| G7 which division a reader uses | a reader that decides an outcome (hearing, arrival cell, intel flip) uses the partition; a reader that reports a place (atlas, `RegionAt`, member/outcome region, reveal grouping, `MembersIn`) uses the authored region; the builder lists every reader with its side in the PR body | R4 |
+| G7 which division a reader uses | a reader that decides an outcome uses the partition: hearing (`links`, `hopsFrom`, `hearersOf`), seat derivation (`deriveSingleRoomSeats` confined to the party start's partition), `arrivalCell`, the intel flip (`sweepPresence`), door footing (`joinOpaqueFooting`); a reader that reports a place uses the authored region: atlas, `RegionAt`, member/outcome region, `Seat.Region`, `MonsterPlacement.Region`, reveal grouping, `MembersIn`; the builder lists every reader with its side in the PR body | R4 |
 | G8 converter | a node-level rewrite that preserves comments and key order outside the changed keys; automatic authoring regions (witness-bound) are refused by the converter and converted by hand, listing each in the PR | R6 |
 
 ## Sequence
@@ -178,7 +178,7 @@ room:
 **Delivers:** F6, F7 (compiler half), K1.
 **Owner:** rpg-toolkit encounter (`dungeonspec/single_room_compile.go`, `single_room_regions.go`; `encounter/compilefield.go`, `partition_region.go`, `data.go`, `field.go`, `noise.go`, `reserve.go`, `flip.go`).
 **Prerequisites:** T1.
-**Files:** modify `single_room_compile.go` (build `[]encounter.RegionInput` from `spec.Room.Gameplay.Regions` with `axialOffset` per expanded cell, `Archetype: "crypt"`, `Lighting: &encounter.Lighting{Intensity: r.Lighting.Intensity}`); rewrite `single_room_regions.go` (`singleRoomRegions` partitions the union of all regions, no longer `field.Regions[0]`, and no longer replaces `field.Regions`); encounter: new `partitions.go` (`PartitionFloor(in PartitionFloorInput) (PartitionFloorOutput, error)` over every region's cells with the same passability as `PartitionRegion`; `Field` gains `partitionOf map[Position]PartitionID` and `partitionCells map[PartitionID][]Position`, `PartitionAt(cell) PartitionID`); `data.go` (`FieldData.Partitions [][]PositionData "partitions"`; load reads them, compile writes them; when absent on load, recompute once); `noise.go` (`links`, `hopsFrom`, `hearersOf` key on `PartitionAt`); `reserve.go` `arrivalCell` (search `partitionCells`); `flip.go` (compare `PartitionAt`); `compilefield.go` (`maxFieldCells` unchanged; refusals unchanged). Keep `PartitionRegion` for its other callers or delete if `singleRoomRegions` was its only caller (inspect; say which in the PR).
+**Files:** modify `single_room_compile.go` (build `[]encounter.RegionInput` from `spec.Room.Gameplay.Regions` with `axialOffset` per expanded cell, `Archetype: "crypt"`, `Lighting: &encounter.Lighting{Intensity: r.Lighting.Intensity}`; seat derivation stays confined to the party start's partition through `PartitionAt`, while `Seat.Region` and `MonsterPlacement.Region` take `RegionAt`); rewrite `single_room_regions.go` (`singleRoomRegions` partitions the union of all regions, no longer `field.Regions[0]`, and no longer replaces `field.Regions`; the footing it returns is subtracted from the owning region's cells and appended to scenery as today; a region emptied by footing is refused at `room.room.regions[i].cells` with "every cell is wall footing"); encounter: new `partitions.go` (`PartitionFloor(in PartitionFloorInput) (PartitionFloorOutput, error)` over every region's cells with the same passability as `PartitionRegion`; `Field` gains `partitionOf map[Position]PartitionID` and `partitionCells map[PartitionID][]Position`, `PartitionAt(cell) PartitionID`, both filled by `compileField` at construction and again by the load path from the persisted regions, walls and doors; `FieldData` unchanged, R8 pending); `noise.go` (`links`, `hopsFrom`, `hearersOf` key on `PartitionAt`); `reserve.go` `arrivalCell` (search `partitionCells`); `flip.go` `sweepPresence` (compare `PartitionAt`); `compilefield.go` (`maxFieldCells` unchanged; refusals unchanged). Keep `PartitionRegion` for its other callers or delete if `singleRoomRegions` was its only caller (inspect; say which in the PR).
 **Interfaces:** `PartitionID` is `string`, values `p0`, `p1`, … in canonical axial order of each component's first cell; never serialised to protos or session types. `RegionAt`, `Member.Region`, `MemberOutcome.Region`, `MembersIn`, `AtlasRegion` keep their types and now carry authored ids. `Seat.Region` and `MonsterPlacement.Region` (dungeonspec outputs) carry the authored id.
 **Behavior:** a sound in the courtyard with a listener in the gatehouse, no wall between: zero hops. The same with a shut door between two partitions: one hop plus the closed-door hop as today. An arrival cell that is taken searches the same partition, not the authored region. The atlas lists authored regions with their own lighting and names, sorted by id.
 **Tests:**
@@ -187,7 +187,8 @@ room:
 - `TestHearing_AuthoredEdgeAddsNoHop` (`wall_door_hearing_test.go` style): two regions, no wall, voice DC 5, listener passive 10 → heard; with a shut door between them → not heard at the same DC (one hop +5 as today).
 - `TestAtlas_ListsAuthoredRegionsWithTheirLighting`: two regions intensity 1 and 0.3 → two `AtlasRegion` entries with those intensities and names.
 - `TestRegionAt_IsTheAuthoredRegion`: a cell painted into `region-gatehouse` answers that id even when its partition spans the yard.
-- `TestFieldData_PartitionsRoundTrip`: compile → `EncounterData` → load → `PartitionAt` identical for every cell; `TestFieldData_PartitionsAbsentRecomputes`.
+- `TestFieldLoad_DerivesTheSamePartitions`: compile → `EncounterData` → load → `PartitionAt` identical for every cell, with `FieldData` carrying no partition key.
+- `TestCompile_FootingLeavesItsRegion`: a region whose cells include an ambiguous-footing cell loses that cell to scenery; a region made of footing only is refused with the named message.
 - Existing `door_threshold_region_test.go`, `wall_door_hearing_test.go`, castletest gate/cells tests: keep passing, with `RegionAt` comparisons now meaning authored regions; where a test compared partitions through `RegionAt` (gatehouse vs courtyard "different region"), rewrite it against `PartitionAt` or against hearing hops and say so in the PR.
 
 - [ ] Write the tests; fail on missing `PartitionFloor`/`PartitionAt`.
@@ -232,13 +233,13 @@ room:
 **Owner:** rpg-toolkit encounter `dungeonspec/contentgolden_test.go`.
 **Prerequisites:** T2, T3, T4.
 **Files:** new test `TestConvertedContentKeepsItsFloor` reading each `testdata/*.compiled.json` at the base commit (captured once into `testdata/pre-v5/*.compiled.json` by a script step in the PR, or compared by `git show origin/main:<path>` in the test; choose the committed copy and delete it in the same PR after the comparison test has run in CI once; say which); then regenerate the 25 goldens with `CONTENT_GOLDEN=write`.
-**Behavior:** for every content file, `cells`, `props`, `boundaries`, `doorways`, `exits`, `start`, `placed`, `doors`, structural walls and doors, intel, scenarios, concealments, endings, factions, dispositions, templates are byte-identical to the pre-v5 golden; `regions` differ only in identity (ids and names), lighting equal; `monsters[].region` and `party_start[].region` carry authored ids.
+**Behavior:** for every content file, `cells`, `props`, `boundaries`, `doorways`, `exits`, `start`, `placed`, `doors`, structural walls and doors, intel, scenarios, concealments, endings, factions, dispositions, templates are byte-identical to the pre-v5 golden; the union of `regions[].cells` is identical while the grouping changes (castle: 8 partitions → 10 authored regions); every region's lighting is 1 unless the source authored a lighting; `monsters[].region` and `party_start[].region` carry authored ids and the same cells as before.
 **Tests:** `TestConvertedContentKeepsItsFloor` as above with a per-key diff listing.
 
 - [ ] Capture pre-v5 goldens; write the comparison; run; regenerate goldens; commit the regenerated goldens and the comparison's output in the PR body.
 
 **Verification:** `go test -race ./dungeonspec/ -run 'TestEveryContentFile|TestConvertedContentKeepsItsFloor'`.
-**Completion evidence:** the per-file diff summary (expected: only region identity changes).
+**Completion evidence:** the per-file diff summary (expected: only region grouping and ids change; the union is equal).
 
 ### Task 6: The 30k fixture and the file budget
 
@@ -352,7 +353,7 @@ room:
 | F3 no cell in two regions | T1 | `TestDecode_CellInTwoRegions` |
 | F4 implicit region | T1, T11 | `TestDecode_ImplicitRegionIdMayBeUnlisted`; removal-falls-to-implicit test |
 | F5 no workspace | T1, T11, T12 | `TestDecode_WorkspaceRefused`; castle round-trip without `workspace` |
-| F6 one RegionInput per region; partitions persisted | T2 | `TestPartitionFloor_TwoRegionsOneOpenSpace`; `TestFieldData_PartitionsRoundTrip` |
+| F6 one RegionInput per region; partitions derived | T2 | `TestPartitionFloor_TwoRegionsOneOpenSpace`; `TestFieldLoad_DerivesTheSamePartitions`; `TestCompile_FootingLeavesItsRegion` |
 | F7 readers on the right division | T2 | `TestHearing_AuthoredEdgeAddsNoHop`; `TestRegionAt_IsTheAuthoredRegion`; G7 table in the PR |
 | F8 floor unchanged | T3, T5, T9, T10 | `TestConvertedContentKeepsItsFloor`; `TestCastleCopiesAgree`; atlas goldens |
 | F9 version 5 | T1, T11 | `TestDecode_Version4Refused`; v4 refused in `singleRoomDungeon.test.ts` |
@@ -371,7 +372,6 @@ Deferrals (by design): O1 sound, O3 placed rooms, O5 runs on the wire, the three
 | T1 dialect v5 | T11 codec | the YAML in T1 (keys, order, row grammar, version 5) | T1 first; T11 may start from the written contract and the converted castle | castle round-trip byte-equal on both sides (`TestConvertV4_CastleRoundTripsTheFloor`; `draftFile.test.ts`) |
 | T1 decode errors | T11 `refusalJump` | paths `room.room.regions[i].cells[j].q[k]` and messages | rpg-api passes paths unchanged (inspected) | `refusalJump.test.ts` with a path produced by T1's tests |
 | T2 `AtlasRegion` (authored) | session pass-through → api convert → web `atlasToScene3D`, `applyReveal`, `atlasRegion.ts` | same fields; ids and names now authored | no proto change | api atlas goldens (T10); web `regionLighting.test.ts` |
-| T2 `FieldData.Partitions` | session persisted `EncounterData` (opaque to session) | new JSON key `partitions` | encounter owns the blob's shape | `TestFieldData_PartitionsRoundTrip` |
 | T3 converter | T8, T9 fixtures | converted bytes decode under T1 and keep the floor | T3 before S2/S3 | `TestCastleCopiesAgree`; T5 |
 | S1 tag | S2 go.mod; S3 go.mod | `rulebooks/dnd5e/encounter/v0.150.0` | published by toolkit CI | `make release-pin-check` |
 | S3 api branch | T12 preview and walk | PutDungeon validate-only on v5 | S3 built before the walk | the walk checklist |
@@ -382,5 +382,5 @@ File-sharing: T1–T7 are one branch, sequential. T11 and T12 are two PRs, T12 s
 
 - Every consumed name is produced by a named task or inspected as existing (`axialOffset`, `PartitionRegion`'s passability, `regionColours`, `refusalJumps`, `KnownFields`).
 - The only user-visible outcome not covered by a unit test is "the current region name reads Gatehouse in play"; it is on the walk checklist.
-- No placeholder remains; G1–G8 settle every decision a builder would otherwise invent.
+- No placeholder remains; G1–G8 settle every decision a builder would otherwise invent, except G5's persistence question, which is R8 and waits on the operator; T2 is written for option 1 (derive, never store) and flips to a persisted key with a rebuild path if R8 rules option 2.
 - T12 is large; it is one deliverable (the studio authors the new shape) and splits only into its two PRs.

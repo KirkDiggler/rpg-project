@@ -31,7 +31,8 @@ flowchart TB
         Field --> Owner[owner: cell → region id]
         Field --> Part[partitions: cell → partition id]
         Owner --> AtlasFor[encounter.AtlasFor]
-        Part --> AtlasFor
+        Part -.-> Hearing[noise.go links / hopsFrom / hearersOf]
+        Part -.-> Seats[dungeonspec seat derivation, reserve.go arrivalCell, flip.go sweepPresence]
     end
     AtlasFor -->|GetAtlasResponse regions + cells| Scene[atlasToScene3D]
     Scene --> Floor[floor per region, lit per region]
@@ -48,7 +49,7 @@ flowchart TB
 | `AuthoringService.PutDungeon` (`rpg-api`) | storing the text verbatim, compiling for the preview | `{key, yaml, validate_only}` → `{errors, atlas}` |
 | `dungeonspec.DecodeSingleRoom` (`rpg-toolkit`) | the strict read of the dialect | YAML → `SingleRoomSpec` with `Regions []RoomRegion`, runs expanded to `[]RoomCell` |
 | `dungeonspec.CompileSingleRoom` | turning authored regions into compiler input | `SingleRoomSpec` → `[]encounter.RegionInput`, one per region, implicit region included |
-| `encounter.compileField` | the floor, cell ownership, partitions, footprint subtraction | `[]RegionInput` + walls + props → field with `owner`, `regionCells`, partitions |
+| `encounter.compileField` | the floor, cell ownership, footprint and footing subtraction | `[]RegionInput` + walls + props → field with `owner`, `regionCells`; partitions derived from it at construction and at load, never stored |
 | `encounter.AtlasFor` | what a seat may know | field + knowledge → `GetAtlasResponse` with `regions[].cells`, each region carrying its lighting |
 | `atlasToScene3D` (`rpg-dnd5e-web`) | geometry from the atlas | atlas → floor tiles grouped by region, ambient per region |
 
@@ -63,8 +64,8 @@ Refusals, one per boundary:
 - `CompileSingleRoom` does not read a region's construction; it reads the runs.
 - `compileField` does not let an authored edge block, cost or count as a hop;
   partitions come from walls only.
-- `AtlasFor` does not merge region id and partition id into one field; a cell
-  carries both.
+- `AtlasFor` does not send partitions; the atlas carries authored regions only,
+  and the field answers `PartitionAt` for the readers that decide outcomes.
 - The renderer does not derive gameplay from region membership; it lights and
   groups by it.
 
@@ -105,7 +106,7 @@ to dim, and brushes the 54 cells between the two gate doors.
 |---|---|
 | Is this cell floor? | membership in any region's cells, minus footprints, in the compiled field |
 | Which place is this cell, for light and sound? | the cell's authored region id |
-| Can sound or an alarm cross here, and at what cost? | the cell's wall partition and the doors between partitions |
+| Can sound or an alarm cross here, at what cost, and which cells may seat the party? | the cell's wall partition and the doors between partitions |
 | What does the author see as the grid? | the content bounding box plus margin, computed in the studio |
 | Where did the author draw a rectangle? | the region's construction, read by the studio only |
 
@@ -122,7 +123,7 @@ the grid in the file makes the working canvas the shipped canvas.
 | Row runs canonical (R2) | lossless, order-free, forty-odd runs for the castle; same cost whichever side is sparse | the decoder expands runs; the author's rectangle is not recoverable from runs alone | rectangles plus exception cells as the canonical grammar; bitmap; outline with fill |
 | Construction optional alongside (R2) | a hall can be resized later | the studio pays to keep construction and runs consistent and to report a split | runs only |
 | Unbounded canvas (R3) | no empty cells stored, no trim step, no "which side is sparse" | the studio derives its grid and keeps the view locally | workspace dimensions in the file |
-| Regions and partitions independent (R4) | an author can divide an open space for ambience without changing sound or sight | the atlas carries two ids per cell; the compiler reads lighting through the region id | partitions nested inside authored regions |
+| Regions and partitions independent (R4) | an author can divide an open space for ambience without changing sound or sight | the field derives partitions on every construction and load; the compiler reads lighting through the region id | partitions nested inside authored regions; partitions persisted in the snapshot |
 | Brush assigns regions (R5) | one gesture for floor and place | no outline tool at first | an outline tool over painted floor |
 | Convert once (R6) | no dual dialect to maintain | one script run, three pins regenerated | accept both dialects for a while |
 
