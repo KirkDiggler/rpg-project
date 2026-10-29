@@ -70,6 +70,9 @@ its current command path.
   classification remains the authority for turn announcements.
 - `useMoveController.ts`: make `beginRoute` return the allocated sequence
   synchronously, retaining the pure `moveController` state transformations.
+  Scope routes to session/member; `forgetRoute(member, seq)` discards only the
+  exact unavailable route. Keep sequence counters after discard within a scope
+  so an old acknowledgement cannot match a later reappearance.
 - New `useWalkPresentation.ts`: bridge the cursor request to `beginRoute` and
   match `member/seq/reached` completion; skip unavailable/unseen/empty routes;
   cancel subscriptions on scope changes and release when presentation disappears.
@@ -83,7 +86,9 @@ its current command path.
   newer authoritative snapshots from snapping an already displayed body ahead
   of its queued route. Initial mounting still places the body normally; active
   interpolation remains owned by the movement hook; remembered bodies bypass
-  this hold and never replay stale motion.
+  this hold and never replay stale motion. The same held-member set protects
+  pending watcher-zone overlays; do not let an overlay jump ahead while its
+  body is queued but has not started interpolating.
 
 **Behavior / lifecycle:**
 - Walk begins only when released by the existing cursor. A completed exit will
@@ -114,10 +119,10 @@ its current command path.
   updates occur on delivery, remote movement goes through presentation callback,
   completion reaches the bridge, held members reach the correct live entities.
 
-- [ ] Write focused failing tests against existing behavior.
-- [ ] Implement the callback/hold/lifecycle seam without changing rule authority.
-- [ ] Run focused tests and TypeScript build; boot a dedicated early-view web.
-- [ ] Report the head/visible behavior for operator look before walk/review.
+- [x] Write focused failing tests against existing behavior.
+- [x] Implement the callback/hold/lifecycle seam without changing rule authority.
+- [x] Run focused tests and TypeScript build; boot a dedicated early-view web.
+- [x] Report the head/visible behavior for operator look before walk/review.
 - [ ] Run PR-boundary `npm run ci-check`, record limitations, commit and publish
   the slice PR linked to its issue. Keep it draft if integration/pins are incomplete.
 
