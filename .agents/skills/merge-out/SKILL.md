@@ -32,7 +32,8 @@ the walk) happened before.
   said QA passed, on the record.
 - **The operator's look comes first.** For a visible PR, the lead puts a
   booted head on the operator's stack (:3030/:8115) with the PR's Try-it
-  script **before any review round**. Review, the walk and the merge follow
+  script **before any review round**, with the slice's walk site already in
+  the walk env's content dir. Review, the walk and the merge follow
   the operator's look, or their go. A pivot after the look costs nothing. A
   PR whose Try-it says "Nothing to try" goes straight to review and merges
   on the verdict.
@@ -107,7 +108,9 @@ the walk) happened before.
    the operator's stack on :3030/:8115.
 3. Remove **only this wave's** worktrees and branches, by exact name, in each
    repo: `git worktree remove <path>` then `git branch -D <branch>` — never
-   a glob.
+   a glob. Delete the slice's untracked walk site from the api worktree's
+   `content/` by exact path first, since `git worktree remove` refuses a tree
+   with untracked files. The castle carries the mechanic from then on.
 4. Report the table and anything that did not go as the brief said.
 
 ## When to stop and report instead of continuing

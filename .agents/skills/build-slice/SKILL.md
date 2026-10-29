@@ -80,6 +80,24 @@ When a port or rewrite leaves the UI unable to show something it showed
 before, that is a dropped fact. Carry it at its source, in the beat and every
 layer above (event-stream Law 10). It is never an accepted loss.
 
+## The walk site
+
+A slice with a visible change ships a walk site: `<slice-short-name>-walk.yaml`,
+a v4 single-room site whose `key` is the file name, small enough that the
+mechanic shows within three moves of the party start. The operator's look
+starts there, never on castle navigation.
+
+- It lives untracked in the slice's rpg-api worktree `content/` and in the
+  walk env's mounted content dir. It is never committed to the rpg-api shelf.
+- The Try-it names the site key in its first line, and every step runs on it
+  except the last.
+- The same slice adds the mechanic to the-mad-king (a row, a door, a binding),
+  so the castle stays the one living reference. That castle change is the
+  Try-it's last step.
+- The engine side carries its own one-off: a site under the module's
+  `testdata/` per mechanic with one scenario test on it, plus one route
+  assertion on the castle.
+
 ## Attribution and PR body
 
 - Commits, PR bodies and comments carry the team signature only: no session

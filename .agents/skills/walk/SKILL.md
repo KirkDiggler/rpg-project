@@ -27,6 +27,10 @@ change. A slice that changes what a step should show updates the encounter
 and this step list in the same PR. The operator loads, edits and saves the
 encounter in the studio.
 
+A slice with a visible change walks on its own walk site first (build-slice
+skill, "The walk site"), then on the castle. A walk that opens with "navigate
+to" is the tell that the site is missing.
+
 ## Ports and stacks
 
 - **Web :3030 and api :8115 belong to the operator.** A builder never brings a

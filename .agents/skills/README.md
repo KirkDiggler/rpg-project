@@ -8,6 +8,7 @@ The canonical skills:
 - `design/SKILL.md`: design, planning and architectural-gap judgment.
 - `build-slice/SKILL.md`: the builder's contract for one slice of a plan.
 - `walk/SKILL.md`: the walk on a real stack, run as the standing QA script.
+- A slice's look and walk start on its own walk site, then fold into the castle: `build-slice/SKILL.md` ("The walk site").
 - `pr-review/SKILL.md`: the independent review round and its QA handoff.
 - `merge-out/SKILL.md`: merging a wave inside-out and shipping the slice.
 - `ingest/SKILL.md`: the judgment that turns notes and run records into knowledge lines, between the team-memory tool's collect and apply.
