@@ -60,7 +60,9 @@ its current command path.
 - New `src/components/session/walkPresentation.ts`: `PresentWalk` callback accepts
   `{act: Act, complete(outcome): void}`; outcomes are `painted`, `unavailable`,
   `cancelled`; returns an unsubscribe function. Presentation-only, no RPC.
-- `combat-experience/useCombatStoryPacing.ts`: consume `session`, `onPresentWalk`;
+- `combat-experience/useCombatStoryPacing.ts`: consume `session`, `onPresentWalk`
+  and host-derived `presentableMembers`; queued motion has terminal lifecycle
+  validity, so disappearance/reappearance cannot revive an old route;
   expose `heldMovementMembers: ReadonlySet<string>` alongside story/result/notice.
   Waiting is fenced by session/member scope and exact active request. No timer
   substitutes for a presented walk's completion. The existing 300 ms rhythm can
@@ -97,8 +99,10 @@ its current command path.
 - New requests do not reset the active completion gate. Stale callbacks do not
   release another walk or another session/member's queue.
 - Non-live catch-up does not animate. World walkers receive no fake combat turn.
-- Loss of visibility/presentation settles the wait as unavailable and discards
-  its motion; it is not banked for a later reappearance.
+- Loss of visibility/presentation settles the active wait as unavailable and
+  permanently discards eligible queued motion. Its story position remains;
+  reappearance requires a fresh walk. Actual scene-error/canvas availability,
+  not a cached last-good scene alone, supplies this lifecycle fact.
 - Initial appearance is not animation from an unknown prior location.
 
 **Tests and checks:**
@@ -123,7 +127,7 @@ its current command path.
 - [x] Implement the callback/hold/lifecycle seam without changing rule authority.
 - [x] Run focused tests and TypeScript build; boot a dedicated early-view web.
 - [x] Report the head/visible behavior for operator look before walk/review.
-- [ ] Run PR-boundary `npm run ci-check`, record limitations, commit and publish
+- [x] Run PR-boundary `npm run ci-check`, record limitations, commit and publish
   the slice PR linked to its issue. Keep it draft if integration/pins are incomplete.
 
 **Commands:** from the web worktree, `npm run test:run --` the named test files;
