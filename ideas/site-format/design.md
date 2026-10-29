@@ -88,6 +88,7 @@ against its budget on the castle and on a generated 30,000-hex fixture:
 | R5 | The author paints into the active region with the implicit region as default; the label is the region's name; brushing with a region active reassigns cells. | settled | studio | KirkDiggler | 2026-10-29 |
 | R6 | The content converts once by script; no dual-dialect period; the three byte pins regenerate in the same PRs; the goldens prove the compiled cell set is unchanged by the conversion. | settled | toolkit, api | KirkDiggler | 2026-10-29 |
 | R7 | This story owns the format in toolkit, web and api, in that order, and the file budget of R1; protos are untouched. The compiled-field cache, region-graph pathfinding and per-region render batching are sibling stories that own the other budgets under R1's yardstick. | settled | story scope | KirkDiggler | 2026-10-29 |
+| R8 | Partitions are derived at field construction and at every load from the persisted regions, walls and doors; nothing derived is stored in the field data. The per-load cost is measured on the castle and the 30k fixture; a high cost reopens this as persistence with a rebuild path. | settled | encounter field | KirkDiggler | 2026-10-29 |
 
 ## Open
 
