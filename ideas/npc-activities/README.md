@@ -4,8 +4,9 @@ This is the walkthrough for [story #711](https://github.com/KirkDiggler/rpg-proj
 and its [design](design.md). It connects reusable animation sets to the existing
 studio, observer-facing identity and presentation machinery. It does not add a
 second rules engine, a server-side animation scheduler, or a new NPC definition
-store. **Completion coordination is the open boundary O1**, not an approved
-implementation hidden inside the word “sequencer”.
+store. **The existing presentation cursor owns completion order** (R9): body
+playback reports readiness/completion rather than advancing the visible story
+on a competing clock.
 
 ## Component shape
 
@@ -31,7 +32,7 @@ flowchart TB
     subgraph Web[rpg-dnd5e-web play]
       Wire --> Body[ClassCharacterModel activity adapter]
       Feed[Delivered Act run] --> Knowledge[Immediate knowledge and authority update]
-      Feed --> Presentation[Existing story presentation cursor: O1]
+      Feed --> Presentation[Existing story presentation cursor: completion-driven]
       Presentation --> Move[useMoveController / useHexMovePath]
       Move --> Body
       Body -->|walking readiness| Move
@@ -53,7 +54,7 @@ flowchart TB
 | API/proto | Transport transcription | `PublicMember` → additive `PublicMemberInfo` field |
 | Activity sequencer | Current activity, Enter/Sustain/Exit, latest requested destination | Default + requested activity + clip completion → playback commands/readiness |
 | Move controller/hook | The visible route and its progress | Accepted route + walking readiness → rendered positions + `movementPainted` |
-| Presentation cursor (O1) | Proposed coordination of visible act order | Delivered acts + presentation completion → releases to movement/story/turn marker |
+| Presentation cursor (R9) | Coordination of visible act order | Delivered acts + presentation completion → releases to movement/story/turn marker |
 
 The provider does not assign monster behavior, statistics or faction. Studio
 does not write clip filenames into gameplay content. Toolkit carries the
@@ -85,8 +86,9 @@ make rules outcomes depend on animation completion (R5, R7, R8).
    boundary and plays Exit. The route remains pending and the body stays put.
    Walking readiness releases the existing route interpolation (R3–R4).
 6. Route completion requests the configured default again. The model plays its
-   entrance and sustains Thoughtful. The exact point at which story and turn
-   presentation advance is O1; it must not be smuggled into the model adapter.
+   entrance and sustains Thoughtful. Route completion releases the presentation
+   cursor to the next visible story/turn item (R9). The model adapter does not
+   advance that cursor by guessing a duration.
 
 ## Separations that look like one thing
 
@@ -96,7 +98,7 @@ make rules outcomes depend on animation completion (R5, R7, R8).
 | What phase is being shown on this client now? | Local activity sequencer |
 | Where is the creature according to authoritative knowledge? | Existing session/knowledge reducers |
 | Where is the animated body along a visible walk? | Existing movement presentation |
-| When does the next visible story/turn item advance? | Presentation cursor, subject to O1 |
+| When does the next visible story/turn item advance? | Completion-driven presentation cursor (R9) |
 | Which animations work with this body? | Provider metadata and verified rig compatibility |
 
 Conflating these makes animation timing into game timing, or makes a current
@@ -110,9 +112,11 @@ server location force a body to slide while it is still exiting a stance.
 | Activity sets with shared entry/exit poses | Another stance adds content rather than pairwise transitions | Provider verifies endpoint/contact compatibility | Dedicated transition for every pair |
 | Finish ordinary exits before travel | Readable stance changes | Presentation pays visible waiting time; speed controls tune it | Snap or interrupt ordinary transitions |
 | Reuse the observer-safe identity path | Preserves the visibility contract | Content/persistence/projection/wire additions must travel together | Read the live studio document in play |
-| O1: completion-driven presentation coordination | Body, story and turn marker agree on visible order | Web presentation seam and lifecycle changes | Keep timer-paced story independent of delayed bodies |
+| Completion-driven presentation coordination (R9) | Body, story and turn marker agree on visible order | Web presentation seam and lifecycle changes | Keep timer-paced story independent of delayed bodies |
 
-The last row is a recommendation awaiting O1, not a settled law.
+The caller waits for a visible completion, not a guessed clip duration. The
+renderer pays the lifecycle cost: it must also report cancellation/unavailability
+when there is no longer a live body to present.
 
 ## Edges
 
@@ -123,7 +127,7 @@ unsupported are different answers (R2).
 Catch-up, remembered and non-visible actors must not replay stale motion. A
 missing/unmounted presentation cannot hold the visible cursor forever. The
 completion policy for those lifecycle cases belongs to the integration contract
-for O1, not to game rules or a magic timeout in a model component.
+for R9, not to game rules or a magic timeout in a model component.
 
 Existing downed/static behavior stays intact; new combat and conversation
 animation policy is outside the first slice (R8). Walk-start/stop blending is an

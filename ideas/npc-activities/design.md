@@ -16,7 +16,7 @@ flowchart LR
     Roster --> Playback[Activity sequencer]
     Sets --> Playback
     Acts[Delivered game acts] --> Authority[Immediate authoritative updates]
-    Acts --> Cursor[Presentation cursor: completion coordination open]
+    Acts --> Cursor[Completion-driven presentation cursor]
     Cursor --> Playback
     Playback --> Motion[Visible walk and model animation]
     Motion -->|painted completion| Cursor
@@ -56,6 +56,12 @@ flowchart LR
   Sword combat, conversation gestures and new hit/death interruption policy are
   outside that slice; existing downed/unseen/catch-up behavior remains intact.
 
+- **R9 — The existing presentation cursor owns visible completion order.** A
+  live presented walk finishes its stance exit and visible route before the next
+  story/turn item advances. Movement completion releases the cursor; authoritative
+  knowledge and rules updates remain immediate. This is one presentation cursor,
+  not another server or gameplay queue.
+
 ## Rulings
 
 | ID | status | scope | ruled by | date |
@@ -68,13 +74,9 @@ flowchart LR
 | R6 | settled | Family donor and compatible-body reuse | KirkDiggler | 2026-10-28 |
 | R7 | settled | Preserve [appearance R4–R5](../npc-appearance-ref/design.md): observer-safe identity delivery | Existing appearance contract | 2026-10-11 |
 | R8 | settled | First integrated slice; deferred combat/conversation policy | KirkDiggler | 2026-10-29 |
-| O1 | open | Completion-driven coordination of body, story and turn-order presentation | — | — |
+| R9 | settled | O1 option A: completion-driven coordination of body, story and turn-order presentation | KirkDiggler | 2026-10-29 |
 
 ## Open
 
-- **O1 — Who advances the visible act sequence?** Coordinate the existing
-  presentation cursor with actual movement completion, or keep activity
-  transitions local to the body while story/turn-order timing remains
-  independent. This changes ownership beyond clip selection; decide it before
-  integrating movement delays. The alternatives and recommendation are on
-  [the story issue](https://github.com/KirkDiggler/rpg-project/issues/711).
+None for the agreed first slice. New combat/conversation interruption policy
+remains outside its scope (R8).
