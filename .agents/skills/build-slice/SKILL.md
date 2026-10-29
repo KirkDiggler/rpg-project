@@ -82,21 +82,26 @@ layer above (event-stream Law 10). It is never an accepted loss.
 
 ## The walk site
 
-A slice with a visible change ships a walk site: `<slice-short-name>-walk.yaml`,
-a v4 single-room site whose `key` is the file name, small enough that the
-mechanic shows within three moves of the party start. The operator's look
-starts there, never on castle navigation.
+A slice with a visible change ships a walk site, `<slice-short-name>-walk.yaml`.
+It exists so the operator's QA look verifies the mechanic, not the route to
+it: a small open place where the mechanic shows and the operator can walk
+around it.
 
+- Cut it from the-mad-king where the castle already has the place, so the
+  fold back is trivial. The gate and its two doors need no courtyard.
+- It is never castle navigation, and never a corridor that forces a fight to
+  reach the mechanic. A fight on the site has a way past it.
 - It lives untracked in the slice's rpg-api worktree `content/` and in the
   walk env's mounted content dir. It is never committed to the rpg-api shelf.
-- The Try-it names the site key in its first line, and every step runs on it
-  except the last.
-- The same slice adds the mechanic to the-mad-king (a row, a door, a binding),
-  so the castle stays the one living reference. That castle change is the
-  Try-it's last step.
+- The Try-it names the site key in its first line. Its last step is the
+  mechanic folded into the-mad-king, which the same slice does so the castle
+  stays the one living reference.
 - The engine side carries its own one-off: a site under the module's
   `testdata/` per mechanic with one scenario test on it, plus one route
   assertion on the castle.
+
+This states the spirit; the builder shapes each site to its mechanic. A site
+built from a template is the tell that the rule went prescriptive.
 
 ## Attribution and PR body
 
