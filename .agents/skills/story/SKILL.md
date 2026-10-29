@@ -57,6 +57,11 @@ another slice.
 
 - **Starting a story:** write the story issue first, before the design
   brief. The design skill's brief and walkthrough link to it.
+- **A detour:** work the operator names mid-story that is not a slice (an
+  upgrade, a cleanup, a fix elsewhere) is filed as its own small explicit
+  issue in the owning repo and linked from the story as a prerequisite or a
+  side note, in the same turn; the conversation returns to the story. A
+  detour carried in chat is lost; one carried as a slice widens the story.
 - **Slicing:** when the plan names the slices, create every sub-issue then,
   with sections 1–5 filled and section 6 as far as the plan knows. The
   checklist completes when the slice is built.
