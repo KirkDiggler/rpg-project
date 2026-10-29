@@ -79,8 +79,8 @@ to dim, and brushes the 54 cells between the two gate doors.
    label on the map is the region's name.
 2. **Encoder.** The region becomes
    `{id: region-gatehouse, name: Gatehouse, lighting: {intensity: 0.3},
-   cells: {"-6": [[-2, 2]], "-5": [[-3, 3]], ...}}`. Six rows, a handful of
-   spans. The identity that survives is the region id and the cell
+   cells: [{r: -6, q: [[-2, 2]]}, {r: -5, q: [[-3, 3]]}, ...]}`. Six rows, a
+   handful of spans. The identity that survives is the region id and the cell
    coordinates; the span boundaries are derived from adjacency and carry no
    meaning of their own.
 3. **PutDungeon.** The text is stored as sent. The preview compiles it.
@@ -161,5 +161,5 @@ the grid in the file makes the working canvas the shipped canvas.
 | Shipped content and pins | `rpg-api/content`, `rpg-api/internal/dungeons` — `castle_copies_test.go`, `atlas_fixture_test.go` |
 | Authoring RPC | `rpg-api-protos/dnd5e/api/authoring/v1alpha1/service.proto` — `PutDungeon`, `GetDungeon` |
 | Studio draft, encoder, decoder | `rpg-dnd5e-web/src/concepts/world-building` — `roomDraft.ts`, `singleRoomDungeon.ts`, `serialization.ts` |
-| Studio grid and paint | `rpg-dnd5e-web/src/concepts/encounter-studio` — `LayoutViewport.tsx`, `WorkspaceCellOverlay.tsx` |
+| Studio grid and paint | `rpg-dnd5e-web/src/concepts/encounter-studio` — `LayoutViewport.tsx`, `overviewFrame.ts`; `src/concepts/world-building` — `WorkspaceCellOverlay.tsx`, `workspaceFloorGeometry.ts` |
 | Play scene from the atlas | `rpg-dnd5e-web/src/components/session` — `atlasToScene3D.ts` |

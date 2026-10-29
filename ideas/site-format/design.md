@@ -1,9 +1,6 @@
 # Site format — regions are the floor
 
-**Status:** DESIGN 2026-10-29. Story: rpg-project#725. Walkthrough: [README.md](README.md).
-**Consumers:** the single-room dialect and compiler (`rpg-toolkit`,
-`rulebooks/dnd5e/encounter/dungeonspec`), the encounter studio (`rpg-dnd5e-web`),
-shipped content (`rpg-api/content`).
+Story rpg-project#725. Walkthrough: [README.md](README.md).
 
 ## Shape
 
@@ -29,8 +26,10 @@ flowchart LR
 
 **Floor.** The floor of a site is the union of its regions. No cell belongs to
 two regions. A cell painted outside a named region belongs to the implicit
-region, which every site has. The dialect carries no walkable list apart from
-the regions, so there is one source of truth for where the floor is.
+region, which every site has. A region may be listed with no cells; it is a
+place declared and not yet painted, and the compiler skips it. The dialect
+carries no walkable list apart from the regions, so there is one source of
+truth for where the floor is.
 
 **Region.** A region is what it lists: an id, a name, the cells it owns, an
 archetype, and a lighting level. Sound attaches here when its use case arrives
@@ -63,12 +62,12 @@ crosses it. The compiler reads a cell's lighting from its authored region.
 at load. Nothing derived is written, so the file carries only what the author
 painted.
 
-**Equality.** The compiled cell set is identical across this change and the
-content goldens prove it. The server stores the file verbatim and the wire
-stays per cell; protos are untouched by this story.
+**Equality.** A site's compiled cell set is determined by its regions, walls
+and props alone, and the content goldens pin it. The server stores the file
+verbatim and the wire is per cell.
 
-**Target.** One site, no fade, up to 30,000 hexes. Budgets per layer, measured
-on the castle and on a generated 30,000-hex fixture:
+**Target.** One site, no fade, up to 30,000 hexes. Each layer is measured
+against its budget on the castle and on a generated 30,000-hex fixture:
 
 | layer | budget |
 |---|---|
@@ -77,8 +76,6 @@ on the castle and on a generated 30,000-hex fixture:
 | studio | fluid paint, pan and zoom at full size |
 | play | 60 fps on an integrated GPU |
 
-The format story owns the file budget. The sibling stories own the others and
-measure against the same fixture.
 
 ## Rulings
 
@@ -88,17 +85,18 @@ measure against the same fixture.
 | R2 | A region's cells are row runs, canonical and lossless; the author's construction may ride alongside and the runs win on disagreement. No bitmap or outline-fill grammar. | settled | dialect, studio | KirkDiggler | 2026-10-29 |
 | R3 | The canvas is unbounded; the file carries no workspace dimensions and keeps its coordinate frame; the studio derives the grid and keeps the view locally. | settled | dialect, studio | KirkDiggler | 2026-10-29 |
 | R4 | Authored regions own presentation and wall partitions own mechanics; they are independent divisions and no authored edge is mechanical. Lighting is read from the cell's authored region. | settled | encounter compiler, atlas | KirkDiggler | 2026-10-29 |
-| R5 | The author paints into the active region with the implicit region as default; the label is the region's name; brushing with a region active reassigns cells. Held loosely until the studio slice is played. | settled | studio | KirkDiggler | 2026-10-29 |
-| R6 | The content converts once by script; no dual-dialect period; the three byte pins regenerate in the same PRs; the goldens prove the compiled cell set is unchanged. | settled | toolkit, api | KirkDiggler | 2026-10-29 |
-| R7 | This story owns the format in toolkit, web and api, in that order. The compiled-field cache, region-graph pathfinding and per-region render batching are sibling stories under R1's yardstick. | settled | story scope | KirkDiggler | 2026-10-29 |
+| R5 | The author paints into the active region with the implicit region as default; the label is the region's name; brushing with a region active reassigns cells. | settled | studio | KirkDiggler | 2026-10-29 |
+| R6 | The content converts once by script; no dual-dialect period; the three byte pins regenerate in the same PRs; the goldens prove the compiled cell set is unchanged by the conversion. | settled | toolkit, api | KirkDiggler | 2026-10-29 |
+| R7 | This story owns the format in toolkit, web and api, in that order, and the file budget of R1; protos are untouched. The compiled-field cache, region-graph pathfinding and per-region render batching are sibling stories that own the other budgets under R1's yardstick. | settled | story scope | KirkDiggler | 2026-10-29 |
 
 ## Open
 
 - **O1 Sound on a region.** The field exists in the model and not in the
   dialect until a use case brings it.
-- **O2 Region authoring gesture.** R5 is brush-only. Whether an outline tool
-  returns, and what the construction's schema is under R2, is decided by the
-  studio slice once it is played.
+- **O2 Region authoring gesture.** R5 is brush-only and is held loosely until
+  the studio slice is played. Whether an outline tool returns, and what the
+  construction's schema is under R2, is decided then; until then a
+  construction is carried verbatim and unread.
 - **O3 Placed rooms.** rpg-project#528 wants a room authored on its own and
   placed into a site, possibly twice. Whether a placed room is a region, a
   group of regions or a document of its own is that story's question and rides
