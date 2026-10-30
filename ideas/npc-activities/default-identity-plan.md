@@ -48,8 +48,8 @@ bespoke protoc serialization tests.
 - [x] Add the field and its owning contract documentation.
 - [x] `make format`, `make test` (Buf lint/format/new-file options/breaking).
 - [x] Commit/push and publish the contract PR with exact semantics and checks.
-- [ ] Obtain operator merge authorization; wait for CI-generated SDK/tag before
-  API/web consume the field. This is the documented protos exception, not a
+- [x] Operator merged #407; CI published v0.1.246 at generated 8f2bb8a26968.
+  API/web consume those actual bindings. This is the protos exception, not a
   reason to merge ordinary Go providers early.
 
 ## Task B — encounter source, persistence and captured identity
@@ -125,13 +125,50 @@ live default. The public-field allow-list adds only the new presentation ref.
 - [x] Run this module's tests/lint, push, and open its own draft PR. Consumer
   merge later requires the encounter release tag, not this development pin.
 
-## Task D — API adoption (next contract)
+## Task D — API adoption
 
-API copies the new public member field through its existing roster/knowledge
-converter, consuming the generated SDK and pushed session provider. No new
-permission-policy RPC classification is needed because no RPC is added. Complete
-the exact converter/pin/test contract at that boundary before editing; site-v5
-consumer adoption and SDK availability remain explicit dependencies.
+**Owner:** rpg-api#1156, `.worktrees/npc-activities`, feat/npc-default-activity.
+**Prerequisites available:** v5 adoption #1155 merged; proto#407 merged and CI
+published v0.1.246 (generated commit 8f2bb8a26968). Consume session#2170 pushed
+7e46ef97 through its real pseudo-version, never a replace/go.work.
+**Files:** go.mod/go.sum; Dockerfile (published SDK requires Go 1.26);
+internal/handlers/dnd5e/session/v1alpha1/get_roster.go and new
+`default_activity_test.go`; owning API architecture documentation.
+**Interface:** `sdk.PublicMember.DefaultActivityRef` copied unchanged into
+`sessionpb.PublicMemberInfo.DefaultActivityRef` at `publicMemberToProto`.
+Both GetRoster and GetKnowledge already use this single conversion point.
+No new lookup, asset validation, animation decision, RPC or permission category.
+**Tests:** suite `DefaultActivityHandlerSuite` exercises both actual handlers
+with provider output containing Thoughtful, a syntactically valid unsupported
+reference and absent legacy values. Expected wire values are identical; identity
+and rules fields remain intact. Missing converter assignment must fail both
+nonempty cases. Mock only the SDK manager/ownership ports, not the converter.
+**Gates:** focused handler tests, full `make test` and `make ci-check`; update
+any required dependency-shape fixtures explicitly, never weaken assertions.
+Published as API#1157 at 4df2315 with both local gates and CI green. The pin
+required UntilStep adaptations in factions/hearing tests and synchronization
+with the pinned toolkit castle (existing captain alliance content); no rule
+was invented. Real toolkit release tags and integration walk remain merge
+prerequisites.
+
+## Task E — web authored-value carriage
+
+**Owner:** web `.worktrees/npc-activities`, feat/npc-default-activity, on merged
+v5 codec #1351. Consume published proto v0.1.246 with its actual lockfile hash.
+**Files:** `src/concepts/world-building/roomDraft.ts`, new
+`roomDefaultActivity.test.ts`; package.json/package-lock.json.
+**Interface:** optional `RoomMonsterPlacement.defaultActivityRef` with a pure
+`setRoomMonsterDefaultActivity` edit. Strict draft decoding carries the value
+through the existing JSON/v5 YAML codec; clearing deletes the key. Only reference
+syntax is checked here; unknown valid refs survive, preserving future content.
+Appearance, rules, bindings, location and facing stay independent.
+**Tests:** exact declaration equality after JSON/YAML reload; known and unknown
+refs; explicit null/non-string/empty/malformed refusal; immutable no-op and clear.
+Checkpoint e1893dae: missing setter failed first; 138 focused codec/appearance
+tests and TypeScript pass. The full web gate remains at the PR boundary.
+Provider-backed
+choices, Arrange staging/undo and renderer use belong to the following connected
+unit; this task does not introduce a hard-coded Thoughtful-only control.
 
 ## Coverage / seam check
 
