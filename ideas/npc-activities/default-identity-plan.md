@@ -45,9 +45,9 @@ Protos main `01b8235` has public identity tags 1–9 occupied; tag 10 is availab
 capture/absence semantics above. No enum, new RPC, generated-code edits or
 bespoke protoc serialization tests.
 
-- [ ] Add the field and its owning contract documentation.
-- [ ] `make format`, `make test` (Buf lint/format/new-file options/breaking).
-- [ ] Commit/push and publish the contract PR with exact semantics and checks.
+- [x] Add the field and its owning contract documentation.
+- [x] `make format`, `make test` (Buf lint/format/new-file options/breaking).
+- [x] Commit/push and publish the contract PR with exact semantics and checks.
 - [ ] Obtain operator merge authorization; wait for CI-generated SDK/tag before
   API/web consume the field. This is the documented protos exception, not a
   reason to merge ordinary Go providers early.
@@ -83,23 +83,55 @@ and the appearance choice. Existing `core.ParseString` is the syntax authority.
   projection; missing legacy stays empty; untagged, explicit null/empty/wrong-type,
   malformed and unknown-state-with-ref payloads refuse.
 
-- [ ] Add the tests and observe the missing-field behavior fail.
-- [ ] Implement along the existing appearance path, not a second identity store.
-- [ ] Run focused encounter/dungeonspec checks with race checking; verify the
-  source/persistence omission mutant is caught at the changed observer seam.
-- [ ] Run the module's required gate, push the first working checkpoint, and
+- [x] Add the tests and observe the missing-field behavior fail.
+- [x] Implement along the existing appearance path, not a second identity store.
+- [x] Run focused encounter/dungeonspec checks with race checking; verify the
+  source/capture omission mutants are caught at the changed observer seam.
+- [x] Run the module's required gate, push the first working checkpoint, and
   immediately open its draft before consumer work. One nearest-go.mod module.
 
-## Task C — session projection and consumer adoption (next contract)
+## Task C — session launch and observer projection
 
-Session gets its own module PR and a real pushed encounter commit pin. It passes
-compiled defaults at launch (including reserves) and projects only decoded
-observer testimony to `PublicMember.DefaultActivityRef`, with a two-observer/
-reload test and the public-boundary allow-list updated. API then copies that
-field through the existing roster/knowledge converter using the generated SDK.
-No new permission-policy RPC classification is needed because no RPC is added.
-The concrete session/API task contract is completed from their current sources
-before edits; consumer v5 adoption and SDK availability remain explicit.
+**Owner:** toolkit `rulebooks/dnd5e/session` only, separate worktree
+`.worktrees/npc-activity-session`, branch `feat/session-default-activity`.
+**Prerequisite:** Task B pushed commit `65afb038`, consumed with `go get` and a
+real pseudo-version. No replace/go.work and no other module edits.
+**Files:** `launch.go`, `read.go`, `types.go`, `doc.go`, `roster_test.go`, new
+`default_activity_test.go`, and this module's `go.mod`/`go.sum`.
+Provider adoption also requires two test fixtures to use `UntilStep` lists
+(with nil remaining nil), and the existing `SeenMember`/`RememberedMember`
+`Allied` facts to be carried through `turndriver.go` and its positive projection
+test. Those are shape adaptations, not new alliance or disposition rules.
+
+**Interfaces:** `MonsterPlacement.DefaultActivityRef` → `JoinInput.DefaultActivityRef`
+at launch, including reserves. `SightTestimony.DefaultActivityRef` →
+`PublicMember.DefaultActivityRef string` (`default_activity_ref,omitempty`) on
+the public roster. The roster reads captured testimony, not live member data.
+Keep the default empty for legacy observations and players with no such authored
+choice. Preserve rule ref, faction, appearance and existing identity fields.
+
+**Tests:** `TestDefaultActivityLaunchReachesActiveAndReservedMembers` asserts all
+expected placements survive launch/save with the exact ref and unchanged rules;
+`TestDefaultActivityMemoryDiffersFromAnotherObserversCurrentSight` changes live
+data and rechecks only where visible, JSON round-trips, then asks both observers;
+`TestDefaultActivityNeverSeenAndLegacyAbsenceAreNotEnriched` asserts never-seen
+NPC absence, self presence and explicit empty legacy capture despite a newer
+live default. The public-field allow-list adds only the new presentation ref.
+
+- [x] Pin the pushed encounter provider and write the named failing tests.
+- [x] Implement launch and captured roster projection, with no new rule or read.
+- [x] Run focused tests with race checking; demonstrate that dropping launch
+  carriage or enriching capture from live data fails the corresponding test.
+- [x] Run this module's tests/lint, push, and open its own draft PR. Consumer
+  merge later requires the encounter release tag, not this development pin.
+
+## Task D — API adoption (next contract)
+
+API copies the new public member field through its existing roster/knowledge
+converter, consuming the generated SDK and pushed session provider. No new
+permission-policy RPC classification is needed because no RPC is added. Complete
+the exact converter/pin/test contract at that boundary before editing; site-v5
+consumer adoption and SDK availability remain explicit dependencies.
 
 ## Coverage / seam check
 
