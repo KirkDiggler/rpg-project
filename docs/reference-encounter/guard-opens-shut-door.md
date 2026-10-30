@@ -14,13 +14,15 @@ objective is completed"
 The engine had no creature that opens a door: a driven walk routes only
 through open doors, so every patrol, march and pursuit stops at the first shut
 one, and the keep authored its throne door open for the AI's sake
-([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L21),
+([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L49),
 [rpg-toolkit#2069](https://github.com/KirkDiggler/rpg-toolkit/issues/2069)).
 
 ## Decision
 
 - D5, creatures and locked doors: "never, for S1; carrying a key is Grant's neighbour" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D5.
+- Knowledge lines:
+  - [encounter L28](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L28): "a creature's own walk … routes through a closed, unlocked door …"
+  - [encounter L32](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L32): "a routed march to an authored cell that a locked door stops asks once more …"
 
 ## Implementation
 

@@ -14,14 +14,20 @@ follow and fight under AI control"
 `allied` was a static stance: an `until` on an allied pair was refused, each
 pair got exactly one flip, behaviour never read allied and no selector named
 an ally
-([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L20)).
+([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L48)).
 
 ## Decision
 
 - D2, the ally word: "selector `ally`; allegiance through the faction's disposition, no personal `follows:` binding" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D11, one pair, two flips: "turning hostile on recognition and waiting for the captain's turn to change our disposition sound like good ideas": `until` is a list of steps, each a predicate and the stance it turns to, and the first that holds wins ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D13, open: a recruited ally the hero strikes stays allied; the lean is that harm across an allied pair turns it neutral ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D2, D11.
+- Knowledge lines:
+  - [mind/behavior L12](https://github.com/KirkDiggler/rpg-toolkit/blob/main/mind/behavior/knowledge/decisions.md#L12): "`mind/behavior` reads a selector `ally` …" (D2)
+  - [encounter L33](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L33): "the encounter resolves `ally` off the view as the nearest member of a faction allied …" (D2)
+  - [encounter L35](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L35): "a disposition's `until` is one step or a list of steps …" (D11)
+  - [encounter L36](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L36): "a pair whose `until` turns it allied settles to the allied edge …"
+  - [encounter L37](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L37): "a companion stays a monster placement driven by its own table …"
+  - D13 (a recruited ally the hero strikes stays allied) has no line yet; it is lane D13 on [rpg-project#722](https://github.com/KirkDiggler/rpg-project/issues/722).
 
 ## Implementation
 

@@ -19,7 +19,12 @@ extra action.
 
 - No ruling: both slice issues say "no decision needed" ([#720](https://github.com/KirkDiggler/rpg-project/issues/720), [#721](https://github.com/KirkDiggler/rpg-project/issues/721)).
 - The player half, an item that hands a sheet an activation, is the Grant story and not this card ([#721](https://github.com/KirkDiggler/rpg-project/issues/721)).
-- Knowledge line: none.
+- Knowledge lines:
+  - [web L10](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L10): "the studio mirrors the engine and never judges for it …"
+  - [web L11](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L11): "route facing offers the dialect's eight compass words …"
+  - [web L15](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L15): "the Read back of a creature's actions says each add and drop …"
+  - [web L22](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L22): "the studio states two session refusals as engine laws …"
+  - [rulebooks/dnd5e L40](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/knowledge/decisions.md#L40): "dungeonspec compiles an action ref by shape and type only …" (Findings)
 
 ## Implementation
 

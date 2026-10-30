@@ -14,13 +14,18 @@ universal alarm"
 The check, the failure row and the fact's local audience were all authorable;
 the predicate grammar had no `not`, so no later line could be withheld on a
 fact
-([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L22)).
+([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L50)).
 
 ## Decision
 
 - D3, whose knowledge `requires: { fact }` reads: "keep the speaker's knowledge; land `not`; a cook who forgets is the finding that brings the second reading" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D14, open: `requires` takes one predicate, so a caught thief can still bribe; the lean leaves it as a story tonight and brings an `all:` form when a second use case names it ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D3.
+- Knowledge lines:
+  - [encounter L38](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L38): "`{ not: <one predicate> }` is a form of the one predicate grammar …" (D3)
+  - [encounter L39](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L39): "a `not` is scoped by what it wraps …"
+  - [encounter L40](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L40): "a waited-for `not` (an until, an arrival, an ending) of a fact, a round or a fall is refused …"
+  - [encounter L41](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L41): "the castle cook's `pilfer` is Sleight of Hand DC 13 …"
+  - [encounter L91](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L91): "a `requires` is one predicate …" (D14, Open)
 
 ## Implementation
 

@@ -20,7 +20,12 @@ fired on leaving, the run had no success or failure, and the keep's
 - D7, the keep's ending: "walk out the front door to end. king taken care of? no? failure, yes? success." ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D9, an ending that fires on leaving: "last one out ends it, go with your lean": `endings: [{ id, when: { left: <exit id> }, if: <one predicate>, outcome: success | failure }]`; the first ending in declaration order whose conditions hold fires ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D10, `king-deposed` and `freed`: both move to the front door as leave endings with their fact as the `if`; revisit if the walk says a deposition should stop the run ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D7, D9, D10.
+- Knowledge lines:
+  - [encounter L18](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L18): "an encounter ends when the party leaves by the front door …" (D7)
+  - [encounter L19](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L19): "the last standing player through the door ends the run …" (D9)
+  - [encounter L20](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L20): "an `if` is legal only beside `left` …" (D9)
+  - [encounter L21](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L21): "every castle ending is at the door …" (D10)
+  - [encounter L22](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L22): "`Outcome.Result` is read from the declared ending …"
 
 ## Implementation
 
