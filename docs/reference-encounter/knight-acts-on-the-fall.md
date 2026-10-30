@@ -12,7 +12,7 @@ hostile variants while preserving positions and mission history"
 ([rpg-project#702](https://github.com/KirkDiggler/rpg-project/issues/702)).
 A row reads only what its creature holds, and a member going down landed no
 deed and minted no fact, so no row could react to a named death
-([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L19)).
+([knowledge finding](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L47)).
 
 ## Decision
 
@@ -20,7 +20,14 @@ deed and minted no fact, so no row could react to a named death
 - D6, hostile variants: "behaviour and allegiance change (S2 + `until: down`) plus a reserve wave; no runtime template swap; revisit after S2 walks with Frank" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D8, two falls by one hero: "go with the first option, file by who fell. maybe the target will be the right answer but I will wait for a use case to show that" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
 - D12, open: the keep's `until: { down: king }` is world truth and stands the whole court down at once; the lean keeps both and names an `until` that reads the faction mind's testimony, which needs mind succession, as the real entry ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D1, D6, D8.
+- Knowledge lines:
+  - [mind/behavior L10](https://github.com/KirkDiggler/rpg-toolkit/blob/main/mind/behavior/knowledge/decisions.md#L10): "a deed condition may carry `who` …"
+  - [encounter L15](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L15): "a fall's witnesses are the members whose sight reaches the fallen's cell …"
+  - [encounter L17](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L17): "the dialect reads `fell: { who, within, on/as }` …"
+  - [encounter L16](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L16): "the castle's knights carry `{ when: { fell: { who: king, within: 3, on: ally } } …"
+  - [mind/behavior L11](https://github.com/KirkDiggler/rpg-toolkit/blob/main/mind/behavior/knowledge/decisions.md#L11): "a fall is filed by who fell as well as who caused it …" (D8)
+  - [encounter L89](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L89): "S2's `fell` rows are testimony …" (D12, Open)
+  - D6 (hostile variants: no runtime template swap) has no line yet; it is lane D6 on [rpg-project#722](https://github.com/KirkDiggler/rpg-project/issues/722).
 
 ## Implementation
 

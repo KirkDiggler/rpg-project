@@ -19,7 +19,12 @@ one placement, so a dead leader's lines died with him
 
 - D4, more than one flip per pair: "no list yet; a refusing survivor who swings turns the pair hostile by provocation, which already exists" ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)). D11 brings the list for a different use case; see [the faction card](faction-turns-captain-follows.md).
 - D12, open: world truth stands the court down at once; testimony lets each knight react on his own. The lean keeps both tonight and names mind succession, "surviving subordinates replace dead leaders as speakers", as the use case for an `until` that reads the faction mind's testimony ([lane](https://github.com/KirkDiggler/rpg-project/issues/722)).
-- Knowledge line: none yet for D4, D12.
+- Knowledge lines:
+  - [encounter L25](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L25): "no `until` list: a refusing survivor who swings …" (D4; the Friction line [L83](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L83) holds it against D11)
+  - [encounter L23](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L23): "a faction may carry `options` …"
+  - [encounter L26](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L26): "a down creature answers nothing …"
+  - [encounter L27](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L27): "the castle's loyalists carry `yield` and `refuse` …"
+  - [encounter L89](https://github.com/KirkDiggler/rpg-toolkit/blob/main/rulebooks/dnd5e/encounter/knowledge/decisions.md#L89): "S2's `fell` rows are testimony …" (D12, Open)
 
 ## Implementation
 

@@ -20,7 +20,11 @@ missing as well ([#732](https://github.com/KirkDiggler/rpg-project/issues/732)).
 ## Decision
 
 - No ruling: the slice mirrors the engine. Every refusal is the engine's sentence, word for word, and lands at the noun it names ([#732](https://github.com/KirkDiggler/rpg-project/issues/732)).
-- Knowledge line: none.
+- Knowledge lines:
+  - [web L10](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L10): "the studio mirrors the engine and never judges for it …"
+  - [web L12](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L12): "download writes the encoder's bytes, never the source's …"
+  - [web L13](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L13): "a one-step `until` keeps the mapping spelling …"
+  - [web L14](https://github.com/KirkDiggler/rpg-dnd5e-web/blob/dev/knowledge/decisions.md#L14): "the Endings panel fires an ending either "when a condition holds" …"
 
 ## Implementation
 
