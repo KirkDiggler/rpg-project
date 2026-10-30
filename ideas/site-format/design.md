@@ -104,6 +104,8 @@ against its budget on the castle and on a generated 30,000-hex fixture:
   on this one.
 - **O4 The 30k fixture.** What a realistic 30,000-hex site looks like for the
   generator: how many regions, walls and doors, and how open. Settled by the
-  first sibling that needs it.
+  first sibling that needs it. The file budget holds on one wall line per
+  seam (60 regions, 104 doors, 76 KB) and not on one wall per neighbour pair
+  (109 KB), so the shape this question settles decides the budget's margin.
 - **O5 Runs on the wire.** The atlas sends cells one by one for fog. Whether
   it ever carries runs waits on a measurement that asks for it.
