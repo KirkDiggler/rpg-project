@@ -2,7 +2,8 @@
 
 **Scene:** walk site `ally-walk` on the stack: the veteran outside the gatehouse; in the keep, the gate captain after `turn`.  
 **Status:** in play. Walked on `ally-walk` 2026-10-30 ("looks good to me"). The companion is in no party roster or party-side turn order yet; that is S9 ([rpg-project#733](https://github.com/KirkDiggler/rpg-project/issues/733)).  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S3 ([#717](https://github.com/KirkDiggler/rpg-project/issues/717))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S3 ([#717](https://github.com/KirkDiggler/rpg-project/issues/717))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

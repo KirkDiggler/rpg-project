@@ -2,7 +2,8 @@
 
 **Scene:** walk site `theft-walk` on the stack: walk in through the open south door to the cook; in the keep, the cook in the kitchen.  
 **Status:** in play. Engine on the stack as `theft-walk`; the studio's `not` editor is on web `dev`. No operator walk is recorded on the slice issue.  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S5 ([#719](https://github.com/KirkDiggler/rpg-project/issues/719))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S5 ([#719](https://github.com/KirkDiggler/rpg-project/issues/719))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

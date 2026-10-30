@@ -2,7 +2,8 @@
 
 **Scene:** the Encounter Studio on :3030: Site → Import YAML → `the-mad-king.yaml` from the stack content dir → Replace draft; then each walk site the same way.  
 **Status:** in studio. Merged to web `dev`; the operator's studio look on :3030 is listed on the story's checklist and not yet ticked.  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S8 ([#732](https://github.com/KirkDiggler/rpg-project/issues/732))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S8 ([#732](https://github.com/KirkDiggler/rpg-project/issues/732))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

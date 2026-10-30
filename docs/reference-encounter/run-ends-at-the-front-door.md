@@ -2,7 +2,8 @@
 
 **Scene:** walk site `gate-walk` on the stack: the party start is the front door; in the keep, the front door is the party start too.  
 **Status:** in play. Walked on `gate-walk` 2026-10-29. No screen shows success or failure yet; that is S9 ([rpg-project#733](https://github.com/KirkDiggler/rpg-project/issues/733)).  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S2 ([#716](https://github.com/KirkDiggler/rpg-project/issues/716))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S2 ([#716](https://github.com/KirkDiggler/rpg-project/issues/716))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

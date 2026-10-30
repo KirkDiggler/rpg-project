@@ -2,7 +2,8 @@
 
 **Scene:** the Encounter Studio on :3030: Site → Import YAML → `the-mad-king.yaml` → Replace draft; then Tables (routes) and Cast (actions).  
 **Status:** in studio. Merged to web `dev`; the live play steps (the guard walks a new loop, the captain throws the added javelin) are not yet walked on :3030.  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S6 ([#720](https://github.com/KirkDiggler/rpg-project/issues/720)) and S7 ([#721](https://github.com/KirkDiggler/rpg-project/issues/721))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S6 ([#720](https://github.com/KirkDiggler/rpg-project/issues/720)) and S7 ([#721](https://github.com/KirkDiggler/rpg-project/issues/721))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

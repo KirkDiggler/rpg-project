@@ -2,7 +2,8 @@
 
 **Scene:** walk site `survivors-walk` on the stack: walk north into the gatehouse yard and drop the band's leader; in the keep, bring the king down.  
 **Status:** in play. On the stack as `survivors-walk`; no operator walk is recorded on the slice issue.  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S4 ([#718](https://github.com/KirkDiggler/rpg-project/issues/718))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S4 ([#718](https://github.com/KirkDiggler/rpg-project/issues/718))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

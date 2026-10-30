@@ -2,7 +2,8 @@
 
 **Scene:** walk site `gate-walk` on the stack: strike the captain and watch the sentry behind the shut gate; in the keep, the throne room door is shut on arrival.  
 **Status:** in play. Walked on `gate-walk` 2026-10-29 ("the sentry came through the gate, watcher ran, worked").  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S1 ([#715](https://github.com/KirkDiggler/rpg-project/issues/715))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S1 ([#715](https://github.com/KirkDiggler/rpg-project/issues/715))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 

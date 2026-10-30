@@ -13,6 +13,11 @@ brief is [rpg-project#702](https://github.com/KirkDiggler/rpg-project/issues/702
 and the decisions are on the lane
 [rpg-project#722](https://github.com/KirkDiggler/rpg-project/issues/722).
 
+The roadmap, with each slice's status, is the story issue
+[rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714), and the decisions are on lane
+[rpg-project#722](https://github.com/KirkDiggler/rpg-project/issues/722); these cards are the
+detail behind its rows.
+
 **Status** is one of: `in play` (merged and on the castle stack), `in studio`
 (merged to web `dev`), `engine only`, `planned`. The castle stack serves the
 engine's side through

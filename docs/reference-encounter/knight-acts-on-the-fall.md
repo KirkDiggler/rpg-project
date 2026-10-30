@@ -2,7 +2,8 @@
 
 **Scene:** walk site `gate-walk` on the stack: drop the captain with the watcher in sight and the sentry behind the gate.  
 **Status:** in play. Walked on `gate-walk` 2026-10-29. In the keep, the court stands down the moment the king falls, so a knight's `fell` row shows only after a fresh blow (D12, open).  
-**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S2 ([#716](https://github.com/KirkDiggler/rpg-project/issues/716))
+**Story:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714) S2 ([#716](https://github.com/KirkDiggler/rpg-project/issues/716))  
+**Roadmap:** [rpg-project#714](https://github.com/KirkDiggler/rpg-project/issues/714)
 
 ## Idea
 
