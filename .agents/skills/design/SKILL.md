@@ -23,6 +23,13 @@ Follow the operator's move toward making an idea concrete; if that intent is
 unclear, ask whether to keep exploring or start shaping it. This is a conversational
 transition, not a new approval ceremony. Exploration can reopen during design.
 
+When a cut of the design is replaced by a later one, the design keeps one
+sentence of the old cut and the operator's words that moved it. A design that
+shows only its final shape hides the reasoning the next reader needs; the
+history of cuts is the record, not churn. The same holds for a ruling the
+session reuses from elsewhere: name the condition that produced it and say
+whether that condition holds here.
+
 ## Converge on a brief
 
 The brief belongs to a story issue, and every slice the plan names gets its
