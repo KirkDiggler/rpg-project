@@ -11,6 +11,7 @@ Manual testing checklists for the 4-class multiplayer multi-room dungeon.
 | [barbarian.md](barbarian.md) | Barbarian: Rage, Unarmored Defense, Reckless Attack |
 | [rogue.md](rogue.md) | Rogue: Sneak Attack, Cunning Action, Expertise |
 | [monk.md](monk.md) | Monk: Martial Arts, Flurry of Blows, Unarmored Defense/Movement |
+| [../reference-encounter/](../reference-encounter/README.md) | The reference encounter (the keep, `the-mad-king`): each mechanic it demonstrates, its status and how to verify it |
 
 ## How to Use
 
