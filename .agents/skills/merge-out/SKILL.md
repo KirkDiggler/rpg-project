@@ -43,6 +43,11 @@ the walk) happened before.
   the merged gap for a fresh walk. Only then does this skill run. (Ruled by
   KirkDiggler, 2026-10-09, after the action-information walk found the
   stranded-seat gap, rpg-project#548.)
+- Every PR in the wave carries its run record (`knowledge/runs/<date>-<topic>.md`
+  at the level its changes bind; the build-slice skill says the shape). A PR
+  without one is not merge-ready; the record is what the ingest reads after
+  the merge, and a merged PR with no record is a run the team never learns
+  from.
 - The brief names the PRs **in order** with their module path, e.g.
   `rpg-toolkit#1988 rulebooks/dnd5e/encounter → #1989 rulebooks/dnd5e/resolution → #1990 rulebooks/dnd5e/session → #1991 (stacked on #1990) → rpg-api#1085 → rpg-dnd5e-web#…`.
 - The brief names who re-pins each consumer (the PR's builder, by agent name,

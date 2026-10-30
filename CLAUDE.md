@@ -237,6 +237,7 @@ case-file carries `<!-- case-file -->` inline and is skipped.
 | What each layer knows and doesn't | `docs/boundaries.md` |
 | Running the game locally | `docs/howto/` |
 | Starting or slicing a line of work | `.agents/skills/story/SKILL.md` |
+| What binds the workspace, and the run-record template every PR copies | `knowledge/` |
 | Designing anything | `.agents/skills/design/SKILL.md` |
 | The independent review round | `.agents/skills/pr-review/SKILL.md` |
 | Cutting a release (`dev` -> `main`) | `game-dev/scripts/release.sh` |

@@ -121,6 +121,22 @@ built from a template is the tell that the rule went prescriptive.
 - Scratch files (PR bodies, drivers) live in the job's temporary directory
   under a name carrying the repo, the PR and the builder.
 
+## The run record
+
+Every PR carries one file, `knowledge/runs/<YYYY-MM-DD>-<topic>.md`, under
+the lowest directory that contains everything the PR changed (with one module
+per toolkit PR, that is the module; a docs-only PR spanning levels uses the
+repo root). Four sections in order: **shipped** (what landed, with the PR),
+**decided** (every judgment a reader could have made differently: the words,
+the options closed, the because, the rule it rests on), **found** (facts the
+run established: measurements, drift, a doc that disagrees with the code),
+**mistaken** (what went wrong and what let it through, or `none observed`).
+One line per entry; every line ends with a link. Copy
+[`rpg-project/knowledge/runs/TEMPLATE.md`](../../../knowledge/runs/TEMPLATE.md).
+The record is evidence, so it may carry commit pins and past tense; the
+`knowledge/` files beside it may not. The ingest reads it once after merge and
+adds a `processed:` line; nobody edits it after that.
+
 ## Stacked PRs
 
 A PR based on another PR's branch is re-targeted to its final base before
