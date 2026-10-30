@@ -47,12 +47,60 @@ appearances to exact unchanged standing hashes and verified rig facts, including
 all existing style/skin variants of each admitted family. Do not infer support
 from bone count alone.
 
+Provider implementation: `scripts/npc_activity_profile.py` accepts a runtime
+root, cooked library and recipe. The recipe owns profile id, reference body,
+exact appearance family refs, default/walk refs, activity descriptors and pose
+bridges. Output schema v1 contains those descriptors, library path/hash/clip
+inventory and admitted appearance refs/standing hashes. Re-read actual body
+bytes, clip inventories and named-joint parents/rest-world/inverse-bind matrices
+before admission; a stale manifest hash or incompatible rig refuses. Output is
+a new candidate directory, never an overwrite of a body or existing profile.
+Tests cover the real complete style/skin family selection, tampered body hashes,
+incompatible library binding and missing clips. Metadata is not a new activity
+command protocol.
+
 Consumer generation validates the profile and hash-bound library/body files and
 emits metadata only. Sync carries licensed files into ignored runtime paths;
 never stage them in the public web repository. The existing appearance catalog
 and original model URLs remain authoritative. Unknown explicit activities are
 named diagnostics, not silent fallback. Concrete generator and sync edits follow
 inspection of their existing pinned-provider flow; no guessed publication.
+
+## Unit G1 — provider-backed Studio selection
+
+Web owns `src/npc-activities/activityProfile.ts`: exact appearance lookup in the
+generated profiles, with no inference from rig count or appearance family names.
+`StudioArrangeFields.tsx` offers nonmoving provider activities, an absent/default
+choice and a named unavailable choice for imported unsupported values. Changing
+appearance must not clear or substitute a default. Extend the existing
+`StudioActorArrangeEdit` and `applyStudioActorArrange` to use the existing pure
+setter; omitted stays untouched, null clears. The normal owner history supplies
+undo/redo, not a second settings store.
+
+Tests: roomDefaultActivity exercises provider choices, simultaneous location/
+default edit and preservation of unknown defaults after a look change. The real
+StudioArrangePanel owner test selects Thoughtful and clears it, verifies save
+and undo/redo and unchanged appearance/rules/faction. No hard-coded option list.
+
+## Unit G2 — production sequencing and movement readiness
+
+`src/npc-activities/activitySequencer.ts` owns only presentation phases. Input:
+provider profile, play callback and state callback. Reset starts the observed
+default's sustain (no imagined prior pose); request retains only the latest
+activity. Real mixer loop/finished events, fenced by serial, advance phases.
+Stop invalidates callbacks; reappearance resets rather than replaying old work.
+Walking readiness means sustain of the profile's explicit walking activity.
+Tests pin completed Enter/Exit, sustain boundaries, latest-wins, exact readiness,
+stop/reset and stale events. No timers substitute for clip completion.
+
+The body adapter loads the separate library and combines named clips with the
+unchanged body's clips. The existing movement hook remains the only position
+writer; a scoped readiness callback gates its frame advancement without accruing
+elapsed time while blocked. Route completion remains the existing cursor's
+completion signal. Mixer and route share the same overall rate; Enter/Exit use
+an additional 1.5 multiplier. Unsupported refs/load failures must report a named
+diagnostic and settle/release presentation, never wedge the story cursor.
+Actual mixer/movement and lifecycle integration tests precede the game walk.
 
 ## Remaining connected unit
 
