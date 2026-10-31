@@ -30,7 +30,9 @@ change is an edit, not a build.
 **One keep, two scales.** Both fixtures come from the same plan and the same
 door graph. The hex-count knob scales room dimensions, at most one and a half
 times linear, and the grounds absorb the remainder exactly. A number that
-moves between the two fixtures is the cost of size alone.
+moves between the two fixtures is the cost of size alone. A wall is one
+line per shared edge of two regions, with one opening per plan door; the
+file budget test pins that this shape stays under R1 of site format.
 
 **Props exercise the engine.** Placed props carry declared footprints that
 block movement and, for tall pieces, sight, so they feed the partition sight
@@ -59,16 +61,26 @@ the palette moves; a test in the api proves each shelf file equals the pinned
 generator's output. The fixtures are measurement content, never edited by
 hand and never the asset team's showcase.
 
-**Caps from the yardstick.** The studio's static caps on items and document
-size derive from R1 of site format: the ceiling fixture at default density
-opens. A cap that refuses it is a defect in the cap, not in the fixture.
+**Supported envelope.** The studio admits a document of at least 4,000
+scene items and 2.5 million envelope characters, and every refusal it
+applies on open and render admits the ceiling fixture at default density,
+which sits under half of both bounds. The bounds are a statement of what the
+studio supports at the ceiling, not a multiple of the fixture; a run above
+default density that crosses them is a run, not content.
+
+**Bench build.** The web has a `bench` build mode: production bundling and
+minification with the development gates open, so the dev player, the query
+overrides, the marks and the perf probe run in it. One predicate answers
+"is this a development-like build" and every gate reads it; a shipped
+production build keeps them all shut.
 
 **Harness.** One command brings up its own environment on its own ports,
-copies the fixtures onto that environment's shelf, builds the web for
-production, drives the studio and play with a real GPU, and records the same
-table every run: file, toolkit, server, studio and play rows per fixture,
-each beside its R1 budget where one applies. Development-mode numbers are not
-recorded.
+copies the fixtures onto that environment's shelf, builds the web in bench
+mode, drives the studio and play on a hardware renderer, and records the
+same table every run: file, toolkit, server, studio and play rows per
+fixture, each beside its R1 budget where one applies. A run whose renderer
+reports a software rasteriser is refused, and development-mode numbers are
+not recorded.
 
 **Where numbers live.** Each run is one table in a comment on the story issue
 and the story body links the latest. The hot-spot list that seeds the two
@@ -94,3 +106,9 @@ follow-on efforts is drawn from the baseline table, not from reading code.
   finding, not a change here.
 - **O4 Runs on the wire.** Site format O5 stands; the atlas size the baseline
   records is the measurement it waits for.
+- **O5 Bench build versus the alternatives.** The bench mode is the default;
+  ungating the probe in shipped production, or signing the harness in
+  through Discord, are the roads not taken until the operator rules.
+- **O6 The supported envelope's bounds.** The item and character bounds are
+  defaults until the operator rules; a veto moves the bounds, not the rule
+  that the studio supports the ceiling.

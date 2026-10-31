@@ -51,12 +51,16 @@ flowchart TB
 | `dungeonspec.RowsOf` (exported) | one spelling of a cell set | `[]RoomCell` → `[]RoomCellRow`, rows ascending, spans merged |
 | api `content/` + `NewFileRegistry` | the shelf | files whose `key` equals the file name → compiled, atlas-projected at boot, listed by lobby `ListDungeons` because root version is 5 |
 | api `bench_fixtures_test.go` | currency of the shelf copies | `keepgen.Generate` with each file's recorded options → bytes equal to the shelf file |
-| web `serialization.ts` caps | what the studio refuses by size | `MAX_ITEMS`, `MAX_JSON_LENGTH` set from the ceiling fixture's measured envelope with margin (O2) |
+| web `serialization.ts` caps | what the studio refuses by size | `MAX_ITEMS` ≥ 4,000, `MAX_JSON_LENGTH` ≥ 2,500,000 (Law Supported envelope); `MAX_WALL_PIECES_PER_WALL` in `structuralWallEditing.ts` admits the ceiling's longest wall |
+| web `devMode.ts` predicate | whether a build is development-like | `import.meta.env.MODE` → `isDevLike()`; `development` and `bench` are true, `production` false; read by `api/auth.ts`, `App.tsx` and the probe mounts |
 | web `performance.mark` points | what the harness can time | marks at open start, decoded, imported, first paint; stroke commit, painted; preview sent, returned; atlas requested, received; scene built; first frame |
-| web `DevPerfProbe` mount | frame-time and draw-call sampling in current play and the studio 3D view | `?perfProbe` → `PERF_PROBE_RESULT:` console line and `window.__rpgPerfProbeLatest` |
-| `scripts/dev-env.sh` production web mode | a measurable web | `RPG_WEB_MODE=preview` → `vite build` then `vite preview` on the env's web port |
-| `tools/browser/bench/run.sh` | the one command | env name + fixture keys → env up, fixtures written into the env's content dir (seeding never overwrites, so the copy is explicit), api restarted, drivers run, table printed |
-| `tools/browser/bench/studio.mjs`, `play.mjs` | the drive | Playwright with a real GPU → marks, probe result, polygon count, JS heap; play started through the lobby picker by key |
+| web `DevPerfProbe` mount | frame-time and draw-call sampling in current play and the studio 3D view | `?perfProbe` → `PERF_PROBE_RESULT:` console line and `window.__rpgPerfProbeLatest`; mounted when `isDevLike()` |
+| web regions list (`LayoutRoomList.tsx`) | the mark the regions-list row reads | `studio:regions:rendered` after its commit |
+| `scripts/dev-env.sh` bench web mode | a measurable web | `RPG_WEB_MODE=bench` → `vite build --mode bench` then `vite preview` on the env's web port |
+| api `NewFileRegistry` timing line | the server boot row | one log line `content registry: compiled <n> files in <ms>ms` |
+| `tools/browser/bench/run.sh` | the one command | env name + fixture keys → env up, fixtures written into `.runtime/<env>/sources/rpg-deployment/content/` (seeding never overwrites, so the copy is explicit), api restarted, drivers run, table printed |
+| `keepgen.OptionsFromHeader` | the recorded options | fixture bytes → `Options` parsed from the header comment, so a shelf copy can be regenerated and compared |
+| `tools/browser/bench/studio.mjs`, `play.mjs` | the drive | Playwright on a hardware renderer (headed, or the GPU flags) → marks, probe result, polygon count, JS heap; the `WEBGL_debug_renderer_info` string is recorded and a SwiftShader or llvmpipe run is refused; play started through the lobby picker by key |
 | `tools/browser/bench/report.mjs` | the table | marks + probe + api log lines `✓ <method> completed in <ms>ms` + toolkit bench output → one markdown table per fixture beside R1's budgets |
 
 Refusals, one per boundary:
@@ -69,7 +73,9 @@ Refusals, one per boundary:
 - The shelf does not rewrite the file; the studio and play read the same
   bytes the generator wrote.
 - The studio caps do not encode a taste for small documents; they encode
-  R1's ceiling.
+  the supported envelope at R1's ceiling.
+- The bench build does not change what a production build does; it opens
+  the same gates development opens, through one predicate.
 - The harness does not patch the web or the api to make a number better; it
   records what the build does.
 - The report does not interpret; the hot-spot list is written by a reader of
@@ -85,7 +91,8 @@ and emits `scene.items[]` entry `banquet-hall-prop-07` with
 `transform {x, y: 0, z, rotationY}` and a `propDeclarations` entry with that
 footprint. `Prove` loads the file: the compiler subtracts the footprint's
 cells from the floor, the sight index files nothing for it because it does
-not block sight, and the hall stays reachable from the gatehouse. On the
+not block sight, the hall stays reachable from the gatehouse, and the
+compiled party start still seats four. On the
 shelf the file is listed as `bench-keep`. The studio decodes it into a v6
 envelope and the placed overlay draws one marker; the harness counts it
 among the items that the caps admit. In play the atlas carries it as a prop
@@ -115,14 +122,14 @@ can claim one.
 
 | Decision | Benefit | Cost / boundary | Not taken |
 |---|---|---|---|
-| Plan as embedded data | FadedPez edits a floor plan; no Go per layout change | the generator carries a plan schema and its refusals | rooms hard-coded in Go |
+| Plan as embedded data | FadedPez edits a floor plan; no Go per layout change | the generator carries a plan schema and its refusals; a layout edit still travels as a toolkit PR, a tag, an api repin and a regeneration, because the shelf copies are pinned to the embedded plan; `-plan <path>` reaches a local file, never the shelf | rooms hard-coded in Go |
 | Same plan at both scales (R2) | size is the only variable between fixtures | the ceiling is mostly grounds; a 60-room castle is not measured | an outer ring of new rooms |
 | Palette refs pinned in the plan | toolkit stays catalog-ignorant | a ref the web drops breaks Open; the api test does not catch it | generator reads the catalog |
 | Proof before write | the shelf never carries a file that refuses boot | generation runs a full compile; seconds at 30k | trust the emitter |
-| Fixtures on the api shelf | one Open path, one play path, no web fixture copy | every api boot compiles and holds both atlases; about a third of a second and a megabyte | a web-only fixture or a dev-env drop |
-| Caps from R1 | the ceiling opens | the autosave and history costs become visible (O3) | leave caps, record "refused" |
+| Fixtures on the api shelf | one Open path, one play path | every api boot compiles and holds both atlases; about a third of a second and a megabyte; every encounter repin in the api regenerates both files when the emitter's output shifts, which a toolkit golden surfaces in the PR that shifts it; the web keeps one test copy of the ceiling by hand | a web-only fixture or a dev-env drop |
+| Supported envelope as law | the ceiling opens and the caps stop being a benchmark knob | the autosave and history costs become visible (O3); the bounds are the operator's to move (O6) | caps as a multiple of the fixture; leave caps, record "refused" |
+| Bench build mode | R1's play budget is measured on minified code with the dev player and the probe | one predicate replaces scattered mode checks; one more vite mode (O5) | ungate the probe in production; Discord sign-in in the harness |
 | Harness in game-dev | owns the env, the ports and the browser already | the web still needs marks and a probe mount | a web-only script |
-| Production web build in the harness | R1's play budget is measured as shipped | one more dev-env mode | measure vite dev and discount |
 | Numbers on the issue | the roadmap and the yardstick in one place | tables in comments, not a dataset | a doc under ideas/ |
 
 ## Edges
@@ -142,6 +149,8 @@ can claim one.
   pinned catalog knows.
 - **A new metric, say wall pieces per region.** `report.mjs` and, if a mark is
   missing, one `performance.mark` in the web.
+- **A new development-only affordance.** Behind `isDevLike()`, so the bench
+  build gets it for free and production never does.
 - **FadedPez renames or resizes a room.** Plan; regenerate; the api test
   flags the stale shelf copies.
 - **A driven garrison (O1).** `Place` adds `monsterBindings` from a plan
@@ -157,7 +166,8 @@ can claim one.
 | 30k budget pin, load benches | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/site_scale_test.go` |
 | shelf, registry | `rpg-api/content/`, `rpg-api/internal/dungeons/registry.go` |
 | shelf currency test | `rpg-api/internal/dungeons/bench_fixtures_test.go` |
-| studio caps, catalog check | `rpg-dnd5e-web/src/concepts/world-building/serialization.ts` |
+| studio caps, catalog check | `rpg-dnd5e-web/src/concepts/world-building/serialization.ts`, `structuralWallEditing.ts` |
+| dev-like predicate, auth fallback, overrides | `rpg-dnd5e-web/src/devMode.ts`, `src/api/auth.ts`, `src/App.tsx` |
 | studio open, import | `rpg-dnd5e-web/src/concepts/world-building/singleRoomDungeon.ts`, `WorldBuildingConcept.tsx` |
 | studio canvas | `rpg-dnd5e-web/src/concepts/encounter-studio/LayoutViewport.tsx` |
 | play scene, floor | `rpg-dnd5e-web/src/components/session/atlasToScene3D.ts`, `components/hex-grid/SyntyHexFloor.tsx` |
