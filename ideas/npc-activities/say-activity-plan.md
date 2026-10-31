@@ -59,7 +59,7 @@ Proposed client request `ActivityCueRequest { id: string; activityRef: string; c
 ### T2 — published wire contract
 
 **Owner:** protos. **Prerequisite:** T1's consumer contract; no dependency on toolkit implementation.
-**Files:** `dnd5e/api/session/v1alpha2/act.proto`, `docs/architecture/components/session-presentation-service.md`.
+**Files:** `dnd5e/api/session/v1alpha2/act.proto`, `docs/architecture/components/session-service.md` (alongside the observed default activity contract; the similarly named presentation-service document owns dice throws, not acts).
 **Interface:** ActivityCue and optional TableAnswer field 12 above. Document absence, positive count, scope, cancellation and provider ownership; no enum of asset names.
 - [ ] Add additive contract and owning documentation.
 - [ ] `make format && make test`; inspect additive diff; commit/push PR, verify CI generation/SDK validation.
@@ -78,11 +78,11 @@ Proposed client request `ActivityCueRequest { id: string; activityRef: string; c
 ### T4 — content, persistence and observed record
 
 **Owner:** toolkit encounter, existing `say-activity-encounter` worktree; consume T3's pushed commit.
-**Files:** `rulebooks/dnd5e/encounter/dungeonspec/spec.go`, `compile.go`, strict JSON-v5 path where inspection finds its entry decoder; `data.go`, `answer.go`, `table.go`, `doc.go`; new `dungeonspec/say_activity_test.go`, `say_activity_test.go`.
+**Files:** `rulebooks/dnd5e/encounter/dungeonspec/spec.go`, `compile.go`, the same `AnswerSpec.UnmarshalYAML` strict decoder used when v5 JSON is read as YAML; `data.go`, `answer.go`, `table.go`, `doc.go`; new `dungeonspec/say_activity_test.go`, `say_activity_test.go`.
 **Interface:** typed authored/persisted cue; optional selected `answered.activity`. Carry through both options and nested row conversions, preserving existing witness audiences and omitted old blobs. Emit only the picked cue, not candidates' cues or current live content.
 - [ ] Failing tests: `TestSayActivitySurvivesCompileAndReload`, `TestSayActivityRejectsMalformedContent`, `TestSelectedSayCarriesOnlyItsActivity`, `TestSayActivityKeepsExistingAudience`, `TestNestedSayActivitySurvivesReload`.
 - [ ] Adopt pushed behavior commit, implement, `go mod tidy`, focused packages then full module race/lint gates.
-**Checks:** module cwd `go test ./dungeonspec -run SayActivity`; `go test . -run SayActivity`; `go test -race ./...`; repository `make lint MODULE=rulebooks/dnd5e/encounter` if supported by that checkout (verify Makefile before invoking).
+**Checks:** module cwd `go test ./dungeonspec -run SayActivity`; `go test . -run SayActivity`; `go test -race ./...`; `golangci-lint run ./...` from that module (repository `make lint` only covers Core/Events, so it is not this gate).
 **Evidence:** reload tests are mandatory; castle-only tests do not exercise the API's every-verb blob round trip. Push actual provider commit for T5/T6.
 
 ### T5 — session act carriage
@@ -98,7 +98,7 @@ Proposed client request `ActivityCueRequest { id: string; activityRef: string; c
 ### T6 — joined API, Studio launch and live presentation
 
 **Owner:** API and web, separate repository PRs. **Prerequisites:** published SDK from T2; actual pushed T4/T5 pins; T1 UI/playback.
-**API files:** `internal/handlers/dnd5e/session/v1alpha2/convert_act.go`, `convert_act_test.go`; `go.mod`, `go.sum`, Docker toolchain if required; a small dedicated `content/reference-say-activity.yaml` and associated existing dungeon/launch test surface after inspection. No edits to the operator castle.
+**API files:** `internal/handlers/dnd5e/session/v1alpha2/convert_act.go`, `convert_act_test.go`; `go.mod`, `go.sum`, Docker toolchain if required; a small untracked `content/say-activity-walk.yaml` for the isolated walkthrough plus a committed engine fixture/regression. The existing canonical castle receives an authored example through the owning encounter provider before its API copy is synchronized; the operator's running castle is not edited/restarted.
 **Web files:** `package.json`/lock; `src/components/session/combat-experience/useCombatStoryPacing.ts`, `useSessionCombatExperience.ts`, `types.ts` as needed; `SessionEncounterView.tsx`, `SessionCanvas.tsx`, `HexEntity.tsx`, `ClassCharacterModel.tsx`; new `src/npc-activities/sayActivityPresentation.ts` with focused tests, or an equivalent narrowly scoped adapter in the existing presentation owner.
 **Interfaces:** API conversion preserves optional ref/count exactly. At the existing cursor's reveal point, extract Speech.Answer or a spoken TableAnswer's cue and target Answer.Who, not the player who asked. Use live delivery metadata and current presentable-member set; never trigger from RPC results or scanning historical story. At most one current cue per actor; completion/discard is identity-fenced. No cue waits for gameplay or blocks the whole story until all cycles finish. A movement command cancels the actor's cue before the existing exit/readiness gate runs.
 **Tests:** API direct and nested TableAnswer mapping, no cue, distinct counts/refs. Web reveal ordering behind a pending walk; response and cue release together; duplicate delivery versus genuinely new response; both clients; no animation for catch-up, hidden/remembered/downed bodies; loss before reveal, surface removal, session change, stale completion; movement interruption followed by arrival does not resurrect the cue. Studio actual save/reopen/launch retains the cue and normal look/style/skin.
@@ -138,4 +138,10 @@ Self-check: do not let the shared Say editor advertise a cue that its delivery p
 
 - Agreement and discard ruling recorded on #746.
 - Baseline inspected; implementation not yet started when this plan was written.
+- Owning issues: web#1363 (T1/T6), protos#409 (T2), toolkit#2201 (T3), toolkit#2202 (T4), toolkit#2203 (T5), API#1161 (T6).
+- T1 checkpoints: web `67ef9ef1` shape (17 expected failures then 35 focused passes), `95c976af` counted mixer (13 expected failures then 22 focused passes), `74c05723` real editor controls (3 expected failures then 8 focused passes), `cc800a5c` same-default completion identity assertion. Draft web#1365 is published at cc800a5c. Full ci-check: 9441 passed / 6 skipped, 720 files passed / 1 skipped, formatting/lint/typecheck/build green. The fresh worktree lacks the ignored dice-tray manifest, so its conditional real-provider observation test is skipped. No skips were added. Runtime stream/scene wiring and Studio persistence/launch proof remain OPEN.
+- T2: protos#410 at `4ec4bae6ee01e6415f48d92a3b15b58ff2eac1f8`, local contract checks and hosted SDK generation/validation green. One independent bounded contract review found no defects; COMMENT verdict 5720261283 published/read back. No full-feature acceptance is claimed.
+- WAITING only for explicit proto early-publication authorization: https://github.com/KirkDiggler/rpg-api-protos/pull/410#issuecomment-6536896320 . Nothing has merged in this wave. T3–T6 remain unimplemented; do not confuse the tested standalone mixer/control checkpoints with the joined feature.
+- Worktrees: project `.worktrees/say-activity` (docs/say-activity), web same name (feat/say-activity), protos same name (feat/say-activity), toolkit `.worktrees/say-activity-encounter` (feat/say-activity-encounter, clean baseline only). Proto reviewer `.worktrees/say-activity-review` detached at 4ec4bae remains clean. The reviewer completed; no agents active. No runtime/ports changed.
+- T2 documentation location corrected after reading the actual owners: the presentation-service page is for dice throws, so the cue belongs beside activity identity in session-service.md.
 - Reconcile exact nested JSON decoder/wire adapter and module lint commands in the owning task before editing; these are implementation-location checks, not new behavior decisions.
