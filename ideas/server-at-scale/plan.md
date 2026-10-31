@@ -92,7 +92,7 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 | G3 what "known cells" is | the journal's `known:cells` facts, written by `learnCells` as deltas and folded by `cellFold`; perception has no cell concept, so the home stays where it is and only its encoding changes | Law Knowledge is written once |
 | G4 why no atlas cache | the api loads the encounter from its data on every verb, so an in-memory cache lives one verb and a persisted one is stored derived data (refused as site format R8 refuses it); the index makes the projection linear instead | Law The field indexes |
 | G5 a monster's beat today | `appendCellsRevealedBeat` runs per learning observer; S3 gates it on the observer being a seat; the monster's `known:cells` facts still persist, so a reloaded monster skips no knowledge | O2 |
-| G6 reach bound | `sightReach` carries each observer's max distance; the sweep iterates the hex ring of radius reach + 1 around the observer's cell (the extra ring for cells whose centre lies within reach of an edge) instead of `e.field.cells`, cold and warm | Law A sweep covers |
+| G6 reach bound | `sightReach` carries each observer's max distance; the sweep iterates the hex ring of radius sight + 1 around the observer's cell (sight = the Sight capability's per-member range, 24 cells at the session's default, never the 3-hex interaction reach; the extra ring for cells whose centre lies within sight of an edge) instead of `e.field.cells`, cold and warm | Law A sweep covers |
 | G7 reach and the clocks | the bounded menu is read where the menu is read today: on the turn clock in `compileOffersFor`, on the world clock in `speakRowOnTheWorldClock`; pricing unchanged | README |
 | G8 store key and shape | `character-config:<character>` JSON `{discovery_sharing: bool|null}`; absent means not chosen; a legacy `character-exploration:v1:<character>` record is read once as the initial value through `resolveDiscoverySharing`'s three branches and never written again | R2, O4 |
 | G9 the approach has no server verb | `MoveRequest` takes a client-composed path; the client composes the path toward the target and stops within reach, as it composes every move today | R4, README |
@@ -172,11 +172,13 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 **Delivers:** V6, G5, G6.
 **Owner:** rpg-toolkit `encounter`.
 **Prerequisites:** T7 (same PR).
-**Files:** `roomknowledge.go` (`discoverCells` iterates the hex ring of radius reach + 1 around the observer, cold and warm; `learnCells` unchanged), `roomreveal.go` (`appendCellsRevealedBeat` only for seats; the session's own fold of monster beats, if any, reads none), `encounter.go` (`rebuildPercepts` unchanged in shape).
+**Files:** `roomknowledge.go` (`discoverCells` iterates the hex ring of radius sight + 1 around the observer, cold and warm; `learnCells` unchanged), `roomreveal.go` (`appendCellsRevealedBeat` only for seats; the session's own fold of monster beats, if any, reads none), `encounter.go` (`rebuildPercepts` unchanged in shape).
 **Behavior:** a warm step's `refreshSight` costs each observer its ring; a monster's facts persist and its reload skips no knowledge (G5).
 **Tests:** `TestDiscoverCells_EqualsFullSweep` (castle and keep: the bounded sweep learns the same set as the full one, cold and after a step); `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge`; `BenchmarkLaunch_Keep10k` (< 2 s, from 18.6 s) and `_Keep30k` (< 10 s, from 149 s); `BenchmarkRefreshSightWarm_Keep10k` (< 50 ms, from 1,169 ms).
 **Verification:** module gates; castletest green; numbers in the PR body; the session re-pins and posts the live StartEncounter and Move rows from the bench env.
 **Completion evidence:** PR link, benchmark lines, rows on #753.
+
+**Finding (toolkit #2212, 2026-10-31):** the bound is sight + 1, not reach + 1: `seesCell` already refused every cell beyond the observer's sight range, so bounding the sweep alone moved launch by nothing. The 18.6 s sat elsewhere, all three fixed in the same PR: every sight ray tested all 654 placements on the keep (authored placements are now bucketed by position in T1's placement index and rays, steps and cell checks ask only the nearby ones); every monster that learned cells built two full projections for a reveal beat nobody reads (monsters write none); fight formation folded the faction graph once per member pair (now once per faction pair); plus a one-pass ray memo for the warm refresh. Launch 10k 18.6 s → 1.37 s, 30k 149 s → 4.14 s, warm refresh 1,169 → 33 ms, blob after launch 7.28 → 2.16 MB (10k).
 
 ### Task T9: knowledge written once, compactly (S4, encounter)
 
