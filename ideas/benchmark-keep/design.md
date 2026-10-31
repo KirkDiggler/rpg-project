@@ -55,11 +55,16 @@ dialect's loader and refuses to write a file that does not compile, has no
 free seat for four at the start, or fails the reachability rule. The same
 inputs produce byte-identical output.
 
-**Shelf.** The two fixtures live in the api's content directory under keys
-that equal their file names and regenerate whenever the dialect, the plan or
-the palette moves; a test in the api proves each shelf file equals the pinned
-generator's output. The fixtures are measurement content, never edited by
-hand and never the asset team's showcase.
+**Shelf.** The two fixtures live in the api repository under
+`content/bench/`, a directory the registry does not read at boot, under keys
+that equal their file names; they regenerate whenever the dialect, the plan or
+the palette moves, and a test in the api proves each equals the pinned
+generator's output. The harness copies them onto its own environment's shelf,
+where they list and open like any reference. They stay off the main shelf
+because the registry compiles and atlas-projects every shelf file at boot and
+the ceiling's projection alone costs seconds, a tax every stack and test run
+would pay for measurement content. The fixtures are never edited by hand and
+never the asset team's showcase.
 
 **Supported envelope.** The studio admits a document of at least 4,000
 scene items and 2.5 million envelope characters, and every refusal it
@@ -103,6 +108,7 @@ default is adjusted when a row shows it wrong.
 | R3 | Props and monsters are placed to exercise the engine, not only the renderer: declared footprints in the majority, monsters at a density. | settled | generator | KirkDiggler | 2026-10-30 |
 | R4 | The five defaults stand as set: density, the supported envelope's bounds, the bench build mode, hardware-renderer runs only, numbers on the story issue. Each is adjusted when a measured row shows it wrong, not debated beforehand. | settled | defaults | KirkDiggler | 2026-10-31 |
 | R5 | Measurement is incremental: each slice records what it can the day it lands, and the follow-on stories open on the rows that exist, not on one baseline run. | settled | story sequence | KirkDiggler | 2026-10-31 |
+| R6 | The fixtures live under `content/bench/`, off the main shelf, and reach a shelf through the harness's copy; the operator's look at them is on the bench environment. | settled, operator may veto on the record PR | api shelf, harness | the session under R4 | 2026-10-31 |
 
 ## Open
 

@@ -1,6 +1,6 @@
 ---
 name: Benchmark keep — implementation plan
-status: PLAN derived 2026-10-30 from design.md R1–R3 and README.md; checked against the inspected baseline below; amended the same day from the design PR's review round (bench build, supported envelope, walls per shared edge, header options, timing line).
+status: PLAN derived 2026-10-30 from design.md R1–R3 and README.md; checked against the inspected baseline below; amended the same day from the design PR's review round (bench build, supported envelope, walls per shared edge, header options, timing line). RECORD 2026-10-31: S1 rpg-toolkit#2204 → encounter v0.157.0; T8 game-dev#122 → main cfd2a17c; amendments the builds surfaced are marked "Record:" in place (G9 localhost only, G12 fifth gate, R6 fixtures under content/bench/, T5 listing test, T6 paste cap, api call-duration log).
 authority: design.md (R1–R3, Law), README.md (ownership table and refusals), story rpg-project#740, lane rpg-project#739
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -26,7 +26,7 @@ hand-authored content.
 | slice | repo / module | base | PR shape |
 |---|---|---|---|
 | S0 | rpg-toolkit `rulebooks/dnd5e/encounter` + rpg-project docs | main | one toolkit PR (`cmd/convert-v4`), one docs PR (how-to); overnight-coder sized |
-| S1 | rpg-toolkit `rulebooks/dnd5e/encounter` | main | one PR: `RowsOf`, `keepgen` package, `cmd/keepgen`, benches; tag minted on merge |
+| S1 | rpg-toolkit `rulebooks/dnd5e/encounter` | main | one PR: `CellRows`, `keepgen` package, `cmd/keepgen`, benches; tag minted on merge |
 | S2 | rpg-api; rpg-dnd5e-web | dev; dev | api PR: pin the S1 tag, two fixtures, currency test, registry timing line. Web PR: the supported envelope's caps, every open and render refusal checked against the ceiling |
 | S3 | rpg-dnd5e-web; game-dev | dev; main | web PR: `isDevLike()` predicate, bench build mode, marks and probe mounts. game-dev PR: `envs/bench.env`, bench web mode, `tools/browser/bench/` |
 | S4 | rpg-project | — | baseline comment on #740, hot-spot list, two follow-on story issues |
@@ -109,10 +109,10 @@ Probe reports (case file): the design PR thread on rpg-project.
 | G6 fixture keys | `bench-keep`, `bench-keep-30k`; `^[a-z0-9-]+$` holds | Law Shelf |
 | G7 which monsters | the castle's refs: `guard`, `knight`, `commoner`, `prisoner`; barracks and gatehouse take guards and knights, service rooms commoners, the prison prisoners | Law Monsters |
 | G8 lighting per room | the plan gives each room an intensity; default 1 for halls, 0.6 for service rooms and passages, 0.3 for the crypt, mausoleum and hidden stash; grounds 1 | Law Plan |
-| G9 bench web in dev-env | `RPG_WEB_MODE=bench` runs `npm run build:bench` then `npx vite preview --host --port <web port>` with the same `VITE_API_HOST` | Law Harness, Law Bench build |
+| G9 bench web in dev-env | `RPG_WEB_MODE=bench` runs `npm run build:bench` then the web's `preview` script on `<web port>` with the same `VITE_API_HOST`, bound to localhost like vite dev. Record: `--host` is not passed; the bench bundle carries the dev player and the harness drives localhost | Law Harness, Law Bench build |
 | G10 play by key from a script | the lobby picker labels a reference `<name> (reference)`; the driver picks by name; `?playerId=` resumes after reload | README |
 | G11 palette refs | full refs from the pinned catalog, by room kind. Halls: `dnd5e:props:fantasy-kingdom:table_fancy_01`, `…:table_fancy_03`, `…:table_fancy_07`, `…:chair_fancy_01`, `…:chair_fancy_02`, `…:bench_seat_01`, `…:statue_knight_01`. Service: `…:barrel_01`, `…:crate_stack_01`, `…:crate_stack_02`, `…:sack_stack_01`, `…:shelf_03`, `…:bread_crate_01`. Quarters: `…:bed_01`, `…:bed_02`, `…:bed_03`, `…:side_table_01`, `…:chest_01`, `…:clothes_rack_01_preset_01`. Library: `…:shelf_03`, `…:books_01`, `…:books_02`, `…:books_03`, `…:books_04`. Chapel: `…:bench_seat_pew_01`, `dnd5e:props:dark-fortress:altar_01`, `dnd5e:props:dark-fortress:candle_stand_02`. Prison: `dnd5e:props:dark-fortress:bench_01`, `dnd5e:props:dark-fortress:barricade_01`. Grounds and courtyard: `…:barrel_01`, `…:crate_stack_03`, `…:statue_plinth_01`. `…` is `dnd5e:props:fantasy-kingdom`. Sight-blocking: shelves, statues, clothes racks, crate stacks. | Law Plan, README refusal |
-| G12 which gates the bench build opens | the dev player fallback (`api/auth.ts` `getAuthDecision`), the `?playerId` override (`App.tsx` `devPlayerIdOverride`), the perf probe gate and the marks; all through `isDevLike()`. Every other development gate stays as it is: `App.tsx` dev routes (`LazyToolkitContributorSandbox`, `hasConceptDeepLink`, `fixedFixture`, `showThumbHarness`, `shouldRenderGlobalDevTools`), `client.ts`/`streamLogging.ts` logging, `ClassCharacterModel.tsx`, `useWorldMaterialCatalog.ts`, `AttackDiePerfHarness.tsx`, `ServerRollingDemo.tsx`, `StoryLog.tsx` | Law Bench build |
+| G12 which gates the bench build opens | the dev player fallback (`api/auth.ts` `getAuthDecision`), the `?playerId` override (`App.tsx` `devPlayerIdOverride`), the dev player's composition world (`rpcCompositionSource`; Record: added when the harness found bench play resolved no composition-ref props), the perf probe gate and the marks; all through `isDevLike()`. Every other development gate stays as it is: `App.tsx` dev routes (`LazyToolkitContributorSandbox`, `hasConceptDeepLink`, `fixedFixture`, `showThumbHarness`, `shouldRenderGlobalDevTools`), `client.ts`/`streamLogging.ts` logging, `ClassCharacterModel.tsx`, `useWorldMaterialCatalog.ts`, `AttackDiePerfHarness.tsx`, `ServerRollingDemo.tsx`, `StoryLog.tsx` | Law Bench build |
 | G13 wall and door appearance | the plan names the castle's refs: walls `dnd5e:env:dark-fortress:45_wall_01`, doors `dnd5e:env:dark-fortress:wall_door_double_01`; the studio's piece length is that wall asset's `boundsMeters` width in the pinned catalog at the shared Synty scale, read by `StructuralWallSurfaces.tsx` through `WORLD_BUILDING_CATALOG_BY_REF`; a wall whose ref the catalog lacks renders an error marker, so the ref is part of the palette the web's import test guards | Law Plan, README refusal |
 
 ## Tasks
@@ -210,26 +210,26 @@ func OptionsFromHeader(doc []byte) (Options, error) // the header comment → th
 **Tests:** as named.
 **Verification:** `go test ./dungeonspec/ -run 'KeepCeiling' -bench 'FieldLoad' -benchtime 3x`; record the three numbers (load, field, partitions) per size and the geometry bytes on #740 as the first toolkit rows (R5).
 
-### Task T5: fixtures on the shelf (S2, api)
+### Task T5: fixtures in the api repository (S2, api)
 
 **Delivers:** B9, K1.
 **Owner:** rpg-api.
 **Prerequisites:** S1 tag.
-**Files:** modify `go.mod` (pin encounter tag); create `content/bench-keep.yaml`, `content/bench-keep-30k.yaml` (generated with `-seed 1`, defaults, keys as named); create `internal/dungeons/bench_fixtures_test.go`; modify `internal/dungeons/registry.go` (`NewFileRegistry` measures its compile loop) and `cmd/server/server.go` (one log line `content registry: compiled <n> files in <ms>ms`).
+**Files:** modify `go.mod` (pin encounter tag); create `content/bench/bench-keep.yaml`, `content/bench/bench-keep-30k.yaml` (generated with `-seed 1`, defaults, keys as named; Record R6: a subdirectory the registry and the seeder skip, because both keeps on the main shelf cost about 7 s per boot and time out four test packages); create `internal/dungeons/bench_fixtures_test.go`; modify `internal/dungeons/registry.go` (`NewFileRegistry` measures its compile loop; godoc says top level only) and `cmd/server/server.go` (one log line `content registry: compiled <n> files in <ms>ms`; Record: `logFunc` reads `grpc.time_ms` as the string the middleware sends, so the `✓ <method> completed in <ms>ms` line prints a real duration instead of 0.00, and an unparseable value prints an explicit marker).
 **Interfaces:** the test calls `keepgen.OptionsFromHeader(file)` then `keepgen.Generate(keepgen.DefaultPlan(), opts)` and asserts byte equality with the shelf file, header included; bytes rather than decoded documents, deliberately, because the header is part of the artifact the harness copies. The two bench keys are the only files the test names.
-**Tests:** `TestBenchFixtures_MatchGenerator` (both files); the existing registry boot test keeps passing with the two files present (no count is pinned).
+**Tests:** `TestBenchFixtures_MatchGenerator` (both files); a listing test stages only the 10k keep on a throwaway shelf (Record: staging the ceiling re-imports its projection cost into every test run); the existing registry boot test keeps passing (no count is pinned); a test pins the timing line and the call-duration line formats.
 **Behavior:** the timing line is the server row "registry compile ms" in B13; S2 posts it with the file rows (bytes, hexes, props, monsters) and the envelope figures from T6 on #740 the day it lands (R5).
 
 - [ ] Pin; generate; add test; `make test`; `make pre-commit`.
 
-**Verification:** `make test`; a local server boots and `ListDungeons` carries both keys.
+**Verification:** `make test`; the bench env (`run.sh`) boots with both files copied onto its shelf and `ListDungeons` carries both keys.
 
-### Task T6: caps from the yardstick (S2, web)
+### Task T6: the supported envelope (S2, web)
 
 **Delivers:** B10, O6.
 **Owner:** rpg-dnd5e-web `concepts/world-building`.
 **Prerequisites:** the ceiling fixture bytes (from S1's pushed commit).
-**Files:** modify `serialization.ts` (`MAX_ITEMS = 4000`, `MAX_JSON_LENGTH = 2_500_000`, each with a comment naming the Supported envelope); `structuralWallEditing.ts` only if the ceiling's longest wall exceeds `MAX_WALL_PIECES_PER_WALL` (T2's `TestPlace_Walls` is meant to keep it under); note in `roomDraft.ts` that the paint cap `MAX_FLOOR_HEXES = 65536` already admits 30k and that `contentGrid`'s `MAX_GRID_*` clamp rather than refuse; add `fixtures/bench-keep-30k.yaml` as a test fixture, kept current by hand on regeneration (README trade-off; the harness's live Open on the shelf is the real currency check).
+**Files:** modify `serialization.ts` (`MAX_ITEMS = 4000`, `MAX_JSON_LENGTH = 2_500_000`, each with a comment naming the Supported envelope; Record: the publishing panel's YAML paste box carried its own 500,000-character cap and takes the same bound); `structuralWallEditing.ts` only if the ceiling's longest wall exceeds `MAX_WALL_PIECES_PER_WALL` (T2's `TestPlace_Walls` is meant to keep it under); note in `roomDraft.ts` that the paint cap `MAX_FLOOR_HEXES = 65536` already admits 30k and that `contentGrid`'s `MAX_GRID_*` clamp rather than refuse; add `fixtures/bench-keep-30k.yaml` as a test fixture, kept current by hand on regeneration (README trade-off; the harness's live Open on the shelf is the real currency check).
 **Interfaces:** the bounds are the Law's, not a multiple of the fixture; the fixture test proves it sits under them.
 **Tests:** `draftFile.test.ts`: "imports the ceiling fixture with no refusal" and asserts its item count and envelope length are each under half the bound; a render test mounts `LayoutViewport` with the ceiling draft and asserts no refusal notice (wall pieces, grid clamp); `serialization.test.ts`: one over `MAX_ITEMS` is refused.
 **Behavior:** Open and Import YAML of the ceiling fixture succeed; the render path shows no refusal.
