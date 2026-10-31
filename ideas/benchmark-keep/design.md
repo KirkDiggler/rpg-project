@@ -86,7 +86,13 @@ not recorded.
 
 **Where numbers live.** Each run is one table in a comment on the story issue
 and the story body links the latest. The hot-spot list that seeds the two
-follow-on efforts is drawn from the baseline table, not from reading code.
+follow-on efforts is drawn from the table, not from reading code.
+
+**Incremental.** The table grows by rows as slices land: a slice posts the
+numbers it can produce the day it merges, the toolkit benches with the
+generator, the open and envelope figures with the shelf, the play and studio
+rows with the harness. No single run gates the follow-on stories, and a
+default is adjusted when a row shows it wrong.
 
 ## Rulings
 
@@ -95,6 +101,8 @@ follow-on efforts is drawn from the baseline table, not from reading code.
 | R1 | The generator mirrors FadedPez's keep: its named rooms around a courtyard with west and south grounds, doors between rooms, rather than a neutral layout. | settled | plan | KirkDiggler | 2026-10-30 |
 | R2 | The 30k ceiling is the same keep at a larger scale: one plan and door graph at both sizes, rooms scaled by the knob, grounds absorbing the remainder, one wall line per seam. Closes site-format O4. | settled | generator, fixtures | KirkDiggler | 2026-10-30 |
 | R3 | Props and monsters are placed to exercise the engine, not only the renderer: declared footprints in the majority, monsters at a density. | settled | generator | KirkDiggler | 2026-10-30 |
+| R4 | The five defaults stand as set: density, the supported envelope's bounds, the bench build mode, hardware-renderer runs only, numbers on the story issue. Each is adjusted when a measured row shows it wrong, not debated beforehand. | settled | defaults | KirkDiggler | 2026-10-31 |
+| R5 | Measurement is incremental: each slice records what it can the day it lands, and the follow-on stories open on the rows that exist, not on one baseline run. | settled | story sequence | KirkDiggler | 2026-10-31 |
 
 ## Open
 
@@ -105,9 +113,9 @@ follow-on efforts is drawn from the baseline table, not from reading code.
   finding, not a change here.
 - **O4 Runs on the wire.** Site format O5 stands; the atlas size the baseline
   records is the measurement it waits for.
-- **O5 Bench build versus the alternatives.** The bench mode is the default;
-  ungating the probe in shipped production, or signing the harness in
-  through Discord, are the roads not taken until the operator rules.
-- **O6 The supported envelope's bounds.** The item and character bounds are
-  defaults until the operator rules; a veto moves the bounds, not the rule
-  that the studio supports the ceiling.
+- **O5 Bench build versus the alternatives.** Settled by R4 as the bench
+  mode; the roads not taken (probe ungated in production, Discord sign-in in
+  the harness) reopen only if a measured row needs them.
+- **O6 The supported envelope's bounds.** Settled by R4 at the stated bounds;
+  a row that crosses them moves the bounds, not the rule that the studio
+  supports the ceiling.
