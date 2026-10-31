@@ -3,8 +3,8 @@
 **Authority:** [story #746](https://github.com/KirkDiggler/rpg-project/issues/746), including the operator's response-time/count agreement and [discard ruling](https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6536601319).
 **Goal:** configure an NPC response's activity and sustain count in Studio, trigger the response in Play, see it play and return to default.
 **Architecture:** carry the cue alongside the selected answer through the existing record/act path. Rendering owns execution through the existing sequencer and mixer; neither the selection algorithm nor gameplay waits for it.
-**Execution:** direct implementation, failing-first focused tests, one bounded independent review round at the appropriate release boundaries. No implementer delegation authorized. No new merge authorization.
-**Finish:** real Studio save/reopen/launch and two-client visible response demonstration; local/hosted gates and linked PRs; operator acceptance and explicit merge authorization remain required. Do not stop at a provider-only unit result.
+**Execution:** direct implementation, failing-first focused tests, one bounded independent review round at the appropriate release boundaries. No implementer delegation authorized. The operator subsequently authorized the merge wave; see the current checkpoint.
+**Finish:** real Studio save/reopen/launch and two-client visible response demonstration; local/hosted gates and linked PRs; operator acceptance and explicit merge authorization are recorded in the current checkpoint. Do not stop at a provider-only unit result.
 
 ## Constraints and decisions
 
@@ -134,7 +134,27 @@ Develop the consumer contract/counting first, then wire schema, behavior → enc
 
 Self-check: do not let the shared Say editor advertise a cue that its delivery path drops; carry spoken TableAnswer as well as nested Speech.Answer. Do not use the old blanket sustain-Infinity mixer setup for finite cues. Native mixer completion must handle single cycles and large updates. Do not restore the cancelled budget after movement. Do not treat an API-only pin or a preview's cached content as integration proof.
 
-## Current checkpoint — QA/review complete; waiting only for merge authorization
+## Current checkpoint — merge AUTHORIZED; ready for compaction
+
+KirkDiggler approved the inside-out wave in conversation; approval is recorded at
+https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6546010660 .
+The five implementation PRs have NOT yet been merged by this session. Resume
+with the authorized merge-out, not another approval request or review campaign.
+API/web stop at dev; no game/main release.
+
+NEXT FOCUS after merge-out: bring in more animations. The operator explicitly
+redirected away from the proposed paused-patrol feature: no concrete use case,
+and the relevant animation is not loaded. Do not implement route-trigger work.
+Inspect the preserved private library before proposing the next runtime slice.
+Archived folded-arms, hands-on-hips and prayer candidates are not automatically
+runtime-published; folded-arm thumb-loop polish was an existing caveat. Keep
+original donor/open Blender scenes and existing look/body/palette bytes intact.
+Private lab: rpg-game-assets/.worktrees/npc-idle-lab, detached at eed6de1;
+its .stage/npc-idle-lab/README.md and library/animation-donors/npc-activities-v1/
+hold the preservation/rig-family context. Only Thoughtful was published in the
+previous runtime slice. Select the next actual animation/use case with the
+operator after inspection; this redirect does not approve a speculative plan.
+
 
 Authorization request: https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6540819332
 Final checklist: https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1363#issuecomment-6540819150
@@ -184,7 +204,7 @@ not licensed models/textures/tracks. The diagnostic web refresh-probe worktree
 was removed; review worktrees remain for ordinary wave cleanup. Keep preview
 resources out of that cleanup until the operator asks otherwise.
 
-NEXT after explicit permission: read merge-out; verify heads/verdicts; publish
+NEXT (permission now recorded): read merge-out; verify heads/verdicts; publish
 behavior tag → encounter released behavior pin/tag → session released encounter
 pin/tag → API actual tags/dev → web dev. Refresh affected gates/head verdicts;
 no game release/dev→main promotion. Plans/evidence branch remains available for
