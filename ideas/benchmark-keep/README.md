@@ -42,23 +42,24 @@ flowchart TB
 
 | Component | Owns | Input → output |
 |---|---|---|
-| `keepgen/plan/keep.yaml` (toolkit, embedded) | the layout as data: rooms `{id, name, kind, width, depth, side, lighting}`, `doors [[a,b],…]`, `courtyard`, `grounds {west, south}`, `partyStart` room, `exits`, `palettes {kind: {props: [{assetRef, width, depth, blocksMovement, blocksLineOfSight}], monsters: [ref,…]}}` | an edit → a different site, no Go change |
+| `keepgen/plan/keep.yaml` (toolkit, embedded) | the layout as data: `name`, rooms `{id, name, kind, width, depth, side, lighting}`, `doors [[a,b],…]`, `courtyard`, `grounds {west, south}`, `partyStart` room, `exits`, `walls {assetRef, door assetRef}`, `palettes {kind: {props: [{assetRef, width, depth, blocksMovement, blocksLineOfSight}], monsters: [ref,…]}}`, `templates` (the stat blocks the monster palette names, emitted into the site) | an edit → a different site, no Go change |
 | `keepgen.Layout` | where each room sits | plan + `Options{Hexes}` → room rectangles in axial cells; linear scale `min(1.5, sqrt(Hexes / planHexes))`; grounds sized so the total equals `Hexes` |
 | `keepgen.Place` | every placed thing | layout + `Options{Seed, PropDensity, GroundsDensity, MonsterDensity}` → walls (one line per seam, quarter-line geometry so no wall covers a cell centre), one opening and door per plan door, `scene.items` with `transform`, `propDeclarations` for blockers, `monsterDeclarations` with `startingCell`, `doorBindings` all `{}` (open) |
 | `keepgen.Emit` | the bytes | placed site → v5 YAML; regions as canonical row runs via the exported encoder; header comment carrying the command line; deterministic ordering |
 | `keepgen.Prove` | the refusal | bytes → `dungeonspec.Load`; every region reachable from `partyStart` through doors; at least four free seats; else an error naming the first failing rule and no file |
 | `cmd/keepgen` | the command line | flags `-plan -hexes -seed -props -grounds-props -monsters -out` → a file, or the proof error on stderr and exit 1 |
-| `dungeonspec.RowsOf` (exported) | one spelling of a cell set | `[]RoomCell` → `[]RoomCellRow`, rows ascending, spans merged |
-| api `content/` + `NewFileRegistry` | the shelf | files whose `key` equals the file name → compiled, atlas-projected at boot, listed by lobby `ListDungeons` because root version is 5 |
+| `dungeonspec.CellRows` (exported) | one spelling of a cell set | `[]RoomCell` → `[]RoomCellRow`, rows ascending, spans merged |
+| api `content/bench/` | the fixtures at rest | files whose `key` equals the file name, off the shelf: `NewFileRegistry` and `SeedShipped` read only the top level, so boot and tests never compile them |
+| api `NewFileRegistry` | the shelf | top-level files → compiled, atlas-projected at boot, listed by lobby `ListDungeons` because root version is 5; one log line `content registry: compiled <n> files in <ms>ms` |
 | api `bench_fixtures_test.go` | currency of the shelf copies | `keepgen.Generate` with each file's recorded options → bytes equal to the shelf file |
 | web `serialization.ts` caps | what the studio refuses by size | `MAX_ITEMS` ≥ 4,000, `MAX_JSON_LENGTH` ≥ 2,500,000 (Law Supported envelope); `MAX_WALL_PIECES_PER_WALL` in `structuralWallEditing.ts` admits the ceiling's longest wall |
-| web `devMode.ts` predicate | whether a build is development-like, for the harness's gates only | `import.meta.env.MODE` → `isDevLike()`; `development` and `bench` are true, `production` false; read by the dev player fallback, the player override, the marks and the probe mounts |
+| web `devMode.ts` predicate | whether a build is development-like, for the harness's gates only | `import.meta.env.MODE` → `isDevLike()`; `development` and `bench` are true, `production` false; read by the dev player fallback, the player override, the dev player's composition world, the marks and the probe mounts |
 | web `performance.mark` points | what the harness can time | marks at open start, decoded, imported, first paint; stroke commit, painted; preview sent, returned; atlas requested, received; scene built; first frame |
 | web `DevPerfProbe` mount | frame-time and draw-call sampling in current play and the studio 3D view | `?perfProbe` → `PERF_PROBE_RESULT:` console line and `window.__rpgPerfProbeLatest`; mounted when `isDevLike()` |
 | web regions list (`LayoutRoomList.tsx`) | the mark the regions-list row reads | `studio:regions:rendered` after its commit |
 | `scripts/dev-env.sh` bench web mode | a measurable web | `RPG_WEB_MODE=bench` → `vite build --mode bench` then `vite preview` on the env's web port |
 | api `NewFileRegistry` timing line | the server boot row | one log line `content registry: compiled <n> files in <ms>ms` |
-| `tools/browser/bench/run.sh` | the one command | env name + fixture keys → env up, fixtures written into `.runtime/<env>/sources/rpg-deployment/content/` (seeding never overwrites, so the copy is explicit), api restarted, drivers run, table printed |
+| `tools/browser/bench/run.sh` | the one command | env name + fixture keys → env up, each key copied from `rpg-api/content/bench/` (or `content/` for a shelf site) flat into `.runtime/<env>/sources/rpg-deployment/content/` (seeding never overwrites, so the copy is explicit), api restarted, drivers run, table printed; a mark that never fires reads `absent` and the run goes on |
 | `keepgen.OptionsFromHeader` | the recorded options | fixture bytes → `Options` parsed from the header comment, so a shelf copy can be regenerated and compared |
 | `tools/browser/bench/studio.mjs`, `play.mjs` | the drive | Playwright on a hardware renderer (headed, or the GPU flags) → marks, probe result, polygon count, JS heap; the `WEBGL_debug_renderer_info` string is recorded and a SwiftShader or llvmpipe run is refused; play started through the lobby picker by key |
 | `tools/browser/bench/report.mjs` | the table | marks + probe + api log lines `✓ <method> completed in <ms>ms` + toolkit bench output → one markdown table per fixture beside R1's budgets |
@@ -127,7 +128,7 @@ can claim one.
 | Same plan at both scales (R2) | size is the only variable between fixtures | the ceiling is mostly grounds; a 60-room castle is not measured | an outer ring of new rooms |
 | Palette refs pinned in the plan | toolkit stays catalog-ignorant | a ref the web drops breaks Open; the api test does not catch it | generator reads the catalog |
 | Proof before write | the shelf never carries a file that refuses boot | generation runs a full compile; seconds at 30k | trust the emitter |
-| Fixtures on the api shelf | one Open path, one play path | every api boot compiles and holds both atlases; about a third of a second and a megabyte; every encounter repin in the api regenerates both files when the emitter's output shifts, which a toolkit golden surfaces in the PR that shifts it; the web keeps one test copy of the ceiling by hand | a web-only fixture or a dev-env drop |
+| Fixtures in the api repository, off the shelf (R6) | one Open path, one play path on the bench env; no boot or test pays the ceiling's projection | the operator's look needs the bench env, not :3030; every encounter repin in the api regenerates both files when the emitter's output shifts, which a toolkit golden surfaces in the PR that shifts it; the web keeps one test copy of the ceiling by hand | both keeps on the main shelf, seconds per boot everywhere; a web-only fixture |
 | Supported envelope as law | the ceiling opens and the caps stop being a benchmark knob | the autosave and history costs become visible (O3); the bounds are the operator's to move (O6) | caps as a multiple of the fixture; leave caps, record "refused" |
 | Bench build mode | R1's play budget is measured on minified code with the dev player and the probe | one predicate for the harness's gates; every other dev gate stays development-only; one more vite mode (O5) | ungate the probe in production; Discord sign-in in the harness |
 | Harness in game-dev | owns the env, the ports and the browser already | the web still needs marks and a probe mount | a web-only script |
@@ -163,9 +164,9 @@ can claim one.
 |---|---|
 | plan, layout, placement, emit, proof | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/keepgen/` |
 | command | `rpg-toolkit/rulebooks/dnd5e/encounter/cmd/keepgen/` |
-| row-run encoder | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/single_room_cells.go` (`RowsOf`) |
+| row-run encoder | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/single_room_cells.go` (`CellRows`) |
 | 30k budget pin, load benches | `rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec/site_scale_test.go` |
-| shelf, registry | `rpg-api/content/`, `rpg-api/internal/dungeons/registry.go` |
+| shelf, registry, fixtures at rest | `rpg-api/content/`, `rpg-api/content/bench/`, `rpg-api/internal/dungeons/registry.go` |
 | shelf currency test | `rpg-api/internal/dungeons/bench_fixtures_test.go` |
 | studio caps, catalog check | `rpg-dnd5e-web/src/concepts/world-building/serialization.ts`, `structuralWallEditing.ts` |
 | dev-like predicate, auth fallback, overrides | `rpg-dnd5e-web/src/devMode.ts`, `src/api/auth.ts`, `src/App.tsx` |
