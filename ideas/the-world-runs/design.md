@@ -57,9 +57,17 @@ stands). A beat a step lands is matched in the same pass, bounded the way a
 turn's intents are bounded today. Async processing is the recorded escape
 hatch, not the design.
 
-**A creature's clock is content** (ruled on rpg-project#690, 2026-10-27). The
-world round, the fight round and an authored bell are beats a state may
-listen to. There is no second `Tick`.
+**A creature's clock is content** (ruled on rpg-project#690, 2026-10-27, and
+R5 here). Clocks are plural and named; `world` is the default. An area can
+declare its own free-roam clock, raised by the paces and actions of the
+members in it; a creature listens to the clock it is seated on; a portal or
+a stair is a transfer between clocks. Fights are plural the same way: a
+fight is a clock, two fights form when two contacts happen out of each
+other's reach, and contact between them (a door opening with a fight on
+either side) merges them. One fight per encounter is today's policy, never
+this design's assumption. The due heap, the `time` beat and every stamp on
+the record carry the clock's name, so "within N rounds" ages on the
+creature's own clock.
 
 **The roll is seen, and it replays.** Every pick is still a roll shown on its
 beat (creature-table R7). The roller is seeded; the seed and the draw count
@@ -251,13 +259,31 @@ with a beat saying so, the anti-spin bound a fight turn has.
 ### 3. Triggers, and clocks as content
 
 The beats a state may listen for are the ones the record already writes,
-named in the vocabulary the encounter supplies: `time` (the world round, the
-default), `heard` with `within` hexes or regions, `deed` with `within` and
-the deed word (`attacked`, `fled`, `door opened`), `seen` (a sighting of an
-enemy band), `fact` (learned, the `until` grain), and `clock` with a word:
-`world` (every raise), `fight` (every fight round, rpg-project#690's reserves
-case, rpg-project#661), `bell:<ref>` (an authored prop's deed). A `clock`
-word is a beat kind like any other; there is no second `Tick`.
+named in the vocabulary the encounter supplies: `time` (a round of the clock
+the creature is seated on, the default), `heard` with `within` hexes or
+regions, `deed` with `within` and the deed word (`attacked`, `fled`, `door
+opened`), `seen` (a sighting of an enemy band), `fact` (learned, the `until`
+grain), and `clock` with a name: `world` (every raise of the default clock),
+`fight` (every round of the fight the creature's faction is engaged in,
+rpg-project#690's reserves case, rpg-project#661), `bell:<ref>` (an authored
+prop's deed), or an area clock's name. A `clock` name is a beat kind like
+any other.
+
+**Clocks are plural (R5).** `play/clock` already keeps progress per driver
+in one `Tick` and transfers members between a `Tick` and a `Turn`; the
+encounter holds one `Tick` today by policy. Under R5 the encounter holds a
+named `Tick` per clock: `world` always, plus one per area that declares its
+own time (a tomb, an underground), created when the first member enters and
+seated with the creatures placed in its regions. A member raises the clock
+it stands on; a party split across two areas runs two clocks that never
+hear each other. A portal or stair is a `Transfer` between two `Tick`s, the
+move the fight bubble already makes. Fights are the same shape: the
+one-bubble policy in `form` (`clocks.go` "ONE bubble per encounter") lifts
+in its own slice, with the Merge the code's comments reserve for contact
+between two running fights, and a fight addressed through one of its
+members. Every key the engine holds (the due heap, a listener's `time`, a
+stamp on the record, `PaceCells`) names its clock from the first slice, so
+the lift is content and a transfer, never a rewrite.
 
 Scope is evaluated at match time against the beat's cell through the field's
 placement index, so "who heard this" costs the listeners for `heard` filtered
@@ -361,9 +387,10 @@ additive. Neither is in the first slices.
 
 ## Non-goals
 
-An async engine. Concurrent fights (one initiative per encounter until a
-scene needs two, rpg-project#690). Wall-clock time or time of day. NPC
-schedules beyond what a `clock` trigger and a `wake_in` express. A "mind"
+An async engine. Wall-clock time or time of day. NPC schedules beyond what
+a `clock` trigger and a `wake_in` express. Reconciling two clocks' stamps
+against each other (a `within` window is read on its own clock; a merge
+seats the joined fight at the leading clock's now, as a join does today). A "mind"
 object: the machine is the skeleton, the table is still the surface
 (creature-table R3). Changing how sight is computed (S7 does that).
 
@@ -377,7 +404,7 @@ Recorded on the lane issue as they land; each row carries its words.
 | R2 | **One deterministic pass.** Machines step in seat order inside the raising call; no goroutines (C5 stands); async is the recorded escape hatch, reopened only by a measured number. | yes |
 | R3 | **The primitive.** A fresh, rulebook-agnostic `mind/machine` with the shape `examples/effects/machine` proved (recipe, guard tree, compile, blob) and a bus-free `Step`, plus `Due` and `Listeners` as plain data structures; nothing moves out of the example; the encounter supplies the vocabulary. | ruled: fresh take, no baggage |
 | R4 | **The default recipe.** A creature with a table and no recipe runs `watch: on time → pick time`; every shipped castle row plays the same; recipes layer like tables (creature-table R4). | yes |
-| R5 | **Clocks are content, as triggers.** `on: clock` with the words `world`, `fight`, `bell:<ref>` applies rpg-project#690; there is no second `Tick`. | yes |
+| R5 | **Clocks are plural, named content, as triggers.** `world` is the default; an area can declare its own free-roam clock, raised by the members in it; a creature listens to the clock it is seated on; a portal is a transfer. Fights are plural the same way, two forming out of each other's reach and merging on contact; one fight per encounter is policy, never this design's assumption. Every engine key names its clock from the first slice. | ruled: "that matches what's in my head" |
 | R6 | **The seed.** `dice.SeededRoller`; the record carries `Dice{Seed, Draws}`; the host's roller deals the seed at launch; the world's dice are seeded, the players' are not; replay is a test. | yes |
 | R7 | **The memory-speed instance is its own slice**, host-side behind `EncounterRepository`, ordered after the garrison numbers; nothing in R1–R6 assumes it. | yes |
 | R8 | **Finish line.** On the keep with a hundred-creature garrison (twenty on routes): a Move that wakes nobody costs what an empty keep's Move costs (S7's bar, 100 ms); a raise's cost grows with how many woke, never with the roster; a replay reproduces the picks; the castle's harness is unchanged. Numbers on the story. | yes |
@@ -404,7 +431,14 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
    test (§5). Session and api pass-through.
 6. **S6 Author and read.** Studio recipe authoring, panel state change,
    the additive beat proto. Visible; walked.
-7. **S7 The memory-speed instance.** api holds the encounter in memory and
+7. **S7 Area clocks.** A named `Tick` per area that declares its own time,
+   seated at entry, transfer at a portal or stair; the tomb's monsters tick
+   on the tomb's clock (R5).
+8. **S8 Plural fights.** The one-bubble policy lifts: two fights form out
+   of each other's reach, a fight is addressed through a member, and
+   contact between two fights merges them (the door opening). Sized large
+   by rpg-project#690's reading.
+9. **S9 The memory-speed instance.** api holds the encounter in memory and
    checkpoints (§7). Taken only if S1–S5's numbers say the blob round trip
    is what remains.
 
@@ -418,3 +452,5 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
 - The same record replays to the same picks.
 - rpg-project#690's reserves case runs as an authored `clock: fight`
   recipe with no engine special case.
+- A tomb's garrison ticks on the tomb's clock while the overworld stands
+  still, and two fights separated by a door merge when it opens (S7, S8).
