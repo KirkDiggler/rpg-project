@@ -1,0 +1,101 @@
+{
+  "undoRedo": true,
+  "saveReopen": true,
+  "playing": {
+    "id": "walker-b",
+    "x": 4.330127018922193,
+    "z": 7.5,
+    "held": false,
+    "url": "/models/synty/npcs/palettes/goblin-humans-v2/goblinPrisoner02/03-b.glb",
+    "actions": [
+      {
+        "clip": "Idle_Thoughtful",
+        "duration": 2.566666603088379,
+        "repetitions": 3,
+        "loop": -1,
+        "time": 0,
+        "rate": 1
+      }
+    ],
+    "activity": "dnd5e:activities:thoughtful",
+    "requested": "dnd5e:activities:thoughtful",
+    "phase": "sustain",
+    "serial": 3,
+    "cueId": "36:ca46f56a-1259-4ca1-a924-31ae6f10e3b6:01M68AVZHD7PWWMQVT8SAPY5N9#0",
+    "walkingReady": false
+  },
+  "returned": {
+    "at": 23751.600000023842,
+    "entities": [
+      {
+        "id": "char_9cac0519-7055-461e-b277-811d1f315e0b",
+        "x": 0,
+        "z": 0,
+        "held": false,
+        "url": "/models/synty/characters/customization/human-v1/bodies/human-bard-body.glb",
+        "actions": [
+          {
+            "clip": "Idle_Relaxed",
+            "duration": 1.8333333730697632,
+            "repetitions": "infinite",
+            "loop": 7,
+            "time": 0.6743663884997371,
+            "rate": 1
+          }
+        ]
+      },
+      {
+        "id": "walker-a",
+        "x": 8.660254037844386,
+        "z": 0,
+        "held": false,
+        "url": "/models/synty/npcs/goblin-knight-01.glb",
+        "actions": [
+          {
+            "clip": "Idle_Relaxed",
+            "duration": 1.8333333730697632,
+            "repetitions": "infinite",
+            "loop": 7,
+            "time": 0.6743663884997371,
+            "rate": 1
+          }
+        ],
+        "activity": "dnd5e:activities:relaxed",
+        "requested": "dnd5e:activities:relaxed",
+        "phase": "sustain",
+        "serial": 1,
+        "walkingReady": false
+      },
+      {
+        "id": "walker-b",
+        "x": 4.330127018922193,
+        "z": 7.5,
+        "held": false,
+        "url": "/models/synty/npcs/palettes/goblin-humans-v2/goblinPrisoner02/03-b.glb",
+        "actions": [
+          {
+            "clip": "Idle_Relaxed",
+            "duration": 1.8333333730697632,
+            "repetitions": "infinite",
+            "loop": -1,
+            "time": 0.23719999998807906,
+            "rate": 1
+          }
+        ],
+        "activity": "dnd5e:activities:relaxed",
+        "requested": "dnd5e:activities:relaxed",
+        "phase": "sustain",
+        "serial": 5,
+        "walkingReady": false
+      }
+    ],
+    "story": [
+      "JoinToolkit Sandbox Bard joins",
+      "JoinWalker A - Knight joins",
+      "JoinWalker B - Prisoner joins",
+      "Speak · perceptionToolkit Sandbox Bard to Walker B - Prisoner: \"Tell me what happened.\" — perception check Walker B - Prisoner: \"Hmm. Let me think.\"perception 5 vs DC 1 — beatenBreakdown1d20 [4] + 1 (Perception) = 5 vs 1 · beaten",
+      "HeardToolkit Sandbox Bard hears voice — 0 cells away"
+    ]
+  },
+  "errors": []
+}
