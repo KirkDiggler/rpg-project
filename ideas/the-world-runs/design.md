@@ -70,8 +70,11 @@ the record carry the clock's name, so "within N rounds" ages on the
 creature's own clock.
 
 **The roll is seen, and it replays.** Every pick is still a roll shown on its
-beat (creature-table R7). The roller is seeded; the seed and the draw count
-live on the record. The same record replays to the same choices.
+beat (creature-table R7), and the temper deal at the door is one too. The
+dice stay as random as they can be (the host's crypto roller, the only
+production roller). Reproducibility comes from the record, not a seed: a
+replay reads the record's own rolls back in order. No seeded roller (R6,
+"we do not have a use case for seeding yet").
 
 **No row gets worse.** Every shipped `time` table is a one-state machine
 whose `time` transition rolls it. The castle plays the same.
@@ -334,19 +337,20 @@ A state's `pick` names a table key, so the author's existing vocabulary
 is only the skeleton that says which key applies now. Nothing in
 `mind/behavior` changes.
 
-### 5. The seed
+### 5. Reproducible, not seeded
 
-`dice` gains `SeededRoller` (PCG, `Seed uint64`, `Draws uint64`), the second
-production roller. The record (`EncounterData`) carries `Dice{Seed, Draws}`;
-`LoadEncounter` constructs the roller from it when present, and the host's
-roller (crypto, as today) deals the seed at launch when absent. Session's
-`diceSeam` is unchanged: it already wraps whatever roller the config holds
-per call. A replay test on the garrison: load the record at round 0, raise
-to round 20, compare the pick beats to the record's.
-
-Player rolls (attacks, saves, checks) stay on the host's roller. Only the
-world's own dice are seeded; the players' are the players'. That is a
-ruling (R6).
+No seeded roller. The dice stay the host's crypto roller, as random as they
+can be. What makes a run reproducible is that every world roll is already on
+the record: a pick is a roll shown with its arithmetic (creature-table R7),
+a temper deal at the door is a beat (`dealTemperFor`,
+`worldtime.go:544`), a driven attack is an attack beat. A replay is a
+roller that reads those rolls back in order (the shape of
+`examples/world/scripted.Roller`, a test double today) under the same
+record from round 0; the test compares the beats it lands to the record's.
+Any world roll that is not on the record is a defect this test finds, which
+is the "roll is seen" law made checkable. Session's `diceSeam` and the
+config's injection are unchanged. A seed is a mechanism a use case has not
+brought (R6).
 
 ### 6. Sight
 
@@ -383,7 +387,7 @@ additive. Neither is in the first slices.
 | sight per driven walk | whole roster | observers of the cells crossed (S7) |
 | a raise with 100 creatures, 20 on routes, nothing heard | 100 views + 100 picks + 21 roster refreshes | 20 views + 20 picks + 20 bounded refreshes |
 | load | rebuild the field's placement index | plus rebuild due and listeners, O(members) |
-| record | `Table`, `Temper`, `Dwell` per member | plus `state`, `bag`, `due` per member; `Dice{Seed, Draws}` once |
+| record | `Table`, `Temper`, `Dwell` per member | plus `state`, `bag`, `due` and the clock's name per member |
 
 ## Non-goals
 
@@ -405,7 +409,7 @@ Recorded on the lane issue as they land; each row carries its words.
 | R3 | **The primitive.** A fresh, rulebook-agnostic `mind/machine` with the shape `examples/effects/machine` proved (recipe, guard tree, compile, blob) and a bus-free `Step`, plus `Due` and `Listeners` as plain data structures; nothing moves out of the example; the encounter supplies the vocabulary. | ruled: fresh take, no baggage |
 | R4 | **The default recipe.** A creature with a table and no recipe runs `watch: on time → pick time`; every shipped castle row plays the same; recipes layer like tables (creature-table R4). | yes |
 | R5 | **Clocks are plural, named content, as triggers.** `world` is the default; an area can declare its own free-roam clock, raised by the members in it; a creature listens to the clock it is seated on; a portal is a transfer. Fights are plural the same way, two forming out of each other's reach and merging on contact; one fight per encounter is policy, never this design's assumption. Every engine key names its clock from the first slice. | ruled: "that matches what's in my head" |
-| R6 | **The seed.** `dice.SeededRoller`; the record carries `Dice{Seed, Draws}`; the host's roller deals the seed at launch; the world's dice are seeded, the players' are not; replay is a test. | yes |
+| R6 | **Reproducible, not seeded.** No seeded roller; the dice stay as random as they can be; every world roll is on the record and a replay reads them back; the replay test is the "roll is seen" law made checkable. | ruled: "as random as we can… also reproducible… no use case for seeding yet" |
 | R7 | **The memory-speed instance is its own slice**, host-side behind `EncounterRepository`, ordered after the garrison numbers; nothing in R1–R6 assumes it. | yes |
 | R8 | **Finish line.** On the keep with a hundred-creature garrison (twenty on routes): a Move that wakes nobody costs what an empty keep's Move costs (S7's bar, 100 ms); a raise's cost grows with how many woke, never with the roster; a replay reproduces the picks; the castle's harness is unchanged. Numbers on the story. | yes |
 
@@ -417,8 +421,7 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
    (minds and routes on a share of placements); the bench harness measures
    a raise today with 100 creatures and 20 routes. Benchmark keep O1
    answered. Numbers only.
-2. **S2 `mind/machine` and the seed.** The primitive (§1), one PR; `dice.SeededRoller`,
-   one PR. Toolkit, one module per PR.
+2. **S2 `mind/machine`.** The primitive (§1), one toolkit PR, one module.
 3. **S3 The encounter wakes who is due.** `Machine` on the member, `wake`
    replaces `worldThinks`, the default recipe (§4), `Dwell` as a timer, the
    transition beat, indexes rebuilt at load. Castle harness green; garrison
@@ -427,8 +430,9 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
    `seen`, `fact`, `clock` as wake beats (§3); the reserves' fight-round
    trigger (rpg-project#661) as the first authored recipe; `dungeonspec`
    words.
-5. **S5 The record's dice.** `Dice{Seed, Draws}` on the record, the replay
-   test (§5). Session and api pass-through.
+5. **S5 Replay from the record.** The read-back roller and the replay test on
+   the garrison (§5); every world roll it finds missing from the record is
+   a finding fixed in the slice. Encounter only.
 6. **S6 Author and read.** Studio recipe authoring, panel state change,
    the additive beat proto. Visible; walked.
 7. **S7 Area clocks.** A named `Tick` per area that declares its own time,
@@ -449,7 +453,8 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
 - A sleeping barracks is never visited; a dropped shield wakes the gate in
   the same raise.
 - The castle plays as it does today on the default recipe.
-- The same record replays to the same picks.
+- The same record replays to the same picks from its own recorded rolls,
+  with no seed anywhere.
 - rpg-project#690's reserves case runs as an authored `clock: fight`
   recipe with no engine special case.
 - A tomb's garrison ticks on the tomb's clock while the overworld stands

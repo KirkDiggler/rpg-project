@@ -27,9 +27,9 @@ their rows and move to `alert`. The sight that refreshes is the sight of
 whoever could see the cells they crossed.
 
 Everything that moved is on the record as beats, the way picks already are,
-with the state a creature left and the state it entered. The dice are one
-seeded roller whose seed and draw count are on the record, so the same keep
-replayed from the same record makes the same choices.
+with the state a creature left and the state it entered. Every roll the
+world makes is on the record too, so the same keep replayed from the same
+record makes the same choices, and the dice stay as random as they can be.
 
 ## What the operator sees
 
