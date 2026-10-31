@@ -17,7 +17,7 @@ posts its before and after rows from `tools/browser/bench/run.sh bench` on
 
 **Non-goals.** The studio's own per-commit copies and polygons; play's one
 mesh per tile and GLB clone per prop; distributed locking; preferences other
-than discovery sharing (O4); the approach's stopping rule beyond O1's default.
+than discovery sharing (O4); a reach other than R4's constant.
 
 **Repositories and order.** Develop outside-in, merge inside-out.
 
