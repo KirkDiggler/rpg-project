@@ -27,15 +27,15 @@ flowchart LR
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
-| R1 | settled | B whole-weapon framing; reviewed three weapons and corrected axe; remaining batch still requires visual verification | KirkDiggler | 2026-10-30 |
+| R1 | settled | B whole-weapon framing across the approved 30-weapon batch, including corrected axe and warhammer orientation | KirkDiggler | 2026-10-30 |
 | R2 | settled | Existing models/appearances, not newly authored skins | KirkDiggler | 2026-10-30 |
 | R3 | settled | Accepted static 512px item-art study; separate from world captures and browser character portraits | KirkDiggler | 2026-10-30 |
 | R4 | settled | Reuse 5195 rather than another persistent preview server | KirkDiggler | 2026-10-30 |
 | R5 | settled | Existing provider/web publication and ownership boundaries remain in force | Existing workspace contract | 2026-10-30 |
 | R6 | settled | Smaller club than greatclub; warhammer striking-face-down refinement to R1 | KirkDiggler | 2026-10-30 |
 
-## Open
+## Presentation and extension boundaries
 
-- Remaining weapon shapes need visual verification against R1 before publication.
-- Joined equipment display size/layout is judged with the new imagery; no final UI dimensions or inventory redesign are settled by the source-image choice.
+- New or changed weapon shapes need visual verification against R1 before publication.
+- Owned carried images use 128px frames; equipped images use 160px frames, reduced to 128px on narrow screens. The equipment panel stacks through 700px inclusive. These accepted consumer choices do not impose dimensions on vendor rows or other item viewers.
 - Catalog version migration and exact release adoption are implementation contracts owned by the provider and consumer, not new gameplay or RPC surfaces.
