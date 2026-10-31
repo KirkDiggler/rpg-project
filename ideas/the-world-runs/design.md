@@ -160,9 +160,10 @@ is addressed.
 ### 1. The primitive: `mind/machine`
 
 A new toolkit module beside `mind/behavior`, rulebook-agnostic (primitives
-law). It lifts from `examples/effects/machine` the recipe, the guard tree,
-compile-against-a-vocabulary and the blob, and changes one thing: **the
-instance has no bus.**
+law), written fresh (R3: "a fresh take with no baggage"). Its shape is the
+one `examples/effects/machine` proved: the recipe, the guard tree,
+compile-against-a-vocabulary and the blob. Nothing is moved out of the
+example, and one thing is different from it: **the instance has no bus.**
 
 ```go
 // Program is a compiled recipe. Step runs the current state's transitions on
@@ -195,9 +196,9 @@ type Listeners[K comparable] struct{ ... }  // beat → []K in insertion order
 func (l *Listeners[K]) Set(k K, beats []Beat); func (l *Listeners[K]) For(beat Beat) []K
 ```
 
-The example's bus binding (`Apply`, `Subscribe`, `OnTransition`) stays in
-the example as an adapter over `Step`; the conditions story (rpg-project#703)
-decides whether it moves. The vocabulary (`Vocabulary{Facts, Beats}`) loses
+The example and its bus binding (`Apply`, `Subscribe`, `OnTransition`)
+stay as they are; the conditions story (rpg-project#703) decides whether it
+ever adopts `mind/machine`. The vocabulary (`Vocabulary{Facts, Beats}`) loses
 `Subscribe` and keeps the fact readers and the beat's `About` selector.
 
 **Refusals.** Compile refuses an unknown beat, an unknown fact, a transition
@@ -374,7 +375,7 @@ Recorded on the lane issue as they land; each row carries its words.
 |---|---|---|
 | R1 | **The shape.** A creature on the world clock is a machine whose current state declares what it listens to; the raise wakes only who is due or addressed; the roster is never walked when the clock moves. Creature-table §5 "when time passes, the world thinks" is amended to "the world wakes who is due". | yes |
 | R2 | **One deterministic pass.** Machines step in seat order inside the raising call; no goroutines (C5 stands); async is the recorded escape hatch, reopened only by a measured number. | yes |
-| R3 | **The primitive.** The recipe, guard tree, compile and blob of `examples/effects/machine` are lifted into a rulebook-agnostic `mind/machine` with a bus-free `Step`, plus `Due` and `Listeners` as plain data structures; the example keeps its bus adapter; the encounter supplies the vocabulary. | yes |
+| R3 | **The primitive.** A fresh, rulebook-agnostic `mind/machine` with the shape `examples/effects/machine` proved (recipe, guard tree, compile, blob) and a bus-free `Step`, plus `Due` and `Listeners` as plain data structures; nothing moves out of the example; the encounter supplies the vocabulary. | ruled: fresh take, no baggage |
 | R4 | **The default recipe.** A creature with a table and no recipe runs `watch: on time → pick time`; every shipped castle row plays the same; recipes layer like tables (creature-table R4). | yes |
 | R5 | **Clocks are content, as triggers.** `on: clock` with the words `world`, `fight`, `bell:<ref>` applies rpg-project#690; there is no second `Tick`. | yes |
 | R6 | **The seed.** `dice.SeededRoller`; the record carries `Dice{Seed, Draws}`; the host's roller deals the seed at launch; the world's dice are seeded, the players' are not; replay is a test. | yes |
