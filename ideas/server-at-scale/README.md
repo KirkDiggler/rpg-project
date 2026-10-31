@@ -70,7 +70,7 @@ Refusals, one per boundary:
 - The web does not compute reach; it shows the rows the server offers and turns a click on a far target into a Move.
 - The api does not compute options; it converts and locks.
 - `readSpeakMenu` does not ask about a target outside reach, and does not offer what the member merely remembers.
-- The Speak door does not keep its own notion of reach; it refuses through `refuseOutOfReach` with the reach the session passed.
+- The Speak door does not keep its own notion of reach; it refuses through `refuseOutOfReach` with the reach the session passed, after its shown and witness checks, so a refusal never tells a probe that a hidden far thing exists.
 - The locker does not take a key wider than the session for a session verb.
 - The session does not write character configuration.
 - `OptionsFor` and `PropOptionsFor` do not project an atlas to decide what the member can be shown.
@@ -153,7 +153,7 @@ its own source, and the projection is downstream of knowledge.
 | concern | path |
 |---|---|
 | speak menu, bounded by reach | `rpg-toolkit/rulebooks/dnd5e/session/offers.go` (`compileOffersFor`, `readSpeakMenu`, `speakableProps`), `afford.go` (`Afford`, `speakRowOnTheWorldClock`); `rpg-toolkit/rulebooks/dnd5e/encounter` new `reach.go` (`WithinReach`) |
-| options, the oracle, reach | `rpg-toolkit/rulebooks/dnd5e/encounter/option.go` (`OptionsFor`, `PropOptionsFor`, `speakableProp`), `hold.go` (`showsCellTo`, `showsAnyCellTo`, `refuseOutOfReach`, `refuseOutOfReachCell`), `errors.go` (`ErrOutOfRange`), `speak.go` (`SpeakInput`) |
+| options, the oracle, reach | `rpg-toolkit/rulebooks/dnd5e/encounter/option.go` (`OptionsFor`, `PropOptionsFor`, `speakableProp`), `hold.go` (`showsCellTo`, `showsAnyCellTo`, `refuseOutOfReach`, `refuseOutOfReachCell`), `errors.go` (`ErrOutOfRange`); `Speak` and `SpeakInput` are in `option.go` |
 | placement index, projection, the mask | `rpg-toolkit/rulebooks/dnd5e/encounter/atlas.go` (`Atlas`, `placedCellsOf`), `placed_props.go` (`placedCells`, `footprintObservationCells`), `structural_walls.go` (`wallFootprintCells`), `projection.go` (`undiscoveredFrom`), `watchzones.go` (`VisibleCellsFor`, `WatchZonesFor`) |
 | sweep and knowledge | `rpg-toolkit/rulebooks/dnd5e/encounter/roomknowledge.go` (`discoverCells`, `learnCells`, `cellFold`), `roomreveal.go` (`appendCellsRevealedBeat`), `encounter.go` (`rebuildPercepts`), `board.go` (`refreshSight`), `data.go` (`sight_sweeps`) |
 | preferences in the session | `rpg-toolkit/rulebooks/dnd5e/session/exploration.go` (`ExplorationData`, `ExplorationRepository`, `SetDiscoverySharing`), `session.go` (`Config.Explorations`) |
