@@ -68,7 +68,7 @@ S2 web → S3 web → S3 game-dev → S4.
 | B11 | The web exposes `performance.mark` points (behind `?perfMarks`) and the perf probe (behind `?perfProbe`) in current play, the studio canvas and the studio 3D view, whenever the build is development-like. | Law Harness, Law Bench build |
 | B12 | One command brings up a bench env on its own ports, writes the fixtures into that env's content dir, builds the web in bench mode, drives studio and play on a hardware renderer and refuses a software one, and prints one table per fixture with R1 budgets beside the rows. | Law Harness |
 | B13 | The table carries: file (bytes, geometry bytes, envelope chars, hexes, regions, props, monsters); toolkit (compile, derivation, load ms); server (registry compile ms from the timing line, GetAtlas ms and bytes, validate-only PutDungeon ms, Move ms); studio (open → first paint ms, polygon count, stroke latency ms, preview round-trip ms, regions-list render ms, JS heap); play (atlas → first frame ms, frame p50/p95 ms, draw calls, triangles, geometries, JS heap, renderer string). | Law Harness |
-| B16 | A `bench` vite mode builds a minified bundle in which `isDevLike()` is true; `production` keeps it false; `api/auth.ts`, `App.tsx` and the probe mounts read the predicate and nothing else reads `MODE` for a gate. | Law Bench build, O5 |
+| B16 | A `bench` vite mode builds a minified bundle in which `isDevLike()` is true; `production` keeps it false; the G12 gates read the predicate and every other development-only gate keeps its own development check, so the bench bundle carries no dev tooling. | Law Bench build, O5 |
 | B14 | Each run is a comment on #740; the story body links the latest; the hot-spot list is drawn from it. | Law Where numbers live |
 | B15 | A `convert-v4` command converts an old-dialect export in place with the existing converter, and a how-to names it. | story S0 |
 | K1 | Castle goldens, the QA castle routes and every existing shelf file keep compiling and playing. | must keep working |
@@ -106,10 +106,11 @@ Probe reports (case file): the design PR thread on rpg-project.
 | G6 fixture keys | `bench-keep`, `bench-keep-30k`; `^[a-z0-9-]+$` holds | Law Shelf |
 | G7 which monsters | the castle's refs: `guard`, `knight`, `commoner`, `prisoner`; barracks and gatehouse take guards and knights, service rooms commoners, the prison prisoners | Law Monsters |
 | G8 lighting per room | the plan gives each room an intensity; default 1 for halls, 0.6 for service rooms and passages, 0.3 for the crypt, mausoleum and hidden stash; grounds 1 | Law Plan |
-| G9 production web in dev-env | `RPG_WEB_MODE=preview` runs `npm run build` then `npx vite preview --host --port <web port>` with the same `VITE_API_HOST` | Law Harness |
+| G9 bench web in dev-env | `RPG_WEB_MODE=bench` runs `npm run build:bench` then `npx vite preview --host --port <web port>` with the same `VITE_API_HOST` | Law Harness, Law Bench build |
 | G10 play by key from a script | the lobby picker labels a reference `<name> (reference)`; the driver picks by name; `?playerId=` resumes after reload | README |
 | G11 palette refs | full refs from the pinned catalog, by room kind. Halls: `dnd5e:props:fantasy-kingdom:table_fancy_01`, `…:table_fancy_03`, `…:table_fancy_07`, `…:chair_fancy_01`, `…:chair_fancy_02`, `…:bench_seat_01`, `…:statue_knight_01`. Service: `…:barrel_01`, `…:crate_stack_01`, `…:crate_stack_02`, `…:sack_stack_01`, `…:shelf_03`, `…:bread_crate_01`. Quarters: `…:bed_01`, `…:bed_02`, `…:bed_03`, `…:side_table_01`, `…:chest_01`, `…:clothes_rack_01_preset_01`. Library: `…:shelf_03`, `…:books_01`, `…:books_02`, `…:books_03`, `…:books_04`. Chapel: `…:bench_seat_pew_01`, `dnd5e:props:dark-fortress:altar_01`, `dnd5e:props:dark-fortress:candle_stand_02`. Prison: `dnd5e:props:dark-fortress:bench_01`, `dnd5e:props:dark-fortress:barricade_01`. Grounds and courtyard: `…:barrel_01`, `…:crate_stack_03`, `…:statue_plinth_01`. `…` is `dnd5e:props:fantasy-kingdom`. Sight-blocking: shelves, statues, clothes racks, crate stacks. | Law Plan, README refusal |
-| G12 which gates the bench build opens | the dev player fallback (`api/auth.ts`), the `?playerId` override and dev routes (`App.tsx`), the perf probe and the marks; all through `isDevLike()`; `client.ts`/`streamLogging.ts` logging keeps its own development-only check because the harness does not want it | Law Bench build |
+| G12 which gates the bench build opens | the dev player fallback (`api/auth.ts` `getAuthDecision`), the `?playerId` override (`App.tsx` `devPlayerIdOverride`), the perf probe gate and the marks; all through `isDevLike()`. Every other development gate stays as it is: `App.tsx` dev routes (`LazyToolkitContributorSandbox`, `hasConceptDeepLink`, `fixedFixture`, `showThumbHarness`, `shouldRenderGlobalDevTools`), `client.ts`/`streamLogging.ts` logging, `ClassCharacterModel.tsx`, `useWorldMaterialCatalog.ts`, `AttackDiePerfHarness.tsx`, `ServerRollingDemo.tsx`, `StoryLog.tsx` | Law Bench build |
+| G13 wall and door appearance | the plan names the castle's refs: walls `dnd5e:env:dark-fortress:45_wall_01`, doors `dnd5e:env:dark-fortress:wall_door_double_01`; the studio's piece length is that wall asset's `boundsMeters` width in the pinned catalog at the shared Synty scale, read by `StructuralWallSurfaces.tsx` through `WORLD_BUILDING_CATALOG_BY_REF`; a wall whose ref the catalog lacks renders an error marker, so the ref is part of the palette the web's import test guards | Law Plan, README refusal |
 
 ## Tasks
 
@@ -171,7 +172,7 @@ func OptionsFromHeader(doc []byte) (Options, error) // the header comment → th
 **Tests:**
 - `TestLoadPlan_RefusesUnknownField`, `TestLoadPlan_RefusesDoorToUnknownRoom`.
 - `TestLayout_ScalesAndFills`: `Hexes: 10000` → `Report.Scale == 1` and floor count 10,000; `Hexes: 30000` → floor count 30,000 exactly, `Scale == 1.5`; every room width/depth ≤ 1.5× plan; room ids and door pairs equal the keep-scale layout's.
-- `TestPlace_Walls`: each pair of adjacent regions yields exactly one wall; no wall segment contains a cell centre of the compiled floor; every plan door yields one opening with an attached door whose binding has neither `closed` nor `locked`; no wall in the 30k output lays more than 200 render pieces at the studio's piece length (the value read from the web's `structuralWallEditing.ts` at planning, recorded as a constant with its source).
+- `TestPlace_Walls`: each pair of adjacent regions yields exactly one wall; no wall segment contains a cell centre of the compiled floor; every plan door yields one opening with an attached door whose binding has neither `closed` nor `locked`; no wall in the 30k output lays more than 200 render pieces at the piece length of the G13 wall asset (its catalog `boundsMeters` width at the shared Synty scale, recorded as a constant with the catalog entry as its source; the cap itself is `MAX_WALL_PIECES_PER_WALL` in `structuralWallEditing.ts`).
 - `TestPlace_KeepsThresholdsClear`: no prop footprint cell on a door threshold, the start, an exit or a monster cell (iterate placements against the compiled floor).
 - `TestPlace_Densities`: at defaults on 10,000 hexes, props within ±10% of expected per kind, blocking ≈ two thirds, monsters within ±10%.
 - `TestEmit_Deterministic`: two calls → equal bytes; `TestEmit_HeaderCarriesCommand`.
@@ -240,14 +241,14 @@ func OptionsFromHeader(doc []byte) (Options, error) // the header comment → th
 **Owner:** rpg-dnd5e-web.
 **Prerequisites:** none (independent of T6; merges after it).
 **Files:** create `src/devMode.ts` (`export function isDevLike(): boolean` over `import.meta.env.MODE`); modify `api/auth.ts` (`getAuthDecision` dev fallback reads `isDevLike()`), `App.tsx` (`isDevelopment` / `devPlayerIdOverride` read `isDevLike()`), `dev/DevPerfProbe.tsx` and `components/game/EncounterMap.tsx` (probe gate reads `isDevLike()`); add `"build:bench": "vite build --mode bench"` to `package.json` scripts (vite accepts any mode; `.env.bench` is not needed). Marks: `concepts/world-building/singleRoomDungeon.ts` (`studio:open:decoded`), `WorldBuildingConcept.tsx` (`studio:open:imported`, `studio:stroke:commit`), `concepts/encounter-studio/LayoutViewport.tsx` (`studio:open:first-paint` after the grid's first commit; `studio:stroke:painted` in a frame callback after commit), `concepts/encounter-studio/LayoutRoomList.tsx` (`studio:regions:rendered` after its commit), `concepts/world-building/useRoomPublishing.ts` / `author/authoringRpc.ts` (`studio:preview:sent`, `studio:preview:returned`), `api/useSessionAtlas.ts` (`play:atlas:requested`, `play:atlas:received`), `components/session/SessionEncounterView.tsx` (`play:scene:built`), `components/session/SessionCanvas.tsx` (`play:first-frame`; mount `DevPerfProbe` in `SessionScene` behind `?perfProbe`), `concepts/world-building/WorldBuildingViewport.tsx` (mount `DevPerfProbe` behind `?perfProbe`).
-**Interfaces:** `isDevLike()` is true for modes `development` and `bench`, false otherwise; it is the only place a gate reads `MODE` (client logging keeps its own development check, G12). Mark names exactly as listed, under `performance.mark`, fired only when `isDevLike()` and `?perfMarks` is present; the probe's existing `PERF_PROBE_RESULT:` line and `window.__rpgPerfProbeLatest`, plus the renderer string from `WEBGL_debug_renderer_info` added to its result.
+**Interfaces:** `isDevLike()` is true for modes `development` and `bench`, false otherwise; only the G12 gates read it, every other development gate is untouched. Mark names exactly as listed, under `performance.mark`, fired only when `isDevLike()` and `?perfMarks` is present; the probe's existing `PERF_PROBE_RESULT:` line and `window.__rpgPerfProbeLatest`, plus the renderer string from `WEBGL_debug_renderer_info` added to its result.
 **Tests:** `devMode.test.ts` (three modes); `auth.test.ts` dev fallback under `bench`; a vitest spy on `performance.mark` for the studio open path (decoded, imported, regions, first-paint marks fire in order); the probe mount render test with the query param.
 
 - [ ] Tests; implement; `npm run ci-check`; `npm run build:bench` produces a bundle and `npm run build` still does.
 
 **Verification:** `vite preview` of the bench bundle with `?playerId=x&perfMarks` signs in as the dev player and `performance.getEntriesByType('mark')` after opening the castle lists the open marks in order; the production bundle with the same query stays unauthenticated.
 
-### Task T8: bench env and production web mode (S3, game-dev)
+### Task T8: bench env and bench web mode (S3, game-dev)
 
 **Delivers:** B12 (env half), G9.
 **Owner:** game-dev.
@@ -322,7 +323,7 @@ func OptionsFromHeader(doc []byte) (Options, error) // the header comment → th
 
 ## Open items
 
-- Resolved assumptions: G1–G12 above.
+- Resolved assumptions: G1–G13 above.
 - Defaults awaiting the operator on the design PR: the bench build mode (O5) and the supported envelope's bounds (O6); a veto changes T7's gate list or T6's two constants and nothing else.
 - Agreed deferrals: O1 driven garrison; O3 autosave at scale (recorded as a finding if the ceiling's autosave fails); O4 runs on the wire.
 - Blockers: none. T9 waits on T5–T8 being on their branches.

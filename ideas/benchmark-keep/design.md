@@ -13,7 +13,7 @@ flowchart LR
     Shelf[rpg-api content/<br/>bench-keep · bench-keep-30k]
     Shelf -->|References → Open| Studio[studio]
     Shelf -->|StartEncounter → GetAtlas| Play[play]
-    Harness[harness<br/>game-dev tools/browser/bench] -.own env, production web build.-> Studio
+    Harness[harness<br/>game-dev tools/browser/bench] -.own env, bench web build.-> Studio
     Harness -.-> Play
     Harness -->|one table per run| Story[story issue #740]
 ```
@@ -69,10 +69,12 @@ studio supports at the ceiling, not a multiple of the fixture; a run above
 default density that crosses them is a run, not content.
 
 **Bench build.** The web has a `bench` build mode: production bundling and
-minification with the development gates open, so the dev player, the query
-overrides, the marks and the perf probe run in it. One predicate answers
-"is this a development-like build" and every gate reads it; a shipped
-production build keeps them all shut.
+minification with the gates the harness needs open: the dev player, the
+player override, the marks and the perf probe. Those gates read one
+predicate that answers "is this a development-like build"; every other
+development-only affordance stays on its own development check, so a bench
+bundle carries no dev tooling, and a shipped production build keeps every
+gate shut.
 
 **Harness.** One command brings up its own environment on its own ports,
 copies the fixtures onto that environment's shelf, builds the web in bench
@@ -98,9 +100,6 @@ follow-on efforts is drawn from the baseline table, not from reading code.
 
 - **O1 Driven garrison.** Whether placed monsters get minds and patrol
   routes so the per-tick cost is measured too. Waits on the baseline.
-- **O2 Cap values.** The item and document caps are set from the ceiling
-  fixture's measured size with margin; the exact numbers land in the plan
-  when the fixture exists.
 - **O3 Autosave at scale.** The studio writes the whole document to browser
   storage on every commit; whether that survives a 30k document is a baseline
   finding, not a change here.

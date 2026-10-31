@@ -30,7 +30,7 @@ flowchart TB
     Shelf -->|GetDungeon, verbatim| Open[studio: readSingleRoomDungeon → importCanonicalRoomYaml]
     Shelf -->|StartEncounter → GetAtlas| Scene[play: buildScene3D → SyntyHexFloor, walls, props]
     subgraph gamedev [game-dev tools/browser/bench]
-        Run[run.sh: env up, fixtures copied, production web] --> Drive[studio.mjs · play.mjs]
+        Run[run.sh: env up, fixtures copied, bench web build] --> Drive[studio.mjs · play.mjs]
         Drive -->|performance marks, perf probe, api log| Report[report.mjs → table]
     end
     Drive -.drives.-> Open
@@ -52,7 +52,7 @@ flowchart TB
 | api `content/` + `NewFileRegistry` | the shelf | files whose `key` equals the file name → compiled, atlas-projected at boot, listed by lobby `ListDungeons` because root version is 5 |
 | api `bench_fixtures_test.go` | currency of the shelf copies | `keepgen.Generate` with each file's recorded options → bytes equal to the shelf file |
 | web `serialization.ts` caps | what the studio refuses by size | `MAX_ITEMS` ≥ 4,000, `MAX_JSON_LENGTH` ≥ 2,500,000 (Law Supported envelope); `MAX_WALL_PIECES_PER_WALL` in `structuralWallEditing.ts` admits the ceiling's longest wall |
-| web `devMode.ts` predicate | whether a build is development-like | `import.meta.env.MODE` → `isDevLike()`; `development` and `bench` are true, `production` false; read by `api/auth.ts`, `App.tsx` and the probe mounts |
+| web `devMode.ts` predicate | whether a build is development-like, for the harness's gates only | `import.meta.env.MODE` → `isDevLike()`; `development` and `bench` are true, `production` false; read by the dev player fallback, the player override, the marks and the probe mounts |
 | web `performance.mark` points | what the harness can time | marks at open start, decoded, imported, first paint; stroke commit, painted; preview sent, returned; atlas requested, received; scene built; first frame |
 | web `DevPerfProbe` mount | frame-time and draw-call sampling in current play and the studio 3D view | `?perfProbe` → `PERF_PROBE_RESULT:` console line and `window.__rpgPerfProbeLatest`; mounted when `isDevLike()` |
 | web regions list (`LayoutRoomList.tsx`) | the mark the regions-list row reads | `studio:regions:rendered` after its commit |
@@ -75,7 +75,8 @@ Refusals, one per boundary:
 - The studio caps do not encode a taste for small documents; they encode
   the supported envelope at R1's ceiling.
 - The bench build does not change what a production build does; it opens
-  the same gates development opens, through one predicate.
+  only the gates the harness needs, through one predicate, and no other
+  development affordance.
 - The harness does not patch the web or the api to make a number better; it
   records what the build does.
 - The report does not interpret; the hot-spot list is written by a reader of
@@ -128,7 +129,7 @@ can claim one.
 | Proof before write | the shelf never carries a file that refuses boot | generation runs a full compile; seconds at 30k | trust the emitter |
 | Fixtures on the api shelf | one Open path, one play path | every api boot compiles and holds both atlases; about a third of a second and a megabyte; every encounter repin in the api regenerates both files when the emitter's output shifts, which a toolkit golden surfaces in the PR that shifts it; the web keeps one test copy of the ceiling by hand | a web-only fixture or a dev-env drop |
 | Supported envelope as law | the ceiling opens and the caps stop being a benchmark knob | the autosave and history costs become visible (O3); the bounds are the operator's to move (O6) | caps as a multiple of the fixture; leave caps, record "refused" |
-| Bench build mode | R1's play budget is measured on minified code with the dev player and the probe | one predicate replaces scattered mode checks; one more vite mode (O5) | ungate the probe in production; Discord sign-in in the harness |
+| Bench build mode | R1's play budget is measured on minified code with the dev player and the probe | one predicate for the harness's gates; every other dev gate stays development-only; one more vite mode (O5) | ungate the probe in production; Discord sign-in in the harness |
 | Harness in game-dev | owns the env, the ports and the browser already | the web still needs marks and a probe mount | a web-only script |
 | Numbers on the issue | the roadmap and the yardstick in one place | tables in comments, not a dataset | a doc under ideas/ |
 
@@ -149,8 +150,8 @@ can claim one.
   pinned catalog knows.
 - **A new metric, say wall pieces per region.** `report.mjs` and, if a mark is
   missing, one `performance.mark` in the web.
-- **A new development-only affordance.** Behind `isDevLike()`, so the bench
-  build gets it for free and production never does.
+- **A new development-only affordance.** On its own development check, as
+  today; it moves behind `isDevLike()` only if the harness needs it.
 - **FadedPez renames or resizes a room.** Plan; regenerate; the api test
   flags the stale shelf copies.
 - **A driven garrison (O1).** `Place` adds `monsterBindings` from a plan
