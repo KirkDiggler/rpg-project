@@ -10,17 +10,18 @@ harness are the benchmark keep's ([../benchmark-keep/design.md](../benchmark-kee
 ```mermaid
 flowchart LR
     subgraph web [rpg-dnd5e-web]
-        Click[click a creature or a prop] --> Approach[Move toward it]
-        Approach --> Ask[ask that one target's options]
+        Click[click a far creature or prop] --> Approach[Move toward it]
+        Near[within interaction reach] --> Menu[its options appear on Afford]
     end
-    Ask -->|TargetOptions by id| api[rpg-api]
+    Menu -->|Afford: rows for targets within reach| api[rpg-api]
     subgraph api_ [rpg-api]
         api --> Lock[lock: this session only]
         api --> Prefs[character configuration store<br/>preferences, by character]
     end
     Lock --> Session[session.TargetOptions]
     subgraph toolkit [rpg-toolkit]
-        Session --> Options[encounter.OptionsFor / PropOptionsFor<br/>lookup + requirement filter]
+        Session --> Near2[targets within reach: placement index around the member]
+        Near2 --> Options[encounter.OptionsFor / PropOptionsFor<br/>lookup + requirement filter]
         Options --> Shown[shown to this member?<br/>answered by the member's knowledge]
         Shown --> Index[field: cell → placements index]
         Atlas[atlas: projected once per structural change] -.filtered by knowledge.-> AtlasFor[AtlasFor member]
@@ -29,12 +30,16 @@ flowchart LR
 
 ## Law
 
-**Interaction is by intent.** A member asks what one target offers, by that
-target's id, after approaching it. The answer is the target's authored options
-that the member's requirements admit: lines for a creature; lines, inspection
-and checks for a prop. No verb enumerates every creature and every prop on
-the map to light up candidates, so the cost of asking scales with the one
-thing asked about.
+**Interaction is by reach.** A member is offered the options of the creatures
+and props within interaction reach of them, and of nothing farther, the way
+an automatic discovery check fires when they come close to a concealed thing.
+The offer is the target's authored options that the member's requirements
+admit: lines for a creature; lines, inspection and checks for a prop. A far
+target is approached by moving toward it, and its options appear on arrival.
+No verb enumerates the map; the cost of an offer is the cells within reach.
+
+**Interaction reach.** Three hexes. One constant for every target; an
+author's option may demand adjacency when a use case asks for it.
 
 **Knowledge is the oracle.** Whether a member can be shown a cell, a creature
 or a prop is answered by that member's own knowledge, the per-observer
@@ -81,12 +86,12 @@ merge.
 | R1 | Speaking and interacting are intent-driven and by id: click a creature or a prop, approach, read that one target's option list; no speak menu computed on Afford; props carry lines, inspection and checks the same way. | settled | session, encounter, api, web | KirkDiggler | 2026-10-31 |
 | R2 | Sessions lock by session, and player preferences live in a first-class character configuration store with its own guard; the discovery-sharing preference moves there. | settled | api, session | KirkDiggler | 2026-10-31 |
 | R3 | Server first: this story precedes the studio's own costs and the GPU, because nothing on a keep can be played until launch and the per-verb cost come down. | settled | story order | KirkDiggler | 2026-10-31 |
+| R4 | Interaction is offered automatically within a set reach in hexes, melee to about three, for just the targets in that range, like the automatic perception check near a concealed thing; a far target is approached first. Amends R1's read-by-id into an offer-by-reach. | settled | session, encounter, web | KirkDiggler | 2026-10-31 |
 
 ## Open
 
-- **O1 Where the approach stops.** A fixed distance, or when the target
-  witnesses the speaker and the speaker can be shown it, an author's line
-  allowed to demand closer. The design carries the second as its default.
+- **O1 Interaction reach's value.** Three hexes is the default under R4;
+  the first walk on the castle and the keep may move it.
 - **O2 Monster beats.** No reader of a monster's revealed-cells beat is known;
   the law drops them. A reader that appears reopens this.
 - **O3 Invalidation grain.** Whether a door's state change re-derives the
