@@ -104,8 +104,8 @@ Proposed client request `ActivityCueRequest { id: string; activityRef: string; c
 **Tests:** API direct and nested TableAnswer mapping, no cue, distinct counts/refs. Web reveal ordering behind a pending walk; response and cue release together; duplicate delivery versus genuinely new response; both clients; no animation for catch-up, hidden/remembered/downed bodies; loss before reveal, surface removal, session change, stale completion; movement interruption followed by arrival does not resurrect the cue. Studio actual save/reopen/launch retains the cue and normal look/style/skin.
 - [x] Add focused failing seam tests; implement adapter and wiring, adopt real SDK and pushed module pins, tidy.
 - [x] Run API `make test && make ci-check`, web `npm run ci-check`; verify no private asset bytes enter public diffs.
-- [ ] Isolated QA: default Relaxed human NPC, deterministic question response with Thoughtful x2; configure in Studio, save/reopen/Play, ask and observe Enter → two sustain cycles → Exit → Relaxed on two clients. Repeat with longer N and movement interruption, then verify no revival after arrival/fresh launch. Use actual model/mixer evidence and correct deployed content hash.
-- [ ] Publish evidence/PRs; one bounded independent review; fixes get failing-first regressions, no new broad campaign.
+- [x] Isolated QA: default Relaxed human NPC, deterministic question response with Thoughtful x2; configure in Studio, save/reopen/Play, ask and observe Enter → two sustain cycles → Exit → Relaxed on two clients. Repeat with longer N and movement interruption, then verify no revival after arrival/fresh launch. Use actual model/mixer evidence and correct deployed content hash.
+- [x] Publish evidence/PRs; one bounded independent review; fixes get failing-first regressions, no new broad campaign.
 **Evidence:** joined launch/stream/render proof; unit green alone is not the deliverable. Allocate isolated ports after inspecting current listeners; do not reuse or restart castle or retained authoring lab.
 
 ## Development and release sequence
@@ -134,7 +134,63 @@ Develop the consumer contract/counting first, then wire schema, behavior → enc
 
 Self-check: do not let the shared Say editor advertise a cue that its delivery path drops; carry spoken TableAnswer as well as nested Speech.Answer. Do not use the old blanket sustain-Infinity mixer setup for finite cues. Native mixer completion must handle single cycles and large updates. Do not restore the cancelled budget after movement. Do not treat an API-only pin or a preview's cached content as integration proof.
 
-## Progress
+## Current checkpoint — QA/review complete; waiting only for merge authorization
+
+Authorization request: https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6540819332
+Final checklist: https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1363#issuecomment-6540819150
+Durable evidence/verifier: `docs/case-files/npc-say-activities/` at project commit d1f2731.
+
+Current published heads (all applicable local/hosted gates green):
+- behavior toolkit#2206: 9d1577156f7bb74fd9e003876ace6ce80ff757ae.
+- encounter toolkit#2207: 9e81f6ecdce1ad42236ae29665b2a1f1798023a2.
+- session toolkit#2208: 2cb2d4d9dde9733b8865da4aebbe2e85e49732ce.
+- API#1163: 3d7d945b0429f5b66249524ba2714f442e01e8e2.
+- web#1365: d4e75340f8089085ac86ea74b48d035cc67ab6ad.
+
+Head-specific COMMENT MERGE-READY reviews: 5721871387 /5721871472 /
+5721871537 /5721871600 /5721871677 respectively, qualified on release pins and
+authorization. Three findings reproduced/fixed and resolved: encounter
+r4430731575 (cloneAnswer, 3ca599cc); web r4430731658 (downed queue, 64c13596),
+r4430731665 (failed-body delivery, 1ffca2db). No active agents or review rounds.
+
+Operator verified two cycles. Final QA authored three via native Studio
+undo/redo/save/reopen, retained03/B, launched it, and checked both clients. Both
+cancelled a20-cycle cue on movement without revival; refresh/catch-up and fresh
+launch passed. Final web gate is9507 passed/6 skipped. Canonical castle prisoner-1
+has two cycles on either existing where-is-the-king verdict; an actual castle
+compile/reload/Speak regression and full castle gates pass. Only two Activity
+objects changed in the narrowly regenerated castle golden; all words/facts/DCs/
+looks stayed unchanged. No unrelated live castle navigation is claimed.
+
+During final gates, main/dev advanced. Session caught up merged CharacterConfigReader
+work without conflicts and pinned encounter9e81. API retained newer generated SDK
+4717a4416c26 (v0.1.249), merged dev host/config/locking work, resolved only dependency
+files, adopted session2cb2 and canonical content. Web caught up approved artwork/
+benchmark/envelope changes automatically. Refreshed gates passed; two-client and
+lifecycle QA were rerun on those final API/web heads. Do not downgrade these bases
+when re-pinning. Web still uses published proto v0.1.248, which includes its cue contract.
+
+Preserve operator preview3046/8136 (APIe679a5b /web31c76fe6), authoring lab3042,
+old pacing3044 and castle3030/8115. Final QA3047/8137 is isolated and serves current
+heads via detached `.worktrees/say-activity-qa`. QA mounted walk hash0c50b648…
+and castle hash81e7a4c9… are recorded in the evidence README. The untracked walk
+file remains only in API builder/QA and managed content; hold it outside the
+shipped shelf for API gates, restore afterward. Never commit it to API content.
+
+Temporary drivers are root game-dev `.worktrees/say-activity/tools/browser/_job_say_activity_*`;
+metadata/model screenshots also remain in /tmp/say-activity-final-qa. The small
+public evidence archive contains observable metadata and the2D Studio controls,
+not licensed models/textures/tracks. The diagnostic web refresh-probe worktree
+was removed; review worktrees remain for ordinary wave cleanup. Keep preview
+resources out of that cleanup until the operator asks otherwise.
+
+NEXT after explicit permission: read merge-out; verify heads/verdicts; publish
+behavior tag → encounter released behavior pin/tag → session released encounter
+pin/tag → API actual tags/dev → web dev. Refresh affected gates/head verdicts;
+no game release/dev→main promotion. Plans/evidence branch remains available for
+its documentation close-out, not an implicit sixth implementation merge.
+
+## Historical progress (superseded by the checkpoint above)
 
 - Agreement and discard ruling recorded on #746.
 - Baseline inspected; implementation not yet started when this plan was written.
