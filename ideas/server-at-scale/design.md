@@ -46,24 +46,24 @@ prop within reach is offered when the member sees it now, not merely
 remembers it, so a wall between them hides it without a path being asked;
 anything else within reach is simply not offered, and proximity reveals
 nothing a map does not show. A line said to a target out of reach is refused
-at the door with the range refusal that already exists. An author's option
-may demand adjacency when a use case asks for it.
+at the door with the range refusal that already exists.
 
 **Knowledge is the oracle.** Whether a member can be shown a cell or a prop is
-answered by that member's known cells under that member's concealment mask,
-the same answer the visible-cells and watch-zone readers already give without
-a projection. Whether a member can be shown a creature is answered by the
+answered by that member's undiscovered mask, the cells their projection would
+leave out, computed once per read without projecting anything. Whether a member can be shown a creature is answered by the
 member's own sightings in perception. The atlas is a projection of knowledge
 and is never consulted to answer either, so no sight question costs a
 projection.
 
-**The field indexes its placements.** The cells a placement or a wall covers
-are derived once when the field is built from its data, in time linear in the
-cells, and read as a lookup after that; a placement that moves updates its own
-entries. Nothing scans every cell to find what stands on one, so a projection
-costs the placements it lists, not placements times cells. Nothing derived is
-stored, and no projection is cached across verbs: the encounter is rebuilt
-from its data on every verb, so a cache would be rebuilt with it.
+**The field indexes its placements.** The cells an authored placement or a
+wall covers are derived once when the field is built from its data, in time
+linear in the cells, and read as a lookup after that; a placement that was
+dropped elsewhere is answered from its placement record at the moment of
+asking, so no writer maintains the index. Nothing scans every cell to find
+what stands on one, so a projection costs the cells it copies plus the
+placements it lists, never placements times cells. Nothing derived is stored,
+and no projection is cached across verbs: the encounter is rebuilt from its
+data on every verb, so a cache would be rebuilt with it.
 
 **A sweep covers what can be seen.** An observer's discovery sweep, cold at
 launch and warm on every step, visits the cells within its sight reach, not
@@ -83,10 +83,10 @@ guard and nothing wider. A slow verb stalls its own table only.
 **Preferences are character configuration.** What a player chooses for their
 character across sessions, discovery sharing today, lives in a first-class
 character configuration store keyed by character with its own guard, written
-by character verbs and read by the session at the moment it needs the answer.
-No session verb writes it and the session keeps no copy of it, so no session
-needs a lock wider than itself and no change needs delivering to a live
-encounter.
+by character verbs and read by the session. The encounter's per-member record
+of the preference is restored from that store at every write verb, so a change
+takes effect at the next verb; no session verb writes the store, so no session
+needs a lock wider than itself.
 
 **A step costs its reach.** A Move's sight refresh is a warm sweep within
 reach plus the load and save of the encounter's data, so the per-Move budget

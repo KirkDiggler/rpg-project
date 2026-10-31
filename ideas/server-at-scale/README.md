@@ -53,14 +53,14 @@ flowchart TB
 | web approach gesture (`components/session/combat-experience`) | walking to a far target | a click on a creature or prop out of reach → `Move` toward it; `speakOptions.ts` keeps reading Afford's rows, which now cover only targets within reach |
 | `SessionService.Afford` (protos, unchanged) | the wire | `Declaration.speak_options` carries the rows for targets within reach; no proto change |
 | `InProcessSessionLocker` (api) | serialising one session's verbs | `LockSession{Session}` → that session's guard; `LockCharacter{Character}` → that character's guard; `sharedStoreLocker` is removed |
-| character configuration store (api, Redis `character-config:<id>`) | preferences across sessions | `CharacterService.SetPreference{character, discovery_sharing}` under the character guard; the session reads through `sdk.CharacterConfigReader.DiscoverySharing(ctx, character)` |
+| character configuration store (api, Redis `character-config:<id>`) | preferences across sessions | `CharacterService.SetPreference{character, discovery_sharing}` under the character guard; the session's `prepareExploration` reads through `sdk.CharacterConfigReader.DiscoverySharing(ctx, character)` and restores the encounter's per-member record (`RestoreDiscovery`) at every write verb |
 | `session.readSpeakMenu` (bounded) | the menu within reach | `encounter.WithinReach(member, InteractionReach)` → for each target `OptionsFor` / `PropOptionsFor`, the witness test for a creature → rows with the Speak selector id; nothing farther is asked; the same `InteractionReach` is passed as `SpeakInput.Range` so the door measures what the offer measured |
 | `encounter.WithinReach` | who and what is near and seen | member, reach → creatures the member's sightings hold and props with a cell the member sees now (`VisibleCellsFor`) whose distance by `Encounter.Distance` is within reach, from the placement index; the door's `refuseOutOfReach` uses the same distance and reach |
 | `encounter.OptionsFor` / `PropOptionsFor` | a target's admitted options | target id → authored options whose `Requires` holds, deep-copied; `ErrNoProp` for a thing the member cannot be shown |
-| `encounter.shownTo` (replaces `showsCellTo` / `showsAnyCellTo`) | the oracle for cells and props | member, cells → any cell ∈ the member's known cells minus `undiscoveredFrom(member)`, the mask `VisibleCellsFor` and `WatchZonesFor` already apply; no projection |
+| `encounter.shownTo` (replaces `showsCellTo` / `showsAnyCellTo`) | the oracle for cells and props | member, cells → any cell not in `undiscoveredFrom(member).cells`, the mask built once per read; no projection |
 | `perception` sightings | the oracle for creatures | does this member currently sight that creature; the per-observer testimony as today |
-| `field.placementIndex` | what stands where | built with the field from its data, linear in cells: cell → placements and walls; `placedCells(placement)`, `wallFootprintCells(wall)` read it; a moved placement updates its entries |
-| `Encounter.Atlas` | the field's projection | reads the index, so a projection is O(placements + walls); nothing cached across verbs; `AtlasFor(member)` filters it by the member's knowledge as today |
+| `field.placementIndex` | what stands where, as authored | built with the field from its data, linear in cells: cell → authored placements and walls; `placedCells(placement)`, `wallFootprintCells(wall)` read it; a dropped placement's cells come from `propPlacements` at query time, so nothing writes the index |
+| `Encounter.Atlas` | the field's projection | copies the cells and reads the index, so a projection is O(cells + placements + walls) with no per-placement cell scan; nothing cached across verbs; `AtlasFor(member)` filters it by the member's knowledge as today |
 | `discoverCells` | one observer's sweep | observer → the cells within its sight reach tested, cold at launch and warm on a step; a monster's sweep writes its known-cells facts and no beat |
 | journal `known:cells` facts | the one home of what a member knows of the floor | written by `learnCells` as row runs, folded by `cellFold`; a seat's `cells_revealed` beat carries the newly shown atlas delta only |
 | harness (`tools/browser/bench/run.sh`) | before and after | the same table every slice posts on #753 |
@@ -103,7 +103,7 @@ hop.
 
 | Query | Source of truth |
 |---|---|
-| Can this member be shown this cell or prop | the member's known cells under their concealment mask (journal facts folded, `undiscoveredFrom`) |
+| Can this member be shown this cell or prop | not in `undiscoveredFrom(member).cells` (journal facts folded, then the mask) |
 | Can this member be shown this creature | the member's sightings (perception) |
 | What this member's map looks like | the atlas, projected from the index and filtered by that knowledge |
 | What stands on this cell | the field's placement index |
@@ -125,7 +125,7 @@ its own source, and the projection is downstream of knowledge.
 |---|---|---|---|
 | Interaction by reach (R1, R4) | the offer costs 37 cells, on any site; no new RPC | a line cannot be said across a hall; a far target is walked to first | read one target by id after a click (a new RPC); memoise one projection per Afford (655 → 1, still placements × cells) |
 | Knowledge as the oracle | sight questions cost a set lookup | known cells must be complete and current for every member | the atlas as oracle |
-| Placement index, built at load | `placedCells` is a lookup; a projection is O(placements) | one linear pass per verb's load; a moved placement updates its entries | scan every cell per call; cache the atlas across verbs (the encounter is rebuilt per verb, so a cache would be too, and stored derived data is refused) |
+| Placement index, built at load | `placedCells` is a lookup; a projection is O(cells + placements) | one linear pass per verb's load; a dropped placement is answered from its record at query time | scan every cell per call; cache the atlas across verbs (the encounter is rebuilt per verb, so a cache would be too, and stored derived data is refused) |
 | Reach-bounded sweep, cold and warm | observers × reach, not observers × cells | an unbounded reach still sweeps the field | sweep every cell |
 | No monster beats (O2) | 99 of 100 beats gone at 10k | a future reader brings its own; a monster's knowledge persists in its facts | keep writing them |
 | Known cells as row runs in the journal | the facts shrink and stay the one home | the fold reads runs; readers unchanged | move knowledge to perception (it has no cell concept); keep one entry per cell |
@@ -145,7 +145,7 @@ its own source, and the projection is downstream of knowledge.
 - **An author adds an "inspect" option to a prop.** Content only; the menu within reach returns it.
 - **An option that demands adjacency.** A per-option reach on the authored option, read by `readSpeakMenu`; the constant stays.
 - **A new preference, say dice colour.** The character configuration store and `SetPreference`; no session change.
-- **A new structural change, say a collapsing wall.** It updates the placement index's entries for its cells, nowhere else; the next projection reads them.
+- **A new structural change, say a collapsing wall.** It is a fact the field's data carries, so the index built at the next load has it; nothing writes the index mid-verb.
 - **A client that must see what a monster saw.** O2 reopens; until then a monster's knowledge is its facts, and nothing else is owed.
 
 ## Source map
