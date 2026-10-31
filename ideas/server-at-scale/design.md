@@ -18,7 +18,7 @@ flowchart LR
         api --> Lock[lock: this session only]
         api --> Prefs[character configuration store<br/>preferences, by character]
     end
-    Lock --> Session[session.TargetOptions]
+    Lock --> Session[session.Afford: the menu within reach]
     subgraph toolkit [rpg-toolkit]
         Session --> Near2[targets within reach: placement index around the member]
         Near2 --> Options[encounter.OptionsFor / PropOptionsFor<br/>lookup + requirement filter]
@@ -38,12 +38,16 @@ admit: lines for a creature; lines, inspection and checks for a prop. A far
 target is approached by moving toward it, and its options appear on arrival.
 No verb enumerates the map; the cost of an offer is the cells within reach.
 
-**Interaction reach.** Three hexes. One constant for every target; an
-author's option may demand adjacency when a use case asks for it. A creature
-within reach is offered when the member sees it and it witnesses the member;
-a prop within reach is offered when the member can be shown it; anything else
-within reach is simply not offered, so proximity reveals nothing a map does
-not show. A line said to a target out of reach is refused at the door.
+**Interaction reach.** Three hexes, measured by the encounter's one distance
+and refused by the encounter's one range rule, the same the door verbs and
+Hold use, so the offer and the Speak door cannot disagree. A creature within
+reach is offered when the member sees it now and it witnesses the member; a
+prop within reach is offered when the member sees it now, not merely
+remembers it, so a wall between them hides it without a path being asked;
+anything else within reach is simply not offered, and proximity reveals
+nothing a map does not show. A line said to a target out of reach is refused
+at the door with the range refusal that already exists. An author's option
+may demand adjacency when a use case asks for it.
 
 **Knowledge is the oracle.** Whether a member can be shown a cell or a prop is
 answered by that member's known cells under that member's concealment mask,
@@ -97,7 +101,7 @@ merge.
 
 | ID | ruling | status | scope | ruled by | date |
 |---|---|---|---|---|---|
-| R1 | Speaking and interacting are intent-driven and by id: click a creature or a prop, approach, read that one target's option list; no speak menu computed on Afford; props carry lines, inspection and checks the same way. | settled | session, encounter, api, web | KirkDiggler | 2026-10-31 |
+| R1 | Speaking and interacting are intent-driven: no speak menu computed over the map; props carry lines, inspection and checks the same way as creatures. The read-by-id form is amended by R4 into an offer within reach. | settled, amended by R4 | session, encounter, api, web | KirkDiggler | 2026-10-31 |
 | R2 | Sessions lock by session, and player preferences live in a first-class character configuration store with its own guard; the discovery-sharing preference moves there. | settled | api, session | KirkDiggler | 2026-10-31 |
 | R3 | Server first: this story precedes the studio's own costs and the GPU, because nothing on a keep can be played until launch and the per-verb cost come down. | settled | story order | KirkDiggler | 2026-10-31 |
 | R4 | Interaction is offered automatically within a set reach in hexes, melee to about three, for just the targets in that range, like the automatic perception check near a concealed thing; a far target is approached first. Amends R1's read-by-id into an offer-by-reach. | settled | session, encounter, web | KirkDiggler | 2026-10-31 |
@@ -105,7 +109,9 @@ merge.
 ## Open
 
 - **O1 Interaction reach's value.** Three hexes is the default under R4;
-  the first walk on the castle and the keep may move it.
+  the first walk on the castle and the keep may move it. Reach is grid
+  distance; sight-now keeps a wall between from offering, and whether a
+  doorway two hexes round a corner should count is the walk's question.
 - **O2 Monster beats.** No reader of a monster's revealed-cells beat is known;
   the law drops them. A reader that appears reopens this.
 - **O3 The known-cells encoding.** Row runs are the default; the first

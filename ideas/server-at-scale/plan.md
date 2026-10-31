@@ -1,7 +1,7 @@
 ---
 name: Server at the keep's scale — implementation plan
-status: PLAN derived 2026-10-31 from design.md R1–R4 and README.md, on the S1 probe report (rpg-project#753); checked against the inspected baseline below. R4 (interaction by reach) removes the TargetOptions RPC: the wire is unchanged for interaction.
-authority: design.md (R1–R3, Law), README.md (ownership table and refusals), story rpg-project#753, lane rpg-project#754, S1 probe report (comment on #753)
+status: PLAN derived 2026-10-31 from design.md R1–R4 and README.md, on the S1 probe report (rpg-project#753); checked against the inspected baseline below; amended in the design PR's review round. R4 (interaction by reach) removes the TargetOptions RPC: the wire is unchanged for interaction, and the reach refusal reuses `TARGET_OUT_OF_REACH`.
+authority: design.md (R1–R4, Law), README.md (ownership table and refusals), story rpg-project#753, lane rpg-project#754, S1 probe report (comment on #753)
 planning guide: ../../.agents/skills/design/planning.md
 ---
 
@@ -9,8 +9,8 @@ planning guide: ../../.agents/skills/design/planning.md
 
 ## Goal and scope
 
-A keep launches, answers a player's Afford and a one-target read, and takes a
-Move inside site format R1's budgets, with sessions locked by session and the
+A keep launches, answers a player's Afford with the menu within reach, and
+takes a Move inside site format R1's budgets, with sessions locked by session and the
 discovery-sharing preference in a character configuration store. Every slice
 posts its before and after rows from `tools/browser/bench/run.sh bench` on
 #753 the day it lands, and no row gets worse.
@@ -50,7 +50,7 @@ after S3. Merge each slice toolkit → protos → api → web.
 | label | requirement | source |
 |---|---|---|
 | V1 | `readSpeakMenu` offers only the creatures and props within interaction reach (3 hexes) of the member, found through `encounter.WithinReach`; nothing farther is asked about; `speakRowOnTheWorldClock` reads the same bounded menu. | R1, R4 |
-| V2 | The rows keep today's shape (`Declaration.speak_options` with the Speak selector id); a target within reach that cannot be shown or does not witness the member is simply not offered. | R1, R4 |
+| V2 | The rows keep today's shape (`Declaration.speak_options` with the Speak selector id); a target within reach that the member does not see now, or that does not witness the member, is simply not offered; `Speak` at a target beyond reach is refused through `refuseOutOfReach` with `ErrOutOfRange` → `ShortfallTargetOutOfReach` → wire `TARGET_OUT_OF_REACH`, all of which exist. | R1, R4 |
 | V3 | `encounter.shownTo(member, cells)` answers from the member's known cells minus `undiscoveredFrom(member)` (the mask `VisibleCellsFor`/`WatchZonesFor` apply), equal to today's `AtlasFor`-based answer; a creature within reach is offered only if the member's sightings hold it; `OptionsFor`/`PropOptionsFor`/`readSpeakMenu` call no `Atlas`/`AtlasFor`. | Law Knowledge is the oracle |
 | V4 | `field.placementIndex` maps cell → placements and walls, built with the field in O(cells + footprint cells); `placedCells`, `wallFootprintCells` and `placedCellsOf` read it; a moved placement updates its entries. | Law The field indexes |
 | V5 | `Encounter.Atlas` costs O(placements + walls) through the index; nothing is cached across verbs and nothing derived is stored; the atlas goldens are byte-identical. | Law The field indexes |
@@ -87,7 +87,7 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 
 | gap | resolution | authority |
 |---|---|---|
-| G1 the approach's stop | reach: three hexes (R4); the client walks a far target into reach and the next Afford carries its rows | R4, O1 |
+| G1 the approach's stop | reach: three hexes (R4), measured by `Encounter.Distance` as `refuseOutOfReachCell` measures; the client walks a far target into reach and the next Afford carries its rows | R4, O1 |
 | G2 witness for a prop | a prop has no eyes; a prop within reach is offered on `shownTo` alone | Law Knowledge is the oracle |
 | G3 what "known cells" is | the journal's `known:cells` facts, written by `learnCells` as deltas and folded by `cellFold`; perception has no cell concept, so the home stays where it is and only its encoding changes | Law Knowledge is written once |
 | G4 why no atlas cache | the api loads the encounter from its data on every verb, so an in-memory cache lives one verb and a persisted one is stored derived data (refused as site format R8 refuses it); the index makes the projection linear instead | Law The field indexes |
@@ -104,10 +104,10 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 **Delivers:** V3, V4.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
 **Prerequisites:** none.
-**Files:** modify `hold.go` (`showsCellTo`, `showsAnyCellTo` → `shownTo(member MemberID, cells []spatial.Position) (bool, error)` reading the member's known cells under `undiscoveredFrom(member)`, as `VisibleCellsFor` does; delete the `AtlasFor` call), `option.go` (`speakableProp` uses `shownTo`), new `placement_index.go` (`placementIndex` built in `compileField` and on placement change; `placedCells`, `wallFootprintCells` read it), `atlas.go` (`placedCellsOf` reads the index), new `reach.go` (`WithinReach(member MemberID, hexes int) (members []MemberID, props []PropID, error)`: the hex ring around the member's cell through the index and the roster's cells).
-**Interfaces:** `shownTo` equals today's `AtlasFor`-based answer for every cell (known under the mask, footing included as the projection includes it); `placementIndex.at(cell) []placementRef`, built in `compileField` in one pass over footprints, updated by the placement writers (`held:`/`dropped:`/`arrived:` folds) for their own entries; `WithinReach` lists every creature the member's sightings hold and every placed or cell prop with a cell inside the ring, sorted by id, excluding the member.
+**Files:** modify `hold.go` (`showsCellTo`, `showsAnyCellTo` → `shownTo(member MemberID, cells []spatial.Position) (bool, error)` reading the member's known cells under `undiscoveredFrom(member)`, as `VisibleCellsFor` does; delete the `AtlasFor` call), `option.go` (`speakableProp` uses `shownTo`), new `placement_index.go` (`placementIndex` built in `compileField` and on placement change; `placedCells`, `wallFootprintCells` read it), `atlas.go` (`placedCellsOf` reads the index), new `reach.go` (`WithinReach(member MemberID, reach int) (members []MemberID, props []PropID, error)`: cells within `reach` by `Encounter.Distance` from the member's cell, through the index and the roster's cells, kept only if the member sees them now per `VisibleCellsFor`); modify `speak.go` (`SpeakInput.Range int`; `Speak` calls `refuseOutOfReach("speak", speaker, target, in.Range)` for a creature and `refuseOutOfReachCell` for a prop before the witness and shown checks, so a probe of a far target learns only "out of range").
+**Interfaces:** `shownTo` equals today's `AtlasFor`-based answer for every cell (known under the mask, footing included as the projection includes it); `placementIndex.at(cell) []placementRef`, built in `compileField` in one pass over footprints, updated by the placement writers (`held:`/`dropped:`/`arrived:` folds) for their own entries; `WithinReach` lists every creature the member's sightings hold and every placed or cell prop with a cell the member sees now within reach, sorted by id, excluding the member; `SpeakInput.Range` zero means 1, as every reach does.
 **Behavior:** no caller of `shownTo` or `WithinReach` projects an atlas; an unsighted creature within reach is absent from the result, not refused.
-**Tests:** `TestShownTo_MatchesAtlasFor` (property test on the castle and the 10k keep: for every member and every placement, including one on concealed floor, `shownTo` equals the old answer); `TestPlacementIndex_UpdatesOnMove`; `TestWithinReach_Ring` (ring of 3 = 37 cells; a prop with one footprint cell inside counts; an unsighted creature inside is absent; adjacent-only when hexes = 1); `BenchmarkPropOptionsFor_Keep10k` (< 1 ms, from ~550 ms); `BenchmarkAtlas_Keep30k` (< 100 ms, from 2.1 s, through the index); `TestOptionsFor_NoProjection` (a probe counter asserts zero `Atlas` calls); atlas goldens byte-identical.
+**Tests:** `TestShownTo_MatchesAtlasFor` (property test on the castle and the 10k keep: for every member and every placement, including one on concealed floor, `shownTo` equals the old answer); `TestPlacementIndex_UpdatesOnMove`; `TestWithinReach_Ring` (ring of 3 = 37 cells; a prop with one footprint cell inside counts; an unsighted creature inside is absent; a known prop behind a wall inside is absent; adjacent-only when reach = 1); `TestSpeak_OutOfRange` (`ErrOutOfRange` at four hexes, admitted at three); `BenchmarkPropOptionsFor_Keep10k` (< 1 ms, from ~550 ms); `BenchmarkAtlas_Keep30k` (< 100 ms, from 2.1 s, through the index); `TestOptionsFor_NoProjection` (a probe counter asserts zero `Atlas` calls); atlas goldens byte-identical.
 **Verification:** `go test -race ./... && golangci-lint run ./...`; the benchmark numbers in the PR body.
 **Completion evidence:** PR link, benchmark lines, golden diff empty.
 
@@ -116,20 +116,16 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 **Delivers:** V1, V2, G1, G2, G7.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
 **Prerequisites:** T1 tag.
-**Files:** modify `offers.go` (`readSpeakMenu` takes its targets from `encounter.WithinReach(member, InteractionReach)` instead of `enc.Witnesses` + `speakableProps`; `speakableProps` and its `enc.Atlas()` are deleted; the witness test runs per creature within reach; `const InteractionReach = 3` with its doc naming R4), `afford.go` (`speakRowOnTheWorldClock` unchanged in shape, reads the bounded menu); `speak.go`'s door unchanged; `buildSpeakOffer` unchanged.
-**Interfaces:** rows carry the same selector id `Speak` validates today; a target outside reach is not a row; `Speak` on a target outside reach is refused at the door with the existing not-witnessed/not-shown reasons plus `ShortfallOutOfReach`.
+**Files:** modify `offers.go` (`readSpeakMenu` takes its targets from `encounter.WithinReach(member, InteractionReach)` instead of `enc.Witnesses` + `speakableProps`; `speakableProps` and its `enc.Atlas()` are deleted; the witness test runs per creature within reach; `const InteractionReach = 3` with its doc naming R4), `afford.go` (`speakRowOnTheWorldClock` unchanged in shape, reads the bounded menu), `speak.go` (passes `Range: InteractionReach` to `encounter.Speak`; maps `ErrOutOfRange` to `ShortfallTargetOutOfReach` as Hold does); `buildSpeakOffer` unchanged. Castletest: the survivors script speaks to `keep-2` from about ten hexes and two refusal-control steps speak to the captain from afar — each moves the speaker within reach first, and the refusal controls assert their original reason, so reach is checked after the option's own door checks in those controls or the step is re-cut; the #639 QA script gains "walk up, then speak".
+**Interfaces:** rows carry the same selector id `Speak` validates today; a target outside reach is not a row; `Speak` on a target outside reach is refused at the door with `ShortfallTargetOutOfReach` (existing).
 **Behavior:** the menu lists only targets within reach that are sighted (creatures) or shown (props); the Speak row keeps its slot, price and availability as today, so the web's Speak button is unchanged; a Speak at a target out of reach is refused at the door.
 **Tests:** `TestSpeakMenu_WithinReachOnly` (castle: a guard four hexes off is not offered, at three he is); `TestSpeakMenu_HiddenPropNotOffered`; `TestSpeakMenu_UnsightedCreatureNotOffered`; `TestSpeak_OutOfReachRefused`; castletest script steps that speak move within reach first (the walk captures the spirit: the player walks up; the QA castle script #639 gains the step); `BenchmarkAfford_Keep10k` (< 100 ms, from 369 s).
 **Completion evidence:** PR link, benchmark line, the #639 script step added.
 **Verification:** module gates; benchmark numbers in the PR body; castletest green.
 
-### Task T3: one enum value (S2, protos)
+### Task T3: not applicable (S2, protos)
 
-**Delivers:** V2's refusal.
-**Owner:** rpg-api-protos.
-**Files:** `dnd5e/api/session/v1alpha1/types.proto` `ShortfallReason` gains `SHORTFALL_REASON_OUT_OF_REACH` (additive); no other wire change — `Declaration.speak_options` carries the rows within reach as today.
-**Tests:** `buf lint`, `buf breaking`.
-**Verification:** bindings published on merge; the api maps the new reason in its shortfall conversion.
+The wire already carries everything S2 needs: `Declaration.speak_options` for the rows within reach and `TARGET_OUT_OF_REACH` for the door's refusal. S5's `SetPreference` is T6.
 
 ### Task T4: the lock (S5, api)
 
@@ -225,6 +221,6 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 
 ## Open items
 
-- O1 reach = 3 (R4, G1); O2 taken (G5); O3 row runs, the first blob after T9 decides whether beats follow; O4 only discovery sharing (G8), the session's verb removed.
+- O1 reach = 3 (R4, G1), measured by the encounter's one distance; the walls question is the walk's; O2 taken (G5); O3 row runs, the first blob after T9 decides whether beats follow; O4 only discovery sharing (G8), the session's verb removed.
 - Finish-line numbers are defaults the operator may move on the design PR.
 - Blockers: none. T5 needs T2 on a stack for the operator's walk; T4 waits for T6.

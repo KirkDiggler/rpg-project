@@ -54,8 +54,8 @@ flowchart TB
 | `SessionService.Afford` (protos, unchanged) | the wire | `Declaration.speak_options` carries the rows for targets within reach; no proto change |
 | `InProcessSessionLocker` (api) | serialising one session's verbs | `LockSession{Session}` → that session's guard; `LockCharacter{Character}` → that character's guard; `sharedStoreLocker` is removed |
 | character configuration store (api, Redis `character-config:<id>`) | preferences across sessions | `CharacterService.SetPreference{character, discovery_sharing}` under the character guard; the session reads through `sdk.CharacterConfigReader.DiscoverySharing(ctx, character)` |
-| `session.readSpeakMenu` (bounded) | the menu within reach | `encounter.WithinReach(member, reach)` → for each target `OptionsFor` / `PropOptionsFor`, the witness test for a creature → rows with the Speak selector id; nothing farther is asked |
-| `encounter.WithinReach` | who and what is near | member, reach in hexes → creatures and props whose cells lie within the hex ring, from the member's cell and the placement index |
+| `session.readSpeakMenu` (bounded) | the menu within reach | `encounter.WithinReach(member, InteractionReach)` → for each target `OptionsFor` / `PropOptionsFor`, the witness test for a creature → rows with the Speak selector id; nothing farther is asked; the same `InteractionReach` is passed as `SpeakInput.Range` so the door measures what the offer measured |
+| `encounter.WithinReach` | who and what is near and seen | member, reach → creatures the member's sightings hold and props with a cell the member sees now (`VisibleCellsFor`) whose distance by `Encounter.Distance` is within reach, from the placement index; the door's `refuseOutOfReach` uses the same distance and reach |
 | `encounter.OptionsFor` / `PropOptionsFor` | a target's admitted options | target id → authored options whose `Requires` holds, deep-copied; `ErrNoProp` for a thing the member cannot be shown |
 | `encounter.shownTo` (replaces `showsCellTo` / `showsAnyCellTo`) | the oracle for cells and props | member, cells → any cell ∈ the member's known cells minus `undiscoveredFrom(member)`, the mask `VisibleCellsFor` and `WatchZonesFor` already apply; no projection |
 | `perception` sightings | the oracle for creatures | does this member currently sight that creature; the per-observer testimony as today |
@@ -69,7 +69,8 @@ Refusals, one per boundary:
 
 - The web does not compute reach; it shows the rows the server offers and turns a click on a far target into a Move.
 - The api does not compute options; it converts and locks.
-- `readSpeakMenu` does not ask about a target outside reach.
+- `readSpeakMenu` does not ask about a target outside reach, and does not offer what the member merely remembers.
+- The Speak door does not keep its own notion of reach; it refuses through `refuseOutOfReach` with the reach the session passed.
 - The locker does not take a key wider than the session for a session verb.
 - The session does not write character configuration.
 - `OptionsFor` and `PropOptionsFor` do not project an atlas to decide what the member can be shown.
@@ -88,8 +89,9 @@ through the placement index and finds the cook and the ledger on the table.
 The cook is offered because the player's sightings hold her and
 `Witnesses(player)` filtered to her confirms she sees them; `OptionsFor(player,
 cook)` keeps each authored option whose `requirementHolds` (the player knows
-the fact, holds the prop). The ledger is offered because `shownTo` finds its
-cell in the player's known cells under their concealment mask. No atlas is
+the fact, holds the prop). The ledger is offered because the player sees its
+cell now (`VisibleCellsFor`) and `shownTo` admits it under their concealment
+mask. No atlas is
 projected and nothing beyond three hexes is asked about. The rows come back
 carrying the Speak selector id the player's `Speak` act will echo. The api
 releases this session's guard; the tomb's table two doors down never
@@ -107,7 +109,8 @@ hop.
 | What stands on this cell | the field's placement index |
 | What this target offers this member | the target's authored options through the requirement filter |
 | Can this target hear this member | `Witnesses`: the target's sight of the member |
-| Who is near enough to interact with | `WithinReach`: the hex ring and the placement index |
+| Who is near enough to interact with | `WithinReach`: `Encounter.Distance` within reach, the placement index, and the member's current visibility |
+| Whether a line may be said to a target | the Speak door: witness, shown, and `refuseOutOfReach` with the same reach |
 | What a player chose for their character | the character configuration store |
 | What a verb may stall | its own session's guard |
 
@@ -150,7 +153,7 @@ its own source, and the projection is downstream of knowledge.
 | concern | path |
 |---|---|
 | speak menu, bounded by reach | `rpg-toolkit/rulebooks/dnd5e/session/offers.go` (`compileOffersFor`, `readSpeakMenu`, `speakableProps`), `afford.go` (`Afford`, `speakRowOnTheWorldClock`); `rpg-toolkit/rulebooks/dnd5e/encounter` new `reach.go` (`WithinReach`) |
-| options and the oracle | `rpg-toolkit/rulebooks/dnd5e/encounter/option.go` (`OptionsFor`, `PropOptionsFor`, `speakableProp`), `hold.go` (`showsCellTo`, `showsAnyCellTo`) |
+| options, the oracle, reach | `rpg-toolkit/rulebooks/dnd5e/encounter/option.go` (`OptionsFor`, `PropOptionsFor`, `speakableProp`), `hold.go` (`showsCellTo`, `showsAnyCellTo`, `refuseOutOfReach`, `refuseOutOfReachCell`), `errors.go` (`ErrOutOfRange`), `speak.go` (`SpeakInput`) |
 | placement index, projection, the mask | `rpg-toolkit/rulebooks/dnd5e/encounter/atlas.go` (`Atlas`, `placedCellsOf`), `placed_props.go` (`placedCells`, `footprintObservationCells`), `structural_walls.go` (`wallFootprintCells`), `projection.go` (`undiscoveredFrom`), `watchzones.go` (`VisibleCellsFor`, `WatchZonesFor`) |
 | sweep and knowledge | `rpg-toolkit/rulebooks/dnd5e/encounter/roomknowledge.go` (`discoverCells`, `learnCells`, `cellFold`), `roomreveal.go` (`appendCellsRevealedBeat`), `encounter.go` (`rebuildPercepts`), `board.go` (`refreshSight`), `data.go` (`sight_sweeps`) |
 | preferences in the session | `rpg-toolkit/rulebooks/dnd5e/session/exploration.go` (`ExplorationData`, `ExplorationRepository`, `SetDiscoverySharing`), `session.go` (`Config.Explorations`) |
