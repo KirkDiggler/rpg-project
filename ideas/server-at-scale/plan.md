@@ -25,21 +25,23 @@ than discovery sharing (O4); the approach's stopping rule beyond O1's default.
 |---|---|---|---|
 | S2 | rpg-toolkit `encounter` → `session`; rpg-dnd5e-web | main / main / dev | encounter PR (oracle, index, `WithinReach`); session PR (speak menu bounded by reach); web PR (click a far target → Move toward it); no protos or api change |
 | S5 | rpg-api; rpg-api-protos; rpg-toolkit `session` | dev / main / main | api PR (locker per session — independent, first); protos PR (`SetPreference`); session PR (`CharacterConfigReader`); api PR (store) |
-| S3 | rpg-toolkit `encounter` | main | one PR: atlas cache, index-backed footprints, reach-bounded sweep, no monster beats |
-| S4 | rpg-toolkit `encounter` (+ `session` if a reader moves) | main | one PR: known cells have one home |
+| S3 | rpg-toolkit `encounter` | main | one PR: index-backed projection, reach-bounded sweep cold and warm, no monster beats |
+| S4 | rpg-toolkit `encounter` | main | one PR: known-cells facts as row runs; beats carry only the newly shown delta |
 
-S2 and S5 are independent and may run in parallel; S3 after S2's encounter PR
-(it shares `placementIndex`); S4 after S3. Merge each slice toolkit → protos →
-api → web.
+S2 and S5 are independent and may run in parallel, except that the api's
+locker change (T4) merges only after the preference has left the session's
+write path (T6). S3 after S2's encounter PR (it shares `placementIndex`); S4
+after S3. Merge each slice toolkit → protos → api → web.
 
 ## Finish line
 
 - Sub-issues S2–S5 under #753 closed by their "done means" with rows posted.
-- On the bench env: `bench-keep` launches under 2 s and `bench-keep-30k` under
-  10 s (from 18.6 s / 149 s); a player Afford on either under 100 ms (from
-  320 s) with the menu within reach included; Move under 100 ms; the castle's
-  rows unchanged or better; a castle launch beside a live keep no slower than
-  alone.
+- On the bench env (numbers are defaults the operator may move on the design
+  PR): `bench-keep` launches under 2 s and `bench-keep-30k` under 10 s (from
+  18.6 s / 149 s); a player Afford on either under 100 ms (from 320 s) with the
+  menu within reach included; Move under 100 ms on both (R1 of site format);
+  the castle's rows unchanged or better; a castle launch beside a live keep no
+  slower than alone.
 - The session blob of the 10k keep under 1 MB (from 7.3 MB).
 - `sharedStoreLocker` gone; `character-config:<id>` holds discovery sharing.
 
@@ -49,13 +51,14 @@ api → web.
 |---|---|---|
 | V1 | `readSpeakMenu` offers only the creatures and props within interaction reach (3 hexes) of the member, found through `encounter.WithinReach`; nothing farther is asked about; `speakRowOnTheWorldClock` reads the same bounded menu. | R1, R4 |
 | V2 | The rows keep today's shape (`Declaration.speak_options` with the Speak selector id); a target within reach that cannot be shown or does not witness the member is simply not offered. | R1, R4 |
-| V3 | `encounter.shownTo(member, cells)` answers from the member's known cells in perception; `OptionsFor`/`PropOptionsFor` call no `Atlas`/`AtlasFor`. | Law Knowledge is the oracle |
-| V4 | `field.placementIndex` maps cell → placements and walls; `placedCells` and `wallFootprintCells` read it; it is rebuilt only on placement change. | Law The field indexes |
-| V5 | `Encounter.Atlas` returns a cached projection until a structural change (door state; placement moved, arrived, gone) invalidates it; `AtlasFor(member)` filters the cache by knowledge. | Law Project once |
-| V6 | `discoverCells` tests only cells within the observer's sight reach; a monster observer writes no `cells_revealed` beat. | Law A sweep covers what can be seen; O2 |
-| V7 | No `known:cells` journal fact is written; readers take the set from perception; a seat's `cells_revealed` beat carries only newly revealed cells. | Law Known cells have one home |
+| V3 | `encounter.shownTo(member, cells)` answers from the member's known cells minus `undiscoveredFrom(member)` (the mask `VisibleCellsFor`/`WatchZonesFor` apply), equal to today's `AtlasFor`-based answer; a creature within reach is offered only if the member's sightings hold it; `OptionsFor`/`PropOptionsFor`/`readSpeakMenu` call no `Atlas`/`AtlasFor`. | Law Knowledge is the oracle |
+| V4 | `field.placementIndex` maps cell → placements and walls, built with the field in O(cells + footprint cells); `placedCells`, `wallFootprintCells` and `placedCellsOf` read it; a moved placement updates its entries. | Law The field indexes |
+| V5 | `Encounter.Atlas` costs O(placements + walls) through the index; nothing is cached across verbs and nothing derived is stored; the atlas goldens are byte-identical. | Law The field indexes |
+| V6 | `discoverCells` tests only cells within the observer's sight reach, cold (launch) and warm (every step's `refreshSight`); a monster observer writes its `known:cells` facts and no `cells_revealed` beat. | Law A sweep covers what can be seen; O2 |
+| V7 | `known:cells` facts are written as row runs and folded by `cellFold` from runs; a seat's `cells_revealed` beat carries only the newly shown atlas delta; readers of known cells are unchanged. | Law Knowledge is written once |
 | V8 | rpg-api locks session verbs by session id; `sharedStoreLocker` is deleted. | R2 |
-| V9 | `CharacterService.SetPreference{character, discovery_sharing}` writes `character-config:<id>` under the character guard; the session reads `DiscoverySharing` through `sdk.CharacterConfigReader`; `SessionService.SetDiscoverySharing` is deprecated in place and delegates. | R2 |
+| V9 | `CharacterService.SetPreference{character, discovery_sharing}` writes `character-config:<id>` under the character guard; the session reads `DiscoverySharing(ctx, character)` through `sdk.CharacterConfigReader` at each resolution and keeps no copy; the session SDK's `SetDiscoverySharing` verb and `ExplorationRepository`'s write are removed; `SessionService.SetDiscoverySharing` stays on the wire deprecated, and its api handler writes the configuration store; a legacy `exploration:<character>` record is read once as the initial value. | R2, O4 |
+| V12 | A Move on the 10k and 30k keeps completes under 100 ms server time, measured by the harness's Move row; its warm `refreshSight` is reach-bounded (V6) and its data load/save is the compact form (V7). | Law A step costs its reach; site format R1 |
 | V10 | The web turns a click on a creature or prop beyond reach into a Move toward it; the menu for targets within reach keeps coming from Afford's rows. | R1, R4 |
 | V11 | Before and after rows for the castle and both keeps posted per slice; none worse. | Law No row gets worse |
 | K1 | The castle's QA routes, goldens, hearing, concealment, fog and the Speak act's door checks keep working. | must keep working |
@@ -86,12 +89,13 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 |---|---|---|
 | G1 the approach's stop | reach: three hexes (R4); the client walks a far target into reach and the next Afford carries its rows | R4, O1 |
 | G2 witness for a prop | a prop has no eyes; a prop within reach is offered on `shownTo` alone | Law Knowledge is the oracle |
-| G3 what "known cells" is | `perception`'s per-observer known set as `learnCells` maintains it today; S4 makes it the only copy | Law Known cells |
-| G4 the cache's writers | door open/close, `Hold`/`Drop`/arrival of a placed prop, `Launch`; each calls `invalidateAtlas()` on the encounter | Law Project once, O3 |
-| G5 a monster's beat today | `appendCellsRevealedBeat` runs per learning observer; S3 gates it on the observer being a seat | O2 |
-| G6 reach bound | `sightReach` already carries each observer's distances; the sweep iterates cells within the max distance of the observer's cell (hex ring) instead of `e.field.cells` | Law A sweep covers |
+| G3 what "known cells" is | the journal's `known:cells` facts, written by `learnCells` as deltas and folded by `cellFold`; perception has no cell concept, so the home stays where it is and only its encoding changes | Law Knowledge is written once |
+| G4 why no atlas cache | the api loads the encounter from its data on every verb, so an in-memory cache lives one verb and a persisted one is stored derived data (refused as site format R8 refuses it); the index makes the projection linear instead | Law The field indexes |
+| G5 a monster's beat today | `appendCellsRevealedBeat` runs per learning observer; S3 gates it on the observer being a seat; the monster's `known:cells` facts still persist, so a reloaded monster skips no knowledge | O2 |
+| G6 reach bound | `sightReach` carries each observer's max distance; the sweep iterates the hex ring of radius reach + 1 around the observer's cell (the extra ring for cells whose centre lies within reach of an edge) instead of `e.field.cells`, cold and warm | Law A sweep covers |
 | G7 reach and the clocks | the bounded menu is read where the menu is read today: on the turn clock in `compileOffersFor`, on the world clock in `speakRowOnTheWorldClock`; pricing unchanged | README |
-| G8 store key and shape | `character-config:<character>` JSON `{discovery_sharing: bool|null}`; absent means not chosen, as `resolveDiscoverySharing` reads today | R2, O4 |
+| G8 store key and shape | `character-config:<character>` JSON `{discovery_sharing: bool|null}`; absent means not chosen, as `resolveDiscoverySharing` reads today; a legacy `exploration:<character>` record (its `private` flag) is read as the initial value once and never written again | R2, O4 |
+| G9 the approach has no server verb | `MoveRequest` takes a client-composed path; the client composes the path toward the target and stops within reach, as it composes every move today | R4, README |
 
 ## Tasks
 
@@ -100,10 +104,12 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 **Delivers:** V3, V4.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
 **Prerequisites:** none.
-**Files:** modify `hold.go` (`showsCellTo`, `showsAnyCellTo` → `shownTo(member MemberID, cells []spatial.Position) (bool, error)` reading perception's known set; delete the `AtlasFor` call), `option.go` (`speakableProp` uses `shownTo`), new `placement_index.go` (`placementIndex` built in `compileField` and on placement change; `placedCells`, `wallFootprintCells` read it), `atlas.go` (`placedCellsOf` reads the index), new `reach.go` (`WithinReach(member MemberID, hexes int) (members []MemberID, props []PropID, error)`: the hex ring around the member's cell through the index and the roster's cells).
-**Interfaces:** `shownTo` semantics equal today's `AtlasFor`-based answer for every cell the member knows; `placementIndex.at(cell) []placementRef`; `WithinReach` lists every creature and placed or cell prop with a cell inside the ring, sorted by id, excluding the member.
-**Tests:** `TestShownTo_MatchesAtlasFor` (property test on the castle and the 10k keep: for every member and every placement, `shownTo` equals the old answer); `TestPlacementIndex_RebuildsOnMove`; `TestWithinReach_Ring` (ring of 3 = 37 cells; a prop with one footprint cell inside counts; adjacent-only when hexes = 1); `BenchmarkPropOptionsFor_Keep10k` (< 1 ms, from ~550 ms); `TestOptionsFor_NoProjection` (a probe counter asserts zero `Atlas` calls).
-**Verification:** `go test -race ./... && golangci-lint run ./...`; the benchmark number in the PR body.
+**Files:** modify `hold.go` (`showsCellTo`, `showsAnyCellTo` → `shownTo(member MemberID, cells []spatial.Position) (bool, error)` reading the member's known cells under `undiscoveredFrom(member)`, as `VisibleCellsFor` does; delete the `AtlasFor` call), `option.go` (`speakableProp` uses `shownTo`), new `placement_index.go` (`placementIndex` built in `compileField` and on placement change; `placedCells`, `wallFootprintCells` read it), `atlas.go` (`placedCellsOf` reads the index), new `reach.go` (`WithinReach(member MemberID, hexes int) (members []MemberID, props []PropID, error)`: the hex ring around the member's cell through the index and the roster's cells).
+**Interfaces:** `shownTo` equals today's `AtlasFor`-based answer for every cell (known under the mask, footing included as the projection includes it); `placementIndex.at(cell) []placementRef`, built in `compileField` in one pass over footprints, updated by the placement writers (`held:`/`dropped:`/`arrived:` folds) for their own entries; `WithinReach` lists every creature the member's sightings hold and every placed or cell prop with a cell inside the ring, sorted by id, excluding the member.
+**Behavior:** no caller of `shownTo` or `WithinReach` projects an atlas; an unsighted creature within reach is absent from the result, not refused.
+**Tests:** `TestShownTo_MatchesAtlasFor` (property test on the castle and the 10k keep: for every member and every placement, including one on concealed floor, `shownTo` equals the old answer); `TestPlacementIndex_UpdatesOnMove`; `TestWithinReach_Ring` (ring of 3 = 37 cells; a prop with one footprint cell inside counts; an unsighted creature inside is absent; adjacent-only when hexes = 1); `BenchmarkPropOptionsFor_Keep10k` (< 1 ms, from ~550 ms); `BenchmarkAtlas_Keep30k` (< 100 ms, from 2.1 s, through the index); `TestOptionsFor_NoProjection` (a probe counter asserts zero `Atlas` calls); atlas goldens byte-identical.
+**Verification:** `go test -race ./... && golangci-lint run ./...`; the benchmark numbers in the PR body.
+**Completion evidence:** PR link, benchmark lines, golden diff empty.
 
 ### Task T2: the speak menu within reach (S2, session)
 
@@ -112,21 +118,29 @@ Numbers (S1 report): Afford 10k 320 s live / 655 projections; launch 18.6 s / 14
 **Prerequisites:** T1 tag.
 **Files:** modify `offers.go` (`readSpeakMenu` takes its targets from `encounter.WithinReach(member, InteractionReach)` instead of `enc.Witnesses` + `speakableProps`; `speakableProps` and its `enc.Atlas()` are deleted; the witness test runs per creature within reach; `const InteractionReach = 3` with its doc naming R4), `afford.go` (`speakRowOnTheWorldClock` unchanged in shape, reads the bounded menu); `speak.go`'s door unchanged; `buildSpeakOffer` unchanged.
 **Interfaces:** rows carry the same selector id `Speak` validates today; a target outside reach is not a row; `Speak` on a target outside reach is refused at the door with the existing not-witnessed/not-shown reasons plus `ShortfallOutOfReach`.
-**Tests:** `TestSpeakMenu_WithinReachOnly` (castle: a guard four hexes off is not offered, at three he is); `TestSpeakMenu_HiddenPropNotOffered`; `TestSpeak_OutOfReachRefused`; castletest script steps that speak move within reach first (the walk captures the spirit: the player walks up); `BenchmarkAfford_Keep10k` (< 100 ms, from 369 s).
+**Behavior:** the menu lists only targets within reach that are sighted (creatures) or shown (props); the Speak row keeps its slot, price and availability as today, so the web's Speak button is unchanged; a Speak at a target out of reach is refused at the door.
+**Tests:** `TestSpeakMenu_WithinReachOnly` (castle: a guard four hexes off is not offered, at three he is); `TestSpeakMenu_HiddenPropNotOffered`; `TestSpeakMenu_UnsightedCreatureNotOffered`; `TestSpeak_OutOfReachRefused`; castletest script steps that speak move within reach first (the walk captures the spirit: the player walks up; the QA castle script #639 gains the step); `BenchmarkAfford_Keep10k` (< 100 ms, from 369 s).
+**Completion evidence:** PR link, benchmark line, the #639 script step added.
 **Verification:** module gates; benchmark numbers in the PR body; castletest green.
 
-### Task T3: not applicable (S2, protos)
+### Task T3: one enum value (S2, protos)
 
-R4 keeps the interaction wire as it is: `Declaration.speak_options` carries the rows within reach. No protos change for S2. (S5's `SetPreference` is in T6.)
+**Delivers:** V2's refusal.
+**Owner:** rpg-api-protos.
+**Files:** `dnd5e/api/session/v1alpha1/types.proto` `ShortfallReason` gains `SHORTFALL_REASON_OUT_OF_REACH` (additive); no other wire change — `Declaration.speak_options` carries the rows within reach as today.
+**Tests:** `buf lint`, `buf breaking`.
+**Verification:** bindings published on merge; the api maps the new reason in its shortfall conversion.
 
 ### Task T4: the lock (S5, api)
 
 **Delivers:** V8.
 **Owner:** rpg-api.
-**Prerequisites:** none (independent of S2; merges first).
-**Files:** modify `internal/orchestrators/session/orchestrator.go:150-153` (use `NewInProcessSessionLocker()` directly), delete `sharedStoreLocker` from `exploration.go`; the discovery-sharing write keeps correctness through T6 (until then it is the one cross-session write, guarded by the character key the SDK already takes around it — verify in `session/exploration.go:182`; if it does not, T4 waits for T6).
+**Prerequisites:** T6 merged (the preference has left the session's write path).
+**Files:** modify `internal/orchestrators/session/orchestrator.go:150-153` (use `NewInProcessSessionLocker()` directly), delete `sharedStoreLocker` from `exploration.go`.
+**Behavior:** two sessions' verbs interleave; a 10k keep's Afford no longer delays a castle launch.
 **Tests:** `TestLocker_SessionsDoNotShareAKey` (two sessions' verbs interleave); the castle integration tests.
 **Verification:** `make test`, `make pre-commit`; on the bench env, a castle launch beside a live keep session takes the castle's own time.
+**Completion evidence:** PR link; the castle-beside-keep row on #753.
 
 ### Task T5: walk to a far target (S2, web)
 
@@ -134,42 +148,50 @@ R4 keeps the interaction wire as it is: `Declaration.speak_options` carries the 
 **Owner:** rpg-dnd5e-web.
 **Prerequisites:** T2 on a stack for the walk (no wire change).
 **Files:** `combat-experience/TargetSurface.tsx` (a creature or prop beyond reach is clickable; the click issues a Move toward it, stopping within reach), `useSessionCombatExperience.ts` (the approach intent), `ConversationPanel.tsx` and `speakOptions.ts` unchanged except that an empty menu reads "nobody within reach".
-**Tests:** vitest: click a far creature → Move intent toward it; after the view refresh with the creature within reach, the panel shows its rows from Afford; nothing within reach → the empty-menu text.
+**Behavior:** the client composes the path toward the target (G9) and stops within reach; the menu comes from Afford's rows unchanged.
+**Tests:** vitest: click a far creature → a composed Move path toward it stopping within reach; after the view refresh with the creature within reach, the panel shows its rows from Afford; nothing within reach → the empty-menu text.
 **Verification:** `npm run ci-check`; the operator walks the castle: click the cook from the hall, the character walks over, the cook's lines appear; stand next to the altar, its options appear without a click.
 
 ### Task T6: character configuration (S5, protos + session + api)
 
 **Delivers:** V9, G8.
-**Owner:** rpg-api-protos (`CharacterService.SetPreference`), rpg-toolkit `session` (`CharacterConfigReader` replaces `ExplorationRepository`'s write path; `SetDiscoverySharing` delegates or is removed from the SDK), rpg-api (`internal/repositories/characterconfig` Redis `character-config:<id>`; `CharacterService.SetPreference` handler under `LockCharacter`; the session's reader wired).
-**Tests:** session: `TestResolveDiscoverySharing_FromReader`; api: repository round-trip, handler locks the character, `SetDiscoverySharing` (session) still works via delegation.
-**Verification:** module gates; `make test`; the discovery-sharing switch in the web still flips and persists.
+**Owner:** rpg-api-protos (`CharacterService.SetPreference{character_id, optional bool discovery_sharing}`), rpg-toolkit `session` (`Config.CharacterConfig CharacterConfigReader` with `DiscoverySharing(ctx, character) (*bool, error)` replaces `Config.Explorations`; `resolveDiscoverySharing` reads it at each discovery resolution; `Manager.SetDiscoverySharing` and `ExplorationRepository` are removed), rpg-api (`internal/repositories/characterconfig` Redis `character-config:<id>`; `CharacterService.SetPreference` handler under `LockCharacter`; `SessionService.SetDiscoverySharing` handler kept, deprecated, writing the same store for the caller's seated character; a legacy `exploration:<character>` record read once as the initial value, G8).
+**Behavior:** preference changes take effect at the next discovery resolution with no delivery step; the web's switch keeps working through the deprecated RPC until it moves to `SetPreference`.
+**Tests:** session: `TestResolveDiscoverySharing_FromReader` (nil → not chosen; true/false); api: repository round-trip, `SetPreference` locks the character, the deprecated handler writes the store, legacy record read once.
+**Verification:** module gates; `make test`; the discovery-sharing switch in the web still flips and persists across sessions.
+**Completion evidence:** PR links (protos, session tag, api).
 
-### Task T7: project once, index-backed footprints (S3, encounter)
+### Task T7: the projection through the index (S3, encounter)
 
 **Delivers:** V5, G4.
 **Owner:** rpg-toolkit `encounter`.
-**Prerequisites:** T1.
-**Files:** `atlas.go` (`Atlas` reads `e.atlasCache` or derives and stores; `invalidateAtlas()`), the writers per G4, `placed_props.go` / `structural_walls.go` (`footprintObservationCells` via the index).
-**Tests:** `TestAtlas_CachedUntilStructuralChange` (door toggle invalidates; a Move does not); `BenchmarkAtlas_Keep30k` (< 50 ms warm, from 2.1 s); the atlas goldens byte-identical.
+**Prerequisites:** T1 (the index exists; T1 already routes `placedCellsOf`). T7 routes the remaining per-projection scans: `structural_walls.go` `wallFootprintCells` → `footprintObservationCells` (26–31% of launch) and `atlas.go:663`'s wall walk read the index; the sight-pass memo `placedCellsOf` (`placed_props.go:1056`) becomes the index.
+**Behavior:** `Atlas()` makes no pass over `e.field.cells`; its output is byte-identical.
+**Tests:** `BenchmarkAtlas_Keep30k` (< 50 ms, from 2.1 s); the atlas goldens byte-identical; a test asserts `Atlas()` visits no cell outside footprints (probe counter).
 **Verification:** module gates; goldens; number in the PR body.
+**Completion evidence:** PR link, benchmark line.
 
 ### Task T8: reach-bounded sweep, no monster beats (S3, encounter)
 
 **Delivers:** V6, G5, G6.
 **Owner:** rpg-toolkit `encounter`.
 **Prerequisites:** T7 (same PR).
-**Files:** `roomknowledge.go` (`discoverCells` iterates the hex ring within the observer's max sight distance), `roomreveal.go` (`appendCellsRevealedBeat` only for seats), `encounter.go` (`rebuildPercepts` unchanged in shape).
-**Tests:** `TestDiscoverCells_EqualsFullSweep` (castle and keep: the bounded sweep learns the same set as the full one); `TestMonster_WritesNoRevealBeat`; `BenchmarkLaunch_Keep10k` (< 2 s, from 18.6 s) and `_Keep30k` (< 10 s, from 149 s).
-**Verification:** module gates; castletest green; numbers in the PR body; the session re-pins and posts the live StartEncounter row from the bench env.
+**Files:** `roomknowledge.go` (`discoverCells` iterates the hex ring of radius reach + 1 around the observer, cold and warm; `learnCells` unchanged), `roomreveal.go` (`appendCellsRevealedBeat` only for seats; the session's own fold of monster beats, if any, reads none), `encounter.go` (`rebuildPercepts` unchanged in shape).
+**Behavior:** a warm step's `refreshSight` costs each observer its ring; a monster's facts persist and its reload skips no knowledge (G5).
+**Tests:** `TestDiscoverCells_EqualsFullSweep` (castle and keep: the bounded sweep learns the same set as the full one, cold and after a step); `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge`; `BenchmarkLaunch_Keep10k` (< 2 s, from 18.6 s) and `_Keep30k` (< 10 s, from 149 s); `BenchmarkRefreshSightWarm_Keep10k` (< 50 ms, from 1,169 ms).
+**Verification:** module gates; castletest green; numbers in the PR body; the session re-pins and posts the live StartEncounter and Move rows from the bench env.
+**Completion evidence:** PR link, benchmark lines, rows on #753.
 
-### Task T9: known cells have one home (S4, encounter + session)
+### Task T9: knowledge written once, compactly (S4, encounter)
 
-**Delivers:** V7.
-**Owner:** rpg-toolkit `encounter` (and `session` if a reader of `known:cells` lives there).
+**Delivers:** V7, V12 (data half).
+**Owner:** rpg-toolkit `encounter`.
 **Prerequisites:** T8.
-**Files:** the writer of the `known:cells` journal fact (located by grep in `roomknowledge.go` / journal), its readers → perception.
-**Tests:** `TestJournal_NoKnownCellsFact`; `TestBlobSize_Keep10k` (marshalled `EncounterData` under 1 MB after launch); readers' tests pass against perception.
-**Verification:** module gates; the bench env's Redis blob size posted on #753.
+**Files:** `roomknowledge.go` (`learnCells` writes the `known:cells` fact's cells as row runs, `cellFold` reads runs and the legacy one-per-cell form), `roomreveal.go` (a seat's beat carries only cells and placements not already in the seat's known set).
+**Behavior:** the facts and beats decode to the same known sets as before; the 10k keep's marshalled `EncounterData` after launch is under 1 MB; the per-verb load falls with it.
+**Tests:** `TestKnownCellsFact_RunsRoundTrip` (legacy and runs decode equal); `TestRevealBeat_DeltaOnly`; `TestBlobSize_Keep10k` (< 1 MB after launch); the fog and reveal tests unchanged.
+**Verification:** module gates; the bench env's Redis blob size and the Move row posted on #753.
+**Completion evidence:** PR link, blob bytes before/after, rows.
 
 ## Requirement coverage
 
@@ -177,13 +199,14 @@ R4 keeps the interaction wire as it is: `Declaration.speak_options` carries the 
 |---|---|---|
 | V1 | T1, T2 | `TestWithinReach_Ring`; `TestSpeakMenu_WithinReachOnly`; `BenchmarkAfford_Keep10k` |
 | V2 | T2 | `TestSpeakMenu_HiddenPropNotOffered`; `TestSpeak_OutOfReachRefused` |
-| V3 | T1 | `TestShownTo_MatchesAtlasFor`; `TestOptionsFor_NoProjection` |
-| V4 | T1 | `TestPlacementIndex_RebuildsOnMove` |
-| V5 | T7 | `TestAtlas_CachedUntilStructuralChange`; goldens |
-| V6 | T8 | `TestDiscoverCells_EqualsFullSweep`; `TestMonster_WritesNoRevealBeat` |
-| V7 | T9 | `TestJournal_NoKnownCellsFact`; `TestBlobSize_Keep10k` |
+| V3 | T1, T2 | `TestShownTo_MatchesAtlasFor`; `TestOptionsFor_NoProjection`; `TestSpeakMenu_UnsightedCreatureNotOffered` |
+| V4 | T1 | `TestPlacementIndex_UpdatesOnMove` |
+| V5 | T1, T7 | `BenchmarkAtlas_Keep30k`; goldens; no-cell-pass counter |
+| V6 | T8 | `TestDiscoverCells_EqualsFullSweep`; `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge` |
+| V7 | T9 | `TestKnownCellsFact_RunsRoundTrip`; `TestRevealBeat_DeltaOnly`; `TestBlobSize_Keep10k` |
+| V12 | T8, T9 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
 | V8 | T4 | `TestLocker_SessionsDoNotShareAKey`; the castle-beside-keep row |
-| V9 | T6 | repository + handler tests; the web switch persists |
+| V9 | T6 | repository + handler tests; `TestResolveDiscoverySharing_FromReader`; the web switch persists |
 | V10 | T5 | vitest approach test; the operator's walk |
 | V11 | every task | rows on #753 |
 | K1 | T2, T7, T8 | castletest, goldens, fog tests |
@@ -196,10 +219,12 @@ R4 keeps the interaction wire as it is: `Declaration.speak_options` carries the 
 | T2 bounded menu | web via Afford (unchanged wire) | `Declaration.speak_options` rows for targets within reach | session tag → api re-pin | castle walk |
 | T4 locker | every session verb | per-session guard | api dev | interleaving test; castle-beside-keep row |
 | T6 `CharacterConfigReader` | session `resolveDiscoverySharing` | `DiscoverySharing(ctx, character) (*bool, error)` | session tag + api store | tests |
-| T7 cache | T8 sweep, `AtlasFor` readers | invalidation on the G4 writers only | same PR | cache test |
+| T1/T7 index | `Atlas`, `AtlasFor`, `WithinReach`, the sweep memo | cell → placements and walls, linear build, writer-updated | encounter tag | goldens; no-cell-pass counter |
+| T6 `CharacterConfigReader` | T4 locker | the preference is off the session's write path | T6 merged before T4 | locker test; `make test` |
 | harness | every slice | rows | game-dev main | #753 comments |
 
 ## Open items
 
-- O1 reach = 3 (R4, G1); O2 taken (G5); O3 decided by T7's first row; O4 only discovery sharing (G8).
-- Blockers: none. T5 needs T2 on a stack for the operator's walk; T4 may wait for T6 if the discovery-sharing write is not already under the character guard.
+- O1 reach = 3 (R4, G1); O2 taken (G5); O3 row runs, the first blob after T9 decides whether beats follow; O4 only discovery sharing (G8), the session's verb removed.
+- Finish-line numbers are defaults the operator may move on the design PR.
+- Blockers: none. T5 needs T2 on a stack for the operator's walk; T4 waits for T6.

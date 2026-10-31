@@ -23,8 +23,8 @@ flowchart LR
         Session --> Near2[targets within reach: placement index around the member]
         Near2 --> Options[encounter.OptionsFor / PropOptionsFor<br/>lookup + requirement filter]
         Options --> Shown[shown to this member?<br/>answered by the member's knowledge]
-        Shown --> Index[field: cell → placements index]
-        Atlas[atlas: projected once per structural change] -.filtered by knowledge.-> AtlasFor[AtlasFor member]
+        Shown --> Index[field: cell → placements index, built at load]
+        Index --> Atlas[atlas: a projection that costs the placements, not placements × cells]
     end
 ```
 
@@ -39,32 +39,39 @@ target is approached by moving toward it, and its options appear on arrival.
 No verb enumerates the map; the cost of an offer is the cells within reach.
 
 **Interaction reach.** Three hexes. One constant for every target; an
-author's option may demand adjacency when a use case asks for it.
+author's option may demand adjacency when a use case asks for it. A creature
+within reach is offered when the member sees it and it witnesses the member;
+a prop within reach is offered when the member can be shown it; anything else
+within reach is simply not offered, so proximity reveals nothing a map does
+not show. A line said to a target out of reach is refused at the door.
 
-**Knowledge is the oracle.** Whether a member can be shown a cell, a creature
-or a prop is answered by that member's own knowledge, the per-observer
-testimony the intel already keeps. The atlas is a projection of knowledge and
-is never consulted to answer it, so no sight question costs a projection.
+**Knowledge is the oracle.** Whether a member can be shown a cell or a prop is
+answered by that member's known cells under that member's concealment mask,
+the same answer the visible-cells and watch-zone readers already give without
+a projection. Whether a member can be shown a creature is answered by the
+member's own sightings in perception. The atlas is a projection of knowledge
+and is never consulted to answer either, so no sight question costs a
+projection.
 
 **The field indexes its placements.** The cells a placement or a wall covers
-are derived when the field is built and when a placement changes, and are
-read as a lookup after that. Nothing scans every cell to find what stands on
-one.
+are derived once when the field is built from its data, in time linear in the
+cells, and read as a lookup after that; a placement that moves updates its own
+entries. Nothing scans every cell to find what stands on one, so a projection
+costs the placements it lists, not placements times cells. Nothing derived is
+stored, and no projection is cached across verbs: the encounter is rebuilt
+from its data on every verb, so a cache would be rebuilt with it.
 
-**Project once per change.** The atlas of a field is derived when the field
-changes structurally, a door, a placement that moves, arrives or goes, and is
-read until the next change. A member's atlas is the field's atlas filtered by
-that member's knowledge. A projection costs what changed, not what exists.
+**A sweep covers what can be seen.** An observer's discovery sweep, cold at
+launch and warm on every step, visits the cells within its sight reach, not
+every cell of the field. A monster's sweep learns what it knows like any
+observer and writes no revealed-cells beat; a beat is an atlas delta for a
+seat's client, and a monster has none.
 
-**A sweep covers what can be seen.** An observer's discovery sweep visits the
-cells within its sight reach, not every cell of the field. A monster's sweep
-learns intel for its own holdings and writes no revealed-cells beat; beats
-are for seats, which have a client to show them to.
-
-**Known cells have one home.** A member's known cells live in that member's
-perception. The record carries the event that revealed them, never a second
-copy of the set, so the encounter's stored size follows what happened, not
-what is known times who knows it.
+**Knowledge is written once, compactly.** What a member knows of the floor is
+the journal's known-cells facts, the one persisted home, written as row runs
+rather than one entry per cell. A revealed-cells beat carries a seat's newly
+shown atlas, never a copy of what the seat already knows. The encounter's
+stored size follows what happened, not what is known times who knows it.
 
 **Sessions lock by session.** A verb on one session holds that session's
 guard and nothing wider. A slow verb stalls its own table only.
@@ -72,8 +79,15 @@ guard and nothing wider. A slow verb stalls its own table only.
 **Preferences are character configuration.** What a player chooses for their
 character across sessions, discovery sharing today, lives in a first-class
 character configuration store keyed by character with its own guard, written
-by character verbs and read by the session. No session verb writes it, so no
-session needs a lock wider than itself.
+by character verbs and read by the session at the moment it needs the answer.
+No session verb writes it and the session keeps no copy of it, so no session
+needs a lock wider than itself and no change needs delivering to a live
+encounter.
+
+**A step costs its reach.** A Move's sight refresh is a warm sweep within
+reach plus the load and save of the encounter's data, so the per-Move budget
+of site format R1 holds on the keep when the sweep is bounded and the data is
+compact.
 
 **No row gets worse.** Every slice posts its before and after rows from the
 harness on the story the day it lands; a slice that worsens any row does not
@@ -94,9 +108,10 @@ merge.
   the first walk on the castle and the keep may move it.
 - **O2 Monster beats.** No reader of a monster's revealed-cells beat is known;
   the law drops them. A reader that appears reopens this.
-- **O3 Invalidation grain.** Whether a door's state change re-derives the
-  whole atlas or only the partition it touches; settled by the first measured
-  row after the cache exists.
+- **O3 The known-cells encoding.** Row runs are the default; the first
+  measured blob after S4 says whether a seat's beat needs the same.
 - **O4 The configuration store's shape.** Which preferences move with
   discovery sharing, and the store's wire; a character-service concern the
-  plan names and this story only needs the one field of.
+  plan names and this story only needs the one field of. The session's own
+  discovery-sharing verb goes; the api's RPC stays deprecated and writes the
+  store.
