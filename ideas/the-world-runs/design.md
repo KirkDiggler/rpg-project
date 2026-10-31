@@ -1,7 +1,7 @@
 # The world runs — a creature is a machine that listens
 
 Story rpg-project#766. Walkthrough: [README.md](README.md). Rulings are
-tracked on the story's lane issue. Measured against rpg-toolkit `ea629b31`
+tracked on the story's lane issue. Measured against rpg-toolkit `ea629b31` <!-- case-file -->
 (encounter v0.160.0, session v0.151.0), the heads the server-at-scale story
 left (rpg-project#753).
 
