@@ -4,6 +4,61 @@ Story project#797; provider assets#337; consumer/acceptance web#1373. Selection
 accepted on assets#336. Kirk approved all six3048 auditions and authorized
 continuing through the existing Studio default/count-response path.
 
+## Current checkpoint — integrated preview complete; new-wave merge permission pending
+
+Operator decision: https://github.com/KirkDiggler/rpg-project/issues/797#issuecomment-6565166105
+Native checklist: https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1373#issuecomment-6564810663
+
+- Assets PR338 READY at65472c865b449d001075e68ec4721d5f6df26da8; exact-head
+  MERGE-READY review5730563785. Web PR1374 DRAFT only for released-provider pin
+  atda6471154fa1f8f51f72d23616a9c3c9930d46fb; pending-re-pin verdict5730675244.
+- Candidate provider pin97c7064c899f85c128b5acaff3d5409c9aae091a; subsequent
+  provider commit adds native evidence/run-record updates only. Runtime bytes
+  unchanged. Library SHA86a68a5c…; profile SHA72f8af57… (full values in recipe).
+- All six real Studio/default/reply/custom03B/Play and both-client count2/
+  count20 interruption cases passed.18 compact traces and inspected images,
+  summary and offline verifier are committed privately under
+  evidence/npc-activities/idle-expansion-v1/ at65472c8.
+-22 scoped provider tests,4495-file inventory and staging pass. No hosted asset
+  workflow and no unrelated broad-suite green claim. Web full local gate9556
+  passed/5 skipped; current-head hosted lint/type/test/security/deploy green.
+- Current doc-only CI initially hit an unchanged toast dismissal assertion,
+  then an unrelated structural-scenario15s timeout. Focused probes passed;
+  attempt3 passed the entire same-head job without code/assertion/timeout
+  changes. Evidence/follow-up web#1376; root cause is not claimed fixed.
+- One combined independent review completed, no findings. It reviewed assets97c7064
+  and web64b0b82d; later changes are evidence/docs only. No active agents and no
+  reason for another broad review. Both roots carry scoped four-section records.
+
+Runtime custody:
+- New3049/8139: local/npc-idle-expansion, managed by root scripts/dev-env.sh.
+  API .worktrees/npc-idle-expansion-preview detached at7e3f267; web is currently
+  SERVED from .worktrees/npc-idle-expansion (the implementation tree, head da647115).
+  Do not edit/re-pin that served tree while preserving the offered preview.
+- Before an authorized consumer re-pin: detach that served web tree IN PLACE at
+  the unchanged current head (no source change), then create a separate
+  .worktrees/npc-idle-expansion-release on feat/npc-idle-expansion for the re-pin.
+  Keep the manifest/STATE paths and current scene stable. This avoids restarting
+  the offered preview just to publish an identical-byte provider revision.
+- Manifest lives in game-dev .worktrees/npc-idle-expansion/envs/local/, symlinked
+  from root envs/local. Local walk source is untracked in the API preview plus
+  managed content; hash6dc34609… verified in container. Preserve it while serving.
+- Offered Bard scene: Drunken sway default, Grumpy arms folded count2 for Tell me
+  what happened (count20 for Take your time thinking), custom03/B, beside B.
+  Fresh starts walk within Speak reach. Source key qa-idle-expansion. Separate
+  closer visual pass used Fighter/key qa-idle-expansion-visual, not the offered run.
+- Drivers: game-dev .worktrees/npc-idle-expansion/tools/browser/_job_npc_idle_*;
+  raw receipts /tmp/npc-idle-expansion-qa and /tmp/npc-idle-expansion-close.
+- Preserve3048 audition,3047/3046 previews,3042 lab,3030 castle and3044 pacing.
+  New detached review trees in assets/web .worktrees/npc-idle-expansion-review
+  are clean/read-only; remove only disposable resources after authorized shipment.
+
+NEXT: operator looks at3049 and explicitly authorizes assets338 → actual merged
+SHA → web1374 released-pin regeneration/sync/gates/head verdict → dev. No game
+release or combat/monk feature. Include the already-recorded CI follow-up link
+in the run record alongside the normal release-pin update; do not create another
+standalone documentation/CI loop or silently claim the instability fixed.
+
 ## Goal, finish and exclusions
 
 Shy, Slumped, Dramatic, Drunken sway, Grumpy arms folded and Grumpy hands on hips
