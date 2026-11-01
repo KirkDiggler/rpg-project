@@ -246,9 +246,9 @@ footer { color: var(--muted); font-size: 0.85rem; }
     <thead><tr><th>layer</th><th>what it owns</th><th>state</th></tr></thead>
     <tbody>
       <tr><td><code>mind/machine</code> (toolkit)</td><td>The primitive, rulebook-agnostic, bus-free. Recipe, guard tree, compile against a vocabulary, <code>Step</code>, <code>Listens</code>, <code>DueAt</code>, the <code>Due</code> heap and <code>Listeners</code> index as plain data structures.</td><td><span class="pill done">v0.1.0</span></td></tr>
-      <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.163.0</span> <span class="pill now">S4 e4a239a0</span></td></tr>
-      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.151.1</span> <span class="pill now">#2221</span></td></tr>
-      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">af2b1fd7</span> <span class="pill now">#1172</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.165.0</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.153.0</span></td></tr>
+      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">dev 84588c51</span></td></tr>
       <tr><td><code>rpg-dnd5e-web</code> · protos</td><td>A state change on the event log and the panel. The studio's <code>states:</code> editing.</td><td><span class="pill next">S6 #776</span></td></tr>
     </tbody>
   </table></div>
@@ -279,7 +279,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
       <tr><td>S1 #771</td><td>The garrison probe: a keep with 99 creatures and the before rows.</td><td><span class="pill done">done</span></td></tr>
       <tr><td>S2 #772</td><td><code>mind/machine</code>, the primitive.</td><td><span class="pill done">done</span></td></tr>
       <tr><td>S3 #773</td><td>The encounter wakes who is due; the default recipe keeps every row the same.</td><td><span class="pill done">done, walked</span></td></tr>
-      <tr><td>S4 #774</td><td>Triggers with scope, clocks as content, the castle's first authored recipes, posts that sleep.</td><td><span class="pill now">staged on :3030</span></td></tr>
+      <tr><td>S4 #774</td><td>Triggers with scope, clocks as content, the castle's first authored recipes, posts that sleep.</td><td><span class="pill done">done, walked</span></td></tr>
       <tr><td>S5 #775</td><td>Replay from the record: the record's own rolls, read back in order.</td><td><span class="pill next">proposed</span></td></tr>
       <tr><td>S6 #776</td><td>Visible: the state change on the log and panel; the studio writes <code>states:</code>.</td><td><span class="pill next">proposed</span></td></tr>
       <tr><td>S7 #777</td><td>Area clocks: a tomb that keeps its own time.</td><td><span class="pill next">proposed</span></td></tr>
@@ -294,8 +294,8 @@ footer { color: var(--muted); font-size: 0.85rem; }
     <div>
       <h3>The order of work</h3>
       <ol>
-        <li><strong>Walk S4</strong> on a fresh mad king (the shelf now carries the recipes). Open the gate first if you want the reserves to come; the gate post's wake is on the record and I read it back for you.</li>
-        <li><strong>Merge S4 inside-out</strong> on your word: encounter → tag → session re-pin → tag → api re-pin → merge-out. Both envs back to dev.</li>
+        <li><strong>Walk S4</strong>: done. The reserves marched on fight rounds and help arrived; the gate post's wake waits for a forced door outside a fight, because a creature inside a fight does not step its world machine.</li>
+        <li><strong>Merge S4 inside-out</strong>: done. Encounter v0.165.0, session v0.153.0, api dev 84588c51; both envs back on dev.</li>
         <li><strong>Take the keep's remaining cost</strong>: #762, the roster-wide sight refresh. It is the whole of what is left in a raise, and it lives in the encounter's sight code, apart from the machines.</li>
         <li><strong>Make the machines visible</strong>: S6, so a state change shows on the log and the panel and you can follow a recipe while it runs. Session, protos, api, web; it can run beside #762.</li>
         <li><strong>Make the keep playable</strong> while those build: the two keep bugs below are overnight-coder sized.</li>
