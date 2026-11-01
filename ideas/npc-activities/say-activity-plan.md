@@ -134,7 +134,22 @@ Develop the consumer contract/counting first, then wire schema, behavior → enc
 
 Self-check: do not let the shared Say editor advertise a cue that its delivery path drops; carry spoken TableAnswer as well as nested Speech.Answer. Do not use the old blanket sustain-Infinity mixer setup for finite cues. Native mixer completion must handle single cycles and large updates. Do not restore the cancelled budget after movement. Do not treat an API-only pin or a preview's cached content as integration proof.
 
-## Current checkpoint — merge AUTHORIZED; ready for compaction
+## Current checkpoint — SHIPPED; continued as social activities project#784
+
+Project#746 and its implementation sub-issues are closed. Ship record:
+https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6553594312 .
+Behavior0.18.0 (47a150fe), encounter0.164.0 (0784a46e), session0.152.0
+(01bc8e56), API dev7e3f267, web dev b5cc3417. Reach fixtures were reconciled,
+all release gates passed, and final two-client QA passed with native walks
+within the newer Speak reach. No game release occurred.
+
+The approved next goal is now implemented and verified in preview3047, awaiting
+its own merge permission: project#784 comment6554083352. Resume from
+rpg-project/.worktrees/npc-social-activities/ideas/npc-activities/social-activities-plan.md
+(branch docs/npc-social-activities), not the superseded checkpoint below.
+Preserved3046/lab/castle remain unchanged; old review worktrees removed.
+
+## Historical pre-merge checkpoint (superseded)
 
 KirkDiggler approved the inside-out wave in conversation; approval is recorded at
 https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6546010660 .
