@@ -359,15 +359,17 @@ server-at-scale S7 (rpg-project#762): a driven move refreshes the observers
 of the cells crossed, never the roster. Until S7 lands, `wake` calls the
 refresh the way `settleWalk` does today, and the numbers say so.
 
-### 7. The memory-speed instance
+### 7. Persistence is another story
 
-Permitted already by `EncounterRepository`'s doc. It is a host (rpg-api)
-slice: hold the encounter decoded in memory behind the per-session lock
-(server-at-scale ruling 2), checkpoint to Redis on a cadence and on every
-beat that ends a fight or a session. Nothing in §1–§6 assumes it; its
-number is the blob round trip the server-at-scale story measured. It is
-ordered after the garrison numbers say what the raise costs with the blob
-cost removed from it.
+How the encounter is saved is out of this story (R7). The record's shapes
+by how fast they change (the site, the roster, the clocks, per-observer
+knowledge, the append-only log) have their own space, rpg-project#770,
+because segmenting the data deserves its own thinking. This story adds to
+the record a machine blob and a clock name per member and a transition
+beat, and assumes nothing about how any of it is stored. The memory-speed
+instance the direction mentioned sits where async does: an escape hatch
+behind `EncounterRepository`'s existing permission, reopened only by a
+number.
 
 ### 8. The studio and the panel
 
@@ -410,7 +412,7 @@ Recorded on the lane issue as they land; each row carries its words.
 | R4 | **The default recipe.** A creature with a table and no recipe runs `watch: on time → pick time`; every shipped castle row plays the same; recipes layer like tables (creature-table R4). | yes |
 | R5 | **Clocks are plural, named content, as triggers.** `world` is the default; an area can declare its own free-roam clock, raised by the members in it; a creature listens to the clock it is seated on; a portal is a transfer. Fights are plural the same way, two forming out of each other's reach and merging on contact; one fight per encounter is policy, never this design's assumption. Every engine key names its clock from the first slice. | ruled: "that matches what's in my head" |
 | R6 | **Reproducible, not seeded.** No seeded roller; the dice stay as random as they can be; every world roll is on the record and a replay reads them back; the replay test is the "roll is seen" law made checkable. | ruled: "as random as we can… also reproducible… no use case for seeding yet" |
-| R7 | **The memory-speed instance is its own slice**, host-side behind `EncounterRepository`, ordered after the garrison numbers; nothing in R1–R6 assumes it. | yes |
+| R7 | **Persistence is out of this story.** The record saved in shapes by change rate is its own story (rpg-project#770); this story assumes nothing about storage; the memory-speed instance is an escape hatch. | ruled: "how we segment the data deserves its own space for thoughts" |
 | R8 | **Finish line.** On the keep with a hundred-creature garrison (twenty on routes): a Move that wakes nobody costs what an empty keep's Move costs (S7's bar, 100 ms); a raise's cost grows with how many woke, never with the roster; a replay reproduces the picks; the castle's harness is unchanged. Numbers on the story. | yes |
 
 ## Build order, once ruled
@@ -442,9 +444,6 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
    of each other's reach, a fight is addressed through a member, and
    contact between two fights merges them (the door opening). Sized large
    by rpg-project#690's reading.
-9. **S9 The memory-speed instance.** api holds the encounter in memory and
-   checkpoints (§7). Taken only if S1–S5's numbers say the blob round trip
-   is what remains.
 
 ## Done when
 
