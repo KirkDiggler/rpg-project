@@ -85,7 +85,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
 <section>
   <h2>1. The mechanism: a raise wakes who is due</h2>
   <figure>
-  <svg viewBox="0 0 960 470" role="img" aria-label="A party verb raises the clock and lands beats. The raise feeds a due heap, the beats feed a listener index. Both produce the wake set, stepped in seat order. Each step runs one transition whose acts roll a table row into a turn, arm a wake, or change state. Beats a step lands are matched in the same pass, bounded. Below, a roster of 99 squares, 79 asleep and untouched, 20 woken.">
+  <svg viewBox="0 0 1010 470" role="img" aria-label="A party verb raises the clock and lands beats. The raise feeds a due heap, the beats feed a listener index. Both produce the wake set, stepped in seat order. Each step runs one transition whose acts roll a table row into a turn, arm a wake, or change state. Beats a step lands are matched in the same pass, bounded. Below, a roster of 99 squares, 79 asleep and untouched, 20 woken.">
     <defs>
       <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
       <marker id="arrow-brass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
@@ -99,9 +99,9 @@ footer { color: var(--muted); font-size: 0.85rem; }
 
       <!-- raise and beats -->
       <path d="M170 140 L250 100" fill="none" stroke-width="1.2" marker-end="url(#arrow)"/>
-      <text x="206" y="108" text-anchor="middle" stroke="none" fill="var(--muted)">raises a round</text>
+      <text x="196" y="98" text-anchor="middle" stroke="none" fill="var(--muted)">raises a round</text>
       <path d="M170 170 L250 215" fill="none" stroke-width="1.2" marker-end="url(#arrow)"/>
-      <text x="206" y="206" text-anchor="middle" stroke="none" fill="var(--muted)">lands beats</text>
+      <text x="196" y="214" text-anchor="middle" stroke="none" fill="var(--muted)">lands beats</text>
 
       <!-- due heap -->
       <rect x="255" y="60" width="190" height="80" rx="4" fill="var(--paper)" stroke-width="1.2"/>
@@ -128,25 +128,25 @@ footer { color: var(--muted); font-size: 0.85rem; }
       <!-- step -->
       <path d="M665 162 L735 162" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#arrow-brass)"/>
       <text x="700" y="152" text-anchor="middle" stroke="none" fill="var(--brass-ink)">Step</text>
-      <rect x="740" y="60" width="200" height="205" rx="4" fill="var(--paper)" stroke-width="1.2"/>
-      <text x="840" y="84" text-anchor="middle" font-weight="600" stroke="none">the first transition that fires</text>
-      <text x="840" y="102" text-anchor="middle" stroke="none" fill="var(--muted)">of the creature's current state</text>
-      <line x1="755" y1="114" x2="925" y2="114" stroke="var(--line)"/>
+      <rect x="740" y="60" width="255" height="205" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="867" y="84" text-anchor="middle" font-weight="600" stroke="none">the first transition that fires</text>
+      <text x="867" y="102" text-anchor="middle" stroke="none" fill="var(--muted)">of the creature's current state</text>
+      <line x1="755" y1="114" x2="980" y2="114" stroke="var(--line)"/>
       <text x="755" y="136" stroke="none"><tspan font-weight="600">pick</tspan> <tspan fill="var(--muted)">roll a table row → the turn</tspan></text>
       <text x="755" y="158" stroke="none"><tspan font-weight="600">wake_in</tspan> <tspan fill="var(--muted)">sleep n rounds, re-arm</tspan></text>
       <text x="755" y="180" stroke="none"><tspan font-weight="600">to</tspan> <tspan fill="var(--muted)">enter a state, re-list</tspan></text>
       <text x="755" y="202" stroke="none"><tspan font-weight="600">anchor · set · clear</tspan> <tspan fill="var(--muted)">the bag</tspan></text>
-      <line x1="755" y1="216" x2="925" y2="216" stroke="var(--line)"/>
+      <line x1="755" y1="216" x2="980" y2="216" stroke="var(--line)"/>
       <text x="755" y="238" stroke="none" fill="var(--muted)">record: state beat (from → to, reason),</text>
       <text x="755" y="254" stroke="none" fill="var(--muted)">the roll on its beat, blob per member</text>
 
       <!-- feedback: beats landed by the step -->
-      <path d="M840 265 L840 300 L350 300 L350 265" fill="none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
-      <text x="595" y="294" text-anchor="middle" stroke="none" fill="var(--muted)">beats the step lands are matched in the same pass, cut at a bound with a beat saying so</text>
+      <path d="M867 265 L867 300 L350 300 L350 265" fill="none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+      <text x="608" y="294" text-anchor="middle" stroke="none" fill="var(--muted)">beats the step lands are matched in the same pass, cut at a bound with a beat saying so</text>
 
       <!-- sight -->
       <path d="M940 162 L955 162" fill="none" stroke="none"/>
-      <text x="840" y="325" text-anchor="middle" stroke="none" fill="var(--muted)">then: sight refresh for who moved (today still roster-wide, #762)</text>
+      <text x="867" y="325" text-anchor="middle" stroke="none" fill="var(--muted)">then: sight refresh (roster-wide today, #762)</text>
 
       <!-- roster -->
       <text x="20" y="372" stroke="none" font-weight="600">the roster, 99 posted and patrolling</text>
