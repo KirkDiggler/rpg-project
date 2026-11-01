@@ -501,6 +501,20 @@ lacks makes the test name the beat and the verb.
 
 ### S6 #776, S7 #777, S8 #778 — seam contracts, detailed when reached
 
+Detailed 2026-11-01 on reaching S6 (plan amendment, after S4 merged out).
+
+**S6a: the state change on the panel** (the slice's visible half; no new verb).
+
+- **Task T10 (session):** `BeatState` folds into `FamilyState` as `StateChange{Party: member, Change: StateMachine, Machine: &MachineChange{From, To, Reason}}`; `BeatWakeCut` folds into `FamilyClock` as a `ClockEntry` naming the cut and its dropped count. Both leave `recordOnly` (R16's table). `StateKind` gains `StateMachine`. Tests: `TestEveryBeatHasAFamily` stays green with the two removed from `recordOnly`; `TestFold_StateBeat` (the castle reserve's `waiting → marching, the gate is fighting` becomes one state piece for every seat); `TestFold_WakeCut`.
+- **Task T11 (protos):** `dnd5e/api/session/v1alpha2/act.proto`: `STATE_KIND_MACHINE` appended to `StateKind`; `message MachineChange { string from = 1; string to = 2; string reason = 3; }`; `MachineChange machine = 8` on `StateChange`. Additive only (protos deprecate, never break). Buf lint and breaking checks green.
+- **Task T12 (api):** `convert_act.go`: `sdk.StateMachine → STATE_KIND_MACHINE`, `Machine` copied; pins session and protos tags. Tests: the converter's golden gains one state change.
+- **Task T13 (web):** `describeAct.ts` renders `StateKind.MACHINE` as `<Name>: <from> → <to> (<reason>)`, the creature's name from the party ref as other state lines do; `actRefreshKeys.ts` maps it to no refresh. The log line is the walk's evidence for the gate post.
+- **Walk (S6a):** castle on :3030: force the gate door from outside the fight → the log reads `Gate guard: posted → alert (heard something)` in that round; start the gate fight → `Reserve: waiting → marching (the gate is fighting)`; end it → `marching → waiting (the fight is over)`.
+
+**S6b: the studio authors states** (second half, its own PRs, after S6a walks): the studio's creature editor gains the `states:` words S4's `dungeonspec` compiles (initial, states, transitions with on/when/within/regions/rounds/to/do/reason), round-tripping through the same YAML the table editor writes; the content gate refuses what the door refuses (S4's binding-path check). Walk: #776's checklist step 1 (`asleep` on a barracks creature).
+
+Seams: T10 before T12 (api pins the session tag); T11 before T12 and T13 (generated bindings); T13 last. Merge inside-out: toolkit → protos → api → web.
+
 - **S6.** Protos: `encounter/v1alpha1` beat `StateChanged{member, from,
   to, reason}` additive beside `Table`; api converts `BeatState`; web
   renders the line and the studio's creature editor gains `states` from
