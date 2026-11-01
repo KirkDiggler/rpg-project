@@ -2,6 +2,57 @@
 
 Story: project#784. Provider: assets#334. Consumer/acceptance: web#1370.
 
+## Current checkpoint — integrated goal complete; new-wave merge permission pending
+
+Operator decision: https://github.com/KirkDiggler/rpg-project/issues/784#issuecomment-6554083352
+Native checklist: https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1370#issuecomment-6554006232
+
+- Assets PR335 READY, head340078e5b55fcf1027386f252f93c0f51ca40f9f;
+  exact-head MERGE-READY comment review5726659080. Nineteen scoped tests,
+  inventory4493 and stage verification pass; no hosted workflow configured.
+- Web PR1371 DRAFT for released-provider re-pin only, head72fa5536ba4f8a65a2417a5625f2e795bc55b118;
+  exact-head MERGE-READY pending re-pin review5726659110. Local full gate9534
+  passed/5 skipped, current-head hosted checks green. Runtime source unchanged
+  from native-tested3c0af682; final commit adds only the required run record.
+- Pinned candidate provider is bd40748a237759853608523a3daf00c0ce7fdc3b; later
+  provider commits add private evidence and the required run record only.
+- Both actual Studio pickers and every three-way default/reply permutation
+  passed save/reopen/custom03B/Play. Both clients receive count2, cancel count20
+  on NPC movement with exit-before-walk, return to different authored defaults
+  and never revive the discarded cue. Original72 look bindings and283 catalog
+  entries preserved. No backend or runtime controller changes.
+- Durable private evidence at assets8704619 under
+  evidence/npc-activities/social-activities-v1/ (walk README,9 compact traces,
+  inspected tactical images, summary and verify_walk.py). Offline verifier
+  passes and does not pretend to be a fresh live run.
+- One independent combined assets/web review completed. No implementation
+  defects; two missing run-record findings addressed by assets340078e and
+  web72fa5536. The scoped project worktree contains the newer tracked policy;
+  the root checkout was older. Four-section/link checks passed. Findings and
+  dispositions are published; do not launch another broad review campaign.
+- Working preview3047/8137 is STILL the managed local/say-activity-qa stack:
+  served web .worktrees/say-activity-qa detached at3c0af682; served API counterpart
+  at e1545aa (same source shipped as7e3f267). Restart uses STATE paths, not edited
+  manifest paths. Current My World qa-say-activities: Standing prayer default,
+  Arms folded count2 on Tell me what happened, count20 on Take your time thinking.
+  Bard is already beside Walker B; fresh starts must walk within Speak reach.
+  Current env manifest points back to the actual served detached trees.
+- Preserve3046/8136, lab3042, castle3030/8115 and older pacing3044. Do not change
+  those to make this preview convenient. Earlier#746 review trees were removed;
+  its provider branches remain reachable for the preserved pseudo-version
+  preview. New review trees are .worktrees/npc-social-activities-review in
+  assets/web; both read-only clean. No active reviewer remains.
+- Native drivers: game-dev .worktrees/say-activity/tools/browser/_job_npc_social_qa.mjs
+  plus shared _job_say_activity_qa_helpers.mjs. Raw evidence /tmp/npc-social-qa;
+  closer solo repeats /tmp/npc-social-close. Driver corrections (seat gRPC-web,
+  explicit overwrite, native walk) are documented, not product fixes.
+
+NEXT only after explicit new-wave permission: assets335 private main, actual
+merged provider SHA into web1371 via generator, update its explicit custody pin
+assertion, sync and refresh applicable gates/head verdict, then web dev. No
+API/web main promotion or game release. Normal re-pin is not another review
+round. Preserve accepted runtime data; all licensed bytes remain private.
+
 ## Goal and authority
 
 The operator approved the three motions in the existing lab and the outcome:

@@ -134,7 +134,15 @@ Develop the consumer contract/counting first, then wire schema, behavior → enc
 
 Self-check: do not let the shared Say editor advertise a cue that its delivery path drops; carry spoken TableAnswer as well as nested Speech.Answer. Do not use the old blanket sustain-Infinity mixer setup for finite cues. Native mixer completion must handle single cycles and large updates. Do not restore the cancelled budget after movement. Do not treat an API-only pin or a preview's cached content as integration proof.
 
-## Current checkpoint — merge AUTHORIZED; ready for compaction
+## Current checkpoint — SHIPPED; see social-activities-plan.md
+
+Project#746 is complete: behavior0.18.0, encounter0.164.0, session0.152.0,
+API dev7e3f267 and web dev b5cc3417. Exact ship record and gates:
+https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6553594312 .
+The next approved goal (#784) is implemented and verified in preview3047;
+its current state and new-wave merge permission are in social-activities-plan.md.
+
+## Historical pre-merge checkpoint (superseded)
 
 KirkDiggler approved the inside-out wave in conversation; approval is recorded at
 https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6546010660 .
