@@ -115,8 +115,12 @@ the slice merges.
 - Resolved: a stamp with no `clock` field means `world` (zero values tell
   the truth); `clock` is written only on a non-world clock (W5), so S3
   changes no golden.
-- Resolved: `Dwell` is read on load and converted to the blob's `WakeAt`;
-  `DwellData` stays one release for old records and is no longer written.
+- Resolved (S3 build finding): `Dwell` stays exactly as today. A dwelling
+  creature is still due every round; its patrol row holds and rows above it
+  fire (`dwell.go`, `TestARowAboveThePatrolInterruptsTheDwellAndLeavingEndsIt`).
+  Converting it to `WakeAt` would have made a standing guard deaf to a
+  clang, a row getting worse (R4). `WakeAt` is set only by an authored
+  `wake_in` act (S4); S3 never sets it and `DueAt` honours it if present.
 - Deferred by design: the bus adapter of the example; the studio's recipe
   editor until S6; stamps across clocks (non-goal).
 - Blocker for R8's final row: rpg-project#762 (observer-bounded refresh),
@@ -321,14 +325,12 @@ build, the tag before ready); Task 1 (fixture for the numbers).
 **Files:** modify `field.go` (`memberRecord` gains `Machine machine.Blob`,
 `Clock string`), `data.go` (`MemberData.Machine *MachineData{State, Bag,
 WakeAt, Anchor}`, `MemberData.Clock string ",omitempty"`; `snapshot`,
-`LoadEncounter`: build the blob, convert `Dwell` → `WakeAt`, rebuild
-`due`/`listeners`), `worldtime.go` (`worldThinks` → `wake`; delete
+`LoadEncounter`: build the blob, rebuild `due`/`listeners`; `Dwell`
+unchanged), `worldtime.go` (`worldThinks` → `wake`; delete
 `worldThinkers`, `thinkFor`; keep `appendTickBeat`, `seatOnWorldClock`
-arms the heap), `clocks.go` (`runIntents` no longer calls `spendDwell`;
-`Transfer` disarms on entering a bubble, re-arms on leaving;
-`buildMonsterView.Dwelling` reads `WakeAt`), `dwell.go` (reads only;
-`spendDwell` deleted), `facing.go` (`faceWalkEnd` sets `WakeAt = now +
-wait` instead of `Dwell`), new `machine.go` (vocabulary, `defaultRecipe`,
+arms the heap), `clocks.go` (`runIntents` keeps calling `spendDwell`;
+`Transfer` disarms on entering a bubble, re-arms on leaving), `dwell.go`
+and `facing.go` unchanged, new `machine.go` (vocabulary, `defaultRecipe`,
 program cache, `enter`, `BeatState`), `beats.go` (`BeatState = "state"`),
 `encounter.go` (`Encounter.due machine.Due[MemberID]`, `listeners
 machine.Listeners[MemberID]`, `programs map[string]*machine.Program`);
@@ -356,9 +358,9 @@ tests `machine_test.go`, `worldtime_test.go` (amend), `castletest` (run).
 **Behavior:** every `worldtime_test.go` scenario passes unchanged (two
 movers advance once; a fight round is a round for every fighter; a
 creature with nothing opposed holds and the beat says so; a spent creature
-is not asked again; an alarm mid-tick completes the tick); a reload of a
-record with `Dwell` arms `WakeAt` and the creature stands its remaining
-rounds; a member joining a bubble is popped from the heap and re-armed at
+is not asked again; an alarm mid-tick completes the tick); a dwelling
+creature is still due and hears a clang mid-dwell (`dwell_test.go`
+unchanged); a member joining a bubble is popped from the heap and re-armed at
 dissolve; a creature with a `hold`-only table is still due every round
 (R4, by design); `wake` never calls `clock.Members()` (W1 test by a
 counting fake is not possible on the concrete `Tick`; assert instead that
@@ -367,14 +369,15 @@ a member with no table and a member in `asleep` (test recipe with no
 in tests).
 **Tests:** `TestWake_VisitsOnlyDue` (3 creatures: table, no table, test
 recipe without `time` → one pick beat), `TestWake_CatchUpPopsTwice`,
-`TestWake_StateBeatAndRelisten`, `TestLoad_DwellBecomesWakeAt`,
+`TestWake_StateBeatAndRelisten`, `TestLoad_WakeAtRoundTrip` (a record
+with `WakeAt` set loads as not due until it),
 `TestTransfer_DisarmsAndRearms`, `TestDefaultRecipe_IsTodaysTurn`
 (golden: the castle harness `TestMadKingKeepFacesAlongItsPatrol` and
 `TestMadKingTheAlarmCarriesToTheKeenEar` unchanged), `BenchmarkGarrisonMove`
 before/after.
 
 - [ ] Add the tests; see `TestWake_VisitsOnlyDue` fail on today's loop.
-- [ ] Implement; delete `worldThinkers`/`thinkFor`/`spendDwell`; keep `DwellData` read-only with a deprecation comment.
+- [ ] Implement; delete `worldThinkers`/`thinkFor`; `dwell.go` untouched.
 - [ ] `go test -race ./... && golangci-lint run ./...` in encounter; `castletest` green; goldens unchanged.
 - [ ] Pin the `mind/machine` tag; one review round; merge; encounter tag.
 
@@ -564,9 +567,8 @@ Scan findings and disposition: `W1` cannot be proved by a counting fake on
 the concrete `Tick`, so it is proved by the absence of beats and views for
 non-due members plus the deletion of `worldThinkers` (recorded above). The
 "quiet Move" number is a curve across slices, not one row (Open items).
-`Dwell` semantics change from "holds its turns while dwelling" to "is not
-due while dwelling": observable only in the absence of `hold` pick beats
-during a dwell; `TestMadKingKeepFacesAlongItsPatrol` is the guard and is
-expected to pass unchanged because it asserts facing and position, not the
-hold beats — if it asserts hold beats, the assertion moves, recorded on
-#773 as a plan finding, not a design change.
+The first draft changed `Dwell` to "not due while dwelling"; the S3 build
+found `dwell_test.go` pins a dwelling guard hearing a clang, so the dwell
+stays as today (Open items). The scan had looked only for hold beats and
+missed the rows above the patrol row: the lesson is to read the owning
+package's own tests for a semantic before planning to change it.

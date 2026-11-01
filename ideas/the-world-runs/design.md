@@ -221,9 +221,13 @@ compiles; that is the point.
 
 `memberRecord` gains `Machine *machineBlob` (`machine.Blob` plus the
 program's ref) and loses nothing: `Table`, `Temper`, `Dwell` stay, read by
-the default recipe (§4). `Dwell` becomes a `wake_in` timer the first time a
-patrol stands at a waypoint; the field stays for one release for the reload
-of a record written before, then goes (protos deprecate, don't break).
+the default recipe (§4). `Dwell` stays what it is: a creature standing at
+a waypoint is still due every round, its patrol row holds and the rows
+above it still fire (a clang is heard mid-dwell, as `dwell.go` says and the
+castle pins). An authored `wake_in` is the different thing: a sleep, during
+which the creature is not due at all and only its listeners can wake it.
+The first plan draft had read the dwell as a sleep; that would have made a
+standing guard deaf, a row getting worse. Corrected on the S3 build.
 
 `worldThinks`, `worldThinkers` and `thinkFor` are replaced by one `wake`:
 
@@ -425,7 +429,7 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
    answered. Numbers only.
 2. **S2 `mind/machine`.** The primitive (§1), one toolkit PR, one module.
 3. **S3 The encounter wakes who is due.** `Machine` on the member, `wake`
-   replaces `worldThinks`, the default recipe (§4), `Dwell` as a timer, the
+   replaces `worldThinks`, the default recipe (§4), `Dwell` unchanged, the
    transition beat, indexes rebuilt at load. Castle harness green; garrison
    numbers before and after.
 4. **S4 Triggers with scope and clocks as content.** `heard`, `deed`,
