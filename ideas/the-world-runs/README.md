@@ -20,7 +20,7 @@ After this story a pace does this: the clock moves one round; the twenty on
 routes are due and take their leg; the kitchen hears nothing and is not
 asked; the barracks has a machine in state `asleep` whose only transitions
 are "a sound within two regions" and "the bell", neither of which landed,
-so it is never visited. The party drops a shield in the ward. The sound is a
+so it is never visited. The party forces a door in the ward. The crash is a
 beat; the listener index says the post at the gate and the two patrols in
 earshot listen for `heard`; they wake in the same raise, in seat order, roll
 their rows and move to `alert`. The sight that refreshes is the sight of
@@ -33,12 +33,12 @@ record makes the same choices, and the dice stay as random as they can be.
 
 ## What the operator sees
 
-- The keep with a garrison that lives: patrols pass, posts stand, a dropped
-  shield wakes the gate.
+- The keep with a garrison that lives: patrols pass, posts stand, a forced
+  door's crash wakes the gate.
 - A Move on that keep costs what it costs on an empty one when nothing woke,
   and grows with how many woke, never with how many exist.
 - The event log reads a creature's state change in the author's words
-  (`asleep → alert, heard: shield within 2`).
+  (`asleep → alert, heard: crash within 2`).
 
 ## Reading order
 

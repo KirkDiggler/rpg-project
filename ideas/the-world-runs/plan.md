@@ -540,7 +540,7 @@ lacks makes the test name the beat and the verb.
 | W11 area clocks | S7 | contract; detailed on reaching |
 | W12 plural fights | S8 | contract; detailed on reaching |
 | K1 existing suites | T1 (golden off), T5, T7 | CI |
-| README scene: shield wakes the gate same raise | T7, T8 | walk #774 |
+| README scene: a crash wakes the gate same raise | T7, T8 | walk #774 |
 | README: sleeping barracks never visited | T7, T8 | `TestWake_AsleepIgnoresFarSound`; garrison row after T8 |
 | R8 "wakes nobody" row | T8 + rpg-project#762 | the garrison Move row on #766 after both |
 
