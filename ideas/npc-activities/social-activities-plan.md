@@ -2,7 +2,28 @@
 
 Story: project#784. Provider: assets#334. Consumer/acceptance: web#1370.
 
-## Current checkpoint — integrated goal complete; new-wave merge permission pending
+## Current checkpoint — SHIPPED to dev
+
+Kirk accepted the integrated preview and authorized publication. Story#784,
+assets#334 and web#1370 are closed. Ship record:
+https://github.com/KirkDiggler/rpg-project/issues/784#issuecomment-6562042432 .
+
+- Assets#335 merged private main: f7b12f8d08fedbc6681afdd2ff9c90715e56e0ee.
+- Web#1371 merged dev: 9757d5b75e02b2073ac4cdcf6efd8009a82bc17d.
+- Release pin head aadcce543f54498c48ea1a98d620d3f8714ce2c7 changed only provider
+  commit identity and its custody assertion. Pinned sync and full local/hosted
+  gates pass; fresh exact-head review5729568573. All runtime hashes unchanged.
+- No game release or main promotion. No required implementation follow-up.
+- Keep accepted preview3047/8137, older3046/8136, lab3042, castle3030/8115 and
+  pacing3044 unchanged. Keep candidate branches reachable for their pinned
+  previews. Only completed new-wave review/build/release worktrees are cleanup
+  targets; the game-dev manifest/driver tree and detached served trees stay.
+- Durable private evidence is on assets main under
+  evidence/npc-activities/social-activities-v1/. The accepted thumb seam remains
+  original motion; it is not claimed polished. Both scoped run-record findings
+  were addressed. No active review or implementation task remains in this wave.
+
+## Historical pre-merge checkpoint (completed; not a pending instruction)
 
 Operator decision: https://github.com/KirkDiggler/rpg-project/issues/784#issuecomment-6554083352
 Native checklist: https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1370#issuecomment-6554006232
