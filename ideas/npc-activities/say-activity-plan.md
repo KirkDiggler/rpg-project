@@ -138,11 +138,29 @@ Self-check: do not let the shared Say editor advertise a cue that its delivery p
 
 KirkDiggler approved the inside-out wave in conversation; approval is recorded at
 https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6546010660 .
-The five implementation PRs have NOT yet been merged by this session. Resume
-with the authorized merge-out, not another approval request or review campaign.
+MERGE-OUT STARTED, then paused on a red integration gate:
+https://github.com/KirkDiggler/rpg-project/issues/746#issuecomment-6553285300 .
+Behavior #2206 merged at 47a150fe2596c01818485786955661694c01b5d5, published
+mind/behavior v0.18.0. Encounter #2207 pushed release pin dd43e63d; its pre-catch-up
+full tests/lint passed. A base conflict required an ordinary merge of origin/main
+(47a150fe) in the encounter worktree. That merge remains UNCOMMITTED. Only go.mod/
+go.sum conflicted; resolved/staged keeping behavior v0.18.0 and upstream
+mind/machine v0.1.0. Source merged automatically.
+Fresh full gate: seven say-activity subcases fail target-out-of-range. Upstream
+added explicit SpeakInput.Range and migrated existing AnswerTestSuite calls to
+Range:speakReach; the three call sites in our say_activity_test.go omit it.
+No fix applied yet; no assertions weakened. Castle and other subpackages passed.
+Log /tmp/say-activity-encounter-merge-main.log. STOP remaining merges until focused
+fixture reconciliation and fresh local/hosted gates and exact-head verdict.
+Session/API/web remain at the heads below; no later merge was attempted.
 API/web stop at dev; no game/main release.
 
-NEXT FOCUS after merge-out: bring in more animations. The operator explicitly
+NEXT FOCUS after merge-out: bring in more animations. Kirk has now viewed and
+approved arms folded, hands on hips and standing prayer in the existing lab,
+and said to get started integrating them in existing Studio default-activity
+and counted-response pickers. Preserve that approved look. Inspect the known
+folded-thumb seam before deciding whether a correction is necessary. No asset
+publication work has begun yet. The operator explicitly
 redirected away from the proposed paused-patrol feature: no concrete use case,
 and the relevant animation is not loaded. Do not implement route-trigger work.
 Inspect the preserved private library before proposing the next runtime slice.
