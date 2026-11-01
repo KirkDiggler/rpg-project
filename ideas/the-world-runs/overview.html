@@ -247,9 +247,9 @@ footer { color: var(--muted); font-size: 0.85rem; }
     <tbody>
       <tr><td><code>mind/machine</code> (toolkit)</td><td>The primitive, rulebook-agnostic, bus-free. Recipe, guard tree, compile against a vocabulary, <code>Step</code>, <code>Listens</code>, <code>DueAt</code>, the <code>Due</code> heap and <code>Listeners</code> index as plain data structures.</td><td><span class="pill done">v0.1.0</span></td></tr>
       <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.165.0</span></td></tr>
-      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.153.0</span></td></tr>
-      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">dev 84588c51</span></td></tr>
-      <tr><td><code>rpg-dnd5e-web</code> · protos</td><td>A state change on the event log and the panel. The studio's <code>states:</code> editing.</td><td><span class="pill next">S6 #776</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.154.0</span></td></tr>
+      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">dev cc96b598</span></td></tr>
+      <tr><td><code>rpg-dnd5e-web</code> · protos</td><td>A state change reads as a line on the event log: <code>Gate guard: posted → alert (heard something)</code>. Protos v0.1.251 carry the kind. The studio's <code>states:</code> editing is S6b.</td><td><span class="pill done">web dev 12bc58d3</span> <span class="pill next">S6b</span></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -281,7 +281,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
       <tr><td>S3 #773</td><td>The encounter wakes who is due; the default recipe keeps every row the same.</td><td><span class="pill done">done, walked</span></td></tr>
       <tr><td>S4 #774</td><td>Triggers with scope, clocks as content, the castle's first authored recipes, posts that sleep.</td><td><span class="pill done">done, walked</span></td></tr>
       <tr><td>S5 #775</td><td>Replay from the record: the record's own rolls, read back in order.</td><td><span class="pill next">proposed</span></td></tr>
-      <tr><td>S6 #776</td><td>Visible: the state change on the log and panel; the studio writes <code>states:</code>.</td><td><span class="pill next">proposed</span></td></tr>
+      <tr><td>S6 #776</td><td>Visible. S6a: the state change on the log, walked ("see Guard: posted → alert"). S6b: the studio writes <code>states:</code>.</td><td><span class="pill done">S6a done</span> <span class="pill next">S6b</span></td></tr>
       <tr><td>S7 #777</td><td>Area clocks: a tomb that keeps its own time.</td><td><span class="pill next">proposed</span></td></tr>
       <tr><td>S8 #778</td><td>Plural fights that merge on contact; the fight-end beat.</td><td><span class="pill next">proposed</span></td></tr>
     </tbody>
@@ -289,24 +289,25 @@ footer { color: var(--muted); font-size: 0.85rem; }
 </section>
 
 <section>
-  <h2>6. Today, 2026-11-01</h2>
+  <h2>6. The day, 2026-11-01, as it went</h2>
   <div class="two">
     <div>
       <h3>The order of work</h3>
       <ol>
         <li><strong>Walk S4</strong>: done. The reserves marched on fight rounds and help arrived; the gate post's wake waits for a forced door outside a fight, because a creature inside a fight does not step its world machine.</li>
         <li><strong>Merge S4 inside-out</strong>: done. Encounter v0.165.0, session v0.153.0, api dev 84588c51; both envs back on dev.</li>
-        <li><strong>Take the keep's remaining cost</strong>: #762, the roster-wide sight refresh. It is the whole of what is left in a raise, and it lives in the encounter's sight code, apart from the machines.</li>
-        <li><strong>Make the machines visible</strong>: S6, so a state change shows on the log and the panel and you can follow a recipe while it runs. Session, protos, api, web; it can run beside #762.</li>
-        <li><strong>Make the keep playable</strong> while those build: the two keep bugs below are overnight-coder sized.</li>
+        <li><strong>Take the keep's remaining cost</strong>: #762 bounded the sight refresh to the observers within reach of what moved (in review, rpg-toolkit#2224). It was the right law and it was not the cost: the keep's Move dropped 4%. The profile put 89% of a patrol's turn in its route search, which floods the whole field to reach its next waypoint. That is the next task, T11.</li>
+        <li><strong>Make the machines visible</strong>: S6a done and walked. The state beat folds into the existing state family, one additive proto kind, one log line. The first attempt showed why S4's walk could not: a failed intimidation forms the fight in the same verb as the voice, and a post inside a fight does not step.</li>
+        <li><strong>Next</strong>: T11, a goal-directed route search in place of the flood (R10: this now, the memory-resident instance when the record story #770 is designed). Then S6b, and the keep bugs below.</li>
       </ol>
     </div>
     <div>
       <h3>Open for your word</h3>
       <ul>
-        <li><strong>Reaction turn</strong> (rpg-toolkit#2219, finding 5): does a reaction's pick count as the creature's turn this round? Recommendation A: the reaction is the turn.</li>
+        <li><strong>Ruled today.</strong> R9: a reaction's pick is the creature's turn this round, on one clock or across clocks (rpg-toolkit#2223 builds it). R10: a route costs its reach, A* now, memory-resident instance later.</li>
         <li><strong>Reference sites off dev</strong> (#786): a walk shelf per env, mounted by dev-env; dev's shelf shrinks to the castle and the bench fixtures.</li>
         <li><strong>Attack from free roam</strong> (#785): a swing on the world clock forms the fight. Amends R3 of #457.</li>
+        <li><strong>Intel in motion</strong> (#796): how what a creature knows travels by sound and speech, as testimony, never as truth. A brainstorm page, not a slice; the fight's din is content, silent by default.</li>
       </ul>
     </div>
   </div>
@@ -319,6 +320,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
         <tr><td>rpg-project#781</td><td>A patrol on the map's top edge picks toward and never steps, silently.</td><td>A silent hold is a fail-silent; the keep's patrols should move.</td></tr>
         <tr><td>rpg-project#764</td><td>A cancelled StartEncounter leaves orphan seats.</td><td>Relaunching the keep repeatedly hits it.</td></tr>
         <tr><td>rpg-toolkit#2220</td><td>Enable the <code>nilnil</code> linter so a <code>(nil, nil)</code> fails CI.</td><td>The standing rule gets a mechanism.</td></tr>
+        <tr><td>rpg-toolkit#2223</td><td>R9: a reaction's pick re-arms the creature at the next round of its own clock.</td><td>Closes the double-turn hole before an author finds it.</td></tr>
         <tr><td>rpg-toolkit#2205</td><td>Keepgen names the site with its size, so the picker can tell keeps apart.</td><td>The bench harness cannot pick a keep today.</td></tr>
       </tbody>
     </table></div>
@@ -326,7 +328,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
   </div>
 </section>
 
-<footer>Numbers and states as of 2026-11-01. The record: rpg-project#766 (story table), #768 (rulings), ideas/the-world-runs/design.md (law), plan.md (task contracts).</footer>
+<footer>Numbers and states as of the evening of 2026-11-01. The record: rpg-project#766 (story table), #768 (rulings), ideas/the-world-runs/design.md (law), plan.md (task contracts).</footer>
 </main>
 <p class="site-nav"><a href="/rpg-project/architecture/">All architecture field notes</a> · <a href="/rpg-project/">Where Everything Meets</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/the-world-runs/design.md">the design, on GitHub</a></p>
 </body>
