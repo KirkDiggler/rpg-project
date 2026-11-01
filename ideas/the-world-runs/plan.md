@@ -41,16 +41,16 @@ other.
 ## Finish line
 
 - Sub-issues #771–#778 closed by their "done means", rows posted on #766.
-- R8 on the garrison keep (`bench-keep-garrison`: 100 creatures with
-  orders, 20 on routes): a Move that wakes nobody costs the plain keep's
+- R8 on the garrison keep (`bench-keep-garrison`: 99 creatures with
+  orders, 20 on routes; the default density places 99 monsters at 10k): a Move that wakes nobody costs the plain keep's
   Move (server-at-scale's 100 ms bar, which also needs #762); the Move's
   cost grows with how many woke, never with the roster; a replay from the
   record reproduces the picks; the castle plays unchanged on the default
   recipe; the tomb ticks on its own clock; two fights merge through an
   opened door.
 - Expected curve, so each slice's row is read honestly: after S1, the
-  garrison Move costs the plain keep's Move plus 100 turns plus 21
-  full-roster refreshes. After S3 the census and the 80 posts' turns are
+  garrison Move costs the plain keep's Move plus 99 turns plus 21
+  full-roster refreshes. After S3 the census and the 79 posts' turns are
   still paid on the default recipe (a `time: hold` table is a `watch`
   state); the saving is the census. After S4 the posts are authored
   `posted` and never visited; the 20 patrols' turns remain. After #762 the
@@ -142,11 +142,14 @@ the slice merges.
 - CLI flags `-garrison N -patrols N`; `OptionsFromHeader` parses them back.
 - Emitted document, with the option on: one faction `garrison` (`temper:
   {soldier: 2, coward: 1}`), tables `post` (`time: [{hold: {}}]`) and
-  `patrol-<i>` (`time: [{when: {enemy: none}, toward: {path: [c1, c2, c3,
-  c1]}}]`, a three-cell loop of floor cells in the monster's own region
+  `patrol-<i>` (`time: [{when: {enemy: none}, toward: {path: [c1, c2,
+  c3]}}]`, a three-cell loop of floor cells in the monster's own region
   reachable by `LegLine`), and `monsterBindings: {<id>: {faction: garrison,
   table: post|patrol-<i>}}` for the first `Garrison` monsters in placement
-  order, the first `Patrols` of them on routes.
+  order, the first `Patrols` of them on routes. A route is three waypoints
+  `[c1, c2, c3]`: the dialect refuses a retraced cell and `patrolStep` loops
+  back to the first waypoint on its own. `Garrison` may not exceed the
+  monsters placed (99 at 10k hexes under the default density).
 **Behavior:** deterministic under `Seed`; the option off emits today's
 bytes (golden unchanged); the document compiles (`Prove`) and every route
 cell is floor in its region.
@@ -163,9 +166,9 @@ OffIsGolden` (SHA equals `goldenKeep`); `TestGarrison_RouteCellsAreFloor`
 - [ ] Regenerate the garrison SHA; leave `goldenKeep` untouched.
 
 **Verification:** from `rpg-toolkit/rulebooks/dnd5e/encounter`: `go run
-./cmd/keepgen -hexes 10000 -seed 1 -garrison 100 -patrols 20 -key
-bench-keep-garrison -out /tmp/x.yaml && go run ./cmd/keepgen -prove
-/tmp/x.yaml` (or the equivalent `Prove` call in a test) exits 0.
+./cmd/keepgen -hexes 10000 -seed 1 -garrison 99 -patrols 20 -key
+bench-keep-garrison -out /tmp/x.yaml` exits 0 (`Generate` proves its own
+bytes before writing; there is no separate prove flag).
 **Completion evidence:** PR link, test names green, the fixture's header
 line.
 
@@ -176,7 +179,7 @@ line.
 **Prerequisites:** Task 1 merged and tagged (encounter tag), rpg-api pinned
 to it.
 **Files:** new `rpg-api/content/bench/bench-keep-garrison.yaml` (header
-`keepgen -hexes 10000 -seed 1 -garrison 100 -patrols 20 -key
+`keepgen -hexes 10000 -seed 1 -garrison 99 -patrols 20 -key
 bench-keep-garrison -out content/bench/bench-keep-garrison.yaml`); modify
 `internal/dungeons/bench_fixtures_test.go` if it enumerates files by name;
 game-dev `tools/browser/bench/run.sh` (default keys gain
@@ -270,9 +273,12 @@ Exact semantics the encounter depends on:
   executed (the host executes `Pick`; the machine applies `Set`, `Clear`,
   `Anchor` (sets `b.Anchor = now`) and `WakeIn` (sets `b.WakeAt = now +
   n`) itself); if `To != ""`, `b.State = To` and `From/To` are set; a
-  `Timed` beat (`time`) clears `b.WakeAt` when it fires at or after it.
-- `DueAt`: if `b.WakeAt != nil` → `(*WakeAt, true)`; else if the state has
-  a transition on a `Timed` beat → `(now+1, true)`; else `(0, false)`.
+  `Timed` beat (`time`) at or after `b.WakeAt` clears it whether or not a
+  transition fires (so the host's catch-up loop terminates; a `WakeIn` on
+  the firing transition arms it again).
+- `DueAt`: a terminal state → `(0, false)`; else if `b.WakeAt != nil` →
+  `(*WakeAt, true)`; else if the state has a transition on a `Timed` beat →
+  `(now+1, true)`; else `(0, false)`.
 - `Listens`: every non-timed `On` of the current state with its `Scope`
   leaf, deduplicated by beat; a state with a `WakeAt` still listens.
 - `Pop(upTo)` returns keys with `at <= upTo` in `(at, K)` order and removes
@@ -282,7 +288,9 @@ Exact semantics the encounter depends on:
   missing, `WakeIn < 0` or `WakeIn == 0` (`ErrBadAct`), a `Scope` on a
   beat whose spec has no `InScope` (`ErrNoScope`), a `Rounds` guard on a
   beat without `Round`. A state with no transitions compiles (terminal or
-  a sink).
+  a sink). A cyclic `do` is not a compile refusal: the machine's acts never
+  raise a beat, only a host-executed `Pick` can, so the bound is the host's
+  (`intentBound`, Task 5).
 **Behavior:** as above; no bus; no goroutine; JSON round trip of `Recipe`
 and `Blob` with `encoding/json/v2` as the example does.
 **Tests:** `TestStep_FirstFiringWins`, `TestStep_GuardDependsDoesNotFire`,
@@ -328,7 +336,7 @@ tests `machine_test.go`, `worldtime_test.go` (amend), `castletest` (run).
 **Interfaces:**
 - Vocabulary this slice supplies: beat `time` (`Timed: true`, `Round` =
   the clock's round); facts none yet (S4 adds). The default recipe:
-  `Recipe{Ref: "machine:default", Initial: "watch", States: {"watch":
+  `Recipe{Ref: "dnd5e:machines:default", Initial: "watch", States: {"watch":
   {Transitions: [{On: "time", Do: [{Pick: "time"}]}]}}}`, compiled once
   per `Encounter`.
 - `wake(clockName string) error`: `at := highWater`; `woke := due.Pop(at)`;
@@ -451,7 +459,7 @@ path's assertion for the gate reserves, keeping `arrives` itself),
 **Files:** the two castle YAMLs: faction `garrison` gains `states`
 (`posted` → `alert` on `heard within 6`, back after 3 rounds via `rounds`
 guard with `Anchor`); the reserves' binding gains the `waiting` recipe;
-the garrison fixture's 80 posts gain `states: {initial: posted, posted:
+the garrison fixture's 79 posts gain `states: {initial: posted, posted:
 {transitions: [{on: heard, within: 6, to: alert}, ...]}}` in keepgen's
 emit (flag `-posts-listen`, default on when `-garrison` is set).
 **Interfaces:** content words from Task 7.
