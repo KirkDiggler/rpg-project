@@ -191,6 +191,19 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 **Verification:** module gates; the bench env's Redis blob size and the Move row posted on #753.
 **Completion evidence:** PR link, blob bytes before/after, rows.
 
+### Task T10: a refresh costs its reach (S7 #762, encounter)
+
+**Delivers:** V12's Move row; the-world-runs R8's "wakes nobody" row.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
+**Prerequisites:** T8 (the warm sweep is bounded per observer); the-world-runs S4 (the wake pass is the raise's only roster walk).
+**Finding:** after T8 one observer's warm refresh is ~33 ms, and a Move on the keep still costs seconds because the callers refresh every observer: `worldtime.go` refreshes `rosterIDs()` after a raise that moved anyone; `hold.go`, `reserve.go`, `rest.go`, `sneak.go`, `doorverbs.go`, `board.go` do the same. A player's own step refreshes `audienceFor` (players), so the roster-wide cost is paid on the raise and on every monster move inside it.
+**Files:** `encounter.go` (`observersOf(cells []Position, declared []MemberID) []MemberID`: every placed member whose cell is within the sight bound (the Sight capability's max range, the same bound T8's sweep uses) of any cell in `cells`, plus `declared`, sorted by id; built from the canvas's entity positions, never from `rosterIDs()` filtered after the fact); `worldtime.go` (the wake pass collects the from/to cells of every member a step moved and refreshes `observersOf(those)`); `hold.go`, `reserve.go`, `rest.go`, `sneak.go` (the actor's from/to cells); `doorverbs.go` (the door's cells: a door changes every ray that crosses it, so its observers are those within the bound of the door); `board.go` unchanged (launch is the one look).
+**Interfaces:** `observersOf` is the only way a verb names its refresh audience besides `audienceFor`; `refreshSight(e.rosterIDs())` remains legal only in `board.go` and is named there as the launch's one look.
+**Behavior:** an observer farther than the sight bound from every changed cell is not refreshed, and its percepts are unchanged by construction (nothing it could see moved); a fight forms the same, because the members who came into view are within the bound of the mover by definition.
+**Tests:** `TestObserversOf_EqualsFullRefresh` (property: castle and 10k keep, random steps and door openings, the bounded refresh's percepts equal the full refresh's for every member); `TestObserversOf_FarObserverUntouched` (a probe counter on `rebuildPercepts` sees no call for a member beyond the bound); `TestDoor_RefreshesRayCrossers` (a door opening refreshes an observer 20 hexes away whose line crosses it and not one 30 hexes away); `BenchmarkGarrisonMove` posts-asleep row (< 500 ms/op from 1.82 s; the raise's 20 patrols each pay their own ring); the harness Move row on the 10k keep with a raise (< 1 s from 3.6–4.5 s; the 100 ms bar then needs the patrols' turns themselves, measured and posted as the next finding, not assumed).
+**Verification:** rows on #753 and #766 the day it lands; none worse.
+**Completion evidence:** PR link, the two rows.
+
 ## Requirement coverage
 
 | requirement | tasks | proof |
@@ -202,7 +215,7 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 | V5 | T1, T7 | `BenchmarkAtlas_Keep30k`; goldens; no-cell-pass counter |
 | V6 | T8 | `TestDiscoverCells_EqualsFullSweep`; `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge` |
 | V7 | T9 | `TestKnownCellsFact_RunsRoundTrip`; `TestRevealBeat_DeltaOnly`; `TestBlobSize_Keep10k` |
-| V12 | T8, T9 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
+| V12 | T8, T9, T10 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
 | V8 | T4 | `TestLocker_SessionsDoNotShareAKey`; the castle-beside-keep row |
 | V9 | T6 | repository + handler tests; `TestResolveDiscoverySharing_FromReader`; the web switch persists |
 | V10 | T5 | vitest approach test; the operator's walk |
