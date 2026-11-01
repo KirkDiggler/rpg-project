@@ -204,6 +204,21 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 **Verification:** rows on #753 and #766 the day it lands; none worse.
 **Completion evidence:** PR link, the two rows.
 
+### Task T11: a route costs its reach (S7 #762, encounter)
+
+**Delivers:** V12's Move row, the part T10 left; R10 on the lane (#754, 2026-11-01: "A and work to C").
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
+**Prerequisites:** T10 merged (same module; never stack).
+**Finding (T10 build, rpg-toolkit#2224):** ~89% of a patrol's Step is `buildMonsterView → cellQuery.routeTo → floodFrom`, an unbounded flood of the field (`limit 0`) per mover per turn to find the nearest stop for one goal; the refresh T10 bounded is ~10%. The flood memo lives inside one query read, and the session reloads the encounter from its blob on every verb.
+**Files:** `clocks.go` (`cellQuery.routeTo` and `routeToRemembered` for a single goal cell or a goal predicate with a known target: a goal-directed search, A* over the hex grid with the hex distance as its admissible heuristic, the same walker rules, neighbour order and tie-breaks as the flood, so the path is deterministic (C8) and equals the flood's path wherever costs are unequal; where the flood's nearest-stop scan matters (a goal predicate with many satisfying cells, e.g. "within reach of X"), the search targets the predicate's anchor and stops at the first satisfying cell it settles, with the same distance/X/Y tie order); `directive.go` (`routeToward` keeps its budgeted flood: it is already bounded).
+**Interfaces:** `routeTo`'s signature and contract unchanged; the flood stays for budgeted and multi-source questions.
+**Behavior:** a route visits cells near its path, not the field; where two paths tie, the chosen one may differ from the flood's; every such golden change is listed in the PR with the two paths, and any that changes a castle walk's spirit is a finding, not a silent update.
+**Tests:** `TestRouteTo_EqualsFlood` (property: castle and the 10k keep, random movers and goals; the A* path has the flood path's length and both satisfy the goal; identical where the flood's path is unique); `TestRouteTo_Deterministic` (asked twice, same answer); `TestRouteTo_VisitsNearThePath` (a probe counter: cells settled ≤ k × path length on the open keep, k stated); `BenchmarkGarrisonMove` default and posts-asleep on main and branch, 20x, same machine (contract: posts-asleep < 500 ms/op from ~2.0 s); the harness Move row on the 10k keep with a raise (< 1 s from 3.6–4.5 s).
+**Verification:** rows on #753 and #766 the day it lands; none worse.
+**Completion evidence:** PR link, the two rows, the golden list.
+
+**C, the memory-resident instance,** is rpg-project#770's design, not a task here: it would let the flood memo and the placement index live across verbs; R10 names it as where this line of work goes next.
+
 ## Requirement coverage
 
 | requirement | tasks | proof |
@@ -215,7 +230,7 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 | V5 | T1, T7 | `BenchmarkAtlas_Keep30k`; goldens; no-cell-pass counter |
 | V6 | T8 | `TestDiscoverCells_EqualsFullSweep`; `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge` |
 | V7 | T9 | `TestKnownCellsFact_RunsRoundTrip`; `TestRevealBeat_DeltaOnly`; `TestBlobSize_Keep10k` |
-| V12 | T8, T9, T10 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
+| V12 | T8, T9, T10, T11 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
 | V8 | T4 | `TestLocker_SessionsDoNotShareAKey`; the castle-beside-keep row |
 | V9 | T6 | repository + handler tests; `TestResolveDiscoverySharing_FromReader`; the web switch persists |
 | V10 | T5 | vitest approach test; the operator's walk |
