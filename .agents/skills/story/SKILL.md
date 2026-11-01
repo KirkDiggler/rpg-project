@@ -43,6 +43,18 @@ done". Its body holds, in this order:
 A slice has no sub-issues of its own. Work that needs its own checklist is
 another slice.
 
+**Overview page** — one per story, `ideas/<topic>/overview.html`, beside the
+design it maps. It is the architecture field note for the story: the
+mechanism drawn (a figure a cold reader can follow without the prose), where
+each piece lives in the stack, the numbers before and after, the slices and
+their state, and what is open for the operator. It is a standalone page in
+both themes, with a `<title>` that names the story and a
+`<meta name="description">`. A push to `main` publishes it at
+`https://kirkdiggler.github.io/rpg-project/architecture/<topic>/` and lists
+it on `/architecture/` (`.github/workflows/publish-architecture.yml`). Update
+it the day a slice moves, with the story table; its numbers are the story's
+numbers, never a separate set.
+
 ## The names
 
 - **Story** — the line of work; its issue number is the only id.

@@ -4,6 +4,8 @@ Story rpg-project#766. Design: [design.md](design.md). The measurement site is
 the benchmark keep's open question O1, a driven garrison
 ([../benchmark-keep/design.md](../benchmark-keep/design.md)).
 
+**Overview page:** [`overview.html`](overview.html), published as architecture field note 02 at <https://kirkdiggler.github.io/rpg-project/architecture/the-world-runs/>.
+
 ## The scene
 
 A keep of ten thousand hexes. A hundred creatures live in it: twenty walk

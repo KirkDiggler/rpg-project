@@ -1,0 +1,57 @@
+# Publishes every architecture field note on main to the site branch.
+#
+# The source of a note is `ideas/<topic>/overview.html`, beside the design it
+# maps. On every push to main that touches one, this copies each note to
+# `architecture/<topic>/index.html` on `gh-pages`, writes the list page
+# `architecture/index.html`, and commits. GitHub Pages serves `gh-pages` as it
+# already does; the hand-written pages there are never touched.
+name: publish architecture field notes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ideas/*/overview.html"
+      - "ideas/*/overview-assets/**"
+      - ".github/workflows/publish-architecture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-architecture
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Check out gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+
+      - name: Copy the notes and write the list
+        run: |
+          set -euo pipefail
+          python3 main/scripts/publish-architecture.py main/ideas site/architecture
+
+      - name: Commit and push
+        run: |
+          set -euo pipefail
+          cd site
+          git add -A architecture
+          if git diff --cached --quiet; then
+            echo "nothing to publish"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "site: publish architecture field notes from main ${GITHUB_SHA::8}" -m "— cross-team agent, on behalf of KirkDiggler"
+          git push origin HEAD:gh-pages
