@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>The World Runs</title>
+<meta name="description" content="A creature is a machine that listens: how the engine wakes only who is due, where each piece lives in the stack, and what it has cost and saved on a keep of a hundred.">
+<link rel="canonical" href="https://kirkdiggler.github.io/rpg-project/architecture/the-world-runs/">
+<link rel="icon" type="image/svg+xml" href="/rpg-project/favicon.svg">
+<link rel="apple-touch-icon" href="/rpg-project/apple-touch-icon.png">
+<meta property="og:site_name" content="Kirk Gilmore">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The World Runs">
+<meta property="og:description" content="A creature is a machine that listens: how the engine wakes only who is due, and what it cost and saved on a keep of a hundred.">
+<meta property="og:url" content="https://kirkdiggler.github.io/rpg-project/architecture/the-world-runs/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column, figures full width of it; a keep's ledger — slate paper, brass for what is awake. */
+:root {
+  --bg: #eef1f5; --paper: #f8f9fb; --fg: #1d2530; --muted: #5b6672; --line: #c9d1da;
+  --brass: #a8701a; --brass-ink: #6e4708; --asleep: #b8c0ca; --fight: #8a3b2e; --ok: #2f6b4f;
+  --display: "Bricolage Grotesque", "Avenir Next", "Helvetica Neue", sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161b22; --paper: #1e252e; --fg: #e6eaef; --muted: #9aa5b1; --line: #3a4552;
+  --brass: #d9a24a; --brass-ink: #f0c57a; --asleep: #4a5664; --fight: #e08a78; --ok: #7cc39e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161b22; --paper: #1e252e; --fg: #e6eaef; --muted: #9aa5b1; --line: #3a4552;
+  --brass: #d9a24a; --brass-ink: #f0c57a; --asleep: #4a5664; --fight: #e08a78; --ok: #7cc39e; color-scheme: dark }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); }
+img { max-width: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5; font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.5rem; font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 700; }
+p { margin: 0; max-width: 64ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass-ink); }
+header { display: grid; gap: 12px; }
+header p.lede { font-size: 1.15rem; max-width: 56ch; }
+section { display: grid; gap: 16px; }
+figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; min-width: 560px; }
+figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 10px; max-width: 70ch; }
+.law { display: grid; gap: 10px; border-left: 3px solid var(--brass); padding-left: 16px; }
+.law p strong { font-family: var(--display); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); white-space: nowrap; }
+.wrap { overflow-x: auto; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 0.7rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.pill.done { color: var(--ok); border-color: var(--ok); }
+.pill.now { color: var(--brass-ink); border-color: var(--brass); }
+.pill.next { color: var(--muted); }
+ol, ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; max-width: 70ch; }
+li strong { font-weight: 600; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.two > div { min-width: 0; display: grid; gap: 10px; align-content: start; }
+a { color: var(--brass-ink); }
+footer { color: var(--muted); font-size: 0.85rem; }
+.site-nav { max-width: 860px; margin: 24px auto 0; font-size: 0.9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<main>
+<header>
+  <div class="eyebrow">Architecture field note 02 · rpg-project #766 · lane #768 · design ideas/the-world-runs</div>
+  <h1>The World Runs</h1>
+  <p class="lede">A creature is a machine that listens. When the party moves, the engine wakes only the creatures that are due or addressed, in seat order, in one pass. The roster is never walked.</p>
+  <p>This page is the overview for 2026-11-01. The design document is the law; this is the map of it, with where each piece sits in the stack, what it has cost and saved so far, and the day's order of work.</p>
+</header>
+
+<section>
+  <h2>1. The mechanism: a raise wakes who is due</h2>
+  <figure>
+  <svg viewBox="0 0 960 470" role="img" aria-label="A party verb raises the clock and lands beats. The raise feeds a due heap, the beats feed a listener index. Both produce the wake set, stepped in seat order. Each step runs one transition whose acts roll a table row into a turn, arm a wake, or change state. Beats a step lands are matched in the same pass, bounded. Below, a roster of 99 squares, 79 asleep and untouched, 20 woken.">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+      <marker id="arrow-brass" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <!-- verb -->
+      <rect x="20" y="120" width="150" height="70" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="95" y="146" text-anchor="middle" font-weight="600" stroke="none">a party verb</text>
+      <text x="95" y="164" text-anchor="middle" stroke="none" fill="var(--muted)">Move a pace · an action</text>
+      <text x="95" y="180" text-anchor="middle" stroke="none" fill="var(--muted)">one call, one pass</text>
+
+      <!-- raise and beats -->
+      <path d="M170 140 L250 100" fill="none" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="206" y="108" text-anchor="middle" stroke="none" fill="var(--muted)">raises a round</text>
+      <path d="M170 170 L250 215" fill="none" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="206" y="206" text-anchor="middle" stroke="none" fill="var(--muted)">lands beats</text>
+
+      <!-- due heap -->
+      <rect x="255" y="60" width="190" height="80" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="350" y="84" text-anchor="middle" font-weight="600" stroke="none">due heap</text>
+      <text x="350" y="102" text-anchor="middle" stroke="none" fill="var(--muted)">who is due at this round</text>
+      <text x="350" y="120" text-anchor="middle" stroke="none" fill="var(--muted)">per clock: world, fight, tomb…</text>
+
+      <!-- listener index -->
+      <rect x="255" y="185" width="190" height="80" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="350" y="209" text-anchor="middle" font-weight="600" stroke="none">listener index</text>
+      <text x="350" y="227" text-anchor="middle" stroke="none" fill="var(--muted)">who listens for this beat,</text>
+      <text x="350" y="245" text-anchor="middle" stroke="none" fill="var(--muted)">within its scope (field index)</text>
+
+      <!-- wake set -->
+      <path d="M445 100 L530 150" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#arrow-brass)"/>
+      <text x="482" y="113" text-anchor="middle" stroke="none" fill="var(--brass-ink)">Pop(now)</text>
+      <path d="M445 225 L530 175" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#arrow-brass)"/>
+      <text x="482" y="217" text-anchor="middle" stroke="none" fill="var(--brass-ink)">For(beat) ∩ scope</text>
+      <rect x="535" y="125" width="130" height="75" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="600" y="152" text-anchor="middle" font-weight="600" stroke="none">wake set</text>
+      <text x="600" y="170" text-anchor="middle" stroke="none" fill="var(--muted)">seat order</text>
+      <text x="600" y="188" text-anchor="middle" stroke="none" fill="var(--muted)">deterministic</text>
+
+      <!-- step -->
+      <path d="M665 162 L735 162" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#arrow-brass)"/>
+      <text x="700" y="152" text-anchor="middle" stroke="none" fill="var(--brass-ink)">Step</text>
+      <rect x="740" y="60" width="200" height="205" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="840" y="84" text-anchor="middle" font-weight="600" stroke="none">the first transition that fires</text>
+      <text x="840" y="102" text-anchor="middle" stroke="none" fill="var(--muted)">of the creature's current state</text>
+      <line x1="755" y1="114" x2="925" y2="114" stroke="var(--line)"/>
+      <text x="755" y="136" stroke="none"><tspan font-weight="600">pick</tspan> <tspan fill="var(--muted)">roll a table row → the turn</tspan></text>
+      <text x="755" y="158" stroke="none"><tspan font-weight="600">wake_in</tspan> <tspan fill="var(--muted)">sleep n rounds, re-arm</tspan></text>
+      <text x="755" y="180" stroke="none"><tspan font-weight="600">to</tspan> <tspan fill="var(--muted)">enter a state, re-list</tspan></text>
+      <text x="755" y="202" stroke="none"><tspan font-weight="600">anchor · set · clear</tspan> <tspan fill="var(--muted)">the bag</tspan></text>
+      <line x1="755" y1="216" x2="925" y2="216" stroke="var(--line)"/>
+      <text x="755" y="238" stroke="none" fill="var(--muted)">record: state beat (from → to, reason),</text>
+      <text x="755" y="254" stroke="none" fill="var(--muted)">the roll on its beat, blob per member</text>
+
+      <!-- feedback: beats landed by the step -->
+      <path d="M840 265 L840 300 L350 300 L350 265" fill="none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+      <text x="595" y="294" text-anchor="middle" stroke="none" fill="var(--muted)">beats the step lands are matched in the same pass, cut at a bound with a beat saying so</text>
+
+      <!-- sight -->
+      <path d="M940 162 L955 162" fill="none" stroke="none"/>
+      <text x="840" y="325" text-anchor="middle" stroke="none" fill="var(--muted)">then: sight refresh for who moved (today still roster-wide, #762)</text>
+
+      <!-- roster -->
+      <text x="20" y="372" stroke="none" font-weight="600">the roster, 99 posted and patrolling</text>
+      <text x="20" y="390" stroke="none" fill="var(--muted)">never walked: 79 posts asleep stay asleep, 20 patrols were due</text>
+      <g id="roster" stroke="none">
+        <!-- 99 squares: 11 per row x 9 rows, 10px with 3px gap -->
+      </g>
+      <g stroke="none" transform="translate(20,400)">
+        <g fill="var(--asleep)">
+          <rect x="0" y="0" width="10" height="10"/><rect x="13" y="0" width="10" height="10"/><rect x="26" y="0" width="10" height="10"/><rect x="39" y="0" width="10" height="10"/><rect x="52" y="0" width="10" height="10"/><rect x="65" y="0" width="10" height="10"/><rect x="78" y="0" width="10" height="10"/><rect x="91" y="0" width="10" height="10"/><rect x="104" y="0" width="10" height="10"/><rect x="117" y="0" width="10" height="10"/><rect x="130" y="0" width="10" height="10"/><rect x="143" y="0" width="10" height="10"/><rect x="156" y="0" width="10" height="10"/><rect x="169" y="0" width="10" height="10"/><rect x="182" y="0" width="10" height="10"/><rect x="195" y="0" width="10" height="10"/><rect x="208" y="0" width="10" height="10"/><rect x="221" y="0" width="10" height="10"/><rect x="234" y="0" width="10" height="10"/><rect x="247" y="0" width="10" height="10"/><rect x="260" y="0" width="10" height="10"/><rect x="273" y="0" width="10" height="10"/><rect x="286" y="0" width="10" height="10"/><rect x="299" y="0" width="10" height="10"/><rect x="312" y="0" width="10" height="10"/><rect x="325" y="0" width="10" height="10"/><rect x="338" y="0" width="10" height="10"/><rect x="351" y="0" width="10" height="10"/><rect x="364" y="0" width="10" height="10"/><rect x="377" y="0" width="10" height="10"/><rect x="390" y="0" width="10" height="10"/><rect x="403" y="0" width="10" height="10"/><rect x="416" y="0" width="10" height="10"/><rect x="429" y="0" width="10" height="10"/><rect x="442" y="0" width="10" height="10"/><rect x="455" y="0" width="10" height="10"/><rect x="468" y="0" width="10" height="10"/><rect x="481" y="0" width="10" height="10"/><rect x="494" y="0" width="10" height="10"/><rect x="507" y="0" width="10" height="10"/>
+          <rect x="0" y="13" width="10" height="10"/><rect x="13" y="13" width="10" height="10"/><rect x="26" y="13" width="10" height="10"/><rect x="39" y="13" width="10" height="10"/><rect x="52" y="13" width="10" height="10"/><rect x="65" y="13" width="10" height="10"/><rect x="78" y="13" width="10" height="10"/><rect x="91" y="13" width="10" height="10"/><rect x="104" y="13" width="10" height="10"/><rect x="117" y="13" width="10" height="10"/><rect x="130" y="13" width="10" height="10"/><rect x="143" y="13" width="10" height="10"/><rect x="156" y="13" width="10" height="10"/><rect x="169" y="13" width="10" height="10"/><rect x="182" y="13" width="10" height="10"/><rect x="195" y="13" width="10" height="10"/><rect x="208" y="13" width="10" height="10"/><rect x="221" y="13" width="10" height="10"/><rect x="234" y="13" width="10" height="10"/><rect x="247" y="13" width="10" height="10"/><rect x="260" y="13" width="10" height="10"/><rect x="273" y="13" width="10" height="10"/><rect x="286" y="13" width="10" height="10"/><rect x="299" y="13" width="10" height="10"/><rect x="312" y="13" width="10" height="10"/><rect x="325" y="13" width="10" height="10"/><rect x="338" y="13" width="10" height="10"/><rect x="351" y="13" width="10" height="10"/><rect x="364" y="13" width="10" height="10"/><rect x="377" y="13" width="10" height="10"/><rect x="390" y="13" width="10" height="10"/><rect x="403" y="13" width="10" height="10"/><rect x="416" y="13" width="10" height="10"/><rect x="429" y="13" width="10" height="10"/><rect x="442" y="13" width="10" height="10"/><rect x="455" y="13" width="10" height="10"/><rect x="468" y="13" width="10" height="10"/><rect x="481" y="13" width="10" height="10"/><rect x="494" y="13" width="10" height="10"/>
+        </g>
+        <g fill="var(--brass)">
+          <rect x="507" y="13" width="10" height="10"/><rect x="520" y="0" width="10" height="10"/><rect x="533" y="0" width="10" height="10"/><rect x="546" y="0" width="10" height="10"/><rect x="559" y="0" width="10" height="10"/><rect x="572" y="0" width="10" height="10"/><rect x="585" y="0" width="10" height="10"/><rect x="598" y="0" width="10" height="10"/><rect x="611" y="0" width="10" height="10"/><rect x="624" y="0" width="10" height="10"/><rect x="637" y="0" width="10" height="10"/>
+          <rect x="520" y="13" width="10" height="10"/><rect x="533" y="13" width="10" height="10"/><rect x="546" y="13" width="10" height="10"/><rect x="559" y="13" width="10" height="10"/><rect x="572" y="13" width="10" height="10"/><rect x="585" y="13" width="10" height="10"/><rect x="598" y="13" width="10" height="10"/><rect x="611" y="13" width="10" height="10"/><rect x="624" y="13" width="10" height="10"/><rect x="637" y="13" width="10" height="10"/>
+        </g>
+        <text x="660" y="10" fill="var(--asleep)" font-size="11">asleep: a state with no <tspan font-family="JetBrains Mono, monospace">time</tspan> transition</text>
+        <text x="660" y="23" fill="var(--brass-ink)" font-size="11">woken: due this round, or addressed by a beat in scope</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>One Move on the garrison keep. The raise pops the 20 patrols from the due heap; the clang, if any, reaches only the listeners within six hexes. The 79 posts are never visited. Everything that woke steps once, in seat order, inside the same call, and what it did goes on the record. No goroutines, no timers.</figcaption>
+  </figure>
+  <div class="law">
+    <p><strong>A creature is a machine.</strong> Its mind is a current state and, for that state, what it listens to and what it does when that fires. All of it is data: <code>on</code> a beat, <code>when</code> a guard holds, <code>do</code> acts, <code>to</code> a state.</p>
+    <p><strong>The raise wakes who is due or addressed.</strong> Two indexes, rebuilt at load from the machines' states, never persisted. The cost of a Move grows with who woke, never with the roster.</p>
+    <p><strong>Clocks are content.</strong> <code>world</code> is the default. A fight is a clock. A tomb can declare its own. A portal is a transfer. Every key the engine holds names its clock.</p>
+    <p><strong>Reproducible, not seeded.</strong> Dice stay as random as they can be. A replay reads the record's own rolls back in order.</p>
+    <p><strong>No row gets worse.</strong> Every shipped table is a one-state machine whose <code>time</code> transition rolls it. The castle plays the same.</p>
+  </div>
+</section>
+
+<section>
+  <h2>2. What an author writes: states, in the castle today</h2>
+  <figure>
+  <svg viewBox="0 0 960 300" role="img" aria-label="Three state machines from the castle. The gate post has states posted and alert; heard within six hexes moves it to alert and anchors; three rounds after the anchor it returns to posted; both states pick time. The reserve has states waiting and marching; a fight round moves it to marching and picks march; every fight round picks march again; a world round returns it to waiting. The barracks has one state, asleep, with only a heard-within-six transition, so it is never due.">
+    <defs>
+      <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+      <marker id="a2f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fight)"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <!-- gate post -->
+      <text x="20" y="28" stroke="none" font-weight="600" font-size="13">gate-1, the gate post</text>
+      <text x="20" y="44" stroke="none" fill="var(--muted)">keeps its time table in both states; only the record knows it is alert</text>
+      <circle cx="80" cy="130" r="38" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="80" y="134" text-anchor="middle" font-weight="600" stroke="none">posted</text>
+      <circle cx="250" cy="130" r="38" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="250" y="134" text-anchor="middle" font-weight="600" stroke="none">alert</text>
+      <path d="M116 112 Q165 80 214 112" fill="none" stroke="var(--brass)" stroke-width="1.4" marker-end="url(#a2)"/>
+      <text x="165" y="86" text-anchor="middle" stroke="none" fill="var(--brass-ink)">heard within 6 → anchor</text>
+      <path d="M214 150 Q165 185 116 150" fill="none" stroke-width="1.2" marker-end="url(#a2)"/>
+      <text x="165" y="196" text-anchor="middle" stroke="none" fill="var(--muted)">time, 3 rounds since anchor</text>
+      <path d="M58 96 Q30 60 70 92" fill="none" stroke-width="1.2" marker-end="url(#a2)"/>
+      <text x="42" y="60" text-anchor="middle" stroke="none" fill="var(--muted)">time → pick</text>
+      <path d="M272 96 Q300 60 260 92" fill="none" stroke-width="1.2" marker-end="url(#a2)"/>
+      <text x="290" y="60" text-anchor="middle" stroke="none" fill="var(--muted)">time → pick</text>
+      <text x="20" y="262" stroke="none" fill="var(--muted)">the clang wakes it in the raise the sound landed,</text>
+      <text x="20" y="278" stroke="none" fill="var(--muted)">not the next one</text>
+
+      <!-- reserve -->
+      <text x="360" y="28" stroke="none" font-weight="600" font-size="13">reserve-1, held until the gate opens</text>
+      <text x="360" y="44" stroke="none" fill="var(--muted)">the first authored recipe on the fight clock (#661)</text>
+      <circle cx="420" cy="130" r="38" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="420" y="134" text-anchor="middle" font-weight="600" stroke="none">waiting</text>
+      <circle cx="600" cy="130" r="38" fill="var(--paper)" stroke="var(--fight)" stroke-width="1.6"/>
+      <text x="600" y="134" text-anchor="middle" font-weight="600" stroke="none">marching</text>
+      <path d="M456 112 Q510 80 564 112" fill="none" stroke="var(--fight)" stroke-width="1.4" marker-end="url(#a2f)"/>
+      <text x="510" y="86" text-anchor="middle" stroke="none" fill="var(--fight)">clock:fight → pick march</text>
+      <path d="M564 150 Q510 185 456 150" fill="none" stroke-width="1.2" marker-end="url(#a2)"/>
+      <text x="510" y="196" text-anchor="middle" stroke="none" fill="var(--muted)">clock:world, "the fight is over"</text>
+      <path d="M398 96 Q370 60 410 92" fill="none" stroke-width="1.2" marker-end="url(#a2)"/>
+      <text x="382" y="60" text-anchor="middle" stroke="none" fill="var(--muted)">time → pick</text>
+      <path d="M622 96 Q650 60 610 92" fill="none" stroke="var(--fight)" stroke-width="1.4" marker-end="url(#a2f)"/>
+      <text x="650" y="60" text-anchor="middle" stroke="none" fill="var(--fight)">clock:fight → march</text>
+      <text x="360" y="262" stroke="none" fill="var(--muted)">marching has no time transition: a leg per fight round,</text>
+      <text x="360" y="278" stroke="none" fill="var(--muted)">and the world clock asks it nothing</text>
+
+      <!-- barracks / posts -->
+      <text x="720" y="28" stroke="none" font-weight="600" font-size="13">a garrison post (79 of them)</text>
+      <text x="720" y="44" stroke="none" fill="var(--muted)">asleep: never on the due heap</text>
+      <circle cx="800" cy="130" r="38" fill="var(--paper)" stroke="var(--asleep)" stroke-width="1.6"/>
+      <text x="800" y="134" text-anchor="middle" font-weight="600" stroke="none">posted</text>
+      <path d="M838 118 L905 118" fill="none" stroke="var(--brass)" stroke-width="1.4" marker-end="url(#a2)"/>
+      <text x="872" y="106" text-anchor="middle" stroke="none" fill="var(--brass-ink)">heard within 6</text>
+      <text x="912" y="134" stroke="none" font-weight="600">alert</text>
+      <text x="720" y="262" stroke="none" fill="var(--muted)">no time transition at all: a Move that makes</text>
+      <text x="720" y="278" stroke="none" fill="var(--muted)">no sound never touches it</text>
+    </g>
+  </svg>
+  <figcaption>The same words for all three: <code>states: {initial, &lt;state&gt;: {transitions: [{on, within, rounds, to, do, reason}]}}</code> on a binding or a faction in the dungeon yaml. Nearest wins. A creature with no <code>states:</code> gets the default recipe, one state, <code>on: time → pick time</code>, which is exactly what every creature did before.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3. Where it lives in the stack</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>layer</th><th>what it owns</th><th>state</th></tr></thead>
+    <tbody>
+      <tr><td><code>mind/machine</code> (toolkit)</td><td>The primitive, rulebook-agnostic, bus-free. Recipe, guard tree, compile against a vocabulary, <code>Step</code>, <code>Listens</code>, <code>DueAt</code>, the <code>Due</code> heap and <code>Listeners</code> index as plain data structures.</td><td><span class="pill done">v0.1.0</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.163.0</span> <span class="pill now">S4 e4a239a0</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.151.1</span> <span class="pill now">#2221</span></td></tr>
+      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">af2b1fd7</span> <span class="pill now">#1172</span></td></tr>
+      <tr><td><code>rpg-dnd5e-web</code> · protos</td><td>A state change on the event log and the panel. The studio's <code>states:</code> editing.</td><td><span class="pill next">S6 #776</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>4. What it has cost and saved</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>row</th><th>before (S1)</th><th>S3 (due heap)</th><th>S4 (posts asleep)</th></tr></thead>
+    <tbody>
+      <tr><td>garrison keep, the Move that raises</td><td class="num">8.4–12.8 s</td><td class="num">7.4 s</td><td class="num">3.6–4.5 s</td></tr>
+      <tr><td>creatures asked on that raise</td><td class="num">99</td><td class="num">99</td><td class="num">20</td></tr>
+      <tr><td>record growth over 8 Moves</td><td class="num">1.18 MB</td><td class="num">1.18 MB</td><td class="num">0.69 MB</td></tr>
+      <tr><td>garrison keep, a plain Move</td><td class="num">256–408 ms</td><td class="num">256–317 ms</td><td class="num">unchanged</td></tr>
+      <tr><td>garrison keep, launch</td><td class="num">1.3–1.5 s</td><td class="num">1.3–1.5 s</td><td class="num">unchanged</td></tr>
+      <tr><td>castle, the Move that raises</td><td class="num">247 ms</td><td class="num">~250 ms</td><td class="num">~250 ms, 16 picks</td></tr>
+      <tr><td>toolkit benchmark, one op (4 Steps)</td><td class="num">4.2 s</td><td class="num">4.2 s</td><td class="num">1.82 s</td></tr>
+    </tbody>
+  </table></div>
+  <p>Server rows are grpcurl against the api on the bench env, 10k hexes, 99 garrison. What remains of the raise is the sight refresh, which still walks every member as an observer after a Move; that is server-at-scale S7 (#762), the next engine cost to take, and independent of this story's modules.</p>
+</section>
+
+<section>
+  <h2>5. The slices</h2>
+  <div class="wrap"><table>
+    <thead><tr><th>slice</th><th>what it adds</th><th>state</th></tr></thead>
+    <tbody>
+      <tr><td>S1 #771</td><td>The garrison probe: a keep with 99 creatures and the before rows.</td><td><span class="pill done">done</span></td></tr>
+      <tr><td>S2 #772</td><td><code>mind/machine</code>, the primitive.</td><td><span class="pill done">done</span></td></tr>
+      <tr><td>S3 #773</td><td>The encounter wakes who is due; the default recipe keeps every row the same.</td><td><span class="pill done">done, walked</span></td></tr>
+      <tr><td>S4 #774</td><td>Triggers with scope, clocks as content, the castle's first authored recipes, posts that sleep.</td><td><span class="pill now">staged on :3030</span></td></tr>
+      <tr><td>S5 #775</td><td>Replay from the record: the record's own rolls, read back in order.</td><td><span class="pill next">proposed</span></td></tr>
+      <tr><td>S6 #776</td><td>Visible: the state change on the log and panel; the studio writes <code>states:</code>.</td><td><span class="pill next">proposed</span></td></tr>
+      <tr><td>S7 #777</td><td>Area clocks: a tomb that keeps its own time.</td><td><span class="pill next">proposed</span></td></tr>
+      <tr><td>S8 #778</td><td>Plural fights that merge on contact; the fight-end beat.</td><td><span class="pill next">proposed</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>6. Today, 2026-11-01</h2>
+  <div class="two">
+    <div>
+      <h3>The order of work</h3>
+      <ol>
+        <li><strong>Walk S4</strong> on a fresh mad king (the shelf now carries the recipes). Open the gate first if you want the reserves to come; the gate post's wake is on the record and I read it back for you.</li>
+        <li><strong>Merge S4 inside-out</strong> on your word: encounter → tag → session re-pin → tag → api re-pin → merge-out. Both envs back to dev.</li>
+        <li><strong>Take the keep's remaining cost</strong>: #762, the roster-wide sight refresh. It is the whole of what is left in a raise, and it lives in the encounter's sight code, apart from the machines.</li>
+        <li><strong>Make the machines visible</strong>: S6, so a state change shows on the log and the panel and you can follow a recipe while it runs. Session, protos, api, web; it can run beside #762.</li>
+        <li><strong>Make the keep playable</strong> while those build: the two keep bugs below are overnight-coder sized.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Open for your word</h3>
+      <ul>
+        <li><strong>Reaction turn</strong> (rpg-toolkit#2219, finding 5): does a reaction's pick count as the creature's turn this round? Recommendation A: the reaction is the turn.</li>
+        <li><strong>Reference sites off dev</strong> (#786): a walk shelf per env, mounted by dev-env; dev's shelf shrinks to the castle and the bench fixtures.</li>
+        <li><strong>Attack from free roam</strong> (#785): a swing on the world clock forms the fight. Amends R3 of #457.</li>
+      </ul>
+    </div>
+  </div>
+  <div>
+    <h3>Overnight-coder list, described and bounded</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>issue</th><th>what</th><th>why now</th></tr></thead>
+      <tbody>
+        <tr><td>rpg-project#782</td><td>Keep monsters have no appearance ref, so they draw with no look.</td><td>The keep is unplayable to the eye without it.</td></tr>
+        <tr><td>rpg-project#781</td><td>A patrol on the map's top edge picks toward and never steps, silently.</td><td>A silent hold is a fail-silent; the keep's patrols should move.</td></tr>
+        <tr><td>rpg-project#764</td><td>A cancelled StartEncounter leaves orphan seats.</td><td>Relaunching the keep repeatedly hits it.</td></tr>
+        <tr><td>rpg-toolkit#2220</td><td>Enable the <code>nilnil</code> linter so a <code>(nil, nil)</code> fails CI.</td><td>The standing rule gets a mechanism.</td></tr>
+        <tr><td>rpg-toolkit#2205</td><td>Keepgen names the site with its size, so the picker can tell keeps apart.</td><td>The bench harness cannot pick a keep today.</td></tr>
+      </tbody>
+    </table></div>
+    <p>#786 splits into one issue per reference site once you have ruled on the shape; #785 needs the ruling before anyone codes.</p>
+  </div>
+</section>
+
+<footer>Numbers and states as of 2026-11-01. The record: rpg-project#766 (story table), #768 (rulings), ideas/the-world-runs/design.md (law), plan.md (task contracts).</footer>
+</main>
+<p class="site-nav"><a href="/rpg-project/architecture/">All architecture field notes</a> · <a href="/rpg-project/">Where Everything Meets</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/the-world-runs/design.md">the design, on GitHub</a></p>
+</body>
+</html>
