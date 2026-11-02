@@ -64,6 +64,7 @@ The session's `Afford` is what hands the bar one row; the web draws only what
 | R2 | What does a hostile act on a neutral do? | A the aggression law as ruled (#493 R3): the two factions turn hostile, the fight forms with everyone in view. B only the struck creature turns hostile. | A | ruled 2026-11-02 (Kirk: "A. I suppose it's an NPC had no faction or was a faction of 1 then only they would turn": the unit is the faction; a creature with none, or alone in one, is the whole of its faction) |
 | R3 | Does the first swing from free roam land before initiative? | A the deed lands on the world clock, the fight forms inside the deed, then the world is charged its round: the swinger gets the first blow for free, the surprise flag records who was caught. B declaring the swing forms the fight first; the swing becomes the first turn, initiative decides who is first. | A | ruled 2026-11-02 (Kirk: "A") |
 | R4 | Do the turn-economy verbs (Dash, Dodge, Disengage, Action Surge) stay on the world bar? | A hide them off the turn clock. B keep them. C show them disabled. | A | ruled 2026-11-02 B (Kirk: "dash, dodge and disengage yes"); in free roam they spend a round and grant an economy that is thrown away; what they mean there is content for later |
+| R5 | What does speaking cost? | A an action on both clocks (today). B free on the world clock. C free to speak; a line that rolls a check is an action (action slot on the turn clock, a round in free roam). | C | ruled 2026-11-02 C (Kirk: "the check is the action… speaking with no check would be a free action") |
 
 ## Slices
 
@@ -75,6 +76,7 @@ The session's `Afford` is what hands the bar one row; the web draws only what
   bar shows Attack, Cast, Activate and the rest; cast Light and watch a world
   round pass; swing at the captain and watch the garrison turn hostile and the
   fight form (R2, R3).
+- **S3 a plain line is free, a check is the action** (R5; encounter then session): the option knows whether it carries a `check:`; only a checked line spends the action slot or the world's round.
 - **S2 rows and the walk**: garrison keep in free roam, a cast and a swing;
   rows on #785; the sneak and clock stories' walks gain the free swing as the
   way to make a clang outside a fight.
