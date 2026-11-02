@@ -246,9 +246,9 @@ footer { color: var(--muted); font-size: 0.85rem; }
     <thead><tr><th>layer</th><th>what it owns</th><th>state</th></tr></thead>
     <tbody>
       <tr><td><code>mind/machine</code> (toolkit)</td><td>The primitive, rulebook-agnostic, bus-free. Recipe, guard tree, compile against a vocabulary, <code>Step</code>, <code>Listens</code>, <code>DueAt</code>, the <code>Due</code> heap and <code>Listeners</code> index as plain data structures.</td><td><span class="pill done">v0.1.0</span></td></tr>
-      <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.165.0</span></td></tr>
-      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.154.0</span></td></tr>
-      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">dev cc96b598</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/encounter</code></td><td>One <code>wake</code> replaces the roster walk. Beats <code>heard</code>, <code>deed</code>, <code>seen</code>, <code>fact</code>, <code>clock:&lt;name&gt;</code> matched with scope through the field index. Machine blob per member on the record. <code>dungeonspec</code> compiles the <code>states:</code> words and refuses a key the creature's own recipe cannot pick.</td><td><span class="pill done">v0.170.0</span></td></tr>
+      <tr><td><code>rulebooks/dnd5e/session</code></td><td>Passes the compiled recipe through the door at launch. Classifies every beat; the state beat and the wake-cut beat are record-only until S6 draws them.</td><td><span class="pill done">v0.156.0</span></td></tr>
+      <tr><td><code>rpg-api</code></td><td>Content: the castle's gate post and reserves, the garrison keep with 79 sleeping posts. Pins. Nothing about machines; the api knows keys, not behaviour.</td><td><span class="pill done">dev, pinned 2026-11-02</span></td></tr>
       <tr><td><code>rpg-dnd5e-web</code> · protos</td><td>A state change reads as a line on the event log: <code>Gate guard: posted → alert (heard something)</code>. Protos v0.1.251 carry the kind. The studio's <code>states:</code> editing is S6b.</td><td><span class="pill done">web dev 12bc58d3</span> <span class="pill next">S6b</span></td></tr>
     </tbody>
   </table></div>
@@ -257,18 +257,18 @@ footer { color: var(--muted); font-size: 0.85rem; }
 <section>
   <h2>4. What it has cost and saved</h2>
   <div class="wrap"><table>
-    <thead><tr><th>row</th><th>before (S1)</th><th>S3 (due heap)</th><th>S4 (posts asleep)</th><th>+ #762 (reach-bounded refresh and routes)</th></tr></thead>
+    <thead><tr><th>row</th><th>before (S1)</th><th>S3 (due heap)</th><th>S4 (posts asleep)</th><th>+ #762 (reach-bounded refresh and routes)</th><th>+ one load per verb, lazy partitions</th></tr></thead>
     <tbody>
-      <tr><td>garrison keep, the Move that raises</td><td class="num">8.4–12.8 s</td><td class="num">7.4 s</td><td class="num">3.6–4.5 s</td><td class="num">1.5 s</td></tr>
-      <tr><td>creatures asked on that raise</td><td class="num">99</td><td class="num">99</td><td class="num">20</td><td class="num">20</td></tr>
-      <tr><td>record growth over 8 Moves</td><td class="num">1.18 MB</td><td class="num">1.18 MB</td><td class="num">0.69 MB</td><td class="num">unchanged</td></tr>
-      <tr><td>garrison keep, a plain Move</td><td class="num">256–408 ms</td><td class="num">256–317 ms</td><td class="num">unchanged</td><td class="num">~300 ms</td></tr>
-      <tr><td>garrison keep, launch</td><td class="num">1.3–1.5 s</td><td class="num">1.3–1.5 s</td><td class="num">unchanged</td><td class="num">1.6 s</td></tr>
-      <tr><td>castle, the Move that raises</td><td class="num">247 ms</td><td class="num">~250 ms</td><td class="num">~250 ms, 16 picks</td><td class="num">170 ms</td></tr>
-      <tr><td>toolkit benchmark, one op (4 Steps)</td><td class="num">4.2 s</td><td class="num">4.2 s</td><td class="num">1.82 s</td><td class="num">0.24 s</td></tr>
+      <tr><td>garrison keep, the Move that raises</td><td class="num">8.4–12.8 s</td><td class="num">7.4 s</td><td class="num">3.6–4.5 s</td><td class="num">1.5 s</td><td class="num">1.25 s</td></tr>
+      <tr><td>creatures asked on that raise</td><td class="num">99</td><td class="num">99</td><td class="num">20</td><td class="num">20</td><td class="num">20</td></tr>
+      <tr><td>record growth over 8 Moves</td><td class="num">1.18 MB</td><td class="num">1.18 MB</td><td class="num">0.69 MB</td><td class="num">unchanged</td><td class="num">unchanged</td></tr>
+      <tr><td>garrison keep, a plain Move</td><td class="num">256–408 ms</td><td class="num">256–317 ms</td><td class="num">unchanged</td><td class="num">~300 ms</td><td class="num">156–174 ms</td></tr>
+      <tr><td>garrison keep, launch</td><td class="num">1.3–1.5 s</td><td class="num">1.3–1.5 s</td><td class="num">unchanged</td><td class="num">1.6 s</td><td class="num">unchanged</td></tr>
+      <tr><td>castle, the Move that raises</td><td class="num">247 ms</td><td class="num">~250 ms</td><td class="num">~250 ms, 16 picks</td><td class="num">170 ms</td><td class="num">150 ms</td></tr>
+      <tr><td>toolkit benchmark, one op (4 Steps)</td><td class="num">4.2 s</td><td class="num">4.2 s</td><td class="num">1.82 s</td><td class="num">0.24 s</td><td class="num">0.24 s</td></tr>
     </tbody>
   </table></div>
-  <p>Server rows are grpcurl against the api on the bench env, 10k hexes, 99 garrison. Server-at-scale #762 then bounded the sight refresh to the observers within reach of what moved, and replaced each patrol's whole-field route flood with a goal-directed search that returns the same path. The toolkit benchmark fell twentyfold; the live raise fell to 1.5 s because a plain server Move still costs about 300 ms of load, save and projection. That split is the next finding; the 100 ms bar is not met yet.</p>
+  <p>Server rows are grpcurl against the api on the bench env, 10k hexes, 99 garrison. Server-at-scale #762 then bounded the sight refresh to the observers within reach of what moved, and replaced each patrol's whole-field route flood with a goal-directed search that returns the same path. The toolkit benchmark fell twentyfold; the live raise fell to 1.5 s because a plain server Move still costs about 300 ms of load, save and projection. A probe then split the 300 ms: a one-cell Move loaded the whole encounter twice (the step's announcement rebuilt it for resolution) and every load derived the field's partitions. One load per verb (resolution v0.74.0, session v0.155.0) and partitions derived when asked (encounter v0.170.0) took a plain keep Move to about 165 ms and Afford to 55 ms. The 100 ms bar is still open; what remains is the bounded refresh's reveal flood (~43 ms) and the record's JSON (~27 ms), which is the record story's ground (#770).</p>
 </section>
 
 <section>
@@ -280,7 +280,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
       <tr><td>S2 #772</td><td><code>mind/machine</code>, the primitive.</td><td><span class="pill done">done</span></td></tr>
       <tr><td>S3 #773</td><td>The encounter wakes who is due; the default recipe keeps every row the same.</td><td><span class="pill done">done, walked</span></td></tr>
       <tr><td>S4 #774</td><td>Triggers with scope, clocks as content, the castle's first authored recipes, posts that sleep.</td><td><span class="pill done">done, walked</span></td></tr>
-      <tr><td>S5 #775</td><td>Replay from the record: the record's own rolls, read back in order.</td><td><span class="pill next">proposed</span></td></tr>
+      <tr><td>S5 #775</td><td>Replay from the record: the record's own rolls, read back in order. No world roll was missing; the one declaration the record lacked, a sneak, is on it now (R11).</td><td><span class="pill done">done</span></td></tr>
       <tr><td>S6 #776</td><td>Visible. S6a: the state change on the log, walked ("see Guard: posted → alert"). S6b: the studio writes <code>states:</code>.</td><td><span class="pill done">S6a done</span> <span class="pill next">S6b</span></td></tr>
       <tr><td>S7 #777</td><td>Area clocks: a tomb that keeps its own time.</td><td><span class="pill next">proposed</span></td></tr>
       <tr><td>S8 #778</td><td>Plural fights that merge on contact; the fight-end beat.</td><td><span class="pill next">proposed</span></td></tr>
@@ -299,13 +299,14 @@ footer { color: var(--muted); font-size: 0.85rem; }
         <li><strong>Take the keep's remaining cost</strong>: #762 bounded the sight refresh to the observers within reach of what moved (in review, rpg-toolkit#2224). It was the right law and it was not the cost: the keep's Move dropped 4%. The profile put 89% of a patrol's turn in its route search, which floods the whole field to reach its next waypoint. That is the next task, T11.</li>
         <li><strong>Make the machines visible</strong>: S6a done and walked. The state beat folds into the existing state family, one additive proto kind, one log line. The first attempt showed why S4's walk could not: a failed intimidation forms the fight in the same verb as the voice, and a post inside a fight does not step.</li>
         <li><strong>T11 done</strong>: the goal-directed route search returns the flood's path cell for cell; encounter v0.167.0 is on api dev and both envs. Live, the keep's raise is 1.5 s and a plain Move about 300 ms.</li>
-        <li><strong>Next</strong>: where the server's 300 ms plain Move goes (load, save, projection, one bounded refresh), as a profile before any further task; S5, replay from the record; S6b, the studio authors <code>states:</code>.</li>
+        <li><strong>Overnight</strong>: the 300 ms probe found a double load and an eager partition pass; T12 and T13 fixed both (plain keep Move ~165 ms, Afford 55 ms). S5 replay from the record shipped with no world roll missing. R11 ruled and built: nobody begins to sneak in plain view, and a sneak is on the record; the kitchen is no longer a place to start one.</li>
+        <li><strong>Next</strong>: S6b, the studio authors <code>states:</code>; the record in shapes (#770), where the last 65 ms of a Move live; S7 area clocks; S8 plural fights.</li>
       </ol>
     </div>
     <div>
       <h3>Open for your word</h3>
       <ul>
-        <li><strong>Ruled today.</strong> R9: a reaction's pick is the creature's turn this round, on one clock or across clocks (rpg-toolkit#2223 builds it). R10: a route costs its reach, A* now, memory-resident instance later.</li>
+        <li><strong>Ruled.</strong> R9: a reaction's pick is the creature's turn this round (rpg-toolkit#2223 builds it). R10: a route costs its reach, A* now, memory-resident instance later. R11: nobody begins to sneak in plain view; a sneak is on the record (built).</li>
         <li><strong>Reference sites off dev</strong> (#786): a walk shelf per env, mounted by dev-env; dev's shelf shrinks to the castle and the bench fixtures.</li>
         <li><strong>Attack from free roam</strong> (#785): a swing on the world clock forms the fight. Amends R3 of #457.</li>
         <li><strong>30k keep stall</strong> (#801): a Move inside the launch fight took 129 s; cause untraced, needs a profile.</li>
@@ -323,6 +324,8 @@ footer { color: var(--muted); font-size: 0.85rem; }
         <tr><td>rpg-project#764</td><td>A cancelled StartEncounter leaves orphan seats.</td><td>Relaunching the keep repeatedly hits it.</td></tr>
         <tr><td>rpg-toolkit#2220</td><td>Enable the <code>nilnil</code> linter so a <code>(nil, nil)</code> fails CI.</td><td>The standing rule gets a mechanism.</td></tr>
         <tr><td>rpg-toolkit#2223</td><td>R9: a reaction's pick re-arms the creature at the next round of its own clock.</td><td>Closes the double-turn hole before an author finds it.</td></tr>
+        <tr><td>rpg-toolkit#2226</td><td>Cache an exhausted route search under the flood key.</td><td>A view with several unreachable targets pays the floor once per target.</td></tr>
+        <tr><td>rpg-toolkit#2236</td><td>Shard the encounter module's CI test job by package.</td><td>Three PRs this week landed within 15 s of the 10 m timeout.</td></tr>
         <tr><td>rpg-toolkit#2205</td><td>Keepgen names the site with its size, so the picker can tell keeps apart.</td><td>The bench harness cannot pick a keep today.</td></tr>
       </tbody>
     </table></div>
@@ -330,7 +333,7 @@ footer { color: var(--muted); font-size: 0.85rem; }
   </div>
 </section>
 
-<footer>Numbers and states as of the night of 2026-11-01. The record: rpg-project#766 (story table), #768 (rulings), ideas/the-world-runs/design.md (law), plan.md (task contracts).</footer>
+<footer>Numbers and states as of the morning of 2026-11-02. The record: rpg-project#766 (story table), #768 (rulings), ideas/the-world-runs/design.md (law), plan.md (task contracts).</footer>
 </main>
 <p class="site-nav"><a href="/rpg-project/architecture/">All architecture field notes</a> · <a href="/rpg-project/">Where Everything Meets</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/the-world-runs/design.md">the design, on GitHub</a></p>
 </body>
