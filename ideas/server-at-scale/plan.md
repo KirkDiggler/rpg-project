@@ -219,6 +219,29 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 
 **C, the memory-resident instance,** is rpg-project#770's design, not a task here: it would let the flood memo and the placement index live across verbs; R10 names it as where this line of work goes next.
 
+### Task T12: one load per verb (S7 #762, session)
+
+**Delivers:** V12's Move row, the largest remaining piece.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
+**Prerequisites:** none (session module; independent of encounter PRs).
+**Finding (probe, 2026-11-02, #753 comment 6568366323):** a one-cell Move on the 10k keep loads the whole encounter twice: once at the verb's open (`LoadEncounter`, 87 ms, of which partition derivation ~45 ms) and again inside the step's announcement, where `resolution.Resolve` is handed a `WorldView()` that rebuilds an encounter from the saved data (~85 ms of the 92 ms announcement). The two loads are 58% of the ~300 ms.
+**Files:** the session's step/announce path (where `WorldView()` is built for `resolution`): the view must be backed by the encounter instance the verb already holds, never by a second `LoadEncounter` from data. The seam stays: resolution still receives a view interface and knows nothing of the encounter; the session, which owns both, hands it the live one.
+**Interfaces:** `resolution`'s view interface unchanged; the session's view adapter takes an `*encounter.Encounter` (or the narrow interface it already satisfies) instead of `EncounterData`.
+**Behavior:** every verb loads the encounter once; the announcement reads the same instance the step mutated, so what resolution sees is the post-step world (as the reload saw it), byte-identical acts and events.
+**Tests:** a probe counter on `LoadEncounter` calls per verb (Move, Speak, EndTurn, door verbs): exactly one; the castle harness and session goldens unchanged; the session-level Move benchmark on the garrison record (the probe's method: load → step → announce → save, median of 45) before and after, both in the PR.
+**Verification:** the harness Move row on the 10k keep (expected ~215 ms from ~300).
+**Completion evidence:** PR link, the row.
+
+### Task T13: partitions derived when asked (S7 #762, encounter)
+
+**Delivers:** V12's Move row, the next piece after T12.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter`.
+**Prerequisites:** T12 measured; no other encounter PR in flight (never stack).
+**Finding:** `LoadEncounter` derives the field's partitions on every load (~45 ms of 87 on the 10k keep); a plain Move reads partitions only where a sound hops or a door changes.
+**Files:** the field's partition derivation becomes lazy (computed on first read, memoized for the instance's life; never stored: the law "the field indexes its placements, no stored derived data" holds, and the memo dies with the verb until #770's instance lives longer).
+**Tests:** `TestPartitions_DerivedOnce` (probe counter), every partition test unchanged, `BenchmarkLoadEncounter_Keep10k` before/after.
+**Verification:** the harness Move row (expected ~170 ms); the remaining ~100 ms is the bounded refresh's reveal flood (~43 ms) and JSON (~27 ms), which are #770's ground.
+
 ## Requirement coverage
 
 | requirement | tasks | proof |
@@ -230,7 +253,7 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 | V5 | T1, T7 | `BenchmarkAtlas_Keep30k`; goldens; no-cell-pass counter |
 | V6 | T8 | `TestDiscoverCells_EqualsFullSweep`; `TestMonster_WritesNoRevealBeat`; `TestMonster_ReloadKeepsKnowledge` |
 | V7 | T9 | `TestKnownCellsFact_RunsRoundTrip`; `TestRevealBeat_DeltaOnly`; `TestBlobSize_Keep10k` |
-| V12 | T8, T9, T10, T11 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
+| V12 | T8, T9, T10, T11, T12, T13 | `BenchmarkRefreshSightWarm_Keep10k`; the harness Move row on both keeps |
 | V8 | T4 | `TestLocker_SessionsDoNotShareAKey`; the castle-beside-keep row |
 | V9 | T6 | repository + handler tests; `TestResolveDiscoverySharing_FromReader`; the web switch persists |
 | V10 | T5 | vitest approach test; the operator's walk |
