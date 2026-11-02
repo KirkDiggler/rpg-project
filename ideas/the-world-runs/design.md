@@ -356,6 +356,13 @@ is the "roll is seen" law made checkable. Session's `diceSeam` and the
 config's injection are unchanged. A seed is a mechanism a use case has not
 brought (R6).
 
+**The record carries every declaration that changes what can be seen.** S5's
+replay (rpg-toolkit#2229) found every world roll on the record and one player
+declaration missing from it: a sneak. R11 (2026-11-02) puts a record-only
+`sneaking` beat on each successful declaration and clear, and refuses a
+declaration while anyone sees the mover (sneaking R10, amended). A replay
+re-issues the declaration from the beat.
+
 ### 6. Sight
 
 This story does not change how sight is computed. It depends on
