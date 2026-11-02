@@ -460,8 +460,9 @@ One deliverable per slice; sub-issues when the plan is written (story skill).
 
 - The garrison keep's raise cost is independent of roster size (R8 rows on
   the story).
-- A sleeping barracks is never visited; a forced door's crash wakes the gate
-  in the same raise.
+- A sleeping barracks is never visited; a forced door's crash, or a voice
+  such as a won `stand-aside`, wakes the gate in the same raise (a free swing
+  at a guard does not: it pulls the post into the fight, rpg-project#785 S2).
 - The castle plays as it does today on the default recipe.
 - The same record replays to the same picks from its own recorded rolls,
   with no seed anywhere.
