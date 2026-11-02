@@ -66,7 +66,7 @@ The session's `Afford` is what hands the bar one row; the web draws only what
 
 ## Slices
 
-- **S1 the bar on the world clock** (session; api and web unchanged): `Afford`
+- **S1 the bar on the world clock** (session, and one web change found on the walk: the dock drew the rows but armed targeting only on the turn clock; api unchanged): `Afford`
   on a non-turn clock compiles every verb's row the turn-clock path compiles,
   priced `SlotNone`, no shortfall, availability by the verb's own facts
   (range, target, sheet). Each verb's door accepts a world-clock declaration
