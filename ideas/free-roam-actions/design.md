@@ -1,5 +1,5 @@
 ---
-status: DESIGN, rulings open (R1–R3 on rpg-project#785)
+status: DESIGN, R1–R3 RULED 2026-11-02 on rpg-project#785; building
 story: rpg-project#785
 ---
 
@@ -53,9 +53,9 @@ The session's `Afford` is what hands the bar one row; the web draws only what
 
 | # | question | options | recommendation | status |
 |---|---|---|---|---|
-| R1 | What does an action cost on the world clock? | A one round of the world per action, as the engine charges today; the bar shows no slot and no shortfall. B nothing. C a budget per round like the turn clock. | A | open |
-| R2 | What does a hostile act on a neutral do? | A the aggression law as ruled (#493 R3): the two factions turn hostile, the fight forms with everyone in view. B only the struck creature turns hostile. | A | open |
-| R3 | Does the first swing from free roam land before initiative? | A the deed lands on the world clock (as a cast does today), then the fight forms: the swinger gets the first blow for free, the surprise flag records who was caught. B declaring the swing forms the fight first; the swing becomes the first turn, initiative decides who is first. | A | open |
+| R1 | What does an action cost on the world clock? | A one round of the world per action, as the engine charges today; the bar shows no slot and no shortfall. B nothing. C a budget per round like the turn clock. | A | ruled 2026-11-02 (Kirk: "A") |
+| R2 | What does a hostile act on a neutral do? | A the aggression law as ruled (#493 R3): the two factions turn hostile, the fight forms with everyone in view. B only the struck creature turns hostile. | A | ruled 2026-11-02 (Kirk: "A. I suppose it's an NPC had no faction or was a faction of 1 then only they would turn": the unit is the faction; a creature with none, or alone in one, is the whole of its faction) |
+| R3 | Does the first swing from free roam land before initiative? | A the deed lands on the world clock (as a cast does today), then the fight forms: the swinger gets the first blow for free, the surprise flag records who was caught. B declaring the swing forms the fight first; the swing becomes the first turn, initiative decides who is first. | A | ruled 2026-11-02 (Kirk: "A") |
 
 ## Slices
 
