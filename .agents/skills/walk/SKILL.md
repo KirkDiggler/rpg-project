@@ -15,7 +15,7 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
 
 1. Start outside the castle, neutral, with guards in front of the gate door.
 2. Round a corner out of their sight and start sneaking; the watch cones show.
-3. Start sneaking in plain sight: nothing happens.
+3. Start sneaking in plain sight: it is refused, and the refusal names who sees you (R11, 2026-11-02; before that the declaration was accepted and the watchers simply kept seeing you).
 4. Fight the gate guards: the next room is empty and nobody comes.
 5. Open the gate door while it is unguarded: guards come from the far room.
 
