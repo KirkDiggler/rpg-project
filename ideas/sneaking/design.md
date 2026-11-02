@@ -86,11 +86,18 @@ engine owns every piece; the client draws the zones it is sent.
   `SheetFacts.PassivePerception`. Resolution rolls it on the session's shared
   dice with the mover as the die's entity. The composition carries the
   verdict and never compares a total.
-- **Nobody vanishes in plain view (R10).** When sneaking begins, each watcher
-  that holds the mover live (`CurrentVia` non-empty), or whose zone already
-  holds the mover's cell, gets a lost verdict with no roll. Why: a roll that
-  could drop the mover out of a sight already on them is hiding from a
-  creature that sees you, which R3 does not grant.
+- **Nobody begins to sneak in plain view (R10, amended 2026-11-02 by the-world-runs
+  R11).** A sneak declaration is refused while any watcher holds the mover live
+  (`CurrentVia` non-empty) or has the mover's cell in its zone: the verb returns
+  `ErrSeen` naming the watchers, the mode does not change, no roll is made. A
+  declaration that succeeds, and a declaration that clears the mode, writes a
+  record-only `sneaking` beat (`{member, on}`) so a replay can rebuild what every
+  creature could see; the beat folds into no act (the session's record-only
+  table). Before the amendment the declaration was accepted with a lost verdict
+  per watcher and no beat; that left the record unable to say when a sneak began
+  (found by S5's replay, rpg-toolkit#2229). Why: a roll that could drop the mover
+  out of a sight already on them is hiding from a creature that sees you, which R3
+  does not grant; refusing says so to the player instead of silently losing.
 - **A lost verdict is ordinary sight (R2, R10).** While a lost verdict
   stands, that watcher sees the mover by ordinary sight, not by its zone, so
   a mover behind a narrowed zone stays seen by a watcher that already sees
@@ -174,6 +181,7 @@ engine owns every piece; the client draws the zones it is sent.
 | R6 | settled | The mode: one session verb `SetSneaking` on the world clock sets or clears `sneaking` on the encounter's member and refreshes sight; declaring the mode already held is a no-op; forbids a turn-clock sneak, a repeated declaration that rolls, re-arms, refreshes or writes a beat, a client-held flag, a monster sneaking and a declaration judged only at some later verb | KirkDiggler | 2026-10-18 |
 | R7 | settled | What ends it: attack, cast, speak, a fight engaging the mover (cleared before any turn budget reads speed), declaring it off, exit; forbids a sound ending it and a caught sneaker's first turn at half speed | KirkDiggler | 2026-10-18 |
 | R8 | settled | Cost: half speed while sneaking, answered by the session's speed fact; forbids a second free-roam movement budget and the encounter knowing the rule | KirkDiggler | 2026-10-18 |
+| R10 (amended) | settled | A sneak declaration is refused while any watcher sees the mover (`ErrSeen`); a successful declaration or clear writes a record-only `sneaking` beat. Kirk, 2026-11-02 (the-world-runs R11): "if anyone can see you you cannot go into sneaking" | KirkDiggler | 2026-11-02 |
 | R9 | settled | The zone is the watcher's sight reach from where it stands, by the one sight test; forbids building it from the watcher's known cells and computing it anywhere but the engine | KirkDiggler | 2026-10-18 |
 | R10 | settled | A roll only on entering a watcher's zone from outside, with either party moving (a watcher's walk or turn, or a door opening, can produce the entry), through the check resolver against the watcher's passive Perception; a watcher already seeing the mover, or already holding the mover's cell in its zone, when sneaking begins gets a lost verdict with no roll; a lost verdict is seen by ordinary sight and re-arms only once ordinary sight breaks and the mover is the re-arm distance outside the zone; verdicts re-arm as discovery's attempts do, at a supplied distance; forbids vanishing from a watcher that sees you, a roll per refresh, a Stealth number on sheet facts, the composition comparing totals, and one roll against the highest passive | KirkDiggler | 2026-10-18 |
 | R11 | settled | A beaten verdict suppresses that one pair in the sight pass; forbids erasing a holding and suppressing any other watcher | KirkDiggler | 2026-10-18 |
