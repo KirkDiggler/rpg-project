@@ -18,9 +18,16 @@ action, the same round a walk pays every pace (the-world-runs §5).
 
 **A hostile act makes a hostile pair.** Hostile intent across a neutral pair
 turns the pair's factions hostile before the deed's testimony lands (the
-aggression law, rpg-project#493 R3, `deed.go`). The fight then forms through
-the same sight refresh a step into an enemy's view forms it. No verb forms a
-fight by itself; seeing an enemy does.
+aggression law, rpg-project#493 R3, `deed.go`), and the stance turn forms the
+fight inside the same deed (`flip.go` `settleStances` → `formOnStance`): the
+struck creature is in the fight the moment the blow lands. Corrected 2026-11-02
+on the S1 build: the first draft said the fight forms on the next sight refresh;
+under that order a charged world round could walk the struck guard out of sight
+before the fight existed. **The world's round is charged to the world.** A deed
+done on the world clock moves the world one round whoever it put in a fight: the
+world's Tick raises by one, the creatures still on the world clock wake, and the
+fighters pay nothing more (the turn clock prices their time now). A harmless cast
+charges its actor's round as before.
 
 **A cast that hurts nobody forms nothing.** Light, a heal, a buff: a round of
 the world passes, witnesses hear a voice if the cast speaks, and nothing else
@@ -55,7 +62,7 @@ The session's `Afford` is what hands the bar one row; the web draws only what
 |---|---|---|---|---|
 | R1 | What does an action cost on the world clock? | A one round of the world per action, as the engine charges today; the bar shows no slot and no shortfall. B nothing. C a budget per round like the turn clock. | A | ruled 2026-11-02 (Kirk: "A") |
 | R2 | What does a hostile act on a neutral do? | A the aggression law as ruled (#493 R3): the two factions turn hostile, the fight forms with everyone in view. B only the struck creature turns hostile. | A | ruled 2026-11-02 (Kirk: "A. I suppose it's an NPC had no faction or was a faction of 1 then only they would turn": the unit is the faction; a creature with none, or alone in one, is the whole of its faction) |
-| R3 | Does the first swing from free roam land before initiative? | A the deed lands on the world clock (as a cast does today), then the fight forms: the swinger gets the first blow for free, the surprise flag records who was caught. B declaring the swing forms the fight first; the swing becomes the first turn, initiative decides who is first. | A | ruled 2026-11-02 (Kirk: "A") |
+| R3 | Does the first swing from free roam land before initiative? | A the deed lands on the world clock, the fight forms inside the deed, then the world is charged its round: the swinger gets the first blow for free, the surprise flag records who was caught. B declaring the swing forms the fight first; the swing becomes the first turn, initiative decides who is first. | A | ruled 2026-11-02 (Kirk: "A") |
 
 ## Slices
 
