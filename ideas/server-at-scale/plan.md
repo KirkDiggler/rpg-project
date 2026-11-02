@@ -222,13 +222,14 @@ The wire already carries everything S2 needs: `Declaration.speak_options` for th
 ### Task T12: one load per verb (S7 #762, session)
 
 **Delivers:** V12's Move row, the largest remaining piece.
-**Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
-**Prerequisites:** none (session module; independent of encounter PRs).
+**Owner:** rpg-toolkit `rulebooks/dnd5e/resolution` then `rulebooks/dnd5e/session`, two PRs, one module each.
+**Prerequisites:** none; independent of encounter PRs.
+**Build finding (2026-11-02):** the reload is inside resolution: `Input.World` is `EncounterData` and `resolveOn` calls `LoadEncounter` on every `Resolve`; resolution only reads the result. Attack-shaped verbs then `adopt` the round-tripped `Output.World` in the session, a third load. So: (1) resolution's `Input` gains `Live`, the narrow read interface resolution uses (satisfied by `*encounter.Encounter`), exactly one of `Live`/`World` set, `Output.World` empty when live, resolution still mutates nothing (asserted); (2) the session passes the verb's live encounter and `land()` skips `adopt` when the world came back live.
 **Finding (probe, 2026-11-02, #753 comment 6568366323):** a one-cell Move on the 10k keep loads the whole encounter twice: once at the verb's open (`LoadEncounter`, 87 ms, of which partition derivation ~45 ms) and again inside the step's announcement, where `resolution.Resolve` is handed a `WorldView()` that rebuilds an encounter from the saved data (~85 ms of the 92 ms announcement). The two loads are 58% of the ~300 ms.
 **Files:** the session's step/announce path (where `WorldView()` is built for `resolution`): the view must be backed by the encounter instance the verb already holds, never by a second `LoadEncounter` from data. The seam stays: resolution still receives a view interface and knows nothing of the encounter; the session, which owns both, hands it the live one.
 **Interfaces:** `resolution`'s view interface unchanged; the session's view adapter takes an `*encounter.Encounter` (or the narrow interface it already satisfies) instead of `EncounterData`.
 **Behavior:** every verb loads the encounter once; the announcement reads the same instance the step mutated, so what resolution sees is the post-step world (as the reload saw it), byte-identical acts and events.
-**Tests:** a probe counter on `LoadEncounter` calls per verb (Move, Speak, EndTurn, door verbs): exactly one; the castle harness and session goldens unchanged; the session-level Move benchmark on the garrison record (the probe's method: load → step → announce → save, median of 45) before and after, both in the PR.
+**Tests:** a probe counter on `LoadEncounter` calls per verb (Move, Speak, EndTurn, door verbs, and Attack, Cast, Activate, React, today three): exactly one; the castle harness and session goldens unchanged; the session-level Move benchmark on the garrison record (the probe's method: load → step → announce → save, median of 45) before and after, both in the PR.
 **Verification:** the harness Move row on the 10k keep (expected ~215 ms from ~300).
 **Completion evidence:** PR link, the row.
 
