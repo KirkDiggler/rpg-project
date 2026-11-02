@@ -16,8 +16,9 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
 1. Start outside the castle, neutral, with guards in front of the gate door.
 2. Round a corner out of their sight and start sneaking; the watch cones show.
 3. Start sneaking in plain sight: it is refused, and the refusal names who sees you (R11, 2026-11-02; before that the declaration was accepted and the watchers simply kept seeing you).
-4. Fight the gate guards: the next room is empty and nobody comes.
+4. Fight the gate guards: a swing from free roam starts it, and the fight forms on that blow with every guard in view in it. The world pays one round. The next room is empty and nobody comes.
 5. Open the gate door while it is unguarded: guards come from the far room.
+6. Speak to the captain from the gatehouse: a plain greeting passes no round of the world. `stand-aside` is a check and pays one round. When it succeeds, its voice turns the gate post alert, which is the sound outside a fight. A free swing makes no such sound: it pulls the post into the fight, and a post inside a fight does not step (rpg-project#785 S2 rows).
 
 A slice is walked once, at its final head, after the operator's early view.
 A re-pin whose delta is only `go.mod` and `go.sum` does not walk again.
