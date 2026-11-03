@@ -124,12 +124,13 @@ merge.
 - Accepted from Task 1's build (rpg-toolkit#2258), recorded in Task 1
   below: the canvas treats a downed blocking monster as the fold does; the
   troupe success teaches `troupe-admitted`.
-- Open (Task 1, for the rpg-toolkit#2258 review to keep or drop):
-  `ValidateWalkEnd` lets a walk aim at a seen, non-hostile blocking body.
-  The builder added it so the gesture reached the step, but the #841 call
-  removed its caller: no walk aims at his cell now, and the session checks
-  only the walk's last cell (`session/move.go:172`). A hostile or
-  pass-through goal is still refused either way.
+- Dropped (Task 1, the lead's call on the rpg-toolkit#2258 review): the
+  `ValidateWalkEnd` relaxation that let a walk aim at a seen, non-hostile
+  blocking body. The #841 gesture call removed its caller: no walk aims at
+  his cell now, and the session checks only the walk's last cell
+  (`session/move.go:172`). A liberty with no caller is not granted; it
+  returns with the use case that needs it. #2258 removes it in its
+  follow-up push.
 - Open (Task 1): the roster row's `Member.BlocksMovement` reports the
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
