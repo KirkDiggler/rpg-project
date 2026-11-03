@@ -78,12 +78,12 @@ merge.
 | D5 | `Step` answers a body stop with output (beats, intel deltas, any fight formed or outcome, the stop reason), not an error; `Move` folds it and reports `stopped`. | Law |
 | W1 | The session decodes `barred` into a `BarredAct`; the wire carries it additively; the api converts it; the web folds it with the answer and shows the line as the guard's speech. | R2 |
 | G1 | castle tests, `step_test.go`, `blocksmovement_test.go`, `wakebeats_internal_test.go`, `machine_internal_test.go`, session `move` tests, web `atlasPath.test.ts` keep passing. | must keep working |
-| H1 | A state may name the door its post holds; while a member is in it and up, the door's crossings are closed to every mover not allied with him, open or shut, any width; his cell still blocks. | R5 |
-| H2 | The hold is read from the state on every step and route, per mover, beside the masquerade; it is never in the shared crossing memo. | R5 |
-| H3 | The holder is the post: an opening is held while any holding member is up; killing one does not open it. | R5 |
+| H1 | A state may name a post: the door whose opening it holds and the cells a holder stands on. While a member is in that state, up and on a post cell, the door's crossings (an edge door's edges, a footprint door's crossings) are closed to every mover not allied with him, open or shut, any width; his cell still blocks. | R5 |
+| H2 | The hold is a state at a place, read on every step and route, per mover, beside the masquerade and before the door pass; it is never in the shared crossing memo, and a walk never opens a held door. | R5 |
+| H3 | The holder is the post: an opening is held while any member is in a holding state, up and on a post cell; killing one does not open it. | R5 |
 | H4 | A step across a held edge stops with `ErrBodyInTheWay`; its reason names the nearest holder the mover observes ("<name> bars the way"), else "someone bars the way"; driven walks route around a held edge and stop silently. | R5 |
-| H5 | The held door is stored beside `BlockingStates`; an observer holds what it saw of the hold; the sighting says which door a seen holder bars against the viewer. | R5 |
-| H6 | The web plans a door held against the viewer as shut; the second plan still runs only when no route round exists. | R5, P1 |
+| H5 | The posts are stored beside `BlockingStates`; an observer holds what it saw of the hold; the sighting says which door a seen holder bars against the viewer. | R5 |
+| H6 | The atlas lists a footprint door's crossings as doorways (existing `AtlasDoorway`, additive); the web plans a shut or held door as shut; the second plan still runs only when no route round exists. | R5, P1 |
 
 ## Constraints
 
@@ -104,7 +104,7 @@ merge.
 | repo | revision | symbols |
 |---|---|---|
 | rpg-toolkit | origin/main 20a124ad (encounter v0.174.0, session v0.161.0) | `encounter/cellfacts.go`: `Passage` :12-27, `CellAt` doc :115-135, member contributor :303-330, `blockedBy` :478-503, `occupantPassage` :528-540. `encounter/encounter.go`: member creation :992, :1015, record load :1261, `join` :2601-2632, `memberEntity.BlocksMovement` :3048-3050. `encounter/board.go`: :167, :175. `encounter/data.go`: `ReserveData.Recipe` :525, `MemberData.Recipe` :2166. `encounter/observedpassage.go`: :43. `encounter/step.go`: `Step` refusal :138-141, `stepMember` :218-410, last-step pass-through :334-336, body refusal :347-352, `stepTo` silent list :440-452. `encounter/field.go`: `StepOutput` :1728, `IntelDeltas` :1763, `Outcome` :1644. `encounter/walkend.go`: `StepObstructedError.PublicReason` :35-48. `encounter/machine.go`: `machineVocabulary` :92, `vocabularyFor` :117, `programFor` :339-350, `runPick` :516, `MachineBeats` :703, `MachineBeatScoped` :726, `ValidateMachine` :751. `encounter/wakebeats.go`: law :19-50, beat words :57-80, `landHeard` :173, `landFactBeat` :212, `matchOne` :320, `react` :392. `encounter/clocks.go`: `runIntents` :588, pick then `answerTime` :628-638. `encounter/answer.go`: voice :239-275, `answerTime` :254. `encounter/dungeonspec/states.go`: `StateSpec` :64, `ValidateMachine` call :319. `encounter/castletest/castle_king_test.go`: fixture :42. `encounter/castletest/castle_king_script_test.go`: cells :53-98, `TestMadKingScriptASneakWindowAtTheDoor` :453, `TestMadKingScriptOpeningTheGateBringsTheFarRoom` :670. `session/move.go`: `CanPay` :446, obstruction :455-461, `Pay` :473. `session/act_family.go`: `answeredPiece` :725-765. `session/act_bodies.go`: `TableAnswer` :394-415. `tools/spatial/room.go`: `CanPlaceEntity` reads `BlocksMovement()` :452. |
-| rpg-toolkit (S1b) | origin/main 9c745794 (encounter v0.175.0) | `encounter/machine.go`: `memberBlocks` :328. `encounter/cellfacts.go`: memoized `crossingBlocked` :188. `encounter/placed_props.go`: `doorAcrossCrossing` :732, `doorCrossings` :761, `Encounter.crossingBlocked` :1067. `encounter/step.go`: masquerade check :310, silent list :454, `bodyRefusalError` :483-497. `encounter/clocks.go`: `walkerEdge` :2571. `encounter/observedpassage.go`: `ObservedPassages` :14. `session/read.go`: sighting passage :457-476. Mirror: gate opening :725-731, `gate-1` states :1717-1758, `post` draw row :308-311. |
+| rpg-toolkit (S1b) | origin/main 9c745794 (encounter v0.175.0) | `encounter/machine.go`: `memberBlocks` :328. `encounter/cellfacts.go`: memoized `crossingBlocked` :188. `encounter/placed_props.go`: `doorAcrossCrossing` :732, `doorCrossings` :761, `Encounter.crossingBlocked` :1067. `encounter/step.go`: masquerade check :310, silent list :454, `bodyRefusalError` :483-497. `encounter/clocks.go`: `walkerEdge` :2571. `encounter/observedpassage.go`: `ObservedPassages` :14. `encounter/atlas.go`: doorways from edges :628-634. `encounter/wakebeats.go`: `landDeedBeat` :200-210. `encounter/dungeonspec/states.go`: `guardOf` :337-358. `encounter/dungeonspec/single_room_doors.go`: wall door id :300-312. `encounter/castletest/castle_king_test.go`: `kingGateDoor` :71-72. `session/read.go`: sighting passage :457-476. Mirror: gate opening :725-731, `post` rows :321-330, `gate-1` states :1717-1758. |
 | rpg-api-protos (S1b) | origin/main 22c45cf (v0.1.253) | `session/v1alpha1/types.proto`: `Sighting` :990, `passage = 11` :1067; `DoorInfo` :2639-2646 |
 | rpg-api-protos | origin/main 22c45cf (v0.1.253) | `dnd5e/api/session/v1alpha2/act.proto`: act body oneof (`table_answer = 34` :104) |
 | rpg-api | origin/dev 6cb2d92 | `content/the-mad-king.yaml`: gate tables :272-327, dispositions :524-531, gate guards :1544-1565, `gate-1` states :1681-1698, captain :1705-1707, stand-aside :1723-1737, turn :1738-1747, gate door :2012-2015; `internal/handlers/dnd5e/session/v1alpha2/convert_act.go` |
@@ -335,87 +335,102 @@ covered by tests, not walked.
 
 ### Task 11 (S1b): a post holds a passage
 
-**Delivers:** H1–H5 in the encounter.
+**Delivers:** H1–H5 in the encounter; the atlas half of H6.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (with `dungeonspec`).
 **Prerequisites:** Task 1 tagged (encounter v0.175.0).
-**Files:** `field.go` (`MemberInput.HoldingStates`), `data.go`
-(`MemberData.HoldingStates`, `ReserveData.HoldingStates`), `machine.go`
-(`memberHolds`, validation), new `hold.go` (`heldAgainst`), `step.go` (the
-held-edge check beside the masquerade), `clocks.go` (`walkerEdge` reads it
-per mover), `walkend.go` / `step.go` (the held reason), `observedpassage.go`
-and the holding refresh (what an observer saw of the hold);
-`dungeonspec/states.go` (`StateSpec.Holds`); the castle mirror; new
-`hold_test.go`; castle tests.
+**Files:** `field.go` (`MemberInput.Posts`), `data.go`
+(`MemberData.Posts`, `ReserveData.Posts`), `machine.go` (validation), new
+`hold.go` (`Post`, `memberHolds`, `heldAgainst`), `step.go` (the held-edge
+check beside the masquerade, before the door pass), `clocks.go`
+(`walkerEdge` reads it per mover, before `doorPast`), `walkend.go` /
+`step.go` (the held reason), `observedpassage.go` and the holding refresh
+(what an observer saw of the hold), `atlas.go` (a footprint door's
+crossings as doorways); `dungeonspec/states.go` (`StateSpec.Holds`); the
+castle mirror; new `hold_test.go`; castle tests.
 **Interfaces:**
-- `MemberInput.HoldingStates map[string]DoorID`: state → the door whose
-  opening the state holds. Refused when a state is not in the recipe, when
-  the door is unknown, or without an authored recipe.
-- `MemberData.HoldingStates` and `ReserveData.HoldingStates`,
-  `json:"holding_states,omitempty"`, beside `BlockingStates`; absent loads
-  as none; an unknown state or door is refused at load (`ErrInvalidData`).
+- `type Post struct { Door DoorID; Cells []spatial.Position }`.
+  `MemberInput.Posts map[string]Post`: state → the post that state holds.
+  Empty `Cells` means the cell the member is placed at. Refused when a
+  state is not in the recipe, the door is unknown, a cell is not floor, or
+  there is no authored recipe.
+- `MemberData.Posts` and `ReserveData.Posts`, `json:"posts,omitempty"`,
+  beside `BlockingStates`; absent loads as none; an unknown state, door or
+  cell is refused at load (`ErrInvalidData`).
 - `func (e *Encounter) memberHolds(id MemberID) (DoorID, bool)`: the door
-  its current state holds, false when it holds none or is down.
-- `func (e *Encounter) heldAgainst(mover MemberID, from, to spatial.Position) (holders []MemberID)`:
-  the members up and holding a door whose `doorCrossings` include the
-  crossing, not allied with the mover, nearest first. The door's crossings
-  are computed once per door (geometry, not state).
-- `StateSpec.Holds string yaml:"holds,omitempty"` names a door id; refused
-  on a terminal state and for an unknown door.
+  of the post its current state names, true only while the member is up
+  and stands on one of the post's cells. Read on every call, never stored,
+  so leaving the cell (any walk, a push) empties the hold at once and
+  standing there again restores it in that step.
+- The opening's crossings: an edge door's `edges`; a footprint door's
+  `doorCrossings` (`placed_props.go:761`), computed once per door.
+- `func (e *Encounter) heldAgainst(mover MemberID, from, to spatial.Position) []MemberID`:
+  the members holding a door whose crossings include this one, not allied
+  with the mover, nearest first.
+- Order: the hold is read before the door pass. `walkerEdge` closes a held
+  edge before it asks `doorPast`, and a player's step refuses a held edge
+  before any door is opened, so a walk never opens a held door.
 - A held step returns `StepObstructedError` wrapping `ErrBodyInTheWay`;
   `PublicReason()` answers "<name> bars the way" for the nearest holder the
-  mover observes, else "someone bars the way". `walkerEdge` closes a held
-  edge for its mover, so routes go round and a driven walk stops silently.
+  mover observes, else "someone bars the way". Driven walks route round a
+  held edge and stop silently at one.
 - The observer's holding of a member gains the door it holds, refreshed
-  when the state changes, as `BlocksMovement` is; `ObservedHolds(view)
-  map[MemberID]DoorID` answers, for a viewer, the doors seen holders bar
-  against it (allies omitted).
-- Two machine guard words, the encounter's (beside `enemy` and
-  `fact:<id>` in `vocabularyFor`): `heard` reads the table's own `heard`
-  condition (kind, rounds) for the creature; `at` is true when the
-  creature stands on the named cell. dungeonspec accepts both in a
-  transition's `when`.
-**Content (in the mirror; T14 copies the hunk):**
-- `posted`: `blocks: true`, `holds: gate-wall-door`; on `time`, when
-  `heard: { kind: voice, within: 1 }`, → `drawn` with `do: [{ pick: draw }]`
-  (today's trigger, unchanged); else `pick: post`.
-- `alert`: `blocks: true`, `holds: gate-wall-door`; he looks round from the
-  gate; the same draw transition to `drawn`.
-- `drawn` (new): `blocks: true`, holds nothing; on `time`, when `at:` his
-  post cell, → `posted`; else `pick: return` (walk to the post), with the
-  same draw transition first so a second voice draws him on. The
-  `cowed`/`turned` fact transitions as on `posted`.
-- `gate-patrol`: the `post` key loses its draw row; a `draw` key holds it
-  (`toward: sound`); a `return` key walks to the post cell.
-- `TestMadKingScriptASneakWindowAtTheDoor` keeps its S1 aim: a voice draws
-  `gate-1` into `drawn`, and the sneaker crosses on `gate-2`'s blind beat.
+  when the hold changes (state or cell), as `BlocksMovement` is;
+  `ObservedHolds(view) map[MemberID]DoorID` answers, for a viewer, the
+  doors seen holders bar against it (allies omitted).
+- `Atlas()` lists a footprint door's crossings as `AtlasDoorway{Door, From,
+  To}` beside an edge door's edges (`atlas.go:628-634`), under the same
+  concealment rule as edge doorways. The shape is unchanged; there are
+  more entries.
+- `StateSpec.Holds`: `holds: { door: <authored id>, at: [{ q, r }, …] }`,
+  cells in the same `{ q, r }` form a table's `toward: { at }` uses.
+  dungeonspec resolves the authored door id to the encounter's
+  (`the-mad-king/gate-wall-door`, `single_room_doors.go:308`) and refuses
+  an unknown opening or door id, a non-floor cell, and `holds` on a
+  terminal state.
+- No new state and no guard word: every leaving already moves him off his
+  cells. A state that must change on a kind of sound would ride a
+  `heard:<kind>` beat, landed as `deed:<word>` is (`wakebeats.go:200-210`);
+  none is needed here.
+**Content (in the mirror; T14 copies the hunk):** `gate-1` `posted` and
+`alert`: `holds: { door: gate-wall-door, at: [{ q: -3, r: 7 }, { q: -4, r: 7 }] }`,
+the two gatehouse-side cells of the opening (the cell he stands on and the
+one the party stepped through in the #841 record); `blocks: true` as
+before. The `post` key's rows are unchanged (mirror `:321-330`).
+`TestMadKingScriptASneakWindowAtTheDoor` keeps its S1 aim: a voice draws
+`gate-1` off his cells, and the sneaker crosses on `gate-2`'s blind beat.
 **Tests:**
-- `TestAPostHoldsBothCellsOfAnOpening`: a two-cell open door, a posted
-  holder on one side cell; a step through either cell is refused with his
-  name; his own cell is refused as before.
+- `TestAPostHoldsBothCellsOfAFootprintOpening`: a two-cell open footprint
+  door, a holder on one post cell; a step through either cell is refused
+  with his name; his own cell is refused as before.
+- `TestAPostHoldsAnEdgeDoor`: the same through an edge door's edges.
 - `TestAHoldWorksOnAnOpenAndAShutDoor`.
+- `TestAWalkNeverOpensAHeldDoor`: a shut held door on a walk that opens
+  doors; the door stays shut and the stop names the holder.
 - `TestAnAllyCrossesAHeldOpening`.
-- `TestTheHoldEndsAndResumesWithTheState`: a fixture state that holds
-  nothing opens the opening; back to a holding state, it is held again,
-  wherever he stands.
-- `TestAnAlertGuardStillHolds`: alert at his post, the opening is held.
-- `TestADrawnGuardHoldsNothing`: a voice draws him into `drawn`; the
-  opening passes while he is away; back on his post he is `posted` and it
-  is held again.
-- `TestTheMachineReadsHeardAndAt`: the two guard words, true and false,
-  and their dungeonspec refusals.
+- `TestTheHoldIsAStateAtAPlace`: off his cells in a holding state, the
+  opening passes; back on a cell, it is held in the same step; a
+  non-holding state on his cell holds nothing.
+- `TestAnyLeavingEmptiesTheHold`: walked to a voice, to a clang, on a
+  chase, and pushed by a directive; each opens the passage.
+- `TestAnAlertGuardStillHolds`: alert on his post, the opening is held.
+- `TestAnOccupiedPostCellIsNotRetaken`: a stranger on his only post cell;
+  he holds nothing until it is free; with two post cells, he holds from
+  the other.
 - `TestADownedHolderHoldsNothing`.
 - `TestTheGroupHoldsTheGate`: two members posted on one door; downing one
   leaves it held; downing both opens it.
 - `TestARouteGoesRoundAHeldOpening` and `TestADrivenWalkStopsSilentlyAtAHeldEdge`.
 - `TestAnUnseenHolderIsSomeone`.
-- `TestAStoredHoldLoads`: member and reserve; unknown state or door refused.
-- dungeonspec: `holds` compiles; on a terminal state or an unknown door it
-  is refused.
+- `TestAStoredPostLoads`: member and reserve; unknown state, door or cell refused.
+- `TestTheAtlasListsAFootprintDoorsCrossings`, and a hidden one's are
+  withheld as an edge door's are.
+- dungeonspec: `holds` compiles to the qualified door id and its cells;
+  an unknown id, a non-floor cell and a terminal state are refused.
 - Castle (the mirror): with the gate door open and `gate-1` posted, the
   party cannot step through either cell of the opening, nor while he is
-  alert at his post; it can while he is drawn and once he is cowed, turned
-  or downed; with `gate-2` given a holding state on
-  the same door in the test, downing `gate-1` alone does not open it.
+  alert on his post; it can while he is drawn off and once he is cowed,
+  turned or downed; with `gate-2` given a post on the same door in the
+  test, downing `gate-1` alone does not open it.
 
 - [ ] Tests first; implement; `go test -race ./... && golangci-lint run ./...` in `rulebooks/dnd5e/encounter`; run record.
 
@@ -429,8 +444,10 @@ and the holding refresh (what an observer saw of the hold);
 **Files:** `go.mod`; `read.go` (beside `ObservedPassages`, `read.go:457`:
 `Sighting.HoldsDoor` from `ObservedHolds`); the sighting type; tests.
 **Tests:** a Move through the held opening answers `stopped` with "Guard
-bars the way"; the viewer's sighting of a posted `gate-1` names
-`gate-wall-door`; an allied viewer's does not; a cowed guard's does not.
+bars the way"; the viewer's sighting of a posted `gate-1` on his post names
+`the-mad-king/gate-wall-door`; an allied viewer's, a cowed guard's and a
+drawn-off guard's do not; the atlas the session serves carries the castle
+gate's crossings as doorways (passed through unchanged).
 
 - [ ] Re-pin; implement; `go test -race ./... && golangci-lint run ./...`.
 
@@ -461,7 +478,10 @@ body changes; `DoorInfo` refreshes only on door beats.
 **Prerequisites:** Task 12 and Task 13 tagged.
 **Files:** `go.mod`; the sighting conversion; its test;
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
-**Tests:** convert test for `holds_door`; the two castle files diff empty;
+**Behavior:** the atlas's doorways pass through unchanged, now including a
+footprint door's crossings (existing `AtlasDoorway`, additive entries).
+**Tests:** convert test for `holds_door`; an atlas test that the castle
+gate's crossings arrive as doorways; the two castle files diff empty;
 `make test && make pre-commit`.
 
 - [ ] Re-pin; implement; stage on :3030.
@@ -477,11 +497,15 @@ body changes; `DoorInfo` refreshes only on door beats.
 (`buildAtlasPathIndex` takes the held door ids and adds their doorway
 edges to `shutDoorEdges`); the caller that builds the index from live
 sightings; `atlasPath.test.ts`.
-**Interfaces:** a door named by a live (not remembered) sighting's
-`holdsDoor` is planned as shut. The second plan (P1) still runs only when
+**Interfaces:** the atlas's doorways now include a footprint door's
+crossings (Task 11); the planner reads them as it reads an edge door's,
+so a shut footprint door is planned shut, which it was not before. A door
+named by a live (not remembered) sighting's `holdsDoor` is planned as
+shut. The second plan (P1) still runs only when
 no route round exists, and plans through a held door then.
-**Tests:** an open door held by a seen body is not planned through when a
-way round exists; with no way round, the second plan crosses it; a hold
+**Tests:** with a footprint-door fixture (crossings as doorways, no
+edges): a shut one is not planned through; an open one held by a seen body
+is not planned through when a way round exists; with no way round, the second plan crosses it; a hold
 that clears (the sighting drops `holdsDoor`) opens the edge on the next
 build; a remembered sighting holds nothing.
 
