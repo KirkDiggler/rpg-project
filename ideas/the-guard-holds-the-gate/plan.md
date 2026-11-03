@@ -382,7 +382,10 @@ castle mirror; new `hold_test.go`; castle tests.
   `atlas.go:628-634`), under the same concealment rule as edge doorways.
   `Crossing` says the pair is a footprint door's crossing, which the map
   already draws as its placed asset: readers that plan and grade fog read
-  both kinds, and renderers draw a doorway only for an edge door.
+  both kinds, and renderers draw a doorway only for an edge door. The
+  reveal beats that carry doorways (`revealbeat.go:226`,
+  `roomreveal.go:165`) list a footprint door's crossings the same way, with
+  `crossing`, so a revealed footprint door joins the cached atlas too.
 - `StateSpec.Holds`: `holds: { door: <authored id>, at: [{ q, r }, …] }`,
   cells in the same `{ q, r }` form a table's `toward: { at }` uses.
   dungeonspec resolves the authored door id to the encounter's
@@ -444,12 +447,19 @@ before. The `post` key's rows are unchanged (mirror `:321-330`).
 **Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
 **Prerequisites:** Task 11 tagged.
 **Files:** `go.mod`; `read.go` (beside `ObservedPassages`, `read.go:457`:
-`Sighting.HoldsDoor` from `ObservedHolds`); the sighting type; tests.
+`Sighting.HoldsDoor` from `ObservedHolds`); the sighting type; `types.go`
+(`AtlasDoorway.Crossing bool json:"crossing,omitempty"` on the session's own
+doorway type, :643; the door-revealed body's doc at :1315-1324, which says
+a footprint door has no doorways, now says its crossings arrive marked);
+`convert.go` (the atlas copy, :178-183, copies `Crossing`); `act_family.go`
+(the reveal act's doorways, :1102-1126, decode `crossing`); tests.
 **Tests:** a Move through the held opening answers `stopped` with "Guard
 bars the way"; the viewer's sighting of a posted `gate-1` on his post names
 `the-mad-king/gate-wall-door`; an allied viewer's, a cowed guard's and a
 drawn-off guard's do not; the atlas the session serves carries the castle
-gate's crossings as doorways (passed through unchanged).
+gate's crossings as doorways with `Crossing` true and an edge door's
+doorways with it false; a reveal act for a footprint door carries its
+crossings with `Crossing` true, and an edge door's reveal carries false.
 
 - [ ] Re-pin; implement; `go test -race ./... && golangci-lint run ./...`.
 
