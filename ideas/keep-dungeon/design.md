@@ -1240,7 +1240,6 @@ the boss. Check that knowledge, remaining actors, loans and escape still agree.
 
 ### Related records
 
-- [Paper-design publication and maintenance issue #838](https://github.com/KirkDiggler/rpg-project/issues/838)
 - [Keep mission requirements #702](https://github.com/KirkDiggler/rpg-project/issues/702)
 - [Dialogue requirements #737](https://github.com/KirkDiggler/rpg-project/issues/737)
 - [Gate admission and arrest use case #769](https://github.com/KirkDiggler/rpg-project/issues/769)
