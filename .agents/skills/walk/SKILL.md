@@ -32,7 +32,9 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    stops one cell short of him and the stop reason names him. A walk past
    `gate-2`, who is not posted, crosses her cell as before. Open the gate
    door while it is unguarded: guards come from the far room. The door is in
-   reach from the cell beside the crossing; the crossing itself is stood on
+   reach from the cell beside the crossing (a castle-test fixture says so,
+   `TestReserves_MarchOnFightRounds`; the walk proves it on the stack); the
+   crossing itself is stood on
    only once it is emptied (`gate-1` downed in step 4's fight, drawn off,
    cowed or turned). Standing him aside is dice-gated and not walked: the
    captain cowed with him watching (he steps to his door post), the

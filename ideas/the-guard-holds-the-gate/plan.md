@@ -126,6 +126,9 @@ merge.
   below: the canvas treats a downed blocking monster as the fold does;
   `ValidateWalkEnd` lets a walk aim at a seen non-hostile blocking body; the
   troupe success teaches `troupe-admitted`.
+- Open (Task 1): the roster row's `Member.BlocksMovement` reports the
+  state, not the declaration, so every reader gives one answer (B2). It
+  lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
 
 ## Task contracts
 
