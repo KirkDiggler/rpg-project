@@ -39,8 +39,9 @@ merge.
 
 - Sub-issues for S1 and S2 closed by their "done means"; each slice walked
   by the operator on :3030; #836's slices table current.
-- On the castle, free roam: walking into the gate guard, who stands in
-  front of the shut gate door, stops the walk with his name; with S2 he
+- On the castle, free roam: walking past the gate guard where he is the
+  only way, the crossing in front of the shut gate door, stops the walk
+  with his name; with S2 he
   says "Whoa there, buddy. Can I help you?", and a second bump gets his
   shorter line. A cowed or turned guard opens the crossing and walks to his
   door post (proved by castle tests; the dice are not walked).
@@ -115,17 +116,20 @@ merge.
 - Resolved: `barred` lands on the barrier alone; bystanders hear his voice
   on the next raise. The captain's reaction is not in this story.
 - Resolved: rows gated on a die are covered by tests and not walked
-  (`.agents/skills/walk/SKILL.md:25-30`); no walk-env mechanism teaches a
+  (`.agents/skills/walk/SKILL.md:48-53`); no walk-env mechanism teaches a
   fact today, and none is built here.
 - Resolved 2026-11-03 (rpg-project#841, the lead's call on the web planner
-  review): P1 keeps only the "no route round exists" leg. The "his cell is
-  the goal" leg is dropped, because clicking a body's cell already means
-  approach to speak in the web, an earlier operator choice this story does
-  not reverse. The lead: "clicking a body's cell already means 'approach to speak' in the web, an earlier operator choice this story does not reverse. The planner's second plan therefore drops its 'his cell is the goal' leg and keeps only 'no route round exists'."
+  review): P1 keeps only the "no route round exists" leg. The lead:
+  "clicking a body's cell already means 'approach to speak' in the web, an earlier operator choice this story does not reverse. The planner's second plan therefore drops its 'his cell is the goal' leg and keeps only 'no route round exists'."
 - Accepted from Task 1's build (rpg-toolkit#2258), recorded in Task 1
-  below: the canvas treats a downed blocking monster as the fold does;
-  `ValidateWalkEnd` lets a walk aim at a seen non-hostile blocking body; the
+  below: the canvas treats a downed blocking monster as the fold does; the
   troupe success teaches `troupe-admitted`.
+- Open (Task 1, for the rpg-toolkit#2258 review to keep or drop):
+  `ValidateWalkEnd` lets a walk aim at a seen, non-hostile blocking body.
+  The builder added it so the gesture reached the step, but the #841 call
+  removed its caller: no walk aims at his cell now, and the session checks
+  only the walk's last cell (`session/move.go:172`). A hostile or
+  pass-through goal is still refused either way.
 - Open (Task 1): the roster row's `Member.BlocksMovement` reports the
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
@@ -186,14 +190,12 @@ tests, castle tests.
   `alert` → `cowed` on it, so the QA script's troupe route is let through
   the gate (accepted from rpg-toolkit#2258).
 - `posted`'s key draws him toward a voice heard this round and otherwise
-  stands the crossing; the captain beside the crossing draws nobody.
+  stands the crossing. The captain beside the crossing draws nobody: an
+  observation of the #2258 fixture that no test names.
 **Accepted from the build (rpg-toolkit#2258):**
 - The canvas treats a downed blocking monster as the fold does: standable.
   The canvas asks participation only for a blocking monster on a cell
   someone is placed on.
-- `ValidateWalkEnd` lets a walk aim at a seen, non-hostile blocking body,
-  so the gesture reaches the step; a hostile or pass-through goal is still
-  refused.
 **Behavior:** the fold is unchanged. A transition that enters or leaves a
 blocking state refreshes the observed holding of that body for every
 observer that sees it.
@@ -294,7 +296,8 @@ goal → no plan through him; a hostile one is never planned through.
 **Prerequisites:** none (R4 ruled A).
 **Files:** `.agents/skills/walk/SKILL.md` steps 2 and 5: the sneak goes
 draw `gate-1` off the crossing (a voice heard this round draws him; the
-captain beside the crossing draws nobody), then cross on `gate-2`'s blind
+captain beside the crossing drawing nobody is a fixture observation no test
+names), then cross on `gate-2`'s blind
 beat; step 5 walks past him where he is the only way (a click beyond the
 crossing, never his cell) and stops one cell short by his name; the door
 opens from beside the crossing, and the crossing is stood on only once
@@ -427,19 +430,20 @@ the start. The gesture is walking past the guard where he is the only
 way: click a cell beyond the crossing (beneath the gate, in front of the
 shut door), never his cell, which is approach to speak. Rows gated
 on a die are covered by tests and not walked
-(`.agents/skills/walk/SKILL.md:25-30`): standing aside needs Intimidation DC
+(`.agents/skills/walk/SKILL.md:48-53`): standing aside needs Intimidation DC
 14 and then the weight-3 row; turning needs Persuasion DC 15. Those rows
 name their tests.
 
 **S1**
 - [ ] Walk past the guard where he is the only way (click beyond the crossing) → the walk stops one cell short of him, and the stop reason names him.
 - [ ] Walk past the other gate guard (not posted) → the walk crosses her cell as before.
-- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate`): cowed with the guard watching opens the crossing and he walks to his door post; a guard who did not witness it keeps blocking; turned opens it too. The troupe let through rests on a won check too.
+- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate`): cowed with the guard watching opens the crossing and he walks to his door post; a guard who did not witness it keeps blocking; turned opens it too.
+- [ ] Covered, not walked (`TestMadKingScriptTheTroupeNeedsTheFeast`): the troupe let through, a won check, opens the crossing, and the party steps beneath the gate.
 - [ ] The re-aimed sneak step (walk skill step 2): a voice draws `gate-1` off the crossing for a round, then cross on `gate-2`'s blind beat (`TestMadKingScriptASneakWindowAtTheDoor`).
 
 **S2**
-- [ ] Walk into the guard → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
-- [ ] Walk into him again → his shorter line.
+- [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
+- [ ] Walk past him again → his shorter line.
 - [ ] Walk into a wall or the shut door elsewhere → no line, no new beat.
 
 Run records go in `rulebooks/dnd5e/knowledge/runs/<date>-<name>.md` in

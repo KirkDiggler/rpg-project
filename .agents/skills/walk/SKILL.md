@@ -21,7 +21,8 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    Sneaking answers who sees you, never whose body is in the way, so the
    sneak is two moves. First draw `gate-1` off: a voice he hears this round
    draws him toward it (a companion's word to someone outside, answered
-   aloud, does it; the captain beside the crossing draws nobody). Then cross
+   aloud, does it; in the fixture the captain beside the crossing draws
+   nobody, though no test names it). Then cross
    on `gate-2`'s blind beat, while she stands with her back to the gate.
    Before the post, both gate guards walked a loop and the crossing was a
    window two world rounds of four.
