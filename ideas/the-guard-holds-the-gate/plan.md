@@ -54,8 +54,8 @@ merge.
   shorter line. A cowed or turned guard opens the crossing and walks to his
   door post (proved by castle tests; the dice are not walked).
 - With S1b, the gate door open and `gate-1` posted, no step through either
-  cell of the opening passes, alert or not; the stop names him; a cowed,
-  turned or downed guard opens it, and with `gate-2` also posted on the
+  cell of the opening passes, alert or not; the stop names him; a drawn,
+  cowed, turned or downed guard opens it, and with `gate-2` also posted on the
   opening, downing one does not.
 
 ## Requirement labels
@@ -369,12 +369,25 @@ and the holding refresh (what an observer saw of the hold);
   when the state changes, as `BlocksMovement` is; `ObservedHolds(view)
   map[MemberID]DoorID` answers, for a viewer, the doors seen holders bar
   against it (allies omitted).
-**Content (in the mirror; T14 copies the hunk):** `gate-1` `posted`:
-`holds: gate-wall-door` (keeps `blocks: true`); `alert` keeps `blocks: true`
-and `holds: gate-wall-door` too; the distraction rows unchanged (design,
-Open). `TestMadKingScriptASneakWindowAtTheDoor` is re-aimed again: a voice
-draws `gate-1` into alert and the opening stays held; the drawn-off
-crossing waits for the distraction call.
+- Two machine guard words, the encounter's (beside `enemy` and
+  `fact:<id>` in `vocabularyFor`): `heard` reads the table's own `heard`
+  condition (kind, rounds) for the creature; `at` is true when the
+  creature stands on the named cell. dungeonspec accepts both in a
+  transition's `when`.
+**Content (in the mirror; T14 copies the hunk):**
+- `posted`: `blocks: true`, `holds: gate-wall-door`; on `time`, when
+  `heard: { kind: voice, within: 1 }`, → `drawn` with `do: [{ pick: draw }]`
+  (today's trigger, unchanged); else `pick: post`.
+- `alert`: `blocks: true`, `holds: gate-wall-door`; he looks round from the
+  gate; the same draw transition to `drawn`.
+- `drawn` (new): `blocks: true`, holds nothing; on `time`, when `at:` his
+  post cell, → `posted`; else `pick: return` (walk to the post), with the
+  same draw transition first so a second voice draws him on. The
+  `cowed`/`turned` fact transitions as on `posted`.
+- `gate-patrol`: the `post` key loses its draw row; a `draw` key holds it
+  (`toward: sound`); a `return` key walks to the post cell.
+- `TestMadKingScriptASneakWindowAtTheDoor` keeps its S1 aim: a voice draws
+  `gate-1` into `drawn`, and the sneaker crosses on `gate-2`'s blind beat.
 **Tests:**
 - `TestAPostHoldsBothCellsOfAnOpening`: a two-cell open door, a posted
   holder on one side cell; a step through either cell is refused with his
@@ -384,8 +397,12 @@ crossing waits for the distraction call.
 - `TestTheHoldEndsAndResumesWithTheState`: a fixture state that holds
   nothing opens the opening; back to a holding state, it is held again,
   wherever he stands.
-- `TestAnAlertGuardStillHolds`: the castle's `alert`, walked off toward a
-  voice, still holds the opening.
+- `TestAnAlertGuardStillHolds`: alert at his post, the opening is held.
+- `TestADrawnGuardHoldsNothing`: a voice draws him into `drawn`; the
+  opening passes while he is away; back on his post he is `posted` and it
+  is held again.
+- `TestTheMachineReadsHeardAndAt`: the two guard words, true and false,
+  and their dungeonspec refusals.
 - `TestADownedHolderHoldsNothing`.
 - `TestTheGroupHoldsTheGate`: two members posted on one door; downing one
   leaves it held; downing both opens it.
@@ -396,8 +413,8 @@ crossing waits for the distraction call.
   is refused.
 - Castle (the mirror): with the gate door open and `gate-1` posted, the
   party cannot step through either cell of the opening, nor while he is
-  alert and walked off toward a voice; it can once he is cowed, turned or
-  downed; with `gate-2` given a holding state on
+  alert at his post; it can while he is drawn and once he is cowed, turned
+  or downed; with `gate-2` given a holding state on
   the same door in the test, downing `gate-1` alone does not open it.
 
 - [ ] Tests first; implement; `go test -race ./... && golangci-lint run ./...` in `rulebooks/dnd5e/encounter`; run record.
@@ -621,7 +638,7 @@ name their tests.
 crossing)
 - [ ] Hover the courtyard → no path.
 - [ ] Click the courtyard → the walk stops at the opening, through either cell, and the stop reason names him ("Guard bars the way").
-- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate` and Task 11's castle test): cowed, he stands aside and the party crosses the opening; turned or downed, the same; alert and walked off toward a voice, still held; with two posted on the opening, downing one does not open it.
+- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate` and Task 11's castle test): cowed, he stands aside and the party crosses the opening; turned, drawn or downed, the same; alert at his post, still held; with two posted on the opening, downing one does not open it.
 - [ ] Walk past `gate-2` on her loop elsewhere → no stop.
 
 **S2**

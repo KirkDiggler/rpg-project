@@ -189,12 +189,15 @@ crossings, read from its geometry, so a hold works on an open door, a shut
 one and any width.
 
 **The hold is a state, not a distance.** It ends when he leaves the
-holding states and resumes when he returns to one. Alert is a holding state
-in the castle content: a guard who hears something and looks round is
-still at his gate. What empties the passage is leaving it: a state that
-holds nothing (cowed, turned, or one content gives a drawn-off walk), or a
-fall. A downed or dead member holds nothing. What draws him off stays open
-for the use case.
+holding states and resumes when he returns to one. Leaving is a state: a
+posted guard who leaves his post holds nothing while he is away; the
+castle's `drawn` state is that, and he returns to `posted` when he is back
+on his post. Alert is a holding state in the castle content: a guard who
+hears something and looks round from the gate is still at it. Cowed and
+turned hold nothing; a downed or dead member holds nothing. What triggers
+the draw stays open for the use case; the effect of being drawn is settled
+by R4 and R5 together, so the sneak crosses on `gate-2`'s blind beat while
+`gate-1` is drawn.
 
 **The holder is the post.** Several members may hold one opening: it is
 held while any of them is in a holding state and up. Killing one guard
@@ -321,11 +324,14 @@ Downed bodies, allies and pass-through bodies are unchanged.
   opening carries a door (`gate-wall-door`), and the encounter knows doors
   by id; an opening with no door compiles to no record. A post names a door
   in S1b. The keep's "already-open gate" is a door authored open.
-- **Today's content draws the post with any voice, and he keeps the hold.**
-  A voice within six hexes turns `gate-1` alert and his `post` row walks him
-  toward it; alert holds, so the passage stays barred while he is away. No
-  castle state today is a drawn-off walk that holds nothing, so a lure
-  cannot open the gate until the distraction call below lands.
+- **Today the draw is a table row, not a state.** `gate-1`'s `post` key
+  walks him toward a voice heard this round (mirror `:322-325`) while his
+  state stays `posted` or `alert`. A machine guard reads only `enemy`,
+  `fact` and `not` (`encounter/dungeonspec/states.go:49`), so a state
+  can neither see that draw nor tell that he is back. S1b gives the
+  machine two guard words: `heard` (the table's own reading, kind and
+  rounds) and `at` (the creature stands on a cell). The draw then moves to
+  a transition into `drawn`, and the trigger it reads stays today's.
 - **The captain does not react to the voice.** He has no states and no
   `heard` row; turning him toward the gate is not in this story.
 
