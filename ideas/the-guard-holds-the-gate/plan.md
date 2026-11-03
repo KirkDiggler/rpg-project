@@ -471,10 +471,14 @@ crossings with `Crossing` true, and an edge door's reveal carries false.
 **Owner:** rpg-api-protos.
 **Prerequisites:** none.
 **Files:** `dnd5e/api/session/v1alpha1/types.proto` (`Sighting`,
-`AtlasDoorway`); generated Go and TS.
-**Interfaces:** `bool crossing = 8;` on `AtlasDoorway`: true for a
-footprint door's crossing, false (the zero value, every doorway today) for
-an edge door's edge. The web cannot tell the kinds from its door map:
+`AtlasDoorway`); `dnd5e/api/session/v1alpha2/act_geometry.proto`
+(`AtlasDoorway`, `RevealedDoor`); generated Go and TS.
+**Interfaces:** `bool crossing = 8;` on the v1alpha1 `AtlasDoorway` (the
+atlas) and `bool crossing = 4;` on the v1alpha2 `AtlasDoorway` (the act
+stream; 1–3 used, nothing reserved): true for a footprint door's crossing,
+false (the zero value, every doorway today) for an edge door's edge.
+`RevealedDoor`'s doc, which says its doorways are empty for a footprint
+door, now says a footprint door's crossings arrive marked `crossing`. The web cannot tell the kinds from its door map:
 `DoorInfo` carries only the id, state and lock (`types.proto:2639-2646`).
 `string holds_door = 12;` on `Sighting`: the door id
 (`DoorInfo.door`, `AtlasDoorway.connection`) whose opening this body bars
@@ -492,12 +496,17 @@ body changes; `DoorInfo` refreshes only on door beats.
 
 **Owner:** rpg-api.
 **Prerequisites:** Task 12 and Task 13 tagged.
-**Files:** `go.mod`; the sighting conversion; its test;
+**Files:** `go.mod`; the sighting conversion; the v1alpha1 atlas
+converter and the v1alpha2 act converter
+(`internal/handlers/dnd5e/session/v1alpha2/convert_act.go`, the revealed
+door's doorways), both copying `crossing`; their tests;
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
-**Behavior:** the atlas's doorways pass through, now including a
-footprint door's crossings with `crossing` set.
-**Tests:** convert test for `holds_door` and `crossing`; an atlas test that
-the castle gate's crossings arrive as doorways with `crossing` true; the two castle files diff empty;
+**Behavior:** the atlas's doorways and a revealed door's doorways carry
+`crossing` on both wires.
+**Tests:** convert test for `holds_door`; a v1alpha1 atlas test that the
+castle gate's crossings arrive with `crossing` true and an edge door's
+false; a v1alpha2 act test that a revealed footprint door's crossings
+arrive with `crossing` true and an edge door's false; the two castle files diff empty;
 `make test && make pre-commit`.
 
 - [ ] Re-pin; implement; stage on :3030.
@@ -530,7 +539,9 @@ edges): a shut one is not planned through; an open one held by a seen body
 is not planned through when a way round exists; with no way round, the second plan crosses it; a hold
 that clears (the sighting drops `holdsDoor`) opens the edge on the next
 build; a remembered sighting holds nothing; a footprint door's crossings
-produce no `doorGaps` and no wall cut, while an edge door's still do.
+produce no `doorGaps` and no wall cut, while an edge door's still do; a
+footprint door revealed under fog (its crossings appended from the act's
+`RevealedDoor`) produces no door gap either.
 
 - [ ] Bump; implement; `npm run ci-check`.
 
