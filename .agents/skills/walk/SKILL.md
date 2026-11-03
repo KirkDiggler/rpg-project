@@ -22,6 +22,12 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
 
 A slice is walked once, at its final head, after the operator's early view.
 A re-pin whose delta is only `go.mod` and `go.sum` does not walk again.
+A row that needs a die to fall a certain way (a failed save, a lost
+check) is not walked: the test that pins the row stands in, the checklist
+names that test next to the row, and the operator walks the rows he can
+reach in one try. A bug seen in play is filed as a small issue, not walked
+for (Kirk, 2026-11-03, rpg-project#825 S1: "Rolling the dice to get a save
+throw failure is not optimal. If we have coverage we can call it good.").
 
 Run the steps the slice touches, plus any step whose result the slice could
 change. A slice that changes what a step should show updates the encounter
