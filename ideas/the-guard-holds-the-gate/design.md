@@ -1,5 +1,5 @@
 ---
-status: DESIGN, R1–R4 RULED 2026-11-03 on rpg-project#835; plan in plan.md
+status: DESIGN, R1–R4 RULED 2026-11-03 on rpg-project#835; gesture law amended 2026-11-03 on rpg-project#841; plan in plan.md
 story: rpg-project#836
 lane: rpg-project#835
 ---
@@ -132,8 +132,17 @@ RAW is not the authority here.
 
 **The gesture is walking into him.** The web prefers the way round: it
 plans around a seen body whose passage is Blocked, as today. It plans
-through a seen, non-hostile one, as if it were pass-through, only when he
-is the goal cell or no route round exists, and sends the walk. The server owns the step and stops it at the body's cell.
+through a seen, non-hostile one, as if it were pass-through, only when no
+route round exists, and sends the walk; the hover preview draws a path into
+him only then. Clicking a body's cell means approach to speak, so the
+gesture is clicking past him where he is the only way, as at the gate's one
+crossing. The first cut also planned through him when his cell was the
+goal; the lead dropped that leg on the rpg-project#841 review (2026-11-03):
+"clicking a body's cell already means 'approach to speak' in the web, an
+earlier operator choice this story does not reverse. The planner's second
+plan therefore drops its 'his cell is the goal' leg and keeps only 'no route
+round exists'."
+The server owns the step and stops it at the body's cell.
 The web never second-guesses that answer: it stops the walk where the
 server says. A hostile body stays unplannable, as today.
 
