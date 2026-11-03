@@ -54,8 +54,8 @@ merge.
   shorter line. A cowed or turned guard opens the crossing and walks to his
   door post (proved by castle tests; the dice are not walked).
 - With S1b, the gate door open and `gate-1` posted, no step through either
-  cell of the opening passes; the stop names him; a cowed, turned,
-  drawn-off or downed guard opens it, and with `gate-2` also posted on the
+  cell of the opening passes, alert or not; the stop names him; a cowed,
+  turned or downed guard opens it, and with `gate-2` also posted on the
   opening, downing one does not.
 
 ## Requirement labels
@@ -371,15 +371,21 @@ and the holding refresh (what an observer saw of the hold);
   against it (allies omitted).
 **Content (in the mirror; T14 copies the hunk):** `gate-1` `posted`:
 `holds: gate-wall-door` (keeps `blocks: true`); `alert` keeps `blocks: true`
-and holds nothing; the distraction rows unchanged (design, Open).
+and `holds: gate-wall-door` too; the distraction rows unchanged (design,
+Open). `TestMadKingScriptASneakWindowAtTheDoor` is re-aimed again: a voice
+draws `gate-1` into alert and the opening stays held; the drawn-off
+crossing waits for the distraction call.
 **Tests:**
 - `TestAPostHoldsBothCellsOfAnOpening`: a two-cell open door, a posted
   holder on one side cell; a step through either cell is refused with his
   name; his own cell is refused as before.
 - `TestAHoldWorksOnAnOpenAndAShutDoor`.
 - `TestAnAllyCrossesAHeldOpening`.
-- `TestTheHoldEndsAndResumesWithTheState`: drawn to `alert`, the opening
-  passes; back to `posted`, it is held again, wherever he stands.
+- `TestTheHoldEndsAndResumesWithTheState`: a fixture state that holds
+  nothing opens the opening; back to a holding state, it is held again,
+  wherever he stands.
+- `TestAnAlertGuardStillHolds`: the castle's `alert`, walked off toward a
+  voice, still holds the opening.
 - `TestADownedHolderHoldsNothing`.
 - `TestTheGroupHoldsTheGate`: two members posted on one door; downing one
   leaves it held; downing both opens it.
@@ -389,8 +395,9 @@ and holds nothing; the distraction rows unchanged (design, Open).
 - dungeonspec: `holds` compiles; on a terminal state or an unknown door it
   is refused.
 - Castle (the mirror): with the gate door open and `gate-1` posted, the
-  party cannot step through either cell of the opening; it can once he is
-  cowed, turned, drawn off or downed; with `gate-2` given a holding state on
+  party cannot step through either cell of the opening, nor while he is
+  alert and walked off toward a voice; it can once he is cowed, turned or
+  downed; with `gate-2` given a holding state on
   the same door in the test, downing `gate-1` alone does not open it.
 
 - [ ] Tests first; implement; `go test -race ./... && golangci-lint run ./...` in `rulebooks/dnd5e/encounter`; run record.
@@ -614,7 +621,7 @@ name their tests.
 crossing)
 - [ ] Hover the courtyard → no path.
 - [ ] Click the courtyard → the walk stops at the opening, through either cell, and the stop reason names him ("Guard bars the way").
-- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate` and Task 11's castle test): cowed, he stands aside and the party crosses the opening; turned, drawn off or downed, the same; with two posted on the opening, downing one does not open it.
+- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate` and Task 11's castle test): cowed, he stands aside and the party crosses the opening; turned or downed, the same; alert and walked off toward a voice, still held; with two posted on the opening, downing one does not open it.
 - [ ] Walk past `gate-2` on her loop elsewhere → no stop.
 
 **S2**
