@@ -18,11 +18,11 @@ and thoughtful at this phase."
 flowchart LR
     subgraph sites["who decides the walk (encounter)"]
         M["Move arm<br/>a creature's own walk"]
-        R["Routed arm<br/>a compulsion on its turn<br/>(Command)"]
+        R["Routed arm<br/>a routed walk on its turn<br/>(table chase, search, patrol; Command)"]
         D["Direct<br/>an effect off its turn<br/>(Dissonant Whispers, Thunderwave)"]
     end
     M -->|own| K{{"moved beat<br/>kind"}}
-    R -->|compelled| K
+    R -->|"the intent's kind:<br/>own (zero), compelled (Command)"| K
     D -->|"compelled (legs move)<br/>displaced (body moved)"| K
     K -->|"own, compelled: provokes<br/>unless disengaged"| OA["opportunity attack fold<br/>(session mover)"]
     K -->|"displaced: never provokes"| OA
@@ -71,7 +71,10 @@ movement the turn has left.
 | `DirectInput.Provokes` is the inverse the Mover receives as `MoveStep.Forced`. | `encounter/directive.go:548-556`, `encounter/turndriver.go:1009-1017` |
 | `walkPath` turns the walker along each step unless the walk is imposed. | `encounter/clocks.go:1717-1723` |
 | A creature's own turn walk passes `forced = false, imposed = false`. | `encounter/clocks.go:1903` |
-| A Routed turn (Command) walks as its own walk with the compulsion as cause, disengages first when it can, and faces the anchor at the end. | `encounter/clocks.go:1232-1263` |
+| A Routed turn walks as the creature's own walk with the intent's cause, disengages first when it can, and faces the anchor at the end. | `encounter/clocks.go:1232-1263` |
+| Routed is not Command's alone: the table driver routes its own chases, sounds, patrol rejoins, retreats and searches through it, and so does any session driver. | `encounter/tabledriver.go:260`, `:283`, `:302`, `:439`, `:446`, `:488`; `session/turndriver.go:539` |
+| A Dash names a cause (`table/dash`) on the creature's own Move. | `encounter/clocks.go:1066-1073` |
+| A player's own step appends the moved beat with nothing classified, so it is `own` by zero value. | `encounter/step.go:150-156` |
 | Resumes carry `forced` through: the held directive and the paused turn; the stored turn pause refuses `forced`. | `encounter/held.go:145`, `:157`; `encounter/pause.go:980`, `:993`, `:508-510` |
 | The session decodes `forced` and a walk segment absorbs a step only when mover, cause and `forced` match. | `rulebooks/dnd5e/session/act_family.go:240-273` |
 | The session hands the opportunity-attack fold a prevention source only for a forced step. | `session/mover.go:130-161` |
@@ -93,13 +96,17 @@ movement the turn has left.
 **A moved beat names its kind.** Every moved beat says how the body moved:
 `own` (the creature chose the walk), `compelled` (its legs move under
 somebody else's order), `displaced` (the body is moved; its legs do not).
-The site that decides the walk names the kind: a creature's own Move is
-`own`; a Routed turn is `compelled`; `Direct` names the kind its caller
-gives it. Absent on a stored beat means `own`, so zero values tell the truth.
+Whoever decides the walk names the kind. A creature's own Move and a
+player's step are `own`. A Routed intent carries its kind, zero meaning
+`own`: a table chase, search or patrol rejoin is the creature's own walk,
+and only a compulsion's intent (Command) names `compelled`. `Direct` names
+the kind its caller gives it. A cause names what moved the body; it never
+names the kind. Absent `kind` on a stored beat means `own`.
 
 **Provoking is derived from the kind.** `own` and `compelled` provoke unless
-the creature disengaged; `displaced` never provokes. Nothing else switches
-an opportunity attack off.
+the creature disengaged; `displaced` never provokes. This is the rule for an
+announced step on the turn clock; a walk on the world clock announces no
+step, so no kind provokes there.
 
 **`forced` is a deprecated mirror.** It is written exactly when the kind is
 `displaced`, on the beat, the session's walk and the wire, and read only as a
@@ -137,9 +144,10 @@ turn; `own` and `compelled` walk. A walk with no kind falls back to `forced`.
 - **A provoking push that pauses for a player's reaction stops the rest of a
   cast's pushes** (`session/castmove.go:191-208`). Harmless while every cast
   that can pause has one target; a second hold is the encounter's to build.
-- **Command offers no Halt and no Drop.** Halt is one menu row and one Obey
-  arm (`spells/cast.go:682-685`). Drop waits on a creature that holds a
-  weapon, a prop in its hand, and a drop primitive (`spells/cast.go:687-692`).
+- **Command offers no Halt and no Drop.** Neither is in this story. Halt is
+  one menu row and one Obey arm, filed as its own issue (rpg-project#830).
+  Drop waits on a creature that holds a weapon, a prop in its hand, and a
+  drop primitive (`spells/cast.go:687-692`).
 - **Content still says `Provokes`, not a kind** (`combat/actions/move.go`
   `CastMove`, `resolution/contest.go` `MoveDirective`). The session's crossing
   names the kind from it (true is `compelled`, false is `displaced`). No spell

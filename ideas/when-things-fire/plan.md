@@ -11,10 +11,10 @@ planning guide: ../../.agents/skills/design/planning.md
 
 Every moved beat names its kind (`own`, `compelled`, `displaced`) from the
 encounter to the web. Provoking and facing are read from the kind. `forced`
-stays as a deprecated mirror of `displaced`. Command gains Halt.
+stays as a deprecated mirror of `displaced`.
 
 **Non-goals.** Command flee Dashing. A second hold for a cast that pushes two
-creatures and provokes. Drop. A `kind` field in content (`CastMove`,
+creatures and provokes. Halt (its own issue, rpg-project#830) and Drop. A `kind` field in content (`CastMove`,
 `MoveDirective` keep `Provokes`; the session names the kind from it). Doors
 on a directed walk.
 
@@ -25,20 +25,17 @@ one module per PR.
 |---|---|---|---|
 | S1 | rpg-toolkit `encounter` → `session`; rpg-api-protos; rpg-api; rpg-dnd5e-web | main / main / main / dev / dev | encounter PR; session re-pin PR; protos PR; api PR; web PR |
 | S2 | rpg-toolkit `encounter` → `session`; rpg-api re-pin | main / main / dev | encounter PR; session re-pin PR; api re-pin PR |
-| S3 | rpg-toolkit `resolution` → umbrella `rulebooks/dnd5e` → `resolution` + `session` re-pin; rpg-api re-pin | main / dev | arm PR; row PR; re-pin PRs |
 
-S1 first. S2 after S1's encounter tag (it reads the kind). S3 is independent
-of S1 and S2 and can run beside them.
+S1 first. S2 after S1's encounter tag (it reads the kind).
 
 ## Finish line
 
-- Sub-issues for S1, S2, S3 closed by their "done means"; each slice walked
+- Sub-issues for S1 and S2 closed by their "done means"; each slice walked
   by the operator on :3030; #825's slices table current.
 - On the castle: a Thunderwave push slides and draws no opportunity attack;
   a Dissonant Whispers flee walks, turns to face its flight, and draws the
   fighter's opportunity attack; a Command flee walks and draws it too (a guard; a goblin disengages first); a
-  commanded goblin still takes its own opportunity attack; Command offers
-  Halt and a halted goblin stands its turn.
+  commanded goblin still takes its own opportunity attack.
 
 ## Requirement labels
 
@@ -47,15 +44,14 @@ of S1 and S2 and can run beside them.
 | K1 | Every moved beat carries `kind` when it is `compelled` or `displaced`; absent means `own`. | R1, Law |
 | K2 | `forced: true` is written exactly when the kind is `displaced`, on the beat, the session walk and the wire. | R1 |
 | K3 | The opportunity-attack fold is suppressed exactly for `displaced` steps. | R1 |
-| K4 | A Routed turn's beats are `compelled`; a creature's own Move is `own`; `Direct` takes its kind from its caller and refuses none. | R1 |
+| K4 | A creature's own Move and a player's step are `own`; a Routed intent carries its kind (zero = own), and only the compelled driver's intent sets `compelled`; `Direct` takes its kind from its caller and refuses none. | R1 |
 | K5 | A held directive and a paused turn resume with the kind they were stored with; a stored pause from before the kind loads by derivation. | R1 |
-| K6 | The session's walk segment breaks on a change of kind; a legacy beat with no `kind` derives one (`forced` → displaced; a cause → compelled; else own). | R1 |
+| K6 | The session's walk segment breaks on a change of kind; a legacy beat with no `kind` derives one from `forced` alone (true → displaced, else own). | R1 |
 | K7 | The wire carries `MoveKind kind = 5`; `forced = 4` is deprecated, still set. | R1 |
 | K8 | The web slides `displaced`, walks `own` and `compelled`, falls back to `forced` when the kind is unspecified, and feeds a local member's non-own walk. | R1 |
 | F1 | A `compelled` walk turns along each step; a `displaced` walk keeps facing. | R2 |
 | F2 | Budgets unchanged: Dissonant Whispers one speed; Command the turn's movement. | R2 |
 | P1 | Dissonant Whispers spends the reaction and is not taken when it is spent; Command never spends the reaction. | R3 |
-| H1 | Command's menu offers Halt; a halted creature spends its turn standing. | S3 |
 | G1 | castle tests, `directive_test.go`, `held_test.go`, `pause_test.go`, `act_fold_internal_test.go`, api `displacement_acceptance_test.go` keep passing with the new fields. | must keep working |
 
 ## Constraints
@@ -72,7 +68,7 @@ of S1 and S2 and can run beside them.
 
 | repo | revision | symbols |
 |---|---|---|
-| rpg-toolkit | origin/main f1291280 (encounter v0.172.0, session v0.159.0, resolution v0.74.0, umbrella v0.213.1) | `encounter/encounter.go`: moved-beat payload `forced` :1701-1708. `encounter/directive.go`: `DirectInput.Provokes` :548-556, `Direct` :636, `walkPath(... !in.Provokes, true)` :669, held pause `forced` :704. `encounter/clocks.go`: Routed arm :1157-1267 (`Dash` :1181, `disengageBeforeWalk` :1235, `walkFor` :1246, `faceWalkEnd` :1260), `walkPath` :1584 (`opens := !imposed` :1594, `action.forced` :1718, `turnAlong` :1721), `walkFor` :1895 (`walkPath(... false, false)` :1903), `walkWorld` :1915 (`turnAlong` :1949). `encounter/step.go`: `executedAction.forced` :61. `encounter/turndriver.go`: `MoveStep.Forced` :1009-1017. `encounter/held.go`: :103, :145, :157. `encounter/pause.go`: `pause.forced` :133, `PauseData.Forced` :236, save :338, load :422, refusal :508, resume :980, :993. `encounter/facing.go`: `turnAlong` :181. `session/act_family.go`: `walkPiece` :242-274. `session/act_bodies.go`: `WalkAct.Forced` :37-38. `session/mover.go`: `ForcedBy: forcedBy(step)` :92, `forcedBy` :155. `session/castmove.go`: budget :116-119, `walkCastPushes` :209, `Provokes: push.move.Provokes` :223. `session/compelled.go`: `compelledIntent` :318-363. `resolution/obey.go`: words :32-36, `newObey` switch :169-173, `Start` :180-195, `walk` :211. `resolution/contest.go`: `MoveDirective` :140, `payForMove` :790. `spells/cast.go`: Command constants :136, Thunderwave :566 (Move :609-612), Dissonant Whispers Move :645-650, Command menu :705-709. `spells/data.go`: Command description :194. `conditions/opportunity_attack.go`: `canReact` :131. Tests: `directive_test.go` `TestADirectiveThatProvokesSaysSoToTheMover` :260, `TestAPushedCreatureKeepsItsFacing` :283, `TestAChosenWalkIsNeitherForcedNorCaused` :309; `act_fold_internal_test.go` :84, :104, `TestWalkActsDistinguishWalkRoutAndPush` :115; `resolution/obey_test.go` `TestEveryWordOnCommandsMenuIsAWordThisPackageObeys` :239. |
+| rpg-toolkit | origin/main f1291280 (encounter v0.172.0, session v0.159.0, resolution v0.74.0, umbrella v0.213.1) | `encounter/encounter.go`: moved-beat payload `forced` :1701-1708. `encounter/directive.go`: `DirectInput.Provokes` :548-556, `Direct` :636, `walkPath(... !in.Provokes, true)` :669, held pause `forced` :704. `encounter/clocks.go`: Routed arm :1157-1267 (`Dash` :1181, `disengageBeforeWalk` :1235, `walkFor` :1246, `faceWalkEnd` :1260), `walkPath` :1584 (`opens := !imposed` :1594, `action.forced` :1718, `turnAlong` :1721), `walkFor` :1895 (`walkPath(... false, false)` :1903), `walkWorld` :1915 (`turnAlong` :1949). `encounter/step.go`: `executedAction.forced` :61. `encounter/turndriver.go`: `MoveStep.Forced` :1009-1017. `encounter/tabledriver.go`: Routed intents :260, :283, :302, :439, :446, :488. `encounter/clocks.go`: Dash cause :1066-1073. `encounter/step.go`: player `Step` beat :153. `session/turndriver.go`: `routedToEncounter` :539. `encounter/held.go`: :103, :145, :157. `encounter/pause.go`: `pause.forced` :133, `PauseData.Forced` :236, save :338, load :422, refusal :508, resume :980, :993. `encounter/facing.go`: `turnAlong` :181. `session/act_family.go`: `walkPiece` :242-274. `session/act_bodies.go`: `WalkAct.Forced` :37-38. `session/mover.go`: `ForcedBy: forcedBy(step)` :92, `forcedBy` :155. `session/castmove.go`: budget :116-119, `walkCastPushes` :209, `Provokes: push.move.Provokes` :223. `session/compelled.go`: `compelledIntent` :318-363. `resolution/obey.go`: words :32-36, `newObey` switch :169-173, `Start` :180-195, `walk` :211. `resolution/contest.go`: `MoveDirective` :140, `payForMove` :790. `spells/cast.go`: Command constants :136, Thunderwave :566 (Move :609-612), Dissonant Whispers Move :645-650, Command menu :705-709. `spells/data.go`: Command description :194. `conditions/opportunity_attack.go`: `canReact` :131. Tests: `directive_test.go` `TestADirectiveThatProvokesSaysSoToTheMover` :260, `TestAPushedCreatureKeepsItsFacing` :283, `TestAChosenWalkIsNeitherForcedNorCaused` :309; `act_fold_internal_test.go` :84, :104, `TestWalkActsDistinguishWalkRoutAndPush` :115; `resolution/obey_test.go` `TestEveryWordOnCommandsMenuIsAWordThisPackageObeys` :239. |
 | rpg-api-protos | origin/main f26fb6e (v0.1.252) | `dnd5e/api/session/v1alpha2/act.proto`: `WalkAct` :368-377 (`bool forced = 4` :376) |
 | rpg-api | origin/dev cbb0720 | `internal/handlers/dnd5e/session/v1alpha2/convert_act.go`: `walkToProto` :558-565; tests `convert_act_test.go`, `internal/integration/session/displacement_acceptance_test.go` |
 | rpg-dnd5e-web | origin/dev 5b650740 | `src/components/session/arrivingWalk.ts` :15-36; `src/components/hex-grid/useHexMovePath.ts` `WalkAnimationGate.forced` :102, `forcedMoveRef` :298-405, `advanceDisplacementFrame`; `src/components/hex-grid/HexEntity.tsx` `moveForced` :202, :424, :520, :911-920; `src/components/hex-grid/ClassCharacterModel.tsx` `isDisplaced` :113, :487-511, :563; `src/components/session/SessionCanvas.tsx` :864, :900; tests `arrivingWalk.test.ts`, `forcedDisplacement.test.tsx`, `forcedMovePath.test.tsx` |
@@ -84,13 +80,18 @@ of S1 and S2 and can run beside them.
    protos tag) → stage on :3030 → walk → merge out.
 2. S2: T6 (encounter, on T1's tag) → tag → T7 (session and api re-pin) →
    stage → walk.
-3. S3: T8 (resolution arm) → T9 (umbrella row) → T10 (re-pins) → stage →
-   walk.
 
 ## Open items
 
-- Resolved: absent `kind` on a stored beat means `own`; `kind` is written
-  only for `compelled` and `displaced`, so every `own` golden is unchanged.
+- Resolved: absent `kind` on a stored beat means `own`, full stop; `kind` is
+  written only for `compelled` and `displaced`, so every `own` golden is
+  unchanged. A legacy record derives from `forced` alone. A cause never
+  derives a kind: a Dash (`table/dash`) and every table walk (`table/*`)
+  carry a cause and are `own`.
+- Resolved: a turn pause stored before the change resumes `own` (its stored
+  `forced` is false). A Command turn paused across the deploy is drawn as a
+  walk either way and still provokes; nothing is keyed on the Commanded ref.
+- Resolved: Halt leaves this story as rpg-project#830 (not ruled on #826).
 - Resolved: S1 changes no facing; S2 owns the facing law, so S1's walk is a
   pure wire change and S2's walk is a pure facing change.
 - Resolved: content keeps `Provokes`; the session's crossing maps true to
@@ -107,6 +108,7 @@ of S1 and S2 and can run beside them.
 **Files:** modify `step.go` (`executedAction.forced` → `kind MoveKind`),
 `encounter.go` (moved-beat payload), `directive.go` (`DirectInput`),
 `clocks.go` (`walkPath`, `walkFor`, `walkWorld`, the Move and Routed arms),
+`turndriver.go` (`Routed.Kind`),
 `turndriver.go` (`MoveStep`), `held.go`, `pause.go`; new `movekind.go`,
 `movekind_test.go`; update `directive_test.go`, `held_test.go`,
 `pause_test.go`, castle goldens if a compelled walk is pinned.
@@ -118,31 +120,38 @@ of S1 and S2 and can run beside them.
   refuses a kind that is not `MoveCompelled` or `MoveDisplaced` with a new
   `ErrBadMoveKind` (fail closed: a directive that names no kind is a bug).
 - `MoveStep.Kind MoveKind` replaces `MoveStep.Forced`.
+- `Routed.Kind MoveKind`, zero meaning own. The table driver's intents
+  (`tabledriver.go`) leave it zero. The Routed arm refuses `MoveDisplaced`
+  (a turn walks on its own legs) with `ErrBadMoveKind`.
 - `walkPath(..., cause core.Ref, kind MoveKind, imposed bool)`; `walkFor`
   and `walkWorld` take the kind. The Move arm passes `MoveOwn`; the Routed
-  arm passes `MoveCompelled`; `Direct` passes `in.Kind`.
+  arm passes `it.Kind`; `Direct` passes `in.Kind`; the player's `Step`
+  (`step.go`) stays `own` by zero value.
 - Moved-beat payload: `"kind": "compelled" | "displaced"`, absent for own;
   `"forced": true` when the kind is displaced.
 - `pause.kind MoveKind`; `PauseData.MoveKind string json:"move_kind,omitempty"`.
   `PauseData.Forced` is still written when the kind is displaced. Load: a
-  stored `move_kind` wins; else `Forced` → displaced; else a directive pause
-  → compelled; else a turn pause with a cause → compelled; else own. The
+  stored `move_kind` wins; else `Forced` → displaced; else own. The
   refusal "a turn is never forced" becomes "a turn is never displaced".
 **Behavior:** facing and doors unchanged (`imposed` stays as today). A paused
-Routed turn resumes `compelled`, so its later beats keep the kind.
+Routed turn stores its intent's kind and resumes with it, so its later
+beats keep the kind.
 **Tests:**
 - `TestAMovedBeatNamesItsKind`: an own Move writes neither `kind` nor
-  `forced`; a Routed turn writes `kind: compelled` and no `forced`; `Direct`
+  `forced`; a Routed intent with zero kind (a table chase) writes neither;
+  a Routed intent with `MoveCompelled` writes `kind: compelled` and no
+  `forced`; a Dash writes its cause and no `kind`; `Direct`
   with `MoveDisplaced` writes `kind: displaced, forced: true`; `Direct` with
   `MoveCompelled` writes `kind: compelled` and no `forced`.
 - `TestADirectiveWithNoKindIsRefused`: empty and `MoveOwn` → `ErrBadMoveKind`, nothing moves.
+- `TestARoutedTurnIsNeverDisplaced`: `Routed{Kind: MoveDisplaced}` → `ErrBadMoveKind`.
 - `TestADirectiveThatProvokesSaysSoToTheMover` → asserts `MoveStep.Kind == MoveCompelled`; a push asserts `MoveDisplaced`.
 - `TestAHeldDirectiveResumesWithItsKind`: a compelled directive paused on a window resumes with every later beat `compelled`.
-- `TestAPausedRoutedTurnResumesCompelled`: the cells after the answer carry `kind: compelled`.
-- `TestAStoredPauseLoadsItsKind`: `move_kind` round trip; legacy `forced: true` → displaced; legacy directive without either → compelled.
+- `TestAPausedRoutedTurnResumesWithItsKind`: a compelled Routed turn paused on a window resumes with `kind: compelled`; a table Routed turn resumes with no kind.
+- `TestAStoredPauseLoadsItsKind`: `move_kind` round trip; legacy `forced: true` → displaced; legacy pause without either → own.
 
 - [ ] Add the tests; see them fail.
-- [ ] Implement the type, the payload, the three sites, the resumes.
+- [ ] Implement the type, the payload, the walk sites, the resumes.
 - [ ] `go test -race ./... && golangci-lint run ./...` in `rulebooks/dnd5e/encounter`.
 
 **Verification:** the commands above, green; `castletest` unchanged except
@@ -156,15 +165,17 @@ compelled beats gaining `kind`.
 **Prerequisites:** Task 1 tagged.
 **Files:** `go.mod` (encounter tag), `act_bodies.go` (`WalkAct.Kind`),
 `act_family.go` (`walkPiece`), `mover.go` (`forcedBy`), `castmove.go`
-(`walkCastPushes`); tests `act_fold_internal_test.go`,
+(`walkCastPushes`), `compelled.go` (`compelledIntent`); tests `act_fold_internal_test.go`,
 `castmove_internal_test.go`, `compelled_internal_test.go`.
 **Interfaces:**
 - `WalkAct.Kind MoveKind json:"kind"` (session's own `MoveKind` string, same
   three words); `WalkAct.Forced` kept, doc'd deprecated, set `Kind ==
   displaced`.
-- `walkPiece` decodes `kind`; absent derives: `forced` → displaced, a cause →
-  compelled, else own. `absorb` compares mover, cause and kind.
+- `walkPiece` decodes `kind`; absent derives from `forced` alone: true →
+  displaced, else own. `absorb` compares mover, cause and kind.
 - `forcedBy(step)` returns the cause only when `step.Kind.Displaced()`.
+- `compelledIntent` (`compelled.go`) sets `Routed.Kind: encounter.MoveCompelled`;
+  `routedToEncounter` (`turndriver.go`) leaves it zero.
 - `moveKindFor(provokes bool) encounter.MoveKind`: true → compelled, false →
   displaced; `walkCastPushes` passes `Kind: moveKindFor(push.move.Provokes)`.
 **Behavior:** opportunity attacks unchanged: displaced suppressed, own and
@@ -232,6 +243,9 @@ acceptance test asserts `MOVE_KIND_DISPLACED` and `forced` for Thunderwave,
 **Owner:** rpg-dnd5e-web.
 **Prerequisites:** Task 3 tagged (package bump); Task 4 on the walk env.
 **Files:** `package.json` (protos version); `src/components/session/arrivingWalk.ts`;
+`src/components/session/moveController.ts` (`forced` :56, :119-125),
+`src/components/session/useMoveController.ts` (:19, :89-92),
+`src/components/session/useWalkPresentation.ts` (:14, :90);
 `src/components/hex-grid/useHexMovePath.ts` (`WalkAnimationGate`);
 `src/components/hex-grid/HexEntity.tsx`; `src/components/session/SessionCanvas.tsx`;
 tests `arrivingWalk.test.ts`, `forcedDisplacement.test.tsx`, `forcedMovePath.test.tsx`.
@@ -280,39 +294,6 @@ castmove test pins Dissonant Whispers' cells to the target's speed.
 **Files:** `go.mod` in each. **Tests:** existing suites green.
 **Completion evidence:** PR links; staged on :3030.
 
-### Task 8 (S3): Obey knows Halt
-
-**Delivers:** H1 (the rule).
-**Owner:** rpg-toolkit `rulebooks/dnd5e/resolution`.
-**Prerequisites:** none.
-**Files:** `obey.go` (`wordHalt = "halt"`, `newObey` switch, `Start` arm, the
-"Halt is deliberately absent" doc line); `obey_test.go`.
-**Interfaces:** Halt finishes `Done{Outcome: ObeyOutcome{}}` with no effects;
-`session.compelledIntent` already turns no move into `Pass`.
-**Tests:** `TestHaltImposesNothing` (Obey "halt" → no effects, no error).
-
-- [ ] Test; implement; `go test -race ./... && golangci-lint run ./...` in `rulebooks/dnd5e/resolution`.
-
-### Task 9 (S3): Command's menu row
-
-**Delivers:** H1 (the menu).
-**Owner:** rpg-toolkit umbrella `rulebooks/dnd5e` (`spells`).
-**Prerequisites:** Task 8 merged (the arm exists before the word is offered).
-**Files:** `spells/cast.go` (`CommandWordHalt`, the Options row "Halt: On its
-next turn the creature does not move and takes no actions.", the HALT comment
-at the menu), `spells/data.go` (Command description names Halt).
-**Tests:** the spells cast test that lists the menu gains Halt.
-
-### Task 10 (S3): re-pins and the turn
-
-**Owner:** rpg-toolkit `resolution` and `session` (umbrella tag), rpg-api.
-**Prerequisites:** Task 9 tagged.
-**Tests:** `TestEveryWordOnCommandsMenuIsAWordThisPackageObeys` sees Halt
-after the re-pin; session `compelled_internal_test.go`
-`TestACommandedHaltPasses` (a halted creature's driven turn is `Pass`, it
-moves nothing and keeps its reaction).
-**Completion evidence:** PR links; staged on :3030.
-
 ## Walk checklists
 
 The walk site is the castle on :3030: a bard for Dissonant Whispers and
@@ -334,8 +315,5 @@ Escape, and a commanded goblin disengages before it flees)
 - [ ] Thunderwave → the guard keeps the facing it had.
 - [ ] Command Flee → unchanged: it turns along its route.
 
-**S3**
-- [ ] Command's menu lists Approach, Flee, Grovel, Halt.
-- [ ] Command Halt and the guard fails → on its turn it stands, attacks nothing, and the turn passes.
 
 — cross-team agent, on behalf of KirkDiggler
