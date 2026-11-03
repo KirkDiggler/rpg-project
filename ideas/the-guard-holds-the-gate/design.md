@@ -346,9 +346,11 @@ Downed bodies, allies and pass-through bodies are unchanged.
   is; a sound never becomes a state's `when`.
 - **The castle's gate is a footprint door.** Its crossings are not in the
   atlas today, so the web cannot mark it shut or held. S1b lists a
-  footprint door's crossings as atlas doorways (the existing
-  `AtlasDoorway` message, more entries, additive), which also lets the web
-  plan a shut footprint door as shut.
+  footprint door's crossings as atlas doorways marked `crossing` (one
+  additive field), which also lets the web plan a shut footprint door as
+  shut. The web draws a doorway gap, leaf and wall cut for every doorway
+  today; a `crossing` doorway draws nothing, because the door is already
+  drawn as its placed asset.
 - **The captain does not react to the voice.** He has no states and no
   `heard` row; turning him toward the gate is not in this story.
 

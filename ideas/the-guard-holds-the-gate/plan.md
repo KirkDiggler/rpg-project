@@ -83,7 +83,7 @@ merge.
 | H3 | The holder is the post: an opening is held while any member is in a holding state, up and on a post cell; killing one does not open it. | R5 |
 | H4 | A step across a held edge stops with `ErrBodyInTheWay`; its reason names the nearest holder the mover observes ("<name> bars the way"), else "someone bars the way"; driven walks route around a held edge and stop silently. | R5 |
 | H5 | The posts are stored beside `BlockingStates`; an observer holds what it saw of the hold; the sighting says which door a seen holder bars against the viewer. | R5 |
-| H6 | The atlas lists a footprint door's crossings as doorways (existing `AtlasDoorway`, additive); the web plans a shut or held door as shut; the second plan still runs only when no route round exists. | R5, P1 |
+| H6 | The atlas lists a footprint door's crossings as doorways, marked `crossing` (additive field on `AtlasDoorway`); renderers draw a doorway only for an edge door; the web plans a shut or held door as shut; the second plan still runs only when no route round exists. | R5, P1 |
 
 ## Constraints
 
@@ -378,9 +378,11 @@ castle mirror; new `hold_test.go`; castle tests.
   `ObservedHolds(view) map[MemberID]DoorID` answers, for a viewer, the
   doors seen holders bar against it (allies omitted).
 - `Atlas()` lists a footprint door's crossings as `AtlasDoorway{Door, From,
-  To}` beside an edge door's edges (`atlas.go:628-634`), under the same
-  concealment rule as edge doorways. The shape is unchanged; there are
-  more entries.
+  To, Crossing: true}` beside an edge door's edges (`Crossing` false,
+  `atlas.go:628-634`), under the same concealment rule as edge doorways.
+  `Crossing` says the pair is a footprint door's crossing, which the map
+  already draws as its placed asset: readers that plan and grade fog read
+  both kinds, and renderers draw a doorway only for an edge door.
 - `StateSpec.Holds`: `holds: { door: <authored id>, at: [{ q, r }, …] }`,
   cells in the same `{ q, r }` form a table's `toward: { at }` uses.
   dungeonspec resolves the authored door id to the encounter's
@@ -458,9 +460,13 @@ gate's crossings as doorways (passed through unchanged).
 **Delivers:** H5 on the wire.
 **Owner:** rpg-api-protos.
 **Prerequisites:** none.
-**Files:** `dnd5e/api/session/v1alpha1/types.proto` (`Sighting`); generated
-Go and TS.
-**Interfaces:** `string holds_door = 12;` on `Sighting`: the door id
+**Files:** `dnd5e/api/session/v1alpha1/types.proto` (`Sighting`,
+`AtlasDoorway`); generated Go and TS.
+**Interfaces:** `bool crossing = 8;` on `AtlasDoorway`: true for a
+footprint door's crossing, false (the zero value, every doorway today) for
+an edge door's edge. The web cannot tell the kinds from its door map:
+`DoorInfo` carries only the id, state and lock (`types.proto:2639-2646`).
+`string holds_door = 12;` on `Sighting`: the door id
 (`DoorInfo.door`, `AtlasDoorway.connection`) whose opening this body bars
 against the viewer; empty when none. The door's own state stays its own:
 a hold is a body's fact, not a door state (R1 B). It rides the sighting
@@ -478,10 +484,10 @@ body changes; `DoorInfo` refreshes only on door beats.
 **Prerequisites:** Task 12 and Task 13 tagged.
 **Files:** `go.mod`; the sighting conversion; its test;
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
-**Behavior:** the atlas's doorways pass through unchanged, now including a
-footprint door's crossings (existing `AtlasDoorway`, additive entries).
-**Tests:** convert test for `holds_door`; an atlas test that the castle
-gate's crossings arrive as doorways; the two castle files diff empty;
+**Behavior:** the atlas's doorways pass through, now including a
+footprint door's crossings with `crossing` set.
+**Tests:** convert test for `holds_door` and `crossing`; an atlas test that
+the castle gate's crossings arrive as doorways with `crossing` true; the two castle files diff empty;
 `make test && make pre-commit`.
 
 - [ ] Re-pin; implement; stage on :3030.
@@ -496,10 +502,16 @@ gate's crossings arrive as doorways; the two castle files diff empty;
 **Files:** `package.json`; `src/components/session/atlasPath.ts`
 (`buildAtlasPathIndex` takes the held door ids and adds their doorway
 edges to `shutDoorEdges`); the caller that builds the index from live
-sightings; `atlasPath.test.ts`.
+sightings; the renderers that read `atlas.doorways`:
+`atlasWallRuns.ts` (`doorGaps`, :227-270), `AtlasWalls.tsx` (:266),
+`atlasToScene3D.ts` (fog, :367-382), `SessionEncounterView.tsx` (door
+targets, :484); `atlasPath.test.ts`, `atlasWallRuns.test.ts`.
 **Interfaces:** the atlas's doorways now include a footprint door's
-crossings (Task 11); the planner reads them as it reads an edge door's,
-so a shut footprint door is planned shut, which it was not before. A door
+crossings (Task 11), marked `crossing: true`. The planner reads both kinds,
+so a shut footprint door is planned shut, which it was not before. Fog
+grading reads both kinds. The renderers (`doorGaps`, the wall cut, the
+door leaf, door targets through a gap) skip a `crossing` doorway: the
+footprint door is already drawn, and targeted, as its placed asset. A door
 named by a live (not remembered) sighting's `holdsDoor` is planned as
 shut. The second plan (P1) still runs only when
 no route round exists, and plans through a held door then.
@@ -507,7 +519,8 @@ no route round exists, and plans through a held door then.
 edges): a shut one is not planned through; an open one held by a seen body
 is not planned through when a way round exists; with no way round, the second plan crosses it; a hold
 that clears (the sighting drops `holdsDoor`) opens the edge on the next
-build; a remembered sighting holds nothing.
+build; a remembered sighting holds nothing; a footprint door's crossings
+produce no `doorGaps` and no wall cut, while an edge door's still do.
 
 - [ ] Bump; implement; `npm run ci-check`.
 
