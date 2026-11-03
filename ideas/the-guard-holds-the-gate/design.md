@@ -1,5 +1,5 @@
 ---
-status: DESIGN, R1–R4 RULED 2026-11-03 on rpg-project#835; gesture law amended 2026-11-03 on rpg-project#841; plan in plan.md
+status: DESIGN, R1–R5 RULED 2026-11-03 on rpg-project#835; gesture law amended 2026-11-03 on rpg-project#841; R5 (a post holds a passage) from the S1 walk; plan in plan.md
 story: rpg-project#836
 lane: rpg-project#835
 ---
@@ -18,6 +18,11 @@ The step fold already answers Blocked, PassThrough or Standable from world
 state, and a walk already stops short with a public reason. This story puts
 that state on the right thing.
 
+The S1 walk moved the cut. A body holds one cell, and the castle gate is a
+two-cell opening: the party stepped through beside the posted guard. R5
+moves the hold from the guard's cell to the passage his post names. The
+use case to develop against is the keep's front gate (below).
+
 ## Shape
 
 ```mermaid
@@ -27,11 +32,16 @@ flowchart LR
     end
     subgraph guard["the guard (encounter)"]
         S["machine state<br/>posted · challenged · cowed · turned"]
-        B["blocks?<br/>read from the state"]
+        B["blocks his cell?<br/>read from the state"]
+        H["holds a passage?<br/>the door his state names"]
         S --> B
+        S --> H
     end
     P -->|Move| F{{"step fold<br/>occupantPassage"}}
+    P -->|Move| E{{"crossing, per mover<br/>a held door's edges"}}
     B --> F
+    H --> E
+    E -->|"held, mover not allied"| BR
     F -->|"Blocked by a body"| BR["barred beat<br/>mover · body · cell"]
     F -->|"Blocked by a wall, door, field"| ST["step refused<br/>walk stops short"]
     F -->|PassThrough| OK["step taken"]
@@ -80,6 +90,11 @@ Read at the baseline pinned in plan.md. Toolkit paths are under
 | A pick's answer reaches its voice after the pick beat: `runIntents`, then `answerTime`. | `encounter/clocks.go:588`, `:628-638`; `encounter/answer.go:254` |
 | Every line said on an answer row is a voice: its hearers are the hearers of that sound. | `encounter/doc.go:142-149`; `encounter/answer.go:239-275` |
 | The session decodes an `answered` beat into a table answer, and the wire and the web already carry it. | `session/act_family.go:725-765`; `session/act_bodies.go:394-415`; rpg-api-protos `act.proto:104`; rpg-dnd5e-web `describeAct.ts:478` |
+| A footprint door's crossings are known from its geometry, whatever its state. | `encounter/placed_props.go:749-787` (`doorCrossings`) |
+| The crossing fold is memoized per crossing, the same answer for every mover; the masquerade is the per-mover check beside it. | `encounter/cellfacts.go:178-205`; `encounter/placed_props.go:1067-1073`; `encounter/step.go:310` |
+| A member's blocking is read from its current state (S1, shipped). | `encounter/machine.go:322-345` (`memberBlocks`) |
+| A sighting's passage is the observer's own answer: the encounter folds what the observer holds, the session puts it on the sighting. | `encounter/observedpassage.go:14-46`; `session/read.go:457-476`; rpg-api-protos `session/v1alpha1/types.proto:1067` (`Passage passage = 11`) |
+| The web knows each door per member (`DoorInfo`: id, state, lock) and plans a doorway's edges shut unless its door is known open. | rpg-api-protos `session/v1alpha1/types.proto:2639-2646`; rpg-dnd5e-web `src/components/session/atlasPath.ts:58-80`, `:100-121` |
 | No condition stops a walk today; prone leaves movement out. | `conditions/prone.go:49-52` |
 | Resolution's `Prevented` is unset by anything; it is reserved for Sentinel. | `resolution/movement.go:114-119`, `:545-548` |
 
@@ -97,6 +112,45 @@ which the castle tests read, `encounter/castletest/castle_king_test.go:42`):
 | The reserves are told to stay off the gate's one crossing. | `:474-478` |
 | The gate door is shut and teaches `gate-opened` when opened. | `:2012-2015` |
 | The crossing is the cell beneath the gate (where a party stands to open it) and the courtyard cell past it; the patrol posts flank it. | `encounter/castletest/castle_king_script_test.go:53-98` |
+| The gate is an opening two cells wide with a double door, `gate-wall-door`. | mirror `:725-731` |
+| `gate-1` holds his post by state (S1): `posted` and `alert` block; his `post` key draws him toward a voice heard this round. | mirror `:1717-1758`, `:308-311` |
+
+## The use case: the keep's front gate
+
+`ideas/keep-dungeon/design.md` is the living paper design this story
+develops against. Its front gate:
+
+> Four guards check arrivals at an already-open gate (`:276`).
+>
+> The open doorway remains impassable to the party until admitted, the
+> guards are defeated, or the party establishes entry elsewhere. Reaching
+> the entrance causes the guards to halt the party and initiate the
+> admission interaction. Backing away is possible; slipping through the
+> unresolved encounter is not. (`:280-283`)
+>
+> Defeating the whole gate group opens access; killing one guard does not
+> clear the encounter. (`:321-322`)
+>
+> Successful admission or established entry through another route removes
+> the front-entry restriction for the rest of the run. (`:327-328`)
+>
+> After entry, living gate guards reposition along their route to the
+> ballroom. (`:332`)
+>
+> Unalerted patrol members normally assume the party belongs. They do not
+> stop every unfamiliar character for a new entry check. (`:684-685`)
+
+| keep behaviour | this story |
+|---|---|
+| An open doorway impassable until resolved | builds: a post holds the door's passage, open or shut (R5) |
+| Reaching the entrance halts the party | builds: the held step stops the walk by name (S1b); the bump speaks (S2) |
+| Killing one guard does not clear it | builds: the hold belongs to the post; any posted member holds it |
+| Release by admission, entry elsewhere, defeat | builds: a fact ends the post; defeat empties it |
+| Backing away is possible | holds already: only the held edges stop a step |
+| Unalerted patrol members do not halt anyone | holds already: only a holding state holds |
+| The admission dialogue, its attempts and DCs | not built: content and dialogue |
+| Arrest into the prison | not built |
+| Guards repositioning to ballroom posts after entry | not built as content; a state change and a table walk carry it |
 
 ## Law
 
@@ -107,7 +161,7 @@ on a dialogue line. Resolution's `Prevented` stays reserved for Sentinel.
 
 **Seeing and blocking are two axes.** Sneaking answers the seeing axis:
 an unseen mover is not noticed, and that is all. The body axis is answered
-only by emptying the cell, and the levers that do it already exist: a
+only by emptying the cell or ending the post, and the levers that do it already exist: a
 `heard` row with `toward: sound` or `search` draws him off when his table
 says so; `gate-cowed` cows him; a displaced move pushes him; a fact relieves
 him; a downed body is not in the way. A posted body never leaves by time:
@@ -125,6 +179,30 @@ beside the state, so a state change opens or closes the cell in the beat it
 happens. The marked states are stored with the recipe they name. The fold is
 unchanged: blocking or hostile is Blocked; a downed monster is Standable;
 any other body is PassThrough.
+
+**A post holds a passage, not a cell.** A state may name the door whose
+opening its post holds. While a member is in that state, the opening's
+edges are closed, as a shut door's are, to every mover not allied with
+him; an ally crosses. His body still blocks its own cell. A state that
+names no opening holds its cell only. The opening's edges are the door's
+crossings, read from its geometry, so a hold works on an open door, a shut
+one and any width.
+
+**The hold is a state, not a distance.** It ends when his state leaves the
+holding one (drawn off, cowed, turned) and resumes when it returns. A
+downed or dead member holds nothing.
+
+**The holder is the post.** Several members may hold one opening: it is
+held while any of them is in a holding state and up. Killing one guard
+does not open the gate; emptying the post does.
+
+**A held step names the holder.** A step across a held edge stops with a
+reason that names the holder the mover observes ("Guard bars the way"),
+even when the step is beside him, and "someone bars the way" when the mover
+observes none. Under S2 the nearest holder is the bump's addressee. The
+hold is per mover, so it is read beside the masquerade, never in the
+crossing memo every mover shares. Provoking and facing take nothing new
+from it.
 
 **A posted body departs from the 2014 rule on purpose.** A nonhostile
 creature's space is pass-through unless the creature is posted to hold it.
@@ -146,7 +224,8 @@ The server owns the step and stops it at the body's cell.
 The web never second-guesses that answer: it stops the walk where the
 server says. A hostile body stays unplannable, as today.
 
-**A barred step names the body.** A step refused by a body says who stands
+**A barred step names the body.** A step refused by a body, on its cell or
+on an edge its post holds, says who stands
 in the way, as a shut door says it is shut. A body the mover does not
 observe is "someone". A wall, a door and a field keep their own sentences.
 
@@ -188,6 +267,7 @@ Downed bodies, allies and pass-through bodies are unchanged.
 | R2 | How does the bump speak? | A the bump is something the guard hears: a `barred` beat, scoped like `heard`; his `on: barred` row says his line on his own machine. B the stop reason carries a string (rejected: no voice, no wake, no record; a tooltip, not a guard). C the session plays Speak at the barrier (rejected: it inverts who speaks first). | A (Kirk: "A sounds great") | the machine vocabulary; the Move answer; the wire | 2026-11-03 |
 | R3 | What is standing aside? | A state only (rejected: bodies overlap for a step). B walk only (rejected: a delayed walk still bars). C both: the state flips at once and his table walks him off the crossing. | C (Kirk: "oh yeah both sound good. I was having a hard time picking") | a posted member's states; castle content | 2026-11-03 |
 | R4 | The gate sneak against the post. | Today (wave C, #606 piece 4) the gate is a sneak: both gate guards walk a loop, and two world rounds of every four both stand at their beat posts with their backs to the gate (the loop's blind beat, `the-mad-king.yaml:296-301`); nobody stands in the crossing. A the post holds the crossing continuously while `posted`: one held body (`gate-1` in the crossing) and one wandering eye (`gate-2` keeps the loop); `posted` never leaves by time; the gate is talked, cowed or turned through, or sneaked through as a harder route: the posted body is emptied first (drawn off by a noise if his table says so, cowed, pushed, downed), then the crossing is taken on `gate-2`'s blind beat; piece 4's sneak test is re-aimed to exactly that (cost: the sneak needs two moves, not one window). B the crossing is one post of `gate-1`'s loop (rejected: the gate is held some rounds of four, a civil party that waits walks through, and "a man who says no" becomes a matter of timing). C a sneaker slips past a posted body on a check (rejected for now: it answers the body axis with a seeing roll; deferred as a verb of its own). Recommended A; the lane's wording for the sneak: draw `gate-1` off, cross on `gate-2`'s blind beat. | A (Kirk: "i like it") | `gate-1`'s post, `gate-2`'s loop; the castle's sneak and open-the-gate steps | 2026-11-03 |
+| R5 | What does a post hold? | The S1 walk (Kirk on the stack, 2026-11-03, rpg-project#841): the gate is a two-cell opening with a double door, so the party stepped through beside the posted `gate-1`; and a talk with the pedlar drew him off his post (his `post` row draws toward a voice heard this round). R1's cut was a posted guard blocking the crossing as his one cell. A a post holds a PASSAGE: a posted body bars the edges of the opening his post names, as a shut door does, for anyone not allied; the reason names him even beside him; his body still blocks its cell; a post naming no opening holds its cell only; the hold is a state, not a distance; the holder is the post, so a group may hold one gate. B two bodies, one per cell (rejected: a workaround; it breaks at three cells, and a drawn-off guard still opens his half). C narrow the castle gate to one cell (rejected: backwards; the content bends to the engine). | A (Kirk: "it is A and i think we will want a use case to develop until we make any decisions. ideally it is all configurable in the studio. this content is great since it really tests and reveals the seams and our decisions are either empowering or restrictive.") | a post's hold on an opening; the castle gate; the keep's front gate | 2026-11-03 |
 
 ## Assumptions, not ruled (open to veto on the design PR)
 
@@ -233,6 +313,14 @@ Downed bodies, allies and pass-through bodies are unchanged.
   the gate stands there too (`TestMadKingScriptOpeningTheGateBringsTheFarRoom`);
   the walk skill's castle steps 2 and 5 say the same. Under R4 both are
   re-aimed in the slice that posts the guard.
+- **A bare opening has no id the encounter holds.** The castle's gate
+  opening carries a door (`gate-wall-door`), and the encounter knows doors
+  by id; an opening with no door compiles to no record. A post names a door
+  in S1b. The keep's "already-open gate" is a door authored open.
+- **Today's content draws the post with any voice.** Under R5 a voice within
+  six hexes turns `gate-1` alert, and alert does not hold, so ordinary talk
+  near the gate opens it for three rounds. That is the open distraction
+  call below; S1b does not change the content.
 - **The captain does not react to the voice.** He has no states and no
   `heard` row; turning him toward the gate is not in this story.
 
@@ -247,10 +335,20 @@ Downed bodies, allies and pass-through bodies are unchanged.
 - The session auto-playing a dialogue line (R2 C).
 - A size-difference exception to pass-through.
 - The captain's reaction to the guard's voice.
+- The keep's admission dialogue, its attempts and checks; arrest; the gate
+  guards' walk to ballroom posts as content (the use case section).
+- A hold on an opening with no door.
 - A slip-past check (R4 C). If it comes, it is a verb of its own with its
   own cost, never a rule of sneaking.
 
 ## Open
+
+- **What distracts a post** (content, waits for the use case; Kirk on
+  R5). Evidence from the keep: its gate guards halt the party
+  (`ideas/keep-dungeon/design.md:281-283`), and nothing in the keep draws a
+  posted guard off for speech. Recommendation, not ruled: a posted guard
+  answers a voice from where he stands; a clang, or a shout out of his
+  sight, draws him; the re-aimed sneak lures with a clang.
 
 - **The barring guard's own stand-aside line.** A walk finding.
 
