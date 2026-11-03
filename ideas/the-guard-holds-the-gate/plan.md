@@ -1,6 +1,6 @@
 ---
 name: The guard holds the gate — implementation plan
-status: PLAN derived 2026-11-03 from design.md R1–R3 (ruled on rpg-project#835); R4 pending, the plan follows its recommended A; checked against the inspected baseline below.
+status: PLAN derived 2026-11-03 from design.md R1–R4 (all ruled on rpg-project#835); checked against the inspected baseline below.
 authority: design.md (Law, R1–R4), story rpg-project#836, lane rpg-project#835
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -57,7 +57,7 @@ merge.
 | B6 | A step refused by a body returns `ErrBodyInTheWay`; its public reason names the body the mover observes, else "someone"; a driven walk still stops silently. | Law |
 | C1 | The dialect accepts `blocks: true` on a state and refuses it on a terminal state. | R1 |
 | P1 | The web plans through a seen, non-hostile body whose passage is Blocked, and to it as a goal; a hostile body stays unplannable; the walk stops where the server says. | Law (the gesture) |
-| Q1 | The castle's sneak and open-the-gate steps are re-aimed under R4 A, in the tests and the walk skill. | R4 (pending, A) |
+| Q1 | The castle's sneak and open-the-gate steps are re-aimed under R4 A, in the tests and the walk skill. | R4 |
 | D1 | A player's step refused by a body (never a wall, door, field or masked refusal) writes a `barred` beat {mover, barrier, cell}, every time; a driven walk writes none. | R2 |
 | D2 | `barred` is a targeted machine beat on the barrier, matched on him alone in the Move that bumped; nothing else that landed is matched; the reaction spends nothing. | R2, Law |
 | D3 | The barrier's `pick` on `barred` writes an `answered` beat whose `say` is a voice; its hearers' `heard` waits for the next raise. | R2 |
@@ -102,9 +102,8 @@ merge.
 
 ## Open items
 
-- Pending: R4. The plan follows A (the post holds the crossing
-  continuously). If B is ruled, T1's content and castle tests and T5 change;
-  nothing else does.
+- Resolved: R4 A. `gate-1` holds the crossing continuously while
+  `posted`; `gate-2` keeps its loop; the sneak test is re-aimed.
 - Resolved: the state binding is the encounter's (`MemberInput.BlockingStates`,
   stored beside the recipe), compiled from the dialect's `blocks: true`;
   `mind/machine` is untouched.
@@ -163,7 +162,8 @@ tests, castle tests.
   stop.
 **Content (in the mirror; T3 copies the hunk):**
 - `gate-1` states: `posted` (`blocks: true`) holds the cell beneath the
-  gate, in front of the shut door, continuously (R4 A); `alert` blocks too.
+  gate, in front of the shut door, continuously (R4 A); `alert` blocks too. `gate-2` keeps its loop
+  unchanged.
   `posted` and `alert` → `cowed` on `fact` when `fact:gate-cowed`; → `turned`
   on `fact` when `fact:guards-turned`; `cowed` and `turned` do not block.
 - `gate-patrol`: `posted`'s key stands the crossing; a `cowed` key walks
@@ -257,7 +257,7 @@ reachable.
 
 **Delivers:** Q1 in the walk skill.
 **Owner:** rpg-project.
-**Prerequisites:** R4 ruled.
+**Prerequisites:** none (R4 ruled A).
 **Files:** `.agents/skills/walk/SKILL.md` steps 2 and 5: the sneak goes
 round the corner to reach the captain unseen; opening the gate needs the
 guard to stand aside first; a new step: walk into the gate guard.

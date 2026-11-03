@@ -1,5 +1,5 @@
 ---
-status: DESIGN, R1–R3 RULED 2026-11-03 on rpg-project#835, R4 PENDING; plan in plan.md
+status: DESIGN, R1–R4 RULED 2026-11-03 on rpg-project#835; plan in plan.md
 story: rpg-project#836
 lane: rpg-project#835
 ---
@@ -105,6 +105,14 @@ player may not do is a thing they can see and act on: a shut door, a body in
 the way, a shout. The one permit-shaped thing stays where it is: `requires`
 on a dialogue line. Resolution's `Prevented` stays reserved for Sentinel.
 
+**Seeing and blocking are two axes.** Sneaking answers the seeing axis:
+an unseen mover is not noticed, and that is all. The body axis is answered
+only by emptying the cell, and the levers that do it already exist: a
+`heard` row with `toward: sound` or `search` draws him off when his table
+says so; `gate-cowed` cows him; a displaced move pushes him; a fact relieves
+him; a downed body is not in the way. An unseen mover who walks into a
+posted body is stopped like anyone else.
+
 **A body blocks by its state.** A creature whose states mark one or more
 states `blocks` blocks exactly while its current state is one of them. A
 creature with no such mark blocks as its creation said (`BlocksMovement`),
@@ -167,7 +175,7 @@ Downed bodies, allies and pass-through bodies are unchanged.
 | R1 | What holds the gate? | A a posted guard blocks the crossing; `blocksMovement` becomes machine state; `gate-cowed` and `guards-turned` turn it off; the door stays as it is. B the door is barred by the garrison and a fact unbars it (rejected: it gates the door, not the guard; the guards stay decorative, and a locked gate tells "nobody is home" where the story is "a man who says no"). C both, as two slices (rejected: the door half has no use case yet, and a slice without one is not cut). | A (Kirk: "yeah i think A makes sense. we will want to trigger a say i think if we try moving past the guards 'who there buddy, can I help you?'") | a member's blocking; the castle gate | 2026-11-03 |
 | R2 | How does the bump speak? | A the bump is something the guard hears: a `barred` beat, scoped like `heard`; his `on: barred` row says his line on his own machine. B the stop reason carries a string (rejected: no voice, no wake, no record; a tooltip, not a guard). C the session plays Speak at the barrier (rejected: it inverts who speaks first). | A (Kirk: "A sounds great") | the machine vocabulary; the Move answer; the wire | 2026-11-03 |
 | R3 | What is standing aside? | A state only (rejected: bodies overlap for a step). B walk only (rejected: a delayed walk still bars). C both: the state flips at once and his table walks him off the crossing. | C (Kirk: "oh yeah both sound good. I was having a hard time picking") | a posted member's states; castle content | 2026-11-03 |
-| R4 | The gate sneak against the post. | A the post holds the crossing continuously while `posted`; the gate is talked, cowed or turned through; the sneak goes another way and the gate sneak test is re-aimed (recommended). B the crossing is one post of `gate-1`'s loop: the gate is held some rounds of four, and a civil party that waits walks through. | **PENDING** on #835 | `gate-1`'s post; the castle's sneak and open-the-gate steps | — |
+| R4 | The gate sneak against the post. | Today (wave C, #606 piece 4) the gate is a sneak: both gate guards walk a loop, and two world rounds of every four both stand at their beat posts with their backs to the gate (the loop's blind beat, `the-mad-king.yaml:296-301`); nobody stands in the crossing. A the post holds the crossing continuously while `posted`: one held body (`gate-1` in the crossing) and one wandering eye (`gate-2` keeps the loop); the gate is talked, cowed, turned or emptied through; the sneak test is re-aimed at reaching the captain unseen (cost: the gate is no longer a sneak route). B the crossing is one post of `gate-1`'s loop (rejected: the gate is held some rounds of four, a civil party that waits walks through, and "a man who says no" becomes a matter of timing). C a sneaker slips past a posted body on a check (rejected for now: it answers the body axis with a seeing roll; deferred as a verb of its own). Recommended A. | A (Kirk: "i like it") | `gate-1`'s post, `gate-2`'s loop; the castle's sneak and open-the-gate steps | 2026-11-03 |
 
 ## Assumptions, not ruled (open to veto on the design PR)
 
@@ -180,10 +188,10 @@ Downed bodies, allies and pass-through bodies are unchanged.
   in `mind/behavior`'s deed vocabulary (another module, and a wider table
   `when:` vocabulary); a deed's subject is the actor, so the barrier's
   identity is lost; and it would make the touch a sound.
-- **R4 A is the working default** until R4 is ruled: `gate-1` holds the
+- **The gate holds one body and one eye (R4 A).** `gate-1` holds the
   cell beneath the gate, in front of the shut door, continuously while
-  `posted`. The stand-aside line stays on the captain; whether the barring
-  guard carries it too is a walk finding.
+  `posted`; `gate-2` keeps the loop. The stand-aside line stays on the
+  captain; whether the barring guard carries it too is a walk finding.
 
 ## Findings, not ruled
 
@@ -211,7 +219,7 @@ Downed bodies, allies and pass-through bodies are unchanged.
 - **The post moves two castle steps.** The sneak dash ends on the cell
   beneath the gate (`TestMadKingScriptASneakWindowAtTheDoor`), and opening
   the gate stands there too (`TestMadKingScriptOpeningTheGateBringsTheFarRoom`);
-  the walk skill's castle steps 2 and 5 say the same. Under R4 A both are
+  the walk skill's castle steps 2 and 5 say the same. Under R4 both are
   re-aimed in the slice that posts the guard.
 - **The captain does not react to the voice.** He has no states and no
   `heard` row; turning him toward the gate is not in this story.
@@ -227,10 +235,11 @@ Downed bodies, allies and pass-through bodies are unchanged.
 - The session auto-playing a dialogue line (R2 C).
 - A size-difference exception to pass-through.
 - The captain's reaction to the guard's voice.
+- A slip-past check (R4 C). If it comes, it is a verb of its own with its
+  own cost, never a rule of sneaking.
 
 ## Open
 
-- **R4, the gate sneak** (Rulings): pending on #835. The plan follows A.
 - **The barring guard's own stand-aside line.** A walk finding.
 
 — cross-team agent, on behalf of KirkDiggler
