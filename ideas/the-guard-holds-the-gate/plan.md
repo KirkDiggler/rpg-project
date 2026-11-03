@@ -56,7 +56,7 @@ merge.
 | B5 | What an observer holds about a body's blocking follows the state. | Law |
 | B6 | A step refused by a body returns `ErrBodyInTheWay`; its public reason names the body the mover observes, else "someone"; a driven walk still stops silently. | Law |
 | C1 | The dialect accepts `blocks: true` on a state and refuses it on a terminal state. | R1 |
-| P1 | The web plans through a seen, non-hostile body whose passage is Blocked, and to it as a goal; a hostile body stays unplannable; the walk stops where the server says. | Law (the gesture) |
+| P1 | The web plans round a seen Blocked body; it plans through a seen, non-hostile one only when he is the goal or no route round exists; a hostile body stays unplannable; the walk stops where the server says. | Law (the gesture) |
 | Q1 | The castle's sneak and open-the-gate steps are re-aimed under R4 A, in the tests and the walk skill. | R4 |
 | D1 | A player's step refused by a body (never a wall, door, field or masked refusal) writes a `barred` beat {mover, barrier, cell}, every time; a driven walk writes none. | R2 |
 | D2 | `barred` is a targeted machine beat on the barrier, matched on him alone in the Move that bumped; nothing else that landed is matched; the reaction spends nothing. | R2, Law |
@@ -103,7 +103,8 @@ merge.
 ## Open items
 
 - Resolved: R4 A. `gate-1` holds the crossing continuously while
-  `posted`; `gate-2` keeps its loop; the sneak test is re-aimed.
+  `posted` and never leaves it by time; `gate-2` keeps its loop; the sneak
+  test is re-aimed to draw `gate-1` off and cross on `gate-2`'s blind beat.
 - Resolved: the state binding is the encounter's (`MemberInput.BlockingStates`,
   stored beside the recipe), compiled from the dialect's `blocks: true`;
   `mind/machine` is untouched.
@@ -194,8 +195,11 @@ observer that sees it.
   short of the guard with his name; `gate-cowed` taught to a guard who
   witnessed it opens the next step and his next beat walks him to the door
   post; a guard who did not witness it keeps blocking; `guards-turned`
-  opens it too. `TestMadKingScriptASneakWindowAtTheDoor` is re-aimed (the
-  sneak reaches the captain unseen, not the crossing) and
+  opens it too. `TestMadKingScriptASneakWindowAtTheDoor` is re-aimed: the
+  crossing holds against the sneaker while `gate-1` is posted, and passes
+  once he is drawn off by a noise and the sneaker crosses on `gate-2`'s
+  blind beat. A posted `gate-1` stands the crossing through any number of
+  `time` beats. And
   `TestMadKingScriptOpeningTheGateBringsTheFarRoom` teaches `gate-cowed`
   before the party stands beneath the gate.
 
@@ -243,11 +247,15 @@ byte for byte).
 **Interfaces:** `indexOccupantPassages` keeps a seen body whose passage is
 `BLOCKED` and whose stance is not hostile (the stance the wire already
 carries, `stanceRing.ts:47`, `partySide.ts:39`) out of `blockedCells`, so
-`edgePassable` and `findAtlasPath` route to and through it. A hostile
-`BLOCKED` body stays blocked. The walk stops where the Move's answer says.
-**Tests:** a path to the courtyard through a non-hostile blocked body is
-found; a path through a hostile one is not; a goal on the body's cell is
-reachable.
+`edgePassable` and `findAtlasPath` route to and through it, but only on a
+second plan: the first plan keeps every Blocked body blocked, and the
+second runs only when the goal is such a body's cell or the first finds no
+path. A hostile `BLOCKED` body stays blocked in both. The walk stops where
+the Move's answer says.
+**Tests:** in an open room with an equal detour round a non-hostile
+blocked body, the path goes round and never enters his cell (no bump); in
+a one-cell corridor he fills, the path goes through him; a goal on his
+cell is reachable; a hostile one is never planned through.
 
 - [ ] Implement; `npm run ci-check`; stage with Task 3.
 
@@ -259,8 +267,8 @@ reachable.
 **Owner:** rpg-project.
 **Prerequisites:** none (R4 ruled A).
 **Files:** `.agents/skills/walk/SKILL.md` steps 2 and 5: the sneak goes
-round the corner to reach the captain unseen; opening the gate needs the
-guard to stand aside first; a new step: walk into the gate guard.
+draw `gate-1` off the crossing with a noise, then cross on `gate-2`'s
+blind beat; opening the gate needs the crossing emptied first; a new step: walk into the gate guard.
 
 - [ ] Edit; `scripts/check-doc-genres.sh`; PR beside Task 3.
 
@@ -385,7 +393,7 @@ guard and his line; the line shows as speech at the guard, not a tooltip.
 
 The walk site is the castle on :3030 in free roam, the party walking in from
 the start. The gesture is walking into the guard: click the cell he stands
-on, beneath the gate and in front of the shut door, or past him. Rows gated
+on, beneath the gate and in front of the shut door. Rows gated
 on a die are covered by tests and not walked
 (`.agents/skills/walk/SKILL.md:25-30`): standing aside needs Intimidation DC
 14 and then the weight-3 row; turning needs Persuasion DC 15. Those rows
@@ -393,7 +401,6 @@ name their tests.
 
 **S1**
 - [ ] Walk into the guard on the crossing → the walk stops one cell short of him, and the stop reason names him.
-- [ ] Click the courtyard past the gate → the same stop; the shut door is never reached.
 - [ ] Walk past the other gate guard (not posted) → the walk crosses his cell as before.
 - [ ] Covered, not walked: cowed with the guard watching opens the crossing and he walks to his door post (Task 1's castle test); a guard who did not witness it keeps blocking; turned opens it too.
 - [ ] The re-aimed sneak step (walk skill step 2) as Task 5 writes it.

@@ -110,7 +110,9 @@ an unseen mover is not noticed, and that is all. The body axis is answered
 only by emptying the cell, and the levers that do it already exist: a
 `heard` row with `toward: sound` or `search` draws him off when his table
 says so; `gate-cowed` cows him; a displaced move pushes him; a fact relieves
-him; a downed body is not in the way. An unseen mover who walks into a
+him; a downed body is not in the way. A posted body never leaves by time:
+his `time` pick while posted stands the post, and only a beat (a sound, a
+fact, a push, a fall) empties the cell. An unseen mover who walks into a
 posted body is stopped like anyone else.
 
 **A body blocks by its state.** A creature whose states mark one or more
@@ -128,9 +130,10 @@ any other body is PassThrough.
 creature's space is pass-through unless the creature is posted to hold it.
 RAW is not the authority here.
 
-**The gesture is walking into him.** The web plans through a seen,
-non-hostile body whose passage is Blocked as if it were pass-through, and
-sends the walk. The server owns the step and stops it at the body's cell.
+**The gesture is walking into him.** The web prefers the way round: it
+plans around a seen body whose passage is Blocked, as today. It plans
+through a seen, non-hostile one, as if it were pass-through, only when he
+is the goal cell or no route round exists, and sends the walk. The server owns the step and stops it at the body's cell.
 The web never second-guesses that answer: it stops the walk where the
 server says. A hostile body stays unplannable, as today.
 
@@ -175,7 +178,7 @@ Downed bodies, allies and pass-through bodies are unchanged.
 | R1 | What holds the gate? | A a posted guard blocks the crossing; `blocksMovement` becomes machine state; `gate-cowed` and `guards-turned` turn it off; the door stays as it is. B the door is barred by the garrison and a fact unbars it (rejected: it gates the door, not the guard; the guards stay decorative, and a locked gate tells "nobody is home" where the story is "a man who says no"). C both, as two slices (rejected: the door half has no use case yet, and a slice without one is not cut). | A (Kirk: "yeah i think A makes sense. we will want to trigger a say i think if we try moving past the guards 'who there buddy, can I help you?'") | a member's blocking; the castle gate | 2026-11-03 |
 | R2 | How does the bump speak? | A the bump is something the guard hears: a `barred` beat, scoped like `heard`; his `on: barred` row says his line on his own machine. B the stop reason carries a string (rejected: no voice, no wake, no record; a tooltip, not a guard). C the session plays Speak at the barrier (rejected: it inverts who speaks first). | A (Kirk: "A sounds great") | the machine vocabulary; the Move answer; the wire | 2026-11-03 |
 | R3 | What is standing aside? | A state only (rejected: bodies overlap for a step). B walk only (rejected: a delayed walk still bars). C both: the state flips at once and his table walks him off the crossing. | C (Kirk: "oh yeah both sound good. I was having a hard time picking") | a posted member's states; castle content | 2026-11-03 |
-| R4 | The gate sneak against the post. | Today (wave C, #606 piece 4) the gate is a sneak: both gate guards walk a loop, and two world rounds of every four both stand at their beat posts with their backs to the gate (the loop's blind beat, `the-mad-king.yaml:296-301`); nobody stands in the crossing. A the post holds the crossing continuously while `posted`: one held body (`gate-1` in the crossing) and one wandering eye (`gate-2` keeps the loop); the gate is talked, cowed, turned or emptied through; the sneak test is re-aimed at reaching the captain unseen (cost: the gate is no longer a sneak route). B the crossing is one post of `gate-1`'s loop (rejected: the gate is held some rounds of four, a civil party that waits walks through, and "a man who says no" becomes a matter of timing). C a sneaker slips past a posted body on a check (rejected for now: it answers the body axis with a seeing roll; deferred as a verb of its own). Recommended A. | A (Kirk: "i like it") | `gate-1`'s post, `gate-2`'s loop; the castle's sneak and open-the-gate steps | 2026-11-03 |
+| R4 | The gate sneak against the post. | Today (wave C, #606 piece 4) the gate is a sneak: both gate guards walk a loop, and two world rounds of every four both stand at their beat posts with their backs to the gate (the loop's blind beat, `the-mad-king.yaml:296-301`); nobody stands in the crossing. A the post holds the crossing continuously while `posted`: one held body (`gate-1` in the crossing) and one wandering eye (`gate-2` keeps the loop); `posted` never leaves by time; the gate is talked, cowed or turned through, or sneaked through as a harder route: the posted body is emptied first (drawn off by a noise if his table says so, cowed, pushed, downed), then the crossing is taken on `gate-2`'s blind beat; piece 4's sneak test is re-aimed to exactly that (cost: the sneak needs two moves, not one window). B the crossing is one post of `gate-1`'s loop (rejected: the gate is held some rounds of four, a civil party that waits walks through, and "a man who says no" becomes a matter of timing). C a sneaker slips past a posted body on a check (rejected for now: it answers the body axis with a seeing roll; deferred as a verb of its own). Recommended A; the lane's wording for the sneak: draw `gate-1` off, cross on `gate-2`'s blind beat. | A (Kirk: "i like it") | `gate-1`'s post, `gate-2`'s loop; the castle's sneak and open-the-gate steps | 2026-11-03 |
 
 ## Assumptions, not ruled (open to veto on the design PR)
 
