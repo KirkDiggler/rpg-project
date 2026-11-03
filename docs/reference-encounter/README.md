@@ -1,6 +1,6 @@
 # The reference encounter
 
-The complete intended dungeon experience is the [living Keep paper design](../dungeons/the-keep.md). These cards track demonstrations and verification separately.
+The complete intended dungeon experience is the [living Keep paper design](../../ideas/keep-dungeon/design.md). These cards track demonstrations and verification separately.
 
 
 The keep, `the-mad-king`, is the one reference encounter: every mechanic the
