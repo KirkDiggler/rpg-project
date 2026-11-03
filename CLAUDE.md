@@ -109,7 +109,8 @@ The invariants that hold it up:
 - **Zero values tell the truth.** An absent value must mean what its author
   meant. Fail closed and loudly — never silently.
 - **Input/Output types on every function.** Non-negotiable.
-- **Never return `(nil, nil)`.** A valid object or an error.
+- **Never return `(nil, nil)`.** Exactly one of a valid object or an error —
+  and an error may be a signal, not a failure (`io.EOF` is the model).
 - **Toolkit types are canonical.** The API stores them; one conversion point at
   the handler/proto boundary.
 - **Events for multiplayer.** One player sees the RPC response; everyone sees
