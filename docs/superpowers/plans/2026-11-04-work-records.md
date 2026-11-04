@@ -40,7 +40,7 @@
 - [x] Write minimal routing skill and three focused guides.
 - [x] Re-run samples with guidance; inspect each output and revise if needed.
 - [x] Check portable frontmatter, linked guide existence, catalog entry, and whitespace.
-- [ ] Record evidence and limits in the PR; commit and open the feature PR.
+- [x] Record evidence and limits in the PR; commit and open [PR #861](https://github.com/KirkDiggler/rpg-project/pull/861).
 
 ## Task 2: Adoption handoff
 
@@ -50,7 +50,7 @@
 
 - [x] Locate reachable existing session or relevant review record without modifying it: rpg-project#859 / rpg-toolkit#2271; no directly reachable session.
 - [x] Supply source paths and bounded instructions in the journal index: journal current evidence, label reconstructions, preserve uncertainty, link delivery/ADR records, keep effects implications as questions.
-- [ ] If session messaging is unavailable, give the operator a paste-ready handoff; explicitly report that it was not sent.
+- [x] Session messaging is unavailable. Publish the paste-ready [handoff on #859](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643379624); explicitly distinguish this shared comment from direct session delivery.
 
 ## Requirement coverage
 
@@ -83,8 +83,8 @@ No runtime API, persistence, multiplayer, generated bindings or dependency pins 
 - [x] Variations evaluated below; no invented rationalizations or universal-compliance claim.
 - [x] Flowchart unnecessary; focused guides are the operator-approved supporting structure.
 - [x] Static checks pass; existing checker failures reported below.
-- [ ] Git commit and feature PR carry Team signature; no Pages publication or main merge.
-- [ ] Adoption handoff delivered or inability to contact explicitly reported.
+- [x] Git commit and feature PR carry Team signature; no Pages publication or main merge.
+- [x] Shared handoff posted on #859; direct session contact unavailable and actual adoption unverified.
 
 ## Observed validation
 
