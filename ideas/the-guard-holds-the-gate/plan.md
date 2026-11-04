@@ -712,9 +712,11 @@ troupe tests at `:479` and `:564`), `TestMadKingScout`
   straddle two regions, and when a crossing of the door has both cells, or
   neither, in the post's region; the castle gate passes.
 - `TestTheDoorVerbsReadTheSettings`: from each side, with and without the pass.
-- `TestObservedHoldsFollowTheSettings`: a viewer with the pass, and a
-  viewer on the open side of a one-way post, see no `holds_door`; the knobs
-  come from the live post.
+- `TestObservedHoldsFollowTheSettings`: a viewer barred in some direction
+  sees `holds_door` from any region, the open side of a one-way post
+  included, with its direction and side (the web bars only the barred
+  direction); a viewer with the pass, or allied with the holder, sees none;
+  the knobs come from the live post.
 - `TestThePassIsReadOncePerPath`: a route across several held edges reads
   the mover's journal once per fact.
 - `TestAStoredPostKeepsItsSettings`; a legacy record loads as both ways.
@@ -746,9 +748,9 @@ crossing cells (Task 20), so the web previews a one-way hold from any
 distance. `holds_door` alone cannot: a viewer more than one region from an
 `entering` post would see either no hold (the arrival case, the keep's
 "check arrivals") or a hold it cannot orient.
-**Tests:** a castle test that a viewer at the party's start (more than one
-region from the gate) sees `HoldsDoor`, `HoldsAgainst: entering` and the
-two gatehouse-side cells; a viewer with the pass sees none; a test post
+**Tests:** a castle test that a viewer within sight of the gate (the
+party's start is ten hexes off and does not see it) sees `HoldsDoor`,
+`HoldsAgainst: entering` and the two gatehouse-side cells; a viewer with the pass sees none; a test post
 set `against: leaving` lets an arrival in and stops the same party walking
 back out.
 
