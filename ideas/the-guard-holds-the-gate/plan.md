@@ -159,6 +159,15 @@ merge.
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
 
+- Open (R6, Kirk's call pending; not ruled): does a post hold both ways?
+  The encounter built the hold both ways (rpg-toolkit#2263): no mover not
+  allied with the holder crosses the opening from either side, so a party
+  inside the castle is held at the gate on the way out as on the way in.
+  Castle routes about something else that leave through the gate open it
+  with a test-only switch, `castleHost.gateUnheld` (`openTheCastle`'s family
+  and `toTheCaptainWithTheTruth`). The call is Kirk's, on lane #835; until
+  it lands the build stands as built and nothing here assumes the answer.
+
 ## Task contracts
 
 ### Task 1 (S1): a body blocks by its state
@@ -497,12 +506,14 @@ body changes; `DoorInfo` refreshes only on door beats.
 **Owner:** rpg-api.
 **Prerequisites:** Task 12 and Task 13 tagged.
 **Files:** `go.mod`; the sighting conversion; the v1alpha1 atlas
-converter and the v1alpha2 act converter
-(`internal/handlers/dnd5e/session/v1alpha2/convert_act.go`, the revealed
-door's doorways), both copying `crossing`; their tests;
+converter and the v1alpha2 act converter (the revealed door's doorways),
+both copying `crossing`; their tests;
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
 **Behavior:** the atlas's doorways and a revealed door's doorways carry
 `crossing` on both wires.
+Corrected 2026-11-03 by the lead: the v1alpha2 helper is `doorwaysToProto`
+in `internal/handlers/dnd5e/session/v1alpha2/convert_geometry.go`; this
+task first named `convert_act.go`.
 **Tests:** convert test for `holds_door`; a v1alpha1 atlas test that the
 castle gate's crossings arrive with `crossing` true and an edge door's
 false; a v1alpha2 act test that a revealed footprint door's crossings
@@ -542,6 +553,11 @@ build; a remembered sighting holds nothing; a footprint door's crossings
 produce no `doorGaps` and no wall cut, while an edge door's still do; a
 footprint door revealed under fog (its crossings appended from the act's
 `RevealedDoor`) produces no door gap either.
+From the rpg-dnd5e-web#1388 review (a minor): the web's reveal test covers
+the room-reveal path, which merges into the atlas through
+`applyCellsRevealed`; a revealed door's doorways reach the atlas through
+the GetAtlas refresh, and the test proves only that the act bridge keeps
+`crossing`.
 
 - [ ] Bump; implement; `npm run ci-check`.
 
@@ -692,12 +708,14 @@ name their tests.
 - [ ] Covered, not walked (`TestMadKingScriptTheTroupeNeedsTheFeast`): the troupe let through, a won check, opens the crossing, and the party steps beneath the gate.
 - [ ] The re-aimed sneak step (walk skill step 2): a voice draws `gate-1` off the crossing for a round, then cross on `gate-2`'s blind beat (`TestMadKingScriptASneakWindowAtTheDoor`).
 
-**S1b** (`gate-1` posted; open the gate door first from beside the
-crossing)
-- [ ] Hover the courtyard → no path.
-- [ ] Click the courtyard → the walk stops at the opening, through either cell, and the stop reason names him ("Guard bars the way").
-- [ ] Covered, not walked (`TestMadKingTheGuardHoldsTheGate` and Task 11's castle test): cowed, he stands aside and the party crosses the opening; turned, drawn or downed, the same; alert at his post, still held; with two posted on the opening, downing one does not open it.
-- [ ] Walk past `gate-2` on her loop elsewhere → no stop.
+**S1b** (`gate-1` posted; open the gate door first from the cell beside
+him)
+- [ ] Hover the courtyard from the free cell beside him and from inside the gatehouse → no path goes through either cell of the opening.
+- [ ] Click the courtyard where no way goes round → the walk stops at the opening, through either cell, and the stop reason names him ("Guard bars the way", or "Guard stands in the way" when the step is onto his cell). His cell is never clicked: it stays approach to speak.
+- [ ] The gate still looks like one door: no extra leaves, no cut in the wall at its crossings.
+- [ ] Walk past `gate-2` (not posted) → crosses as before.
+- [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.
+- [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; the troupe let through cows him, and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
 
 **S2**
 - [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
