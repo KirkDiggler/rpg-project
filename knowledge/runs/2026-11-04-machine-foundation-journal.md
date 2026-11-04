@@ -6,6 +6,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - First question-led entry in the existing mind/machine journal, with the index updated; earlier investigation is labeled as reconstruction, not new experimental evidence — [entry](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md).
 
+- Follow-up entry records the executable guard trace, negative controls, and the distinction between a machine table-name output and actual controlled-roll selection — [unit-probe entry](../../docs/journal/mind-machine/2026-11-04-can-the-existing-machine-express-the-guard-trace.md).
+
 ## Decided
 
 - KirkDiggler requested work-records adoption focused on intended delivery and what it could unlock; begin with the journal without selecting an architecture or manufacturing an accepted ADR — [direction record](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643743069).
@@ -14,6 +16,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 ## Found
 
 - Sound categories already exist, while hearing enumerates the roster and sound memory retains the latest occurrence per kind; these source observations sharpen the input/memory questions without proving a new design — [source-linked evidence](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md#evidence).
+
+- The existing machine passes the single-path fixture without production changes; both missing-state-write and false-guard mutations fail the new tests, with the full module race suite and lint passing after restoration — [experiment receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6644178404).
 
 ## Mistaken
 

@@ -23,6 +23,8 @@ session's scope.
 
 - **2026-11-04 — [What should the machine foundation let a designer express?](2026-11-04-what-should-the-foundation-unlock.md)** First entry: intended capabilities, the inspected sound/memory/machine boundaries, and open questions about cooperating behaviors and recovery. Earlier work is explicitly reconstructed from linked sources; no shared architecture is selected.
 
+- **2026-11-04 — [Can the existing machine express the guard trace?](2026-11-04-can-the-existing-machine-express-the-guard-trace.md)** Executable unit probe: the single path passes against the existing kernel; two intentional mutations demonstrate that the test catches broken behavior. Controlled-roll selection is the next consumer boundary, not part of this result.
+
 ## Adoption handoff
 
 Read the [work-records skill](../../../.agents/skills/work-records/SKILL.md) and
