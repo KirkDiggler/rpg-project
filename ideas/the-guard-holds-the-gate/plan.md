@@ -801,8 +801,9 @@ and marks a crossing shut in the barred direction only:
 `entering` bars side-cell → far cell, `leaving` the reverse, `both` or
 empty both ways); the caller that reads the live sightings;
 `atlasPath.test.ts`.
-**Tests:** an `entering` hold refuses a previewed path from the far side
-at any distance and allows one from the side cells outward; `leaving` the
+**Tests:** an `entering` hold refuses a previewed path from the side
+cells to the far side at any distance and allows one from the far side
+back; `leaving` the
 reverse; an empty direction reads as both; the second plan (P1) still
 runs only when no route round exists.
 
