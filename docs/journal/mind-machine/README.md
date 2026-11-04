@@ -1,8 +1,8 @@
 # mind/machine investigation journal
 
 Working notes for the machine exploration, kept separately from its design,
-decisions and delivery tracking. The investigation's session owns the entries;
-this index does not claim that session has adopted the journal or produced findings.
+decisions and delivery tracking. Entries distinguish evidence, interpretation
+and proposals; the linked issue remains the home for delivery state.
 
 ## Scope and record
 
@@ -21,9 +21,7 @@ session's scope.
 
 ## Entries
 
-No investigation entries have been supplied yet. Add dated links here as the
-investigating session records its work; do not reconstruct its observations from
-this index.
+- **2026-11-04 — [What should the machine foundation let a designer express?](2026-11-04-what-should-the-foundation-unlock.md)** First entry: intended capabilities, the inspected sound/memory/machine boundaries, and open questions about cooperating behaviors and recovery. Earlier work is explicitly reconstructed from linked sources; no shared architecture is selected.
 
 ## Adoption handoff
 
