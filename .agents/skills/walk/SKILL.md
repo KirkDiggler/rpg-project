@@ -18,7 +18,7 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    The gate holds one body and one eye (rpg-project#836, R4 A): `gate-1` is
    posted on the cell beneath the gate in front of the shut door and never
    leaves it by time; his post holds the gate's whole opening, both cells
-   of it (R5, step 5); `gate-2` walks the loop.
+   of it (R5), against arrivals only (R6, step 5); `gate-2` walks the loop.
    Sneaking answers who sees you, never whose body is in the way, so the
    sneak is two moves. First draw `gate-1` off: a voice he hears this round
    draws him toward it (a companion's word to someone outside, answered
@@ -30,38 +30,58 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    window two world rounds of four.
 3. Start sneaking in plain sight: it is refused, and the refusal names who sees you (R11, 2026-11-02; before that the declaration was accepted and the watchers simply kept seeing you).
 4. Fight the gate guards: a swing from free roam starts it, and the fight forms on that blow with every guard in view in it. The world pays one round. The next room is empty and nobody comes.
-5. On a castle where he still holds the post, the gate is held, not only
-   his cell (R5, rpg-project#852). Open the gate door from the cell beside
-   him (in reach there: the castle-test fixture
-   `TestReserves_MarchOnFightRounds` says so; the walk proves it on the
-   stack), then walk for the courtyard. Hover the courtyard from the free
-   cell beside him and from inside the gatehouse: no path goes through
-   either cell of the opening. Click it where no
-   way goes round: the walk stops at the opening and the stop reason names
-   him, "Guard bars the way", or "Guard stands in the way" when the step is
-   onto his cell. Never click his cell, which stays "approach to speak".
-   The gate still looks like one door: no extra leaves, no cut in the wall
-   at its crossings. A walk past `gate-2`, who is not posted, crosses as
-   before. Open the gate door while it is unguarded: guards come from the
-   far room. In S1 his body held only his own cell, and the party stepped
-   through the opening's other cell beside him (rpg-project#841); Kirk moved
-   the hold to the passage on lane #835, R5: "it is A and i think we will
-   want a use case to develop until we make any decisions. ideally it is
-   all configurable in the studio. this content is great since it really
-   tests and reveals the seams and our decisions are either empowering or
-   restrictive." Drawing him off is a voice, not a die, so it is walked:
+5. On a castle where he still holds the post, the gate is held against
+   arrivals (R6, rpg-project#857): his post bars the whole opening, both
+   cells of it (R5, rpg-project#852), to anyone walking in, and lets
+   anyone inside walk out. From outside, OpenDoor on the gate from the cell
+   beside him is refused, "Guard bars the door", and the door stays shut
+   (R7); the cells in front stay reachable, since that is where the
+   conversation happens. Hover the courtyard from the free cell beside him
+   and from the start: no path goes through either cell of the opening.
+   Never click his cell, which stays "approach to speak". The gate still
+   looks like one door: no extra leaves, no cut in the wall at its
+   crossings. A walk past `gate-2`, who is not posted, crosses as before.
+   Then come in another way, by the kitchen door or past him drawn off
+   (below), and leave by the gate: from inside, the hover shows the path out
+   through the opening, the gate door opens, and the party walks out
+   unchallenged while he stays posted. Open the gate door while it is
+   unguarded: guards come from the far room. In S1 his body held only his
+   own cell, and the party stepped through the opening's other cell beside
+   him (rpg-project#841); Kirk moved the hold to the passage on lane #835,
+   R5: "it is A and i think we will want a use case to develop until we
+   make any decisions. ideally it is all configurable in the studio. this
+   content is great since it really tests and reveals the seams and our
+   decisions are either empowering or restrictive." In S1b the hold was
+   both ways, as the law then read, and a party inside could not walk out
+   through the gate while he was posted; Kirk gave the post a direction and
+   a pass on lane #835, R6: "so what if the party upon entering under a
+   guest guise they get a fact that would override the guard from barring
+   it. i think if the guards are guarding people from entering it would
+   not apply to the other direction. something would happen, questions at
+   minimum, but i think the encounter designer would use facts to control
+   that", then "so i think there could be cases where we guard one
+   direction. i think having that built in as an option on the setting
+   would be best". Drawing him off is a voice, not a die, so it is walked:
    with the gate held, speak to someone within his earshot (the pedlar did
    it on Kirk's walk; today any voice he hears this round draws him), and
-   he walks off his post; hover the courtyard and the path through the
-   gate appears; walk through. The next round he walks back and holds
-   again. What draws a post is still the open content call (R5), so the
-   lure may change. The other rows rest on a won check or on a fixture and
-   are not walked; their tests stand in (the dice paragraph below): alert
-   on his post, still held; cowed, turned or downed in step 4's fight, the
-   opening passes; the troupe let through cows him, and cowed he holds
-   nothing; with a second holder on the same door, downing one does not
-   open it (a test stands `gate-2` there; the castle posts only `gate-1`).
-   The tests are `TestMadKingThePostHoldsTheGatesPassage` (rpg-toolkit#2263),
+   he walks off his post; OpenDoor on the gate now passes; hover the
+   courtyard and the path through the gate appears; walk through. The next
+   round he walks back and holds again. What draws a post is still R5's
+   open content call, unchanged by R6, so the lure may change. The other
+   rows rest on a won check or on a fixture and are not walked; their tests
+   stand in (the dice paragraph below): the troupe's won Performance check
+   teaches the pass, and the troupe walks in while he stays at his post
+   (`TestMadKingTheTroupePassesThePostedGuard`, rpg-toolkit#2268);
+   alert on his post, still held; cowed by the stand-aside, turned or downed in step 4's fight, the
+   opening passes, and cowed he holds nothing; a step through the open,
+   held opening stops with "Guard bars the way" (the door cannot be opened
+   while he holds it); with a second holder on the same door, downing one
+   does not open it (a test stands `gate-2` there; the castle posts only
+   `gate-1`); a post that holds both ways, the default, bars the party on
+   the way out too, and that is a test post on the same gate, not the
+   castle (`TestMadKingTheGateLetsThePartyOut`,
+   `TestAPostHoldsBothWaysByDefault`, rpg-toolkit#2268). The other tests are
+   `TestMadKingThePostHoldsTheGatesPassage` (rpg-toolkit#2263),
    `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`,
    and in the session `TestCastleThePostHoldsTheGatesOpening`
    (rpg-toolkit#2265).
