@@ -1,6 +1,6 @@
 ---
 name: The guard holds the gate — implementation plan
-status: PLAN derived 2026-11-03 from design.md R1–R5 and R7 (ruled on rpg-project#835; R6 open); checked against the inspected baseline below; P1 amended 2026-11-03 on rpg-project#841; S1 DONE, S1b (R5) added 2026-11-03.
+status: PLAN derived 2026-11-03 from design.md R1–R7 (all ruled on rpg-project#835); checked against the inspected baseline below; P1 amended 2026-11-03 on rpg-project#841; S1 DONE, S1b (R5) added 2026-11-03.
 authority: design.md (Law, R1–R7), story rpg-project#836, lane rpg-project#835
 planning guide: ../../.agents/skills/design/planning.md
 ---
@@ -27,6 +27,7 @@ one module per PR. `dungeonspec` is a package of the encounter module.
 |---|---|---|---|
 | S1 | rpg-toolkit `encounter` → `session` re-pin; rpg-api; rpg-dnd5e-web; rpg-project | main / main / dev / dev / main | encounter PR (code, castle mirror, castle tests); session re-pin PR; api PR (pin + the same content hunk); web PR (planner); walk skill PR |
 | S1b | rpg-toolkit `encounter` → `session`; rpg-api-protos; rpg-api; rpg-dnd5e-web; rpg-project | main / main / main / dev / dev / main | encounter PR (code, castle mirror, castle tests); session PR; protos PR; api PR (pin, convert, the same content hunk); web PR (planner); walk skill PR |
+| S1c | rpg-toolkit `encounter` → `session`; rpg-api-protos; rpg-api; rpg-dnd5e-web; rpg-project | main / main / main / dev / dev / main | encounter PR (code, castle mirror, castle tests, `gateUnheld` deleted); session PR; protos PR (the sighting's barred side); api PR (pin, convert, the same content hunk); web PR (the one-way preview); walk skill PR |
 | S2 | rpg-toolkit `encounter` → `session`; rpg-api-protos; rpg-api; rpg-dnd5e-web | main / main / main / dev / dev | encounter PR (code, castle mirror, castle test); session PR; protos PR; api PR (pin, convert, the same content hunk); web PR |
 
 S1 is DONE: the primitive "a posted body blocks its cell" (rpg-toolkit
@@ -34,7 +35,10 @@ S1 is DONE: the primitive "a posted body blocks its cell" (rpg-toolkit
 merging out). Its walk finding (rpg-project#841): the gate is a two-cell
 opening and the party stepped through beside the guard; a talk with the
 pedlar drew him off. R5 answers the first; the second waits for the use
-case (design, Open). S1b next, on S1's tags. S2 after S1b's encounter tag:
+case (design, Open). S1b next, on S1's tags. S1b is DONE after its walk
+(Kirk, 2026-11-04: the held door refused, a won check released it;
+encounter v0.176.0, rpg-toolkit #2263), merging out. S1c, the post's
+settings (R6), follows on S1b's tags. S2 after S1b's encounter tag:
 the halt it voices is the keep's "reaching the entrance halts the party".
 
 **The castle file lives twice.** rpg-api's `content/the-mad-king.yaml` and
@@ -45,7 +49,7 @@ merge.
 
 ## Finish line
 
-- Sub-issues for S1, S1b and S2 closed by their "done means"; each slice walked
+- Sub-issues for S1, S1b, S1c and S2 closed by their "done means"; each slice walked
   by the operator on :3030; #836's slices table current.
 - On the castle, free roam: walking past the gate guard where he is the
   only way, the crossing in front of the shut gate door, stops the walk
@@ -121,7 +125,11 @@ merge.
    (session) → tag. T13 (protos) in parallel → tag. T14 (api, on the
    session and protos tags) → T15 (web, on the protos tag). T16 (walk
    skill) with T14. Stage → walk → merge out.
-3. S2: T6 (encounter, on T11's tag, with the mirror) → tag → T7 (session) →
+3. S1c: T17 (encounter, on T11's tag, with the mirror) → tag → T18
+   (session) → tag. T20 (protos) in parallel → tag. T19 (api, on the
+   session and protos tags) → T22 (web, on the protos tag). T21 (walk
+   skill) with T19. Stage → walk → merge out.
+4. S2: T6 (encounter, on T11's tag, with the mirror) → tag → T7 (session) →
    tag. T8 (protos) in parallel → tag. T9 (api, on the session and protos
    tags) → T10 (web, on the protos tag) → stage → walk → merge out.
 
@@ -166,14 +174,22 @@ merge.
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
 
-- Open (R6, Kirk's call pending; not ruled): does a post hold both ways?
-  The encounter built the hold both ways (rpg-toolkit#2263): no mover not
-  allied with the holder crosses the opening from either side, so a party
-  inside the castle is held at the gate on the way out as on the way in.
-  Castle routes about something else that leave through the gate open it
-  with a test-only switch, `castleHost.gateUnheld` (`openTheCastle`'s family
-  and `toTheCaptainWithTheTruth`). The call is Kirk's, on lane #835; until
-  it lands the build stands as built and nothing here assumes the answer.
+- Resolved: the castle's pass is `troupe-admitted`, taught by the troupe
+  success only, a check, as the keep's guest guise is a check; an answer
+  entry teaches one fact, so no new fact is added. `troupe-admitted` no
+  longer cows `gate-1`: the troupe passes by the fact while he stays
+  posted. `greet`, a plain line that cannot fail, teaches nothing.
+- Resolved: R6 A with two knobs (Kirk, 2026-11-04, lane #835). A post
+  holds both ways by default; its setting may name a direction
+  (`against`) and a pass fact (`pass`). The castle's `gate-1` post is
+  `against: entering` with `pass: troupe-admitted` (the lead's content
+  call, from Kirk's words on R6: "if the guards are guarding people from
+  entering it would not apply to the other direction"): from inside, no
+  civil lever reaches a posted `gate-1` before S2 (the gate launches shut,
+  a courtyard voice or clang needs DC 15 against his passive, and a clang
+  forms a fight). The routes that set `gateUnheld` walk out unchallenged,
+  and the switch is deleted. The default `both` is covered by a test
+  post.
 
 ## Task contracts
 
@@ -395,7 +411,7 @@ castle mirror; new `hold_test.go`; castle tests.
   no beat (S2 adds the `barred` beat). The held arm runs after the door is
   found and its id checked, so `ErrNoDoor` and `ErrBadDoor` keep their own
   answers and are never reported as a hold.
-- `func (e *Encounter) DoorHeldFor(actor MemberID, door DoorID) (reason string, held bool, err error)`:
+- `func (e *Encounter) DoorHeldFor(actor MemberID, door DoorID) (held bool, reason string, err error)`:
   the same read as the verbs' arm, as a query, so the session can ask it
   before it rolls Unlock's check or poses a Guidance pause.
 - A held step returns `StepObstructedError` wrapping `ErrBodyInTheWay`;
@@ -442,7 +458,7 @@ before. The `post` key's rows are unchanged (mirror `:321-330`).
   doors; the door stays shut and the stop names the holder.
 - `TestAHeldDoorRefusesItsVerbs` (R7): OpenDoor, CloseDoor and Unlock by a
   non-allied actor in reach of a held door are refused with `ErrDoorHeld`,
-  naming the observed holder ("the Guard bars the door"), else "someone";
+  naming the observed holder ("Guard bars the door"), else "someone";
   nothing changes and no beat is written. A held locked door names the
   guard, not the lock.
 - `TestAnAllyAndTheHolderWorkAHeldDoor`: an ally of the holder, and the
@@ -507,8 +523,8 @@ gate's crossings as doorways with `Crossing` true and an edge door's
 doorways with it false; a reveal act for a footprint door carries its
 crossings with `Crossing` true, and an edge door's reveal carries false.
 OpenDoor, CloseDoor and Unlock on the castle gate from the cell beside a
-posted `gate-1` are refused with `ErrDoorHeld` and the error text "the
-Guard bars the door"; Unlock rolls nothing and poses no pause; once he is
+posted `gate-1` are refused with `ErrDoorHeld` and the error text "Guard
+bars the door"; Unlock rolls nothing and poses no pause; once he is
 cowed they pass.
 
 - [ ] Re-pin; implement; `go test -race ./... && golangci-lint run ./...`.
@@ -551,7 +567,7 @@ converter and the v1alpha2 act converter (the revealed door's doorways),
 both copying `crossing`; their tests;
 `internal/handlers/dnd5e/sdkerr/errors.go` (`sdk.ErrDoorHeld` joins the
 FailedPrecondition bucket beside `ErrLocked` and `ErrDoorShut`, :237-238;
-the error text, "the Guard bars the door", rides the status message) and
+the error text, "Guard bars the door", rides the status message) and
 `errors_test.go` (its exhaustiveness table, :227, gains the row);
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
 The web needs no change for R7: its door notice already shows the error
@@ -619,6 +635,180 @@ steps.
 - [ ] Edit; `scripts/check-doc-genres.sh`; PR beside Task 14.
 
 **Completion evidence:** PR link.
+
+### Task 17 (S1c): the post's settings, direction and pass fact
+
+**Delivers:** R6 in the encounter.
+**Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (with `dungeonspec`).
+**Prerequisites:** Task 11 tagged (encounter v0.176.0).
+**Files:** `post.go` (`Post`, `PostData`, `heldAgainst`, `heldEdge`,
+`DoorHeldFor`, `refuseHeldDoor`, `ObservedHolds`), `region.go` (the post's
+side), `cellfacts.go` (the per-read memo of the mover's pass answer),
+`dungeonspec/states.go` (`holds:` gains `against` and `pass`); the castle
+mirror; `castletest` (the routes that set `gateUnheld`, the troupe tests;
+`castleHost.gateUnheld` deleted); new tests in `post_test.go`. No schema
+change: an answer entry teaches one fact (`dungeonspec/spec.go:1295`), and
+the castle's pass is a fact the troupe line already teaches.
+**Interfaces:**
+- `Post` gains `Against PostDirection` (`"both"` default, `"entering"`,
+  `"leaving"`) and `Pass FactID` (empty: none). `PostData` stores both,
+  `omitempty`; a record without them loads as both ways and no pass.
+- The post's side is the region its cells stand in (`RegionAt`). A post
+  naming a direction is refused, at the door and at load, unless its cells
+  stand in one region and every crossing of its door has exactly one cell
+  in that region. Regions do not follow walls (`region.go`), so a crossing
+  with both cells, or neither, in the post's region would make the
+  direction mean both ways or no way.
+- `heldAgainst` (`post.go:301`) keeps a holder only when the crossing is
+  barred for this mover: the direction matches the side `from` stands on
+  (entering: `from` in the post's region; leaving: `from` outside it;
+  both: either), and the mover does not know the pass fact
+  (`knowsFact`, `world.go:480`). Allies and the holder pass as today.
+  `knowsFact` scans the journal, so the read memoizes each mover's pass
+  answer per fact beside `q.held` (`cellfacts.go`); A* never rescans it.
+- `DoorHeldFor` and the door verbs read the same two knobs, with the
+  actor's own cell as the side it acts from.
+- `ObservedHolds` reads `against` and `pass` from the holder's live post
+  for that door at read time (its state's `Post`), never from the sight
+  testimony, which stores only `HoldsDoor` (`testimony.go:92-101`); the
+  knobs are the post's settings, not something the viewer saw. It names a
+  door for a viewer whenever the hold bars that viewer in some direction
+  (the pass and alliance decide), whatever region the viewer stands in,
+  and answers `HeldDoor{Door, Against, Side}`: the direction, and the
+  crossing cells on the post's side (one per crossing, B5). The web reads
+  the direction from those (Task 22), so a viewer at any distance gets an
+  exact preview.
+- dungeonspec: `holds: { door, at, against, pass }`; `against` is one of
+  the three words; `pass` names a fact; an unknown word is refused.
+**Content (in the mirror; T19 copies the hunk):**
+- `gate-1`'s `posted` and `alert` posts gain `against: entering` and
+  `pass: troupe-admitted`. The gate bars arrivals and lets the party walk
+  out. The default `both` is covered by a test post, not the castle.
+- `troupe-admitted` no longer moves `gate-1` to `cowed`: the
+  `{ on: fact, when: { fact: troupe-admitted }, to: cowed }` transitions on
+  `posted` and `alert` (mirror `:1747`, `:1756`) are removed. The troupe
+  passes by its fact while he stays posted, which is the keep's shape:
+  the guards stay at the gate and admit the guests. Cowing stays with
+  `gate-cowed` (the stand-aside). `greet` teaches nothing.
+**Castle routes (every call site that sets `gateUnheld`):** each starts
+inside the gate (`besideTheCook`) and walks out to the captain. Under
+`against: entering` they leave unchallenged, so none needs a lever:
+`TestMadKingTheOrdersTurnTheGarrison` (`castle_king_cells_test.go:106`),
+`toTheCaptainWithTheTruth` (`castle_king_companion_test.go:39`), the
+cook's-gossip troupe route (`castle_king_gate_test.go:444`, run by the
+troupe tests at `:479` and `:564`), `TestMadKingScout`
+(`castle_king_gate_test.go:602`) and `turnTheGarrison`
+(`castle_king_keep_test.go:35`) drop the switch and keep their routes.
+`castleHost.gateUnheld` and its doc in `castle_king_test.go` are deleted.
+**Tests:**
+- `TestAPostHoldsBothWaysByDefault`.
+- `TestAnEnteringPostLetsTheLeaversOut` and `TestALeavingPostLetsTheArrivalsIn`.
+- `TestAPassFactWalksThroughAHold`: a mover who knows it crosses and opens
+  the door while the holder stays posted and on his cell; one who does not
+  is barred; an ally needs none.
+- `TestThePassIsTheMoversOwn`: a companion who did not witness the line is
+  still barred.
+- `TestADirectedPostNeedsOneSidePerCrossing`: refused when the cells
+  straddle two regions, and when a crossing of the door has both cells, or
+  neither, in the post's region; the castle gate passes.
+- `TestTheDoorVerbsReadTheSettings`: from each side, with and without the pass.
+- `TestObservedHoldsFollowTheSettings`: a viewer with the pass, and a
+  viewer on the open side of a one-way post, see no `holds_door`; the knobs
+  come from the live post.
+- `TestThePassIsReadOncePerPath`: a route across several held edges reads
+  the mover's journal once per fact.
+- `TestAStoredPostKeepsItsSettings`; a legacy record loads as both ways.
+- dungeonspec: the knobs compile; an unknown direction is refused.
+- Castle: `TestMadKingTheTroupePassesThePostedGuard`: the troupe line is
+  won, and the party crosses the gate inward while `gate-1` stays `posted`
+  on his cell (the test asserts his state at the crossing).
+  `TestMadKingTheGateLetsThePartyOut`: from inside, the party walks out
+  past the posted guard unchallenged. A test post set `against: both` on
+  the same gate bars the same party on the way out.
+  `TestMadKingScriptTheTroupeNeedsTheFeast` changes its expectation: after
+  the troupe line `gate-1` stays posted, and the party crosses by the pass,
+  not by his standing aside.
+
+- [ ] Tests first; implement; rewrite the routes; delete `gateUnheld`;
+      `go test -race ./... && golangci-lint run ./...`; run record.
+
+**Completion evidence:** PR link, encounter tag.
+
+### Task 18 (S1c): the session carries the barred side
+
+**Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
+**Prerequisites:** Task 17 tagged.
+**Files:** `go.mod`; `read.go` (the sighting fill beside `HoldsDoor`,
+`read.go:457`); the sighting type (`HoldsAgainst string`, `HoldsSide
+[]spatial.Position`); castle tests.
+**Wire:** the sighting carries the hold's direction and its post-side
+crossing cells (Task 20), so the web previews a one-way hold from any
+distance. `holds_door` alone cannot: a viewer more than one region from an
+`entering` post would see either no hold (the arrival case, the keep's
+"check arrivals") or a hold it cannot orient.
+**Tests:** a castle test that a viewer at the party's start (more than one
+region from the gate) sees `HoldsDoor`, `HoldsAgainst: entering` and the
+two gatehouse-side cells; a viewer with the pass sees none; a test post
+set `against: leaving` lets an arrival in and stops the same party walking
+back out.
+
+- [ ] Re-pin; implement; `go test -race ./... && golangci-lint run ./...`.
+
+**Completion evidence:** PR link, session tag.
+
+### Task 19 (S1c): the api serves the settings
+
+**Owner:** rpg-api.
+**Prerequisites:** Task 18 and Task 20 tagged.
+**Files:** `go.mod`; the sighting conversion (`holds_against`,
+`holds_side`); its test; `content/the-mad-king.yaml` (Task 17's hunk,
+byte for byte). **Tests:** a convert test for the two fields; `make test
+&& make pre-commit`; the two castle files diff empty. Stage on :3030, with the content shelf copied (Open items).
+
+**Completion evidence:** PR link.
+
+### Task 20 (S1c): the wire carries the barred side
+
+**Owner:** rpg-api-protos. **Prerequisites:** none.
+**Files:** `dnd5e/api/session/v1alpha1/types.proto` (`Sighting`);
+generated Go and TS.
+**Interfaces:** additive, beside `holds_door = 12`:
+`string holds_against = 13;` (`both`, `entering`, `leaving`; empty reads
+as `both`) and `repeated Position holds_side = 14;` (the held door's
+crossing cells on the post's side, one per crossing).
+**Tests:** none hand-written; `buf lint`, `buf breaking`.
+
+- [ ] Edit, generate, lint, breaking check; PR; tag on merge.
+
+**Completion evidence:** PR link, protos tag.
+
+### Task 21 (S1c): the walk script follows the settings
+
+**Owner:** rpg-project. **Prerequisites:** Task 19 staged.
+**Files:** `.agents/skills/walk/SKILL.md`: the S1c rows below.
+
+- [ ] Edit; `scripts/check-doc-genres.sh`; PR beside Task 19.
+
+**Completion evidence:** PR link.
+
+### Task 22 (S1c): the web previews a one-way hold
+
+**Owner:** rpg-dnd5e-web. **Prerequisites:** Task 20 tagged; Task 19 on
+the walk env.
+**Files:** `package.json`; `src/components/session/atlasPath.ts`
+(`buildAtlasPathIndex` takes, per held door, its direction and side cells,
+and marks a crossing shut in the barred direction only:
+`entering` bars side-cell → far cell, `leaving` the reverse, `both` or
+empty both ways); the caller that reads the live sightings;
+`atlasPath.test.ts`.
+**Tests:** an `entering` hold refuses a previewed path from the far side
+at any distance and allows one from the side cells outward; `leaving` the
+reverse; an empty direction reads as both; the second plan (P1) still
+runs only when no route round exists.
+
+- [ ] Bump; implement; `npm run ci-check`.
+
+**Completion evidence:** PR link, the walk on :3030.
 
 ### Task 6 (S2): the bump is a beat the body hears
 
@@ -760,13 +950,19 @@ name their tests.
 - [ ] The re-aimed sneak step (walk skill step 2): a voice draws `gate-1` off the crossing for a round, then cross on `gate-2`'s blind beat (`TestMadKingScriptASneakWindowAtTheDoor`).
 
 **S1b** (`gate-1` posted; the gate door launches shut)
-- [ ] OpenDoor on the gate from the cell beside the posted guard → refused, "the Guard bars the door"; the door stays shut (R7).
+- [ ] OpenDoor on the gate from the cell beside the posted guard → refused, "Guard bars the door"; the door stays shut (R7).
 - [ ] Hover the courtyard from the free cell beside him and from inside the gatehouse → no path goes through either cell of the opening.
 - [ ] Covered, not walked (the door cannot be opened while he holds it, R7): a step through either cell of the open, held opening stops with "Guard bars the way" (`TestMadKingThePostHoldsTheGatesPassage`, which opens the door in the fixture). His cell is never clicked: it stays approach to speak.
 - [ ] The gate still looks like one door: no extra leaves, no cut in the wall at its crossings.
 - [ ] Walk past `gate-2` (not posted) → crosses as before.
 - [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → OpenDoor on the gate now passes → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.
-- [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; the troupe let through cows him, and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
+- [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; as S1b built it the troupe let through cowed him (S1c changes this: the troupe passes by its fact while he stays posted), and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
+
+**S1c** (`gate-1` posted, `against: entering`, `pass: troupe-admitted`)
+- [ ] From the start, hover the courtyard through the gate → no path; walk to the gate and click past him → stopped, "Guard bars the way"; OpenDoor refused (the arrival, as the S1b rows).
+- [ ] Once inside (the troupe pass, or a lure), walk out through the gate → crosses unchallenged; the preview showed the path out.
+- [ ] Covered, not walked (a check): the troupe line won, the party crosses inward while `gate-1` stays posted (`TestMadKingTheTroupePassesThePostedGuard`).
+- [ ] Covered, not walked: barred on the way out is a test post set `against: both` on the same gate; the castle bars only arrivals (`TestMadKingTheGateLetsThePartyOut`, `TestAPostHoldsBothWaysByDefault`).
 
 **S2**
 - [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
