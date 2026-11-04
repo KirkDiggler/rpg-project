@@ -1,5 +1,5 @@
 ---
-status: DESIGN, R1–R5 RULED 2026-11-03 and R7 RULED 2026-11-04 on rpg-project#835, R6 OPEN; gesture law amended 2026-11-03 on rpg-project#841; R5 (a post holds a passage) from the S1 walk; plan in plan.md
+status: DESIGN, R1–R5 RULED 2026-11-03 and R6 and R7 RULED 2026-11-04 on rpg-project#835; gesture law amended 2026-11-03 on rpg-project#841; R5 (a post holds a passage) from the S1 walk; plan in plan.md
 story: rpg-project#836
 lane: rpg-project#835
 ---
@@ -214,7 +214,7 @@ names the holder, not the door.
 
 **A held door refuses its verbs.** OpenDoor, CloseDoor and Unlock on a door
 a post holds are refused to any actor not allied with a holder, naming the
-nearest holder the actor observes ("the Guard bars the door"), else
+nearest holder the actor observes ("Guard bars the door"), else
 "someone bars the door", as the crossing is. Unlock reads the hold before
 any check is rolled or any help is asked for. The hold is read after reach and before the
 door's own state, so a held locked door names the guard, not the lock. The
@@ -225,6 +225,24 @@ answers. An ally, and the holder himself, open the door as before.
 **The holder is the post.** Several members may hold one opening: it is
 held while any of them is in a holding state, up and on a post cell. Killing one guard
 does not open the gate; emptying the post does.
+
+**A post holds both ways unless its setting says a direction.** By default
+a post bars its opening to movers crossing either way. Its setting may
+name one direction: `against: entering` bars a crossing that starts on the
+post's side (the region its cells stand in) and ends on the far side;
+`against: leaving` bars the reverse; `against: both` is the default. The
+door verbs follow the same setting from the side the actor stands on.
+
+**A pass fact walks through a hold.** A post's setting may name a fact
+(`pass: <fact>`). A mover who knows it crosses the held opening, and works
+its door, as an ally does; everyone else is barred. The fact is the
+mover's own, read from what the mover has learned, so a party that came in
+another way and never learned it meets the guard on the way out. The
+barred still get the guard's question under S2.
+
+Both are settings on the post, not engine rules, because a post is
+authored content that the studio configures (Kirk on R5: "ideally it is
+all configurable in the studio").
 
 **A held step names the holder.** A step across a held edge stops with a
 reason that names the holder the mover observes ("Guard bars the way"),
@@ -298,8 +316,8 @@ Downed bodies, allies and pass-through bodies are unchanged.
 | R3 | What is standing aside? | A state only (rejected: bodies overlap for a step). B walk only (rejected: a delayed walk still bars). C both: the state flips at once and his table walks him off the crossing. | C (Kirk: "oh yeah both sound good. I was having a hard time picking") | a posted member's states; castle content | 2026-11-03 |
 | R4 | The gate sneak against the post. | Today (wave C, #606 piece 4) the gate is a sneak: both gate guards walk a loop, and two world rounds of every four both stand at their beat posts with their backs to the gate (the loop's blind beat, `the-mad-king.yaml:296-301`); nobody stands in the crossing. A the post holds the crossing continuously while `posted`: one held body (`gate-1` in the crossing) and one wandering eye (`gate-2` keeps the loop); `posted` never leaves by time; the gate is talked, cowed or turned through, or sneaked through as a harder route: the posted body is emptied first (drawn off by a noise if his table says so, cowed, pushed, downed), then the crossing is taken on `gate-2`'s blind beat; piece 4's sneak test is re-aimed to exactly that (cost: the sneak needs two moves, not one window). B the crossing is one post of `gate-1`'s loop (rejected: the gate is held some rounds of four, a civil party that waits walks through, and "a man who says no" becomes a matter of timing). C a sneaker slips past a posted body on a check (rejected for now: it answers the body axis with a seeing roll; deferred as a verb of its own). Recommended A; the lane's wording for the sneak: draw `gate-1` off, cross on `gate-2`'s blind beat. | A (Kirk: "i like it") | `gate-1`'s post, `gate-2`'s loop; the castle's sneak and open-the-gate steps | 2026-11-03 |
 | R5 | What does a post hold? | The S1 walk (Kirk on the stack, 2026-11-03, rpg-project#841): the gate is a two-cell opening with a double door, so the party stepped through beside the posted `gate-1`; and a talk with the pedlar drew him off his post (his `post` row draws toward a voice heard this round). R1's cut was a posted guard blocking the crossing as his one cell. A a post holds a PASSAGE: a posted body bars the edges of the opening his post names, as a shut door does, for anyone not allied; the reason names him even beside him; his body still blocks its cell; a post naming no opening holds its cell only; the hold is a state, not a distance (amended on the #846 review: a state at a place, read while the holder stands on a post cell); the holder is the post, so a group may hold one gate. B two bodies, one per cell (rejected: a workaround; it breaks at three cells, and a drawn-off guard still opens his half). C narrow the castle gate to one cell (rejected: backwards; the content bends to the engine). | A (Kirk: "it is A and i think we will want a use case to develop until we make any decisions. ideally it is all configurable in the studio. this content is great since it really tests and reveals the seams and our decisions are either empowering or restrictive.") | a post's hold on an opening; the castle gate; the keep's front gate | 2026-11-03 |
-| R6 | Which way does a post hold? | S1b built the hold both ways: a party inside cannot walk out through the gate while `gate-1` is posted; nine castle QA routes that leave through the gate are kept green by a named test-only switch until this lands. A both ways (recommended: a gate guard challenges strangers leaving as well as arriving). B one authored side (fits the keep's "check arrivals" literally; costs an authored direction and a side rule). C both ways but a known pass (A plus a release fact). | **OPEN** on #835 | a post's hold, by direction | — |
-| R7 | What does a held door do to its verbs? | Found on Kirk's S1b walk (2026-11-04): he opened the held gate from the cell beside the guard, and walked through. A OpenDoor, CloseDoor and Unlock on a held door are refused to anyone not allied with a holder, naming him ("the Guard bars the door"), as the crossing is; the cells in front stay reachable, since that is where the conversation happens; the attempt is the bump (under S2 it writes `barred` and his table answers "what do you want?"); the keep's two admission attempts and the arrest are content on top of S2 (a `challenged` state counting attempts, an arrest row), out of this story. B the post holds the approach cells (rejected: a second kind of hold, and it makes the keep's "reaching the entrance causes the guards to halt the party" impossible, since nobody reaches it). C nobody can open a held door, guard included (rejected: the guard's side can never open his gate, even for the troupe). | A (Kirk: "I should not be able to open that door. what we want is to block the space in front of the door so no one can attempt to open it. long term we will want to trigger a say on the npc asking us what we want. after a couple more attempts the scenario is to have us arrested." then "A works for me") | the door verbs on a held door; the castle gate; the keep's front gate | 2026-11-04 |
+| R6 | Which way does a post hold? | S1b built the hold both ways, as the law read: a party inside the castle cannot walk out through the gate while `gate-1` is posted. Ten castle QA routes that leave through the gate (the cells, companion, keep and gate tests) stayed green only through a named test-only switch, `castleHost.gateUnheld`. The use case is the keep's front gate: its guards "check arrivals" (`ideas/keep-dungeon/design.md:276`), and a successful admission removes the restriction for the run (`:327-328`). A both ways (recommended: a gate guard challenges strangers leaving as well as arriving). B one authored side (fits "check arrivals" literally; costs an authored direction and a side rule). C both ways but a known pass (A plus a release fact). | A with two knobs on the post's setting: both ways by default; a direction, `against: both \| entering \| leaving`, for the cases that guard one way; and a pass fact, `pass: <fact>`, that walks its holder through while everyone else is barred (the keep's admission teaches it to the guests; a party that sneaked in by the kitchen never learned it and meets the guard on the way out). The barred still get S2's question. The ten outbound castle routes are rewritten honestly and `gateUnheld` is deleted. (Kirk: "so what if the party upon entering under a guest guise they get a fact that would override the guard from barring it. i think if the guards are guarding people from entering it would not apply to the other direction. something would happen, questions at minimum, but i think the encounter designer would use facts to control that" then "so i think there could be cases where we guard one direction. i think having that built in as an option on the setting would be best") | a post's setting: direction and pass fact; the castle gate; the keep's front gate | 2026-11-04 |
+| R7 | What does a held door do to its verbs? | Found on Kirk's S1b walk (2026-11-04): he opened the held gate from the cell beside the guard, and walked through. A OpenDoor, CloseDoor and Unlock on a held door are refused to anyone not allied with a holder, naming him ("Guard bars the door"), as the crossing is; the cells in front stay reachable, since that is where the conversation happens; the attempt is the bump (under S2 it writes `barred` and his table answers "what do you want?"); the keep's two admission attempts and the arrest are content on top of S2 (a `challenged` state counting attempts, an arrest row), out of this story. B the post holds the approach cells (rejected: a second kind of hold, and it makes the keep's "reaching the entrance causes the guards to halt the party" impossible, since nobody reaches it). C nobody can open a held door, guard included (rejected: the guard's side can never open his gate, even for the troupe). | A (Kirk: "I should not be able to open that door. what we want is to block the space in front of the door so no one can attempt to open it. long term we will want to trigger a say on the npc asking us what we want. after a couple more attempts the scenario is to have us arrested." then "A works for me") | the door verbs on a held door; the castle gate; the keep's front gate | 2026-11-04 |
 
 ## Assumptions, not ruled (open to veto on the design PR)
 
@@ -388,9 +406,6 @@ Downed bodies, allies and pass-through bodies are unchanged.
   own cost, never a rule of sneaking.
 
 ## Open
-
-- **R6, which way a post holds** (Rulings): open on #835. S1b holds both
-  ways.
 
 - **What distracts a post** (content, waits for the use case; Kirk on
   R5). Evidence from the keep: its gate guards halt the party
