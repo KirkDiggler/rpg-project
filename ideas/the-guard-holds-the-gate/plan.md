@@ -390,9 +390,14 @@ castle mirror; new `hold_test.go`; castle tests.
   reach → held → locked/already open/not locked → …, `doorverbs.go:128`,
   `:221`, `:383`): an actor not allied with any holder of the door is
   refused with a `doorHeldError` wrapping `ErrDoorHeld`, whose
-  `PublicReason()` names the holder the actor observes ("the Guard bars
-  the door"), else "someone bars the door". Atomic: no state change, no
-  beat (S2 adds the `barred` beat).
+  `PublicReason()` names the nearest holder the actor observes ("the Guard
+  bars the door"), else "someone bars the door". Atomic: no state change,
+  no beat (S2 adds the `barred` beat). The held arm runs after the door is
+  found and its id checked, so `ErrNoDoor` and `ErrBadDoor` keep their own
+  answers and are never reported as a hold.
+- `func (e *Encounter) DoorHeldFor(actor MemberID, door DoorID) (reason string, held bool, err error)`:
+  the same read as the verbs' arm, as a query, so the session can ask it
+  before it rolls Unlock's check or poses a Guidance pause.
 - A held step returns `StepObstructedError` wrapping `ErrBodyInTheWay`;
   `PublicReason()` answers "<name> bars the way" for the nearest holder the
   mover observes, else "someone bars the way". Driven walks route round a
@@ -487,10 +492,13 @@ doorway type, :643; the door-revealed body's doc at :1315-1324, which says
 a footprint door has no doorways, now says its crossings arrive marked);
 `convert.go` (the atlas copy, :178-183, copies `Crossing`); `act_family.go`
 (the reveal act's doorways, :1102-1126, decode `crossing`); `read.go`
-(the translate, :740-756: `encounter.ErrDoorHeld` → a session
-`ErrDoorHeld` beside `ErrLocked` and `ErrDoorShut`, carrying the public
-reason); `doors.go` and `close_door.go` (OpenDoor, Unlock, CloseDoor answer
-it as their refusal); tests.
+(the translate, :740-756, returns bare sentinels and drops the message
+today: its new arm wraps the session's `ErrDoorHeld` in a
+`DoorHeldError{Reason}` carrying the encounter's public reason, and
+`errors.Is(err, ErrDoorHeld)` still holds); `doors.go` and
+`close_door.go` (OpenDoor and CloseDoor answer it as their refusal;
+Unlock asks `DoorHeldFor` first, `doors.go:256`, before it rolls the lock
+check or poses a Guidance pause, `:363`); tests.
 **Tests:** a Move through the held opening answers `stopped` with "Guard
 bars the way"; the viewer's sighting of a posted `gate-1` on his post names
 `the-mad-king/gate-wall-door`; an allied viewer's, a cowed guard's and a
@@ -499,8 +507,9 @@ gate's crossings as doorways with `Crossing` true and an edge door's
 doorways with it false; a reveal act for a footprint door carries its
 crossings with `Crossing` true, and an edge door's reveal carries false.
 OpenDoor, CloseDoor and Unlock on the castle gate from the cell beside a
-posted `gate-1` are refused with `ErrDoorHeld` and "the Guard bars the
-door"; once he is cowed they pass.
+posted `gate-1` are refused with `ErrDoorHeld` and the error text "the
+Guard bars the door"; Unlock rolls nothing and poses no pause; once he is
+cowed they pass.
 
 - [ ] Re-pin; implement; `go test -race ./... && golangci-lint run ./...`.
 
@@ -540,7 +549,13 @@ body changes; `DoorInfo` refreshes only on door beats.
 **Files:** `go.mod`; the sighting conversion; the v1alpha1 atlas
 converter and the v1alpha2 act converter (the revealed door's doorways),
 both copying `crossing`; their tests;
+`internal/handlers/dnd5e/sdkerr/errors.go` (`sdk.ErrDoorHeld` joins the
+FailedPrecondition bucket beside `ErrLocked` and `ErrDoorShut`, :237-238;
+the error text, "the Guard bars the door", rides the status message) and
+`errors_test.go` (its exhaustiveness table, :227, gains the row);
 `content/the-mad-king.yaml` (Task 11's hunk, byte for byte).
+The web needs no change for R7: its door notice already shows the error
+text.
 **Behavior:** the atlas's doorways and a revealed door's doorways carry
 `crossing` on both wires.
 Corrected 2026-11-03 by the lead: the v1alpha2 helper is `doorwaysToProto`
@@ -621,11 +636,10 @@ test.
   its post holds (the barrier is then the nearest holder, H4); never by
   `stepTo`, and never for a wall, door, field or masked refusal. This is
   the keep's halt at the entrance.
-- R7: a door verb refused by a hold is the bump too. It writes `barred`
+- R7: a door verb refused by a hold is the bump too: it writes `barred`
   {actor, the nearest holder, the door's cell} and matches it on the
-  holder as a step's bump does; the verb answers its output (the beats,
-  deltas, any fight formed) with the refusal reason instead of a bare
-  error, and Task 7 folds it the same way.
+  holder as a step's bump does. A refused door verb also returns its
+  output; the field is named when S2 is cut.
 - `beatBarred machine.Beat = "barred"`, scoped. `Step` builds one
   targeted `wakeBeat{Beat: beatBarred, Member: barrier, Subject: mover,
   Cell: &cell}` and hands it to `matchOne` directly. It is never appended
@@ -748,7 +762,7 @@ name their tests.
 **S1b** (`gate-1` posted; the gate door launches shut)
 - [ ] OpenDoor on the gate from the cell beside the posted guard → refused, "the Guard bars the door"; the door stays shut (R7).
 - [ ] Hover the courtyard from the free cell beside him and from inside the gatehouse → no path goes through either cell of the opening.
-- [ ] Covered, not walked (the door cannot be opened while he holds it, R7): a step through either cell of the open, held opening stops with "Guard bars the way" (Task 11's castle test opens the door in the fixture). His cell is never clicked: it stays approach to speak.
+- [ ] Covered, not walked (the door cannot be opened while he holds it, R7): a step through either cell of the open, held opening stops with "Guard bars the way" (`TestMadKingThePostHoldsTheGatesPassage`, which opens the door in the fixture). His cell is never clicked: it stays approach to speak.
 - [ ] The gate still looks like one door: no extra leaves, no cut in the wall at its crossings.
 - [ ] Walk past `gate-2` (not posted) → crosses as before.
 - [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → OpenDoor on the gate now passes → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.

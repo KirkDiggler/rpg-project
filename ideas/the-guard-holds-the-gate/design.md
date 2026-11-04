@@ -214,8 +214,9 @@ names the holder, not the door.
 
 **A held door refuses its verbs.** OpenDoor, CloseDoor and Unlock on a door
 a post holds are refused to any actor not allied with a holder, naming the
-holder the actor observes ("the Guard bars the door"), else "someone bars
-the door", as the crossing is. The hold is read after reach and before the
+nearest holder the actor observes ("the Guard bars the door"), else
+"someone bars the door", as the crossing is. Unlock reads the hold before
+any check is rolled or any help is asked for. The hold is read after reach and before the
 door's own state, so a held locked door names the guard, not the lock. The
 cells in front of the door stay reachable: that is where the conversation
 happens. The attempt is the bump: under S2 it writes `barred` and his table
