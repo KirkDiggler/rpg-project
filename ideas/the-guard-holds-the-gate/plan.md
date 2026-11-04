@@ -174,11 +174,10 @@ merge.
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
 
-- Open, content (the lead's call, to confirm): `greet` is a plain line
-  that cannot fail and costs nothing, so teaching `gate-pass` on it lets
-  any party that says good evening through the gate both ways. The
-  recommendation is the troupe success alone (a check) plus the existing
-  stand-asides; greet stays in Task 17 as asked until this is confirmed.
+- Resolved: `gate-pass` is taught by the troupe success only, a check, as
+  the keep's guest guise is a check. `greet`, a plain line that cannot
+  fail, teaches nothing: a pass on it would open the gate to anyone who
+  says good evening.
 - Resolved: R6 A with two knobs (Kirk, 2026-11-04, lane #835). A post
   holds both ways by default; its setting may name a direction
   (`against`) and a pass fact (`pass`). The castle stays both ways and
@@ -662,11 +661,11 @@ deleted); new tests in `post_test.go`.
   the three words; `pass` names a fact; an unknown word is refused.
 **Content (in the mirror; T19 copies the hunk):** the castle stays both
 ways. `gate-1`'s `posted` and `alert` posts gain `pass: gate-pass`. The
-captain's `troupe` success and `greet` line teach `gate-pass` to their
-witnesses (the lead's call; see Open items on `greet`).
+captain's `troupe` success (a check) teaches `gate-pass` to its witnesses,
+beside the existing stand-asides; `greet` teaches nothing.
 **Castle routes:** the ten routes that leave through the gate (the cells,
 companion, keep and gate tests that set `gateUnheld`) are rewritten to
-earn the pass (`troupe` or `greet` before they leave) or to stand him
+earn the pass (the troupe line before they leave) or to stand him
 aside (cowed, turned), each as its story would; `castleHost.gateUnheld`
 and its doc in `castle_king_test.go` are deleted.
 **Tests:**
@@ -881,9 +880,9 @@ name their tests.
 - [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; the troupe let through cows him, and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
 
 **S1c** (`gate-1` posted; the castle both ways with `gate-pass`)
-- [ ] Greet the captain, then OpenDoor on the gate → it opens, and the walk crosses the opening; the guard says nothing (S2 adds his question for the barred).
 - [ ] A fresh run, in by the kitchen: walk back out to the gate → stopped at the opening, "Guard bars the way"; OpenDoor refused.
-- [ ] Covered, not walked: the troupe line (a check) teaches the pass; a one-way post (`against`) is a test post, since the castle stays both ways.
+- [ ] Covered, not walked (a check): the troupe line teaches `gate-pass`, and its holder opens the gate and walks out both ways (`TestMadKingScriptTheTroupeNeedsTheFeast` and Task 17's castle test).
+- [ ] Covered, not walked: a one-way post (`against`) is a test post, since the castle stays both ways (`TestAnEnteringPostLetsTheLeaversOut`, `TestALeavingPostLetsTheArrivalsIn`).
 
 **S2**
 - [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
