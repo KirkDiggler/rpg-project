@@ -244,7 +244,10 @@ another way and never learned it meets the guard on the way out. The
 barred still get the guard's question under S2. In the castle the troupe
 passes by its fact while the guard stays posted, the keep's shape: the
 guards stay at the gate and admit the guests. Cowing stays with the
-stand-aside.
+stand-aside. The castle's gate post is set `against: entering`: it bars
+arrivals and lets the party leave, so no civil lever is needed from inside
+before S2 gives the guard his question. The default, both ways, is
+covered by a test post.
 
 Both are settings on the post, not engine rules, because a post is
 authored content that the studio configures (Kirk on R5: "ideally it is
