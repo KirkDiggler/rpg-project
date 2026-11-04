@@ -174,15 +174,16 @@ merge.
   state, not the declaration, so every reader gives one answer (B2). It
   lands in rpg-toolkit#2258 or in Task 2, as the #2258 review decides.
 
-- Resolved: `gate-pass` is taught by the troupe success only, a check, as
-  the keep's guest guise is a check. `greet`, a plain line that cannot
-  fail, teaches nothing: a pass on it would open the gate to anyone who
-  says good evening.
+- Resolved: the castle's pass is `troupe-admitted`, taught by the troupe
+  success only, a check, as the keep's guest guise is a check; an answer
+  entry teaches one fact, so no new fact is added. `troupe-admitted` no
+  longer cows `gate-1`: the troupe passes by the fact while he stays
+  posted. `greet`, a plain line that cannot fail, teaches nothing.
 - Resolved: R6 A with two knobs (Kirk, 2026-11-04, lane #835). A post
   holds both ways by default; its setting may name a direction
-  (`against`) and a pass fact (`pass`). The castle stays both ways and
-  gains `gate-pass`; the ten outbound routes earn it or stand him aside,
-  and `castleHost.gateUnheld` is deleted (S1c).
+  (`against`) and a pass fact (`pass`). The castle stays both ways with
+  `pass: troupe-admitted`; every route that set `gateUnheld` crosses on a
+  lure instead, and the switch is deleted (S1c).
 
 ## Task contracts
 
@@ -634,55 +635,93 @@ steps.
 **Delivers:** R6 in the encounter.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/encounter` (with `dungeonspec`).
 **Prerequisites:** Task 11 tagged (encounter v0.176.0).
-**Files:** `post.go` (`Post`, `PostData`, `heldAgainst`, `DoorHeldFor`,
-`refuseHeldDoor`, `ObservedHolds`), `region.go` (the post's side),
+**Files:** `post.go` (`Post`, `PostData`, `heldAgainst`, `heldEdge`,
+`DoorHeldFor`, `refuseHeldDoor`, `ObservedHolds`), `region.go` (the post's
+side), `cellfacts.go` (the per-read memo of the mover's pass answer),
 `dungeonspec/states.go` (`holds:` gains `against` and `pass`); the castle
-mirror; `castletest` (the ten outbound routes; `castleHost.gateUnheld`
-deleted); new tests in `post_test.go`.
+mirror; `castletest` (the routes that set `gateUnheld`, the troupe tests;
+`castleHost.gateUnheld` deleted); new tests in `post_test.go`. No schema
+change: an answer entry teaches one fact (`dungeonspec/spec.go:1295`), and
+the castle's pass is a fact the troupe line already teaches.
 **Interfaces:**
 - `Post` gains `Against PostDirection` (`"both"` default, `"entering"`,
   `"leaving"`) and `Pass FactID` (empty: none). `PostData` stores both,
   `omitempty`; a record without them loads as both ways and no pass.
 - The post's side is the region its cells stand in (`RegionAt`). A post
-  naming a direction whose cells stand in more than one region is refused
-  at the door and at load: its side would be ambiguous.
+  naming a direction is refused, at the door and at load, unless its cells
+  stand in one region and every crossing of its door has exactly one cell
+  in that region. Regions do not follow walls (`region.go`), so a crossing
+  with both cells, or neither, in the post's region would make the
+  direction mean both ways or no way.
 - `heldAgainst` (`post.go:301`) keeps a holder only when the crossing is
   barred for this mover: the direction matches the side `from` stands on
-  (entering: `from` on the post's side; leaving: `from` on the far side;
+  (entering: `from` in the post's region; leaving: `from` outside it;
   both: either), and the mover does not know the pass fact
   (`knowsFact`, `world.go:480`). Allies and the holder pass as today.
+  `knowsFact` scans the journal, so the read memoizes each mover's pass
+  answer per fact beside `q.held` (`cellfacts.go`); A* never rescans it.
 - `DoorHeldFor` and the door verbs read the same two knobs, with the
   actor's own cell as the side it acts from.
-- `ObservedHolds` names a door for a viewer only when the hold bars that
-  viewer from where it stands now, so `Sighting.holds_door` stays the
-  web's whole answer; the session reads it on every sighting read
-  (`read.go:457`), so learning the pass or crossing sides refreshes it.
+- `ObservedHolds` reads `against` and `pass` from the holder's live post
+  for that door at read time (its state's `Post`), never from the sight
+  testimony, which stores only `HoldsDoor` (`testimony.go:92-101`); the
+  knobs are the post's settings, not something the viewer saw. It names a
+  door for a viewer only when the hold bars that viewer from the region it
+  stands in now.
 - dungeonspec: `holds: { door, at, against, pass }`; `against` is one of
   the three words; `pass` names a fact; an unknown word is refused.
-**Content (in the mirror; T19 copies the hunk):** the castle stays both
-ways. `gate-1`'s `posted` and `alert` posts gain `pass: gate-pass`. The
-captain's `troupe` success (a check) teaches `gate-pass` to its witnesses,
-beside the existing stand-asides; `greet` teaches nothing.
-**Castle routes:** the ten routes that leave through the gate (the cells,
-companion, keep and gate tests that set `gateUnheld`) are rewritten to
-earn the pass (the troupe line before they leave) or to stand him
-aside (cowed, turned), each as its story would; `castleHost.gateUnheld`
-and its doc in `castle_king_test.go` are deleted.
+**Content (in the mirror; T19 copies the hunk):**
+- The castle stays both ways. `gate-1`'s `posted` and `alert` posts gain
+  `pass: troupe-admitted`.
+- `troupe-admitted` no longer moves `gate-1` to `cowed`: the
+  `{ on: fact, when: { fact: troupe-admitted }, to: cowed }` transitions on
+  `posted` and `alert` (mirror `:1747`, `:1756`) are removed. The troupe
+  passes by its fact while he stays posted, which is the keep's shape:
+  the guards stay at the gate and admit the guests. Cowing stays with
+  `gate-cowed` (the stand-aside). `greet` teaches nothing.
+**Castle routes (every call site that sets `gateUnheld`; none keeps it):**
+each is inside the gate (`besideTheCook`) and walks out to the captain,
+who stands beyond it, so none can earn the pass or witness a stand-aside
+first. Each uses a lure: a voice spoken beyond his reach, or a clang
+(today's free swing) in the courtyard, draws `gate-1` off his post, and
+the route crosses while he is away.
+- `TestMadKingTheOrdersTurnTheGarrison` (`castle_king_cells_test.go:106`): a lure.
+- `toTheCaptainWithTheTruth` (`castle_king_companion_test.go:39`): a lure.
+- The cook's-gossip troupe route (`castle_king_gate_test.go:444`, run by
+  the troupe tests at `:479` and `:564`): a lure. Before S2 gives the guard
+  his question, the cook's-gossip route reaches the captain only by a lure.
+- `TestMadKingScout` (`castle_king_gate_test.go:602`): a lure.
+- `turnTheGarrison` (`castle_king_keep_test.go:35`): a lure.
+- A fight (he falls) or a stand-aside the captain can witness stay the
+  levers for a route whose story is a fight or a talk at the gate; none of
+  these is.
+`castleHost.gateUnheld` and its doc in `castle_king_test.go` are deleted.
 **Tests:**
 - `TestAPostHoldsBothWaysByDefault`.
 - `TestAnEnteringPostLetsTheLeaversOut` and `TestALeavingPostLetsTheArrivalsIn`.
 - `TestAPassFactWalksThroughAHold`: a mover who knows it crosses and opens
-  the door; one who does not is barred; an ally needs none.
+  the door while the holder stays posted and on his cell; one who does not
+  is barred; an ally needs none.
 - `TestThePassIsTheMoversOwn`: a companion who did not witness the line is
   still barred.
-- `TestADirectedPostStraddlingTwoRegionsIsRefused`.
+- `TestADirectedPostNeedsOneSidePerCrossing`: refused when the cells
+  straddle two regions, and when a crossing of the door has both cells, or
+  neither, in the post's region; the castle gate passes.
 - `TestTheDoorVerbsReadTheSettings`: from each side, with and without the pass.
 - `TestObservedHoldsFollowTheSettings`: a viewer with the pass, and a
-  viewer on the open side of a one-way post, see no `holds_door`.
-- `TestAStoredPostKeepsItsSettings`; legacy record loads as both ways.
+  viewer on the open side of a one-way post, see no `holds_door`; the knobs
+  come from the live post.
+- `TestThePassIsReadOncePerPath`: a route across several held edges reads
+  the mover's journal once per fact.
+- `TestAStoredPostKeepsItsSettings`; a legacy record loads as both ways.
 - dungeonspec: the knobs compile; an unknown direction is refused.
-- Castle: a party that came in by the kitchen is barred at the gate on the
-  way out; one that won the troupe line walks out.
+- Castle: `TestMadKingTheTroupePassesThePostedGuard`: the troupe line is
+  won, and the party crosses the gate while `gate-1` stays `posted` on his
+  cell (the test asserts his state at the crossing). A party that crossed
+  in on a lure and stays without the pass is barred on the way out.
+  `TestMadKingScriptTheTroupeNeedsTheFeast` changes its expectation: after
+  the troupe line `gate-1` stays posted, and the party crosses by the pass,
+  not by his standing aside.
 
 - [ ] Tests first; implement; rewrite the routes; delete `gateUnheld`;
       `go test -race ./... && golangci-lint run ./...`; run record.
@@ -694,10 +733,14 @@ and its doc in `castle_king_test.go` are deleted.
 **Owner:** rpg-toolkit `rulebooks/dnd5e/session`.
 **Prerequisites:** Task 17 tagged.
 **Files:** `go.mod`; castle tests.
-**Wire:** none. `holds_door` already names a door only when it bars the
-viewer from where it stands (Task 17), so the web's planner needs no
-direction field; a path that crosses a one-way opening twice is the one
-case it cannot preview, and the server's stop answers it.
+**Wire:** none in S1c. The castle serves no one-way post: the gate stays
+both ways, and `holds_door` per viewer is exact for a both-ways post.
+**The preview gap, stated:** for a one-way post, `holds_door` reads the
+side from the region the viewer stands in now. A viewer more than one
+region away from an `entering` post stands in neither side's region, so it
+sees no `holds_door`; its planner previews a path through the opening and
+the server stops it at the crossing. That is the arrival case, the keep's
+"check arrivals", not a corner. It is deferred to Task 20.
 **Tests:** a castle test that the pass fact walks through and its
 sighting drops `holds_door`; a test post set `against: leaving` lets an
 arrival in and stops the same party walking back out.
@@ -715,12 +758,14 @@ diff empty. Stage on :3030, with the content shelf copied (Open items).
 
 **Completion evidence:** PR link.
 
-### Task 20 (S1c): the web, only if needed
+### Task 20 (S1c, deferred): the planner reads the barred side
 
-**Owner:** rpg-dnd5e-web. **Prerequisites:** Task 18's finding.
-None expected: `holds_door` carries the direction's effect per viewer. If
-Task 18 finds a case it cannot carry, this task adds the protos field and
-the planner reads it.
+**Owner:** rpg-api-protos, the session, rpg-api, rpg-dnd5e-web.
+**Trigger:** the first content that serves a one-way post (the keep's
+front gate), not S1c, which serves none. Then the sighting carries the
+side a hold bars (the post's region and its direction), so the planner
+can refuse a previewed path that crosses the opening the barred way from
+any distance; additive.
 
 ### Task 21 (S1c): the walk script follows the settings
 
@@ -879,9 +924,9 @@ name their tests.
 - [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → OpenDoor on the gate now passes → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.
 - [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; the troupe let through cows him, and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
 
-**S1c** (`gate-1` posted; the castle both ways with `gate-pass`)
-- [ ] A fresh run, in by the kitchen: walk back out to the gate → stopped at the opening, "Guard bars the way"; OpenDoor refused.
-- [ ] Covered, not walked (a check): the troupe line teaches `gate-pass`, and its holder opens the gate and walks out both ways (`TestMadKingScriptTheTroupeNeedsTheFeast` and Task 17's castle test).
+**S1c** (`gate-1` posted; the castle both ways, `pass: troupe-admitted`)
+- [ ] Lure him off (a voice beyond his reach), cross in while he is away, wait for him to walk back and hold again, then walk out → stopped at the opening, "Guard bars the way"; OpenDoor refused, "Guard bars the door".
+- [ ] Covered, not walked (a check): the troupe line won, the party crosses while `gate-1` stays posted (`TestMadKingTheTroupePassesThePostedGuard`).
 - [ ] Covered, not walked: a one-way post (`against`) is a test post, since the castle stays both ways (`TestAnEnteringPostLetsTheLeaversOut`, `TestALeavingPostLetsTheArrivalsIn`).
 
 **S2**
