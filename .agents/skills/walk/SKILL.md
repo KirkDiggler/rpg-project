@@ -50,9 +50,15 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    tests and reveals the seams and our decisions are either empowering or
    restrictive." The opening passes only once he holds nothing: downed in
    step 4's fight, drawn off, cowed or turned; with a second holder on the
-   same door, downing one does not open it. Those rows are not walked:
-   standing him aside, turning the garrison, drawing him off and the troupe
-   let through each rest on a won check or a timed voice, and their tests
+   same door, downing one does not open it. Drawing him off is a voice, not
+   a die, so it is walked: with the gate held, speak to someone within his
+   earshot (the pedlar did it on Kirk's walk; today any voice he hears this
+   round draws him), and he walks off his post; hover the courtyard and the
+   path through the gate appears; walk through. The next round he walks
+   back and holds again. What draws a post is still the open content call
+   (R5), so the lure may change. The other rows are not walked: standing
+   him aside, turning the garrison and the troupe let through each rest on
+   a won check, and their tests
    stand in (the dice paragraph below): `TestMadKingThePostHoldsTheGatesPassage`
    (rpg-toolkit#2263), `TestMadKingTheGuardHoldsTheGate`,
    `TestMadKingScriptTheTroupeNeedsTheFeast`, and in the session
