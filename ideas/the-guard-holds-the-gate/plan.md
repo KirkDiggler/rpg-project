@@ -710,12 +710,12 @@ name their tests.
 
 **S1b** (`gate-1` posted; open the gate door first from the cell beside
 him)
-- [ ] Hover the courtyard from either cell of the opening → no path through the gate.
+- [ ] Hover the courtyard from the free cell beside him and from inside the gatehouse → no path goes through either cell of the opening.
 - [ ] Click the courtyard where no way goes round → the walk stops at the opening, through either cell, and the stop reason names him ("Guard bars the way", or "Guard stands in the way" when the step is onto his cell). His cell is never clicked: it stays approach to speak.
 - [ ] The gate still looks like one door: no extra leaves, no cut in the wall at its crossings.
 - [ ] Walk past `gate-2` (not posted) → crosses as before.
 - [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.
-- [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert at his post, still held; cowed, turned or downed, the opening passes; the troupe let through crosses; with `gate-2` also posted on the door, downing one does not open it.
+- [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; the troupe let through cows him, and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
 
 **S2**
 - [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.

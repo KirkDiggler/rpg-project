@@ -34,8 +34,9 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    his cell (R5, rpg-project#852). Open the gate door from the cell beside
    him (in reach there: the castle-test fixture
    `TestReserves_MarchOnFightRounds` says so; the walk proves it on the
-   stack), then walk for the courtyard. Hover the courtyard from either
-   cell of the opening: no path goes through the gate. Click it where no
+   stack), then walk for the courtyard. Hover the courtyard from the free
+   cell beside him and from inside the gatehouse: no path goes through
+   either cell of the opening. Click it where no
    way goes round: the walk stops at the opening and the stop reason names
    him, "Guard bars the way", or "Guard stands in the way" when the step is
    onto his cell. Never click his cell, which stays "approach to speak".
@@ -48,21 +49,22 @@ The script is the QA castle: the-mad-king encounter (rpg-project#639).
    want a use case to develop until we make any decisions. ideally it is
    all configurable in the studio. this content is great since it really
    tests and reveals the seams and our decisions are either empowering or
-   restrictive." The opening passes only once he holds nothing: downed in
-   step 4's fight, drawn off, cowed or turned; with a second holder on the
-   same door, downing one does not open it. Drawing him off is a voice, not
-   a die, so it is walked: with the gate held, speak to someone within his
-   earshot (the pedlar did it on Kirk's walk; today any voice he hears this
-   round draws him), and he walks off his post; hover the courtyard and the
-   path through the gate appears; walk through. The next round he walks
-   back and holds again. What draws a post is still the open content call
-   (R5), so the lure may change. The other rows are not walked: standing
-   him aside, turning the garrison and the troupe let through each rest on
-   a won check, and their tests
-   stand in (the dice paragraph below): `TestMadKingThePostHoldsTheGatesPassage`
-   (rpg-toolkit#2263), `TestMadKingTheGuardHoldsTheGate`,
-   `TestMadKingScriptTheTroupeNeedsTheFeast`, and in the session
-   `TestCastleThePostHoldsTheGatesOpening` (rpg-toolkit#2265).
+   restrictive." Drawing him off is a voice, not a die, so it is walked:
+   with the gate held, speak to someone within his earshot (the pedlar did
+   it on Kirk's walk; today any voice he hears this round draws him), and
+   he walks off his post; hover the courtyard and the path through the
+   gate appears; walk through. The next round he walks back and holds
+   again. What draws a post is still the open content call (R5), so the
+   lure may change. The other rows rest on a won check or on a fixture and
+   are not walked; their tests stand in (the dice paragraph below): alert
+   on his post, still held; cowed, turned or downed in step 4's fight, the
+   opening passes; the troupe let through cows him, and cowed he holds
+   nothing; with a second holder on the same door, downing one does not
+   open it (a test stands `gate-2` there; the castle posts only `gate-1`).
+   The tests are `TestMadKingThePostHoldsTheGatesPassage` (rpg-toolkit#2263),
+   `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`,
+   and in the session `TestCastleThePostHoldsTheGatesOpening`
+   (rpg-toolkit#2265).
 6. Speak to the captain from the gatehouse: a plain greeting passes no round of the world. `stand-aside` is a check and pays one round. When it succeeds, its voice turns the gate post alert, which is the sound outside a fight. A free swing makes no such sound: it pulls the post into the fight, and a post inside a fight does not step (rpg-project#785 S2 rows).
 
 A slice is walked once, at its final head, after the operator's early view.
