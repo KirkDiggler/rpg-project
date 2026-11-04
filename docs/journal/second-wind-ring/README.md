@@ -14,3 +14,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 ## Entries
 
 - [2026-11-04 — What does a ring actually need to grant?](2026-11-04-what-the-ring-grants.md)
+- [2026-11-04 — The ring supplies the Second Wind level](2026-11-04-ring-supplies-the-level.md)
