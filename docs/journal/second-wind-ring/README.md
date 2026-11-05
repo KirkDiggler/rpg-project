@@ -3,12 +3,12 @@
 Working journal for [Keep signature combat and loot S1 — #862](https://github.com/KirkDiggler/rpg-project/issues/862),
 a consumer investigation under [#850](https://github.com/KirkDiggler/rpg-project/issues/850).
 
-- [Proposed ADR-0048: Composing Equipment-Granted Abilities and Effects](https://github.com/KirkDiggler/rpg-toolkit/blob/docs/second-wind-ring/docs/adr/0048-equipment-granted-abilities.md).
+- [ADR-0048: accepted composition/ownership decision; APIs and extraction open](https://github.com/KirkDiggler/rpg-toolkit/blob/docs/second-wind-ring/docs/adr/0048-equipment-granted-abilities.md).
 - [Existing effects provider story — #703](https://github.com/KirkDiggler/rpg-project/issues/703).
 - [Overall keep experience — #702](https://github.com/KirkDiggler/rpg-project/issues/702).
 
 This journal records the evidence behind the ring's composition. The issue owns
-delivery state; the ADR owns the proposed architectural choice. The separate
+delivery state; the ADR owns the accepted composition/ownership boundaries. The separate
 mind/machine investigation is not a prerequisite or a shared-package decision.
 
 ## Entries
@@ -22,3 +22,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-04 — Let the package supply the constructor's noun](2026-11-04-let-the-package-name-the-constructor.md)
 - [2026-11-05 — Composition layers matter more than provisional constructor names](2026-11-05-composition-layers-and-provisional-names.md)
 - [2026-11-05 — From a test probe to an item composer](2026-11-05-from-probe-to-item-composer.md)
+- [2026-11-05 — Accepting the ownership decision, not freezing the example](2026-11-05-accepting-the-ownership-decision.md)
