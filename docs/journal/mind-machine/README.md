@@ -25,6 +25,8 @@ session's scope.
 
 - **2026-11-04 — [Can the existing machine express the guard trace?](2026-11-04-can-the-existing-machine-express-the-guard-trace.md)** Executable unit probe: the single path passes against the existing kernel; two intentional mutations demonstrate that the test catches broken behavior. Controlled-roll selection is the next consumer boundary, not part of this result.
 
+- **2026-11-05 — [What must a patrol remember to resume?](2026-11-05-what-must-a-patrol-remember.md)** The next slice is agreed. Inspection and existing tests show that current patrols derive progress from position and abandon a departed waypoint's dwell; the retained-resume target is a specific open choice.
+
 ## Adoption handoff
 
 Read the [work-records skill](../../../.agents/skills/work-records/SKILL.md) and

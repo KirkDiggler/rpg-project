@@ -8,10 +8,14 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - Follow-up entry records the executable guard trace, negative controls, and the distinction between a machine table-name output and actual controlled-roll selection — [unit-probe entry](../../docs/journal/mind-machine/2026-11-04-can-the-existing-machine-express-the-guard-trace.md).
 
+- 2026-11-05: investigation entry distinguishes a remembered machine mode from a retained patrol continuation, with current-behavior test receipts and a bounded resume-target decision — [patrol entry](../../docs/journal/mind-machine/2026-11-05-what-must-a-patrol-remember.md).
+
 ## Decided
 
 - KirkDiggler requested work-records adoption focused on intended delivery and what it could unlock; begin with the journal without selecting an architecture or manufacturing an accepted ADR — [direction record](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643743069).
 - Preserve the existing issue/PR as scope and decision homes; no runtime, skill, architecture-law or Pages publication changes — [entry](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md).
+
+- 2026-11-05: KirkDiggler agreed to NPC behavior S1, investigation temporarily owning movement and then yielding to retained patrol progress; the exact resume target remains open rather than being silently selected in code — [slice and decision](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6648376210).
 
 ## Found
 
@@ -19,6 +23,10 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - The existing machine passes the single-path fixture without production changes; both missing-state-write and false-guard mutations fail the new tests, with the full module race suite and lint passing after restoration — [experiment receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6644178404).
 
+- 2026-11-05: existing patrol logic rejoins the nearest waypoint and discards departed dwells, while weighted rows do not implement authored role priority; the two focused baseline tests pass, not a new resume implementation — [receipt](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6648376210).
+- 2026-11-05: a patrol-driver comment implies first-match priority despite the weighted selector; the documentation correction is separate, non-blocking work — [toolkit#2274](https://github.com/KirkDiggler/rpg-toolkit/issues/2274).
+
 ## Mistaken
 
-- None observed; distinguish the earlier test receipt from this documentation task, and operator proposals from accepted contracts — [evidence limits](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md#evidence).
+- 2026-11-04: none observed; distinguish the earlier test receipt from this documentation task, and operator proposals from accepted contracts — [evidence limits](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md#evidence).
+- 2026-11-05: a local scope check diffed against the moving main tip and falsely included an upstream skill change; staged status and the merge-base diff proved the skill untouched, and the check now uses the common base rather than treating upstream-only changes as this PR's work — [upstream change #865](https://github.com/KirkDiggler/rpg-project/pull/865).
