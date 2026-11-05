@@ -7,14 +7,15 @@ Investigation for [rpg-project#859](https://github.com/KirkDiggler/rpg-project/i
 - Prepared a seventh journal entry and index link recording the existing bundle/state surfaces and the limits of their reuse; no new authoring fields, compiler bridge, runtime behavior or deployment delivered — [initial investigation](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668089982).
 - Added an R1 design record and working two-guard example, explicitly leaving source schema, variable-route materialization and the concrete consumer bridge open — [R1 receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668590252).
 
-- Recorded the accepted ownership/continuation proposal as R2 and added a planning preflight; affected implementation tasks remain blocked on the explicit R3 lifecycle choice, not on another blanket plan approval — [acceptance and planning seam](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
+- Recorded the accepted ownership/continuation proposal as R2 and added a planning preflight; the preflight initially identified R3 as the lifecycle choice blocking affected tasks, not another blanket plan approval — [acceptance and planning seam](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
 
 ## Decided
 
 - At initial inspection, data definitions were a recommendation awaiting the operator; the authoring contract remains distinct from the accepted composer responsibility — [initial alternatives](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668089982).
 - KirkDiggler selected authored definitions as data on 2026-11-05; this settles editable lifecycle/selection source rather than parameter-only per-behavior Go builders, not an unspecified schema or implementation — [R1 receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668590252).
 
-- KirkDiggler accepted the two-guard proposal on 2026-11-05; preserve the definition/binding/progress split, different route lengths, addressed completion and original-configuration reload, while distinguishing producer expansion from a new runtime sequence contract — [R2 and open R3](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
+- KirkDiggler accepted the two-guard proposal on 2026-11-05; preserve the definition/binding/progress split, different route lengths, addressed completion and original-configuration reload, while distinguishing producer expansion from a new runtime sequence contract — [R2 and the initial R3 question](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
+- KirkDiggler selected finite producer-side expansion on 2026-11-05 (R3); the runtime remains unchanged, while concrete source/binding/completion contracts and implementation remain unfinished — [R3 receipt](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6670342428).
 
 ## Found
 
@@ -28,5 +29,7 @@ Investigation for [rpg-project#859](https://github.com/KirkDiggler/rpg-project/i
 - `machine.Recipe`/`SetAct` name literal states, table keys and writes; `recipeOf` translates explicit states, and `Selector.Path` deliberately retains no continuation, leaving a real sequence tool to specify rather than an already-working adapter to rename — [source-backed preflight](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
 
 ## Mistaken
+
+- The R3 checklist and law were updated, but the issue/PR summaries and preflight still described it as pending; their current-state text now agrees with the settled ruling and separates ADR-0049's narrow acceptance from ongoing authoring research — [tracking correction](https://github.com/KirkDiggler/rpg-project/pull/868).
 
 - The first local law-genre assertion matched a numeric issue-comment ID as a commit pin; inspection identified the exact match, and the law now links the story while the working example retains the precise receipt, without changing the workspace checker — [authoring record](https://github.com/KirkDiggler/rpg-project/pull/868).

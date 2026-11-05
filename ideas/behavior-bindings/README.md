@@ -1,7 +1,7 @@
 # One definition, two guards
 
 Accepted behavioral proposal for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
-and [R1–R2](design.md#law). This explains the agreed outcome, not supported YAML,
+and [R1–R3](design.md#law). This explains the agreed outcome, not supported YAML,
 a checked implementation plan or a claim of playable integration. The source and
 binding type names remain part of [the open contract](design.md#open);
 [planning preflight](planning-preflight.md) isolates the next lifecycle seam.
@@ -67,11 +67,11 @@ not proof that a stateful attachment format already exists.
 
 **A route value does not explain how to remember its next leg.** The materializer
 must connect a data-authored lifecycle to the supplied route without concealing
-that behavior in a Patrol-specific Go factory. The source form for that connection
-is R3's open question, not a finished feature of the scalar checker. Producer-side
-finite expansion preserves the existing runtime shape; a runtime cursor requires
-new progression and current-item lookup contracts. The alternatives and their
-costs are recorded in the planning preflight.
+that behavior in a Patrol-specific Go factory. R3 selects producer-side finite
+expansion, preserving the existing runtime shape. Its concrete source spelling,
+binding interfaces and completion mapping still need specification; the scalar
+checker does not already supply them. The planning preflight retains the
+alternatives and their costs as investigation evidence.
 
 Likewise, `StatesSpec` is not a ready-made generic behavior definition: its
 `blocks` and `holds` fields carry creature-body/post bindings. Reusing state

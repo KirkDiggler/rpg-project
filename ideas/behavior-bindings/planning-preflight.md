@@ -1,16 +1,17 @@
 # Behavior bindings — implementation planning preflight
 
-**Goal:** Turn the accepted [R1–R2 contract](design.md) and
+**Goal:** Turn the accepted [R1–R3 contract](design.md) and
 [two-guard example](README.md) into bounded, executable tasks without hiding a
 new lifecycle mechanism inside a test fixture or per-behavior builder.
 
 **Authority:** [Proposal acceptance and R3 discussion](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634),
 on [story #859](https://github.com/KirkDiggler/rpg-project/issues/859).
 
-**Readiness:** This is a preflight, **not a checked implementation plan**. R3
-changes a public authoring/runtime seam. The affected task contracts cannot be
-made executable by silently choosing its answer. There is no additional blanket
-plan-approval gate once the remaining contract is settled.
+**Readiness:** This is a preflight, **not a checked implementation plan**.
+**Update, 2026-11-05:** [R3 selects finite expansion during binding](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6670342428).
+The alternatives below preserve the investigation, not a still-pending decision.
+Concrete source/binding/completion contracts remain to be specified. There is no
+additional blanket plan-approval gate once those contracts are settled.
 
 ## Agreed outcome and finish line
 
@@ -79,8 +80,8 @@ than implement either approach.
 
 ## Requirement and seam preflight
 
-These are the requirements to assign to concrete tasks after R3, not completed
-plan coverage checks or executed new tests.
+These are the requirements to assign to concrete tasks following R3's selection,
+not completed plan coverage checks or executed new tests.
 
 | Requirement | Existing support | Required joined proof |
 |---|---|---|
@@ -101,8 +102,8 @@ plan coverage checks or executed new tests.
 
 ## Resume point
 
-Resolve [R3 on the design PR](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
-Then finish the concrete source/binding/completion contracts, derive the task and
-release boundaries, create the slices named by that plan, and publish requirement
-coverage plus provider/consumer seam checks before implementation. Do not present
-this preflight as a plan a fresh builder can already execute.
+Write the complete authored Patrol example: one definition, two-/three-waypoint
+bindings and the expanded states/tables. Specify parameter references, completion
+mapping and refusals; then derive task/release boundaries, create the slices named
+by that plan, and publish requirement coverage plus provider/consumer seam checks.
+R1–R3 are settled. No new binder code or executable implementation plan is claimed.

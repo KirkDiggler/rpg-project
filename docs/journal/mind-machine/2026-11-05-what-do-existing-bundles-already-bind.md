@@ -124,3 +124,11 @@ tool. The recommendation is producer-side expansion. That is a new mechanism
 choice, not a request to reapprove the accepted outcome or hide the missing tool
 in a test helper. The fresh composer race baseline passes, but no new binder or
 variable-route test has been implemented.
+
+**R3 follow-up, 2026-11-05:** KirkDiggler selected A, finite expansion during
+binding; [the receipt](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6670342428)
+closes that mechanism choice. The next artifact is the complete authored example
+and its concrete contracts, followed by the checked plan. This remains
+research/design work with R1–R3 settled, not a shipped binder. ADR-0049's existing
+**Accepted** status is narrower: composer responsibility and mechanical parameter
+metadata, not a declaration that the entire authoring design is finished.
