@@ -35,6 +35,8 @@ session's scope.
 
 - **2026-11-05 — [Where does interrupted behavior keep its progress?](2026-11-05-where-does-interrupted-behavior-keep-progress.md)** The first production component checkpoint joins real machines and weighted selection, retains private progress across reload, and passes an independent review. It does not claim live encounter or studio adoption.
 
+- **2026-11-05 — [What do existing bundles already bind?](2026-11-05-what-do-existing-bundles-already-bind.md)** Existing content and studio machinery already supports parameterized row bundles, including routes. The investigation separates that reuse from stateful attachments and records the still-open definition-authoring choice.
+
 ## Adoption handoff
 
 Read the [work-records skill](../../../.agents/skills/work-records/SKILL.md) and
