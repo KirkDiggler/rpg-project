@@ -14,6 +14,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - 2026-11-05: review-correction entry records the distinction between earlier architectural eras and the current play/world composition model, preserving the earlier proposal/journal revisions — [entry](../../docs/journal/mind-machine/2026-11-05-which-era-does-a-decision-belong-to.md).
 
+- 2026-11-05: component-checkpoint entry records the actual composer/metadata implementation, controlled-roll scenario, discovered ownership fixes, verification and independent review — [entry](../../docs/journal/mind-machine/2026-11-05-where-does-interrupted-behavior-keep-progress.md).
+
 ## Decided
 
 - KirkDiggler requested work-records adoption focused on intended delivery and what it could unlock; begin with the journal without selecting an architecture or manufacturing an accepted ADR — [direction record](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643743069).
@@ -22,6 +24,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 - 2026-11-05: KirkDiggler agreed to NPC behavior S1, investigation temporarily owning movement and then yielding to retained patrol progress; the exact resume target remains open rather than being silently selected in code — [slice and decision](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6648376210).
 
 - 2026-11-05: KirkDiggler emphasized procedural generation and suitable parameter values, and identified the composer direction as ADR-worthy; the decision is recorded as Proposed, not an accepted API or implementation — [direction](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6648962999).
+
+- 2026-11-05: KirkDiggler approved proceeding with the composer responsibility and mechanical parameter metadata; no separate quality-profile framework is required up front, and no merge is authorized — [agreement](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6650897115).
 
 ## Found
 
@@ -33,6 +37,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 - 2026-11-05: a patrol-driver comment implies first-match priority despite the weighted selector; the documentation correction is separate, non-blocking work — [toolkit#2274](https://github.com/KirkDiggler/rpg-toolkit/issues/2274).
 
 - 2026-11-05: three focused keepgen tests pass (1.362s), showing existing generated bindings and structural refusals, not a generic behavior library, editor support or quality-profile validation — [receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6648962999).
+
+- 2026-11-05: the real component passes module race/lint gates and head-specific CI; independent review found no Critical, Important or Minor findings and independently killed/restored the wrong-scalar loader mutant — [component receipt](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6652161699).
 
 ## Mistaken
 
