@@ -1,5 +1,7 @@
 # Run — 2026-11-03 — nilnil #2220 — the law gains its second half
 
+processed: 2026-11-05T201556Z
+
 Amends [rpg-project/AGENTS.md](https://github.com/KirkDiggler/rpg-project/blob/main/AGENTS.md) in service of [rpg-toolkit#2220](https://github.com/KirkDiggler/rpg-toolkit/issues/2220). Base: `rpg-project` `main` at 2a666a2. Ruling: Kirk, in session, [recorded on the issue](https://github.com/KirkDiggler/rpg-toolkit/issues/2220#issuecomment-6613107798).
 
 ## Shipped

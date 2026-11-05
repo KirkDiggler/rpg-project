@@ -1,5 +1,7 @@
 # Run — 2026-11-03 — Keep living paper design
 
+processed: 2026-11-05T201556Z
+
 Publication [rpg-project#839](https://github.com/KirkDiggler/rpg-project/pull/839), related to [#702](https://github.com/KirkDiggler/rpg-project/issues/702). Base: rpg-project main at 2a666a2.
 
 ## Shipped
