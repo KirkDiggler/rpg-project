@@ -73,6 +73,10 @@ covers every package.
 - Commit in the same turn a gate turns green.
 - A test earns its place by what must break for it to fail. A count pin or
   an assertion that cannot fail is replaced with one that states the fact.
+- A slice that ships a new content field, a key the dungeonspec compiles,
+  includes in the same slice a studio test that imports the current served
+  castle and round-trips it, so the studio keeps every field it does not
+  author and never refuses what the engine runs.
 
 ## Facts across a port
 
