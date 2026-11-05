@@ -9,6 +9,7 @@ and proposals; the linked issue remains the home for delivery state.
 - [Machine exploration — rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859): scope, decisions and delivery record.
 - [Exploration walkthrough — toolkit PR #2271](https://github.com/KirkDiggler/rpg-toolkit/pull/2271): the current designer-facing discussion and its source evidence.
 - [Keep goal — rpg-project#702](https://github.com/KirkDiggler/rpg-project/issues/702): the customer experiences motivating the work.
+- [Proposed ADR-0049: behavior as a parameterized composer](https://github.com/KirkDiggler/rpg-toolkit/blob/a16c4573829718d2e119c832eb05359029e6cc36/docs/adr/0049-behavior-is-a-composer.md): the candidate boundary for reusable behaviors and studio/generator bindings, not accepted architecture.
 
 At journal setup, PR #2271 describes exploration inside `mind/machine`, keeping
 the effects prototype separate and deferring extraction until the boundary is
@@ -26,6 +27,8 @@ session's scope.
 - **2026-11-04 — [Can the existing machine express the guard trace?](2026-11-04-can-the-existing-machine-express-the-guard-trace.md)** Executable unit probe: the single path passes against the existing kernel; two intentional mutations demonstrate that the test catches broken behavior. Controlled-roll selection is the next consumer boundary, not part of this result.
 
 - **2026-11-05 — [What must a patrol remember to resume?](2026-11-05-what-must-a-patrol-remember.md)** The next slice is agreed. Inspection and existing tests show that current patrols derive progress from position and abandon a departed waypoint's dwell; the retained-resume target is a specific open choice.
+
+- **2026-11-05 — [How can the same behaviors serve authors and generators?](2026-11-05-how-can-behaviors-serve-authors-and-generators.md)** Procedural generation makes parameter suitability distinct from validity. Existing generation tests provide a baseline; ADR-0049 records the proposed composer boundary and alternatives without selecting APIs or accepting the architecture.
 
 ## Adoption handoff
 
