@@ -12,6 +12,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - 2026-11-05: author/generator entry connects the parameter-selection question to Proposed ADR-0049, preserving the difference between valid content and suitable behavior — [entry](../../docs/journal/mind-machine/2026-11-05-how-can-behaviors-serve-authors-and-generators.md).
 
+- 2026-11-05: review-correction entry records the distinction between earlier architectural eras and the current play/world composition model, preserving the earlier proposal/journal revisions — [entry](../../docs/journal/mind-machine/2026-11-05-which-era-does-a-decision-belong-to.md).
+
 ## Decided
 
 - KirkDiggler requested work-records adoption focused on intended delivery and what it could unlock; begin with the journal without selecting an architecture or manufacturing an accepted ADR — [direction record](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643743069).
@@ -33,6 +35,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 - 2026-11-05: three focused keepgen tests pass (1.362s), showing existing generated bindings and structural refusals, not a generic behavior library, editor support or quality-profile validation — [receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6648962999).
 
 ## Mistaken
+
+- 2026-11-05: older ADR names/principles were treated as current authority in the first behavior-composer proposal; operator review prompted explicit current-contract grounding and historical labeling, without rewriting old ADR statuses or claiming a precise era cutoff — [correction](https://github.com/KirkDiggler/rpg-toolkit/pull/2271#issuecomment-6649755562).
 
 - 2026-11-04: none observed; distinguish the earlier test receipt from this documentation task, and operator proposals from accepted contracts — [evidence limits](../../docs/journal/mind-machine/2026-11-04-what-should-the-foundation-unlock.md#evidence).
 - 2026-11-05: a local scope check diffed against the moving main tip and falsely included an upstream skill change; staged status and the merge-base diff proved the skill untouched, and the check now uses the common base rather than treating upstream-only changes as this PR's work — [upstream change #865](https://github.com/KirkDiggler/rpg-project/pull/865).
