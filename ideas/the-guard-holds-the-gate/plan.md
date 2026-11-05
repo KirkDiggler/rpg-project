@@ -712,9 +712,11 @@ troupe tests at `:479` and `:564`), `TestMadKingScout`
   straddle two regions, and when a crossing of the door has both cells, or
   neither, in the post's region; the castle gate passes.
 - `TestTheDoorVerbsReadTheSettings`: from each side, with and without the pass.
-- `TestObservedHoldsFollowTheSettings`: a viewer with the pass, and a
-  viewer on the open side of a one-way post, see no `holds_door`; the knobs
-  come from the live post.
+- `TestObservedHoldsFollowTheSettings`: a viewer barred in some direction
+  sees `holds_door` from any region, the open side of a one-way post
+  included, with its direction and side (the web bars only the barred
+  direction); a viewer with the pass, or allied with the holder, sees none;
+  the knobs come from the live post.
 - `TestThePassIsReadOncePerPath`: a route across several held edges reads
   the mover's journal once per fact.
 - `TestAStoredPostKeepsItsSettings`; a legacy record loads as both ways.
@@ -746,9 +748,9 @@ crossing cells (Task 20), so the web previews a one-way hold from any
 distance. `holds_door` alone cannot: a viewer more than one region from an
 `entering` post would see either no hold (the arrival case, the keep's
 "check arrivals") or a hold it cannot orient.
-**Tests:** a castle test that a viewer at the party's start (more than one
-region from the gate) sees `HoldsDoor`, `HoldsAgainst: entering` and the
-two gatehouse-side cells; a viewer with the pass sees none; a test post
+**Tests:** a castle test that a viewer within sight of the gate (the
+party's start is ten hexes off and does not see it) sees `HoldsDoor`,
+`HoldsAgainst: entering` and the two gatehouse-side cells; a viewer with the pass sees none; a test post
 set `against: leaving` lets an arrival in and stops the same party walking
 back out.
 
@@ -801,8 +803,9 @@ and marks a crossing shut in the barred direction only:
 `entering` bars side-cell → far cell, `leaving` the reverse, `both` or
 empty both ways); the caller that reads the live sightings;
 `atlasPath.test.ts`.
-**Tests:** an `entering` hold refuses a previewed path from the far side
-at any distance and allows one from the side cells outward; `leaving` the
+**Tests:** an `entering` hold refuses a previewed path from the side
+cells to the far side at any distance and allows one from the far side
+back; `leaving` the
 reverse; an empty direction reads as both; the second plan (P1) still
 runs only when no route round exists.
 
@@ -958,11 +961,15 @@ name their tests.
 - [ ] Drawn off, walked (a voice, not a die): with the gate held, speak to someone within his earshot (the pedlar on Kirk's walk; today any voice heard this round draws him) → `gate-1` walks off his post → OpenDoor on the gate now passes → hover the courtyard → the path through the gate appears → walk through; the next round he walks back and holds again. What draws a post is still R5's open content call, so the lure may change.
 - [ ] Covered, not walked (`TestMadKingThePostHoldsTheGatesPassage` in rpg-toolkit#2263, `TestMadKingTheGuardHoldsTheGate`, `TestMadKingScriptTheTroupeNeedsTheFeast`; session `TestCastleThePostHoldsTheGatesOpening` in rpg-toolkit#2265): alert on his post, still held; cowed, turned or downed, the opening passes; as S1b built it the troupe let through cowed him (S1c changes this: the troupe passes by its fact while he stays posted), and cowed he holds nothing; with a second holder on the same door, downing one does not open it (a test stands `gate-2` there with `castleHost.postedLike`; the castle posts only `gate-1`).
 
-**S1c** (`gate-1` posted, `against: entering`, `pass: troupe-admitted`)
-- [ ] From the start, hover the courtyard through the gate → no path; walk to the gate and click past him → stopped, "Guard bars the way"; OpenDoor refused (the arrival, as the S1b rows).
-- [ ] Once inside (the troupe pass, or a lure), walk out through the gate → crosses unchallenged; the preview showed the path out.
-- [ ] Covered, not walked (a check): the troupe line won, the party crosses inward while `gate-1` stays posted (`TestMadKingTheTroupePassesThePostedGuard`).
-- [ ] Covered, not walked: barred on the way out is a test post set `against: both` on the same gate; the castle bars only arrivals (`TestMadKingTheGateLetsThePartyOut`, `TestAPostHoldsBothWaysByDefault`).
+**S1c** (`gate-1` posted, `against: entering`, `pass: troupe-admitted`; walk skill step 5)
+- [ ] From outside, OpenDoor on the gate from the cell beside him → refused, "Guard bars the door"; the door stays shut (R7, as the S1b row).
+- [ ] Hover the courtyard from the free cell beside him and from the start → no path goes through either cell of the opening (the arrival, as the S1b row). His cell is never clicked: it stays approach to speak.
+- [ ] The gate still looks like one door; a walk past `gate-2` (not posted) crosses as before.
+- [ ] Once inside (by the kitchen door, or past him drawn off), leave by the gate → the hover from inside shows the path out through the opening, the gate door opens, and the party walks out unchallenged while `gate-1` stays posted.
+- [ ] Drawn off, walked (a voice, not a die): as the S1b row; what draws a post is still R5's open content call, unchanged by R6.
+- [ ] Covered, not walked (a check): the troupe's won Performance check teaches the pass, and the troupe walks in while `gate-1` stays posted on his cell (`TestMadKingTheTroupePassesThePostedGuard` in rpg-toolkit#2268, `TestMadKingScriptTheTroupeNeedsTheFeast`).
+- [ ] Covered, not walked: alert on his post, still held; cowed by the stand-aside (`gate-cowed`), turned or downed, the opening passes, and cowed he holds nothing; a step through the open, held opening stops with "Guard bars the way"; with a second holder on the same door, downing one does not open it (`TestMadKingThePostHoldsTheGatesPassage`, `TestMadKingTheGuardHoldsTheGate`; session `TestCastleThePostHoldsTheGatesOpening`).
+- [ ] Covered, not walked: barred on the way out is a test post holding both ways, the default, on the same gate; the castle bars only arrivals (`TestMadKingTheGateLetsThePartyOut`, `TestAPostHoldsBothWaysByDefault`, both in rpg-toolkit#2268).
 
 **S2**
 - [ ] Walk past the guard where he is the only way → he says "Whoa there, buddy. Can I help you?" as speech at his cell, and the walk stops.
