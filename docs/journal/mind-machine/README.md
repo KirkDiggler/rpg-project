@@ -9,6 +9,7 @@ and proposals; the linked issue remains the home for delivery state.
 - [Machine exploration — rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859): scope, decisions and delivery record.
 - [Exploration walkthrough — toolkit PR #2271](https://github.com/KirkDiggler/rpg-toolkit/pull/2271): the current designer-facing discussion and its source evidence.
 - [Keep goal — rpg-project#702](https://github.com/KirkDiggler/rpg-project/issues/702): the customer experiences motivating the work.
+- [Mind architecture walkthrough](https://github.com/KirkDiggler/rpg-toolkit/blob/de47f4e4d7db7ee6f6fbb7a7a65d67390b712a6a/docs/architecture/components/mind.md): start here for the high-level shape, machine/composer zoom-ins, and the guard traced through both. This is the explanatory guide, not another journal or decision authority.
 - [Accepted ADR-0049: behavior as a parameterized composer](https://github.com/KirkDiggler/rpg-toolkit/blob/81b5ed0f4a475fa95b6c6fce768ad4a5d9ed6d52/docs/adr/0049-behavior-is-a-composer.md): the agreed responsibility and mechanical parameter-metadata direction; implementation/adoption remain separately evidenced.
 
 At journal setup, PR #2271 describes exploration inside `mind/machine`, keeping

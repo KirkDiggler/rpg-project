@@ -16,6 +16,8 @@ Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). 
 
 - 2026-11-05: component-checkpoint entry records the actual composer/metadata implementation, controlled-roll scenario, discovered ownership fixes, verification and independent review — [entry](../../docs/journal/mind-machine/2026-11-05-where-does-interrupted-behavior-keep-progress.md).
 
+- The journal index points to the toolkit-owned architecture walkthrough, with overview and machine/composer zooms; the explanation is not duplicated into a second journal article — [guide](https://github.com/KirkDiggler/rpg-toolkit/blob/de47f4e4d7db7ee6f6fbb7a7a65d67390b712a6a/docs/architecture/components/mind.md).
+
 ## Decided
 
 - KirkDiggler requested work-records adoption focused on intended delivery and what it could unlock; begin with the journal without selecting an architecture or manufacturing an accepted ADR — [direction record](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6643743069).
