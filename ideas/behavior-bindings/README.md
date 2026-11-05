@@ -1,9 +1,10 @@
 # One definition, two guards
 
-Working example for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
-and [the authoring direction, R1](design.md#law). This is a contract sketch, not
-supported YAML, a checked implementation plan or a claim of playable integration.
-The source and binding type names remain part of [the open contract](design.md#open).
+Accepted behavioral proposal for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
+and [R1–R2](design.md#law). This explains the agreed outcome, not supported YAML,
+a checked implementation plan or a claim of playable integration. The source and
+binding type names remain part of [the open contract](design.md#open);
+[planning preflight](planning-preflight.md) isolates the next lifecycle seam.
 
 ## What the author changes
 
@@ -32,7 +33,7 @@ Court guard
   Supplied route: court-A → court-B → court-C → repeat
 ```
 
-The two-versus-three waypoint example is a proposed acceptance case: it prevents
+The two-versus-three waypoint example is the acceptance case in R2: it prevents
 a fixed two-state fixture from standing in for a reusable route contract. The
 notation describes the desired content, not a newly invented `repeat` grammar.
 
@@ -51,7 +52,7 @@ Both guards can name their attachment `duty`: that identity is local to each
 composer, not a shared bag of patrol state. Their materialized definitions may
 differ because their parameter values differ.
 
-The proposed observable trace is: both begin on their first leg; west receives
+The observable trace is: both begin on their first leg; west receives
 its addressed arrival and advances to west-B; court remains on court-A. Saving
 and reloading both preserves those different continuations without generating
 new routes or selecting another answer during load. Changing Patrol's source is
@@ -67,7 +68,10 @@ not proof that a stateful attachment format already exists.
 **A route value does not explain how to remember its next leg.** The materializer
 must connect a data-authored lifecycle to the supplied route without concealing
 that behavior in a Patrol-specific Go factory. The source form for that connection
-is the central open question, not a finished feature of the scalar checker.
+is R3's open question, not a finished feature of the scalar checker. Producer-side
+finite expansion preserves the existing runtime shape; a runtime cursor requires
+new progression and current-item lookup contracts. The alternatives and their
+costs are recorded in the planning preflight.
 
 Likewise, `StatesSpec` is not a ready-made generic behavior definition: its
 `blocks` and `holds` fields carry creature-body/post bindings. Reusing state

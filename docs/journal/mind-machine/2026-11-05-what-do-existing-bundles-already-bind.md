@@ -111,3 +111,16 @@ source also finds `blocks`/`holds` creature-body annotations: reuse of its edito
 cannot silently make private patrol progress a new physical-permission owner.
 The open work is the source/binding contract and that reusable lifecycle tool,
 not another choice between data definitions and per-behavior Go builders.
+
+**Acceptance and planning follow-up, 2026-11-05:** KirkDiggler accepted the
+proposal: “proposal accepted, it looks great.” R2 in the design now records the
+ownership split and two-/three-waypoint independent-progress and reload contract.
+[Planning preflight](../../../ideas/behavior-bindings/planning-preflight.md)
+finds that the existing recipe has literal states, picks and bag writes, not a
+current-item/cursor operation; row substitution alone does not generate a
+lifecycle. The [R3 question](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634)
+therefore distinguishes finite expansion during binding from a runtime sequence
+tool. The recommendation is producer-side expansion. That is a new mechanism
+choice, not a request to reapprove the accepted outcome or hide the missing tool
+in a test helper. The fresh composer race baseline passes, but no new binder or
+variable-route test has been implemented.
