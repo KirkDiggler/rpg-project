@@ -17,3 +17,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-04 — The ring supplies the Second Wind level](2026-11-04-ring-supplies-the-level.md)
 - [2026-11-04 — The item composes usage, its pool and reusable effects](2026-11-04-item-composes-usage-and-effects.md)
 - [2026-11-04 — Normal recovery is configuration, not a different effect](2026-11-04-normal-recovery-as-configuration.md)
+- [2026-11-04 — The first item consumer exposes the grant seam](2026-11-04-consumer-probe-exposes-the-seams.md)
