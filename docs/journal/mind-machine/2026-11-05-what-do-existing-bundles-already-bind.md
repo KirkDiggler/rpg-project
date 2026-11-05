@@ -96,3 +96,18 @@ The eventual proof should bind the same definition twice, show the correct
 independent resolved values and continuations, and exercise the new content
 through the real compiler and studio round-trip. It must not stop at a passing
 Go literal or claim the existing bundle tests prove the new composer bridge.
+
+**Follow-up, 2026-11-05:** KirkDiggler selected authored definitions as data:
+“I like authored definitions as data too.” The [R1 receipt](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668590252)
+answers the authoring choice above; [the design record](../../../ideas/behavior-bindings/design.md)
+owns that ruling. The earlier recommendation and uncertainty remain as the
+record of the investigation, not a still-pending question.
+
+The [working example](../../../ideas/behavior-bindings/README.md) now proposes
+two versus three waypoints to expose variable-route materialization rather than
+prove only different coordinates in one fixed graph. That case is not yet an
+executed test or supported syntax. Further inspection of the same `StatesSpec`
+source also finds `blocks`/`holds` creature-body annotations: reuse of its editor
+cannot silently make private patrol progress a new physical-permission owner.
+The open work is the source/binding contract and that reusable lifecycle tool,
+not another choice between data definitions and per-behavior Go builders.
