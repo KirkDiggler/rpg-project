@@ -22,8 +22,8 @@ flowchart TD
 [Working two-guard example](README.md).
 
 R1 settles the authoring direction; R2 settles the ownership and observable
-behavior. R3 and the concrete source/producer contracts remain open. Planning
-must resolve those interfaces before implementation.
+behavior; R3 selects finite expansion during binding. The concrete source and
+producer interfaces remain to be specified.
 
 ## Law
 
@@ -41,6 +41,13 @@ only its recipient. Selecting a movement is not completing it. Saving and
 reloading preserves those continuations and the original materialized
 configuration without resampling.
 
+**R3 — finite expansion during binding.** A reusable producer-side tool expands
+a data-authored repeated body over a supplied finite list into ordinary machine
+states and table entries. The body remains editable data, not a Patrol-specific
+Go factory. The machine and composer require no new runtime sequence interpreter.
+Materialized configuration grows with the list; generated identities and
+source-to-generated diagnostics belong to the producer.
+
 The runtime boundary remains subject to
 [ADR-0049](https://github.com/KirkDiggler/rpg-toolkit/blob/main/docs/adr/0049-behavior-is-a-composer.md):
 `mind/behavior` consumes materialized recipes/tables, and each attachment owns
@@ -53,17 +60,16 @@ change weighted selection into role priority, or authorize shared mutable progre
 |---|---|---|---|---|
 | R1 | settled | Reusable definitions themselves are authored data, rather than only parameter settings for per-behavior Go builders | KirkDiggler | 2026-11-05 |
 | R2 | settled | Definition/binding/progress ownership and the two-/three-waypoint independent-completion and reload contract | KirkDiggler | 2026-11-05 |
-| R3 | open | Repeated authored steps over a finite parameter list: producer expansion or a runtime sequence tool | — | — |
+| R3 | settled | Producer-side finite expansion of authored repeated steps; unchanged machine/composer runtime | KirkDiggler | 2026-11-05 |
 
 ## Open
 
 - **Source and binding contract:** the serializable definition/binding shapes,
   parameter references, structured-value metadata and owner-supplied validation.
   Scalar `ParameterSpec` support does not establish a route-value contract.
-- **R3 — variable route structure:** choose producer-side expansion into ordinary
-  recipes/tables or a runtime sequence/cursor component. The body remains authored
-  data in either case; a Patrol-specific Go factory is not an alternative.
-  [Planning preflight](planning-preflight.md) identifies the affected seams.
+- **Expansion contract:** the concrete source spelling, generated identity and
+  diagnostic mapping for R3. [Planning preflight](planning-preflight.md) records
+  the inspected seams and alternatives preceding the selection.
 - **Consumer bridge:** the concrete input/completion vocabulary and the adapter
   carrying original materialized configuration and per-attachment continuation.
   Selection remains distinct from physical execution; the existing snapshot
