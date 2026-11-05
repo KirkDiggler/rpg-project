@@ -18,3 +18,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-04 — The item composes usage, its pool and reusable effects](2026-11-04-item-composes-usage-and-effects.md)
 - [2026-11-04 — Normal recovery is configuration, not a different effect](2026-11-04-normal-recovery-as-configuration.md)
 - [2026-11-04 — The first item consumer exposes the grant seam](2026-11-04-consumer-probe-exposes-the-seams.md)
+- [2026-11-04 — The consumer makes the construction API hard to read](2026-11-04-consumer-feedback-cleans-the-provider-api.md)
