@@ -20,3 +20,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-04 — The first item consumer exposes the grant seam](2026-11-04-consumer-probe-exposes-the-seams.md)
 - [2026-11-04 — The consumer makes the construction API hard to read](2026-11-04-consumer-feedback-cleans-the-provider-api.md)
 - [2026-11-04 — Let the package supply the constructor's noun](2026-11-04-let-the-package-name-the-constructor.md)
+- [2026-11-05 — Composition layers matter more than provisional constructor names](2026-11-05-composition-layers-and-provisional-names.md)
