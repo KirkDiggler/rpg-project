@@ -21,3 +21,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-04 — The consumer makes the construction API hard to read](2026-11-04-consumer-feedback-cleans-the-provider-api.md)
 - [2026-11-04 — Let the package supply the constructor's noun](2026-11-04-let-the-package-name-the-constructor.md)
 - [2026-11-05 — Composition layers matter more than provisional constructor names](2026-11-05-composition-layers-and-provisional-names.md)
+- [2026-11-05 — From a test probe to an item composer](2026-11-05-from-probe-to-item-composer.md)
