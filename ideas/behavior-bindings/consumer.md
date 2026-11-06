@@ -2,7 +2,8 @@
 
 Live-consumer walkthrough for [#859](https://github.com/KirkDiggler/rpg-project/issues/859)
 and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
-[Contract and R4–R7](consumer-design.md); [implementation plan](plan-consumer.md).
+[Contract and R4–R7](consumer-design.md); [implementation plan](plan-consumer.md);
+[focused source → instance contract](source-instance-contract.md).
 This explains the agreed target; candidate interface names in the plan are not
 claims that the live adapter has already shipped.
 
@@ -91,6 +92,11 @@ while another instance runs; ordinary delivered observations remain independent.
 No virtual paused clocks or new global scheduler is introduced.
 
 ## Source adapter and the first authoring cut
+
+The [source → instance boundary](source-instance-contract.md) pins the distinct
+source key, definition ref, actor identity and attachment ID, the producer
+handoff, refusal paths and source-preserving round-trip assertions. It does not
+silently settle the separate selection-lane or legacy-normalization semantics.
 
 Use the existing site document, not a new authoring database. The candidate
 `behaviorDefinitions` map and ordered creature/faction binding lists are source

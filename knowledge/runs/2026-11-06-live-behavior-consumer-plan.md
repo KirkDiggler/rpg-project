@@ -8,6 +8,8 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 
 - Revised the consumer plan/design for the accepted review direction, retained independent per-concern machines, and removed new editor panels from the first delivery; runtime implementation has not started — [accepted review](https://github.com/KirkDiggler/rpg-project/pull/877#pullrequestreview-5805884858).
 
+- Added a focused source → instance contract: four separate identities, existing producer API handoff, source-preserving values, actor-local attachment uniqueness, refusal matrix and named future assertions; no runtime or selection-lane policy was implemented — [consumer plan](https://github.com/KirkDiggler/rpg-project/pull/877).
+
 ## Decided
 
 - Reuse #866's existing live-journey delivery issue rather than invent a duplicate slice; proposed PR boundaries follow the actual behavior, encounter, session, API and web owners — [existing acceptance checklist](https://github.com/KirkDiggler/rpg-project/issues/866).

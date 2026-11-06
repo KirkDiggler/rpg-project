@@ -99,10 +99,11 @@ The inherited and consumer invariants remain:
   Named tests cover reactions, multiple-pick source refusals, terminal state,
   wake/deferred progress, body/post changes and ordinary combat policy. A
   concrete contradiction must be reported rather than silently changing rules.
-- **Source/selection-lane contract:** the canonical-runtime ruling does not settle
-  every source spelling, reusable-instance binding or resource/selection-lane
-  policy. Preserve independent concerns such as movement and needs; specify the
-  first consumer's action-lane boundaries before implementation.
+- **Source/selection-lane contract:** the [source → instance boundary](source-instance-contract.md)
+  specifies identity, supplied values, producer output and refusals. It does not
+  settle the separate resource/selection-lane policy. Preserve independent
+  concerns such as movement and needs; finish the first consumer's action-lane
+  boundaries and migration semantics before implementation.
 - **Later authoring breadth:** dedicated editors, cross-site catalogs, sampled
   defaults, generalized item schemas and async cross-cycle completion
   deduplication are not prerequisites of this delivery.
