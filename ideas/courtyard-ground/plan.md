@@ -152,6 +152,32 @@ Merge after proof: Assets provider, protos publication, encounter tag, session t
 - [ ] Independent review per repository policy, then fix findings with tests. Feature remains draft while integration or released pins are pending.
 - [ ] After authorized merges, adopt actual published tags/catalog pin, repeat joined verification, obtain final castle walk and close #874 only when all finish-line evidence exists.
 
+## Execution checkpoint — 2026-11-06
+
+| Task | Evidence / state |
+|---|---|
+| T1 | Implemented in Web `ffd31384`; edit, ownership, source/composition/local round trips and current full Web gate pass. |
+| T2 | Assets `48bd564`, draft assets#342: three exact color-resource candidates and 7 focused tests pass. Full Assets discovery exceeded 780 seconds; publication/inventory/pin remain pending. Web strict reader and private dev-only verified mount are implemented; candidate resources are outside public/dist. |
+| T3 | Protos `4c3ce65`, PR protos#421: local and remote contract gates pass; NOT merged/published. |
+| T4 | Encounter `45055ff6`, draft toolkit#2289: all module packages and lint pass locally and CI passes. Includes native fixture, save/reload/copy, source validation, footing and partial/concealment disclosure tests. |
+| T5 | Session `74bc4ea8`, draft toolkit#2290: full module/lint/CI pass; real encounter pseudo-version remains until release. |
+| T6 | API worktree is clean; wire mappings/integration await published T3 bindings. No API deployment. |
+| T7 | Studio base/paint/erase, real history/persistence, 2D feedback and batched level 3D drawing implemented in draft web#1395. Full Web gate passes. Live-play consumer/discovery merge still needs the new generated wire types. |
+| T8 | Native Studio early-view check passes: base-preserving paint, pointer paint/undo/redo/erase, YAML download and browser reload. Operator look, joined actor/NPC/fog walk, comparable benchmark, independent review, final pins and merges remain pending. |
+
+The current paper trail and preview instructions are on #874. The preview is
+http://127.0.0.1:3181/; the operator castle (:3030) and review Lab (:3180) are
+unchanged. Nothing is merged. Discussion remains in chat before recording decisions.
+
+Plan refinements supported by inspection: the new `scripts/groundPreviewPlugin.ts`
+serves only hash-verified private staging under an explicit environment opt-in,
+marks the UI as candidate, and is dev-only. Existing authoring fill annotations
+are omitted on textured ground while outlines/grid remain; native screenshots
+showed that otherwise those annotations masked the intended surface colors.
+Neither refinement changes mechanics or source ownership. Cross-repository
+progress is recorded here and in the linked issue/PRs rather than assigning
+all code commits to the documentation worktree's git history.
+
 ## Requirement coverage
 
 | Requirement | Tasks | Concrete proof |
