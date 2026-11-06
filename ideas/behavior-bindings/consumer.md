@@ -3,7 +3,8 @@
 Live-consumer walkthrough for [#859](https://github.com/KirkDiggler/rpg-project/issues/859)
 and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
 [Contract and R4–R7](consumer-design.md); [implementation plan](plan-consumer.md);
-[focused source → instance contract](source-instance-contract.md).
+[source → instance contract](source-instance-contract.md);
+[selection-lane contract](selection-lane-contract.md).
 This explains the agreed target; candidate interface names in the plan are not
 claims that the live adapter has already shipped.
 
@@ -70,6 +71,11 @@ The plan requires parity tests at those seams before removing the old runner.
 Compatibility, where retained, lives only at construction/load boundaries.
 
 ## Typed delegation and opportunity beats
+
+The [lane contract](selection-lane-contract.md) separates observation, data-only
+progress, permitted selection and actual completion. Its movement-plus-needs
+trace makes independent progress explicit; authored precedence applies to action
+requests, not to every state update.
 
 R5 retains the existing compulsion wrapper before the ordinary brain. A concrete
 imposed/custom intent bypasses composed selection. The default decision source

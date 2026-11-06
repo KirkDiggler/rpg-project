@@ -60,6 +60,12 @@ proves Studio import/edit/save/export preservation plus server compilation.
 Dedicated behavior-definition/binding editors are a later slice, not a
 prerequisite. Client-side game-rule execution is not introduced.
 
+**R8 — source and instance identity.** The source definition key, reusable
+reference, actor identity and attachment ID have distinct scopes. Bindings supply
+values without copying shared logic or private progress into authoring source.
+The [source → instance contract](source-instance-contract.md) owns the detailed
+handoff/refusal assertions.
+
 The inherited and consumer invariants remain:
 
 - The encounter owns lawful observation projection, opportunity/budget checks,
@@ -91,6 +97,7 @@ The inherited and consumer invariants remain:
 | R5 | settled | Typed Delegated intent, compulsion before ordinary choice, no second roll | KirkDiggler | 2026-11-06 |
 | R6 | settled | Distinct world/fight opportunity beats, separate from clock notifications | KirkDiggler | 2026-11-06 |
 | R7 | settled | YAML-first delivery with Studio preservation/round-trip proof; dedicated editors later | KirkDiggler | 2026-11-06 |
+| R8 | settled | Source/definition/actor/attachment identities, supplied-value ownership and source-preserving producer handoff | KirkDiggler | 2026-11-06 |
 
 ## Open
 
@@ -99,11 +106,11 @@ The inherited and consumer invariants remain:
   Named tests cover reactions, multiple-pick source refusals, terminal state,
   wake/deferred progress, body/post changes and ordinary combat policy. A
   concrete contradiction must be reported rather than silently changing rules.
-- **Source/selection-lane contract:** the [source → instance boundary](source-instance-contract.md)
-  specifies identity, supplied values, producer output and refusals. It does not
-  settle the separate resource/selection-lane policy. Preserve independent
-  concerns such as movement and needs; finish the first consumer's action-lane
-  boundaries and migration semantics before implementation.
+- **Selection lane and migration:** the [lane contract](selection-lane-contract.md)
+  specifies independent observation/progress, one selected answer per offered
+  opportunity, explicit permission and addressed completion using the shipped
+  composer semantics. Current encounter normalization/reaction parity remains
+  a separate migration contract; the new consumer path is not implemented.
 - **Later authoring breadth:** dedicated editors, cross-site catalogs, sampled
   defaults, generalized item schemas and async cross-cycle completion
   deduplication are not prerequisites of this delivery.

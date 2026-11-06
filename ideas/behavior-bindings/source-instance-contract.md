@@ -1,8 +1,8 @@
 # Source → instance boundary
 
-This is the next focused specification section for [consumer plan #877](https://github.com/KirkDiggler/rpg-project/pull/877),
-under [R1–R7](consumer-design.md). It defines identity, value ownership and the
-producer handoff. It does **not** settle selection-lane policy, legacy execution
+This is the source specification section for [consumer plan #877](https://github.com/KirkDiggler/rpg-project/pull/877),
+accepted as [R8](consumer-design.md#rulings). It defines identity, value ownership
+and the producer handoff. It does **not** settle selection-lane policy, legacy execution
 parity or a general item-schema language, and adds no runtime implementation.
 
 ## Four different identities
@@ -132,7 +132,8 @@ compiler must not generate an actor-wide cross-product such as
 
 This boundary carries the instances and their authored order. It does not decide
 whether a need is a data-only update, requests an action opportunity, or belongs
-to a different resource/selection lane. That is the next contract. In particular,
+to a different resource/selection lane. The [lane contract](selection-lane-contract.md)
+addresses that separate boundary. In particular,
 source list order must not be treated as permission to stop unrelated data-only
 progress, nor as a claim that all concerns compete for movement.
 
@@ -173,6 +174,6 @@ These are required future tests, **not tests executed by this documentation**:
 - `TestBindingRefusalsNameTheOriginalSource`: malformed definition/parameter/item
   errors identify actor, binding, parameter/item and local source field.
 
-Selection-lane rules and exact legacy normalization/parity cases remain separate.
-This section makes the producer boundary concrete without claiming the whole
-consumer plan is already executable.
+The [selection-lane contract](selection-lane-contract.md) and exact legacy
+normalization/parity cases remain separate. This section makes the producer
+boundary concrete without claiming the whole consumer plan is already executable.

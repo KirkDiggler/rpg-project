@@ -90,3 +90,13 @@ needs or other machines into one actor-wide state graph. Exact source/instance
 and selection-lane contracts remain to be finished before runtime changes.
 No runtime files were modified in this planning revision. #877 was retargeted
 to main before #868 can merge or its branch be deleted; neither PR was merged.
+
+**Source and lane follow-up, 2026-11-06:** the operator accepted the focused
+[source → instance contract](../../../ideas/behavior-bindings/source-instance-contract.md),
+recorded as R8. The subsequent [selection-lane section](../../../ideas/behavior-bindings/selection-lane-contract.md)
+distinguishes observation, independent data-only progress, authorized action
+requests, no-candidate versus explicit Hold and actual completion. Seven existing
+Composer tests pass unchanged in 0.006s; they support those component semantics,
+not a live consumer. The remaining normalization/parity section must address the
+old dispatcher's transition-before-pick behavior rather than assume it matches
+composer observation/commit semantics. No runtime files changed in this pass.
