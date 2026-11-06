@@ -25,3 +25,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-05 — From a test probe to an item composer](2026-11-05-from-probe-to-item-composer.md)
 - [2026-11-05 — Accepting the ownership decision, not freezing the example](2026-11-05-accepting-the-ownership-decision.md)
 - [2026-11-05 — Rage, retrieved loot, and an items-first extraction path](2026-11-05-rage-loot-and-items-first-extraction.md)
+- [2026-11-06 — From the walkthrough to a concrete extraction plan](2026-11-06-from-walkthrough-to-extraction-plan.md)
