@@ -1,14 +1,14 @@
 # Live Patrol consumer implementation plan
 
-> Planning revision: the operator accepted the review direction on 2026-11-06. This document records that direction and its remaining implementation contracts; it does not claim runtime work has started. Independent feature review and explicit merge gates remain.
+> Execution revision, 2026-11-06: R4–R9 are settled. Task 1 is implemented/reviewed in toolkit #2292; Tasks 2–3 are in progress in draft toolkit #2293. No canonical live cutover, merge, release or deployment is claimed.
 
 **Goal:** Complete [NPC behavior S1's live adoption, #866](https://github.com/KirkDiggler/rpg-project/issues/866), under [story #859](https://github.com/KirkDiggler/rpg-project/issues/859): one authored Patrol definition, two-/three-waypoint guards, real movement, qualifying disturbance, retained resumption and save/reload, with source surviving Studio edits.
 
-**Architecture:** [Consumer design R4–R7](consumer-design.md), [walkthrough](consumer.md), inherited [R1–R3](design.md). Machine-driven actors use one canonical composer runtime and new-format source. R9 removes old-format compatibility and normalization machinery; the playtest site and fixtures are rebuilt. Body/post state has one designated instance. Typed delegation preserves compulsion; world/fight opportunities are distinct. YAML plus Studio preservation is the first delivery, not new editors.
+**Architecture:** [Consumer design R4–R9](consumer-design.md), [walkthrough](consumer.md), inherited [R1–R3](design.md). Machine-driven actors use one canonical composer runtime and new-format source. R9 removes old-format compatibility and normalization machinery; the playtest site and fixtures are rebuilt. Body/post state has one designated instance. Typed delegation preserves compulsion; world/fight opportunities are distinct. YAML plus Studio preservation is the first delivery, not new editors.
 
 **Tech stack:** Go module boundaries in toolkit; existing dungeonspec YAML and canonical behavior JSON; React/TypeScript Studio codecs; existing authoring/session RPCs and API integration harness.
 
-**Readiness:** R4–R8 and the source/lane contracts carry the agreed target. [R9](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412) explicitly removes backwards compatibility: rebuild content/fixtures for the new format instead of adding migration adapters. The migration-parity prerequisite is deleted. Execute Task 1 now, then the dependent consumer tasks, keeping concrete gameplay/ownership checks and normal review/release gates.
+**Readiness:** R4–R8 and the source/lane contracts carry the agreed target. [R9](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412) explicitly removes backwards compatibility: rebuild content/fixtures for the new format instead of adding migration adapters. The migration-parity prerequisite is deleted. Task 1 is implemented and independently reviewed; continue Tasks 2–3 on its pushed commit, keeping concrete gameplay/ownership checks and normal review/release gates.
 
 ## Global constraints and finish line
 
@@ -36,7 +36,7 @@ cd rulebooks/dnd5e/encounter
 go test -count=1 -v -run '^(TestHeldSuite|TestADwellReloadedWhilePausedSpendsNone|TestABumpMatchesOnlyItsOwnBeat|TestBystandersHearTheAnswerOnTheNextRaise|TestTheHoldIsAStateAtAPlace)$' .
 ```
 
-No new consumer tests ran. Web/API paths were inspected only. No dependencies were installed or stack started.
+At this inspected baseline, no new consumer tests ran; web/API paths were inspected only and no stack started. Later implementation evidence is recorded under each task and its PR.
 
 Observed seams that drive this plan:
 
@@ -56,12 +56,12 @@ The named tests below must cover these normal-use failure classes:
 1. The walk stops short because of budget, a body/door or a reaction window; do not mistake turn-end for arrival (Task 2).
 2. Multiple roles listen for the same beat with different scopes; first-listener deduplication must not drop one (Tasks 1–2).
 3. A held walk is saved, source is edited, and the run reloads; resume the selected work against original configuration without another roll (Tasks 2–4).
-4. A profile coexists with creature-state blocking/post settings; physical permission has one designated state source, not a mirrored blob (Task 2, blocked on R4).
+4. A profile coexists with creature-state blocking/post settings; physical permission has one designated state source, not a mirrored blob (Task 2; R4 is settled).
 5. A valid current-format source field survives import/edit/local save/export/server compile; unrelated fields and explicit absence remain truthful. Old-format compatibility is not a requirement (Tasks 3–4).
 
 ## Implementation interfaces
 
-Names below are implementation targets, not claims these APIs already exist.
+The behavior provider APIs below exist at #2292's pushed commit. Encounter/source interfaces remain implementation targets unless their task's checkpoint says otherwise.
 
 | Owner | Proposed interface | Meaning |
 |---|---|---|
@@ -92,23 +92,37 @@ Install canonical instances from the rebuilt source and persist canonical config
 - DelayWakes(5) shifts wakes 8→13, leaves nil wakes/anchors/state/bags unchanged; zero span changes none; overflow wraps `ErrBadWakeDelay` and refuses with byte-identical snapshots.
 - `TestTimedInputDoesNotStepASleepingInstance`: a high-priority role sleeps until 8 while another role is due at 3; time 3 selects only the awake role, without touching the sleeper or its dice. Time 8 can select it. Non-timed delivered input can still wake it. This caller/composer boundary is missing today: Program.Step clears a due wake but does not itself suppress an early timed call.
 
-- [ ] Write named tests, observe meaningful red, implement the methods and run full module gates.
-- [ ] Publish provider commit for consumers; no provider merge is needed to start local integration.
+- [x] Write named tests, observe meaningful red, implement the methods and run full module gates.
+- [x] Publish provider commit for consumers; no provider merge is needed to start local integration.
+
+**Checkpoint:** [toolkit #2292](https://github.com/KirkDiggler/rpg-toolkit/pull/2292),
+`64cf9672540f1340703901a3cb89c07dce7a8273`: full module race/lint/hook and
+applicable CI pass. [Independent COMMENT review](https://github.com/KirkDiggler/rpg-toolkit/pull/2292#pullrequestreview-5808481734)
+reads all eight files, reports no findings and kills early-wake, alias and overflow
+mutants. MERGE-READY for provider scope only; not merged or released.
 
 **Verification:** `cd mind/behavior && go test -race -count=1 ./... && golangci-lint run ./...`; actual scoped hook. Consumer pins pushed commit during development, real provider tag before merge.
 
 ## Task 2: Encounter ownership, one selection and actual completion
 
 **Delivers:** The real state/execution/persistence path. **Owner:** toolkit `rulebooks/dnd5e/encounter`, same PR as Task 3 because they are one release unit. **Prerequisites:** Task 1 provider pin; settled R4–R7.
+**Current checkpoint:** [draft toolkit #2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293)
+at `440c681c44cb69bb17df6e7c32fd43a5b8653cc1` pins the provider and adds
+`IntentForAnswer` plus occurrence-owned heard kind through JSON reload. Exact
+d200 face 101 preserves the selected target with no second roll; clang/voice
+kind loss was observed as an assertion failure and fixed. Full owning-module
+race/lint/scoped-hook pass. The old runner is still active at this preparatory
+checkpoint; replacement, completion/pause, canonical source and live proof remain.
+
 **Create:** `behavior.go`, `behavior_test.go`, `behavior_work.go`, `behavior_work_test.go`, `behavior_data_test.go` in the encounter module.
 **Modify inspected files/symbols:** `field.go` MemberInput/memberRecord; `encounter.go` Join/Board copies and construction; `data.go` MemberData/ToData/Load; `machine.go` program/wake adapters and state projection; `wakebeats.go` land/match/re-arm; `noise.go` makeSound/landHeard; `tabledriver.go` translation; `clocks.go` runIntents/executeTurnIntent/record table description; `pause.go` turnPause/TurnPauseData/copy/validation/finishPausedIntent; `post.go` and `cellfacts.go` state reads. Replace the old live machine runner; update/rebuild affected fixtures against canonical input. Do not keep an old-format adapter or nil-input execution fork.
 
 **Execution contract:** [selection-lane boundary](selection-lane-contract.md). The actor has one action-selection lane per offered opportunity, not one combined machine or a universal resource scheduler.
 - Install the same Composer-based runtime for machine-driven actors from canonical input; remove the Machine/Table compatibility path. Empty/no-policy actors gain no invented behavior. Resolve body-state source once (sole instance by default); physical state reads StateOf(BodyInstance), never a copied blob.
 - Derive due/listener indexes from Inspect. Preserve all role listeners; a conservative unscoped actor-level union may dispatch to the composer, whose guards recheck exact scope. Never concatenate into first-per-beat and lose a broader scope. Rebuild indexes at load, do not persist them or scan the roster on every clock raise.
-- Preserve owed-round ordering and elapse semantics. Use existing world high-water/delivered timestamps consistently, not an unrelated fight-round counter. Deliver world opportunity `time` and fight opportunity `turn` separately; both may be timed inputs, but the world due adapter filters current-state Timed names and never arms a fight-only role merely for world time. Keep `clock:world`/`clock:fight` as notifications, not action opportunities. Normalize existing source's world-state and ordinary combat policy explicitly. No defensive clock.kind guard is required on every Patrol.
+- Preserve owed-round ordering and elapse semantics. Use existing world high-water/delivered timestamps consistently, not an unrelated fight-round counter. Deliver world opportunity `time` and fight opportunity `turn` separately; both may be timed inputs, but the world due adapter filters current-state Timed names and never arms a fight-only role merely for world time. Keep `clock:world`/`clock:fight` as notifications, not action opportunities. Author the rebuilt site's world-state and ordinary combat policy explicitly. No defensive clock.kind guard is required on every Patrol.
 - A queued input remains queued; barred is still synchronous and targeted. The caller explicitly distinguishes data-only observation from an existing permitted reaction/time opportunity. Do not treat ordinary observation or completion as another paid turn. Use the one canonical permission/budget path.
-- Add the delivered kind to wakeBeat/wakeEv and their saved form; `heard.kind` reads that occurrence. Older queued inputs lacking kind are unknown, not guessed. Never project its private Subject as an unseen maker identity.
+- Add the delivered kind to wakeBeat/wakeEv and their saved form; `heard.kind` reads that occurrence. Queued inputs lacking kind are unknown, not guessed. Never project its private Subject as an unseen maker identity.
 - Keep Driver consultation first, preserving `session.compelledDriver` precedence. The ordinary source returns typed `Delegated{}` without rolling; concrete imposed/custom intents bypass the composer. Refuse Delegated with an existing Pick and refuse an unresolved Delegated at the executor. Private `selectDecision` resolves it by calling Composer.Decide once with the correct opportunity, real view/facts/temper and existing Capabilities.Roller, then IntentForAnswer. Do not call TableDriver.Act again afterward. Missing Roller retains the existing refusal, not a local RNG.
 - Deliver an occurrence once. Any same-budget reconsult after a nonterminal intent is a new action-selection opportunity, not redelivery of the original heard/barred input. Preserve the existing reaction/world/turn permission distinction explicitly in the private selection context.
 - Record the chosen table from its actual instance, with instance-qualified record identity, not `m.Table[chosen.Key]`. Reuse existing answer/movement projections; do not expose private role blobs in the client.
@@ -207,8 +221,8 @@ No release happens as a development prerequisite. If R4 leads to no provider ext
 | Provider → consumer | Produced vs consumed contract | Availability / proof |
 |---|---|---|
 | Released sequence tool → source compiler | Existing ExpandSequence input/output, scalar parameters and mapped completions | v0.20.0 exists; Task 3 adapter tests |
-| Proposed Composer reads/wake shift → encounter | Exact Task 1 status/state/digest/listener/due values | New provider, blocked on R4; scope/alias/overflow tests |
-| Source compiler → session → encounter install | BehaviorInput ordered slots and explicit body source | New plain-data fields, Task 3/4 launch tests; no session rules |
+| Composer reads/wake shift → encounter | Exact Task 1 status/state/digest/listener/due values | #2292 implemented/reviewed; #2293 pins its pushed commit; use in the runtime remains Task 2 |
+| Source compiler → session → encounter install | BehaviorInput ordered instances and explicit body source | New plain-data fields, Task 3/4 launch tests; no session rules |
 | Encounter selection → translator → execution | Already-selected Answer, real TurnIntent, typed BehaviorWork | Task 2 one-roll/arrival tests; pause copy and loader must carry same claim |
 | Saved encounter → LoadComposer | Original materialized Instances/completions/body source + ComposerData | No source lookup; corruption/reload/held claim tests |
 | Server source grammar ↔ Studio codecs | Same named fields, explicit presence/order, server-owned errors | Same complete fixture and current served castle; Task 4 joined round trip |

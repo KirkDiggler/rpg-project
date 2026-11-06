@@ -100,3 +100,32 @@ Composer tests pass unchanged in 0.006s; they support those component semantics,
 not a live consumer. The remaining normalization/parity section must address the
 old dispatcher's transition-before-pick behavior rather than assume it matches
 composer observation/commit semantics. No runtime files changed in this pass.
+
+## Implementation follow-up — 2026-11-06
+
+**Question:** Must old experiments survive before we can build the canonical
+playtest consumer? The operator answered no: rebuild the site and fixtures;
+backwards compatibility is unnecessary ([R9](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412)).
+The earlier normalization/parity requirement above is superseded, not another
+approval gate.
+
+**Evidence:** [Provider #2292](https://github.com/KirkDiggler/rpg-toolkit/pull/2292)
+implements inspection/state/wake access. Its regression first selected a sleeping
+role at time three despite its wake at eight. The fixed code passes full-module
+race/lint/CI; [independent review](https://github.com/KirkDiggler/rpg-toolkit/pull/2292#pullrequestreview-5808481734)
+found no issues and killed early-wake, live-pointer and overflow mutants.
+[Consumer draft #2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293) adds
+the shared selected-answer translation boundary and fixes queued heard-kind loss
+through actual sound creation, EncounterData JSON and load. Exact d200 face 101
+keeps the second selected goal without another roll. Clang then voice each retains
+its own kind; missing kind stays unknown. Full encounter-module race/lint and the
+scoped hook pass at `440c681c`.
+
+**Interpretation:** These are concrete provider and preparatory consumer results,
+not the live patrol journey. The old runner is still active in the draft; it is
+not accepted as a permanent branch. Neither PR is merged or deployed.
+
+**Next:** Install canonical instance/configuration ownership and designated body
+state; replace dispatch with lawful opportunities and addressed real completion;
+carry held work through pause/reload. Rebuilt source and Studio/server/local-stack
+proof follow in the same adoption wave, without a legacy migration prerequisite.

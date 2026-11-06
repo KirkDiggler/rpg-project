@@ -4,6 +4,9 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 
 ## Shipped
 
+- Provider Task 1 is implemented at toolkit `64cf9672`, full module gates and applicable CI green, independent current-head COMMENT verdict MERGE-READY with no findings; still unmerged and not the live consumer — [provider #2292 review](https://github.com/KirkDiggler/rpg-toolkit/pull/2292#pullrequestreview-5808481734).
+- Consumer draft `440c681c` pins that pushed provider and adds pure selected-answer translation plus heard occurrence kind through actual JSON reload; full encounter-module race/lint/hook pass, but the canonical runner/source/completion/local-stack work remains — [draft #2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293).
+
 - Prepared a proposed consumer contract, walkthrough, conditional task plan and investigation entry; no runtime/source field, installation, deployment or implementation-ready approval is claimed — [planning PR #877](https://github.com/KirkDiggler/rpg-project/pull/877).
 
 - Revised the consumer plan/design for the accepted review direction, retained independent per-concern machines, and removed new editor panels from the first delivery; runtime implementation has not started — [accepted review](https://github.com/KirkDiggler/rpg-project/pull/877#pullrequestreview-5805884858).
