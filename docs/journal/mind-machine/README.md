@@ -39,6 +39,8 @@ session's scope.
 
 - **2026-11-06 — [Can one authored body drive two different patrols?](2026-11-06-can-one-authored-body-drive-two-patrols.md)** A real producer expands one source into two-/three-item programs; deterministic journeys, an actual reference-capture regression, restored mutants and independent review establish the component path without claiming studio or live-world adoption.
 
+- **2026-11-06 — [Where does live behavior meet the creature's body?](2026-11-06-where-does-live-behavior-meet-the-body.md)** Consumer planning finds that creature state also controls blocking/posts, turn-end is not arrival, and held work lacks completion identity. A conditional plan preserves compulsion, scheduling and source round trips while leaving the explicit state-owner choice open.
+
 ## Adoption handoff
 
 Read the [work-records skill](../../../.agents/skills/work-records/SKILL.md) and
