@@ -1,7 +1,8 @@
-# Second Wind ring investigation
+# Item/effects investigation — starting with the Second Wind ring
 
-Working journal for [Keep signature combat and loot S1 — #862](https://github.com/KirkDiggler/rpg-project/issues/862),
-a consumer investigation under [#850](https://github.com/KirkDiggler/rpg-project/issues/850).
+Working journal for [Keep equipment S1 — #862](https://github.com/KirkDiggler/rpg-project/issues/862)
+and [S2 — Rage and encounter-independent loot #873](https://github.com/KirkDiggler/rpg-project/issues/873),
+under [#850](https://github.com/KirkDiggler/rpg-project/issues/850). The original folder name is retained so existing links stay valid.
 
 - [ADR-0048: accepted composition/ownership decision; APIs and extraction open](https://github.com/KirkDiggler/rpg-toolkit/blob/docs/second-wind-ring/docs/adr/0048-equipment-granted-abilities.md).
 - [Existing effects provider story — #703](https://github.com/KirkDiggler/rpg-project/issues/703).
@@ -23,3 +24,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-05 — Composition layers matter more than provisional constructor names](2026-11-05-composition-layers-and-provisional-names.md)
 - [2026-11-05 — From a test probe to an item composer](2026-11-05-from-probe-to-item-composer.md)
 - [2026-11-05 — Accepting the ownership decision, not freezing the example](2026-11-05-accepting-the-ownership-decision.md)
+- [2026-11-05 — Rage, retrieved loot, and an items-first extraction path](2026-11-05-rage-loot-and-items-first-extraction.md)
