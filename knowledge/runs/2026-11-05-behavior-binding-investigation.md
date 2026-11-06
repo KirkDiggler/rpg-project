@@ -11,6 +11,8 @@ Investigation for [rpg-project#859](https://github.com/KirkDiggler/rpg-project/i
 
 - On 2026-11-06, added the eighth investigation entry and linked the executable source/expansion guide, completed plan and independent review; this records a reviewed component, not a merge/tag or live adoption — [toolkit#2284](https://github.com/KirkDiggler/rpg-toolkit/pull/2284).
 
+- Release follow-up, 2026-11-06: toolkit #2284 merged at `c9fbb6bcb141c9215bdf778590beb5acea9b0d01` and CI published `mind/behavior/v0.20.0`; #871 is closed, while this companion documentation PR and consumer adoption remain separate — [release receipt](https://github.com/KirkDiggler/rpg-project/issues/871#issuecomment-6677799175).
+
 ## Decided
 
 - At initial inspection, data definitions were a recommendation awaiting the operator; the authoring contract remains distinct from the accepted composer responsibility — [initial alternatives](https://github.com/KirkDiggler/rpg-project/issues/859#issuecomment-6668089982).
@@ -33,6 +35,8 @@ Investigation for [rpg-project#859](https://github.com/KirkDiggler/rpg-project/i
 - `machine.Recipe`/`SetAct` name literal states, table keys and writes; `recipeOf` translates explicit states, and `Selector.Path` deliberately retains no continuation, leaving a real sequence tool to specify rather than an already-working adapter to rename — [source-backed preflight](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6669172634).
 
 - The production expander proves both route lengths, addressed progress, interruption/hold/reload and a non-movement body; independent review reads all eleven files and publishes MERGE-READY at `eba23e1dbe6ec4ff93e82c5f2d8af55392f908dc`, with no findings and applicable CI green — [review receipt](https://github.com/KirkDiggler/rpg-toolkit/pull/2284#pullrequestreview-5793883425).
+
+- The release tag and Go module origin resolve to the same merge commit; merged `mind/behavior` is identical to the reviewed module, with fresh race results 1.213s/1.016s/1.016s and lint zero issues — [merge-tree verification](https://github.com/KirkDiggler/rpg-project/issues/871#issuecomment-6677799175).
 
 ## Mistaken
 

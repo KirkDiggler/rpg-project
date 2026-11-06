@@ -84,3 +84,11 @@ operator authorization and the actual CI-published tag; #871 remains open until
 its delivery requirements hold. The broader source/Studio/world adapter proof
 remains on #859 and the live journey on #866. Do not turn this successful
 component checkpoint into a claim that either consumer path already works.
+
+**Release follow-up, 2026-11-06:** KirkDiggler merged #2284 at
+`c9fbb6bcb141c9215bdf778590beb5acea9b0d01`; CI published **mind/behavior v0.20.0**.
+The tag and Go module origin both resolve to that merge. The merged module tree
+matches the reviewed head; fresh isolated merge-tree race tests pass (root 1.213s,
+sound 1.016s, stage 1.016s) and lint reports zero issues. [Release receipt](https://github.com/KirkDiggler/rpg-project/issues/871#issuecomment-6677799175).
+#871 is closed. The companion project record PR #868 remains unmerged; source,
+Studio and live-world adoption remain separate work.
