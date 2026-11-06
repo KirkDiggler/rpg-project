@@ -2,7 +2,7 @@
 
 Live-consumer walkthrough for [#859](https://github.com/KirkDiggler/rpg-project/issues/859)
 and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
-[Contract and R4–R7](consumer-design.md); [implementation plan](plan-consumer.md);
+[Contract and R4–R9](consumer-design.md); [implementation plan](plan-consumer.md);
 [source → instance contract](source-instance-contract.md);
 [selection-lane contract](selection-lane-contract.md).
 This explains the agreed target; candidate interface names in the plan are not
@@ -12,7 +12,7 @@ claims that the live adapter has already shipped.
 
 ```mermaid
 flowchart TD
-    Source["Existing YAML / machine-table shorthand / explicit bindings"] --> Normalize["Source normalization and domain validation"]
+    Source["Rebuilt playtest YAML / explicit bindings"] --> Normalize["Current-format source and domain validation"]
     Normalize --> Expand["ExpandSequence or ordinary InstanceSpec"]
     Expand --> Launch["session carries canonical configuration"]
     Launch --> Actor["encounter: one behavior runtime"]
@@ -34,10 +34,10 @@ flowchart TD
 | Component | Owns | Input → output |
 |---|---|---|
 | Source / Studio carry | Authored definitions, references, values and ordering | YAML → existing draft/source codecs → preserved YAML; no new editor prerequisite |
-| `dungeonspec` | Name resolution, source normalization, domain validation and coordinate lowering | Existing machine/table shorthand or explicit behavior bindings → canonical behavior setup |
+| `dungeonspec` | Name resolution, current-format validation and coordinate lowering | Rebuilt explicit behavior bindings → canonical behavior setup; no legacy input adapter |
 | `ExpandSequence` | Finite expansion | Definition + chosen items/scalars → ordinary instances, completion/source maps |
 | Session/API | Launch/load/store plumbing | Compiled and saved toolkit data; no behavior or geometry decisions |
-| Encounter installation | One normalized runtime configuration | Existing shorthand becomes a canonical composition; no permanent legacy execution branch |
+| Encounter installation | One canonical runtime configuration | Materialized behavior setup; no old-format adapter or execution branch |
 | Composer | Instance progress and ordered weighted choice | Observe/Decide plus derived state/scheduling queries |
 | Driver/compulsion gate | Imposed/custom decision precedence | Concrete intent, or typed `Delegated{}` for ordinary composed choice |
 | Execution | Real price, route, movement and actual completion | Selected answer → TurnIntent → execution/held work → addressed completion |
@@ -47,16 +47,15 @@ The client does not expand or execute definitions. The compiler does not sample
 missing values. The translator does not roll. Turn-end does not fabricate
 arrival. A load does not replace saved configuration with the latest source.
 
-## One runtime, normalization at the boundary
+## One runtime, rebuilt source
 
-R4 makes the existing machine/table input shorthand for canonical composition.
-A creature with a simple policy needs only the simple source form; it does not
-need a second live interpreter. Multiple concerns still use independent machines
-and continuations—for example, movement and needs are not collapsed into one
-actor-wide state graph. The first action lane does not become a universal
-resource scheduler. Explicit compositions can name several roles in
-authored order. Actors with no ordinary machine-driven policy gain no invented
-behavior merely for structural uniformity.
+R4 supplies one canonical runtime; R9 removes the compatibility requirement for
+old experiments. The playtest site and affected fixtures are rebuilt in the new
+format rather than translated by a legacy adapter. Multiple concerns still use
+independent machines and continuations: movement and needs are not collapsed
+into one actor-wide state graph. The first action lane is not a universal resource
+scheduler. Explicit compositions name roles in authored order; actors with no
+ordinary policy gain no invented behavior.
 
 `BlockingStates` and `Posts` remain encounter rules. Their state source is one
 instance; when exactly one exists it is unambiguous, otherwise the author names
@@ -64,11 +63,10 @@ it. Other roles' private progress is not another physical permission authority.
 The canonical saved form contains the materialized instances, original completion
 maps and private progress, not both a live Machine blob and its composer copy.
 
-Normalization must preserve existing observable behavior. It is not enough to
-rename a type: current world reactions can pick, fight turns use the existing
-ordinary table path, and the core composer refuses a Pick through Observe.
-The plan requires parity tests at those seams before removing the old runner.
-Compatibility, where retained, lives only at construction/load boundaries.
+The new format explicitly expresses observations, opportunities and completion.
+Tests preserve the agreed gameplay boundaries, not the old representation or its
+dispatcher quirks. Old unsupported source/saves fail explicitly; current-format
+save/reload must retain original configuration and progress.
 
 ## Typed delegation and opportunity beats
 
@@ -92,8 +90,8 @@ repeated defensive `clock.kind == world` guard.
 
 The world due index must not arm a fight-only role merely because its beat is
 timed. The provider proposal reports each current state's timed beat names as well
-as wake/due information; its exact source/lane contract still needs specification
-before implementation. A future wake suppresses timed stepping of that instance
+as wake/due information; the provider task implements that explicit query
+contract and per-instance timed-wake admission. A future wake suppresses timed stepping of that instance
 while another instance runs; ordinary delivered observations remain independent.
 No virtual paused clocks or new global scheduler is introduced.
 
@@ -102,12 +100,12 @@ No virtual paused clocks or new global scheduler is introduced.
 The [source → instance boundary](source-instance-contract.md) pins the distinct
 source key, definition ref, actor identity and attachment ID, the producer
 handoff, refusal paths and source-preserving round-trip assertions. It does not
-silently settle the separate selection-lane or legacy-normalization semantics.
+replace the separate selection-lane contract or add old-format normalization.
 
 Use the existing site document, not a new authoring database. The candidate
 `behaviorDefinitions` map and ordered creature/faction binding lists are source
-forms for the canonical runtime. Existing simple machine/table content normalizes
-at the same boundary. Explicit lists replace inherited lists wholesale; absent
+forms for the canonical runtime. The new playtest content supplies them
+explicitly; no old machine/table import arm is required. Explicit lists replace inherited lists wholesale; absent
 and explicitly empty are not collapsed into an accidental fallback.
 
 Definitions can use the shipped sequence body or a concrete reusable ordinary
@@ -135,8 +133,8 @@ supplies `{"x":12,"y":0}` to the finite producer. The emitted configuration has
 that goal's table and completion mapping; editable source still names one shared
 definition and supplies its own route.
 
-Launch carries the compiled setup. Encounter normalizes simple and composed
-source to the same runtime, retaining original materialized data. A world
+Launch carries the compiled current-format setup. Encounter installs the
+canonical runtime, retaining original materialized data. A world
 opportunity reaches the Driver/compulsion gate; ordinary delegated choice asks the
 composer once. The existing router/Mover consumes the selected answer within the
 real movement budget.
@@ -168,7 +166,7 @@ feeds existing body/post state projection.
 
 | Decision | Benefit | Cost / boundary | Not taken |
 |---|---|---|---|
-| R4 canonical runtime | One future place to maintain scheduling, progress and persistence | Boundary normalization and parity proof are paid during migration | Permanent opt-in legacy/composer branches |
+| R4/R9 canonical runtime and rebuilt content | One future place to maintain scheduling, progress and persistence | Rebuild playtest content/fixtures and prove current-format behavior | Legacy adapters and migration-parity work |
 | R5 typed delegation | One explicit sealed outcome instead of a flag beside a value | Resolve before execution and preserve compulsion | `UseBehaviors` plus competing intent |
 | R6 separate opportunities | Forgotten clock guard cannot hijack a fight turn | Normalize existing source meaning; keep notifications distinct | A defensive guard on every duty |
 | R7 YAML and preservation first | A smaller real consumer delivery | Dedicated editing UI remains later work | New definition/binding panels in this wave |
@@ -176,8 +174,8 @@ feeds existing body/post state projection.
 
 The fixture's pending waypoint is its authored resumption target, not a new
 global rejoin/dwell policy. This is not an asynchronous job protocol or arbitrary
-rollback. A concrete parity conflict is reported with a failing path rather than
-silently redefining source meaning.
+rollback. Current-format contract failures are reported and fixed; preserving
+old experimental representations is not a prerequisite.
 
 ## Where changes land and source map
 

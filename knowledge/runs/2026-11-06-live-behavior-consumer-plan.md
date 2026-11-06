@@ -12,6 +12,8 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 
 - Added the selection-lane contract and movement-plus-needs acceptance trace, distinguishing data-only progress, permitted action requests, no-candidate/explicit holds and completion; no consumer implementation is claimed — [planning PR](https://github.com/KirkDiggler/rpg-project/pull/877).
 
+- R9 removes the compatibility/migration prerequisite; the plan now targets rebuilt playtest source and current-format behavior, and execution begins with the bounded composer provider task — [R9 receipt](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412).
+
 ## Decided
 
 - Reuse #866's existing live-journey delivery issue rather than invent a duplicate slice; proposed PR boundaries follow the actual behavior, encounter, session, API and web owners — [existing acceptance checklist](https://github.com/KirkDiggler/rpg-project/issues/866).
@@ -23,6 +25,8 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 
 - KirkDiggler accepted the source → instance contract on 2026-11-06; R8 records identity/value/source-preservation scope without claiming the live consumer is implemented — [source boundary](https://github.com/KirkDiggler/rpg-project/blob/docs/consumer-patrol/ideas/behavior-bindings/source-instance-contract.md).
 
+- KirkDiggler ruled on 2026-11-06 that backwards compatibility is unnecessary and existing work can be rebuilt for the actual playtest site; no old-format importer, saved-state migrator or parity blocker is retained merely to protect experiments — [operator ruling](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412).
+
 ## Found
 
 - Existing creature state is the source for blocking/posts, `Routed` turn-end also includes blocked/partial walks, and held-turn data has no behavior-completion claim — [current encounter seams](https://github.com/KirkDiggler/rpg-toolkit/tree/9922e218d7942a8cf048af46cc2090f2e77d4fd1/rulebooks/dnd5e/encounter).
@@ -33,6 +37,8 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 - Seven selected existing Composer tests pass in 0.006s, confirming data-only updates alongside selection, atomic observation refusal, addressed completion, authored priority and no-candidate versus explicit Hold semantics; new consumer assertions remain unrun — [shipped component tests](https://github.com/KirkDiggler/rpg-toolkit/blob/9922e218d7942a8cf048af46cc2090f2e77d4fd1/mind/behavior/composer_test.go).
 
 ## Mistaken
+
+- The plan prolonged a legacy-normalization/parity requirement after the runtime direction was settled; the operator clarified that experiments are disposable, and R9 removes that requirement rather than making it another prerequisite to implementation — [correction](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412).
 
 - The progress message prematurely announced starting the provider task while source/selection-lane contracts still need specification; no runtime files were edited, and the revised plan records that boundary instead of presenting the review adoption as completed implementation planning — [current plan record](https://github.com/KirkDiggler/rpg-project/pull/877).
 

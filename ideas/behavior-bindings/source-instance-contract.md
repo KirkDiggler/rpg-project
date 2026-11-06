@@ -2,8 +2,9 @@
 
 This is the source specification section for [consumer plan #877](https://github.com/KirkDiggler/rpg-project/pull/877),
 accepted as [R8](consumer-design.md#rulings). It defines identity, value ownership
-and the producer handoff. It does **not** settle selection-lane policy, legacy execution
-parity or a general item-schema language, and adds no runtime implementation.
+and the producer handoff. R9 removes compatibility with prior source/save experiments;
+this targets the rebuilt playtest format, not an old-input adapter. A general
+item-schema language remains outside the first consumer.
 
 ## Four different identities
 
@@ -38,18 +39,18 @@ The candidate field names remain those in the consumer plan:
 - A concrete non-sequence definition supplies reusable recipe/table data. Its
   attachment ID comes from the binding, not from a shared instance ID inside the
   definition. Unsupported `items`/`with` on this form are refused, not ignored.
-- `creature: true` is the explicit shorthand-import arm already described in the
-  plan. It is not a third behavior factory selected by an NPC name. Its legacy
-  execution normalization is a separate contract, not assumed resolved here.
+- There is no `creature: true` legacy-import arm. The rebuilt source explicitly
+  supplies its ordinary behavior and body-state instances.
 
-Source references and author-supplied values remain source. Saving/exporting an
+Old source/save shapes are not translated by this boundary; unsupported shapes
+are refused. Source references and author-supplied values remain source. Saving/exporting an
 edited dungeon does not replace a `use` with generated states, serialize private
 progress into it or spread one guard's route into the shared definition.
 
-An absent binding list, an explicitly empty list and a nonempty list remain
-representably distinct. This boundary preserves that distinction; the separate
-normalization contract determines the existing simple-source case. It does not
-silently erase an explicit empty list while encoding.
+Inheritance, an explicitly empty list and a nonempty list remain representably
+distinct in current-format source. After inheritance, no roles means no ordinary
+behavior—not a fallback to an old machine/table runner. Encoding does not erase
+an explicit empty list.
 
 ## The producer handoff
 
@@ -144,7 +145,7 @@ progress, nor as a claim that all concerns compete for movement.
 | `use` names no definition in the document | Error at that binding's `use`; no guessed/global lookup |
 | Empty or duplicate attachment ID within an actor | Error at the binding ID; no rename/deduplication |
 | Same ID on different actors | Valid; distinct instance ownership |
-| Mixed binding arms (`use` and `creature`) | Named structural refusal; no precedence by field order |
+| Unsupported old-format/import fields | Named structural refusal; no compatibility fallback |
 | Required scalar absent or wrong-kind/out-of-bounds | Existing parameter refusal attached to the source path |
 | Empty/non-finite/malformed sequence input | Refusal before live construction; no fabricated first state |
 | Cell not valid for the site/item domain | Owner's source-coordinate refusal before expansion is accepted |
@@ -174,6 +175,6 @@ These are required future tests, **not tests executed by this documentation**:
 - `TestBindingRefusalsNameTheOriginalSource`: malformed definition/parameter/item
   errors identify actor, binding, parameter/item and local source field.
 
-The [selection-lane contract](selection-lane-contract.md) and exact legacy
-normalization/parity cases remain separate. This section makes the producer
-boundary concrete without claiming the whole consumer plan is already executable.
+The [selection-lane contract](selection-lane-contract.md) supplies the action
+boundary. R9 removes old-format normalization/parity as a prerequisite; the
+consumer plan targets the rebuilt site and current-format assertions.

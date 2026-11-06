@@ -4,7 +4,8 @@ This specifies the next boundary for [consumer plan #877](https://github.com/Kir
 following the accepted [source → instance contract](source-instance-contract.md)
 and [R1–R7](consumer-design.md). It carries forward the shipped composer's
 selection semantics rather than inventing a resource scheduler. The encounter
-adapter, beat mapping and migration are not implemented by this document.
+adapter and beat mapping are implemented through the consumer plan; R9 removes
+backwards-compatibility/migration work from that plan.
 
 ## What a lane means here
 
@@ -38,9 +39,8 @@ and their owner; it is not inferred from adding another machine instance.
 | Actual work completion | Addressed `Observe` | Advance only the selected attachment's authored completion transition; no new opportunity |
 
 `clock:fight` is the existing faction-addressed round notification, not an
-individual actor's fight-turn opportunity. The exact source mapping for existing
-reaction-capable recipes belongs to migration; this table does not silently
-reclassify all heard/barred/fact inputs as either free actions or notifications.
+individual actor's fight-turn opportunity. The rebuilt source names its reaction/opportunity contracts explicitly. Old
+reaction-capable source is not automatically translated or reclassified.
 
 **Do not catch `ErrSelectionRequired` and automatically retry with Decide.** A
 Pick requested during data-only Observe is an input/definition-contract mismatch;
@@ -139,13 +139,11 @@ These are future consumer tests, not a claim the adapter exists:
 - `TestCompletionDoesNotGrantAnotherOpportunity`: addressed actual completion
   changes the intended continuation but does not invoke the picker again.
 
-## Remaining boundary: migration semantics
+## Current-format implementation
 
-This contract describes the target lane, not an assumption that current encounter
-execution already obeys it. Current `afterStep` commits a creature transition
-before running its picks; current composer observation rejects Picks and a
-no-candidate decision retains its requesting transition. Existing multi-pick,
-terminal-world-state, wake and combat-table cases therefore require an explicit
-normalization/parity contract. The canonical-runtime ruling does not justify
-silently dropping a request or changing physical-state timing. That migration
-section follows separately; runtime implementation remains outside this pass.
+R9 removes the previously planned migration/parity prerequisite. Old experimental
+source and saves can be rebuilt; no adapter must reproduce the old dispatcher's
+transition-before-pick or multiple-pick behavior. The new site explicitly authors
+its observation, opportunity, physical-state and completion contracts, and tests
+establish those contracts through the canonical runtime. Unsupported old formats
+fail rather than silently translating or resetting.

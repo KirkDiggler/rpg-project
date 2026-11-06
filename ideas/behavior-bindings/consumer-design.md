@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart TD
-    A["Authored dungeon definitions / machine-table shorthand"] --> B["dungeonspec: normalize source and validate domain values"]
+    A["New-format authored dungeon definitions / bindings"] --> B["dungeonspec: validate and materialize domain values"]
     B --> X["Materialized composer configuration"]
     X --> L["session: launch/load carry toolkit data"]
     L --> E["encounter: one behavior runtime"]
@@ -31,9 +31,9 @@ This extends the accepted [R1–R3 producer boundaries](design.md).
 
 ## Law
 
-**R4 — one runtime.** Machine-driven actors use one composer runtime. Existing
-machine/table source is shorthand normalized at construction or load, not a
-second execution path. Distinct concerns retain independent machine instances
+**R4 — one runtime.** Machine-driven actors use one canonical composer runtime,
+not a second legacy execution path. R9 removes the earlier requirement to carry
+old machine/table source or saved forms through a compatibility boundary. Distinct concerns retain independent machine instances
 and private progress; canonical runtime does not mean one giant actor state
 machine or a requirement that every concern competes for movement. A body/post
 binding reads one designated instance; a
@@ -52,13 +52,21 @@ opportunities use distinct input beats. Clock/round notifications remain a
 separate input class and grant no action by themselves. Duties subscribe to the
 opportunities they handle; a behavior intended for both explicitly names both.
 A world Patrol is not offered a fight turn merely because its author omitted a
-clock guard. Normalization preserves existing authored input meaning at the
-boundary rather than retaining a legacy runtime branch.
+clock guard. Current-format content names these inputs explicitly; no legacy
+input translation is required.
 
 **R7 — first authoring cut.** The first live delivery authors content as YAML and
 proves Studio import/edit/save/export preservation plus server compilation.
 Dedicated behavior-definition/binding editors are a later slice, not a
 prerequisite. Client-side game-rule execution is not introduced.
+
+**R9 — rebuild for the playtest.** Backwards compatibility with previous source,
+saves and experimental representations is not a requirement. The playtest site
+and affected fixtures are rebuilt for the canonical format. Do not add legacy
+import arms, saved-state migration or parallel execution paths to preserve those
+experiments. Unsupported old formats fail explicitly rather than silently reset.
+Current-format persistence and the agreed gameplay/ownership boundaries still
+require their named tests.
 
 **R8 — source and instance identity.** The source definition key, reusable
 reference, actor identity and attachment ID have distinct scopes. Bindings supply
@@ -98,19 +106,14 @@ The inherited and consumer invariants remain:
 | R6 | settled | Distinct world/fight opportunity beats, separate from clock notifications | KirkDiggler | 2026-11-06 |
 | R7 | settled | YAML-first delivery with Studio preservation/round-trip proof; dedicated editors later | KirkDiggler | 2026-11-06 |
 | R8 | settled | Source/definition/actor/attachment identities, supplied-value ownership and source-preserving producer handoff | KirkDiggler | 2026-11-06 |
+| R9 | settled | No backwards-compatibility requirement; rebuild the playtest site/fixtures in the canonical format | KirkDiggler | 2026-11-06 |
 
 ## Open
 
-- **Migration parity is an implementation proof, not assumed equivalence.** The
-  current reaction dispatcher and `Composer.Observe` have different contracts.
-  Named tests cover reactions, multiple-pick source refusals, terminal state,
-  wake/deferred progress, body/post changes and ordinary combat policy. A
-  concrete contradiction must be reported rather than silently changing rules.
-- **Selection lane and migration:** the [lane contract](selection-lane-contract.md)
-  specifies independent observation/progress, one selected answer per offered
-  opportunity, explicit permission and addressed completion using the shipped
-  composer semantics. Current encounter normalization/reaction parity remains
-  a separate migration contract; the new consumer path is not implemented.
+- The [lane contract](selection-lane-contract.md) and [source boundary](source-instance-contract.md)
+  provide the current-format target. Old-dispatcher parity is not an open gate.
+  Implementation evidence must still establish the new consumer's actual
+  movement, reactions, held work, body/post projection and current-format reload.
 - **Later authoring breadth:** dedicated editors, cross-site catalogs, sampled
   defaults, generalized item schemas and async cross-cycle completion
   deduplication are not prerequisites of this delivery.
