@@ -1,226 +1,183 @@
 # From authored Patrol to a moving creature
 
-Proposed live-consumer walkthrough for [#859](https://github.com/KirkDiggler/rpg-project/issues/859)
-and [S1's remaining adoption journey, #866](https://github.com/KirkDiggler/rpg-project/issues/866).
-[Consumer contract](consumer-design.md); [implementation plan](plan-consumer.md).
-**R4 is open.** This explains the recommended cut so it can be judged; new type
-and field names below are proposed, not existing APIs.
+Live-consumer walkthrough for [#859](https://github.com/KirkDiggler/rpg-project/issues/859)
+and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
+[Contract and R4–R7](consumer-design.md); [implementation plan](plan-consumer.md).
+This explains the agreed target; candidate interface names in the plan are not
+claims that the live adapter has already shipped.
 
 ## Component shape
 
 ```mermaid
 flowchart TD
-    subgraph Authoring["Content and Studio"]
-      Source["behaviorDefinitions + ordered behavior bindings"]
-      Codec["Existing site/draft/YAML codecs"]
-      Source <--> Codec
-    end
-    subgraph Toolkit["Toolkit"]
-      Compile["dungeonspec compiler + domain validation"]
-      Expand["mind/behavior ExpandSequence"]
-      Launch["session Launch carries values"]
-      Actor["Encounter actor composition and Driver / compulsion gate"]
-      Body["Explicit body-state projection"]
-      Intent["Already-selected answer to TurnIntent"]
-      Walk["Existing movement and pause/resume"]
-      Save["EncounterData + original config + progress"]
-      Compile --> Expand --> Launch --> Actor
-      Actor --> Body
-      Actor --> Intent --> Walk
-      Walk -->|actual completion| Actor
-      Actor <--> Save
-    end
-    Codec --> Compile
-    Save <--> API["API opaque storage / existing session transport"]
-    Walk --> View["Existing audienced acts and client rendering"]
+    Source["Existing YAML / machine-table shorthand / explicit bindings"] --> Normalize["Source normalization and domain validation"]
+    Normalize --> Expand["ExpandSequence or ordinary InstanceSpec"]
+    Expand --> Launch["session carries canonical configuration"]
+    Launch --> Actor["encounter: one behavior runtime"]
+    Clock["world opportunity / fight opportunity / notifications"] --> Actor
+    Actor --> Gate["Driver and compulsion gate"]
+    Gate -->|Delegated| Compose["Composer chooses once"]
+    Gate -->|concrete intent| Execute["Existing execution / held movement"]
+    Compose --> Translate["Translate selected answer without rolling"]
+    Translate --> Execute
+    Compose --> Body["Designated instance state → encounter physical permission"]
+    Execute -->|actual addressed completion| Actor
+    Actor <--> Saved["Original configuration / progress / held claim"]
+    Saved <--> API["Existing API storage and transport"]
+    Execute --> View["Existing audienced acts and rendering"]
 ```
 
 ## Ownership and contracts
 
 | Component | Owns | Input → output |
 |---|---|---|
-| Site authoring/Studio | Editable definitions, references, ordered bindings and values | Proposed `behaviorDefinitions`, `monsterBindings.<id>.behaviors`, `behaviorState`; existing `decodeSingleRoomDungeon` / `encodeSingleRoomDungeon` and draft persistence |
-| `dungeonspec` | Source names, inheritance, typed values, cell validation/lowering and diagnostics | Proposed `BehaviorDefinitionSpec` / `BehaviorBindingSpec` → `encounter.BehaviorInput` carried by `MonsterPlacement` |
-| `ExpandSequence` | Finite data expansion and local references | Existing `ExpandSequenceInput` → materialized `InstanceSpec`, completion/source maps; no geometry or catalog lookup |
-| `session.Launch` | Carrying the compiled placement through load-act-save | `MonsterPlacement.Behaviors` → `JoinInput.Behaviors`; no behavior decisions |
-| Encounter installation | Resolve an explicit creature-state/table import after existing defaults/layers, validate and seat the composition | Proposed ordered `BehaviorSlot` values → original materialized configuration + one live `Composer` |
-| Composer | Private progress and ordered weighted selection | Existing `Observe` / `Decide`; proposed read-only `Inspect` and explicit wake-shift operation for existing world elapse semantics |
-| Encounter observation/opportunity adapter | Lawful facts, event delivery timing and budget | Existing `wakeBeat` / `MonsterView` → data observation or explicitly permitted selection; no automatic extra opportunity |
-| Driver/compulsion gate | Preserve imposed/custom decisions before ordinary choice | Existing wrapper runs first; proposed `Decision.UseBehaviors` delegates normal configured choice without rolling |
-| Intent translation and movement | Execute one selected answer; detect its actual outcome | Proposed `IntentForAnswer` over existing `MonsterView` + `Answer` → existing `TurnIntent`; completion claim survives `turnPause` |
-| Encounter persistence | Original materialized values, body-state binding, private blobs and a held action's claim | Proposed `BehaviorData` on `MemberData`, optional typed claim on `TurnPauseData` → identity-checked reload |
-| API/client | Storage, existing authoring transport and audienced rendering | Existing YAML transport and session data; no new behavior evaluator or source rebind |
+| Source / Studio carry | Authored definitions, references, values and ordering | YAML → existing draft/source codecs → preserved YAML; no new editor prerequisite |
+| `dungeonspec` | Name resolution, source normalization, domain validation and coordinate lowering | Existing machine/table shorthand or explicit behavior bindings → canonical behavior setup |
+| `ExpandSequence` | Finite expansion | Definition + chosen items/scalars → ordinary instances, completion/source maps |
+| Session/API | Launch/load/store plumbing | Compiled and saved toolkit data; no behavior or geometry decisions |
+| Encounter installation | One normalized runtime configuration | Existing shorthand becomes a canonical composition; no permanent legacy execution branch |
+| Composer | Instance progress and ordered weighted choice | Observe/Decide plus derived state/scheduling queries |
+| Driver/compulsion gate | Imposed/custom decision precedence | Concrete intent, or typed `Delegated{}` for ordinary composed choice |
+| Execution | Real price, route, movement and actual completion | Selected answer → TurnIntent → execution/held work → addressed completion |
+| Physical projection | Blocking/posts from one designated state source | Read-only instance state, never a second mirrored live blob |
 
-Refusals: a client does not expand or execute behavior. The source compiler does
-not sample a missing value. The runtime does not consult a mutable source key on
-load. The translator does not roll. Ending an intent does not fabricate arrival.
-A private role state does not independently decide whether a body blocks.
+The client does not expand or execute definitions. The compiler does not sample
+missing values. The translator does not roll. Turn-end does not fabricate
+arrival. A load does not replace saved configuration with the latest source.
 
-## R4: how the existing creature state joins the new composition
+## One runtime, normalization at the boundary
 
-The existing creature machine is not just a patrol cursor. Its state controls
-`BlockingStates` and `Posts`, and it can pick a table in response to an immediate
-`barred` input. Adding a second controller without a rule would leave two sources
-of action requests and an ambiguous physical-state owner.
+R4 makes the existing machine/table input shorthand for canonical composition.
+A creature with a simple policy needs only the simple source form; it does not
+need a second live interpreter. Multiple concerns still use independent machines
+and continuations—for example, movement and needs are not collapsed into one
+actor-wide state graph. The first action lane does not become a universal
+resource scheduler. Explicit compositions can name several roles in
+authored order. Actors with no ordinary machine-driven policy gain no invented
+behavior merely for structural uniformity.
 
-**Recommended A: one progress owner for an opted-in actor.** An authored binding
-may explicitly import the existing creature recipe and resolved table as one
-named composer instance. An explicit `behaviorState` identifies the instance
-whose state the encounter uses for existing blocking/post projection. Other
-instances remain private duties. Imported state names stay the original names;
-no mirrored `memberRecord.Machine` blob is maintained for that composed actor.
-Existing actors without a behavior profile keep their legacy path.
+`BlockingStates` and `Posts` remain encounter rules. Their state source is one
+instance; when exactly one exists it is unambiguous, otherwise the author names
+it. Other roles' private progress is not another physical permission authority.
+The canonical saved form contains the materialized instances, original completion
+maps and private progress, not both a live Machine blob and its composer copy.
 
-The order is authored, including where an imported creature/table instance sits.
-There is no implicit fallback role or universal priority ladder. A default
-`watch → pick time` instance placed before an always-active patrol would win by
-that authored order, so the example places the ordinary baseline last and gives
-Patrol/Investigate explicit world-clock eligibility. This preserves combat's
-normal table path through an explicit baseline rather than silently making
-patrol movement the whole combat policy.
+Normalization must preserve existing observable behavior. It is not enough to
+rename a type: current world reactions can pick, fight turns use the existing
+ordinary table path, and the core composer refuses a Pick through Observe.
+The plan requires parity tests at those seams before removing the old runner.
+Compatibility, where retained, lives only at construction/load boundaries.
 
-**Alternative B: keep the creature machine and composer as separate runners.**
-The physical state owner remains where it is, but action arbitration, listener/due
-scheduling and queued-input ordering must be specified across both runners.
-Running both, ignoring one runner's picks, or polling the roster each round is
-not an implementation of either cut.
+## Typed delegation and opportunity beats
 
-## Proposed source adapter
+R5 retains the existing compulsion wrapper before the ordinary brain. A concrete
+imposed/custom intent bypasses composed selection. The default decision source
+returns `Delegated{}` without rolling; the encounter resolves it by choosing once
+and translating the chosen answer. Delegation is resolved before the movement
+executor and cannot carry an already-selected Pick.
 
-Use the existing site document, not a new authoring database. Add a local
-`behaviorDefinitions` map and an optional ordered `behaviors` list on a creature
-binding (and faction inheritance, nearest explicit list winning wholesale).
-An absent list retains legacy behavior; an explicitly empty list means a composed
-actor with no selection roles, not an instruction to fall back silently.
+R6 separates world opportunities from fight opportunities. The proposed spellings
+are `time` for a world action opportunity and `turn` for a fight action opportunity.
+Existing `clock:world`/`clock:fight` inputs remain notifications: in particular,
+`clock:fight` is a faction-addressed round announcement, not an individual's turn.
+A body intended for both opportunities names both; Patrol need not carry a
+repeated defensive `clock.kind == world` guard.
 
-Two definition forms serve this consumer without a universal template system:
+The world due index must not arm a fight-only role merely because its beat is
+timed. The provider proposal reports each current state's timed beat names as well
+as wake/due information; its exact source/lane contract still needs specification
+before implementation. A future wake suppresses timed stepping of that instance
+while another instance runs; ordinary delivered observations remain independent.
+No virtual paused clocks or new global scheduler is introduced.
 
-- `sequence`: a canonical `behavior.SequenceDefinition` plus an item adapter
-  declaration (`cells` for this Patrol; `json` for already-domain-valid literal
-  items). Bindings supply `items` and scalar `with` values.
-- `instance`: a concrete reusable recipe/table body for the investigation or
-  another non-sequence role. Its instance ID comes from the binding, not the
-  shared definition. Unknown `with`/`items` on this form are refused rather than
-  ignored; adding parameterized flat bodies is not hidden in this first adapter.
+## Source adapter and the first authoring cut
 
-An explicit binding arm `creature: true` imports the existing resolved creature
-recipe/table under its supplied ID. It is mutually exclusive with `use`, `with`
-and `items`. `behaviorState` must identify that explicit imported state instance
-when existing blocking/post state bindings are present. A source that supplies
-legacy state/orders but gives them no explicit consumer is refused, not discarded.
+Use the existing site document, not a new authoring database. The candidate
+`behaviorDefinitions` map and ordered creature/faction binding lists are source
+forms for the canonical runtime. Existing simple machine/table content normalizes
+at the same boundary. Explicit lists replace inherited lists wholesale; absent
+and explicitly empty are not collapsed into an accidental fallback.
 
-Illustrative source outline, **conditional on R4 and not supported syntax yet**:
+Definitions can use the shipped sequence body or a concrete reusable ordinary
+recipe/table body. A binding supplies its own ID, chosen finite items and scalar
+values; it does not carry an edited copy of the shared definition's logic.
+Existing catalog/default/coordinate owners remain responsible for those concerns.
 
-```yaml
-behaviorDefinitions:
-  patrol:
-    kind: sequence
-    items: cells
-    definition: # the canonical SequenceDefinition data, not a Go factory
-      ref: example:behaviors:patrol
-      end: repeat
-      parameters: [{name: weight, kind: int, required: true, min: 1, max: 3}]
-      body: # recipe/table data and the four references defined by S2
-        # full body supplied by the acceptance fixture
-  investigate:
-    kind: instance
-    instance: # concrete, reusable recipe/table data
-      # full body supplied by the acceptance fixture
-room:
-  room:
-    monsterBindings:
-      west:
-        behaviors:
-          - {id: investigate, use: investigate}
-          - {id: duty, use: patrol, items: [{q: 0, r: 0}, {q: 12, r: 0}], with: {weight: 1}}
-          - {id: baseline, creature: true}
-        behaviorState: baseline
-```
+For Patrol, `cells` items use the existing `RoomCell{Q,R}`, `roomCells.cellAt` and
+`hexCell` boundary. Single-room axial values already name the canonical cell;
+never convert through an offset frame twice. Validate emitted selectors through
+their existing owner, without importing stateless-route overlap restrictions
+into a state-retained finite list.
 
-The outline is not a build fixture with omitted bodies. The implementation plan
-requires complete committed fixtures and loader assertions before code is claimed
-working. Reuse the existing parameter/value and route-editing surfaces where they
-fit; a definition-body text editor is sufficient initially. Do not make the client
-execute server validation or invent a second behavior interpreter.
-
-`cells` items use the existing `RoomCell{Q,R}` and `roomCells.cellAt`/`hexCell`
-owner. Single-room axial coordinates already name the canonical cell; do not
-apply an offset conversion twice. Validate every emitted spatial selector through
-the existing owning grammar. Do not apply legacy position-derived route overlap
-restrictions to a state-retained list merely because both are called routes.
+R7 authors the first content as YAML. Studio must preserve definitions, binding
+order, values, explicit absence and unrelated/unknown fields through import,
+ordinary editing, draft persistence and export; the exported source must compile
+on the actual server. Existing `SiteScope.unread`, binding-field carry and source
+splicing are reused. Add codec changes only where the joined round-trip test
+shows a concrete gap. Dedicated definition/binding panels are a later slice.
 
 ## Walk one value through
 
-West's source contains `{q: 12, r: 0}` as its second item. The compiler validates
-it as floor and lowers it to the component value `{"x":12,"y":0}`. `ExpandSequence`
-produces the duty instance's second movement table, completion beat and source
-mapping. The definition and binding remain intact in the editable source.
+West's second waypoint is `{q:12,r:0}`. The compiler validates that it is floor and
+supplies `{"x":12,"y":0}` to the finite producer. The emitted configuration has
+that goal's table and completion mapping; editable source still names one shared
+definition and supplies its own route.
 
-At launch, session carries the compiled setup. Encounter resolves the explicit
-baseline import using the already-layered creature table, then creates one
-composer and retains that final configuration. The body's physical state is read
-from the designated instance, not copied into a second live machine blob.
+Launch carries the compiled setup. Encounter normalizes simple and composed
+source to the same runtime, retaining original materialized data. A world
+opportunity reaches the Driver/compulsion gate; ordinary delegated choice asks the
+composer once. The existing router/Mover consumes the selected answer within the
+real movement budget.
 
-A paid world opportunity builds the real observer-local view and prices movement.
-The existing driver/compulsion wrapper is consulted first: a commanded turn does
-not ask the composer or roll its table. The default table driver explicitly
-delegates a configured actor's ordinary choice without rolling; the encounter
-then uses its existing shared Roller. The composer selects once.
-`IntentForAnswer` translates its chosen `Toward.At`
-without invoking `TableDriver.Act` and rolling again. The existing router and
-movement seam take as many legal cells as the budget permits. If West stops
-short of `(12,0)`, the caller sends no completion. If it reaches the cell, the
-caller sends the exact mapped beat to `duty`. The next opportunity can request
-the next leg; arrival itself grants no extra turn.
+Stopping short of `(12,0)` sends no completion. Actual arrival sends the mapped
+input to the selected instance, with no free extra turn. A reaction window carries
+the selected attachment/key/goal in held-turn data; reload uses stored
+configuration and resumes that held action without selecting again. Another
+actor's same local attachment ID owns independent progress.
 
-If a reaction window opens midway, the selected attachment/key/goal travels in
-the existing held-turn data. Save/reload rebuilds the composer from stored
-configuration and progress, then finishes the held movement without reselecting.
-Only actual arrival completes the step. The existing audienced movement and
-answer acts are what the client renders; this design does not publish private
-role state as extra omniscient client information.
+The client renders existing lawful answer/movement acts. Private role blobs are
+not additional omniscient client state. Only the designated body-state source
+feeds existing body/post state projection.
 
 ## Separations that look like one thing
 
 | Query | Source of truth |
 |---|---|
-| Which behavior requests the opportunity? | Composer and authored ordering |
-| Can the action be afforded/executed? | Encounter/rulebook budget and execution capabilities |
-| Did the turn end? | Existing intent-loop result |
-| Did the selected cell goal complete? | Actual execution result and final cell, after any pause |
-| Does the body/post block? | Encounter projection of the explicitly designated state source |
+| Which role requests this opportunity? | Composer and authored order |
+| Which opportunity is being offered? | Encounter's world/fight/reaction dispatcher |
+| Can the action execute? | Real budget and rulebook/encounter capabilities |
+| Did the turn end? | Intent-loop result |
+| Was the selected goal satisfied? | Actual execution/final cell after any pause |
+| Does the body/post block? | Encounter projection of one designated state source |
 | What did this NPC hear? | Its delivered occurrence and observer-local testimony |
-| What does a resumed run execute? | Saved materialized configuration, not the latest source |
+| What resumes after load? | Original materialized configuration and saved progress |
 
 ## Trade-offs and boundaries
 
 | Decision | Benefit | Cost / boundary | Not taken |
 |---|---|---|---|
-| R4 recommendation: explicit imported state instance | One live progress owner, authored precedence, no mirrored body blob | Encounter must update state projection, scheduling, save/load and legacy bridging | Two independently acting runners |
-| Reuse canonical component bodies inside the site adapter | No per-behavior factory and no second runtime language | Initial body editing is text-oriented; domain values still need their owner | Full graph editor in this consumer |
-| Carry a completion claim through the existing pause | Real arrival survives reaction/save/resume | Pause validation and finalization must be updated together | Treating `done == true` as arrival |
-| Retry the pending waypoint after a blocked/partial leg | The authored goal and private continuation remain truthful | No automatic skip, teleport or global recovery policy | Inferring a new nearest waypoint |
+| R4 canonical runtime | One future place to maintain scheduling, progress and persistence | Boundary normalization and parity proof are paid during migration | Permanent opt-in legacy/composer branches |
+| R5 typed delegation | One explicit sealed outcome instead of a flag beside a value | Resolve before execution and preserve compulsion | `UseBehaviors` plus competing intent |
+| R6 separate opportunities | Forgotten clock guard cannot hijack a fight turn | Normalize existing source meaning; keep notifications distinct | A defensive guard on every duty |
+| R7 YAML and preservation first | A smaller real consumer delivery | Dedicated editing UI remains later work | New definition/binding panels in this wave |
+| Exact completion claim | Arrival survives partial/blocked/held execution | Pause/load/finalization must change together | Turn-end treated as arrival |
 
-Only the example's pending-waypoint destination is selected by its authored
-body. Legacy `Selector.Path` and dwell behavior are unchanged. This is not an
-async job protocol: the encounter owns one held action and validates that action's
-claim. A future concurrent-operation use case needs its own contract.
+The fixture's pending waypoint is its authored resumption target, not a new
+global rejoin/dwell policy. This is not an asynchronous job protocol or arbitrary
+rollback. A concrete parity conflict is reported with a failing path rather than
+silently redefining source meaning.
 
-## Where a change lands
+## Where changes land and source map
 
-A different route or role order is content. A new item domain belongs to the
-source/domain adapter. A new physical action outcome belongs at the encounter /
-rulebook execution seam. A source-preservation defect belongs in the existing
-Studio codecs. None belongs in an API-side NPC script.
+Routes/role order are content; new item domains belong to the source/domain
+adapter; new physical outcomes belong to execution; preservation defects belong
+to Studio codecs. None belongs in an API-side NPC script.
 
-## Source map
-
-| Concern | Existing owning files |
+| Concern | Owning paths |
 |---|---|
-| Source and domain values | `encounter/dungeonspec/{single_room.go,single_room_compile.go,single_room_site.go,bundles.go,states.go}` |
-| Facts, time and listeners | `encounter/{machine.go,wakebeats.go,noise.go,worldtime.go}`; `mind/machine/listeners.go` |
-| Selection to real action | `encounter/{tabledriver.go,turndriver.go,clocks.go}` |
-| Body/post permission | `encounter/{field.go,post.go,cellfacts.go,barred.go}` |
-| Saved/held execution | `encounter/{data.go,pause.go}`; `session/{launch.go,write.go,driver.go}` |
-| Studio carry/edit/export | `src/concepts/world-building/{siteScope.ts,roomDraft.ts,singleRoomDungeon.ts,BundlesPanel.tsx,creatureStates.ts}` |
-| API transport and acceptance | `internal/{dungeons/registry.go,sessionworld/sessionworld.go,orchestrators/authoring/orchestrator.go,integration/session/}` |
+| Source and domain lowering | `encounter/dungeonspec/{single_room.go,single_room_compile.go,single_room_site.go,bundles.go,states.go}` |
+| Facts, timing, listeners | `encounter/{machine.go,wakebeats.go,noise.go,worldtime.go}`; `mind/behavior` inspection; `mind/machine/listeners.go` |
+| Decision and execution | `encounter/{tabledriver.go,turndriver.go,clocks.go}`; `session/{driver.go,compelled.go,capabilities.go}` |
+| Body/post and held state | `encounter/{field.go,post.go,cellfacts.go,barred.go,data.go,pause.go}` |
+| Source preservation | `src/concepts/world-building/{siteScope.ts,roomDraft.ts,singleRoomDungeon.ts}` |
+| Transport and acceptance | `internal/{dungeons/registry.go,sessionworld/sessionworld.go,orchestrators/authoring/orchestrator.go,integration/session/}` |

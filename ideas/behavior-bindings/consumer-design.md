@@ -1,86 +1,108 @@
-# Live behavior consumer — proposed contract
+# Live behavior consumer contract
 
 ## Shape
 
 ```mermaid
 flowchart TD
-    A["Studio source and existing dungeon document"] --> B["dungeonspec: resolve bindings and validate domain values"]
-    B --> X["ExpandSequence / ordinary InstanceSpec"]
+    A["Authored dungeon definitions / machine-table shorthand"] --> B["dungeonspec: normalize source and validate domain values"]
+    B --> X["Materialized composer configuration"]
     X --> L["session: launch/load carry toolkit data"]
-    L --> E["encounter: install and own live actor composition"]
-    K["Observer-local facts and delivered inputs"] --> E
-    Q["Clock / reaction opportunity and real budget"] --> E
-    E -->|data observation| C["Composer: one selection, private continuations"]
-    E -->|permitted choice| G["Existing Driver / compulsion gate"]
-    G -->|ordinary configured choice| C
-    G -->|imposed or custom intent| W
-    C --> I["Translate the already-selected answer"]
-    I --> W["Existing route / movement / reaction-window execution"]
-    W --> F["Actual completion, addressed to its attachment"]
+    L --> E["encounter: one behavior runtime"]
+    K["Observer-local facts / clock notifications"] --> E
+    Q["Distinct world and fight opportunities + real budget"] --> E
+    E -->|observation| C["Composer: private progress and one choice"]
+    E -->|opportunity| G["Driver / compulsion gate"]
+    G -->|typed Delegated| C
+    G -->|concrete intent| W["Existing movement / reaction-window execution"]
+    C --> I["Translate already-selected answer"]
+    I --> W
+    C --> P["Encounter reads designated body-state instance"]
+    W --> F["Actual addressed completion"]
     F --> E
-    E --> S["EncounterData: original configuration + progress + held work"]
+    E --> S["Canonical saved configuration / progress / held work"]
     S --> L
-    C -. "R4: designated state owner?" .-> P["Existing body blocking and post projection"]
 ```
 
-This is the live-consumer proposal for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
-and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
-[Walkthrough](consumer.md); [conditional implementation plan](plan-consumer.md);
-[R4 case file](https://github.com/KirkDiggler/rpg-project/pull/877).
-It inherits [R1–R3](design.md). R4 is open: the proposal is not authorization to
-change creature-state ownership before that decision.
+[Story #859](https://github.com/KirkDiggler/rpg-project/issues/859),
+[live S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866),
+[case file #877](https://github.com/KirkDiggler/rpg-project/pull/877).
+[Walkthrough](consumer.md); [implementation plan](plan-consumer.md).
+This extends the accepted [R1–R3 producer boundaries](design.md).
 
 ## Law
 
-The accepted R1–R3 boundaries continue to hold. The following consumer invariants
-are the proposed implementation contract, conditional on R4:
+**R4 — one runtime.** Machine-driven actors use one composer runtime. Existing
+machine/table source is shorthand normalized at construction or load, not a
+second execution path. Distinct concerns retain independent machine instances
+and private progress; canonical runtime does not mean one giant actor state
+machine or a requirement that every concern competes for movement. A body/post
+binding reads one designated instance; a
+single-instance composition supplies that source unambiguously. No second live
+creature-machine blob mirrors the same progress. Actors with no ordinary
+machine-driven policy gain no invented behavior.
 
-- Source references and authored values survive studio load/edit/save. The
-  compiler resolves them once into immutable runtime configuration.
+**R5 — typed delegation.** `Delegated` is a member of the sealed `TurnIntent`
+vocabulary, not a boolean beside a competing intent. The existing Driver and
+compulsion wrapper run before ordinary choice. The encounter resolves delegation
+before execution and refuses an already-selected Pick attached to it. It does
+not invoke a second weighted selection after the composer answers.
+
+**R6 — opportunity kinds.** World-action opportunities and fight-turn
+opportunities use distinct input beats. Clock/round notifications remain a
+separate input class and grant no action by themselves. Duties subscribe to the
+opportunities they handle; a behavior intended for both explicitly names both.
+A world Patrol is not offered a fight turn merely because its author omitted a
+clock guard. Normalization preserves existing authored input meaning at the
+boundary rather than retaining a legacy runtime branch.
+
+**R7 — first authoring cut.** The first live delivery authors content as YAML and
+proves Studio import/edit/save/export preservation plus server compilation.
+Dedicated behavior-definition/binding editors are a later slice, not a
+prerequisite. Client-side game-rule execution is not introduced.
+
+The inherited and consumer invariants remain:
+
 - The encounter owns lawful observation projection, opportunity/budget checks,
-  action execution and completion detection. API/session code stores and carries
-  toolkit values; it does not choose behavior or interpret geometry.
-- One opportunity produces at most one selected answer per selection call. The
-  answer is translated and executed without a second weighted pick.
+  execution, actual completion and physical permission. API/session carry and
+  store toolkit values; they do not choose behavior or interpret geometry.
 - A turn ending does not imply an authored waypoint was reached. Exact-cell work
-  completes only when its selected target is actually satisfied and the actor is
-  not still suspended in a reaction window.
+  completes only when the selected target is satisfied and the actor is not
+  suspended in a reaction window.
 - No-budget holds, partial movement and blocked movement do not consume a pending
-  Patrol leg. The example retries its pending authored waypoint; it does not
-  silently migrate legacy position-derived patrol or dwell semantics.
-- A held action carries its behavior attachment, selected key, completion mapping
-  and target through the existing pause/save/resume path. Resume does not select
-  again. Corrupt or mismatched non-null completion claims are refused.
+  Patrol leg. The example retries its pending authored waypoint, without a new
+  universal nearest-waypoint, dwell or recovery policy.
+- Held execution retains attachment, selected key, completion mapping and target
+  through the existing pause/save/resume path. Resume does not select again.
+  Corrupt or mismatched non-null completion claims are refused.
 - Runtime configuration, completion maps and private progress load from the saved
   encounter. Loading does not consult edited source, expand again or resample.
-- Existing observer-local testimony remains authoritative for what an NPC knows.
-  A heard occurrence exposes its delivered kind/location, not an unseen maker's
-  identity or another observer's holdings.
-- Body/post permissions stay encounter-owned and derived from one explicitly
-  designated state source. Other behavior instances do not become extra physical
-  permission authorities. R4 selects that state source's runtime placement.
-- Existing actors without the new authored composition keep their current path.
-  Presence of a new composition is not a silent rewrite of existing content.
-- This consumer adds no general job scheduler, async recovery protocol, shared
-  effects machine, runtime script interpreter or client-side game-rule engine.
+- A heard occurrence exposes its delivered kind/location, not an unseen maker's
+  identity or another observer's holdings. Private role state is not additional
+  client-visible world truth.
+- This consumer adds no general scheduler, asynchronous recovery protocol,
+  shared effects machine or runtime script interpreter.
 
 ## Rulings
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
 | R1–R3 | settled | Data definitions, separate bindings/progress, finite expansion; inherited from the parent design | KirkDiggler | 2026-11-05 |
-| R4 | open | For opted-in actors, represent the existing creature-state machine as an explicit composer instance and designate the body-state source, or retain a separate runner | — | — |
+| R4 | settled | One canonical runtime for machine-driven actors; source normalization and designated body-state instance, not opt-in parallel execution | KirkDiggler | 2026-11-06 |
+| R5 | settled | Typed Delegated intent, compulsion before ordinary choice, no second roll | KirkDiggler | 2026-11-06 |
+| R6 | settled | Distinct world/fight opportunity beats, separate from clock notifications | KirkDiggler | 2026-11-06 |
+| R7 | settled | YAML-first delivery with Studio preservation/round-trip proof; dedicated editors later | KirkDiggler | 2026-11-06 |
 
 ## Open
 
-- **R4 — one live progress owner or two runners.** The recommended cut uses one
-  composer for an opted-in actor, with an explicit imported creature-state entry
-  and explicit body-state binding. The alternative keeps the existing creature
-  machine alongside the composer and requires a separately specified arbitration
-  and scheduling rule. Neither choice is implied by merely pinning v0.20.0.
-- **Contract finalization after R4:** the conditional plan names proposed types,
-  source fields, scope and test assertions for the recommended cut. Reconcile
-  them with the chosen cut before declaring the plan executable.
-- **Later authoring breadth:** rich graph editing, cross-site definition catalogs,
-  sampled defaults, generalized item schemas and async cross-cycle completion
-  deduplication are not prerequisites of this two-guard consumer.
+- **Migration parity is an implementation proof, not assumed equivalence.** The
+  current reaction dispatcher and `Composer.Observe` have different contracts.
+  Named tests cover reactions, multiple-pick source refusals, terminal state,
+  wake/deferred progress, body/post changes and ordinary combat policy. A
+  concrete contradiction must be reported rather than silently changing rules.
+- **Source/selection-lane contract:** the canonical-runtime ruling does not settle
+  every source spelling, reusable-instance binding or resource/selection-lane
+  policy. Preserve independent concerns such as movement and needs; specify the
+  first consumer's action-lane boundaries before implementation.
+- **Later authoring breadth:** dedicated editors, cross-site catalogs, sampled
+  defaults, generalized item schemas and async cross-cycle completion
+  deduplication are not prerequisites of this delivery.

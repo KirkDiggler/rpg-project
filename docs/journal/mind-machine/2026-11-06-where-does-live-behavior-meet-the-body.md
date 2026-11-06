@@ -79,3 +79,14 @@ with that choice. The plan names files, candidate interfaces, tests, gates and
 release dependencies, but is deliberately not labeled executable while the
 state-owner decision remains open. This planning request implements no runtime
 or authoring fields and does not merge the earlier record PR.
+
+**Review follow-up, 2026-11-06:** the operator adopted
+[review 5805884858](https://github.com/KirkDiggler/rpg-project/pull/877#pullrequestreview-5805884858)
+and the assessment. R4–R7 now select a canonical runtime rather than permanent
+opt-in branches, typed delegation, distinct world/fight opportunities and a
+YAML/preservation-only first delivery. The original alternatives above remain
+as the record of the investigation. This does not collapse independent movement,
+needs or other machines into one actor-wide state graph. Exact source/instance
+and selection-lane contracts remain to be finished before runtime changes.
+No runtime files were modified in this planning revision. #877 was retargeted
+to main before #868 can merge or its branch be deleted; neither PR was merged.
