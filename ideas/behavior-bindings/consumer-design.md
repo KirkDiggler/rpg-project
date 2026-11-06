@@ -25,7 +25,8 @@ flowchart TD
 
 This is the live-consumer proposal for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
 and [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issues/866).
-[Walkthrough](consumer.md); [conditional implementation plan](plan-consumer.md).
+[Walkthrough](consumer.md); [conditional implementation plan](plan-consumer.md);
+[R4 case file](https://github.com/KirkDiggler/rpg-project/pull/877).
 It inherits [R1–R3](design.md). R4 is open: the proposal is not authorization to
 change creature-state ownership before that decision.
 

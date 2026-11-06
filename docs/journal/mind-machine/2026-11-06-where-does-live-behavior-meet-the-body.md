@@ -72,7 +72,8 @@ stand in for a reached waypoint.
 ## Next
 
 Review [the consumer proposal](../../../ideas/behavior-bindings/consumer-design.md)
-and [walkthrough](../../../ideas/behavior-bindings/consumer.md), settle R4, and
+and [walkthrough](../../../ideas/behavior-bindings/consumer.md), settle
+[R4 in its checklist](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6693233263), and
 reconcile the [conditional task plan](../../../ideas/behavior-bindings/plan-consumer.md)
 with that choice. The plan names files, candidate interfaces, tests, gates and
 release dependencies, but is deliberately not labeled executable while the

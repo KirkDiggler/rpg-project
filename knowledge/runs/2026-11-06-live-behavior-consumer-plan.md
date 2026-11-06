@@ -4,12 +4,12 @@ Planning for [S1 adoption #866](https://github.com/KirkDiggler/rpg-project/issue
 
 ## Shipped
 
-- Prepared a proposed consumer contract, walkthrough, conditional task plan and investigation entry; no runtime/source field, installation, deployment or implementation-ready approval is claimed — [S1 adoption scope](https://github.com/KirkDiggler/rpg-project/issues/866).
+- Prepared a proposed consumer contract, walkthrough, conditional task plan and investigation entry; no runtime/source field, installation, deployment or implementation-ready approval is claimed — [planning PR #877](https://github.com/KirkDiggler/rpg-project/pull/877).
 
 ## Decided
 
 - Reuse #866's existing live-journey delivery issue rather than invent a duplicate slice; proposed PR boundaries follow the actual behavior, encounter, session, API and web owners — [existing acceptance checklist](https://github.com/KirkDiggler/rpg-project/issues/866).
-- Recommend one composer for an opted-in actor with an explicit imported creature-state instance/body-state source, because two independently acting runners require another arbitration contract; R4 remains an operator decision, not inferred from R1–R3 — [story authority](https://github.com/KirkDiggler/rpg-project/issues/859).
+- Recommend one composer for an opted-in actor with an explicit imported creature-state instance/body-state source, because two independently acting runners require another arbitration contract; R4 remains an operator decision, not inferred from R1–R3 — [pending R4 checklist](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6693233263).
 - Preserve Driver consultation before ordinary composer choice, reusing the existing shared Roller, because bypassing the wrapper would bypass compulsion rather than merely remove a redundant roll — [current compelled wrapper](https://github.com/KirkDiggler/rpg-toolkit/blob/9922e218d7942a8cf048af46cc2090f2e77d4fd1/rulebooks/dnd5e/session/compelled.go).
 
 ## Found
