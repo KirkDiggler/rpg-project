@@ -14,6 +14,11 @@ The canonical skills:
 - `ingest/SKILL.md`: the judgment that turns notes and run records into knowledge lines, between the team-memory tool's collect and apply.
 - `work-records/SKILL.md`: journals, architecture decision records and retrospective field notes; keeps their roles distinct from delivery issues and living story overviews.
 
+For how these existing owners connect a significant decision to its implementation
+and the larger architecture, see the [architecture record trail](../../docs/working-procedures/architecture-records.md).
+It is a reference map, not another skill or approval workflow; canonical procedures
+remain in the skills linked there.
+
 Changes to shared procedures follow the operator's agreement; a skill is not permission to add approval ceremonies.
 
 `.opencode/skills` and `.claude/skills` are legacy candidates, not inputs. They may inspire a reviewed procedure, but they are not automatically part of this namespace.
