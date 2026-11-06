@@ -37,6 +37,8 @@ session's scope.
 
 - **2026-11-05 — [What do existing bundles already bind?](2026-11-05-what-do-existing-bundles-already-bind.md)** Existing content and studio machinery already supports parameterized row bundles, including routes. The investigation separates that reuse from stateful attachments; a dated follow-up records the choice of data-authored definitions while preserving the earlier uncertainty.
 
+- **2026-11-06 — [Can one authored body drive two different patrols?](2026-11-06-can-one-authored-body-drive-two-patrols.md)** A real producer expands one source into two-/three-item programs; deterministic journeys, an actual reference-capture regression, restored mutants and independent review establish the component path without claiming studio or live-world adoption.
+
 ## Adoption handoff
 
 Read the [work-records skill](../../../.agents/skills/work-records/SKILL.md) and

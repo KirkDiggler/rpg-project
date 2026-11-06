@@ -8,6 +8,8 @@
 
 **Finish line for this execution:** source examples, production expander, deterministic joined tests, full module race/lint/hooks, assertion-level mutation controls, published PR and one independent review. Merge/tag/closure still require their existing explicit authorization and gates. No live stack is needed for this component-only checkpoint.
 
+**Execution receipt, 2026-11-06:** [toolkit #2284](https://github.com/KirkDiggler/rpg-toolkit/pull/2284), head `eba23e1dbe6ec4ff93e82c5f2d8af55392f908dc`, implements this component plan. [Independent review](https://github.com/KirkDiggler/rpg-toolkit/pull/2284#pullrequestreview-5793883425): no Critical, Important or Minor findings; exact-head applicable CI is green. [Journal evidence and limits](../../docs/journal/mind-machine/2026-11-06-can-one-authored-body-drive-two-patrols.md). No merge/release or live adoption is claimed.
+
 ## Scope and concrete producer contract
 
 This tool is separate from `Composer` execution. `mind/behavior` supplies a reusable producer utility because it combines a machine recipe with that module's table. It knows no route geometry, content catalog, actor roster or studio document. Existing content/bundle producers remain responsible for catalog lookup, explicit defaults, domain validation and lowering authored coordinates. They can eventually call this utility rather than replace their authoring machinery.
@@ -99,10 +101,10 @@ A second definition repeats supplied spoken lines (`alpha`, `beta`) through the 
 - `TestOutputsAreDetachedAndDeterministic`: source/input/vocabulary unchanged; changing one result cannot alter another binding; equal inputs yield equal emitted instance data.
 - `TestLocalBagReferencesAreScoped`: `Set`, `Clear` and nested `Flag` follow the correct item's declared keys rather than alias another item's flags.
 
-- [ ] Write API/fixture tests first; run and record the expected initial missing-API compilation failure separately from behavioral regression evidence.
-- [ ] Implement the source resolver and expansion in the named files; no changes to existing composer/machine execution.
-- [ ] Exercise every named refusal and ownership case; fix assertion-level failures before broadening scope.
-- [ ] Run full module race tests and lint, then commit the working provider checkpoint and open its draft immediately.
+- [x] Write API/fixture tests first; run and record the expected initial missing-API compilation failure separately from behavioral regression evidence.
+- [x] Implement the source resolver and expansion in the named files; no changes to existing composer/machine execution.
+- [x] Exercise every named refusal and ownership case; fix assertion-level failures before broadening scope.
+- [x] Run full module race tests and lint, then commit the working provider checkpoint and open its draft immediately.
 
 **Verification:** from `mind/behavior`, `go test -count=1 -run '^TestSequenceSuite$' .`, then `go test -race -count=1 ./...` and `golangci-lint run ./...`. Pass means all assertions succeed; unrun checks are not completion evidence.
 
@@ -119,9 +121,9 @@ A second definition repeats supplied spoken lines (`alpha`, `beta`) through the 
 - `TestReloadKeepsOriginalBindingsAndProgress`: JSON-round-trip original instances and progress, use saved vocabulary, no re-expansion; different actors resume their pending targets; changed materialized configuration is refused.
 - `TestAnotherBodyUsesTheSameProducer`: lines `alpha`, `beta` followed by a terminal no-pick; no name-based factory or implicit completion on selection.
 
-- [ ] Write each batch against the real producer and inspect any failure before adjusting production code.
-- [ ] Run the named suite with verbose output; log readable actor/target/completion traces.
-- [ ] Run the full module race suite and lint; commit the joined evidence.
+- [x] Write each batch against the real producer and inspect any failure before adjusting production code.
+- [x] Run the named suite with verbose output; log readable actor/target/completion traces.
+- [x] Run the full module race suite and lint; commit the joined evidence.
 
 **Verification:** `go test -count=1 -v -run '^TestSequencePatrolSuite$' .`; `go test -race -count=1 ./...`; `golangci-lint run ./...` from the owning module.
 
@@ -130,10 +132,10 @@ A second definition repeats supplied spoken lines (`alpha`, `beta`) through the 
 **Files:** update `mind/behavior/README.md` and `doc.go`; create `mind/behavior/knowledge/runs/2026-11-05-authored-sequences-s2.md`; add the concrete example/receipt to project #868 and #871. Do not change ADR-0049's accepted scope or claim studio adoption.
 **Evidence:** mutation controls must cause assertion failures, be restored, and leave final production hashes unchanged. Candidate controls: resolve `$next` to the current initial state (normal progression fails), skip addressed observation commit (completion/progress fails), or interpret inserted marker-looking text again (literal-value protection fails). Record exactly which controls ran.
 
-- [ ] Run and restore at least two meaningful assertion-level mutation controls, then run the green full suite again.
-- [ ] Document source → binding → expanded output and caller completion mapping, ownership/refusals and limits.
-- [ ] Run full race/lint, `git diff --check`, module-isolation and actual scoped `.githooks/pre-commit` (not the unrelated root Make target).
-- [ ] Publish scope and actual evidence in the PR/issue; obtain one independent review under the owning project policy, address substantive findings with regression tests, and leave truthful readiness.
+- [x] Run and restore at least two meaningful assertion-level mutation controls, then run the green full suite again.
+- [x] Document source → binding → expanded output and caller completion mapping, ownership/refusals and limits.
+- [x] Run full race/lint, `git diff --check`, module-isolation and actual scoped `.githooks/pre-commit` (not the unrelated root Make target).
+- [x] Publish scope and actual evidence in the PR/issue; obtain one independent review under the owning project policy, address substantive findings with regression tests, and leave truthful readiness.
 
 **Verification:** owning-module commands above; from toolkit root, `PRE_COMMIT_USE_CACHE=false` is not an established option—use the actual hook's `PRE_COMMIT_CACHE=false .githooks/pre-commit`; inspect resulting dependency/file diff. No `go.work`, `replace`, hand tag, force push or automatic merge.
 

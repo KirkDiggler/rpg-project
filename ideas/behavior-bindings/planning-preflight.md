@@ -10,8 +10,11 @@ on [story #859](https://github.com/KirkDiggler/rpg-project/issues/859).
 **Readiness:** This is a preflight, **not a checked implementation plan**.
 **Update, 2026-11-05:** [R3 selects finite expansion during binding](https://github.com/KirkDiggler/rpg-project/pull/868#issuecomment-6670342428).
 The alternatives below preserve the investigation, not a still-pending decision.
-Concrete source/binding/completion contracts remain to be specified. There is no
-additional blanket plan-approval gate once those contracts are settled.
+This preflight preserves the inspection preceding the concrete component
+contract. [The checked S2 plan](plan-s2.md) is the execution record; the
+[evidence entry](../../docs/journal/mind-machine/2026-11-06-can-one-authored-body-drive-two-patrols.md)
+links its implementation and review. Site-facing source and live-consumer
+adapters remain separate.
 
 ## Agreed outcome and finish line
 
@@ -102,8 +105,8 @@ not completed plan coverage checks or executed new tests.
 
 ## Resume point
 
-Write the complete authored Patrol example: one definition, two-/three-waypoint
-bindings and the expanded states/tables. Specify parameter references, completion
-mapping and refusals; then derive task/release boundaries, create the slices named
-by that plan, and publish requirement coverage plus provider/consumer seam checks.
-R1–R3 are settled. No new binder code or executable implementation plan is claimed.
+Follow [S2 #871](https://github.com/KirkDiggler/rpg-project/issues/871), its
+[plan](plan-s2.md) and linked implementation/review receipts rather than restarting
+this preflight. R1–R3 are settled. Remaining delivery and consumer-adoption work
+stays in the issues; this document is the source-backed investigation, not a
+second live task store.

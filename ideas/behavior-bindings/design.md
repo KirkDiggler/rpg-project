@@ -22,8 +22,9 @@ flowchart TD
 [Working two-guard example](README.md).
 
 R1 settles the authoring direction; R2 settles the ownership and observable
-behavior; R3 selects finite expansion during binding. The concrete source and
-producer interfaces remain to be specified.
+behavior; R3 selects finite expansion during binding. The component expansion
+contract belongs to `mind/behavior`; site-facing source and live-consumer adapters
+remain to be specified.
 
 ## Law
 
@@ -64,12 +65,13 @@ change weighted selection into role priority, or authorize shared mutable progre
 
 ## Open
 
-- **Source and binding contract:** the serializable definition/binding shapes,
-  parameter references, structured-value metadata and owner-supplied validation.
-  Scalar `ParameterSpec` support does not establish a route-value contract.
-- **Expansion contract:** the concrete source spelling, generated identity and
-  diagnostic mapping for R3. [Planning preflight](planning-preflight.md) records
-  the inspected seams and alternatives preceding the selection.
+- **Site-facing source and bindings:** their serializable shapes, structured-value
+  metadata and owner-supplied domain validation. The component's canonical JSON
+  contract is not automatically a studio/dungeonspec source dialect.
+- **Source adapter:** connect existing bundle/state authoring to the finite
+  producer without duplicating catalog, default or coordinate ownership.
+  [The S2 plan](plan-s2.md) names the component seam; [planning preflight](planning-preflight.md)
+  preserves the inspected starting point.
 - **Consumer bridge:** the concrete input/completion vocabulary and the adapter
   carrying original materialized configuration and per-attachment continuation.
   Selection remains distinct from physical execution; the existing snapshot

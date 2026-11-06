@@ -1,10 +1,11 @@
 # One definition, two guards
 
 Accepted behavioral proposal for [story #859](https://github.com/KirkDiggler/rpg-project/issues/859)
-and [R1–R3](design.md#law). This explains the agreed outcome, not supported YAML,
-a checked implementation plan or a claim of playable integration. The source and
-binding type names remain part of [the open contract](design.md#open);
-[planning preflight](planning-preflight.md) isolates the next lifecycle seam.
+and [R1–R3](design.md#law). This explains the agreed outcome, not studio YAML or
+a claim of playable integration. The concrete component contract and checks are
+in [the S2 plan](plan-s2.md); the [evidence entry](../../docs/journal/mind-machine/2026-11-06-can-one-authored-body-drive-two-patrols.md)
+links the executable source-to-expansion guide. Site-facing source/consumer
+adapters remain part of [the open contract](design.md#open).
 
 ## What the author changes
 
@@ -41,11 +42,11 @@ notation describes the desired content, not a newly invented `repeat` grammar.
 
 | Boundary | Concrete value | What the boundary contributes |
 |---|---|---|
-| Definition → authoring tool | One editable lifecycle/table source and parameter declarations; source schema open | Studio can edit the definition; generation can consume the same contract |
+| Definition → authoring tool | One editable lifecycle/table source and parameter declarations; site-facing schema open | Source/editor adapters target the component's `SequenceDefinition` contract |
 | Placement → producer | Local attachment ID `duty`, definition reference and route values; binding schema open | Associates values with this guard without copying behavior logic |
 | Producer → composer | Existing `behavior.InstanceSpec{ID, Recipe, Table}`, inside `ComposerConfig.Instances` | Resolved configuration; the producer handles source references and validation |
 | Composer → caller | Existing `DecideOutput.Instance` and `Pick` | Identifies the selected attachment and already-selected answer, not a completed movement |
-| Caller → composer | Existing addressed `ObserveInput`; completion vocabulary open | Delivers actual completion to the owning actor/attachment |
+| Caller → composer | Addressed `ObserveInput` using the producer's completion mapping; live-delivery adapter open | Delivers actual completion to the owning actor/attachment |
 | Composer → persistence owner | Existing `ComposerData` plus retained original configuration | Keeps continuation separate from source editing and subsequent generation |
 
 Both guards can name their attachment `duty`: that identity is local to each
@@ -68,10 +69,12 @@ not proof that a stateful attachment format already exists.
 **A route value does not explain how to remember its next leg.** The materializer
 must connect a data-authored lifecycle to the supplied route without concealing
 that behavior in a Patrol-specific Go factory. R3 selects producer-side finite
-expansion, preserving the existing runtime shape. Its concrete source spelling,
-binding interfaces and completion mapping still need specification; the scalar
-checker does not already supply them. The planning preflight retains the
-alternatives and their costs as investigation evidence.
+expansion, preserving the existing runtime shape. The component's
+`SequenceDefinition`/`ExpandSequence` contract and completion mapping live with
+`mind/behavior`; the scalar checker is reused, not mistaken for the expander.
+Connecting existing site authoring and actual execution to those values is a
+separate adapter concern. The planning preflight retains the alternatives and
+their costs as investigation evidence.
 
 Likewise, `StatesSpec` is not a ready-made generic behavior definition: its
 `blocks` and `holds` fields carry creature-body/post bindings. Reusing state
