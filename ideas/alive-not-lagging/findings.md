@@ -105,3 +105,21 @@ keep plain Move 300 → 165 ms after server-at-scale S7 and the-world-runs S4;
 raise 4 s → 1.25 s; the 100 ms bar left open; the save 1.3 MB per verb, of
 which JSON is about 65 ms (#770). This story's live numbers land under R5's
 harness and supersede this entry.
+
+## F7 — the player's own step is 41 ms; the raise is the rest
+
+2026-11-07 · rpg-toolkit main `3972f948` with the S0 benchmark
+(rpg-toolkit#2298 at `ecac6530`) · garrison keep, both variants.
+
+Command: `go test -run '^$' -bench BenchmarkGarrisonMove -benchtime 10x .`
+in `rulebooks/dnd5e/encounter`.
+
+| keep | ns/op | walk step | raise step | raises/op | blob | growth/op | allocs/op |
+|---|---|---|---|---|---|---|---|
+| default | 432 ms | 41.4 ms | 421.6 ms | 0.7 | 969,186 | 2,950 | 984k, 169 MB |
+| posts-asleep | 298 ms | 41.1 ms | 232.6 ms | 0.7 | 994,652 | 1,843 | 712k, 95 MB |
+
+Means: a step that does not raise the clock, the walk and the player's own
+sight, costs 41 ms on both keeps and is already under the 100 ms bar; a step
+that raises pays nine tenths of its time for the garrison. The answer the
+design moves ahead of the raise is the 41 ms step. Holds.
