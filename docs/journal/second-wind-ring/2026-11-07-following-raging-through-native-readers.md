@@ -16,16 +16,18 @@ The existing character converter also produced no source for the new origin shap
 
 [Web #1398](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1398) no longer requires cached damage_bonus/level. The badge reads saved progress and server text, keeping bindings opaque. Ten focused assertions failed before the reader change; all 52 focused cases passed afterward. Full API and web gates also completed. The [implementation checkpoint](https://github.com/KirkDiggler/rpg-toolkit/blob/design/rulebook-effect-composition/docs/ideas/rulebook-effect-composition/implementation.md) preserves measurements and the earlier timed-out attempts rather than counting them as passes.
 
-No isolated stack has been booted, no browser walk or independent runtime review has happened, and no release tag adoption is claimed. The operator's stack and characters were untouched.
+At that initial checkpoint, no isolated stack had been booted, no browser walk or independent runtime review had happened, and no release tag adoption was claimed. The operator's stack and characters were untouched.
+
+**Later on 2026-11-07:** Kirk reported the protos merged and generated. Publication CI and tag v0.1.259 both identify generated commit 7dcb1b2. The API and client tests then caught the remaining dropped source IDs before direct mapping fixed them; both full consumer gates passed. The isolated :3307/:8307 stack now boots at API 2bf39e23/web 156a39bc. Its landing renders without browser errors and the real client lists the local courtyard walk site. This advances the evidence to a booted early view, not a gameplay walk; [the receipt](https://github.com/KirkDiggler/rpg-toolkit/blob/design/rulebook-effect-composition/docs/ideas/rulebook-effect-composition/implementation.md#published-sdk-adoption-and-isolated-boot) keeps those limits explicit.
 
 ## Interpretation
 
 Sharing the constructor was necessary but not sufficient. The consumers tested whether the agreed facts survived each boundary. Four effect rows did not mean four attack bonuses; an origin was not a stacking address; a binding was not a client-side formula. Those distinctions had to survive ordinary persistence and rendering, not just the rulebook's tests.
 
-The missing wire field changed the execution dependency, not the agreed design or the decision to refuse old Rage saves. This is now a publication gate: generated SDKs must exist before the API and client can carry the source value. It is not another request to approve the architecture.
+The missing wire field changed the execution dependency, not the agreed design or the decision to refuse old Rage saves. That was a publication gate: generated SDKs had to exist before the API and client could carry the source value. It was not another request to approve the architecture; the later publication and failing-then-passing mappings resolved it.
 
 ## Next
 
-With authorization, publish the additive proto contract and adopt its generated SDKs, then boot the exact isolated stack for the early native look. [S12](https://github.com/KirkDiggler/rpg-project/issues/884) owns that work and the later walk/review/release evidence. The current question is still whether the real journey agrees with the source-level proof.
+The initial next step was publication, SDK adoption and isolated boot; those are now observed. The next distinction is the operator's early native look, followed by the agreed gameplay walk and independent review. [S12](https://github.com/KirkDiggler/rpg-project/issues/884) owns that work and the later walk/review/release evidence. The current question is still whether the real journey agrees with the source-level proof.
 
 — cross-team agent, on behalf of KirkDiggler
