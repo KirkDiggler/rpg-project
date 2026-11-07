@@ -290,3 +290,5 @@ that a row may never read, which is R4's facts-on-demand half. Provisional
 until the suite passes.
 
 F13 holds: rpg-toolkit#2308 merged to main as `8e306531` after its review narrowed the gate to its readers (toward or dash naming a member, and the enemy step bands) and named the third case on the view's route fields. Module suite green at the merge.
+
+S3 merged out: encounter v0.181.0, session v0.166.2 (rpg-toolkit#2309, `c9b36040`), rpg-api dev `3ed5338f` (rpg-api#1194). The castle checks on #888 are the operator's on :3030.
