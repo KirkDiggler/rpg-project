@@ -292,3 +292,30 @@ until the suite passes.
 F13 holds: rpg-toolkit#2308 merged to main as `8e306531` after its review narrowed the gate to its readers (toward or dash naming a member, and the enemy step bands) and named the third case on the view's route fields. Module suite green at the merge.
 
 S3 merged out: encounter v0.181.0, session v0.166.2 (rpg-toolkit#2309, `c9b36040`), rpg-api dev `3ed5338f` (rpg-api#1194). The castle checks on #888 are the operator's on :3030.
+
+## F14 — four folds kept until their inputs change
+
+2026-11-07 · rpg-toolkit main `8e306531` (S3 in) plus rpg-toolkit#2310 at
+`6f6847d1` · garrison keep, 40 iterations.
+
+With the harness reading the round through a cheap accessor instead of the
+whole record, the allocation profile of a Move is honest, and four things
+recomputed on every ask stand out: the blocking-door slice rebuilt on every
+crossing check (20 MB a Move), the holdings fold and a member's known facts
+each copying the whole world journal per question, the faction graph
+refolded per stance question (17 MB), and the host's participation
+assessment asked anew by every woken creature (23 MB, a hundred assessments
+of one roster per raise). Each now reads back until its input changes: the
+door slice by each door's reading, the three folds by the append-only
+journal's length, participation for one wake pass.
+
+Command: `go test -run '^$' -bench BenchmarkGarrisonMove -benchtime 40x .`
+
+| keep | Move | raise step | allocs per op | bytes per op |
+|---|---|---|---|---|
+| default | 161 → 134 ms | 139 → 105 ms | 551k → 408k | 80 → 44 MB |
+| posts-asleep | 127 → 123 ms | 96 → 88 ms | 450k → 368k | 59 → 39 MB |
+
+Means: a quarter of the allocations and a sixth of the time, mechanically,
+with what anyone sees or decides unchanged. Against F7 the default Move is
+432 → 134 ms. Provisional until the suite and the review land.
