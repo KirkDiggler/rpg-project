@@ -152,24 +152,25 @@ Merge after proof: Assets provider, protos publication, encounter tag, session t
 - [ ] Independent review per repository policy, then fix findings with tests. Feature remains draft while integration or released pins are pending.
 - [ ] After authorized merges, adopt actual published tags/catalog pin, repeat joined verification, obtain final castle walk and close #874 only when all finish-line evidence exists.
 
-## Execution checkpoint — 2026-11-06
+## Current execution checkpoint
 
 | Task | Evidence / state |
 |---|---|
 | T1 | Implemented in Web `ffd31384`; edit, ownership, source/composition/local round trips and current full Web gate pass. |
-| T2 | Assets `5acb669`, draft assets#342: three verified private candidates and 7 focused tests pass. Full discovery completed 2175 tests with 21 failures/15 errors/119 skips; all 36 failure identities reproduce on base `fe6b5ee`, tracked in assets#333. Publication/inventory/pin remain pending. |
+| T2 | Assets `cb2bbb5`, draft assets#342: identical approved-color resources installed in the private provider candidate; 9 ground checks, source rebuild and complete 4501-file inventory/stage closure pass. Independent custody finding fixed and closure clear. Full discovery: 2177 tests, unchanged 21 failures/15 errors/119 skips from assets#333; no waiver. Publication/exact consumer pin remain pending. |
 | T3 | Protos#421 is operator-merged and generated: TS v0.1.258 and Go v0.0.0-20261106231558-dea142c77291 are adopted. |
 | T4 | Encounter `45055ff6`, draft toolkit#2289: all module packages and lint pass locally and CI passes. Includes native fixture, save/reload/copy, source validation, footing and partial/concealment disclosure tests. |
 | T5 | Session `74bc4ea8`, draft toolkit#2290: full module/lint/CI pass; real encounter pseudo-version remains until release. |
 | T6 | API `2355058`, draft api#1190: both wire mappings and native create/start/fresh-host captured reload pass; full local gates pass. Runs only in the isolated :8124 environment. |
 | T7 | Web `78b4901d`, draft web#1395: Studio and live rendering/discovery union implemented; full gate passes 9972 tests with five skips. Layout UVs match 3D; unused source GPU uploads are removed. |
-| T8 | Early Studio appearance approved. Joined native save/play, two-client gate discovery, actor/NPC motion, reload and source immutability pass. Three-pair 431-cell RTX 4090 benchmark records 369→71 calls, unchanged 16.8-ms p95 and worse startup p99 (40.7→65.1 ms). Full castle/large-keep acceptance, independent review, publication, final pins and authorized merges remain open. |
+| T8 | Early Studio appearance approved. Joined native save/play, two-client gate discovery, actor/NPC motion, reload and source immutability pass. Three-pair 431-cell RTX 4090 benchmark records 369→71 calls, unchanged 16.8-ms p95 and worse startup p99 (40.7→65.1 ms). Independent code reviews are clear at all listed heads, including focused Assets custody closure. Full castle/large-keep acceptance, the unwaived Assets baseline gate, publication, final pins and authorized merges remain open. |
 
 The current paper trail and preview instructions are on #874. The preview is
 http://127.0.0.1:3181/; the operator castle (:3030) and review Lab (:3180) are
 unchanged. Only the operator-merged proto contract has merged. The playable link,
 measurements and remaining gates are on [the joined checkpoint](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6701542844).
-Discussion remains in chat before recording decisions.
+[Review closure and the current provider gate](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6712221345)
+name the remaining stop. Discussion remains in chat before recording decisions.
 
 Plan refinements supported by inspection: the new `scripts/groundPreviewPlugin.ts`
 serves only hash-verified private staging under an explicit environment opt-in,
