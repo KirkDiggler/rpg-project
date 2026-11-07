@@ -23,7 +23,7 @@ prefix and agreed public-name changes, excluding comments and positions. Its
 race tests, example, vet and lint pass. Both real item consumers now resolve the
 pushed provider without local replacements: Second Wind S1 at `7d7ef342`, and
 Rage/loot S2 at `7dadbb64`. Their full-module race tests, runnable examples, vet
-and lint pass too. The [implementation record](https://github.com/KirkDiggler/rpg-toolkit/blob/feat/effects-extraction/docs/ideas/item-effect-composition/implementation.md)
+and lint pass too. The [implementation record](https://github.com/KirkDiggler/rpg-toolkit/blob/01038a6d3f424c57fd7ead042f5bf2187bcdc390/docs/ideas/item-effect-composition/implementation.md)
 links the receipts and limits.
 
 The selected module path is not new to Go's version history: its retired

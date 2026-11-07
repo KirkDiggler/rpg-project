@@ -10,7 +10,7 @@ What is the first bounded implementation cut after agreeing on the layers and th
 
 The operator cleared the documentation for merge. Toolkit [#2288](https://github.com/KirkDiggler/rpg-toolkit/pull/2288) merged at `aca78cdf`; project [#878](https://github.com/KirkDiggler/rpg-project/pull/878) merged at `07516c5`. Head-specific documentation verdicts and checks are recorded on the PRs. No item/example PR was included in that merge permission.
 
-The [first-cut extraction plan](https://github.com/KirkDiggler/rpg-toolkit/blob/feat/effects-extraction/docs/ideas/item-effect-composition/plan.md), in [toolkit#2291](https://github.com/KirkDiggler/rpg-toolkit/pull/2291), inventories the existing generic provider, both item consumers, import seams, live documentation, CI module discovery and first-tag behavior. It names exact tasks/tests and separates development pins from released adoption.
+The [first-cut extraction plan](https://github.com/KirkDiggler/rpg-toolkit/blob/22a6acefd054fa8ef5d8797882b59076b41b8d47/docs/ideas/item-effect-composition/plan.md), in [toolkit#2291](https://github.com/KirkDiggler/rpg-toolkit/pull/2291), inventories the existing generic provider, both item consumers, import seams, live documentation, CI module discovery and first-tag behavior. It names exact tasks/tests and separates development pins from released adoption.
 
 The earlier record deliberately leaves the module home until extraction. The proposed home is top-level `effects/`, keeping `effects/machine` in the same release unit. That recommendation is H1 on #705, not an operator ruling silently supplied by this session. No source directory or consumer import has moved.
 

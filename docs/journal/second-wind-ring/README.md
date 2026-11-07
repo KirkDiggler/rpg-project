@@ -4,7 +4,7 @@ Working journal for [Keep equipment S1 — #862](https://github.com/KirkDiggler/
 and [S2 — Rage and encounter-independent loot #873](https://github.com/KirkDiggler/rpg-project/issues/873),
 under [#850](https://github.com/KirkDiggler/rpg-project/issues/850). The original folder name is retained so existing links stay valid.
 
-- [ADR-0048: accepted composition/ownership decision; APIs and extraction open](https://github.com/KirkDiggler/rpg-toolkit/blob/docs/second-wind-ring/docs/adr/0048-equipment-granted-abilities.md).
+- [ADR-0048: accepted composition/ownership decision; item APIs remain experimental](https://github.com/KirkDiggler/rpg-toolkit/blob/main/docs/adr/0048-equipment-granted-abilities.md).
 - [Existing effects provider story — #703](https://github.com/KirkDiggler/rpg-project/issues/703).
 - [Overall keep experience — #702](https://github.com/KirkDiggler/rpg-project/issues/702).
 
@@ -27,3 +27,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-05 — Rage, retrieved loot, and an items-first extraction path](2026-11-05-rage-loot-and-items-first-extraction.md)
 - [2026-11-06 — From the walkthrough to a concrete extraction plan](2026-11-06-from-walkthrough-to-extraction-plan.md)
 - [2026-11-06 — What does Compose name, and where does it belong?](2026-11-06-what-compose-names.md)
+- [2026-11-07 — When is the extraction actually adopted?](2026-11-07-from-pushed-code-to-released-adoption.md)
