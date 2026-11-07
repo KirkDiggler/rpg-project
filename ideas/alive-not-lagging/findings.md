@@ -233,3 +233,7 @@ second, with no change to what anyone sees. The cache is a property of the
 site plus its doors and props, which is the site tier of the three-tier
 shape: computed once per site version, shared by every game on it, with the
 door and prop signature as the invalidation. Provisional.
+
+F11 oracle: the whole encounter module passes with the spike in place
+(`go test -count=1 ./...`: root, castletest, dungeonspec, keepgen, replay,
+commands, scenarios, all ok). What anyone sees is unchanged. F11 holds.
