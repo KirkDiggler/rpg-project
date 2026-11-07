@@ -29,3 +29,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-06 — What does Compose name, and where does it belong?](2026-11-06-what-compose-names.md)
 - [2026-11-07 — When is the extraction actually adopted?](2026-11-07-from-pushed-code-to-released-adoption.md)
 - [2026-11-07 — Which saved data does the next Rage implementation need?](2026-11-07-choosing-the-current-rage-data.md)
+- [2026-11-07 — Does shared creation survive the native readers?](2026-11-07-following-raging-through-native-readers.md)
