@@ -150,3 +150,29 @@ Means: a live keep held in the API process costs single-digit megabytes; the
 orders and routes add under a megabyte. A hundred live sessions of the
 largest keep is 1.6 GB; a handful is nothing. The 1 MB JSON record is a
 sixth of the built size, which is the rebuild the cache avoids. Holds.
+
+## F9 — rebuilding per verb costs 2.4× the CPU of a live instance, for 5 MB a game
+
+2026-11-07 · rpg-toolkit main `3972f948` with the simulation benchmark
+(rpg-toolkit#2301 at `05b4ec36`) · garrison keep, 1, 8 and 32 games served
+round-robin by one process, one verb per Step, one op = the four-cell pace.
+
+Command: `go test -run '^$' -bench BenchmarkSessionStyles -benchtime 12x .`
+in `rulebooks/dnd5e/encounter`.
+
+| style | games | per verb | resident heap | GC pause per op | allocs per op |
+|---|---|---|---|---|---|
+| rebuild (unmarshal, LoadEncounter, Step, marshal) | 1 | 231 ms | 2 MB | 8.4 ms | 4.36M, 616 MB |
+| live (Step, marshal the checkpoint) | 1 | 97 ms | 6 MB | 3.0 ms | 983k, 194 MB |
+| live, no checkpoint | 1 | 88 ms | 6 MB | 1.7 ms | 958k, 163 MB |
+| rebuild | 8 | 225 ms | 8 MB | 4.2 ms | 4.35M |
+| live | 8 | 95 ms | 41 MB | 0.6 ms | 986k |
+| rebuild | 32 | 245 ms | 31 MB | 1.9 ms | 4.61M |
+| live | 32 | 118 ms | 164 MB | 0.2 ms | 1.25M |
+
+Means: the rebuild is 134 ms of every verb, 2.4 times the live cost and 4.4
+times the allocations, bought back for about 5 MB of resident heap per live
+game. The checkpoint of the whole record is 10 ms of a live verb. Thirty-two
+resident keeps slow a live verb by a fifth, the collector scanning 164 MB.
+The simulation has no Redis round trip; the server pays that on top of the
+rebuild line. Holds.
