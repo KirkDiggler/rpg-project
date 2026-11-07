@@ -189,3 +189,47 @@ at-rest figure; a verb in flight holds one built encounter besides, so peak
 is the blobs plus one keep per concurrent verb.
 
 The simulation is on rpg-toolkit main as `707f8f1e` (`BenchmarkSessionStyles`).
+
+## F10 — who gets their sight rebuilt, and why it costs
+
+2026-11-07 · rpg-toolkit main `707f8f1e` · garrison keep, default, nine
+ops (six raises) of the four-cell pace, the rebuild probe counting every
+observer list `rebuildPercepts` is handed.
+
+| refresh | calls | observers per call | distinct | pattern |
+|---|---|---|---|---|
+| the player's own step | one per step, four per op | 19 | 19 | the same nineteen guards who see the player's two cells, every step |
+| the wake | one per raise | 78 | 78 | twenty patrol legs reach nearly the whole garrison, every raise |
+
+128 observer rebuilds per op. A stationary observer already skips its sweep
+when its sweep key (own cell, sight range, opacity, hidden set) is unchanged,
+so the cost is the movers: the player sweeps from every cell it steps to and
+each patrol sweeps from every leg, and a sweep casts a ray to every cell of
+the sight disk that is not yet known, which in a keep is most of the disk
+behind walls, again from every cell. Members never block sight, so what a
+cell sees is a function of the site, the doors, the props and the observer's
+concealment knowledge, and nothing else. Holds.
+
+## F11 — a cross-pass visible-cells cache halves the Move
+
+2026-11-07 · rpg-toolkit main `707f8f1e` plus a spike: the floor an observer
+sees from a cell is cached across passes, keyed by the existing sweep key,
+and the whole cache is dropped when a signature of door states and opaque
+entity cells changes · garrison keep, 40 iterations.
+
+| keep | before | after | walk step | raise step | allocs per op |
+|---|---|---|---|---|---|
+| default | 432 ms | 229 ms | 41 → 18 ms | 422 → 251 ms | 984k → 729k |
+| posts-asleep | 298 ms | 129 ms | 41 → 18 ms | 233 → 103 ms | 712k → 466k |
+
+Over sixty ops: 469 hits, 114 misses, all misses in the first nine ops (one
+lap of every route); 114 entries holding 69,637 cells, about 1 MB as
+positions and 28 KB as bitsets. The sight-related tests pass; the module's
+full suite is the oracle and runs at the time of writing. Provisional until
+it passes.
+
+Means: the player's own step drops to 18 ms and the raise to a quarter of a
+second, with no change to what anyone sees. The cache is a property of the
+site plus its doors and props, which is the site tier of the three-tier
+shape: computed once per site version, shared by every game on it, with the
+door and prop signature as the invalidation. Provisional.
