@@ -258,3 +258,5 @@ soundness and the opacity only frees orphaned entries. Under R4 an entry is
 instance state; the site tier could hold only the authored site's answer.
 The module's full suite passes at the merge. Holds; supersedes F11's
 provisional numbers.
+
+S2 merged out: session v0.166.1 (rpg-toolkit#2307, `b5f8f75e`), rpg-api dev `65f03a8c` (rpg-api#1192). The castle walk of the door invalidation is the operator's on :3030.
