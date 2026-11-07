@@ -260,3 +260,31 @@ The module's full suite passes at the merge. Holds; supersedes F11's
 provisional numbers.
 
 S2 merged out: session v0.166.1 (rpg-toolkit#2307, `b5f8f75e`), rpg-api dev `65f03a8c` (rpg-api#1192). The castle walk of the door invalidation is the operator's on :3030.
+
+## F13 — routes on demand: 930 route searches per op, none read
+
+2026-11-07 · rpg-toolkit main `c8cb8e53` (S2 in) plus a spike · garrison
+keep, 40 iterations.
+
+Every woken creature's view searched a route toward and a route away from
+every member it could see, before any row was picked: 117 views and 930 A*
+searches per op in the garrison keep, and not one of them read, because a
+post's table holds and a patrol's table walks a route of cells. The spike
+searches member routes only when a row of the member's table can read one
+(a selector word on a movement verb, a search, or an `enemy` band measured
+in steps); a member with no table keeps every route, since something this
+package cannot see drives it.
+
+Command: `go test -run '^$' -bench BenchmarkGarrisonMove -benchtime 40x .`
+
+| keep | Move | raise step | walk step | allocs per op |
+|---|---|---|---|---|
+| default | 233 → 161 ms | 255 → 139 ms | 18 → 20 ms | 728k → 551k |
+| posts-asleep | 128 → 127 ms | 100 → 96 ms | 18 → 19 ms | 466k → 450k |
+
+Means: the raise with the whole garrison awake drops by nearly half again;
+posts asleep barely move, because sleeping posts build no view. Against
+F7's 432 ms the default Move is now 161 ms. The root package passes; the
+module suite runs. Routes are the second value computed eagerly per visit
+that a row may never read, which is R4's facts-on-demand half. Provisional
+until the suite passes.
