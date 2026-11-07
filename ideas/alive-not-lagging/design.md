@@ -2,7 +2,7 @@
 
 Story rpg-project#879. Findings ledger: [findings.md](findings.md). Index and
 how to add a finding: [README.md](README.md). Rulings R1–R5 are ruled on the
-lane issue (#880). Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
+lane issue (#880); R1 and R2 settled 2026-11-07. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
 cutover head `c1cbf623` (toolkit#2293), on the garrison keep. <!-- case-file -->
 
 ## Shape
@@ -64,8 +64,8 @@ in the findings ledger; a number without those three is an opinion.
 
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
-| R1 the budget: the verb answers within 100 ms at the garrison keep, the first beat within 250 ms after | open | §Law, the verb | | |
-| R2 the verb answers first, the raise runs after under the session lock | open | §Shape | | |
+| R1 the budget: the verb answers within 100 ms at the garrison keep, the first beat within 250 ms after | settled | §Law, the verb | KirkDiggler | 2026-11-07 |
+| R2 the verb answers first, the raise runs after under the session lock; the first slice | settled | §Shape | KirkDiggler | 2026-11-07 |
 | R3 one in-memory encounter per session, checkpointed after each pass | open | §Shape, the checkpoint | | |
 | R4 sight cached per observer, facts on demand first | open | §Law, sight and facts | | |
 | R5 the harness is the record: phases, blob, allocations, answer and first beat | open | §Law, the claim | | |
