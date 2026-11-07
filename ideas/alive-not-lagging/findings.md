@@ -130,3 +130,23 @@ averages). Rerun at that head, 5x: default walk 36.8 ms, raise 356 ms,
 growth 1,866 bytes per op; posts-asleep walk 37.4 ms, raise 207 ms, growth
 −287 bytes per op (retention trimming the log on a quiet keep). The S0
 numbers above stand; the harness is now on main for every later entry.
+
+## F8 — a built keep weighs 6 MB on the heap
+
+2026-11-07 · rpg-toolkit main `3972f948` · keepgen keeps, seed 1, default
+monster density (about one creature per hundred hexes), built with the
+benchmark's capabilities.
+
+Command: a throwaway test reading `runtime.MemStats.HeapInuse` after two
+forced GCs before and after `NewEncounter`.
+
+| keep | hexes | members | live encounter heap |
+|---|---|---|---|
+| garrison (99 with orders, 20 on routes) | 10,000 | 100 | 5.9 MB |
+| same density, nobody given orders | 10,000 | 100 | 5.1 MB |
+| garrison | 30,000 | 298 | 16.0 MB |
+
+Means: a live keep held in the API process costs single-digit megabytes; the
+orders and routes add under a megabyte. A hundred live sessions of the
+largest keep is 1.6 GB; a handful is nothing. The 1 MB JSON record is a
+sixth of the built size, which is the rebuild the cache avoids. Holds.
