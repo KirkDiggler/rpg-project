@@ -187,3 +187,5 @@ verb either way. The ratio is engine-only: settlement, numbering, fan-out and
 the session save are paid in both styles. Rebuild's resident heap is the
 at-rest figure; a verb in flight holds one built encounter besides, so peak
 is the blobs plus one keep per concurrent verb.
+
+The simulation is on rpg-toolkit main as `707f8f1e` (`BenchmarkSessionStyles`).
