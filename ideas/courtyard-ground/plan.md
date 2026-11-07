@@ -123,10 +123,10 @@ Merge after proof: Assets provider, protos publication, encounter tag, session t
 **Files:** `internal/handlers/dnd5e/session/v1alpha1/convert.go`, `convert_test.go`; v1alpha2 `convert_geometry.go`, `convert_act_test.go`; existing authoring/session integration tests; module pins; private untracked `content/courtyard-ground-walk.yaml`.
 **Interfaces:** field-for-field mappings in both wire versions. No RPC/permission additions.
 
-- [ ] Add distinguishing conversion assertions for nonempty base, explicit same-as-base paint and partial delivered paint; null ground remains absent.
-- [ ] Add a real native-document create/start/reload integration path; changing stored source after starting must not repaint the encounter snapshot.
-- [ ] Observe RED, implement pure mapping and real dependency pins.
-- [ ] Run focused handler/integration checks and `make ci-check` plus `make test` before PR readiness. No local Go replacement or source-copy build.
+- [x] Add distinguishing conversion assertions for nonempty base, explicit same-as-base paint and partial delivered paint; null ground remains absent.
+- [x] Add a real native-document create/start/reload integration path; changing stored source after starting must not repaint the encounter snapshot.
+- [x] Observe RED, implement pure mapping and real dependency pins.
+- [x] Run focused handler/integration checks and `make ci-check` plus `make test` before PR readiness. No local Go replacement or source-copy build.
 
 ## T7 — Studio controls, shared ground drawing and discovery merge
 
@@ -146,7 +146,7 @@ Merge after proof: Assets provider, protos publication, encounter tag, session t
 **Files/artifacts:** untracked walk site cut from castle courtyard; private screenshots and fixed camera/arrival driver; API castle content changes only after verified fold-back; issue/PR evidence and run records.
 
 - [ ] Boot builder-owned stack using root `scripts/dev-env.sh`; verify exact served API/Web/content/catalog hashes and normal asset sync. Do not alter :3030 or the Lab.
-- [ ] Publish early-view URL and head on #874. Obtain the operator's look before the formal walk/review round.
+- [x] Publish early-view URL and head on #874. Obtain the operator's look before the formal walk/review round.
 - [ ] Walk every #874 checklist item, including player and NPC motion, base-equal paint, remove/reassign floor behavior, unavailable styles and fog/reload. Verify ordinary gate/route behavior after fold-back.
 - [ ] Measure same scene/camera/device/build configuration before and after: load-to-first-frame, frame-time distribution, draw calls, resource/memory observations. Keep asset loading distinct from engine latency and do not certify hardware from software-rendered captures.
 - [ ] Independent review per repository policy, then fix findings with tests. Feature remains draft while integration or released pins are pending.
@@ -157,21 +157,24 @@ Merge after proof: Assets provider, protos publication, encounter tag, session t
 | Task | Evidence / state |
 |---|---|
 | T1 | Implemented in Web `ffd31384`; edit, ownership, source/composition/local round trips and current full Web gate pass. |
-| T2 | Assets `48bd564`, draft assets#342: three exact color-resource candidates and 7 focused tests pass. Full Assets discovery exceeded 780 seconds; publication/inventory/pin remain pending. Web strict reader and private dev-only verified mount are implemented; candidate resources are outside public/dist. |
-| T3 | Protos `4c3ce65`, PR protos#421: local and remote contract gates pass; NOT merged/published. |
+| T2 | Assets `5acb669`, draft assets#342: three verified private candidates and 7 focused tests pass. Full discovery completed 2175 tests with 21 failures/15 errors/119 skips; all 36 failure identities reproduce on base `fe6b5ee`, tracked in assets#333. Publication/inventory/pin remain pending. |
+| T3 | Protos#421 is operator-merged and generated: TS v0.1.258 and Go v0.0.0-20261106231558-dea142c77291 are adopted. |
 | T4 | Encounter `45055ff6`, draft toolkit#2289: all module packages and lint pass locally and CI passes. Includes native fixture, save/reload/copy, source validation, footing and partial/concealment disclosure tests. |
 | T5 | Session `74bc4ea8`, draft toolkit#2290: full module/lint/CI pass; real encounter pseudo-version remains until release. |
-| T6 | API worktree is clean; wire mappings/integration await published T3 bindings. No API deployment. |
-| T7 | Studio base/paint/erase, real history/persistence, 2D feedback and batched level 3D drawing implemented in draft web#1395. Full Web gate passes. Live-play consumer/discovery merge still needs the new generated wire types. |
-| T8 | Native Studio early-view check passes: base-preserving paint, pointer paint/undo/redo/erase, YAML download and browser reload. Operator look, joined actor/NPC/fog walk, comparable benchmark, independent review, final pins and merges remain pending. |
+| T6 | API `2355058`, draft api#1190: both wire mappings and native create/start/fresh-host captured reload pass; full local gates pass. Runs only in the isolated :8124 environment. |
+| T7 | Web `78b4901d`, draft web#1395: Studio and live rendering/discovery union implemented; full gate passes 9972 tests with five skips. Layout UVs match 3D; unused source GPU uploads are removed. |
+| T8 | Early Studio appearance approved. Joined native save/play, two-client gate discovery, actor/NPC motion, reload and source immutability pass. Three-pair 431-cell RTX 4090 benchmark records 369→71 calls, unchanged 16.8-ms p95 and worse startup p99 (40.7→65.1 ms). Full castle/large-keep acceptance, independent review, publication, final pins and authorized merges remain open. |
 
 The current paper trail and preview instructions are on #874. The preview is
 http://127.0.0.1:3181/; the operator castle (:3030) and review Lab (:3180) are
-unchanged. Nothing is merged. Discussion remains in chat before recording decisions.
+unchanged. Only the operator-merged proto contract has merged. The playable link,
+measurements and remaining gates are on [the joined checkpoint](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6701542844).
+Discussion remains in chat before recording decisions.
 
 Plan refinements supported by inspection: the new `scripts/groundPreviewPlugin.ts`
 serves only hash-verified private staging under an explicit environment opt-in,
-marks the UI as candidate, and is dev-only. Existing authoring fill annotations
+marks the UI as candidate, and serves development or explicit `bench` preview
+only; ordinary production preview refuses private staging. Existing authoring fill annotations
 are omitted on textured ground while outlines/grid remain; native screenshots
 showed that otherwise those annotations masked the intended surface colors.
 Neither refinement changes mechanics or source ownership. Cross-repository
