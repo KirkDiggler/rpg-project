@@ -176,3 +176,14 @@ game. The checkpoint of the whole record is 10 ms of a live verb. Thirty-two
 resident keeps slow a live verb by a fifth, the collector scanning 164 MB.
 The simulation has no Redis round trip; the server pays that on top of the
 rebuild line. Holds.
+
+F9, the other end of the range (rpg-toolkit#2301 at `c2d772c9`, after its review):
+the server's Move loads once per path, not per cell, so a four-cell pace sent
+as one verb is one rebuild, four steps and one save. Measured as
+`rebuild-walk`: 492 ms per Move at one game, 494 at eight, 562 at thirty-two,
+against live's 380 to 472. So a one-cell verb (a step, a bump, a swing) pays
+2.4× and a four-cell Move pays 1.3×; the rebuild is 110 to 134 ms of CPU per
+verb either way. The ratio is engine-only: settlement, numbering, fan-out and
+the session save are paid in both styles. Rebuild's resident heap is the
+at-rest figure; a verb in flight holds one built encounter besides, so peak
+is the blobs plus one keep per concurrent verb.
