@@ -237,3 +237,24 @@ door and prop signature as the invalidation. Provisional.
 F11 oracle: the whole encounter module passes with the spike in place
 (`go test -count=1 ./...`: root, castletest, dungeonspec, keepgen, replay,
 commands, scenarios, all ok). What anyone sees is unchanged. F11 holds.
+
+## F12 — S2 on main: what a cell sees is cached, not recast
+
+2026-11-07 · rpg-toolkit#2305 merged to main as `c8cb8e53` · garrison keep.
+
+Command: `go test -run '^$' -bench BenchmarkGarrisonMove -benchtime 40x .`
+in `rulebooks/dnd5e/encounter`, at the review head `a3a8e1de` (the merge is
+that head squashed).
+
+| keep | Move | walk step | raise step | allocs per op |
+|---|---|---|---|---|
+| default | 432 → 235 ms | 41 → 18.6 ms | 422 → 266 ms | 984k → 722k |
+| posts-asleep | 298 → 130 ms | 41 → 18.1 ms | 233 → 103 ms | 712k → 466k |
+
+The review found the separate door-and-prop epoch redundant: the sweep key
+already carries the pass's opacity, which fingerprints doors, placed
+footprints, opaque entities and obscuring areas, so the key is the
+soundness and the opacity only frees orphaned entries. Under R4 an entry is
+instance state; the site tier could hold only the authored site's answer.
+The module's full suite passes at the merge. Holds; supersedes F11's
+provisional numbers.
