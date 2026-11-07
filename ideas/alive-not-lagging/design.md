@@ -2,7 +2,7 @@
 
 Story rpg-project#879. Findings ledger: [findings.md](findings.md). Index and
 how to add a finding: [README.md](README.md). Rulings R1–R5 are ruled on the
-lane issue (#880); R1 and R2 settled 2026-11-07. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
+lane issue (#880); R1, R2 and R4 settled 2026-11-07. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
 cutover head `c1cbf623` (toolkit#2293), on the garrison keep. <!-- case-file -->
 
 ## Shape
@@ -40,10 +40,15 @@ record stays one deterministic pass in seat order (the-world-runs R2 stands).
 encounter supplies; a step never rebuilds sight. The composer is a cost only
 when the profile says so.
 
-**Sight is a function, not a recomputation.** What an observer sees is a
-function of its cell, its facing and the blockers in its lanes. The wake reads
-a cached value and invalidates it only when a mover enters the observer's
-sweep.
+**Sight is a function, not a recomputation.** What a cell sees is a function
+of the site, the doors and the props; members never block sight. The wake
+reads a cached value and invalidates it when a door or a prop changes, never
+when a member moves.
+
+**A cached value lives where its inputs live.** What depends only on the
+compiled site is site data, shared by every game on that site version. What
+changes with the game, an observer's concealment knowledge, is the
+instance's. A value that changes with an instance cannot live above it.
 
 **A fact is computed when a guard asks.** A guard that asks whether an enemy
 is in sight gets a lane query; it does not pay for the cells the observer
@@ -67,7 +72,7 @@ in the findings ledger; a number without those three is an opinion.
 | R1 the budget: the verb answers within 100 ms at the garrison keep, the first beat within 250 ms after | settled | §Law, the verb | KirkDiggler | 2026-11-07 |
 | R2 the verb answers first, the raise runs after under the session lock; the first slice | settled | §Shape | KirkDiggler | 2026-11-07 |
 | R3 one in-memory encounter per session, checkpointed after each pass | open | §Shape, the checkpoint | | |
-| R4 sight cached per observer, facts on demand first | open | §Law, sight and facts | | |
+| R4 a cached value lives where its inputs live: what a cell sees given doors and props is compiled site data, the concealment layer is the instance's | settled | §Law, sight and facts | KirkDiggler | 2026-11-07 |
 | R5 the harness is the record: phases, blob, allocations, answer and first beat | open | §Law, the claim | | |
 
 ## Open
