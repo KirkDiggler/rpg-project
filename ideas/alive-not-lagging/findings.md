@@ -123,3 +123,10 @@ Means: a step that does not raise the clock, the walk and the player's own
 sight, costs 41 ms on both keeps and is already under the 100 ms bar; a step
 that raises pays nine tenths of its time for the garrison. The answer the
 design moves ahead of the raise is the 41 ms step. Holds.
+
+Merged to rpg-toolkit main as `058c7f11` with the review's three fixes
+(pure round read, growth named as net change after retention, sub-ms
+averages). Rerun at that head, 5x: default walk 36.8 ms, raise 356 ms,
+growth 1,866 bytes per op; posts-asleep walk 37.4 ms, raise 207 ms, growth
+−287 bytes per op (retention trimming the log on a quiet keep). The S0
+numbers above stand; the harness is now on main for every later entry.
