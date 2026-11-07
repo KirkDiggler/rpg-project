@@ -11,6 +11,8 @@ Slice [#874](https://github.com/KirkDiggler/rpg-project/issues/874), story [#867
 - KirkDiggler agreed to per-region stone-default bases, explicit paint surviving base changes, erase-to-base, level ground and hex boundaries; S2 execution is authorized — [story agreements](https://github.com/KirkDiggler/rpg-project/issues/867).
 - Use the existing typed region projection, not the retired full-source scene path; preserve separate provider module PRs and the proto publication gate — [S2 contract](https://github.com/KirkDiggler/rpg-project/issues/874).
 
+- After confirming the broad Assets Python suite is not a CI test job, the operator directed current courtyard work to retain the baseline notes, verify new work and investigate useful validation separately; no tests are removed and no merge/deployment authority is inferred — [operator disposition](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6712580255).
+
 ## Found
 
 - Existing Kingdom ground color images contain faceted variation; floor-resource candidates can use those images without weakening generic prop volume/grounding checks — [S2](https://github.com/KirkDiggler/rpg-project/issues/874).
@@ -21,6 +23,8 @@ Slice [#874](https://github.com/KirkDiggler/rpg-project/issues/874), story [#867
 - The full Assets gate completed with 21 failures and 15 errors; all 36 identities reproduce on unchanged base, matching the existing blocker rather than authorizing a waiver — [Assets #333](https://github.com/KirkDiggler/rpg-game-assets/issues/333#issuecomment-6701160384).
 
 - Independent reviews are clear for all current implementation heads. Assets source-custody checking had one Important defect, reproduced and fixed with a real CLI regression, then independently closed; the shared baseline gate remains unwaived — [review closure and gate](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6712221345).
+
+- GitHub lists only dynamic Copilot review for Assets, with no checked-in workflows or PR test checks. Fresh nine-test ground/source/inventory/stage checks pass; measuring validation value and change triggers is a separate follow-up rather than an invented permanent policy — [Assets #343](https://github.com/KirkDiggler/rpg-game-assets/issues/343).
 
 ## Mistaken
 
