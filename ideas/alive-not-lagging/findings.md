@@ -288,3 +288,5 @@ F7's 432 ms the default Move is now 161 ms. The root package passes; the
 module suite runs. Routes are the second value computed eagerly per visit
 that a row may never read, which is R4's facts-on-demand half. Provisional
 until the suite passes.
+
+F13 holds: rpg-toolkit#2308 merged to main as `8e306531` after its review narrowed the gate to its readers (toward or dash naming a member, and the enemy step bands) and named the third case on the view's route fields. Module suite green at the merge.
