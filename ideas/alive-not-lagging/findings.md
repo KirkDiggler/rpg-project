@@ -466,3 +466,42 @@ invalidating by sheet write is the session's to do. With the fold of F16,
 these four are about 900 of the 1,390 ms.
 
 F17 correction (from rpg-toolkit#2318's builder, a counter on `field.doorCrossings`): the door-crossing scan is paid once per door when doors attach at load, 36 calls per open on the garrison, none inside the timed steps; it reaches 96 ms per Move on the live path because the session loads the encounter once per verb, not because the walker pays it per step. The per-Move cost and the placement (site data) stand; the mechanism named in F17 was wrong. The S9 PR adds a load-plus-atlas benchmark that sees it (823k → 97k allocs/op) because the Move bench keeps one encounter open and cannot.
+
+## F18 — the four session-layer slices halve the live Move; the growth remains
+
+2026-11-08 · rpg-api dev `f890674a` (rpg-api#1197 S1, #1199 S10, #1201 repin;
+session v0.169.0 with S7 and S8, encounter v0.184.0 with S9) · same setup as
+F15: `bench-keep-garrison`, 8-cell world-clock path, 30 Moves after 3
+warm-ups, real Redis 7.2.2, AMD Ryzen 9 3950X, load average 8–9, in-process
+from the handler's Move to the act broker, production act buffer (64
+commits), the measurement test at rpg-api#1202 `2d8328d`.
+
+Command (branch of rpg-api#1202):
+```
+redis-server --port 6491 --save '' --daemonize yes
+RPG_MEASURE=1 RPG_MEASURE_N=30 go test ./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v -timeout 60m
+```
+
+| mode | answer p50 / p95 | first beat p50 / p95 | acts per verb | lagged |
+|---|---|---|---|---|
+| whole answer | 989 / 1280 ms | 989 / 1280 ms | 165–320 | no |
+| S1, the answer first | 307 / 484 ms | 885 / 1150 ms | 165–320 | no |
+
+| measure | F15 | F18 |
+|---|---|---|
+| whole Move p50 | 1817 ms | 989 ms |
+| S1 answer p50 | 425 ms | 307 ms |
+| first beat p50 | 1852 ms | 885 ms |
+
+Means: the fold for listeners, the sheets once per verb, the site data and
+the per-commit buffer together take the live garrison Move from 1.8 s to
+1.0 s and the S1 answer from 425 to 307 ms, and the lag on the first
+garrison verb is gone. Against R1 (100 ms answer, 250 ms first beat) the
+answer is three times over and the first beat three and a half, and the
+first beat still lands with the last beat because the verb's acts leave as
+one unit after the save. The growth is not gone: the S1 answer climbs from
+139–263 ms to 357–522 ms over 33 Moves and the whole Move from 599 to 1280
+ms, so something still scales with the record each verb (the session's
+record stream fold, the load and save of a record that grows by 200–386
+entries a Move, or the catch-up read). A growth profile is next. Holds as
+the story's live number at this head.
