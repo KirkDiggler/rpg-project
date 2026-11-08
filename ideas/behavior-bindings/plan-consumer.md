@@ -2,27 +2,28 @@
 
 > Historical planning checkpoint, 2026-11-06: R4–R9 were settled; Task 1 was implemented/reviewed and Tasks 2–3 were in progress. The implementation snapshots and interface targets below describe that planning stage, not current delivery status.
 
-## Current execution checkpoint — 2026-11-07
+## Shipped execution checkpoint — 2026-11-08
 
-Tasks 1–4 are implemented and published. The operator confirmed the early look;
-real two-client disturbance/resumption, Studio/server preservation and the
-qualified castle QA are recorded in the [verification receipt](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6714836907).
+Tasks 1–4 and authorized adoption are complete; #866 is closed. The
+[release receipt](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6719508279)
+records generated tags, merge commits, fresh-head gates and follow-ups.
 
-- Encounter [toolkit#2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293): `add0d72c`; both Important review findings fixed and independently closed; required CI green.
-- Session [toolkit#2296](https://github.com/KirkDiggler/rpg-toolkit/pull/2296): `7e45f1a9`; real canonical launch/delegation and provider pin; gates green.
-- API [api#1191](https://github.com/KirkDiggler/rpg-api/pull/1191): `fc453174`; byte-identical to reviewed/tested `f03695d`, tree `595a6b11201009b3104e192d4b57087cd2423550`; full local gates and final remote build/test green; current-head independent review carries forward the identical tree.
-- Studio [web#1397](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1397): `4e4d763e`; existing codecs preserve the complete source, no dedicated behavior panels; local and remote gates green.
+- Encounter [toolkit#2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293): **v0.185.0**.
+- Session [toolkit#2296](https://github.com/KirkDiggler/rpg-toolkit/pull/2296): **v0.171.0**, consuming the released encounter.
+- API [api#1191](https://github.com/KirkDiggler/rpg-api/pull/1191): merged to **dev** with released providers.
+- Studio [web#1397](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1397): merged to **dev**; existing codecs preserve source, without dedicated behavior panels.
 
-The receipt distinguishes actual live rows from controlled tests and names the
-existing planner gap and deferred Minor findings. The owner code at these heads
-is the current API reference; the interface table below remains the planning
-snapshot. Do not rebuild completed tasks from its older progress notes.
+The [joined optimized-stack receipt](https://github.com/KirkDiggler/rpg-project/issues/866#issuecomment-6718917429)
+distinguishes real two-client/UI/castle outcomes from controlled tests. The
+canonical runtime was checked together with early-answer continuations,
+subscriber-local folding, participation memoization, site geometry/sight caches
+and commit-unit delivery. The same independent round closed its bounded
+integration deltas. Remaining latency work and named minor/planner/observability
+follow-ups are separate; consumer main is still the operator's release gate.
 
-**No merge authorization has been given.** All feature/consumer PRs remain
-held/draft. Concurrent upstream performance releases are not silently substituted
-for the reviewed candidate: provider catch-up, real release/tag re-pins and
-relevant gates belong to the eventual authorized inside-out merge-out. #866 stays
-open until that adoption is complete.
+The body below is the historical implementation plan, not remaining work. Its
+interface snapshots and progress notes do not supersede the released owner code.
+Documentation companions #877/#868 remain separate open records.
 
 **Goal:** Complete [NPC behavior S1's live adoption, #866](https://github.com/KirkDiggler/rpg-project/issues/866), under [story #859](https://github.com/KirkDiggler/rpg-project/issues/859): one authored Patrol definition, two-/three-waypoint guards, real movement, qualifying disturbance, retained resumption and save/reload, with source surviving Studio edits.
 
@@ -30,7 +31,7 @@ open until that adoption is complete.
 
 **Tech stack:** Go module boundaries in toolkit; existing dungeonspec YAML and canonical behavior JSON; React/TypeScript Studio codecs; existing authoring/session RPCs and API integration harness.
 
-**Readiness:** R4–R8 and the source/lane contracts carry the agreed target. [R9](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412) explicitly removes backwards compatibility: rebuild content/fixtures for the new format instead of adding migration adapters. The migration-parity prerequisite is deleted. Task 1 is implemented and independently reviewed; continue Tasks 2–3 on its pushed commit, keeping concrete gameplay/ownership checks and normal review/release gates.
+**Historical planning readiness (superseded above):** R4–R8 and the source/lane contracts carry the agreed target. [R9](https://github.com/KirkDiggler/rpg-project/pull/877#issuecomment-6698028412) explicitly removes backwards compatibility: rebuild content/fixtures for the new format instead of adding migration adapters. The migration-parity prerequisite is deleted. Task 1 is implemented and independently reviewed; continue Tasks 2–3 on its pushed commit, keeping concrete gameplay/ownership checks and normal review/release gates.
 
 ## Global constraints and finish line
 
