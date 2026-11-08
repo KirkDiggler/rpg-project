@@ -2,7 +2,7 @@
 
 Story rpg-project#879. Findings ledger: [findings.md](findings.md). Index and
 how to add a finding: [README.md](README.md). Rulings R1–R5 are ruled on the
-lane issue (#880); R1, R2 and R4 settled 2026-11-07. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
+lane issue (#880); R1, R2 and R4 settled 2026-11-07, R3 2026-11-08. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
 cutover head `c1cbf623` (toolkit#2293), on the garrison keep. <!-- case-file -->
 
 ## Shape
@@ -109,7 +109,7 @@ append.
 |---|---|---|---|---|
 | R1 the budget: the verb answers within 100 ms at the garrison keep, the first beat within 250 ms after | settled | §Law, the verb | KirkDiggler | 2026-11-07 |
 | R2 the verb answers first, the raise runs after under the session lock; the first slice | settled | §Shape | KirkDiggler | 2026-11-07 |
-| R3 where the instance lives: three tiers, the compiled site by content hash shared across games, the live instance resident where the session's lock lives, the writes queued per session after the answer | proposed | §Where the instance lives | | |
+| R3 where the instance lives: three tiers, the compiled site by content hash shared across games, the live instance resident where the session's lock lives, the writes queued per session after the answer | settled | §Where the instance lives | KirkDiggler | 2026-11-08 |
 | R4 a cached value lives where its inputs live: what a cell sees given doors and props is compiled site data, the concealment layer is the instance's | settled | §Law, sight and facts | KirkDiggler | 2026-11-07 |
 | R5 the harness is the record: phases, blob, allocations, answer and first beat | open | §Law, the claim | | |
 
