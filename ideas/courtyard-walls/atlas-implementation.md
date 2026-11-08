@@ -72,6 +72,23 @@ Only work whose concrete contract is checked below starts now. Later contracts m
 
 **Seam check:** renderer adapter already consumes `{surfaceId, material}` and strict catalog bindings; selection persistence resolves materialRef at the consumer, not in the engine. Encounter/SDK follow-up must add matching MaterialOverrides fields, deep copies and captured recipient projection tests before API use; no locally invented binding is accepted as generated code. This contract task is executable before those consumers under the outside-in development policy.
 
+## Task A4 — Native appearance capture in encounter
+
+**Owner/baseline:** toolkit encounter module only, `.worktrees/courtyard-895`, stacked on ground provider 241e4263. No rulebook/API/proto imports. Published wire is v0.1.262/generated c23b703; Web has adopted the real package and types pass.
+
+**Files/interfaces:** new `material_override.go` defines runtime `MaterialOverride{SurfaceID,MaterialRef}`, separate snake-case `MaterialOverrideData`, validation and detached conversions. Extend `PropPresentation`/`PropPresentationData`, `StructuralWallInput`/private `structuralWall`, `AtlasStructuralWall`, and `StructuralWallData` in their existing files. Capture/clone in `prop_presentation.go`, `structural_walls.go`, `projection.go`, `data.go`; encode full introduced wall rows in `structural_reveal.go`. Existing mutable prop observation paths already route through prop presentation conversions and clone helpers; verify rather than add a parallel observation store.
+
+Native `dungeonspec/single_room.go::RoomWallAppearance` gains `MaterialOverrides []RoomMaterialOverride` with camel-case YAML/JSON fields; new `single_room_material_overrides.go` owns shape/value reading and conversion. `single_room_walls.go` checks the optional list during shape validation and copies it in `canonicalStructuralWalls`; `single_room_presentation.go::readPropPresentation` reads prop-owned selections from the source node. Empty/absent means Original; present null, non-list, empty/blank IDs, duplicate surfaces and non-string fields refuse with source paths. Runtime validates nonblank opaque strings/unique IDs, never catalog membership.
+
+- [ ] RED new `material_override_test.go` methods on existing StructuralWallSuite / PlacedPropsSuite: construction-input and AtlasFor/ToData mutations cannot reach stored choices; JSON host reload preserves wall/prop selections; malformed choices fail NewEncounter and load; concealed owners do not leak selections.
+- [ ] RED `dungeonspec/material_overrides_test.go`: actual native castle source plus two selected scopes lowers correctly, retains choices through input/native compilation and field data, and leaves geometry/blocking/regions/ground unchanged. Table-test null/wrong-kind/blank/duplicate values at both owner paths.
+- [ ] Implement exactly the listed capture/copy/projection seams. Add narrow mutable-sighting/reveal assertions to existing scenario helpers; no new audience calculation.
+- [ ] `GOWORK=off go test ./...` and module lint, then same-turn commit/push/draft provider PR. No local replacements or fabricated module versions.
+
+**Completion:** all module packages/lint pass; actual pushed commit is available for the separate SDK worktree. Provider runtime no longer loses material choices across its own capture/reload/projection, but SDK/API/Web adoption is still required.
+
+**Coverage/seam check:** native camel-case pair → encounter runtime pair → snake-case persisted/reveal pair → detached Atlas/observation pair. All conversions use the same two strings. Wall-opening replacement events do not resend or alter immutable appearance. The new list is mutable Go data, so copying only parent structs is insufficient; tests deliberately mutate nested entries. Existing appearance fields provide an owner/audience, not permission to fetch source or infer material rules.
+
 ## Current coverage and seams
 
 | Requirement | Task | Proof / remaining work |
