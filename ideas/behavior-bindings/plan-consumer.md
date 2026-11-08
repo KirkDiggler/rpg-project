@@ -10,7 +10,7 @@ qualified castle QA are recorded in the [verification receipt](https://github.co
 
 - Encounter [toolkit#2293](https://github.com/KirkDiggler/rpg-toolkit/pull/2293): `add0d72c`; both Important review findings fixed and independently closed; required CI green.
 - Session [toolkit#2296](https://github.com/KirkDiggler/rpg-toolkit/pull/2296): `7e45f1a9`; real canonical launch/delegation and provider pin; gates green.
-- API [api#1191](https://github.com/KirkDiggler/rpg-api/pull/1191): `fc453174`; byte-identical to reviewed/tested `f03695d`, tree `595a6b11201009b3104e192d4b57087cd2423550`; full local gates green, final remote checks pending at this checkpoint.
+- API [api#1191](https://github.com/KirkDiggler/rpg-api/pull/1191): `fc453174`; byte-identical to reviewed/tested `f03695d`, tree `595a6b11201009b3104e192d4b57087cd2423550`; full local gates and final remote build/test green; current-head independent review carries forward the identical tree.
 - Studio [web#1397](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1397): `4e4d763e`; existing codecs preserve the complete source, no dedicated behavior panels; local and remote gates green.
 
 The receipt distinguishes actual live rows from controlled tests and names the
