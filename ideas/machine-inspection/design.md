@@ -40,8 +40,10 @@ flowchart LR
 | R6 | settled | Symbols survive live-window trimming and captured-run reading | KirkDiggler | 2026-11-08 |
 | R7 | settled | Server-side capture and development-only diagnostic access | KirkDiggler | 2026-11-08 |
 | R8 | settled | Details now; analytics later | KirkDiggler | 2026-11-08 |
+| R9 | open | Lossless live payload representation for wide integers | operator pending | — |
 
 ## Open
 
-- None for the agreed capability. Transport and storage mechanics are bounded by the existing after-save, best-effort record-delivery contract; implementation must make incomplete capture explicit.
+- **R9:** the live wire must either carry lossless raw JSON or explicitly limit numeric representability. The operator chooses that public-contract boundary; the decision checklist and evidence live on the design PR. Captured JSON remains exact under either choice.
+- Transport and storage mechanics retain the existing after-save, best-effort record-delivery contract; implementation must make incomplete capture explicit.
 - A durable exactly-once audit store and reconstruction of a simulated world are outside this design, not guarantees of a captured diagnostic record.

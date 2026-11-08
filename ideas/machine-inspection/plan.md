@@ -8,7 +8,7 @@
 
 **Authority / finish:** KirkDiggler approved the conversational design and continuing on 2026-11-08; [story #898](https://github.com/KirkDiggler/rpg-project/issues/898). Build/commit/draft PRs and an owned early-view stack are authorized. Visible early look precedes full walk/review. No merge or operator-stack change is authorized by this brief. Completion includes the whole joined path, normal independent review, applicable current-head gates and eventual authorized tag/re-pin release, not just Task1.
 
-**Tech:** Go modules, existing JSON record payloads / v1alpha2 RecordService, TypeScript/Vitest/React. No new proto fields or RPCs are needed.
+**Tech:** Go modules, existing JSON record payloads / v1alpha2 RecordService, TypeScript/Vitest/React. No new RPC is needed. **R9 is open:** the actual Struct converter rounds9007199254740993 to9007199254740992. Lossless live-payload encoding may require an additive proto field; [decision/evidence](https://github.com/KirkDiggler/rpg-project/pull/902#issuecomment-6727648247). Do not claim the original no-proto assumption is verified. Pause only the precision-dependent live codec; exact captured JSON parsing and the reader/cache continue.
 
 ## Constraints and baseline
 
@@ -29,6 +29,8 @@
 Develop each provider to green, publish its commit and pin consumers to real pseudo-versions. Do not merge to unblock development. Release later inside-out: machine → behavior → encounter → session → API → web, verifying real generated tags and re-pin gates. Recheck the API/session integration against the concurrent resident-instance changes before the joined walk; do not modify that session's worktrees.
 
 ## Review focus
+
+- R9 boundary: exact captured integers must not be silently rounded in the reader. Live transport precision is an explicit open contract, not a silently deferred requirement.
 
 1. Short-circuited nested guards and later transitions must not be evaluated for display (Task1).
 2. A losing preview may contain a proposed transition/Set; actual progress must stay unchanged (Task2).
@@ -135,6 +137,10 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 
 ## Resume
 
-Provider checkpoint: Task1 machine `aa9db662` / toolkit#2324 and Task2 behavior `00337bc9` / toolkit#2325 have full local gates and exact-head CI green. Task3 encounter `676d7839` / toolkit#2326 has full nine-package race/lint/root hook green; remote CI pending at this checkpoint. All three remain unmerged, with whole-wave review still ahead.
+Provider checkpoint: Tasks1–4 are built: machine `aa9db662` / toolkit#2324, behavior `00337bc9` / toolkit#2325, encounter `676d7839` / toolkit#2326 and session `02b6402b` / toolkit#2328. All have full local gates/actual root hook and exact-head CI green. API Task5 `eb8c84a` / api#1207 has full local and remote gates green. Web's unblocked reader `d1fb874e` / web#1400 has its full local gate green (9988passed/6skipped); Task6 is not complete while R9 live precision is open. All remain unmerged, with operator early view and whole-wave review still ahead.
 
-Project worktree `.worktrees/machine-inspection`, branch `docs/machine-inspection`. Toolkit worktrees: `machine-inspection` (`feat/machine-inspection`), `behavior-inspection` (`feat/behavior-inspection`), `encounter-inspection` (`feat/encounter-inspection`). Each has its task ledger under `.superpowers/sdd/plan/`; the public story/slices remain the shared record. Next: Task4 in a separate `session-inspection` worktree, pin the actual encounter commit, prove record-only classification and live/catch-up delivery. Tasks5–6 and live verification remain unstarted. No operator/demo environment has changed.
+Project worktree `.worktrees/machine-inspection`, branch `docs/machine-inspection`. Toolkit worktrees: `machine-inspection`, `behavior-inspection`, `encounter-inspection`, `session-inspection`, each on its corresponding `feat/` branch and owning one module. API/web use `.worktrees/machine-inspection`, `feat/machine-inspection`. Task ledgers live under each `.superpowers/sdd/plan/`; public story/slices remain the shared record.
+
+Owned preview: `local/machine-inspection`, web3048/API8138, detached `898-api-walk` at eb8c84a and `898-web-walk` at d1fb874e. The actual inspector renders live/captured evidence for a real investigation/deferred patrol decision, with matching structured text and no unexpected browser errors. This is boot/fixture evidence, not the final QA walk. Prepared URL: http://localhost:3048/?playerId=toolkit-sandbox-fighter .
+
+Next: operator's concrete R9 decision and early look. If lossless raw live payload is chosen, add the checked proto provider and publish bindings only with that narrow authorization, then adopt in API/web. Do not restart completed provider tasks or rerun unchanged gates. Review/QA and eventual release-tag re-pins remain. This session changed only its owned preview; no other environment was restarted or removed.
