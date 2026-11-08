@@ -380,3 +380,54 @@ Against the slice's done line (answer under 100 ms, first beat within 250
 ms): not met on the live path. S1 is correct and four times faster to
 answer; the bars now point at the session layer. Provisional until rpg-api#1197
 merges; the measurement test lives on a branch pending R5.
+
+## F16 — where the live Move goes: the walker's own sight, the fold for a hundred, the machines' sheets
+
+2026-11-08 · same setup as F15 (rpg-api `d27ccfa`, session v0.167.0,
+encounter v0.182.0, `bench-keep-garrison`, 8-cell path, real Redis) ·
+whole-answer mode, 13 Moves (3 warm-up, 10 measured), CPU profile; Move
+CPU 1389 ms against a wall p50 of 1388 ms, so the store's wait is nothing.
+
+Command (branch `s1-measure` at `024f674`):
+```
+RPG_MEASURE=1 RPG_MEASURE_MODES=whole RPG_MEASURE_N=10 go test ./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v -cpuprofile cpu.out
+```
+
+| phase | ms per Move | share |
+|---|---|---|
+| session load: GetEncounter + unmarshal 41, LoadEncounter + compile 48 | 89 | 6% |
+| walk: the walker's own sight refresh after each step | 418 | 30% |
+| walk: the raise, machines (resolution.Participation attaching monster sheets ≈198) | 235 | 17% |
+| walk: the raise, the woken creatures' sight | 188 | 14% |
+| walk: mover seam, sheet reads, admission, discovery | 60 | 4% |
+| commit: the act fold, one story copy per member in EverMembers (100) | 206 | 15% |
+| commit: the act fold, decoding beats to fold them | 139 | 10% |
+| commit: JSON marshal + SaveEncounter | 30 | 2% |
+| commit: settlement, record, view, deliver | ≈10 | <1% |
+
+Across phases: sight is 606 ms (44%), of which line-of-sight lanes 268 ms;
+JSON decoding is 282 ms (20%), spread over the fold, the load, conditions
+and sight testimony. No flat function above 4.3%.
+
+Two checks:
+
+- **The fold is per recipient and unbounded.** `commitActs` folds a story
+  for each of the hundred ever-members, and each fold copies that member's
+  whole record (no FromSeq bound): 31k entries copied on the first Move,
+  339k on the thirteenth, 15.5k acts produced for 100 recipients of whom
+  one listens. Folding for the player only: 431 entries rising to 3,575,
+  1.4 to 3.8 ms, and Move p50 1429 → 1001 ms, p95 1840 → 1371 ms, with most
+  of the per-Move growth gone (951–1088 ms against 1100–1499).
+- **The player's story is 92% other members' deeds.** A one-pace Move adds
+  about 200 entries to her story: 108 patrol steps, 77 NPC machine answers,
+  8 of her own steps, 6 sightings, 1 tick; a two-pace Move 386.
+
+Means: the live cost is three things the toolkit bench never measured. The
+walker's own sight refresh is 52 ms a step here against 18 ms for the whole
+step in the keep bench, so the live refresh carries something the bench's
+walker does not (testimony, conditions, the decode); the raise spends 198
+ms attaching a hundred monster sheets to a participation per pass, a value
+that changes only when a sheet does (R4: instance memory); and the commit
+folds the record for everyone who could ever listen, from the beginning,
+every verb. None of the three is the toolkit's wake. Provisional until the
+measurement test is on dev under R5.
