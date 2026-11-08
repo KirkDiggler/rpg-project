@@ -321,3 +321,5 @@ with what anyone sees or decides unchanged. Against F7 the default Move is
 432 → 134 ms. Provisional until the suite and the review land.
 
 F14 holds: rpg-toolkit#2310 merged to main as `ba074f9d`. The review found the door mask written in place through the partition pass's shallow copy (a shut door served as open after a load) and a mover dropped mid-walk inside a wake pass kept walking; both fixed and pinned before the merge. Module race suite green.
+
+S3b merged out: encounter v0.181.1, session v0.166.3 (rpg-toolkit#2311, `6e265ba5`), rpg-api dev `8d8c4ef3` (rpg-api#1195). The castle checks on #889 are the operator's on :3030.
