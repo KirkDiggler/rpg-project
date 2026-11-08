@@ -2,7 +2,7 @@
 
 Story rpg-project#879. Findings ledger: [findings.md](findings.md). Index and
 how to add a finding: [README.md](README.md). Rulings R1–R5 are ruled on the
-lane issue (#880); R1, R2 and R4 settled 2026-11-07, R3 and R6 2026-11-08. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
+lane issue (#880); R1, R2 and R4 settled 2026-11-07, R3, R6 and R7 2026-11-08. Measured against rpg-toolkit main `3972f948` and the behavior <!-- case-file -->
 cutover head `c1cbf623` (toolkit#2293), on the garrison keep. <!-- case-file -->
 
 ## Shape
@@ -70,6 +70,17 @@ them together with the version fence in one transaction, so a process that
 dies mid-save leaves the store whole. A load fetches every piece in one
 pipelined read and assembles the instance in memory; the site piece is
 skipped when its hash is already resident.
+
+**A listener hears a beat when its commit is saved, and the continuation
+commits at each pace boundary.** Delivery waits for the save, so nothing a
+listener hears can be lost and nothing in the record is ever ahead of its
+checkpoint; no load replays. The continuation does not wait for the verb's
+end to save: when a pace comes due, the raise's beats and the checkpoint
+delta land together in one small fenced transaction and are delivered at
+once, and the remaining steps follow in the next commit. A process that
+dies mid-continuation leaves the player at the last committed boundary,
+which is what every client was told. The first beat is therefore the
+answer plus one raise plus one small save, never the end of the verb.
 
 **A machine step costs no perception.** A machine reads the facts the
 encounter supplies; a step never rebuilds sight. The composer is a cost only
@@ -156,15 +167,19 @@ shows in the answer. Until either is measured, the copy is a cache.
 | R4 a cached value lives where its inputs live: what a cell sees given doors and props is compiled site data, the concealment layer is the instance's | settled | §Law, sight and facts | KirkDiggler | 2026-11-07 |
 | R5 the harness is the record: phases, blob, allocations, answer and first beat | open | §Law, the claim | | |
 | R6 the resident copy is a cache behind the store's lease, the store is the authority, the save is one transaction of the pieces that changed, fenced on a checkpoint version the store increments; the owner shape is deferred with its reopen conditions; the site tier is built before the instance tier | settled | §Law, the lock; §Where the instance lives | KirkDiggler | 2026-11-08 |
+| R7 a listener hears a beat when its commit is saved; the continuation commits at each pace boundary, so the first beat is the answer plus one raise plus one small save; the record as the source of truth with a replayed tail is a story of its own, not refused | settled | §Law, the listener | KirkDiggler | 2026-11-08 |
 
 ## Open
 
 - **The second verb while the world runs.** It waits on the lock, as today;
   how the client shows the wait, and whether a read verb may answer from the
   pre-raise view, is a session question.
-- **The durability window.** A verb answered and not yet written is lost if
-  the process dies; whether the beats-first write closes it before the answer
-  or just after is settled with the write tier.
+- **The record as the game.** Beats written and delivered as they are
+  produced, the checkpoint an optimisation, a tail ahead of it replayed on
+  load: replay, spectate from the start, rewind for the GM. Every beat
+  would need an apply and the fold a determinism contract. The appended
+  record is its prerequisite and nothing here forecloses it; it is a story
+  of its own.
 - **The grain of the knowledge piece.** A walk changes the mover's cell and
   every observer's sight, so the knowledge piece is the largest a Move
   writes; whether it splits per observer, and what that saves, is measured
