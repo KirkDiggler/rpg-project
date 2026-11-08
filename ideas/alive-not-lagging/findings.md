@@ -319,3 +319,5 @@ Command: `go test -run '^$' -bench BenchmarkGarrisonMove -benchtime 40x .`
 Means: a quarter of the allocations and a sixth of the time, mechanically,
 with what anyone sees or decides unchanged. Against F7 the default Move is
 432 → 134 ms. Provisional until the suite and the review land.
+
+F14 holds: rpg-toolkit#2310 merged to main as `ba074f9d`. The review found the door mask written in place through the partition pass's shallow copy (a shut door served as open after a load) and a mover dropped mid-walk inside a wake pass kept walking; both fixed and pinned before the merge. Module race suite green.
