@@ -27,11 +27,11 @@
 **Interfaces:** existing `GENERATED_WORLD_ASSETS`, `GENERATED_WORLD_MATERIALS`, `WORLD_BUILDING_CATALOG_BY_REF`, `repeatableWallAssetRefs`, `isRepeatableWallAsset`. No shape changes. Source is exact merged Assets main revision, resolved to full SHA before generation.
 **Behavior:** expose published House Wall01–09 and their thumbnails/measured bounds; reject moving leaves for repeating; retain existing Castle Wall Fit01 declarations; expose the five schema1 wall finish rows with complete paired resources. Ground pin/bytes are independent and unchanged. Failure to consume the published schema is a real seam finding, not a reason to drop provider fields.
 
-- [ ] Add `published solid house walls are selectable wall bodies` covering the missing 01/05–09 refs individually and existing 02–04; show absence failure on the old pin.
-- [ ] Add `moving leaves are not repeating wall bodies` using an actual published leaf; `only declared fit bodies claim corner capability`; `published masonry finishes retain paired resources` for each named ref, not a historical catalog-count assertion.
-- [ ] Run existing `scripts/sync-game-assets.sh --world-assets` and `--world-materials` against clean exact provider with `RPG_GAME_ASSETS_PATH` and `ASSETS_SYNC_SKIP_UPDATE=1`; no generated file editing.
-- [ ] Run new tests, generation tests, wall controls/edit helpers; verify semantic preservation of every prior generated asset/material row and unchanged ground metadata.
-- [ ] Run normal `assets:sync:pinned`; check actual delivered model/thumbnail/image hashes against generated metadata/provider. No broad unrelated Assets suite.
+- [x] Add `published solid house walls are selectable wall bodies` covering the missing 01/05–09 refs individually and existing 02–04; show absence failure on the old pin.
+- [x] Add `moving leaves are not repeating wall bodies` using an actual published leaf; `only declared fit bodies claim corner capability`; `published masonry finishes retain paired resources` for each named ref, not a historical catalog-count assertion.
+- [x] Run existing `bash scripts/sync-game-assets.sh --world-assets` and `--world-materials` against clean exact provider with `RPG_GAME_ASSETS_PATH` and `ASSETS_SYNC_SKIP_UPDATE=1`; no generated file editing.
+- [x] Run new tests, generation tests, wall controls/edit helpers; verify semantic preservation of every prior generated asset/material row and unchanged ground metadata.
+- [x] Run normal `assets:sync:pinned`; check actual delivered model/thumbnail/image hashes against generated metadata/provider. No broad unrelated Assets suite.
 
 **Verification:** from Web worktree: `npx vitest run src/concepts/encounter-studio/courtyardWallAssets.test.ts scripts/generateWorldAssetCatalog.test.ts scripts/generateWorldMaterialCatalog.test.ts src/concepts/world-building/structuralWallEditing.test.ts src/concepts/encounter-studio/StudioWallControls.test.tsx`; sync `--world-assets --check`, `--world-materials --check`, and `ground:check` with its actual provider checkout. Expected: named new choices work, old rows/ground are exact, honest capability eligibility. At PR boundary only, `npm run ci-check`.
 
@@ -42,10 +42,10 @@
 **Inputs/outputs:** current served native document; model choices from Task 1; existing pure appearance edit and document/native export helpers. A proposed stone hall edge and timber kitchen-facing edge are initial builder choices for the early view, not final artistic acceptance.
 **Behavior:** edit model ref and visual dimensions through production helpers, preserving all other source facts; reset and history restore exact prior appearance. Short/long spans with an opening derive finite positive pieces and leave that opening clear; reject a moving-leaf ref under existing validation. No fabricated miter capability for detailed timber.
 
-- [ ] Add `current castle changes only selected wall appearances`: import and byte-roundtrip actual source, apply two wall model edits, persist/reopen/export; parsed result equals original after restoring just the edited appearance fields.
-- [ ] Assert ground and all scene items, walls' lines/blockers/openings and door bindings stay exact; verify original/default restoration.
-- [ ] Use existing `layoutWallPieces` and current structural geometry contracts to check finite tiling and no opening overlap at short and longer lengths. Reuse existing undo/redo controls tests; add only missing changed-path assertions.
-- [ ] Run focused test and types; no production behavior patch unless the tests expose a genuine gap within the agreed contracts.
+- [x] Add `current castle changes only selected wall appearances`: import and byte-roundtrip actual source, apply two wall model edits, persist/reopen/export; parsed result equals original after restoring just the edited appearance fields.
+- [x] Assert ground and all scene items, walls' lines/blockers/openings and door bindings stay exact; verify original/default restoration.
+- [x] Use existing `layoutWallPieces` and current structural geometry contracts to check finite tiling and no opening overlap at short and longer lengths. Reuse existing undo/redo controls tests; add only missing changed-path assertions.
+- [x] Run focused test and types; no production behavior patch unless the tests expose a genuine gap within the agreed contracts.
 
 **Verification:** `npx vitest run src/concepts/encounter-studio/courtyardWalls.test.ts src/concepts/encounter-studio/castleGround.test.ts src/concepts/encounter-studio/StudioWallControls.test.tsx`; `npm run typecheck`. Expected exact non-appearance preservation and same model identity after native reload.
 
@@ -55,7 +55,7 @@
 **Files:** private ignored wall-preview artifacts and native export; after operator appearance agreement only, API `content/the-mad-king.yaml`, toolkit `rulebooks/dnd5e/encounter/dungeonspec/testdata/world-builder-v4-castle.yaml`, their existing atlas/compiled fixtures and scoped tests/run records. Separate content worktrees/branches based on #874 checkpoints when that task begins.
 **Lifecycle:** boot/check the new Web head, open a native copy in the existing Studio, configure the two wall appearances through real controls/helpers, save a copy and show Studio/play. A local walk copy may start in the courtyard so seeing walls does not require a fight; that spawn is never folded into canonical content. Do not auto-use alternate finishes that the UI labels Studio-only. Artist reviews wall look, proportions, seams and visibility from the actual camera, not an engine checklist.
 
-- [ ] Verify normal delivery and no browser exceptions, exact runtime head; inspect screenshots before sending the link.
+- [x] Verify normal delivery and no browser exceptions, exact runtime head; inspect screenshots before sending the link.
 - [ ] Record exact selected refs/appearance values and source hash. Keep prior runs intact. Clearly distinguish a proposed composition from the operator's tree-containing document.
 - [ ] Request the bounded visual look, then do applicable review/walk only after the early-view rule is met.
 - [ ] Fold only accepted appearance fields; structural comparison and existing `TestCastleCopiesAgree` prove no unrelated content changes. Re-capture changed goldens with trusted unchanged projection code and compare allowed fields explicitly.
@@ -83,5 +83,7 @@
 | Studio appearance helper | native document / API compiler | existing appearance fields; no new wire or persistence shape | Task 2 native roundtrip, Task 3 actual launch |
 | Native captured atlas | existing wall renderer | explicit model refs/dimensions + unchanged openings/blocks | real saved-copy play and opening-clearance view |
 | S2 floor branch | S3 branch and isolated view | stacked branch dependency; released provider tags still pending | preserve exact ground pin, explicit PR base/release prerequisite |
+
+**Early-view checkpoint:** implementation `e40819ca`, evidence-only update `7677fec1`. 148 focused tests and types pass; normal full pinned sync and three resource checks pass. Actual Studio import/save-copy/play loads both selected model hashes. Fresh isolated :3182/:8125 runs the proposal; the old environment and state files were already absent, and restart refused before mutation. Private settled screenshots show the timber frontage/masonry junction. Full PR gate, independent review, operator wall feedback and final composition/fold remain open. The initial screenshot was premature; use `play-timber.png` / `studio-settled.png`, not the blank first capture.
 
 **Plan check findings:** the assets already exist, so new conversion/promotion would duplicate work. World geometry and materials are independently pinned; updating one does not update the other. Finish controls explicitly say Studio-only, so model/default appearance parity must not be confused with general surface editing. Canonical source lacks the operator's tree placement; do not pretend a fixture is their current composition. These findings narrow implementation mechanism, not the approved visible finish line. No protocol, event, authorization or rules changes are needed for model choices. No replaced path or schema migration to clean up.
