@@ -431,3 +431,36 @@ that changes only when a sheet does (R4: instance memory); and the commit
 folds the record for everyone who could ever listen, from the beginning,
 every verb. None of the three is the toolkit's wake. Provisional until the
 measurement test is on dev under R5.
+
+## F17 — under the walker's sight and the machines' participation
+
+2026-11-08 · the F16 profile (`cpu-whole.out`, 13 Moves of 8 steps), pass
+counts from a short uncommitted counting hack in a local session copy.
+
+The walker's own refresh, 398 ms a Move, 50 ms a step:
+
+| bucket | ms per Move | share |
+|---|---|---|
+| line-of-sight lanes (discoverCells → visibleFrom → SightLanes 120; Observe → reach 25) | 145 | 36% |
+| door openings for presences: `field.doorCrossings` scans the whole keep's floor every step (isFloor 39, GetNeighbors 33); wall footprints 8 | 96 | 24% |
+| sight testimony decode, once per observer per step for 99 observers (hasStrictSightFields re-parses the JSON to check fields, 40) plus heading passes | 84 | 21% |
+| session seams: participation (downNow → the standing seam's 99-sheet pass) 17, conditions 6 | 23 | 6% |
+| discovery and intel delta 16, per-step beats 7, bookkeeping 25 | 48 | 12% |
+
+The raise's participation, 188 ms a Move: `resolution.Participation` attaches
+all 99 monster sheets on a fresh bus for every assessment (JSON decode 30,
+condition composition 36, bus subscriptions 54, teardown 25, compulsion
+check 19, the in-memory sheet read 8). A one-pace Move assesses 112 times,
+a two-pace Move 191: about 11k and 19k sheet attachments per Move, 13 µs
+each; every assessment covers all 100 members and six in the whole run
+covered the player alone.
+
+Means: three mechanisms, three owners. The door-crossing scan is site
+geometry recomputed per step, which R4 places in the compiled site. The
+testimony decode is instance state re-parsed from JSON per observer per
+step, which R4 places on the instance, decoded once per load. The
+participation pass rebuilds a hundred sheets per machine step because the
+memo S3b added is dropped by every mover's step, when only a sheet write
+changes anyone's standing; attaching once per verb on one bus and
+invalidating by sheet write is the session's to do. With the fold of F16,
+these four are about 900 of the 1,390 ms.
