@@ -25,7 +25,7 @@ Only work whose concrete contract is checked below starts now. Later contracts m
 
 **Interface:** `readWorldMaterialCatalog({catalogPath, modelRoot})` retains v1 `{catalogSha256, materials}` exactly. For v2 it additionally returns `schemaVersion:2`, `atlasMaterials`, `collections`, `bindings`: typed projections from the SAME catalog, not separate catalogs. `materials` remains the existing masonry view so existing physical chart consumers cannot accidentally consume atlas data. Atlas materials retain `mapping: authored-uv`, `normal:null`, `emissive:null` and one verified baseColor image. Collections and bindings retain the agreed public fields; image paths project to versioned runtime URLs.
 
-**Behavior:** support exact schema1 and exact schema2; a partial v2 envelope refuses. Validate strict fields and identities, duplicate refs/IDs/targets, collection and suggested-collection references, selected material mapping kind, model/default-image hashes, UV channels and glTF sampler enums. Unknown fields, mixed masonry/atlas roles, null/invalid required records and dangling refs refuse. Suggested collections remain recommendations; an empty recommendation list does not make a valid target unusable. Reuse existing PNG decode/hash/CRC/dimension and exact owned-file checks across ALL image roles/rows. Never use metadata assertions in place of actual image verification. Binding shape validation alone does not certify actual GLB content; renderer/generator joins own that separate proof. Until generation/preview consumers are upgraded, `generate-world-material-catalog.mjs` and `stage-world-material-preview.mjs` explicitly refuse schema2 projections rather than silently discarding atlas fields. Add executable caller refusal tests to the existing generator/preview suites.
+**Behavior:** support exact schema1 and exact schema2; a partial v2 envelope refuses. Validate strict fields and identities, duplicate refs/IDs/targets, collection and suggested-collection references, selected material mapping kind, model/default-image hashes, UV channels and glTF sampler enums. Unknown fields, mixed masonry/atlas roles, null/invalid required records and dangling refs refuse. Suggested collections remain recommendations, not exhaustive permissions. The agreed v2 wire requires a nonempty valid recommendation list; a valid atlas material outside those lists is still retained for consumer experimentation. Reuse existing PNG decode/hash/CRC/dimension and exact owned-file checks across ALL image roles/rows. Never use metadata assertions in place of actual image verification. Binding shape validation alone does not certify actual GLB content; renderer/generator joins own that separate proof. Until generation/preview consumers are upgraded, `generate-world-material-catalog.mjs` and `stage-world-material-preview.mjs` explicitly refuse schema2 projections rather than silently discarding atlas fields. Add executable caller refusal tests to the existing generator/preview suites.
 
 - [ ] RED: named mixed-catalog case preserves old masonry while exposing color-only atlas materials and exact declared targets; current v1 reader refuses it.
 - [ ] Add refusal cases for incomplete/version-spoofed envelopes, atlas role/mapping errors, duplicate material/collection/binding/surface ownership, stale-shaped hashes, bad channels/sampler enums and dangling references.
@@ -46,6 +46,31 @@ Only work whose concrete contract is checked below starts now. Later contracts m
 - [ ] Cover color-only/no fake normal or emissive, Original/reset and double-dispose, stale hash/target/channel/sampler, duplicate selection and invalid second target causing no partial mutation.
 - [ ] Implement the pure adapter and typed contract; run `npx vitest run src/rendering/worldAtlasMaterials.test.ts src/rendering/worldSurfaceMaterials.test.ts` and `npm run typecheck`.
 - [ ] Exercise real House Wall05 model/binding/source resources in the existing preview path before marking consumer readiness; unit fakes alone do not satisfy release acceptance.
+
+## Task A3 — Additive captured selection wire
+
+**Authority:** [texture design](texture-design.md), R2–R4. This transcribes the planned encounter/SDK `MaterialOverride{SurfaceID, MaterialRef}` value, not a new resource service or game mechanic. Concrete native storage is `materialOverrides` at each prop/wall appearance owner; snapshot/act records use the same value list.
+
+**Owner/files:** Protos `dnd5e/api/session/v1alpha1/types.proto`, `dnd5e/api/session/v1alpha2/act_geometry.proto`, owning `docs/architecture/components/session-service.md` and a scoped run record. Baseline origin/main `fac26ce`; isolated `.worktrees/courtyard-895`.
+
+**Interface:** each package gains `MaterialOverride { string surface_id = 1; string material_ref = 2; }`. Add `repeated MaterialOverride material_overrides = 10` to `PropPresentation` and `AtlasStructuralWall` in both packages. Field10 is unused in all four inspected records. No structural-door field yet: that belongs to the later door task, not guessed enrollment.
+
+**Behavior:** both strings nonempty and target IDs unique within an owner; empty list means Original for that complete render record. A supplied invalid/unavailable override refuses visibly, not silent default. Records remain captured, follow owner audience, and contain no paths, image bytes, editor lookup IDs or mechanics. No separate recolor event or new RPC.
+
+- [ ] Add only the named fields/messages and document their absence/validation/capture semantics; unchanged existing numbering.
+- [ ] Run `make format` and `make test` in the proto worktree; normal contract checks only, no handwritten serialization tests or local SDK generation.
+- [ ] Open the additive PR against main with design/consumer handoff. CI validates generation. Request the operator's actual merge authorization before generated adoption; never merge or push generated automatically.
+
+**Completion evidence:** additive diff, local Buf gates and CI generation; wire publication is not end-to-end feature completion. Consumers wait for actual CI-published revisions.
+
+| Requirement | Wire proof |
+|---|---|
+| Native selection identity survives snapshot and reveal | same MaterialOverride fields on both owner messages in both packages |
+| No inferred default or hidden-scene lookup | explicit empty-list/original and invalid-selection semantics |
+| No gameplay/material interpretation | opaque IDs only, owner disclosure unchanged |
+| Release safety | checks + CI-owned SDK publication + explicit merge authorization |
+
+**Seam check:** renderer adapter already consumes `{surfaceId, material}` and strict catalog bindings; selection persistence resolves materialRef at the consumer, not in the engine. Encounter/SDK follow-up must add matching MaterialOverrides fields, deep copies and captured recipient projection tests before API use; no locally invented binding is accepted as generated code. This contract task is executable before those consumers under the outside-in development policy.
 
 ## Current coverage and seams
 
