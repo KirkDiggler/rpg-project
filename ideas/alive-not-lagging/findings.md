@@ -579,3 +579,43 @@ any tier is built. The checkpoint without the record is a megabyte that
 does not grow, half of it the site field that R3's site tier takes out of
 the save altogether; the record is the only thing that grows, which is what
 an append-only write is for. Holds.
+
+## F21 — a cold reload is 159 ms; load plus save is a quarter of the Move
+
+2026-11-08 · rpg-api dev `85c8bcc` plus the harness commit (merged as
+rpg-api#1203, dev `3abf710d`), session v0.171.0, encounter v0.185.0,
+`bench-keep-garrison`, N=20 per mode, Redis on a side port. Command:
+`RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:6497 RPG_MEASURE_N=20 go test
+./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v`.
+Run record: rpg-api `knowledge/runs/2026-11-08-alive-not-lagging-cold-reload-api.md`.
+
+| stage | bytes | p50 | p90 |
+|---|---|---|---|
+| session record fetch + decode | 83 KB | 1.6 ms | 2.8 ms |
+| fetch the encounter blob (GET) | 9.1 MB | 13.2 ms | 15.4 ms |
+| decode (JSON → EncounterData) | | 62.8 ms | 69.0 ms |
+| site build (LoadEncounter) | | 75.1 ms | 79.1 ms |
+| attach (residual of a read verb: lock, driver, standing) | | 7.3 ms | 21.7 ms |
+| **read load whole** | | **159.3 ms** | 176.6 ms |
+| ToData | | 8.3 ms | 10.1 ms |
+| JSON encode | 9.1 MB | 58.4 ms | 64.0 ms |
+| persist (SET) | 9.1 MB | 7.4 ms | 9.6 ms |
+| Move, whole answer | | 889.7 ms | 1221.6 ms |
+| Move, S1 answer / drained | | 255.9 / 914.9 ms | 347.0 / 1215.3 ms |
+
+Attach is a residual, not an isolated stage: the session's standing and
+capability builders are unexported, so the row subtracts the other stages
+from a read verb. The write-path extras of a write verb's open (ledger,
+write capabilities, sheet staging, act open) are reachable only through a
+verb and are not in the row. No toolkit hook was added.
+
+Means: a miss is cheap enough to make routing an optimisation (R6): 159 ms,
+of which JSON decode and the site build are 138. Load plus save is about
+230 ms of an 890 ms Move; JSON alone (decode plus encode) is 121 ms, more
+than the field compile. The blob grows with the record, 3.7 MB after 6
+Moves to 9.1 MB after 23, so a miss gets dearer as a session ages, and the
+audience table (S11, record v0.3.x) takes most of that growth out before
+any residency lands. The other 650 ms is the verb itself, the walk and the
+fold, which no storage tier removes: the S1 answer at 256 ms against the
+100 ms bar is a walker cost (F16: 52 ms a step live against 18 on the
+bench), and that is the next profile once the storage line is in.
