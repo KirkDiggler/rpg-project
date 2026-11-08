@@ -28,6 +28,8 @@ Slice [#874](https://github.com/KirkDiggler/rpg-project/issues/874), story [#867
 
 - Normal pinned delivery now works without the private preview mount: exact catalog/image hashes, native start/Move and gated-run resume were exercised. Web's full gate passes 9986 tests with five skips, with tested and committed tree identities equal; post-merge pins and final acceptance remain separate — [normal delivery](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6713829128).
 
+- The actual QA castle was folded through Studio helpers and booted on separate :3182/:8125, leaving the operator and existing cut worlds untouched. Source and compiled comparisons changed only courtyard ground; route/reload and current-source Studio tests pass; human castle verification is handed off, not claimed complete — [castle handoff](https://github.com/KirkDiggler/rpg-project/issues/874#issuecomment-6715048565).
+
 ## Mistaken
 
 - Review handoffs named earlier failed encounter/API logs instead of the final receipts. Exact-head CI and the actual final local transcripts resolved the evidence; subsequent handoffs distinguish current, failed and baseline receipts rather than infer a pass from a filename — [corrected API evidence](https://github.com/KirkDiggler/rpg-api/pull/1190#pullrequestreview-5814253327).
