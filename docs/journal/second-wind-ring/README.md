@@ -33,3 +33,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-07 — What did the damage fixture fail to exercise?](2026-11-07-when-native-damage-disagrees-with-the-fixture.md)
 - [2026-11-07 — When is the shared Raging cut actually adopted?](2026-11-07-releasing-the-shared-raging-cut.md)
 - [2026-11-08 — What if concentration is one of the effects?](2026-11-08-when-upkeep-is-an-effect-too.md)
+- [2026-11-08 — What can still happen while an effect ends?](2026-11-08-what-can-still-happen-while-an-effect-ends.md)
