@@ -31,3 +31,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-07 — Which saved data does the next Rage implementation need?](2026-11-07-choosing-the-current-rage-data.md)
 - [2026-11-07 — Does shared creation survive the native readers?](2026-11-07-following-raging-through-native-readers.md)
 - [2026-11-07 — What did the damage fixture fail to exercise?](2026-11-07-when-native-damage-disagrees-with-the-fixture.md)
+- [2026-11-07 — When is the shared Raging cut actually adopted?](2026-11-07-releasing-the-shared-raging-cut.md)
