@@ -48,11 +48,16 @@ creature does moves relative to the player's steps.
 store.** A verb runs under a session lease the store grants; the live
 encounter that verb mutates is a resident copy on the process that holds
 the lease, kept for as long as the host keeps it. The store is the
-authority: a verb compares the store's record sequence with the copy's,
+authority: a verb compares the store's checkpoint version with the copy's,
 reuses the copy on a match and rebuilds it from the checkpoint on a miss,
-and saves with a fence on that sequence so a copy that fell behind fails
-closed instead of overwriting. Residency is a cache, never ownership; a
-verb that lands on another process costs one rebuild and loses nothing.
+and saves with a fence on that version so a copy that fell behind fails
+closed instead of overwriting. The version is the store's, incremented on
+every save; the record's sequence cannot serve, because a verb that
+appends no beat leaves it where it was and two such writers would both
+pass. A lease may expire while a verb still runs; the fence, not the
+lease, is what keeps a late writer out. Residency is a cache, never
+ownership; a verb that lands on another process costs one rebuild and
+loses nothing.
 Routing a guild's verbs and streams to one process raises the hit rate and
 is never needed for correctness. The repository contract permits this
 already: an encounter held in memory on a live server and checkpointed
@@ -61,7 +66,7 @@ periodically is invisible from the session's side.
 **The save is one fenced transaction of the pieces that changed.** The
 checkpoint is stored by shape (#770's shapes: site, roster, clocks,
 knowledge, log), a verb writes only the pieces it touched, and it writes
-them together with the sequence fence in one transaction, so a process that
+them together with the version fence in one transaction, so a process that
 dies mid-save leaves the store whole. A load fetches every piece in one
 pipelined read and assembles the instance in memory; the site piece is
 skipped when its hash is already resident.
@@ -102,7 +107,7 @@ Three tiers, each where its inputs live.
 | tier | holds | keyed by | shared by | invalidated by |
 |---|---|---|---|---|
 | site | the compiled site: field, partitions, the authored site's answer to what a cell sees | the content hash of the authored site | every game on that version | a new version of the content, nothing else |
-| instance | one live encounter per game: members, clocks, journal, knowledge, the sight entries for door states that differ from the authored site; a cache of the store, validated by the record sequence | encounter id, at a record sequence | the verbs of one game that land on this process, in lease order | a sequence mismatch, eviction by the host, or the game ending; rebuilt from the checkpoint |
+| instance | one live encounter per game: members, clocks, journal, knowledge, the sight entries for door states that differ from the authored site; a cache of the store, validated by the checkpoint version | encounter id, at a checkpoint version | the verbs of one game that land on this process, in lease order | a version mismatch, eviction by the host, or the game ending; rebuilt from the checkpoint |
 | writes | the verb's writes, leaving the answer's path: the beats first, then the pieces of the checkpoint that changed, in one fenced transaction | session | nothing; one queue per session, in order | drained at shutdown |
 
 The site tier is `encounter`'s to split out of the build; what of a built
@@ -126,7 +131,7 @@ Nothing migrates and nothing syncs; a copy is validated or rebuilt.
 | event | what happens |
 |---|---|
 | a verb lands on a process without the copy | the lease is taken, the pieces are fetched, the instance is assembled; the site is reused when its hash is resident |
-| a verb lands where a copy is stale | the sequence check misses, the copy is dropped and rebuilt |
+| a verb lands where a copy is stale | the version check misses, the copy is dropped and rebuilt |
 | a stale copy tries to save | the fence refuses, the copy is dropped, the verb fails closed and the client retries |
 | the process drains for a deploy | continuations finish within the drain window, dirty pieces are written, the process exits; the next process rebuilds on first verb |
 | the process dies | the verb in flight fails closed, the lease expires, the next verb rebuilds from the checkpoint; a continuation that did not finish wrote nothing, and the world is still due on the next verb |
@@ -150,7 +155,7 @@ shows in the answer. Until either is measured, the copy is a cache.
 | R3 where the instance lives: three tiers, the compiled site by content hash shared across games, the live instance resident where the session's lock lives, the writes queued per session after the answer | settled | §Where the instance lives | KirkDiggler | 2026-11-08 |
 | R4 a cached value lives where its inputs live: what a cell sees given doors and props is compiled site data, the concealment layer is the instance's | settled | §Law, sight and facts | KirkDiggler | 2026-11-07 |
 | R5 the harness is the record: phases, blob, allocations, answer and first beat | open | §Law, the claim | | |
-| R6 the resident copy is a cache behind the store's lease, the store is the authority, the save is one fenced transaction of the pieces that changed; the owner shape is deferred with its reopen conditions; the site tier is built before the instance tier | settled | §Law, the lock; §Where the instance lives | KirkDiggler | 2026-11-08 |
+| R6 the resident copy is a cache behind the store's lease, the store is the authority, the save is one transaction of the pieces that changed, fenced on a checkpoint version the store increments; the owner shape is deferred with its reopen conditions; the site tier is built before the instance tier | settled | §Law, the lock; §Where the instance lives | KirkDiggler | 2026-11-08 |
 
 ## Open
 
