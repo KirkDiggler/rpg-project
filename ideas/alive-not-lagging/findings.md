@@ -505,3 +505,38 @@ ms, so something still scales with the record each verb (the session's
 record stream fold, the load and save of a record that grows by 200–386
 entries a Move, or the catch-up read). A growth profile is next. Holds as
 the story's live number at this head.
+
+## F19 — the record is unbounded and the blob's round trip is the growth
+
+2026-11-08 · rpg-api dev `f890674a` (session v0.169.0, encounter v0.184.0),
+whole-answer mode, garrison keep, 33 Moves; wall-clock phase timings inside
+`Manager.Move` from an uncommitted instrumented copy of the two modules,
+load average 6–10; one-pace Moves compared.
+
+| phase | Move 5 (1,572 entries, 4.8 MB blob) | Move 31 (8,748 entries, 24.3 MB) | per 100 entries |
+|---|---|---|---|
+| GetEncounter (GET + unmarshal) | 31 ms | 154 ms | +1.7 ms |
+| LoadEncounter | 46 ms | 105 ms | +0.8 ms |
+| walk: the walker | 270 ms | 323 ms | +0.7 ms |
+| walk: the raise | 195 ms | 205 ms | +0.1 ms |
+| commitRecord (whole-record copy) | 1.5 ms | 12 ms | +0.14 ms |
+| commitActs | 1.4 ms | 1.4 ms | flat |
+| ToData + WorldView | 6.5 ms | 18 ms | +0.16 ms |
+| SaveEncounter (marshal + SET) | 38 ms | 152 ms | +1.6 ms |
+| Move inside the SDK | 596 ms | 996 ms | +5.6 ms |
+
+The record: 541 entries after Move 1, 9,358 after Move 33, about 210 added
+per one-pace Move and 400 per two-pace Move; the blob 2.06 MB → 25.9 MB,
+about 2.7 KB per entry and 0.56 MB per one-pace Move. Redis itself is 0.03
+ms; the cost is JSON. Retention: the session launches every run with
+`encounter.RetentionUnbounded` (session `launch.go`), so no trim ever runs.
+
+Means: of the 5.6 ms a Move gains per hundred entries, 4.1 ms is the blob's
+round trip (unmarshal, compile, marshal) and the blob is mostly record; the
+raise is flat; the acts fold is flat since S7; the record stream's copy is
+small but grows. On this keep the whole record is serialised and parsed on
+every verb and never trimmed, which is the shape #770 names and R3's
+instance and write tiers address: a resident instance loads nothing per
+verb, and a record appended rather than rewritten is written once per beat.
+2.7 KB per entry is large for a beat; what an entry is made of is the next
+read. Holds.
