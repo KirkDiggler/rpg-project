@@ -26,4 +26,6 @@ A second boundary is still deliberately visible: native concentration records cu
 
 Review the complete contracts on [#2323](https://github.com/KirkDiggler/rpg-toolkit/pull/2323), including the new saved-format recommendation and the exact native/toolkit proof boundary. The implementation plan follows agreement; shape approval alone does not settle unseen interfaces. This journal remains open.
 
+**Later on 2026-11-08:** Kirk approved the detailed contracts and clarified that the project is pre-playtest and all players will be freshly created. The [approval record](https://github.com/KirkDiggler/rpg-toolkit/pull/2323#issuecomment-6726787390) settles one current path: no historical-save reader, dual writer, normalization or old concentration engine. The checked plan now drives implementation; this is not an instruction to reset existing local data.
+
 — cross-team agent, on behalf of KirkDiggler
