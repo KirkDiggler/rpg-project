@@ -36,7 +36,7 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 4. Capture starting after a host restart, delayed writer shutdown or missing configuration cannot masquerade as complete history (Task5).
 5. More than500 rows, reconnect, source edit and imported captures must resolve the old configuration or explicitly report it missing (Task6).
 
-## Task1 — one-pass machine trace values
+### Task 1: One-pass machine trace values
 
 **Owner:** toolkit `mind/machine`, separate feature worktree/PR. No provider dependency changes.
 **Files:** new `trace.go`, `trace_test.go`; change `step.go`, `guard.go`, `errors.go`, `doc.go`; owning `knowledge/runs/2026-11-08-machine-inspection.md`.
@@ -52,7 +52,7 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 - [ ] Focused tests, whole-module race/lint, actual root hook; commit/push/draft PR.
 **Verification:** from owning module: `go test -count=1 -run '^TestTraceSuite$' .`, `go test -race -count=1 ./...`, `golangci-lint run ./...`; root `.githooks/pre-commit` through normal commit. Mutation of a skipped reader to an extra call must fail actual count/panic assertions.
 
-## Task2 — composer outcomes distinguish proposal and commit
+### Task 2: Composer outcomes distinguish proposal and commit
 
 **Owner:** toolkit `mind/behavior`, its own worktree/PR; needs Task1 pushed version.
 **Files:** new `trace.go`, `trace_test.go`; `composer.go`, `doc.go`, manifests and owning run record.
@@ -64,19 +64,19 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 - [ ] Focused/full race/lint/root hook, commit/push/draft.
 **Verification:** `go test -count=1 -run '^TestComposerTraceSuite$' .`; full owning-module race/lint and normal hook. Compare ToData and exact d100 counts with trace off/on.
 
-## Task3 — encounter symbols, decision records and execution evidence
+### Task 3: Encounter symbols, decision records and execution evidence
 
 **Owner:** toolkit encounter, separate worktree/PR; Task2 pushed version.
-**Files:** new `behavior_trace.go`, `behavior_trace_test.go`; `behavior.go`, `behavior_work.go`, `machine.go`, `pause.go`, `data.go`, `behavior_binding.go`; tests beside real behavior/pause fixtures; manifests/run record.
-**Interfaces:** exported record kinds `BeatBehaviorConfig`, `BeatBehaviorDecision`, `BeatBehaviorWork`. Payloads carry `beat`, `schema:1`, actor/member, configuration identity, existing act/clock correlation. Config describes original `BehaviorInput` (not Progress). Decision carries operation/trigger and Task2 outcomes; existing `answered` continues carrying picker arithmetic. Work carries attachment/key and explicit `selected`, `partial`, `paused`, `completed` status from actual owner call-sites.
-**Behavior:** persist per-member last-described configuration identity, following TableHash; emit its symbol before the first referencing trace. No duplicate config on unchanged reload. Custom/compelled driver bypass does not pretend the ordinary composer ran. Keep completion validation and held-work restore unchanged. New beats are diagnostics only, not physical body-state changes.
+**Files:** new `behavior_trace.go`, `behavior_trace_test.go`; `behavior.go`, `behavior_work.go`, `clocks.go`, `wakebeats.go`, `pause.go`; tests beside real behavior/pause fixtures; manifests/run record. Inspection places observation delivery in wakebeats.go and selected-work/pause ownership in clocks.go/pause.go, not machine.go.
+**Interfaces:** exported record kinds `BeatBehaviorConfig`, `BeatBehaviorDecision`, `BeatBehaviorWork`. Payloads carry `beat`, `schema:1`, actor/member, configuration identity, existing act/clock correlation. Config describes original `BehaviorInput` (not Progress). Decision carries operation/trigger and Task2 outcomes; a `pick_record` backlink names the actual `answered` record containing picker arithmetic. A suppressed no-candidate answered record carries its verdict in the diagnostic record instead; no guard/row evaluation is repeated. Work carries attachment/key, `decision_record` backlink and explicit `selected`, `partial`, `paused`, `completed` status from actual owner call-sites. Non-completion due to inactive/superseded work is explicitly abandoned, not completed. Diagnostic records have an empty audience (GM/debug only).
+**Behavior:** persist `SymbolsRecorded bool` alongside the already immutable definition in BehaviorData/behaviorRuntime; emit its symbol before the first referencing trace. This covers placed members and reserves without duplicating definition hashes in MemberData/TableHash. No duplicate config on unchanged reload. The choice's time act and execution's move act are distinct: preserve `DecisionRecord string` on BehaviorWork/BehaviorWorkData through pause/reload solely as a diagnostic backlink. Custom/compelled driver bypass does not pretend the ordinary composer ran. Keep completion validation and held-work restore unchanged. New beats are diagnostics only, not physical body-state changes.
 **Tests:** `BehaviorTraceSuite.TestConfigurationPrecedesDecisionAndUsesOriginalBinding`, `TestInvestigationDefersPatrolWithoutCommittingItsPreview`, `TestPartialAndPausedWalkNeverClaimCompletion`, `TestReloadKeepsSymbolsAndRollCount`, `TestDriverBypassDoesNotInventMachineEvaluation`; compare physical state, ordinary acts and exact scripted dice to existing canonical fixtures. Save/load under normal session unbounded retention; test missing-symbol input as explicit reader incompleteness, not a source rebind.
 - [ ] RED through real compiler/composer/world fixtures.
 - [ ] Capture returned values and existing work outcomes; no extra selection/movement.
 - [ ] Full owning-module gates and hook; benchmark record growth/trace cost, commit/push/draft.
 **Verification:** focused real behavior/paused suites, `go test -race -count=1 ./...`, lint/root hook; verify record JSON contains no event/env object or unseen sound-maker from authoritative host state.
 
-## Task4 — session keeps new kinds record-only
+### Task 4: Session keeps new kinds record-only
 
 **Owner:** toolkit session, separate worktree/PR; Task3 pushed version.
 **Files:** `act_family.go`, `acts_test.go`, `act_fold_internal_test.go`, `behavior_launch_test.go`, `record_test.go`, manifests/run record.
@@ -87,7 +87,7 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 - [ ] Owning-module race/lint/hook, commit/push/draft.
 **Verification:** full module gates, exact captured RecordEvent payload identity across live/read, no changes to ordinary acts or continuation completion.
 
-## Task5 — host capture and diagnostic access gate
+### Task 5: Host capture and diagnostic access gate
 
 **Owner:** API; Task4 published pin. Reconcile latest dev/resident-instance work before changing wiring.
 **Files:** new `internal/orchestrators/session/record_capture.go`, `record_capture_test.go`, `record_publisher.go`; existing `orchestrator.go` (record sink wiring only), `cmd/server/server.go`; `internal/handlers/dnd5e/session/v1alpha2/{handler.go,get_record.go,stream_record.go,handler_test.go}`; integration `internal/integration/session/behavior_trace_test.go`; manifests/run record.
@@ -99,7 +99,7 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 - [ ] Run focused tests, `make test`, `make ci-check`; commit/push/draft; boot owned stack.
 **Verification:** full API gates; actual server logs parse as JSON records; inspect same decision ID through API capture and GetRecord. Producer source edit/reload keeps original config. Capture failure is visible; no claim of durable exactly-once audit storage. Existing #649 file-read contract is linked rather than duplicated as a new event service.
 
-## Task6 — inspect live and captured traces with retained symbols
+### Task 6: Inspect live and captured traces with retained symbols
 
 **Owner:** web; Task5 running stack. Existing published proto unchanged.
 **Files:** new `src/components/session/combat-experience/behaviorSymbols.ts`, `BehaviorTrace.tsx` and tests; new `src/components/session/recordCapture.ts` and tests; existing `recordFeed.ts`, `recordFeed.test.ts`, `useSessionRecordStream.ts`, `combat-experience/{RecordPanel.tsx,RecordPanel.test.tsx,StoryLog.tsx,recordSymbols.ts}` and owning run record.
@@ -135,4 +135,6 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 
 ## Resume
 
-Project worktree `.worktrees/machine-inspection`, branch `docs/machine-inspection`; first toolkit worktree same name, branch `feat/machine-inspection`, owning module `mind/machine`. Next action: Task1 RED tests. Later module worktrees/PRs are created when their prerequisites are published; do not edit siblings' go.mod files in this worktree. Public story/slices carry current delivery status.
+Provider checkpoint: Task1 machine `aa9db662` / toolkit#2324 and Task2 behavior `00337bc9` / toolkit#2325 have full local gates and exact-head CI green. Task3 encounter `676d7839` / toolkit#2326 has full nine-package race/lint/root hook green; remote CI pending at this checkpoint. All three remain unmerged, with whole-wave review still ahead.
+
+Project worktree `.worktrees/machine-inspection`, branch `docs/machine-inspection`. Toolkit worktrees: `machine-inspection` (`feat/machine-inspection`), `behavior-inspection` (`feat/behavior-inspection`), `encounter-inspection` (`feat/encounter-inspection`). Each has its task ledger under `.superpowers/sdd/plan/`; the public story/slices remain the shared record. Next: Task4 in a separate `session-inspection` worktree, pin the actual encounter commit, prove record-only classification and live/catch-up delivery. Tasks5–6 and live verification remain unstarted. No operator/demo environment has changed.
