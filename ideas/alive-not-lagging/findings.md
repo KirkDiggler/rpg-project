@@ -323,3 +323,60 @@ with what anyone sees or decides unchanged. Against F7 the default Move is
 F14 holds: rpg-toolkit#2310 merged to main as `ba074f9d`. The review found the door mask written in place through the partition pass's shallow copy (a shut door served as open after a load) and a mover dropped mid-walk inside a wake pass kept walking; both fixed and pinned before the merge. Module race suite green.
 
 S3b merged out: encounter v0.181.1, session v0.166.3 (rpg-toolkit#2311, `6e265ba5`), rpg-api dev `8d8c4ef3` (rpg-api#1195). The castle checks on #889 are the operator's on :3030.
+
+## F15 — on the live server path the garrison Move is 1.8 s, and the stream waits for the save
+
+2026-11-08 · rpg-api `d27ccfa` (rpg-api#1197 head), session v0.167.0,
+encounter v0.182.0, protos v0.1.260 · `bench-keep-garrison` (10k hexes, 99
+garrison, 20 patrols, 100 members, neutral to the party) · an 8-cell
+world-clock path along axial q from the file's seat (23,72), back and
+forth · 30 Moves after 3 warm-ups, drained between Moves · real Redis 7.2.2
+· AMD Ryzen 9 3950X. In-process from the handler's Move to the act broker's
+channel: no gRPC transport, no proto or JSON encoding to the client, no
+network.
+
+Command (from `rpg-api`, branch `s1-measure` at `8ab27cc`):
+```
+redis-server --port 6491 --save '' --daemonize yes
+RPG_MEASURE=1 RPG_MEASURE_N=30 go test ./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v -timeout 60m
+```
+
+| mode | continues | answer p50 / p95 | first beat p50 / p95 | last beat p50 / p95 |
+|---|---|---|---|---|
+| whole answer (today) | 0/30 | 1817 / 2639 ms | 1816 / 2638 ms | 1816 / 2638 ms |
+| S1, the answer first | 30/30 | 425 / 635 ms | 1852 / 2636 ms | 1852 / 2636 ms |
+
+Redis GET floor 0.02 ms. Acts per verb for the player: 165 to 320; every
+patrol step she sees is its own act. Steps in the S1 answer: 1 to 5,
+depending on where the pace falls. Launch 1.4 s, compile 0.2 s.
+
+Means, in order of weight:
+
+1. **The live Move is 1.8 s where the toolkit bench says 134 ms.** The
+   difference is the session layer and the host: the act fold per recipient
+   at commit (one story fold for each of a hundred members, every verb), the
+   load of a record that grows by hundreds of beats per verb, the sheet
+   reads per cell, the 1 MB save. F9 named these as "paid in both styles";
+   this is their price on the garrison. The toolkit numbers of F7 to F14
+   stand, and they are a sixth of the live cost.
+2. **The answer moved; the stream did not.** Under S1 the answer is 425 ms
+   and still over the 100 ms bar; the first beat is unchanged at 1.85 s
+   because delivery waits for the save (S9) and the whole verb's acts,
+   including the answered steps', leave in one burst after the continuation
+   saves. The first-beat bar needs the beats written before the checkpoint,
+   the write tier's beats-first half, or a delivery after the answer that
+   S9 does not permit today.
+3. **The cost climbs 40 ms per Move.** Whole-answer Moves rose from 1.05 s
+   to 2.74 s over thirty; S1 answers from 215 to 644 ms. The record grows
+   each verb and something reads it whole.
+4. **The act buffer lags on the garrison.** The production buffer of 256
+   closed the subscriber on the first garrison verb; the test raised it to a
+   million. On this keep a live client would be told it lagged and re-read
+   after every verb.
+5. The plain `bench-keep` forms a fight at launch, so its Move is a combat
+   move; the garrison variant is the free-roam keep for this story.
+
+Against the slice's done line (answer under 100 ms, first beat within 250
+ms): not met on the live path. S1 is correct and four times faster to
+answer; the bars now point at the session layer. Provisional until rpg-api#1197
+merges; the measurement test lives on a branch pending R5.
