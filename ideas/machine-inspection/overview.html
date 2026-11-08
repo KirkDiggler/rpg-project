@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Machine inspection — symbols and execution traces</title><meta name="description" content="Exact machine configurations and recorded alternatives, from toolkit evaluation to playtest inspection and structured API logs."><style>:root{color-scheme:light dark;font:17px/1.55 system-ui}body{max-width:980px;margin:3rem auto;padding:0 1.2rem}h1{line-height:1.15}a{color:light-dark(#1450ad,#9bc4ff)}figure,section{border:1px solid light-dark(#bbb,#555);border-radius:8px;padding:1.1rem;margin:1rem 0}pre{overflow:auto;font-size:15px}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:.6rem;border-bottom:1px solid #888}small{opacity:.8}</style></head><body>
+<h1>Machine inspection</h1><p>Configuration as debug symbols. Decisions as an execution trace. <a href="https://github.com/KirkDiggler/rpg-project/issues/898">Story #898</a> is the live delivery record.</p>
+<figure><pre>Exact bound recipes / tables / precedence
+                   │ configuration identity
+                   ▼
+Machine guard trace → Composer disposition → Encounter work result
+                   │ one committed record path
+            ┌──────┴────────┐
+            ▼               ▼
+  Playtest Debug view    Structured API logs
+  symbols + row window   captured records → later analytics</pre><figcaption>Toolkit decides and explains; API transports; readers inspect. No reader re-evaluates rules.</figcaption></figure>
+<section><h2>What stays separate</h2><p>A false guard is not an unknown fact. An unvisited branch is not rejected. A losing proposal is not committed. A selected movement is not arrival. A missing symbol is not permission to substitute today's edited source.</p></section>
+<section><h2>Delivery</h2><table><thead><tr><th>Slice</th><th>State</th><th>Owning components</th></tr></thead><tbody><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — explanations</a></td><td>Building</td><td>machine, behavior</td></tr><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — records and capture</a></td><td>Planned</td><td>encounter, session, API</td></tr><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Planned</td><td>web</td></tr></tbody></table></section>
+<section><h2>Measurements and limits</h2><p>Existing browser record window: 500 rows. Session server history is currently unbounded. The symbol dictionary has its own lifetime; row eviction must not erase configuration meaning.</p><p>No feature overhead or end-to-end result is measured yet. Trace/untraced callback counts, dice, output and progress must match. Export is bounded and reports gaps; it is not a durable exactly-once audit store.</p></section>
+<section><h2>Not in this cut</h2><p>Time-series database choice, dashboards, simulation replay, new NPC policies and the concurrent resident-instance optimization. Current authorization is to build and verify; operator look and merge gates remain.</p></section>
+<small>Design: <a href="design.md">law</a> · <a href="README.md">walkthrough</a> · <a href="plan.md">implementation plan</a></small>
+</body></html>
