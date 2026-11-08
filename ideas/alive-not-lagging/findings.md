@@ -540,3 +540,42 @@ instance and write tiers address: a resident instance loads nothing per
 verb, and a record appended rather than rewritten is written once per beat.
 2.7 KB per entry is large for a beat; what an entry is made of is the next
 read. Holds.
+
+## F20 — a record entry is its audience; the checkpoint without the record is 1 MB and flat
+
+2026-11-08 · the saved blob after Move 10 of a whole-answer garrison run at
+rpg-api dev `f890674a` (8.72 MB, 3,003 entries) and after Move 4 (4.28 MB,
+1,362 entries); compact JSON as stored; the payload is a `[]byte`, so it is
+stored base64.
+
+| field of a `moved` beat (49% of entries) | bytes |
+|---|---|
+| audience: 100 member ids at about 24 B each | 2,420 |
+| payload as stored (decoded 75 B: member, position, beat) | 114 |
+| tags, correlation, id, seq, at | 166 |
+| total | 2,701, of which audience 90% |
+
+An `answered` beat (33%) is 3,125 B with a 538 B payload (rows, candidates,
+creature, temper, selector), audience 77%; a `tick` 2,630 B, audience 92%;
+`sighted` and `cells_revealed` carry one recipient (320 B and 7.7 KB).
+Across the record: audience 6.34 MB (82.7%), payload 0.85 MB (11.1%), tags
+2.4%, correlation 1.7%, id 1.3%, seq and at 0.7%. The audience is 72.7% of
+the whole blob at Move 10 and about 79% at Move 33 by extrapolation.
+
+| the blob without the record | Move 4 | Move 10 |
+|---|---|---|
+| field (regions 161, placed 166, prop presentations 139, walls 32) | 498 KB | 498 KB |
+| perception (intel and testimony) | 346 KB | 347 KB |
+| journal | 132 KB | 132 KB |
+| members, doors, sight sweeps, clock, ever-members | 75 KB | 75 KB |
+| everything except the record | 1.051 MB | 1.052 MB |
+| the record | 3.2 MB (75%) | 7.7 MB (88%) |
+
+Means: every beat the whole table may see spells the whole table out, a
+hundred ids a beat, and that list is four fifths of the record and three
+quarters of the blob; a beat for everyone named once ("everyone") takes a
+`moved` entry from 2,701 to 281 B and most of F19's growth with it, before
+any tier is built. The checkpoint without the record is a megabyte that
+does not grow, half of it the site field that R3's site tier takes out of
+the save altogether; the record is the only thing that grows, which is what
+an append-only write is for. Holds.
