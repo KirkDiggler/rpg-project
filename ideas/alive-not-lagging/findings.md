@@ -464,3 +464,5 @@ memo S3b added is dropped by every mover's step, when only a sheet write
 changes anyone's standing; attaching once per verb on one bus and
 invalidating by sheet write is the session's to do. With the fold of F16,
 these four are about 900 of the 1,390 ms.
+
+F17 correction (from rpg-toolkit#2318's builder, a counter on `field.doorCrossings`): the door-crossing scan is paid once per door when doors attach at load, 36 calls per open on the garrison, none inside the timed steps; it reaches 96 ms per Move on the live path because the session loads the encounter once per verb, not because the walker pays it per step. The per-Move cost and the placement (site data) stand; the mechanism named in F17 was wrong. The S9 PR adds a load-plus-atlas benchmark that sees it (823k → 97k allocs/op) because the Move bench keeps one encounter open and cannot.
