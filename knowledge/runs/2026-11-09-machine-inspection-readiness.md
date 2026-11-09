@@ -6,6 +6,7 @@
 
 ## Decided
 
+- Make the walkthrough the architecture entry point and the story the single current status, because the operator asked to understand flow and direction rather than follow a chain of gates/commits — [#898](https://github.com/KirkDiggler/rpg-project/issues/898).
 - Treat the operator's merge-readiness direction as approval to finish raw JSON and gates, not permission to merge the whole wave; generated proto publication requires its own concrete action — [publication gate](https://github.com/KirkDiggler/rpg-api-protos/pull/426#issuecomment-6729481164).
 - Reuse the same independent reviewer and upstream closures rather than restart whole reviews after catch-up or a bounded scalar fix — [round verdict](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1400#pullrequestreview-5820582677).
 - Keep actual Exit events visible in the QA record and stop the affected script rather than restoring departed actors to manufacture a complete pass — [QA checkpoint](https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6730010080).
@@ -19,5 +20,6 @@
 
 ## Mistaken
 
+- Appending superseding checkpoints left older contradictory slice/status prose in the story, and the walkthrough omitted the raw-JSON transport explanation. The status body is reconciled and the walkthrough now separates existing JSON payloads, protobuf transport and lossless decoding — [#898](https://github.com/KirkDiggler/rpg-project/issues/898).
 - The toolkit hook's cache hit was not valid joined-tree evidence: its relative-path bug hashes zero files. An uncached run actually passed; the existing issue, not another duplicate, holds the mechanism — [toolkit#1736](https://github.com/KirkDiggler/rpg-toolkit/issues/1736#issuecomment-6729481384).
 - The QA driver initially encountered no-such-member as an unexplained stop; stored records and server logs identify a real Exit RPC, not state loss from diagnostics. The source of that call is not guessed — [checkpoint](https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6730010080).

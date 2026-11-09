@@ -1,18 +1,109 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Machine inspection — symbols and execution traces</title><meta name="description" content="Exact machine configurations and recorded alternatives, from toolkit evaluation to playtest inspection and structured API logs."><style>:root{color-scheme:light dark;font:17px/1.55 system-ui}body{max-width:980px;margin:3rem auto;padding:0 1.2rem}h1{line-height:1.15}a{color:light-dark(#1450ad,#9bc4ff)}figure,section{border:1px solid light-dark(#bbb,#555);border-radius:8px;padding:1.1rem;margin:1rem 0}pre{overflow:auto;font-size:15px}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:.6rem;border-bottom:1px solid #888}small{opacity:.8}</style></head><body>
-<h1>Machine inspection</h1><p>Configuration as debug symbols. Decisions as an execution trace. <a href="https://github.com/KirkDiggler/rpg-project/issues/898">Story #898</a> is the live delivery record.</p>
-<figure><pre>Exact bound recipes / tables / precedence
-                   │ configuration identity
-                   ▼
-Machine guard trace → Composer disposition → Encounter work result
-                   │ one committed record path
-            ┌──────┴────────┐
-            ▼               ▼
-  Playtest Debug view    Structured API logs
-  symbols + row window   captured records → later analytics</pre><figcaption>Toolkit decides and explains; API transports; readers inspect. No reader re-evaluates rules.</figcaption></figure>
-<section><h2>What stays separate</h2><p>A false guard is not an unknown fact. An unvisited branch is not rejected. A losing proposal is not committed. A selected movement is not arrival. A missing symbol is not permission to substitute today's edited source.</p></section>
-<section><h2>Delivery</h2><table><thead><tr><th>Slice</th><th>State</th><th>Owning components</th></tr></thead><tbody><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — explanations</a></td><td>Providers locally green; unreleased</td><td>machine, behavior</td></tr><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — records and capture</a></td><td>Built; gates green, unreleased</td><td>encounter, session, API</td></tr><tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted; raw-codec publication pending</td><td>web</td></tr></tbody></table></section>
-<section><h2>Measurements and limits</h2><p>Existing browser record window: 500 rows. Session server history is currently unbounded. The symbol dictionary has its own lifetime; row eviction must not erase configuration meaning.</p><p>Provider controls preserve callbacks, dice and progress. A bounded N10 garrison comparison adds about103KB/121 diagnostic records per four-cell op (default) or45KB/58 (posts asleep), including first-use symbols amortized over the run. Timing is not a production latency result; <a href="https://github.com/KirkDiggler/rpg-project/issues/879#issuecomment-6726671119">measurement qualifications</a>. The owned3048/8138 preview renders the real recorded alternatives and captured-file view. This is boot evidence, not final QA; the current Struct wire cannot represent wide integers exactly.</p></section>
-<section><h2>Not in this cut</h2><p>Time-series database choice, dashboards, simulation replay, new NPC policies and the concurrent resident-instance optimization. Current authorization is to build and verify; operator look and merge gates remain. R9 selects lossless raw JSON. <a href="https://github.com/KirkDiggler/rpg-api-protos/pull/426#issuecomment-6729481164">The reviewed proto needs narrow publication permission</a> before consumers can adopt its generated bindings; exact captured JSON is already supported.</p></section>
-<small>Design: <a href="design.md">law</a> · <a href="README.md">walkthrough</a> · <a href="plan.md">implementation plan</a></small>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Machine inspection — the flow, the JSON boundary, and what remains</title>
+  <meta name="description" content="How authored NPC behavior becomes inspectable evidence, why raw JSON travels inside protobuf, and the current delivery path.">
+  <style>
+    :root { color-scheme: light dark; font: 17px/1.55 system-ui; }
+    body { max-width: 1020px; margin: 3rem auto; padding: 0 1.2rem; }
+    h1 { line-height: 1.15; } h2 { margin-top: 0; }
+    a { color: light-dark(#1450ad,#9bc4ff); }
+    figure,section { border: 1px solid light-dark(#bbb,#555); border-radius: 8px; padding: 1.1rem; margin: 1rem 0; }
+    pre { overflow: auto; font-size: 15px; }
+    table { border-collapse: collapse; width: 100%; }
+    td,th { text-align: left; padding: .6rem; border-bottom: 1px solid #888; vertical-align: top; }
+    .pair { display: grid; grid-template-columns: repeat(auto-fit,minmax(270px,1fr)); gap: 1rem; }
+    .pair section { margin: 0; } small { opacity: .8; }
+  </style>
+</head>
+<body>
+  <h1>Reading the machine, not guessing its intent</h1>
+  <p>Load the exact configuration like debug symbols. Read which alternatives were considered, which role and row won, and what execution actually completed.</p>
+  <p><strong>Start with the <a href="README.md">walkthrough</a>.</strong> The <a href="https://github.com/KirkDiggler/rpg-project/issues/898">story issue #898</a> is the current status; <a href="design.md">design law</a> states the contracts; <a href="plan.md">the plan</a> is builder detail.</p>
+
+  <section>
+    <h2>What builds on what</h2>
+    <p><a href="https://github.com/KirkDiggler/rpg-project/issues/866">The authored-behavior foundation (#866)</a> is shipped: definitions, bindings, independent progress, precedence and real execution. This inspection wave (#898) explains that machinery. It does not add another NPC decision system.</p>
+  </section>
+
+  <figure>
+    <pre>Authored definition + actor bindings
+                  │ compiler
+                  ▼
+        Exact bound configuration
+                  ├──────────────────────────┐
+                  ▼                          ▼
+  Machine → Composer → Picker          Configuration symbols
+                         │                   │
+                         ▼                   │
+                Encounter executes           │
+             (completion feeds progress)     │
+                         │                   │
+              Decision / work evidence       │
+                         └─────────┬─────────┘
+                                   ▼
+                         One diagnostic record
+                         save, then publish
+                         ┌─────────┴──────────┐
+                         ▼                    ▼
+                 Playtest Debug view    Structured API logs
+                         └────── same facts ──┘
+                        live or captured inspection</pre>
+    <figcaption>Toolkit decides and explains; API transports; readers inspect. Normal player narration remains a separate, perception-filtered act stream.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Why JSON — and what is not changing</h2>
+    <p><strong>The payload is already JSON in the toolkit record.</strong> We are removing a lossy conversion, not moving game rules into JSON or replacing protobuf/Connect RPCs.</p>
+    <div class="pair">
+      <section><h3>Approximate live projection</h3><p>Toolkit JSON → protobuf <code>Struct</code> → browser numbers.</p><p>Struct uses doubles: <code>9007199254740993</code> can become <code>9007199254740992</code>.</p></section>
+      <section><h3>Exact diagnostic contract</h3><p>Original JSON bytes → protobuf <code>fields_json</code> → lossless reader.</p><p>Record ID, act ID, beat and game-clock reading stay in the typed envelope. API capture carries the same payload without reconstructing it.</p></section>
+    </div>
+    <p>The reader must preserve integers too; ordinary JavaScript number decoding can lose them again. Missing/malformed data is unavailable evidence, never a guessed value. <a href="https://github.com/KirkDiggler/rpg-project/pull/902#issuecomment-6727648247">Probe and wire decision</a>.</p>
+  </section>
+
+  <section>
+    <h2>What the trace keeps separate</h2>
+    <ul>
+      <li>Configuration is not private runtime progress.</li>
+      <li>A false guard is not an unknown fact; an unvisited branch is not rejected.</li>
+      <li>A losing role's proposal is not committed progress.</li>
+      <li>A selected move is not arrival or completion.</li>
+      <li>A captured window is not automatically a complete run or simulation replay.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Where this wave stands</h2>
+    <table>
+      <thead><tr><th>Slice</th><th>Current state</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Built, tested and independently reviewed; not merged.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built and reviewed. Raw-payload proto is reviewed/CI-green; publication and consumer adoption remain.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted. Review's missing-scalar finding fixed; captured reader works. Exact live-wire adoption and remaining QA are not complete.</td></tr>
+      </tbody>
+    </table>
+    <p>No PR in this inspection wave is merged. <a href="https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6730010080">Readiness and partial QA evidence</a>.</p>
+  </section>
+
+  <section>
+    <h2>Where we go next</h2>
+    <ol>
+      <li>Publish the checked proto bindings after the narrow publication action is authorized.</li>
+      <li>Adopt raw bytes in API/web and prove exact live/captured values without a Struct fallback.</li>
+      <li>Finish applicable QA and focused review closure; prepare current-head verdicts and release-pin order.</li>
+      <li>Merge this wave only when authorized. Studio authoring remains a separate next product slice.</li>
+    </ol>
+    <p>Analytics questions and database selection come later. Recording evidence does not choose a time-series database or implement an exactly-once audit store.</p>
+  </section>
+
+  <section>
+    <h2>Costs and the optimization work</h2>
+    <p>The UI keeps 500 visible rows but retains symbols independently. Session server history is currently unbounded. Export I/O is asynchronous and bounded; generating/copying/storing diagnostics still costs resources.</p>
+    <p>The bounded N10 garrison comparison adds about 103 KB/121 diagnostic records per four-cell op (default) or 45 KB/58 (posts asleep), including first-use symbols amortized over the run. These are not production latency guarantees: <a href="https://github.com/KirkDiggler/rpg-project/issues/879#issuecomment-6726671119">measurements and qualifications</a>.</p>
+    <p>Your resident-instance work attacks repeated hydration and coordination costs. It is separate from record volume; this wave does not build a competing cache.</p>
+  </section>
+</body>
+</html>
