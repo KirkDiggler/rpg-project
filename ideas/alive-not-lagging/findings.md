@@ -619,3 +619,29 @@ any residency lands. The other 650 ms is the verb itself, the walk and the
 fold, which no storage tier removes: the S1 answer at 256 ms against the
 100 ms bar is a walker cost (F16: 52 ms a step live against 18 on the
 bench), and that is the next profile once the storage line is in.
+
+## F22 — the fence costs one round trip; the audience table takes two thirds off the blob
+
+2026-11-09 · rpg-api dev `109251fc` (rpg-api#1208, session v0.172.1, play/record
+v0.3.0), `bench-keep-garrison`, N=20, Redis on a side port; the harness of
+F21 (`RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:<port> RPG_MEASURE_N=20 go test
+./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v`).
+Run record on rpg-api#1208.
+
+| row | before (dev `3abf710d`, record v0.2.x) | after |
+|---|---|---|
+| Move, whole answer, p50 | 949 ms | 777 ms |
+| S1 answer, p50 | 273 ms | 198 ms |
+| blob after the walk | 9.1 MB | 2.7 MB |
+| write side: encode + SET → fenced save | 24.06 ms | 24.43 ms |
+| read side: plain → fenced read | 26.27 ms | 27.41 ms |
+
+Means: the fence (one Lua compare-and-set over a sibling version key, the
+world, the session record and the touched sheets in one script) costs about
+one round trip, under half a millisecond on the write and one on the read.
+The Move numbers are not a like-for-like pair: between the two runs the
+record's audience table (S11) shrank the blob by two thirds, and the JSON
+round trip shrank with it; that, not the fence, is the 170 ms. A stale
+writer now fails closed with ABORTED and nothing written; a run launched
+before the deploy has no version key and fails closed at its next verb by
+design (the castle gets a fresh Redis at rebuild).
