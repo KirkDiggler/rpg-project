@@ -26,6 +26,7 @@ flowchart LR
 - **R5 — One evidence path.** Toolkit owns the meaning and configuration symbols; the existing record carries them. API transports and captures opaque records; readers render them without executing guards or game rules. Normal perception-filtered player acts do not acquire private diagnostic data.
 - **R6 — Retain evidence honestly.** Symbol records travel with captured runs and are cached independently of the debugger's bounded row list. Missing symbols, retention restart and capture gaps are visible. Record identity and ordering remain unchanged; configuration records do not invent gameplay acts.
 - **R7 — Host capture is independent of the browser.** Structured API capture can run without a debug subscriber; diagnostic client access is server-gated off outside the development/playtest mode. Slow or failing export is reported, not silently represented as a complete run or permitted to roll back committed gameplay.
+- **R9 — Exact live payloads are raw JSON.** RecordEvent carries the owner's original JSON bytes; the Struct projection is approximate and deprecated for diagnostic readers. Exact readers preserve integer precision and refuse missing/malformed raw payloads rather than substituting the approximate projection.
 - **R8 — Capture details, defer analytics.** Events carry stable identities and structured values rather than only prose. No time-series database, dashboard, simulation replay or new NPC policy is part of this capability. Export work does not add a database round trip to the gameplay critical section.
 
 ## Rulings
@@ -40,10 +41,10 @@ flowchart LR
 | R6 | settled | Symbols survive live-window trimming and captured-run reading | KirkDiggler | 2026-11-08 |
 | R7 | settled | Server-side capture and development-only diagnostic access | KirkDiggler | 2026-11-08 |
 | R8 | settled | Details now; analytics later | KirkDiggler | 2026-11-08 |
-| R9 | open | Lossless live payload representation for wide integers | operator pending | — |
+| R9 | settled | Raw JSON bytes for exact live payloads; no Struct fallback | KirkDiggler | 2026-11-09 |
 
 ## Open
 
-- **R9:** the live wire must either carry lossless raw JSON or explicitly limit numeric representability. The operator chooses that public-contract boundary; the decision checklist and evidence live on the design PR. Captured JSON remains exact under either choice.
+- No remaining design choice. Proto publication authority and generated-binding availability are delivery gates tracked on the design PR, not permission to merge the implementation wave.
 - Transport and storage mechanics retain the existing after-save, best-effort record-delivery contract; implementation must make incomplete capture explicit.
 - A durable exactly-once audit store and reconstruction of a simulated world are outside this design, not guarantees of a captured diagnostic record.

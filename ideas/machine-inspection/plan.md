@@ -8,7 +8,7 @@
 
 **Authority / finish:** KirkDiggler approved the conversational design and continuing on 2026-11-08; [story #898](https://github.com/KirkDiggler/rpg-project/issues/898). Build/commit/draft PRs and an owned early-view stack are authorized. Visible early look precedes full walk/review. No merge or operator-stack change is authorized by this brief. Completion includes the whole joined path, normal independent review, applicable current-head gates and eventual authorized tag/re-pin release, not just Task1.
 
-**Tech:** Go modules, existing JSON record payloads / v1alpha2 RecordService, TypeScript/Vitest/React. No new RPC is needed. **R9 is open:** the actual Struct converter rounds9007199254740993 to9007199254740992. Lossless live-payload encoding may require an additive proto field; [decision/evidence](https://github.com/KirkDiggler/rpg-project/pull/902#issuecomment-6727648247). Do not claim the original no-proto assumption is verified. Pause only the precision-dependent live codec; exact captured JSON parsing and the reader/cache continue.
+**Tech:** Go modules, existing JSON record payloads / v1alpha2 RecordService, TypeScript/Vitest/React. No new RPC is needed. **R9 chooses raw JSON:** the Struct converter rounds9007199254740993 to9007199254740992, so RecordEvent gains an additive raw byte payload. [Decision/evidence](https://github.com/KirkDiggler/rpg-project/pull/902#issuecomment-6727648247). Preparing merge readiness is authorized; narrow proto publication permission is still required before its generated bindings become consumable. Tasks7–8 close this inspected gap.
 
 ## Constraints and baseline
 
@@ -112,6 +112,25 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 - [ ] Full `npm run ci-check`, commit/push/draft, boot owned early-view stack.
 **Verification:** inspect actual real-compiler two-guard interruption/partial/resume journey, then open its captured file, locate the same record ID and configuration. Move past500 visible rows; alternatives still resolve. Development mode can inspect; released-mode server denies diagnostic RPCs while gameplay works. Operator early look precedes independent review and standing castle walk. Record tests, actual browser outcomes and unrun branches separately.
 
+### Task 7: Publish the lossless record contract
+
+**Owner:** rpg-api-protos, existing `dnd5e/api/session/v1alpha2/record.proto`; run record at repo knowledge/runs. Same slice #900, not a new gameplay story.
+**Interface:** additive `bytes fields_json = 6`; field5 Struct remains with deprecated annotation. Raw data is exact UTF-8 JSON as written. Empty is unavailable, not an empty object. IDs/RPCs/order/audience unchanged; no exact-data fallback to Struct.
+**Verification:** `make format`, `make test`, exact-head CI generation/mock/TS validation; no bespoke tests of generated mechanics. Independent review covers the field's meaning and consumer requirement. CI publishes bindings only after main merge; do not use local overrides or hand-publish generated code.
+**Status:** proto#426 `b9b4c257` checks/independent review green. [Narrow publication permission](https://github.com/KirkDiggler/rpg-api-protos/pull/426#issuecomment-6729481164) is pending; this is not feature-wave merge authority.
+
+### Task 8: Adopt exact live payloads and close readiness
+
+**Owners:** API converter/record handlers and web record feed; requires Task7's actual published SDK tag. Existing API/web PRs, not duplicate implementations.
+**Files:** API `internal/handlers/dnd5e/session/v1alpha2/{convert.go,convert_test.go,handler_test.go}` and `internal/integration/session/behavior_trace_test.go`; web `recordFeed.ts`, its tests, record-capture/inspection tests and manifests; update run records.
+**Interfaces:** API fills generated `RecordEvent.FieldsJson` from the original SDK `Fields` bytes, detached and unparsed. Legacy Struct may remain approximate for old generic readers, but is never the exact authority. Web reads generated `fieldsJson`, validates UTF-8 and JSON with existing lossless `parseRecordJSON`; missing/malformed/non-object raw data preserves ID/act/beat with an explicit unavailable reason, never a Struct fallback. Replace the provisional unsafe-Struct gate in the new reader with this raw-payload refusal contract.
+**Tests:** `TestRecordEventRawJSONIsVerbatim` covers integer9007199254740993, false/zero/empty and raw-byte ownership; both GetRecord/StreamRecord retain original bytes; real Redis continuation/capture test compares raw fields with export. Web live/capture exact-wide-value parity; valid Struct with absent raw still unavailable; malformed UTF-8/JSON and conflicting symbols explicit; ordinary story and cache/linked-inspection tests retained.
+- [ ] Adopt the actual generated Go/TS tag, not an invented version.
+- [ ] RED→GREEN conversion/reader tests; preserve original records and no extra interpretation.
+- [ ] Full API make test/make ci-check, full web ci-check, current-head CI.
+- [ ] Update owned detached preview, verify binary/content hashes, perform affected two-client/QA-castle checks after accepted early look.
+- [ ] Same independent reviewer closes the new wire seam and any findings; publish current-head verdicts with release-pin qualifications. No feature merges without operator authority.
+
 ## Visible plan checks
 
 | Requirement | Tasks | Concrete proof |
@@ -132,6 +151,7 @@ Develop each provider to green, publish its commit and pin consumers to real pse
 | encounter → session | New Beat constants / record-only set | Task3 pseudo-version | No narrative leak, identical RecordEvents |
 | session → API | Unchanged RecordStream / opaque publisher | Task4 pseudo-version | Save/reload plus same record IDs |
 | API → web | Existing record RPC + schema1 capture | Task5 server | Live/captured ID/config match |
+| protos → API/web | fields_json field6 / FieldsJson / fieldsJson | Task7 published generated tag | Task8 exact wide values, byte identity, no fallback |
 
 **Check disposition:** The existing symbols can be aged out by the500-row client cap; fix the symbol-cache lifetime rather than changing wire ordering or adding a lookup RPC. Detailed machine trace is optional so unrelated machine callers do not allocate it. Composer commit dispositions must be applied after selection; this closes the tempting but wrong use of every preview as a transition. API export stays on the existing after-save seam, not the concurrent resident-instance path. No implementation claim is made by this plan; task checks are expectations until their evidence is recorded.
 
