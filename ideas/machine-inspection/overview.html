@@ -80,19 +80,19 @@
     <table>
       <thead><tr><th>Slice</th><th>Current state</th></tr></thead>
       <tbody>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Built, tested and independently reviewed; not merged.</td></tr>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built, reviewed and walked. Raw-payload proto v0.1.263 is published and adopted; implementation awaits inside-out release/re-pins.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Shipped: machine v0.2.0 and behavior v0.22.0. S1 is closed.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built, reviewed and walked; proto v0.1.263 published/adopted. Release is paused at encounter: two CI package timeouts on the release-pin candidate; existing toolkit#2236 owns the budget gap.</td></tr>
         <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted; exact live/captured reader implemented. W1/R9 review closure and applicable final two-client/castle QA pass; implementation remains unmerged.</td></tr>
       </tbody>
     </table>
-    <p>Only the narrowly authorized proto provider has merged. All implementation heads have green gates and no open Critical/Important code finding. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6731477380">Final readiness and qualified QA evidence</a>.</p>
+    <p>Proto and both S1 providers have merged. Inspection code review/QA is complete, but the new encounter release-pin head is CI-red; session/API/web remain unmerged. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6731477380">Final readiness and qualified QA evidence</a>.</p>
   </section>
 
   <section>
     <h2>Where we go next</h2>
     <ol>
-      <li>Obtain the operator's implementation-wave merge-out authorization; no design or raw-wire blocker remains.</li>
-      <li>Release machine → behavior → encounter → session, re-pinning consumers to each actual generated toolkit tag and checking changed heads.</li>
+      <li>Resolve the measured encounter CI-budget gate in <a href="https://github.com/KirkDiggler/rpg-toolkit/issues/2236#issuecomment-6732741282">toolkit#2236</a>; no timeout increase, test removal or retry-until-green.</li>
+      <li>Resume the authorized sequence at encounter → session, re-pinning consumers to actual generated tags and checking changed heads. Machine and behavior are already released.</li>
       <li>Merge API then web after those release gates. Proto bindings are already published and adopted.</li>
       <li>Keep broader optimization, Studio authoring and analytics as separate work, guided by captured evidence.</li>
     </ol>
