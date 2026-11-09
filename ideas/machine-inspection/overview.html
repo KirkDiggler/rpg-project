@@ -21,7 +21,7 @@
 <body>
   <h1>Reading the machine, not guessing its intent</h1>
   <p>Load the exact configuration like debug symbols. Read which alternatives were considered, which role and row won, and what execution actually completed.</p>
-  <p><strong>Start with the <a href="README.md">walkthrough</a>.</strong> The <a href="https://github.com/KirkDiggler/rpg-project/issues/898">story issue #898</a> is the current status; <a href="design.md">design law</a> states the contracts; <a href="plan.md">the plan</a> is builder detail.</p>
+  <p><strong>Start with the <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/README.md">walkthrough</a>.</strong> The <a href="https://github.com/KirkDiggler/rpg-project/issues/898">story issue #898</a> is the current status; <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/design.md">design law</a> states the contracts; <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/plan.md">the plan</a> is builder detail.</p>
 
   <section>
     <h2>What builds on what</h2>
@@ -81,21 +81,17 @@
       <thead><tr><th>Slice</th><th>Current state</th></tr></thead>
       <tbody>
         <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Shipped: machine v0.2.0 and behavior v0.22.0. S1 is closed.</td></tr>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built, reviewed and walked; proto v0.1.263 published/adopted. Encounter has caught up to main and all three CI shards pass. It is ready; session/API release pins and consumer checks remain.</td></tr>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted; exact live/captured reader implemented. W1/R9 review closure and applicable final two-client/castle QA pass; implementation remains unmerged.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Shipped: proto v0.1.263, encounter v0.186.0, session v0.173.0 and API dev. Released-graph storage/capture verification passes.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Shipped to web dev. Preview accepted; exact live/captured values, cold-host reload and captured-file rendering verified on the released graph.</td></tr>
       </tbody>
     </table>
-    <p>Proto and both S1 providers have merged. Encounter's current-head CI gate is clear after the reviewed main catch-up. Encounter/session/API/web remain unmerged. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6731477380">Final readiness and qualified QA evidence</a>.</p>
+    <p>The inspection implementation is merged through all providers and API/web dev. This is not a consumer main/production deployment. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6752953576">Release receipt</a> · <a href="https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6752825030">released-graph verification</a>.</p>
   </section>
 
   <section>
     <h2>Where we go next</h2>
-    <ol>
-      <li>Continue the authorized release from the <a href="https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6750359071">now-ready encounter provider</a>; main's fixture/shard changes cleared its CI gate.</li>
-      <li>Re-pin session and API to actual generated tags and check changed heads. Published record v0.3.0 changes saved-log storage, so refresh consumer save/reload/capture evidence on compatible owned runs.</li>
-      <li>Merge API then web after those release gates. Proto bindings are already published and adopted.</li>
-      <li>Keep broader optimization, Studio authoring and analytics as separate work, guided by captured evidence.</li>
-    </ol>
+    <p>This wave is complete. Use its recorded evidence to vet authored encounters. Dedicated Studio behavior authoring, broader optimization and analytics remain separate workstreams, not unfinished parts of this inspector.</p>
+    <p>The local Docker signal-permission problem is tracked separately as <a href="https://github.com/KirkDiggler/game-dev/issues/127">game-dev#127</a>; application drain and cold reload were verified without changing host security settings.</p>
     <p>Analytics questions and database selection come later. Recording evidence does not choose a time-series database or implement an exactly-once audit store.</p>
   </section>
 

@@ -45,6 +45,6 @@ flowchart LR
 
 ## Open
 
-- No remaining design choice. Proto publication authority and generated-binding availability are delivery gates tracked on the design PR, not permission to merge the implementation wave.
+- No remaining design choice. Delivery receipts and follow-on work live on [the story](https://github.com/KirkDiggler/rpg-project/issues/898), not as new design gates.
 - Transport and storage mechanics retain the existing after-save, best-effort record-delivery contract; implementation must make incomplete capture explicit.
 - A durable exactly-once audit store and reconstruction of a simulated world are outside this design, not guarantees of a captured diagnostic record.
