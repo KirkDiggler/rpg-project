@@ -81,20 +81,20 @@
       <thead><tr><th>Slice</th><th>Current state</th></tr></thead>
       <tbody>
         <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Built, tested and independently reviewed; not merged.</td></tr>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built and reviewed. Raw-payload proto is reviewed/CI-green; publication and consumer adoption remain.</td></tr>
-        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted. Review's missing-scalar finding fixed; captured reader works. Exact live-wire adoption and remaining QA are not complete.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Built, reviewed and walked. Raw-payload proto v0.1.263 is published and adopted; implementation awaits inside-out release/re-pins.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Preview accepted; exact live/captured reader implemented. W1/R9 review closure and applicable final two-client/castle QA pass; implementation remains unmerged.</td></tr>
       </tbody>
     </table>
-    <p>No PR in this inspection wave is merged. <a href="https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6730010080">Readiness and partial QA evidence</a>.</p>
+    <p>Only the narrowly authorized proto provider has merged. All implementation heads have green gates and no open Critical/Important code finding. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6731477380">Final readiness and qualified QA evidence</a>.</p>
   </section>
 
   <section>
     <h2>Where we go next</h2>
     <ol>
-      <li>Publish the checked proto bindings after the narrow publication action is authorized.</li>
-      <li>Adopt raw bytes in API/web and prove exact live/captured values without a Struct fallback.</li>
-      <li>Finish applicable QA and focused review closure; prepare current-head verdicts and release-pin order.</li>
-      <li>Merge this wave only when authorized. Studio authoring remains a separate next product slice.</li>
+      <li>Obtain the operator's implementation-wave merge-out authorization; no design or raw-wire blocker remains.</li>
+      <li>Release machine → behavior → encounter → session, re-pinning consumers to each actual generated toolkit tag and checking changed heads.</li>
+      <li>Merge API then web after those release gates. Proto bindings are already published and adopted.</li>
+      <li>Keep broader optimization, Studio authoring and analytics as separate work, guided by captured evidence.</li>
     </ol>
     <p>Analytics questions and database selection come later. Recording evidence does not choose a time-series database or implement an exactly-once audit store.</p>
   </section>
