@@ -645,3 +645,75 @@ round trip shrank with it; that, not the fence, is the 170 ms. A stale
 writer now fails closed with ABORTED and nothing written; a run launched
 before the deploy has no version key and fails closed at its next verb by
 design (the castle gets a fresh Redis at rebuild).
+
+## F23 — a live step is a cold sweep: the per-verb load discards what a cell sees
+
+2026-11-09 · rpg-api dev `109251fc` plus the harness of rpg-api#1211
+(`34dc1d6`), session v0.172.1, encounter v0.185.0, play/record v0.3.0.
+`bench-keep-garrison` (posts listening), S1 continues mode, 3 warm-up
+Moves, Redis 7.2.2 on a side port, load average 4 to 5. Run record on
+rpg-api#1211. Command, with `RPG_MEASURE_PATH` set to 1, 4 and 8 and a CPU
+profile on the 8-cell run:
+`RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:6497 RPG_MEASURE_N=20
+RPG_MEASURE_MODES=continues RPG_MEASURE_RELOAD=0 RPG_MEASURE_PATH=8 go test
+./internal/integration/session/ -run TestMeasure_AnswerAndFirstBeat -count=1 -v -cpuprofile cpu.out`.
+
+**Per verb against per step.** A continued answer is the load plus the
+walker's own steps up to the pace, nothing saved; the line is fitted over
+continued Moves only.
+
+| path | answer p50 by steps answered | fixed per verb | per step |
+|---|---|---|---|
+| 8 cells, N=20 | 1: 120 · 3: 195 · 5: 272 ms | 84 ms | 37.4 ms |
+| 4 cells, N=30 | 1: 109 · 3: 185 ms | 71 ms | 38 ms |
+| 1 cell, N=30 | 0: 63 ms | 63 ms before any step | |
+
+A rerun at load average 12 gave 90 ms fixed and 42 ms per step. The verb's
+open is 68 ms of CPU: the fenced fetch and JSON decode 20 ms, LoadEncounter
+46 ms (field compile 14, room-local sightings 10, behaviors 7, testimony
+decode 7). The intercept sits about 20 ms above the zero-step answer, so a
+verb's first step costs more than the later ones. Answers that finish the
+walk carry the save and the commit and add about 40 ms.
+
+**Per answered step, CPU** (profile focused on `startWalk`, 2.99 s over
+about 71 steps).
+
+| bucket | ms per step | share | owner |
+|---|---|---|---|
+| the walker's sweep from each new cell; `visibleFrom` misses cast fresh (SightLanes) | 17.5 | 41% | encounter |
+| discovery remainder (learnCells, sweep keys) | 2.5 | 6% | encounter |
+| line of sight to each member (Perception.Observe) | 5.8 | 14% | encounter |
+| observers within reach, held sight testimony | 3.1 | 7% | encounter |
+| refresh remainder (presences, conditions, equipment, testimony encode, triggers) | 3.2 | 8% | encounter |
+| Step bookkeeping (stepMember, beat, pace) | 0.7 | 2% | encounter |
+| mover seam: `resolution.Resolve` builds a whole WorldView per step (behavior runtime 0.20 s, Log.ToData 0.12 s, perception) | 5.6 | 13% | session / resolution |
+| mover seam: attachAll and teardown | 1.4 | 3% | session |
+| standing seam | 1.7 | 4% | session |
+| PaceDue | 0.6 | 1% | encounter |
+| total | 42.1 CPU (37 to 42 wall) | | |
+
+**Against the bench** (an uncommitted experiment bench at encounter
+v0.185.0, posts-asleep keep, stub capabilities, raising steps excluded).
+
+| variant | mid step | first step | allocs per op |
+|---|---|---|---|
+| the garrison bench's two cells, keep kept open | about 12 ms | 11.9 ms | 114k |
+| 8-cell line, keep kept open | 19.3 ms | 17.3 ms | 259k |
+| 8-cell line, keep reloaded from JSON before each op | 36.3 ms | 42.6 ms | 1.23M |
+
+A profiled rerun at higher load gave 10.4 ms open against 28.5 ms
+reloaded; `visibleFrom` spent 0.31 s kept open against 2.81 s reloaded.
+The reload alone doubles the step.
+
+Means: half the live walker step, about 17 ms, is the walker re-sweeping
+cells it already swept. The visible-cells cache from S2 is instance memory
+that the per-verb load throws away, so by F17's placement it is per-load
+state paid per verb; the bench never sees it because it keeps one
+encounter open on two cells. The raw answer to what a cell sees given
+doors and props is site data (R4), so the cache belongs in the site tier
+(S5) or survives in a resident instance (R6, S6); either way it is the
+encounter's to place. The mover seam builds a whole-world snapshot on
+every step for its resolution, about 7 ms with the attach: per-step work
+over state that changes per verb, the session's and resolution's. The rest
+is the walker's genuine per-step sight, about 15 ms, and the 63 to 68 ms
+open per verb, which is the F21 load line.
