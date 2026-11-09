@@ -89,6 +89,83 @@ Native `dungeonspec/single_room.go::RoomWallAppearance` gains `MaterialOverrides
 
 **Coverage/seam check:** native camel-case pair → encounter runtime pair → snake-case persisted/reveal pair → detached Atlas/observation pair. All conversions use the same two strings. Wall-opening replacement events do not resend or alter immutable appearance. The new list is mutable Go data, so copying only parent structs is insufficient; tests deliberately mutate nested entries. Existing appearance fields provide an owner/audience, not permission to fetch source or infer material rules.
 
+## Task A5 — SDK transcription and reveal integrity
+
+**Owner:** separate session module worktree `.worktrees/courtyard-895-session`, based on cab0ad8f, consuming pushed encounter e3849c88 through actual pseudo-version `v0.179.1-0.20261108215032-e3849c889aa5`. No local replacement or proto import.
+
+**Files:** new `material_override.go` / `material_override_internal_test.go`; existing `types.go::AtlasStructuralWall`, `structural.go::projectStructuralWall/validStructuralRows`, `prop_presentation.go::PropPresentation/projectPropPresentation/validPropPresentation`, module go.mod/go.sum and run record. Existing explicit projection-field inventory tests in `atlasmap_test.go` / `convert_internal_test.go` gain MaterialOverrides rather than being weakened.
+
+**Contract:** SDK `MaterialOverride{SurfaceID,MaterialRef}` has snake-case JSON tags matching captured reveal data. Owner fields are `MaterialOverrides []MaterialOverride` with omitempty. Projection allocates detached slices. Shared validity requires nonblank strings and no repeated surface ID; invalid wall/prop lists refuse the whole reveal body through existing decoders. No catalog lookup, resource-derived rules, defaults or audience logic.
+
+- [ ] RED methods on existing PropPresentationDecodeSuite: snapshots carry both owner lists without aliasing; valid event payload retains identical selections; malformed/null-item/blank/duplicate/wrong-kind selections refuse wall and prop payloads wholesale.
+- [ ] Implement DTO/projection/decoder validation and update explicit field-inventory assertions for the added fact.
+- [ ] Run `GOWORK=off go test ./...` and `GOWORK=off golangci-lint run ./...` in session; commit/push and open a draft against the ground SDK branch. Actual release tag replaces pseudo-version before merge.
+
+**Seam check:** provider runtime pair → SDK-owned pair → existing raw JSON event decoder pair is field-for-field. Snapshot and event tests name the same material refs; this seam never looks up current definitions to enrich old observations. API can consume the resulting actual pushed SDK revision next.
+
+## Task A6 — API transcription and real saved-host proof
+
+**Owner/baseline:** API `.worktrees/courtyard-895`, stacked on 9a3896e. Actual SDK 579875f9 and nested generated module `rpg-api-protos/gen/go` at c23b703; no local replacements or generation.
+
+**Files/interfaces:** snapshot `internal/handlers/dnd5e/session/v1alpha1/convert_structural.go` and `convert_prop_presentation.go`; act `v1alpha2/convert_geometry.go`. Add one package-local list converter per wire version, mapping SDK SurfaceID/MaterialRef to generated MaterialOverride. New focused conversion tests in each package cover both owners and detached output. New `internal/integration/session/testdata/material-overrides.yaml` and `material_override_acceptance_test.go` use existing Redis-backed acceptance harness/native compile/fresh host read helpers.
+
+**Behavior/proof:** no new RPC, permission or business logic. Native fixture has one wall and one decorative prop with atlas_04_c; launch normally, read GetKnowledge, edit/recompile source to atlas_01_a, create a fresh API host over the saved repositories, and still read original selections. All floor, wall and prop identities/poses remain unchanged. Full owner records, not a client-side source fallback, supply the choices.
+
+- [ ] RED snapshot/act conversion tests for both appearance owners with nonempty lists and no aliasing.
+- [ ] RED Redis/native/fresh-host acceptance test; implement only field transcription and dependency pins.
+- [ ] Run focused handler/integration checks, then `make test` (including cmd/server) and `make ci-check` at PR boundary. Commit/push/draft with generated version and actual toolkit pins.
+
+**Seam check:** session owns validation and audience; API only transcribes the same pair. Protos field10 is present in both actual generated packages. Nested `gen/go` is the imported module, not the repository's root Go module. SDK/toolkit release tags and remaining Web/publisher adoption still gate readiness.
+
+## Task A7 — Generated and private-preview atlas views
+
+**Owner/files:** Web `scripts/generate-world-material-catalog.mjs`, `stage-world-material-preview.mjs`, `src/generated/worldMaterialCatalog.ts`, `src/rendering/worldMaterialCatalog.ts`, and associated reader/generator/preview tests. Reuse the pure atlas metadata validator for browser boundary checks; no new catalog authority.
+
+**Contract:** generated module retains existing masonry exports and adds typed `GENERATED_WORLD_ATLAS_MATERIALS`, `GENERATED_WORLD_MATERIAL_COLLECTIONS`, `GENERATED_WORLD_ATLAS_BINDINGS` from the same provider/digest. V1 emits empty atlas views, never fake choices. Runtime catalog carries optional `atlas: {materials,collections,bindings}`; masonry callers continue using their existing material view. A2 receives selections resolved against these exact bindings. Private preview uses the existing dev-only opt-in and dedicated ignored resource root; v2 image URLs stay hash-bound and contained. Each atlas binding must match the selected generated world asset and the actual staged model bytes.
+
+- [ ] Replace transitional refusal tests with executable generated-module assertions retaining all atlas rows/bindings; v1 tests remain green.
+- [ ] Extend existing preview transaction to stage all owned shared images and atlas metadata after model identity checks. Test real temporary files, unowned-output refusal, mismatched model hash, and no partial overwrite on failure.
+- [ ] Extend runtime pinned/preview catalog handling without confusing authored-UV atlas materials with masonry. Invalid/stale/unavailable bindings stay explicit errors.
+- [ ] Regenerate the still-live v1 metadata through its normal generator, retaining the provider pin/bytes and empty atlas views; do not activate an unapproved v2 provider.
+- [ ] Run focused generator/preview/catalog tests and type checking. Actual private source-built v2 candidate staging demonstrates the joined reader/metadata boundary; it is not publication acceptance or the missing UI/play wiring.
+
+**Seam check:** producer schema2 → A1 strict typed views → generated/runtime optional atlas view → A2 verified material target adapter. Previous v1 consumer guards are removed only as each projection carries the full view, not before. An independently pinned world catalog may reject stale atlas bindings; the client never fixes their hashes itself.
+
+## Task A8 — Native selection data and Studio history
+
+**Owner/files:** Web rendering types gain `MaterialOverride{surfaceId,materialRef}`; new pure `concepts/world-building/materialOverrides.ts` validates/copies owner lists and changes one explicit target. Extend `WorldProp` in `types.ts`, wall appearance in `structuralWalls.ts`, `serialization.ts` and `structuralWallEditing.ts`. Use existing nested-owner codec evolution; no new root scene field/store/version is needed. Add tests `materialOverrides.test.ts` and native current-castle import/persist/export coverage.
+
+**Behavior:** absent/empty retains Original; null/wrong-kind/blank strings/duplicate targets refuse. Preserve unknown authored fields by the existing carryUnknownKeys mechanism, and never alias nested selection arrays. Changing/resetting one scope preserves unrelated scopes; future A/B does not require a shared global override. Pure data validation does not invent catalog compatibility.
+
+- [ ] RED invalid-owner-input tests at actual prop and wall codecs (unknown fields previously passed through without validating these values).
+- [ ] Add native import/persist/reopen tests with wall and prop choices, Original reset and all other source facts preserved.
+- [ ] Implement optional owner fields and detached pure helpers; preserve existing source round-trip and wall/ground tests.
+
+**Studio wiring contract (next checked edit):** stage choice in existing ArrangeDraft/Apply/Cancel, dispatch through current scene-edit or wall-edit transaction and history. Select the provider-declared atlas scope; expose Original and named 01_A–04_C choices without pretending they are masonry faces. Selection resolution checks the binding/asset hash; incompatible explicit choices remain visible. No independent browser state or fake per-side UI.
+
+**Verification:** focused materialOverrides/serialization/native wall tests, types and changed-file lint. UI/history and live renderer wiring remain required after these data tests; data retention alone is not a picker or Save & Play completion.
+
+## Task A9 — Shared resource access and product render wiring
+
+**Owner/files:** move the existing resource hook to `src/rendering/useWorldMaterialCatalog.ts` with a compatibility re-export from its old concept path. New `worldMaterialPreviewLoader.ts` owns one cached, validated request per explicit dev preview; tests prove shared success/failure without fallback. Normal pinned metadata is one immutable cached view. The existing MODE=development + explicit preview flag remains unchanged.
+
+`WorldAssetModel` gains optional `materialOverrides` and a prepared atlas branch; resolve exact model/scope/material against the shared catalog, then call A2 before existing memory/lighting treatment. `WorldPropModel`, structural-wall surfaces and placed-prop render callers pass the owner values. Extend `useRememberedModelTint` ownership/cleanup to compose atlas treatment before overlays, restoring it afterward. No shared GLTF/image mutation or per-model catalog request.
+
+Player `propPresentations.ts` and `structuralLayout.ts` validate/copy generated materialOverrides into the same existing rendered owner fields; both snapshot and reveal paths use those conversions. Never reconstruct choices from source or guess a material from the asset name.
+
+**Checks:** shared-request tests, actual material target resolution/missing/refusal tests, existing renderer/tint/structural surface tests, live snapshot/reveal conversion tests, and real native Save & Play on the owned stack. Product UI is not complete until that joined path is shown. The private preview remains candidate-labeled; normal provider publication/custody and final pins still apply.
+
+## Joined checkpoint — 2026-11-08
+
+- A1/A2: Web reader and authored-UV adapter implemented; real House Wall05 01_A/04_C rendering and pixel-exact Original reset verified.
+- A3: operator merged Protos #425; generated c23b703 / TS v0.1.262 adopted.
+- A4: encounter e3849c88, draft #2330; all nine module packages and zero-issue lint pass.
+- A5: session 579875f9, draft #2333; both packages/lint pass on the real encounter pseudo-version.
+- A6: API 8059e8b, draft #1209; full tests including cmd/server and ci-check pass. Actual native/Redis/fresh-host source-immutability proof passes.
+- A7–A9: Web 60f802e9, draft #1401. Full gate passes 10,086 tests, five skipped. Existing Stage preview transaction retains all twelve atlas choices/193 bindings and validates actual model bytes. Native owner fields, existing Arrange transactions, cached shared catalog access, memory/lighting composition and player snapshot/reveal adapters are wired.
+- Actual Studio on :3183: selector exposes Original/01_A–04_C; Cancel/Apply/Undo/Redo and native Save a copy → Play pass. After reload and movement, recipient metadata and actual wall material both select atlas_04_c on authored UV0; inspected images and no page exceptions. [Exact heads and early-look handoff](https://github.com/KirkDiggler/rpg-project/issues/895#issuecomment-6729452773).
+- Still open: operator texture-control look, one applicable independent review, normal material publication/custody, release pins/authorized merges and accepted composition fold. The private candidate is not a normal delivery or shipped claim. The existing brick-source rebuild differs at one red value in one pixel; unchanged versions, CPU-dispatch probes and Blender-hosted derivation reproduce the new result, so the historical-byte cause remains unresolved. Do not fabricate acceptance or source from installed output.
+
 ## Current coverage and seams
 
 | Requirement | Task | Proof / remaining work |
