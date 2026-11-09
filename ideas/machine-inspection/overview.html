@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Machine inspection — the flow, the JSON boundary, and what remains</title>
+  <meta name="description" content="How authored NPC behavior becomes inspectable evidence, why raw JSON travels inside protobuf, and the current delivery path.">
+  <style>
+    :root { color-scheme: light dark; font: 17px/1.55 system-ui; }
+    body { max-width: 1020px; margin: 3rem auto; padding: 0 1.2rem; }
+    h1 { line-height: 1.15; } h2 { margin-top: 0; }
+    a { color: light-dark(#1450ad,#9bc4ff); }
+    figure,section { border: 1px solid light-dark(#bbb,#555); border-radius: 8px; padding: 1.1rem; margin: 1rem 0; }
+    pre { overflow: auto; font-size: 15px; }
+    table { border-collapse: collapse; width: 100%; }
+    td,th { text-align: left; padding: .6rem; border-bottom: 1px solid #888; vertical-align: top; }
+    .pair { display: grid; grid-template-columns: repeat(auto-fit,minmax(270px,1fr)); gap: 1rem; }
+    .pair section { margin: 0; } small { opacity: .8; }
+  </style>
+</head>
+<body>
+  <h1>Reading the machine, not guessing its intent</h1>
+  <p>Load the exact configuration like debug symbols. Read which alternatives were considered, which role and row won, and what execution actually completed.</p>
+  <p><strong>Start with the <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/README.md">walkthrough</a>.</strong> The <a href="https://github.com/KirkDiggler/rpg-project/issues/898">story issue #898</a> is the current status; <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/design.md">design law</a> states the contracts; <a href="https://github.com/KirkDiggler/rpg-project/blob/main/ideas/machine-inspection/plan.md">the plan</a> is builder detail.</p>
+
+  <section>
+    <h2>What builds on what</h2>
+    <p><a href="https://github.com/KirkDiggler/rpg-project/issues/866">The authored-behavior foundation (#866)</a> is shipped: definitions, bindings, independent progress, precedence and real execution. This inspection wave (#898) explains that machinery. It does not add another NPC decision system.</p>
+  </section>
+
+  <figure>
+    <pre>Authored definition + actor bindings
+                  │ compiler
+                  ▼
+        Exact bound configuration
+                  ├──────────────────────────┐
+                  ▼                          ▼
+  Machine → Composer → Picker          Configuration symbols
+                         │                   │
+                         ▼                   │
+                Encounter executes           │
+             (completion feeds progress)     │
+                         │                   │
+              Decision / work evidence       │
+                         └─────────┬─────────┘
+                                   ▼
+                         One diagnostic record
+                         save, then publish
+                         ┌─────────┴──────────┐
+                         ▼                    ▼
+                 Playtest Debug view    Structured API logs
+                         └────── same facts ──┘
+                        live or captured inspection</pre>
+    <figcaption>Toolkit decides and explains; API transports; readers inspect. Normal player narration remains a separate, perception-filtered act stream.</figcaption>
+  </figure>
+
+  <section>
+    <h2>Why JSON — and what is not changing</h2>
+    <p><strong>The payload is already JSON in the toolkit record.</strong> We are removing a lossy conversion, not moving game rules into JSON or replacing protobuf/Connect RPCs.</p>
+    <div class="pair">
+      <section><h3>Approximate live projection</h3><p>Toolkit JSON → protobuf <code>Struct</code> → browser numbers.</p><p>Struct uses doubles: <code>9007199254740993</code> can become <code>9007199254740992</code>.</p></section>
+      <section><h3>Exact diagnostic contract</h3><p>Original JSON bytes → protobuf <code>fields_json</code> → lossless reader.</p><p>Record ID, act ID, beat and game-clock reading stay in the typed envelope. API capture carries the same payload without reconstructing it.</p></section>
+    </div>
+    <p>The reader must preserve integers too; ordinary JavaScript number decoding can lose them again. Missing/malformed data is unavailable evidence, never a guessed value. <a href="https://github.com/KirkDiggler/rpg-project/pull/902#issuecomment-6727648247">Probe and wire decision</a>.</p>
+  </section>
+
+  <section>
+    <h2>What the trace keeps separate</h2>
+    <ul>
+      <li>Configuration is not private runtime progress.</li>
+      <li>A false guard is not an unknown fact; an unvisited branch is not rejected.</li>
+      <li>A losing role's proposal is not committed progress.</li>
+      <li>A selected move is not arrival or completion.</li>
+      <li>A captured window is not automatically a complete run or simulation replay.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Where this wave stands</h2>
+    <table>
+      <thead><tr><th>Slice</th><th>Current state</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/899">S1 — machine/composer explanations</a></td><td>Shipped: machine v0.2.0 and behavior v0.22.0. S1 is closed.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/900">S2 — committed records and API capture</a></td><td>Shipped: proto v0.1.263, encounter v0.186.0, session v0.173.0 and API dev. Released-graph storage/capture verification passes.</td></tr>
+        <tr><td><a href="https://github.com/KirkDiggler/rpg-project/issues/901">S3 — inspection</a></td><td>Shipped to web dev. Preview accepted; exact live/captured values, cold-host reload and captured-file rendering verified on the released graph.</td></tr>
+      </tbody>
+    </table>
+    <p>The inspection implementation is merged through all providers and API/web dev. This is not a consumer main/production deployment. <a href="https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6752953576">Release receipt</a> · <a href="https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6752825030">released-graph verification</a>.</p>
+  </section>
+
+  <section>
+    <h2>Where we go next</h2>
+    <p>This wave is complete. Use its recorded evidence to vet authored encounters. Dedicated Studio behavior authoring, broader optimization and analytics remain separate workstreams, not unfinished parts of this inspector.</p>
+    <p>The local Docker signal-permission problem is tracked separately as <a href="https://github.com/KirkDiggler/game-dev/issues/127">game-dev#127</a>; application drain and cold reload were verified without changing host security settings.</p>
+    <p>Analytics questions and database selection come later. Recording evidence does not choose a time-series database or implement an exactly-once audit store.</p>
+  </section>
+
+  <section>
+    <h2>Costs and the optimization work</h2>
+    <p>The UI keeps 500 visible rows but retains symbols independently. Session server history is currently unbounded. Export I/O is asynchronous and bounded; generating/copying/storing diagnostics still costs resources.</p>
+    <p>The bounded N10 garrison comparison adds about 103 KB/121 diagnostic records per four-cell op (default) or 45 KB/58 (posts asleep), including first-use symbols amortized over the run. These are not production latency guarantees: <a href="https://github.com/KirkDiggler/rpg-project/issues/879#issuecomment-6726671119">measurements and qualifications</a>.</p>
+    <p>Your resident-instance work attacks repeated hydration and coordination costs. It is separate from record volume; this wave does not build a competing cache.</p>
+  </section>
+</body>
+</html>
