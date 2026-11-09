@@ -14,7 +14,9 @@
 
 - Encounter93fdaedf changes only release manifests; full nine-package race/lint pass, but both CI42563030102 attempts time out at600s while a geometry assertion test has run only6–7s. No assertion or race failure is shown; the underlying CI/local speed difference is not proven — [failure evidence](https://github.com/KirkDiggler/rpg-toolkit/pull/2326#issuecomment-6732741028).
 - Local root execution is171.341s under race alone and481.304s with uncached race plus atomic coverage. Earlier green CI root was505.202s; completed neighboring packages were also slower on the failing runner. Coverage materially changes the verification workload — [comparison](https://github.com/KirkDiggler/rpg-toolkit/issues/2236#issuecomment-6732741282).
-- S2 remains open and encounter is draft; session/API/web are unchanged and unmerged. Resume the authorized release only after the current-head CI gate is resolved — [S2 checkpoint](https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6732741544).
+- At the93fdaedf stop, S2 remained open and encounter returned to draft; session/API/web were unchanged and unmerged. That gate was not bypassed — [S2 checkpoint](https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6732741544).
+- A later operator-requested main catch-up reaches115200c9 through publishedf61e4379: complete local gates and all three real CI test shards now pass. Provider is ready again; consumers still need release pins and recordv0.3.0-compatible storage checks. The preview is unchanged — [gate closure](https://github.com/KirkDiggler/rpg-project/issues/900#issuecomment-6750359071).
+- The approved smaller fixtures already supersede the separate test-value cut; PR2337 is closed unmerged rather than maintained as a redundant implementation, preserving its measured audit — [supersession](https://github.com/KirkDiggler/rpg-toolkit/pull/2337#issuecomment-6749652701).
 
 ## Mistaken
 
