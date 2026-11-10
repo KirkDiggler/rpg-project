@@ -50,8 +50,8 @@ complete failure causes arrest, not an automatic fight.
 The encounter owns an authored interaction instance independently of any
 speaker or guard. Conversation state and admission progress are that one
 instance: its state is a requirement source for the replies offered at the
-entrance, exactly as a known fact or a carried prop is, and an authored
-answer row may advance it. The replies offered are one evaluated pool
+entrance, exactly as a known fact or a carried prop is, and the settled verdict of a
+line spoken there may advance it; which flavour row answered does not. The replies offered are one evaluated pool
 (`mind/behavior/selection`) carrying the instance's revision; a reply names
 its option and the revision it was offered at, and the door chooses on that
 same pool. Its identity is the interaction binding within the run;
