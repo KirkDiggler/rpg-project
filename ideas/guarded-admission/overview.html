@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guarded admission — one entrance remembers</title>
+<meta name="description" content="Proposed guarded-admission architecture: one acting character, shared entrance progress, private guard minds, and authoritative passage without a new decision engine.">
+<style>
+:root{color-scheme:light dark;--bg:#f5f3ee;--card:#fff;--ink:#24303a;--muted:#59636e;--line:#cbd1d5;--accent:#245f57;--soft:#e4f0eb;--pending:#865900}
+@media(prefers-color-scheme:dark){:root{--bg:#141b21;--card:#1d2730;--ink:#edf1ed;--muted:#acb9c2;--line:#43515c;--accent:#91d5be;--soft:#233e38;--pending:#efd08c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:48px 24px}a{color:var(--accent)}h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.12;max-width:900px}h2{margin-top:42px;font-size:1.5rem}h3{font-size:1.15rem;margin:0 0 8px}p{max-width:85ch}.eyebrow{text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-size:.8rem;font-weight:750}.note{border-left:4px solid var(--pending);padding:12px 20px;background:var(--card)}.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:14px;margin:24px 0}.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px}.box.shared{background:var(--soft);border:2px solid var(--accent)}.arrow{display:flex;align-items:center;color:var(--accent);font-size:1.7rem}.label{font-size:.78rem;font-weight:750;color:var(--muted);text-transform:uppercase}.box p{margin-bottom:0}.return{padding:14px 20px;border:1px dashed var(--accent);border-radius:9px;text-align:center}.columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}ul{padding-left:22px}li{margin:7px 0}table{width:100%;border-collapse:collapse;background:var(--card)}th,td{text-align:left;vertical-align:top;padding:13px;border-bottom:1px solid var(--line)}th{font-size:.82rem;text-transform:uppercase;color:var(--muted)}.muted,footer{color:var(--muted)}footer{margin-top:42px;border-top:1px solid var(--line);padding-top:18px;font-size:.9rem}@media(max-width:760px){main{padding:28px 18px}.flow,.columns{grid-template-columns:1fr}.arrow{justify-content:center;transform:rotate(90deg)}th,td{padding:9px}}
+</style>
+</head>
+<body><main>
+<p class="eyebrow">Guarded admission · design proposal</p>
+<h1>The guard stops the walk.<br>The entrance remembers.</h1>
+<p>One character answers. Changing the speaker does not reset the party’s attempts. A guard’s private mind, a shared interaction, and permission to pass remain different things.</p>
+<p><a href="https://github.com/KirkDiggler/rpg-project/issues/769">Story and current decisions</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/docs/guarded-admission/ideas/guarded-admission/README.md">Walkthrough</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/docs/guarded-admission/ideas/guarded-admission/design.md">Contracts and open questions</a></p>
+<p class="note"><strong>Agreed:</strong> one acting character uses Speak/check first; attempts and admission remain shared consequences. <strong>Proposed, not implemented:</strong> the shared interaction and invitation contracts below. Full party voting is not this delivery’s prerequisite.</p>
+<h2>Three owners, not one giant guard script</h2>
+<div class="flow" aria-label="Proposed component flow from individual guard behavior to shared interaction to the player's reply view">
+<section class="box"><span class="label">Existing NPC behavior</span><h3>The guard</h3><p>His own observations, role precedence and progress. He issues an authored invitation through a bounded dialogue opportunity—not a free attack or movement turn.</p></section>
+<div class="arrow" aria-hidden="true">→</div>
+<section class="box shared"><span class="label">Proposed · encounter-owned</span><h3>The entrance interaction</h3><p>Original definition, shared progression, addressed invitation and reserved check. It survives changes of speaker, guard and connection.</p></section>
+<div class="arrow" aria-hidden="true">→</div>
+<section class="box"><span class="label">Session → API → web</span><h3>The player’s replies</h3><p>Only the offered choices and observable outcomes. Saved state is delivered before presentation; a panel never decides admission.</p></section>
+</div>
+<div class="return">Player selects an offered reply → existing Speak/resolution → one committed shared outcome → physical passage and real guard movement</div>
+<h2>Reuse the foundation; add the missing owner</h2>
+<div class="columns">
+<section class="box"><h3>Already present</h3><ul><li>A post holds the opening and stops a long walk.</li><li>The guard reacts to a bump and speaks in the same act.</li><li>Speak supports authored checks and answers.</li><li>Movement, persistence and machine inspection have real consumers.</li></ul></section>
+<section class="box"><h3>Proposed additions</h3><ul><li>One shared interaction, driven by the existing machine.</li><li>A recoverable, addressed invitation that does not freeze unrelated play.</li><li>Versioned choices and reservation through a paused check.</li><li>Explicit consequences, distinct from who knows about them.</li></ul></section>
+</div>
+<h2>The distinctions that matter</h2>
+<table><thead><tr><th>Not the same thing</th><th>Why</th></tr></thead><tbody>
+<tr><td>Invitation / paused check</td><td>Opening replies must not freeze distant players. An actual check may still use its existing resolution window.</td></tr>
+<tr><td>Shared attempt / personal knowledge</td><td>A different speaker gets no fresh budget; a distant member is not taught dialogue they never heard.</td></tr>
+<tr><td>Entry granted / guard arrived</td><td>Passage releases without waiting for the guard to finish walking to the ballroom.</td></tr>
+<tr><td>Panel dismissed / entrance resolved</td><td>Closing the UI spends no check and grants no permission.</td></tr>
+</tbody></table>
+<h2>What still needs a ruling</h2>
+<ul><li>Which split-party characters are arrested: everyone, or only those locally involved?</li><li>How the authored approach and physical bypass meet the existing post-at-place rule.</li><li>Final claim mapping and the boundary of second-attempt advantage removal.</li><li>The proposed state, selection and lifecycle contracts before implementation.</li></ul>
+<p class="muted">Existing-code evidence: 9 focused encounter controls and 2 session castle controls pass under fresh race runs. These establish reuse, not completion of the proposed interaction. The standing QA castle is not silently rewritten into the canonical admission mission.</p>
+<footer>No implementation slices or merges are claimed. Studio behavior tooling, shared voting, analytics and effects unification remain separate. The story is the current status.</footer>
+</main></body></html>
