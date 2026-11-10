@@ -720,12 +720,12 @@ open per verb, which is the F21 load line.
 
 ## F24 — the site shared by hash halves the load line; path 1 is under the answer bar in the harness
 
-2026-11-10 · rpg-api dev `2be23860` (rpg-api#1216), session v0.175.0,
+2026-11-09 · rpg-api dev `2be23860` (rpg-api#1216), session v0.175.0,
 resolution v0.75.0, encounter v0.188.0, play/record v0.3.0. Before = dev
 `2253b33e` at the previous pins. `bench-keep-garrison` (posts listening),
 both modes, N=20 per path, Redis on a side port flushed between paths. Run
 record on rpg-api#1216
-(`knowledge/runs/2026-11-10-alive-not-lagging-site-shared-api.md`).
+(`knowledge/runs/2026-11-09-alive-not-lagging-site-shared-api.md`).
 Command, with `RPG_MEASURE_PATH` set to 1, 4 and 8, once per tree:
 `RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:<port> RPG_MEASURE_N=20
 RPG_MEASURE_PATH=8 go test ./internal/integration/session/ -run
