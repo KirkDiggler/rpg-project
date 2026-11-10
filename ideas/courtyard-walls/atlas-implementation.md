@@ -175,6 +175,24 @@ Player `propPresentations.ts` and `structuralLayout.ts` validate/copy generated 
 - Independent encounter/SDK/API reviews are clear at e3849c88/579875f9/8059e8b. [Release chain and current state](https://github.com/KirkDiggler/rpg-project/issues/895) distinguish these checked heads from merged providers/released tags.
 - Still open: explicit inside-out merge authorization, ground-base resolution/released Go tags/final consumer re-pins and integration gates; accepted composition fold after obtaining the operator's tree-containing Studio YAML. Do not invent the tree, close the slice prematurely or deploy over :3030/:3180. UI consolidation Web#1402 and mixed wall sections Project#906 remain separate.
 
+## Implementation merge-out — 2026-11-10
+
+All ten ground/texture implementation PRs merged under explicit operator authorization. No operator-stack deployment, manual tag, replacement, rebase, force push or protection bypass occurred.
+
+| Layer | Ground | Texture |
+|---|---|---|
+| Assets | #342 → 877de99a | #344 → 6345db54 |
+| Encounter | #2289 → 4be23054 / v0.186.1 | #2330 → 4c2766b9 / v0.187.0 |
+| Session | #2290 → ace8340f / v0.173.1 | #2333 → bd7a8723 / v0.174.0 |
+| API dev | #1190 → 49b0eb01 | #1209 → 2253b33e |
+| Web dev | #1395 → a5a06c3f | #1401 → 3be3c439 |
+
+Final API pins actual encounter v0.187.0 / session v0.174.0 and generated Go cb53a2b66f6a; final Web retains published TS v0.1.263 and merged asset SHAs above. Final Web CI at9809f6ce passed10,197tests/six skipped; merged3be3c439 has exactly the gated tree. Normal final provider checks/pinned assembly passed; material harness bytes equal the previously played d030e2a tree.
+
+Merge-out incorporated separately approved upstream test/CI, behavior-record and diagnostics changes, with current-head gates and scoped head verdicts. The encounter timeout cleared through upstream test/budget changes. Web#1403's toast dismissal race was reproduced before passive effects, fixed through the existing keyed-scope pattern and independently reviewed; it shipped in Web#1401. Strict API up-to-date protection was satisfied by another clean current-dev merge, not bypassed. An erroneous merge-message whole-module identity claim was corrected on toolkit#2330: the upstream behavior-record baseline changed, while this feature's diff remained scoped.
+
+[Ground S2#874](https://github.com/KirkDiggler/rpg-project/issues/874) is closed under the accepted scoped verification direction. [S3#895](https://github.com/KirkDiggler/rpg-project/issues/895) remains open only for the accepted canonical wall composition fold: obtain the operator's tree-containing Studio YAML before modifying that composition. Do not invent the tree, repeat floor-art/general combat approval or claim operator deployment. The shared isolated environment/worktrees are retained while that fold remains open. S4#906 and shared-panel Web#1402 remain separate; Project design/evidence PR#875 is not one of the ten implementation merges.
+
 ## Current coverage and seams
 
 | Requirement | Task | Proof / remaining work |
