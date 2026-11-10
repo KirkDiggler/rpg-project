@@ -12,13 +12,13 @@ Not included: general-purpose form engine, new asset registry/browser, new inges
 
 ## Finish line
 
-For the design pass: source-grounded ownership/walkthrough, explicit provider and owner contracts, disposition of the discovered masonry capture gap, and a checked implementation plan linked to this issue. A diagram alone is not implementation readiness.
+The source-grounded design and [checked plan](plan.md) include the approved masonry lane. Implement that plan directly; the diagram alone was not the finish line.
 
 For the eventual feature: imported choices drive shared controls; wall/NPC/prop changes stay instance-owned; valid channel state is clear; missing references retain intent; atomic history and native/play persistence are verified; existing normal-bearing packs are not downgraded. Applicable resource checks, automated tests, one focused visual verification and independent feature review precede release/pin integration. Merge and operator deployment remain separately authorized.
 
 ## Authority and stops
 
-Ordinary inspection, design documentation and publishing this design PR are within the continued task. Follow the accepted shape without reopening it. R9 is a real scope boundary: existing masonry controls are deliberately Studio-only, so including them in played output adds captured material/chart facts rather than a UI-only refactor. Resolve that choice before deriving its implementation tasks. The detailed provider schema and any added capture contract then need the design's ownership/refusal checks; do not implement an assumed wire shape.
+R9 is approved: include existing normal-bearing masonry wall finishes in captured play. Continue with concrete contracts, the checked plan and implementation without another blanket approval. Preserve the design's ownership/refusal checks; return only genuinely new architectural decisions. The new wave has no merge or operator-stack deployment authorization.
 
 ## Progress / resume
 
@@ -26,11 +26,11 @@ Ordinary inspection, design documentation and publishing this design PR are with
 - [x] Trace NPC complete looks, atlas overrides, masonry normals and current owner transactions.
 - [x] Run focused baseline checks: five files, 83 tests passed; no new feature tests or browser proof claimed.
 - [x] Write design and walkthrough; identify the concrete masonry play boundary.
-- [ ] Operator resolves R9: include existing masonry packs in captured play now (recommended), or retain a clearly Studio-only lane in the first common-controls delivery.
-- [ ] Complete the concrete schema/capture design for that scope and check one value source-to-play.
-- [ ] Derive the implementation plan and its named tests; create delivery sub-issues only when real implementation slices are known.
+- [x] Operator resolved R9: include existing masonry packs in captured play now — [agreement](https://github.com/KirkDiggler/rpg-project/pull/915#issuecomment-6758627344).
+- [x] Complete the concrete schema/capture contract: schema3 atlas compatibility plus per-wall face choices with existing local mapping, no speculative regional chart payload.
+- [x] Derive [plan.md](plan.md), its named tests, requirement coverage and provider/consumer seam checks. This is one deliverable under Web#1402; tasks follow release-unit/test boundaries, not one issue per branch.
 - [ ] Execute the agreed plan through its required evidence and PR gates; do not infer merge/deployment authority.
 
-Worktree: `rpg-project/.worktrees/studio-1402`, branch `design/1402-studio-appearance`, from main `b2a2dda`. Product source inspection is read-only in the existing courtyard worktrees: Web `9809f6ce` (tree equal to merged `3be3c439`), Assets `6345db54`. No Web/Assets source edits, dependency installation, new runtime, or stack restart is part of this design pass.
+Worktrees: Project `.worktrees/studio-1402` on `design/1402-studio-appearance` from main `b2a2dda`; Web, Assets, toolkit encounter, API and Protos each use their own `.worktrees/studio-1402` on `feat/1402-studio-appearance`. Toolkit session has `.worktrees/studio-1402-session` on `feat/1402-studio-appearance-sdk`. Baselines: Web `3be3c439`, Assets `6345db54`, toolkit `ba6d40f2`, API `b4af0f1d`, Protos `45a0fb36`. No new runtime or stack restart. Initial inspection used the equivalent earlier courtyard snapshots; plan from the fresh owning worktrees.
 
 Baseline receipt: `/tmp/rpg-1402-design-baseline-tests.log`. Exact files/observations and the narrowed earlier normal-support statement are recorded in `knowledge/runs/2026-11-10-studio-appearance-design.md` and the linked PR/issue case file.

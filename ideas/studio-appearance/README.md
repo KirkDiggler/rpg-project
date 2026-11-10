@@ -43,7 +43,7 @@ flowchart TB
 
 ## Ownership and contracts
 
-`AppearanceSheet` and `AppearanceEdit` below are proposed editor boundary names, not a new serialized schema. Their exact fields belong to the checked plan after the masonry delivery boundary is settled.
+`AppearanceSheet` and `AppearanceEdit` below are editor boundary types, not a new serialized schema. Their concrete contracts and the versioned provider/wire changes are specified in [plan.md](plan.md).
 
 | Component                        | Owns                                                                                               | Input → output                                                                                               |
 | -------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -81,7 +81,7 @@ Consider a Castle Wall Fit 01 face and the published Brick material.
 2. **Consumer projection.** Existing readers verify the model/resource identities. The wall adapter joins the actual face binding to compatible masonry materials and exposes Brick as a pack choice. The normal role says that its map comes from Brick; an independent normal override is not offered without a supporting contract.
 3. **Author intent.** The shared control emits a pack selection for that face. The wall adapter creates the owner's existing staged edit; Apply changes that placement only. Original/inherit uses the wall owner's real default semantics rather than a universal empty-string interpretation (R5–R6).
 4. **Native state.** The native document retains the selected material identity and the mapping information needed to reconstruct the authored result. Existing wall-finish state is `scene.wallFinishes`; region defaults and pattern starts live in `scene.regionPresentation`. These are different from authored-UV `appearance.materialOverrides`.
-5. **Play boundary — R9.** If masonry is in the first playable delivery, its material choices and per-face mapping spans/anchors must enter immutable captured presentation facts. Preserve mapping continuity without shipping the full authoring document or asking the client to derive hidden regions. The precise capture type and ownership of chart compilation must be designed before that implementation. If masonry remains Studio-only for this delivery, the panel says so explicitly and does not claim this step exists.
+5. **Play boundary — R9.** Capture `WallFaceFinish { side, materialRef }` for each explicit selected face on the permitted wall. `side` is `positive-z` or `negative-z` in the wall's local frame. Existing wall endpoints and elevation carry the mapping anchor; the shared renderer derives the wall-local chart (phase zero, direction +1/-1, repeat from the material). No region geometry or asset-resource lookup enters the backend. The current listed-cell regions have no wall-face binding, so their unapplied regional finish metadata remains unapplied rather than becoming inferred ownership.
 6. **Rendering.** The existing masonry renderer applies color and normal together using its validated basis. Per-instance material state remains isolated, and the existing memory/lighting treatment follows appearance composition (R8).
 
 The same panel can expose `04_C` on a House Wall 05 or chair through `MaterialOverride { surfaceId, materialRef }`. An NPC style/skin choice instead resolves through `chooseNpcAppearance` to a complete `appearanceRef`, including its standing and downed models. Those identities are not converted into masonry charts to make the UI look uniform.
@@ -103,18 +103,18 @@ Treating these as one registry would let a visual selection change mechanics, a 
 
 ## Trade-offs
 
-| Decision                               | Benefit                                                           | Cost / boundary                                                                 | Not taken                                            |
-| -------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Shared panel over typed adapters       | Familiar controls without erasing real rendering differences      | Web maintains small explicit adapters                                           | One universal texture algorithm                      |
-| Extend existing provider authorities   | Import-time facts remain authoritative and reviewable             | Versioned readers/pins must evolve with declarations                            | A second editor-options registry                     |
-| Preserve existing owner representation | No unrelated actor/prop/wall document migration                   | Adapters translate shared edits into distinct intent types                      | One untyped persisted appearance bag                 |
-| Validated complete NPC looks           | Retains verified rig, downed appearance and palette identity      | Independently editable NPC channels require a later real resource contract      | Pretending every NPC variant is a runtime image swap |
-| Pack-first channel support             | Retains paired normals without offering broken channel operations | Authors cannot independently override a fixed channel until the contract exists | Decorative or misleading dropdowns                   |
-| Captured mapping if R9 is included     | Studio masonry can agree with play without source fetches         | Capture/projection and renderer integration enlarge the first delivery          | Deriving full room geometry on the player client     |
+| Decision                                  | Benefit                                                           | Cost / boundary                                                                 | Not taken                                            |
+| ----------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Shared panel over typed adapters          | Familiar controls without erasing real rendering differences      | Web maintains small explicit adapters                                           | One universal texture algorithm                      |
+| Extend existing provider authorities      | Import-time facts remain authoritative and reviewable             | Versioned readers/pins must evolve with declarations                            | A second editor-options registry                     |
+| Preserve existing owner representation    | No unrelated actor/prop/wall document migration                   | Adapters translate shared edits into distinct intent types                      | One untyped persisted appearance bag                 |
+| Validated complete NPC looks              | Retains verified rig, downed appearance and palette identity      | Independently editable NPC channels require a later real resource contract      | Pretending every NPC variant is a runtime image swap |
+| Pack-first channel support                | Retains paired normals without offering broken channel operations | Authors cannot independently override a fixed channel until the contract exists | Decorative or misleading dropdowns                   |
+| Capture explicit face choices on the wall | Studio masonry agrees with play using existing wall-local mapping | A typed face-choice list crosses capture, SDK and wire boundaries               | New room charts or hidden-region reconstruction      |
 
 ## Edges
 
-- R9 is the first-delivery scope decision, not a claim that the atlas release implements masonry playback.
+- R9 includes existing per-wall masonry choices in the first delivery. Region finishes with no declared wall-face binding remain unapplied; this work does not restore retired automatic room inference or claim broader room-chart support.
 - Common controls do not publish new presets, ingest assets from the browser or grant asset-curation permissions.
 - New normal/emissive support requires verified layout, sampling and renderer-basis facts. A manifest does not make an unsupported renderer operation safe.
 - Supported wall side scopes remain distinct. No fake A/B controls appear on a whole-atlas target; broader independent-side editing stays with the richer-material step.
