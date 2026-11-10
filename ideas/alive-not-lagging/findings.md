@@ -883,3 +883,54 @@ missed mark can only cost bytes (an unknown mark writes the piece). Cost
 measured: 2.0 ms per save on the garrison. The mark is opaque to the store,
 so a funnelled piece can switch to a stamp later without changing the
 contract.
+
+## F27 — the rest as pieces: a quiet Move writes 33 KB
+
+2026-11-10 · rpg-api dev `cc470ea0` (rpg-api#1219), session v0.178.0,
+encounter v0.192.0 (v0.191.1 carried the determinism fix), play/record
+v0.4.0. Before = dev `83082f15` (leg (c): rest + segment, 778 KB p50
+flat). `bench-keep-garrison`, path 4, N=30 measured Moves (10 without a
+round, 20 with one), Redis on a side port; the reviewer reproduced the
+numbers at the head within two bytes. Run record on rpg-api#1219
+(`knowledge/runs/2026-11-10-checkpoint-pieces.md`); the grain and the
+decisions are F26. Command: the F25 harness with its bytes rows now split
+by shape.
+
+**Bytes handed to the save per Move, by shape.**
+
+| Moves | before | after | head | roster | knowledge | journal | segment | pieces |
+|---|---|---|---|---|---|---|---|---|
+| without a round (10), p50 | 643,680 | 33,429 | 3,008 | 117 | 24,453 | 0 | 5,502 | 11 |
+| with a round (20), p50 | 778,286 | 475,661 | 3,008 | 42,061 | 288,144 | 0 | 140,131 | 101 |
+| all, p50 | 777,931 | 470,472 | | | | | | |
+
+**Found.**
+
+- A Move that pays no round writes 33 KB where it wrote 644 KB: the head
+  (3 KB, every save), the walker's member piece, the observers who saw the
+  step, and the step's beats. Eleven pieces.
+- A round Move writes 476 KB where it wrote 778 KB, and almost all of it is
+  two things this leg does not touch: 288 KB of knowledge re-written
+  because `reconfirm` re-stamps `Confirmed` on every holding an observer
+  re-sees (96% of those holdings changed only the stamp; rpg-toolkit#2360),
+  and the round's 140 KB segment of beats (about a hundred, each naming its
+  audience). The roster's 42 KB is the twenty patrols that moved.
+- The split costs 4.1 ms per save on the garrison (digesting about 200
+  pieces); the encode it replaces was 2.5 ms, so the save's CPU rose by
+  about 1.6 ms while its bytes fell by 20× on a quiet Move.
+- The leg could not have been measured without PR 1: behavior recipes
+  encoded with unordered maps, so 38 to 51 of the small keep's 61 members
+  differed in bytes on a Move where nothing changed. The snapshot's own
+  byte-identical promise had not held since behaviors joined the checkpoint.
+- S12's done line is met across its three legs: a stale writer fails closed
+  and persists nothing; a killed process leaves the store whole (one
+  script); a Move writes the record delta plus the shapes it touched; bytes
+  per Move are flat over the run.
+
+**Deploy.** Keys v1alpha3: a head string, a roster hash (`_` and `m:<id>`),
+a knowledge hash (`_` and `o:<observer>`), a journal string, each value
+prefixed by its mark; the segment list, floor and version keys from leg (c)
+unchanged. A checkpoint under the leg (c) or S12a prefixes is refused by
+name (`ErrCheckpointBeforePieces`, FAILED_PRECONDITION); a store that
+disagrees with itself is `ErrCheckpointMismatch`, the same code. The dev
+env was rebuilt on `cc470ea0`; any session live at that moment relaunches.
