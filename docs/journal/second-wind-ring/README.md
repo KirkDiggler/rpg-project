@@ -36,3 +36,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-08 — What can still happen while an effect ends?](2026-11-08-what-can-still-happen-while-an-effect-ends.md)
 - [2026-11-08 — Which application did that removal end?](2026-11-08-which-application-did-that-removal-end.md)
 - [2026-11-09 — Who owns a half-delivered cast?](2026-11-09-who-owns-a-half-delivered-cast.md)
+- [2026-11-10 — What actually needs sealing?](2026-11-10-what-actually-needs-sealing.md)
