@@ -45,10 +45,16 @@ established alternate entry releases the gate for the run. The keep allows
 two attempts: the first failed claim is unavailable for the retry; the second
 complete failure causes arrest, not an automatic fight.
 
-### R3 — Shared progress has one owner — proposed
+### R3 — Shared progress has one owner
 
 The encounter owns an authored interaction instance independently of any
-speaker or guard. Its identity is the interaction binding within the run;
+speaker or guard. Conversation state and admission progress are that one
+instance: its state is a requirement source for the replies offered at the
+entrance, exactly as a known fact or a carried prop is, and an authored
+answer row may advance it. The replies offered are one evaluated pool
+(`mind/behavior/selection`) carrying the instance's revision; a reply names
+its option and the revision it was offered at, and the door chooses on that
+same pool. Its identity is the interaction binding within the run;
 its original bound definition and persisted `machine.Blob` remain distinct.
 The existing machine evaluates the shared progression; the encounter supplies
 its vocabulary and executes its consequences. No new generic machine,
@@ -87,11 +93,11 @@ replacement conversation.
 
 ### R5 — A choice is validated and reserved before dice — proposed
 
-The offered choice carries the shared interaction identity and its revision.
-The toolkit revalidates recipient, target, phase, option, reach and current
-eligibility before charging, rolling or reserving an attempt. A stale or
-inapplicable selection is refused; the API does not reinterpret it as a new
-choice.
+The offered choice is the reply's option id and the evaluated pool's
+revision (R3). The toolkit revalidates recipient, target, phase, option, reach
+and current eligibility by choosing on that pool before charging, rolling or
+reserving an attempt. A stale or inapplicable selection is refused; the API
+does not reinterpret it as a new choice.
 
 Only one checked choice can be pending for an interaction at a time. A posed
 check retains that reservation and its original attempt through save/reload
@@ -189,7 +195,7 @@ below; the area-or-intel boundary does not settle it by implication.
 |---|---|---|---|---|
 | R1 | settled | One acting character uses Speak/check; shared consequences, not group voting in first delivery | KirkDiggler | 2026-11-10 |
 | R2 | settled | Entrance/run attempt history and canonical admission consequences | KirkDiggler, canonical keep and #769 | 2026-10-31 |
-| R3 | open | Encounter-owned shared interaction using the existing machine | — | — |
+| R3 | settled | One owner: the encounter-owned interaction on the existing machine is both conversation state and admission progress; its state gates replies, an answer advances it, the evaluated pool's revision is the versioned choice | KirkDiggler | 2026-11-10 |
 | R4 | open | Authored approach, addressed invitation and non-frozen lifecycle | — | — |
 | R5 | open | Versioned choice, pending-check reservation and stale refusal | — | — |
 | R6 | open | Permission distinct from knowledge; integration with physical posts | — | — |
@@ -214,7 +220,7 @@ below; the area-or-intel boundary does not settle it by implication.
   Persuasion/Performance and whether the second attempt removes only the
   admission-granted advantage or also independent sources. Preserve the
   existing class/background requirements in the canonical keep.
-- **Contract review (R3–R9):** validate the proposed ownership, selection,
+- **Contract review (R4–R9):** validate the proposed ownership, selection,
   reservation, reload and delivery contracts before deriving implementation
   tasks. New public shapes in the walkthrough are proposal names, not existing
   toolkit or protobuf APIs.

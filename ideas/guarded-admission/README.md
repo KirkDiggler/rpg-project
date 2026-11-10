@@ -72,7 +72,7 @@ actual seams the design extends.
 | Each guard's behavior | Its own perception, role precedence, selected answer and actual work | Encounter's proposed bounded dialogue opportunity → existing composer selection with a **proposed invitation answer**, carrying the interaction reference and actual approached character; ordinary movement remains separate |
 | `encounter` passage and placement | Who physically occupies or holds an opening, and actual destination positions | Existing `Post`, `StepInput`, movement/directive inputs + explicit authored release → legal movement or an actual stop |
 | `resolution` | The check, character modifiers and any genuine paused resolution | Existing staged check plus authored context → settled verdict/calculation or posed check |
-| `session` | Actor lookup, host verbs, saved state and player projection | Extended `SpeakInput` with **proposed `InteractionSelection`** → ordinary check result plus projected interaction state; `EncounterData` → existing persistence seam |
+| `session` | Actor lookup, host verbs, saved state and player projection | `SpeakInput` carrying the option id and the offered pool's revision (R3) → ordinary check result plus projected interaction state; `EncounterData` → existing persistence seam |
 | `rpg-api` | Caller binding, opaque storage, continuation ownership and wire conversion | IDs/selection → session call; saved projection → protobuf/stream |
 | Web | Presentation of an addressed interaction and submission of an offered choice | Server `InteractionView`/ordinary acts → reply panel; chosen selection → Speak |
 
@@ -103,8 +103,8 @@ states, not host-side `if gate` branches (R2, R3).
 3. The encounter records an addressed invitation. The session saves it with
    the world before ordinary delivery. Web opens Alice's replies from the
    current projection. Bob elsewhere is not silently put into a conversation.
-4. Alice selects a checked claim. The proposed `InteractionSelection` names
-   the interaction, its offered revision and the choice. The existing member
+4. Alice selects a checked claim. Her reply names the option and the
+   revision of the evaluated pool it was offered from (R3). The existing member
    and target identities still travel through Speak. The toolkit validates
    them before reserving the choice and invoking the real check.
 5. If the check poses a held benefit, its original attempt remains pending.
