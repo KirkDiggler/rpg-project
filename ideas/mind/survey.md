@@ -14,6 +14,7 @@ Three scout reports carry the evidence, with file and line anchors:
 | inventory | [scouts/2026-11-09-inventory.md](scouts/2026-11-09-inventory.md) | what lives in `mind/`, who consumes it, what is unwired |
 | live flow | [scouts/2026-11-09-live-flow.md](scouts/2026-11-09-live-flow.md) | how an NPC decides in the running keep, how a player talks to one, where #2351 lands |
 | design trail | [scouts/2026-11-09-design-trail.md](scouts/2026-11-09-design-trail.md) | what is ruled, what is proposed and unbuilt, where names collide |
+| gate S2 ground | [scouts/2026-11-10-gate-s2-ground.md](scouts/2026-11-10-gate-s2-ground.md) | what an encounter-owned interaction touches: option grammar, machine step, persistence, castle content, studio |
 
 ## 1. What we have
 
