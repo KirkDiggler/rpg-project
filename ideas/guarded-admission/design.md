@@ -124,8 +124,10 @@ Surviving guards retain identity, health, resources and memories and walk to
 their authored destinations through existing movement and work completion.
 Gate release does not wait for that walk. Membership and outcome identifiers
 survive reload so neither relocation nor arrest starts again from a duplicate
-request or presentation event. Which split-party members arrest affects is
-open below.
+request or presentation event. R11 supplies the arrest-membership boundary.
+The encounter captures the selected member IDs and their qualifying basis
+when committing the arrest consequence; reload and presentation reuse that
+set rather than querying changed positions or intel again.
 
 ### R8 — Checks remain rulebook-owned — proposed
 
@@ -164,6 +166,23 @@ quest platform, universal scheduler or effects-machine migration. The standing
 QA castle remains a regression fixture; the canonical admission mission and
 its focused authored fixture have their own required outcomes.
 
+### R11 — Area or the arresting guards' intel
+
+Front-gate arrest includes party characters in the authored entrance area or
+in the arresting guards' own intel. The two sources form a union, not an
+intersection. Membership in the party roster alone is insufficient; a distant
+character is not excluded merely for being out of sight if guard intel
+qualifies them.
+
+The intel branch reads the relevant guards' actual observer-held information,
+not a global party view or an unrelated NPC's knowledge. It must identify the
+character; an anonymous sound does not establish its maker. Combining the
+arresting guards' answers does not teach each guard everybody else's knowledge
+or replace remembered information with a live hidden position.
+
+The exact location-state predicate for intel eligibility is an open contract
+below; the area-or-intel boundary does not settle it by implication.
+
 ## Rulings
 
 | ID | status | scope | ruled by | date |
@@ -174,17 +193,19 @@ its focused authored fixture have their own required outcomes.
 | R4 | open | Authored approach, addressed invitation and non-frozen lifecycle | — | — |
 | R5 | open | Versioned choice, pending-check reservation and stale refusal | — | — |
 | R6 | open | Permission distinct from knowledge; integration with physical posts | — | — |
-| R7 | open | Existing-actor consequence lifecycle and split-party arrest membership | — | — |
+| R7 | open | Existing-actor consequence lifecycle and captured arrest-set persistence | — | — |
 | R8 | open | Claim mapping and authored check-benefit boundaries | — | — |
 | R9 | open | Persistence, projections and inspection of shared progress | — | — |
 | R10 | open | Proposed first-delivery boundaries beyond the settled R1 participation scope | — | — |
+| R11 | settled | Front-gate arrest membership: entrance area OR the arresting guards' own intel, not the whole party by default | KirkDiggler | 2026-11-10 |
 
 ## Open
 
-- **Split-party arrest membership (R7):** all party members, or only those
-  locally involved at the entrance? If local, the boundary and capture moment
-  must be explicit before implementing arrest. No implementation may choose
-  an implicit distance or teleport distant members by default.
+- **Intel eligibility and area binding (R11):** distinguish identified
+  characters with current or remembered known-location testimony from those
+  whose location is marked lost or unknown. Decide which qualify for arrest
+  outside the area without consulting their hidden live positions. Bind the
+  area explicitly; no implementation may choose an implicit distance.
 - **Approach and physical bypass (R4/R6):** fix the authored approach and its
   perception/re-arm conditions, and reconcile full entrance enforcement with
   the existing rule that an actually vacated post holds nothing. Preserve

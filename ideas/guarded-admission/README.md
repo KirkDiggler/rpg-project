@@ -124,8 +124,13 @@ states, not host-side `if gate` branches (R2, R3).
    applicable. The private inspector explains the actual shared transition
    and related NPC decisions without recreating them from current YAML.
 
-The second failure's affected arrest set is deliberately not guessed in this
-walk: it is the product decision named in R7 and the design's Open section.
+On a second failure, the arrest candidates come from the entrance area OR the
+arresting guards' own intel (R11). A distant explorer absent from both is not
+included just because they belong to the party. An out-of-sight character may
+qualify through guard intel. The exact treatment of lost/unknown locations
+remains the design's Open question, not a live-position lookup disguised as
+knowledge. The committed consequence retains its selected IDs across reload
+rather than recomputing the set after the world changes (R7).
 
 ## Separations that look like one thing
 
@@ -136,6 +141,8 @@ walk: it is the product decision named in R7 and the design's Open section.
 | How many claims remain at this entrance? | Shared interaction progress for the run |
 | Who is currently being invited to reply? | The addressed invitation |
 | Has a check already started but not settled? | The reserved attempt and genuine resolution continuation |
+| Who is eligible for front-gate arrest? | Authored entrance-area membership OR the arresting guards' own intel (R11) |
+| Does a guard know a character's current location? | That guard's actual testimony, not the arrest selection or global placement |
 | Does this character know what was said? | Observer-local knowledge and ordinary audience |
 | May the party pass the entrance? | Committed shared outcome, applied by the encounter to passage policy |
 | Can a body actually stand or move here? | Existing placement, doors, posts and movement |
@@ -170,9 +177,9 @@ this proposal does not change that policy (R4).
 
 Ordinary body/post rules remain physical. The design must reconcile a vacated
 post with the mission's entrance restriction rather than smuggling in an
-invisible blocker (R6, Open). It also must select the affected arrest set and
-class/background check context explicitly before their implementation (R7,
-R8, Open).
+invisible blocker (R6, Open). Arrest's area-or-intel boundary is R11; its
+precise intel predicate and the class/background check context must be
+explicit before their implementation (R8, R11, Open).
 
 An invitation lost from a live stream is recoverable state. Diagnostic history
 is evidence, not the authority for whether somebody may choose a line or cross
@@ -197,6 +204,7 @@ NPC instance; the existing reader must not mislabel one as the other (R9).
 | Generic progress and trace | `rpg-toolkit/mind/machine/{compile,step,trace,blob}.go` |
 | Individual NPC composition | `rpg-toolkit/mind/behavior/composer.go`; `encounter/{behavior,behavior_work,wakebeats}.go` |
 | Physical stop and addressed guard response | `encounter/{post,barred,step}.go`; `session/move.go` |
+| Observer-held identities and location states | `mind/perception/perception.go`; `encounter/{observation_subject,testimony,turndriver}.go` |
 | Authored choices and knowledge requirements | `encounter/option.go`; `encounter/world.go` |
 | Host social/check path | `session/{speak,social,conceal}.go` |
 | Genuine paused decisions | `play/interrupt`; `session/afford.go` |

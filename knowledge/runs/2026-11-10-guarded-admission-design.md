@@ -9,11 +9,13 @@ Design pass for [rpg-project#769](https://github.com/KirkDiggler/rpg-project/iss
 ## Decided
 
 - KirkDiggler accepted one acting character's existing Speak/check path for the first playable admission delivery, retaining shared entrance/party consequences and deferring shared voting as a prerequisite, on 2026-11-10 — [participation ruling](https://github.com/KirkDiggler/rpg-project/issues/769#issuecomment-6756203706).
+- KirkDiggler ruled front-gate arrest membership as entrance area OR the arresting guards' own intel, expanding the local-only proposal without choosing whole-party arrest; the precise lost/unknown-location predicate remains open — [R11 and remaining intel question](https://github.com/KirkDiggler/rpg-project/pull/916#issuecomment-6757124569).
 - Keep shared interaction progress separate from personal knowledge and each guard's private behavior in the proposal; ownership, lifecycle and new types remain open for review — [proposed contract](../../ideas/guarded-admission/design.md#law).
 
 ## Found
 
 - Nine encounter controls and two actual session castle controls pass in fresh race runs; they prove existing stop/response/pass/persistence behavior, not a completed admission interaction — [reconciliation and exact tests](https://github.com/KirkDiggler/rpg-project/issues/769#issuecomment-6756203706).
+- A held identity can survive without a known position; `Lost` and `Unknown` differ from remembered `Known(position)`, so a guard-intel membership rule must name its predicate rather than use live hidden placement to repair it — [existing location testimony](https://github.com/KirkDiggler/rpg-toolkit/blob/e4ac31f8/rulebooks/dnd5e/encounter/testimony.go#L17-L58).
 - An ordinary open resolution window freezes every member's verbs, so reusing it for a mere invitation would change unrelated players' ability to act — [current Afford gate](https://github.com/KirkDiggler/rpg-toolkit/blob/e4ac31f8/rulebooks/dnd5e/session/afford.go#L592-L614).
 - The existing immediate bump response is an explicit caller-granted opportunity; other observations use Observe and cannot silently become paid turns, which the proposed approach contract must preserve — [current reaction boundary](https://github.com/KirkDiggler/rpg-toolkit/blob/e4ac31f8/rulebooks/dnd5e/encounter/wakebeats.go#L403-L450).
 - Light, dark and narrow overview renders produce no page errors or horizontal overflow; focused law scan has zero findings across one file, while the workspace scan retains44advisories across89files and exits1 — [overview and proposal](../../ideas/guarded-admission/overview.html).

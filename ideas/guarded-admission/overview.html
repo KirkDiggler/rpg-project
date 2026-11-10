@@ -16,7 +16,7 @@
 <h1>The guard stops the walk.<br>The entrance remembers.</h1>
 <p>One character answers. Changing the speaker does not reset the party’s attempts. A guard’s private mind, a shared interaction, and permission to pass remain different things.</p>
 <p><a href="https://github.com/KirkDiggler/rpg-project/issues/769">Story and current decisions</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/docs/guarded-admission/ideas/guarded-admission/README.md">Walkthrough</a> · <a href="https://github.com/KirkDiggler/rpg-project/blob/docs/guarded-admission/ideas/guarded-admission/design.md">Contracts and open questions</a></p>
-<p class="note"><strong>Agreed:</strong> one acting character uses Speak/check first; attempts and admission remain shared consequences. <strong>Proposed, not implemented:</strong> the shared interaction and invitation contracts below. Full party voting is not this delivery’s prerequisite.</p>
+<p class="note"><strong>Agreed:</strong> one acting character uses Speak/check first; attempts and admission remain shared consequences. Front-gate arrest covers characters in the entrance area <strong>OR</strong> in the arresting guards’ own intel—not the entire party by default. <strong>Proposed, not implemented:</strong> the shared interaction and invitation contracts below. Full party voting is not this delivery’s prerequisite.</p>
 <h2>Three owners, not one giant guard script</h2>
 <div class="flow" aria-label="Proposed component flow from individual guard behavior to shared interaction to the player's reply view">
 <section class="box"><span class="label">Existing NPC behavior</span><h3>The guard</h3><p>His own observations, role precedence and progress. He issues an authored invitation through a bounded dialogue opportunity—not a free attack or movement turn.</p></section>
@@ -39,7 +39,7 @@
 <tr><td>Panel dismissed / entrance resolved</td><td>Closing the UI spends no check and grants no permission.</td></tr>
 </tbody></table>
 <h2>What still needs a ruling</h2>
-<ul><li>Which split-party characters are arrested: everyone, or only those locally involved?</li><li>How the authored approach and physical bypass meet the existing post-at-place rule.</li><li>Final claim mapping and the boundary of second-attempt advantage removal.</li><li>The proposed state, selection and lifecycle contracts before implementation.</li></ul>
+<ul><li>For the intel branch of arrest: how known-location memories differ from lost or unknown locations. The area-or-intel boundary itself is settled.</li><li>How the authored approach and physical bypass meet the existing post-at-place rule.</li><li>Final claim mapping and the boundary of second-attempt advantage removal.</li><li>The proposed state, selection and lifecycle contracts before implementation.</li></ul>
 <p class="muted">Existing-code evidence: 9 focused encounter controls and 2 session castle controls pass under fresh race runs. These establish reuse, not completion of the proposed interaction. The standing QA castle is not silently rewritten into the canonical admission mission.</p>
 <footer>No implementation slices or merges are claimed. Studio behavior tooling, shared voting, analytics and effects unification remain separate. The story is the current status.</footer>
 </main></body></html>
