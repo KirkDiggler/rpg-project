@@ -827,3 +827,59 @@ beats, each prefixed by its last seq) and a floor key, all under the shared
 TTL; the version key is unchanged. A checkpoint under the old
 `session-enc:v1alpha1:` prefix is refused by name. The dev env was rebuilt
 on `83082f15` at 06:47 UTC; any session live at that moment relaunches.
+
+## F26 — the knowledge grain: per observer, as fields of one hash
+
+2026-11-09 · measured read-only on rpg-api dev `83082f15` (the F25 harness,
+`bench-keep-garrison`, path 4) and a throwaway encounter test at toolkit
+main (encounter v0.189.0). The question S12 leg (b) asks before its
+encounter PR: at what grain does the knowledge shape (perception: what each
+observer knows, 347 KB over 100 observers, 3.5 KB average, 9.3 KB max) get
+stored, so a Move writes only what it changed.
+
+**Bytes a store would write per Move, by grain.**
+
+| grain | Move without a round | Move with a round (2 of 3 at path 4) |
+|---|---|---|
+| one key | 347 KB | 347 KB |
+| per observer | 15–23 KB (6–9 observers) | 276–286 KB (77–79 observers) |
+| per room | 39 of 241 KB (encounter test) | 230 of 241 KB |
+| per holding | about 5 KB | about 280 KB (about 700 holdings) |
+
+**Found.**
+
+- Per observer wins on both kinds of Move. Rooms lose to observers on both;
+  holdings gain nothing on a round. The walker's sight sweep rides inside
+  its observer's field, because the same movers change both.
+- The shape is ONE Redis hash with one field per observer (and the roster
+  one hash with one field per member): the read stays one key, a save
+  HSETs the changed observers and HDELs the emptied ones. Keys per observer
+  would multiply the read; one string per shape would rewrite 347 KB.
+- A round Move stays at about 280 KB of knowledge because `reconfirm`
+  re-stamps `Confirmed` on every holding it re-sees: 96% of the "changed"
+  holdings on a round changed only their stamp. That is its own small card
+  (rpg-toolkit issue filed with this finding), not this leg.
+- The rest's other shapes on the garrison: roster (members) is most of the
+  remainder, the journal is append-only (its length is a free change
+  counter), clocks and the log head are about 3 KB and can be written every
+  save.
+- Expected after leg (b): a Move without a round writes about 25–35 KB
+  (today 643 KB); a round writes about 465 KB, or about 590 KB when the
+  journal moves (today 778 KB).
+- BLOCKER found on the way: `BehaviorData` encodes its recipes through
+  `encoding/json/v2` without the deterministic option, so recipe map order
+  differs on every save; 44–52 members' bytes differ on a Move where
+  nothing changed. It breaks the snapshot's own byte-identical promise and
+  any change comparison. Fixed first, as leg (b)'s PR 1.
+
+**Decided (cross-team agent, for Kirk to overrule).** Change detection is
+MARKS COMPARED AT THE STORAGE BOUNDARY, not dirty bits at the mutation
+sites: a 64-bit digest of each piece's canonical JSON, stored as a prefix
+of the piece's value (as a segment carries its last seq), returned on load,
+held by the session beside the record baseline, advanced only on a landed
+save. Because: the roster has no mutation funnel (about 55 writes across 20
+files); a missed stamp is a write lost in silence on the next load, while a
+missed mark can only cost bytes (an unknown mark writes the piece). Cost
+measured: 2.0 ms per save on the garrison. The mark is opaque to the store,
+so a funnelled piece can switch to a stamp later without changing the
+contract.
