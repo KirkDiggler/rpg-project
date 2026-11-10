@@ -934,3 +934,51 @@ unchanged. A checkpoint under the leg (c) or S12a prefixes is refused by
 name (`ErrCheckpointBeforePieces`, FAILED_PRECONDITION); a store that
 disagrees with itself is `ErrCheckpointMismatch`, the same code. The dev
 env was rebuilt on `cc470ea0`; any session live at that moment relaunches.
+
+## F28 — the continuation commits at each pace boundary: the first beat lands at 107 ms after the answer
+
+2026-11-10 · rpg-api dev `c119a0df` (rpg-api#1220), session v0.179.0
+(rpg-toolkit#2364, follow-up #2365), encounter v0.192.0, play/record
+v0.4.0. Before = dev `cc470ea0`. `bench-keep-garrison`, S1 continues
+mode, Redis on a side port; the harness gained "first beat after the
+answer" p50/p95 and "commits per verb" (`measure_answer_first_beat_test.go`).
+Run record on rpg-api#1220 (`knowledge/runs/2026-11-10-pace-commits.md`).
+
+**Correction to F24.** F24 compared the first beat measured from the
+verb's start (356 ms on path 8) with R1's bar, which is 250 ms AFTER the
+answer. Measured after the answer the p50 was 175 ms before this slice; what
+missed the bar were the one-step answers, at 262–302 ms at p95, because
+their rest walked seven cells before the single commit.
+
+**First beat after the answer, before → after.**
+
+| path, N | answer p50 | first beat after the answer p50 / p95 | drained p50 | commits per Move | write p50 |
+|---|---|---|---|---|---|
+| 1, 20 | 86 → 85 ms | 0 / 369 → 0 / 361 ms | 88 → 85 ms | 1 → 1 | 24.5 KB (a round: 617 KB) |
+| 4, 20 | 110 → 121 ms | 98 / 144 → 99 / 110 ms | 203 → 218 ms | 1 → 1–2 | 470 → 476 KB |
+| 8, 20 | 122 → 130 ms | 175 / 285 → 107 / 116 ms | 312 → 355 ms | 1 → 2 | 483 → 505 KB |
+| 8, 30 | 129 → 131 ms | 186 / 302 → 108 / 118 ms | 338 → 364 ms | 1 → 2 | 483 → 508 KB |
+
+**Found.**
+
+- R1's first-beat bar is met on paths 4 and 8 at p95, one-step answers
+  included: the continuation commits the raise's beats and the checkpoint
+  delta as soon as the due step has run, and walks on. The rest of the walk
+  lands in the next commit.
+- Path 1 misses the bar at 361 ms p95 with or without this slice, and it is
+  a different cost: in the three of twenty Moves that continue, the due
+  step is the walk's only step, so the first beat IS that round's raise
+  (about 70 ms) plus its commit, which writes 617 KB including a 131 KB
+  journal piece. Nothing is left to split off. The next fix there is the
+  raise's own cost and the round's write (rpg-toolkit#2360, S6).
+- The price: each extra commit adds about 43 ms to the drained time on
+  path 8, after the first beat; a one-raise Move writes 4.5% more; the
+  every-third Move whose rest pays two rounds writes about 950 KB in two
+  saves against 619 KB in one (+54%). No subscriber lagged.
+- A stale pace commit fails closed with no retry; commits already landed
+  stand and were delivered; the api logs "saved through <record id>". The
+  client gets no signal in this slice (rpg-api#1198).
+
+**Status against R1, harness.** Answer: path 1 85 ms (bar 100, met), path
+4 121, path 8 130. First beat after the answer: paths 4 and 8 met at p95;
+path 1 not, for the reason above.
