@@ -65,7 +65,7 @@ death, replacement as speaker or interruption cannot reset the shared
 interaction. The interaction does not become the NPC composer or choose
 movement on its behalf.
 
-### R4 — An invitation is not a frozen resolution — proposed
+### R4 — An invitation is not a frozen resolution — settled
 
 The authored approach names where a living, eligible guard can initiate the
 interaction through the encounter's placement and perception answers. The
@@ -90,6 +90,30 @@ invitations. Leaving and returning can address the remaining interaction
 again. An unavailable guard, combat, changed interaction state or an actor no
 longer eligible invalidates the old invitation rather than fabricating a
 replacement conversation.
+
+Settled 2026-11-11 by KirkDiggler, on #923:
+
+- **One addressee per interaction.** The address (the character spoken to and
+  the guard speaking) is part of the interaction instance. While it stands, no
+  other carrier of that interaction opens one. "once 1 has it active the other
+  will not trigger."
+- **Others listen through the events.** The conversation reaches bystanders as
+  the beats Speak and the answer already emit, on their audiences. "the
+  conversation should be flowing through the events. they can listen in."
+- **The approach is a distance, authored once on the interaction** and editable
+  in the studio. Its carriers are the NPCs whose replies name the interaction.
+  The earlier cut authored approach cells per entrance; the operator's words
+  that moved it: "this interaction should be configurable in the studio (how
+  close to trigger it)" and "one place sounds way better."
+- **The distance stays inside Speak reach, for now.** A larger authored value is
+  refused. Not taken: answering from beyond Speak reach when hailed from afar.
+- **The hail takes the player's focus.** The walk stops where the hail lands,
+  the reply panel opens, and the camera centres on the guard as on the active
+  member in combat.
+
+Lead's assumptions, open to veto: the hail requires the carrier to see the
+character; the address ends when the character is out of Speak reach or out of
+that carrier's sight.
 
 ### R5 — A choice is validated and reserved before dice — proposed
 
@@ -196,7 +220,7 @@ below; the area-or-intel boundary does not settle it by implication.
 | R1 | settled | One acting character uses Speak/check; shared consequences, not group voting in first delivery | KirkDiggler | 2026-11-10 |
 | R2 | settled | Entrance/run attempt history and canonical admission consequences | KirkDiggler, canonical keep and #769 | 2026-10-31 |
 | R3 | settled | One owner: the encounter-owned interaction on the existing machine is both conversation state and admission progress; its state gates replies, an answer advances it, the evaluated pool's revision is the versioned choice | KirkDiggler | 2026-11-10 |
-| R4 | open | Authored approach, addressed invitation and non-frozen lifecycle | — | — |
+| R4 | settled | One addressee per interaction; approach is one authored distance inside Speak reach; the hail stops the walk and takes focus; bystanders listen through events | KirkDiggler | 2026-11-11 |
 | R5 | open | Versioned choice, pending-check reservation and stale refusal | — | — |
 | R6 | open | Permission distinct from knowledge; integration with physical posts | — | — |
 | R7 | open | Existing-actor consequence lifecycle and captured arrest-set persistence | — | — |

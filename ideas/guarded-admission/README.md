@@ -66,7 +66,7 @@ actual seams the design extends.
 
 | Component | Owns | Input → output |
 |---|---|---|
-| `encounter/dungeonspec` | Validation and lowering of authored interaction definitions, approach cells, guard references and choice references | Source document → **proposed `InteractionDefinition`**, bound `machine.Recipe` and original configuration |
+| `encounter/dungeonspec` | Validation and lowering of authored interaction definitions, the approach distance, guard references and choice references | Source document → **proposed `InteractionDefinition`**, bound `machine.Recipe` and original configuration |
 | `mind/machine` | One state transition and its actual evaluation trace | `Program`, `Blob`, supplied event/environment → `Stepped` or `TraceStepOutput` |
 | `encounter` shared interaction | The interaction identity, shared progress, addressed invitation and pending attempt | Definition + `Step`/`Speak` outcomes → **proposed `InteractionData`**, **`InteractionView`**, ordinary outcomes and private trace records |
 | Each guard's behavior | Its own perception, role precedence, selected answer and actual work | Encounter's proposed bounded dialogue opportunity → existing composer selection with a **proposed invitation answer**, carrying the interaction reference and actual approached character; ordinary movement remains separate |
