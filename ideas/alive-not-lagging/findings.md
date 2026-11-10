@@ -717,3 +717,61 @@ every step for its resolution, about 7 ms with the attach: per-step work
 over state that changes per verb, the session's and resolution's. The rest
 is the walker's genuine per-step sight, about 15 ms, and the 63 to 68 ms
 open per verb, which is the F21 load line.
+
+## F24 — the site shared by hash halves the load line; path 1 is under the answer bar in the harness
+
+2026-11-10 · rpg-api dev `2be23860` (rpg-api#1216), session v0.175.0,
+resolution v0.75.0, encounter v0.188.0, play/record v0.3.0. Before = dev
+`2253b33e` at the previous pins. `bench-keep-garrison` (posts listening),
+both modes, N=20 per path, Redis on a side port flushed between paths. Run
+record on rpg-api#1216
+(`knowledge/runs/2026-11-10-alive-not-lagging-site-shared-api.md`).
+Command, with `RPG_MEASURE_PATH` set to 1, 4 and 8, once per tree:
+`RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:<port> RPG_MEASURE_N=20
+RPG_MEASURE_PATH=8 go test ./internal/integration/session/ -run
+'TestMeasure_AnswerAndFirstBeat$' -count=1 -v`.
+
+**The whole Move and its load line.**
+
+| row | path 1 before → after | path 4 | path 8 |
+|---|---|---|---|
+| Move whole, answer (AnswerWhole) | 146 → 93 ms | 595 → 210 ms | 851 → 350 ms |
+| S1 continues: answer / drained | 148 / 150 → 90 / 92 ms | 207 / 607 → 108 / 210 ms | 215 / 831 → 129 / 356 ms |
+| read load whole (Manager.Where) | 66.6 → 38.1 ms | 80.6 → 51.9 ms | 96.6 → 76.8 ms |
+| 3 site build, warm provider (attach only) | 45.2 → 28.1 ms | | 54.0 → 41.1 ms |
+| 3p stored piece GetSite, GET + decode, 507 KB | — → 8.7 ms | | — → 7.9 ms |
+| 3c cold site build, fresh provider + piece | — → 49.4 ms | | — → 63.9 ms |
+| Move whole, cold provider (fresh process, first verb) | — → 162 ms | | — → 971 ms |
+| Move whole, warm provider (same process, next verb) | — → 131 ms | | — → 825 ms |
+| encounter blob bytes | 1,876,612 → 1,378,438 | 3,557,333 → 3,059,159 | |
+| 2 decode JSON → EncounterData | 16.0 → 8.6 ms | 22.7 → 15.7 ms | |
+| 5b encode JSON | 15.4 → 8.9 ms | 25.8 → 17.6 ms | |
+
+**Found.**
+
+- The checkpoint no longer carries the field: 498 KB less per blob, and
+  decode and encode halve with it. The fenced fetch and save each drop from
+  about 19 to about 10 ms on path 1.
+- A cold process pays the piece fetch plus the compile once per site, 50 to
+  64 ms; every later verb on that site is warm. On the dev env the boot
+  compiles the shelf itself: 13 files in 762 ms, the keep 153 ms, the castle
+  9 ms, the rest under 2 ms each, one log line per site.
+- "Site build, warm provider" is still 28 to 41 ms per verb. That is
+  `LoadEncounter` attaching the instance to the site (perception, members,
+  behaviors, room-local sightings), not a compile. With the field gone it is
+  the largest fixed cost left in the load line, and it is what S6 (the
+  resident copy) removes.
+- The path 8 drained number falls from 831 to 356 ms with no change to the
+  walker: the per-step re-sweep of F23 was paying for the field compile's
+  discarded sight too. The remaining per-step cost is the F23 remainder.
+- Against R1 in the harness: path 1 answer 93 ms is under the 100 ms bar for
+  the first time; path 8 is 350 ms. First beat on path 8 (S1 continues,
+  drained) is 356 ms, against a 250 ms bar after the answer. S13 is the next
+  slice that moves it.
+
+**Deploy.** A checkpoint saved before this head carries a field and no
+`site_hash`; the api refuses it as INVALID_ARGUMENT, named by field. The dev
+env was rebuilt on `2be23860` at 04:54 with its Redis persisted; any session
+live at that moment relaunches. The persistent dev content dir still holds
+thirteen files (the reference sites compile again at these pins); rpg-api#1204
+reconciles that dir to the shipped set.
