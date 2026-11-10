@@ -775,3 +775,55 @@ env was rebuilt on `2be23860` at 04:54 with its Redis persisted; any session
 live at that moment relaunches. The persistent dev content dir still holds
 thirteen files (the reference sites compile again at these pins); rpg-api#1204
 reconciles that dir to the shipped set.
+
+## F25 — the record appended: the write per Move is flat; the rest is the next weight
+
+2026-11-09 · rpg-api dev `83082f15` (rpg-api#1217), session v0.176.0,
+encounter v0.189.0, play/record v0.4.0. Before = dev `2be23860` (the whole
+blob every save). `bench-keep-garrison`, path 4, AnswerWhole, N=30 measured
+Moves, Redis on a side port. Run record on rpg-api#1217
+(`knowledge/runs/2026-11-09-appended-record.md`). The harness sums the
+bytes handed to the save script per Move, plus the stored rest and segment
+sizes: `RPG_MEASURE=1 RPG_MEASURE_REDIS=127.0.0.1:<port> RPG_MEASURE_N=30
+RPG_MEASURE_PATH=4 go test ./internal/integration/session/ -run
+'TestMeasure_AnswerAndFirstBeat$' -count=1 -v` (the bytes rows print with
+the main table).
+
+**Bytes handed to the save per Move.**
+
+| row | before | after |
+|---|---|---|
+| write, first Move | 1,238,601 | 641,221 |
+| write, last Move (30th) | 4,032,134 | 778,246 |
+| write p50 | 2,642,954 | 777,877 |
+| rest p50 | whole blob | 637,896 |
+| segment p50 | — | 139,427 (about 5.5 KB on a Move that pays no round) |
+| stored record after 30 Moves | inside the blob | 3.48 MB in 34 segments (retention unbounded) |
+
+**Found.**
+
+- The write no longer grows with the run: 641 → 778 KB over 30 Moves,
+  against 1.24 → 4.03 MB before (about 137 KB more per Move, F19's growth).
+  The record half of S12's done line is met.
+- What is written is now two things: the REST (638 KB, rewritten every
+  Move: perception, journal, members, holdings, canvas) and the SEGMENT
+  (the beats this verb appended, with its own audience table). A Move that
+  pays a round appends 139–151 KB; one that does not, 5.5 KB. The map's
+  guess of 60–110 KB per segment was low because a round's raise writes
+  about a hundred beats, each naming its audience.
+- The rest is the next weight. Leg (b), pieces by shape with dirty bits,
+  is what stops the 638 KB rewrite; it measures the knowledge grain (one
+  key, or one per observer) before its encounter PR, because a walk touches
+  every observer's sight.
+- Two refusal classes came out of the review and are pinned: a segment list
+  lost under a bounded rest loaded as an empty story (now
+  `ErrCheckpointRecordMismatch`, and the floor is stored beside the rest);
+  a rest carrying entries was written unchecked (now `ErrRestCarriesRecord`
+  before any write). Both fail closed by name.
+
+**Deploy.** New keys `session-enc:v1alpha2:<id>` (rest),
+`session-enc-log:v1alpha2:<id>` (segments, one element per save that wrote
+beats, each prefixed by its last seq) and a floor key, all under the shared
+TTL; the version key is unchanged. A checkpoint under the old
+`session-enc:v1alpha1:` prefix is refused by name. The dev env was rebuilt
+on `83082f15` at 06:47 UTC; any session live at that moment relaunches.
