@@ -38,3 +38,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-09 — Who owns a half-delivered cast?](2026-11-09-who-owns-a-half-delivered-cast.md)
 - [2026-11-10 — What actually needs sealing?](2026-11-10-what-actually-needs-sealing.md)
 - [2026-11-11 — Does pending delivery survive all the way to the private sheet?](2026-11-11-following-pending-delivery-to-the-private-sheet.md)
+- [2026-11-11 — Which identity does the private sheet name?](2026-11-11-which-identity-does-the-private-sheet-name.md)
