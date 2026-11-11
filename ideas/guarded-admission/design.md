@@ -148,7 +148,7 @@ Settled 2026-11-11 (#924), two calls:
 Lead's assumption, open to veto: a waiting check whose speaker leaves Speak
 reach is closed, so an unanswered roll cannot hold the interaction's lines.
 
-### R6 — Permission is not knowledge — proposed
+### R6 — Permission is what a guard holds about a person — settled
 
 Private knowledge, current speaker, shared interaction progress, passage
 permission and physical placement have different owners. Granting passage
@@ -161,6 +161,31 @@ of the guards completing their relocation. Existing body occupancy,
 post-at-place rules, door crossings and movement remain authoritative; there
 is no invisible replacement wall. A new permission effect is not an excuse
 to read private progress from the API or infer it in the client.
+
+Settled 2026-11-11 (#925). The proposal above read as opening the gate to
+everyone; the ruling replaces "release the named posts":
+
+- **A member who took no part is not admitted out of hand.** They are
+  excluded deliberately, because they do not share what the others share.
+  "excluded deliberately because they don't share something is how these
+  systems connect."
+- **Admission is the guard recognising a group of people.** Hearing the
+  answer is not being recognised: a hidden listener does not pass.
+- **It is a relationship record: holder, subject, topic.** `play/intel` is
+  the store; a holding gains a topic so one holder can hold several things
+  about one subject. "We have the two at the outside edges and then a topic
+  that carries the relationship." History stays in the log.
+- **Admission writes one record for each party member the admitting guard
+  can see at that moment,** from his own point of view. Not taken: only the
+  speaker; whoever stands within the approach distance.
+- **Another guard recognises them only when it is shared with him.** "how
+  intel moves is up to us. What it means is what's important."
+- **A post's pass asks its holder,** not the walker: does the holder hold
+  the topic about this walker. The walker-knows-a-fact pass remains for
+  content that wants a password.
+
+Lead's assumption, open to veto: a guard at the gate who sees and hears the
+admission holds the same record through a heard channel.
 
 ### R7 — Consequences act on existing people — proposed
 
@@ -239,7 +264,7 @@ below; the area-or-intel boundary does not settle it by implication.
 | R3 | settled | One owner: the encounter-owned interaction on the existing machine is both conversation state and admission progress; its state gates replies, an answer advances it, the evaluated pool's revision is the versioned choice | KirkDiggler | 2026-11-10 |
 | R4 | settled | One addressee per interaction; approach is one authored distance inside Speak reach; the hail stops the walk and takes focus; bystanders listen through events | KirkDiggler | 2026-11-11 |
 | R5 | settled | A waiting check reserves the interaction: gated lines show pending to others, unrelated lines stay open; a reply from an older revision is refused, never re-read | KirkDiggler | 2026-11-11 |
-| R6 | open | Permission distinct from knowledge; integration with physical posts | — | — |
+| R6 | settled | Admission is a guard's intel record (holder, subject, topic) about each party member he can see; a post's pass asks its holder; others recognise only when it is shared; no blanket release | KirkDiggler | 2026-11-11 |
 | R7 | open | Existing-actor consequence lifecycle and captured arrest-set persistence | — | — |
 | R8 | open | Claim mapping and authored check-benefit boundaries | — | — |
 | R9 | open | Persistence, projections and inspection of shared progress | — | — |
