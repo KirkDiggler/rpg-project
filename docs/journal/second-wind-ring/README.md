@@ -39,3 +39,4 @@ mind/machine investigation is not a prerequisite or a shared-package decision.
 - [2026-11-10 — What actually needs sealing?](2026-11-10-what-actually-needs-sealing.md)
 - [2026-11-11 — Does pending delivery survive all the way to the private sheet?](2026-11-11-following-pending-delivery-to-the-private-sheet.md)
 - [2026-11-11 — Which identity does the private sheet name?](2026-11-11-which-identity-does-the-private-sheet-name.md)
+- [2026-11-11 — When does a dependency pin also select a castle?](2026-11-11-when-a-provider-pin-also-selects-content.md)
