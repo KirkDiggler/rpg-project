@@ -115,7 +115,7 @@ Lead's assumptions, open to veto: the hail requires the carrier to see the
 character; the address ends when the character is out of Speak reach or out of
 that carrier's sight.
 
-### R5 — A choice is validated and reserved before dice — proposed
+### R5 — A choice is validated and reserved before dice — settled
 
 The offered choice is the reply's option id and the evaluated pool's
 revision (R3). The toolkit revalidates recipient, target, phase, option, reach
@@ -130,6 +130,23 @@ Its settled verdict advances shared progress once. Another speaker cannot
 start a competing check against the same phase. Duplicate/stale requests
 cannot spend a second attempt or reroll a delivered result. This is not a
 promise of exactly-once host execution across a failed, uncommitted save.
+
+Settled 2026-11-11 (#924), two calls:
+
+- **While a check is waiting, gated lines show pending.** Lines whose
+  availability reads the interaction's progress evaluate Unknown for every
+  other speaker and are refused if sent; lines that do not read the
+  interaction stay open. "yeah A makes sense to me." Not taken: the whole
+  interaction goes busy; both roll and the later verdict is discarded.
+- **A reply from an old menu is refused, never re-read.** The castle's
+  `troupe` line is offered from `fresh` and from `warned-guest`, where a
+  failure is a warning and an arrest respectively; re-reading changes the
+  stakes after the player chose. "yeah we can refuse that. A works." Not
+  taken: accept when the id is still offered; refuse only when that line
+  changed.
+
+Lead's assumption, open to veto: a waiting check whose speaker leaves Speak
+reach is closed, so an unanswered roll cannot hold the interaction's lines.
 
 ### R6 — Permission is not knowledge — proposed
 
@@ -221,7 +238,7 @@ below; the area-or-intel boundary does not settle it by implication.
 | R2 | settled | Entrance/run attempt history and canonical admission consequences | KirkDiggler, canonical keep and #769 | 2026-10-31 |
 | R3 | settled | One owner: the encounter-owned interaction on the existing machine is both conversation state and admission progress; its state gates replies, an answer advances it, the evaluated pool's revision is the versioned choice | KirkDiggler | 2026-11-10 |
 | R4 | settled | One addressee per interaction; approach is one authored distance inside Speak reach; the hail stops the walk and takes focus; bystanders listen through events | KirkDiggler | 2026-11-11 |
-| R5 | open | Versioned choice, pending-check reservation and stale refusal | — | — |
+| R5 | settled | A waiting check reserves the interaction: gated lines show pending to others, unrelated lines stay open; a reply from an older revision is refused, never re-read | KirkDiggler | 2026-11-11 |
 | R6 | open | Permission distinct from knowledge; integration with physical posts | — | — |
 | R7 | open | Existing-actor consequence lifecycle and captured arrest-set persistence | — | — |
 | R8 | open | Claim mapping and authored check-benefit boundaries | — | — |
