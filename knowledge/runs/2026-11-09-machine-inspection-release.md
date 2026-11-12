@@ -1,5 +1,7 @@
 # Run — 2026-11-09 — machine inspection release
 
+processed: 2026-11-12T165555Z
+
 ## Shipped
 
 - Completed the inspection implementation through encounterv0.186.0 (`b1e3f202`), sessionv0.173.0 (`e107bcde`), API dev`cc5e07b4` and web dev`94358893`, on the official proto and released toolkit graph; consumer merge trees equal the tested candidates, with no main/production deployment — [release table](https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6752953576).
