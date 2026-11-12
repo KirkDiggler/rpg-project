@@ -1,5 +1,7 @@
 # Run — 2026-11-09 — machine inspection readiness
 
+processed: 2026-11-12T165555Z
+
 ## Shipped
 
 - Published the narrowly authorized proto#426 as official v0.1.263, adopted its generated bindings in API/web, and completed exact-wire QA and retained-reviewer closure; implementation PRs remain unmerged pending authorized inside-out release/re-pins — [final readiness](https://github.com/KirkDiggler/rpg-project/issues/898#issuecomment-6731477380).

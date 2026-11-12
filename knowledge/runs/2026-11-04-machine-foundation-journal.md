@@ -1,5 +1,7 @@
 # Run — 2026-11-04 — machine foundation journal adoption
 
+processed: 2026-11-12T165555Z
+
 Story [rpg-project#859](https://github.com/KirkDiggler/rpg-project/issues/859). Base: project main at [`5dda5ce`](https://github.com/KirkDiggler/rpg-project/commit/5dda5ce8bd1c800bcbe01ef7c018a2b9d72f896d). Documentation only.
 
 ## Shipped
