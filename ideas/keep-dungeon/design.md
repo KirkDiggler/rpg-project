@@ -349,8 +349,12 @@ and return control.
 The party keeps its equipment. Preserve existing characters, health and story
 state; place affected party members at distinct valid positions. Do not create
 a second prince. The same arrest destination applies to the barracks captain's
-arrest outcome. Exact wording and treatment of distant split-party members
-remain TBD.
+arrest outcome. At the front gate, affected party members are those in the
+entrance area **or** in the arresting guards' own intel, not the whole roster
+by default ([guarded admission R11](../guarded-admission/design.md#law)).
+Being outside the area is not an exemption when guard intel qualifies the
+character. The precise intel predicate, area boundary and transition wording
+remain to be specified; this ruling does not select barracks arrest membership.
 
 ## Prison and the rightful king
 
