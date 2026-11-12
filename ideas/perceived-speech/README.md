@@ -2,8 +2,8 @@
 
 This is the proposed ownership and flow for
 [perceived speech #930](https://github.com/KirkDiggler/rpg-project/issues/930).
-[The design](design.md) holds the law and which rows are settled; open rows
-are not implementation authority. [The slices](slices.md) carry the measured
+[The design](design.md) holds the law; a deferred row is not
+implementation authority. [The slices](slices.md) carry the measured
 starting point and the plan.
 
 ## What this is
@@ -42,7 +42,7 @@ Not in this story:
 - a player-to-player telling verb, free-typed speech or languages;
 - the shared-knowledge stop's targeting rules (designed in R12, shared knowledge at the party grain; built last);
 - narrowing the beats that still reach every member (the shelf
-  `audienceFor` keeps for rpg-toolkit#940), except a spoken pick's beat (R9: the record each utterance leaves).
+  `audienceFor` keeps for rpg-toolkit#940), except a spoken pick's beat (R9: a line teaches whoever catches its words).
 
 ## Component shape
 
@@ -121,7 +121,7 @@ the great hall, two rooms in, behind a closed door. The dial is at shared view.
    speak line's reach, and with passive Perception 13 against 5 + 5 notices a
    voice. Ash's version: place, one room, speak — no speaker, no words.
 3. **Answered.** The row fires. `answered` goes to those who see `gate-1`
-   (R9: the record each utterance leaves). `utter` for the shout: Bea sees `gate-1` and catches the words; Ash
+   (R9: a line teaches whoever catches its words). `utter` for the shout: Bea sees `gate-1` and catches the words; Ash
    catches the words (one room, open door) but does not see `gate-1`; Cole is
    two rooms plus a closed door (three) beyond a shout's reach of one, and
    with passive Perception 10 against 0 + 15 notices nothing.
@@ -190,7 +190,7 @@ Retirement, in protos' deprecate-don't-break form:
 | Old | Mark | Sent until |
 |---|---|---|
 | `SpeakAct` and `Act.speak = 24` | `option deprecated = true;` on the message, `[deprecated = true]` on the field | the web reads `Speech` (the wire slice) |
-| `TableAnswer.say = 6`, `TableAnswer.to = 13` | `[deprecated = true]` | same; `TableAnswer` stays for table arithmetic and temperament deals (Open) |
+| `TableAnswer.say = 6`, `TableAnswer.to = 13` | `[deprecated = true]` | same; `TableAnswer` stays for table arithmetic and temperament deals (R9, a line teaches whoever catches its words) |
 | `Sound.kind = "voice"` | a comment on `Sound.kind` naming `voice` retired for players (a string value carries no option) | same; NPC holdings keep the `voice` kind |
 
 While both are sent, the session builds each retired message from the same
@@ -244,7 +244,7 @@ line for a character who never heard it.
     bypassing rooms;
   - **Thieves' Cant and languages** split "caught the words" from "understood
     them": a words part present but unintelligible.
-- Speaking to a creature that cannot see the speaker stays refused (Open).
+- Speaking to a creature that cannot see the speaker stays refused (R13, speaking unseen stays refused).
 
 ## Refusals and costs by stop
 
@@ -281,7 +281,7 @@ and stores nothing.
 - **Deafened:** a sheet fact the encounter's utterance reads per observer; no
   wire change.
 - **A friend's sight on the map at shared view:** the session's `View`, not
-  the encounter (Open).
+  the encounter (R11, shared view shares what friends hear and notice: a later slice).
 - **Shared view for clangs and crashes:** the session merge already covers
   per-observer perception acts; nothing in the encounter moves.
 

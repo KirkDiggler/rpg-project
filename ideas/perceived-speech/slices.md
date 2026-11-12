@@ -96,7 +96,7 @@ interactions, scenarios and facts, and no encounter-wide setting today
 ### What contradicts a ruling or makes it expensive
 
 - **Reaction lines reach everyone** (`appendPickBeat` through `audienceFor`):
-  directly against R1 (sight tells who). R9 (the record each utterance leaves) narrows that one beat at its call site rather than
+  directly against R1 (sight tells who). R9 (a line teaches whoever catches its words) narrows that one beat at its call site rather than
   flipping the shelf for every beat.
 - **A creature's answer is audienced by who sees the player, not who
   perceives the creature**, and its fact teaches the same set. Every answer
@@ -107,182 +107,68 @@ interactions, scenarios and facts, and no encounter-wide setting today
 - **The #925 shout ruling put a shout's words on passive Perception**; R2 (reach by loudness)
   makes them flat by level. The design records the amendment.
 - **The ruling names `TableAnswer` retired**, but `TableAnswer` also carries
-  temperament deals and silent table picks; only its speech fields can retire
-  without losing those (Open).
+  temperament deals and silent table picks; only its speech fields retire
+  (R9, a line teaches whoever catches its words, lead's call).
 - **Speak refuses a target that cannot see the speaker** — eavesdropping on a
-  player is possible after this story, speaking unseen is not (Open).
+  player is possible after this story, speaking unseen is not (R13, speaking
+  unseen stays refused).
 - **Shared knowledge reaches every knowledge reader at once**: option
   requirements, machine `knows`, cells and concealments. It is the expensive
   stop, which is why it is built last.
 - **Unbounded partition search per sound**: harmless today, multiplied by
   every utterance after this story; the utterance search is bounded.
+- **The castle's alarm spreads by voice today**: `answerTime` teaches
+  `alarm-raised` to every passive-Perception hearer. Under R9 (a line teaches
+  whoever catches its words) it reaches only the words' reach, so the alarm
+  rows are authored `shout` in the first slice.
 
-## Open calls, with recommendations
+## Still open
 
-1. **What an NPC catches.** A: facts a line teaches, and recognition's `heard`
-   channel, go to whoever catches the words. B: keep the speaker's sight
-   witnesses (today). C: both. **Recommend A**: it is R1 (sight tells who) applied to minds;
-   the castle's alarm rows then need `loudness: shout` to reach the yard.
-2. **What shared view covers now.** A: speech and every per-observer
-   perception act (sounds, sightings, rolls) in the story. B: A plus the map —
-   a friend's sight on the board through `View`. C: speech only. **Recommend
-   A**, with B as its own slice after the castle if wanted.
-3. **What a player chooses when speaking.** A: the line's authored loudness.
-   B: the player picks a loudness per line. C: authored default the player
-   may change. **Recommend A** until a player-to-player telling verb brings
-   the use case.
-4. **Speaking to someone who cannot see you.** A: keep Speak's refusal.
-   B: admit a line to a target that catches the words. **Recommend A** for
-   this story; B with a use case.
-5. **Where a spoken pick's table arithmetic rides.** A: `TableAnswer` keeps
-   the pick's arithmetic (die, candidates, entry, temperament) for those who
-   see the creature; `say` and `to` retire; the speech carries the words and
-   the die. B: the speech carries the arithmetic too and `TableAnswer` stops
-   being sent for spoken picks. **Recommend A**: the decision is seen, the
-   words are heard, and silent picks keep one message.
-6. **Acting on what only a friend perceives** at shared knowledge: settled
-   with the slice that builds that stop, from its own measurement.
+- **Shared knowledge (R12, the party grain):** the fold and acting on what
+  only a friend perceives are settled with the shared-knowledge slice, from
+  its own measurement of every knowledge reader.
 
 ## Slices
 
 Toolkit is one module per PR. "Review" marks a slice that gets an independent
-review round.
+review round. The sub-issues of #930 carry the live checklists; this table is
+the plan they were cut from.
 
 | # | Deliverable | Repos and modules | Review |
 |---|---|---|---|
-| S1 | Words travel by loudness; each observer gets their version | toolkit `encounter`, then `session` | yes, both |
-| S2 | One speech message on the wire, and the client shows it | protos, toolkit `session`, api, web | yes, `session` |
-| S3 | The sharing dial: each their own, shared view | toolkit `encounter`, `session`; api; web studio | yes, `session` |
-| S4 | The gate guard shouts inside | toolkit `encounter` (castle content), session, api, web repins | no, unless it finds an engine gap |
-| S5 | Shared knowledge | toolkit `encounter`, `session`; web studio | yes, `encounter` |
+| S1 [#933](https://github.com/KirkDiggler/rpg-project/issues/933) | Words travel by loudness; each observer gets their version | toolkit `encounter` (with its `dungeonspec`), then `session`; api and web repin | yes, both |
+| S2 [#934](https://github.com/KirkDiggler/rpg-project/issues/934) | One speech message on the wire, and the client shows it | protos, toolkit `session`, api, web | yes, `session` |
+| S3 [#935](https://github.com/KirkDiggler/rpg-project/issues/935) | The sharing dial: each their own, shared view | toolkit `encounter`, `session`; api; web studio | yes, `session` |
+| S4 [#936](https://github.com/KirkDiggler/rpg-project/issues/936) | The gate guard's hint is a shout | toolkit `encounter` (castle content); session, api, web repins | no, unless it finds an engine gap |
+| S5 [#937](https://github.com/KirkDiggler/rpg-project/issues/937) | Shared knowledge | toolkit `encounter`, `session`; web studio | yes, `encounter` |
 
-### Perceived speech S1 — words travel by loudness; each observer gets their version
+**Words by loudness (S1)** — the engine's utterance: `loudness` compiled on
+options and answer rows; word reach over the wall partitions with a bounded
+search; the facet table; one speech beat per facet group under one utterance
+id; a voice for every line said, a player's included; a line's fact and
+recognition's `heard` channel to whoever catches the words; a spoken pick's
+`answered` beat to those who see the creature; the castle's `alarm-raised`
+rows authored `shout`. The session decodes speech beats into today's messages
+without leaking a part. Rulings: R1, sight tells who; R2, reach by loudness;
+R4, spoken-to is seen; R8, the encounter assembles each version; R9, a line
+teaches whoever catches its words; R10, the loudness is the author's.
 
-**What it is.** The engine's utterance: loudness on lines and answer rows,
-word reach over the wall partitions, the facet table, one speech beat per
-facet group with one utterance id, a voice for every line said.
+**The speech message (S2)** — `Speech`, `Loudness` and `Perceived` in protos;
+the session's speech act; the api conversion; every web renderer moved; the
+retired messages deprecated and then no longer sent. Rulings: R3, the roll
+travels with the words; R4, spoken-to is seen; R6, one speech message.
 
-**What it does when done.** A player beyond a speak line's room no longer
-reads its words because they could see the speaker; a guard's hail or bump
-answer no longer reaches players who neither see nor hear him; a player who
-catches words without sight is told a voice and no name through today's
-messages.
+**The sharing dial (S3)** — `party.sharing` authored in the studio and carried
+on the field data; the session's per-utterance merge over speech and every
+per-observer perception act at shared view; `Perceived.via`. Rulings: R5, the
+sharing dial; R10, the loudness is the author's (the dial's authored word);
+R11, shared view shares what friends hear and notice.
 
-**How it works.** R1 (sight tells who), R2 (reach by loudness), R4 (spoken-to is seen), R8 (the encounter assembles each version), R9 (the record each utterance leaves), R10 (loudness only). `encounter`:
-`dungeonspec` compiles `loudness`; `utter` replaces the answer and pick paths'
-direct audiences; a bounded partition search; `spoke` keeps the check; a
-spoken pick's `answered` goes to those who see the creature. `session`:
-decodes the speech beat into today's messages honestly (no `SpeakAct` or
-`TableAnswer.say` to a reader without sight and words; a voice `Sound` to one
-with words and no sight until S2 (the speech message on the wire)).
+**The gate shout (S4)** — the castle's gate guards answer the unrecognised
+speaker's plain line (added by rpg-project#932) with a hint that a friend can
+speak for them, authored `shout`, and the castle reads back. Rulings: R7,
+speech first, the gate shout; R14, the hint is the author's tool.
 
-**Done means.** Encounter and session merged on tags; api and web repinned on
-dev; tests for every row of the facet table, each loudness through open and
-closed doors, the addressee, a down member, a sneak-beaten watcher, the
-studio round-trip of `loudness`; looked at by the operator.
-
-**Verification checklist** (two clients, HTTPS).
-
-- [ ] A speaks to the gate guard; B stands one room away through an open door, in sight of A → B is not shown A's words or roll.
-- [ ] Same, B in A's room out of sight behind a pillar → B is shown a voice from A's place, no name.
-- [ ] B walks up to a guard and is hailed; A is two closed doors away → A is shown nothing of the hail.
-- [ ] A studio line marked `shout` saves, reloads and still reads `shout`.
-
-### Perceived speech S2 — one speech message on the wire, and the client shows it
-
-**What it is.** `Speech`, `Loudness`, `Perceived` in protos; the session's
-speech act; the api conversion; the web rendering; the old messages marked
-deprecated.
-
-**What it does when done.** Words heard without sight show as words from
-someone at a place; a roll heard without sight is "someone rolls 1"; the
-addressee is named only when seen; a bubble sits over a seen speaker, and a
-voice cue sits at the place of an unseen one.
-
-**How it works.** R3 (the roll travels with the words), R4 (spoken-to is seen), R6 (one speech message). Protos merge first (contract). The session emits
-`Speech` beside the retired messages; the web moves every renderer
-(`speechAtSpeakers`, `toastPolicy`, `describeAct`, `ConversationPanel`,
-`RecentActs`, `heardBeat`) to `Speech`; then the session stops sending the
-retired ones.
-
-**Done means.** Protos merged and released; session merged on a tag; api and
-web merged on dev; the retired messages no longer sent; looked at by the
-operator.
-
-**Verification checklist** (two clients, HTTPS).
-
-- [ ] A speaks a checked line to a guard; B is in the room out of sight → B's log shows the words and "someone rolled N", no name.
-- [ ] B steps into sight and A speaks again → B's log names A and shows the roll as A's.
-- [ ] A whispers a line to a guard beside them; B watches from across the room → B sees A whispering to the guard, no words, no roll.
-- [ ] A speaks to a guard B cannot see → B's line names no addressee.
-
-### Perceived speech S3 — the sharing dial: each their own, shared view
-
-**What it is.** `party: { sharing }` authored in the studio; the session's
-per-utterance merge at shared view; `Perceived.via`.
-
-**What it does when done.** At shared view (the default) a player is shown
-what any party member perceives, marked as shared by that friend; at each
-their own, only their own character's versions. No rule changes at either
-stop.
-
-**How it works.** R5 (the sharing dial), R10 (the dial), R11 (shared view in the session); the coverage per Open call 2.
-`encounter` carries the compiled setting on its field data; `session` reads
-it and merges party members' stories; web adds the dial to the encounter
-home and its round-trip test.
-
-**Done means.** Encounter and session merged on tags; api and web on dev;
-tests for the merge (parts unioned, own version preferred, `via` named),
-reload keeps the setting, a merged version never reaches `Afford` or
-`Speak`; studio round-trip; looked at by the operator.
-
-**Verification checklist** (two clients, HTTPS).
-
-- [ ] Shared view: A speaks to a guard while B is two rooms away → B is shown A's line and roll, marked shared by A.
-- [ ] Each their own (set in the studio): same → B is shown nothing.
-- [ ] Shared view: A overhears a line that unlocks a fact → B's Speak menu does not gain the line that fact unlocks.
-- [ ] The setting survives save, reload and a studio round-trip.
-
-### Perceived speech S4 — the gate guard shouts inside
-
-**What it is.** The castle's ask line for a straggler and the gate guard's
-shouted answer, the last bullet of rpg-project#929.
-
-**What it does when done.** B, a straggler at the gate, asks a guard to call
-inside; the guard shouts; A, admitted and out of sight in the yard, is shown
-the shouted words with no name, walks back and vouches.
-
-**How it works.** R2 (reach by loudness), R7 (speech first, the gate shout); S1 (words by loudness) to S3 (the sharing dial). Castle content only: the ask option on
-the gate guards, the answer row with `loudness: shout`; castle tests.
-
-**Done means.** Encounter merged on a tag (castle content and test); session,
-api, web repinned; looked at by the operator.
-
-**Verification checklist** (two clients, HTTPS).
-
-- [ ] B asks a gate guard to call inside; A is in the yard, out of sight → A is shown the shout's words with no name.
-- [ ] A is in the great hall behind a closed door → A is shown nothing.
-- [ ] A returns to the gate and vouches with B in the guard's sight → B walks through.
-
-### Perceived speech S5 — shared knowledge
-
-**What it is.** The dial's third stop: a party member's knowledge facts folded
-at the party's grain.
-
-**What it does when done.** At shared knowledge, a fact one member learns
-offers its lines to every member; at the other stops it does not; no guard,
-captain or other creature learns anything from the party's sharing.
-
-**How it works.** R12 (shared knowledge at the party grain) and Open call 6, settled first. `encounter` audiences
-learned facts, cells and pierced concealments to `FactionParty` when the
-field's dial is knowledge; `session` and web enable the third stop.
-
-**Done means.** Encounter and session merged on tags; api and web on dev;
-tests for every fold reader at each stop and for no change to non-party
-holdings; looked at by the operator.
-
-**Verification checklist** (two clients, HTTPS).
-
-- [ ] Shared knowledge: A learns the password from a guard's answer; B, elsewhere, is offered the password line at another guard.
-- [ ] Shared view: same → B is not offered it.
-- [ ] Shared knowledge: the guard who recognised A does not recognise B because of it.
+**Shared knowledge (S5)** — the third stop: a party member's knowledge facts
+folded at the party grain; targeting on a friend's sight settled first.
+Rulings: R5, the sharing dial; R12, shared knowledge at the party grain.

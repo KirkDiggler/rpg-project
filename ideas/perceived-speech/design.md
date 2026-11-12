@@ -18,7 +18,7 @@ flowchart TD
       Facets[Each observer's facets<br/>speaker? spoken-to? words? roll?]
       Facets --> Beats[One speech beat per facet group,<br/>one utterance id across all of them]
     end
-    Beats --> NPC[NPC hearers: the voice on the sounds channel,<br/>facts per the open question]
+    Beats --> NPC[NPC hearers: the voice on the sounds channel;<br/>facts to whoever caught the words]
     Beats --> Assemble
     subgraph session[session: a player's view]
       Assemble[Read the player's own story]
@@ -36,8 +36,9 @@ flowchart TD
 the operator's direction and every ruling's record. [The walkthrough](README.md)
 explains owners, the measured state today, the wire field by field and one
 utterance walked to the screen. [The slices](slices.md) are the working plan.
-Rows marked **settled** below are agreed law; rows marked **open** are this
-design's proposals, awaiting the operator, and are not implementation authority.
+Rows marked **settled** below are agreed law; a lead's call inside a row is
+law until the operator vetoes it. A deferred row is not implementation
+authority.
 
 ## Law
 
@@ -134,15 +135,15 @@ asks a gate guard to call inside; the guard shouts; a recognised friend in
 earshot catches the words, not who said them, and can come back and vouch
 (rpg-project#929).
 
-### R8 — The encounter assembles every observer's version — open
+### R8 — The encounter assembles every observer's version — settled
 
 The encounter computes, once per utterance, who sees the speaker, who catches
-the words, who only notices a voice and who sees the addressee, and appends one
-speech beat per distinct set of facets, each audienced to exactly the members
-that set describes (the per-reader shape the `sighted` and `recognized` beats
-already have). Every version of one utterance carries the same utterance id.
-A version never carries a part its readers did not perceive; absent is absent,
-never blanked.
+the words, who only notices a voice and who sees the addressee, and writes
+each observer exactly the parts their senses delivered (R1, sight tells who;
+R2, reach by loudness; R3, the roll travels with the words; R4, spoken-to is
+seen). Every version of one utterance carries the same utterance id. A version
+never carries a part its reader did not perceive; absent is absent, never
+blanked.
 
 | sees speaker | catches words | the version carries |
 |---|---|---|
@@ -152,48 +153,78 @@ never blanked.
 | no | no, but noticed | place, distance in rooms, loudness |
 | no | no, not noticed | nothing |
 
-Lead's assumptions, open to veto: the member a line is spoken to always catches
-its words (a line is only said within Speak reach); a whisper makes no sound
-anyone else notices; noticing difficulty by level is content tuned on the walk,
-starting at speak 5, shout 0, scream 0, one step of 5 per room as today.
+Lead's calls, open to veto: the versions are written as one speech beat per
+distinct set of parts, audienced to exactly the members that set describes
+(the per-reader shape of the `sighted` and `recognized` beats); the member a
+line is spoken to always catches its words (a line is only said within Speak
+reach); a whisper makes no sound anyone else notices; noticing difficulty by
+level is content tuned on the walk, starting at speak 5, shout 0, scream 0,
+one step of 5 per room as today.
 
-### R9 — The record each utterance leaves — open
+### R9 — A line teaches whoever catches its words — settled
 
-The `spoke` beat keeps the check and the deed for the verb; what any observer
-is told of the line moves to the speech beats. A creature's spoken answer or
-reaction stops writing its words onto a beat every member reads: the
-`answered` beat of a pick that says something is audienced to those who see
-the creature, and its words travel only on the speech beats. Non-player
-hearers keep holding a voice on the sounds channel, kind and place only, so
-every `heard: { kind: voice }` table keeps working. Every line said makes its
-voice, a player's included.
+A fact a spoken line teaches, and the `heard` channel of a recognition, reach
+the members the words reach, never those who only see the speaker. An alarm
+spreads to the next room only when it is shouted; the castle's alarm lines are
+authored `shout`. A creature's spoken answer or reaction stops writing its
+words onto a beat every member reads: the `answered` beat of a pick that says
+something reaches those who see the creature, and its words travel only in
+the speech versions. Non-player hearers keep holding a voice on the sounds
+channel, kind and place only, so every `heard: { kind: voice }` table keeps
+working. Every line said makes its voice, a player's included.
 
-### R10 — Authored loudness and the authored dial — open
+Lead's calls, open to veto: the `spoke` beat keeps the check and the deed for
+the verb; the arithmetic of a creature's pick (die, candidates, entry,
+temperament) stays on `TableAnswer` for those who see the creature, and only
+its speech fields (`say`, `to`) retire.
+
+### R10 — A line's loudness is the author's — settled
 
 A line's loudness is authored where its words are: on a creature's option and
 on an answer row's `say`, as `loudness: whisper | speak | shout | scream`.
-Unmarked is speak. The dial is authored once on the encounter document as
+Unmarked is speak. A player does not choose how loudly to speak in this story.
+The dial is authored once on the encounter document as
 `party: { sharing: own | view | knowledge }`; unmarked is view. The compiler
 refuses any other word. A whispered line is offered and admitted only from
 beside the member it is said to. The studio round-trips both fields.
 
-### R11 — Shared view is assembled where a player's view is read — open
+### R11 — Shared view shares what friends hear and notice — settled
 
-The session assembles a player's story from their own character's versions,
-and at shared view from every party member's versions, merged per utterance:
-each part present in any party member's version is present, and the Perceived
-part names the friends whose senses contributed. It never asks the encounter
-to widen an audience, and it never feeds a merged version back into any rule.
+Shared view covers speech and every per-observer perception act: sounds,
+sightings, discoveries, and the rolls that travel with words. A friend's sight
+drawn on the map is not part of this story. The session assembles a player's
+story from their own character's versions and, at shared view, every party
+member's versions, merged per utterance: each part present in any party
+member's version is present, and the Perceived part names the friends whose
+senses contributed. It never asks the encounter to widen an audience, and it
+never feeds a merged version back into any rule.
 
-### R12 — Shared knowledge folds facts at the party's grain — open
+### R12 — Shared knowledge folds facts at the party's grain — deferred until the shared-knowledge slice
 
 At shared knowledge, a fact a party member comes to know is a fact the party
 knows: the encounter audiences that member's knowledge facts (learned facts,
 learned cells, pierced concealments) to the party group, the knowledge model's
 group grain, so every party member's fold carries them. It never changes what a
 non-party member holds, never shares a character's live sight, and never moves
-an NPC's records. Acting on a creature only a friend can see is outside this
-ruling and returns to the operator with the slice that builds it.
+an NPC's records.
+
+Lead's call, open to veto: acting on a creature only a friend can see is
+settled with the slice that builds this stop, from its own measurement.
+
+### R13 — Speaking to a creature that cannot see you stays refused — settled
+
+Speak keeps refusing a line said to a creature that does not see the speaker.
+Overhearing an unseen speaker follows from R1 (sight tells who); addressing a
+creature from out of its sight waits for a use case.
+
+Lead's call, open to veto.
+
+### R14 — The hint is the author's tool — settled
+
+A shout is how an author gives a party a hint across rooms. In the castle, an
+unrecognised speaker at the gate has a plain line asking whether the guard saw
+their friends go in; the guard's answer hints that a friend can speak for them,
+and is a shout, so a friend inside catches the words and not who said them.
 
 ## Rulings
 
@@ -206,25 +237,16 @@ ruling and returns to the operator with the slice that builds it.
 | R5 | settled | One sharing dial per encounter: each their own / shared view (default) / shared knowledge; first two built in this story; party sharing never changes others' holdings | KirkDiggler | 2026-11-12 |
 | R6 | settled | One speech message with parts present or absent, plus a reusable Perceived part; other sounds keep `Sound`; old messages deprecated, not broken | KirkDiggler | 2026-11-12 |
 | R7 | settled | Speech goes in before more gate work; the castle's guard shouts inside for a straggler | KirkDiggler | 2026-11-12 |
-| R8 | open | The encounter appends one speech beat per facet group with one utterance id; addressee always catches; whisper makes no noticed sound; noticing DCs per level | — | — |
-| R9 | open | `spoke` keeps the check; a spoken pick's `answered` beat goes to who sees the creature; NPC hearers keep the voice on the sounds channel; a player's line makes a voice | — | — |
-| R10 | open | `loudness` on options and answer rows (default speak); `party.sharing` on the encounter (default view); studio round-trip for both | — | — |
-| R11 | open | Shared view is the session's per-utterance merge of the party's versions, read-only | — | — |
-| R12 | open | Shared knowledge audiences a party member's knowledge facts to the party group; never NPC holdings, never live sight | — | — |
+| R8 | settled | The facet table per observer, one utterance id; lead's calls open to veto: beat per facet group, addressee always catches, whisper unnoticed, noticing DCs per level | KirkDiggler (from R1–R4); lead's calls | 2026-11-12 |
+| R9 | settled | A line's fact and recognition's heard channel go to whoever catches the words; alarms shouted; a spoken pick's beat to who sees the creature; NPC voice holdings kept; lead's calls: `spoke` keeps the check, `TableAnswer` keeps pick arithmetic, only `say`/`to` retire | KirkDiggler; lead's calls | 2026-11-12 |
+| R10 | settled | Loudness is authored on options and answer rows (default speak), no player choice in this story; `party.sharing` on the encounter (default view); studio round-trip for both | KirkDiggler | 2026-11-12 |
+| R11 | settled | Shared view covers speech and every per-observer perception act, merged in the session, read-only; a friend's sight on the map is a later slice | KirkDiggler | 2026-11-12 |
+| R12 | deferred-until-the-shared-knowledge-slice | Shared knowledge audiences a party member's knowledge facts to the party group; targeting on a friend's sight settled with that slice | — | — |
+| R13 | settled | Speaking to a creature that cannot see the speaker stays refused in this story | lead's call, open to veto | 2026-11-12 |
+| R14 | settled | The castle hint: a plain line at the gate, answered by a shouted hint a friend inside catches | KirkDiggler | 2026-11-12 |
 
 ## Open
 
-- **What an NPC catches (R9: the record each utterance leaves):** whether a fact a spoken line teaches, and the
-  `heard` channel of recognition, reach those who catch the words rather than
-  those who see the speaker. Changes who learns an alarm in the castle.
-- **What shared view covers in this story (R11: shared view in the session):** speech and every
-  per-observer perception act only, or also the map a friend sees.
-- **What a player chooses when speaking (R10: authored loudness and dial):** the line's authored loudness
-  only, or a loudness the player picks per line.
-- **Speaking to someone who cannot see you:** Speak today refuses a line to a
-  creature that does not see the speaker; whether a line may be said to a
-  creature that would only hear it.
-- **Where a spoken pick's table arithmetic rides (R6, one speech message; R9, the record each utterance leaves):** on the retired
-  `TableAnswer` for those who see the creature, or inside the speech message.
-- **Acting on what only a friend perceives (R12: shared knowledge at the party grain):** targeting at shared
-  knowledge; settled with the slice that builds that stop.
+- **Shared knowledge (R12, the party grain):** the fold and acting on what only
+  a friend perceives are settled with the shared-knowledge slice, from its own
+  measurement of every knowledge reader.
