@@ -118,7 +118,13 @@ engine owns every piece; the client draws the zones it is sent.
 - **A win suppresses; nothing is erased (R11).** While a beaten verdict
   stands, `Reaches(watcher, mover)` answers false for that pair alone. The
   watcher's memory of the mover, if it has one, stays a ghost at the last
-  position it saw. The suppression is set on the reach the pass is handed,
+  position it saw: a creature's search reads that memory. A player's held
+  sighting of a member whose remembered cell that player can currently see
+  is held as known-of with no position (rpg-project#961). The player's own
+  look at the cell decides it, never where the subject stands, so a hidden
+  member standing on their own remembered cell gives nothing away. Nothing
+  is erased either way: the holding stays, and only the position is
+  withdrawn. The suppression is set on the reach the pass is handed,
   before any copy of it is taken. A lost verdict changes nothing: the watcher
   sees the mover and contact proceeds as today.
 - **Outside the zone, a sneaker is unseen by that watcher (R9, R14).** For a
