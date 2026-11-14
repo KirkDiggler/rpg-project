@@ -258,8 +258,12 @@ question.
 With totality in place, Kirk's tactic works without Hide doing anything special:
 
 1. **Turn the corner.** The monster's next observation of the corridor is total and you are not
-   in it — your live sighting fades to a ghost, and if the monster then *looks* at the place it
-   last saw you, the ghost is corrected rather than left standing.
+   in it — your live sighting fades to a ghost, and if the holder then *looks* at the place it
+   last saw you, the ghost is corrected rather than left standing. A player's ghost is corrected
+   by the perception pass itself, the moment the player sees the cell empty; a creature's is
+   corrected by walking there under its table, where a search that finds nothing ends in a
+   sighting known-of with no position. A witness who saw a member relocated away holds them
+   known-of with no position at once, player or creature.
 2. **Go stealth.** Hide's Stealth check is rolled against the passive Perception of everyone who
    currently holds **live** sight of you (`CurrentVia` non-empty). Break line of sight first and
    that set is empty — which is why auto-success is *correct* rather than a bug, once the empty
