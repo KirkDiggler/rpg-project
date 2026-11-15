@@ -1,6 +1,7 @@
 # Encounter studio — the selection inspector, the cast, and reading it back
 
-Walkthrough: [README.md](README.md). Epic: rpg-project#545. The authored
+Walkthrough: [README.md](README.md). Epic: rpg-project#545; places, ways and
+the engine's read-back: rpg-project#966. The authored
 document is the toolkit's single-room dialect
 (`rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec`, `SingleRoomSpec`); the
 castle use case it must carry is rpg-project#569. Per-placement looks reuse
@@ -10,19 +11,22 @@ castle use case it must carry is rpg-project#569. Per-placement looks reuse
 ## Shape
 
 Two surfaces edit one document. The map holds what is placed; the Encounter
-home holds what is placed nowhere. One inspector answers for whatever is
-selected, and a selection made on either surface is the selection on both.
+side holds the people and the places and what is placed nowhere (R28). One
+inspector answers for whatever is selected, and a selection made on either
+surface is the selection on both. What the studio says about the document, it
+says in the engine's sentences (R25).
 
 ```mermaid
 flowchart LR
-    subgraph Home[Encounter home: the unplaced]
+    subgraph Home[Encounter side: people and places]
         Cast[Cast]
-        Tables[Behavior tables]
         Factions[Factions]
         Disp[Dispositions]
+        Beh[Behaviours, seen and assigned]
+        Conv[Conversations]
         Intel[Intel]
         Endings[Endings and concealments]
-        Facts[Fact index, derived]
+        Threads[Hubs and their threads, derived]
     end
     subgraph Map[Map: the placed, Layout and 3D]
         Palette[Palette lists the cast]
@@ -39,8 +43,10 @@ flowchart LR
     Palette -->|drop stamps| Doc
     Insp -->|edit| Doc
     Home -->|edit| Doc
-    Doc -->|read-back prose| Insp
-    Doc --> Facts
+    Doc -->|the check, on each edit| Eng[Engine: compile and read-back]
+    Eng -->|sentences about the selection| Insp
+    Eng -->|joins and ways| Overview
+    Eng --> Threads
     Doc -->|Save and Play: the encoder's bytes| Reg[(API registry, by key)]
     Reg -->|refusals at the field| Insp
     Reg -->|StartEncounter key| Play[The running encounter]
@@ -86,12 +92,64 @@ flowchart LR
 | nothing | the room: size, default finishes, notes, party start |
 | wall | finish, endpoints, place a door |
 | door | open, closed or locked; the concealment that hides it |
-| placed cast member | read-back prose; look, facing, faction, table, says, holds |
-| prop | read-back prose; look, footprint, light, holds, options |
+| placed cast member | the engine's read-back; look, facing, faction, behaviour, says, holds |
+| prop | the engine's read-back; look, footprint, light, holds, options |
 | floor hex | region, lighting, exit |
 | group | members, ungroup, duplicate, delete |
 | label | text, cell |
 | party start | cell, move |
+| join | its kind and state; the ways through it |
+| hub | its thread: who teaches it, who asks it, what it wakes or opens |
+
+The engine says the document back; the studio shows it. One field on the
+check's response carries the read-back, and one map turns a file path into a
+selection for sentences, refusals, joins and threads alike.
+
+```mermaid
+flowchart LR
+    subgraph TK[rpg-toolkit, dungeonspec]
+        C[compile] --> RB[readback: sentences, each with a path and connections]
+        C --> J[joins: which places meet, by what, in what state]
+        J --> RB
+        RB --> H[hubs: facts and topics]
+    end
+    subgraph API[rpg-api, PutDungeon check only]
+        E[refusals]
+        A[atlas]
+        R[read-back]
+    end
+    RB --> R
+    H --> R
+    subgraph Web[rpg-dnd5e-web, encounter studio]
+        M[path to selection]
+        I[Inspector read-back]
+        P[Places view]
+        T[Threads]
+        N[Refusals, from anywhere]
+        B[Ways counted by method]
+    end
+    R --> I
+    R --> P
+    R --> T
+    R --> B
+    E --> N
+    M --- I
+    M --- P
+    M --- T
+    M --- N
+```
+
+The places view is the map at region scale with the encounter's web laid
+over it.
+
+| Word | What it is |
+|---|---|
+| place | a region |
+| join | where two places meet: a door, an opening with no door, open floor where one region runs into the next, or a passage that is not physical (a relocation, an arrest) |
+| state of a join | free, locked, held by a post, or hidden until something is known |
+| way | one means through a join: its method (a skill and its difficulty, something known, something carried, a fight), what it needs, and what failing does |
+| hub | a fact, a topic, an intel record or a concealment |
+| thread | what follows from a hub: who teaches it, who asks it, what it wakes or opens |
 
 A cast member is one document template plus studio defaults. Placing it
 stamps a declaration and a binding; only the template is followed by id.
@@ -113,10 +171,14 @@ flowchart LR
 - **The selection keys the inspector (R1).** Every editable field of a
   placed thing is reached by selecting it; there are no tool tabs that hold
   configuration. Why: the author is looking at the thing they mean to change.
-- **The unplaced live on the Encounter home (R2).** Cast, tables, factions,
-  dispositions, intel, endings and the fact index are edited there and named
-  from placements. Why: the dialect itself places them at the root because no
-  single placement owns them.
+- **The unplaced live on the Encounter side (R2, R28).** Cast, factions,
+  dispositions, intel, endings, conversations and behaviours are edited or
+  assigned there and named from placements. Why: the dialect itself places
+  them at the root because no single placement owns them.
+- **The Encounter side is people and places (R28).** It is organised by who
+  is in the encounter and where, never by the file's sections. Why: an author
+  thinks of the cook who knows something and the altar in the chapel, not of
+  a root key.
 - **A cast member is a template (R3).** The cast list is the document's
   `templates` plus studio defaults; there is no second creature list. The
   palette lists the cast. Placing writes a declaration whose ref names the
@@ -128,16 +190,59 @@ flowchart LR
   default look; each placement may override it; a shuffle varies the looks of
   one cast member's placements. Why: twelve guards are one stat block and
   twelve faces.
-- **Read-back is rendered from the document (R5).** A placed thing's
-  inspector opens with prose stating what it does on its time, what can be
-  said to it, and what it knows. Values come from the document; a missing
-  table is stated as the kind's default; engine laws are stated as laws, never
-  invented. Why: an author who cannot read back the configuration cannot trust
-  it.
-- **The fact index is derived (R5).** For every fact id the document
-  mentions, the home lists who writes it and who reads it. It stores nothing.
-  Why: facts are declared by mention, so only an index can show one that is
-  written and never read, or read and never written.
+- **Read-back heads the inspector (R5).** A placed thing's inspector opens
+  with prose stating what it does on its time, what can be said to it, and
+  what it knows. Why: an author who cannot read back the configuration cannot
+  trust it.
+- **The read-back is the engine's (R25).** The sentences are those of
+  `dungeonspec/readback`, said from the compiled result and carried on the
+  check the studio sends after each edit. The studio holds no copy of the
+  engine's rules and writes no sentence of its own about what will run. While
+  a draft does not compile, the inspector shows the sentences of the last
+  draft that did, marked as such, beside the refusal. Why: a second voice
+  falls behind the engine and then disagrees with it.
+- **One map from a path to a selection (R25).** A sentence, a refusal, a
+  join and a thread each carry the file path where the thing is set, in the
+  compiler's own form, and one map turns that path into a selection. Why:
+  four ways to land on a thing would be four maps to keep true.
+- **Hubs and threads are derived (R5, R32).** A hub is a fact, a topic, an
+  intel record or a concealment. Its thread lists who teaches it, who asks
+  it and what it wakes or opens, each a jump. A thread is never authored and
+  the studio stores nothing for it. Why: facts are declared by mention, so
+  only a derived view can show one that is taught and never asked, or asked
+  and never taught.
+- **A place is a region, and the engine says what joins it (R30).** Two
+  places meet by a door, an opening with no door, open floor, or a passage
+  that is not physical. A join has a state: free, locked, held by a post, or
+  hidden. A way through a join names its method, what it needs and what
+  failing does. All of it is derived by the engine from the running file;
+  nothing is authored for the picture. Why: an author checks that an
+  encounter offers several ways by different methods, and can only trust a
+  count the engine made.
+- **A join is a sentence (R31).** The engine says each join as a read-back
+  statement that connects two regions and whatever holds, locks or hides it.
+  The studio draws the places view from those connections. No geometry
+  message is added beside the atlas. Why: a second map of the site is a
+  second thing to keep true.
+- **The picture proves wiring (R30).** The places view shows that a way
+  exists and what it needs. Whether it works in play is proved by a walk or a
+  test, and the studio does not claim otherwise.
+- **Behaviour is a machine, built and then assigned (R26).** A creature's
+  inspector names the behaviour it runs and lets the author assign one. Named
+  tables and the `on`, `table` and `states` keys are not offered: the engine
+  refuses them. Building a behaviour has its own home and its own story. Why:
+  the engine runs machines, and a form that writes what the engine refuses is
+  a trap.
+- **Scenarios are not shown (R27).** The studio has no scenarios view. A file
+  that carries the key still round-trips.
+- **The file's `interactions` are Conversations (R29).** A conversation
+  remembers for the whole run, so one creature can act on what was said to
+  another. The screen never calls the wider set of things a player can do
+  "interactions".
+- **A primitive is shown once (R33).** A word that joins primitives to
+  achieve something is shown as that joining: an arrest is a relocation with a
+  message, reached from a conversation. Why: three forms for one act teach the
+  author three things where there is one.
 - **Humans place; configuration may be written by anyone (R6).** Layout,
   placement and looks are visual and human-authored. Tables, options, checks,
   factions and dispositions may be written by an agent. Every field an agent
@@ -156,10 +261,10 @@ flowchart LR
 - **The two surfaces point at each other (R11).** Selecting a cast member on
   the home selects its placements on the map, and selecting a placement
   highlights its cast member.
-- **Rows read heaviest first (R12).** The Tables form and every read-back
-  list a table's rows by weight, highest first, equal weights in authored
-  order, and the studio saves them in that order. Why: a heavy row in the
-  middle of a list is misread, and row order carries no meaning in the roll.
+- **Rows read heaviest first (R12).** Every list of weighted rows the studio
+  edits shows them by weight, highest first, equal weights in authored order,
+  and saves them in that order. Why: a heavy row in the middle of a list is
+  misread, and row order carries no meaning in the roll.
 - **The workspace grows up and to the right (R13).** The workspace grows up
   and to the right by default; the author may choose another side. No cell
   moves on any side, because the workspace carries explicit bounds. Why: a
@@ -193,6 +298,10 @@ flowchart LR
   jump that selects it and opens its inspector. One that maps to nothing stays
   a sentence under the Save group. Why: the author fixes the thing, not the
   path.
+- **A refusal is seen from anywhere (R34).** The header counts the current
+  refusals on every home and view, and each is shown in the engine's words at
+  the field that caused it. Why: a draft the engine refuses must not look
+  healthy until Save is opened.
 - **The studio says why it cannot (R18).** With authoring disabled on the
   server the control is present and disabled with that reason. Without a
   character picked on Home, Play is disabled with that reason. The studio does
@@ -259,17 +368,17 @@ flowchart LR
 | ID | status | scope | ruled by | date |
 |---|---|---|---|---|
 | R1 | settled | one inspector keyed by the selection; Arrange, Walls, Doors and Notes tabs retire; N toggles the inspector, clicking a thing opens it | operator | 2026-10-14 |
-| R2 | settled | the unplaced (cast, tables, factions, dispositions, intel, fact index) live on the Encounter home | operator | 2026-10-14 |
+| R2 | settled | the unplaced (cast, factions, dispositions, intel, endings, conversations, behaviours) live on the Encounter side (amended 2026-11-15: tables left with R26, the fact index became hubs and threads with R32, the grouping is R28) | operator | 2026-10-14 |
 | R3 | settled | cast replaces Creatures and Stat blocks; cast member = template plus studio defaults; palette lists the cast; template followed by id, stamped faction and look not | operator | 2026-10-14 |
 | R4 | settled | looks vary per placement; the cast member carries the default; a shuffle varies one cast member's placements | operator | 2026-10-14 |
-| R5 | settled | read-back prose heads a placed thing's inspector; fact index on the home; kind default and engine laws stated, not invented | operator | 2026-10-14 |
+| R5 | settled | read-back prose heads a placed thing's inspector (amended 2026-11-15: whose sentences they are is R25; the fact index is R32) | operator | 2026-10-14 |
 | R6 | settled | humans own layout and placement; an agent may write configuration; the studio lets a human read it back | operator | 2026-10-14 |
 | R7 | settled | Layout overview: placed nouns in 2D, one colour per region, room list that frames and sizes; shared-wall doors between separate rooms out of scope | operator | 2026-10-14 |
 | R8 | settled | exits, endings, concealments and door state get studio views | operator | 2026-10-14 |
 | R9 | settled | the inspector shows one thing; Shift-pick for the group gesture keeps working, and a group is one thing with its own view; multi-select as an editing mode waits for a use case (amended 2026-10-14: grouping already needs a multi-pick, epic #545 keeps grouping) | operator | 2026-10-14 |
 | R10 | settled | the screen does not say single room; the dialect's name stays in code; the on-screen word is undecided | operator | 2026-10-14 |
 | R11 | settled | selecting a cast member on the home selects it on the map, and the reverse | operator | 2026-10-14 |
-| R12 | settled | table rows display and save heaviest first, ties in authored order | operator | 2026-10-14 |
+| R12 | settled | weighted rows display and save heaviest first, ties in authored order (amended 2026-11-15: the Tables form left with R26; the rule holds for every row list that remains) | operator | 2026-10-14 |
 | R13 | settled | default growth up and right; any side choosable; no cell moves, no warning (amended 2026-10-14: the plan found explicit bounds make the warning never true) | operator | 2026-10-14 |
 | R14 | settled | props have a look per placement: the catalog variant; the shuffle stays with cast members | operator | 2026-10-14 |
 | R14b | deferred-until-look-catalog | per-prop surface material and provider-published look choices; picker is rpg-dnd5e-web#1268 | operator | 2026-10-14 |
@@ -283,11 +392,31 @@ flowchart LR
 | R22 | settled | `RenameDungeon{key, new_key}` on the world store, atomic, refused when `new_key` is taken in the world, shipped or outside the grammar; `DeleteDungeon{key}` on the world store; both refused with the another-member sentence for anyone but the owner; references are neither renamed nor deleted (owner checked on each record) | operator | 2026-10-15 |
 | R23 | settled | multi-room-dialect references are removed from the studio Open panel and the lobby picker; their files, the lobby default and launch by key stay until rpg-api#1105 | operator | 2026-10-15 |
 | R24 | settled | the Open panel beside Save and Play lists This world (every world encounter, owner shown, the caller's own marked Mine) and References and opens through the draft-file import; one's own seeds its key as saved; another member's or a reference opens as a copy, a fresh key and no remembered save; the lobby picker lists the world's encounters; Save and Play unchanged (amended 2026-10-15: the world's encounters are listed) | operator | 2026-10-15 |
+| R25 | settled | the inspector's read-back is `dungeonspec/readback`'s, carried on the validate-only PutDungeon; the studio's own renderer retires; a draft that does not compile shows the last compiling draft's sentences beside the refusal; one path-to-selection map serves sentences, refusals, joins and threads | operator | 2026-11-15 |
+| R26 | settled | named tables and the `on`/`table`/`states` forms retire; behaviour is a machine that is built, then assigned; this design shows and assigns one, building is a separate story | operator | 2026-11-15 |
+| R27 | settled | the Scenarios view is removed; the key still round-trips | operator | 2026-11-15 |
+| R28 | settled | the Encounter side is people and places, not the file's sections | operator | 2026-11-15 |
+| R29 | settled | the file's `interactions` are called Conversations on screen | operator | 2026-11-15 |
+| R30 | settled | a place is a region; a join is a door, an opening, open floor or a non-physical passage, with a state (free, locked, held, hidden); a way names method, need and failure; all derived by the engine; the picture proves wiring, not play | operator | 2026-11-15 |
+| R31 | settled | the engine says each join as a read-back statement connecting two regions and what holds, locks or hides it; one new field on the wire; no geometry message beside the atlas | operator | 2026-11-15 |
+| R32 | settled | hubs (facts, topics, intel records, concealments) and their threads are derived, never authored, never stored | operator | 2026-11-15 |
+| R33 | settled | a primitive is shown once; a word that joins primitives is shown as that joining; whether the engine folds `relocate`, `jail` and `arrest` is outside this design | operator | 2026-11-15 |
+| R34 | settled | the current refusals are counted in the header on every home and view and shown in the engine's words at the field | operator | 2026-11-15 |
 
 ## Open
 
 - **The document's on-screen word.** Encounter, site and room all appear
   today; the screen needs one.
+- **The on-screen words for place, join, way, hub and thread.** The design
+  uses them; the screen's words are not chosen.
+- **The read-back's size on the wire.** The castle's read-back is 642
+  statements. Whether every check carries all of it, or a check carries what
+  changed, is settled by measuring the first slice.
+- **Open floor and a doorless gap.** Both show as two regions sharing a
+  partition; telling them apart needs the wall and opening geometry, and
+  whether the author needs them told apart is unsettled.
+- **The behaviour builder.** Its own story; this design gives a behaviour a
+  place to be seen and assigned (R26).
 - **Region lighting in play.** Play lights every derived region at full
   intensity with one archetype; whether an authored region's lighting should
   reach play is unsettled and separate from the look catalog (R19).

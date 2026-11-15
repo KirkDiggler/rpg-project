@@ -1,7 +1,9 @@
 # Encounter studio — walkthrough
 
 Law: [design.md](design.md). Epic: rpg-project#545. Use case it must carry:
-rpg-project#569 (the mad king's castle).
+rpg-project#569 (the mad king's castle). Places, ways and the engine's
+read-back: rpg-project#966, walked in
+[its own section](#places-ways-and-the-engines-read-back-r25r34).
 
 ## What this is
 
@@ -11,7 +13,8 @@ It reuses the single-room dialect unchanged: every form below writes a key
 that `SingleRoomSpec` already declares, and the only studio-owned data is
 presentation the dialect carries opaquely (`room.scene`). It introduces **no
 second creature list, no second fact store and no studio-side rules**: the
-read-back renders the document, and the fact index is computed from it.
+read-back is the engine's (R25), and hubs and their threads are computed from
+it (R32).
 
 The server keeps two stores behind one registry: the shipped references,
 which no author can write, and a world store per Discord server, which
@@ -72,9 +75,13 @@ flowchart LR
 | Component | Owns | Input → output | Authored by (R6) |
 |---|---|---|---|
 | Encounter home forms | Editing the unplaced: `templates`, `tables`, `factions`, `dispositions`, `intel`, `endings`, `concealments` | form edit → one draft change per commit | either |
-| Fact index | Nothing stored; a derived list | draft → `{fact, writers[], readers[]}` per mentioned fact id | derived |
+| Hubs and threads (R32) | Nothing stored; a derived view | the read-back's `topic.*` and `fact.*` statements → per hub: taught by, asked by, wakes, each with its path | derived |
+| Engine read-back (R25) | Every sentence about what will run | file bytes → `ReadBack{sections[]{groups[]{statements[]}}}`, each `Statement{kind, about{kind,id}, sentence, path, connects[]{kind,id,role}}`; refuses a file the compiler refuses | derived |
+| Joins (R30, R31) | Which places meet, by what, in what state | compiled site → one `place.join` statement per join, connecting two regions and the door, post or concealment on it | derived |
+| Places view (R30) | Drawing regions, joins and the ways through a join | read-back statements → region nodes at their map positions, a mark per join by kind and state; click a join → its ways | derived |
+| Path to selection (R25) | Turning a file path into the thing to select | `room.room.monsterBindings.gate-1.options[0]…` → `{kind, id}` or a home section | none |
 | Inspector | Editing the one selected thing's fields | selection `{kind, id}` + draft → field edits on that thing's declaration and binding | per field, see the forms |
-| Read-back renderer | Prose for a placed thing | draft + selection → sentences; names the kind's default, states engine laws | derived |
+| Read-back renderer | Showing the engine's sentences about the selection | read-back + selection `{kind, id}` → the statements whose `about` is that thing, connections as jumps | derived |
 | Layout overview | Showing placed nouns and regions in 2D | draft → region fills, placement glyphs, room list with sizes; click → selection | human |
 | Palette | Listing the cast; dropping one | cast member id + cell → `monsterDeclarations[]` entry + `monsterBindings.<id>` | human |
 | Document encode and decode | The file round trip | draft ↔ YAML/JSON of `SingleRoomSpec` | none |
@@ -92,11 +99,19 @@ The refusals, one per boundary:
 - **The inspector does not edit another selection's fields.** A faction's
   table is edited on the Factions form, never from a member's inspector; the
   member's inspector links to it.
-- **The read-back does not simulate.** It never rolls, never guesses what an
-  undeclared default table contains, and never paraphrases a law the engine
-  does not document. A value absent from the document is said to be absent.
-- **The fact index does not declare facts.** It has no key in the document;
-  a fact exists because something mentions it.
+- **The studio writes no sentence about what will run.** The renderer
+  filters and lays out the engine's statements; it does not reword, extend or
+  correct them, and it holds no copy of an engine rule (R25).
+- **The engine's read-back does not simulate.** It says the compiled result;
+  it never rolls and never plays a turn. What the file authors and it cannot
+  yet say is listed as not yet said, never skipped.
+- **A thread does not declare a hub.** It has no key in the document; a fact
+  exists because something mentions it (R32).
+- **The places view does not judge.** It draws the joins the engine says and
+  counts the ways the engine lists. It does not decide that an encounter is
+  balanced, and it does not claim a way works in play (R30).
+- **The joins do not add a map.** A join is a statement with connections;
+  cells and outlines stay in the atlas and the draft (R31).
 - **The overview does not derive membership.** A region fill is an
   annotation; a creature inside a coloured area is not "in" that region for
   any rule.
@@ -410,6 +425,105 @@ The same document gives the fact index these rows, among others:
 | king-burned-village | cook: ashford; intel cooks-ledger | captain: turn |
 | alarm-raised | gate-patrol, keep-patrol | gate-patrol, keep-patrol; reserve-1, reserve-2 arrive |
 | king-is-cultist | altar: examine | nothing, marked |
+
+## Places, ways and the engine's read-back (R25–R34)
+
+### Click the captain
+
+1. The author edits the draft. 400 ms later the studio sends the bytes to
+   `PutDungeon` with `validate_only`, as it already does.
+2. The api compiles them. With no refusals it calls the engine's read-back on
+   the same bytes and returns it beside the atlas.
+3. The author clicks the Guard Captain. The inspector takes the statements
+   whose `about` is `{creature, captain}` and shows them in order: who he is
+   and how his side stands, the routine he runs and its states, what can be
+   said to him, what he holds.
+4. A sentence names the fact `guards-turned`. Its connection carries
+   `{fact, guards-turned}`; clicking it opens that hub's thread.
+5. The author breaks the draft. The check returns refusals and no read-back.
+   The inspector keeps the last sentences, marked as from the last draft
+   that compiled, and the header's count goes to one.
+
+### The gate, as a join
+
+1. The engine finds that the Gatehouse and the Courtyard meet at the door
+   `gate-wall-door`, and says so in one `place.join` statement connected to
+   both regions and the door.
+2. The door's own statements already say it starts closed and is held by the
+   posts of three creatures, each letting through whoever it recognises as
+   `admitted`.
+3. The places view draws the join as held. Clicking it lists the ways: every
+   line that grants `admitted` (the troupe claim, the guest claim, vouching,
+   the straggler), each with its check, what it requires and what a miss
+   does; the arrest that sets the party down in the Cells; and the fight.
+4. The grate is a join of another kind: a passage from the Kitchen to the
+   Chapel and the Cells, hidden by the concealment `kitchen-passage`, whose
+   thread names who tells it.
+
+### Separations that look like one thing
+
+| Query | Source of truth |
+|---|---|
+| What a creature will do | the engine's read-back of the compiled file |
+| What the draft says right now | the draft; it may not compile |
+| Which places meet | the engine's joins, never the web's region-touching used for colours |
+| Where a region is drawn | the draft's regions and the atlas |
+| Whether a way exists | the read-back's connections |
+| Whether a way works in play | a walk or a test |
+| A conversation | the file's `interactions`: one remembered state for the run |
+| What a player can do to a thing | its lines and options; there is no stored list |
+
+**The hazard is drawing a join from what looks adjacent.** Two regions whose
+cells touch are neighbours for a colouring and may have a wall between them;
+only the engine's partition of the floor says they meet.
+
+### Trade-offs
+
+| Decision | Benefit | Cost / boundary | Not taken |
+|---|---|---|---|
+| The engine's read-back (R25) | one voice; a new engine word is said the day the engine can say it | nothing is said about a draft that does not compile; the check's response grows | keeping the studio's renderer and teaching it each new word by hand |
+| The read-back rides the check (R25) | no new call, and it is always the read-back of the bytes just checked | every check pays for the read-back | a call made on demand per selection, which must resend the file |
+| Joins as sentences (R31) | one field on the wire; the studio draws from connections it already follows | the places view takes positions from the draft, not from the join | a join message with cells, a second map beside the atlas |
+| Derived threads (R32) | nothing to keep true | a story has no name; it is found from its hub | an authored story list, which the dialect has no key for |
+| People and places (R28) | the author finds things the way they think of them | the file's sections are no longer the screen's sections | twelve tabs, one per root key |
+| Tables retire (R26) | the studio cannot write what the engine refuses | a file with named tables is carried, not edited | keeping the Tables form beside the machine |
+| The picture proves wiring (R30) | the count is exact and instant | an author may read "a way exists" as "a way works" | simulating play in the studio |
+
+### Edges
+
+- **A draft that has never compiled.** There is no read-back to show; the
+  inspector says so and shows the refusals.
+- **A file older than the site dialect.** The engine's read-back refuses it;
+  the studio says the read-back is not available for that file.
+- **A region no join reaches.** It is drawn with no joins; the places view
+  marks it.
+- **A join with no way.** A locked door with no approach, or a post whose
+  pass nothing grants, is drawn as held or locked with an empty list.
+- **A relocation into a region.** It is a passage with one direction; it has
+  no mark on the floor until the prop or line that carries it is selected.
+- **A file that carries `tables` or `scenarios`.** Both ride through a save
+  untouched and neither has a view (R26, R27).
+
+### Where a change lands
+
+- **A new engine word.** The read-back package says it; the studio shows it
+  with no change, and gains a form only when the word is to be edited.
+- **A new kind of join.** One statement kind in the engine, one mark in the
+  places view.
+- **The behaviour builder.** A new home on the Encounter side; the inspector's
+  assign control and the read-back are unchanged.
+
+### Source map
+
+| Concern | Path |
+|---|---|
+| Read-back | toolkit `rulebooks/dnd5e/encounter/dungeonspec/readback` (`Of`, `ReadBack`, `Statement`, `Connection`; hubs in `hubs.go`) |
+| Floor partition and door crossings | toolkit `rulebooks/dnd5e/encounter` (`PartitionFloor`, `Atlas().Doorways`) |
+| The check | protos `dnd5e/api/authoring/v1alpha1/service.proto` (`PutDungeonResponse`), api `internal/dungeons/registry.go` (`compileEntry`) |
+| Path to selection | web `encounter-studio/refusalJump.ts` |
+| Inspector read-back | web `encounter-studio/ReadBack.tsx`; the retiring renderer is `world-building/readBack.ts` |
+| Region outlines and the room list | web `encounter-studio/{RegionBoundaryOverlay.tsx,LayoutRoomList.tsx}` |
+| Encounter side sections | web `encounter-studio/EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS`) |
 
 ## Separations that look like one thing
 
