@@ -232,6 +232,12 @@ flowchart LR
   remembers for the whole run, so one creature can act on what was said to
   another. The screen never calls the wider set of things a player can do
   "interactions".
+- **A built piece is named, used and filled in (R35).** Whatever an author
+  builds once and uses many times (a cast member, a behaviour, a bundle, a
+  conversation) is shown as a named piece with where it is used, and whatever
+  it needs filled in is shown as a form. Why: a piece that reads the same on
+  every shelf can later be kept on a world's shelf without a second design
+  (rpg-project#977).
 - **A primitive is shown once (R33).** A word that joins primitives to
   achieve something is shown as that joining: an arrest is a relocation with a
   message, reached from a conversation. Why: three forms for one act teach the
@@ -395,6 +401,7 @@ flowchart LR
 | R32 | settled | hubs (facts, topics, intel records, concealments) and their threads are derived, never authored, never stored | operator | 2026-11-15 |
 | R33 | settled | a primitive is shown once; a word that joins primitives is shown as that joining; whether the engine folds `relocate`, `jail` and `arrest` is outside this design | operator | 2026-11-15 |
 | R34 | settled | the current refusals are counted in the header on every home and view and shown in the engine's words at the field | operator | 2026-11-15 |
+| R35 | settled | a built piece is shown as a named thing with where it is used; what it needs filled in is a form; this is what the design keeps open for a world's shelf of pieces (rpg-project#977), which it does not build | operator | 2026-11-15 |
 
 ## Open
 
