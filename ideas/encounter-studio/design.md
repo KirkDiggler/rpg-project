@@ -43,10 +43,8 @@ flowchart LR
     Palette -->|drop stamps| Doc
     Insp -->|edit| Doc
     Home -->|edit| Doc
-    Doc -->|the check, on each edit| Eng[Engine: compile and read-back]
-    Eng -->|sentences about the selection| Insp
-    Eng -->|joins and ways| Overview
-    Eng --> Threads
+    Doc -->|the engine's read-back| Insp
+    Doc --> Threads
     Doc -->|Save and Play: the encoder's bytes| Reg[(API registry, by key)]
     Reg -->|refusals at the field| Insp
     Reg -->|StartEncounter key| Play[The running encounter]
@@ -101,42 +99,37 @@ flowchart LR
 | join | its kind and state; the ways through it |
 | hub | its thread: who teaches it, who asks it, what it wakes or opens |
 
-The engine says the document back; the studio shows it. One field on the
-check's response carries the read-back, and one map turns a file path into a
-selection for sentences, refusals, joins and threads alike.
+The engine says the document back one statement at a time, on the check the
+studio sends after each edit. A statement has four parts, and each part is
+what one piece of the studio reads.
 
 ```mermaid
 flowchart LR
-    subgraph TK[rpg-toolkit, dungeonspec]
-        C[compile] --> RB[readback: sentences, each with a path and connections]
-        C --> J[joins: which places meet, by what, in what state]
-        J --> RB
-        RB --> H[hubs: facts and topics]
-    end
-    subgraph API[rpg-api, PutDungeon check only]
-        E[refusals]
-        A[atlas]
-        R[read-back]
-    end
-    RB --> R
-    H --> R
-    subgraph Web[rpg-dnd5e-web, encounter studio]
-        M[path to selection]
-        I[Inspector read-back]
-        P[Places view]
-        T[Threads]
-        N[Refusals, from anywhere]
-        B[Ways counted by method]
-    end
-    R --> I
-    R --> P
-    R --> T
-    R --> B
-    E --> N
-    M --- I
-    M --- P
-    M --- T
-    M --- N
+    S[One statement] --> Ab["about: the creature captain"]
+    S --> Se["sentence: the engine's words"]
+    S --> Pa["path: where in the file it is set"]
+    S --> Co["connects: the fact guards-turned"]
+    Ab -->|chooses what the inspector shows| Insp[Inspector of the selected thing]
+    Se --> Insp
+    Pa -->|a click selects the thing| Sel((Selection))
+    Co -->|a click opens| Th[The hub's thread]
+    Co -->|two regions and a door draw| Jn[A join on the places view]
+```
+
+A join is one such statement. The front gate, as the castle runs:
+
+```mermaid
+flowchart LR
+    G[Place: Gatehouse] --- J{{"Join: the gate door, held by three posts"}}
+    J --- C[Place: Courtyard]
+    J --> W1["Way: the troupe claim. Performance 13 or Deception 15"]
+    J --> W2["Way: the guest claim. Persuasion 11"]
+    J --> W3["Way: vouched for by someone admitted"]
+    J --> W4["Way: the fight"]
+    F((Hub: feast-tonight)) -.->|needed by| W1
+    W1 -.->|two misses| Ar["Passage: arrest"]
+    W2 -.->|two misses| Ar
+    Ar --> Ce[Place: Cells]
 ```
 
 The places view is the map at region scale with the encounter's web laid
