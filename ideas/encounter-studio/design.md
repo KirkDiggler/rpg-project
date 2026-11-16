@@ -5,8 +5,7 @@ the engine's read-back: rpg-project#966. The authored
 document is the toolkit's single-room dialect
 (`rpg-toolkit/rulebooks/dnd5e/encounter/dungeonspec`, `SingleRoomSpec`); the
 castle use case it must carry is rpg-project#569. Per-placement looks reuse
-[npc-appearance-ref](../npc-appearance-ref/design.md); tables are
-[creature-table](../creature-table/design.md)'s.
+[npc-appearance-ref](../npc-appearance-ref/design.md).
 
 ## Shape
 
@@ -96,12 +95,13 @@ flowchart LR
 | group | members, ungroup, duplicate, delete |
 | label | text, cell |
 | party start | cell, move |
-| join | its kind and state; the ways through it |
+| join | its kind and its bars; the ways that lift each bar |
 | hub | its thread: who teaches it, who asks it, what it wakes or opens |
 
 The engine says the document back one statement at a time, on the check the
-studio sends after each edit. A statement has four parts, and each part is
-what one piece of the studio reads.
+studio sends after each edit. A statement has a kind and four parts. The
+kind tells the studio what sort of thing is said (a join, a way, a line),
+and each part is what one piece of the studio reads.
 
 ```mermaid
 flowchart LR
@@ -126,7 +126,9 @@ flowchart LR
     B --> W1["Way: the troupe claim. Performance 13 or Deception 15"]
     B --> W2["Way: the guest claim. Persuasion 11"]
     B --> W3["Way: vouched for by someone admitted"]
+    B --> W6["Way: the straggler's own case. Persuasion 13 or Deception 15"]
     B --> W5["Way: stand aside. Intimidation 14"]
+    B --> W7["Way: turning the garrison. Persuasion 15"]
     B --> W4["Way: the fight"]
     F((Hub: feast-tonight)) -.->|needed by| W1
     W1 -.->|two misses| Ar["Passage: arrest, taken on going quietly"]
@@ -142,7 +144,7 @@ over it.
 | place | a region |
 | join | where two places meet: a door, an opening with no door, open floor where one region runs into the next, or a passage that is not physical (a relocation, an arrest) |
 | bar | what stops a walker at a join: a lock, a hold by posted holders, or being hidden. A join has none, one or several |
-| way | one means of lifting one bar: its method (a skill and its difficulty, something known, something carried, a fight), what it needs, and what failing does. A walker is through when every bar is lifted |
+| way | one means through a join: its method (a skill and its difficulty, something known, something carried, a fight), what it needs, and what failing does. A way lifts one bar, or lifts none where the join has no bar (it is free) or the way is the passage itself. A walker is through when every bar is lifted |
 | partial way | something that lifts a bar for some holders and not all; it helps and is not counted as a way |
 | sight seam | two places that see each other where no member can step across; not a join |
 | hub | a fact, a topic, an intel record or a concealment |
@@ -220,14 +222,16 @@ flowchart LR
   one to the other. Where sight crosses and feet do not, the engine says a
   sight seam, which is not a join; where feet cross and sight does not, it is
   a join whose sentence says sight is blocked. Why: a way is a way through.
-- **A bar stops a walker; a way lifts one bar (R39).** A join is barred by a
+- **A bar stops a walker; a way lifts it (R39).** A join is barred by a
   lock, by a hold of posted holders, or by being hidden, and may carry
-  several. A way lifts exactly one bar, and a walker is through when every
-  bar is lifted. A way past holders reaches every holder and meets each
-  holder's whole pass, as the engine judges a pass. What lifts a bar for some
-  holders only is a partial way and is never counted. A bar nothing lifts is
-  said. Why: a locked and guarded door is one obstacle with two parts, and a
-  list that reads either part as enough is false.
+  several. A way lifts one bar, and a walker is through when every bar is
+  lifted; a free way and the passage itself lift none. A hold is lifted for
+  every holder or not at all: by meeting each holder's whole pass, as the
+  engine judges a pass, by drawing every holder off its post, or by the
+  fight. What lifts it for some holders only is a partial way and is never
+  counted. A bar nothing lifts is said. Why: a locked and guarded door is one
+  obstacle with two parts, and a list that reads either part as enough is
+  false.
 - **The engine says the ways (R39).** Each way is a read-back statement
   connected to its join, the bar it lifts, what carries it, what it needs and
   its method, with a check's difficulty as a number. The studio groups a
@@ -320,7 +324,7 @@ flowchart LR
   keys for one draft is two files, and a play-tweak-play loop must not ask
   every time.
 - **A refusal lands at the thing (R17).** A server refusal whose field path
-  maps to a placed thing, a cast member, a table, a faction or a door becomes a
+  maps to a placed thing, a cast member, a faction or a door becomes a
   jump that selects it and opens its inspector. One that maps to nothing stays
   a sentence under the Save group. Why: the author fixes the thing, not the
   path.
@@ -331,7 +335,7 @@ flowchart LR
   needs room, and a layout preference is not content.
 - **A refusal is seen from anywhere (R34).** The header counts the current
   refusals on every home and view, and each is shown in the engine's words at
-  the field that caused it. A refused file key is counted with them. A new
+  the field that caused it. A refused publish key is counted with them. A new
   empty draft shows its refusal at once. Why: a draft the engine refuses must
   not look healthy until Save is opened.
 - **The studio says why it cannot (R18).** With authoring disabled on the
@@ -433,12 +437,12 @@ flowchart LR
 | R31 | settled | the engine says each join as a read-back statement connecting two regions and what holds, locks or hides it; one new field on the wire; no geometry message beside the atlas | operator | 2026-11-15 |
 | R32 | settled | hubs (facts, topics, intel records, concealments) and their threads are derived, never authored, never stored | operator | 2026-11-15 |
 | R33 | settled | a primitive is shown once; a word that joins primitives is shown as that joining; whether the engine folds `relocate`, `jail` and `arrest` is outside this design | operator | 2026-11-15 |
-| R34 | settled | the current refusals are counted in the header on every home and view and shown in the engine's words at the field | operator | 2026-11-15 |
+| R34 | settled | the current refusals, a refused publish key among them, are counted in the header on every home and view and shown in the engine's words at the field | operator | 2026-11-15 |
 | R35 | settled | a built piece is shown as a named thing with where it is used; what it needs filled in is a form; this is what the design keeps open for a world's shelf of pieces (rpg-project#977), which it does not build | operator | 2026-11-15 |
-| R36 | settled | the read-back is computed on the validate-only check only, never on a save | lead, from CI evidence, 2026-11-15; unvetoed | 2026-11-15 |
+| R36 | settled | the read-back is computed on the validate-only check only, never on a save | lead | 2026-11-15 |
 | R37 | settled | the inspector opens on the engine's one-thing fold with a Folded and Full switch; each entry opens to its full statements; the studio never folds | operator | 2026-11-16 |
-| R38 | settled | a join is decided by movement; a sight seam is said and is not a join | lead, open to the operator's veto | 2026-11-15 |
-| R39 | settled | bars (lock, hold, hidden); a way lifts one bar; partial ways; a bar nothing lifts is said; a pass is judged per holder as the engine judges it; ways and their method and difficulty are said by the engine | lead, open to the operator's veto | 2026-11-16 |
+| R38 | settled | a join is decided by movement; a sight seam is said and is not a join | lead | 2026-11-15 |
+| R39 | settled | bars (lock, hold, hidden); a way lifts one bar; partial ways; a bar nothing lifts is said; a pass is judged per holder as the engine judges it; ways and their method and difficulty are said by the engine | lead | 2026-11-16 |
 | R40 | settled | the inspector's width is set by the author, kept per viewer, never in the file; docks where the map keeps a floor, floats otherwise | operator | 2026-11-16 |
 | R41 | settled | a new empty draft shows its refusal in the header at once | operator | 2026-11-16 |
 

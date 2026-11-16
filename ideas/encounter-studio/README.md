@@ -77,8 +77,11 @@ flowchart LR
 | Encounter home forms | Editing the unplaced: `templates`, `tables`, `factions`, `dispositions`, `intel`, `endings`, `concealments` | form edit → one draft change per commit | either |
 | Hubs and threads (R32) | Nothing stored; a derived view | the read-back's `topic.*` and `fact.*` statements → per hub: taught by, asked by, wakes, each with its path | derived |
 | Engine read-back (R25) | Every sentence about what will run | file bytes → `ReadBack{sections[]{groups[]{statements[]}}}`, each `Statement{kind, about{kind,id}, sentence, path, connects[]{kind,id,role}}`; refuses a file the compiler refuses | derived |
-| Joins (R30, R31) | Which places meet, by what, in what state | compiled site → one `place.join` statement per join, connecting two regions and the door, post or concealment on it | derived |
-| Places view (R30) | Drawing regions, joins and the ways through a join | read-back statements → region nodes at their map positions, a mark per join by kind and state; click a join → its ways | derived |
+| Joins (R30, R31, R38) | Which places meet and by what | compiled site → one `place.join.*` statement per join, connecting two regions and the door, carrier or concealment on it; a sight seam where sight crosses and feet do not | derived |
+| Ways (R39) | What lifts each bar of a join | compiled site → one `place.way.*` statement per way, connected to its join, the bar it lifts, what carries it, what it needs and its method with a check's difficulty | derived |
+| Fold (R37) | The short form for one thing at a time | read-back → sections of items, each carrying the path of every statement it stands for | derived |
+| Join inspector (R39) | Listing a selected join's ways under each bar | read-back + join id → the join's sentence, then its ways grouped by the bar each says it lifts, partial ways apart | derived |
+| Places view (R30) | Drawing regions, joins and the ways through a join | read-back statements → region nodes at their map positions, a mark per join by kind and by its bars; click a join → its ways | derived |
 | Path to selection (R25) | Turning a file path into the thing to select | `room.room.monsterBindings.gate-1.options[0]…` → `{kind, id}` or a home section | none |
 | Inspector | Editing the one selected thing's fields | selection `{kind, id}` + draft → field edits on that thing's declaration and binding | per field, see the forms |
 | Read-back renderer | Showing the engine's sentences about the selection | read-back + selection `{kind, id}` → the statements whose `about` is that thing, connections as jumps | derived |
@@ -512,8 +515,8 @@ only the engine's partition of the floor says they meet.
   the studio says the read-back is not available for that file.
 - **A region no join reaches.** It is drawn with no joins; the places view
   marks it.
-- **A join with no way.** A locked door with no approach, or a post whose
-  pass nothing grants, is drawn as held or locked with an empty list.
+- **A bar nothing lifts.** The engine says it in a statement of its own; the
+  join is drawn as barred and its list shows that sentence.
 - **A relocation into a region.** It is a passage with one direction; it has
   no mark on the floor until the prop or line that carries it is selected.
 - **A file that carries `tables` or `scenarios`.** Both ride through a save
@@ -533,10 +536,14 @@ only the engine's partition of the floor says they meet.
 | Concern | Path |
 |---|---|
 | Read-back | toolkit `rulebooks/dnd5e/encounter/dungeonspec/readback` (`Of`, `ReadBack`, `Statement`, `Connection`; hubs in `hubs.go`) |
-| Floor partition and door crossings | toolkit `rulebooks/dnd5e/encounter` (`PartitionFloor`, `Atlas().Doorways`) |
-| The check | protos `dnd5e/api/authoring/v1alpha1/service.proto` (`PutDungeonResponse`), api `internal/dungeons/registry.go` (`compileEntry`) |
+| Joins, ways and the fold | toolkit `rulebooks/dnd5e/encounter/dungeonspec/readback/{joins.go,ways.go,folded.go}` |
+| Floor crossings | toolkit `rulebooks/dnd5e/encounter` (`FloorTopology`) |
+| The check | protos `dnd5e/api/authoring/v1alpha1/service.proto` (`PutDungeonResponse`), api `internal/dungeons/stores.go` (`readBackOf`) |
 | Path to selection | web `encounter-studio/refusalJump.ts` |
-| Inspector read-back | web `encounter-studio/ReadBack.tsx`; the retiring renderer is `world-building/readBack.ts` |
+| Inspector read-back | web `encounter-studio/{ReadBack.tsx,engineReadBack.ts}` |
+| Places view and join inspector | web `encounter-studio/{placesView.ts,usePlacesView.ts,JoinInspector.tsx}` |
+| Refusal count | web `encounter-studio/{StudioPublish.tsx,useSettledRefusals.ts}` |
+| Inspector width | web `encounter-studio/{StudioInspectorResize.tsx,inspectorWidth.ts}` |
 | Region outlines and the room list | web `encounter-studio/{RegionBoundaryOverlay.tsx,LayoutRoomList.tsx}` |
 | Encounter side sections | web `encounter-studio/EncounterStudioWorkspace.tsx` (`ENCOUNTER_SECTIONS`) |
 

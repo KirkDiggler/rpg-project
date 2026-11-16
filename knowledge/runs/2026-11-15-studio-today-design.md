@@ -4,9 +4,9 @@ Design for story [rpg-project#966](https://github.com/KirkDiggler/rpg-project/is
 
 ## Shipped
 
-- The studio design gains rulings R25 to R35 and its walkthrough a section walking the Guard Captain and the front gate — [rpg-project#976](https://github.com/KirkDiggler/rpg-project/pull/976).
+- The studio design gains rulings R25 to R41 and its walkthrough a section walking the Guard Captain and the front gate — [rpg-project#976](https://github.com/KirkDiggler/rpg-project/pull/976).
 - A wave-one implementation plan with task contracts for four slices — [rpg-project#976](https://github.com/KirkDiggler/rpg-project/pull/976).
-- Nine slices cut as sub-issues — [rpg-project#966](https://github.com/KirkDiggler/rpg-project/issues/966).
+- Thirteen slices cut as sub-issues — [rpg-project#966](https://github.com/KirkDiggler/rpg-project/issues/966).
 
 ## Decided
 
