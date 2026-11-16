@@ -120,14 +120,16 @@ A join is one such statement. The front gate, as the castle runs:
 
 ```mermaid
 flowchart LR
-    G[Place: Gatehouse] --- J{{"Join: the gate door, held by three posts"}}
+    G[Place: Gatehouse] --- J{{"Join: the gate door"}}
     J --- C[Place: Courtyard]
-    J --> W1["Way: the troupe claim. Performance 13 or Deception 15"]
-    J --> W2["Way: the guest claim. Persuasion 11"]
-    J --> W3["Way: vouched for by someone admitted"]
-    J --> W4["Way: the fight"]
+    J --> B["Bar: held by three posts"]
+    B --> W1["Way: the troupe claim. Performance 13 or Deception 15"]
+    B --> W2["Way: the guest claim. Persuasion 11"]
+    B --> W3["Way: vouched for by someone admitted"]
+    B --> W5["Way: stand aside. Intimidation 14"]
+    B --> W4["Way: the fight"]
     F((Hub: feast-tonight)) -.->|needed by| W1
-    W1 -.->|two misses| Ar["Passage: arrest"]
+    W1 -.->|two misses| Ar["Passage: arrest, taken on going quietly"]
     W2 -.->|two misses| Ar
     Ar --> Ce[Place: Cells]
 ```
@@ -139,8 +141,10 @@ over it.
 |---|---|
 | place | a region |
 | join | where two places meet: a door, an opening with no door, open floor where one region runs into the next, or a passage that is not physical (a relocation, an arrest) |
-| state of a join | free, locked, held by a post, or hidden until something is known |
-| way | one means through a join: its method (a skill and its difficulty, something known, something carried, a fight), what it needs, and what failing does |
+| bar | what stops a walker at a join: a lock, a hold by posted holders, or being hidden. A join has none, one or several |
+| way | one means of lifting one bar: its method (a skill and its difficulty, something known, something carried, a fight), what it needs, and what failing does. A walker is through when every bar is lifted |
+| partial way | something that lifts a bar for some holders and not all; it helps and is not counted as a way |
+| sight seam | two places that see each other where no member can step across; not a join |
 | hub | a fact, a topic, an intel record or a concealment |
 | thread | what follows from a hub: who teaches it, who asks it, what it wakes or opens |
 
@@ -189,7 +193,9 @@ flowchart LR
   trust it.
 - **The read-back is the engine's (R25).** The sentences are those of
   `dungeonspec/readback`, said from the compiled result and carried on the
-  check the studio sends after each edit. The studio holds no copy of the
+  check the studio sends after each edit, and only on the check: a save
+  carries none, because the studio holds the read-back of the check before
+  it (R36). The studio holds no copy of the
   engine's rules and writes no sentence of its own about what will run. While
   a draft does not compile, the inspector shows the sentences of the last
   draft that did, marked as such, beside the refusal. Why: a second voice
@@ -206,20 +212,41 @@ flowchart LR
   and never taught.
 - **A place is a region, and the engine says what joins it (R30).** Two
   places meet by a door, an opening with no door, open floor, or a passage
-  that is not physical. A join has a state: free, locked, held by a post, or
-  hidden. A way through a join names its method, what it needs and what
-  failing does. All of it is derived by the engine from the running file;
-  nothing is authored for the picture. Why: an author checks that an
+  that is not physical. All of it is derived by the engine from the running
+  file; nothing is authored for the picture. Why: an author checks that an
   encounter offers several ways by different methods, and can only trust a
   count the engine made.
-- **A join is a sentence (R31).** The engine says each join as a read-back
-  statement that connects two regions and whatever holds, locks or hides it.
-  The studio draws the places view from those connections. No geometry
+- **Feet decide a join (R38).** Two places join where a member can step from
+  one to the other. Where sight crosses and feet do not, the engine says a
+  sight seam, which is not a join; where feet cross and sight does not, it is
+  a join whose sentence says sight is blocked. Why: a way is a way through.
+- **A bar stops a walker; a way lifts one bar (R39).** A join is barred by a
+  lock, by a hold of posted holders, or by being hidden, and may carry
+  several. A way lifts exactly one bar, and a walker is through when every
+  bar is lifted. A way past holders reaches every holder and meets each
+  holder's whole pass, as the engine judges a pass. What lifts a bar for some
+  holders only is a partial way and is never counted. A bar nothing lifts is
+  said. Why: a locked and guarded door is one obstacle with two parts, and a
+  list that reads either part as enough is false.
+- **The engine says the ways (R39).** Each way is a read-back statement
+  connected to its join, the bar it lifts, what carries it, what it needs and
+  its method, with a check's difficulty as a number. The studio groups a
+  join's ways by bar and lists them; it never decides that something is a
+  way. Why: the rules that make a way are the engine's, and a second copy of
+  them in the studio would drift.
+- **A join is a sentence (R31).** The engine says each join, and each way, as
+  a read-back statement with connections. The studio draws the places view
+  from those connections and takes positions from the draft. No geometry
   message is added beside the atlas. Why: a second map of the site is a
   second thing to keep true.
 - **The picture proves wiring (R30).** The places view shows that a way
   exists and what it needs. Whether it works in play is proved by a walk or a
   test, and the studio does not claim otherwise.
+- **The studio shows the engine's fold (R37).** The read-back opens on the
+  engine's fold for one thing at a time, and each folded entry opens to the
+  full statements it stands for. The studio never folds, joins or rewords a
+  sentence. Why: a fold made by the studio is the studio speaking for the
+  engine.
 - **Behaviour is a machine, built and then assigned (R26).** A creature's
   inspector names the behaviour it runs and lets the author assign one. Named
   tables and the `on`, `table` and `states` keys are not offered: the engine
@@ -297,10 +324,16 @@ flowchart LR
   jump that selects it and opens its inspector. One that maps to nothing stays
   a sentence under the Save group. Why: the author fixes the thing, not the
   path.
+- **The inspector's width is the viewer's (R40).** The author sets the
+  inspector's width; it is kept in the viewer's browser and never in the
+  encounter file. Where there is room the map stops at the inspector; in a
+  narrow window the inspector floats over the map. Why: a long read-back
+  needs room, and a layout preference is not content.
 - **A refusal is seen from anywhere (R34).** The header counts the current
   refusals on every home and view, and each is shown in the engine's words at
-  the field that caused it. Why: a draft the engine refuses must not look
-  healthy until Save is opened.
+  the field that caused it. A refused file key is counted with them. A new
+  empty draft shows its refusal at once. Why: a draft the engine refuses must
+  not look healthy until Save is opened.
 - **The studio says why it cannot (R18).** With authoring disabled on the
   server the control is present and disabled with that reason. Without a
   character picked on Home, Play is disabled with that reason. The studio does
@@ -396,12 +429,18 @@ flowchart LR
 | R27 | settled | the Scenarios view is removed; the key still round-trips | operator | 2026-11-15 |
 | R28 | settled | the Encounter side is people and places, not the file's sections | operator | 2026-11-15 |
 | R29 | settled | the file's `interactions` are called Conversations on screen | operator | 2026-11-15 |
-| R30 | settled | a place is a region; a join is a door, an opening, open floor or a non-physical passage, with a state (free, locked, held, hidden); a way names method, need and failure; all derived by the engine; the picture proves wiring, not play | operator | 2026-11-15 |
+| R30 | settled | a place is a region; a join is a door, an opening, open floor or a non-physical passage; all derived by the engine; the picture proves wiring, not play (amended 2026-11-16: the state of a join is its bars, R39; feet decide a join, R38) | operator | 2026-11-15 |
 | R31 | settled | the engine says each join as a read-back statement connecting two regions and what holds, locks or hides it; one new field on the wire; no geometry message beside the atlas | operator | 2026-11-15 |
 | R32 | settled | hubs (facts, topics, intel records, concealments) and their threads are derived, never authored, never stored | operator | 2026-11-15 |
 | R33 | settled | a primitive is shown once; a word that joins primitives is shown as that joining; whether the engine folds `relocate`, `jail` and `arrest` is outside this design | operator | 2026-11-15 |
 | R34 | settled | the current refusals are counted in the header on every home and view and shown in the engine's words at the field | operator | 2026-11-15 |
 | R35 | settled | a built piece is shown as a named thing with where it is used; what it needs filled in is a form; this is what the design keeps open for a world's shelf of pieces (rpg-project#977), which it does not build | operator | 2026-11-15 |
+| R36 | settled | the read-back is computed on the validate-only check only, never on a save | lead, from CI evidence, 2026-11-15; unvetoed | 2026-11-15 |
+| R37 | settled | the inspector opens on the engine's one-thing fold with a Folded and Full switch; each entry opens to its full statements; the studio never folds | operator | 2026-11-16 |
+| R38 | settled | a join is decided by movement; a sight seam is said and is not a join | lead, open to the operator's veto | 2026-11-15 |
+| R39 | settled | bars (lock, hold, hidden); a way lifts one bar; partial ways; a bar nothing lifts is said; a pass is judged per holder as the engine judges it; ways and their method and difficulty are said by the engine | lead, open to the operator's veto | 2026-11-16 |
+| R40 | settled | the inspector's width is set by the author, kept per viewer, never in the file; docks where the map keeps a floor, floats otherwise | operator | 2026-11-16 |
+| R41 | settled | a new empty draft shows its refusal in the header at once | operator | 2026-11-16 |
 
 ## Open
 
@@ -409,12 +448,19 @@ flowchart LR
   today; the screen needs one.
 - **The on-screen words for place, join, way, hub and thread.** The design
   uses them; the screen's words are not chosen.
-- **The read-back's size on the wire.** The castle's read-back is 642
-  statements. Whether every check carries all of it, or a check carries what
-  changed, is settled by measuring the first slice.
-- **Open floor and a doorless gap.** Both show as two regions sharing a
-  partition; telling them apart needs the wall and opening geometry, and
-  whether the author needs them told apart is unsettled.
+- **Open floor and a doorless gap.** The engine can tell them apart from
+  what the compiled site holds; they are one kind until content needs them
+  told apart.
+- **Alternatives and the parts of one approach.** A way's method
+  connections do not yet say which belong to one approach
+  (rpg-toolkit#2444).
+- **Folding the ways.** A join's ways are shown as full sentences, and a
+  line carried by several creatures is said once per carrier.
+- **Drawing sight seams.** The engine says them; the places view does not
+  draw them.
+- **Reusing the compile.** The read-back compiles the file a second time on
+  each check; an engine entry point that says back an already compiled file
+  is not built.
 - **The behaviour builder.** Its own story; this design gives a behaviour a
   place to be seen and assigned (R26).
 - **Region lighting in play.** Play lights every derived region at full

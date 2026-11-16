@@ -452,13 +452,25 @@ The same document gives the fact index these rows, among others:
 2. The door's own statements already say it starts closed and is held by the
    posts of three creatures, each letting through whoever it recognises as
    `admitted`.
-3. The places view draws the join as held. Clicking it lists the ways: every
-   line that grants `admitted` (the troupe claim, the guest claim, vouching,
-   the straggler), each with its check, what it requires and what a miss
-   does; the arrest that sets the party down in the Cells; and the fight.
-4. The grate is a join of another kind: a passage from the Kitchen to the
-   Chapel and the Cells, hidden by the concealment `kitchen-passage`, whose
-   thread names who tells it.
+3. The engine says the join's bar: a hold, by three posted holders. Under it
+   it says each way that lifts that bar as its own statement: every line that
+   grants `admitted` to every holder (the troupe claim, the guest claim,
+   vouching, the straggler), the two lines that draw every holder off its
+   post (stand aside, turning the garrison), and the fight. Each way carries
+   its method and difficulty, what it needs and what a miss does.
+4. The places view draws the join with the mark for a hold. Selecting it
+   lists the ways under "To pass the holders, any of", in the engine's
+   sentences. The studio decided none of it: it grouped the ways by the bar
+   each one says it lifts.
+5. The kitchen door is barred by a lock, with two ways. A door both locked
+   and held would show two bars, and each way says that lifting its bar alone
+   does not get a walker through.
+6. The grate is a join of another kind: a passage from the Kitchen to the
+   Chapel and the Cells, barred by being hidden. Finding the secret or being
+   told it lifts that bar; using the grate is then the passage itself.
+7. The arrest is a passage with no bar: the party is taken when the
+   conversation enters its arrest, and set down in the Cells when a member
+   says the line that goes quietly.
 
 ### Separations that look like one thing
 
@@ -468,7 +480,8 @@ The same document gives the fact index these rows, among others:
 | What the draft says right now | the draft; it may not compile |
 | Which places meet | the engine's joins, never the web's region-touching used for colours |
 | Where a region is drawn | the draft's regions and the atlas |
-| Whether a way exists | the read-back's connections |
+| Whether a way exists | the engine's way statements, never a rule in the studio |
+| What bars a join | the bars its ways say they lift, or that nothing lifts |
 | Whether a way works in play | a walk or a test |
 | A conversation | the file's `interactions`: one remembered state for the run |
 | What a player can do to a thing | its lines and options; there is no stored list |
@@ -484,6 +497,8 @@ only the engine's partition of the floor says they meet.
 | The engine's read-back (R25) | one voice; a new engine word is said the day the engine can say it | nothing is said about a draft that does not compile; the check's response grows | keeping the studio's renderer and teaching it each new word by hand |
 | The read-back rides the check (R25) | no new call, and it is always the read-back of the bytes just checked | every check pays for the read-back | a call made on demand per selection, which must resend the file |
 | Joins as sentences (R31) | one field on the wire; the studio draws from connections it already follows | the places view takes positions from the draft, not from the join | a join message with cells, a second map beside the atlas |
+| The engine says the ways (R39) | the rules that make a way live in one place; a count is the engine's | the engine's read-back grows, and a new kind of way is an engine change | the studio following a join's connections to work the ways out itself |
+| The read-back on the check only (R36) | a save costs what it did | a save's response has no sentences; the studio keeps the check's | a read-back on every Put |
 | Derived threads (R32) | nothing to keep true | a story has no name; it is found from its hub | an authored story list, which the dialect has no key for |
 | People and places (R28) | the author finds things the way they think of them | the file's sections are no longer the screen's sections | twelve tabs, one per root key |
 | Tables retire (R26) | the studio cannot write what the engine refuses | a file with named tables is carried, not edited | keeping the Tables form beside the machine |
