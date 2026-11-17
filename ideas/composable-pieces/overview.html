@@ -169,7 +169,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   <h2>3. The shape: six pieces</h2>
   <p>A machine tells a story. Its states do things to people. That makes facts so, and gives people things to hold. The author writes how what is so gets out. People act only on what they hold.</p>
   <figure>
-  <svg viewBox="0 0 980 350" role="img" aria-label="Beats wake a machine. A machine's states run consequences that each name who. Consequences make facts so in the world and give holdings to people. Senses the author writes, told, heard and seen, carry facts to the people who then hold them. The story's machines read what is so; people act on what they hold.">
+  <svg viewBox="0 0 980 350" role="img" aria-label="Beats wake a machine. A machine's states run consequences that each name who. Consequences make facts so in the world and give holdings to people. Senses, heard and seen, carry facts to the people who then hold them. The story's machines read what is so; people act on what they hold.">
     <defs>
       <marker id="f3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
       <marker id="f3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
@@ -220,7 +220,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <text x="764" y="108" stroke="none" font-family="JetBrains Mono, monospace" font-size="10">feast-tonight · village-burned</text>
 
       <path d="M900 120 L900 168" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#f3b)"/>
-      <text x="892" y="141" text-anchor="end" stroke="none" fill="var(--brass-ink)">Senses: told,</text>
+      <text x="892" y="141" text-anchor="end" stroke="none" fill="var(--brass-ink)">Senses:</text>
       <text x="892" y="157" text-anchor="end" stroke="none" fill="var(--brass-ink)">heard, seen</text>
 
       <rect x="750" y="170" width="210" height="90" rx="4" fill="var(--paper)" stroke-width="1.2"/>
@@ -247,10 +247,10 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
     <tbody>
       <tr><td><strong>Fact</strong></td><td>Something that is so in the world, with no point of view: the feast is tonight, the village burned.</td><td>Facts are a plain list, kept apart from what people hold.</td></tr>
       <tr><td><strong>Holding</strong></td><td>Someone holds something, optionally about someone. The guards hold “arrested” about us. We hold “is-chained” on ourselves, and whoever sees us comes to hold it too.</td><td>Arrested is a holding. A status is a holding on the person it shows on. Jailed is not stored: it is where you are.</td></tr>
-      <tr><td><strong>Sense</strong></td><td>How a fact or a holding reaches someone else: told, heard, seen.</td><td>The author determines how a fact gets out. Nothing becomes known by itself.</td></tr>
-      <tr><td><strong>Consequence</strong></td><td>What an author makes happen. Done once on entering a state, or in force while the state lasts.</td><td>Hold-in-place is the only real condition, and it must end with the hold. In force “while here”, nothing has to remove it.</td></tr>
+      <tr><td><strong>Sense</strong></td><td>The channel a fact or a holding comes in on: heard or seen. Telling is not a sense. It is someone saying it, and whoever hears it comes to hold it.</td><td>The author determines how a fact gets out. Nothing becomes known by itself. A sense is the channel.</td></tr>
+      <tr><td><strong>Consequence</strong></td><td>What a machine’s step puts out. Done once on entering a state, or in force while the state lasts. Authors pick them; the engine team composes them from smaller primitives.</td><td>Hold-in-place is the only real condition, and it must end with the hold. A condition comes from the effects system, with how it ends stated explicitly so it cannot get stuck.</td></tr>
       <tr><td><strong>Who</strong></td><td>Which people a consequence applies to: the ones in this area, the ones who saw it, the ones someone holds a thing about.</td><td>The author picks the holders. No group is stored: the holdings are the memory.</td></tr>
-      <tr><td><strong>Machine</strong></td><td>States and the beats between them. It may belong to a creature, to a conversation, or to nobody.</td><td>The machine tells the story and processes everyone. Each person’s standing is the holdings about them.</td></tr>
+      <tr><td><strong>Machine</strong></td><td>States and the beats between them. It may belong to a creature, to a conversation, or to nobody. This is where authors find the magic.</td><td>The machine tells the story and processes everyone. Each person’s standing is the holdings about them.</td></tr>
     </tbody>
   </table>
   </div>
@@ -319,7 +319,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   <h2>5. Second test: the feast and the burned village</h2>
   <p>A story with nothing in common with the gate, built on the operator’s two facts. It needed no new consequence. It did need a machine that belongs to nobody, and it shows why “is so” and “someone holds it” are kept apart.</p>
   <figure>
-  <svg viewBox="0 0 980 320" role="img" aria-label="A machine called the evening goes from day to feast when the clock reaches dusk, making the fact feast-begun so and ringing the hall bell. Three facts each get out by a sense the author wrote: feast-tonight is told by the scullion and opens a gate line; feast-begun is heard from the hall bell and sends a gate guard to the hall; village-burned is seen as smoke from the wall and makes the captain send the garrison out.">
+  <svg viewBox="0 0 980 320" role="img" aria-label="A machine called the evening goes from day to feast when the clock reaches dusk, making the fact feast-begun so and ringing the hall bell. Three facts each get out by a sense the author wrote: feast-tonight is heard from the scullion and opens a gate line; feast-begun is heard from the hall bell and sends a gate guard to the hall; village-burned is seen as smoke from the wall and makes the captain send the garrison out.">
     <defs>
       <marker id="f5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
       <marker id="f5b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
@@ -342,7 +342,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
         <text x="34" y="153" stroke="none" fill="var(--muted)">so from the start</text>
         <path d="M250 140 L296 140" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#f5b)"/>
         <rect x="300" y="114" width="290" height="52" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
-        <text x="314" y="135" font-weight="600" stroke="none">told</text>
+        <text x="314" y="135" font-weight="600" stroke="none">heard</text>
         <text x="314" y="153" stroke="none" fill="var(--muted)">the scullion’s line “The feast is tonight”</text>
         <path d="M590 140 L636 140" fill="none" stroke-width="1.2" marker-end="url(#f5a)"/>
         <rect x="640" y="114" width="320" height="52" rx="4" fill="var(--paper)" stroke-width="1.2"/>
@@ -446,6 +446,8 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
         <li>Jailed is where you are. A status such as is-chained is held on the person it shows on.</li>
         <li>The machine tells the story and processes everyone. People’s standing is the holdings about them.</li>
         <li>The author determines how a fact gets out.</li>
+        <li>A sense is the channel it comes in on: heard, seen. Telling is saying it.</li>
+        <li>The machine is the author’s. Making consequences is the engine team’s job, composed from primitives and the effects system.</li>
       </ul>
     </div>
     <div>
