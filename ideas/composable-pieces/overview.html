@@ -271,7 +271,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   <h2>4. First test: the gate’s arrest, written in the pieces</h2>
   <p>Everything the castle’s front gate does today, with no engine word called arrest or jail. Fail two claims and the gate arrests whoever is there; go quietly and you are walked to the cells; fight and the hold is gone; walk off and you are wanted.</p>
   <figure>
-  <svg viewBox="0 0 980 370" role="img" aria-label="The gate machine goes from fresh to warned to arrested. Entering arrested gives the gate guards who saw it the holding arrested about the party at the gate, and wanted about the party not at the gate. While in that state, those the gate holds arrested about are held in place. A fight with a gate guard leaves the state and ends the hold. Lines on a gate guard let an arrested person come quietly, which moves them to the cells, or refuse. Watches on a gate guard seize the wanted and notice escapes.">
+  <svg viewBox="0 0 980 370" role="img" aria-label="The gate machine goes from fresh to warned to arrested. Entering arrested gives the gate guards who saw it the holding arrested about the party at the gate, and wanted about the party not at the gate. While in that state, those the gate holds arrested about are held in place, and the hold states what ends it. A fight with a gate guard leaves the state and ends the hold. Lines on a gate guard let an arrested person come quietly, which moves them to the cells, or refuse. Watches on a gate guard seize the wanted and notice escapes.">
     <defs>
       <marker id="f4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
     </defs>
@@ -294,8 +294,8 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <circle cx="40" cy="186" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="190" stroke="none">give “wanted” to the gate guards,</text>
       <text x="54" y="206" stroke="none" fill="var(--muted)">about the party not at the gate</text>
       <text x="34" y="232" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WHILE HERE</text>
-      <circle cx="40" cy="248" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="252" stroke="none">hold in place those the gate holds “arrested” about,</text>
-      <text x="54" y="268" stroke="none" fill="var(--muted)">outside the cells</text>
+      <circle cx="40" cy="248" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="252" stroke="none">hold in place those the gate holds “arrested” about</text>
+      <text x="54" y="268" stroke="none" fill="var(--muted)">ends on: a fight with a holder · leaving this state · being moved</text>
 
       <rect x="20" y="300" width="460" height="52" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
       <text x="34" y="321" font-weight="600" stroke="none">“The taken” is not stored.</text>
@@ -317,7 +317,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   </svg>
   <figcaption>Each dot is one of the general consequences from section 3. A press gang, a kidnapping or an escort to an audience is the same writing with different names, places and words.</figcaption>
   </figure>
-  <p><strong>What fires the jailing.</strong> Not a machine. The line “I’ll come quietly” puts out one consequence, a move, for the speaker. The move is a status effect the engine team composed from primitive effects (section 3). The hold is a separate status effect, and how it ends is stated on it.</p>
+  <p><strong>What fires the jailing.</strong> Not a machine. The line “I’ll come quietly” puts out one consequence, a move, for the speaker. The move is a status effect the engine team composed from primitive effects (section 3). The hold is a separate status effect. What ends it is written where the author applies it: a fight with a holder, the machine leaving the state, or being moved. The move knows nothing about holds.</p>
   <p>What writing it out showed:</p>
   <ul>
     <li><strong>No stored group.</strong> Someone seized later joins by being given the same holding. The separate arrest record goes away.</li>
@@ -454,7 +454,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <ul>
         <li>Facts and what people hold are two things. Facts are a plain list with no point of view.</li>
         <li>Arrested is a holding: what matters is who holds it and whether they pass it on.</li>
-        <li>Only “held” is a condition, and it must end when the hold is over. The player can always fight out.</li>
+        <li>Only “held” is a condition, and it must end when the hold is over. The player can always fight out. What ends it is stated explicitly where it is applied.</li>
         <li>Jailed is where you are. A status such as is-chained is held on the person it shows on.</li>
         <li>The machine tells the story and processes everyone. People’s standing is the holdings about them.</li>
         <li>The author determines how a fact gets out.</li>
