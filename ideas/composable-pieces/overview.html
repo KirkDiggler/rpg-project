@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Composable Pieces</title>
+<meta name="description" content="The engine knows a few pieces; an arrest, a jailing and a shared conversation are recipes joined from them. What the engine has today, a proposed shape, and the studio tools it would allow.">
+<link rel="canonical" href="https://kirkdiggler.github.io/rpg-project/architecture/composable-pieces/">
+<link rel="icon" type="image/svg+xml" href="/rpg-project/favicon.svg">
+<link rel="apple-touch-icon" href="/rpg-project/apple-touch-icon.png">
+<meta property="og:site_name" content="Kirk Gilmore">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Composable Pieces">
+<meta property="og:description" content="The engine knows a few pieces; an arrest, a jailing and a shared conversation are recipes joined from them. What the engine has today, a proposed shape, and the studio tools it would allow.">
+<meta property="og:url" content="https://kirkdiggler.github.io/rpg-project/architecture/composable-pieces/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column, figures full width of it; slate paper, brass for the path of one step and for what would be new. */
+:root {
+  --bg: #eef1f5; --paper: #f8f9fb; --fg: #1d2530; --muted: #5b6672; --line: #c9d1da;
+  --brass: #a8701a; --brass-ink: #6e4708; --asleep: #b8c0ca; --fight: #8a3b2e; --ok: #2f6b4f;
+  --display: "Bricolage Grotesque", "Avenir Next", "Helvetica Neue", sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161b22; --paper: #1e252e; --fg: #e6eaef; --muted: #9aa5b1; --line: #3a4552;
+  --brass: #d9a24a; --brass-ink: #f0c57a; --asleep: #4a5664; --fight: #e08a78; --ok: #7cc39e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161b22; --paper: #1e252e; --fg: #e6eaef; --muted: #9aa5b1; --line: #3a4552;
+  --brass: #d9a24a; --brass-ink: #f0c57a; --asleep: #4a5664; --fight: #e08a78; --ok: #7cc39e; color-scheme: dark }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); }
+img { max-width: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.5; font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.5rem; font-weight: 700; }
+h3 { font-size: 1.1rem; font-weight: 700; }
+p { margin: 0; max-width: 64ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brass-ink); }
+header { display: grid; gap: 12px; }
+header p.lede { font-size: 1.15rem; max-width: 56ch; }
+section { display: grid; gap: 16px; }
+figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 16px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; min-width: 560px; }
+figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 10px; max-width: 70ch; }
+.law { display: grid; gap: 10px; border-left: 3px solid var(--brass); padding-left: 16px; }
+.law p strong { font-family: var(--display); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); white-space: nowrap; }
+.wrap { overflow-x: auto; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--paper); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 0.7rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+.pill.done { color: var(--ok); border-color: var(--ok); }
+.pill.now { color: var(--brass-ink); border-color: var(--brass); }
+.pill.next { color: var(--muted); }
+ol, ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; max-width: 70ch; }
+li strong { font-weight: 600; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+.two > div { min-width: 0; display: grid; gap: 10px; align-content: start; }
+a { color: var(--brass-ink); }
+footer { color: var(--muted); font-size: 0.85rem; }
+.site-nav { max-width: 860px; margin: 24px auto 0; font-size: 0.9rem; color: var(--muted); }
+td.yes { color: var(--ok); } td.no { color: var(--fight); }
+.two ul { padding-left: 1.1em; }
+</style>
+</head>
+<body>
+
+<main>
+<header>
+  <div class="eyebrow">Architecture field note · rpg-project #987 · first cut of the shape, nothing ruled</div>
+  <h1>Composable Pieces</h1>
+  <p class="lede">The engine knows a few pieces. An arrest, a jailing, a guarded door and a shared conversation are recipes an author joins from them. Today the engine knows the recipes too, each with its own rules.</p>
+  <p>This page is for thinking, dated 2026-11-17. The first two figures are what three scouts read in the engine as it stands. The rest is a proposed shape to pick apart. Nothing here is built and nothing is decided.</p>
+</header>
+
+<section>
+  <h2>1. Today: one arrest, written five times</h2>
+  <p>Follow one thing: the party is arrested at the gate. The engine records that single event in five places, because each reader can only see one kind of record.</p>
+  <figure>
+  <svg viewBox="0 0 980 340" role="img" aria-label="The party being arrested is recorded five ways: the taken list read by jail, a topic the guards hold read by lines and posts, a custody phase read by movement, the conversation's state read by lines, and a fact read by the faction's stance.">
+    <defs>
+      <marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <rect x="20" y="140" width="180" height="60" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="110" y="166" text-anchor="middle" font-weight="600" stroke="none">the party is arrested</text>
+      <text x="110" y="184" text-anchor="middle" stroke="none" fill="var(--muted)">one event</text>
+
+      <text x="320" y="14" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WRITTEN AS</text>
+      <text x="700" y="14" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">THE ONLY READER THAT CAN SEE IT</text>
+
+      <g>
+        <rect x="320" y="24" width="320" height="48" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+        <text x="334" y="44" font-weight="600" stroke="none">the taken list</text>
+        <text x="334" y="61" stroke="none" fill="var(--muted)">a record kept with the conversation</text>
+        <path d="M200 156 L318 50" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <path d="M640 48 L696 48" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <text x="704" y="52" stroke="none">jail, to know whom to move</text>
+      </g>
+      <g>
+        <rect x="320" y="86" width="320" height="48" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+        <text x="334" y="106" font-weight="600" stroke="none">the topic “arrested”</text>
+        <text x="334" y="123" stroke="none" fill="var(--muted)">a guard’s memory about each person</text>
+        <path d="M200 164 L318 112" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <path d="M640 110 L696 110" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <text x="704" y="114" stroke="none">lines and guard posts</text>
+      </g>
+      <g>
+        <rect x="320" y="148" width="320" height="48" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+        <text x="334" y="168" font-weight="600" stroke="none">custody: held</text>
+        <text x="334" y="185" stroke="none" fill="var(--muted)">a phase on the arrest record</text>
+        <path d="M200 172 L318 172" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <path d="M640 172 L696 172" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <text x="704" y="176" stroke="none">movement, to refuse a step</text>
+      </g>
+      <g>
+        <rect x="320" y="210" width="320" height="48" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+        <text x="334" y="230" font-weight="600" stroke="none">the conversation’s state “arrested”</text>
+        <text x="334" y="247" stroke="none" fill="var(--muted)">one state for the whole run</text>
+        <path d="M200 180 L318 232" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <path d="M640 234 L696 234" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <text x="704" y="238" stroke="none">which lines are offered</text>
+      </g>
+      <g>
+        <rect x="320" y="272" width="320" height="48" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+        <text x="334" y="292" font-weight="600" stroke="none">the fact “refused-arrest”</text>
+        <text x="334" y="309" stroke="none" fill="var(--muted)">something a member knows</text>
+        <path d="M200 188 L318 294" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <path d="M640 296 L696 296" fill="none" stroke-width="1.2" marker-end="url(#f1)"/>
+        <text x="704" y="300" stroke="none">a faction turning hostile</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>Each record exists because its reader cannot see the others. Movement cannot read a topic, a stance cannot wait on a topic, and a fact cannot be about someone. The engine also special-cases the word “arrested” so the topic only counts while custody holds.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>2. Today: where a piece may be attached</h2>
+  <p>The pieces that do the work are shared and sound. What is uneven is where each one is allowed. Every gap in this table is where a specific word was added.</p>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>What happens</th><th>A line’s row</th><th>A conversation entering a state</th><th>A behaviour’s step</th><th>The word added to cover the gap</th></tr></thead>
+    <tbody>
+      <tr><td>Teach a fact</td><td class="yes">yes</td><td class="no">refused</td><td class="yes">yes, as an alarm</td><td>jail’s escape fact; scene move’s leave fact; a door’s “fact when it opens”</td></tr>
+      <tr><td>Make someone hold a topic about someone</td><td class="yes">yes, two fixed subjects</td><td class="yes">yes, two fixed subjects</td><td class="no">no</td><td>arrest’s built-in split into taken and wanted</td></tr>
+      <tr><td>Move people</td><td class="yes">yes, the speaker only</td><td class="no">refused: “use jail”</td><td class="no">no</td><td>jail; scene move</td></tr>
+      <tr><td>Hand over a record</td><td class="yes">yes</td><td class="no">refused</td><td class="no">no</td><td>none yet</td></tr>
+      <tr><td>Stop someone moving</td><td class="no">no</td><td class="no">only inside arrest</td><td class="no">no</td><td>custody, with its own four phases</td></tr>
+      <tr><td>Step a conversation</td><td class="yes">yes</td><td class="no">no</td><td class="no">no</td><td>none: a conversation can only be driven by a line</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Moving people now exists three ways, differing only in who moves, where to, whose words, and whether custody is bypassed. Teaching a fact exists five ways, differing only in who learns it and what sets it off. One thing in the castle is already built from general pieces alone, with no engine word: the gate’s “vouch” line. Composition works wherever the pieces allow it.</p>
+</section>
+
+<section>
+  <h2>3. A proposed shape: four kinds of piece</h2>
+  <p>Read it as a loop. Something wakes a machine. Its step does things to someone. That makes things true. What is true decides the next step, and everything else in the world can read it.</p>
+  <figure>
+  <svg viewBox="0 0 980 330" role="img" aria-label="A loop of four pieces. Beats wake a machine. A machine's step runs consequences on a chosen who. Consequences make truths. Truths are read by the machine's own guards and by lines, posts, movement and watches.">
+    <defs>
+      <marker id="f3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+      <marker id="f3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <!-- beats -->
+      <rect x="20" y="40" width="180" height="170" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="34" y="62" font-weight="600" stroke="none">Beats</text>
+      <text x="34" y="80" stroke="none" fill="var(--muted)">what can wake a machine</text>
+      <text x="34" y="108" stroke="none">a line was said</text>
+      <text x="34" y="126" stroke="none">something heard or seen</text>
+      <text x="34" y="144" stroke="none">someone came near</text>
+      <text x="34" y="162" stroke="none">a clock ran out</text>
+      <text x="34" y="180" stroke="none">a truth changed</text>
+      <text x="34" y="198" stroke="none">a fight started or ended</text>
+
+      <path d="M200 125 L262 125" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#f3b)"/>
+      <text x="231" y="116" text-anchor="middle" stroke="none" fill="var(--brass-ink)">wakes</text>
+
+      <!-- machine -->
+      <rect x="266" y="40" width="200" height="170" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="280" y="62" font-weight="600" stroke="none">A machine</text>
+      <text x="280" y="80" stroke="none" fill="var(--muted)">states and the steps between</text>
+      <rect x="282" y="100" width="64" height="30" rx="15" fill="var(--bg)" stroke-width="1.2"/>
+      <text x="314" y="119" text-anchor="middle" stroke="none">state</text>
+      <rect x="386" y="100" width="64" height="30" rx="15" fill="var(--bg)" stroke-width="1.2"/>
+      <text x="418" y="119" text-anchor="middle" stroke="none">state</text>
+      <path d="M346 115 L384 115" fill="none" stroke-width="1.2" marker-end="url(#f3)"/>
+      <text x="280" y="158" stroke="none">on a beat</text>
+      <text x="280" y="176" stroke="none">when a truth holds</text>
+      <text x="280" y="194" stroke="none">do a list of consequences</text>
+
+      <path d="M466 125 L508 125" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#f3b)"/>
+      <text x="487" y="116" text-anchor="middle" stroke="none" fill="var(--brass-ink)">does</text>
+
+      <!-- consequences -->
+      <rect x="512" y="40" width="200" height="170" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="526" y="62" font-weight="600" stroke="none">Consequences</text>
+      <text x="526" y="80" stroke="none" fill="var(--muted)">one list, usable anywhere</text>
+      <text x="526" y="108" stroke="none">say words</text>
+      <text x="526" y="126" stroke="none">mark something true</text>
+      <text x="526" y="144" stroke="none">move to a place</text>
+      <text x="526" y="162" stroke="none">hand over a record</text>
+      <text x="526" y="180" stroke="none">hold in place, or release</text>
+      <text x="526" y="198" stroke="none" fill="var(--brass-ink)">each one names who</text>
+
+      <path d="M712 125 L754 125" fill="none" stroke="var(--brass)" stroke-width="1.6" marker-end="url(#f3b)"/>
+      <text x="733" y="116" text-anchor="middle" stroke="none" fill="var(--brass-ink)">makes</text>
+
+      <!-- truths -->
+      <rect x="758" y="40" width="202" height="170" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="772" y="62" font-weight="600" stroke="none">Truths</text>
+      <text x="772" y="80" stroke="none" fill="var(--muted)">one kind, three shapes</text>
+      <text x="772" y="108" stroke="none">true of the world</text>
+      <text x="772" y="126" stroke="none">true about someone</text>
+      <text x="772" y="144" stroke="none">known by someone</text>
+      <text x="772" y="170" stroke="none" fill="var(--muted)">also a remembered group:</text>
+      <text x="772" y="188" stroke="none" fill="var(--muted)">“the ones who …”</text>
+
+      <!-- return: truths read by guards -->
+      <path d="M858 210 L858 262 L366 262 L366 212" fill="none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#f3)"/>
+      <text x="612" y="254" text-anchor="middle" stroke="none">a machine’s “when” reads them</text>
+
+      <!-- other readers -->
+      <path d="M900 210 L900 292" fill="none" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <path d="M900 292 L340 292" fill="none" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#f3)"/>
+      <text x="20" y="296" stroke="none">and so do lines, guard posts, movement and watches</text>
+    </g>
+  </svg>
+  <figcaption>Brass marks the path of one step. The dashed lines are reads. The claim of this shape is that every reader sees the same truths and every host runs the same list of consequences, so no reader or host needs a word of its own.</figcaption>
+  </figure>
+  <div class="two">
+    <div>
+      <h3>What exists in some form</h3>
+      <ul>
+        <li><strong>Beats.</strong> A creature’s machine already hears a dozen. A conversation hears only one.</li>
+        <li><strong>A machine.</strong> One engine runs behaviours and conversations. A second runs conditions.</li>
+        <li><strong>Most consequences.</strong> Say, teach, recognise, move and hand over all have shared writers underneath.</li>
+        <li><strong>Known by someone, and about someone.</strong> Facts and topics, in two separate stores.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What would be new</h3>
+      <ul>
+        <li><strong>One list.</strong> The same consequences on a row, a step, a door or a watch.</li>
+        <li><strong>Who.</strong> The speaker, those in sight, those in an area, a remembered group.</li>
+        <li><strong>True of the world, and readable by all.</strong> Including by movement and by anything that waits.</li>
+        <li><strong>Hold in place.</strong> As a general consequence, ended by a beat such as a fight starting.</li>
+        <li><strong>Parameters.</strong> A machine written once and used with different places and words.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>4. The gate’s arrest, drawn as a recipe</h2>
+  <p>The same castle story, written with the pieces above. The machine is about one party. The engine would know nothing called arrest or jail.</p>
+  <figure>
+  <svg viewBox="0 0 980 470" role="img" aria-label="A machine about a party with states fresh, warned, arrested, jailed and free. Entering arrested marks arrested true about those in the area or seen, remembers them as the taken, and holds them. Coming quietly moves the taken to the cell with words. A fight releases the hold. A watch teaches a fact when a guard sees one of the taken outside the cell.">
+    <defs>
+      <marker id="f4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <!-- parameters -->
+      <text x="20" y="22" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">FILLED IN PER USE</text>
+      <g font-family="JetBrains Mono, monospace" font-size="11">
+        <rect x="170" y="8" width="150" height="22" rx="11" fill="var(--bg)" stroke="var(--brass)" stroke-width="1.2"/><text x="245" y="23" text-anchor="middle" stroke="none">area: Gatehouse</text>
+        <rect x="330" y="8" width="110" height="22" rx="11" fill="var(--bg)" stroke="var(--brass)" stroke-width="1.2"/><text x="385" y="23" text-anchor="middle" stroke="none">cell: Cells</text>
+        <rect x="450" y="8" width="290" height="22" rx="11" fill="var(--bg)" stroke="var(--brass)" stroke-width="1.2"/><text x="595" y="23" text-anchor="middle" stroke="none">words: “The guards march you …”</text>
+        <rect x="750" y="8" width="90" height="22" rx="11" fill="var(--bg)" stroke="var(--brass)" stroke-width="1.2"/><text x="795" y="23" text-anchor="middle" stroke="none">rounds: 5</text>
+      </g>
+
+      <!-- states -->
+      <rect x="20" y="60" width="110" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="75" y="83" text-anchor="middle" font-weight="600" stroke="none">fresh</text>
+      <path d="M130 78 L196 78" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="163" y="70" text-anchor="middle" stroke="none" fill="var(--muted)">a miss</text>
+      <rect x="200" y="60" width="110" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="255" y="83" text-anchor="middle" font-weight="600" stroke="none">warned</text>
+      <path d="M310 78 L386 78" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="348" y="70" text-anchor="middle" stroke="none" fill="var(--muted)">another miss</text>
+      <rect x="390" y="60" width="120" height="36" rx="18" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/><text x="450" y="83" text-anchor="middle" font-weight="600" stroke="none">arrested</text>
+      <path d="M510 78 L666 78" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="588" y="70" text-anchor="middle" stroke="none" fill="var(--muted)">“we’ll come quietly”</text>
+      <rect x="670" y="60" width="110" height="36" rx="18" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/><text x="725" y="83" text-anchor="middle" font-weight="600" stroke="none">jailed</text>
+
+      <!-- arrested card -->
+      <path d="M450 96 L450 128" fill="none" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <rect x="250" y="130" width="330" height="140" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="264" y="151" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">ON ENTERING, DO</text>
+      <circle cx="270" cy="172" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="284" y="176" stroke="none">remember “the taken”: in the area, or seen</text>
+      <circle cx="270" cy="196" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="284" y="200" stroke="none">mark “arrested” true about the taken</text>
+      <circle cx="270" cy="220" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="284" y="224" stroke="none">hold the taken in place</text>
+      <circle cx="270" cy="244" r="4" fill="var(--ok)" stroke="none"/><text x="284" y="248" stroke="none">the guards who heard come to know it</text>
+
+      <!-- jailed card -->
+      <path d="M725 96 L725 128" fill="none" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <rect x="610" y="130" width="350" height="140" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="624" y="151" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">ON ENTERING, DO</text>
+      <circle cx="630" cy="172" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="644" y="176" stroke="none">move the taken to the cell</text>
+      <circle cx="630" cy="196" r="4" fill="var(--ok)" stroke="none"/><text x="644" y="200" stroke="none">say the words; let the rounds pass</text>
+      <circle cx="630" cy="220" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="644" y="224" stroke="none">release the hold: the walls hold them now</text>
+      <circle cx="630" cy="244" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="644" y="248" stroke="none">mark “jailed” true about the taken</text>
+
+      <!-- fight -->
+      <path d="M415 270 L415 336" fill="none" stroke-width="1.2" marker-end="url(#f4)"/>
+      <text x="425" y="308" stroke="none" fill="var(--muted)">a fight starts</text>
+      <rect x="340" y="340" width="150" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="415" y="363" text-anchor="middle" font-weight="600" stroke="none">free, and wanted</text>
+      <rect x="250" y="386" width="330" height="36" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <circle cx="270" cy="404" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="284" y="408" stroke="none">release the hold; mark “wanted” about the taken</text>
+
+      <!-- watch -->
+      <rect x="610" y="300" width="350" height="92" rx="4" fill="var(--paper)" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="624" y="321" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">A WATCH, WHILE JAILED</text>
+      <circle cx="630" cy="344" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="644" y="348" stroke="none">when a guard sees one of the taken outside the cell</text>
+      <circle cx="630" cy="368" r="4" fill="var(--ok)" stroke="none"/><text x="644" y="372" stroke="none">teach the guards’ side the fact “prisoners-escaped”</text>
+
+      <!-- legend -->
+      <circle cx="30" cy="444" r="4" fill="var(--ok)" stroke="none"/><text x="44" y="448" stroke="none">a piece the engine has today</text>
+      <circle cx="250" cy="444" r="4" fill="none" stroke="var(--brass)" stroke-width="1.6"/><text x="264" y="448" stroke="none">new, or an existing piece allowed somewhere it is refused today</text>
+    </g>
+  </svg>
+  <figcaption>Every ring is one of the five new pieces from section 3, and none of them is about arrests. A press gang, a kidnapping or an escort to an audience is this recipe with different names, places and words. A second gate fills in a different cell.</figcaption>
+  </figure>
+  <p>What this cut would retire as engine words: <code>arrest</code>, <code>jail</code>, <code>sceneMove</code>, the custody phases, the reserved topics <code>arrested</code>, <code>wanted</code> and <code>jailed</code>, and the facts that exist only to bridge them. What it must not lose: the split is decided once and kept; a fight is a way out; someone who walked off before the arrest is still wanted.</p>
+</section>
+
+<section>
+  <h2>5. A conversation, pulled apart</h2>
+  <p>A conversation holds no lines. The lines stay on each person. What it holds today is three things that may not belong together.</p>
+  <figure>
+  <svg viewBox="0 0 980 230" role="img" aria-label="A conversation today bundles three things: shared standing with steps, the hail, and what happens on entering a state. Pulled apart they are a machine about a party, a watch that fires a beat, and the shared list of consequences.">
+    <defs>
+      <marker id="f5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
+    </defs>
+    <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
+      <rect x="20" y="20" width="330" height="190" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="34" y="42" font-weight="600" stroke="none">a conversation today</text>
+      <text x="34" y="59" stroke="none" fill="var(--muted)">one per run, shared by everyone who carries it</text>
+      <rect x="36" y="74" width="298" height="36" rx="4" fill="var(--bg)" stroke-width="1"/><text x="48" y="97" stroke="none">where things stand, and the allowed steps</text>
+      <rect x="36" y="118" width="298" height="36" rx="4" fill="var(--bg)" stroke-width="1"/><text x="48" y="141" stroke="none">the hail: call out when someone comes near</text>
+      <rect x="36" y="162" width="298" height="36" rx="4" fill="var(--bg)" stroke-width="1"/><text x="48" y="185" stroke="none">what happens on entering a state</text>
+
+      <path d="M334 92 L556 60" fill="none" stroke-width="1.2" marker-end="url(#f5)"/>
+      <path d="M334 136 L556 122" fill="none" stroke-width="1.2" marker-end="url(#f5)"/>
+      <path d="M334 180 L556 184" fill="none" stroke-width="1.2" marker-end="url(#f5)"/>
+
+      <rect x="560" y="30" width="400" height="50" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="574" y="51" font-weight="600" stroke="none">a machine about a party</text>
+      <text x="574" y="68" stroke="none" fill="var(--muted)">how this gate regards these people; several NPCs read and step it</text>
+      <rect x="560" y="96" width="400" height="50" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="574" y="117" font-weight="600" stroke="none">a watch that fires a beat</text>
+      <text x="574" y="134" stroke="none" fill="var(--muted)">“someone came near” is useful well beyond conversations</text>
+      <rect x="560" y="162" width="400" height="50" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="574" y="183" font-weight="600" stroke="none">the shared list of consequences</text>
+      <text x="574" y="200" stroke="none" fill="var(--muted)">the same list a line’s row and a behaviour’s step use</text>
+    </g>
+  </svg>
+  <figcaption>The first piece is the real idea: shared standing, where the path matters (“fail once, a warning; fail twice, an arrest”). Its scope is the open question. Today there is one standing for the whole run, so a second party meets a gate that has already arrested someone.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>6. Tools the studio could offer</h2>
+  <p>If the pieces are few and general, the studio’s job changes from one form per engine word to a small set of tools that work on any recipe.</p>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>Tool</th><th>What an author does with it</th><th>What it needs from the engine</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Machine canvas</strong></td><td>See a machine as states and steps. Click a step to read its beat, its condition and what it does. Add a state, draw a step.</td><td>The engine says each step’s from, to and beat as connections (rpg-project #985).</td></tr>
+      <tr><td><strong>Fill in a recipe</strong></td><td>Pick “arrest at a gate” from a shelf and fill in the area, the cell and the words. The form is made from the recipe’s parameters.</td><td>Machines that take parameters. The engine publishes each recipe’s parameter list.</td></tr>
+      <tr><td><strong>Trace one truth</strong></td><td>Pick “arrested” and see everything that makes it true and everything that reads it, across people, doors and machines.</td><td>The read-back already carries connections. Threads become this view once truths are one kind.</td></tr>
+      <tr><td><strong>Step it by hand</strong></td><td>Stand a pretend party at the gate, send beats (“a miss”, “a fight starts”) and watch states and truths change, without launching the game.</td><td>A dry run of one machine against a scratch world. The engine already dry-runs a conversation for jail.</td></tr>
+      <tr><td><strong>What can go here</strong></td><td>Every dropdown lists what the engine accepts at that spot, and nothing typed into the studio’s own code.</td><td>The engine publishes its pieces: consequences, beats, who-words, and where each is allowed.</td></tr>
+      <tr><td><strong>The shelf</strong></td><td>Keep recipes and pieces: ours, the author’s own, and an add-on’s, each with a version.</td><td>A unit of sharing below a whole site (rpg-project #977).</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>7. Open, for the operator</h2>
+  <p>Three questions shape everything else. They are asked one at a time on the story issue.</p>
+  <ol>
+    <li><strong>Whose is a conversation’s standing?</strong> The whole run, as today, or the party or person it is about.</li>
+    <li><strong>Is “true about someone” one thing?</strong> Facts and topics become one kind of truth that every reader sees, or stay two stores with a bridge.</li>
+    <li><strong>One machine?</strong> Behaviours, conversations and conditions run on one mechanism that can sense, act and take parameters, or stay separate with a shared list of consequences between them.</li>
+  </ol>
+</section>
+
+<footer>
+  <p>Sources: three read-only scout reports against rpg-toolkit main and the castle on rpg-api dev, kept in the comments of rpg-project #987. Sections 1 and 2 are readings of the code. Sections 3 to 6 are a first cut.</p>
+</footer>
+</main>
+
+</body>
+</html>
