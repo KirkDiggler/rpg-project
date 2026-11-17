@@ -250,7 +250,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <tr><td><strong>Sense</strong></td><td>The channel a fact or a holding comes in on: heard or seen. Telling is not a sense. It is someone saying it, and whoever hears it comes to hold it.</td><td>The author determines how a fact gets out. Nothing becomes known by itself. A sense is the channel.</td></tr>
       <tr><td><strong>Consequence</strong></td><td>What a machine’s step puts out. Done once on entering a state, or in force while the state lasts. Authors pick them; the engine team composes them from smaller primitives.</td><td>Hold-in-place is the only real condition, and it must end with the hold. A condition comes from the effects system, with how it ends stated explicitly so it cannot get stuck.</td></tr>
       <tr><td><strong>Who</strong></td><td>Which people a consequence applies to: the ones in this area, the ones who saw it, the ones someone holds a thing about.</td><td>The author picks the holders. No group is stored: the holdings are the memory.</td></tr>
-      <tr><td><strong>Machine</strong></td><td>States and the beats between them. An author creates it and applies it to NPCs, each in its own state, or to nobody. Its beats come from the host’s senses and what the host comes to hold. This is where authors find the magic.</td><td>A guard’s state is its own: what it is doing. What it thinks of each person is a holding. A guard who was not there is fresh with you.</td></tr>
+      <tr><td><strong>Machine</strong></td><td>States and the beats between them. An author creates it. It runs on NPCs, each in its own state, or on the world. Its beats come from the host’s senses and what the host comes to hold. This is where authors find the magic.</td><td>A guard’s state is its own: what it is doing. What it thinks of each person is a holding. A guard who was not there is fresh with you.</td></tr>
     </tbody>
   </table>
   </div>
@@ -331,7 +331,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
 
 <section>
   <h2>5. Second test: the feast and the burned village</h2>
-  <p>A story with nothing in common with the gate, built on the operator’s two facts. It needed no new consequence. It did need a machine that belongs to nobody, and it shows why “is so” and “someone holds it” are kept apart.</p>
+  <p>A story with nothing in common with the gate, built on the operator’s two facts. It needed no new consequence. It did need a machine that runs on the world, and it shows why “is so” and “someone holds it” are kept apart.</p>
   <figure>
   <svg viewBox="0 0 980 320" role="img" aria-label="A machine called the evening goes from day to feast when the clock reaches dusk, making the fact feast-begun so and ringing the hall bell. Three facts each get out by a sense the author wrote: feast-tonight is heard from the scullion and opens a gate line; feast-begun is heard from the hall bell and sends a gate guard to the hall; village-burned is seen as smoke from the wall and makes the captain send the garrison out.">
     <defs>
@@ -339,7 +339,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <marker id="f5b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--brass)"/></marker>
     </defs>
     <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
-      <text x="20" y="20" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">A MACHINE WITH NO OWNER: THE EVENING</text>
+      <text x="20" y="20" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">A MACHINE THAT RUNS ON THE WORLD: THE EVENING</text>
       <rect x="20" y="32" width="90" height="34" rx="17" fill="var(--paper)" stroke-width="1.2"/><text x="65" y="54" text-anchor="middle" font-weight="600" stroke="none">day</text>
       <path d="M110 49 L296 49" fill="none" stroke-width="1.2" marker-end="url(#f5a)"/><text x="203" y="41" text-anchor="middle" stroke="none" fill="var(--muted)">the clock reaches dusk</text>
       <rect x="300" y="32" width="90" height="34" rx="17" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/><text x="345" y="54" text-anchor="middle" font-weight="600" stroke="none">feast</text>
@@ -458,7 +458,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
         <li>Arrested is a holding: what matters is who holds it and whether they pass it on.</li>
         <li>Only “held” is a condition, and it must end when the hold is over. The player can always fight out. What ends it is stated explicitly where it is applied.</li>
         <li>Jailed is where you are. A status such as is-chained is held on the person it shows on.</li>
-        <li>Authors create machines and apply them to NPCs. Each NPC is in its own state, moved by its own senses and what it comes to hold. The state is what the NPC is doing; what it thinks of each person is a holding.</li>
+        <li>Machines run on NPCs or on the world; a conversation is not a separate kind of machine. Each NPC is in its own state, moved by its own senses and what it comes to hold. The state is what the NPC is doing; what it thinks of each person is a holding.</li>
         <li>The author determines how a fact gets out.</li>
         <li>What someone holds must be transmitted to reach anyone else, and that is authored. A guard who was not there does not have it. Reaching the captain does not mean the whole faction knows.</li>
         <li>A sense is the channel it comes in on: heard, seen. Telling is saying it.</li>

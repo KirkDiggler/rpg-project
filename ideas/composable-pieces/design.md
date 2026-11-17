@@ -12,7 +12,7 @@ author writes from the pieces; the engine does not know those words.
 flowchart LR
     Beats[beats<br/>what the host senses,<br/>and what it comes to hold] --> Machine
     subgraph author [the author's, in the studio]
-        Machine[a machine<br/>states are the author's words<br/>applied to NPCs, each in its own state,<br/>or to nobody]
+        Machine[a machine<br/>states are the author's words<br/>runs on NPCs, each in its own state,<br/>or on the world]
     end
     Machine -->|a step puts out| Cons[consequences<br/>once on entering a state,<br/>or in force while it lasts<br/>each names who]
     subgraph engine [the engine team's]
@@ -22,7 +22,7 @@ flowchart LR
     Cons -->|make so| Facts[(facts<br/>what is so in the world)]
     Cons -->|give| Holdings[(holdings<br/>who holds what, about whom)]
     Facts -->|a sense: heard, seen| Holdings
-    Facts -.->|a machine applied to nobody reads what is so| Machine
+    Facts -.->|a machine on the world reads what is so| Machine
     Holdings -.->|people act on what they hold| Machine
 ```
 
@@ -50,16 +50,16 @@ flowchart LR
 
 **Machines**
 
-- An author creates a machine and applies it. It is applied to NPCs, each in
-  its own state, or to nobody.
+- An author creates a machine. It runs on NPCs, each in its own state, or on
+  the world. There is no other kind of machine: a conversation is not one.
 - A machine's beats come from its host: the host's senses, and what the host
-  comes to hold. A machine applied to nobody is moved by the clock and by what
-  is so.
+  comes to hold. A machine on the world is moved by the clock and by what is
+  so.
 - A state on an NPC is what that NPC is doing. What the NPC thinks of each
   person is a holding, never a state.
 - States are the author's words. The engine gives no state a meaning.
-- A machine is the same thing wherever it is applied: one set of beats, one
-  set of consequences.
+- A machine is the same thing wherever it runs: one set of beats, one set of
+  consequences.
 
 **Consequences**
 
@@ -102,6 +102,7 @@ Ruled by the operator on rpg-project#987.
 | R14 | Each NPC is in its own state on a machine; beats come from that NPC | settled | this story | KirkDiggler | 2026-11-18 |
 | R15 | An NPC's state is what it is doing; what it thinks of each person is a holding | settled | this story | KirkDiggler | 2026-11-18 |
 | R16 | The studio tool for consequences comes later | deferred-until-the-status-effects-exist | this story | KirkDiggler | 2026-11-18 |
+| R17 | Machines run on NPCs or on the world; the separate conversation machine goes away | settled | this story | KirkDiggler | 2026-11-18 |
 
 Superseded cuts, one sentence each:
 
@@ -117,9 +118,10 @@ Superseded cuts, one sentence each:
 
 ## Open
 
-- **What the machine work is.** Which beats and which consequences a machine
-  has wherever it is applied, measured against the engine as it stands. Not yet
-  probed for this design.
+- **The machine work, measured.** An NPC's machine gains a beat for a line
+  said to it, consequences on a state, and reading what it holds about a
+  particular person; a machine can run on the world. The size of each against
+  the engine as it stands is being probed.
 - **The who-words.** The list an author picks from, and whether authors can
   name their own.
 - **Reuse.** Writing a machine once and applying it at a second gate with a
