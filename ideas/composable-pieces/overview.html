@@ -188,7 +188,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
 
       <rect x="240" y="60" width="200" height="150" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
       <text x="254" y="82" font-weight="600" stroke="none">A machine</text>
-      <text x="254" y="100" stroke="none" fill="var(--muted)">tells one story, for everyone</text>
+      <text x="254" y="100" stroke="none" fill="var(--muted)">applied to NPCs, each in its own state</text>
       <rect x="256" y="112" width="64" height="28" rx="14" fill="var(--bg)" stroke-width="1.2"/>
       <text x="288" y="130" text-anchor="middle" stroke="none">state</text>
       <rect x="360" y="112" width="64" height="28" rx="14" fill="var(--bg)" stroke-width="1.2"/>
@@ -250,7 +250,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <tr><td><strong>Sense</strong></td><td>The channel a fact or a holding comes in on: heard or seen. Telling is not a sense. It is someone saying it, and whoever hears it comes to hold it.</td><td>The author determines how a fact gets out. Nothing becomes known by itself. A sense is the channel.</td></tr>
       <tr><td><strong>Consequence</strong></td><td>What a machine’s step puts out. Done once on entering a state, or in force while the state lasts. Authors pick them; the engine team composes them from smaller primitives.</td><td>Hold-in-place is the only real condition, and it must end with the hold. A condition comes from the effects system, with how it ends stated explicitly so it cannot get stuck.</td></tr>
       <tr><td><strong>Who</strong></td><td>Which people a consequence applies to: the ones in this area, the ones who saw it, the ones someone holds a thing about.</td><td>The author picks the holders. No group is stored: the holdings are the memory.</td></tr>
-      <tr><td><strong>Machine</strong></td><td>States and the beats between them. It may belong to a creature, to a conversation, or to nobody. This is where authors find the magic.</td><td>The machine tells the story and processes everyone. Each person’s standing is the holdings about them.</td></tr>
+      <tr><td><strong>Machine</strong></td><td>States and the beats between them. An author creates it and applies it to NPCs, each in its own state, or to nobody. Its beats come from the host’s senses and what the host comes to hold. This is where authors find the magic.</td><td>A guard’s state is its own: what it is doing. What it thinks of each person is a holding. A guard who was not there is fresh with you.</td></tr>
     </tbody>
   </table>
   </div>
@@ -269,50 +269,51 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
 
 <section>
   <h2>4. First test: the gate’s arrest, written in the pieces</h2>
-  <p>Everything the castle’s front gate does today, with no engine word called arrest or jail. Fail two claims and the gate arrests whoever is there; go quietly and you are walked to the cells; fight and the hold is gone; walk off and you are wanted.</p>
+  <p>Everything the castle’s front gate does today, with no engine word called arrest or jail. Fail a claim and the guards who heard it hold “warned” about you; fail again in front of one of them and that guard arrests whoever is there; go quietly and you are walked to the cells; fight and the hold is gone; walk off and you are wanted.</p>
   <figure>
-  <svg viewBox="0 0 980 370" role="img" aria-label="The gate machine goes from fresh to warned to arrested. Entering arrested gives the gate guards who saw it the holding arrested about the party at the gate, and wanted about the party not at the gate. While in that state, those the gate holds arrested about are held in place, and the hold states what ends it. A fight with a gate guard leaves the state and ends the hold. Lines on a gate guard let an arrested person come quietly, which moves them to the cells, or refuse. Watches on a gate guard seize the wanted and notice escapes.">
+  <svg viewBox="0 0 980 430" role="img" aria-label="The gate machine is applied to the captain and both guards, and each is in its own state. A posted guard who hears a claim fail holds warned about that party. Hearing a claim fail from someone it holds warned about moves it to arresting. On entering arresting it holds arrested about the party at the gate and wanted about the party not at the gate, and while arresting it holds in place those it holds arrested about, ending on a fight, leaving the state or being moved. A fight moves it to fighting; when everyone it held is gone it returns to posted. Lines on a gate guard let an arrested person come quietly, which moves them to the cells, or refuse. Watches seize the wanted and notice escapes.">
     <defs>
       <marker id="f4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
     </defs>
     <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="currentColor" stroke="currentColor">
-      <text x="20" y="22" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">THE GATE’S MACHINE: ONE STORY, EVERYONE GOES THROUGH IT</text>
-      <rect x="20" y="40" width="100" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="70" y="63" text-anchor="middle" font-weight="600" stroke="none">fresh</text>
-      <path d="M120 58 L176 58" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="148" y="50" text-anchor="middle" stroke="none" fill="var(--muted)">a miss</text>
-      <rect x="180" y="40" width="100" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="230" y="63" text-anchor="middle" font-weight="600" stroke="none">warned</text>
-      <path d="M280 58 L366 58" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="323" y="50" text-anchor="middle" stroke="none" fill="var(--muted)">another miss</text>
-      <rect x="370" y="40" width="110" height="36" rx="18" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/><text x="425" y="63" text-anchor="middle" font-weight="600" stroke="none">arrested</text>
-      <path d="M480 58 L676 58" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="578" y="50" text-anchor="middle" stroke="none" fill="var(--muted)">a fight with a gate guard</text>
-      <rect x="680" y="40" width="110" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="735" y="63" text-anchor="middle" font-weight="600" stroke="none">broken</text>
-      <text x="800" y="62" stroke="none" fill="var(--muted)" font-size="11">leaving ends the hold</text>
+      <text x="20" y="14" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">THE GATE MACHINE, APPLIED TO THE CAPTAIN AND BOTH GUARDS: EACH IS IN ITS OWN STATE</text>
+      <path d="M540 52 L540 36 L70 36 L70 50" fill="none" stroke-width="1.2" marker-end="url(#f4)"/>
+      <text x="305" y="31" text-anchor="middle" stroke="none" fill="var(--muted)">everyone it held is gone</text>
+      <rect x="20" y="52" width="100" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="70" y="75" text-anchor="middle" font-weight="600" stroke="none">posted</text>
+      <path d="M120 74 L476 74" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="298" y="66" text-anchor="middle" stroke="none" fill="var(--muted)">hears a claim fail from someone it holds “warned” about</text>
+      <rect x="480" y="52" width="120" height="36" rx="18" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/><text x="540" y="75" text-anchor="middle" font-weight="600" stroke="none">arresting</text>
+      <path d="M600 70 L716 70" fill="none" stroke-width="1.2" marker-end="url(#f4)"/><text x="658" y="62" text-anchor="middle" stroke="none" fill="var(--muted)">a fight</text>
+      <rect x="720" y="52" width="110" height="36" rx="18" fill="var(--paper)" stroke-width="1.2"/><text x="775" y="75" text-anchor="middle" font-weight="600" stroke="none">fighting</text>
 
-      <path d="M425 76 L425 108" fill="none" stroke-width="1.2" stroke-dasharray="4 3"/>
-      <rect x="20" y="110" width="460" height="172" rx="4" fill="var(--paper)" stroke-width="1.2"/>
-      <text x="34" y="131" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">ON ENTERING, ONCE</text>
-      <circle cx="40" cy="148" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="152" stroke="none">give “arrested” to the gate guards who saw it,</text>
-      <text x="54" y="168" stroke="none" fill="var(--muted)">about the party at the gate</text>
-      <circle cx="40" cy="186" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="190" stroke="none">give “wanted” to the gate guards,</text>
-      <text x="54" y="206" stroke="none" fill="var(--muted)">about the party not at the gate</text>
-      <text x="34" y="232" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WHILE HERE</text>
-      <circle cx="40" cy="248" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="252" stroke="none">hold in place those the gate holds “arrested” about</text>
-      <text x="54" y="268" stroke="none" fill="var(--muted)">ends on: a fight with a holder · leaving this state · being moved</text>
+      <rect x="20" y="120" width="460" height="70" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="34" y="141" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WHILE POSTED</text>
+      <circle cx="40" cy="158" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="162" stroke="none">hears a claim fail → it holds “warned” about that party</text>
+      <text x="54" y="178" stroke="none" fill="var(--muted)">a guard who was not there holds nothing: you are fresh with them</text>
 
-      <rect x="20" y="300" width="460" height="52" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
-      <text x="34" y="321" font-weight="600" stroke="none">“The taken” is not stored.</text>
-      <text x="34" y="339" stroke="none">It is whoever the gate holds “arrested” about.</text>
+      <rect x="20" y="204" width="460" height="150" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="34" y="225" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">ON ENTERING ARRESTING, ONCE</text>
+      <circle cx="40" cy="242" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="246" stroke="none">it holds “arrested” about the party at the gate</text>
+      <circle cx="40" cy="266" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="270" stroke="none">it holds “wanted” about the party not at the gate</text>
+      <text x="34" y="296" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WHILE ARRESTING</text>
+      <circle cx="40" cy="312" r="4" fill="var(--brass)" stroke="none"/><text x="54" y="316" stroke="none">hold in place those it holds “arrested” about</text>
+      <text x="54" y="332" stroke="none" fill="var(--muted)">ends on: a fight with a holder · leaving this state · being moved</text>
 
-      <rect x="510" y="110" width="450" height="110" rx="4" fill="var(--paper)" stroke-width="1.2"/>
-      <text x="524" y="131" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">LINES ON A GATE GUARD</text>
-      <text x="524" y="149" stroke="none" fill="var(--muted)">offered to someone this guard holds “arrested” about</text>
-      <circle cx="530" cy="170" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="174" stroke="none">“I’ll come quietly” → move the speaker to the cells, with words</text>
-      <circle cx="530" cy="194" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="198" stroke="none">“I refuse” → the fact refused-arrest becomes so; the guards hold it</text>
+      <rect x="510" y="120" width="450" height="110" rx="4" fill="var(--paper)" stroke-width="1.2"/>
+      <text x="524" y="141" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">LINES ON A GATE GUARD</text>
+      <text x="524" y="159" stroke="none" fill="var(--muted)">offered to someone this guard holds “arrested” about</text>
+      <circle cx="530" cy="180" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="184" stroke="none">“I’ll come quietly” → move the speaker to the cells, with words</text>
+      <circle cx="530" cy="204" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="208" stroke="none">“I refuse” → the fact refused-arrest becomes so; the guards hear it</text>
 
-      <rect x="510" y="240" width="450" height="112" rx="4" fill="var(--paper)" stroke-width="1.2" stroke-dasharray="4 3"/>
-      <text x="524" y="261" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WATCHES ON A GATE GUARD</text>
-      <circle cx="530" cy="280" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="284" stroke="none">sees someone it holds “wanted” about, close by</text>
-      <text x="544" y="300" stroke="none" fill="var(--muted)">→ give “arrested” about that one</text>
-      <circle cx="530" cy="320" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="324" stroke="none">sees someone it holds “arrested” about, out of the cells again</text>
-      <text x="544" y="340" stroke="none" fill="var(--muted)">→ the fact prisoners-escaped becomes so</text>
+      <rect x="510" y="244" width="450" height="110" rx="4" fill="var(--paper)" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="524" y="265" stroke="none" fill="var(--muted)" font-family="JetBrains Mono, monospace" font-size="11">WATCHES ON A GATE GUARD</text>
+      <circle cx="530" cy="282" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="286" stroke="none">sees someone it holds “wanted” about, close by</text>
+      <text x="544" y="302" stroke="none" fill="var(--muted)">→ it holds “arrested” about that one</text>
+      <circle cx="530" cy="322" r="4" fill="var(--brass)" stroke="none"/><text x="544" y="326" stroke="none">sees someone it holds “arrested” about, out of the cells again</text>
+      <text x="544" y="342" stroke="none" fill="var(--muted)">→ the fact prisoners-escaped becomes so</text>
+
+      <rect x="20" y="372" width="940" height="44" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
+      <text x="34" y="391" font-weight="600" stroke="none">Nothing about the party is stored on the machine.</text>
+      <text x="34" y="407" stroke="none">“Warned”, “arrested” and “wanted” are what each guard holds about you. The state is only what that guard is doing.</text>
     </g>
   </svg>
   <figcaption>Each dot is one of the general consequences from section 3. A press gang, a kidnapping or an escort to an audience is the same writing with different names, places and words.</figcaption>
@@ -320,7 +321,8 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   <p><strong>What fires the jailing.</strong> Not a machine. The line “I’ll come quietly” puts out one consequence, a move, for the speaker. The move is a status effect the engine team composed from primitive effects (section 3). The hold is a separate status effect. What ends it is written where the author applies it: a fight with a holder, the machine leaving the state, or being moved. The move knows nothing about holds.</p>
   <p>What writing it out showed:</p>
   <ul>
-    <li><strong>No stored group.</strong> Someone seized later joins by being given the same holding. The separate arrest record goes away.</li>
+    <li><strong>No stored group, and no who-word for “the guards who saw it”.</strong> Each guard’s own machine moves because that guard sensed it. Someone seized later is simply held “arrested” about by the guard who seized them.</li>
+    <li><strong>A change of shift matters.</strong> The guard who warned you can pass that on to the next guard. If they do not, you are fresh with the new one.</li>
     <li><strong>Two forms of consequence.</strong> Once on entering, or in force while the state lasts. The hold is the second form, so it cannot outlive what holds it.</li>
     <li><strong>The author no longer needs a <code>jailed</code> state to make the move happen.</strong> Going quietly is a line that moves the speaker. An author may still write such a state if the story wants one.</li>
   </ul>
@@ -397,7 +399,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
   <h2>6. A conversation, pulled apart</h2>
   <p>A conversation holds no lines. The lines stay on each person. What it holds today is three things that may not belong together.</p>
   <figure>
-  <svg viewBox="0 0 980 230" role="img" aria-label="A conversation today bundles three things: shared standing with steps, the hail, and what happens on entering a state. Pulled apart they are a machine that tells the story, a watch that fires a beat, and the shared list of consequences.">
+  <svg viewBox="0 0 980 230" role="img" aria-label="A conversation today bundles three things: shared standing with steps, the hail, and what happens on entering a state. Pulled apart they are a machine applied to each NPC, a watch that fires a beat, and the shared list of consequences.">
     <defs>
       <marker id="f5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker>
     </defs>
@@ -414,8 +416,8 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <path d="M334 180 L556 184" fill="none" stroke-width="1.2" marker-end="url(#f5)"/>
 
       <rect x="560" y="30" width="400" height="50" rx="4" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.6"/>
-      <text x="574" y="51" font-weight="600" stroke="none">a machine that tells the story</text>
-      <text x="574" y="68" stroke="none" fill="var(--muted)">everyone goes through it; standing lives in the holdings</text>
+      <text x="574" y="51" font-weight="600" stroke="none">a machine applied to each NPC</text>
+      <text x="574" y="68" stroke="none" fill="var(--muted)">each is in its own state; standing lives in the holdings</text>
       <rect x="560" y="96" width="400" height="50" rx="4" fill="var(--paper)" stroke-width="1.2"/>
       <text x="574" y="117" font-weight="600" stroke="none">a watch that fires a beat</text>
       <text x="574" y="134" stroke="none" fill="var(--muted)">“someone came near” is useful well beyond conversations</text>
@@ -424,7 +426,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <text x="574" y="200" stroke="none" fill="var(--muted)">the same list a line’s row and a behaviour’s step use</text>
     </g>
   </svg>
-  <figcaption>The first piece is the real idea: a shared story where the path matters (“fail once, a warning; fail twice, an arrest”). It is ruled that the machine processes everyone, and each person’s standing is carried by the holdings about them.</figcaption>
+  <figcaption>The first piece is the real idea: a shared story where the path matters (“fail once, a warning; fail twice, an arrest”). It is ruled that each NPC is in its own state on the machine, and what it thinks of each person is a holding.</figcaption>
   </figure>
 </section>
 
@@ -456,7 +458,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
         <li>Arrested is a holding: what matters is who holds it and whether they pass it on.</li>
         <li>Only “held” is a condition, and it must end when the hold is over. The player can always fight out. What ends it is stated explicitly where it is applied.</li>
         <li>Jailed is where you are. A status such as is-chained is held on the person it shows on.</li>
-        <li>The machine tells the story and processes everyone. People’s standing is the holdings about them.</li>
+        <li>Authors create machines and apply them to NPCs. Each NPC is in its own state, moved by its own senses and what it comes to hold. The state is what the NPC is doing; what it thinks of each person is a holding.</li>
         <li>The author determines how a fact gets out.</li>
         <li>What someone holds must be transmitted to reach anyone else, and that is authored. A guard who was not there does not have it. Reaching the captain does not mean the whole faction knows.</li>
         <li>A sense is the channel it comes in on: heard, seen. Telling is saying it.</li>
@@ -467,7 +469,7 @@ td.yes { color: var(--ok); } td.no { color: var(--fight); }
       <h3>Still open</h3>
       <ul>
         <li><strong>Deferred: how word spreads.</strong> Announce, send a messenger, share on sight, gossip at a pace; a guard finding the captain, or a sergeant passing along a remembered location. Wanted, and kept clean at the seams so it can come later.</li>
-        <li><strong>Start here: the machine.</strong> The operator’s lean is one kind, the mind machine, which authors create and which is then applied. A machine is applied to NPCs, and each NPC is in its own state on it: the beats come from that NPC’s senses and what it comes to hold. A guard who was away for the arrest never enters that state. The figures in sections 3 and 4 still show one shared state and will be redrawn. Open is whether a guard’s state is about everyone it meets or kept per party.</li>
+        <li><strong>Start here: the machine.</strong> One set of beats and one set of consequences wherever a machine is applied. Today a conversation’s machine can only be moved by a line, and a creature’s machine can do almost nothing to the world.</li>
         <li><strong>The who-words.</strong> The short list an author picks from, and whether authors can name their own.</li>
         <li><strong>Reuse.</strong> Writing a machine once and using it at a second gate with a different cell and words.</li>
       </ul>
