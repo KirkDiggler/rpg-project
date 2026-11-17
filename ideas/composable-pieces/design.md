@@ -97,12 +97,14 @@ Ruled by the operator on rpg-project#987.
 | R9 | Three layers: machines the author's; status effects and primitive effects the engine team's; the studio's inputs are status effects | settled | this story | KirkDiggler | 2026-11-18 |
 | R10 | A condition states its own endings where it is applied; a move knows nothing about holds | settled | this story | KirkDiggler | 2026-11-18 |
 | R11 | What someone holds must be transmitted, and that is authored; reaching the captain is not the faction knowing | settled | this story | KirkDiggler | 2026-11-18 |
-| R12 | How word spreads (announce, messenger, on sight, gossip) | deferred-until-the-machine-work-lands | this story | KirkDiggler | 2026-11-18 |
+| R12 | How word spreads (announce, messenger, on sight, gossip) | deferred-until-the-machine-work-lands (rpg-project#992) | this story | KirkDiggler | 2026-11-18 |
 | R13 | Start with the machine; it is the mind machine, also when applied to nobody | settled | this story | KirkDiggler | 2026-11-18 |
 | R14 | Each NPC is in its own state on a machine; beats come from that NPC | settled | this story | KirkDiggler | 2026-11-18 |
 | R15 | An NPC's state is what it is doing; what it thinks of each person is a holding | settled | this story | KirkDiggler | 2026-11-18 |
 | R16 | The studio tool for consequences comes later | deferred-until-the-status-effects-exist | this story | KirkDiggler | 2026-11-18 |
 | R17 | Machines run on NPCs or on the world; the separate conversation machine goes away | settled | this story | KirkDiggler | 2026-11-18 |
+| R18 | A machine on the world | deferred-until-a-story-needs-it (rpg-project#991) | this story | KirkDiggler | 2026-11-18 |
+| R19 | The engine work is recorded as stories (rpg-project#989, #990) and does not block improving the studio | settled | this story | KirkDiggler | 2026-11-18 |
 
 Superseded cuts, one sentence each:
 
