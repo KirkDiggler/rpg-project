@@ -10,7 +10,7 @@
 
 - Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number}`. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.
 - Existing `frame`, `leaf`, `above` roles remain the authored part declarations. The repeat part is above the fixed region and spans the remaining native height. Door leaves never belong to it. Generic scalable bodies and fixed props use the same profile/consumer contract without becoming doors.
-- `planAssetHeight({nativeHeight,targetHeight,profile,maxRows?})` returns an exact height, whole-instance Y scale and repeat-row offsets/scales. A repeat profile leaves fixed geometry at scale 1, preserves the existing nearest-whole-row policy and distributes its residual across the rows. Invalid heights/profiles and allocation overflow refuse; no silent cap or height clamp.
+- `planAssetHeight({nativeHeight,targetHeight,profile,maxRows?})` returns an exact height, whole-instance Y scale and repeat-row offsets/scales. A repeat profile leaves fixed geometry at scale 1, preserves the existing nearest-whole-row policy and distributes its residual across the rows. Invalid heights/profiles refuse. Preserve the existing bounded row-pool policy: the cap limits clone allocation, not target height; spread the residual over the rows actually created. Never silently shorten the geometry or stretch the fixed opening.
 - Structural `appearance.height` remains the authored target. A doorway inherits its owning wall's explicit height. Existing prop `heightScale` can be converted once to a target height at the adapter; no new native/wire field is presumed necessary.
 - Same compatible finish means shared physical U/V scale and phase. All declared masonry parts on a face receive it, including repeated upper rows. Leaf/trim materials stay separate. Timber/atlas surfaces are not silently reclassified as masonry.
 - Source preparation uses the existing trusted source/capture and promotion mechanisms. Never use installed output as replacement source or weaken custody checks. Licensed geometry and screenshots stay private.
@@ -21,11 +21,11 @@
 **Owner:** Web rendering. **Prerequisite:** agreed contract above.
 **Files:** create `src/rendering/assetHeightLayout.ts`, `assetHeightLayout.test.ts`; then integrate in `src/components/hex-grid/WorldAssetModel.tsx` with `WorldAssetModel.test.tsx` and the loaded-instance fit tests.
 **Interface:** the closed height profile and `planAssetHeight` above; immutable planning output, no scene/global mutation.
-**Behavior/proofs:** differently sized scalable sources reach the same target; repeat-above grows only the upper rows; exactly at the fixed-region minimum has no upper rows; below minimum refuses; invalid/non-finite dimensions and more than the row cap refuse before allocation. Input remains unchanged and repeated planning is identical.
+**Behavior/proofs:** differently sized scalable sources reach the same target; repeat-above grows only the upper rows; exactly at the fixed-region minimum has no upper rows; below minimum refuses; invalid/non-finite dimensions refuse. Targets requiring more than the row pool still reach the exact top using the bounded pool, with fixed geometry unscaled. Input remains unchanged and repeated planning is identical.
 
-- [ ] Add named height-layout cases and observe failure before the module exists.
-- [ ] Implement the pure planner and run `npx vitest run src/rendering/assetHeightLayout.test.ts`.
-- [ ] Replace the scattered row-count/residual calculations with this planner; keep scene attachment/disposal in the existing commit lifecycle, never during render.
+- [x] Add named height-layout cases and observe failure before the module exists.
+- [x] Implement the pure planner and run `npx vitest run src/rendering/assetHeightLayout.test.ts`.
+- [x] Replace the existing above-row count/residual calculations with this planner; keep scene attachment/disposal in the existing commit lifecycle, never during render. Other adapters remain Task 3.
 - [ ] Add loaded-geometry assertions: two instances at different heights cannot mutate each other or the cached source; fixed leaf transforms stay unchanged; shrinking after growing removes extra rows.
 
 ## Task 2 — provider configuration and asset inventory
@@ -80,5 +80,7 @@
 | Task 1 | Shared model / structural / prop adapters | Exact target-height layout, typed refusal | Pure layout and actual instance bounds tests |
 | Task 2 surface bindings | Shared wall charts / independent door render | Per-part side targets, existing material ref/phase | Matching chart coordinates at joins and repeated rows |
 | Existing native/captured height and face data | Task 3 | Reused fields; no protocol addition currently needed | Round-trip and independent-disclosure regressions |
+
+**Checkpoint finding:** the existing renderer capped clones but calculated residual against an uncapped row count, so a fixture reporting height 120 rendered only 66. Its residual scaling also shifted a course's lower face when its pivot was centred. The integrated regression now reaches the requested top, keeps the leaf unchanged and anchors courses at their lower face. This is not yet a diagnosis of the operator's screenshot. The plan's initial row-overflow refusal was corrected to preserve the base code's documented bounded-pool policy without shortening valid heights.
 
 **Open implementation checks:** exact scene reproduction needs the operator's YAML; source availability and per-asset part authoring must be established in the inventory. If inspection shows native/wire facts are insufficient, return that specific architectural gap rather than smuggling new authority into the renderer. These checks do not authorize narrowing the promised inventory.
