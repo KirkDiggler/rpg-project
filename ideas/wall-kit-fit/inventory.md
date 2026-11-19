@@ -1,6 +1,6 @@
 # Wall/door configuration inventory
 
-Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-project/issues/1022), inspected against Assets `6c74fd4` with the derived height-profile checkpoint `19056c4`. This is a human coverage list, not a runtime name-matching classifier.
+Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-project/issues/1022), initially inspected against Assets `6c74fd4`, updated for the first prepared pair at `a5ebe4e`. This is a human coverage list, not a runtime name-matching classifier.
 
 72 wall/door/window/gate/arch-related environment entries are listed. Generic props also receive the same height-profile shape; these labels do not automatically grant repetition, masonry mapping or door behavior.
 
@@ -17,7 +17,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle gate — large tower Doorway (`castle_gateway_doorway_large_01`) | fixed | frame: Door_Frame, leaf: Door_Leaf_Left, leaf: Door_Leaf_Right | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle gate — standard Opening (`castle_gateway_opening_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle gate — large tower Opening (`castle_gateway_opening_large_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| Castle Wall 01 (`castle_wall_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
+| Castle Wall 01 (`castle_wall_01`) | scale | named body/fit anchors; original default retained | shared masonry | `kingdom-standard-walls-v1.json` |
 | Castle Wall 02 (`castle_wall_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall 03 (`castle_wall_03`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall 04 (`castle_wall_04`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
@@ -27,7 +27,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Wall Door Big 01 (`castle_wall_door_big_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Door Big Door 01 (`castle_wall_door_big_door_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Doorway Double 01 (`castle_wall_doorway_double_01`) | fixed | frame: Door_Frame, leaf: Door_Leaf_Left, leaf: Door_Leaf_Right | not enrolled | `kingdom-door-batch-v1.json` |
-| Castle Wall Doorway Single 01 (`castle_wall_doorway_single_01`) | fixed | frame: Door_Frame, leaf: Door_Leaf | shared masonry | `kingdom-single-opening-v1.json` |
+| Castle Wall Doorway Single 01 (`castle_wall_doorway_single_01`) | repeat-above | frame: Door_Frame, leaf: Door_Leaf, above: Door_Wall_Above | fixed + upper masonry | `kingdom-single-opening-v1.json` |
 | Castle Wall Doorway Single 01 (seated revision) (`castle_wall_doorway_single_02`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall Drain 01 (`castle_wall_drain_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Drain Tunnel 01 (`castle_wall_drain_tunnel_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
@@ -35,7 +35,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Wall Gate Door L 01 (`castle_wall_gate_door_l_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Gate Door R 01 (`castle_wall_gate_door_r_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Opening Double 01 (`castle_wall_opening_double_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| Castle Wall Opening Single 01 (`castle_wall_opening_single_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-single-opening-v1.json` |
+| Castle Wall Opening Single 01 (`castle_wall_opening_single_01`) | repeat-above | frame: Door_Frame, above: Door_Wall_Above | fixed + upper masonry; non-door body adapter still pending | `kingdom-single-opening-v1.json` |
 | Castle Wall Opening Single 01 (seated revision) (`castle_wall_opening_single_02`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall Panel Stone 02 (`castle_wall_panel_stone_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Window 03 (`castle_wall_window_03`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
@@ -86,4 +86,5 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 - The immutable `kingdom-single-v1.blend` contains the original Castle Wall 01 body and Single Doorway frame/leaf. The existing Fit01 exporter already derives its plain wall from that same original wall object; it is not a different-height source model.
 - In the original doorway, decorative/fixed frame vertices extend to raw Z ≈2.865 while the wall reaches Z=5. A repeat band must be explicitly authored above the protected feature, not inferred by the runtime or obtained by scaling the whole doorway.
 - Other raw castle wall FBXs are present in the existing Kingdom source pack. Their declarations still require preparation; existence alone is not verification or enrollment.
-- The raw Castle Wall 01 reference belongs to a converted batch, while prepared Fit01 and doorway references belong to authored batches. Preserve exact asset identity and custody when standardizing them; do not solve this by adding another confusing picker alias.
+- Castle Wall 01 was transferred from its converted owner to an authored standard-wall owner without changing its ref or original gray maps. Unchanged old-owner entries retain their historical proofs. Fit01 remains a compatible older appearance; no additional picker alias was invented.
+- The first actual Studio checkpoint compares heights 3.75 and 6 with matching selected gray finishes and unchanged leaf height. It does not complete the rest of this inventory.

@@ -4,6 +4,8 @@
 
 - Recorded the agreed height/finish brief and checked provider/consumer task plan; implementation is not complete — [Courtyard S6](https://github.com/KirkDiggler/rpg-project/issues/1022).
 
+- The first real Studio checkpoint uses existing Castle Wall 01 and Single Doorway01 at heights 3.75 and 6, with matching selected gray charts, unchanged leaves and working refusal/edit/Undo; the wider inventory remains in progress — [Assets draft #348](https://github.com/KirkDiggler/rpg-game-assets/pull/348), [Web draft #1465](https://github.com/KirkDiggler/rpg-dnd5e-web/pull/1465).
+
 ## Decided
 
 - Reuse declared fixed/repeatable parts, existing source custody and shared charts instead of introducing another per-model fitting path or source registry — [agreement](https://github.com/KirkDiggler/rpg-project/issues/1022).
@@ -12,6 +14,8 @@
 ## Found
 
 - The old Double Door has an `above` part, Single Doorway01 does not, and structural parents scale their children outside the prop's upper-row mechanism; the generic wall selector also admits every valid non-leaf catalog entry — [source-grounded plan](../../ideas/wall-kit-fit/plan.md).
+
+- Existing wall/door refs can retain their identity and default wall maps while moving into the authored configuration path; body fitting and automatic corner opt-in remain separate — [source and integration checkpoint](https://github.com/KirkDiggler/rpg-project/issues/1022).
 
 ## Mistaken
 

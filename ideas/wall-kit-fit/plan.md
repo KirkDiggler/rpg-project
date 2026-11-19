@@ -26,18 +26,18 @@
 - [x] Add named height-layout cases and observe failure before the module exists.
 - [x] Implement the pure planner and run `npx vitest run src/rendering/assetHeightLayout.test.ts`.
 - [x] Replace the existing above-row count/residual calculations with this planner; keep scene attachment/disposal in the existing commit lifecycle, never during render. Other adapters remain Task 3.
-- [ ] Add loaded-geometry assertions: two instances at different heights cannot mutate each other or the cached source; fixed leaf transforms stay unchanged; shrinking after growing removes extra rows.
+- [x] Add loaded-geometry assertions: two instances at different heights cannot mutate each other or the cached source; fixed leaf transforms stay unchanged; shrinking after growing retires the old owned hierarchy.
 
 ## Task 2 — provider configuration and asset inventory
 
 **Owner:** private Assets. **Prerequisite:** profile consumed by Task 1 is fixed.
-**Files:** `scripts/world_asset_review.py`, `scripts/promote_world_assets.py`, `scripts/build_world_asset_catalog.py`, `scripts/world_asset_surfaces.py`, `scripts/doorway_asset_contract.py`; new `scripts/asset_height_contract.py` and focused tests; owning recipes under `scripts/configs/world-asset-promotion/`; generated catalog/receipts through existing producers.
+**Files:** `scripts/world_asset_review.py`, `scripts/promote_world_assets.py`, `scripts/build_world_asset_catalog.py`, `scripts/world_asset_surfaces.py`, `scripts/doorway_asset_contract.py`, `scripts/world_asset_receipts.py`, `scripts/doorway_kit_config.py`, `scripts/blender_export_doorway_kit.py`, `scripts/blender_export_wall_corner_candidate.py`, `scripts/prepare_doorway_kit.py`; new `scripts/asset_height_contract.py`, `scripts/blender_height_parts.py` and focused tests; owning recipes under `scripts/configs/world-asset-promotion/`; generated catalog/receipts through existing producers.
 **Interface:** catalog `heightFit`, existing part roles and per-part surface bindings. New verifier resolves declared nodes uniquely and derives repeat base/row height from transformed geometry. Leaf-bearing assets without a repeat region are explicitly fixed until authored correctly, not stretched by default.
 **Inventory:** [72 wall/door/window/gate/arch-related entries](inventory.md) and their owning recipes/current declarations are recorded. This is coverage tracking, not a runtime name-based eligibility rule. Include the raw castle walls, Fit01, fixed-feature/window walls, house/interior walls, authored openings/doorways and the older Double Door; retain standalone leaves as fixed parts rather than promoting them to complete wall pieces. The current generic picker admits every non-leaf asset; names are for the human inventory, never runtime eligibility inference.
 
 - [x] Add fixtures proving missing/ambiguous repeat nodes, intersecting moving leaves, invalid row dimensions and inconsistent native height are refused.
 - [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current part-role declarations produce 288 scale, 25 fixed and one repeat-above profile; this is not yet completed part preparation.
-- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. Start the visible checkpoint with Castle Wall 01 and Single Doorway01, but do not call the pass complete with only those two configured.
+- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **First pair prepared:** original Castle Wall 01 and Single Doorway01, using the existing immutable source checkpoint. The broader inventory is not complete.
 - [ ] Enroll all compatible masonry targets, including upper rows; verify their declared face/material ownership without assuming every face is one whole rectangular body.
 - [ ] Regenerate only the affected publication units through existing custody mechanisms; retain immutable source evidence. Run focused profile/catalog/surface checks, not the known broad suite.
 
@@ -51,7 +51,7 @@
 
 - [x] Carry the provider profile through the strict generator, normal pinned sync and loaded upper-row validation; reject disagreement with the loaded repeat geometry.
 - [ ] Add regressions that actual wall/doorway instances with the same target have the same top/base, and the opening/leaf does not scale vertically with the wall.
-- [ ] Route structural walls, doorway assemblies and the prop adapter into the same height assembly path; remove the older duplicated height calculations after parity is proven.
+- [ ] Complete the shared height adapters for the full inventory. **Implemented:** generated props, structural walls and doorway assemblies use `assembleAssetHeightInstance` with explicit `targetHeight`; old parent-Y scaling and live-row append calculations are removed. Legacy-only prop adapters and remaining body-anchor cases still need reconciliation.
 - [ ] Apply matching finish to every declared masonry region on each face; cover repeated rows and independent door frame phases, not only a single `.find(side)` target.
 - [ ] Preserve `appearance.height` when changing asset, expose the target clearly in the existing inspector, and report minimum-height refusals before committing an invalid edit.
 - [ ] Verify history/native round-trip and independent captured play. No source-scene fetch or parent lookup is added.
@@ -63,6 +63,16 @@
 - [ ] Complete the inventory's remaining configured entries, not just the demonstration pair.
 - [ ] Run ordinary PR-boundary gates once per completed update, publish the bounded review and address concrete findings. Keep the asset broad-suite waiver intact.
 - [ ] Record exact provider pins, checks, visual evidence, remaining blockers and PR state on #1022. Do not imply implementation approval is merge/deployment authority.
+
+## First-pair checkpoint
+
+- Assets data pin `a5ebe4e`; Web `33158b28`. Draft PRs: Assets #348, Web #1465.
+- Actual Studio: `http://127.0.0.1:3190/_job_1022_start.html`, detached preview tree. This is local authoring, not a new multiplayer-play claim or operator acceptance.
+- Real loaded wall/doorway heights: 3.75 and 6. Both leaf heights stay 1.7588006258; selected gray finish chart errors are below 5.4e-8. Real mouse/inspector edits refuse 1 without changing the geometry, accept 5.25, and Undo restores 6.
+- Full Web gate: 11292 passed / 30 skipped. Focused provider checks: 59 Python tests plus three Blender geometry tests. No broad asset-suite campaign.
+- Ruling: prepare new height revisions entirely off-scene, then expand placement-local node/surface aliases before applying charts/materials. Saved surface identities remain unchanged; cached resources remain immutable.
+- Ruling: preserve Castle Wall 01's original material/UVs and ref. Its `wall-body-fit` capability does not silently opt existing documents into separate `wall-miter-90` corner behavior. The old owner transfers only that ref; all remaining historical source evidence stays unchanged.
+- Remaining explicit checks include Original/default upper-row charts, non-door opening/body-anchor rendering, the wider inventory, native/play integration and one final bounded review. The explicit-gray first-pair checkpoint is not proof of those cases.
 
 ## Visible plan checks
 
