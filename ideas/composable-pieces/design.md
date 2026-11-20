@@ -110,6 +110,7 @@ Ruled by the operator on rpg-project#987.
 | R22 | One shape for a guard, an altar and a grate: something offered to the player, an optional check, and consequences. A conversation is the case where the offer is something said (issuecomment-7033267815) | settled | this story | KirkDiggler | 2026-11-20 |
 | R23 | What a conversation offers is decided for each carrier from what that carrier has recorded; a consequence that landed on one NPC and not another makes them offer different things (issuecomment-7033267815) | settled | this story | KirkDiggler | 2026-11-20 |
 | R24 | A shared set of lines is not a bundle stretched to hold lines; no shortcut. A bundle is what follows a pass or a miss can use, not what a conversation is (issuecomment-7031745938) | settled | this story | KirkDiggler | 2026-11-20 |
+| R25 | Who something is said to is always stated, never left empty. A speech is said to the crowd: everyone in hearing, nobody in particular (rpg-project#987, the comment of 2026-11-20 on said-to) | settled | this story | KirkDiggler | 2026-11-20 |
 
 Superseded cuts, one sentence each:
 
