@@ -49,14 +49,8 @@ slice. A gap that blocks the slice: the builder commits and pushes what is
 green, reports the gap with the pushed head and the named tests that pass,
 and ends its session there.
 
-The lead turns each reported gap into its own small issue (story skill) and a
-fresh session builds it. A gap that is a decision goes to the operator first
-and becomes an issue once it is made. A blocked slice resumes in a fresh
-session, from its issue and the pushed head, after the gap lands; the session
-that found the gap is never the one that builds it.
-
-A gap is a new session, not a new branch: where the wave already has a
-branch in the owning repository, the gap's session commits there.
+What the lead does with a reported gap is in the story skill; the builder's
+part ends with the report.
 
 ## Worktrees and git
 
