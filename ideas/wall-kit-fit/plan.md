@@ -8,8 +8,8 @@
 
 ## Contracts and constraints
 
-- Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number}`. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.
-- Existing `frame`, `leaf`, `above` roles remain the authored part declarations. The repeat part is above the fixed region and spans the remaining native height. Door leaves never belong to it. Generic scalable bodies and fixed props use the same profile/consumer contract without becoming doors.
+- Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number, capNode?:string, capHeight?:number}`. The optional cap pair declares one fixed top translated once; the minimum is fixed base plus cap height. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.
+- Existing `frame`, `leaf`, `above` roles remain the authored part declarations; `cap` declares the optional fixed top. The repeat part is above the fixed region and spans the remaining native height. Door leaves never belong to it. Generic scalable bodies and fixed props use the same profile/consumer contract without becoming doors.
 - `planAssetHeight({nativeHeight,targetHeight,profile,maxRows?})` returns an exact height, whole-instance Y scale and repeat-row offsets/scales. A repeat profile leaves fixed geometry at scale 1, preserves the existing nearest-whole-row policy and distributes its residual across the rows. Invalid heights/profiles refuse. Preserve the existing bounded row-pool policy: the cap limits clone allocation, not target height; spread the residual over the rows actually created. Never silently shorten the geometry or stretch the fixed opening.
 - Structural `appearance.height` remains the authored target. A doorway inherits its owning wall's explicit height. Existing prop `heightScale` can be converted once to a target height at the adapter; no new native/wire field is presumed necessary.
 - Same compatible finish means shared physical U/V scale and phase. All declared masonry parts on a face receive it, including repeated upper rows. Leaf/trim materials stay separate. Timber/atlas surfaces are not silently reclassified as masonry.
@@ -73,6 +73,16 @@
 - Ruling: prepare new height revisions entirely off-scene, then expand placement-local node/surface aliases before applying charts/materials. Saved surface identities remain unchanged; cached resources remain immutable.
 - Ruling: preserve Castle Wall 01's original material/UVs and ref. Its `wall-body-fit` capability does not silently opt existing documents into separate `wall-miter-90` corner behavior. The old owner transfers only that ref; all remaining historical source evidence stays unchanged.
 - Remaining explicit checks include Original/default upper-row charts, non-door opening/body-anchor rendering, the wider inventory, native/play integration and one final bounded review. The explicit-gray first-pair checkpoint is not proof of those cases.
+
+## Feature-batch source ruling
+
+The pictured walls include shaped top caps. Repeating their whole upper halves would duplicate those decorations or produce mismatched cross-sections. Keep a `cap` once at the top, repeat only the recipe-selected middle band, and preserve the lower feature. This is the same generic height contract, not a per-model renderer branch.
+
+Nine existing refs are prepared from hash-pinned original FBXs through the registered material importer: Castle Wall 02–05, Archway01, Door Big01, Drain01, Window03 and Window Fancy01. Each band has matching cross-sections through its length and continuous wall backing; through-openings and tapered bands refuse. A recessed facade is allowed to have its backing behind its decorative projections, rather than being assumed solid at every depth. The fixed cap joins the same captured cut and translates without scaling.
+
+The source-face proof initially lost barycentric precision on a long, thin Wall04 triangle because `mathutils.dot` accumulates float32. Double-precision scalar products fix that counterexample without relaxing the existing tolerance. The prepared exports/captures retain source geometry, UVs, material resources and source identities. Facade masonry is enrolled; edge/ornament surfaces retain their authored materials, as with the existing protected trim contract.
+
+This batch is still candidate work. It does not turn window/arch geometry into gameplay passages, and it does not implement the pending once-placed section picker/native section representation.
 
 ## Visible plan checks
 

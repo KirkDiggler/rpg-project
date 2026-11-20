@@ -1,6 +1,6 @@
 # Wall/door configuration inventory
 
-Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-project/issues/1022), initially inspected against Assets `6c74fd4`, updated for the first prepared pair at `a5ebe4e`. This is a human coverage list, not a runtime name-matching classifier.
+Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-project/issues/1022), initially inspected against Assets `6c74fd4`, updated for the first prepared pair at `a5ebe4e` and nine candidate feature pieces at `05cfd6a`. This is a human coverage list, not a runtime name-matching classifier.
 
 72 wall/door/window/gate/arch-related environment entries are listed. Generic props also receive the same height-profile shape; these labels do not automatically grant repetition, masonry mapping or door behavior.
 
@@ -18,18 +18,18 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle gate — standard Opening (`castle_gateway_opening_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle gate — large tower Opening (`castle_gateway_opening_large_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall 01 (`castle_wall_01`) | scale | named body/fit anchors; original default retained | shared masonry | `kingdom-standard-walls-v1.json` |
-| Castle Wall 02 (`castle_wall_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall 03 (`castle_wall_03`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall 04 (`castle_wall_04`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall 05 (`castle_wall_05`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall Archway 01 (`castle_wall_archway_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
+| Castle Wall 02 (`castle_wall_02`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |
+| Castle Wall 03 (`castle_wall_03`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |
+| Castle Wall 04 (`castle_wall_04`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |
+| Castle Wall 05 (`castle_wall_05`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |
+| Castle Wall Archway 01 (`castle_wall_archway_01`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
 | Castle Wall Door 01 (`castle_wall_door_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall Door Big 01 (`castle_wall_door_big_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
+| Castle Wall Door Big 01 (`castle_wall_door_big_01`) | repeat-above + cap | frame / above / cap; body anchors; no moving leaf | facade masonry | `kingdom-feature-walls-v1.json` |
 | Castle Wall Door Big Door 01 (`castle_wall_door_big_door_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Doorway Double 01 (`castle_wall_doorway_double_01`) | fixed | frame: Door_Frame, leaf: Door_Leaf_Left, leaf: Door_Leaf_Right | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall Doorway Single 01 (`castle_wall_doorway_single_01`) | repeat-above | frame: Door_Frame, leaf: Door_Leaf, above: Door_Wall_Above | fixed + upper masonry | `kingdom-single-opening-v1.json` |
 | Castle Wall Doorway Single 01 (seated revision) (`castle_wall_doorway_single_02`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
-| Castle Wall Drain 01 (`castle_wall_drain_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
+| Castle Wall Drain 01 (`castle_wall_drain_01`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
 | Castle Wall Drain Tunnel 01 (`castle_wall_drain_tunnel_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Fit 01 (`castle_wall_fit_01`) | scale | generic body (no part roles) | shared masonry | `kingdom-wall-corners-v1.json` |
 | Castle Wall Gate Door L 01 (`castle_wall_gate_door_l_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
@@ -38,8 +38,8 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Wall Opening Single 01 (`castle_wall_opening_single_01`) | repeat-above | frame: Door_Frame, above: Door_Wall_Above | fixed + upper masonry; non-door body adapter still pending | `kingdom-single-opening-v1.json` |
 | Castle Wall Opening Single 01 (seated revision) (`castle_wall_opening_single_02`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall Panel Stone 02 (`castle_wall_panel_stone_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall Window 03 (`castle_wall_window_03`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| Castle Wall Window Fancy 01 (`castle_wall_window_fancy_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
+| Castle Wall Window 03 (`castle_wall_window_03`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
+| Castle Wall Window Fancy 01 (`castle_wall_window_fancy_01`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
 | House Base Wall 02 (`house_base_wall_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | House Wall 01 (`house_wall_01`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Wall 02 (`house_wall_02`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-selected-20261005.json` |
@@ -80,6 +80,10 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | House Wall Window 07 (`house_wall_window_07`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Window 07 Glazed (`house_wall_window_07_glazed`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-glazed-windows-v1.json` |
 | House Wall Window 08 (`house_wall_window_08`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
+
+## Feature checkpoint
+
+All nine candidates retain existing refs and have fixed lower geometry, a proved repeat band, and one unscaled top cap. Wall04 and Window03 were measured in actual Studio at heights 3.75 and 6: fixed feature/cap sizes unchanged and facade chart errors below 7e-8. Preview :3191 uses one short wall per piece; this is **not** the pending one-logical-wall section placement workflow. Original/default charts, native/play delivery and the remaining inventory are still open.
 
 ## First source checkpoint
 
