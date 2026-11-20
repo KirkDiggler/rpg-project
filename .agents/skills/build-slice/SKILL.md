@@ -55,6 +55,9 @@ and becomes an issue once it is made. A blocked slice resumes in a fresh
 session, from its issue and the pushed head, after the gap lands; the session
 that found the gap is never the one that builds it.
 
+A gap is a new session, not a new branch: where the wave already has a
+branch in the owning repository, the gap's session commits there.
+
 ## Worktrees and git
 
 - One plain git worktree per line of work, under `<repo>/.worktrees/<name>`:
