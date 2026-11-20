@@ -1,15 +1,18 @@
 ---
 name: build-slice
-description: Use when building one slice of an agreed plan across the RPG repositories — worktrees, base branches, module discipline, pseudo-version to tag, TDD against the plan's named tests, gates, commits, PR bodies, stacked PRs and review fix lists. The builder's contract; a fresh builder follows it from the plan alone.
+description: Use when building one slice of a feature story across the RPG repositories — worktrees, base branches, module discipline, pseudo-version to tag, checking what the slice rests on, reporting gaps, TDD against the issue's named tests, gates, commits, PR bodies, stacked PRs and review fix lists. The builder's contract; a fresh builder follows it from the slice issue alone.
 ---
 
 # Build a slice
 
-The plan names the tasks, files, interfaces and tests. This skill is how a
-builder carries one task to a ready PR without inventing process.
+The slice issue names the files, steps, interfaces and tests (story skill).
+This skill is how a builder carries that one slice to a ready PR without
+inventing process, and without deciding anything the issue did not hand it.
+The issue's "From build-slice" section names the sections below that apply.
 
 ## Slice order
 
+0. **Check what the slice rests on**, and say so on the issue.
 1. **Build** the slice.
 2. **Boot it:** the stack comes up on the builder's own ports and its pages
    load with no errors.
@@ -19,6 +22,80 @@ builder carries one task to a ready PR without inventing process.
 The builder starts neither a walk nor a review request until the lead says
 the operator has looked, or that the slice has nothing to see. The operator
 may pivot on the early view, and a pivot then costs nothing.
+
+## First: check what the slice rests on
+
+The issue's "Rests on" lists the facts the slice assumes, `F1`, `F2`, each
+with the command or the `path:line` that proves it. Before writing code, run
+each check against the branch being built on.
+
+Post one comment on the slice issue, always, also when every fact holds:
+
+`Rests on: F1 holds · F2 holds · F3 does not hold`
+
+A fact that does not hold is a gap of kind **find** that blocks the slice:
+report it as below and stop. Code changes between the day an issue is
+written and the day it is built, and this is where that shows.
+
+## When the issue does not cover it: report a gap
+
+Build the one slice the issue names. When the slice needs something the
+issue does not give, that is a **gap**. Do not fix it, do not work around it
+and do not choose for the issue. Report it.
+
+A gap is one of two kinds.
+
+- **A call** — the issue leaves a choice open and the code could go more
+  than one way.
+- **A find** — a fact the issue did not know or has wrong.
+
+These are the moments a gap shows:
+
+- a name the issue uses is not in the code when searched for;
+- the next edit is in a file the issue does not list;
+- the next sentence to write is "I will assume";
+- the issue, a doc and the code say different things.
+
+A private helper inside a file the issue names is not a gap. When unsure,
+report.
+
+### The report
+
+Post the form below as a comment on the slice issue, one comment per gap.
+Fill every line. Write `none` where a line has no answer; never drop a line.
+
+```markdown
+## Gap: <one sentence, the missing thing in plain words>
+
+- **Slice:** <link to this slice issue>
+- **Kind:** call | find
+- **Blocks the slice:** yes | no
+- **I was doing:** <the step or line of the issue, quoted>
+- **The issue says:** <what that line assumes or asks>
+- **The code has:** <`path:line` with the lines quoted, or the command and its output>
+- **What is missing:** <a fact, one or two sentences; no code>
+- **Ways it could go:** <each way in one line, for a call; else `none`>
+- **My guess:** <optional, one line; a guess, not acted on>
+- **I did not:** <what was left untouched because of this gap>
+- **Where the slice stands:** branch `<name>` at `<pushed sha>`; passing: <named tests>; not done: <issue steps left>
+```
+
+"The code has" is evidence, not memory: quote the lines or paste the output.
+
+Then:
+
+- **Blocks: no.** Finish the slice. List the gap's comment link in the PR
+  body under "Gaps reported".
+- **Blocks: yes.** Commit and push what is green. Do not open a PR for the
+  half slice. Stop.
+
+End the turn with one line per gap and nothing after it:
+
+`GAP blocking <comment link>` or `GAP not-blocking <comment link>`
+
+A builder decides nothing the issue did not hand it. The run record's
+**decided** section lists only choices the issue gave; a judgment that
+appears there and nowhere in the issue is a gap that went unreported.
 
 ## Worktrees and git
 
@@ -66,8 +143,8 @@ covers every package.
 
 ## Tests and gates
 
-- Write the plan's named tests first and see them fail for the reason the
-  plan states. Then implement.
+- Write the issue's named tests first and see them fail for the reason the
+  issue states. Then implement.
 - Run gates in the foreground under a timeout. Never wait on `tail -f` or a
   background monitor; a gate that is not watched finishing is not finished.
 - Commit in the same turn a gate turns green.
@@ -112,15 +189,15 @@ built from a template is the tell that the rule went prescriptive.
 - Commits, PR bodies and comments carry the team signature only: no session
   link, no model name, no co-author trailer.
 - The PR body says what changed, lists the named tests, states every
-  deviation from the plan and why, carries `Part of <repo>#<n>` and
+  deviation from the issue and why, carries `Part of <repo>#<n>` and
   `Closes <repo>#<n>` for the slice sub-issue it finishes (story skill), and
   ends with the signature. A slice with no sub-issue stops here: the builder
   asks the lead for one before opening the PR.
 - **Try it**, required in every PR with a visible change: where to point
   (the operator's stack on :3030/:8115, or the studio), then numbered steps
   written for the operator, each "do this → expect that" and each tied to the
-  box of the slice sub-issue's verification checklist it proves — the
-  checklist is authored there and copied here, never the other way round. A PR with no visible change says "Nothing to
+  box of the story's playtest slice it proves — the checklist is authored
+  there and copied here, never the other way round. A PR with no visible change says "Nothing to
   try (api internals)" or "Nothing to try (toolkit)".
 - Scratch files (PR bodies, drivers) live in the job's temporary directory
   under a name carrying the repo, the PR and the builder.

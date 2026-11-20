@@ -149,6 +149,14 @@ reported tokens including rework. Use Sol when the task's ambiguity or observed
 failure warrants it; state that reason rather than silently upgrading. Model
 selection does not authorize changing execution protocols after a launch failure.
 
+The default tiers follow the kind of session. The lead designs, sets work up
+and rules on gaps. A builder works from a technical slice issue on a smaller
+model; a scout checks one fact on the smallest (story, build-slice and scout
+skills). For Claude sessions that is a Sonnet builder and a Haiku scout. A
+larger builder is the exception, with its reason written on the slice issue.
+A session does one thing: a builder that meets a gap reports it and does not
+close it.
+
 Read the required startup guidance, then progressively load the selected module
 and linked evidence. Do not preload every role context file or unrelated history.
 Return a compact receipt (scope, head, checks, gaps, artifact links), not a whole
