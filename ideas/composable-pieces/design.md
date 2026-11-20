@@ -105,6 +105,11 @@ Ruled by the operator on rpg-project#987.
 | R17 | Machines run on NPCs or on the world; the separate conversation machine goes away | settled | this story | KirkDiggler | 2026-11-18 |
 | R18 | A machine on the world | deferred-until-a-story-needs-it (rpg-project#991) | this story | KirkDiggler | 2026-11-18 |
 | R19 | The engine work is recorded as stories (rpg-project#989, #990) and does not block improving the studio | settled | this story | KirkDiggler | 2026-11-18 |
+| R20 | A conversation is its content, the things that can be said, not the storage of running it. It is written once and applied to a number of NPCs (rpg-project#987, issuecomment-7031378865, -7031795013) | settled | this story | KirkDiggler | 2026-11-20 |
+| R21 | A conversation is lines and checks that have a consequence. A consequence lands on those who were in sight or hearing and is stored on each of them; an NPC who was away has nothing stored, though it carries the same conversation (issuecomment-7033215555) | settled | this story | KirkDiggler | 2026-11-20 |
+| R22 | One shape for a guard, an altar and a grate: something offered to the player, an optional check, and consequences. A conversation is the case where the offer is something said (issuecomment-7033267815) | settled | this story | KirkDiggler | 2026-11-20 |
+| R23 | What a conversation offers is decided for each carrier from what that carrier has recorded; a consequence that landed on one NPC and not another makes them offer different things (issuecomment-7033267815) | settled | this story | KirkDiggler | 2026-11-20 |
+| R24 | A shared set of lines is not a bundle stretched to hold lines; no shortcut. A bundle is what follows a pass or a miss can use, not what a conversation is (issuecomment-7031745938) | settled | this story | KirkDiggler | 2026-11-20 |
 
 Superseded cuts, one sentence each:
 
