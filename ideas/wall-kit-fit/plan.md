@@ -6,6 +6,8 @@
 **Baselines:** Assets `6c74fd4`, Web `363f3b62`, Project `e5c7281`. Worktrees: `.worktrees/wall-kit-fit`; direct implementation, no delegated investigation.
 **Finish line:** configured inventory, working Studio height/finish checkpoint, history/native/play integration, bounded review and ordinary repository gates. Merge/deployment remains separately authorized. No broad asset-suite campaign.
 
+**One-wall continuation:** [section ownership, authoring and captured delivery plan](sections-plan.md), following the operator's acceptance of texture alignment and rejection of three independently editable walls as the final interaction. Its backend/native capture work remains required.
+
 ## Contracts and constraints
 
 - Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number, capNode?:string, capHeight?:number}`. The optional cap pair declares one fixed top translated once; the minimum is fixed base plus cap height. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.

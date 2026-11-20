@@ -27,9 +27,9 @@
 **Files:** new `wallSections.ts`, `wallSections.test.ts`; `structuralWalls.ts`, `structuralWallEditing.ts`, `wallHeightEdits.ts`; existing corresponding tests and `singleRoomDungeon.test.ts`.
 **Interfaces:** `WallSection`; detached parser; pure insert/update/remove helpers; visual exclusion geometry; endpoint-resize protection using shared interval arithmetic without changing mechanical openings.
 **Tests:** a 12-unit wall with one 3.75-unit section centred at 6 remains one wall, has unchanged blocker and zero gameplay openings, and has plain visual spans [0,4.125] / [7.875,12]. Duplicate IDs, nonfinite/zero width, beyond-end, section overlap and door-surround overlap refuse. Two touching sections pass. Translate/rotate/resize preserve owned records and input isolation. Resize from Start shifts local centres to preserve world pose; shrink clamps. Removing restores the uninterrupted visual span. JSON/native round-trip retains fields and unknown siblings.
-- [ ] RED then GREEN core codec/edit/interval tests.
-- [ ] Integrate owner validation and all wall transforms.
-- [ ] Verify native round-trip without changing mechanical declarations.
+- [x] RED then GREEN core codec/edit/interval tests.
+- [x] Integrate owner validation and wall transforms; endpoint resize protects section edges and shifts Start-relative centres.
+- [x] Verify editor-native round-trip without changing mechanical declarations. This is not engine compilation (5d remains open).
 **Verification:** `npx vitest run src/concepts/world-building/wallSections.test.ts src/concepts/world-building/structuralWalls.test.ts src/concepts/world-building/structuralWallEditing.test.ts src/concepts/world-building/wallHeightEdits.test.ts src/concepts/world-building/singleRoomDungeon.test.ts` in the Web worktree.
 
 ### S6.5b — render once and inherit wall charts
@@ -38,8 +38,8 @@
 **Files:** `StructuralWallSurfaces.tsx`, new `StructuralWallSections.tsx` and tests; `WorldPropModel.tsx`, `WorldAssetModel.tsx`, new detached geometry clipping helper/tests if required by partial fog; existing `plainWallFit.ts`, `wallSurfaceCharts.ts` remain fit/chart owners.
 **Interfaces:** same `StructuralWallSurface.appearance.sections`; section-local placement and full-span fitting; temporary visible interval clipping only at the render boundary.
 **Tests:** one wall/one window yields exactly one feature and no base art over its span; target heights 3.75/6 preserve fixed geometry; frame/above/cap and neighbouring plain pieces share phase at a non-repeat-aligned position. Partial remembered/absent coverage clips only supplied stretches without stretching the feature, duplicate caps or mutating cached source. Door surround and section coexist without shared state.
-- [ ] RED/GREEN actual synthetic mesh and phase tests.
-- [ ] Shared rendered placement, finish inheritance, cleanup and fog clipping.
+- [x] RED/GREEN synthetic render/clip tests; actual one-wall source meshes measured at an off-repeat-aligned window position.
+- [x] Shared rendered placement, finish inheritance, cleanup and fog clipping. Loaded fitter omission mutant fails without clipping.
 **Verification:** focused new renderer tests plus `StructuralWallFit.test.tsx`, `StructuralWallVisual.test.tsx`, `assetHeightInstance.test.ts`, `assetHeightCharts.test.ts`.
 
 ### S6.5c — ordinary Studio authoring and history
@@ -48,8 +48,8 @@
 **Files:** `WorldBuildingConcept.tsx`, `studioSession.ts`, `StudioInspector.tsx`, new `StudioWallSections.tsx` and tests; `fixtures/fakeStudioSession.tsx`, `EncounterStudioIntegration.test.tsx`; extend the existing placement gesture path if needed rather than duplicating document ownership.
 **Interfaces:** a wall-scoped section edit command through the existing document/history transaction. Choose a configured feature, place/adjust its centre along the owning wall, remove it. The wall remains the inspected/selected owner; sections are not `scene.items` or independent wall entries.
 **Tests:** add/window/move/remove, wall height change, Undo/Redo, native save/reopen. Each command yields one history entry; failed overlap/minimum-height edit writes nothing. A wall remains one document row and its blocker/openings are byte-equivalent after appearance-only edits. Existing served-castle round-trip remains covered.
-- [ ] RED/GREEN owner/port/UI tests.
-- [ ] Replace the three-object demonstration with a separate isolated one-wall sample; preserve earlier previews.
+- [x] RED/GREEN owner/port/UI tests through existing `wallEditing.edit`; no new document/history owner.
+- [x] Add a separate isolated one-wall sample at :3192; earlier preview drafts remain intact.
 **Verification:** focused panel and owner integration tests; early actual Studio view before final review/play walk.
 
 ### S6.5d — native and captured visual list
@@ -91,3 +91,11 @@
 | Generated schema + runtime adapter 5d | Shared 5b renderer | Feet converted once; section facts preserved through opening patches | Synthetic plus actual Play view |
 
 No implementation reuses gameplay openings to store visual sections. Native additions are required work, not an optional promise to defer after a Studio-only result.
+
+## Studio checkpoint (not Play completion)
+
+Web `53bcb915` supplies the editor continuation. `http://127.0.0.1:3192/_job_1022_sections.html` has two comparison samples, each exactly one wall containing one real door and one window section, with zero extra scene items. Both actual surfaces reach heights 3.75/6; editing the high wall to 5.25 moves all three visual components together while the window's fixed lower/cap geometry stays unchanged. Moving the window and editor-native encode/decode preserve the owning wall. Chart errors stay below 2e-7.
+
+The section inspector edits apply immediately outside the wall's staged placement form. Sections tagged by the provider are no longer offered as new repeating walls, while old imported repeat intent remains renderable. Full Web gate: 11326 passed, 30 skipped, 880 files passed/1 skipped; format/lint/types/build/production guards passed.
+
+The preview's **two engine refusals are expected and unresolved**: the currently connected backend does not read `appearance.sections`. They are not suppressed. Task 5d must add native compilation, immutable capture and recipient delivery before Play is complete. This is the early real editor view required before the play walk/final review, not a narrowed finish line.
