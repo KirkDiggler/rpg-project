@@ -4,9 +4,10 @@ Shared repeatable procedures belong here only after individual review and approv
 
 The canonical skills:
 
-- `story/SKILL.md`: the story issue, its slice sub-issues, and the names (story, S<n>, R<n>) everyone uses.
+- `story/SKILL.md`: the week goal, its feature stories, their technical slice issues, the playtest slice, the holding zone, and the names (story, S<n>, R<n>) everyone uses.
+- `scout/SKILL.md`: checking one fact with a small read-only session before work is set up.
 - `design/SKILL.md`: design, planning and architectural-gap judgment.
-- `build-slice/SKILL.md`: the builder's contract for one slice of a plan.
+- `build-slice/SKILL.md`: the builder's contract for one slice: check what it rests on, report gaps, build from the slice issue alone.
 - `walk/SKILL.md`: the walk on a real stack, run as the standing QA script.
 - A slice's look and walk start on its own walk site, then fold into the castle: `build-slice/SKILL.md` ("The walk site").
 - `pr-review/SKILL.md`: the independent review round and its QA handoff.
