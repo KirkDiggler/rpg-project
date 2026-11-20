@@ -80,14 +80,12 @@ numbers, never a separate set.
 - **Building:** the builder's PR body carries `Part of <repo>#<story>` and
   `Closes <repo>#<slice>` for the slice it finishes (build-slice skill).
 - **A reported gap:** a builder that meets something its slice issue does
-  not give reports it and does not build it (build-slice skill). The lead
-  files each gap as its own small explicit issue in the owning repo, linked
-  from the slice, and a fresh session builds it. A gap that is a decision
-  goes to the operator first and becomes an issue once it is made. A blocked
-  slice resumes in a fresh session, from its issue and the pushed head, after
-  the gap lands; the session that found the gap never builds it. A gap is a
-  new session, not a new branch: where the wave already has a branch in the
-  owning repo, the gap's session commits there.
+  not give posts a gap report on the slice issue and ends its turn with a
+  `GAP` line carrying the link (build-slice skill). The lead reads the
+  report and files the gap as its own small explicit issue in the owning
+  repo, linked from the slice. A gap of kind "open choice" goes to the
+  operator first and becomes an issue once the choice is made. A report the
+  lead cannot file an issue from is a fault in the form; fix the form.
 - **Waiting on the operator:** the question or checklist goes on the slice
   sub-issue (or the design PR), one line with the link in chat. The lead
   never asks "should S2 merge?" in chat without the sub-issue the operator

@@ -20,37 +20,52 @@ The builder starts neither a walk nor a review request until the lead says
 the operator has looked, or that the slice has nothing to see. The operator
 may pivot on the early view, and a pivot then costs nothing.
 
-## One session, one thing
+## When the issue does not cover it: report a gap
 
-A builder session builds the one slice its issue names and nothing else. The
-single focus is what lets a smaller model build it well.
+Build the one slice the issue names. When the slice needs something the
+issue does not give, that is a **gap**. Do not fix it, do not work around it
+and do not choose for the issue. Report it.
 
-A **gap** is anything the slice needs that its issue does not give:
+It is a gap when any of these is true:
 
-- a choice the issue does not make;
-- a seam, field or verb the issue assumes and the code does not have;
-- a change outside the files and the module the issue names;
-- a doc or an issue line that disagrees with the code.
+- the issue leaves a choice open and the code could go more than one way;
+- the issue names a function, field, type or verb that the code does not have;
+- finishing needs a change outside the files and the module the issue names;
+- the issue, a doc and the code disagree.
 
-A private helper inside a file the issue names is not a gap.
+A private helper inside a file the issue names is not a gap. When unsure,
+report.
 
-The builder never closes a gap and never designs around one. It reports the
-gap to the lead, in detail:
+### The report
 
-- what the slice needed, and the line of the issue that needed it;
-- what exists today, with `file:line`;
-- what is missing, stated as a fact, not built and not sketched in code;
-- whether it is a missing piece with one plain path, or a decision someone
-  has to make;
-- whether the slice can finish without it.
+Post the form below as a comment on the slice issue, one comment per gap.
+Fill every line. Write `none` where a line has no answer; never drop a line.
 
-A gap the slice can finish without: the builder reports it and finishes the
-slice. A gap that blocks the slice: the builder commits and pushes what is
-green, reports the gap with the pushed head and the named tests that pass,
-and ends its session there.
+```markdown
+## Gap: <one sentence, the missing thing in plain words>
 
-What the lead does with a reported gap is in the story skill; the builder's
-part ends with the report.
+- **Slice:** <link to this slice issue>
+- **Blocks the slice:** yes | no
+- **Kind:** missing piece | open choice | outside my files | issue and code disagree
+- **I was doing:** <the step or line of the issue, quoted>
+- **The issue expects:** <what that line assumes is true>
+- **The code has:** <what is there, with `path:line` and the lines quoted>
+- **What is missing:** <a fact, one or two sentences; no code>
+- **Ways it could go:** <each way in one line, for an open choice; else `none`>
+- **I did not:** <what was left untouched because of this gap>
+- **Where the slice stands:** branch `<name>` at `<pushed sha>`; passing: <named tests>; not done: <issue steps left>
+```
+
+Then:
+
+- **Blocks: no.** Finish the slice. List the gap's comment link in the PR
+  body under "Gaps reported".
+- **Blocks: yes.** Commit and push what is green. Do not open a PR for the
+  half slice. Stop.
+
+End the turn with one line per gap and nothing after it:
+
+`GAP blocking <comment link>` or `GAP not-blocking <comment link>`
 
 ## Worktrees and git
 
