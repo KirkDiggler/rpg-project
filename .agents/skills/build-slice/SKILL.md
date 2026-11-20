@@ -20,6 +20,41 @@ The builder starts neither a walk nor a review request until the lead says
 the operator has looked, or that the slice has nothing to see. The operator
 may pivot on the early view, and a pivot then costs nothing.
 
+## One session, one thing
+
+A builder session builds the one slice its issue names and nothing else. The
+single focus is what lets a smaller model build it well.
+
+A **gap** is anything the slice needs that its issue does not give:
+
+- a choice the issue does not make;
+- a seam, field or verb the issue assumes and the code does not have;
+- a change outside the files and the module the issue names;
+- a doc or an issue line that disagrees with the code.
+
+A private helper inside a file the issue names is not a gap.
+
+The builder never closes a gap and never designs around one. It reports the
+gap to the lead, in detail:
+
+- what the slice needed, and the line of the issue that needed it;
+- what exists today, with `file:line`;
+- what is missing, stated as a fact, not built and not sketched in code;
+- whether it is a missing piece with one plain path, or a decision someone
+  has to make;
+- whether the slice can finish without it.
+
+A gap the slice can finish without: the builder reports it and finishes the
+slice. A gap that blocks the slice: the builder commits and pushes what is
+green, reports the gap with the pushed head and the named tests that pass,
+and ends its session there.
+
+The lead turns each reported gap into its own small issue (story skill) and a
+fresh session builds it. A gap that is a decision goes to the operator first
+and becomes an issue once it is made. A blocked slice resumes in a fresh
+session, from its issue and the pushed head, after the gap lands; the session
+that found the gap is never the one that builds it.
+
 ## Worktrees and git
 
 - One plain git worktree per line of work, under `<repo>/.worktrees/<name>`:
