@@ -57,12 +57,12 @@
 **Owner:** existing Protos, Toolkit Encounter/Session, API boundaries. **Prerequisite:** consumer contract exercised by S6.5a–c; worktrees and each owning module's instructions before edits.
 **Files:** Protos `dnd5e/api/session/v1alpha1/types.proto` plus v1alpha2 act geometry where it owns the corresponding type. Encounter: new visual-section type/tests, `structural_walls.go`, `data.go`, `atlas.go`, `structural_reveal.go`, `dungeonspec/single_room.go`, `single_room_walls.go`, `single_room_decode.go` as required by the actual decoder. Session: `structural.go`, `convert.go` and existing atlas/event deep-copy/round-trip tests. API: both `internal/handlers/dnd5e/session/v1alpha{1,2}/convert_structural.go`/`convert_geometry.go` owners and joined native session fixture. Web runtime: `components/session/structuralLayout.ts`, `applyReveal.ts` and their tests with generated bindings.
 **Interfaces:** captured section list in feet, exact opaque refs/IDs; all complete-wall introduction, snapshot, persistence and replay lanes carry independent copies. Opening-only replacement preserves it. No new RPC, permission, mechanics, independent child disclosure or source fetch.
-**Tests:** native value → canonical feet → persistence reload → two-recipient snapshot/reveal → Web scene-unit conversion; legacy absent list; duplicate/invalid/overlapping sections refuse; unchanged movement/sight/door topology. Hidden wall carries no section facts. Opening replacement does not erase/recompute sections. Inputs/results are detached. Legacy no-section hash remains unchanged if optional data is absent.
-- [ ] Inspect provider package instructions/current bases; create isolated worktrees.
-- [ ] Additive schema/generation checks (no hand-written proto tests).
-- [ ] RED/GREEN provider and seam tests; one toolkit module per PR.
+**Tests:** native value → canonical feet → persistence reload → two-recipient snapshot/reveal → Web scene-unit conversion; legacy absent list; duplicate/invalid/overlapping sections refuse; unchanged movement/sight/door topology. Hidden wall carries no section facts. Opening replacement does not erase/recompute sections. Inputs/results are detached. Legacy no-section persisted SiteHash remains unchanged if optional data is absent. The separate compiler ContentHash includes every compiled struct field and is engine-version-local.
+- [x] Inspect provider package instructions/current bases; create isolated worktrees. Protos base ba987c8, Encounter base 771116fb, API base 2cddb1a3. Session reconciles main after #2502 landed.
+- [x] Additive schema checks: Protos #449 at b17e26b, local `make format`/`make test` and remote generation/SDK checks green; publication still requires authorized merge.
+- [x] RED/GREEN Encounter/native and Session projection/decode tests; full module race tests and lint pass. Separate module PRs #2503 / #2505. API/generated-wire integration remains below.
 - [ ] Join on actual generated bindings/pushed candidate versions; keep incomplete/pseudo-version consumers draft.
-**Verification:** proto `make test`, `make generate`; named module-focused tests during development; owning full module/API gates at PR boundaries. No generated bindings hand edits or fake release tags.
+**Verification:** proto `make format`, `make test`, and CI-owned generation/SDK checks (owning repository explicitly does not require local generation for contract authoring); named module-focused tests during development; owning full module/API gates at PR boundaries. No generated bindings hand edits or fake release tags.
 
 ### S6.5e — joined delivery evidence
 
@@ -91,6 +91,14 @@
 | Generated schema + runtime adapter 5d | Shared 5b renderer | Feet converted once; section facts preserved through opening patches | Synthetic plus actual Play view |
 
 No implementation reuses gameplay openings to store visual sections. Native additions are required work, not an optional promise to defer after a Studio-only result.
+
+## Provider checkpoint and publication dependency
+
+- Protos #449: b17e26b, additive wall `sections = 12` in both session versions; contract and remote generation gates pass. No SDK publication until merge.
+- Encounter #2503: 9c166b2d. Native decoding/lowering, immutable capture, detached persistence/read/reveal paths, real finder-vs-peer disclosure tests; full `go test -race ./...` and lint pass.
+- Session #2505: 43538a14. Real candidate pin `v0.237.1-0.20261120222209-9c166b2d562e`, detached seam DTOs, required numeric presence and malformed-whole-reveal refusal; full race suite and lint pass. The already-merged Encounter initiative change initially broke the old Session pin, so the branch consumed existing #2502 and then merged main after it landed. No duplicate initiative implementation or rebasing.
+- The first Encounter full gate exposed six JSON atlas characterizations adding only `Sections:null` and the engine-version-local ContentHash change. Programmatic comparison proved no other golden delta. Updated the content hash pin without modifying its generic encoder. The persisted SiteHash/empty-list checks remain green.
+- API's isolated worktree is clean and unchanged. API mapping and Web runtime adoption are blocked on actual generated bindings. No generated-branch push, manual SDK copy or local replace is used to bypass the publication seam. Only a specific operator authorization to merge Protos #449 is being requested; all other merge/deployment holds remain.
 
 ## Studio checkpoint (not Play completion)
 
