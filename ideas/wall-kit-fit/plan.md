@@ -38,8 +38,8 @@
 **Inventory:** [72 wall/door/window/gate/arch-related entries](inventory.md) and their owning recipes/current declarations are recorded. This is coverage tracking, not a runtime name-based eligibility rule. Include the raw castle walls, Fit01, fixed-feature/window walls, house/interior walls, authored openings/doorways and the older Double Door; retain standalone leaves as fixed parts rather than promoting them to complete wall pieces. The current generic picker admits every non-leaf asset; names are for the human inventory, never runtime eligibility inference.
 
 - [x] Add fixtures proving missing/ambiguous repeat nodes, intersecting moving leaves, invalid row dimensions and inconsistent native height are refused.
-- [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current candidate declarations produce 279 scale, 23 fixed and 12 repeat-above profiles across the same 314 refs; this is not yet completed part preparation.
-- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **First pair prepared:** original Castle Wall 01 and Single Doorway01, using the existing immutable source checkpoint. The broader inventory is not complete.
+- [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current candidate declarations produce 278 scale, 17 fixed and 19 repeat-above profiles across the same 314 refs; this is not yet completed part preparation.
+- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **Prepared:** first wall/Single01 pair; ten raw castle feature refs; captured Double01, seated Single02 and large-gateway opening/assembly pairs. Standard gateway has matching masonry but remains explicitly fixed after its tested band failed full-width backing. Remaining families/source cases keep this item open.
 - [ ] Enroll all compatible masonry targets, including upper rows; verify their declared face/material ownership without assuming every face is one whole rectangular body.
 - [ ] Regenerate only the affected publication units through existing custody mechanisms; retain immutable source evidence. Run focused profile/catalog/surface checks, not the known broad suite.
 
@@ -95,6 +95,16 @@ The same checkpoint adds full-body anchoring for measured leafless opening asset
 Legacy static props continue their declared proportional behavior; an explicit target uses the shared scale profile after the complete loaded assembly (including companions) is measured. It neither invents protected parts nor changes old percentage/anchor behavior. A capped generated asset's proportional minimum includes base plus cap. RED/GREEN cases measure actual geometry and source isolation.
 
 Full Web gate passed: 11345 tests /30 skipped, 884 files passed/1 skipped, format/lint/types/build/production guards. Accepted :3191/:3192 editor origins now serve detached d4fcddc5 with their same local drafts; :3190 and the :3193/:8133 Play stack remain unchanged. Developer-only probes use :3194. No new asset bytes/pins, API fields, gameplay rules or operator deployment.
+
+## Expanded castle coverage checkpoint
+
+Assets data `a9ec761`, Web `97ba7cf0`. The original raw Castle Wall Door01 now has fixed/repeat/cap/body configuration without changing its ref or default image payloads. The preceding nine raw feature entries/captures/runtime bytes remain unchanged.
+
+Captured Double01 and seated Single02 opening/assembly pairs now share matching fixed/upper/cap masonry, with actual 3.75/6 geometry and unchanged leaves. The large gateway pair has a valid full-width growth band and a real minimum8.1317; actual 12/15 views preserve its fixed architecture and leaves. Standard gateway gains front/back masonry at native height4.39638 only: the tested5.5..5.8 raw band is narrower than the full frame span. No validator or source width is relaxed to claim repetition.
+
+The source authoring pass preserves untouched leaves exactly. Blender initially re-quantized normals/split vertices despite identical positions/UVs/transforms; the final sources retain original capture leaf payloads and exact runtime signatures. Opening/assembly fixed-part signatures agree. Standard-gateway material scoping copies every triangle corner attribute exactly and leaves default thumbnail PNGs unchanged. All source/receipt/index changes use the existing bounded atomic transaction; global314 refs and unrelated owner evidence are preserved.
+
+Focused provider checks pass (48 per affected publication checkpoint), normal sync/check passes, and the full Web gate passes:11350 tests/30 skipped,884 files passed/1 skipped. Developer Studio views were inspected; these are not a new Play walk or a request to reapprove accepted looks. Existing accepted origins remain frozen. Captured house frames were measured as distinct timber/plaster/board color-map families without normals; they are not silently relabeled masonry. Remaining raw/house preparation and final review remain open.
 
 ## Visible plan checks
 
