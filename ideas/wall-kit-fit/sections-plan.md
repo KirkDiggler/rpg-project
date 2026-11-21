@@ -59,16 +59,16 @@
 **Interfaces:** captured section list in feet, exact opaque refs/IDs; all complete-wall introduction, snapshot, persistence and replay lanes carry independent copies. Opening-only replacement preserves it. No new RPC, permission, mechanics, independent child disclosure or source fetch.
 **Tests:** native value → canonical feet → persistence reload → two-recipient snapshot/reveal → Web scene-unit conversion; legacy absent list; duplicate/invalid/overlapping sections refuse; unchanged movement/sight/door topology. Hidden wall carries no section facts. Opening replacement does not erase/recompute sections. Inputs/results are detached. Legacy no-section persisted SiteHash remains unchanged if optional data is absent. The separate compiler ContentHash includes every compiled struct field and is engine-version-local.
 - [x] Inspect provider package instructions/current bases; create isolated worktrees. Protos base ba987c8, Encounter base 771116fb, API base 2cddb1a3. Session reconciles main after #2502 landed.
-- [x] Additive schema checks: Protos #449 at b17e26b, local `make format`/`make test` and remote generation/SDK checks green; publication still requires authorized merge.
+- [x] Additive schema checks: Protos #449 local `make format`/`make test` and remote generation/SDK checks green; operator merge and SDK publication completed.
 - [x] RED/GREEN Encounter/native and Session projection/decode tests; full module race tests and lint pass. Separate module PRs #2503 / #2505. API/generated-wire integration remains below.
-- [ ] Join on actual generated bindings/pushed candidate versions; keep incomplete/pseudo-version consumers draft.
+- [x] Join on actual generated bindings/pushed candidate versions: SDK v0.1.286 / Go generated 200e4b5d6efd; API111bcee0 and Webd4fcddc5. Consumers remain draft on candidate Toolkit pins.
 **Verification:** proto `make format`, `make test`, and CI-owned generation/SDK checks (owning repository explicitly does not require local generation for contract authoring); named module-focused tests during development; owning full module/API gates at PR boundaries. No generated bindings hand edits or fake release tags.
 
 ### S6.5e — joined delivery evidence
 
 **Owner:** Assets team across existing line of work. **Prerequisites:** S6.5a–d.
-- [ ] One actual wall with a door and a once-placed window/decorative section, wall height/finish edits, Undo/Redo, native save/reopen and Play, and independent captured rendering.
-- [ ] One ordinary Web gate at the completed PR update; focused Assets regressions, not a broad verification campaign.
+- [x] Actual one-wall door/window checkpoint: prior accepted height/finish/Undo editor evidence plus native Save a copy → Play/reload and two independently authenticated rendered recipients on :3193. Window03/SingleDoorway01 are the joined Play sample, not all-inventory proof.
+- [x] Ordinary Web gate for the runtime update: 11330 passed /30 skipped; API `make ci-check` and full `make test` passed. No broad Assets campaign.
 - [ ] One bounded independent review of the completed branches. Required fixes use focused RED/GREEN tests.
 - [ ] Update #1022/parent story and exact pins. No merge/operator deployment without authorization; actual releases before merge-out.
 
@@ -102,15 +102,17 @@ The session's earlier statement that the separation itself was necessarily exces
 
 The operator authorized recording door adoption separately where appropriate. [Web #1478](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1478) tracks shared door/static-section visual authoring and any justified migration, coordinated with existing #1234/#1402. It does not absorb this slice's unfinished native/capture/Play work or prescribe collapsing distinct owners into one record.
 
-This resolves the architectural publication hold, not merge/deployment authorization. The existing proto-only SDK-publication decision remains operator-owned.
+The operator subsequently merged Protos #449 and its SDKs were published. That resolves the protocol publication dependency; Toolkit/API/Web merges and operator deployment remain separately held.
 
 ## Provider checkpoint and publication dependency
 
-- Protos #449: b17e26b, additive wall `sections = 12` in both session versions; contract and remote generation gates pass. No SDK publication until merge.
+- Protos #449 merged by the operator at 20de1f982bab811b571344060d21a7f999e83d8c. Published generated commit 200e4b5d6efd2691d0f7ac9c06e2279e953f9c55 / TS v0.1.286 / Go v0.0.0-20261121010049-200e4b5d6efd.
 - Encounter #2503: 9c166b2d. Native decoding/lowering, immutable capture, detached persistence/read/reveal paths, real finder-vs-peer disclosure tests; full `go test -race ./...` and lint pass.
 - Session #2505: 43538a14. Real candidate pin `v0.237.1-0.20261120222209-9c166b2d562e`, detached seam DTOs, required numeric presence and malformed-whole-reveal refusal; full race suite and lint pass. The already-merged Encounter initiative change initially broke the old Session pin, so the branch consumed existing #2502 and then merged main after it landed. No duplicate initiative implementation or rebasing.
 - The first Encounter full gate exposed six JSON atlas characterizations adding only `Sections:null` and the engine-version-local ContentHash change. Programmatic comparison proved no other golden delta. Updated the content hash pin without modifying its generic encoder. The persisted SiteHash/empty-list checks remain green.
-- API's isolated worktree is clean and unchanged. API mapping and Web runtime adoption are blocked on actual generated bindings. No generated-branch push, manual SDK copy or local replace is used to bypass the publication seam. Only a specific operator authorization to merge Protos #449 is being requested; all other merge/deployment holds remain.
+- API #1268 at111bcee0 copies section facts in both protocol versions and proves two-member/cold-host capture without source enrichment. Web #1465 atd4fcddc5 converts feet once, validates spans and preserves sections through v2 reveals/opening-only updates. Full local gates pass; Toolkit provider CI was green, while API/Web check rollups were empty when inspected (not claimed green).
+- Isolated `local/wall-kit-fit`: Web3193/API8133, detached source worktrees. Actual Studio save/Play/reload, subsequent API-only restart, two browser recipients, door Open/Close and guest reload retain the captured window at height6. No Play-time source/candidate fetches. Container/source content hashes match. Private evidence is `evidence/1022-wall-kit/captured-play/` in Assets.
+- Current castle gatehouse-south legacy double-door rendering was checked. This is not a full concealed-front-gate/combat/speech walkthrough or a new canonical composition fold. Wider inventory, Original/default chart/adaptor cases, final bounded review and released Toolkit pins remain open.
 
 ## Studio checkpoint (not Play completion)
 
@@ -118,4 +120,4 @@ Web `53bcb915` supplies the editor continuation. `http://127.0.0.1:3192/_job_102
 
 The section inspector edits apply immediately outside the wall's staged placement form. Sections tagged by the provider are no longer offered as new repeating walls, while old imported repeat intent remains renderable. Full Web gate: 11326 passed, 30 skipped, 880 files passed/1 skipped; format/lint/types/build/production guards passed.
 
-The preview's **two engine refusals are expected and unresolved**: the currently connected backend does not read `appearance.sections`. They are not suppressed. Task 5d must add native compilation, immutable capture and recipient delivery before Play is complete. This is the early real editor view required before the play walk/final review, not a narrowed finish line.
+At that early editor checkpoint, its backend did not read `appearance.sections` and showed two refusals; they were not suppressed. The subsequent isolated :3193 stack now implements and exercises that native/captured path. The older preview's backend was not redeployed. The broader finish line remains unchanged.
