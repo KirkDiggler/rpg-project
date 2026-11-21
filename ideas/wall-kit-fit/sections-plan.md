@@ -100,6 +100,8 @@ The current section record is therefore a durable representation of static wall-
 
 The session's earlier statement that the separation itself was necessarily excessive conflated visual reuse with canonical ownership. The useful finding is that the current static section chooser does not accept doors; the incorrect inference was that their distinct captured records must therefore be temporary. The operator asked to record the reasoning and continue provided no throwaway architecture is added. Proceed on the durable distinction above; do not force door state or independently disclosed door facts into the wall section array.
 
+The operator authorized recording door adoption separately where appropriate. [Web #1478](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1478) tracks shared door/static-section visual authoring and any justified migration, coordinated with existing #1234/#1402. It does not absorb this slice's unfinished native/capture/Play work or prescribe collapsing distinct owners into one record.
+
 This resolves the architectural publication hold, not merge/deployment authorization. The existing proto-only SDK-publication decision remains operator-owned.
 
 ## Provider checkpoint and publication dependency
