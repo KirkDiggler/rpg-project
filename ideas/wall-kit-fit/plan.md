@@ -38,7 +38,7 @@
 **Inventory:** [72 wall/door/window/gate/arch-related entries](inventory.md) and their owning recipes/current declarations are recorded. This is coverage tracking, not a runtime name-based eligibility rule. Include the raw castle walls, Fit01, fixed-feature/window walls, house/interior walls, authored openings/doorways and the older Double Door; retain standalone leaves as fixed parts rather than promoting them to complete wall pieces. The current generic picker admits every non-leaf asset; names are for the human inventory, never runtime eligibility inference.
 
 - [x] Add fixtures proving missing/ambiguous repeat nodes, intersecting moving leaves, invalid row dimensions and inconsistent native height are refused.
-- [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current part-role declarations produce 288 scale, 25 fixed and one repeat-above profile; this is not yet completed part preparation.
+- [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current candidate declarations produce 279 scale, 23 fixed and 12 repeat-above profiles across the same 314 refs; this is not yet completed part preparation.
 - [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **First pair prepared:** original Castle Wall 01 and Single Doorway01, using the existing immutable source checkpoint. The broader inventory is not complete.
 - [ ] Enroll all compatible masonry targets, including upper rows; verify their declared face/material ownership without assuming every face is one whole rectangular body.
 - [ ] Regenerate only the affected publication units through existing custody mechanisms; retain immutable source evidence. Run focused profile/catalog/surface checks, not the known broad suite.
@@ -52,11 +52,11 @@
 **Interfaces:** generator copies the verified height profile; callers supply target height, not competing parent/model Y multipliers. Existing aperture/width/depth fit and miter anchors still own their separate axes. Surface chart application uses each fitted/repeated instance's final coordinates.
 
 - [x] Carry the provider profile through the strict generator, normal pinned sync and loaded upper-row validation; reject disagreement with the loaded repeat geometry.
-- [ ] Add regressions that actual wall/doorway instances with the same target have the same top/base, and the opening/leaf does not scale vertically with the wall.
-- [ ] Complete the shared height adapters for the full inventory. **Implemented:** generated props, structural walls and doorway assemblies use `assembleAssetHeightInstance` with explicit `targetHeight`; old parent-Y scaling and live-row append calculations are removed. Legacy-only prop adapters and remaining body-anchor cases still need reconciliation.
-- [ ] Apply matching finish to every declared masonry region on each face; cover repeated rows and independent door frame phases, not only a single `.find(side)` target.
-- [ ] Preserve `appearance.height` when changing asset, expose the target clearly in the existing inspector, and report minimum-height refusals before committing an invalid edit.
-- [ ] Verify history/native round-trip and independent captured play. No source-scene fetch or parent lookup is added.
+- [x] Add regressions that actual wall/doorway instances with the same target have the same top/base, and the opening/leaf does not scale vertically with the wall.
+- [x] Complete the shared adapter mechanisms: generated props, structural walls and doorway assemblies use `assembleAssetHeightInstance` with explicit `targetHeight`. Legacy static props now use the same scale planner against complete loaded bounds, including companions, while percentage-only calls preserve their old behavior. Leafless opening fits support body anchoring without door semantics. Actual per-asset part/material readiness remains Task 2, not implied by an adapter.
+- [x] Apply matching finish to every declared masonry region on each face; cover repeated rows and independent door frame phases, not only a single `.find(side)` target. Original height continuation uses the actual declared source chart; unsupported new section/finish combinations refuse before commit.
+- [x] Preserve `appearance.height` when changing asset, expose Wall height in the existing inspector, and report minimum-height refusals before committing an invalid edit.
+- [x] Verify history/native round-trip and independent captured play for the delivered one-wall/window/door checkpoint. No source-scene fetch or parent lookup is added; broader asset data coverage remains separate.
 
 ## Task 4 — integrated checkpoint and delivery
 
@@ -84,7 +84,17 @@ Nine existing refs are prepared from hash-pinned original FBXs through the regis
 
 The source-face proof initially lost barycentric precision on a long, thin Wall04 triangle because `mathutils.dot` accumulates float32. Double-precision scalar products fix that counterexample without relaxing the existing tolerance. The prepared exports/captures retain source geometry, UVs, material resources and source identities. Facade masonry is enrolled; edge/ornament surfaces retain their authored materials, as with the existing protected trim contract.
 
-This batch is still candidate work. It does not turn window/arch geometry into gameplay passages, and it does not implement the pending once-placed section picker/native section representation.
+This batch remains candidate work and does not turn window/arch geometry into gameplay passages. The subsequent [section continuation](sections-plan.md) implements one-wall placement and native/captured delivery; its focused editor and Play checkpoints are accepted. Whole-inventory preparation is still open.
+
+## Original-height and adapter checkpoint
+
+Web `486ed93d` fixes the measured Original UV mismatch: the plain fitter was stretching fixed-region UVs before upper-row assembly, and copied bands reset their chart. Fixed parts now retain native-height mapping; only explicitly enrolled moving masonry continues its authored paired-channel derivatives over actual row/cap positions. Unbound trim/atlas channels stay authored. No default material or universal repeat size is guessed. Actual Window03/Wall04 checks at 3.75/6 preserve fixed UV values and continue moving charts within 5.3e-7; selected-finish regressions remain green.
+
+The same checkpoint adds full-body anchoring for measured leafless opening assets, keeping their full frame span rather than treating the aperture as their width. They remain visual-only sections. Nine such existing entries can now use the adapter; unmapped materials/fixed native heights remain explicit capabilities/refusals, not invented masonry or repeat parts. The owner rejects new incompatible section/finish edits without history writes and preserves unchanged imported intent.
+
+Legacy static props continue their declared proportional behavior; an explicit target uses the shared scale profile after the complete loaded assembly (including companions) is measured. It neither invents protected parts nor changes old percentage/anchor behavior. A capped generated asset's proportional minimum includes base plus cap. RED/GREEN cases measure actual geometry and source isolation.
+
+Full Web gate passed: 11345 tests /30 skipped, 884 files passed/1 skipped, format/lint/types/build/production guards. Accepted :3191/:3192 editor origins now serve detached d4fcddc5 with their same local drafts; :3190 and the :3193/:8133 Play stack remain unchanged. Developer-only probes use :3194. No new asset bytes/pins, API fields, gameplay rules or operator deployment.
 
 ## Visible plan checks
 

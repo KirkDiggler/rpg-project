@@ -35,7 +35,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Wall Gate Door L 01 (`castle_wall_gate_door_l_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Gate Door R 01 (`castle_wall_gate_door_r_01`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Opening Double 01 (`castle_wall_opening_double_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| Castle Wall Opening Single 01 (`castle_wall_opening_single_01`) | repeat-above | frame: Door_Frame, above: Door_Wall_Above | fixed + upper masonry; non-door body adapter still pending | `kingdom-single-opening-v1.json` |
+| Castle Wall Opening Single 01 (`castle_wall_opening_single_01`) | repeat-above | frame: Door_Frame, above: Door_Wall_Above | fixed + upper masonry; full-body static-section adapter verified at 3.75/6 | `kingdom-single-opening-v1.json` |
 | Castle Wall Opening Single 01 (seated revision) (`castle_wall_opening_single_02`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle Wall Panel Stone 02 (`castle_wall_panel_stone_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
 | Castle Wall Window 03 (`castle_wall_window_03`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
@@ -80,6 +80,12 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | House Wall Window 07 (`house_wall_window_07`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Window 07 Glazed (`house_wall_window_07_glazed`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-glazed-windows-v1.json` |
 | House Wall Window 08 (`house_wall_window_08`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
+
+## Adapter/default-height reconciliation
+
+Web486ed93d verifies Original fixed UV preservation and upper/cap chart continuation on Window03/Wall04, retains selected-finish alignment, and fits the actual opening-only Single01 by full body span/centre without adding a gameplay opening. Eight other measured leafless opening records now share that static fit adapter; their existing fixed heights and absent shared-masonry bindings remain explicit limitations, not completed source preparation. Incompatible new finish choices refuse at the owner before history changes. Legacy static-prop absolute heights measure companions through the shared scale planner, without changing existing percentage semantics.
+
+Raw Castle Wall Door01, remaining unique-feature/house preparations and per-asset material enrollment are still tracked here. An adapter is not an invented part or a complete 72-entry delivery.
 
 ## Feature checkpoint
 
