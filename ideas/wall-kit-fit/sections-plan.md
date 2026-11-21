@@ -92,6 +92,16 @@
 
 No implementation reuses gameplay openings to store visual sections. Native additions are required work, not an optional promise to defer after a Studio-only result.
 
+## Shared visuals versus ownership — continuation ruling
+
+The future direction is one consistent wall-insert authoring experience and shared visual placement/fitting/material primitives, not one universal gameplay or disclosure record. Doors are wall inserts visually, but their passage, mutable state and independent disclosure remain in the existing opening/door owners. Static window/decorative sections remain immutable visual facts on their owning wall. Both can feed shared visual tooling without duplicating a door's pose or requiring a hidden parent to draw an independently permitted door.
+
+The current section record is therefore a durable representation of static wall-owned appearance, not a temporary door substitute. The implementation uses the existing wall edit/history/native paths and shared `WorldPropModel`/height/material fitting; it adds no parallel asset registry, fake gameplay opening or replacement persistence service. The local `_job_1022_*` launchers are untracked preview aids, not shipped public application code. Common insertion controls and further placement-helper consolidation can grow over these owners without discarding the captured section data.
+
+The session's earlier statement that the separation itself was necessarily excessive conflated visual reuse with canonical ownership. The useful finding is that the current static section chooser does not accept doors; the incorrect inference was that their distinct captured records must therefore be temporary. The operator asked to record the reasoning and continue provided no throwaway architecture is added. Proceed on the durable distinction above; do not force door state or independently disclosed door facts into the wall section array.
+
+This resolves the architectural publication hold, not merge/deployment authorization. The existing proto-only SDK-publication decision remains operator-owned.
+
 ## Provider checkpoint and publication dependency
 
 - Protos #449: b17e26b, additive wall `sections = 12` in both session versions; contract and remote generation gates pass. No SDK publication until merge.
