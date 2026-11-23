@@ -6,6 +6,8 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 
 **Not a completion table.** The current modes preserve existing declarations: most still need part/surface preparation. A fixed standalone leaf is a part, not a complete doorway. Atlas variants and shared masonry are distinct compatible finish families. The complete pass cannot be claimed from just Fit01/Single01.
 
+**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. Inner-wall family inspection is next; house-kit panels/doorways below are candidates, not yet configured equivalents of the castle set.
+
 | Asset / exact key suffix | Current height mode | Declared parts | Current finish support | Owning private recipe |
 |---|---|---|---|---|
 | 45 Wall 01 (`45_wall_01`) | scale | generic body (no part roles) | not enrolled | `dark-fortress-world-assets-45-wall-01.json` |
@@ -14,9 +16,9 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Single Door Leaf 01 (`castle_door_leaf_single_01`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-single-opening-v1.json` |
 | Castle Single Door Leaf 01 (seated revision) (`castle_door_leaf_single_02`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
 | Castle gate — standard Doorway (`castle_gateway_doorway_01`) | fixed; tested growth band too narrow | frame + two original leaves | shared front/back masonry; original attributes retained | `kingdom-door-batch-v1.json` |
-| Castle gate — large tower Doorway (`castle_gateway_doorway_large_01`) | repeat-above + cap; minimum8.1317 | frame / above / cap + two original leaves | shared masonry | `kingdom-door-batch-v1.json` |
+| Castle gate — large tower Doorway (`castle_gateway_doorway_large_01`) | repeat-above + cap; minimum8.1317 | frame / above / cap + two original leaves | shared masonry; **parked / assembly not accepted** | `kingdom-door-batch-v1.json` |
 | Castle gate — standard Opening (`castle_gateway_opening_01`) | fixed; tested growth band too narrow | frame | shared front/back masonry | `kingdom-door-batch-v1.json` |
-| Castle gate — large tower Opening (`castle_gateway_opening_large_01`) | repeat-above + cap; minimum8.1317 | frame / above / cap | shared masonry | `kingdom-door-batch-v1.json` |
+| Castle gate — large tower Opening (`castle_gateway_opening_large_01`) | repeat-above + cap; minimum8.1317 | frame / above / cap | shared masonry; **parked with large-gateway family** | `kingdom-door-batch-v1.json` |
 | Castle Wall 01 (`castle_wall_01`) | scale | named body/fit anchors; original default retained | shared masonry | `kingdom-standard-walls-v1.json` |
 | Castle Wall 02 (`castle_wall_02`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |
 | Castle Wall 03 (`castle_wall_03`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; other surfaces authored | `kingdom-feature-walls-v1.json` |

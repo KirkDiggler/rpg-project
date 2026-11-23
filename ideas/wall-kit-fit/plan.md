@@ -8,6 +8,13 @@
 
 **One-wall continuation:** [section ownership, authoring and captured delivery plan](sections-plan.md), following the operator's acceptance of texture alignment and rejection of three independently editable walls as the final interaction. Its backend/native capture work remains required.
 
+## Current operator direction
+
+- The single doorway and simpler Castle Wall Double01 are sufficient for the castle-wall door set. Both already use the shared height/material path; this does not claim final merge readiness.
+- Park the large gateway. Its joins were corrected, but the operator rejected the overall front/back assembly as visually wrong and may inspect it in Blender. Retain the candidate/evidence without treating it as accepted or requiring further work on it for the selected castle door set.
+- Move the next inspection to inner walls. Establish the intended family before preparing it: the inventory includes timber/plaster/board house panels and doorways, while the checked-in castle still references the older Dark Fortress walls/doors. That file is not evidence of the operator's intended new interior style.
+- Keep the wider inventory visible; this direction is not an assertion that every inventory entry is prepared. Existing gate/review/released-pin obligations remain.
+
 ## Contracts and constraints
 
 - Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number, capNode?:string, capHeight?:number}`. The optional cap pair declares one fixed top translated once; the minimum is fixed base plus cap height. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.
@@ -39,7 +46,7 @@
 
 - [x] Add fixtures proving missing/ambiguous repeat nodes, intersecting moving leaves, invalid row dimensions and inconsistent native height are refused.
 - [x] Extend the existing catalog contract and verify measured profiles from final bytes. Current candidate declarations produce 278 scale, 17 fixed and 19 repeat-above profiles across the same 314 refs; this is not yet completed part preparation.
-- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **Prepared:** first wall/Single01 pair; ten raw castle feature refs; captured Double01, seated Single02 and large-gateway opening/assembly pairs. Standard gateway has matching masonry but remains explicitly fixed after its tested band failed full-width backing. Remaining families/source cases keep this item open.
+- [ ] Prepare named fixed/repeatable parts from trusted sources for the inventory. **Prepared:** first wall/Single01 pair; ten raw castle feature refs; captured Double01 and seated Single02 opening/assembly pairs. The prepared large-gateway candidate is **parked, not accepted** after the operator's front/back assembly review. Standard gateway has matching masonry but remains explicitly fixed after its tested band failed full-width backing. Remaining families/source cases keep this item open.
 - [ ] Enroll all compatible masonry targets, including upper rows; verify their declared face/material ownership without assuming every face is one whole rectangular body.
 - [ ] Regenerate only the affected publication units through existing custody mechanisms; retain immutable source evidence. Run focused profile/catalog/surface checks, not the known broad suite.
 
