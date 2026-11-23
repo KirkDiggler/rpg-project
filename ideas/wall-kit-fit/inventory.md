@@ -6,7 +6,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 
 **Not a completion table.** The current modes preserve existing declarations: most still need part/surface preparation. A fixed standalone leaf is a part, not a complete doorway. Atlas variants and shared masonry are distinct compatible finish families. The complete pass cannot be claimed from just Fit01/Single01.
 
-**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. Inner-wall family inspection is next; house-kit panels/doorways below are candidates, not yet configured equivalents of the castle set.
+**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. The operator confirmed the house kit as the inner-wall family, including plaster and wood-board variants. Doorway03/04 are the wood-board pair; House Wall03 is the matching plain wood panel (House Wall04 is a different plaster panel). These are selected-family candidates, not yet configured equivalents of the castle set.
 
 | Asset / exact key suffix | Current height mode | Declared parts | Current finish support | Owning private recipe |
 |---|---|---|---|---|

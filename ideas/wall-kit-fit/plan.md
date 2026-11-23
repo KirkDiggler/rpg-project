@@ -12,7 +12,7 @@
 
 - The single doorway and simpler Castle Wall Double01 are sufficient for the castle-wall door set. Both already use the shared height/material path; this does not claim final merge readiness.
 - Park the large gateway. Its joins were corrected, but the operator rejected the overall front/back assembly as visually wrong and may inspect it in Blender. Retain the candidate/evidence without treating it as accepted or requiring further work on it for the selected castle door set.
-- Move the next inspection to inner walls. Establish the intended family before preparing it: the inventory includes timber/plaster/board house panels and doorways, while the checked-in castle still references the older Dark Fortress walls/doors. That file is not evidence of the operator's intended new interior style.
+- The operator confirmed the timber/plaster/board house kit as the intended inner-wall family. Doorway01/02 are the arched/square plaster pair; Doorway03/04 are the arched/square wood-board pair. Prepare these as their own family, preserving timber/door detail and existing atlas finishes rather than treating them as masonry. House Wall03 is the matching plain wood-board candidate. The older Dark Fortress refs in the checked-in castle are not silently migrated by this selection.
 - Keep the wider inventory visible; this direction is not an assertion that every inventory entry is prepared. Existing gate/review/released-pin obligations remain.
 
 ## Contracts and constraints
