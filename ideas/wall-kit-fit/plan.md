@@ -15,6 +15,8 @@
 - The operator confirmed the timber/plaster/board house kit as the intended inner-wall family. Doorway01/02 are the arched/square plaster pair; Doorway03/04 are the arched/square wood-board pair. Prepare these as their own family, preserving timber/door detail and existing atlas finishes rather than treating them as masonry. House Wall03 is the matching plain wood-board candidate. The older Dark Fortress refs in the checked-in castle are not silently migrated by this selection.
 - Keep the wider inventory visible; this direction is not an assertion that every inventory entry is prepared. Existing gate/review/released-pin obligations remain.
 
+**Anchored-parts continuation:** KirkDiggler approved preserving overlapping rigid trim/caps through declared anchors. Follow the checked [anchored-parts plan](anchored-parts-plan.md) for the new mode and genuine infill; do not install the rejected top-rail repetition candidate. This extends the original non-overlapping profiles below without changing their behavior.
+
 ## Contracts and constraints
 
 - Public catalog `heightFit` is a closed union: `{mode:'scale'}`, `{mode:'fixed'}`, or `{mode:'repeat-above', node:string, baseHeight:number, rowHeight:number, capNode?:string, capHeight?:number}`. The optional cap pair declares one fixed top translated once; the minimum is fixed base plus cap height. Dimensions are in the same rendered units as catalog `boundsMeters`; `baseHeight` is measured from the asset base. They are measured/validated against declared parts, not entered as a second geometry authority.
