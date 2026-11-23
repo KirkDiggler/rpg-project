@@ -31,8 +31,8 @@ This is asset presentation metadata. Existing opaque asset refs and wall heights
 **Prerequisite:** approved anchored shape above; existing isolated ownership/64-row machinery.
 **Interface/behavior:** add the anchored union alternative and consume exactly its markers/metrics. Reuse the existing owned clone/cap translation/row positioning lifecycle. Validate anchors against loaded geometry before mutation. Preserve legacy inference for old profiles; an anchored source must not be guessed from silhouettes or names of assets.
 **Tests:** native3.5 with anchors2/3 and a cap extending down to2.8 reaches6 with fixed leaf/frame unchanged, cap still0.7 high and translated2.5, one stretched infill or bounded repeated rows. Cached source and another instance remain unchanged. Below-native height, reversed/nonfinite metrics, missing/duplicate/geometry-bearing/misparented markers and a leaf under infill/cap refuse. Existing repeat minimum, cap and huge-height cases remain green.
-- [ ] Add failing anchored layout/loaded-instance cases.
-- [ ] Implement and run `npx vitest run src/rendering/assetHeightLayout.test.ts src/rendering/assetHeightInstance.test.ts`.
+- [x] Add failing anchored layout/loaded-instance cases.
+- [x] Implement and run `npx vitest run src/rendering/assetHeightLayout.test.ts src/rendering/assetHeightInstance.test.ts`.
 
 ## Task B — source measurement and strict catalog seam
 
@@ -40,8 +40,8 @@ This is asset presentation metadata. Existing opaque asset refs and wall heights
 **Prerequisite:** Task A's consumed shape fixed as above; roles/tags already belong to existing promotion entries.
 **Interface/behavior:** derive numeric heights from declared source anchors and actual geometry, never accept guessed catalog numbers. Emit the exact anchored shape. Keep untagged legacy geometry checks strict. Generator checks exact keys, finite ordered heights within native height, distinct names, matching above/cap roles, and repeat/stretch enum; source/loaded geometry validators own real marker existence/placement.
 **Tests:** source fixture with full cap overlapping fixed trim succeeds only on explicit anchored declaration; same geometry without it still refuses. Translation of the entire root does not change measurements. Bad tags/markers/ancestry/geometry and moving leaves refuse. Generated catalog accepts the measured shape, rejects extra keys/unknown policy/bad metrics, and exposes matching TS type.
-- [ ] Red then green provider and generator cases.
-- [ ] Run Assets `PYTHONPATH=scripts python3 -m unittest test_asset_height_contract test_wall_height_band`; Web `npx vitest run scripts/generateWorldAssetCatalog.test.ts`.
+- [x] Red then green provider and generator cases.
+- [x] Run Assets `PYTHONPATH=scripts python3 -m unittest test_asset_height_contract test_wall_height_band`; Web `npx vitest run scripts/generateWorldAssetCatalog.test.ts`.
 
 ## Task C — real model adapter and authoring validation
 
@@ -49,8 +49,9 @@ This is asset presentation metadata. Existing opaque asset refs and wall heights
 **Prerequisite:** Tasks A/B; generated type available before typechecking adapters.
 **Behavior:** plain fitting retains native-height UV setup before anchored assembly; chart/profile dimensions reflect the final target; full cap hierarchy remains rigid. Atlas-authored UVs are not treated as masonry charts merely because a model is wall-fitted. Height refusal occurs before the existing authoring transaction/history commit. No per-asset rendering branch or new owner.
 **Tests:** actual model component uses anchored assembly rather than returning an unchanged source; two heights isolate cached buffers and protect cap/leaf geometry. Original atlas UVs stay in their authored region. Native minimum refuses before owner commit. Existing masonry Original/selected-chart regressions remain green.
-- [ ] Red then green loaded renderer/owner cases.
-- [ ] Run the named component/rendering/height-edit tests, typecheck; normal full Web gate once at the PR update, not a repeated campaign on the currently contended host.
+- [x] Red then green loaded renderer/owner cases. The model regression caught double height scaling; scoped-UV cases caught atlas corruption under width/offset fitting.
+- [x] Run named component/rendering/height-edit tests and typecheck:120 tests across10files pass. Full gate completed with11356 passes, two deficient synthetic material fixtures and two15-second Studio timeouts. Fixture declarations corrected; all four failures pass their focused recheck; whole-repo format and final typecheck pass.
+- [ ] Obtain a green full Web gate before publishing the held consumer update. Do not relabel the failed full run green or rerun a suite campaign on the contended host.
 
 ## Task D — selected inner source preparation and integration
 
@@ -58,7 +59,8 @@ This is asset presentation metadata. Existing opaque asset refs and wall heights
 **Prerequisite:** Tasks A–C. Source authority remains the original captures/FBXs, never rejected candidates or installed runtime geometry.
 **Behavior:** declare whole cap components and anchors; preserve actual rigid door/trim geometry; author genuine plank/plaster infill from the selected family's sources. Keep packed atlas sampling explicit and preserve old registered palette capabilities when changing plain-panel source identity. Refresh affected material bindings through their existing producer, not hand-edited hashes. Begin with plain House01/03 and the four opening/doorway pairs; selected05/06 remain visible coverage, not silently completed. No extra castle-door work.
 **Tests/evidence:** exact leaf and whole-cap source signatures/shape, paired opening/assembly frames, native/taller bounds and joins, cap appears once, no repeated horizontal-rail block or plaster striping. Verify Original and supported finish selections separately. Normal producer custody/receipt/index/atomic install and consumer sync/check; installed-data Studio evidence before calling the candidate delivered. Complete source identity/material compatibility guards before promotion.
-- [ ] Replace rejected source partition with semantic components/real infill.
+- [x] Replace the rejected eight inner-door/opening candidates with whole rigid wood rails, actual matching plank infill from the original House Wall03 FBX, anchored stretch declarations and exact original leaf/cap payloads. Private normalization and paired-frame proofs pass; native/taller front and back views inspected.
+- [ ] Prepare matching plain panels and refresh their existing palette bindings; candidate door views alone do not complete joined-wall or finish integration.
 - [ ] Restore `pending-tests/test_published_house_height.py` from Assets' local ledger when publishing the accepted data; update assertions for anchored policy and full rigid cap rather than a last sliver.
 - [ ] Inspect actual native/taller/rotated views, then bounded publication and provider check.
 - [ ] Record exact pins/results/remaining work; retain rejected probe as case evidence, not acceptance.
