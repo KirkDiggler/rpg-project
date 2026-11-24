@@ -1,0 +1,196 @@
+package session_test
+
+// The engine side of the Unreal-client spike. It is not part of any build:
+// it lives here as the recipe (see ../README.md), and ran once as
+// internal/integration/session/zz_ue_spike_test.go in a worktree of rpg-api
+// (`dev` at ed4bfc65), approved by Kirk 2026-11-23.
+//
+// To re-run, copy it there, inside a worktree of rpg-api:
+//
+//	cp <this file> internal/integration/session/zz_ue_spike_test.go
+//	UE_SPIKE_ADDR=127.0.0.1:50151 UE_SPIKE_INFO=<spike>/run/engine.json \
+//	  go test -vet=off -count=1 -v -run '^TestUESpikeServe$' \
+//	  ./internal/integration/session -timeout 3h
+//
+// Skipped unless UE_SPIKE_ADDR and UE_SPIKE_INFO are set. When set, it stands
+// up the record-reader suite's run (same fixture, same launch) and serves
+// RecordService + SessionService on a real TCP listener, behind the PRODUCTION
+// auth interceptors with the Dev scheme allowed, until the test is killed.
+// The TCP listener forwards to the suite's in-process bufconn listener.
+//
+// Teardown note: `go test` spawns the test binary (session.test); killing the
+// `go test` pid alone leaves that binary serving the port. Kill by port:
+//	ss -ltnp | grep ':50151 '   → pid=…
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"net"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
+
+	recordhandler "github.com/KirkDiggler/rpg-api/internal/handlers/dnd5e/session/v1alpha2"
+	"github.com/KirkDiggler/rpg-api/internal/auth"
+	"github.com/KirkDiggler/rpg-api/internal/dungeons"
+	"github.com/KirkDiggler/rpg-api/internal/dungeons/dungeonstest"
+	"github.com/KirkDiggler/rpg-api/internal/entities"
+	"github.com/KirkDiggler/rpg-api/internal/pkg/idgen"
+	lobbyorch "github.com/KirkDiggler/rpg-api/internal/orchestrators/lobby"
+	characterrepo "github.com/KirkDiggler/rpg-api/internal/repositories/character"
+	lobbyrepo "github.com/KirkDiggler/rpg-api/internal/repositories/lobby"
+
+	sessionpb "github.com/KirkDiggler/rpg-api-protos/gen/go/dnd5e/api/session/v1alpha1"
+	recordpb "github.com/KirkDiggler/rpg-api-protos/gen/go/dnd5e/api/session/v1alpha2"
+)
+
+func TestUESpikeServe(t *testing.T) {
+	addr, infoPath := os.Getenv("UE_SPIKE_ADDR"), os.Getenv("UE_SPIKE_INFO")
+	if addr == "" || infoPath == "" {
+		t.Skip("ue spike: set UE_SPIKE_ADDR and UE_SPIKE_INFO")
+	}
+	if err := os.MkdirAll(filepath.Dir(infoPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	// The record-reader suite's setup, verbatim in shape.
+	h := newAcceptanceHarnessWithDice(t, alwaysTheLowestFace{})
+	projector := dungeonstest.ProjectorFor(h.manager.Manager)
+	raw, err := os.ReadFile(dungeonstest.SitePath(t, hashSiteKey)) //nolint:gosec // repository fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, dungeons.DefaultKey+".yaml"),
+		dungeonstest.AsKey(t, raw, hashSiteKey, dungeons.DefaultKey), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	shipped, err := dungeons.NewFileRegistry(dir, projector)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lobbies := lobbyrepo.NewInMemory()
+	lobby, err := lobbyorch.New(&lobbyorch.Config{
+		LobbyRepo: lobbies, LobbyBroker: lobbyorch.NewBroker(), CharacterRepo: h.charRepo,
+		LobbyIDGenerator: idgen.NewSequential("lobby"), JoinRefGenerator: idgen.NewSequential("ref"),
+		EncounterIDGenerator: idgen.NewSequential("enc"), SessionManager: h.manager.Manager,
+		Dungeons: dungeonstest.Join(t, shipped, false),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	member, host := "reader-alice", "player-reader-alice"
+	if _, err := h.charRepo.Create(context.Background(), characterrepo.CreateInput{
+		Character: &entities.Character{Data: armedFighter(member, host)},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := lobbies.Save(context.Background(), &lobbyrepo.Data{
+		ID: "lobby-reader", HostPlayerID: host, Status: lobbyrepo.StatusWaiting,
+		Members:     map[string]*lobbyrepo.Member{host: {PlayerID: host, CharacterID: member, IsHost: true, IsReady: true}},
+		MemberOrder: []string{host},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	out, err := lobby.StartEncounter(context.Background(), &lobbyorch.StartEncounterInput{
+		WorldID: dungeonstest.Caller.WorldID, PlayerID: host, LobbyID: "lobby-reader",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := out.EncounterID
+
+	// The production auth boundary, Dev scheme allowed: a client must send
+	// `authorization: Dev <player_id>`.
+	authCfg := &auth.InterceptorConfig{DevMode: true}
+	srv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(auth.UnaryAuthInterceptor(nil, nil, authCfg)),
+		grpc.ChainStreamInterceptor(auth.StreamAuthInterceptor(nil, nil, authCfg)),
+	)
+	record, err := recordhandler.New(&recordhandler.HandlerConfig{
+		Manager: h.manager.Manager, Broker: h.manager.RecordBroker, Enabled: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recordpb.RegisterRecordServiceServer(srv, record)
+	sessionpb.RegisterSessionServiceServer(srv, h.handler)
+
+	lis := bufconn.Listen(1 << 20)
+	go func() { _ = srv.Serve(lis) }()
+	t.Cleanup(srv.Stop)
+
+	tcp, err := net.Listen("tcp", addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = tcp.Close() })
+	go func() {
+		for {
+			c, err := tcp.Accept()
+			if err != nil {
+				return
+			}
+			b, err := lis.Dial()
+			if err != nil {
+				_ = c.Close()
+				continue
+			}
+			go func() {
+				defer c.Close()
+				defer b.Close()
+				go func() { _, _ = io.Copy(b, c) }()
+				_, _ = io.Copy(c, b)
+			}()
+		}
+	}()
+
+	// Live beats: the host ends her turn a few times (Afford → EndTurn, the
+	// way a client does on the turn clock; this fixture opens in a fight) so
+	// the record grows while a client is watching. Never fatal: the server
+	// must outlive a refused beat.
+	go func() {
+		ctx := auth.WithPlayerID(context.Background(), host)
+		for i := 0; i < 12; i++ {
+			time.Sleep(20 * time.Second)
+			out, err := h.handler.Afford(ctx, &sessionpb.AffordRequest{Session: run, Member: member})
+			if err != nil {
+				t.Logf("live beat %d: Afford refused: %v", i, err)
+				continue
+			}
+			var decl string
+			for _, d := range out.GetDeclarations() {
+				if d.GetVerb() == sessionpb.Verb_VERB_END_TURN && d.GetAvailable() {
+					decl = d.GetId()
+					break
+				}
+			}
+			if decl == "" {
+				t.Logf("live beat %d: no available END_TURN declaration (clock=%v)", i, out.GetClock())
+				continue
+			}
+			resp, err := h.handler.EndTurn(ctx, &sessionpb.EndTurnRequest{Session: run, Member: member, DeclarationId: decl})
+			if err != nil {
+				t.Logf("live beat %d: EndTurn refused: %v", i, err)
+				continue
+			}
+			t.Logf("live beat %d: EndTurn ok, next=%q round_wrapped=%v", i, resp.GetNext(), resp.GetRoundWrapped())
+		}
+	}()
+
+	info, _ := json.MarshalIndent(map[string]string{
+		"addr": addr, "session": run, "member": member, "host": host, "onlooker": readerPlayer,
+		"auth": "authorization: Dev <player id>",
+	}, "", "  ")
+	if err := os.WriteFile(infoPath, info, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("UE SPIKE READY %s", info)
+
+	time.Sleep(2 * time.Hour)
+}

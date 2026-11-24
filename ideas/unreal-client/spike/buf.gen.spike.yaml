@@ -1,0 +1,11 @@
+# Throwaway spike template — NOT the repo's buf.gen.yaml.
+# Pins match the runtime TurboLink v1.4.2 (UE 5.6) vendors: protobuf 4.23.4 (release v23.4;
+# port_def.inc's PROTOBUF_VERSION 4023004), gRPC C++ 1.57.0.
+version: v2
+managed:
+  enabled: false
+plugins:
+  - remote: buf.build/protocolbuffers/cpp:v23.4
+    out: cpp
+  - remote: buf.build/grpc/cpp:v1.57.0
+    out: cpp
