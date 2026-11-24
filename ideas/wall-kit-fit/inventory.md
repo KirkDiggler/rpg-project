@@ -83,6 +83,20 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | House Window 07 Glazed (`house_wall_window_07_glazed`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-glazed-windows-v1.json` |
 | House Wall Window 08 (`house_wall_window_08`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 
+## Staged inner-kit checkpoint
+
+The four selected plain panels01/03/05/06 and four opening/doorway pairs are now
+prepared in the coordinated candidate385470b. They retain existing refs and
+original rigid geometry, use declared anchors, and close measured growth/lateral
+join gaps. The panel palette scope remains `atlas` over the complete body; only
+four of193 binding identities/scopes change, with all palette resources unchanged.
+Actual joined Studio editing, height3.4/palette01_B, Undo/Redo and browser-draft
+reload are verified at :3196. The table above still describes the **installed**
+provider: the candidate awaits [publication approval](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7117584838).
+Door-frame atlas inheritance, My World/Play and final review/released pins are not
+claimed by the panel-palette checkpoint. The earlier accepted source view stays
+at :3195 unchanged.
+
 ## Expanded castle source pass
 
 The ten pictured/raw feature candidates now include the original Castle Wall Door01 ref. Captured Double01 and seated Single02 pairs support 3.75/6 with fixed leaves/caps; the large gateway supports 12/15 with a real minimum8.1317. The standard gateway gains matching masonry at native height4.39638 but remains fixed: the tested5.5..5.8 raw band has backing narrower than its full frame envelope. No repeat capability is invented. Actual chart errors stay below2e-7 in the inspected views.
