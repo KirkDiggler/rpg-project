@@ -3,7 +3,7 @@
 - **Law:** [design.md](design.md). R1 is settled; R2, R3 and R4 are open.
 - **Spike:** [spike/README.md](spike/README.md). What ran, what it showed, and how to run it again.
 - **Run record:** [knowledge/runs/2026-11-24-unreal-client-design.md](../../knowledge/runs/2026-11-24-unreal-client-design.md).
-- **Paper trail:** idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154); design PR in the first comment there; contract gap [rpg-api-protos#453](https://github.com/KirkDiggler/rpg-api-protos/issues/453).
+- **Paper trail:** idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154); design PR [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155); contract gap [rpg-api-protos#453](https://github.com/KirkDiggler/rpg-api-protos/issues/453).
 
 ## What this is
 
