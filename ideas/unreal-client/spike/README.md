@@ -178,5 +178,5 @@ containers it is mounted at `/spike`.
 
 Generated output, vendored libraries, the release archive, binaries and run
 logs. The recipe rebuilds each; the
-[run record](../../knowledge/runs/2026-11-24-unreal-client-design.md) keeps
+[run record](../../../knowledge/runs/2026-11-24-unreal-client-design.md) keeps
 the evidence.
