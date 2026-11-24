@@ -86,10 +86,12 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 ## Staged inner-kit checkpoint
 
 The four selected plain panels01/03/05/06 and four opening/doorway pairs are now
-prepared in the coordinated candidate385470b. They retain existing refs and
+prepared in the coordinated candidate8bbe057 (geometry unchanged from385470b). They retain existing refs and
 original rigid geometry, use declared anchors, and close measured growth/lateral
 join gaps. The panel palette scope remains `atlas` over the complete body; only
-four of193 binding identities/scopes change, with all palette resources unchanged.
+four of193 bindings change, with all palette resources unchanged. Provider
+appearance groups now show one Original wood look and distinct plaster looks;
+all exact saved references remain compatible and are not silently rewritten.
 Actual joined Studio editing, height3.4/palette01_B, Undo/Redo and browser-draft
 reload are verified at :3196. The table above still describes the **installed**
 provider: the candidate awaits [publication approval](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7117584838).

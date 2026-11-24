@@ -21,25 +21,25 @@ The sheet retains `value` as the exact current reference and adds a display-only
 **Owner/files:** Assets new `scripts/world_atlas_appearances.py` and focused tests; `world_material_atlas_candidate.py`, `prepare_prop_atlas_candidate.py`, their tests and pipeline documentation.
 **Interfaces:** optional groups above; derive from final GLB scope and verified default/compatible palette bytes. Build groups for body-atlas targets; recompute them when verifying bindings with actual model/resource roots. Keep old scopes/compatibility unchanged.
 **Tests:** two images differing only outside mapped UVs collapse; mapped colour differences remain separate; same images on a different surface can group differently; Original equivalence and deterministic order; geometry/UV/image mismatch refuses; malformed/incomplete group metadata refuses. Existing single-mesh, glazing, receipt and publication tests remain green.
-- [ ] RED/GREEN focused tests and producer implementation.
-- [ ] Rebuild the staged material bundle against verified candidate world385470b; only the four panel bindings gain grouping, no images or compatibility refs change.
+- [x] RED/GREEN producer and schema checks implemented at Assetsc673307;108 focused provider/material/height tests pass.
+- [x] Rebuild against the verified candidate world: only four panel bindings gain groups, with images/materials/compatibility unchanged. Staged catalog is now0f95ba16… and candidate8bbe057; original6996 identity is superseded, not approved.
 **Verify:** Assets `PYTHONPATH=scripts python3 -m unittest test_world_atlas_appearances test_world_material_atlas_candidate test_prepare_prop_atlas_candidate test_compound_atlas_scopes test_publish_world_materials_v2`.
 
 ## Task 2 — wire/schema and display-only projection
 
-**Owner/files:** Web `src/rendering/worldMaterialTypes.ts`, `worldAtlasCatalogSchema.mjs`, its `.d.mts`, `worldAtlasCatalog.ts`, `scripts/world-material-catalog.mjs`; schema/catalog tests; `appearance/appearanceSheet.ts`, `appearanceTypes.ts`, `StudioAppearancePanel.tsx`, sheet/edit/panel tests.
+**Owner/files:** Web `src/rendering/worldMaterialTypes.ts`, `worldAtlasCatalogSchema.mjs`, its `.d.mts`, `worldAtlasCatalog.ts`, `scripts/world-material-catalog.mjs`; schema/catalog tests; `appearance/appearanceSheet.ts`, `appearanceTypes.ts`, `StudioAppearancePanel.tsx`, `encounterStudio.css`, sheet/edit/panel tests.
 **Interfaces:** same optional groups copied by generated and dev-preview catalog paths. The pure sheet projects distinct choices and displayValue; raw value and owner patches remain unchanged. The existing reset command still clears only on explicit user action.
 **Tests:** grouped wood shows one Original; plaster retains distinct groups; equivalent saved refs stay valid and unchanged under unrelated edits; explicit reset works; unavailable/stale references do not collapse into Original; old catalogs still show all compatible choices. Runtime material resolution continues to accept every compatible alias.
-- [ ] RED/GREEN schema and sheet/UI tests.
-- [ ] Typecheck and targeted existing appearance/history/catalog regressions.
+- [x] RED/GREEN schema/sheet/UI checks implemented in Web7baf9aa2, including exact saved aliases and explicit reset.
+- [x]159 focused Web tests and typecheck pass. Full suite11368/30 passes with lint/types/build/guards; the gate's sole failure was prior ignored-ledger formatting, corrected and whole-repo format rechecked. No full-green invocation is fabricated and no suite repeat is required for ignored markdown.
 **Verify:** focused Vitest catalog/schema and `appearanceSheet.test.ts`, `appearanceEdits.test.ts`, `StudioArrangePanel.test.tsx`; ordinary full `npm run ci-check` at the PR update.
 
 ## Task 3 — staged Studio and paper trail
 
 **Owner/files:** existing private candidate material bundle and3196 preview worktree; source evidence under Assets `evidence/1022-wall-kit/`; main feature commits/PRs and #1022.
 **Behavior/proof:** stage the new metadata through the existing preview producer, no hand-edited runtime catalog. Check actual Studio wood read-only display, plaster choices/visible change, and a saved equivalent ref surviving height Apply/reload; verify explicit reset separately. Preserve accepted height/door behavior. Update the pending publication identity—old catalog6996… does not authorize a revised candidate.
-- [ ] Actual UI/visual and saved-reference checks.
-- [ ] Commit/push checked code and private evidence; retain publication/merge holds.
+- [x] Actual3196 Studio verifies readonly wood Original, twelve distinct plaster groups, saved01_B surviving height/history/reload, and explicit reset only on Apply. Plaster changed100533 rendered pixels. Readonly text layout was inspected and corrected.
+- [x] Code and private evidence pushed: Web7baf9aa2, Assets012385b. Publication/merge holds remain; this direction did not approve the revised data batch.
 
 ## Coverage and seams
 
