@@ -6,7 +6,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 
 **Not a completion table.** The current modes preserve existing declarations: most still need part/surface preparation. A fixed standalone leaf is a part, not a complete doorway. Atlas variants and shared masonry are distinct compatible finish families. The complete pass cannot be claimed from just Fit01/Single01.
 
-**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. The operator confirmed the house kit as the inner-wall family, including plaster and wood-board variants. Doorway03/04 are the wood-board pair; House Wall03 is the matching plain wood panel (House Wall04 is a different plaster panel). These are selected-family candidates, not yet configured equivalents of the castle set.
+**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. The operator confirmed the house kit as the inner-wall family, including plaster and wood-board variants. Doorway03/04 are the wood-board pair; House Wall03 is the matching plain wood panel (House Wall04 is a different plaster panel). Their anchored fitting and plain-panel palettes are published at Assets4f007dc; captured inner-frame atlas finishes remain open.
 
 | Asset / exact key suffix | Current height mode | Declared parts | Current finish support | Owning private recipe |
 |---|---|---|---|---|
@@ -43,12 +43,12 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | Castle Wall Window 03 (`castle_wall_window_03`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
 | Castle Wall Window Fancy 01 (`castle_wall_window_fancy_01`) | repeat-above + cap | frame / above / cap; body anchors | facade masonry; no inferred passage | `kingdom-feature-walls-v1.json` |
 | House Base Wall 02 (`house_base_wall_02`) | scale | generic body (no part roles) | not enrolled | `fantasy-kingdom-selected-20261005.json` |
-| House Wall 01 (`house_wall_01`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
+| House Wall 01 (`house_wall_01`) | anchored stretch | frame / above / whole cap | distinct plaster atlas groups | `kingdom-inner-walls-v1.json` |
 | House Wall 02 (`house_wall_02`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-selected-20261005.json` |
-| House Wall 03 (`house_wall_03`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-selected-20261005.json` |
+| House Wall 03 (`house_wall_03`) | anchored stretch | frame / above / whole cap | one Original wood group; exact aliases retained | `kingdom-inner-walls-v1.json` |
 | House Wall 04 (`house_wall_04`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-selected-20261005.json` |
-| House Wall 05 (`house_wall_05`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
-| House Wall 06 (`house_wall_06`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
+| House Wall 05 (`house_wall_05`) | anchored stretch | frame / above / whole cap | distinct plaster atlas groups | `kingdom-inner-walls-v1.json` |
+| House Wall 06 (`house_wall_06`) | anchored stretch | frame / above / whole cap | distinct plaster atlas groups | `kingdom-inner-walls-v1.json` |
 | House Wall 07 (`house_wall_07`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Wall 08 (`house_wall_08`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Wall 09 (`house_wall_09`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
@@ -56,18 +56,18 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | House Wall Door 02 (`house_wall_door_02`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-selected-20261005.json` |
 | House Wall Door 03 (`house_wall_door_03`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Wall Door 04 (`house_wall_door_04`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
-| House 01 — arched — plaster Doorway (`house_wall_doorway_01`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
-| House 02 — square — plaster Doorway (`house_wall_doorway_02`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
-| House 03 — arched — boards Doorway (`house_wall_doorway_03`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
-| House 04 — square — boards Doorway (`house_wall_doorway_04`) | fixed | frame: Door_Frame, leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
+| House 01 — arched — plaster Doorway (`house_wall_doorway_01`) | anchored stretch | frame / leaf / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 02 — square — plaster Doorway (`house_wall_doorway_02`) | anchored stretch | frame / leaf / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 03 — arched — boards Doorway (`house_wall_doorway_03`) | anchored stretch | frame / leaf / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 04 — square — boards Doorway (`house_wall_doorway_04`) | anchored stretch | frame / leaf / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
 | House 01 — arched — plaster leaf (`house_wall_leaf_01`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
 | House 02 — square — plaster leaf (`house_wall_leaf_02`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
 | House 03 — arched — boards leaf (`house_wall_leaf_03`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
 | House 04 — square — boards leaf (`house_wall_leaf_04`) | fixed | leaf: Door_Leaf | not enrolled | `kingdom-door-batch-v1.json` |
-| House 01 — arched — plaster Opening (`house_wall_opening_01`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| House 02 — square — plaster Opening (`house_wall_opening_02`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| House 03 — arched — boards Opening (`house_wall_opening_03`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
-| House 04 — square — boards Opening (`house_wall_opening_04`) | fixed | frame: Door_Frame | not enrolled | `kingdom-door-batch-v1.json` |
+| House 01 — arched — plaster Opening (`house_wall_opening_01`) | anchored stretch | frame / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 02 — square — plaster Opening (`house_wall_opening_02`) | anchored stretch | frame / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 03 — arched — boards Opening (`house_wall_opening_03`) | anchored stretch | frame / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
+| House 04 — square — boards Opening (`house_wall_opening_04`) | anchored stretch | frame / above / whole cap | Original; atlas inheritance open | `kingdom-door-batch-v1.json` |
 | House Wall Window 01 (`house_wall_window_01`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 | House Window 01 Glazed (`house_wall_window_01_glazed`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-glazed-windows-v1.json` |
 | House Wall Window 02 (`house_wall_window_02`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
@@ -83,18 +83,20 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 | House Window 07 Glazed (`house_wall_window_07_glazed`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-glazed-windows-v1.json` |
 | House Wall Window 08 (`house_wall_window_08`) | scale | generic body (no part roles) | atlas variants | `fantasy-kingdom-house-kit-v1.json` |
 
-## Staged inner-kit checkpoint
+## Published inner-kit checkpoint
 
 The four selected plain panels01/03/05/06 and four opening/doorway pairs are now
-prepared in the coordinated candidate8bbe057 (geometry unchanged from385470b). They retain existing refs and
+published at Assets4f007dc from approved candidate8bbe057. They retain existing refs and
 original rigid geometry, use declared anchors, and close measured growth/lateral
 join gaps. The panel palette scope remains `atlas` over the complete body; only
 four of193 bindings change, with all palette resources unchanged. Provider
 appearance groups now show one Original wood look and distinct plaster looks;
 all exact saved references remain compatible and are not silently rewritten.
 Actual joined Studio editing, height3.4/palette01_B, Undo/Redo and browser-draft
-reload are verified at :3196. The table above still describes the **installed**
-provider: the candidate awaits [publication approval](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7117584838).
+reload are verified at :3196 on normal pins with the preview override off.
+Web4f94ee9f pins both providers to4f007dc. Both ownership checks and112 focused
+provider tests pass; Web11369/30, lint/types/build/guards and the corrected
+scratch-page format recheck pass. The table describes the installed feature provider.
 Door-frame atlas inheritance, My World/Play and final review/released pins are not
 claimed by the panel-palette checkpoint. The earlier accepted source view stays
 at :3195 unchanged.
@@ -103,7 +105,7 @@ at :3195 unchanged.
 
 The ten pictured/raw feature candidates now include the original Castle Wall Door01 ref. Captured Double01 and seated Single02 pairs support 3.75/6 with fixed leaves/caps; the large gateway supports 12/15 with a real minimum8.1317. The standard gateway gains matching masonry at native height4.39638 but remains fixed: the tested5.5..5.8 raw band has backing narrower than its full frame envelope. No repeat capability is invented. Actual chart errors stay below2e-7 in the inspected views.
 
-Original captured leaves remain exact in final runtime signatures. A Blender import/export initially changed only their normal quantization/vertex splitting; original capture payloads were retained rather than accepting the drift. The standard gateway material-only preparation copies all triangle corner attributes exactly and leaves native thumbnail PNGs byte-unchanged. All314 refs remain; current profiles are278 scale,17 fixed,19 repeat-above.
+Original captured leaves remain exact in final runtime signatures. A Blender import/export initially changed only their normal quantization/vertex splitting; original capture payloads were retained rather than accepting the drift. The standard gateway material-only preparation copies all triangle corner attributes exactly and leaves native thumbnail PNGs byte-unchanged. All314 refs remain. That castle checkpoint had278 scale,17 fixed,19 repeat-above; after the inner publication the current totals are274 scale,9 fixed,19 repeat-above,12 anchored.
 
 Captured house frames were inspected from their original sources: timber/plaster/boards with color maps but no normal maps. That is a distinct material capability, not a reason to label them masonry. Their source preparation/material work remains open; this pass does not complete the72-entry inventory.
 
