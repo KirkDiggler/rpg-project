@@ -34,14 +34,15 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/encoding/protojson"
 
-	recordhandler "github.com/KirkDiggler/rpg-api/internal/handlers/dnd5e/session/v1alpha2"
 	"github.com/KirkDiggler/rpg-api/internal/auth"
 	"github.com/KirkDiggler/rpg-api/internal/dungeons"
 	"github.com/KirkDiggler/rpg-api/internal/dungeons/dungeonstest"
 	"github.com/KirkDiggler/rpg-api/internal/entities"
-	"github.com/KirkDiggler/rpg-api/internal/pkg/idgen"
+	recordhandler "github.com/KirkDiggler/rpg-api/internal/handlers/dnd5e/session/v1alpha2"
 	lobbyorch "github.com/KirkDiggler/rpg-api/internal/orchestrators/lobby"
+	"github.com/KirkDiggler/rpg-api/internal/pkg/idgen"
 	characterrepo "github.com/KirkDiggler/rpg-api/internal/repositories/character"
 	lobbyrepo "github.com/KirkDiggler/rpg-api/internal/repositories/lobby"
 
@@ -104,6 +105,80 @@ func TestUESpikeServe(t *testing.T) {
 		t.Fatal(err)
 	}
 	run := out.EncounterID
+
+	// A second run, from a shipped dungeon, launched by key the way the lobby
+	// does it: the castle. Its atlas is what the Unreal scene is built from.
+	castleDir := t.TempDir()
+	castleSrc := dungeonstest.FixtureContentDir(t)
+	entries, err := os.ReadDir(castleSrc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
+			continue
+		}
+		raw, err := os.ReadFile(filepath.Join(castleSrc, entry.Name())) //nolint:gosec // a fixture entry under the repo
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(castleDir, entry.Name()), raw, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	shippedCastle, err := dungeons.NewFileRegistry(castleDir, projector)
+	if err != nil {
+		t.Fatal(err)
+	}
+	castleLobbies := lobbyrepo.NewInMemory()
+	castleLobby, err := lobbyorch.New(&lobbyorch.Config{
+		LobbyRepo: castleLobbies, LobbyBroker: lobbyorch.NewBroker(), CharacterRepo: h.charRepo,
+		LobbyIDGenerator: idgen.NewSequential("castle-lobby"), JoinRefGenerator: idgen.NewSequential("castle-ref"),
+		EncounterIDGenerator: idgen.NewSequential("castle"), SessionManager: h.manager.Manager,
+		Dungeons: dungeonstest.Join(t, shippedCastle, false),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	castleMember, castleHost := "alice", "player-alice"
+	if _, err := h.charRepo.Create(context.Background(), characterrepo.CreateInput{
+		Character: &entities.Character{Data: armedFighter(castleMember, castleHost)},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := castleLobbies.Save(context.Background(), &lobbyrepo.Data{
+		ID: "lobby-castle", HostPlayerID: castleHost, Status: lobbyrepo.StatusWaiting,
+		Members:     map[string]*lobbyrepo.Member{castleHost: {PlayerID: castleHost, CharacterID: castleMember, IsHost: true, IsReady: true}},
+		MemberOrder: []string{castleHost},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	castleOut, err := castleLobby.StartEncounter(context.Background(), &lobbyorch.StartEncounterInput{
+		WorldID: dungeonstest.Caller.WorldID, PlayerID: castleHost, LobbyID: "lobby-castle", DungeonKey: "the-mad-king",
+	})
+	if err != nil {
+		t.Fatalf("castle launch: %v", err)
+	}
+	castle := castleOut.EncounterID
+	atlas, err := h.handler.GetAtlas(auth.WithPlayerID(context.Background(), castleHost),
+		&sessionpb.GetAtlasRequest{Session: castle, Member: castleMember})
+	if err != nil {
+		t.Fatalf("castle atlas: %v", err)
+	}
+	t.Logf("CASTLE %s atlas: grid=%s cells=%d regions=%d boundaries=%d doorways=%d props=%d placed=%d structural walls=%d structural doors=%d exits=%d segments=%d",
+		castle, atlas.GetGrid(), len(atlas.GetCells()), len(atlas.GetRegions()), len(atlas.GetBoundaries()),
+		len(atlas.GetDoorways()), len(atlas.GetProps()), len(atlas.GetPlaced()), len(atlas.GetStructuralWalls()),
+		len(atlas.GetStructuralDoors()), len(atlas.GetExits()), len(atlas.GetSegments()))
+	if dumpPath := os.Getenv("UE_SPIKE_ATLAS"); dumpPath != "" {
+		document, err := protojson.MarshalOptions{Multiline: true}.Marshal(atlas)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(dumpPath, document, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("castle atlas written to %s", dumpPath)
+	}
 
 	// The production auth boundary, Dev scheme allowed: a client must send
 	// `authorization: Dev <player_id>`.
@@ -185,6 +260,7 @@ func TestUESpikeServe(t *testing.T) {
 
 	info, _ := json.MarshalIndent(map[string]string{
 		"addr": addr, "session": run, "member": member, "host": host, "onlooker": readerPlayer,
+		"castle": castle, "castle_member": castleMember, "castle_host": castleHost,
 		"auth": "authorization: Dev <player id>",
 	}, "", "  ")
 	if err := os.WriteFile(infoPath, info, 0o600); err != nil {

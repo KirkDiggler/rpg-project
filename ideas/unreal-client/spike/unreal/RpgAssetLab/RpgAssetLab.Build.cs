@@ -1,4 +1,5 @@
-// RpgAssetLab: the proof project's asset lab (see Private/RpgAssetLabModule.cpp).
+// RpgAssetLab: the proof project's labs — the asset row (RpgAssetLabModule.cpp)
+// and the scene built from the atlas (RpgSceneLabActor.cpp).
 using UnrealBuildTool;
 
 public class RpgAssetLab : ModuleRules
@@ -8,6 +9,6 @@ public class RpgAssetLab : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = false;
 
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
+        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "RpgWire", "ProceduralMeshComponent" });
     }
 }

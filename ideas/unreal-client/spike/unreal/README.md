@@ -198,7 +198,98 @@ the soldier with its idle; the raw pack character.
   characters, untested.
 - How a beat becomes motion, sound and animation: the game's own design.
 
-### Not kept here
+## Leg 3: the scene from the atlas
+
+Question: can Unreal show what the web shows for the same atlas?
+
+### What was built
+
+- `RpgSession.h`, `RpgSession.cpp` (in `RpgWire`, plain C++): a signed-in
+  connection. `Session::Atlas` fetches the atlas as a seated member and
+  returns it in plain values; the wire types stay inside that module.
+- `RpgAssetLab/RpgSceneLabActor.*`: the `rpg.scene` console command. It
+  fetches the atlas on a worker thread, then on the game thread builds one
+  hex per revealed cell tinted by region, the authored walls and doors as
+  boxes, the seated member at the start cell, and two cameras; it shoots
+  one frame straight down, one at an angle, and quits.
+- `reference_top.py`: draws the same atlas from its JSON dump with the web's
+  formulas, in Python, so the Unreal scene can be checked against a second
+  code path.
+- The engine-side test now also launches a shipped dungeon by key (the
+  castle), the way the lobby does, logs the atlas's counts and can dump it
+  (`UE_SPIKE_ATLAS`).
+
+### The frame, from the web's code
+
+- Pointy-top hexes of circumradius one scene unit. A cell `(q, r)` sits at
+  `x = sqrt(3) * (q + r/2)`, `y = 1.5 * r`. Here one scene unit is one metre.
+- Authored walls and doors are in **feet**; a hex is five feet flat to flat,
+  so a foot is `sqrt(3)/5` scene units (`structuralLayout.ts` says so in as
+  many words). A placement's `depth` runs along its `facing`, its `width`
+  across it.
+- A wall with openings is drawn by its spans, which the atlas already
+  places; one without, by itself.
+
+### The atlas at the start of the castle
+
+For a freshly seated member: 128 cells (q from -17 to 5, r from 7 to 17) in
+two regions, Gatehouse with 8 cells and the castle's yard with 115; 16
+doorways; 5 authored walls, one with an opening; 1 double door; 12 placed
+footprints (the walls, their spans, the door); no props revealed yet. The
+rest of the castle is beyond what this member knows, as it is on the web.
+
+### What the frames showed
+
+Drawn from two independent code paths, the atlas has the same outlines: the
+band of revealed yard, the gatehouse rectangle with its unknown interior
+showing through, the notch of hexes at its upper left, the column at the far
+right, the gap in the south wall where the door sits, and the start cell in
+the same place. Unreal built 128 floor cells and 7 wall and door boxes, and
+skipped nothing. The angled frame reads as the place: a walled yard, the
+gatehouse, its door in the far wall, the member tiny on the far side.
+
+### Four things it taught
+
+1. **The module boundary bit a third time.** First the generated symbols,
+   then my own plain-C++ class: anything a host calls across a module needs
+   the module's export mark. `Session` now carries `RPGWIRE_API`, the one
+   Unreal-ism in the core, and reads the wire types into plain values so no
+   host ever holds one.
+2. **Unreal's field of view is horizontal.** A 42-degree lens sees 42
+   degrees across a 16:9 frame and about 24 down it. The first top-down
+   frame showed half the scene; the distance now comes from both half-angles.
+3. **Unreal is left-handed.** A camera looking straight down with north up
+   shows east on the left. Rolled 180 degrees it is the web's top view: x
+   right, the web's z down the screen. The web's default camera azimuth is
+   not ported; the angled view looks from the south.
+4. **A door is placed under its bare id** while its authored record carries
+   the dungeon key as a prefix.
+
+### What is crude in this cut
+
+- Walls are plain boxes. The web fits wall-kit pieces by reference (this
+  castle names `dnd5e:env:dark-fortress:45_wall_01` and a double door).
+- Hexes are flat and tinted. The web lays textured tiles with each region's
+  ground and lighting.
+- No props: none are revealed at the start, and the manifest that maps a
+  reference to a model is not ported.
+- Only the seated member is placed; the roster's other creatures are not.
+- Sky where the web shows darkness, and a camera angle chosen by eye.
+
+### Recipe
+
+With the engine side up (the throwaway test, which now serves the castle as
+`castle_1` for member `alice`, player `player-alice`):
+
+```
+UnrealEditor-Cmd <project> -game -RenderOffscreen -unattended -NoSound \
+  -windowed -ResX=1920 -ResY=1080 -ExecCmds="rpg.scene <addr> <session> <player> <member>"
+python3 reference_top.py castle-atlas.json reference-top.png
+```
+
+The frames are under the project's `AssetLab/evidence/`, and stay out of git.
+
+## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no
 repository): the plugin with its compiled contract, the imported assets, the
