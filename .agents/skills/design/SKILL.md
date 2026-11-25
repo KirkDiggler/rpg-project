@@ -81,8 +81,9 @@ must do.
 
 ### Waiting on the operator
 
-A question about a slice goes on that slice's sub-issue; a question about the
-design goes on the design PR. Chat carries one line and the link.
+A question for the operator about a story or one of its slices goes on the
+story, which is the operator's page; a slice issue is the builder's brief. A
+question about the design goes on the design PR. Chat carries one line and the link.
 
 When a decision is the operator's and the session is waiting for it:
 
