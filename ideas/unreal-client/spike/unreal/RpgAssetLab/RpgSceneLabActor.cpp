@@ -7,6 +7,11 @@
 // The atlas is fetched over the wire as the seated member, so it is the atlas
 // as that member knows it, exactly what the web would draw for them.
 //
+// In the EDITOR (no -game), or with a fifth argument `stay`, the scene is
+// built into the editor's own world, the viewport is placed at the angled
+// camera, and nothing is shot or closed: hold the right mouse button in the
+// viewport and fly with W A S D.
+//
 // The frame is the web's (rpg-dnd5e-web atlasToScene3D.ts, structuralLayout.ts):
 //   - pointy-top hexes, circumradius one scene unit; a cell (q, r) sits at
 //     x = sqrt(3) * (q + r/2), y = 1.5 * r;
@@ -39,6 +44,8 @@
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformMisc.h"
 #include "HighResScreenshot.h"
+#include "Editor.h"
+#include "LevelEditorViewport.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProceduralMeshComponent.h"
@@ -130,6 +137,16 @@ ARpgSceneLab::ARpgSceneLab()
 void ARpgSceneLab::BeginPlay()
 {
     Super::BeginPlay();
+    Start();
+}
+
+void ARpgSceneLab::Start()
+{
+    if (Started)
+    {
+        return;
+    }
+    Started = true;
     GetWorldTimerManager().SetTimer(FetchTimer, this, &ARpgSceneLab::FetchAtlas, kFetchAfterSeconds, false);
 }
 
@@ -210,6 +227,10 @@ void ARpgSceneLab::OnAtlas(bool Ok, const FString& Error, const std::shared_ptr<
         *Atlas.DungeonKey, Atlas.Cells.Num(), Atlas.Regions.Num(), Atlas.Authored.Num(), Atlas.Placed.Num(),
         Atlas.Start.Key, Atlas.Start.Value);
     Build(Atlas);
+    if (Stay)
+    {
+        return;
+    }
     GetWorldTimerManager().SetTimer(QuitTimer, this, &ARpgSceneLab::Shoot, kShotAfterSeconds, false);
 }
 
@@ -387,6 +408,21 @@ void ARpgSceneLab::Build(const FSceneAtlas& Atlas)
     {
         Controller->SetViewTarget(TopCamera);
     }
+    if (Stay)
+    {
+        // Put the editor's viewport where the angled camera is; from there it flies freely.
+        if (GEditor && GEditor->GetActiveViewport())
+        {
+            if (FLevelEditorViewportClient* Viewport = static_cast<FLevelEditorViewportClient*>(GEditor->GetActiveViewport()->GetClient()))
+            {
+                Viewport->SetViewLocation(AngleCamera->GetActorLocation());
+                Viewport->SetViewRotation(AngleCamera->GetActorRotation());
+                Viewport->FOVAngle = 42.0f;
+                Viewport->Invalidate(false, false);
+            }
+        }
+        return;
+    }
     // The map's default pawn draws a sphere where it spawns; it is not part of the evidence.
     for (TActorIterator<APawn> It(World); It; ++It)
     {
@@ -428,18 +464,24 @@ namespace
 {
     FAutoConsoleCommand GRpgSceneCommand(
         TEXT("rpg.scene"),
-        TEXT("Build the web's view of a session's atlas in the game world, screenshot, quit. rpg.scene <addr> <session> <player> <member>"),
+        TEXT("Build the web's view of a session's atlas. rpg.scene <addr> <session> <player> <member> [stay]. In the editor it builds into the editor world and stays open."),
         FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
         {
+            // A game world when run with -game; otherwise the editor's own world, to look around in.
             UWorld* World = GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWorld() : nullptr;
+            const bool bEditor = World == nullptr;
+            if (!World && GEditor)
+            {
+                World = GEditor->GetEditorWorldContext().World();
+            }
             if (!World)
             {
-                UE_LOG(LogRpgSceneLab, Error, TEXT("rpg.scene: no game world; start the editor with -game"));
+                UE_LOG(LogRpgSceneLab, Error, TEXT("rpg.scene: no world to build in"));
                 return;
             }
             if (Args.Num() < 4)
             {
-                UE_LOG(LogRpgSceneLab, Error, TEXT("usage: rpg.scene <addr> <session> <player> <member>"));
+                UE_LOG(LogRpgSceneLab, Error, TEXT("usage: rpg.scene <addr> <session> <player> <member> [stay]"));
                 return;
             }
             ARpgSceneLab* Lab = World->SpawnActor<ARpgSceneLab>();
@@ -448,6 +490,10 @@ namespace
             TargetToRead.Session = Args[1];
             TargetToRead.Player = Args[2];
             TargetToRead.Member = Args[3];
+            Lab->SetStay(bEditor || (Args.Num() > 4 && Args[4].Equals(TEXT("stay"), ESearchCase::IgnoreCase)));
+            UE_LOG(LogRpgSceneLab, Display, TEXT("building in the %s world%s"), bEditor ? TEXT("editor") : TEXT("game"),
+                Lab->StaysOpen() ? TEXT("; staying open") : TEXT(""));
             Lab->ReadTarget(TargetToRead);
+            Lab->Start();
         }));
 }

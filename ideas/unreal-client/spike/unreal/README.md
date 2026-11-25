@@ -289,6 +289,12 @@ python3 reference_top.py castle-atlas.json reference-top.png
 
 The frames are under the project's `AssetLab/evidence/`, and stay out of git.
 
+In the **editor** (no `-game`), or with a fifth argument `stay`, the scene is
+built into the editor's own world and nothing is shot or closed: the viewport
+is placed where the angled camera is, and the right mouse button with W A S D
+flies. An actor spawned into the editor's world never begins play, so the
+fetch starts when the command sets its target, not from BeginPlay.
+
 ## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no

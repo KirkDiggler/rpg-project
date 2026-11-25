@@ -37,6 +37,14 @@ public:
 
     void ReadTarget(const Target& InTarget) { TargetToRead = InTarget; }
 
+    /// Stay open for looking around, in the editor's own world: no frames, no exit.
+    void SetStay(bool InStay) { Stay = InStay; }
+
+    /// Begins the fetch. Called once the target is set: an actor spawned into
+    /// the editor's world never begins play, so BeginPlay cannot be the trigger.
+    void Start();
+    bool StaysOpen() const { return Stay; }
+
 protected:
     void BeginPlay() override;
 
@@ -51,6 +59,8 @@ private:
 
     Target TargetToRead;
     int32 Built = 0;
+    bool Stay = false;
+    bool Started = false;
     ACameraActor* TopCamera = nullptr;
     ACameraActor* AngleCamera = nullptr;
     FTimerHandle FetchTimer;
