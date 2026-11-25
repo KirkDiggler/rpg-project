@@ -9,7 +9,7 @@ public class RpgAssetLab : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         bEnableExceptions = false;
 
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "RpgWire", "ProceduralMeshComponent" });
+        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "RpgWire", "ProceduralMeshComponent", "Json" });
         // The editor viewport, to place it where the scene is when looking around.
         if (Target.bBuildEditor)
         {

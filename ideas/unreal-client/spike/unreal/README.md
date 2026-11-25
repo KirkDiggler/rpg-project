@@ -295,6 +295,72 @@ is placed where the angled camera is, and the right mouse button with W A S D
 flies. An actor spawned into the editor's world never begins play, so the
 fetch starts when the command sets its target, not from BeginPlay.
 
+## Leg 4: a game started from Unreal, on the real stack
+
+Question: does a game started by the Unreal client, as a real player on the
+real stack, play? This is the slice Kirk ruled for: a functional game in
+whatever slice we can manage, in C++; Blueprint is a nice-to-have.
+
+### The stack
+
+The real one, brought up the sanctioned way: `scripts/dev-env.sh up
+local/ue-play` with a five-line `envs/local/ue-play.env` (the `dev` refs for
+the API and the web, host ports 8143 and 3143, no Redis persistence). Local
+environments seed the sandbox identities on every start
+(`docs/dev-environments.md`): `toolkit-sandbox-bard` among them, with one
+character. The published API port is the browser's (gRPC-Web through Envoy);
+the native gRPC port is reached at the API container's own address, which the
+Unreal client is given on its command line.
+
+### What was built
+
+- The core's `Session` gains three calls: `Characters` (the signed-in
+  player's), `StartGame` (create a lobby with the character, ready, start
+  the default dungeon, as the web's `LobbyFlow` does), and `Roster`.
+  `RecordStream` became public, with the module's export mark.
+- `RpgPlayLabActor.*`: `rpg.play <api-host:port> <player>`. It signs in,
+  starts a game, reads the roster, has the scene lab build the atlas scene,
+  follows the record as the seated character, and places each figure where
+  its `joined_at` beat says it stood. The player's figure is the bridged
+  fighter; every other is, for now, the bridged skeleton soldier, whatever
+  its reference (the reference is logged).
+
+### What happened
+
+Signed in as the bard; a lobby created, readied, the castle launched
+(session ids differ per run); the roster read: the bard and the pedlar. The
+record then placed **18 figures**: the bard at the start cell, the two gate
+guards, the captain, the cook, the king, the sergeant, the turnkey, four
+prisoners, the prince, the pedlar and the rest of the castle's cast, each at
+its cell. The scene: 128 floor cells, 7 wall and door boxes. In the editor
+it stays open to walk around in.
+
+### What the real stack taught
+
+- **A character sits in one run at a time.** A second start is refused, and
+  the refusal names the earlier run. The client now leaves it with the
+  session's `Exit` verb and starts again. (Abandoning the player's active
+  lobby, the web's route, did not free the seat.)
+- **The roster carries no positions.** Where each member stood is in the
+  record's `joined_at` beats; the roster only says who and of what kind. In
+  development mode the record places the whole cast; a seated member's
+  record is narrower, as on the web.
+- **The editor stops ticking when its window is not on screen.** A fetch on a
+  timer never ran until the window was shown; both labs now fetch the moment
+  the command runs, and what needs the game thread completes when the window
+  appears.
+- Figures outside the roster read as "unspecified"; a client maps a figure
+  to a model by reference, which is the next leg's work.
+
+### Still open from this leg
+
+- Figures do not move yet: walk, attack and the other acts arrive and are
+  logged, not yet shown. No input: nothing sends a verb.
+- Models by reference; the castle's guards and its people are stock Synty
+  characters that the Unreal-format packs hold natively.
+- A figure placed where the record says is not yet a figure that faces,
+  animates, or is hidden until seen.
+
 ## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no

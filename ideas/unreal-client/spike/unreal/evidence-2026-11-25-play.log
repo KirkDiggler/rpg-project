@@ -1,0 +1,38 @@
+2026.11.25-23.34.04:206 signing in as toolkit-sandbox-bard at 172.20.0.3:50051
+2026.11.25-23.34.04:206 playing in the editor world
+2026.11.25-23.34.04:676 game started: player toolkit-sandbox-bard, character char_00f27b00-cdeb-499c-b07d-de355f1cf1ce, session aa940d98-3484-4766-8d99-edd75715fdc8, 2 in the roster
+2026.11.25-23.34.04:676   roster: char_00f27b00-cdeb-499c-b07d-de355f1cf1ce  player  class bard
+2026.11.25-23.34.04:676   roster: pedlar  monster  monster dnd5e:monsters:commoner 
+2026.11.25-23.34.04:677 following the record as char_00f27b00-cdeb-499c-b07d-de355f1cf1ce
+2026.11.25-23.34.04:690 +0.0s beat 1: {"beat":"scene-opened"}
+2026.11.25-23.34.04:690 +0.0s beat 2: {"beat":"scene_content","content_hash":"e3b4252104424f014d2df14d2916a6998c3421d27d0131db4875c8a0a2585312","engine":"v0.258.1","key":"the-mad-king","si...
+2026.11.25-23.34.04:690 +0.0s beat 3: {"beat":"joined","kind":"player","member":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce"}
+2026.11.25-23.34.04:690   player char_00f27b00-cdeb-499c-b07d-de355f1cf1ce stood at (-2,16)
+2026.11.25-23.34.04:727 +0.0s beat 4: {"beat":"joined_at","cell":{"x":-2,"y":16},"member":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce"}
+2026.11.25-23.34.04:727 +0.1s beat 5: {"beat":"joined","kind":"monster","member":"gate-1"}
+2026.11.25-23.34.04:727   unspecified gate-1 stood at (-3,7)
+2026.11.25-23.34.04:753 +0.1s beat 6: {"beat":"joined_at","cell":{"x":-3,"y":7},"member":"gate-1"}
+2026.11.25-23.34.04:753 +0.1s beat 7: {"beat":"tempered","faction":"garrison","member":"gate-1","of":3,"roll":3,"temper":"soldier"}
+2026.11.25-23.34.04:753 +0.1s beat 8: {"beat":"joined","kind":"monster","member":"gate-2"}
+2026.11.25-23.34.04:753   unspecified gate-2 stood at (-3,10)
+2026.11.25-23.34.04:754 +0.1s beat 9: {"beat":"joined_at","cell":{"x":-3,"y":10},"member":"gate-2"}
+2026.11.25-23.34.04:754 +0.1s beat 10: {"beat":"tempered","faction":"garrison","member":"gate-2","of":3,"roll":2,"temper":"soldier"}
+2026.11.25-23.34.04:754 +0.1s beat 11: {"beat":"joined","kind":"monster","member":"captain"}
+2026.11.25-23.34.04:754   unspecified captain stood at (-4,8)
+2026.11.25-23.34.04:755 +0.1s beat 12: {"beat":"joined_at","cell":{"x":-4,"y":8},"member":"captain"}
+2026.11.25-23.34.04:755   unspecified cook stood at (-14,-12)
+2026.11.25-23.34.04:755   unspecified hall-1 stood at (14,-11)
+2026.11.25-23.34.04:756   unspecified keep-1 stood at (6,-19)
+2026.11.25-23.34.04:756   unspecified keep-2 stood at (14,-19)
+2026.11.25-23.34.04:757   unspecified king stood at (3,-17)
+2026.11.25-23.34.04:757   unspecified scullion stood at (-19,-9)
+2026.11.25-23.34.04:758   unspecified sergeant stood at (-24,5)
+2026.11.25-23.34.04:759   unspecified turnkey stood at (-20,5)
+2026.11.25-23.34.04:759   unspecified prisoner-1 stood at (-31,13)
+2026.11.25-23.34.04:759   unspecified prisoner-2 stood at (-28,13)
+2026.11.25-23.34.04:760   unspecified prisoner-3 stood at (-25,13)
+2026.11.25-23.34.04:760   unspecified prisoner-4 stood at (-22,13)
+2026.11.25-23.34.04:761   unspecified prince stood at (-27,11)
+2026.11.25-23.34.04:761   monster pedlar stood at (0,14)
+2026.11.25-23.34.04:762 atlas of the-mad-king: 128 cells, 2 regions, 6 authored walls and doors, 12 placed, start (-2,16)
+2026.11.25-23.34.04:819 built 128 floor cells; 7 wall and door boxes; 0 placements skipped (props)

@@ -147,7 +147,7 @@ void ARpgSceneLab::Start()
         return;
     }
     Started = true;
-    GetWorldTimerManager().SetTimer(FetchTimer, this, &ARpgSceneLab::FetchAtlas, kFetchAfterSeconds, false);
+    FetchAtlas(); // at once: a timer would wait for the editor to tick, and it does not while its window is hidden
 }
 
 void ARpgSceneLab::FetchAtlas()

@@ -3,7 +3,9 @@
 #include <chrono>
 #include <grpcpp/grpcpp.h>
 
+#include "dnd5e/api/lobby/v1alpha1/service.grpc.pb.h"
 #include "dnd5e/api/session/v1alpha1/service.grpc.pb.h"
+#include "dnd5e/api/v1alpha1/character.grpc.pb.h"
 
 namespace rpgwire
 {
@@ -51,6 +53,164 @@ bool Session::AtlasWire(const std::string& session, const std::string& member,
             *error = status.error_message();
         }
         return false;
+    }
+    return true;
+}
+
+bool Session::Characters(std::vector<Character>* out, std::string* error)
+{
+    namespace character = dnd5e::api::v1alpha1;
+    std::unique_ptr<character::CharacterService::Stub> stub = character::CharacterService::NewStub(channel_);
+    character::ListCharactersRequest request;
+    character::ListCharactersResponse response;
+    std::unique_ptr<grpc::ClientContext> context = Context();
+    const grpc::Status status = stub->ListCharacters(context.get(), request, &response);
+    if (!status.ok())
+    {
+        if (error)
+        {
+            *error = status.error_message();
+        }
+        return false;
+    }
+    out->clear();
+    for (const auto& wire : response.characters())
+    {
+        Character value;
+        value.id = wire.id();
+        value.name = wire.name();
+        value.level = wire.level();
+        out->push_back(value);
+    }
+    return true;
+}
+
+bool Session::StartGame(const std::string& character_id, std::string* session, std::string* error)
+{
+    namespace lobby = dnd5e::api::lobby::v1alpha1;
+    std::unique_ptr<lobby::LobbyService::Stub> stub = lobby::LobbyService::NewStub(channel_);
+
+    lobby::CreateLobbyRequest create;
+    create.set_campaign_id("default-campaign"); // the web's dev campaign (LobbyFlow.tsx)
+    create.set_character_id(character_id);
+    lobby::CreateLobbyResponse created;
+    {
+        std::unique_ptr<grpc::ClientContext> context = Context();
+        const grpc::Status status = stub->CreateLobby(context.get(), create, &created);
+        if (!status.ok())
+        {
+            if (error)
+            {
+                *error = "CreateLobby: " + status.error_message();
+            }
+            return false;
+        }
+    }
+
+    lobby::SetReadyRequest ready;
+    ready.set_lobby_id(created.lobby_id());
+    ready.set_ready(true);
+    lobby::SetReadyResponse readied;
+    {
+        std::unique_ptr<grpc::ClientContext> context = Context();
+        const grpc::Status status = stub->SetReady(context.get(), ready, &readied);
+        if (!status.ok())
+        {
+            if (error)
+            {
+                *error = "SetReady: " + status.error_message();
+            }
+            return false;
+        }
+    }
+
+    lobby::StartEncounterRequest start;
+    start.set_lobby_id(created.lobby_id());
+    start.set_dungeon_key(""); // the default dungeon, as the web's lobby sends it
+    lobby::StartEncounterResponse started;
+    grpc::Status status;
+    {
+        std::unique_ptr<grpc::ClientContext> context = Context();
+        status = stub->StartEncounter(context.get(), start, &started);
+    }
+    std::string recovery;
+    if (!status.ok() && status.error_message().find("seated in session \"") != std::string::npos)
+    {
+        // A character sits in one run at a time, and the refusal names that run:
+        //   ... is seated in session "<id>" ...
+        // Leave it, as the character (the Exit verb: "the client just says
+        // leave"), then start this lobby. One attempt.
+        const std::string message = status.error_message();
+        const size_t first = message.find("seated in session \"") + 19;
+        const size_t last = message.find('\"', first);
+        if (last != std::string::npos && last > first)
+        {
+            const std::string earlier = message.substr(first, last - first);
+            v1::ExitRequest exit;
+            exit.set_session(earlier);
+            exit.set_member(character_id);
+            v1::ExitResponse left;
+            std::unique_ptr<grpc::ClientContext> exitContext = Context();
+            std::unique_ptr<v1::SessionService::Stub> sessions = v1::SessionService::NewStub(channel_);
+            const grpc::Status exited = sessions->Exit(exitContext.get(), exit, &left);
+            recovery = " (left the earlier run " + earlier + (exited.ok() ? ")" : ": " + exited.error_message() + ")");
+            if (exited.ok())
+            {
+                lobby::StartEncounterResponse retried;
+                std::unique_ptr<grpc::ClientContext> retryContext = Context();
+                status = stub->StartEncounter(retryContext.get(), start, &retried);
+                started = retried;
+            }
+        }
+    }
+    if (!status.ok())
+    {
+        if (error)
+        {
+            *error = "StartEncounter: " + status.error_message() + recovery;
+        }
+        return false;
+    }
+    if (session)
+    {
+        *session = started.encounter_id();
+    }
+    return true;
+}
+
+bool Session::Roster(const std::string& session, const std::string& member, std::vector<Member>* out, std::string* error)
+{
+    v1::GetRosterRequest request;
+    request.set_session(session);
+    request.set_member(member);
+    v1::GetRosterResponse response;
+    std::unique_ptr<v1::SessionService::Stub> stub = v1::SessionService::NewStub(channel_);
+    std::unique_ptr<grpc::ClientContext> context = Context();
+    const grpc::Status status = stub->GetRoster(context.get(), request, &response);
+    if (!status.ok())
+    {
+        if (error)
+        {
+            *error = status.error_message();
+        }
+        return false;
+    }
+    out->clear();
+    for (const auto& wire : response.members())
+    {
+        Member value;
+        value.id = wire.id();
+        switch (wire.kind())
+        {
+            case v1::MEMBER_KIND_PLAYER: value.kind = Member::Kind::Player; break;
+            case v1::MEMBER_KIND_MONSTER: value.kind = Member::Kind::Monster; break;
+            case v1::MEMBER_KIND_WORLD: value.kind = Member::Kind::World; break;
+            default: value.kind = Member::Kind::Unspecified; break;
+        }
+        value.name = wire.name();
+        value.monster_ref = wire.monster_ref();
+        value.class_ref = wire.class_ref();
+        out->push_back(value);
     }
     return true;
 }

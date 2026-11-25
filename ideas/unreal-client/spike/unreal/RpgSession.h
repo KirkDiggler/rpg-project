@@ -29,6 +29,26 @@ namespace rpgwire
 
 struct Atlas;
 
+/// One of the player's characters.
+struct Character
+{
+    std::string id;
+    std::string name;
+    int level = 0;
+};
+
+/// One member of a session's roster.
+struct Member
+{
+    enum class Kind { Unspecified = 0, Player = 1, Monster = 2, World = 3 };
+
+    std::string id;
+    Kind kind = Kind::Unspecified;
+    std::string name;
+    std::string monster_ref; // for a monster: the creature, as a reference
+    std::string class_ref;   // for a player: the class, as a reference
+};
+
 class RPGWIRE_API Session
 {
 public:
@@ -40,7 +60,21 @@ public:
 
     explicit Session(Options options);
 
-    // Blocking. Returns false and fills `error` when the call does not succeed.
+    // Every call below blocks, and returns false with `error` filled when it
+    // does not succeed. Run them off the game thread.
+
+    // The signed-in player's characters.
+    bool Characters(std::vector<Character>* out, std::string* error);
+
+    // Starts a game the way the web's lobby does: create a lobby with the
+    // character, ready, start the default dungeon. `session` is the encounter
+    // the party is seated in; `member` is the character's id in it.
+    bool StartGame(const std::string& character_id, std::string* session, std::string* error);
+
+    // Who is in the session, as this member knows them. Positions are not in
+    // it on purpose: the record's `joined_at` beats say where each stood.
+    bool Roster(const std::string& session, const std::string& member, std::vector<Member>* out, std::string* error);
+
     // The atlas as this member knows it, in plain values (see `Atlas` below).
     bool Atlas(const std::string& session, const std::string& member, struct Atlas* out, std::string* error);
 
