@@ -6,7 +6,7 @@ Case inventory for [Courtyard S6 #1022](https://github.com/KirkDiggler/rpg-proje
 
 **Not a completion table.** The current modes preserve existing declarations: most still need part/surface preparation. A fixed standalone leaf is a part, not a complete doorway. Atlas variants and shared masonry are distinct compatible finish families. The complete pass cannot be claimed from just Fit01/Single01.
 
-**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. The operator confirmed the house kit as the inner-wall family, including plaster and wood-board variants. Doorway03/04 are the wood-board pair; House Wall03 is the matching plain wood panel (House Wall04 is a different plaster panel). Their anchored fitting and plain-panel palettes are published at Assets4f007dc; captured inner-frame atlas finishes remain open.
+**Current selection:** the operator considers the simpler Castle Wall Double01 and the single doorway sufficient for castle-wall doors. Both have the shared fitting/material configuration. The large gateway is **parked, not accepted**: correcting its joins did not establish a correct overall assembly. Its captured work stays recorded, not promoted to acceptance. The operator confirmed the house kit as the inner-wall family, including plaster and wood-board variants. Doorway03/04 are the wood-board pair; House Wall03 is the matching plain wood panel (House Wall04 is a different plaster panel). Their anchored fitting and plain-panel palettes are published at Assets4f007dc; inner-frame atlas finishes are operator-deferred to Original.
 
 | Asset / exact key suffix | Current height mode | Declared parts | Current finish support | Owning private recipe |
 |---|---|---|---|---|
@@ -97,9 +97,12 @@ reload are verified at :3196 on normal pins with the preview override off.
 Web4f94ee9f pins both providers to4f007dc. Both ownership checks and112 focused
 provider tests pass; Web11369/30, lint/types/build/guards and the corrected
 scratch-page format recheck pass. The table describes the installed feature provider.
-Door-frame atlas inheritance, My World/Play and final review/released pins are not
-claimed by the panel-palette checkpoint. The earlier accepted source view stays
-at :3195 unchanged.
+The later native/Play/cold-resume walk passes on normal pins with preserved
+panel choices and Original doors. The operator deferred frame atlas inheritance;
+those open capabilities are not current completion blockers. One bounded review
+is closed after the touching-section fix. Genuine released dependency pins and
+separately authorized merge-out remain outstanding; broader inventory is not
+certified. The earlier accepted source view stays at :3195 unchanged.
 
 ## Expanded castle source pass
 

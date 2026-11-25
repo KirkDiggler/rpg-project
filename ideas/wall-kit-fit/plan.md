@@ -10,6 +10,9 @@
 
 ## Current operator direction
 
+- Inner-door atlas inheritance is deferred by the operator: selected inner doors retain Original for this slice. Panel palette choices and existing castle masonry finishes remain supported; no new captured-frame field is added — [ruling](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7145840081).
+- The implemented selected-kit review is closed after one bounded round. F1 touching-section roundoff is fixed at Encounter6ca5b352/Web43e0f596 and consumed by Session6112681b/API8f71d6d6; full affected gates pass. Minor atlas wrapping-edge F2 is deferred to Assets349 and does not affect the four published panel footprints. This does not certify all72 inventory entries or authorize merge/deployment.
+
 - The single doorway and simpler Castle Wall Double01 are sufficient for the castle-wall door set. Both already use the shared height/material path; this does not claim final merge readiness.
 - Park the large gateway. Its joins were corrected, but the operator rejected the overall front/back assembly as visually wrong and may inspect it in Blender. Retain the candidate/evidence without treating it as accepted or requiring further work on it for the selected castle door set.
 - The operator confirmed the timber/plaster/board house kit as the intended inner-wall family. Doorway01/02 are the arched/square plaster pair; Doorway03/04 are the arched/square wood-board pair. Prepare these as their own family, preserving timber/door detail and existing atlas finishes rather than treating them as masonry. House Wall03 is the matching plain wood-board candidate. The older Dark Fortress refs in the checked-in castle are not silently migrated by this selection.
@@ -72,8 +75,8 @@
 - [ ] Normal provider sync/check; one isolated Studio checkpoint at two explicit heights with Castle Wall 01, Fit01, the Single Doorway and the older Double Door.
 - [ ] Inspect matching finishes and protected openings during normal editing/playtesting; use the operator's exported castle when available, without overwriting it.
 - [ ] Complete the inventory's remaining configured entries, not just the demonstration pair.
-- [ ] Run ordinary PR-boundary gates once per completed update, publish the bounded review and address concrete findings. Keep the asset broad-suite waiver intact.
-- [ ] Record exact provider pins, checks, visual evidence, remaining blockers and PR state on #1022. Do not imply implementation approval is merge/deployment authority.
+- [x] Publish one bounded independent review and close its findings: native/client F1 red→green, Encounter/Session full tests+lint, API ci-check, Web complete ci-check11371/30. F2 deferred with an unaffected-current-footprint audit and linked follow-up. Asset broad-suite waiver remains intact, not relabeled passing.
+- [x] Record current selected-kit pins, gates and native/cold-resume evidence on #1022. World/material data pin4f007dc; final review evidence926d5dd. Draft Encounter/Session pins remain pseudo-versions pending real tags and consumer repins. PRs remain unmerged; broader inventory and release/merge authority are not silently completed.
 
 ## First-pair checkpoint
 
