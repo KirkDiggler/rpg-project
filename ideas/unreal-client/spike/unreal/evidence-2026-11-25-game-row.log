@@ -1,0 +1,14 @@
+2026.11.25-20.53.02:761 lab built in OpenWorld; shot in 10s
+2026.11.25-20.53.12:457 LAB fighter, first attempt playing=1 position=1.17s
+2026.11.25-20.53.12:457 POSE fighter, first attempt left hand now=(-68,-115,27) rest=(-64,72,22) apart=178.3 deg
+2026.11.25-20.53.12:457 LAB fighter, bones matched playing=1 position=1.17s
+2026.11.25-20.53.12:457 POSE fighter, bones matched left hand now=(-68,-115,27) rest=(-64,72,22) apart=178.3 deg
+2026.11.25-20.53.12:457 LAB soldier, bones matched playing=1 position=1.17s
+2026.11.25-20.53.12:457 POSE soldier, bones matched left hand now=(-68,-115,27) rest=(-64,72,22) apart=178.3 deg
+2026.11.25-20.53.12:457 POSE soldier, no clip       left hand now=(-64,-108,22) rest=(-64,72,22) apart=180.0 deg
+2026.11.25-20.53.12:458 POSE raw pack character     left hand now=(-0,180,90) rest=(-0,-0,90) apart=180.0 deg
+2026.11.25-20.53.13:342 MOTION fighter, first attempt left hand turned 3.5 degrees in half a clip (0.88s)
+2026.11.25-20.53.13:342 MOTION fighter, bones matched left hand turned 3.5 degrees in half a clip (0.88s)
+2026.11.25-20.53.13:342 MOTION soldier, bones matched left hand turned 3.5 degrees in half a clip (0.88s)
+2026.11.25-20.53.13:342 MOTION soldier, no clip       left hand turned 0.0 degrees in half a clip (0.88s)
+2026.11.25-20.53.13:342 MOTION raw pack character     left hand turned 0.0 degrees in half a clip (0.88s)

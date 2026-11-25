@@ -11,6 +11,9 @@ running engine, can be proven before anyone installs an editor?
 whole contract, the auth boundary, catch-up-then-live streaming. It also
 surfaced what has to be decided first.
 
+Two Unreal legs followed on the same machine, the record client as an Unreal
+module and the asset bridge; they are recorded in [unreal/README.md](unreal/README.md).
+
 ## What ran
 
 | Step | What | Result |
