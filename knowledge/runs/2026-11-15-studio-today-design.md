@@ -1,5 +1,7 @@
 # Run — 2026-11-15 — Studio today design: places, ways and the engine's read-back
 
+processed: 2026-11-25T190427Z
+
 Design for story [rpg-project#966](https://github.com/KirkDiggler/rpg-project/issues/966). Base: `rpg-project` `main` at [`71991a1`](https://github.com/KirkDiggler/rpg-project/commit/71991a1).
 
 ## Shipped
