@@ -361,6 +361,58 @@ it stays open to walk around in.
 - A figure placed where the record says is not yet a figure that faces,
   animates, or is hidden until seen.
 
+## Leg 5: a stock character animated natively, and the rig gap
+
+Question: do the Unreal-format packs animate natively, so the Blender bridge
+stays only for the characters the pipeline assembles itself?
+
+### What ran
+
+- Three clips from the animation packs on this machine (locomotion v3, idles
+  v3, sword combat v5: 721, 670 and 243 FBX files) imported with Unreal's own
+  importer onto the Fantasy Kingdom pack's stock soldier skeleton, clips only.
+- `rpg.lab native`: that soldier with the native idle, the same soldier with
+  no clip (the control), and the soldier walking; the hand pose and motion
+  measured as in leg 2 (`rename_pack_skeleton.py`, `native_anim_import.py`,
+  `native_anim_census.py`).
+
+### What it showed
+
+- **The importer works and the clips bind** to the pack's own skeleton:
+  idle 53 frames, walk 31, attack 36 to 41 by clip; the hand moves where the
+  clip plays and 0.0 degrees on the control.
+- **And the soldier is crumpled**: legs right, torso and head folded. The
+  importer says why in one line: `Unable to retrieve bone index for track:
+  Hips`.
+- **The two sides do not share a rig.** The Fantasy Kingdom pack (saved for
+  5.3) is on Synty's older rig: `Pelvis, spine_01, UpperArm_L, lowerarm_l,
+  Thigh_L, calf_l, Foot_L`. The animation packs are on the current one:
+  `Hips, Spine_01, Shoulder_L, Elbow_L, UpperLeg_L, LowerLeg_L, Ankle_L`. Same
+  skeleton, a different vocabulary. Only the tracks whose names happen to
+  match bind, and a body animated in part folds.
+- The clips are also sparse by design: 15 tracks each, the bones a clip moves.
+- Two prefixes in the packs, `A_POLY_` and `A_MOD_`, are two *newer* rigs;
+  neither is the pack's old one.
+
+### The route, and where it stopped
+
+The mapping is a rename, which is what the web pipeline does in Blender.
+Unreal's `SkeletonModifier` performs it: `rename_bones` took the whole table
+(56 bones) in memory. Its `commit_skeleton_to_skeletal_mesh` returned false
+and the asset on disk kept the old names, so the end-to-end proof is not
+done. The commit is the one open step; the alternative is the bridge, which
+already carries this retarget for the web's characters.
+
+### What this decides
+
+- **Native works where a character pack and the animation packs share a
+  rig.** A newer pack on the current rig needs nothing but the importer.
+- **The Fantasy Kingdom pack needs the mapping once per skeleton.** The table
+  is in `rename_pack_skeleton.py`; which side of the fingers takes the `_1`
+  suffix is still a guess to confirm by eye.
+- The bridge is not made redundant by the Unreal-format packs; it is the
+  other route, and the only one for the pipeline's own characters.
+
 ## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no

@@ -38,6 +38,28 @@ DEFINE_LOG_CATEGORY_STATIC(LogRpgAssetLab, Log, All);
 
 namespace
 {
+    // The left hand's bone, whatever the casing: the bridge taught that Unreal
+    // capitalizes a mesh's bone names and not a track's.
+    int32 LeftHandBone(const FReferenceSkeleton& Ref)
+    {
+        const int32 Exact = Ref.FindBoneIndex(TEXT("Hand_l"));
+        if (Exact != INDEX_NONE)
+        {
+            return Exact;
+        }
+        for (int32 Bone = 0; Bone < Ref.GetNum(); ++Bone)
+        {
+            if (Ref.GetBoneName(Bone).ToString().Contains(TEXT("hand_l"), ESearchCase::IgnoreCase))
+            {
+                return Bone;
+            }
+        }
+        return INDEX_NONE;
+    }
+}
+
+namespace
+{
     constexpr float SHOT_AFTER_SECONDS = 10.0f;
     constexpr float QUIT_AFTER_SHOT_SECONDS = 4.0f;
 
@@ -65,9 +87,20 @@ void ARpgAssetLab::BeginPlay()
     GetWorldTimerManager().SetTimer(ShotTimer, this, &ARpgAssetLab::Shoot, SHOT_AFTER_SECONDS, false);
 }
 
+namespace
+{
+    bool GNativeRow = false; // `rpg.lab native`: the stock soldier with clips from the animation packs
+}
+
 void ARpgAssetLab::Build()
 {
     UWorld* World = GetWorld();
+
+    if (GNativeRow)
+    {
+        BuildNativeRow(World);
+        return;
+    }
 
     auto PlaceStatic = [World](const TCHAR* Path, const FVector& At, float Yaw = 0.0f, float Scale = 1.0f)
     {
@@ -148,6 +181,79 @@ void ARpgAssetLab::Build()
     UE_LOG(LogRpgAssetLab, Display, TEXT("lab built in %s; shot in %.0fs"), *World->GetMapName(), SHOT_AFTER_SECONDS);
 }
 
+// The native route, with its control: the pack's stock soldier with a clip
+// imported from an animation pack onto the pack's own skeleton, the same
+// soldier with no clip, and the soldier walking.
+void ARpgAssetLab::BuildNativeRow(UWorld* World)
+{
+    ADirectionalLight* Sun = World->SpawnActor<ADirectionalLight>(FVector(0.0, 0.0, 500.0), FRotator(-48.0, 32.0, 0.0));
+    Sun->GetLightComponent()->SetIntensity(6.0f);
+    if (UClass* SkySphereClass = StaticLoadClass(AActor::StaticClass(), nullptr, TEXT("/Engine/EngineSky/BP_Sky_Sphere.BP_Sky_Sphere_C")))
+    {
+        World->SpawnActor<AActor>(SkySphereClass, FVector::ZeroVector, FRotator::ZeroRotator);
+    }
+    auto PlaceStatic = [World](const TCHAR* Path, const FVector& At, float Yaw = 0.0f, float Scale = 1.0f)
+    {
+        AStaticMeshActor* Actor = World->SpawnActor<AStaticMeshActor>(At, FRotator(0.0, Yaw, 0.0));
+        Actor->SetMobility(EComponentMobility::Movable);
+        Actor->SetActorScale3D(FVector(Scale));
+        if (UStaticMesh* Mesh = Asset<UStaticMesh>(Path))
+        {
+            Actor->GetStaticMeshComponent()->SetStaticMesh(Mesh);
+        }
+    };
+    auto PlaceCharacter = [this, World](const TCHAR* Path, const TCHAR* Idle, const FVector& At, const FString& Label)
+    {
+        ASkeletalMeshActor* Actor = World->SpawnActor<ASkeletalMeshActor>(At, FRotator(0.0, 180.0, 0.0));
+        USkeletalMeshComponent* Component = Actor->GetSkeletalMeshComponent();
+        if (USkeletalMesh* Mesh = Asset<USkeletalMesh>(Path))
+        {
+            Component->SetSkeletalMeshAsset(Mesh);
+        }
+        if (UAnimSequence* Animation = Idle ? Asset<UAnimSequence>(Idle) : nullptr)
+        {
+            Component->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+            Component->SetAnimation(Animation);
+            Component->Play(true);
+            Idles.Add(Component, Label);
+        }
+        Measured.Add(Component, Label);
+    };
+    PlaceStatic(TEXT("/Engine/BasicShapes/Plane.Plane"), FVector(0.0, 60.0, 0.0), 0.0f, 40.0);
+
+    const TCHAR* Soldier = TEXT("/Game/PolygonFantasyKingdom/Meshes/Chr/SK_Chr_Soldier_Male_01.SK_Chr_Soldier_Male_01");
+    // What the pack's skeleton calls its bones, against what the clips name.
+    if (USkeletalMesh* SoldierMesh = Asset<USkeletalMesh>(Soldier))
+    {
+        const FReferenceSkeleton& Ref = SoldierMesh->GetRefSkeleton();
+        FString Names;
+        for (int32 Bone = 0; Bone < Ref.GetNum(); ++Bone)
+        {
+            Names += Ref.GetBoneName(Bone).ToString() + TEXT(" ");
+        }
+        UE_LOG(LogRpgAssetLab, Display, TEXT("BONES the pack soldier: %d bones: %s"), Ref.GetNum(), *Names);
+    }
+    PlaceCharacter(Soldier, TEXT("/Game/NativeAnim/A_POLY_IDL_Base_Masc.A_POLY_IDL_Base_Masc"), FVector(-170.0, 60.0, 0.0), TEXT("soldier, native idle"));
+    PlaceCharacter(Soldier, nullptr, FVector(0.0, 60.0, 0.0), TEXT("soldier, no clip"));
+    PlaceCharacter(Soldier, TEXT("/Game/NativeAnim/A_Walk_F_Masc.A_Walk_F_Masc"), FVector(170.0, 60.0, 0.0), TEXT("soldier, native walk"));
+
+    ACameraActor* Camera = World->SpawnActor<ACameraActor>(FVector(0.0, -640.0, 230.0), FRotator(-9.0, 90.0, 0.0));
+    Camera->GetCameraComponent()->SetFieldOfView(42.0f);
+    if (APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0))
+    {
+        Controller->SetViewTarget(Camera);
+    }
+    for (TActorIterator<APawn> It(World); It; ++It)
+    {
+        TInlineComponentArray<UPrimitiveComponent*> Primitives(*It);
+        for (UPrimitiveComponent* Primitive : Primitives)
+        {
+            Primitive->SetVisibility(false);
+        }
+    }
+    UE_LOG(LogRpgAssetLab, Display, TEXT("native row built in %s"), *World->GetMapName());
+}
+
 void ARpgAssetLab::Shoot()
 {
     for (const TPair<TWeakObjectPtr<USkeletalMeshComponent>, FString>& Idle : Idles)
@@ -166,9 +272,10 @@ void ARpgAssetLab::Shoot()
             continue;
         }
         const FReferenceSkeleton& Ref = Mesh->GetRefSkeleton();
-        const int32 Hand = Ref.FindBoneIndex(TEXT("Hand_l"));
+        const int32 Hand = LeftHandBone(Ref);
         if (Hand == INDEX_NONE)
         {
+            UE_LOG(LogRpgAssetLab, Display, TEXT("LAB %-22s has no left-hand bone among %d bones"), *Idle.Value, Ref.GetNum());
             continue;
         }
         FQuat Rest = FQuat::Identity;
@@ -193,7 +300,7 @@ void ARpgAssetLab::Shoot()
             continue;
         }
         const FReferenceSkeleton& Ref = Mesh->GetRefSkeleton();
-        const int32 Hand = Ref.FindBoneIndex(TEXT("Hand_l"));
+        const int32 Hand = LeftHandBone(Ref);
         if (Hand == INDEX_NONE)
         {
             continue;
@@ -226,7 +333,7 @@ void ARpgAssetLab::ShootAfterAMoment()
             }
         }
         const USkeletalMesh* Mesh = Component ? Component->GetSkeletalMeshAsset() : nullptr;
-        const int32 Hand = Mesh ? Mesh->GetRefSkeleton().FindBoneIndex(TEXT("Hand_l")) : INDEX_NONE;
+        const int32 Hand = Mesh ? LeftHandBone(Mesh->GetRefSkeleton()) : INDEX_NONE;
         if (Hand != INDEX_NONE)
         {
             const float Moved = FMath::RadiansToDegrees(Pair.Value.AngularDistance(Component->GetBoneTransform(Hand).GetRotation()));
@@ -246,8 +353,8 @@ namespace
 {
     FAutoConsoleCommand GRpgLabCommand(
         TEXT("rpg.lab"),
-        TEXT("Build the asset lab in the game world, take a screenshot, quit. Run with -game."),
-        FConsoleCommandDelegate::CreateLambda([]()
+        TEXT("Build the asset lab in the game world, take a screenshot, quit. Run with -game. `rpg.lab native`: the stock soldier with native clips."),
+        FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
         {
             UWorld* World = GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWorld() : nullptr;
             if (!World)
@@ -255,6 +362,7 @@ namespace
                 UE_LOG(LogRpgAssetLab, Error, TEXT("rpg.lab: no game world; start the editor with -game"));
                 return;
             }
+            GNativeRow = Args.Num() > 0 && Args[0].Equals(TEXT("native"), ESearchCase::IgnoreCase);
             World->SpawnActor<ARpgAssetLab>();
         }));
 }

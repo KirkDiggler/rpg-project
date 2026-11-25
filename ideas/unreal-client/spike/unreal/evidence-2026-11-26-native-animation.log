@@ -1,0 +1,9 @@
+2026.11.25-23.51.34:167 BONES the pack soldier: 56 bones: Root Pelvis spine_01 spine_02 spine_03 neck_01 head eyes eyebrows clavicle_l UpperArm_L lowerarm_l Hand_L thumb_01_l thumb_02_l thumb_03_l indexFinger_01_l indexFinger_02_l indexFinger_03_l indexFinger_04_l finger_01_l finger_02_l finger_03_l finger_04_l clavicle_r UpperArm_R lowerarm_r Hand_R thumb_01_r thumb_02_r thumb_03_r indexFinger_01_r indexFinger_02_r indexFinger_03_r indexFinger_04_r finger_01_r finger_02_r finger_03_r finger_04_r Thigh_R calf_r Foot_R ball_r toes_r Thigh_L calf_l Foot_L ball_l toes_l ik_foot_root ik_foot_l ik_foot_r ik_hand_root ik_hand_gun ik_hand_l ik_hand_r 
+2026.11.25-23.51.43:965 LAB soldier, native idle   playing=1 position=1.17s
+2026.11.25-23.51.43:965 POSE soldier, native idle   left hand now=(5,104,48) rest=(-0,-0,90) apart=111.4 deg
+2026.11.25-23.51.43:965 LAB soldier, native walk   playing=1 position=0.70s
+2026.11.25-23.51.43:965 POSE soldier, native walk   left hand now=(5,116,61) rest=(-0,-0,90) apart=119.8 deg
+2026.11.25-23.51.43:965 POSE soldier, no clip       left hand now=(-0,180,90) rest=(-0,-0,90) apart=180.0 deg
+2026.11.25-23.51.44:847 MOTION soldier, native idle   left hand turned 2.3 degrees in half a clip (0.88s)
+2026.11.25-23.51.44:847 MOTION soldier, native walk   left hand turned 24.0 degrees in half a clip (0.88s)
+2026.11.25-23.51.44:847 MOTION soldier, no clip       left hand turned 0.0 degrees in half a clip (0.88s)
