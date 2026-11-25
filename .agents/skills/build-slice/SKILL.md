@@ -186,8 +186,10 @@ built from a template is the tell that the rule went prescriptive.
 
 ## Attribution and PR body
 
-- Commits, PR bodies and comments carry the team signature only: no session
-  link, no model name, no co-author trailer.
+- Commits, PR bodies and comments carry the team signature with the
+  builder's model in it, `— <team> agent (<model>), on behalf of <login>`,
+  so a reader can tell which model did the work. No session link and no
+  co-author trailer.
 - The PR body says what changed, lists the named tests, states every
   deviation from the issue and why, carries `Part of <repo>#<n>` and
   `Closes <repo>#<n>` for the slice sub-issue it finishes (story skill), and
