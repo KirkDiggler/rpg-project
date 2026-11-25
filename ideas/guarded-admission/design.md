@@ -1,0 +1,292 @@
+# Guarded admission
+
+## Shape
+
+```mermaid
+flowchart TD
+    Content[Authored interaction and guard bindings] --> Compile[Encounter compiler]
+    Compile --> Shared[Encounter-owned shared interaction]
+    Compile --> Guard[Each guard's existing behavior]
+    Approach[Player reaches an authored approach] --> World[Encounter placement and perception]
+    World --> Guard
+    Guard --> Invite[Addressed conversation invitation]
+    Invite --> Shared
+    Shared --> View[Session projection and after-save delivery]
+    View --> UI[Web: offered replies]
+    UI --> Speak[Existing Speak and resolution check]
+    Speak --> Shared
+    Shared --> Consequence[Encounter executes authored consequences]
+    Consequence --> Post[Existing passage hold and movement]
+    Consequence --> Record[Player story and private diagnostics]
+```
+
+[Story #769](https://github.com/KirkDiggler/rpg-project/issues/769) carries
+scope, decisions and delivery evidence. [The walkthrough](README.md) explains
+the proposed seams. Only rows marked **settled** below are agreed law; open
+rows describe the proposed contract for review. An open row is not permission
+to implement it.
+
+## Law
+
+### R1 — One acting character, shared consequences
+
+The first playable admission interaction uses one acting character's existing
+Speak/check path. Group voting and shared result selection remain separate
+from this delivery. Other characters receive only outcomes their ordinary
+observer-local stream permits; they need not stop exploring merely because
+an invitation is open.
+
+### R2 — The entrance remembers for the run
+
+Attempts and admission belong to the party at the named entrance for the run.
+Changing speaker or guard, backing away, dismissing a panel, disconnecting or
+rejoining does not create a fresh attempt budget. A successful admission or
+established alternate entry releases the gate for the run. The keep allows
+two attempts: the first failed claim is unavailable for the retry; the second
+complete failure causes arrest, not an automatic fight.
+
+### R3 — Shared progress has one owner
+
+The encounter owns an authored interaction instance independently of any
+speaker or guard. Conversation state and admission progress are that one
+instance: its state is a requirement source for the replies offered at the
+entrance, exactly as a known fact or a carried prop is, and the settled verdict of a
+line spoken there may advance it; which flavour row answered does not. The replies offered are one evaluated pool
+(`mind/behavior/selection`) carrying the instance's revision; a reply names
+its option and the revision it was offered at, and the door chooses on that
+same pool. Its identity is the interaction binding within the run;
+its original bound definition and persisted `machine.Blob` remain distinct.
+The existing machine evaluates the shared progression; the encounter supplies
+its vocabulary and executes its consequences. No new generic machine,
+workflow service or host-side admission counter is introduced.
+
+A guard retains its own behavior instances, observations and work. A guard's
+death, replacement as speaker or interruption cannot reset the shared
+interaction. The interaction does not become the NPC composer or choose
+movement on its behalf.
+
+### R4 — An invitation is not a frozen resolution — settled
+
+The authored approach names where a living, eligible guard can initiate the
+interaction through the encounter's placement and perception answers. The
+encounter authorizes a bounded dialogue opportunity on the world clock; an
+observation does not become an ordinary paid turn. That opportunity permits
+only the authored challenge/invitation, not a free move or attack. The guard's
+composer selects once, and an explicit invitation names the actual approached
+character rather than a client-inferred listener. A long walk stops on the
+outside approach before any restricted crossing. It reports
+only steps actually taken and discards its unentered remainder; answering or
+dismissing the invitation never resumes that old path automatically.
+
+The invitation addresses one character and identifies the real guard and the
+shared interaction. It is recoverable from authoritative state, not only from
+a one-time stream notification. Its presence neither spends a check attempt
+nor freezes unrelated players. An actual Speak check that poses an existing
+resolution window retains that window's established freeze/resume behavior.
+
+Backing away ends the current address without clearing shared progress.
+Repeated reads or repeated steps within the same approach do not spam new
+invitations. Leaving and returning can address the remaining interaction
+again. An unavailable guard, combat, changed interaction state or an actor no
+longer eligible invalidates the old invitation rather than fabricating a
+replacement conversation.
+
+Settled 2026-11-11 by KirkDiggler, on #923:
+
+- **One addressee per interaction.** The address (the character spoken to and
+  the guard speaking) is part of the interaction instance. While it stands, no
+  other carrier of that interaction opens one. "once 1 has it active the other
+  will not trigger."
+- **Others listen through the events.** The conversation reaches bystanders as
+  the beats Speak and the answer already emit, on their audiences. "the
+  conversation should be flowing through the events. they can listen in."
+- **The approach is a distance, authored once on the interaction** and editable
+  in the studio. Its carriers are the NPCs whose replies name the interaction.
+  The earlier cut authored approach cells per entrance; the operator's words
+  that moved it: "this interaction should be configurable in the studio (how
+  close to trigger it)" and "one place sounds way better."
+- **The distance stays inside Speak reach, for now.** A larger authored value is
+  refused. Not taken: answering from beyond Speak reach when hailed from afar.
+- **The hail takes the player's focus.** The walk stops where the hail lands,
+  the reply panel opens, and the camera centres on the guard as on the active
+  member in combat.
+
+Lead's assumptions, open to veto: the hail requires the carrier to see the
+character; the address ends when the character is out of Speak reach or out of
+that carrier's sight.
+
+### R5 — A choice is validated and reserved before dice — settled
+
+The offered choice is the reply's option id and the evaluated pool's
+revision (R3). The toolkit revalidates recipient, target, phase, option, reach
+and current eligibility by choosing on that pool before charging, rolling or
+reserving an attempt. A stale or inapplicable selection is refused; the API
+does not reinterpret it as a new choice.
+
+Only one checked choice can be pending for an interaction at a time. A posed
+check retains that reservation and its original attempt through save/reload
+and ordinary React. An unresolved check is neither a failure nor a new try.
+Its settled verdict advances shared progress once. Another speaker cannot
+start a competing check against the same phase. Duplicate/stale requests
+cannot spend a second attempt or reroll a delivered result. This is not a
+promise of exactly-once host execution across a failed, uncommitted save.
+
+Settled 2026-11-11 (#924), two calls:
+
+- **While a check is waiting, gated lines show pending.** Lines whose
+  availability reads the interaction's progress evaluate Unknown for every
+  other speaker and are refused if sent; lines that do not read the
+  interaction stay open. "yeah A makes sense to me." Not taken: the whole
+  interaction goes busy; both roll and the later verdict is discarded.
+- **A reply from an old menu is refused, never re-read.** The castle's
+  `troupe` line is offered from `fresh` and from `warned-guest`, where a
+  failure is a warning and an arrest respectively; re-reading changes the
+  stakes after the player chose. "yeah we can refuse that. A works." Not
+  taken: accept when the id is still offered; refuse only when that line
+  changed.
+
+Lead's assumption, open to veto: a waiting check whose speaker leaves Speak
+reach is closed, so an unanswered roll cannot hold the interaction's lines.
+
+### R6 — Permission is what a guard holds about a person — settled
+
+Private knowledge, current speaker, shared interaction progress, passage
+permission and physical placement have different owners. Granting passage
+does not teach a distant member the dialogue, and hearing a claim is not
+permission to enter. Admission never grants faction-wide alliance as a
+shortcut.
+
+The encounter applies the authored release to the named posts independently
+of the guards completing their relocation. Existing body occupancy,
+post-at-place rules, door crossings and movement remain authoritative; there
+is no invisible replacement wall. A new permission effect is not an excuse
+to read private progress from the API or infer it in the client.
+
+Settled 2026-11-11 (#925). The proposal above read as opening the gate to
+everyone; the ruling replaces "release the named posts":
+
+- **A member who took no part is not admitted out of hand.** They are
+  excluded deliberately, because they do not share what the others share.
+  "excluded deliberately because they don't share something is how these
+  systems connect."
+- **Admission is the guard recognising a group of people.** Hearing the
+  answer is not being recognised: a hidden listener does not pass.
+- **It is a relationship record: holder, subject, topic.** `play/intel` is
+  the store; a holding gains a topic so one holder can hold several things
+  about one subject. "We have the two at the outside edges and then a topic
+  that carries the relationship." History stays in the log.
+- **Admission writes one record for each party member the admitting guard
+  can see at that moment,** from his own point of view. Not taken: only the
+  speaker; whoever stands within the approach distance.
+- **Another guard recognises them only when it is shared with him.** "how
+  intel moves is up to us. What it means is what's important."
+- **A post's pass asks its holder,** not the walker: does the holder hold
+  the topic about this walker. The walker-knows-a-fact pass remains for
+  content that wants a password.
+
+Lead's assumption, open to veto: a guard at the gate who sees and hears the
+admission holds the same record through a heard channel.
+
+### R7 — Consequences act on existing people — proposed
+
+Arrest uses the covered transition specified by the keep, retains equipment
+and character state, and places affected members at distinct valid positions
+in the authored shared cell. It creates no replacement prisoner or run.
+Surviving guards retain identity, health, resources and memories and walk to
+their authored destinations through existing movement and work completion.
+Gate release does not wait for that walk. Membership and outcome identifiers
+survive reload so neither relocation nor arrest starts again from a duplicate
+request or presentation event. R11 supplies the arrest-membership boundary.
+The encounter captures the selected member IDs and their qualifying basis
+when committing the arrest consequence; reload and presentation reuse that
+set rather than querying changed positions or intel again.
+
+### R8 — Checks remain rulebook-owned — proposed
+
+The requested admission routes are Performance and Persuasion, initially
+DC11. Claim mapping and context-specific advantage are explicit authored
+inputs to the rulebook check path, not comparisons in the API or encounter
+composition. Existing per-character modifiers still come from the acting
+character. No extra Deception check is silently inserted. The second attempt
+does not increase the DC; the exact boundary of its advantage removal must
+be resolved before authoring that check policy.
+
+### R9 — Stored truth, observable consequences — proposed
+
+Original interaction definitions, shared progress, addressed invitations and
+pending attempts save with the encounter's authoritative state. The host
+uses the existing fenced persistence and after-save delivery. Presentation
+cannot grant passage or clear pending gameplay work.
+
+Load validates the captured definition and progress together; it never
+substitutes current YAML or resets malformed progress to a fresh interaction.
+A run with no authored interactions has none; adding interaction content does
+not retrofit an existing saved run.
+
+Ordinary story carries the permitted invitation and outcomes. Private
+inspection records identify the shared interaction separately from NPC
+instances and report actual evaluation and commitment without replaying
+choices or rolling again. Missing evidence remains unavailable.
+
+### R10 — A bounded first delivery
+
+The first interaction has one acting character, not a voting service. Automatic
+initiation belongs to the free-roam entrance journey and does not override a
+combat turn or an already posed resolution. It introduces no dedicated Studio
+behavior editor, analytics database, general
+quest platform, universal scheduler or effects-machine migration. The standing
+QA castle remains a regression fixture; the canonical admission mission and
+its focused authored fixture have their own required outcomes.
+
+### R11 — Area or the arresting guards' intel
+
+Front-gate arrest includes party characters in the authored entrance area or
+in the arresting guards' own intel. The two sources form a union, not an
+intersection. Membership in the party roster alone is insufficient; a distant
+character is not excluded merely for being out of sight if guard intel
+qualifies them.
+
+The intel branch reads the relevant guards' actual observer-held information,
+not a global party view or an unrelated NPC's knowledge. It must identify the
+character; an anonymous sound does not establish its maker. Combining the
+arresting guards' answers does not teach each guard everybody else's knowledge
+or replace remembered information with a live hidden position.
+
+The exact location-state predicate for intel eligibility is an open contract
+below; the area-or-intel boundary does not settle it by implication.
+
+## Rulings
+
+| ID | status | scope | ruled by | date |
+|---|---|---|---|---|
+| R1 | settled | One acting character uses Speak/check; shared consequences, not group voting in first delivery | KirkDiggler | 2026-11-10 |
+| R2 | settled | Entrance/run attempt history and canonical admission consequences | KirkDiggler, canonical keep and #769 | 2026-10-31 |
+| R3 | settled | One owner: the encounter-owned interaction on the existing machine is both conversation state and admission progress; its state gates replies, an answer advances it, the evaluated pool's revision is the versioned choice | KirkDiggler | 2026-11-10 |
+| R4 | settled | One addressee per interaction; approach is one authored distance inside Speak reach; the hail stops the walk and takes focus; bystanders listen through events | KirkDiggler | 2026-11-11 |
+| R5 | settled | A waiting check reserves the interaction: gated lines show pending to others, unrelated lines stay open; a reply from an older revision is refused, never re-read | KirkDiggler | 2026-11-11 |
+| R6 | settled | Admission is a guard's intel record (holder, subject, topic) about each party member he can see; a post's pass asks its holder; others recognise only when it is shared; no blanket release | KirkDiggler | 2026-11-11 |
+| R7 | open | Existing-actor consequence lifecycle and captured arrest-set persistence | — | — |
+| R8 | open | Claim mapping and authored check-benefit boundaries | — | — |
+| R9 | open | Persistence, projections and inspection of shared progress | — | — |
+| R10 | open | Proposed first-delivery boundaries beyond the settled R1 participation scope | — | — |
+| R11 | settled | Front-gate arrest membership: entrance area OR the arresting guards' own intel, not the whole party by default | KirkDiggler | 2026-11-10 |
+
+## Open
+
+- **Intel eligibility and area binding (R11):** distinguish identified
+  characters with current or remembered known-location testimony from those
+  whose location is marked lost or unknown. Decide which qualify for arrest
+  outside the area without consulting their hidden live positions. Bind the
+  area explicitly; no implementation may choose an implicit distance.
+- **Approach and physical bypass (R4/R6):** fix the authored approach and its
+  perception/re-arm conditions, and reconcile full entrance enforcement with
+  the existing rule that an actually vacated post holds nothing. Preserve
+  legitimate physical play; do not silently add an invisible barrier.
+- **Claim and advantage policy (R8):** settle guest/entertainment mapping to
+  Persuasion/Performance and whether the second attempt removes only the
+  admission-granted advantage or also independent sources. Preserve the
+  existing class/background requirements in the canonical keep.
+- **Contract review (R4–R9):** validate the proposed ownership, selection,
+  reservation, reload and delivery contracts before deriving implementation
+  tasks. New public shapes in the walkthrough are proposal names, not existing
+  toolkit or protobuf APIs.
