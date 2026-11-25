@@ -10,6 +10,8 @@
 
 ## Current operator direction
 
+- The operator authorized current-base catch-up and will arrange review afterward. All conflicts are cleared by normal merge commits: Encounterb8a3133a and Session34fbd0df include main3e03721e; API07338cb7 includes devf4cd93fa; Web3fe48570 includes dev24e06075. Local required gates and configured remote checks pass; PRs are ready for review, not newly gate-approved. Assets was already current; a050dd1 adds only reconciliation evidence. [Handoff](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7171827354).
+
 - Inner-door atlas inheritance is deferred by the operator: selected inner doors retain Original for this slice. Panel palette choices and existing castle masonry finishes remain supported; no new captured-frame field is added — [ruling](https://github.com/KirkDiggler/rpg-project/issues/1022#issuecomment-7145840081).
 - The implemented selected-kit review is closed after one bounded round. F1 touching-section roundoff is fixed at Encounter6ca5b352/Web43e0f596 and consumed by Session6112681b/API8f71d6d6; full affected gates pass. Minor atlas wrapping-edge F2 is deferred to Assets349 and does not affect the four published panel footprints. This does not certify all72 inventory entries or authorize merge/deployment.
 
