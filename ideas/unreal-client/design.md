@@ -54,7 +54,7 @@ animation is its own design and is not this document's (O1).
 | ID | ruling | status | scope | ruled by | date |
 |---|---|---|---|---|---|
 | R1 | An Unreal client is a client of the running engine over the published contract: not a Go library linked into its process, not a native port of the engine. | settled | clients, protos, api | KirkDiggler | 2026-11-23 |
-| R2 | Where the two `descriptor` fields are renamed so that C++ generated code compiles: in place, wire-identical, with protos, web and api in one wave; or in a later proto version. | open | protos, web, api | — | — |
+| R2 | The two `descriptor` fields are renamed in place to `npc_descriptor`, tag numbers untouched, in one wave across protos, api and web under the protos repository's breaking-change label: in an alpha package a deliberate break is made in place, and a later version is for a released package. | settled | protos, web, api | KirkDiggler | 2026-11-26 |
 | R3 | TurboLink's place in the first Unreal leg: none, with raw stubs against the libraries it ships or against our own build; or in, once its generator preserves proto3 presence. | open | unreal-client | — | — |
 | R4 | Where the engine runs for the Unreal client: hosted as for the web, or a local engine mode, which needs a store because the api requires Redis. | open | api, deployment | — | — |
 | R5 | The Unreal client's repository is `rpg-dnd5e-unreal`: the platform named beside the rules, as the web's is, so another engine would be `rpg-dnd5e-<engine>`. | settled | unreal-client | KirkDiggler | 2026-11-26 |
