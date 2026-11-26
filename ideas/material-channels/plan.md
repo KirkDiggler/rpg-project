@@ -94,8 +94,8 @@ bind selected channel image hashes, sampling/UV/basis, and nonzero default facts
 for every selector. Existing world-surface/atlas and NPC manifest identities
 remain their respective source authorities; no second resource catalog.
 
-**Wire:** new `dnd5e/api/session/presentation/v1alpha1/material_channels.proto`
-in the existing presentation namespace defines `MaterialChannelAdjustment`
+**Wire:** new `dnd5e/api/session/presentation/material/v1alpha1/types.proto`
+in a neutral material subpackage beneath presentation defines `MaterialChannelAdjustment`
 (`target_id`, optional message `normal`, optional message `emissive`) and
 `ChannelAdjustment` with a oneof of `google.protobuf.Empty off` or
 `double multiplier`. Missing channel message means default; a present message
@@ -147,10 +147,10 @@ retains unknown row/channel metadata and detaches it through `carryUnknownKeys`.
 **Tests:** `copies mixed modes without normalizing identity or explicit one`;
 `refuses invalid adjustment shapes`; `detaches nested channel values`;
 `retains future native row and channel metadata without aliasing`.
-- [ ] Write the named tests and observe the missing-module RED.
-- [ ] Implement the typed copier and native wrapper only.
-- [ ] Run focused GREEN plus existing Appearance/material regressions.
-- [ ] Commit the independently testable value contract.
+- [x] Write the named tests and observe the missing-module RED.
+- [x] Implement the typed copier and native wrapper only.
+- [x] Run focused GREEN plus existing Appearance/material regressions.
+- [x] Commit the independently testable value contract: Web83020f7e;70 tests, lint/types passed. No UI or full Web gate claim.
 **Verification:** Web `npm run test:run -- src/rendering/materialChannelAdjustments.test.ts src/concepts/world-building/materialChannels.test.ts`; then existing
 `worldSurfaceMaterials.test.ts` and `appearanceSheet.test.ts`. Run lint/type checks
 on the checkpoint; full `npm run ci-check` at the Web PR boundary, not each edit.
@@ -191,12 +191,13 @@ publication remains T8. No broad Assets suite or art reapproval campaign.
 ### Task 3: Shared wire leaf and captured-owner fields (T3)
 
 **Delivers:** R7/R9. **Owner:** Protos. **Prerequisites:** T1 value contract.
-**Files:** create `dnd5e/api/session/presentation/v1alpha1/material_channels.proto`;
+**Files:** create `dnd5e/api/session/presentation/material/v1alpha1/types.proto`;
 modify `dnd5e/api/session/v1alpha1/types.proto` and
 `dnd5e/api/session/v1alpha2/act_geometry.proto`; update the existing session
 component contract and add a run record.
 **Interfaces:** shared messages above; additive repeated `material_channels` on
-Member (snapshot field11), AtlasStructuralWall (field13), PropPresentation
+PublicMemberInfo (snapshot field11, beside observed appearance_ref),
+AtlasStructuralWall (field13), PropPresentation
 (field11), DoorFramePresentation (field3); mirror applicable geometry fields in
 v1alpha2. Verify field availability again before editing; no field renumbering.
 **Behavior:** no new RPC or auth classification; normal/emissive message presence
@@ -204,9 +205,9 @@ and the oneof preserve all three intentions. Static, frame and observed member
 owners remain separate. Unknown/never-seen actors are not added to any roster.
 **Tests:** contract format/lint/breaking and CI-generated SDK validation only;
 no hand-written tests of protobuf mechanics.
-- [ ] Add documented shared messages and additive owner fields.
-- [ ] Run `make format` and `make test` against current main.
-- [ ] Push a contract PR; record configured CI and ask operator to merge when ready.
+- [x] Add documented shared messages and additive owner fields.
+- [x] Run `make format` and `make test` against current main623df7e.
+- [ ] Complete current-head CI/review handoff for [Protos456](https://github.com/KirkDiggler/rpg-api-protos/pull/456), head53a10d9; contract is pushed, generation/compilation check pending.
 - [ ] Verify actual generated SDK/tag before T5/T7 consumer dependency updates.
 **Verification:** Protos `make format && make test`; configured GitHub checks.
 **Evidence:** PR/head/checks and genuine generated SDK identity; no manual generated code.
@@ -395,8 +396,16 @@ review dispositions, release table. Cleanup/deployment need their own authority.
   clone/replacement hook. Source normal scale must join its existing snapshots.
 - Source image presence is not emission eligibility. Zero-source and mapped
   contribution checks remain explicit; no fabricated visible proof fixture.
-- Snapshot/live packages must not import each other. T3 uses their existing
-  neutral presentation namespace for the new leaf, rather than copying oneof logic.
+- Snapshot/live packages must not import each other. T3 uses a neutral material
+  subpackage beneath presentation for the new leaf, rather than copying oneof logic.
+  The first same-package attempt failed Buf's option-uniformity checks because
+  legacy presentation files have explicit Go/Java options and new files must not.
+  A dedicated material package preserves both policies and existing generated
+  identities without weakening lint or putting material types in the dice file.
+- T3 pre-edit inspection corrected the plan's shorthand `Member` to
+  `PublicMemberInfo`: only the latter carries observed appearance_ref. The
+  position-only Member message stays untouched; this preserves the approved
+  observed-appearance owner rather than adding a new delivery route.
 - Case-file publication/receipt changes are a separate deliverable from enabling
   schema4 parsing. Read-only candidates do not authorize installed data changes.
 - New RPC/auth policies, gameplay calculations, source asset ingestion, texture
