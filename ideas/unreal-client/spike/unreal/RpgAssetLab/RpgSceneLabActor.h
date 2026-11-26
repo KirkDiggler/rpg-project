@@ -45,6 +45,9 @@ public:
     void Start();
     bool StaysOpen() const { return Stay; }
 
+    /// The camera the web's angled view is drawn from, once the scene is built.
+    AActor* Camera() const;
+
 protected:
     void BeginPlay() override;
 

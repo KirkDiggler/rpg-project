@@ -70,6 +70,20 @@ struct Swing
     int damage = 0;
 };
 
+/// The selector a verb carries for `verb` (1 attack, 2 move, 3 end turn), when
+/// Afford says it is available; empty otherwise.
+inline std::string DeclarationFor(const Afforded& afforded, int verb)
+{
+    for (const Declaration& declaration : afforded.declarations)
+    {
+        if (declaration.verb == verb && declaration.available && !declaration.id.empty())
+        {
+            return declaration.id;
+        }
+    }
+    return std::string();
+}
+
 /// One of the player's characters.
 struct Character
 {
@@ -126,9 +140,11 @@ public:
     // What the member may do right now, and which kind of time it is in.
     bool Afford(const std::string& session, const std::string& member, Afforded* out, std::string* error);
 
-    // Walks `path` cell by cell. `declaration_id` is the one Afford gave for
-    // Move on the turn clock; empty on the world clock. The engine may stop
-    // early (sight, the turn's budget, an obstacle): `steps` is what was walked.
+    // Walks `path` cell by cell. `path` names the cells to step onto, never
+    // the one the member stands on (the engine refuses that). `declaration_id`
+    // is the one Afford gave for Move on the turn clock; empty on the world
+    // clock. The engine may stop early (sight, the turn's budget, an
+    // obstacle): `steps` is what was walked.
     bool Move(const std::string& session, const std::string& member, const std::vector<Cell>& path,
               const std::string& declaration_id, Walk* out, std::string* error);
 

@@ -1,0 +1,119 @@
+# the play lab: a verb in, the record out, on the real stack (local/ue-play) — 2026-11-26T04:09Z
+2026.11.26-04.08.10:536 BEATS handled 25, motion steps 0, frames 0
+2026.11.26-04.08.10:538 BEATS handled 50, motion steps 0, frames 0
+2026.11.26-04.08.10:592 VIEW the player controller looks through the scene's camera; the cursor is shown
+2026.11.26-04.08.13:525 VERB move (-2,16) -> (-1,15): 1 of 1 cell(s) walked, stop reason: none (world clock)
+2026.11.26-04.08.13:530 FRAME char_00f27b00-cdeb-499c-b07d-de355f1cf1ce-walk-1
+2026.11.26-04.08.14:193 FRAME char_00f27b00-cdeb-499c-b07d-de355f1cf1ce-arrived-2
+2026.11.26-04.08.16:142 VERB attack pedlar: roll 14, total 15 against 10, hit, damage 0
+2026.11.26-04.08.16:144 FRAME char_00f27b00-cdeb-499c-b07d-de355f1cf1ce-swing-3
+2026.11.26-04.08.16:146 BEATS handled 75, motion steps 2, frames 3
+2026.11.26-04.08.16:148 BEATS handled 100, motion steps 2, frames 3
+2026.11.26-04.08.16:150 BEATS handled 125, motion steps 2, frames 3
+2026.11.26-04.08.16:280 MOTION gate-2 walks (-3,10) -> (-3,11) over 0.40s, from V(X=346.41, Y=1500.00)
+2026.11.26-04.08.16:280 MOTION hall-1 walks (14,-11) -> (13,-11) over 0.40s, from V(X=1472.24, Y=-1650.00)
+2026.11.26-04.08.16:280 MOTION keep-1 walks (6,-19) -> (7,-19) over 0.40s, from V(X=-606.22, Y=-2850.00)
+2026.11.26-04.08.16:280 MOTION keep-2 walks (14,-19) -> (15,-19) over 0.40s, from V(X=779.42, Y=-2850.00)
+2026.11.26-04.08.16:647 MARKER the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's
+2026.11.26-04.08.16:681 MOTION gate-2 arrived after 0.40s at V(X=433.01, Y=1650.00)
+2026.11.26-04.08.16:681 MOTION hall-1 arrived after 0.40s at V(X=1299.04, Y=-1650.00)
+2026.11.26-04.08.16:681 MOTION keep-1 arrived after 0.40s at V(X=-433.01, Y=-2850.00)
+2026.11.26-04.08.16:681 MOTION keep-2 arrived after 0.40s at V(X=952.63, Y=-2850.00)
+2026.11.26-04.08.16:681 MOTION gate-2 walks (-3,11) -> (-3,12) over 0.40s, from V(X=433.01, Y=1650.00)
+2026.11.26-04.08.16:681 MOTION hall-1 walks (13,-11) -> (12,-11) over 0.40s, from V(X=1299.04, Y=-1650.00)
+2026.11.26-04.08.16:681 MOTION keep-1 walks (7,-19) -> (7,-20) over 0.40s, from V(X=-433.01, Y=-2850.00)
+2026.11.26-04.08.16:681 MOTION keep-2 walks (15,-19) -> (16,-19) over 0.40s, from V(X=952.63, Y=-2850.00)
+2026.11.26-04.08.17:085 MOTION keep-2 arrived after 0.40s at V(X=1125.83, Y=-2850.00)
+2026.11.26-04.08.17:085 MOTION keep-1 arrived after 0.40s at V(X=-519.62, Y=-3000.00)
+2026.11.26-04.08.17:085 MOTION hall-1 arrived after 0.40s at V(X=1125.83, Y=-1650.00)
+2026.11.26-04.08.17:085 MOTION gate-2 arrived after 0.40s at V(X=519.62, Y=1800.00)
+2026.11.26-04.08.17:085 MOTION gate-2 walks (-3,12) -> (-2,12) over 0.40s, from V(X=519.62, Y=1800.00)
+2026.11.26-04.08.17:085 MOTION hall-1 walks (12,-11) -> (11,-11) over 0.40s, from V(X=1125.83, Y=-1650.00)
+2026.11.26-04.08.17:085 MOTION keep-1 walks (7,-20) -> (7,-21) over 0.40s, from V(X=-519.62, Y=-3000.00)
+2026.11.26-04.08.17:085 MOTION keep-2 walks (16,-19) -> (16,-20) over 0.40s, from V(X=1125.83, Y=-2850.00)
+2026.11.26-04.08.17:249 FRAME turn-4
+2026.11.26-04.08.17:487 MOTION keep-2 arrived after 0.40s at V(X=1039.23, Y=-3000.00)
+2026.11.26-04.08.17:487 MOTION keep-1 arrived after 0.40s at V(X=-606.22, Y=-3150.00)
+2026.11.26-04.08.17:487 MOTION hall-1 arrived after 0.40s at V(X=952.63, Y=-1650.00)
+2026.11.26-04.08.17:487 MOTION gate-2 arrived after 0.40s at V(X=692.82, Y=1800.00)
+2026.11.26-04.08.17:487 MOTION hall-1 walks (11,-11) -> (10,-11) over 0.40s, from V(X=952.63, Y=-1650.00)
+2026.11.26-04.08.17:487 MOTION keep-1 walks (7,-21) -> (6,-21) over 0.40s, from V(X=-606.22, Y=-3150.00)
+2026.11.26-04.08.17:487 MOTION keep-2 walks (16,-20) -> (16,-21) over 0.40s, from V(X=1039.23, Y=-3000.00)
+2026.11.26-04.08.17:888 MOTION keep-2 arrived after 0.40s at V(X=952.63, Y=-3150.00)
+2026.11.26-04.08.17:888 MOTION keep-1 arrived after 0.40s at V(X=-779.42, Y=-3150.00)
+2026.11.26-04.08.17:888 MOTION hall-1 arrived after 0.40s at V(X=779.42, Y=-1650.00)
+2026.11.26-04.08.17:888 MOTION hall-1 walks (10,-11) -> (9,-11) over 0.40s, from V(X=779.42, Y=-1650.00)
+2026.11.26-04.08.17:888 MOTION keep-1 walks (6,-21) -> (5,-21) over 0.40s, from V(X=-779.42, Y=-3150.00)
+2026.11.26-04.08.17:889 MOTION keep-2 walks (16,-21) -> (15,-21) over 0.40s, from V(X=952.63, Y=-3150.00)
+2026.11.26-04.08.18:291 MOTION keep-2 arrived after 0.40s at V(X=779.42, Y=-3150.00)
+2026.11.26-04.08.18:291 MOTION keep-1 arrived after 0.40s at V(X=-952.63, Y=-3150.00)
+2026.11.26-04.08.18:291 MOTION hall-1 arrived after 0.40s at V(X=606.22, Y=-1650.00)
+2026.11.26-04.08.18:291 MOTION hall-1 walks (9,-11) -> (8,-11) over 0.40s, from V(X=606.22, Y=-1650.00)
+2026.11.26-04.08.18:291 MOTION keep-1 walks (5,-21) -> (5,-20) over 0.40s, from V(X=-952.63, Y=-3150.00)
+2026.11.26-04.08.18:291 MOTION keep-2 walks (15,-21) -> (14,-21) over 0.40s, from V(X=779.42, Y=-3150.00)
+2026.11.26-04.08.18:521 VERB end: the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's, round wrapped 1
+2026.11.26-04.08.18:522 MARKER the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's
+2026.11.26-04.08.18:522 MARKER the turn is now pedlar's
+2026.11.26-04.08.18:695 MOTION keep-2 arrived after 0.40s at V(X=606.22, Y=-3150.00)
+2026.11.26-04.08.18:695 MOTION keep-1 arrived after 0.40s at V(X=-866.03, Y=-3000.00)
+2026.11.26-04.08.18:695 MOTION hall-1 arrived after 0.40s at V(X=433.01, Y=-1650.00)
+2026.11.26-04.08.19:127 FRAME turn-6
+2026.11.26-04.08.19:127 FRAME turn-5
+# beats the verbs caused, in order:
+2026.11.26-04.08.16:143 +5.7s beat 65 [attack:01M8B0M] {"actor":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce","against":10,"amount":0,"attack":{"damage_type":"bludgeoning","name":"Unarmed Strike","ref":
+2026.11.26-04.08.16:143 +5.7s beat 66 [attack:01M8B0M] {"beat":"stance","between":["party","townsfolk"],"cause":"attacked by char_00f27b00-cdeb-499c-b07d-de355f1cf1ce","stance":"hostile"}
+2026.11.26-04.08.16:143 +5.7s beat 67 [attack:01M8B0M] {"beat":"bubble-formed","order":["pedlar","char_00f27b00-cdeb-499c-b07d-de355f1cf1ce"],"rolls":[{"member":"pedlar","roll":16,"total":16,"calculat
+2026.11.26-04.08.16:143 +5.7s beat 68 [attack:01M8B0M] {"beat":"turn-ended","member":"pedlar","next":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce"}
+2026.11.26-04.08.16:143 +5.7s beat 69 [attack:01M8B0M] {"beat":"tick","tick":1}
+2026.11.26-04.08.16:145 +5.7s beat 70 [attack:01M8B0M] {"beat":"behavior_config","config":"5b34f0220b43f07a802e73f915b419d20fdfb85a34795fcb8a23b5ddd6c3c982","configuration":{"Instances":[{"Instance":{
+2026.11.26-04.08.16:145 +5.7s beat 71 [attack:01M8B0M] {"beat":"behavior_decision","config":"5b34f0220b43f07a802e73f915b419d20fdfb85a34795fcb8a23b5ddd6c3c982","member":"gate-1","now":1,"on":"heard","o
+2026.11.26-04.08.16:145 +5.7s beat 72 [time:01M8B0MBZ] {"beat":"behavior_config","config":"3a1482039d0fa41848552bbea3a56bbb8c3cef45495fe2c26636c790f6487875","configuration":{"Instances":[{"Instance":{
+2026.11.26-04.08.16:146 +5.7s beat 73 [time:01M8B0MBZ] {"beat":"table","creature":"captain","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"toward
+2026.11.26-04.08.16:146 +5.7s beat 74 [time:01M8B0MBZ] {"beat":"answered","candidates":[],"creature":"captain","entry":-1,"key":"behavior/6:policy/time","of":0,"path":[],"prop":"","roll":0,"rows":[{"a
+2026.11.26-04.08.16:146 +5.7s beat 75 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"3a1482039d0fa41848552bbea3a56bbb8c3cef45495fe2c26636c790f6487875","member":"captain","now":1,"on":"time","o
+2026.11.26-04.08.16:146 +5.7s beat 76 [time:01M8B0MBZ] {"beat":"table","creature":"gate-1","key":"behavior/6:policy/post","option":"","percents":{"attack":50,"away":300,"flee":300,"hold":100,"toward":
+2026.11.26-04.08.16:146 +5.7s beat 77 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":3,"loaded":100,"percent":100,"weight":1},{"entry":5,"loaded":50,"percent":50,"weight":1}],"creature":"g
+2026.11.26-04.08.16:146 +5.7s beat 78 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"5b34f0220b43f07a802e73f915b419d20fdfb85a34795fcb8a23b5ddd6c3c982","member":"gate-1","now":1,"on":"time","op
+2026.11.26-04.08.16:146 +5.7s beat 79 [pass:01M8B0MBZ] {"beat":"stayed","cause":"encounter:table:toward","member":"gate-1","why":"already there"}
+2026.11.26-04.08.16:147 +5.7s beat 80 [time:01M8B0MBZ] {"beat":"behavior_config","config":"43cdd2133788cb588a25ddfcf49146e70acdddc9a0a44f79c4faa1082d6ece8f","configuration":{"Instances":[{"Instance":{
+2026.11.26-04.08.16:147 +5.7s beat 81 [time:01M8B0MBZ] {"beat":"table","creature":"gate-2","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"toward"
+2026.11.26-04.08.16:147 +5.7s beat 82 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":2,"loaded":100,"percent":100,"weight":1}],"creature":"gate-2","entry":2,"key":"behavior/6:policy/time",
+2026.11.26-04.08.16:147 +5.7s beat 83 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"43cdd2133788cb588a25ddfcf49146e70acdddc9a0a44f79c4faa1082d6ece8f","member":"gate-2","now":1,"on":"time","op
+2026.11.26-04.08.16:148 +5.7s beat 87 [time:01M8B0MBZ] {"beat":"behavior_config","config":"07c84cc11d4d51c47e824b5da58664ae16a71d98efb226c3e68444ee268dee6a","configuration":{"Instances":[{"Instance":{
+2026.11.26-04.08.16:148 +5.7s beat 88 [time:01M8B0MBZ] {"beat":"table","creature":"hall-1","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"toward"
+2026.11.26-04.08.16:148 +5.7s beat 89 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":3,"loaded":100,"percent":100,"weight":1}],"creature":"hall-1","entry":3,"key":"behavior/6:policy/time",
+2026.11.26-04.08.16:148 +5.7s beat 90 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"07c84cc11d4d51c47e824b5da58664ae16a71d98efb226c3e68444ee268dee6a","member":"hall-1","now":1,"on":"time","op
+2026.11.26-04.08.16:148 +5.7s beat 97 [time:01M8B0MBZ] {"beat":"behavior_config","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","configuration":{"Instances":[{"Instance":{
+2026.11.26-04.08.16:148 +5.7s beat 98 [time:01M8B0MBZ] {"beat":"table","creature":"keep-1","key":"behavior/6:policy/time","option":"","percents":{"attack":300,"away":25,"flee":25,"hold":50,"toward":30
+2026.11.26-04.08.16:148 +5.7s beat 99 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-1","entry":6,"key":"behavior/6:policy/time",
+2026.11.26-04.08.16:148 +5.7s beat 100 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","member":"keep-1","now":1,"on":"time","o
+2026.11.26-04.08.16:149 +5.7s beat 102 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-1","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:149 +5.7s beat 103 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","member":"keep-1","now":1,"on":"time","o
+2026.11.26-04.08.16:149 +5.7s beat 106 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-1","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:149 +5.7s beat 107 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","member":"keep-1","now":1,"on":"time","o
+2026.11.26-04.08.16:149 +5.7s beat 110 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-1","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:149 +5.7s beat 111 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","member":"keep-1","now":1,"on":"time","o
+2026.11.26-04.08.16:149 +5.7s beat 113 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"69d4447f036402b3adc6328a0f444a2ba8fbb9d80da2d5c9bb0b7f4f8d73f1bf","member":"keep-1","now":1,"on":"time","o
+2026.11.26-04.08.16:149 +5.7s beat 114 [time:01M8B0MBZ] {"beat":"behavior_config","config":"0c90f2de2002521b9b4cb207601a7e4611b68dad612217709616ee81d8134c56","configuration":{"Instances":[{"Instance":
+2026.11.26-04.08.16:149 +5.7s beat 115 [time:01M8B0MBZ] {"beat":"table","creature":"keep-2","key":"behavior/6:policy/time","option":"","percents":{"attack":300,"away":25,"flee":25,"hold":50,"toward":3
+2026.11.26-04.08.16:149 +5.7s beat 116 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-2","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:149 +5.7s beat 117 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"0c90f2de2002521b9b4cb207601a7e4611b68dad612217709616ee81d8134c56","member":"keep-2","now":1,"on":"time","o
+2026.11.26-04.08.16:150 +5.7s beat 120 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-2","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:150 +5.7s beat 121 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"0c90f2de2002521b9b4cb207601a7e4611b68dad612217709616ee81d8134c56","member":"keep-2","now":1,"on":"time","o
+2026.11.26-04.08.16:150 +5.7s beat 124 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":6,"loaded":300,"percent":300,"weight":1}],"creature":"keep-2","entry":6,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:150 +5.7s beat 125 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"0c90f2de2002521b9b4cb207601a7e4611b68dad612217709616ee81d8134c56","member":"keep-2","now":1,"on":"time","o
+2026.11.26-04.08.16:150 +5.7s beat 128 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"0c90f2de2002521b9b4cb207601a7e4611b68dad612217709616ee81d8134c56","member":"keep-2","now":1,"on":"time","o
+2026.11.26-04.08.16:150 +5.7s beat 129 [time:01M8B0MBZ] {"beat":"behavior_config","config":"1038b6dc082973c8978058995fca9af43dae5d9630f24fc716945513bd05307b","configuration":{"Instances":[{"Instance":
+2026.11.26-04.08.16:150 +5.7s beat 130 [time:01M8B0MBZ] {"beat":"table","creature":"prince","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"toward
+2026.11.26-04.08.16:150 +5.7s beat 131 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":3,"loaded":100,"percent":100,"weight":1}],"creature":"prince","entry":3,"key":"behavior/6:policy/time"
+2026.11.26-04.08.16:150 +5.7s beat 132 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"1038b6dc082973c8978058995fca9af43dae5d9630f24fc716945513bd05307b","member":"prince","now":1,"on":"time","o
+2026.11.26-04.08.16:150 +5.7s beat 133 [time:01M8B0MBZ] {"beat":"behavior_config","config":"bc9badf89aa06510a370da1b0e53a9160f4e99a95a4ba5bbbe80e0604157c363","configuration":{"Instances":[{"Instance":
+2026.11.26-04.08.16:150 +5.7s beat 134 [time:01M8B0MBZ] {"beat":"table","creature":"sergeant","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"towa
+2026.11.26-04.08.16:150 +5.7s beat 135 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":4,"loaded":100,"percent":100,"weight":1}],"creature":"sergeant","entry":4,"key":"behavior/6:policy/tim
+2026.11.26-04.08.16:151 +5.7s beat 136 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"bc9badf89aa06510a370da1b0e53a9160f4e99a95a4ba5bbbe80e0604157c363","member":"sergeant","now":1,"on":"time",
+2026.11.26-04.08.16:151 +5.7s beat 137 [time:01M8B0MBZ] {"beat":"behavior_config","config":"8a4906eee3bba87ac45b9874707e75da78ab3b523bd788c12812725027791ac2","configuration":{"Instances":[{"Instance":
+2026.11.26-04.08.16:151 +5.7s beat 138 [time:01M8B0MBZ] {"beat":"table","creature":"turnkey","key":"behavior/6:policy/time","option":"","percents":{"attack":100,"away":100,"flee":100,"hold":100,"towar
+2026.11.26-04.08.16:152 +5.7s beat 139 [time:01M8B0MBZ] {"beat":"answered","candidates":[{"entry":4,"loaded":100,"percent":100,"weight":1}],"creature":"turnkey","entry":4,"key":"behavior/6:policy/time
+2026.11.26-04.08.16:152 +5.7s beat 140 [time:01M8B0MBZ] {"beat":"behavior_decision","config":"8a4906eee3bba87ac45b9874707e75da78ab3b523bd788c12812725027791ac2","member":"turnkey","now":1,"on":"time","
+2026.11.26-04.08.18:520 +8.1s beat 141 [end_turn:01M8B] {"beat":"turn-ended","member":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce","next":"pedlar"}
+2026.11.26-04.08.18:521 +8.1s beat 142 [end_turn:01M8B] {"beat":"turn-ended","member":"pedlar","next":"char_00f27b00-cdeb-499c-b07d-de355f1cf1ce"}

@@ -144,7 +144,13 @@ ARpgSceneLab::ARpgSceneLab()
 void ARpgSceneLab::BeginPlay()
 {
     Super::BeginPlay();
-    Start();
+    // In a game an actor begins play as it is spawned, before its spawner has
+    // read it a target; that spawner starts it (the play lab does). Only a lab
+    // that already holds a target starts itself.
+    if (!TargetToRead.Address.IsEmpty())
+    {
+        Start();
+    }
 }
 
 void ARpgSceneLab::Start()
@@ -439,6 +445,11 @@ void ARpgSceneLab::Build(const FSceneAtlas& Atlas)
             Primitive->SetVisibility(false);
         }
     }
+}
+
+AActor* ARpgSceneLab::Camera() const
+{
+    return AngleCamera;
 }
 
 void ARpgSceneLab::Shoot()
