@@ -48,6 +48,7 @@ import (
 
 	sessionpb "github.com/KirkDiggler/rpg-api-protos/gen/go/dnd5e/api/session/v1alpha1"
 	recordpb "github.com/KirkDiggler/rpg-api-protos/gen/go/dnd5e/api/session/v1alpha2"
+	"github.com/KirkDiggler/rpg-toolkit/rulebooks/dnd5e/refs"
 )
 
 func TestUESpikeServe(t *testing.T) {
@@ -180,6 +181,36 @@ func TestUESpikeServe(t *testing.T) {
 		t.Logf("castle atlas written to %s", dumpPath)
 	}
 
+	// Three runs for the Unreal client's verb tests (ideas/unreal-client/spike/
+	// round-verbs.md, Task 1), launched the way the acceptance suite launches
+	// because this server registers Session and Record only, no lobby. Each
+	// holds exactly the geometry one test needs, and no test ends a turn in a
+	// run another test reads, so no test depends on another's leftovers:
+	//   ue-tomb   a fighter with a skeleton beside it: a swing that the engine
+	//             resolves, and a turn to end;
+	//   ue-range  a fighter with a skeleton three cells off: a swing refused;
+	//   ue-walk   a fighter alone: the world clock, a step out and back.
+	for _, seeded := range []struct{ member, host string }{
+		{"ue-fighter", "player-ue-fighter"}, {"ue-archer", "player-ue-archer"}, {"ue-walker", "player-ue-walker"},
+	} {
+		if _, err := h.charRepo.Create(context.Background(), characterrepo.CreateInput{
+			Character: &entities.Character{Data: armedFighter(seeded.member, seeded.host)},
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	skeleton := refs.Monsters.Skeleton().String()
+	if placed := memberIDs(h.launch(t, "ue-tomb",
+		withMonsters(buildThreeRoomTomb(t), monsterAt("ue-dummy", skeleton, 2, 1)),
+		seatAt("ue-fighter", 1, 1),
+	)); len(placed) != 2 {
+		t.Fatalf("ue-tomb: want the fighter and the skeleton on the board, got %v", placed)
+	}
+	h.launch(t, "ue-range",
+		withMonsters(buildThreeRoomTomb(t), monsterAt("ue-far", skeleton, 4, 1)),
+		seatAt("ue-archer", 1, 1))
+	h.launch(t, "ue-walk", buildThreeRoomTomb(t), seatAt("ue-walker", 1, 1))
+
 	// The production auth boundary, Dev scheme allowed: a client must send
 	// `authorization: Dev <player_id>`.
 	authCfg := &auth.InterceptorConfig{DevMode: true}
@@ -261,6 +292,9 @@ func TestUESpikeServe(t *testing.T) {
 	info, _ := json.MarshalIndent(map[string]string{
 		"addr": addr, "session": run, "member": member, "host": host, "onlooker": readerPlayer,
 		"castle": castle, "castle_member": castleMember, "castle_host": castleHost,
+		"tomb": "ue-tomb", "fighter": "ue-fighter", "fighter_host": "player-ue-fighter", "dummy": "ue-dummy",
+		"range": "ue-range", "archer": "ue-archer", "archer_host": "player-ue-archer", "far": "ue-far",
+		"walk": "ue-walk", "walker": "ue-walker", "walker_host": "player-ue-walker",
 		"auth": "authorization: Dev <player id>",
 	}, "", "  ")
 	if err := os.WriteFile(infoPath, info, 0o600); err != nil {
