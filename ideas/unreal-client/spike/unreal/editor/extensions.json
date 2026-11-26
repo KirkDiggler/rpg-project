@@ -1,8 +1,0 @@
-{
-  "recommendations": [
-    "ms-python.python",
-    "ms-vscode.cpptools",
-    "llvm-vs-code-extensions.vscode-clangd",
-    "vadimcn.vscode-lldb"
-  ]
-}

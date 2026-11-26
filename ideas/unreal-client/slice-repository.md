@@ -1,5 +1,7 @@
 # Slice: the repository
 
+> The spike files this plan copies from were removed from this repository after the slice; they read at [the commit that held them](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike).
+
 The second step of [the shape on the design PR](https://github.com/KirkDiggler/rpg-project/pull/1155#issuecomment-7184548947):
 a public repository, `rpg-dnd5e-unreal`, built from the spike's keepers,
 that builds and tests from a clean checkout. Law: [design.md](design.md)

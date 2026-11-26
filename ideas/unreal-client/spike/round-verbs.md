@@ -1,5 +1,7 @@
 # Round: intent in, record out
 
+> The files this document names were removed from this folder when the idea's code left rpg-project. They read as written at [the commit that held them](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike); where each went is in the [spike's index](README.md#where-the-code-went).
+
 A working plan for the spike's last round. Law: [../design.md](../design.md),
 the rule **Intent in, record out (R1)** and **The same door (R1)**; O1 is
 not decided here: the client's interaction model stays open, and this round

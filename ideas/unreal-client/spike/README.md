@@ -1,5 +1,20 @@
 # The spike: a C++ client reads the engine's record
 
+## Where the code went
+
+This folder is the spike's record. Its code is not here: a design repository carries prose ([game-dev#140](https://github.com/KirkDiggler/game-dev/pull/140)). What there was, and where a reader finds it now:
+
+| what | where |
+|------|-------|
+| `RpgSession`, `RpgRecordStream` and the verb tests; `RpgMotion` and its tests; `perfile_check.py`; `buf.gen.spike.yaml` | [rpg-dnd5e-unreal](https://github.com/KirkDiggler/rpg-dnd5e-unreal), as the repository's modules and scripts — [its first PR](https://github.com/KirkDiggler/rpg-dnd5e-unreal/pull/1) |
+| `go-side/zz_ue_spike_test.go`, the engine's served harness | [rpg-api#1289](https://github.com/KirkDiggler/rpg-api/pull/1289), `internal/integration/session/` |
+| the headless client (`client/`), the toolchain images (`docker/`), `turbolink_gen.sh` | [the tree as it stood](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike); a working copy in `game-dev/envs/local/ue-spike/` on the machine that ran it |
+| the labs (`unreal/RpgAssetLab`, `unreal/RpgWire`, the editor setup) | [the same tree](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike); the spike's Unreal project, on that machine |
+| the asset scripts: `glb_to_fbx.py`, `rename_pack_skeleton.py` with the rig table, `asset_import*.py`, `census.py`, `native_anim_*.py`, `lab_shot.py`, `reference_top.py` | [the same tree](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike); their home is the asset pipeline, when content arrives by reference |
+| the evidence logs | here, under `unreal/` |
+
+The commands and paths named below are how it ran, in these files, at that commit.
+
 Throwaway by design, kept as the recipe. It ran on Linux, on one machine,
 without Unreal, on 2026-11-23 and 24, for [../design.md](../design.md) and
 idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154).

@@ -5,8 +5,8 @@ Idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154).
 ## Shipped
 
 - A game started by the Unreal client as a real player on the real stack: the recipe, sources and evidence — [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155).
-- `Session::Characters`, `Session::StartGame` and `Session::Roster` in the plain-C++ core; `RecordStream` public — [RpgSession.h](../../ideas/unreal-client/spike/unreal/RpgSession.h).
-- The `rpg.play` command and the figures it places from the record — [RpgPlayLabActor.cpp](../../ideas/unreal-client/spike/unreal/RpgAssetLab/RpgPlayLabActor.cpp).
+- `Session::Characters`, `Session::StartGame` and `Session::Roster` in the plain-C++ core; `RecordStream` public — [RpgSession.h](https://github.com/KirkDiggler/rpg-project/blob/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike/unreal/RpgSession.h).
+- The `rpg.play` command and the figures it places from the record — [RpgPlayLabActor.cpp](https://github.com/KirkDiggler/rpg-project/blob/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike/unreal/RpgAssetLab/RpgPlayLabActor.cpp).
 - The log of one such game — [evidence-2026-11-25-play.log](../../ideas/unreal-client/spike/unreal/evidence-2026-11-25-play.log).
 
 ## Decided

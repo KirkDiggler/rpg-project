@@ -1,5 +1,7 @@
 # The Unreal legs
 
+> The Unreal side's files were removed from this folder; [where each went](../README.md#where-the-code-went). They read as written at [the commit that held them](https://github.com/KirkDiggler/rpg-project/tree/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike/unreal).
+
 Two legs ran after the headless one, on the same Linux machine, with no
 Windows reboot. Both are recorded here; the code that ran is beside this file.
 Evidence images are not in git: they show licensed models, and this

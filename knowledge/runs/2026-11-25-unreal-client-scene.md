@@ -7,8 +7,8 @@ Idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154).
 - The web's view of an atlas, built in Unreal from the atlas fetched over the wire: the recipe, its sources and its record — [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155).
 - `rpgwire::Session`, the signed-in connection in the plain-C++ core, returning the atlas in plain values — [spike/unreal, leg 3](../../ideas/unreal-client/spike/unreal/README.md#leg-3-the-scene-from-the-atlas).
 - The `rpg.scene` command: floor, walls, door, the member at the start cell, two cameras, two frames — [spike/unreal, leg 3](../../ideas/unreal-client/spike/unreal/README.md#what-was-built).
-- A second rendering of the same atlas from its JSON dump, in Python, to check the first against — [reference_top.py](../../ideas/unreal-client/spike/unreal/reference_top.py).
-- The engine-side test launches a shipped dungeon by key and can dump its atlas — [zz_ue_spike_test.go](../../ideas/unreal-client/spike/go-side/zz_ue_spike_test.go).
+- A second rendering of the same atlas from its JSON dump, in Python, to check the first against — [reference_top.py](https://github.com/KirkDiggler/rpg-project/blob/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike/unreal/reference_top.py).
+- The engine-side test launches a shipped dungeon by key and can dump its atlas — [zz_ue_spike_test.go](https://github.com/KirkDiggler/rpg-project/blob/f24359d38617b4c9b30f833ddc621efcd94f6f08/ideas/unreal-client/spike/go-side/zz_ue_spike_test.go).
 
 ## Decided
 
