@@ -111,4 +111,26 @@ private:
     int32 Frames = 0;
     int32 BeatsSinceVerb = -1;                             // -1 until the first verb goes out
     TArray<TPair<FString, double>> FramesDue;                 // a frame to take when its moment comes
+
+    /// The game thread's frame times over one stretch, in milliseconds.
+    struct FWindow
+    {
+        bool Open = false;
+        double Since = 0.0;
+        double Seconds = 3.0;
+        TArray<double> Deltas;
+        int32 Beats = 0;
+        int32 BeatsInFirstFrame = 0;
+        int32 FramesShot = 0;
+    };
+
+    void Sample(FWindow& Window, const TCHAR* Name, double DeltaSeconds, double Now);
+    void Open(FWindow& Window, const TCHAR* Name, double Now, double Seconds);
+    void Close(FWindow& Window, const TCHAR* Name);
+    void LogWindow(const TCHAR* Name, const FWindow& Window);
+
+    FWindow Idle;                                            // before the first verb
+    FWindow Burst;                                           // after a verb that can run the world
+    int32 BeatsThisTick = 0;
+    int32 FramesThisTick = 0;
 };

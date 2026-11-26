@@ -426,6 +426,54 @@ a module amalgamated: alone, each borrowed `#include`s from its neighbour.
 `perfile_check.py` compiles every hand-written file on its own under the
 database's flags; all eight are clean, and the real build still passes.
 
+## Leg 6: intent in, record out
+
+The plan and its checks are in [../round-verbs.md](../round-verbs.md).
+
+### What ran
+
+- The core's verbs, `Afford`, `Move`, `Attack`, `EndTurn`, `Exit` and a
+  record read-back, each proven by an automation test against the server the
+  engine-side test serves (`RpgWire.Session.*`, six tests, stable to repeat).
+- What a beat means, as two functions with no world in them (`PlanMotion`,
+  `HexLine`; `RpgAssetLab.Motion.*`, seven tests on the beats the engine
+  wrote).
+- The play lab in a standalone game on the real stack, as the sandbox bard:
+  `rpg.play`, then `rpg.verb move -1 15`, `rpg.verb attack pedlar`,
+  `rpg.verb end`.
+
+### What it showed
+
+- **A verb in is the record out.** A step comes back as a `moved` beat and
+  the figure walks it, 0.40 s a cell, 25 walks and 25 arrivals in the first
+  full run. A swing comes back as a `struck` or `missed` beat (the engine's
+  dice: 14 to hit, 6 and 7 to miss, in three runs) and the figure turns to
+  its target and lunges. A `turn-ended` beat moves a marker over whoever
+  acts next.
+- **The world answers.** The bard's swing turned the pedlar `hostile`,
+  formed a fight, and the garrison heard it: gate-1 walked seven cells
+  toward the bard in the world tick that followed, gate-2 closed too.
+- **The frame cost, measured.** 75 beats in the burst after a swing: a
+  maximum frame of 10.3 ms and a p99 of 9.0 ms, uncapped and offscreen,
+  against 11.3 ms p99 idle. A frame that took a screenshot alongside 57 of
+  those beats ran 126 ms: the screenshot, not the beats. One hitch of about
+  350 ms sits half a second after the scene builds, on first-time loads.
+
+### What the game world showed that the editor had hidden
+
+- The scene lab began play as it was spawned, before it had a target, and
+  so had never built the scene in a game; the figures had been standing on
+  the engine template's floor.
+- A `Move` path names the cells to step onto: the engine refuses one that
+  begins where the member stands.
+- A marker spawned in the frame of a screenshot is a package still loading.
+
+### Not in this leg
+
+Input: a click on the floor and a key still send nothing; the verbs go out
+by console command. That is leg 7, and the interaction model behind it is
+O1.
+
 ## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no

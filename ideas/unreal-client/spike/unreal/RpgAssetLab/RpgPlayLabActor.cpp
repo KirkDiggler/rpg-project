@@ -65,6 +65,8 @@ namespace
     constexpr int kVerbEndTurn = 3;
     constexpr int kClockTurn = 2;              // dnd5e.api.session.v1alpha1.ClockKind
 
+    bool gFramesOn = true; // rpg.frames 0: no screenshots, for a clean frame-time measurement
+
     FVector CellCenter(double Q, double R)
     {
         return FVector(kSqrt3 * (Q + R / 2.0) * kCmPerScene, 1.5 * R * kCmPerScene, 0.0);
@@ -232,6 +234,9 @@ void ARpgPlayLab::OnGameStarted(bool Ok, const FString& Error, const FString& Ch
         });
     UE_LOG(LogRpgPlayLab, Display, TEXT("following the record as %s"), *Member);
 
+    // The idle window: the first seconds of a game standing still.
+    Open(Idle, TEXT("idle"), FPlatformTime::Seconds() + 0.5, 2.0);
+
     // The turn marker's shape, loaded now: the first `turn-ended` beat is no
     // time to start loading a package.
     LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
@@ -252,6 +257,7 @@ void ARpgPlayLab::OnGameStarted(bool Ok, const FString& Error, const FString& Ch
 void ARpgPlayLab::OnBeat(const rpgwire::RecordBeat& Beat)
 {
     ++Beats;
+    ++BeatsThisTick;
     const double Since = FPlatformTime::Seconds() - StartedAt;
     const FString Fields = Take(Beat.fields_json);
 
@@ -298,8 +304,72 @@ void ARpgPlayLab::OnBeat(const rpgwire::RecordBeat& Beat)
 void ARpgPlayLab::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    const double now = FPlatformTime::Seconds();
     AdoptPlayerController();
-    Pump(FPlatformTime::Seconds());
+    Pump(now);
+    Sample(Idle, TEXT("idle"), DeltaSeconds, now);
+    Sample(Burst, TEXT("burst"), DeltaSeconds, now);
+    BeatsThisTick = 0;
+    FramesThisTick = 0;
+}
+
+void ARpgPlayLab::Open(FWindow& Window, const TCHAR* Name, double Now, double Seconds)
+{
+    Window = FWindow();
+    Window.Open = true;
+    Window.Since = Now;
+    Window.Seconds = Seconds;
+    UE_LOG(LogRpgPlayLab, Display, TEXT("FRAMES %s window opens"), Name);
+}
+
+void ARpgPlayLab::Sample(FWindow& Window, const TCHAR* Name, double DeltaSeconds, double Now)
+{
+    if (!Window.Open || Now < Window.Since)
+    {
+        return;
+    }
+    Window.Deltas.Add(DeltaSeconds * 1000.0);
+    Window.Beats += BeatsThisTick;
+    if (Window.BeatsInFirstFrame == 0 && BeatsThisTick > 0)
+    {
+        Window.BeatsInFirstFrame = BeatsThisTick;
+    }
+    Window.FramesShot += FramesThisTick;
+    if (Now - Window.Since >= Window.Seconds)
+    {
+        Close(Window, Name);
+    }
+}
+
+void ARpgPlayLab::Close(FWindow& Window, const TCHAR* Name)
+{
+    if (!Window.Open)
+    {
+        return;
+    }
+    LogWindow(Name, Window);
+    Window = FWindow();
+}
+
+void ARpgPlayLab::LogWindow(const TCHAR* Name, const FWindow& Window)
+{
+    if (Window.Deltas.Num() == 0)
+    {
+        UE_LOG(LogRpgPlayLab, Display, TEXT("FRAMES %s: no frames sampled"), Name);
+        return;
+    }
+    TArray<double> sorted = Window.Deltas;
+    sorted.Sort();
+    double sum = 0.0;
+    for (const double delta : sorted)
+    {
+        sum += delta;
+    }
+    const int32 n = sorted.Num();
+    const double p99 = sorted[FMath::Clamp(static_cast<int32>(0.99 * (n - 1)), 0, n - 1)];
+    const double p50 = sorted[n / 2];
+    UE_LOG(LogRpgPlayLab, Display, TEXT("FRAMES %s: %.1fs, %d frame(s), mean %.2f ms, p50 %.2f ms, p99 %.2f ms, max %.2f ms; %d beat(s), %d of them in one frame; %d frame(s) shot"),
+        Name, sum / 1000.0, n, sum / n, p50, p99, sorted[n - 1], Window.Beats, Window.BeatsInFirstFrame, Window.FramesShot);
 }
 
 void ARpgPlayLab::AdoptPlayerController()
@@ -361,6 +431,13 @@ void ARpgPlayLab::Pump(double Now)
         if (BeatsSinceVerb < 0)
         {
             BeatsSinceVerb = 0;
+        }
+        // A swing or an ended turn can run other members' turns inside the
+        // call: the record of it arrives at once.
+        if (due.Verb == TEXT("attack") || due.Verb == TEXT("end"))
+        {
+            Close(Burst, TEXT("burst"));
+            Open(Burst, TEXT("burst"), Now, 3.0);
         }
         SendVerb(due.Verb, due.A, due.B);
     }
@@ -676,7 +753,12 @@ void ARpgPlayLab::SendVerb(const FString& Verb, const FString& A, const FString&
 
 void ARpgPlayLab::TakeFrame(const FString& Name)
 {
+    if (!gFramesOn)
+    {
+        return;
+    }
     FScreenshotRequest::RequestScreenshot(Name + TEXT(".png"), false, false);
+    ++FramesThisTick;
     UE_LOG(LogRpgPlayLab, Display, TEXT("FRAME %s"), *Name);
     // Where each figure is in that frame, in its pixels, so the picture can be
     // read by position rather than by eye.
@@ -810,6 +892,18 @@ namespace
                 return;
             }
             Lab->QueueVerb(Args[0], Args.Num() > 1 ? Args[1] : FString(), Args.Num() > 2 ? Args[2] : FString());
+        }));
+
+    FAutoConsoleCommand GRpgFramesCommand(
+        TEXT("rpg.frames"),
+        TEXT("rpg.frames 0|1: whether the lab takes evidence frames (a frame costs the frame it is taken in)."),
+        FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+        {
+            if (Args.Num() >= 1)
+            {
+                gFramesOn = FCString::Atoi(*Args[0]) != 0;
+            }
+            UE_LOG(LogRpgPlayLab, Display, TEXT("frames %s"), gFramesOn ? TEXT("on") : TEXT("off"));
         }));
 
     FAutoConsoleCommand GRpgFrameCommand(
