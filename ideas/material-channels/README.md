@@ -1,6 +1,6 @@
 # Authored material-channel controls
 
-This is the proposed contract walkthrough for [Web #1402](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1402)
+This is the contract walkthrough for [Web #1402](https://github.com/KirkDiggler/rpg-dnd5e-web/issues/1402)
 and its [design law](design.md). It adds a reusable adjustment value for the
 normal and emissive maps an asset already supplies. It reuses the shared
 Appearance panel, existing placement transactions and captured presentation;
@@ -46,7 +46,8 @@ permitted to receive to its pinned provider (R2/R7).
 
 ## Ownership and contracts
 
-The following type names describe the proposed extension, not an existing API.
+The following type names describe the channel contract; the source map names its
+owning implementation surfaces.
 
 `MaterialChannelCapability` identifies an asset-bound target and its verified
 selectors. For each channel it reports absent, fixed or adjustable. Adjustable

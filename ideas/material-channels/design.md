@@ -108,20 +108,18 @@ The [walkthrough](README.md) explains the contracts. Scope and decisions live on
 | --- | --- | --- | --- | --- |
 | R1 | settled | Authored-map controls with default/off/strength before replacement maps and different looks | KirkDiggler | 2026-11-26 |
 | R2 | settled | Existing manifest/owner boundaries, native capture, no mechanics or illumination authority | KirkDiggler; Studio appearance R1/R2/R6–R8 retained | 2026-11-10 |
-| R3 | open | Exact provider targets, channel capability and multiplier ranges | — | — |
-| R4 | open | Default/off/positive multiplier semantics; zero-reference exclusion | — | — |
-| R5 | open | Wall projection, target identity and incompatible-look refusal | — | — |
-| R6 | open | Channel edits through existing atomic appearance transactions | — | — |
-| R7 | open | Typed per-owner persistence, independent frames and observer snapshots | — | — |
-| R8 | open | Effective-look scaling and material lifecycle/basis behavior | — | — |
-| R9 | open | Unsupported intent and versioned consumer rollout | — | — |
-| R10 | open | Named proof set and Studio world/NPC enrollment boundaries | — | — |
+| R3 | settled | Exact provider targets, channel capability and multiplier ranges | KirkDiggler | 2026-11-26 |
+| R4 | settled | Default/off/positive multiplier semantics; zero-reference exclusion | KirkDiggler | 2026-11-26 |
+| R5 | settled | Wall projection, target identity and incompatible-look refusal | KirkDiggler | 2026-11-26 |
+| R6 | settled | Channel edits through existing atomic appearance transactions | KirkDiggler | 2026-11-26 |
+| R7 | settled | Typed per-owner persistence, independent frames and observer snapshots | KirkDiggler | 2026-11-26 |
+| R8 | settled | Effective-look scaling and material lifecycle/basis behavior | KirkDiggler | 2026-11-26 |
+| R9 | settled | Unsupported intent and versioned consumer rollout | KirkDiggler | 2026-11-26 |
+| R10 | settled | Named proof set and Studio world/NPC enrollment boundaries | KirkDiggler | 2026-11-26 |
 
 ## Open
 
-- **Design agreement.** R3–R10 are the proposed contracts elaborating the selected
-  scope, not additional operator rulings. The linked design PR carries their
-  agreement checklist and any specific unresolved decision.
+- No architectural decision is pending for the authored-map multiplier cut.
 - **Enrollment proof.** Candidate targets need source/binding verification and
   visible mapped-channel evidence before publication. Source-proven multiplier
   intervals and the exact enrolled set belong to provider declarations and the
