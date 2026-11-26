@@ -14,6 +14,12 @@
 // bridged skeleton soldier whatever its reference says (the reference is
 // logged, so the mapping to real models is the next step, not a guess).
 #include "RpgPlayLabActor.h"
+#include "CoreMinimal.h"
+#include "Editor.h"
+#include "Engine/GameViewportClient.h"
+
+#include "Components/SkeletalMeshComponent.h"
+
 
 #include "Animation/AnimSequence.h"
 #include "Animation/SkeletalMeshActor.h"

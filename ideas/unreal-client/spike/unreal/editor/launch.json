@@ -1,0 +1,77 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to the running Unreal Editor",
+      "type": "cppdbg",
+      "request": "attach",
+      "processId": "${command:pickProcess}",
+      "program": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor",
+      "MIMode": "gdb",
+      "cwd": "${workspaceFolder}",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "Launch the asset lab under the debugger",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor-Cmd",
+      "args": [
+        "${workspaceFolder}/RpgUeProof.uproject",
+        "-game",
+        "-RenderOffscreen",
+        "-unattended",
+        "-NoSound",
+        "-windowed",
+        "-ResX=640",
+        "-ResY=360",
+        "-stdout",
+        "-FullStdOutLogOutput",
+        "-ExecCmds=rpg.lab native"
+      ],
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
+      "name": "Attach to the running Unreal Editor (CodeLLDB)",
+      "type": "lldb",
+      "request": "attach",
+      "program": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor",
+      "cwd": "${workspaceFolder}",
+      "pid": "${command:pickProcess}"
+    },
+    {
+      "name": "Launch the asset lab under the debugger (CodeLLDB)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor-Cmd",
+      "args": [
+        "${workspaceFolder}/RpgUeProof.uproject",
+        "-game",
+        "-RenderOffscreen",
+        "-unattended",
+        "-NoSound",
+        "-windowed",
+        "-ResX=640",
+        "-ResY=360",
+        "-stdout",
+        "-FullStdOutLogOutput",
+        "-ExecCmds=rpg.lab native"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

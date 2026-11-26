@@ -1,0 +1,117 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "UE: build the editor target",
+      "type": "shell",
+      "command": "/home/kirk/UnrealEngine/UE_5.9/Engine/Build/BatchFiles/Linux/Build.sh",
+      "args": [
+        "RpgUeProofEditor",
+        "${workspaceFolder}/RpgUeProof.uproject",
+        "Development",
+        "Linux"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc",
+        "$msCompile"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "clear": true
+      }
+    },
+    {
+      "label": "UE: asset lab, offscreen (rpg.lab native)",
+      "type": "shell",
+      "command": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor-Cmd",
+      "args": [
+        "${workspaceFolder}/RpgUeProof.uproject",
+        "-game",
+        "-RenderOffscreen",
+        "-unattended",
+        "-NoSound",
+        "-windowed",
+        "-ResX=1920",
+        "-ResY=1080",
+        "-stdout",
+        "-FullStdOutLogOutput",
+        "-ExecCmds=rpg.lab native"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "clear": true
+      },
+      "dependsOn": "UE: build the editor target"
+    },
+    {
+      "label": "UE: play the real game in the editor (rpg.play)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "IP=$(sed 's/:.*//' ~/UnrealEngine/.ue-play-api-ip); /home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/Linux/UnrealEditor \"${workspaceFolder}/RpgUeProof.uproject\" -ExecCmds=\"rpg.play ${IP}:50051 toolkit-sandbox-bard\" > ~/UnrealEngine/.ue-play-editor.log 2>&1 & echo $! > ~/UnrealEngine/.ue-play-editor.pid"
+      ],
+      "problemMatcher": [],
+      "dependsOn": "UE: build the editor target",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "UE: regenerate the compile database",
+      "type": "shell",
+      "command": "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/ThirdParty/DotNet/10.0/linux-x64/dotnet",
+      "args": [
+        "/home/kirk/UnrealEngine/UE_5.9/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll",
+        "-Mode=GenerateClangDatabase",
+        "-Project=${workspaceFolder}/RpgUeProof.uproject",
+        "-OutputDir=${workspaceFolder}/.vscode",
+        "RpgUeProofEditor",
+        "Development",
+        "Linux",
+        "-Exclude=${workspaceFolder}/Plugins/RpgWire/Source/RpgWireGen/;${workspaceFolder}/Plugins/RpgWire/Source/RpgWire/Private/pb/"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "stack: bring the game stack up (dev-env.sh up local/ue-play)",
+      "type": "shell",
+      "command": "/home/kirk/game-dev/scripts/dev-env.sh",
+      "args": [
+        "up",
+        "local/ue-play"
+      ],
+      "options": {
+        "cwd": "/home/kirk/game-dev"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "stack: take it down",
+      "type": "shell",
+      "command": "/home/kirk/game-dev/scripts/dev-env.sh",
+      "args": [
+        "down",
+        "local/ue-play"
+      ],
+      "options": {
+        "cwd": "/home/kirk/game-dev"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    }
+  ]
+}

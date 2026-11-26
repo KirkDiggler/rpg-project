@@ -22,6 +22,13 @@
 //     azimuth, mirrored left to right; cells and walls go through the same
 //     mapping, so they agree with each other either way).
 #include "RpgSceneLabActor.h"
+#include "CoreMinimal.h"
+#include "Animation/AnimationAsset.h"
+#include "Animation/AnimSequence.h"
+#include "Engine/GameViewportClient.h"
+
+#include "Components/SkeletalMeshComponent.h"
+
 
 #include "Async/Async.h"
 #include "Camera/CameraActor.h"

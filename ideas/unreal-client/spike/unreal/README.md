@@ -413,6 +413,19 @@ already carries this retarget for the web's characters.
 - The bridge is not made redundant by the Unreal-format packs; it is the
   other route, and the only one for the pipeline's own characters.
 
+## Editor
+
+VS Code or Windsurf, from `RpgUeProof.code-workspace` (a copy is in
+`editor/`). C++ IntelliSense reads a compile database the build tool
+writes (`-Mode=GenerateClangDatabase`, hand-written files only; exclusions
+are path prefixes, absolute ones work); Python resolves `unreal` from the
+stubs the editor writes in developer mode.
+
+The database found that three lab files built only because Unreal compiles
+a module amalgamated: alone, each borrowed `#include`s from its neighbour.
+`perfile_check.py` compiles every hand-written file on its own under the
+database's flags; all eight are clean, and the real build still passes.
+
 ## Not kept here
 
 The proof project, `~/UnrealEngine/Projects/RpgUeProof` (local, no

@@ -11,6 +11,13 @@
 // idle playing; the raw Unreal-format copy of the one the fighter was built
 // from; the bridged wall piece and rug; a raw prop from the pack.
 #include "RpgAssetLabActor.h"
+#include "CoreMinimal.h"
+#include "Modules/ModuleManager.h"
+
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/GameViewportClient.h"
+#include "UnrealClient.h"
+
 
 #include "Animation/AnimSequence.h"
 #include "Animation/SkeletalMeshActor.h"
