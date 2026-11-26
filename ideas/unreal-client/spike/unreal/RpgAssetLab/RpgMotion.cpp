@@ -103,6 +103,46 @@ bool PlanMotion(const FString& beat, const FString& fields_json, TMap<FString, F
     return false;
 }
 
+namespace
+{
+    constexpr double kSqrt3 = 1.7320508075688772;
+    constexpr double kCmPerCell = 100.0;
+
+    /// The cell a point of the cube grid rounds to: round each axis, then put
+    /// the one that moved furthest back on the cube.
+    FIntPoint RoundedCell(double x, double y, double z)
+    {
+        double rx = FMath::RoundToDouble(x);
+        double ry = FMath::RoundToDouble(y);
+        double rz = FMath::RoundToDouble(z);
+        const double dx = FMath::Abs(rx - x);
+        const double dy = FMath::Abs(ry - y);
+        const double dz = FMath::Abs(rz - z);
+        if (dx > dy && dx > dz)
+        {
+            rx = -ry - rz;
+        }
+        else if (dy > dz)
+        {
+            ry = -rx - rz;
+        }
+        else
+        {
+            rz = -rx - ry;
+        }
+        return FIntPoint(static_cast<int32>(rx), static_cast<int32>(rz));
+    }
+} // namespace
+
+FIntPoint CellAt(const FVector2D& centimetres)
+{
+    // The inverse of the layout: r is y over 150; q is x over the column
+    // spacing, less half of r.
+    const double r = centimetres.Y / (1.5 * kCmPerCell);
+    const double q = centimetres.X / (kSqrt3 * kCmPerCell) - r / 2.0;
+    return RoundedCell(q, -q - r, r);
+}
+
 TArray<FIntPoint> HexLine(const FIntPoint& from, const FIntPoint& to)
 {
     // Cube coordinates: x is q, z is r, and y closes the cube at -x - z. The
@@ -126,29 +166,7 @@ TArray<FIntPoint> HexLine(const FIntPoint& from, const FIntPoint& to)
     for (int32 i = 0; i <= steps; ++i)
     {
         const double t = steps == 0 ? 0.0 : static_cast<double>(i) / static_cast<double>(steps);
-        const double x = a.x + (b.x - a.x) * t;
-        const double y = a.y + (b.y - a.y) * t;
-        const double z = a.z + (b.z - a.z) * t;
-        // Round each axis, then put the one that moved furthest back on the cube.
-        double rx = FMath::RoundToDouble(x);
-        double ry = FMath::RoundToDouble(y);
-        double rz = FMath::RoundToDouble(z);
-        const double dx = FMath::Abs(rx - x);
-        const double dy = FMath::Abs(ry - y);
-        const double dz = FMath::Abs(rz - z);
-        if (dx > dy && dx > dz)
-        {
-            rx = -ry - rz;
-        }
-        else if (dy > dz)
-        {
-            ry = -rx - rz;
-        }
-        else
-        {
-            rz = -rx - ry;
-        }
-        line.Add(FIntPoint(static_cast<int32>(rx), static_cast<int32>(rz)));
+        line.Add(RoundedCell(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t));
     }
     return line;
 }

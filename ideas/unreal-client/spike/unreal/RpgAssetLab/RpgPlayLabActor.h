@@ -49,14 +49,32 @@ public:
     void Start();
 
     /// Queues a verb to send: "afford"; "move <q> <r>"; "attack <target>";
-    /// "end". Sent once the game has started (at once, if it has), in order,
-    /// a pause apart so each one's motion can be watched.
-    void QueueVerb(const FString& Verb, const FString& A = FString(), const FString& B = FString());
+    /// "end". Sent once the game has started (at once, if it has), in order.
+    /// A scripted verb waits a pause after the one before, so its motion can
+    /// be watched; one from a player's hand goes at once.
+    void QueueVerb(const FString& Verb, const FString& A = FString(), const FString& B = FString(), bool bFromInput = false);
 
     /// Saves a frame under Saved/Screenshots, named `<Name>.png`.
     void TakeFrame(const FString& Name);
 
     virtual void Tick(float DeltaSeconds) override;
+
+    void BindInput(APlayerController* Controller);
+
+    /// What a click on the floor's cell `cell` means: a figure standing there
+    /// (other than this one) is swung at; otherwise it is where to walk.
+    void ClickCell(const FIntPoint& Cell);
+    void OnClick();
+    void OnEndTurnKey();
+
+    /// A click or a key sent through the game's own input, at the screen
+    /// position of `cell`: the path a player's hand takes.
+    void InjectClick(const FIntPoint& Cell, double NotBefore);
+    void InjectKey(const FKey& Key, double NotBefore);
+    void ShowMessage(const FString& Text);
+
+    /// The cell `member` stands on, as the record last said; null if unknown.
+    const FIntPoint* CellOf(const FString& Whose) const { return Cells.Find(Whose); }
 
 private:
     void Fetch();
@@ -128,6 +146,16 @@ private:
     void Open(FWindow& Window, const TCHAR* Name, double Now, double Seconds);
     void Close(FWindow& Window, const TCHAR* Name);
     void LogWindow(const TCHAR* Name, const FWindow& Window);
+
+    struct FInjected
+    {
+        bool bKey = false;
+        FIntPoint Cell = FIntPoint::ZeroValue;
+        FKey Key;
+        double NotBefore = 0.0;
+    };
+    TArray<FInjected> Injected;                              // clicks and keys waiting for their moment
+    int32 NextMessageKey = 10;
 
     FWindow Idle;                                            // before the first verb
     FWindow Burst;                                           // after a verb that can run the world

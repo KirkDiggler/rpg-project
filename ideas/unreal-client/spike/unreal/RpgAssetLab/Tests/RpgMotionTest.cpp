@@ -173,4 +173,32 @@ bool FMotionHexLineTest::RunTest(const FString& Parameters)
     return !HasAnyErrors();
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMotionCellAtTest, "RpgAssetLab.Motion.AFloorPointNamesItsCell",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FMotionCellAtTest::RunTest(const FString& Parameters)
+{
+    const double sqrt3 = 1.7320508075688772;
+    const auto centre = [sqrt3](const FIntPoint& cell) {
+        return FVector2D(sqrt3 * (cell.X + cell.Y / 2.0) * 100.0, 1.5 * cell.Y * 100.0);
+    };
+    // Every cell's centre is in that cell, negatives included.
+    for (const FIntPoint& cell : { FIntPoint(0, 0), FIntPoint(-2, 16), FIntPoint(7, -19), FIntPoint(-31, 13), FIntPoint(1, 1) })
+    {
+        TestEqual(FString::Printf(TEXT("the centre of (%d,%d)"), cell.X, cell.Y), cell, CellAt(centre(cell)));
+    }
+    // Well inside a hex, toward a neighbour, is still that hex.
+    TestEqual(TEXT("40 cm toward a neighbour"), FIntPoint(-2, 16), CellAt(centre(FIntPoint(-2, 16)) + FVector2D(40.0, 0.0)));
+    // Past the edge toward a neighbour (the edge is 86.6 cm out), it is the neighbour's.
+    TestEqual(TEXT("95 cm east of (-2,16) is (-1,16)"), FIntPoint(-1, 16), CellAt(centre(FIntPoint(-2, 16)) + FVector2D(95.0, 0.0)));
+    // (q, r+1) is the south-EAST neighbour: its centre is 173.2 cm away along (0.5, 0.866).
+    const FVector2D southeast(0.5 * 95.0, 0.8660254 * 95.0);
+    TestEqual(TEXT("95 cm toward the south-east neighbour is (-2,17)"), FIntPoint(-2, 17), CellAt(centre(FIntPoint(-2, 16)) + southeast));
+    // A pointy top: straight south is a vertex 100 cm out, so 95 cm south is still inside.
+    TestEqual(TEXT("95 cm due south of (-2,16) is still (-2,16)"), FIntPoint(-2, 16), CellAt(centre(FIntPoint(-2, 16)) + FVector2D(0.0, 95.0)));
+    TestEqual(TEXT("100 cm east of (-2,16) is still inside (-1,16)"), FIntPoint(-1, 16),
+        CellAt(centre(FIntPoint(-2, 16)) + FVector2D(100.0, 0.0)));
+    return !HasAnyErrors();
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

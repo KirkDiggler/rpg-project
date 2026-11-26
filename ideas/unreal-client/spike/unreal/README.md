@@ -468,11 +468,19 @@ The plan and its checks are in [../round-verbs.md](../round-verbs.md).
   begins where the member stands.
 - A marker spawned in the frame of a screenshot is a package still loading.
 
-### Not in this leg
+### Input
 
-Input: a click on the floor and a key still send nothing; the verbs go out
-by console command. That is leg 7, and the interaction model behind it is
-O1.
+A click on the floor names the cell it landed on (the ray under the
+cursor met with the floor's plane, rounded to a hex), and sends the
+straight hex line to it: the engine walks it cell by cell and stops where
+it says. A click on a figure swings at it. `E` ends the turn. Each result
+and each refusal is written on the screen, in the engine's words. Proven
+through the game's own input, a real mouse event at a cell's screen
+position and a real key event, not by calling the handlers.
+
+Not in this leg: a route around walls (the client names the straight
+line; the engine stops it), models by reference, and the interaction
+model behind any of it, which is O1.
 
 ## Not kept here
 

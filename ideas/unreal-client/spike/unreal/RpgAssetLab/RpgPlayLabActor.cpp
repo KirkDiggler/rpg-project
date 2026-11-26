@@ -22,6 +22,8 @@
 #include "CoreMinimal.h"
 #include "Editor.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
+#include "GenericPlatform/IInputInterface.h"
 #include "UnrealClient.h"
 
 #include "Animation/AnimSequence.h"
@@ -29,6 +31,7 @@
 #include "Async/Async.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/InputComponent.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 #include "Engine/StaticMesh.h"
@@ -64,6 +67,7 @@ namespace
     constexpr int kVerbAttack = 1;             // dnd5e.api.session.v1alpha1.Verb
     constexpr int kVerbMove = 2;
     constexpr int kVerbEndTurn = 3;
+    constexpr int kClockWorld = 1;             // dnd5e.api.session.v1alpha1.ClockKind
     constexpr int kClockTurn = 2;              // dnd5e.api.session.v1alpha1.ClockKind
 
     bool gFramesOn = true; // rpg.frames 0: no screenshots, for a clean frame-time measurement
@@ -253,6 +257,10 @@ void ARpgPlayLab::OnGameStarted(bool Ok, const FString& Error, const FString& Ch
     {
         UE_LOG(LogRpgPlayLab, Display, TEXT("%d verb(s) queued; the first goes in %.1fs"), Verbs.Num(), kFirstVerbAfterSeconds);
     }
+    for (int32 i = 0; i < Injected.Num(); ++i)
+    {
+        Injected[i].NotBefore = Now + kFirstVerbAfterSeconds + (Verbs.Num() + i) * kVerbGapSeconds;
+    }
 }
 
 void ARpgPlayLab::OnBeat(const rpgwire::RecordBeat& Beat)
@@ -408,11 +416,160 @@ void ARpgPlayLab::AdoptPlayerController()
     {
         pawn->SetActorHiddenInGame(true); // the map's default pawn is not part of the scene
     }
-    UE_LOG(LogRpgPlayLab, Display, TEXT("VIEW the player controller looks through the scene's camera; the cursor is shown"));
+    BindInput(controller);
+    UE_LOG(LogRpgPlayLab, Display, TEXT("VIEW the player controller looks through the scene's camera; the cursor is shown; left click and E are bound"));
+}
+
+void ARpgPlayLab::BindInput(APlayerController* Controller)
+{
+    // On the controller's own input component, as any actor's bindings are.
+    UInputComponent* input = Controller->InputComponent;
+    if (!input)
+    {
+        UE_LOG(LogRpgPlayLab, Error, TEXT("INPUT the controller has no input component to bind to"));
+        return;
+    }
+    input->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &ARpgPlayLab::OnClick);
+    input->BindKey(EKeys::E, IE_Pressed, this, &ARpgPlayLab::OnEndTurnKey);
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(1, 3600.0f, FColor::Yellow,
+            TEXT("Click the floor: walk there    Click a figure: attack    E: end turn"));
+    }
+}
+
+void ARpgPlayLab::OnClick()
+{
+    APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+    if (!controller)
+    {
+        return;
+    }
+    FVector origin = FVector::ZeroVector;
+    FVector direction = FVector::ZeroVector;
+    // The ray under the cursor, met with the floor's plane: the floor needs no
+    // collision for a click to land.
+    if (!controller->DeprojectMousePositionToWorld(origin, direction) || FMath::Abs(direction.Z) < 1.0e-4)
+    {
+        return;
+    }
+    const double along = -origin.Z / direction.Z;
+    if (along < 0.0)
+    {
+        return;
+    }
+    const FVector point = origin + direction * along;
+    const FIntPoint cell = CellAt(FVector2D(point.X, point.Y));
+    UE_LOG(LogRpgPlayLab, Display, TEXT("INPUT click on the floor at %s -> cell %s"), *point.ToCompactString(), *Cell(cell));
+    ClickCell(cell);
+}
+
+void ARpgPlayLab::OnEndTurnKey()
+{
+    UE_LOG(LogRpgPlayLab, Display, TEXT("INPUT key E -> end turn"));
+    QueueVerb(TEXT("end"), FString(), FString(), true);
+    ShowMessage(TEXT("End turn"));
+}
+
+void ARpgPlayLab::ClickCell(const FIntPoint& Clicked)
+{
+    if (Member.IsEmpty())
+    {
+        ShowMessage(TEXT("No game yet"));
+        return;
+    }
+    for (const auto& pair : Figures)
+    {
+        const FIntPoint* standing = Cells.Find(pair.Key);
+        if (pair.Key != Member && standing && *standing == Clicked)
+        {
+            QueueVerb(TEXT("attack"), pair.Key, FString(), true);
+            ShowMessage(FString::Printf(TEXT("Attack %s"), *pair.Key));
+            return;
+        }
+    }
+    const FIntPoint here = Cells.FindRef(Member);
+    if (Clicked == here)
+    {
+        ShowMessage(TEXT("Already there"));
+        return;
+    }
+    if (Waiting.Contains(Member) || Playing.Contains(Member))
+    {
+        ShowMessage(TEXT("Still walking"));
+        return;
+    }
+    QueueVerb(TEXT("move"), FString::FromInt(Clicked.X), FString::FromInt(Clicked.Y), true);
+    ShowMessage(FString::Printf(TEXT("Walk to %s"), *Cell(Clicked)));
+}
+
+void ARpgPlayLab::InjectClick(const FIntPoint& Cell, double NotBefore)
+{
+    FInjected click;
+    click.Cell = Cell;
+    click.NotBefore = NotBefore;
+    Injected.Add(click);
+}
+
+void ARpgPlayLab::InjectKey(const FKey& Key, double NotBefore)
+{
+    FInjected key;
+    key.bKey = true;
+    key.Key = Key;
+    key.NotBefore = NotBefore;
+    Injected.Add(key);
+}
+
+void ARpgPlayLab::ShowMessage(const FString& Text)
+{
+    if (!GEngine)
+    {
+        return;
+    }
+    GEngine->AddOnScreenDebugMessage(static_cast<uint64>(NextMessageKey), 8.0f, FColor::White, Text);
+    if (++NextMessageKey > 40)
+    {
+        NextMessageKey = 10;
+    }
 }
 
 void ARpgPlayLab::Pump(double Now)
 {
+    // Clicks and keys sent through the game's own input, when due.
+    for (int32 i = Injected.Num() - 1; i >= 0; --i)
+    {
+        if (Injected[i].NotBefore > Now)
+        {
+            continue;
+        }
+        const FInjected input = Injected[i];
+        Injected.RemoveAt(i);
+        APlayerController* controller = UGameplayStatics::GetPlayerController(this, 0);
+        FViewport* viewport = controller && controller->GetLocalPlayer() ? controller->GetLocalPlayer()->ViewportClient->Viewport : nullptr;
+        if (!viewport)
+        {
+            UE_LOG(LogRpgPlayLab, Error, TEXT("INPUT no viewport to send a click or a key through"));
+            continue;
+        }
+        if (input.bKey)
+        {
+            UE_LOG(LogRpgPlayLab, Display, TEXT("INPUT injecting key %s"), *input.Key.ToString());
+            const FInputDeviceId device = IPlatformInputDeviceMapper::Get().GetDefaultInputDevice();
+            controller->InputKey(FInputKeyEventArgs(viewport, device, input.Key, IE_Pressed, 0));
+            controller->InputKey(FInputKeyEventArgs(viewport, device, input.Key, IE_Released, 0));
+        }
+        else
+        {
+            FVector2D screen = FVector2D::ZeroVector;
+            controller->ProjectWorldLocationToScreen(CellCenter(input.Cell.X, input.Cell.Y), screen);
+            viewport->SetMouse(static_cast<int32>(screen.X), static_cast<int32>(screen.Y));
+            UE_LOG(LogRpgPlayLab, Display, TEXT("INPUT injecting a click on cell %s at pixel (%.0f, %.0f)"), *Cell(input.Cell), screen.X, screen.Y);
+            const FInputDeviceId device = IPlatformInputDeviceMapper::Get().GetDefaultInputDevice();
+            controller->InputKey(FInputKeyEventArgs(viewport, device, EKeys::LeftMouseButton, IE_Pressed, 0));
+            controller->InputKey(FInputKeyEventArgs(viewport, device, EKeys::LeftMouseButton, IE_Released, 0));
+        }
+    }
+
     // Frames whose moment has come.
     for (int32 i = FramesDue.Num() - 1; i >= 0; --i)
     {
@@ -610,13 +767,14 @@ void ARpgPlayLab::PlaceFigure(const FString& Who, int32 Q, int32 R)
     Figures.Add(Who, SpawnFigure(Who, at));
 }
 
-void ARpgPlayLab::QueueVerb(const FString& Verb, const FString& A, const FString& B)
+void ARpgPlayLab::QueueVerb(const FString& Verb, const FString& A, const FString& B, bool bFromInput)
 {
     FVerb queued;
     queued.Verb = Verb;
     queued.A = A;
     queued.B = B;
-    queued.NotBefore = FPlatformTime::Seconds() + 0.05 + Verbs.Num() * kVerbGapSeconds;
+    const double now = FPlatformTime::Seconds();
+    queued.NotBefore = bFromInput ? now + 0.05 : now + 0.05 + Verbs.Num() * kVerbGapSeconds;
     Verbs.Add(queued);
     UE_LOG(LogRpgPlayLab, Display, TEXT("VERB queued: %s %s %s%s"), *Verb, *A, *B, Started ? TEXT("") : TEXT(" (waits for the game)"));
 }
@@ -632,7 +790,7 @@ void ARpgPlayLab::SendVerb(const FString& Verb, const FString& A, const FString&
     const FString member = Member;
     const FString who = Member;
 
-    Async(EAsyncExecution::ThreadPool, [target, session, member, who, Verb, A, B, here, there, line]()
+    Async(EAsyncExecution::ThreadPool, [WeakThis = TWeakObjectPtr<ARpgPlayLab>(this), target, session, member, who, Verb, A, B, here, there, line]()
     {
         rpgwire::Session::Options options;
         options.address = TCHAR_TO_UTF8(*target.Address);
@@ -724,7 +882,10 @@ void ARpgPlayLab::SendVerb(const FString& Verb, const FString& A, const FString&
             const std::string declaration = rpgwire::DeclarationFor(afforded, kVerbEndTurn);
             if (declaration.empty())
             {
-                report = FString::Printf(TEXT("VERB end: refused in Afford on clock %d: no available End Turn"), afforded.clock);
+                // Afford offers no End Turn outside a fight: the engine's answer, said plainly.
+                report = afforded.clock == kClockWorld
+                    ? TEXT("VERB end: outside a fight there is no turn to end (the engine offers none on the world clock)")
+                    : FString::Printf(TEXT("VERB end: refused in Afford on the turn clock: no available End Turn"));
             }
             else
             {
@@ -745,9 +906,14 @@ void ARpgPlayLab::SendVerb(const FString& Verb, const FString& A, const FString&
             report = FString::Printf(TEXT("VERB %s: not a verb this lab knows (afford, move <q> <r>, attack <target>, end)"), *Verb);
         }
 
-        AsyncTask(ENamedThreads::GameThread, [report]()
+        AsyncTask(ENamedThreads::GameThread, [WeakThis, report]()
+
         {
             UE_LOG(LogRpgPlayLab, Display, TEXT("%s"), *report);
+            if (ARpgPlayLab* self = WeakThis.Get())
+            {
+                self->ShowMessage(report);
+            }
         });
     });
 }
@@ -830,6 +996,12 @@ ASkeletalMeshActor* ARpgPlayLab::SpawnFigure(const FString& Who, const FVector& 
 
 namespace
 {
+    UWorld* GameWorldOrEditor()
+    {
+        UWorld* world = GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWorld() : nullptr;
+        return world ? world : (GEditor ? GEditor->GetEditorWorldContext().World() : nullptr);
+    }
+
     ARpgPlayLab* ThePlayLab(UWorld* World)
     {
         ARpgPlayLab* found = nullptr;
@@ -876,12 +1048,7 @@ namespace
         TEXT("Send a verb as the seated character: rpg.verb afford | move <q> <r> | attack <target> | end. What it comes to is read from the record."),
         FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
         {
-            UWorld* World = GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWorld() : nullptr;
-            if (!World && GEditor)
-            {
-                World = GEditor->GetEditorWorldContext().World();
-            }
-            ARpgPlayLab* Lab = ThePlayLab(World);
+            ARpgPlayLab* Lab = ThePlayLab(GameWorldOrEditor());
             if (!Lab)
             {
                 UE_LOG(LogRpgPlayLab, Error, TEXT("rpg.verb: no game yet; rpg.play <api-host:port> <player> first"));
@@ -907,17 +1074,64 @@ namespace
             UE_LOG(LogRpgPlayLab, Display, TEXT("frames %s"), gFramesOn ? TEXT("on") : TEXT("off"));
         }));
 
+    FAutoConsoleCommand GRpgClickCommand(
+        TEXT("rpg.click"),
+        TEXT("As a click on a cell, by the same code a player's click reaches: rpg.click <q> <r> | figure <name>"),
+        FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+        {
+            ARpgPlayLab* Lab = ThePlayLab(GameWorldOrEditor());
+            if (!Lab || Args.Num() < 1)
+            {
+                UE_LOG(LogRpgPlayLab, Error, TEXT("usage: rpg.click <q> <r> | figure <name>, after rpg.play"));
+                return;
+            }
+            if (Args[0] == TEXT("figure") && Args.Num() >= 2)
+            {
+                if (const FIntPoint* cell = Lab->CellOf(Args[1]))
+                {
+                    Lab->ClickCell(*cell);
+                    return;
+                }
+                UE_LOG(LogRpgPlayLab, Error, TEXT("rpg.click: no figure named %s"), *Args[1]);
+                return;
+            }
+            Lab->ClickCell(FIntPoint(FCString::Atoi(*Args[0]), Args.Num() > 1 ? FCString::Atoi(*Args[1]) : 0));
+        }));
+
+    FAutoConsoleCommand GRpgMouseCommand(
+        TEXT("rpg.mouse"),
+        TEXT("A real click, sent through the game's input at the screen position of a cell: rpg.mouse <q> <r>"),
+        FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+        {
+            ARpgPlayLab* Lab = ThePlayLab(GameWorldOrEditor());
+            if (!Lab || Args.Num() < 2)
+            {
+                UE_LOG(LogRpgPlayLab, Error, TEXT("usage: rpg.mouse <q> <r>, after rpg.play"));
+                return;
+            }
+            Lab->InjectClick(FIntPoint(FCString::Atoi(*Args[0]), FCString::Atoi(*Args[1])), FPlatformTime::Seconds() + 0.05);
+        }));
+
+    FAutoConsoleCommand GRpgKeyCommand(
+        TEXT("rpg.key"),
+        TEXT("A real key press, sent through the game's input: rpg.key E"),
+        FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
+        {
+            ARpgPlayLab* Lab = ThePlayLab(GameWorldOrEditor());
+            if (!Lab || Args.Num() < 1)
+            {
+                UE_LOG(LogRpgPlayLab, Error, TEXT("usage: rpg.key <key>, after rpg.play"));
+                return;
+            }
+            Lab->InjectKey(FKey(*Args[0]), FPlatformTime::Seconds() + 0.05);
+        }));
+
     FAutoConsoleCommand GRpgFrameCommand(
         TEXT("rpg.frame"),
         TEXT("Save a frame of the game as <name>.png under Saved/Screenshots."),
         FConsoleCommandWithArgsDelegate::CreateLambda([](const TArray<FString>& Args)
         {
-            UWorld* World = GEngine && GEngine->GameViewport ? GEngine->GameViewport->GetWorld() : nullptr;
-            if (!World && GEditor)
-            {
-                World = GEditor->GetEditorWorldContext().World();
-            }
-            ARpgPlayLab* Lab = ThePlayLab(World);
+            ARpgPlayLab* Lab = ThePlayLab(GameWorldOrEditor());
             if (!Lab || Args.Num() < 1)
             {
                 UE_LOG(LogRpgPlayLab, Error, TEXT("usage: rpg.frame <name>, after rpg.play"));

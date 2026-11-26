@@ -33,3 +33,8 @@ bool PlanMotion(const FString& beat, const FString& fields_json, TMap<FString, F
 /// coordinates, rounded. The engine prices and may refuse the path; this
 /// only names it.
 TArray<FIntPoint> HexLine(const FIntPoint& from, const FIntPoint& to);
+
+/// The cell a point of the floor is in, for the board the scene lab builds:
+/// pointy-topped hexes 100 cm apart, cell (q, r) centred at
+/// (√3·(q + r/2), 1.5·r) in centimetres.
+FIntPoint CellAt(const FVector2D& centimetres);
