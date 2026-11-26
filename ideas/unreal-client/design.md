@@ -57,6 +57,8 @@ animation is its own design and is not this document's (O1).
 | R2 | Where the two `descriptor` fields are renamed so that C++ generated code compiles: in place, wire-identical, with protos, web and api in one wave; or in a later proto version. | open | protos, web, api | — | — |
 | R3 | TurboLink's place in the first Unreal leg: none, with raw stubs against the libraries it ships or against our own build; or in, once its generator preserves proto3 presence. | open | unreal-client | — | — |
 | R4 | Where the engine runs for the Unreal client: hosted as for the web, or a local engine mode, which needs a store because the api requires Redis. | open | api, deployment | — | — |
+| R5 | The Unreal client's repository is `rpg-dnd5e-unreal`: the platform named beside the rules, as the web's is, so another engine would be `rpg-dnd5e-<engine>`. | settled | unreal-client | KirkDiggler | 2026-11-26 |
+| R6 | The client's repository is public and holds no licensed content. Unreal-format licensed content lives in `rpg-game-assets`, the private canonical store, and the client mounts it; it is never committed to the client. | settled | unreal-client, game-assets | KirkDiggler | 2026-11-26 |
 
 ## Open
 
@@ -69,6 +71,6 @@ animation is its own design and is not this document's (O1).
   targets one engine version and a fixed platform list. This project's engine
   version and platforms are not chosen. Building the runtime ourselves
   reopens the list.
-- **O3 The client's repository.** Its name; that it is private, because it
+- **O3 The client's repository, what remains.** Its name is R5 and its visibility R6. Open: how it consumes generated code, as a target of the protos pipeline or a published package; and the project file's name, which the convention derives from the repository until the operator names a product.
   will hold licensed content; and how it consumes generated code, as an
   artifact of the protos pipeline or a pinned fetch.
