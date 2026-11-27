@@ -1,0 +1,53 @@
+# Idea: the Unreal client
+
+- **Law:** [design.md](design.md). R1, R2 and R4 to R8 are settled; R3 and R9 are open, on the checklist of [the story](https://github.com/KirkDiggler/rpg-project/issues/1237).
+- **Spike:** [spike/README.md](spike/README.md). What ran, what it showed, and how to run it again.
+- **Run record:** [knowledge/runs/2026-11-24-unreal-client-design.md](../../knowledge/runs/2026-11-24-unreal-client-design.md).
+- **Paper trail:** idea [rpg-project#1154](https://github.com/KirkDiggler/rpg-project/issues/1154); design PR [rpg-project#1155](https://github.com/KirkDiggler/rpg-project/pull/1155); contract gap [rpg-api-protos#453](https://github.com/KirkDiggler/rpg-api-protos/issues/453).
+
+## What this is
+
+A second client of the running engine, built in Unreal, for a first- or
+third-person way to play what the engine's stories already do. It is shaped
+like the web client: generated code from the same protos, the same auth, the
+same verbs in and record out. Nothing in the engine changes for it.
+
+## Origin
+
+Session of 2026-11-23. The web client is one way to interact with the
+engine's story-building. The Synty assets have already stood in Unreal as a
+first- and third-person experience. The question was whether to make the
+toolkit a C-bound library or to re-implement it in C++. The answer was
+neither: a second client over the existing contract (R1). The operator
+approved a spike the same day, and it ran on Linux.
+
+## Earlier cuts
+
+- **Bind or port the engine.** The first framing of the question: a Go library
+  inside the game's process, or a native C++ engine. It gave way when the
+  operator moved to Unreal as another client, like the web. No second engine.
+- **Portable combat core.** A separate product for game builders, with the
+  composition core re-implemented in C++ for a deck-builder game and a UE
+  host. Not this game and not this engine:
+  [ideas/portable-combat-core](../portable-combat-core/design.md). It stays a
+  parallel line.
+
+## What the spike showed
+
+A C++ client, linked against the protobuf and gRPC libraries that ship for
+Unreal 5.6, read the record stream from the Go engine on Linux. It received
+the retained beats in eight milliseconds, then live rounds as the engine
+played its turns, through the production auth boundary. A caller with no seat
+read the whole record in development mode.
+
+It also found what has to be decided before the first Unreal leg builds: a
+C++-only defect in the contract (R2) and a presence bug in the Blueprint
+wrapper it surveyed (R3). Numbers, evidence and the recipe are in
+[spike/README.md](spike/README.md).
+
+## Status
+
+- R1, R2 and R4 to R8 are settled. R3 and R9 are the operator's, in the checklist of
+  the story, [rpg-project#1237](https://github.com/KirkDiggler/rpg-project/issues/1237). The rulings table is in the design doc.
+- Nothing more is built until R3 rules. Then this
+  folder gains its walkthrough, and the story skill cuts the first Unreal leg.

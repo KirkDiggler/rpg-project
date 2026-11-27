@@ -1,0 +1,14 @@
+# input through the game's own mouse and keyboard — 2026-11-26T04:43Z; -game -RenderOffscreen; ExecCmds: rpg.frames 0, rpg.play …, rpg.mouse -1 15, rpg.mouse 0 14, rpg.key E
+2026.11.26-04.37.12:443 VIEW the player controller looks through the scene's camera; the cursor is shown; left click and E are bound
+2026.11.26-04.37.15:314 INPUT injecting a click on cell (-1,15) at pixel (328, 252)
+2026.11.26-04.37.15:317 INPUT click on the floor at V(X=1129.44, Y=2254.16) -> cell (-1,15)
+2026.11.26-04.37.15:421 VERB move (-2,16) -> (-1,15): 1 of 1 cell(s) walked, stop reason: none (world clock)
+2026.11.26-04.37.17:813 INPUT injecting a click on cell (0,14) at pixel (300, 287)
+2026.11.26-04.37.17:817 INPUT click on the floor at V(X=1214.73, Y=2100.28) -> cell (0,14)
+2026.11.26-04.37.18:053 VERB attack pedlar: roll 17, total 18 against 10, hit, damage 0
+2026.11.26-04.37.18:560 MARKER the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's
+2026.11.26-04.37.20:315 INPUT injecting key E
+2026.11.26-04.37.20:321 INPUT key E -> end turn
+2026.11.26-04.37.20:429 VERB end: the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's, round wrapped 1
+2026.11.26-04.37.20:434 MARKER the turn is now char_00f27b00-cdeb-499c-b07d-de355f1cf1ce's
+2026.11.26-04.37.20:435 MARKER the turn is now pedlar's
